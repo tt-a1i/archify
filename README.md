@@ -29,9 +29,6 @@ Export 菜单 —— 复制到剪贴板 + 四种格式下载：
 
 ![导出菜单](examples/images/archify-menu.png)
 
-原生支持打印 —— <kbd>Cmd</kbd>+<kbd>P</kbd> 自动隐藏工具栏、换白底、去网格：
-
-![打印预览](examples/images/archify-print.png)
 
 想亲自玩一下：克隆仓库后打开 [`examples/web-app.html`](examples/web-app.html)，按 <kbd>T</kbd> 切主题，<kbd>E</kbd> 打开导出菜单。给 URL 加上 `?theme=light` 或 `?openExport=1` 可以强制初始状态。
 
