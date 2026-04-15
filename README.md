@@ -1,19 +1,19 @@
 # Archify
 
-**Generate beautiful architecture diagrams in chat. Switch dark / light. Copy to clipboard or export PNG / JPEG / WebP / SVG at 1× / 2× / 4×.**
+**Generate beautiful architecture diagrams in chat. Switch dark / light. Copy to clipboard or export crisp 4× PNG / JPEG / WebP / SVG.**
 
-Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-using-skills-in-claude) that turns a plain-English description of your system into a polished, self-contained architecture diagram — a single HTML file you can open, toggle themes on, copy to the clipboard, and export to any common image format.
+Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-using-skills-in-claude) that turns a plain-English description of your system into a polished, self-contained architecture diagram — a single HTML file you can open, toggle themes on, copy to the clipboard, and export at maximum resolution.
 
 - **No design skills needed** — describe your architecture in English, get a diagram
 - **Built-in theme toggle** — one click between dark and light, persists across sessions
 - **Copy PNG to clipboard** — one click, paste straight into Slack / Notion / GitHub
-- **Export to image** — PNG, JPEG, WebP, or SVG at user-selected 1× / 2× / 4× scale
+- **Ultra-crisp image export** — PNG / JPEG / WebP rendered natively at 4× source resolution (no upsampling blur), or SVG for true vector
 - **Self-contained HTML** — zero dependencies, share by sending the file
 - **Iterate by chat** — "add Redis", "move auth to the left", "use emerald for the API"
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Claude](https://img.shields.io/badge/Claude-Skill-7C3AED?style=flat-square)
-![Version](https://img.shields.io/badge/version-2.2.1-0891b2?style=flat-square)
+![Version](https://img.shields.io/badge/version-2.3.0-0891b2?style=flat-square)
 
 ## Preview
 
@@ -23,7 +23,7 @@ Same diagram, two themes, one click to switch:
 |---|---|
 | ![Dark theme](examples/images/archify-dark.png) | ![Light theme](examples/images/archify-light.png) |
 
-The Export menu with the 1× / 2× / 4× scale selector and Copy-to-clipboard:
+The Export menu — Copy PNG to clipboard plus 4 download formats (all raster exports at 4× source resolution):
 
 ![Export menu](examples/images/archify-menu.png)
 
@@ -37,18 +37,17 @@ Live example: [`examples/web-app.html`](examples/web-app.html) — open in a bro
 
 Archify is based on [Cocoon-AI/architecture-diagram-generator](https://github.com/Cocoon-AI/architecture-diagram-generator) v1.0 (dark-only, HTML output). 2.0 rewrote the template around a themeable CSS-variable system and added a client-side export pipeline; 2.1 extends that with copy-to-clipboard and selectable export scale:
 
-| Feature | v1.0 | Archify 2.0 | Archify 2.1 |
-|---|---|---|---|
-| Dark theme | Yes | Yes | Yes |
-| Light theme | — | Yes (toggle) | Yes (toggle) |
-| Theme persistence | — | `localStorage` + `prefers-color-scheme` | + URL param `?theme=` |
-| PNG download | manual screenshot | 2× retina | **1× / 2× / 4× user-selectable** |
-| JPEG / WebP download | — | 2× retina | **1× / 2× / 4×** |
-| SVG download | — | Vector, styles inlined | Same |
-| Copy PNG to clipboard | — | — | **Yes** (via `ClipboardItem`) |
-| Keyboard shortcuts | — | — | **<kbd>T</kbd> / <kbd>E</kbd> + full menu nav** |
-| Accessibility | — | — | **ARIA semantics + focus-visible** |
-| Styling model | Inline `fill` / `stroke` | CSS custom properties + semantic classes | Same |
+| Feature | v1.0 | 2.0 | 2.1 | 2.3 |
+|---|---|---|---|---|
+| Dark theme | Yes | Yes | Yes | Yes |
+| Light theme | — | Toggle | Toggle | Toggle + <kbd>T</kbd> shortcut |
+| PNG / JPEG / WebP download | manual screenshot | 2× upsampled | 1× / 2× / 4× selector | **4× natively rendered, no blur** |
+| SVG download | — | Vector, styles inlined | Same | Same |
+| Copy PNG to clipboard | — | — | Yes | Yes (always 4×) |
+| Keyboard shortcuts | — | — | <kbd>T</kbd> / <kbd>E</kbd> + menu nav | Same |
+| Accessibility | — | — | ARIA + focus-visible | Same |
+| Print stylesheet | — | — | — | Yes (from 2.2) |
+| Styling model | Inline `fill` / `stroke` | CSS custom properties + semantic classes | Same | Same |
 
 ## Quick start
 
@@ -117,18 +116,18 @@ Open the generated HTML in any browser. Top-right you'll see two buttons:
 
 ### Export menu
 
-| Control | What it does |
+| Action | What it does |
 |---|---|
-| **1× / 2× / 4×** scale selector | Sets the raster output scale; remembered per-browser. 1× = compact, 2× = retina (default), 4× = print / slides. |
-| **Copy PNG** | Puts a PNG of the current diagram straight on your clipboard at the selected scale. Paste into Slack, Notion, GitHub, Figma. |
-| **Download PNG / JPEG / WebP** | Saves a raster image at the selected scale. JPEG/WebP are painted over the current theme's background (no alpha); PNG keeps transparency. |
-| **Download SVG** | Vector export with all styles inlined. Edit in Figma / Illustrator. Scale selector doesn't apply — SVG is resolution-independent. |
+| **Copy PNG** | Puts a PNG of the current diagram straight on your clipboard. Paste into Slack, Notion, GitHub, Figma. |
+| **Download PNG / JPEG / WebP** | Saves a raster image. JPEG/WebP are painted over the current theme's background (no alpha); PNG keeps transparency. |
+| **Download SVG** | Vector export with all styles inlined. Edit in Figma / Illustrator. Scales losslessly. |
+
+Every raster export (Copy PNG, Download PNG/JPEG/WebP) is rendered natively by the browser at **4× the diagram's intrinsic resolution** — the serialized SVG is given a `width`/`height` of `4 × viewBox`, rasterized by the browser at that resolution, and drawn to the canvas at natural size (no upsampling). This produces genuinely crisp output for retina displays, slides, and print. There is no scale dial — maximum sharpness is the default and the only option.
 
 ### Keyboard
 
 - <kbd>T</kbd> anywhere — toggle theme
 - <kbd>E</kbd> anywhere — open the Export menu
-- <kbd>←</kbd> <kbd>→</kbd> on the scale selector — switch scale
 - <kbd>↑</kbd> <kbd>↓</kbd> inside the menu — navigate actions
 - <kbd>Home</kbd> / <kbd>End</kbd> — jump to first / last action
 - <kbd>Enter</kbd> / <kbd>Space</kbd> — activate

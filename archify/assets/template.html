@@ -288,31 +288,6 @@
       color: var(--text-dim);
       font-size: 0.625rem;
     }
-    .toolbar .export-menu .export-scale {
-      display: flex;
-      gap: 0.25rem;
-      padding: 0.125rem;
-    }
-    .toolbar .export-menu .export-scale button {
-      flex: 1;
-      width: auto;
-      justify-content: center;
-      padding: 0.3125rem 0.375rem;
-      font-size: 0.7rem;
-      border: 1px solid transparent;
-      border-radius: 0.25rem;
-    }
-    .toolbar .export-menu .export-scale button[aria-checked="true"] {
-      background: var(--toolbar-hover);
-      border-color: var(--frontend-stroke);
-      color: var(--frontend-stroke);
-    }
-    .toolbar .export-menu .export-sep {
-      height: 1px;
-      background: var(--toolbar-border);
-      margin: 0.25rem 0.375rem;
-      opacity: 0.6;
-    }
 
     /* Toast — brief feedback for actions like "copied" */
     .archify-toast {
@@ -402,12 +377,6 @@
         Export <span aria-hidden="true">&#9662;</span>
       </button>
       <div class="export-menu" id="export-menu" role="menu" aria-label="Export">
-        <div class="export-scale" role="radiogroup" aria-label="Raster scale">
-          <button data-scale="1" type="button" role="radio" aria-checked="false" title="1x (compact)">1&times;</button>
-          <button data-scale="2" type="button" role="radio" aria-checked="true"  title="2x (retina, default)">2&times;</button>
-          <button data-scale="4" type="button" role="radio" aria-checked="false" title="4x (print / slides)">4&times;</button>
-        </div>
-        <div class="export-sep" aria-hidden="true"></div>
         <button data-action="copy"  type="button" role="menuitem" tabindex="-1">Copy PNG <span class="hint">clipboard</span></button>
         <button data-format="png"   type="button" role="menuitem" tabindex="-1">Download PNG</button>
         <button data-format="jpeg"  type="button" role="menuitem" tabindex="-1">Download JPEG</button>
@@ -670,12 +639,18 @@
 
     /* ============================================================
        Export — PNG / JPEG / WebP / SVG (download) and Copy PNG (clipboard)
-       Raster scale is user-selectable (1x / 2x / 4x) and persists in
-       localStorage. JPEG/WebP paint the current theme's background
-       explicitly since those formats have no alpha.
+
+       Raster exports are always rendered at 4x source resolution for
+       maximum sharpness. The trick: we set the serialized SVG's
+       `width`/`height` to viewBox * 4 so the browser rasterizes the
+       vectors at that resolution natively. drawImage then draws at
+       the image's natural size (no upscaling = no blur).
+
+       JPEG/WebP paint the current theme's background explicitly since
+       those formats have no alpha channel.
        ============================================================ */
     (function () {
-      var SCALE_KEY = 'archify-export-scale';
+      var RASTER_SCALE = 4;
 
       function diagramFilename() {
         var title = (document.title || 'diagram').replace(/\s+Architecture(\s+Diagram)?$/i, '').trim();
@@ -695,13 +670,21 @@
        * rasterized via an Image -> canvas pipeline (canvas does not read the
        * host document's CSS).
        */
-      function serializeSvg() {
+      function serializeSvg(scale) {
+        // scale: integer multiplier for intrinsic SVG pixel dimensions used by
+        // the raster path. Defaults to 1 (natural size) for SVG download.
+        scale = scale || 1;
+
         var svg = document.querySelector('.diagram-container svg');
         var clone = svg.cloneNode(true);
 
         var vb = svg.viewBox.baseVal;
-        clone.setAttribute('width', vb.width);
-        clone.setAttribute('height', vb.height);
+        // Scale width/height so the browser rasterizes the vectors at target
+        // resolution directly. viewBox stays unchanged so coordinates don't
+        // shift. This is the key to sharp rasters — do NOT scale later via
+        // canvas upscaling.
+        clone.setAttribute('width', vb.width * scale);
+        clone.setAttribute('height', vb.height * scale);
         clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
         var theme = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -756,8 +739,8 @@
 
         return {
           svgString: new XMLSerializer().serializeToString(clone),
-          width: vb.width,
-          height: vb.height
+          width: vb.width * scale,
+          height: vb.height * scale
         };
       }
 
@@ -773,27 +756,30 @@
       }
 
       function rasterize(format) {
-        var data = serializeSvg();
+        // Serialize at RASTER_SCALE — the SVG itself will be rasterized by
+        // the browser at the target resolution. drawImage then draws at
+        // natural size, so no upsampling blur.
+        var data = serializeSvg(RASTER_SCALE);
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
-        var scale = getScale();
 
         return new Promise(function (resolve, reject) {
           var img = new Image();
           img.onload = function () {
             var canvas = document.createElement('canvas');
-            canvas.width = data.width * scale;
-            canvas.height = data.height * scale;
+            canvas.width = data.width;
+            canvas.height = data.height;
             var ctx = canvas.getContext('2d');
             if (format === 'jpeg') {
               ctx.fillStyle = currentBg();
               ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            // Draw at natural size — SVG was already rasterized at target res.
+            ctx.drawImage(img, 0, 0);
             URL.revokeObjectURL(svgUrl);
             var mime = format === 'jpeg' ? 'image/jpeg' :
                        format === 'webp' ? 'image/webp' : 'image/png';
-            var quality = format === 'png' ? undefined : 0.92;
+            var quality = format === 'png' ? undefined : 0.95;
             canvas.toBlob(function (blob) {
               if (!blob) reject(new Error('toBlob returned null for ' + format));
               else resolve(blob);
@@ -812,26 +798,6 @@
       var items = function () {
         return Array.prototype.slice.call(menu.querySelectorAll('button[role="menuitem"]'));
       };
-      var scaleButtons = function () {
-        return Array.prototype.slice.call(menu.querySelectorAll('.export-scale button[data-scale]'));
-      };
-
-      // ---- Raster scale (1x / 2x / 4x) -------------------------------------
-      function getScale() {
-        var checked = menu.querySelector('.export-scale button[aria-checked="true"]');
-        return checked ? parseInt(checked.dataset.scale, 10) : 2;
-      }
-      function setScale(scale) {
-        var s = String(scale);
-        scaleButtons().forEach(function (b) {
-          b.setAttribute('aria-checked', b.dataset.scale === s ? 'true' : 'false');
-        });
-        try { localStorage.setItem(SCALE_KEY, s); } catch (_) {}
-      }
-      (function restoreScale() {
-        var saved = parseInt(localStorage.getItem(SCALE_KEY), 10);
-        if (saved === 1 || saved === 2 || saved === 4) setScale(saved);
-      })();
 
       // ---- Clipboard support ----------------------------------------------
       function canCopyImage() {
@@ -903,27 +869,11 @@
       });
 
       // Keyboard navigation inside the menu.
-      //   Scale radio group: Left/Right moves + selects (roving tabindex).
       //   Menu items: Up/Down, Home/End.
       //   Esc closes + returns focus to trigger; Tab closes.
       menu.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') { e.preventDefault(); close(true); return; }
         if (e.key === 'Tab')    { close(false); return; }
-
-        var onScale = e.target.closest('.export-scale button');
-        if (onScale) {
-          var sb = scaleButtons();
-          var idx = sb.indexOf(onScale);
-          if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-            e.preventDefault();
-            var next = e.key === 'ArrowRight'
-              ? sb[(idx + 1) % sb.length]
-              : sb[(idx - 1 + sb.length) % sb.length];
-            setScale(next.dataset.scale);
-            next.focus();
-          }
-          return;
-        }
 
         var available = items().filter(function (i) { return !i.disabled; });
         var current = available.indexOf(document.activeElement);
@@ -972,7 +922,7 @@
         return rasterize('png').then(function (blob) {
           return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
         }).then(function () {
-          toast('Copied PNG to clipboard (' + getScale() + 'x)');
+          toast('Copied PNG to clipboard');
         }).catch(function (err) {
           console.error(err);
           alert('Copy failed: ' + (err && err.message ? err.message : 'unknown'));
@@ -980,9 +930,6 @@
       }
 
       menu.addEventListener('click', function (e) {
-        var scaleBtn = e.target.closest('.export-scale button[data-scale]');
-        if (scaleBtn) { setScale(scaleBtn.dataset.scale); return; }
-
         var copyBtn = e.target.closest('button[data-action="copy"]');
         if (copyBtn && !copyBtn.disabled) { runCopy(); return; }
 

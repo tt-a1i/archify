@@ -2,6 +2,20 @@
 
 All notable changes are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.3.0] — 2026-04-15
+
+### Fixed
+- **Raster exports are now genuinely sharp.** Previously the browser rasterized the serialized SVG at its natural `viewBox` dimensions (e.g., 1000×680), and then `ctx.drawImage(img, 0, 0, width*scale, height*scale)` bitmap-upsampled that raster onto the canvas — which just blew up the pixels and produced a soft image. The new flow sets the serialized SVG's `width`/`height` to `4 × viewBox` so the browser rasterizes the vectors at target resolution natively; the canvas then draws at the image's natural size with no scaling. Result: text edges, arrow heads, and stroke details that are actually crisp at 4×.
+
+### Removed
+- **Scale selector (1× / 2× / 4×).** The selector introduced in 2.1 encouraged picking a low scale to "save file size", which (combined with the upsampling bug above) always produced the softest output. Replaced with a single hardcoded 4× render on every raster export. PNG file sizes grow ~3–4× but the output is visibly sharper. A typical diagram exports to 4000×2720 (~300–700 KB PNG).
+- `Left` / `Right` arrow key binding (used by the selector) removed from the menu keyboard nav. Up/Down/Home/End/Esc/Tab all preserved.
+- `archify-export-scale` localStorage key is no longer read or written (old values are harmless leftovers).
+
+### Changed
+- Toast no longer includes the scale suffix — now just "Copied PNG to clipboard" since the scale is always 4×.
+- JPEG/WebP quality bumped from 0.92 to 0.95 (file-size delta is tiny at 4× but the encoded edges look cleaner).
+
 ## [2.2.1] — 2026-04-15
 
 ### Fixed
