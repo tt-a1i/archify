@@ -1,42 +1,50 @@
 # Archify
 
-**Generate beautiful architecture diagrams in chat. Switch dark / light. Export PNG / JPEG / WebP / SVG.**
+**Generate beautiful architecture diagrams in chat. Switch dark / light. Copy to clipboard or export PNG / JPEG / WebP / SVG at 1× / 2× / 4×.**
 
-Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-using-skills-in-claude) that turns a plain-English description of your system into a polished, self-contained architecture diagram — a single HTML file you can open, toggle themes on, and export to any common image format.
+Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-using-skills-in-claude) that turns a plain-English description of your system into a polished, self-contained architecture diagram — a single HTML file you can open, toggle themes on, copy to the clipboard, and export to any common image format.
 
 - **No design skills needed** — describe your architecture in English, get a diagram
 - **Built-in theme toggle** — one click between dark and light, persists across sessions
-- **One-click image export** — PNG, JPEG, WebP (2x retina), or SVG (vector)
+- **Copy PNG to clipboard** — one click, paste straight into Slack / Notion / GitHub
+- **Export to image** — PNG, JPEG, WebP, or SVG at user-selected 1× / 2× / 4× scale
 - **Self-contained HTML** — zero dependencies, share by sending the file
 - **Iterate by chat** — "add Redis", "move auth to the left", "use emerald for the API"
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Claude](https://img.shields.io/badge/Claude-Skill-7C3AED?style=flat-square)
-![Version](https://img.shields.io/badge/version-2.0-0891b2?style=flat-square)
+![Version](https://img.shields.io/badge/version-2.1-0891b2?style=flat-square)
 
 ## Preview
 
-Same diagram, two themes, one click to switch — and the Export menu top-right:
+Same diagram, two themes, one click to switch:
 
 | Dark | Light |
 |---|---|
 | ![Dark theme](examples/images/archify-dark.png) | ![Light theme](examples/images/archify-light.png) |
 
-Live example: [`examples/web-app.html`](examples/web-app.html) — open in a browser, press <kbd>T</kbd> to toggle, <kbd>E</kbd> to open Export.
+The Export menu with the 1× / 2× / 4× scale selector and Copy-to-clipboard:
 
-## What's new in 2.0
+![Export menu](examples/images/archify-menu.png)
 
-Archify is based on [Cocoon-AI/architecture-diagram-generator](https://github.com/Cocoon-AI/architecture-diagram-generator) v1.0 (dark-only, HTML output). 2.0 rewrites the template around a themeable CSS-variable system and adds a client-side export pipeline:
+Live example: [`examples/web-app.html`](examples/web-app.html) — open in a browser, press <kbd>T</kbd> to toggle theme, <kbd>E</kbd> to open Export. Append `?theme=light` or `?openExport=1` to the URL for deterministic screenshots.
 
-| Feature | v1.0 | Archify 2.0 |
-|---|---|---|
-| Dark theme | Yes | Yes |
-| Light theme | — | Yes, one-click toggle |
-| Theme persistence | — | `localStorage` + `prefers-color-scheme` |
-| PNG export | manual screenshot | Built-in, 2x retina |
-| JPEG / WebP export | — | Built-in, 2x retina |
-| SVG export | — | Built-in, vector, styles inlined |
-| Styling model | Inline `fill` / `stroke` | CSS custom properties + semantic classes |
+## What's new
+
+Archify is based on [Cocoon-AI/architecture-diagram-generator](https://github.com/Cocoon-AI/architecture-diagram-generator) v1.0 (dark-only, HTML output). 2.0 rewrote the template around a themeable CSS-variable system and added a client-side export pipeline; 2.1 extends that with copy-to-clipboard and selectable export scale:
+
+| Feature | v1.0 | Archify 2.0 | Archify 2.1 |
+|---|---|---|---|
+| Dark theme | Yes | Yes | Yes |
+| Light theme | — | Yes (toggle) | Yes (toggle) |
+| Theme persistence | — | `localStorage` + `prefers-color-scheme` | + URL param `?theme=` |
+| PNG download | manual screenshot | 2× retina | **1× / 2× / 4× user-selectable** |
+| JPEG / WebP download | — | 2× retina | **1× / 2× / 4×** |
+| SVG download | — | Vector, styles inlined | Same |
+| Copy PNG to clipboard | — | — | **Yes** (via `ClipboardItem`) |
+| Keyboard shortcuts | — | — | **<kbd>T</kbd> / <kbd>E</kbd> + full menu nav** |
+| Accessibility | — | — | **ARIA semantics + focus-visible** |
+| Styling model | Inline `fill` / `stroke` | CSS custom properties + semantic classes | Same |
 
 ## Quick start
 
@@ -98,20 +106,40 @@ That's it. Claude generates an HTML file you can open in any browser. Iterate by
 
 ## Using the output
 
-Open the generated HTML in any browser. Top-right you'll see:
+Open the generated HTML in any browser. Top-right you'll see two buttons:
 
-- **Theme button** — toggles Dark / Light. Remembered across sessions. Shortcut: <kbd>T</kbd>.
-- **Export menu** — drops down with PNG / JPEG / WebP / SVG options. Shortcut: <kbd>E</kbd>.
+- **Theme button** (Dark / Light) — one click flip, persisted across sessions. Shortcut: <kbd>T</kbd>.
+- **Export menu** — opens a dropdown with a scale selector and five actions. Shortcut: <kbd>E</kbd>.
 
-Inside the menu: <kbd>Arrow</kbd> keys navigate, <kbd>Enter</kbd> exports, <kbd>Esc</kbd> closes.
+### Export menu
 
-The export respects the **current** theme — flip to light mode first if you want a light-mode PNG. PNG/JPEG/WebP are rendered at 2x retina; SVG is true vector with all styles inlined, so it scales cleanly and can be further edited in Figma or Illustrator.
+| Control | What it does |
+|---|---|
+| **1× / 2× / 4×** scale selector | Sets the raster output scale; remembered per-browser. 1× = compact, 2× = retina (default), 4× = print / slides. |
+| **Copy PNG** | Puts a PNG of the current diagram straight on your clipboard at the selected scale. Paste into Slack, Notion, GitHub, Figma. |
+| **Download PNG / JPEG / WebP** | Saves a raster image at the selected scale. JPEG/WebP are painted over the current theme's background (no alpha); PNG keeps transparency. |
+| **Download SVG** | Vector export with all styles inlined. Edit in Figma / Illustrator. Scale selector doesn't apply — SVG is resolution-independent. |
 
-**URL parameter:** append `?theme=light` or `?theme=dark` to force a starting theme — handy for deterministic screenshots, share links, or embedding in docs pipelines.
+### Keyboard
 
-**Format support:** WebP depends on your browser's canvas encoder. If WebP isn't supported (older Safari), the menu item is dimmed and disabled. PNG and JPEG are universal.
+- <kbd>T</kbd> anywhere — toggle theme
+- <kbd>E</kbd> anywhere — open the Export menu
+- <kbd>←</kbd> <kbd>→</kbd> on the scale selector — switch scale
+- <kbd>↑</kbd> <kbd>↓</kbd> inside the menu — navigate actions
+- <kbd>Home</kbd> / <kbd>End</kbd> — jump to first / last action
+- <kbd>Enter</kbd> / <kbd>Space</kbd> — activate
+- <kbd>Esc</kbd> — close menu
 
-**Font caveat:** exported raster images use the system's monospace fallback (`ui-monospace` / Menlo / Consolas) because the sandboxed image-rendering context can't fetch Google Fonts. Install JetBrains Mono locally for pixel-perfect exports.
+### URL parameters
+
+- `?theme=light` or `?theme=dark` — force a starting theme (deterministic screenshots, share links, embeds)
+- `?openExport=1` — auto-open the Export menu on load (demo / docs screenshots)
+
+### Notes
+
+- **WebP support** depends on your browser's canvas encoder. If unavailable (older Safari), the menu item is dimmed and disabled. PNG and JPEG are universal.
+- **Clipboard support** for images requires `ClipboardItem` + `navigator.clipboard.write` (Chromium, Firefox 127+, Safari 16+). If unavailable, Copy PNG is dimmed.
+- **Fonts in exports**: raster images use the system monospace fallback (`ui-monospace` / Menlo / Consolas) because the sandboxed image-rendering context can't fetch Google Fonts. Install JetBrains Mono locally for pixel-perfect rendering.
 
 ## Example prompts
 

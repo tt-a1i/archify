@@ -2,6 +2,19 @@
 
 All notable changes are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.0] — 2026-04-15
+
+### Added
+- **Copy PNG to clipboard.** New menu action writes the diagram straight to the system clipboard via `ClipboardItem` / `navigator.clipboard.write` so it can be pasted into Slack, Notion, GitHub, Figma, Keynote, etc. Item is dimmed on browsers that don't support clipboard image writes.
+- **Export scale selector (1× / 2× / 4×)** at the top of the Export menu. Raster downloads and Copy use the selected scale. Selection persists in `localStorage`. Keyboard: <kbd>←</kbd> / <kbd>→</kbd> switch scale.
+- **Toast feedback** — brief "Copied PNG to clipboard (2×)" confirmation after successful copy.
+- **URL parameter `?openExport=1`** — auto-opens the Export menu on load. Primarily for deterministic screenshots and live demos.
+- Screenshot showing the Export menu open (`examples/images/archify-menu.png`) wired into the README preview section.
+
+### Changed
+- Export menu items renamed from `PNG / JPEG / WebP / SVG` to `Download PNG / JPEG / WebP / SVG` to disambiguate from the new `Copy PNG` action above.
+- `SCALE` constant replaced by `getScale()` reading from the radiogroup; scale flows through `rasterize()` and clipboard copy alike.
+
 ## [2.0.0] — 2026-04-15
 
 First Archify release. Fork / rewrite of
