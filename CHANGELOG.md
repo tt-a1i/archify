@@ -2,6 +2,13 @@
 
 All notable changes are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.2.0] — 2026-04-15
+
+### Added
+- **Print stylesheet.** <kbd>Cmd</kbd>+<kbd>P</kbd> (or browser print) now produces a clean, print-ready page: toolbar and toasts hidden, dark background replaced with white, grid removed, card/container borders switched to light gray, `break-inside: avoid` on diagram + cards so nothing splits mid-element. Works regardless of current theme.
+- **Font fallback improvement for exported images.** The serialized SVG now includes a `local()`-only `@font-face` block for JetBrains Mono at weights 400/500/600/700 so that raster exports can pick up a locally-installed JetBrains Mono (common on developer machines) and fall through cleanly to `ui-monospace` / Menlo otherwise. Previously the sandboxed image-rendering context couldn't reach the Google Fonts URL in the `<link>`, resulting in plain monospace even when users had the font installed.
+- `archify-print.png` screenshot wired into the README preview section.
+
 ## [2.1.0] — 2026-04-15
 
 ### Added

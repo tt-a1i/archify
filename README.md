@@ -13,7 +13,7 @@ Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-usin
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Claude](https://img.shields.io/badge/Claude-Skill-7C3AED?style=flat-square)
-![Version](https://img.shields.io/badge/version-2.1-0891b2?style=flat-square)
+![Version](https://img.shields.io/badge/version-2.2-0891b2?style=flat-square)
 
 ## Preview
 
@@ -26,6 +26,10 @@ Same diagram, two themes, one click to switch:
 The Export menu with the 1× / 2× / 4× scale selector and Copy-to-clipboard:
 
 ![Export menu](examples/images/archify-menu.png)
+
+Print-ready out of the box — <kbd>Cmd</kbd>+<kbd>P</kbd> drops the toolbar, the dark background, and the grid automatically:
+
+![Print preview](examples/images/archify-print.png)
 
 Live example: [`examples/web-app.html`](examples/web-app.html) — open in a browser, press <kbd>T</kbd> to toggle theme, <kbd>E</kbd> to open Export. Append `?theme=light` or `?openExport=1` to the URL for deterministic screenshots.
 

@@ -200,6 +200,30 @@
     }
 
     /* ==========================================================
+       Print stylesheet — hide interactive controls, force light,
+       drop the grid so the diagram doesn't waste ink.
+       ========================================================== */
+    @media print {
+      :root, [data-theme="dark"], [data-theme="light"] {
+        --bg: #ffffff;
+        --grid: transparent;
+        --panel: #ffffff;
+        --panel-border: #e2e8f0;
+        --text: #0f172a;
+        --text-muted: #475569;
+        --text-dim: #94a3b8;
+        --mask: #ffffff;
+      }
+      body { background: #ffffff !important; padding: 0; }
+      .toolbar, .archify-toast { display: none !important; }
+      .diagram-container, .card { box-shadow: none; border-color: #e2e8f0; }
+      /* Ensure elements break sensibly across pages */
+      .card { break-inside: avoid; }
+      .diagram-container { break-inside: avoid; }
+      h1, .subtitle { color: #0f172a; }
+    }
+
+    /* ==========================================================
        TOOLBAR (theme toggle + export menu)
        ========================================================== */
     .toolbar {
@@ -595,7 +619,7 @@
 
     <!-- Footer -->
     <p class="footer">
-      Try <kbd>T</kbd> to toggle theme &middot; <kbd>E</kbd> for Export &middot; pick 1&times; / 2&times; / 4&times; scale &middot; PNG / JPEG / WebP / SVG or copy to clipboard
+      Try <kbd>T</kbd> to toggle theme &middot; <kbd>E</kbd> for Export &middot; pick 1&times; / 2&times; / 4&times; scale &middot; PNG / JPEG / WebP / SVG or copy to clipboard &middot; <kbd>Cmd</kbd>+<kbd>P</kbd> for a clean printable page
     </p>
   </div>
 
@@ -700,11 +724,23 @@
           return n + ': ' + computed.getPropertyValue(n).trim() + ';';
         }).join(' ');
 
+        // Prepend a local()-only @font-face block for each weight so that the
+        // sandboxed image-rendering context used during PNG/JPEG/WebP export
+        // can find JetBrains Mono if the user has it installed locally, and
+        // falls through cleanly to the monospace stack otherwise. The usual
+        // Google-Fonts <link> in the host document is unreachable from the
+        // serialized SVG, so url()-sourced faces would just hang.
+        var fontFallback = [400, 500, 600, 700].map(function (w) {
+          return "@font-face { font-family: 'JetBrains Mono'; font-weight: " + w +
+                 "; src: local('JetBrains Mono'), local('JetBrainsMono-Regular'); }";
+        }).join('\n');
+
         // IMPORTANT: inject the resolved variables AFTER hostStyle, otherwise
         // hostStyle's ":root, [data-theme=\"dark\"] { ... }" rule overrides our
         // chosen theme via later-in-cascade equal-specificity. Keep this order.
         var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
         style.textContent =
+          fontFallback + "\n" +
           "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }\n" +
           hostStyle + "\n" +
           ":root, svg { " + vars + " }\n";
@@ -954,6 +990,7 @@
 
       Archify.exportMenu = { open: open, close: close, isOpen: isOpen, run: runExport };
 
+      // Auto-open on page load for demo/screenshot purposes: ?openExport=1
       try {
         if (new URLSearchParams(window.location.search).get('openExport') === '1') {
           setTimeout(open, 60);
