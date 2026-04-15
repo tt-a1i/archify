@@ -491,9 +491,11 @@
         <text x="255" y="448" class="t-muted" font-size="8" text-anchor="middle">&bull; bucket-three</text>
         <text x="255" y="466" class="t-cloud" font-size="7" text-anchor="middle">OAI Protected</text>
 
-        <!-- Security Group (dashed boundary) -->
-        <rect x="350" y="265" width="120" height="80" rx="8" class="c-security-group" stroke-width="1"/>
-        <text x="358" y="279" class="t-security" font-size="8">sg-name :port</text>
+        <!-- Security Group (dashed boundary). NOTE: extra vertical headroom
+             so the sg-name label has ~12px breathing room above the inner
+             component. Pattern: boundary y = inner.y - 30, h = inner.h + 50. -->
+        <rect x="350" y="250" width="120" height="100" rx="8" class="c-security-group" stroke-width="1"/>
+        <text x="358" y="268" class="t-security" font-size="8">sg-name :port</text>
 
         <!-- Component inside security group -->
         <rect x="360" y="280" width="100" height="50" rx="6" class="c-mask"/>

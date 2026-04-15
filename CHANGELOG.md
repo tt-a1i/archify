@@ -2,6 +2,14 @@
 
 All notable changes are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.2.1] — 2026-04-15
+
+### Fixed
+- **Security group label crowding.** The `sg-name :port` label on the dashed rose boundary sat only ~1px above the Load Balancer box inside it (boundary `y=265 h=80`, inner box `y=280`, label baseline `y=279`). Bumped the boundary to `y=250 h=100` and moved the label to `y=268`, giving ~12px clear gap between the label baseline and the inner component. Same pattern documented in `SKILL.md` so Claude stops generating crowded boundaries.
+
+### Changed
+- `SKILL.md`: new **Security Group & Region Boundary Padding** section with the 30/50 offset rule (boundary `y = inner.y - 30`, `h = inner.h + 50`, label baseline 18px below boundary top) and a concrete code example.
+
 ## [2.2.0] — 2026-04-15
 
 ### Added

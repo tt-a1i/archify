@@ -13,7 +13,7 @@ Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-usin
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Claude](https://img.shields.io/badge/Claude-Skill-7C3AED?style=flat-square)
-![Version](https://img.shields.io/badge/version-2.2-0891b2?style=flat-square)
+![Version](https://img.shields.io/badge/version-2.2.1-0891b2?style=flat-square)
 
 ## Preview
 

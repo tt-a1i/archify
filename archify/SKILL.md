@@ -129,6 +129,26 @@ Component B: y=170, height=60  -> ends at y=230
 **Wrong:** Placing a message bus at y=160 when Component B starts at y=170 (causes overlap)
 **Right:** Placing a message bus at y=140, centered in the 40px gap (y=130 to y=170)
 
+### Security Group & Region Boundary Padding
+
+When a component sits inside a `c-security-group` or `c-region` boundary, the small label on the boundary (e.g., `sg-name :port`, `AWS Region: us-west-2`) needs room above the inner component — otherwise the label visually crashes into the box below it.
+
+**Rule:** boundary `y` = inner-component `y` − 30, boundary `height` = inner-component `height` + 50. Place the label 18px below the boundary top (baseline). This yields ~12px clear gap between the label baseline and the inner component's top edge.
+
+**Example** — a Load Balancer (y=280, h=50) inside a security group:
+
+```svg
+<!-- Security group — extends 30px above and 20px below the inner box -->
+<rect x="350" y="250" width="120" height="100" rx="8" class="c-security-group" stroke-width="1"/>
+<text x="358" y="268" class="t-security" font-size="8">sg-name :port</text>
+
+<!-- Inner component — unchanged coordinates -->
+<rect x="360" y="280" width="100" height="50" rx="6" class="c-mask"/>
+<rect x="360" y="280" width="100" height="50" rx="6" class="c-cloud" stroke-width="1.5"/>
+```
+
+If the inner component is taller (e.g., a 100px multi-line box), keep the 30/50 offsets — the extra vertical room on top stays the same, the bottom padding grows naturally.
+
 ### Legend Placement
 
 **CRITICAL:** Place legends OUTSIDE all boundary boxes (region boundaries, cluster boundaries, security groups).
