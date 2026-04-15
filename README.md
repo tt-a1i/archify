@@ -16,8 +16,13 @@ Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-usin
 
 ## Preview
 
-![Web App Architecture](examples/images/web-app.png)
-![Microservices Architecture](examples/images/microservices.png)
+Same diagram, two themes, one click to switch — and the Export menu top-right:
+
+| Dark | Light |
+|---|---|
+| ![Dark theme](examples/images/archify-dark.png) | ![Light theme](examples/images/archify-light.png) |
+
+Live example: [`examples/web-app.html`](examples/web-app.html) — open in a browser, press <kbd>T</kbd> to toggle, <kbd>E</kbd> to open Export.
 
 ## What's new in 2.0
 
@@ -95,10 +100,18 @@ That's it. Claude generates an HTML file you can open in any browser. Iterate by
 
 Open the generated HTML in any browser. Top-right you'll see:
 
-- **Theme button** — toggles Dark / Light. Remembered across sessions.
-- **Export menu** — drops down with PNG / JPEG / WebP / SVG options.
+- **Theme button** — toggles Dark / Light. Remembered across sessions. Shortcut: <kbd>T</kbd>.
+- **Export menu** — drops down with PNG / JPEG / WebP / SVG options. Shortcut: <kbd>E</kbd>.
+
+Inside the menu: <kbd>Arrow</kbd> keys navigate, <kbd>Enter</kbd> exports, <kbd>Esc</kbd> closes.
 
 The export respects the **current** theme — flip to light mode first if you want a light-mode PNG. PNG/JPEG/WebP are rendered at 2x retina; SVG is true vector with all styles inlined, so it scales cleanly and can be further edited in Figma or Illustrator.
+
+**URL parameter:** append `?theme=light` or `?theme=dark` to force a starting theme — handy for deterministic screenshots, share links, or embedding in docs pipelines.
+
+**Format support:** WebP depends on your browser's canvas encoder. If WebP isn't supported (older Safari), the menu item is dimmed and disabled. PNG and JPEG are universal.
+
+**Font caveat:** exported raster images use the system's monospace fallback (`ui-monospace` / Menlo / Consolas) because the sandboxed image-rendering context can't fetch Google Fonts. Install JetBrains Mono locally for pixel-perfect exports.
 
 ## Example prompts
 

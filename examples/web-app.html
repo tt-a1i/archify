@@ -1,163 +1,838 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Web Application Architecture</title>
+  <title>Sample Web App Architecture Diagram</title>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ==========================================================
+       THEME VARIABLES — switch by toggling [data-theme] on <html>
+       ========================================================== */
+    :root,
+    [data-theme="dark"] {
+      --bg: #020617;
+      --grid: #1e293b;
+      --text: #ffffff;
+      --text-muted: #94a3b8;
+      --text-dim: #475569;
+
+      --panel: rgba(15, 23, 42, 0.5);
+      --panel-border: #1e293b;
+
+      --arrow: #64748b;
+      --arrow-emphasis: #34d399;
+
+      /* Opaque mask color used behind semi-transparent component fills
+         so the arrows drawn underneath are properly hidden. */
+      --mask: #0f172a;
+
+      --frontend-fill:    rgba(8, 51, 68, 0.4);
+      --frontend-stroke:  #22d3ee;
+      --backend-fill:     rgba(6, 78, 59, 0.4);
+      --backend-stroke:   #34d399;
+      --database-fill:    rgba(76, 29, 149, 0.4);
+      --database-stroke:  #a78bfa;
+      --cloud-fill:       rgba(120, 53, 15, 0.3);
+      --cloud-stroke:     #fbbf24;
+      --security-fill:    rgba(136, 19, 55, 0.4);
+      --security-stroke:  #fb7185;
+      --messagebus-fill:  rgba(251, 146, 60, 0.3);
+      --messagebus-stroke:#fb923c;
+      --external-fill:    rgba(30, 41, 59, 0.5);
+      --external-stroke:  #94a3b8;
+
+      --toolbar-bg:       rgba(15, 23, 42, 0.8);
+      --toolbar-border:   #334155;
+      --toolbar-text:     #e2e8f0;
+      --toolbar-hover:    rgba(15, 23, 42, 0.95);
+      --toolbar-menu-bg:  #0f172a;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --grid: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --text-dim: #94a3b8;
+
+      --panel: #ffffff;
+      --panel-border: #e2e8f0;
+
+      --arrow: #94a3b8;
+      --arrow-emphasis: #059669;
+
+      --mask: #ffffff;
+
+      --frontend-fill:    rgba(34, 211, 238, 0.15);
+      --frontend-stroke:  #0891b2;
+      --backend-fill:     rgba(52, 211, 153, 0.18);
+      --backend-stroke:   #059669;
+      --database-fill:    rgba(167, 139, 250, 0.2);
+      --database-stroke:  #7c3aed;
+      --cloud-fill:       rgba(251, 191, 36, 0.18);
+      --cloud-stroke:     #d97706;
+      --security-fill:    rgba(251, 113, 133, 0.15);
+      --security-stroke:  #e11d48;
+      --messagebus-fill:  rgba(251, 146, 60, 0.15);
+      --messagebus-stroke:#ea580c;
+      --external-fill:    rgba(148, 163, 184, 0.18);
+      --external-stroke:  #64748b;
+
+      --toolbar-bg:       rgba(255, 255, 255, 0.92);
+      --toolbar-border:   #cbd5e1;
+      --toolbar-text:     #334155;
+      --toolbar-hover:    #ffffff;
+      --toolbar-menu-bg:  #ffffff;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: 'JetBrains Mono', monospace;
-      background: #020617;
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      background: var(--bg);
       min-height: 100vh;
       padding: 2rem;
-      color: white;
+      color: var(--text);
+      transition: background 0.2s ease, color 0.2s ease;
     }
+
     .container { max-width: 1200px; margin: 0 auto; }
+
     .header { margin-bottom: 2rem; }
-    .header-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
     .pulse-dot {
-      width: 12px; height: 12px; background: #22d3ee;
-      border-radius: 50%; animation: pulse 2s infinite;
+      width: 12px;
+      height: 12px;
+      background: var(--frontend-stroke);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
     }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
-    .subtitle { color: #94a3b8; font-size: 0.875rem; margin-left: 1.75rem; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-left: 1.75rem;
+    }
+
     .diagram-container {
-      background: rgba(15, 23, 42, 0.5);
-      border-radius: 1rem; border: 1px solid #1e293b;
-      padding: 1.5rem; overflow-x: auto;
+      background: var(--panel);
+      border-radius: 1rem;
+      border: 1px solid var(--panel-border);
+      padding: 1.5rem;
+      overflow-x: auto;
     }
-    svg { width: 100%; min-width: 800px; display: block; }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 2rem; }
-    .card { background: rgba(15, 23, 42, 0.5); border-radius: 0.75rem; border: 1px solid #1e293b; padding: 1.25rem; }
-    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
-    .card-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .card-dot.cyan { background: #22d3ee; }
-    .card-dot.emerald { background: #34d399; }
-    .card-dot.violet { background: #a78bfa; }
-    .card h3 { font-size: 0.875rem; font-weight: 600; }
-    .card ul { list-style: none; color: #94a3b8; font-size: 0.75rem; }
+
+    svg {
+      width: 100%;
+      min-width: 900px;
+      display: block;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .card {
+      background: var(--panel);
+      border-radius: 0.75rem;
+      border: 1px solid var(--panel-border);
+      padding: 1.25rem;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .card-dot.cyan     { background: var(--frontend-stroke); }
+    .card-dot.emerald  { background: var(--backend-stroke); }
+    .card-dot.violet   { background: var(--database-stroke); }
+    .card-dot.amber    { background: var(--cloud-stroke); }
+    .card-dot.rose     { background: var(--security-stroke); }
+    .card-dot.orange   { background: var(--messagebus-stroke); }
+    .card-dot.slate    { background: var(--external-stroke); }
+
+    .card h3 { font-size: 0.875rem; font-weight: 600; color: var(--text); }
+
+    .card ul {
+      list-style: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
     .card li { margin-bottom: 0.375rem; }
-    .footer { text-align: center; margin-top: 1.5rem; color: #475569; font-size: 0.75rem; }
+
+    .footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+    }
+
+    /* ==========================================================
+       TOOLBAR (theme toggle + export menu)
+       ========================================================== */
+    .toolbar {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      z-index: 100;
+    }
+    .toolbar button {
+      background: var(--toolbar-bg);
+      color: var(--toolbar-text);
+      border: 1px solid var(--toolbar-border);
+      padding: 0.5rem 0.875rem;
+      border-radius: 0.5rem;
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s, border-color 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+    .toolbar button:hover {
+      background: var(--toolbar-hover);
+      border-color: var(--arrow);
+    }
+    .toolbar button:focus-visible {
+      outline: 2px solid var(--frontend-stroke);
+      outline-offset: 2px;
+    }
+    .toolbar .export-wrap { position: relative; }
+    .toolbar .export-menu {
+      position: absolute;
+      top: calc(100% + 0.375rem);
+      right: 0;
+      background: var(--toolbar-menu-bg);
+      border: 1px solid var(--toolbar-border);
+      border-radius: 0.5rem;
+      padding: 0.375rem;
+      min-width: 160px;
+      display: none;
+      flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+    .toolbar .export-menu.open { display: flex; }
+    .toolbar .export-menu button {
+      background: transparent;
+      border: 0;
+      justify-content: space-between;
+      width: 100%;
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+    }
+    .toolbar .export-menu button:hover {
+      background: var(--toolbar-hover);
+    }
+    .toolbar .export-menu .hint {
+      color: var(--text-dim);
+      font-size: 0.625rem;
+    }
+
+    /* ==========================================================
+       SVG SEMANTIC CLASSES — use these instead of inline fill/stroke
+       ========================================================== */
+    .c-grid       { stroke: var(--grid); fill: none; }
+    .c-mask       { fill: var(--mask); stroke: none; }
+
+    .c-frontend   { fill: var(--frontend-fill);   stroke: var(--frontend-stroke); }
+    .c-backend    { fill: var(--backend-fill);    stroke: var(--backend-stroke); }
+    .c-database   { fill: var(--database-fill);   stroke: var(--database-stroke); }
+    .c-cloud      { fill: var(--cloud-fill);      stroke: var(--cloud-stroke); }
+    .c-security   { fill: var(--security-fill);   stroke: var(--security-stroke); }
+    .c-messagebus { fill: var(--messagebus-fill); stroke: var(--messagebus-stroke); }
+    .c-external   { fill: var(--external-fill);   stroke: var(--external-stroke); }
+
+    /* Text helpers */
+    .t-primary { fill: var(--text); }
+    .t-muted   { fill: var(--text-muted); }
+    .t-dim     { fill: var(--text-dim); }
+    .t-frontend   { fill: var(--frontend-stroke); }
+    .t-backend    { fill: var(--backend-stroke); }
+    .t-database   { fill: var(--database-stroke); }
+    .t-cloud      { fill: var(--cloud-stroke); }
+    .t-security   { fill: var(--security-stroke); }
+    .t-messagebus { fill: var(--messagebus-stroke); }
+    .t-external   { fill: var(--external-stroke); }
+
+    /* Arrows */
+    .a-default   { stroke: var(--arrow); fill: none; }
+    .a-emphasis  { stroke: var(--arrow-emphasis); fill: none; }
+    .a-security  { stroke: var(--security-stroke); fill: none; stroke-dasharray: 5,5; }
+    .a-dashed    { stroke: var(--database-stroke); fill: none; stroke-dasharray: 4,4; }
+
+    /* Arrowhead markers reference these */
+    .m-default   { fill: var(--arrow); }
+    .m-emphasis  { fill: var(--arrow-emphasis); }
+    .m-security  { fill: var(--security-stroke); }
+    .m-dashed    { fill: var(--database-stroke); }
+
+    /* Dashed boundary variants */
+    .c-security-group { fill: transparent; stroke: var(--security-stroke); stroke-dasharray: 4,4; }
+    .c-region         { fill: rgba(251, 191, 36, 0.05); stroke: var(--cloud-stroke); stroke-dasharray: 8,4; }
   </style>
 </head>
 <body>
+  <!-- Toolbar: theme toggle + export menu (present on every generated diagram)
+       Keyboard: T toggles theme, E opens export menu (when no input focused) -->
+  <div class="toolbar" role="toolbar" aria-label="Diagram actions">
+    <button id="btn-theme" type="button"
+            title="Toggle theme (T)"
+            aria-label="Toggle color theme"
+            aria-pressed="false">
+      <span id="theme-icon" aria-hidden="true">&#9790;</span>
+      <span id="theme-label">Dark</span>
+    </button>
+    <div class="export-wrap">
+      <button id="btn-export" type="button"
+              title="Export diagram (E)"
+              aria-label="Export diagram"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-controls="export-menu">
+        Export <span aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="export-menu" id="export-menu" role="menu" aria-label="Export format">
+        <button data-format="png"  type="button" role="menuitem" tabindex="-1">PNG <span class="hint">2&times;</span></button>
+        <button data-format="jpeg" type="button" role="menuitem" tabindex="-1">JPEG <span class="hint">2&times;</span></button>
+        <button data-format="webp" type="button" role="menuitem" tabindex="-1">WebP <span class="hint">2&times;</span></button>
+        <button data-format="svg"  type="button" role="menuitem" tabindex="-1">SVG <span class="hint">vector</span></button>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
+    <!-- Header -->
     <div class="header">
       <div class="header-row">
         <div class="pulse-dot"></div>
-        <h1>Web Application Architecture</h1>
+        <h1>Sample Web App Architecture</h1>
       </div>
-      <p class="subtitle">React + Node.js + PostgreSQL stack</p>
+      <p class="subtitle">Classic 3-tier SaaS on AWS &mdash; generated by the Archify Claude Skill</p>
     </div>
 
+    <!-- Main Diagram -->
     <div class="diagram-container">
-      <svg viewBox="0 0 900 400">
+      <svg viewBox="0 0 1000 680">
+        <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+            <polygon points="0 0, 10 3.5, 0 7" class="m-default" />
+          </marker>
+          <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-emphasis" />
+          </marker>
+          <marker id="arrowhead-security" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-security" />
+          </marker>
+          <marker id="arrowhead-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" />
           </marker>
           <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+            <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
           </pattern>
         </defs>
 
+        <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />
 
-        <!-- Arrows (drawn first for z-order) -->
-        <line x1="130" y1="200" x2="248" y2="200" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <text x="189" y="190" fill="#94a3b8" font-size="8" text-anchor="middle">HTTPS</text>
+        <!-- =================================================================
+             COMPONENT EXAMPLES — use CSS classes, not inline fill/stroke
+             (so theme toggle works). Each box pattern:
+               1. opaque mask rect (.c-mask) to hide arrows underneath
+               2. styled rect (.c-<type>) with 1.5px stroke
+               3. text (.t-primary / .t-muted)
+             ================================================================= -->
 
-        <line x1="400" y1="200" x2="498" y2="200" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <text x="449" y="190" fill="#94a3b8" font-size="8" text-anchor="middle">REST API</text>
+        <!-- External/Generic Component -->
+        <rect x="30" y="280" width="100" height="50" rx="6" class="c-mask"/>
+        <rect x="30" y="280" width="100" height="50" rx="6" class="c-external" stroke-width="1.5"/>
+        <text x="80" y="300" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Users</text>
+        <text x="80" y="316" class="t-muted" font-size="9" text-anchor="middle">Browser/Mobile</text>
 
-        <line x1="650" y1="200" x2="748" y2="200" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <text x="699" y="190" fill="#94a3b8" font-size="8" text-anchor="middle">SQL</text>
+        <!-- Security Component -->
+        <rect x="30" y="80" width="100" height="60" rx="6" class="c-mask"/>
+        <rect x="30" y="80" width="100" height="60" rx="6" class="c-security" stroke-width="1.5"/>
+        <text x="80" y="105" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Auth Provider</text>
+        <text x="80" y="121" class="t-muted" font-size="9" text-anchor="middle">OAuth 2.0</text>
 
-        <!-- Users -->
-        <rect x="30" y="160" width="100" height="80" rx="6" fill="#0f172a"/>
-        <rect x="30" y="160" width="100" height="80" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
-        <text x="80" y="195" fill="white" font-size="12" font-weight="600" text-anchor="middle">Users</text>
-        <text x="80" y="215" fill="#94a3b8" font-size="9" text-anchor="middle">Browser</text>
+        <!-- Region/Cloud Boundary -->
+        <rect x="160" y="40" width="820" height="620" rx="12" class="c-region" stroke-width="1"/>
+        <text x="172" y="58" class="t-cloud" font-size="10" font-weight="600">AWS Region: us-west-2</text>
 
-        <!-- Frontend -->
-        <rect x="250" y="140" width="150" height="120" rx="6" fill="#0f172a"/>
-        <rect x="250" y="140" width="150" height="120" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
-        <text x="325" y="175" fill="white" font-size="12" font-weight="600" text-anchor="middle">Frontend</text>
-        <text x="325" y="195" fill="#94a3b8" font-size="9" text-anchor="middle">React</text>
-        <text x="325" y="210" fill="#94a3b8" font-size="9" text-anchor="middle">TypeScript</text>
-        <text x="325" y="225" fill="#94a3b8" font-size="9" text-anchor="middle">Tailwind CSS</text>
-        <text x="325" y="248" fill="#22d3ee" font-size="8" text-anchor="middle">:3000</text>
+        <!-- AWS/Cloud Service -->
+        <rect x="200" y="280" width="110" height="50" rx="6" class="c-mask"/>
+        <rect x="200" y="280" width="110" height="50" rx="6" class="c-cloud" stroke-width="1.5"/>
+        <text x="255" y="300" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">CloudFront</text>
+        <text x="255" y="316" class="t-muted" font-size="9" text-anchor="middle">CDN</text>
 
-        <!-- Backend -->
-        <rect x="500" y="140" width="150" height="120" rx="6" fill="#0f172a"/>
-        <rect x="500" y="140" width="150" height="120" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
-        <text x="575" y="175" fill="white" font-size="12" font-weight="600" text-anchor="middle">Backend</text>
-        <text x="575" y="195" fill="#94a3b8" font-size="9" text-anchor="middle">Node.js</text>
-        <text x="575" y="210" fill="#94a3b8" font-size="9" text-anchor="middle">Express</text>
-        <text x="575" y="225" fill="#94a3b8" font-size="9" text-anchor="middle">REST API</text>
-        <text x="575" y="248" fill="#34d399" font-size="8" text-anchor="middle">:8080</text>
+        <!-- Multi-line AWS Component (S3 Buckets example) -->
+        <rect x="200" y="380" width="110" height="100" rx="6" class="c-mask"/>
+        <rect x="200" y="380" width="110" height="100" rx="6" class="c-cloud" stroke-width="1.5"/>
+        <text x="255" y="400" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">S3 Buckets</text>
+        <text x="255" y="420" class="t-muted" font-size="8" text-anchor="middle">&bull; bucket-one</text>
+        <text x="255" y="434" class="t-muted" font-size="8" text-anchor="middle">&bull; bucket-two</text>
+        <text x="255" y="448" class="t-muted" font-size="8" text-anchor="middle">&bull; bucket-three</text>
+        <text x="255" y="466" class="t-cloud" font-size="7" text-anchor="middle">OAI Protected</text>
 
-        <!-- Database -->
-        <rect x="750" y="150" width="120" height="100" rx="6" fill="#0f172a"/>
-        <rect x="750" y="150" width="120" height="100" rx="6" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
-        <text x="810" y="190" fill="white" font-size="12" font-weight="600" text-anchor="middle">PostgreSQL</text>
-        <text x="810" y="210" fill="#94a3b8" font-size="9" text-anchor="middle">Database</text>
-        <text x="810" y="238" fill="#a78bfa" font-size="8" text-anchor="middle">:5432</text>
+        <!-- Security Group (dashed boundary) -->
+        <rect x="350" y="265" width="120" height="80" rx="8" class="c-security-group" stroke-width="1"/>
+        <text x="358" y="279" class="t-security" font-size="8">sg-name :port</text>
 
-        <!-- Legend -->
-        <text x="30" y="350" fill="white" font-size="10" font-weight="600">Legend</text>
-        <rect x="30" y="362" width="16" height="10" rx="2" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1"/>
-        <text x="52" y="370" fill="#94a3b8" font-size="8">Frontend</text>
-        <rect x="110" y="362" width="16" height="10" rx="2" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1"/>
-        <text x="132" y="370" fill="#94a3b8" font-size="8">Backend</text>
-        <rect x="190" y="362" width="16" height="10" rx="2" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1"/>
-        <text x="212" y="370" fill="#94a3b8" font-size="8">Database</text>
+        <!-- Component inside security group -->
+        <rect x="360" y="280" width="100" height="50" rx="6" class="c-mask"/>
+        <rect x="360" y="280" width="100" height="50" rx="6" class="c-cloud" stroke-width="1.5"/>
+        <text x="410" y="300" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Load Balancer</text>
+        <text x="410" y="316" class="t-muted" font-size="9" text-anchor="middle">HTTPS :443</text>
+
+        <!-- Backend Component -->
+        <rect x="510" y="280" width="110" height="50" rx="6" class="c-mask"/>
+        <rect x="510" y="280" width="110" height="50" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="565" y="300" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">API Server</text>
+        <text x="565" y="316" class="t-muted" font-size="9" text-anchor="middle">FastAPI :8000</text>
+
+        <!-- Database Component -->
+        <rect x="700" y="280" width="120" height="50" rx="6" class="c-mask"/>
+        <rect x="700" y="280" width="120" height="50" rx="6" class="c-database" stroke-width="1.5"/>
+        <text x="760" y="300" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Database</text>
+        <text x="760" y="316" class="t-muted" font-size="9" text-anchor="middle">PostgreSQL</text>
+
+        <!-- Frontend Component -->
+        <rect x="200" y="520" width="200" height="110" rx="8" class="c-mask"/>
+        <rect x="200" y="520" width="200" height="110" rx="8" class="c-frontend" stroke-width="1.5"/>
+        <text x="300" y="545" class="t-primary" font-size="12" font-weight="600" text-anchor="middle">Frontend</text>
+        <text x="300" y="565" class="t-muted" font-size="9" text-anchor="middle">React + TypeScript</text>
+        <text x="300" y="580" class="t-muted" font-size="9" text-anchor="middle">Additional detail</text>
+        <text x="300" y="595" class="t-muted" font-size="9" text-anchor="middle">More info</text>
+        <text x="300" y="615" class="t-frontend" font-size="8" text-anchor="middle">domain.example.com</text>
+
+        <!-- =================================================================
+             ARROW EXAMPLES (use .a-* classes and stroke-width on the line)
+             ================================================================= -->
+
+        <!-- Standard arrow with label -->
+        <line x1="130" y1="305" x2="198" y2="305" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="164" y="299" class="t-muted" font-size="9" text-anchor="middle">HTTPS</text>
+
+        <!-- Simple arrow (no label) -->
+        <line x1="310" y1="305" x2="358" y2="305" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+        <!-- Vertical arrow -->
+        <line x1="255" y1="330" x2="255" y2="378" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="270" y="358" class="t-muted" font-size="9">OAI</text>
+
+        <!-- Straight arrows between services -->
+        <line x1="460" y1="305" x2="508" y2="305" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <line x1="620" y1="305" x2="698" y2="305" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="655" y="299" class="t-muted" font-size="9">TLS</text>
+
+        <!-- Curved dashed path for auth/security flow -->
+        <path d="M 80 140 L 80 200 Q 80 220 100 220 L 200 220 Q 220 220 220 240 L 220 278"
+              class="a-security" stroke-width="1.5"/>
+        <text x="150" y="210" class="t-security" font-size="8">JWT + PKCE</text>
+
+        <!-- =================================================================
+             LEGEND
+             ================================================================= -->
+        <text x="720" y="70" class="t-primary" font-size="10" font-weight="600">Legend</text>
+
+        <rect x="720" y="82" width="16" height="10" rx="2" class="c-frontend" stroke-width="1"/>
+        <text x="742" y="90" class="t-muted" font-size="8">Frontend</text>
+
+        <rect x="720" y="98" width="16" height="10" rx="2" class="c-backend" stroke-width="1"/>
+        <text x="742" y="106" class="t-muted" font-size="8">Backend</text>
+
+        <rect x="720" y="114" width="16" height="10" rx="2" class="c-cloud" stroke-width="1"/>
+        <text x="742" y="122" class="t-muted" font-size="8">Cloud Service</text>
+
+        <rect x="720" y="130" width="16" height="10" rx="2" class="c-database" stroke-width="1"/>
+        <text x="742" y="138" class="t-muted" font-size="8">Database</text>
+
+        <rect x="720" y="146" width="16" height="10" rx="2" class="c-security" stroke-width="1"/>
+        <text x="742" y="154" class="t-muted" font-size="8">Security</text>
+
+        <line x1="720" y1="168" x2="736" y2="168" class="a-security" stroke-width="1"/>
+        <text x="742" y="171" class="t-muted" font-size="8">Auth Flow</text>
+
+        <rect x="720" y="178" width="16" height="10" rx="2" class="c-security-group" stroke-width="1"/>
+        <text x="742" y="186" class="t-muted" font-size="8">Security Group</text>
       </svg>
     </div>
 
+    <!-- Info Cards -->
     <div class="cards">
       <div class="card">
         <div class="card-header">
-          <div class="card-dot cyan"></div>
-          <h3>Frontend Stack</h3>
+          <div class="card-dot rose"></div>
+          <h3>Security</h3>
         </div>
         <ul>
-          <li>• React 18 with hooks</li>
-          <li>• TypeScript for type safety</li>
-          <li>• Tailwind CSS styling</li>
-          <li>• Vite build tool</li>
+          <li>&bull; OAuth 2.0 via external provider</li>
+          <li>&bull; JWT + PKCE auth flow</li>
+          <li>&bull; TLS everywhere</li>
+          <li>&bull; Security groups scope ingress</li>
         </ul>
       </div>
+
       <div class="card">
         <div class="card-header">
-          <div class="card-dot emerald"></div>
-          <h3>Backend Stack</h3>
+          <div class="card-dot amber"></div>
+          <h3>AWS Services</h3>
         </div>
         <ul>
-          <li>• Node.js runtime</li>
-          <li>• Express framework</li>
-          <li>• JWT authentication</li>
-          <li>• REST API design</li>
+          <li>&bull; CloudFront CDN + WAF</li>
+          <li>&bull; S3 buckets (OAI-protected)</li>
+          <li>&bull; ALB &rarr; ECS / Lambda</li>
+          <li>&bull; RDS PostgreSQL (Multi-AZ)</li>
         </ul>
       </div>
+
       <div class="card">
         <div class="card-header">
           <div class="card-dot violet"></div>
-          <h3>Data Layer</h3>
+          <h3>Data</h3>
         </div>
         <ul>
-          <li>• PostgreSQL database</li>
-          <li>• Prisma ORM</li>
-          <li>• Redis caching</li>
-          <li>• S3 file storage</li>
+          <li>&bull; PostgreSQL primary</li>
+          <li>&bull; Static assets on S3</li>
+          <li>&bull; CDN-cached GET responses</li>
+          <li>&bull; Daily snapshots retained 30d</li>
         </ul>
       </div>
     </div>
 
-    <p class="footer">Web Application Architecture • Three-tier design</p>
+    <!-- Footer -->
+    <p class="footer">
+      Try the <kbd>T</kbd> key to toggle theme &middot; Click <em>Export</em> for PNG / JPEG / WebP / SVG
+    </p>
   </div>
+
+  <script>
+    /* ============================================================
+       Theme toggle — persists to localStorage, respects system pref
+       ============================================================ */
+    var Archify = {};
+
+    Archify.theme = (function () {
+      var STORAGE_KEY = 'archify-theme';
+      var html = document.documentElement;
+      var btn = document.getElementById('btn-theme');
+      var icon = document.getElementById('theme-icon');
+      var label = document.getElementById('theme-label');
+
+      function resolveInitial() {
+        try {
+          var param = new URLSearchParams(window.location.search).get('theme');
+          if (param === 'light' || param === 'dark') return param;
+        } catch (_) {}
+        var saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === 'light' || saved === 'dark') return saved;
+        return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      }
+
+      function apply(theme) {
+        html.setAttribute('data-theme', theme);
+        icon.textContent = theme === 'dark' ? '\u263E' : '\u263C';
+        label.textContent = theme === 'dark' ? 'Dark' : 'Light';
+        btn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
+      }
+
+      function toggle() {
+        var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        apply(next);
+        localStorage.setItem(STORAGE_KEY, next);
+      }
+
+      apply(resolveInitial());
+      btn.addEventListener('click', toggle);
+
+      return { toggle: toggle };
+    })();
+
+    /* ============================================================
+       Export — PNG / JPEG / WebP / SVG
+       PNG/JPEG/WebP are rendered from the SVG onto a 2x canvas.
+       JPEG/WebP use the current theme's background color.
+       ============================================================ */
+    (function () {
+      var SCALE = 2;
+
+      function diagramFilename() {
+        var title = (document.title || 'diagram').replace(/\s+Architecture(\s+Diagram)?$/i, '').trim();
+        return title.replace(/[^a-z0-9_\-]+/gi, '-')
+                    .toLowerCase()
+                    .replace(/^-+|-+$/g, '') || 'diagram';
+      }
+
+      function currentBg() {
+        return getComputedStyle(document.body).backgroundColor || '#ffffff';
+      }
+
+      /**
+       * Serialize the main SVG into a standalone document.
+       * Inlines the host CSS + the current theme's resolved variables so the
+       * serialized SVG renders correctly both as a standalone file and when
+       * rasterized via an Image -> canvas pipeline (canvas does not read the
+       * host document's CSS).
+       */
+      function serializeSvg() {
+        var svg = document.querySelector('.diagram-container svg');
+        var clone = svg.cloneNode(true);
+
+        var vb = svg.viewBox.baseVal;
+        clone.setAttribute('width', vb.width);
+        clone.setAttribute('height', vb.height);
+        clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+        var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+        var hostStyle = Array.prototype.map.call(document.querySelectorAll('style'), function (s) {
+          return s.textContent;
+        }).join('\n');
+
+        var themeHost = document.querySelector('[data-theme="' + theme + '"]') || document.documentElement;
+        var computed = getComputedStyle(themeHost);
+        var varNames = [
+          '--bg','--grid','--text','--text-muted','--text-dim',
+          '--arrow','--arrow-emphasis','--mask',
+          '--frontend-fill','--frontend-stroke',
+          '--backend-fill','--backend-stroke',
+          '--database-fill','--database-stroke',
+          '--cloud-fill','--cloud-stroke',
+          '--security-fill','--security-stroke',
+          '--messagebus-fill','--messagebus-stroke',
+          '--external-fill','--external-stroke'
+        ];
+        var vars = varNames.map(function (n) {
+          return n + ': ' + computed.getPropertyValue(n).trim() + ';';
+        }).join(' ');
+
+        // IMPORTANT: inject the resolved variables AFTER hostStyle, otherwise
+        // hostStyle's ":root, [data-theme=\"dark\"] { ... }" rule overrides our
+        // chosen theme via later-in-cascade equal-specificity. Keep this order.
+        var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+        style.textContent =
+          "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }\n" +
+          hostStyle + "\n" +
+          ":root, svg { " + vars + " }\n";
+        clone.insertBefore(style, clone.firstChild);
+
+        var bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        bgRect.setAttribute('width', '100%');
+        bgRect.setAttribute('height', '100%');
+        bgRect.setAttribute('fill', computed.getPropertyValue('--bg').trim() || '#ffffff');
+        clone.insertBefore(bgRect, style.nextSibling);
+
+        return {
+          svgString: new XMLSerializer().serializeToString(clone),
+          width: vb.width,
+          height: vb.height
+        };
+      }
+
+      function download(blob, filename) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      }
+
+      function rasterize(format) {
+        var data = serializeSvg();
+        var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
+        var svgUrl = URL.createObjectURL(svgBlob);
+
+        return new Promise(function (resolve, reject) {
+          var img = new Image();
+          img.onload = function () {
+            var canvas = document.createElement('canvas');
+            canvas.width = data.width * SCALE;
+            canvas.height = data.height * SCALE;
+            var ctx = canvas.getContext('2d');
+            if (format === 'jpeg') {
+              ctx.fillStyle = currentBg();
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(svgUrl);
+            var mime = format === 'jpeg' ? 'image/jpeg' :
+                       format === 'webp' ? 'image/webp' : 'image/png';
+            var quality = format === 'png' ? undefined : 0.92;
+            canvas.toBlob(function (blob) {
+              if (!blob) reject(new Error('toBlob returned null for ' + format));
+              else resolve(blob);
+            }, mime, quality);
+          };
+          img.onerror = function (e) {
+            URL.revokeObjectURL(svgUrl);
+            reject(e);
+          };
+          img.src = svgUrl;
+        });
+      }
+
+      var menu = document.getElementById('export-menu');
+      var btn = document.getElementById('btn-export');
+      var items = function () {
+        return Array.prototype.slice.call(menu.querySelectorAll('button[data-format]'));
+      };
+
+      // Raster format support detection — canvas.toBlob('image/webp') silently
+      // returns a PNG on browsers without WebP encoding (Safari < 16).
+      function supports(format) {
+        if (format === 'svg' || format === 'png') return true;
+        var mime = format === 'jpeg' ? 'image/jpeg' : 'image/webp';
+        try {
+          var c = document.createElement('canvas');
+          c.width = c.height = 2;
+          return c.toDataURL(mime).indexOf('data:' + mime) === 0;
+        } catch (_) { return false; }
+      }
+
+      // Gray out unsupported menu items.
+      items().forEach(function (it) {
+        if (!supports(it.dataset.format)) {
+          it.disabled = true;
+          it.title = 'Not supported by this browser';
+          it.style.opacity = '0.5';
+        }
+      });
+
+      function open() {
+        menu.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+        var first = items().filter(function (i) { return !i.disabled; })[0];
+        if (first) first.focus();
+      }
+      function close(focusTrigger) {
+        menu.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+        if (focusTrigger) btn.focus();
+      }
+      function isOpen() { return menu.classList.contains('open'); }
+
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (isOpen()) close(false);
+        else open();
+      });
+      document.addEventListener('click', function (e) {
+        if (!menu.contains(e.target) && e.target !== btn) close(false);
+      });
+
+      // Keyboard navigation inside the menu: ArrowUp/Down, Home/End, Esc, Tab.
+      menu.addEventListener('keydown', function (e) {
+        var available = items().filter(function (i) { return !i.disabled; });
+        var current = available.indexOf(document.activeElement);
+        switch (e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            if (available.length) available[(current + 1 + available.length) % available.length].focus();
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            if (available.length) available[(current - 1 + available.length) % available.length].focus();
+            break;
+          case 'Home':
+            e.preventDefault();
+            if (available[0]) available[0].focus();
+            break;
+          case 'End':
+            e.preventDefault();
+            if (available.length) available[available.length - 1].focus();
+            break;
+          case 'Escape':
+            e.preventDefault();
+            close(true);
+            break;
+          case 'Tab':
+            close(false);
+            break;
+        }
+      });
+
+      function runExport(format) {
+        var base = diagramFilename();
+        close(false);
+        return (format === 'svg'
+          ? Promise.resolve(serializeSvg()).then(function (d) {
+              download(new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' }), base + '.svg');
+            })
+          : rasterize(format).then(function (blob) {
+              download(blob, base + '.' + format);
+            })
+        ).catch(function (err) {
+          console.error(err);
+          alert('Export failed: ' + (err && err.message ? err.message : format));
+        });
+      }
+
+      menu.addEventListener('click', function (e) {
+        var target = e.target.closest('button[data-format]');
+        if (!target || target.disabled) return;
+        runExport(target.dataset.format);
+      });
+
+      Archify.exportMenu = { open: open, close: close, isOpen: isOpen, run: runExport };
+    })();
+
+    /* ============================================================
+       Global keyboard shortcuts
+         T -> toggle theme
+         E -> open export menu
+       Ignored when focus is inside an input/textarea/contenteditable.
+       ============================================================ */
+    document.addEventListener('keydown', function (e) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      var t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (e.key === 't' || e.key === 'T') {
+        e.preventDefault();
+        Archify.theme.toggle();
+      } else if (e.key === 'e' || e.key === 'E') {
+        e.preventDefault();
+        if (!Archify.exportMenu.isOpen()) Archify.exportMenu.open();
+      }
+    });
+  </script>
 </body>
 </html>

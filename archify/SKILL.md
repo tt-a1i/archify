@@ -61,6 +61,8 @@ Text on a dark or light background uses three neutral helpers:
 | `t-muted`   | Sublabels, annotations        |
 | `t-dim`     | Tertiary / footer metadata    |
 
+Per-semantic text accents also exist: `t-frontend`, `t-backend`, `t-database`, `t-cloud`, `t-security`, `t-messagebus`, `t-external` — use when you want a label colored to match its component type (e.g., a small "OAI Protected" caption inside a cloud-type box).
+
 ### Arrow classes
 
 | Class         | Marker id                  | Semantic                       |
@@ -185,7 +187,7 @@ Pair each arrow class with the matching marker id (same suffix).
 </div>
 ```
 
-Valid `card-dot` colors: `cyan`, `emerald`, `violet`, `amber`, `rose` — these automatically re-theme.
+Valid `card-dot` colors: `cyan`, `emerald`, `violet`, `amber`, `rose`, `orange`, `slate` — all automatically re-theme. Pair the dot to its component semantic (e.g., `orange` for a "Messaging" card, `slate` for an "External Services" card).
 
 ## Template
 

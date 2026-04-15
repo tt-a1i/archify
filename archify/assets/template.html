@@ -179,6 +179,8 @@
     .card-dot.violet   { background: var(--database-stroke); }
     .card-dot.amber    { background: var(--cloud-stroke); }
     .card-dot.rose     { background: var(--security-stroke); }
+    .card-dot.orange   { background: var(--messagebus-stroke); }
+    .card-dot.slate    { background: var(--external-stroke); }
 
     .card h3 { font-size: 0.875rem; font-weight: 600; color: var(--text); }
 
@@ -227,6 +229,10 @@
     .toolbar button:hover {
       background: var(--toolbar-hover);
       border-color: var(--arrow);
+    }
+    .toolbar button:focus-visible {
+      outline: 2px solid var(--frontend-stroke);
+      outline-offset: 2px;
     }
     .toolbar .export-wrap { position: relative; }
     .toolbar .export-menu {
@@ -283,6 +289,7 @@
     .t-cloud      { fill: var(--cloud-stroke); }
     .t-security   { fill: var(--security-stroke); }
     .t-messagebus { fill: var(--messagebus-stroke); }
+    .t-external   { fill: var(--external-stroke); }
 
     /* Arrows */
     .a-default   { stroke: var(--arrow); fill: none; }
@@ -302,19 +309,30 @@
   </style>
 </head>
 <body>
-  <!-- Toolbar: theme toggle + export menu (present on every generated diagram) -->
-  <div class="toolbar">
-    <button id="btn-theme" type="button" title="Toggle theme">
-      <span id="theme-icon">&#9790;</span>
+  <!-- Toolbar: theme toggle + export menu (present on every generated diagram)
+       Keyboard: T toggles theme, E opens export menu (when no input focused) -->
+  <div class="toolbar" role="toolbar" aria-label="Diagram actions">
+    <button id="btn-theme" type="button"
+            title="Toggle theme (T)"
+            aria-label="Toggle color theme"
+            aria-pressed="false">
+      <span id="theme-icon" aria-hidden="true">&#9790;</span>
       <span id="theme-label">Dark</span>
     </button>
     <div class="export-wrap">
-      <button id="btn-export" type="button" title="Export diagram">Export &#9662;</button>
-      <div class="export-menu" id="export-menu" role="menu">
-        <button data-format="png"  type="button">PNG <span class="hint">2&times;</span></button>
-        <button data-format="jpeg" type="button">JPEG <span class="hint">2&times;</span></button>
-        <button data-format="webp" type="button">WebP <span class="hint">2&times;</span></button>
-        <button data-format="svg"  type="button">SVG <span class="hint">vector</span></button>
+      <button id="btn-export" type="button"
+              title="Export diagram (E)"
+              aria-label="Export diagram"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-controls="export-menu">
+        Export <span aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="export-menu" id="export-menu" role="menu" aria-label="Export format">
+        <button data-format="png"  type="button" role="menuitem" tabindex="-1">PNG <span class="hint">2&times;</span></button>
+        <button data-format="jpeg" type="button" role="menuitem" tabindex="-1">JPEG <span class="hint">2&times;</span></button>
+        <button data-format="webp" type="button" role="menuitem" tabindex="-1">WebP <span class="hint">2&times;</span></button>
+        <button data-format="svg"  type="button" role="menuitem" tabindex="-1">SVG <span class="hint">vector</span></button>
       </div>
     </div>
   </div>
@@ -529,7 +547,9 @@
     /* ============================================================
        Theme toggle — persists to localStorage, respects system pref
        ============================================================ */
-    (function () {
+    var Archify = {};
+
+    Archify.theme = (function () {
       var STORAGE_KEY = 'archify-theme';
       var html = document.documentElement;
       var btn = document.getElementById('btn-theme');
@@ -537,6 +557,11 @@
       var label = document.getElementById('theme-label');
 
       function resolveInitial() {
+        // URL param wins (useful for deterministic screenshots / share links)
+        try {
+          var param = new URLSearchParams(window.location.search).get('theme');
+          if (param === 'light' || param === 'dark') return param;
+        } catch (_) {}
         var saved = localStorage.getItem(STORAGE_KEY);
         if (saved === 'light' || saved === 'dark') return saved;
         return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
@@ -546,15 +571,19 @@
         html.setAttribute('data-theme', theme);
         icon.textContent = theme === 'dark' ? '\u263E' : '\u263C';
         label.textContent = theme === 'dark' ? 'Dark' : 'Light';
+        btn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
       }
 
-      apply(resolveInitial());
-
-      btn.addEventListener('click', function () {
+      function toggle() {
         var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
         apply(next);
         localStorage.setItem(STORAGE_KEY, next);
-      });
+      }
+
+      apply(resolveInitial());
+      btn.addEventListener('click', toggle);
+
+      return { toggle: toggle };
     })();
 
     /* ============================================================
@@ -566,8 +595,10 @@
       var SCALE = 2;
 
       function diagramFilename() {
-        var title = (document.title || 'diagram').replace(/\s+Architecture\s+Diagram$/i, '').trim();
-        return title.replace(/[^a-z0-9_\-]+/gi, '-').toLowerCase() || 'diagram';
+        var title = (document.title || 'diagram').replace(/\s+Architecture(\s+Diagram)?$/i, '').trim();
+        return title.replace(/[^a-z0-9_\-]+/gi, '-')
+                    .toLowerCase()
+                    .replace(/^-+|-+$/g, '') || 'diagram';
       }
 
       function currentBg() {
@@ -612,11 +643,14 @@
           return n + ': ' + computed.getPropertyValue(n).trim() + ';';
         }).join(' ');
 
+        // IMPORTANT: inject the resolved variables AFTER hostStyle, otherwise
+        // hostStyle's ":root, [data-theme=\"dark\"] { ... }" rule overrides our
+        // chosen theme via later-in-cascade equal-specificity. Keep this order.
         var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
         style.textContent =
           "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }\n" +
-          ":root { " + vars + " }\n" +
-          hostStyle;
+          hostStyle + "\n" +
+          ":root, svg { " + vars + " }\n";
         clone.insertBefore(style, clone.firstChild);
 
         var bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -679,22 +713,88 @@
 
       var menu = document.getElementById('export-menu');
       var btn = document.getElementById('btn-export');
+      var items = function () {
+        return Array.prototype.slice.call(menu.querySelectorAll('button[data-format]'));
+      };
+
+      // Raster format support detection — canvas.toBlob('image/webp') silently
+      // returns a PNG on browsers without WebP encoding (Safari < 16).
+      function supports(format) {
+        if (format === 'svg' || format === 'png') return true;
+        var mime = format === 'jpeg' ? 'image/jpeg' : 'image/webp';
+        try {
+          var c = document.createElement('canvas');
+          c.width = c.height = 2;
+          return c.toDataURL(mime).indexOf('data:' + mime) === 0;
+        } catch (_) { return false; }
+      }
+
+      // Gray out unsupported menu items.
+      items().forEach(function (it) {
+        if (!supports(it.dataset.format)) {
+          it.disabled = true;
+          it.title = 'Not supported by this browser';
+          it.style.opacity = '0.5';
+        }
+      });
+
+      function open() {
+        menu.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+        var first = items().filter(function (i) { return !i.disabled; })[0];
+        if (first) first.focus();
+      }
+      function close(focusTrigger) {
+        menu.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+        if (focusTrigger) btn.focus();
+      }
+      function isOpen() { return menu.classList.contains('open'); }
 
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
-        menu.classList.toggle('open');
+        if (isOpen()) close(false);
+        else open();
       });
       document.addEventListener('click', function (e) {
-        if (!menu.contains(e.target) && e.target !== btn) menu.classList.remove('open');
+        if (!menu.contains(e.target) && e.target !== btn) close(false);
       });
 
-      menu.addEventListener('click', function (e) {
-        var target = e.target.closest('button[data-format]');
-        if (!target) return;
-        var format = target.dataset.format;
+      // Keyboard navigation inside the menu: ArrowUp/Down, Home/End, Esc, Tab.
+      menu.addEventListener('keydown', function (e) {
+        var available = items().filter(function (i) { return !i.disabled; });
+        var current = available.indexOf(document.activeElement);
+        switch (e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            if (available.length) available[(current + 1 + available.length) % available.length].focus();
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            if (available.length) available[(current - 1 + available.length) % available.length].focus();
+            break;
+          case 'Home':
+            e.preventDefault();
+            if (available[0]) available[0].focus();
+            break;
+          case 'End':
+            e.preventDefault();
+            if (available.length) available[available.length - 1].focus();
+            break;
+          case 'Escape':
+            e.preventDefault();
+            close(true);
+            break;
+          case 'Tab':
+            close(false);
+            break;
+        }
+      });
+
+      function runExport(format) {
         var base = diagramFilename();
-        menu.classList.remove('open');
-        (format === 'svg'
+        close(false);
+        return (format === 'svg'
           ? Promise.resolve(serializeSvg()).then(function (d) {
               download(new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' }), base + '.svg');
             })
@@ -705,8 +805,35 @@
           console.error(err);
           alert('Export failed: ' + (err && err.message ? err.message : format));
         });
+      }
+
+      menu.addEventListener('click', function (e) {
+        var target = e.target.closest('button[data-format]');
+        if (!target || target.disabled) return;
+        runExport(target.dataset.format);
       });
+
+      Archify.exportMenu = { open: open, close: close, isOpen: isOpen, run: runExport };
     })();
+
+    /* ============================================================
+       Global keyboard shortcuts
+         T -> toggle theme
+         E -> open export menu
+       Ignored when focus is inside an input/textarea/contenteditable.
+       ============================================================ */
+    document.addEventListener('keydown', function (e) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      var t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (e.key === 't' || e.key === 'T') {
+        e.preventDefault();
+        Archify.theme.toggle();
+      } else if (e.key === 'e' || e.key === 'E') {
+        e.preventDefault();
+        if (!Archify.exportMenu.isOpen()) Archify.exportMenu.open();
+      }
+    });
   </script>
 </body>
 </html>
