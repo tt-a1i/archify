@@ -2,6 +2,18 @@
 
 All notable changes are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.3.1] — 2026-04-15
+
+### Fixed
+- **Stale docs referencing the removed scale selector.** `SKILL.md` frontmatter version bumped `2.0` → `2.3`; the two "2x retina" bullets (lines 18, 233) rewritten to describe the current 4× native pipeline + clipboard copy. `README.md` cleaned up in four places: intro paragraph, "What's new" table (now includes v2.2 column), "Export menu" description (no more "scale selector"), and technical-details section (accurate 4× native-rasterization description, not `Image + 2x canvas`).
+- **Canvas-size clamp for large diagrams.** `rasterize()` now picks the largest integer scale in `{4,3,2,1}` whose `viewBox × scale × scale` fits under a 16 Mpx cap — enough to cover older iOS Safari's silent "blank canvas" ceiling. Default diagrams (viewBox ≈ 1000×680) stay at 4×; only unusually large viewBoxes (say, 1600×1200) step down to 3× automatically.
+- **`?openExport=1` race with font loading.** Replaced the 60 ms `setTimeout(open)` with `document.fonts.ready.then(open)` (+ double `requestAnimationFrame` to let layout settle). Slow connections no longer get a flashed / mispositioned menu on first paint.
+
+### Added
+- **Export menu visual grouping.** Two `<hr role="separator">` dividers split the menu into three sections: *Copy to clipboard*, *Download raster (PNG / JPEG / WebP)*, *Download vector (SVG)*. Makes scanning faster and disambiguates "Copy PNG" vs "Download PNG" at a glance.
+- **Renamed "Copy PNG" → "Copy to clipboard"** with `PNG` moved to the hint badge on the right. The destination ("clipboard") is now in the primary label instead of inferred from context.
+- **Print stylesheet polish.** Added `@page { size: landscape; margin: 1.5cm; }`, expanded container width in print, switched the summary-card grid to two columns in print so the third card doesn't orphan onto a second page, and added `page-break-inside: avoid` for older browsers that don't understand `break-inside`.
+
 ## [2.3.0] — 2026-04-15
 
 ### Fixed

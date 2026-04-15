@@ -201,8 +201,12 @@
 
     /* ==========================================================
        Print stylesheet — hide interactive controls, force light,
-       drop the grid so the diagram doesn't waste ink.
+       drop the grid so the diagram doesn't waste ink, use landscape
+       so wide diagrams fit, pack summary cards into 2 columns to
+       avoid an orphan card on a trailing page.
        ========================================================== */
+    @page { size: landscape; margin: 1.5cm; }
+
     @media print {
       :root, [data-theme="dark"], [data-theme="light"] {
         --bg: #ffffff;
@@ -215,11 +219,13 @@
         --mask: #ffffff;
       }
       body { background: #ffffff !important; padding: 0; }
+      .container { max-width: none; }
       .toolbar, .archify-toast { display: none !important; }
       .diagram-container, .card { box-shadow: none; border-color: #e2e8f0; }
+      .cards { grid-template-columns: 1fr 1fr; }
       /* Ensure elements break sensibly across pages */
-      .card { break-inside: avoid; }
-      .diagram-container { break-inside: avoid; }
+      .card { break-inside: avoid; page-break-inside: avoid; }
+      .diagram-container { break-inside: avoid; page-break-inside: avoid; }
       h1, .subtitle { color: #0f172a; }
     }
 
@@ -287,6 +293,12 @@
     .toolbar .export-menu .hint {
       color: var(--text-dim);
       font-size: 0.625rem;
+    }
+    .toolbar .export-menu hr {
+      border: 0;
+      border-top: 1px solid var(--toolbar-border);
+      margin: 0.25rem 0.375rem;
+      opacity: 0.5;
     }
 
     /* Toast — brief feedback for actions like "copied" */
@@ -377,10 +389,12 @@
         Export <span aria-hidden="true">&#9662;</span>
       </button>
       <div class="export-menu" id="export-menu" role="menu" aria-label="Export">
-        <button data-action="copy"  type="button" role="menuitem" tabindex="-1">Copy PNG <span class="hint">clipboard</span></button>
+        <button data-action="copy"  type="button" role="menuitem" tabindex="-1">Copy to clipboard <span class="hint">PNG</span></button>
+        <hr role="separator" aria-hidden="true">
         <button data-format="png"   type="button" role="menuitem" tabindex="-1">Download PNG</button>
         <button data-format="jpeg"  type="button" role="menuitem" tabindex="-1">Download JPEG</button>
         <button data-format="webp"  type="button" role="menuitem" tabindex="-1">Download WebP</button>
+        <hr role="separator" aria-hidden="true">
         <button data-format="svg"   type="button" role="menuitem" tabindex="-1">Download SVG <span class="hint">vector</span></button>
       </div>
     </div>
@@ -590,7 +604,7 @@
 
     <!-- Footer -->
     <p class="footer">
-      Try <kbd>T</kbd> to toggle theme &middot; <kbd>E</kbd> for Export &middot; raster output is always 4&times; native resolution for maximum sharpness
+      <kbd>T</kbd> toggle theme &middot; <kbd>E</kbd> open Export &middot; <kbd>Cmd</kbd>+<kbd>P</kbd> print &middot; raster output natively rendered at 4&times; source resolution
     </p>
   </div>
 
@@ -755,11 +769,29 @@
         setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
       }
 
+      // Conservative upper bound on total canvas pixels. Older Safari on iOS
+      // silently produces a blank canvas above ~16 Mpx; Chrome / Firefox /
+      // desktop Safari are far higher but start failing on memory-constrained
+      // devices. We pick the largest integer scale in {4,3,2,1} whose target
+      // pixel count fits under this cap.
+      var MAX_CANVAS_PIXELS = 16 * 1024 * 1024;
+
+      function pickSafeScale(vbW, vbH) {
+        for (var s = RASTER_SCALE; s >= 1; s--) {
+          if (vbW * s * vbH * s <= MAX_CANVAS_PIXELS) return s;
+        }
+        return 1;
+      }
+
       function rasterize(format) {
-        // Serialize at RASTER_SCALE — the SVG itself will be rasterized by
-        // the browser at the target resolution. drawImage then draws at
-        // natural size, so no upsampling blur.
-        var data = serializeSvg(RASTER_SCALE);
+        // Serialize at a safe scale (RASTER_SCALE=4 by default, reduced if the
+        // resulting canvas would exceed MAX_CANVAS_PIXELS). The SVG itself is
+        // rasterized at target resolution natively; drawImage draws at natural
+        // size — no upsampling blur.
+        var svg = document.querySelector('.diagram-container svg');
+        var vb = svg.viewBox.baseVal;
+        var scale = pickSafeScale(vb.width, vb.height);
+        var data = serializeSvg(scale);
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
 
@@ -940,9 +972,19 @@
       Archify.exportMenu = { open: open, close: close, isOpen: isOpen, run: runExport };
 
       // Auto-open on page load for demo/screenshot purposes: ?openExport=1
+      // Wait for fonts (so the menu doesn't flash before typography lands)
+      // and paint before opening. Fallback timeout for browsers without the
+      // Font Loading API.
       try {
         if (new URLSearchParams(window.location.search).get('openExport') === '1') {
-          setTimeout(open, 60);
+          var openWhenReady = function () {
+            requestAnimationFrame(function () { requestAnimationFrame(open); });
+          };
+          if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(openWhenReady);
+          } else {
+            setTimeout(openWhenReady, 200);
+          }
         }
       } catch (_) {}
     })();

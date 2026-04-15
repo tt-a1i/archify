@@ -13,7 +13,7 @@ Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-usin
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Claude](https://img.shields.io/badge/Claude-Skill-7C3AED?style=flat-square)
-![Version](https://img.shields.io/badge/version-2.3.0-0891b2?style=flat-square)
+![Version](https://img.shields.io/badge/version-2.3.1-0891b2?style=flat-square)
 
 ## Preview
 
@@ -35,19 +35,20 @@ Live example: [`examples/web-app.html`](examples/web-app.html) — open in a bro
 
 ## What's new
 
-Archify is based on [Cocoon-AI/architecture-diagram-generator](https://github.com/Cocoon-AI/architecture-diagram-generator) v1.0 (dark-only, HTML output). 2.0 rewrote the template around a themeable CSS-variable system and added a client-side export pipeline; 2.1 extends that with copy-to-clipboard and selectable export scale:
+Archify is based on [Cocoon-AI/architecture-diagram-generator](https://github.com/Cocoon-AI/architecture-diagram-generator) v1.0 (dark-only, HTML output). **2.0** rewrote the template around a themeable CSS-variable system and added a client-side export pipeline. **2.1** added copy-to-clipboard + keyboard nav. **2.2** added a print stylesheet + local-font fallback. **2.3** fixed a long-standing upsampling bug and made every raster export genuinely sharp at 4× source resolution (the 1× / 2× / 4× selector introduced in 2.1 was removed at the same time — it only encouraged picking a soft-looking scale).
 
-| Feature | v1.0 | 2.0 | 2.1 | 2.3 |
-|---|---|---|---|---|
-| Dark theme | Yes | Yes | Yes | Yes |
-| Light theme | — | Toggle | Toggle | Toggle + <kbd>T</kbd> shortcut |
-| PNG / JPEG / WebP download | manual screenshot | 2× upsampled | 1× / 2× / 4× selector | **4× natively rendered, no blur** |
-| SVG download | — | Vector, styles inlined | Same | Same |
-| Copy PNG to clipboard | — | — | Yes | Yes (always 4×) |
-| Keyboard shortcuts | — | — | <kbd>T</kbd> / <kbd>E</kbd> + menu nav | Same |
-| Accessibility | — | — | ARIA + focus-visible | Same |
-| Print stylesheet | — | — | — | Yes (from 2.2) |
-| Styling model | Inline `fill` / `stroke` | CSS custom properties + semantic classes | Same | Same |
+| Feature | v1.0 | 2.0 | 2.1 | 2.2 | 2.3 |
+|---|---|---|---|---|---|
+| Dark theme | Yes | Yes | Yes | Yes | Yes |
+| Light theme | — | Toggle | Toggle | Toggle | Toggle + <kbd>T</kbd> shortcut |
+| PNG / JPEG / WebP download | manual screenshot | 2× bitmap-upsampled | 1× / 2× / 4× selector (still upsampled) | same | **4× rasterized natively — no blur** |
+| SVG download | — | Vector, styles inlined | Same | Same | Same |
+| Copy PNG to clipboard | — | — | Yes | Same | Yes (always 4×) |
+| Keyboard shortcuts | — | — | <kbd>T</kbd> / <kbd>E</kbd> + menu nav | Same | Same |
+| Accessibility | — | — | ARIA + focus-visible | Same | Same |
+| Print stylesheet | — | — | — | Yes | Yes (+ landscape + 2-col cards) |
+| Local-font fallback on export | — | — | — | Yes | Yes |
+| Styling model | Inline `fill` / `stroke` | CSS custom properties + semantic classes | Same | Same | Same |
 
 ## Quick start
 
@@ -112,7 +113,7 @@ That's it. Claude generates an HTML file you can open in any browser. Iterate by
 Open the generated HTML in any browser. Top-right you'll see two buttons:
 
 - **Theme button** (Dark / Light) — one click flip, persisted across sessions. Shortcut: <kbd>T</kbd>.
-- **Export menu** — opens a dropdown with a scale selector and five actions. Shortcut: <kbd>E</kbd>.
+- **Export menu** — opens a dropdown with five actions (Copy PNG + download PNG / JPEG / WebP / SVG). Shortcut: <kbd>E</kbd>.
 
 ### Export menu
 
@@ -195,7 +196,7 @@ Each color has coordinated dark-mode and light-mode variants that switch togethe
 ## Technical details
 
 - **Styling:** CSS custom properties on `:root` + `[data-theme="light"]`; SVG elements reference semantic classes (`c-frontend`, `t-muted`, `a-emphasis`, etc.). Toggling `data-theme` on `<html>` re-themes the entire diagram including gradient, grid, arrows, and mask rects.
-- **Export pipeline:** The SVG is cloned, host `<style>` is inlined, current theme variables are resolved and written into a `:root` rule on the clone, then serialized via `XMLSerializer`. For raster formats it's rasterized via an `Image` + 2x `<canvas>` + `toBlob(mime)`. JPEG gets an explicit background fill since it doesn't support transparency.
+- **Export pipeline:** The SVG is cloned, host `<style>` is inlined, and current theme variables are resolved and written into a `:root` rule on the clone. For raster formats the clone's `width`/`height` are set to `4 × viewBox` so the browser rasterizes the vectors at target resolution natively; the canvas is sized to match and the image is drawn at natural size (no bitmap upsampling). `toBlob(mime)` then produces the file. JPEG gets an explicit background fill since it has no alpha. If the target resolution would exceed the browser's canvas limits, the pipeline automatically falls back to 3× or 2× so the export still succeeds.
 - **Self-contained output:** Single HTML file, Google Fonts link + inline SVG + ~3 KB of embedded JS. No build step, no JS framework, no server.
 - **Browser support:** Any modern browser (Chrome, Safari, Firefox, Edge). Needs `Image` + `canvas.toBlob` with `image/webp` support for WebP export.
 
