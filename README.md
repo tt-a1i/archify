@@ -221,12 +221,11 @@ Archify 2.x 贡献：
 
 ## 路线图
 
-短期和长期计划见 [ROADMAP.md](ROADMAP.md)：
+详见 [ROADMAP.md](ROADMAP.md)。
 
-- `?exportScale=N` URL 参数（恢复 1×/2× 轻量出图）
-- 色盲友好调色板（Okabe-Ito）
-- gzip+base64 分享链接
-- `diagram.yaml` 中间格式（撬动 diff / auto-layout / Mermaid 导入 / C4 分层）
+下一站是 **v3.0 — Mermaid-aware 架构**：把 Mermaid flowchart 当一等输入格式，Claude 继续主导布局判断，archify 负责渲染。简单说就是「把你 README 里的 mermaid 代码块粘进来 → 同样的图，但好看 10 倍」。中间夹一层极简 JSON IR (`diagram.json`)，撬动 git diff、theme/palette 重渲染、CI 架构 diff bot 等附带能力。
+
+> 经三轮独立评审，原 v2.4 / v2.5 计划（`?exportScale=N` URL 参数、色盲友好调色板、gzip+base64 分享链接、auto-layout）**全部砍掉**。每一项的理由记录在 ROADMAP 的「Not planned」段落里。
 
 ## License
 
