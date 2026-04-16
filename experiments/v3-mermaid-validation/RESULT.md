@@ -60,11 +60,17 @@
 ## Decision
 
 - [ ] **PASS** → Proceed with v3.0 Mermaid-aware architecture (P0 → P3)
-- [ ] **FAIL** → v3.0 collapses to "JSON IR for stable iteration only"; Mermaid input becomes a SKILL.md prompt trick, not a parser
+- [x] **FAIL** → v3.0 collapses to "JSON IR for stable iteration only"; Mermaid input becomes a SKILL.md prompt trick, not a parser
 
-### Notes
+### Notes (2026-04-16)
 
-_Write decision rationale here after evaluation._
+Owner self-evaluation result: **C (archify hand-placed) looks good; A and B both don't look good.** B is not meaningfully better than A — swapping CSS without changing layout does not bridge the aesthetic gap. The experiment confirms all three pre-experiment reviews: layout is the product, not CSS.
+
+**Consequence:**
+- P1 (Mermaid flowchart parser → IR with dagre layout) is **killed**.
+- P0 / P0.5 (JSON IR + render.js for coordinate stability) remain **viable** — they solve the coordinate-drift problem independent of Mermaid input.
+- Mermaid input becomes a **SKILL.md prompt-engineering trick**: user pastes Mermaid, Claude reads the structure and lays out from scratch in archify style. No dagre, no parser, no auto-layout. This is already how archify works today (user describes → Claude draws), just with Mermaid as the input dialect instead of natural language.
+- External 5-engineer panel is **skipped** — self-eval conclusively failed both criteria.
 
 ---
 

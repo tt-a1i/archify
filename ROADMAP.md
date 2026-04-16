@@ -1,16 +1,16 @@
 # Archify Roadmap
 
-After v2.3.1 ships, the only remaining planned work is a Mermaid-aware v3.0. The original v2.4 / v2.5 backlog (export-scale URL param, color-blind palette, gzip+base64 share links) was considered and dropped — see [Not planned](#not-planned) for the rationale on each.
+After v2.3.1 ships, the only remaining planned work is a slim v3.0 focused on coordinate stability. The original v2.4 / v2.5 backlog (export-scale URL param, color-blind palette, gzip+base64 share links) was considered and dropped — see [Not planned](#not-planned) for the rationale on each.
 
-This roadmap was rewritten on 2026-04-16 after three independent design reviews converged on the same architectural conclusions.
+This roadmap was rewritten on 2026-04-16 after three independent design reviews, and updated the same day after a visual-quality validation experiment conclusively failed (see `experiments/v3-mermaid-validation/RESULT.md`).
 
 ---
 
-## v3.0 — Mermaid-aware architecture
+## v3.0 — JSON IR for coordinate stability
 
 ### What
 
-Introduce a thin JSON intermediate representation (`diagram.json`) that sits between input formats (Mermaid flowchart, Claude-written IR) and the existing HTML template. **Mermaid is a first-class input format; auto-layout is explicitly out of scope.** Claude does the layout work, just like today — only now it can ingest a Mermaid diagram as a starting point instead of starting from a chat description.
+Introduce a thin JSON intermediate representation (`diagram.json`) that captures the SVG component graph (components + connections + positions) so Claude can make targeted edits without regenerating the entire HTML. **Mermaid is no longer a first-class parser target** — the validation experiment showed that auto-layout + archify CSS is not meaningfully better than stock Mermaid. Mermaid input is handled via SKILL.md prompt engineering: user pastes Mermaid, Claude reads the structure and lays out from scratch.
 
 ### Why this shape (and not the original "diagram.yaml" plan)
 
@@ -67,57 +67,37 @@ The "Claude in the loop" property is the moat, not a limitation. Auto-layout lib
 }
 ```
 
-**Deliberately out of v1:** security-group boundaries, region boundaries, summary cards, footer, palette toggle. These stay in the HTML template where they live today. The IR is only for the SVG component graph — the part that needs to round-trip through Mermaid.
+**Deliberately out of v1:** security-group boundaries, region boundaries, summary cards, footer, palette toggle. These stay in the HTML template where they live today. The IR is only for the SVG component graph.
 
 `schema_version: 1` is mandatory from day 1. Validated via JSON Schema. All fields except `schema_version` and the component `type` are optional with documented defaults.
 
-### Phasing
+### Phasing (post-experiment, revised)
 
 | Phase | Deliverable | Target |
 |---|---|---|
-| **Validate** | 5-Mermaid blind-rate experiment. Continue only if it passes. | (no version) |
+| ~~**Validate**~~ | ~~5-Mermaid blind-rate experiment~~ | **DONE — FAILED** (see below) |
 | **P0** | JSON IR + JSON Schema validator + `schema_version` enforcement | v3.0-alpha |
-| **P0.5** | `render.js` — pure-JS renderer takes IR → HTML using existing template. Coordinates required (no auto-layout in the renderer). | v3.0-alpha |
-| **P1** | Mermaid flowchart parser → IR (extracts nodes, edges, `subgraph` blocks, `:::class` hints; leaves `pos` empty) | v3.0-beta |
-| **P2** | Updated SKILL.md teaching Claude to read Mermaid-derived IR, fill positions with archify spatial reasoning, apply semantic classes | v3.0-beta |
-| **P3** | End-to-end pipeline + re-run validation experiment on real output | v3.0 |
-| **P4** | IR → Mermaid output (round-trip) + C4 DSL input adapter | v3.1+ |
+| **P0.5** | `render.js` — pure-JS renderer takes IR → HTML using existing template. Coordinates required (no auto-layout). | v3.0-alpha |
+| ~~**P1**~~ | ~~Mermaid flowchart parser → IR~~ | **KILLED** — experiment showed auto-layout + CSS is not enough |
+| **P2** | Updated SKILL.md teaching Claude to accept Mermaid as input and lay out from scratch (prompt engineering, no parser) | v3.0-beta |
+| ~~**P3**~~ | ~~End-to-end parser pipeline~~ | **KILLED** |
+| ~~**P4**~~ | ~~IR → Mermaid output + C4 input~~ | **KILLED** |
 
-### Validation experiment (mandatory before P0)
+### Validation experiment — FAILED (2026-04-16)
 
-The whole v3.0 bet rests on: "Mermaid input + Claude layout + archify CSS" looks noticeably better than stock Mermaid. If it doesn't, the architecture has no point.
+The experiment tested whether auto-layout (dagre) + archify CSS (version B) looked meaningfully better than stock Mermaid (version A). 5 real-world Mermaid flowcharts were rendered in three versions (A/B/C), randomized, and blind-rated by the project owner.
 
-**Procedure.** Pick 5 real Mermaid flowcharts:
+**Result:** Owner rated C (archify hand-placed) as good-looking; A and B as both not good-looking. B was not meaningfully better than A. Both pass criteria failed. Full data in `experiments/v3-mermaid-validation/RESULT.md`.
 
-1. Mermaid docs' canonical flowchart example
-2. Kubernetes deployment diagram from a popular README
-3. Microservices diagram from `awesome-architecture` or similar
-4. CI/CD pipeline (GitHub Actions / GitLab style)
-5. Simple 3-tier web app
+**Takeaway:** archify's aesthetic moat is in Claude's layout judgment (semantic grouping, deliberate spacing, asymmetric placement), not in its CSS. Any path that removes Claude from the layout loop (auto-layout, parser pipeline) strips the product of its differentiator.
 
-For each, produce three versions:
+### Done when (revised, post-experiment)
 
-- **(A)** Stock Mermaid via `mmdc` default theme
-- **(B)** Mermaid + archify-style `themeCSS` injection — mimics the v3.0 path *before* any Claude polish (proxies "auto-layout + nice CSS, no spatial reasoning")
-- **(C)** Hand-placed in archify HTML by Claude — proxies the v3.0 path *after* Claude polish
-
-Show all 15 screenshots, unlabeled and randomized, to 5 engineers outside the project. Ask:
-
-- Rate each diagram 1–10 for visual quality
-- For each diagram (groups of 3), pick which version you'd want in your README
-
-**Pass criterion:** B averages ≥ 7/10 **and** is rated closer to C than to A in at least 4 of the 5 diagrams.
-
-**Fail action:** Kill the Mermaid-input-as-headline path. v3.0 collapses to "Claude-native JSON IR for stable iteration" only; Mermaid input becomes a SKILL.md prompt-engineering trick instead of a real parser. P1/P2/P3/P4 all rescoped or dropped.
-
-### Done when
-
-- `render.js` reproduces today's `examples/web-app.html` byte-for-byte from a hand-written `diagram.json`.
-- The Mermaid flowchart parser successfully ingests the 5 validation diagrams.
-- Claude, given a positionless parsed IR, produces HTML that meets the success criterion above on at least 4 of 5 diagrams.
+- `render.js` reproduces today's `examples/web-app.html` from a hand-written `diagram.json`.
 - `schema_version: 1` is documented in `docs/diagram-json-schema.md` with the full JSON Schema published.
-- Round-trip works: `mermaid → IR → Claude (fills positions) → HTML` and `Claude → IR → render.js → HTML` are both supported flows.
-- README and SKILL.md updated to describe the new input pipeline.
+- Claude, given an existing `diagram.json`, can make targeted coordinate edits without unrelated drift.
+- SKILL.md updated to mention Mermaid as an accepted input dialect (prompt engineering, not parser).
+- README updated to describe the new stable-iteration workflow.
 
 ---
 
@@ -132,6 +112,7 @@ Each item below was considered and explicitly declined. Listed so issue submitte
 | **gzip+base64 share links** | Requires a long-running hosted decoder page, opens an XSS-via-share-link vector that's hard to fully close even with a separate hostname, and bumps URL length limits on realistic diagrams. The "send a single HTML file" workflow is already friction-free. |
 | **Auto-layout (dagre / elk-js)** | Independently flagged by all three v3.0 design reviews as the primary risk to archify's aesthetic. The hand-placed coordinate system *is* the product; automating it is automating away the differentiator. |
 | **YAML as the IR format** | LLM-generated YAML has a high "looks right, parses wrong" failure rate due to whitespace sensitivity. JSON is unambiguous, has native browser support, and is sufficient for `git diff` readability. |
+| **Mermaid flowchart parser + dagre auto-layout** | Validation experiment (2026-04-16) conclusively showed that auto-layout + archify CSS is not meaningfully better than stock Mermaid. Layout IS the product; removing Claude from the loop strips the differentiator. Mermaid input is instead handled via SKILL.md prompt engineering. |
 | **General-purpose graph IR adoption** (Cytoscape JSON / GraphViz DOT / GraphML / Mermaid AST / D2 / C4 DSL) | Each evaluated against archify's actual requirement: hybrid of graph topology + visual layout + non-graph metadata (cards, footer, region boundaries). None covers all three cleanly; the wrappers needed amount to inventing a custom schema anyway. |
 | **Zoom & pan UI** | Browser native pinch / Cmd+scroll already works on the SVG. Minimal gain for significant added code. |
 | **Annotation / overlay editor mode** | Pushes archify toward being an editor. Positioning is *generator + viewer*, not editor. |

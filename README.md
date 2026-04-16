@@ -223,9 +223,11 @@ Archify 2.x 贡献：
 
 详见 [ROADMAP.md](ROADMAP.md)。
 
-下一站是 **v3.0 — Mermaid-aware 架构**：把 Mermaid flowchart 当一等输入格式，Claude 继续主导布局判断，archify 负责渲染。简单说就是「把你 README 里的 mermaid 代码块粘进来 → 同样的图，但好看 10 倍」。中间夹一层极简 JSON IR (`diagram.json`)，撬动 git diff、theme/palette 重渲染、CI 架构 diff bot 等附带能力。
+下一站是 **v3.0 — JSON IR 稳定迭代**：引入极简 `diagram.json` 中间格式，让 Claude 做局部坐标修改时不会漂移无关组件，同时支持 `git diff` 友好和 theme/palette 不重渲染。
 
-> 经三轮独立评审，原 v2.4 / v2.5 计划（`?exportScale=N` URL 参数、色盲友好调色板、gzip+base64 分享链接、auto-layout）**全部砍掉**。每一项的理由记录在 ROADMAP 的「Not planned」段落里。
+> **关于 Mermaid 导入：** 经实验验证（auto-layout + archify CSS 并不比原生 Mermaid 好看多少），Mermaid 自动解析器路线已砍掉。archify 的美学核心是 Claude 的布局判断，不是 CSS。用户仍可贴 Mermaid 代码让 Claude 从零布局出 archify 风格图 —— 只是走 prompt 而不是走 parser。
+>
+> 原 v2.4 / v2.5 计划（`?exportScale=N`、色盲调色板、分享链接）也已砍掉。理由见 [ROADMAP「Not planned」段落](ROADMAP.md#not-planned)。
 
 ## License
 
