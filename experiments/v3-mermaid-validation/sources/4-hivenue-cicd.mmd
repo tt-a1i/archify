@@ -1,0 +1,11 @@
+flowchart TD
+A[Hivenue <br> Development <br> Environment] -->|Code <br> Commit| B[Develop <br> Branch]
+B -->|Build <br> Dev <br> Distribution| C{Unit Test - jest <br> Test Coverage - istanbul}
+C -->|Fail| D[CI Fail <br> Push Notification]
+C -->|Pass| E[CI Pass <br> Push Notification]
+E -->|Staging <br> DigitalOcean <br> Prod Distribution| F{e2e/UAT <br> Playwright Test}
+F -->|Fail| G[CD Fail <br> Push Notification]
+F -->|Pass| H{CD Pass <br> Push Notification}
+H -->|Continuous <br> Deployment <br> Prod Distribution| I[Production <br> Release]
+H -->|Approve <br> Deployment <br> Prod Distribution| I
+I --> J[Deployment Success <br> Push Notification]

@@ -1,0 +1,11 @@
+flowchart LR
+    subgraph Sources
+        A[Application stdout / stderr]
+        B[Control plane logs]
+        C[Audit records]
+    end
+    A --> N[Node log agent]
+    B --> N
+    C --> N
+    N --> L[Central log store]
+    L --> Q[Dashboards, alerting, SIEM]

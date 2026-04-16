@@ -1,0 +1,57 @@
+flowchart TD
+%% Application Layer
+  subgraph "Application Layer"
+    app["App & DI (fxmain)"]
+  end
+
+%% Server Layer
+  subgraph "Server Layer"
+    grpc["gRPC Server"]
+    gateway["HTTP Gateway"]
+    zinx["TCP/WebSocket/KCP Server (zinx)"]
+  end
+
+%% Middleware Layer
+  subgraph "Middleware Layer"
+    auth["Auth Middleware"]
+    stdmw["Other Middlewares (Logging,RateLimit,Recovery,OTel)"]
+  end
+
+%% Storage & Message Queue Layer
+  subgraph "Storage & Message Queue Layer"
+    gorm["Relational DB (GORM)"]
+    mongo["NoSQL DB (MongoDB)"]
+    cache["Cache (Redis & Dragonfly)"]
+    nats["Message Queue (NATS)"]
+  end
+
+%% Integration Layer
+  subgraph "Integration Layer"
+    iap["IAP Integration"]
+    agones["Agones Integration"]
+  end
+
+  app -->|"initializes"| grpc
+  app -->|"initializes"| gateway
+  app -->|"initializes"| zinx
+
+  grpc -->|"processed by"| auth
+  grpc -->|"processed by"| stdmw
+  gateway -->|"processed by"| auth
+  gateway -->|"processed by"| stdmw
+  zinx -->|"processed by"| auth
+  zinx -->|"processed by"| stdmw
+
+  auth -->|"accesses"| gorm
+  auth -->|"accesses"| mongo
+  auth -->|"accesses"| cache
+  auth -->|"accesses"| nats
+  stdmw -->|"accesses"| gorm
+  stdmw -->|"accesses"| mongo
+  stdmw -->|"accesses"| cache
+  stdmw -->|"accesses"| nats
+
+  auth -->|"integrates"| iap
+  auth -->|"integrates"| agones
+  stdmw -->|"integrates"| iap
+  stdmw -->|"integrates"| agones

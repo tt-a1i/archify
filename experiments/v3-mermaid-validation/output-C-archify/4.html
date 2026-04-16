@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<title>Hivenue CI/CD — Archify</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#020617; --grid:#1e293b; --text:#fff; --text-muted:#94a3b8; --text-dim:#475569;
+  --panel:rgba(15,23,42,0.5); --panel-border:#1e293b;
+  --arrow:#64748b; --arrow-emphasis:#34d399; --mask:#0f172a;
+  --frontend-fill:rgba(8,51,68,0.4); --frontend-stroke:#22d3ee;
+  --backend-fill:rgba(6,78,59,0.4); --backend-stroke:#34d399;
+  --database-fill:rgba(76,29,149,0.4); --database-stroke:#a78bfa;
+  --cloud-fill:rgba(120,53,15,0.3); --cloud-stroke:#fbbf24;
+  --security-fill:rgba(136,19,55,0.4); --security-stroke:#fb7185;
+  --messagebus-fill:rgba(251,146,60,0.3); --messagebus-stroke:#fb923c;
+  --external-fill:rgba(30,41,59,0.5); --external-stroke:#94a3b8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;background:var(--bg);min-height:100vh;padding:2rem;color:var(--text)}
+.container{max-width:1400px;margin:0 auto}
+.header{margin-bottom:2rem}
+.header-row{display:flex;align-items:center;gap:1rem;margin-bottom:.5rem}
+.pulse-dot{width:12px;height:12px;background:var(--cloud-stroke);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+h1{font-size:1.5rem;font-weight:700;letter-spacing:-.025em}
+.subtitle{color:var(--text-muted);font-size:.875rem;margin-left:1.75rem}
+.diagram-container{background:var(--panel);border-radius:1rem;border:1px solid var(--panel-border);padding:1.5rem;overflow-x:auto}
+svg{width:100%;display:block}
+.c-grid{stroke:var(--grid);fill:none}
+.c-mask{fill:var(--mask);stroke:none}
+.c-frontend{fill:var(--frontend-fill);stroke:var(--frontend-stroke)}
+.c-backend{fill:var(--backend-fill);stroke:var(--backend-stroke)}
+.c-database{fill:var(--database-fill);stroke:var(--database-stroke)}
+.c-cloud{fill:var(--cloud-fill);stroke:var(--cloud-stroke)}
+.c-security{fill:var(--security-fill);stroke:var(--security-stroke)}
+.c-messagebus{fill:var(--messagebus-fill);stroke:var(--messagebus-stroke)}
+.c-external{fill:var(--external-fill);stroke:var(--external-stroke)}
+.t-primary{fill:var(--text)}.t-muted{fill:var(--text-muted)}.t-dim{fill:var(--text-dim)}
+.t-frontend{fill:var(--frontend-stroke)}.t-backend{fill:var(--backend-stroke)}
+.t-database{fill:var(--database-stroke)}.t-cloud{fill:var(--cloud-stroke)}
+.t-security{fill:var(--security-stroke)}.t-messagebus{fill:var(--messagebus-stroke)}
+.t-external{fill:var(--external-stroke)}
+.a-default{stroke:var(--arrow);fill:none}.a-emphasis{stroke:var(--arrow-emphasis);fill:none}
+.a-security{stroke:var(--security-stroke);fill:none;stroke-dasharray:5,5}
+.m-default{fill:var(--arrow)}.m-emphasis{fill:var(--arrow-emphasis)}
+.m-security{fill:var(--security-stroke)}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-row"><div class="pulse-dot"></div><h1>Hivenue CI/CD Pipeline</h1></div>
+    <p class="subtitle">Commit → tests → staging → e2e → production, with push-notification gates</p>
+  </div>
+  <div class="diagram-container">
+    <svg viewBox="0 0 1300 920" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="m-default"/></marker>
+        <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="m-emphasis"/></marker>
+        <marker id="arrowhead-security" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="m-security"/></marker>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/></pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)"/>
+
+      <!-- A: Dev Environment -->
+      <rect x="500" y="40" width="220" height="74" rx="6" class="c-mask"/>
+      <rect x="500" y="40" width="220" height="74" rx="6" class="c-frontend" stroke-width="1.5"/>
+      <text x="610" y="68" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Hivenue Dev</text>
+      <text x="610" y="86" class="t-muted" font-size="9" text-anchor="middle">development environment</text>
+      <text x="610" y="102" class="t-frontend" font-size="8" text-anchor="middle">developer machine</text>
+
+      <!-- B: Develop Branch -->
+      <rect x="500" y="180" width="220" height="64" rx="6" class="c-mask"/>
+      <rect x="500" y="180" width="220" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+      <text x="610" y="208" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">develop branch</text>
+      <text x="610" y="226" class="t-muted" font-size="9" text-anchor="middle">git push origin develop</text>
+
+      <!-- C: Unit Test (decision) -->
+      <polygon points="610,300 800,365 610,430 420,365" class="c-mask"/>
+      <polygon points="610,300 800,365 610,430 420,365" class="c-backend" stroke-width="1.5"/>
+      <text x="610" y="358" class="t-primary" font-size="12" font-weight="600" text-anchor="middle">Unit Test</text>
+      <text x="610" y="375" class="t-muted" font-size="9" text-anchor="middle">jest · istanbul</text>
+
+      <!-- D: CI Fail -->
+      <rect x="100" y="335" width="200" height="60" rx="6" class="c-mask"/>
+      <rect x="100" y="335" width="200" height="60" rx="6" class="c-security" stroke-width="1.5"/>
+      <text x="200" y="362" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">CI Fail</text>
+      <text x="200" y="378" class="t-muted" font-size="9" text-anchor="middle">push notification</text>
+
+      <!-- E: CI Pass -->
+      <rect x="500" y="490" width="220" height="60" rx="6" class="c-mask"/>
+      <rect x="500" y="490" width="220" height="60" rx="6" class="c-backend" stroke-width="1.5"/>
+      <text x="610" y="517" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">CI Pass</text>
+      <text x="610" y="533" class="t-muted" font-size="9" text-anchor="middle">push notification</text>
+
+      <!-- F: e2e/UAT (decision) -->
+      <polygon points="610,610 800,675 610,740 420,675" class="c-mask"/>
+      <polygon points="610,610 800,675 610,740 420,675" class="c-backend" stroke-width="1.5"/>
+      <text x="610" y="668" class="t-primary" font-size="12" font-weight="600" text-anchor="middle">e2e / UAT</text>
+      <text x="610" y="685" class="t-muted" font-size="9" text-anchor="middle">Playwright</text>
+
+      <!-- G: CD Fail -->
+      <rect x="100" y="645" width="200" height="60" rx="6" class="c-mask"/>
+      <rect x="100" y="645" width="200" height="60" rx="6" class="c-security" stroke-width="1.5"/>
+      <text x="200" y="672" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">CD Fail</text>
+      <text x="200" y="688" class="t-muted" font-size="9" text-anchor="middle">push notification</text>
+
+      <!-- H: CD Pass (decision) -->
+      <polygon points="970,610 1150,675 970,740 790,675" class="c-mask"/>
+      <polygon points="970,610 1150,675 970,740 790,675" class="c-cloud" stroke-width="1.5"/>
+      <text x="970" y="670" class="t-primary" font-size="12" font-weight="600" text-anchor="middle">CD Pass</text>
+      <text x="970" y="687" class="t-muted" font-size="9" text-anchor="middle">deployment gate</text>
+
+      <!-- I: Production Release -->
+      <rect x="860" y="800" width="220" height="64" rx="6" class="c-mask"/>
+      <rect x="860" y="800" width="220" height="64" rx="6" class="c-cloud" stroke-width="1.5"/>
+      <text x="970" y="828" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Production Release</text>
+      <text x="970" y="846" class="t-muted" font-size="9" text-anchor="middle">DigitalOcean</text>
+
+      <!-- J: Deployment Success -->
+      <rect x="500" y="800" width="220" height="64" rx="6" class="c-mask"/>
+      <rect x="500" y="800" width="220" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+      <text x="610" y="828" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Deployment OK</text>
+      <text x="610" y="846" class="t-muted" font-size="9" text-anchor="middle">push notification</text>
+
+      <!-- arrows -->
+      <line x1="610" y1="114" x2="610" y2="178" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <text x="625" y="150" class="t-muted" font-size="9">code commit</text>
+
+      <line x1="610" y1="244" x2="610" y2="298" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <text x="625" y="275" class="t-muted" font-size="9">build</text>
+
+      <!-- C -> D (Fail) -->
+      <path d="M 420 365 Q 360 365 320 365" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
+      <text x="370" y="355" class="t-security" font-size="10" font-weight="600">Fail</text>
+
+      <!-- C -> E (Pass) -->
+      <path d="M 610 430 L 610 488" class="a-emphasis" stroke-width="1.5" marker-end="url(#arrowhead-emphasis)"/>
+      <text x="625" y="465" class="t-backend" font-size="10" font-weight="600">Pass</text>
+
+      <!-- E -> F -->
+      <line x1="610" y1="550" x2="610" y2="608" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <text x="625" y="582" class="t-muted" font-size="9">staging</text>
+
+      <!-- F -> G (Fail) -->
+      <path d="M 420 675 Q 360 675 320 675" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
+      <text x="370" y="665" class="t-security" font-size="10" font-weight="600">Fail</text>
+
+      <!-- F -> H (Pass) -->
+      <path d="M 800 675 L 788 675" class="a-emphasis" stroke-width="1.5" marker-end="url(#arrowhead-emphasis)"/>
+      <text x="795" y="665" class="t-backend" font-size="10" font-weight="600" text-anchor="end">Pass</text>
+
+      <!-- H -> I (continuous + approve, two paths bundled visually) -->
+      <path d="M 970 740 L 970 798" class="a-emphasis" stroke-width="2" marker-end="url(#arrowhead-emphasis)"/>
+      <text x="985" y="775" class="t-backend" font-size="9">deploy</text>
+
+      <!-- I -> J -->
+      <line x1="858" y1="832" x2="722" y2="832" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <text x="790" y="822" class="t-muted" font-size="9" text-anchor="middle">notify</text>
+    </svg>
+  </div>
+</div>
+</body>
+</html>

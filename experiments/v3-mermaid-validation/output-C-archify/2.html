@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<title>K8s Log Pipeline — Archify</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#020617; --grid:#1e293b; --text:#fff; --text-muted:#94a3b8; --text-dim:#475569;
+  --panel:rgba(15,23,42,0.5); --panel-border:#1e293b;
+  --arrow:#64748b; --arrow-emphasis:#34d399; --mask:#0f172a;
+  --frontend-fill:rgba(8,51,68,0.4); --frontend-stroke:#22d3ee;
+  --backend-fill:rgba(6,78,59,0.4); --backend-stroke:#34d399;
+  --database-fill:rgba(76,29,149,0.4); --database-stroke:#a78bfa;
+  --cloud-fill:rgba(120,53,15,0.3); --cloud-stroke:#fbbf24;
+  --security-fill:rgba(136,19,55,0.4); --security-stroke:#fb7185;
+  --messagebus-fill:rgba(251,146,60,0.3); --messagebus-stroke:#fb923c;
+  --external-fill:rgba(30,41,59,0.5); --external-stroke:#94a3b8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;background:var(--bg);min-height:100vh;padding:2rem;color:var(--text)}
+.container{max-width:1400px;margin:0 auto}
+.header{margin-bottom:2rem}
+.header-row{display:flex;align-items:center;gap:1rem;margin-bottom:.5rem}
+.pulse-dot{width:12px;height:12px;background:var(--frontend-stroke);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+h1{font-size:1.5rem;font-weight:700;letter-spacing:-.025em}
+.subtitle{color:var(--text-muted);font-size:.875rem;margin-left:1.75rem}
+.diagram-container{background:var(--panel);border-radius:1rem;border:1px solid var(--panel-border);padding:1.5rem;overflow-x:auto}
+svg{width:100%;display:block}
+.c-grid{stroke:var(--grid);fill:none}
+.c-mask{fill:var(--mask);stroke:none}
+.c-frontend{fill:var(--frontend-fill);stroke:var(--frontend-stroke)}
+.c-backend{fill:var(--backend-fill);stroke:var(--backend-stroke)}
+.c-database{fill:var(--database-fill);stroke:var(--database-stroke)}
+.c-cloud{fill:var(--cloud-fill);stroke:var(--cloud-stroke)}
+.c-security{fill:var(--security-fill);stroke:var(--security-stroke)}
+.c-messagebus{fill:var(--messagebus-fill);stroke:var(--messagebus-stroke)}
+.c-external{fill:var(--external-fill);stroke:var(--external-stroke)}
+.t-primary{fill:var(--text)}.t-muted{fill:var(--text-muted)}.t-dim{fill:var(--text-dim)}
+.t-frontend{fill:var(--frontend-stroke)}.t-backend{fill:var(--backend-stroke)}
+.t-database{fill:var(--database-stroke)}.t-cloud{fill:var(--cloud-stroke)}
+.t-security{fill:var(--security-stroke)}.t-messagebus{fill:var(--messagebus-stroke)}
+.t-external{fill:var(--external-stroke)}
+.a-default{stroke:var(--arrow);fill:none}.a-emphasis{stroke:var(--arrow-emphasis);fill:none}
+.a-security{stroke:var(--security-stroke);fill:none;stroke-dasharray:5,5}
+.m-default{fill:var(--arrow)}.m-emphasis{fill:var(--arrow-emphasis)}
+.m-security{fill:var(--security-stroke)}
+.c-region{fill:rgba(251,191,36,0.05);stroke:var(--cloud-stroke);stroke-dasharray:8,4}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-row"><div class="pulse-dot"></div><h1>Kubernetes Log Pipeline</h1></div>
+    <p class="subtitle">Cluster log aggregation through node agent into central store</p>
+  </div>
+  <div class="diagram-container">
+    <svg viewBox="0 0 1300 540" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="m-default"/></marker>
+        <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="m-emphasis"/></marker>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/></pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)"/>
+
+      <!-- Sources cluster boundary -->
+      <rect x="40" y="60" width="260" height="430" rx="12" class="c-region" stroke-width="1"/>
+      <text x="52" y="84" class="t-cloud" font-size="11" font-weight="600">Sources</text>
+
+      <!-- Source 1: stdout/stderr -->
+      <rect x="60" y="110" width="220" height="64" rx="6" class="c-mask"/>
+      <rect x="60" y="110" width="220" height="64" rx="6" class="c-external" stroke-width="1.5"/>
+      <text x="170" y="138" class="t-primary" font-size="12" font-weight="600" text-anchor="middle">Application</text>
+      <text x="170" y="156" class="t-muted" font-size="9" text-anchor="middle">stdout / stderr</text>
+
+      <!-- Source 2: Control plane logs -->
+      <rect x="60" y="240" width="220" height="64" rx="6" class="c-mask"/>
+      <rect x="60" y="240" width="220" height="64" rx="6" class="c-external" stroke-width="1.5"/>
+      <text x="170" y="268" class="t-primary" font-size="12" font-weight="600" text-anchor="middle">Control Plane</text>
+      <text x="170" y="286" class="t-muted" font-size="9" text-anchor="middle">component logs</text>
+
+      <!-- Source 3: Audit records -->
+      <rect x="60" y="370" width="220" height="64" rx="6" class="c-mask"/>
+      <rect x="60" y="370" width="220" height="64" rx="6" class="c-security" stroke-width="1.5"/>
+      <text x="170" y="398" class="t-primary" font-size="12" font-weight="600" text-anchor="middle">Audit Records</text>
+      <text x="170" y="416" class="t-muted" font-size="9" text-anchor="middle">k8s API audit</text>
+
+      <!-- Node log agent -->
+      <rect x="450" y="240" width="200" height="64" rx="6" class="c-mask"/>
+      <rect x="450" y="240" width="200" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+      <text x="550" y="268" class="t-primary" font-size="12" font-weight="600" text-anchor="middle">Node Log Agent</text>
+      <text x="550" y="286" class="t-muted" font-size="9" text-anchor="middle">DaemonSet · per-node</text>
+
+      <!-- Central log store -->
+      <rect x="800" y="240" width="200" height="64" rx="6" class="c-mask"/>
+      <rect x="800" y="240" width="200" height="64" rx="6" class="c-database" stroke-width="1.5"/>
+      <text x="900" y="268" class="t-primary" font-size="12" font-weight="600" text-anchor="middle">Central Log Store</text>
+      <text x="900" y="286" class="t-muted" font-size="9" text-anchor="middle">Loki / ES / etc.</text>
+
+      <!-- Dashboards / SIEM -->
+      <rect x="1110" y="170" width="170" height="64" rx="6" class="c-mask"/>
+      <rect x="1110" y="170" width="170" height="64" rx="6" class="c-frontend" stroke-width="1.5"/>
+      <text x="1195" y="198" class="t-primary" font-size="12" font-weight="600" text-anchor="middle">Dashboards</text>
+      <text x="1195" y="216" class="t-muted" font-size="9" text-anchor="middle">Grafana</text>
+
+      <rect x="1110" y="260" width="170" height="64" rx="6" class="c-mask"/>
+      <rect x="1110" y="260" width="170" height="64" rx="6" class="c-cloud" stroke-width="1.5"/>
+      <text x="1195" y="288" class="t-primary" font-size="12" font-weight="600" text-anchor="middle">Alerting</text>
+      <text x="1195" y="306" class="t-muted" font-size="9" text-anchor="middle">PagerDuty</text>
+
+      <rect x="1110" y="350" width="170" height="64" rx="6" class="c-mask"/>
+      <rect x="1110" y="350" width="170" height="64" rx="6" class="c-security" stroke-width="1.5"/>
+      <text x="1195" y="378" class="t-primary" font-size="12" font-weight="600" text-anchor="middle">SIEM</text>
+      <text x="1195" y="396" class="t-muted" font-size="9" text-anchor="middle">audit + security</text>
+
+      <!-- Arrows: 3 sources -> agent -->
+      <path d="M 280 142 Q 360 142 380 200 L 446 252" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <line x1="280" y1="272" x2="446" y2="272" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <path d="M 280 402 Q 360 402 380 340 L 446 295" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+      <!-- agent -> store -->
+      <line x1="650" y1="272" x2="796" y2="272" class="a-emphasis" stroke-width="2" marker-end="url(#arrowhead-emphasis)"/>
+      <text x="723" y="262" class="t-backend" font-size="10" text-anchor="middle">push</text>
+
+      <!-- store -> 3 consumers -->
+      <path d="M 1000 268 Q 1055 268 1080 220 L 1106 200" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <line x1="1000" y1="290" x2="1106" y2="290" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <path d="M 1000 295 Q 1055 295 1080 340 L 1106 380" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+    </svg>
+  </div>
+</div>
+</body>
+</html>

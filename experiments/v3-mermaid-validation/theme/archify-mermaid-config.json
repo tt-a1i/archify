@@ -1,0 +1,36 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "background": "#020617",
+    "primaryColor": "rgba(30, 41, 59, 0.6)",
+    "primaryTextColor": "#f1f5f9",
+    "primaryBorderColor": "#94a3b8",
+    "lineColor": "#64748b",
+    "secondaryColor": "rgba(30, 41, 59, 0.6)",
+    "tertiaryColor": "rgba(30, 41, 59, 0.6)",
+    "mainBkg": "rgba(30, 41, 59, 0.6)",
+    "secondBkg": "rgba(30, 41, 59, 0.6)",
+    "tertiaryBkg": "rgba(30, 41, 59, 0.6)",
+    "nodeBorder": "#94a3b8",
+    "clusterBkg": "rgba(15, 23, 42, 0.4)",
+    "clusterBorder": "#334155",
+    "edgeLabelBackground": "#020617",
+    "labelBoxBkgColor": "rgba(15, 23, 42, 0.9)",
+    "labelBoxBorderColor": "#334155",
+    "labelTextColor": "#cbd5e1",
+    "fontFamily": "'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace",
+    "fontSize": "14px",
+    "titleColor": "#f1f5f9",
+    "textColor": "#e2e8f0",
+    "errorBkgColor": "rgba(136, 19, 55, 0.4)",
+    "errorTextColor": "#fb7185"
+  },
+  "themeCSS": ".node rect, .node polygon, .node circle, .node ellipse, .node path { stroke-width: 1.5px !important; rx: 6 !important; ry: 6 !important; } .cluster rect { stroke-width: 1px !important; stroke-dasharray: 4,4 !important; rx: 8 !important; ry: 8 !important; } .edgePath .path { stroke-width: 1.5px !important; } .edgeLabel { font-size: 11px !important; } .nodeLabel { font-weight: 500 !important; }",
+  "flowchart": {
+    "htmlLabels": true,
+    "curve": "basis",
+    "padding": 20,
+    "nodeSpacing": 50,
+    "rankSpacing": 60
+  }
+}
