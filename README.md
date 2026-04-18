@@ -8,12 +8,13 @@ Archify 是一个 [Claude Skill](https://support.claude.com/en/articles/12512180
 - **内置主题切换** —— 深色 / 浅色一键切，浏览器记住偏好
 - **一键复制到剪贴板** —— 直接贴到 Slack、飞书、微信、Notion、GitHub issue
 - **导出图片超清晰** —— PNG / JPEG / WebP 全部由浏览器在 4× 源分辨率下**原生光栅化**（不是位图放大，没有糊），或导出 SVG 做真矢量
+- **SVG 自动跟系统深浅色** —— 导出的 SVG 内嵌两套变量 + `@media (prefers-color-scheme)`，贴到 GitHub README 里，读者切深浅色图跟着切（不用两张 PNG + `<picture>` 包起来）
 - **单文件 HTML** —— 零依赖，发一个文件就能分享
 - **聊天迭代** —— "把 Redis 挪到左边"、"鉴权服务换成玫红"、"加个 Kafka"
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Claude](https://img.shields.io/badge/Claude-Skill-7C3AED?style=flat-square)
-![Version](https://img.shields.io/badge/version-2.3.1-0891b2?style=flat-square)
+![Version](https://img.shields.io/badge/version-2.4.0-0891b2?style=flat-square)
 
 <p align="right"><a href="./README_EN.md">English</a></p>
 
@@ -37,20 +38,20 @@ Export 菜单 —— 复制到剪贴板 + 四种格式下载：
 
 ## 版本演进
 
-Archify 基于 [Cocoon-AI/architecture-diagram-generator](https://github.com/Cocoon-AI/architecture-diagram-generator) v1.0（只有深色主题的 HTML 输出）fork 重写。**2.0** 把模板重构成 CSS 变量驱动的可主题化系统，加入客户端导出流水线。**2.1** 加入剪贴板复制 + 键盘导航。**2.2** 加入打印样式 + 本地字体回退。**2.3** 修了一个存在已久的位图升采样 bug，所有光栅导出改为 4× 原生渲染（同时移除了 v2.1 引入的 1×/2×/4× 选择器 —— 那个选择器只是在诱导用户选出更糊的图）。
+Archify 基于 [Cocoon-AI/architecture-diagram-generator](https://github.com/Cocoon-AI/architecture-diagram-generator) v1.0（只有深色主题的 HTML 输出）fork 重写。**2.0** 把模板重构成 CSS 变量驱动的可主题化系统，加入客户端导出流水线。**2.1** 加入剪贴板复制 + 键盘导航。**2.2** 加入打印样式 + 本地字体回退。**2.3** 修了一个存在已久的位图升采样 bug，所有光栅导出改为 4× 原生渲染（同时移除了 v2.1 引入的 1×/2×/4× 选择器 —— 那个选择器只是在诱导用户选出更糊的图）。**2.4** SVG 导出升级成双主题自持版 —— 同一个 `.svg` 文件贴在 GitHub README 里，读者切深浅色图会自己跟着切。
 
-| 能力 | v1.0 | 2.0 | 2.1 | 2.2 | 2.3 |
-|---|---|---|---|---|---|
-| 深色主题 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| 浅色主题 | — | 切换 | 切换 | 切换 | 切换 + <kbd>T</kbd> 快捷键 |
-| PNG / JPEG / WebP 下载 | 手动截图 | 2× 位图放大 | 1×/2×/4× 选择器（仍是放大）| 同 | **4× 原生光栅化，不糊** |
-| SVG 下载 | — | 矢量 + 内联样式 | 同 | 同 | 同 |
-| 复制 PNG 到剪贴板 | — | — | ✓ | 同 | 同（始终 4×）|
-| 键盘快捷键 | — | — | <kbd>T</kbd>/<kbd>E</kbd> + 菜单导航 | 同 | 同 |
-| 可访问性 | — | — | ARIA + focus-visible | 同 | 同 |
-| 打印样式表 | — | — | — | ✓ | ✓（+ 横向 + 2 列卡片）|
-| 导出时本地字体回退 | — | — | — | ✓ | ✓ |
-| 样式模型 | 内联 `fill` / `stroke` | CSS 变量 + 语义 class | 同 | 同 | 同 |
+| 能力 | v1.0 | 2.0 | 2.1 | 2.2 | 2.3 | 2.4 |
+|---|---|---|---|---|---|---|
+| 深色主题 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 浅色主题 | — | 切换 | 切换 | 切换 | 切换 + <kbd>T</kbd> 快捷键 | 同 |
+| PNG / JPEG / WebP 下载 | 手动截图 | 2× 位图放大 | 1×/2×/4× 选择器（仍是放大）| 同 | **4× 原生光栅化，不糊** | 同 |
+| SVG 下载 | — | 矢量 + 内联样式（单主题）| 同 | 同 | 同 | **双主题自持**（`@media prefers-color-scheme`）|
+| 复制 PNG 到剪贴板 | — | — | ✓ | 同 | 同（始终 4×）| 同 |
+| 键盘快捷键 | — | — | <kbd>T</kbd>/<kbd>E</kbd> + 菜单导航 | 同 | 同 | 同 |
+| 可访问性 | — | — | ARIA + focus-visible | 同 | 同 | 同 |
+| 打印样式表 | — | — | — | ✓ | ✓（+ 横向 + 2 列卡片）| 同 |
+| 导出时本地字体回退 | — | — | — | ✓ | ✓ | 同 |
+| 样式模型 | 内联 `fill` / `stroke` | CSS 变量 + 语义 class | 同 | 同 | 同 | 同 |
 
 ## 快速上手
 
@@ -122,7 +123,7 @@ unzip archify.zip -d ./.claude/skills/
 |---|---|
 | **Copy to clipboard** | 当前图以 PNG 格式直接进系统剪贴板，粘贴到 Slack / Notion / 飞书 / GitHub / Figma |
 | **Download PNG / JPEG / WebP** | 保存为光栅图。JPEG / WebP 会用当前主题的背景色填充（无透明）；PNG 保留透明度 |
-| **Download SVG** | 矢量导出，所有样式内联。可以在 Figma / Illustrator 里继续编辑。无损缩放 |
+| **Download SVG** | 矢量导出，所有样式内联，**双主题自持**。内嵌了 dark + light 两套 CSS 变量 + `@media (prefers-color-scheme)` 规则 —— 同一个 `.svg` 贴到 GitHub README / 博客，读者切深浅色图自己跟着切。可以在 Figma / Illustrator 里继续编辑。无损缩放 |
 
 所有光栅导出（复制 + PNG/JPEG/WebP）都由浏览器在 **4× 源分辨率**下原生光栅化 —— 序列化后的 SVG 被设为 `4 × viewBox` 大小，浏览器直接在该分辨率下光栅化矢量，canvas 按自然大小绘制（没有位图升采样）。结果是视网膜屏、演示幻灯、打印输出都真正清晰。
 
@@ -213,6 +214,7 @@ Archify 2.x 贡献：
 - 主题切换 + `localStorage` 持久化 + `prefers-color-scheme` 默认
 - 内置 PNG / JPEG / WebP / SVG 导出菜单 + 复制到剪贴板
 - 4× 原生光栅化（修复升采样导致的模糊）
+- SVG 导出双主题自持（单文件跟随宿主 `prefers-color-scheme`）
 - 键盘导航 + 可访问性语义
 - 打印样式表 + 本地字体回退
 - 更新后的 `SKILL.md` 引导 Claude 使用 class 化、可主题化的画图方式

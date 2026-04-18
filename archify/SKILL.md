@@ -3,7 +3,7 @@ name: archify
 description: Create professional architecture diagrams as standalone HTML files with SVG graphics, a built-in dark/light theme toggle, and one-click export to PNG / JPEG / WebP / SVG. Use when the user asks for system architecture diagrams, infrastructure diagrams, cloud architecture visualizations, security diagrams, network topology diagrams, or any technical diagram showing system components and their relationships.
 license: MIT
 metadata:
-  version: "2.3"
+  version: "2.4"
   author: tt-a1i
   based_on: Cocoon-AI/architecture-diagram-generator (MIT, v1.0)
 ---
@@ -15,7 +15,7 @@ Create professional technical architecture diagrams as self-contained HTML files
 Every diagram this skill produces ships with:
 
 - A **Dark / Light theme toggle** (top-right, persists in `localStorage`, respects `prefers-color-scheme` on first visit).
-- An **Export menu** with **Copy PNG to clipboard** plus downloads for **PNG / JPEG / WebP** (all rasterized natively at 4× source resolution for maximum sharpness) and **SVG** (vector, styles inlined) — rendered entirely in-browser, no server.
+- An **Export menu** with **Copy PNG to clipboard** plus downloads for **PNG / JPEG / WebP** (all rasterized natively at 4× source resolution for maximum sharpness) and **SVG** (vector, styles inlined). The SVG download is **dual-theme self-contained**: it ships with both dark and light variable sets plus a `@media (prefers-color-scheme)` rule, so embedding it in a GitHub README (or any `<img>` host that exposes a color scheme) makes it follow the reader's dark/light preference automatically. All rendering happens in-browser, no server.
 - A **CSS-variable-driven color system** so both themes remain visually consistent with the same SVG markup.
 
 ## The Cardinal Rule: Use CSS Classes, Not Inline Colors
@@ -230,4 +230,4 @@ Produce a single self-contained `.html` file with:
 - Inline SVG (no external images)
 - Small amount of embedded JS (theme toggle + export) — keep as-is from template
 
-The file should render correctly when opened directly in any modern browser. The **Export** menu should cleanly copy PNG to the clipboard, download PNG / JPEG / WebP (all at 4× source resolution, rendered natively by the browser — no bitmap upsampling), and download a standalone SVG with inlined styles.
+The file should render correctly when opened directly in any modern browser. The **Export** menu should cleanly copy PNG to the clipboard, download PNG / JPEG / WebP (all at 4× source resolution, rendered natively by the browser — no bitmap upsampling), and download a **dual-theme self-contained SVG** whose colors follow the embedding host's `prefers-color-scheme` (dark by default; swaps to light under a light host; `svg[data-theme="..."]` still works as a manual override).

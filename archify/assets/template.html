@@ -679,15 +679,24 @@
 
       /**
        * Serialize the main SVG into a standalone document.
-       * Inlines the host CSS + the current theme's resolved variables so the
-       * serialized SVG renders correctly both as a standalone file and when
-       * rasterized via an Image -> canvas pipeline (canvas does not read the
-       * host document's CSS).
+       *
+       * Two modes:
+       * - Default (opts.autoTheme=false) — locks the serialized SVG to the
+       *   viewer's current theme. Used by the raster pipeline
+       *   (PNG/JPEG/WebP/clipboard) because canvas rasterization needs
+       *   deterministic colors; a raster cannot react to
+       *   prefers-color-scheme after encoding.
+       * - autoTheme=true — emits BOTH dark and light variable sets plus a
+       *   `@media (prefers-color-scheme)` rule so the resulting SVG
+       *   self-themes when embedded in GitHub READMEs or other hosts that
+       *   expose a color scheme. Used for "Download SVG".
        */
-      function serializeSvg(scale) {
+      function serializeSvg(scale, opts) {
         // scale: integer multiplier for intrinsic SVG pixel dimensions used by
         // the raster path. Defaults to 1 (natural size) for SVG download.
         scale = scale || 1;
+        opts = opts || {};
+        var autoTheme = opts.autoTheme === true;
 
         var svg = document.querySelector('.diagram-container svg');
         var clone = svg.cloneNode(true);
@@ -701,13 +710,10 @@
         clone.setAttribute('height', vb.height * scale);
         clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
-        var theme = document.documentElement.getAttribute('data-theme') || 'dark';
         var hostStyle = Array.prototype.map.call(document.querySelectorAll('style'), function (s) {
           return s.textContent;
         }).join('\n');
 
-        var themeHost = document.querySelector('[data-theme="' + theme + '"]') || document.documentElement;
-        var computed = getComputedStyle(themeHost);
         var varNames = [
           '--bg','--grid','--text','--text-muted','--text-dim',
           '--arrow','--arrow-emphasis','--mask',
@@ -719,9 +725,23 @@
           '--messagebus-fill','--messagebus-stroke',
           '--external-fill','--external-stroke'
         ];
-        var vars = varNames.map(function (n) {
-          return n + ': ' + computed.getPropertyValue(n).trim() + ';';
-        }).join(' ');
+
+        // Resolve the full variable set for a given data-theme via an
+        // off-DOM probe, independent of what the viewer is currently set to.
+        function resolveVars(themeAttr) {
+          var probe = document.createElement('div');
+          probe.setAttribute('data-theme', themeAttr);
+          probe.style.cssText = 'position:absolute;width:0;height:0;visibility:hidden;';
+          document.body.appendChild(probe);
+          try {
+            var c = getComputedStyle(probe);
+            return varNames.map(function (n) {
+              return n + ': ' + c.getPropertyValue(n).trim() + ';';
+            }).join(' ');
+          } finally {
+            document.body.removeChild(probe);
+          }
+        }
 
         // Prepend a local()-only @font-face block for each weight so that the
         // sandboxed image-rendering context used during PNG/JPEG/WebP export
@@ -734,21 +754,57 @@
                  "; src: local('JetBrains Mono'), local('JetBrainsMono-Regular'); }";
         }).join('\n');
 
-        // IMPORTANT: inject the resolved variables AFTER hostStyle, otherwise
-        // hostStyle's ":root, [data-theme=\"dark\"] { ... }" rule overrides our
-        // chosen theme via later-in-cascade equal-specificity. Keep this order.
         var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-        style.textContent =
-          fontFallback + "\n" +
-          "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }\n" +
-          hostStyle + "\n" +
-          ":root, svg { " + vars + " }\n";
-        clone.insertBefore(style, clone.firstChild);
-
         var bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         bgRect.setAttribute('width', '100%');
         bgRect.setAttribute('height', '100%');
-        bgRect.setAttribute('fill', computed.getPropertyValue('--bg').trim() || '#ffffff');
+
+        if (autoTheme) {
+          // Dual-theme SVG. Dark is the default (so hosts without
+          // prefers-color-scheme still render), light swaps in via media
+          // query, and svg[data-theme="..."] still lets downstream
+          // consumers force a specific theme.
+          var darkVars = resolveVars('dark');
+          var lightVars = resolveVars('light');
+
+          style.textContent =
+            fontFallback + "\n" +
+            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }\n" +
+            hostStyle + "\n" +
+            ":root, svg { " + darkVars + " }\n" +
+            "@media (prefers-color-scheme: light) { :root, svg { " + lightVars + " } }\n" +
+            "svg[data-theme=\"light\"] { " + lightVars + " }\n" +
+            "svg[data-theme=\"dark\"] { " + darkVars + " }\n" +
+            "rect.c-bg-rect { fill: var(--bg); }\n";
+
+          // Don't lock the serialized SVG to the viewer's current theme.
+          clone.removeAttribute('data-theme');
+          // Background follows the CSS variable, not a fixed color, so it
+          // swaps with the media query.
+          bgRect.setAttribute('class', 'c-bg-rect');
+        } else {
+          // Raster path: lock to the viewer's current theme.
+          var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+          var themeHost = document.querySelector('[data-theme="' + theme + '"]') || document.documentElement;
+          var computed = getComputedStyle(themeHost);
+          var vars = varNames.map(function (n) {
+            return n + ': ' + computed.getPropertyValue(n).trim() + ';';
+          }).join(' ');
+
+          // IMPORTANT: inject the resolved variables AFTER hostStyle,
+          // otherwise hostStyle's ":root, [data-theme=\"dark\"] { ... }" rule
+          // overrides our chosen theme via later-in-cascade equal-specificity.
+          // Keep this order.
+          style.textContent =
+            fontFallback + "\n" +
+            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }\n" +
+            hostStyle + "\n" +
+            ":root, svg { " + vars + " }\n";
+
+          bgRect.setAttribute('fill', computed.getPropertyValue('--bg').trim() || '#ffffff');
+        }
+
+        clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
         return {
@@ -933,7 +989,7 @@
         var base = diagramFilename();
         close(false);
         return (format === 'svg'
-          ? Promise.resolve(serializeSvg()).then(function (d) {
+          ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
               download(new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' }), base + '.svg');
             })
           : rasterize(format).then(function (blob) {

@@ -2,6 +2,16 @@
 
 All notable changes are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.4.0] — 2026-04-18
+
+### Changed
+- **Download SVG is now dual-theme self-contained.** The exported `.svg` ships with BOTH dark and light CSS variable sets plus a `@media (prefers-color-scheme: light)` rule. Embedding the file via `<img src="x.svg">` in a GitHub README (or any host that exposes a color scheme) makes it follow the reader's dark/light preference automatically — no more shipping two PNGs wrapped in `<picture>`. The root `<svg>` no longer carries a `data-theme` attribute, so the media query can actually take effect; downstream consumers can still force a theme via `svg[data-theme="light"]` / `svg[data-theme="dark"]`.
+- **`serializeSvg(scale, opts)`** grew a second argument: `opts.autoTheme: true` switches on the new dual-theme path. The raster pipeline (PNG / JPEG / WebP / Copy to clipboard) explicitly does NOT set it, so those paths keep locking colors to the viewer's current theme — canvas rasterization needs deterministic output and a raster can't react to `prefers-color-scheme` after encoding.
+- **Background rect in auto-theme mode** now carries `class="c-bg-rect"` + `rect.c-bg-rect { fill: var(--bg); }` instead of a baked-in color, so the backdrop swaps along with the variables.
+
+### Why
+The v2.0 SVG export was good, but single-theme — users who wanted README embedding still had to export one PNG per theme and wrap them in `<picture><source media="(prefers-color-scheme: dark)">`. A single SVG that already knows both themes cuts that down to `![](archify.svg)`.
+
 ## [2.3.1] — 2026-04-15
 
 ### Fixed
