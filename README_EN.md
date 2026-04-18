@@ -30,10 +30,6 @@ The Export menu — Copy PNG to clipboard plus 4 download formats (all raster ex
 
 ![Export menu](examples/images/archify-menu.png)
 
-Print-ready out of the box — <kbd>Cmd</kbd>+<kbd>P</kbd> drops the toolbar, the dark background, and the grid automatically:
-
-![Print preview](examples/images/archify-print.png)
-
 Live example: [`examples/web-app.html`](examples/web-app.html) — open in a browser, press <kbd>T</kbd> to toggle theme, <kbd>E</kbd> to open Export. Append `?theme=light` or `?openExport=1` to the URL for deterministic screenshots.
 
 ## What's new
