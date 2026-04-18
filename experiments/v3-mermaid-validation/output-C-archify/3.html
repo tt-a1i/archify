@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<title>moke-kit — Archify</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#020617; --grid:#1e293b; --text:#fff; --text-muted:#94a3b8; --text-dim:#475569;
+  --panel:rgba(15,23,42,0.5); --panel-border:#1e293b;
+  --arrow:#64748b; --arrow-emphasis:#34d399; --mask:#0f172a;
+  --frontend-fill:rgba(8,51,68,0.4); --frontend-stroke:#22d3ee;
+  --backend-fill:rgba(6,78,59,0.4); --backend-stroke:#34d399;
+  --database-fill:rgba(76,29,149,0.4); --database-stroke:#a78bfa;
+  --cloud-fill:rgba(120,53,15,0.3); --cloud-stroke:#fbbf24;
+  --security-fill:rgba(136,19,55,0.4); --security-stroke:#fb7185;
+  --messagebus-fill:rgba(251,146,60,0.3); --messagebus-stroke:#fb923c;
+  --external-fill:rgba(30,41,59,0.5); --external-stroke:#94a3b8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;background:var(--bg);min-height:100vh;padding:2rem;color:var(--text)}
+.container{max-width:1500px;margin:0 auto}
+.header{margin-bottom:2rem}
+.header-row{display:flex;align-items:center;gap:1rem;margin-bottom:.5rem}
+.pulse-dot{width:12px;height:12px;background:var(--backend-stroke);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+h1{font-size:1.5rem;font-weight:700;letter-spacing:-.025em}
+.subtitle{color:var(--text-muted);font-size:.875rem;margin-left:1.75rem}
+.diagram-container{background:var(--panel);border-radius:1rem;border:1px solid var(--panel-border);padding:1.5rem;overflow-x:auto}
+svg{width:100%;display:block}
+.c-grid{stroke:var(--grid);fill:none}
+.c-mask{fill:var(--mask);stroke:none}
+.c-frontend{fill:var(--frontend-fill);stroke:var(--frontend-stroke)}
+.c-backend{fill:var(--backend-fill);stroke:var(--backend-stroke)}
+.c-database{fill:var(--database-fill);stroke:var(--database-stroke)}
+.c-cloud{fill:var(--cloud-fill);stroke:var(--cloud-stroke)}
+.c-security{fill:var(--security-fill);stroke:var(--security-stroke)}
+.c-messagebus{fill:var(--messagebus-fill);stroke:var(--messagebus-stroke)}
+.c-external{fill:var(--external-fill);stroke:var(--external-stroke)}
+.t-primary{fill:var(--text)}.t-muted{fill:var(--text-muted)}.t-dim{fill:var(--text-dim)}
+.t-frontend{fill:var(--frontend-stroke)}.t-backend{fill:var(--backend-stroke)}
+.t-database{fill:var(--database-stroke)}.t-cloud{fill:var(--cloud-stroke)}
+.t-security{fill:var(--security-stroke)}.t-messagebus{fill:var(--messagebus-stroke)}
+.t-external{fill:var(--external-stroke)}
+.a-default{stroke:var(--arrow);fill:none}.a-emphasis{stroke:var(--arrow-emphasis);fill:none}
+.a-security{stroke:var(--security-stroke);fill:none;stroke-dasharray:5,5}
+.m-default{fill:var(--arrow)}.m-emphasis{fill:var(--arrow-emphasis)}
+.m-security{fill:var(--security-stroke)}
+.c-region{fill:rgba(255,255,255,0.02);stroke:#334155;stroke-dasharray:6,4}
+.layer-label{fill:var(--text-dim);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-row"><div class="pulse-dot"></div><h1>moke-kit</h1></div>
+    <p class="subtitle">Go game-server toolkit — layered server / middleware / storage architecture</p>
+  </div>
+  <div class="diagram-container">
+    <svg viewBox="0 0 1400 880" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="m-default"/></marker>
+        <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="m-emphasis"/></marker>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/></pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)"/>
+
+      <!-- Layer labels -->
+      <text x="40" y="80" class="layer-label">Application</text>
+      <text x="40" y="220" class="layer-label">Servers</text>
+      <text x="40" y="400" class="layer-label">Middleware</text>
+      <text x="40" y="580" class="layer-label">Storage &amp; Queue</text>
+      <text x="40" y="780" class="layer-label">Integrations</text>
+
+      <!-- Application Layer -->
+      <rect x="600" y="60" width="200" height="70" rx="6" class="c-mask"/>
+      <rect x="600" y="60" width="200" height="70" rx="6" class="c-backend" stroke-width="1.5"/>
+      <text x="700" y="89" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">App &amp; DI</text>
+      <text x="700" y="108" class="t-muted" font-size="9" text-anchor="middle">fxmain · uber/fx</text>
+
+      <!-- Server Layer (3 servers) -->
+      <rect x="280" y="200" width="200" height="70" rx="6" class="c-mask"/>
+      <rect x="280" y="200" width="200" height="70" rx="6" class="c-backend" stroke-width="1.5"/>
+      <text x="380" y="229" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">gRPC Server</text>
+      <text x="380" y="248" class="t-muted" font-size="9" text-anchor="middle">RPC services</text>
+
+      <rect x="600" y="200" width="200" height="70" rx="6" class="c-mask"/>
+      <rect x="600" y="200" width="200" height="70" rx="6" class="c-backend" stroke-width="1.5"/>
+      <text x="700" y="229" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">HTTP Gateway</text>
+      <text x="700" y="248" class="t-muted" font-size="9" text-anchor="middle">REST · gRPC-gateway</text>
+
+      <rect x="920" y="200" width="240" height="70" rx="6" class="c-mask"/>
+      <rect x="920" y="200" width="240" height="70" rx="6" class="c-backend" stroke-width="1.5"/>
+      <text x="1040" y="229" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">TCP/WS/KCP Server</text>
+      <text x="1040" y="248" class="t-muted" font-size="9" text-anchor="middle">zinx · realtime games</text>
+
+      <!-- Middleware Layer (2) -->
+      <rect x="380" y="380" width="220" height="70" rx="6" class="c-mask"/>
+      <rect x="380" y="380" width="220" height="70" rx="6" class="c-security" stroke-width="1.5"/>
+      <text x="490" y="409" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Auth Middleware</text>
+      <text x="490" y="428" class="t-muted" font-size="9" text-anchor="middle">Firebase Auth</text>
+
+      <rect x="780" y="380" width="320" height="70" rx="6" class="c-mask"/>
+      <rect x="780" y="380" width="320" height="70" rx="6" class="c-backend" stroke-width="1.5"/>
+      <text x="940" y="405" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Other Middlewares</text>
+      <text x="940" y="424" class="t-muted" font-size="9" text-anchor="middle">Logging · RateLimit · Recovery · OTel</text>
+
+      <!-- Storage Layer (4) -->
+      <rect x="180" y="560" width="200" height="70" rx="6" class="c-mask"/>
+      <rect x="180" y="560" width="200" height="70" rx="6" class="c-database" stroke-width="1.5"/>
+      <text x="280" y="589" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Relational DB</text>
+      <text x="280" y="608" class="t-muted" font-size="9" text-anchor="middle">GORM</text>
+
+      <rect x="430" y="560" width="200" height="70" rx="6" class="c-mask"/>
+      <rect x="430" y="560" width="200" height="70" rx="6" class="c-database" stroke-width="1.5"/>
+      <text x="530" y="589" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">NoSQL DB</text>
+      <text x="530" y="608" class="t-muted" font-size="9" text-anchor="middle">MongoDB</text>
+
+      <rect x="680" y="560" width="200" height="70" rx="6" class="c-mask"/>
+      <rect x="680" y="560" width="200" height="70" rx="6" class="c-database" stroke-width="1.5"/>
+      <text x="780" y="589" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Cache</text>
+      <text x="780" y="608" class="t-muted" font-size="9" text-anchor="middle">Redis · Dragonfly</text>
+
+      <rect x="930" y="560" width="200" height="70" rx="6" class="c-mask"/>
+      <rect x="930" y="560" width="200" height="70" rx="6" class="c-messagebus" stroke-width="1.5"/>
+      <text x="1030" y="589" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Message Queue</text>
+      <text x="1030" y="608" class="t-muted" font-size="9" text-anchor="middle">NATS</text>
+
+      <!-- Integration Layer (2) -->
+      <rect x="430" y="760" width="220" height="70" rx="6" class="c-mask"/>
+      <rect x="430" y="760" width="220" height="70" rx="6" class="c-external" stroke-width="1.5"/>
+      <text x="540" y="789" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">IAP Integration</text>
+      <text x="540" y="808" class="t-muted" font-size="9" text-anchor="middle">App Store · Play Store</text>
+
+      <rect x="780" y="760" width="220" height="70" rx="6" class="c-mask"/>
+      <rect x="780" y="760" width="220" height="70" rx="6" class="c-external" stroke-width="1.5"/>
+      <text x="890" y="789" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Agones</text>
+      <text x="890" y="808" class="t-muted" font-size="9" text-anchor="middle">k8s game-server orchestration</text>
+
+      <!-- App -> 3 servers -->
+      <line x1="660" y1="130" x2="430" y2="198" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <line x1="700" y1="130" x2="700" y2="198" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <line x1="740" y1="130" x2="980" y2="198" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <text x="700" y="170" class="t-muted" font-size="9" text-anchor="middle">initializes</text>
+
+      <!-- 3 servers -> auth (left) -->
+      <path d="M 380 270 Q 380 320 420 378" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <line x1="600" y1="270" x2="500" y2="378" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <path d="M 1000 270 Q 800 290 580 378" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+      <!-- 3 servers -> stdmw (right) -->
+      <path d="M 480 270 Q 700 290 870 378" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <line x1="800" y1="270" x2="900" y2="378" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <path d="M 1040 270 Q 1040 320 990 378" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+      <!-- middleware -> storage (bundled visual) -->
+      <path d="M 460 450 Q 380 510 290 558" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <path d="M 480 450 Q 510 510 530 558" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <path d="M 540 450 Q 660 510 770 558" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <path d="M 580 450 Q 800 510 1010 558" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+      <path d="M 820 450 Q 600 510 320 558" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)" opacity="0.5"/>
+      <path d="M 870 450 Q 720 510 560 558" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)" opacity="0.5"/>
+      <path d="M 940 450 Q 880 510 800 558" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)" opacity="0.5"/>
+      <path d="M 990 450 Q 1010 510 1030 558" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)" opacity="0.5"/>
+
+      <!-- middleware -> integrations -->
+      <path d="M 480 450 Q 480 600 530 758" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)" opacity="0.6"/>
+      <path d="M 510 450 Q 700 600 870 758" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)" opacity="0.6"/>
+    </svg>
+  </div>
+</div>
+</body>
+</html>

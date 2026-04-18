@@ -1,0 +1,68 @@
+flowchart TD
+%% Application Layer
+  subgraph "Application Layer"
+    app["App & DI (fxmain)"]:::app
+  end
+
+%% Server Layer
+  subgraph "Server Layer"
+    grpc["gRPC Server"]:::server
+    gateway["HTTP Gateway"]:::server
+    zinx["TCP/WebSocket/KCP Server (zinx)"]:::server
+  end
+
+%% Middleware Layer
+  subgraph "Middleware Layer"
+    auth["Auth Middleware"]:::mw
+    stdmw["Other Middlewares (Logging,RateLimit,Recovery,OTel)"]:::mw
+  end
+
+%% Storage & Message Queue Layer
+  subgraph "Storage & Message Queue Layer"
+    gorm["Relational DB (GORM)"]:::storage
+    mongo["NoSQL DB (MongoDB)"]:::storage
+    cache["Cache (Redis & Dragonfly)"]:::storage
+    nats["Message Queue (NATS)"]:::storage
+  end
+
+%% Integration Layer
+  subgraph "Integration Layer"
+    iap["IAP Integration"]:::integration
+    agones["Agones Integration"]:::integration
+  end
+
+%% Connections from Application Layer to Server Layer
+  app -->|"initializes"| grpc
+  app -->|"initializes"| gateway
+  app -->|"initializes"| zinx
+
+%% Connections from Server Layer to Middleware Layer
+  grpc -->|"processed by"| auth
+  grpc -->|"processed by"| stdmw
+  gateway -->|"processed by"| auth
+  gateway -->|"processed by"| stdmw
+  zinx -->|"processed by"| auth
+  zinx -->|"processed by"| stdmw
+
+%% Connections from Middleware Layer to Storage & Message Queue Layer
+  auth -->|"accesses"| gorm
+  auth -->|"accesses"| mongo
+  auth -->|"accesses"| cache
+  auth -->|"accesses"| nats
+  stdmw -->|"accesses"| gorm
+  stdmw -->|"accesses"| mongo
+  stdmw -->|"accesses"| cache
+  stdmw -->|"accesses"| nats
+
+%% Connections from Middleware Layer to Integration Layer
+  auth -->|"integrates"| iap
+  auth -->|"integrates"| agones
+  stdmw -->|"integrates"| iap
+  stdmw -->|"integrates"| agones
+
+%% Styles
+  classDef app fill:#D0E6A5,stroke:#333,stroke-width:2px;
+  classDef server fill:#86E3CE,stroke:#333,stroke-width:2px;
+  classDef mw fill:#FFDD94,stroke:#333,stroke-width:2px;
+  classDef storage fill:#F09494,stroke:#333,stroke-width:2px;
+  classDef integration fill:#A29BFE,stroke:#333,stroke-width:2px;

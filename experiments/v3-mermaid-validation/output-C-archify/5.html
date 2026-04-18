@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<title>Taiga 3-tier — Archify</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#020617; --grid:#1e293b; --text:#fff; --text-muted:#94a3b8; --text-dim:#475569;
+  --panel:rgba(15,23,42,0.5); --panel-border:#1e293b;
+  --arrow:#64748b; --arrow-emphasis:#34d399; --mask:#0f172a;
+  --frontend-fill:rgba(8,51,68,0.4); --frontend-stroke:#22d3ee;
+  --backend-fill:rgba(6,78,59,0.4); --backend-stroke:#34d399;
+  --database-fill:rgba(76,29,149,0.4); --database-stroke:#a78bfa;
+  --cloud-fill:rgba(120,53,15,0.3); --cloud-stroke:#fbbf24;
+  --security-fill:rgba(136,19,55,0.4); --security-stroke:#fb7185;
+  --messagebus-fill:rgba(251,146,60,0.3); --messagebus-stroke:#fb923c;
+  --external-fill:rgba(30,41,59,0.5); --external-stroke:#94a3b8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;background:var(--bg);min-height:100vh;padding:2rem;color:var(--text)}
+.container{max-width:1400px;margin:0 auto}
+.header{margin-bottom:2rem}
+.header-row{display:flex;align-items:center;gap:1rem;margin-bottom:.5rem}
+.pulse-dot{width:12px;height:12px;background:var(--frontend-stroke);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+h1{font-size:1.5rem;font-weight:700;letter-spacing:-.025em}
+.subtitle{color:var(--text-muted);font-size:.875rem;margin-left:1.75rem}
+.diagram-container{background:var(--panel);border-radius:1rem;border:1px solid var(--panel-border);padding:1.5rem;overflow-x:auto}
+svg{width:100%;display:block}
+.c-grid{stroke:var(--grid);fill:none}
+.c-mask{fill:var(--mask);stroke:none}
+.c-frontend{fill:var(--frontend-fill);stroke:var(--frontend-stroke)}
+.c-backend{fill:var(--backend-fill);stroke:var(--backend-stroke)}
+.c-database{fill:var(--database-fill);stroke:var(--database-stroke)}
+.c-cloud{fill:var(--cloud-fill);stroke:var(--cloud-stroke)}
+.c-security{fill:var(--security-fill);stroke:var(--security-stroke)}
+.c-messagebus{fill:var(--messagebus-fill);stroke:var(--messagebus-stroke)}
+.c-external{fill:var(--external-fill);stroke:var(--external-stroke)}
+.t-primary{fill:var(--text)}.t-muted{fill:var(--text-muted)}.t-dim{fill:var(--text-dim)}
+.t-frontend{fill:var(--frontend-stroke)}.t-backend{fill:var(--backend-stroke)}
+.t-database{fill:var(--database-stroke)}.t-cloud{fill:var(--cloud-stroke)}
+.t-security{fill:var(--security-stroke)}.t-messagebus{fill:var(--messagebus-stroke)}
+.t-external{fill:var(--external-stroke)}
+.a-default{stroke:var(--arrow);fill:none}.a-emphasis{stroke:var(--arrow-emphasis);fill:none}
+.a-security{stroke:var(--security-stroke);fill:none;stroke-dasharray:5,5}
+.m-default{fill:var(--arrow)}.m-emphasis{fill:var(--arrow-emphasis)}
+.m-security{fill:var(--security-stroke)}
+.tier-label{fill:var(--text-dim);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-row"><div class="pulse-dot"></div><h1>Taiga — Scientific Data Platform</h1></div>
+    <p class="subtitle">Browser → Flask + Celery + Redis → Postgres + S3 + GCS, with external integrations</p>
+  </div>
+  <div class="diagram-container">
+    <svg viewBox="0 0 1300 760" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="m-default"/></marker>
+        <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="m-emphasis"/></marker>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/></pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)"/>
+
+      <!-- Tier labels -->
+      <text x="40" y="80" class="tier-label">Client</text>
+      <text x="40" y="240" class="tier-label">Application</text>
+      <text x="40" y="490" class="tier-label">Storage</text>
+      <text x="40" y="690" class="tier-label">External</text>
+
+      <!-- Browser -->
+      <rect x="540" y="60" width="220" height="64" rx="6" class="c-mask"/>
+      <rect x="540" y="60" width="220" height="64" rx="6" class="c-frontend" stroke-width="1.5"/>
+      <text x="650" y="88" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Web Browser</text>
+      <text x="650" y="106" class="t-muted" font-size="9" text-anchor="middle">end user</text>
+
+      <!-- Flask API -->
+      <rect x="180" y="220" width="220" height="64" rx="6" class="c-mask"/>
+      <rect x="180" y="220" width="220" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+      <text x="290" y="248" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Flask API</text>
+      <text x="290" y="266" class="t-muted" font-size="9" text-anchor="middle">HTTP / signed-URL gen</text>
+
+      <!-- Redis Queue -->
+      <rect x="540" y="220" width="220" height="64" rx="6" class="c-mask"/>
+      <rect x="540" y="220" width="220" height="64" rx="6" class="c-messagebus" stroke-width="1.5"/>
+      <text x="650" y="248" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Redis Queue</text>
+      <text x="650" y="266" class="t-muted" font-size="9" text-anchor="middle">task broker</text>
+
+      <!-- Celery Workers -->
+      <rect x="900" y="220" width="220" height="64" rx="6" class="c-mask"/>
+      <rect x="900" y="220" width="220" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+      <text x="1010" y="248" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Celery Workers</text>
+      <text x="1010" y="266" class="t-muted" font-size="9" text-anchor="middle">async file ops</text>
+
+      <!-- PostgreSQL -->
+      <rect x="120" y="470" width="200" height="64" rx="6" class="c-mask"/>
+      <rect x="120" y="470" width="200" height="64" rx="6" class="c-database" stroke-width="1.5"/>
+      <text x="220" y="498" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">PostgreSQL</text>
+      <text x="220" y="516" class="t-muted" font-size="9" text-anchor="middle">metadata</text>
+
+      <!-- AWS S3 -->
+      <rect x="430" y="470" width="200" height="64" rx="6" class="c-mask"/>
+      <rect x="430" y="470" width="200" height="64" rx="6" class="c-cloud" stroke-width="1.5"/>
+      <text x="530" y="498" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">AWS S3</text>
+      <text x="530" y="516" class="t-muted" font-size="9" text-anchor="middle">object storage</text>
+
+      <!-- GCS -->
+      <rect x="730" y="470" width="200" height="64" rx="6" class="c-mask"/>
+      <rect x="730" y="470" width="200" height="64" rx="6" class="c-cloud" stroke-width="1.5"/>
+      <text x="830" y="498" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Google Cloud Storage</text>
+      <text x="830" y="516" class="t-muted" font-size="9" text-anchor="middle">object storage</text>
+
+      <!-- Figshare (external) -->
+      <rect x="430" y="670" width="200" height="64" rx="6" class="c-mask"/>
+      <rect x="430" y="670" width="200" height="64" rx="6" class="c-external" stroke-width="1.5"/>
+      <text x="530" y="698" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Figshare</text>
+      <text x="530" y="716" class="t-muted" font-size="9" text-anchor="middle">publish dataset</text>
+
+      <!-- Email service -->
+      <rect x="730" y="670" width="200" height="64" rx="6" class="c-mask"/>
+      <rect x="730" y="670" width="200" height="64" rx="6" class="c-external" stroke-width="1.5"/>
+      <text x="830" y="698" class="t-primary" font-size="13" font-weight="600" text-anchor="middle">Email Service</text>
+      <text x="830" y="716" class="t-muted" font-size="9" text-anchor="middle">notifications</text>
+
+      <!-- Browser -> Flask -->
+      <path d="M 540 90 Q 380 90 290 218" class="a-emphasis" stroke-width="1.5" marker-end="url(#arrowhead-emphasis)"/>
+      <text x="370" y="155" class="t-backend" font-size="10">HTTP / HTTPS</text>
+
+      <!-- Flask -> Postgres -->
+      <line x1="290" y1="284" x2="240" y2="468" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <text x="220" y="380" class="t-muted" font-size="9">query</text>
+
+      <!-- Flask -> Redis -->
+      <line x1="400" y1="252" x2="538" y2="252" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <text x="469" y="244" class="t-muted" font-size="9" text-anchor="middle">enqueue</text>
+
+      <!-- Redis -> Celery -->
+      <line x1="760" y1="252" x2="898" y2="252" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <text x="829" y="244" class="t-muted" font-size="9" text-anchor="middle">dispatch</text>
+
+      <!-- Celery -> S3 -->
+      <path d="M 950 284 Q 800 350 580 468" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+      <!-- Celery -> GCS -->
+      <line x1="990" y1="284" x2="850" y2="468" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+      <!-- Celery -> Figshare -->
+      <path d="M 980 284 Q 760 470 580 668" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)" opacity="0.7"/>
+
+      <!-- Celery -> Email -->
+      <path d="M 1020 284 Q 920 480 850 668" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)" opacity="0.7"/>
+
+      <!-- Flask -> S3 (signed URL) -->
+      <path d="M 380 280 Q 440 380 500 468" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)" stroke-dasharray="4,3" opacity="0.6"/>
+      <text x="475" y="380" class="t-muted" font-size="8">signed URL</text>
+
+      <!-- Flask -> GCS (signed URL) -->
+      <path d="M 400 280 Q 600 380 800 468" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)" stroke-dasharray="4,3" opacity="0.4"/>
+    </svg>
+  </div>
+</div>
+</body>
+</html>

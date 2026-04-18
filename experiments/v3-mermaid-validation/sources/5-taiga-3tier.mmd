@@ -1,0 +1,32 @@
+graph TD
+    subgraph "Client"
+        Browser[Web Browser]
+    end
+
+    subgraph "Application Server"
+        Flask[Flask API]
+        Celery[Celery Workers]
+        Redis[Redis Queue]
+    end
+
+    subgraph "Storage"
+        Postgres[PostgreSQL]
+        S3[AWS S3]
+        GCS[Google Cloud Storage]
+    end
+
+    subgraph "External Services"
+        Figshare[Figshare]
+        Email[Email Service]
+    end
+
+    Browser -->|HTTP/HTTPS| Flask
+    Flask -->|Query/Update| Postgres
+    Flask -->|Enqueue Tasks| Redis
+    Redis -->|Process Tasks| Celery
+    Celery -->|File Operations| S3
+    Celery -->|File Operations| GCS
+    Celery -->|Publish| Figshare
+    Celery -->|Send Notifications| Email
+    Flask -->|Generate Signed URLs| S3
+    Flask -->|Generate Signed URLs| GCS

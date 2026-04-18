@@ -1,285 +1,121 @@
 # Archify Roadmap
 
-Features planned but not yet shipped, in recommended implementation order.
+After v2.3.1 ships, the only remaining planned work is a slim v3.0 focused on coordinate stability. The original v2.4 / v2.5 backlog (export-scale URL param, color-blind palette, gzip+base64 share links) was considered and dropped — see [Not planned](#not-planned) for the rationale on each.
 
-Effort legend: **S** = afternoon · **M** = ~a day · **L** = multi-day.
-Target versions are suggestions — bundle them however makes sense.
+This roadmap was rewritten on 2026-04-16 after three independent design reviews, and updated the same day after a visual-quality validation experiment conclusively failed (see `experiments/v3-mermaid-validation/RESULT.md`).
 
 ---
 
-## 1. `?exportScale=N` URL parameter
-
-**Effort:** S &middot; **Target:** v2.4.0
+## v3.0 — JSON IR for coordinate stability
 
 ### What
 
-Re-expose 1× / 2× / 3× / 4× raster scale control — via URL parameter only, no UI selector. Default stays 4× for any user who doesn't care.
+Introduce a thin JSON intermediate representation (`diagram.json`) that captures the SVG component graph (components + connections + positions) so Claude can make targeted edits without regenerating the entire HTML. **Mermaid is no longer a first-class parser target** — the validation experiment showed that auto-layout + archify CSS is not meaningfully better than stock Mermaid. Mermaid input is handled via SKILL.md prompt engineering: user pastes Mermaid, Claude reads the structure and lays out from scratch.
 
-### Why
+### Why this shape (and not the original "diagram.yaml" plan)
 
-v2.3.0 removed the scale selector because "2× default + bitmap upsampling" produced soft output and the UI actively encouraged picking the softest option. The native-rasterization fix from 2.3 stays; this just restores an escape hatch for:
+Three independent reviews converged on:
 
-- Sharing compact PNGs in Slack / Notion / Discord where a 4000×2720 file is overkill
-- Headless batch scripts wanting a specific output size
-- Embedding in pipelines that re-compress anyway (no point in paying the 4× pixel cost upstream)
+1. **Auto-layout (dagre / elk-js) is a dead end for archify.** The aesthetic — Auth Provider floating outside the AWS region, S3 deliberately below CloudFront to imply a serving relationship, security-group boundary at exact 30/50 padding, summary cards, legend nested into dead space — *is* the layout decisions. Stripping the human (or Claude) out of layout strips the product of its differentiator. Dagre output of a typical 8-node graph is a uniform rectangular grid; CSS-skinning it gets you only ~30% of the way from "stock Mermaid" to "archify hand-placed."
 
-No UI surface means no regression back to the "soft by default" footgun.
+2. **"Prettier Mermaid renderer" is already taken.** [lukilabs/beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid) ships 15 themes (Tokyo Night, Catppuccin, Nord, Dracula…) with 8.1k stars and is growing fast. Mermaid 11.14 itself added Neo / Redux themes + ELK layout + Hand Drawn look. Competing as "the prettier Mermaid library" is uphill. Archify's real moat is *information architecture* (semantic colors per technology, security boundaries, summary cards, deliberate spatial narrative), not just "prettier CSS on top of Mermaid".
 
-### How
+3. **JSON beats YAML as the IR format.** LLM-generated YAML has a high "looks right, parses wrong" failure rate due to whitespace sensitivity, and the inline-flow `pos: [40, 80]` / `sublabel: "Redis :6379"` patterns hit YAML quoting gotchas. JSON has unambiguous parsing, native browser `JSON.parse`, mature JSON Schema validation, and is human-readable enough for `git diff`.
 
-```js
-function resolveRasterScale() {
-  try {
-    var v = parseInt(new URLSearchParams(location.search).get('exportScale'), 10);
-    if (v === 1 || v === 2 || v === 3 || v === 4) return v;
-  } catch (_) {}
-  return 4;
-}
-var RASTER_SCALE = resolveRasterScale();
+### Architecture
+
+```
+                                              ┌→ Mermaid output (P4, v3.1+)
+                                              │
+   Mermaid input  ─┐                          │
+                   ├→ IR (JSON) ─→ Claude ────┼→ archify HTML
+   Claude direct ─┘                fills      │
+                                   coords     └→ PNG / JPEG / WebP / SVG
+                                   + classes
 ```
 
-Also:
-- Let the existing canvas-size clamp (16 Mpx) continue to downshift automatically if `scale × viewBox` would exceed limits.
-- Update the "Copied" toast to append `(Nx)` when `N !== 4`, so the user sees they got non-default output.
-- Document in README's **URL parameters** section.
+The "Claude in the loop" property is the moat, not a limitation. Auto-layout libraries see edges and nodes; Claude sees architectural meaning and lays out accordingly.
 
-### Done when
+### IR (`diagram.json`) — minimal v1 schema
 
-- `?exportScale=2` produces a 2000×1360 PNG for the default viewBox.
-- No parameter → output is byte-for-byte identical to v2.3.1.
-- Canvas clamp still kicks in on oversized viewBoxes.
-- README and CHANGELOG updated.
-
----
-
-## 2. Color-blind-safe palette
-
-**Effort:** S &middot; **Target:** v2.4.0 (bundle with #1)
-
-### What
-
-A third CSS-variable set `[data-palette="cb"]` orthogonal to the existing `[data-theme]` axis. Uses the Okabe-Ito palette (seven colors designed to be distinguishable under deuteranopia, protanopia, and tritanopia).
-
-### Why
-
-Archify's default palette uses emerald (backend) + rose (security) + violet (database) — emerald and rose are hard to distinguish under red-green deficiency, which affects ~8% of males. For inclusive team docs, architecture reviews, and conference slides, an accessible option matters.
-
-### How
-
-Add a palette axis alongside the theme axis. Existing CSS structure already has every color as a variable, so this is just one more block:
-
-```css
-[data-palette="cb"] {
-  --frontend-stroke:   #56B4E9;  /* sky blue     */
-  --backend-stroke:    #009E73;  /* bluish green */
-  --database-stroke:   #CC79A7;  /* reddish purple */
-  --cloud-stroke:      #E69F00;  /* orange */
-  --security-stroke:   #D55E00;  /* vermillion */
-  --messagebus-stroke: #F0E442;  /* yellow */
-  --external-stroke:   #0072B2;  /* blue */
-  /* matching rgba fills for each */
+```json
+{
+  "schema_version": 1,
+  "meta": {
+    "title": "agmon",
+    "subtitle": "AI agent observability",
+    "theme": "dark",
+    "viewBox": [1000, 680]
+  },
+  "components": {
+    "claude_code": {
+      "type": "external",
+      "label": "Claude Code",
+      "sublabel": "AI coding agent",
+      "pos": [40, 80],
+      "size": [140, 60]
+    }
+  },
+  "connections": [
+    {
+      "from": "claude_code",
+      "to": "agmon_emit",
+      "label": "hooks (stdin)",
+      "variant": "default"
+    }
+  ]
 }
 ```
 
-Toggle surfaces:
-- URL parameter `?palette=cb` (mirrors the existing `?theme=` pattern).
-- Optionally: an accessibility button in the toolbar next to the theme toggle. Button label can be a small `◐` glyph with `aria-label="Color palette"`.
+**Deliberately out of v1:** security-group boundaries, region boundaries, summary cards, footer, palette toggle. These stay in the HTML template where they live today. The IR is only for the SVG component graph.
 
-Persistence: `localStorage['archify-palette']`, URL param wins.
+`schema_version: 1` is mandatory from day 1. Validated via JSON Schema. All fields except `schema_version` and the component `type` are optional with documented defaults.
 
-### Done when
+### Phasing (post-experiment, revised)
 
-- Dark + default, Dark + cb, Light + default, Light + cb all render cleanly.
-- URL override works alongside localStorage persistence.
-- README documents `?palette=cb`.
-- SKILL.md notes that palette is orthogonal to theme.
-- Legend + summary-card dots re-map correctly under the cb palette.
+| Phase | Deliverable | Target |
+|---|---|---|
+| ~~**Validate**~~ | ~~5-Mermaid blind-rate experiment~~ | **DONE — FAILED** (see below) |
+| **P0** | JSON IR + JSON Schema validator + `schema_version` enforcement | v3.0-alpha |
+| **P0.5** | `render.js` — pure-JS renderer takes IR → HTML using existing template. Coordinates required (no auto-layout). | v3.0-alpha |
+| ~~**P1**~~ | ~~Mermaid flowchart parser → IR~~ | **KILLED** — experiment showed auto-layout + CSS is not enough |
+| **P2** | Updated SKILL.md teaching Claude to accept Mermaid as input and lay out from scratch (prompt engineering, no parser) | v3.0-beta |
+| ~~**P3**~~ | ~~End-to-end parser pipeline~~ | **KILLED** |
+| ~~**P4**~~ | ~~IR → Mermaid output + C4 input~~ | **KILLED** |
 
----
+### Validation experiment — FAILED (2026-04-16)
 
-## 3. gzip + base64 share links
+The experiment tested whether auto-layout (dagre) + archify CSS (version B) looked meaningfully better than stock Mermaid (version A). 5 real-world Mermaid flowcharts were rendered in three versions (A/B/C), randomized, and blind-rated by the project owner.
 
-**Effort:** M &middot; **Target:** v2.5.0
+**Result:** Owner rated C (archify hand-placed) as good-looking; A and B as both not good-looking. B was not meaningfully better than A. Both pass criteria failed. Full data in `experiments/v3-mermaid-validation/RESULT.md`.
 
-### What
+**Takeaway:** archify's aesthetic moat is in Claude's layout judgment (semantic grouping, deliberate spacing, asymmetric placement), not in its CSS. Any path that removes Claude from the layout loop (auto-layout, parser pipeline) strips the product of its differentiator.
 
-"Share" button in the toolbar that compresses the entire generated HTML into the URL fragment, producing a self-contained link. Opening the link reconstitutes the diagram in-browser. No server, no attachment.
+### Done when (revised, post-experiment)
 
-### Why
-
-Today, sharing a diagram means attaching an HTML file. A URL is strictly better for:
-- Slack / Discord / Teams (shows as link unfurl inline)
-- GitHub / GitLab issue + PR comments
-- Jira / Linear / Notion pages
-- Email + RFC drafts
-- Browser bookmarks + history
-
-### How
-
-Two halves:
-
-**Producer (in the generated HTML):**
-
-```js
-async function createShareLink() {
-  const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-  const stream = new Blob([html]).stream().pipeThrough(new CompressionStream('gzip'));
-  const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
-  const b64 = btoa(String.fromCharCode.apply(null, bytes));
-  return SHARE_BASE_URL + '#data=' + b64;
-}
-```
-
-**Consumer (hosted decoder page):**
-
-A static page at `archify.pages.dev/` (Cloudflare Pages, free tier) that:
-1. Reads `location.hash`
-2. Base64-decodes, runs it through `DecompressionStream('gzip')`
-3. `document.open(); document.write(html); document.close();`
-
-Use `CompressionStream` / `DecompressionStream` (native, no pako dep needed — supported across Chrome 80+, Firefox 113+, Safari 16.4+).
-
-### Tradeoffs
-
-- **URL length:** Chrome handles ~32 KB fragments reliably. A typical archify diagram compresses to 5–15 KB. Very large diagrams (30+ components) may bump into the limit — fall back to a "Diagram too large to share as link" message with a download button.
-- **Security:** The decoder `document.write()`s arbitrary HTML. The decoder page must live on a dedicated hostname that never holds user credentials, so XSS-via-share-link can't exfiltrate anything interesting. Never run the decoder on the same origin as an account system.
-- **Fragment vs query param:** `#data=` stays client-side (never hits server logs). Prefer it over `?data=`.
-
-### Done when
-
-- "Share" button produces a URL < 30 KB for a typical 8-component diagram.
-- Opening the link in a fresh tab reconstitutes the exact same page (theme, palette, everything).
-- Link works after pasting into Slack / GitHub (tested in a throwaway thread).
-- Decoder page is deployed and versioned (e.g., `archify.pages.dev/v1/`).
-- Fallback flow triggers cleanly when payload exceeds the threshold.
-
-### Open questions
-
-- Should the decoder sanitize anything? The HTML is self-written by Archify, but a malicious actor could craft a payload. Mitigation: only run decoder on dedicated hostname, set strict CSP on the decoder page.
-- Versioning: if the template changes, do older share links still work? Yes — the link contains the entire old template inline, so it's self-contained. Decoder just `document.write()`s whatever's in the blob.
+- `render.js` reproduces today's `examples/web-app.html` from a hand-written `diagram.json`.
+- `schema_version: 1` is documented in `docs/diagram-json-schema.md` with the full JSON Schema published.
+- Claude, given an existing `diagram.json`, can make targeted coordinate edits without unrelated drift.
+- SKILL.md updated to mention Mermaid as an accepted input dialect (prompt engineering, not parser).
+- README updated to describe the new stable-iteration workflow.
 
 ---
 
-## 4. `diagram.yaml` intermediate format
+## Not planned
 
-**Effort:** L &middot; **Target:** v3.0.0 (architectural break, worth its own major version)
-
-### What
-
-Claude writes a structured YAML spec describing the diagram (components, connections, groups, positions, metadata) instead of one-shot HTML. A renderer (JS module) turns the YAML into the existing HTML template.
-
-### Why
-
-Today, every iteration ("move Redis to the left") triggers Claude to regenerate the entire HTML, which frequently shifts unrelated coordinates. A structured intermediate format unlocks:
-
-| Capability | How it uses the YAML |
-|---|---|
-| Stable iterative edits | Modify one field; renderer preserves everything else |
-| Version diffing | `git diff` on YAML is human-readable |
-| Theme / palette re-render | One YAML × N themes = N HTMLs without re-prompting Claude |
-| Mermaid / PlantUML import | Parser: source → YAML → HTML |
-| Auto-layout via Dagre / ELK | Read YAML, recompute `pos`, re-render |
-| C4 layer navigation | Add `layer: context / container / component` field |
-| CI architecture diff bot | PR bot renders before.yaml vs after.yaml side-by-side as PNGs |
-
-### Schema sketch
-
-```yaml
-meta:
-  title: agmon
-  subtitle: AI agent observability
-  theme: dark           # dark | light
-  palette: default      # default | cb
-  viewBox: [1000, 680]
-
-components:
-  claude_code:
-    type: external      # frontend | backend | database | cloud | security | messagebus | external
-    label: Claude Code
-    sublabel: AI coding agent
-    pos: [40, 80]
-    size: [140, 60]
-
-  agmon_emit:
-    type: backend
-    label: agmon emit
-    sublabel: hook stdin bridge
-    pos: [410, 80]
-    size: [150, 60]
-
-connections:
-  - from: claude_code
-    to: agmon_emit
-    label: "hooks (stdin)"
-    variant: default    # default | emphasis | security | dashed
-
-groups:
-  - type: security-group
-    label: "sg-name :port"
-    contains: [load_balancer]
-
-cards:
-  - title: Security
-    color: rose
-    items:
-      - OAuth 2.0 via external provider
-      - TLS everywhere
-
-footer: "T toggle theme · E open Export"
-```
-
-### How (phased)
-
-**Phase A — Renderer only (no LLM changes).** `render.js` (plain JS, runs in browser or Node) reads a YAML file → outputs the existing HTML. Power users can hand-write YAML. Ships as a library + CLI; template still works standalone. Target: v2.6.
-
-**Phase B — SKILL.md rewrite.** Claude produces YAML + a one-line "render this" note first, and the HTML second. Users iterate by asking Claude to modify the YAML; the renderer regenerates the HTML. Target: v3.0.
-
-**Phase C (optional) — Expose the renderer as:**
-- CLI: `npx archify render diagram.yaml > diagram.html`
-- Cloudflare Worker: POST YAML → HTML
-- VS Code extension: side-by-side YAML → preview
-
-### Tradeoffs
-
-- **Pro:** Unlocks diffing, auto-layout, Mermaid import, C4 layers, CI integration — every backlog feature becomes easier.
-- **Pro:** Claude output becomes more deterministic and reviewable.
-- **Con:** Two artifacts per generation (YAML + HTML) is slightly more complex for first-time users. Mitigate by generating HTML inline in the chat as usual; the YAML is an artifact, not a required read.
-- **Con:** Breaks the "generate → open → done" single-artifact promise — there's now a source-of-truth question. We'd need to be clear the YAML is canonical and the HTML is regenerable.
-- **Con:** Renderer becomes the canonical implementation path. The current template.html stays, but it becomes a target rather than the source.
-
-### Done when
-
-- `render.js` can reproduce today's `examples/web-app.html` from a hand-written YAML.
-- YAML schema documented in `docs/yaml-schema.md`.
-- Claude, prompted via the updated SKILL.md, produces valid YAML that renders correctly.
-- Re-theming (dark → light, default → cb palette) is a YAML edit + re-render, no re-prompt.
-- `git diff` between two diagram YAMLs is actually readable.
-- Backward-compat: hand-written or 2.x-generated HTML still works in a browser; it's just no longer the primary output format.
-
----
-
-## Recommended order
-
-1. **`?exportScale=N`** (S) — fills a gap left by v2.3 at near-zero effort.
-2. **Color-blind palette** (S) — CSS-variable system is already in place; high ratio of user impact to effort.
-3. **gzip + base64 share** (M) — meaningful UX win for every sharing interaction.
-4. **`diagram.yaml`** (L) — architectural; bundle under v3.0.
-
-Features 1 and 2 are good candidates to ship together as v2.4.0.
-Feature 3 is v2.5.0.
-Feature 4 is v3.0.0.
-
----
-
-## Not planned (declined or deferred)
+Each item below was considered and explicitly declined. Listed so issue submitters can find prior decision context.
 
 | Idea | Why not |
 |---|---|
-| Zoom & pan | Browser native pinch / Cmd-scroll already works; minimal gain for significant code. |
-| Auto-layout (Dagre / ELK) | Conflicts with hand-placed aesthetic; blocked on `diagram.yaml`. |
-| Annotation / overlay mode | Pushes toward an editor, not a viewer. |
-| C4 layer tabs | Blocked on `diagram.yaml`. |
-| Diagram diff UI | Better as a companion CLI than template bloat. |
-| Mermaid import | Can be addressed via SKILL.md prompt engineering first; full parser after `diagram.yaml`. |
-| PDF export button | `Cmd+P → Save as PDF` already works, print stylesheet handles the rest. |
-| Font-embedding in exports | `local()` fallback (2.2) covers the common case; full embed would add ~150 KB per generated file. |
+| **`?exportScale=N` URL parameter** | v2.3 explicitly removed the scale selector because it encouraged users to pick a soft output. Re-adding it — even as URL-only with no UI — is a back door to the same footgun. Users needing smaller raster files can resize externally. |
+| **Color-blind-safe palette (Okabe-Ito)** | Maintenance burden — every new component class needs a CB variant — outweighs adoption. The CSS-variable system means downstream forks can roll their own palette in ~30 lines without an upstream change. |
+| **gzip+base64 share links** | Requires a long-running hosted decoder page, opens an XSS-via-share-link vector that's hard to fully close even with a separate hostname, and bumps URL length limits on realistic diagrams. The "send a single HTML file" workflow is already friction-free. |
+| **Auto-layout (dagre / elk-js)** | Independently flagged by all three v3.0 design reviews as the primary risk to archify's aesthetic. The hand-placed coordinate system *is* the product; automating it is automating away the differentiator. |
+| **YAML as the IR format** | LLM-generated YAML has a high "looks right, parses wrong" failure rate due to whitespace sensitivity. JSON is unambiguous, has native browser support, and is sufficient for `git diff` readability. |
+| **Mermaid flowchart parser + dagre auto-layout** | Validation experiment (2026-04-16) conclusively showed that auto-layout + archify CSS is not meaningfully better than stock Mermaid. Layout IS the product; removing Claude from the loop strips the differentiator. Mermaid input is instead handled via SKILL.md prompt engineering. |
+| **General-purpose graph IR adoption** (Cytoscape JSON / GraphViz DOT / GraphML / Mermaid AST / D2 / C4 DSL) | Each evaluated against archify's actual requirement: hybrid of graph topology + visual layout + non-graph metadata (cards, footer, region boundaries). None covers all three cleanly; the wrappers needed amount to inventing a custom schema anyway. |
+| **Zoom & pan UI** | Browser native pinch / Cmd+scroll already works on the SVG. Minimal gain for significant added code. |
+| **Annotation / overlay editor mode** | Pushes archify toward being an editor. Positioning is *generator + viewer*, not editor. |
+| **Diagram diff UI** | Better delivered as a companion CLI / CI bot than baked into the template. Blocked on `diagram.json` shipping anyway. |
+| **PDF export button** | `Cmd+P → Save as PDF` already produces clean output via the v2.2 print stylesheet. No need for a dedicated button. |
+| **Font embedding in raster exports** | `local()` fallback (v2.2) covers the common case (developers with JetBrains Mono installed). Full embed adds ~150 KB to every generated HTML file for marginal benefit. |

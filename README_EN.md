@@ -8,12 +8,13 @@ Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-usin
 - **Built-in theme toggle** — one click between dark and light, persists across sessions
 - **Copy PNG to clipboard** — one click, paste straight into Slack / Notion / GitHub
 - **Ultra-crisp image export** — PNG / JPEG / WebP rendered natively at 4× source resolution (no upsampling blur), or SVG for true vector
+- **SVG follows system dark/light** — exported SVGs ship with both variable sets + `@media (prefers-color-scheme)`, so dropping one into a GitHub README makes it follow the reader's color preference (no more two PNGs wrapped in `<picture>`)
 - **Self-contained HTML** — zero dependencies, share by sending the file
 - **Iterate by chat** — "add Redis", "move auth to the left", "use emerald for the API"
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Claude](https://img.shields.io/badge/Claude-Skill-7C3AED?style=flat-square)
-![Version](https://img.shields.io/badge/version-2.3.1-0891b2?style=flat-square)
+![Version](https://img.shields.io/badge/version-2.4.0-0891b2?style=flat-square)
 
 <p align="right"><a href="./README.md">中文</a></p>
 
@@ -37,20 +38,20 @@ Live example: [`examples/web-app.html`](examples/web-app.html) — open in a bro
 
 ## What's new
 
-Archify is based on [Cocoon-AI/architecture-diagram-generator](https://github.com/Cocoon-AI/architecture-diagram-generator) v1.0 (dark-only, HTML output). **2.0** rewrote the template around a themeable CSS-variable system and added a client-side export pipeline. **2.1** added copy-to-clipboard + keyboard nav. **2.2** added a print stylesheet + local-font fallback. **2.3** fixed a long-standing upsampling bug and made every raster export genuinely sharp at 4× source resolution (the 1× / 2× / 4× selector introduced in 2.1 was removed at the same time — it only encouraged picking a soft-looking scale).
+Archify is based on [Cocoon-AI/architecture-diagram-generator](https://github.com/Cocoon-AI/architecture-diagram-generator) v1.0 (dark-only, HTML output). **2.0** rewrote the template around a themeable CSS-variable system and added a client-side export pipeline. **2.1** added copy-to-clipboard + keyboard nav. **2.2** added a print stylesheet + local-font fallback. **2.3** fixed a long-standing upsampling bug and made every raster export genuinely sharp at 4× source resolution (the 1× / 2× / 4× selector introduced in 2.1 was removed at the same time — it only encouraged picking a soft-looking scale). **2.4** upgraded the SVG export to a dual-theme self-contained file — drop the same `.svg` into a GitHub README and it follows the reader's dark/light preference automatically.
 
-| Feature | v1.0 | 2.0 | 2.1 | 2.2 | 2.3 |
-|---|---|---|---|---|---|
-| Dark theme | Yes | Yes | Yes | Yes | Yes |
-| Light theme | — | Toggle | Toggle | Toggle | Toggle + <kbd>T</kbd> shortcut |
-| PNG / JPEG / WebP download | manual screenshot | 2× bitmap-upsampled | 1× / 2× / 4× selector (still upsampled) | same | **4× rasterized natively — no blur** |
-| SVG download | — | Vector, styles inlined | Same | Same | Same |
-| Copy PNG to clipboard | — | — | Yes | Same | Yes (always 4×) |
-| Keyboard shortcuts | — | — | <kbd>T</kbd> / <kbd>E</kbd> + menu nav | Same | Same |
-| Accessibility | — | — | ARIA + focus-visible | Same | Same |
-| Print stylesheet | — | — | — | Yes | Yes (+ landscape + 2-col cards) |
-| Local-font fallback on export | — | — | — | Yes | Yes |
-| Styling model | Inline `fill` / `stroke` | CSS custom properties + semantic classes | Same | Same | Same |
+| Feature | v1.0 | 2.0 | 2.1 | 2.2 | 2.3 | 2.4 |
+|---|---|---|---|---|---|---|
+| Dark theme | Yes | Yes | Yes | Yes | Yes | Yes |
+| Light theme | — | Toggle | Toggle | Toggle | Toggle + <kbd>T</kbd> shortcut | Same |
+| PNG / JPEG / WebP download | manual screenshot | 2× bitmap-upsampled | 1× / 2× / 4× selector (still upsampled) | same | **4× rasterized natively — no blur** | Same |
+| SVG download | — | Vector, styles inlined (single theme) | Same | Same | Same | **Dual-theme self-contained** (`@media prefers-color-scheme`) |
+| Copy PNG to clipboard | — | — | Yes | Same | Yes (always 4×) | Same |
+| Keyboard shortcuts | — | — | <kbd>T</kbd> / <kbd>E</kbd> + menu nav | Same | Same | Same |
+| Accessibility | — | — | ARIA + focus-visible | Same | Same | Same |
+| Print stylesheet | — | — | — | Yes | Yes (+ landscape + 2-col cards) | Same |
+| Local-font fallback on export | — | — | — | Yes | Yes | Same |
+| Styling model | Inline `fill` / `stroke` | CSS custom properties + semantic classes | Same | Same | Same | Same |
 
 ## Quick start
 
@@ -123,7 +124,7 @@ Open the generated HTML in any browser. Top-right you'll see two buttons:
 |---|---|
 | **Copy PNG** | Puts a PNG of the current diagram straight on your clipboard. Paste into Slack, Notion, GitHub, Figma. |
 | **Download PNG / JPEG / WebP** | Saves a raster image. JPEG/WebP are painted over the current theme's background (no alpha); PNG keeps transparency. |
-| **Download SVG** | Vector export with all styles inlined. Edit in Figma / Illustrator. Scales losslessly. |
+| **Download SVG** | Vector export with all styles inlined, **dual-theme self-contained**. The file ships with both dark and light CSS variable sets plus a `@media (prefers-color-scheme)` rule — drop the same `.svg` into a GitHub README or blog and it follows the reader's preference automatically. Still editable in Figma / Illustrator. Scales losslessly. |
 
 Every raster export (Copy PNG, Download PNG/JPEG/WebP) is rendered natively by the browser at **4× the diagram's intrinsic resolution** — the serialized SVG is given a `width`/`height` of `4 × viewBox`, rasterized by the browser at that resolution, and drawn to the canvas at natural size (no upsampling). This produces genuinely crisp output for retina displays, slides, and print. There is no scale dial — maximum sharpness is the default and the only option.
 
@@ -206,10 +207,14 @@ Each color has coordinated dark-mode and light-mode variants that switch togethe
 
 Archify is a fork / rewrite of [**Cocoon-AI/architecture-diagram-generator**](https://github.com/Cocoon-AI/architecture-diagram-generator) (MIT, v1.0) by [Cocoon AI](mailto:hello@cocoon-ai.com). The original's clean visual design — color palette, grid background, summary-card layout, JetBrains Mono typography — is preserved. All credit for the original aesthetic belongs to them.
 
-Archify 2.0 contributes:
+Archify 2.x contributes:
 - Refactor of the template to a CSS-variable theme system (dark + light)
 - Theme toggle + `localStorage` persistence + `prefers-color-scheme` default
-- Built-in PNG / JPEG / WebP / SVG export menu
+- Built-in PNG / JPEG / WebP / SVG export menu + copy to clipboard
+- 4× native rasterization (fixes upsampling blur)
+- Dual-theme self-contained SVG export (single file follows the host's `prefers-color-scheme`)
+- Keyboard navigation + accessibility semantics
+- Print stylesheet + local-font fallback
 - Updated `SKILL.md` to guide Claude toward class-based (themeable) diagrams
 
 Both projects are MIT-licensed.
