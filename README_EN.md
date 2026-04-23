@@ -1,3 +1,5 @@
+![Archify product preview](examples/images/archify-readme-hero.png)
+
 # Archify
 
 **Generate beautiful architecture diagrams in chat. Switch dark / light. Copy to clipboard or export crisp 4× PNG / JPEG / WebP / SVG.**
@@ -19,8 +21,6 @@ Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-usin
 <p align="right"><a href="./README.md">中文</a></p>
 
 ## Preview
-
-![Archify product preview](examples/images/archify-readme-hero.png)
 
 Same diagram, two themes, one click to switch:
 

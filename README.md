@@ -1,3 +1,5 @@
+![Archify 主视觉](examples/images/archify-readme-hero.png)
+
 # Archify
 
 **聊两句就画出好看的架构图。深色 / 浅色一键切。导出 4× 清晰 PNG / JPEG / WebP / SVG，或直接复制到剪贴板。**
@@ -19,8 +21,6 @@ Archify 是一个 [Claude Skill](https://support.claude.com/en/articles/12512180
 <p align="right"><a href="./README_EN.md">English</a></p>
 
 ## 预览
-
-![Archify 主视觉](examples/images/archify-readme-hero.png)
 
 同一张图，两套主题，一键切换：
 
