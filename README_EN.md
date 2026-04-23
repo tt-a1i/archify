@@ -20,6 +20,8 @@ Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-usin
 
 ## Preview
 
+![Archify product preview](examples/images/archify-readme-hero.png)
+
 Same diagram, two themes, one click to switch:
 
 | Dark | Light |

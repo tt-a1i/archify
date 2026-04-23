@@ -20,6 +20,8 @@ Archify 是一个 [Claude Skill](https://support.claude.com/en/articles/12512180
 
 ## 预览
 
+![Archify 主视觉](examples/images/archify-readme-hero.png)
+
 同一张图，两套主题，一键切换：
 
 | 深色 | 浅色 |
