@@ -5,7 +5,7 @@
     "title": "Product Analytics Data Flow",
     "subtitle": "Events, consent, PII isolation, warehouse sync, and downstream analytics",
     "output": "examples/dataflow-product-analytics.html",
-    "viewBox": [900, 720]
+    "viewBox": [1080, 760]
   },
   "stages": [
     { "label": "Sources" },
@@ -24,19 +24,19 @@
     { "id": "warehouse", "type": "database", "label": "Warehouse", "sublabel": "analytics tables", "stage": 3, "row": 2, "tag": "curated" },
     { "id": "features", "type": "database", "label": "Feature Store", "sublabel": "daily batch", "stage": 3, "row": 4, "tag": "derived" },
     { "id": "dashboard", "type": "backend", "label": "Dashboards", "sublabel": "product metrics", "stage": 4, "row": 1, "tag": "SQL" },
-    { "id": "model", "type": "backend", "label": "ML Model", "sublabel": "ranking job", "stage": 4, "row": 3, "tag": "features" }
+    { "id": "model", "type": "backend", "label": "ML Model", "sublabel": "ranking job", "stage": 4, "row": 4, "tag": "features" }
   ],
   "flows": [
-    { "from": "web", "to": "edge", "label": "clickstream", "classification": "user events", "variant": "emphasis", "route": "auto", "labelAt": [176, 182] },
-    { "from": "mobile", "to": "edge", "label": "app events", "classification": "device events", "variant": "default", "route": "auto", "labelAt": [176, 328] },
-    { "from": "edge", "to": "consent", "label": "identity + consent", "classification": "PII touch", "variant": "security", "route": "top-channel", "channelY": 124, "labelAt": [356, 112] },
-    { "from": "edge", "to": "stream", "label": "accepted events", "classification": "append-only", "variant": "emphasis", "route": "auto" },
-    { "from": "consent", "to": "pii", "label": "identity map", "classification": "encrypted PII", "variant": "security", "route": "straight", "labelAt": [536, 178] },
-    { "from": "stream", "to": "warehouse", "label": "normalized facts", "classification": "non-PII", "variant": "emphasis", "route": "straight" },
-    { "from": "warehouse", "to": "features", "label": "daily aggregates", "classification": "batch", "variant": "dashed", "route": "vertical-channel", "channelX": 634, "labelSegment": 1, "labelDx": 10 },
-    { "from": "warehouse", "to": "dashboard", "label": "metrics SQL", "classification": "read-only", "variant": "default", "route": "auto", "labelAt": [700, 310] },
-    { "from": "features", "to": "model", "label": "feature vectors", "classification": "derived", "variant": "dashed", "route": "auto", "labelAt": [704, 512] },
-    { "from": "pii", "to": "dashboard", "label": "restricted join", "classification": "approved only", "variant": "security", "route": "bottom-channel", "channelY": 224, "labelAt": [684, 246] }
+    { "from": "web", "to": "edge", "label": "clickstream", "classification": "user events", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[184, 157], [184, 271]], "labelAt": [204, 190] },
+    { "from": "mobile", "to": "edge", "label": "app events", "classification": "device events", "variant": "default", "fromSide": "right", "toSide": "left", "via": [[222, 385], [222, 271]], "labelAt": [220, 342] },
+    { "from": "edge", "to": "consent", "label": "identity + consent", "classification": "PII touch", "variant": "security", "fromSide": "top", "toSide": "left", "via": [[315, 112], [450, 112], [450, 157]], "labelAt": [382, 100] },
+    { "from": "edge", "to": "stream", "label": "accepted events", "classification": "append-only", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[420, 271], [420, 385]], "labelAt": [438, 324] },
+    { "from": "consent", "to": "pii", "label": "identity map", "classification": "encrypted PII", "variant": "security", "route": "straight", "labelAt": [638, 144] },
+    { "from": "stream", "to": "warehouse", "label": "normalized facts", "classification": "non-PII", "variant": "emphasis", "route": "straight", "labelAt": [638, 372] },
+    { "from": "warehouse", "to": "features", "label": "daily aggregates", "classification": "batch", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "route": "straight", "labelAt": [745, 496] },
+    { "from": "warehouse", "to": "dashboard", "label": "metrics SQL", "classification": "read-only", "variant": "default", "fromSide": "right", "toSide": "left", "via": [[852, 385], [852, 271]], "labelAt": [830, 326] },
+    { "from": "features", "to": "model", "label": "feature vectors", "classification": "derived", "variant": "dashed", "route": "straight", "labelAt": [852, 598] },
+    { "from": "pii", "to": "dashboard", "label": "restricted join", "classification": "approved only", "variant": "security", "fromSide": "right", "toSide": "top", "via": [[878, 157], [878, 212], [960, 212]], "labelAt": [880, 198] }
   ],
   "cards": [
     {

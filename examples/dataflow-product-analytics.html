@@ -448,7 +448,7 @@
 
     <!-- Main Diagram -->
     <div class="diagram-container">
-      <svg viewBox="0 0 900 720">
+      <svg viewBox="0 0 1080 760">
         <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -472,136 +472,136 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Data Stages -->
-        <rect x="21" y="46" width="142" height="600" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="92" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">01 / Sources</text>
+        <rect x="16" y="46" width="168" height="640" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="100" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">01 / Sources</text>
 
-        <rect x="195" y="46" width="142" height="600" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="266" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">02 / Ingest</text>
+        <rect x="231" y="46" width="168" height="640" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="315" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">02 / Ingest</text>
 
-        <rect x="369" y="46" width="142" height="600" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="440" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">03 / Process</text>
+        <rect x="446" y="46" width="168" height="640" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="530" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">03 / Process</text>
 
-        <rect x="543" y="46" width="142" height="600" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="614" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">04 / Store</text>
+        <rect x="661" y="46" width="168" height="640" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="745" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">04 / Store</text>
 
-        <rect x="717" y="46" width="142" height="600" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="788" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">05 / Consume</text>
+        <rect x="876" y="46" width="168" height="640" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="960" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">05 / Consume</text>
 
         <!-- Flow paths -->
-        <path d="M 148 165 L 179 165 L 179 271 L 210 271" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path d="M 148 377 L 179 377 L 179 271 L 210 271" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path d="M 322 271 L 322 124 L 384 124 L 384 165" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
-        <path d="M 322 271 L 353 271 L 353 377 L 384 377" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path d="M 496 165 L 558 165" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
-        <path d="M 496 377 L 558 377" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path d="M 614 406 L 634 406 L 634 560 L 614 560" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path d="M 670 377 L 701 377 L 701 271 L 732 271" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path d="M 670 589 L 701 589 L 701 483 L 732 483" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path d="M 670 165 L 670 224 L 732 224 L 732 271" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path d="M 156 157 L 184 157 L 184 271 L 259 271" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 156 385 L 222 385 L 222 271 L 259 271" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path d="M 315 242 L 315 112 L 450 112 L 450 157 L 474 157" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path d="M 371 271 L 420 271 L 420 385 L 474 385" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 586 157 L 689 157" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path d="M 586 385 L 689 385" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 745 414 L 745 584" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path d="M 801 385 L 852 385 L 852 271 L 904 271" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path d="M 801 613 L 904 613" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path d="M 801 157 L 878 157 L 878 212 L 960 212 L 960 242" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
 
         <!-- Nodes -->
-        <rect x="36" y="136" width="112" height="58" rx="6" class="c-mask"/>
-        <rect x="36" y="136" width="112" height="58" rx="6" class="c-frontend" stroke-width="1.5"/>
-        <text x="92" y="157" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Web App</text>
-        <text x="92" y="173" class="t-muted" font-size="7" text-anchor="middle">browser SDK</text>
-        <text x="92" y="183" class="t-frontend" font-size="7" text-anchor="middle">events</text>
+        <rect x="44" y="128" width="112" height="58" rx="6" class="c-mask"/>
+        <rect x="44" y="128" width="112" height="58" rx="6" class="c-frontend" stroke-width="1.5"/>
+        <text x="100" y="149" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Web App</text>
+        <text x="100" y="165" class="t-muted" font-size="7" text-anchor="middle">browser SDK</text>
+        <text x="100" y="175" class="t-frontend" font-size="7" text-anchor="middle">events</text>
 
-        <rect x="36" y="348" width="112" height="58" rx="6" class="c-mask"/>
-        <rect x="36" y="348" width="112" height="58" rx="6" class="c-frontend" stroke-width="1.5"/>
-        <text x="92" y="369" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Mobile</text>
-        <text x="92" y="385" class="t-muted" font-size="7" text-anchor="middle">iOS / Android</text>
-        <text x="92" y="395" class="t-frontend" font-size="7" text-anchor="middle">events</text>
+        <rect x="44" y="356" width="112" height="58" rx="6" class="c-mask"/>
+        <rect x="44" y="356" width="112" height="58" rx="6" class="c-frontend" stroke-width="1.5"/>
+        <text x="100" y="377" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Mobile</text>
+        <text x="100" y="393" class="t-muted" font-size="7" text-anchor="middle">iOS / Android</text>
+        <text x="100" y="403" class="t-frontend" font-size="7" text-anchor="middle">events</text>
 
-        <rect x="210" y="242" width="112" height="58" rx="6" class="c-mask"/>
-        <rect x="210" y="242" width="112" height="58" rx="6" class="c-cloud" stroke-width="1.5"/>
-        <text x="266" y="263" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Edge API</text>
-        <text x="266" y="279" class="t-muted" font-size="7" text-anchor="middle">collector</text>
-        <text x="266" y="289" class="t-cloud" font-size="7" text-anchor="middle">TLS</text>
+        <rect x="259" y="242" width="112" height="58" rx="6" class="c-mask"/>
+        <rect x="259" y="242" width="112" height="58" rx="6" class="c-cloud" stroke-width="1.5"/>
+        <text x="315" y="263" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Edge API</text>
+        <text x="315" y="279" class="t-muted" font-size="7" text-anchor="middle">collector</text>
+        <text x="315" y="289" class="t-cloud" font-size="7" text-anchor="middle">TLS</text>
 
-        <rect x="384" y="136" width="112" height="58" rx="6" class="c-mask"/>
-        <rect x="384" y="136" width="112" height="58" rx="6" class="c-security" stroke-width="1.5"/>
-        <text x="440" y="157" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Consent Gate</text>
-        <text x="440" y="173" class="t-muted" font-size="7" text-anchor="middle">policy filter</text>
-        <text x="440" y="183" class="t-security" font-size="7" text-anchor="middle">PII guard</text>
+        <rect x="474" y="128" width="112" height="58" rx="6" class="c-mask"/>
+        <rect x="474" y="128" width="112" height="58" rx="6" class="c-security" stroke-width="1.5"/>
+        <text x="530" y="149" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Consent Gate</text>
+        <text x="530" y="165" class="t-muted" font-size="7" text-anchor="middle">policy filter</text>
+        <text x="530" y="175" class="t-security" font-size="7" text-anchor="middle">PII guard</text>
 
-        <rect x="384" y="348" width="112" height="58" rx="6" class="c-mask"/>
-        <rect x="384" y="348" width="112" height="58" rx="6" class="c-messagebus" stroke-width="1.5"/>
-        <text x="440" y="369" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Event Stream</text>
-        <text x="440" y="385" class="t-muted" font-size="7" text-anchor="middle">Kafka topic</text>
-        <text x="440" y="395" class="t-messagebus" font-size="7" text-anchor="middle">ordered</text>
+        <rect x="474" y="356" width="112" height="58" rx="6" class="c-mask"/>
+        <rect x="474" y="356" width="112" height="58" rx="6" class="c-messagebus" stroke-width="1.5"/>
+        <text x="530" y="377" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Event Stream</text>
+        <text x="530" y="393" class="t-muted" font-size="7" text-anchor="middle">Kafka topic</text>
+        <text x="530" y="403" class="t-messagebus" font-size="7" text-anchor="middle">ordered</text>
 
-        <rect x="558" y="136" width="112" height="58" rx="6" class="c-mask"/>
-        <rect x="558" y="136" width="112" height="58" rx="6" class="c-security" stroke-width="1.5"/>
-        <text x="614" y="157" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">PII Vault</text>
-        <text x="614" y="173" class="t-muted" font-size="7" text-anchor="middle">encrypted</text>
-        <text x="614" y="183" class="t-security" font-size="7" text-anchor="middle">restricted</text>
+        <rect x="689" y="128" width="112" height="58" rx="6" class="c-mask"/>
+        <rect x="689" y="128" width="112" height="58" rx="6" class="c-security" stroke-width="1.5"/>
+        <text x="745" y="149" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">PII Vault</text>
+        <text x="745" y="165" class="t-muted" font-size="7" text-anchor="middle">encrypted</text>
+        <text x="745" y="175" class="t-security" font-size="7" text-anchor="middle">restricted</text>
 
-        <rect x="558" y="348" width="112" height="58" rx="6" class="c-mask"/>
-        <rect x="558" y="348" width="112" height="58" rx="6" class="c-database" stroke-width="1.5"/>
-        <text x="614" y="369" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Warehouse</text>
-        <text x="614" y="385" class="t-muted" font-size="7" text-anchor="middle">analytics tables</text>
-        <text x="614" y="395" class="t-database" font-size="7" text-anchor="middle">curated</text>
+        <rect x="689" y="356" width="112" height="58" rx="6" class="c-mask"/>
+        <rect x="689" y="356" width="112" height="58" rx="6" class="c-database" stroke-width="1.5"/>
+        <text x="745" y="377" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Warehouse</text>
+        <text x="745" y="393" class="t-muted" font-size="7" text-anchor="middle">analytics tables</text>
+        <text x="745" y="403" class="t-database" font-size="7" text-anchor="middle">curated</text>
 
-        <rect x="558" y="560" width="112" height="58" rx="6" class="c-mask"/>
-        <rect x="558" y="560" width="112" height="58" rx="6" class="c-database" stroke-width="1.5"/>
-        <text x="614" y="581" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Feature Store</text>
-        <text x="614" y="597" class="t-muted" font-size="7" text-anchor="middle">daily batch</text>
-        <text x="614" y="607" class="t-database" font-size="7" text-anchor="middle">derived</text>
+        <rect x="689" y="584" width="112" height="58" rx="6" class="c-mask"/>
+        <rect x="689" y="584" width="112" height="58" rx="6" class="c-database" stroke-width="1.5"/>
+        <text x="745" y="605" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Feature Store</text>
+        <text x="745" y="621" class="t-muted" font-size="7" text-anchor="middle">daily batch</text>
+        <text x="745" y="631" class="t-database" font-size="7" text-anchor="middle">derived</text>
 
-        <rect x="732" y="242" width="112" height="58" rx="6" class="c-mask"/>
-        <rect x="732" y="242" width="112" height="58" rx="6" class="c-backend" stroke-width="1.5"/>
-        <text x="788" y="263" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Dashboards</text>
-        <text x="788" y="279" class="t-muted" font-size="7" text-anchor="middle">product metrics</text>
-        <text x="788" y="289" class="t-backend" font-size="7" text-anchor="middle">SQL</text>
+        <rect x="904" y="242" width="112" height="58" rx="6" class="c-mask"/>
+        <rect x="904" y="242" width="112" height="58" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="960" y="263" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Dashboards</text>
+        <text x="960" y="279" class="t-muted" font-size="7" text-anchor="middle">product metrics</text>
+        <text x="960" y="289" class="t-backend" font-size="7" text-anchor="middle">SQL</text>
 
-        <rect x="732" y="454" width="112" height="58" rx="6" class="c-mask"/>
-        <rect x="732" y="454" width="112" height="58" rx="6" class="c-backend" stroke-width="1.5"/>
-        <text x="788" y="475" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">ML Model</text>
-        <text x="788" y="491" class="t-muted" font-size="7" text-anchor="middle">ranking job</text>
-        <text x="788" y="501" class="t-backend" font-size="7" text-anchor="middle">features</text>
+        <rect x="904" y="584" width="112" height="58" rx="6" class="c-mask"/>
+        <rect x="904" y="584" width="112" height="58" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="960" y="605" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">ML Model</text>
+        <text x="960" y="621" class="t-muted" font-size="7" text-anchor="middle">ranking job</text>
+        <text x="960" y="631" class="t-backend" font-size="7" text-anchor="middle">features</text>
 
         <!-- Flow labels -->
-        <rect x="143.05" y="171" width="65.9" height="27" rx="4" class="c-mask"/>
-        <text x="176" y="182" class="t-backend" font-size="8" text-anchor="middle">clickstream</text>
-        <text x="176" y="193" class="t-dim" font-size="7" text-anchor="middle">user events</text>
-        <rect x="145.5" y="317" width="61" height="27" rx="4" class="c-mask"/>
-        <text x="176" y="328" class="t-muted" font-size="8" text-anchor="middle">app events</text>
-        <text x="176" y="339" class="t-dim" font-size="7" text-anchor="middle">device events</text>
-        <rect x="305.9" y="101" width="100.2" height="27" rx="4" class="c-mask"/>
-        <text x="356" y="112" class="t-security" font-size="8" text-anchor="middle">identity + consent</text>
-        <text x="356" y="123" class="t-dim" font-size="7" text-anchor="middle">PII touch</text>
-        <rect x="310.25" y="303" width="85.5" height="27" rx="4" class="c-mask"/>
-        <text x="353" y="314" class="t-backend" font-size="8" text-anchor="middle">accepted events</text>
-        <text x="353" y="325" class="t-dim" font-size="7" text-anchor="middle">append-only</text>
-        <rect x="500.6" y="167" width="70.80000000000001" height="27" rx="4" class="c-mask"/>
-        <text x="536" y="178" class="t-security" font-size="8" text-anchor="middle">identity map</text>
-        <text x="536" y="189" class="t-dim" font-size="7" text-anchor="middle">encrypted PII</text>
-        <rect x="481.8" y="356" width="90.4" height="27" rx="4" class="c-mask"/>
-        <text x="527" y="367" class="t-backend" font-size="8" text-anchor="middle">normalized facts</text>
-        <text x="527" y="378" class="t-dim" font-size="7" text-anchor="middle">non-PII</text>
-        <rect x="598.8" y="462" width="90.4" height="27" rx="4" class="c-mask"/>
-        <text x="644" y="473" class="t-messagebus" font-size="8" text-anchor="middle">daily aggregates</text>
-        <text x="644" y="484" class="t-dim" font-size="7" text-anchor="middle">batch</text>
-        <rect x="667.05" y="299" width="65.9" height="27" rx="4" class="c-mask"/>
-        <text x="700" y="310" class="t-muted" font-size="8" text-anchor="middle">metrics SQL</text>
-        <text x="700" y="321" class="t-dim" font-size="7" text-anchor="middle">read-only</text>
-        <rect x="661.25" y="501" width="85.5" height="27" rx="4" class="c-mask"/>
-        <text x="704" y="512" class="t-messagebus" font-size="8" text-anchor="middle">feature vectors</text>
-        <text x="704" y="523" class="t-dim" font-size="7" text-anchor="middle">derived</text>
-        <rect x="641.25" y="235" width="85.5" height="27" rx="4" class="c-mask"/>
-        <text x="684" y="246" class="t-security" font-size="8" text-anchor="middle">restricted join</text>
-        <text x="684" y="257" class="t-dim" font-size="7" text-anchor="middle">approved only</text>
+        <rect x="171.05" y="179" width="65.9" height="27" rx="4" class="c-mask"/>
+        <text x="204" y="190" class="t-backend" font-size="8" text-anchor="middle">clickstream</text>
+        <text x="204" y="201" class="t-dim" font-size="7" text-anchor="middle">user events</text>
+        <rect x="182.15" y="331" width="75.7" height="27" rx="4" class="c-mask"/>
+        <text x="220" y="342" class="t-muted" font-size="8" text-anchor="middle">app events</text>
+        <text x="220" y="353" class="t-dim" font-size="7" text-anchor="middle">device events</text>
+        <rect x="331.9" y="89" width="100.2" height="27" rx="4" class="c-mask"/>
+        <text x="382" y="100" class="t-security" font-size="8" text-anchor="middle">identity + consent</text>
+        <text x="382" y="111" class="t-dim" font-size="7" text-anchor="middle">PII touch</text>
+        <rect x="395.25" y="313" width="85.5" height="27" rx="4" class="c-mask"/>
+        <text x="438" y="324" class="t-backend" font-size="8" text-anchor="middle">accepted events</text>
+        <text x="438" y="335" class="t-dim" font-size="7" text-anchor="middle">append-only</text>
+        <rect x="600.15" y="133" width="75.7" height="27" rx="4" class="c-mask"/>
+        <text x="638" y="144" class="t-security" font-size="8" text-anchor="middle">identity map</text>
+        <text x="638" y="155" class="t-dim" font-size="7" text-anchor="middle">encrypted PII</text>
+        <rect x="592.8" y="361" width="90.4" height="27" rx="4" class="c-mask"/>
+        <text x="638" y="372" class="t-backend" font-size="8" text-anchor="middle">normalized facts</text>
+        <text x="638" y="383" class="t-dim" font-size="7" text-anchor="middle">non-PII</text>
+        <rect x="699.8" y="485" width="90.4" height="27" rx="4" class="c-mask"/>
+        <text x="745" y="496" class="t-messagebus" font-size="8" text-anchor="middle">daily aggregates</text>
+        <text x="745" y="507" class="t-dim" font-size="7" text-anchor="middle">batch</text>
+        <rect x="797.05" y="315" width="65.9" height="27" rx="4" class="c-mask"/>
+        <text x="830" y="326" class="t-muted" font-size="8" text-anchor="middle">metrics SQL</text>
+        <text x="830" y="337" class="t-dim" font-size="7" text-anchor="middle">read-only</text>
+        <rect x="809.25" y="587" width="85.5" height="27" rx="4" class="c-mask"/>
+        <text x="852" y="598" class="t-messagebus" font-size="8" text-anchor="middle">feature vectors</text>
+        <text x="852" y="609" class="t-dim" font-size="7" text-anchor="middle">derived</text>
+        <rect x="837.25" y="187" width="85.5" height="27" rx="4" class="c-mask"/>
+        <text x="880" y="198" class="t-security" font-size="8" text-anchor="middle">restricted join</text>
+        <text x="880" y="209" class="t-dim" font-size="7" text-anchor="middle">approved only</text>
 
         <!-- Legend -->
-        <text x="214" y="664" class="t-primary" font-size="10" font-weight="600">Legend</text>
-        <path d="M 214 684 L 248 684" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <text x="257" y="687" class="t-muted" font-size="8">primary data</text>
-        <path d="M 340 684 L 374 684" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
-        <text x="383" y="687" class="t-muted" font-size="8">policy / PII</text>
-        <path d="M 480 684 L 514 684" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <text x="523" y="687" class="t-muted" font-size="8">async batch</text>
-        <rect x="625" y="676" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
-        <text x="646" y="684" class="t-muted" font-size="8">data store</text>
+        <text x="214" y="704" class="t-primary" font-size="10" font-weight="600">Legend</text>
+        <path d="M 214 724 L 248 724" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <text x="257" y="727" class="t-muted" font-size="8">primary data</text>
+        <path d="M 340 724 L 374 724" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <text x="383" y="727" class="t-muted" font-size="8">policy / PII</text>
+        <path d="M 480 724 L 514 724" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <text x="523" y="727" class="t-muted" font-size="8">async batch</text>
+        <rect x="625" y="716" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+        <text x="646" y="724" class="t-muted" font-size="8">data store</text>
       </svg>
     </div>
 

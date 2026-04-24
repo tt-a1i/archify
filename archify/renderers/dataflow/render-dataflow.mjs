@@ -16,12 +16,12 @@ const layout = {
   stageY: 46,
   stageH: 36,
   stageBottomPad: 74,
-  leftX: 92,
-  colGap: 174,
-  stageW: 142,
+  leftX: 100,
+  colGap: 215,
+  stageW: 168,
   nodeW: 112,
   nodeH: 58,
-  rowYs: [136, 242, 348, 454, 560],
+  rowYs: [128, 242, 356, 470, 584],
   labelH: 16
 };
 
@@ -290,7 +290,8 @@ function renderFlowPath(flow) {
 function renderFlowLabel(flow) {
   const routed = pathFor(flow);
   const [lx, ly] = labelPoint(flow, routed.points);
-  const labelW = Math.max(34, flow.label.length * 4.9 + 12);
+  const longestLine = Math.max(flow.label.length, (flow.classification || '').length);
+  const labelW = Math.max(34, longestLine * 4.9 + 12);
   const classification = flow.classification
     ? `\n        <text x="${lx}" y="${ly + 11}" class="t-dim" font-size="7" text-anchor="middle">${esc(flow.classification)}</text>`
     : '';
