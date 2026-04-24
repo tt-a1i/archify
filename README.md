@@ -2,12 +2,12 @@
 
 # Archify
 
-**聊两句就画出好看的架构图、技术流程图和调用时序图。深色 / 浅色一键切。导出 4× 清晰 PNG / JPEG / WebP / SVG，或直接复制到剪贴板。**
+**聊两句就画出好看的架构图、技术流程图、调用时序图和数据流图。深色 / 浅色一键切。导出 4× 清晰 PNG / JPEG / WebP / SVG，或直接复制到剪贴板。**
 
 Archify 是一个 [Claude Skill](https://support.claude.com/en/articles/12512180-using-skills-in-claude)：你用大白话描述自己的系统或流程，它就把你的描述变成一张做工精细的技术图 —— 一个单文件 HTML，在浏览器里打开就能切主题、复制到剪贴板、导出成各种图片格式。
 
 - **不需要会画图** —— 把组件和连接关系说给 Claude 就行
-- **支持 workflow / sequence** —— 技术流程、审批链、工具调用、CI/CD、请求调用链都可以画
+- **支持 workflow / sequence / data flow** —— 技术流程、审批链、工具调用、CI/CD、请求调用链、数据管线、PII 边界都可以画
 - **内置主题切换** —— 深色 / 浅色一键切，浏览器记住偏好
 - **一键复制到剪贴板** —— 直接贴到 Slack、飞书、微信、Notion、GitHub issue
 - **导出图片超清晰** —— PNG / JPEG / WebP 全部由浏览器在 4× 源分辨率下**原生光栅化**（不是位图放大，没有糊），或导出 SVG 做真矢量
@@ -38,13 +38,14 @@ Export 菜单 —— 复制到剪贴板 + 四种格式下载：
 
 ## 图表类型
 
-Archify 现在有三种主要输出：
+Archify 现在有四种主要输出：
 
 | 类型 | 适合画什么 | 怎么用 |
 |---|---|---|
 | **Architecture** | 系统组件、云资源、数据库、缓存、服务边界、安全组 | 直接描述系统结构 |
 | **Workflow** | 请求生命周期、审批流程、工具调用、CI/CD、运维 runbook、事故响应 | 说明参与方、步骤顺序、关键分支 |
 | **Sequence** | API 调用链、请求生命周期、缓存回源、鉴权、异步 trace、服务交互 | 说明谁调用谁、先后顺序、返回路径 |
+| **Data Flow** | 数据管线、ETL/ELT、埋点、PII 隔离、仓库同步、数据血缘、下游消费 | 说明数据来源、处理阶段、存储位置、敏感边界和消费方 |
 
 Workflow 不是通用流程图的替代品，它更偏“技术沟通图”：有泳道、有语义颜色、有主路径和异步/审批/观测路径。比如：
 
@@ -65,6 +66,18 @@ Sequence 用来解释更细的交互顺序，比如：
 示例：[`examples/sequence-cache-miss-request.html`](examples/sequence-cache-miss-request.html)。
 
 ![Sequence 示例](examples/images/archify-sequence.png)
+
+Data Flow 适合解释“数据资产怎么走”，比如：
+
+```
+用 archify 画一个 data flow：
+Web 和 Mobile 上报埋点，Edge API 收集事件，Consent Gate 过滤 PII，Kafka 承接事件流，
+Warehouse 存分析表，Feature Store 做每日特征，Dashboard 和 ML Model 消费下游数据。
+```
+
+示例：[`examples/dataflow-product-analytics.html`](examples/dataflow-product-analytics.html)。
+
+![Data Flow 示例](examples/images/archify-dataflow.png)
 
 ## 版本演进
 
@@ -211,6 +224,18 @@ unzip archify.zip -d ./.claude/skills/
 - PostgreSQL、MongoDB、Elasticsearch
 - Kafka 做事件流
 - K8s 做编排
+```
+
+**数据流 / 埋点分析：**
+```
+用 archify 画一个 data flow：
+- Web App 和 Mobile SDK 产生 clickstream events
+- Edge API 收集事件
+- Consent Gate 过滤身份信息和 PII
+- Kafka/Event Stream 承接 accepted events
+- Warehouse 存 normalized facts
+- Feature Store 每日生成 feature vectors
+- Dashboards 和 ML Model 消费下游数据
 ```
 
 ## 语义配色

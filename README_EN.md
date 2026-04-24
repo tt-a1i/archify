@@ -2,12 +2,12 @@
 
 # Archify
 
-**Generate beautiful architecture, technical workflow, and sequence diagrams in chat. Switch dark / light. Copy to clipboard or export crisp 4× PNG / JPEG / WebP / SVG.**
+**Generate beautiful architecture, technical workflow, sequence, and data-flow diagrams in chat. Switch dark / light. Copy to clipboard or export crisp 4× PNG / JPEG / WebP / SVG.**
 
 Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-using-skills-in-claude) that turns a plain-English description of your system or process into a polished, self-contained technical diagram — a single HTML file you can open, toggle themes on, copy to the clipboard, and export at maximum resolution.
 
 - **No design skills needed** — describe your architecture in English, get a diagram
-- **Workflow and sequence diagrams too** — technical flows, approvals, tool calls, CI/CD, runbooks, and request call chains can be drawn
+- **Workflow, sequence, and data-flow diagrams too** — technical flows, approvals, tool calls, CI/CD, runbooks, request call chains, data pipelines, and PII boundaries can be drawn
 - **Built-in theme toggle** — one click between dark and light, persists across sessions
 - **Copy PNG to clipboard** — one click, paste straight into Slack / Notion / GitHub
 - **Ultra-crisp image export** — PNG / JPEG / WebP rendered natively at 4× source resolution (no upsampling blur), or SVG for true vector
@@ -37,13 +37,14 @@ Live example: [`examples/web-app.html`](examples/web-app.html) — open in a bro
 
 ## Diagram types
 
-Archify now has three primary outputs:
+Archify now has four primary outputs:
 
 | Type | Good for | How to ask |
 |---|---|---|
 | **Architecture** | System components, cloud resources, databases, caches, services, boundaries, security groups | Describe the system structure |
 | **Workflow** | Request lifecycles, approval flows, tool calls, CI/CD, runbooks, incident response | Describe participants, step order, and key branches |
 | **Sequence** | API call chains, request lifecycles, cache fallback, auth checks, async trace, service interactions | Describe who calls whom, in what order, and what returns |
+| **Data Flow** | Data pipelines, ETL/ELT, analytics events, PII isolation, warehouse sync, lineage, downstream consumers | Describe sources, processing stages, storage, sensitivity boundaries, and consumers |
 
 Workflow is not trying to replace every general-purpose flowchart. It is a technical communication diagram: swimlanes, semantic colors, a clear happy path, and secondary async / approval / trace paths.
 
@@ -64,6 +65,18 @@ User opens a page, the frontend calls the API, the API verifies JWT, reads Redis
 Open the example here: [`examples/sequence-cache-miss-request.html`](examples/sequence-cache-miss-request.html).
 
 ![Sequence example](examples/images/archify-sequence.png)
+
+Data Flow diagrams explain how data assets move and change:
+
+```text
+Use archify to draw a data flow:
+Web and Mobile emit analytics events, Edge API collects them, Consent Gate filters PII, Kafka carries accepted events,
+Warehouse stores analytics tables, Feature Store derives daily features, Dashboards and an ML Model consume downstream data.
+```
+
+Open the example here: [`examples/dataflow-product-analytics.html`](examples/dataflow-product-analytics.html).
+
+![Data Flow example](examples/images/archify-dataflow.png)
 
 ## What's new
 
@@ -209,6 +222,18 @@ Create an architecture diagram for a microservices system with:
 - PostgreSQL, MongoDB, and Elasticsearch databases
 - Kafka for event streaming
 - Kubernetes orchestration
+```
+
+**Data flow / product analytics:**
+```
+Use archify to draw a data flow:
+- Web App and Mobile SDK produce clickstream events
+- Edge API collects events
+- Consent Gate filters identity and PII
+- Kafka/Event Stream carries accepted events
+- Warehouse stores normalized facts
+- Feature Store derives daily feature vectors
+- Dashboards and ML Model consume downstream data
 ```
 
 ## Color palette

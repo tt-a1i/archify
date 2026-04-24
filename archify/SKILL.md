@@ -1,6 +1,6 @@
 ---
 name: archify
-description: Create professional architecture, workflow, and sequence diagrams as standalone HTML files with SVG graphics, a built-in dark/light theme toggle, and one-click export to PNG / JPEG / WebP / SVG. Use when the user asks for system architecture diagrams, infrastructure diagrams, cloud architecture visualizations, security diagrams, network topology diagrams, technical workflows, approval flows, runbooks, CI/CD flows, process diagrams, API call sequences, request lifecycles, or interaction diagrams.
+description: Create professional architecture, workflow, sequence, and data-flow diagrams as standalone HTML files with SVG graphics, a built-in dark/light theme toggle, and one-click export to PNG / JPEG / WebP / SVG. Use when the user asks for system architecture diagrams, infrastructure diagrams, cloud architecture visualizations, security diagrams, network topology diagrams, technical workflows, approval flows, runbooks, CI/CD flows, process diagrams, API call sequences, request lifecycles, interaction diagrams, data pipelines, analytics flows, ETL/ELT maps, PII boundaries, or governance/data lineage diagrams.
 license: MIT
 metadata:
   version: "2.4"
@@ -10,7 +10,7 @@ metadata:
 
 # Archify Skill
 
-Create professional technical architecture diagrams as self-contained HTML files with inline SVG, a theme toggle, and a built-in image/SVG export menu. No external runtime dependencies beyond Google Fonts.
+Create professional technical diagrams as self-contained HTML files with inline SVG, a theme toggle, and a built-in image/SVG export menu. No external runtime dependencies beyond Google Fonts.
 
 Every diagram this skill produces ships with:
 
@@ -20,19 +20,22 @@ Every diagram this skill produces ships with:
 
 ## Diagram Types
 
-Archify supports three technical diagram modes:
+Archify supports four technical diagram modes:
 
 | Type | Use for | Output path |
 |------|---------|-------------|
 | `architecture` | System components, cloud resources, services, storage, security boundaries, and infrastructure relationships | Hand-place SVG components inside `assets/template.html` |
 | `workflow` | Technical flows, request lifecycles, approval gates, tool calls, runbooks, CI/CD paths, incident response, and process ownership | Prefer `renderers/workflow/render-workflow.mjs` with a workflow JSON file |
 | `sequence` | API calls, request lifecycles, service interactions, cache fallback paths, async trace/logging, and return paths over time | Prefer `renderers/sequence/render-sequence.mjs` with a sequence JSON file |
+| `dataflow` | Data pipelines, ETL/ELT, analytics flows, PII isolation, governance boundaries, lineage, warehouse sync, and downstream consumers | Prefer `renderers/dataflow/render-dataflow.mjs` with a data-flow JSON file |
 
 When the user says "architecture", "system diagram", "cloud diagram", or asks to understand a codebase structure, use the `architecture` mode unless the requested output is clearly process-oriented.
 
 When the user says "workflow", "flow", "process", "runbook", "sequence of steps", "approval", "CI/CD", "incident", or asks how work moves through actors/systems over time, use the `workflow` mode.
 
 When the user says "sequence", "interaction", "call sequence", "request lifecycle", "API call chain", "who calls whom", or asks how multiple participants interact over time, use the `sequence` mode.
+
+When the user says "data flow", "pipeline", "ETL", "ELT", "lineage", "analytics", "warehouse", "PII", "consent", "governance", or asks where data comes from, how it is transformed, and who consumes it, use the `dataflow` mode.
 
 ### Workflow Mode
 
@@ -114,6 +117,49 @@ The renderer:
 - Fails fast when participants overflow, message endpoints are unknown, or message rows are too tight
 
 Use sequence diagrams when the important thing is order over time. Keep labels short; prefer "GET /path", "verify JWT", "cache miss", "emit trace", and "200 JSON" over prose sentences.
+
+### Data-flow Mode
+
+Data-flow diagrams use a compact JSON IR:
+
+```json
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Product Analytics Data Flow",
+    "subtitle": "Events, consent, PII isolation, warehouse sync, and consumers",
+    "output": "product-analytics.html",
+    "viewBox": [900, 720]
+  },
+  "stages": [
+    { "label": "Sources" },
+    { "label": "Ingest" },
+    { "label": "Process" },
+    { "label": "Store" },
+    { "label": "Consume" }
+  ],
+  "nodes": [],
+  "flows": [],
+  "cards": []
+}
+```
+
+If you have filesystem/tool access, create a data-flow JSON file and render it with:
+
+```bash
+node archify/renderers/dataflow/render-dataflow.mjs dataflow.json dataflow.html
+```
+
+The renderer:
+
+- Places nodes by lifecycle stage + row
+- Uses vertical stage bands for source, ingest, process, store, and consume boundaries
+- Uses flow labels to name data assets, plus optional `classification` for PII/governance context
+- Uses semantic variants: `emphasis` for the primary data path, `security` for PII/policy/consent/restricted joins, and `dashed` for async or batch derivations
+- Fails fast when nodes overlap, stages overflow, flow endpoints are unknown, labels are missing, or arrows become unreadably short
+
+Use data-flow diagrams when the important thing is data lineage and governance. Keep labels asset-like: "clickstream", "identity map", "normalized facts", "feature vectors", "restricted join". Put sensitivity in `classification`: "PII touch", "encrypted PII", "approved only", "non-PII", "read-only".
 
 ## The Cardinal Rule: Use CSS Classes, Not Inline Colors
 

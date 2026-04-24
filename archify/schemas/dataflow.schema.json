@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/dataflow.schema.json",
+  "title": "Archify Data Flow Diagram",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "diagram_type", "meta", "stages", "nodes", "flows"],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "diagram_type": {
+      "const": "dataflow"
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "subtitle": { "type": "string" },
+        "output": { "type": "string" },
+        "viewBox": {
+          "type": "array",
+          "prefixItems": [
+            { "type": "number", "minimum": 360 },
+            { "type": "number", "minimum": 360 }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "stages": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "label", "stage", "row"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "type": {
+            "enum": ["frontend", "backend", "database", "cloud", "security", "messagebus", "external"]
+          },
+          "label": { "type": "string", "minLength": 1 },
+          "sublabel": { "type": "string" },
+          "tag": { "type": "string" },
+          "stage": { "type": "integer", "minimum": 0 },
+          "row": { "type": "integer", "minimum": 0 },
+          "width": { "type": "number", "minimum": 48 },
+          "height": { "type": "number", "minimum": 36 },
+          "yOffset": { "type": "number" }
+        }
+      }
+    },
+    "flows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "to", "label"],
+        "properties": {
+          "from": { "$ref": "#/$defs/id" },
+          "to": { "$ref": "#/$defs/id" },
+          "label": { "type": "string", "minLength": 1 },
+          "classification": { "type": "string" },
+          "variant": {
+            "enum": ["default", "emphasis", "security", "dashed"]
+          },
+          "route": {
+            "enum": ["auto", "straight", "vertical-channel", "bottom-channel", "top-channel"]
+          },
+          "fromSide": {
+            "enum": ["left", "right", "top", "bottom"]
+          },
+          "toSide": {
+            "enum": ["left", "right", "top", "bottom"]
+          },
+          "channelX": { "type": "number" },
+          "channelY": { "type": "number" },
+          "labelAt": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number" },
+              { "type": "number" }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "labelDx": { "type": "number" },
+          "labelDy": { "type": "number" },
+          "labelSegment": { "type": "integer", "minimum": 0 },
+          "via": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "number" },
+                { "type": "number" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "width": { "type": "number", "minimum": 0.5 }
+        }
+      }
+    },
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["dot", "title", "items"],
+        "properties": {
+          "dot": { "enum": ["cyan", "emerald", "violet", "amber", "rose", "orange", "slate"] },
+          "title": { "type": "string", "minLength": 1 },
+          "items": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+    }
+  }
+}

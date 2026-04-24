@@ -12,6 +12,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 - **Sequence JSON Schema.** Added `archify/schemas/sequence.schema.json` to document and validate the sequence IR shape.
 - **Sequence example.** Added a rendered cache-miss request sequence example at `examples/sequence-cache-miss-request.html`.
 - **Sequence README preview.** Added a rendered sequence screenshot to the README preview flow.
+- **Data-flow diagram mode.** Added a renderer-backed data-flow diagram type for analytics pipelines, ETL/ELT, PII isolation, governance boundaries, data lineage, warehouse sync, and downstream consumers.
+- **Data-flow JSON Schema.** Added `archify/schemas/dataflow.schema.json` to document and validate the data-flow IR shape.
+- **Data-flow example.** Added a rendered product analytics data-flow example at `examples/dataflow-product-analytics.html`, plus a README preview screenshot.
 
 ### Changed
 - **Template responsive polish.** The shared HTML template now handles narrow viewports better: the toolbar no longer overlaps the title, diagrams can scale down to the available width, and cards stack cleanly on mobile.

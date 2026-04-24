@@ -111,6 +111,12 @@ Sequence diagrams became the second typed renderer pilot. They use `diagram_type
 
 Like workflow, sequence is not a generic auto-layout target. The renderer enforces readable spacing and semantic styling, while Claude still decides which participants matter, how the story is grouped, which messages deserve labels, and which return/async paths should stay quiet.
 
+### Data-flow renderer pilot (2026-04-24)
+
+Data-flow diagrams became the third typed renderer pilot. They use `diagram_type: "dataflow"` JSON with lifecycle stages, semantic nodes, labeled data flows, optional classifications, and summary cards. The goal is to explain analytics pipelines, ETL/ELT, PII isolation, governance boundaries, warehouse sync, derived features, and downstream consumers.
+
+Like workflow and sequence, data-flow is not a generic graph layout engine. The renderer provides stable stage/row placement and validation checks, while Claude still decides which data assets matter, where sensitive boundaries should appear, which paths are primary, and which batch or restricted joins should stay visually secondary.
+
 ---
 
 ## Not planned
