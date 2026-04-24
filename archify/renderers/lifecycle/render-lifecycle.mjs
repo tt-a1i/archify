@@ -16,12 +16,12 @@ const layout = {
   laneX: 32,
   laneY: 44,
   laneW: 914,
-  laneGap: 14,
+  laneGap: 10,
   laneTitleH: 20,
-  laneH: 112,
+  laneH: 92,
   colXs: [96, 246, 396, 546, 696, 846],
   nodeW: 112,
-  nodeH: 56
+  nodeH: 54
 };
 
 const typeClass = {

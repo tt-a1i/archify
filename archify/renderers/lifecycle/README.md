@@ -38,10 +38,11 @@ archify/schemas/lifecycle.schema.json
 
 ## Design Rules
 
-- Use lanes for lifecycle layers: main path, wait states, exception/recovery
-  paths, terminal states.
+- Use lanes for lifecycle layers: active run states, suspended states,
+  recovery loops, and terminal outcomes.
 - Place states with lane IDs and column indexes.
-- Keep the happy path left-to-right in one lane when possible.
+- Keep the active path left-to-right, then exit into a distinct terminal
+  outcome when the lifecycle ends.
 - Use `success` for terminal success, `failure` for failure/terminal error,
   `waiting` for pauses, and `decision` for gates.
 - Use `emphasis` for the main transition path.
