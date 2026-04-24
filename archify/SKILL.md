@@ -1,6 +1,6 @@
 ---
 name: archify
-description: Create professional architecture and workflow diagrams as standalone HTML files with SVG graphics, a built-in dark/light theme toggle, and one-click export to PNG / JPEG / WebP / SVG. Use when the user asks for system architecture diagrams, infrastructure diagrams, cloud architecture visualizations, security diagrams, network topology diagrams, technical workflows, approval flows, runbooks, CI/CD flows, or process diagrams.
+description: Create professional architecture, workflow, and sequence diagrams as standalone HTML files with SVG graphics, a built-in dark/light theme toggle, and one-click export to PNG / JPEG / WebP / SVG. Use when the user asks for system architecture diagrams, infrastructure diagrams, cloud architecture visualizations, security diagrams, network topology diagrams, technical workflows, approval flows, runbooks, CI/CD flows, process diagrams, API call sequences, request lifecycles, or interaction diagrams.
 license: MIT
 metadata:
   version: "2.4"
@@ -20,16 +20,19 @@ Every diagram this skill produces ships with:
 
 ## Diagram Types
 
-Archify supports two technical diagram modes:
+Archify supports three technical diagram modes:
 
 | Type | Use for | Output path |
 |------|---------|-------------|
 | `architecture` | System components, cloud resources, services, storage, security boundaries, and infrastructure relationships | Hand-place SVG components inside `assets/template.html` |
 | `workflow` | Technical flows, request lifecycles, approval gates, tool calls, runbooks, CI/CD paths, incident response, and process ownership | Prefer `renderers/workflow/render-workflow.mjs` with a workflow JSON file |
+| `sequence` | API calls, request lifecycles, service interactions, cache fallback paths, async trace/logging, and return paths over time | Prefer `renderers/sequence/render-sequence.mjs` with a sequence JSON file |
 
 When the user says "architecture", "system diagram", "cloud diagram", or asks to understand a codebase structure, use the `architecture` mode unless the requested output is clearly process-oriented.
 
 When the user says "workflow", "flow", "process", "runbook", "sequence of steps", "approval", "CI/CD", "incident", or asks how work moves through actors/systems over time, use the `workflow` mode.
+
+When the user says "sequence", "interaction", "call sequence", "request lifecycle", "API call chain", "who calls whom", or asks how multiple participants interact over time, use the `sequence` mode.
 
 ### Workflow Mode
 
@@ -71,6 +74,46 @@ The renderer:
 - Fails fast when nodes overlap, leave their lane, or short arrows become unreadable
 
 Use workflow labels sparingly. Adjacent steps should often be unlabeled; reserve labels for cross-lane transitions, approval decisions, async trace writes, and return paths.
+
+### Sequence Mode
+
+Sequence diagrams use a compact JSON IR:
+
+```json
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Cache Miss Request Sequence",
+    "subtitle": "Frontend request path with auth and cache fallback",
+    "output": "cache-miss-request.html",
+    "viewBox": [820, 760]
+  },
+  "participants": [
+    { "id": "web", "type": "frontend", "label": "Web App", "sublabel": "React UI" },
+    { "id": "api", "type": "backend", "label": "API", "sublabel": "request handler" }
+  ],
+  "messages": [],
+  "activations": [],
+  "cards": []
+}
+```
+
+If you have filesystem/tool access, create a sequence JSON file and render it with:
+
+```bash
+node archify/renderers/sequence/render-sequence.mjs sequence.json sequence.html
+```
+
+The renderer:
+
+- Places participants across the top and time downward
+- Uses semantic message variants: `emphasis`, `security`, `return`, and `dashed`
+- Uses activation bars to show ownership duration
+- Uses light segment bands as story landmarks
+- Fails fast when participants overflow, message endpoints are unknown, or message rows are too tight
+
+Use sequence diagrams when the important thing is order over time. Keep labels short; prefer "GET /path", "verify JWT", "cache miss", "emit trace", and "200 JSON" over prose sentences.
 
 ## The Cardinal Rule: Use CSS Classes, Not Inline Colors
 

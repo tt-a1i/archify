@@ -2,12 +2,12 @@
 
 # Archify
 
-**Generate beautiful architecture and technical workflow diagrams in chat. Switch dark / light. Copy to clipboard or export crisp 4× PNG / JPEG / WebP / SVG.**
+**Generate beautiful architecture, technical workflow, and sequence diagrams in chat. Switch dark / light. Copy to clipboard or export crisp 4× PNG / JPEG / WebP / SVG.**
 
 Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-using-skills-in-claude) that turns a plain-English description of your system or process into a polished, self-contained technical diagram — a single HTML file you can open, toggle themes on, copy to the clipboard, and export at maximum resolution.
 
 - **No design skills needed** — describe your architecture in English, get a diagram
-- **Workflow diagrams too** — technical flows, approvals, tool calls, CI/CD, and runbooks can be drawn as swimlane diagrams
+- **Workflow and sequence diagrams too** — technical flows, approvals, tool calls, CI/CD, runbooks, and request call chains can be drawn
 - **Built-in theme toggle** — one click between dark and light, persists across sessions
 - **Copy PNG to clipboard** — one click, paste straight into Slack / Notion / GitHub
 - **Ultra-crisp image export** — PNG / JPEG / WebP rendered natively at 4× source resolution (no upsampling blur), or SVG for true vector
@@ -37,12 +37,13 @@ Live example: [`examples/web-app.html`](examples/web-app.html) — open in a bro
 
 ## Diagram types
 
-Archify now has two primary outputs:
+Archify now has three primary outputs:
 
 | Type | Good for | How to ask |
 |---|---|---|
 | **Architecture** | System components, cloud resources, databases, caches, services, boundaries, security groups | Describe the system structure |
 | **Workflow** | Request lifecycles, approval flows, tool calls, CI/CD, runbooks, incident response | Describe participants, step order, and key branches |
+| **Sequence** | API call chains, request lifecycles, cache fallback, auth checks, async trace, service interactions | Describe who calls whom, in what order, and what returns |
 
 Workflow is not trying to replace every general-purpose flowchart. It is a technical communication diagram: swimlanes, semantic colors, a clear happy path, and secondary async / approval / trace paths.
 
@@ -52,6 +53,15 @@ User submits a request -> Agent plans -> Approval Gate if needed -> Tool Call ->
 ```
 
 Open the example here: [`examples/workflow-agent-tool-call-rendered.html`](examples/workflow-agent-tool-call-rendered.html).
+
+Sequence diagrams explain a narrower interaction over time:
+
+```text
+Use archify to draw a sequence diagram:
+User opens a page, the frontend calls the API, the API verifies JWT, reads Redis, falls back to Postgres on cache miss, returns JSON, and emits trace.
+```
+
+Open the example here: [`examples/sequence-cache-miss-request.html`](examples/sequence-cache-miss-request.html).
 
 ## What's new
 

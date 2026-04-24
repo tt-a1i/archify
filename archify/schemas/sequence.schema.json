@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/sequence.schema.json",
+  "title": "Archify Sequence Diagram",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "diagram_type", "meta", "participants", "messages"],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "diagram_type": {
+      "const": "sequence"
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "subtitle": { "type": "string" },
+        "output": { "type": "string" },
+        "viewBox": {
+          "type": "array",
+          "prefixItems": [
+            { "type": "number", "minimum": 320 },
+            { "type": "number", "minimum": 240 }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "participants": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "label"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "type": {
+            "enum": ["frontend", "backend", "database", "cloud", "security", "messagebus", "external"]
+          },
+          "label": { "type": "string", "minLength": 1 },
+          "sublabel": { "type": "string" }
+        }
+      }
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "to", "label"],
+        "properties": {
+          "from": { "type": "number" },
+          "to": { "type": "number" },
+          "label": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "messages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "to", "y", "label"],
+        "properties": {
+          "from": { "$ref": "#/$defs/id" },
+          "to": { "$ref": "#/$defs/id" },
+          "y": { "type": "number" },
+          "label": { "type": "string", "minLength": 1 },
+          "variant": {
+            "enum": ["default", "emphasis", "security", "dashed", "return"]
+          },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "activations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["participant", "from", "to"],
+        "properties": {
+          "participant": { "$ref": "#/$defs/id" },
+          "from": { "type": "number" },
+          "to": { "type": "number" },
+          "type": {
+            "enum": ["frontend", "backend", "database", "cloud", "security", "messagebus", "external"]
+          }
+        }
+      }
+    },
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["dot", "title", "items"],
+        "properties": {
+          "dot": { "enum": ["cyan", "emerald", "violet", "amber", "rose", "orange", "slate"] },
+          "title": { "type": "string", "minLength": 1 },
+          "items": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+    }
+  }
+}

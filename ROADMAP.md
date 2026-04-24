@@ -105,6 +105,12 @@ Workflow diagrams became the first concrete test of typed diagram renderers insi
 
 This does not reverse the anti-auto-layout decision above. The workflow renderer is intentionally a constrained layout assistant, not a generic graph layout engine: lanes and columns provide stability, while Claude still chooses the semantic grouping, lane order, route intent, labels, and summary cards.
 
+### Sequence renderer pilot (2026-04-24)
+
+Sequence diagrams became the second typed renderer pilot. They use `diagram_type: "sequence"` JSON with participants, time segments, messages, activations, and summary cards. The goal is to explain API call chains, request lifecycles, auth checks, cache fallback, async trace/logging, and return paths with Archify's theme/export shell.
+
+Like workflow, sequence is not a generic auto-layout target. The renderer enforces readable spacing and semantic styling, while Claude still decides which participants matter, how the story is grouped, which messages deserve labels, and which return/async paths should stay quiet.
+
 ---
 
 ## Not planned
