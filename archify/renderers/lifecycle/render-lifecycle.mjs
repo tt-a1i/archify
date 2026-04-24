@@ -13,15 +13,15 @@ const outPath = path.resolve(process.cwd(), process.argv[3] || lifecycle.meta.ou
 
 const viewBox = lifecycle.meta.viewBox || [980, 720];
 const layout = {
-  laneX: 34,
-  laneY: 48,
-  laneW: 912,
-  laneGap: 22,
-  laneTitleH: 30,
-  laneH: 150,
+  laneX: 32,
+  laneY: 44,
+  laneW: 914,
+  laneGap: 14,
+  laneTitleH: 20,
+  laneH: 112,
   colXs: [96, 246, 396, 546, 696, 846],
   nodeW: 112,
-  nodeH: 58
+  nodeH: 56
 };
 
 const typeClass = {
@@ -286,8 +286,8 @@ function renderDefinitions() {
 
 function renderLane(lane, index) {
   const y = layout.laneY + index * (layout.laneH + layout.laneGap);
-  return `        <rect x="${layout.laneX}" y="${y}" width="${layout.laneW}" height="${layout.laneH}" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="${layout.laneX + 14}" y="${y + 22}" class="t-dim" font-size="10" font-weight="600">${String(index + 1).padStart(2, '0')} / ${esc(lane.label)}</text>`;
+  return `        <path d="M ${layout.laneX} ${y + layout.laneTitleH} L ${layout.laneX + layout.laneW} ${y + layout.laneTitleH}" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
+        <text x="${layout.laneX}" y="${y + 14}" class="t-dim" font-size="10" font-weight="600">${String(index + 1).padStart(2, '0')} / ${esc(lane.label)}</text>`;
 }
 
 function renderState(state) {
