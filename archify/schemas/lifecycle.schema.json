@@ -61,6 +61,7 @@
           "label": { "type": "string", "minLength": 1 },
           "sublabel": { "type": "string" },
           "tag": { "type": "string" },
+          "step": { "type": "string" },
           "lane": { "$ref": "#/$defs/id" },
           "col": { "type": "integer", "minimum": 0 },
           "width": { "type": "number", "minimum": 48 },

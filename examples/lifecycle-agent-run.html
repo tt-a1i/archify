@@ -448,7 +448,7 @@
 
     <!-- Main Diagram -->
     <div class="diagram-container">
-      <svg viewBox="0 0 980 610">
+      <svg viewBox="0 0 980 660">
         <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -471,91 +471,89 @@
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />
 
-        <!-- Lifecycle lanes -->
-        <path d="M 32 64 L 946 64" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
-        <text x="32" y="58" class="t-dim" font-size="10" font-weight="600">01 / Active lifecycle</text>
+        <!-- Lifecycle bands -->
+        <path d="M 72 112 L 908 112" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
+        <text x="72" y="100" class="t-dim" font-size="10" font-weight="600">01 / Lifecycle phases</text>
+        <path d="M 72 264 L 908 264" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
+        <text x="72" y="252" class="t-dim" font-size="10" font-weight="600">02 / Interruptions + recovery</text>
+        <path d="M 72 436 L 908 436" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
+        <text x="72" y="424" class="t-dim" font-size="10" font-weight="600">03 / Outcomes</text>
 
-        <path d="M 32 184 L 946 184" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
-        <text x="32" y="178" class="t-dim" font-size="10" font-weight="600">02 / Suspended states</text>
-
-        <path d="M 32 304 L 946 304" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
-        <text x="32" y="298" class="t-dim" font-size="10" font-weight="600">03 / Recovery loop</text>
-
-        <path d="M 32 424 L 946 424" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
-        <text x="32" y="418" class="t-dim" font-size="10" font-weight="600">04 / Terminal outcomes</text>
+        <!-- Primary lifecycle rail -->
+        <path d="M 154 157 L 748 157" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Transition paths -->
-        <path d="M 152 106 L 190 106" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path d="M 302 106 L 340 106" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path d="M 452 106 L 490 106" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path d="M 546 133 L 546 439" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path d="M 396 133 L 396 199" class="a-security" stroke-width="1.2" marker-end="url(#arrowhead-security)"/>
-        <path d="M 602 106 L 602 146 Q 602 156 612 156 L 630 156 Q 640 156 640 166 L 640 226" class="a-default" stroke-width="1.2" marker-end="url(#arrowhead)"/>
-        <path d="M 340 106 L 340 294 Q 340 304 330 304 L 253.5 304 Q 246 304 246 311.5 L 246 319" class="a-security" stroke-width="1.2" marker-end="url(#arrowhead-security)"/>
-        <path d="M 246 319 L 246 133" class="a-dashed" stroke-width="1.2" marker-end="url(#arrowhead-dashed)"/>
-        <path d="M 696 253 L 696 439" class="a-security" stroke-width="1.2" marker-end="url(#arrowhead-security)"/>
-        <path d="M 396 253 L 396 439" class="a-security" stroke-width="1.2" marker-end="url(#arrowhead-security)"/>
+        <path d="M 402 188 L 402 278" class="a-security" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
+        <path d="M 556 188 L 556 233 L 556 233 L 556 278" class="a-default" stroke-width="1.1" marker-end="url(#arrowhead)"/>
+        <path d="M 343 157 L 340.1621408448257 332.00131456908264 Q 340 342 350 342 L 395 342 Q 402 342 402 349 L 402 356" class="a-security" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
+        <path d="M 556 336 L 556 450" class="a-security" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
+        <path d="M 402 336 L 402 450" class="a-security" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
 
         <!-- States -->
-        <rect x="40" y="79" width="112" height="54" rx="6" class="c-mask"/>
-        <rect x="40" y="79" width="112" height="54" rx="6" class="c-frontend" stroke-width="1.5"/>
-        <text x="96" y="100" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Queued</text>
-        <text x="96" y="116" class="t-muted" font-size="7" text-anchor="middle">request accepted</text>
-        <text x="96" y="122" class="t-frontend" font-size="7" text-anchor="middle">entry</text>
+        <rect x="35" y="126" width="118" height="62" rx="7" class="c-mask"/>
+        <rect x="35" y="126" width="118" height="62" rx="7" class="c-frontend" stroke-width="1.5"/>
+        <text x="45" y="140" class="t-frontend" font-size="7" font-weight="700">01</text>
+        <text x="94" y="147" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Queued</text>
+        <text x="94" y="163" class="t-muted" font-size="7" text-anchor="middle">request accepted</text>
+        <text x="94" y="177" class="t-frontend" font-size="7" text-anchor="middle">entry</text>
 
-        <rect x="190" y="79" width="112" height="54" rx="6" class="c-mask"/>
-        <rect x="190" y="79" width="112" height="54" rx="6" class="c-backend" stroke-width="1.5"/>
-        <text x="246" y="100" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Planning</text>
-        <text x="246" y="116" class="t-muted" font-size="7" text-anchor="middle">build task graph</text>
-        <text x="246" y="122" class="t-backend" font-size="7" text-anchor="middle">model</text>
+        <rect x="189" y="126" width="118" height="62" rx="7" class="c-mask"/>
+        <rect x="189" y="126" width="118" height="62" rx="7" class="c-backend" stroke-width="1.5"/>
+        <text x="199" y="140" class="t-backend" font-size="7" font-weight="700">02</text>
+        <text x="248" y="147" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Planning</text>
+        <text x="248" y="163" class="t-muted" font-size="7" text-anchor="middle">build task graph</text>
+        <text x="248" y="177" class="t-backend" font-size="7" text-anchor="middle">model</text>
 
-        <rect x="340" y="79" width="112" height="54" rx="6" class="c-mask"/>
-        <rect x="340" y="79" width="112" height="54" rx="6" class="c-backend" stroke-width="1.5"/>
-        <text x="396" y="100" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Executing</text>
-        <text x="396" y="116" class="t-muted" font-size="7" text-anchor="middle">tool calls</text>
-        <text x="396" y="122" class="t-backend" font-size="7" text-anchor="middle">work</text>
+        <rect x="343" y="126" width="118" height="62" rx="7" class="c-mask"/>
+        <rect x="343" y="126" width="118" height="62" rx="7" class="c-backend" stroke-width="1.5"/>
+        <text x="353" y="140" class="t-backend" font-size="7" font-weight="700">03</text>
+        <text x="402" y="147" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Executing</text>
+        <text x="402" y="163" class="t-muted" font-size="7" text-anchor="middle">tool calls</text>
+        <text x="402" y="177" class="t-backend" font-size="7" text-anchor="middle">work</text>
 
-        <rect x="490" y="79" width="112" height="54" rx="6" class="c-mask"/>
-        <rect x="490" y="79" width="112" height="54" rx="6" class="c-security" stroke-width="1.5"/>
-        <text x="546" y="100" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Reviewing</text>
-        <text x="546" y="116" class="t-muted" font-size="7" text-anchor="middle">quality gate</text>
-        <text x="546" y="122" class="t-security" font-size="7" text-anchor="middle">check</text>
+        <rect x="497" y="126" width="118" height="62" rx="7" class="c-mask"/>
+        <rect x="497" y="126" width="118" height="62" rx="7" class="c-security" stroke-width="1.5"/>
+        <text x="507" y="140" class="t-security" font-size="7" font-weight="700">04</text>
+        <text x="556" y="147" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Reviewing</text>
+        <text x="556" y="163" class="t-muted" font-size="7" text-anchor="middle">quality gate</text>
+        <text x="556" y="177" class="t-security" font-size="7" text-anchor="middle">check</text>
 
-        <rect x="340" y="199" width="112" height="54" rx="6" class="c-mask"/>
-        <rect x="340" y="199" width="112" height="54" rx="6" class="c-cloud" stroke-width="1.5"/>
-        <text x="396" y="220" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Needs Approval</text>
-        <text x="396" y="236" class="t-muted" font-size="7" text-anchor="middle">human gate</text>
-        <text x="396" y="242" class="t-cloud" font-size="7" text-anchor="middle">pause</text>
+        <rect x="651" y="126" width="118" height="62" rx="7" class="c-mask"/>
+        <rect x="651" y="126" width="118" height="62" rx="7" class="c-database" stroke-width="1.5"/>
+        <text x="661" y="140" class="t-database" font-size="7" font-weight="700">05</text>
+        <text x="710" y="147" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Completed</text>
+        <text x="710" y="163" class="t-muted" font-size="7" text-anchor="middle">final response</text>
+        <text x="710" y="177" class="t-database" font-size="7" text-anchor="middle">done</text>
 
-        <rect x="640" y="199" width="112" height="54" rx="6" class="c-mask"/>
-        <rect x="640" y="199" width="112" height="54" rx="6" class="c-cloud" stroke-width="1.5"/>
-        <text x="696" y="220" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Blocked</text>
-        <text x="696" y="236" class="t-muted" font-size="7" text-anchor="middle">missing input</text>
-        <text x="696" y="242" class="t-cloud" font-size="7" text-anchor="middle">wait</text>
+        <rect x="339" y="278" width="126" height="58" rx="7" class="c-mask"/>
+        <rect x="339" y="278" width="126" height="58" rx="7" class="c-cloud" stroke-width="1.5"/>
+        <text x="402" y="299" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Needs Approval</text>
+        <text x="402" y="315" class="t-muted" font-size="7" text-anchor="middle">human gate</text>
+        <text x="402" y="325" class="t-cloud" font-size="7" text-anchor="middle">pause</text>
 
-        <rect x="190" y="319" width="112" height="54" rx="6" class="c-mask"/>
-        <rect x="190" y="319" width="112" height="54" rx="6" class="c-security" stroke-width="1.5"/>
-        <text x="246" y="340" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Failed</text>
-        <text x="246" y="356" class="t-muted" font-size="7" text-anchor="middle">recoverable error</text>
-        <text x="246" y="362" class="t-security" font-size="7" text-anchor="middle">retryable</text>
+        <rect x="493" y="278" width="126" height="58" rx="7" class="c-mask"/>
+        <rect x="493" y="278" width="126" height="58" rx="7" class="c-cloud" stroke-width="1.5"/>
+        <text x="556" y="299" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Blocked</text>
+        <text x="556" y="315" class="t-muted" font-size="7" text-anchor="middle">missing input</text>
+        <text x="556" y="325" class="t-cloud" font-size="7" text-anchor="middle">wait</text>
 
-        <rect x="340" y="439" width="112" height="54" rx="6" class="c-mask"/>
-        <rect x="340" y="439" width="112" height="54" rx="6" class="c-security" stroke-width="1.5"/>
-        <text x="396" y="460" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Cancelled</text>
-        <text x="396" y="476" class="t-muted" font-size="7" text-anchor="middle">user stopped</text>
-        <text x="396" y="482" class="t-security" font-size="7" text-anchor="middle">terminal</text>
+        <rect x="339" y="356" width="126" height="58" rx="7" class="c-mask"/>
+        <rect x="339" y="356" width="126" height="58" rx="7" class="c-security" stroke-width="1.5"/>
+        <text x="402" y="377" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Failed</text>
+        <text x="402" y="393" class="t-muted" font-size="7" text-anchor="middle">recoverable error</text>
+        <text x="402" y="403" class="t-security" font-size="7" text-anchor="middle">retryable</text>
 
-        <rect x="490" y="439" width="112" height="54" rx="6" class="c-mask"/>
-        <rect x="490" y="439" width="112" height="54" rx="6" class="c-database" stroke-width="1.5"/>
-        <text x="546" y="460" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Completed</text>
-        <text x="546" y="476" class="t-muted" font-size="7" text-anchor="middle">final response</text>
-        <text x="546" y="482" class="t-database" font-size="7" text-anchor="middle">success</text>
+        <rect x="343" y="450" width="118" height="58" rx="7" class="c-mask"/>
+        <rect x="343" y="450" width="118" height="58" rx="7" class="c-security" stroke-width="1.5"/>
+        <text x="402" y="471" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Cancelled</text>
+        <text x="402" y="487" class="t-muted" font-size="7" text-anchor="middle">user stopped</text>
+        <text x="402" y="497" class="t-security" font-size="7" text-anchor="middle">terminal</text>
 
-        <rect x="640" y="439" width="112" height="54" rx="6" class="c-mask"/>
-        <rect x="640" y="439" width="112" height="54" rx="6" class="c-security" stroke-width="1.5"/>
-        <text x="696" y="460" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Expired</text>
-        <text x="696" y="476" class="t-muted" font-size="7" text-anchor="middle">timeout</text>
-        <text x="696" y="482" class="t-security" font-size="7" text-anchor="middle">terminal</text>
+        <rect x="497" y="450" width="118" height="58" rx="7" class="c-mask"/>
+        <rect x="497" y="450" width="118" height="58" rx="7" class="c-security" stroke-width="1.5"/>
+        <text x="556" y="471" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Expired</text>
+        <text x="556" y="487" class="t-muted" font-size="7" text-anchor="middle">timeout</text>
+        <text x="556" y="497" class="t-security" font-size="7" text-anchor="middle">terminal</text>
 
         <!-- Transition labels -->
 
@@ -564,23 +562,16 @@
 
 
 
-
-
-
-
-
         <!-- Legend -->
-        <text x="220" y="532" class="t-primary" font-size="10" font-weight="600">Legend</text>
-        <rect x="220" y="544" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
-        <text x="240" y="552" class="t-muted" font-size="7">active state</text>
-        <rect x="325" y="544" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
-        <text x="345" y="552" class="t-muted" font-size="7">waiting</text>
-        <rect x="415" y="544" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
-        <text x="435" y="552" class="t-muted" font-size="7">terminal success</text>
-        <rect x="560" y="544" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
-        <text x="580" y="552" class="t-muted" font-size="7">failure / gate</text>
-        <path d="M 690 552 L 724 552" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <text x="733" y="555" class="t-muted" font-size="7">retry / async</text>
+        <text x="220" y="542" class="t-primary" font-size="10" font-weight="600">Legend</text>
+        <rect x="220" y="554" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+        <text x="240" y="562" class="t-muted" font-size="7">active state</text>
+        <rect x="325" y="554" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+        <text x="345" y="562" class="t-muted" font-size="7">waiting</text>
+        <rect x="415" y="554" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+        <text x="435" y="562" class="t-muted" font-size="7">terminal success</text>
+        <rect x="560" y="554" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+        <text x="580" y="562" class="t-muted" font-size="7">failure / exit</text>
       </svg>
     </div>
 
@@ -592,9 +583,9 @@
           <h3>Main Path</h3>
         </div>
         <ul>
-          <li>&bull; Queued, Planning, Executing, and Reviewing are active run states</li>
-          <li>&bull; A clean run reads left to right before exiting to an outcome</li>
-          <li>&bull; A successful review exits into the terminal outcome lane</li>
+          <li>&bull; The run has five ordered phases from queue to completion</li>
+          <li>&bull; The primary lifecycle is carried by one horizontal rail</li>
+          <li>&bull; Completion is a phase, not a detached side box</li>
         </ul>
       </div>
 
@@ -617,8 +608,8 @@
         </div>
         <ul>
           <li>&bull; Failed loops back while retry budget remains</li>
-          <li>&bull; Completed, Cancelled, and Expired are visually grouped as outcomes</li>
-          <li>&bull; Terminal states do not point back into active execution</li>
+          <li>&bull; Cancelled and Expired are exits from the lifecycle</li>
+          <li>&bull; Terminal exits do not point back into active execution</li>
         </ul>
       </div>
     </div>

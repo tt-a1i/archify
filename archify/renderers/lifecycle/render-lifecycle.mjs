@@ -11,17 +11,20 @@ const templatePath = path.join(skillRoot, 'assets/template.html');
 const template = fs.readFileSync(templatePath, 'utf8');
 const outPath = path.resolve(process.cwd(), process.argv[3] || lifecycle.meta.output || 'lifecycle.html');
 
-const viewBox = lifecycle.meta.viewBox || [980, 720];
+const viewBox = lifecycle.meta.viewBox || [980, 660];
 const layout = {
-  laneX: 32,
-  laneY: 44,
-  laneW: 914,
-  laneGap: 16,
-  laneTitleH: 20,
-  laneH: 104,
-  colXs: [96, 246, 396, 546, 696, 846],
-  nodeW: 112,
-  nodeH: 54
+  phaseY: 126,
+  eventY: 278,
+  outcomeY: 450,
+  phaseW: 118,
+  phaseH: 62,
+  eventW: 126,
+  eventH: 58,
+  outcomeW: 118,
+  outcomeH: 58,
+  phaseXs: [94, 248, 402, 556, 710],
+  eventXs: [402, 556, 710],
+  outcomeXs: [402, 556, 710]
 };
 
 const typeClass = {
@@ -63,26 +66,22 @@ function esc(value) {
   }[c]));
 }
 
-const laneIndex = new Map((lifecycle.lanes || []).map((lane, index) => [lane.id, index]));
-
-function laneTop(id) {
-  return layout.laneY + laneIndex.get(id) * (layout.laneH + layout.laneGap);
-}
-
-function lastLaneBottom() {
-  return layout.laneY + lifecycle.lanes.length * layout.laneH + (lifecycle.lanes.length - 1) * layout.laneGap;
-}
-
 function legendY() {
-  return lastLaneBottom() + 44;
+  return 562;
 }
 
 function measureState(state) {
-  const width = state.width || layout.nodeW;
-  const height = state.height || layout.nodeH;
-  const cx = layout.colXs[state.col];
-  const contentH = layout.laneH - layout.laneTitleH;
-  const y = laneTop(state.lane) + layout.laneTitleH + (contentH - height) / 2 + (state.yOffset || 0);
+  const isPhase = state.lane === 'main';
+  const isOutcome = state.lane === 'terminal';
+  const width = state.width || (isPhase ? layout.phaseW : isOutcome ? layout.outcomeW : layout.eventW);
+  const height = state.height || (isPhase ? layout.phaseH : isOutcome ? layout.outcomeH : layout.eventH);
+  const xs = isPhase ? layout.phaseXs : isOutcome ? layout.outcomeXs : layout.eventXs;
+  const cx = xs[state.col] ?? xs[xs.length - 1];
+  const y = (
+    isPhase ? layout.phaseY :
+      isOutcome ? layout.outcomeY :
+        layout.eventY
+  ) + (state.yOffset || 0);
   return {
     ...state,
     width,
@@ -123,16 +122,19 @@ function validateLifecycle() {
       problems.push(`State "${state.id}" uses unknown lane "${state.lane}".`);
       continue;
     }
-    if (typeof state.col !== 'number' || state.col < 0 || state.col >= layout.colXs.length) {
+    const maxCol = state.lane === 'main'
+      ? layout.phaseXs.length
+      : state.lane === 'terminal'
+        ? layout.outcomeXs.length
+        : layout.eventXs.length;
+    if (typeof state.col !== 'number' || state.col < 0 || state.col >= maxCol) {
       problems.push(`State "${state.id}" uses invalid column ${state.col}.`);
     }
-    const top = laneTop(state.lane);
-    const contentTop = top + layout.laneTitleH;
-    if (state.x < layout.laneX || state.x + state.width > layout.laneX + layout.laneW) {
-      problems.push(`State "${state.id}" exceeds the horizontal bounds of lane "${state.lane}".`);
+    if (state.x < 32 || state.x + state.width > viewBox[0] - 32) {
+      problems.push(`State "${state.id}" exceeds the horizontal bounds of the diagram.`);
     }
-    if (state.y < contentTop || state.y + state.height > top + layout.laneH) {
-      problems.push(`State "${state.id}" collides with the title or boundary of lane "${state.lane}".`);
+    if (state.y < 64 || state.y + state.height > legendY() - 24) {
+      problems.push(`State "${state.id}" exceeds the vertical lifecycle area.`);
     }
   }
 
@@ -193,23 +195,17 @@ function defaultToSide(from, to) {
   return 'bottom';
 }
 
-function gapYBetween(fromLane, toLane, bias = 0.5) {
-  const a = laneTop(fromLane) + layout.laneH;
-  const b = laneTop(toLane);
-  return a + (b - a) * bias;
-}
-
 function routeVia(transition, from, to, start, end) {
   if (transition.via) return transition.via;
   switch (transition.route || 'auto') {
     case 'straight':
       return [];
     case 'drop': {
-      const y = gapYBetween(from.lane, to.lane, transition.bias || 0.5);
+      const y = transition.channelY || (start[1] + end[1]) / 2;
       return [[start[0], y], [end[0], y]];
     }
     case 'raise': {
-      const y = gapYBetween(to.lane, from.lane, transition.bias || 0.5);
+      const y = transition.channelY || (start[1] + end[1]) / 2;
       return [[start[0], y], [end[0], y]];
     }
     case 'bottom-channel': {
@@ -231,7 +227,7 @@ function routeVia(transition, from, to, start, end) {
     case 'auto':
     default: {
       if (from.lane === to.lane) return [];
-      const y = gapYBetween(from.lane, to.lane, transition.bias || 0.5);
+      const y = transition.channelY || (start[1] + end[1]) / 2;
       return [[start[0], y], [end[0], y]];
     }
   }
@@ -311,10 +307,13 @@ function renderDefinitions() {
         </defs>`;
 }
 
-function renderLane(lane, index) {
-  const y = layout.laneY + index * (layout.laneH + layout.laneGap);
-  return `        <path d="M ${layout.laneX} ${y + layout.laneTitleH} L ${layout.laneX + layout.laneW} ${y + layout.laneTitleH}" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
-        <text x="${layout.laneX}" y="${y + 14}" class="t-dim" font-size="10" font-weight="600">${String(index + 1).padStart(2, '0')} / ${esc(lane.label)}</text>`;
+function renderBands() {
+  return `        <path d="M 72 112 L 908 112" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
+        <text x="72" y="100" class="t-dim" font-size="10" font-weight="600">01 / Lifecycle phases</text>
+        <path d="M 72 264 L 908 264" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
+        <text x="72" y="252" class="t-dim" font-size="10" font-weight="600">02 / Interruptions + recovery</text>
+        <path d="M 72 436 L 908 436" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
+        <text x="72" y="424" class="t-dim" font-size="10" font-weight="600">03 / Outcomes</text>`;
 }
 
 function renderState(state) {
@@ -323,8 +322,11 @@ function renderState(state) {
   const tag = state.tag
     ? `\n        <text x="${state.cx}" y="${state.y + state.height - 11}" class="${accent}" font-size="7" text-anchor="middle">${esc(state.tag)}</text>`
     : '';
-  return `        <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="6" class="c-mask"/>
-        <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="6" class="${fill}" stroke-width="1.5"/>
+  const step = state.step
+    ? `\n        <text x="${state.x + 10}" y="${state.y + 14}" class="${accent}" font-size="7" font-weight="700">${esc(state.step)}</text>`
+    : '';
+  return `        <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="c-mask"/>
+        <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="${fill}" stroke-width="1.5"/>${step}
         <text x="${state.cx}" y="${state.y + 21}" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">${esc(state.label)}</text>
         <text x="${state.cx}" y="${state.y + 37}" class="t-muted" font-size="7" text-anchor="middle">${esc(state.sublabel || '')}</text>${tag}`;
 }
@@ -342,7 +344,7 @@ function transitionAccent(transition) {
 function renderTransitionPath(transition) {
   const [cls, marker] = arrowClass[transition.variant || 'default'] || arrowClass.default;
   const routed = pathFor(transition);
-  const strokeWidth = transition.width || (transition.variant === 'emphasis' ? 1.8 : 1.2);
+  const strokeWidth = transition.width || (transition.variant === 'emphasis' ? 2 : 1.1);
   return `        <path d="${routed.d}" class="${cls}" stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
 }
 
@@ -370,9 +372,11 @@ function renderLegend() {
         <rect x="415" y="${y - 8}" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
         <text x="435" y="${y}" class="t-muted" font-size="7">terminal success</text>
         <rect x="560" y="${y - 8}" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
-        <text x="580" y="${y}" class="t-muted" font-size="7">failure / gate</text>
-        <path d="M 690 ${y} L 724 ${y}" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <text x="733" y="${y + 3}" class="t-muted" font-size="7">retry / async</text>`;
+        <text x="580" y="${y}" class="t-muted" font-size="7">failure / exit</text>`;
+}
+
+function renderLifecycleRail() {
+  return `        <path d="M 154 ${layout.phaseY + 31} L 748 ${layout.phaseY + 31}" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>`;
 }
 
 function renderSvg() {
@@ -382,8 +386,11 @@ ${renderDefinitions()}
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />
 
-        <!-- Lifecycle lanes -->
-${lifecycle.lanes.map(renderLane).join('\n\n')}
+        <!-- Lifecycle bands -->
+${renderBands()}
+
+        <!-- Primary lifecycle rail -->
+${renderLifecycleRail()}
 
         <!-- Transition paths -->
 ${(lifecycle.transitions || []).map(renderTransitionPath).join('\n')}

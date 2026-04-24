@@ -20,8 +20,8 @@ Lifecycle JSON files must set:
   "diagram_type": "lifecycle",
   "meta": {
     "title": "Agent Run Lifecycle",
-    "subtitle": "State machine for planning, execution, waits, retries, and terminal outcomes",
-    "viewBox": [980, 720]
+    "subtitle": "Lifecycle phases, interruptions, recovery, and terminal exits",
+    "viewBox": [980, 660]
   },
   "lanes": [],
   "states": [],
@@ -38,18 +38,16 @@ archify/schemas/lifecycle.schema.json
 
 ## Design Rules
 
-- Use lanes for lifecycle layers: active run states, suspended states,
-  recovery loops, and terminal outcomes.
-- Place states with lane IDs and column indexes.
-- Keep the active path left-to-right, then exit into a distinct terminal
-  outcome when the lifecycle ends.
-- Use `success` for terminal success, `failure` for failure/terminal error,
-  `waiting` for pauses, and `decision` for gates.
-- Use `emphasis` for the main transition path.
-- Use `security` for cancellation, timeout, failure, policy, and blocked paths.
-- Use `dashed` for retry, resume, async, or non-primary transitions.
-- Keep transition labels short: `start`, `plan ready`, `needs approval`,
-  `retry`, `timeout`, `cancel`.
+- Treat lifecycle diagrams as a phase map, not a dense state-transition graph.
+- Put the primary lifecycle on one horizontal rail using the `main` lane.
+- Use `step` labels for ordered phases, such as `01`, `02`, and `03`.
+- Use lower lanes only for interruptions, recovery, and terminal exits.
+- Keep transition labels out of the main SVG unless the label is essential;
+  prefer node labels, tags, legend entries, and summary cards.
+- Avoid diagonal and crossing lines. Terminal exits should drop vertically from
+  their source event whenever possible.
+- Use `success` for completion, `failure` for failure/terminal exits,
+  `waiting` for pauses, and `decision` for quality gates.
 
 The renderer fails when it can detect layout problems, including duplicate state
 IDs, unknown lanes, unknown transition endpoints, states outside their lanes,
