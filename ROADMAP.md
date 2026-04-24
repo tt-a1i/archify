@@ -117,6 +117,12 @@ Data-flow diagrams became the third typed renderer pilot. They use `diagram_type
 
 Like workflow and sequence, data-flow is not a generic graph layout engine. The renderer provides stable stage/row placement and validation checks, while Claude still decides which data assets matter, where sensitive boundaries should appear, which paths are primary, and which batch or restricted joins should stay visually secondary.
 
+### Lifecycle renderer pilot (2026-04-24)
+
+Lifecycle diagrams became the fourth typed renderer pilot. They use `diagram_type: "lifecycle"` JSON with lanes, states, semantic state types, routed transitions, transition labels, and summary cards. The goal is to explain state machines for agent runs, tasks, orders, deployments, subscriptions, incident tickets, retries, wait states, cancellation, timeout, and terminal outcomes.
+
+Like the other typed renderers, lifecycle is deliberately constrained rather than fully automatic. The renderer gives stable lane/column placement and validation checks, while Claude still decides which states are worth showing, which transitions should be labeled, and how to separate happy path, waits, and exception recovery.
+
 ---
 
 ## Not planned

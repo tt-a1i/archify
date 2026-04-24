@@ -1,6 +1,6 @@
 ---
 name: archify
-description: Create professional architecture, workflow, sequence, and data-flow diagrams as standalone HTML files with SVG graphics, a built-in dark/light theme toggle, and one-click export to PNG / JPEG / WebP / SVG. Use when the user asks for system architecture diagrams, infrastructure diagrams, cloud architecture visualizations, security diagrams, network topology diagrams, technical workflows, approval flows, runbooks, CI/CD flows, process diagrams, API call sequences, request lifecycles, interaction diagrams, data pipelines, analytics flows, ETL/ELT maps, PII boundaries, or governance/data lineage diagrams.
+description: Create professional architecture, workflow, sequence, data-flow, and lifecycle/state diagrams as standalone HTML files with SVG graphics, a built-in dark/light theme toggle, and one-click export to PNG / JPEG / WebP / SVG. Use when the user asks for system architecture diagrams, infrastructure diagrams, cloud architecture visualizations, security diagrams, network topology diagrams, technical workflows, approval flows, runbooks, CI/CD flows, process diagrams, API call sequences, request lifecycles, interaction diagrams, data pipelines, analytics flows, ETL/ELT maps, PII boundaries, governance/data lineage diagrams, state machines, lifecycle diagrams, status transitions, or terminal/retry paths.
 license: MIT
 metadata:
   version: "2.4"
@@ -20,7 +20,7 @@ Every diagram this skill produces ships with:
 
 ## Diagram Types
 
-Archify supports four technical diagram modes:
+Archify supports five technical diagram modes:
 
 | Type | Use for | Output path |
 |------|---------|-------------|
@@ -28,6 +28,7 @@ Archify supports four technical diagram modes:
 | `workflow` | Technical flows, request lifecycles, approval gates, tool calls, runbooks, CI/CD paths, incident response, and process ownership | Prefer `renderers/workflow/render-workflow.mjs` with a workflow JSON file |
 | `sequence` | API calls, request lifecycles, service interactions, cache fallback paths, async trace/logging, and return paths over time | Prefer `renderers/sequence/render-sequence.mjs` with a sequence JSON file |
 | `dataflow` | Data pipelines, ETL/ELT, analytics flows, PII isolation, governance boundaries, lineage, warehouse sync, and downstream consumers | Prefer `renderers/dataflow/render-dataflow.mjs` with a data-flow JSON file |
+| `lifecycle` | State machines, object lifecycles, run/order/deployment status transitions, wait states, retries, terminal states, and recovery paths | Prefer `renderers/lifecycle/render-lifecycle.mjs` with a lifecycle JSON file |
 
 When the user says "architecture", "system diagram", "cloud diagram", or asks to understand a codebase structure, use the `architecture` mode unless the requested output is clearly process-oriented.
 
@@ -36,6 +37,8 @@ When the user says "workflow", "flow", "process", "runbook", "sequence of steps"
 When the user says "sequence", "interaction", "call sequence", "request lifecycle", "API call chain", "who calls whom", or asks how multiple participants interact over time, use the `sequence` mode.
 
 When the user says "data flow", "pipeline", "ETL", "ELT", "lineage", "analytics", "warehouse", "PII", "consent", "governance", or asks where data comes from, how it is transformed, and who consumes it, use the `dataflow` mode.
+
+When the user says "state", "status", "lifecycle", "state machine", "terminal", "retry", "cancel", "timeout", "order lifecycle", "deployment lifecycle", "agent run lifecycle", or asks how an object changes state over time, use the `lifecycle` mode.
 
 ### Workflow Mode
 
@@ -160,6 +163,47 @@ The renderer:
 - Fails fast when nodes overlap, stages overflow, flow endpoints are unknown, labels are missing, or arrows become unreadably short
 
 Use data-flow diagrams when the important thing is data lineage and governance. Keep labels asset-like: "clickstream", "identity map", "normalized facts", "feature vectors", "restricted join". Put sensitivity in `classification`: "PII touch", "encrypted PII", "approved only", "non-PII", "read-only".
+
+### Lifecycle Mode
+
+Lifecycle diagrams use a compact JSON IR:
+
+```json
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Agent Run Lifecycle",
+    "subtitle": "State machine for planning, execution, waits, retries, and terminal outcomes",
+    "output": "agent-run.html",
+    "viewBox": [980, 720]
+  },
+  "lanes": [
+    { "id": "main", "label": "Main lifecycle" },
+    { "id": "waiting", "label": "Wait states" },
+    { "id": "exceptions", "label": "Exceptions + recovery" }
+  ],
+  "states": [],
+  "transitions": [],
+  "cards": []
+}
+```
+
+If you have filesystem/tool access, create a lifecycle JSON file and render it with:
+
+```bash
+node archify/renderers/lifecycle/render-lifecycle.mjs lifecycle.json lifecycle.html
+```
+
+The renderer:
+
+- Places states by lane + column
+- Uses lanes to separate the happy path, wait states, and exception/recovery paths
+- Uses semantic state types: `start`, `active`, `waiting`, `decision`, `success`, `failure`, and `neutral`
+- Uses transition variants: `emphasis` for the primary lifecycle, `security` for failure/cancel/timeout/policy paths, and `dashed` for retry/resume paths
+- Fails fast when states overlap, leave their lane, reference unknown lanes, use unknown transition endpoints, or push the legend outside the viewBox
+
+Use lifecycle diagrams when the important thing is state, not step-by-step work. Keep transition labels event-like: "start", "plan ready", "needs approval", "retry", "timeout", "cancel". Put terminal states on the right or in the bottom lane so endings are visually unambiguous.
 
 ## The Cardinal Rule: Use CSS Classes, Not Inline Colors
 

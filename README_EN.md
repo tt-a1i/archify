@@ -2,12 +2,12 @@
 
 # Archify
 
-**Generate beautiful architecture, technical workflow, sequence, and data-flow diagrams in chat. Switch dark / light. Copy to clipboard or export crisp 4× PNG / JPEG / WebP / SVG.**
+**Generate beautiful architecture, technical workflow, sequence, data-flow, and lifecycle diagrams in chat. Switch dark / light. Copy to clipboard or export crisp 4× PNG / JPEG / WebP / SVG.**
 
 Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-using-skills-in-claude) that turns a plain-English description of your system or process into a polished, self-contained technical diagram — a single HTML file you can open, toggle themes on, copy to the clipboard, and export at maximum resolution.
 
 - **No design skills needed** — describe your architecture in English, get a diagram
-- **Workflow, sequence, and data-flow diagrams too** — technical flows, approvals, tool calls, CI/CD, runbooks, request call chains, data pipelines, and PII boundaries can be drawn
+- **Workflow, sequence, data-flow, and lifecycle diagrams too** — technical flows, approvals, tool calls, CI/CD, runbooks, request call chains, data pipelines, PII boundaries, and state machines can be drawn
 - **Built-in theme toggle** — one click between dark and light, persists across sessions
 - **Copy PNG to clipboard** — one click, paste straight into Slack / Notion / GitHub
 - **Ultra-crisp image export** — PNG / JPEG / WebP rendered natively at 4× source resolution (no upsampling blur), or SVG for true vector
@@ -37,7 +37,7 @@ Live example: [`examples/web-app.html`](examples/web-app.html) — open in a bro
 
 ## Diagram types
 
-Archify now has four primary outputs:
+Archify now has five primary outputs:
 
 | Type | Good for | How to ask |
 |---|---|---|
@@ -45,6 +45,7 @@ Archify now has four primary outputs:
 | **Workflow** | Request lifecycles, approval flows, tool calls, CI/CD, runbooks, incident response | Describe participants, step order, and key branches |
 | **Sequence** | API call chains, request lifecycles, cache fallback, auth checks, async trace, service interactions | Describe who calls whom, in what order, and what returns |
 | **Data Flow** | Data pipelines, ETL/ELT, analytics events, PII isolation, warehouse sync, lineage, downstream consumers | Describe sources, processing stages, storage, sensitivity boundaries, and consumers |
+| **Lifecycle** | State machines, order/task/deployment/agent-run lifecycles, wait states, retries, cancellation, timeout, terminal states | Describe states, transition events, retry paths, and terminal outcomes |
 
 Workflow is not trying to replace every general-purpose flowchart. It is a technical communication diagram: swimlanes, semantic colors, a clear happy path, and secondary async / approval / trace paths.
 
@@ -77,6 +78,18 @@ Warehouse stores analytics tables, Feature Store derives daily features, Dashboa
 Open the example here: [`examples/dataflow-product-analytics.html`](examples/dataflow-product-analytics.html).
 
 ![Data Flow example](examples/images/archify-dataflow.png)
+
+Lifecycle diagrams explain how an object changes state:
+
+```text
+Use archify to draw a lifecycle diagram:
+Agent Run starts at Queued, moves through Planning, Executing, and Reviewing. It can pause at Needs Approval,
+wait at Blocked, retry after Failed, end at Cancelled or Expired, or finish at Completed.
+```
+
+Open the example here: [`examples/lifecycle-agent-run.html`](examples/lifecycle-agent-run.html).
+
+![Lifecycle example](examples/images/archify-lifecycle.png)
 
 ## What's new
 
@@ -234,6 +247,17 @@ Use archify to draw a data flow:
 - Warehouse stores normalized facts
 - Feature Store derives daily feature vectors
 - Dashboards and ML Model consume downstream data
+```
+
+**State machine / lifecycle:**
+```
+Use archify to draw a lifecycle diagram:
+- A task starts at Queued
+- Planning builds the plan
+- Executing calls tools
+- Reviewing checks quality
+- Needs Approval and Blocked are wait states
+- Failed can retry, while Cancelled / Expired / Completed are terminal states
 ```
 
 ## Color palette

@@ -15,6 +15,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 - **Data-flow diagram mode.** Added a renderer-backed data-flow diagram type for analytics pipelines, ETL/ELT, PII isolation, governance boundaries, data lineage, warehouse sync, and downstream consumers.
 - **Data-flow JSON Schema.** Added `archify/schemas/dataflow.schema.json` to document and validate the data-flow IR shape.
 - **Data-flow example.** Added a rendered product analytics data-flow example at `examples/dataflow-product-analytics.html`, plus a README preview screenshot.
+- **Lifecycle diagram mode.** Added a renderer-backed lifecycle/state-machine diagram type for object lifecycles, wait states, retries, cancellation, timeout, terminal states, and recovery paths.
+- **Lifecycle JSON Schema.** Added `archify/schemas/lifecycle.schema.json` to document and validate the lifecycle IR shape.
+- **Lifecycle example.** Added a rendered agent-run lifecycle example at `examples/lifecycle-agent-run.html`, plus a README preview screenshot.
 
 ### Changed
 - **Template responsive polish.** The shared HTML template now handles narrow viewports better: the toolbar no longer overlaps the title, diagrams can scale down to the available width, and cards stack cleanly on mobile.

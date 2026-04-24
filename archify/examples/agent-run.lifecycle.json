@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Agent Run Lifecycle",
+    "subtitle": "State machine for planning, tool execution, human approval, retries, and terminal outcomes",
+    "output": "examples/lifecycle-agent-run.html",
+    "viewBox": [980, 720]
+  },
+  "lanes": [
+    { "id": "main", "label": "Main lifecycle" },
+    { "id": "waiting", "label": "Wait states" },
+    { "id": "exceptions", "label": "Exceptions + recovery" }
+  ],
+  "states": [
+    { "id": "queued", "type": "start", "label": "Queued", "sublabel": "request accepted", "lane": "main", "col": 0, "tag": "entry" },
+    { "id": "planning", "type": "active", "label": "Planning", "sublabel": "build task graph", "lane": "main", "col": 1, "tag": "model" },
+    { "id": "executing", "type": "active", "label": "Executing", "sublabel": "tool calls", "lane": "main", "col": 2, "tag": "work" },
+    { "id": "reviewing", "type": "decision", "label": "Reviewing", "sublabel": "quality gate", "lane": "main", "col": 3, "tag": "check" },
+    { "id": "completed", "type": "success", "label": "Completed", "sublabel": "final response", "lane": "main", "col": 5, "tag": "terminal" },
+    { "id": "approval", "type": "waiting", "label": "Needs Approval", "sublabel": "human gate", "lane": "waiting", "col": 3, "tag": "pause" },
+    { "id": "blocked", "type": "waiting", "label": "Blocked", "sublabel": "missing input", "lane": "waiting", "col": 4, "tag": "wait" },
+    { "id": "failed", "type": "failure", "label": "Failed", "sublabel": "recoverable error", "lane": "exceptions", "col": 2, "tag": "retryable" },
+    { "id": "cancelled", "type": "failure", "label": "Cancelled", "sublabel": "user stopped", "lane": "exceptions", "col": 4, "tag": "terminal" },
+    { "id": "expired", "type": "failure", "label": "Expired", "sublabel": "timeout", "lane": "exceptions", "col": 5, "tag": "terminal" }
+  ],
+  "transitions": [
+    { "from": "queued", "to": "planning", "label": "start", "variant": "emphasis", "route": "straight" },
+    { "from": "planning", "to": "executing", "label": "plan ready", "variant": "emphasis", "route": "straight" },
+    { "from": "executing", "to": "reviewing", "label": "tool results", "variant": "emphasis", "route": "straight" },
+    { "from": "reviewing", "to": "completed", "label": "passes", "note": "terminal", "variant": "emphasis", "route": "straight", "labelAt": [624, 104] },
+    { "from": "executing", "to": "approval", "label": "needs approval", "note": "policy gate", "variant": "security", "fromSide": "bottom", "toSide": "top", "via": [[396, 194], [546, 194]], "labelAt": [478, 182] },
+    { "from": "approval", "to": "executing", "variant": "dashed", "fromSide": "top", "toSide": "bottom", "via": [[546, 216], [396, 216]] },
+    { "from": "reviewing", "to": "blocked", "label": "needs input", "variant": "default", "route": "drop", "labelAt": [618, 190] },
+    { "from": "blocked", "to": "planning", "label": "user reply", "variant": "dashed", "fromSide": "left", "toSide": "bottom", "route": "bottom-channel", "channelY": 350, "labelAt": [472, 350] },
+    { "from": "executing", "to": "failed", "label": "tool error", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight", "labelAt": [426, 392] },
+    { "from": "failed", "to": "planning", "label": "retry", "note": "bounded", "variant": "dashed", "fromSide": "left", "toSide": "bottom", "route": "left-channel", "channelX": 188, "labelAt": [188, 446] },
+    { "from": "blocked", "to": "expired", "label": "timeout", "variant": "security", "fromSide": "right", "toSide": "top", "route": "right-channel", "channelX": 906, "labelAt": [906, 362] },
+    { "from": "approval", "to": "cancelled", "label": "cancel", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "drop", "labelAt": [620, 362] }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Main Path",
+      "items": [
+        "Main states are Queued, Planning, Executing, Reviewing, and Completed",
+        "The hot path stays in one lane and reads left to right",
+        "Completed is the only success terminal state"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Human + Input Gates",
+      "items": [
+        "Approval pauses execution without ending the run",
+        "Blocked waits for missing user input",
+        "Wait states can resume back into planning or execution"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Terminal + Recovery",
+      "items": [
+        "Failed is recoverable while retry budget remains",
+        "Cancelled and Expired are terminal failure states",
+        "Error transitions are separated from the happy path"
+      ]
+    }
+  ]
+}
