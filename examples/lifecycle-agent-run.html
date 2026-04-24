@@ -489,12 +489,12 @@
         <path d="M 302 106 L 340 106" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path d="M 452 106 L 490 106" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path d="M 546 133 L 546 439" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path d="M 396 133 L 396 182 Q 396 192 406 192 L 630 192 Q 640 192 640 202 L 640 226" class="a-security" stroke-width="1.2" marker-end="url(#arrowhead-security)"/>
-        <path d="M 602 106 L 602 146 Q 602 156 612 156 L 780 156 Q 790 156 790 166 L 790 226" class="a-default" stroke-width="1.2" marker-end="url(#arrowhead)"/>
-        <path d="M 396 133 L 396 319" class="a-security" stroke-width="1.2" marker-end="url(#arrowhead-security)"/>
-        <path d="M 340 346 L 246 346 Q 236 346 236 336 L 236 138 Q 236 133 241 133 L 246 133" class="a-dashed" stroke-width="1.2" marker-end="url(#arrowhead-dashed)"/>
-        <path d="M 846 253 L 846 439" class="a-security" stroke-width="1.2" marker-end="url(#arrowhead-security)"/>
+        <path d="M 396 133 L 396 199" class="a-security" stroke-width="1.2" marker-end="url(#arrowhead-security)"/>
+        <path d="M 602 106 L 602 146 Q 602 156 612 156 L 630 156 Q 640 156 640 166 L 640 226" class="a-default" stroke-width="1.2" marker-end="url(#arrowhead)"/>
+        <path d="M 340 106 L 340 294 Q 340 304 330 304 L 253.5 304 Q 246 304 246 311.5 L 246 319" class="a-security" stroke-width="1.2" marker-end="url(#arrowhead-security)"/>
+        <path d="M 246 319 L 246 133" class="a-dashed" stroke-width="1.2" marker-end="url(#arrowhead-dashed)"/>
         <path d="M 696 253 L 696 439" class="a-security" stroke-width="1.2" marker-end="url(#arrowhead-security)"/>
+        <path d="M 396 253 L 396 439" class="a-security" stroke-width="1.2" marker-end="url(#arrowhead-security)"/>
 
         <!-- States -->
         <rect x="40" y="79" width="112" height="54" rx="6" class="c-mask"/>
@@ -521,23 +521,29 @@
         <text x="546" y="116" class="t-muted" font-size="7" text-anchor="middle">quality gate</text>
         <text x="546" y="122" class="t-security" font-size="7" text-anchor="middle">check</text>
 
+        <rect x="340" y="199" width="112" height="54" rx="6" class="c-mask"/>
+        <rect x="340" y="199" width="112" height="54" rx="6" class="c-cloud" stroke-width="1.5"/>
+        <text x="396" y="220" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Needs Approval</text>
+        <text x="396" y="236" class="t-muted" font-size="7" text-anchor="middle">human gate</text>
+        <text x="396" y="242" class="t-cloud" font-size="7" text-anchor="middle">pause</text>
+
         <rect x="640" y="199" width="112" height="54" rx="6" class="c-mask"/>
         <rect x="640" y="199" width="112" height="54" rx="6" class="c-cloud" stroke-width="1.5"/>
-        <text x="696" y="220" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Needs Approval</text>
-        <text x="696" y="236" class="t-muted" font-size="7" text-anchor="middle">human gate</text>
-        <text x="696" y="242" class="t-cloud" font-size="7" text-anchor="middle">pause</text>
+        <text x="696" y="220" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Blocked</text>
+        <text x="696" y="236" class="t-muted" font-size="7" text-anchor="middle">missing input</text>
+        <text x="696" y="242" class="t-cloud" font-size="7" text-anchor="middle">wait</text>
 
-        <rect x="790" y="199" width="112" height="54" rx="6" class="c-mask"/>
-        <rect x="790" y="199" width="112" height="54" rx="6" class="c-cloud" stroke-width="1.5"/>
-        <text x="846" y="220" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Blocked</text>
-        <text x="846" y="236" class="t-muted" font-size="7" text-anchor="middle">missing input</text>
-        <text x="846" y="242" class="t-cloud" font-size="7" text-anchor="middle">wait</text>
+        <rect x="190" y="319" width="112" height="54" rx="6" class="c-mask"/>
+        <rect x="190" y="319" width="112" height="54" rx="6" class="c-security" stroke-width="1.5"/>
+        <text x="246" y="340" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Failed</text>
+        <text x="246" y="356" class="t-muted" font-size="7" text-anchor="middle">recoverable error</text>
+        <text x="246" y="362" class="t-security" font-size="7" text-anchor="middle">retryable</text>
 
-        <rect x="340" y="319" width="112" height="54" rx="6" class="c-mask"/>
-        <rect x="340" y="319" width="112" height="54" rx="6" class="c-security" stroke-width="1.5"/>
-        <text x="396" y="340" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Failed</text>
-        <text x="396" y="356" class="t-muted" font-size="7" text-anchor="middle">recoverable error</text>
-        <text x="396" y="362" class="t-security" font-size="7" text-anchor="middle">retryable</text>
+        <rect x="340" y="439" width="112" height="54" rx="6" class="c-mask"/>
+        <rect x="340" y="439" width="112" height="54" rx="6" class="c-security" stroke-width="1.5"/>
+        <text x="396" y="460" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Cancelled</text>
+        <text x="396" y="476" class="t-muted" font-size="7" text-anchor="middle">user stopped</text>
+        <text x="396" y="482" class="t-security" font-size="7" text-anchor="middle">terminal</text>
 
         <rect x="490" y="439" width="112" height="54" rx="6" class="c-mask"/>
         <rect x="490" y="439" width="112" height="54" rx="6" class="c-database" stroke-width="1.5"/>
@@ -547,15 +553,9 @@
 
         <rect x="640" y="439" width="112" height="54" rx="6" class="c-mask"/>
         <rect x="640" y="439" width="112" height="54" rx="6" class="c-security" stroke-width="1.5"/>
-        <text x="696" y="460" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Cancelled</text>
-        <text x="696" y="476" class="t-muted" font-size="7" text-anchor="middle">user stopped</text>
+        <text x="696" y="460" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Expired</text>
+        <text x="696" y="476" class="t-muted" font-size="7" text-anchor="middle">timeout</text>
         <text x="696" y="482" class="t-security" font-size="7" text-anchor="middle">terminal</text>
-
-        <rect x="790" y="439" width="112" height="54" rx="6" class="c-mask"/>
-        <rect x="790" y="439" width="112" height="54" rx="6" class="c-security" stroke-width="1.5"/>
-        <text x="846" y="460" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Expired</text>
-        <text x="846" y="476" class="t-muted" font-size="7" text-anchor="middle">timeout</text>
-        <text x="846" y="482" class="t-security" font-size="7" text-anchor="middle">terminal</text>
 
         <!-- Transition labels -->
 
@@ -564,15 +564,10 @@
 
 
 
-        <rect x="393.5" y="279" width="61" height="16" rx="4" class="c-mask"/>
-        <text x="424" y="290" class="t-security" font-size="8" text-anchor="middle">tool error</text>
-        <rect x="212.85" y="347" width="46.300000000000004" height="27" rx="4" class="c-mask"/>
-        <text x="236" y="358" class="t-messagebus" font-size="8" text-anchor="middle">retry</text>
-        <text x="236" y="369" class="t-dim" font-size="7" text-anchor="middle">bounded</text>
-        <rect x="822.85" y="385" width="46.300000000000004" height="16" rx="4" class="c-mask"/>
-        <text x="846" y="396" class="t-security" font-size="8" text-anchor="middle">timeout</text>
-        <rect x="675.3" y="385" width="41.400000000000006" height="16" rx="4" class="c-mask"/>
-        <text x="696" y="396" class="t-security" font-size="8" text-anchor="middle">cancel</text>
+
+
+
+
 
         <!-- Legend -->
         <text x="220" y="532" class="t-primary" font-size="10" font-weight="600">Legend</text>
