@@ -2,11 +2,12 @@
 
 # Archify
 
-**Generate beautiful architecture diagrams in chat. Switch dark / light. Copy to clipboard or export crisp 4× PNG / JPEG / WebP / SVG.**
+**Generate beautiful architecture and technical workflow diagrams in chat. Switch dark / light. Copy to clipboard or export crisp 4× PNG / JPEG / WebP / SVG.**
 
-Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-using-skills-in-claude) that turns a plain-English description of your system into a polished, self-contained architecture diagram — a single HTML file you can open, toggle themes on, copy to the clipboard, and export at maximum resolution.
+Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-using-skills-in-claude) that turns a plain-English description of your system or process into a polished, self-contained technical diagram — a single HTML file you can open, toggle themes on, copy to the clipboard, and export at maximum resolution.
 
 - **No design skills needed** — describe your architecture in English, get a diagram
+- **Workflow diagrams too** — technical flows, approvals, tool calls, CI/CD, and runbooks can be drawn as swimlane diagrams
 - **Built-in theme toggle** — one click between dark and light, persists across sessions
 - **Copy PNG to clipboard** — one click, paste straight into Slack / Notion / GitHub
 - **Ultra-crisp image export** — PNG / JPEG / WebP rendered natively at 4× source resolution (no upsampling blur), or SVG for true vector
@@ -33,6 +34,24 @@ The Export menu — Copy PNG to clipboard plus 4 download formats (all raster ex
 ![Export menu](examples/images/archify-menu.png)
 
 Live example: [`examples/web-app.html`](examples/web-app.html) — open in a browser, press <kbd>T</kbd> to toggle theme, <kbd>E</kbd> to open Export. Append `?theme=light` or `?openExport=1` to the URL for deterministic screenshots.
+
+## Diagram types
+
+Archify now has two primary outputs:
+
+| Type | Good for | How to ask |
+|---|---|---|
+| **Architecture** | System components, cloud resources, databases, caches, services, boundaries, security groups | Describe the system structure |
+| **Workflow** | Request lifecycles, approval flows, tool calls, CI/CD, runbooks, incident response | Describe participants, step order, and key branches |
+
+Workflow is not trying to replace every general-purpose flowchart. It is a technical communication diagram: swimlanes, semantic colors, a clear happy path, and secondary async / approval / trace paths.
+
+```text
+Use archify to draw a workflow:
+User submits a request -> Agent plans -> Approval Gate if needed -> Tool Call -> Trace Log -> Final Reply
+```
+
+Open the example here: [`examples/workflow-agent-tool-call-rendered.html`](examples/workflow-agent-tool-call-rendered.html).
 
 ## What's new
 

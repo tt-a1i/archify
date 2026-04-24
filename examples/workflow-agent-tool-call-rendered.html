@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>[PROJECT NAME] Architecture Diagram</title>
+  <title>Agent Tool Call Workflow Diagram</title>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     /* ==========================================================
@@ -441,14 +441,14 @@
     <div class="header">
       <div class="header-row">
         <div class="pulse-dot"></div>
-        <h1>[PROJECT NAME] Architecture</h1>
+        <h1>Agent Tool Call Workflow</h1>
       </div>
-      <p class="subtitle">[Subtitle description]</p>
+      <p class="subtitle">Renderer-driven workflow prototype with lanes, anchored nodes, and orthogonal edges</p>
     </div>
 
     <!-- Main Diagram -->
     <div class="diagram-container">
-      <svg viewBox="0 0 1000 680">
+      <svg viewBox="0 0 720 780">
         <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -471,128 +471,119 @@
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />
 
-        <!-- =================================================================
-             COMPONENT EXAMPLES — use CSS classes, not inline fill/stroke
-             (so theme toggle works). Each box pattern:
-               1. opaque mask rect (.c-mask) to hide arrows underneath
-               2. styled rect (.c-<type>) with 1.5px stroke
-               3. text (.t-primary / .t-muted)
-             ================================================================= -->
+        <!-- Swimlanes -->
+        <rect x="40" y="52" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / User Interface</text>
 
-        <!-- External/Generic Component -->
-        <rect x="30" y="280" width="100" height="50" rx="6" class="c-mask"/>
-        <rect x="30" y="280" width="100" height="50" rx="6" class="c-external" stroke-width="1.5"/>
-        <text x="80" y="300" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Users</text>
-        <text x="80" y="316" class="t-muted" font-size="9" text-anchor="middle">Browser/Mobile</text>
+        <rect x="40" y="176" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / Agent Runtime</text>
 
-        <!-- Security Component -->
-        <rect x="30" y="80" width="100" height="60" rx="6" class="c-mask"/>
-        <rect x="30" y="80" width="100" height="60" rx="6" class="c-security" stroke-width="1.5"/>
-        <text x="80" y="105" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Auth Provider</text>
-        <text x="80" y="121" class="t-muted" font-size="9" text-anchor="middle">OAuth 2.0</text>
+        <rect x="40" y="300" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="322" class="t-dim" font-size="10" font-weight="600">03 / Policy Boundary</text>
 
-        <!-- Region/Cloud Boundary -->
-        <rect x="160" y="40" width="820" height="620" rx="12" class="c-region" stroke-width="1"/>
-        <text x="172" y="58" class="t-cloud" font-size="10" font-weight="600">AWS Region: us-west-2</text>
+        <rect x="40" y="424" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="446" class="t-dim" font-size="10" font-weight="600">04 / Tool Execution</text>
 
-        <!-- AWS/Cloud Service -->
-        <rect x="200" y="280" width="110" height="50" rx="6" class="c-mask"/>
-        <rect x="200" y="280" width="110" height="50" rx="6" class="c-cloud" stroke-width="1.5"/>
-        <text x="255" y="300" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">CloudFront</text>
-        <text x="255" y="316" class="t-muted" font-size="9" text-anchor="middle">CDN</text>
+        <rect x="40" y="548" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="570" class="t-dim" font-size="10" font-weight="600">05 / Observability</text>
 
-        <!-- Multi-line AWS Component (S3 Buckets example) -->
-        <rect x="200" y="380" width="110" height="100" rx="6" class="c-mask"/>
-        <rect x="200" y="380" width="110" height="100" rx="6" class="c-cloud" stroke-width="1.5"/>
-        <text x="255" y="400" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">S3 Buckets</text>
-        <text x="255" y="420" class="t-muted" font-size="8" text-anchor="middle">&bull; bucket-one</text>
-        <text x="255" y="434" class="t-muted" font-size="8" text-anchor="middle">&bull; bucket-two</text>
-        <text x="255" y="448" class="t-muted" font-size="8" text-anchor="middle">&bull; bucket-three</text>
-        <text x="255" y="466" class="t-cloud" font-size="7" text-anchor="middle">OAI Protected</text>
+        <!-- Edge paths -->
+        <path d="M 134 119 L 174 119" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path d="M 220 145 L 220 166 L 300 166 L 300 209" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 346 243 L 384 243" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path d="M 430 269 L 430 290 L 430 290 L 430 333" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path d="M 430 401 L 430 414 L 500 414 L 500 457" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 546 491 L 579 491" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path d="M 625 517 L 625 673 L 500 673 L 500 641" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path d="M 546 615 L 692 615 L 692 119 L 671 119" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 300 277 L 300 414 L 220 414 L 220 589" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path d="M 266 615 L 454 615" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
 
-        <!-- Security Group (dashed boundary). NOTE: extra vertical headroom
-             so the sg-name label has ~12px breathing room above the inner
-             component. Pattern: boundary y = inner.y - 30, h = inner.h + 50. -->
-        <rect x="350" y="250" width="120" height="100" rx="8" class="c-security-group" stroke-width="1"/>
-        <text x="358" y="268" class="t-security" font-size="8">sg-name :port</text>
+        <!-- Nodes -->
+        <rect x="42" y="93" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="42" y="93" width="92" height="52" rx="6" class="c-external" stroke-width="1.5"/>
+        <text x="88" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">User</text>
+        <text x="88" y="131" class="t-muted" font-size="8" text-anchor="middle">asks for work</text>
 
-        <!-- Component inside security group -->
-        <rect x="360" y="280" width="100" height="50" rx="6" class="c-mask"/>
-        <rect x="360" y="280" width="100" height="50" rx="6" class="c-cloud" stroke-width="1.5"/>
-        <text x="410" y="300" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Load Balancer</text>
-        <text x="410" y="316" class="t-muted" font-size="9" text-anchor="middle">HTTPS :443</text>
+        <rect x="174" y="93" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="174" y="93" width="92" height="52" rx="6" class="c-frontend" stroke-width="1.5"/>
+        <text x="220" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Chat Surface</text>
+        <text x="220" y="131" class="t-muted" font-size="8" text-anchor="middle">thread + files</text>
 
-        <!-- Backend Component -->
-        <rect x="510" y="280" width="110" height="50" rx="6" class="c-mask"/>
-        <rect x="510" y="280" width="110" height="50" rx="6" class="c-backend" stroke-width="1.5"/>
-        <text x="565" y="300" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">API Server</text>
-        <text x="565" y="316" class="t-muted" font-size="9" text-anchor="middle">FastAPI :8000</text>
+        <rect x="579" y="93" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="579" y="93" width="92" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="625" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Final Reply</text>
+        <text x="625" y="131" class="t-muted" font-size="8" text-anchor="middle">answer + changes</text>
 
-        <!-- Database Component -->
-        <rect x="700" y="280" width="120" height="50" rx="6" class="c-mask"/>
-        <rect x="700" y="280" width="120" height="50" rx="6" class="c-database" stroke-width="1.5"/>
-        <text x="760" y="300" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Database</text>
-        <text x="760" y="316" class="t-muted" font-size="9" text-anchor="middle">PostgreSQL</text>
+        <rect x="254" y="209" width="92" height="68" rx="6" class="c-mask"/>
+        <rect x="254" y="209" width="92" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="300" y="230" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Agent Planner</text>
+        <text x="300" y="247" class="t-muted" font-size="8" text-anchor="middle">plan next step</text>
+        <text x="300" y="265" class="t-backend" font-size="7" text-anchor="middle">context aware</text>
 
-        <!-- Frontend Component -->
-        <rect x="200" y="520" width="200" height="110" rx="8" class="c-mask"/>
-        <rect x="200" y="520" width="200" height="110" rx="8" class="c-frontend" stroke-width="1.5"/>
-        <text x="300" y="545" class="t-primary" font-size="12" font-weight="600" text-anchor="middle">Frontend</text>
-        <text x="300" y="565" class="t-muted" font-size="9" text-anchor="middle">React + TypeScript</text>
-        <text x="300" y="580" class="t-muted" font-size="9" text-anchor="middle">Additional detail</text>
-        <text x="300" y="595" class="t-muted" font-size="9" text-anchor="middle">More info</text>
-        <text x="300" y="615" class="t-frontend" font-size="8" text-anchor="middle">domain.example.com</text>
+        <rect x="384" y="217" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="384" y="217" width="92" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="430" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Tool Router</text>
+        <text x="430" y="255" class="t-muted" font-size="8" text-anchor="middle">choose capability</text>
 
-        <!-- =================================================================
-             ARROW EXAMPLES (use .a-* classes and stroke-width on the line)
-             ================================================================= -->
+        <rect x="384" y="333" width="92" height="68" rx="6" class="c-mask"/>
+        <rect x="384" y="333" width="92" height="68" rx="6" class="c-security" stroke-width="1.5"/>
+        <text x="430" y="354" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Approval Gate</text>
+        <text x="430" y="371" class="t-muted" font-size="8" text-anchor="middle">scope + consent</text>
+        <text x="430" y="389" class="t-security" font-size="7" text-anchor="middle">block risky ops</text>
 
-        <!-- Standard arrow with label -->
-        <line x1="130" y1="305" x2="198" y2="305" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <text x="164" y="299" class="t-muted" font-size="9" text-anchor="middle">HTTPS</text>
+        <rect x="454" y="457" width="92" height="68" rx="6" class="c-mask"/>
+        <rect x="454" y="457" width="92" height="68" rx="6" class="c-messagebus" stroke-width="1.5"/>
+        <text x="500" y="478" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Tool Call</text>
+        <text x="500" y="495" class="t-muted" font-size="8" text-anchor="middle">shell / browser / MCP</text>
+        <text x="500" y="513" class="t-messagebus" font-size="7" text-anchor="middle">structured result</text>
 
-        <!-- Simple arrow (no label) -->
-        <line x1="310" y1="305" x2="358" y2="305" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <rect x="579" y="465" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="579" y="465" width="92" height="52" rx="6" class="c-cloud" stroke-width="1.5"/>
+        <text x="625" y="486" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">External API</text>
+        <text x="625" y="503" class="t-muted" font-size="8" text-anchor="middle">network service</text>
 
-        <!-- Vertical arrow -->
-        <line x1="255" y1="330" x2="255" y2="378" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <text x="270" y="358" class="t-muted" font-size="9">OAI</text>
+        <rect x="174" y="589" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="174" y="589" width="92" height="52" rx="6" class="c-database" stroke-width="1.5"/>
+        <text x="220" y="610" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Context Store</text>
+        <text x="220" y="627" class="t-muted" font-size="8" text-anchor="middle">repo + memory</text>
 
-        <!-- Straight arrows between services -->
-        <line x1="460" y1="305" x2="508" y2="305" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <line x1="620" y1="305" x2="698" y2="305" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <text x="655" y="299" class="t-muted" font-size="9">TLS</text>
+        <rect x="454" y="589" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="454" y="589" width="92" height="52" rx="6" class="c-database" stroke-width="1.5"/>
+        <text x="500" y="610" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Trace Log</text>
+        <text x="500" y="627" class="t-muted" font-size="8" text-anchor="middle">events + output</text>
 
-        <!-- Curved dashed path for auth/security flow -->
-        <path d="M 80 140 L 80 200 Q 80 220 100 220 L 200 220 Q 220 220 220 240 L 220 278"
-              class="a-security" stroke-width="1.5"/>
-        <text x="150" y="210" class="t-security" font-size="8">JWT + PKCE</text>
+        <!-- Edge labels -->
 
-        <!-- =================================================================
-             LEGEND
-             ================================================================= -->
-        <text x="720" y="70" class="t-primary" font-size="10" font-weight="600">Legend</text>
+        <rect x="245" y="146" width="30" height="14" rx="3" class="c-mask"/>
+        <text x="260" y="156" class="t-backend" font-size="8" text-anchor="middle">plan</text>
 
-        <rect x="720" y="82" width="16" height="10" rx="2" class="c-frontend" stroke-width="1"/>
-        <text x="742" y="90" class="t-muted" font-size="8">Frontend</text>
+        <rect x="423" y="277.5" width="82" height="14" rx="3" class="c-mask"/>
+        <text x="464" y="287.5" class="t-security" font-size="8" text-anchor="middle">needs approval?</text>
+        <rect x="440.8" y="408" width="48.4" height="14" rx="3" class="c-mask"/>
+        <text x="465" y="418" class="t-backend" font-size="8" text-anchor="middle">approved</text>
 
-        <rect x="720" y="98" width="16" height="10" rx="2" class="c-backend" stroke-width="1"/>
-        <text x="742" y="106" class="t-muted" font-size="8">Backend</text>
+        <rect x="526.3" y="653" width="72.4" height="14" rx="3" class="c-mask"/>
+        <text x="562.5" y="663" class="t-database" font-size="8" text-anchor="middle">record result</text>
+        <rect x="624.2" y="347" width="91.6" height="14" rx="3" class="c-mask"/>
+        <text x="670" y="357" class="t-backend" font-size="8" text-anchor="middle">summarize outcome</text>
+        <rect x="226.2" y="394" width="67.6" height="14" rx="3" class="c-mask"/>
+        <text x="260" y="404" class="t-database" font-size="8" text-anchor="middle">load context</text>
+        <rect x="327" y="612" width="106" height="14" rx="3" class="c-mask"/>
+        <text x="380" y="622" class="t-database" font-size="8" text-anchor="middle">write trace + memory</text>
 
-        <rect x="720" y="114" width="16" height="10" rx="2" class="c-cloud" stroke-width="1"/>
-        <text x="742" y="122" class="t-muted" font-size="8">Cloud Service</text>
-
-        <rect x="720" y="130" width="16" height="10" rx="2" class="c-database" stroke-width="1"/>
-        <text x="742" y="138" class="t-muted" font-size="8">Database</text>
-
-        <rect x="720" y="146" width="16" height="10" rx="2" class="c-security" stroke-width="1"/>
-        <text x="742" y="154" class="t-muted" font-size="8">Security</text>
-
-        <line x1="720" y1="168" x2="736" y2="168" class="a-security" stroke-width="1"/>
-        <text x="742" y="171" class="t-muted" font-size="8">Auth Flow</text>
-
-        <rect x="720" y="178" width="16" height="10" rx="2" class="c-security-group" stroke-width="1"/>
-        <text x="742" y="186" class="t-muted" font-size="8">Security Group</text>
+        <!-- Legend -->
+        <text x="175" y="676" class="t-primary" font-size="10" font-weight="600">Legend</text>
+        <rect x="175" y="688" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
+        <text x="195" y="696" class="t-muted" font-size="7">User UI</text>
+        <rect x="260" y="688" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+        <text x="280" y="696" class="t-muted" font-size="7">Agent logic</text>
+        <rect x="370" y="688" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+        <text x="390" y="696" class="t-muted" font-size="7">Policy</text>
+        <rect x="455" y="688" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+        <text x="475" y="696" class="t-muted" font-size="7">Tool action</text>
+        <rect x="565" y="688" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+        <text x="585" y="696" class="t-muted" font-size="7">Context / trace</text>
       </svg>
     </div>
 
@@ -600,47 +591,47 @@
     <div class="cards">
       <div class="card">
         <div class="card-header">
+          <div class="card-dot cyan"></div>
+          <h3>Renderer Rules</h3>
+        </div>
+        <ul>
+          <li>&bull; Lanes and columns determine node placement</li>
+          <li>&bull; Edges attach to explicit node anchors</li>
+          <li>&bull; Cross-lane paths use orthogonal routing</li>
+          <li>&bull; Short adjacent links stay unlabeled</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
           <div class="card-dot rose"></div>
-          <h3>Card Title 1</h3>
+          <h3>Workflow Semantics</h3>
         </div>
         <ul>
-          <li>&bull; Item one</li>
-          <li>&bull; Item two</li>
-          <li>&bull; Item three</li>
-          <li>&bull; Item four</li>
+          <li>&bull; Approval is a first-class policy step</li>
+          <li>&bull; Consent gates are visible in the main path</li>
+          <li>&bull; External calls stay inside the tool lane</li>
+          <li>&bull; Trace writes are separate from the hot path</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
-          <div class="card-dot amber"></div>
-          <h3>Card Title 2</h3>
+          <div class="card-dot emerald"></div>
+          <h3>Why It Matters</h3>
         </div>
         <ul>
-          <li>&bull; Item one</li>
-          <li>&bull; Item two</li>
-          <li>&bull; Item three</li>
-          <li>&bull; Item four</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-dot violet"></div>
-          <h3>Card Title 3</h3>
-        </div>
-        <ul>
-          <li>&bull; Item one</li>
-          <li>&bull; Item two</li>
-          <li>&bull; Item three</li>
-          <li>&bull; Item four</li>
+          <li>&bull; This is closer to a diagram_type renderer</li>
+          <li>&bull; The graph can be edited without SVG surgery</li>
+          <li>&bull; Layout rules can be tested and improved</li>
+          <li>&bull; A future IR can reuse this shape directly</li>
         </ul>
       </div>
     </div>
 
     <!-- Footer -->
     <p class="footer">
-      [Project Name] &bull; [Additional metadata]
+      Workflow diagram &bull; Built with Archify &bull; Press <kbd>T</kbd> for theme and <kbd>E</kbd> for export
     </p>
   </div>
 

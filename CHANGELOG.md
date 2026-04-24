@@ -2,6 +2,17 @@
 
 All notable changes are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+- **Workflow diagram mode.** Archify now includes a renderer-backed workflow diagram type for technical flows, approval chains, tool calls, CI/CD paths, runbooks, and process ownership diagrams. Workflow diagrams use a JSON IR with lanes, nodes, routed edges, and summary cards, then render into the same standalone HTML shell with theme toggle and export menu.
+- **Workflow JSON Schema.** Added `archify/schemas/workflow.schema.json` to document and validate the workflow IR shape.
+- **Workflow example.** Added a rendered agent tool-call workflow example at `examples/workflow-agent-tool-call-rendered.html`.
+
+### Changed
+- **Template responsive polish.** The shared HTML template now handles narrow viewports better: the toolbar no longer overlaps the title, diagrams can scale down to the available width, and cards stack cleanly on mobile.
+- **Subtle swimlane styling.** Added `c-lane` for workflow/process swimlanes so workflow boundaries do not visually overpower the main path.
+
 ## [2.4.0] — 2026-04-18
 
 ### Changed

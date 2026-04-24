@@ -2,11 +2,12 @@
 
 # Archify
 
-**聊两句就画出好看的架构图。深色 / 浅色一键切。导出 4× 清晰 PNG / JPEG / WebP / SVG，或直接复制到剪贴板。**
+**聊两句就画出好看的架构图和技术流程图。深色 / 浅色一键切。导出 4× 清晰 PNG / JPEG / WebP / SVG，或直接复制到剪贴板。**
 
-Archify 是一个 [Claude Skill](https://support.claude.com/en/articles/12512180-using-skills-in-claude)：你用大白话描述自己的系统，它就把你的描述变成一张做工精细的架构图 —— 一个单文件 HTML，在浏览器里打开就能切主题、复制到剪贴板、导出成各种图片格式。
+Archify 是一个 [Claude Skill](https://support.claude.com/en/articles/12512180-using-skills-in-claude)：你用大白话描述自己的系统或流程，它就把你的描述变成一张做工精细的技术图 —— 一个单文件 HTML，在浏览器里打开就能切主题、复制到剪贴板、导出成各种图片格式。
 
 - **不需要会画图** —— 把组件和连接关系说给 Claude 就行
+- **支持 workflow** —— 技术流程、审批链、工具调用、CI/CD、运维 runbook 都可以用泳道图表达
 - **内置主题切换** —— 深色 / 浅色一键切，浏览器记住偏好
 - **一键复制到剪贴板** —— 直接贴到 Slack、飞书、微信、Notion、GitHub issue
 - **导出图片超清晰** —— PNG / JPEG / WebP 全部由浏览器在 4× 源分辨率下**原生光栅化**（不是位图放大，没有糊），或导出 SVG 做真矢量
@@ -34,6 +35,24 @@ Export 菜单 —— 复制到剪贴板 + 四种格式下载：
 
 
 想亲自玩一下：克隆仓库后打开 [`examples/web-app.html`](examples/web-app.html)，按 <kbd>T</kbd> 切主题，<kbd>E</kbd> 打开导出菜单。给 URL 加上 `?theme=light` 或 `?openExport=1` 可以强制初始状态。
+
+## 图表类型
+
+Archify 现在有两种主要输出：
+
+| 类型 | 适合画什么 | 怎么用 |
+|---|---|---|
+| **Architecture** | 系统组件、云资源、数据库、缓存、服务边界、安全组 | 直接描述系统结构 |
+| **Workflow** | 请求生命周期、审批流程、工具调用、CI/CD、运维 runbook、事故响应 | 说明参与方、步骤顺序、关键分支 |
+
+Workflow 不是通用流程图的替代品，它更偏“技术沟通图”：有泳道、有语义颜色、有主路径和异步/审批/观测路径。比如：
+
+```
+用 archify 画一个 workflow：
+用户提交请求 -> Agent 规划 -> 需要审批时进入 Approval Gate -> 调工具 -> 记录 trace -> 返回结果
+```
+
+本仓库里有一个可打开的示例：[`examples/workflow-agent-tool-call-rendered.html`](examples/workflow-agent-tool-call-rendered.html)。
 
 ## 版本演进
 

@@ -99,6 +99,12 @@ The experiment tested whether auto-layout (dagre) + archify CSS (version B) look
 - SKILL.md updated to mention Mermaid as an accepted input dialect (prompt engineering, not parser).
 - README updated to describe the new stable-iteration workflow.
 
+### Workflow renderer pilot (2026-04-24)
+
+Workflow diagrams became the first concrete test of typed diagram renderers inside Archify. The pilot uses a dedicated `diagram_type: "workflow"` JSON IR with lanes, semantic nodes, anchored edges, route presets, and validation checks for common visual failures such as overlapping nodes, labels on short links, unreadable arrow lengths, and legends outside the viewBox.
+
+This does not reverse the anti-auto-layout decision above. The workflow renderer is intentionally a constrained layout assistant, not a generic graph layout engine: lanes and columns provide stability, while Claude still chooses the semantic grouping, lane order, route intent, labels, and summary cards.
+
 ---
 
 ## Not planned

@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Agent Tool Call Workflow",
+    "subtitle": "Renderer-driven workflow prototype with lanes, anchored nodes, and orthogonal edges",
+    "output": "examples/workflow-agent-tool-call-rendered.html",
+    "viewBox": [720, 780]
+  },
+  "lanes": [
+    { "id": "ui", "label": "User Interface" },
+    { "id": "agent", "label": "Agent Runtime" },
+    { "id": "policy", "label": "Policy Boundary" },
+    { "id": "tools", "label": "Tool Execution" },
+    { "id": "trace", "label": "Observability" }
+  ],
+  "nodes": [
+    { "id": "user", "lane": "ui", "col": 0, "type": "external", "label": "User", "sublabel": "asks for work" },
+    { "id": "chat", "lane": "ui", "col": 1, "type": "frontend", "label": "Chat Surface", "sublabel": "thread + files" },
+    { "id": "final", "lane": "ui", "col": 5, "type": "backend", "label": "Final Reply", "sublabel": "answer + changes" },
+    { "id": "planner", "lane": "agent", "col": 2, "type": "backend", "label": "Agent Planner", "sublabel": "plan next step", "tag": "context aware" },
+    { "id": "router", "lane": "agent", "col": 3, "type": "backend", "label": "Tool Router", "sublabel": "choose capability" },
+    { "id": "approval", "lane": "policy", "col": 3, "type": "security", "label": "Approval Gate", "sublabel": "scope + consent", "tag": "block risky ops" },
+    { "id": "tool", "lane": "tools", "col": 4, "type": "messagebus", "label": "Tool Call", "sublabel": "shell / browser / MCP", "tag": "structured result" },
+    { "id": "external", "lane": "tools", "col": 5, "type": "cloud", "label": "External API", "sublabel": "network service" },
+    { "id": "store", "lane": "trace", "col": 1, "type": "database", "label": "Context Store", "sublabel": "repo + memory" },
+    { "id": "trace", "lane": "trace", "col": 4, "type": "database", "label": "Trace Log", "sublabel": "events + output" }
+  ],
+  "edges": [
+    { "from": "user", "to": "chat", "variant": "default" },
+    { "from": "chat", "to": "planner", "label": "plan", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "drop", "labelSegment": 1 },
+    { "from": "planner", "to": "router", "variant": "default" },
+    { "from": "router", "to": "approval", "label": "needs approval?", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "drop", "labelSegment": 0, "labelDx": 34, "labelDy": 18 },
+    { "from": "approval", "to": "tool", "label": "approved", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "drop-right", "labelSegment": 1, "labelDy": 14 },
+    { "from": "tool", "to": "external", "variant": "default" },
+    { "from": "external", "to": "trace", "label": "record result", "variant": "dashed", "fromSide": "bottom", "toSide": "bottom", "route": "bottom-channel", "labelSegment": 1 },
+    { "from": "trace", "to": "final", "label": "summarize outcome", "variant": "emphasis", "fromSide": "right", "toSide": "right", "route": "outside-right", "labelSegment": 1, "labelDx": -22 },
+    { "from": "planner", "to": "store", "label": "load context", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "route": "drop-left", "labelSegment": 1 },
+    { "from": "store", "to": "trace", "label": "write trace + memory", "variant": "dashed", "labelAt": [380, 622] }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Renderer Rules",
+      "items": [
+        "Lanes and columns determine node placement",
+        "Edges attach to explicit node anchors",
+        "Cross-lane paths use orthogonal routing",
+        "Short adjacent links stay unlabeled"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Workflow Semantics",
+      "items": [
+        "Approval is a first-class policy step",
+        "Consent gates are visible in the main path",
+        "External calls stay inside the tool lane",
+        "Trace writes are separate from the hot path"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Why It Matters",
+      "items": [
+        "This is closer to a diagram_type renderer",
+        "The graph can be edited without SVG surgery",
+        "Layout rules can be tested and improved",
+        "A future IR can reuse this shape directly"
+      ]
+    }
+  ]
+}

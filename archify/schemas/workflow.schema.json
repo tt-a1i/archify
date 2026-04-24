@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/workflow.schema.json",
+  "title": "Archify Workflow Diagram",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "diagram_type", "meta", "lanes", "nodes", "edges"],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "diagram_type": {
+      "const": "workflow"
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "subtitle": { "type": "string" },
+        "output": { "type": "string" },
+        "viewBox": {
+          "type": "array",
+          "prefixItems": [
+            { "type": "number", "minimum": 320 },
+            { "type": "number", "minimum": 240 }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "lanes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "label": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "lane", "col", "type", "label"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "lane": { "$ref": "#/$defs/id" },
+          "col": { "type": "integer", "minimum": 0 },
+          "type": {
+            "enum": ["frontend", "backend", "database", "cloud", "security", "messagebus", "external"]
+          },
+          "label": { "type": "string", "minLength": 1 },
+          "sublabel": { "type": "string" },
+          "tag": { "type": "string" },
+          "width": { "type": "number", "minimum": 32 },
+          "height": { "type": "number", "minimum": 32 },
+          "yOffset": { "type": "number" }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "to"],
+        "properties": {
+          "from": { "$ref": "#/$defs/id" },
+          "to": { "$ref": "#/$defs/id" },
+          "label": { "type": "string" },
+          "variant": { "enum": ["default", "emphasis", "security", "dashed"] },
+          "fromSide": { "$ref": "#/$defs/side" },
+          "toSide": { "$ref": "#/$defs/side" },
+          "route": {
+            "enum": ["auto", "straight", "drop", "drop-right", "drop-left", "same-lane", "outside-right", "return-left", "bottom-channel", "up-channel"]
+          },
+          "via": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/point" }
+          },
+          "labelAt": { "$ref": "#/$defs/point" },
+          "labelDx": { "type": "number" },
+          "labelDy": { "type": "number" },
+          "labelSegment": { "type": "integer", "minimum": 0 },
+          "channelX": { "type": "number" },
+          "channelY": { "type": "number" },
+          "bias": { "type": "number", "minimum": 0, "maximum": 1 },
+          "width": { "type": "number", "minimum": 0.5 }
+        }
+      }
+    },
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["dot", "title", "items"],
+        "properties": {
+          "dot": { "enum": ["cyan", "emerald", "violet", "amber", "rose", "orange", "slate"] },
+          "title": { "type": "string", "minLength": 1 },
+          "items": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+    },
+    "side": {
+      "enum": ["auto", "left", "right", "top", "bottom"]
+    },
+    "point": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number" },
+        { "type": "number" }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    }
+  }
+}

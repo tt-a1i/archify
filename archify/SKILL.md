@@ -1,6 +1,6 @@
 ---
 name: archify
-description: Create professional architecture diagrams as standalone HTML files with SVG graphics, a built-in dark/light theme toggle, and one-click export to PNG / JPEG / WebP / SVG. Use when the user asks for system architecture diagrams, infrastructure diagrams, cloud architecture visualizations, security diagrams, network topology diagrams, or any technical diagram showing system components and their relationships.
+description: Create professional architecture and workflow diagrams as standalone HTML files with SVG graphics, a built-in dark/light theme toggle, and one-click export to PNG / JPEG / WebP / SVG. Use when the user asks for system architecture diagrams, infrastructure diagrams, cloud architecture visualizations, security diagrams, network topology diagrams, technical workflows, approval flows, runbooks, CI/CD flows, or process diagrams.
 license: MIT
 metadata:
   version: "2.4"
@@ -17,6 +17,60 @@ Every diagram this skill produces ships with:
 - A **Dark / Light theme toggle** (top-right, persists in `localStorage`, respects `prefers-color-scheme` on first visit).
 - An **Export menu** with **Copy PNG to clipboard** plus downloads for **PNG / JPEG / WebP** (all rasterized natively at 4× source resolution for maximum sharpness) and **SVG** (vector, styles inlined). The SVG download is **dual-theme self-contained**: it ships with both dark and light variable sets plus a `@media (prefers-color-scheme)` rule, so embedding it in a GitHub README (or any `<img>` host that exposes a color scheme) makes it follow the reader's dark/light preference automatically. All rendering happens in-browser, no server.
 - A **CSS-variable-driven color system** so both themes remain visually consistent with the same SVG markup.
+
+## Diagram Types
+
+Archify supports two technical diagram modes:
+
+| Type | Use for | Output path |
+|------|---------|-------------|
+| `architecture` | System components, cloud resources, services, storage, security boundaries, and infrastructure relationships | Hand-place SVG components inside `assets/template.html` |
+| `workflow` | Technical flows, request lifecycles, approval gates, tool calls, runbooks, CI/CD paths, incident response, and process ownership | Prefer `renderers/workflow/render-workflow.mjs` with a workflow JSON file |
+
+When the user says "architecture", "system diagram", "cloud diagram", or asks to understand a codebase structure, use the `architecture` mode unless the requested output is clearly process-oriented.
+
+When the user says "workflow", "flow", "process", "runbook", "sequence of steps", "approval", "CI/CD", "incident", or asks how work moves through actors/systems over time, use the `workflow` mode.
+
+### Workflow Mode
+
+Workflow diagrams use a compact JSON IR:
+
+```json
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Release Workflow",
+    "subtitle": "PR to production deployment",
+    "output": "release-workflow.html",
+    "viewBox": [720, 780]
+  },
+  "lanes": [
+    { "id": "dev", "label": "Developer" },
+    { "id": "ci", "label": "CI" }
+  ],
+  "nodes": [],
+  "edges": [],
+  "cards": []
+}
+```
+
+If you have filesystem/tool access, create a workflow JSON file and render it with:
+
+```bash
+node archify/renderers/workflow/render-workflow.mjs workflow.json workflow.html
+```
+
+The renderer:
+
+- Places nodes by lane + column instead of raw SVG coordinates
+- Routes edges through explicit anchors and orthogonal route presets
+- Uses `c-lane` swimlanes plus the normal semantic component classes
+- Hides labels on short adjacent links unless a label is truly necessary
+- Adds a `c-mask` label background for routed labels
+- Fails fast when nodes overlap, leave their lane, or short arrows become unreadable
+
+Use workflow labels sparingly. Adjacent steps should often be unlabeled; reserve labels for cross-lane transitions, approval decisions, async trace writes, and return paths.
 
 ## The Cardinal Rule: Use CSS Classes, Not Inline Colors
 
@@ -80,6 +134,7 @@ Always set `stroke-width` on the line (e.g., `1.5`) — the class only sets colo
 |---------------------|------------------------------------|
 | `c-security-group`  | Dashed rose boundary for SGs       |
 | `c-region`          | Large dashed amber region/cluster  |
+| `c-lane`            | Subtle swimlane for workflow/process diagrams |
 
 ### Typography
 
