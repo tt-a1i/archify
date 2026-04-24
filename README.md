@@ -64,6 +64,8 @@ Sequence 用来解释更细的交互顺序，比如：
 
 示例：[`examples/sequence-cache-miss-request.html`](examples/sequence-cache-miss-request.html)。
 
+![Sequence 示例](examples/images/archify-sequence.png)
+
 ## 版本演进
 
 Archify 基于 [Cocoon-AI/architecture-diagram-generator](https://github.com/Cocoon-AI/architecture-diagram-generator) v1.0（只有深色主题的 HTML 输出）fork 重写。**2.0** 把模板重构成 CSS 变量驱动的可主题化系统，加入客户端导出流水线。**2.1** 加入剪贴板复制 + 键盘导航。**2.2** 加入打印样式 + 本地字体回退。**2.3** 修了一个存在已久的位图升采样 bug，所有光栅导出改为 4× 原生渲染（同时移除了 v2.1 引入的 1×/2×/4× 选择器 —— 那个选择器只是在诱导用户选出更糊的图）。**2.4** SVG 导出升级成双主题自持版 —— 同一个 `.svg` 文件贴在 GitHub README 里，读者切深浅色图会自己跟着切。

@@ -11,6 +11,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 - **Sequence diagram mode.** Added a renderer-backed sequence diagram type for API call chains, request lifecycles, cache fallback paths, authentication checks, async trace emission, and service interactions over time.
 - **Sequence JSON Schema.** Added `archify/schemas/sequence.schema.json` to document and validate the sequence IR shape.
 - **Sequence example.** Added a rendered cache-miss request sequence example at `examples/sequence-cache-miss-request.html`.
+- **Sequence README preview.** Added a rendered sequence screenshot to the README preview flow.
 
 ### Changed
 - **Template responsive polish.** The shared HTML template now handles narrow viewports better: the toolbar no longer overlaps the title, diagrams can scale down to the available width, and cards stack cleanly on mobile.

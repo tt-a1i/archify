@@ -63,6 +63,8 @@ User opens a page, the frontend calls the API, the API verifies JWT, reads Redis
 
 Open the example here: [`examples/sequence-cache-miss-request.html`](examples/sequence-cache-miss-request.html).
 
+![Sequence example](examples/images/archify-sequence.png)
+
 ## What's new
 
 Archify is based on [Cocoon-AI/architecture-diagram-generator](https://github.com/Cocoon-AI/architecture-diagram-generator) v1.0 (dark-only, HTML output). **2.0** rewrote the template around a themeable CSS-variable system and added a client-side export pipeline. **2.1** added copy-to-clipboard + keyboard nav. **2.2** added a print stylesheet + local-font fallback. **2.3** fixed a long-standing upsampling bug and made every raster export genuinely sharp at 4× source resolution (the 1× / 2× / 4× selector introduced in 2.1 was removed at the same time — it only encouraged picking a soft-looking scale). **2.4** upgraded the SVG export to a dual-theme self-contained file — drop the same `.svg` into a GitHub README and it follows the reader's dark/light preference automatically.
