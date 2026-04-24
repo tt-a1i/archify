@@ -16,9 +16,9 @@ const layout = {
   laneX: 32,
   laneY: 44,
   laneW: 914,
-  laneGap: 10,
+  laneGap: 16,
   laneTitleH: 20,
-  laneH: 92,
+  laneH: 104,
   colXs: [96, 246, 396, 546, 696, 846],
   nodeW: 112,
   nodeH: 54
@@ -244,9 +244,36 @@ function pathFor(transition) {
   const end = anchor(to, transition.toSide || defaultToSide(from, to));
   const points = [start, ...routeVia(transition, from, to, start, end), end];
   return {
-    d: points.map(([x, y], index) => `${index === 0 ? 'M' : 'L'} ${x} ${y}`).join(' '),
+    d: roundedPath(points, transition.cornerRadius ?? 10),
     points
   };
+}
+
+function roundedPath(points, radius) {
+  if (points.length < 3 || radius <= 0) {
+    return points.map(([x, y], index) => `${index === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ');
+  }
+
+  const commands = [`M ${points[0][0]} ${points[0][1]}`];
+  for (let i = 1; i < points.length - 1; i += 1) {
+    const [px, py] = points[i - 1];
+    const [cx, cy] = points[i];
+    const [nx, ny] = points[i + 1];
+    const prevLen = Math.hypot(cx - px, cy - py);
+    const nextLen = Math.hypot(nx - cx, ny - cy);
+    const r = Math.min(radius, prevLen / 2, nextLen / 2);
+    if (r < 1) {
+      commands.push(`L ${cx} ${cy}`);
+      continue;
+    }
+    const before = [cx - ((cx - px) / prevLen) * r, cy - ((cy - py) / prevLen) * r];
+    const after = [cx + ((nx - cx) / nextLen) * r, cy + ((ny - cy) / nextLen) * r];
+    commands.push(`L ${before[0]} ${before[1]}`);
+    commands.push(`Q ${cx} ${cy} ${after[0]} ${after[1]}`);
+  }
+  const [endX, endY] = points[points.length - 1];
+  commands.push(`L ${endX} ${endY}`);
+  return commands.join(' ');
 }
 
 function labelPoint(transition, points) {
@@ -315,7 +342,7 @@ function transitionAccent(transition) {
 function renderTransitionPath(transition) {
   const [cls, marker] = arrowClass[transition.variant || 'default'] || arrowClass.default;
   const routed = pathFor(transition);
-  const strokeWidth = transition.width || (transition.variant === 'emphasis' ? 1.8 : 1.4);
+  const strokeWidth = transition.width || (transition.variant === 'emphasis' ? 1.8 : 1.2);
   return `        <path d="${routed.d}" class="${cls}" stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
 }
 

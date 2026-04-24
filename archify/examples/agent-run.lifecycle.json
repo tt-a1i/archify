@@ -5,7 +5,7 @@
     "title": "Agent Run Lifecycle",
     "subtitle": "State machine for planning, tool execution, human approval, retries, and terminal outcomes",
     "output": "examples/lifecycle-agent-run.html",
-    "viewBox": [980, 530]
+    "viewBox": [980, 610]
   },
   "lanes": [
     { "id": "main", "label": "Active lifecycle" },
@@ -18,25 +18,24 @@
     { "id": "planning", "type": "active", "label": "Planning", "sublabel": "build task graph", "lane": "main", "col": 1, "tag": "model" },
     { "id": "executing", "type": "active", "label": "Executing", "sublabel": "tool calls", "lane": "main", "col": 2, "tag": "work" },
     { "id": "reviewing", "type": "decision", "label": "Reviewing", "sublabel": "quality gate", "lane": "main", "col": 3, "tag": "check" },
-    { "id": "approval", "type": "waiting", "label": "Needs Approval", "sublabel": "human gate", "lane": "waiting", "col": 3, "tag": "pause" },
-    { "id": "blocked", "type": "waiting", "label": "Blocked", "sublabel": "missing input", "lane": "waiting", "col": 4, "tag": "wait" },
+    { "id": "approval", "type": "waiting", "label": "Needs Approval", "sublabel": "human gate", "lane": "waiting", "col": 4, "tag": "pause" },
+    { "id": "blocked", "type": "waiting", "label": "Blocked", "sublabel": "missing input", "lane": "waiting", "col": 5, "tag": "wait" },
     { "id": "failed", "type": "failure", "label": "Failed", "sublabel": "recoverable error", "lane": "exceptions", "col": 2, "tag": "retryable" },
-    { "id": "completed", "type": "success", "label": "Completed", "sublabel": "final response", "lane": "terminal", "col": 5, "tag": "success" },
-    { "id": "cancelled", "type": "failure", "label": "Cancelled", "sublabel": "user stopped", "lane": "terminal", "col": 3, "tag": "terminal" },
-    { "id": "expired", "type": "failure", "label": "Expired", "sublabel": "timeout", "lane": "terminal", "col": 4, "tag": "terminal" }
+    { "id": "completed", "type": "success", "label": "Completed", "sublabel": "final response", "lane": "terminal", "col": 3, "tag": "success" },
+    { "id": "cancelled", "type": "failure", "label": "Cancelled", "sublabel": "user stopped", "lane": "terminal", "col": 4, "tag": "terminal" },
+    { "id": "expired", "type": "failure", "label": "Expired", "sublabel": "timeout", "lane": "terminal", "col": 5, "tag": "terminal" }
   ],
   "transitions": [
     { "from": "queued", "to": "planning", "variant": "emphasis", "route": "straight" },
     { "from": "planning", "to": "executing", "variant": "emphasis", "route": "straight" },
     { "from": "executing", "to": "reviewing", "variant": "emphasis", "route": "straight" },
-    { "from": "reviewing", "to": "completed", "variant": "emphasis", "fromSide": "right", "toSide": "top", "via": [[846, 99], [846, 371]] },
-    { "from": "executing", "to": "approval", "variant": "security", "fromSide": "bottom", "toSide": "left", "via": [[396, 180], [490, 180]] },
-    { "from": "approval", "to": "reviewing", "variant": "dashed", "fromSide": "top", "toSide": "bottom", "route": "straight" },
+    { "from": "reviewing", "to": "completed", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "straight" },
+    { "from": "executing", "to": "approval", "variant": "security", "fromSide": "bottom", "toSide": "left", "via": [[396, 192], [640, 192]] },
     { "from": "reviewing", "to": "blocked", "variant": "default", "route": "drop" },
-    { "from": "executing", "to": "failed", "label": "tool error", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight", "labelAt": [426, 258] },
-    { "from": "failed", "to": "planning", "label": "retry", "note": "bounded", "variant": "dashed", "fromSide": "left", "toSide": "bottom", "route": "left-channel", "channelX": 236, "labelAt": [236, 326] },
-    { "from": "blocked", "to": "expired", "label": "timeout", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight", "labelAt": [728, 340] },
-    { "from": "approval", "to": "cancelled", "label": "cancel", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight", "labelAt": [578, 340] }
+    { "from": "executing", "to": "failed", "label": "tool error", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight", "labelAt": [424, 290] },
+    { "from": "failed", "to": "planning", "label": "retry", "note": "bounded", "variant": "dashed", "fromSide": "left", "toSide": "bottom", "route": "left-channel", "channelX": 236, "labelAt": [236, 358] },
+    { "from": "blocked", "to": "expired", "label": "timeout", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight", "labelAt": [846, 396] },
+    { "from": "approval", "to": "cancelled", "label": "cancel", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight", "labelAt": [696, 396] }
   ],
   "cards": [
     {
