@@ -40,6 +40,18 @@ When the user says "data flow", "pipeline", "ETL", "ELT", "lineage", "analytics"
 
 When the user says "state", "status", "lifecycle", "state machine", "terminal", "retry", "cancel", "timeout", "order lifecycle", "deployment lifecycle", "agent run lifecycle", or asks how an object changes state over time, use the `lifecycle` mode.
 
+### Schema Validation (all renderer modes)
+
+Every JSON file is validated against its schema (`archify/schemas/*.schema.json`) before any layout work runs. Schema violations exit non-zero with a path-prefixed error message — for example `/cards/0/dot must be equal to one of the allowed values ["cyan","emerald","violet","amber","rose","orange","slate"]` or `/nodes/0/id must match pattern "^[a-zA-Z][a-zA-Z0-9_-]*$"`. Common things the schema catches before the renderer touches the file:
+
+- Unknown node/participant/state `type`, unknown card `dot`
+- IDs containing spaces or starting with a digit
+- Extra/misspelled fields (`additionalProperties: false` is set on every object)
+- Missing required fields (`label`, `meta.title`, etc.)
+- `schema_version` not equal to `1`
+
+If a render fails with a schema error, fix the JSON and re-run; do not edit the renderer.
+
 ### Workflow Mode
 
 Workflow diagrams use a compact JSON IR:
@@ -75,9 +87,8 @@ The renderer:
 - Places nodes by lane + column instead of raw SVG coordinates
 - Routes edges through explicit anchors and orthogonal route presets
 - Uses `c-lane` swimlanes plus the normal semantic component classes
-- Hides labels on short adjacent links unless a label is truly necessary
 - Adds a `c-mask` label background for routed labels
-- Fails fast when nodes overlap, leave their lane, or short arrows become unreadable
+- Fails fast on schema violations, overlapping nodes, out-of-lane placement, and labeled short links — keep adjacent-step labels minimal in the JSON to avoid the short-link error
 
 Use workflow labels sparingly. Adjacent steps should often be unlabeled; reserve labels for cross-lane transitions, approval decisions, async trace writes, and return paths.
 
@@ -117,7 +128,7 @@ The renderer:
 - Uses semantic message variants: `emphasis`, `security`, `return`, and `dashed`
 - Uses activation bars to show ownership duration
 - Uses light segment bands as story landmarks
-- Fails fast when participants overflow, message endpoints are unknown, or message rows are too tight
+- Fails fast on schema violations, overflowing participants, unknown message endpoints, and rows that are too tight
 
 Use sequence diagrams when the important thing is order over time. Keep labels short; prefer "GET /path", "verify JWT", "cache miss", "emit trace", and "200 JSON" over prose sentences.
 
@@ -160,7 +171,7 @@ The renderer:
 - Uses vertical stage bands for source, ingest, process, store, and consume boundaries
 - Uses flow labels to name data assets, plus optional `classification` for PII/governance context
 - Uses semantic variants: `emphasis` for the primary data path, `security` for PII/policy/consent/restricted joins, and `dashed` for async or batch derivations
-- Fails fast when nodes overlap, stages overflow, flow endpoints are unknown, labels are missing, or arrows become unreadably short
+- Fails fast on schema violations, node overlap, stage overflow, unknown flow endpoints, missing labels, and unreadably short arrows
 
 Use data-flow diagrams when the important thing is data lineage and governance. Keep labels asset-like: "clickstream", "identity map", "normalized facts", "feature vectors", "restricted join". Put sensitivity in `classification`: "PII touch", "encrypted PII", "approved only", "non-PII", "read-only".
 
@@ -201,7 +212,7 @@ The renderer:
 - Uses lanes to separate the happy path, wait states, and exception/recovery paths
 - Uses semantic state types: `start`, `active`, `waiting`, `decision`, `success`, `failure`, and `neutral`
 - Uses transition variants: `emphasis` for the primary lifecycle, `security` for failure/cancel/timeout/policy paths, and `dashed` for retry/resume paths
-- Fails fast when states overlap, leave their lane, reference unknown lanes, use unknown transition endpoints, or push the legend outside the viewBox
+- Fails fast on schema violations, state overlap, out-of-lane placement, unknown lanes, unknown transition endpoints, and legends pushed outside the viewBox
 
 Use lifecycle diagrams when the important thing is state, not step-by-step work. Keep transition labels event-like: "start", "plan ready", "needs approval", "retry", "timeout", "cancel". Put terminal states on the right or in the bottom lane so endings are visually unambiguous.
 

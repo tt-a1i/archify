@@ -2,11 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderCards, applyTemplate } from '../shared/utils.mjs';
+import { validateSchema } from '../shared/validator.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '../..');
 const inputPath = path.resolve(process.argv[2] || path.join(skillRoot, 'examples/product-analytics.dataflow.json'));
 const dataflow = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+validateSchema('dataflow', dataflow);
 
 const templatePath = path.join(skillRoot, 'assets/template.html');
 const template = fs.readFileSync(templatePath, 'utf8');

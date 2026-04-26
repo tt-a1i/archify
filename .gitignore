@@ -1,3 +1,4 @@
 .DS_Store
 *.DS_Store
 .harnessed/
+archify/node_modules/

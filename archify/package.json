@@ -1,0 +1,11 @@
+{
+  "name": "archify",
+  "version": "2.4.0",
+  "private": true,
+  "type": "module",
+  "description": "JSON-IR diagram renderers (workflow / sequence / dataflow / lifecycle).",
+  "license": "MIT",
+  "dependencies": {
+    "ajv": "^8.17.1"
+  }
+}
