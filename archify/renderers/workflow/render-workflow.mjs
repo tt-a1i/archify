@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { esc, renderDefinitions, renderCards, applyTemplate } from '../shared/utils.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '../..');
@@ -54,16 +55,6 @@ const arrowClass = {
 };
 
 const laneIndex = new Map(workflow.lanes.map((lane, index) => [lane.id, index]));
-
-function esc(value) {
-  return String(value).replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  }[c]));
-}
 
 function laneTop(id) {
   return layout.laneY + laneIndex.get(id) * (layout.laneH + layout.laneGap);
@@ -296,27 +287,6 @@ function labelPoint(edge, points) {
   return [(a[0] + b[0]) / 2 + (edge.labelDx || 0), (a[1] + b[1]) / 2 - 10 + (edge.labelDy || 0)];
 }
 
-function renderDefinitions() {
-  return `        <!-- Definitions -->
-        <defs>
-          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" class="m-default" />
-          </marker>
-          <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" class="m-emphasis" />
-          </marker>
-          <marker id="arrowhead-security" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" class="m-security" />
-          </marker>
-          <marker id="arrowhead-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" />
-          </marker>
-          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
-          </pattern>
-        </defs>`;
-}
-
 function renderLane(lane, index) {
   const y = layout.laneY + index * (layout.laneH + layout.laneGap);
   return `        <rect x="${layout.laneX}" y="${y}" width="${layout.laneW}" height="${layout.laneH}" rx="10" class="c-lane" stroke-width="1"/>
@@ -400,33 +370,14 @@ ${renderLegend()}
       </svg>`;
 }
 
-function renderCards() {
-  const cards = workflow.cards || [];
-  return `    <!-- Info Cards -->
-    <div class="cards">
-${cards.map((card) => `      <div class="card">
-        <div class="card-header">
-          <div class="card-dot ${esc(card.dot)}"></div>
-          <h3>${esc(card.title)}</h3>
-        </div>
-        <ul>
-${card.items.map((item) => `          <li>&bull; ${esc(item)}</li>`).join('\n')}
-        </ul>
-      </div>`).join('\n\n')}
-    </div>`;
-}
-
-function applyTemplate(svg, cards) {
-  return template
-    .replace('<title>[PROJECT NAME] Architecture Diagram</title>', `<title>${esc(workflow.meta.title)} Diagram</title>`)
-    .replace('<h1>[PROJECT NAME] Architecture</h1>', `<h1>${esc(workflow.meta.title)}</h1>`)
-    .replace('<p class="subtitle">[Subtitle description]</p>', `<p class="subtitle">${esc(workflow.meta.subtitle || '')}</p>`)
-    .replace(/      <svg viewBox="0 0 1000 680">[\s\S]*?      <\/svg>/, svg)
-    .replace(/    <!-- Info Cards -->[\s\S]*?    <!-- Footer -->/, `${cards}\n\n    <!-- Footer -->`)
-    .replace('[Project Name] &bull; [Additional metadata]', 'Workflow diagram &bull; Built with Archify &bull; Press <kbd>T</kbd> for theme and <kbd>E</kbd> for export');
-}
 
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 validateWorkflow();
-fs.writeFileSync(outPath, applyTemplate(renderSvg(), renderCards()));
+fs.writeFileSync(outPath, applyTemplate(template, {
+  title: workflow.meta.title,
+  subtitle: workflow.meta.subtitle,
+  footer: 'Workflow diagram &bull; Built with Archify &bull; Press <kbd>T</kbd> for theme and <kbd>E</kbd> for export',
+  svg: renderSvg(),
+  cards: renderCards(workflow.cards),
+}));
 console.log(outPath);

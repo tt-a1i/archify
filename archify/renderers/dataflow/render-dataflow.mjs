@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { esc, renderDefinitions, renderCards, applyTemplate } from '../shared/utils.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '../..');
@@ -51,16 +52,6 @@ const arrowClass = {
   security: ['a-security', 'arrowhead-security'],
   dashed: ['a-dashed', 'arrowhead-dashed']
 };
-
-function esc(value) {
-  return String(value ?? '').replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  }[c]));
-}
 
 function stageX(index) {
   return layout.leftX + index * layout.colGap;
@@ -229,27 +220,6 @@ function labelPoint(flow, points) {
   return [(a[0] + b[0]) / 2 + (flow.labelDx || 0), (a[1] + b[1]) / 2 - 10 + (flow.labelDy || 0)];
 }
 
-function renderDefinitions() {
-  return `        <!-- Definitions -->
-        <defs>
-          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" class="m-default" />
-          </marker>
-          <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" class="m-emphasis" />
-          </marker>
-          <marker id="arrowhead-security" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" class="m-security" />
-          </marker>
-          <marker id="arrowhead-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" />
-          </marker>
-          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
-          </pattern>
-        </defs>`;
-}
-
 function renderStage(stage, index) {
   const cx = stageX(index);
   const x = cx - layout.stageW / 2;
@@ -337,33 +307,13 @@ ${renderLegend()}
       </svg>`;
 }
 
-function renderCards() {
-  const cards = dataflow.cards || [];
-  return `    <!-- Info Cards -->
-    <div class="cards">
-${cards.map((card) => `      <div class="card">
-        <div class="card-header">
-          <div class="card-dot ${esc(card.dot)}"></div>
-          <h3>${esc(card.title)}</h3>
-        </div>
-        <ul>
-${card.items.map((item) => `          <li>&bull; ${esc(item)}</li>`).join('\n')}
-        </ul>
-      </div>`).join('\n\n')}
-    </div>`;
-}
-
-function applyTemplate(svg, cards) {
-  return template
-    .replace('<title>[PROJECT NAME] Architecture Diagram</title>', `<title>${esc(dataflow.meta.title)} Diagram</title>`)
-    .replace('<h1>[PROJECT NAME] Architecture</h1>', `<h1>${esc(dataflow.meta.title)}</h1>`)
-    .replace('<p class="subtitle">[Subtitle description]</p>', `<p class="subtitle">${esc(dataflow.meta.subtitle || '')}</p>`)
-    .replace(/      <svg viewBox="0 0 1000 680">[\s\S]*?      <\/svg>/, svg)
-    .replace(/    <!-- Info Cards -->[\s\S]*?    <!-- Footer -->/, `${cards}\n\n    <!-- Footer -->`)
-    .replace('[Project Name] &bull; [Additional metadata]', 'Data-flow diagram &bull; Built with Archify &bull; Press <kbd>T</kbd> for theme and <kbd>E</kbd> for export');
-}
-
 validateDataflow();
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
-fs.writeFileSync(outPath, applyTemplate(renderSvg(), renderCards()));
+fs.writeFileSync(outPath, applyTemplate(template, {
+  title: dataflow.meta.title,
+  subtitle: dataflow.meta.subtitle,
+  footer: 'Data-flow diagram &bull; Built with Archify &bull; Press <kbd>T</kbd> for theme and <kbd>E</kbd> for export',
+  svg: renderSvg(),
+  cards: renderCards(dataflow.cards),
+}));
 console.log(outPath);
