@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Archify — Architecture Diagrams from Plain English</title>
-  <meta name="description" content="A Claude Skill that turns plain-English descriptions into polished, self-contained HTML architecture diagrams with dark/light themes, clipboard copy, and 4× export.">
+  <meta name="description" content="An agent skill for Claude, Codex CLI, and opencode that turns plain-English descriptions into polished, self-contained HTML architecture diagrams with dark/light themes, clipboard copy, and 4× export.">
   <meta name="theme-color" content="#020617">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><polygon points='14,2 26,8 26,20 14,26 2,20 2,8' fill='%23083344' stroke='%2322d3ee' stroke-width='1.5'/><circle cx='14' cy='15' r='2.5' fill='%2322d3ee'/></svg>">
 
@@ -216,7 +216,7 @@
     <div class="container">
       <div class="hero-badge fade-up">
         <div class="pulse-dot"></div>
-        <span data-i18n="hero-badge">Claude Skill &nbsp;·&nbsp; v2.6.0</span>
+        <span data-i18n="hero-badge">Agent Skill &nbsp;·&nbsp; v2.6.0</span>
       </div>
       <h1 class="fade-up d1" data-i18n="hero-h1">From plain English<br>to architecture <em>in seconds.</em></h1>
       <p class="hero-sub fade-up d2" data-i18n="hero-sub">Describe your system in chat. Archify generates a polished, self-contained HTML diagram — with dark/light themes, clipboard copy, and ultra-crisp 4× export built in.</p>
@@ -462,13 +462,13 @@
         <div>
           <div class="section-label fade-up" data-i18n="label-qs">Quick Start</div>
           <h2 class="section-heading fade-up d1" data-i18n="qs-h2">Up and running<br>in three steps.</h2>
-          <p class="section-body fade-up d2" style="margin-bottom:2.5rem" data-i18n="qs-body">Requires Claude Pro, Max, Team, or Enterprise — or Claude Code CLI.</p>
+          <p class="section-body fade-up d2" style="margin-bottom:2.5rem" data-i18n="qs-body">Works with Claude, Codex CLI, and opencode.</p>
           <div class="steps">
             <div class="step fade-up d1">
               <div class="step-num">1</div>
               <div class="step-content">
                 <h4 data-i18n="step1-h">Install the Skill</h4>
-                <p data-i18n="step1-p">Download <a href="https://github.com/tt-a1i/archify/raw/main/archify.zip">archify.zip</a>, go to Claude Settings → Capabilities → Skills, click + Add and upload it. Or unzip to ~/.claude/skills/ for CLI use.</p>
+                <p data-i18n="step1-p">Download <a href="https://github.com/tt-a1i/archify/raw/main/archify.zip">archify.zip</a>. Upload it in Claude Settings, or unzip it for CLI agents: ~/.claude/skills/ for Claude Code, ~/.agents/skills/ for Codex, ~/.config/opencode/skills/ or .opencode/skills/ for opencode.</p>
               </div>
             </div>
             <div class="step fade-up d2">
@@ -570,7 +570,7 @@ this description.</span>
   const LANGS = {
     en: {
       'nav-docs':'Docs','nav-install':'Install Skill',
-      'hero-badge':'Claude Skill &nbsp;·&nbsp; v2.6.0',
+      'hero-badge':'Agent Skill &nbsp;·&nbsp; v2.6.0',
       'hero-h1':'From plain English<br>to architecture <em>in seconds.</em>',
       'hero-sub':'Describe your system in chat. Archify generates a polished, self-contained HTML diagram — with dark/light themes, clipboard copy, and ultra-crisp 4× export built in.',
       'hero-cta':'Get started','hero-gh':'View on GitHub',
@@ -615,8 +615,8 @@ this description.</span>
       'chip-external':'External','chip-external-use':'Users, 3rd parties, generic',
       'label-qs':'Quick Start',
       'qs-h2':'Up and running<br>in three steps.',
-      'qs-body':'Requires Claude Pro, Max, Team, or Enterprise — or Claude Code CLI.',
-      'step1-h':'Install the Skill','step1-p':'Download <a href="https://github.com/tt-a1i/archify/raw/main/archify.zip">archify.zip</a>, go to Claude Settings → Capabilities → Skills, click + Add and upload it. Or unzip to ~/.claude/skills/ for CLI use.',
+      'qs-body':'Works with Claude, Codex CLI, and opencode.',
+      'step1-h':'Install the Skill','step1-p':'Download <a href="https://github.com/tt-a1i/archify/raw/main/archify.zip">archify.zip</a>. Upload it in Claude Settings, or unzip it for CLI agents: ~/.claude/skills/ for Claude Code, ~/.agents/skills/ for Codex, ~/.config/opencode/skills/ or .opencode/skills/ for opencode.',
       'step2-h':'Describe your system','step2-p':'Write a plain-English description of your architecture — components, connections, cloud services. Or ask Claude to analyze your codebase first.',
       'step3-h':'Ask Claude to draw it','step3-p':'Tell Claude to use the Archify skill. It generates a self-contained HTML file you open in any browser. Iterate from there — in plain English.',
       'code-label':'example prompt',
@@ -626,7 +626,7 @@ this description.</span>
     },
     zh: {
       'nav-docs':'文档','nav-install':'安装技能',
-      'hero-badge':'Claude 技能 &nbsp;·&nbsp; v2.6.0',
+      'hero-badge':'Agent 技能 &nbsp;·&nbsp; v2.6.0',
       'hero-h1':'用自然语言，<br>秒级生成<em>架构图。</em>',
       'hero-sub':'在对话中描述你的系统，Archify 生成精美、独立的 HTML 架构图——内置深色/浅色主题、一键复制剪贴板、超清 4× 图片导出。',
       'hero-cta':'快速开始','hero-gh':'在 GitHub 查看',
@@ -671,8 +671,8 @@ this description.</span>
       'chip-external':'外部系统','chip-external-use':'用户、第三方、通用外部',
       'label-qs':'快速开始',
       'qs-h2':'三步上手，<br>即刻运行。',
-      'qs-body':'需要 Claude Pro、Max、Team 或 Enterprise 计划，或 Claude Code CLI。',
-      'step1-h':'安装技能','step1-p':'下载 <a href="https://github.com/tt-a1i/archify/raw/main/archify.zip">archify.zip</a>，进入 Claude 设置 → 能力 → 技能，点击「+ 添加」上传。或解压至 ~/.claude/skills/ 供 CLI 使用。',
+      'qs-body':'支持 Claude、Codex CLI 和 opencode。',
+      'step1-h':'安装技能','step1-p':'下载 <a href="https://github.com/tt-a1i/archify/raw/main/archify.zip">archify.zip</a>。Claude 可在设置里上传；CLI agent 可解压到对应目录：Claude Code 用 ~/.claude/skills/，Codex 用 ~/.agents/skills/，opencode 用 ~/.config/opencode/skills/ 或 .opencode/skills/。',
       'step2-h':'描述你的系统','step2-p':'用自然语言描述你的架构——组件、连接关系、云服务。也可以先让 Claude 分析你的代码仓库。',
       'step3-h':'让 Claude 绘制','step3-p':'告诉 Claude 使用 Archify 技能，它会生成独立的 HTML 文件，用任意浏览器打开即可。然后继续用自然语言迭代。',
       'code-label':'示例提示词',

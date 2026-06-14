@@ -4,7 +4,7 @@
 
 **聊两句就画出好看的架构图、技术流程图、调用时序图、数据流图和生命周期图。深色 / 浅色一键切。导出最高 4× 清晰 PNG / JPEG / WebP / SVG，或直接复制到剪贴板。**
 
-Archify 是一个 [Claude Skill](https://support.claude.com/en/articles/12512180-using-skills-in-claude)：你用大白话描述自己的系统或流程，它就把你的描述变成一张做工精细的技术图 —— 一个单文件 HTML，在浏览器里打开就能切主题、复制到剪贴板、导出成各种图片格式。
+Archify 是一个可用于 Claude、Codex CLI 和 opencode 的 agent skill：你用大白话描述自己的系统或流程，它就把你的描述变成一张做工精细的技术图 —— 一个单文件 HTML，在浏览器里打开就能切主题、复制到剪贴板、导出成各种图片格式。
 
 - **不需要会画图** —— 把组件和连接关系说给 Claude 就行
 - **支持 workflow / sequence / data flow / lifecycle** —— 技术流程、审批链、工具调用、CI/CD、请求调用链、数据管线、PII 边界、状态机都可以画
@@ -16,7 +16,7 @@ Archify 是一个 [Claude Skill](https://support.claude.com/en/articles/12512180
 - **聊天迭代** —— "把 Redis 挪到左边"、"鉴权服务换成玫红"、"加个 Kafka"
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
-![Claude](https://img.shields.io/badge/Claude-Skill-7C3AED?style=flat-square)
+![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
 ![Version](https://img.shields.io/badge/version-2.6.0-0891b2?style=flat-square)
 
 **[在线落地页 → tt-a1i.github.io/archify](https://tt-a1i.github.io/archify/)**
@@ -119,7 +119,7 @@ Archify 基于 [Cocoon-AI/architecture-diagram-generator](https://github.com/Coc
 
 ### 1. 安装 skill
 
-> 需要 Claude Pro / Max / Team / Enterprise 套餐，或 Claude Code。
+Archify 打包成标准 agent skill 目录（`archify/SKILL.md`），同一个 [`archify.zip`](archify.zip) 可以用于 Claude、Codex CLI 和 opencode。
 
 **Claude.ai：**
 1. 下载 [`archify.zip`](archify.zip)
@@ -138,10 +138,31 @@ unzip archify.zip -d ~/.claude/skills/
 unzip archify.zip -d ./.claude/skills/
 ```
 
-类型化渲染器（workflow / sequence / dataflow / lifecycle）依赖 ajv 做 schema 校验，需要在 skill 目录执行一次 `npm install`。首次使用时 Claude 会按 `SKILL.md` 的 Setup 指引自动安装；也可以自己先装好：
+**Codex CLI：**
+```bash
+# 全局（所有项目可用）
+unzip archify.zip -d ~/.agents/skills/
+
+# 或者仅当前项目
+unzip archify.zip -d ./.agents/skills/
+```
+
+**opencode：**
+```bash
+# 全局（opencode 原生目录）
+unzip archify.zip -d ~/.config/opencode/skills/
+
+# 或者仅当前项目
+unzip archify.zip -d ./.opencode/skills/
+
+# 也可以复用上面 Codex 的通用 agent 目录
+unzip archify.zip -d ~/.agents/skills/
+```
+
+类型化渲染器（workflow / sequence / dataflow / lifecycle）依赖 ajv 做 schema 校验，需要在安装后的 skill 目录执行一次 `npm install`。很多 agent runtime 首次使用时会按 `SKILL.md` 的 Setup 指引自动安装；也可以自己先装好：
 
 ```bash
-cd ~/.claude/skills/archify && npm install
+cd ~/.agents/skills/archify && npm install
 ```
 
 没装依赖时渲染器会跳过 schema 校验（布局检查仍然运行）。
@@ -154,6 +175,8 @@ cd ~/.claude/skills/archify && npm install
 | 安装方式 | 能力 |
 |---|---|
 | **Claude Code** | 完整 —— 可运行类型化渲染器 + schema 校验 |
+| **Codex CLI** | 完整 —— 安装到 `~/.agents/skills/` 或 `.agents/skills/` |
+| **opencode** | 完整 —— 安装到 `.opencode/skills/`、`.agents/skills/` 或其他支持的 skills 目录 |
 | **Claude.ai 上传 zip** | 通常可用 —— 取决于沙箱能否 `npm install`，一般可以 |
 | **Project Knowledge** | 仅架构模式 —— 不执行代码，纯 prompt 驱动 |
 

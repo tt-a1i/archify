@@ -4,7 +4,7 @@
 
 **Generate beautiful architecture, technical workflow, sequence, data-flow, and lifecycle diagrams in chat. Switch dark / light. Copy to clipboard or export crisp up-to-4× PNG / JPEG / WebP / SVG.**
 
-Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-using-skills-in-claude) that turns a plain-English description of your system or process into a polished, self-contained technical diagram — a single HTML file you can open, toggle themes on, copy to the clipboard, and export at maximum resolution.
+Archify is an agent skill for Claude, Codex CLI, and opencode. It turns a plain-English description of your system or process into a polished, self-contained technical diagram — a single HTML file you can open, toggle themes on, copy to the clipboard, and export at maximum resolution.
 
 - **No design skills needed** — describe your architecture in English, get a diagram
 - **Workflow, sequence, data-flow, and lifecycle diagrams too** — technical flows, approvals, tool calls, CI/CD, runbooks, request call chains, data pipelines, PII boundaries, and state machines can be drawn
@@ -16,7 +16,7 @@ Archify is a [Claude Skill](https://support.claude.com/en/articles/12512180-usin
 - **Iterate by chat** — "add Redis", "move auth to the left", "use emerald for the API"
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
-![Claude](https://img.shields.io/badge/Claude-Skill-7C3AED?style=flat-square)
+![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
 ![Version](https://img.shields.io/badge/version-2.6.0-0891b2?style=flat-square)
 
 **Project page:** [tt-a1i.github.io/archify](https://tt-a1i.github.io/archify/)
@@ -117,7 +117,7 @@ Archify is based on [Cocoon-AI/architecture-diagram-generator](https://github.co
 
 ### 1. Install the skill
 
-> Requires Claude Pro, Max, Team, or Enterprise plan (or Claude Code).
+Archify is packaged as an agent skill directory (`archify/SKILL.md`), so the same [`archify.zip`](archify.zip) works with Claude, Codex CLI, and opencode.
 
 **Claude.ai:**
 1. Download [`archify.zip`](archify.zip)
@@ -134,10 +134,31 @@ unzip archify.zip -d ~/.claude/skills/
 unzip archify.zip -d ./.claude/skills/
 ```
 
-The typed renderers (workflow / sequence / dataflow / lifecycle) rely on ajv for schema validation, which takes a one-time `npm install` in the skill directory. Claude installs it automatically on first use, following the Setup instructions in `SKILL.md` — or run it yourself:
+**Codex CLI:**
+```bash
+# Global (all projects)
+unzip archify.zip -d ~/.agents/skills/
+
+# Or project-local
+unzip archify.zip -d ./.agents/skills/
+```
+
+**opencode:**
+```bash
+# Global (opencode-native)
+unzip archify.zip -d ~/.config/opencode/skills/
+
+# Or project-local
+unzip archify.zip -d ./.opencode/skills/
+
+# Also works: the shared agent directory used above for Codex
+unzip archify.zip -d ~/.agents/skills/
+```
+
+The typed renderers (workflow / sequence / dataflow / lifecycle) rely on ajv for schema validation, which takes a one-time `npm install` in the installed skill directory. Many agent runtimes can run it automatically on first use, following the Setup instructions in `SKILL.md` — or run it yourself:
 
 ```bash
-cd ~/.claude/skills/archify && npm install
+cd ~/.agents/skills/archify && npm install
 ```
 
 Without the dependency the renderers skip schema validation (layout checks still run).
@@ -150,6 +171,8 @@ What each install surface can do:
 | Install surface | Capability |
 |---|---|
 | **Claude Code** | Full — runs the typed renderers + schema validation |
+| **Codex CLI** | Full — install to `~/.agents/skills/` or `.agents/skills/` |
+| **opencode** | Full — install to `.opencode/skills/`, `.agents/skills/`, or another supported skills directory |
 | **Claude.ai (zip upload)** | Usually full — depends on whether the sandbox can `npm install`, which it typically can |
 | **Project Knowledge** | Architecture mode only — no code execution, purely prompt-driven |
 
