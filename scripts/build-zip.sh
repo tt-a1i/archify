@@ -8,11 +8,18 @@ out="${1:-$repo_root/archify.zip}"
 
 # Stage a clean copy: node_modules never ships; test/ is repo-only (the golden
 # harness compares against ../examples at the repo root, which does not exist
-# in an installed skill) — and the npm scripts that point at it are stripped
-# from the shipped package.json so `npm test` can't crash for skill users.
+# in an installed skill); local agent coordination folders are also excluded so
+# a developer's working tree cannot leak into the distributable archive. The npm
+# scripts that point at test/ are stripped from the shipped package.json so
+# `npm test` can't crash for skill users.
 stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
-rsync -a --exclude 'node_modules' --exclude 'test' --exclude '.DS_Store' \
+rsync -a \
+  --exclude 'node_modules' \
+  --exclude 'test' \
+  --exclude '.DS_Store' \
+  --exclude '.hive' \
+  --exclude '.workbuddy' \
   "$repo_root/archify/" "$stage/archify/"
 node -e "
   const fs = require('fs');
