@@ -11,6 +11,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 ### Changed
 - **60-second quick start.** README and GitHub Pages now lead with `npx skills add tt-a1i/archify -g`, a temporary `skills use` path, and three copy-ready prompts before the manual ZIP instructions.
 
+### Fixed
+- **CJK text width coverage (#14).** `textUnits` now detects supplementary Kana, Tangut, Nushu, Khitan, and vertical CJK punctuation while keeping halfwidth forms single-width.
+
 ## [2.10.0] — 2026-07-05
 
 ### Added
