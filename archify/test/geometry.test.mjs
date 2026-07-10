@@ -141,13 +141,25 @@ test('labelPoint: explicit labelAt wins outright', () => {
   assert.deepEqual(labelPoint({ labelAt: [7, 8] }, [[0, 0], [100, 0]]), [7, 8]);
 });
 
-test('textUnits: ASCII=1, CJK=2, mixed sums, fullwidth supplementary=2', () => {
+test('textUnits: ASCII, pure CJK, and mixed labels use expected widths', () => {
   assert.equal(textUnits('abc'), 3);
   assert.equal(textUnits('中文'), 4);
-  assert.equal(textUnits('a中'), 3);
+  assert.equal(textUnits('审批通过'), 8);
+  assert.equal(textUnits('写入 API'), 8);
   assert.equal(textUnits(''), 0);
   assert.equal(textUnits(null), 0);
+});
+
+test('textUnits: fullwidth punctuation and supplementary CJK use two units', () => {
+  assert.equal(textUnits('「写入」'), 8); // CJK punctuation
+  assert.equal(textUnits('︐'), 2); // vertical comma (U+FE10)
+  assert.equal(textUnits('Ａ'), 2); // fullwidth Latin
+  assert.equal(textUnits('ｶﾅ'), 2); // halfwidth Katakana remains single-width
   assert.equal(textUnits('𠀀'), 2); // CJK Ext-B (supplementary plane)
+  assert.equal(textUnits('𛀀'), 2); // Kana Supplement
+  assert.equal(textUnits('𗀀'), 2); // Tangut
+  assert.equal(textUnits('𛅰'), 2); // Nushu
+  assert.equal(textUnits('𘬀'), 2); // Khitan Small Script
   assert.equal(textUnits('🚀'), 2); // emoji
 });
 
