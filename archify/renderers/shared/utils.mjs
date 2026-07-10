@@ -77,12 +77,17 @@ export function applyTemplate(template, { title, subtitle, footer, svg, cards })
 }
 
 // CJK and other fullwidth glyphs render at roughly twice the advance width of
-// ASCII in the monospace stacks the template uses. Includes the supplementary
-// CJK extensions and emoji, which also render double-width.
-const FULLWIDTH_RE = /[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︰-﹏＀-｠￠-￦　-〿\u{1F000}-\u{1FAFF}\u{20000}-\u{3FFFD}]/u;
+// ASCII in the monospace stacks the template uses. Unicode script properties
+// cover supplementary CJK scripts (for example Kana, Tangut, Nushu, and
+// Khitan) without relying on a few contiguous BMP ranges. Halfwidth forms must
+// stay single-width even though they retain their Katakana/Hangul script.
+const HALFWIDTH_RE = /[\uFF61-\uFFDC\uFFE8-\uFFEE]/u;
+const FULLWIDTH_RE = /[\p{Script_Extensions=Han}\p{Script_Extensions=Hiragana}\p{Script_Extensions=Katakana}\p{Script_Extensions=Hangul}\p{Script_Extensions=Bopomofo}\p{Script_Extensions=Yi}\p{Script_Extensions=Tangut}\p{Script_Extensions=Nushu}\p{Script_Extensions=Khitan_Small_Script}\u3000-\u303F\uFE10-\uFE19\uFE30-\uFE6F\uFF01-\uFF60\uFFE0-\uFFE6\u{1F000}-\u{1FAFF}]/u;
 
 export function textUnits(text) {
   let units = 0;
-  for (const ch of String(text ?? '')) units += FULLWIDTH_RE.test(ch) ? 2 : 1;
+  for (const ch of String(text ?? '')) {
+    units += !HALFWIDTH_RE.test(ch) && FULLWIDTH_RE.test(ch) ? 2 : 1;
+  }
   return units;
 }
