@@ -62,6 +62,7 @@ jobs:
           node bin/archify.mjs --help
           node bin/archify.mjs doctor
           node bin/archify.mjs demo /tmp/archify-demo
+          node bin/archify.mjs examples
           node bin/archify.mjs render workflow examples/agent-tool-call.workflow.json /tmp/workflow.html
           node bin/archify.mjs check /tmp/workflow.html
 

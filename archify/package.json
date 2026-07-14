@@ -15,7 +15,7 @@
     "generate:validators": "node scripts/generate-validators.mjs",
     "check:validators": "node scripts/generate-validators.mjs --check",
     "test": "npm run check:validators && node test/golden.mjs && node --test test/*.test.mjs",
-    "render:examples": "node test/render-examples.mjs"
+    "render:examples": "node scripts/render-examples.mjs ../examples"
   },
   "devDependencies": {
     "ajv": "^8.17.1"

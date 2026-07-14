@@ -19,6 +19,17 @@ function run(args, options = {}) {
   });
 }
 
+function copyInstalledSkill(target) {
+  fs.cpSync(skillRoot, target, {
+    recursive: true,
+    filter(source) {
+      const rel = path.relative(skillRoot, source);
+      return rel !== 'node_modules' && !rel.startsWith(`node_modules${path.sep}`)
+        && rel !== 'test' && !rel.startsWith(`test${path.sep}`);
+    },
+  });
+}
+
 test('cli: help lists commands and diagram types', () => {
   const result = run(['--help']);
   assert.equal(result.status, 0, result.stderr);
@@ -33,6 +44,7 @@ test('cli: doctor reports a complete installation is ready', () => {
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /\[ok\] Node\.js v\d+/);
   assert.match(result.stdout, /\[ok\] Core template/);
+  assert.match(result.stdout, /\[ok\] Example renderer/);
   assert.match(result.stdout, /\[ok\] Standalone schema validators/);
   assert.match(result.stdout, /\[ok\] architecture renderer, schema, and example/);
   assert.match(result.stdout, /\[ok\] lifecycle renderer, schema, and example/);
@@ -58,14 +70,7 @@ test('cli: doctor identifies an incomplete installation', () => {
 
 test('cli: doctor rejects a corrupt standalone validator', () => {
   const corruptRoot = path.join(tmp, 'corrupt-skill');
-  fs.cpSync(skillRoot, corruptRoot, {
-    recursive: true,
-    filter(source) {
-      const rel = path.relative(skillRoot, source);
-      return rel !== 'node_modules' && !rel.startsWith(`node_modules${path.sep}`)
-        && rel !== 'test' && !rel.startsWith(`test${path.sep}`);
-    },
-  });
+  copyInstalledSkill(corruptRoot);
   fs.writeFileSync(path.join(corruptRoot, 'renderers/shared/generated-validators.mjs'), 'export const workflow = ;\n');
 
   const result = spawnSync(process.execPath, [path.join(corruptRoot, 'bin/archify.mjs'), 'doctor'], {
@@ -76,6 +81,27 @@ test('cli: doctor rejects a corrupt standalone validator', () => {
   assert.equal(result.status, 1);
   assert.match(result.stdout, /\[invalid\] Standalone schema validators/);
   assert.match(result.stderr, /Archify is not ready: 1 runtime check failed\./);
+});
+
+test('cli: examples renders from an installed skill', () => {
+  const installedRoot = path.join(tmp, 'installed-skill');
+  copyInstalledSkill(installedRoot);
+
+  const result = spawnSync(process.execPath, [path.join(installedRoot, 'bin/archify.mjs'), 'examples'], {
+    cwd: installedRoot,
+    encoding: 'utf8',
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  for (const output of [
+    'workflow-agent-tool-call-rendered.html',
+    'sequence-cache-miss-request.html',
+    'dataflow-product-analytics.html',
+    'lifecycle-agent-run.html',
+    'web-app-rendered.html',
+  ]) {
+    assert.equal(fs.existsSync(path.join(installedRoot, 'examples', output)), true, output);
+  }
 });
 
 test('cli: demo creates a ready-to-open diagram in a chosen directory', () => {
@@ -156,6 +182,24 @@ test('cli: validate returns renderer errors for bad input', () => {
   });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /unknown target "ghost"/);
+  assert.deepEqual(fs.readdirSync(validateTmp), []);
+});
+
+test('cli: validate rejects an unknown type without leaking a temp directory', () => {
+  const validateTmp = path.join(tmp, 'validate-unknown-type-tmp');
+  fs.mkdirSync(validateTmp);
+
+  const result = run(['validate', 'unknown', 'ignored.json'], {
+    env: {
+      ...process.env,
+      TMPDIR: validateTmp,
+      TMP: validateTmp,
+      TEMP: validateTmp,
+    },
+  });
+
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /Unknown diagram type "unknown"/);
   assert.deepEqual(fs.readdirSync(validateTmp), []);
 });
 

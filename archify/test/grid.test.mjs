@@ -33,3 +33,15 @@ test('validateGridPlacement rejects duplicate cells and missing row/col', () => 
   assert.ok(problems.some((p) => p.includes('share grid cell')));
   assert.ok(problems.some((p) => p.includes('"c" needs pos')));
 });
+
+test('validateGridPlacement ignores explicit pos overrides without row/col', () => {
+  const grid = gridLayout({ layout: { mode: 'grid', cols: 4 } });
+  const problems = [];
+  validateGridPlacement({
+    components: [
+      { id: 'a', pos: [40, 80] },
+      { id: 'b', pos: [200, 80] },
+    ],
+  }, grid, problems);
+  assert.deepEqual(problems, []);
+});

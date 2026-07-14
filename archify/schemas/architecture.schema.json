@@ -59,7 +59,16 @@
           "row": { "type": "integer", "minimum": 0 },
           "col": { "type": "integer", "minimum": 0 },
           "pos": { "$ref": "common.schema.json#/$defs/point" },
-          "size": { "$ref": "common.schema.json#/$defs/point" }
+          "size": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "exclusiveMinimum": 0 },
+              { "type": "number", "exclusiveMinimum": 0 }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
         }
       }
     },

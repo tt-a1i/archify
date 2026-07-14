@@ -66,7 +66,7 @@ function commandCheck(args) {
 }
 
 function commandExamples() {
-  const result = runNode([path.join(skillRoot, 'test/render-examples.mjs')], { cwd: skillRoot });
+  const result = runNode([path.join(skillRoot, 'scripts/render-examples.mjs')], { cwd: skillRoot });
   if (result.status !== 0) exitFrom(result);
 }
 
@@ -85,6 +85,13 @@ async function commandDoctor() {
     label: 'Core template',
     ok: fs.existsSync(template),
     missing: fs.existsSync(template) ? 0 : 1,
+  });
+
+  const examplesRenderer = path.join(skillRoot, 'scripts/render-examples.mjs');
+  checks.push({
+    label: 'Example renderer',
+    ok: fs.existsSync(examplesRenderer),
+    missing: fs.existsSync(examplesRenderer) ? 0 : 1,
   });
 
   const validators = path.join(skillRoot, 'renderers/shared/generated-validators.mjs');
@@ -176,12 +183,13 @@ function commandValidate(args) {
   const rest = args.filter((arg) => arg !== '--json' && arg !== '--layout-json');
   const [type, input] = rest;
   if (!type || !input) fail(usage());
+  const renderer = rendererPath(type);
 
   if (layoutJson) {
     if (type !== 'architecture') {
       fail('--layout-json is currently supported for architecture diagrams only.');
     }
-    const result = runNode([rendererPath(type), input, '/dev/null', '--layout-json'], { stdio: 'pipe' });
+    const result = runNode([renderer, input, '/dev/null', '--layout-json'], { stdio: 'pipe' });
     if (result.status !== 0) {
       if (result.stderr) process.stderr.write(result.stderr);
       if (result.stdout) process.stdout.write(result.stdout);
@@ -196,7 +204,7 @@ function commandValidate(args) {
   let exitCode = 0;
 
   try {
-    const render = runNode([rendererPath(type), input, out], { stdio: 'pipe' });
+    const render = runNode([renderer, input, out], { stdio: 'pipe' });
     if (render.status !== 0) {
       if (render.stderr) process.stderr.write(render.stderr);
       if (render.stdout) process.stdout.write(render.stdout);

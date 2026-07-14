@@ -132,6 +132,10 @@ function validateArchitecture() {
       problems.push(`Component "${c.id}" has non-finite pos/size — pos and size must be [number, number].`);
       continue;
     }
+    if (c.width <= 0 || c.height <= 0) {
+      problems.push(`Component "${c.id}" has invalid size ${c.width}x${c.height} — width and height must be greater than 0.`);
+      continue;
+    }
     if (c.x < 0 || c.y < 0 || c.x + c.width > viewBox[0] || c.y + c.height > viewBox[1]) {
       problems.push(`Component "${c.id}" falls outside the viewBox ${viewBox[0]}x${viewBox[1]} — adjust pos/size or set a larger meta.viewBox.`);
     }

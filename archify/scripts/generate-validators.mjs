@@ -51,7 +51,9 @@ if (validatorCode.includes('require(')) {
 const generated = `${banner}${validatorCode}\n`;
 
 if (process.argv.includes('--check')) {
-  const current = fs.existsSync(output) ? fs.readFileSync(output, 'utf8') : '';
+  const current = fs.existsSync(output)
+    ? fs.readFileSync(output, 'utf8').replace(/\r\n?/g, '\n')
+    : '';
   if (current !== generated) {
     console.error('generated validators are stale — run npm run generate:validators');
     process.exit(1);

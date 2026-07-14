@@ -40,7 +40,7 @@ export function validateGridPlacement(arch, grid, problems) {
   for (const c of arch.components ?? []) {
     const hasPos = Array.isArray(c.pos) && c.pos.length === 2;
     const hasCell = Number.isInteger(c.row) && Number.isInteger(c.col);
-    if (hasPos && hasCell) continue; // pos wins; row/col are hints only
+    if (hasPos) continue; // pos wins; row/col are optional hints only
     if (!hasPos && !hasCell) {
       problems.push(`Component "${c.id}" needs pos [x,y] or grid row/col when layout.mode is "grid".`);
       continue;
