@@ -1,11 +1,15 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { esc, renderDefinitions, textUnits } from '../shared/utils.mjs';
-import { animateAttr, loadDiagram, writeDiagram, svgRootAttrs } from '../shared/cli.mjs';
+import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
+import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagram, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import {
   asArray,
   isFinitePoint,
   rectsOverlap,
+  cleanFlowProblems,
+  cleanCrossingProblems,
+  cleanBorderRunProblems,
+  cleanRouteRhythmProblems,
   suggestLabelObstacleFix,
   suggestLabelPairFix,
   anchor,
@@ -13,6 +17,7 @@ import {
   defaultToSide,
   chosenSide,
   roundedPath,
+  routePointsValue,
   labelPoint,
   arrowClassMap,
   variantAccent
@@ -100,6 +105,7 @@ function measureState(state) {
 }
 
 const states = new Map(asArray(lifecycle.states).map((state) => [state.id, measureState(state)]));
+const laneLabels = new Map(asArray(lifecycle.lanes).map((lane) => [lane.id, lane.label]));
 const stateSteps = new Map();
 for (const [index, transition] of asArray(lifecycle.transitions).entries()) {
   if (!stateSteps.has(transition.from)) stateSteps.set(transition.from, index);
@@ -184,6 +190,46 @@ function validateLifecycle() {
       if (distance < 32) problems.push(`Transition "${transition.label || `${transition.from}->${transition.to}`}" is too short (${Math.round(distance)}px; minimum 32px) — route it through a channel or drop its label.`);
     }
   }
+
+  problems.push(...cleanFlowProblems({
+    relations: lifecycle.transitions,
+    endpointIds: new Set(states.keys()),
+    obstacles: states.values(),
+    pathFor,
+    diagramType: 'lifecycle',
+    relationCollection: 'transitions',
+    obstacleKind: 'state',
+    routeHint: 'adjust fromSide/toSide, set route/via or channelX/channelY, or move the state with col/yOffset'
+  }));
+  problems.push(...cleanCrossingProblems({
+    relations: lifecycle.transitions,
+    endpointIds: new Set(states.keys()),
+    pathFor,
+    diagramType: 'lifecycle',
+    relationCollection: 'transitions',
+    profile: lifecycle.meta?.quality_profile,
+    routeHint: 'adjust route/via or channelX/channelY so the transitions use separate lifecycle corridors'
+  }));
+  // Lifecycle bands are dashed reading guides, not closed containers. Keep the
+  // shared contract wired with an explicit empty frame set so future typed
+  // lifecycle containers cannot accidentally inherit presentation geometry.
+  problems.push(...cleanBorderRunProblems({
+    relations: lifecycle.transitions,
+    endpointIds: new Set(states.keys()),
+    frames: [],
+    pathFor,
+    diagramType: 'lifecycle',
+    relationCollection: 'transitions'
+  }));
+  problems.push(...cleanRouteRhythmProblems({
+    relations: lifecycle.transitions,
+    endpointIds: new Set(states.keys()),
+    pathFor,
+    diagramType: 'lifecycle',
+    relationCollection: 'transitions',
+    profile: lifecycle.meta?.quality_profile,
+    routeHint: 'move route/via or channel coordinates so each lifecycle turn has a readable run-up'
+  }));
 
   const labelRects = [];
   for (const transition of asArray(lifecycle.transitions)) {
@@ -291,26 +337,34 @@ function renderBands() {
 function renderState(state) {
   const fill = typeClass[state.type] || typeClass.neutral;
   const accent = textClass[state.type] || 't-muted';
+  const hasSub = state.sublabel != null && state.sublabel !== '';
+  const sub = hasSub
+    ? `\n          <text data-detail="context" x="${state.cx}" y="${state.y + 37}" class="t-muted" font-size="7" text-anchor="middle">${esc(state.sublabel)}</text>`
+    : '';
   const tag = state.tag
-    ? `\n        <text x="${state.cx}" y="${state.y + state.height - 11}" class="${accent}" font-size="7" text-anchor="middle">${esc(state.tag)}</text>`
+    ? `\n        <text data-detail="fine" x="${state.cx}" y="${state.y + state.height - 11}" class="${accent}" font-size="7" text-anchor="middle">${esc(state.tag)}</text>`
     : '';
   const step = state.step
-    ? `\n        <text x="${state.x + 10}" y="${state.y + 14}" class="${accent}" font-size="7" font-weight="700">${esc(state.step)}</text>`
+    ? `\n        <text data-detail="fine" x="${state.x + 10}" y="${state.y + 14}" class="${accent}" font-size="7" font-weight="700">${esc(state.step)}</text>`
     : '';
-  return `        <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="c-mask"/>
-        <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="${fill}"${animateAttr(lifecycle.meta, 'node', stateSteps.get(state.id))} stroke-width="1.5"/>${step}
-        <text x="${state.cx}" y="${state.y + 21}" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">${esc(state.label)}</text>
-        <text x="${state.cx}" y="${state.y + 37}" class="t-muted" font-size="7" text-anchor="middle">${esc(state.sublabel || '')}</text>${tag}`;
+  const passport = { kind: state.type, sublabel: state.sublabel, tag: state.tag, context: laneLabels.get(state.lane) || 'Lifecycle state' };
+  return `        <g ${focusNodeAttrs(state.id, state.label, passport)}>
+          ${focusNodeTitle(state.label, passport)}
+          <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="c-mask"/>
+          <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="${fill}"${animateAttr(lifecycle.meta, 'node', stateSteps.get(state.id))} stroke-width="1.5"/>
+          ${renderSemanticSigil(state.type, { x: state.x + state.width - 17, y: state.y + 6 })}${step}
+          <text${hasSub ? ' data-detail-anchor' : ''} x="${state.cx}" y="${state.y + 21}" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}
+        </g>`;
 }
 
 function renderTransitionPath(transition, index) {
   const [cls, marker] = arrowClassMap[transition.variant || 'default'] || arrowClassMap.default;
   const routed = pathFor(transition);
   const strokeWidth = transition.width || (transition.variant === 'emphasis' ? 2 : 1.1);
-  return `        <path d="${routed.d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  return `        <path ${focusEdgeAttrs(transition.from, transition.to, transition.label, index, transition.id)} data-composition-points="${routePointsValue(routed.points)}" d="${routed.d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
 }
 
-function renderTransitionLabel(transition) {
+function renderTransitionLabel(transition, index) {
   if (!transition.label) return '';
   const routed = pathFor(transition);
   const [lx, ly] = labelPoint(transition, routed.points);
@@ -318,23 +372,35 @@ function renderTransitionLabel(transition) {
   const labelW = Math.max(32, longestLine * 4.9 + 12);
   const labelH = transition.note ? 27 : 16;
   const note = transition.note
-    ? `\n        <text x="${lx}" y="${ly + 11}" class="t-dim" font-size="7" text-anchor="middle">${esc(transition.note)}</text>`
+    ? `\n        <text data-detail="fine" x="${lx}" y="${ly + 11}" class="t-dim" font-size="7" text-anchor="middle">${esc(transition.note)}</text>`
     : '';
-  return `        <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>
-        <text x="${lx}" y="${ly}" class="${variantAccent(transition.variant)}" font-size="8" text-anchor="middle">${esc(transition.label)}</text>${note}`;
+  return `        <g data-detail="context" ${focusEdgeAttrs(transition.from, transition.to, transition.label, index, transition.id)}>
+          <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>
+          <text x="${lx}" y="${ly}" class="${variantAccent(transition.variant)}" font-size="8" text-anchor="middle">${esc(transition.label)}</text>${note}
+        </g>`;
 }
 
 function renderLegend() {
   const y = legendY();
-  return `        <text x="220" y="${y - 20}" class="t-primary" font-size="10" font-weight="600">Legend</text>
-        <rect x="220" y="${y - 8}" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
-        <text x="240" y="${y}" class="t-muted" font-size="7">active state</text>
-        <rect x="325" y="${y - 8}" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
-        <text x="345" y="${y}" class="t-muted" font-size="7">waiting</text>
-        <rect x="415" y="${y - 8}" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
-        <text x="435" y="${y}" class="t-muted" font-size="7">terminal success</text>
-        <rect x="560" y="${y - 8}" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
-        <text x="580" y="${y}" class="t-muted" font-size="7">failure / exit</text>`;
+  return `        <g data-legend-bridge>
+          <text x="220" y="${y - 20}" class="t-primary" font-size="10" font-weight="600">Legend</text>
+        <g data-legend-kind="active">
+          <rect x="220" y="${y - 8}" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+          <text x="240" y="${y}" class="t-muted" font-size="7">active state</text>
+        </g>
+        <g data-legend-kind="waiting">
+          <rect x="325" y="${y - 8}" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+          <text x="345" y="${y}" class="t-muted" font-size="7">waiting</text>
+        </g>
+        <g data-legend-kind="success">
+          <rect x="415" y="${y - 8}" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+          <text x="435" y="${y}" class="t-muted" font-size="7">terminal success</text>
+        </g>
+        <g data-legend-kind="failure">
+          <rect x="560" y="${y - 8}" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+          <text x="580" y="${y}" class="t-muted" font-size="7">failure / exit</text>
+        </g>
+        </g>`;
 }
 
 function renderLifecycleRail() {
@@ -348,6 +414,7 @@ function renderLifecycleRail() {
 
 function renderSvg() {
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(lifecycle.meta, 'lifecycle diagram')}>
+${svgAccessibleText(lifecycle.meta, 'lifecycle diagram')}
 ${renderDefinitions()}
 
         <!-- Background Grid -->

@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Archify — Architecture Diagrams from Plain English</title>
-  <meta name="description" content="An agent skill for Claude, Codex CLI, and opencode that turns plain-English descriptions into polished, self-contained HTML architecture diagrams with dark/light themes, clipboard copy, and 4× export.">
+  <meta name="description" content="An agent skill for Claude, Codex CLI, and opencode that turns plain-English descriptions into polished, explorable, self-contained technical diagrams with semantic focus, motion, and crisp export.">
   <meta name="theme-color" content="#020617">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><polygon points='14,2 26,8 26,20 14,26 2,20 2,8' fill='%23083344' stroke='%2322d3ee' stroke-width='1.5'/><circle cx='14' cy='15' r='2.5' fill='%2322d3ee'/></svg>">
 
   <meta property="og:type" content="website">
   <meta property="og:title" content="Archify — Architecture Diagrams from Plain English">
-  <meta property="og:description" content="Describe your system in chat. Archify generates a polished, self-contained HTML diagram — with dark/light themes, clipboard copy, and ultra-crisp 4× export built in.">
+  <meta property="og:description" content="Describe your system in chat. Archify generates a polished, explorable HTML diagram with semantic focus, dark/light themes, motion, and ultra-crisp export.">
   <meta property="og:image" content="https://tt-a1i.github.io/archify/assets/archify-social-preview.png">
   <meta property="og:url" content="https://tt-a1i.github.io/archify/">
   <meta name="twitter:card" content="summary_large_image">
@@ -63,18 +63,38 @@
     .fade-up.d5 { transition-delay:.5s; }
 
     /* HERO */
-    .hero { text-align:center; padding-top:11rem; padding-bottom:6rem; }
-    .hero-badge { display:inline-flex; align-items:center; gap:.5rem; padding:.35rem .875rem; background:var(--emerald-fill); border:1px solid rgba(52,211,153,.25); border-radius:999px; font-size:.6875rem; font-weight:500; color:var(--emerald); margin-bottom:2.25rem; letter-spacing:.05em; }
+    .hero { text-align:center; padding-top:5.5rem; padding-bottom:6rem; }
+    .hero-badge { display:inline-flex; align-items:center; gap:.5rem; padding:.35rem .875rem; background:var(--emerald-fill); border:1px solid rgba(52,211,153,.25); border-radius:999px; font-size:.6875rem; font-weight:500; color:var(--emerald); margin-bottom:1.125rem; letter-spacing:.05em; }
     .pulse-dot { width:7px; height:7px; border-radius:50%; background:var(--emerald); animation:pulse 2.2s ease-in-out infinite; }
     @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.5; transform:scale(.85); } }
-    .hero h1 { font-size:clamp(2.25rem,5vw,3.75rem); font-weight:700; line-height:1.1; letter-spacing:-.035em; color:var(--text); margin-bottom:1.5rem; text-wrap:balance; }
+    .hero h1 { font-size:clamp(2.25rem,5vw,3.75rem); font-weight:700; line-height:1.1; letter-spacing:-.035em; color:var(--text); margin-bottom:.875rem; text-wrap:balance; }
     .hero h1 em { font-style:normal; color:var(--cyan); }
-    .hero-sub { font-size:1rem; color:var(--muted); line-height:1.7; max-width:560px; margin:0 auto 2.75rem; text-wrap:pretty; }
-    .hero-actions { display:flex; align-items:center; justify-content:center; gap:.875rem; margin-bottom:4.5rem; }
-    .hero-actions .btn { padding:.65rem 1.375rem; font-size:.8125rem; }
-    .hero-screenshot { position:relative; border-radius:1rem; overflow:hidden; border:1px solid var(--border-hi); box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 24px 80px rgba(0,0,0,.6),0 0 120px rgba(34,211,238,.06); }
-    .hero-screenshot img { width:100%; display:block; }
-    .hero-screenshot::after { content:''; position:absolute; bottom:0; left:0; right:0; height:40%; background:linear-gradient(to top,var(--bg) 0%,transparent 100%); pointer-events:none; }
+    .hero-sub { font-size:1rem; color:var(--muted); line-height:1.7; max-width:560px; margin:0 auto 1.375rem; text-wrap:pretty; }
+    .hero-actions { display:flex; align-items:center; justify-content:center; gap:.875rem; margin-bottom:1.5rem; }
+    .hero-actions .btn { min-height:44px; padding:.65rem 1.375rem; font-size:.8125rem; }
+    .hero-proof { position:relative; overflow:hidden; scroll-margin-top:80px; text-align:left; border:1px solid var(--border-hi); border-radius:1rem; background:#020617; box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 24px 80px rgba(0,0,0,.6),0 0 120px rgba(34,211,238,.08); }
+    .proof-chrome { min-height:64px; display:grid; grid-template-columns:minmax(190px,1fr) auto minmax(110px,1fr); align-items:center; gap:1rem; padding:.75rem 1rem; border-bottom:1px solid var(--border); background:rgba(8,15,30,.96); }
+    .proof-status { display:flex; align-items:center; gap:.75rem; min-width:0; }
+    .proof-live { display:inline-flex; align-items:center; gap:.4rem; flex-shrink:0; color:var(--emerald); font-size:.625rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+    .proof-live::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; box-shadow:0 0 12px currentColor; animation:pulse 2.2s ease-in-out infinite; }
+    .proof-status-copy { min-width:0; }
+    .proof-status-copy strong { display:block; overflow:hidden; color:var(--text); font-size:.6875rem; font-weight:600; white-space:nowrap; text-overflow:ellipsis; }
+    .proof-status-copy span { display:block; margin-top:.15rem; color:var(--dim); font-size:.5625rem; letter-spacing:.04em; white-space:nowrap; }
+    .proof-tabs { display:flex; align-items:center; gap:.25rem; padding:.25rem; border:1px solid var(--border); border-radius:.625rem; background:rgba(2,6,23,.72); }
+    .proof-tab { min-width:94px; padding:.48rem .7rem; border:1px solid transparent; border-radius:.4rem; background:transparent; color:var(--muted); font-family:inherit; font-size:.625rem; font-weight:600; cursor:pointer; transition:color .15s,border-color .15s,background .15s; }
+    .proof-tab:hover { color:var(--text); }
+    .proof-tab[aria-selected="true"] { color:var(--cyan); border-color:rgba(34,211,238,.22); background:rgba(34,211,238,.09); }
+    .proof-open { justify-self:end; display:inline-flex; align-items:center; gap:.35rem; color:var(--muted); font-size:.625rem; font-weight:600; text-decoration:none; white-space:nowrap; transition:color .15s; }
+    .proof-open:hover { color:var(--cyan); }
+    .proof-viewport { position:relative; height:clamp(500px,52vw,610px); background:#020617; }
+    .proof-viewport::before { content:''; position:absolute; inset:0; z-index:0; background:radial-gradient(circle at 50% 40%,rgba(34,211,238,.07),transparent 55%); }
+    .proof-viewport iframe { position:relative; z-index:1; width:100%; height:100%; display:block; border:0; background:#020617; opacity:1; transition:opacity .18s ease; }
+    .hero-proof.is-loading .proof-viewport iframe { opacity:.32; }
+    .proof-caption { min-height:66px; display:flex; align-items:center; justify-content:space-between; gap:2rem; padding:.85rem 1rem; border-top:1px solid var(--border); background:rgba(8,15,30,.96); }
+    .proof-caption-main { min-width:0; }
+    .proof-caption-main span { display:block; margin-bottom:.24rem; color:var(--cyan); font-size:.5625rem; font-weight:600; letter-spacing:.09em; text-transform:uppercase; }
+    .proof-caption-main strong { display:block; overflow:hidden; color:var(--text); font-size:.75rem; font-weight:600; white-space:nowrap; text-overflow:ellipsis; }
+    .proof-hint { color:var(--dim); font-size:.625rem; line-height:1.5; text-align:right; }
 
     /* SECTION */
     .section-label { font-size:.6875rem; font-weight:600; letter-spacing:.12em; color:var(--cyan); text-transform:uppercase; margin-bottom:1rem; }
@@ -109,7 +129,7 @@
 
     /* EXPORT */
     .export-label-row { font-size:.6875rem; color:var(--dim); text-transform:uppercase; letter-spacing:.1em; margin-top:3rem; margin-bottom:0; }
-    .export-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:.875rem; overflow:hidden; margin-top:1rem; }
+    .export-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:.875rem; overflow:hidden; margin-top:1rem; }
     .export-item { background:var(--bg); padding:1.5rem 1.25rem; text-align:center; }
     .export-item .fmt { font-size:.6875rem; font-weight:700; letter-spacing:.1em; margin-bottom:.375rem; }
     .export-item .desc { font-size:.625rem; color:var(--dim); line-height:1.5; }
@@ -125,12 +145,14 @@
 
     /* QUICK START */
     .quickstart-layout { display:grid; grid-template-columns:1fr 1fr; gap:5rem; align-items:start; }
+    .quickstart-layout > * { min-width:0; }
     .steps { display:flex; flex-direction:column; }
     .step { display:grid; grid-template-columns:48px 1fr; gap:1.25rem; padding-bottom:2.5rem; position:relative; }
     .step:not(:last-child)::before { content:''; position:absolute; left:23px; top:48px; bottom:0; width:1px; background:var(--border-hi); }
     .step-num { width:48px; height:48px; border-radius:50%; border:1px solid var(--border-hi); display:flex; align-items:center; justify-content:center; font-size:.8125rem; font-weight:700; color:var(--cyan); background:var(--bg); flex-shrink:0; position:relative; z-index:1; }
     .step-content h4 { font-size:.9375rem; font-weight:600; letter-spacing:-.02em; color:var(--text); margin-bottom:.5rem; padding-top:.75rem; }
     .step-content p { font-size:.8125rem; color:var(--muted); line-height:1.7; text-wrap:pretty; }
+    .step-content code { overflow-wrap:anywhere; }
     .step-content a { color:var(--cyan); text-decoration:none; border-bottom:1px solid rgba(34,211,238,.4); transition:border-color .15s; }
     .step-content a:hover { border-bottom-color:var(--cyan); }
 
@@ -161,6 +183,13 @@
     .footer-links a { font-size:.6875rem; color:var(--dim); text-decoration:none; transition:color .15s; }
     .footer-links a:hover { color:var(--muted); }
 
+    @media(prefers-reduced-motion:reduce) {
+      html { scroll-behavior:auto; }
+      .fade-up { opacity:1!important; transform:none!important; transition:none!important; }
+      .pulse-dot,.proof-live::before { animation:none!important; }
+      .proof-viewport iframe { transition:none; }
+    }
+
     @media(max-width:900px) {
       .types-header { grid-template-columns:1fr; gap:2rem; }
       .type-panel { grid-template-columns:1fr; }
@@ -169,13 +198,29 @@
       .palette-grid { grid-template-columns:repeat(4,1fr); }
       .quickstart-layout { grid-template-columns:1fr; gap:3rem; }
       .export-grid { grid-template-columns:repeat(3,1fr); }
+      .proof-chrome { grid-template-columns:1fr auto; }
+      .proof-tabs { grid-column:1 / -1; grid-row:2; }
+      .proof-tab { flex:1; }
+      .proof-open { grid-column:2; grid-row:1; }
+      .proof-viewport { height:500px; }
     }
     @media(max-width:640px) {
       nav { padding:0 1.25rem; }
       .container { padding:0 1.25rem; }
       section { padding:4.5rem 0; }
-      .hero { padding-top:8rem; }
-      .hero-actions { flex-direction:column; }
+      .hero { padding-top:4.75rem; }
+      .hero-actions { flex-direction:column; gap:.625rem; }
+      .hero-actions .btn { width:100%; justify-content:center; }
+      .proof-chrome { display:flex; flex-wrap:wrap; gap:.7rem; padding:.75rem; }
+      .proof-status { flex:1; }
+      .proof-status-copy span { display:none; }
+      .proof-tabs { order:3; width:100%; overflow-x:auto; }
+      .proof-tab { min-width:0; flex:1; padding:.5rem .35rem; }
+      .proof-open { margin-left:auto; }
+      .proof-viewport { height:400px; }
+      .proof-caption { min-height:76px; align-items:flex-start; gap:.6rem; padding:.8rem .75rem; }
+      .proof-caption-main strong { white-space:normal; line-height:1.4; }
+      .proof-hint { max-width:112px; }
       .palette-grid { grid-template-columns:repeat(3,1fr); }
       .export-grid { grid-template-columns:1fr 1fr; }
       footer { padding:2rem 1.25rem; }
@@ -204,6 +249,8 @@
       <span class="nav-logo-text">Archify</span>
     </a>
     <div class="nav-right">
+      <a class="nav-link" href="guide.html" data-i18n="nav-guide">Guide</a>
+      <a class="nav-link" href="gallery.html" data-i18n="nav-gallery">Gallery</a>
       <a class="nav-link" href="#quickstart" data-i18n="nav-docs">Docs</a>
       <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
       <button class="btn btn-lang" id="btn-lang">中文</button>
@@ -212,26 +259,52 @@
   </nav>
 
   <!-- HERO -->
-  <section class="hero">
+  <section class="hero" data-proof-aperture="first-fold">
     <div class="container">
       <div class="hero-badge fade-up">
         <div class="pulse-dot"></div>
         <span data-i18n="hero-badge">Agent Skill &nbsp;·&nbsp; v2.11.0</span>
       </div>
       <h1 class="fade-up d1" data-i18n="hero-h1">From plain English<br>to architecture <em>in seconds.</em></h1>
-      <p class="hero-sub fade-up d2" data-i18n="hero-sub">Describe your system in chat. Archify generates a polished, self-contained HTML diagram — with dark/light themes, clipboard copy, and ultra-crisp 4× export built in.</p>
+      <p class="hero-sub fade-up d2" data-i18n="hero-sub">Describe your system in chat. Archify generates a polished, explorable HTML diagram — with progressive MAP → READ → FULL detail, a semantic camera, path-aware stories, motion, and ultra-crisp export built in.</p>
       <div class="hero-actions fade-up d3">
-        <a class="btn btn-primary" href="#quickstart">
+        <a class="btn btn-primary" href="guide.html">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span data-i18n="hero-cta">Get started</span>
+          <span data-i18n="hero-cta">Choose the right diagram</span>
         </a>
-        <a class="btn btn-ghost" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.38.6.11.82-.26.82-.57v-2c-3.34.72-4.04-1.6-4.04-1.6-.54-1.38-1.33-1.75-1.33-1.75-1.08-.74.08-.72.08-.72 1.2.08 1.83 1.23 1.83 1.23 1.06 1.82 2.79 1.29 3.47.99.1-.77.41-1.29.75-1.59-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4 11.5 11.5 0 0 1 3 .4c2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.82.57C20.56 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
-          <span data-i18n="hero-gh">View on GitHub</span>
+        <a class="btn btn-ghost" href="gallery.html">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="4" height="4" stroke="currentColor"/><rect x="8.5" y="1.5" width="4" height="4" stroke="currentColor"/><rect x="1.5" y="8.5" width="4" height="4" stroke="currentColor"/><rect x="8.5" y="8.5" width="4" height="4" stroke="currentColor"/></svg>
+          <span data-i18n="hero-gallery">Explore proof gallery</span>
         </a>
       </div>
-      <div class="hero-screenshot fade-up d4">
-        <img src="assets/archify-readme-hero.png" alt="Archify hero screenshot">
+      <div class="hero-proof fade-up d4" id="hero-proof-stage" data-proof-playback="settled">
+        <div class="proof-chrome">
+          <div class="proof-status">
+            <span class="proof-live" data-i18n="proof-live">Live proof</span>
+            <div class="proof-status-copy">
+              <strong data-i18n="proof-status">Generated, checked, interactive</strong>
+              <span data-i18n="proof-receipt">Real gallery artifact · 7/7 validation checks</span>
+            </div>
+          </div>
+          <div class="proof-tabs" id="proof-tabs" role="tablist" aria-label="Choose a live Archify proof">
+            <button class="proof-tab" id="proof-tab-signal" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="true" tabindex="0" data-proof="signal">Signal Flow</button>
+            <button class="proof-tab" id="proof-tab-blueprint" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="false" tabindex="-1" data-proof="blueprint">Blueprint</button>
+            <button class="proof-tab" id="proof-tab-classic" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="false" tabindex="-1" data-proof="classic">Classic</button>
+          </div>
+          <a class="proof-open" id="proof-open" href="gallery/artifacts/agent-tool-call.workflow.html?present=1&amp;play=1#view=happy-path" target="_blank" rel="noopener">
+            <span data-i18n="proof-open">Open artifact</span><span aria-hidden="true">↗</span>
+          </a>
+        </div>
+        <div class="proof-viewport" id="hero-proof-panel" role="tabpanel" aria-labelledby="proof-tab-signal">
+          <iframe id="hero-proof-frame" data-proof="signal" src="gallery/artifacts/agent-tool-call.workflow.html?embed=1&amp;theme=dark#view=happy-path" title="Agent Tool Call live Archify proof" loading="eager"></iframe>
+        </div>
+        <div class="proof-caption" aria-live="polite">
+          <div class="proof-caption-main">
+            <span id="proof-meta">Workflow · Signal Flow · 12 nodes · 11 edges</span>
+            <strong id="proof-title">Agent Tool Call — policy, execution, recovery, and evidence</strong>
+          </div>
+          <span class="proof-hint" data-i18n="proof-hint">Pin one exact Story Moment, copy its stable link, and let someone else open the same authored node.</span>
+        </div>
       </div>
     </div>
   </section>
@@ -344,9 +417,9 @@
           <div class="feature-icon" style="background:rgba(34,211,238,0.1)">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="#22d3ee" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <h3 data-i18n="f1-h">One-click theme toggle</h3>
-          <p data-i18n="f1-p">Every diagram ships with dark and light themes. Toggle with a click or press T. Persists to localStorage, respects prefers-color-scheme on first visit.</p>
-          <span class="feature-tag" style="background:rgba(34,211,238,0.1);color:var(--cyan)" data-i18n="f1-tag">DARK &amp; LIGHT</span>
+          <h3 data-i18n="f1-h">Three visual identities</h3>
+          <p data-i18n="f1-p">Classic, Signal Flow, and Blueprint share one geometry contract. Every preset includes coordinated dark/light themes and exports cleanly.</p>
+          <span class="feature-tag" style="background:rgba(34,211,238,0.1);color:var(--cyan)" data-i18n="f1-tag">3 PRESETS · 2 THEMES</span>
         </div>
         <div class="feature-card fade-up d1">
           <div class="feature-icon" style="background:rgba(52,211,153,0.1)">
@@ -388,6 +461,22 @@
           <p data-i18n="f6-p">"Add Redis", "move auth to the left", "use emerald for the API" — refine in natural language. No diagram editor to learn.</p>
           <span class="feature-tag" style="background:rgba(251,146,60,0.1);color:var(--orange)" data-i18n="f6-tag">CONVERSATIONAL</span>
         </div>
+        <div class="feature-card fade-up d2">
+          <div class="feature-icon" style="background:rgba(34,211,238,0.1)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="#22d3ee" stroke-width="1.75"/><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" stroke="#22d3ee" stroke-width="1.75"/></svg>
+          </div>
+          <h3 data-i18n="f7-h">Inspect and play real routes</h3>
+          <p data-i18n="f7-p">Route Journey keeps the complete authored path visible while you inspect any stop or play one finite, reader-controlled pass over each exact incoming relationship.</p>
+          <span class="feature-tag" style="background:rgba(34,211,238,0.1);color:var(--cyan)" data-i18n="f7-tag">INSPECT · PLAY · PAUSE</span>
+        </div>
+        <div class="feature-card fade-up d3">
+          <div class="feature-icon" style="background:rgba(251,113,133,0.1)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="m9 7 7 5-7 5V7Z" stroke="#fb7185" stroke-width="1.75" stroke-linejoin="round"/><rect x="3" y="3" width="18" height="18" rx="3" stroke="#fb7185" stroke-width="1.75"/></svg>
+          </div>
+          <h3 data-i18n="f8-h">Anticipate and share the exact story moment</h3>
+          <p data-i18n="f8-p">Story Horizon distinguishes the exact next stop, while Semantic Story Carrier shows whether its one authored relationship is a call, data, event, security, or state transition. Pin any beat or share the same stable moment.</p>
+          <span class="feature-tag" style="background:rgba(251,113,133,0.1);color:var(--rose)" data-i18n="f8-tag">FOLLOW · ANTICIPATE · SHARE</span>
+        </div>
       </div>
 
       <div class="fade-up d2">
@@ -397,6 +486,7 @@
           <div class="export-item"><div class="fmt" style="color:var(--emerald)">JPEG</div><div class="desc" data-i18n="exp-jpg">Theme bg · 4× native</div></div>
           <div class="export-item"><div class="fmt" style="color:var(--violet)">WEBP</div><div class="desc" data-i18n="exp-webp">Small · 4× native</div></div>
           <div class="export-item"><div class="fmt" style="color:var(--amber)">SVG</div><div class="desc" data-i18n="exp-svg">Vector · dual-theme</div></div>
+          <div class="export-item"><div class="fmt" style="color:var(--orange)">WEBM</div><div class="desc" data-i18n="exp-webm">Motion · browser-native</div></div>
           <div class="export-item"><div class="fmt" style="color:var(--rose)" data-i18n="exp-clip-fmt">Clipboard</div><div class="desc" data-i18n="exp-clip">Copy PNG · instant paste</div></div>
         </div>
       </div>
@@ -548,8 +638,18 @@ npx skills use tt-a1i/archify@archify --agent codex
           <div class="shortcut-box">
             <p class="shortcut-title" data-i18n="kbd-label">Keyboard shortcuts</p>
             <div class="shortcut-rows">
+              <div class="shortcut-row"><span data-i18n="kbd-guide">Diagram guide</span><kbd>?</kbd></div>
               <div class="shortcut-row"><span data-i18n="kbd-theme">Toggle theme</span><kbd>T</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-find">Find node / route endpoint</span><kbd>/</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-route">Trace, inspect, and play a route</span><kbd>R</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-radar">Semantic radar</span><kbd>M</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-lens">Compare semantic kinds</span><kbd>L</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-present">Presentation stage</span><kbd>F</kbd></div>
               <div class="shortcut-row"><span data-i18n="kbd-export">Open export menu</span><kbd>E</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-focus">Focus node</span><kbd>Enter</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-views">Guided views</span><kbd>[ ]</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-play">Play story</span><kbd>P</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-zoom">Reading depth / reset</span><kbd>+ − 0</kbd></div>
               <div class="shortcut-row"><span data-i18n="kbd-nav">Navigate menu</span><kbd>↑ ↓</kbd></div>
               <div class="shortcut-row"><span data-i18n="kbd-close">Close menu</span><kbd>Esc</kbd></div>
             </div>
@@ -583,11 +683,12 @@ npx skills use tt-a1i/archify@archify --agent codex
   ══════════════════════════════════════ */
   const LANGS = {
     en: {
-      'nav-docs':'Docs','nav-install':'Install Skill',
+      'nav-guide':'Guide','nav-gallery':'Gallery','nav-docs':'Docs','nav-install':'Install Skill',
       'hero-badge':'Agent Skill &nbsp;·&nbsp; v2.11.0',
       'hero-h1':'From plain English<br>to architecture <em>in seconds.</em>',
-      'hero-sub':'Describe your system in chat. Archify generates a polished, self-contained HTML diagram — with dark/light themes, clipboard copy, and ultra-crisp 4× export built in.',
-      'hero-cta':'Get started','hero-gh':'View on GitHub',
+      'hero-sub':'Describe your system in chat. Archify generates a polished, explorable HTML diagram — with progressive MAP → READ → FULL detail, a semantic camera, path-aware stories, motion, and ultra-crisp export built in.',
+      'hero-cta':'Choose the right diagram','hero-gallery':'Explore proof gallery',
+      'proof-live':'Live proof','proof-status':'Generated, checked, interactive','proof-receipt':'Real gallery artifact · 7/7 validation checks','proof-open':'Open artifact','proof-hint':'Play a story that follows the current authored moment, then pin and share that exact node.',
       'label-types':'Diagram Types',
       'types-h2':'Five ways to see your system.',
       'types-body':'Architecture, workflows, sequences, data flows, or state machines — describe what you need and Archify picks the right visual language.',
@@ -609,14 +710,16 @@ npx skills use tt-a1i/archify@archify --agent codex
       'life-li1':'Agent run lifecycle','life-li2':'Order status machine','life-li3':'Deployment pipeline','life-li4':'Approval & retry paths',
       'label-features':'Features',
       'features-h2':'Production-ready output,<br>zero configuration.',
-      'f1-h':'One-click theme toggle','f1-p':'Every diagram ships with dark and light themes. Toggle with a click or press T. Persists to localStorage, respects prefers-color-scheme on first visit.','f1-tag':'DARK & LIGHT',
+      'f1-h':'Three visual identities','f1-p':'Classic, Signal Flow, and Blueprint share one geometry contract. Every preset includes coordinated dark/light themes and exports cleanly.','f1-tag':'3 PRESETS · 2 THEMES',
       'f2-h':'Ultra-crisp 4× export','f2-p':'PNG, JPEG, WebP — all rasterized natively at up to 4× source resolution by the browser. No upsampling blur. Sharp on retina displays, slides, and print.','f2-tag':'PNG · JPEG · WEBP',
       'f3-h':'Dual-theme SVG','f3-p':"The SVG export ships with both variable sets plus a @media prefers-color-scheme rule. Drop one file into a GitHub README — it follows the reader's theme.",'f3-tag':'VECTOR · SELF-THEMED',
       'f4-h':'Copy to clipboard','f4-p':'One button puts a PNG straight on your clipboard. Paste directly into Slack, Notion, GitHub, or Figma — no intermediate save step.','f4-tag':'INSTANT SHARE',
       'f5-h':'Self-contained HTML','f5-p':'One HTML file. Zero dependencies, no server, no runtime. Open it in any browser and it works. Share by attaching it to an email or PR comment.','f5-tag':'ZERO DEPS',
       'f6-h':'Iterate by chat','f6-p':'"Add Redis", "move auth to the left", "use emerald for the API" — refine in natural language. No diagram editor to learn.','f6-tag':'CONVERSATIONAL',
+      'f7-h':'Inspect and play real routes','f7-p':'Route Journey keeps the complete authored path visible while you inspect any stop or play one finite, reader-controlled pass over each exact incoming relationship.','f7-tag':'INSPECT · PLAY · PAUSE',
+      'f8-h':'Anticipate and share the exact story moment','f8-p':'Story Horizon distinguishes the exact next stop, while Semantic Story Carrier shows whether its one authored relationship is a call, data, event, security, or state transition. Pin any beat or share the same stable moment.','f8-tag':'FOLLOW · ANTICIPATE · SHARE',
       'export-label':'Export formats',
-      'exp-png':'Transparent · 4× native','exp-jpg':'Theme bg · 4× native','exp-webp':'Small · 4× native','exp-svg':'Vector · dual-theme','exp-clip-fmt':'Clipboard','exp-clip':'Copy PNG · instant paste',
+      'exp-png':'Transparent · 4× native','exp-jpg':'Theme bg · 4× native','exp-webp':'Small · 4× native','exp-svg':'Vector · dual-theme','exp-webm':'Motion · browser-native','exp-clip-fmt':'Clipboard','exp-clip':'Copy PNG · instant paste',
       'label-palette':'Design System',
       'palette-h2':'A semantic color language for infrastructure.',
       'palette-body':'Seven component types. Each with coordinated dark and light variants that switch together via the theme toggle.',
@@ -634,16 +737,17 @@ npx skills use tt-a1i/archify@archify --agent codex
       'step2-h':'Describe your system','step2-p':'Describe components, connections, and cloud services — or ask your agent to analyze the repository first.',
       'step3-h':'Ask your agent to draw it','step3-p':'Tell your agent to use Archify. It generates a self-contained HTML file you can open in any browser and refine in chat.',
       'code-label':'example prompt',
-      'kbd-label':'Keyboard shortcuts','kbd-theme':'Toggle theme','kbd-export':'Open export menu','kbd-nav':'Navigate menu','kbd-close':'Close menu',
+      'kbd-label':'Keyboard shortcuts','kbd-guide':'Diagram guide','kbd-theme':'Toggle theme','kbd-find':'Find node / route endpoint','kbd-route':'Trace, inspect, and play a route','kbd-radar':'Semantic radar','kbd-lens':'Compare semantic kinds','kbd-present':'Presentation stage','kbd-export':'Open export menu','kbd-focus':'Focus node','kbd-views':'Guided views','kbd-play':'Play story','kbd-zoom':'Reading depth / reset','kbd-nav':'Navigate menu','kbd-close':'Close menu',
       'footer-meta':'v2.11.0 &nbsp;·&nbsp; MIT License<br>Based on Cocoon-AI/architecture-diagram-generator',
       'footer-changelog':'Changelog','footer-license':'License'
     },
     zh: {
-      'nav-docs':'文档','nav-install':'安装技能',
+      'nav-guide':'场景指南','nav-gallery':'作品集','nav-docs':'文档','nav-install':'安装技能',
       'hero-badge':'Agent 技能 &nbsp;·&nbsp; v2.11.0',
       'hero-h1':'用自然语言，<br>秒级生成<em>架构图。</em>',
-      'hero-sub':'在对话中描述你的系统，Archify 生成精美、独立的 HTML 架构图——内置深色/浅色主题、一键复制剪贴板、超清 4× 图片导出。',
-      'hero-cta':'快速开始','hero-gh':'在 GitHub 查看',
+      'hero-sub':'在对话中描述你的系统，Archify 生成精美、可探索的 HTML 技术图——信息会按 MAP → READ → FULL 渐进展开，并内置语义镜头、路径故事、动态效果和超清导出。',
+      'hero-cta':'选择合适的图','hero-gallery':'查看验证作品集',
+      'proof-live':'实时成品','proof-status':'自动生成 · 检查通过 · 可交互','proof-receipt':'真实作品集成品 · 7/7 项验证通过','proof-open':'打开完整成品','proof-hint':'播放会跟随当前作者时刻的故事，再钉住并分享这个精确节点。',
       'label-types':'图表类型',
       'types-h2':'五种方式，读懂你的系统。',
       'types-body':'架构图、工作流、时序图、数据流图、状态机——描述需求，Archify 自动选择最合适的可视化语言。',
@@ -665,14 +769,16 @@ npx skills use tt-a1i/archify@archify --agent codex
       'life-li1':'Agent 运行生命周期','life-li2':'订单状态机','life-li3':'部署流水线','life-li4':'审批与重试路径',
       'label-features':'功能特性',
       'features-h2':'生产级输出，<br>零配置。',
-      'f1-h':'一键切换主题','f1-p':'每张图内置深色和浅色两套主题。点击按钮或按 T 键切换，自动持久化，首次访问遵循系统颜色偏好。','f1-tag':'深色 & 浅色',
+      'f1-h':'三套视觉身份','f1-p':'Classic、Signal Flow 和 Blueprint 共用同一套几何契约；每套都提供协调的深浅主题并保持干净导出。','f1-tag':'3 套预设 · 2 套主题',
       'f2-h':'超清 4× 导出','f2-p':'PNG、JPEG、WebP——由浏览器以最高 4 倍分辨率原生栅格化，无上采样模糊。视网膜屏、幻灯片、印刷均清晰。','f2-tag':'PNG · JPEG · WEBP',
       'f3-h':'双主题 SVG','f3-p':'SVG 导出同时内置深色和浅色变量集，并附 @media prefers-color-scheme 规则。放入 GitHub README，自动跟随读者主题。','f3-tag':'矢量 · 自适应主题',
       'f4-h':'复制到剪贴板','f4-p':'一键将 PNG 写入剪贴板，直接粘贴到 Slack、Notion、GitHub 或 Figma，无需手动保存。','f4-tag':'即时分享',
       'f5-h':'独立 HTML 文件','f5-p':'单个 HTML 文件，零依赖、无需服务器或构建工具，任意浏览器打开即用。作为附件发邮件或贴 PR 评论均可。','f5-tag':'零依赖',
       'f6-h':'对话式迭代','f6-p':'「加一个 Redis」「把鉴权移到左边」「API 用绿色」——用自然语言精调，无需学习任何图形编辑器。','f6-tag':'对话驱动',
+      'f7-h':'检查并播放真实路径','f7-p':'Route Journey 始终保留完整作者路径，可逐站检查，也可沿每条精确入向关系播放一次由读者控制的有限旅程。','f7-tag':'检查 · 播放 · 暂停',
+      'f8-h':'跟随并分享精确故事时刻','f8-p':'Story Horizon 指出唯一下一站，Semantic Story Carrier 则说明这条真实关系传递的是调用、数据、事件、安全还是状态变化；任意 beat 都可钉住或稳定分享。','f8-tag':'跟随 · 钉住 · 分享',
       'export-label':'导出格式',
-      'exp-png':'透明底 · 4× 分辨率','exp-jpg':'主题背景 · 4× 分辨率','exp-webp':'体积小 · 4× 分辨率','exp-svg':'矢量 · 双主题','exp-clip-fmt':'剪贴板','exp-clip':'复制 PNG · 即时粘贴',
+      'exp-png':'透明底 · 4× 分辨率','exp-jpg':'主题背景 · 4× 分辨率','exp-webp':'体积小 · 4× 分辨率','exp-svg':'矢量 · 双主题','exp-webm':'动态 · 浏览器原生','exp-clip-fmt':'剪贴板','exp-clip':'复制 PNG · 即时粘贴',
       'label-palette':'设计系统',
       'palette-h2':'为基础设施而生的语义色彩系统。',
       'palette-body':'七种组件类型，各有深色与浅色协调变体，随主题切换同步变换。',
@@ -690,14 +796,120 @@ npx skills use tt-a1i/archify@archify --agent codex
       'step2-h':'描述你的系统','step2-p':'描述组件、连接关系和云服务，也可以先让 agent 分析代码仓库。',
       'step3-h':'让 agent 绘制','step3-p':'告诉 agent 使用 Archify，它会生成可在任意浏览器打开的单文件 HTML，并可继续在对话中迭代。',
       'code-label':'示例提示词',
-      'kbd-label':'键盘快捷键','kbd-theme':'切换主题','kbd-export':'打开导出菜单','kbd-nav':'菜单导航','kbd-close':'关闭菜单',
+      'kbd-label':'键盘快捷键','kbd-guide':'图表指南','kbd-theme':'切换主题','kbd-find':'查找节点 / 路径端点','kbd-route':'探查、检查并播放路径','kbd-radar':'语义雷达','kbd-lens':'对比语义类型','kbd-present':'演示舞台','kbd-export':'打开导出菜单','kbd-focus':'聚焦节点','kbd-views':'引导视图','kbd-play':'播放故事','kbd-zoom':'阅读层级 / 复位','kbd-nav':'菜单导航','kbd-close':'关闭菜单',
       'footer-meta':'v2.11.0 &nbsp;·&nbsp; MIT 许可证<br>基于 Cocoon-AI/architecture-diagram-generator',
       'footer-changelog':'更新日志','footer-license':'许可证'
     }
   };
 
+  const PROOFS = {
+    signal: {
+      artifact: 'gallery/artifacts/agent-tool-call.workflow.html',
+      view: 'happy-path',
+      iframeTitle: { en: 'Agent Tool Call live Archify proof', zh: '智能体工具调用 Archify 实时成品' },
+      meta: { en: 'Workflow · Signal Flow · 12 nodes · 11 edges', zh: '工作流 · Signal Flow · 12 节点 · 11 条关系' },
+      title: { en: 'Agent Tool Call — policy, execution, recovery, and evidence', zh: '智能体工具调用——策略、执行、恢复与证据闭环' }
+    },
+    blueprint: {
+      artifact: 'gallery/artifacts/production-deployment.architecture.html',
+      view: 'request-boundary',
+      iframeTitle: { en: 'Production Deployment live Archify proof', zh: '生产部署架构 Archify 实时成品' },
+      meta: { en: 'Architecture · Blueprint · 12 nodes · 12 edges', zh: '架构图 · Blueprint · 12 节点 · 12 条关系' },
+      title: { en: 'Production Deployment — regions, ownership, state, and audit', zh: '生产部署——区域、归属、状态与审计边界' }
+    },
+    classic: {
+      artifact: 'gallery/artifacts/cache-miss.sequence.html',
+      view: 'cache-fallback',
+      iframeTitle: { en: 'Cache Miss Request live Archify proof', zh: '缓存未命中请求 Archify 实时成品' },
+      meta: { en: 'Sequence · Classic · 7 participants · 12 messages', zh: '时序图 · Classic · 7 个参与者 · 12 条消息' },
+      title: { en: 'Cache Miss — authentication, fallback, return, and trace', zh: '缓存未命中——鉴权、回退、返回与追踪' }
+    }
+  };
+
   let lang = localStorage.getItem('archify-lang') || 'en';
+  let activeProof = 'signal';
   const btnLang = document.getElementById('btn-lang');
+  const proofStage = document.getElementById('hero-proof-stage');
+  const proofFrame = document.getElementById('hero-proof-frame');
+  const proofPanel = document.getElementById('hero-proof-panel');
+  const proofOpen = document.getElementById('proof-open');
+  const proofMeta = document.getElementById('proof-meta');
+  const proofTitle = document.getElementById('proof-title');
+  const proofMotionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let initialProofPlaybackStarted = false;
+  let initialProofObserver = null;
+
+  function proofEmbedUrl(proof, { play = false } = {}) {
+    const playback = play ? '&play=1' : '';
+    return `${proof.artifact}?embed=1${playback}&theme=dark#view=${encodeURIComponent(proof.view)}`;
+  }
+
+  function renderProof(key, { focus = false, deliberate = false } = {}) {
+    const proof = PROOFS[key];
+    if (!proof) return;
+    activeProof = key;
+    document.querySelectorAll('.proof-tab').forEach(tab => {
+      const selected = tab.dataset.proof === key;
+      tab.setAttribute('aria-selected', String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+      if (selected && focus) tab.focus();
+    });
+    const selectedTab = document.querySelector(`.proof-tab[data-proof="${key}"]`);
+    proofPanel.setAttribute('aria-labelledby', selectedTab.id);
+    proofOpen.href = `${proof.artifact}?present=1&play=1#view=${encodeURIComponent(proof.view)}`;
+    proofMeta.textContent = proof.meta[lang];
+    proofTitle.textContent = proof.title[lang];
+    proofFrame.title = proof.iframeTitle[lang];
+    if (proofFrame.dataset.proof !== key) {
+      if (deliberate) {
+        initialProofPlaybackStarted = true;
+        initialProofObserver?.disconnect();
+        proofStage.dataset.proofPlayback = 'deliberate';
+      }
+      proofStage.classList.add('is-loading');
+      proofFrame.dataset.proof = key;
+      proofFrame.src = proofEmbedUrl(proof, { play: deliberate });
+    }
+  }
+
+  function startInitialProofPlayback() {
+    if (initialProofPlaybackStarted || proofMotionPreference.matches || activeProof !== 'signal') return false;
+    initialProofPlaybackStarted = true;
+    proofStage.dataset.proofPlayback = 'visible-once';
+    proofStage.classList.add('is-loading');
+    proofFrame.src = proofEmbedUrl(PROOFS.signal, { play: true });
+    return true;
+  }
+
+  function armInitialProofPlayback() {
+    if (proofMotionPreference.matches || !('IntersectionObserver' in window)) return;
+    initialProofObserver = new IntersectionObserver(entries => {
+      const entry = entries.find(candidate => candidate.target === proofPanel);
+      if (!entry) return;
+      const visibleHeight = Math.max(0, Math.min(entry.boundingClientRect.bottom, entry.rootBounds?.bottom ?? innerHeight) - Math.max(entry.boundingClientRect.top, entry.rootBounds?.top ?? 0));
+      if (!entry.isIntersecting || visibleHeight < 88) return;
+      startInitialProofPlayback();
+      initialProofObserver.disconnect();
+    }, { threshold: [0, .15, .2] });
+    initialProofObserver.observe(proofPanel);
+  }
+
+  proofFrame.addEventListener('load', () => proofStage.classList.remove('is-loading'));
+  document.querySelectorAll('.proof-tab').forEach(tab => {
+    tab.addEventListener('click', () => renderProof(tab.dataset.proof, { deliberate: true }));
+    tab.addEventListener('keydown', event => {
+      const tabs = [...document.querySelectorAll('.proof-tab')];
+      const current = tabs.indexOf(tab);
+      let next = current;
+      if (event.key === 'ArrowRight') next = (current + 1) % tabs.length;
+      else if (event.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length;
+      else if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = tabs.length - 1;
+      else return;
+      event.preventDefault();
+      renderProof(tabs[next].dataset.proof, { focus: true, deliberate: true });
+    });
+  });
 
   function applyLang(l) {
     lang = l;
@@ -709,18 +921,27 @@ npx skills use tt-a1i/archify@archify --agent codex
       const v = dict[el.dataset.i18n];
       if (v !== undefined) el.innerHTML = v;
     });
+    renderProof(activeProof);
     document.getElementById('code-en').style.display = l === 'en' ? '' : 'none';
     document.getElementById('code-zh').style.display = l === 'zh' ? '' : 'none';
   }
 
   btnLang.addEventListener('click', () => applyLang(lang === 'en' ? 'zh' : 'en'));
   applyLang(lang);
+  armInitialProofPlayback();
+  proofMotionPreference.addEventListener?.('change', event => {
+    if (event.matches && !initialProofPlaybackStarted) initialProofObserver?.disconnect();
+  });
 
   /* ══ Intersection observer ══ */
-  const obs = new IntersectionObserver(es => {
-    es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
-  }, { threshold:.12, rootMargin:'0px 0px -40px 0px' });
-  document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+  if ('IntersectionObserver' in window) {
+    const obs = new IntersectionObserver(es => {
+      es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold:.12, rootMargin:'0px 0px -40px 0px' });
+    document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+  } else {
+    document.querySelectorAll('.fade-up').forEach(el => el.classList.add('visible'));
+  }
 
   /* ══ Diagram type tabs ══ */
   document.querySelectorAll('.type-tab').forEach(tab => {

@@ -14,6 +14,9 @@
   "scripts": {
     "generate:validators": "node scripts/generate-validators.mjs",
     "check:validators": "node scripts/generate-validators.mjs --check",
+    "build:gallery": "node ../scripts/build-gallery.mjs ../docs",
+    "build:guide": "node ../scripts/build-guide.mjs ../docs/guide.html",
+    "build:readme-showcase": "node ../scripts/build-readme-showcase.mjs",
     "test": "npm run check:validators && node test/golden.mjs && node --test test/*.test.mjs",
     "render:examples": "node scripts/render-examples.mjs ../examples"
   },

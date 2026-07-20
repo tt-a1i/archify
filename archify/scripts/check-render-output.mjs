@@ -2,6 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { collectBorderRuns, collectRouteRhythmIssues, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 
 const input = process.argv[2];
 
@@ -24,6 +25,28 @@ try {
 }
 
 const checks = [];
+let composition = {
+  schemaVersion: 1,
+  profile: 'standard',
+  status: 'pass',
+  summary: { errors: 0, warnings: 0 },
+  metrics: {
+    properCrossings: 0,
+    containerBorderRuns: 0,
+    maxBends: 0,
+    routesOverSuggestedBends: 0,
+    maxStretch: null,
+    routesOverSuggestedStretch: 0,
+    minSegmentPx: null,
+    minInteriorSegmentPx: null,
+    shortSegmentCount: 0,
+    shortEndpointSegmentCount: 0,
+    shortInteriorSegmentCount: 0,
+    microSegmentCount: 0,
+  },
+  suggestedLimits: { bendsPerRelationship: 2, stretch: 1.35, segmentPx: 16, microSegmentPx: 8 },
+  issues: [],
+};
 
 function addCheck(name, ok, details = []) {
   checks.push({ name, ok, details });
@@ -34,6 +57,8 @@ addCheck('single_svg', svgMatches.length === 1, [`found ${svgMatches.length} <sv
 
 if (svgMatches.length === 1) {
   const svg = svgMatches[0][0];
+  const svgRoot = svg.match(/<svg\b[^>]*>/i)?.[0] || '';
+  const qualityProfile = parseAttrs(svgRoot)['data-quality-profile'] || 'standard';
   addCheck('finite_svg', !/\b(?:NaN|undefined|Infinity|-Infinity)\b/.test(svg));
   const legendStart = svg.indexOf('<!-- Legend -->');
   const beforeLegend = legendStart >= 0 ? svg.slice(0, legendStart) : svg;
@@ -43,6 +68,96 @@ if (svgMatches.length === 1) {
     'orthogonal_arrows',
     diagonal.length === 0,
     diagonal.map((arrow) => `${arrow.kind} ${arrow.index}: ${arrow.raw}`),
+  );
+  const relationshipCrossings = collectRelationshipCrossings(arrows);
+  const compositionFrames = collectCompositionFrames(beforeLegend);
+  const containerBorderRuns = collectBorderRuns({
+    routedRelations: arrows
+      .filter((arrow) => arrow.from && arrow.to && arrow.borderSegments.length)
+      .map((arrow) => ({
+        relation: arrow,
+        relationIndex: arrow.index,
+        segments: arrow.borderSegments,
+      })),
+    frames: compositionFrames,
+  });
+  const routedRelationships = arrows
+    .filter((arrow) => arrow.from && arrow.to && arrow.routePoints.length)
+    .map((arrow) => ({ relation: arrow, relationIndex: arrow.index, points: arrow.routePoints }));
+  const routeMetrics = routeBudgetMetrics({ routedRelations: routedRelationships });
+  const routeRhythmIssues = collectRouteRhythmIssues({ routedRelations: routedRelationships });
+  const crossingIsError = qualityProfile === 'showcase';
+  const rhythmIsError = qualityProfile === 'showcase';
+  const compositionErrors = containerBorderRuns.length
+    + (crossingIsError ? relationshipCrossings.length : 0)
+    + (rhythmIsError ? routeRhythmIssues.length : 0);
+  const compositionWarnings = (crossingIsError ? 0 : relationshipCrossings.length)
+    + (rhythmIsError ? 0 : routeRhythmIssues.length);
+  composition = {
+    schemaVersion: 1,
+    profile: qualityProfile,
+    status: compositionErrors ? 'fail' : 'pass',
+    summary: {
+      errors: compositionErrors,
+      warnings: compositionWarnings,
+    },
+    metrics: {
+      properCrossings: relationshipCrossings.length,
+      containerBorderRuns: containerBorderRuns.length,
+      ...roundedRouteMetrics(routeMetrics),
+    },
+    suggestedLimits: { bendsPerRelationship: 2, stretch: 1.35, segmentPx: 16, microSegmentPx: 8 },
+    issues: [
+      ...containerBorderRuns.map((hit) => ({
+        severity: 'error',
+        code: 'composition/container-border-run',
+        relationship: relationshipRecord(hit.relation),
+        frame: frameRecord(hit.frame),
+        side: hit.side,
+        segmentIndex: hit.segmentIndex,
+        overlapLength: Math.round(hit.overlapLength * 10) / 10,
+        from: hit.overlapStart.map((value) => Math.round(value * 10) / 10),
+        to: hit.overlapEnd.map((value) => Math.round(value * 10) / 10),
+      })),
+      ...relationshipCrossings.map((hit) => ({
+        severity: crossingIsError ? 'error' : 'warning',
+        code: 'composition/proper-crossing',
+        relationship: relationshipRecord(hit.left),
+        otherRelationship: relationshipRecord(hit.right),
+        point: hit.point.map((value) => Math.round(value * 10) / 10),
+      })),
+      ...routeRhythmIssues.map((hit) => ({
+        severity: rhythmIsError ? 'error' : 'warning',
+        code: hit.code,
+        relationship: relationshipRecord(hit.relation),
+        segmentIndex: hit.segmentIndex,
+        position: hit.position,
+        length: Math.round(hit.length * 10) / 10,
+        from: hit.start.map((value) => Math.round(value * 10) / 10),
+        to: hit.end.map((value) => Math.round(value * 10) / 10),
+      })),
+    ],
+  };
+  addCheck(
+    'relationship_crossings',
+    !crossingIsError || relationshipCrossings.length === 0,
+    relationshipCrossings.map((hit) => (
+      `[composition/proper-crossing] ${qualityProfile} ${relationshipName(hit.left)} crosses ${relationshipName(hit.right)} at [${formatPoint(hit.point)}]`
+    )),
+  );
+  addCheck(
+    'container_border_runs',
+    containerBorderRuns.length === 0,
+    containerBorderRuns.map((hit) => (
+      `[composition/container-border-run] ${relationshipName(hit.relation)} follows ${frameName(hit.frame)} ${hit.side} border for ${Math.round(hit.overlapLength * 10) / 10}px on segment ${hit.segmentIndex} [${formatPoint(hit.overlapStart)}] -> [${formatPoint(hit.overlapEnd)}]`
+    )),
+  );
+  addCheck(
+    'route_rhythm',
+    !rhythmIsError || routeRhythmIssues.length === 0,
+    routeRhythmIssues.map((hit) => (
+      `[${hit.code}] ${qualityProfile} ${relationshipName(hit.relation)} has a ${Math.round(hit.length * 10) / 10}px ${hit.position} segment ${hit.segmentIndex} [${formatPoint(hit.start)}] -> [${formatPoint(hit.end)}]`
+    )),
   );
 
   if (legendStart >= 0) {
@@ -59,8 +174,8 @@ if (svgMatches.length === 1) {
   }
 }
 
-const ok = checks.every((check) => check.ok);
-console.log(JSON.stringify({ ok, file: htmlPath, checks }, null, 2));
+const ok = checks.every((check) => check.ok) && composition.status !== 'fail';
+console.log(JSON.stringify({ ok, file: htmlPath, checks, composition }, null, 2));
 process.exit(ok ? 0 : 1);
 
 function collectArrows(fragment) {
@@ -75,10 +190,125 @@ function collectArrows(fragment) {
     const segments = tag[1].toLowerCase() === 'line'
       ? lineSegments(attrs)
       : pathSegments(attrs.d || '');
-    arrows.push({ kind: tag[1].toLowerCase(), index: index += 1, raw, segments });
+    const borderSegments = tag[1].toLowerCase() === 'line'
+      ? segments
+      : straightPathSegments(attrs.d || '');
+    arrows.push({
+      kind: tag[1].toLowerCase(),
+      index: index += 1,
+      raw,
+      segments,
+      borderSegments,
+      routePoints: parseRoutePoints(attrs['data-composition-points']) || (
+        borderSegments.length ? [borderSegments[0].start, ...borderSegments.map((segment) => segment.end)] : []
+      ),
+      from: attrs['data-edge-from'] || attrs['data-composition-edge-from'],
+      to: attrs['data-edge-to'] || attrs['data-composition-edge-to'],
+      id: attrs['data-edge-id'] || attrs['data-composition-edge-id'],
+    });
   }
 
   return arrows;
+}
+
+function roundedRouteMetrics(metrics) {
+  return {
+    ...metrics,
+    maxStretch: metrics.maxStretch == null ? null : Math.round(metrics.maxStretch * 1000) / 1000,
+    minSegmentPx: metrics.minSegmentPx == null ? null : Math.round(metrics.minSegmentPx * 10) / 10,
+    minInteriorSegmentPx: metrics.minInteriorSegmentPx == null ? null : Math.round(metrics.minInteriorSegmentPx * 10) / 10,
+  };
+}
+
+function parseRoutePoints(value) {
+  if (!value) return null;
+  const points = value.split(';').map((pair) => pair.split(',').map(Number));
+  return points.length >= 2 && points.every(isPoint) ? points : null;
+}
+
+function collectRelationshipCrossings(arrows) {
+  const relationships = arrows.filter((arrow) => arrow.from && arrow.to && arrow.segments.length);
+  const crossings = [];
+  for (let leftIndex = 0; leftIndex < relationships.length; leftIndex += 1) {
+    const left = relationships[leftIndex];
+    for (let rightIndex = leftIndex + 1; rightIndex < relationships.length; rightIndex += 1) {
+      const right = relationships[rightIndex];
+      if ([left.from, left.to].some((id) => id === right.from || id === right.to)) continue;
+      let point = null;
+      for (const leftSegment of left.segments) {
+        for (const rightSegment of right.segments) {
+          point = properSegmentIntersection(leftSegment.start, leftSegment.end, rightSegment.start, rightSegment.end);
+          if (point) break;
+        }
+        if (point) break;
+      }
+      if (point) crossings.push({ left, right, point });
+    }
+  }
+  return crossings;
+}
+
+function relationshipName(arrow) {
+  return arrow.id
+    ? `relationship id "${arrow.id}" ("${arrow.from}" -> "${arrow.to}")`
+    : `relationship "${arrow.from}" -> "${arrow.to}"`;
+}
+
+function relationshipRecord(arrow) {
+  return {
+    id: arrow.id,
+    from: arrow.from,
+    to: arrow.to,
+    artifactIndex: arrow.index,
+  };
+}
+
+function collectCompositionFrames(fragment) {
+  const frames = [];
+  for (const match of fragment.matchAll(/<(rect|path|line)\b[^>]*>/gi)) {
+    const attrs = parseAttrs(match[0]);
+    const kind = attrs['data-composition-frame-kind'];
+    if (!kind) continue;
+    const identity = attrs['data-composition-frame-id'] || frames.length;
+    if (match[1].toLowerCase() === 'rect') {
+      const frame = {
+        kind,
+        id: identity,
+        x: numberAttr(attrs, 'x'),
+        y: numberAttr(attrs, 'y'),
+        width: numberAttr(attrs, 'width'),
+        height: numberAttr(attrs, 'height'),
+        radius: numberAttr(attrs, 'rx') || 0,
+      };
+      if ([frame.x, frame.y, frame.width, frame.height].every(Number.isFinite)) frames.push(frame);
+      continue;
+    }
+    const segments = match[1].toLowerCase() === 'line'
+      ? lineSegments(attrs)
+      : pathSegments(attrs.d || '');
+    for (const [segmentIndex, segment] of segments.entries()) {
+      frames.push({
+        kind,
+        id: segments.length > 1 ? `${identity}:${segmentIndex}` : identity,
+        shape: 'line',
+        start: segment.start,
+        end: segment.end,
+      });
+    }
+  }
+  return frames;
+}
+
+function frameName(frame) {
+  return `${frame.kind || 'frame'} "${frame.id}"`;
+}
+
+function frameRecord(frame) {
+  return { kind: frame.kind, id: frame.id };
+}
+
+function formatPoint(point) {
+  return point.map((value) => Math.round(value * 10) / 10).join(', ');
 }
 
 function lineSegments(attrs) {
@@ -95,6 +325,79 @@ function pathSegments(d) {
     segments.push({ start: points[i - 1], end: points[i] });
   }
   return segments;
+}
+
+// Border runs use exact visible primitives. Non-collinear Q curves are never
+// flattened into chords here: a tangent or sampled near-horizontal curve is
+// not a structural border run. A fully collinear Q remains a straight visible
+// primitive and is included.
+function straightPathSegments(d) {
+  const tokens = d.match(/[MLHVQZmlhvqz]|[-+]?(?:\d*\.)?\d+(?:e[-+]?\d+)?/g) || [];
+  const segments = [];
+  let i = 0;
+  let command = '';
+  let current = [0, 0];
+  let start = null;
+  while (i < tokens.length) {
+    if (isCommand(tokens[i])) command = tokens[i++];
+    if (!command) break;
+    const absolute = command === command.toUpperCase();
+    switch (command.toUpperCase()) {
+      case 'M':
+      case 'L': {
+        let first = true;
+        while (i + 1 < tokens.length && !isCommand(tokens[i])) {
+          const point = [Number.parseFloat(tokens[i++]), Number.parseFloat(tokens[i++])];
+          if (!point.every(Number.isFinite)) break;
+          const next = absolute ? point : [current[0] + point[0], current[1] + point[1]];
+          if (command.toUpperCase() === 'L' || !first) segments.push({ start: current, end: next });
+          current = next;
+          if (!start) start = current;
+          first = false;
+        }
+        break;
+      }
+      case 'H': {
+        while (i < tokens.length && !isCommand(tokens[i])) {
+          const value = Number.parseFloat(tokens[i++]);
+          if (!Number.isFinite(value)) break;
+          const next = [absolute ? value : current[0] + value, current[1]];
+          segments.push({ start: current, end: next });
+          current = next;
+        }
+        break;
+      }
+      case 'V': {
+        while (i < tokens.length && !isCommand(tokens[i])) {
+          const value = Number.parseFloat(tokens[i++]);
+          if (!Number.isFinite(value)) break;
+          const next = [current[0], absolute ? value : current[1] + value];
+          segments.push({ start: current, end: next });
+          current = next;
+        }
+        break;
+      }
+      case 'Q': {
+        while (i + 3 < tokens.length && !isCommand(tokens[i])) {
+          const values = [0, 0, 0, 0].map(() => Number.parseFloat(tokens[i++]));
+          if (!values.every(Number.isFinite)) break;
+          const control = absolute ? values.slice(0, 2) : [current[0] + values[0], current[1] + values[1]];
+          const end = absolute ? values.slice(2, 4) : [current[0] + values[2], current[1] + values[3]];
+          if (Math.abs(crossProduct(current, control, end)) <= 1e-9) segments.push({ start: current, end });
+          current = end;
+        }
+        break;
+      }
+      case 'Z':
+        if (start) segments.push({ start: current, end: start });
+        current = start || current;
+        command = '';
+        break;
+      default:
+        return [];
+    }
+  }
+  return segments.filter(({ start: a, end: b }) => isPoint(a) && isPoint(b));
 }
 
 function isTwoPointDiagonal(arrow) {
@@ -166,7 +469,7 @@ function estimatedTextWidth(text, fontSize) {
 }
 
 function pointsFromPath(d) {
-  const tokens = d.match(/[MLHVZmlhvz]|[-+]?(?:\d*\.)?\d+(?:e[-+]?\d+)?/g) || [];
+  const tokens = d.match(/[MLHVQZmlhvqz]|[-+]?(?:\d*\.)?\d+(?:e[-+]?\d+)?/g) || [];
   const points = [];
   let i = 0;
   let command = '';
@@ -209,6 +512,32 @@ function pointsFromPath(d) {
         }
         break;
       }
+      case 'Q': {
+        while (i + 3 < tokens.length && !isCommand(tokens[i])) {
+          const controlX = Number.parseFloat(tokens[i++]);
+          const controlY = Number.parseFloat(tokens[i++]);
+          const endX = Number.parseFloat(tokens[i++]);
+          const endY = Number.parseFloat(tokens[i++]);
+          if (![controlX, controlY, endX, endY].every(Number.isFinite)) break;
+          const control = absolute
+            ? [controlX, controlY]
+            : [current[0] + controlX, current[1] + controlY];
+          const end = absolute
+            ? [endX, endY]
+            : [current[0] + endX, current[1] + endY];
+          const startPoint = current;
+          for (let step = 1; step <= 8; step += 1) {
+            const amount = step / 8;
+            const remaining = 1 - amount;
+            points.push([
+              remaining * remaining * startPoint[0] + 2 * remaining * amount * control[0] + amount * amount * end[0],
+              remaining * remaining * startPoint[1] + 2 * remaining * amount * control[1] + amount * amount * end[1],
+            ]);
+          }
+          current = end;
+        }
+        break;
+      }
       case 'Z': {
         if (start) points.push(start);
         break;
@@ -219,6 +548,28 @@ function pointsFromPath(d) {
   }
 
   return points.filter(isPoint);
+}
+
+function properSegmentIntersection(a, b, c, d) {
+  const abC = crossProduct(a, b, c);
+  const abD = crossProduct(a, b, d);
+  const cdA = crossProduct(c, d, a);
+  const cdB = crossProduct(c, d, b);
+  const epsilon = 1e-9;
+  const opposite = (left, right) => (left > epsilon && right < -epsilon) || (left < -epsilon && right > epsilon);
+  if (!opposite(abC, abD) || !opposite(cdA, cdB)) return null;
+  const denominator = (a[0] - b[0]) * (c[1] - d[1]) - (a[1] - b[1]) * (c[0] - d[0]);
+  if (Math.abs(denominator) < epsilon) return null;
+  const ab = a[0] * b[1] - a[1] * b[0];
+  const cd = c[0] * d[1] - c[1] * d[0];
+  return [
+    (ab * (c[0] - d[0]) - (a[0] - b[0]) * cd) / denominator,
+    (ab * (c[1] - d[1]) - (a[1] - b[1]) * cd) / denominator,
+  ];
+}
+
+function crossProduct(a, b, c) {
+  return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
 }
 
 function segmentIntersectsBox(segment, box) {

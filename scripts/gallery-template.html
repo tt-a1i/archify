@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en" data-preview-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="archify gallery [[ARCHIFY_VERSION]]">
+  <title>Archify Proof Lab — Generated Diagram Gallery</title>
+  <meta name="description" content="A generated gallery of validated, self-contained Archify diagrams. Every preview links to its exact JSON source and interactive HTML artifact.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #05080c;
+      --panel: #0a1017;
+      --panel-2: #0e1721;
+      --line: #253341;
+      --line-hi: #3b5164;
+      --paper: #f4f1e8;
+      --muted: #8ea0ad;
+      --dim: #5c6b76;
+      --signal: #67e8f9;
+      --mint: #6ee7b7;
+      --amber: #f6c453;
+      --rose: #fb7185;
+      --violet: #c4b5fd;
+      --content: 1320px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--paper);
+      background:
+        linear-gradient(rgba(59, 81, 100, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59, 81, 100, 0.12) 1px, transparent 1px),
+        var(--ink);
+      background-size: 32px 32px;
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    a { color: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    :focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+    .shell { width: min(var(--content), calc(100% - 48px)); margin: 0 auto; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      border-bottom: 1px solid var(--line);
+      background: rgba(5, 8, 12, 0.88);
+      backdrop-filter: blur(16px);
+    }
+    .topbar-inner {
+      min-height: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .brand { min-height: 44px; display: inline-flex; align-items: center; gap: 12px; text-decoration: none; }
+    .brand-mark {
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--signal);
+      color: var(--signal);
+      transform: rotate(45deg);
+      box-shadow: 0 0 24px rgba(103, 232, 249, 0.12);
+    }
+    .brand-mark span { transform: rotate(-45deg); font-size: 11px; font-weight: 700; }
+    .brand-copy { display: flex; flex-direction: column; gap: 2px; }
+    .brand-copy strong { font-family: 'Space Grotesk', sans-serif; font-size: 15px; letter-spacing: -0.01em; }
+    .brand-copy small { color: var(--dim); font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase; }
+    .top-actions { display: flex; align-items: center; gap: 9px; }
+    .top-link, .utility-button {
+      min-width: 44px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 13px;
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      background: var(--panel);
+      color: var(--muted);
+      font: 600 10px/1 'JetBrains Mono', monospace;
+      letter-spacing: 0.07em;
+      text-decoration: none;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+    }
+    .top-link:hover, .utility-button:hover { color: var(--paper); border-color: var(--line-hi); background: var(--panel-2); }
+
+    .hero { padding: 104px 0 72px; border-bottom: 1px solid var(--line); }
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(310px, 0.55fr); gap: 72px; align-items: end; }
+    .eyebrow { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; color: var(--signal); font-size: 10px; letter-spacing: 0.17em; text-transform: uppercase; }
+    .eyebrow::before { content: ''; width: 44px; height: 1px; background: var(--signal); box-shadow: 0 0 12px var(--signal); }
+    .hero h1 {
+      margin: 0;
+      max-width: 860px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(52px, 7.4vw, 104px);
+      line-height: 0.88;
+      letter-spacing: -0.065em;
+      text-wrap: balance;
+    }
+    .hero h1 em { color: var(--signal); font-style: normal; }
+    .hero-copy { margin-top: 32px; max-width: 700px; color: var(--muted); font-size: 13px; line-height: 1.85; }
+    .hero-copy strong { color: var(--paper); font-weight: 500; }
+    .proof-board { border-top: 1px solid var(--line-hi); }
+    .proof-row { min-height: 64px; display: grid; grid-template-columns: 88px 1fr; align-items: center; border-bottom: 1px solid var(--line); }
+    .proof-value { color: var(--paper); font-family: 'Space Grotesk', sans-serif; font-size: 25px; font-weight: 700; }
+    .proof-label { color: var(--dim); font-size: 9px; line-height: 1.55; letter-spacing: 0.1em; text-transform: uppercase; }
+    .proof-status { display: inline-flex; align-items: center; gap: 8px; color: var(--mint); }
+    .proof-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 12px var(--mint); }
+
+    .controls { padding: 24px 0; border-bottom: 1px solid var(--line); background: rgba(5, 8, 12, 0.58); }
+    .controls-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .filter-group { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .filter-button {
+      min-height: 44px;
+      padding: 0 12px;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      background: transparent;
+      color: var(--dim);
+      font: 600 10px/1 'JetBrains Mono', monospace;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .filter-button:hover { color: var(--paper); }
+    .filter-button[aria-pressed="true"] { color: var(--signal); border-color: rgba(103, 232, 249, 0.35); background: rgba(103, 232, 249, 0.07); }
+    .controls-note { color: var(--dim); font-size: 9px; letter-spacing: 0.08em; text-align: right; text-transform: uppercase; }
+
+    .gallery-section { padding: 56px 0 112px; }
+    .section-intro { display: flex; justify-content: space-between; align-items: end; gap: 32px; margin-bottom: 28px; }
+    .section-intro h2 { margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: clamp(28px, 4vw, 48px); letter-spacing: -0.045em; }
+    .section-intro p { margin: 0; max-width: 440px; color: var(--dim); font-size: 10px; line-height: 1.75; text-align: right; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .showcase-card {
+      min-width: 0;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      background: var(--panel);
+      clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%);
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 420ms ease, transform 420ms ease, border-color 180ms ease;
+    }
+    .showcase-card.visible { opacity: 1; transform: translateY(0); }
+    .showcase-card:hover { border-color: var(--line-hi); }
+    .showcase-card:target { scroll-margin-top: 86px; border-color: var(--accent, var(--signal)); box-shadow: 0 0 0 1px var(--accent, var(--signal)), 0 24px 72px rgba(0, 0, 0, 0.34); }
+    .showcase-card.is-featured { grid-column: 1 / -1; }
+    .showcase-card[hidden] { display: none; }
+    .card-header { min-height: 88px; display: grid; grid-template-columns: 66px 1fr auto; align-items: center; border-bottom: 1px solid var(--line); }
+    .card-index { height: 100%; display: grid; place-items: center; border-right: 1px solid var(--line); color: var(--dim); font-size: 11px; }
+    .card-title-wrap { min-width: 0; padding: 18px 20px; }
+    .card-kicker { margin-bottom: 7px; color: var(--accent, var(--signal)); font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase; }
+    .card-title { margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 22px; letter-spacing: -0.035em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-mode { margin-right: 20px; padding: 6px 8px; border: 1px solid var(--line); color: var(--muted); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .preview-shell { position: relative; height: 370px; overflow: hidden; background: #020617; border-bottom: 1px solid var(--line); }
+    .showcase-card.is-featured .preview-shell { height: 600px; }
+    .preview-shell::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(103, 232, 249, 0.025), transparent 30%, transparent 72%, rgba(5, 8, 12, 0.38));
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.025);
+    }
+    .preview-shell iframe { width: 100%; height: 100%; border: 0; display: block; pointer-events: none; background: #020617; }
+    .live-flag { position: absolute; z-index: 2; top: 16px; left: 16px; display: inline-flex; align-items: center; gap: 7px; padding: 6px 8px; border: 1px solid rgba(110, 231, 183, 0.32); background: rgba(5, 8, 12, 0.78); color: var(--mint); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; }
+    .live-flag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+    .card-body { padding: 22px 22px 20px; }
+    .card-description { min-height: 44px; margin: 0 0 20px; color: var(--muted); font-size: 11px; line-height: 1.75; }
+    .receipt { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); }
+    .receipt-cell { min-width: 0; padding: 12px; border-right: 1px solid var(--line); }
+    .receipt-cell:last-child { border-right: 0; }
+    .receipt-label { display: block; margin-bottom: 6px; color: var(--dim); font-size: 8px; letter-spacing: 0.11em; text-transform: uppercase; }
+    .receipt-value { display: block; color: var(--paper); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .receipt-value.ok { color: var(--mint); }
+    .card-actions { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+    .card-link { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 13px; border: 1px solid var(--line); border-radius: 2px; color: var(--muted); font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-decoration: none; text-transform: uppercase; transition: 160ms ease; }
+    .card-link:hover { color: var(--paper); border-color: var(--line-hi); background: var(--panel-2); }
+    .card-link.primary { border-color: rgba(103, 232, 249, 0.4); color: var(--signal); background: rgba(103, 232, 249, 0.06); }
+    .card-link.primary:hover { border-color: var(--signal); }
+    .empty-state { display: none; padding: 64px 24px; border: 1px dashed var(--line-hi); color: var(--muted); text-align: center; font-size: 11px; }
+    .empty-state.visible { display: block; }
+
+    .method { border-top: 1px solid var(--line); padding: 72px 0; background: rgba(10, 16, 23, 0.76); }
+    .method-grid { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 72px; }
+    .method h2 { margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 36px; letter-spacing: -0.045em; }
+    .method-copy { color: var(--muted); font-size: 11px; line-height: 1.9; }
+    .pipeline { margin-top: 28px; display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .pipeline-step { display: grid; grid-template-columns: 50px 1fr auto; align-items: center; gap: 16px; min-height: 58px; padding: 0 16px; background: var(--panel); }
+    .pipeline-num { color: var(--signal); font-size: 9px; }
+    .pipeline-label { font-size: 10px; }
+    .pipeline-state { color: var(--mint); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; }
+    .method-code { border: 1px solid var(--line); background: var(--ink); }
+    .method-code-bar { display: flex; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--line); color: var(--dim); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; }
+    .method-code pre { margin: 0; padding: 22px; color: var(--muted); font: 10px/1.85 'JetBrains Mono', monospace; white-space: pre-wrap; }
+    .method-code .accent { color: var(--signal); }
+
+    footer { border-top: 1px solid var(--line); padding: 32px 0 44px; color: var(--dim); font-size: 9px; }
+    .footer-inner { display: flex; justify-content: space-between; gap: 24px; }
+
+    @media (max-width: 960px) {
+      .hero-grid, .method-grid { grid-template-columns: 1fr; gap: 48px; }
+      .proof-board { display: grid; grid-template-columns: repeat(3, 1fr); }
+      .proof-row { grid-template-columns: 1fr; align-content: center; gap: 5px; padding: 12px; border-right: 1px solid var(--line); }
+      .gallery-grid { grid-template-columns: 1fr; }
+      .showcase-card.is-featured { grid-column: auto; }
+      .showcase-card.is-featured .preview-shell { height: 440px; }
+    }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 28px, var(--content)); }
+      .topbar-inner { min-height: 60px; }
+      .brand-copy small, .top-link { display: none; }
+      .utility-button { padding: 0 10px; }
+      .hero { padding: 74px 0 52px; }
+      .hero h1 { font-size: clamp(46px, 16vw, 68px); }
+      .hero-copy { font-size: 11px; }
+      .proof-board { grid-template-columns: 1fr; }
+      .proof-row { grid-template-columns: 72px 1fr; min-height: 54px; border-right: 0; }
+      .controls-inner, .section-intro { align-items: flex-start; flex-direction: column; }
+      .controls-note, .section-intro p { text-align: left; }
+      .filter-group { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+      .card-header { grid-template-columns: 48px 1fr; }
+      .card-mode { display: none; }
+      .card-title-wrap { padding: 15px 14px; }
+      .card-title { font-size: 18px; }
+      .preview-shell, .showcase-card.is-featured .preview-shell { height: 310px; }
+      .card-body { padding: 18px 14px; }
+      .receipt { grid-template-columns: 1fr 1fr; }
+      .receipt-cell:nth-child(2) { border-right: 0; }
+      .receipt-cell:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .card-actions { flex-wrap: wrap; }
+      .card-link { flex: 1; min-width: 118px; }
+      .method { padding: 52px 0; }
+      .footer-inner { flex-direction: column; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="index.html" aria-label="Back to Archify home">
+        <span class="brand-mark" aria-hidden="true"><span>A</span></span>
+        <span class="brand-copy"><strong>Archify</strong><small>Proof Lab / [[ARCHIFY_VERSION]]</small></span>
+      </a>
+      <div class="top-actions">
+        <a class="top-link" href="guide.html" data-en="Scenario guide" data-zh="场景指南">Scenario guide</a>
+        <a class="top-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub ↗</a>
+        <button class="utility-button" id="preview-theme" type="button">Preview: dark</button>
+        <button class="utility-button" id="language" type="button" aria-label="Switch language">中文</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div>
+          <div class="eyebrow" data-en="Generated showcase / verified artifacts" data-zh="自动生成作品集 / 真实验证成品">Generated showcase / verified artifacts</div>
+          <h1 data-en="Proof,<br><em>not promises.</em>" data-zh="先看成品，<br><em>再谈能力。</em>">Proof,<br><em>not promises.</em></h1>
+          <p class="hero-copy" data-en="Every frame below is a live Archify artifact—not a mockup. Each one is regenerated from versioned JSON IR, checked for structural integrity, and linked to the exact source that produced it." data-zh="下面每一帧都是可运行的 Archify 成品，不是效果图。它们全部由版本化 JSON IR 重新生成、经过结构检查，并链接到产生它的精确源数据。">Every frame below is a live Archify artifact—not a mockup. Each one is regenerated from versioned JSON IR, checked for structural integrity, and linked to the exact source that produced it.</p>
+        </div>
+        <div class="proof-board" aria-label="Gallery quality summary">
+          <div class="proof-row"><span class="proof-value">[[ENTRY_COUNT]]</span><span class="proof-label" data-en="scenario proofs<br>from real IR" data-zh="个场景成品<br>来自真实 IR">scenario proofs<br>from real IR</span></div>
+          <div class="proof-row"><span class="proof-value">[[CHECK_COUNT]]</span><span class="proof-label" data-en="structural checks<br>passed" data-zh="项结构检查<br>全部通过">structural checks<br>passed</span></div>
+          <div class="proof-row"><span class="proof-value proof-status">PASS</span><span class="proof-label" data-en="generated from<br>source of truth" data-zh="从源数据<br>自动生成">generated from<br>source of truth</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="Gallery controls">
+      <div class="shell controls-inner">
+        <div class="filter-group" role="group" aria-label="Filter diagrams by type">
+          <button class="filter-button" type="button" data-filter="all" aria-pressed="true">All / [[ENTRY_COUNT]]</button>
+          <button class="filter-button" type="button" data-filter="architecture" aria-pressed="false">Architecture</button>
+          <button class="filter-button" type="button" data-filter="workflow" aria-pressed="false">Workflow</button>
+          <button class="filter-button" type="button" data-filter="sequence" aria-pressed="false">Sequence</button>
+          <button class="filter-button" type="button" data-filter="dataflow" aria-pressed="false">Data flow</button>
+          <button class="filter-button" type="button" data-filter="lifecycle" aria-pressed="false">Lifecycle</button>
+        </div>
+        <div class="controls-note" data-en="Live HTML previews · open any artifact to explore" data-zh="实时 HTML 预览 · 打开任意成品继续探索">Live HTML previews · open any artifact to explore</div>
+      </div>
+    </section>
+
+    <section class="gallery-section" id="gallery">
+      <div class="shell">
+        <div class="section-intro">
+          <h2 data-en="Five lenses. Eleven real stories." data-zh="五种视角，十一个真实故事。">Five lenses. Eleven real stories.</h2>
+          <p data-en="Every scenario has named reader views with a path-aware Story Trail, shareable navigation, dark/light rendering, self-contained export, and a machine-readable quality receipt." data-zh="每个场景都有能辨别真实方向的 Story Trail 命名视图、可分享导航、深浅主题、自包含导出和机器可读质量凭证。">Every scenario has named reader views with a path-aware Story Trail, shareable navigation, dark/light rendering, self-contained export, and a machine-readable quality receipt.</p>
+        </div>
+        <div class="gallery-grid" id="gallery-grid">
+[[GALLERY_CARDS]]
+        </div>
+        <div class="empty-state" id="empty-state" data-en="No proof cards match this filter." data-zh="当前筛选条件下没有成品。">No proof cards match this filter.</div>
+      </div>
+    </section>
+
+    <section class="method">
+      <div class="shell method-grid">
+        <div>
+          <div class="eyebrow" data-en="Build receipt" data-zh="生成凭证">Build receipt</div>
+          <h2 data-en="The gallery cannot drift from the product." data-zh="画廊不会和产品事实分叉。">The gallery cannot drift from the product.</h2>
+          <div class="pipeline" aria-label="Gallery generation pipeline">
+            <div class="pipeline-step"><span class="pipeline-num">01</span><span data-en="Read versioned JSON IR" data-zh="读取版本化 JSON IR">Read versioned JSON IR</span><span class="pipeline-state">PASS</span></div>
+            <div class="pipeline-step"><span class="pipeline-num">02</span><span data-en="Run the typed renderer" data-zh="执行类型化 renderer">Run the typed renderer</span><span class="pipeline-state">PASS</span></div>
+            <div class="pipeline-step"><span class="pipeline-num">03</span><span data-en="Check HTML and SVG structure" data-zh="检查 HTML 与 SVG 结构">Check HTML and SVG structure</span><span class="pipeline-state">PASS</span></div>
+            <div class="pipeline-step"><span class="pipeline-num">04</span><span data-en="Publish artifact, source, and digest" data-zh="发布成品、源数据与摘要">Publish artifact, source, and digest</span><span class="pipeline-state">PASS</span></div>
+          </div>
+        </div>
+        <div class="method-code">
+          <div class="method-code-bar"><span>reproduce locally</span><span>zero runtime deps</span></div>
+          <pre><span class="accent">$ node scripts/build-gallery.mjs</span>
+
+render  workflow      ✓
+render  sequence      ✓
+render  dataflow      ✓
+render  lifecycle     ✓
+render  architecture  ✓
+
+receipt [[CHECK_COUNT]] checks / [[ENTRY_COUNT]] artifacts / deterministic hashes</pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-inner">
+      <span data-en="Generated from Archify's checked-in examples. No hand-authored capability claims." data-zh="由 Archify 仓库内示例自动生成，不手写可能过期的能力声明。">Generated from Archify's checked-in examples. No hand-authored capability claims.</span>
+      <span>Archify [[ARCHIFY_VERSION]] · MIT</span>
+    </div>
+  </footer>
+
+  <script id="gallery-manifest" type="application/json">[[MANIFEST_JSON]]</script>
+  <script>
+    (function () {
+      var cards = Array.prototype.slice.call(document.querySelectorAll('.showcase-card'));
+      var filterButtons = Array.prototype.slice.call(document.querySelectorAll('[data-filter]'));
+      var empty = document.getElementById('empty-state');
+      var previewTheme = 'dark';
+      var language = localStorage.getItem('archify-gallery-language') || 'en';
+
+      function applyLanguage(next) {
+        language = next === 'zh' ? 'zh' : 'en';
+        document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
+        localStorage.setItem('archify-gallery-language', language);
+        document.querySelectorAll('[data-en][data-zh]').forEach(function (node) {
+          node.innerHTML = node.getAttribute(language === 'zh' ? 'data-zh' : 'data-en');
+        });
+        document.getElementById('language').textContent = language === 'zh' ? 'EN' : '中文';
+      }
+
+      function applyFilter(type, updateUrl) {
+        var visible = 0;
+        cards.forEach(function (card) {
+          var match = type === 'all' || card.getAttribute('data-type') === type;
+          card.hidden = !match;
+          if (match) visible += 1;
+        });
+        filterButtons.forEach(function (button) {
+          button.setAttribute('aria-pressed', button.getAttribute('data-filter') === type ? 'true' : 'false');
+        });
+        empty.classList.toggle('visible', visible === 0);
+        if (updateUrl) {
+          var url = new URL(location.href);
+          if (type === 'all') url.searchParams.delete('type');
+          else url.searchParams.set('type', type);
+          history.replaceState(null, '', url.pathname + url.search + url.hash);
+        }
+      }
+
+      function applyPreviewTheme(next) {
+        previewTheme = next === 'light' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-preview-theme', previewTheme);
+        document.getElementById('preview-theme').textContent = 'Preview: ' + previewTheme;
+        document.querySelectorAll('iframe[data-src-base]').forEach(function (frame) {
+          frame.src = frame.getAttribute('data-src-base') + '?embed=1&theme=' + previewTheme;
+        });
+      }
+
+      filterButtons.forEach(function (button) {
+        button.addEventListener('click', function () { applyFilter(button.getAttribute('data-filter'), true); });
+      });
+      document.getElementById('language').addEventListener('click', function () { applyLanguage(language === 'en' ? 'zh' : 'en'); });
+      document.getElementById('preview-theme').addEventListener('click', function () { applyPreviewTheme(previewTheme === 'dark' ? 'light' : 'dark'); });
+
+      var allowed = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'];
+      var requested = new URLSearchParams(location.search).get('type') || 'all';
+      applyFilter(allowed.indexOf(requested) >= 0 ? requested : 'all', false);
+      applyLanguage(language);
+
+      if ('IntersectionObserver' in window) {
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.08 });
+        cards.forEach(function (card) { observer.observe(card); });
+      } else {
+        cards.forEach(function (card) { card.classList.add('visible'); });
+      }
+    })();
+  </script>
+</body>
+</html>

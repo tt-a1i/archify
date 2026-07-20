@@ -9,6 +9,8 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
   const inputPath = path.resolve(argv[2] || path.join(skillRoot, 'examples', defaultExample));
   const diagram = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
   validateSchema(diagramType, diagram);
+  validateGuidedViews(diagramType, diagram);
+  validateRelationshipIds(diagramType, diagram);
   const template = fs.readFileSync(path.join(skillRoot, 'assets/template.html'), 'utf8');
   // Optional chaining: in degraded mode (no ajv) malformed input must still
   // reach the renderer's friendly layout checks instead of crashing here.
@@ -20,25 +22,149 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
 // The keyboard hint is screen-only — it means nothing on paper.
 export function writeDiagram({ outPath, template, meta, footerLabel, svg, cards }) {
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  const guidedHint = Array.isArray(meta.views) && meta.views.length
+    ? ' &bull; <kbd>[</kbd>/<kbd>]</kbd> views &bull; <kbd>P</kbd> play story'
+    : '';
   fs.writeFileSync(outPath, applyTemplate(template, {
     title: meta.title,
     subtitle: meta.subtitle,
-    footer: `${footerLabel} &bull; Built with Archify<span class="no-print"> &bull; Press <kbd>T</kbd> for theme and <kbd>E</kbd> for export</span>`,
+    footer: `${footerLabel} &bull; Built with Archify<span class="no-print"> &bull; Hover to trace &bull; <kbd>R</kbd> route &bull; Click to focus &bull; <kbd>+</kbd>/<kbd>&minus;</kbd> zoom &bull; <kbd>M</kbd> radar${guidedHint} &bull; <kbd>T</kbd> theme &bull; <kbd>E</kbd> export</span>`,
     svg,
     cards: renderCards(cards),
+    visualPreset: meta.visual_preset || 'classic',
+    guidedViews: meta.views || [],
   }));
   console.log(outPath);
 }
 
+const SEMANTIC_COLLECTIONS = {
+  architecture: 'components',
+  workflow: 'nodes',
+  sequence: 'participants',
+  dataflow: 'nodes',
+  lifecycle: 'states',
+};
+
+const RELATIONSHIP_COLLECTIONS = {
+  architecture: 'connections',
+  workflow: 'edges',
+  sequence: 'messages',
+  dataflow: 'flows',
+  lifecycle: 'transitions',
+};
+
+// Relationship IDs are optional for backwards compatibility, but once an
+// author supplies one it becomes the durable identity used by viewer links.
+// Keep uniqueness enforcement in the shared zero-install path so every typed
+// renderer fails the same way even when development dependencies are absent.
+export function validateRelationshipIds(diagramType, diagram) {
+  const collection = RELATIONSHIP_COLLECTIONS[diagramType];
+  const relationships = collection && Array.isArray(diagram[collection]) ? diagram[collection] : [];
+  const seen = new Set();
+  const problems = [];
+
+  relationships.forEach((relationship, index) => {
+    if (relationship.id === undefined || relationship.id === null || relationship.id === '') return;
+    if (seen.has(relationship.id)) {
+      problems.push(`/${collection}/${index}/id duplicates relationship id ${JSON.stringify(relationship.id)}`);
+    }
+    seen.add(relationship.id);
+  });
+
+  if (problems.length) {
+    throw new Error(`Relationship identity validation failed:\n- ${problems.join('\n- ')}`);
+  }
+}
+
+// JSON Schema keeps the view object bounded; this pass checks facts that span
+// collections. Keeping it here makes the same contract apply to all five
+// renderers, including the zero-install standalone-validator path.
+export function validateGuidedViews(diagramType, diagram) {
+  const views = diagram.meta?.views;
+  if (!Array.isArray(views) || views.length === 0) return;
+  const collection = SEMANTIC_COLLECTIONS[diagramType];
+  const semanticIds = new Set((diagram[collection] || []).map((item) => item.id));
+  const seen = new Set();
+  const problems = [];
+
+  views.forEach((view, index) => {
+    if (seen.has(view.id)) problems.push(`/meta/views/${index}/id duplicates view id ${JSON.stringify(view.id)}`);
+    seen.add(view.id);
+    const seenFocus = new Set();
+    (view.focus || []).forEach((id, focusIndex) => {
+      if (seenFocus.has(id)) {
+        problems.push(`/meta/views/${index}/focus/${focusIndex} duplicates semantic id ${JSON.stringify(id)}`);
+      }
+      seenFocus.add(id);
+      if (!semanticIds.has(id)) {
+        problems.push(`/meta/views/${index}/focus/${focusIndex} references unknown semantic id ${JSON.stringify(id)}`);
+      }
+    });
+  });
+
+  if (problems.length) {
+    throw new Error(`Guided view validation failed:\n- ${problems.join('\n- ')}`);
+  }
+}
+
 // Accessible name for the generated diagram SVG.
 export function svgRootAttrs(meta, kind) {
-  const name = meta.subtitle ? `${meta.title} — ${meta.subtitle}` : meta.title;
   const animation = meta.animation === 'trace' ? ' data-animation="trace"' : '';
-  return `role="img" aria-label="${esc(`${name} (${kind})`)}"${animation}`;
+  const preset = ` data-preset="${esc(meta.visual_preset || 'classic')}"`;
+  const requestedProfile = process.env.ARCHIFY_QUALITY_PROFILE || meta.quality_profile;
+  const qualityProfile = requestedProfile === 'showcase' ? 'showcase' : 'standard';
+  return `role="img" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset} data-quality-profile="${esc(qualityProfile)}"`;
+}
+
+// Keep the accessible name inside the SVG so it survives standalone SVG
+// export and embedding. The fixed IDs are deterministic because an Archify
+// artifact intentionally contains one primary diagram SVG.
+export function svgAccessibleText(meta, kind) {
+  const description = meta.subtitle || `A ${kind} generated by Archify.`;
+  return `        <title id="archify-diagram-title">${esc(meta.title)}</title>\n        <desc id="archify-diagram-description">${esc(description)}</desc>`;
 }
 
 export function animateAttr(meta, kind, step) {
   if (meta.animation !== 'trace') return '';
-  const safeStep = Number.isFinite(step) && step >= 0 ? Math.floor(step) : 0;
+  // Ambient trace must finish inside the fixed six-second WebM capture. The
+  // cap affects visual delay only; authored order and semantic identity stay
+  // untouched in the JSON, DOM, Story, and relationship contracts.
+  const safeStep = Number.isFinite(step) && step >= 0 ? Math.min(12, Math.floor(step)) : 0;
   return ` data-animate="${kind}" style="--step:${safeStep}"`;
+}
+
+// Stable semantic hooks for the standalone HTML explorer. IDs already pass
+// the schema's conservative identifier pattern; escape again at the markup
+// boundary so these helpers remain safe if that contract expands later.
+export function focusNodeAttrs(id, label, metadata = {}) {
+  const optional = [
+    ['data-node-kind', metadata.kind],
+    ['data-node-sublabel', metadata.sublabel],
+    ['data-node-tag', metadata.tag],
+    ['data-node-context', metadata.context],
+  ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
+    .map(([name, value]) => ` ${name}="${esc(String(value))}"`)
+    .join('');
+  const detail = [metadata.sublabel, metadata.context]
+    .filter((value) => value !== undefined && value !== null && String(value).trim() !== '')
+    .join(', ');
+  const aria = detail ? `Focus ${label}, ${detail}` : `Focus ${label}`;
+  return `id="node-${esc(id)}" data-node-id="${esc(id)}" data-node-label="${esc(label)}" tabindex="0" role="button" aria-label="${esc(aria)}" aria-pressed="false"${optional}`;
+}
+
+// Native SVG titles preserve a compact details-on-demand fallback when the
+// canonical SVG is embedded inline outside the full Archify viewer.
+export function focusNodeTitle(label, metadata = {}) {
+  const parts = [label, metadata.sublabel, metadata.context, metadata.tag]
+    .filter((value) => value !== undefined && value !== null && String(value).trim() !== '');
+  return `<title>${esc(parts.join(' · '))}</title>`;
+}
+
+export function focusEdgeAttrs(from, to, label, key, id) {
+  const named = label ? ` data-edge-label="${esc(label)}"` : '';
+  const keyed = key !== undefined && key !== null ? ` data-edge-key="${esc(String(key))}"` : '';
+  const identified = id !== undefined && id !== null && String(id).trim() !== ''
+    ? ` data-edge-id="${esc(String(id))}"`
+    : '';
+  return `data-edge-from="${esc(from)}" data-edge-to="${esc(to)}"${named}${keyed}${identified}`;
 }

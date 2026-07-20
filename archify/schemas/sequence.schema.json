@@ -41,6 +41,22 @@
             "none"
           ]
         },
+        "visual_preset": {
+          "enum": [
+            "classic",
+            "signal-flow",
+            "blueprint"
+          ]
+        },
+        "quality_profile": {
+          "enum": [
+            "standard",
+            "showcase"
+          ]
+        },
+        "views": {
+          "$ref": "common.schema.json#/$defs/guidedViews"
+        },
         "viewBox": {
           "type": "array",
           "prefixItems": [
@@ -124,6 +140,9 @@
           "label"
         ],
         "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
           "from": {
             "$ref": "common.schema.json#/$defs/id"
           },

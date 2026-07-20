@@ -190,4 +190,176 @@ test('workflow: edge crossing a non-endpoint node is rejected', () => {
   assert.match(stderr, /fromSide\/toSide|channel|lane\/column/);
 });
 
+test('architecture: Clean Flow Gate rejects a connection through a component', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Opaque component crossing' },
+    components: [
+      { id: 'left', type: 'frontend', label: 'Left', pos: [60, 120], size: [100, 54] },
+      { id: 'middle', type: 'security', label: 'Middle', pos: [270, 120], size: [100, 54] },
+      { id: 'right', type: 'backend', label: 'Right', pos: [480, 120], size: [100, 54] },
+    ],
+    connections: [{ id: 'direct', from: 'left', to: 'right', route: 'straight' }],
+  };
+  const { code, stderr } = render('architecture', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[clean-flow\/edge-through-node\] architecture connections\[0\] id "direct"/);
+  assert.match(stderr, /crosses component "middle"/);
+  assert.match(stderr, /segment 0 .*2px clearance/);
+});
+
+test('architecture: showcase rejects an unrelated proper edge crossing', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Showcase crossing', quality_profile: 'showcase' },
+    components: [
+      { id: 'a', type: 'frontend', label: 'A', pos: [60, 80], size: [60, 40] },
+      { id: 'b', type: 'backend', label: 'B', pos: [360, 260], size: [60, 40] },
+      { id: 'c', type: 'database', label: 'C', pos: [60, 260], size: [60, 40] },
+      { id: 'd', type: 'external', label: 'D', pos: [360, 80], size: [60, 40] },
+    ],
+    connections: [
+      { id: 'down-right', from: 'a', to: 'b', route: 'orthogonal-h' },
+      { id: 'up-right', from: 'c', to: 'd', route: 'orthogonal-v' },
+    ],
+  };
+  const { code, stderr } = render('architecture', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/proper-crossing\] showcase architecture/);
+  assert.match(stderr, /connections\[0\] id "down-right"/);
+  assert.match(stderr, /connections\[1\] id "up-right"/);
+  assert.match(stderr, /at \[240, 190\]/);
+  assert.match(stderr, /segments 1 and 1/);
+  assert.match(stderr, /route\/via|fromSide\/toSide/);
+});
+
+test('architecture: standard keeps the same proper crossing renderable', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Standard crossing', quality_profile: 'standard' },
+    components: [
+      { id: 'a', type: 'frontend', label: 'A', pos: [60, 80], size: [60, 40] },
+      { id: 'b', type: 'backend', label: 'B', pos: [360, 260], size: [60, 40] },
+      { id: 'c', type: 'database', label: 'C', pos: [60, 260], size: [60, 40] },
+      { id: 'd', type: 'external', label: 'D', pos: [360, 80], size: [60, 40] },
+    ],
+    connections: [
+      { from: 'a', to: 'b', route: 'orthogonal-h' },
+      { from: 'c', to: 'd', route: 'orthogonal-v' },
+    ],
+  };
+  const { code, stderr } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+});
+
+test('architecture: route rhythm warns in standard and blocks a showcase micro segment', () => {
+  const base = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Readable turn rhythm' },
+    components: [
+      { id: 'a', type: 'frontend', label: 'A', pos: [60, 80], size: [60, 40] },
+      { id: 'b', type: 'backend', label: 'B', pos: [360, 80], size: [60, 40] },
+    ],
+    connections: [
+      { id: 'tight', from: 'a', to: 'b', fromSide: 'right', toSide: 'bottom', via: [[125, 100], [125, 160], [390, 160]] },
+    ],
+  };
+  const standard = structuredClone(base);
+  standard.meta.quality_profile = 'standard';
+  assert.equal(render('architecture', standard).code, 0);
+
+  const showcase = structuredClone(base);
+  showcase.meta.quality_profile = 'showcase';
+  const { code, stderr } = render('architecture', showcase);
+  assert.notEqual(code, 0);
+  assert.match(stderr, /\[composition\/micro-segment\] showcase architecture connections\[0\] id "tight"/);
+  assert.match(stderr, /5px source-stub segment 0/);
+  assert.match(stderr, /wider corridor|move the component/);
+});
+
+test('architecture: container border run is blocking in standard and showcase', () => {
+  for (const profile of ['standard', 'showcase']) {
+    const d = load('architecture');
+    d.meta.quality_profile = profile;
+    d.connections.find((connection) => connection.id === 'jwt-verification').via = [[620, 142], [620, 270], [735, 270]];
+    const { code, stderr } = render('architecture', d);
+    assert.notEqual(code, 0, `expected ${profile} to reject a border run`);
+    assert.match(stderr, /\[composition\/container-border-run\] architecture connections\[1\] id "jwt-verification"/);
+    assert.match(stderr, /security-group "sg-api :443\/:8000" top border/);
+  }
+});
+
+test('dataflow: stage border run is blocking and the inter-stage gutter passes', () => {
+  const bad = load('dataflow');
+  bad.flows.find((flow) => flow.id === 'web-clickstream').via = [[184, 157], [184, 271]];
+  const failed = render('dataflow', bad);
+  assert.notEqual(failed.code, 0);
+  assert.match(failed.stderr, /\[composition\/container-border-run\] dataflow flows\[0\] id "web-clickstream"/);
+  assert.match(failed.stderr, /stage "Sources" right border for 114px/);
+
+  const clean = load('dataflow');
+  const passed = render('dataflow', clean);
+  assert.equal(passed.code, 0, passed.stderr);
+});
+
+test('sequence: a message cannot masquerade as a time-segment border', () => {
+  const d = load('sequence');
+  d.messages.find((message) => message.id === 'cache-read').y = 315;
+  const { code, stderr } = render('sequence', d);
+  assert.notEqual(code, 0);
+  assert.match(stderr, /\[composition\/container-border-run\] sequence messages\[4\] id "cache-read"/);
+  assert.match(stderr, /segment "Fallback" top border/);
+});
+
+test('dataflow: Clean Flow Gate rejects a flow through an unrelated node', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'dataflow',
+    meta: { title: 'Opaque data node crossing' },
+    stages: [{ label: 'Source' }, { label: 'Middle' }, { label: 'Sink' }],
+    nodes: [
+      { id: 'left', type: 'frontend', label: 'Left', stage: 0, row: 1 },
+      { id: 'middle', type: 'security', label: 'Middle', stage: 1, row: 1 },
+      { id: 'right', type: 'database', label: 'Right', stage: 2, row: 1 },
+    ],
+    flows: [{ id: 'direct', from: 'left', to: 'right', label: 'payload', route: 'straight', labelAt: [315, 190] }],
+  };
+  const { code, stderr } = render('dataflow', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[clean-flow\/edge-through-node\] dataflow flows\[0\] id "direct"/);
+  assert.match(stderr, /crosses node "middle"/);
+  assert.match(stderr, /stage\/row/);
+});
+
+test('lifecycle: Clean Flow Gate rejects a transition through an unrelated state', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'lifecycle',
+    meta: { title: 'Opaque state crossing' },
+    lanes: [{ id: 'main', label: 'Main' }],
+    states: [
+      { id: 'left', type: 'start', label: 'Left', lane: 'main', col: 0 },
+      { id: 'middle', type: 'waiting', label: 'Middle', lane: 'main', col: 2 },
+      { id: 'right', type: 'success', label: 'Right', lane: 'main', col: 4 },
+    ],
+    transitions: [{ id: 'direct', from: 'left', to: 'right', route: 'straight' }],
+  };
+  const { code, stderr } = render('lifecycle', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[clean-flow\/edge-through-node\] lifecycle transitions\[0\] id "direct"/);
+  assert.match(stderr, /crosses state "middle"/);
+  assert.match(stderr, /col\/yOffset/);
+});
+
+test('sequence: lifelines and activation bars remain intentional pass-through geometry', () => {
+  const d = load('sequence');
+  const { code, stderr } = render('sequence', d);
+  assert.equal(code, 0, stderr);
+  assert.doesNotMatch(stderr, /Clean Flow Gate/);
+});
+
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

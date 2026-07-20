@@ -119,8 +119,11 @@ const webApp = fs.readFileSync(path.join(repoRoot, 'examples/web-app.html'), 'ut
 // <style> and <script> blocks pass through applyTemplate untouched, so the
 // architecture-mode example must contain them verbatim or it has drifted.
 for (const tag of ['style', 'script']) {
-  const t = blocks(template, tag).filter((b) => !b.includes('[PROJECT NAME]'));
-  const w = blocks(webApp, tag).filter((b) => !b.includes('Sample Web App'));
+  // The guided-view JSON script is generated from meta.views; compare only
+  // template-owned executable scripts, not per-diagram data payloads.
+  const isTemplateOwned = (block) => !block.includes('type="application/json"');
+  const t = blocks(template, tag).filter((b) => !b.includes('[PROJECT NAME]') && isTemplateOwned(b));
+  const w = blocks(webApp, tag).filter((b) => !b.includes('Sample Web App') && isTemplateOwned(b));
   check(`web-app.html ${tag} blocks match template`,
     JSON.stringify(t) === JSON.stringify(w),
     'examples/web-app.html was generated from a stale template — re-derive it');

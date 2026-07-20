@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-preset="classic">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="archify 2.11.0">
+  <title>Agent Tool Call Workflow Diagram</title>
+  <script>
+    // Resolve the theme before first paint so light-preference users don't
+    // see a dark flash. The toolbar script below re-applies with UI state.
+    (function () {
+      try {
+        var theme = null;
+        try {
+          var param = new URLSearchParams(window.location.search).get('theme');
+          if (param === 'light' || param === 'dark') theme = param;
+        } catch (_) {}
+        if (!theme) {
+          try { theme = localStorage.getItem('archify-theme'); } catch (_) {}
+        }
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (_) {}
+    })();
+  </script>
+  <!-- Async font load: a blackholed network must not block first paint.
+       The body font stack falls back to system monospace until it lands. -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </noscript>
+  <style>
+    /* ==========================================================
+       THEME VARIABLES — switch by toggling [data-theme] on <html>
+       ========================================================== */
+    :root,
+    [data-theme="dark"] {
+      --bg: #020617;
+      --grid: #1e293b;
+      --text: #ffffff;
+      --text-muted: #94a3b8;
+      --text-dim: #475569;
+      /* UI chrome (menu hints, footer) needs more contrast than SVG .t-dim accents */
+      --text-faint: #7d8da1;
+
+      --panel: rgba(15, 23, 42, 0.5);
+      --panel-border: #1e293b;
+      --lane-fill: rgba(15, 23, 42, 0.22);
+      --lane-stroke: #334155;
+
+      --arrow: #64748b;
+      --arrow-emphasis: #34d399;
+
+      /* Opaque mask color used behind semi-transparent component fills
+         so the arrows drawn underneath are properly hidden. */
+      --mask: #0f172a;
+
+      --frontend-fill:    rgba(8, 51, 68, 0.4);
+      --frontend-stroke:  #22d3ee;
+      --backend-fill:     rgba(6, 78, 59, 0.4);
+      --backend-stroke:   #34d399;
+      --database-fill:    rgba(76, 29, 149, 0.4);
+      --database-stroke:  #a78bfa;
+      --cloud-fill:       rgba(120, 53, 15, 0.3);
+      --cloud-stroke:     #fbbf24;
+      --security-fill:    rgba(136, 19, 55, 0.4);
+      --security-stroke:  #fb7185;
+      --messagebus-fill:  rgba(251, 146, 60, 0.3);
+      --messagebus-stroke:#fb923c;
+      --external-fill:    rgba(30, 41, 59, 0.5);
+      --external-stroke:  #94a3b8;
+
+      --toolbar-bg:       rgba(15, 23, 42, 0.8);
+      --toolbar-border:   #334155;
+      --toolbar-text:     #e2e8f0;
+      --toolbar-hover:    rgba(15, 23, 42, 0.95);
+      --toolbar-menu-bg:  #0f172a;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --grid: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --text-dim: #94a3b8;
+      --text-faint: #64748b;
+
+      --panel: #ffffff;
+      --panel-border: #e2e8f0;
+      --lane-fill: rgba(248, 250, 252, 0.65);
+      --lane-stroke: #cbd5e1;
+
+      --arrow: #94a3b8;
+      --arrow-emphasis: #059669;
+
+      --mask: #ffffff;
+
+      --frontend-fill:    rgba(34, 211, 238, 0.15);
+      --frontend-stroke:  #0891b2;
+      --backend-fill:     rgba(52, 211, 153, 0.18);
+      --backend-stroke:   #059669;
+      --database-fill:    rgba(167, 139, 250, 0.2);
+      --database-stroke:  #7c3aed;
+      --cloud-fill:       rgba(251, 191, 36, 0.18);
+      --cloud-stroke:     #d97706;
+      --security-fill:    rgba(251, 113, 133, 0.15);
+      --security-stroke:  #e11d48;
+      --messagebus-fill:  rgba(251, 146, 60, 0.15);
+      --messagebus-stroke:#ea580c;
+      --external-fill:    rgba(148, 163, 184, 0.18);
+      --external-stroke:  #64748b;
+
+      --toolbar-bg:       rgba(255, 255, 255, 0.92);
+      --toolbar-border:   #cbd5e1;
+      --toolbar-text:     #334155;
+      --toolbar-hover:    #ffffff;
+      --toolbar-menu-bg:  #ffffff;
+    }
+
+    /* ==========================================================
+       SIGNAL FLOW — an opt-in, motion-forward visual preset.
+       The variables also target a standalone exported SVG, whose
+       root carries data-preset and data-theme directly.
+       ========================================================== */
+    [data-preset="signal-flow"][data-theme="dark"] {
+      --bg: #030711;
+      --grid: #15233a;
+      --panel: rgba(6, 14, 28, 0.78);
+      --panel-border: #1d3350;
+      --lane-fill: rgba(9, 22, 40, 0.5);
+      --lane-stroke: #2c4564;
+      --text: #f5fbff;
+      --text-muted: #9eb0c7;
+      --text-dim: #52667f;
+      --text-faint: #7890ad;
+      --mask: #07101e;
+      --frontend-fill: rgba(6, 182, 212, 0.14);
+      --frontend-stroke: #67e8f9;
+      --backend-fill: rgba(16, 185, 129, 0.14);
+      --backend-stroke: #5eead4;
+      --database-fill: rgba(139, 92, 246, 0.16);
+      --database-stroke: #c4b5fd;
+      --cloud-fill: rgba(245, 158, 11, 0.13);
+      --cloud-stroke: #fcd34d;
+      --security-fill: rgba(244, 63, 94, 0.13);
+      --security-stroke: #fda4af;
+      --messagebus-fill: rgba(249, 115, 22, 0.13);
+      --messagebus-stroke: #fdba74;
+      --external-fill: rgba(71, 85, 105, 0.24);
+      --external-stroke: #a5b4c7;
+      --arrow: #7890ad;
+      --arrow-emphasis: #2dd4bf;
+      --toolbar-bg: rgba(7, 16, 30, 0.86);
+      --toolbar-border: #29415f;
+      --toolbar-menu-bg: #07101e;
+    }
+
+    [data-preset="signal-flow"][data-theme="light"] {
+      --bg: #f4f9fc;
+      --grid: #d4e5ee;
+      --panel: rgba(255, 255, 255, 0.82);
+      --panel-border: #bfd5e2;
+      --lane-fill: rgba(232, 243, 248, 0.62);
+      --lane-stroke: #a9c5d5;
+      --text: #102638;
+      --text-muted: #587287;
+      --text-dim: #8aa2b4;
+      --text-faint: #668397;
+      --mask: #ffffff;
+      --frontend-fill: rgba(6, 182, 212, 0.09);
+      --frontend-stroke: #0789a1;
+      --backend-fill: rgba(5, 150, 105, 0.09);
+      --backend-stroke: #087f69;
+      --database-fill: rgba(124, 58, 237, 0.09);
+      --database-stroke: #7254c7;
+      --cloud-fill: rgba(217, 119, 6, 0.08);
+      --cloud-stroke: #b9670b;
+      --security-fill: rgba(225, 29, 72, 0.08);
+      --security-stroke: #c53a59;
+      --messagebus-fill: rgba(234, 88, 12, 0.08);
+      --messagebus-stroke: #c65f27;
+      --external-fill: rgba(100, 116, 139, 0.1);
+      --external-stroke: #607a8c;
+      --arrow: #7b97aa;
+      --arrow-emphasis: #0d9488;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace;
+      background: var(--bg);
+      min-height: 100vh;
+      padding: 2rem;
+      color: var(--text);
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    html[data-preset="signal-flow"] body {
+      background-image:
+        radial-gradient(circle at 18% -8%, rgba(34, 211, 238, 0.14), transparent 34rem),
+        radial-gradient(circle at 92% 18%, rgba(139, 92, 246, 0.12), transparent 30rem);
+      background-attachment: fixed;
+    }
+    html[data-preset="signal-flow"][data-theme="light"] body {
+      background-image:
+        radial-gradient(circle at 18% -8%, rgba(6, 182, 212, 0.12), transparent 34rem),
+        radial-gradient(circle at 92% 18%, rgba(139, 92, 246, 0.08), transparent 30rem);
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    .header { margin-bottom: 2rem; }
+
+    html[data-preset="signal-flow"] .header { padding-right: 12rem; }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .pulse-dot {
+      width: 12px;
+      height: 12px;
+      background: var(--frontend-stroke);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-left: 1.75rem;
+    }
+
+    html[data-preset="signal-flow"] .header-row::after {
+      content: "SIGNAL FLOW / LIVE";
+      margin-left: auto;
+      color: var(--frontend-stroke);
+      border: 1px solid var(--frontend-stroke);
+      border-radius: 999px;
+      padding: 0.28rem 0.6rem;
+      font-size: 0.625rem;
+      letter-spacing: 0.12em;
+      opacity: 0.82;
+      box-shadow: 0 0 20px rgba(34, 211, 238, 0.12);
+      white-space: nowrap;
+    }
+
+    .diagram-container {
+      background: var(--panel);
+      border-radius: 1rem;
+      border: 1px solid var(--panel-border);
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+
+    html[data-preset="signal-flow"] .diagram-container {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(8, 20, 38, 0.82), rgba(3, 8, 18, 0.94));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 28px 80px rgba(0, 0, 0, 0.34);
+    }
+    html[data-preset="signal-flow"][data-theme="light"] .diagram-container {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(237, 246, 250, 0.94));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 24px 60px rgba(45, 78, 99, 0.12);
+    }
+    html[data-preset="signal-flow"] .diagram-container::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(115deg, transparent 28%, rgba(103, 232, 249, 0.035) 48%, transparent 68%);
+      transform: translateX(-70%);
+      animation: archify-signal-scan 6s ease-in-out infinite;
+    }
+
+    svg {
+      width: 100%;
+      min-width: min(900px, 100%);
+      display: block;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .card {
+      background: var(--panel);
+      border-radius: 0.75rem;
+      border: 1px solid var(--panel-border);
+      padding: 1.25rem;
+    }
+
+    html[data-preset="signal-flow"] .card {
+      background: linear-gradient(145deg, rgba(10, 24, 43, 0.86), rgba(5, 12, 24, 0.92));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+    }
+    html[data-preset="signal-flow"][data-theme="light"] .card {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(237, 246, 250, 0.9));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 32px rgba(45, 78, 99, 0.08);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .card-dot.cyan     { background: var(--frontend-stroke); }
+    .card-dot.emerald  { background: var(--backend-stroke); }
+    .card-dot.violet   { background: var(--database-stroke); }
+    .card-dot.amber    { background: var(--cloud-stroke); }
+    .card-dot.rose     { background: var(--security-stroke); }
+    .card-dot.orange   { background: var(--messagebus-stroke); }
+    .card-dot.slate    { background: var(--external-stroke); }
+
+    .card h3 { font-size: 0.875rem; font-weight: 600; color: var(--text); }
+
+    .card ul {
+      list-style: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .card li { margin-bottom: 0.375rem; }
+
+    .footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: var(--text-faint);
+      font-size: 0.75rem;
+    }
+
+    /* ==========================================================
+       Print stylesheet — hide interactive controls, force light,
+       drop the grid so the diagram doesn't waste ink, use landscape
+       so wide diagrams fit, pack summary cards into 2 columns to
+       avoid an orphan card on a trailing page.
+       ========================================================== */
+    @page { size: landscape; margin: 1.5cm; }
+
+    @media print {
+      /* Force the FULL light palette — including component fills/strokes and
+         lane/arrow colors — so printing from dark theme doesn't put neon
+         strokes and translucent dark fills on white paper. */
+      :root, [data-theme="dark"], [data-theme="light"] {
+        --bg: #ffffff;
+        --grid: transparent;
+        --panel: #ffffff;
+        --panel-border: #e2e8f0;
+        --text: #0f172a;
+        --text-muted: #475569;
+        --text-dim: #94a3b8;
+        --text-faint: #64748b;
+        --mask: #ffffff;
+        --lane-fill: rgba(248, 250, 252, 0.65);
+        --lane-stroke: #cbd5e1;
+        --arrow: #94a3b8;
+        --arrow-emphasis: #059669;
+        --frontend-fill:    rgba(34, 211, 238, 0.15);
+        --frontend-stroke:  #0891b2;
+        --backend-fill:     rgba(52, 211, 153, 0.18);
+        --backend-stroke:   #059669;
+        --database-fill:    rgba(167, 139, 250, 0.2);
+        --database-stroke:  #7c3aed;
+        --cloud-fill:       rgba(251, 191, 36, 0.18);
+        --cloud-stroke:     #d97706;
+        --security-fill:    rgba(251, 113, 133, 0.15);
+        --security-stroke:  #e11d48;
+        --messagebus-fill:  rgba(251, 146, 60, 0.15);
+        --messagebus-stroke:#ea580c;
+        --external-fill:    rgba(148, 163, 184, 0.18);
+        --external-stroke:  #64748b;
+      }
+      body { background: #ffffff !important; padding: 0; }
+      .container { max-width: none; }
+      .toolbar, .archify-toast, .no-print { display: none !important; }
+      .diagram-container, .card { box-shadow: none; border-color: #e2e8f0; }
+      html[data-preset="signal-flow"] .diagram-container,
+      html[data-preset="signal-flow"] .card { background: #ffffff; }
+      .cards { grid-template-columns: 1fr 1fr; }
+      /* Ensure elements break sensibly across pages */
+      .card { break-inside: avoid; page-break-inside: avoid; }
+      .diagram-container { break-inside: avoid; page-break-inside: avoid; }
+      h1, .subtitle { color: #0f172a; }
+    }
+
+    /* ==========================================================
+       TOOLBAR (theme toggle + export menu)
+       ========================================================== */
+    .toolbar {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      z-index: 100;
+    }
+    .toolbar button {
+      background: var(--toolbar-bg);
+      color: var(--toolbar-text);
+      border: 1px solid var(--toolbar-border);
+      padding: 0.5rem 0.875rem;
+      border-radius: 0.5rem;
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s, border-color 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+    .toolbar button:hover {
+      background: var(--toolbar-hover);
+      border-color: var(--arrow);
+    }
+    .toolbar button:focus-visible {
+      outline: 2px solid var(--frontend-stroke);
+      outline-offset: 2px;
+    }
+    .toolbar .export-wrap { position: relative; }
+    .toolbar .export-menu {
+      position: absolute;
+      top: calc(100% + 0.375rem);
+      right: 0;
+      background: var(--toolbar-menu-bg);
+      border: 1px solid var(--toolbar-border);
+      border-radius: 0.5rem;
+      padding: 0.375rem;
+      min-width: 160px;
+      display: none;
+      flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+    .toolbar .export-menu.open { display: flex; }
+    .toolbar .export-menu button {
+      background: transparent;
+      border: 0;
+      justify-content: space-between;
+      width: 100%;
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+    }
+    .toolbar .export-menu button:hover {
+      background: var(--toolbar-hover);
+    }
+    .toolbar .export-menu .hint {
+      color: var(--text-faint);
+      font-size: 0.625rem;
+    }
+    .toolbar .export-menu hr {
+      border: 0;
+      border-top: 1px solid var(--toolbar-border);
+      margin: 0.25rem 0.375rem;
+      opacity: 0.5;
+    }
+
+    /* Toast — brief feedback for actions like "copied" */
+    .archify-toast {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      background: var(--toolbar-menu-bg);
+      color: var(--text);
+      border: 1px solid var(--toolbar-border);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-family: inherit;
+      font-size: 0.75rem;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 200;
+      pointer-events: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+    .archify-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 720px) {
+      body { padding: 1rem; }
+      .toolbar {
+        position: static;
+        justify-content: flex-end;
+        margin-bottom: 1rem;
+      }
+      .header { margin-bottom: 1.25rem; }
+      html[data-preset="signal-flow"] .header { padding-right: 0; }
+      .header-row {
+        gap: 0.75rem;
+        align-items: flex-start;
+      }
+      html[data-preset="signal-flow"] .header-row { flex-wrap: wrap; }
+      html[data-preset="signal-flow"] .header-row::after {
+        margin-left: 0;
+        order: 3;
+      }
+      h1 {
+        font-size: 1.25rem;
+        line-height: 1.25;
+      }
+      .subtitle {
+        margin-left: 0;
+        font-size: 0.8125rem;
+        line-height: 1.55;
+      }
+      .diagram-container {
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+      }
+      .cards {
+        grid-template-columns: 1fr;
+        margin-top: 1rem;
+      }
+    }
+
+    /* ==========================================================
+       SVG SEMANTIC CLASSES — use these instead of inline fill/stroke
+       ========================================================== */
+    .c-grid       { stroke: var(--grid); fill: none; }
+    .c-mask       { fill: var(--mask); stroke: none; }
+
+    .c-frontend   { fill: var(--frontend-fill);   stroke: var(--frontend-stroke); }
+    .c-backend    { fill: var(--backend-fill);    stroke: var(--backend-stroke); }
+    .c-database   { fill: var(--database-fill);   stroke: var(--database-stroke); }
+    .c-cloud      { fill: var(--cloud-fill);      stroke: var(--cloud-stroke); }
+    .c-security   { fill: var(--security-fill);   stroke: var(--security-stroke); }
+    .c-messagebus { fill: var(--messagebus-fill); stroke: var(--messagebus-stroke); }
+    .c-external   { fill: var(--external-fill);   stroke: var(--external-stroke); }
+
+    /* Text helpers */
+    .t-primary { fill: var(--text); }
+    .t-muted   { fill: var(--text-muted); }
+    .t-dim     { fill: var(--text-dim); }
+    .t-frontend   { fill: var(--frontend-stroke); }
+    .t-backend    { fill: var(--backend-stroke); }
+    .t-database   { fill: var(--database-stroke); }
+    .t-cloud      { fill: var(--cloud-stroke); }
+    .t-security   { fill: var(--security-stroke); }
+    .t-messagebus { fill: var(--messagebus-stroke); }
+    .t-external   { fill: var(--external-stroke); }
+
+    /* Arrows */
+    .a-default   { stroke: var(--arrow); fill: none; }
+    .a-emphasis  { stroke: var(--arrow-emphasis); fill: none; }
+    .a-security  { stroke: var(--security-stroke); fill: none; stroke-dasharray: 5,5; }
+    .a-dashed    { stroke: var(--database-stroke); fill: none; stroke-dasharray: 4,4; }
+
+    /* Arrowhead markers reference these */
+    .m-default   { fill: var(--arrow); }
+    .m-emphasis  { fill: var(--arrow-emphasis); }
+    .m-security  { fill: var(--security-stroke); }
+    .m-dashed    { fill: var(--database-stroke); }
+
+    /* Dashed boundary variants */
+    .c-security-group { fill: transparent; stroke: var(--security-stroke); stroke-dasharray: 4,4; }
+    .c-region         { fill: rgba(251, 191, 36, 0.05); stroke: var(--cloud-stroke); stroke-dasharray: 8,4; }
+    .c-lane           { fill: var(--lane-fill); stroke: var(--lane-stroke); stroke-dasharray: 6,6; }
+
+    /* Optional trace animation, enabled only by meta.animation = "trace".
+       Static diagrams do not carry data-animation and render exactly as before. */
+    svg[data-animation="trace"] [data-animate="edge"] {
+      stroke-dasharray: 10 8;
+      stroke-dashoffset: 54;
+      animation: archify-edge-flow 2.4s linear infinite;
+      animation-delay: calc(var(--step, 0) * 160ms);
+    }
+    svg[data-animation="trace"] [data-animate="node"] {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: archify-node-pulse 3.6s ease-in-out infinite;
+      animation-delay: calc(var(--step, 0) * 160ms);
+    }
+    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="edge"] {
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 3px var(--arrow-emphasis));
+      animation-duration: 1.75s;
+    }
+    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="node"] {
+      animation-duration: 3.1s;
+    }
+    @keyframes archify-edge-flow {
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes archify-node-pulse {
+      0%, 72%, 100% { filter: none; stroke-width: 1.5; }
+      18%, 36% {
+        filter: drop-shadow(0 0 8px var(--arrow-emphasis));
+        stroke-width: 2.4;
+      }
+    }
+    @keyframes archify-signal-scan {
+      0%, 18% { transform: translateX(-70%); }
+      70%, 100% { transform: translateX(70%); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html[data-preset="signal-flow"] .diagram-container::before {
+        animation: none !important;
+      }
+      svg[data-animation="trace"] [data-animate] {
+        animation: none !important;
+        stroke-dashoffset: 0;
+      }
+    }
+  </style>
+  <style id="archify-visual-evolution-prototype">
+    /* PROTOTYPE ONLY — intentionally isolated from the production template. */
+    html { --prototype-accent: #67e8f9; }
+    body { background-attachment: fixed; }
+    .container, .header, .diagram-container, .cards, .footer {
+      transition: background .25s ease, border-color .25s ease, box-shadow .25s ease,
+                  transform .25s ease, color .25s ease;
+    }
+
+    /* A — Signal Flow: luminous, layered, motion-forward. */
+    html[data-prototype-variant="signal"] {
+      --bg: #030711;
+      --grid: #15233a;
+      --panel: rgba(6, 14, 28, .78);
+      --panel-border: #1d3350;
+      --lane-fill: rgba(9, 22, 40, .5);
+      --lane-stroke: #2c4564;
+      --text: #f5fbff;
+      --text-muted: #9eb0c7;
+      --text-dim: #52667f;
+      --frontend-fill: rgba(6, 182, 212, .14);
+      --frontend-stroke: #67e8f9;
+      --backend-fill: rgba(16, 185, 129, .14);
+      --backend-stroke: #5eead4;
+      --database-fill: rgba(139, 92, 246, .16);
+      --database-stroke: #c4b5fd;
+      --cloud-fill: rgba(245, 158, 11, .13);
+      --cloud-stroke: #fcd34d;
+      --security-fill: rgba(244, 63, 94, .13);
+      --security-stroke: #fda4af;
+      --messagebus-fill: rgba(249, 115, 22, .13);
+      --messagebus-stroke: #fdba74;
+      --external-fill: rgba(71, 85, 105, .24);
+      --external-stroke: #a5b4c7;
+      --arrow: #7890ad;
+      --arrow-emphasis: #2dd4bf;
+      --prototype-accent: #67e8f9;
+    }
+    html[data-prototype-variant="signal"] body {
+      background-image:
+        radial-gradient(circle at 18% -8%, rgba(34, 211, 238, .14), transparent 34rem),
+        radial-gradient(circle at 92% 18%, rgba(139, 92, 246, .12), transparent 30rem);
+    }
+    html[data-prototype-variant="signal"] .header-row::after {
+      content: "SIGNAL FLOW / LIVE";
+      margin-left: auto;
+      color: var(--frontend-stroke);
+      border: 1px solid color-mix(in srgb, var(--frontend-stroke) 45%, transparent);
+      border-radius: 999px;
+      padding: .28rem .6rem;
+      font-size: .625rem;
+      letter-spacing: .12em;
+      box-shadow: 0 0 20px rgba(34, 211, 238, .12);
+    }
+    html[data-prototype-variant="signal"] .diagram-container {
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(8, 20, 38, .82), rgba(3, 8, 18, .94));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 28px 80px rgba(0,0,0,.34);
+    }
+    html[data-prototype-variant="signal"] .diagram-container::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(115deg, transparent 28%, rgba(103,232,249,.035) 48%, transparent 68%);
+      transform: translateX(-70%);
+      animation: prototype-scan 6s ease-in-out infinite;
+    }
+    html[data-prototype-variant="signal"] .card {
+      background: linear-gradient(145deg, rgba(10,24,43,.86), rgba(5,12,24,.92));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+    }
+    html[data-prototype-variant="signal"] svg[data-animation="trace"] [data-animate="edge"] {
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 3px var(--arrow-emphasis));
+      animation-duration: 1.75s;
+    }
+    html[data-prototype-variant="signal"] svg[data-animation="trace"] [data-animate="node"] {
+      animation-duration: 3.1s;
+    }
+
+    /* B — Blueprint Review: denser inspector layout and drafting semantics. */
+    html[data-prototype-variant="blueprint"] {
+      --bg: #061426;
+      --grid: #1c4b73;
+      --panel: #081b31;
+      --panel-border: #2b668f;
+      --lane-fill: rgba(8, 35, 61, .62);
+      --lane-stroke: #3b7398;
+      --text: #e9f7ff;
+      --text-muted: #91b8cf;
+      --text-dim: #4d7895;
+      --frontend-fill: rgba(14, 116, 144, .08);
+      --frontend-stroke: #6ee7f9;
+      --backend-fill: rgba(8, 145, 178, .08);
+      --backend-stroke: #7dd3fc;
+      --database-fill: rgba(59, 130, 246, .08);
+      --database-stroke: #93c5fd;
+      --cloud-fill: rgba(2, 132, 199, .08);
+      --cloud-stroke: #bae6fd;
+      --security-fill: rgba(56, 189, 248, .07);
+      --security-stroke: #38bdf8;
+      --messagebus-fill: rgba(125, 211, 252, .08);
+      --messagebus-stroke: #7dd3fc;
+      --external-fill: rgba(14, 116, 144, .07);
+      --external-stroke: #7dd3fc;
+      --arrow: #5c8bad;
+      --arrow-emphasis: #67e8f9;
+      --prototype-accent: #7dd3fc;
+    }
+    html[data-prototype-variant="blueprint"] body { padding: 1.25rem; }
+    html[data-prototype-variant="blueprint"] .container {
+      max-width: 1480px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      grid-template-areas: "header header" "diagram cards" "footer footer";
+      gap: 1rem;
+    }
+    html[data-prototype-variant="blueprint"] .header {
+      grid-area: header;
+      margin: 0;
+      border-block: 1px solid var(--panel-border);
+      padding: .8rem 0;
+    }
+    html[data-prototype-variant="blueprint"] .header-row { margin: 0; }
+    html[data-prototype-variant="blueprint"] h1 {
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-size: 1.1rem;
+    }
+    html[data-prototype-variant="blueprint"] .subtitle { margin: .35rem 0 0 1.7rem; }
+    html[data-prototype-variant="blueprint"] .diagram-container {
+      grid-area: diagram;
+      border-radius: 0;
+      border-style: dashed;
+      background-color: rgba(4, 21, 39, .86);
+      background-image:
+        linear-gradient(rgba(51, 125, 173, .08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(51, 125, 173, .08) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    html[data-prototype-variant="blueprint"] .cards {
+      grid-area: cards;
+      display: flex;
+      flex-direction: column;
+      gap: .65rem;
+      margin: 0;
+    }
+    html[data-prototype-variant="blueprint"] .card {
+      border-radius: 0;
+      border-style: dashed;
+      padding: .9rem;
+    }
+    html[data-prototype-variant="blueprint"] .footer { grid-area: footer; margin: 0; }
+    html[data-prototype-variant="blueprint"] svg[data-animation="trace"] [data-animate="edge"] {
+      stroke-dasharray: 4 5;
+      animation-duration: 2.8s;
+    }
+
+    /* C — Ember Ops: cards become a status rail above a cinematic canvas. */
+    html[data-prototype-variant="ember"] {
+      --bg: #0b0807;
+      --grid: #30201a;
+      --panel: rgba(24, 15, 12, .84);
+      --panel-border: #4b2b20;
+      --lane-fill: rgba(42, 24, 18, .38);
+      --lane-stroke: #69402f;
+      --text: #fff8f0;
+      --text-muted: #c9aa96;
+      --text-dim: #775648;
+      --frontend-fill: rgba(249, 115, 22, .12);
+      --frontend-stroke: #fb923c;
+      --backend-fill: rgba(245, 158, 11, .12);
+      --backend-stroke: #fbbf24;
+      --database-fill: rgba(239, 68, 68, .11);
+      --database-stroke: #f87171;
+      --cloud-fill: rgba(251, 191, 36, .10);
+      --cloud-stroke: #fde68a;
+      --security-fill: rgba(244, 63, 94, .12);
+      --security-stroke: #fb7185;
+      --messagebus-fill: rgba(234, 88, 12, .13);
+      --messagebus-stroke: #fdba74;
+      --external-fill: rgba(120, 53, 15, .16);
+      --external-stroke: #d6a47f;
+      --arrow: #a06f59;
+      --arrow-emphasis: #fb923c;
+      --prototype-accent: #fb923c;
+    }
+    html[data-prototype-variant="ember"] body {
+      background-image: radial-gradient(circle at 50% -20%, rgba(249,115,22,.17), transparent 44rem);
+    }
+    html[data-prototype-variant="ember"] .container {
+      max-width: 1320px;
+      display: flex;
+      flex-direction: column;
+    }
+    html[data-prototype-variant="ember"] .header {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    html[data-prototype-variant="ember"] .header-row { justify-content: center; }
+    html[data-prototype-variant="ember"] .subtitle { margin-left: 0; }
+    html[data-prototype-variant="ember"] .cards {
+      order: 1;
+      grid-template-columns: repeat(3, 1fr);
+      margin: 0 0 .75rem;
+      gap: .5rem;
+    }
+    html[data-prototype-variant="ember"] .diagram-container {
+      order: 2;
+      border-radius: .25rem;
+      border-color: #7c3b23;
+      box-shadow: 0 0 0 1px rgba(251,146,60,.08), 0 30px 90px rgba(0,0,0,.44);
+    }
+    html[data-prototype-variant="ember"] .card {
+      padding: .8rem 1rem;
+      border-radius: .25rem;
+      border-top: 2px solid var(--prototype-accent);
+      background: linear-gradient(180deg, rgba(47,26,18,.88), rgba(24,15,12,.92));
+    }
+    html[data-prototype-variant="ember"] .footer { order: 3; }
+    html[data-prototype-variant="ember"] svg[data-animation="trace"] [data-animate="edge"] {
+      stroke-dasharray: 14 10;
+      filter: drop-shadow(0 0 4px rgba(251,146,60,.65));
+      animation-duration: 2.05s;
+    }
+
+    @keyframes prototype-scan {
+      0%, 15% { transform: translateX(-75%); }
+      68%, 100% { transform: translateX(75%); }
+    }
+
+    .prototype-switcher {
+      position: fixed;
+      left: 50%;
+      bottom: 1rem;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      transform: translateX(-50%);
+      padding: .35rem;
+      border: 1px solid rgba(148,163,184,.35);
+      border-radius: 999px;
+      background: rgba(2,6,23,.92);
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      backdrop-filter: blur(14px);
+      font: 600 11px/1.2 'JetBrains Mono', monospace;
+      color: #e2e8f0;
+    }
+    .prototype-switcher button {
+      width: 2rem;
+      height: 2rem;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(148,163,184,.12);
+      color: inherit;
+      cursor: pointer;
+    }
+    .prototype-switcher button:hover { background: rgba(148,163,184,.24); }
+    .prototype-switcher output { min-width: 13.5rem; text-align: center; }
+    .prototype-switcher .prototype-key { color: var(--prototype-accent); }
+    @media (max-width: 900px) {
+      html[data-prototype-variant="blueprint"] .container { display: block; }
+      html[data-prototype-variant="blueprint"] .cards { margin-top: 1rem; }
+      html[data-prototype-variant="ember"] .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Toolbar: theme toggle + export menu (present on every generated diagram)
+       Keyboard: T toggles theme, E opens export menu (when no input focused) -->
+  <div class="toolbar" role="toolbar" aria-label="Diagram actions">
+    <button id="btn-theme" type="button"
+            title="Toggle theme (T)"
+            aria-label="Toggle color theme"
+            aria-pressed="false">
+      <span id="theme-icon" aria-hidden="true">&#9790;</span>
+      <span id="theme-label">Dark</span>
+    </button>
+    <div class="export-wrap">
+      <button id="btn-export" type="button"
+              title="Export diagram (E)"
+              aria-label="Export diagram"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-controls="export-menu">
+        Export <span aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="export-menu" id="export-menu" role="menu" aria-label="Export">
+        <button data-action="copy"  type="button" role="menuitem" tabindex="-1">Copy to clipboard <span class="hint">PNG</span></button>
+        <hr role="separator">
+        <button data-format="png"   type="button" role="menuitem" tabindex="-1">Download PNG</button>
+        <button data-format="jpeg"  type="button" role="menuitem" tabindex="-1">Download JPEG</button>
+        <button data-format="webp"  type="button" role="menuitem" tabindex="-1">Download WebP</button>
+        <hr role="separator">
+        <button data-format="svg"   type="button" role="menuitem" tabindex="-1">Download SVG <span class="hint">vector</span></button>
+        <button data-format="webm"  type="button" role="menuitem" tabindex="-1">Download WebM <span class="hint">6s motion</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1>Agent Tool Call Workflow</h1>
+      </div>
+      <p class="subtitle">Renderer-driven workflow prototype with lanes, anchored nodes, and orthogonal edges</p>
+    </div>
+
+    <!-- Main Diagram -->
+    <div class="diagram-container">
+      <svg viewBox="0 0 720 900" role="img" aria-label="Agent Tool Call Workflow — Renderer-driven workflow prototype with lanes, anchored nodes, and orthogonal edges (workflow diagram)" data-animation="trace" data-preset="classic">
+        <!-- Definitions -->
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-default" />
+          </marker>
+          <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-emphasis" />
+          </marker>
+          <marker id="arrowhead-security" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-security" />
+          </marker>
+          <marker id="arrowhead-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <!-- Background Grid -->
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- Swimlanes -->
+        <rect x="40" y="52" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / User Interface</text>
+
+        <rect x="40" y="176" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / Agent Runtime</text>
+
+        <rect x="40" y="300" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="322" class="t-dim" font-size="10" font-weight="600">03 / Policy Boundary</text>
+
+        <rect x="40" y="424" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <rect x="46" y="430" width="628" height="92" rx="8" class="c-security-group" stroke-width="1"/>
+        <text x="54" y="446" class="t-security" font-size="10" font-weight="600">EX / Exception Handling</text>
+
+        <rect x="40" y="548" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="570" class="t-dim" font-size="10" font-weight="600">05 / Tool Execution</text>
+
+        <rect x="40" y="672" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="694" class="t-dim" font-size="10" font-weight="600">06 / Observability</text>
+
+        <!-- Phase headers -->
+        <line x1="42" y1="35" x2="266" y2="35" class="a-default" stroke-width="1.1"/>
+        <rect x="42" y="27" width="224" height="16" rx="4" class="c-mask"/>
+        <text x="154" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">Intake</text>
+        <line x1="254" y1="35" x2="476" y2="35" class="a-emphasis" stroke-width="1.1"/>
+        <rect x="254" y="27" width="222" height="16" rx="4" class="c-mask"/>
+        <text x="365" y="39" class="t-backend" font-size="8" font-weight="600" text-anchor="middle">Plan + route</text>
+        <line x1="454" y1="35" x2="671" y2="35" class="a-dashed" stroke-width="1.1"/>
+        <rect x="454" y="27" width="217" height="16" rx="4" class="c-mask"/>
+        <text x="562.5" y="39" class="t-messagebus" font-size="8" font-weight="600" text-anchor="middle">Execute + report</text>
+
+        <!-- Workflow groups -->
+        <rect x="250" y="214" width="230" height="58" rx="9" class="c-lane" stroke-width="1"/>
+        <text x="260" y="228" class="t-backend" font-size="7" font-weight="600">Planning loop</text>
+        <rect x="450" y="586" width="225" height="58" rx="9" class="c-lane" stroke-width="1"/>
+        <text x="460" y="600" class="t-messagebus" font-size="7" font-weight="600">Tool work</text>
+        <rect x="380" y="462" width="295" height="58" rx="9" class="c-security-group" stroke-width="1"/>
+        <text x="390" y="476" class="t-security" font-size="7" font-weight="600">Human or policy stop</text>
+
+        <!-- Edge paths -->
+        <path d="M 134 119 L 174 119" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path d="M 220 145 L 220 166 L 300 166 L 300 209" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 346 243 L 384 243" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path d="M 430 269 L 430 290 L 430 290 L 430 333" class="a-security" data-animate="edge" style="--step:3" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path d="M 384 367 L 356 367 L 356 615 L 454 615" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 430 401 L 430 414 L 500 414 L 500 465" class="a-security" data-animate="edge" style="--step:13" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path d="M 546 491 L 579 491" class="a-dashed" data-animate="edge" style="--step:14" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path d="M 546 615 L 579 615" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path d="M 671 615 L 692 615 L 692 119 L 671 119" class="a-emphasis" data-animate="edge" style="--step:6" stroke-width="1.2" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 625 641 L 625 797 L 500 797 L 500 765" class="a-dashed" data-animate="edge" style="--step:17" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path d="M 266 739 L 454 739" class="a-dashed" data-animate="edge" style="--step:18" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+
+        <!-- Nodes -->
+        <rect x="42" y="93" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="42" y="93" width="92" height="52" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
+        <text x="88" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">User</text>
+        <text x="88" y="131" class="t-muted" font-size="8" text-anchor="middle">asks for work</text>
+
+        <rect x="174" y="93" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="174" y="93" width="92" height="52" rx="6" class="c-frontend" data-animate="node" style="--step:1" stroke-width="1.5"/>
+        <text x="220" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Chat Surface</text>
+        <text x="220" y="131" class="t-muted" font-size="8" text-anchor="middle">thread + files</text>
+
+        <rect x="579" y="93" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="579" y="93" width="92" height="52" rx="6" class="c-backend" data-animate="node" style="--step:7" stroke-width="1.5"/>
+        <text x="625" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Final Reply</text>
+        <text x="625" y="131" class="t-muted" font-size="8" text-anchor="middle">answer + changes</text>
+
+        <rect x="254" y="209" width="92" height="68" rx="6" class="c-mask"/>
+        <rect x="254" y="209" width="92" height="68" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
+        <text x="300" y="230" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Agent Planner</text>
+        <text x="300" y="247" class="t-muted" font-size="8" text-anchor="middle">plan next step</text>
+        <text x="300" y="265" class="t-backend" font-size="7" text-anchor="middle">context aware</text>
+
+        <rect x="384" y="217" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="384" y="217" width="92" height="52" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
+        <text x="430" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Tool Router</text>
+        <text x="430" y="255" class="t-muted" font-size="8" text-anchor="middle">choose capability</text>
+
+        <rect x="384" y="333" width="92" height="68" rx="6" class="c-mask"/>
+        <rect x="384" y="333" width="92" height="68" rx="6" class="c-security" data-animate="node" style="--step:4" stroke-width="1.5"/>
+        <text x="430" y="354" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Approval Gate</text>
+        <text x="430" y="371" class="t-muted" font-size="8" text-anchor="middle">scope + consent</text>
+        <text x="430" y="389" class="t-security" font-size="7" text-anchor="middle">block risky ops</text>
+
+        <rect x="454" y="465" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="454" y="465" width="92" height="52" rx="6" class="c-security" data-animate="node" style="--step:14" stroke-width="1.5"/>
+        <text x="500" y="486" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Blocked</text>
+        <text x="500" y="503" class="t-muted" font-size="8" text-anchor="middle">wait or reject</text>
+
+        <rect x="579" y="465" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="579" y="465" width="92" height="52" rx="6" class="c-messagebus" data-animate="node" style="--step:15" stroke-width="1.5"/>
+        <text x="625" y="486" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Retry Path</text>
+        <text x="625" y="503" class="t-muted" font-size="8" text-anchor="middle">revise request</text>
+
+        <rect x="454" y="581" width="92" height="68" rx="6" class="c-mask"/>
+        <rect x="454" y="581" width="92" height="68" rx="6" class="c-messagebus" data-animate="node" style="--step:5" stroke-width="1.5"/>
+        <text x="500" y="602" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Tool Call</text>
+        <text x="500" y="619" class="t-muted" font-size="8" text-anchor="middle">shell / browser / MCP</text>
+        <text x="500" y="637" class="t-messagebus" font-size="7" text-anchor="middle">structured result</text>
+
+        <rect x="579" y="589" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="579" y="589" width="92" height="52" rx="6" class="c-cloud" data-animate="node" style="--step:6" stroke-width="1.5"/>
+        <text x="625" y="610" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">External API</text>
+        <text x="625" y="627" class="t-muted" font-size="8" text-anchor="middle">network service</text>
+
+        <rect x="174" y="713" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="174" y="713" width="92" height="52" rx="6" class="c-database" data-animate="node" style="--step:18" stroke-width="1.5"/>
+        <text x="220" y="734" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Context Store</text>
+        <text x="220" y="751" class="t-muted" font-size="8" text-anchor="middle">repo + memory</text>
+
+        <rect x="454" y="713" width="92" height="52" rx="6" class="c-mask"/>
+        <rect x="454" y="713" width="92" height="52" rx="6" class="c-database" data-animate="node" style="--step:19" stroke-width="1.5"/>
+        <text x="500" y="734" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Trace Log</text>
+        <text x="500" y="751" class="t-muted" font-size="8" text-anchor="middle">events + output</text>
+
+        <!-- Edge labels -->
+
+        <rect x="245" y="146" width="30" height="14" rx="3" class="c-mask"/>
+        <text x="260" y="156" class="t-backend" font-size="8" text-anchor="middle">plan</text>
+
+        <rect x="423" y="277.5" width="82" height="14" rx="3" class="c-mask"/>
+        <text x="464" y="287.5" class="t-security" font-size="8" text-anchor="middle">needs approval?</text>
+
+        <rect x="445.6" y="406" width="38.8" height="14" rx="3" class="c-mask"/>
+        <text x="465" y="416" class="t-security" font-size="8" text-anchor="middle">denied</text>
+
+
+
+        <rect x="526.3" y="777" width="72.4" height="14" rx="3" class="c-mask"/>
+        <text x="562.5" y="787" class="t-database" font-size="8" text-anchor="middle">record result</text>
+        <rect x="326.4" y="725" width="77.2" height="14" rx="3" class="c-mask"/>
+        <text x="365" y="735" class="t-database" font-size="8" text-anchor="middle">trace + memory</text>
+
+        <!-- Legend -->
+        <text x="175" y="800" class="t-primary" font-size="10" font-weight="600">Legend</text>
+        <rect x="175" y="812" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
+        <text x="195" y="820" class="t-muted" font-size="7">User UI</text>
+        <rect x="260" y="812" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+        <text x="280" y="820" class="t-muted" font-size="7">Agent logic</text>
+        <rect x="370" y="812" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+        <text x="390" y="820" class="t-muted" font-size="7">Policy</text>
+        <rect x="455" y="812" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+        <text x="475" y="820" class="t-muted" font-size="7">Tool action</text>
+        <rect x="565" y="812" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+        <text x="585" y="820" class="t-muted" font-size="7">Context / trace</text>
+      </svg>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="cards">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot cyan"></div>
+          <h3>Renderer Rules</h3>
+        </div>
+        <ul>
+          <li>&bull; Lanes and columns determine node placement</li>
+          <li>&bull; Edges attach to explicit node anchors</li>
+          <li>&bull; Cross-lane paths use orthogonal routing</li>
+          <li>&bull; Short adjacent links stay unlabeled</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot rose"></div>
+          <h3>Workflow Semantics</h3>
+        </div>
+        <ul>
+          <li>&bull; Approval is a first-class policy step</li>
+          <li>&bull; Consent gates are visible in the main path</li>
+          <li>&bull; External calls stay inside the tool lane</li>
+          <li>&bull; Trace writes are separate from the hot path</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot emerald"></div>
+          <h3>Why It Matters</h3>
+        </div>
+        <ul>
+          <li>&bull; This is closer to a diagram_type renderer</li>
+          <li>&bull; The graph can be edited without SVG surgery</li>
+          <li>&bull; Layout rules can be tested and improved</li>
+          <li>&bull; A future IR can reuse this shape directly</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <p class="footer">
+      Workflow diagram &bull; Built with Archify<span class="no-print"> &bull; Press <kbd>T</kbd> for theme and <kbd>E</kbd> for export</span>
+    </p>
+  </div>
+
+  <script>
+    /* ============================================================
+       Theme toggle — persists to localStorage, respects system pref
+       ============================================================ */
+    var Archify = {};
+
+    Archify.theme = (function () {
+      var STORAGE_KEY = 'archify-theme';
+      var html = document.documentElement;
+      var btn = document.getElementById('btn-theme');
+      var icon = document.getElementById('theme-icon');
+      var label = document.getElementById('theme-label');
+
+      // localStorage can throw (blocked cookies, sandboxed iframes); the whole
+      // script element dies on an uncaught error, so guard every access.
+      function readStored() {
+        try { return localStorage.getItem(STORAGE_KEY); } catch (_) { return null; }
+      }
+      function writeStored(value) {
+        try { localStorage.setItem(STORAGE_KEY, value); } catch (_) {}
+      }
+      function urlOverride() {
+        // URL param wins (useful for deterministic screenshots / share links)
+        try {
+          var param = new URLSearchParams(window.location.search).get('theme');
+          if (param === 'light' || param === 'dark') return param;
+        } catch (_) {}
+        return null;
+      }
+
+      function resolveInitial() {
+        var fromUrl = urlOverride();
+        if (fromUrl) return fromUrl;
+        var saved = readStored();
+        if (saved === 'light' || saved === 'dark') return saved;
+        return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      }
+
+      function apply(theme) {
+        html.setAttribute('data-theme', theme);
+        icon.textContent = theme === 'dark' ? '\u263E' : '\u263C';
+        label.textContent = theme === 'dark' ? 'Dark' : 'Light';
+        btn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
+      }
+
+      function toggle() {
+        var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        apply(next);
+        writeStored(next);
+      }
+
+      apply(resolveInitial());
+      btn.addEventListener('click', toggle);
+
+      // Follow live OS theme changes while the user has no explicit preference.
+      try {
+        var media = window.matchMedia('(prefers-color-scheme: light)');
+        var onChange = function (e) {
+          var saved = readStored();
+          if (urlOverride() || saved === 'light' || saved === 'dark') return;
+          apply(e.matches ? 'light' : 'dark');
+        };
+        if (media.addEventListener) media.addEventListener('change', onChange);
+        else if (media.addListener) media.addListener(onChange);
+      } catch (_) {}
+
+      return { toggle: toggle };
+    })();
+
+    /* ============================================================
+       Export — PNG / JPEG / WebP / SVG / WebM and Copy PNG (clipboard)
+
+       Raster exports are always rendered at 4x source resolution for
+       maximum sharpness. The trick: we set the serialized SVG's
+       `width`/`height` to viewBox * 4 so the browser rasterizes the
+       vectors at that resolution natively. drawImage then draws at
+       the image's natural size (no upscaling = no blur).
+
+       JPEG/WebP paint the current theme's background explicitly since
+       those formats have no alpha channel.
+       ============================================================ */
+    (function () {
+      var RASTER_SCALE = 4;
+      var MOTION_DURATION = 6000;
+      var MOTION_FPS = 30;
+
+      function diagramFilename() {
+        var title = (document.title || 'diagram')
+          .replace(/\s+Architecture(\s+Diagram)?$/i, '')
+          .replace(/\s+Diagram$/i, '')
+          .trim();
+        return title.replace(/[^a-z0-9_\-]+/gi, '-')
+                    .toLowerCase()
+                    .replace(/^-+|-+$/g, '') || 'diagram';
+      }
+
+      function currentBg() {
+        return getComputedStyle(document.body).backgroundColor || '#ffffff';
+      }
+
+      /**
+       * Serialize the main SVG into a standalone document.
+       *
+       * Two modes:
+       * - Default (opts.autoTheme=false) — locks the serialized SVG to the
+       *   viewer's current theme. Used by the raster pipeline
+       *   (PNG/JPEG/WebP/clipboard) because canvas rasterization needs
+       *   deterministic colors; a raster cannot react to
+       *   prefers-color-scheme after encoding.
+       * - autoTheme=true — emits BOTH dark and light variable sets plus a
+       *   `@media (prefers-color-scheme)` rule so the resulting SVG
+       *   self-themes when embedded in GitHub READMEs or other hosts that
+       *   expose a color scheme. Used for "Download SVG".
+       */
+      function serializeSvg(scale, opts) {
+        // scale: integer multiplier for intrinsic SVG pixel dimensions used by
+        // the raster path. Defaults to 1 (natural size) for SVG download.
+        scale = scale || 1;
+        opts = opts || {};
+        var autoTheme = opts.autoTheme === true;
+
+        var svg = document.querySelector('.diagram-container svg');
+        var clone = svg.cloneNode(true);
+
+        var vb = svg.viewBox.baseVal;
+        // Scale width/height so the browser rasterizes the vectors at target
+        // resolution directly. viewBox stays unchanged so coordinates don't
+        // shift. This is the key to sharp rasters — do NOT scale later via
+        // canvas upscaling.
+        clone.setAttribute('width', vb.width * scale);
+        clone.setAttribute('height', vb.height * scale);
+        clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+        // Only the SVG-relevant rules: semantic classes, markers, and the
+        // theme variable blocks. Toolbar/cards/print CSS can never apply
+        // inside a standalone SVG and would only bloat the export.
+        var hostStyle = (function () {
+          var out = [];
+          Array.prototype.forEach.call(document.styleSheets, function (sheet) {
+            var rules;
+            try { rules = sheet.cssRules; } catch (_) { return; } // cross-origin
+            if (!rules) return;
+            Array.prototype.forEach.call(rules, function (rule) {
+              if (rule.type === 7 && /^archify-/.test(rule.name || '')) {
+                out.push(rule.cssText);
+                return;
+              }
+              if (rule.type !== 1) return; // plain style rules only
+              var sel = rule.selectorText || '';
+              if (/(^|,)\s*(svg|:root|\[data-theme|\[data-preset|\.c-|\.t-|\.a-|\.m-)/.test(sel)) {
+                out.push(rule.cssText);
+              }
+            });
+          });
+          return out.join('\n');
+        })();
+
+        // Derive the variable list from the stylesheet so newly added theme
+        // variables can never be missed by the export pipeline again
+        // (--lane-fill/--lane-stroke once were).
+        var varNames = (function () {
+          var seen = {};
+          var names = [];
+          (hostStyle.match(/--[a-zA-Z0-9-]+(?=\s*:)/g) || []).forEach(function (n) {
+            if (!seen[n]) { seen[n] = true; names.push(n); }
+          });
+          return names;
+        })();
+
+        // Resolve the full variable set for a given data-theme via an
+        // off-DOM probe, independent of what the viewer is currently set to.
+        function resolveVars(themeAttr) {
+          var probe = document.createElement('div');
+          probe.setAttribute('data-theme', themeAttr);
+          probe.setAttribute('data-preset', document.documentElement.getAttribute('data-preset') || 'classic');
+          probe.style.cssText = 'position:absolute;width:0;height:0;visibility:hidden;';
+          document.body.appendChild(probe);
+          try {
+            var c = getComputedStyle(probe);
+            return varNames.map(function (n) {
+              return n + ': ' + c.getPropertyValue(n).trim() + ';';
+            }).join(' ');
+          } finally {
+            document.body.removeChild(probe);
+          }
+        }
+
+        // Prepend a local()-only @font-face block for each weight so that the
+        // sandboxed image-rendering context used during PNG/JPEG/WebP export
+        // can find JetBrains Mono if the user has it installed locally, and
+        // falls through cleanly to the monospace stack otherwise. The usual
+        // Google-Fonts <link> in the host document is unreachable from the
+        // serialized SVG, so url()-sourced faces would just hang.
+        var fontFallback = [400, 500, 600, 700].map(function (w) {
+          return "@font-face { font-family: 'JetBrains Mono'; font-weight: " + w +
+                 "; src: local('JetBrains Mono'), local('JetBrainsMono-Regular'); }";
+        }).join('\n');
+
+        var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+        var bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        bgRect.setAttribute('width', '100%');
+        bgRect.setAttribute('height', '100%');
+
+        if (autoTheme) {
+          // Dual-theme SVG. Dark is the default (so hosts without
+          // prefers-color-scheme still render), light swaps in via media
+          // query, and svg[data-theme="..."] still lets downstream
+          // consumers force a specific theme.
+          var darkVars = resolveVars('dark');
+          var lightVars = resolveVars('light');
+
+          style.textContent =
+            fontFallback + "\n" +
+            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
+            hostStyle + "\n" +
+            ":root, svg { " + darkVars + " }\n" +
+            "@media (prefers-color-scheme: light) { :root, svg { " + lightVars + " } }\n" +
+            "svg[data-theme=\"light\"] { " + lightVars + " }\n" +
+            "svg[data-theme=\"dark\"] { " + darkVars + " }\n" +
+            "rect.c-bg-rect { fill: var(--bg); }\n";
+
+          // Don't lock the serialized SVG to the viewer's current theme.
+          clone.removeAttribute('data-theme');
+          // Background follows the CSS variable, not a fixed color, so it
+          // swaps with the media query.
+          bgRect.setAttribute('class', 'c-bg-rect');
+        } else {
+          // Raster path: lock to the viewer's current theme.
+          var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+          var themeHost = document.querySelector('[data-theme="' + theme + '"]') || document.documentElement;
+          var computed = getComputedStyle(themeHost);
+          var vars = varNames.map(function (n) {
+            return n + ': ' + computed.getPropertyValue(n).trim() + ';';
+          }).join(' ');
+
+          // IMPORTANT: inject the resolved variables AFTER hostStyle,
+          // otherwise hostStyle's ":root, [data-theme=\"dark\"] { ... }" rule
+          // overrides our chosen theme via later-in-cascade equal-specificity.
+          // Keep this order.
+          style.textContent =
+            fontFallback + "\n" +
+            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
+            hostStyle + "\n" +
+            ":root, svg { " + vars + " }\n";
+
+          bgRect.setAttribute('fill', computed.getPropertyValue('--bg').trim() || '#ffffff');
+        }
+
+        clone.insertBefore(style, clone.firstChild);
+        clone.insertBefore(bgRect, style.nextSibling);
+
+        return {
+          svgString: new XMLSerializer().serializeToString(clone),
+          width: vb.width * scale,
+          height: vb.height * scale
+        };
+      }
+
+      function download(blob, filename) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      }
+
+      // Conservative upper bound on total canvas pixels. Older Safari on iOS
+      // silently produces a blank canvas above ~16 Mpx; Chrome / Firefox /
+      // desktop Safari are far higher but start failing on memory-constrained
+      // devices. We pick the largest integer scale in {4,3,2,1} whose target
+      // pixel count fits under this cap.
+      var MAX_CANVAS_PIXELS = 16 * 1024 * 1024;
+
+      function pickSafeScale(vbW, vbH) {
+        for (var s = RASTER_SCALE; s >= 1; s--) {
+          if (vbW * s * vbH * s <= MAX_CANVAS_PIXELS) return s;
+        }
+        return 1;
+      }
+
+      function rasterize(format) {
+        // Serialize at a safe scale (RASTER_SCALE=4 by default, reduced if the
+        // resulting canvas would exceed MAX_CANVAS_PIXELS). The SVG itself is
+        // rasterized at target resolution natively; drawImage draws at natural
+        // size — no upsampling blur.
+        var svg = document.querySelector('.diagram-container svg');
+        var vb = svg.viewBox.baseVal;
+        var scale = pickSafeScale(vb.width, vb.height);
+        var data = serializeSvg(scale);
+        var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
+        var svgUrl = URL.createObjectURL(svgBlob);
+
+        return new Promise(function (resolve, reject) {
+          var img = new Image();
+          img.onload = function () {
+            var canvas = document.createElement('canvas');
+            canvas.width = data.width;
+            canvas.height = data.height;
+            var ctx = canvas.getContext('2d');
+            if (format === 'jpeg') {
+              ctx.fillStyle = currentBg();
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            // Draw at natural size — SVG was already rasterized at target res.
+            ctx.drawImage(img, 0, 0);
+            URL.revokeObjectURL(svgUrl);
+            var mime = format === 'jpeg' ? 'image/jpeg' :
+                       format === 'webp' ? 'image/webp' : 'image/png';
+            var quality = format === 'png' ? undefined : 0.95;
+            canvas.toBlob(function (blob) {
+              if (!blob) reject(new Error('toBlob returned null for ' + format));
+              else resolve(blob);
+            }, mime, quality);
+          };
+          img.onerror = function (e) {
+            URL.revokeObjectURL(svgUrl);
+            reject(e);
+          };
+          img.src = svgUrl;
+        });
+      }
+
+      function motionMimeType() {
+        if (typeof MediaRecorder === 'undefined') return '';
+        var candidates = [
+          'video/webm;codecs=vp9',
+          'video/webm;codecs=vp8',
+          'video/webm'
+        ];
+        for (var i = 0; i < candidates.length; i++) {
+          if (!MediaRecorder.isTypeSupported || MediaRecorder.isTypeSupported(candidates[i])) return candidates[i];
+        }
+        return '';
+      }
+
+      function canRecordMotion() {
+        var svg = document.querySelector('.diagram-container svg');
+        return !!(svg && svg.getAttribute('data-animation') === 'trace' &&
+          typeof MediaRecorder !== 'undefined' && motionMimeType() &&
+          typeof HTMLCanvasElement !== 'undefined' &&
+          typeof HTMLCanvasElement.prototype.captureStream === 'function');
+      }
+
+      // Record the live CSS animation without Puppeteer, ffmpeg, or a network
+      // dependency. The serialized SVG keeps Archify's animation keyframes;
+      // one Image instance advances its timeline while each frame is painted
+      // into a MediaRecorder-backed canvas.
+      function recordWebm(options) {
+        options = options || {};
+        if (!canRecordMotion()) {
+          return Promise.reject(new Error('WebM motion export requires a trace animation and browser MediaRecorder support'));
+        }
+        var duration = Math.max(250, Number(options.duration) || MOTION_DURATION);
+        var fps = Math.max(1, Number(options.fps) || MOTION_FPS);
+        var svg = document.querySelector('.diagram-container svg');
+        var vb = svg.viewBox.baseVal;
+        var scale = Math.min(1, 1280 / vb.width);
+        var data = serializeSvg(scale);
+        var sourceUrl = URL.createObjectURL(new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' }));
+
+        return new Promise(function (resolve, reject) {
+          var img = new Image();
+          img.onload = function () {
+            var canvas = document.createElement('canvas');
+            canvas.width = Math.max(2, Math.round(data.width / 2) * 2);
+            canvas.height = Math.max(2, Math.round(data.height / 2) * 2);
+            var ctx = canvas.getContext('2d');
+            var stream = canvas.captureStream(fps);
+            var mime = motionMimeType();
+            var recorder;
+            try {
+              recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
+            } catch (err) {
+              URL.revokeObjectURL(sourceUrl);
+              stream.getTracks().forEach(function (track) { track.stop(); });
+              reject(err);
+              return;
+            }
+            var chunks = [];
+            var raf = 0;
+            var stopped = false;
+            function cleanup() {
+              if (stopped) return;
+              stopped = true;
+              cancelAnimationFrame(raf);
+              URL.revokeObjectURL(sourceUrl);
+              stream.getTracks().forEach(function (track) { track.stop(); });
+            }
+            function draw() {
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              raf = requestAnimationFrame(draw);
+            }
+            recorder.ondataavailable = function (event) {
+              if (event.data && event.data.size) chunks.push(event.data);
+            };
+            recorder.onerror = function (event) {
+              cleanup();
+              reject(event.error || new Error('MediaRecorder failed'));
+            };
+            recorder.onstop = function () {
+              cleanup();
+              var blob = new Blob(chunks, { type: recorder.mimeType || mime });
+              if (!blob.size) reject(new Error('MediaRecorder produced an empty WebM'));
+              else resolve(blob);
+            };
+            draw();
+            recorder.start(250);
+            setTimeout(function () {
+              if (recorder.state !== 'inactive') recorder.stop();
+            }, duration);
+          };
+          img.onerror = function () {
+            URL.revokeObjectURL(sourceUrl);
+            reject(new Error('Animated SVG could not be loaded for WebM export'));
+          };
+          img.src = sourceUrl;
+        });
+      }
+
+      var menu = document.getElementById('export-menu');
+      var btn = document.getElementById('btn-export');
+      var items = function () {
+        return Array.prototype.slice.call(menu.querySelectorAll('button[role="menuitem"]'));
+      };
+
+      // ---- Clipboard support ----------------------------------------------
+      function canCopyImage() {
+        return typeof ClipboardItem !== 'undefined' &&
+               navigator.clipboard &&
+               typeof navigator.clipboard.write === 'function';
+      }
+
+      // ---- Raster format detection ----------------------------------------
+      // canvas.toBlob('image/webp') silently returns a PNG on browsers without
+      // WebP encoding (older Safari), so detect explicitly.
+      function supports(format) {
+        if (format === 'svg' || format === 'png') return true;
+        if (format === 'webm') return canRecordMotion();
+        var mime = format === 'jpeg' ? 'image/jpeg' : 'image/webp';
+        try {
+          var c = document.createElement('canvas');
+          c.width = c.height = 2;
+          return c.toDataURL(mime).indexOf('data:' + mime) === 0;
+        } catch (_) { return false; }
+      }
+
+      // Gray out unsupported items.
+      items().forEach(function (it) {
+        if (it.dataset.format && !supports(it.dataset.format)) {
+          it.disabled = true;
+          it.title = 'Not supported by this browser';
+          it.style.opacity = '0.5';
+        }
+        if (it.dataset.action === 'copy' && !canCopyImage()) {
+          it.disabled = true;
+          it.title = 'Clipboard image write not supported by this browser';
+          it.style.opacity = '0.5';
+        }
+      });
+
+      // ---- Toast ----------------------------------------------------------
+      // A live region only announces CHANGES to an existing node, so the toast
+      // element is created once up front and updated in place.
+      var toastEl = document.createElement('div');
+      toastEl.className = 'archify-toast';
+      toastEl.setAttribute('role', 'status');
+      document.body.appendChild(toastEl);
+      var toastTimer = null;
+
+      function toast(msg) {
+        toastEl.textContent = '';
+        requestAnimationFrame(function () {
+          toastEl.textContent = msg;
+          toastEl.classList.add('show');
+        });
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1500);
+      }
+
+      function open(focusLast) {
+        menu.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+        var available = items().filter(function (i) { return !i.disabled; });
+        var target = focusLast ? available[available.length - 1] : available[0];
+        if (target) target.focus();
+      }
+      function close(focusTrigger) {
+        menu.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+        if (focusTrigger) btn.focus();
+      }
+      function isOpen() { return menu.classList.contains('open'); }
+
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (isOpen()) close(false);
+        else open();
+      });
+      // APG menu-button pattern: ArrowDown/ArrowUp on the trigger opens the menu.
+      btn.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (!isOpen()) open(e.key === 'ArrowUp');
+        }
+      });
+      document.addEventListener('click', function (e) {
+        if (!menu.contains(e.target) && e.target !== btn) close(false);
+      });
+
+      // Keyboard navigation inside the menu.
+      //   Menu items: Up/Down, Home/End.
+      //   Esc closes + returns focus to trigger; Tab closes.
+      menu.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { e.preventDefault(); close(true); return; }
+        if (e.key === 'Tab')    { close(false); return; }
+
+        var available = items().filter(function (i) { return !i.disabled; });
+        var current = available.indexOf(document.activeElement);
+        switch (e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            if (available.length) available[(current + 1 + available.length) % available.length].focus();
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            if (available.length) available[(current - 1 + available.length) % available.length].focus();
+            break;
+          case 'Home':
+            e.preventDefault();
+            if (available[0]) available[0].focus();
+            break;
+          case 'End':
+            e.preventDefault();
+            if (available.length) available[available.length - 1].focus();
+            break;
+        }
+      });
+
+      function runExport(format) {
+        var base = diagramFilename();
+        close(true);
+        if (format === 'webm') toast('Recording 6 seconds of motion…');
+        return (format === 'svg'
+          ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
+              download(new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' }), base + '.svg');
+            })
+          : format === 'webm'
+            ? recordWebm().then(function (blob) {
+                document.documentElement.setAttribute('data-last-motion-bytes', String(blob.size));
+                download(blob, base + '.webm');
+                toast('Downloaded WebM');
+              })
+          : rasterize(format).then(function (blob) {
+              download(blob, base + '.' + format);
+            })
+        ).catch(function (err) {
+          console.error(err);
+          alert('Export failed: ' + (err && err.message ? err.message : format));
+        });
+      }
+
+      function runCopy() {
+        close(true);
+        if (!canCopyImage()) {
+          alert('Clipboard image write not supported in this browser.');
+          return;
+        }
+        // WebKit requires ClipboardItem to be constructed synchronously inside
+        // the user gesture — pass the pending Promise<Blob> as the item value.
+        // Browsers that reject promise values throw synchronously; fall back
+        // to awaiting the blob first (works in Chromium/Firefox).
+        var blobPromise = rasterize('png');
+        var writePromise;
+        try {
+          writePromise = navigator.clipboard.write([new ClipboardItem({ 'image/png': blobPromise })]);
+        } catch (_) {
+          writePromise = blobPromise.then(function (blob) {
+            return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          });
+        }
+        return writePromise.then(function () {
+          toast('Copied PNG to clipboard');
+        }).catch(function (err) {
+          console.error(err);
+          alert('Copy failed: ' + (err && err.message ? err.message : 'unknown'));
+        });
+      }
+
+      menu.addEventListener('click', function (e) {
+        var copyBtn = e.target.closest('button[data-action="copy"]');
+        if (copyBtn && !copyBtn.disabled) { runCopy(); return; }
+
+        var formatBtn = e.target.closest('button[data-format]');
+        if (formatBtn && !formatBtn.disabled) { runExport(formatBtn.dataset.format); }
+      });
+
+      Archify.motion = { canRecord: canRecordMotion, recordWebm: recordWebm };
+      Archify.exportMenu = { open: open, close: close, isOpen: isOpen, run: runExport };
+
+      // Auto-open on page load for demo/screenshot purposes: ?openExport=1
+      // Wait for fonts (so the menu doesn't flash before typography lands)
+      // and paint before opening. Fallback timeout for browsers without the
+      // Font Loading API.
+      try {
+        if (new URLSearchParams(window.location.search).get('openExport') === '1') {
+          var openWhenReady = function () {
+            requestAnimationFrame(function () { requestAnimationFrame(open); });
+          };
+          if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(openWhenReady);
+          } else {
+            setTimeout(openWhenReady, 200);
+          }
+        }
+      } catch (_) {}
+    })();
+
+    /* ============================================================
+       Global keyboard shortcuts
+         T -> toggle theme
+         E -> open export menu
+       Ignored when focus is inside an input/textarea/contenteditable.
+       ============================================================ */
+    document.addEventListener('keydown', function (e) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      var t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (e.key === 't' || e.key === 'T') {
+        e.preventDefault();
+        Archify.theme.toggle();
+      } else if (e.key === 'e' || e.key === 'E') {
+        e.preventDefault();
+        if (!Archify.exportMenu.isOpen()) Archify.exportMenu.open();
+      }
+    });
+  </script>
+  <div class="prototype-switcher no-print" aria-label="Visual prototype variants">
+    <button type="button" data-prototype-direction="-1" aria-label="Previous variant">&#8592;</button>
+    <output id="prototype-label" aria-live="polite"></output>
+    <button type="button" data-prototype-direction="1" aria-label="Next variant">&#8594;</button>
+  </div>
+  <script>
+    (function () {
+      var variants = [
+        { key: 'signal', name: 'Signal Flow' },
+        { key: 'blueprint', name: 'Blueprint Review' },
+        { key: 'ember', name: 'Ember Ops' }
+      ];
+      var params = new URLSearchParams(window.location.search);
+      var selected = params.get('variant');
+      var index = Math.max(0, variants.findIndex(function (v) { return v.key === selected; }));
+      var label = document.getElementById('prototype-label');
+
+      function apply(nextIndex, replace) {
+        index = (nextIndex + variants.length) % variants.length;
+        var variant = variants[index];
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.setAttribute('data-prototype-variant', variant.key);
+        label.innerHTML = '<span class="prototype-key">' + (index + 1) + '/' + variants.length + '</span> — ' + variant.name;
+        params.set('variant', variant.key);
+        var url = window.location.pathname + '?' + params.toString() + window.location.hash;
+        history[replace ? 'replaceState' : 'pushState'](null, '', url);
+      }
+
+      document.querySelectorAll('[data-prototype-direction]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          apply(index + Number(button.dataset.prototypeDirection), false);
+        });
+      });
+      document.addEventListener('keydown', function (event) {
+        var target = event.target;
+        if (target && (target.matches('input,textarea,[contenteditable]'))) return;
+        if (event.key === 'ArrowLeft') { event.preventDefault(); apply(index - 1, false); }
+        if (event.key === 'ArrowRight') { event.preventDefault(); apply(index + 1, false); }
+      });
+      window.addEventListener('popstate', function () {
+        var key = new URLSearchParams(window.location.search).get('variant');
+        var found = variants.findIndex(function (v) { return v.key === key; });
+        apply(found < 0 ? 0 : found, true);
+      });
+      apply(index, true);
+    })();
+  </script>
+</body>
+</html>

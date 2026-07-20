@@ -1,12 +1,15 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { esc, renderDefinitions, textUnits } from '../shared/utils.mjs';
-import { animateAttr, loadDiagram, writeDiagram, svgRootAttrs } from '../shared/cli.mjs';
+import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
+import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagram, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import {
   asArray,
   isFinitePoint,
   rectsOverlap,
-  segmentIntersectsRect,
+  cleanFlowProblems,
+  cleanCrossingProblems,
+  cleanBorderRunProblems,
+  cleanRouteRhythmProblems,
   suggestLabelObstacleFix,
   suggestLabelPairFix,
   anchor,
@@ -14,6 +17,7 @@ import {
   defaultToSide,
   chosenSide,
   polylinePath,
+  routePointsValue,
   labelPoint,
   componentFill,
   componentText,
@@ -48,6 +52,17 @@ const autoHeight = layout.laneY
 const viewBox = workflow.meta?.viewBox || [720, autoHeight];
 
 const laneIndex = new Map(asArray(workflow.lanes).map((lane, index) => [lane.id, index]));
+const laneLabels = new Map(asArray(workflow.lanes).map((lane) => [lane.id, lane.label]));
+
+function nodeContext(node) {
+  const group = asArray(workflow.groups).find((candidate) => (
+    candidate.lane === node.lane && node.col >= candidate.fromCol && node.col <= candidate.toCol
+  ));
+  const phase = asArray(workflow.phases).find((candidate) => (
+    node.col >= candidate.fromCol && node.col <= candidate.toCol
+  ));
+  return [laneLabels.get(node.lane), group?.label, phase?.label].filter(Boolean).join(' › ') || 'Workflow node';
+}
 
 function laneTop(id) {
   return layout.laneY + laneIndex.get(id) * (layout.laneH + layout.laneGap);
@@ -79,6 +94,31 @@ function measureNode(node) {
 }
 
 const nodes = new Map(asArray(workflow.nodes).map((node) => [node.id, measureNode(node)]));
+
+function workflowCompositionFrames() {
+  const frames = [];
+  for (const [index, lane] of asArray(workflow.lanes).entries()) {
+    const y = layout.laneY + index * (layout.laneH + layout.laneGap);
+    frames.push({ id: `lane-${index}`, label: lane.label, kind: 'lane', x: layout.laneX, y, width: layout.laneW, height: layout.laneH, radius: 10 });
+    if (lane.variant === 'exception') {
+      frames.push({ id: `lane-${index}-exception`, label: `${lane.label} exception`, kind: 'exception-lane', x: layout.laneX + 6, y: y + 6, width: layout.laneW - 12, height: layout.laneH - 12, radius: 8 });
+    }
+  }
+  for (const [index, group] of asArray(workflow.groups).entries()) {
+    const span = spanForCols(group.fromCol, group.toCol, 50);
+    frames.push({
+      id: `group-${index}`,
+      label: group.label,
+      kind: 'group',
+      x: span.x,
+      y: laneTop(group.lane) + layout.laneTitleH + 8,
+      width: span.width,
+      height: layout.laneH - layout.laneTitleH - 16,
+      radius: 9,
+    });
+  }
+  return frames;
+}
 
 const mainPathSteps = new Map(asArray(workflow.mainPath).map((id, index) => [id, index]));
 const edgeSteps = new Map(asArray(workflow.edges).map((edge, index) => {
@@ -232,18 +272,46 @@ function validateWorkflow() {
           problems.push(`Edge "${edge.from}" -> "${edge.to}" is too short (${Math.round(segmentLength)}px; minimum 28px) — drop its label or route it through a channel.`);
         }
       }
-      const segments = [];
-      for (let i = 1; i < routed.points.length; i += 1) {
-        segments.push({ start: routed.points[i - 1], end: routed.points[i] });
-      }
-      for (const node of nodes.values()) {
-        if (node.id === edge.from || node.id === edge.to) continue;
-        if (segments.some((segment) => segmentIntersectsRect(segment, node, 2))) {
-          problems.push(`Edge "${edge.from}" -> "${edge.to}" crosses node "${node.id}" — adjust fromSide/toSide, route it through a channel, or move one node to a clearer lane/column.`);
-        }
-      }
     }
   }
+
+  problems.push(...cleanFlowProblems({
+    relations: workflow.edges,
+    endpointIds: new Set(nodes.keys()),
+    obstacles: nodes.values(),
+    pathFor,
+    diagramType: 'workflow',
+    relationCollection: 'edges',
+    obstacleKind: 'node',
+    routeHint: 'adjust fromSide/toSide, set route/via or channel coordinates, or move the node to a clearer lane/column'
+  }));
+  problems.push(...cleanCrossingProblems({
+    relations: workflow.edges,
+    endpointIds: new Set(nodes.keys()),
+    pathFor,
+    diagramType: 'workflow',
+    relationCollection: 'edges',
+    profile: workflow.meta?.quality_profile,
+    routeHint: 'adjust route/via, bias, or channel coordinates so the edges use separate lane corridors'
+  }));
+  problems.push(...cleanBorderRunProblems({
+    relations: workflow.edges,
+    endpointIds: new Set(nodes.keys()),
+    frames: workflowCompositionFrames(),
+    pathFor,
+    diagramType: 'workflow',
+    relationCollection: 'edges',
+    routeHint: 'adjust route/via, bias, or channel coordinates so the edge crosses the lane or group perpendicularly instead of following its border'
+  }));
+  problems.push(...cleanRouteRhythmProblems({
+    relations: workflow.edges,
+    endpointIds: new Set(nodes.keys()),
+    pathFor,
+    diagramType: 'workflow',
+    relationCollection: 'edges',
+    profile: workflow.meta?.quality_profile,
+    routeHint: 'adjust route/via, bias, or channel coordinates so each turn has a readable run-up'
+  }));
 
   if (Array.isArray(workflow.mainPath)) {
     for (const id of workflow.mainPath) {
@@ -370,11 +438,11 @@ function pathFor(edge) {
 function renderLane(lane, index) {
   const y = layout.laneY + index * (layout.laneH + layout.laneGap);
   const exception = lane.variant === 'exception'
-    ? `\n        <rect x="${layout.laneX + 6}" y="${y + 6}" width="${layout.laneW - 12}" height="${layout.laneH - 12}" rx="8" class="c-security-group" stroke-width="1"/>`
+    ? `\n        <rect data-graph-role="structural-frame" data-composition-frame-kind="exception-lane" data-composition-frame-id="lane-${index}-exception" x="${layout.laneX + 6}" y="${y + 6}" width="${layout.laneW - 12}" height="${layout.laneH - 12}" rx="8" class="c-security-group" stroke-width="1"/>`
     : '';
   const labelClass = lane.variant === 'exception' ? 't-security' : 't-dim';
   const prefix = lane.variant === 'exception' ? 'EX' : String(index + 1).padStart(2, '0');
-  return `        <rect x="${layout.laneX}" y="${y}" width="${layout.laneW}" height="${layout.laneH}" rx="10" class="c-lane" stroke-width="1"/>${exception}
+  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-${index}" x="${layout.laneX}" y="${y}" width="${layout.laneW}" height="${layout.laneH}" rx="10" class="c-lane" stroke-width="1"/>${exception}
         <text x="${layout.laneX + 14}" y="${y + 22}" class="${labelClass}" font-size="10" font-weight="600">${prefix} / ${esc(lane.label)}</text>`;
 }
 
@@ -387,61 +455,84 @@ function renderPhase(phase) {
         <text x="${span.cx}" y="39" class="${accent}" font-size="8" font-weight="600" text-anchor="middle">${esc(phase.label)}</text>`;
 }
 
-function renderGroup(group) {
+function renderGroup(group, index) {
   const span = spanForCols(group.fromCol, group.toCol, 50);
   const y = laneTop(group.lane) + layout.laneTitleH + 8;
   const height = layout.laneH - layout.laneTitleH - 16;
   const cls = group.variant === 'security' ? 'c-security-group' : 'c-lane';
   const textClass = variantAccent(group.variant);
-  return `        <rect x="${span.x}" y="${y}" width="${span.width}" height="${height}" rx="9" class="${cls}" stroke-width="1"/>
+  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-${index}" x="${span.x}" y="${y}" width="${span.width}" height="${height}" rx="9" class="${cls}" stroke-width="1"/>
         <text x="${span.x + 10}" y="${y + 14}" class="${textClass}" font-size="7" font-weight="600">${esc(group.label)}</text>`;
 }
 
 function renderNode(node) {
   const fill = componentFill[node.type] || 'c-external';
   const accent = componentText[node.type] || 't-muted';
-  const tag = node.tag
-    ? `\n        <text x="${node.cx}" y="${node.y + node.height - 12}" class="${accent}" font-size="7" text-anchor="middle">${esc(node.tag)}</text>`
+  const hasSub = node.sublabel != null && node.sublabel !== '';
+  const sub = hasSub
+    ? `\n          <text data-detail="context" x="${node.cx}" y="${node.y + 38}" class="t-muted" font-size="8" text-anchor="middle">${esc(node.sublabel)}</text>`
     : '';
-  return `        <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="c-mask"/>
-        <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="${fill}"${animateAttr(workflow.meta, 'node', nodeStep(node))} stroke-width="1.5"/>
-        <text x="${node.cx}" y="${node.y + 21}" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">${esc(node.label)}</text>
-        <text x="${node.cx}" y="${node.y + 38}" class="t-muted" font-size="8" text-anchor="middle">${esc(node.sublabel || '')}</text>${tag}`;
+  const tag = node.tag
+    ? `\n        <text data-detail="fine" x="${node.cx}" y="${node.y + node.height - 12}" class="${accent}" font-size="7" text-anchor="middle">${esc(node.tag)}</text>`
+    : '';
+  const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context: nodeContext(node) };
+  return `        <g ${focusNodeAttrs(node.id, node.label, passport)}>
+          ${focusNodeTitle(node.label, passport)}
+          <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="c-mask"/>
+          <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="${fill}"${animateAttr(workflow.meta, 'node', nodeStep(node))} stroke-width="1.5"/>
+          ${renderSemanticSigil(node.type, { x: node.x + 6, y: node.y + 6 })}
+          <text${hasSub ? ' data-detail-anchor' : ''} x="${node.cx}" y="${node.y + 21}" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">${esc(node.label)}</text>${sub}${tag}
+        </g>`;
 }
 
-function renderEdgePath(edge) {
+function renderEdgePath(edge, index) {
   const [cls, marker] = arrowClassMap[edge.variant || 'default'] || arrowClassMap.default;
   const routed = pathFor(edge);
   const strokeWidth = edge.width || (edge.variant === 'emphasis' ? 1.8 : 1.4);
-  return `        <path d="${routed.d}" class="${cls}"${animateAttr(workflow.meta, 'edge', edgeSteps.get(edge))} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  return `        <path ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)} data-composition-points="${routePointsValue(routed.points)}" d="${routed.d}" class="${cls}"${animateAttr(workflow.meta, 'edge', edgeSteps.get(edge))} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
 }
 
-function renderEdgeLabel(edge) {
+function renderEdgeLabel(edge, index) {
   if (!edge.label) return '';
   const routed = pathFor(edge);
   const [lx, ly] = labelPoint(edge, routed.points);
   const labelW = Math.max(30, textUnits(edge.label) * 4.8 + 10);
-  return `        <rect x="${lx - labelW / 2}" y="${ly - 10}" width="${labelW}" height="14" rx="3" class="c-mask"/>
-        <text x="${lx}" y="${ly}" class="${variantAccent(edge.variant, { dashed: 't-database' })}" font-size="8" text-anchor="middle">${esc(edge.label)}</text>`;
+  return `        <g data-detail="context" ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)}>
+          <rect x="${lx - labelW / 2}" y="${ly - 10}" width="${labelW}" height="14" rx="3" class="c-mask"/>
+          <text x="${lx}" y="${ly}" class="${variantAccent(edge.variant, { dashed: 't-database' })}" font-size="8" text-anchor="middle">${esc(edge.label)}</text>
+        </g>`;
 }
 
 function renderLegend() {
   const y = legendY();
-  return `        <text x="175" y="${y - 20}" class="t-primary" font-size="10" font-weight="600">Legend</text>
-        <rect x="175" y="${y - 8}" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
-        <text x="195" y="${y}" class="t-muted" font-size="7">User UI</text>
-        <rect x="260" y="${y - 8}" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
-        <text x="280" y="${y}" class="t-muted" font-size="7">Agent logic</text>
-        <rect x="370" y="${y - 8}" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
-        <text x="390" y="${y}" class="t-muted" font-size="7">Policy</text>
-        <rect x="455" y="${y - 8}" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
-        <text x="475" y="${y}" class="t-muted" font-size="7">Tool action</text>
-        <rect x="565" y="${y - 8}" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
-        <text x="585" y="${y}" class="t-muted" font-size="7">Context / trace</text>`;
+  return `        <g data-legend-bridge>
+          <text x="175" y="${y - 20}" class="t-primary" font-size="10" font-weight="600">Legend</text>
+        <g data-legend-kind="frontend">
+          <rect x="175" y="${y - 8}" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
+          <text x="195" y="${y}" class="t-muted" font-size="7">User UI</text>
+        </g>
+        <g data-legend-kind="backend">
+          <rect x="260" y="${y - 8}" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+          <text x="280" y="${y}" class="t-muted" font-size="7">Agent logic</text>
+        </g>
+        <g data-legend-kind="security">
+          <rect x="370" y="${y - 8}" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+          <text x="390" y="${y}" class="t-muted" font-size="7">Policy</text>
+        </g>
+        <g data-legend-kind="messagebus">
+          <rect x="455" y="${y - 8}" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+          <text x="475" y="${y}" class="t-muted" font-size="7">Tool action</text>
+        </g>
+        <g data-legend-kind="database">
+          <rect x="565" y="${y - 8}" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+          <text x="585" y="${y}" class="t-muted" font-size="7">Context / trace</text>
+        </g>
+        </g>`;
 }
 
 function renderSvg() {
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(workflow.meta, 'workflow diagram')}>
+${svgAccessibleText(workflow.meta, 'workflow diagram')}
 ${renderDefinitions()}
 
         <!-- Background Grid -->

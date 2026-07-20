@@ -1,11 +1,15 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { esc, renderDefinitions, textUnits } from '../shared/utils.mjs';
-import { animateAttr, loadDiagram, writeDiagram, svgRootAttrs } from '../shared/cli.mjs';
+import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
+import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagram, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import {
   asArray,
   isFinitePoint,
   rectsOverlap,
+  cleanFlowProblems,
+  cleanCrossingProblems,
+  cleanBorderRunProblems,
+  cleanRouteRhythmProblems,
   suggestLabelObstacleFix,
   suggestLabelPairFix,
   anchor,
@@ -13,6 +17,7 @@ import {
   defaultToSide,
   chosenSide,
   polylinePath,
+  routePointsValue,
   labelPoint,
   componentFill,
   componentText,
@@ -44,6 +49,21 @@ const layout = {
 function stageX(index) {
   return layout.leftX + index * layout.colGap;
 }
+
+function stageFrame(stage, index) {
+  return {
+    id: index,
+    label: stage.label,
+    kind: 'stage',
+    x: stageX(index) - layout.stageW / 2,
+    y: layout.stageY,
+    width: layout.stageW,
+    height: viewBox[1] - layout.stageY - layout.stageBottomPad,
+    radius: 10,
+  };
+}
+
+const compositionFrames = asArray(dataflow.stages).map(stageFrame);
 
 function measureNode(node) {
   const width = node.width || layout.nodeW;
@@ -133,6 +153,44 @@ function validateDataflow() {
     }
   }
 
+  problems.push(...cleanFlowProblems({
+    relations: dataflow.flows,
+    endpointIds: new Set(nodes.keys()),
+    obstacles: nodes.values(),
+    pathFor,
+    diagramType: 'dataflow',
+    relationCollection: 'flows',
+    obstacleKind: 'node',
+    routeHint: 'adjust fromSide/toSide, set route/via or channelX/channelY, or move the node to another stage/row'
+  }));
+  problems.push(...cleanCrossingProblems({
+    relations: dataflow.flows,
+    endpointIds: new Set(nodes.keys()),
+    pathFor,
+    diagramType: 'dataflow',
+    relationCollection: 'flows',
+    profile: dataflow.meta?.quality_profile,
+    routeHint: 'adjust route/via or channelX/channelY so the flows use separate stage corridors'
+  }));
+  problems.push(...cleanBorderRunProblems({
+    relations: dataflow.flows,
+    endpointIds: new Set(nodes.keys()),
+    frames: compositionFrames,
+    pathFor,
+    diagramType: 'dataflow',
+    relationCollection: 'flows',
+    routeHint: 'adjust route/via or channelX/channelY so the flow crosses the stage perpendicularly instead of following its border'
+  }));
+  problems.push(...cleanRouteRhythmProblems({
+    relations: dataflow.flows,
+    endpointIds: new Set(nodes.keys()),
+    pathFor,
+    diagramType: 'dataflow',
+    relationCollection: 'flows',
+    profile: dataflow.meta?.quality_profile,
+    routeHint: 'adjust route/via or channelX/channelY so each turn uses a clear inter-stage corridor'
+  }));
+
   const labelRects = [];
   for (const flow of asArray(dataflow.flows)) {
     if (!flow.label || !nodes.has(flow.from) || !nodes.has(flow.to)) continue;
@@ -208,43 +266,54 @@ function pathFor(flow) {
 }
 
 function renderStage(stage, index) {
+  const frame = compositionFrames[index];
   const cx = stageX(index);
-  const x = cx - layout.stageW / 2;
-  const h = viewBox[1] - layout.stageY - layout.stageBottomPad;
-  return `        <rect x="${x}" y="${layout.stageY}" width="${layout.stageW}" height="${h}" rx="10" class="c-lane" stroke-width="1"/>
+  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="stage" data-composition-frame-id="${index}" x="${frame.x}" y="${frame.y}" width="${frame.width}" height="${frame.height}" rx="${frame.radius}" class="c-lane" stroke-width="1"/>
         <text x="${cx}" y="${layout.stageY + 22}" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">${String(index + 1).padStart(2, '0')} / ${esc(stage.label)}</text>`;
 }
 
 function renderNode(node) {
   const fill = componentFill[node.type] || 'c-external';
   const accent = componentText[node.type] || 't-muted';
-  const tag = node.tag
-    ? `\n        <text x="${node.cx}" y="${node.y + node.height - 11}" class="${accent}" font-size="7" text-anchor="middle">${esc(node.tag)}</text>`
+  const hasSub = node.sublabel != null && node.sublabel !== '';
+  const sub = hasSub
+    ? `\n          <text data-detail="context" x="${node.cx}" y="${node.y + 37}" class="t-muted" font-size="7" text-anchor="middle">${esc(node.sublabel)}</text>`
     : '';
-  return `        <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="c-mask"/>
-        <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="${fill}"${animateAttr(dataflow.meta, 'node', nodeSteps.get(node.id))} stroke-width="1.5"/>
-        <text x="${node.cx}" y="${node.y + 21}" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">${esc(node.label)}</text>
-        <text x="${node.cx}" y="${node.y + 37}" class="t-muted" font-size="7" text-anchor="middle">${esc(node.sublabel || '')}</text>${tag}`;
+  const tag = node.tag
+    ? `\n        <text data-detail="fine" x="${node.cx}" y="${node.y + node.height - 11}" class="${accent}" font-size="7" text-anchor="middle">${esc(node.tag)}</text>`
+    : '';
+  const stage = asArray(dataflow.stages)[node.stage];
+  const context = stage ? `${String(node.stage + 1).padStart(2, '0')} / ${stage.label}` : 'Data-flow node';
+  const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context };
+  return `        <g ${focusNodeAttrs(node.id, node.label, passport)}>
+          ${focusNodeTitle(node.label, passport)}
+          <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="c-mask"/>
+          <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="${fill}"${animateAttr(dataflow.meta, 'node', nodeSteps.get(node.id))} stroke-width="1.5"/>
+          ${renderSemanticSigil(node.type, { x: node.x + 6, y: node.y + 6 })}
+          <text${hasSub ? ' data-detail-anchor' : ''} x="${node.cx}" y="${node.y + 21}" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">${esc(node.label)}</text>${sub}${tag}
+        </g>`;
 }
 
 function renderFlowPath(flow, index) {
   const [cls, marker] = arrowClassMap[flow.variant || 'default'] || arrowClassMap.default;
   const routed = pathFor(flow);
   const strokeWidth = flow.width || (flow.variant === 'emphasis' ? 1.8 : 1.4);
-  return `        <path d="${routed.d}" class="${cls}"${animateAttr(dataflow.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  return `        <path ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)} data-composition-points="${routePointsValue(routed.points)}" d="${routed.d}" class="${cls}"${animateAttr(dataflow.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
 }
 
-function renderFlowLabel(flow) {
+function renderFlowLabel(flow, index) {
   const routed = pathFor(flow);
   const [lx, ly] = labelPoint(flow, routed.points);
   const longestLine = Math.max(textUnits(flow.label), textUnits(flow.classification || ''));
   const labelW = Math.max(34, longestLine * 4.9 + 12);
   const classification = flow.classification
-    ? `\n        <text x="${lx}" y="${ly + 11}" class="t-dim" font-size="7" text-anchor="middle">${esc(flow.classification)}</text>`
+    ? `\n        <text data-detail="fine" x="${lx}" y="${ly + 11}" class="t-dim" font-size="7" text-anchor="middle">${esc(flow.classification)}</text>`
     : '';
   const labelH = flow.classification ? 27 : layout.labelH;
-  return `        <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>
-        <text x="${lx}" y="${ly}" class="${variantAccent(flow.variant)}" font-size="8" text-anchor="middle">${esc(flow.label)}</text>${classification}`;
+  return `        <g data-detail="context" ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)}>
+          <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>
+          <text x="${lx}" y="${ly}" class="${variantAccent(flow.variant)}" font-size="8" text-anchor="middle">${esc(flow.label)}</text>${classification}
+        </g>`;
 }
 
 function renderLegend() {
@@ -262,6 +331,7 @@ function renderLegend() {
 
 function renderSvg() {
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(dataflow.meta, 'data-flow diagram')}>
+${svgAccessibleText(dataflow.meta, 'data-flow diagram')}
 ${renderDefinitions()}
 
         <!-- Background Grid -->

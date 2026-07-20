@@ -21,6 +21,19 @@ level, so unknown fields are rejected rather than silently ignored.
 
 Every `meta` object also accepts `animation: "trace"` for opt-in SVG/CSS motion
 in generated HTML. Omit it, or set `"none"`, for the default static output.
+`visual_preset` accepts `classic` (the stable default), `signal-flow` (luminous
+motion-forward presentation), or `blueprint` (high-contrast engineering review).
+Presets change only viewer styling; they do not alter semantic IDs or geometry.
+It may also include up to five guided `views`. Each view has a unique `id`, a
+reader-facing `label`, a non-empty `focus` list of existing semantic node IDs,
+and an optional short `note`.
+
+Every relationship collection (`connections`, `edges`, `messages`, `flows`, and
+`transitions`) accepts an optional author-controlled `id` using the shared ID
+pattern. The renderer keeps its source-order runtime key separately, while the
+authored ID enables a stable `#relation=<id>` viewer link that survives array
+reordering. ID-less documents remain valid and their relationship pins stay
+local to the current page.
 
 ## schema_version policy
 
@@ -40,6 +53,7 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
   `messagebus`, `external`
 - `variant` — `default`, `emphasis`, `security`, `dashed` (sequence messages
   extend this list locally with `return`)
+- `guidedViews` — the bounded, read-only reader paths accepted by `meta.views`
 - `cards` — the summary-card blocks rendered below the SVG
 
 Lifecycle state `type` is mode-specific (`start`/`active`/`waiting`/...) and
@@ -53,6 +67,10 @@ schemas with ajv's draft 2020-12 standalone generator using `strict: true` and
 is committed and shipped with the skill, so runtime validation has no npm or
 network dependency. `renderers/shared/validator.mjs` applies the matching
 standalone validator before the renderer's own layout checks.
+The shared loader then checks cross-collection facts that JSON Schema cannot
+express cleanly here: duplicate view IDs, duplicate focus IDs, focus IDs that do
+not exist in the diagram's semantic collection, and duplicate authored
+relationship IDs within the mode's relationship collection.
 
 `npm test` runs the generator in check mode and fails when the committed
 validators drift from their schemas.
