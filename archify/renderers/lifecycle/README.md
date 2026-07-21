@@ -87,5 +87,14 @@ element's id or label. The renderer additionally fails when it can detect
 layout problems, including a missing `main` lane, duplicate state IDs, unknown
 lanes, unknown transition endpoints, states outside the lifecycle area,
 overlapping states (including across lanes), labels colliding with states or
-other labels, labels wider than their state, or unreadably short transitions.
+other labels, labels wider than their state, unreadably short transitions, or
+transitions crossing unrelated states (2px Clean Flow clearance). Lifecycle
+bands remain intentional pass-through containers.
 Text width is estimated CJK-aware: fullwidth glyphs count as two units.
+
+Set `meta.quality_profile` to `showcase` for polished delivery. Unrelated proper
+X crossings then fail with `composition/proper-crossing`; default `standard`
+keeps them as artifact-receipt warnings. The final artifact check samples
+rounded `Q` corners, while shared endpoints, touches, and collinear corridors
+remain exempt. Showcase also rejects any route segment below 8px and any
+interior turn segment below 16px; ordinary 8–15px endpoint stubs remain valid.

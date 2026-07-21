@@ -23,6 +23,19 @@ jobs:
       - name: Tests must pass before releasing
         run: npm test
         working-directory: archify
+      - name: Provision a known Chrome runtime
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          chrome-version: stable
+          install-dependencies: true
+      - name: Install the WebM decoder
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
+      - name: WebM export must contain distinct decoded frames
+        run: npm run test:webm
+        working-directory: archify
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
       - name: Tag must match package.json version
         run: |
           pkg_version="$(node -p "require('./archify/package.json').version")"

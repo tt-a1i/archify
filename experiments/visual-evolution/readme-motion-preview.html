@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Archify README motion preview</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Cpolygon points='14,2 26,8 26,20 14,26 2,20 2,8' fill='%23083344' stroke='%2322d3ee'/%3E%3Ccircle cx='14' cy='15' r='2.5' fill='%2322d3ee'/%3E%3C/svg%3E">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: #0d1117; color: #f0f6fc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    a { color: #4493f8; text-decoration: none; }
+    .github-bar { position: sticky; z-index: 2; top: 0; height: 64px; display: flex; align-items: center; gap: 12px; padding: 0 28px; border-bottom: 1px solid #30363d; background: #010409; }
+    .github-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #f0f6fc; color: #010409; font-weight: 800; }
+    .repository { font-weight: 600; }
+    .readme { max-width: 1012px; margin: 0 auto; padding: 32px 24px 72px; }
+    .center { text-align: center; }
+    .language { margin: 0 0 16px; font-size: 14px; }
+    .trendshift { width: 250px; height: 55px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 18px; border: 1px solid #30363d; border-radius: 8px; background: #161b22; color: #8b949e; font-size: 12px; }
+    .hero-link { display: block; }
+    .hero { width: 960px; max-width: 100%; height: auto; display: block; margin: 0 auto; border: 1px solid #30363d; border-radius: 6px; background: #020617; }
+    .caption { display: block; margin: 9px 0 22px; color: #8b949e; font-size: 13px; line-height: 1.55; }
+    .caption strong { color: #c9d1d9; }
+    h1 { margin: 20px 0 16px; padding-bottom: 10px; border-bottom: 1px solid #21262d; font-size: 32px; }
+    .lead { font-size: 16px; font-weight: 600; line-height: 1.55; }
+    .body { color: #c9d1d9; line-height: 1.55; }
+    .bullets { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; color: #c9d1d9; font-size: 14px; }
+    .badge { display: inline-block; margin: 8px 4px 0 0; padding: 3px 8px; border-radius: 4px; background: #238636; color: white; font-size: 12px; }
+    .badge.violet { background: #8957e5; }
+    .badge.blue { background: #0969da; }
+    @media (max-width: 640px) {
+      .github-bar { height: 56px; padding: 0 16px; }
+      .readme { padding: 20px 16px 48px; }
+      .trendshift { margin-bottom: 14px; }
+      .hero { border-radius: 4px; }
+      .caption { font-size: 12px; }
+      h1 { font-size: 26px; }
+      .lead { font-size: 15px; }
+      .bullets { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="github-bar"><div class="github-mark">A</div><span class="repository">tt-a1i / archify</span></div>
+  <main class="readme">
+    <p class="center language" id="language"><strong>English</strong> · <a href="?lang=zh">简体中文</a></p>
+    <p class="center"><span class="trendshift">Archify on Trendshift · repository 31352</span></p>
+    <p class="center">
+      <a class="hero-link" href="../../docs/gallery.html"><img class="hero" src="../../docs/assets/archify-live-proof.gif" alt="Three verified Archify artifacts moving through Signal Flow, Blueprint, and Classic presets" width="960"></a>
+      <small class="caption" id="caption"><strong>Three real generated artifacts.</strong> Signal Flow · Blueprint · Classic · <a href="../../docs/gallery.html">open the interactive Proof Lab ↗</a></small>
+    </p>
+    <h1>Archify</h1>
+    <p class="lead" id="lead">Generate beautiful architecture, technical workflow, sequence, data-flow, and lifecycle diagrams in chat. Switch dark / light. Add motion. Export crisp PNG / JPEG / WebP / SVG / WebM.</p>
+    <p class="body" id="body-copy">Archify turns a plain-English description of your system or process into a polished, self-contained technical diagram.</p>
+    <div class="bullets" id="bullets"><span>✓ Three contract-backed visual presets</span><span>✓ Searchable semantic node navigation</span><span>✓ Playable guided stories</span><span>✓ Dependency-free pan, zoom, and export</span></div>
+    <p><span class="badge">MIT</span><span class="badge violet">Agent Skill</span><span class="badge blue">v2.11.0</span></p>
+  </main>
+  <script>
+    if (new URLSearchParams(location.search).get('lang') === 'zh') {
+      document.documentElement.lang = 'zh-CN';
+      document.getElementById('language').innerHTML = '<a href="?">English</a> · <strong>简体中文</strong>';
+      document.querySelector('.hero').alt = '三个经过验证的 Archify 成品依次展示 Signal Flow、Blueprint 和 Classic 预设';
+      document.getElementById('caption').innerHTML = '<strong>三个真实生成、校验通过的成品。</strong> Signal Flow · Blueprint · Classic · <a href="../../docs/gallery.html">打开可交互验证作品集 ↗</a>';
+      document.getElementById('lead').textContent = '聊两句就画出好看的架构图、技术流程图、调用时序图、数据流图和生命周期图。深色 / 浅色一键切，还能动起来。导出清晰 PNG / JPEG / WebP / SVG / WebM。';
+      document.getElementById('body-copy').textContent = 'Archify 把自然语言描述变成做工精细、可探索的单文件 HTML 技术图。';
+      document.getElementById('bullets').innerHTML = '<span>✓ 三套有契约的视觉预设</span><span>✓ 可沿入向/出向关系跳转的语义导航</span><span>✓ 可播放的引导故事</span><span>✓ 零依赖平移、缩放与导出</span>';
+    }
+  </script>
+</body>
+</html>

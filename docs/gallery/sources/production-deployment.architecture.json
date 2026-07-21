@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Production Deployment Ownership",
+    "subtitle": "Regions, network boundaries, workload owners, state, and named crossings",
+    "output": "examples/production-deployment.html",
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "request-boundary",
+        "label": "Request crosses the edge",
+        "focus": ["clients", "edge", "gateway", "api_a", "api_b"],
+        "note": "Follow public traffic into the private application network."
+      },
+      {
+        "id": "state-ownership",
+        "label": "State and ownership",
+        "focus": ["api_a", "api_b", "redis", "postgres", "replica"],
+        "note": "Separate stateless platform workloads from data-team-owned state."
+      },
+      {
+        "id": "async-operations",
+        "label": "Async and operations",
+        "focus": ["api_b", "events", "worker", "audit", "observability"],
+        "note": "See the asynchronous work and the evidence it emits."
+      }
+    ]
+  },
+  "components": [
+    { "id": "clients", "type": "external", "label": "Customers", "sublabel": "web + mobile", "pos": [38, 300], "size": [122, 60] },
+    { "id": "edge", "type": "cloud", "label": "Global Edge", "sublabel": "CDN + WAF", "pos": [230, 300], "size": [126, 60], "tag": "edge team" },
+    { "id": "gateway", "type": "security", "label": "API Gateway", "sublabel": "public :443", "pos": [430, 300], "size": [128, 60], "tag": "platform" },
+    { "id": "api_a", "type": "backend", "label": "API Pods / AZ-a", "sublabel": "private subnet", "pos": [630, 195], "size": [136, 62], "tag": "app team" },
+    { "id": "api_b", "type": "backend", "label": "API Pods / AZ-b", "sublabel": "private subnet", "pos": [630, 405], "size": [136, 62], "tag": "app team" },
+    { "id": "redis", "type": "database", "label": "Redis", "sublabel": "multi-AZ cache", "pos": [840, 195], "size": [126, 62], "tag": "platform" },
+    { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "primary / encrypted", "pos": [840, 405], "size": [126, 62], "tag": "data team" },
+    { "id": "events", "type": "messagebus", "label": "Event Bus", "sublabel": "orders.v1", "pos": [1040, 300], "size": [126, 60], "tag": "platform" },
+    { "id": "worker", "type": "backend", "label": "Workers", "sublabel": "private workload", "pos": [1240, 300], "size": [126, 60], "tag": "app team" },
+    { "id": "replica", "type": "database", "label": "DR Replica", "sublabel": "eu-west-1", "pos": [1040, 610], "size": [126, 62], "tag": "data team" },
+    { "id": "audit", "type": "cloud", "label": "Audit Archive", "sublabel": "immutable objects", "pos": [1240, 465], "size": [126, 62], "tag": "security" },
+    { "id": "observability", "type": "external", "label": "Observability", "sublabel": "metrics + traces", "pos": [1240, 85], "size": [126, 62], "tag": "SRE" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "AWS us-east-1 / production", "wraps": ["edge", "gateway", "api_a", "api_b", "redis", "postgres", "events", "worker", "audit"] },
+    { "kind": "security-group", "label": "private application network", "wraps": ["api_a", "api_b", "redis", "postgres", "events", "worker"] },
+    { "kind": "region", "label": "AWS eu-west-1 / disaster recovery", "wraps": ["replica"] }
+  ],
+  "connections": [
+    { "from": "clients", "to": "edge", "label": "HTTPS", "variant": "emphasis" },
+    { "from": "edge", "to": "gateway", "label": "mTLS", "variant": "security" },
+    { "from": "gateway", "to": "api_a", "variant": "emphasis", "route": "orthogonal-h" },
+    { "from": "gateway", "to": "api_b", "variant": "emphasis", "route": "orthogonal-h" },
+    { "from": "api_a", "to": "redis", "label": "cache", "route": "straight" },
+    { "from": "api_b", "to": "postgres", "label": "SQL", "route": "straight" },
+    { "from": "api_a", "to": "events", "label": "publish", "variant": "dashed", "fromSide": "top", "toSide": "top", "via": [[698, 170], [1103, 170]] },
+    { "from": "api_b", "to": "events", "variant": "dashed", "fromSide": "top", "toSide": "bottom", "via": [[698, 380], [1103, 380]] },
+    { "from": "events", "to": "worker", "variant": "emphasis" },
+    { "from": "postgres", "to": "replica", "label": "cross-region WAL", "variant": "security", "route": "orthogonal-v", "labelAt": [1003, 529] },
+    { "from": "worker", "to": "audit", "label": "evidence", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 58 },
+    { "from": "worker", "to": "observability", "label": "OTLP", "variant": "dashed", "route": "orthogonal-v" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Runtime Ownership", "items": ["Platform owns the edge, gateway, cache, and event bus", "Application teams own API pods and workers", "Data owns primary and disaster-recovery state"] },
+    { "dot": "rose", "title": "Named Crossings", "items": ["Public HTTPS terminates at the managed edge", "mTLS crosses into the application network", "Cross-region WAL is explicit and encrypted"] },
+    { "dot": "emerald", "title": "Operational Evidence", "items": ["Workers emit traces to SRE-owned observability", "Audit evidence lands in immutable storage", "Unknown placement should remain marked, never invented"] }
+  ]
+}

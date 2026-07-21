@@ -25,7 +25,11 @@ function copyInstalledSkill(target) {
     filter(source) {
       const rel = path.relative(skillRoot, source);
       return rel !== 'node_modules' && !rel.startsWith(`node_modules${path.sep}`)
-        && rel !== 'test' && !rel.startsWith(`test${path.sep}`);
+        && rel !== 'test' && !rel.startsWith(`test${path.sep}`)
+        // Another test creates this short-lived directory under skillRoot so
+        // Ajv resolves from the checkout. Never copy a concurrently removed
+        // test fixture into an installed-skill simulation.
+        && !rel.startsWith('.validator-check-');
     },
   });
 }
@@ -34,6 +38,7 @@ test('cli: help lists commands and diagram types', () => {
   const result = run(['--help']);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /archify render <type>/);
+  assert.match(result.stdout, /archify guide \[scenario or question\]/);
   assert.match(result.stdout, /archify doctor/);
   assert.match(result.stdout, /archify demo \[output-directory\]/);
   assert.match(result.stdout, /architecture, workflow, sequence, dataflow, lifecycle/);
@@ -45,6 +50,7 @@ test('cli: doctor reports a complete installation is ready', () => {
   assert.match(result.stdout, /\[ok\] Node\.js v\d+/);
   assert.match(result.stdout, /\[ok\] Core template/);
   assert.match(result.stdout, /\[ok\] Example renderer/);
+  assert.match(result.stdout, /\[ok\] Scenario recipe guide/);
   assert.match(result.stdout, /\[ok\] Standalone schema validators/);
   assert.match(result.stdout, /\[ok\] architecture renderer, schema, and example/);
   assert.match(result.stdout, /\[ok\] lifecycle renderer, schema, and example/);
@@ -64,6 +70,7 @@ test('cli: doctor identifies an incomplete installation', () => {
 
   assert.equal(result.status, 1);
   assert.match(result.stdout, /\[missing\] Core template/);
+  assert.match(result.stdout, /\[missing\] Scenario recipe guide/);
   assert.match(result.stdout, /\[missing\] workflow renderer, schema, and example/);
   assert.match(result.stderr, /Archify is not ready: \d+ required files? missing\./);
 });
@@ -102,6 +109,52 @@ test('cli: examples renders from an installed skill', () => {
   ]) {
     assert.equal(fs.existsSync(path.join(installedRoot, 'examples', output)), true, output);
   }
+});
+
+test('cli: guide lists all scenario recipes by diagram type', () => {
+  const result = run(['guide']);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Archify scenario recipes \(11\)/);
+  for (const type of ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']) {
+    assert.match(result.stdout, new RegExp(`\\[${type}\\]`));
+  }
+});
+
+test('cli: guide recommends a scenario as structured json', () => {
+  const result = run(['guide', 'Show an API request with Redis cache miss', '--json']);
+
+  assert.equal(result.status, 0, result.stderr);
+  const parsed = JSON.parse(result.stdout);
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.lang, 'en');
+  assert.equal(parsed.confidence, 'high');
+  assert.equal(parsed.recommendation.id, 'api-request');
+  assert.equal(parsed.recommendation.type, 'sequence');
+});
+
+test('cli: guide detects Chinese and explains the recommendation boundary', () => {
+  const result = run(['guide', '展示 Kafka topic 消费者组和死信队列']);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /推荐: 事件流拓扑  \[dataflow\]/);
+  assert.match(result.stdout, /不要这样用:/);
+  assert.match(result.stdout, /必须包含:/);
+  assert.match(result.stdout, /可直接复制的提示词:/);
+});
+
+test('cli: guide works from an installed skill without node_modules', () => {
+  const installedRoot = path.join(tmp, 'installed-guide-skill');
+  copyInstalledSkill(installedRoot);
+  const installedCli = path.join(installedRoot, 'bin/archify.mjs');
+
+  const result = spawnSync(process.execPath, [installedCli, 'guide', 'incident-runbook', '--json'], {
+    cwd: installedRoot,
+    encoding: 'utf8',
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).recommendation.id, 'incident-runbook');
 });
 
 test('cli: demo creates a ready-to-open diagram in a chosen directory', () => {
@@ -153,8 +206,30 @@ test('cli: validate emits structured json without keeping html output', () => {
   const parsed = JSON.parse(result.stdout);
   assert.equal(parsed.ok, true);
   assert.equal(parsed.type, 'workflow');
-  assert.equal(parsed.checks.length, 4);
+  assert.equal(parsed.checks.length, 7);
+  assert.equal(parsed.composition.profile, 'showcase');
+  assert.deepEqual(parsed.composition.summary, { errors: 0, warnings: 0 });
+  assert.equal(parsed.composition.metrics.containerBorderRuns, 0);
   assert.deepEqual(new Set(fs.readdirSync(tmp)), before);
+});
+
+test('cli: --quality overrides the source profile for render and validate', () => {
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  const out = path.join(tmp, 'workflow-standard.html');
+  const rendered = run(['render', 'workflow', input, out, '--quality', 'standard']);
+  assert.equal(rendered.status, 0, rendered.stderr);
+  assert.match(fs.readFileSync(out, 'utf8'), /data-quality-profile="standard"/);
+
+  const validated = run(['validate', 'workflow', input, '--quality=standard', '--json']);
+  assert.equal(validated.status, 0, validated.stderr);
+  assert.equal(JSON.parse(validated.stdout).composition.profile, 'standard');
+});
+
+test('cli: rejects an unknown quality profile', () => {
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  const result = run(['validate', 'workflow', input, '--quality', 'hero']);
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /Expected standard or showcase/);
 });
 
 test('cli: inspect emits architecture layout json', () => {

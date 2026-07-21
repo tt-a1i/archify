@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Async Job Roundtrip",
+    "subtitle": "Acknowledgement, queueing, background work, retries, callback, polling, and final consistency",
+    "output": "examples/async-job-roundtrip.html",
+    "viewBox": [820, 920],
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "accept-and-enqueue", "label": "Accept without blocking", "focus": ["client", "api", "queue"], "note": "The API acknowledges quickly after durable enqueue." },
+      { "id": "work-and-retry", "label": "Background work and retry", "focus": ["queue", "worker", "provider"], "note": "Timeouts re-enter the queue instead of holding the original request open." },
+      { "id": "observe-final-state", "label": "Observe final consistency", "focus": ["worker", "store", "notify", "client", "api"], "note": "Webhook delivery is primary; polling remains a bounded fallback." }
+    ]
+  },
+  "participants": [
+    { "id": "client", "type": "external", "label": "Client", "sublabel": "mobile app" },
+    { "id": "api", "type": "backend", "label": "Jobs API", "sublabel": "request edge" },
+    { "id": "queue", "type": "messagebus", "label": "Queue", "sublabel": "durable work" },
+    { "id": "worker", "type": "backend", "label": "Worker", "sublabel": "background" },
+    { "id": "provider", "type": "cloud", "label": "Provider", "sublabel": "external API" },
+    { "id": "store", "type": "database", "label": "Job Store", "sublabel": "source of truth" },
+    { "id": "notify", "type": "messagebus", "label": "Notifier", "sublabel": "webhook" }
+  ],
+  "segments": [
+    { "from": 150, "to": 288, "label": "Accept" },
+    { "from": 306, "to": 538, "label": "Background work" },
+    { "from": 554, "to": 800, "label": "Notify + reconcile" }
+  ],
+  "messages": [
+    { "from": "client", "to": "api", "y": 180, "label": "POST /jobs", "variant": "emphasis" },
+    { "from": "api", "to": "queue", "y": 222, "label": "enqueue job", "variant": "emphasis" },
+    { "from": "api", "to": "client", "y": 264, "label": "202 + job id", "variant": "return" },
+    { "from": "queue", "to": "worker", "y": 326, "label": "deliver", "variant": "emphasis" },
+    { "from": "worker", "to": "provider", "y": 368, "label": "perform work", "variant": "default" },
+    { "from": "provider", "to": "worker", "y": 410, "label": "result / timeout", "variant": "return" },
+    { "from": "worker", "to": "queue", "y": 452, "label": "retry if timeout", "variant": "dashed" },
+    { "from": "worker", "to": "store", "y": 494, "label": "persist final state", "variant": "emphasis" },
+    { "from": "worker", "to": "notify", "y": 566, "label": "job.completed", "variant": "dashed" },
+    { "from": "notify", "to": "client", "y": 608, "label": "signed webhook", "variant": "dashed" },
+    { "from": "client", "to": "api", "y": 650, "label": "GET /jobs/:id", "variant": "default" },
+    { "from": "api", "to": "store", "y": 692, "label": "read status", "variant": "default" },
+    { "from": "store", "to": "api", "y": 734, "label": "completed", "variant": "return" },
+    { "from": "api", "to": "client", "y": 776, "label": "200 final result", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "api", "from": 174, "to": 272, "type": "backend" },
+    { "participant": "queue", "from": 216, "to": 334, "type": "messagebus" },
+    { "participant": "worker", "from": 320, "to": 574, "type": "backend" },
+    { "participant": "provider", "from": 362, "to": 416, "type": "cloud" },
+    { "participant": "store", "from": 488, "to": 742, "type": "database" },
+    { "participant": "notify", "from": 560, "to": 616, "type": "messagebus" },
+    { "participant": "api", "from": 644, "to": 784, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Fast Acknowledgement", "items": ["The caller receives a durable job id before work begins", "Queue ownership is visible in the acceptance contract", "The original connection does not wait for provider latency"] },
+    { "dot": "orange", "title": "Bounded Recovery", "items": ["Timeouts re-enter the queue with a retry policy", "Final state is persisted before notification", "The job store remains the source of truth"] },
+    { "dot": "emerald", "title": "Two Observation Paths", "items": ["A signed webhook announces completion", "Status polling is a fallback, not a second workflow", "Both paths converge on the same final state"] }
+  ]
+}

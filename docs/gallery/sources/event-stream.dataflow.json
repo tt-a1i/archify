@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Order Event-stream Topology",
+    "subtitle": "Named events, ordered topics, processors, consumer groups, state, replay, and dead letters",
+    "output": "examples/event-stream.html",
+    "viewBox": [1080, 780],
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "order-transit", "label": "Order event transit", "focus": ["checkout", "orders", "validate", "state", "fulfillment"], "note": "Follow an order from producer through ordered processing to fulfillment." },
+      { "id": "payment-transit", "label": "Payment event transit", "focus": ["billing", "payments", "enrich", "state", "analytics"], "note": "Track payment facts into the shared materialized state and analytics." },
+      { "id": "failure-and-replay", "label": "Failure and replay", "focus": ["validate", "enrich", "dlq", "replay", "ops"], "note": "Isolate dead letters, operator review, and controlled replay ownership." }
+    ]
+  },
+  "stages": [
+    { "label": "Producers" },
+    { "label": "Transit" },
+    { "label": "Processors" },
+    { "label": "State + recovery" },
+    { "label": "Consumers" }
+  ],
+  "nodes": [
+    { "id": "checkout", "type": "frontend", "label": "Checkout API", "sublabel": "order producer", "stage": 0, "row": 0, "tag": "team commerce" },
+    { "id": "billing", "type": "backend", "label": "Billing API", "sublabel": "payment producer", "stage": 0, "row": 2, "tag": "team money" },
+    { "id": "orders", "type": "messagebus", "label": "orders.v1", "sublabel": "12 partitions", "stage": 1, "row": 0, "tag": "key: order_id" },
+    { "id": "payments", "type": "messagebus", "label": "payments.v2", "sublabel": "8 partitions", "stage": 1, "row": 2, "tag": "key: order_id" },
+    { "id": "validate", "type": "backend", "label": "Order Validate", "sublabel": "group fulfillment", "stage": 2, "row": 0, "tag": "ordered" },
+    { "id": "enrich", "type": "backend", "label": "Payment Enrich", "sublabel": "group analytics", "stage": 2, "row": 2, "tag": "at-least-once" },
+    { "id": "state", "type": "database", "label": "Order State", "sublabel": "materialized view", "stage": 3, "row": 1, "tag": "idempotent" },
+    { "id": "dlq", "type": "messagebus", "label": "events.dlq", "sublabel": "poison events", "stage": 3, "row": 4, "tag": "7-day retention" },
+    { "id": "fulfillment", "type": "backend", "label": "Fulfillment", "sublabel": "shipping workflow", "stage": 4, "row": 0, "tag": "consumer" },
+    { "id": "analytics", "type": "database", "label": "Analytics", "sublabel": "streaming facts", "stage": 4, "row": 2, "tag": "consumer" },
+    { "id": "replay", "type": "security", "label": "Replay Tool", "sublabel": "approved batch", "stage": 4, "row": 4, "tag": "operator gate" },
+    { "id": "ops", "type": "external", "label": "On-call", "sublabel": "DLQ owner", "stage": 4, "row": 3, "yOffset": -18, "tag": "SRE" }
+  ],
+  "flows": [
+    { "from": "checkout", "to": "orders", "label": "OrderPlaced", "classification": "schema v1", "variant": "emphasis", "route": "straight" },
+    { "from": "billing", "to": "payments", "label": "PaymentCaptured", "classification": "schema v2", "variant": "emphasis", "route": "straight" },
+    { "from": "orders", "to": "validate", "label": "ordered orders", "classification": "consumer group", "variant": "emphasis", "route": "straight" },
+    { "from": "payments", "to": "enrich", "label": "payment facts", "classification": "at-least-once", "variant": "emphasis", "route": "straight" },
+    { "from": "validate", "to": "state", "label": "valid order", "classification": "idempotent", "variant": "emphasis", "route": "vertical-channel" },
+    { "from": "enrich", "to": "state", "label": "enriched payment", "classification": "idempotent", "variant": "default", "route": "vertical-channel" },
+    { "from": "state", "to": "fulfillment", "label": "ready orders", "classification": "read model", "variant": "emphasis", "route": "vertical-channel" },
+    { "from": "state", "to": "analytics", "label": "order facts", "classification": "non-PII", "variant": "default", "route": "vertical-channel" },
+    { "from": "validate", "to": "dlq", "label": "invalid event", "classification": "dead letter", "variant": "security", "fromSide": "bottom", "toSide": "top", "via": [[630, 186], [630, 550], [745, 550]], "labelAt": [630, 428] },
+    { "from": "enrich", "to": "dlq", "label": "poison event", "classification": "dead letter", "variant": "security", "route": "bottom-channel", "labelDy": 30 },
+    { "from": "dlq", "to": "ops", "label": "failure sample", "classification": "restricted", "variant": "security", "route": "vertical-channel" },
+    { "from": "dlq", "to": "replay", "label": "approved replay", "classification": "audited batch", "variant": "dashed", "route": "straight" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "Transit Contract", "items": ["Every event and topic is named", "Partition keys preserve per-order ordering", "Consumer groups expose processing ownership"] },
+    { "dot": "emerald", "title": "State + Delivery", "items": ["Processors write an idempotent materialized view", "Fulfillment and analytics consume distinct assets", "At-least-once delivery never implies duplicate business effects"] },
+    { "dot": "rose", "title": "Failure Ownership", "items": ["Poison events land in a retained dead-letter topic", "On-call inspects samples before replay", "Replay is gated, batched, and auditable"] }
+  ]
+}

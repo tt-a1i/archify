@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="archify guide 2.11.0">
+  <title>Archify Scenario Guide — Choose the Right Diagram</title>
+  <meta name="description" content="Describe the technical question you need to answer. Archify recommends a bounded diagram recipe, evidence checklist, and copy-ready prompt.">
+  <meta name="theme-color" content="#020617">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#020617; --panel:rgba(9,18,36,.86); --panel-solid:#091224; --line:#1e2d46;
+      --text:#f4f8ff; --muted:#8da0ba; --dim:#53657c; --cyan:#2dd4e8; --cyan-soft:rgba(45,212,232,.11);
+      --green:#34d399; --amber:#fbbf24; --violet:#a78bfa; --rose:#fb7185; --blue:#60a5fa;
+      --shadow:0 24px 80px rgba(0,0,0,.38);
+    }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; min-width:300px; color:var(--text); background:var(--bg); font-family:'JetBrains Mono',ui-monospace,monospace; overflow-x:hidden; }
+    body::before { content:''; position:fixed; inset:0; z-index:-2; background-image:linear-gradient(rgba(39,59,87,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(39,59,87,.25) 1px,transparent 1px); background-size:42px 42px; mask-image:linear-gradient(to bottom,#000 0%,transparent 74%); }
+    body::after { content:''; position:fixed; width:700px; height:700px; z-index:-1; left:50%; top:-470px; transform:translateX(-50%); background:radial-gradient(circle,rgba(45,212,232,.16),transparent 66%); pointer-events:none; }
+    button,textarea { font:inherit; }
+    button { color:inherit; }
+    a { color:inherit; }
+    .shell { width:min(1180px,calc(100% - 48px)); margin:0 auto; }
+    .topbar { height:68px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(30,45,70,.75); }
+    .brand { display:flex; align-items:center; gap:11px; text-decoration:none; }
+    .brand-mark { width:30px; height:30px; display:grid; place-items:center; border:1px solid rgba(45,212,232,.5); background:var(--cyan-soft); clip-path:polygon(50% 0,94% 25%,94% 75%,50% 100%,6% 75%,6% 25%); color:var(--cyan); }
+    .brand-copy { display:grid; gap:2px; }
+    .brand-copy strong { font:700 14px 'Manrope',sans-serif; letter-spacing:.01em; }
+    .brand-copy small { color:var(--dim); font-size:9px; letter-spacing:.12em; text-transform:uppercase; }
+    .nav { display:flex; align-items:center; gap:18px; }
+    .nav a { color:var(--muted); text-decoration:none; font-size:11px; }
+    .nav a:hover { color:var(--text); }
+    .utility { border:1px solid var(--line); background:rgba(255,255,255,.025); border-radius:7px; padding:8px 11px; font-size:10px; cursor:pointer; }
+    .hero { padding:86px 0 52px; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr); gap:72px; align-items:end; }
+    .eyebrow { display:flex; align-items:center; gap:10px; color:var(--cyan); font-size:10px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; margin-bottom:20px; }
+    .eyebrow::before { content:''; width:32px; height:1px; background:var(--cyan); }
+    h1 { margin:0; max-width:770px; font:700 clamp(42px,6.2vw,76px)/.98 'Manrope',sans-serif; letter-spacing:-.055em; }
+    h1 em { color:var(--cyan); font-style:normal; }
+    .lede { max-width:680px; margin:25px 0 0; color:var(--muted); font-size:14px; line-height:1.8; }
+    .metrics { display:grid; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); }
+    .metric { display:flex; justify-content:space-between; align-items:center; padding:16px 18px; background:rgba(5,12,25,.92); }
+    .metric strong { font:700 23px 'Manrope',sans-serif; color:var(--cyan); }
+    .metric span { color:var(--muted); font-size:10px; line-height:1.45; text-align:right; }
+    .chooser { padding:20px; border:1px solid var(--line); border-radius:16px; background:linear-gradient(135deg,rgba(10,23,44,.94),rgba(5,12,25,.96)); box-shadow:var(--shadow); position:relative; overflow:hidden; }
+    .chooser::before { content:''; position:absolute; inset:0 auto auto 0; width:180px; height:1px; background:linear-gradient(90deg,var(--cyan),transparent); }
+    .chooser-head { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin-bottom:16px; }
+    .chooser-head h2 { margin:0 0 6px; font:700 17px 'Manrope',sans-serif; }
+    .chooser-head p { margin:0; color:var(--muted); font-size:10px; line-height:1.6; }
+    .kbd { flex:none; border:1px solid var(--line); border-radius:5px; padding:4px 7px; color:var(--dim); font-size:9px; }
+    textarea { width:100%; min-height:104px; resize:vertical; border:1px solid #273b57; border-radius:10px; padding:15px 16px; background:rgba(2,6,23,.72); color:var(--text); outline:none; font-size:12px; line-height:1.7; }
+    textarea::placeholder { color:#53657c; }
+    textarea:focus { border-color:var(--cyan); box-shadow:0 0 0 3px rgba(45,212,232,.09); }
+    .sample-row { margin:13px 0 17px; display:flex; gap:7px; flex-wrap:wrap; }
+    .chip { border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.025); color:var(--muted); padding:7px 10px; font-size:9px; cursor:pointer; }
+    .chip:hover { color:var(--cyan); border-color:rgba(45,212,232,.45); }
+    .actions { display:flex; align-items:center; gap:9px; }
+    .primary,.secondary { border-radius:8px; padding:10px 14px; border:1px solid transparent; font-size:10px; font-weight:700; cursor:pointer; }
+    .primary { background:var(--cyan); color:#021018; }
+    .primary:hover { background:#67e8f9; }
+    .secondary { background:transparent; border-color:var(--line); color:var(--muted); }
+    .secondary:hover { color:var(--text); }
+    .result { margin-top:18px; border:1px solid rgba(45,212,232,.25); border-radius:14px; background:rgba(2,8,19,.78); overflow:hidden; display:none; }
+    .result.visible { display:block; animation:reveal .28s ease-out; }
+    @keyframes reveal { from { opacity:0; transform:translateY(5px); } }
+    .result-main { padding:24px; display:grid; grid-template-columns:minmax(0,1.1fr) minmax(260px,.9fr); gap:28px; }
+    .result-kicker { color:var(--cyan); font-size:9px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+    .result h3 { margin:8px 0 5px; font:700 26px 'Manrope',sans-serif; letter-spacing:-.025em; }
+    .result-question { margin:0; color:var(--text); font-size:12px; line-height:1.6; }
+    .result-summary { margin:16px 0 0; color:var(--muted); font-size:10px; line-height:1.75; }
+    .proof-link { display:inline-flex; align-items:center; margin-top:16px; padding:8px 10px; border:1px solid rgba(52,211,153,.3); border-radius:7px; background:rgba(52,211,153,.06); color:var(--green); text-decoration:none; font-size:8px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+    .proof-link:hover { border-color:var(--green); background:rgba(52,211,153,.1); }
+    .boundary { display:grid; gap:10px; }
+    .boundary-item { border-left:2px solid var(--green); padding-left:12px; }
+    .boundary-item.avoid { border-color:var(--rose); }
+    .boundary-item small { display:block; margin-bottom:5px; color:var(--green); font-size:8px; letter-spacing:.12em; text-transform:uppercase; }
+    .boundary-item.avoid small { color:var(--rose); }
+    .boundary-item p { margin:0; color:var(--muted); font-size:9px; line-height:1.65; }
+    .result-grid { display:grid; grid-template-columns:minmax(230px,.7fr) minmax(0,1.3fr); border-top:1px solid var(--line); }
+    .checklist,.prompt-box { padding:21px 24px; }
+    .checklist { border-right:1px solid var(--line); }
+    .mini-heading { margin:0 0 12px; color:var(--dim); font-size:8px; letter-spacing:.12em; text-transform:uppercase; }
+    .checklist ul { list-style:none; padding:0; margin:0; display:grid; gap:9px; }
+    .checklist li { color:var(--muted); font-size:9px; line-height:1.5; display:flex; gap:8px; }
+    .checklist li::before { content:'✓'; color:var(--green); }
+    .presentation { display:flex; flex-wrap:wrap; gap:6px; margin-top:16px; }
+    .tag { padding:5px 7px; border-radius:5px; background:rgba(167,139,250,.1); color:var(--violet); font-size:8px; }
+    .prompt-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+    .copy { border:0; background:none; color:var(--cyan); padding:0; font-size:8px; cursor:pointer; }
+    .prompt-text { margin:0; color:#c7d4e7; font-size:9px; line-height:1.75; }
+    .alternatives { padding:13px 24px; border-top:1px solid var(--line); color:var(--dim); font-size:8px; }
+    .alternatives button { margin-left:7px; padding:0; border:0; background:none; color:var(--muted); cursor:pointer; font-size:8px; }
+    .alternatives button:hover { color:var(--cyan); }
+    .library { padding:84px 0 110px; }
+    .section-head { display:flex; align-items:end; justify-content:space-between; gap:28px; margin-bottom:26px; }
+    .section-head h2 { margin:7px 0 0; font:700 clamp(28px,4vw,42px) 'Manrope',sans-serif; letter-spacing:-.04em; }
+    .section-head p { max-width:440px; margin:0; color:var(--muted); font-size:10px; line-height:1.7; }
+    .filters { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:18px; }
+    .filter { border:1px solid var(--line); border-radius:7px; background:rgba(255,255,255,.02); color:var(--muted); padding:8px 10px; font-size:9px; cursor:pointer; }
+    .filter.active { color:#031019; background:var(--cyan); border-color:var(--cyan); font-weight:700; }
+    .cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    .card { min-width:0; min-height:206px; padding:19px; text-align:left; border:1px solid var(--line); border-radius:12px; background:rgba(7,15,30,.82); cursor:pointer; transition:transform .16s,border-color .16s,background .16s; position:relative; overflow:hidden; }
+    .card::before { content:''; position:absolute; inset:0 auto auto 0; width:70px; height:2px; background:var(--type-color,var(--cyan)); opacity:.7; }
+    .card:hover,.card:focus-visible { transform:translateY(-3px); border-color:var(--type-color,var(--cyan)); background:#0a162b; outline:none; }
+    .card-type { color:var(--type-color,var(--cyan)); font-size:8px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+    .card h3 { margin:15px 0 8px; font:700 17px 'Manrope',sans-serif; letter-spacing:-.02em; }
+    .card-question { margin:0; color:#c3d0e3; font-size:9px; line-height:1.65; }
+    .card-summary { margin:12px 0 0; color:var(--dim); font-size:8px; line-height:1.6; }
+    .card-foot { position:absolute; left:19px; right:19px; bottom:17px; display:flex; justify-content:space-between; color:var(--dim); font-size:7px; }
+    footer { border-top:1px solid var(--line); padding:28px 0 38px; color:var(--dim); font-size:8px; }
+    footer .shell { display:flex; justify-content:space-between; gap:16px; }
+    @media(max-width:900px) {
+      .hero { grid-template-columns:1fr; gap:36px; }
+      .metrics { grid-template-columns:repeat(3,1fr); }
+      .metric { display:grid; gap:6px; }
+      .metric span { text-align:left; }
+      .cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .result-main,.result-grid { grid-template-columns:1fr; }
+      .checklist { border-right:0; border-bottom:1px solid var(--line); }
+    }
+    @media(max-width:620px) {
+      .shell { width:min(100% - 28px,1180px); }
+      .topbar { height:60px; }
+      .nav a { display:none; }
+      .hero { padding:62px 0 38px; }
+      h1 { font-size:42px; }
+      .lede { font-size:12px; }
+      .metrics { grid-template-columns:1fr; }
+      .metric { display:flex; }
+      .metric span { text-align:right; }
+      .chooser { padding:15px; border-radius:12px; }
+      .chooser-head .kbd { display:none; }
+      .sample-row { flex-wrap:nowrap; overflow:auto; padding-bottom:4px; }
+      .chip { white-space:nowrap; }
+      .result-main { padding:19px; }
+      .checklist,.prompt-box { padding:18px 19px; }
+      .cards { grid-template-columns:1fr; }
+      .section-head { align-items:flex-start; flex-direction:column; }
+      .library { padding:64px 0 80px; }
+      footer .shell { flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="shell topbar">
+    <a class="brand" href="index.html" aria-label="Archify home">
+      <span class="brand-mark">◆</span>
+      <span class="brand-copy"><strong>Archify</strong><small>Scenario guide / v2.11.0</small></span>
+    </a>
+    <nav class="nav" aria-label="Main navigation">
+      <a href="gallery.html" data-i18n="navProof">Proof Lab</a>
+      <a href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
+      <button class="utility" id="language" type="button" aria-label="Switch language">中文</button>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <div class="eyebrow" data-i18n="eyebrow">Question-first diagramming</div>
+        <h1 data-i18n-html="headline">Choose the question.<br>Get the <em>right diagram.</em></h1>
+        <p class="lede" data-i18n="lede">Describe what your audience needs to understand. Archify recommends one bounded visual recipe—plus the evidence it must contain, when not to use it, and a prompt you can copy.</p>
+      </div>
+      <div class="metrics" aria-label="Guide metrics">
+        <div class="metric"><strong>11</strong><span data-i18n-html="metricRecipes">real-world<br>recipes</span></div>
+        <div class="metric"><strong>5</strong><span data-i18n-html="metricModes">typed diagram<br>modes</span></div>
+        <div class="metric"><strong>0</strong><span data-i18n-html="metricRuntime">runtime<br>dependencies</span></div>
+      </div>
+    </section>
+
+    <section class="chooser" aria-labelledby="chooser-title">
+      <div class="chooser-head">
+        <div><h2 id="chooser-title" data-i18n="chooserTitle">What must the diagram explain?</h2><p data-i18n="chooserBody">Write a situation, not a diagram type. Specific system facts produce a stronger recommendation.</p></div>
+        <span class="kbd">⌘ / Ctrl + Enter</span>
+      </div>
+      <textarea id="scenario" data-i18n-placeholder="placeholder" placeholder="Example: Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing."></textarea>
+      <div class="sample-row" id="samples"></div>
+      <div class="actions">
+        <button class="primary" id="recommend" type="button" data-i18n="recommend">Recommend a recipe →</button>
+        <button class="secondary" id="clear" type="button" data-i18n="clear">Clear</button>
+      </div>
+      <div class="result" id="result" aria-live="polite"></div>
+    </section>
+
+    <section class="library" id="library">
+      <div class="section-head">
+        <div><div class="eyebrow" data-i18n="libraryEyebrow">Recipe library</div><h2 data-i18n="libraryTitle">Eleven small, opinionated starting points.</h2></div>
+        <p data-i18n="libraryBody">Each recipe answers one technical question. That boundary keeps the result legible, reviewable, and honest about missing evidence.</p>
+      </div>
+      <div class="filters" id="filters" aria-label="Filter recipes"></div>
+      <div class="cards" id="cards"></div>
+    </section>
+  </main>
+
+  <footer><div class="shell"><span data-i18n="footerLeft">Generated from the same recipe source as the Archify CLI.</span><span>archify guide "your scenario"</span></div></footer>
+
+  <script id="guide-data" type="application/json">[{"id":"system-overview","type":"architecture","proof":"web-app","presentation":{"preset":"classic","motion":"static","views":"optional"},"title":"System overview","question":"What exists, who owns it, and how is it connected?","summary":"A bounded map of core components, external dependencies, primary paths, and trust boundaries.","useWhen":"Onboarding, design reviews, repository orientation, or explaining a service landscape.","avoidWhen":"The audience needs exact call order, state transitions, or row-level data lineage.","include":["8–12 core components","one primary path","external dependencies","trust boundaries"],"prompt":"Analyze this repository, then use Archify to create a high-level architecture diagram. Show 8–12 core runtime components, one primary request or data path, external dependencies, ownership or trust boundaries, and put supporting detail in cards instead of adding more edges.","en":{"title":"System overview","question":"What exists, who owns it, and how is it connected?","summary":"A bounded map of core components, external dependencies, primary paths, and trust boundaries.","useWhen":"Onboarding, design reviews, repository orientation, or explaining a service landscape.","avoidWhen":"The audience needs exact call order, state transitions, or row-level data lineage.","include":["8–12 core components","one primary path","external dependencies","trust boundaries"],"prompt":"Analyze this repository, then use Archify to create a high-level architecture diagram. Show 8–12 core runtime components, one primary request or data path, external dependencies, ownership or trust boundaries, and put supporting detail in cards instead of adding more edges."},"zh":{"title":"系统总览","question":"系统里有什么、归谁负责、彼此如何连接？","summary":"用一张有边界的图展示核心组件、外部依赖、主路径和信任边界。","useWhen":"适合新人上手、方案评审、仓库梳理和服务全景说明。","avoidWhen":"如果重点是精确调用顺序、状态流转或字段级血缘，请换其他配方。","include":["8–12 个核心组件","一条主路径","外部依赖","归属或信任边界"],"prompt":"分析这个仓库，然后用 Archify 生成高层系统架构图。展示 8–12 个核心运行时组件、一条主要请求或数据路径、外部依赖、归属或信任边界；支持性细节放进卡片，不要继续堆连线。"},"signals":[["system overview",12],["architecture",10],["components",6],["services",4],["repository",5],["trust boundary",8],["架构",10],["系统总览",12],["组件",6],["服务",4],["仓库",5],["信任边界",8]]},{"id":"deployment-ownership","type":"architecture","proof":"deployment-ownership","presentation":{"preset":"blueprint","motion":"trace","views":"recommended"},"title":"Deployment ownership","question":"Where does each workload run, and what crosses a boundary?","summary":"A deployment-focused map of regions, networks, clusters, workloads, stores, and cross-boundary mechanisms.","useWhen":"Cloud reviews, production readiness, multi-region planning, or infrastructure ownership handoffs.","avoidWhen":"Deployment facts are unknown or the real question is application behavior rather than placement.","include":["regions and networks","workload ownership","stateful services","named boundary crossings"],"prompt":"Use Archify to draw the production deployment topology. Group resources by region, network, cluster, and owner; show workloads and stateful services; label every cross-boundary mechanism. Do not invent deployment facts—mark unknown areas explicitly.","en":{"title":"Deployment ownership","question":"Where does each workload run, and what crosses a boundary?","summary":"A deployment-focused map of regions, networks, clusters, workloads, stores, and cross-boundary mechanisms.","useWhen":"Cloud reviews, production readiness, multi-region planning, or infrastructure ownership handoffs.","avoidWhen":"Deployment facts are unknown or the real question is application behavior rather than placement.","include":["regions and networks","workload ownership","stateful services","named boundary crossings"],"prompt":"Use Archify to draw the production deployment topology. Group resources by region, network, cluster, and owner; show workloads and stateful services; label every cross-boundary mechanism. Do not invent deployment facts—mark unknown areas explicitly."},"zh":{"title":"部署与归属","question":"每个工作负载运行在哪里，哪些连接跨越了边界？","summary":"围绕 Region、网络、集群、工作负载、存储和跨边界机制组织部署图。","useWhen":"适合云上评审、生产就绪、多区域规划和基础设施交接。","avoidWhen":"部署事实不清楚，或真正问题是应用行为而不是资源位置时不要使用。","include":["区域与网络","工作负载归属","有状态服务","明确的跨边界机制"],"prompt":"用 Archify 绘制生产部署拓扑。按区域、网络、集群和负责人分组，展示工作负载与有状态服务，并标注每一种跨边界机制。不要编造部署事实，不确定的区域要明确标出。"},"signals":[["deployment topology",14],["region",7],["vpc",9],["cluster",6],["availability zone",8],["ownership",7],["cloud deployment",12],["部署拓扑",14],["区域",6],["集群",6],["可用区",8],["资源归属",9],["跨区",8]]},{"id":"agent-tool-call","type":"workflow","proof":"agent-tool-call","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Agent tool-call loop","question":"How does an agent plan, get permission, act, recover, and report?","summary":"A lane-based agent loop with policy gates, tool execution, exception recovery, evidence, and final response.","useWhen":"Explaining agent runtimes, MCP/tool orchestration, approvals, retries, or observability.","avoidWhen":"The goal is only to show static agent components or exact API message timing.","include":["request and planning","policy or approval gate","tool execution","exception and evidence paths"],"prompt":"Use Archify workflow mode to explain this agent tool-call loop. Separate user surface, agent runtime, policy boundary, exception handling, tool execution, and observability into lanes. Make the successful path primary and show approval, retry, blocked, and evidence paths explicitly.","en":{"title":"Agent tool-call loop","question":"How does an agent plan, get permission, act, recover, and report?","summary":"A lane-based agent loop with policy gates, tool execution, exception recovery, evidence, and final response.","useWhen":"Explaining agent runtimes, MCP/tool orchestration, approvals, retries, or observability.","avoidWhen":"The goal is only to show static agent components or exact API message timing.","include":["request and planning","policy or approval gate","tool execution","exception and evidence paths"],"prompt":"Use Archify workflow mode to explain this agent tool-call loop. Separate user surface, agent runtime, policy boundary, exception handling, tool execution, and observability into lanes. Make the successful path primary and show approval, retry, blocked, and evidence paths explicitly."},"zh":{"title":"智能体工具调用","question":"智能体如何规划、获批、执行、恢复并汇报？","summary":"用泳道表达策略门、工具执行、异常恢复、证据和最终回复。","useWhen":"适合解释 Agent Runtime、MCP/工具编排、审批、重试和可观测性。","avoidWhen":"如果只想看静态组件，或重点是精确 API 消息时序，请换其他配方。","include":["请求与规划","策略或审批门","工具执行","异常与证据路径"],"prompt":"用 Archify 工作流模式解释这段智能体工具调用。把用户界面、Agent Runtime、策略边界、异常处理、工具执行和可观测性分成泳道；突出成功主路径，并明确展示审批、重试、阻塞和证据路径。"},"signals":[["agent tool call",16],["tool call",12],["approval gate",10],["human in the loop",9],["mcp",7],["planner",6],["agent loop",10],["智能体工具调用",16],["工具调用",12],["审批门",10],["人在回路",9],["规划器",6],["智能体循环",10]]},{"id":"delivery-workflow","type":"workflow","proof":"delivery-workflow","presentation":{"preset":"classic","motion":"trace","views":"optional"},"title":"Delivery workflow","question":"How does a change move safely from commit to production?","summary":"A delivery flow with build, checks, environments, approvals, smoke tests, rollback, and ownership lanes.","useWhen":"CI/CD design, release reviews, deployment governance, or onboarding developers to delivery.","avoidWhen":"The question is where infrastructure runs or what states a deployment object can occupy.","include":["trigger and build","blocking checks","approval and environments","rollback and verification"],"prompt":"Use Archify workflow mode to draw this delivery process from commit to production. Separate developer, CI, approval, environment, and exception lanes; mark blocking checks, smoke tests, ownership, and the rollback path. Keep one unmistakable happy path.","en":{"title":"Delivery workflow","question":"How does a change move safely from commit to production?","summary":"A delivery flow with build, checks, environments, approvals, smoke tests, rollback, and ownership lanes.","useWhen":"CI/CD design, release reviews, deployment governance, or onboarding developers to delivery.","avoidWhen":"The question is where infrastructure runs or what states a deployment object can occupy.","include":["trigger and build","blocking checks","approval and environments","rollback and verification"],"prompt":"Use Archify workflow mode to draw this delivery process from commit to production. Separate developer, CI, approval, environment, and exception lanes; mark blocking checks, smoke tests, ownership, and the rollback path. Keep one unmistakable happy path."},"zh":{"title":"研发交付流程","question":"一次变更如何安全地从提交走到生产？","summary":"展示构建、检查、环境、审批、冒烟、回滚和负责人泳道。","useWhen":"适合 CI/CD 设计、发布评审、部署治理和研发新人上手。","avoidWhen":"如果重点是基础设施位置或部署对象的状态集合，请换架构图或生命周期图。","include":["触发与构建","阻断检查","审批与环境","回滚与验证"],"prompt":"用 Archify 工作流模式绘制从代码提交到生产发布的流程。拆分开发者、CI、审批、环境和异常泳道；标出阻断检查、冒烟测试、负责人和回滚路径，并保留一条一眼可见的成功主路径。"},"signals":[["ci/cd",14],["release workflow",14],["deployment pipeline",11],["pull request",7],["staging",7],["rollback",8],["发布流程",14],["流水线",9],["上线",7],["预发",7],["回滚",8],["审批发布",10]]},{"id":"incident-runbook","type":"workflow","proof":"incident-runbook","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Incident runbook","question":"How do responders detect, triage, mitigate, verify, and escalate?","summary":"An operational workflow that separates signals, responders, mitigation, communications, and recovery proof.","useWhen":"Incident playbooks, on-call handoffs, reliability reviews, and tabletop exercises.","avoidWhen":"The audience needs live metrics or a post-incident component topology instead of response actions.","include":["detection signal","triage owner","mitigation and rollback","verification and communication"],"prompt":"Use Archify workflow mode to turn this incident runbook into responder lanes. Show detection, triage, mitigation, escalation, communication, rollback, and recovery verification. Separate decision gates from actions and make missing ownership visible.","en":{"title":"Incident runbook","question":"How do responders detect, triage, mitigate, verify, and escalate?","summary":"An operational workflow that separates signals, responders, mitigation, communications, and recovery proof.","useWhen":"Incident playbooks, on-call handoffs, reliability reviews, and tabletop exercises.","avoidWhen":"The audience needs live metrics or a post-incident component topology instead of response actions.","include":["detection signal","triage owner","mitigation and rollback","verification and communication"],"prompt":"Use Archify workflow mode to turn this incident runbook into responder lanes. Show detection, triage, mitigation, escalation, communication, rollback, and recovery verification. Separate decision gates from actions and make missing ownership visible."},"zh":{"title":"事故处置 Runbook","question":"响应者如何发现、分诊、缓解、验证并升级？","summary":"把信号、响应者、缓解动作、沟通和恢复证据拆成可执行流程。","useWhen":"适合故障预案、On-call 交接、稳定性评审和桌面演练。","avoidWhen":"如果受众需要实时指标仪表盘或事故后的组件拓扑，而不是响应动作，请换其他视图。","include":["发现信号","分诊负责人","缓解与回滚","恢复验证与沟通"],"prompt":"用 Archify 工作流模式把事故处置预案画成响应者泳道。展示发现、分诊、缓解、升级、沟通、回滚和恢复验证；把决策门与操作分开，并让缺失的负责人清晰可见。"},"signals":[["incident response",15],["runbook",12],["outage",9],["triage",8],["mitigation",8],["escalation",7],["事故处置",15],["故障",9],["应急预案",12],["排障",9],["缓解",7],["升级响应",8]]},{"id":"api-request","type":"sequence","proof":"cache-miss","presentation":{"preset":"classic","motion":"trace","views":"optional"},"title":"API request chain","question":"Who calls whom, in what order, and what returns?","summary":"A time-ordered request path with authentication, cache fallback, persistence, return traffic, and async trace.","useWhen":"API documentation, debugging request latency, auth reviews, or explaining cache fallback.","avoidWhen":"Order is unimportant and the audience only needs the stable service topology.","include":["callers and callees","request and return messages","fallback or error path","async side effects"],"prompt":"Use Archify sequence mode to show this request from caller to final response. Include authentication, cache hit or miss, persistence fallback, return messages, and asynchronous trace or event emission. Keep message labels short and order unambiguous.","en":{"title":"API request chain","question":"Who calls whom, in what order, and what returns?","summary":"A time-ordered request path with authentication, cache fallback, persistence, return traffic, and async trace.","useWhen":"API documentation, debugging request latency, auth reviews, or explaining cache fallback.","avoidWhen":"Order is unimportant and the audience only needs the stable service topology.","include":["callers and callees","request and return messages","fallback or error path","async side effects"],"prompt":"Use Archify sequence mode to show this request from caller to final response. Include authentication, cache hit or miss, persistence fallback, return messages, and asynchronous trace or event emission. Keep message labels short and order unambiguous."},"zh":{"title":"API 请求链","question":"谁调用谁、顺序如何、最终返回什么？","summary":"按时间展示鉴权、缓存回退、持久化、返回流量和异步追踪。","useWhen":"适合 API 文档、请求耗时排查、鉴权评审和缓存回退说明。","avoidWhen":"如果顺序不重要，受众只需要稳定的服务拓扑，请用架构图。","include":["调用方与被调用方","请求与返回消息","回退或错误路径","异步副作用"],"prompt":"用 Archify 时序模式展示从调用方到最终响应的完整请求。包含鉴权、缓存命中或未命中、持久化回退、返回消息，以及异步 Trace 或事件上报；消息标签保持简短，顺序必须明确。"},"signals":[["api request",14],["request response",12],["call chain",11],["cache miss",13],["jwt",8],["who calls whom",12],["api 请求",14],["请求响应",12],["调用链",11],["缓存未命中",13],["谁调用谁",12],["鉴权链路",9]]},{"id":"async-roundtrip","type":"sequence","proof":"async-roundtrip","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Async roundtrip","question":"What happens after the initial request returns?","summary":"A sequence view of enqueue, acknowledgement, background work, callbacks, retries, timeout, and final consistency.","useWhen":"Webhooks, jobs, queues, payment callbacks, eventual consistency, or async API contracts.","avoidWhen":"The primary question is topic topology and consumer ownership rather than time order.","include":["initial acknowledgement","queue or scheduler","background work","callback, retry, and timeout"],"prompt":"Use Archify sequence mode to explain this asynchronous roundtrip. Show the initial acknowledgement, enqueue or scheduling step, background processing, callback or polling, retry and timeout behavior, and the point where the caller can observe final consistency.","en":{"title":"Async roundtrip","question":"What happens after the initial request returns?","summary":"A sequence view of enqueue, acknowledgement, background work, callbacks, retries, timeout, and final consistency.","useWhen":"Webhooks, jobs, queues, payment callbacks, eventual consistency, or async API contracts.","avoidWhen":"The primary question is topic topology and consumer ownership rather than time order.","include":["initial acknowledgement","queue or scheduler","background work","callback, retry, and timeout"],"prompt":"Use Archify sequence mode to explain this asynchronous roundtrip. Show the initial acknowledgement, enqueue or scheduling step, background processing, callback or polling, retry and timeout behavior, and the point where the caller can observe final consistency."},"zh":{"title":"异步往返链路","question":"初始请求返回之后，后台还会发生什么？","summary":"按时间展示入队、确认、后台处理、回调、重试、超时和最终一致。","useWhen":"适合 Webhook、后台任务、队列、支付回调、最终一致和异步 API 契约。","avoidWhen":"如果重点是 Topic 拓扑和消费者归属，而不是时间顺序，请用事件数据流配方。","include":["初始确认","队列或调度器","后台处理","回调、重试与超时"],"prompt":"用 Archify 时序模式解释这段异步往返链路。展示初始确认、入队或调度、后台处理、回调或轮询、重试与超时，以及调用方何时能观察到最终一致结果。"},"signals":[["async roundtrip",14],["webhook",10],["callback",10],["acknowledgement",8],["timeout",7],["retry message",8],["异步回调",14],["回调",10],["确认消息",8],["超时",7],["消息重试",9],["webhook",10]]},{"id":"data-lineage","type":"dataflow","proof":"product-analytics","presentation":{"preset":"classic","motion":"trace","views":"recommended"},"title":"Data lineage","question":"Where does data come from, how does it change, and who consumes it?","summary":"A governed path from sources through consent, transforms, sensitive stores, warehouse, and consumers.","useWhen":"Analytics architecture, ETL/ELT review, PII assessment, warehouse design, or model feature lineage.","avoidWhen":"The audience needs request timing or operational task ownership rather than data assets.","include":["sources and assets","transform stages","classification or consent","stores and consumers"],"prompt":"Use Archify dataflow mode to map this data lineage. Name every data asset and transform, show consent or classification boundaries, distinguish streaming from batch paths, and identify stores plus downstream consumers. Do not use unlabeled flows.","en":{"title":"Data lineage","question":"Where does data come from, how does it change, and who consumes it?","summary":"A governed path from sources through consent, transforms, sensitive stores, warehouse, and consumers.","useWhen":"Analytics architecture, ETL/ELT review, PII assessment, warehouse design, or model feature lineage.","avoidWhen":"The audience needs request timing or operational task ownership rather than data assets.","include":["sources and assets","transform stages","classification or consent","stores and consumers"],"prompt":"Use Archify dataflow mode to map this data lineage. Name every data asset and transform, show consent or classification boundaries, distinguish streaming from batch paths, and identify stores plus downstream consumers. Do not use unlabeled flows."},"zh":{"title":"数据血缘","question":"数据从哪里来、如何变化、最终被谁消费？","summary":"从来源经过同意、转换、敏感存储、数仓直到消费者的治理路径。","useWhen":"适合分析架构、ETL/ELT 评审、PII 评估、数仓设计和特征血缘。","avoidWhen":"如果受众需要请求时序或操作负责人，而不是数据资产，请换其他配方。","include":["数据来源与资产","转换阶段","分类或同意边界","存储与消费者"],"prompt":"用 Archify 数据流模式梳理这段数据血缘。为每个数据资产和转换命名，展示用户同意或数据分类边界，区分流式与批处理路径，并标明存储和下游消费者；所有数据流都必须有标签。"},"signals":[["data lineage",15],["etl",12],["warehouse",9],["pii",11],["governance",9],["analytics pipeline",12],["数据血缘",15],["数据管道",11],["数仓",9],["治理",9],["隐私数据",10],["用户同意",9]]},{"id":"event-stream","type":"dataflow","proof":"event-stream","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Event-stream topology","question":"Which events move through which topics, processors, groups, and failure paths?","summary":"A stream map of producers, topics, ordered processors, consumer groups, state, replay, and DLQ.","useWhen":"Kafka/event-platform design, stream processing reviews, ownership, replay, and failure handling.","avoidWhen":"Topic names, consumer groups, and delivery semantics are not known—use a generic workflow instead.","include":["producers and event names","topics and ordering","processors and consumer groups","state, replay, and DLQ"],"prompt":"Use Archify dataflow mode to draw this event-stream topology. Name producers, events, topics, ordered processors, consumer groups, state stores, replay paths, and the DLQ. Show ownership and delivery semantics only when supported by evidence.","en":{"title":"Event-stream topology","question":"Which events move through which topics, processors, groups, and failure paths?","summary":"A stream map of producers, topics, ordered processors, consumer groups, state, replay, and DLQ.","useWhen":"Kafka/event-platform design, stream processing reviews, ownership, replay, and failure handling.","avoidWhen":"Topic names, consumer groups, and delivery semantics are not known—use a generic workflow instead.","include":["producers and event names","topics and ordering","processors and consumer groups","state, replay, and DLQ"],"prompt":"Use Archify dataflow mode to draw this event-stream topology. Name producers, events, topics, ordered processors, consumer groups, state stores, replay paths, and the DLQ. Show ownership and delivery semantics only when supported by evidence."},"zh":{"title":"事件流拓扑","question":"哪些事件经过哪些 Topic、处理器、消费者组和失败路径？","summary":"展示生产者、Topic、有序处理器、消费者组、状态、重放和 DLQ。","useWhen":"适合 Kafka/事件平台设计、流处理评审、归属、重放和失败处理。","avoidWhen":"如果 Topic、消费者组和投递语义都不清楚，请先用通用工作流，不要编造事件拓扑。","include":["生产者与事件名","Topic 与顺序","处理器与消费者组","状态、重放与 DLQ"],"prompt":"用 Archify 数据流模式绘制这段事件流拓扑。命名生产者、事件、Topic、有序处理器、消费者组、状态存储、重放路径和 DLQ；只有在证据充分时才标注归属和投递语义。"},"signals":[["event stream",15],["kafka topology",14],["topic",8],["consumer group",11],["dead letter",10],["dlq",10],["事件流",15],["kafka 拓扑",14],["主题",7],["消费者组",11],["死信",10],["事件地铁图",12]]},{"id":"object-lifecycle","type":"lifecycle","proof":"agent-run","presentation":{"preset":"classic","motion":"trace","views":"optional"},"title":"Object lifecycle","question":"Which states exist, what events move between them, and how does it end?","summary":"A state model with active work, waits, retries, cancellation, failure, and explicit terminal outcomes.","useWhen":"Tasks, orders, tickets, subscriptions, jobs, agent runs, or any durable object with status.","avoidWhen":"The object has no durable state and the real question is participant interaction over time.","include":["start and active states","event-labelled transitions","wait and retry states","all terminal outcomes"],"prompt":"Use Archify lifecycle mode to model this object. Separate main progress, waiting or interruption states, and terminal outcomes. Label transitions with events, include retry, cancellation, timeout, success, and failure where real, and never hide an ending.","en":{"title":"Object lifecycle","question":"Which states exist, what events move between them, and how does it end?","summary":"A state model with active work, waits, retries, cancellation, failure, and explicit terminal outcomes.","useWhen":"Tasks, orders, tickets, subscriptions, jobs, agent runs, or any durable object with status.","avoidWhen":"The object has no durable state and the real question is participant interaction over time.","include":["start and active states","event-labelled transitions","wait and retry states","all terminal outcomes"],"prompt":"Use Archify lifecycle mode to model this object. Separate main progress, waiting or interruption states, and terminal outcomes. Label transitions with events, include retry, cancellation, timeout, success, and failure where real, and never hide an ending."},"zh":{"title":"对象生命周期","question":"有哪些状态、什么事件触发流转、最终如何结束？","summary":"展示执行、等待、重试、取消、失败以及明确终态的状态模型。","useWhen":"适合任务、订单、工单、订阅、作业、Agent Run 等带持久状态的对象。","avoidWhen":"对象没有持久状态，真正问题是参与者随时间的交互时，请使用时序图。","include":["开始与执行态","带事件的转换","等待与重试态","所有终态"],"prompt":"用 Archify 生命周期模式建模这个对象。分开主进度、等待或中断状态和终态；用事件标注转换，并在真实存在时展示重试、取消、超时、成功和失败，不能隐藏任何结束方式。"},"signals":[["state machine",15],["object lifecycle",14],["status transition",11],["terminal state",9],["retry state",8],["状态机",15],["生命周期",13],["状态流转",11],["终态",9],["等待态",8],["重试状态",8]]},{"id":"deployment-lifecycle","type":"lifecycle","proof":"deployment-lifecycle","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Deployment lifecycle","question":"What state is a release in, and what can happen next?","summary":"A deployment state model covering queued, building, verifying, approval, promotion, rollback, and terminal outcomes.","useWhen":"Release controllers, GitOps reconciliation, environment promotion, or deployment status APIs.","avoidWhen":"The question is the human/CI sequence of delivery actions rather than the deployment object state.","include":["queued and running states","verification and approval","promotion and rollback","success, failure, cancellation"],"prompt":"Use Archify lifecycle mode to model the deployment object. Show queued, building, verifying, waiting for approval, promoting, rolling back, and every terminal outcome. Label the events and guards that permit each transition.","en":{"title":"Deployment lifecycle","question":"What state is a release in, and what can happen next?","summary":"A deployment state model covering queued, building, verifying, approval, promotion, rollback, and terminal outcomes.","useWhen":"Release controllers, GitOps reconciliation, environment promotion, or deployment status APIs.","avoidWhen":"The question is the human/CI sequence of delivery actions rather than the deployment object state.","include":["queued and running states","verification and approval","promotion and rollback","success, failure, cancellation"],"prompt":"Use Archify lifecycle mode to model the deployment object. Show queued, building, verifying, waiting for approval, promoting, rolling back, and every terminal outcome. Label the events and guards that permit each transition."},"zh":{"title":"部署生命周期","question":"一次发布当前处于什么状态，下一步可能发生什么？","summary":"覆盖排队、构建、验证、审批、晋级、回滚和终态的部署状态模型。","useWhen":"适合发布控制器、GitOps 对账、环境晋级和部署状态 API。","avoidWhen":"如果重点是人员与 CI 的交付动作顺序，而不是部署对象状态，请用交付工作流。","include":["排队与执行态","验证与审批","晋级与回滚","成功、失败与取消"],"prompt":"用 Archify 生命周期模式建模部署对象。展示排队、构建、验证、等待审批、晋级、回滚以及所有终态，并标注允许每次状态转换的事件和守卫条件。"},"signals":[["deployment lifecycle",15],["release state",10],["promotion state",9],["approval status",8],["rollback state",10],["部署生命周期",15],["发布状态",10],["晋级",7],["审批状态",8],["回滚状态",10]]}]</script>
+  <script>
+    (function () {
+      'use strict';
+      var recipes = JSON.parse(document.getElementById('guide-data').textContent);
+      var types = ['architecture','workflow','sequence','dataflow','lifecycle'];
+      var colors = { architecture:'#2dd4e8', workflow:'#34d399', sequence:'#a78bfa', dataflow:'#fbbf24', lifecycle:'#fb7185' };
+      var language = localStorage.getItem('archify-guide-language') === 'zh' ? 'zh' : 'en';
+      var activeType = 'all';
+      var lastRecipe = null;
+      var copy = {
+        en: {
+          navProof:'Proof Lab', eyebrow:'Question-first diagramming', headline:'Choose the question.<br>Get the <em>right diagram.</em>', lede:'Describe what your audience needs to understand. Archify recommends one bounded visual recipe—plus the evidence it must contain, when not to use it, and a prompt you can copy.',
+          metricRecipes:'real-world<br>recipes',metricModes:'typed diagram<br>modes',metricRuntime:'runtime<br>dependencies',chooserTitle:'What must the diagram explain?',chooserBody:'Write a situation, not a diagram type. Specific system facts produce a stronger recommendation.',placeholder:'Example: Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing.',recommend:'Recommend a recipe →',clear:'Clear',libraryEyebrow:'Recipe library',libraryTitle:'Eleven small, opinionated starting points.',libraryBody:'Each recipe answers one technical question. That boundary keeps the result legible, reviewable, and honest about missing evidence.',footerLeft:'Generated from the same recipe source as the Archify CLI.',all:'All recipes',recommended:'Recommended recipe',use:'Use when',avoid:'Avoid when',must:'Evidence to include',presentation:'Presentation',prompt:'Copy-ready prompt',copyPrompt:'Copy prompt',copied:'Copied',alternatives:'Other possible fits:',confidence:'confidence',open:'Open recipe',proofReady:'Verified proof',proofLink:'Open verified example ↗',
+          samples:[['API + cache miss','Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing.'],['Kafka + DLQ','Map Kafka topics, ordered processors, consumer groups, replay, state stores, and the dead-letter queue.'],['Incident response','Show how responders detect, triage, mitigate, escalate, communicate, and verify recovery.']]
+        },
+        zh: {
+          navProof:'验证作品集',eyebrow:'先问题，后图表',headline:'先选对问题，<br>再得到<em>对的图。</em>',lede:'描述受众真正需要理解的内容。Archify 会推荐一个有边界的视觉配方，同时给出证据清单、禁用条件和可复制提示词。',
+          metricRecipes:'个真实场景<br>配方',metricModes:'种类型化<br>图表模式',metricRuntime:'个运行时<br>依赖',chooserTitle:'这张图必须解释什么？',chooserBody:'写清场景，不要只写图表类型。系统事实越具体，推荐越可靠。',placeholder:'例如：展示带 JWT 鉴权、Redis 缓存未命中、数据库回退和异步追踪的 API 请求。',recommend:'推荐配方 →',clear:'清空',libraryEyebrow:'配方库',libraryTitle:'十一个小而专的起点。',libraryBody:'每个配方只回答一个技术问题。清晰的边界让图更易读、可评审，也不会掩盖证据缺口。',footerLeft:'网页与 Archify CLI 使用同一份配方数据生成。',all:'全部配方',recommended:'推荐配方',use:'适合',avoid:'不要这样用',must:'必须包含的证据',presentation:'表现建议',prompt:'可直接复制的提示词',copyPrompt:'复制提示词',copied:'已复制',alternatives:'其他可能：',confidence:'置信度',open:'打开配方',proofReady:'已验证成品',proofLink:'打开验证成品 ↗',
+          samples:[['API + 缓存未命中','展示带 JWT 鉴权、Redis 缓存未命中、数据库回退和异步追踪的 API 请求。'],['Kafka + 死信','梳理 Kafka Topic、有序处理器、消费者组、重放、状态存储和死信队列。'],['事故处置','展示响应者如何发现、分诊、缓解、升级、沟通并验证恢复。']]
+        }
+      };
+
+      function t(key) { return copy[language][key]; }
+      function local(recipe) { return Object.assign({}, recipe, recipe[language]); }
+      function normalize(value) { return String(value || '').normalize('NFKC').toLowerCase().replace(/[\\s_]+/g,' ').trim(); }
+      function rank(query) {
+        var text = normalize(query);
+        return recipes.map(function (recipe,index) {
+          var score = 0, matched = [];
+          if (text === recipe.id || text === recipe.id.replace(/-/g,' ')) { score = 100; matched = [recipe.id]; }
+          else recipe.signals.forEach(function (signal) { if (text.includes(normalize(signal[0]))) { score += signal[1]; matched.push(signal[0]); } });
+          return { recipe:recipe, score:score, matched:matched, index:index };
+        }).sort(function (a,b) { return b.score - a.score || a.index - b.index; });
+      }
+      function recommendation(query) {
+        var ranked = rank(query), winner = ranked[0].score > 0 ? ranked[0] : { recipe:recipes[0], score:0, matched:[] };
+        return { recipe:winner.recipe, confidence:winner.score >= 14 ? 'high' : winner.score >= 7 ? 'medium' : 'low', alternatives:ranked.filter(function (entry) { return entry.recipe.id !== winner.recipe.id && entry.score > 0; }).slice(0,2) };
+      }
+      function escapeHtml(value) { var node = document.createElement('span'); node.textContent = String(value); return node.innerHTML; }
+      function renderSamples() {
+        document.getElementById('samples').innerHTML = t('samples').map(function (sample) { return '<button class="chip" type="button" data-query="'+escapeHtml(sample[1])+'">'+escapeHtml(sample[0])+'</button>'; }).join('');
+      }
+      function renderFilters() {
+        var labels = { en:{architecture:'Architecture',workflow:'Workflow',sequence:'Sequence',dataflow:'Data flow',lifecycle:'Lifecycle'}, zh:{architecture:'架构',workflow:'工作流',sequence:'时序',dataflow:'数据流',lifecycle:'生命周期'} };
+        document.getElementById('filters').innerHTML = ['all'].concat(types).map(function (type) { return '<button class="filter '+(activeType === type ? 'active':'')+'" type="button" data-filter="'+type+'">'+escapeHtml(type === 'all' ? t('all') : labels[language][type])+'</button>'; }).join('');
+      }
+      function renderCards() {
+        var visible = recipes.filter(function (recipe) { return activeType === 'all' || recipe.type === activeType; });
+        document.getElementById('cards').innerHTML = visible.map(function (raw) {
+          var recipe = local(raw);
+          return '<button class="card" type="button" data-recipe="'+recipe.id+'" style="--type-color:'+colors[recipe.type]+'"><span class="card-type">'+escapeHtml(recipe.type)+'</span><h3>'+escapeHtml(recipe.title)+'</h3><p class="card-question">'+escapeHtml(recipe.question)+'</p><p class="card-summary">'+escapeHtml(recipe.summary)+'</p><span class="card-foot"><span>'+escapeHtml(recipe.presentation.preset)+' · '+escapeHtml(recipe.presentation.motion)+'</span><span>'+escapeHtml(recipe.proof ? t('proofReady') : t('open'))+' ↗</span></span></button>';
+        }).join('');
+      }
+      function renderResult(rawRecipe, confidence, alternatives) {
+        var recipe = local(rawRecipe);
+        lastRecipe = rawRecipe;
+        var alt = alternatives || [];
+        var html = '<div class="result-main"><div><span class="result-kicker">'+escapeHtml(t('recommended'))+' · '+escapeHtml(confidence)+' '+escapeHtml(t('confidence'))+'</span><h3>'+escapeHtml(recipe.title)+'</h3><p class="result-question">'+escapeHtml(recipe.question)+'</p><p class="result-summary">'+escapeHtml(recipe.summary)+'</p>'+(recipe.proof ? '<a class="proof-link" href="gallery.html#proof-'+encodeURIComponent(recipe.proof)+'">'+escapeHtml(t('proofLink'))+'</a>' : '')+'</div><div class="boundary"><div class="boundary-item"><small>'+escapeHtml(t('use'))+'</small><p>'+escapeHtml(recipe.useWhen)+'</p></div><div class="boundary-item avoid"><small>'+escapeHtml(t('avoid'))+'</small><p>'+escapeHtml(recipe.avoidWhen)+'</p></div></div></div>';
+        html += '<div class="result-grid"><div class="checklist"><div class="mini-heading">'+escapeHtml(t('must'))+'</div><ul>'+recipe.include.map(function (item) { return '<li>'+escapeHtml(item)+'</li>'; }).join('')+'</ul><div class="presentation"><span class="tag">'+escapeHtml(recipe.type)+'</span><span class="tag">'+escapeHtml(recipe.presentation.preset)+'</span><span class="tag">'+escapeHtml(recipe.presentation.motion)+'</span><span class="tag">views '+escapeHtml(recipe.presentation.views)+'</span></div></div>';
+        html += '<div class="prompt-box"><div class="prompt-bar"><div class="mini-heading" style="margin:0">'+escapeHtml(t('prompt'))+'</div><button class="copy" id="copy-prompt" type="button">'+escapeHtml(t('copyPrompt'))+'</button></div><p class="prompt-text">'+escapeHtml(recipe.prompt)+'</p></div></div>';
+        if (alt.length) html += '<div class="alternatives">'+escapeHtml(t('alternatives'))+alt.map(function (entry) { var item=local(entry.recipe); return '<button type="button" data-alt="'+item.id+'">'+escapeHtml(item.title)+' ['+item.type+']</button>'; }).join('')+'</div>';
+        var result = document.getElementById('result');
+        result.innerHTML = html;
+        result.classList.add('visible');
+      }
+      function runRecommendation() {
+        var query = document.getElementById('scenario').value.trim();
+        if (!query) { document.getElementById('scenario').focus(); return; }
+        var picked = recommendation(query);
+        renderResult(picked.recipe,picked.confidence,picked.alternatives);
+      }
+      function applyLanguage(next) {
+        language = next === 'zh' ? 'zh' : 'en';
+        localStorage.setItem('archify-guide-language',language);
+        document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
+        document.getElementById('language').textContent = language === 'zh' ? 'EN' : '中文';
+        document.querySelectorAll('[data-i18n]').forEach(function (node) { node.textContent=t(node.dataset.i18n); });
+        document.querySelectorAll('[data-i18n-html]').forEach(function (node) { node.innerHTML=t(node.dataset.i18nHtml); });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(function (node) { node.placeholder=t(node.dataset.i18nPlaceholder); });
+        renderSamples(); renderFilters(); renderCards();
+        if (lastRecipe) renderResult(lastRecipe,'selected',[]);
+      }
+      async function copyPrompt() {
+        if (!lastRecipe) return;
+        var text = local(lastRecipe).prompt, button = document.getElementById('copy-prompt');
+        try { await navigator.clipboard.writeText(text); } catch (_) {
+          var area=document.createElement('textarea'); area.value=text; document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove();
+        }
+        button.textContent=t('copied'); setTimeout(function () { if (button.isConnected) button.textContent=t('copyPrompt'); },1200);
+      }
+      document.getElementById('recommend').addEventListener('click',runRecommendation);
+      document.getElementById('clear').addEventListener('click',function () { document.getElementById('scenario').value=''; document.getElementById('result').classList.remove('visible'); lastRecipe=null; });
+      document.getElementById('language').addEventListener('click',function () { applyLanguage(language === 'en' ? 'zh':'en'); });
+      document.getElementById('scenario').addEventListener('keydown',function (event) { if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') runRecommendation(); });
+      document.getElementById('samples').addEventListener('click',function (event) { var chip=event.target.closest('[data-query]'); if (!chip) return; document.getElementById('scenario').value=chip.dataset.query; runRecommendation(); });
+      document.getElementById('filters').addEventListener('click',function (event) { var filter=event.target.closest('[data-filter]'); if (!filter) return; activeType=filter.dataset.filter; renderFilters(); renderCards(); });
+      document.getElementById('cards').addEventListener('click',function (event) { var card=event.target.closest('[data-recipe]'); if (!card) return; var recipe=recipes.find(function (item) { return item.id === card.dataset.recipe; }); renderResult(recipe,'selected',[]); document.getElementById('result').scrollIntoView({behavior:'smooth',block:'center'}); });
+      document.getElementById('result').addEventListener('click',function (event) { if (event.target.id === 'copy-prompt') copyPrompt(); var alt=event.target.closest('[data-alt]'); if (alt) renderResult(recipes.find(function (item) { return item.id === alt.dataset.alt; }),'selected',[]); });
+      applyLanguage(language);
+    }());
+  </script>
+</body>
+</html>

@@ -25,6 +25,27 @@ jobs:
         run: npm test
         working-directory: archify
 
+  webm-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Provision a known Chrome runtime
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          chrome-version: stable
+          install-dependencies: true
+      - name: Install the WebM decoder
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
+      - name: Decode a real motion export and reject static frames
+        run: npm run test:webm
+        working-directory: archify
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+
   zip-freshness:
     runs-on: ubuntu-latest
     steps:

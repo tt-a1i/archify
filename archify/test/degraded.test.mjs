@@ -35,7 +35,11 @@ fs.cpSync(skillRoot, installedRoot, {
   filter(source) {
     const rel = path.relative(skillRoot, source);
     return rel !== 'node_modules' && !rel.startsWith(`node_modules${path.sep}`)
-      && rel !== 'test' && !rel.startsWith(`test${path.sep}`);
+      && rel !== 'test' && !rel.startsWith(`test${path.sep}`)
+      // The validator freshness test creates and removes this fixture inside
+      // skillRoot while the test runner executes files concurrently. Exclude
+      // it from the installed-skill copy to avoid a copy/remove race.
+      && !rel.startsWith('.validator-check-');
   },
 });
 

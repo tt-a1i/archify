@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Incident Response Runbook",
+    "subtitle": "Detection, triage, mitigation, communication, escalation, and recovery proof",
+    "output": "examples/incident-response.html",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "detect-and-triage", "label": "Detect and establish command", "focus": ["alert", "page", "triage", "declare"], "note": "Follow the first minutes from signal to an owned incident." },
+      { "id": "mitigate-and-verify", "label": "Mitigate and prove recovery", "focus": ["triage", "contain", "recover", "verify", "close"], "note": "Keep mitigation separate from the evidence required to close." },
+      { "id": "escalate-and-communicate", "label": "Escalation and communication", "focus": ["declare", "escalate", "update", "rollback"], "note": "See who is paged, what stakeholders hear, and when rollback begins." }
+    ]
+  },
+  "lanes": [
+    { "id": "signals", "label": "Signals" },
+    { "id": "responders", "label": "Incident Command" },
+    { "id": "mitigation", "label": "Service Mitigation" },
+    { "id": "recovery", "label": "Recovery Evidence" },
+    { "id": "communication", "label": "Stakeholder Communication" },
+    { "id": "exceptions", "label": "Escalation + Rollback", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "detect", "label": "Detect", "fromCol": 0, "toCol": 1 },
+    { "id": "respond", "label": "Triage + mitigate", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "recover", "label": "Verify + close", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "command", "label": "Incident command", "lane": "responders", "fromCol": 1, "toCol": 3, "variant": "emphasis" },
+    { "id": "exception_actions", "label": "If impact persists", "lane": "exceptions", "fromCol": 3, "toCol": 5, "variant": "security" }
+  ],
+  "mainPath": ["alert", "page", "triage", "contain", "recover", "verify", "close"],
+  "nodes": [
+    { "id": "alert", "lane": "signals", "col": 0, "type": "messagebus", "label": "SLO Alert", "sublabel": "burn rate" },
+    { "id": "page", "lane": "responders", "col": 1, "width": 76, "type": "external", "label": "Page On-call", "sublabel": "acknowledge" },
+    { "id": "triage", "lane": "responders", "col": 2, "width": 64, "type": "backend", "label": "Triage", "sublabel": "scope impact" },
+    { "id": "declare", "lane": "responders", "col": 3, "type": "security", "label": "Declare", "sublabel": "assign commander", "tag": "SEV-1/2" },
+    { "id": "contain", "lane": "mitigation", "col": 3, "width": 72, "type": "backend", "label": "Contain", "sublabel": "stop growth" },
+    { "id": "recover", "lane": "mitigation", "col": 4, "width": 52, "type": "cloud", "label": "Recover", "sublabel": "restore" },
+    { "id": "verify", "lane": "recovery", "col": 5, "type": "database", "label": "Verify", "sublabel": "SLO + traces", "tag": "15 min stable" },
+    { "id": "close", "lane": "communication", "col": 5, "type": "external", "label": "Resolve", "sublabel": "final update" },
+    { "id": "update", "lane": "communication", "col": 3, "type": "frontend", "label": "Status Update", "sublabel": "impact + ETA" },
+    { "id": "escalate", "lane": "exceptions", "col": 3, "width": 72, "type": "security", "label": "Escalate", "sublabel": "specialist" },
+    { "id": "rollback", "lane": "exceptions", "col": 5, "type": "messagebus", "label": "Rollback", "sublabel": "last good" }
+  ],
+  "edges": [
+    { "from": "alert", "to": "page", "label": "page", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "page", "to": "triage", "route": "bottom-channel", "fromSide": "bottom", "toSide": "bottom" },
+    { "from": "triage", "to": "contain", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "contain", "to": "recover", "route": "bottom-channel", "fromSide": "bottom", "toSide": "bottom" },
+    { "from": "recover", "to": "verify", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "verify", "to": "close", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "triage", "to": "declare", "variant": "security" },
+    { "from": "declare", "to": "update", "variant": "dashed", "fromSide": "bottom", "toSide": "left", "via": [[430, 310], [356, 310], [356, 615]] },
+    { "from": "update", "to": "escalate", "variant": "security", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "verify", "to": "rollback", "variant": "security", "role": "error", "route": "outside-right", "fromSide": "right", "toSide": "right" }
+  ],
+  "cards": [
+    { "dot": "rose", "title": "Ownership First", "items": ["A page is not an incident until someone owns command", "Severity and scope are explicit before mitigation spreads", "Escalation names the missing expertise"] },
+    { "dot": "emerald", "title": "Recovery Is Evidence", "items": ["Mitigation can reduce impact without proving recovery", "SLOs and traces must stay healthy for a fixed window", "The final update follows verification, not optimism"] },
+    { "dot": "cyan", "title": "Communication Contract", "items": ["Stakeholders receive impact, action, and next update time", "Rollback remains visible as a deliberate response", "Every branch has an owner and observable exit"] }
+  ]
+}

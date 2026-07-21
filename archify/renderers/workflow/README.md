@@ -99,5 +99,14 @@ layout problems, including node overlap, nodes outside their lanes, invalid
 phase/group column ranges, empty groups, broken `mainPath` steps, unknown edge
 targets, labels colliding with nodes or other labels, labels wider than their
 node, legends outside the viewBox, or straight arrows that are too short to
-read cleanly. Text width is estimated CJK-aware: fullwidth glyphs count as two
-units.
+read cleanly. The shared Clean Flow Gate also rejects edges crossing unrelated
+nodes with 2px clearance; lanes, phases, and groups remain intentional
+pass-through containers. Text width is estimated CJK-aware: fullwidth glyphs
+count as two units.
+
+Set `meta.quality_profile` to `showcase` for polished delivery. Unrelated proper
+X crossings then fail with `composition/proper-crossing`; default `standard`
+keeps them as artifact-receipt warnings. Shared semantic endpoints, endpoint
+touches, and collinear lane corridors are not proper crossings. Showcase also
+rejects any route segment below 8px and any interior turn segment below 16px;
+ordinary 8–15px endpoint stubs remain valid for fixed lane gaps.

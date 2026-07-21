@@ -13,10 +13,11 @@ const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'life
 
 function usage() {
   return `Usage:
-  archify render <type> <input.json> [output.html]
-  archify validate <type> <input.json> [--json] [--layout-json]
+  archify render <type> <input.json> [output.html] [--quality standard|showcase]
+  archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase]
   archify inspect <type> <input.json>
   archify check <output.html>
+  archify guide [scenario or question] [--json] [--lang en|zh]
   archify examples
   archify doctor
   archify demo [output-directory]
@@ -43,7 +44,30 @@ function runNode(args, options = {}) {
     cwd: options.cwd || process.cwd(),
     encoding: 'utf8',
     stdio: options.stdio || 'inherit',
+    env: options.env ? { ...process.env, ...options.env } : process.env,
   });
+}
+
+function extractQualityArgs(args) {
+  const rest = [];
+  let quality;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--quality') {
+      quality = args[index + 1];
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--quality=')) {
+      quality = arg.slice('--quality='.length);
+      continue;
+    }
+    rest.push(arg);
+  }
+  if (quality !== undefined && !['standard', 'showcase'].includes(quality)) {
+    fail(`Unknown quality profile "${quality}". Expected standard or showcase.`);
+  }
+  return { rest, quality };
 }
 
 function exitFrom(result) {
@@ -52,9 +76,12 @@ function exitFrom(result) {
 }
 
 function commandRender(args) {
-  const [type, input, output] = args;
+  const { rest, quality } = extractQualityArgs(args);
+  const [type, input, output] = rest;
   if (!type || !input) fail(usage());
-  const result = runNode([rendererPath(type), input, ...(output ? [output] : [])]);
+  const result = runNode([rendererPath(type), input, ...(output ? [output] : [])], {
+    env: quality ? { ARCHIFY_QUALITY_PROFILE: quality } : undefined,
+  });
   if (result.status !== 0) exitFrom(result);
 }
 
@@ -92,6 +119,13 @@ async function commandDoctor() {
     label: 'Example renderer',
     ok: fs.existsSync(examplesRenderer),
     missing: fs.existsSync(examplesRenderer) ? 0 : 1,
+  });
+
+  const scenarioGuide = path.join(skillRoot, 'recipes/scenarios.mjs');
+  checks.push({
+    label: 'Scenario recipe guide',
+    ok: fs.existsSync(scenarioGuide),
+    missing: fs.existsSync(scenarioGuide) ? 0 : 1,
   });
 
   const validators = path.join(skillRoot, 'renderers/shared/generated-validators.mjs');
@@ -156,6 +190,59 @@ async function commandDoctor() {
   process.exitCode = 1;
 }
 
+async function commandGuide(args) {
+  let lang;
+  let json = false;
+  const queryParts = [];
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--json') {
+      json = true;
+    } else if (arg === '--lang') {
+      const value = args[index + 1];
+      if (value !== 'en' && value !== 'zh') fail('--lang must be "en" or "zh".');
+      lang = value;
+      index += 1;
+    } else if (arg.startsWith('--lang=')) {
+      const value = arg.slice('--lang='.length);
+      if (value !== 'en' && value !== 'zh') fail('--lang must be "en" or "zh".');
+      lang = value;
+    } else if (arg.startsWith('--')) {
+      fail(`Unknown guide option "${arg}".`);
+    } else {
+      queryParts.push(arg);
+    }
+  }
+
+  const guidePath = path.join(skillRoot, 'recipes/scenarios.mjs');
+  let guide;
+  try {
+    guide = await import(pathToFileURL(guidePath).href);
+  } catch (error) {
+    fail(`Could not load the scenario recipe guide: ${error.message}`, 1);
+  }
+
+  const query = queryParts.join(' ').trim();
+  if (!query) {
+    const selectedLang = lang || 'en';
+    if (json) {
+      console.log(JSON.stringify({
+        ok: true,
+        mode: 'list',
+        lang: selectedLang,
+        recipes: guide.listScenarioRecipes(selectedLang),
+      }, null, 2));
+    } else {
+      console.log(guide.formatScenarioList(selectedLang));
+    }
+    return;
+  }
+
+  const result = guide.recommendScenario(query, lang ? { lang } : {});
+  console.log(json ? JSON.stringify(result, null, 2) : guide.formatScenarioRecommendation(result));
+}
+
 function commandDemo(args) {
   if (args.length > 1) fail(usage());
 
@@ -178,6 +265,9 @@ function commandDemo(args) {
 }
 
 function commandValidate(args) {
+  const qualityArgs = extractQualityArgs(args);
+  args = qualityArgs.rest;
+  const quality = qualityArgs.quality;
   const json = args.includes('--json');
   const layoutJson = args.includes('--layout-json');
   const rest = args.filter((arg) => arg !== '--json' && arg !== '--layout-json');
@@ -189,7 +279,10 @@ function commandValidate(args) {
     if (type !== 'architecture') {
       fail('--layout-json is currently supported for architecture diagrams only.');
     }
-    const result = runNode([renderer, input, '/dev/null', '--layout-json'], { stdio: 'pipe' });
+    const result = runNode([renderer, input, '/dev/null', '--layout-json'], {
+      stdio: 'pipe',
+      env: quality ? { ARCHIFY_QUALITY_PROFILE: quality } : undefined,
+    });
     if (result.status !== 0) {
       if (result.stderr) process.stderr.write(result.stderr);
       if (result.stdout) process.stdout.write(result.stdout);
@@ -204,7 +297,10 @@ function commandValidate(args) {
   let exitCode = 0;
 
   try {
-    const render = runNode([renderer, input, out], { stdio: 'pipe' });
+    const render = runNode([renderer, input, out], {
+      stdio: 'pipe',
+      env: quality ? { ARCHIFY_QUALITY_PROFILE: quality } : undefined,
+    });
     if (render.status !== 0) {
       if (render.stderr) process.stderr.write(render.stderr);
       if (render.stdout) process.stdout.write(render.stdout);
@@ -223,9 +319,10 @@ function commandValidate(args) {
             type,
             input: path.resolve(input),
             checks: result.checks,
+            composition: result.composition,
           }, null, 2));
         } else {
-          console.log(`ok ${type} ${path.resolve(input)} (${result.checks.length} checks)`);
+          console.log(`ok ${type} ${path.resolve(input)} (${result.checks.length} artifact checks; composition ${result.composition.profile}: ${result.composition.summary.errors} errors, ${result.composition.summary.warnings} warnings)`);
         }
       }
     }
@@ -256,6 +353,9 @@ switch (command) {
     break;
   case 'check':
     commandCheck(args);
+    break;
+  case 'guide':
+    await commandGuide(args);
     break;
   case 'examples':
     commandExamples();

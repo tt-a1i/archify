@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MCO Runtime Architecture",
+    "subtitle": "Explicit provider selection, policy-bound execution, parallel orchestration, and raw-answer evidence",
+    "output": "experiments/mco-showcase/mco-runtime.html",
+    "visual_preset": "signal-flow",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [1680, 720],
+    "views": [
+      {
+        "id": "dispatch-path",
+        "label": "Dispatch one task",
+        "focus": ["callers", "entry", "router", "policy", "invocation", "adapters", "transport", "providers"],
+        "note": "Follow an explicit task from the caller through policy resolution into the selected native provider CLIs."
+      },
+      {
+        "id": "persistent-session",
+        "label": "Keep a provider session",
+        "focus": ["callers", "entry", "router", "session", "session_state"],
+        "note": "See how the CLI starts a detached daemon, exchanges requests over a local socket, and persists history."
+      },
+      {
+        "id": "evidence-output",
+        "label": "Preserve raw evidence",
+        "focus": ["invocation", "adapters", "transport", "artifacts", "outputs"],
+        "note": "Provider responses stay opaque while MCO records per-invocation answers, status, usage, and run metadata."
+      }
+    ]
+  },
+  "components": [
+    { "id": "callers", "type": "external", "label": "Callers", "sublabel": "human · coding agent", "pos": [30, 280], "size": [132, 66] },
+    { "id": "entry", "type": "frontend", "label": "Entry Surfaces", "sublabel": "npm · Python CLI · MCP", "pos": [210, 280], "size": [150, 66], "tag": "bin/mco.js · mco" },
+    { "id": "router", "type": "backend", "label": "Command Router", "sublabel": "run · review · doctor", "pos": [410, 280], "size": [150, 66], "tag": "runtime.cli" },
+    { "id": "policy", "type": "security", "label": "Config + Policy", "sublabel": "scope · permissions · risk", "pos": [610, 280], "size": [158, 66], "tag": "read_only · write · yolo" },
+    { "id": "invocation", "type": "backend", "label": "Invocation Workflow", "sublabel": "parallel · chain · debate", "pos": [820, 280], "size": [170, 66], "tag": "timeouts · cancellation" },
+    { "id": "adapters", "type": "backend", "label": "Adapter Registry", "sublabel": "detect · run · poll · cancel", "pos": [1040, 280], "size": [158, 66], "tag": "ProviderAdapter contract" },
+    { "id": "transport", "type": "messagebus", "label": "Transport Layer", "sublabel": "shim stdout · ACP JSON-RPC", "pos": [1240, 280], "size": [166, 66], "tag": "decode_transport" },
+    { "id": "providers", "type": "external", "label": "Provider CLIs", "sublabel": "Claude · Codex · Pi · 7 more", "pos": [1460, 280], "size": [176, 66], "tag": "native auth + sandbox" },
+    { "id": "session", "type": "backend", "label": "Session Daemon", "sublabel": "detached worker + socket", "pos": [405, 500], "size": [160, 66], "tag": "queue · retry · cancel" },
+    { "id": "session_state", "type": "database", "label": "Session State", "sublabel": ".mco/sessions", "pos": [640, 500], "size": [150, 66], "tag": "state · history · logs" },
+    { "id": "artifacts", "type": "database", "label": "Invocation Artifacts", "sublabel": "answers · result.md · run.json", "pos": [1240, 500], "size": [166, 66], "tag": "per-stage evidence" },
+    { "id": "outputs", "type": "external", "label": "Output Consumers", "sublabel": "terminal · agent · CI", "pos": [1460, 500], "size": [176, 66], "tag": "text · JSON · JSONL" }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "MCO local package / Python runtime",
+      "wraps": ["entry", "router", "policy", "invocation", "adapters", "transport", "session", "session_state", "artifacts"]
+    },
+    {
+      "kind": "security-group",
+      "label": "explicit execution-policy boundary",
+      "wraps": ["policy", "invocation", "adapters", "transport"]
+    }
+  ],
+  "connections": [
+    { "id": "submit", "from": "callers", "to": "entry", "label": "task + selected agents", "variant": "emphasis", "route": "straight", "labelAt": [186, 276] },
+    { "id": "parse", "from": "entry", "to": "router", "variant": "emphasis", "route": "straight" },
+    { "id": "resolve", "from": "router", "to": "policy", "variant": "security", "route": "straight" },
+    { "id": "authorize", "from": "policy", "to": "invocation", "label": "validated scope", "variant": "security", "route": "straight", "labelAt": [794, 276] },
+    { "id": "schedule", "from": "invocation", "to": "adapters", "variant": "emphasis", "route": "straight" },
+    { "id": "adapt", "from": "adapters", "to": "transport", "label": "provider contract", "variant": "emphasis", "route": "straight", "labelAt": [1219, 276] },
+    { "id": "execute", "from": "transport", "to": "providers", "label": "native CLI", "variant": "emphasis", "route": "straight" },
+    { "id": "session_start", "from": "router", "to": "session", "label": "start · send · resume", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "route": "straight", "labelAt": [490, 430] },
+    { "id": "session_persist", "from": "session", "to": "session_state", "label": "socket + history", "variant": "dashed", "route": "straight", "labelAt": [605, 496] },
+    { "id": "persist_answers", "from": "transport", "to": "artifacts", "label": "decode + persist", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "route": "straight", "labelAt": [1323, 430] },
+    { "id": "publish_outputs", "from": "artifacts", "to": "outputs", "label": "raw evidence", "variant": "emphasis", "route": "straight", "labelAt": [1433, 580] }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Explicit Entrypoints",
+      "items": [
+        "The npm wrapper launches the same Python runtime used by the console script",
+        "CLI and optional MCP tools converge on one invocation workflow",
+        "MCO never silently chooses the provider team"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Policy Before Process",
+      "items": [
+        "Repository scope and allow-paths are normalized before dispatch",
+        "read_only, write, and yolo map to provider-native permissions",
+        "Timeout, cancellation, and partial success stay explicit"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Opaque Answers, Durable Evidence",
+      "items": [
+        "Adapters normalize transport without inventing findings or consensus",
+        "Each invocation keeps its raw answer and operational status",
+        "Markdown artifacts and JSON metadata remain available to humans and CI"
+      ]
+    }
+  ]
+}

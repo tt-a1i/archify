@@ -1,13 +1,17 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { esc, renderDefinitions, textUnits } from '../shared/utils.mjs';
-import { animateAttr, loadDiagram, writeDiagram, svgRootAttrs } from '../shared/cli.mjs';
+import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
+import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagram, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { componentBox, boundaryBox, connectionPath } from '../shared/layout-report.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import {
   asArray,
   isFinitePoint,
   rectsOverlap,
+  cleanFlowProblems,
+  cleanCrossingProblems,
+  cleanBorderRunProblems,
+  cleanRouteRhythmProblems,
   suggestLabelObstacleFix,
   suggestComponentSeparation,
   anchor,
@@ -15,6 +19,7 @@ import {
   defaultToSide,
   chosenSide,
   polylinePath,
+  routePointsValue,
   roundedPath,
   labelPoint,
   componentFill,
@@ -82,6 +87,20 @@ function boundaryRect(boundary) {
 }
 
 const boundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
+const compositionFrames = boundaries.map((boundary, index) => ({
+  ...boundary,
+  id: boundary.id || index,
+  kind: boundary.kind || 'boundary',
+  radius: boundary.kind === 'security-group' ? 8 : 12,
+}));
+
+function componentContext(component) {
+  const scopes = boundaries
+    .filter((boundary) => asArray(boundary.wraps).includes(component.id))
+    .sort((a, b) => (b.width * b.height) - (a.width * a.height))
+    .map((boundary) => boundary.label);
+  return scopes.length ? scopes.join(' › ') : 'Architecture component';
+}
 
 // ---- Auto viewBox: fit all geometry + a legend row --------------------------
 function autoViewBox() {
@@ -178,6 +197,46 @@ function validateArchitecture() {
     }
   }
 
+  problems.push(...cleanFlowProblems({
+    relations: arch.connections,
+    endpointIds: new Set(components.keys()),
+    obstacles: components.values(),
+    pathFor,
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    obstacleKind: 'component',
+    profile: arch.meta?.quality_profile,
+    routeHint: 'adjust fromSide/toSide, set route/via, or move the component'
+  }));
+  problems.push(...cleanCrossingProblems({
+    relations: arch.connections,
+    endpointIds: new Set(components.keys()),
+    pathFor,
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: arch.meta?.quality_profile,
+    routeHint: 'adjust route/via or fromSide/toSide so the connections use separate corridors'
+  }));
+  problems.push(...cleanBorderRunProblems({
+    relations: arch.connections,
+    endpointIds: new Set(components.keys()),
+    frames: compositionFrames,
+    pathFor,
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: arch.meta?.quality_profile,
+    routeHint: 'adjust route/via or fromSide/toSide so the connection crosses the boundary perpendicularly instead of following its border'
+  }));
+  problems.push(...cleanRouteRhythmProblems({
+    relations: arch.connections,
+    endpointIds: new Set(components.keys()),
+    pathFor,
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: arch.meta?.quality_profile,
+    routeHint: 'move route/via points into a wider corridor or move the component so every turn has room to read'
+  }));
+
   // Connection labels must not land on top of components.
   const labelRects = [];
   for (const conn of asArray(arch.connections)) {
@@ -270,11 +329,11 @@ function pathFor(conn) {
 }
 
 // ---- Rendering ---------------------------------------------------------------
-function renderBoundary(b) {
+function renderBoundary(b, index) {
   const cls = b.kind === 'security-group' ? 'c-security-group' : 'c-region';
   const labelCls = b.kind === 'security-group' ? 't-security' : 't-cloud';
   const rx = b.kind === 'security-group' ? 8 : 12;
-  return `        <rect x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}" rx="${rx}" class="${cls}" stroke-width="1"/>
+  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-id="${index}" x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}" rx="${rx}" class="${cls}" stroke-width="1"/>
         <text x="${b.x + 8}" y="${b.y + 18}" class="${labelCls}" font-size="9" font-weight="600">${esc(b.label)}</text>`;
 }
 
@@ -282,15 +341,17 @@ function renderConnectionPath(conn, index) {
   const [cls, marker] = arrowClassMap[conn.variant || 'default'] || arrowClassMap.default;
   const routed = pathFor(conn);
   const strokeWidth = conn.width || (conn.variant === 'emphasis' ? 1.8 : 1.5);
-  return `        <path d="${routed.d}" class="${cls}"${animateAttr(arch.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  return `        <path ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)} data-composition-points="${routePointsValue(routed.points)}" d="${routed.d}" class="${cls}"${animateAttr(arch.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
 }
 
-function renderConnectionLabel(conn) {
+function renderConnectionLabel(conn, index) {
   if (!conn.label) return '';
   const [lx, ly] = labelPoint(conn, pathFor(conn).points);
   const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
-  return `        <rect x="${lx - w / 2}" y="${ly - 10}" width="${w}" height="14" rx="3" class="c-mask"/>
-        <text x="${lx}" y="${ly}" class="${variantAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>`;
+  return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}>
+          <rect x="${lx - w / 2}" y="${ly - 10}" width="${w}" height="14" rx="3" class="c-mask"/>
+          <text x="${lx}" y="${ly}" class="${variantAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
+        </g>`;
 }
 
 function renderComponent(c) {
@@ -300,14 +361,19 @@ function renderComponent(c) {
   const hasSub = c.sublabel != null && c.sublabel !== '';
   const labelY = hasSub ? c.y + c.height / 2 - 2 : c.y + c.height / 2 + 4;
   const sub = hasSub
-    ? `\n        <text x="${cx}" y="${c.y + c.height / 2 + 14}" class="t-muted" font-size="9" text-anchor="middle">${esc(c.sublabel)}</text>`
+    ? `\n        <text data-detail="context" x="${cx}" y="${c.y + c.height / 2 + 14}" class="t-muted" font-size="9" text-anchor="middle">${esc(c.sublabel)}</text>`
     : '';
   const tag = c.tag
-    ? `\n        <text x="${cx}" y="${c.y + c.height - 8}" class="${accent}" font-size="7" text-anchor="middle">${esc(c.tag)}</text>`
+    ? `\n        <text data-detail="fine" x="${cx}" y="${c.y + c.height - 8}" class="${accent}" font-size="7" text-anchor="middle">${esc(c.tag)}</text>`
     : '';
-  return `        <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="c-mask"/>
-        <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
-        <text x="${cx}" y="${labelY}" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}`;
+  const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c) };
+  return `        <g ${focusNodeAttrs(c.id, c.label, passport)}>
+          ${focusNodeTitle(c.label, passport)}
+          <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="c-mask"/>
+          <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
+          ${renderSemanticSigil(c.type, { x: c.x + 6, y: c.y + 6 })}
+          <text${hasSub ? ' data-detail-anchor' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}
+        </g>`;
 }
 
 // Auto legend: one swatch per component type actually used, left to right.
@@ -323,17 +389,22 @@ function renderLegend() {
   }
   const y = legendY();
   let x = layout.margin;
-  const parts = [`        <text x="${x}" y="${y - 13}" class="t-primary" font-size="9" font-weight="600">Legend</text>`];
+  const parts = ['        <g data-legend-bridge>',
+    `          <text x="${x}" y="${y - 13}" class="t-primary" font-size="9" font-weight="600">Legend</text>`];
   for (const type of used) {
-    parts.push(`        <rect x="${x}" y="${y - 8}" width="14" height="9" rx="2" class="${componentFill[type] || 'c-external'}" stroke-width="1"/>`);
-    parts.push(`        <text x="${x + 20}" y="${y}" class="t-muted" font-size="8">${TYPE_LABELS[type] || type}</text>`);
-    x += 30 + (textUnits(TYPE_LABELS[type] || type) * 5 + 28);
+    parts.push(`          <g data-legend-kind="${esc(type)}">`);
+    parts.push(`            <rect x="${x}" y="${y - 8}" width="14" height="9" rx="2" class="${componentFill[type] || 'c-external'}" stroke-width="1"/>`);
+    parts.push(`            <text x="${x + 20}" y="${y}" class="t-muted" font-size="8">${TYPE_LABELS[type] || type}</text>`);
+    parts.push('          </g>');
+    x += 30 + (textUnits(TYPE_LABELS[type] || type) * 5 + 34);
   }
+  parts.push('        </g>');
   return parts.join('\n');
 }
 
 function renderSvg() {
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta, 'architecture diagram')}>
+${svgAccessibleText(arch.meta, 'architecture diagram')}
 ${renderDefinitions()}
 
         <!-- Background Grid -->

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Release Delivery Workflow",
+    "subtitle": "Commit, blocking checks, approval, production verification, and rollback",
+    "output": "examples/release-delivery.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "commit-to-checks", "label": "Commit to green build", "focus": ["commit", "pull_request", "build", "checks"], "note": "Follow the change through reproducible build and blocking quality gates." },
+      { "id": "approval-to-production", "label": "Approve and promote", "focus": ["checks", "approval", "deploy", "verify_prod", "announce"], "note": "See who authorizes production and how success is verified." },
+      { "id": "rollback-path", "label": "Failure and rollback", "focus": ["checks", "failed", "verify_prod", "rollback", "deploy"], "note": "Isolate the two places where delivery stops or reverses safely." }
+    ]
+  },
+  "lanes": [
+    { "id": "dev", "label": "Developer" },
+    { "id": "ci", "label": "Continuous Integration" },
+    { "id": "approval", "label": "Release Governance" },
+    { "id": "environment", "label": "Production Environment" },
+    { "id": "communication", "label": "Release Communication" },
+    { "id": "exceptions", "label": "Failure + Rollback", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "change", "label": "Change", "fromCol": 0, "toCol": 1 },
+    { "id": "verify", "label": "Build + verify", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "promote", "label": "Promote + observe", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "blocking_checks", "label": "Blocking checks", "lane": "ci", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "rollback_work", "label": "Recovery path", "lane": "exceptions", "fromCol": 3, "toCol": 5, "variant": "security" }
+  ],
+  "mainPath": ["commit", "pull_request", "build", "checks", "approval", "deploy", "verify_prod", "announce"],
+  "nodes": [
+    { "id": "commit", "lane": "dev", "col": 0, "type": "frontend", "label": "Commit", "sublabel": "signed change" },
+    { "id": "pull_request", "lane": "dev", "col": 1, "type": "frontend", "label": "Pull Request", "sublabel": "reviewed diff" },
+    { "id": "build", "lane": "ci", "col": 2, "type": "backend", "label": "Build", "sublabel": "locked inputs", "tag": "reproducible" },
+    { "id": "checks", "lane": "ci", "col": 3, "type": "security", "label": "Quality Gates", "sublabel": "test + scan", "tag": "blocking" },
+    { "id": "approval", "lane": "approval", "col": 4, "type": "security", "label": "Approve", "sublabel": "release owner", "tag": "human gate" },
+    { "id": "deploy", "lane": "environment", "col": 4, "type": "cloud", "label": "Deploy", "sublabel": "canary 10%", "tag": "production" },
+    { "id": "verify_prod", "lane": "environment", "col": 5, "type": "backend", "label": "Verify", "sublabel": "smoke + SLO" },
+    { "id": "announce", "lane": "communication", "col": 5, "type": "external", "label": "Announce", "sublabel": "status + notes" },
+    { "id": "failed", "lane": "exceptions", "col": 2, "type": "security", "label": "Stop Release", "sublabel": "gate failed" },
+    { "id": "rollback", "lane": "exceptions", "col": 4, "width": 64, "type": "messagebus", "label": "Rollback", "sublabel": "last good image", "tag": "owner: on-call" }
+  ],
+  "edges": [
+    { "from": "commit", "to": "pull_request" },
+    { "from": "pull_request", "to": "build", "label": "merge", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "build", "to": "checks" },
+    { "from": "checks", "to": "approval", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "approval", "to": "deploy", "variant": "security", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "deploy", "to": "verify_prod" },
+    { "from": "verify_prod", "to": "announce", "label": "healthy", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "checks", "to": "failed", "label": "red", "variant": "security", "role": "error", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "verify_prod", "to": "rollback", "variant": "security", "role": "error", "route": "outside-right", "fromSide": "right", "toSide": "right" },
+    { "from": "rollback", "to": "deploy", "label": "restore", "variant": "dashed", "role": "return", "route": "return-left", "fromSide": "left", "toSide": "left" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "One Happy Path", "items": ["Every change is reviewed before a reproducible build", "Blocking checks must be green before human approval", "Production is complete only after smoke and SLO verification"] },
+    { "dot": "rose", "title": "Stop Conditions", "items": ["Test or security failure stops promotion", "Production health can reverse a release", "Rollback ownership is visible before an incident"] },
+    { "dot": "cyan", "title": "Release Evidence", "items": ["Approval, immutable image, and check results are retained", "The release announcement follows verification", "The main path remains readable without hiding failure"] }
+  ]
+}

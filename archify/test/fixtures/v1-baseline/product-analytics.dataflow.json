@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Product Analytics Data Flow",
+    "subtitle": "Events, consent, PII isolation, warehouse sync, and downstream analytics",
+    "output": "examples/dataflow-product-analytics.html",
+    "viewBox": [1080, 760]
+  },
+  "stages": [
+    { "label": "Sources" },
+    { "label": "Ingest" },
+    { "label": "Process" },
+    { "label": "Store" },
+    { "label": "Consume" }
+  ],
+  "nodes": [
+    { "id": "web", "type": "frontend", "label": "Web App", "sublabel": "browser SDK", "stage": 0, "row": 0, "tag": "events" },
+    { "id": "mobile", "type": "frontend", "label": "Mobile", "sublabel": "iOS / Android", "stage": 0, "row": 2, "tag": "events" },
+    { "id": "edge", "type": "cloud", "label": "Edge API", "sublabel": "collector", "stage": 1, "row": 1, "tag": "TLS" },
+    { "id": "consent", "type": "security", "label": "Consent Gate", "sublabel": "policy filter", "stage": 2, "row": 0, "tag": "PII guard" },
+    { "id": "stream", "type": "messagebus", "label": "Event Stream", "sublabel": "Kafka topic", "stage": 2, "row": 2, "tag": "ordered" },
+    { "id": "pii", "type": "security", "label": "PII Vault", "sublabel": "encrypted", "stage": 3, "row": 0, "tag": "restricted" },
+    { "id": "warehouse", "type": "database", "label": "Warehouse", "sublabel": "analytics tables", "stage": 3, "row": 2, "tag": "curated" },
+    { "id": "features", "type": "database", "label": "Feature Store", "sublabel": "daily batch", "stage": 3, "row": 4, "tag": "derived" },
+    { "id": "dashboard", "type": "backend", "label": "Dashboards", "sublabel": "product metrics", "stage": 4, "row": 1, "tag": "SQL" },
+    { "id": "model", "type": "backend", "label": "ML Model", "sublabel": "ranking job", "stage": 4, "row": 4, "tag": "features" }
+  ],
+  "flows": [
+    { "from": "web", "to": "edge", "label": "clickstream", "classification": "user events", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[184, 157], [184, 271]], "labelAt": [204, 190] },
+    { "from": "mobile", "to": "edge", "label": "app events", "classification": "device events", "variant": "default", "fromSide": "right", "toSide": "left", "via": [[222, 385], [222, 271]], "labelAt": [220, 342] },
+    { "from": "edge", "to": "consent", "label": "identity + consent", "classification": "PII touch", "variant": "security", "fromSide": "top", "toSide": "left", "via": [[315, 112], [450, 112], [450, 157]], "labelAt": [382, 100] },
+    { "from": "edge", "to": "stream", "label": "accepted events", "classification": "append-only", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[420, 271], [420, 385]], "labelAt": [438, 324] },
+    { "from": "consent", "to": "pii", "label": "identity map", "classification": "encrypted PII", "variant": "security", "route": "straight", "labelAt": [638, 144] },
+    { "from": "stream", "to": "warehouse", "label": "normalized facts", "classification": "non-PII", "variant": "emphasis", "route": "straight", "labelAt": [638, 372] },
+    { "from": "warehouse", "to": "features", "label": "daily aggregates", "classification": "batch", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "route": "straight", "labelAt": [745, 496] },
+    { "from": "warehouse", "to": "dashboard", "label": "metrics SQL", "classification": "read-only", "variant": "default", "fromSide": "right", "toSide": "left", "via": [[852, 385], [852, 271]], "labelAt": [830, 326] },
+    { "from": "features", "to": "model", "label": "feature vectors", "classification": "derived", "variant": "dashed", "route": "straight", "labelAt": [852, 598] },
+    { "from": "pii", "to": "dashboard", "label": "restricted join", "classification": "approved only", "variant": "security", "fromSide": "right", "toSide": "top", "via": [[878, 157], [878, 212], [960, 212]], "labelAt": [880, 198] }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Primary Data Path",
+      "items": [
+        "Events move left to right through source, ingest, process, store, and consume stages",
+        "The hot path stays visually clear even with secondary batch flows",
+        "Labels name data assets instead of generic API verbs"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Sensitive Boundary",
+      "items": [
+        "Consent and PII paths are styled as security flows",
+        "PII lands in a restricted vault, separate from the analytics warehouse",
+        "Restricted joins are visible without implying default access"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Derived Consumers",
+      "items": [
+        "Dashboards read curated facts from the warehouse",
+        "Feature vectors are derived by batch from analytics tables",
+        "Consumption paths stay distinct from collection and consent handling"
+      ]
+    }
+  ]
+}

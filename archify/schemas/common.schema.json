@@ -23,6 +23,25 @@
     "variant": {
       "enum": ["default", "emphasis", "security", "dashed"]
     },
+    "guidedViews": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "focus"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "label": { "type": "string", "minLength": 1, "maxLength": 48 },
+          "focus": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/id" }
+          },
+          "note": { "type": "string", "maxLength": 140 }
+        }
+      }
+    },
     "cards": {
       "type": "array",
       "items": {
