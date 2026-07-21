@@ -83,7 +83,7 @@ async function freePort() {
   return port;
 }
 
-async function devtoolsEndpoint(port) {
+async function devtoolsEndpoint(port, chromeProcess, diagnostics) {
   for (let attempt = 0; attempt < 100; attempt += 1) {
     try {
       const response = await fetch(`http://127.0.0.1:${port}/json/version`);
@@ -91,9 +91,12 @@ async function devtoolsEndpoint(port) {
     } catch (_) {
       // Chrome may need a moment to bind the debugging port.
     }
+    if (chromeProcess.exitCode !== null) break;
     await delay(50);
   }
-  throw new Error('Chrome did not expose a DevTools endpoint');
+  const stderr = diagnostics().trim();
+  const exit = chromeProcess.exitCode === null ? 'still running' : `exited with code ${chromeProcess.exitCode}`;
+  throw new Error(`Chrome did not expose a DevTools endpoint (${exit})${stderr ? `:\n${stderr}` : ''}`);
 }
 
 async function connectCdp(webSocketUrl) {
@@ -141,6 +144,7 @@ async function evaluate(cdp, sessionId, expression, awaitPromise = false) {
 }
 
 const port = await freePort();
+let chromeStderr = '';
 const chromeProcess = spawn(chrome, [
   '--headless=new',
   '--disable-gpu',
@@ -150,16 +154,20 @@ const chromeProcess = spawn(chrome, [
   '--autoplay-policy=no-user-gesture-required',
   '--log-level=3',
   `--user-data-dir=${path.join(tmp, 'chrome-profile')}`,
+  '--remote-debugging-address=127.0.0.1',
   `--remote-debugging-port=${port}`,
   'about:blank',
 ], { stdio: ['ignore', 'ignore', 'pipe'] });
-chromeProcess.stderr.resume();
+chromeProcess.stderr.setEncoding('utf8');
+chromeProcess.stderr.on('data', (chunk) => {
+  chromeStderr = `${chromeStderr}${chunk}`.slice(-64 * 1024);
+});
 
 let cdp;
 let targetId;
 
 try {
-  cdp = await connectCdp(await devtoolsEndpoint(port));
+  cdp = await connectCdp(await devtoolsEndpoint(port, chromeProcess, () => chromeStderr));
   ({ targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' }));
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
   await cdp.send('Page.enable', {}, sessionId);
