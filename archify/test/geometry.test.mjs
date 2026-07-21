@@ -405,6 +405,16 @@ test('textUnits: ASCII=1, CJK=2, mixed sums, fullwidth supplementary=2', () => {
   assert.equal(textUnits(null), 0);
   assert.equal(textUnits('𠀀'), 2); // CJK Ext-B (supplementary plane)
   assert.equal(textUnits('🚀'), 2); // emoji
+  // CJK edge cases (issue #14)
+  assert.equal(textUnits('写入'), 4);        // CJK Unified Ideographs
+  assert.equal(textUnits('审批通过'), 8);     // mixed CJK
+  assert.equal(textUnits('。、'), 4);        // CJK punctuation
+  assert.equal(textUnits('！＠＃'), 6);       // fullwidth punctuation
+  assert.equal(textUnits('０１２'), 6);       // fullwidth digits
+  assert.equal(textUnits('한글'), 4);         // Korean Hangul
+  assert.equal(textUnits('注入提示词'), 10);   // the original failing label (5 chars × 2)
+  assert.equal(textUnits('a中文b'), 6);       // mixed ASCII+CJK (1+2*2+1)
+  assert.equal(textUnits('a！b'), 4);         // mixed ASCII+fullwidth (1+2+1)
 });
 
 test('semantic sigils cover every component and lifecycle kind without literal color', () => {
