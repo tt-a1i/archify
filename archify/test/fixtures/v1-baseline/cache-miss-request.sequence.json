@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Cache Miss Request Sequence",
+    "subtitle": "Frontend request path with auth, cache fallback, persistence, and async trace",
+    "output": "examples/sequence-cache-miss-request.html",
+    "viewBox": [820, 760]
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "User", "sublabel": "browser session" },
+    { "id": "web", "type": "frontend", "label": "Web App", "sublabel": "React UI" },
+    { "id": "api", "type": "backend", "label": "API", "sublabel": "request handler" },
+    { "id": "auth", "type": "security", "label": "Auth", "sublabel": "JWT verify" },
+    { "id": "redis", "type": "database", "label": "Redis", "sublabel": "cache" },
+    { "id": "db", "type": "database", "label": "Postgres", "sublabel": "source of truth" },
+    { "id": "trace", "type": "messagebus", "label": "Trace", "sublabel": "async event" }
+  ],
+  "segments": [
+    { "from": 150, "to": 295, "label": "Request" },
+    { "from": 315, "to": 505, "label": "Fallback" },
+    { "from": 525, "to": 665, "label": "Response + trace" }
+  ],
+  "messages": [
+    { "from": "user", "to": "web", "y": 185, "label": "open page", "variant": "default" },
+    { "from": "web", "to": "api", "y": 228, "label": "GET /dashboard", "variant": "emphasis" },
+    { "from": "api", "to": "auth", "y": 270, "label": "verify JWT", "variant": "security" },
+    { "from": "auth", "to": "api", "y": 305, "label": "claims ok", "variant": "return" },
+    { "from": "api", "to": "redis", "y": 354, "label": "read cache", "variant": "default" },
+    { "from": "redis", "to": "api", "y": 391, "label": "miss", "variant": "return" },
+    { "from": "api", "to": "db", "y": 443, "label": "query profile + metrics", "variant": "emphasis" },
+    { "from": "db", "to": "api", "y": 489, "label": "rows", "variant": "return" },
+    { "from": "api", "to": "redis", "y": 536, "label": "set cache", "variant": "dashed" },
+    { "from": "api", "to": "trace", "y": 580, "label": "emit trace", "variant": "dashed" },
+    { "from": "api", "to": "web", "y": 625, "label": "200 JSON", "variant": "return" },
+    { "from": "web", "to": "user", "y": 662, "label": "render", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "web", "from": 220, "to": 668, "type": "frontend" },
+    { "participant": "api", "from": 228, "to": 632, "type": "backend" },
+    { "participant": "auth", "from": 265, "to": 310, "type": "security" },
+    { "participant": "redis", "from": 349, "to": 398, "type": "database" },
+    { "participant": "db", "from": 438, "to": 496, "type": "database" },
+    { "participant": "trace", "from": 575, "to": 630, "type": "messagebus" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Happy Path",
+      "items": [
+        "The main request is Web App -> API -> data source -> response",
+        "Return messages are quieter than forward calls",
+        "Activation bars make ownership duration visible"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Policy + Fallback",
+      "items": [
+        "JWT verification is colored as a security interaction",
+        "Cache miss is visible without overpowering the main path",
+        "Database access only appears after cache fallback"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Async Trace",
+      "items": [
+        "Trace emission is dashed and secondary",
+        "It does not block the response path",
+        "The diagram separates user-facing latency from observability"
+      ]
+    }
+  ]
+}

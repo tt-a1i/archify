@@ -25,6 +25,17 @@ jobs:
         run: npm test
         working-directory: archify
 
+  webm-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Decode a real motion export and reject static frames
+        run: npm run test:webm
+        working-directory: archify
+
   zip-freshness:
     runs-on: ubuntu-latest
     steps:

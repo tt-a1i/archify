@@ -78,6 +78,7 @@ test('cleanFlowProblems reports collection index, ids, segment, clearance, and f
     diagramType: 'architecture',
     relationCollection: 'connections',
     obstacleKind: 'component',
+    profile: 'standard',
     routeHint: 'set route/via'
   });
   assert.equal(problems.length, 1);
@@ -94,7 +95,8 @@ test('cleanFlowProblems exempts endpoints and ignores missing endpoint geometry'
     pathFor: () => ({ points: [[20, 10], [80, 10]] }),
     diagramType: 'workflow',
     relationCollection: 'edges',
-    obstacleKind: 'node'
+    obstacleKind: 'node',
+    profile: 'standard'
   });
   assert.deepEqual(endpointOnly, []);
 
@@ -123,7 +125,8 @@ test('cleanFlowProblems uses clearance, reports the first segment, and deduplica
     pathFor: () => ({ points: [[0, -1], [20, -1], [0, 5], [20, 5]] }),
     diagramType: 'workflow',
     relationCollection: 'edges',
-    obstacleKind: 'node'
+    obstacleKind: 'node',
+    profile: 'standard'
   });
   assert.equal(problems.length, 1);
   assert.match(problems[0], /segment 0 \[0, -1\] -> \[20, -1\]/);
@@ -210,6 +213,7 @@ test('cleanBorderRunProblems reports a deterministic long run on a rounded frame
     pathFor: () => ({ points: [[40, 80], [220, 80], [220, 140]] }),
     diagramType: 'architecture',
     relationCollection: 'connections',
+    profile: 'standard',
     routeHint: 'move the via point',
   });
   assert.equal(problems.length, 1);

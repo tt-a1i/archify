@@ -161,6 +161,7 @@ function validateDataflow() {
     diagramType: 'dataflow',
     relationCollection: 'flows',
     obstacleKind: 'node',
+    profile: dataflow.meta?.quality_profile,
     routeHint: 'adjust fromSide/toSide, set route/via or channelX/channelY, or move the node to another stage/row'
   }));
   problems.push(...cleanCrossingProblems({
@@ -179,6 +180,7 @@ function validateDataflow() {
     pathFor,
     diagramType: 'dataflow',
     relationCollection: 'flows',
+    profile: dataflow.meta?.quality_profile,
     routeHint: 'adjust route/via or channelX/channelY so the flow crosses the stage perpendicularly instead of following its border'
   }));
   problems.push(...cleanRouteRhythmProblems({

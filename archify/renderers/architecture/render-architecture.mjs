@@ -205,6 +205,7 @@ function validateArchitecture() {
     diagramType: 'architecture',
     relationCollection: 'connections',
     obstacleKind: 'component',
+    profile: arch.meta?.quality_profile,
     routeHint: 'adjust fromSide/toSide, set route/via, or move the component'
   }));
   problems.push(...cleanCrossingProblems({
@@ -223,6 +224,7 @@ function validateArchitecture() {
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',
+    profile: arch.meta?.quality_profile,
     routeHint: 'adjust route/via or fromSide/toSide so the connection crosses the boundary perpendicularly instead of following its border'
   }));
   problems.push(...cleanRouteRhythmProblems({

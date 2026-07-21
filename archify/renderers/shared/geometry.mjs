@@ -53,9 +53,11 @@ export function cleanFlowProblems({
   diagramType,
   relationCollection,
   obstacleKind,
+  profile,
   clearance = 2,
   routeHint = 'adjust fromSide/toSide, set route/via or channel coordinates, or move the obstacle'
 }) {
+  if (!process.env.ARCHIFY_QUALITY_PROFILE && !profile) return [];
   const problems = [];
   const obstacleList = [...obstacles];
   const obstacleIds = new Set(obstacleList.map((obstacle) => obstacle?.id));
@@ -207,8 +209,10 @@ export function cleanBorderRunProblems({
   pathFor,
   diagramType,
   relationCollection,
+  profile,
   routeHint = 'adjust route/via or channel coordinates so the relationship crosses the frame perpendicularly through a clear opening'
 }) {
+  if (!process.env.ARCHIFY_QUALITY_PROFILE && !profile) return [];
   const routedRelations = asArray(relations).map((relation, relationIndex) => {
     if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') return null;
     if (endpointIds && (!endpointIds.has(relation.from) || !endpointIds.has(relation.to))) return null;

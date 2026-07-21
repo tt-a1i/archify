@@ -119,6 +119,7 @@ function validateSequence() {
     diagramType: 'sequence',
     relationCollection: 'messages',
     obstacleKind: 'participant header',
+    profile: sequence.meta?.quality_profile,
     clearance: 0,
     routeHint: 'move the message y below the participant headers or reorder participants'
   }));
@@ -138,6 +139,7 @@ function validateSequence() {
     pathFor: messagePath,
     diagramType: 'sequence',
     relationCollection: 'messages',
+    profile: sequence.meta?.quality_profile,
     routeHint: 'move the message y so it crosses a segment boundary perpendicularly or stays clearly inside the segment'
   }));
   problems.push(...cleanRouteRhythmProblems({

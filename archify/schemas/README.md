@@ -38,10 +38,13 @@ local to the current page.
 ## schema_version policy
 
 `schema_version` is `"const": 1`. The constant pins the IR contract: a file
-that validates today keeps rendering identically on every 2.x release. A
-breaking change to any IR shape bumps the constant to `2`; renderers will then
-reject version-1 files with a clear schema error instead of misrendering them.
-Additive, backwards-compatible fields do not bump the version.
+that validates today keeps validating and rendering on every 2.x release.
+Additive viewer, accessibility, and presentation improvements may enhance the
+generated HTML, but they must not reinterpret authored IR or turn a previously
+valid profile-less v1 file into a new hard layout failure. A breaking change to
+any IR shape bumps the constant to `2`; renderers will then reject version-1
+files with a clear schema error instead of misrendering them. Additive,
+backwards-compatible fields do not bump the version.
 
 ## Shared definitions (common.schema.json)
 

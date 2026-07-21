@@ -175,7 +175,7 @@ test('workflow: edge crossing a non-endpoint node is rejected', () => {
   const d = {
     schema_version: 1,
     diagram_type: 'workflow',
-    meta: { title: 'Crossing edge route' },
+    meta: { title: 'Crossing edge route', quality_profile: 'standard' },
     lanes: [{ id: 'main', label: 'Main lane' }],
     nodes: [
       { id: 'left', lane: 'main', col: 0, type: 'backend', label: 'Left', width: 60 },
@@ -194,7 +194,7 @@ test('architecture: Clean Flow Gate rejects a connection through a component', (
   const d = {
     schema_version: 1,
     diagram_type: 'architecture',
-    meta: { title: 'Opaque component crossing' },
+    meta: { title: 'Opaque component crossing', quality_profile: 'standard' },
     components: [
       { id: 'left', type: 'frontend', label: 'Left', pos: [60, 120], size: [100, 54] },
       { id: 'middle', type: 'security', label: 'Middle', pos: [270, 120], size: [100, 54] },
@@ -319,7 +319,7 @@ test('dataflow: Clean Flow Gate rejects a flow through an unrelated node', () =>
   const d = {
     schema_version: 1,
     diagram_type: 'dataflow',
-    meta: { title: 'Opaque data node crossing' },
+    meta: { title: 'Opaque data node crossing', quality_profile: 'standard' },
     stages: [{ label: 'Source' }, { label: 'Middle' }, { label: 'Sink' }],
     nodes: [
       { id: 'left', type: 'frontend', label: 'Left', stage: 0, row: 1 },
@@ -339,7 +339,7 @@ test('lifecycle: Clean Flow Gate rejects a transition through an unrelated state
   const d = {
     schema_version: 1,
     diagram_type: 'lifecycle',
-    meta: { title: 'Opaque state crossing' },
+    meta: { title: 'Opaque state crossing', quality_profile: 'standard' },
     lanes: [{ id: 'main', label: 'Main' }],
     states: [
       { id: 'left', type: 'start', label: 'Left', lane: 'main', col: 0 },

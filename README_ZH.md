@@ -42,7 +42,7 @@ Archify 是一个可用于 Claude、Codex CLI 和 opencode 的 agent skill：你
 - **导出图片超清晰** —— PNG / JPEG / WebP 全部由浏览器在最高 4× 源分辨率下**原生光栅化**（不是位图放大，没有糊），或导出 SVG 做真矢量
 - **动态结果可分享** —— 开启 Trace 的图可直接在浏览器录制 6 秒 WebM，不依赖 Puppeteer 或 ffmpeg
 - **SVG 自动跟系统深浅色** —— 导出的 SVG 内嵌两套变量 + `@media (prefers-color-scheme)`，贴到 GitHub README 里，读者切深浅色图跟着切（不用两张 PNG + `<picture>` 包起来）
-- **内置质量闭环** —— renderer 驱动的图会经过 JSON schema 校验、布局检查、通用的节点穿线 Clean Flow Gate，以及构图收据：关系线沿结构容器边框行走会在所有 profile 中阻断，`showcase` 还会拒绝小于 8px 的线路小钩、小于 16px 的内部转折和无关关系 X 交叉，同时不会误杀普通端点短桩
+- **内置质量闭环** —— renderer 驱动的图会经过 JSON schema 与既有布局检查；显式选择 `standard` 或 `showcase` 后，还会启用节点穿线 Clean Flow 和结构容器贴边走线门禁，而未设置 profile 的旧 v1 文件继续保持向后兼容。`showcase` 还会拒绝小于 8px 的线路小钩、小于 16px 的内部转折和无关关系 X 交叉，同时不会误杀普通端点短桩
 - **语义技术标签** —— 可以把组件写成 `aws.lambda`、`postgres`、`redis`、`github-actions`、`openai` 等；Archify 会把它们映射到合适的视觉类别，不需要完整图标库
 - **单文件 HTML** —— 生成的 HTML 零运行时依赖，发一个文件就能分享
 - **聊天迭代** —— "把 Redis 挪到左边"、"鉴权服务换成玫红"、"加个 Kafka"
@@ -164,7 +164,7 @@ Lifecycle 区分正常进展、等待态、重试路径和终态。
 
 - **用布局判断代替通用自动布局** —— Agent 根据要讲的故事决定层级、间距、线路和视觉重点。
 - **Typed JSON IR** —— 五种图都由对应 Schema 和 Renderer 驱动。
-- **交付前验证** —— Schema、布局、HTML 和 SVG 检查会尽早发现结构错误和明显的可读性问题；Clean Flow 会精确指出节点穿线几何，构图收据会拒绝关系线贴着结构容器边框行走、分类最终可见的 X 交叉、区分端点短桩与拥挤转折，并在路由角色尚未校准前继续把 bend / stretch 保留为中性证据。
+- **交付前验证** —— Schema、布局、HTML 和 SVG 检查会尽早发现结构错误和明显的可读性问题；显式选择质量 profile 后，Clean Flow 会精确指出节点穿线几何，构图收据会拒绝关系线贴着结构容器边框行走、分类最终可见的 X 交叉、区分端点短桩与拥挤转折，并在路由角色尚未校准前继续把 bend / stretch 保留为中性证据。
 - **便于分享** —— 一个 HTML 文件即可打开，无需服务器或前端框架；外部字体不可用时会使用本地字体。
 - **语义技术标签** —— `postgres`、`redis`、`aws.lambda`、`github-actions` 等名称会参与视觉分类，不需要沉重的图标运行时。
 

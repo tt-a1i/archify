@@ -199,6 +199,7 @@ function validateLifecycle() {
     diagramType: 'lifecycle',
     relationCollection: 'transitions',
     obstacleKind: 'state',
+    profile: lifecycle.meta?.quality_profile,
     routeHint: 'adjust fromSide/toSide, set route/via or channelX/channelY, or move the state with col/yOffset'
   }));
   problems.push(...cleanCrossingProblems({
@@ -219,7 +220,8 @@ function validateLifecycle() {
     frames: [],
     pathFor,
     diagramType: 'lifecycle',
-    relationCollection: 'transitions'
+    relationCollection: 'transitions',
+    profile: lifecycle.meta?.quality_profile
   }));
   problems.push(...cleanRouteRhythmProblems({
     relations: lifecycle.transitions,

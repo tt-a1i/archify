@@ -113,7 +113,8 @@ export function svgRootAttrs(meta, kind) {
   const preset = ` data-preset="${esc(meta.visual_preset || 'classic')}"`;
   const requestedProfile = process.env.ARCHIFY_QUALITY_PROFILE || meta.quality_profile;
   const qualityProfile = requestedProfile === 'showcase' ? 'showcase' : 'standard';
-  return `role="img" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset} data-quality-profile="${esc(qualityProfile)}"`;
+  const advisory = requestedProfile ? '' : ' data-quality-gates="advisory"';
+  return `role="img" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset} data-quality-profile="${esc(qualityProfile)}"${advisory}`;
 }
 
 // Keep the accessible name inside the SVG so it survives standalone SVG

@@ -58,7 +58,9 @@ addCheck('single_svg', svgMatches.length === 1, [`found ${svgMatches.length} <sv
 if (svgMatches.length === 1) {
   const svg = svgMatches[0][0];
   const svgRoot = svg.match(/<svg\b[^>]*>/i)?.[0] || '';
-  const qualityProfile = parseAttrs(svgRoot)['data-quality-profile'] || 'standard';
+  const svgAttrs = parseAttrs(svgRoot);
+  const qualityProfile = svgAttrs['data-quality-profile'] || 'standard';
+  const qualityGatesEnforced = svgAttrs['data-quality-gates'] !== 'advisory';
   addCheck('finite_svg', !/\b(?:NaN|undefined|Infinity|-Infinity)\b/.test(svg));
   const legendStart = svg.indexOf('<!-- Legend -->');
   const beforeLegend = legendStart >= 0 ? svg.slice(0, legendStart) : svg;
@@ -88,10 +90,11 @@ if (svgMatches.length === 1) {
   const routeRhythmIssues = collectRouteRhythmIssues({ routedRelations: routedRelationships });
   const crossingIsError = qualityProfile === 'showcase';
   const rhythmIsError = qualityProfile === 'showcase';
-  const compositionErrors = containerBorderRuns.length
+  const compositionErrors = (qualityGatesEnforced ? containerBorderRuns.length : 0)
     + (crossingIsError ? relationshipCrossings.length : 0)
     + (rhythmIsError ? routeRhythmIssues.length : 0);
-  const compositionWarnings = (crossingIsError ? 0 : relationshipCrossings.length)
+  const compositionWarnings = (qualityGatesEnforced ? 0 : containerBorderRuns.length)
+    + (crossingIsError ? 0 : relationshipCrossings.length)
     + (rhythmIsError ? 0 : routeRhythmIssues.length);
   composition = {
     schemaVersion: 1,
@@ -109,7 +112,7 @@ if (svgMatches.length === 1) {
     suggestedLimits: { bendsPerRelationship: 2, stretch: 1.35, segmentPx: 16, microSegmentPx: 8 },
     issues: [
       ...containerBorderRuns.map((hit) => ({
-        severity: 'error',
+        severity: qualityGatesEnforced ? 'error' : 'warning',
         code: 'composition/container-border-run',
         relationship: relationshipRecord(hit.relation),
         frame: frameRecord(hit.frame),
@@ -147,7 +150,7 @@ if (svgMatches.length === 1) {
   );
   addCheck(
     'container_border_runs',
-    containerBorderRuns.length === 0,
+    !qualityGatesEnforced || containerBorderRuns.length === 0,
     containerBorderRuns.map((hit) => (
       `[composition/container-border-run] ${relationshipName(hit.relation)} follows ${frameName(hit.frame)} ${hit.side} border for ${Math.round(hit.overlapLength * 10) / 10}px on segment ${hit.segmentIndex} [${formatPoint(hit.overlapStart)}] -> [${formatPoint(hit.overlapEnd)}]`
     )),

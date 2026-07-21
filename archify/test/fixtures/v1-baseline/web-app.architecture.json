@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sample Web App",
+    "subtitle": "Classic 3-tier SaaS on AWS — rendered by Archify",
+    "output": "web-app-rendered.html"
+  },
+  "components": [
+    { "id": "users", "type": "external", "label": "Users", "sublabel": "Browser / Mobile", "pos": [40, 300], "size": [120, 60] },
+    { "id": "auth", "type": "security", "label": "Auth Provider", "sublabel": "OAuth 2.0", "pos": [40, 110], "size": [120, 64], "tag": "JWT + PKCE" },
+    { "id": "cdn", "type": "cloud", "label": "CloudFront", "sublabel": "CDN", "pos": [250, 300], "size": [130, 60] },
+    { "id": "lb", "type": "cloud", "label": "Load Balancer", "sublabel": "HTTPS :443", "pos": [460, 300], "size": [130, 60] },
+    { "id": "api", "type": "backend", "label": "API Server", "sublabel": "FastAPI :8000", "pos": [670, 300], "size": [130, 60] },
+    { "id": "cache", "type": "database", "label": "Redis", "sublabel": "cache :6379", "pos": [670, 150], "size": [130, 60] },
+    { "id": "db", "type": "database", "label": "PostgreSQL", "sublabel": "primary :5432", "pos": [880, 300], "size": [130, 60] },
+    { "id": "s3", "type": "cloud", "label": "S3", "sublabel": "static assets", "pos": [250, 440], "size": [130, 60], "tag": "OAI protected" },
+    { "id": "queue", "type": "messagebus", "label": "SQS", "sublabel": "job queue", "pos": [670, 440], "size": [130, 60] },
+    { "id": "worker", "type": "backend", "label": "Worker", "sublabel": "async jobs", "pos": [880, 440], "size": [130, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "AWS Region: us-west-2", "wraps": ["cdn", "lb", "api", "cache", "db", "s3", "queue", "worker"] },
+    { "kind": "security-group", "label": "sg-api :443/:8000", "wraps": ["lb", "api"] }
+  ],
+  "connections": [
+    { "from": "users", "to": "cdn", "label": "HTTPS", "variant": "emphasis" },
+    { "from": "auth", "to": "api", "label": "verify JWT", "variant": "security", "fromSide": "right", "toSide": "top" },
+    { "from": "cdn", "to": "lb" },
+    { "from": "cdn", "to": "s3", "label": "static", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 58 },
+    { "from": "lb", "to": "api" },
+    { "from": "api", "to": "cache", "label": "read-through", "fromSide": "top", "toSide": "bottom", "labelDy": -68 },
+    { "from": "api", "to": "db", "label": "SQL" },
+    { "from": "api", "to": "queue", "label": "enqueue", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 58 },
+    { "from": "queue", "to": "worker" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Edge", "items": ["CloudFront CDN fronts all traffic", "S3 serves static assets via OAI"] },
+    { "dot": "emerald", "title": "Application", "items": ["FastAPI behind an HTTPS load balancer", "Redis read-through cache", "Async work drained from SQS by a worker"] },
+    { "dot": "rose", "title": "Security", "items": ["OAuth 2.0 with JWT + PKCE", "API + LB isolated in a security group"] }
+  ]
+}

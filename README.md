@@ -46,7 +46,7 @@ Archify is an agent skill for Claude, Codex CLI, and opencode. It turns a plain-
 - **Ultra-crisp image export** — PNG / JPEG / WebP rendered natively at up to 4× source resolution (no upsampling blur), or SVG for true vector
 - **Shareable motion export** — trace-enabled diagrams record a six-second WebM directly in the browser, with no Puppeteer or ffmpeg dependency
 - **SVG follows system dark/light** — exported SVGs ship with both variable sets + `@media (prefers-color-scheme)`, so dropping one into a GitHub README makes it follow the reader's color preference (no more two PNGs wrapped in `<picture>`)
-- **Validation loop built in** — renderer-backed diagrams go through JSON schema validation, layout checks, a universal Clean Flow Gate for node pass-through, and a composition receipt that blocks structural border-riding in every profile; `showcase` also rejects sub-8px route hooks, sub-16px interior turns, and unrelated X crossings without misclassifying ordinary endpoint stubs
+- **Validation loop built in** — renderer-backed diagrams go through JSON schema validation and established layout checks; explicitly selecting `standard` or `showcase` also enables Clean Flow and structural border-run gates, while profile-less v1 files remain backward-compatible. `showcase` additionally rejects sub-8px route hooks, sub-16px interior turns, and unrelated X crossings without misclassifying ordinary endpoint stubs
 - **Semantic tech labels** — describe components as `aws.lambda`, `postgres`, `redis`, `github-actions`, `openai`, etc.; Archify maps them to the right visual category without needing a full icon library
 - **Self-contained HTML** — the generated file has zero dependencies, share by sending it
 - **Iterate by chat** — "add Redis", "move auth to the left", "use emerald for the API"
@@ -168,7 +168,7 @@ Lifecycle separates normal progress, wait states, retries, and terminal outcomes
 
 - **Layout judgment over generic auto-layout** — the agent chooses hierarchy, spacing, routes, and emphasis for the story being told.
 - **Typed JSON IR** — architecture, workflow, sequence, data-flow, and lifecycle diagrams use renderer-backed schemas.
-- **Validation before delivery** — schema, layout, HTML, and SVG checks catch malformed or unreadable output early; Clean Flow names exact node pass-through geometry, while the composition receipt rejects structural border-riding, classifies final visible relationship crossings, separates endpoint stubs from cramped turns, and keeps bend/stretch evidence neutral until it is role-aware.
+- **Validation before delivery** — schema, layout, HTML, and SVG checks catch malformed or unreadable output early; after an explicit quality profile is selected, Clean Flow names exact node pass-through geometry and the composition receipt rejects structural border-riding, classifies final visible relationship crossings, separates endpoint stubs from cramped turns, and keeps bend/stretch evidence neutral until it is role-aware.
 - **Portable output** — one HTML file, no server or framework required, with local font fallbacks when external fonts are unavailable.
 - **Semantic technology labels** — names such as `postgres`, `redis`, `aws.lambda`, and `github-actions` guide visual categorization without a heavyweight icon runtime.
 

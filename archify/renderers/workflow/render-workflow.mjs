@@ -283,6 +283,7 @@ function validateWorkflow() {
     diagramType: 'workflow',
     relationCollection: 'edges',
     obstacleKind: 'node',
+    profile: workflow.meta?.quality_profile,
     routeHint: 'adjust fromSide/toSide, set route/via or channel coordinates, or move the node to a clearer lane/column'
   }));
   problems.push(...cleanCrossingProblems({
@@ -301,6 +302,7 @@ function validateWorkflow() {
     pathFor,
     diagramType: 'workflow',
     relationCollection: 'edges',
+    profile: workflow.meta?.quality_profile,
     routeHint: 'adjust route/via, bias, or channel coordinates so the edge crosses the lane or group perpendicularly instead of following its border'
   }));
   problems.push(...cleanRouteRhythmProblems({

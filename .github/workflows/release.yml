@@ -23,6 +23,9 @@ jobs:
       - name: Tests must pass before releasing
         run: npm test
         working-directory: archify
+      - name: WebM export must contain distinct decoded frames
+        run: npm run test:webm
+        working-directory: archify
       - name: Tag must match package.json version
         run: |
           pkg_version="$(node -p "require('./archify/package.json').version")"
