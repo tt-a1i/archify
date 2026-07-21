@@ -23,6 +23,8 @@ jobs:
       - name: Tests must pass before releasing
         run: npm test
         working-directory: archify
+      - name: Install the WebM decoder
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
       - name: WebM export must contain distinct decoded frames
         run: npm run test:webm
         working-directory: archify
