@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
+import { once } from 'node:events';
 import fs from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
@@ -56,6 +57,14 @@ assert.equal(typeof WebSocket, 'function', 'Node.js 22+ is required for the Chro
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForExit(child, timeoutMs) {
+  if (child.exitCode !== null || child.signalCode !== null) return true;
+  return Promise.race([
+    once(child, 'exit').then(() => true),
+    delay(timeoutMs).then(() => false),
+  ]);
 }
 
 async function withTimeout(promise, ms, label) {
@@ -220,9 +229,9 @@ try {
   if (cdp && targetId) await withTimeout(cdp.send('Target.closeTarget', { targetId }), 500, 'target close').catch(() => {});
   if (cdp) cdp.socket.close();
   chromeProcess.kill('SIGTERM');
-  await Promise.race([
-    new Promise((resolve) => chromeProcess.once('exit', resolve)),
-    delay(1000).then(() => chromeProcess.kill('SIGKILL')),
-  ]);
-  fs.rmSync(tmp, { recursive: true, force: true });
+  if (!(await waitForExit(chromeProcess, 1000))) {
+    chromeProcess.kill('SIGKILL');
+    await waitForExit(chromeProcess, 1000);
+  }
+  fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 }
