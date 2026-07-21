@@ -103,16 +103,97 @@ test('README motion proof is compact, looping, and backed by current gallery art
   }
 });
 
-test('all README languages lead with the verified animated proof', () => {
+test('all README languages keep the product hero and retain the verified animated proof', () => {
   for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
+    const heroIndex = readme.indexOf('docs/assets/archify-readme-hero.png');
+    const titleIndex = readme.indexOf('# Archify');
+    const proofIndex = readme.indexOf('docs/assets/archify-live-proof.gif');
+    const demosIndex = Math.max(readme.indexOf('## Interactive demos in 2.11'), readme.indexOf('## 2.11 交互演示'));
+    assert.ok(heroIndex >= 0 && heroIndex < titleIndex, `${filename}: product hero is not above the title`);
+    assert.ok(proofIndex > demosIndex, `${filename}: animated proof must live in the demo section`);
     assert.match(readme, /docs\/assets\/archify-live-proof\.gif/);
     assert.match(readme, /https:\/\/tt-a1i\.github\.io\/archify\/gallery\.html/);
-    assert.doesNotMatch(readme, /docs\/assets\/archify-readme-hero\.png/);
   }
   assert.equal(
     fs.readFileSync(path.join(repoRoot, 'README.md'), 'utf8'),
     fs.readFileSync(path.join(repoRoot, 'README_EN.md'), 'utf8'),
     'README.md and README_EN.md must stay synchronized',
   );
+});
+
+test('README 2.11 demos use checked-in captures and live deep links below the existing hero', () => {
+  const demos = [
+    {
+      asset: 'archify-demo-story.png',
+      link: 'agent-tool-call.workflow.html?theme=dark&present=1&play=1#view=happy-path',
+    },
+    {
+      asset: 'archify-demo-route.png',
+      link: 'cache-miss.sequence.html?theme=dark&present=1#route=web~db',
+    },
+    {
+      asset: 'archify-demo-lens.png',
+      link: 'production-deployment.architecture.html?theme=dark&present=1#lens=backend~database',
+    },
+  ];
+
+  for (const demo of demos) {
+    const buffer = fs.readFileSync(path.join(repoRoot, 'docs', 'assets', demo.asset));
+    assert.equal(buffer.subarray(1, 4).toString('ascii'), 'PNG', `${demo.asset}: invalid PNG signature`);
+    assert.equal(buffer.readUInt32BE(16), 1280, `${demo.asset}: unexpected width`);
+    assert.equal(buffer.readUInt32BE(20), 720, `${demo.asset}: unexpected height`);
+    assert.ok(buffer.byteLength < 400 * 1024, `${demo.asset}: capture is too large`);
+  }
+
+  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+    const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
+    const heroIndex = readme.indexOf('docs/assets/archify-readme-hero.png');
+    const proofIndex = readme.indexOf('docs/assets/archify-live-proof.gif');
+    const previewIndex = Math.max(readme.indexOf('## Preview'), readme.indexOf('## 预览'));
+    const demosIndex = Math.max(readme.indexOf('## Interactive demos in 2.11'), readme.indexOf('## 2.11 交互演示'));
+    const quickStartIndex = Math.max(readme.indexOf('## Quick start'), readme.indexOf('## 快速开始'));
+    assert.ok(heroIndex >= 0 && heroIndex < demosIndex, `${filename}: existing hero proof moved`);
+    assert.ok(demosIndex < previewIndex && previewIndex < quickStartIndex, `${filename}: demo section is misplaced`);
+    assert.ok(demosIndex < proofIndex && proofIndex < previewIndex, `${filename}: animated proof is outside the demo section`);
+    for (const demo of demos) {
+      assert.match(readme, new RegExp(`docs/assets/${demo.asset.replaceAll('.', '\\.')}`));
+      assert.ok(readme.includes(demo.link), `${filename}: missing ${demo.link}`);
+    }
+  }
+});
+
+test('README stays scannable without deleting the visual proof set', () => {
+  const commonAssets = [
+    'archify-readme-hero.png',
+    'archify-live-proof.gif',
+    'archify-demo-story.png',
+    'archify-demo-route.png',
+    'archify-demo-lens.png',
+    'archify-dark.png',
+    'archify-light.png',
+    'archify-menu.png',
+    'archify-workflow.png',
+    'archify-sequence.png',
+    'archify-dataflow.png',
+    'archify-lifecycle.png',
+  ];
+
+  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+    const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
+    assert.ok(readme.split('\n').length <= 280, `${filename}: README grew beyond the scannable line budget`);
+    for (const asset of commonAssets) {
+      assert.ok(readme.includes(`docs/assets/${asset}`), `${filename}: visual proof ${asset} was removed`);
+    }
+  }
+
+  const english = fs.readFileSync(path.join(repoRoot, 'README.md'), 'utf8');
+  const wordCount = english.trim().split(/\s+/).length;
+  const intro = english.slice(0, english.indexOf('![License]'));
+  const introBullets = intro.match(/^- \*\*/gm) || [];
+  assert.ok(wordCount <= 2000, `README.md is too verbose again (${wordCount} words)`);
+  assert.ok(introBullets.length <= 8, `README.md has too many top-level capability bullets (${introBullets.length})`);
+
+  const chinese = fs.readFileSync(path.join(repoRoot, 'README_ZH.md'), 'utf8');
+  assert.ok(chinese.includes('docs/assets/claude-skills-settings.png'), 'README_ZH.md lost the Claude Skills setup image');
 });
