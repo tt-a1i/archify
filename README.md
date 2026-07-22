@@ -138,7 +138,7 @@ Architecture examples: [`web-app`](examples/web-app.html) · [`Archify pipeline`
 
 ## Why Archify
 
-- **Layout judgment over generic auto-layout** — the agent chooses hierarchy, spacing, routes, and emphasis for the story.
+- **Layout judgment over generic auto-layout** — the agent chooses hierarchy, spacing, routes, and emphasis; shared automatic endpoints spread deterministically instead of piling arrows on one midpoint.
 - **Typed JSON IR** — every renderer-backed mode has a schema and reproducible source.
 - **Atomic validation before delivery** — schema, layout, HTML/SVG, route, and optional showcase checks must all pass before a final artifact replaces the last known good output.
 - **Truthful interaction** — focus, routes, role comparison, and stories reuse authored nodes and relationships instead of inventing topology.
