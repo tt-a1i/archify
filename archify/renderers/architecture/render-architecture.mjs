@@ -14,6 +14,7 @@ import {
   cleanAmbiguousCorridorProblems,
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
+  cleanLabelRouteClearanceProblems,
   suggestLabelObstacleFix,
   suggestComponentSeparation,
   anchor,
@@ -251,11 +252,11 @@ function validateArchitecture() {
 
   // Connection labels must not land on top of components.
   const labelRects = [];
-  for (const conn of asArray(arch.connections)) {
+  for (const [connectionIndex, conn] of asArray(arch.connections).entries()) {
     if (!conn.label || !components.has(conn.from) || !components.has(conn.to)) continue;
     const [lx, ly] = labelPoint(conn, pathFor(conn).points);
     const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
-    labelRects.push({ label: conn.label, x: lx - w / 2, y: ly - 10, width: w, height: 14, lx, ly });
+    labelRects.push({ relation: conn, relationIndex: connectionIndex, label: conn.label, x: lx - w / 2, y: ly - 10, width: w, height: 14, lx, ly });
   }
   for (const rect of labelRects) {
     for (const c of components.values()) {
@@ -264,6 +265,15 @@ function validateArchitecture() {
       }
     }
   }
+  problems.push(...cleanLabelRouteClearanceProblems({
+    relations: arch.connections,
+    labels: labelRects,
+    endpointIds: new Set(components.keys()),
+    pathFor,
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: arch.meta?.quality_profile,
+  }));
 
   if (problems.length) {
     throw new Error(`Architecture layout validation failed:\n- ${problems.join('\n- ')}`);

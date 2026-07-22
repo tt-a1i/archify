@@ -41,6 +41,135 @@ export function segmentIntersectsRect(segment, rect, gap = 0) {
   );
 }
 
+export function segmentRectClearance(segment, rect) {
+  if (!segment || !rect) return null;
+  const { start, end } = segment;
+  if (!Array.isArray(start) || !Array.isArray(end) || start.length !== 2 || end.length !== 2) return null;
+  if (!isFinitePoint(...start, ...end, rect.x, rect.y, rect.width, rect.height)) return null;
+  if (rect.width < 0 || rect.height < 0) return null;
+  if (segmentIntersectsRect(segment, rect)) return 0;
+
+  const corners = [
+    [rect.x, rect.y],
+    [rect.x + rect.width, rect.y],
+    [rect.x + rect.width, rect.y + rect.height],
+    [rect.x, rect.y + rect.height],
+  ];
+  return Math.min(
+    pointRectDistance(start, rect),
+    pointRectDistance(end, rect),
+    ...corners.map((corner) => pointSegmentDistance(corner, start, end)),
+  );
+}
+
+export function segmentRectIntersectionLength(segment, rect) {
+  if (!segment || !rect) return null;
+  const { start, end } = segment;
+  if (!Array.isArray(start) || !Array.isArray(end) || start.length !== 2 || end.length !== 2) return null;
+  if (!isFinitePoint(...start, ...end, rect.x, rect.y, rect.width, rect.height)) return null;
+  if (rect.width < 0 || rect.height < 0) return null;
+
+  const dx = end[0] - start[0];
+  const dy = end[1] - start[1];
+  const length = Math.hypot(dx, dy);
+  if (length <= 0.0000001) return 0;
+  const bounds = [
+    [-dx, start[0] - rect.x],
+    [dx, rect.x + rect.width - start[0]],
+    [-dy, start[1] - rect.y],
+    [dy, rect.y + rect.height - start[1]],
+  ];
+  let enter = 0;
+  let leave = 1;
+  for (const [direction, distance] of bounds) {
+    if (Math.abs(direction) <= 0.0000001) {
+      if (distance < -0.0000001) return 0;
+      continue;
+    }
+    const ratio = distance / direction;
+    if (direction < 0) enter = Math.max(enter, ratio);
+    else leave = Math.min(leave, ratio);
+    if (enter > leave + 0.0000001) return 0;
+  }
+  return length * Math.max(0, leave - enter);
+}
+
+export function collectLabelRouteClearance({ labels, routedRelations, threshold }) {
+  if (!Number.isFinite(threshold) || threshold < 0) return [];
+  const routeCandidates = asArray(routedRelations).map((entry, fallbackIndex) => {
+    const relation = entry?.relation || entry;
+    const points = normalizeRoutePoints(entry?.points || relation?.routePoints);
+    if (!relation || points.length < 2) return null;
+    return {
+      relation,
+      relationIndex: Number.isInteger(entry?.relationIndex) ? entry.relationIndex : fallbackIndex,
+      points,
+    };
+  }).filter(Boolean);
+  const seenRoutes = new Set();
+  const routes = routeCandidates.filter((route) => {
+    const identity = relationshipIdentity(route.relation, route.relationIndex);
+    if (seenRoutes.has(identity)) return false;
+    seenRoutes.add(identity);
+    return true;
+  });
+  const hits = [];
+  const seenLabels = new Set();
+
+  for (const [fallbackIndex, label] of asArray(labels).entries()) {
+    const rect = label?.rect || label;
+    if (!rect || !isFinitePoint(rect.x, rect.y, rect.width, rect.height) || rect.width < 0 || rect.height < 0) continue;
+    const relationIndex = Number.isInteger(label?.relationIndex) ? label.relationIndex : fallbackIndex;
+    const labelIdentity = relationshipIdentity(label?.relation, relationIndex);
+    if (seenLabels.has(labelIdentity)) continue;
+    seenLabels.add(labelIdentity);
+    for (const route of routes) {
+      if (relationIndex === route.relationIndex || sameRelationship(label?.relation, route.relation)) continue;
+      let nearest = null;
+      for (let segmentIndex = 0; segmentIndex < route.points.length - 1; segmentIndex += 1) {
+        const start = route.points[segmentIndex];
+        const end = route.points[segmentIndex + 1];
+        const clearance = segmentRectClearance({ start, end }, rect);
+        if (clearance == null) continue;
+        if (!nearest || clearance < nearest.clearance) {
+          nearest = {
+            clearance,
+            intersectionLength: segmentRectIntersectionLength({ start, end }, rect),
+            segmentIndex,
+            start,
+            end,
+          };
+        }
+      }
+      if (!nearest || nearest.clearance + 0.0001 >= threshold) continue;
+      hits.push({
+        label,
+        labelRelation: label?.relation,
+        labelRelationIndex: relationIndex,
+        otherRelation: route.relation,
+        otherRelationIndex: route.relationIndex,
+        rect,
+        ...nearest,
+        threshold,
+      });
+    }
+  }
+  return hits;
+}
+
+function relationshipIdentity(relation, relationIndex) {
+  if (relation?.key !== undefined) return `key:${relation.key}`;
+  if (relation?.id) return `id:${relation.from || ''}\u0000${relation.to || ''}\u0000${relation.id}`;
+  return `index:${relationIndex}`;
+}
+
+function sameRelationship(left, right) {
+  if (!left || !right) return false;
+  if (left === right) return true;
+  if (left.key !== undefined && right.key !== undefined) return left.key === right.key;
+  return Boolean(left.id && right.id && left.id === right.id && left.from === right.from && left.to === right.to);
+}
+
 // One mechanical quality gate for every renderer-owned relationship path.
 // A renderer supplies its semantic obstacle set; source/target boxes are
 // always exempt because paths are expected to terminate on their boundaries.
@@ -451,6 +580,37 @@ export function cleanRouteRhythmProblems({
   });
 }
 
+export function cleanLabelRouteClearanceProblems({
+  relations,
+  labels,
+  endpointIds,
+  pathFor,
+  diagramType,
+  relationCollection,
+  profile,
+  threshold = 4,
+  routeHint = 'adjust labelAt, labelDx, labelDy, or labelSegment; otherwise adjust the other relationship route/via/channel',
+}) {
+  const requestedProfile = process.env.ARCHIFY_QUALITY_PROFILE || profile;
+  if (requestedProfile !== 'showcase') return [];
+  const routedRelations = asArray(relations).map((relation, relationIndex) => {
+    if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') return null;
+    if (endpointIds && (!endpointIds.has(relation.from) || !endpointIds.has(relation.to))) return null;
+    return { relation, relationIndex, points: pathFor(relation)?.points };
+  }).filter(Boolean);
+  return collectLabelRouteClearance({ labels, routedRelations, threshold }).map((hit) => {
+    const describe = (relation, relationIndex) => {
+      const relationId = relation?.id ? ` id "${relation.id}"` : '';
+      const relationLabel = relation?.label ? ` label "${relation.label}"` : '';
+      return `${relationCollection}[${relationIndex}]${relationId} "${relation?.from}" -> "${relation?.to}"${relationLabel}`;
+    };
+    const clearance = Math.round(hit.clearance * 10) / 10;
+    const from = hit.start.map((value) => Math.round(value * 10) / 10).join(', ');
+    const to = hit.end.map((value) => Math.round(value * 10) / 10).join(', ');
+    return `[composition/label-route-clearance] showcase ${diagramType} label "${hit.label?.label || hit.labelRelation?.label || ''}" on ${describe(hit.labelRelation, hit.labelRelationIndex)} is ${clearance}px from ${describe(hit.otherRelation, hit.otherRelationIndex)} segment ${hit.segmentIndex} [${from}] -> [${to}] (label rect ${formatRect(hit.rect)}; minimum ${threshold}px) — ${routeHint}.`;
+  });
+}
+
 function segmentPosition(index, segmentCount) {
   if (index === 0) return 'source-stub';
   if (index === segmentCount - 1) return 'target-stub';
@@ -470,6 +630,21 @@ function normalizeRoutePoints(points) {
     normalized.push(point);
   }
   return normalized;
+}
+
+function pointRectDistance(point, rect) {
+  const dx = Math.max(rect.x - point[0], 0, point[0] - (rect.x + rect.width));
+  const dy = Math.max(rect.y - point[1], 0, point[1] - (rect.y + rect.height));
+  return Math.hypot(dx, dy);
+}
+
+function pointSegmentDistance(point, start, end) {
+  const dx = end[0] - start[0];
+  const dy = end[1] - start[1];
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared <= 0.0000001) return Math.hypot(point[0] - start[0], point[1] - start[1]);
+  const projection = Math.max(0, Math.min(1, ((point[0] - start[0]) * dx + (point[1] - start[1]) * dy) / lengthSquared));
+  return Math.hypot(point[0] - (start[0] + projection * dx), point[1] - (start[1] + projection * dy));
 }
 
 function collinearForward(a, b, c) {

@@ -2,7 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { collectAmbiguousCorridors, collectBorderRuns, collectRouteRhythmIssues, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
+import { collectAmbiguousCorridors, collectBorderRuns, collectLabelRouteClearance, collectRouteRhythmIssues, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 
 const input = process.argv[2];
 
@@ -34,6 +34,8 @@ let composition = {
     properCrossings: 0,
     ambiguousCorridors: 0,
     containerBorderRuns: 0,
+    labelRouteClearanceIssues: 0,
+    minLabelRouteClearance: null,
     maxBends: 0,
     routesOverSuggestedBends: 0,
     maxStretch: null,
@@ -90,16 +92,31 @@ if (svgMatches.length === 1) {
   const routeMetrics = routeBudgetMetrics({ routedRelations: routedRelationships });
   const routeRhythmIssues = collectRouteRhythmIssues({ routedRelations: routedRelationships });
   const ambiguousCorridors = collectAmbiguousCorridors({ routedRelations: routedRelationships });
+  const relationshipLabels = collectRelationshipLabelMasks(beforeLegend, arrows);
+  const labelClearanceThreshold = qualityProfile === 'showcase' ? 4 : 2;
+  const labelRouteMeasurements = collectLabelRouteClearance({
+    labels: relationshipLabels,
+    routedRelations: arrows.map((arrow) => ({ relation: arrow, relationIndex: arrow.index, points: arrow.routePoints })),
+    threshold: Number.MAX_VALUE,
+  });
+  const labelRouteClearance = collectLabelRouteClearance({
+    labels: relationshipLabels,
+    routedRelations: arrows.map((arrow) => ({ relation: arrow, relationIndex: arrow.index, points: arrow.routePoints })),
+    threshold: labelClearanceThreshold,
+  });
   const crossingIsError = qualityProfile === 'showcase';
   const corridorIsError = qualityProfile === 'showcase';
   const rhythmIsError = qualityProfile === 'showcase';
+  const labelClearanceIsError = qualityProfile === 'showcase';
   const compositionErrors = (qualityGatesEnforced ? containerBorderRuns.length : 0)
     + (crossingIsError ? relationshipCrossings.length : 0)
     + (corridorIsError ? ambiguousCorridors.length : 0)
+    + (labelClearanceIsError ? labelRouteClearance.length : 0)
     + (rhythmIsError ? routeRhythmIssues.length : 0);
   const compositionWarnings = (qualityGatesEnforced ? 0 : containerBorderRuns.length)
     + (crossingIsError ? 0 : relationshipCrossings.length)
     + (corridorIsError ? 0 : ambiguousCorridors.length)
+    + (labelClearanceIsError ? 0 : labelRouteClearance.length)
     + (rhythmIsError ? 0 : routeRhythmIssues.length);
   composition = {
     schemaVersion: 1,
@@ -113,6 +130,10 @@ if (svgMatches.length === 1) {
       properCrossings: relationshipCrossings.length,
       ambiguousCorridors: ambiguousCorridors.length,
       containerBorderRuns: containerBorderRuns.length,
+      labelRouteClearanceIssues: labelRouteClearance.length,
+      minLabelRouteClearance: labelRouteMeasurements.length
+        ? Math.round(Math.min(...labelRouteMeasurements.map((hit) => hit.clearance)) * 10) / 10
+        : null,
       ...roundedRouteMetrics(routeMetrics),
     },
     suggestedLimits: { bendsPerRelationship: 2, stretch: 1.35, segmentPx: 16, microSegmentPx: 8 },
@@ -127,6 +148,20 @@ if (svgMatches.length === 1) {
         overlapLength: Math.round(hit.overlapLength * 10) / 10,
         from: hit.overlapStart.map((value) => Math.round(value * 10) / 10),
         to: hit.overlapEnd.map((value) => Math.round(value * 10) / 10),
+      })),
+      ...labelRouteClearance.map((hit) => ({
+        severity: labelClearanceIsError ? 'error' : 'warning',
+        code: 'composition/label-route-clearance',
+        label: hit.label?.label || hit.labelRelation?.label || '',
+        labelRelationship: relationshipRecord(hit.labelRelation),
+        otherRelationship: relationshipRecord(hit.otherRelation),
+        segmentIndex: hit.segmentIndex,
+        labelRect: roundedRect(hit.rect),
+        clearance: Math.round(hit.clearance * 10) / 10,
+        intersectionLength: Math.round((hit.intersectionLength || 0) * 10) / 10,
+        threshold: hit.threshold,
+        from: hit.start.map((value) => Math.round(value * 10) / 10),
+        to: hit.end.map((value) => Math.round(value * 10) / 10),
       })),
       ...relationshipCrossings.map((hit) => ({
         severity: crossingIsError ? 'error' : 'warning',
@@ -158,6 +193,13 @@ if (svgMatches.length === 1) {
       })),
     ],
   };
+  addCheck(
+    'label_route_clearance',
+    !labelClearanceIsError || labelRouteClearance.length === 0,
+    labelRouteClearance.map((hit) => (
+      `[composition/label-route-clearance] ${qualityProfile} label "${hit.label?.label || hit.labelRelation?.label || ''}" on ${relationshipName(hit.labelRelation)} is ${Math.round(hit.clearance * 10) / 10}px from ${relationshipName(hit.otherRelation)} segment ${hit.segmentIndex} [${formatPoint(hit.start)}] -> [${formatPoint(hit.end)}]${hit.intersectionLength > 0 ? ` with ${Math.round(hit.intersectionLength * 10) / 10}px hidden by the mask` : ''} (minimum ${hit.threshold}px) — use renderer-supported label controls (message y for sequence; otherwise labelAt, labelDx, labelDy, or labelSegment), or adjust the other relationship route/via/channel.`
+    )),
+  );
   addCheck(
     'relationship_crossings',
     !crossingIsError || relationshipCrossings.length === 0,
@@ -232,10 +274,64 @@ function collectArrows(fragment) {
       from: attrs['data-edge-from'] || attrs['data-composition-edge-from'],
       to: attrs['data-edge-to'] || attrs['data-composition-edge-to'],
       id: attrs['data-edge-id'] || attrs['data-composition-edge-id'],
+      key: attrs['data-edge-key'],
+      label: attrs['data-edge-label'],
+      offset: tag.index,
     });
   }
 
   return arrows;
+}
+
+function collectRelationshipLabelMasks(fragment, arrows) {
+  const labels = [];
+  for (const match of fragment.matchAll(/<g\b[^>]*\bdata-edge-(?:key|id|from)="[^"]*"[^>]*>[\s\S]*?<\/g>/gi)) {
+    const group = match[0];
+    const groupAttrs = parseAttrs(group.match(/<g\b[^>]*>/i)?.[0] || '');
+    const rectTag = [...group.matchAll(/<rect\b[^>]*>/gi)]
+      .map((item) => item[0])
+      .find((tag) => /\bclass="[^"]*\bc-mask\b/.test(tag));
+    if (!rectTag) continue;
+    const attrs = parseAttrs(rectTag);
+    const rect = {
+      x: numberAttr(attrs, 'x'),
+      y: numberAttr(attrs, 'y'),
+      width: numberAttr(attrs, 'width'),
+      height: numberAttr(attrs, 'height'),
+    };
+    if (![rect.x, rect.y, rect.width, rect.height].every(Number.isFinite)) continue;
+    const groupStart = match.index;
+    const groupEnd = groupStart + group.length;
+    const containedOwner = arrows.find((arrow) => (
+      arrow.offset > groupStart
+      && arrow.offset < groupEnd
+      && arrow.from === groupAttrs['data-edge-from']
+      && arrow.to === groupAttrs['data-edge-to']
+      && (!groupAttrs['data-edge-id'] || !arrow.id || arrow.id === groupAttrs['data-edge-id'])
+    ));
+    const owner = arrows.find((arrow) => (
+      groupAttrs['data-edge-key'] !== undefined && arrow.key === groupAttrs['data-edge-key']
+    )) || containedOwner || arrows.find((arrow) => (
+      arrow.id === groupAttrs['data-edge-id']
+      && arrow.from === groupAttrs['data-edge-from']
+      && arrow.to === groupAttrs['data-edge-to']
+    ));
+    if (!owner) continue;
+    if (owner.key === undefined && groupAttrs['data-edge-key'] !== undefined) owner.key = groupAttrs['data-edge-key'];
+    if (!owner.id && groupAttrs['data-edge-id']) owner.id = groupAttrs['data-edge-id'];
+    if (!owner.label && groupAttrs['data-edge-label']) owner.label = groupAttrs['data-edge-label'];
+    labels.push({
+      relation: owner,
+      relationIndex: owner.index,
+      label: groupAttrs['data-edge-label'] || '',
+      rect,
+    });
+  }
+  return labels;
+}
+
+function roundedRect(rect) {
+  return Object.fromEntries(Object.entries(rect).map(([key, value]) => [key, Math.round(value * 10) / 10]));
 }
 
 function roundedRouteMetrics(metrics) {
@@ -282,10 +378,13 @@ function relationshipName(arrow) {
 }
 
 function relationshipRecord(arrow) {
+  const stableIndex = Number(arrow.key);
   return {
     id: arrow.id,
     from: arrow.from,
     to: arrow.to,
+    label: arrow.label || '',
+    collectionIndex: Number.isInteger(stableIndex) && stableIndex >= 0 ? stableIndex : arrow.index - 1,
     artifactIndex: arrow.index,
   };
 }

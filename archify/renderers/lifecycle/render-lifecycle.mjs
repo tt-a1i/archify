@@ -11,6 +11,7 @@ import {
   cleanAmbiguousCorridorProblems,
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
+  cleanLabelRouteClearanceProblems,
   suggestLabelObstacleFix,
   suggestLabelPairFix,
   anchor,
@@ -245,13 +246,13 @@ function validateLifecycle() {
   }));
 
   const labelRects = [];
-  for (const transition of asArray(lifecycle.transitions)) {
+  for (const [transitionIndex, transition] of asArray(lifecycle.transitions).entries()) {
     if (!transition.label || !states.has(transition.from) || !states.has(transition.to)) continue;
     const [lx, ly] = labelPoint(transition, pathFor(transition).points);
     const longestLine = Math.max(textUnits(transition.label), textUnits(transition.note || ''));
     const width = Math.max(32, longestLine * 4.9 + 12);
     const height = transition.note ? 27 : 16;
-    labelRects.push({ label: transition.label, x: lx - width / 2, y: ly - 11, width, height, lx, ly });
+    labelRects.push({ relation: transition, relationIndex: transitionIndex, label: transition.label, x: lx - width / 2, y: ly - 11, width, height, lx, ly });
   }
   for (const rect of labelRects) {
     for (const state of states.values()) {
@@ -267,6 +268,15 @@ function validateLifecycle() {
       }
     }
   }
+  problems.push(...cleanLabelRouteClearanceProblems({
+    relations: lifecycle.transitions,
+    labels: labelRects,
+    endpointIds: new Set(states.keys()),
+    pathFor,
+    diagramType: 'lifecycle',
+    relationCollection: 'transitions',
+    profile: lifecycle.meta?.quality_profile,
+  }));
 
   if (problems.length) {
     throw new Error(`Lifecycle layout validation failed:\n- ${problems.join('\n- ')}`);
