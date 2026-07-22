@@ -147,6 +147,22 @@ async function waitForExit(child, timeoutMs) {
   ]);
 }
 
+async function removeTempTree(directory) {
+  const transientCodes = new Set(['EBUSY', 'ENOTEMPTY', 'EPERM']);
+  let lastError;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      fs.rmSync(directory, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+      return;
+    } catch (error) {
+      if (!transientCodes.has(error?.code)) throw error;
+      lastError = error;
+      await delay(100 * (attempt + 1));
+    }
+  }
+  console.warn(`warning: temporary Chrome profile cleanup deferred (${lastError?.code || 'unknown'}): ${directory}`);
+}
+
 async function withTimeout(promise, ms, label) {
   let timer;
   try {
@@ -954,5 +970,5 @@ try {
     chromeProcess.kill('SIGKILL');
     await waitForExit(chromeProcess, 1000);
   }
-  fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  await removeTempTree(tmp);
 }
