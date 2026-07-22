@@ -355,6 +355,44 @@ test('lifecycle: Clean Flow Gate rejects a transition through an unrelated state
   assert.match(stderr, /col\/yOffset/);
 });
 
+// Regression coverage for #24. The explicit-straight case above covers a
+// route the author asked for; here the document gives NO route hints and the
+// auto-router itself picks a detour whose corner sits inside an unrelated
+// component — the arrow hides behind the obstacle box and reads as
+// "cache -> queue" instead of "api -> queue". The gate must judge the
+// router's own output, not just author-requested routes.
+function passThroughRepro(connection) {
+  return {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Repro', quality_profile: 'standard' },
+    components: [
+      { id: 'api', type: 'backend', label: 'API', pos: [400, 280], size: [160, 76] },
+      { id: 'cache', type: 'database', label: 'Cache', pos: [645, 130], size: [130, 60] },
+      { id: 'queue', type: 'cloud', label: 'Queue', pos: [880, 130] },
+    ],
+    connections: [connection],
+  };
+}
+
+test('architecture: Clean Flow Gate rejects an auto-routed connection through an unrelated component', () => {
+  const d = passThroughRepro({ from: 'api', to: 'queue', variant: 'dashed' });
+  const { code, stderr } = render('architecture', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[clean-flow\/edge-through-node\] architecture connections\[0\] "api" -> "queue"/);
+  assert.match(stderr, /crosses component "cache"/);
+  assert.match(stderr, /fromSide\/toSide/);
+});
+
+test('architecture: via waypoints routed around the obstacle satisfy the Clean Flow Gate', () => {
+  const d = passThroughRepro({
+    from: 'api', to: 'queue', variant: 'dashed',
+    fromSide: 'right', toSide: 'top', via: [[620, 318], [620, 100], [940, 100]],
+  });
+  const { code, stderr } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+});
+
 test('sequence: lifelines and activation bars remain intentional pass-through geometry', () => {
   const d = load('sequence');
   const { code, stderr } = render('sequence', d);
