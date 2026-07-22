@@ -1698,13 +1698,16 @@
       top: 1rem;
       left: 1rem;
       z-index: 24;
+      display: flex;
+      flex-direction: column;
       width: min(22rem, calc(100% - 2rem));
+      max-height: calc(100% - 2rem);
       overflow: hidden;
       border: 1px solid var(--toolbar-border);
       border-radius: 0.85rem;
       background: var(--toolbar-menu-bg);
       color: var(--toolbar-text);
-      box-shadow: 0 18px 52px rgba(0, 0, 0, 0.34);
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.22);
       backdrop-filter: blur(16px);
     }
     .node-finder[hidden] { display: none; }
@@ -1744,7 +1747,6 @@
     .node-finder-close:hover,
     .node-finder-close:focus-visible { background: var(--toolbar-hover); }
     .node-finder-close:focus-visible,
-    .node-finder-input:focus-visible,
     .node-finder-result:focus-visible {
       outline: 2px solid var(--frontend-stroke);
       outline-offset: -2px;
@@ -1760,10 +1762,16 @@
       border: 1px solid var(--toolbar-border);
       border-radius: 0.55rem;
       background: color-mix(in srgb, var(--panel) 78%, transparent);
+      transition: border-color 160ms ease-out, box-shadow 160ms ease-out;
     }
     html[data-preset="blueprint"] .node-finder-search { border-radius: 0.18rem; }
     .node-finder-search > span { color: var(--frontend-stroke); font-size: 0.875rem; }
+    .node-finder-search:focus-within {
+      border-color: var(--frontend-stroke);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--frontend-stroke) 20%, transparent);
+    }
     .node-finder-input {
+      appearance: none;
       width: 100%;
       min-width: 0;
       border: 0;
@@ -1773,6 +1781,7 @@
       font: inherit;
       font-size: 0.75rem;
     }
+    .node-finder-input:focus-visible { outline: none; }
     .node-finder-input::placeholder { color: var(--text-faint); }
     .node-finder kbd {
       padding: 0.1rem 0.32rem;
@@ -1784,34 +1793,50 @@
     }
     .node-finder-results {
       display: grid;
-      gap: 0.18rem;
+      flex: 1 1 auto;
+      gap: 0;
+      min-height: 0;
       max-height: min(18rem, 48vh);
-      margin: 0;
-      padding: 0 0.55rem 0.55rem;
+      margin: 0 0.55rem 0.45rem;
+      padding: 0;
       overflow-y: auto;
       overscroll-behavior: contain;
+      border: 1px solid color-mix(in srgb, var(--toolbar-border) 78%, transparent);
+      border-radius: 0.55rem;
+      background: color-mix(in srgb, var(--panel) 54%, transparent);
+      scroll-padding-block: 0.25rem;
       scrollbar-width: thin;
     }
+    html[data-preset="blueprint"] .node-finder-results { border-radius: 0.18rem; }
     .node-finder-result {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 0.2rem 0.75rem;
       width: 100%;
-      padding: 0.55rem 0.65rem;
+      min-height: 3.25rem;
+      padding: 0.58rem 0.65rem;
       border: 0;
-      border-radius: 0.45rem;
+      border-radius: 0;
       background: transparent;
       color: var(--text);
       font: inherit;
       text-align: left;
       cursor: pointer;
+      transition: background-color 160ms ease-out;
     }
-    html[data-preset="blueprint"] .node-finder-result { border-radius: 0.12rem; }
+    .node-finder-result:not(:last-child) {
+      border-bottom: 1px solid color-mix(in srgb, var(--toolbar-border) 62%, transparent);
+    }
     .node-finder-result:hover,
-    .node-finder-result:focus-visible { background: var(--toolbar-hover); }
+    .node-finder-result:focus-visible {
+      position: relative;
+      z-index: 1;
+      background: color-mix(in srgb, var(--frontend-fill) 48%, var(--toolbar-hover));
+    }
     .node-finder-result strong {
       overflow: hidden;
       font-size: 0.75rem;
+      line-height: 1.25;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
@@ -1820,7 +1845,7 @@
       overflow: hidden;
       color: var(--text-faint);
       font-size: 0.5625rem;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.015em;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
@@ -1847,8 +1872,8 @@
       text-align: center;
     }
     .node-finder-status {
-      padding: 0.5rem 0.8rem;
-      border-top: 1px solid var(--toolbar-border);
+      margin: 0;
+      padding: 0.1rem 0.8rem 0.65rem;
       color: var(--text-faint);
       font-size: 0.5625rem;
     }
@@ -4144,7 +4169,7 @@
         </div>
         <div class="node-finder-search">
           <span aria-hidden="true">&#8981;</span>
-          <input class="node-finder-input" id="node-finder-input" type="search" autocomplete="off" spellcheck="false" placeholder="Search labels or IDs" aria-describedby="node-finder-status">
+          <input class="node-finder-input" id="node-finder-input" type="search" autocomplete="off" spellcheck="false" placeholder="Search labels or IDs" aria-label="Search diagram nodes" aria-describedby="node-finder-status">
           <kbd aria-hidden="true">/</kbd>
         </div>
         <div class="node-finder-results" id="node-finder-results" role="group" aria-label="Diagram nodes"></div>
@@ -9746,7 +9771,11 @@
           button.type = 'button';
           button.className = 'node-finder-result';
           button.setAttribute('data-node-id', item.id);
-          var badge = context.badges && context.badges[item.id] ? context.badges[item.id] : String(item.links);
+          var badge = context.badges && context.badges[item.id]
+            ? context.badges[item.id]
+            : context.kind === 'focus'
+              ? item.links + (item.links === 1 ? ' link' : ' links')
+              : String(item.links);
           var action = context.kind === 'route-source'
             ? 'Choose ' + item.label + ' as route start'
             : context.kind === 'route-target'
@@ -9758,11 +9787,10 @@
           name.textContent = item.label;
           var links = document.createElement('em');
           links.textContent = badge;
-          links.title = context.kind === 'focus'
-            ? item.links + ' related connection' + (item.links === 1 ? '' : 's')
-            : action;
+          links.title = context.kind === 'focus' ? badge : action;
           var meta = document.createElement('small');
-          meta.textContent = [item.type, item.context, item.sublabel, item.tag, item.id].filter(Boolean).join(' \u00b7 ');
+          meta.textContent = [item.type, item.id, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
+          meta.title = [item.type, item.id, item.context, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
           button.appendChild(name);
           button.appendChild(links);
           button.appendChild(meta);
@@ -9770,7 +9798,9 @@
           results.appendChild(button);
         });
         empty.hidden = visibleItems.length !== 0;
-        status.textContent = visibleItems.length + ' of ' + available.length + ' ' + context.availableNoun + (query ? ' match' : ' available');
+        status.textContent = query
+          ? visibleItems.length + ' of ' + available.length + ' ' + context.availableNoun
+          : available.length + ' ' + context.availableNoun;
       }
 
       function open(options) {

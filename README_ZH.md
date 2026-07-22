@@ -12,7 +12,7 @@ Archify 是一个可用于 Claude、Codex CLI 和 opencode 的 Agent Skill。它
 
 - **五种图表类型** —— Architecture、Workflow、Sequence、Data Flow、Lifecycle
 - **三套实时视觉预设** —— 先确定作者默认风格，再在同一拓扑上试穿 `classic`、`signal-flow` 或 `blueprint`
-- **探索真实拓扑** —— 查找节点、检查关系、探查路径、对比角色、播放引导故事
+- **探索真实拓扑** —— 按名称或稳定 ID 搜索节点、检查关系、探查路径、对比角色、播放引导故事
 - **动态默认关闭** —— 只有显式设置 `meta.animation: "trace"` 才启用动态
 - **便携导出** —— 一键生成、复制或下载 1200×630 Share Card；把已解析路径导出为聚焦的 Route Share Card；也可导出 PNG / JPEG / WebP / 双主题 SVG / WebM
 - **Typed + Checked** —— Typed JSON IR、内置 Schema 校验、默认语义安全门禁和可选构图档位
@@ -227,7 +227,7 @@ Claude.ai 中的上传入口：
 - [路线图](ROADMAP.md)
 - [自动生成的 Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-Archify 2.11 已覆盖五种 Typed IR、三套视觉预设、可选有限动态、引导视图、语义探索、可分享深链、浏览器原生 WebM，以及显式 `standard` / `showcase` 质量档位。
+Archify 2.11 已覆盖五种 Typed IR、三套视觉预设、验证后实时预览、可选有限动态、引导视图、语义搜索与关系探索、可分享深链、1200×630 整图与路径卡片、浏览器原生 WebM，以及显式 `standard` / `showcase` 质量档位。
 
 自动 Mermaid Parser、通用自动布局、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。
 

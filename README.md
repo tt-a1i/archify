@@ -16,7 +16,7 @@ Archify is an agent skill for Claude, Codex CLI, and opencode. It produces a sel
 
 - **Five diagram types** — architecture, workflow, sequence, data flow, and lifecycle
 - **Three live visual presets** — author a default, then try `classic`, `signal-flow`, or `blueprint` on the same topology
-- **Explore real topology** — find nodes, inspect relationships, trace routes, compare roles, and play guided stories
+- **Explore real topology** — search nodes by label or stable ID, inspect relationships, trace routes, compare roles, and play guided stories
 - **Motion is optional** — output stays static unless `meta.animation: "trace"` is explicitly enabled
 - **Portable exports** — create, copy, or download a 1200×630 Share Card; turn a resolved route into a focused Route Share Card; or export PNG, JPEG, WebP, dual-theme SVG, and trace-enabled WebM
 - **Typed and checked** — JSON IR, bundled schema validation, default semantic safety gates, and opt-in composition profiles
@@ -227,7 +227,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Roadmap](ROADMAP.md)
 - [Generated Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-Archify 2.11 includes typed IR across all five modes, three visual presets, optional finite motion, guided views, semantic exploration, shareable deep links, browser-native WebM recording, and explicit `standard` / `showcase` quality profiles.
+Archify 2.11 includes typed IR across all five modes, three visual presets, verified live preview, optional finite motion, guided views, semantic search and relationship exploration, shareable deep links, 1200×630 diagram and route cards, browser-native WebM recording, and explicit `standard` / `showcase` quality profiles.
 
 Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
 

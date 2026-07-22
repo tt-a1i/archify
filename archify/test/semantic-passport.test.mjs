@@ -86,7 +86,8 @@ test('Node Finder searches and presents the same passport facts', () => {
   assert.match(html, /var context = node\.getAttribute\('data-node-context'\) \|\| ''/);
   assert.match(html, /var tag = node\.getAttribute\('data-node-tag'\) \|\| ''/);
   assert.match(html, /search: \(id \+ ' ' \+ label \+ ' ' \+ type \+ ' ' \+ sublabel \+ ' ' \+ context \+ ' ' \+ tag \+ ' ' \+ text\)\.toLowerCase\(\)/);
-  assert.match(html, /\[item\.type, item\.context, item\.sublabel, item\.tag, item\.id\]\.filter\(Boolean\)\.join\(' \\u00b7 '\)/);
+  assert.match(html, /\[item\.type, item\.id, item\.sublabel, item\.tag\]\.filter\(Boolean\)\.join\(' \\u00b7 '\)/);
+  assert.match(html, /meta\.title = \[item\.type, item\.id, item\.context, item\.sublabel, item\.tag\]\.filter\(Boolean\)\.join\(' \\u00b7 '\)/);
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
