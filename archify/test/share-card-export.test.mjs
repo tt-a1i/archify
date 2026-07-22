@@ -67,6 +67,37 @@ test('Share Card is a canonical PNG with exact receipt dimensions and filename',
   assert.match(html, /if \(format === 'share-card'\) return true;/);
 });
 
+test('Copy Share Card reuses one canonical card blob and writes only PNG to the clipboard', () => {
+  const html = render('architecture');
+  assert.match(html, /data-action="copy-share-card"/);
+  assert.match(html, /Copy Share Card[\s\S]*?<span class="hint">PNG<\/span>/);
+  assert.match(html, /function runCopyShareCard\(\)[\s\S]*?var blobPromise = rasterizeShareCard\(\);/);
+  const copyBlock = html.match(/function runCopyShareCard\(\) \{[\s\S]*?\n      \}/)?.[0] || '';
+  assert.equal((copyBlock.match(/rasterizeShareCard\(\)/g) || []).length, 1);
+  assert.match(copyBlock, /writePngToClipboard\(blobPromise\)/);
+  assert.match(html, /new ClipboardItem\(\{ 'image\/png': blobPromise \}\)/);
+  assert.match(copyBlock, /recordExportReceipt\('share-card', blob, true, \{ width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT \}\)/);
+  assert.match(copyBlock, /toast\('Copied Share Card'\)/);
+  assert.match(html, /copyShareCard: runCopyShareCard/);
+});
+
+test('Copy Share Card fails closed when image clipboard writing is unavailable', () => {
+  const html = render('workflow');
+  assert.match(html, /it\.dataset\.action === 'copy-share-card'[\s\S]*?!canCopyImage\(\)/);
+  assert.match(html, /function runCopyShareCard\(\)[\s\S]*?if \(!canCopyImage\(\)\)/);
+  assert.match(html, /Clipboard image write not supported by this browser/);
+  assert.match(html, /button\[data-action="copy-share-card"\]/);
+  assert.match(html, /document\.documentElement\.removeAttribute\('data-last-export-format'\)/);
+  assert.match(html, /data-last-export-error-format', 'share-card'/);
+});
+
+test('ordinary Copy PNG keeps its existing full-diagram raster path', () => {
+  const html = render('sequence');
+  assert.match(html, /function runCopy\(\)[\s\S]*?var blobPromise = rasterize\('png'\);/);
+  assert.match(html, /runCopy\(\)[\s\S]*?writePngToClipboard\(blobPromise\)/);
+  assert.doesNotMatch(svgBlock(html), /copy-share-card|Copy Share Card/);
+});
+
 test('Share Card stays viewer-only and reuses export cleanup instead of source state', () => {
   const html = render('sequence');
   assert.match(html, /html\[data-embed="true"\] \.toolbar/);
@@ -82,11 +113,13 @@ test('the skill and every README make the optional Share Card discoverable', () 
   assert.match(skill, /optional 1200(?:×|x)630 Share Card PNG/i);
   assert.match(skill, /current theme and visual preset/i);
   assert.match(skill, /never claim(?:s|ing)? validation/i);
+  assert.match(skill, /Copy Share Card/i);
 
   for (const readme of ['README.md', 'README_EN.md', 'README_ZH.md']) {
     const text = fs.readFileSync(path.join(repoRoot, readme), 'utf8');
     assert.match(text, /Share Card/i, readme);
     assert.match(text, /1200(?:×|x)630/, readme);
+    assert.match(text, /copy|复制/i, readme);
   }
 });
 
