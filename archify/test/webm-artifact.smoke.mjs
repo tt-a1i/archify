@@ -53,6 +53,13 @@ execFileSync(process.execPath, [
   output,
 ], { stdio: ['ignore', 'ignore', 'pipe'] });
 
+const sequenceOutput = path.join(tmp, 'sequence.html');
+execFileSync(process.execPath, [
+  path.join(skillRoot, 'renderers/sequence/render-sequence.mjs'),
+  path.join(skillRoot, 'examples/cache-miss-request.sequence.json'),
+  sequenceOutput,
+], { stdio: ['ignore', 'ignore', 'pipe'] });
+
 assert.equal(typeof WebSocket, 'function', 'Node.js 22+ is required for the Chrome DevTools smoke harness');
 
 function delay(ms) {
@@ -181,14 +188,69 @@ try {
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
   await cdp.send('Page.enable', {}, sessionId);
   await cdp.send('Runtime.enable', {}, sessionId);
-  await cdp.send('Page.navigate', { url: pathToFileURL(output).href }, sessionId);
 
-  let ready = false;
-  for (let attempt = 0; attempt < 100 && !ready; attempt += 1) {
-    ready = await evaluate(cdp, sessionId, 'document.readyState === "complete" && !!(window.Archify && Archify.motion && Archify.motion.canRecord())');
-    if (!ready) await delay(50);
+  async function navigateReady(file, condition, label) {
+    await cdp.send('Page.navigate', { url: pathToFileURL(file).href }, sessionId);
+    let ready = false;
+    for (let attempt = 0; attempt < 100 && !ready; attempt += 1) {
+      ready = await evaluate(cdp, sessionId, `document.readyState === "complete" && (${condition})`);
+      if (!ready) await delay(50);
+    }
+    assert.equal(ready, true, `${label} did not expose its browser export surface`);
   }
-  assert.equal(ready, true, 'rendered artifact did not expose a recordable motion surface');
+
+  async function captureShareCard(file, label) {
+    await navigateReady(file, '!!(window.Archify && Archify.exportMenu && Archify.exportMenu.shareCard)', label);
+    const sharePayload = await withTimeout(evaluate(cdp, sessionId, String.raw`(async function () {
+      try {
+        var blob = await Archify.exportMenu.shareCard();
+        var bytes = new Uint8Array(await blob.arrayBuffer());
+        var binary = '';
+        for (var offset = 0; offset < bytes.length; offset += 32768) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(offset, offset + 32768));
+        }
+        return { ok: true, type: blob.type, size: blob.size, base64: btoa(binary) };
+      } catch (error) {
+        return { ok: false, error: String(error && error.message || error) };
+      }
+    })()`, true), 10_000, `${label} Share Card export`);
+
+    assert.equal(sharePayload?.ok, true, sharePayload?.error || `${label} Share Card export failed`);
+    assert.equal(sharePayload.type, 'image/png');
+    assert.ok(sharePayload.size > 20_000, `${label} Share Card is unexpectedly small (${sharePayload.size} bytes)`);
+
+    const png = Buffer.from(sharePayload.base64, 'base64');
+    assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${label} output is not a PNG`);
+    assert.equal(png.readUInt32BE(16), 1200, `${label} Share Card width`);
+    assert.equal(png.readUInt32BE(20), 630, `${label} Share Card height`);
+
+    const pngPath = path.join(tmp, `${label}.share-card.png`);
+    fs.writeFileSync(pngPath, png);
+    const pixels = execFileSync(ffmpeg, [
+      '-v', 'error',
+      '-i', pngPath,
+      '-vf', 'scale=120:63',
+      '-frames:v', '1',
+      '-f', 'rawvideo',
+      '-pix_fmt', 'rgb24',
+      '-',
+    ], { maxBuffer: 4 * 1024 * 1024 });
+    const colors = new Set();
+    const counts = new Map();
+    for (let offset = 0; offset < pixels.length; offset += 3) {
+      const color = pixels.subarray(offset, offset + 3).toString('hex');
+      colors.add(color);
+      counts.set(color, (counts.get(color) || 0) + 1);
+    }
+    const largestColorShare = Math.max(...counts.values()) / (pixels.length / 3);
+    assert.ok(colors.size >= 24, `${label} Share Card has only ${colors.size} sampled colors`);
+    assert.ok(largestColorShare < 0.96, `${label} Share Card is visually near-blank (${Math.round(largestColorShare * 100)}% one color)`);
+    console.log(`ok ${label} Share Card: ${sharePayload.size} bytes, 1200x630, ${colors.size} sampled colors`);
+  }
+
+  await captureShareCard(output, 'architecture-wide');
+  await captureShareCard(sequenceOutput, 'sequence-tall');
+  await navigateReady(output, '!!(window.Archify && Archify.motion && Archify.motion.canRecord())', 'motion artifact');
 
   const payload = await withTimeout(evaluate(cdp, sessionId, String.raw`(async function () {
     try {
