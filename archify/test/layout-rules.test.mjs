@@ -223,13 +223,32 @@ function autoRoutePassThroughDocument(connection) {
   };
 }
 
-test('architecture: default delivery rejects an auto-routed connection through an unrelated component', () => {
+test('architecture: default auto route selects a safe orthogonal candidate around an unrelated component', () => {
   const d = autoRoutePassThroughDocument({ from: 'api', to: 'queue', variant: 'dashed' });
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  assert.match(html, /data-composition-points="560,318;560,239;880,239;880,160"/);
+});
+
+test('architecture: explicit orthogonal route remains authoritative when it crosses a component', () => {
+  const d = autoRoutePassThroughDocument({
+    from: 'api',
+    to: 'queue',
+    variant: 'dashed',
+    route: 'orthogonal-h',
+  });
   const { code, stderr } = render('architecture', d);
   assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
-  assert.match(stderr, /\[clean-flow\/edge-through-node\] architecture connections\[0\] "api" -> "queue"/);
-  assert.match(stderr, /crosses component "cache"/);
-  assert.match(stderr, /fromSide\/toSide/);
+  assert.match(stderr, /connections\[0\] "api" -> "queue" crosses component "cache"/);
+});
+
+test('architecture: auto route still fails closed when both bounded doglegs are blocked', () => {
+  const d = autoRoutePassThroughDocument({ from: 'api', to: 'queue', variant: 'dashed' });
+  d.components.push({ id: 'guard', type: 'security', label: 'Guard', pos: [790, 215], size: [60, 50] });
+  const { code, stderr } = render('architecture', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /connections\[0\] "api" -> "queue" crosses component "cache"/);
 });
 
 test('architecture: explicit waypoints around an obstacle remain valid by default', () => {

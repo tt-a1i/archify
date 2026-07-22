@@ -8,6 +8,7 @@ import {
   asArray,
   isFinitePoint,
   rectsOverlap,
+  segmentIntersectsRect,
   cleanFlowProblems,
   cleanCrossingProblems,
   cleanBorderRunProblems,
@@ -292,6 +293,19 @@ function buildLayoutReport() {
 }
 
 // ---- Connection routing ------------------------------------------------------
+function routeClearsComponents(conn, points, clearance = 2) {
+  const endpointIds = new Set([conn.from, conn.to]);
+  for (const component of components.values()) {
+    if (endpointIds.has(component.id)) continue;
+    for (let index = 0; index < points.length - 1; index += 1) {
+      if (segmentIntersectsRect({ start: points[index], end: points[index + 1] }, component, clearance)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 function routeVia(conn, from, to, start, end) {
   if (conn.via) return conn.via;
   switch (conn.route || 'auto') {
@@ -310,7 +324,17 @@ function routeVia(conn, from, to, start, end) {
       // Direct line unless the anchors are clearly orthogonal-friendly.
       if (Math.abs(start[0] - end[0]) < 4 || Math.abs(start[1] - end[1]) < 4) return [];
       const midX = (start[0] + end[0]) / 2;
-      return [[midX, start[1]], [midX, end[1]]];
+      const horizontalFirst = [[midX, start[1]], [midX, end[1]]];
+      if (routeClearsComponents(conn, [start, ...horizontalFirst, end])) return horizontalFirst;
+
+      // The only fallback is the complementary in-bounds dogleg. Both
+      // candidates stay between the authored anchors, preserve two bends, and
+      // remain deterministic. If neither is safe, keep the original route so
+      // the universal Clean Flow gate returns the actionable hard failure.
+      const midY = (start[1] + end[1]) / 2;
+      const verticalFirst = [[start[0], midY], [end[0], midY]];
+      if (routeClearsComponents(conn, [start, ...verticalFirst, end])) return verticalFirst;
+      return horizontalFirst;
     }
   }
 }
