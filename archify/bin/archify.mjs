@@ -11,11 +11,24 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 
 const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
+const SOURCE_CAPSULE_RENDERER_ARG = '--archify-source-capsule';
+
+function sourceCapsuleFilename(inputPath, diagramType) {
+  const basename = path.basename(inputPath).trim();
+  const portable = basename
+    .replace(/[<>:"/\\|?*\u0000-\u001f\u007f]/g, '-')
+    .replace(/[. ]+$/g, '');
+  return portable || `${diagramType}.json`;
+}
+
+function sourceCapsuleRendererArg(inputPath, diagramType) {
+  return `${SOURCE_CAPSULE_RENDERER_ARG}=${encodeURIComponent(sourceCapsuleFilename(inputPath, diagramType))}`;
+}
 
 function usage() {
   return `Usage:
-  archify render <type> <input.json> [output.html] [--quality standard|showcase]
-  archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase]
+  archify render <type> <input.json> [output.html] [--quality standard|showcase] [--with-source]
+  archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--with-source]
   archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase]
   archify inspect <type> <input.json>
   archify check <output.html>
@@ -26,6 +39,9 @@ function usage() {
 
 Types:
   architecture, workflow, sequence, dataflow, lifecycle
+
+Privacy:
+  --with-source is opt-in. It embeds validated source JSON in the HTML for editable handoff.
 `;
 }
 
@@ -77,12 +93,25 @@ function exitFrom(result) {
   process.exit(result.status ?? 1);
 }
 
+function rendererEnv(quality) {
+  return quality ? { ARCHIFY_QUALITY_PROFILE: quality } : undefined;
+}
+
 function commandRender(args) {
   const { rest, quality } = extractQualityArgs(args);
-  const [type, input, output] = rest;
-  if (!type || !input) fail(usage());
-  const result = runNode([rendererPath(type), input, ...(output ? [output] : [])], {
-    env: quality ? { ARCHIFY_QUALITY_PROFILE: quality } : undefined,
+  const withSource = rest.includes('--with-source');
+  const knownOptions = new Set(['--with-source']);
+  const unknown = rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
+  if (unknown.length) fail(`Unknown render option "${unknown[0]}".`);
+  const positional = rest.filter((arg) => !knownOptions.has(arg));
+  const [type, input, output] = positional;
+  if (!type || !input || positional.length > 3) fail(usage());
+  const rendererArgs = [rendererPath(type), input];
+  if (output) rendererArgs.push(output);
+  else if (withSource) rendererArgs.push('');
+  if (withSource) rendererArgs.push(sourceCapsuleRendererArg(input, type));
+  const result = runNode(rendererArgs, {
+    env: rendererEnv(quality),
   });
   if (result.status !== 0) exitFrom(result);
 }
@@ -108,7 +137,8 @@ async function commandDeliver(args) {
   const qualityArgs = extractQualityArgs(args);
   const json = qualityArgs.rest.includes('--json');
   const open = qualityArgs.rest.includes('--open');
-  const knownOptions = new Set(['--json', '--open']);
+  const withSource = qualityArgs.rest.includes('--with-source');
+  const knownOptions = new Set(['--json', '--open', '--with-source']);
   const unknown = qualityArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) fail(`Unknown deliver option "${unknown[0]}".`);
   const positional = qualityArgs.rest.filter((arg) => !knownOptions.has(arg));
@@ -117,6 +147,7 @@ async function commandDeliver(args) {
 
   const renderer = rendererPath(type);
   const inputPath = path.resolve(input);
+  const sourceFilename = withSource ? sourceCapsuleFilename(inputPath, type) : null;
   let diagram;
   try {
     diagram = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
@@ -171,9 +202,14 @@ async function commandDeliver(args) {
   const candidatePath = path.join(stagingDirectory, path.basename(outputPath));
 
   try {
-    const render = runNode([renderer, inputPath, candidatePath], {
+    const render = runNode([
+      renderer,
+      inputPath,
+      candidatePath,
+      ...(withSource ? [`${SOURCE_CAPSULE_RENDERER_ARG}=${encodeURIComponent(sourceFilename)}`] : []),
+    ], {
       stdio: 'pipe',
-      env: qualityArgs.quality ? { ARCHIFY_QUALITY_PROFILE: qualityArgs.quality } : undefined,
+      env: rendererEnv(qualityArgs.quality),
     });
     if (render.status !== 0) {
       if (render.stderr) process.stderr.write(render.stderr);
@@ -262,6 +298,12 @@ async function commandDeliver(args) {
         errors: result.composition.summary.errors,
         warnings: result.composition.summary.warnings,
       },
+      ...(withSource ? {
+        sourceCapsule: {
+          included: true,
+          filename: sourceFilename,
+        },
+      } : {}),
     };
 
     try {

@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
 export function esc(value) {
@@ -101,6 +103,7 @@ ${card.items.map((item) => `          <li>&bull; ${esc(item)}</li>`).join('\n')}
 const SVG_SLOT_RE = /      <!-- ARCHIFY:SVG_SLOT_START -->[\s\S]*?      <!-- ARCHIFY:SVG_SLOT_END -->/;
 const CARDS_SLOT_RE = /    <!-- ARCHIFY:CARDS_SLOT_START -->[\s\S]*?    <!-- ARCHIFY:CARDS_SLOT_END -->/;
 const GUIDED_VIEWS_PLACEHOLDER = '<!-- ARCHIFY:GUIDED_VIEWS_DATA -->';
+const SOURCE_CAPSULE_PLACEHOLDER = '    <!-- ARCHIFY:SOURCE_CAPSULE_DATA -->';
 
 const TEMPLATE_PLACEHOLDERS = [
   '<html lang="en" data-theme="dark" data-preset="[VISUAL PRESET]">',
@@ -109,11 +112,22 @@ const TEMPLATE_PLACEHOLDERS = [
   '<p class="subtitle">[Subtitle description]</p>',
   '[Project Name] &bull; [Additional metadata]',
   GUIDED_VIEWS_PLACEHOLDER,
+  SOURCE_CAPSULE_PLACEHOLDER,
 ];
 
 // `footer` is injected as raw HTML so callers can embed <kbd> hints;
 // pass only trusted strings here, never user input.
-export function applyTemplate(template, { title, subtitle, footer, svg, cards, visualPreset = 'classic', guidedViews = [] }) {
+export function applyTemplate(template, {
+  title,
+  subtitle,
+  footer,
+  svg,
+  cards,
+  visualPreset = 'classic',
+  guidedViews = [],
+  diagramType = 'architecture',
+  sourceCapsule = null,
+}) {
   if (!SVG_SLOT_RE.test(template)) {
     throw new Error('applyTemplate: template missing ARCHIFY:SVG_SLOT sentinel');
   }
@@ -131,15 +145,26 @@ export function applyTemplate(template, { title, subtitle, footer, svg, cards, v
     .replaceAll('<', '\\u003c')
     .replaceAll('>', '\\u003e')
     .replaceAll('&', '\\u0026');
+  const sourceJson = sourceCapsule ? JSON.stringify(sourceCapsule.diagram, null, 2) : '';
+  const sourceDigest = sourceCapsule
+    ? createHash('sha256').update(sourceJson, 'utf8').digest('hex')
+    : '';
+  const sourceCapsuleHtml = sourceCapsule
+    ? `    <script id="archify-source-capsule" type="application/json" data-source-filename="${esc(sourceCapsule.filename)}" data-source-sha256="${sourceDigest}">${sourceJson
+      .replaceAll('<', '\\u003c')
+      .replaceAll('>', '\\u003e')
+      .replaceAll('&', '\\u0026')}</script>`
+    : '';
   return template
-    .replace(TEMPLATE_PLACEHOLDERS[0], () => `<html lang="en" data-theme="dark" data-preset="${esc(visualPreset)}">`)
+    .replace(TEMPLATE_PLACEHOLDERS[0], () => `<html lang="en" data-theme="dark" data-preset="${esc(visualPreset)}" data-diagram-type="${esc(diagramType)}">`)
     .replace(TEMPLATE_PLACEHOLDERS[1], () => `<title>${esc(title)} Diagram</title>`)
     .replace(TEMPLATE_PLACEHOLDERS[2], () => `<h1>${esc(title)}</h1>`)
     .replace(TEMPLATE_PLACEHOLDERS[3], () => `<p class="subtitle">${esc(subtitle ?? '')}</p>`)
     .replace(SVG_SLOT_RE, () => svg)
     .replace(CARDS_SLOT_RE, () => cards)
     .replace(TEMPLATE_PLACEHOLDERS[4], () => footer)
-    .replace(GUIDED_VIEWS_PLACEHOLDER, () => `<script id="archify-guided-views-data" type="application/json">${guidedViewsJson}</script>`);
+    .replace(GUIDED_VIEWS_PLACEHOLDER, () => `<script id="archify-guided-views-data" type="application/json">${guidedViewsJson}</script>`)
+    .replace(SOURCE_CAPSULE_PLACEHOLDER, () => sourceCapsuleHtml);
 }
 
 // CJK and other wide/fullwidth glyphs render at roughly twice the advance

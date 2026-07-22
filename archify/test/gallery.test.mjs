@@ -26,7 +26,10 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
   const output = execFileSync(process.execPath, [
     path.join(repoRoot, 'scripts', 'build-gallery.mjs'),
     generatedRoot,
-  ], { encoding: 'utf8' });
+  ], {
+    encoding: 'utf8',
+    env: { ...process.env, ARCHIFY_INCLUDE_SOURCE: '1' },
+  });
   assert.match(output, /gallery 11 artifacts \/ 99 checks/);
 
   const manifestPath = path.join(generatedRoot, 'gallery', 'manifest.json');
@@ -61,6 +64,8 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
     const source = path.join(generatedRoot, entry.input.replace(/^gallery\//, 'gallery/'));
     assert.ok(fs.existsSync(artifact), `${entry.id}: artifact missing`);
     assert.ok(fs.existsSync(source), `${entry.id}: source missing`);
+    assert.doesNotMatch(fs.readFileSync(artifact, 'utf8'), /id="archify-source-capsule"/,
+      `${entry.id}: public proof artifact inherited an editable source capsule`);
     assert.equal(sha256(artifact), entry.artifactSha256, `${entry.id}: artifact digest drift`);
     assert.equal(sha256(source), entry.sourceSha256, `${entry.id}: source digest drift`);
     assert.equal(entry.checks.length, 9);

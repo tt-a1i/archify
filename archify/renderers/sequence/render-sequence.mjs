@@ -5,7 +5,7 @@ import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagra
 import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, routePointsValue, asArray, isFinitePoint } from '../shared/geometry.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const { diagram: sequence, template, outPath } = loadDiagram({
+const { diagram: sequence, template, outPath, sourceCapsule } = loadDiagram({
   rendererDir: __dirname,
   diagramType: 'sequence',
   defaultExample: 'cache-miss-request.sequence.json'
@@ -354,4 +354,5 @@ writeDiagram({
   footerLabel: 'Sequence diagram',
   svg: renderSvg(),
   cards: sequence.cards,
+  sourceCapsule,
 });

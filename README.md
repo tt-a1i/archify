@@ -146,7 +146,7 @@ Architecture examples: [`web-app`](examples/web-app.html) · [`Archify pipeline`
 - **Typed JSON IR** — every renderer-backed mode has a schema and reproducible source.
 - **Atomic validation before delivery** — schema, layout, HTML/SVG, route, and label-to-route clearance checks must all pass before a showcase artifact replaces the last known good output.
 - **Truthful interaction** — focus, routes, role comparison, and stories reuse authored nodes and relationships instead of inventing topology.
-- **Portable by default** — the result is one HTML file; exports remain full-diagram and free of temporary viewer state.
+- **Portable by default** — the result is one HTML file; exports remain full-diagram and free of temporary viewer state. Optional `--with-source` makes that HTML an editable handoff.
 
 Archify is not a general-purpose drawing editor or a Mermaid theme. It turns technical intent into a communication artifact.
 
@@ -171,6 +171,8 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 ```
 
 Use `--open` for an interactive local handoff. It is off by default, runs only after the verified artifact is committed, and never turns a successful delivery into a failure when the OS opener is unavailable; JSON stays on stdout and the absolute manual-open path goes to stderr.
+
+Source JSON stays out of the HTML by default. Add `--with-source` only when the recipient should be able to download the validated JSON from **Export → Source JSON**; image, SVG, WebM, and Share Card exports remain source-free.
 
 Optional motion and presentation styling are explicit:
 

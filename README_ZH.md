@@ -142,7 +142,7 @@ Architecture 示例：[`Web App`](examples/web-app.html) · [`Archify Pipeline`]
 - **Typed JSON IR** —— 每种 Renderer 模式都有 Schema 和可复现的源文件。
 - **原子交付前校验** —— Schema、布局、HTML/SVG、线路和标签到其他路径的净空检查必须全部通过，Showcase 成品才会替换上一份可信结果。
 - **交互不编造拓扑** —— 聚焦、路径、角色对比和故事都复用作者定义的节点与关系。
-- **结果默认便携** —— 一个 HTML 文件即可分享；导出永远是完整原图，不携带临时 Viewer 状态。
+- **结果默认便携** —— 一个 HTML 文件即可分享；导出永远是完整原图，不携带临时 Viewer 状态。可选的 `--with-source` 能把它变成可继续编辑的交接件。
 
 Archify 不是通用绘图编辑器，也不是 Mermaid 主题；它负责把技术意图变成可交流的成品。
 
@@ -167,6 +167,8 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 ```
 
 `--open` 只适合本地交互式交付。它默认关闭，并且只在验证成品原子提交后执行；系统无法打开时，交付仍保持成功，JSON 只写 stdout，stderr 会给出可手动打开的绝对路径。
+
+源 JSON 默认不会进入 HTML。只有收件人需要继续编辑时才添加 `--with-source`，此时可从 **Export → Source JSON** 下载通过校验的 JSON；图片、SVG、WebM 和 Share Card 导出仍然不携带源数据。
 
 动态和演示样式需要显式选择：
 

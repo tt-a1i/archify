@@ -3,6 +3,8 @@ import path from 'node:path';
 import { applyTemplate, renderCards, esc } from './utils.mjs';
 import { validateSchema } from './validator.mjs';
 
+const SOURCE_CAPSULE_RENDERER_PREFIX = '--archify-source-capsule=';
+
 // Common CLI head: node render-<type>.mjs [input.json] [output.html]
 export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = process.argv }) {
   const skillRoot = path.resolve(rendererDir, '../..');
@@ -15,7 +17,16 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
   // Optional chaining: in degraded mode (no ajv) malformed input must still
   // reach the renderer's friendly layout checks instead of crashing here.
   const outPath = path.resolve(process.cwd(), argv[3] || diagram.meta?.output || `${diagramType}.html`);
-  return { diagram, template, outPath };
+  const sourceArg = argv.find((arg) => arg.startsWith(SOURCE_CAPSULE_RENDERER_PREFIX));
+  let sourceCapsule = null;
+  if (sourceArg) {
+    const filename = decodeURIComponent(sourceArg.slice(SOURCE_CAPSULE_RENDERER_PREFIX.length));
+    if (!filename || filename.includes('/') || filename.includes('\\')) {
+      throw new Error('Editable source handoff requires one portable basename.');
+    }
+    sourceCapsule = { filename, diagram };
+  }
+  return { diagram, template, outPath, sourceCapsule };
 }
 
 const START_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
@@ -23,7 +34,7 @@ const START_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow',
 // Common CLI tail: fill the template and write the standalone HTML file.
 // The keyboard hint and the restrained start link are viewer-only — neither
 // belongs in canonical SVG exports or on paper.
-export function writeDiagram({ outPath, template, diagramType, meta, footerLabel, svg, cards }) {
+export function writeDiagram({ outPath, template, diagramType, meta, footerLabel, svg, cards, sourceCapsule }) {
   if (!START_TYPES.has(diagramType)) throw new Error(`writeDiagram: unknown diagram type ${JSON.stringify(diagramType)}`);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   const guidedHint = Array.isArray(meta.views) && meta.views.length
@@ -38,6 +49,8 @@ export function writeDiagram({ outPath, template, diagramType, meta, footerLabel
     cards: renderCards(cards),
     visualPreset: meta.visual_preset || 'classic',
     guidedViews: meta.views || [],
+    diagramType,
+    sourceCapsule,
   }));
   console.log(outPath);
 }
