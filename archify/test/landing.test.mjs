@@ -26,6 +26,12 @@ const proofs = [
   },
 ];
 
+test('landing metadata describes the full technical-diagram product without changing the hero', () => {
+  assert.match(landing, /<title>Archify — Technical Diagrams from Plain English<\/title>/);
+  assert.match(landing, /<meta property="og:title" content="Archify — Technical Diagrams from Plain English">/);
+  assert.match(landing, /From plain English<br>to architecture <em>in seconds\.<\/em>/);
+});
+
 test('landing hero leads with three real generated proof artifacts', () => {
   assert.match(landing, /id="hero-proof-stage"/);
   assert.match(landing, /id="hero-proof-panel" role="tabpanel"/);

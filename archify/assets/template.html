@@ -2402,6 +2402,19 @@
       font-size: 0.75rem;
     }
 
+    .footer .artifact-start-link {
+      color: var(--text-faint);
+      text-decoration-color: color-mix(in srgb, var(--frontend-stroke) 48%, transparent);
+      text-underline-offset: 0.22em;
+      transition: color 0.15s ease, text-decoration-color 0.15s ease;
+    }
+
+    .footer .artifact-start-link:hover,
+    .footer .artifact-start-link:focus-visible {
+      color: var(--frontend-stroke);
+      text-decoration-color: currentColor;
+    }
+
     /* ==========================================================
        Print stylesheet — hide interactive controls, force light,
        drop the grid so the diagram doesn't waste ink, use landscape

@@ -459,6 +459,7 @@ if (layoutJsonMode) {
 writeDiagram({
   outPath,
   template,
+  diagramType: 'architecture',
   meta: arch.meta,
   footerLabel: 'Architecture diagram',
   svg: renderSvg(),

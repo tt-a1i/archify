@@ -360,6 +360,7 @@ validateDataflow();
 writeDiagram({
   outPath,
   template,
+  diagramType: 'dataflow',
   meta: dataflow.meta,
   footerLabel: 'Data-flow diagram',
   svg: renderSvg(),

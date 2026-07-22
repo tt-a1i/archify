@@ -16,6 +16,7 @@
     "check:validators": "node scripts/generate-validators.mjs --check",
     "build:gallery": "node ../scripts/build-gallery.mjs ../docs",
     "build:guide": "node ../scripts/build-guide.mjs ../docs/guide.html",
+    "build:start": "node ../scripts/build-start.mjs ../docs/start.html",
     "build:readme-showcase": "node ../scripts/build-readme-showcase.mjs",
     "test:webm": "node test/webm-artifact.smoke.mjs",
     "test": "npm run check:validators && node test/golden.mjs && node --test test/*.test.mjs",
