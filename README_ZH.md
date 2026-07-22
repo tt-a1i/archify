@@ -17,7 +17,7 @@ Archify 是一个可用于 Claude、Codex CLI 和 opencode 的 Agent Skill。它
 - **便携导出** —— 一键生成 1200×630 Share Card，复制 PNG，或下载 PNG / JPEG / WebP / 双主题 SVG / WebM
 - **Typed + Checked** —— Typed JSON IR、内置 Schema 校验、默认语义安全门禁和可选构图档位
 - **结果完全独立** —— 一个 HTML 文件即可查看和分享，不依赖 Viewer 服务
-- **适合 Agent 工作流** —— 安装一次，通过对话持续生成和细调
+- **适合 Agent 工作流** —— 安装一次，通过对话持续生成和细调；需要时只打开已经验证的最终成品
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
@@ -148,7 +148,7 @@ Archify 不是通用绘图编辑器，也不是 Mermaid 主题；它负责把技
 |---|---|
 | **生成** | Agent 根据描述创建 Typed JSON IR。 |
 | **校验** | 内置 Validator 和布局规则检查源文件。 |
-| **交付** | 在目标同目录生成并检查候选；只有通过门禁的结果才原子替换目标文件。 |
+| **交付** | 在目标同目录生成并检查候选；只有通过门禁的结果才原子替换目标文件，随后可选用 `--open` 打开这个确切成品。 |
 | **迭代** | Agent 修改源文件，不干扰无关结构。 |
 
 仓库常用命令：
@@ -159,8 +159,10 @@ node bin/archify.mjs doctor
 node bin/archify.mjs demo /tmp/archify-demo
 node bin/archify.mjs guide "展示 CI/CD 检查、审批、部署和回滚"
 node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --quality showcase --json
-node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow.html --quality showcase --json
+node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow.html --quality showcase --open --json
 ```
+
+`--open` 只适合本地交互式交付。它默认关闭，并且只在验证成品原子提交后执行；系统无法打开时，交付仍保持成功，JSON 只写 stdout，stderr 会给出可手动打开的绝对路径。
 
 动态和演示样式需要显式选择：
 

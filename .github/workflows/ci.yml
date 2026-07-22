@@ -87,6 +87,10 @@ jobs:
           node bin/archify.mjs render workflow examples/agent-tool-call.workflow.json /tmp/workflow.html
           node bin/archify.mjs check /tmp/workflow.html
           node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow-delivered.html --quality showcase --json
+          node_path="$(command -v node)"
+          mkdir -p /tmp/archify-empty-path
+          PATH=/tmp/archify-empty-path "$node_path" bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow-open-fallback.html --open --json > /tmp/workflow-open-receipt.json
+          node -e "const r=require('/tmp/workflow-open-receipt.json'); if (!r.ok || r.open?.status !== 'unsupported') process.exit(1)"
 
           node bin/archify.mjs validate architecture examples/web-app.architecture.json --json
           node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --json
