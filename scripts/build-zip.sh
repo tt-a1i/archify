@@ -5,6 +5,9 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 out="${1:-$repo_root/archify.zip}"
+if [[ "$out" != /* ]]; then
+  out="$(pwd)/$out"
+fi
 
 # Stage a clean copy: node_modules never ships; test/ is repo-only (the golden
 # harness compares against ../examples at the repo root, which does not exist
