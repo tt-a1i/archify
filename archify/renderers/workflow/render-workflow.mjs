@@ -567,6 +567,7 @@ validateWorkflow();
 writeDiagram({
   outPath,
   template,
+  diagramType: 'workflow',
   meta: workflow.meta,
   footerLabel: 'Workflow diagram',
   svg: renderSvg(),

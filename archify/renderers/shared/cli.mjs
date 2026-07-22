@@ -18,17 +18,22 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
   return { diagram, template, outPath };
 }
 
+const START_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
+
 // Common CLI tail: fill the template and write the standalone HTML file.
-// The keyboard hint is screen-only — it means nothing on paper.
-export function writeDiagram({ outPath, template, meta, footerLabel, svg, cards }) {
+// The keyboard hint and the restrained start link are viewer-only — neither
+// belongs in canonical SVG exports or on paper.
+export function writeDiagram({ outPath, template, diagramType, meta, footerLabel, svg, cards }) {
+  if (!START_TYPES.has(diagramType)) throw new Error(`writeDiagram: unknown diagram type ${JSON.stringify(diagramType)}`);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   const guidedHint = Array.isArray(meta.views) && meta.views.length
     ? ' &bull; <kbd>[</kbd>/<kbd>]</kbd> views &bull; <kbd>P</kbd> play story'
     : '';
+  const startUrl = `https://tt-a1i.github.io/archify/start.html?type=${esc(diagramType)}`;
   fs.writeFileSync(outPath, applyTemplate(template, {
     title: meta.title,
     subtitle: meta.subtitle,
-    footer: `${footerLabel} &bull; Built with Archify<span class="no-print"> &bull; Hover to trace &bull; <kbd>R</kbd> route &bull; Click to focus &bull; <kbd>+</kbd>/<kbd>&minus;</kbd> zoom &bull; <kbd>M</kbd> radar${guidedHint} &bull; <kbd>T</kbd> theme &bull; <kbd>E</kbd> export</span>`,
+    footer: `${footerLabel} &bull; Built with Archify<span class="no-print"> &bull; <a class="artifact-start-link" href="${startUrl}" target="_blank" rel="noopener noreferrer">Create yours &nearr;</a> &bull; Hover to trace &bull; <kbd>R</kbd> route &bull; Click to focus &bull; <kbd>+</kbd>/<kbd>&minus;</kbd> zoom &bull; <kbd>M</kbd> radar${guidedHint} &bull; <kbd>T</kbd> theme &bull; <kbd>E</kbd> export</span>`,
     svg,
     cards: renderCards(cards),
     visualPreset: meta.visual_preset || 'classic',

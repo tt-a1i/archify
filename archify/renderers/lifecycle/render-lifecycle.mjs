@@ -446,6 +446,7 @@ validateLifecycle();
 writeDiagram({
   outPath,
   template,
+  diagramType: 'lifecycle',
   meta: lifecycle.meta,
   footerLabel: 'Lifecycle diagram',
   svg: renderSvg(),

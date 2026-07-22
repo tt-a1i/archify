@@ -329,6 +329,7 @@ validateSequence();
 writeDiagram({
   outPath,
   template,
+  diagramType: 'sequence',
   meta: sequence.meta,
   footerLabel: 'Sequence diagram',
   svg: renderSvg(),

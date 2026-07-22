@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Archify Start — From Artifact to First Diagram</title>
+  <meta name="description" content="Install Archify, copy one bounded prompt, and create a verifiable technical diagram without sending repository or diagram content to this page.">
+  <meta name="theme-color" content="#020617">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Archify Start — One bounded prompt to a verifiable diagram">
+  <meta property="og:description" content="Choose a technical question, install Archify, and copy an exact prompt backed by a verified example.">
+  <meta property="og:url" content="https://tt-a1i.github.io/archify/start.html">
+  <meta property="og:image" content="https://tt-a1i.github.io/archify/assets/archify-social-preview.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#020617;
+      --panel:#07101f;
+      --panel-raised:#0a1425;
+      --border:#1e293b;
+      --border-hi:#334155;
+      --text:#f8fafc;
+      --muted:#94a3b8;
+      --dim:#64748b;
+      --cyan:#22d3ee;
+      --cyan-soft:rgba(34,211,238,.1);
+      --emerald:#34d399;
+      --emerald-soft:rgba(52,211,153,.08);
+      --amber:#fbbf24;
+      --focus:#67e8f9;
+    }
+
+    *,*::before,*::after { box-sizing:border-box; }
+    html { color-scheme:dark; }
+    body {
+      margin:0;
+      min-height:100vh;
+      overflow-x:hidden;
+      background:var(--bg);
+      color:var(--text);
+      font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    }
+    body::before {
+      content:'';
+      position:fixed;
+      inset:0;
+      z-index:-2;
+      background-image:linear-gradient(rgba(30,41,59,.42) 1px,transparent 1px),linear-gradient(90deg,rgba(30,41,59,.42) 1px,transparent 1px);
+      background-size:40px 40px;
+      mask-image:linear-gradient(to bottom,black 0%,rgba(0,0,0,.38) 72%,transparent 100%);
+    }
+    body::after {
+      content:'';
+      position:fixed;
+      inset:0;
+      z-index:-1;
+      pointer-events:none;
+      background:linear-gradient(90deg,rgba(2,6,23,.88),transparent 22%,transparent 78%,rgba(2,6,23,.88));
+    }
+
+    a { color:inherit; }
+    button { font:inherit; }
+    :focus-visible { outline:2px solid var(--focus); outline-offset:3px; }
+
+    .nav {
+      min-height:64px;
+      padding:0 2rem;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:1rem;
+      border-bottom:1px solid var(--border);
+      background:rgba(2,6,23,.9);
+      backdrop-filter:blur(14px);
+    }
+    .brand { display:flex; align-items:center; gap:.75rem; text-decoration:none; font-size:.85rem; font-weight:700; }
+    .brand-mark { width:26px; height:26px; color:var(--cyan); }
+    .brand-path { color:var(--dim); font-weight:500; }
+    .nav-links { display:flex; align-items:center; gap:1.25rem; }
+    .nav-links a { color:var(--muted); font-size:.7rem; font-weight:600; text-decoration:none; }
+    .nav-links a:hover { color:var(--text); }
+    .language {
+      min-height:36px;
+      padding:.45rem .7rem;
+      border:1px solid var(--border-hi);
+      border-radius:6px;
+      background:transparent;
+      color:var(--muted);
+      cursor:pointer;
+    }
+    .language:hover { color:var(--text); border-color:var(--dim); }
+
+    main { width:min(1120px,calc(100% - 3rem)); margin:0 auto; padding:5rem 0 4rem; }
+    .lead { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(260px,.65fr); gap:4rem; align-items:end; margin-bottom:3rem; }
+    .eyebrow { margin:0 0 1rem; color:var(--cyan); font-size:.68rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
+    h1 { max-width:780px; margin:0; font-size:clamp(2.1rem,5.3vw,4.7rem); line-height:1.04; letter-spacing:-.055em; text-wrap:balance; }
+    h1 span { color:var(--cyan); }
+    html[lang^="zh"] .title-gap { display:none; }
+    .lead-copy { margin:0; color:var(--muted); font-size:.8rem; line-height:1.8; }
+    .trust-line { display:flex; gap:.7rem; align-items:flex-start; margin-top:1rem; color:var(--emerald); font-size:.68rem; line-height:1.65; }
+    .trust-line::before { content:'✓'; flex:0 0 auto; }
+
+    .type-shell { margin-bottom:1.25rem; padding:.75rem; border:1px solid var(--border); background:rgba(7,16,31,.82); }
+    .type-label { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin:0 0 .65rem; color:var(--dim); font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; }
+    .type-label strong { color:var(--emerald); font-weight:600; }
+    .type-tabs { display:grid; grid-template-columns:repeat(5,1fr); gap:1px; border:1px solid var(--border); background:var(--border); }
+    .type-tab {
+      min-height:48px;
+      border:0;
+      background:var(--panel);
+      color:var(--muted);
+      cursor:pointer;
+      font-size:.7rem;
+      font-weight:600;
+      transition:background .15s,color .15s,box-shadow .15s;
+    }
+    .type-tab:hover { background:var(--panel-raised); color:var(--text); }
+    .type-tab[aria-selected="true"] { color:var(--cyan); background:var(--cyan-soft); box-shadow:inset 0 -2px var(--cyan); }
+
+    .workbench { display:grid; grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr); gap:1px; border:1px solid var(--border-hi); background:var(--border-hi); box-shadow:0 24px 80px rgba(0,0,0,.32); }
+    .panel { min-width:0; padding:2rem; background:rgba(7,16,31,.96); }
+    .panel-kicker { display:flex; align-items:center; gap:.7rem; margin-bottom:1.4rem; color:var(--dim); font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; }
+    .panel-kicker b { display:grid; place-items:center; width:26px; height:26px; border:1px solid var(--border-hi); color:var(--cyan); font-size:.64rem; }
+    .panel h2 { margin:0 0 .65rem; font-size:1.05rem; letter-spacing:-.025em; }
+    .panel-intro { min-height:3.9rem; margin:0 0 1.5rem; color:var(--muted); font-size:.72rem; line-height:1.75; }
+
+    .command-block { margin-top:1rem; border:1px solid var(--border); background:#030914; }
+    .command-bar { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.62rem .75rem; border-bottom:1px solid var(--border); color:var(--dim); font-size:.6rem; text-transform:uppercase; letter-spacing:.08em; }
+    .copy-button { border:0; background:transparent; color:var(--cyan); cursor:pointer; font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+    .copy-button:hover { color:#a5f3fc; }
+    pre { margin:0; padding:1rem; overflow:auto; color:#d9f9ff; font:500 .7rem/1.65 'JetBrains Mono',ui-monospace,monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .secondary-note { margin:1.25rem 0 0; padding:1rem; border-left:2px solid var(--emerald); background:var(--emerald-soft); color:var(--muted); font-size:.67rem; line-height:1.7; }
+
+    .question { margin:0 0 1rem; color:var(--text); font-size:.82rem; line-height:1.65; }
+    .include-list { display:flex; flex-wrap:wrap; gap:.45rem; margin:0 0 1.2rem; padding:0; list-style:none; }
+    .include-list li { padding:.35rem .55rem; border:1px solid var(--border-hi); color:var(--muted); font-size:.6rem; background:rgba(15,23,42,.5); }
+    .prompt-box { min-height:172px; margin:0; padding:1.15rem; border:1px solid rgba(34,211,238,.28); background:rgba(8,51,68,.14); color:#e6fbff; font-size:.72rem; line-height:1.82; white-space:pre-wrap; }
+    .actions { display:flex; align-items:center; flex-wrap:wrap; gap:.7rem; margin-top:1rem; }
+    .action { min-height:42px; display:inline-flex; align-items:center; justify-content:center; padding:.65rem .9rem; border:1px solid var(--border-hi); background:transparent; color:var(--muted); font:600 .68rem 'JetBrains Mono',ui-monospace,monospace; text-decoration:none; cursor:pointer; }
+    .action:hover { color:var(--text); border-color:var(--dim); }
+    .action-primary { border-color:var(--cyan); background:var(--cyan); color:#041019; }
+    .action-primary:hover { background:#67e8f9; border-color:#67e8f9; color:#041019; }
+    .proof-meta { margin-top:1.1rem; color:var(--dim); font-size:.61rem; line-height:1.65; }
+
+    .page-footer { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-top:1rem; color:var(--dim); font-size:.62rem; }
+    .page-footer a { color:var(--muted); text-decoration:none; }
+    .page-footer a:hover { color:var(--text); }
+    #copy-status { min-height:1.1rem; color:var(--emerald); }
+
+    @media (max-width:840px) {
+      main { width:min(100% - 2rem,720px); padding-top:3rem; }
+      .lead { grid-template-columns:1fr; gap:1.3rem; }
+      .workbench { grid-template-columns:1fr; }
+      .type-tabs { grid-template-columns:repeat(2,1fr); }
+      .type-tab:last-child { grid-column:1 / -1; }
+    }
+    @media (max-width:560px) {
+      .nav { padding:0 1rem; }
+      .nav-links > a { display:none; }
+      main { width:calc(100% - 1.5rem); padding-top:2.5rem; }
+      .panel { padding:1.25rem; }
+      .type-tabs { grid-template-columns:1fr; }
+      .type-tab:last-child { grid-column:auto; }
+      .page-footer { align-items:flex-start; flex-direction:column; }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      *,*::before,*::after { scroll-behavior:auto!important; transition:none!important; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav" aria-label="Primary navigation">
+    <a class="brand" href="./" aria-label="Archify project page">
+      <svg class="brand-mark" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+        <polygon points="14,2 26,8 26,20 14,26 2,20 2,8" fill="rgba(8,51,68,.7)" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="14" cy="14" r="2.6" fill="currentColor"/>
+        <path d="M14 2v9M14 17v9M2 8l9 5M17 15l9 5" stroke="currentColor" stroke-width="1" opacity=".55"/>
+      </svg>
+      <span>Archify <span class="brand-path">/ start</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="guide.html" data-en="Scenario guide" data-zh="场景指南">Scenario guide</a>
+      <a href="gallery.html" data-en="Proof Lab" data-zh="验证成品">Proof Lab</a>
+      <a href="https://github.com/tt-a1i/archify">GitHub ↗</a>
+      <button class="language" id="language" type="button" aria-label="Switch language">中文</button>
+    </div>
+  </nav>
+
+  <main>
+    <header class="lead">
+      <div>
+        <p class="eyebrow" data-en="01 / From a real artifact to your own" data-zh="01 / 从真实成品到你自己的图">01 / From a real artifact to your own</p>
+        <h1><span data-en="One install." data-zh="一次安装，">One install.</span><span class="title-gap" aria-hidden="true"> </span><span data-en="One bounded prompt." data-zh="一段有边界的提示词。">One bounded prompt.</span></h1>
+      </div>
+      <div>
+        <p class="lead-copy" data-en="Choose the technical question closest to the artifact you saw. Copy a tested starting prompt, then let your coding agent inspect the real repository before it draws." data-zh="选择最接近你刚才所看成品的技术问题。复制一段经过验证的起始提示词，再让编码智能体先检查真实仓库，然后作图。">Choose the technical question closest to the artifact you saw. Copy a tested starting prompt, then let your coding agent inspect the real repository before it draws.</p>
+        <div class="trust-line" data-en="No repository content or diagram data is sent to this page." data-zh="这个页面不会接收仓库内容或图表数据。">No repository content or diagram data is sent to this page.</div>
+      </div>
+    </header>
+
+    <section class="type-shell" aria-labelledby="type-label">
+      <p class="type-label" id="type-label"><span data-en="Choose the question shape" data-zh="选择问题形态">Choose the question shape</span><strong data-en="5 typed renderers" data-zh="5 种类型化渲染器">5 typed renderers</strong></p>
+      <div class="type-tabs" role="tablist" aria-label="Diagram type">
+        <button class="type-tab" type="button" role="tab" data-type="architecture" data-en="Architecture" data-zh="架构图">Architecture</button>
+        <button class="type-tab" type="button" role="tab" data-type="workflow" data-en="Workflow" data-zh="工作流">Workflow</button>
+        <button class="type-tab" type="button" role="tab" data-type="sequence" data-en="Sequence" data-zh="时序图">Sequence</button>
+        <button class="type-tab" type="button" role="tab" data-type="dataflow" data-en="Data flow" data-zh="数据流">Data flow</button>
+        <button class="type-tab" type="button" role="tab" data-type="lifecycle" data-en="Lifecycle" data-zh="生命周期">Lifecycle</button>
+      </div>
+    </section>
+
+    <section class="workbench" aria-label="Archify quick start">
+      <article class="panel">
+        <div class="panel-kicker"><b>01</b><span data-en="Install the skill" data-zh="安装 Skill">Install the skill</span></div>
+        <h2 data-en="Keep the tool local." data-zh="让工具留在本地。">Keep the tool local.</h2>
+        <p class="panel-intro" data-en="Install once for Claude Code, Codex, or opencode. The packaged renderers and validators work without a hosted diagram service." data-zh="一次安装，即可用于 Claude Code、Codex 或 opencode。打包后的渲染器与校验器不依赖托管式图表服务。">Install once for Claude Code, Codex, or opencode. The packaged renderers and validators work without a hosted diagram service.</p>
+
+        <div class="command-block">
+          <div class="command-bar"><span data-en="Permanent install" data-zh="永久安装">Permanent install</span><button class="copy-button" type="button" data-copy-source="install-command" data-en="Copy" data-zh="复制">Copy</button></div>
+          <pre id="install-command">npx skills add tt-a1i/archify -g</pre>
+        </div>
+        <div class="command-block">
+          <div class="command-bar"><span data-en="One-off Codex run" data-zh="Codex 临时体验">One-off Codex run</span><button class="copy-button" type="button" data-copy-source="try-command" data-en="Copy" data-zh="复制">Copy</button></div>
+          <pre id="try-command">npx skills use tt-a1i/archify@archify --agent codex</pre>
+        </div>
+        <p class="secondary-note" data-en="The viewer link carries only the diagram type. It does not include the title, nodes, edges, repository path, or source JSON." data-zh="Viewer 链接只携带图表类型，不包含标题、节点、连线、仓库路径或源 JSON。">The viewer link carries only the diagram type. It does not include the title, nodes, edges, repository path, or source JSON.</p>
+      </article>
+
+      <article class="panel" aria-live="polite">
+        <div class="panel-kicker"><b>02</b><span data-en="Ask one bounded question" data-zh="只问一个有边界的问题">Ask one bounded question</span></div>
+        <h2 id="recipe-title">System overview</h2>
+        <p class="question" id="recipe-question"></p>
+        <ul class="include-list" id="include-list" aria-label="Required evidence"></ul>
+        <p class="prompt-box" id="recipe-prompt"></p>
+        <div class="actions">
+          <button class="action action-primary" id="copy-prompt" type="button" data-en="Copy exact prompt" data-zh="复制准确提示词">Copy exact prompt</button>
+          <a class="action" id="proof-link" href="gallery.html" data-en="Open verified proof ↗" data-zh="打开验证成品 ↗">Open verified proof ↗</a>
+          <a class="action" href="guide.html" data-en="Need another recipe?" data-zh="需要其他配方？">Need another recipe?</a>
+        </div>
+        <p class="proof-meta" id="proof-meta"></p>
+      </article>
+    </section>
+
+    <footer class="page-footer">
+      <span>Archify v2.11.0 · self-contained HTML · typed JSON source</span>
+      <span id="copy-status" role="status" aria-live="polite"></span>
+      <a href="https://github.com/tt-a1i/archify" data-en="View source on GitHub ↗" data-zh="在 GitHub 查看源码 ↗">View source on GitHub ↗</a>
+    </footer>
+  </main>
+
+  <script id="start-data" type="application/json">{"architecture":{"id":"system-overview","type":"architecture","proof":"web-app","presentation":{"preset":"classic","motion":"static","views":"optional"},"en":{"title":"System overview","question":"What exists, who owns it, and how is it connected?","summary":"A bounded map of core components, external dependencies, primary paths, and trust boundaries.","useWhen":"Onboarding, design reviews, repository orientation, or explaining a service landscape.","avoidWhen":"The audience needs exact call order, state transitions, or row-level data lineage.","include":["8–12 core components","one primary path","external dependencies","trust boundaries"],"prompt":"Analyze this repository, then use Archify to create a high-level architecture diagram. Show 8–12 core runtime components, one primary request or data path, external dependencies, ownership or trust boundaries, and put supporting detail in cards instead of adding more edges."},"zh":{"title":"系统总览","question":"系统里有什么、归谁负责、彼此如何连接？","summary":"用一张有边界的图展示核心组件、外部依赖、主路径和信任边界。","useWhen":"适合新人上手、方案评审、仓库梳理和服务全景说明。","avoidWhen":"如果重点是精确调用顺序、状态流转或字段级血缘，请换其他配方。","include":["8–12 个核心组件","一条主路径","外部依赖","归属或信任边界"],"prompt":"分析这个仓库，然后用 Archify 生成高层系统架构图。展示 8–12 个核心运行时组件、一条主要请求或数据路径、外部依赖、归属或信任边界；支持性细节放进卡片，不要继续堆连线。"}},"workflow":{"id":"agent-tool-call","type":"workflow","proof":"agent-tool-call","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"en":{"title":"Agent tool-call loop","question":"How does an agent plan, get permission, act, recover, and report?","summary":"A lane-based agent loop with policy gates, tool execution, exception recovery, evidence, and final response.","useWhen":"Explaining agent runtimes, MCP/tool orchestration, approvals, retries, or observability.","avoidWhen":"The goal is only to show static agent components or exact API message timing.","include":["request and planning","policy or approval gate","tool execution","exception and evidence paths"],"prompt":"Use Archify workflow mode to explain this agent tool-call loop. Separate user surface, agent runtime, policy boundary, exception handling, tool execution, and observability into lanes. Make the successful path primary and show approval, retry, blocked, and evidence paths explicitly."},"zh":{"title":"智能体工具调用","question":"智能体如何规划、获批、执行、恢复并汇报？","summary":"用泳道表达策略门、工具执行、异常恢复、证据和最终回复。","useWhen":"适合解释 Agent Runtime、MCP/工具编排、审批、重试和可观测性。","avoidWhen":"如果只想看静态组件，或重点是精确 API 消息时序，请换其他配方。","include":["请求与规划","策略或审批门","工具执行","异常与证据路径"],"prompt":"用 Archify 工作流模式解释这段智能体工具调用。把用户界面、Agent Runtime、策略边界、异常处理、工具执行和可观测性分成泳道；突出成功主路径，并明确展示审批、重试、阻塞和证据路径。"}},"sequence":{"id":"api-request","type":"sequence","proof":"cache-miss","presentation":{"preset":"classic","motion":"trace","views":"optional"},"en":{"title":"API request chain","question":"Who calls whom, in what order, and what returns?","summary":"A time-ordered request path with authentication, cache fallback, persistence, return traffic, and async trace.","useWhen":"API documentation, debugging request latency, auth reviews, or explaining cache fallback.","avoidWhen":"Order is unimportant and the audience only needs the stable service topology.","include":["callers and callees","request and return messages","fallback or error path","async side effects"],"prompt":"Use Archify sequence mode to show this request from caller to final response. Include authentication, cache hit or miss, persistence fallback, return messages, and asynchronous trace or event emission. Keep message labels short and order unambiguous."},"zh":{"title":"API 请求链","question":"谁调用谁、顺序如何、最终返回什么？","summary":"按时间展示鉴权、缓存回退、持久化、返回流量和异步追踪。","useWhen":"适合 API 文档、请求耗时排查、鉴权评审和缓存回退说明。","avoidWhen":"如果顺序不重要，受众只需要稳定的服务拓扑，请用架构图。","include":["调用方与被调用方","请求与返回消息","回退或错误路径","异步副作用"],"prompt":"用 Archify 时序模式展示从调用方到最终响应的完整请求。包含鉴权、缓存命中或未命中、持久化回退、返回消息，以及异步 Trace 或事件上报；消息标签保持简短，顺序必须明确。"}},"dataflow":{"id":"event-stream","type":"dataflow","proof":"event-stream","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"en":{"title":"Event-stream topology","question":"Which events move through which topics, processors, groups, and failure paths?","summary":"A stream map of producers, topics, ordered processors, consumer groups, state, replay, and DLQ.","useWhen":"Kafka/event-platform design, stream processing reviews, ownership, replay, and failure handling.","avoidWhen":"Topic names, consumer groups, and delivery semantics are not known—use a generic workflow instead.","include":["producers and event names","topics and ordering","processors and consumer groups","state, replay, and DLQ"],"prompt":"Use Archify dataflow mode to draw this event-stream topology. Name producers, events, topics, ordered processors, consumer groups, state stores, replay paths, and the DLQ. Show ownership and delivery semantics only when supported by evidence."},"zh":{"title":"事件流拓扑","question":"哪些事件经过哪些 Topic、处理器、消费者组和失败路径？","summary":"展示生产者、Topic、有序处理器、消费者组、状态、重放和 DLQ。","useWhen":"适合 Kafka/事件平台设计、流处理评审、归属、重放和失败处理。","avoidWhen":"如果 Topic、消费者组和投递语义都不清楚，请先用通用工作流，不要编造事件拓扑。","include":["生产者与事件名","Topic 与顺序","处理器与消费者组","状态、重放与 DLQ"],"prompt":"用 Archify 数据流模式绘制这段事件流拓扑。命名生产者、事件、Topic、有序处理器、消费者组、状态存储、重放路径和 DLQ；只有在证据充分时才标注归属和投递语义。"}},"lifecycle":{"id":"object-lifecycle","type":"lifecycle","proof":"agent-run","presentation":{"preset":"classic","motion":"trace","views":"optional"},"en":{"title":"Object lifecycle","question":"Which states exist, what events move between them, and how does it end?","summary":"A state model with active work, waits, retries, cancellation, failure, and explicit terminal outcomes.","useWhen":"Tasks, orders, tickets, subscriptions, jobs, agent runs, or any durable object with status.","avoidWhen":"The object has no durable state and the real question is participant interaction over time.","include":["start and active states","event-labelled transitions","wait and retry states","all terminal outcomes"],"prompt":"Use Archify lifecycle mode to model this object. Separate main progress, waiting or interruption states, and terminal outcomes. Label transitions with events, include retry, cancellation, timeout, success, and failure where real, and never hide an ending."},"zh":{"title":"对象生命周期","question":"有哪些状态、什么事件触发流转、最终如何结束？","summary":"展示执行、等待、重试、取消、失败以及明确终态的状态模型。","useWhen":"适合任务、订单、工单、订阅、作业、Agent Run 等带持久状态的对象。","avoidWhen":"对象没有持久状态，真正问题是参与者随时间的交互时，请使用时序图。","include":["开始与执行态","带事件的转换","等待与重试态","所有终态"],"prompt":"用 Archify 生命周期模式建模这个对象。分开主进度、等待或中断状态和终态；用事件标注转换，并在真实存在时展示重试、取消、超时、成功和失败，不能隐藏任何结束方式。"}}}</script>
+  <script>
+    (function () {
+      'use strict';
+
+      var DATA = JSON.parse(document.getElementById('start-data').textContent);
+      var KNOWN_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
+      var params = new URLSearchParams(window.location.search);
+      var requestedType = params.get('type');
+      var requestedLanguage = params.get('lang');
+      var type = KNOWN_TYPES.has(requestedType) ? requestedType : 'architecture';
+      var language = requestedLanguage === 'zh' || requestedLanguage === 'en'
+        ? requestedLanguage
+        : ((navigator.languages && navigator.languages[0]) || navigator.language || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+
+      var title = document.getElementById('recipe-title');
+      var question = document.getElementById('recipe-question');
+      var prompt = document.getElementById('recipe-prompt');
+      var includeList = document.getElementById('include-list');
+      var proofLink = document.getElementById('proof-link');
+      var proofMeta = document.getElementById('proof-meta');
+      var copyStatus = document.getElementById('copy-status');
+      var languageButton = document.getElementById('language');
+
+      function copyForElement(element) {
+        return language === 'zh' ? element.dataset.zh : element.dataset.en;
+      }
+
+      function updateStaticCopy() {
+        document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
+        document.querySelectorAll('[data-en][data-zh]').forEach(function (element) {
+          element.textContent = copyForElement(element);
+        });
+        languageButton.textContent = language === 'zh' ? 'EN' : '中文';
+        languageButton.setAttribute('aria-label', language === 'zh' ? 'Switch to English' : '切换到中文');
+      }
+
+      function updateUrl() {
+        var next = new URLSearchParams(window.location.search);
+        next.set('type', type);
+        next.set('lang', language);
+        history.replaceState(null, '', window.location.pathname + '?' + next.toString());
+      }
+
+      function render() {
+        var recipe = DATA[type];
+        var copy = recipe[language];
+        updateStaticCopy();
+        document.querySelectorAll('[data-type]').forEach(function (button) {
+          var active = button.dataset.type === type;
+          button.setAttribute('aria-selected', String(active));
+          button.tabIndex = active ? 0 : -1;
+        });
+        title.textContent = copy.title;
+        question.textContent = copy.question;
+        prompt.textContent = copy.prompt;
+        includeList.replaceChildren.apply(includeList, copy.include.map(function (item) {
+          var entry = document.createElement('li');
+          entry.textContent = item;
+          return entry;
+        }));
+        proofLink.href = 'gallery.html#proof-' + encodeURIComponent(recipe.proof);
+        proofMeta.textContent = language === 'zh'
+          ? '验证成品 · ' + recipe.presentation.preset + ' · ' + recipe.presentation.motion
+          : 'Verified proof · ' + recipe.presentation.preset + ' · ' + recipe.presentation.motion;
+        copyStatus.textContent = '';
+        updateUrl();
+      }
+
+      function fallbackCopy(text) {
+        var area = document.createElement('textarea');
+        area.value = text;
+        area.setAttribute('readonly', '');
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        var ok = document.execCommand('copy');
+        area.remove();
+        if (!ok) throw new Error('copy failed');
+      }
+
+      async function copyText(text) {
+        try {
+          if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text);
+          else fallbackCopy(text);
+          copyStatus.textContent = language === 'zh' ? '已复制到剪贴板。' : 'Copied to clipboard.';
+        } catch (_) {
+          copyStatus.textContent = language === 'zh' ? '复制失败，请手动选择文本。' : 'Copy failed. Select the text manually.';
+        }
+      }
+
+      document.querySelectorAll('[data-type]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          type = button.dataset.type;
+          render();
+        });
+        button.addEventListener('keydown', function (event) {
+          var buttons = Array.from(document.querySelectorAll('[data-type]'));
+          var index = buttons.indexOf(button);
+          if (event.key === 'ArrowRight' || event.key === 'ArrowDown') index = (index + 1) % buttons.length;
+          else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') index = (index - 1 + buttons.length) % buttons.length;
+          else if (event.key === 'Home') index = 0;
+          else if (event.key === 'End') index = buttons.length - 1;
+          else return;
+          event.preventDefault();
+          buttons[index].click();
+          buttons[index].focus();
+        });
+      });
+
+      document.querySelectorAll('[data-copy-source]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          copyText(document.getElementById(button.dataset.copySource).textContent.trim());
+        });
+      });
+      document.getElementById('copy-prompt').addEventListener('click', function () {
+        copyText(DATA[type][language].prompt);
+      });
+      languageButton.addEventListener('click', function () {
+        language = language === 'zh' ? 'en' : 'zh';
+        render();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
