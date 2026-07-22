@@ -505,10 +505,10 @@
 
     .container { max-width: 1200px; margin: 0 auto; }
 
-    .header { margin-bottom: 2rem; padding-right: 23rem; }
+    .header { margin-bottom: 2rem; padding-right: 29.5rem; }
 
     html[data-preset="signal-flow"] .header,
-    html[data-preset="blueprint"] .header { padding-right: 23rem; }
+    html[data-preset="blueprint"] .header { padding-right: 29.5rem; }
 
     .header-row {
       display: flex;
@@ -708,7 +708,9 @@
     }
     html[data-motion="still"] .route-journey-overlay,
     html[data-document-hidden="true"] .route-journey-overlay { display: none !important; }
-    html[data-motion="still"] .relationship-pulse-overlay { display: none !important; }
+    html[data-motion="still"] .relationship-pulse-overlay,
+    html[data-motion="still"] .story-carrier-overlay,
+    html[data-document-hidden="true"] .story-carrier-overlay { display: none !important; }
     html[data-motion="still"] .chapter-handoff-overlay { display: none !important; }
     html[data-motion="still"] .chapter-handoff-anchor { animation: none !important; }
     html[data-motion="still"] .guided-view-chapter,
@@ -2400,6 +2402,19 @@
       font-size: 0.75rem;
     }
 
+    .footer .artifact-start-link {
+      color: var(--text-faint);
+      text-decoration-color: color-mix(in srgb, var(--frontend-stroke) 48%, transparent);
+      text-underline-offset: 0.22em;
+      transition: color 0.15s ease, text-decoration-color 0.15s ease;
+    }
+
+    .footer .artifact-start-link:hover,
+    .footer .artifact-start-link:focus-visible {
+      color: var(--frontend-stroke);
+      text-decoration-color: currentColor;
+    }
+
     /* ==========================================================
        Print stylesheet — hide interactive controls, force light,
        drop the grid so the diagram doesn't waste ink, use landscape
@@ -2472,7 +2487,8 @@
       .relationship-hit-overlay { display: none !important; }
       .relationship-pulse-overlay { display: none !important; }
       .route-probe-overlay, .route-journey-overlay { display: none !important; }
-      .story-trail-overlay { display: none !important; }
+      .story-trail-overlay,
+      .story-carrier-overlay { display: none !important; }
       .diagram-container svg[data-focus-active] [data-node-id],
       .diagram-container svg[data-focus-active] [data-edge-from],
       .diagram-container svg[data-story-beat] [data-story-step],
@@ -2525,6 +2541,26 @@
     .toolbar #btn-motion[hidden] { display: none !important; }
     .toolbar #btn-motion { min-width: 4.4rem; }
     .toolbar #btn-motion:disabled { cursor: default; opacity: 0.58; }
+    .toolbar #btn-preset { min-width: 5.4rem; }
+    .preset-control-mark {
+      width: 0.58rem;
+      height: 0.58rem;
+      flex: 0 0 auto;
+      border: 1px solid var(--frontend-stroke);
+      border-radius: 0.2rem;
+      background: color-mix(in srgb, var(--frontend-stroke) 28%, transparent);
+      transition: border-radius 0.15s, box-shadow 0.15s, transform 0.15s;
+    }
+    #btn-preset[data-preset-option="signal-flow"] .preset-control-mark {
+      border-radius: 50%;
+      box-shadow: 0 0 10px color-mix(in srgb, var(--frontend-stroke) 78%, transparent);
+    }
+    #btn-preset[data-preset-option="blueprint"] .preset-control-mark {
+      border-radius: 0.06rem;
+      background: transparent;
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--frontend-stroke) 32%, transparent);
+      transform: rotate(45deg) scale(0.84);
+    }
     .motion-control-dot {
       width: 0.46rem;
       height: 0.46rem;
@@ -2923,7 +2959,7 @@
       .toolbar { gap: 0.25rem; }
       .toolbar button { padding-right: 0.58rem; padding-left: 0.58rem; }
       .toolbar #btn-motion { min-width: 4.4rem; padding-right: 0.58rem; padding-left: 0.58rem; }
-      #theme-label, #present-label { display: none; }
+      #theme-label, #preset-label, #present-label { display: none; }
       .guided-view-handoff { max-width: 6.5rem; }
     }
 
@@ -2952,6 +2988,28 @@
     .t-security   { fill: var(--security-stroke); }
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
+
+    /* Semantic Sigils are small authored role stamps, not icons from a brand
+       pack and not viewer controls. Prefix selectors with svg so the canonical
+       export's SVG-only stylesheet collector keeps them automatically. */
+    svg .semantic-sigil {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.35;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.76;
+      pointer-events: none;
+    }
+    svg .semantic-sigil > * { vector-effect: non-scaling-stroke; }
+    svg .semantic-sigil .sigil-fill { fill: currentColor; stroke: none; }
+    svg .s-frontend   { color: var(--frontend-stroke); }
+    svg .s-backend    { color: var(--backend-stroke); }
+    svg .s-database   { color: var(--database-stroke); }
+    svg .s-cloud      { color: var(--cloud-stroke); }
+    svg .s-security   { color: var(--security-stroke); }
+    svg .s-messagebus { color: var(--messagebus-stroke); }
+    svg .s-external   { color: var(--external-stroke); }
 
     /* Reading Depth is a viewer-only level-of-detail layer. MAP preserves the
        authored structure and primary labels, READ restores relationship labels
@@ -3236,6 +3294,48 @@
       stroke-linecap: square;
       filter: none;
     }
+    .semantic-flow-token {
+      color: var(--frontend-stroke);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .relationship-flow-token {
+      animation: archify-relationship-token-life 1.2s linear 1 both;
+    }
+    .story-flow-token {
+      animation: archify-relationship-token-life 0.78s linear 1 both;
+    }
+    .semantic-flow-token-halo {
+      fill: var(--mask);
+      stroke: currentColor;
+      stroke-width: 1.1;
+      vector-effect: non-scaling-stroke;
+      opacity: 0.96;
+    }
+    .relationship-flow-token-shape {
+      fill: var(--mask);
+      stroke: currentColor;
+      stroke-width: 1.35;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+    .relationship-flow-token-ink {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.05;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+    }
+    .relationship-flow-token-dot { fill: currentColor; stroke: none; }
+    .semantic-flow-token[data-token-kind="data"] { color: var(--database-stroke); }
+    .semantic-flow-token[data-token-kind="event"] { color: var(--messagebus-stroke); }
+    .semantic-flow-token[data-token-kind="security"] { color: var(--security-stroke); }
+    .semantic-flow-token[data-token-kind="state"] { color: var(--cloud-stroke); }
+    svg[data-preset="signal-flow"] .semantic-flow-token {
+      filter: drop-shadow(0 0 5px currentColor);
+    }
+    svg[data-preset="blueprint"] .semantic-flow-token { filter: none; }
     html[data-embed="true"] .relationship-pulse-overlay { display: none; }
 
     /* Intent Trace is a temporary, pre-click exploration layer. Related
@@ -3387,6 +3487,7 @@
        of the active guided view. The authored edge stays underneath with its
        original color, dash pattern, marker, and geometry intact. */
     .story-trail-overlay { pointer-events: none; }
+    .story-carrier-overlay { pointer-events: none; }
     .story-trail-flow {
       fill: none;
       stroke: var(--frontend-stroke);
@@ -3472,15 +3573,13 @@
 
     /* Optional trace animation, enabled only by meta.animation = "trace".
        The ordinary viewer performs one ambient pass and then restores the
-       authored solid/security/async line language. WebM uses the same finite
-       timeline on an isolated export clone. */
-    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-animate="edge"],
-    svg[data-motion-export="true"] [data-animate="edge"] {
+       authored solid/security/async line language. WebM samples the same
+       authored geometry into an explicit canvas timeline. */
+    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-animate="edge"] {
       animation: archify-edge-flow 2.4s linear 1;
       animation-delay: calc(var(--step, 0) * 160ms);
     }
-    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-animate="node"],
-    svg[data-motion-export="true"] [data-animate="node"] {
+    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-animate="node"] {
       transform-box: fill-box;
       transform-origin: center;
       animation: archify-node-pulse 3.6s ease-in-out 1;
@@ -3569,6 +3668,11 @@
       10%, 76% { opacity: 0.98; }
       100% { opacity: 0; stroke-dashoffset: -1; }
     }
+    @keyframes archify-relationship-token-life {
+      0%, 7% { opacity: 0; }
+      13%, 82% { opacity: 1; }
+      100% { opacity: 0; }
+    }
     @keyframes archify-story-beat-node {
       from { opacity: 0.48; filter: saturate(0.6); }
       58% { opacity: 1; filter: drop-shadow(0 0 10px var(--frontend-stroke)); }
@@ -3627,7 +3731,8 @@
         stroke-dashoffset: 0;
         opacity: 0.78;
       }
-      .route-journey-overlay { display: none !important; }
+      .route-journey-overlay,
+      .story-carrier-overlay { display: none !important; }
       .semantic-lens-flow {
         animation: none !important;
         stroke-dasharray: none;
@@ -3642,9 +3747,9 @@
   </style>
 </head>
 <body>
-  <!-- Toolbar: theme, trace motion, presentation stage, and export.
+  <!-- Toolbar: theme, live visual style, trace motion, presentation stage, and export.
        Motion appears only for trace-enabled artifacts and has no shortcut;
-       Keyboard: T toggles theme, F toggles the stage, E opens export. -->
+       Keyboard: T toggles theme, S cycles style, F toggles the stage, E opens export. -->
   <div class="toolbar" role="toolbar" aria-label="Diagram actions">
     <button id="btn-theme" type="button"
             title="Toggle theme (T)"
@@ -3652,6 +3757,12 @@
             aria-pressed="false">
       <span id="theme-icon" aria-hidden="true">&#9790;</span>
       <span id="theme-label">Dark</span>
+    </button>
+    <button id="btn-preset" type="button"
+            title="Cycle visual style (S)"
+            aria-label="Cycle visual style">
+      <span class="preset-control-mark" aria-hidden="true"></span>
+      <span id="preset-label">Style</span>
     </button>
     <button id="btn-motion" type="button" hidden
             title="Pause motion"
@@ -3778,17 +3889,21 @@
         <path d="M 154 157 L 748 157" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Transition paths -->
-        <path data-edge-from="executing" data-edge-to="approval" data-edge-key="0" data-edge-id="approval-needed" d="M 402 188 L 402 278" class="a-security" data-animate="edge" style="--step:0" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="reviewing" data-edge-to="blocked" data-edge-key="1" data-edge-id="review-blocked" d="M 556 188 L 556 233 L 556 233 L 556 278" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.1" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="executing" data-edge-to="failed" data-edge-key="2" data-edge-id="execution-failed" d="M 343 157 L 330 157 Q 320 157 320 167 L 320 332 Q 320 342 330 342 L 395 342 Q 402 342 402 349 L 402 356" class="a-security" data-animate="edge" style="--step:2" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="blocked" data-edge-to="expired" data-edge-key="3" data-edge-id="block-expired" d="M 556 336 L 556 450" class="a-security" data-animate="edge" style="--step:3" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="approval" data-edge-to="cancelled" data-edge-key="4" data-edge-id="approval-cancelled" d="M 402 336 L 470 336 Q 480 336 480 346 L 480 422 Q 480 432 470 432 L 411 432 Q 402 432 402 441 L 402 450" class="a-security" data-animate="edge" style="--step:4" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="executing" data-edge-to="approval" data-edge-key="0" data-edge-id="approval-needed" data-composition-points="402,188;402,278" d="M 402 188 L 402 278" class="a-security" data-animate="edge" style="--step:0" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="reviewing" data-edge-to="blocked" data-edge-key="1" data-edge-id="review-blocked" data-composition-points="556,188;556,233;556,233;556,278" d="M 556 188 L 556 233 L 556 233 L 556 278" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.1" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="executing" data-edge-to="failed" data-edge-key="2" data-edge-id="execution-failed" data-composition-points="343,157;320,157;320,385;339,385" d="M 343 157 L 330 157 Q 320 157 320 167 L 320 375.5 Q 320 385 329.5 385 L 339 385" class="a-security" data-animate="edge" style="--step:2" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="blocked" data-edge-to="expired" data-edge-key="3" data-edge-id="block-expired" data-composition-points="556,336;556,450" d="M 556 336 L 556 450" class="a-security" data-animate="edge" style="--step:3" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="approval" data-edge-to="cancelled" data-edge-key="4" data-edge-id="approval-cancelled" data-composition-points="402,336;480,336;480,432;402,432;402,450" d="M 402 336 L 470 336 Q 480 336 480 346 L 480 422 Q 480 432 470 432 L 411 432 Q 402 432 402 441 L 402 450" class="a-security" data-animate="edge" style="--step:4" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
 
         <!-- States -->
         <g id="node-queued" data-node-id="queued" data-node-label="Queued" tabindex="0" role="button" aria-label="Focus Queued, request accepted, Lifecycle phases" aria-pressed="false" data-node-kind="start" data-node-sublabel="request accepted" data-node-tag="entry" data-node-context="Lifecycle phases">
           <title>Queued · request accepted · Lifecycle phases · entry</title>
           <rect x="35" y="126" width="118" height="62" rx="7" class="c-mask"/>
           <rect x="35" y="126" width="118" height="62" rx="7" class="c-frontend" data-animate="node" style="--step:0" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="start" class="semantic-sigil s-frontend" transform="translate(136 132) scale(0.6875)">
+            <circle cx="8" cy="8" r="5"/>
+            <path d="m7 5.4 3.6 2.6L7 10.6Z" class="sigil-fill"/>
+          </g>
         <text data-detail="fine" x="45" y="140" class="t-frontend" font-size="7" font-weight="700">01</text>
           <text data-detail-anchor x="94" y="147" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Queued</text>
           <text data-detail="context" x="94" y="163" class="t-muted" font-size="7" text-anchor="middle">request accepted</text>
@@ -3799,6 +3914,9 @@
           <title>Planning · build task graph · Lifecycle phases · model</title>
           <rect x="189" y="126" width="118" height="62" rx="7" class="c-mask"/>
           <rect x="189" y="126" width="118" height="62" rx="7" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="active" class="semantic-sigil s-backend" transform="translate(290 132) scale(0.6875)">
+            <path d="M2 8h3l1.5-3.5L9 12l1.6-4H14"/>
+          </g>
         <text data-detail="fine" x="199" y="140" class="t-backend" font-size="7" font-weight="700">02</text>
           <text data-detail-anchor x="248" y="147" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Planning</text>
           <text data-detail="context" x="248" y="163" class="t-muted" font-size="7" text-anchor="middle">build task graph</text>
@@ -3809,6 +3927,9 @@
           <title>Executing · tool calls · Lifecycle phases · work</title>
           <rect x="343" y="126" width="118" height="62" rx="7" class="c-mask"/>
           <rect x="343" y="126" width="118" height="62" rx="7" class="c-backend" data-animate="node" style="--step:0" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="active" class="semantic-sigil s-backend" transform="translate(444 132) scale(0.6875)">
+            <path d="M2 8h3l1.5-3.5L9 12l1.6-4H14"/>
+          </g>
         <text data-detail="fine" x="353" y="140" class="t-backend" font-size="7" font-weight="700">03</text>
           <text data-detail-anchor x="402" y="147" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Executing</text>
           <text data-detail="context" x="402" y="163" class="t-muted" font-size="7" text-anchor="middle">tool calls</text>
@@ -3819,6 +3940,10 @@
           <title>Reviewing · quality gate · Lifecycle phases · check</title>
           <rect x="497" y="126" width="118" height="62" rx="7" class="c-mask"/>
           <rect x="497" y="126" width="118" height="62" rx="7" class="c-security" data-animate="node" style="--step:1" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="neutral" class="semantic-sigil s-external" transform="translate(598 132) scale(0.6875)">
+            <rect x="3" y="3" width="10" height="10" rx="2"/>
+            <circle cx="8" cy="8" r="1.2" class="sigil-fill"/>
+          </g>
         <text data-detail="fine" x="507" y="140" class="t-security" font-size="7" font-weight="700">04</text>
           <text data-detail-anchor x="556" y="147" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Reviewing</text>
           <text data-detail="context" x="556" y="163" class="t-muted" font-size="7" text-anchor="middle">quality gate</text>
@@ -3829,6 +3954,10 @@
           <title>Completed · final response · Lifecycle phases · done</title>
           <rect x="651" y="126" width="118" height="62" rx="7" class="c-mask"/>
           <rect x="651" y="126" width="118" height="62" rx="7" class="c-database" data-animate="node" style="--step:4" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="success" class="semantic-sigil s-database" transform="translate(752 132) scale(0.6875)">
+            <circle cx="8" cy="8" r="5.3"/>
+            <path d="m5.2 8 1.8 1.8 3.8-4"/>
+          </g>
         <text data-detail="fine" x="661" y="140" class="t-database" font-size="7" font-weight="700">05</text>
           <text data-detail-anchor x="710" y="147" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Completed</text>
           <text data-detail="context" x="710" y="163" class="t-muted" font-size="7" text-anchor="middle">final response</text>
@@ -3839,6 +3968,9 @@
           <title>Needs Approval · human gate · Interruptions · pause</title>
           <rect x="339" y="278" width="126" height="58" rx="7" class="c-mask"/>
           <rect x="339" y="278" width="126" height="58" rx="7" class="c-cloud" data-animate="node" style="--step:1" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="waiting" class="semantic-sigil s-cloud" transform="translate(448 284) scale(0.6875)">
+            <path d="M4 2.5h8M4 13.5h8M5 3c0 2.8 2 3.2 3 5-1 1.8-3 2.2-3 5M11 3c0 2.8-2 3.2-3 5 1 1.8 3 2.2 3 5"/>
+          </g>
           <text data-detail-anchor x="402" y="299" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Needs Approval</text>
           <text data-detail="context" x="402" y="315" class="t-muted" font-size="7" text-anchor="middle">human gate</text>
         <text data-detail="fine" x="402" y="325" class="t-cloud" font-size="7" text-anchor="middle">pause</text>
@@ -3848,6 +3980,9 @@
           <title>Blocked · missing input · Interruptions · wait</title>
           <rect x="493" y="278" width="126" height="58" rx="7" class="c-mask"/>
           <rect x="493" y="278" width="126" height="58" rx="7" class="c-cloud" data-animate="node" style="--step:2" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="waiting" class="semantic-sigil s-cloud" transform="translate(602 284) scale(0.6875)">
+            <path d="M4 2.5h8M4 13.5h8M5 3c0 2.8 2 3.2 3 5-1 1.8-3 2.2-3 5M11 3c0 2.8-2 3.2-3 5 1 1.8 3 2.2 3 5"/>
+          </g>
           <text data-detail-anchor x="556" y="299" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Blocked</text>
           <text data-detail="context" x="556" y="315" class="t-muted" font-size="7" text-anchor="middle">missing input</text>
         <text data-detail="fine" x="556" y="325" class="t-cloud" font-size="7" text-anchor="middle">wait</text>
@@ -3857,6 +3992,10 @@
           <title>Failed · recoverable error · Recovery loop · retryable</title>
           <rect x="339" y="356" width="126" height="58" rx="7" class="c-mask"/>
           <rect x="339" y="356" width="126" height="58" rx="7" class="c-security" data-animate="node" style="--step:3" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="failure" class="semantic-sigil s-security" transform="translate(448 362) scale(0.6875)">
+            <circle cx="8" cy="8" r="5.3"/>
+            <path d="m5.7 5.7 4.6 4.6m0-4.6-4.6 4.6"/>
+          </g>
           <text data-detail-anchor x="402" y="377" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Failed</text>
           <text data-detail="context" x="402" y="393" class="t-muted" font-size="7" text-anchor="middle">recoverable error</text>
         <text data-detail="fine" x="402" y="403" class="t-security" font-size="7" text-anchor="middle">retryable</text>
@@ -3866,6 +4005,10 @@
           <title>Cancelled · user stopped · Terminal exits · terminal</title>
           <rect x="343" y="450" width="118" height="58" rx="7" class="c-mask"/>
           <rect x="343" y="450" width="118" height="58" rx="7" class="c-security" data-animate="node" style="--step:5" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="failure" class="semantic-sigil s-security" transform="translate(444 456) scale(0.6875)">
+            <circle cx="8" cy="8" r="5.3"/>
+            <path d="m5.7 5.7 4.6 4.6m0-4.6-4.6 4.6"/>
+          </g>
           <text data-detail-anchor x="402" y="471" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Cancelled</text>
           <text data-detail="context" x="402" y="487" class="t-muted" font-size="7" text-anchor="middle">user stopped</text>
         <text data-detail="fine" x="402" y="497" class="t-security" font-size="7" text-anchor="middle">terminal</text>
@@ -3875,6 +4018,10 @@
           <title>Expired · timeout · Terminal exits · terminal</title>
           <rect x="497" y="450" width="118" height="58" rx="7" class="c-mask"/>
           <rect x="497" y="450" width="118" height="58" rx="7" class="c-security" data-animate="node" style="--step:4" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="failure" class="semantic-sigil s-security" transform="translate(598 456) scale(0.6875)">
+            <circle cx="8" cy="8" r="5.3"/>
+            <path d="m5.7 5.7 4.6 4.6m0-4.6-4.6 4.6"/>
+          </g>
           <text data-detail-anchor x="556" y="471" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Expired</text>
           <text data-detail="context" x="556" y="487" class="t-muted" font-size="7" text-anchor="middle">timeout</text>
         <text data-detail="fine" x="556" y="497" class="t-security" font-size="7" text-anchor="middle">terminal</text>
@@ -3963,7 +4110,7 @@
           </button>
         </div>
         <div class="diagram-guide-shortcuts" aria-label="Additional keyboard shortcuts">
-          <span><kbd>E</kbd> Export</span><span><kbd>T</kbd> Theme</span><span><kbd>0</kbd> Reset</span><span><kbd>+</kbd> Zoom in</span><span><kbd>-</kbd> Zoom out</span><span><kbd>Esc</kbd> Close</span>
+          <span><kbd>E</kbd> Export</span><span><kbd>T</kbd> Theme</span><span><kbd>S</kbd> Style</span><span><kbd>0</kbd> Reset</span><span><kbd>+</kbd> Zoom in</span><span><kbd>-</kbd> Zoom out</span><span><kbd>Esc</kbd> Close</span>
         </div>
         <p class="diagram-guide-feedback" id="diagram-guide-feedback" aria-live="polite"></p>
       </div>
@@ -4110,15 +4257,59 @@
 
     <!-- Footer -->
     <p class="footer">
-      Lifecycle diagram &bull; Built with Archify<span class="no-print"> &bull; Hover to trace &bull; <kbd>R</kbd> route &bull; Click to focus &bull; <kbd>+</kbd>/<kbd>&minus;</kbd> zoom &bull; <kbd>M</kbd> radar &bull; <kbd>[</kbd>/<kbd>]</kbd> views &bull; <kbd>P</kbd> play story &bull; <kbd>T</kbd> theme &bull; <kbd>E</kbd> export</span>
+      Lifecycle diagram &bull; Built with Archify<span class="no-print"> &bull; <a class="artifact-start-link" href="https://tt-a1i.github.io/archify/start.html?type=lifecycle" target="_blank" rel="noopener noreferrer">Create yours &nearr;</a> &bull; Hover to trace &bull; <kbd>R</kbd> route &bull; Click to focus &bull; <kbd>+</kbd>/<kbd>&minus;</kbd> zoom &bull; <kbd>M</kbd> radar &bull; <kbd>[</kbd>/<kbd>]</kbd> views &bull; <kbd>P</kbd> play story &bull; <kbd>T</kbd> theme &bull; <kbd>E</kbd> export</span>
     </p>
   </div>
 
   <script>
+    var Archify = {};
+
+    /* ============================================================
+       Visual style try-on — one topology, three bundled presets.
+       The reader's choice is intentionally session-only: it updates the
+       live page and canonical SVG together, but never rewrites the source,
+       URL, or a later diagram's authored default.
+       ============================================================ */
+    Archify.preset = (function () {
+      var PRESETS = ['classic', 'signal-flow', 'blueprint'];
+      var LABELS = { classic: 'Classic', 'signal-flow': 'Flow', blueprint: 'Blueprint' };
+      var html = document.documentElement;
+      var svg = document.querySelector('.diagram-container svg');
+      var btn = document.getElementById('btn-preset');
+      var label = document.getElementById('preset-label');
+      var authored = PRESETS.indexOf(html.getAttribute('data-preset')) >= 0
+        ? html.getAttribute('data-preset')
+        : 'classic';
+
+      function current() {
+        var value = html.getAttribute('data-preset');
+        return PRESETS.indexOf(value) >= 0 ? value : authored;
+      }
+      function nextAfter(preset) {
+        return PRESETS[(PRESETS.indexOf(preset) + 1) % PRESETS.length];
+      }
+      function apply(preset) {
+        if (html.getAttribute('data-embed') === 'true') return false;
+        if (PRESETS.indexOf(preset) < 0) return false;
+        html.setAttribute('data-preset', preset);
+        svg.setAttribute('data-preset', preset);
+        btn.setAttribute('data-preset-option', preset);
+        label.textContent = LABELS[preset];
+        var next = nextAfter(preset);
+        btn.setAttribute('aria-label', 'Visual style: ' + LABELS[preset] + '. Activate for ' + LABELS[next]);
+        btn.title = 'Cycle visual style (S)';
+        return true;
+      }
+      function cycle() { return apply(nextAfter(current())); }
+
+      apply(authored);
+      btn.addEventListener('click', cycle);
+      return { cycle: cycle, apply: apply, current: current, authored: authored };
+    })();
+
     /* ============================================================
        Theme toggle — persists to localStorage, respects system pref
        ============================================================ */
-    var Archify = {};
 
     Archify.theme = (function () {
       var STORAGE_KEY = 'archify-theme';
@@ -4234,12 +4425,8 @@
         scale = scale || 1;
         opts = opts || {};
         var autoTheme = opts.autoTheme === true;
-        var motionExport = opts.motion === true;
-
         var svg = document.querySelector('.diagram-container svg');
         var clone = svg.cloneNode(true);
-        if (motionExport) clone.setAttribute('data-motion-export', 'true');
-        else clone.removeAttribute('data-motion-export');
 
         // View transforms and neighborhood focus are HTML exploration state,
         // never part of a downloaded full-diagram artifact.
@@ -4274,7 +4461,7 @@
         Array.prototype.forEach.call(clone.querySelectorAll('[data-chapter-preview-role]'), function (el) {
           el.removeAttribute('data-chapter-preview-role');
         });
-        Array.prototype.forEach.call(clone.querySelectorAll('[data-story-overlay]'), function (el) {
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay]'), function (el) {
           el.remove();
         });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-intent-trace-overlay]'), function (el) {
@@ -4384,7 +4571,7 @@
           !clone.hasAttribute('data-chapter-anchor') &&
           !clone.hasAttribute('data-chapter-preview') &&
           !clone.style.getPropertyValue('transform') &&
-          clone.querySelectorAll('[data-story-overlay], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-detail], [data-detail-anchor]').length === 0;
+          clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-detail], [data-detail-anchor]').length === 0;
 
         var vb = svg.viewBox.baseVal;
         // Scale width/height so the browser rasterizes the vectors at target
@@ -4610,9 +4797,11 @@
       }
 
       // Record the live CSS animation without Puppeteer, ffmpeg, or a network
-      // dependency. The serialized SVG keeps Archify's animation keyframes;
-      // one Image instance advances its timeline while each frame is painted
-      // into a MediaRecorder-backed canvas.
+      // dependency. SVG files loaded through Image are commonly rasterized as
+      // one cached bitmap, so repeatedly drawing that Image does not reliably
+      // advance its CSS animation. Keep one crisp static SVG background, then
+      // render an explicit time-varying signal scene over the real authored
+      // relationship geometry on every captured canvas frame.
       function recordWebm(options) {
         options = options || {};
         if (!canRecordMotion()) {
@@ -4623,12 +4812,161 @@
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var scale = Math.min(1, 1280 / vb.width);
-        var data = serializeSvg(scale, { motion: true });
+        var data = serializeSvg(scale);
         var sourceUrl = URL.createObjectURL(new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' }));
 
+        function createMotionScene(root) {
+          var rootMatrix = root.getCTM ? root.getCTM() : null;
+
+          function pointInRoot(element, point) {
+            if (!rootMatrix || !element.getCTM || !point.matrixTransform) return { x: point.x, y: point.y };
+            try {
+              var elementMatrix = element.getCTM();
+              if (!elementMatrix) return { x: point.x, y: point.y };
+              var mapped = point.matrixTransform(rootMatrix.inverse().multiply(elementMatrix));
+              return { x: mapped.x, y: mapped.y };
+            } catch (_) {
+              return { x: point.x, y: point.y };
+            }
+          }
+
+          function samplesFor(element) {
+            if (typeof element.getTotalLength !== 'function' || typeof element.getPointAtLength !== 'function') return [];
+            var length;
+            try { length = element.getTotalLength(); } catch (_) { return []; }
+            if (!Number.isFinite(length) || length <= 0) return [];
+            var count = Math.max(12, Math.min(72, Math.ceil(length / 12)));
+            var points = [];
+            for (var i = 0; i <= count; i++) {
+              points.push(pointInRoot(element, element.getPointAtLength(length * i / count)));
+            }
+            return points;
+          }
+
+          function authoredStep(element, fallback) {
+            var raw = element.style.getPropertyValue('--step') || getComputedStyle(element).getPropertyValue('--step');
+            var value = Number(raw);
+            return Number.isFinite(value) ? value : fallback;
+          }
+
+          var edges = Array.prototype.slice.call(root.querySelectorAll('[data-animate="edge"]')).map(function (element, index) {
+            var computed = getComputedStyle(element);
+            return {
+              points: samplesFor(element),
+              color: computed.stroke && computed.stroke !== 'none' ? computed.stroke : '#22d3ee',
+              width: Math.max(1.5, parseFloat(computed.strokeWidth) || 1.5),
+              delay: Math.min(12, authoredStep(element, index)) * 0.16
+            };
+          }).filter(function (edge) { return edge.points.length > 1; });
+
+          var nodes = Array.prototype.slice.call(root.querySelectorAll('[data-node-id][data-animate="node"]')).map(function (element, index) {
+            var box;
+            try { box = element.getBBox(); } catch (_) { return null; }
+            var painted = element.querySelector('[class*="c-"]') || element;
+            var computed = getComputedStyle(painted);
+            return {
+              x: box.x,
+              y: box.y,
+              width: box.width,
+              height: box.height,
+              color: computed.stroke && computed.stroke !== 'none' ? computed.stroke : '#22d3ee',
+              delay: Math.min(12, authoredStep(element, index)) * 0.16
+            };
+          }).filter(Boolean);
+
+          return { edges: edges, nodes: nodes, x: vb.x, y: vb.y, width: vb.width, height: vb.height };
+        }
+
+        function pointAlong(points, progress) {
+          var scaled = Math.max(0, Math.min(1, progress)) * (points.length - 1);
+          var index = Math.min(points.length - 2, Math.floor(scaled));
+          var mix = scaled - index;
+          return {
+            x: points[index].x + (points[index + 1].x - points[index].x) * mix,
+            y: points[index].y + (points[index + 1].y - points[index].y) * mix
+          };
+        }
+
+        function roundedRectPath(ctx, x, y, width, height, radius) {
+          var r = Math.max(0, Math.min(radius, width / 2, height / 2));
+          ctx.beginPath();
+          ctx.moveTo(x + r, y);
+          ctx.lineTo(x + width - r, y);
+          ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+          ctx.lineTo(x + width, y + height - r);
+          ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+          ctx.lineTo(x + r, y + height);
+          ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+          ctx.lineTo(x, y + r);
+          ctx.quadraticCurveTo(x, y, x + r, y);
+          ctx.closePath();
+        }
+
+        function drawMotionFrame(ctx, backgroundImage, motionScene, elapsed) {
+          ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+          ctx.drawImage(backgroundImage, 0, 0, ctx.canvas.width, ctx.canvas.height);
+          ctx.save();
+          ctx.scale(ctx.canvas.width / motionScene.width, ctx.canvas.height / motionScene.height);
+          ctx.translate(-motionScene.x, -motionScene.y);
+
+          motionScene.edges.forEach(function (edge) {
+            var duration = 1.75;
+            var progress = (elapsed - edge.delay) / duration;
+            if (progress < 0 || progress > 1) return;
+            var head = Math.max(0, Math.min(1, progress));
+            var tail = Math.max(0, head - 0.24);
+            var opacity = Math.sin(Math.PI * Math.min(1, progress));
+
+            ctx.save();
+            ctx.strokeStyle = edge.color;
+            ctx.fillStyle = edge.color;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = Math.max(3.2, edge.width * 2.2);
+            ctx.globalAlpha = 0.42 + opacity * 0.5;
+            ctx.shadowColor = edge.color;
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            for (var i = 0; i <= 14; i++) {
+              var trailPoint = pointAlong(edge.points, tail + (head - tail) * i / 14);
+              if (i === 0) ctx.moveTo(trailPoint.x, trailPoint.y);
+              else ctx.lineTo(trailPoint.x, trailPoint.y);
+            }
+            ctx.stroke();
+
+            var point = pointAlong(edge.points, head);
+            ctx.globalAlpha = 0.95;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 4.8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          });
+
+          motionScene.nodes.forEach(function (node) {
+            var progress = (elapsed - node.delay) / 2.6;
+            if (progress < 0 || progress > 1) return;
+            var pulse = Math.sin(Math.PI * progress);
+            if (pulse <= 0.02) return;
+            ctx.save();
+            ctx.strokeStyle = node.color;
+            ctx.lineWidth = 1.4 + pulse * 1.8;
+            ctx.globalAlpha = pulse * 0.5;
+            ctx.shadowColor = node.color;
+            ctx.shadowBlur = 12 * pulse;
+            var inset = 2 + pulse * 3;
+            roundedRectPath(ctx, node.x - inset, node.y - inset, node.width + inset * 2, node.height + inset * 2, 8);
+            ctx.stroke();
+            ctx.restore();
+          });
+
+          ctx.restore();
+        }
+
+        var motionScene = createMotionScene(svg);
+
         return new Promise(function (resolve, reject) {
-          var img = new Image();
-          img.onload = function () {
+          var backgroundImage = new Image();
+          backgroundImage.onload = function () {
             var canvas = document.createElement('canvas');
             canvas.width = Math.max(2, Math.round(data.width / 2) * 2);
             canvas.height = Math.max(2, Math.round(data.height / 2) * 2);
@@ -4647,6 +4985,7 @@
             var chunks = [];
             var raf = 0;
             var stopped = false;
+            var startedAt = performance.now();
             function cleanup() {
               if (stopped) return;
               stopped = true;
@@ -4654,9 +4993,9 @@
               URL.revokeObjectURL(sourceUrl);
               stream.getTracks().forEach(function (track) { track.stop(); });
             }
-            function draw() {
-              ctx.clearRect(0, 0, canvas.width, canvas.height);
-              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            function draw(now) {
+              var elapsed = Math.max(0, ((Number(now) || performance.now()) - startedAt) / 1000);
+              drawMotionFrame(ctx, backgroundImage, motionScene, elapsed);
               raf = requestAnimationFrame(draw);
             }
             recorder.ondataavailable = function (event) {
@@ -4672,8 +5011,10 @@
               if (!blob.size) reject(new Error('MediaRecorder produced an empty WebM'));
               else resolve(blob);
             };
-            draw();
+            drawMotionFrame(ctx, backgroundImage, motionScene, 0);
             recorder.start(250);
+            startedAt = performance.now();
+            raf = requestAnimationFrame(draw);
             setTimeout(function () {
               if (recorder.state === 'inactive') return;
               // Chromium normally emits the final chunk during stop(), but
@@ -4686,11 +5027,11 @@
               }, 120);
             }, duration);
           };
-          img.onerror = function () {
+          backgroundImage.onerror = function () {
             URL.revokeObjectURL(sourceUrl);
-            reject(new Error('Animated SVG could not be loaded for WebM export'));
+            reject(new Error('SVG background could not be loaded for WebM export'));
           };
-          img.src = sourceUrl;
+          backgroundImage.src = sourceUrl;
         });
       }
 
@@ -5400,6 +5741,99 @@
         clone.setAttribute('pathLength', '1');
         return clone;
       }
+      function relationshipTokenKind(edge) {
+        var shapes = relationshipEdgeShapes(edge);
+        var classEvidence = [edge.getAttribute('class') || ''].concat(shapes.map(function (shape) {
+          return shape.getAttribute('class') || '';
+        })).join(' ');
+        var from = edge.getAttribute('data-edge-from') || '';
+        var to = edge.getAttribute('data-edge-to') || '';
+        var source = nodes().find(function (node) { return node.getAttribute('data-node-id') === from; });
+        var target = nodes().find(function (node) { return node.getAttribute('data-node-id') === to; });
+        var sourceKind = source ? source.getAttribute('data-node-kind') || 'neutral' : 'neutral';
+        var targetKind = target ? target.getAttribute('data-node-kind') || 'neutral' : 'neutral';
+        if (/\ba-security\b/.test(classEvidence) || sourceKind === 'security' || targetKind === 'security' || targetKind === 'failure') return 'security';
+        if (/\ba-dashed\b/.test(classEvidence) || sourceKind === 'messagebus' || targetKind === 'messagebus') return 'event';
+        if (sourceKind === 'database' || targetKind === 'database') return 'data';
+        if (targetKind === 'waiting' || targetKind === 'success') return 'state';
+        return 'call';
+      }
+      function relationshipTokenPath(shape) {
+        if (!shape) return '';
+        var tagName = String(shape.tagName || '').toLowerCase();
+        if (tagName === 'path') return shape.getAttribute('d') || '';
+        if (tagName === 'line') {
+          return 'M ' + shape.getAttribute('x1') + ' ' + shape.getAttribute('y1') +
+            ' L ' + shape.getAttribute('x2') + ' ' + shape.getAttribute('y2');
+        }
+        if (tagName === 'polyline' && shape.points && shape.points.numberOfItems > 1) {
+          var commands = [];
+          for (var i = 0; i < shape.points.numberOfItems; i += 1) {
+            var point = shape.points.getItem(i);
+            commands.push((i === 0 ? 'M ' : 'L ') + point.x + ' ' + point.y);
+          }
+          return commands.join(' ');
+        }
+        return '';
+      }
+      function relationshipTokenPart(tagName, className, attrs) {
+        var part = document.createElementNS(svgNamespace, tagName);
+        part.setAttribute('class', className);
+        Object.keys(attrs || {}).forEach(function (name) { part.setAttribute(name, attrs[name]); });
+        return part;
+      }
+      function relationshipTokenGeometry(shape, kind, key, options) {
+        options = options || {};
+        var pathData = relationshipTokenPath(shape);
+        if (!pathData) return null;
+        var token = document.createElementNS(svgNamespace, 'g');
+        token.setAttribute('class', 'semantic-flow-token ' + (options.className || 'relationship-flow-token'));
+        token.setAttribute('data-token-kind', kind);
+        token.setAttribute('data-token-edge-key', key);
+        token.setAttribute('aria-hidden', 'true');
+        token.appendChild(relationshipTokenPart('circle', 'semantic-flow-token-halo', { cx: '0', cy: '0', r: '7' }));
+        if (kind === 'data') {
+          token.appendChild(relationshipTokenPart('rect', 'relationship-flow-token-shape', { x: '-5', y: '-4', width: '10', height: '8', rx: '2' }));
+          token.appendChild(relationshipTokenPart('path', 'relationship-flow-token-ink', { d: 'M -2.8 -1.2 h 5.6 M -2.8 1.4 h 3.8' }));
+        } else if (kind === 'event') {
+          token.appendChild(relationshipTokenPart('rect', 'relationship-flow-token-shape', { x: '-7', y: '-3', width: '4', height: '6', rx: '1' }));
+          token.appendChild(relationshipTokenPart('rect', 'relationship-flow-token-shape', { x: '-2', y: '-3', width: '4', height: '6', rx: '1' }));
+          token.appendChild(relationshipTokenPart('rect', 'relationship-flow-token-shape', { x: '3', y: '-3', width: '4', height: '6', rx: '1' }));
+        } else if (kind === 'security') {
+          token.appendChild(relationshipTokenPart('path', 'relationship-flow-token-shape', { d: 'M 0 -5 L 4 -3.4 V 0 c 0 3 -1.6 4.5 -4 5.5 C -2.4 4.5 -4 3 -4 0 v -3.4 Z' }));
+          token.appendChild(relationshipTokenPart('path', 'relationship-flow-token-ink', { d: 'm -2 .2 1.4 1.4 L 2 -1.4' }));
+        } else if (kind === 'state') {
+          token.appendChild(relationshipTokenPart('circle', 'relationship-flow-token-shape', { cx: '0', cy: '0', r: '5' }));
+          token.appendChild(relationshipTokenPart('circle', 'relationship-flow-token-dot', { cx: '0', cy: '0', r: '1.35' }));
+        } else {
+          token.appendChild(relationshipTokenPart('path', 'relationship-flow-token-ink', { d: 'M -5 -3 L -1 0 L -5 3 M 0 -3 L 4 0 L 0 3' }));
+        }
+        var motion = document.createElementNS(svgNamespace, 'animateMotion');
+        motion.setAttribute('path', pathData);
+        motion.setAttribute('dur', options.duration || '1.2s');
+        motion.setAttribute('begin', '0s');
+        motion.setAttribute('fill', 'freeze');
+        motion.setAttribute('rotate', 'auto');
+        motion.setAttribute('calcMode', 'spline');
+        motion.setAttribute('keyTimes', '0;1');
+        motion.setAttribute('keySplines', '.2 0 .2 1');
+        token.appendChild(motion);
+        return token;
+      }
+      function createSemanticFlowToken(edge, shape, options) {
+        if (!edge || !shape) return null;
+        var key = edge.getAttribute('data-edge-key') || (
+          edge.getAttribute('data-edge-from') + '\u0000' +
+          edge.getAttribute('data-edge-to') + '\u0000' +
+          (edge.getAttribute('data-edge-label') || '')
+        );
+        return relationshipTokenGeometry(shape, relationshipTokenKind(edge), key, options);
+      }
+      Archify.flowTokens = {
+        create: createSemanticFlowToken,
+        kind: function (edge) { return relationshipTokenKind(edge); },
+        path: relationshipTokenPath
+      };
       function renderRelationshipPulse(key) {
         removeRelationshipPulse();
         if (!key || document.documentElement.getAttribute('data-embed') === 'true') return false;
@@ -5414,12 +5848,23 @@
         overlay.setAttribute('data-relationship-pulse-overlay', '');
         overlay.setAttribute('data-relationship-pulse-key', key);
         overlay.setAttribute('aria-hidden', 'true');
+        var tokenAdded = false;
         matchingEdges.forEach(function (edge) {
           var wrapper = document.createElementNS(svgNamespace, 'g');
           if (edge.hasAttribute('transform')) wrapper.setAttribute('transform', edge.getAttribute('transform'));
-          relationshipEdgeShapes(edge).forEach(function (shape) {
+          var shapes = relationshipEdgeShapes(edge);
+          shapes.forEach(function (shape) {
             wrapper.appendChild(relationshipPulseGeometry(shape));
           });
+          if (!tokenAdded && shapes.length) {
+            var tokenKind = relationshipTokenKind(edge);
+            var token = relationshipTokenGeometry(shapes[0], tokenKind, key);
+            if (token) {
+              wrapper.appendChild(token);
+              overlay.setAttribute('data-relationship-token-kind', tokenKind);
+              tokenAdded = true;
+            }
+          }
           if (wrapper.childNodes.length) overlay.appendChild(wrapper);
         });
         if (!overlay.childNodes.length) return false;
@@ -6341,6 +6786,7 @@
       var momentRestoreGeneration = 0;
       var storySteps = [];
       var storyPulseOwnerToken = 0;
+      var storyPulseGeneration = 0;
       var autoplayPending = false;
       var VIEW_INTERVAL_MS = 3200;
       var STORY_FOLLOW_MIN_DWELL_MS = 1100;
@@ -6866,6 +7312,22 @@
         );
       }
 
+      function uniqueStoryEdges(edgeList) {
+        var positions = {};
+        var unique = [];
+        edgeList.forEach(function (edge) {
+          var key = storyEdgeKey(edge);
+          if (!Object.prototype.hasOwnProperty.call(positions, key)) {
+            positions[key] = unique.length;
+            unique.push(edge);
+            return;
+          }
+          var index = positions[key];
+          if (!storyGeometry(unique[index]).length && storyGeometry(edge).length) unique[index] = edge;
+        });
+        return unique;
+      }
+
       function storyStep(view, index, edgeList, byId) {
         var id = view.focus[index];
         var node = byId[id];
@@ -6880,6 +7342,8 @@
             else if (from === id && to === previousId) reverse.push(edge);
           });
         }
+        forward = uniqueStoryEdges(forward);
+        reverse = uniqueStoryEdges(reverse);
         var edges = forward.concat(reverse).sort(function (left, right) {
           return edgeList.indexOf(left) - edgeList.indexOf(right);
         });
@@ -7050,7 +7514,8 @@
       function storyMotionAllowed() {
         if (document.hidden || reducedMotion()) return false;
         if (document.documentElement.getAttribute('data-motion') !== 'live') return false;
-        if (document.documentElement.getAttribute('data-embed') === 'true') return false;
+        if (document.documentElement.getAttribute('data-embed') === 'true' &&
+            document.documentElement.getAttribute('data-share-playback') !== 'true') return false;
         if (window.matchMedia && window.matchMedia('print').matches) return false;
         return !(Archify.motionGovernor && Archify.motionGovernor.isPaused());
       }
@@ -7064,8 +7529,12 @@
 
       function clearStoryPulse(options) {
         options = options || {};
+        storyPulseGeneration += 1;
         Array.prototype.forEach.call(svg.querySelectorAll('.story-trail-flow[data-story-pulse]'), function (flow) {
           flow.removeAttribute('data-story-pulse');
+        });
+        Array.prototype.forEach.call(svg.querySelectorAll('[data-story-carrier-overlay]'), function (overlay) {
+          overlay.remove();
         });
         if (storyPulseOwnerToken && options.release !== false && Archify.motionGovernor) {
           var token = storyPulseOwnerToken;
@@ -7079,14 +7548,41 @@
         if (!step || (step.relation !== 'forward' && step.relation !== 'reverse') || step.edges.length !== 1 || !storyMotionAllowed()) return false;
         var flows = Array.prototype.slice.call(svg.querySelectorAll('.story-trail-flow[data-story-beat-step="' + step.index + '"]'));
         if (!flows.length) return false;
+        var pulseGeneration = storyPulseGeneration;
         if (Archify.motionGovernor && Archify.motionGovernor.capable) {
           storyPulseOwnerToken = Archify.motionGovernor.claim('story', function () {
             clearStoryPulse({ release: false });
           });
         }
         flows.forEach(function (flow) { flow.setAttribute('data-story-pulse', 'true'); });
+        if (Archify.flowTokens && typeof Archify.flowTokens.create === 'function') {
+          var edge = step.edges[0];
+          var shapes = storyGeometry(edge);
+          var carrier = shapes.length ? Archify.flowTokens.create(edge, shapes[0], {
+            className: 'story-flow-token',
+            duration: '0.78s'
+          }) : null;
+          if (carrier) {
+            var carrierOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            var carrierWrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            carrierOverlay.setAttribute('class', 'story-carrier-overlay');
+            carrierOverlay.setAttribute('data-story-carrier-overlay', '');
+            carrierOverlay.setAttribute('aria-hidden', 'true');
+            if (edge.hasAttribute('transform')) carrierWrapper.setAttribute('transform', edge.getAttribute('transform'));
+            carrier.setAttribute('data-story-carrier-token', '');
+            carrier.setAttribute('data-story-beat-step', String(step.index));
+            carrierWrapper.appendChild(carrier);
+            carrierOverlay.appendChild(carrierWrapper);
+            var firstNode = svg.querySelector('[data-node-id]');
+            while (firstNode && firstNode.parentNode !== svg) firstNode = firstNode.parentNode;
+            if (firstNode) svg.insertBefore(carrierOverlay, firstNode);
+            else svg.appendChild(carrierOverlay);
+          }
+        }
         void flows[0].getBoundingClientRect();
-        flows[0].addEventListener('animationend', function () { clearStoryPulse(); }, { once: true });
+        flows[0].addEventListener('animationend', function () {
+          if (pulseGeneration === storyPulseGeneration) clearStoryPulse();
+        }, { once: true });
         return true;
       }
 
@@ -10704,6 +11200,7 @@
         if (action === 'present') return Archify.presentation.enter();
         if (action === 'export') return Archify.exportMenu.open();
         if (action === 'theme') return Archify.theme.toggle();
+        if (action === 'preset') return Archify.preset.cycle();
         if (action === 'reset') return Archify.view.reset();
         if (action === 'zoom-in') return Archify.view.zoomIn();
         if (action === 'zoom-out') return Archify.view.zoomOut();
@@ -10719,6 +11216,7 @@
           f: 'present',
           e: 'export',
           t: 'theme',
+          s: 'preset',
           '0': 'reset',
           '+': 'zoom-in',
           '=': 'zoom-in',
@@ -10785,9 +11283,10 @@
 
     /* ============================================================
        Global keyboard shortcuts
-         ? -> open Diagram Guide
-         T -> toggle theme
-         E -> open export menu
+       ? -> open Diagram Guide
+       T -> toggle theme
+       S -> cycle visual style
+       E -> open export menu
          F -> toggle presentation stage
          M -> toggle Semantic Radar
          L -> toggle Semantic Lens
@@ -10811,6 +11310,9 @@
       } else if (e.key === 't' || e.key === 'T') {
         e.preventDefault();
         Archify.theme.toggle();
+      } else if (e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        Archify.preset.cycle();
       } else if (e.key === 'e' || e.key === 'E') {
         e.preventDefault();
         if (!Archify.exportMenu.isOpen()) Archify.exportMenu.open();

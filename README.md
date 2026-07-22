@@ -15,7 +15,7 @@
 Archify is an agent skill for Claude, Codex CLI, and opencode. It produces a self-contained HTML diagram that opens in any modern browser, switches between dark and light themes, supports focused exploration, and exports clean static or motion assets.
 
 - **Five diagram types** — architecture, workflow, sequence, data flow, and lifecycle
-- **Three visual presets** — stable `classic`, luminous `signal-flow`, and precise `blueprint`
+- **Three live visual presets** — author a default, then try `classic`, `signal-flow`, or `blueprint` on the same topology
 - **Explore real topology** — find nodes, inspect relationships, trace routes, compare roles, and play guided stories
 - **Motion is optional** — output stays static unless `meta.animation: "trace"` is explicitly enabled
 - **Portable exports** — copy PNG or download PNG, JPEG, WebP, dual-theme SVG, and trace-enabled WebM
@@ -192,7 +192,7 @@ Omit `animation` for a truly static diagram. `classic` remains the default visua
 | Open the live overview radar | <kbd>M</kbd> or `MAP` |
 | Play a guided story / change chapter | <kbd>P</kbd> / <kbd>[</kbd> <kbd>]</kbd> |
 | Enter Presentation Stage | <kbd>F</kbd> |
-| Toggle theme / open Export | <kbd>T</kbd> / <kbd>E</kbd> |
+| Cycle visual style / toggle theme / open Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | Zoom or reset | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
 Stable links can restore `#focus=<id>`, `#relation=<id>`, `#route=<source>~<target>`, `#lens=<kind>~<kind>`, and `#view=<view-id>`. Reader-driven motion is finite, respects `prefers-reduced-motion`, and never enters canonical exports.

@@ -190,8 +190,9 @@
       "from": "toolrt",
       "to": "permission",
       "variant": "security",
-      "fromSide": "top",
-      "toSide": "bottom"
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [[850, 540], [1160, 540], [1160, 100], [850, 100]]
     }
   ],
   "cards": [

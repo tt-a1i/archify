@@ -11,7 +11,7 @@
 Archify 是一个可用于 Claude、Codex CLI 和 opencode 的 Agent Skill。它生成单文件 HTML 技术图：浏览器直接打开，可切换深浅主题、聚焦探索真实拓扑，并导出清晰的静态或动态结果。
 
 - **五种图表类型** —— Architecture、Workflow、Sequence、Data Flow、Lifecycle
-- **三套视觉预设** —— 稳定的 `classic`、有光感的 `signal-flow`、精确的 `blueprint`
+- **三套实时视觉预设** —— 先确定作者默认风格，再在同一拓扑上试穿 `classic`、`signal-flow` 或 `blueprint`
 - **探索真实拓扑** —— 查找节点、检查关系、探查路径、对比角色、播放引导故事
 - **动态默认关闭** —— 只有显式设置 `meta.animation: "trace"` 才启用动态
 - **便携导出** —— 复制 PNG，下载 PNG / JPEG / WebP / 双主题 SVG / WebM
@@ -188,7 +188,7 @@ node bin/archify.mjs check /tmp/workflow.html
 | 打开实时全局雷达 | <kbd>M</kbd> 或 `MAP` |
 | 播放故事 / 切换章节 | <kbd>P</kbd> / <kbd>[</kbd> <kbd>]</kbd> |
 | 进入 Presentation Stage | <kbd>F</kbd> |
-| 切换主题 / 打开 Export | <kbd>T</kbd> / <kbd>E</kbd> |
+| 切换视觉风格 / 主题 / 打开 Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | 缩放或复位 | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
 稳定链接可以恢复 `#focus=<id>`、`#relation=<id>`、`#route=<source>~<target>`、`#lens=<kind>~<kind>` 和 `#view=<view-id>`。读者触发的动态有限运行、遵守 `prefers-reduced-motion`，并且不会进入标准导出。

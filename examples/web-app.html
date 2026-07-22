@@ -505,10 +505,10 @@
 
     .container { max-width: 1200px; margin: 0 auto; }
 
-    .header { margin-bottom: 2rem; padding-right: 23rem; }
+    .header { margin-bottom: 2rem; padding-right: 29.5rem; }
 
     html[data-preset="signal-flow"] .header,
-    html[data-preset="blueprint"] .header { padding-right: 23rem; }
+    html[data-preset="blueprint"] .header { padding-right: 29.5rem; }
 
     .header-row {
       display: flex;
@@ -2541,6 +2541,26 @@
     .toolbar #btn-motion[hidden] { display: none !important; }
     .toolbar #btn-motion { min-width: 4.4rem; }
     .toolbar #btn-motion:disabled { cursor: default; opacity: 0.58; }
+    .toolbar #btn-preset { min-width: 5.4rem; }
+    .preset-control-mark {
+      width: 0.58rem;
+      height: 0.58rem;
+      flex: 0 0 auto;
+      border: 1px solid var(--frontend-stroke);
+      border-radius: 0.2rem;
+      background: color-mix(in srgb, var(--frontend-stroke) 28%, transparent);
+      transition: border-radius 0.15s, box-shadow 0.15s, transform 0.15s;
+    }
+    #btn-preset[data-preset-option="signal-flow"] .preset-control-mark {
+      border-radius: 50%;
+      box-shadow: 0 0 10px color-mix(in srgb, var(--frontend-stroke) 78%, transparent);
+    }
+    #btn-preset[data-preset-option="blueprint"] .preset-control-mark {
+      border-radius: 0.06rem;
+      background: transparent;
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--frontend-stroke) 32%, transparent);
+      transform: rotate(45deg) scale(0.84);
+    }
     .motion-control-dot {
       width: 0.46rem;
       height: 0.46rem;
@@ -2939,7 +2959,7 @@
       .toolbar { gap: 0.25rem; }
       .toolbar button { padding-right: 0.58rem; padding-left: 0.58rem; }
       .toolbar #btn-motion { min-width: 4.4rem; padding-right: 0.58rem; padding-left: 0.58rem; }
-      #theme-label, #present-label { display: none; }
+      #theme-label, #preset-label, #present-label { display: none; }
       .guided-view-handoff { max-width: 6.5rem; }
     }
 
@@ -3727,9 +3747,9 @@
   </style>
 </head>
 <body>
-  <!-- Toolbar: theme, trace motion, presentation stage, and export.
+  <!-- Toolbar: theme, live visual style, trace motion, presentation stage, and export.
        Motion appears only for trace-enabled artifacts and has no shortcut;
-       Keyboard: T toggles theme, F toggles the stage, E opens export. -->
+       Keyboard: T toggles theme, S cycles style, F toggles the stage, E opens export. -->
   <div class="toolbar" role="toolbar" aria-label="Diagram actions">
     <button id="btn-theme" type="button"
             title="Toggle theme (T)"
@@ -3737,6 +3757,12 @@
             aria-pressed="false">
       <span id="theme-icon" aria-hidden="true">&#9790;</span>
       <span id="theme-label">Dark</span>
+    </button>
+    <button id="btn-preset" type="button"
+            title="Cycle visual style (S)"
+            aria-label="Cycle visual style">
+      <span class="preset-control-mark" aria-hidden="true"></span>
+      <span id="preset-label">Style</span>
     </button>
     <button id="btn-motion" type="button" hidden
             title="Pause motion"
@@ -4102,7 +4128,7 @@
           </button>
         </div>
         <div class="diagram-guide-shortcuts" aria-label="Additional keyboard shortcuts">
-          <span><kbd>E</kbd> Export</span><span><kbd>T</kbd> Theme</span><span><kbd>0</kbd> Reset</span><span><kbd>+</kbd> Zoom in</span><span><kbd>-</kbd> Zoom out</span><span><kbd>Esc</kbd> Close</span>
+          <span><kbd>E</kbd> Export</span><span><kbd>T</kbd> Theme</span><span><kbd>S</kbd> Style</span><span><kbd>0</kbd> Reset</span><span><kbd>+</kbd> Zoom in</span><span><kbd>-</kbd> Zoom out</span><span><kbd>Esc</kbd> Close</span>
         </div>
         <p class="diagram-guide-feedback" id="diagram-guide-feedback" aria-live="polite"></p>
       </div>
@@ -4252,10 +4278,54 @@
   </div>
 
   <script>
+    var Archify = {};
+
+    /* ============================================================
+       Visual style try-on — one topology, three bundled presets.
+       The reader's choice is intentionally session-only: it updates the
+       live page and canonical SVG together, but never rewrites the source,
+       URL, or a later diagram's authored default.
+       ============================================================ */
+    Archify.preset = (function () {
+      var PRESETS = ['classic', 'signal-flow', 'blueprint'];
+      var LABELS = { classic: 'Classic', 'signal-flow': 'Flow', blueprint: 'Blueprint' };
+      var html = document.documentElement;
+      var svg = document.querySelector('.diagram-container svg');
+      var btn = document.getElementById('btn-preset');
+      var label = document.getElementById('preset-label');
+      var authored = PRESETS.indexOf(html.getAttribute('data-preset')) >= 0
+        ? html.getAttribute('data-preset')
+        : 'classic';
+
+      function current() {
+        var value = html.getAttribute('data-preset');
+        return PRESETS.indexOf(value) >= 0 ? value : authored;
+      }
+      function nextAfter(preset) {
+        return PRESETS[(PRESETS.indexOf(preset) + 1) % PRESETS.length];
+      }
+      function apply(preset) {
+        if (html.getAttribute('data-embed') === 'true') return false;
+        if (PRESETS.indexOf(preset) < 0) return false;
+        html.setAttribute('data-preset', preset);
+        svg.setAttribute('data-preset', preset);
+        btn.setAttribute('data-preset-option', preset);
+        label.textContent = LABELS[preset];
+        var next = nextAfter(preset);
+        btn.setAttribute('aria-label', 'Visual style: ' + LABELS[preset] + '. Activate for ' + LABELS[next]);
+        btn.title = 'Cycle visual style (S)';
+        return true;
+      }
+      function cycle() { return apply(nextAfter(current())); }
+
+      apply(authored);
+      btn.addEventListener('click', cycle);
+      return { cycle: cycle, apply: apply, current: current, authored: authored };
+    })();
+
     /* ============================================================
        Theme toggle — persists to localStorage, respects system pref
        ============================================================ */
-    var Archify = {};
 
     Archify.theme = (function () {
       var STORAGE_KEY = 'archify-theme';
@@ -11146,6 +11216,7 @@
         if (action === 'present') return Archify.presentation.enter();
         if (action === 'export') return Archify.exportMenu.open();
         if (action === 'theme') return Archify.theme.toggle();
+        if (action === 'preset') return Archify.preset.cycle();
         if (action === 'reset') return Archify.view.reset();
         if (action === 'zoom-in') return Archify.view.zoomIn();
         if (action === 'zoom-out') return Archify.view.zoomOut();
@@ -11161,6 +11232,7 @@
           f: 'present',
           e: 'export',
           t: 'theme',
+          s: 'preset',
           '0': 'reset',
           '+': 'zoom-in',
           '=': 'zoom-in',
@@ -11227,9 +11299,10 @@
 
     /* ============================================================
        Global keyboard shortcuts
-         ? -> open Diagram Guide
-         T -> toggle theme
-         E -> open export menu
+       ? -> open Diagram Guide
+       T -> toggle theme
+       S -> cycle visual style
+       E -> open export menu
          F -> toggle presentation stage
          M -> toggle Semantic Radar
          L -> toggle Semantic Lens
@@ -11253,6 +11326,9 @@
       } else if (e.key === 't' || e.key === 'T') {
         e.preventDefault();
         Archify.theme.toggle();
+      } else if (e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        Archify.preset.cycle();
       } else if (e.key === 'e' || e.key === 'E') {
         e.preventDefault();
         if (!Archify.exportMenu.isOpen()) Archify.exportMenu.open();
