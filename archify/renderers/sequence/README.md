@@ -88,7 +88,9 @@ fullwidth glyphs count as two units.
 Set `meta.quality_profile` to `showcase` for polished delivery. Unrelated proper
 message X crossings then fail with `composition/proper-crossing`; default
 `standard` keeps them as artifact-receipt warnings. Messages may still cross
-intermediate lifelines, and shared endpoints/touches/collinear corridors remain
-outside the proper-X contract. Showcase also rejects any route segment below
-8px and any interior turn segment below 16px; ordinary 8–15px endpoint stubs
-remain valid.
+intermediate lifelines. Collinear corridors remain outside the proper-X rule,
+but a separate gate warns in `standard` and fails in `showcase` when unrelated
+messages overlap for at least 8px. Shared semantic endpoints, point touches,
+and shorter overlaps remain valid. Showcase also rejects any route segment
+below 8px and any interior turn segment below 16px; ordinary 8–15px endpoint
+stubs remain valid.

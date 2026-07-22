@@ -155,6 +155,93 @@ export function cleanCrossingProblems({
   return problems;
 }
 
+// Two unrelated relationships that occupy the same visible corridor can read
+// as one authored branch or merge even when neither relationship crosses a
+// node or forms a proper X. Keep shared semantic endpoints exempt: their
+// initial/final fan-out is real topology. Tiny overlaps below the route rhythm
+// floor are ignored to avoid turning sub-pixel rounding into a quality debt.
+export function collectAmbiguousCorridors({
+  routedRelations,
+  minOverlapPx = 8,
+}) {
+  const routed = asArray(routedRelations).map((entry, fallbackIndex) => {
+    const relation = entry?.relation;
+    if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') return null;
+    const points = normalizeRoutePoints(entry?.points);
+    if (points.length < 2) return null;
+    return {
+      relation,
+      relationIndex: Number.isInteger(entry.relationIndex) ? entry.relationIndex : fallbackIndex,
+      points,
+    };
+  }).filter(Boolean);
+  const hits = [];
+
+  for (let leftIndex = 0; leftIndex < routed.length; leftIndex += 1) {
+    const left = routed[leftIndex];
+    for (let rightIndex = leftIndex + 1; rightIndex < routed.length; rightIndex += 1) {
+      const right = routed[rightIndex];
+      if ([left.relation.from, left.relation.to].some((id) => id === right.relation.from || id === right.relation.to)) continue;
+
+      let longest = null;
+      for (let leftSegment = 0; leftSegment < left.points.length - 1; leftSegment += 1) {
+        for (let rightSegment = 0; rightSegment < right.points.length - 1; rightSegment += 1) {
+          const overlap = collinearAxisOverlap(
+            left.points[leftSegment],
+            left.points[leftSegment + 1],
+            right.points[rightSegment],
+            right.points[rightSegment + 1],
+          );
+          if (!overlap || overlap.length + 0.0001 < minOverlapPx) continue;
+          if (!longest || overlap.length > longest.overlapLength + 0.0001) {
+            longest = {
+              left,
+              right,
+              leftSegment,
+              rightSegment,
+              overlapLength: overlap.length,
+              overlapStart: overlap.start,
+              overlapEnd: overlap.end,
+            };
+          }
+        }
+      }
+      if (longest) hits.push(longest);
+    }
+  }
+  return hits;
+}
+
+export function cleanAmbiguousCorridorProblems({
+  relations,
+  endpointIds,
+  pathFor,
+  diagramType,
+  relationCollection,
+  profile = 'standard',
+  routeHint = 'adjust route/via or channel coordinates so the relationships use separate corridors',
+  minOverlapPx = 8,
+}) {
+  const requestedProfile = process.env.ARCHIFY_QUALITY_PROFILE || profile;
+  if (requestedProfile !== 'showcase') return [];
+  const routedRelations = asArray(relations).map((relation, relationIndex) => {
+    if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') return null;
+    if (endpointIds && (!endpointIds.has(relation.from) || !endpointIds.has(relation.to))) return null;
+    return { relation, relationIndex, points: pathFor(relation)?.points };
+  }).filter(Boolean);
+
+  return collectAmbiguousCorridors({ routedRelations, minOverlapPx }).map((hit) => {
+    const describe = ({ relation, relationIndex }) => {
+      const id = relation.id ? ` id "${relation.id}"` : '';
+      return `${relationCollection}[${relationIndex}]${id} "${relation.from}" -> "${relation.to}"`;
+    };
+    const length = Math.round(hit.overlapLength * 10) / 10;
+    const from = hit.overlapStart.map((value) => Math.round(value * 10) / 10).join(', ');
+    const to = hit.overlapEnd.map((value) => Math.round(value * 10) / 10).join(', ');
+    return `[composition/ambiguous-corridor] showcase ${diagramType} ${describe(hit.left)} shares a ${length}px corridor with ${describe(hit.right)} at [${from}] -> [${to}] (segments ${hit.leftSegment} and ${hit.rightSegment}; minimum ${minOverlapPx}px) — ${routeHint}.`;
+  });
+}
+
 // Relationship paths may cross a structural frame, but they must not borrow a
 // frame side as a routing corridor. Rounded rectangle corners are trimmed from
 // the modeled straight sides so a short corner touch is not mistaken for a

@@ -95,6 +95,9 @@ Text width is estimated CJK-aware: fullwidth glyphs count as two units.
 Set `meta.quality_profile` to `showcase` for polished delivery. Unrelated proper
 X crossings then fail with `composition/proper-crossing`; default `standard`
 keeps them as artifact-receipt warnings. The final artifact check samples
-rounded `Q` corners, while shared endpoints, touches, and collinear corridors
-remain exempt. Showcase also rejects any route segment below 8px and any
-interior turn segment below 16px; ordinary 8–15px endpoint stubs remain valid.
+rounded `Q` corners. Collinear corridors remain outside the proper-X rule, but
+a separate gate warns in `standard` and fails in `showcase` when unrelated
+transitions overlap for at least 8px. Shared semantic endpoints, point touches,
+and shorter overlaps remain valid. Showcase also rejects any route segment
+below 8px and any interior turn segment below 16px; ordinary 8–15px endpoint
+stubs remain valid.

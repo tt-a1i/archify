@@ -3876,7 +3876,7 @@
         <path data-edge-from="enrich" data-edge-to="state" data-edge-label="enriched payment" data-edge-key="5" data-composition-points="586,385;630,385;630,271;689,271" d="M 586 385 L 630 385 L 630 271 L 689 271" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <path data-edge-from="state" data-edge-to="fulfillment" data-edge-label="ready orders" data-edge-key="6" data-composition-points="801,271;845,271;845,157;904,157" d="M 801 271 L 845 271 L 845 157 L 904 157" class="a-emphasis" data-animate="edge" style="--step:6" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="state" data-edge-to="analytics" data-edge-label="order facts" data-edge-key="7" data-composition-points="801,271;845,271;845,385;904,385" d="M 801 271 L 845 271 L 845 385 L 904 385" class="a-default" data-animate="edge" style="--step:7" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="validate" data-edge-to="dlq" data-edge-label="invalid event" data-edge-key="8" data-composition-points="530,186;630,186;630,550;745,550;745,584" d="M 530 186 L 630 186 L 630 550 L 745 550 L 745 584" class="a-security" data-animate="edge" style="--step:8" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="validate" data-edge-to="dlq" data-edge-label="invalid event" data-edge-key="8" data-composition-points="530,128;530,80;20,80;20,550;745,550;745,584" d="M 530 128 L 530 80 L 20 80 L 20 550 L 745 550 L 745 584" class="a-security" data-animate="edge" style="--step:8" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="enrich" data-edge-to="dlq" data-edge-label="poison event" data-edge-key="9" data-composition-points="586,385;586,668;689,668;689,613" d="M 586 385 L 586 668 L 689 668 L 689 613" class="a-security" data-animate="edge" style="--step:9" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="dlq" data-edge-to="ops" data-edge-label="failure sample" data-edge-key="10" data-composition-points="801,613;845,613;845,481;904,481" d="M 801 613 L 845 613 L 845 481 L 904 481" class="a-security" data-animate="edge" style="--step:10" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="dlq" data-edge-to="replay" data-edge-label="approved replay" data-edge-key="11" data-composition-points="801,613;904,613" d="M 801 613 L 904 613" class="a-dashed" data-animate="edge" style="--step:11" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
@@ -4084,9 +4084,9 @@
         <text data-detail="fine" x="845" y="329" class="t-dim" font-size="7" text-anchor="middle">non-PII</text>
         </g>
         <g data-detail="context" data-edge-from="validate" data-edge-to="dlq" data-edge-label="invalid event" data-edge-key="8">
-          <rect x="592.15" y="417" width="75.7" height="27" rx="4" class="c-mask"/>
-          <text x="630" y="428" class="t-security" font-size="8" text-anchor="middle">invalid event</text>
-        <text data-detail="fine" x="630" y="439" class="t-dim" font-size="7" text-anchor="middle">dead letter</text>
+          <rect x="262.15" y="539" width="75.7" height="27" rx="4" class="c-mask"/>
+          <text x="300" y="550" class="t-security" font-size="8" text-anchor="middle">invalid event</text>
+        <text data-detail="fine" x="300" y="561" class="t-dim" font-size="7" text-anchor="middle">dead letter</text>
         </g>
         <g data-detail="context" data-edge-from="enrich" data-edge-to="dlq" data-edge-label="poison event" data-edge-key="9">
           <rect x="602.1" y="677" width="70.80000000000001" height="27" rx="4" class="c-mask"/>

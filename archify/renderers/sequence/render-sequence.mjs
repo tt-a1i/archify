@@ -2,7 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagram, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
-import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, routePointsValue, asArray, isFinitePoint } from '../shared/geometry.mjs';
+import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, routePointsValue, asArray, isFinitePoint } from '../shared/geometry.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const { diagram: sequence, template, outPath } = loadDiagram({
@@ -131,6 +131,15 @@ function validateSequence() {
     relationCollection: 'messages',
     profile: sequence.meta?.quality_profile,
     routeHint: 'separate the message y values; lifeline crossings remain allowed'
+  }));
+  problems.push(...cleanAmbiguousCorridorProblems({
+    relations: sequence.messages,
+    endpointIds: new Set(participants.keys()),
+    pathFor: messagePath,
+    diagramType: 'sequence',
+    relationCollection: 'messages',
+    profile: sequence.meta?.quality_profile,
+    routeHint: 'separate the message y values so unrelated messages do not visually merge'
   }));
   problems.push(...cleanBorderRunProblems({
     relations: sequence.messages,

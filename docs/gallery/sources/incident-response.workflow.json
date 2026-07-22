@@ -53,7 +53,7 @@
     { "from": "recover", "to": "verify", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
     { "from": "verify", "to": "close", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
     { "from": "triage", "to": "declare", "variant": "security" },
-    { "from": "declare", "to": "update", "variant": "dashed", "fromSide": "bottom", "toSide": "left", "via": [[430, 310], [356, 310], [356, 615]] },
+    { "from": "declare", "to": "update", "variant": "dashed", "fromSide": "top", "toSide": "left", "via": [[430, 16], [20, 16], [20, 615]] },
     { "from": "update", "to": "escalate", "variant": "security", "route": "drop", "fromSide": "bottom", "toSide": "top" },
     { "from": "verify", "to": "rollback", "variant": "security", "role": "error", "route": "outside-right", "fromSide": "right", "toSide": "right" }
   ],

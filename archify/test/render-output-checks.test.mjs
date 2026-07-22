@@ -98,17 +98,44 @@ test('render output check: showcase rejects a proper X with semantic identities'
   assert.deepEqual(result.composition.summary, { errors: 1, warnings: 0 });
 });
 
-test('render output check: shared endpoints, endpoint touches, and collinear corridors pass showcase', () => {
+test('render output check: shared endpoints and endpoint touches pass showcase', () => {
   const { code, result } = checkHtml('showcase-exemptions', `
     <path data-edge-from="a" data-edge-to="b" d="M 20 60 L 200 60" class="a-default" marker-end="url(#arrowhead)"/>
-    <path data-edge-from="a" data-edge-to="c" d="M 100 20 L 100 120" class="a-dashed" marker-end="url(#arrowhead-dashed)"/>
+    <path data-edge-from="a" data-edge-to="c" d="M 100 20 L 100 90" class="a-dashed" marker-end="url(#arrowhead-dashed)"/>
     <path data-edge-from="d" data-edge-to="e" d="M 20 100 L 100 100" class="a-default" marker-end="url(#arrowhead)"/>
     <path data-edge-from="f" data-edge-to="g" d="M 100 100 L 100 140" class="a-default" marker-end="url(#arrowhead)"/>
-    <path data-edge-from="h" data-edge-to="i" d="M 40 150 L 160 150" class="a-default" marker-end="url(#arrowhead)"/>
-    <path data-edge-from="j" data-edge-to="k" d="M 80 150 L 180 150" class="a-dashed" marker-end="url(#arrowhead-dashed)"/>
   `, 'showcase');
   assert.equal(code, 0);
   assert.equal(result.composition.metrics.properCrossings, 0);
+  assert.equal(result.composition.metrics.ambiguousCorridors, 0);
+});
+
+test('render output check: unrelated shared corridors warn in standard and fail showcase', () => {
+  for (const profile of ['standard', 'showcase']) {
+    const { code, result } = checkHtml(`corridor-${profile}`, `
+      <path data-edge-id="first" data-edge-from="a" data-edge-to="b" data-composition-points="20,60;140,60;140,100" d="M 20 60 L 140 60 L 140 100" class="a-default" marker-end="url(#arrowhead)"/>
+      <path data-edge-id="second" data-edge-from="c" data-edge-to="d" data-composition-points="60,60;180,60;180,100" d="M 60 60 L 180 60 L 180 100" class="a-dashed" marker-end="url(#arrowhead-dashed)"/>
+    `, profile);
+    assert.equal(result.composition.metrics.ambiguousCorridors, 1);
+    assert.equal(result.composition.issues[0].code, 'composition/ambiguous-corridor');
+    assert.equal(result.composition.issues[0].overlapLength, 80);
+    assert.deepEqual(result.composition.issues[0].from, [60, 60]);
+    assert.deepEqual(result.composition.issues[0].to, [140, 60]);
+    const check = result.checks.find((item) => item.name === 'relationship_corridors');
+    if (profile === 'standard') {
+      assert.equal(code, 0);
+      assert.equal(check.ok, true);
+      assert.deepEqual(result.composition.summary, { errors: 0, warnings: 1 });
+      assert.equal(result.composition.issues[0].severity, 'warning');
+    } else {
+      assert.notEqual(code, 0);
+      assert.equal(check.ok, false);
+      assert.match(check.details[0], /\[composition\/ambiguous-corridor\] showcase/);
+      assert.match(check.details[0], /relationship id "first".*relationship id "second"/);
+      assert.deepEqual(result.composition.summary, { errors: 1, warnings: 0 });
+      assert.equal(result.composition.issues[0].severity, 'error');
+    }
+  }
 });
 
 test('render output check: visible quadratic crossing is caught in showcase', () => {

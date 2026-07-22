@@ -310,6 +310,38 @@ test('architecture: standard keeps the same proper crossing renderable', () => {
   assert.equal(code, 0, stderr);
 });
 
+function ambiguousCorridorDocument(profile) {
+  return {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Ambiguous corridor', quality_profile: profile },
+    components: [
+      { id: 'a', type: 'frontend', label: 'A', pos: [40, 60], size: [60, 40] },
+      { id: 'b', type: 'backend', label: 'B', pos: [400, 60], size: [60, 40] },
+      { id: 'c', type: 'database', label: 'C', pos: [120, 220], size: [60, 40] },
+      { id: 'd', type: 'external', label: 'D', pos: [480, 220], size: [60, 40] },
+    ],
+    connections: [
+      { id: 'first', from: 'a', to: 'b', fromSide: 'right', toSide: 'left', route: 'straight' },
+      { id: 'second', from: 'c', to: 'd', fromSide: 'top', toSide: 'top', via: [[150, 80], [390, 80], [390, 180], [510, 180]] },
+    ],
+  };
+}
+
+test('architecture: showcase rejects an unrelated shared route corridor', () => {
+  const { code, stderr } = render('architecture', ambiguousCorridorDocument('showcase'));
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/ambiguous-corridor\] showcase architecture/);
+  assert.match(stderr, /connections\[0\] id "first" "a" -> "b" shares a 240px corridor with connections\[1\] id "second" "c" -> "d"/);
+  assert.match(stderr, /\[150, 80\] -> \[390, 80\]/);
+  assert.match(stderr, /do not visually merge/);
+});
+
+test('architecture: standard keeps an ambiguous corridor renderable for repair', () => {
+  const { code, stderr } = render('architecture', ambiguousCorridorDocument('standard'));
+  assert.equal(code, 0, stderr);
+});
+
 test('architecture: route rhythm warns in standard and blocks a showcase micro segment', () => {
   const base = {
     schema_version: 1,

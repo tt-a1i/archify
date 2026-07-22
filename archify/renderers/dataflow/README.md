@@ -85,7 +85,9 @@ is estimated CJK-aware: fullwidth glyphs count as two units.
 
 Set `meta.quality_profile` to `showcase` for polished delivery. Unrelated proper
 X crossings then fail with `composition/proper-crossing`; default `standard`
-keeps them as artifact-receipt warnings. Shared semantic endpoints, endpoint
-touches, and collinear stage corridors are not proper crossings. Showcase also
+keeps them as artifact-receipt warnings. Collinear stage corridors are outside
+the proper-X rule, but a separate gate warns in `standard` and fails in
+`showcase` when unrelated flows overlap for at least 8px. Shared semantic
+endpoints, point touches, and shorter overlaps remain valid. Showcase also
 rejects any route segment below 8px and any interior turn segment below 16px;
 ordinary 8–15px endpoint stubs remain valid.

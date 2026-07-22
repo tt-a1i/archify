@@ -8,6 +8,7 @@ import {
   rectsOverlap,
   cleanFlowProblems,
   cleanCrossingProblems,
+  cleanAmbiguousCorridorProblems,
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   suggestLabelObstacleFix,
@@ -210,6 +211,15 @@ function validateLifecycle() {
     relationCollection: 'transitions',
     profile: lifecycle.meta?.quality_profile,
     routeHint: 'adjust route/via or channelX/channelY so the transitions use separate lifecycle corridors'
+  }));
+  problems.push(...cleanAmbiguousCorridorProblems({
+    relations: lifecycle.transitions,
+    endpointIds: new Set(states.keys()),
+    pathFor,
+    diagramType: 'lifecycle',
+    relationCollection: 'transitions',
+    profile: lifecycle.meta?.quality_profile,
+    routeHint: 'adjust route/via or channelX/channelY so unrelated transitions do not visually merge'
   }));
   // Lifecycle bands are dashed reading guides, not closed containers. Keep the
   // shared contract wired with an explicit empty frame set so future typed

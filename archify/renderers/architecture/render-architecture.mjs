@@ -11,6 +11,7 @@ import {
   segmentIntersectsRect,
   cleanFlowProblems,
   cleanCrossingProblems,
+  cleanAmbiguousCorridorProblems,
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   suggestLabelObstacleFix,
@@ -217,6 +218,15 @@ function validateArchitecture() {
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
     routeHint: 'adjust route/via or fromSide/toSide so the connections use separate corridors'
+  }));
+  problems.push(...cleanAmbiguousCorridorProblems({
+    relations: arch.connections,
+    endpointIds: new Set(components.keys()),
+    pathFor,
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: arch.meta?.quality_profile,
+    routeHint: 'adjust route/via or fromSide/toSide so unrelated connections do not visually merge'
   }));
   problems.push(...cleanBorderRunProblems({
     relations: arch.connections,

@@ -2,7 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { collectBorderRuns, collectRouteRhythmIssues, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
+import { collectAmbiguousCorridors, collectBorderRuns, collectRouteRhythmIssues, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 
 const input = process.argv[2];
 
@@ -32,6 +32,7 @@ let composition = {
   summary: { errors: 0, warnings: 0 },
   metrics: {
     properCrossings: 0,
+    ambiguousCorridors: 0,
     containerBorderRuns: 0,
     maxBends: 0,
     routesOverSuggestedBends: 0,
@@ -88,13 +89,17 @@ if (svgMatches.length === 1) {
     .map((arrow) => ({ relation: arrow, relationIndex: arrow.index, points: arrow.routePoints }));
   const routeMetrics = routeBudgetMetrics({ routedRelations: routedRelationships });
   const routeRhythmIssues = collectRouteRhythmIssues({ routedRelations: routedRelationships });
+  const ambiguousCorridors = collectAmbiguousCorridors({ routedRelations: routedRelationships });
   const crossingIsError = qualityProfile === 'showcase';
+  const corridorIsError = qualityProfile === 'showcase';
   const rhythmIsError = qualityProfile === 'showcase';
   const compositionErrors = (qualityGatesEnforced ? containerBorderRuns.length : 0)
     + (crossingIsError ? relationshipCrossings.length : 0)
+    + (corridorIsError ? ambiguousCorridors.length : 0)
     + (rhythmIsError ? routeRhythmIssues.length : 0);
   const compositionWarnings = (qualityGatesEnforced ? 0 : containerBorderRuns.length)
     + (crossingIsError ? 0 : relationshipCrossings.length)
+    + (corridorIsError ? 0 : ambiguousCorridors.length)
     + (rhythmIsError ? 0 : routeRhythmIssues.length);
   composition = {
     schemaVersion: 1,
@@ -106,6 +111,7 @@ if (svgMatches.length === 1) {
     },
     metrics: {
       properCrossings: relationshipCrossings.length,
+      ambiguousCorridors: ambiguousCorridors.length,
       containerBorderRuns: containerBorderRuns.length,
       ...roundedRouteMetrics(routeMetrics),
     },
@@ -129,6 +135,17 @@ if (svgMatches.length === 1) {
         otherRelationship: relationshipRecord(hit.right),
         point: hit.point.map((value) => Math.round(value * 10) / 10),
       })),
+      ...ambiguousCorridors.map((hit) => ({
+        severity: corridorIsError ? 'error' : 'warning',
+        code: 'composition/ambiguous-corridor',
+        relationship: relationshipRecord(hit.left.relation),
+        otherRelationship: relationshipRecord(hit.right.relation),
+        segmentIndex: hit.leftSegment,
+        otherSegmentIndex: hit.rightSegment,
+        overlapLength: Math.round(hit.overlapLength * 10) / 10,
+        from: hit.overlapStart.map((value) => Math.round(value * 10) / 10),
+        to: hit.overlapEnd.map((value) => Math.round(value * 10) / 10),
+      })),
       ...routeRhythmIssues.map((hit) => ({
         severity: rhythmIsError ? 'error' : 'warning',
         code: hit.code,
@@ -146,6 +163,13 @@ if (svgMatches.length === 1) {
     !crossingIsError || relationshipCrossings.length === 0,
     relationshipCrossings.map((hit) => (
       `[composition/proper-crossing] ${qualityProfile} ${relationshipName(hit.left)} crosses ${relationshipName(hit.right)} at [${formatPoint(hit.point)}]`
+    )),
+  );
+  addCheck(
+    'relationship_corridors',
+    !corridorIsError || ambiguousCorridors.length === 0,
+    ambiguousCorridors.map((hit) => (
+      `[composition/ambiguous-corridor] ${qualityProfile} ${relationshipName(hit.left.relation)} shares a ${Math.round(hit.overlapLength * 10) / 10}px corridor with ${relationshipName(hit.right.relation)} at [${formatPoint(hit.overlapStart)}] -> [${formatPoint(hit.overlapEnd)}]`
     )),
   );
   addCheck(

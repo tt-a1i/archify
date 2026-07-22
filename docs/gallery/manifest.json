@@ -3,7 +3,7 @@
   "generator": "scripts/build-gallery.mjs",
   "archifyVersion": "2.11.0",
   "entryCount": 11,
-  "checkCount": 77,
+  "checkCount": 88,
   "entries": [
     {
       "id": "agent-tool-call",
@@ -48,6 +48,10 @@
           "ok": true
         },
         {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
           "name": "container_border_runs",
           "ok": true
         },
@@ -70,6 +74,7 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
           "maxBends": 2,
           "routesOverSuggestedBends": 0,
@@ -134,6 +139,10 @@
           "ok": true
         },
         {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
           "name": "container_border_runs",
           "ok": true
         },
@@ -156,6 +165,7 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
           "maxBends": 2,
           "routesOverSuggestedBends": 0,
@@ -220,6 +230,10 @@
           "ok": true
         },
         {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
           "name": "container_border_runs",
           "ok": true
         },
@@ -242,6 +256,7 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
           "maxBends": 0,
           "routesOverSuggestedBends": 0,
@@ -306,6 +321,10 @@
           "ok": true
         },
         {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
           "name": "container_border_runs",
           "ok": true
         },
@@ -328,6 +347,7 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
           "maxBends": 2,
           "routesOverSuggestedBends": 0,
@@ -370,10 +390,10 @@
       "animation": "trace",
       "nodeCount": 11,
       "edgeCount": 10,
-      "artifactBytes": 524385,
-      "artifactSha256": "208e896992cddc67b75faa66f8d1e334b6d8b4cc2f7ef24fee25e2e4eab8ff68",
-      "sourceBytes": 5478,
-      "sourceSha256": "73dfd0779c8657c766a1b598447ffb193303d327b3c8effa09bbc4e3bb0909c7",
+      "artifactBytes": 524377,
+      "artifactSha256": "835e9d74936f7f8dd83f259af0b0d6761e1be246a4d25d97a6123a3bba477c8f",
+      "sourceBytes": 5471,
+      "sourceSha256": "9beb8698b275679a2fc92d4b51288cd5b5fc2115696d06b9168f3d7fef253a72",
       "checks": [
         {
           "name": "single_svg",
@@ -389,6 +409,10 @@
         },
         {
           "name": "relationship_crossings",
+          "ok": true
+        },
+        {
+          "name": "relationship_corridors",
           "ok": true
         },
         {
@@ -414,11 +438,12 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
           "maxBends": 3,
           "routesOverSuggestedBends": 1,
-          "maxStretch": 1.914,
-          "routesOverSuggestedStretch": 2,
+          "maxStretch": 3.465,
+          "routesOverSuggestedStretch": 3,
           "minSegmentPx": 21,
           "minInteriorSegmentPx": 70,
           "shortSegmentCount": 0,
@@ -478,6 +503,10 @@
           "ok": true
         },
         {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
           "name": "container_border_runs",
           "ok": true
         },
@@ -500,6 +529,7 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
           "maxBends": 3,
           "routesOverSuggestedBends": 2,
@@ -564,6 +594,10 @@
           "ok": true
         },
         {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
           "name": "container_border_runs",
           "ok": true
         },
@@ -586,6 +620,7 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
           "maxBends": 0,
           "routesOverSuggestedBends": 0,
@@ -628,10 +663,10 @@
       "animation": "trace",
       "nodeCount": 12,
       "edgeCount": 12,
-      "artifactBytes": 529907,
-      "artifactSha256": "856e523ecc262cb1826bfbf29eaaf9a82e1276e2fa7c2836ecdb23128c404915",
-      "sourceBytes": 5523,
-      "sourceSha256": "6ba25b4ea9897f05061b073d45a3914bf95fbe7a9e9d63fcb3e8ba76222fdfd7",
+      "artifactBytes": 529917,
+      "artifactSha256": "d460f50fdb8bc8b15c5398fcc17ee36c705f56b4c4310f9f815127519d305294",
+      "sourceBytes": 5528,
+      "sourceSha256": "6541e9d00ea1efc38e4afc9c1cb4bbbea6e4468781e64da43ad9787cd6d51efc",
       "checks": [
         {
           "name": "single_svg",
@@ -647,6 +682,10 @@
         },
         {
           "name": "relationship_crossings",
+          "ok": true
+        },
+        {
+          "name": "relationship_corridors",
           "ok": true
         },
         {
@@ -672,11 +711,12 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
-          "maxBends": 3,
+          "maxBends": 4,
           "routesOverSuggestedBends": 1,
-          "maxStretch": 1.332,
-          "routesOverSuggestedStretch": 0,
+          "maxStretch": 2.663,
+          "routesOverSuggestedStretch": 1,
           "minSegmentPx": 34,
           "minInteriorSegmentPx": 103,
           "shortSegmentCount": 0,
@@ -736,6 +776,10 @@
           "ok": true
         },
         {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
           "name": "container_border_runs",
           "ok": true
         },
@@ -758,6 +802,7 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
           "maxBends": 3,
           "routesOverSuggestedBends": 1,
@@ -822,6 +867,10 @@
           "ok": true
         },
         {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
           "name": "container_border_runs",
           "ok": true
         },
@@ -844,6 +893,7 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
           "maxBends": 0,
           "routesOverSuggestedBends": 0,
@@ -908,6 +958,10 @@
           "ok": true
         },
         {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
           "name": "container_border_runs",
           "ok": true
         },
@@ -930,6 +984,7 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
           "maxBends": 3,
           "routesOverSuggestedBends": 1,

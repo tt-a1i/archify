@@ -8,6 +8,7 @@ import {
   rectsOverlap,
   cleanFlowProblems,
   cleanCrossingProblems,
+  cleanAmbiguousCorridorProblems,
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   suggestLabelObstacleFix,
@@ -294,6 +295,15 @@ function validateWorkflow() {
     relationCollection: 'edges',
     profile: workflow.meta?.quality_profile,
     routeHint: 'adjust route/via, bias, or channel coordinates so the edges use separate lane corridors'
+  }));
+  problems.push(...cleanAmbiguousCorridorProblems({
+    relations: workflow.edges,
+    endpointIds: new Set(nodes.keys()),
+    pathFor,
+    diagramType: 'workflow',
+    relationCollection: 'edges',
+    profile: workflow.meta?.quality_profile,
+    routeHint: 'adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge'
   }));
   problems.push(...cleanBorderRunProblems({
     relations: workflow.edges,

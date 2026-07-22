@@ -99,7 +99,7 @@ test('README motion proof is compact, looping, and backed by current gallery art
     const artifact = path.join(repoRoot, scene.artifact);
     assert.ok(fs.existsSync(artifact), `${scene.id}: source artifact missing`);
     assert.equal(scene.artifactSha256, sha256(artifact), `${scene.id}: source artifact drift; rebuild README showcase`);
-    assert.match(scene.receipt, /7\/7 checks/);
+    assert.match(scene.receipt, /8\/8 checks/);
   }
 });
 

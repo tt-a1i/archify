@@ -8,6 +8,7 @@ import {
   rectsOverlap,
   cleanFlowProblems,
   cleanCrossingProblems,
+  cleanAmbiguousCorridorProblems,
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   suggestLabelObstacleFix,
@@ -172,6 +173,15 @@ function validateDataflow() {
     relationCollection: 'flows',
     profile: dataflow.meta?.quality_profile,
     routeHint: 'adjust route/via or channelX/channelY so the flows use separate stage corridors'
+  }));
+  problems.push(...cleanAmbiguousCorridorProblems({
+    relations: dataflow.flows,
+    endpointIds: new Set(nodes.keys()),
+    pathFor,
+    diagramType: 'dataflow',
+    relationCollection: 'flows',
+    profile: dataflow.meta?.quality_profile,
+    routeHint: 'adjust route/via or channelX/channelY so unrelated flows do not visually merge'
   }));
   problems.push(...cleanBorderRunProblems({
     relations: dataflow.flows,

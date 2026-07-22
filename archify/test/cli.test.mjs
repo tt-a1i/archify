@@ -206,10 +206,11 @@ test('cli: validate emits structured json without keeping html output', () => {
   const parsed = JSON.parse(result.stdout);
   assert.equal(parsed.ok, true);
   assert.equal(parsed.type, 'workflow');
-  assert.equal(parsed.checks.length, 7);
+  assert.equal(parsed.checks.length, 8);
   assert.equal(parsed.composition.profile, 'showcase');
   assert.deepEqual(parsed.composition.summary, { errors: 0, warnings: 0 });
   assert.equal(parsed.composition.metrics.containerBorderRuns, 0);
+  assert.equal(parsed.composition.metrics.ambiguousCorridors, 0);
   assert.deepEqual(new Set(fs.readdirSync(tmp)), before);
 });
 
