@@ -19,7 +19,7 @@ Archify is an agent skill for Claude, Codex CLI, and opencode. It produces a sel
 - **Explore real topology** — find nodes, inspect relationships, trace routes, compare roles, and play guided stories
 - **Motion is optional** — output stays static unless `meta.animation: "trace"` is explicitly enabled
 - **Portable exports** — copy PNG or download PNG, JPEG, WebP, dual-theme SVG, and trace-enabled WebM
-- **Typed and checked** — JSON IR, bundled schema validation, layout checks, and opt-in quality profiles
+- **Typed and checked** — JSON IR, bundled schema validation, default semantic safety gates, and opt-in composition profiles
 - **Self-contained output** — one shareable HTML file with no viewer runtime dependency
 - **Built for agent workflows** — install once, then create and refine diagrams through conversation
 

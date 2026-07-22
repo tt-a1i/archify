@@ -24,7 +24,7 @@
   ],
   "connections": [
     { "from": "users", "to": "cdn", "label": "HTTPS", "variant": "emphasis" },
-    { "from": "auth", "to": "api", "label": "verify JWT", "variant": "security", "fromSide": "right", "toSide": "top" },
+    { "from": "auth", "to": "api", "label": "verify JWT", "variant": "security", "fromSide": "right", "toSide": "left", "via": [[620, 142], [620, 330]] },
     { "from": "cdn", "to": "lb" },
     { "from": "cdn", "to": "s3", "label": "static", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 58 },
     { "from": "lb", "to": "api" },

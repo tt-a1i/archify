@@ -107,7 +107,14 @@ test('legacy v1 architecture geometry remains renderable without an explicit qua
       { id: 'api', type: 'backend', label: 'API Server', pos: [670, 300], size: [130, 60] },
     ],
     connections: [
-      { from: 'auth', to: 'api', label: 'verify JWT', fromSide: 'right', toSide: 'top' },
+      {
+        from: 'auth',
+        to: 'api',
+        label: 'verify JWT',
+        fromSide: 'right',
+        toSide: 'left',
+        via: [[620, 142], [620, 330]],
+      },
     ],
   };
 
@@ -155,8 +162,8 @@ test('legacy v1 lifecycle geometry remains renderable without an explicit qualit
       { id: 'cancelled', type: 'failure', label: 'Cancelled', lane: 'terminal', col: 0 },
     ],
     transitions: [
-      { from: 'executing', to: 'failed', fromSide: 'left', toSide: 'top', via: [[340, 342], [402, 342]] },
-      { from: 'approval', to: 'cancelled', fromSide: 'bottom', toSide: 'top', route: 'straight' },
+      { from: 'executing', to: 'failed', fromSide: 'left', toSide: 'top', via: [[320, 157], [320, 342], [402, 342]] },
+      { from: 'approval', to: 'cancelled', fromSide: 'bottom', toSide: 'top', via: [[320, 336], [320, 430], [402, 430]] },
     ],
   };
 

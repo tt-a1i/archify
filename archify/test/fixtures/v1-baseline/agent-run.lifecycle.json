@@ -28,9 +28,9 @@
   "transitions": [
     { "from": "executing", "to": "approval", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight" },
     { "from": "reviewing", "to": "blocked", "variant": "default", "route": "drop" },
-    { "from": "executing", "to": "failed", "variant": "security", "fromSide": "left", "toSide": "top", "via": [[340, 342], [402, 342]] },
+    { "from": "executing", "to": "failed", "variant": "security", "fromSide": "left", "toSide": "top", "via": [[320, 157], [320, 342], [402, 342]] },
     { "from": "blocked", "to": "expired", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight" },
-    { "from": "approval", "to": "cancelled", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight" }
+    { "from": "approval", "to": "cancelled", "variant": "security", "fromSide": "bottom", "toSide": "top", "via": [[320, 336], [320, 430], [402, 430]] }
   ],
   "cards": [
     {
