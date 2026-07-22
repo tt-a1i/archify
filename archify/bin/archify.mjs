@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -14,6 +15,7 @@ const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'life
 function usage() {
   return `Usage:
   archify render <type> <input.json> [output.html] [--quality standard|showcase]
+  archify deliver <type> <input.json> [output.html] [--json] [--quality standard|showcase]
   archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase]
   archify inspect <type> <input.json>
   archify check <output.html>
@@ -83,6 +85,210 @@ function commandRender(args) {
     env: quality ? { ARCHIFY_QUALITY_PROFILE: quality } : undefined,
   });
   if (result.status !== 0) exitFrom(result);
+}
+
+function reportDeliveryFailure({ json, stage, type, input, output, error, status = 1, checker }) {
+  const receipt = {
+    schemaVersion: 1,
+    ok: false,
+    command: 'deliver',
+    stage,
+    type,
+    input,
+    output,
+    error,
+    ...(checker ? { checker } : {}),
+  };
+  if (json) console.log(JSON.stringify(receipt, null, 2));
+  else console.error(error);
+  process.exitCode = status;
+}
+
+function commandDeliver(args) {
+  const qualityArgs = extractQualityArgs(args);
+  const json = qualityArgs.rest.includes('--json');
+  const unknown = qualityArgs.rest.filter((arg) => arg.startsWith('--') && arg !== '--json');
+  if (unknown.length) fail(`Unknown deliver option "${unknown[0]}".`);
+  const positional = qualityArgs.rest.filter((arg) => arg !== '--json');
+  const [type, input, requestedOutput] = positional;
+  if (!type || !input || positional.length > 3) fail(usage());
+
+  const renderer = rendererPath(type);
+  const inputPath = path.resolve(input);
+  let diagram;
+  try {
+    diagram = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+  } catch (error) {
+    reportDeliveryFailure({
+      json,
+      stage: 'input',
+      type,
+      input: inputPath,
+      output: path.resolve(requestedOutput || `${type}.html`),
+      error: `Could not read delivery input "${inputPath}": ${error.message}`,
+    });
+    return;
+  }
+
+  const authoredOutput = typeof diagram?.meta?.output === 'string' && diagram.meta.output
+    ? diagram.meta.output
+    : `${type}.html`;
+  const outputPath = path.resolve(requestedOutput || authoredOutput);
+  const outputDirectory = path.dirname(outputPath);
+  try {
+    fs.mkdirSync(outputDirectory, { recursive: true });
+  } catch (error) {
+    reportDeliveryFailure({
+      json,
+      stage: 'prepare',
+      type,
+      input: inputPath,
+      output: outputPath,
+      error: `Could not create delivery directory "${outputDirectory}": ${error.message}`,
+    });
+    return;
+  }
+
+  // Keep the candidate beside the target so the final rename is one
+  // same-filesystem commit. A render or artifact-check failure never touches
+  // an existing trusted output.
+  let stagingDirectory;
+  try {
+    stagingDirectory = fs.mkdtempSync(path.join(outputDirectory, '.archify-delivery-'));
+  } catch (error) {
+    reportDeliveryFailure({
+      json,
+      stage: 'prepare',
+      type,
+      input: inputPath,
+      output: outputPath,
+      error: `Could not create a delivery candidate beside "${outputPath}": ${error.message}`,
+    });
+    return;
+  }
+  const candidatePath = path.join(stagingDirectory, path.basename(outputPath));
+
+  try {
+    const render = runNode([renderer, inputPath, candidatePath], {
+      stdio: 'pipe',
+      env: qualityArgs.quality ? { ARCHIFY_QUALITY_PROFILE: qualityArgs.quality } : undefined,
+    });
+    if (render.status !== 0) {
+      if (render.stderr) process.stderr.write(render.stderr);
+      if (render.stdout) process.stderr.write(render.stdout);
+      reportDeliveryFailure({
+        json,
+        stage: 'render',
+        type,
+        input: inputPath,
+        output: outputPath,
+        error: (render.stderr || render.stdout || 'Renderer failed without a diagnostic.').trim(),
+        status: render.status ?? 1,
+      });
+      return;
+    }
+
+    const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), candidatePath], {
+      stdio: 'pipe',
+    });
+    if (check.status !== 0) {
+      if (check.stderr) process.stderr.write(check.stderr);
+      let checker;
+      try {
+        checker = JSON.parse(check.stdout);
+        checker.file = outputPath;
+      } catch {
+        checker = { ok: false, file: outputPath, diagnostic: check.stdout.trim() };
+      }
+      reportDeliveryFailure({
+        json,
+        stage: 'check',
+        type,
+        input: inputPath,
+        output: outputPath,
+        error: 'Final artifact check failed; the previous artifact was preserved.',
+        status: check.status ?? 1,
+        checker,
+      });
+      return;
+    }
+
+    let result;
+    try {
+      result = JSON.parse(check.stdout);
+    } catch (error) {
+      reportDeliveryFailure({
+        json,
+        stage: 'receipt',
+        type,
+        input: inputPath,
+        output: outputPath,
+        error: `Could not parse the successful artifact-check receipt: ${error.message}`,
+      });
+      return;
+    }
+    let artifact;
+    try {
+      artifact = fs.readFileSync(candidatePath);
+    } catch (error) {
+      reportDeliveryFailure({
+        json,
+        stage: 'receipt',
+        type,
+        input: inputPath,
+        output: outputPath,
+        error: `Could not read the verified delivery candidate: ${error.message}`,
+      });
+      return;
+    }
+    const receipt = {
+      schemaVersion: 1,
+      ok: true,
+      command: 'deliver',
+      type,
+      input: inputPath,
+      output: outputPath,
+      artifact: {
+        sha256: createHash('sha256').update(artifact).digest('hex'),
+        bytes: artifact.byteLength,
+      },
+      validation: {
+        checksPassed: result.checks.filter((checkItem) => checkItem.ok).length,
+        checkCount: result.checks.length,
+        compositionProfile: result.composition.profile,
+        compositionStatus: result.composition.status,
+        errors: result.composition.summary.errors,
+        warnings: result.composition.summary.warnings,
+      },
+    };
+
+    try {
+      fs.renameSync(candidatePath, outputPath);
+    } catch (error) {
+      reportDeliveryFailure({
+        json,
+        stage: 'commit',
+        type,
+        input: inputPath,
+        output: outputPath,
+        error: `Could not commit verified delivery "${outputPath}": ${error.message}`,
+      });
+      return;
+    }
+
+    if (json) {
+      console.log(JSON.stringify(receipt, null, 2));
+    } else {
+      console.log(`delivered ${type} ${outputPath}`);
+      console.log(`${receipt.validation.checksPassed}/${receipt.validation.checkCount} artifact checks; composition ${receipt.validation.compositionProfile}: ${receipt.validation.compositionStatus}; sha256 ${receipt.artifact.sha256.slice(0, 12)}`);
+    }
+  } finally {
+    try {
+      fs.rmSync(stagingDirectory, { recursive: true, force: true });
+    } catch (error) {
+      console.error(`Warning: could not remove delivery staging directory "${stagingDirectory}": ${error.message}`);
+    }
+  }
 }
 
 function commandCheck(args) {
@@ -344,6 +550,9 @@ switch (command) {
     break;
   case 'render':
     commandRender(args);
+    break;
+  case 'deliver':
+    commandDeliver(args);
     break;
   case 'validate':
     commandValidate(args);

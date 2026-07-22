@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Rebuild archify.zip and compare contents
         run: |
-          scripts/build-zip.sh /tmp/fresh.zip
+          (cd /tmp && "$GITHUB_WORKSPACE/scripts/build-zip.sh" fresh.zip)
           mkdir /tmp/fresh /tmp/checked
           unzip -q /tmp/fresh.zip -d /tmp/fresh
           unzip -q archify.zip -d /tmp/checked
@@ -86,6 +86,7 @@ jobs:
           node bin/archify.mjs examples
           node bin/archify.mjs render workflow examples/agent-tool-call.workflow.json /tmp/workflow.html
           node bin/archify.mjs check /tmp/workflow.html
+          node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow-delivered.html --quality showcase --json
 
           node bin/archify.mjs validate architecture examples/web-app.architecture.json --json
           node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --json

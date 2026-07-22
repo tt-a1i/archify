@@ -140,7 +140,7 @@ Architecture examples: [`web-app`](examples/web-app.html) · [`Archify pipeline`
 
 - **Layout judgment over generic auto-layout** — the agent chooses hierarchy, spacing, routes, and emphasis for the story.
 - **Typed JSON IR** — every renderer-backed mode has a schema and reproducible source.
-- **Validation before delivery** — schema, layout, HTML/SVG, route, and optional showcase checks catch broken output.
+- **Atomic validation before delivery** — schema, layout, HTML/SVG, route, and optional showcase checks must all pass before a final artifact replaces the last known good output.
 - **Truthful interaction** — focus, routes, role comparison, and stories reuse authored nodes and relationships instead of inventing topology.
 - **Portable by default** — the result is one HTML file; exports remain full-diagram and free of temporary viewer state.
 
@@ -152,8 +152,7 @@ Archify is not a general-purpose drawing editor or a Mermaid theme. It turns tec
 |---|---|
 | **Generate** | The agent creates typed JSON IR from your description. |
 | **Validate** | Bundled validators and layout rules check the source. |
-| **Render** | The selected renderer produces standalone HTML and SVG. |
-| **Check** | Artifact checks reject malformed geometry and unsafe routes. |
+| **Deliver** | A same-directory candidate is rendered and checked; only a passing artifact atomically replaces the target. |
 | **Iterate** | The agent updates the source while unrelated structure stays stable. |
 
 Useful repository commands:
@@ -163,9 +162,8 @@ cd archify
 node bin/archify.mjs doctor
 node bin/archify.mjs demo /tmp/archify-demo
 node bin/archify.mjs guide "Show CI/CD checks, approval, deploy, and rollback"
-node bin/archify.mjs render workflow examples/agent-tool-call.workflow.json /tmp/workflow.html
 node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --quality showcase --json
-node bin/archify.mjs check /tmp/workflow.html
+node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow.html --quality showcase --json
 ```
 
 Optional motion and presentation styling are explicit:

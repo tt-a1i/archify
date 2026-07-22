@@ -136,7 +136,7 @@ Architecture 示例：[`Web App`](examples/web-app.html) · [`Archify Pipeline`]
 
 - **用布局判断代替通用自动布局** —— Agent 根据故事选择层级、留白、线路和强调关系。
 - **Typed JSON IR** —— 每种 Renderer 模式都有 Schema 和可复现的源文件。
-- **交付前校验** —— Schema、布局、HTML/SVG、线路和可选 Showcase 检查会拦截坏结果。
+- **原子交付前校验** —— Schema、布局、HTML/SVG、线路和可选 Showcase 检查必须全部通过，成品才会替换上一份可信结果。
 - **交互不编造拓扑** —— 聚焦、路径、角色对比和故事都复用作者定义的节点与关系。
 - **结果默认便携** —— 一个 HTML 文件即可分享；导出永远是完整原图，不携带临时 Viewer 状态。
 
@@ -148,8 +148,7 @@ Archify 不是通用绘图编辑器，也不是 Mermaid 主题；它负责把技
 |---|---|
 | **生成** | Agent 根据描述创建 Typed JSON IR。 |
 | **校验** | 内置 Validator 和布局规则检查源文件。 |
-| **渲染** | 对应 Renderer 生成独立 HTML 和 SVG。 |
-| **检查** | Artifact 门禁拒绝错误几何和不安全线路。 |
+| **交付** | 在目标同目录生成并检查候选；只有通过门禁的结果才原子替换目标文件。 |
 | **迭代** | Agent 修改源文件，不干扰无关结构。 |
 
 仓库常用命令：
@@ -159,9 +158,8 @@ cd archify
 node bin/archify.mjs doctor
 node bin/archify.mjs demo /tmp/archify-demo
 node bin/archify.mjs guide "展示 CI/CD 检查、审批、部署和回滚"
-node bin/archify.mjs render workflow examples/agent-tool-call.workflow.json /tmp/workflow.html
 node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --quality showcase --json
-node bin/archify.mjs check /tmp/workflow.html
+node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow.html --quality showcase --json
 ```
 
 动态和演示样式需要显式选择：
