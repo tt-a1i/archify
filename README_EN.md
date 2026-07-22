@@ -18,7 +18,7 @@ Archify is an agent skill for Claude, Codex CLI, and opencode. It produces a sel
 - **Three live visual presets** — author a default, then try `classic`, `signal-flow`, or `blueprint` on the same topology
 - **Explore real topology** — find nodes, inspect relationships, trace routes, compare roles, and play guided stories
 - **Motion is optional** — output stays static unless `meta.animation: "trace"` is explicitly enabled
-- **Portable exports** — create, copy, or download a 1200×630 Share Card; copy PNG; or download PNG, JPEG, WebP, dual-theme SVG, and trace-enabled WebM
+- **Portable exports** — create, copy, or download a 1200×630 Share Card; turn a resolved route into a focused Route Share Card; or export PNG, JPEG, WebP, dual-theme SVG, and trace-enabled WebM
 - **Typed and checked** — JSON IR, bundled schema validation, default semantic safety gates, and opt-in composition profiles
 - **Self-contained output** — one shareable HTML file with no viewer runtime dependency
 - **Built for agent workflows** — install once, then create and refine diagrams through conversation; optionally open only the verified final artifact
@@ -63,6 +63,10 @@ Same diagram, two themes, one click to switch:
 The Export menu copies PNG to the clipboard and downloads static or motion formats:
 
 ![Export menu](docs/assets/archify-menu.png)
+
+After tracing a route, open **Export → Route Share Card** to download the exact authored path as a 1200×630 PNG while retaining the full diagram for context. It is an optional, download-only Share Card variant; ordinary exports remain canonical.
+
+![Route Share Card showing the exact Users to API Server path with the full architecture retained as context](docs/assets/archify-route-share-card.png)
 
 Open [`examples/web-app.html`](examples/web-app.html) locally to try the complete viewer.
 

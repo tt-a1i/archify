@@ -14,7 +14,7 @@ Archify 是一个可用于 Claude、Codex CLI 和 opencode 的 Agent Skill。它
 - **三套实时视觉预设** —— 先确定作者默认风格，再在同一拓扑上试穿 `classic`、`signal-flow` 或 `blueprint`
 - **探索真实拓扑** —— 查找节点、检查关系、探查路径、对比角色、播放引导故事
 - **动态默认关闭** —— 只有显式设置 `meta.animation: "trace"` 才启用动态
-- **便携导出** —— 一键生成、复制或下载 1200×630 Share Card，也可复制 PNG，或下载 PNG / JPEG / WebP / 双主题 SVG / WebM
+- **便携导出** —— 一键生成、复制或下载 1200×630 Share Card；把已解析路径导出为聚焦的 Route Share Card；也可导出 PNG / JPEG / WebP / 双主题 SVG / WebM
 - **Typed + Checked** —— Typed JSON IR、内置 Schema 校验、默认语义安全门禁和可选构图档位
 - **结果完全独立** —— 一个 HTML 文件即可查看和分享，不依赖 Viewer 服务
 - **适合 Agent 工作流** —— 安装一次，通过对话持续生成和细调；需要时只打开已经验证的最终成品
@@ -59,6 +59,10 @@ npx skills add tt-a1i/archify -g
 Export 菜单支持复制 PNG，并下载静态或动态格式：
 
 ![导出菜单](docs/assets/archify-menu.png)
+
+路径解析完成后，打开 **Export → Route Share Card**，即可把这条真实有向路径下载为 1200×630 PNG，同时保留完整拓扑作为上下文。它是可选、仅下载的 Share Card 变体；普通导出仍保持 canonical。
+
+![Route Share Card：突出 Users 到 API Server 的精确路径，同时保留完整架构作为上下文](docs/assets/archify-route-share-card.png)
 
 在本地打开 [`examples/web-app.html`](examples/web-app.html)，即可体验完整 Viewer。
 

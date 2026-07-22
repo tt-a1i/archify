@@ -40,7 +40,7 @@ test('all five renderers expose one explicit 1200x630 Share Card export', () => 
     assert.match(html, /Share Card[\s\S]*?1200(?:&times;|×)630 PNG/, mode);
     assert.match(html, /var SHARE_CARD_WIDTH = 1200;/, mode);
     assert.match(html, /var SHARE_CARD_HEIGHT = 630;/, mode);
-    assert.match(html, /function rasterizeShareCard\(\)/, mode);
+    assert.match(html, /function rasterizeShareCard\(options\)/, mode);
     assert.match(html, /format === 'share-card'/, mode);
   }
 });
@@ -51,7 +51,12 @@ test('Share Card uses contain-only canonical geometry with fixed safe areas', ()
   assert.match(html, /var availableHeight = SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING;/);
   assert.match(html, /var fit = Math\.min\(availableWidth \/ data\.width, availableHeight \/ data\.height\);/);
   assert.match(html, /ctx\.drawImage\(img, drawX, drawY, drawWidth, drawHeight\);/);
-  assert.match(html, /serializeSvg\(sourceScale\)/);
+  assert.match(html, /function canvas2dOrThrow\(canvas, label\)/);
+  assert.match(html, /2D canvas context unavailable for/);
+  assert.match(html, /canvas\.toBlob unavailable for/);
+  assert.match(html, /img\.onload = function \(\) \{\s*try \{/);
+  assert.match(html, /function rasterizeShareCard\(options\)[\s\S]*?if \(!options\.variant\) return renderShareCard\(\);/);
+  assert.match(html, /function renderShareCard\(options\)[\s\S]*?serializeSvg\(sourceScale, \{ routeSnapshot: routeSnapshot \}\)/);
   assert.match(html, /fitCanvasText\(ctx, title, [^)]+\)/);
   assert.match(html, /ARCHIFY ·/);
   assert.doesNotMatch(svgBlock(html), /share-card|Share Card|ARCHIFY ·/);
@@ -102,7 +107,8 @@ test('Share Card stays viewer-only and reuses export cleanup instead of source s
   const html = render('sequence');
   assert.match(html, /html\[data-embed="true"\] \.toolbar/);
   assert.match(html, /@media print[\s\S]*?\.toolbar/);
-  assert.match(html, /function rasterizeShareCard\(\)[\s\S]*?serializeSvg\(sourceScale\)/);
+  assert.match(html, /function rasterizeShareCard\(options\)[\s\S]*?if \(!options\.variant\) return renderShareCard\(\);/);
+  assert.match(html, /function renderShareCard\(options\)[\s\S]*?serializeSvg\(sourceScale, \{ routeSnapshot: routeSnapshot \}\)/);
   assert.match(html, /if \(!data\.canonicalStateClean\) return Promise\.reject\(new Error\('Share Card export could not remove temporary viewer state'\)\);/);
   assert.match(html, /canonicalStateClean/);
   assert.doesNotMatch(svgBlock(html), /data-last-export-|data-format="share-card"/);

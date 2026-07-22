@@ -2597,6 +2597,7 @@
       text-align: left;
       padding: 0.5rem 0.75rem;
     }
+    .toolbar .export-menu button[hidden] { display: none; }
     .toolbar .export-menu button:hover {
       background: var(--toolbar-hover);
     }
@@ -3789,6 +3790,7 @@
       </button>
       <div class="export-menu" id="export-menu" role="menu" aria-label="Export">
         <button data-format="share-card" type="button" role="menuitem" tabindex="-1">Share Card <span class="hint">1200&times;630 PNG</span></button>
+        <button data-action="route-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled>Route Share Card <span class="hint">1200&times;630 PNG</span></button>
         <button data-action="copy-share-card" type="button" role="menuitem" tabindex="-1">Copy Share Card <span class="hint">PNG</span></button>
         <hr role="separator">
         <button data-action="copy"  type="button" role="menuitem" tabindex="-1">Copy to clipboard <span class="hint">PNG</span></button>
@@ -4333,6 +4335,27 @@
   <script>
     var Archify = {};
 
+    function hasDrawableGeometry(element) {
+      if (!element) return false;
+      var geometries = /^(path|line|polyline)$/i.test(element.tagName)
+        ? [element]
+        : Array.prototype.slice.call(element.querySelectorAll('path, line, polyline'));
+      return geometries.some(function (geometry) {
+        var source = geometry.tagName.toLowerCase() === 'path'
+          ? geometry.getAttribute('d')
+          : geometry.tagName.toLowerCase() === 'polyline'
+            ? geometry.getAttribute('points')
+            : [geometry.getAttribute('x1'), geometry.getAttribute('y1'), geometry.getAttribute('x2'), geometry.getAttribute('y2')].join(' ');
+        if (!source || /(?:^|[^a-z])(?:nan|infinity)(?:[^a-z]|$)/i.test(source) || typeof geometry.getTotalLength !== 'function') return false;
+        try {
+          var length = Number(geometry.getTotalLength());
+          return Number.isFinite(length) && length > 0;
+        } catch (_) {
+          return false;
+        }
+      });
+    }
+
     /* ============================================================
        Visual style try-on — one topology, three bundled presets.
        The reader's choice is intentionally session-only: it updates the
@@ -4492,6 +4515,84 @@
        *   self-themes when embedded in GitHub READMEs or other hosts that
        *   expose a color scheme. Used for "Download SVG".
        */
+      function applyRouteSnapshot(clone, snapshot) {
+        if (!snapshot || !Array.isArray(snapshot.nodeIds) || !Array.isArray(snapshot.edges) ||
+            snapshot.nodeIds.length < 2 || snapshot.edges.length !== snapshot.nodeIds.length - 1 ||
+            snapshot.hops !== snapshot.edges.length ||
+            !snapshot.source || !snapshot.target ||
+            snapshot.source.id !== snapshot.nodeIds[0] ||
+            snapshot.target.id !== snapshot.nodeIds[snapshot.nodeIds.length - 1]) return false;
+
+        clone.removeAttribute('data-animation');
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-animate]'), function (element) {
+          element.removeAttribute('data-animate');
+          element.style.removeProperty('--step');
+        });
+
+        var cloneNodes = Array.prototype.slice.call(clone.querySelectorAll('[data-node-id]'));
+        var cloneEdges = Array.prototype.slice.call(clone.querySelectorAll('[data-edge-key]'));
+        var nodeIds = Object.create(null);
+        var edgeKeys = Object.create(null);
+        var nodeMatches = [];
+        var edgeMatches = [];
+
+        for (var nodeIndex = 0; nodeIndex < snapshot.nodeIds.length; nodeIndex++) {
+          var nodeId = snapshot.nodeIds[nodeIndex];
+          if (typeof nodeId !== 'string' || !nodeId || nodeIds[nodeId]) return false;
+          var matchedNodes = cloneNodes.filter(function (candidate) {
+            return candidate.getAttribute('data-node-id') === nodeId;
+          });
+          if (matchedNodes.length !== 1) return false;
+          nodeIds[nodeId] = true;
+          nodeMatches.push(matchedNodes);
+        }
+
+        for (var edgeIndex = 0; edgeIndex < snapshot.edges.length; edgeIndex++) {
+          var edge = snapshot.edges[edgeIndex];
+          var fromId = snapshot.nodeIds[edgeIndex];
+          var toId = snapshot.nodeIds[edgeIndex + 1];
+          if (!edge || typeof edge.key !== 'string' || !edge.key || edgeKeys[edge.key] ||
+              edge.from !== fromId || edge.to !== toId) return false;
+          var matchedEdges = cloneEdges.filter(function (candidate) {
+            return candidate.getAttribute('data-edge-key') === edge.key;
+          });
+          var drawableMatches = matchedEdges.filter(hasDrawableGeometry);
+          if (!matchedEdges.length || drawableMatches.length !== 1 || !matchedEdges.every(function (candidate) {
+            return candidate.getAttribute('data-edge-from') === edge.from &&
+              candidate.getAttribute('data-edge-to') === edge.to &&
+              (candidate.getAttribute('data-edge-id') || '') === (edge.id || '');
+          })) return false;
+          edgeKeys[edge.key] = true;
+          edgeMatches.push(matchedEdges);
+        }
+
+        clone.setAttribute('data-share-route', '');
+        nodeMatches.forEach(function (matches, step) {
+          matches.forEach(function (element) {
+            element.setAttribute('data-share-route-match', '');
+            element.setAttribute('data-share-route-step', String(step));
+            if (step === 0) element.setAttribute('data-share-route-start', '');
+            else if (step === snapshot.nodeIds.length - 1) element.setAttribute('data-share-route-end', '');
+            else element.setAttribute('data-share-route-middle', '');
+          });
+        });
+        edgeMatches.forEach(function (matches, step) {
+          matches.forEach(function (element) {
+            element.setAttribute('data-share-route-match', '');
+            element.setAttribute('data-share-route-step', String(step));
+          });
+        });
+
+        return clone.hasAttribute('data-share-route') &&
+          !clone.hasAttribute('data-animation') &&
+          !clone.hasAttribute('data-route-active') &&
+          !clone.hasAttribute('data-route-journey') &&
+          clone.querySelectorAll('[data-animate], [data-route-match], [data-route-step], [data-route-start], [data-route-end], [data-route-journey-state], [data-route-journey-current], [data-route-journey-overlay]').length === 0 &&
+          clone.querySelectorAll('[data-share-route-match]').length ===
+            nodeMatches.reduce(function (count, matches) { return count + matches.length; }, 0) +
+            edgeMatches.reduce(function (count, matches) { return count + matches.length; }, 0);
+      }
+
       function serializeSvg(scale, opts) {
         // scale: integer multiplier for intrinsic SVG pixel dimensions used by
         // the raster path. Defaults to 1 (natural size) for SVG download.
@@ -4517,6 +4618,7 @@
         clone.removeAttribute('data-route-picking');
         clone.removeAttribute('data-route-active');
         clone.removeAttribute('data-route-journey');
+        clone.removeAttribute('data-share-route');
         clone.removeAttribute('data-story-active');
         clone.removeAttribute('data-story-playing');
         clone.removeAttribute('data-story-beat');
@@ -4616,6 +4718,13 @@
           el.removeAttribute('data-route-journey-current');
           el.style.removeProperty('--route-step');
         });
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle]'), function (el) {
+          el.removeAttribute('data-share-route-match');
+          el.removeAttribute('data-share-route-step');
+          el.removeAttribute('data-share-route-start');
+          el.removeAttribute('data-share-route-end');
+          el.removeAttribute('data-share-route-middle');
+        });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-detail], [data-detail-anchor]'), function (el) {
           el.removeAttribute('data-detail');
           el.removeAttribute('data-detail-anchor');
@@ -4635,6 +4744,7 @@
           !clone.hasAttribute('data-route-picking') &&
           !clone.hasAttribute('data-route-active') &&
           !clone.hasAttribute('data-route-journey') &&
+          !clone.hasAttribute('data-share-route') &&
           !clone.hasAttribute('data-story-active') &&
           !clone.hasAttribute('data-story-playing') &&
           !clone.hasAttribute('data-story-beat') &&
@@ -4644,9 +4754,14 @@
           !clone.hasAttribute('data-chapter-anchor') &&
           !clone.hasAttribute('data-chapter-preview') &&
           !clone.style.getPropertyValue('transform') &&
-          clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-detail], [data-detail-anchor]').length === 0;
+          clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-detail], [data-detail-anchor]').length === 0;
 
         var vb = svg.viewBox.baseVal;
+        var finiteSvgDimensions = Number.isFinite(vb.x) && Number.isFinite(vb.y) &&
+          Number.isFinite(vb.width) && Number.isFinite(vb.height) && vb.width > 0 && vb.height > 0;
+        var routeStateClean = opts.routeSnapshot
+          ? canonicalStateClean && finiteSvgDimensions && applyRouteSnapshot(clone, opts.routeSnapshot)
+          : null;
         // Scale width/height so the browser rasterizes the vectors at target
         // resolution directly. viewBox stays unchanged so coordinates don't
         // shift. This is the key to sharp rasters — do NOT scale later via
@@ -4770,6 +4885,14 @@
           bgRect.setAttribute('fill', computed.getPropertyValue('--bg').trim() || '#ffffff');
         }
 
+        if (opts.routeSnapshot) {
+          style.textContent += "\nsvg[data-share-route] [data-node-id], svg[data-share-route] [data-edge-from] { opacity: 0.18; }\n" +
+            "svg[data-share-route] [data-share-route-match] { opacity: 1; }\n" +
+            "svg[data-share-route] [data-share-route-start] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 3; stroke-dasharray: 5 3; }\n" +
+            "svg[data-share-route] [data-share-route-middle] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 2.2; }\n" +
+            "svg[data-share-route] [data-share-route-end] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 3.4; stroke-dasharray: 1 0; }\n";
+        }
+
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
@@ -4777,7 +4900,8 @@
           svgString: new XMLSerializer().serializeToString(clone),
           width: vb.width * scale,
           height: vb.height * scale,
-          canonicalStateClean: canonicalStateClean
+          canonicalStateClean: canonicalStateClean,
+          routeStateClean: routeStateClean
         };
       }
 
@@ -4821,24 +4945,29 @@
         return new Promise(function (resolve, reject) {
           var img = new Image();
           img.onload = function () {
-            var canvas = document.createElement('canvas');
-            canvas.width = data.width;
-            canvas.height = data.height;
-            var ctx = canvas.getContext('2d');
-            if (format === 'jpeg') {
-              ctx.fillStyle = currentBg();
-              ctx.fillRect(0, 0, canvas.width, canvas.height);
+            try {
+              var canvas = document.createElement('canvas');
+              canvas.width = data.width;
+              canvas.height = data.height;
+              var ctx = canvas2dOrThrow(canvas, format);
+              if (format === 'jpeg') {
+                ctx.fillStyle = currentBg();
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              }
+              // Draw at natural size — SVG was already rasterized at target res.
+              ctx.drawImage(img, 0, 0);
+              URL.revokeObjectURL(svgUrl);
+              var mime = format === 'jpeg' ? 'image/jpeg' :
+                         format === 'webp' ? 'image/webp' : 'image/png';
+              var quality = format === 'png' ? undefined : 0.95;
+              canvas.toBlob(function (blob) {
+                if (!blob) reject(new Error('toBlob returned null for ' + format));
+                else resolve(blob);
+              }, mime, quality);
+            } catch (error) {
+              URL.revokeObjectURL(svgUrl);
+              reject(error);
             }
-            // Draw at natural size — SVG was already rasterized at target res.
-            ctx.drawImage(img, 0, 0);
-            URL.revokeObjectURL(svgUrl);
-            var mime = format === 'jpeg' ? 'image/jpeg' :
-                       format === 'webp' ? 'image/webp' : 'image/png';
-            var quality = format === 'png' ? undefined : 0.95;
-            canvas.toBlob(function (blob) {
-              if (!blob) reject(new Error('toBlob returned null for ' + format));
-              else resolve(blob);
-            }, mime, quality);
           };
           img.onerror = function (e) {
             URL.revokeObjectURL(svgUrl);
@@ -4866,75 +4995,98 @@
         return value + suffix;
       }
 
-      function rasterizeShareCard() {
+      function canvas2dOrThrow(canvas, label) {
+        if (!canvas || typeof canvas.getContext !== 'function') {
+          throw new Error('Canvas unavailable for ' + label);
+        }
+        var ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('2D canvas context unavailable for ' + label);
+        if (typeof canvas.toBlob !== 'function') throw new Error('canvas.toBlob unavailable for ' + label);
+        return ctx;
+      }
+
+      function renderShareCard(options) {
+        options = options || {};
+        var routeSnapshot = options.routeSnapshot || null;
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
-        var data = serializeSvg(sourceScale);
+        var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot });
         if (!data.canonicalStateClean) return Promise.reject(new Error('Share Card export could not remove temporary viewer state'));
+        if (routeSnapshot && !data.routeStateClean) return Promise.reject(new Error('Route Card export could not preserve the resolved route safely'));
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
 
         return new Promise(function (resolve, reject) {
           var img = new Image();
           img.onload = function () {
-            var canvas = document.createElement('canvas');
-            canvas.width = SHARE_CARD_WIDTH;
-            canvas.height = SHARE_CARD_HEIGHT;
-            var ctx = canvas.getContext('2d');
-            var computed = getComputedStyle(document.documentElement);
-            var bg = computed.getPropertyValue('--bg').trim() || currentBg();
-            var text = computed.getPropertyValue('--text').trim() || '#ffffff';
-            var muted = computed.getPropertyValue('--text-muted').trim() || '#94a3b8';
-            var border = computed.getPropertyValue('--panel-border').trim() || '#334155';
-            var accent = computed.getPropertyValue('--frontend-stroke').trim() || '#22d3ee';
-            var titleNode = document.querySelector('.header h1');
-            var subtitleNode = document.querySelector('.header .subtitle');
-            var title = titleNode ? titleNode.textContent : document.title;
-            var subtitle = subtitleNode ? subtitleNode.textContent : '';
-            var preset = document.documentElement.getAttribute('data-preset') || 'classic';
-            var theme = document.documentElement.getAttribute('data-theme') || 'dark';
-            var presetLabel = preset === 'signal-flow' ? 'FLOW' : preset.toUpperCase();
+            try {
+              var canvas = document.createElement('canvas');
+              canvas.width = SHARE_CARD_WIDTH;
+              canvas.height = SHARE_CARD_HEIGHT;
+              var ctx = canvas2dOrThrow(canvas, 'Share Card');
+              var computed = getComputedStyle(document.documentElement);
+              var bg = computed.getPropertyValue('--bg').trim() || currentBg();
+              var text = computed.getPropertyValue('--text').trim() || '#ffffff';
+              var muted = computed.getPropertyValue('--text-muted').trim() || '#94a3b8';
+              var border = computed.getPropertyValue('--panel-border').trim() || '#334155';
+              var accent = computed.getPropertyValue('--frontend-stroke').trim() || '#22d3ee';
+              var titleNode = document.querySelector('.header h1');
+              var subtitleNode = document.querySelector('.header .subtitle');
+              var title = titleNode ? titleNode.textContent : document.title;
+              var subtitle = routeSnapshot
+                ? 'Route: ' + routeSnapshot.source.label + ' → ' + routeSnapshot.target.label + ' · ' + routeSnapshot.hops + ' directed hops'
+                : subtitleNode ? subtitleNode.textContent : '';
+              var preset = document.documentElement.getAttribute('data-preset') || 'classic';
+              var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+              var presetLabel = preset === 'signal-flow' ? 'FLOW' : preset.toUpperCase();
+              var cardLabel = routeSnapshot
+                ? 'ARCHIFY · ROUTE · ' + routeSnapshot.hops + ' HOPS'
+                : 'ARCHIFY · ' + presetLabel + ' · ' + theme.toUpperCase();
 
-            ctx.fillStyle = bg;
-            ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
+              ctx.fillStyle = bg;
+              ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
 
-            ctx.fillStyle = accent;
-            ctx.fillRect(SHARE_CARD_PADDING, 27, 42, 3);
+              ctx.fillStyle = accent;
+              ctx.fillRect(SHARE_CARD_PADDING, 27, 42, 3);
 
-            ctx.textBaseline = 'alphabetic';
-            ctx.fillStyle = text;
-            var fittedTitle = fitCanvasText(ctx, title, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 330, 29, 18, '700');
-            ctx.fillText(fittedTitle, SHARE_CARD_PADDING, 62);
+              ctx.textBaseline = 'alphabetic';
+              ctx.fillStyle = text;
+              var fittedTitle = fitCanvasText(ctx, title, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 330, 29, 18, '700');
+              ctx.fillText(fittedTitle, SHARE_CARD_PADDING, 62);
 
-            ctx.fillStyle = muted;
-            var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 280, 13, 11, '500');
-            ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 87);
+              ctx.fillStyle = muted;
+              var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 280, 13, 11, '500');
+              ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 87);
 
-            ctx.font = "600 12px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-            ctx.textAlign = 'right';
-            ctx.fillStyle = accent;
-            ctx.fillText('ARCHIFY · ' + presetLabel + ' · ' + theme.toUpperCase(), SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 50);
-            ctx.textAlign = 'left';
+              ctx.font = "600 12px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+              ctx.textAlign = 'right';
+              ctx.fillStyle = accent;
+              ctx.fillText(cardLabel, SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 50);
+              ctx.textAlign = 'left';
 
-            var availableWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
-            var availableHeight = SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING;
-            var fit = Math.min(availableWidth / data.width, availableHeight / data.height);
-            var drawWidth = data.width * fit;
-            var drawHeight = data.height * fit;
-            var drawX = SHARE_CARD_PADDING + (availableWidth - drawWidth) / 2;
-            var drawY = SHARE_CARD_HEADER + (availableHeight - drawHeight) / 2;
+              var availableWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
+              var availableHeight = SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING;
+              var fit = Math.min(availableWidth / data.width, availableHeight / data.height);
+              var drawWidth = data.width * fit;
+              var drawHeight = data.height * fit;
+              var drawX = SHARE_CARD_PADDING + (availableWidth - drawWidth) / 2;
+              var drawY = SHARE_CARD_HEADER + (availableHeight - drawHeight) / 2;
 
-            ctx.strokeStyle = border;
-            ctx.lineWidth = 1;
-            ctx.strokeRect(drawX - 0.5, drawY - 0.5, drawWidth + 1, drawHeight + 1);
-            ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-            URL.revokeObjectURL(svgUrl);
+              ctx.strokeStyle = border;
+              ctx.lineWidth = 1;
+              ctx.strokeRect(drawX - 0.5, drawY - 0.5, drawWidth + 1, drawHeight + 1);
+              ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+              URL.revokeObjectURL(svgUrl);
 
-            canvas.toBlob(function (blob) {
-              if (!blob) reject(new Error('toBlob returned null for Share Card'));
-              else resolve(blob);
-            }, 'image/png');
+              canvas.toBlob(function (blob) {
+                if (!blob) reject(new Error('toBlob returned null for Share Card'));
+                else resolve(blob);
+              }, 'image/png');
+            } catch (error) {
+              URL.revokeObjectURL(svgUrl);
+              reject(error);
+            }
           };
           img.onerror = function (e) {
             URL.revokeObjectURL(svgUrl);
@@ -4942,6 +5094,15 @@
           };
           img.src = svgUrl;
         });
+      }
+
+      function rasterizeShareCard(options) {
+        options = options || {};
+        if (!options.variant) return renderShareCard();
+        if (options.variant !== 'route') return Promise.reject(new Error('Unknown Share Card variant: ' + options.variant));
+        var snapshot = Archify.routeProbe && Archify.routeProbe.exportSnapshot();
+        if (!snapshot) return Promise.reject(new Error('Trace a route before exporting a Route Share Card'));
+        return renderShareCard({ routeSnapshot: snapshot });
       }
 
       function motionMimeType() {
@@ -5206,9 +5367,19 @@
 
       var menu = document.getElementById('export-menu');
       var btn = document.getElementById('btn-export');
+      var routeShareItem = menu.querySelector('button[data-action="route-share-card"]');
       var items = function () {
         return Array.prototype.slice.call(menu.querySelectorAll('button[role="menuitem"]'));
       };
+
+      function syncRouteShareItem() {
+        var snapshot = Archify.routeProbe && typeof Archify.routeProbe.exportSnapshot === 'function'
+          ? Archify.routeProbe.exportSnapshot()
+          : null;
+        routeShareItem.hidden = !snapshot;
+        routeShareItem.disabled = !snapshot;
+        return snapshot;
+      }
 
       // ---- Clipboard support ----------------------------------------------
       function canCopyImage() {
@@ -5268,9 +5439,10 @@
       function open(focusLast) {
         if (Archify.semanticLens && typeof Archify.semanticLens.clearPreview === 'function') Archify.semanticLens.clearPreview();
         if (Archify.semanticLens && Archify.semanticLens.isOpen()) Archify.semanticLens.close({ restoreFocus: false });
+        syncRouteShareItem();
         menu.classList.add('open');
         btn.setAttribute('aria-expanded', 'true');
-        var available = items().filter(function (i) { return !i.disabled; });
+        var available = items().filter(function (i) { return !i.hidden && !i.disabled; });
         var target = focusLast ? available[available.length - 1] : available[0];
         if (target) target.focus();
       }
@@ -5304,7 +5476,7 @@
         if (e.key === 'Escape') { e.preventDefault(); close(true); return; }
         if (e.key === 'Tab')    { close(false); return; }
 
-        var available = items().filter(function (i) { return !i.disabled; });
+        var available = items().filter(function (i) { return !i.hidden && !i.disabled; });
         var current = available.indexOf(document.activeElement);
         switch (e.key) {
           case 'ArrowDown':
@@ -5329,8 +5501,7 @@
       function runExport(format) {
         var base = diagramFilename();
         close(true);
-        document.documentElement.removeAttribute('data-last-export-error');
-        document.documentElement.removeAttribute('data-last-export-error-format');
+        clearExportReceipt();
         if (format === 'webm') toast('Recording 6 seconds of motion…');
         return (format === 'share-card'
           ? rasterizeShareCard().then(function (blob) {
@@ -5374,13 +5545,44 @@
         });
       }
 
+      function runRouteShareCard() {
+        close(false);
+        clearExportReceipt();
+        var snapshot = Archify.routeProbe && Archify.routeProbe.exportSnapshot();
+        var blobPromise = snapshot
+          ? renderShareCard({ routeSnapshot: snapshot })
+          : Promise.reject(new Error('Trace a route before exporting a Route Share Card'));
+        return blobPromise.then(function (blob) {
+          recordExportReceipt('share-card', blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, 'route', true);
+          download(blob, diagramFilename() + '-route-share-card.png');
+          toast('Downloaded Route Share Card');
+          return blob;
+        }).catch(function (err) {
+          console.error(err);
+          var message = err && err.message ? err.message : 'share-card';
+          document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
+          document.documentElement.setAttribute('data-last-export-error', message);
+          alert('Route Share Card export failed: ' + message);
+        });
+      }
+
       // A compact, machine-readable receipt for local QA and generated proof
       // galleries. It exposes no diagram contents, only the completed format,
       // byte count, and whether temporary viewer state was excluded.
-      function recordExportReceipt(format, blob, canonical, dimensions) {
+      function recordExportReceipt(format, blob, canonical, dimensions, variant, routeStateClean) {
         document.documentElement.setAttribute('data-last-export-format', format);
         document.documentElement.setAttribute('data-last-export-bytes', String(blob.size));
         document.documentElement.setAttribute('data-last-export-canonical', canonical ? 'true' : 'false');
+        if (variant) {
+          document.documentElement.setAttribute('data-last-export-variant', variant);
+        } else {
+          document.documentElement.removeAttribute('data-last-export-variant');
+        }
+        if (routeStateClean === true) {
+          document.documentElement.setAttribute('data-last-export-route-state-clean', 'true');
+        } else {
+          document.documentElement.removeAttribute('data-last-export-route-state-clean');
+        }
         if (dimensions) {
           document.documentElement.setAttribute('data-last-export-width', String(dimensions.width));
           document.documentElement.setAttribute('data-last-export-height', String(dimensions.height));
@@ -5396,6 +5598,8 @@
         document.documentElement.removeAttribute('data-last-export-canonical');
         document.documentElement.removeAttribute('data-last-export-width');
         document.documentElement.removeAttribute('data-last-export-height');
+        document.documentElement.removeAttribute('data-last-export-variant');
+        document.documentElement.removeAttribute('data-last-export-route-state-clean');
         document.documentElement.removeAttribute('data-last-export-error-format');
         document.documentElement.removeAttribute('data-last-export-error');
       }
@@ -5437,6 +5641,7 @@
 
       function runCopy() {
         close(true);
+        clearExportReceipt();
         if (!canCopyImage()) {
           alert('Clipboard image write not supported in this browser.');
           return;
@@ -5451,6 +5656,9 @@
       }
 
       menu.addEventListener('click', function (e) {
+        var routeShareCardBtn = e.target.closest('button[data-action="route-share-card"]');
+        if (routeShareCardBtn && !routeShareCardBtn.disabled && !routeShareCardBtn.hidden) { runRouteShareCard(); return; }
+
         var copyShareCardBtn = e.target.closest('button[data-action="copy-share-card"]');
         if (copyShareCardBtn && !copyShareCardBtn.disabled) { runCopyShareCard(); return; }
 
@@ -5462,7 +5670,16 @@
       });
 
       Archify.motion = { canRecord: canRecordMotion, recordWebm: recordWebm };
-      Archify.exportMenu = { open: open, close: close, isOpen: isOpen, run: runExport, shareCard: rasterizeShareCard, copyShareCard: runCopyShareCard };
+      Archify.exportMenu = {
+        open: open,
+        close: close,
+        isOpen: isOpen,
+        run: runExport,
+        shareCard: rasterizeShareCard,
+        downloadRouteShareCard: runRouteShareCard,
+        syncRouteShare: syncRouteShareItem,
+        copyShareCard: runCopyShareCard
+      };
 
       // Auto-open on page load for demo/screenshot purposes: ?openExport=1
       // Wait for fonts (so the menu doesn't flash before typography lands)
@@ -9736,13 +9953,61 @@
         return Array.prototype.slice.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'));
       }
       function nodesById() {
-        var out = {};
+        var out = Object.create(null);
         nodes().forEach(function (node) { out[node.getAttribute('data-node-id')] = node; });
         return out;
       }
       function nodeLabel(node, fallback) {
         return node.getAttribute('data-node-label') ||
           (node.getAttribute('aria-label') || fallback).replace(/^Focus\s+/, '').split(',')[0];
+      }
+      function exportSnapshot() {
+        if (mode !== 'result' || activeNodeIds.length < 2 || activeEdges.length !== activeNodeIds.length - 1) return null;
+        var allNodes = nodes();
+        var byId = nodesById();
+        var seenNodeIds = Object.create(null);
+        var seenEdgeKeys = Object.create(null);
+        if (startId !== activeNodeIds[0] || endId !== activeNodeIds[activeNodeIds.length - 1] ||
+            activeNodeIds.some(function (id) {
+              if (seenNodeIds[id] || allNodes.filter(function (node) {
+                return node.getAttribute('data-node-id') === id;
+              }).length !== 1) return true;
+              seenNodeIds[id] = true;
+              return !byId[id];
+            }) ||
+            activeEdges.some(function (edge, index) {
+              if (!edge || !svg.contains(edge)) return true;
+              var edgeKey = edge.getAttribute('data-edge-key');
+              var edgeId = edge.getAttribute('data-edge-id') || '';
+              if (!edgeKey || seenEdgeKeys[edgeKey]) return true;
+              seenEdgeKeys[edgeKey] = true;
+              var fragments = Array.prototype.slice.call(svg.querySelectorAll('[data-edge-key]')).filter(function (candidate) {
+                return candidate.getAttribute('data-edge-key') === edgeKey;
+              });
+              var drawableFragments = fragments.filter(hasDrawableGeometry);
+              return !fragments.length || !fragments.every(function (fragment) {
+                return fragment.getAttribute('data-edge-from') === activeNodeIds[index] &&
+                  fragment.getAttribute('data-edge-to') === activeNodeIds[index + 1] &&
+                  (fragment.getAttribute('data-edge-id') || '') === edgeId;
+              }) || drawableFragments.length !== 1 || drawableFragments[0] !== edge ||
+                edge.getAttribute('data-edge-from') !== activeNodeIds[index] ||
+                edge.getAttribute('data-edge-to') !== activeNodeIds[index + 1];
+            })) return null;
+        return {
+          source: { id: startId, label: nodeLabel(byId[startId], startId) },
+          target: { id: endId, label: nodeLabel(byId[endId], endId) },
+          nodeIds: activeNodeIds.slice(),
+          hops: activeEdges.length,
+          edges: activeEdges.map(function (edge) {
+            return {
+              key: edge.getAttribute('data-edge-key'),
+              id: edge.getAttribute('data-edge-id') || '',
+              from: edge.getAttribute('data-edge-from'),
+              to: edge.getAttribute('data-edge-to'),
+              label: edge.getAttribute('data-edge-label') || ''
+            };
+          })
+        };
       }
       function edgeShapes(edge) {
         if (/^(path|line|polyline)$/i.test(edge.tagName)) return [edge];
@@ -9892,6 +10157,7 @@
         findBtn.setAttribute('aria-label', 'Find a route start');
         copyBtn.hidden = true;
         copyBtn.textContent = 'Copy link';
+        if (Archify.exportMenu && typeof Archify.exportMenu.syncRouteShare === 'function') Archify.exportMenu.syncRouteShare();
         setTrigger(false);
         if (wasActive && options.preserveView !== true && Archify.view && typeof Archify.view.reset === 'function') {
           Archify.view.reset({ automatic: true });
@@ -10371,6 +10637,7 @@
         findBtn.hidden = true;
         copyBtn.hidden = false;
         setTrigger(true);
+        if (Archify.exportMenu && typeof Archify.exportMenu.syncRouteShare === 'function') Archify.exportMenu.syncRouteShare();
         if (options.updateUrl !== false) {
           replaceRouteHash(encodeURIComponent(startId) + '~' + encodeURIComponent(endId));
         }
@@ -10641,6 +10908,7 @@
         finderOpening: finderOpening,
         finderClosed: finderClosed,
         openFinder: openFinder,
+        exportSnapshot: exportSnapshot,
         active: function () { return mode === 'idle' ? null : mode; },
         result: function () {
           return mode === 'result'

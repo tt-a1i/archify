@@ -29,6 +29,7 @@ rsync -a \
   --exclude '.DS_Store' \
   --exclude '.hive' \
   --exclude '.workbuddy' \
+  --exclude '.validator-check-*' \
   "$repo_root/archify/" "$stage/archify/"
 node -e "
   const fs = require('fs');
