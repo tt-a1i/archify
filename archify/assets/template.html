@@ -3788,6 +3788,8 @@
         Export <span aria-hidden="true">&#9662;</span>
       </button>
       <div class="export-menu" id="export-menu" role="menu" aria-label="Export">
+        <button data-format="share-card" type="button" role="menuitem" tabindex="-1">Share Card <span class="hint">1200&times;630 PNG</span></button>
+        <hr role="separator">
         <button data-action="copy"  type="button" role="menuitem" tabindex="-1">Copy to clipboard <span class="hint">PNG</span></button>
         <hr role="separator">
         <button data-format="png"   type="button" role="menuitem" tabindex="-1">Download PNG</button>
@@ -4324,7 +4326,7 @@
     })();
 
     /* ============================================================
-       Export — PNG / JPEG / WebP / SVG / WebM and Copy PNG (clipboard)
+       Export — Share Card / PNG / JPEG / WebP / SVG / WebM and Copy PNG
 
        Raster exports are always rendered at 4x source resolution for
        maximum sharpness. The trick: we set the serialized SVG's
@@ -4339,6 +4341,10 @@
       var RASTER_SCALE = 4;
       var MOTION_DURATION = 6000;
       var MOTION_FPS = 30;
+      var SHARE_CARD_WIDTH = 1200;
+      var SHARE_CARD_HEIGHT = 630;
+      var SHARE_CARD_PADDING = 36;
+      var SHARE_CARD_HEADER = 112;
 
       function diagramFilename() {
         var title = (document.title || 'diagram')
@@ -4724,6 +4730,102 @@
         });
       }
 
+      function fitCanvasText(ctx, text, maxWidth, startSize, minSize, weight) {
+        var value = String(text || '').trim();
+        var size = startSize;
+        var family = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+        while (size > minSize) {
+          ctx.font = (weight || '600') + ' ' + size + 'px ' + family;
+          if (ctx.measureText(value).width <= maxWidth) return value;
+          size -= 1;
+        }
+        ctx.font = (weight || '600') + ' ' + minSize + 'px ' + family;
+        if (ctx.measureText(value).width <= maxWidth) return value;
+        var suffix = '\u2026';
+        while (value.length > 1 && ctx.measureText(value + suffix).width > maxWidth) {
+          value = value.slice(0, -1);
+        }
+        return value + suffix;
+      }
+
+      function rasterizeShareCard() {
+        var svg = document.querySelector('.diagram-container svg');
+        var vb = svg.viewBox.baseVal;
+        var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
+        var data = serializeSvg(sourceScale);
+        if (!data.canonicalStateClean) return Promise.reject(new Error('Share Card export could not remove temporary viewer state'));
+        var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
+        var svgUrl = URL.createObjectURL(svgBlob);
+
+        return new Promise(function (resolve, reject) {
+          var img = new Image();
+          img.onload = function () {
+            var canvas = document.createElement('canvas');
+            canvas.width = SHARE_CARD_WIDTH;
+            canvas.height = SHARE_CARD_HEIGHT;
+            var ctx = canvas.getContext('2d');
+            var computed = getComputedStyle(document.documentElement);
+            var bg = computed.getPropertyValue('--bg').trim() || currentBg();
+            var text = computed.getPropertyValue('--text').trim() || '#ffffff';
+            var muted = computed.getPropertyValue('--text-muted').trim() || '#94a3b8';
+            var border = computed.getPropertyValue('--panel-border').trim() || '#334155';
+            var accent = computed.getPropertyValue('--frontend-stroke').trim() || '#22d3ee';
+            var titleNode = document.querySelector('.header h1');
+            var subtitleNode = document.querySelector('.header .subtitle');
+            var title = titleNode ? titleNode.textContent : document.title;
+            var subtitle = subtitleNode ? subtitleNode.textContent : '';
+            var preset = document.documentElement.getAttribute('data-preset') || 'classic';
+            var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+            var presetLabel = preset === 'signal-flow' ? 'FLOW' : preset.toUpperCase();
+
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
+
+            ctx.fillStyle = accent;
+            ctx.fillRect(SHARE_CARD_PADDING, 27, 42, 3);
+
+            ctx.textBaseline = 'alphabetic';
+            ctx.fillStyle = text;
+            var fittedTitle = fitCanvasText(ctx, title, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 330, 29, 18, '700');
+            ctx.fillText(fittedTitle, SHARE_CARD_PADDING, 62);
+
+            ctx.fillStyle = muted;
+            var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 280, 13, 11, '500');
+            ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 87);
+
+            ctx.font = "600 12px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+            ctx.textAlign = 'right';
+            ctx.fillStyle = accent;
+            ctx.fillText('ARCHIFY · ' + presetLabel + ' · ' + theme.toUpperCase(), SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 50);
+            ctx.textAlign = 'left';
+
+            var availableWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
+            var availableHeight = SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING;
+            var fit = Math.min(availableWidth / data.width, availableHeight / data.height);
+            var drawWidth = data.width * fit;
+            var drawHeight = data.height * fit;
+            var drawX = SHARE_CARD_PADDING + (availableWidth - drawWidth) / 2;
+            var drawY = SHARE_CARD_HEADER + (availableHeight - drawHeight) / 2;
+
+            ctx.strokeStyle = border;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(drawX - 0.5, drawY - 0.5, drawWidth + 1, drawHeight + 1);
+            ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+            URL.revokeObjectURL(svgUrl);
+
+            canvas.toBlob(function (blob) {
+              if (!blob) reject(new Error('toBlob returned null for Share Card'));
+              else resolve(blob);
+            }, 'image/png');
+          };
+          img.onerror = function (e) {
+            URL.revokeObjectURL(svgUrl);
+            reject(e);
+          };
+          img.src = svgUrl;
+        });
+      }
+
       function motionMimeType() {
         if (typeof MediaRecorder === 'undefined') return '';
         var candidates = [
@@ -5001,6 +5103,7 @@
       // canvas.toBlob('image/webp') silently returns a PNG on browsers without
       // WebP encoding (older Safari), so detect explicitly.
       function supports(format) {
+        if (format === 'share-card') return true;
         if (format === 'svg' || format === 'png') return true;
         if (format === 'webm') return canRecordMotion();
         var mime = format === 'jpeg' ? 'image/jpeg' : 'image/webp';
@@ -5111,7 +5214,13 @@
         document.documentElement.removeAttribute('data-last-export-error');
         document.documentElement.removeAttribute('data-last-export-error-format');
         if (format === 'webm') toast('Recording 6 seconds of motion…');
-        return (format === 'svg'
+        return (format === 'share-card'
+          ? rasterizeShareCard().then(function (blob) {
+              recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
+              download(blob, base + '-share-card.png');
+              toast('Downloaded Share Card');
+            })
+          : format === 'svg'
           ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
               var blob = new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' });
               recordExportReceipt('svg', blob, d.canonicalStateClean);
@@ -5150,10 +5259,17 @@
       // A compact, machine-readable receipt for local QA and generated proof
       // galleries. It exposes no diagram contents, only the completed format,
       // byte count, and whether temporary viewer state was excluded.
-      function recordExportReceipt(format, blob, canonical) {
+      function recordExportReceipt(format, blob, canonical, dimensions) {
         document.documentElement.setAttribute('data-last-export-format', format);
         document.documentElement.setAttribute('data-last-export-bytes', String(blob.size));
         document.documentElement.setAttribute('data-last-export-canonical', canonical ? 'true' : 'false');
+        if (dimensions) {
+          document.documentElement.setAttribute('data-last-export-width', String(dimensions.width));
+          document.documentElement.setAttribute('data-last-export-height', String(dimensions.height));
+        } else {
+          document.documentElement.removeAttribute('data-last-export-width');
+          document.documentElement.removeAttribute('data-last-export-height');
+        }
       }
 
       function runCopy() {
@@ -5192,7 +5308,7 @@
       });
 
       Archify.motion = { canRecord: canRecordMotion, recordWebm: recordWebm };
-      Archify.exportMenu = { open: open, close: close, isOpen: isOpen, run: runExport };
+      Archify.exportMenu = { open: open, close: close, isOpen: isOpen, run: runExport, shareCard: rasterizeShareCard };
 
       // Auto-open on page load for demo/screenshot purposes: ?openExport=1
       // Wait for fonts (so the menu doesn't flash before typography lands)
