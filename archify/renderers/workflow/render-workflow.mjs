@@ -11,6 +11,7 @@ import {
   cleanAmbiguousCorridorProblems,
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
+  cleanLabelRouteClearanceProblems,
   suggestLabelObstacleFix,
   suggestLabelPairFix,
   anchor,
@@ -349,11 +350,11 @@ function validateWorkflow() {
   }
 
   const labelRects = [];
-  for (const edge of workflow.edges) {
+  for (const [edgeIndex, edge] of workflow.edges.entries()) {
     if (!edge.label || !nodes.has(edge.from) || !nodes.has(edge.to)) continue;
     const [lx, ly] = labelPoint(edge, pathFor(edge).points);
     const width = Math.max(30, textUnits(edge.label) * 4.8 + 10);
-    labelRects.push({ label: edge.label, x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly });
+    labelRects.push({ relation: edge, relationIndex: edgeIndex, label: edge.label, x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly });
   }
   for (const rect of labelRects) {
     for (const node of nodes.values()) {
@@ -369,6 +370,15 @@ function validateWorkflow() {
       }
     }
   }
+  problems.push(...cleanLabelRouteClearanceProblems({
+    relations: workflow.edges,
+    labels: labelRects,
+    endpointIds: new Set(nodes.keys()),
+    pathFor,
+    diagramType: 'workflow',
+    relationCollection: 'edges',
+    profile: workflow.meta?.quality_profile,
+  }));
 
   if (viewBox[0] < layout.laneX + layout.laneW + 16) {
     problems.push(`viewBox width ${viewBox[0]} clips the ${layout.laneW}px lanes — set meta.viewBox[0] to at least ${layout.laneX + layout.laneW + 16}.`);

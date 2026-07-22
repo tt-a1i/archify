@@ -244,8 +244,8 @@ test('cli: deliver atomically writes a checked artifact and structured receipt',
   assert.equal(receipt.artifact.sha256, sha256(out));
   assert.equal(receipt.artifact.bytes, fs.statSync(out).size);
   assert.deepEqual(receipt.validation, {
-    checksPassed: 8,
-    checkCount: 8,
+    checksPassed: 9,
+    checkCount: 9,
     compositionProfile: 'showcase',
     compositionStatus: 'pass',
     errors: 0,
@@ -373,7 +373,7 @@ test('cli: deliver works from an installed skill without node_modules', () => {
     });
 
     assert.equal(result.status, 0, `${type}: ${result.stderr}`);
-    assert.equal(JSON.parse(result.stdout).validation.checkCount, 8, type);
+    assert.equal(JSON.parse(result.stdout).validation.checkCount, 9, type);
     assert.equal(fs.existsSync(out), true, type);
   }
 });
@@ -510,7 +510,7 @@ test('cli: validate emits structured json without keeping html output', () => {
   const parsed = JSON.parse(result.stdout);
   assert.equal(parsed.ok, true);
   assert.equal(parsed.type, 'workflow');
-  assert.equal(parsed.checks.length, 8);
+  assert.equal(parsed.checks.length, 9);
   assert.equal(parsed.composition.profile, 'showcase');
   assert.deepEqual(parsed.composition.summary, { errors: 0, warnings: 0 });
   assert.equal(parsed.composition.metrics.containerBorderRuns, 0);

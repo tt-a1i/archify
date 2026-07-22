@@ -10,6 +10,9 @@ import assert from 'node:assert/strict';
 import {
   rectsOverlap,
   segmentIntersectsRect,
+  segmentRectClearance,
+  segmentRectIntersectionLength,
+  collectLabelRouteClearance,
   cleanFlowProblems,
   cleanCrossingProblems,
   collectAmbiguousCorridors,
@@ -64,6 +67,52 @@ test('rectsOverlap: negative gap shrinks the hit box (label-collision convention
 test('segmentIntersectsRect: detects an edge crossing a node box', () => {
   assert.equal(segmentIntersectsRect({ start: [0, 5], end: [20, 5] }, rect(8, 0, 4, 10)), true);
   assert.equal(segmentIntersectsRect({ start: [0, 20], end: [20, 20] }, rect(8, 0, 4, 10)), false);
+});
+
+test('segmentRectClearance measures horizontal, vertical, and reversed diagonal segments', () => {
+  const box = rect(10, 10, 10, 10);
+  assert.equal(segmentRectClearance({ start: [0, 6], end: [30, 6] }, box), 4);
+  assert.equal(segmentRectClearance({ start: [6, 0], end: [6, 30] }, box), 4);
+  assert.equal(segmentRectClearance({ start: [0, 0], end: [8, 8] }, box), Math.sqrt(8));
+  assert.equal(segmentRectClearance({ start: [8, 8], end: [0, 0] }, box), Math.sqrt(8));
+  assert.equal(segmentRectClearance({ start: [0, 15], end: [30, 15] }, box), 0);
+});
+
+test('label-route clearance locks tangent, sub-threshold, boundary, and reversed coordinates', () => {
+  const box = rect(10, 10, 10, 10);
+  const cases = [
+    { segment: { start: [0, 10], end: [30, 10] }, clearance: 0, intersection: 10 },
+    { segment: { start: [10, 0], end: [10, 30] }, clearance: 0, intersection: 10 },
+    { segment: { start: [0, 0], end: [30, 30] }, clearance: 0, intersection: Math.sqrt(200) },
+    { segment: { start: [0, 0], end: [10, 10] }, clearance: 0, intersection: 0 },
+    { segment: { start: [0, 8.1], end: [30, 8.1] }, clearance: 1.9, intersection: 0 },
+    { segment: { start: [0, 8], end: [30, 8] }, clearance: 2, intersection: 0 },
+    { segment: { start: [0, 6.1], end: [30, 6.1] }, clearance: 3.9, intersection: 0 },
+    { segment: { start: [0, 6], end: [30, 6] }, clearance: 4, intersection: 0 },
+    { segment: { start: [0, 0], end: [5, 0] }, clearance: Math.sqrt(125), intersection: 0 },
+  ];
+  for (const { segment, clearance, intersection } of cases) {
+    assert.ok(Math.abs(segmentRectClearance(segment, box) - clearance) < 0.000001);
+    assert.ok(Math.abs(segmentRectIntersectionLength(segment, box) - intersection) < 0.000001);
+    const reversed = { start: segment.end, end: segment.start };
+    assert.ok(Math.abs(segmentRectClearance(reversed, box) - clearance) < 0.000001);
+    assert.ok(Math.abs(segmentRectIntersectionLength(reversed, box) - intersection) < 0.000001);
+  }
+});
+
+test('collectLabelRouteClearance exempts only the owning relationship at an exact threshold', () => {
+  const owner = { id: 'owner', from: 'a', to: 'b' };
+  const sharedSource = { id: 'other', from: 'a', to: 'c' };
+  const labels = [{ relation: owner, relationIndex: 0, label: 'handoff', ...rect(80, 48, 60, 14) }];
+  const routedRelations = [
+    { relation: owner, relationIndex: 0, points: [[20, 60], [200, 60]] },
+    { relation: sharedSource, relationIndex: 1, points: [[70, 64], [150, 64]] },
+  ];
+  assert.deepEqual(collectLabelRouteClearance({ labels, routedRelations, threshold: 2 }), []);
+  const hits = collectLabelRouteClearance({ labels, routedRelations, threshold: 4 });
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].clearance, 2);
+  assert.equal(hits[0].otherRelation, sharedSource);
 });
 
 test('cleanFlowProblems reports collection index, ids, segment, clearance, and fix', () => {

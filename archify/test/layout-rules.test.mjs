@@ -209,6 +209,77 @@ test('architecture: Clean Flow Gate rejects a connection through a component', (
   assert.match(stderr, /segment 0 .*2px clearance/);
 });
 
+test('dataflow: showcase rejects a relationship label that hides another route', () => {
+  const d = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'event-stream.dataflow.json'), 'utf8'));
+  const approvedReplay = d.flows.find((flow) => flow.label === 'approved replay');
+  delete approvedReplay.labelAt;
+  delete approvedReplay.labelDx;
+  delete approvedReplay.labelDy;
+  delete approvedReplay.labelSegment;
+  const { code, stderr } = render('dataflow', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-route-clearance\] showcase dataflow/);
+  assert.match(stderr, /approved replay.*failure sample/);
+  assert.match(stderr, /labelAt.*labelDx.*labelDy.*labelSegment/);
+});
+
+test('dataflow: validator and SVG share the 27px CJK/emoji classification mask', () => {
+  const d = load('dataflow');
+  const flow = d.flows[0];
+  flow.label = '写入🚀';
+  flow.classification = '机密🔐';
+  const { code, stderr, outPath } = render('dataflow', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const group = html.match(/<g data-detail="context"[^>]*data-edge-id="web-clickstream"[^>]*>[\s\S]*?<\/g>/)?.[0] || '';
+  assert.match(group, /data-edge-label="写入🚀"/);
+  assert.match(group, /<rect x="[^\"]+" y="[^\"]+" width="41\.4" height="27" rx="4" class="c-mask"\/>/);
+  assert.match(group, />机密🔐<\/text>/);
+});
+
+test('architecture: showcase rejects a connection label that hides another route', () => {
+  const d = load('architecture');
+  d.connections[0].labelAt = [620, 330];
+  const { code, stderr } = render('architecture', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-route-clearance\] showcase architecture/);
+  assert.match(stderr, /HTTPS.*lb-to-api/);
+});
+
+test('workflow: showcase rejects an edge label that hides another route', () => {
+  const d = load('workflow');
+  d.edges.find((edge) => edge.id === 'plan-request').labelAt = [562, 491];
+  const { code, stderr } = render('workflow', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-route-clearance\] showcase workflow/);
+  assert.match(stderr, /plan.*retry-request/);
+});
+
+test('lifecycle: showcase rejects a transition label that hides another route', () => {
+  const d = load('lifecycle');
+  d.transitions[0].label = 'approval gate';
+  d.transitions[0].labelAt = [556, 250];
+  const { code, stderr } = render('lifecycle', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-route-clearance\] showcase lifecycle/);
+  assert.match(stderr, /approval gate.*review-blocked/);
+});
+
+test('sequence: showcase rejects a message label that hides an adjacent route', () => {
+  const d = load('sequence');
+  d.messages = d.messages.slice(0, 2);
+  d.messages[0].label = 'customer authorization context';
+  d.messages[0].y = 250;
+  d.messages[1].label = 'ok';
+  d.messages[1].y = 245;
+  d.segments = [];
+  d.activations = [];
+  const { code, stderr } = render('sequence', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-route-clearance\] showcase sequence/);
+  assert.match(stderr, /customer authorization context.*dashboard-request/);
+});
+
 function autoRoutePassThroughDocument(connection) {
   return {
     schema_version: 1,

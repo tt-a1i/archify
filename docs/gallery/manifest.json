@@ -3,7 +3,7 @@
   "generator": "scripts/build-gallery.mjs",
   "archifyVersion": "2.11.0",
   "entryCount": 11,
-  "checkCount": 88,
+  "checkCount": 99,
   "entries": [
     {
       "id": "agent-tool-call",
@@ -44,6 +44,10 @@
           "ok": true
         },
         {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
           "name": "relationship_crossings",
           "ok": true
         },
@@ -76,6 +80,8 @@
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "minLabelRouteClearance": 52.1,
           "maxBends": 2,
           "routesOverSuggestedBends": 0,
           "maxStretch": 1.257,
@@ -135,6 +141,10 @@
           "ok": true
         },
         {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
           "name": "relationship_crossings",
           "ok": true
         },
@@ -167,6 +177,8 @@
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "minLabelRouteClearance": 36,
           "maxBends": 2,
           "routesOverSuggestedBends": 0,
           "maxStretch": 1.098,
@@ -226,6 +238,10 @@
           "ok": true
         },
         {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
           "name": "relationship_crossings",
           "ok": true
         },
@@ -258,6 +274,8 @@
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "minLabelRouteClearance": 15,
           "maxBends": 0,
           "routesOverSuggestedBends": 0,
           "maxStretch": 1,
@@ -317,6 +335,10 @@
           "ok": true
         },
         {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
           "name": "relationship_crossings",
           "ok": true
         },
@@ -349,6 +371,8 @@
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "minLabelRouteClearance": 36.3,
           "maxBends": 2,
           "routesOverSuggestedBends": 0,
           "maxStretch": 1.214,
@@ -408,6 +432,10 @@
           "ok": true
         },
         {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
           "name": "relationship_crossings",
           "ok": true
         },
@@ -440,6 +468,8 @@
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "minLabelRouteClearance": 119,
           "maxBends": 3,
           "routesOverSuggestedBends": 1,
           "maxStretch": 3.465,
@@ -499,6 +529,10 @@
           "ok": true
         },
         {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
           "name": "relationship_crossings",
           "ok": true
         },
@@ -531,6 +565,8 @@
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "minLabelRouteClearance": 57,
           "maxBends": 3,
           "routesOverSuggestedBends": 2,
           "maxStretch": 1.369,
@@ -590,6 +626,10 @@
           "ok": true
         },
         {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
           "name": "relationship_crossings",
           "ok": true
         },
@@ -622,6 +662,8 @@
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "minLabelRouteClearance": 22,
           "maxBends": 0,
           "routesOverSuggestedBends": 0,
           "maxStretch": 1,
@@ -663,10 +705,10 @@
       "animation": "trace",
       "nodeCount": 12,
       "edgeCount": 12,
-      "artifactBytes": 541323,
-      "artifactSha256": "66161b977dbcd51c0c6468bbffb7d8b59f78831330a3257433255e784594eb7b",
-      "sourceBytes": 5528,
-      "sourceSha256": "6541e9d00ea1efc38e4afc9c1cb4bbbea6e4468781e64da43ad9787cd6d51efc",
+      "artifactBytes": 541271,
+      "artifactSha256": "c5d4c203813461384f8151ed15b7331bafbd7f1c287a7345ffaeafba955314cb",
+      "sourceBytes": 5543,
+      "sourceSha256": "bbfedc2f1b73bf50932490f7f56d45d5f853e970d2fab26660a04947a783969c",
       "checks": [
         {
           "name": "single_svg",
@@ -678,6 +720,10 @@
         },
         {
           "name": "orthogonal_arrows",
+          "ok": true
+        },
+        {
+          "name": "label_route_clearance",
           "ok": true
         },
         {
@@ -713,6 +759,8 @@
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "minLabelRouteClearance": 9,
           "maxBends": 4,
           "routesOverSuggestedBends": 1,
           "maxStretch": 2.663,
@@ -772,6 +820,10 @@
           "ok": true
         },
         {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
           "name": "relationship_crossings",
           "ok": true
         },
@@ -804,6 +856,8 @@
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "minLabelRouteClearance": null,
           "maxBends": 3,
           "routesOverSuggestedBends": 1,
           "maxStretch": 2.368,
@@ -863,6 +917,10 @@
           "ok": true
         },
         {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
           "name": "relationship_crossings",
           "ok": true
         },
@@ -895,6 +953,8 @@
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "minLabelRouteClearance": null,
           "maxBends": 0,
           "routesOverSuggestedBends": 0,
           "maxStretch": 1,
@@ -954,6 +1014,10 @@
           "ok": true
         },
         {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
           "name": "relationship_crossings",
           "ok": true
         },
@@ -986,6 +1050,8 @@
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "minLabelRouteClearance": 20,
           "maxBends": 3,
           "routesOverSuggestedBends": 1,
           "maxStretch": 1,

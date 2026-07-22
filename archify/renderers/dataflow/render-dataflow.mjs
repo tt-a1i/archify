@@ -11,6 +11,7 @@ import {
   cleanAmbiguousCorridorProblems,
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
+  cleanLabelRouteClearanceProblems,
   suggestLabelObstacleFix,
   suggestLabelPairFix,
   anchor,
@@ -47,6 +48,14 @@ const layout = {
   rowYs: [128, 242, 356, 470, 584],
   labelH: 16
 };
+
+function flowLabelSize(flow) {
+  const longestLine = Math.max(textUnits(flow.label), textUnits(flow.classification || ''));
+  return {
+    width: Math.round(Math.max(34, longestLine * 4.9 + 12) * 10) / 10,
+    height: flow.classification ? 27 : layout.labelH,
+  };
+}
 
 function stageX(index) {
   return layout.leftX + index * layout.colGap;
@@ -205,13 +214,11 @@ function validateDataflow() {
   }));
 
   const labelRects = [];
-  for (const flow of asArray(dataflow.flows)) {
+  for (const [flowIndex, flow] of asArray(dataflow.flows).entries()) {
     if (!flow.label || !nodes.has(flow.from) || !nodes.has(flow.to)) continue;
     const [lx, ly] = labelPoint(flow, pathFor(flow).points);
-    const longestLine = Math.max(textUnits(flow.label), textUnits(flow.classification || ''));
-    const width = Math.max(34, longestLine * 4.9 + 12);
-    const height = flow.classification ? 27 : layout.labelH;
-    labelRects.push({ label: flow.label, x: lx - width / 2, y: ly - 11, width, height, lx, ly });
+    const { width, height } = flowLabelSize(flow);
+    labelRects.push({ relation: flow, relationIndex: flowIndex, label: flow.label, x: lx - width / 2, y: ly - 11, width, height, lx, ly });
   }
   for (const rect of labelRects) {
     for (const node of nodes.values()) {
@@ -227,6 +234,16 @@ function validateDataflow() {
       }
     }
   }
+  problems.push(...cleanLabelRouteClearanceProblems({
+    relations: dataflow.flows,
+    labels: labelRects,
+    endpointIds: new Set(nodes.keys()),
+    pathFor,
+    diagramType: 'dataflow',
+    relationCollection: 'flows',
+    profile: dataflow.meta?.quality_profile,
+    routeHint: 'adjust labelAt, labelDx, labelDy, or labelSegment; otherwise adjust the other flow route/via/channelX/channelY'
+  }));
 
   const lastStageX = stageX(asArray(dataflow.stages).length - 1);
   if (lastStageX + layout.stageW / 2 > viewBox[0] - 24) {
@@ -319,12 +336,10 @@ function renderFlowPath(flow, index) {
 function renderFlowLabel(flow, index) {
   const routed = pathFor(flow);
   const [lx, ly] = labelPoint(flow, routed.points);
-  const longestLine = Math.max(textUnits(flow.label), textUnits(flow.classification || ''));
-  const labelW = Math.max(34, longestLine * 4.9 + 12);
+  const { width: labelW, height: labelH } = flowLabelSize(flow);
   const classification = flow.classification
     ? `\n        <text data-detail="fine" x="${lx}" y="${ly + 11}" class="t-dim" font-size="7" text-anchor="middle">${esc(flow.classification)}</text>`
     : '';
-  const labelH = flow.classification ? 27 : layout.labelH;
   return `        <g data-detail="context" ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)}>
           <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>
           <text x="${lx}" y="${ly}" class="${variantAccent(flow.variant)}" font-size="8" text-anchor="middle">${esc(flow.label)}</text>${classification}

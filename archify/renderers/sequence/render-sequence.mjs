@@ -2,7 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagram, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
-import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, routePointsValue, asArray, isFinitePoint } from '../shared/geometry.mjs';
+import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, routePointsValue, asArray, isFinitePoint } from '../shared/geometry.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const { diagram: sequence, template, outPath } = loadDiagram({
@@ -183,13 +183,14 @@ function validateSequence() {
   // Label masks can extend well past the arrow span, so check the actual
   // label rectangles too — tangent arrows with long labels still collide.
   const labelRects = asArray(sequence.messages)
-    .filter((m) => participants.has(m.from) && participants.has(m.to) && typeof m.y === 'number')
-    .map((m) => {
+    .map((m, messageIndex) => {
+      if (!participants.has(m.from) || !participants.has(m.to) || typeof m.y !== 'number') return null;
       const x1 = participants.get(m.from).cx;
       const x2 = participants.get(m.to).cx;
       const width = Math.max(34, textUnits(m.label) * 5.2 + 12);
-      return { label: m.label, x: (x1 + x2) / 2 - width / 2, y: m.y - 20, width, height: layout.labelH };
-    });
+      return { relation: m, relationIndex: messageIndex, label: m.label, x: (x1 + x2) / 2 - width / 2, y: m.y - 20, width, height: layout.labelH };
+    })
+    .filter(Boolean);
   for (let i = 0; i < labelRects.length; i += 1) {
     for (let j = i + 1; j < labelRects.length; j += 1) {
       if (rectsOverlap(labelRects[i], labelRects[j], -2)) {
@@ -197,6 +198,16 @@ function validateSequence() {
       }
     }
   }
+  problems.push(...cleanLabelRouteClearanceProblems({
+    relations: sequence.messages,
+    labels: labelRects,
+    endpointIds: new Set(participants.keys()),
+    pathFor: messagePath,
+    diagramType: 'sequence',
+    relationCollection: 'messages',
+    profile: sequence.meta?.quality_profile,
+    routeHint: 'spread the message y values, shorten the label, or reorder participants so the adjacent route stays visible'
+  }));
 
   for (const segment of asArray(sequence.segments)) {
     if (segment.to <= segment.from) {

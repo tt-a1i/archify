@@ -48,7 +48,7 @@
     { "from": "validate", "to": "dlq", "label": "invalid event", "classification": "dead letter", "variant": "security", "fromSide": "top", "toSide": "top", "via": [[530, 80], [20, 80], [20, 550], [745, 550]], "labelAt": [300, 550] },
     { "from": "enrich", "to": "dlq", "label": "poison event", "classification": "dead letter", "variant": "security", "route": "bottom-channel", "labelDy": 30 },
     { "from": "dlq", "to": "ops", "label": "failure sample", "classification": "restricted", "variant": "security", "route": "vertical-channel" },
-    { "from": "dlq", "to": "replay", "label": "approved replay", "classification": "audited batch", "variant": "dashed", "route": "straight" }
+    { "from": "dlq", "to": "replay", "label": "approved replay", "classification": "audited batch", "variant": "dashed", "route": "straight", "labelDy": 30 }
   ],
   "cards": [
     { "dot": "amber", "title": "Transit Contract", "items": ["Every event and topic is named", "Partition keys preserve per-order ordering", "Consumer groups expose processing ownership"] },
