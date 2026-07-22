@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="archify 2.12.0">
-  <title>Async Job Roundtrip Diagram</title>
+  <title>MCO Runtime Architecture Diagram</title>
   <script>
     // Resolve the theme before first paint so light-preference users don't
     // see a dark flash. The toolbar script below re-applies with UI state.
@@ -3835,12 +3835,12 @@
     <div class="header">
       <div class="header-row">
         <div class="pulse-dot"></div>
-        <h1>Async Job Roundtrip</h1>
+        <h1>MCO Runtime Architecture</h1>
       </div>
-      <p class="subtitle">Acknowledgement, queueing, background work, retries, callback, polling, and final consistency</p>
+      <p class="subtitle">mco-org/mco · explicit provider policy · parallel invocation · durable raw answers</p>
     </div>
 
-    <script id="archify-guided-views-data" type="application/json">[{"id":"accept-and-enqueue","label":"Accept without blocking","focus":["client","api","queue"],"note":"The API acknowledges quickly after durable enqueue."},{"id":"work-and-retry","label":"Background work and retry","focus":["queue","worker","provider"],"note":"Timeouts re-enter the queue instead of holding the original request open."},{"id":"observe-final-state","label":"Observe final consistency","focus":["worker","store","notify","client","api"],"note":"Webhook delivery is primary; polling remains a bounded fallback."}]</script>
+    <script id="archify-guided-views-data" type="application/json">[{"id":"dispatch-path","label":"Dispatch path","focus":["callers","entry","router","policy","workflow","adapters","provider_clis"],"note":"An explicit provider team crosses one validated execution-policy boundary before MCO starts parallel work."},{"id":"answer-evidence","label":"Answer evidence","focus":["adapters","answer_transport","artifacts","consumers"],"note":"Provider output is decoded and persisted without turning raw answers into an automatic decision."},{"id":"durable-sessions","label":"Durable sessions","focus":["router","session_daemon","session_state"],"note":"Detached local workers use Unix sockets plus state.json and history.jsonl for resumable sessions."}]</script>
     <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
       <button id="guided-view-prev" type="button" aria-label="Previous guided view" title="Previous guided view ([)">&#8592;</button>
       <div class="guided-view-copy">
@@ -3882,9 +3882,9 @@
 
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="map">
-      <svg viewBox="0 0 820 920" role="img" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="signal-flow" data-quality-profile="showcase">
-        <title id="archify-diagram-title">Async Job Roundtrip</title>
-        <desc id="archify-diagram-description">Acknowledgement, queueing, background work, retries, callback, polling, and final consistency</desc>
+      <svg viewBox="0 0 1750 648" role="img" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="signal-flow" data-quality-profile="showcase">
+        <title id="archify-diagram-title">MCO Runtime Architecture</title>
+        <desc id="archify-diagram-description">mco-org/mco · explicit provider policy · parallel invocation · durable raw answers</desc>
         <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -3907,250 +3907,251 @@
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />
 
-        <!-- Time Segments -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="segment" data-composition-frame-id="0" x="48" y="150" width="724" height="138" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="62" y="168" class="t-dim" font-size="9" font-weight="600">Accept</text>
+        <!-- Boundaries (behind everything) -->
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" x="160" y="100" width="1300" height="480" rx="12" class="c-region" stroke-width="1"/>
+        <text x="168" y="118" class="t-cloud" font-size="9" font-weight="600">mco local package / Python runtime</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="segment" data-composition-frame-id="1" x="48" y="306" width="724" height="232" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="62" y="324" class="t-dim" font-size="9" font-weight="600">Background work</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" x="570" y="270" width="680" height="110" rx="8" class="c-security-group" stroke-width="1"/>
+        <text x="578" y="288" class="t-security" font-size="9" font-weight="600">explicit execution-policy boundary</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="segment" data-composition-frame-id="2" x="48" y="554" width="724" height="246" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="62" y="572" class="t-dim" font-size="9" font-weight="600">Notify + reconcile</text>
+        <!-- Connection paths (before components for correct z-order) -->
+        <path data-edge-from="callers" data-edge-to="entry" data-edge-key="0" data-edge-id="caller-entry" data-composition-points="150,330;190,330" d="M 150 330 L 190 330" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="entry" data-edge-to="router" data-edge-key="1" data-edge-id="entry-route" data-composition-points="340,330;390,330" d="M 340 330 L 390 330" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="router" data-edge-to="policy" data-edge-key="2" data-edge-id="route-policy" data-composition-points="540,330;600,330" d="M 540 330 L 600 330" class="a-security" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="config" data-edge-to="policy" data-edge-key="3" data-edge-id="config-policy" data-composition-points="680,190;680,300" d="M 680 190 L 680 300" class="a-security" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="policy" data-edge-to="workflow" data-edge-key="4" data-edge-id="policy-workflow" data-composition-points="760,330;820,330" d="M 760 330 L 820 330" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="workflow" data-edge-to="adapters" data-edge-key="5" data-edge-id="workflow-adapters" data-composition-points="990,330;1050,330" d="M 990 330 L 1050 330" class="a-emphasis" data-animate="edge" style="--step:5" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="adapters" data-edge-to="provider_clis" data-edge-label="native CLI / ACP" data-edge-key="6" data-edge-id="adapters-providers" data-composition-points="1220,330;1530,330" d="M 1220 330 L 1530 330" class="a-emphasis" data-animate="edge" style="--step:6" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="adapters" data-edge-to="answer_transport" data-edge-label="decode events" data-edge-key="7" data-edge-id="adapters-answer" data-composition-points="1135,360;1135,500" d="M 1135 360 L 1135 500" class="a-default" data-animate="edge" style="--step:7" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="answer_transport" data-edge-to="artifacts" data-edge-key="8" data-edge-id="answer-artifacts" data-composition-points="1220,530;1260,530" d="M 1220 530 L 1260 530" class="a-emphasis" data-animate="edge" style="--step:8" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="artifacts" data-edge-to="consumers" data-edge-label="raw answers" data-edge-key="9" data-edge-id="artifacts-consumers" data-composition-points="1430,530;1530,530" d="M 1430 530 L 1530 530" class="a-emphasis" data-animate="edge" style="--step:9" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="router" data-edge-to="session_daemon" data-edge-label="start · send · resume" data-edge-key="10" data-edge-id="router-session" data-composition-points="465,360;465,500" d="M 465 360 L 465 500" class="a-dashed" data-animate="edge" style="--step:10" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="session_daemon" data-edge-to="session_state" data-edge-label="persist" data-edge-key="11" data-edge-id="session-state" data-composition-points="545,530;600,530" d="M 545 530 L 600 530" class="a-dashed" data-animate="edge" style="--step:11" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
-        <!-- Lifelines -->
-        <path d="M 62 142 L 62 855" class="a-default" stroke-width="0.8" stroke-dasharray="3,7"/>
-        <path d="M 170 142 L 170 855" class="a-default" stroke-width="0.8" stroke-dasharray="3,7"/>
-        <path d="M 278 142 L 278 855" class="a-default" stroke-width="0.8" stroke-dasharray="3,7"/>
-        <path d="M 386 142 L 386 855" class="a-default" stroke-width="0.8" stroke-dasharray="3,7"/>
-        <path d="M 494 142 L 494 855" class="a-default" stroke-width="0.8" stroke-dasharray="3,7"/>
-        <path d="M 602 142 L 602 855" class="a-default" stroke-width="0.8" stroke-dasharray="3,7"/>
-        <path d="M 710 142 L 710 855" class="a-default" stroke-width="0.8" stroke-dasharray="3,7"/>
-
-        <!-- Messages -->
-        <g data-edge-from="client" data-edge-to="api" data-edge-label="POST /jobs" data-edge-key="0">
-          <path data-composition-edge-from="client" data-composition-edge-to="api" data-composition-points="69,180;163,180" d="M 69 180 L 163 180" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <g data-detail="context">
-          <rect x="84" y="160" width="64" height="16" rx="3" class="c-mask"/>
-          <text x="116" y="170" class="t-backend" font-size="9" text-anchor="middle">POST /jobs</text>
-        </g>
-        </g>
-
-        <g data-edge-from="api" data-edge-to="queue" data-edge-label="enqueue job" data-edge-key="1">
-          <path data-composition-edge-from="api" data-composition-edge-to="queue" data-composition-points="177,222;271,222" d="M 177 222 L 271 222" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <g data-detail="context">
-          <rect x="189.4" y="202" width="69.2" height="16" rx="3" class="c-mask"/>
-          <text x="224" y="212" class="t-backend" font-size="9" text-anchor="middle">enqueue job</text>
-        </g>
-        </g>
-
-        <g data-edge-from="api" data-edge-to="client" data-edge-label="202 + job id" data-edge-key="2">
-          <path data-composition-edge-from="api" data-composition-edge-to="client" data-composition-points="163,264;69,264" d="M 163 264 L 69 264" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.4" stroke-dasharray="3,5" marker-end="url(#arrowhead)"/>
-        <g data-detail="context">
-          <rect x="78.8" y="244" width="74.4" height="16" rx="3" class="c-mask"/>
-          <text x="116" y="254" class="t-muted" font-size="9" text-anchor="middle">202 + job id</text>
-        </g>
-        </g>
-
-        <g data-edge-from="queue" data-edge-to="worker" data-edge-label="deliver" data-edge-key="3">
-          <path data-composition-edge-from="queue" data-composition-edge-to="worker" data-composition-points="285,326;379,326" d="M 285 326 L 379 326" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <g data-detail="context">
-          <rect x="307.8" y="306" width="48.4" height="16" rx="3" class="c-mask"/>
-          <text x="332" y="316" class="t-backend" font-size="9" text-anchor="middle">deliver</text>
-        </g>
-        </g>
-
-        <g data-edge-from="worker" data-edge-to="provider" data-edge-label="perform work" data-edge-key="4">
-          <path data-composition-edge-from="worker" data-composition-edge-to="provider" data-composition-points="393,368;487,368" d="M 393 368 L 487 368" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <g data-detail="context">
-          <rect x="402.8" y="348" width="74.4" height="16" rx="3" class="c-mask"/>
-          <text x="440" y="358" class="t-backend" font-size="9" text-anchor="middle">perform work</text>
-        </g>
-        </g>
-
-        <g data-edge-from="provider" data-edge-to="worker" data-edge-label="result / timeout" data-edge-key="5">
-          <path data-composition-edge-from="provider" data-composition-edge-to="worker" data-composition-points="487,410;393,410" d="M 487 410 L 393 410" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.4" stroke-dasharray="3,5" marker-end="url(#arrowhead)"/>
-        <g data-detail="context">
-          <rect x="392.4" y="390" width="95.2" height="16" rx="3" class="c-mask"/>
-          <text x="440" y="400" class="t-muted" font-size="9" text-anchor="middle">result / timeout</text>
-        </g>
-        </g>
-
-        <g data-edge-from="worker" data-edge-to="queue" data-edge-label="retry if timeout" data-edge-key="6">
-          <path data-composition-edge-from="worker" data-composition-edge-to="queue" data-composition-points="379,452;285,452" d="M 379 452 L 285 452" class="a-dashed" data-animate="edge" style="--step:6" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <g data-detail="context">
-          <rect x="284.4" y="432" width="95.2" height="16" rx="3" class="c-mask"/>
-          <text x="332" y="442" class="t-messagebus" font-size="9" text-anchor="middle">retry if timeout</text>
-        </g>
-        </g>
-
-        <g data-edge-from="worker" data-edge-to="store" data-edge-label="persist final state" data-edge-key="7">
-          <path data-composition-edge-from="worker" data-composition-edge-to="store" data-composition-points="393,494;595,494" d="M 393 494 L 595 494" class="a-emphasis" data-animate="edge" style="--step:7" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <g data-detail="context">
-          <rect x="438.6" y="474" width="110.8" height="16" rx="3" class="c-mask"/>
-          <text x="494" y="484" class="t-backend" font-size="9" text-anchor="middle">persist final state</text>
-        </g>
-        </g>
-
-        <g data-edge-from="worker" data-edge-to="notify" data-edge-label="job.completed" data-edge-key="8">
-          <path data-composition-edge-from="worker" data-composition-edge-to="notify" data-composition-points="393,566;703,566" d="M 393 566 L 703 566" class="a-dashed" data-animate="edge" style="--step:8" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <g data-detail="context">
-          <rect x="508.2" y="546" width="79.60000000000001" height="16" rx="3" class="c-mask"/>
-          <text x="548" y="556" class="t-messagebus" font-size="9" text-anchor="middle">job.completed</text>
-        </g>
-        </g>
-
-        <g data-edge-from="notify" data-edge-to="client" data-edge-label="signed webhook" data-edge-key="9">
-          <path data-composition-edge-from="notify" data-composition-edge-to="client" data-composition-points="703,608;69,608" d="M 703 608 L 69 608" class="a-dashed" data-animate="edge" style="--step:9" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <g data-detail="context">
-          <rect x="343.6" y="588" width="84.8" height="16" rx="3" class="c-mask"/>
-          <text x="386" y="598" class="t-messagebus" font-size="9" text-anchor="middle">signed webhook</text>
-        </g>
-        </g>
-
-        <g data-edge-from="client" data-edge-to="api" data-edge-label="GET /jobs/:id" data-edge-key="10">
-          <path data-composition-edge-from="client" data-composition-edge-to="api" data-composition-points="69,650;163,650" d="M 69 650 L 163 650" class="a-default" data-animate="edge" style="--step:10" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <g data-detail="context">
-          <rect x="76.19999999999999" y="630" width="79.60000000000001" height="16" rx="3" class="c-mask"/>
-          <text x="116" y="640" class="t-backend" font-size="9" text-anchor="middle">GET /jobs/:id</text>
-        </g>
-        </g>
-
-        <g data-edge-from="api" data-edge-to="store" data-edge-label="read status" data-edge-key="11">
-          <path data-composition-edge-from="api" data-composition-edge-to="store" data-composition-points="177,692;595,692" d="M 177 692 L 595 692" class="a-default" data-animate="edge" style="--step:11" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <g data-detail="context">
-          <rect x="351.4" y="672" width="69.2" height="16" rx="3" class="c-mask"/>
-          <text x="386" y="682" class="t-backend" font-size="9" text-anchor="middle">read status</text>
-        </g>
-        </g>
-
-        <g data-edge-from="store" data-edge-to="api" data-edge-label="completed" data-edge-key="12">
-          <path data-composition-edge-from="store" data-composition-edge-to="api" data-composition-points="595,734;177,734" d="M 595 734 L 177 734" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" stroke-dasharray="3,5" marker-end="url(#arrowhead)"/>
-        <g data-detail="context">
-          <rect x="356.6" y="714" width="58.800000000000004" height="16" rx="3" class="c-mask"/>
-          <text x="386" y="724" class="t-muted" font-size="9" text-anchor="middle">completed</text>
-        </g>
-        </g>
-
-        <g data-edge-from="api" data-edge-to="client" data-edge-label="200 final result" data-edge-key="13">
-          <path data-composition-edge-from="api" data-composition-edge-to="client" data-composition-points="163,776;69,776" d="M 163 776 L 69 776" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" stroke-dasharray="3,5" marker-end="url(#arrowhead)"/>
-        <g data-detail="context">
-          <rect x="68.4" y="756" width="95.2" height="16" rx="3" class="c-mask"/>
-          <text x="116" y="766" class="t-muted" font-size="9" text-anchor="middle">200 final result</text>
-        </g>
-        </g>
-
-        <!-- Activations -->
-        <rect x="165" y="174" width="10" height="98" rx="3" class="c-mask"/>
-        <rect x="165" y="174" width="10" height="98" rx="3" class="c-backend" stroke-width="1"/>
-        <rect x="273" y="216" width="10" height="118" rx="3" class="c-mask"/>
-        <rect x="273" y="216" width="10" height="118" rx="3" class="c-messagebus" stroke-width="1"/>
-        <rect x="381" y="320" width="10" height="254" rx="3" class="c-mask"/>
-        <rect x="381" y="320" width="10" height="254" rx="3" class="c-backend" stroke-width="1"/>
-        <rect x="489" y="362" width="10" height="54" rx="3" class="c-mask"/>
-        <rect x="489" y="362" width="10" height="54" rx="3" class="c-cloud" stroke-width="1"/>
-        <rect x="597" y="488" width="10" height="254" rx="3" class="c-mask"/>
-        <rect x="597" y="488" width="10" height="254" rx="3" class="c-database" stroke-width="1"/>
-        <rect x="705" y="560" width="10" height="56" rx="3" class="c-mask"/>
-        <rect x="705" y="560" width="10" height="56" rx="3" class="c-messagebus" stroke-width="1"/>
-        <rect x="165" y="644" width="10" height="140" rx="3" class="c-mask"/>
-        <rect x="165" y="644" width="10" height="140" rx="3" class="c-backend" stroke-width="1"/>
-
-        <!-- Participants -->
-        <g id="node-client" data-node-id="client" data-node-label="Client" tabindex="0" role="button" aria-label="Focus Client, mobile app, Sequence participant" aria-pressed="false" data-node-kind="external" data-node-sublabel="mobile app" data-node-context="Sequence participant">
-          <title>Client · mobile app · Sequence participant</title>
-          <rect x="19" y="72" width="86" height="54" rx="6" class="c-mask"/>
-          <rect x="19" y="72" width="86" height="54" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(25 78) scale(0.6875)">
+        <!-- Components -->
+        <g id="node-callers" data-node-id="callers" data-node-label="Callers" tabindex="0" role="button" aria-label="Focus Callers, human · coding agent, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="human · coding agent" data-node-context="Architecture component">
+          <title>Callers · human · coding agent · Architecture component</title>
+          <rect x="20" y="300" width="130" height="60" rx="6" class="c-mask"/>
+          <rect x="20" y="300" width="130" height="60" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(26 306) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-detail-anchor x="62" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Client</text>
-          <text data-detail="context" x="62" y="111" class="t-muted" font-size="7" text-anchor="middle">mobile app</text>
+          <text data-detail-anchor x="85" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Callers</text>
+        <text data-detail="context" x="85" y="344" class="t-muted" font-size="9" text-anchor="middle">human · coding agent</text>
         </g>
 
-        <g id="node-api" data-node-id="api" data-node-label="Jobs API" tabindex="0" role="button" aria-label="Focus Jobs API, request edge, Sequence participant" aria-pressed="false" data-node-kind="backend" data-node-sublabel="request edge" data-node-context="Sequence participant">
-          <title>Jobs API · request edge · Sequence participant</title>
-          <rect x="127" y="72" width="86" height="54" rx="6" class="c-mask"/>
-          <rect x="127" y="72" width="86" height="54" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(133 78) scale(0.6875)">
+        <g id="node-entry" data-node-id="entry" data-node-label="Entry Surfaces" tabindex="0" role="button" aria-label="Focus Entry Surfaces, npm shim · Python CLI · MCP, mco local package / Python runtime" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="npm shim · Python CLI · MCP" data-node-context="mco local package / Python runtime">
+          <title>Entry Surfaces · npm shim · Python CLI · MCP · mco local package / Python runtime</title>
+          <rect x="190" y="300" width="150" height="60" rx="6" class="c-mask"/>
+          <rect x="190" y="300" width="150" height="60" rx="6" class="c-frontend" data-animate="node" style="--step:1" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(196 306) scale(0.6875)">
+            <rect x="2" y="3" width="12" height="10" rx="2"/>
+            <path d="M2 6.5h12"/>
+            <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
+            <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
+          </g>
+          <text data-detail-anchor x="265" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Entry Surfaces</text>
+        <text data-detail="context" x="265" y="344" class="t-muted" font-size="9" text-anchor="middle">npm shim · Python CLI · MCP</text>
+        </g>
+
+        <g id="node-router" data-node-id="router" data-node-label="Command Router" tabindex="0" role="button" aria-label="Focus Command Router, run · review · doctor · session, mco local package / Python runtime" aria-pressed="false" data-node-kind="backend" data-node-sublabel="run · review · doctor · session" data-node-context="mco local package / Python runtime">
+          <title>Command Router · run · review · doctor · session · mco local package / Python runtime</title>
+          <rect x="390" y="300" width="150" height="60" rx="6" class="c-mask"/>
+          <rect x="390" y="300" width="150" height="60" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(396 306) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-detail-anchor x="170" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Jobs API</text>
-          <text data-detail="context" x="170" y="111" class="t-muted" font-size="7" text-anchor="middle">request edge</text>
+          <text data-detail-anchor x="465" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Command Router</text>
+        <text data-detail="context" x="465" y="344" class="t-muted" font-size="9" text-anchor="middle">run · review · doctor · session</text>
         </g>
 
-        <g id="node-queue" data-node-id="queue" data-node-label="Queue" tabindex="0" role="button" aria-label="Focus Queue, durable work, Sequence participant" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="durable work" data-node-context="Sequence participant">
-          <title>Queue · durable work · Sequence participant</title>
-          <rect x="235" y="72" width="86" height="54" rx="6" class="c-mask"/>
-          <rect x="235" y="72" width="86" height="54" rx="6" class="c-messagebus" data-animate="node" style="--step:2" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(241 78) scale(0.6875)">
-            <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
-            <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
-            <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
-            <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
-          </g>
-          <text data-detail-anchor x="278" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Queue</text>
-          <text data-detail="context" x="278" y="111" class="t-muted" font-size="7" text-anchor="middle">durable work</text>
-        </g>
-
-        <g id="node-worker" data-node-id="worker" data-node-label="Worker" tabindex="0" role="button" aria-label="Focus Worker, background, Sequence participant" aria-pressed="false" data-node-kind="backend" data-node-sublabel="background" data-node-context="Sequence participant">
-          <title>Worker · background · Sequence participant</title>
-          <rect x="343" y="72" width="86" height="54" rx="6" class="c-mask"/>
-          <rect x="343" y="72" width="86" height="54" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(349 78) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-detail-anchor x="386" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Worker</text>
-          <text data-detail="context" x="386" y="111" class="t-muted" font-size="7" text-anchor="middle">background</text>
-        </g>
-
-        <g id="node-provider" data-node-id="provider" data-node-label="Provider" tabindex="0" role="button" aria-label="Focus Provider, external API, Sequence participant" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="external API" data-node-context="Sequence participant">
-          <title>Provider · external API · Sequence participant</title>
-          <rect x="451" y="72" width="86" height="54" rx="6" class="c-mask"/>
-          <rect x="451" y="72" width="86" height="54" rx="6" class="c-cloud" data-animate="node" style="--step:4" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(457 78) scale(0.6875)">
-            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
-          </g>
-          <text data-detail-anchor x="494" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Provider</text>
-          <text data-detail="context" x="494" y="111" class="t-muted" font-size="7" text-anchor="middle">external API</text>
-        </g>
-
-        <g id="node-store" data-node-id="store" data-node-label="Job Store" tabindex="0" role="button" aria-label="Focus Job Store, source of truth, Sequence participant" aria-pressed="false" data-node-kind="database" data-node-sublabel="source of truth" data-node-context="Sequence participant">
-          <title>Job Store · source of truth · Sequence participant</title>
-          <rect x="559" y="72" width="86" height="54" rx="6" class="c-mask"/>
-          <rect x="559" y="72" width="86" height="54" rx="6" class="c-database" data-animate="node" style="--step:5" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(565 78) scale(0.6875)">
+        <g id="node-config" data-node-id="config" data-node-label="Config + Selection" tabindex="0" role="button" aria-label="Focus Config + Selection, files · explicit provider team, mco local package / Python runtime" aria-pressed="false" data-node-kind="database" data-node-sublabel="files · explicit provider team" data-node-tag="no silent team" data-node-context="mco local package / Python runtime">
+          <title>Config + Selection · files · explicit provider team · mco local package / Python runtime · no silent team</title>
+          <rect x="600" y="130" width="160" height="60" rx="6" class="c-mask"/>
+          <rect x="600" y="130" width="160" height="60" rx="6" class="c-database" data-animate="node" style="--step:3" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(606 136) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-detail-anchor x="602" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Job Store</text>
-          <text data-detail="context" x="602" y="111" class="t-muted" font-size="7" text-anchor="middle">source of truth</text>
+          <text data-detail-anchor x="680" y="158" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Config + Selection</text>
+        <text data-detail="context" x="680" y="174" class="t-muted" font-size="9" text-anchor="middle">files · explicit provider team</text>
+        <text data-detail="fine" x="680" y="182" class="t-database" font-size="7" text-anchor="middle">no silent team</text>
         </g>
 
-        <g id="node-notify" data-node-id="notify" data-node-label="Notifier" tabindex="0" role="button" aria-label="Focus Notifier, webhook, Sequence participant" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="webhook" data-node-context="Sequence participant">
-          <title>Notifier · webhook · Sequence participant</title>
-          <rect x="667" y="72" width="86" height="54" rx="6" class="c-mask"/>
-          <rect x="667" y="72" width="86" height="54" rx="6" class="c-messagebus" data-animate="node" style="--step:6" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(673 78) scale(0.6875)">
+        <g id="node-policy" data-node-id="policy" data-node-label="Execution Policy" tabindex="0" role="button" aria-label="Focus Execution Policy, read_only · write · yolo, mco local package / Python runtime › explicit execution-policy boundary" aria-pressed="false" data-node-kind="security" data-node-sublabel="read_only · write · yolo" data-node-tag="explicit boundary" data-node-context="mco local package / Python runtime › explicit execution-policy boundary">
+          <title>Execution Policy · read_only · write · yolo · mco local package / Python runtime › explicit execution-policy boundary · explicit boundary</title>
+          <rect x="600" y="300" width="160" height="60" rx="6" class="c-mask"/>
+          <rect x="600" y="300" width="160" height="60" rx="6" class="c-security" data-animate="node" style="--step:3" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(606 306) scale(0.6875)">
+            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
+            <path d="m5.8 8 1.5 1.5 3-3"/>
+          </g>
+          <text data-detail-anchor x="680" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Execution Policy</text>
+        <text data-detail="context" x="680" y="344" class="t-muted" font-size="9" text-anchor="middle">read_only · write · yolo</text>
+        <text data-detail="fine" x="680" y="352" class="t-security" font-size="7" text-anchor="middle">explicit boundary</text>
+        </g>
+
+        <g id="node-workflow" data-node-id="workflow" data-node-label="Invocation Workflow" tabindex="0" role="button" aria-label="Focus Invocation Workflow, parallel · chain · debate · synthesize, mco local package / Python runtime › explicit execution-policy boundary" aria-pressed="false" data-node-kind="backend" data-node-sublabel="parallel · chain · debate · synthesize" data-node-context="mco local package / Python runtime › explicit execution-policy boundary">
+          <title>Invocation Workflow · parallel · chain · debate · synthesize · mco local package / Python runtime › explicit execution-policy boundary</title>
+          <rect x="820" y="300" width="170" height="60" rx="6" class="c-mask"/>
+          <rect x="820" y="300" width="170" height="60" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(826 306) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-detail-anchor x="905" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Invocation Workflow</text>
+        <text data-detail="context" x="905" y="344" class="t-muted" font-size="9" text-anchor="middle">parallel · chain · debate · synthesize</text>
+        </g>
+
+        <g id="node-adapters" data-node-id="adapters" data-node-label="Provider Adapters" tabindex="0" role="button" aria-label="Focus Provider Adapters, shim / ACP · detect · run · poll · cancel, mco local package / Python runtime › explicit execution-policy boundary" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="shim / ACP · detect · run · poll · cancel" data-node-context="mco local package / Python runtime › explicit execution-policy boundary">
+          <title>Provider Adapters · shim / ACP · detect · run · poll · cancel · mco local package / Python runtime › explicit execution-policy boundary</title>
+          <rect x="1050" y="300" width="170" height="60" rx="6" class="c-mask"/>
+          <rect x="1050" y="300" width="170" height="60" rx="6" class="c-messagebus" data-animate="node" style="--step:6" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(1056 306) scale(0.6875)">
             <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
             <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
             <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-detail-anchor x="710" y="94" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Notifier</text>
-          <text data-detail="context" x="710" y="111" class="t-muted" font-size="7" text-anchor="middle">webhook</text>
+          <text data-detail-anchor x="1135" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Provider Adapters</text>
+        <text data-detail="context" x="1135" y="344" class="t-muted" font-size="9" text-anchor="middle">shim / ACP · detect · run · poll · cancel</text>
+        </g>
+
+        <g id="node-provider_clis" data-node-id="provider_clis" data-node-label="Provider CLIs" tabindex="0" role="button" aria-label="Focus Provider CLIs, Claude · Codex · Pi · 7 more, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="Claude · Codex · Pi · 7 more" data-node-context="Architecture component">
+          <title>Provider CLIs · Claude · Codex · Pi · 7 more · Architecture component</title>
+          <rect x="1530" y="300" width="180" height="60" rx="6" class="c-mask"/>
+          <rect x="1530" y="300" width="180" height="60" rx="6" class="c-external" data-animate="node" style="--step:7" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(1536 306) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-detail-anchor x="1620" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Provider CLIs</text>
+        <text data-detail="context" x="1620" y="344" class="t-muted" font-size="9" text-anchor="middle">Claude · Codex · Pi · 7 more</text>
+        </g>
+
+        <g id="node-answer_transport" data-node-id="answer_transport" data-node-label="Answer Transport" tabindex="0" role="button" aria-label="Focus Answer Transport, plain · JSON · JSONL · ACP events, mco local package / Python runtime" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="plain · JSON · JSONL · ACP events" data-node-context="mco local package / Python runtime">
+          <title>Answer Transport · plain · JSON · JSONL · ACP events · mco local package / Python runtime</title>
+          <rect x="1050" y="500" width="170" height="60" rx="6" class="c-mask"/>
+          <rect x="1050" y="500" width="170" height="60" rx="6" class="c-messagebus" data-animate="node" style="--step:8" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(1056 506) scale(0.6875)">
+            <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
+            <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
+            <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
+            <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
+          </g>
+          <text data-detail-anchor x="1135" y="528" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Answer Transport</text>
+        <text data-detail="context" x="1135" y="544" class="t-muted" font-size="9" text-anchor="middle">plain · JSON · JSONL · ACP events</text>
+        </g>
+
+        <g id="node-artifacts" data-node-id="artifacts" data-node-label="Invocation Artifacts" tabindex="0" role="button" aria-label="Focus Invocation Artifacts, answers · result.md · run.json, mco local package / Python runtime" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="answers · result.md · run.json" data-node-tag="raw evidence" data-node-context="mco local package / Python runtime">
+          <title>Invocation Artifacts · answers · result.md · run.json · mco local package / Python runtime · raw evidence</title>
+          <rect x="1260" y="500" width="170" height="60" rx="6" class="c-mask"/>
+          <rect x="1260" y="500" width="170" height="60" rx="6" class="c-cloud" data-animate="node" style="--step:9" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(1266 506) scale(0.6875)">
+            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
+          </g>
+          <text data-detail-anchor x="1345" y="528" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Invocation Artifacts</text>
+        <text data-detail="context" x="1345" y="544" class="t-muted" font-size="9" text-anchor="middle">answers · result.md · run.json</text>
+        <text data-detail="fine" x="1345" y="552" class="t-cloud" font-size="7" text-anchor="middle">raw evidence</text>
+        </g>
+
+        <g id="node-consumers" data-node-id="consumers" data-node-label="Output Consumers" tabindex="0" role="button" aria-label="Focus Output Consumers, terminal · calling agent · CI, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="terminal · calling agent · CI" data-node-context="Architecture component">
+          <title>Output Consumers · terminal · calling agent · CI · Architecture component</title>
+          <rect x="1530" y="500" width="180" height="60" rx="6" class="c-mask"/>
+          <rect x="1530" y="500" width="180" height="60" rx="6" class="c-external" data-animate="node" style="--step:10" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(1536 506) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-detail-anchor x="1620" y="528" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Output Consumers</text>
+        <text data-detail="context" x="1620" y="544" class="t-muted" font-size="9" text-anchor="middle">terminal · calling agent · CI</text>
+        </g>
+
+        <g id="node-session_daemon" data-node-id="session_daemon" data-node-label="Session Daemon" tabindex="0" role="button" aria-label="Focus Session Daemon, detached worker · Unix socket, mco local package / Python runtime" aria-pressed="false" data-node-kind="backend" data-node-sublabel="detached worker · Unix socket" data-node-context="mco local package / Python runtime">
+          <title>Session Daemon · detached worker · Unix socket · mco local package / Python runtime</title>
+          <rect x="385" y="500" width="160" height="60" rx="6" class="c-mask"/>
+          <rect x="385" y="500" width="160" height="60" rx="6" class="c-backend" data-animate="node" style="--step:11" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(391 506) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-detail-anchor x="465" y="528" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Session Daemon</text>
+        <text data-detail="context" x="465" y="544" class="t-muted" font-size="9" text-anchor="middle">detached worker · Unix socket</text>
+        </g>
+
+        <g id="node-session_state" data-node-id="session_state" data-node-label="Session State" tabindex="0" role="button" aria-label="Focus Session State, state.json · history.jsonl, mco local package / Python runtime" aria-pressed="false" data-node-kind="database" data-node-sublabel="state.json · history.jsonl" data-node-tag=".mco/sessions" data-node-context="mco local package / Python runtime">
+          <title>Session State · state.json · history.jsonl · mco local package / Python runtime · .mco/sessions</title>
+          <rect x="600" y="500" width="160" height="60" rx="6" class="c-mask"/>
+          <rect x="600" y="500" width="160" height="60" rx="6" class="c-database" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(606 506) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-detail-anchor x="680" y="528" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Session State</text>
+        <text data-detail="context" x="680" y="544" class="t-muted" font-size="9" text-anchor="middle">state.json · history.jsonl</text>
+        <text data-detail="fine" x="680" y="552" class="t-database" font-size="7" text-anchor="middle">.mco/sessions</text>
+        </g>
+
+        <!-- Connection labels -->
+
+
+
+
+
+
+        <g data-detail="context" data-edge-from="adapters" data-edge-to="provider_clis" data-edge-label="native CLI / ACP" data-edge-key="6" data-edge-id="adapters-providers">
+          <rect x="1331.6" y="310" width="86.8" height="14" rx="3" class="c-mask"/>
+          <text x="1375" y="320" class="t-backend" font-size="8" text-anchor="middle">native CLI / ACP</text>
+        </g>
+        <g data-detail="context" data-edge-from="adapters" data-edge-to="answer_transport" data-edge-label="decode events" data-edge-key="7" data-edge-id="adapters-answer">
+          <rect x="1098.8" y="420" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="1135" y="430" class="t-muted" font-size="8" text-anchor="middle">decode events</text>
+        </g>
+
+        <g data-detail="context" data-edge-from="artifacts" data-edge-to="consumers" data-edge-label="raw answers" data-edge-key="9" data-edge-id="artifacts-consumers">
+          <rect x="1448.6" y="510" width="62.8" height="14" rx="3" class="c-mask"/>
+          <text x="1480" y="520" class="t-backend" font-size="8" text-anchor="middle">raw answers</text>
+        </g>
+        <g data-detail="context" data-edge-from="router" data-edge-to="session_daemon" data-edge-label="start · send · resume" data-edge-key="10" data-edge-id="router-session">
+          <rect x="409.6" y="420" width="110.8" height="14" rx="3" class="c-mask"/>
+          <text x="465" y="430" class="t-messagebus" font-size="8" text-anchor="middle">start · send · resume</text>
+        </g>
+        <g data-detail="context" data-edge-from="session_daemon" data-edge-to="session_state" data-edge-label="persist" data-edge-key="11" data-edge-id="session-state">
+          <rect x="550.7" y="510" width="43.6" height="14" rx="3" class="c-mask"/>
+          <text x="572.5" y="520" class="t-messagebus" font-size="8" text-anchor="middle">persist</text>
         </g>
 
         <!-- Legend -->
-        <text x="150" y="846" class="t-primary" font-size="10" font-weight="600">Legend</text>
-        <path d="M 150 866 L 184 866" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <text x="193" y="869" class="t-muted" font-size="8">request</text>
-        <path d="M 270 866 L 304 866" class="a-default" stroke-width="1.4" stroke-dasharray="3,5" marker-end="url(#arrowhead)"/>
-        <text x="313" y="869" class="t-muted" font-size="8">return</text>
-        <path d="M 385 866 L 419 866" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
-        <text x="428" y="869" class="t-muted" font-size="8">security</text>
-        <path d="M 530 866 L 564 866" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <text x="573" y="869" class="t-muted" font-size="8">async trace</text>
+        <g data-legend-bridge>
+          <text x="40" y="619" class="t-primary" font-size="9" font-weight="600">Legend</text>
+          <g data-legend-kind="external">
+            <rect x="40" y="624" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
+            <text x="60" y="632" class="t-muted" font-size="8">External</text>
+          </g>
+          <g data-legend-kind="frontend">
+            <rect x="144" y="624" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
+            <text x="164" y="632" class="t-muted" font-size="8">Frontend</text>
+          </g>
+          <g data-legend-kind="backend">
+            <rect x="248" y="624" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+            <text x="268" y="632" class="t-muted" font-size="8">Backend</text>
+          </g>
+          <g data-legend-kind="database">
+            <rect x="347" y="624" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+            <text x="367" y="632" class="t-muted" font-size="8">Database</text>
+          </g>
+          <g data-legend-kind="security">
+            <rect x="451" y="624" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+            <text x="471" y="632" class="t-muted" font-size="8">Security</text>
+          </g>
+          <g data-legend-kind="messagebus">
+            <rect x="555" y="624" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+            <text x="575" y="632" class="t-muted" font-size="8">Message bus</text>
+          </g>
+          <g data-legend-kind="cloud">
+            <rect x="674" y="624" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+            <text x="694" y="632" class="t-muted" font-size="8">Cloud</text>
+          </g>
+        </g>
       </svg>
       <p class="intent-trace-status no-print" id="intent-trace-status" role="status" aria-live="polite" aria-atomic="true"></p>
       <div class="share-chapter-cue no-print" id="share-chapter-cue" hidden role="status" aria-live="polite">
@@ -4318,43 +4319,43 @@
       <div class="card">
         <div class="card-header">
           <div class="card-dot cyan"></div>
-          <h3>Fast Acknowledgement</h3>
+          <h3>Source-backed dispatch</h3>
         </div>
         <ul>
-          <li>&bull; The caller receives a durable job id before work begins</li>
-          <li>&bull; Queue ownership is visible in the acceptance contract</li>
-          <li>&bull; The original connection does not wait for provider latency</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-dot orange"></div>
-          <h3>Bounded Recovery</h3>
-        </div>
-        <ul>
-          <li>&bull; Timeouts re-enter the queue with a retry policy</li>
-          <li>&bull; Final state is persisted before notification</li>
-          <li>&bull; The job store remains the source of truth</li>
+          <li>&bull; runtime/cli.py requires an explicit provider or named agent team</li>
+          <li>&bull; runtime/policy.py validates models, context, permissions, and risk</li>
+          <li>&bull; runtime/invocation_runtime.py owns parallelism, timeouts, and cancellation</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
           <div class="card-dot emerald"></div>
-          <h3>Two Observation Paths</h3>
+          <h3>Raw-answer contract</h3>
         </div>
         <ul>
-          <li>&bull; A signed webhook announces completion</li>
-          <li>&bull; Status polling is a fallback, not a second workflow</li>
-          <li>&bull; Both paths converge on the same final state</li>
+          <li>&bull; Adapters keep each provider CLI behind one shared runtime contract</li>
+          <li>&bull; answer_transport.py decodes output without inventing findings or consensus</li>
+          <li>&bull; Artifacts persist answers and run metadata for terminal, agents, or CI</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot violet"></div>
+          <h3>Real repository proof</h3>
+        </div>
+        <ul>
+          <li>&bull; Repository: github.com/mco-org/mco</li>
+          <li>&bull; Source snapshot: main @ 9f1a1cf</li>
+          <li>&bull; Evidence read: README, CLI, policy, adapters, invocation runtime, sessions</li>
         </ul>
       </div>
     </div>
 
     <!-- Footer -->
     <p class="footer">
-      Sequence diagram &bull; Built with Archify<span class="no-print"> &bull; <a class="artifact-start-link" href="https://tt-a1i.github.io/archify/start.html?type=sequence" target="_blank" rel="noopener noreferrer">Create yours &nearr;</a> &bull; Hover to trace &bull; <kbd>R</kbd> route &bull; Click to focus &bull; <kbd>+</kbd>/<kbd>&minus;</kbd> zoom &bull; <kbd>M</kbd> radar &bull; <kbd>[</kbd>/<kbd>]</kbd> views &bull; <kbd>P</kbd> play story &bull; <kbd>T</kbd> theme &bull; <kbd>E</kbd> export</span>
+      Architecture diagram &bull; Built with Archify<span class="no-print"> &bull; <a class="artifact-start-link" href="https://tt-a1i.github.io/archify/start.html?type=architecture" target="_blank" rel="noopener noreferrer">Create yours &nearr;</a> &bull; Hover to trace &bull; <kbd>R</kbd> route &bull; Click to focus &bull; <kbd>+</kbd>/<kbd>&minus;</kbd> zoom &bull; <kbd>M</kbd> radar &bull; <kbd>[</kbd>/<kbd>]</kbd> views &bull; <kbd>P</kbd> play story &bull; <kbd>T</kbd> theme &bull; <kbd>E</kbd> export</span>
     </p>
   </div>
 

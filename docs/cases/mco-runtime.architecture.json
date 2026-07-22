@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MCO Runtime Architecture",
+    "subtitle": "mco-org/mco · explicit provider policy · parallel invocation · durable raw answers",
+    "output": "docs/cases/mco-runtime.architecture.html",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "dispatch-path",
+        "label": "Dispatch path",
+        "focus": ["callers", "entry", "router", "policy", "workflow", "adapters", "provider_clis"],
+        "note": "An explicit provider team crosses one validated execution-policy boundary before MCO starts parallel work."
+      },
+      {
+        "id": "answer-evidence",
+        "label": "Answer evidence",
+        "focus": ["adapters", "answer_transport", "artifacts", "consumers"],
+        "note": "Provider output is decoded and persisted without turning raw answers into an automatic decision."
+      },
+      {
+        "id": "durable-sessions",
+        "label": "Durable sessions",
+        "focus": ["router", "session_daemon", "session_state"],
+        "note": "Detached local workers use Unix sockets plus state.json and history.jsonl for resumable sessions."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "callers",
+      "type": "external",
+      "label": "Callers",
+      "sublabel": "human · coding agent",
+      "pos": [20, 300],
+      "size": [130, 60]
+    },
+    {
+      "id": "entry",
+      "type": "frontend",
+      "label": "Entry Surfaces",
+      "sublabel": "npm shim · Python CLI · MCP",
+      "pos": [190, 300],
+      "size": [150, 60]
+    },
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "Command Router",
+      "sublabel": "run · review · doctor · session",
+      "pos": [390, 300],
+      "size": [150, 60]
+    },
+    {
+      "id": "config",
+      "type": "database",
+      "label": "Config + Selection",
+      "sublabel": "files · explicit provider team",
+      "pos": [600, 130],
+      "size": [160, 60],
+      "tag": "no silent team"
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "Execution Policy",
+      "sublabel": "read_only · write · yolo",
+      "pos": [600, 300],
+      "size": [160, 60],
+      "tag": "explicit boundary"
+    },
+    {
+      "id": "workflow",
+      "type": "backend",
+      "label": "Invocation Workflow",
+      "sublabel": "parallel · chain · debate · synthesize",
+      "pos": [820, 300],
+      "size": [170, 60]
+    },
+    {
+      "id": "adapters",
+      "type": "messagebus",
+      "label": "Provider Adapters",
+      "sublabel": "shim / ACP · detect · run · poll · cancel",
+      "pos": [1050, 300],
+      "size": [170, 60]
+    },
+    {
+      "id": "provider_clis",
+      "type": "external",
+      "label": "Provider CLIs",
+      "sublabel": "Claude · Codex · Pi · 7 more",
+      "pos": [1530, 300],
+      "size": [180, 60]
+    },
+    {
+      "id": "answer_transport",
+      "type": "messagebus",
+      "label": "Answer Transport",
+      "sublabel": "plain · JSON · JSONL · ACP events",
+      "pos": [1050, 500],
+      "size": [170, 60]
+    },
+    {
+      "id": "artifacts",
+      "type": "cloud",
+      "label": "Invocation Artifacts",
+      "sublabel": "answers · result.md · run.json",
+      "pos": [1260, 500],
+      "size": [170, 60],
+      "tag": "raw evidence"
+    },
+    {
+      "id": "consumers",
+      "type": "external",
+      "label": "Output Consumers",
+      "sublabel": "terminal · calling agent · CI",
+      "pos": [1530, 500],
+      "size": [180, 60]
+    },
+    {
+      "id": "session_daemon",
+      "type": "backend",
+      "label": "Session Daemon",
+      "sublabel": "detached worker · Unix socket",
+      "pos": [385, 500],
+      "size": [160, 60]
+    },
+    {
+      "id": "session_state",
+      "type": "database",
+      "label": "Session State",
+      "sublabel": "state.json · history.jsonl",
+      "pos": [600, 500],
+      "size": [160, 60],
+      "tag": ".mco/sessions"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "mco local package / Python runtime",
+      "wraps": ["entry", "router", "config", "policy", "workflow", "adapters", "answer_transport", "artifacts", "session_daemon", "session_state"]
+    },
+    {
+      "kind": "security-group",
+      "label": "explicit execution-policy boundary",
+      "wraps": ["policy", "workflow", "adapters"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "caller-entry",
+      "from": "callers",
+      "to": "entry",
+      "variant": "emphasis"
+    },
+    {
+      "id": "entry-route",
+      "from": "entry",
+      "to": "router",
+      "variant": "emphasis"
+    },
+    {
+      "id": "route-policy",
+      "from": "router",
+      "to": "policy",
+      "variant": "security"
+    },
+    {
+      "id": "config-policy",
+      "from": "config",
+      "to": "policy",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "policy-workflow",
+      "from": "policy",
+      "to": "workflow",
+      "variant": "emphasis"
+    },
+    {
+      "id": "workflow-adapters",
+      "from": "workflow",
+      "to": "adapters",
+      "variant": "emphasis"
+    },
+    {
+      "id": "adapters-providers",
+      "from": "adapters",
+      "to": "provider_clis",
+      "label": "native CLI / ACP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "adapters-answer",
+      "from": "adapters",
+      "to": "answer_transport",
+      "label": "decode events",
+      "labelAt": [1135, 430],
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "answer-artifacts",
+      "from": "answer_transport",
+      "to": "artifacts",
+      "variant": "emphasis"
+    },
+    {
+      "id": "artifacts-consumers",
+      "from": "artifacts",
+      "to": "consumers",
+      "label": "raw answers",
+      "variant": "emphasis"
+    },
+    {
+      "id": "router-session",
+      "from": "router",
+      "to": "session_daemon",
+      "label": "start · send · resume",
+      "labelAt": [465, 430],
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight"
+    },
+    {
+      "id": "session-state",
+      "from": "session_daemon",
+      "to": "session_state",
+      "label": "persist",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Source-backed dispatch",
+      "items": [
+        "runtime/cli.py requires an explicit provider or named agent team",
+        "runtime/policy.py validates models, context, permissions, and risk",
+        "runtime/invocation_runtime.py owns parallelism, timeouts, and cancellation"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Raw-answer contract",
+      "items": [
+        "Adapters keep each provider CLI behind one shared runtime contract",
+        "answer_transport.py decodes output without inventing findings or consensus",
+        "Artifacts persist answers and run metadata for terminal, agents, or CI"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Real repository proof",
+      "items": [
+        "Repository: github.com/mco-org/mco",
+        "Source snapshot: main @ 9f1a1cf",
+        "Evidence read: README, CLI, policy, adapters, invocation runtime, sessions"
+      ]
+    }
+  ]
+}

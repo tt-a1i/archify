@@ -109,7 +109,7 @@ test('all README languages keep the product hero and retain the verified animate
     const heroIndex = readme.indexOf('docs/assets/archify-readme-hero.png');
     const titleIndex = readme.indexOf('# Archify');
     const proofIndex = readme.indexOf('docs/assets/archify-live-proof.gif');
-    const demosIndex = Math.max(readme.indexOf('## Interactive demos in 2.11'), readme.indexOf('## 2.11 交互演示'));
+    const demosIndex = Math.max(readme.indexOf('## See Archify in action'), readme.indexOf('## 看看 Archify 能做什么'));
     assert.ok(heroIndex >= 0 && heroIndex < titleIndex, `${filename}: product hero is not above the title`);
     assert.ok(proofIndex > demosIndex, `${filename}: animated proof must live in the demo section`);
     assert.match(readme, /docs\/assets\/archify-live-proof\.gif/);
@@ -122,7 +122,7 @@ test('all README languages keep the product hero and retain the verified animate
   );
 });
 
-test('README 2.11 demos use checked-in captures and live deep links below the existing hero', () => {
+test('README demos use checked-in captures and live deep links below the existing hero', () => {
   const demos = [
     {
       asset: 'archify-demo-story.png',
@@ -151,7 +151,7 @@ test('README 2.11 demos use checked-in captures and live deep links below the ex
     const heroIndex = readme.indexOf('docs/assets/archify-readme-hero.png');
     const proofIndex = readme.indexOf('docs/assets/archify-live-proof.gif');
     const previewIndex = Math.max(readme.indexOf('## Preview'), readme.indexOf('## 预览'));
-    const demosIndex = Math.max(readme.indexOf('## Interactive demos in 2.11'), readme.indexOf('## 2.11 交互演示'));
+    const demosIndex = Math.max(readme.indexOf('## See Archify in action'), readme.indexOf('## 看看 Archify 能做什么'));
     const quickStartIndex = Math.max(readme.indexOf('## Quick start'), readme.indexOf('## 快速开始'));
     assert.ok(heroIndex >= 0 && heroIndex < demosIndex, `${filename}: existing hero proof moved`);
     assert.ok(demosIndex < previewIndex && previewIndex < quickStartIndex, `${filename}: demo section is misplaced`);
@@ -170,6 +170,7 @@ test('README stays scannable without deleting the visual proof set', () => {
     'archify-demo-story.png',
     'archify-demo-route.png',
     'archify-demo-lens.png',
+    'mco-runtime-share-card.png',
     'archify-dark.png',
     'archify-light.png',
     'archify-menu.png',

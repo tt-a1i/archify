@@ -6,7 +6,7 @@
 
 # Archify
 
-**在对话里，把自然语言描述变成漂亮、可靠的架构图、工作流图、时序图、数据流图和生命周期图。**
+**在对话里，把代码仓库或系统描述变成漂亮、可靠、可交互的系统地图。**
 
 Archify 是适用于 Claude、Codex CLI 和 opencode 的 Agent Skill。给它一段系统描述或一个代码仓库，就能得到可打开、可探索、可演示、可分享的专业技术图。
 
@@ -16,7 +16,7 @@ Archify 是适用于 Claude、Codex CLI 和 opencode 的 Agent Skill。给它一
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
-![Version](https://img.shields.io/badge/version-2.11.0-0891b2?style=flat-square)
+![Version](https://img.shields.io/badge/version-2.12.0-0891b2?style=flat-square)
 
 **[在线项目页](https://tt-a1i.github.io/archify/)** · **[场景选图指南](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
 
@@ -26,7 +26,7 @@ npx skills add tt-a1i/archify -g
 
 然后告诉 Agent：`使用 archify 梳理这个仓库的运行时架构。`
 
-## 2.11 交互演示
+## 看看 Archify 能做什么
 
 下面都是真实生成的 Archify 成品，不是产品效果图。点击画面即可打开对应的可分享交互状态。
 
@@ -43,6 +43,12 @@ npx skills add tt-a1i/archify -g
 
 [Proof Lab](https://tt-a1i.github.io/archify/gallery.html) 收录全部 11 个仓库内场景、JSON 源、命名视图和校验回执。
 
+### 从真实仓库读出来，不是只靠 Prompt 画出来
+
+[![根据公开仓库 mco-org/mco 生成的 MCO 运行时架构图](docs/assets/mco-runtime-share-card.png)](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)
+
+Archify 读取 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版本，追踪 CLI、执行策略、Provider Adapter、调用运行时和持久会话，最终生成这张校验通过、可交互的系统地图。**[打开可交互成品 ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)** · [查看 Typed Source](docs/cases/mco-runtime.architecture.json)
+
 ## 预览
 
 同一张图，两套主题，一键切换：
@@ -54,6 +60,8 @@ npx skills add tt-a1i/archify -g
 Export 菜单支持复制 PNG，并下载静态或动态格式：
 
 ![导出菜单](docs/assets/archify-menu.png)
+
+需要用于 README、Release 或社交平台的标准 1200×630 图片时，使用 **Copy Share Card**。
 
 路径解析完成后，打开 **Export → Route Share Card**，即可把这条真实有向路径下载为 1200×630 PNG，同时保留完整拓扑作为上下文。它是可选、仅下载的 Share Card 变体；普通导出仍保持 canonical。
 
@@ -222,7 +230,7 @@ Claude.ai 中的上传入口：
 - [路线图](ROADMAP.md)
 - [自动生成的 Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-Archify 2.11 已覆盖五种 Typed IR、三套视觉预设、验证后实时预览、可选有限动态、引导视图、语义搜索与关系探索、可分享深链、1200×630 整图与路径卡片、浏览器原生 WebM，以及显式 `standard` / `showcase` 质量档位。
+Archify 2.12 已覆盖五种 Typed IR、真实仓库证明、验证后实时预览、可选有限动态、引导视图、语义搜索与关系探索、可分享深链、1200×630 整图与路径卡片、浏览器原生 WebM，以及显式 `standard` / `showcase` 质量档位。
 
 自动 Mermaid Parser、通用自动布局、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。
 

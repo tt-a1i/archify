@@ -10,7 +10,7 @@
 
 # Archify
 
-**Turn plain-English system descriptions into polished architecture, workflow, sequence, data-flow, and lifecycle diagrams — directly in chat.**
+**Turn a codebase or system description into a polished, interactive system map — directly in chat.**
 
 Archify is an agent skill for Claude, Codex CLI, and opencode. Give it a system description or repository; get a polished diagram you can open, explore, present, and share.
 
@@ -20,7 +20,7 @@ Archify is an agent skill for Claude, Codex CLI, and opencode. Give it a system 
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
-![Version](https://img.shields.io/badge/version-2.11.0-0891b2?style=flat-square)
+![Version](https://img.shields.io/badge/version-2.12.0-0891b2?style=flat-square)
 
 **[Project page](https://tt-a1i.github.io/archify/)** · **[Scenario guide](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
 
@@ -30,7 +30,7 @@ npx skills add tt-a1i/archify -g
 
 Then ask your agent: `Use archify to map this repository's runtime architecture.`
 
-## Interactive demos in 2.11
+## See Archify in action
 
 These are generated Archify artifacts, not product mockups. Click a frame to open its live, shareable state.
 
@@ -47,6 +47,12 @@ These are generated Archify artifacts, not product mockups. Click a frame to ope
 
 The [Proof Lab](https://tt-a1i.github.io/archify/gallery.html) contains all 11 checked-in scenarios, their JSON sources, named views, and validation receipts.
 
+### A real repository, mapped from source
+
+[![MCO runtime architecture generated from the public mco-org/mco repository](docs/assets/mco-runtime-share-card.png)](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)
+
+Archify read [`mco-org/mco`](https://github.com/mco-org/mco) at commit `9f1a1cf`, traced its CLI, policy, provider adapters, invocation runtime, and durable sessions, then produced this checked, interactive map. **[Open the live map ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)** · [inspect the typed source](docs/cases/mco-runtime.architecture.json)
+
 ## Preview
 
 Same diagram, two themes, one click to switch:
@@ -58,6 +64,8 @@ Same diagram, two themes, one click to switch:
 The Export menu copies PNG to the clipboard and downloads static or motion formats:
 
 ![Export menu](docs/assets/archify-menu.png)
+
+Use **Copy Share Card** when you want a canonical 1200×630 image for a README, release, or social post.
 
 After tracing a route, open **Export → Route Share Card** to download the exact authored path as a 1200×630 PNG while retaining the full diagram for context. It is an optional, download-only Share Card variant; ordinary exports remain canonical.
 
@@ -222,7 +230,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Roadmap](ROADMAP.md)
 - [Generated Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-Archify 2.11 includes typed IR across all five modes, three visual presets, verified live preview, optional finite motion, guided views, semantic search and relationship exploration, shareable deep links, 1200×630 diagram and route cards, browser-native WebM recording, and explicit `standard` / `showcase` quality profiles.
+Archify 2.12 includes typed IR across all five modes, real-repository proof, verified live preview, optional finite motion, guided views, semantic search and relationship exploration, shareable deep links, 1200×630 diagram and route cards, browser-native WebM recording, and explicit `standard` / `showcase` quality profiles.
 
 Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
 

@@ -3,7 +3,7 @@ name: archify
 description: Create polished, validated architecture, workflow, sequence, data-flow, and lifecycle/state diagrams as explorable standalone HTML with inline SVG, dark/light themes, semantic navigation, optional trace motion, an optional 1200×630 Share Card PNG, and PNG/JPEG/WebP/SVG/WebM export. Accept plain-language requirements or pasted Mermaid flowchart, sequenceDiagram, and stateDiagram input; inspect repository evidence when the diagram must reflect real code. Use when the user asks to visualize system architecture, infrastructure, cloud/security/network topology, technical workflows, approval or CI/CD flows, API call sequences, request lifecycles, data pipelines, ETL/ELT, data lineage, state machines, or to convert/beautify Mermaid. Prefer typed JSON IR renderers and deterministic validation; deliver static output by default, enable motion only when requested, and use optional post-commit opening only for an interactive local handoff.
 license: MIT
 metadata:
-  version: "2.11"
+  version: "2.12"
   author: tt-a1i
   based_on: Cocoon-AI/architecture-diagram-generator (MIT, v1.0)
 ---
