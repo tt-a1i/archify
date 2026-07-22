@@ -27,7 +27,7 @@ import {
 } from '../shared/geometry.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const { diagram: lifecycle, template, outPath } = loadDiagram({
+const { diagram: lifecycle, template, outPath, sourceCapsule } = loadDiagram({
   rendererDir: __dirname,
   diagramType: 'lifecycle',
   defaultExample: 'agent-run.lifecycle.json'
@@ -479,4 +479,5 @@ writeDiagram({
   footerLabel: 'Lifecycle diagram',
   svg: renderSvg(),
   cards: lifecycle.cards,
+  sourceCapsule,
 });

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-preset="classic">
+<html lang="en" data-theme="dark" data-preset="classic" data-diagram-type="dataflow">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2583,7 +2583,7 @@
       border: 1px solid var(--toolbar-border);
       border-radius: 0.5rem;
       padding: 0.375rem;
-      min-width: 160px;
+      min-width: 208px;
       display: none;
       flex-direction: column;
       box-shadow: 0 4px 20px rgba(0,0,0,0.25);
@@ -3801,6 +3801,8 @@
         <hr role="separator">
         <button data-format="svg"   type="button" role="menuitem" tabindex="-1">Download SVG <span class="hint">vector</span></button>
         <button data-format="webm"  type="button" role="menuitem" tabindex="-1">Download WebM <span class="hint">6s motion</span></button>
+        <hr role="separator" data-source-capsule-control hidden>
+        <button data-action="source-json" type="button" role="menuitem" tabindex="-1" hidden disabled>Source JSON <span class="hint">editable</span></button>
       </div>
     </div>
   </div>
@@ -3816,6 +3818,7 @@
     </div>
 
     <script id="archify-guided-views-data" type="application/json">[{"id":"collection-path","label":"Collection path","focus":["web","mobile","edge","stream"],"note":"Follow product events from clients into the ordered event stream."},{"id":"consent-boundary","label":"Consent and PII","focus":["edge","consent","pii"],"note":"Isolate the policy gate and restricted identity store."},{"id":"analytics-consumers","label":"Curated consumers","focus":["stream","warehouse","dashboard","features","model"],"note":"See curated facts, dashboards, and the derived feature path."}]</script>
+
     <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
       <button id="guided-view-prev" type="button" aria-label="Previous guided view" title="Previous guided view ([)">&#8592;</button>
       <div class="guided-view-copy">
@@ -5349,9 +5352,117 @@
       var menu = document.getElementById('export-menu');
       var btn = document.getElementById('btn-export');
       var routeShareItem = menu.querySelector('button[data-action="route-share-card"]');
+      var sourceItem = menu.querySelector('button[data-action="source-json"]');
+      var sourceSeparator = menu.querySelector('[data-source-capsule-control]');
       var items = function () {
         return Array.prototype.slice.call(menu.querySelectorAll('button[role="menuitem"]'));
       };
+
+      function readSourceCapsule() {
+        var data = document.getElementById('archify-source-capsule');
+        if (!data) return null;
+        try {
+          var diagram = JSON.parse(data.textContent || '');
+          var filename = data.getAttribute('data-source-filename') || '';
+          var renderedType = document.documentElement.getAttribute('data-diagram-type') || '';
+          var expectedDigest = data.getAttribute('data-source-sha256') || '';
+          var shapes = {
+            architecture: { nodes: 'components', edges: 'connections', edgesOptional: true, requiredArrays: ['components'] },
+            workflow: { nodes: 'nodes', edges: 'edges', requiredArrays: ['lanes', 'nodes', 'edges'] },
+            sequence: { nodes: 'participants', edges: 'messages', requiredArrays: ['participants', 'messages'] },
+            dataflow: { nodes: 'nodes', edges: 'flows', requiredArrays: ['stages', 'nodes', 'flows'] },
+            lifecycle: { nodes: 'states', edges: 'transitions', requiredArrays: ['lanes', 'states', 'transitions'] }
+          };
+          if (!diagram || typeof diagram !== 'object' || Array.isArray(diagram) ||
+              diagram.schema_version !== 1 || diagram.diagram_type !== renderedType ||
+              !shapes[renderedType] || !filename || filename.indexOf('/') !== -1 ||
+              filename.indexOf('\\') !== -1 || !diagram.meta || typeof diagram.meta !== 'object' ||
+              Array.isArray(diagram.meta) || typeof diagram.meta.title !== 'string' ||
+              !diagram.meta.title.trim() || !/^[a-f0-9]{64}$/.test(expectedDigest)) return null;
+          var shape = shapes[renderedType];
+          for (var requiredIndex = 0; requiredIndex < shape.requiredArrays.length; requiredIndex += 1) {
+            if (!Array.isArray(diagram[shape.requiredArrays[requiredIndex]])) return null;
+          }
+          var sourceNodes = diagram[shape.nodes];
+          var sourceEdges = diagram[shape.edges];
+          if (!Array.isArray(sourceNodes) ||
+              (!Array.isArray(sourceEdges) && !(shape.edgesOptional && sourceEdges === undefined))) return null;
+          sourceEdges = sourceEdges || [];
+
+          var svg = document.querySelector('.diagram-container svg');
+          if (!svg) return null;
+          var renderedNodes = Object.create(null);
+          Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id]'), function (node) {
+            renderedNodes[node.getAttribute('data-node-id')] = node;
+          });
+          var sourceNodeIds = Object.create(null);
+          for (var nodeIndex = 0; nodeIndex < sourceNodes.length; nodeIndex += 1) {
+            var sourceNode = sourceNodes[nodeIndex];
+            if (!sourceNode || typeof sourceNode !== 'object' || Array.isArray(sourceNode) ||
+                typeof sourceNode.id !== 'string' || !sourceNode.id || sourceNodeIds[sourceNode.id] ||
+                typeof sourceNode.label !== 'string' || !renderedNodes[sourceNode.id] ||
+                renderedNodes[sourceNode.id].getAttribute('data-node-label') !== sourceNode.label) return null;
+            sourceNodeIds[sourceNode.id] = true;
+          }
+          if (Object.keys(renderedNodes).length !== sourceNodes.length) return null;
+
+          var renderedEdges = Object.create(null);
+          Array.prototype.forEach.call(svg.querySelectorAll('[data-edge-key]'), function (edge) {
+            var key = edge.getAttribute('data-edge-key');
+            if (!(key in renderedEdges)) renderedEdges[key] = edge;
+          });
+          if (Object.keys(renderedEdges).length !== sourceEdges.length) return null;
+          for (var edgeIndex = 0; edgeIndex < sourceEdges.length; edgeIndex += 1) {
+            var sourceEdge = sourceEdges[edgeIndex];
+            var renderedEdge = renderedEdges[String(edgeIndex)];
+            if (!sourceEdge || typeof sourceEdge !== 'object' || Array.isArray(sourceEdge) || !renderedEdge ||
+                typeof sourceEdge.from !== 'string' || typeof sourceEdge.to !== 'string' ||
+                (sourceEdge.label !== undefined && typeof sourceEdge.label !== 'string') ||
+                (sourceEdge.id !== undefined && typeof sourceEdge.id !== 'string') ||
+                renderedEdge.getAttribute('data-edge-from') !== sourceEdge.from ||
+                renderedEdge.getAttribute('data-edge-to') !== sourceEdge.to ||
+                (renderedEdge.getAttribute('data-edge-label') || '') !== (sourceEdge.label || '') ||
+                (renderedEdge.getAttribute('data-edge-id') || '') !== (sourceEdge.id || '')) return null;
+          }
+          var canonicalJson = JSON.stringify(diagram, null, 2);
+          return {
+            diagram: diagram,
+            filename: filename,
+            json: canonicalJson + '\n',
+            canonicalJson: canonicalJson,
+            expectedDigest: expectedDigest
+          };
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function sha256Hex(value) {
+        if (!window.crypto || !window.crypto.subtle || typeof TextEncoder === 'undefined') {
+          return Promise.resolve(null);
+        }
+        return window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)).then(function (buffer) {
+          return Array.prototype.map.call(new Uint8Array(buffer), function (byte) {
+            return byte.toString(16).padStart(2, '0');
+          }).join('');
+        }).catch(function () { return null; });
+      }
+
+      var sourceCapsule = null;
+      var sourceCandidate = readSourceCapsule();
+      if (sourceCandidate) {
+        sha256Hex(sourceCandidate.canonicalJson).then(function (actualDigest) {
+          if (actualDigest !== sourceCandidate.expectedDigest) return;
+          sourceCapsule = {
+            diagram: sourceCandidate.diagram,
+            filename: sourceCandidate.filename,
+            json: sourceCandidate.json
+          };
+          sourceItem.hidden = false;
+          sourceItem.disabled = false;
+          sourceSeparator.hidden = false;
+        });
+      }
 
       function syncRouteShareItem() {
         var snapshot = Archify.routeProbe && typeof Archify.routeProbe.exportSnapshot === 'function'
@@ -5636,6 +5747,31 @@
         });
       }
 
+      function runSourceJson() {
+        close(true);
+        clearExportReceipt();
+        if (!sourceCapsule) {
+          var message = 'Source JSON was not included in this artifact.';
+          document.documentElement.setAttribute('data-last-export-error-format', 'source-json');
+          document.documentElement.setAttribute('data-last-export-error', message);
+          alert(message);
+          return Promise.resolve(null);
+        }
+        var blob = new Blob([sourceCapsule.json], { type: 'application/json;charset=utf-8' });
+        try {
+          download(blob, sourceCapsule.filename);
+        } catch (err) {
+          var downloadMessage = err && err.message ? err.message : 'Source JSON download failed.';
+          document.documentElement.setAttribute('data-last-export-error-format', 'source-json');
+          document.documentElement.setAttribute('data-last-export-error', downloadMessage);
+          alert('Source JSON export failed: ' + downloadMessage);
+          return Promise.resolve(null);
+        }
+        recordExportReceipt('source-json', blob, true);
+        toast('Downloaded Source JSON');
+        return Promise.resolve(blob);
+      }
+
       menu.addEventListener('click', function (e) {
         var routeShareCardBtn = e.target.closest('button[data-action="route-share-card"]');
         if (routeShareCardBtn && !routeShareCardBtn.disabled && !routeShareCardBtn.hidden) { runRouteShareCard(); return; }
@@ -5645,6 +5781,9 @@
 
         var copyBtn = e.target.closest('button[data-action="copy"]');
         if (copyBtn && !copyBtn.disabled) { runCopy(); return; }
+
+        var sourceBtn = e.target.closest('button[data-action="source-json"]');
+        if (sourceBtn && !sourceBtn.disabled && !sourceBtn.hidden) { runSourceJson(); return; }
 
         var formatBtn = e.target.closest('button[data-format]');
         if (formatBtn && !formatBtn.disabled) { runExport(formatBtn.dataset.format); }
@@ -5659,7 +5798,8 @@
         shareCard: rasterizeShareCard,
         downloadRouteShareCard: runRouteShareCard,
         syncRouteShare: syncRouteShareItem,
-        copyShareCard: runCopyShareCard
+        copyShareCard: runCopyShareCard,
+        'source-json': runSourceJson
       };
 
       // Auto-open on page load for demo/screenshot purposes: ?openExport=1

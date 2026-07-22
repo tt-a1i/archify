@@ -29,7 +29,7 @@ import {
 } from '../shared/geometry.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const { diagram: dataflow, template, outPath } = loadDiagram({
+const { diagram: dataflow, template, outPath, sourceCapsule } = loadDiagram({
   rendererDir: __dirname,
   diagramType: 'dataflow',
   defaultExample: 'product-analytics.dataflow.json'
@@ -393,4 +393,5 @@ writeDiagram({
   footerLabel: 'Data-flow diagram',
   svg: renderSvg(),
   cards: dataflow.cards,
+  sourceCapsule,
 });

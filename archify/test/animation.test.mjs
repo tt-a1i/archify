@@ -54,13 +54,13 @@ test('static output omits animation attributes', () => {
 
 test('classic preset remains the default for existing diagrams', () => {
   const html = render('architecture', CASES.architecture, null, null);
-  assert.match(html, /<html lang="en" data-theme="dark" data-preset="classic">/);
+  assert.match(html, /<html lang="en" data-theme="dark" data-preset="classic" data-diagram-type="architecture">/);
   assert.match(svgBlock(html), /data-preset="classic"/);
 });
 
 test('signal-flow preset reaches the page, SVG, and motion export surface', () => {
   const html = render('workflow', CASES.workflow, 'trace', 'signal-flow');
-  assert.match(html, /<html lang="en" data-theme="dark" data-preset="signal-flow">/);
+  assert.match(html, /<html lang="en" data-theme="dark" data-preset="signal-flow" data-diagram-type="workflow">/);
   assert.match(svgBlock(html), /data-preset="signal-flow"/);
   assert.match(html, /content: "SIGNAL FLOW"/);
   assert.match(html, /data-format="webm"/);
@@ -97,7 +97,7 @@ test('webm renders an explicit time-varying canvas scene instead of replaying on
 
 test('blueprint preset reaches every visual surface without changing the default', () => {
   const html = render('architecture', CASES.architecture, null, 'blueprint');
-  assert.match(html, /<html lang="en" data-theme="dark" data-preset="blueprint">/);
+  assert.match(html, /<html lang="en" data-theme="dark" data-preset="blueprint" data-diagram-type="architecture">/);
   assert.match(svgBlock(html), /data-preset="blueprint"/);
   assert.match(html, /content: "BLUEPRINT \/ REV 01"/);
   assert.match(html, /\[data-preset="blueprint"\]\[data-theme="dark"\]/);

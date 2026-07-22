@@ -570,6 +570,7 @@ test('applyTemplate preserves dollar sequences in titles', () => {
 <h1>[PROJECT NAME] Architecture</h1>
 <p class="subtitle">[Subtitle description]</p>
 <!-- ARCHIFY:GUIDED_VIEWS_DATA -->
+    <!-- ARCHIFY:SOURCE_CAPSULE_DATA -->
       <!-- ARCHIFY:SVG_SLOT_START --><svg></svg>      <!-- ARCHIFY:SVG_SLOT_END -->
     <!-- ARCHIFY:CARDS_SLOT_START --><div></div>    <!-- ARCHIFY:CARDS_SLOT_END -->
 [Project Name] &bull; [Additional metadata]`;

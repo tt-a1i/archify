@@ -29,7 +29,7 @@ import {
 } from '../shared/geometry.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const { diagram: workflow, template, outPath } = loadDiagram({
+const { diagram: workflow, template, outPath, sourceCapsule } = loadDiagram({
   rendererDir: __dirname,
   diagramType: 'workflow',
   defaultExample: 'agent-tool-call.workflow.json'
@@ -595,4 +595,5 @@ writeDiagram({
   footerLabel: 'Workflow diagram',
   svg: renderSvg(),
   cards: workflow.cards,
+  sourceCapsule,
 });
