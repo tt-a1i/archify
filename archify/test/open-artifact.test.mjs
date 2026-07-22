@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
-import { openArtifact } from '../bin/open-artifact.mjs';
+import { openArtifact, openLoopbackUrl } from '../bin/open-artifact.mjs';
 
 const target = path.resolve("/tmp/-复杂 path 'quoted'/diagram.html");
 
@@ -83,4 +83,36 @@ test('open artifact: distinguishes missing support from opener execution failure
     target,
     method: null,
   });
+});
+
+test('open artifact: live preview opens only an exact loopback HTTP root', () => {
+  const url = 'http://127.0.0.1:43127/';
+  let invocation;
+  const result = openLoopbackUrl(url, {
+    platform: 'darwin',
+    spawn(command, args, options) {
+      invocation = { command, args, options };
+      return { status: 0 };
+    },
+  });
+
+  assert.deepEqual(result, {
+    requested: true,
+    status: 'opened',
+    target: url,
+    method: 'open',
+  });
+  assert.deepEqual(invocation.args, [url]);
+  assert.equal(invocation.options.shell, false);
+
+  for (const rejected of [
+    'https://127.0.0.1:43127/',
+    'http://localhost:43127/',
+    'http://0.0.0.0:43127/',
+    'http://127.0.0.1:43127/path',
+    'http://127.0.0.1:43127/?source=secret',
+    'not a url',
+  ]) {
+    assert.throws(() => openLoopbackUrl(rejected), /loopback|valid/i, rejected);
+  }
 });

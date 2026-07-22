@@ -16,6 +16,7 @@ function usage() {
   return `Usage:
   archify render <type> <input.json> [output.html] [--quality standard|showcase]
   archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase]
+  archify preview <type> <input.json> [output.html] [--no-open] [--quality standard|showcase]
   archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase]
   archify inspect <type> <input.json>
   archify check <output.html>
@@ -311,6 +312,36 @@ async function commandDeliver(args) {
   }
 }
 
+async function commandPreview(args) {
+  const qualityArgs = extractQualityArgs(args);
+  const noOpen = qualityArgs.rest.includes('--no-open');
+  const knownOptions = new Set(['--no-open']);
+  const unknown = qualityArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
+  if (unknown.length) fail(`Unknown preview option "${unknown[0]}".`);
+  const positional = qualityArgs.rest.filter((arg) => !knownOptions.has(arg));
+  const [type, input, output] = positional;
+  if (!type || !input || positional.length > 3) fail(usage());
+  rendererPath(type);
+
+  let runPreview;
+  try {
+    ({ runPreview } = await import('./preview.mjs'));
+  } catch (error) {
+    fail(`Could not load live preview: ${error.message}`, 1);
+  }
+  try {
+    await runPreview({
+      type,
+      input,
+      output,
+      quality: qualityArgs.quality,
+      open: !noOpen,
+    });
+  } catch (error) {
+    fail(`Could not start live preview: ${error.message}`, 1);
+  }
+}
+
 function commandCheck(args) {
   const [html] = args;
   if (!html) fail(usage());
@@ -345,6 +376,13 @@ async function commandDoctor() {
     label: 'Example renderer',
     ok: fs.existsSync(examplesRenderer),
     missing: fs.existsSync(examplesRenderer) ? 0 : 1,
+  });
+
+  const previewRuntime = path.join(skillRoot, 'bin/preview.mjs');
+  checks.push({
+    label: 'Live preview runtime',
+    ok: fs.existsSync(previewRuntime),
+    missing: fs.existsSync(previewRuntime) ? 0 : 1,
   });
 
   const scenarioGuide = path.join(skillRoot, 'recipes/scenarios.mjs');
@@ -573,6 +611,9 @@ switch (command) {
     break;
   case 'deliver':
     await commandDeliver(args);
+    break;
+  case 'preview':
+    await commandPreview(args);
     break;
   case 'validate':
     commandValidate(args);

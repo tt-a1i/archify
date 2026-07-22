@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -73,6 +73,7 @@ test('cli: help lists commands and diagram types', () => {
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /archify render <type>/);
   assert.match(result.stdout, /archify deliver <type>/);
+  assert.match(result.stdout, /archify preview <type>/);
   assert.match(result.stdout, /--open/);
   assert.match(result.stdout, /archify guide \[scenario or question\]/);
   assert.match(result.stdout, /archify doctor/);
@@ -86,6 +87,7 @@ test('cli: doctor reports a complete installation is ready', () => {
   assert.match(result.stdout, /\[ok\] Node\.js v\d+/);
   assert.match(result.stdout, /\[ok\] Core template/);
   assert.match(result.stdout, /\[ok\] Example renderer/);
+  assert.match(result.stdout, /\[ok\] Live preview runtime/);
   assert.match(result.stdout, /\[ok\] Scenario recipe guide/);
   assert.match(result.stdout, /\[ok\] Standalone schema validators/);
   assert.match(result.stdout, /\[ok\] architecture renderer, schema, and example/);
@@ -376,6 +378,50 @@ test('cli: deliver works from an installed skill without node_modules', () => {
     assert.equal(JSON.parse(result.stdout).validation.checkCount, 9, type);
     assert.equal(fs.existsSync(out), true, type);
   }
+});
+
+test('cli: preview runs from an installed skill without node_modules and exits cleanly', { timeout: 30000 }, async () => {
+  const installedRoot = path.join(tmp, 'installed-preview-skill');
+  copyInstalledSkill(installedRoot);
+  const installedCli = path.join(installedRoot, 'bin/archify.mjs');
+  const input = path.join(installedRoot, 'examples/web-app.architecture.json');
+  const output = path.join(tmp, 'installed-preview.html');
+  const child = spawn(process.execPath, [installedCli, 'preview', 'architecture', input, output, '--quality', 'showcase', '--no-open'], {
+    cwd: installedRoot,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let stdout = '';
+  let stderr = '';
+  child.stdout.setEncoding('utf8');
+  child.stderr.setEncoding('utf8');
+  child.stdout.on('data', (chunk) => { stdout += chunk; });
+  child.stderr.on('data', (chunk) => { stderr += chunk; });
+
+  let previewUrl;
+  const started = Date.now();
+  while (!previewUrl && Date.now() - started < 8000) {
+    previewUrl = stdout.match(/preview (http:\/\/127\.0\.0\.1:\d+\/)/)?.[1];
+    if (!previewUrl) await new Promise((resolve) => setTimeout(resolve, 40));
+  }
+  assert.ok(previewUrl, `preview URL missing; stdout=${stdout}; stderr=${stderr}`);
+
+  let state;
+  while (Date.now() - started < 15000) {
+    state = await fetch(new URL('/state', previewUrl)).then((response) => response.json());
+    if (state.status === 'verified') break;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  assert.equal(state?.status, 'verified', `preview did not verify; stdout=${stdout}; stderr=${stderr}`);
+  assert.equal(state.revision, 1);
+  assert.equal(fs.existsSync(output), true);
+
+  child.kill('SIGTERM');
+  const exit = await new Promise((resolve) => child.once('close', (code, signal) => resolve({ code, signal })));
+  assert.deepEqual(exit, { code: 0, signal: null });
+  assert.match(stdout, /stopping preview/);
+  await assert.rejects(fetch(previewUrl));
+  assert.deepEqual(fs.readdirSync(path.dirname(output)).filter((name) => name.startsWith('.archify-preview-')), []);
 });
 
 test('cli: deliver preserves the previous artifact when the final check fails', () => {
