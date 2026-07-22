@@ -142,10 +142,12 @@ export function applyTemplate(template, { title, subtitle, footer, svg, cards, v
     .replace(GUIDED_VIEWS_PLACEHOLDER, () => `<script id="archify-guided-views-data" type="application/json">${guidedViewsJson}</script>`);
 }
 
-// CJK and other fullwidth glyphs render at roughly twice the advance width of
-// ASCII in the monospace stacks the template uses. Includes the supplementary
-// CJK extensions and emoji, which also render double-width.
-const FULLWIDTH_RE = /[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︰-﹏＀-｠￠-￦　-〿\u{1F000}-\u{1FAFF}\u{20000}-\u{3FFFD}]/u;
+// CJK and other wide/fullwidth glyphs render at roughly twice the advance
+// width of ASCII in the monospace stacks the template uses. Keep halfwidth
+// forms (notably U+FF61–U+FF9F Katakana) out of this set. The explicit ranges
+// also cover vertical punctuation and supplementary East Asian scripts that
+// literal glyph ranges made difficult to audit.
+const FULLWIDTH_RE = /[\u1100-\u115F\u2329-\u232A\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE10-\uFE19\uFE30-\uFE6F\uFF01-\uFF60\uFFE0-\uFFE6\u{16FE0}-\u{18DFF}\u{1AFF0}-\u{1AFFF}\u{1B000}-\u{1B2FF}\u{1F000}-\u{1FAFF}\u{20000}-\u{3FFFD}]/u;
 
 export function textUnits(text) {
   let units = 0;

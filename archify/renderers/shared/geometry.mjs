@@ -57,7 +57,10 @@ export function cleanFlowProblems({
   clearance = 2,
   routeHint = 'adjust fromSide/toSide, set route/via or channel coordinates, or move the obstacle'
 }) {
-  if (!process.env.ARCHIFY_QUALITY_PROFILE && !profile) return [];
+  // A relationship hidden behind an unrelated opaque node changes the
+  // diagram's meaning, so this is a correctness invariant rather than an
+  // opt-in composition preference. Keep it active even when the author omits
+  // quality_profile; standard/showcase still control stricter visual budgets.
   const problems = [];
   const obstacleList = [...obstacles];
   const obstacleIds = new Set(obstacleList.map((obstacle) => obstacle?.id));

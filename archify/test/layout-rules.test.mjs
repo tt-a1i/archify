@@ -209,6 +209,42 @@ test('architecture: Clean Flow Gate rejects a connection through a component', (
   assert.match(stderr, /segment 0 .*2px clearance/);
 });
 
+function autoRoutePassThroughDocument(connection) {
+  return {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Auto-route pass-through regression' },
+    components: [
+      { id: 'api', type: 'backend', label: 'API', pos: [400, 280], size: [160, 76] },
+      { id: 'cache', type: 'database', label: 'Cache', pos: [645, 130], size: [130, 60] },
+      { id: 'queue', type: 'cloud', label: 'Queue', pos: [880, 130] },
+    ],
+    connections: [connection],
+  };
+}
+
+test('architecture: default delivery rejects an auto-routed connection through an unrelated component', () => {
+  const d = autoRoutePassThroughDocument({ from: 'api', to: 'queue', variant: 'dashed' });
+  const { code, stderr } = render('architecture', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[clean-flow\/edge-through-node\] architecture connections\[0\] "api" -> "queue"/);
+  assert.match(stderr, /crosses component "cache"/);
+  assert.match(stderr, /fromSide\/toSide/);
+});
+
+test('architecture: explicit waypoints around an obstacle remain valid by default', () => {
+  const d = autoRoutePassThroughDocument({
+    from: 'api',
+    to: 'queue',
+    variant: 'dashed',
+    fromSide: 'right',
+    toSide: 'top',
+    via: [[620, 318], [620, 100], [940, 100]],
+  });
+  const { code, stderr } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+});
+
 test('architecture: showcase rejects an unrelated proper edge crossing', () => {
   const d = {
     schema_version: 1,
