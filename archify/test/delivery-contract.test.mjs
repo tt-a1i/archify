@@ -21,3 +21,11 @@ test('skill uses atomic verified delivery for the final artifact', () => {
   assert.match(skill, /only replaces the target after.*artifact checks pass/i);
   assert.match(skill, /never claim that the deterministic receipt includes visual review/i);
 });
+
+test('skill keeps optional opening behind the verified commit and outside automation', () => {
+  assert.match(skill, /Add `--open` only when the user wants an immediate local preview/);
+  assert.match(skill, /runs after that atomic commit/);
+  assert.match(skill, /Keep it off for CI, unattended agents, and non-interactive environments/);
+  assert.match(skill, /never invokes an opener/);
+  assert.match(skill, /status proves only whether the local opener invocation succeeded/);
+});

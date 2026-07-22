@@ -21,7 +21,7 @@ Archify is an agent skill for Claude, Codex CLI, and opencode. It produces a sel
 - **Portable exports** — create a 1200×630 Share Card, copy PNG, or download PNG, JPEG, WebP, dual-theme SVG, and trace-enabled WebM
 - **Typed and checked** — JSON IR, bundled schema validation, default semantic safety gates, and opt-in composition profiles
 - **Self-contained output** — one shareable HTML file with no viewer runtime dependency
-- **Built for agent workflows** — install once, then create and refine diagrams through conversation
+- **Built for agent workflows** — install once, then create and refine diagrams through conversation; optionally open only the verified final artifact
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
@@ -152,7 +152,7 @@ Archify is not a general-purpose drawing editor or a Mermaid theme. It turns tec
 |---|---|
 | **Generate** | The agent creates typed JSON IR from your description. |
 | **Validate** | Bundled validators and layout rules check the source. |
-| **Deliver** | A same-directory candidate is rendered and checked; only a passing artifact atomically replaces the target. |
+| **Deliver** | A same-directory candidate is rendered and checked; only a passing artifact atomically replaces the target, then optional `--open` launches that exact file. |
 | **Iterate** | The agent updates the source while unrelated structure stays stable. |
 
 Useful repository commands:
@@ -163,8 +163,10 @@ node bin/archify.mjs doctor
 node bin/archify.mjs demo /tmp/archify-demo
 node bin/archify.mjs guide "Show CI/CD checks, approval, deploy, and rollback"
 node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --quality showcase --json
-node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow.html --quality showcase --json
+node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow.html --quality showcase --open --json
 ```
+
+Use `--open` for an interactive local handoff. It is off by default, runs only after the verified artifact is committed, and never turns a successful delivery into a failure when the OS opener is unavailable; JSON stays on stdout and the absolute manual-open path goes to stderr.
 
 Optional motion and presentation styling are explicit:
 

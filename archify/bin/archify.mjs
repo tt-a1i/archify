@@ -15,7 +15,7 @@ const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'life
 function usage() {
   return `Usage:
   archify render <type> <input.json> [output.html] [--quality standard|showcase]
-  archify deliver <type> <input.json> [output.html] [--json] [--quality standard|showcase]
+  archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase]
   archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase]
   archify inspect <type> <input.json>
   archify check <output.html>
@@ -104,12 +104,14 @@ function reportDeliveryFailure({ json, stage, type, input, output, error, status
   process.exitCode = status;
 }
 
-function commandDeliver(args) {
+async function commandDeliver(args) {
   const qualityArgs = extractQualityArgs(args);
   const json = qualityArgs.rest.includes('--json');
-  const unknown = qualityArgs.rest.filter((arg) => arg.startsWith('--') && arg !== '--json');
+  const open = qualityArgs.rest.includes('--open');
+  const knownOptions = new Set(['--json', '--open']);
+  const unknown = qualityArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) fail(`Unknown deliver option "${unknown[0]}".`);
-  const positional = qualityArgs.rest.filter((arg) => arg !== '--json');
+  const positional = qualityArgs.rest.filter((arg) => !knownOptions.has(arg));
   const [type, input, requestedOutput] = positional;
   if (!type || !input || positional.length > 3) fail(usage());
 
@@ -276,11 +278,29 @@ function commandDeliver(args) {
       return;
     }
 
+    if (open) {
+      try {
+        const { openArtifact } = await import('./open-artifact.mjs');
+        receipt.open = openArtifact(outputPath);
+      } catch {
+        receipt.open = {
+          requested: true,
+          status: 'unsupported',
+          target: outputPath,
+          method: null,
+        };
+      }
+      if (receipt.open.status !== 'opened') {
+        console.error(`Could not open the verified artifact (${receipt.open.status}). Open it manually: ${outputPath}`);
+      }
+    }
+
     if (json) {
       console.log(JSON.stringify(receipt, null, 2));
     } else {
       console.log(`delivered ${type} ${outputPath}`);
       console.log(`${receipt.validation.checksPassed}/${receipt.validation.checkCount} artifact checks; composition ${receipt.validation.compositionProfile}: ${receipt.validation.compositionStatus}; sha256 ${receipt.artifact.sha256.slice(0, 12)}`);
+      if (receipt.open?.status === 'opened') console.log(`opened ${outputPath}`);
     }
   } finally {
     try {
@@ -552,7 +572,7 @@ switch (command) {
     commandRender(args);
     break;
   case 'deliver':
-    commandDeliver(args);
+    await commandDeliver(args);
     break;
   case 'validate':
     commandValidate(args);

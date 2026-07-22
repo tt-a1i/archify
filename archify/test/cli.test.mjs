@@ -24,6 +24,35 @@ function sha256(file) {
   return createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }
 
+function makeFakeOpeners(name, { exitCode = 0 } = {}) {
+  const bin = path.join(tmp, name);
+  const log = path.join(bin, 'open-log.json');
+  fs.mkdirSync(bin, { recursive: true });
+  const source = `#!/usr/bin/env node
+import fs from 'node:fs';
+const target = process.argv.at(-1);
+fs.writeFileSync(process.env.ARCHIFY_TEST_OPEN_LOG, JSON.stringify({
+  argv: process.argv.slice(2),
+  target,
+  existed: fs.existsSync(target),
+}));
+process.exit(${exitCode});
+`;
+  for (const command of ['open', 'xdg-open']) {
+    const executable = path.join(bin, command);
+    fs.writeFileSync(executable, source);
+    fs.chmodSync(executable, 0o755);
+  }
+  return {
+    log,
+    env: {
+      ...process.env,
+      PATH: `${bin}${path.delimiter}${process.env.PATH || ''}`,
+      ARCHIFY_TEST_OPEN_LOG: log,
+    },
+  };
+}
+
 function copyInstalledSkill(target) {
   fs.cpSync(skillRoot, target, {
     recursive: true,
@@ -44,6 +73,7 @@ test('cli: help lists commands and diagram types', () => {
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /archify render <type>/);
   assert.match(result.stdout, /archify deliver <type>/);
+  assert.match(result.stdout, /--open/);
   assert.match(result.stdout, /archify guide \[scenario or question\]/);
   assert.match(result.stdout, /archify doctor/);
   assert.match(result.stdout, /archify demo \[output-directory\]/);
@@ -221,6 +251,90 @@ test('cli: deliver atomically writes a checked artifact and structured receipt',
     errors: 0,
     warnings: 0,
   });
+  assert.equal('open' in receipt, false);
+});
+
+test('cli: deliver --open launches only the committed absolute artifact as one argument', {
+  skip: process.platform === 'win32',
+}, () => {
+  const fake = makeFakeOpeners('successful-open');
+  const out = path.join(tmp, `-复杂 path 'quoted'`, 'verified diagram.html');
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  const result = run(['deliver', 'workflow', input, out, '--open', '--json'], { env: fake.env });
+
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.open, {
+    requested: true,
+    status: 'opened',
+    target: out,
+    method: process.platform === 'darwin' ? 'open' : 'xdg-open',
+  });
+  const invocation = JSON.parse(fs.readFileSync(fake.log, 'utf8'));
+  assert.equal(invocation.existed, true, 'the opener must run after the atomic commit');
+  assert.deepEqual(invocation.argv, [out]);
+  assert.equal(invocation.target, out);
+  assert.equal(fs.existsSync(out), true);
+});
+
+test('cli: opener failure does not invalidate a verified delivery or pollute json stdout', {
+  skip: process.platform === 'win32',
+}, () => {
+  const fake = makeFakeOpeners('failed-open', { exitCode: 17 });
+  const out = path.join(tmp, 'open-failure-preserves-delivery.html');
+  const input = path.join(skillRoot, 'examples/web-app.architecture.json');
+  const result = run(['deliver', 'architecture', input, out, '--open', '--json'], { env: fake.env });
+
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.ok, true);
+  assert.equal(receipt.open.status, 'failed');
+  assert.equal(receipt.open.target, out);
+  assert.match(result.stderr, /Could not open the verified artifact/);
+  assert.match(result.stderr, new RegExp(out.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.equal(fs.existsSync(out), true);
+  assert.equal(receipt.artifact.sha256, sha256(out));
+});
+
+test('cli: deliver failure never invokes the optional opener', {
+  skip: process.platform === 'win32',
+}, () => {
+  const fake = makeFakeOpeners('never-open');
+  const input = path.join(tmp, 'invalid-open-delivery.json');
+  fs.writeFileSync(input, '{broken json');
+  const out = path.join(tmp, 'must-not-open.html');
+  const result = run(['deliver', 'architecture', input, out, '--open', '--json'], { env: fake.env });
+
+  assert.equal(result.status, 1);
+  assert.equal(JSON.parse(result.stdout).stage, 'input');
+  assert.equal(fs.existsSync(fake.log), false);
+  assert.equal(fs.existsSync(out), false);
+});
+
+test('cli: a missing optional opener module preserves verified delivery with a fallback receipt', () => {
+  const installedRoot = path.join(tmp, 'missing-open-module-skill');
+  copyInstalledSkill(installedRoot);
+  const installedCli = path.join(installedRoot, 'bin/archify.mjs');
+  fs.rmSync(path.join(installedRoot, 'bin/open-artifact.mjs'));
+  const input = path.join(installedRoot, 'examples/agent-tool-call.workflow.json');
+  const out = path.join(tmp, 'missing-open-module-delivery.html');
+
+  const result = spawnSync(process.execPath, [installedCli, 'deliver', 'workflow', input, out, '--open', '--json'], {
+    cwd: installedRoot,
+    encoding: 'utf8',
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.ok, true);
+  assert.deepEqual(receipt.open, {
+    requested: true,
+    status: 'unsupported',
+    target: out,
+    method: null,
+  });
+  assert.match(result.stderr, /Open it manually/);
+  assert.equal(receipt.artifact.sha256, sha256(out));
 });
 
 test('cli: deliver preserves the renderer default output contract', () => {
