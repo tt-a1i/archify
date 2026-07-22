@@ -17,6 +17,7 @@ import {
   suggestLabelObstacleFix,
   suggestComponentSeparation,
   anchor,
+  automaticPortSpread,
   defaultFromSide,
   defaultToSide,
   chosenSide,
@@ -350,12 +351,14 @@ function routeVia(conn, from, to, start, end) {
 }
 
 const pathCache = new Map();
+const automaticPorts = automaticPortSpread(arch.connections, components);
 function pathFor(conn) {
   if (pathCache.has(conn)) return pathCache.get(conn);
   const from = components.get(conn.from);
   const to = components.get(conn.to);
-  const start = anchor(from, chosenSide(conn.fromSide, defaultFromSide(from, to)));
-  const end = anchor(to, chosenSide(conn.toSide, defaultToSide(from, to)));
+  const ports = automaticPorts.get(conn);
+  const start = ports?.from || anchor(from, chosenSide(conn.fromSide, defaultFromSide(from, to)));
+  const end = ports?.to || anchor(to, chosenSide(conn.toSide, defaultToSide(from, to)));
   const points = [start, ...routeVia(conn, from, to, start, end), end];
   const routed = { d: roundedPath(points, 8), points };
   pathCache.set(conn, routed);

@@ -608,6 +608,63 @@ export function anchor(rect, side) {
   }
 }
 
+// Keep conservative auto-routed fan-out/fan-in relationships visually
+// distinct without changing authored route controls. The returned map only
+// contains endpoints that belong to a shared automatic midpoint anchor.
+export function automaticPortSpread(relations, boxes, { gutter = 16, maxSpacing = 14 } = {}) {
+  const groups = new Map();
+  const spread = new Map();
+
+  const add = (relation, endpoint, rect, side, counterpart) => {
+    const key = `${rect.id}\u0000${side}`;
+    const items = groups.get(key) || [];
+    items.push({ relation, endpoint, rect, side, counterpart });
+    groups.set(key, items);
+  };
+
+  for (const relation of asArray(relations)) {
+    if (!relation || (relation.route && relation.route !== 'auto')) continue;
+    if (relation.via || relation.channelX !== undefined || relation.channelY !== undefined || relation.labelAt) continue;
+    const from = boxes.get(relation.from);
+    const to = boxes.get(relation.to);
+    if (!from || !to) continue;
+    const fromSide = chosenSide(relation.fromSide, defaultFromSide(from, to));
+    const toSide = chosenSide(relation.toSide, defaultToSide(from, to));
+    add(relation, 'from', from, fromSide, to);
+    add(relation, 'to', to, toSide, from);
+  }
+
+  for (const items of groups.values()) {
+    if (items.length < 2) continue;
+    const verticalSide = items[0].side === 'left' || items[0].side === 'right';
+    items.sort((a, b) => {
+      const aCoordinate = verticalSide ? a.counterpart.cy : a.counterpart.cx;
+      const bCoordinate = verticalSide ? b.counterpart.cy : b.counterpart.cx;
+      if (aCoordinate !== bCoordinate) return aCoordinate - bCoordinate;
+      const aKey = `${a.relation.id || ''}\u0000${a.relation.from}\u0000${a.relation.to}\u0000${a.relation.label || ''}`;
+      const bKey = `${b.relation.id || ''}\u0000${b.relation.from}\u0000${b.relation.to}\u0000${b.relation.label || ''}`;
+      return aKey < bKey ? -1 : aKey > bKey ? 1 : 0;
+    });
+
+    const extent = verticalSide ? items[0].rect.height : items[0].rect.width;
+    const usable = Math.max(0, extent - gutter * 2);
+    const spacing = Math.min(maxSpacing, usable / (items.length - 1));
+    if (!(spacing > 0)) continue;
+
+    for (const [index, item] of items.entries()) {
+      const offset = (index - (items.length - 1) / 2) * spacing;
+      const point = anchor(item.rect, item.side);
+      if (verticalSide) point[1] += offset;
+      else point[0] += offset;
+      const endpoints = spread.get(item.relation) || {};
+      endpoints[item.endpoint] = point;
+      spread.set(item.relation, endpoints);
+    }
+  }
+
+  return spread;
+}
+
 export function defaultFromSide(from, to) {
   if (to.cx < from.cx) return 'left';
   if (to.cx > from.cx) return 'right';

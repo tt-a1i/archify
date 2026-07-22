@@ -134,7 +134,7 @@ Architecture 示例：[`Web App`](examples/web-app.html) · [`Archify Pipeline`]
 
 ## 为什么用 Archify
 
-- **用布局判断代替通用自动布局** —— Agent 根据故事选择层级、留白、线路和强调关系。
+- **用布局判断代替通用自动布局** —— Agent 根据故事选择层级、留白、线路和强调关系；共享的自动端点会确定性展开，不再让多支箭头堆在同一个中点。
 - **Typed JSON IR** —— 每种 Renderer 模式都有 Schema 和可复现的源文件。
 - **原子交付前校验** —— Schema、布局、HTML/SVG、线路和可选 Showcase 检查必须全部通过，成品才会替换上一份可信结果。
 - **交互不编造拓扑** —— 聚焦、路径、角色对比和故事都复用作者定义的节点与关系。

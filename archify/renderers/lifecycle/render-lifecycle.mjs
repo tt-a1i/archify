@@ -14,6 +14,7 @@ import {
   suggestLabelObstacleFix,
   suggestLabelPairFix,
   anchor,
+  automaticPortSpread,
   defaultFromSide,
   defaultToSide,
   chosenSide,
@@ -307,14 +308,21 @@ function routeVia(transition, from, to, start, end) {
 }
 
 const pathCache = new Map();
+const automaticPorts = automaticPortSpread(lifecycle.transitions, states);
 
 function pathFor(transition) {
   if (pathCache.has(transition)) return pathCache.get(transition);
   const from = states.get(transition.from);
   const to = states.get(transition.to);
-  const start = anchor(from, chosenSide(transition.fromSide, defaultFromSide(from, to)));
-  const end = anchor(to, chosenSide(transition.toSide, defaultToSide(from, to)));
-  const points = [start, ...routeVia(transition, from, to, start, end), end];
+  const ports = automaticPorts.get(transition);
+  const start = ports?.from || anchor(from, chosenSide(transition.fromSide, defaultFromSide(from, to)));
+  const end = ports?.to || anchor(to, chosenSide(transition.toSide, defaultToSide(from, to)));
+  let via = routeVia(transition, from, to, start, end);
+  if (ports && !via.length && Math.abs(start[0] - end[0]) >= 4 && Math.abs(start[1] - end[1]) >= 4) {
+    const midX = (start[0] + end[0]) / 2;
+    via = [[midX, start[1]], [midX, end[1]]];
+  }
+  const points = [start, ...via, end];
   const routed = {
     d: roundedPath(points, transition.cornerRadius ?? 10),
     points

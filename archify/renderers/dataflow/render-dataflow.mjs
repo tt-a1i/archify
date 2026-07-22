@@ -14,6 +14,7 @@ import {
   suggestLabelObstacleFix,
   suggestLabelPairFix,
   anchor,
+  automaticPortSpread,
   defaultFromSide,
   defaultToSide,
   chosenSide,
@@ -264,13 +265,15 @@ function routeVia(flow, from, to, start, end) {
 }
 
 const pathCache = new Map();
+const automaticPorts = automaticPortSpread(dataflow.flows, nodes);
 
 function pathFor(flow) {
   if (pathCache.has(flow)) return pathCache.get(flow);
   const from = nodes.get(flow.from);
   const to = nodes.get(flow.to);
-  const start = anchor(from, chosenSide(flow.fromSide, defaultFromSide(from, to)));
-  const end = anchor(to, chosenSide(flow.toSide, defaultToSide(from, to)));
+  const ports = automaticPorts.get(flow);
+  const start = ports?.from || anchor(from, chosenSide(flow.fromSide, defaultFromSide(from, to)));
+  const end = ports?.to || anchor(to, chosenSide(flow.toSide, defaultToSide(from, to)));
   const points = [start, ...routeVia(flow, from, to, start, end), end];
   const routed = { d: polylinePath(points), points };
   pathCache.set(flow, routed);

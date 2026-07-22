@@ -14,6 +14,7 @@ import {
   suggestLabelObstacleFix,
   suggestLabelPairFix,
   anchor,
+  automaticPortSpread,
   defaultFromSide,
   defaultToSide,
   chosenSide,
@@ -434,13 +435,15 @@ function routeVia(edge, from, to, start, end) {
 }
 
 const pathCache = new Map();
+const automaticPorts = automaticPortSpread(workflow.edges, nodes);
 
 function pathFor(edge) {
   if (pathCache.has(edge)) return pathCache.get(edge);
   const from = nodes.get(edge.from);
   const to = nodes.get(edge.to);
-  const start = anchor(from, chosenSide(edge.fromSide, defaultFromSide(from, to)));
-  const end = anchor(to, chosenSide(edge.toSide, defaultToSide(from, to)));
+  const ports = automaticPorts.get(edge);
+  const start = ports?.from || anchor(from, chosenSide(edge.fromSide, defaultFromSide(from, to)));
+  const end = ports?.to || anchor(to, chosenSide(edge.toSide, defaultToSide(from, to)));
   const points = [start, ...routeVia(edge, from, to, start, end), end];
   const routed = { d: polylinePath(points), points };
   pathCache.set(edge, routed);
