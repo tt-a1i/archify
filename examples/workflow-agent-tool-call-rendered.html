@@ -3789,6 +3789,7 @@
       </button>
       <div class="export-menu" id="export-menu" role="menu" aria-label="Export">
         <button data-format="share-card" type="button" role="menuitem" tabindex="-1">Share Card <span class="hint">1200&times;630 PNG</span></button>
+        <button data-action="copy-share-card" type="button" role="menuitem" tabindex="-1">Copy Share Card <span class="hint">PNG</span></button>
         <hr role="separator">
         <button data-action="copy"  type="button" role="menuitem" tabindex="-1">Copy to clipboard <span class="hint">PNG</span></button>
         <hr role="separator">
@@ -4457,7 +4458,7 @@
     })();
 
     /* ============================================================
-       Export — Share Card / PNG / JPEG / WebP / SVG / WebM and Copy PNG
+       Export — Share Card / PNG / JPEG / WebP / SVG / WebM and clipboard
 
        Raster exports are always rendered at 4x source resolution for
        maximum sharpness. The trick: we set the serialized SVG's
@@ -5252,7 +5253,7 @@
           it.title = 'Not supported by this browser';
           it.style.opacity = '0.5';
         }
-        if (it.dataset.action === 'copy' && !canCopyImage()) {
+        if ((it.dataset.action === 'copy' || it.dataset.action === 'copy-share-card') && !canCopyImage()) {
           it.disabled = true;
           it.title = 'Clipboard image write not supported by this browser';
           it.style.opacity = '0.5';
@@ -5403,26 +5404,59 @@
         }
       }
 
+      function clearExportReceipt() {
+        document.documentElement.removeAttribute('data-last-export-format');
+        document.documentElement.removeAttribute('data-last-export-bytes');
+        document.documentElement.removeAttribute('data-last-export-canonical');
+        document.documentElement.removeAttribute('data-last-export-width');
+        document.documentElement.removeAttribute('data-last-export-height');
+        document.documentElement.removeAttribute('data-last-export-error-format');
+        document.documentElement.removeAttribute('data-last-export-error');
+      }
+
+      function writePngToClipboard(blobPromise) {
+        // WebKit requires ClipboardItem to be constructed synchronously inside
+        // the user gesture. Chromium accepts the same pending Promise<Blob>;
+        // engines that reject promise values fall back to an awaited Blob.
+        try {
+          return navigator.clipboard.write([new ClipboardItem({ 'image/png': blobPromise })]);
+        } catch (_) {
+          return blobPromise.then(function (blob) {
+            return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          });
+        }
+      }
+
+      function runCopyShareCard() {
+        close(true);
+        clearExportReceipt();
+        if (!canCopyImage()) {
+          alert('Clipboard image write not supported by this browser.');
+          return;
+        }
+        var blobPromise = rasterizeShareCard();
+        return writePngToClipboard(blobPromise).then(function () {
+          return blobPromise.then(function (blob) {
+            recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
+            toast('Copied Share Card');
+          });
+        }).catch(function (err) {
+          console.error(err);
+          var message = err && err.message ? err.message : 'unknown';
+          document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
+          document.documentElement.setAttribute('data-last-export-error', message);
+          alert('Copy failed: ' + message);
+        });
+      }
+
       function runCopy() {
         close(true);
         if (!canCopyImage()) {
           alert('Clipboard image write not supported in this browser.');
           return;
         }
-        // WebKit requires ClipboardItem to be constructed synchronously inside
-        // the user gesture — pass the pending Promise<Blob> as the item value.
-        // Browsers that reject promise values throw synchronously; fall back
-        // to awaiting the blob first (works in Chromium/Firefox).
         var blobPromise = rasterize('png');
-        var writePromise;
-        try {
-          writePromise = navigator.clipboard.write([new ClipboardItem({ 'image/png': blobPromise })]);
-        } catch (_) {
-          writePromise = blobPromise.then(function (blob) {
-            return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-          });
-        }
-        return writePromise.then(function () {
+        return writePngToClipboard(blobPromise).then(function () {
           toast('Copied PNG to clipboard');
         }).catch(function (err) {
           console.error(err);
@@ -5431,6 +5465,9 @@
       }
 
       menu.addEventListener('click', function (e) {
+        var copyShareCardBtn = e.target.closest('button[data-action="copy-share-card"]');
+        if (copyShareCardBtn && !copyShareCardBtn.disabled) { runCopyShareCard(); return; }
+
         var copyBtn = e.target.closest('button[data-action="copy"]');
         if (copyBtn && !copyBtn.disabled) { runCopy(); return; }
 
@@ -5439,7 +5476,7 @@
       });
 
       Archify.motion = { canRecord: canRecordMotion, recordWebm: recordWebm };
-      Archify.exportMenu = { open: open, close: close, isOpen: isOpen, run: runExport, shareCard: rasterizeShareCard };
+      Archify.exportMenu = { open: open, close: close, isOpen: isOpen, run: runExport, shareCard: rasterizeShareCard, copyShareCard: runCopyShareCard };
 
       // Auto-open on page load for demo/screenshot purposes: ?openExport=1
       // Wait for fonts (so the menu doesn't flash before typography lands)

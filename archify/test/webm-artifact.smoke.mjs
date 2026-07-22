@@ -248,8 +248,69 @@ try {
     console.log(`ok ${label} Share Card: ${sharePayload.size} bytes, 1200x630, ${colors.size} sampled colors`);
   }
 
+  async function captureCopiedShareCard(file, label) {
+    await navigateReady(file, '!!(window.Archify && Archify.exportMenu && Archify.exportMenu.copyShareCard)', label);
+    const copiedPayload = await withTimeout(evaluate(cdp, sessionId, String.raw`(async function () {
+      try {
+        Object.defineProperty(window, 'ClipboardItem', {
+          configurable: true,
+          value: function ClipboardItem(items) { this.items = items; }
+        });
+        Object.defineProperty(navigator, 'clipboard', {
+          configurable: true,
+          value: {
+            write: async function (items) {
+              window.__archifyCopiedShareCard = await Promise.resolve(items[0].items['image/png']);
+            }
+          }
+        });
+        window.alert = function (message) { window.__archifyCopyAlert = message; };
+        await Archify.exportMenu.copyShareCard();
+        var blob = window.__archifyCopiedShareCard;
+        if (!blob) throw new Error(window.__archifyCopyAlert || 'clipboard received no blob');
+        var bytes = new Uint8Array(await blob.arrayBuffer());
+        var binary = '';
+        for (var offset = 0; offset < bytes.length; offset += 32768) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(offset, offset + 32768));
+        }
+        return {
+          ok: true,
+          type: blob.type,
+          size: blob.size,
+          base64: btoa(binary),
+          receipt: {
+            format: document.documentElement.getAttribute('data-last-export-format'),
+            width: document.documentElement.getAttribute('data-last-export-width'),
+            height: document.documentElement.getAttribute('data-last-export-height'),
+            canonical: document.documentElement.getAttribute('data-last-export-canonical'),
+            error: document.documentElement.getAttribute('data-last-export-error')
+          }
+        };
+      } catch (error) {
+        return { ok: false, error: String(error && error.message || error) };
+      }
+    })()`, true), 10_000, `${label} Copy Share Card`);
+
+    assert.equal(copiedPayload?.ok, true, copiedPayload?.error || `${label} Copy Share Card failed`);
+    assert.equal(copiedPayload.type, 'image/png');
+    assert.ok(copiedPayload.size > 20_000, `${label} copied Share Card is unexpectedly small`);
+    const png = Buffer.from(copiedPayload.base64, 'base64');
+    assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${label} copied output is not a PNG`);
+    assert.equal(png.readUInt32BE(16), 1200, `${label} copied Share Card width`);
+    assert.equal(png.readUInt32BE(20), 630, `${label} copied Share Card height`);
+    assert.deepEqual(copiedPayload.receipt, {
+      format: 'share-card',
+      width: '1200',
+      height: '630',
+      canonical: 'true',
+      error: null,
+    });
+    console.log(`ok ${label} Copy Share Card: ${copiedPayload.size} bytes, image/png, truthful receipt`);
+  }
+
   await captureShareCard(output, 'architecture-wide');
   await captureShareCard(sequenceOutput, 'sequence-tall');
+  await captureCopiedShareCard(output, 'architecture-wide');
   await navigateReady(output, '!!(window.Archify && Archify.motion && Archify.motion.canRecord())', 'motion artifact');
 
   const payload = await withTimeout(evaluate(cdp, sessionId, String.raw`(async function () {
