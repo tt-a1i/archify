@@ -11,7 +11,7 @@
 Archify 是适用于 Claude、Codex CLI 和 opencode 的 Agent Skill。给它一段系统描述或一个代码仓库，就能得到可打开、可探索、可演示、可分享的专业技术图。
 
 - **打开就是成品** —— 五种技术图、三套视觉预设、深浅主题，以及显式启用的有限动态
-- **每次探索都有依据** —— 搜索节点、按需打开版本校验过的源码、检查关系、追踪作者路径、对比角色、播放故事，但不编造拓扑
+- **每次探索都有依据** —— 搜索节点、按需打开版本校验过的源码、追踪作者定义的上下游可达范围与精确路径、对比角色、播放故事，但不编造拓扑
 - **一个文件即可放心交付** —— Typed JSON IR 和确定性校验生成独立 HTML，并支持 PNG、SVG、WebM 与 1200×630 分享卡片
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
@@ -47,7 +47,7 @@ npx skills add tt-a1i/archify -g
 
 [![根据公开仓库 mco-org/mco 生成的 MCO 运行时架构图](docs/assets/mco-runtime-share-card.png)](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)
 
-Archify 读取 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版本，追踪 CLI、执行策略、Provider Adapter、调用运行时和持久会话，最终生成这张校验通过、可交互的系统地图。**[打开可交互成品 ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)** · [查看 Typed Source](docs/cases/mco-runtime.architecture.json)
+Archify 读取 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版本，追踪 CLI、执行策略、Provider Adapter、调用运行时和持久会话，最终生成这张校验通过、可交互的系统地图。**[打开可交互成品 ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)** · [查看 Command Router 下游 ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [查看 Typed Source](docs/cases/mco-runtime.architecture.json)
 
 ## 预览
 
@@ -145,7 +145,7 @@ Architecture 示例：[`Web App`](examples/web-app.html) · [`Archify Pipeline`]
 - **Typed JSON IR** —— 每种 Renderer 模式都有 Schema 和可复现的源文件。
 - **原子交付前校验** —— Schema、布局、HTML/SVG、线路和标签到其他路径的净空检查必须全部通过，Showcase 成品才会替换上一份可信结果。
 - **保留最后好图的实时预览** —— 可选桌面循环只监听一个 JSON；只有最新候选通过全部门禁才刷新，半写入或无效保存时继续显示上一份验证成品。
-- **交互不编造拓扑** —— 聚焦、路径、角色对比和故事都复用作者定义的节点与关系。
+- **交互不编造拓扑** —— 聚焦、上下游可达范围、精确路径、角色对比和故事都复用作者定义的节点与关系，也不把图上可达误报成真实运行时影响。
 - **只在需要时附源码证据** —— 有证据的 Architecture 节点会显示 `SRC n`，并可打开由 Git 校验、固定到公开 commit 的文件与行号；普通成品不携带源码信息。
 - **结果默认便携** —— 一个 HTML 文件即可分享；导出永远是完整原图，不携带临时 Viewer 状态。
 
@@ -196,6 +196,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 |---|---|
 | 打开事实型 Diagram Guide | <kbd>?</kbd> |
 | 查找并聚焦语义节点 | <kbd>/</kbd> |
+| 追踪作者定义的上游 / 下游可达范围 | 聚焦节点 → `Upstream` / `Downstream` |
 | 探查有向路径并逐站检查 | <kbd>R</kbd> 或 `PATH` |
 | 对比一种或两种语义角色 | <kbd>L</kbd> 或 `LENS` |
 | 打开实时全局雷达 | <kbd>M</kbd> 或 `MAP` |
@@ -204,7 +205,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 切换视觉风格 / 主题 / 打开 Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | 缩放或复位 | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
-稳定链接可以恢复 `#focus=<id>`、`#relation=<id>`、`#route=<source>~<target>`、`#lens=<kind>~<kind>` 和 `#view=<view-id>`。读者触发的动态有限运行、遵守 `prefers-reduced-motion`，并且不会进入标准导出。
+稳定链接可以恢复 `#focus=<id>`、`#focus=<id>&reach=upstream|downstream`、`#relation=<id>`、`#route=<source>~<target>`、`#lens=<kind>~<kind>` 和 `#view=<view-id>`。读者触发的动态有限运行、遵守 `prefers-reduced-motion`，并且不会进入标准导出。
 
 完整生成与 Viewer 契约请查看 [`archify/SKILL.md`](archify/SKILL.md)。
 
@@ -231,7 +232,7 @@ Claude.ai 中的上传入口：
 - [路线图](ROADMAP.md)
 - [自动生成的 Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-Archify 2.12 已覆盖五种 Typed IR、真实仓库证明、验证后实时预览、可选有限动态、引导视图、语义搜索与关系探索、可分享深链、1200×630 整图与路径卡片、浏览器原生 WebM，以及显式 `standard` / `showcase` 质量档位。
+Archify 2.12 已覆盖五种 Typed IR、真实仓库证明、验证后实时预览、作者可达性、可选有限动态、引导视图、语义搜索与关系探索、可分享深链、1200×630 整图与路径卡片、浏览器原生 WebM，以及显式 `standard` / `showcase` 质量档位。
 
 自动 Mermaid Parser、通用自动布局、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。
 

@@ -15,7 +15,7 @@
 Archify is an agent skill for Claude, Codex CLI, and opencode. Give it a system description or repository; get a polished diagram you can open, explore, present, and share.
 
 - **Open it and present** — five technical diagram types, three visual presets, dark/light themes, and optional finite motion
-- **Every interaction stays grounded** — search nodes, optionally open revision-verified source, inspect relationships, trace authored routes, compare roles, and play guided stories without inventing topology
+- **Every interaction stays grounded** — search nodes, optionally open revision-verified source, trace upstream/downstream authored reach and exact routes, compare roles, and play guided stories without inventing topology
 - **One file, ready to trust and share** — typed JSON IR and deterministic checks produce self-contained HTML plus PNG, SVG, WebM, and 1200×630 share cards
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
@@ -51,7 +51,7 @@ The [Proof Lab](https://tt-a1i.github.io/archify/gallery.html) contains all 11 c
 
 [![MCO runtime architecture generated from the public mco-org/mco repository](docs/assets/mco-runtime-share-card.png)](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)
 
-Archify read [`mco-org/mco`](https://github.com/mco-org/mco) at commit `9f1a1cf`, traced its CLI, policy, provider adapters, invocation runtime, and durable sessions, then produced this checked, interactive map. **[Open the live map ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)** · [inspect the typed source](docs/cases/mco-runtime.architecture.json)
+Archify read [`mco-org/mco`](https://github.com/mco-org/mco) at commit `9f1a1cf`, traced its CLI, policy, provider adapters, invocation runtime, and durable sessions, then produced this checked, interactive map. **[Open the live map ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)** · [trace Command Router reach ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [inspect the typed source](docs/cases/mco-runtime.architecture.json)
 
 ## Preview
 
@@ -149,7 +149,7 @@ Architecture examples: [`web-app`](examples/web-app.html) · [`Archify pipeline`
 - **Typed JSON IR** — every renderer-backed mode has a schema and reproducible source.
 - **Atomic validation before delivery** — schema, layout, HTML/SVG, route, and label-to-route clearance checks must all pass before a showcase artifact replaces the last known good output.
 - **Last-good live preview** — an optional desktop loop watches one JSON file, refreshes only after the latest candidate passes every gate, and keeps the previous verified diagram visible when a save is incomplete or invalid.
-- **Truthful interaction** — focus, routes, role comparison, and stories reuse authored nodes and relationships instead of inventing topology.
+- **Truthful interaction** — focus, upstream/downstream reach, exact routes, role comparison, and stories reuse authored nodes and relationships instead of inventing topology or claiming runtime impact.
 - **Source evidence, only when requested** — Evidence-backed Architecture nodes mark themselves `SRC n` and open Git-verified files and line ranges pinned to one public commit; ordinary artifacts stay source-free.
 - **Portable by default** — the result is one HTML file; exports remain full-diagram and free of temporary viewer state.
 
@@ -200,6 +200,7 @@ Omit `animation` for a truly static diagram. `classic` remains the default visua
 |---|---|
 | Open the factual Diagram Guide | <kbd>?</kbd> |
 | Find and focus a semantic node | <kbd>/</kbd> |
+| Trace upstream/downstream authored reach | Focus a node → `Upstream` / `Downstream` |
 | Probe a directed route and inspect its journey | <kbd>R</kbd> or `PATH` |
 | Compare one or two semantic roles | <kbd>L</kbd> or `LENS` |
 | Open the live overview radar | <kbd>M</kbd> or `MAP` |
@@ -208,7 +209,7 @@ Omit `animation` for a truly static diagram. `classic` remains the default visua
 | Cycle visual style / toggle theme / open Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | Zoom or reset | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
-Stable links can restore `#focus=<id>`, `#relation=<id>`, `#route=<source>~<target>`, `#lens=<kind>~<kind>`, and `#view=<view-id>`. Reader-driven motion is finite, respects `prefers-reduced-motion`, and never enters canonical exports.
+Stable links can restore `#focus=<id>`, `#focus=<id>&reach=upstream|downstream`, `#relation=<id>`, `#route=<source>~<target>`, `#lens=<kind>~<kind>`, and `#view=<view-id>`. Reader-driven motion is finite, respects `prefers-reduced-motion`, and never enters canonical exports.
 
 The complete generation and viewer contract lives in [`archify/SKILL.md`](archify/SKILL.md).
 
@@ -231,7 +232,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Roadmap](ROADMAP.md)
 - [Generated Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-Archify 2.12 includes typed IR across all five modes, real-repository proof, verified live preview, optional finite motion, guided views, semantic search and relationship exploration, shareable deep links, 1200×630 diagram and route cards, browser-native WebM recording, and explicit `standard` / `showcase` quality profiles.
+Archify 2.12 includes typed IR across all five modes, real-repository proof, verified live preview, authored reachability, optional finite motion, guided views, semantic search and relationship exploration, shareable deep links, 1200×630 diagram and route cards, browser-native WebM recording, and explicit `standard` / `showcase` quality profiles.
 
 Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
 

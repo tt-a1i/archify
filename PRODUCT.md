@@ -26,7 +26,7 @@ Precise, composed, vivid. Archify should feel like a confident technical instrum
 
 ## Design Principles
 
-1. Truth before spectacle: every focus, route, story, source link, and receipt must derive from authored or verified evidence.
+1. Truth before spectacle: every focus, reachability query, route, story, source link, and receipt must derive from authored or verified evidence.
 2. One spatial narrative first: make the primary path legible before revealing secondary relationships and detail.
 3. Progressive disclosure over permanent chrome: keep the canvas dominant and reuse focused tools instead of adding panels.
 4. Motion has one bounded owner: static meaning must remain complete, motion must be finite and reader-controlled, and exports stay clean.

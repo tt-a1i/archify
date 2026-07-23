@@ -204,12 +204,16 @@ One focused node opens one compact proof surface containing stable ID, authored 
 
 An evidence-backed node receives one viewer-only `SRC n` capsule in its upper-right corner. It inherits node state, adds no tab stop, and is stripped from every canonical visual export.
 
+### Authored Reachability
+
+Semantic Passport offers two native, count-bearing actions: `Upstream` follows authored incoming relationships and `Downstream` follows authored outgoing relationships. The canvas keeps the focused origin plus the complete reachable subgraph strong while unrelated topology recedes. Upstream uses Repository Violet, downstream uses Proof Green, and Blueprint removes glow. The receipt says nodes, links, and maximum hops; it never says blast radius or breakage.
+
 ## Do's and Don'ts
 
 ### Do:
 
 - **Do** make the primary path legible before adding secondary relationships or detail.
-- **Do** derive every focus, route, story, source link, receipt, and count from authored or locally verified evidence.
+- **Do** derive every focus, reachability query, route, story, source link, receipt, and count from authored or locally verified evidence.
 - **Do** keep ordinary artifacts source-free and make repository evidence explicitly opt-in.
 - **Do** use 140–200ms transitions for control state and honor `prefers-reduced-motion`.
 - **Do** preserve keyboard access, visible focus, semantic labels, dark/light parity, and non-color state cues.
@@ -223,4 +227,5 @@ An evidence-backed node receives one viewer-only `SRC n` capsule in its upper-ri
 - **Don't** use dense dashboard shells, endless identical card grids, decorative glass, gradient text, and other AI-generated interface clichés.
 - **Don't** add vendor-icon catalogues or product-name matching that weaken Archify's portable semantic vocabulary.
 - **Don't** create another permanent panel when the Semantic Passport, Node Finder, or existing canvas can carry the capability.
+- **Don't** call graph reachability runtime impact, blast radius, or breakage without independent code-analysis evidence.
 - **Don't** change the README Hero as a side effect of artifact or viewer iteration.

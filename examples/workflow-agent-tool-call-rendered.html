@@ -1508,6 +1508,75 @@
       color: var(--text-faint);
       font-size: 0.5625rem;
     }
+    .semantic-passport-reach {
+      display: grid;
+      gap: 0.28rem;
+      margin-top: 0.52rem;
+      padding-top: 0.48rem;
+      border-top: 1px solid color-mix(in srgb, var(--toolbar-border) 76%, transparent);
+    }
+    .semantic-passport-reach[hidden] { display: none; }
+    .semantic-passport-reach-label {
+      color: var(--text-faint);
+      font-size: 0.5rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .semantic-passport-reach-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.25rem;
+    }
+    .semantic-passport-reach-actions button {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      min-width: 0;
+      min-height: 2rem;
+      padding: 0.32rem 0.42rem;
+      border: 1px solid color-mix(in srgb, var(--toolbar-border) 86%, transparent);
+      background: color-mix(in srgb, var(--panel) 70%, transparent);
+      color: var(--text-muted);
+      text-align: left;
+    }
+    .semantic-passport-reach-actions button:hover:not(:disabled),
+    .semantic-passport-reach-actions button:focus-visible {
+      border-color: color-mix(in srgb, var(--frontend-stroke) 62%, var(--toolbar-border));
+      color: var(--text);
+    }
+    .semantic-passport-reach-actions button:focus-visible {
+      outline: 2px solid var(--frontend-stroke);
+      outline-offset: 1px;
+    }
+    .semantic-passport-reach-actions button:disabled {
+      cursor: default;
+      opacity: 0.5;
+    }
+    .semantic-passport-reach-actions button[aria-pressed="true"] {
+      border-color: color-mix(in srgb, var(--reach-color, var(--frontend-stroke)) 72%, var(--toolbar-border));
+      background: color-mix(in srgb, var(--reach-fill, var(--frontend-fill)) 48%, transparent);
+      color: var(--text);
+    }
+    #btn-reach-upstream {
+      --reach-color: var(--database-stroke);
+      --reach-fill: var(--database-fill);
+    }
+    #btn-reach-downstream {
+      --reach-color: var(--backend-stroke);
+      --reach-fill: var(--backend-fill);
+    }
+    .semantic-passport-reach-actions strong {
+      color: var(--reach-color, var(--frontend-stroke));
+      font-size: 0.625rem;
+    }
+    .semantic-passport-reach-status {
+      color: var(--text-faint);
+      font-size: 0.525rem;
+      line-height: 1.4;
+    }
+    .semantic-passport-reach-status[hidden] { display: none; }
     .relationship-lens-list {
       max-height: min(18rem, 46vh);
       overflow: auto;
@@ -2598,6 +2667,8 @@
       .story-carrier-overlay { display: none !important; }
       .diagram-container svg[data-focus-active] [data-node-id],
       .diagram-container svg[data-focus-active] [data-edge-from],
+      .diagram-container svg[data-reach-active] [data-node-id],
+      .diagram-container svg[data-reach-active] [data-edge-from],
       .diagram-container svg[data-story-beat] [data-story-step],
       .diagram-container svg[data-story-beat] [data-edge-from][data-story-beat-step],
       .diagram-container svg[data-route-active] [data-node-id],
@@ -3143,6 +3214,8 @@
        the global zoom level. Reveal only their exact semantic matches. */
     svg[data-focus-active] [data-focus-match][data-detail],
     svg[data-focus-active] [data-focus-match] [data-detail],
+    svg[data-reach-active] [data-reach-match][data-detail],
+    svg[data-reach-active] [data-reach-match] [data-detail],
     svg[data-lens-active] [data-lens-match][data-detail],
     svg[data-lens-active] [data-lens-match] [data-detail],
     svg[data-legend-preview-active] [data-legend-preview-match][data-detail],
@@ -3161,6 +3234,7 @@
       pointer-events: auto;
     }
     svg[data-focus-active] [data-focus-match] [data-detail-anchor],
+    svg[data-reach-active] [data-reach-match] [data-detail-anchor],
     svg[data-lens-active] [data-lens-match] [data-detail-anchor],
     svg[data-legend-preview-active] [data-legend-preview-match] [data-detail-anchor],
     svg[data-intent-trace-active] [data-intent-trace-match] [data-detail-anchor],
@@ -3340,6 +3414,30 @@
     svg[data-focus-active] [data-focus-match] { opacity: 1; }
     svg[data-focus-active] [data-focus-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
+    }
+
+    /* Authored Reachability is a bounded graph query over the relationships
+       already present in the artifact. Upstream walks incoming edges;
+       downstream walks outgoing edges. It never claims runtime causality and
+       changes only viewer emphasis, not canonical geometry or export bytes. */
+    svg[data-reach-active] [data-node-id],
+    svg[data-reach-active] [data-edge-from] { opacity: 0.09; }
+    svg[data-reach-active] [data-reach-match] { opacity: 1; }
+    svg[data-reach-active="upstream"] [data-reach-origin] {
+      filter: drop-shadow(0 0 11px var(--database-stroke));
+    }
+    svg[data-reach-active="downstream"] [data-reach-origin] {
+      filter: drop-shadow(0 0 11px var(--backend-stroke));
+    }
+    svg[data-reach-active="upstream"] [data-edge-from][data-reach-match] {
+      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--database-stroke) 72%, transparent));
+    }
+    svg[data-reach-active="downstream"] [data-edge-from][data-reach-match] {
+      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--backend-stroke) 72%, transparent));
+    }
+    svg[data-preset="blueprint"][data-reach-active] [data-reach-origin],
+    svg[data-preset="blueprint"][data-reach-active] [data-edge-from][data-reach-match] {
+      filter: none;
     }
 
     /* Direct Relationship Explorer makes authored paths a real input surface
@@ -3619,6 +3717,9 @@
     }
     svg[data-preset="blueprint"][data-focus-active] [data-focus-selected] {
       filter: drop-shadow(0 0 3px var(--frontend-stroke));
+    }
+    svg[data-preset="blueprint"][data-focus-active][data-reach-active] [data-focus-selected][data-reach-origin] {
+      filter: none;
     }
     svg[data-preset="blueprint"][data-relationship-preview-active] [data-relationship-preview],
     svg[data-preset="blueprint"][data-relationship-preview-active] [data-relationship-preview-source],
@@ -4374,6 +4475,18 @@
               <div class="semantic-passport-evidence-links" id="focus-evidence-links"></div>
             </div>
             <span class="relationship-lens-summary" id="focus-summary" aria-live="polite"></span>
+            <div class="semantic-passport-reach" id="focus-reach" hidden>
+              <span class="semantic-passport-reach-label">Authored reach</span>
+              <div class="semantic-passport-reach-actions" role="group" aria-label="Trace authored reachability">
+                <button id="btn-reach-upstream" type="button" aria-label="Trace upstream authored reachability" aria-pressed="false">
+                  <span>Upstream</span><strong id="focus-reach-upstream-count">0</strong>
+                </button>
+                <button id="btn-reach-downstream" type="button" aria-label="Trace downstream authored reachability" aria-pressed="false">
+                  <span>Downstream</span><strong id="focus-reach-downstream-count">0</strong>
+                </button>
+              </div>
+              <small class="semantic-passport-reach-status" id="focus-reach-status" hidden aria-live="polite"></small>
+            </div>
           </div>
           <div class="relationship-lens-actions">
             <button id="btn-focus-copy" type="button" aria-label="Copy link to focused node">Copy link</button>
@@ -4772,6 +4885,7 @@
         clone.style.removeProperty('transform');
         clone.removeAttribute('data-view-scale');
         clone.removeAttribute('data-focus-active');
+        clone.removeAttribute('data-reach-active');
         clone.removeAttribute('data-lens-active');
         clone.removeAttribute('data-lens-flow-count');
         clone.removeAttribute('data-lens-flow-density');
@@ -4863,6 +4977,11 @@
           el.removeAttribute('data-focus-match');
           el.removeAttribute('data-focus-selected');
         });
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-reach-match], [data-reach-origin], [data-reach-depth]'), function (el) {
+          el.removeAttribute('data-reach-match');
+          el.removeAttribute('data-reach-origin');
+          el.removeAttribute('data-reach-depth');
+        });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-lens-match], [data-lens-selected], [data-lens-peer]'), function (el) {
           el.removeAttribute('data-lens-match');
           el.removeAttribute('data-lens-selected');
@@ -4909,6 +5028,7 @@
         });
         var canonicalStateClean = !clone.hasAttribute('data-view-scale') &&
           !clone.hasAttribute('data-focus-active') &&
+          !clone.hasAttribute('data-reach-active') &&
           !clone.hasAttribute('data-lens-active') &&
           !clone.hasAttribute('data-lens-flow-count') &&
           !clone.hasAttribute('data-lens-flow-density') &&
@@ -4929,7 +5049,7 @@
           !clone.hasAttribute('data-chapter-anchor') &&
           !clone.hasAttribute('data-chapter-preview') &&
           !clone.style.getPropertyValue('transform') &&
-          clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]').length === 0;
+          clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]').length === 0;
 
         var vb = svg.viewBox.baseVal;
         var finiteSvgDimensions = Number.isFinite(vb.x) && Number.isFinite(vb.y) &&
@@ -6229,6 +6349,12 @@
       var repositoryLink = document.getElementById('focus-repository');
       var evidenceLinks = document.getElementById('focus-evidence-links');
       var summary = document.getElementById('focus-summary');
+      var reachSection = document.getElementById('focus-reach');
+      var reachStatus = document.getElementById('focus-reach-status');
+      var upstreamBtn = document.getElementById('btn-reach-upstream');
+      var downstreamBtn = document.getElementById('btn-reach-downstream');
+      var upstreamCount = document.getElementById('focus-reach-upstream-count');
+      var downstreamCount = document.getElementById('focus-reach-downstream-count');
       var relationshipList = document.getElementById('relationship-lens-list');
       var copyBtn = document.getElementById('btn-focus-copy');
       var relationsBtn = document.getElementById('btn-focus-relations');
@@ -6242,6 +6368,8 @@
       var relationshipHitOverlay = null;
       var relationshipHitTargets = [];
       var directPreviewTimer = null;
+      var reachabilityMode = null;
+      var activeReachability = null;
       var svgNamespace = 'http://www.w3.org/2000/svg';
       var reducedMotionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
       var finePointerQuery = window.matchMedia ? window.matchMedia('(hover: hover) and (pointer: fine)') : null;
@@ -6254,6 +6382,178 @@
       }
       function nodeLabel(node, fallback) {
         return node.getAttribute('data-node-label') || (node.getAttribute('aria-label') || fallback).replace(/^Focus\s+/, '');
+      }
+      function reachabilityRelationships() {
+        var seen = Object.create(null);
+        var relationships = [];
+        edges().forEach(function (edge) {
+          var from = edge.getAttribute('data-edge-from');
+          var to = edge.getAttribute('data-edge-to');
+          var key = edge.getAttribute('data-edge-key') || (from + '\u0000' + to + '\u0000' + (edge.getAttribute('data-edge-label') || ''));
+          if (!from || !to || seen[key]) return;
+          seen[key] = true;
+          relationships.push({ key: key, from: from, to: to });
+        });
+        return relationships;
+      }
+      function computeReachability(originId, direction, relationships) {
+        if (typeof originId !== 'string' || !originId ||
+            (direction !== 'upstream' && direction !== 'downstream') ||
+            !Array.isArray(relationships)) return null;
+        var records = [];
+        var seenKeys = Object.create(null);
+        relationships.forEach(function (relationship, index) {
+          if (!relationship || typeof relationship.from !== 'string' || !relationship.from ||
+              typeof relationship.to !== 'string' || !relationship.to) return;
+          var key = typeof relationship.key === 'string' && relationship.key
+            ? relationship.key : String(index);
+          if (seenKeys[key]) return;
+          seenKeys[key] = true;
+          records.push({ key: key, from: relationship.from, to: relationship.to });
+        });
+
+        var depths = Object.create(null);
+        var order = [];
+        var queue = [originId];
+        depths[originId] = 0;
+        for (var cursor = 0; cursor < queue.length; cursor += 1) {
+          var current = queue[cursor];
+          records.forEach(function (relationship) {
+            var next = null;
+            if (direction === 'downstream' && relationship.from === current) next = relationship.to;
+            else if (direction === 'upstream' && relationship.to === current) next = relationship.from;
+            if (next == null || Object.prototype.hasOwnProperty.call(depths, next)) return;
+            depths[next] = depths[current] + 1;
+            queue.push(next);
+          });
+        }
+        queue.forEach(function (id) { order.push(id); });
+
+        var edgeKeys = [];
+        records.forEach(function (relationship) {
+          if (Object.prototype.hasOwnProperty.call(depths, relationship.from) &&
+              Object.prototype.hasOwnProperty.call(depths, relationship.to)) edgeKeys.push(relationship.key);
+        });
+        var maxDepth = order.reduce(function (maximum, id) {
+          return Math.max(maximum, depths[id]);
+        }, 0);
+        return {
+          direction: direction,
+          originId: originId,
+          nodeIds: order,
+          edgeKeys: edgeKeys,
+          depths: depths,
+          maxDepth: maxDepth
+        };
+      }
+      function reachabilityFor(id, direction) {
+        return computeReachability(id, direction, reachabilityRelationships());
+      }
+      function resetReachabilityButtons() {
+        upstreamBtn.setAttribute('aria-pressed', 'false');
+        downstreamBtn.setAttribute('aria-pressed', 'false');
+      }
+      function clearReachability(options) {
+        options = options || {};
+        reachabilityMode = null;
+        activeReachability = null;
+        svg.removeAttribute('data-reach-active');
+        chip.removeAttribute('data-reach-mode');
+        nodes().forEach(function (node) {
+          node.removeAttribute('data-reach-match');
+          node.removeAttribute('data-reach-origin');
+          node.removeAttribute('data-reach-depth');
+        });
+        edges().forEach(function (edge) {
+          edge.removeAttribute('data-reach-match');
+          edge.removeAttribute('data-reach-depth');
+        });
+        resetReachabilityButtons();
+        reachStatus.textContent = '';
+        reachStatus.hidden = true;
+        if (options.updateUrl === true && activeIds.length === 1) {
+          try {
+            history.replaceState(null, '', location.pathname + location.search + '#focus=' + encodeURIComponent(activeIds[0]));
+          } catch (_) {}
+        }
+      }
+      function renderReachabilityControls(id) {
+        var upstream = reachabilityFor(id, 'upstream');
+        var downstream = reachabilityFor(id, 'downstream');
+        var upstreamReach = upstream ? Math.max(0, upstream.nodeIds.length - 1) : 0;
+        var downstreamReach = downstream ? Math.max(0, downstream.nodeIds.length - 1) : 0;
+        upstreamCount.textContent = String(upstreamReach);
+        downstreamCount.textContent = String(downstreamReach);
+        upstreamBtn.disabled = upstreamReach === 0;
+        downstreamBtn.disabled = downstreamReach === 0;
+        upstreamBtn.setAttribute('aria-label', upstreamReach
+          ? 'Trace ' + upstreamReach + ' upstream authored node' + (upstreamReach === 1 ? '' : 's')
+          : 'No upstream authored nodes');
+        downstreamBtn.setAttribute('aria-label', downstreamReach
+          ? 'Trace ' + downstreamReach + ' downstream authored node' + (downstreamReach === 1 ? '' : 's')
+          : 'No downstream authored nodes');
+        reachSection.hidden = false;
+      }
+      function applyReachability(direction, options) {
+        options = options || {};
+        if (activeIds.length !== 1 || (direction !== 'upstream' && direction !== 'downstream')) return false;
+        if (reachabilityMode === direction && options.toggle !== false) {
+          clearReachability({ updateUrl: options.updateUrl !== false });
+          return true;
+        }
+        var result = reachabilityFor(activeIds[0], direction);
+        if (!result || result.nodeIds.length <= 1) return false;
+        if (Archify.guidedViews && typeof Archify.guidedViews.showAll === 'function') {
+          Archify.guidedViews.showAll({ clearFocus: false, updateUrl: false, resetView: false });
+        }
+        clearRelationshipPreview({ clearPin: true });
+        clearReachability({ updateUrl: false });
+        reachabilityMode = direction;
+        activeReachability = result;
+        var edgeKeySet = Object.create(null);
+        result.edgeKeys.forEach(function (key) { edgeKeySet[key] = true; });
+        svg.setAttribute('data-reach-active', direction);
+        chip.setAttribute('data-reach-mode', direction);
+        nodes().forEach(function (node) {
+          var id = node.getAttribute('data-node-id');
+          if (!Object.prototype.hasOwnProperty.call(result.depths, id)) return;
+          node.setAttribute('data-reach-match', '');
+          node.setAttribute('data-reach-depth', String(result.depths[id]));
+          if (id === result.originId) node.setAttribute('data-reach-origin', '');
+        });
+        edges().forEach(function (edge) {
+          var key = edge.getAttribute('data-edge-key') || (
+            edge.getAttribute('data-edge-from') + '\u0000' +
+            edge.getAttribute('data-edge-to') + '\u0000' +
+            (edge.getAttribute('data-edge-label') || '')
+          );
+          if (!edgeKeySet[key]) return;
+          edge.setAttribute('data-reach-match', '');
+          var fromDepth = result.depths[edge.getAttribute('data-edge-from')];
+          var toDepth = result.depths[edge.getAttribute('data-edge-to')];
+          edge.setAttribute('data-reach-depth', String(Math.max(fromDepth || 0, toDepth || 0)));
+        });
+        resetReachabilityButtons();
+        var activeButton = direction === 'upstream' ? upstreamBtn : downstreamBtn;
+        activeButton.setAttribute('aria-pressed', 'true');
+        var reachableCount = result.nodeIds.length - 1;
+        var directionLabel = direction === 'upstream' ? 'Upstream' : 'Downstream';
+        reachStatus.textContent = directionLabel + ' · ' + reachableCount + ' node' +
+          (reachableCount === 1 ? '' : 's') + ' · ' + result.edgeKeys.length + ' link' +
+          (result.edgeKeys.length === 1 ? '' : 's') + ' · max ' + result.maxDepth + ' hop' +
+          (result.maxDepth === 1 ? '' : 's');
+        reachStatus.hidden = false;
+        if (options.updateUrl !== false) {
+          try {
+            history.replaceState(null, '', location.pathname + location.search + '#focus=' +
+              encodeURIComponent(activeIds[0]) + '&reach=' + direction);
+          } catch (_) {}
+        }
+        if (options.reveal !== false && Archify.view && typeof Archify.view.reveal === 'function') {
+          Archify.view.reveal(result.nodeIds, { includeNeighbors: false, reason: 'reachability' });
+        }
+        requestLensPlacement();
+        return true;
       }
       function setPassportValue(element, value) {
         var normalized = value == null ? '' : String(value).trim();
@@ -6862,6 +7162,7 @@
         var counts = { out: 0, in: 0, loop: 0 };
         relationships.forEach(function (relationship) { counts[relationship.direction] += 1; });
         summary.textContent = counts.out + ' outgoing · ' + counts.in + ' incoming' + (counts.loop ? ' · ' + counts.loop + ' loop' : '');
+        renderReachabilityControls(id);
         relationshipList.textContent = '';
         if (!relationships.length) {
           var empty = document.createElement('p');
@@ -6958,6 +7259,7 @@
       }
       function clear(options) {
         options = options || {};
+        clearReachability({ updateUrl: false });
         if (Archify.intentTrace && typeof Archify.intentTrace.clear === 'function') {
           Archify.intentTrace.clear({ announce: false });
         }
@@ -6989,6 +7291,11 @@
         repositoryLink.removeAttribute('href');
         repositoryLink.textContent = '';
         summary.textContent = '';
+        reachSection.hidden = true;
+        upstreamCount.textContent = '0';
+        downstreamCount.textContent = '0';
+        upstreamBtn.disabled = true;
+        downstreamBtn.disabled = true;
         relationshipList.textContent = '';
         copyBtn.textContent = 'Copy link';
         copyBtn.setAttribute('aria-label', 'Copy link to focused node');
@@ -7098,7 +7405,7 @@
         var relationId = record && record.id;
         var value = location.href.replace(/#.*$/, '') + (relationId
           ? '#relation=' + encodeURIComponent(relationId)
-          : '#focus=' + encodeURIComponent(activeIds[0]));
+          : '#focus=' + encodeURIComponent(activeIds[0]) + (reachabilityMode ? '&reach=' + reachabilityMode : ''));
         var copy = navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
@@ -7138,6 +7445,8 @@
       });
       clearBtn.addEventListener('click', function () { clear(); });
       copyBtn.addEventListener('click', copyFocusLink);
+      upstreamBtn.addEventListener('click', function () { applyReachability('upstream'); });
+      downstreamBtn.addEventListener('click', function () { applyReachability('downstream'); });
       relationsBtn.addEventListener('click', function () {
         var expanded = chip.getAttribute('data-relations-expanded') === 'true';
         if (expanded) chip.removeAttribute('data-relations-expanded');
@@ -7225,11 +7534,17 @@
           var params = new URLSearchParams(location.hash.replace(/^#/, ''));
           var relation = params.get('relation');
           var initial = params.get('focus');
+          var reach = params.get('reach');
           if (relation) {
             if (html.getAttribute('data-embed') === 'true' ||
                 !inspectRelationshipById(relation, { updateUrl: false, toggle: false })) clear({ updateUrl: false });
           }
-          else if (initial) set(initial, { updateUrl: false, toggle: false });
+          else if (initial) {
+            if (set(initial, { updateUrl: false, toggle: false }) &&
+                (reach === 'upstream' || reach === 'downstream')) {
+              applyReachability(reach, { updateUrl: false, toggle: false, reveal: false });
+            }
+          }
           else if (!params.get('view')) clear({ updateUrl: false });
         } catch (_) {}
       }
@@ -7242,12 +7557,23 @@
         setMany: setMany,
         clear: clear,
         copyLink: copyFocusLink,
+        reach: applyReachability,
+        clearReach: clearReachability,
         inspectRelationship: inspectRelationship,
         inspectRelationshipById: inspectRelationshipById,
         reposition: requestLensPlacement,
         relationship: function () {
           var record = pinnedRelationshipRecord();
           return record ? { id: record.id || null, key: record.key, from: record.from, to: record.to, label: record.label } : null;
+        },
+        reachability: function () {
+          return activeReachability ? {
+            direction: activeReachability.direction,
+            originId: activeReachability.originId,
+            nodeIds: activeReachability.nodeIds.slice(),
+            edgeKeys: activeReachability.edgeKeys.slice(),
+            maxDepth: activeReachability.maxDepth
+          } : null;
         },
         active: function () { return activeIds.length === 0 ? null : (activeIds.length === 1 ? activeIds[0] : activeIds.slice()); }
       };

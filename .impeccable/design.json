@@ -66,9 +66,17 @@
     {
       "name": "Semantic Passport",
       "kind": "custom",
-      "description": "One focused node's compact metadata, relationships, and optional verified sources.",
+      "description": "One focused node's compact metadata, authored reachability, relationships, and optional verified sources.",
       "html": "<aside class=\"ds-passport\"><span>SEMANTIC PASSPORT</span><strong>Entry Surfaces</strong><small>frontend · entry</small></aside>",
       "css": ".ds-passport { display: grid; gap: 0.4rem; width: 18rem; padding: 0.75rem; border: 1px solid #22d3ee; border-radius: 0.82rem; background: #0f172a; color: #fff; box-shadow: 0 18px 48px rgba(0,0,0,0.3); font-family: 'JetBrains Mono', ui-monospace, monospace; } .ds-passport span { color: #22d3ee; font-size: 0.5rem; font-weight: 800; letter-spacing: 0.14em; } .ds-passport small { color: #94a3b8; } .ds-passport:focus-within { outline: 2px solid #22d3ee; outline-offset: 2px; }"
+    },
+    {
+      "name": "Authored Reachability",
+      "kind": "custom",
+      "refersTo": "authored-reachability",
+      "description": "Two compact Semantic Passport actions that reveal the deterministic upstream or downstream closure of authored relationships without claiming runtime causality.",
+      "html": "<div class=\"ds-reach\"><button aria-pressed=\"false\">Upstream <b>3</b></button><button aria-pressed=\"true\">Downstream <b>9</b></button><small>9 nodes · 9 links · max 6 hops</small></div>",
+      "css": ".ds-reach { display: grid; grid-template-columns: 1fr 1fr; gap: 0.38rem; width: 18rem; font-family: 'JetBrains Mono', ui-monospace, monospace; } .ds-reach button { min-height: 2rem; border: 1px solid #334155; border-radius: 0.45rem; background: #0f172a; color: #cbd5e1; font: 700 0.65rem/1 'JetBrains Mono', ui-monospace, monospace; } .ds-reach button[aria-pressed=\"true\"] { border-color: #22d3ee; color: #22d3ee; background: rgba(34,211,238,0.08); } .ds-reach b { color: inherit; } .ds-reach small { grid-column: 1 / -1; color: #94a3b8; font-size: 0.6rem; } .ds-reach button:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; }"
     },
     {
       "name": "Verified Source Beacon",
@@ -87,6 +95,7 @@
       "A fixed semantic color vocabulary shared by nodes, edges, legends, focus, and evidence.",
       "Mono-forward typography, small labels, and deliberate density for engineering review.",
       "Viewer state stays outside canonical exports; proof remains portable and deterministic.",
+      "Authored reachability is explicit, finite, shareable, and never presented as runtime impact.",
       "State transitions are 140–200ms; authored story motion may be longer but finite and reader-controlled."
     ],
     "rules": [
@@ -100,6 +109,7 @@
     "dos": [
       "Do make the primary path legible before adding secondary relationships or detail.",
       "Do derive every focus, route, story, source link, receipt, and count from authored or locally verified evidence.",
+      "Do label upstream and downstream exploration as authored reachability, deduplicate relationship fragments, terminate cycles, and preserve deterministic DOM order.",
       "Do keep ordinary artifacts source-free and make repository evidence explicitly opt-in.",
       "Do use 140–200ms transitions for control state and honor prefers-reduced-motion.",
       "Do preserve keyboard access, visible focus, semantic labels, dark/light parity, and non-color state cues.",
@@ -109,6 +119,7 @@
       "Don't build generic Mermaid beautifiers that change themes without improving information architecture.",
       "Don't turn Archify into WYSIWYG drawing suites whose editing chrome becomes the product.",
       "Don't ship motion-first graph demos that imply relationships or activity not present in the authored source.",
+      "Don't call authored graph reachability blast radius, breakage, dependency impact, or runtime causality.",
       "Don't use dense dashboard shells, endless identical card grids, decorative glass, gradient text, and other AI-generated interface clichés.",
       "Don't add vendor-icon catalogues or product-name matching that weaken Archify's portable semantic vocabulary.",
       "Don't create another permanent panel when the Semantic Passport, Node Finder, or existing canvas can carry the capability.",
