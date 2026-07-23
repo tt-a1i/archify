@@ -79,6 +79,14 @@
       "css": ".ds-reach { display: grid; grid-template-columns: 1fr 1fr; gap: 0.38rem; width: 18rem; font-family: 'JetBrains Mono', ui-monospace, monospace; } .ds-reach button { min-height: 2rem; border: 1px solid #334155; border-radius: 0.45rem; background: #0f172a; color: #cbd5e1; font: 700 0.65rem/1 'JetBrains Mono', ui-monospace, monospace; } .ds-reach button[aria-pressed=\"true\"] { border-color: #22d3ee; color: #22d3ee; background: rgba(34,211,238,0.08); } .ds-reach b { color: inherit; } .ds-reach small { grid-column: 1 / -1; color: #94a3b8; font-size: 0.6rem; } .ds-reach button:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; }"
     },
     {
+      "name": "Reach Share Card",
+      "kind": "custom",
+      "refersTo": "reach-share-card",
+      "description": "An explicit 1200 by 630 authored upstream or downstream reading that preserves full-graph context without claiming runtime impact.",
+      "html": "<article class=\"ds-reach-card\" data-direction=\"downstream\"><span>ARCHIFY · DOWNSTREAM REACH</span><strong>Authored downstream from Command Router</strong><small>9 nodes · 9 links · max 6 hops</small><i aria-hidden=\"true\"></i></article>",
+      "css": ".ds-reach-card { display: grid; gap: 0.55rem; width: 24rem; padding: 1rem 1.1rem; border: 1px solid #334155; border-left: 3px solid #34d399; border-radius: 0.65rem; background: #020617; color: #fff; font-family: 'JetBrains Mono', ui-monospace, monospace; } .ds-reach-card span { color: #34d399; font-size: 0.52rem; font-weight: 800; letter-spacing: 0.13em; } .ds-reach-card strong { font-size: 0.85rem; } .ds-reach-card small { color: #94a3b8; } .ds-reach-card i { height: 2px; background: linear-gradient(90deg, #34d399 0 58%, #1e293b 58%); } .ds-reach-card[data-direction=\"upstream\"] { border-left-color: #a78bfa; } .ds-reach-card[data-direction=\"upstream\"] span { color: #a78bfa; }"
+    },
+    {
       "name": "Verified Source Beacon",
       "kind": "chip",
       "refersTo": "evidence-beacon",
@@ -96,6 +104,7 @@
       "Mono-forward typography, small labels, and deliberate density for engineering review.",
       "Viewer state stays outside canonical exports; proof remains portable and deterministic.",
       "Authored reachability is explicit, finite, shareable, and never presented as runtime impact.",
+      "Scoped share variants name their authored state, direction, origin, counts, and clean-state proof.",
       "State transitions are 140–200ms; authored story motion may be longer but finite and reader-controlled."
     ],
     "rules": [
@@ -110,6 +119,7 @@
       "Do make the primary path legible before adding secondary relationships or detail.",
       "Do derive every focus, route, story, source link, receipt, and count from authored or locally verified evidence.",
       "Do label upstream and downstream exploration as authored reachability, deduplicate relationship fragments, terminate cycles, and preserve deterministic DOM order.",
+      "Do name the authored scope, direction, origin, node count, link count, and maximum hops on every Reach Share Card.",
       "Do keep ordinary artifacts source-free and make repository evidence explicitly opt-in.",
       "Do use 140–200ms transitions for control state and honor prefers-reduced-motion.",
       "Do preserve keyboard access, visible focus, semantic labels, dark/light parity, and non-color state cues.",
@@ -120,6 +130,7 @@
       "Don't turn Archify into WYSIWYG drawing suites whose editing chrome becomes the product.",
       "Don't ship motion-first graph demos that imply relationships or activity not present in the authored source.",
       "Don't call authored graph reachability blast radius, breakage, dependency impact, or runtime causality.",
+      "Don't present a Reach Share Card as proof of impact, failure propagation, breakage, or runtime causality.",
       "Don't use dense dashboard shells, endless identical card grids, decorative glass, gradient text, and other AI-generated interface clichés.",
       "Don't add vendor-icon catalogues or product-name matching that weaken Archify's portable semantic vocabulary.",
       "Don't create another permanent panel when the Semantic Passport, Node Finder, or existing canvas can carry the capability.",

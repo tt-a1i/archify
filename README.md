@@ -71,6 +71,10 @@ After tracing a route, open **Export → Route Share Card** to download the exac
 
 ![Route Share Card showing the exact Users to API Server path with the full architecture retained as context](docs/assets/archify-route-share-card.png)
 
+After tracing `Upstream` or `Downstream` authored reach, choose **Export → Reach Share Card** to turn that exact reading into a 1200×630 PNG. The card keeps the complete topology as context and names its direction, origin, nodes, links, and maximum hops—it does not claim runtime impact.
+
+![MCO downstream Reach Share Card showing authored relationships from Command Router](docs/assets/mco-runtime-reach-share-card.png)
+
 Open [`examples/web-app.html`](examples/web-app.html) locally to try the complete viewer.
 
 ## Quick start

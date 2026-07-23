@@ -10,6 +10,13 @@ import { pathToFileURL, fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-webm-artifact-'));
+const externalReachSource = process.env.ARCHIFY_REACH_CARD_SOURCE
+  ? path.resolve(process.env.ARCHIFY_REACH_CARD_SOURCE)
+  : '';
+const externalReachOutput = process.env.ARCHIFY_REACH_CARD_OUTPUT
+  ? path.resolve(process.env.ARCHIFY_REACH_CARD_OUTPUT)
+  : '';
+assert.equal(Boolean(externalReachSource), Boolean(externalReachOutput), 'ARCHIFY_REACH_CARD_SOURCE and ARCHIFY_REACH_CARD_OUTPUT must be set together');
 
 function executable(candidates) {
   for (const candidate of candidates) {
@@ -908,6 +915,270 @@ try {
     console.log(`ok ${label} Route visual matrix: Classic/Flow/Blueprint x dark/light`);
   }
 
+  async function captureReachShareCard(file, label, originId, direction, options = {}) {
+    await navigateReady(file, '!!(window.Archify && Archify.focus && Archify.focus.reachabilitySnapshot && Archify.exportMenu && Archify.exportMenu.downloadReachShareCard)', label);
+    const reachPayload = await withTimeout(evaluate(cdp, sessionId, String.raw`(async function () {
+      try {
+        window.alert = function (message) { window.__archifyReachAlert = String(message); };
+        if (!Archify.focus.set(${JSON.stringify(originId)}, { toggle: false, updateUrl: false })) {
+          throw new Error('focus origin did not resolve');
+        }
+        if (!Archify.focus.reach(${JSON.stringify(direction)}, { toggle: false, updateUrl: false, reveal: false })) {
+          throw new Error('authored reach did not resolve');
+        }
+        var snapshot = Archify.focus.reachabilitySnapshot();
+        if (!snapshot) throw new Error('active authored reach exposed no export snapshot');
+        Archify.exportMenu.syncReachShare();
+        var reachMenuItem = document.querySelector('[data-action="reach-share-card"]');
+        var menuResolved = !!reachMenuItem && !reachMenuItem.hidden && !reachMenuItem.disabled &&
+          getComputedStyle(reachMenuItem).display !== 'none';
+        var svg = document.querySelector('.diagram-container svg');
+
+        var firstEdge = snapshot.edges[0];
+        var primaryCarrier = Array.from(svg.querySelectorAll('[data-edge-key]')).find(function (element) {
+          return element.getAttribute('data-edge-key') === firstEdge.key && hasDrawableGeometry(element);
+        });
+        if (!primaryCarrier) throw new Error('reach exposed no primary geometry carrier');
+        var duplicateCarrier = primaryCarrier.cloneNode(true);
+        var duplicateGeometry = /^(path|line|polyline)$/i.test(duplicateCarrier.tagName)
+          ? duplicateCarrier
+          : duplicateCarrier.querySelector('path, line, polyline');
+        if (duplicateGeometry.tagName.toLowerCase() === 'path') {
+          duplicateGeometry.setAttribute('d', duplicateGeometry.getAttribute('d') + ' M 0 0 L 1 1');
+        }
+        svg.appendChild(duplicateCarrier);
+        var duplicateGeometryRejected = Archify.focus.reachabilitySnapshot() === null;
+        var duplicateExportError = '';
+        try { await Archify.exportMenu.shareCard({ variant: 'reach' }); }
+        catch (error) { duplicateExportError = String(error && error.message || error); }
+        duplicateCarrier.remove();
+        snapshot = Archify.focus.reachabilitySnapshot();
+        if (!snapshot) throw new Error('reach snapshot did not recover after geometry restoration');
+
+        function stableLiveSnapshot() {
+          var clone = svg.cloneNode(true);
+          clone.style.removeProperty('transform');
+          clone.removeAttribute('data-view-scale');
+          Array.from(clone.querySelectorAll('[data-legend-bridge-runtime]')).forEach(function (element) { element.remove(); });
+          return clone.outerHTML;
+        }
+        function fingerprintBytes(bytes) {
+          var hash = 2166136261;
+          for (var index = 0; index < bytes.length; index++) {
+            hash ^= bytes[index];
+            hash = Math.imul(hash, 16777619);
+          }
+          return (hash >>> 0).toString(16);
+        }
+        var liveBefore = stableLiveSnapshot();
+        var captured = [];
+        var downloads = [];
+        var originalCreateObjectURL = URL.createObjectURL.bind(URL);
+        var originalAnchorClick = HTMLAnchorElement.prototype.click;
+        URL.createObjectURL = function (blob) {
+          if (blob && blob.type && blob.type.indexOf('image/svg+xml') === 0) captured.push(blob.text());
+          return originalCreateObjectURL(blob);
+        };
+        HTMLAnchorElement.prototype.click = function () { downloads.push(this.download); };
+
+        try {
+          var blob = await Archify.exportMenu.shareCard({ variant: 'reach' });
+          var reachSvgText = captured[0] ? await captured[0] : '';
+          var downloadedBlob = await Archify.exportMenu.downloadReachShareCard();
+          var reachReceipt = {
+            format: document.documentElement.getAttribute('data-last-export-format'),
+            variant: document.documentElement.getAttribute('data-last-export-variant'),
+            width: document.documentElement.getAttribute('data-last-export-width'),
+            height: document.documentElement.getAttribute('data-last-export-height'),
+            canonical: document.documentElement.getAttribute('data-last-export-canonical'),
+            routeStateClean: document.documentElement.getAttribute('data-last-export-route-state-clean'),
+            reachStateClean: document.documentElement.getAttribute('data-last-export-reach-state-clean'),
+            error: document.documentElement.getAttribute('data-last-export-error')
+          };
+
+          var parser = new DOMParser();
+          var reachSvg = parser.parseFromString(reachSvgText, 'image/svg+xml').documentElement;
+          var matchedNodeIds = Array.from(reachSvg.querySelectorAll('[data-node-id][data-share-reach-match]')).map(function (node) {
+            return node.getAttribute('data-node-id');
+          });
+          var matchedEdgeKeys = Array.from(new Set(Array.from(reachSvg.querySelectorAll('[data-edge-key][data-share-reach-match]')).map(function (edge) {
+            return edge.getAttribute('data-edge-key');
+          })));
+          var reachNodeIds = Array.from(reachSvg.querySelectorAll('[data-node-id]')).map(function (node) {
+            return node.getAttribute('data-node-id');
+          }).sort();
+          var liveNodeIds = Array.from(svg.querySelectorAll('[data-node-id]')).map(function (node) {
+            return node.getAttribute('data-node-id');
+          }).sort();
+          var reachEdgeKeys = Array.from(new Set(Array.from(reachSvg.querySelectorAll('[data-edge-key]')).map(function (edge) {
+            return edge.getAttribute('data-edge-key');
+          }))).sort();
+          var liveEdgeKeys = Array.from(new Set(Array.from(svg.querySelectorAll('[data-edge-key]')).map(function (edge) {
+            return edge.getAttribute('data-edge-key');
+          }))).sort();
+          var reachStyles = Array.from(reachSvg.querySelectorAll('style')).map(function (style) { return style.textContent; }).join('\n');
+
+          await new Promise(function (resolve) {
+            requestAnimationFrame(function () { requestAnimationFrame(resolve); });
+          });
+          var liveAfter = stableLiveSnapshot();
+
+          var matrix = [];
+          if (${JSON.stringify(options.matrix === true)}) {
+            var identity = JSON.stringify(snapshot);
+            for (var preset of ['classic', 'signal-flow', 'blueprint']) {
+              if (!Archify.preset.apply(preset)) throw new Error('could not apply preset ' + preset);
+              for (var theme of ['dark', 'light']) {
+                document.documentElement.setAttribute('data-theme', theme);
+                var matrixBlob = await Archify.exportMenu.shareCard({ variant: 'reach' });
+                var matrixBytes = new Uint8Array(await matrixBlob.arrayBuffer());
+                var matrixView = new DataView(matrixBytes.buffer, matrixBytes.byteOffset, matrixBytes.byteLength);
+                matrix.push({
+                  preset: preset,
+                  theme: theme,
+                  type: matrixBlob.type,
+                  size: matrixBlob.size,
+                  width: matrixView.getUint32(16),
+                  height: matrixView.getUint32(20),
+                  hash: fingerprintBytes(matrixBytes),
+                  identity: JSON.stringify(Archify.focus.reachabilitySnapshot())
+                });
+              }
+            }
+            if (matrix.some(function (entry) { return entry.identity !== identity; })) {
+              throw new Error('visual matrix changed authored reach identity');
+            }
+          }
+
+          Archify.focus.clearReach({ updateUrl: false });
+          Archify.exportMenu.syncReachShare();
+          var hiddenAfterClear = reachMenuItem.hidden && reachMenuItem.disabled &&
+            getComputedStyle(reachMenuItem).display === 'none';
+          var staleError = '';
+          try { await Archify.exportMenu.shareCard({ variant: 'reach' }); }
+          catch (error) { staleError = String(error && error.message || error); }
+          await Archify.exportMenu.downloadReachShareCard();
+          var failedReceipt = {
+            format: document.documentElement.getAttribute('data-last-export-format'),
+            variant: document.documentElement.getAttribute('data-last-export-variant'),
+            errorFormat: document.documentElement.getAttribute('data-last-export-error-format'),
+            error: document.documentElement.getAttribute('data-last-export-error')
+          };
+          var canonicalIndex = captured.length;
+          var canonicalBlob = await Archify.exportMenu.shareCard();
+          var canonicalSvgText = captured[canonicalIndex] ? await captured[canonicalIndex] : '';
+          var canonicalSvg = parser.parseFromString(canonicalSvgText, 'image/svg+xml').documentElement;
+          var canonicalReachResidue = canonicalSvg.hasAttribute('data-share-reach') ||
+            canonicalSvg.hasAttribute('data-reach-active') ||
+            canonicalSvg.querySelectorAll('[data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-reach-match], [data-reach-origin], [data-reach-depth]').length > 0;
+
+          var bytes = new Uint8Array(await blob.arrayBuffer());
+          var binary = '';
+          for (var offset = 0; offset < bytes.length; offset += 32768) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(offset, offset + 32768));
+          }
+          return {
+            ok: true,
+            type: blob.type,
+            size: blob.size,
+            base64: btoa(binary),
+            snapshot: snapshot,
+            matchedNodeIds: matchedNodeIds,
+            matchedEdgeKeys: matchedEdgeKeys,
+            expectedEdgeKeys: snapshot.edges.map(function (edge) { return edge.key; }),
+            reachDirection: reachSvg.getAttribute('data-share-reach'),
+            originCount: reachSvg.querySelectorAll('[data-node-id][data-share-reach-origin]').length,
+            reachLiveResidue: reachSvg.hasAttribute('data-reach-active') || reachSvg.querySelectorAll('[data-reach-match], [data-reach-origin], [data-reach-depth]').length > 0,
+            routeResidue: reachSvg.hasAttribute('data-share-route') || reachSvg.querySelectorAll('[data-share-route-match], [data-share-route-step], [data-route-match], [data-route-step]').length > 0,
+            motionResidue: reachSvg.hasAttribute('data-animation') || reachSvg.querySelectorAll('[data-animate]').length > 0,
+            blueprintStaticRule: /data-preset=\"blueprint\"\]\[data-share-reach\][^}]*filter:\s*none/.test(reachStyles),
+            reachNodeIds: reachNodeIds,
+            liveNodeIds: liveNodeIds,
+            reachEdgeKeys: reachEdgeKeys,
+            liveEdgeKeys: liveEdgeKeys,
+            liveUnchanged: liveBefore === liveAfter,
+            menuResolved: menuResolved,
+            duplicateGeometryRejected: duplicateGeometryRejected,
+            duplicateExportError: duplicateExportError,
+            downloadStable: downloadedBlob && downloadedBlob.type === 'image/png',
+            downloads: downloads,
+            reachReceipt: reachReceipt,
+            hiddenAfterClear: hiddenAfterClear,
+            staleSnapshot: Archify.focus.reachabilitySnapshot(),
+            staleError: staleError,
+            failedReceipt: failedReceipt,
+            canonicalSize: canonicalBlob.size,
+            canonicalReachResidue: canonicalReachResidue,
+            matrix: matrix
+          };
+        } finally {
+          URL.createObjectURL = originalCreateObjectURL;
+          HTMLAnchorElement.prototype.click = originalAnchorClick;
+        }
+      } catch (error) {
+        return { ok: false, error: String(error && error.message || error) };
+      }
+    })()`, true), options.matrix ? 35_000 : 15_000, `${label} Reach Card export`);
+
+    assert.equal(reachPayload?.ok, true, reachPayload?.error || `${label} Reach Card export failed`);
+    assert.equal(reachPayload.type, 'image/png');
+    assert.ok(reachPayload.size > 20_000, `${label} Reach Card is unexpectedly small (${reachPayload.size} bytes)`);
+    const png = Buffer.from(reachPayload.base64, 'base64');
+    assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${label} Reach Card is not a PNG`);
+    assert.equal(png.readUInt32BE(16), 1200, `${label} Reach Card width`);
+    assert.equal(png.readUInt32BE(20), 630, `${label} Reach Card height`);
+    if (options.outputPath) {
+      fs.mkdirSync(path.dirname(options.outputPath), { recursive: true });
+      fs.writeFileSync(options.outputPath, png);
+    }
+    assert.equal(reachPayload.reachDirection, direction);
+    assert.deepEqual(reachPayload.matchedNodeIds.slice().sort(), reachPayload.snapshot.nodeIds.slice().sort());
+    assert.deepEqual(reachPayload.matchedEdgeKeys.slice().sort(), reachPayload.expectedEdgeKeys.slice().sort());
+    assert.equal(reachPayload.originCount, 1);
+    assert.equal(reachPayload.reachLiveResidue, false);
+    assert.equal(reachPayload.routeResidue, false);
+    assert.equal(reachPayload.motionResidue, false);
+    assert.equal(reachPayload.blueprintStaticRule, true);
+    assert.deepEqual(reachPayload.reachNodeIds, reachPayload.liveNodeIds);
+    assert.deepEqual(reachPayload.reachEdgeKeys, reachPayload.liveEdgeKeys);
+    assert.equal(reachPayload.liveUnchanged, true);
+    assert.equal(reachPayload.menuResolved, true);
+    assert.equal(reachPayload.duplicateGeometryRejected, true);
+    assert.match(reachPayload.duplicateExportError, /Trace authored reach before exporting a Reach Share Card/);
+    assert.equal(reachPayload.downloadStable, true);
+    assert.match(reachPayload.downloads[0], new RegExp(`-${direction}-reach-share-card\\.png$`));
+    assert.deepEqual(reachPayload.reachReceipt, {
+      format: 'share-card',
+      variant: 'reach',
+      width: '1200',
+      height: '630',
+      canonical: 'false',
+      routeStateClean: null,
+      reachStateClean: 'true',
+      error: null,
+    });
+    assert.equal(reachPayload.hiddenAfterClear, true);
+    assert.equal(reachPayload.staleSnapshot, null);
+    assert.match(reachPayload.staleError, /Trace authored reach before exporting a Reach Share Card/);
+    assert.equal(reachPayload.failedReceipt.format, null);
+    assert.equal(reachPayload.failedReceipt.variant, null);
+    assert.equal(reachPayload.failedReceipt.errorFormat, 'share-card');
+    assert.match(reachPayload.failedReceipt.error, /Trace authored reach before exporting a Reach Share Card/);
+    assert.ok(reachPayload.canonicalSize > 20_000);
+    assert.equal(reachPayload.canonicalReachResidue, false);
+    if (options.matrix) {
+      assert.equal(reachPayload.matrix.length, 6);
+      assert.equal(new Set(reachPayload.matrix.map((entry) => entry.hash)).size, 6, `${label} Reach presets/themes should produce six distinct PNGs`);
+      for (const entry of reachPayload.matrix) {
+        assert.equal(entry.type, 'image/png');
+        assert.equal(entry.width, 1200);
+        assert.equal(entry.height, 630);
+        assert.ok(entry.size > 20_000);
+      }
+    }
+    console.log(`ok ${label} Reach Card: ${reachPayload.size} bytes, ${reachPayload.snapshot.nodeIds.length} nodes, ${reachPayload.snapshot.edges.length} authored links`);
+  }
+
   await captureShareCard(output, 'architecture-wide');
   await captureShareCard(sequenceOutput, 'sequence-tall');
   await captureCopiedShareCard(output, 'architecture-wide');
@@ -924,6 +1195,22 @@ try {
   });
   await captureRouteVisualMatrix(routeOutputs.architecture, 'architecture-route', 'users', 'api');
   await captureRouteVisualMatrix(routeOutputs.sequence, 'sequence-route', 'web', 'db');
+  await captureReachShareCard(routeOutputs.architecture, 'architecture-reach', 'users', 'downstream', { matrix: true });
+  await captureReachShareCard(routeOutputs.workflow, 'workflow-reach', 'user', 'downstream');
+  await captureReachShareCard(routeOutputs.sequence, 'sequence-reach', 'web', 'downstream');
+  await captureReachShareCard(routeOutputs.dataflow, 'dataflow-reach', 'web', 'downstream');
+  await captureReachShareCard(routeOutputs.lifecycle, 'lifecycle-reach', 'executing', 'downstream');
+  if (externalReachSource) {
+    assert.ok(fs.existsSync(externalReachSource), `external Reach Card source does not exist: ${externalReachSource}`);
+    await captureReachShareCard(
+      externalReachSource,
+      'external-reach',
+      process.env.ARCHIFY_REACH_CARD_ORIGIN || 'router',
+      process.env.ARCHIFY_REACH_CARD_DIRECTION || 'downstream',
+      { outputPath: externalReachOutput },
+    );
+    console.log(`ok external Reach Card artifact: ${externalReachOutput}`);
+  }
   await verifyDynamicReducedMotionRoute(routeOutputs.architecture, 'architecture-route reduced motion', 'users', 'api');
   await navigateReady(output, '!!(window.Archify && Archify.motion && Archify.motion.canRecord())', 'motion artifact');
 

@@ -67,6 +67,10 @@ Export 菜单支持复制 PNG，并下载静态或动态格式：
 
 ![Route Share Card：突出 Users 到 API Server 的精确路径，同时保留完整架构作为上下文](docs/assets/archify-route-share-card.png)
 
+完成 `Upstream` 或 `Downstream` authored reach 后，选择 **Export → Reach Share Card**，即可把这次阅读结果变成 1200×630 PNG。卡片保留完整拓扑作为上下文，并写明方向、起点、节点数、关系数与最大跳数；它不会冒充运行时影响分析。
+
+![MCO downstream Reach Share Card：展示从 Command Router 出发的已创作关系](docs/assets/mco-runtime-reach-share-card.png)
+
 在本地打开 [`examples/web-app.html`](examples/web-app.html)，即可体验完整 Viewer。
 
 ## 快速开始

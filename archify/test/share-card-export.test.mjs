@@ -56,7 +56,7 @@ test('Share Card uses contain-only canonical geometry with fixed safe areas', ()
   assert.match(html, /canvas\.toBlob unavailable for/);
   assert.match(html, /img\.onload = function \(\) \{\s*try \{/);
   assert.match(html, /function rasterizeShareCard\(options\)[\s\S]*?if \(!options\.variant\) return renderShareCard\(\);/);
-  assert.match(html, /function renderShareCard\(options\)[\s\S]*?serializeSvg\(sourceScale, \{ routeSnapshot: routeSnapshot \}\)/);
+  assert.match(html, /function renderShareCard\(options\)[\s\S]*?serializeSvg\(sourceScale, \{ routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot \}\)/);
   assert.match(html, /fitCanvasText\(ctx, title, [^)]+\)/);
   assert.match(html, /ARCHIFY ·/);
   assert.doesNotMatch(svgBlock(html), /share-card|Share Card|ARCHIFY ·/);
@@ -108,7 +108,7 @@ test('Share Card stays viewer-only and reuses export cleanup instead of source s
   assert.match(html, /html\[data-embed="true"\] \.toolbar/);
   assert.match(html, /@media print[\s\S]*?\.toolbar/);
   assert.match(html, /function rasterizeShareCard\(options\)[\s\S]*?if \(!options\.variant\) return renderShareCard\(\);/);
-  assert.match(html, /function renderShareCard\(options\)[\s\S]*?serializeSvg\(sourceScale, \{ routeSnapshot: routeSnapshot \}\)/);
+  assert.match(html, /function renderShareCard\(options\)[\s\S]*?serializeSvg\(sourceScale, \{ routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot \}\)/);
   assert.match(html, /if \(!data\.canonicalStateClean\) return Promise\.reject\(new Error\('Share Card export could not remove temporary viewer state'\)\);/);
   assert.match(html, /canonicalStateClean/);
   assert.doesNotMatch(svgBlock(html), /data-last-export-|data-format="share-card"/);

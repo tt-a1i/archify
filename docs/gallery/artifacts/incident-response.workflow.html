@@ -4035,6 +4035,7 @@
       <div class="export-menu" id="export-menu" role="menu" aria-label="Export">
         <button data-format="share-card" type="button" role="menuitem" tabindex="-1">Share Card <span class="hint">1200&times;630 PNG</span></button>
         <button data-action="route-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled>Route Share Card <span class="hint">1200&times;630 PNG</span></button>
+        <button data-action="reach-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled>Reach Share Card <span class="hint">1200&times;630 PNG</span></button>
         <button data-action="copy-share-card" type="button" role="menuitem" tabindex="-1">Copy Share Card <span class="hint">PNG</span></button>
         <hr role="separator">
         <button data-action="copy"  type="button" role="menuitem" tabindex="-1">Copy to clipboard <span class="hint">PNG</span></button>
@@ -4840,6 +4841,90 @@
             edgeMatches.reduce(function (count, matches) { return count + matches.length; }, 0);
       }
 
+      function applyReachSnapshot(clone, snapshot) {
+        if (!snapshot || (snapshot.direction !== 'upstream' && snapshot.direction !== 'downstream') ||
+            !snapshot.origin || typeof snapshot.origin.id !== 'string' || !snapshot.origin.id ||
+            typeof snapshot.origin.label !== 'string' || !snapshot.origin.label.trim() ||
+            !Array.isArray(snapshot.nodeIds) || snapshot.nodeIds.length < 2 ||
+            !Array.isArray(snapshot.edges) || !snapshot.edges.length ||
+            !snapshot.depths || typeof snapshot.depths !== 'object' ||
+            !Number.isInteger(snapshot.maxDepth) || snapshot.maxDepth < 1 ||
+            snapshot.nodeIds[0] !== snapshot.origin.id) return false;
+
+        clone.removeAttribute('data-animation');
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-animate]'), function (element) {
+          element.removeAttribute('data-animate');
+          element.style.removeProperty('--step');
+        });
+
+        var cloneNodes = Array.prototype.slice.call(clone.querySelectorAll('[data-node-id]'));
+        var cloneEdges = Array.prototype.slice.call(clone.querySelectorAll('[data-edge-key]'));
+        var nodeIds = Object.create(null);
+        var edgeKeys = Object.create(null);
+        var nodeMatches = [];
+        var edgeMatches = [];
+        var measuredMaxDepth = 0;
+
+        for (var nodeIndex = 0; nodeIndex < snapshot.nodeIds.length; nodeIndex++) {
+          var nodeId = snapshot.nodeIds[nodeIndex];
+          var depth = snapshot.depths[nodeId];
+          if (typeof nodeId !== 'string' || !nodeId || nodeIds[nodeId] ||
+              !Number.isInteger(depth) || depth < 0 || depth > snapshot.maxDepth ||
+              (nodeId === snapshot.origin.id ? depth !== 0 : depth < 1)) return false;
+          var matchedNodes = cloneNodes.filter(function (candidate) {
+            return candidate.getAttribute('data-node-id') === nodeId;
+          });
+          if (matchedNodes.length !== 1) return false;
+          nodeIds[nodeId] = true;
+          measuredMaxDepth = Math.max(measuredMaxDepth, depth);
+          nodeMatches.push({ elements: matchedNodes, id: nodeId, depth: depth });
+        }
+        if (measuredMaxDepth !== snapshot.maxDepth) return false;
+
+        for (var edgeIndex = 0; edgeIndex < snapshot.edges.length; edgeIndex++) {
+          var edge = snapshot.edges[edgeIndex];
+          if (!edge || typeof edge.key !== 'string' || !edge.key || edgeKeys[edge.key] ||
+              !nodeIds[edge.from] || !nodeIds[edge.to] ||
+              !Number.isInteger(edge.depth) || edge.depth < 1 || edge.depth > snapshot.maxDepth ||
+              edge.depth !== Math.max(snapshot.depths[edge.from], snapshot.depths[edge.to])) return false;
+          var matchedEdges = cloneEdges.filter(function (candidate) {
+            return candidate.getAttribute('data-edge-key') === edge.key;
+          });
+          var drawableMatches = matchedEdges.filter(hasDrawableGeometry);
+          if (!matchedEdges.length || drawableMatches.length !== 1 || !matchedEdges.every(function (candidate) {
+            return candidate.getAttribute('data-edge-from') === edge.from &&
+              candidate.getAttribute('data-edge-to') === edge.to &&
+              (candidate.getAttribute('data-edge-id') || '') === (edge.id || '');
+          })) return false;
+          edgeKeys[edge.key] = true;
+          edgeMatches.push({ elements: matchedEdges, depth: edge.depth });
+        }
+
+        clone.setAttribute('data-share-reach', snapshot.direction);
+        nodeMatches.forEach(function (match) {
+          match.elements.forEach(function (element) {
+            element.setAttribute('data-share-reach-match', '');
+            element.setAttribute('data-share-reach-depth', String(match.depth));
+            if (match.id === snapshot.origin.id) element.setAttribute('data-share-reach-origin', '');
+          });
+        });
+        edgeMatches.forEach(function (match) {
+          match.elements.forEach(function (element) {
+            element.setAttribute('data-share-reach-match', '');
+            element.setAttribute('data-share-reach-depth', String(match.depth));
+          });
+        });
+
+        return clone.getAttribute('data-share-reach') === snapshot.direction &&
+          !clone.hasAttribute('data-animation') &&
+          !clone.hasAttribute('data-reach-active') &&
+          clone.querySelectorAll('[data-animate], [data-reach-match], [data-reach-origin], [data-reach-depth]').length === 0 &&
+          clone.querySelectorAll('[data-share-reach-origin]').length === 1 &&
+          clone.querySelectorAll('[data-share-reach-match]').length ===
+            nodeMatches.reduce(function (count, match) { return count + match.elements.length; }, 0) +
+            edgeMatches.reduce(function (count, match) { return count + match.elements.length; }, 0);
+      }
+
       function serializeSvg(scale, opts) {
         // scale: integer multiplier for intrinsic SVG pixel dimensions used by
         // the raster path. Defaults to 1 (natural size) for SVG download.
@@ -4867,6 +4952,7 @@
         clone.removeAttribute('data-route-active');
         clone.removeAttribute('data-route-journey');
         clone.removeAttribute('data-share-route');
+        clone.removeAttribute('data-share-reach');
         clone.removeAttribute('data-story-active');
         clone.removeAttribute('data-story-playing');
         clone.removeAttribute('data-story-beat');
@@ -4988,6 +5074,11 @@
           el.removeAttribute('data-share-route-end');
           el.removeAttribute('data-share-route-middle');
         });
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth]'), function (el) {
+          el.removeAttribute('data-share-reach-match');
+          el.removeAttribute('data-share-reach-origin');
+          el.removeAttribute('data-share-reach-depth');
+        });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-detail], [data-detail-anchor]'), function (el) {
           el.removeAttribute('data-detail');
           el.removeAttribute('data-detail-anchor');
@@ -5009,6 +5100,7 @@
           !clone.hasAttribute('data-route-active') &&
           !clone.hasAttribute('data-route-journey') &&
           !clone.hasAttribute('data-share-route') &&
+          !clone.hasAttribute('data-share-reach') &&
           !clone.hasAttribute('data-story-active') &&
           !clone.hasAttribute('data-story-playing') &&
           !clone.hasAttribute('data-story-beat') &&
@@ -5018,13 +5110,16 @@
           !clone.hasAttribute('data-chapter-anchor') &&
           !clone.hasAttribute('data-chapter-preview') &&
           !clone.style.getPropertyValue('transform') &&
-          clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]').length === 0;
+          clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]').length === 0;
 
         var vb = svg.viewBox.baseVal;
         var finiteSvgDimensions = Number.isFinite(vb.x) && Number.isFinite(vb.y) &&
           Number.isFinite(vb.width) && Number.isFinite(vb.height) && vb.width > 0 && vb.height > 0;
         var routeStateClean = opts.routeSnapshot
           ? canonicalStateClean && finiteSvgDimensions && applyRouteSnapshot(clone, opts.routeSnapshot)
+          : null;
+        var reachStateClean = opts.reachSnapshot
+          ? canonicalStateClean && finiteSvgDimensions && !opts.routeSnapshot && applyReachSnapshot(clone, opts.reachSnapshot)
           : null;
         // Scale width/height so the browser rasterizes the vectors at target
         // resolution directly. viewBox stays unchanged so coordinates don't
@@ -5156,6 +5251,14 @@
             "svg[data-share-route] [data-share-route-middle] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 2.2; }\n" +
             "svg[data-share-route] [data-share-route-end] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 3.4; stroke-dasharray: 1 0; }\n";
         }
+        if (opts.reachSnapshot) {
+          style.textContent += "\nsvg[data-share-reach] [data-node-id], svg[data-share-reach] [data-edge-from] { opacity: 0.14; }\n" +
+            "svg[data-share-reach] [data-share-reach-match] { opacity: 1; }\n" +
+            "svg[data-share-reach] [data-edge-from][data-share-reach-match] { stroke-width: 1.55; }\n" +
+            "svg[data-share-reach=\"upstream\"] [data-share-reach-origin] > :is(rect, circle, polygon):not(.c-mask) { stroke: var(--database-stroke); stroke-width: 3.4; stroke-dasharray: 5 3; }\n" +
+            "svg[data-share-reach=\"downstream\"] [data-share-reach-origin] > :is(rect, circle, polygon):not(.c-mask) { stroke: var(--backend-stroke); stroke-width: 3.4; stroke-dasharray: 1 0; }\n" +
+            "svg[data-preset=\"blueprint\"][data-share-reach] [data-share-reach-origin], svg[data-preset=\"blueprint\"][data-share-reach] [data-edge-from][data-share-reach-match] { filter: none; }\n";
+        }
 
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
@@ -5165,7 +5268,8 @@
           width: vb.width * scale,
           height: vb.height * scale,
           canonicalStateClean: canonicalStateClean,
-          routeStateClean: routeStateClean
+          routeStateClean: routeStateClean,
+          reachStateClean: reachStateClean
         };
       }
 
@@ -5272,12 +5376,15 @@
       function renderShareCard(options) {
         options = options || {};
         var routeSnapshot = options.routeSnapshot || null;
+        var reachSnapshot = options.reachSnapshot || null;
+        if (routeSnapshot && reachSnapshot) return Promise.reject(new Error('Share Card variants cannot be combined'));
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
-        var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot });
+        var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot });
         if (!data.canonicalStateClean) return Promise.reject(new Error('Share Card export could not remove temporary viewer state'));
         if (routeSnapshot && !data.routeStateClean) return Promise.reject(new Error('Route Card export could not preserve the resolved route safely'));
+        if (reachSnapshot && !data.reachStateClean) return Promise.reject(new Error('Reach Card export could not preserve authored reach safely'));
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
 
@@ -5294,19 +5401,28 @@
               var text = computed.getPropertyValue('--text').trim() || '#ffffff';
               var muted = computed.getPropertyValue('--text-muted').trim() || '#94a3b8';
               var border = computed.getPropertyValue('--panel-border').trim() || '#334155';
-              var accent = computed.getPropertyValue('--frontend-stroke').trim() || '#22d3ee';
+              var accentProperty = reachSnapshot
+                ? (reachSnapshot.direction === 'upstream' ? '--database-stroke' : '--backend-stroke')
+                : '--frontend-stroke';
+              var accent = computed.getPropertyValue(accentProperty).trim() || '#22d3ee';
               var titleNode = document.querySelector('.header h1');
               var subtitleNode = document.querySelector('.header .subtitle');
               var title = titleNode ? titleNode.textContent : document.title;
               var subtitle = routeSnapshot
                 ? 'Route: ' + routeSnapshot.source.label + ' → ' + routeSnapshot.target.label + ' · ' + routeSnapshot.hops + ' directed hops'
-                : subtitleNode ? subtitleNode.textContent : '';
+                : reachSnapshot
+                  ? 'Authored ' + reachSnapshot.direction + ' from ' + reachSnapshot.origin.label + ' · ' +
+                    (reachSnapshot.nodeIds.length - 1) + ' nodes · ' + reachSnapshot.edges.length +
+                    ' links · max ' + reachSnapshot.maxDepth + ' hops'
+                  : subtitleNode ? subtitleNode.textContent : '';
               var preset = document.documentElement.getAttribute('data-preset') || 'classic';
               var theme = document.documentElement.getAttribute('data-theme') || 'dark';
               var presetLabel = preset === 'signal-flow' ? 'FLOW' : preset.toUpperCase();
               var cardLabel = routeSnapshot
                 ? 'ARCHIFY · ROUTE · ' + routeSnapshot.hops + ' HOPS'
-                : 'ARCHIFY · ' + presetLabel + ' · ' + theme.toUpperCase();
+                : reachSnapshot
+                  ? 'ARCHIFY · ' + reachSnapshot.direction.toUpperCase() + ' REACH'
+                  : 'ARCHIFY · ' + presetLabel + ' · ' + theme.toUpperCase();
 
               ctx.fillStyle = bg;
               ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
@@ -5363,10 +5479,19 @@
       function rasterizeShareCard(options) {
         options = options || {};
         if (!options.variant) return renderShareCard();
-        if (options.variant !== 'route') return Promise.reject(new Error('Unknown Share Card variant: ' + options.variant));
-        var snapshot = Archify.routeProbe && Archify.routeProbe.exportSnapshot();
-        if (!snapshot) return Promise.reject(new Error('Trace a route before exporting a Route Share Card'));
-        return renderShareCard({ routeSnapshot: snapshot });
+        if (options.variant !== 'route' && options.variant !== 'reach') {
+          return Promise.reject(new Error('Unknown Share Card variant: ' + options.variant));
+        }
+        if (options.variant === 'route') {
+          var routeSnapshot = Archify.routeProbe && Archify.routeProbe.exportSnapshot();
+          if (!routeSnapshot) return Promise.reject(new Error('Trace a route before exporting a Route Share Card'));
+          return renderShareCard({ routeSnapshot: routeSnapshot });
+        }
+        var snapshot = Archify.focus && typeof Archify.focus.reachabilitySnapshot === 'function'
+          ? Archify.focus.reachabilitySnapshot()
+          : null;
+        if (!snapshot) return Promise.reject(new Error('Trace authored reach before exporting a Reach Share Card'));
+        return renderShareCard({ reachSnapshot: snapshot });
       }
 
       function motionMimeType() {
@@ -5632,6 +5757,7 @@
       var menu = document.getElementById('export-menu');
       var btn = document.getElementById('btn-export');
       var routeShareItem = menu.querySelector('button[data-action="route-share-card"]');
+      var reachShareItem = menu.querySelector('button[data-action="reach-share-card"]');
       var items = function () {
         return Array.prototype.slice.call(menu.querySelectorAll('button[role="menuitem"]'));
       };
@@ -5642,6 +5768,15 @@
           : null;
         routeShareItem.hidden = !snapshot;
         routeShareItem.disabled = !snapshot;
+        return snapshot;
+      }
+
+      function syncReachShareItem() {
+        var snapshot = Archify.focus && typeof Archify.focus.reachabilitySnapshot === 'function'
+          ? Archify.focus.reachabilitySnapshot()
+          : null;
+        reachShareItem.hidden = !snapshot;
+        reachShareItem.disabled = !snapshot;
         return snapshot;
       }
 
@@ -5704,6 +5839,7 @@
         if (Archify.semanticLens && typeof Archify.semanticLens.clearPreview === 'function') Archify.semanticLens.clearPreview();
         if (Archify.semanticLens && Archify.semanticLens.isOpen()) Archify.semanticLens.close({ restoreFocus: false });
         syncRouteShareItem();
+        syncReachShareItem();
         menu.classList.add('open');
         btn.setAttribute('aria-expanded', 'true');
         var available = items().filter(function (i) { return !i.hidden && !i.disabled; });
@@ -5830,10 +5966,33 @@
         });
       }
 
+      function runReachShareCard() {
+        close(false);
+        clearExportReceipt();
+        var snapshot = Archify.focus && typeof Archify.focus.reachabilitySnapshot === 'function'
+          ? Archify.focus.reachabilitySnapshot()
+          : null;
+        var blobPromise = snapshot
+          ? renderShareCard({ reachSnapshot: snapshot })
+          : Promise.reject(new Error('Trace authored reach before exporting a Reach Share Card'));
+        return blobPromise.then(function (blob) {
+          recordExportReceipt('share-card', blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, 'reach', false, true);
+          download(blob, diagramFilename() + '-' + snapshot.direction + '-reach-share-card.png');
+          toast('Downloaded Reach Share Card');
+          return blob;
+        }).catch(function (err) {
+          console.error(err);
+          var message = err && err.message ? err.message : 'share-card';
+          document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
+          document.documentElement.setAttribute('data-last-export-error', message);
+          alert('Reach Share Card export failed: ' + message);
+        });
+      }
+
       // A compact, machine-readable receipt for local QA and generated proof
       // galleries. It exposes no diagram contents, only the completed format,
       // byte count, and whether temporary viewer state was excluded.
-      function recordExportReceipt(format, blob, canonical, dimensions, variant, routeStateClean) {
+      function recordExportReceipt(format, blob, canonical, dimensions, variant, routeStateClean, reachStateClean) {
         document.documentElement.setAttribute('data-last-export-format', format);
         document.documentElement.setAttribute('data-last-export-bytes', String(blob.size));
         document.documentElement.setAttribute('data-last-export-canonical', canonical ? 'true' : 'false');
@@ -5846,6 +6005,11 @@
           document.documentElement.setAttribute('data-last-export-route-state-clean', 'true');
         } else {
           document.documentElement.removeAttribute('data-last-export-route-state-clean');
+        }
+        if (reachStateClean === true) {
+          document.documentElement.setAttribute('data-last-export-reach-state-clean', 'true');
+        } else {
+          document.documentElement.removeAttribute('data-last-export-reach-state-clean');
         }
         if (dimensions) {
           document.documentElement.setAttribute('data-last-export-width', String(dimensions.width));
@@ -5864,6 +6028,7 @@
         document.documentElement.removeAttribute('data-last-export-height');
         document.documentElement.removeAttribute('data-last-export-variant');
         document.documentElement.removeAttribute('data-last-export-route-state-clean');
+        document.documentElement.removeAttribute('data-last-export-reach-state-clean');
         document.documentElement.removeAttribute('data-last-export-error-format');
         document.documentElement.removeAttribute('data-last-export-error');
       }
@@ -5923,6 +6088,9 @@
         var routeShareCardBtn = e.target.closest('button[data-action="route-share-card"]');
         if (routeShareCardBtn && !routeShareCardBtn.disabled && !routeShareCardBtn.hidden) { runRouteShareCard(); return; }
 
+        var reachShareCardBtn = e.target.closest('button[data-action="reach-share-card"]');
+        if (reachShareCardBtn && !reachShareCardBtn.disabled && !reachShareCardBtn.hidden) { runReachShareCard(); return; }
+
         var copyShareCardBtn = e.target.closest('button[data-action="copy-share-card"]');
         if (copyShareCardBtn && !copyShareCardBtn.disabled) { runCopyShareCard(); return; }
 
@@ -5941,7 +6109,9 @@
         run: runExport,
         shareCard: rasterizeShareCard,
         downloadRouteShareCard: runRouteShareCard,
+        downloadReachShareCard: runReachShareCard,
         syncRouteShare: syncRouteShareItem,
+        syncReachShare: syncReachShareItem,
         copyShareCard: runCopyShareCard
       };
 
@@ -6440,6 +6610,9 @@
         resetReachabilityButtons();
         reachStatus.textContent = '';
         reachStatus.hidden = true;
+        if (Archify.exportMenu && typeof Archify.exportMenu.syncReachShare === 'function') {
+          Archify.exportMenu.syncReachShare();
+        }
         if (options.updateUrl === true && activeIds.length === 1) {
           try {
             history.replaceState(null, '', location.pathname + location.search + '#focus=' + encodeURIComponent(activeIds[0]));
@@ -6512,6 +6685,9 @@
           (result.edgeKeys.length === 1 ? '' : 's') + ' · max ' + result.maxDepth + ' hop' +
           (result.maxDepth === 1 ? '' : 's');
         reachStatus.hidden = false;
+        if (Archify.exportMenu && typeof Archify.exportMenu.syncReachShare === 'function') {
+          Archify.exportMenu.syncReachShare();
+        }
         if (options.updateUrl !== false) {
           try {
             history.replaceState(null, '', location.pathname + location.search + '#focus=' +
@@ -6523,6 +6699,98 @@
         }
         requestLensPlacement();
         return true;
+      }
+      function reachabilitySnapshot() {
+        if (!activeReachability || activeIds.length !== 1 ||
+            (reachabilityMode !== 'upstream' && reachabilityMode !== 'downstream') ||
+            activeReachability.direction !== reachabilityMode ||
+            activeReachability.originId !== activeIds[0] ||
+            svg.getAttribute('data-reach-active') !== reachabilityMode) return null;
+
+        var originId = activeReachability.originId;
+        var nodeIds = activeReachability.nodeIds.slice();
+        var edgeKeys = activeReachability.edgeKeys.slice();
+        if (nodeIds.length < 2 || nodeIds[0] !== originId || !edgeKeys.length ||
+            !activeReachability.depths || !Number.isInteger(activeReachability.maxDepth) ||
+            activeReachability.maxDepth < 1) return null;
+
+        var allNodes = nodes();
+        var allEdges = edges();
+        var seenNodeIds = Object.create(null);
+        var seenEdgeKeys = Object.create(null);
+        var nodeIdSet = Object.create(null);
+        var depths = Object.create(null);
+        var originNode = null;
+        var measuredMaxDepth = 0;
+
+        if (nodeIds.some(function (id) {
+          var depth = activeReachability.depths[id];
+          var matches = allNodes.filter(function (node) {
+            return node.getAttribute('data-node-id') === id;
+          });
+          if (typeof id !== 'string' || !id || seenNodeIds[id] || matches.length !== 1 ||
+              !matches[0].hasAttribute('data-reach-match') ||
+              !Number.isInteger(depth) || depth < 0 || depth > activeReachability.maxDepth ||
+              (id === originId
+                ? (!matches[0].hasAttribute('data-reach-origin') || depth !== 0)
+                : depth < 1)) return true;
+          seenNodeIds[id] = true;
+          nodeIdSet[id] = true;
+          depths[id] = depth;
+          measuredMaxDepth = Math.max(measuredMaxDepth, depth);
+          if (id === originId) originNode = matches[0];
+          return false;
+        }) || !originNode || measuredMaxDepth !== activeReachability.maxDepth ||
+            allNodes.filter(function (node) { return node.hasAttribute('data-reach-match'); }).length !== nodeIds.length) return null;
+
+        var edgeRecords = [];
+        if (edgeKeys.some(function (key) {
+          if (typeof key !== 'string' || !key || seenEdgeKeys[key]) return true;
+          var fragments = allEdges.filter(function (edge) {
+            return edge.getAttribute('data-edge-key') === key;
+          });
+          var drawableFragments = fragments.filter(hasDrawableGeometry);
+          if (!fragments.length || drawableFragments.length !== 1 ||
+              !fragments.every(function (fragment) { return fragment.hasAttribute('data-reach-match'); })) return true;
+          var first = fragments[0];
+          var from = first.getAttribute('data-edge-from');
+          var to = first.getAttribute('data-edge-to');
+          var id = first.getAttribute('data-edge-id') || '';
+          var labelValue = first.getAttribute('data-edge-label') || '';
+          if (!nodeIdSet[from] || !nodeIdSet[to] || !fragments.every(function (fragment) {
+            return fragment.getAttribute('data-edge-from') === from &&
+              fragment.getAttribute('data-edge-to') === to &&
+              (fragment.getAttribute('data-edge-id') || '') === id;
+          })) return true;
+          seenEdgeKeys[key] = true;
+          edgeRecords.push({
+            key: key,
+            id: id,
+            from: from,
+            to: to,
+            label: labelValue,
+            depth: Math.max(depths[from], depths[to])
+          });
+          return false;
+        })) return null;
+
+        var liveEdgeKeys = Object.create(null);
+        if (allEdges.some(function (edge) {
+          if (!edge.hasAttribute('data-reach-match')) return false;
+          var key = edge.getAttribute('data-edge-key');
+          if (!key || !seenEdgeKeys[key]) return true;
+          liveEdgeKeys[key] = true;
+          return false;
+        }) || Object.keys(liveEdgeKeys).length !== edgeKeys.length) return null;
+
+        return {
+          direction: reachabilityMode,
+          origin: { id: originId, label: nodeLabel(originNode, originId) },
+          nodeIds: nodeIds,
+          depths: depths,
+          maxDepth: activeReachability.maxDepth,
+          edges: edgeRecords
+        };
       }
       function setPassportValue(element, value) {
         var normalized = value == null ? '' : String(value).trim();
@@ -7528,6 +7796,7 @@
         copyLink: copyFocusLink,
         reach: applyReachability,
         clearReach: clearReachability,
+        reachabilitySnapshot: reachabilitySnapshot,
         inspectRelationship: inspectRelationship,
         inspectRelationshipById: inspectRelationshipById,
         reposition: requestLensPlacement,
