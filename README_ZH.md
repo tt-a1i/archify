@@ -10,7 +10,7 @@
 
 Archify 是适用于 Cursor、Claude Code、Codex CLI 和 OpenCode 的 Agent Skill。给它系统描述或代码仓库，就能得到可交互、可分享的专业技术地图。
 
-- **打开就是成品** —— 五种技术图、三套视觉预设、深浅主题，以及显式启用的有限动态
+- **打开就是成品** —— 五种技术图、四套视觉预设、深浅主题，以及显式启用的有限动态
 - **合并前先看清架构变化** —— 把两份已校验快照对比为 Before / Delta / After，准确区分新增、删除、语义变化、移动和重路由
 - **每次探索都有依据** —— 搜索节点、按需打开版本校验过的源码、追踪作者定义的上下游可达范围与精确路径、对比角色、播放故事，但不编造拓扑
 - **一个文件即可放心交付** —— Typed JSON IR 和确定性校验生成独立 HTML，并支持 PNG、SVG、WebM 与 1200×630 分享卡片
@@ -215,7 +215,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 }
 ```
 
-不设置 `animation` 时结果完全静态；`classic` 始终是默认视觉预设。
+不设置 `animation` 时结果完全静态；`classic` 始终是默认视觉预设。设计评审、发布说明和技术文档可以显式选择 `editorial`，获得暖纸张与深墨色的编辑风格，同时保持几何完全不变。
 
 ## 探索与分享
 

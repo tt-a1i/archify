@@ -271,6 +271,83 @@
       --toolbar-menu-bg: #f9fdff;
     }
 
+    /* ==========================================================
+       EDITORIAL — a warm, publication-minded preset for design
+       reviews, launch notes, and documentation. The diagram keeps
+       the same semantic palette and exact geometry, but trades
+       software chrome for paper, ink, ruled structure, and one
+       restrained vermilion accent.
+       ========================================================== */
+    [data-preset="editorial"][data-theme="dark"] {
+      --bg: #181611;
+      --grid: #39342a;
+      --panel: rgba(35, 31, 24, 0.96);
+      --panel-border: #625a4a;
+      --lane-fill: rgba(52, 46, 35, 0.46);
+      --lane-stroke: #726957;
+      --text: #f4eddf;
+      --text-muted: #b9ae9b;
+      --text-dim: #776e60;
+      --text-faint: #9d917e;
+      --mask: #231f18;
+      --frontend-fill: rgba(43, 133, 142, 0.16);
+      --frontend-stroke: #7fc6c7;
+      --backend-fill: rgba(63, 132, 92, 0.16);
+      --backend-stroke: #8fc29e;
+      --database-fill: rgba(117, 91, 141, 0.17);
+      --database-stroke: #c0a4d0;
+      --cloud-fill: rgba(170, 119, 49, 0.16);
+      --cloud-stroke: #d8ad68;
+      --security-fill: rgba(157, 69, 65, 0.17);
+      --security-stroke: #df9085;
+      --messagebus-fill: rgba(174, 79, 42, 0.16);
+      --messagebus-stroke: #df946f;
+      --external-fill: rgba(126, 115, 96, 0.18);
+      --external-stroke: #b8ad99;
+      --arrow: #948978;
+      --arrow-emphasis: #dd6b3d;
+      --toolbar-bg: rgba(35, 31, 24, 0.92);
+      --toolbar-border: #625a4a;
+      --toolbar-text: #eee5d5;
+      --toolbar-hover: #302a20;
+      --toolbar-menu-bg: #231f18;
+    }
+
+    [data-preset="editorial"][data-theme="light"] {
+      --bg: #f2eee5;
+      --grid: #d8d0c2;
+      --panel: rgba(251, 248, 241, 0.97);
+      --panel-border: #c4b9a6;
+      --lane-fill: rgba(229, 221, 207, 0.42);
+      --lane-stroke: #b8aa94;
+      --text: #242018;
+      --text-muted: #6f6658;
+      --text-dim: #a09788;
+      --text-faint: #817767;
+      --mask: #fbf8f1;
+      --frontend-fill: rgba(31, 117, 126, 0.09);
+      --frontend-stroke: #287e84;
+      --backend-fill: rgba(42, 119, 75, 0.09);
+      --backend-stroke: #397b53;
+      --database-fill: rgba(105, 75, 130, 0.09);
+      --database-stroke: #765d86;
+      --cloud-fill: rgba(157, 103, 31, 0.1);
+      --cloud-stroke: #9a671f;
+      --security-fill: rgba(153, 58, 52, 0.09);
+      --security-stroke: #9e463f;
+      --messagebus-fill: rgba(182, 70, 27, 0.09);
+      --messagebus-stroke: #ad4b25;
+      --external-fill: rgba(101, 91, 75, 0.09);
+      --external-stroke: #746b5e;
+      --arrow: #8a806f;
+      --arrow-emphasis: #bb4c23;
+      --toolbar-bg: rgba(251, 248, 241, 0.94);
+      --toolbar-border: #c4b9a6;
+      --toolbar-text: #40392f;
+      --toolbar-hover: #fffdf8;
+      --toolbar-menu-bg: #fbf8f1;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
@@ -299,6 +376,12 @@
         linear-gradient(90deg, var(--grid) 1px, transparent 1px);
       background-size: 32px 32px;
       background-position: -1px -1px;
+      background-attachment: fixed;
+    }
+    html[data-preset="editorial"] body {
+      background-image:
+        linear-gradient(90deg, transparent 0, transparent 5.4rem, color-mix(in srgb, var(--security-stroke) 18%, transparent) 5.4rem, color-mix(in srgb, var(--security-stroke) 18%, transparent) calc(5.4rem + 1px), transparent calc(5.4rem + 1px)),
+        repeating-linear-gradient(0deg, transparent 0, transparent 31px, color-mix(in srgb, var(--grid) 36%, transparent) 31px, color-mix(in srgb, var(--grid) 36%, transparent) 32px);
       background-attachment: fixed;
     }
 
@@ -368,6 +451,20 @@
         var(--toolbar-menu-bg);
       box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
       backdrop-filter: none;
+    }
+    html[data-preset="editorial"] .share-chapter-cue {
+      border-color: var(--panel-border);
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--security-fill) 58%, transparent), transparent 42%),
+        var(--toolbar-menu-bg);
+      box-shadow: 0 10px 30px color-mix(in srgb, #000 18%, transparent);
+      backdrop-filter: none;
+    }
+    html[data-preset="editorial"] .share-chapter-state { color: var(--arrow-emphasis); }
+    html[data-preset="editorial"] .share-chapter-state::before {
+      border-radius: 0;
+      box-shadow: none;
+      transform: rotate(45deg) scale(0.8);
     }
     .share-chapter-index {
       display: grid;
@@ -508,7 +605,8 @@
     .header { margin-bottom: 2rem; padding-right: 29.5rem; }
 
     html[data-preset="signal-flow"] .header,
-    html[data-preset="blueprint"] .header { padding-right: 29.5rem; }
+    html[data-preset="blueprint"] .header,
+    html[data-preset="editorial"] .header { padding-right: 29.5rem; }
 
     .header-row {
       display: flex;
@@ -581,6 +679,36 @@
       white-space: nowrap;
     }
 
+    html[data-preset="editorial"] h1,
+    html[data-preset="editorial"] .card h3 {
+      font-family: Georgia, 'Times New Roman', 'Songti SC', STSong, serif;
+      letter-spacing: -0.02em;
+    }
+    html[data-preset="editorial"] h1 { font-size: 1.72rem; font-weight: 600; }
+    html[data-preset="editorial"] .pulse-dot {
+      width: 9px;
+      height: 9px;
+      border: 1px solid var(--arrow-emphasis);
+      border-radius: 0;
+      background: var(--arrow-emphasis);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--arrow-emphasis) 14%, transparent);
+      transform: rotate(45deg);
+      animation: none;
+    }
+    html[data-preset="editorial"] .header-row::after {
+      content: "EDITORIAL / FIELD NOTE";
+      margin-left: auto;
+      padding: 0.32rem 0 0.24rem;
+      border-bottom: 2px solid var(--arrow-emphasis);
+      color: var(--arrow-emphasis);
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 0.625rem;
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
     .diagram-container {
       background: var(--panel);
       border-radius: 1rem;
@@ -625,6 +753,35 @@
         linear-gradient(var(--frontend-stroke), var(--frontend-stroke)) right bottom / 1px 1.35rem no-repeat;
       opacity: 0.58;
     }
+    html[data-preset="editorial"] .diagram-container {
+      overflow: hidden;
+      border-color: var(--panel-border);
+      border-radius: 0.38rem;
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--security-fill) 58%, transparent), transparent 12%),
+        var(--panel);
+      box-shadow:
+        0 1px 0 color-mix(in srgb, var(--text) 6%, transparent),
+        0 18px 48px color-mix(in srgb, #000 19%, transparent);
+    }
+    html[data-preset="editorial"] .diagram-container::after {
+      position: absolute;
+      z-index: 10;
+      top: 0.72rem;
+      right: 1.25rem;
+      padding: 0.2rem 0.52rem;
+      border: 1px solid var(--panel-border);
+      background: var(--panel);
+      color: var(--arrow-emphasis);
+      content: "ARCHIFY / PLATE 04";
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 0.52rem;
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      pointer-events: none;
+    }
+    html[data-embed="true"][data-preset="editorial"] .diagram-container::after { display: none; }
     html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-motion="running"] .diagram-container::before {
       content: "";
       position: absolute;
@@ -1354,10 +1511,25 @@
     .relationship-lens-actions {
       display: flex;
       flex-direction: column;
-      align-items: stretch;
+      align-items: flex-end;
       gap: 0.18rem;
     }
     .relationship-lens-actions button { white-space: nowrap; }
+    .relationship-lens-actions #btn-focus-clear {
+      display: grid;
+      width: 1.75rem;
+      height: 1.75rem;
+      padding: 0;
+      place-items: center;
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1;
+    }
+    .relationship-lens-actions #btn-focus-clear:hover,
+    .relationship-lens-actions #btn-focus-clear:focus-visible {
+      background: var(--toolbar-hover);
+      color: var(--text);
+    }
     .relationship-lens-actions #btn-focus-copy { color: var(--frontend-stroke); }
     .relationship-lens-actions #btn-focus-relations { display: none; }
     .relationship-lens-eyebrow {
@@ -1420,12 +1592,163 @@
     .semantic-passport-meta [hidden] { display: none; }
     html[data-preset="blueprint"] .semantic-passport-meta span,
     html[data-preset="blueprint"] .semantic-passport-meta code { border-radius: 0.1rem; }
+    .semantic-passport-evidence {
+      margin-top: 0.52rem;
+      padding: 0.5rem;
+      border: 1px solid color-mix(in srgb, var(--backend-stroke) 32%, var(--toolbar-border));
+      border-radius: 0.55rem;
+      background: color-mix(in srgb, var(--backend-fill) 18%, var(--panel));
+    }
+    .semantic-passport-evidence[hidden] { display: none; }
+    html[data-preset="blueprint"] .semantic-passport-evidence { border-radius: 0.18rem; }
+    .semantic-passport-evidence-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.55rem;
+      margin-bottom: 0.35rem;
+    }
+    .semantic-passport-evidence-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.28rem;
+      color: var(--backend-stroke);
+      font-size: 0.5rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .semantic-passport-evidence-status::before {
+      content: '';
+      width: 0.38rem;
+      height: 0.38rem;
+      border-radius: 50%;
+      background: var(--backend-stroke);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--backend-stroke) 14%, transparent);
+    }
+    .semantic-passport-repository {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--text-faint);
+      font-size: 0.5rem;
+      text-decoration: none;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .semantic-passport-repository:hover,
+    .semantic-passport-repository:focus-visible { color: var(--backend-stroke); }
+    .semantic-passport-evidence-links { display: grid; gap: 0.22rem; }
+    .semantic-passport-source {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.15rem 0.45rem;
+      align-items: center;
+      padding: 0.34rem 0.4rem;
+      border: 1px solid transparent;
+      border-radius: 0.38rem;
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    .semantic-passport-source:hover,
+    .semantic-passport-source:focus-visible {
+      border-color: color-mix(in srgb, var(--backend-stroke) 42%, transparent);
+      background: color-mix(in srgb, var(--backend-fill) 32%, transparent);
+      color: var(--text);
+    }
+    .semantic-passport-source strong {
+      overflow: hidden;
+      font-size: 0.5625rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .semantic-passport-source code {
+      color: var(--backend-stroke);
+      font: inherit;
+      font-size: 0.5rem;
+    }
+    .semantic-passport-source small {
+      grid-column: 1 / -1;
+      overflow: hidden;
+      color: var(--text-faint);
+      font-size: 0.5rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .relationship-lens-summary {
       display: block;
       margin-top: 0.12rem;
       color: var(--text-faint);
       font-size: 0.5625rem;
     }
+    .semantic-passport-reach {
+      display: grid;
+      gap: 0.28rem;
+      margin-top: 0.52rem;
+      padding-top: 0.48rem;
+      border-top: 1px solid color-mix(in srgb, var(--toolbar-border) 76%, transparent);
+    }
+    .semantic-passport-reach[hidden] { display: none; }
+    .semantic-passport-reach-label {
+      color: var(--text-faint);
+      font-size: 0.5rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .semantic-passport-reach-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.25rem;
+    }
+    .semantic-passport-reach-actions button {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      min-width: 0;
+      min-height: 2rem;
+      padding: 0.32rem 0.42rem;
+      border: 1px solid color-mix(in srgb, var(--toolbar-border) 86%, transparent);
+      background: color-mix(in srgb, var(--panel) 70%, transparent);
+      color: var(--text-muted);
+      text-align: left;
+    }
+    .semantic-passport-reach-actions button:hover:not(:disabled),
+    .semantic-passport-reach-actions button:focus-visible {
+      border-color: color-mix(in srgb, var(--frontend-stroke) 62%, var(--toolbar-border));
+      color: var(--text);
+    }
+    .semantic-passport-reach-actions button:focus-visible {
+      outline: 2px solid var(--frontend-stroke);
+      outline-offset: 1px;
+    }
+    .semantic-passport-reach-actions button:disabled {
+      cursor: default;
+      opacity: 0.5;
+    }
+    .semantic-passport-reach-actions button[aria-pressed="true"] {
+      border-color: color-mix(in srgb, var(--reach-color, var(--frontend-stroke)) 72%, var(--toolbar-border));
+      background: color-mix(in srgb, var(--reach-fill, var(--frontend-fill)) 48%, transparent);
+      color: var(--text);
+    }
+    #btn-reach-upstream {
+      --reach-color: var(--database-stroke);
+      --reach-fill: var(--database-fill);
+    }
+    #btn-reach-downstream {
+      --reach-color: var(--backend-stroke);
+      --reach-fill: var(--backend-fill);
+    }
+    .semantic-passport-reach-actions strong {
+      color: var(--reach-color, var(--frontend-stroke));
+      font-size: 0.625rem;
+    }
+    .semantic-passport-reach-status {
+      color: var(--text-faint);
+      font-size: 0.525rem;
+      line-height: 1.4;
+    }
+    .semantic-passport-reach-status[hidden] { display: none; }
     .relationship-lens-list {
       max-height: min(18rem, 46vh);
       overflow: auto;
@@ -1698,13 +2021,16 @@
       top: 1rem;
       left: 1rem;
       z-index: 24;
+      display: flex;
+      flex-direction: column;
       width: min(22rem, calc(100% - 2rem));
+      max-height: calc(100% - 2rem);
       overflow: hidden;
       border: 1px solid var(--toolbar-border);
       border-radius: 0.85rem;
       background: var(--toolbar-menu-bg);
       color: var(--toolbar-text);
-      box-shadow: 0 18px 52px rgba(0, 0, 0, 0.34);
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.22);
       backdrop-filter: blur(16px);
     }
     .node-finder[hidden] { display: none; }
@@ -1744,7 +2070,6 @@
     .node-finder-close:hover,
     .node-finder-close:focus-visible { background: var(--toolbar-hover); }
     .node-finder-close:focus-visible,
-    .node-finder-input:focus-visible,
     .node-finder-result:focus-visible {
       outline: 2px solid var(--frontend-stroke);
       outline-offset: -2px;
@@ -1760,10 +2085,16 @@
       border: 1px solid var(--toolbar-border);
       border-radius: 0.55rem;
       background: color-mix(in srgb, var(--panel) 78%, transparent);
+      transition: border-color 160ms ease-out, box-shadow 160ms ease-out;
     }
     html[data-preset="blueprint"] .node-finder-search { border-radius: 0.18rem; }
     .node-finder-search > span { color: var(--frontend-stroke); font-size: 0.875rem; }
+    .node-finder-search:focus-within {
+      border-color: var(--frontend-stroke);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--frontend-stroke) 20%, transparent);
+    }
     .node-finder-input {
+      appearance: none;
       width: 100%;
       min-width: 0;
       border: 0;
@@ -1773,6 +2104,7 @@
       font: inherit;
       font-size: 0.75rem;
     }
+    .node-finder-input:focus-visible { outline: none; }
     .node-finder-input::placeholder { color: var(--text-faint); }
     .node-finder kbd {
       padding: 0.1rem 0.32rem;
@@ -1784,34 +2116,50 @@
     }
     .node-finder-results {
       display: grid;
-      gap: 0.18rem;
+      flex: 1 1 auto;
+      gap: 0;
+      min-height: 0;
       max-height: min(18rem, 48vh);
-      margin: 0;
-      padding: 0 0.55rem 0.55rem;
+      margin: 0 0.55rem 0.45rem;
+      padding: 0;
       overflow-y: auto;
       overscroll-behavior: contain;
+      border: 1px solid color-mix(in srgb, var(--toolbar-border) 78%, transparent);
+      border-radius: 0.55rem;
+      background: color-mix(in srgb, var(--panel) 54%, transparent);
+      scroll-padding-block: 0.25rem;
       scrollbar-width: thin;
     }
+    html[data-preset="blueprint"] .node-finder-results { border-radius: 0.18rem; }
     .node-finder-result {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 0.2rem 0.75rem;
       width: 100%;
-      padding: 0.55rem 0.65rem;
+      min-height: 3.25rem;
+      padding: 0.58rem 0.65rem;
       border: 0;
-      border-radius: 0.45rem;
+      border-radius: 0;
       background: transparent;
       color: var(--text);
       font: inherit;
       text-align: left;
       cursor: pointer;
+      transition: background-color 160ms ease-out;
     }
-    html[data-preset="blueprint"] .node-finder-result { border-radius: 0.12rem; }
+    .node-finder-result:not(:last-child) {
+      border-bottom: 1px solid color-mix(in srgb, var(--toolbar-border) 62%, transparent);
+    }
     .node-finder-result:hover,
-    .node-finder-result:focus-visible { background: var(--toolbar-hover); }
+    .node-finder-result:focus-visible {
+      position: relative;
+      z-index: 1;
+      background: color-mix(in srgb, var(--frontend-fill) 48%, var(--toolbar-hover));
+    }
     .node-finder-result strong {
       overflow: hidden;
       font-size: 0.75rem;
+      line-height: 1.25;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
@@ -1820,7 +2168,7 @@
       overflow: hidden;
       color: var(--text-faint);
       font-size: 0.5625rem;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.015em;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
@@ -1847,8 +2195,8 @@
       text-align: center;
     }
     .node-finder-status {
-      padding: 0.5rem 0.8rem;
-      border-top: 1px solid var(--toolbar-border);
+      margin: 0;
+      padding: 0.1rem 0.8rem 0.65rem;
       color: var(--text-faint);
       font-size: 0.5625rem;
     }
@@ -2364,6 +2712,22 @@
       border-top: 2px solid var(--frontend-stroke);
     }
 
+    html[data-preset="editorial"] .card {
+      position: relative;
+      border-radius: 0.28rem;
+      background: var(--panel);
+      box-shadow: 0 10px 28px color-mix(in srgb, #000 10%, transparent);
+    }
+    html[data-preset="editorial"] .card::before {
+      position: absolute;
+      top: -1px;
+      left: 1.25rem;
+      width: 3.25rem;
+      border-top: 3px solid var(--arrow-emphasis);
+      content: "";
+    }
+    html[data-preset="editorial"] .card-dot { border-radius: 0; transform: rotate(45deg) scale(0.78); }
+
     .card-header {
       display: flex;
       align-items: center;
@@ -2491,6 +2855,8 @@
       .story-carrier-overlay { display: none !important; }
       .diagram-container svg[data-focus-active] [data-node-id],
       .diagram-container svg[data-focus-active] [data-edge-from],
+      .diagram-container svg[data-reach-active] [data-node-id],
+      .diagram-container svg[data-reach-active] [data-edge-from],
       .diagram-container svg[data-story-beat] [data-story-step],
       .diagram-container svg[data-story-beat] [data-edge-from][data-story-beat-step],
       .diagram-container svg[data-route-active] [data-node-id],
@@ -2561,6 +2927,25 @@
       box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--frontend-stroke) 32%, transparent);
       transform: rotate(45deg) scale(0.84);
     }
+    #btn-preset[data-preset-option="editorial"] .preset-control-mark {
+      border-color: var(--arrow-emphasis);
+      border-radius: 0;
+      background: var(--arrow-emphasis);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--arrow-emphasis) 14%, transparent);
+      transform: rotate(45deg) scale(0.72);
+    }
+    html[data-preset="editorial"] .toolbar button,
+    html[data-preset="editorial"] .export-menu,
+    html[data-preset="editorial"] .overview-map,
+    html[data-preset="editorial"] .semantic-lens,
+    html[data-preset="editorial"] .route-probe,
+    html[data-preset="editorial"] .focus-chip,
+    html[data-preset="editorial"] .diagram-guide,
+    html[data-preset="editorial"] .node-finder,
+    html[data-preset="editorial"] .guided-views,
+    html[data-preset="editorial"] .share-chapter-cue {
+      border-radius: 0.3rem;
+    }
     .motion-control-dot {
       width: 0.46rem;
       height: 0.46rem;
@@ -2597,6 +2982,7 @@
       text-align: left;
       padding: 0.5rem 0.75rem;
     }
+    .toolbar .export-menu button[hidden] { display: none; }
     .toolbar .export-menu button:hover {
       background: var(--toolbar-hover);
     }
@@ -2644,18 +3030,24 @@
       }
       .header { margin-bottom: 1.25rem; padding-right: 0; }
       html[data-preset="signal-flow"] .header,
-      html[data-preset="blueprint"] .header { padding-right: 0; }
+      html[data-preset="blueprint"] .header,
+      html[data-preset="editorial"] .header { padding-right: 0; }
       .header-row {
         gap: 0.75rem;
         align-items: flex-start;
       }
       html[data-preset="signal-flow"] .header-row,
-      html[data-preset="blueprint"] .header-row { flex-wrap: wrap; }
+      html[data-preset="blueprint"] .header-row,
+      html[data-preset="editorial"] .header-row { flex-wrap: wrap; }
       html[data-preset="signal-flow"] .header-row::after {
         margin-left: 0;
         order: 3;
       }
       html[data-preset="blueprint"] .header-row::after {
+        margin-left: 0;
+        order: 3;
+      }
+      html[data-preset="editorial"] .header-row::after {
         margin-left: 0;
         order: 3;
       }
@@ -3035,6 +3427,8 @@
        the global zoom level. Reveal only their exact semantic matches. */
     svg[data-focus-active] [data-focus-match][data-detail],
     svg[data-focus-active] [data-focus-match] [data-detail],
+    svg[data-reach-active] [data-reach-match][data-detail],
+    svg[data-reach-active] [data-reach-match] [data-detail],
     svg[data-lens-active] [data-lens-match][data-detail],
     svg[data-lens-active] [data-lens-match] [data-detail],
     svg[data-legend-preview-active] [data-legend-preview-match][data-detail],
@@ -3053,6 +3447,7 @@
       pointer-events: auto;
     }
     svg[data-focus-active] [data-focus-match] [data-detail-anchor],
+    svg[data-reach-active] [data-reach-match] [data-detail-anchor],
     svg[data-lens-active] [data-lens-match] [data-detail-anchor],
     svg[data-legend-preview-active] [data-legend-preview-match] [data-detail-anchor],
     svg[data-intent-trace-active] [data-intent-trace-match] [data-detail-anchor],
@@ -3083,6 +3478,41 @@
     svg [data-node-id]:focus-visible {
       filter: drop-shadow(0 0 7px var(--frontend-stroke));
       outline: none;
+    }
+    /* Verified Source Beacons are installed at runtime only for nodes whose
+       repository evidence passed the local revision/blob/line checks. They
+       live inside the owning node so every focus, route, story, and guided
+       view keeps one coherent opacity state. Export serialization removes
+       them before producing the canonical SVG or any derived visual. */
+    .source-evidence-beacon {
+      pointer-events: none;
+      opacity: 0.76;
+      transition: opacity 160ms ease, filter 160ms ease;
+    }
+    .source-evidence-beacon rect {
+      fill: color-mix(in srgb, var(--mask) 92%, var(--backend-stroke));
+      stroke: color-mix(in srgb, var(--backend-stroke) 82%, var(--panel-border));
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+    .source-evidence-beacon text {
+      fill: var(--backend-stroke);
+      font-size: 5.5px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-anchor: middle;
+      text-transform: uppercase;
+    }
+    svg [data-node-id]:hover .source-evidence-beacon,
+    svg [data-node-id]:focus-visible .source-evidence-beacon,
+    svg [data-node-id][data-focus-selected] .source-evidence-beacon {
+      opacity: 1;
+      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--backend-stroke) 72%, transparent));
+    }
+    svg[data-preset="signal-flow"] .source-evidence-beacon { opacity: 0.9; }
+    svg[data-preset="blueprint"] .source-evidence-beacon rect {
+      rx: 0.8px;
+      filter: none;
     }
     svg [data-legend-kind][role="button"] { cursor: pointer; }
     svg [data-legend-kind]:focus { outline: none; }
@@ -3199,6 +3629,30 @@
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
     }
 
+    /* Authored Reachability is a bounded graph query over the relationships
+       already present in the artifact. Upstream walks incoming edges;
+       downstream walks outgoing edges. It never claims runtime causality and
+       changes only viewer emphasis, not canonical geometry or export bytes. */
+    svg[data-reach-active] [data-node-id],
+    svg[data-reach-active] [data-edge-from] { opacity: 0.09; }
+    svg[data-reach-active] [data-reach-match] { opacity: 1; }
+    svg[data-reach-active="upstream"] [data-reach-origin] {
+      filter: drop-shadow(0 0 11px var(--database-stroke));
+    }
+    svg[data-reach-active="downstream"] [data-reach-origin] {
+      filter: drop-shadow(0 0 11px var(--backend-stroke));
+    }
+    svg[data-reach-active="upstream"] [data-edge-from][data-reach-match] {
+      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--database-stroke) 72%, transparent));
+    }
+    svg[data-reach-active="downstream"] [data-edge-from][data-reach-match] {
+      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--backend-stroke) 72%, transparent));
+    }
+    svg[data-preset="blueprint"][data-reach-active] [data-reach-origin],
+    svg[data-preset="blueprint"][data-reach-active] [data-edge-from][data-reach-match] {
+      filter: none;
+    }
+
     /* Direct Relationship Explorer makes authored paths a real input surface
        without changing their visible stroke or canonical SVG. A transparent
        runtime rail supplies forgiving pointer geometry; the exact authored
@@ -3294,6 +3748,11 @@
       stroke-linecap: square;
       filter: none;
     }
+    svg[data-preset="editorial"] .relationship-flow-pulse {
+      stroke: var(--arrow-emphasis);
+      stroke-width: 2.75;
+      filter: none;
+    }
     .semantic-flow-token {
       color: var(--frontend-stroke);
       opacity: 0;
@@ -3336,6 +3795,7 @@
       filter: drop-shadow(0 0 5px currentColor);
     }
     svg[data-preset="blueprint"] .semantic-flow-token { filter: none; }
+    svg[data-preset="editorial"] .semantic-flow-token { filter: none; }
     html[data-embed="true"] .relationship-pulse-overlay { display: none; }
 
     /* Intent Trace is a temporary, pre-click exploration layer. Related
@@ -3376,6 +3836,8 @@
       filter: none;
       stroke-linecap: square;
     }
+    svg[data-preset="editorial"] [data-intent-trace-selected],
+    svg[data-preset="editorial"] .intent-trace-flow { filter: none; }
     .intent-trace-status {
       position: absolute;
       width: 1px;
@@ -3459,6 +3921,25 @@
       filter: none;
       stroke-linecap: square;
     }
+    svg[data-preset="editorial"] [data-route-start],
+    svg[data-preset="editorial"] [data-route-end],
+    svg[data-preset="editorial"] [data-route-step],
+    svg[data-preset="editorial"] .route-probe-flow,
+    svg[data-preset="editorial"] .route-journey-flow { filter: none; }
+
+    svg[data-preset="editorial"] .c-grid {
+      stroke-dasharray: 1 4;
+      opacity: 0.48;
+    }
+    svg[data-preset="editorial"] .c-region {
+      fill: color-mix(in srgb, var(--cloud-fill) 48%, transparent);
+      stroke-dasharray: 9 4;
+    }
+    svg[data-preset="editorial"] [data-node-id]:hover,
+    svg[data-preset="editorial"] [data-node-id]:focus-visible,
+    svg[data-preset="editorial"][data-focus-active] [data-focus-selected] {
+      filter: drop-shadow(0 2px 2px color-mix(in srgb, var(--text) 18%, transparent));
+    }
 
     svg[data-preset="blueprint"] .c-grid {
       stroke-dasharray: 1 3;
@@ -3476,6 +3957,9 @@
     }
     svg[data-preset="blueprint"][data-focus-active] [data-focus-selected] {
       filter: drop-shadow(0 0 3px var(--frontend-stroke));
+    }
+    svg[data-preset="blueprint"][data-focus-active][data-reach-active] [data-focus-selected][data-reach-origin] {
+      filter: none;
     }
     svg[data-preset="blueprint"][data-relationship-preview-active] [data-relationship-preview],
     svg[data-preset="blueprint"][data-relationship-preview-active] [data-relationship-preview-source],
@@ -3541,6 +4025,10 @@
       filter: none;
       animation: none;
     }
+    svg[data-preset="editorial"] .story-trail-flow { filter: none; }
+    svg[data-preset="editorial"][data-story-beat] [data-story-step][data-story-beat-state="active"] {
+      filter: drop-shadow(0 2px 2px color-mix(in srgb, var(--text) 16%, transparent));
+    }
 
     /* Chapter Delta Preview is a static, pre-commit comparison between two
        chapter focus sets. Symbols in the rail carry the meaning without color;
@@ -3602,6 +4090,14 @@
       animation-name: archify-blueprint-node-pulse;
       animation-duration: 3.8s;
     }
+    svg[data-preset="editorial"][data-animation="trace"] [data-animate="edge"] {
+      filter: none;
+      animation-duration: 2.2s;
+    }
+    svg[data-preset="editorial"][data-animation="trace"] [data-animate="node"] {
+      animation-name: archify-editorial-node-pulse;
+      animation-duration: 3.5s;
+    }
     /* Embedded proofs are static until a named Story Trail chapter is played.
        This keeps proof grids calm and ensures ?play=1 stops all viewer motion
        after one 3.2 second chapter instead of leaving ambient trace loops on. */
@@ -3626,6 +4122,10 @@
     @keyframes archify-blueprint-node-pulse {
       0%, 72%, 100% { opacity: 1; filter: none; }
       18%, 36% { opacity: 0.72; filter: drop-shadow(0 0 2px var(--frontend-stroke)); }
+    }
+    @keyframes archify-editorial-node-pulse {
+      0%, 72%, 100% { opacity: 1; filter: none; }
+      18%, 36% { opacity: 0.78; filter: drop-shadow(0 2px 2px color-mix(in srgb, var(--text) 18%, transparent)); }
     }
     @keyframes archify-signal-scan {
       0%, 18% { opacity: 1; transform: translateX(-70%); }
@@ -3742,6 +4242,7 @@
       }
       .relationship-pulse-overlay { display: none !important; }
       .guided-view-chapter { transition: none !important; }
+      .source-evidence-beacon,
       svg [data-node-id], svg [data-edge-from], svg [data-detail], svg [data-detail-anchor], svg [data-legend-hit], svg { transition: none !important; }
     }
   </style>
@@ -3789,6 +4290,8 @@
       </button>
       <div class="export-menu" id="export-menu" role="menu" aria-label="Export">
         <button data-format="share-card" type="button" role="menuitem" tabindex="-1">Share Card <span class="hint">1200&times;630 PNG</span></button>
+        <button data-action="route-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled>Route Share Card <span class="hint">1200&times;630 PNG</span></button>
+        <button data-action="reach-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled>Reach Share Card <span class="hint">1200&times;630 PNG</span></button>
         <button data-action="copy-share-card" type="button" role="menuitem" tabindex="-1">Copy Share Card <span class="hint">PNG</span></button>
         <hr role="separator">
         <button data-action="copy"  type="button" role="menuitem" tabindex="-1">Copy to clipboard <span class="hint">PNG</span></button>
@@ -3814,6 +4317,7 @@
     </div>
 
     <script id="archify-guided-views-data" type="application/json">[{"id":"request-path","label":"Primary request path","focus":["users","cdn","lb","api","db"],"note":"Follow the primary customer request from the edge to durable state."},{"id":"identity-and-cache","label":"Identity and cache","focus":["auth","api","cache"],"note":"Isolate authentication and the read-through cache beside the request path."},{"id":"async-work","label":"Static and async work","focus":["cdn","s3","api","queue","worker"],"note":"See the two secondary paths without adding noise to the main request."}]</script>
+
     <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
       <button id="guided-view-prev" type="button" aria-label="Previous guided view" title="Previous guided view ([)">&#8592;</button>
       <div class="guided-view-copy">
@@ -4142,7 +4646,7 @@
         </div>
         <div class="node-finder-search">
           <span aria-hidden="true">&#8981;</span>
-          <input class="node-finder-input" id="node-finder-input" type="search" autocomplete="off" spellcheck="false" placeholder="Search labels or IDs" aria-describedby="node-finder-status">
+          <input class="node-finder-input" id="node-finder-input" type="search" autocomplete="off" spellcheck="false" placeholder="Search labels or IDs" aria-label="Search diagram nodes" aria-describedby="node-finder-status">
           <kbd aria-hidden="true">/</kbd>
         </div>
         <div class="node-finder-results" id="node-finder-results" role="group" aria-label="Diagram nodes"></div>
@@ -4161,12 +4665,31 @@
               <span id="focus-tag" data-passport="tag" hidden></span>
               <code id="focus-id" data-passport="id"></code>
             </div>
+            <div class="semantic-passport-evidence" id="focus-evidence" hidden aria-label="Verified source evidence">
+              <div class="semantic-passport-evidence-head">
+                <span class="semantic-passport-evidence-status">Verified source</span>
+                <a class="semantic-passport-repository" id="focus-repository" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer"></a>
+              </div>
+              <div class="semantic-passport-evidence-links" id="focus-evidence-links"></div>
+            </div>
             <span class="relationship-lens-summary" id="focus-summary" aria-live="polite"></span>
+            <div class="semantic-passport-reach" id="focus-reach" hidden>
+              <span class="semantic-passport-reach-label">Authored reach</span>
+              <div class="semantic-passport-reach-actions" role="group" aria-label="Trace authored reachability">
+                <button id="btn-reach-upstream" type="button" aria-label="Trace upstream authored reachability" aria-pressed="false">
+                  <span>Upstream</span><strong id="focus-reach-upstream-count">0</strong>
+                </button>
+                <button id="btn-reach-downstream" type="button" aria-label="Trace downstream authored reachability" aria-pressed="false">
+                  <span>Downstream</span><strong id="focus-reach-downstream-count">0</strong>
+                </button>
+              </div>
+              <small class="semantic-passport-reach-status" id="focus-reach-status" hidden aria-live="polite"></small>
+            </div>
           </div>
           <div class="relationship-lens-actions">
+            <button id="btn-focus-clear" type="button" aria-label="Close semantic passport" title="Close">&#215;</button>
             <button id="btn-focus-copy" type="button" aria-label="Copy link to focused node">Copy link</button>
             <button id="btn-focus-relations" type="button" aria-label="Show connected relationships" aria-expanded="false" aria-controls="relationship-lens-list">Relations</button>
-            <button id="btn-focus-clear" type="button" aria-label="Clear focused node">Clear</button>
           </div>
         </div>
         <div class="relationship-lens-list" id="relationship-lens-list" aria-label="Connected relationships"></div>
@@ -4283,15 +4806,36 @@
   <script>
     var Archify = {};
 
+    function hasDrawableGeometry(element) {
+      if (!element) return false;
+      var geometries = /^(path|line|polyline)$/i.test(element.tagName)
+        ? [element]
+        : Array.prototype.slice.call(element.querySelectorAll('path, line, polyline'));
+      return geometries.some(function (geometry) {
+        var source = geometry.tagName.toLowerCase() === 'path'
+          ? geometry.getAttribute('d')
+          : geometry.tagName.toLowerCase() === 'polyline'
+            ? geometry.getAttribute('points')
+            : [geometry.getAttribute('x1'), geometry.getAttribute('y1'), geometry.getAttribute('x2'), geometry.getAttribute('y2')].join(' ');
+        if (!source || /(?:^|[^a-z])(?:nan|infinity)(?:[^a-z]|$)/i.test(source) || typeof geometry.getTotalLength !== 'function') return false;
+        try {
+          var length = Number(geometry.getTotalLength());
+          return Number.isFinite(length) && length > 0;
+        } catch (_) {
+          return false;
+        }
+      });
+    }
+
     /* ============================================================
-       Visual style try-on — one topology, three bundled presets.
+       Visual style try-on — one topology, four bundled presets.
        The reader's choice is intentionally session-only: it updates the
        live page and canonical SVG together, but never rewrites the source,
        URL, or a later diagram's authored default.
        ============================================================ */
     Archify.preset = (function () {
-      var PRESETS = ['classic', 'signal-flow', 'blueprint'];
-      var LABELS = { classic: 'Classic', 'signal-flow': 'Flow', blueprint: 'Blueprint' };
+      var PRESETS = ['classic', 'signal-flow', 'blueprint', 'editorial'];
+      var LABELS = { classic: 'Classic', 'signal-flow': 'Flow', blueprint: 'Blueprint', editorial: 'Editorial' };
       var html = document.documentElement;
       var svg = document.querySelector('.diagram-container svg');
       var btn = document.getElementById('btn-preset');
@@ -4442,6 +4986,168 @@
        *   self-themes when embedded in GitHub READMEs or other hosts that
        *   expose a color scheme. Used for "Download SVG".
        */
+      function applyRouteSnapshot(clone, snapshot) {
+        if (!snapshot || !Array.isArray(snapshot.nodeIds) || !Array.isArray(snapshot.edges) ||
+            snapshot.nodeIds.length < 2 || snapshot.edges.length !== snapshot.nodeIds.length - 1 ||
+            snapshot.hops !== snapshot.edges.length ||
+            !snapshot.source || !snapshot.target ||
+            snapshot.source.id !== snapshot.nodeIds[0] ||
+            snapshot.target.id !== snapshot.nodeIds[snapshot.nodeIds.length - 1]) return false;
+
+        clone.removeAttribute('data-animation');
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-animate]'), function (element) {
+          element.removeAttribute('data-animate');
+          element.style.removeProperty('--step');
+        });
+
+        var cloneNodes = Array.prototype.slice.call(clone.querySelectorAll('[data-node-id]'));
+        var cloneEdges = Array.prototype.slice.call(clone.querySelectorAll('[data-edge-key]'));
+        var nodeIds = Object.create(null);
+        var edgeKeys = Object.create(null);
+        var nodeMatches = [];
+        var edgeMatches = [];
+
+        for (var nodeIndex = 0; nodeIndex < snapshot.nodeIds.length; nodeIndex++) {
+          var nodeId = snapshot.nodeIds[nodeIndex];
+          if (typeof nodeId !== 'string' || !nodeId || nodeIds[nodeId]) return false;
+          var matchedNodes = cloneNodes.filter(function (candidate) {
+            return candidate.getAttribute('data-node-id') === nodeId;
+          });
+          if (matchedNodes.length !== 1) return false;
+          nodeIds[nodeId] = true;
+          nodeMatches.push(matchedNodes);
+        }
+
+        for (var edgeIndex = 0; edgeIndex < snapshot.edges.length; edgeIndex++) {
+          var edge = snapshot.edges[edgeIndex];
+          var fromId = snapshot.nodeIds[edgeIndex];
+          var toId = snapshot.nodeIds[edgeIndex + 1];
+          if (!edge || typeof edge.key !== 'string' || !edge.key || edgeKeys[edge.key] ||
+              edge.from !== fromId || edge.to !== toId) return false;
+          var matchedEdges = cloneEdges.filter(function (candidate) {
+            return candidate.getAttribute('data-edge-key') === edge.key;
+          });
+          var drawableMatches = matchedEdges.filter(hasDrawableGeometry);
+          if (!matchedEdges.length || drawableMatches.length !== 1 || !matchedEdges.every(function (candidate) {
+            return candidate.getAttribute('data-edge-from') === edge.from &&
+              candidate.getAttribute('data-edge-to') === edge.to &&
+              (candidate.getAttribute('data-edge-id') || '') === (edge.id || '');
+          })) return false;
+          edgeKeys[edge.key] = true;
+          edgeMatches.push(matchedEdges);
+        }
+
+        clone.setAttribute('data-share-route', '');
+        nodeMatches.forEach(function (matches, step) {
+          matches.forEach(function (element) {
+            element.setAttribute('data-share-route-match', '');
+            element.setAttribute('data-share-route-step', String(step));
+            if (step === 0) element.setAttribute('data-share-route-start', '');
+            else if (step === snapshot.nodeIds.length - 1) element.setAttribute('data-share-route-end', '');
+            else element.setAttribute('data-share-route-middle', '');
+          });
+        });
+        edgeMatches.forEach(function (matches, step) {
+          matches.forEach(function (element) {
+            element.setAttribute('data-share-route-match', '');
+            element.setAttribute('data-share-route-step', String(step));
+          });
+        });
+
+        return clone.hasAttribute('data-share-route') &&
+          !clone.hasAttribute('data-animation') &&
+          !clone.hasAttribute('data-route-active') &&
+          !clone.hasAttribute('data-route-journey') &&
+          clone.querySelectorAll('[data-animate], [data-route-match], [data-route-step], [data-route-start], [data-route-end], [data-route-journey-state], [data-route-journey-current], [data-route-journey-overlay]').length === 0 &&
+          clone.querySelectorAll('[data-share-route-match]').length ===
+            nodeMatches.reduce(function (count, matches) { return count + matches.length; }, 0) +
+            edgeMatches.reduce(function (count, matches) { return count + matches.length; }, 0);
+      }
+
+      function applyReachSnapshot(clone, snapshot) {
+        if (!snapshot || (snapshot.direction !== 'upstream' && snapshot.direction !== 'downstream') ||
+            !snapshot.origin || typeof snapshot.origin.id !== 'string' || !snapshot.origin.id ||
+            typeof snapshot.origin.label !== 'string' || !snapshot.origin.label.trim() ||
+            !Array.isArray(snapshot.nodeIds) || snapshot.nodeIds.length < 2 ||
+            !Array.isArray(snapshot.edges) || !snapshot.edges.length ||
+            !snapshot.depths || typeof snapshot.depths !== 'object' ||
+            !Number.isInteger(snapshot.maxDepth) || snapshot.maxDepth < 1 ||
+            snapshot.nodeIds[0] !== snapshot.origin.id) return false;
+
+        clone.removeAttribute('data-animation');
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-animate]'), function (element) {
+          element.removeAttribute('data-animate');
+          element.style.removeProperty('--step');
+        });
+
+        var cloneNodes = Array.prototype.slice.call(clone.querySelectorAll('[data-node-id]'));
+        var cloneEdges = Array.prototype.slice.call(clone.querySelectorAll('[data-edge-key]'));
+        var nodeIds = Object.create(null);
+        var edgeKeys = Object.create(null);
+        var nodeMatches = [];
+        var edgeMatches = [];
+        var measuredMaxDepth = 0;
+
+        for (var nodeIndex = 0; nodeIndex < snapshot.nodeIds.length; nodeIndex++) {
+          var nodeId = snapshot.nodeIds[nodeIndex];
+          var depth = snapshot.depths[nodeId];
+          if (typeof nodeId !== 'string' || !nodeId || nodeIds[nodeId] ||
+              !Number.isInteger(depth) || depth < 0 || depth > snapshot.maxDepth ||
+              (nodeId === snapshot.origin.id ? depth !== 0 : depth < 1)) return false;
+          var matchedNodes = cloneNodes.filter(function (candidate) {
+            return candidate.getAttribute('data-node-id') === nodeId;
+          });
+          if (matchedNodes.length !== 1) return false;
+          nodeIds[nodeId] = true;
+          measuredMaxDepth = Math.max(measuredMaxDepth, depth);
+          nodeMatches.push({ elements: matchedNodes, id: nodeId, depth: depth });
+        }
+        if (measuredMaxDepth !== snapshot.maxDepth) return false;
+
+        for (var edgeIndex = 0; edgeIndex < snapshot.edges.length; edgeIndex++) {
+          var edge = snapshot.edges[edgeIndex];
+          if (!edge || typeof edge.key !== 'string' || !edge.key || edgeKeys[edge.key] ||
+              !nodeIds[edge.from] || !nodeIds[edge.to] ||
+              !Number.isInteger(edge.depth) || edge.depth < 1 || edge.depth > snapshot.maxDepth ||
+              edge.depth !== Math.max(snapshot.depths[edge.from], snapshot.depths[edge.to])) return false;
+          var matchedEdges = cloneEdges.filter(function (candidate) {
+            return candidate.getAttribute('data-edge-key') === edge.key;
+          });
+          var drawableMatches = matchedEdges.filter(hasDrawableGeometry);
+          if (!matchedEdges.length || drawableMatches.length !== 1 || !matchedEdges.every(function (candidate) {
+            return candidate.getAttribute('data-edge-from') === edge.from &&
+              candidate.getAttribute('data-edge-to') === edge.to &&
+              (candidate.getAttribute('data-edge-id') || '') === (edge.id || '');
+          })) return false;
+          edgeKeys[edge.key] = true;
+          edgeMatches.push({ elements: matchedEdges, depth: edge.depth });
+        }
+
+        clone.setAttribute('data-share-reach', snapshot.direction);
+        nodeMatches.forEach(function (match) {
+          match.elements.forEach(function (element) {
+            element.setAttribute('data-share-reach-match', '');
+            element.setAttribute('data-share-reach-depth', String(match.depth));
+            if (match.id === snapshot.origin.id) element.setAttribute('data-share-reach-origin', '');
+          });
+        });
+        edgeMatches.forEach(function (match) {
+          match.elements.forEach(function (element) {
+            element.setAttribute('data-share-reach-match', '');
+            element.setAttribute('data-share-reach-depth', String(match.depth));
+          });
+        });
+
+        return clone.getAttribute('data-share-reach') === snapshot.direction &&
+          !clone.hasAttribute('data-animation') &&
+          !clone.hasAttribute('data-reach-active') &&
+          clone.querySelectorAll('[data-animate], [data-reach-match], [data-reach-origin], [data-reach-depth]').length === 0 &&
+          clone.querySelectorAll('[data-share-reach-origin]').length === 1 &&
+          clone.querySelectorAll('[data-share-reach-match]').length ===
+            nodeMatches.reduce(function (count, match) { return count + match.elements.length; }, 0) +
+            edgeMatches.reduce(function (count, match) { return count + match.elements.length; }, 0);
+      }
+
       function serializeSvg(scale, opts) {
         // scale: integer multiplier for intrinsic SVG pixel dimensions used by
         // the raster path. Defaults to 1 (natural size) for SVG download.
@@ -4456,6 +5162,7 @@
         clone.style.removeProperty('transform');
         clone.removeAttribute('data-view-scale');
         clone.removeAttribute('data-focus-active');
+        clone.removeAttribute('data-reach-active');
         clone.removeAttribute('data-lens-active');
         clone.removeAttribute('data-lens-flow-count');
         clone.removeAttribute('data-lens-flow-density');
@@ -4467,6 +5174,8 @@
         clone.removeAttribute('data-route-picking');
         clone.removeAttribute('data-route-active');
         clone.removeAttribute('data-route-journey');
+        clone.removeAttribute('data-share-route');
+        clone.removeAttribute('data-share-reach');
         clone.removeAttribute('data-story-active');
         clone.removeAttribute('data-story-playing');
         clone.removeAttribute('data-story-beat');
@@ -4526,6 +5235,16 @@
         Array.prototype.forEach.call(clone.querySelectorAll('[data-relationship-hit-overlay]'), function (el) {
           el.remove();
         });
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-source-evidence-beacon]'), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-source-evidence-count]'), function (el) {
+          var originalLabel = el.getAttribute('data-source-evidence-original-label');
+          if (originalLabel == null || originalLabel === '') el.removeAttribute('aria-label');
+          else el.setAttribute('aria-label', originalLabel);
+          el.removeAttribute('data-source-evidence-count');
+          el.removeAttribute('data-source-evidence-original-label');
+        });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-story-step], [data-story-beat-state], [data-story-beat-step]'), function (el) {
           el.removeAttribute('data-story-step');
           el.removeAttribute('data-story-beat-state');
@@ -4535,6 +5254,11 @@
         Array.prototype.forEach.call(clone.querySelectorAll('[data-focus-match], [data-focus-selected]'), function (el) {
           el.removeAttribute('data-focus-match');
           el.removeAttribute('data-focus-selected');
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-reach-match], [data-reach-origin], [data-reach-depth]'), function (el) {
+          el.removeAttribute('data-reach-match');
+          el.removeAttribute('data-reach-origin');
+          el.removeAttribute('data-reach-depth');
         });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-lens-match], [data-lens-selected], [data-lens-peer]'), function (el) {
           el.removeAttribute('data-lens-match');
@@ -4566,6 +5290,18 @@
           el.removeAttribute('data-route-journey-current');
           el.style.removeProperty('--route-step');
         });
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle]'), function (el) {
+          el.removeAttribute('data-share-route-match');
+          el.removeAttribute('data-share-route-step');
+          el.removeAttribute('data-share-route-start');
+          el.removeAttribute('data-share-route-end');
+          el.removeAttribute('data-share-route-middle');
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth]'), function (el) {
+          el.removeAttribute('data-share-reach-match');
+          el.removeAttribute('data-share-reach-origin');
+          el.removeAttribute('data-share-reach-depth');
+        });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-detail], [data-detail-anchor]'), function (el) {
           el.removeAttribute('data-detail');
           el.removeAttribute('data-detail-anchor');
@@ -4575,6 +5311,7 @@
         });
         var canonicalStateClean = !clone.hasAttribute('data-view-scale') &&
           !clone.hasAttribute('data-focus-active') &&
+          !clone.hasAttribute('data-reach-active') &&
           !clone.hasAttribute('data-lens-active') &&
           !clone.hasAttribute('data-lens-flow-count') &&
           !clone.hasAttribute('data-lens-flow-density') &&
@@ -4585,6 +5322,8 @@
           !clone.hasAttribute('data-route-picking') &&
           !clone.hasAttribute('data-route-active') &&
           !clone.hasAttribute('data-route-journey') &&
+          !clone.hasAttribute('data-share-route') &&
+          !clone.hasAttribute('data-share-reach') &&
           !clone.hasAttribute('data-story-active') &&
           !clone.hasAttribute('data-story-playing') &&
           !clone.hasAttribute('data-story-beat') &&
@@ -4594,9 +5333,17 @@
           !clone.hasAttribute('data-chapter-anchor') &&
           !clone.hasAttribute('data-chapter-preview') &&
           !clone.style.getPropertyValue('transform') &&
-          clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-detail], [data-detail-anchor]').length === 0;
+          clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]').length === 0;
 
         var vb = svg.viewBox.baseVal;
+        var finiteSvgDimensions = Number.isFinite(vb.x) && Number.isFinite(vb.y) &&
+          Number.isFinite(vb.width) && Number.isFinite(vb.height) && vb.width > 0 && vb.height > 0;
+        var routeStateClean = opts.routeSnapshot
+          ? canonicalStateClean && finiteSvgDimensions && applyRouteSnapshot(clone, opts.routeSnapshot)
+          : null;
+        var reachStateClean = opts.reachSnapshot
+          ? canonicalStateClean && finiteSvgDimensions && !opts.routeSnapshot && applyReachSnapshot(clone, opts.reachSnapshot)
+          : null;
         // Scale width/height so the browser rasterizes the vectors at target
         // resolution directly. viewBox stays unchanged so coordinates don't
         // shift. This is the key to sharp rasters — do NOT scale later via
@@ -4720,6 +5467,22 @@
           bgRect.setAttribute('fill', computed.getPropertyValue('--bg').trim() || '#ffffff');
         }
 
+        if (opts.routeSnapshot) {
+          style.textContent += "\nsvg[data-share-route] [data-node-id], svg[data-share-route] [data-edge-from] { opacity: 0.18; }\n" +
+            "svg[data-share-route] [data-share-route-match] { opacity: 1; }\n" +
+            "svg[data-share-route] [data-share-route-start] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 3; stroke-dasharray: 5 3; }\n" +
+            "svg[data-share-route] [data-share-route-middle] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 2.2; }\n" +
+            "svg[data-share-route] [data-share-route-end] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 3.4; stroke-dasharray: 1 0; }\n";
+        }
+        if (opts.reachSnapshot) {
+          style.textContent += "\nsvg[data-share-reach] [data-node-id], svg[data-share-reach] [data-edge-from] { opacity: 0.14; }\n" +
+            "svg[data-share-reach] [data-share-reach-match] { opacity: 1; }\n" +
+            "svg[data-share-reach] [data-edge-from][data-share-reach-match] { stroke-width: 1.55; }\n" +
+            "svg[data-share-reach=\"upstream\"] [data-share-reach-origin] > :is(rect, circle, polygon):not(.c-mask) { stroke: var(--database-stroke); stroke-width: 3.4; stroke-dasharray: 5 3; }\n" +
+            "svg[data-share-reach=\"downstream\"] [data-share-reach-origin] > :is(rect, circle, polygon):not(.c-mask) { stroke: var(--backend-stroke); stroke-width: 3.4; stroke-dasharray: 1 0; }\n" +
+            "svg[data-preset=\"blueprint\"][data-share-reach] [data-share-reach-origin], svg[data-preset=\"blueprint\"][data-share-reach] [data-edge-from][data-share-reach-match] { filter: none; }\n";
+        }
+
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
@@ -4727,7 +5490,9 @@
           svgString: new XMLSerializer().serializeToString(clone),
           width: vb.width * scale,
           height: vb.height * scale,
-          canonicalStateClean: canonicalStateClean
+          canonicalStateClean: canonicalStateClean,
+          routeStateClean: routeStateClean,
+          reachStateClean: reachStateClean
         };
       }
 
@@ -4771,24 +5536,29 @@
         return new Promise(function (resolve, reject) {
           var img = new Image();
           img.onload = function () {
-            var canvas = document.createElement('canvas');
-            canvas.width = data.width;
-            canvas.height = data.height;
-            var ctx = canvas.getContext('2d');
-            if (format === 'jpeg') {
-              ctx.fillStyle = currentBg();
-              ctx.fillRect(0, 0, canvas.width, canvas.height);
+            try {
+              var canvas = document.createElement('canvas');
+              canvas.width = data.width;
+              canvas.height = data.height;
+              var ctx = canvas2dOrThrow(canvas, format);
+              if (format === 'jpeg') {
+                ctx.fillStyle = currentBg();
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              }
+              // Draw at natural size — SVG was already rasterized at target res.
+              ctx.drawImage(img, 0, 0);
+              URL.revokeObjectURL(svgUrl);
+              var mime = format === 'jpeg' ? 'image/jpeg' :
+                         format === 'webp' ? 'image/webp' : 'image/png';
+              var quality = format === 'png' ? undefined : 0.95;
+              canvas.toBlob(function (blob) {
+                if (!blob) reject(new Error('toBlob returned null for ' + format));
+                else resolve(blob);
+              }, mime, quality);
+            } catch (error) {
+              URL.revokeObjectURL(svgUrl);
+              reject(error);
             }
-            // Draw at natural size — SVG was already rasterized at target res.
-            ctx.drawImage(img, 0, 0);
-            URL.revokeObjectURL(svgUrl);
-            var mime = format === 'jpeg' ? 'image/jpeg' :
-                       format === 'webp' ? 'image/webp' : 'image/png';
-            var quality = format === 'png' ? undefined : 0.95;
-            canvas.toBlob(function (blob) {
-              if (!blob) reject(new Error('toBlob returned null for ' + format));
-              else resolve(blob);
-            }, mime, quality);
           };
           img.onerror = function (e) {
             URL.revokeObjectURL(svgUrl);
@@ -4816,75 +5586,110 @@
         return value + suffix;
       }
 
-      function rasterizeShareCard() {
+      function canvas2dOrThrow(canvas, label) {
+        if (!canvas || typeof canvas.getContext !== 'function') {
+          throw new Error('Canvas unavailable for ' + label);
+        }
+        var ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('2D canvas context unavailable for ' + label);
+        if (typeof canvas.toBlob !== 'function') throw new Error('canvas.toBlob unavailable for ' + label);
+        return ctx;
+      }
+
+      function renderShareCard(options) {
+        options = options || {};
+        var routeSnapshot = options.routeSnapshot || null;
+        var reachSnapshot = options.reachSnapshot || null;
+        if (routeSnapshot && reachSnapshot) return Promise.reject(new Error('Share Card variants cannot be combined'));
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
-        var data = serializeSvg(sourceScale);
+        var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot });
         if (!data.canonicalStateClean) return Promise.reject(new Error('Share Card export could not remove temporary viewer state'));
+        if (routeSnapshot && !data.routeStateClean) return Promise.reject(new Error('Route Card export could not preserve the resolved route safely'));
+        if (reachSnapshot && !data.reachStateClean) return Promise.reject(new Error('Reach Card export could not preserve authored reach safely'));
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
 
         return new Promise(function (resolve, reject) {
           var img = new Image();
           img.onload = function () {
-            var canvas = document.createElement('canvas');
-            canvas.width = SHARE_CARD_WIDTH;
-            canvas.height = SHARE_CARD_HEIGHT;
-            var ctx = canvas.getContext('2d');
-            var computed = getComputedStyle(document.documentElement);
-            var bg = computed.getPropertyValue('--bg').trim() || currentBg();
-            var text = computed.getPropertyValue('--text').trim() || '#ffffff';
-            var muted = computed.getPropertyValue('--text-muted').trim() || '#94a3b8';
-            var border = computed.getPropertyValue('--panel-border').trim() || '#334155';
-            var accent = computed.getPropertyValue('--frontend-stroke').trim() || '#22d3ee';
-            var titleNode = document.querySelector('.header h1');
-            var subtitleNode = document.querySelector('.header .subtitle');
-            var title = titleNode ? titleNode.textContent : document.title;
-            var subtitle = subtitleNode ? subtitleNode.textContent : '';
-            var preset = document.documentElement.getAttribute('data-preset') || 'classic';
-            var theme = document.documentElement.getAttribute('data-theme') || 'dark';
-            var presetLabel = preset === 'signal-flow' ? 'FLOW' : preset.toUpperCase();
+            try {
+              var canvas = document.createElement('canvas');
+              canvas.width = SHARE_CARD_WIDTH;
+              canvas.height = SHARE_CARD_HEIGHT;
+              var ctx = canvas2dOrThrow(canvas, 'Share Card');
+              var computed = getComputedStyle(document.documentElement);
+              var bg = computed.getPropertyValue('--bg').trim() || currentBg();
+              var text = computed.getPropertyValue('--text').trim() || '#ffffff';
+              var muted = computed.getPropertyValue('--text-muted').trim() || '#94a3b8';
+              var border = computed.getPropertyValue('--panel-border').trim() || '#334155';
+              var accentProperty = reachSnapshot
+                ? (reachSnapshot.direction === 'upstream' ? '--database-stroke' : '--backend-stroke')
+                : '--frontend-stroke';
+              var accent = computed.getPropertyValue(accentProperty).trim() || '#22d3ee';
+              var titleNode = document.querySelector('.header h1');
+              var subtitleNode = document.querySelector('.header .subtitle');
+              var title = titleNode ? titleNode.textContent : document.title;
+              var subtitle = routeSnapshot
+                ? 'Route: ' + routeSnapshot.source.label + ' → ' + routeSnapshot.target.label + ' · ' + routeSnapshot.hops + ' directed hops'
+                : reachSnapshot
+                  ? 'Authored ' + reachSnapshot.direction + ' from ' + reachSnapshot.origin.label + ' · ' +
+                    (reachSnapshot.nodeIds.length - 1) + ' nodes · ' + reachSnapshot.edges.length +
+                    ' links · max ' + reachSnapshot.maxDepth + ' hops'
+                  : subtitleNode ? subtitleNode.textContent : '';
+              var preset = document.documentElement.getAttribute('data-preset') || 'classic';
+              var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+              var presetLabel = preset === 'signal-flow' ? 'FLOW' : preset.toUpperCase();
+              var cardLabel = routeSnapshot
+                ? 'ARCHIFY · ROUTE · ' + routeSnapshot.hops + ' HOPS'
+                : reachSnapshot
+                  ? 'ARCHIFY · ' + reachSnapshot.direction.toUpperCase() + ' REACH'
+                  : 'ARCHIFY · ' + presetLabel + ' · ' + theme.toUpperCase();
 
-            ctx.fillStyle = bg;
-            ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
+              ctx.fillStyle = bg;
+              ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
 
-            ctx.fillStyle = accent;
-            ctx.fillRect(SHARE_CARD_PADDING, 27, 42, 3);
+              ctx.fillStyle = accent;
+              ctx.fillRect(SHARE_CARD_PADDING, 27, 42, 3);
 
-            ctx.textBaseline = 'alphabetic';
-            ctx.fillStyle = text;
-            var fittedTitle = fitCanvasText(ctx, title, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 330, 29, 18, '700');
-            ctx.fillText(fittedTitle, SHARE_CARD_PADDING, 62);
+              ctx.textBaseline = 'alphabetic';
+              ctx.fillStyle = text;
+              var fittedTitle = fitCanvasText(ctx, title, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 330, 29, 18, '700');
+              ctx.fillText(fittedTitle, SHARE_CARD_PADDING, 62);
 
-            ctx.fillStyle = muted;
-            var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 280, 13, 11, '500');
-            ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 87);
+              ctx.fillStyle = muted;
+              var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 280, 13, 11, '500');
+              ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 87);
 
-            ctx.font = "600 12px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-            ctx.textAlign = 'right';
-            ctx.fillStyle = accent;
-            ctx.fillText('ARCHIFY · ' + presetLabel + ' · ' + theme.toUpperCase(), SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 50);
-            ctx.textAlign = 'left';
+              ctx.font = "600 12px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+              ctx.textAlign = 'right';
+              ctx.fillStyle = accent;
+              ctx.fillText(cardLabel, SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 50);
+              ctx.textAlign = 'left';
 
-            var availableWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
-            var availableHeight = SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING;
-            var fit = Math.min(availableWidth / data.width, availableHeight / data.height);
-            var drawWidth = data.width * fit;
-            var drawHeight = data.height * fit;
-            var drawX = SHARE_CARD_PADDING + (availableWidth - drawWidth) / 2;
-            var drawY = SHARE_CARD_HEADER + (availableHeight - drawHeight) / 2;
+              var availableWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
+              var availableHeight = SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING;
+              var fit = Math.min(availableWidth / data.width, availableHeight / data.height);
+              var drawWidth = data.width * fit;
+              var drawHeight = data.height * fit;
+              var drawX = SHARE_CARD_PADDING + (availableWidth - drawWidth) / 2;
+              var drawY = SHARE_CARD_HEADER + (availableHeight - drawHeight) / 2;
 
-            ctx.strokeStyle = border;
-            ctx.lineWidth = 1;
-            ctx.strokeRect(drawX - 0.5, drawY - 0.5, drawWidth + 1, drawHeight + 1);
-            ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-            URL.revokeObjectURL(svgUrl);
+              ctx.strokeStyle = border;
+              ctx.lineWidth = 1;
+              ctx.strokeRect(drawX - 0.5, drawY - 0.5, drawWidth + 1, drawHeight + 1);
+              ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+              URL.revokeObjectURL(svgUrl);
 
-            canvas.toBlob(function (blob) {
-              if (!blob) reject(new Error('toBlob returned null for Share Card'));
-              else resolve(blob);
-            }, 'image/png');
+              canvas.toBlob(function (blob) {
+                if (!blob) reject(new Error('toBlob returned null for Share Card'));
+                else resolve(blob);
+              }, 'image/png');
+            } catch (error) {
+              URL.revokeObjectURL(svgUrl);
+              reject(error);
+            }
           };
           img.onerror = function (e) {
             URL.revokeObjectURL(svgUrl);
@@ -4892,6 +5697,24 @@
           };
           img.src = svgUrl;
         });
+      }
+
+      function rasterizeShareCard(options) {
+        options = options || {};
+        if (!options.variant) return renderShareCard();
+        if (options.variant !== 'route' && options.variant !== 'reach') {
+          return Promise.reject(new Error('Unknown Share Card variant: ' + options.variant));
+        }
+        if (options.variant === 'route') {
+          var routeSnapshot = Archify.routeProbe && Archify.routeProbe.exportSnapshot();
+          if (!routeSnapshot) return Promise.reject(new Error('Trace a route before exporting a Route Share Card'));
+          return renderShareCard({ routeSnapshot: routeSnapshot });
+        }
+        var snapshot = Archify.focus && typeof Archify.focus.reachabilitySnapshot === 'function'
+          ? Archify.focus.reachabilitySnapshot()
+          : null;
+        if (!snapshot) return Promise.reject(new Error('Trace authored reach before exporting a Reach Share Card'));
+        return renderShareCard({ reachSnapshot: snapshot });
       }
 
       function motionMimeType() {
@@ -5156,9 +5979,29 @@
 
       var menu = document.getElementById('export-menu');
       var btn = document.getElementById('btn-export');
+      var routeShareItem = menu.querySelector('button[data-action="route-share-card"]');
+      var reachShareItem = menu.querySelector('button[data-action="reach-share-card"]');
       var items = function () {
         return Array.prototype.slice.call(menu.querySelectorAll('button[role="menuitem"]'));
       };
+
+      function syncRouteShareItem() {
+        var snapshot = Archify.routeProbe && typeof Archify.routeProbe.exportSnapshot === 'function'
+          ? Archify.routeProbe.exportSnapshot()
+          : null;
+        routeShareItem.hidden = !snapshot;
+        routeShareItem.disabled = !snapshot;
+        return snapshot;
+      }
+
+      function syncReachShareItem() {
+        var snapshot = Archify.focus && typeof Archify.focus.reachabilitySnapshot === 'function'
+          ? Archify.focus.reachabilitySnapshot()
+          : null;
+        reachShareItem.hidden = !snapshot;
+        reachShareItem.disabled = !snapshot;
+        return snapshot;
+      }
 
       // ---- Clipboard support ----------------------------------------------
       function canCopyImage() {
@@ -5218,9 +6061,11 @@
       function open(focusLast) {
         if (Archify.semanticLens && typeof Archify.semanticLens.clearPreview === 'function') Archify.semanticLens.clearPreview();
         if (Archify.semanticLens && Archify.semanticLens.isOpen()) Archify.semanticLens.close({ restoreFocus: false });
+        syncRouteShareItem();
+        syncReachShareItem();
         menu.classList.add('open');
         btn.setAttribute('aria-expanded', 'true');
-        var available = items().filter(function (i) { return !i.disabled; });
+        var available = items().filter(function (i) { return !i.hidden && !i.disabled; });
         var target = focusLast ? available[available.length - 1] : available[0];
         if (target) target.focus();
       }
@@ -5254,7 +6099,7 @@
         if (e.key === 'Escape') { e.preventDefault(); close(true); return; }
         if (e.key === 'Tab')    { close(false); return; }
 
-        var available = items().filter(function (i) { return !i.disabled; });
+        var available = items().filter(function (i) { return !i.hidden && !i.disabled; });
         var current = available.indexOf(document.activeElement);
         switch (e.key) {
           case 'ArrowDown':
@@ -5279,8 +6124,7 @@
       function runExport(format) {
         var base = diagramFilename();
         close(true);
-        document.documentElement.removeAttribute('data-last-export-error');
-        document.documentElement.removeAttribute('data-last-export-error-format');
+        clearExportReceipt();
         if (format === 'webm') toast('Recording 6 seconds of motion…');
         return (format === 'share-card'
           ? rasterizeShareCard().then(function (blob) {
@@ -5324,13 +6168,72 @@
         });
       }
 
+      function runRouteShareCard() {
+        close(false);
+        clearExportReceipt();
+        var snapshot = Archify.routeProbe && Archify.routeProbe.exportSnapshot();
+        var blobPromise = snapshot
+          ? renderShareCard({ routeSnapshot: snapshot })
+          : Promise.reject(new Error('Trace a route before exporting a Route Share Card'));
+        return blobPromise.then(function (blob) {
+          recordExportReceipt('share-card', blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, 'route', true);
+          download(blob, diagramFilename() + '-route-share-card.png');
+          toast('Downloaded Route Share Card');
+          return blob;
+        }).catch(function (err) {
+          console.error(err);
+          var message = err && err.message ? err.message : 'share-card';
+          document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
+          document.documentElement.setAttribute('data-last-export-error', message);
+          alert('Route Share Card export failed: ' + message);
+        });
+      }
+
+      function runReachShareCard() {
+        close(false);
+        clearExportReceipt();
+        var snapshot = Archify.focus && typeof Archify.focus.reachabilitySnapshot === 'function'
+          ? Archify.focus.reachabilitySnapshot()
+          : null;
+        var blobPromise = snapshot
+          ? renderShareCard({ reachSnapshot: snapshot })
+          : Promise.reject(new Error('Trace authored reach before exporting a Reach Share Card'));
+        return blobPromise.then(function (blob) {
+          recordExportReceipt('share-card', blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, 'reach', false, true);
+          download(blob, diagramFilename() + '-' + snapshot.direction + '-reach-share-card.png');
+          toast('Downloaded Reach Share Card');
+          return blob;
+        }).catch(function (err) {
+          console.error(err);
+          var message = err && err.message ? err.message : 'share-card';
+          document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
+          document.documentElement.setAttribute('data-last-export-error', message);
+          alert('Reach Share Card export failed: ' + message);
+        });
+      }
+
       // A compact, machine-readable receipt for local QA and generated proof
       // galleries. It exposes no diagram contents, only the completed format,
       // byte count, and whether temporary viewer state was excluded.
-      function recordExportReceipt(format, blob, canonical, dimensions) {
+      function recordExportReceipt(format, blob, canonical, dimensions, variant, routeStateClean, reachStateClean) {
         document.documentElement.setAttribute('data-last-export-format', format);
         document.documentElement.setAttribute('data-last-export-bytes', String(blob.size));
         document.documentElement.setAttribute('data-last-export-canonical', canonical ? 'true' : 'false');
+        if (variant) {
+          document.documentElement.setAttribute('data-last-export-variant', variant);
+        } else {
+          document.documentElement.removeAttribute('data-last-export-variant');
+        }
+        if (routeStateClean === true) {
+          document.documentElement.setAttribute('data-last-export-route-state-clean', 'true');
+        } else {
+          document.documentElement.removeAttribute('data-last-export-route-state-clean');
+        }
+        if (reachStateClean === true) {
+          document.documentElement.setAttribute('data-last-export-reach-state-clean', 'true');
+        } else {
+          document.documentElement.removeAttribute('data-last-export-reach-state-clean');
+        }
         if (dimensions) {
           document.documentElement.setAttribute('data-last-export-width', String(dimensions.width));
           document.documentElement.setAttribute('data-last-export-height', String(dimensions.height));
@@ -5346,6 +6249,9 @@
         document.documentElement.removeAttribute('data-last-export-canonical');
         document.documentElement.removeAttribute('data-last-export-width');
         document.documentElement.removeAttribute('data-last-export-height');
+        document.documentElement.removeAttribute('data-last-export-variant');
+        document.documentElement.removeAttribute('data-last-export-route-state-clean');
+        document.documentElement.removeAttribute('data-last-export-reach-state-clean');
         document.documentElement.removeAttribute('data-last-export-error-format');
         document.documentElement.removeAttribute('data-last-export-error');
       }
@@ -5387,6 +6293,7 @@
 
       function runCopy() {
         close(true);
+        clearExportReceipt();
         if (!canCopyImage()) {
           alert('Clipboard image write not supported in this browser.');
           return;
@@ -5401,6 +6308,12 @@
       }
 
       menu.addEventListener('click', function (e) {
+        var routeShareCardBtn = e.target.closest('button[data-action="route-share-card"]');
+        if (routeShareCardBtn && !routeShareCardBtn.disabled && !routeShareCardBtn.hidden) { runRouteShareCard(); return; }
+
+        var reachShareCardBtn = e.target.closest('button[data-action="reach-share-card"]');
+        if (reachShareCardBtn && !reachShareCardBtn.disabled && !reachShareCardBtn.hidden) { runReachShareCard(); return; }
+
         var copyShareCardBtn = e.target.closest('button[data-action="copy-share-card"]');
         if (copyShareCardBtn && !copyShareCardBtn.disabled) { runCopyShareCard(); return; }
 
@@ -5412,7 +6325,18 @@
       });
 
       Archify.motion = { canRecord: canRecordMotion, recordWebm: recordWebm };
-      Archify.exportMenu = { open: open, close: close, isOpen: isOpen, run: runExport, shareCard: rasterizeShareCard, copyShareCard: runCopyShareCard };
+      Archify.exportMenu = {
+        open: open,
+        close: close,
+        isOpen: isOpen,
+        run: runExport,
+        shareCard: rasterizeShareCard,
+        downloadRouteShareCard: runRouteShareCard,
+        downloadReachShareCard: runReachShareCard,
+        syncRouteShare: syncRouteShareItem,
+        syncReachShare: syncReachShareItem,
+        copyShareCard: runCopyShareCard
+      };
 
       // Auto-open on page load for demo/screenshot purposes: ?openExport=1
       // Wait for fonts (so the menu doesn't flash before typography lands)
@@ -5697,6 +6621,76 @@
       };
     })();
 
+    /* Verified repository evidence is emitted only after the renderer checks
+       the authored GitHub revision, source blobs, and optional line ranges
+       against the explicit --repo-root. It remains outside the SVG so every
+       canonical visual export stays free of repository paths. */
+    Archify.sourceEvidence = (function () {
+      var element = document.getElementById('archify-source-evidence-data');
+      var payload = null;
+      var svgNamespace = 'http://www.w3.org/2000/svg';
+      if (element) {
+        try {
+          var parsed = JSON.parse(element.textContent || 'null');
+          if (parsed && parsed.verified === true && parsed.repository && parsed.nodes) payload = parsed;
+        } catch (_) {}
+      }
+      function installBeacons() {
+        if (!payload) return 0;
+        var svg = document.querySelector('.diagram-container svg');
+        if (!svg) return 0;
+        var installed = 0;
+        Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id]'), function (node) {
+          var id = node.getAttribute('data-node-id');
+          var sources = payload.nodes[id];
+          if (!Array.isArray(sources) || !sources.length || node.querySelector('[data-source-evidence-beacon]')) return;
+          var shape = node.querySelector('[data-animate="node"]') || node.querySelector('[class*="c-"]');
+          var box;
+          try { box = (shape || node).getBBox(); } catch (_) { return; }
+          if (!box || !Number.isFinite(box.x) || !Number.isFinite(box.y) || !Number.isFinite(box.width) || box.width < 36) return;
+
+          var count = sources.length;
+          var label = count + ' verified source' + (count === 1 ? '' : 's') + '; focus this node to inspect';
+          var beacon = document.createElementNS(svgNamespace, 'g');
+          beacon.classList.add('source-evidence-beacon');
+          beacon.setAttribute('data-source-evidence-beacon', '');
+          beacon.setAttribute('aria-hidden', 'true');
+          beacon.setAttribute('transform', 'translate(' + (box.x + box.width - 35) + ' ' + (box.y + 5) + ')');
+          var title = document.createElementNS(svgNamespace, 'title');
+          title.textContent = label;
+          var plate = document.createElementNS(svgNamespace, 'rect');
+          plate.setAttribute('width', '30');
+          plate.setAttribute('height', '12');
+          plate.setAttribute('rx', '6');
+          var text = document.createElementNS(svgNamespace, 'text');
+          text.setAttribute('x', '15');
+          text.setAttribute('y', '8.25');
+          text.textContent = 'SRC ' + count;
+          beacon.appendChild(title);
+          beacon.appendChild(plate);
+          beacon.appendChild(text);
+          node.appendChild(beacon);
+
+          var originalLabel = node.getAttribute('aria-label') || '';
+          node.setAttribute('data-source-evidence-count', String(count));
+          node.setAttribute('data-source-evidence-original-label', originalLabel);
+          node.setAttribute('aria-label', (originalLabel ? originalLabel + ', ' : '') + count + ' verified source reference' + (count === 1 ? '' : 's'));
+          installed += 1;
+        });
+        return installed;
+      }
+      return {
+        available: function () { return Boolean(payload); },
+        repository: function () { return payload ? payload.repository : null; },
+        node: function (id) {
+          var sources = payload && payload.nodes ? payload.nodes[id] : null;
+          return Array.isArray(sources) ? sources.slice() : [];
+        },
+        installBeacons: installBeacons
+      };
+    })();
+    Archify.sourceEvidence.installBeacons();
+
     /* ============================================================
        Explore — stable-ID neighborhood focus + dependency-free pan/zoom.
        Renderer IDs become deep-linkable semantic hooks without turning the
@@ -5713,7 +6707,16 @@
       var context = document.getElementById('focus-context');
       var tag = document.getElementById('focus-tag');
       var semanticId = document.getElementById('focus-id');
+      var evidence = document.getElementById('focus-evidence');
+      var repositoryLink = document.getElementById('focus-repository');
+      var evidenceLinks = document.getElementById('focus-evidence-links');
       var summary = document.getElementById('focus-summary');
+      var reachSection = document.getElementById('focus-reach');
+      var reachStatus = document.getElementById('focus-reach-status');
+      var upstreamBtn = document.getElementById('btn-reach-upstream');
+      var downstreamBtn = document.getElementById('btn-reach-downstream');
+      var upstreamCount = document.getElementById('focus-reach-upstream-count');
+      var downstreamCount = document.getElementById('focus-reach-downstream-count');
       var relationshipList = document.getElementById('relationship-lens-list');
       var copyBtn = document.getElementById('btn-focus-copy');
       var relationsBtn = document.getElementById('btn-focus-relations');
@@ -5727,6 +6730,8 @@
       var relationshipHitOverlay = null;
       var relationshipHitTargets = [];
       var directPreviewTimer = null;
+      var reachabilityMode = null;
+      var activeReachability = null;
       var svgNamespace = 'http://www.w3.org/2000/svg';
       var reducedMotionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
       var finePointerQuery = window.matchMedia ? window.matchMedia('(hover: hover) and (pointer: fine)') : null;
@@ -5740,10 +6745,317 @@
       function nodeLabel(node, fallback) {
         return node.getAttribute('data-node-label') || (node.getAttribute('aria-label') || fallback).replace(/^Focus\s+/, '');
       }
+      function reachabilityRelationships() {
+        var seen = Object.create(null);
+        var relationships = [];
+        edges().forEach(function (edge) {
+          var from = edge.getAttribute('data-edge-from');
+          var to = edge.getAttribute('data-edge-to');
+          var key = edge.getAttribute('data-edge-key') || (from + '\u0000' + to + '\u0000' + (edge.getAttribute('data-edge-label') || ''));
+          if (!from || !to || seen[key]) return;
+          seen[key] = true;
+          relationships.push({ key: key, from: from, to: to });
+        });
+        return relationships;
+      }
+      function computeReachability(originId, direction, relationships) {
+        if (typeof originId !== 'string' || !originId ||
+            (direction !== 'upstream' && direction !== 'downstream') ||
+            !Array.isArray(relationships)) return null;
+        var records = [];
+        var seenKeys = Object.create(null);
+        relationships.forEach(function (relationship, index) {
+          if (!relationship || typeof relationship.from !== 'string' || !relationship.from ||
+              typeof relationship.to !== 'string' || !relationship.to) return;
+          var key = typeof relationship.key === 'string' && relationship.key
+            ? relationship.key : String(index);
+          if (seenKeys[key]) return;
+          seenKeys[key] = true;
+          records.push({ key: key, from: relationship.from, to: relationship.to });
+        });
+
+        var depths = Object.create(null);
+        var order = [];
+        var queue = [originId];
+        depths[originId] = 0;
+        for (var cursor = 0; cursor < queue.length; cursor += 1) {
+          var current = queue[cursor];
+          records.forEach(function (relationship) {
+            var next = null;
+            if (direction === 'downstream' && relationship.from === current) next = relationship.to;
+            else if (direction === 'upstream' && relationship.to === current) next = relationship.from;
+            if (next == null || Object.prototype.hasOwnProperty.call(depths, next)) return;
+            depths[next] = depths[current] + 1;
+            queue.push(next);
+          });
+        }
+        queue.forEach(function (id) { order.push(id); });
+
+        var edgeKeys = [];
+        records.forEach(function (relationship) {
+          if (Object.prototype.hasOwnProperty.call(depths, relationship.from) &&
+              Object.prototype.hasOwnProperty.call(depths, relationship.to)) edgeKeys.push(relationship.key);
+        });
+        var maxDepth = order.reduce(function (maximum, id) {
+          return Math.max(maximum, depths[id]);
+        }, 0);
+        return {
+          direction: direction,
+          originId: originId,
+          nodeIds: order,
+          edgeKeys: edgeKeys,
+          depths: depths,
+          maxDepth: maxDepth
+        };
+      }
+      function reachabilityFor(id, direction) {
+        return computeReachability(id, direction, reachabilityRelationships());
+      }
+      function resetReachabilityButtons() {
+        upstreamBtn.setAttribute('aria-pressed', 'false');
+        downstreamBtn.setAttribute('aria-pressed', 'false');
+      }
+      function clearReachability(options) {
+        options = options || {};
+        reachabilityMode = null;
+        activeReachability = null;
+        svg.removeAttribute('data-reach-active');
+        chip.removeAttribute('data-reach-mode');
+        nodes().forEach(function (node) {
+          node.removeAttribute('data-reach-match');
+          node.removeAttribute('data-reach-origin');
+          node.removeAttribute('data-reach-depth');
+        });
+        edges().forEach(function (edge) {
+          edge.removeAttribute('data-reach-match');
+          edge.removeAttribute('data-reach-depth');
+        });
+        resetReachabilityButtons();
+        reachStatus.textContent = '';
+        reachStatus.hidden = true;
+        if (Archify.exportMenu && typeof Archify.exportMenu.syncReachShare === 'function') {
+          Archify.exportMenu.syncReachShare();
+        }
+        if (options.updateUrl === true && activeIds.length === 1) {
+          try {
+            history.replaceState(null, '', location.pathname + location.search + '#focus=' + encodeURIComponent(activeIds[0]));
+          } catch (_) {}
+        }
+      }
+      function renderReachabilityControls(id) {
+        var upstream = reachabilityFor(id, 'upstream');
+        var downstream = reachabilityFor(id, 'downstream');
+        var upstreamReach = upstream ? Math.max(0, upstream.nodeIds.length - 1) : 0;
+        var downstreamReach = downstream ? Math.max(0, downstream.nodeIds.length - 1) : 0;
+        upstreamCount.textContent = String(upstreamReach);
+        downstreamCount.textContent = String(downstreamReach);
+        upstreamBtn.disabled = upstreamReach === 0;
+        downstreamBtn.disabled = downstreamReach === 0;
+        upstreamBtn.setAttribute('aria-label', upstreamReach
+          ? 'Trace ' + upstreamReach + ' upstream authored node' + (upstreamReach === 1 ? '' : 's')
+          : 'No upstream authored nodes');
+        downstreamBtn.setAttribute('aria-label', downstreamReach
+          ? 'Trace ' + downstreamReach + ' downstream authored node' + (downstreamReach === 1 ? '' : 's')
+          : 'No downstream authored nodes');
+        reachSection.hidden = false;
+      }
+      function applyReachability(direction, options) {
+        options = options || {};
+        if (activeIds.length !== 1 || (direction !== 'upstream' && direction !== 'downstream')) return false;
+        if (reachabilityMode === direction && options.toggle !== false) {
+          clearReachability({ updateUrl: options.updateUrl !== false });
+          return true;
+        }
+        var result = reachabilityFor(activeIds[0], direction);
+        if (!result || result.nodeIds.length <= 1) return false;
+        if (Archify.guidedViews && typeof Archify.guidedViews.showAll === 'function') {
+          Archify.guidedViews.showAll({ clearFocus: false, updateUrl: false, resetView: false });
+        }
+        clearRelationshipPreview({ clearPin: true });
+        clearReachability({ updateUrl: false });
+        reachabilityMode = direction;
+        activeReachability = result;
+        var edgeKeySet = Object.create(null);
+        result.edgeKeys.forEach(function (key) { edgeKeySet[key] = true; });
+        svg.setAttribute('data-reach-active', direction);
+        chip.setAttribute('data-reach-mode', direction);
+        nodes().forEach(function (node) {
+          var id = node.getAttribute('data-node-id');
+          if (!Object.prototype.hasOwnProperty.call(result.depths, id)) return;
+          node.setAttribute('data-reach-match', '');
+          node.setAttribute('data-reach-depth', String(result.depths[id]));
+          if (id === result.originId) node.setAttribute('data-reach-origin', '');
+        });
+        edges().forEach(function (edge) {
+          var key = edge.getAttribute('data-edge-key') || (
+            edge.getAttribute('data-edge-from') + '\u0000' +
+            edge.getAttribute('data-edge-to') + '\u0000' +
+            (edge.getAttribute('data-edge-label') || '')
+          );
+          if (!edgeKeySet[key]) return;
+          edge.setAttribute('data-reach-match', '');
+          var fromDepth = result.depths[edge.getAttribute('data-edge-from')];
+          var toDepth = result.depths[edge.getAttribute('data-edge-to')];
+          edge.setAttribute('data-reach-depth', String(Math.max(fromDepth || 0, toDepth || 0)));
+        });
+        resetReachabilityButtons();
+        var activeButton = direction === 'upstream' ? upstreamBtn : downstreamBtn;
+        activeButton.setAttribute('aria-pressed', 'true');
+        var reachableCount = result.nodeIds.length - 1;
+        var directionLabel = direction === 'upstream' ? 'Upstream' : 'Downstream';
+        reachStatus.textContent = directionLabel + ' · ' + reachableCount + ' node' +
+          (reachableCount === 1 ? '' : 's') + ' · ' + result.edgeKeys.length + ' link' +
+          (result.edgeKeys.length === 1 ? '' : 's') + ' · max ' + result.maxDepth + ' hop' +
+          (result.maxDepth === 1 ? '' : 's');
+        reachStatus.hidden = false;
+        if (Archify.exportMenu && typeof Archify.exportMenu.syncReachShare === 'function') {
+          Archify.exportMenu.syncReachShare();
+        }
+        if (options.updateUrl !== false) {
+          try {
+            history.replaceState(null, '', location.pathname + location.search + '#focus=' +
+              encodeURIComponent(activeIds[0]) + '&reach=' + direction);
+          } catch (_) {}
+        }
+        if (options.reveal !== false && Archify.view && typeof Archify.view.reveal === 'function') {
+          Archify.view.reveal(result.nodeIds, { includeNeighbors: false, reason: 'reachability' });
+        }
+        requestLensPlacement();
+        return true;
+      }
+      function reachabilitySnapshot() {
+        if (!activeReachability || activeIds.length !== 1 ||
+            (reachabilityMode !== 'upstream' && reachabilityMode !== 'downstream') ||
+            activeReachability.direction !== reachabilityMode ||
+            activeReachability.originId !== activeIds[0] ||
+            svg.getAttribute('data-reach-active') !== reachabilityMode) return null;
+
+        var originId = activeReachability.originId;
+        var nodeIds = activeReachability.nodeIds.slice();
+        var edgeKeys = activeReachability.edgeKeys.slice();
+        if (nodeIds.length < 2 || nodeIds[0] !== originId || !edgeKeys.length ||
+            !activeReachability.depths || !Number.isInteger(activeReachability.maxDepth) ||
+            activeReachability.maxDepth < 1) return null;
+
+        var allNodes = nodes();
+        var allEdges = edges();
+        var seenNodeIds = Object.create(null);
+        var seenEdgeKeys = Object.create(null);
+        var nodeIdSet = Object.create(null);
+        var depths = Object.create(null);
+        var originNode = null;
+        var measuredMaxDepth = 0;
+
+        if (nodeIds.some(function (id) {
+          var depth = activeReachability.depths[id];
+          var matches = allNodes.filter(function (node) {
+            return node.getAttribute('data-node-id') === id;
+          });
+          if (typeof id !== 'string' || !id || seenNodeIds[id] || matches.length !== 1 ||
+              !matches[0].hasAttribute('data-reach-match') ||
+              !Number.isInteger(depth) || depth < 0 || depth > activeReachability.maxDepth ||
+              (id === originId
+                ? (!matches[0].hasAttribute('data-reach-origin') || depth !== 0)
+                : depth < 1)) return true;
+          seenNodeIds[id] = true;
+          nodeIdSet[id] = true;
+          depths[id] = depth;
+          measuredMaxDepth = Math.max(measuredMaxDepth, depth);
+          if (id === originId) originNode = matches[0];
+          return false;
+        }) || !originNode || measuredMaxDepth !== activeReachability.maxDepth ||
+            allNodes.filter(function (node) { return node.hasAttribute('data-reach-match'); }).length !== nodeIds.length) return null;
+
+        var edgeRecords = [];
+        if (edgeKeys.some(function (key) {
+          if (typeof key !== 'string' || !key || seenEdgeKeys[key]) return true;
+          var fragments = allEdges.filter(function (edge) {
+            return edge.getAttribute('data-edge-key') === key;
+          });
+          var drawableFragments = fragments.filter(hasDrawableGeometry);
+          if (!fragments.length || drawableFragments.length !== 1 ||
+              !fragments.every(function (fragment) { return fragment.hasAttribute('data-reach-match'); })) return true;
+          var first = fragments[0];
+          var from = first.getAttribute('data-edge-from');
+          var to = first.getAttribute('data-edge-to');
+          var id = first.getAttribute('data-edge-id') || '';
+          var labelValue = first.getAttribute('data-edge-label') || '';
+          if (!nodeIdSet[from] || !nodeIdSet[to] || !fragments.every(function (fragment) {
+            return fragment.getAttribute('data-edge-from') === from &&
+              fragment.getAttribute('data-edge-to') === to &&
+              (fragment.getAttribute('data-edge-id') || '') === id;
+          })) return true;
+          seenEdgeKeys[key] = true;
+          edgeRecords.push({
+            key: key,
+            id: id,
+            from: from,
+            to: to,
+            label: labelValue,
+            depth: Math.max(depths[from], depths[to])
+          });
+          return false;
+        })) return null;
+
+        var liveEdgeKeys = Object.create(null);
+        if (allEdges.some(function (edge) {
+          if (!edge.hasAttribute('data-reach-match')) return false;
+          var key = edge.getAttribute('data-edge-key');
+          if (!key || !seenEdgeKeys[key]) return true;
+          liveEdgeKeys[key] = true;
+          return false;
+        }) || Object.keys(liveEdgeKeys).length !== edgeKeys.length) return null;
+
+        return {
+          direction: reachabilityMode,
+          origin: { id: originId, label: nodeLabel(originNode, originId) },
+          nodeIds: nodeIds,
+          depths: depths,
+          maxDepth: activeReachability.maxDepth,
+          edges: edgeRecords
+        };
+      }
       function setPassportValue(element, value) {
         var normalized = value == null ? '' : String(value).trim();
         element.textContent = normalized;
         element.hidden = !normalized;
+      }
+      function renderSourceEvidence(id) {
+        evidenceLinks.textContent = '';
+        repositoryLink.removeAttribute('href');
+        repositoryLink.textContent = '';
+        var sources = Archify.sourceEvidence.node(id);
+        var repository = Archify.sourceEvidence.repository();
+        if (!repository || !sources.length) {
+          evidence.hidden = true;
+          return;
+        }
+        var slug = repository.url.replace(/^https:\/\/github\.com\//, '').replace(/\/$/, '');
+        repositoryLink.href = repository.url + '/tree/' + repository.revision;
+        repositoryLink.textContent = slug + ' @ ' + repository.shortRevision;
+        repositoryLink.setAttribute('aria-label', 'Open verified repository revision ' + repository.revision);
+        sources.forEach(function (source) {
+          var link = document.createElement('a');
+          link.className = 'semantic-passport-source';
+          link.href = source.href;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.referrerPolicy = 'no-referrer';
+          link.setAttribute('aria-label', 'Open verified source ' + source.path + ' at revision ' + repository.shortRevision);
+          var name = document.createElement('strong');
+          name.textContent = source.label || source.path.split('/').pop() || source.path;
+          var location = document.createElement('code');
+          location.textContent = source.line
+            ? 'L' + source.line + (source.endLine && source.endLine !== source.line ? '–' + source.endLine : '') + ' ↗'
+            : 'Open ↗';
+          var sourcePath = document.createElement('small');
+          sourcePath.textContent = source.path;
+          link.appendChild(name);
+          link.appendChild(location);
+          link.appendChild(sourcePath);
+          evidenceLinks.appendChild(link);
+        });
+        evidence.hidden = false;
       }
       function renderPassport(id, node) {
         setPassportValue(detail, node.getAttribute('data-node-sublabel'));
@@ -5752,6 +7064,7 @@
         setPassportValue(tag, node.getAttribute('data-node-tag'));
         semanticId.textContent = id;
         semanticId.hidden = false;
+        renderSourceEvidence(id);
       }
       function relationshipsFor(id, byId) {
         var seen = {};
@@ -6309,6 +7622,7 @@
         var counts = { out: 0, in: 0, loop: 0 };
         relationships.forEach(function (relationship) { counts[relationship.direction] += 1; });
         summary.textContent = counts.out + ' outgoing · ' + counts.in + ' incoming' + (counts.loop ? ' · ' + counts.loop + ' loop' : '');
+        renderReachabilityControls(id);
         relationshipList.textContent = '';
         if (!relationships.length) {
           var empty = document.createElement('p');
@@ -6405,6 +7719,10 @@
       }
       function clear(options) {
         options = options || {};
+        var restoreNode = options.restoreFocus === true && activeIds.length === 1
+          ? svg.querySelector('[data-node-id="' + activeIds[0] + '"]')
+          : null;
+        clearReachability({ updateUrl: false });
         if (Archify.intentTrace && typeof Archify.intentTrace.clear === 'function') {
           Archify.intentTrace.clear({ announce: false });
         }
@@ -6431,7 +7749,16 @@
         tag.hidden = true;
         semanticId.textContent = '';
         semanticId.hidden = true;
+        evidence.hidden = true;
+        evidenceLinks.textContent = '';
+        repositoryLink.removeAttribute('href');
+        repositoryLink.textContent = '';
         summary.textContent = '';
+        reachSection.hidden = true;
+        upstreamCount.textContent = '0';
+        downstreamCount.textContent = '0';
+        upstreamBtn.disabled = true;
+        downstreamBtn.disabled = true;
         relationshipList.textContent = '';
         copyBtn.textContent = 'Copy link';
         copyBtn.setAttribute('aria-label', 'Copy link to focused node');
@@ -6445,6 +7772,10 @@
         }
         if (options.updateUrl !== false) {
           try { history.replaceState(null, '', location.pathname + location.search); } catch (_) {}
+        }
+        if (restoreNode) {
+          try { restoreNode.focus({ preventScroll: true }); }
+          catch (_) { try { restoreNode.focus(); } catch (_) {} }
         }
       }
 
@@ -6541,7 +7872,7 @@
         var relationId = record && record.id;
         var value = location.href.replace(/#.*$/, '') + (relationId
           ? '#relation=' + encodeURIComponent(relationId)
-          : '#focus=' + encodeURIComponent(activeIds[0]));
+          : '#focus=' + encodeURIComponent(activeIds[0]) + (reachabilityMode ? '&reach=' + reachabilityMode : ''));
         var copy = navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
@@ -6579,8 +7910,10 @@
           Archify.view.reveal([id], { includeNeighbors: true, reason: 'focus' });
         }
       });
-      clearBtn.addEventListener('click', function () { clear(); });
+      clearBtn.addEventListener('click', function () { clear({ restoreFocus: true }); });
       copyBtn.addEventListener('click', copyFocusLink);
+      upstreamBtn.addEventListener('click', function () { applyReachability('upstream'); });
+      downstreamBtn.addEventListener('click', function () { applyReachability('downstream'); });
       relationsBtn.addEventListener('click', function () {
         var expanded = chip.getAttribute('data-relations-expanded') === 'true';
         if (expanded) chip.removeAttribute('data-relations-expanded');
@@ -6644,6 +7977,13 @@
         event.preventDefault();
         buttons[index].focus();
       });
+      document.addEventListener('click', function (event) {
+        var target = event.target;
+        if (chip.hidden || !target || typeof target.closest !== 'function' || chip.contains(target)) return;
+        if (container.getAttribute('data-just-panned') === 'true') return;
+        if (target.closest('[data-node-id], [data-relationship-hit-key]')) return;
+        clear();
+      }, true);
       window.addEventListener('scroll', requestLensPlacement, { passive: true });
       window.addEventListener('resize', requestLensPlacement);
       container.addEventListener('scroll', requestLensPlacement, { passive: true });
@@ -6668,11 +8008,17 @@
           var params = new URLSearchParams(location.hash.replace(/^#/, ''));
           var relation = params.get('relation');
           var initial = params.get('focus');
+          var reach = params.get('reach');
           if (relation) {
             if (html.getAttribute('data-embed') === 'true' ||
                 !inspectRelationshipById(relation, { updateUrl: false, toggle: false })) clear({ updateUrl: false });
           }
-          else if (initial) set(initial, { updateUrl: false, toggle: false });
+          else if (initial) {
+            if (set(initial, { updateUrl: false, toggle: false }) &&
+                (reach === 'upstream' || reach === 'downstream')) {
+              applyReachability(reach, { updateUrl: false, toggle: false, reveal: false });
+            }
+          }
           else if (!params.get('view')) clear({ updateUrl: false });
         } catch (_) {}
       }
@@ -6685,12 +8031,24 @@
         setMany: setMany,
         clear: clear,
         copyLink: copyFocusLink,
+        reach: applyReachability,
+        clearReach: clearReachability,
+        reachabilitySnapshot: reachabilitySnapshot,
         inspectRelationship: inspectRelationship,
         inspectRelationshipById: inspectRelationshipById,
         reposition: requestLensPlacement,
         relationship: function () {
           var record = pinnedRelationshipRecord();
           return record ? { id: record.id || null, key: record.key, from: record.from, to: record.to, label: record.label } : null;
+        },
+        reachability: function () {
+          return activeReachability ? {
+            direction: activeReachability.direction,
+            originId: activeReachability.originId,
+            nodeIds: activeReachability.nodeIds.slice(),
+            edgeKeys: activeReachability.edgeKeys.slice(),
+            maxDepth: activeReachability.maxDepth
+          } : null;
         },
         active: function () { return activeIds.length === 0 ? null : (activeIds.length === 1 ? activeIds[0] : activeIds.slice()); }
       };
@@ -9452,6 +10810,10 @@
         var context = node.getAttribute('data-node-context') || '';
         var tag = node.getAttribute('data-node-tag') || '';
         var type = semanticType(node);
+        var sources = Archify.sourceEvidence.node(id);
+        var sourceSearch = sources.map(function (source) {
+          return [source.path, source.label, source.line, source.endLine].filter(Boolean).join(' ');
+        }).join(' ');
         return {
           id: id,
           label: label,
@@ -9459,8 +10821,9 @@
           sublabel: sublabel,
           context: context,
           tag: tag,
+          sources: sources,
           links: connectionsFor(id),
-          search: (id + ' ' + label + ' ' + type + ' ' + sublabel + ' ' + context + ' ' + tag + ' ' + text).toLowerCase(),
+          search: (id + ' ' + label + ' ' + type + ' ' + sublabel + ' ' + context + ' ' + tag + ' ' + sourceSearch + ' ' + text).toLowerCase(),
           node: node
         };
       });
@@ -9529,7 +10892,11 @@
           button.type = 'button';
           button.className = 'node-finder-result';
           button.setAttribute('data-node-id', item.id);
-          var badge = context.badges && context.badges[item.id] ? context.badges[item.id] : String(item.links);
+          var badge = context.badges && context.badges[item.id]
+            ? context.badges[item.id]
+            : context.kind === 'focus'
+              ? item.links + (item.links === 1 ? ' link' : ' links')
+              : String(item.links);
           var action = context.kind === 'route-source'
             ? 'Choose ' + item.label + ' as route start'
             : context.kind === 'route-target'
@@ -9541,11 +10908,10 @@
           name.textContent = item.label;
           var links = document.createElement('em');
           links.textContent = badge;
-          links.title = context.kind === 'focus'
-            ? item.links + ' related connection' + (item.links === 1 ? '' : 's')
-            : action;
+          links.title = context.kind === 'focus' ? badge : action;
           var meta = document.createElement('small');
-          meta.textContent = [item.type, item.context, item.sublabel, item.tag, item.id].filter(Boolean).join(' \u00b7 ');
+          meta.textContent = [item.type, item.id, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
+          meta.title = [item.type, item.id, item.context, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
           button.appendChild(name);
           button.appendChild(links);
           button.appendChild(meta);
@@ -9553,7 +10919,9 @@
           results.appendChild(button);
         });
         empty.hidden = visibleItems.length !== 0;
-        status.textContent = visibleItems.length + ' of ' + available.length + ' ' + context.availableNoun + (query ? ' match' : ' available');
+        status.textContent = query
+          ? visibleItems.length + ' of ' + available.length + ' ' + context.availableNoun
+          : available.length + ' ' + context.availableNoun;
       }
 
       function open(options) {
@@ -9686,13 +11054,61 @@
         return Array.prototype.slice.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'));
       }
       function nodesById() {
-        var out = {};
+        var out = Object.create(null);
         nodes().forEach(function (node) { out[node.getAttribute('data-node-id')] = node; });
         return out;
       }
       function nodeLabel(node, fallback) {
         return node.getAttribute('data-node-label') ||
           (node.getAttribute('aria-label') || fallback).replace(/^Focus\s+/, '').split(',')[0];
+      }
+      function exportSnapshot() {
+        if (mode !== 'result' || activeNodeIds.length < 2 || activeEdges.length !== activeNodeIds.length - 1) return null;
+        var allNodes = nodes();
+        var byId = nodesById();
+        var seenNodeIds = Object.create(null);
+        var seenEdgeKeys = Object.create(null);
+        if (startId !== activeNodeIds[0] || endId !== activeNodeIds[activeNodeIds.length - 1] ||
+            activeNodeIds.some(function (id) {
+              if (seenNodeIds[id] || allNodes.filter(function (node) {
+                return node.getAttribute('data-node-id') === id;
+              }).length !== 1) return true;
+              seenNodeIds[id] = true;
+              return !byId[id];
+            }) ||
+            activeEdges.some(function (edge, index) {
+              if (!edge || !svg.contains(edge)) return true;
+              var edgeKey = edge.getAttribute('data-edge-key');
+              var edgeId = edge.getAttribute('data-edge-id') || '';
+              if (!edgeKey || seenEdgeKeys[edgeKey]) return true;
+              seenEdgeKeys[edgeKey] = true;
+              var fragments = Array.prototype.slice.call(svg.querySelectorAll('[data-edge-key]')).filter(function (candidate) {
+                return candidate.getAttribute('data-edge-key') === edgeKey;
+              });
+              var drawableFragments = fragments.filter(hasDrawableGeometry);
+              return !fragments.length || !fragments.every(function (fragment) {
+                return fragment.getAttribute('data-edge-from') === activeNodeIds[index] &&
+                  fragment.getAttribute('data-edge-to') === activeNodeIds[index + 1] &&
+                  (fragment.getAttribute('data-edge-id') || '') === edgeId;
+              }) || drawableFragments.length !== 1 || drawableFragments[0] !== edge ||
+                edge.getAttribute('data-edge-from') !== activeNodeIds[index] ||
+                edge.getAttribute('data-edge-to') !== activeNodeIds[index + 1];
+            })) return null;
+        return {
+          source: { id: startId, label: nodeLabel(byId[startId], startId) },
+          target: { id: endId, label: nodeLabel(byId[endId], endId) },
+          nodeIds: activeNodeIds.slice(),
+          hops: activeEdges.length,
+          edges: activeEdges.map(function (edge) {
+            return {
+              key: edge.getAttribute('data-edge-key'),
+              id: edge.getAttribute('data-edge-id') || '',
+              from: edge.getAttribute('data-edge-from'),
+              to: edge.getAttribute('data-edge-to'),
+              label: edge.getAttribute('data-edge-label') || ''
+            };
+          })
+        };
       }
       function edgeShapes(edge) {
         if (/^(path|line|polyline)$/i.test(edge.tagName)) return [edge];
@@ -9842,6 +11258,7 @@
         findBtn.setAttribute('aria-label', 'Find a route start');
         copyBtn.hidden = true;
         copyBtn.textContent = 'Copy link';
+        if (Archify.exportMenu && typeof Archify.exportMenu.syncRouteShare === 'function') Archify.exportMenu.syncRouteShare();
         setTrigger(false);
         if (wasActive && options.preserveView !== true && Archify.view && typeof Archify.view.reset === 'function') {
           Archify.view.reset({ automatic: true });
@@ -10321,6 +11738,7 @@
         findBtn.hidden = true;
         copyBtn.hidden = false;
         setTrigger(true);
+        if (Archify.exportMenu && typeof Archify.exportMenu.syncRouteShare === 'function') Archify.exportMenu.syncRouteShare();
         if (options.updateUrl !== false) {
           replaceRouteHash(encodeURIComponent(startId) + '~' + encodeURIComponent(endId));
         }
@@ -10591,6 +12009,7 @@
         finderOpening: finderOpening,
         finderClosed: finderClosed,
         openFinder: openFinder,
+        exportSnapshot: exportSnapshot,
         active: function () { return mode === 'idle' ? null : mode; },
         result: function () {
           return mode === 'result'
@@ -11526,7 +12945,7 @@
         Archify.intentTrace.clear();
       } else if (e.key === 'Escape' && Archify.focus.active()) {
         e.preventDefault();
-        Archify.focus.clear();
+        Archify.focus.clear({ restoreFocus: true });
       } else if (e.key === 'Escape' && Archify.presentation.active()) {
         e.preventDefault();
         Archify.presentation.exit();

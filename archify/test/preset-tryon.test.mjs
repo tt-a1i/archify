@@ -51,7 +51,7 @@ test('all five renderers expose one reader-controlled visual style cycle', () =>
 test('style cycle synchronizes page and canonical SVG without touching geometry', () => {
   const html = render('architecture');
   const runtime = presetRuntime(html);
-  assert.match(runtime, /\['classic', 'signal-flow', 'blueprint'\]/);
+  assert.match(runtime, /\['classic', 'signal-flow', 'blueprint', 'editorial'\]/);
   assert.match(runtime, /html\.setAttribute\('data-preset', preset\)/);
   assert.match(runtime, /svg\.setAttribute\('data-preset', preset\)/);
   assert.match(runtime, /data-preset-option/);
@@ -67,11 +67,12 @@ test('style try-on is session-only and unavailable to passive embeds', () => {
   assert.match(html, /@media print/);
 });
 
-test('same topology keeps identical canonical SVG geometry across all three styles', () => {
-  const normalize = (svg) => svg.replace(/ data-preset="(?:classic|signal-flow|blueprint)"/, '');
-  const variants = ['classic', 'signal-flow', 'blueprint'].map((preset) => normalize(svgBlock(render('architecture', preset))));
+test('same topology keeps identical canonical SVG geometry across all four styles', () => {
+  const normalize = (svg) => svg.replace(/ data-preset="(?:classic|signal-flow|blueprint|editorial)"/, '');
+  const variants = ['classic', 'signal-flow', 'blueprint', 'editorial'].map((preset) => normalize(svgBlock(render('architecture', preset))));
   assert.equal(variants[1], variants[0]);
   assert.equal(variants[2], variants[0]);
+  assert.equal(variants[3], variants[0]);
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

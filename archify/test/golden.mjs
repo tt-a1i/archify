@@ -1,6 +1,6 @@
 // Golden-file harness for the archify renderers. No test framework needed:
-// renderers are deterministic, so fresh renders must match the checked-in
-// example HTML aside from platform checkout line endings. Also covers schema enforcement (negative cases),
+// renderers are deterministic, so fresh renders must match both checked-in
+// development and packaged example HTML aside from platform checkout line endings. Also covers schema enforcement (negative cases),
 // template freshness of the architecture-mode example, and version sync.
 //
 // Run from the skill folder: npm test
@@ -56,8 +56,11 @@ for (const [mode, input, golden] of GOLDEN) {
     render(mode, path.join(skillRoot, 'examples', input), out);
     const fresh = fs.readFileSync(out, 'utf8');
     const checked = fs.readFileSync(path.join(repoRoot, 'examples', golden), 'utf8');
+    const packaged = fs.readFileSync(path.join(skillRoot, 'examples', golden), 'utf8');
     check(`${mode}: ${golden}`, normalizeNewlines(fresh) === normalizeNewlines(checked),
       `fresh render differs from examples/${golden}; if the change is intentional, re-render the examples and commit them`);
+    check(`${mode}: packaged ${golden}`, normalizeNewlines(fresh) === normalizeNewlines(packaged),
+      `fresh render differs from archify/examples/${golden}; re-render the packaged examples and rebuild archify.zip`);
   } catch (err) {
     check(`${mode}: ${golden}`, false, String(err.stderr || err.message).slice(0, 300));
   }

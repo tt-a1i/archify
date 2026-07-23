@@ -271,6 +271,83 @@
       --toolbar-menu-bg: #f9fdff;
     }
 
+    /* ==========================================================
+       EDITORIAL — a warm, publication-minded preset for design
+       reviews, launch notes, and documentation. The diagram keeps
+       the same semantic palette and exact geometry, but trades
+       software chrome for paper, ink, ruled structure, and one
+       restrained vermilion accent.
+       ========================================================== */
+    [data-preset="editorial"][data-theme="dark"] {
+      --bg: #181611;
+      --grid: #39342a;
+      --panel: rgba(35, 31, 24, 0.96);
+      --panel-border: #625a4a;
+      --lane-fill: rgba(52, 46, 35, 0.46);
+      --lane-stroke: #726957;
+      --text: #f4eddf;
+      --text-muted: #b9ae9b;
+      --text-dim: #776e60;
+      --text-faint: #9d917e;
+      --mask: #231f18;
+      --frontend-fill: rgba(43, 133, 142, 0.16);
+      --frontend-stroke: #7fc6c7;
+      --backend-fill: rgba(63, 132, 92, 0.16);
+      --backend-stroke: #8fc29e;
+      --database-fill: rgba(117, 91, 141, 0.17);
+      --database-stroke: #c0a4d0;
+      --cloud-fill: rgba(170, 119, 49, 0.16);
+      --cloud-stroke: #d8ad68;
+      --security-fill: rgba(157, 69, 65, 0.17);
+      --security-stroke: #df9085;
+      --messagebus-fill: rgba(174, 79, 42, 0.16);
+      --messagebus-stroke: #df946f;
+      --external-fill: rgba(126, 115, 96, 0.18);
+      --external-stroke: #b8ad99;
+      --arrow: #948978;
+      --arrow-emphasis: #dd6b3d;
+      --toolbar-bg: rgba(35, 31, 24, 0.92);
+      --toolbar-border: #625a4a;
+      --toolbar-text: #eee5d5;
+      --toolbar-hover: #302a20;
+      --toolbar-menu-bg: #231f18;
+    }
+
+    [data-preset="editorial"][data-theme="light"] {
+      --bg: #f2eee5;
+      --grid: #d8d0c2;
+      --panel: rgba(251, 248, 241, 0.97);
+      --panel-border: #c4b9a6;
+      --lane-fill: rgba(229, 221, 207, 0.42);
+      --lane-stroke: #b8aa94;
+      --text: #242018;
+      --text-muted: #6f6658;
+      --text-dim: #a09788;
+      --text-faint: #817767;
+      --mask: #fbf8f1;
+      --frontend-fill: rgba(31, 117, 126, 0.09);
+      --frontend-stroke: #287e84;
+      --backend-fill: rgba(42, 119, 75, 0.09);
+      --backend-stroke: #397b53;
+      --database-fill: rgba(105, 75, 130, 0.09);
+      --database-stroke: #765d86;
+      --cloud-fill: rgba(157, 103, 31, 0.1);
+      --cloud-stroke: #9a671f;
+      --security-fill: rgba(153, 58, 52, 0.09);
+      --security-stroke: #9e463f;
+      --messagebus-fill: rgba(182, 70, 27, 0.09);
+      --messagebus-stroke: #ad4b25;
+      --external-fill: rgba(101, 91, 75, 0.09);
+      --external-stroke: #746b5e;
+      --arrow: #8a806f;
+      --arrow-emphasis: #bb4c23;
+      --toolbar-bg: rgba(251, 248, 241, 0.94);
+      --toolbar-border: #c4b9a6;
+      --toolbar-text: #40392f;
+      --toolbar-hover: #fffdf8;
+      --toolbar-menu-bg: #fbf8f1;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
@@ -299,6 +376,12 @@
         linear-gradient(90deg, var(--grid) 1px, transparent 1px);
       background-size: 32px 32px;
       background-position: -1px -1px;
+      background-attachment: fixed;
+    }
+    html[data-preset="editorial"] body {
+      background-image:
+        linear-gradient(90deg, transparent 0, transparent 5.4rem, color-mix(in srgb, var(--security-stroke) 18%, transparent) 5.4rem, color-mix(in srgb, var(--security-stroke) 18%, transparent) calc(5.4rem + 1px), transparent calc(5.4rem + 1px)),
+        repeating-linear-gradient(0deg, transparent 0, transparent 31px, color-mix(in srgb, var(--grid) 36%, transparent) 31px, color-mix(in srgb, var(--grid) 36%, transparent) 32px);
       background-attachment: fixed;
     }
 
@@ -368,6 +451,20 @@
         var(--toolbar-menu-bg);
       box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
       backdrop-filter: none;
+    }
+    html[data-preset="editorial"] .share-chapter-cue {
+      border-color: var(--panel-border);
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--security-fill) 58%, transparent), transparent 42%),
+        var(--toolbar-menu-bg);
+      box-shadow: 0 10px 30px color-mix(in srgb, #000 18%, transparent);
+      backdrop-filter: none;
+    }
+    html[data-preset="editorial"] .share-chapter-state { color: var(--arrow-emphasis); }
+    html[data-preset="editorial"] .share-chapter-state::before {
+      border-radius: 0;
+      box-shadow: none;
+      transform: rotate(45deg) scale(0.8);
     }
     .share-chapter-index {
       display: grid;
@@ -508,7 +605,8 @@
     .header { margin-bottom: 2rem; padding-right: 29.5rem; }
 
     html[data-preset="signal-flow"] .header,
-    html[data-preset="blueprint"] .header { padding-right: 29.5rem; }
+    html[data-preset="blueprint"] .header,
+    html[data-preset="editorial"] .header { padding-right: 29.5rem; }
 
     .header-row {
       display: flex;
@@ -581,6 +679,36 @@
       white-space: nowrap;
     }
 
+    html[data-preset="editorial"] h1,
+    html[data-preset="editorial"] .card h3 {
+      font-family: Georgia, 'Times New Roman', 'Songti SC', STSong, serif;
+      letter-spacing: -0.02em;
+    }
+    html[data-preset="editorial"] h1 { font-size: 1.72rem; font-weight: 600; }
+    html[data-preset="editorial"] .pulse-dot {
+      width: 9px;
+      height: 9px;
+      border: 1px solid var(--arrow-emphasis);
+      border-radius: 0;
+      background: var(--arrow-emphasis);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--arrow-emphasis) 14%, transparent);
+      transform: rotate(45deg);
+      animation: none;
+    }
+    html[data-preset="editorial"] .header-row::after {
+      content: "EDITORIAL / FIELD NOTE";
+      margin-left: auto;
+      padding: 0.32rem 0 0.24rem;
+      border-bottom: 2px solid var(--arrow-emphasis);
+      color: var(--arrow-emphasis);
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 0.625rem;
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
     .diagram-container {
       background: var(--panel);
       border-radius: 1rem;
@@ -625,6 +753,35 @@
         linear-gradient(var(--frontend-stroke), var(--frontend-stroke)) right bottom / 1px 1.35rem no-repeat;
       opacity: 0.58;
     }
+    html[data-preset="editorial"] .diagram-container {
+      overflow: hidden;
+      border-color: var(--panel-border);
+      border-radius: 0.38rem;
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--security-fill) 58%, transparent), transparent 12%),
+        var(--panel);
+      box-shadow:
+        0 1px 0 color-mix(in srgb, var(--text) 6%, transparent),
+        0 18px 48px color-mix(in srgb, #000 19%, transparent);
+    }
+    html[data-preset="editorial"] .diagram-container::after {
+      position: absolute;
+      z-index: 10;
+      top: 0.72rem;
+      right: 1.25rem;
+      padding: 0.2rem 0.52rem;
+      border: 1px solid var(--panel-border);
+      background: var(--panel);
+      color: var(--arrow-emphasis);
+      content: "ARCHIFY / PLATE 04";
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 0.52rem;
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      pointer-events: none;
+    }
+    html[data-embed="true"][data-preset="editorial"] .diagram-container::after { display: none; }
     html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-motion="running"] .diagram-container::before {
       content: "";
       position: absolute;
@@ -2555,6 +2712,22 @@
       border-top: 2px solid var(--frontend-stroke);
     }
 
+    html[data-preset="editorial"] .card {
+      position: relative;
+      border-radius: 0.28rem;
+      background: var(--panel);
+      box-shadow: 0 10px 28px color-mix(in srgb, #000 10%, transparent);
+    }
+    html[data-preset="editorial"] .card::before {
+      position: absolute;
+      top: -1px;
+      left: 1.25rem;
+      width: 3.25rem;
+      border-top: 3px solid var(--arrow-emphasis);
+      content: "";
+    }
+    html[data-preset="editorial"] .card-dot { border-radius: 0; transform: rotate(45deg) scale(0.78); }
+
     .card-header {
       display: flex;
       align-items: center;
@@ -2754,6 +2927,25 @@
       box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--frontend-stroke) 32%, transparent);
       transform: rotate(45deg) scale(0.84);
     }
+    #btn-preset[data-preset-option="editorial"] .preset-control-mark {
+      border-color: var(--arrow-emphasis);
+      border-radius: 0;
+      background: var(--arrow-emphasis);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--arrow-emphasis) 14%, transparent);
+      transform: rotate(45deg) scale(0.72);
+    }
+    html[data-preset="editorial"] .toolbar button,
+    html[data-preset="editorial"] .export-menu,
+    html[data-preset="editorial"] .overview-map,
+    html[data-preset="editorial"] .semantic-lens,
+    html[data-preset="editorial"] .route-probe,
+    html[data-preset="editorial"] .focus-chip,
+    html[data-preset="editorial"] .diagram-guide,
+    html[data-preset="editorial"] .node-finder,
+    html[data-preset="editorial"] .guided-views,
+    html[data-preset="editorial"] .share-chapter-cue {
+      border-radius: 0.3rem;
+    }
     .motion-control-dot {
       width: 0.46rem;
       height: 0.46rem;
@@ -2838,18 +3030,24 @@
       }
       .header { margin-bottom: 1.25rem; padding-right: 0; }
       html[data-preset="signal-flow"] .header,
-      html[data-preset="blueprint"] .header { padding-right: 0; }
+      html[data-preset="blueprint"] .header,
+      html[data-preset="editorial"] .header { padding-right: 0; }
       .header-row {
         gap: 0.75rem;
         align-items: flex-start;
       }
       html[data-preset="signal-flow"] .header-row,
-      html[data-preset="blueprint"] .header-row { flex-wrap: wrap; }
+      html[data-preset="blueprint"] .header-row,
+      html[data-preset="editorial"] .header-row { flex-wrap: wrap; }
       html[data-preset="signal-flow"] .header-row::after {
         margin-left: 0;
         order: 3;
       }
       html[data-preset="blueprint"] .header-row::after {
+        margin-left: 0;
+        order: 3;
+      }
+      html[data-preset="editorial"] .header-row::after {
         margin-left: 0;
         order: 3;
       }
@@ -3550,6 +3748,11 @@
       stroke-linecap: square;
       filter: none;
     }
+    svg[data-preset="editorial"] .relationship-flow-pulse {
+      stroke: var(--arrow-emphasis);
+      stroke-width: 2.75;
+      filter: none;
+    }
     .semantic-flow-token {
       color: var(--frontend-stroke);
       opacity: 0;
@@ -3592,6 +3795,7 @@
       filter: drop-shadow(0 0 5px currentColor);
     }
     svg[data-preset="blueprint"] .semantic-flow-token { filter: none; }
+    svg[data-preset="editorial"] .semantic-flow-token { filter: none; }
     html[data-embed="true"] .relationship-pulse-overlay { display: none; }
 
     /* Intent Trace is a temporary, pre-click exploration layer. Related
@@ -3632,6 +3836,8 @@
       filter: none;
       stroke-linecap: square;
     }
+    svg[data-preset="editorial"] [data-intent-trace-selected],
+    svg[data-preset="editorial"] .intent-trace-flow { filter: none; }
     .intent-trace-status {
       position: absolute;
       width: 1px;
@@ -3714,6 +3920,25 @@
     svg[data-preset="blueprint"] .route-journey-flow {
       filter: none;
       stroke-linecap: square;
+    }
+    svg[data-preset="editorial"] [data-route-start],
+    svg[data-preset="editorial"] [data-route-end],
+    svg[data-preset="editorial"] [data-route-step],
+    svg[data-preset="editorial"] .route-probe-flow,
+    svg[data-preset="editorial"] .route-journey-flow { filter: none; }
+
+    svg[data-preset="editorial"] .c-grid {
+      stroke-dasharray: 1 4;
+      opacity: 0.48;
+    }
+    svg[data-preset="editorial"] .c-region {
+      fill: color-mix(in srgb, var(--cloud-fill) 48%, transparent);
+      stroke-dasharray: 9 4;
+    }
+    svg[data-preset="editorial"] [data-node-id]:hover,
+    svg[data-preset="editorial"] [data-node-id]:focus-visible,
+    svg[data-preset="editorial"][data-focus-active] [data-focus-selected] {
+      filter: drop-shadow(0 2px 2px color-mix(in srgb, var(--text) 18%, transparent));
     }
 
     svg[data-preset="blueprint"] .c-grid {
@@ -3800,6 +4025,10 @@
       filter: none;
       animation: none;
     }
+    svg[data-preset="editorial"] .story-trail-flow { filter: none; }
+    svg[data-preset="editorial"][data-story-beat] [data-story-step][data-story-beat-state="active"] {
+      filter: drop-shadow(0 2px 2px color-mix(in srgb, var(--text) 16%, transparent));
+    }
 
     /* Chapter Delta Preview is a static, pre-commit comparison between two
        chapter focus sets. Symbols in the rail carry the meaning without color;
@@ -3861,6 +4090,14 @@
       animation-name: archify-blueprint-node-pulse;
       animation-duration: 3.8s;
     }
+    svg[data-preset="editorial"][data-animation="trace"] [data-animate="edge"] {
+      filter: none;
+      animation-duration: 2.2s;
+    }
+    svg[data-preset="editorial"][data-animation="trace"] [data-animate="node"] {
+      animation-name: archify-editorial-node-pulse;
+      animation-duration: 3.5s;
+    }
     /* Embedded proofs are static until a named Story Trail chapter is played.
        This keeps proof grids calm and ensures ?play=1 stops all viewer motion
        after one 3.2 second chapter instead of leaving ambient trace loops on. */
@@ -3885,6 +4122,10 @@
     @keyframes archify-blueprint-node-pulse {
       0%, 72%, 100% { opacity: 1; filter: none; }
       18%, 36% { opacity: 0.72; filter: drop-shadow(0 0 2px var(--frontend-stroke)); }
+    }
+    @keyframes archify-editorial-node-pulse {
+      0%, 72%, 100% { opacity: 1; filter: none; }
+      18%, 36% { opacity: 0.78; filter: drop-shadow(0 2px 2px color-mix(in srgb, var(--text) 18%, transparent)); }
     }
     @keyframes archify-signal-scan {
       0%, 18% { opacity: 1; transform: translateX(-70%); }
@@ -4638,14 +4879,14 @@
     }
 
     /* ============================================================
-       Visual style try-on — one topology, three bundled presets.
+       Visual style try-on — one topology, four bundled presets.
        The reader's choice is intentionally session-only: it updates the
        live page and canonical SVG together, but never rewrites the source,
        URL, or a later diagram's authored default.
        ============================================================ */
     Archify.preset = (function () {
-      var PRESETS = ['classic', 'signal-flow', 'blueprint'];
-      var LABELS = { classic: 'Classic', 'signal-flow': 'Flow', blueprint: 'Blueprint' };
+      var PRESETS = ['classic', 'signal-flow', 'blueprint', 'editorial'];
+      var LABELS = { classic: 'Classic', 'signal-flow': 'Flow', blueprint: 'Blueprint', editorial: 'Editorial' };
       var html = document.documentElement;
       var svg = document.querySelector('.diagram-container svg');
       var btn = document.getElementById('btn-preset');

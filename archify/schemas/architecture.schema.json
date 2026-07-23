@@ -17,7 +17,7 @@
         "subtitle": { "type": "string" },
         "output": { "type": "string" },
         "animation": { "enum": ["trace", "none"] },
-        "visual_preset": { "enum": ["classic", "signal-flow", "blueprint"] },
+        "visual_preset": { "enum": ["classic", "signal-flow", "blueprint", "editorial"] },
         "quality_profile": { "enum": ["standard", "showcase"] },
         "engineering_profile": { "enum": ["deployment-ownership"] },
         "repository": {

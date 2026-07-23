@@ -114,6 +114,18 @@ test('blueprint preset is accepted by all five typed renderers', () => {
   }
 });
 
+test('editorial preset reaches every visual surface and all five typed renderers', () => {
+  for (const [mode, example] of Object.entries(CASES)) {
+    const html = render(mode, example, null, 'editorial');
+    assert.match(html, /<html lang="en" data-theme="dark" data-preset="editorial">/, mode);
+    assert.match(svgBlock(html), /data-preset="editorial"/, mode);
+    assert.match(html, /content: "EDITORIAL \/ FIELD NOTE"/, mode);
+    assert.match(html, /\[data-preset="editorial"\]\[data-theme="dark"\]/, mode);
+    assert.match(html, /html\[data-preset="editorial"\] \.diagram-container/, mode);
+    assert.match(html, /svg\[data-preset="editorial"\] \.story-trail-flow/, mode);
+  }
+});
+
 test('all five renderers add one geometry-neutral semantic sigil per primary node', () => {
   for (const [mode, example] of Object.entries(CASES)) {
     const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', example), 'utf8'));

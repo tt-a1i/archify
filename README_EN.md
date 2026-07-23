@@ -14,7 +14,7 @@
 
 Archify is an agent skill for Cursor, Claude Code, Codex CLI, and OpenCode. Give it a system description or repository; get an interactive, shareable technical map.
 
-- **Open it and present** — five technical diagram types, three visual presets, dark/light themes, and optional finite motion
+- **Open it and present** — five technical diagram types, four visual presets, dark/light themes, and optional finite motion
 - **Review architecture changes before merge** — compare two validated snapshots as Before / Delta / After, with exact added, removed, changed, moved, and rerouted facts
 - **Every interaction stays grounded** — search nodes, optionally open revision-verified source, trace upstream/downstream authored reach and exact routes, compare roles, and play guided stories without inventing topology
 - **One file, ready to trust and share** — typed JSON IR and deterministic checks produce self-contained HTML plus PNG, SVG, WebM, and 1200×630 share cards
@@ -220,7 +220,7 @@ Optional motion and presentation styling are explicit:
 }
 ```
 
-Omit `animation` for a truly static diagram. `classic` remains the default visual preset.
+Omit `animation` for a truly static diagram. `classic` remains default; `editorial` adds a warm publication look.
 
 ## Explore and share the output
 

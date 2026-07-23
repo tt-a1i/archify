@@ -22,7 +22,8 @@ level, so unknown fields are rejected rather than silently ignored.
 Every `meta` object also accepts `animation: "trace"` for opt-in SVG/CSS motion
 in generated HTML. Omit it, or set `"none"`, for the default static output.
 `visual_preset` accepts `classic` (the stable default), `signal-flow` (luminous
-motion-forward presentation), or `blueprint` (high-contrast engineering review).
+motion-forward presentation), `blueprint` (high-contrast engineering review),
+or `editorial` (warm publication-style design review and documentation).
 Presets change only viewer styling; they do not alter semantic IDs or geometry.
 It may also include up to five guided `views`. Each view has a unique `id`, a
 reader-facing `label`, a non-empty `focus` list of existing semantic node IDs,

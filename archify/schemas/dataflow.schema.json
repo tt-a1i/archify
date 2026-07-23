@@ -46,7 +46,8 @@
           "enum": [
             "classic",
             "signal-flow",
-            "blueprint"
+            "blueprint",
+            "editorial"
           ]
         },
         "quality_profile": {
