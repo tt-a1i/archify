@@ -8,6 +8,10 @@
     "visual_preset": "signal-flow",
     "animation": "trace",
     "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/mco-org/mco",
+      "revision": "9f1a1cf1afdc04d7b5406782b40dfec76d9bc798"
+    },
     "viewBox": [1680, 720],
     "views": [
       {
@@ -32,16 +36,16 @@
   },
   "components": [
     { "id": "callers", "type": "external", "label": "Callers", "sublabel": "human · coding agent", "pos": [30, 280], "size": [132, 66] },
-    { "id": "entry", "type": "frontend", "label": "Entry Surfaces", "sublabel": "npm · Python CLI · MCP", "pos": [210, 280], "size": [150, 66], "tag": "bin/mco.js · mco" },
-    { "id": "router", "type": "backend", "label": "Command Router", "sublabel": "run · review · doctor", "pos": [410, 280], "size": [150, 66], "tag": "runtime.cli" },
-    { "id": "policy", "type": "security", "label": "Config + Policy", "sublabel": "scope · permissions · risk", "pos": [610, 280], "size": [158, 66], "tag": "read_only · write · yolo" },
-    { "id": "invocation", "type": "backend", "label": "Invocation Workflow", "sublabel": "parallel · chain · debate", "pos": [820, 280], "size": [170, 66], "tag": "timeouts · cancellation" },
-    { "id": "adapters", "type": "backend", "label": "Adapter Registry", "sublabel": "detect · run · poll · cancel", "pos": [1040, 280], "size": [158, 66], "tag": "ProviderAdapter contract" },
-    { "id": "transport", "type": "messagebus", "label": "Transport Layer", "sublabel": "shim stdout · ACP JSON-RPC", "pos": [1240, 280], "size": [166, 66], "tag": "decode_transport" },
+    { "id": "entry", "type": "frontend", "label": "Entry Surfaces", "sublabel": "npm · Python CLI · MCP", "pos": [210, 280], "size": [150, 66], "tag": "bin/mco.js · mco", "sources": [{ "path": "bin/mco.js", "line": 1, "label": "npm entry" }, { "path": "runtime/mcp_server.py", "line": 108, "end_line": 153, "label": "MCP entry" }] },
+    { "id": "router", "type": "backend", "label": "Command Router", "sublabel": "run · review · doctor", "pos": [410, 280], "size": [150, 66], "tag": "runtime.cli", "sources": [{ "path": "runtime/cli.py", "line": 1945, "label": "CLI main" }] },
+    { "id": "policy", "type": "security", "label": "Config + Policy", "sublabel": "scope · permissions · risk", "pos": [610, 280], "size": [158, 66], "tag": "read_only · write · yolo", "sources": [{ "path": "runtime/config.py", "line": 24, "label": "Review policy" }, { "path": "runtime/policy.py", "line": 34, "label": "Provider policy preview" }] },
+    { "id": "invocation", "type": "backend", "label": "Invocation Workflow", "sublabel": "parallel · chain · debate", "pos": [820, 280], "size": [170, 66], "tag": "timeouts · cancellation", "sources": [{ "path": "runtime/invocation_runtime.py", "line": 696, "label": "Workflow entry" }, { "path": "runtime/invocation_runtime.py", "line": 156, "label": "Single invocation" }] },
+    { "id": "adapters", "type": "backend", "label": "Adapter Registry", "sublabel": "detect · run · poll · cancel", "pos": [1040, 280], "size": [158, 66], "tag": "ProviderAdapter contract", "sources": [{ "path": "runtime/adapters/__init__.py", "line": 57, "label": "Adapter registry" }, { "path": "runtime/contracts.py", "line": 77, "label": "Provider contract" }] },
+    { "id": "transport", "type": "messagebus", "label": "Transport Layer", "sublabel": "shim stdout · ACP JSON-RPC", "pos": [1240, 280], "size": [166, 66], "tag": "decode_transport", "sources": [{ "path": "runtime/adapters/shim.py", "line": 98, "label": "Shim decode" }, { "path": "runtime/acp/adapter.py", "line": 126, "label": "ACP decode" }] },
     { "id": "providers", "type": "external", "label": "Provider CLIs", "sublabel": "Claude · Codex · Pi · 7 more", "pos": [1460, 280], "size": [176, 66], "tag": "native auth + sandbox" },
-    { "id": "session", "type": "backend", "label": "Session Daemon", "sublabel": "detached worker + socket", "pos": [405, 500], "size": [160, 66], "tag": "queue · retry · cancel" },
-    { "id": "session_state", "type": "database", "label": "Session State", "sublabel": ".mco/sessions", "pos": [640, 500], "size": [150, 66], "tag": "state · history · logs" },
-    { "id": "artifacts", "type": "database", "label": "Invocation Artifacts", "sublabel": "answers · result.md · run.json", "pos": [1240, 500], "size": [166, 66], "tag": "per-stage evidence" },
+    { "id": "session", "type": "backend", "label": "Session Daemon", "sublabel": "detached worker + socket", "pos": [405, 500], "size": [160, 66], "tag": "queue · retry · cancel", "sources": [{ "path": "runtime/session/daemon.py", "line": 50, "label": "Daemon context" }] },
+    { "id": "session_state", "type": "database", "label": "Session State", "sublabel": ".mco/sessions", "pos": [640, 500], "size": [150, 66], "tag": "state · history · logs", "sources": [{ "path": "runtime/session/state.py", "line": 25, "label": "Session state" }] },
+    { "id": "artifacts", "type": "database", "label": "Invocation Artifacts", "sublabel": "answers · result.md · run.json", "pos": [1240, 500], "size": [166, 66], "tag": "per-stage evidence", "sources": [{ "path": "runtime/invocation_artifacts.py", "line": 8, "label": "Artifact writer" }] },
     { "id": "outputs", "type": "external", "label": "Output Consumers", "sublabel": "terminal · agent · CI", "pos": [1460, 500], "size": [176, 66], "tag": "text · JSON · JSONL" }
   ],
   "boundaries": [

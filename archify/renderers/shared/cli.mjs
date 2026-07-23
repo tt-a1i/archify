@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { applyTemplate, renderCards, esc } from './utils.mjs';
 import { validateSchema } from './validator.mjs';
+import { verifyRepositoryEvidence } from './repository-evidence.mjs';
 
 // Common CLI head: node render-<type>.mjs [input.json] [output.html]
 export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = process.argv }) {
@@ -11,11 +12,12 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
   validateSchema(diagramType, diagram);
   validateGuidedViews(diagramType, diagram);
   validateRelationshipIds(diagramType, diagram);
+  const sourceEvidence = verifyRepositoryEvidence(diagramType, diagram, process.env.ARCHIFY_REPO_ROOT);
   const template = fs.readFileSync(path.join(skillRoot, 'assets/template.html'), 'utf8');
   // Optional chaining: in degraded mode (no ajv) malformed input must still
   // reach the renderer's friendly layout checks instead of crashing here.
   const outPath = path.resolve(process.cwd(), argv[3] || diagram.meta?.output || `${diagramType}.html`);
-  return { diagram, template, outPath };
+  return { diagram, template, outPath, sourceEvidence };
 }
 
 const START_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
@@ -23,7 +25,7 @@ const START_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow',
 // Common CLI tail: fill the template and write the standalone HTML file.
 // The keyboard hint and the restrained start link are viewer-only — neither
 // belongs in canonical SVG exports or on paper.
-export function writeDiagram({ outPath, template, diagramType, meta, footerLabel, svg, cards }) {
+export function writeDiagram({ outPath, template, diagramType, meta, footerLabel, svg, cards, sourceEvidence = null }) {
   if (!START_TYPES.has(diagramType)) throw new Error(`writeDiagram: unknown diagram type ${JSON.stringify(diagramType)}`);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   const guidedHint = Array.isArray(meta.views) && meta.views.length
@@ -38,6 +40,7 @@ export function writeDiagram({ outPath, template, diagramType, meta, footerLabel
     cards: renderCards(cards),
     visualPreset: meta.visual_preset || 'classic',
     guidedViews: meta.views || [],
+    sourceEvidence,
   }));
   console.log(outPath);
 }

@@ -35,7 +35,7 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const layoutJsonMode = process.argv.includes('--layout-json');
 const cliArgs = process.argv.filter((arg) => arg !== '--layout-json');
-const { diagram: arch, template, outPath } = loadDiagram({
+const { diagram: arch, template, outPath, sourceEvidence } = loadDiagram({
   rendererDir: __dirname,
   diagramType: 'architecture',
   defaultExample: 'web-app.architecture.json',
@@ -487,4 +487,5 @@ writeDiagram({
   footerLabel: 'Architecture diagram',
   svg: renderSvg(),
   cards: arch.cards,
+  sourceEvidence,
 });

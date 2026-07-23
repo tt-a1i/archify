@@ -582,3 +582,21 @@ test('applyTemplate preserves dollar sequences in titles', () => {
   });
   assert.match(html, /Plan \$\$50 tier/);
 });
+
+test('applyTemplate requires the new evidence slot only when evidence is present', () => {
+  const legacyTemplate = `<html lang="en" data-theme="dark" data-preset="[VISUAL PRESET]">
+<title>[PROJECT NAME] Architecture Diagram</title>
+<h1>[PROJECT NAME] Architecture</h1>
+<p class="subtitle">[Subtitle description]</p>
+<!-- ARCHIFY:GUIDED_VIEWS_DATA -->
+      <!-- ARCHIFY:SVG_SLOT_START --><svg></svg>      <!-- ARCHIFY:SVG_SLOT_END -->
+    <!-- ARCHIFY:CARDS_SLOT_START --><div></div>    <!-- ARCHIFY:CARDS_SLOT_END -->
+[Project Name] &bull; [Additional metadata]`;
+  assert.doesNotThrow(() => applyTemplate(legacyTemplate, {
+    title: 'Legacy', subtitle: '', footer: '', svg: '<svg/>', cards: '',
+  }));
+  assert.throws(() => applyTemplate(legacyTemplate, {
+    title: 'Evidence', subtitle: '', footer: '', svg: '<svg/>', cards: '',
+    sourceEvidence: { verified: true },
+  }), /repository evidence requires placeholder/);
+});

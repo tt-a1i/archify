@@ -4,6 +4,12 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
+### Added
+- **Revision-verified Repository Evidence Passport.** Architecture diagrams can opt into public GitHub source links by declaring a repository URL, a full commit SHA, and one to three repo-relative sources per component, then passing `--repo-root` to `render`, `deliver`, `preview`, or `validate`. Archify verifies the local origin, commit, blobs, and optional line ranges before publishing; verified links appear in Semantic Passport and Node Finder while staying outside the canonical SVG and every visual export. Plain diagrams remain the default, other diagram modes reject the option, and private or unpinned evidence is deliberately out of scope.
+
+### Fixed
+- Existing custom templates remain compatible when repository evidence is unused; only the opt-in evidence path requires the new HTML payload slot. Evidence paths reject control characters, and line verification no longer treats a trailing newline as an extra source line.
+
 ## [2.12.0] — 2026-07-23
 
 ### Added

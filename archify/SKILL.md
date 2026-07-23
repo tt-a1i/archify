@@ -274,6 +274,43 @@ Architecture has the same read-schema-then-render loop as the other modes — pr
 
 Render: `node bin/archify.mjs render architecture <input>.json <output>.html`.
 
+### Optional verified repository evidence
+
+For a public-repository architecture map, offer one explicit choice before adding source evidence: **plain portable map (default)** or **revision-verified source links**. Do not enable evidence silently, infer paths, or add it to workflow/sequence/dataflow/lifecycle diagrams. If the user already asked for a source-linked or evidence-backed map, that is sufficient consent; do not ask twice.
+
+Evidence is opt-in because repository paths become part of the standalone HTML. It is currently limited to public GitHub repositories and Architecture mode. Never use it for a private repository, never serialize an absolute local path, and never claim a path is verified unless the command below succeeds.
+
+```json
+{
+  "meta": {
+    "title": "Runtime Architecture",
+    "repository": {
+      "url": "https://github.com/example/project",
+      "revision": "0123456789abcdef0123456789abcdef01234567"
+    }
+  },
+  "components": [
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "Command Router",
+      "sources": [
+        { "path": "src/router.ts", "line": 24, "end_line": 61, "label": "Dispatch entry" }
+      ]
+    }
+  ]
+}
+```
+
+Use a full 40-character commit SHA. Each component may name one to three repo-relative POSIX paths, with an optional 1-based line or inclusive line range and reader-facing label. Then pass the repository top level explicitly:
+
+```bash
+node bin/archify.mjs deliver architecture map.architecture.json map.html \
+  --repo-root /absolute/path/to/project --quality showcase --json
+```
+
+`render`, `validate`, and `preview` accept the same `--repo-root` option. Archify checks that the local `origin` matches the authored GitHub URL and that the exact commit, blobs, and requested lines exist. A failure preserves the previous delivered artifact. A success adds only verified links to the existing Semantic Passport and Node Finder; the evidence payload stays outside the SVG, so SVG/raster/Share Card/WebM exports remain free of repository paths.
+
 **Free placement** — `pos: [x, y]` is the component's top-left; `size: [w, h]` defaults to `[120, 60]`. Unlike typed modes there is no lane/stage grid — asymmetric placement is yours to choose. `meta.viewBox` is optional (auto-fitted).
 
 **Grid placement (#8)** — when manual coordinates are painful, set semantic cells instead of doing arithmetic:
@@ -367,4 +404,4 @@ When no browser or image reader is available, report `visual_review: skipped (im
 
 ## Output
 
-A single self-contained `.html`: embedded CSS (Google Fonts loads async and degrades to system monospace offline), one canonical inline SVG, and embedded JS for Intent Trace, Route Probe, Node Finder, Semantic Passport, runtime-built Semantic Radar, Presentation Stage, Story Trail playback, semantic focus, pan/zoom, theme, and export. It renders directly in any modern browser. Every semantic node has a deterministic DOM ID, accessible keyboard control, renderer-owned kind/responsibility/context attributes, and a compact native `<title>` tooltip; the SVG root includes its own `<title>` and `<desc>`. The viewer footer may link to Archify's bounded start page using only the diagram type; it must never serialize the title, semantic graph, repository path, or source JSON, must suppress the document referrer, and stays outside print and every canonical export. Raster exports render natively at up to 4× the viewBox (large diagrams step down to 3×/2× to stay under canvas limits); the SVG download is dual-theme self-contained and follows the host's `prefers-color-scheme` (manual override via `svg[data-theme="..."]`); trace-enabled diagrams can be recorded to WebM without external tooling.
+A single self-contained `.html`: embedded CSS (Google Fonts loads async and degrades to system monospace offline), one canonical inline SVG, and embedded JS for Intent Trace, Route Probe, Node Finder, Semantic Passport, runtime-built Semantic Radar, Presentation Stage, Story Trail playback, semantic focus, pan/zoom, theme, and export. It renders directly in any modern browser. Every semantic node has a deterministic DOM ID, accessible keyboard control, renderer-owned kind/responsibility/context attributes, and a compact native `<title>` tooltip; the SVG root includes its own `<title>` and `<desc>`. Explicit, successfully verified Architecture repository evidence may live in a separate HTML-only JSON payload for Passport/Node Finder use; it must never enter the SVG or visual exports. The viewer footer may link to Archify's bounded start page using only the diagram type; it must never serialize the title, semantic graph, repository path, or source JSON, must suppress the document referrer, and stays outside print and every canonical export. Raster exports render natively at up to 4× the viewBox (large diagrams step down to 3×/2× to stay under canvas limits); the SVG download is dual-theme self-contained and follows the host's `prefers-color-scheme` (manual override via `svg[data-theme="..."]`); trace-enabled diagrams can be recorded to WebM without external tooling.

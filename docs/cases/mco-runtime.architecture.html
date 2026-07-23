@@ -1420,6 +1420,88 @@
     .semantic-passport-meta [hidden] { display: none; }
     html[data-preset="blueprint"] .semantic-passport-meta span,
     html[data-preset="blueprint"] .semantic-passport-meta code { border-radius: 0.1rem; }
+    .semantic-passport-evidence {
+      margin-top: 0.52rem;
+      padding: 0.5rem;
+      border: 1px solid color-mix(in srgb, var(--backend-stroke) 32%, var(--toolbar-border));
+      border-radius: 0.55rem;
+      background: color-mix(in srgb, var(--backend-fill) 18%, var(--panel));
+    }
+    .semantic-passport-evidence[hidden] { display: none; }
+    html[data-preset="blueprint"] .semantic-passport-evidence { border-radius: 0.18rem; }
+    .semantic-passport-evidence-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.55rem;
+      margin-bottom: 0.35rem;
+    }
+    .semantic-passport-evidence-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.28rem;
+      color: var(--backend-stroke);
+      font-size: 0.5rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .semantic-passport-evidence-status::before {
+      content: '';
+      width: 0.38rem;
+      height: 0.38rem;
+      border-radius: 50%;
+      background: var(--backend-stroke);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--backend-stroke) 14%, transparent);
+    }
+    .semantic-passport-repository {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--text-faint);
+      font-size: 0.5rem;
+      text-decoration: none;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .semantic-passport-repository:hover,
+    .semantic-passport-repository:focus-visible { color: var(--backend-stroke); }
+    .semantic-passport-evidence-links { display: grid; gap: 0.22rem; }
+    .semantic-passport-source {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.15rem 0.45rem;
+      align-items: center;
+      padding: 0.34rem 0.4rem;
+      border: 1px solid transparent;
+      border-radius: 0.38rem;
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    .semantic-passport-source:hover,
+    .semantic-passport-source:focus-visible {
+      border-color: color-mix(in srgb, var(--backend-stroke) 42%, transparent);
+      background: color-mix(in srgb, var(--backend-fill) 32%, transparent);
+      color: var(--text);
+    }
+    .semantic-passport-source strong {
+      overflow: hidden;
+      font-size: 0.5625rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .semantic-passport-source code {
+      color: var(--backend-stroke);
+      font: inherit;
+      font-size: 0.5rem;
+    }
+    .semantic-passport-source small {
+      grid-column: 1 / -1;
+      overflow: hidden;
+      color: var(--text-faint);
+      font-size: 0.5rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .relationship-lens-summary {
       display: block;
       margin-top: 0.12rem;
@@ -3841,6 +3923,7 @@
     </div>
 
     <script id="archify-guided-views-data" type="application/json">[{"id":"dispatch-path","label":"Dispatch path","focus":["callers","entry","router","policy","workflow","adapters","provider_clis"],"note":"An explicit provider team crosses one validated execution-policy boundary before MCO starts parallel work."},{"id":"answer-evidence","label":"Answer evidence","focus":["adapters","answer_transport","artifacts","consumers"],"note":"Provider output is decoded and persisted without turning raw answers into an automatic decision."},{"id":"durable-sessions","label":"Durable sessions","focus":["router","session_daemon","session_state"],"note":"Detached local workers use Unix sockets plus state.json and history.jsonl for resumable sessions."}]</script>
+
     <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
       <button id="guided-view-prev" type="button" aria-label="Previous guided view" title="Previous guided view ([)">&#8592;</button>
       <div class="guided-view-copy">
@@ -4237,6 +4320,13 @@
               <span id="focus-context" data-passport="context" hidden></span>
               <span id="focus-tag" data-passport="tag" hidden></span>
               <code id="focus-id" data-passport="id"></code>
+            </div>
+            <div class="semantic-passport-evidence" id="focus-evidence" hidden aria-label="Verified source evidence">
+              <div class="semantic-passport-evidence-head">
+                <span class="semantic-passport-evidence-status">Verified source</span>
+                <a class="semantic-passport-repository" id="focus-repository" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer"></a>
+              </div>
+              <div class="semantic-passport-evidence-links" id="focus-evidence-links"></div>
             </div>
             <span class="relationship-lens-summary" id="focus-summary" aria-live="polite"></span>
           </div>
@@ -5991,6 +6081,29 @@
       };
     })();
 
+    /* Verified repository evidence is emitted only after the renderer checks
+       the authored GitHub revision, source blobs, and optional line ranges
+       against the explicit --repo-root. It remains outside the SVG so every
+       canonical visual export stays free of repository paths. */
+    Archify.sourceEvidence = (function () {
+      var element = document.getElementById('archify-source-evidence-data');
+      var payload = null;
+      if (element) {
+        try {
+          var parsed = JSON.parse(element.textContent || 'null');
+          if (parsed && parsed.verified === true && parsed.repository && parsed.nodes) payload = parsed;
+        } catch (_) {}
+      }
+      return {
+        available: function () { return Boolean(payload); },
+        repository: function () { return payload ? payload.repository : null; },
+        node: function (id) {
+          var sources = payload && payload.nodes ? payload.nodes[id] : null;
+          return Array.isArray(sources) ? sources.slice() : [];
+        }
+      };
+    })();
+
     /* ============================================================
        Explore — stable-ID neighborhood focus + dependency-free pan/zoom.
        Renderer IDs become deep-linkable semantic hooks without turning the
@@ -6007,6 +6120,9 @@
       var context = document.getElementById('focus-context');
       var tag = document.getElementById('focus-tag');
       var semanticId = document.getElementById('focus-id');
+      var evidence = document.getElementById('focus-evidence');
+      var repositoryLink = document.getElementById('focus-repository');
+      var evidenceLinks = document.getElementById('focus-evidence-links');
       var summary = document.getElementById('focus-summary');
       var relationshipList = document.getElementById('relationship-lens-list');
       var copyBtn = document.getElementById('btn-focus-copy');
@@ -6039,6 +6155,43 @@
         element.textContent = normalized;
         element.hidden = !normalized;
       }
+      function renderSourceEvidence(id) {
+        evidenceLinks.textContent = '';
+        repositoryLink.removeAttribute('href');
+        repositoryLink.textContent = '';
+        var sources = Archify.sourceEvidence.node(id);
+        var repository = Archify.sourceEvidence.repository();
+        if (!repository || !sources.length) {
+          evidence.hidden = true;
+          return;
+        }
+        var slug = repository.url.replace(/^https:\/\/github\.com\//, '').replace(/\/$/, '');
+        repositoryLink.href = repository.url + '/tree/' + repository.revision;
+        repositoryLink.textContent = slug + ' @ ' + repository.shortRevision;
+        repositoryLink.setAttribute('aria-label', 'Open verified repository revision ' + repository.revision);
+        sources.forEach(function (source) {
+          var link = document.createElement('a');
+          link.className = 'semantic-passport-source';
+          link.href = source.href;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.referrerPolicy = 'no-referrer';
+          link.setAttribute('aria-label', 'Open verified source ' + source.path + ' at revision ' + repository.shortRevision);
+          var name = document.createElement('strong');
+          name.textContent = source.label || source.path.split('/').pop() || source.path;
+          var location = document.createElement('code');
+          location.textContent = source.line
+            ? 'L' + source.line + (source.endLine && source.endLine !== source.line ? '–' + source.endLine : '') + ' ↗'
+            : 'Open ↗';
+          var sourcePath = document.createElement('small');
+          sourcePath.textContent = source.path;
+          link.appendChild(name);
+          link.appendChild(location);
+          link.appendChild(sourcePath);
+          evidenceLinks.appendChild(link);
+        });
+        evidence.hidden = false;
+      }
       function renderPassport(id, node) {
         setPassportValue(detail, node.getAttribute('data-node-sublabel'));
         setPassportValue(kind, node.getAttribute('data-node-kind') || 'node');
@@ -6046,6 +6199,7 @@
         setPassportValue(tag, node.getAttribute('data-node-tag'));
         semanticId.textContent = id;
         semanticId.hidden = false;
+        renderSourceEvidence(id);
       }
       function relationshipsFor(id, byId) {
         var seen = {};
@@ -6725,6 +6879,10 @@
         tag.hidden = true;
         semanticId.textContent = '';
         semanticId.hidden = true;
+        evidence.hidden = true;
+        evidenceLinks.textContent = '';
+        repositoryLink.removeAttribute('href');
+        repositoryLink.textContent = '';
         summary.textContent = '';
         relationshipList.textContent = '';
         copyBtn.textContent = 'Copy link';
@@ -9746,6 +9904,10 @@
         var context = node.getAttribute('data-node-context') || '';
         var tag = node.getAttribute('data-node-tag') || '';
         var type = semanticType(node);
+        var sources = Archify.sourceEvidence.node(id);
+        var sourceSearch = sources.map(function (source) {
+          return [source.path, source.label, source.line, source.endLine].filter(Boolean).join(' ');
+        }).join(' ');
         return {
           id: id,
           label: label,
@@ -9753,8 +9915,9 @@
           sublabel: sublabel,
           context: context,
           tag: tag,
+          sources: sources,
           links: connectionsFor(id),
-          search: (id + ' ' + label + ' ' + type + ' ' + sublabel + ' ' + context + ' ' + tag + ' ' + text).toLowerCase(),
+          search: (id + ' ' + label + ' ' + type + ' ' + sublabel + ' ' + context + ' ' + tag + ' ' + sourceSearch + ' ' + text).toLowerCase(),
           node: node
         };
       });

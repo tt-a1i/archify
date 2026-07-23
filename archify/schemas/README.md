@@ -75,6 +75,15 @@ express cleanly here: duplicate view IDs, duplicate focus IDs, focus IDs that do
 not exist in the diagram's semantic collection, and duplicate authored
 relationship IDs within the mode's relationship collection.
 
+Architecture additionally supports opt-in, revision-pinned repository evidence.
+`meta.repository` names a public GitHub URL and full commit SHA; a component may
+carry one to three `sources` with repo-relative POSIX paths, optional line
+ranges, and optional labels. Shape is schema-checked, then the renderer requires
+`--repo-root`: the local Git origin must match, and Git must prove the commit,
+blobs, and requested lines. Verified evidence is embedded outside the canonical
+SVG for the Semantic Passport and Node Finder; ordinary documents and visual
+exports carry no repository evidence.
+
 `npm test` runs the generator in check mode and fails when the committed
 validators drift from their schemas.
 

@@ -14,10 +14,10 @@ const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'life
 
 function usage() {
   return `Usage:
-  archify render <type> <input.json> [output.html] [--quality standard|showcase]
-  archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase]
-  archify preview <type> <input.json> [output.html] [--no-open] [--quality standard|showcase]
-  archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase]
+  archify render <type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path]
+  archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path]
+  archify preview <type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]
+  archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path]
   archify inspect <type> <input.json>
   archify check <output.html>
   archify guide [scenario or question] [--json] [--lang en|zh]
@@ -73,17 +73,53 @@ function extractQualityArgs(args) {
   return { rest, quality };
 }
 
+function extractRepoRootArgs(args) {
+  const rest = [];
+  let repoRoot;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--repo-root') {
+      repoRoot = args[index + 1];
+      if (!repoRoot || repoRoot.startsWith('--')) fail('--repo-root requires a repository path.');
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--repo-root=')) {
+      repoRoot = arg.slice('--repo-root='.length);
+      if (!repoRoot) fail('--repo-root requires a repository path.');
+      continue;
+    }
+    rest.push(arg);
+  }
+  return { rest, repoRoot: repoRoot ? path.resolve(repoRoot) : undefined };
+}
+
+function rendererEnv(quality, repoRoot) {
+  return {
+    ...(quality ? { ARCHIFY_QUALITY_PROFILE: quality } : {}),
+    ...(repoRoot ? { ARCHIFY_REPO_ROOT: repoRoot } : {}),
+  };
+}
+
+function assertEvidenceType(type, repoRoot) {
+  if (repoRoot && type !== 'architecture') {
+    fail('--repo-root is currently supported for architecture diagrams only.');
+  }
+}
+
 function exitFrom(result) {
   if (result.error) fail(result.error.message, 1);
   process.exit(result.status ?? 1);
 }
 
 function commandRender(args) {
-  const { rest, quality } = extractQualityArgs(args);
-  const [type, input, output] = rest;
+  const qualityArgs = extractQualityArgs(args);
+  const repoArgs = extractRepoRootArgs(qualityArgs.rest);
+  const [type, input, output] = repoArgs.rest;
   if (!type || !input) fail(usage());
+  assertEvidenceType(type, repoArgs.repoRoot);
   const result = runNode([rendererPath(type), input, ...(output ? [output] : [])], {
-    env: quality ? { ARCHIFY_QUALITY_PROFILE: quality } : undefined,
+    env: rendererEnv(qualityArgs.quality, repoArgs.repoRoot),
   });
   if (result.status !== 0) exitFrom(result);
 }
@@ -105,16 +141,29 @@ function reportDeliveryFailure({ json, stage, type, input, output, error, status
   process.exitCode = status;
 }
 
+function sourceEvidenceFromArtifact(artifact) {
+  const html = artifact.toString('utf8');
+  const match = html.match(/<script id="archify-source-evidence-data" type="application\/json">([\s\S]*?)<\/script>/);
+  if (!match) return null;
+  const evidence = JSON.parse(match[1]);
+  if (evidence?.verified !== true || !evidence.repository?.url || !evidence.repository?.revision || !Number.isInteger(evidence.referenceCount)) {
+    throw new Error('Rendered source evidence receipt is incomplete.');
+  }
+  return evidence;
+}
+
 async function commandDeliver(args) {
   const qualityArgs = extractQualityArgs(args);
-  const json = qualityArgs.rest.includes('--json');
-  const open = qualityArgs.rest.includes('--open');
+  const repoArgs = extractRepoRootArgs(qualityArgs.rest);
+  const json = repoArgs.rest.includes('--json');
+  const open = repoArgs.rest.includes('--open');
   const knownOptions = new Set(['--json', '--open']);
-  const unknown = qualityArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
+  const unknown = repoArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) fail(`Unknown deliver option "${unknown[0]}".`);
-  const positional = qualityArgs.rest.filter((arg) => !knownOptions.has(arg));
+  const positional = repoArgs.rest.filter((arg) => !knownOptions.has(arg));
   const [type, input, requestedOutput] = positional;
   if (!type || !input || positional.length > 3) fail(usage());
+  assertEvidenceType(type, repoArgs.repoRoot);
 
   const renderer = rendererPath(type);
   const inputPath = path.resolve(input);
@@ -174,7 +223,7 @@ async function commandDeliver(args) {
   try {
     const render = runNode([renderer, inputPath, candidatePath], {
       stdio: 'pipe',
-      env: qualityArgs.quality ? { ARCHIFY_QUALITY_PROFILE: qualityArgs.quality } : undefined,
+      env: rendererEnv(qualityArgs.quality, repoArgs.repoRoot),
     });
     if (render.status !== 0) {
       if (render.stderr) process.stderr.write(render.stderr);
@@ -244,6 +293,20 @@ async function commandDeliver(args) {
       });
       return;
     }
+    let sourceEvidence;
+    try {
+      sourceEvidence = sourceEvidenceFromArtifact(artifact);
+    } catch (error) {
+      reportDeliveryFailure({
+        json,
+        stage: 'receipt',
+        type,
+        input: inputPath,
+        output: outputPath,
+        error: `Could not read the repository evidence receipt: ${error.message}`,
+      });
+      return;
+    }
     const receipt = {
       schemaVersion: 1,
       ok: true,
@@ -263,6 +326,14 @@ async function commandDeliver(args) {
         errors: result.composition.summary.errors,
         warnings: result.composition.summary.warnings,
       },
+      ...(sourceEvidence ? {
+        evidence: {
+          verified: true,
+          repository: sourceEvidence.repository.url,
+          revision: sourceEvidence.repository.revision,
+          references: sourceEvidence.referenceCount,
+        },
+      } : {}),
     };
 
     try {
@@ -314,13 +385,15 @@ async function commandDeliver(args) {
 
 async function commandPreview(args) {
   const qualityArgs = extractQualityArgs(args);
-  const noOpen = qualityArgs.rest.includes('--no-open');
+  const repoArgs = extractRepoRootArgs(qualityArgs.rest);
+  const noOpen = repoArgs.rest.includes('--no-open');
   const knownOptions = new Set(['--no-open']);
-  const unknown = qualityArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
+  const unknown = repoArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) fail(`Unknown preview option "${unknown[0]}".`);
-  const positional = qualityArgs.rest.filter((arg) => !knownOptions.has(arg));
+  const positional = repoArgs.rest.filter((arg) => !knownOptions.has(arg));
   const [type, input, output] = positional;
   if (!type || !input || positional.length > 3) fail(usage());
+  assertEvidenceType(type, repoArgs.repoRoot);
   rendererPath(type);
 
   let runPreview;
@@ -335,6 +408,7 @@ async function commandPreview(args) {
       input,
       output,
       quality: qualityArgs.quality,
+      repoRoot: repoArgs.repoRoot,
       open: !noOpen,
     });
   } catch (error) {
@@ -530,13 +604,16 @@ function commandDemo(args) {
 
 function commandValidate(args) {
   const qualityArgs = extractQualityArgs(args);
-  args = qualityArgs.rest;
+  const repoArgs = extractRepoRootArgs(qualityArgs.rest);
+  args = repoArgs.rest;
   const quality = qualityArgs.quality;
+  const repoRoot = repoArgs.repoRoot;
   const json = args.includes('--json');
   const layoutJson = args.includes('--layout-json');
   const rest = args.filter((arg) => arg !== '--json' && arg !== '--layout-json');
   const [type, input] = rest;
   if (!type || !input) fail(usage());
+  assertEvidenceType(type, repoRoot);
   const renderer = rendererPath(type);
 
   if (layoutJson) {
@@ -545,7 +622,7 @@ function commandValidate(args) {
     }
     const result = runNode([renderer, input, '/dev/null', '--layout-json'], {
       stdio: 'pipe',
-      env: quality ? { ARCHIFY_QUALITY_PROFILE: quality } : undefined,
+      env: rendererEnv(quality, repoRoot),
     });
     if (result.status !== 0) {
       if (result.stderr) process.stderr.write(result.stderr);
@@ -563,7 +640,7 @@ function commandValidate(args) {
   try {
     const render = runNode([renderer, input, out], {
       stdio: 'pipe',
-      env: quality ? { ARCHIFY_QUALITY_PROFILE: quality } : undefined,
+      env: rendererEnv(quality, repoRoot),
     });
     if (render.status !== 0) {
       if (render.stderr) process.stderr.write(render.stderr);

@@ -46,7 +46,7 @@ test('all typed renderers ship the same geometry-neutral node finder', () => {
 
 test('finder searches semantic ids and labels, then delegates to focus and reveal', () => {
   const html = render('architecture', CASES.architecture);
-  assert.match(html, /search: \(id \+ ' ' \+ label \+ ' ' \+ type \+ ' ' \+ sublabel \+ ' ' \+ context \+ ' ' \+ tag \+ ' ' \+ text\)\.toLowerCase\(\)/);
+  assert.match(html, /search: \(id \+ ' ' \+ label \+ ' ' \+ type \+ ' ' \+ sublabel \+ ' ' \+ context \+ ' ' \+ tag \+ ' ' \+ sourceSearch \+ ' ' \+ text\)\.toLowerCase\(\)/);
   assert.match(html, /item\.search\.indexOf\(query\) !== -1/);
   assert.match(html, /Archify\.guidedViews\.showAll\(\{ clearFocus: false, updateUrl: false \}\)/);
   assert.match(html, /Archify\.view\.reset\(\{ automatic: true \}\)/);

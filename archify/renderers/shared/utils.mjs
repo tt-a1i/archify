@@ -101,6 +101,7 @@ ${card.items.map((item) => `          <li>&bull; ${esc(item)}</li>`).join('\n')}
 const SVG_SLOT_RE = /      <!-- ARCHIFY:SVG_SLOT_START -->[\s\S]*?      <!-- ARCHIFY:SVG_SLOT_END -->/;
 const CARDS_SLOT_RE = /    <!-- ARCHIFY:CARDS_SLOT_START -->[\s\S]*?    <!-- ARCHIFY:CARDS_SLOT_END -->/;
 const GUIDED_VIEWS_PLACEHOLDER = '<!-- ARCHIFY:GUIDED_VIEWS_DATA -->';
+const SOURCE_EVIDENCE_PLACEHOLDER = '    <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->';
 
 const TEMPLATE_PLACEHOLDERS = [
   '<html lang="en" data-theme="dark" data-preset="[VISUAL PRESET]">',
@@ -113,7 +114,7 @@ const TEMPLATE_PLACEHOLDERS = [
 
 // `footer` is injected as raw HTML so callers can embed <kbd> hints;
 // pass only trusted strings here, never user input.
-export function applyTemplate(template, { title, subtitle, footer, svg, cards, visualPreset = 'classic', guidedViews = [] }) {
+export function applyTemplate(template, { title, subtitle, footer, svg, cards, visualPreset = 'classic', guidedViews = [], sourceEvidence = null }) {
   if (!SVG_SLOT_RE.test(template)) {
     throw new Error('applyTemplate: template missing ARCHIFY:SVG_SLOT sentinel');
   }
@@ -125,9 +126,19 @@ export function applyTemplate(template, { title, subtitle, footer, svg, cards, v
       throw new Error(`applyTemplate: template missing placeholder ${JSON.stringify(ph)}`);
     }
   }
+  // Keep existing custom templates compatible when evidence is not requested.
+  // Silently dropping verified evidence would be misleading, so the new slot
+  // becomes mandatory only for the opt-in evidence path.
+  if (sourceEvidence && !template.includes(SOURCE_EVIDENCE_PLACEHOLDER)) {
+    throw new Error(`applyTemplate: repository evidence requires placeholder ${JSON.stringify(SOURCE_EVIDENCE_PLACEHOLDER)}`);
+  }
   // Function replacers: a literal `$&`, `$'`, `$\`` or `$$` in titles, labels,
   // or rendered SVG must not be interpreted as a replacement pattern.
   const guidedViewsJson = JSON.stringify(guidedViews)
+    .replaceAll('<', '\\u003c')
+    .replaceAll('>', '\\u003e')
+    .replaceAll('&', '\\u0026');
+  const sourceEvidenceJson = JSON.stringify(sourceEvidence)
     .replaceAll('<', '\\u003c')
     .replaceAll('>', '\\u003e')
     .replaceAll('&', '\\u0026');
@@ -139,7 +150,10 @@ export function applyTemplate(template, { title, subtitle, footer, svg, cards, v
     .replace(SVG_SLOT_RE, () => svg)
     .replace(CARDS_SLOT_RE, () => cards)
     .replace(TEMPLATE_PLACEHOLDERS[4], () => footer)
-    .replace(GUIDED_VIEWS_PLACEHOLDER, () => `<script id="archify-guided-views-data" type="application/json">${guidedViewsJson}</script>`);
+    .replace(GUIDED_VIEWS_PLACEHOLDER, () => `<script id="archify-guided-views-data" type="application/json">${guidedViewsJson}</script>`)
+    .replace(SOURCE_EVIDENCE_PLACEHOLDER, () => sourceEvidence
+      ? `    <script id="archify-source-evidence-data" type="application/json">${sourceEvidenceJson}</script>`
+      : '');
 }
 
 // CJK and other wide/fullwidth glyphs render at roughly twice the advance
