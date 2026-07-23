@@ -72,6 +72,7 @@ test('cli: help lists commands and diagram types', () => {
   const result = run(['--help']);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /archify render <type>/);
+  assert.match(result.stdout, /archify compare architecture <base\.json> <head\.json>/);
   assert.match(result.stdout, /archify deliver <type>/);
   assert.match(result.stdout, /archify preview <type>/);
   assert.match(result.stdout, /--open/);
@@ -89,6 +90,7 @@ test('cli: doctor reports a complete installation is ready', () => {
   assert.match(result.stdout, /\[ok\] Example renderer/);
   assert.match(result.stdout, /\[ok\] Live preview runtime/);
   assert.match(result.stdout, /\[ok\] Scenario recipe guide/);
+  assert.match(result.stdout, /\[ok\] Architecture compare runtime and proof fixtures/);
   assert.match(result.stdout, /\[ok\] Standalone schema validators/);
   assert.match(result.stdout, /\[ok\] architecture renderer, schema, and example/);
   assert.match(result.stdout, /\[ok\] lifecycle renderer, schema, and example/);

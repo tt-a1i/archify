@@ -12,9 +12,10 @@
 
 **Turn a codebase or system description into a polished, interactive system map — directly in chat.**
 
-Archify is an agent skill for Cursor, Claude Code, Codex CLI, and OpenCode. Give it a system description or repository; get a polished diagram you can open, explore, present, and share.
+Archify is an agent skill for Cursor, Claude Code, Codex CLI, and OpenCode. Give it a system description or repository; get an interactive, shareable technical map.
 
 - **Open it and present** — five technical diagram types, three visual presets, dark/light themes, and optional finite motion
+- **Review architecture changes before merge** — compare two validated snapshots as Before / Delta / After, with exact added, removed, changed, moved, and rerouted facts
 - **Every interaction stays grounded** — search nodes, optionally open revision-verified source, trace upstream/downstream authored reach and exact routes, compare roles, and play guided stories without inventing topology
 - **One file, ready to trust and share** — typed JSON IR and deterministic checks produce self-contained HTML plus PNG, SVG, WebM, and 1200×630 share cards
 
@@ -53,7 +54,7 @@ The [Proof Lab](https://tt-a1i.github.io/archify/gallery.html) contains all 11 c
 
 [![MCO runtime architecture generated from the public mco-org/mco repository](docs/assets/mco-runtime-share-card.png)](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)
 
-Archify read [`mco-org/mco`](https://github.com/mco-org/mco) at commit `9f1a1cf`, traced its CLI, policy, provider adapters, invocation runtime, and durable sessions, then produced this checked, interactive map. **[Open the live map ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)** · [trace Command Router reach ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [inspect the typed source](docs/cases/mco-runtime.architecture.json)
+Archify traced [`mco-org/mco`](https://github.com/mco-org/mco) at `9f1a1cf` and produced this checked map. **[Open it ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)** · [trace reach ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [typed source](docs/cases/mco-runtime.architecture.json)
 
 ## Preview
 
@@ -69,11 +70,11 @@ The Export menu copies PNG to the clipboard and downloads static or motion forma
 
 Use **Copy Share Card** when you want a canonical 1200×630 image for a README, release, or social post.
 
-After tracing a route, open **Export → Route Share Card** to download the exact authored path as a 1200×630 PNG while retaining the full diagram for context. It is an optional, download-only Share Card variant; ordinary exports remain canonical.
+After tracing a route, **Export → Route Share Card** downloads that authored path as a 1200×630 PNG with the full diagram retained for context.
 
 ![Route Share Card showing the exact Users to API Server path with the full architecture retained as context](docs/assets/archify-route-share-card.png)
 
-After tracing `Upstream` or `Downstream` authored reach, choose **Export → Reach Share Card** to turn that exact reading into a 1200×630 PNG. The card keeps the complete topology as context and names its direction, origin, nodes, links, and maximum hops—it does not claim runtime impact.
+After tracing authored `Upstream` or `Downstream` reach, **Export → Reach Share Card** captures that exact reading without claiming runtime impact.
 
 ![MCO downstream Reach Share Card showing authored relationships from Command Router](docs/assets/mco-runtime-reach-share-card.png)
 
@@ -135,6 +136,12 @@ For a production deployment review, Architecture can optionally enable the
 single-region placement, private database scope, or named boundary crossings
 are missing. It is never enabled silently and validates authored facts—not live
 infrastructure. See the [checked deployment proof](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership).
+
+For design or PR review, Architecture Delta compares two validated sources as Before / Delta / After plus a machine receipt—never as risk or merge safety.
+
+`node archify/bin/archify.mjs compare architecture base.json head.json architecture-delta.html --json`
+
+[![Architecture Delta showing added, removed, changed, and moved authored facts](docs/assets/architecture-delta-proof.jpg)](examples/checkout-platform-delta.html)
 
 Not sure which one fits? Use the [interactive scenario guide](https://tt-a1i.github.io/archify/guide.html), or ask the zero-dependency CLI:
 
@@ -253,7 +260,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Roadmap](ROADMAP.md)
 - [Generated Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-Archify 2.12 includes typed IR across all five modes, real-repository proof, verified live preview, authored reachability, optional finite motion, guided views, semantic search and relationship exploration, shareable deep links, 1200×630 diagram and route cards, browser-native WebM recording, explicit `standard` / `showcase` quality profiles, and an opt-in deployment ownership contract.
+Archify 2.12 includes typed IR across all five modes, real-repository proof, deterministic Architecture Delta review, verified live preview, authored reachability, optional finite motion, guided views, semantic search and relationship exploration, shareable deep links, 1200×630 diagram and route cards, browser-native WebM recording, explicit `standard` / `showcase` quality profiles, and an opt-in deployment ownership contract.
 
 Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
 

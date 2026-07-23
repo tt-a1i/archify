@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Checkout Platform — Fraud Gate",
+    "subtitle": "Fraud screening now owns payment authorization",
+    "visual_preset": "signal-flow"
+  },
+  "components": [
+    { "id": "buyers", "type": "external", "label": "Buyers", "sublabel": "Web + mobile", "pos": [40, 250], "size": [120, 60] },
+    { "id": "edge", "type": "cloud", "label": "Edge Gateway", "sublabel": "TLS + routing", "pos": [220, 250], "size": [130, 60] },
+    { "id": "checkout", "type": "backend", "label": "Checkout API", "sublabel": "v2 idempotent", "pos": [430, 250], "size": [130, 60] },
+    { "id": "fraud", "type": "security", "label": "Fraud Gate", "sublabel": "policy scoring", "pos": [640, 100], "size": [130, 60], "tag": "new owner" },
+    { "id": "orders", "type": "database", "label": "Orders", "sublabel": "PostgreSQL", "pos": [640, 250], "size": [130, 60] },
+    { "id": "queue", "type": "messagebus", "label": "Order Events", "sublabel": "durable queue", "pos": [430, 420], "size": [130, 60] },
+    { "id": "worker", "type": "backend", "label": "Fulfilment", "sublabel": "async worker", "pos": [640, 400], "size": [130, 60] },
+    { "id": "payments", "type": "external", "label": "Payment Rail", "sublabel": "external", "pos": [850, 250], "size": [130, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Production region", "wraps": ["edge", "checkout", "fraud", "orders", "queue", "worker"] },
+    { "kind": "security-group", "label": "Checkout trust zone", "wraps": ["checkout", "fraud", "orders"] }
+  ],
+  "connections": [
+    { "id": "buyer-request", "from": "buyers", "to": "edge", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "edge-checkout", "from": "edge", "to": "checkout" },
+    { "id": "fraud-check", "from": "checkout", "to": "fraud", "label": "screen", "variant": "security", "fromSide": "top", "toSide": "bottom", "labelDy": -66 },
+    { "id": "persist-order", "from": "checkout", "to": "orders", "label": "SQL tx" },
+    { "id": "publish-order", "from": "checkout", "to": "queue", "label": "accepted", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 76 },
+    { "id": "consume-order", "from": "queue", "to": "worker" },
+    { "id": "authorize-payment", "from": "fraud", "to": "payments", "label": "authorize", "variant": "security", "fromSide": "right", "toSide": "top", "via": [[820, 130], [915, 130]] }
+  ]
+}

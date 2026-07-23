@@ -15,6 +15,7 @@ const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'life
 function usage() {
   return `Usage:
   archify render <type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path]
+  archify compare architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]
   archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path]
   archify preview <type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]
   archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path]
@@ -240,6 +241,286 @@ function assertEvidenceType(type, repoRoot) {
 function exitFrom(result) {
   if (result.error) fail(result.error.message, 1);
   process.exit(result.status ?? 1);
+}
+
+function reportCompareFailure({ json, stage, error, code = 'delta/internal', details = {}, status = 1 }) {
+  const receipt = {
+    schemaVersion: 1,
+    ok: false,
+    command: 'compare',
+    type: 'architecture',
+    stage,
+    error,
+    diagnostics: [{
+      code,
+      severity: 'error',
+      message: error,
+      subject: details.side ? { side: details.side, ...(details.path ? { path: details.path } : {}) } : {},
+      evidence: Object.fromEntries(Object.entries(details).filter(([key]) => !['side', 'path', 'supportedFixes'].includes(key))),
+      supportedFixes: details.supportedFixes || [],
+    }],
+  };
+  if (json) console.log(JSON.stringify(receipt, null, 2));
+  else console.error(formatDiagnostics(error, receipt.diagnostics));
+  process.exitCode = status;
+}
+
+function extractCompareOptions(args) {
+  const positional = [];
+  let receipt;
+  let json = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--json') {
+      json = true;
+      continue;
+    }
+    if (arg === '--receipt') {
+      receipt = args[index + 1];
+      if (!receipt || receipt.startsWith('--')) fail('--receipt requires a JSON output path.');
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--receipt=')) {
+      receipt = arg.slice('--receipt='.length);
+      if (!receipt) fail('--receipt requires a JSON output path.');
+      continue;
+    }
+    if (arg.startsWith('--')) fail(`Unknown compare option "${arg}".`);
+    positional.push(arg);
+  }
+  return { positional, receipt, json };
+}
+
+function compareReceiptPath(outputPath) {
+  const extension = path.extname(outputPath);
+  return extension ? `${outputPath.slice(0, -extension.length)}.receipt.json` : `${outputPath}.receipt.json`;
+}
+
+function renderValidatedArchitecture(inputPath, outputPath, quality, repoRoot) {
+  const render = runNode([rendererPath('architecture'), inputPath, outputPath], {
+    stdio: 'pipe',
+    env: rendererEnv(quality, repoRoot, true),
+  });
+  if (render.status !== 0) {
+    const failure = rendererFailure(render);
+    const error = new Error(failure.error);
+    error.compareStage = 'input';
+    error.compareStatus = render.status ?? 1;
+    error.diagnostics = failure.diagnostics;
+    throw error;
+  }
+  const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), outputPath], { stdio: 'pipe' });
+  if (check.status !== 0) {
+    const error = new Error('Validated snapshot failed final artifact checks.');
+    error.compareStage = 'check';
+    error.compareStatus = check.status ?? 1;
+    try {
+      error.checker = JSON.parse(check.stdout);
+      error.diagnostics = checkerDiagnostics(error.checker);
+    } catch {
+      error.diagnostics = [];
+    }
+    throw error;
+  }
+  const artifact = fs.readFileSync(outputPath);
+  return {
+    artifact,
+    html: artifact.toString('utf8'),
+    checks: JSON.parse(check.stdout),
+    sourceEvidence: sourceEvidenceFromArtifact(artifact),
+  };
+}
+
+async function commandCompare(args) {
+  const qualityArgs = extractQualityArgs(args);
+  const repoArgs = extractRepoRootArgs(qualityArgs.rest);
+  const options = extractCompareOptions(repoArgs.rest);
+  const [type, baseInput, headInput, requestedOutput] = options.positional;
+  if (type !== 'architecture' || !baseInput || !headInput || options.positional.length > 4) fail(usage());
+  let deltaRuntime;
+  try {
+    deltaRuntime = await import(pathToFileURL(path.join(skillRoot, 'delta/architecture-delta.mjs')).href);
+  } catch (error) {
+    reportCompareFailure({ json: options.json, stage: 'prepare', error: 'Architecture compare runtime is unavailable.', code: 'delta/runtime-missing', details: { reason: error.message, supportedFixes: ['install the complete Archify skill package'] } });
+    return;
+  }
+  const {
+    ArchitectureDeltaError,
+    annotateArchitectureSideSvg,
+    buildDeltaSvg,
+    canonicalArchitecture,
+    canonicalArchitectureJson,
+    compareArchitecture,
+    extractArchitectureSvg,
+    extractArtifactCss,
+    renderArchitectureDeltaHtml,
+    validateArchitectureDeltaHtml,
+  } = deltaRuntime;
+
+  const basePath = path.resolve(baseInput);
+  const headPath = path.resolve(headInput);
+  const outputPath = path.resolve(requestedOutput || 'architecture-delta.html');
+  const receiptPath = path.resolve(options.receipt || compareReceiptPath(outputPath));
+  if (outputPath === receiptPath) fail('Compare artifact and receipt must use different paths.');
+
+  let baseBuffer;
+  let headBuffer;
+  let base;
+  let head;
+  try {
+    baseBuffer = fs.readFileSync(basePath);
+    base = JSON.parse(baseBuffer.toString('utf8'));
+  } catch (error) {
+    reportCompareFailure({ json: options.json, stage: 'input', error: `Could not read base input: ${error.message}`, code: 'delta/base-input', details: { side: 'base', reason: error.message } });
+    return;
+  }
+  try {
+    headBuffer = fs.readFileSync(headPath);
+    head = JSON.parse(headBuffer.toString('utf8'));
+  } catch (error) {
+    reportCompareFailure({ json: options.json, stage: 'input', error: `Could not read head input: ${error.message}`, code: 'delta/head-input', details: { side: 'head', reason: error.message } });
+    return;
+  }
+
+  const outputDirectory = path.dirname(outputPath);
+  if (path.dirname(receiptPath) !== outputDirectory) {
+    reportCompareFailure({ json: options.json, stage: 'prepare', error: 'The compare receipt must be written beside the HTML artifact.', code: 'delta/receipt-directory', details: { supportedFixes: ['choose a --receipt path in the same directory as output.html'] } });
+    return;
+  }
+  try {
+    fs.mkdirSync(outputDirectory, { recursive: true });
+  } catch (error) {
+    reportCompareFailure({ json: options.json, stage: 'prepare', error: `Could not create compare output directory: ${error.message}`, code: 'delta/output-directory', details: { reason: error.message } });
+    return;
+  }
+
+  let stagingDirectory;
+  try {
+    stagingDirectory = fs.mkdtempSync(path.join(outputDirectory, '.archify-compare-'));
+  } catch (error) {
+    reportCompareFailure({ json: options.json, stage: 'prepare', error: `Could not create compare candidate: ${error.message}`, code: 'delta/candidate-directory', details: { reason: error.message } });
+    return;
+  }
+
+  const baseCandidate = path.join(stagingDirectory, 'base.html');
+  const headCandidate = path.join(stagingDirectory, 'head.html');
+  const canonicalBaseInput = path.join(stagingDirectory, 'base.architecture.json');
+  const canonicalHeadInput = path.join(stagingDirectory, 'head.architecture.json');
+  const htmlCandidate = path.join(stagingDirectory, path.basename(outputPath));
+  const receiptCandidate = path.join(stagingDirectory, path.basename(receiptPath));
+
+  try {
+    let baseResult;
+    let headResult;
+    fs.writeFileSync(canonicalBaseInput, JSON.stringify(canonicalArchitecture(base)));
+    fs.writeFileSync(canonicalHeadInput, JSON.stringify(canonicalArchitecture(head)));
+    try {
+      baseResult = renderValidatedArchitecture(canonicalBaseInput, baseCandidate, qualityArgs.quality, repoArgs.repoRoot);
+    } catch (error) {
+      const diagnosticEntry = error.diagnostics?.[0];
+      reportCompareFailure({
+        json: options.json,
+        stage: error.compareStage || 'validate',
+        error: `Base snapshot failed validation: ${error.message}`,
+        code: diagnosticEntry?.code || 'delta/base-validation',
+        details: { side: 'base', ...(diagnosticEntry?.subject?.path ? { path: diagnosticEntry.subject.path } : {}), ...(diagnosticEntry?.evidence || {}), supportedFixes: diagnosticEntry?.supportedFixes || [] },
+        status: error.compareStatus || 1,
+      });
+      return;
+    }
+    try {
+      headResult = renderValidatedArchitecture(canonicalHeadInput, headCandidate, qualityArgs.quality, repoArgs.repoRoot);
+    } catch (error) {
+      const diagnosticEntry = error.diagnostics?.[0];
+      reportCompareFailure({
+        json: options.json,
+        stage: error.compareStage || 'validate',
+        error: `Head snapshot failed validation: ${error.message}`,
+        code: diagnosticEntry?.code || 'delta/head-validation',
+        details: { side: 'head', ...(diagnosticEntry?.subject?.path ? { path: diagnosticEntry.subject.path } : {}), ...(diagnosticEntry?.evidence || {}), supportedFixes: diagnosticEntry?.supportedFixes || [] },
+        status: error.compareStatus || 1,
+      });
+      return;
+    }
+
+    const semanticHash = (diagram) => createHash('sha256').update(canonicalArchitectureJson(diagram)).digest('hex');
+    let compareIr;
+    try {
+      compareIr = compareArchitecture(base, head, {
+        baseRawSha256: createHash('sha256').update(baseBuffer).digest('hex'),
+        headRawSha256: createHash('sha256').update(headBuffer).digest('hex'),
+        baseSemanticSha256: semanticHash(base),
+        headSemanticSha256: semanticHash(head),
+        baseBytes: baseBuffer.byteLength,
+        headBytes: headBuffer.byteLength,
+        baseVerified: Boolean(baseResult.sourceEvidence),
+        headVerified: Boolean(headResult.sourceEvidence),
+      });
+    } catch (error) {
+      if (!(error instanceof ArchitectureDeltaError)) throw error;
+      reportCompareFailure({ json: options.json, stage: 'compare', error: error.message, code: error.code, details: error.details });
+      return;
+    }
+
+    const baseSourceSvg = extractArchitectureSvg(baseResult.html);
+    const headSourceSvg = extractArchitectureSvg(headResult.html);
+    const baseSvg = annotateArchitectureSideSvg(baseSourceSvg, compareIr, 'base');
+    const headSvg = annotateArchitectureSideSvg(headSourceSvg, compareIr, 'head');
+    const deltaSvg = buildDeltaSvg(baseSourceSvg, headSourceSvg, compareIr);
+    // Raw input hashes and byte counts belong in the sidecar receipt, not the
+    // artifact. Keeping them out makes formatting-only input rewrites produce
+    // the exact same canonical review HTML and artifact hash.
+    const artifactIr = {
+      ...compareIr,
+      base: Object.fromEntries(Object.entries(compareIr.base).filter(([key]) => !['rawSha256', 'bytes'].includes(key))),
+      head: Object.fromEntries(Object.entries(compareIr.head).filter(([key]) => !['rawSha256', 'bytes'].includes(key))),
+    };
+    const html = renderArchitectureDeltaHtml({
+      receipt: artifactIr,
+      baseSvg,
+      deltaSvg,
+      headSvg,
+      artifactCss: extractArtifactCss(headResult.html),
+    });
+    const deltaValidation = validateArchitectureDeltaHtml(html, artifactIr);
+    fs.writeFileSync(htmlCandidate, html);
+    const artifact = fs.readFileSync(htmlCandidate);
+    const baseChecks = baseResult.checks.checks.filter((check) => check.ok).length;
+    const headChecks = headResult.checks.checks.filter((check) => check.ok).length;
+    const finalReceipt = {
+      ...compareIr,
+      artifact: { sha256: createHash('sha256').update(artifact).digest('hex'), bytes: artifact.byteLength },
+      validation: {
+        checksPassed: baseChecks + headChecks + deltaValidation.checksPassed,
+        checkCount: baseResult.checks.checks.length + headResult.checks.checks.length + deltaValidation.checkCount,
+        baseComposition: baseResult.checks.composition.status,
+        headComposition: headResult.checks.composition.status,
+      },
+    };
+    fs.writeFileSync(receiptCandidate, `${JSON.stringify(finalReceipt, null, 2)}\n`);
+
+    fs.renameSync(htmlCandidate, outputPath);
+    fs.renameSync(receiptCandidate, receiptPath);
+    if (options.json) console.log(JSON.stringify(finalReceipt, null, 2));
+    else {
+      console.log(`compared architecture ${outputPath}`);
+      console.log(`${finalReceipt.validation.checksPassed}/${finalReceipt.validation.checkCount} checks; completeness ${finalReceipt.completeness}; ${finalReceipt.proofLevel}; sha256 ${finalReceipt.artifact.sha256.slice(0, 12)}`);
+      console.log(`receipt ${receiptPath}`);
+    }
+  } catch (error) {
+    if (error instanceof ArchitectureDeltaError) {
+      reportCompareFailure({ json: options.json, stage: 'artifact', error: error.message, code: error.code, details: error.details });
+    } else {
+      reportCompareFailure({ json: options.json, stage: 'internal', error: 'Architecture compare failed before commit.', code: 'delta/internal', details: { reason: error.message } });
+    }
+  } finally {
+    try {
+      fs.rmSync(stagingDirectory, { recursive: true, force: true });
+    } catch (error) {
+      console.error(`Warning: could not remove compare staging directory: ${error.message}`);
+    }
+  }
 }
 
 function commandRender(args) {
@@ -672,6 +953,18 @@ async function commandDoctor() {
     missing: fs.existsSync(scenarioGuide) ? 0 : 1,
   });
 
+  const compareRuntime = path.join(skillRoot, 'delta/architecture-delta.mjs');
+  const compareFixtures = [
+    path.join(skillRoot, 'examples/checkout-platform.base.architecture.json'),
+    path.join(skillRoot, 'examples/checkout-platform.head.architecture.json'),
+  ];
+  const compareMissing = [compareRuntime, ...compareFixtures].filter((file) => !fs.existsSync(file)).length;
+  checks.push({
+    label: 'Architecture compare runtime and proof fixtures',
+    ok: compareMissing === 0,
+    missing: compareMissing,
+  });
+
   const validators = path.join(skillRoot, 'renderers/shared/generated-validators.mjs');
   const validatorsExist = fs.existsSync(validators);
   let validatorsValid = false;
@@ -929,6 +1222,9 @@ switch (command) {
     break;
   case 'render':
     commandRender(args);
+    break;
+  case 'compare':
+    await commandCompare(args);
     break;
   case 'deliver':
     await commandDeliver(args);

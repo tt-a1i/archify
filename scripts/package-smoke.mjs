@@ -86,6 +86,17 @@ try {
   run(['render', 'architecture', path.join(skillRoot, 'examples', fixtures[0][1]), deployment]);
   run(['check', deployment]);
 
+  const compareReceipt = JSON.parse(run([
+    'compare', 'architecture',
+    path.join(skillRoot, 'examples', 'checkout-platform.base.architecture.json'),
+    path.join(skillRoot, 'examples', 'checkout-platform.head.architecture.json'),
+    path.join(scratch, 'architecture-delta.html'), '--json',
+  ]));
+  if (!compareReceipt.ok || compareReceipt.completeness !== 'complete'
+    || compareReceipt.validation?.checksPassed !== compareReceipt.validation?.checkCount) {
+    throw new Error('packaged Architecture compare did not return a complete passing receipt');
+  }
+
   const delivered = JSON.parse(run([
     'deliver', 'workflow', path.join(skillRoot, 'examples', fixtures[1][1]),
     path.join(scratch, 'workflow-delivered.html'), '--quality', 'showcase', '--json',

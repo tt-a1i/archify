@@ -8,9 +8,10 @@
 
 **在对话里，把代码仓库或系统描述变成漂亮、可靠、可交互的系统地图。**
 
-Archify 是适用于 Cursor、Claude Code、Codex CLI 和 OpenCode 的 Agent Skill。给它一段系统描述或一个代码仓库，就能得到可打开、可探索、可演示、可分享的专业技术图。
+Archify 是适用于 Cursor、Claude Code、Codex CLI 和 OpenCode 的 Agent Skill。给它系统描述或代码仓库，就能得到可交互、可分享的专业技术地图。
 
 - **打开就是成品** —— 五种技术图、三套视觉预设、深浅主题，以及显式启用的有限动态
+- **合并前先看清架构变化** —— 把两份已校验快照对比为 Before / Delta / After，准确区分新增、删除、语义变化、移动和重路由
 - **每次探索都有依据** —— 搜索节点、按需打开版本校验过的源码、追踪作者定义的上下游可达范围与精确路径、对比角色、播放故事，但不编造拓扑
 - **一个文件即可放心交付** —— Typed JSON IR 和确定性校验生成独立 HTML，并支持 PNG、SVG、WebM 与 1200×630 分享卡片
 
@@ -49,7 +50,7 @@ npx skills add tt-a1i/archify -g
 
 [![根据公开仓库 mco-org/mco 生成的 MCO 运行时架构图](docs/assets/mco-runtime-share-card.png)](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)
 
-Archify 读取 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版本，追踪 CLI、执行策略、Provider Adapter、调用运行时和持久会话，最终生成这张校验通过、可交互的系统地图。**[打开可交互成品 ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)** · [查看 Command Router 下游 ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [查看 Typed Source](docs/cases/mco-runtime.architecture.json)
+Archify 追踪 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版本并生成这张校验地图。**[打开成品 ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)** · [追踪下游 ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [Typed Source](docs/cases/mco-runtime.architecture.json)
 
 ## 预览
 
@@ -65,11 +66,11 @@ Export 菜单支持复制 PNG，并下载静态或动态格式：
 
 需要用于 README、Release 或社交平台的标准 1200×630 图片时，使用 **Copy Share Card**。
 
-路径解析完成后，打开 **Export → Route Share Card**，即可把这条真实有向路径下载为 1200×630 PNG，同时保留完整拓扑作为上下文。它是可选、仅下载的 Share Card 变体；普通导出仍保持 canonical。
+路径解析后，**Export → Route Share Card** 会把真实路径下载为 1200×630 PNG，并保留完整拓扑上下文。
 
 ![Route Share Card：突出 Users 到 API Server 的精确路径，同时保留完整架构作为上下文](docs/assets/archify-route-share-card.png)
 
-完成 `Upstream` 或 `Downstream` authored reach 后，选择 **Export → Reach Share Card**，即可把这次阅读结果变成 1200×630 PNG。卡片保留完整拓扑作为上下文，并写明方向、起点、节点数、关系数与最大跳数；它不会冒充运行时影响分析。
+完成 authored `Upstream` 或 `Downstream` reach 后，**Export → Reach Share Card** 会捕获这次阅读结果，但不冒充运行时影响分析。
 
 ![MCO downstream Reach Share Card：展示从 Command Router 出发的已创作关系](docs/assets/mco-runtime-reach-share-card.png)
 
@@ -130,6 +131,12 @@ Redis Session 查询 -> PostgreSQL 回源。把缓存未命中作为次要路径
 工程画像：负责人、单一区域归属、数据库私有边界或边界穿越机制缺失时会直接阻断。
 它不会被静默开启，只校验作者写入的事实，不代表线上基础设施已经核验。可查看
 [通过校验的部署证明](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership)。
+
+做设计或 PR 评审时，Architecture Delta 把两份已校验源文件比较为 Before / Delta / After 和机器回执，不冒充风险或合并安全判断。
+
+`node archify/bin/archify.mjs compare architecture base.json head.json architecture-delta.html --json`
+
+[![Architecture Delta：展示作者明确写出的新增、删除、变化和移动](docs/assets/architecture-delta-proof.jpg)](examples/checkout-platform-delta.html)
 
 不知道选哪一种？打开[交互式场景指南](https://tt-a1i.github.io/archify/guide.html)，或直接询问零依赖 CLI：
 
@@ -252,7 +259,7 @@ Claude.ai 中的上传入口：
 - [路线图](ROADMAP.md)
 - [自动生成的 Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-Archify 2.12 已覆盖五种 Typed IR、真实仓库证明、验证后实时预览、作者可达性、可选有限动态、引导视图、语义搜索与关系探索、可分享深链、1200×630 整图与路径卡片、浏览器原生 WebM、显式 `standard` / `showcase` 质量档位，以及按需启用的部署所有权契约。
+Archify 2.12 已覆盖五种 Typed IR、真实仓库证明、确定性的 Architecture Delta 评审、验证后实时预览、作者可达性、可选有限动态、引导视图、语义搜索与关系探索、可分享深链、1200×630 整图与路径卡片、浏览器原生 WebM、显式 `standard` / `showcase` 质量档位，以及按需启用的部署所有权契约。
 
 自动 Mermaid Parser、通用自动布局、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。
 

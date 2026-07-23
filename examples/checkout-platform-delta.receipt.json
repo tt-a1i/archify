@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "compare",
+  "type": "architecture",
+  "comparatorVersion": 1,
+  "canonicalVersion": 1,
+  "completeness": "complete",
+  "proofLevel": "authored",
+  "base": {
+    "title": "Checkout Platform — Baseline",
+    "rawSha256": "3cc9e5b6075aa77b51a892d2cfeba16e0f8eb0f00416e0337e94ec8ec6300d8c",
+    "semanticSha256": "c6abe82520a9a634a275f2c38f07bdb9497275dbecaa76054cec6c28925579cb",
+    "bytes": 2304
+  },
+  "head": {
+    "title": "Checkout Platform — Fraud Gate",
+    "rawSha256": "54982cff83d1a91316097e27fde009b10e7c07a2e321e8bff94ec21ef902e5f2",
+    "semanticSha256": "66eaa8c327626376defe232a771d5da22509047f44ffb82e2f04d76b0243bf63",
+    "bytes": 2434
+  },
+  "summary": {
+    "components": {
+      "added": 1,
+      "changed": 1,
+      "evidenceChanged": 0,
+      "removed": 1,
+      "moved": 1
+    },
+    "connections": {
+      "added": 1,
+      "changed": 2,
+      "removed": 1,
+      "rerouted": 1
+    },
+    "boundaries": {
+      "added": 0,
+      "changed": 2,
+      "removed": 0,
+      "geometryChanged": 0
+    },
+    "presentationChanged": true,
+    "provenanceChanged": false
+  },
+  "changes": {
+    "components": [
+      {
+        "id": "cache",
+        "baseLabel": "Session Cache",
+        "status": "removed",
+        "classifications": [
+          "semantic"
+        ],
+        "changedFields": []
+      },
+      {
+        "id": "checkout",
+        "baseLabel": "Checkout API",
+        "headLabel": "Checkout API",
+        "status": "changed",
+        "classifications": [
+          "semantic"
+        ],
+        "changedFields": [
+          "/sublabel"
+        ]
+      },
+      {
+        "id": "fraud",
+        "headLabel": "Fraud Gate",
+        "status": "added",
+        "classifications": [
+          "semantic"
+        ],
+        "changedFields": []
+      },
+      {
+        "id": "queue",
+        "baseLabel": "Order Events",
+        "headLabel": "Order Events",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos"
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "id": "authorize-payment",
+        "base": {
+          "from": "orders",
+          "to": "payments",
+          "label": "authorize"
+        },
+        "head": {
+          "from": "fraud",
+          "to": "payments",
+          "label": "authorize"
+        },
+        "status": "changed",
+        "classifications": [
+          "geometry",
+          "topology"
+        ],
+        "changedFields": [
+          "/from",
+          "/fromSide",
+          "/toSide",
+          "/via"
+        ]
+      },
+      {
+        "id": "fraud-check",
+        "head": {
+          "from": "checkout",
+          "to": "fraud",
+          "label": "screen"
+        },
+        "status": "added",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
+      },
+      {
+        "id": "persist-order",
+        "base": {
+          "from": "checkout",
+          "to": "orders",
+          "label": "SQL"
+        },
+        "head": {
+          "from": "checkout",
+          "to": "orders",
+          "label": "SQL tx"
+        },
+        "status": "changed",
+        "classifications": [
+          "semantic"
+        ],
+        "changedFields": [
+          "/label"
+        ]
+      },
+      {
+        "id": "publish-order",
+        "base": {
+          "from": "checkout",
+          "to": "queue",
+          "label": "accepted"
+        },
+        "head": {
+          "from": "checkout",
+          "to": "queue",
+          "label": "accepted"
+        },
+        "status": "rerouted",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/labelDy"
+        ]
+      },
+      {
+        "id": "session-read",
+        "base": {
+          "from": "checkout",
+          "to": "cache",
+          "label": "session"
+        },
+        "status": "removed",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
+      }
+    ],
+    "boundaries": [
+      {
+        "key": "region:Production region",
+        "kind": "region",
+        "label": "Production region",
+        "status": "changed",
+        "classifications": [
+          "scope"
+        ],
+        "changedFields": [
+          "/wraps"
+        ]
+      },
+      {
+        "key": "security-group:Checkout trust zone",
+        "kind": "security-group",
+        "label": "Checkout trust zone",
+        "status": "changed",
+        "classifications": [
+          "scope"
+        ],
+        "changedFields": [
+          "/wraps"
+        ]
+      }
+    ]
+  },
+  "identity": {
+    "components": "components[].id",
+    "connections": "connections[].id (required)",
+    "boundaries": "boundaries[].kind + boundaries[].label (derived)"
+  },
+  "view": {
+    "visualPreset": "signal-flow"
+  },
+  "limitations": [
+    "Authored Architecture IR only; no runtime impact, causality, risk, or mergeability is inferred.",
+    "Boundary identity is conservatively derived from kind + label."
+  ],
+  "artifact": {
+    "sha256": "405c40ca58c1cd309266fe6bf64820b050db32f139036f90676172a6906e0ac2",
+    "bytes": 226757
+  },
+  "validation": {
+    "checksPassed": 23,
+    "checkCount": 23,
+    "baseComposition": "pass",
+    "headComposition": "pass"
+  }
+}
