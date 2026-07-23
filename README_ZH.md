@@ -8,7 +8,7 @@
 
 **在对话里，把代码仓库或系统描述变成漂亮、可靠、可交互的系统地图。**
 
-Archify 是适用于 Claude、Codex CLI 和 opencode 的 Agent Skill。给它一段系统描述或一个代码仓库，就能得到可打开、可探索、可演示、可分享的专业技术图。
+Archify 是适用于 Cursor、Claude Code、Codex CLI 和 OpenCode 的 Agent Skill。给它一段系统描述或一个代码仓库，就能得到可打开、可探索、可演示、可分享的专业技术图。
 
 - **打开就是成品** —— 五种技术图、三套视觉预设、深浅主题，以及显式启用的有限动态
 - **每次探索都有依据** —— 搜索节点、按需打开版本校验过的源码、追踪作者定义的上下游可达范围与精确路径、对比角色、播放故事，但不编造拓扑
@@ -23,6 +23,8 @@ Archify 是适用于 Claude、Codex CLI 和 opencode 的 Agent Skill。给它一
 ```bash
 npx skills add tt-a1i/archify -g
 ```
+
+使用 Cursor？打开[可切换 Agent 的快速开始页](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)，即可获得准确的全局或当前仓库安装命令。
 
 然后告诉 Agent：`使用 archify 梳理这个仓库的运行时架构。`
 
@@ -81,13 +83,19 @@ Export 菜单支持复制 PNG，并下载静态或动态格式：
 npx skills add tt-a1i/archify -g
 ```
 
+显式、非交互地安装到 Cursor：
+
+```bash
+npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
+```
+
 如果只想临时体验：
 
 ```bash
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-需要时可以把 `codex` 换成 `claude-code` 或 `opencode`。仓库内的 [`archify.zip`](archify.zip) 也不需要执行 `npm install`。
+同一份 Skill 可用于 `cursor`、`codex`、`claude-code` 和 `opencode`；[快速开始页的 Agent 切换器](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)会生成准确命令，不维护厂商专属分叉。仓库内的 [`archify.zip`](archify.zip) 也不需要执行 `npm install`。
 
 ### 2. 先画一个边界清楚的视图
 

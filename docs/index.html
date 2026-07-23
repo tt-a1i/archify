@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Archify — Technical Diagrams from Plain English</title>
-  <meta name="description" content="An agent skill for Claude, Codex CLI, and opencode that turns plain-English descriptions into polished, explorable, self-contained technical diagrams with semantic focus, motion, and crisp export.">
+  <meta name="description" content="An agent skill for Cursor, Claude Code, Codex CLI, and OpenCode that turns plain-English descriptions into polished, explorable, self-contained technical diagrams with semantic focus, motion, and crisp export.">
   <meta name="theme-color" content="#020617">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><polygon points='14,2 26,8 26,20 14,26 2,20 2,8' fill='%23083344' stroke='%2322d3ee' stroke-width='1.5'/><circle cx='14' cy='15' r='2.5' fill='%2322d3ee'/></svg>">
 
@@ -277,7 +277,7 @@
           <span data-i18n="hero-gallery">Explore proof gallery</span>
         </a>
       </div>
-      <div class="hero-proof fade-up d4" id="hero-proof-stage" data-proof-playback="settled">
+      <div class="hero-proof fade-up d4" id="hero-proof-stage" data-proof-playback="first-fold-once">
         <div class="proof-chrome">
           <div class="proof-status">
             <span class="proof-live" data-i18n="proof-live">Live proof</span>
@@ -296,7 +296,7 @@
           </a>
         </div>
         <div class="proof-viewport" id="hero-proof-panel" role="tabpanel" aria-labelledby="proof-tab-signal">
-          <iframe id="hero-proof-frame" data-proof="signal" src="gallery/artifacts/agent-tool-call.workflow.html?embed=1&amp;theme=dark#view=happy-path" title="Agent Tool Call live Archify proof" loading="eager"></iframe>
+          <iframe id="hero-proof-frame" data-proof="signal" src="gallery/artifacts/agent-tool-call.workflow.html?embed=1&amp;play=1&amp;theme=dark#view=happy-path" title="Agent Tool Call live Archify proof" loading="eager" sandbox="allow-scripts"></iframe>
         </div>
         <div class="proof-caption" aria-live="polite">
           <div class="proof-caption-main">
@@ -552,13 +552,13 @@
         <div>
           <div class="section-label fade-up" data-i18n="label-qs">Quick Start</div>
           <h2 class="section-heading fade-up d1" data-i18n="qs-h2">Up and running<br>in three steps.</h2>
-          <p class="section-body fade-up d2" style="margin-bottom:2.5rem" data-i18n="qs-body">One command for Claude Code, Codex, or opencode. Or try it with a temporary copy.</p>
+          <p class="section-body fade-up d2" style="margin-bottom:2.5rem" data-i18n="qs-body">One checked Skill for Cursor, Claude Code, Codex, and OpenCode. Choose an agent, then draw.</p>
           <div class="steps">
             <div class="step fade-up d1">
               <div class="step-num">1</div>
               <div class="step-content">
                 <h4 data-i18n="step1-h">Install in one command</h4>
-                <p data-i18n="step1-p">Run <code>npx skills add tt-a1i/archify -g</code>, then select your agent. To try it without a permanent install, use <code>npx skills use tt-a1i/archify@archify --agent codex</code>.</p>
+                <p data-i18n="step1-p">Run <code>npx skills add tt-a1i/archify -g</code>, or open the <a href="start.html?agent=cursor&amp;type=architecture">agent-aware quick start</a> for an exact Cursor, Codex, Claude Code, or OpenCode command.</p>
               </div>
             </div>
             <div class="step fade-up d2">
@@ -584,8 +584,8 @@
               <div class="code-bar-dots"><span class="d-red"></span><span class="d-amber"></span><span class="d-green"></span></div>
               <span class="code-bar-label" data-i18n="code-label">example prompt</span>
             </div>
-            <div class="code-body" id="code-en"><span class="cmt"># Step 1 — install globally</span>
-npx skills add tt-a1i/archify -g
+            <div class="code-body" id="code-en"><span class="cmt"># Step 1 — install globally for Cursor</span>
+npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
 
 <span class="cmt"># Or try with Codex, without a permanent install</span>
 npx skills use tt-a1i/archify@archify --agent codex
@@ -609,8 +609,8 @@ with rollback on failure.</span>
 <span class="str">"Add a Kafka message bus"
 "Move Redis next to the DB"
 "Use rose for the auth path"</span></div>
-            <div class="code-body" id="code-zh" style="display:none"><span class="cmt"># 第 1 步 — 全局安装</span>
-npx skills add tt-a1i/archify -g
+            <div class="code-body" id="code-zh" style="display:none"><span class="cmt"># 第 1 步 — 全局安装到 Cursor</span>
+npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
 
 <span class="cmt"># 或者用临时副本启动 Codex</span>
 npx skills use tt-a1i/archify@archify --agent codex
@@ -732,8 +732,8 @@ npx skills use tt-a1i/archify@archify --agent codex
       'chip-external':'External','chip-external-use':'Users, 3rd parties, generic',
       'label-qs':'Quick Start',
       'qs-h2':'Up and running<br>in three steps.',
-      'qs-body':'One command for Claude Code, Codex, or opencode. Or try it with a temporary copy.',
-      'step1-h':'Install in one command','step1-p':'Run <code>npx skills add tt-a1i/archify -g</code>, then select your agent. To try it without a permanent install, use <code>npx skills use tt-a1i/archify@archify --agent codex</code>.',
+      'qs-body':'One checked Skill for Cursor, Claude Code, Codex, and OpenCode. Choose an agent, then draw.',
+      'step1-h':'Install in one command','step1-p':'Run <code>npx skills add tt-a1i/archify -g</code>, or open the <a href="start.html?agent=cursor&amp;type=architecture">agent-aware quick start</a> for an exact Cursor, Codex, Claude Code, or OpenCode command.',
       'step2-h':'Describe your system','step2-p':'Describe components, connections, and cloud services — or ask your agent to analyze the repository first.',
       'step3-h':'Ask your agent to draw it','step3-p':'Tell your agent to use Archify. It generates a self-contained HTML file you can open in any browser and refine in chat.',
       'code-label':'example prompt',
@@ -791,8 +791,8 @@ npx skills use tt-a1i/archify@archify --agent codex
       'chip-external':'外部系统','chip-external-use':'用户、第三方、通用外部',
       'label-qs':'快速开始',
       'qs-h2':'三步上手，<br>即刻运行。',
-      'qs-body':'一条命令用于 Claude Code、Codex 或 opencode，也可以先用临时副本试用。',
-      'step1-h':'一条命令安装','step1-p':'运行 <code>npx skills add tt-a1i/archify -g</code>，然后选择使用的 agent。不想常驻安装，可运行 <code>npx skills use tt-a1i/archify@archify --agent codex</code>。',
+      'qs-body':'同一份经过检查的 Skill 可用于 Cursor、Claude Code、Codex 和 OpenCode；选择 Agent，然后开始作图。',
+      'step1-h':'一条命令安装','step1-p':'运行 <code>npx skills add tt-a1i/archify -g</code>，或打开<a href="start.html?agent=cursor&amp;type=architecture">可切换 Agent 的快速开始页</a>，获取准确的 Cursor、Codex、Claude Code 或 OpenCode 命令。',
       'step2-h':'描述你的系统','step2-p':'描述组件、连接关系和云服务，也可以先让 agent 分析代码仓库。',
       'step3-h':'让 agent 绘制','step3-p':'告诉 agent 使用 Archify，它会生成可在任意浏览器打开的单文件 HTML，并可继续在对话中迭代。',
       'code-label':'示例提示词',
@@ -835,9 +835,6 @@ npx skills use tt-a1i/archify@archify --agent codex
   const proofOpen = document.getElementById('proof-open');
   const proofMeta = document.getElementById('proof-meta');
   const proofTitle = document.getElementById('proof-title');
-  const proofMotionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let initialProofPlaybackStarted = false;
-  let initialProofObserver = null;
 
   function proofEmbedUrl(proof, { play = false } = {}) {
     const playback = play ? '&play=1' : '';
@@ -861,40 +858,16 @@ npx skills use tt-a1i/archify@archify --agent codex
     proofTitle.textContent = proof.title[lang];
     proofFrame.title = proof.iframeTitle[lang];
     if (proofFrame.dataset.proof !== key) {
-      if (deliberate) {
-        initialProofPlaybackStarted = true;
-        initialProofObserver?.disconnect();
-        proofStage.dataset.proofPlayback = 'deliberate';
-      }
+      if (deliberate) proofStage.dataset.proofPlayback = 'deliberate';
       proofStage.classList.add('is-loading');
       proofFrame.dataset.proof = key;
       proofFrame.src = proofEmbedUrl(proof, { play: deliberate });
     }
   }
 
-  function startInitialProofPlayback() {
-    if (initialProofPlaybackStarted || proofMotionPreference.matches || activeProof !== 'signal') return false;
-    initialProofPlaybackStarted = true;
-    proofStage.dataset.proofPlayback = 'visible-once';
-    proofStage.classList.add('is-loading');
-    proofFrame.src = proofEmbedUrl(PROOFS.signal, { play: true });
-    return true;
-  }
-
-  function armInitialProofPlayback() {
-    if (proofMotionPreference.matches || !('IntersectionObserver' in window)) return;
-    initialProofObserver = new IntersectionObserver(entries => {
-      const entry = entries.find(candidate => candidate.target === proofPanel);
-      if (!entry) return;
-      const visibleHeight = Math.max(0, Math.min(entry.boundingClientRect.bottom, entry.rootBounds?.bottom ?? innerHeight) - Math.max(entry.boundingClientRect.top, entry.rootBounds?.top ?? 0));
-      if (!entry.isIntersecting || visibleHeight < 88) return;
-      startInitialProofPlayback();
-      initialProofObserver.disconnect();
-    }, { threshold: [0, .15, .2] });
-    initialProofObserver.observe(proofPanel);
-  }
-
-  proofFrame.addEventListener('load', () => proofStage.classList.remove('is-loading'));
+  proofFrame.addEventListener('load', () => {
+    proofStage.classList.remove('is-loading');
+  });
   document.querySelectorAll('.proof-tab').forEach(tab => {
     tab.addEventListener('click', () => renderProof(tab.dataset.proof, { deliberate: true }));
     tab.addEventListener('keydown', event => {
@@ -928,10 +901,6 @@ npx skills use tt-a1i/archify@archify --agent codex
 
   btnLang.addEventListener('click', () => applyLang(lang === 'en' ? 'zh' : 'en'));
   applyLang(lang);
-  armInitialProofPlayback();
-  proofMotionPreference.addEventListener?.('change', event => {
-    if (event.matches && !initialProofPlaybackStarted) initialProofObserver?.disconnect();
-  });
 
   /* ══ Intersection observer ══ */
   if ('IntersectionObserver' in window) {

@@ -42,30 +42,25 @@ test('narrow mobile gets an independently tuned proof aperture and full-size act
   assert.match(mobile, /\.proof-viewport\s*\{\s*height:400px;\s*\}/);
 });
 
-test('proof aperture remains one real eager artifact with explicit user-selected identities', () => {
+test('proof aperture remains one real eager sandboxed artifact with explicit user-selected identities', () => {
   assert.equal((landing.match(/<iframe id="hero-proof-frame"/g) || []).length, 1);
   assert.match(landing, /loading="eager"/);
+  assert.match(landing, /sandbox="allow-scripts"/);
+  assert.doesNotMatch(landing, /sandbox="[^"]*allow-same-origin/);
   assert.equal((landing.match(/class="proof-tab"/g) || []).length, 3);
-  assert.match(landing, /data-proof-playback="settled"/);
-  assert.match(landing, /\?embed=1&amp;theme=dark#view=happy-path/);
-  assert.doesNotMatch(landing, /src="[^"]+play=1[^"]+"/);
+  assert.match(landing, /data-proof-playback="first-fold-once"/);
+  assert.match(landing, /\?embed=1&amp;play=1&amp;theme=dark#view=happy-path/);
   assert.doesNotMatch(landing, /setInterval\(|scrollIntoView\(|scroll-triggered|proof-carousel/);
 });
 
-test('initial proof playback waits for 88 visible canvas pixels and can start only once', () => {
-  assert.match(landing, /let initialProofPlaybackStarted = false/);
-  assert.match(landing, /visibleHeight < 88/);
-  assert.match(landing, /new IntersectionObserver\(entries =>/);
-  assert.match(landing, /threshold: \[0, \.15, \.2\]/);
-  assert.match(landing, /if \(initialProofPlaybackStarted \|\| proofMotionPreference\.matches \|\| activeProof !== 'signal'\) return false/);
-  assert.match(landing, /initialProofPlaybackStarted = true/);
-  assert.match(landing, /proofStage\.dataset\.proofPlayback = 'visible-once'/);
-  assert.match(landing, /initialProofObserver\.disconnect\(\)/);
+test('initial proof playback uses one sandboxed load without parent-frame reach-through', () => {
+  assert.match(landing, /src="gallery\/artifacts\/agent-tool-call\.workflow\.html\?embed=1&amp;play=1&amp;theme=dark#view=happy-path"/);
+  assert.doesNotMatch(landing, /initialProof|proofFrameDocumentIsReady|proofFrame\.contentWindow|proofFrame\.contentDocument/);
+  assert.match(landing, /proofFrame\.addEventListener\('load', \(\) => \{/);
+  assert.match(landing, /proofStage\.classList\.remove\('is-loading'\)/);
 });
 
-test('proof visibility handshake has reduced-motion, no-observer, and deliberate-choice boundaries', () => {
-  assert.match(landing, /window\.matchMedia\('\(prefers-reduced-motion: reduce\)'\)/);
-  assert.match(landing, /if \(proofMotionPreference\.matches \|\| !\('IntersectionObserver' in window\)\) return/);
+test('proof playback delegates reduced motion to the artifact and keeps deliberate-choice boundaries', () => {
   assert.match(landing, /renderProof\(tab\.dataset\.proof, \{ deliberate: true \}\)/);
   assert.match(landing, /renderProof\(tabs\[next\]\.dataset\.proof, \{ focus: true, deliberate: true \}\)/);
   assert.match(landing, /proofEmbedUrl\(proof, \{ play: deliberate \}\)/);

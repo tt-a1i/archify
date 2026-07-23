@@ -95,7 +95,7 @@
     main { width:min(1120px,calc(100% - 3rem)); margin:0 auto; padding:5rem 0 4rem; }
     .lead { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(260px,.65fr); gap:4rem; align-items:end; margin-bottom:3rem; }
     .eyebrow { margin:0 0 1rem; color:var(--cyan); font-size:.68rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
-    h1 { max-width:780px; margin:0; font-size:clamp(2.1rem,5.3vw,4.7rem); line-height:1.04; letter-spacing:-.055em; text-wrap:balance; }
+    h1 { max-width:780px; margin:0; font-size:clamp(2.1rem,5.3vw,4.7rem); line-height:1.04; letter-spacing:-.04em; text-wrap:balance; }
     h1 span { color:var(--cyan); }
     html[lang^="zh"] .title-gap { display:none; }
     .lead-copy { margin:0; color:var(--muted); font-size:.8rem; line-height:1.8; }
@@ -119,19 +119,38 @@
     .type-tab:hover { background:var(--panel-raised); color:var(--text); }
     .type-tab[aria-selected="true"] { color:var(--cyan); background:var(--cyan-soft); box-shadow:inset 0 -2px var(--cyan); }
 
-    .workbench { display:grid; grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr); gap:1px; border:1px solid var(--border-hi); background:var(--border-hi); box-shadow:0 24px 80px rgba(0,0,0,.32); }
+    .workbench { display:grid; grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr); gap:1px; border:1px solid var(--border-hi); background:var(--border-hi); }
     .panel { min-width:0; padding:2rem; background:rgba(7,16,31,.96); }
     .panel-kicker { display:flex; align-items:center; gap:.7rem; margin-bottom:1.4rem; color:var(--dim); font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; }
     .panel-kicker b { display:grid; place-items:center; width:26px; height:26px; border:1px solid var(--border-hi); color:var(--cyan); font-size:.64rem; }
     .panel h2 { margin:0 0 .65rem; font-size:1.05rem; letter-spacing:-.025em; }
     .panel-intro { min-height:3.9rem; margin:0 0 1.5rem; color:var(--muted); font-size:.72rem; line-height:1.75; }
 
+    .agent-picker { margin:0 0 1.25rem; }
+    .agent-picker-head { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin:0 0 .6rem; color:var(--muted); font-size:.64rem; line-height:1.45; }
+    .agent-picker-head strong { color:var(--emerald); font-weight:600; }
+    .agent-tabs { display:flex; flex-wrap:wrap; gap:.4rem; }
+    .agent-tab {
+      min-height:44px;
+      padding:.55rem .72rem;
+      border:1px solid var(--border-hi);
+      border-radius:6px;
+      background:transparent;
+      color:var(--muted);
+      cursor:pointer;
+      font-size:.64rem;
+      font-weight:650;
+      transition:background .15s,color .15s,border-color .15s;
+    }
+    .agent-tab:hover { color:var(--text); border-color:var(--dim); }
+    .agent-tab[aria-selected="true"] { color:#041019; border-color:var(--cyan); background:var(--cyan); }
+
     .command-block { margin-top:1rem; border:1px solid var(--border); background:#030914; }
     .command-bar { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.62rem .75rem; border-bottom:1px solid var(--border); color:var(--dim); font-size:.6rem; text-transform:uppercase; letter-spacing:.08em; }
     .copy-button { border:0; background:transparent; color:var(--cyan); cursor:pointer; font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
     .copy-button:hover { color:#a5f3fc; }
     pre { margin:0; padding:1rem; overflow:auto; color:#d9f9ff; font:500 .7rem/1.65 'JetBrains Mono',ui-monospace,monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
-    .secondary-note { margin:1.25rem 0 0; padding:1rem; border-left:2px solid var(--emerald); background:var(--emerald-soft); color:var(--muted); font-size:.67rem; line-height:1.7; }
+    .secondary-note { margin:1.25rem 0 0; padding:1rem; border:1px solid rgba(52,211,153,.28); background:var(--emerald-soft); color:var(--muted); font-size:.67rem; line-height:1.7; }
 
     .question { margin:0 0 1rem; color:var(--text); font-size:.82rem; line-height:1.65; }
     .include-list { display:flex; flex-wrap:wrap; gap:.45rem; margin:0 0 1.2rem; padding:0; list-style:none; }
@@ -215,17 +234,27 @@
       <article class="panel">
         <div class="panel-kicker"><b>01</b><span data-en="Install the skill" data-zh="安装 Skill">Install the skill</span></div>
         <h2 data-en="Keep the tool local." data-zh="让工具留在本地。">Keep the tool local.</h2>
-        <p class="panel-intro" data-en="Install once for Claude Code, Codex, or opencode. The packaged renderers and validators work without a hosted diagram service." data-zh="一次安装，即可用于 Claude Code、Codex 或 opencode。打包后的渲染器与校验器不依赖托管式图表服务。">Install once for Claude Code, Codex, or opencode. The packaged renderers and validators work without a hosted diagram service.</p>
+        <p class="panel-intro" data-en="Choose Cursor, Codex, Claude Code, or OpenCode. Every agent receives the same checked Skill and zero-dependency renderers—no vendor-specific fork." data-zh="选择 Cursor、Codex、Claude Code 或 OpenCode。每个 Agent 使用同一份经过检查的 Skill 与零依赖渲染器，不维护厂商专属分叉。">Choose Cursor, Codex, Claude Code, or OpenCode. Every agent receives the same checked Skill and zero-dependency renderers—no vendor-specific fork.</p>
+
+        <div class="agent-picker">
+          <p class="agent-picker-head"><span data-en="Choose your coding agent" data-zh="选择你的编码 Agent">Choose your coding agent</span><strong id="agent-state">Codex · same Skill</strong></p>
+          <div class="agent-tabs" role="tablist" aria-label="Coding agent">
+            <button class="agent-tab" type="button" role="tab" data-agent="cursor">Cursor</button>
+            <button class="agent-tab" type="button" role="tab" data-agent="codex">Codex</button>
+            <button class="agent-tab" type="button" role="tab" data-agent="claude-code">Claude Code</button>
+            <button class="agent-tab" type="button" role="tab" data-agent="opencode">OpenCode</button>
+          </div>
+        </div>
 
         <div class="command-block">
-          <div class="command-bar"><span data-en="Permanent install" data-zh="永久安装">Permanent install</span><button class="copy-button" type="button" data-copy-source="install-command" data-en="Copy" data-zh="复制">Copy</button></div>
-          <pre id="install-command">npx skills add tt-a1i/archify -g</pre>
+          <div class="command-bar"><span data-en="Global install" data-zh="全局安装">Global install</span><button class="copy-button" type="button" data-copy-source="install-command" data-en="Copy" data-zh="复制">Copy</button></div>
+          <pre id="install-command">npx -y skills add tt-a1i/archify --skill archify --agent codex --global --copy --yes</pre>
         </div>
         <div class="command-block">
-          <div class="command-bar"><span data-en="One-off Codex run" data-zh="Codex 临时体验">One-off Codex run</span><button class="copy-button" type="button" data-copy-source="try-command" data-en="Copy" data-zh="复制">Copy</button></div>
-          <pre id="try-command">npx skills use tt-a1i/archify@archify --agent codex</pre>
+          <div class="command-bar"><span data-en="This repository only" data-zh="仅安装到当前仓库">This repository only</span><button class="copy-button" type="button" data-copy-source="project-command" data-en="Copy" data-zh="复制">Copy</button></div>
+          <pre id="project-command">npx -y skills add tt-a1i/archify --skill archify --agent codex --copy --yes</pre>
         </div>
-        <p class="secondary-note" data-en="The viewer link carries only the diagram type. It does not include the title, nodes, edges, repository path, or source JSON." data-zh="Viewer 链接只携带图表类型，不包含标题、节点、连线、仓库路径或源 JSON。">The viewer link carries only the diagram type. It does not include the title, nodes, edges, repository path, or source JSON.</p>
+        <p class="secondary-note" data-en="The Start link carries only your agent, language, and diagram type. It never contains a repository path, title, node, relationship, or source JSON." data-zh="Start 链接只携带 Agent、语言和图表类型，不包含仓库路径、标题、节点、关系或源 JSON。">The Start link carries only your agent, language, and diagram type. It never contains a repository path, title, node, relationship, or source JSON.</p>
       </article>
 
       <article class="panel" aria-live="polite">
@@ -257,10 +286,13 @@
 
       var DATA = JSON.parse(document.getElementById('start-data').textContent);
       var KNOWN_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
+      var KNOWN_AGENTS = new Set(['cursor', 'codex', 'claude-code', 'opencode']);
       var params = new URLSearchParams(window.location.search);
       var requestedType = params.get('type');
+      var requestedAgent = params.get('agent');
       var requestedLanguage = params.get('lang');
       var type = KNOWN_TYPES.has(requestedType) ? requestedType : 'architecture';
+      var agent = KNOWN_AGENTS.has(requestedAgent) ? requestedAgent : 'codex';
       var language = requestedLanguage === 'zh' || requestedLanguage === 'en'
         ? requestedLanguage
         : ((navigator.languages && navigator.languages[0]) || navigator.language || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
@@ -273,6 +305,9 @@
       var proofMeta = document.getElementById('proof-meta');
       var copyStatus = document.getElementById('copy-status');
       var languageButton = document.getElementById('language');
+      var agentState = document.getElementById('agent-state');
+      var installCommand = document.getElementById('install-command');
+      var projectCommand = document.getElementById('project-command');
 
       function copyForElement(element) {
         return language === 'zh' ? element.dataset.zh : element.dataset.en;
@@ -290,6 +325,7 @@
       function updateUrl() {
         var next = new URLSearchParams(window.location.search);
         next.set('type', type);
+        next.set('agent', agent);
         next.set('lang', language);
         history.replaceState(null, '', window.location.pathname + '?' + next.toString());
       }
@@ -303,6 +339,15 @@
           button.setAttribute('aria-selected', String(active));
           button.tabIndex = active ? 0 : -1;
         });
+        document.querySelectorAll('[data-agent]').forEach(function (button) {
+          var active = button.dataset.agent === agent;
+          button.setAttribute('aria-selected', String(active));
+          button.tabIndex = active ? 0 : -1;
+        });
+        var agentName = document.querySelector('[data-agent="' + agent + '"]').textContent;
+        agentState.textContent = agentName + (language === 'zh' ? ' · 同一份 Skill' : ' · same Skill');
+        installCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --agent ' + agent + ' --global --copy --yes';
+        projectCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --agent ' + agent + ' --copy --yes';
         title.textContent = copy.title;
         question.textContent = copy.question;
         prompt.textContent = copy.prompt;
@@ -349,6 +394,25 @@
         });
         button.addEventListener('keydown', function (event) {
           var buttons = Array.from(document.querySelectorAll('[data-type]'));
+          var index = buttons.indexOf(button);
+          if (event.key === 'ArrowRight' || event.key === 'ArrowDown') index = (index + 1) % buttons.length;
+          else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') index = (index - 1 + buttons.length) % buttons.length;
+          else if (event.key === 'Home') index = 0;
+          else if (event.key === 'End') index = buttons.length - 1;
+          else return;
+          event.preventDefault();
+          buttons[index].click();
+          buttons[index].focus();
+        });
+      });
+
+      document.querySelectorAll('[data-agent]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          agent = button.dataset.agent;
+          render();
+        });
+        button.addEventListener('keydown', function (event) {
+          var buttons = Array.from(document.querySelectorAll('[data-agent]'));
           var index = buttons.indexOf(button);
           if (event.key === 'ArrowRight' || event.key === 'ArrowDown') index = (index + 1) % buttons.length;
           else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') index = (index - 1 + buttons.length) % buttons.length;

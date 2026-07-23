@@ -12,7 +12,7 @@
 
 **Turn a codebase or system description into a polished, interactive system map — directly in chat.**
 
-Archify is an agent skill for Claude, Codex CLI, and opencode. Give it a system description or repository; get a polished diagram you can open, explore, present, and share.
+Archify is an agent skill for Cursor, Claude Code, Codex CLI, and OpenCode. Give it a system description or repository; get a polished diagram you can open, explore, present, and share.
 
 - **Open it and present** — five technical diagram types, three visual presets, dark/light themes, and optional finite motion
 - **Every interaction stays grounded** — search nodes, optionally open revision-verified source, trace upstream/downstream authored reach and exact routes, compare roles, and play guided stories without inventing topology
@@ -27,6 +27,8 @@ Archify is an agent skill for Claude, Codex CLI, and opencode. Give it a system 
 ```bash
 npx skills add tt-a1i/archify -g
 ```
+
+Using Cursor? Open the [agent-aware quick start](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) for exact global and project commands.
 
 Then ask your agent: `Use archify to map this repository's runtime architecture.`
 
@@ -85,13 +87,19 @@ Open [`examples/web-app.html`](examples/web-app.html) locally to try the complet
 npx skills add tt-a1i/archify -g
 ```
 
+For an explicit, non-interactive Cursor install:
+
+```bash
+npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
+```
+
 To try it without a permanent install:
 
 ```bash
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-Replace `codex` with `claude-code` or `opencode` when needed. The packaged [`archify.zip`](archify.zip) also works without `npm install`.
+The same Skill works with `cursor`, `codex`, `claude-code`, and `opencode`; the [quick-start agent switcher](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) generates the exact command without maintaining vendor-specific forks. The packaged [`archify.zip`](archify.zip) also works without `npm install`.
 
 ### 2. Ask for one bounded view
 

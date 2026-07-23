@@ -28,8 +28,11 @@ test('start page: checked-in HTML is reproducible from canonical scenario recipe
 test('start page: offers five bounded bilingual starts without ingesting source content', () => {
   const html = fs.readFileSync(path.join(repoRoot, 'docs/start.html'), 'utf8');
   assert.doesNotMatch(html, /\[\[[A-Z0-9_]+\]\]/);
-  assert.match(html, /npx skills add tt-a1i\/archify -g/);
-  assert.match(html, /npx skills use tt-a1i\/archify@archify --agent codex/);
+  assert.match(html, /npx -y skills add tt-a1i\/archify --skill archify --agent codex --global --copy --yes/);
+  assert.match(html, /npx -y skills add tt-a1i\/archify --skill archify --agent codex --copy --yes/);
+  for (const agent of ['cursor', 'codex', 'claude-code', 'opencode']) {
+    assert.match(html, new RegExp(`role="tab" data-agent="${agent}"`));
+  }
   assert.match(html, /data-en="One install\."/);
   assert.match(html, /data-en="One bounded prompt\."/);
   assert.match(html, /data-zh="一次安装，"/);
@@ -47,6 +50,10 @@ test('start page: offers five bounded bilingual starts without ingesting source 
   assert.ok(scriptMatch);
   assert.doesNotThrow(() => new vm.Script(scriptMatch[1]));
   assert.match(scriptMatch[1], /KNOWN_TYPES\.has\(requestedType\)/);
+  assert.match(scriptMatch[1], /KNOWN_AGENTS\.has\(requestedAgent\)/);
+  assert.match(scriptMatch[1], /next\.set\('agent', agent\)/);
+  assert.match(scriptMatch[1], /--agent ' \+ agent \+ ' --global --copy --yes/);
+  assert.match(scriptMatch[1], /--agent ' \+ agent \+ ' --copy --yes/);
   assert.match(scriptMatch[1], /textContent/);
   assert.match(scriptMatch[1], /replaceChildren/);
   assert.doesNotMatch(scriptMatch[1], /innerHTML/);
