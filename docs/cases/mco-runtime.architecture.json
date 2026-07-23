@@ -8,6 +8,10 @@
     "animation": "trace",
     "visual_preset": "signal-flow",
     "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/mco-org/mco",
+      "revision": "9f1a1cf1afdc04d7b5406782b40dfec76d9bc798"
+    },
     "views": [
       {
         "id": "dispatch-path",
@@ -44,7 +48,11 @@
       "label": "Entry Surfaces",
       "sublabel": "npm shim · Python CLI · MCP",
       "pos": [190, 300],
-      "size": [150, 60]
+      "size": [150, 60],
+      "sources": [
+        { "path": "bin/mco.js", "line": 1, "label": "npm entry" },
+        { "path": "runtime/mcp_server.py", "line": 108, "end_line": 153, "label": "MCP entry" }
+      ]
     },
     {
       "id": "router",
@@ -52,7 +60,10 @@
       "label": "Command Router",
       "sublabel": "run · review · doctor · session",
       "pos": [390, 300],
-      "size": [150, 60]
+      "size": [150, 60],
+      "sources": [
+        { "path": "runtime/cli.py", "line": 1945, "label": "CLI main" }
+      ]
     },
     {
       "id": "config",
@@ -61,7 +72,10 @@
       "sublabel": "files · explicit provider team",
       "pos": [600, 130],
       "size": [160, 60],
-      "tag": "no silent team"
+      "tag": "no silent team",
+      "sources": [
+        { "path": "runtime/config.py", "line": 24, "label": "Review config" }
+      ]
     },
     {
       "id": "policy",
@@ -70,7 +84,10 @@
       "sublabel": "read_only · write · yolo",
       "pos": [600, 300],
       "size": [160, 60],
-      "tag": "explicit boundary"
+      "tag": "explicit boundary",
+      "sources": [
+        { "path": "runtime/policy.py", "line": 34, "label": "Provider policy" }
+      ]
     },
     {
       "id": "workflow",
@@ -78,7 +95,11 @@
       "label": "Invocation Workflow",
       "sublabel": "parallel · chain · debate · synthesize",
       "pos": [820, 300],
-      "size": [170, 60]
+      "size": [170, 60],
+      "sources": [
+        { "path": "runtime/invocation_runtime.py", "line": 696, "label": "Workflow entry" },
+        { "path": "runtime/invocation_runtime.py", "line": 156, "label": "Single invocation" }
+      ]
     },
     {
       "id": "adapters",
@@ -86,7 +107,11 @@
       "label": "Provider Adapters",
       "sublabel": "shim / ACP · detect · run · poll · cancel",
       "pos": [1050, 300],
-      "size": [170, 60]
+      "size": [170, 60],
+      "sources": [
+        { "path": "runtime/adapters/__init__.py", "line": 57, "label": "Adapter registry" },
+        { "path": "runtime/contracts.py", "line": 77, "label": "Provider contract" }
+      ]
     },
     {
       "id": "provider_clis",
@@ -102,7 +127,10 @@
       "label": "Answer Transport",
       "sublabel": "plain · JSON · JSONL · ACP events",
       "pos": [1050, 500],
-      "size": [170, 60]
+      "size": [170, 60],
+      "sources": [
+        { "path": "runtime/answer_transport.py", "line": 79, "label": "Transport decoders" }
+      ]
     },
     {
       "id": "artifacts",
@@ -111,7 +139,10 @@
       "sublabel": "answers · result.md · run.json",
       "pos": [1260, 500],
       "size": [170, 60],
-      "tag": "raw evidence"
+      "tag": "raw evidence",
+      "sources": [
+        { "path": "runtime/invocation_artifacts.py", "line": 8, "label": "Artifact writer" }
+      ]
     },
     {
       "id": "consumers",
@@ -127,7 +158,10 @@
       "label": "Session Daemon",
       "sublabel": "detached worker · Unix socket",
       "pos": [385, 500],
-      "size": [160, 60]
+      "size": [160, 60],
+      "sources": [
+        { "path": "runtime/session/daemon.py", "line": 50, "label": "Daemon context" }
+      ]
     },
     {
       "id": "session_state",
@@ -136,7 +170,10 @@
       "sublabel": "state.json · history.jsonl",
       "pos": [600, 500],
       "size": [160, 60],
-      "tag": ".mco/sessions"
+      "tag": ".mco/sessions",
+      "sources": [
+        { "path": "runtime/session/state.py", "line": 25, "label": "Session state" }
+      ]
     }
   ],
   "boundaries": [

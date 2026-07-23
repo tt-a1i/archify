@@ -91,6 +91,11 @@ test('repository evidence is revision-verified, receipt-backed, searchable, and 
   assert.match(html, /var sourceSearch = sources\.map/);
   assert.match(html, /renderSourceEvidence\(id\)/);
   assert.match(html, /referrerPolicy = 'no-referrer'/);
+  assert.match(html, /classList\.add\('source-evidence-beacon'\)/);
+  assert.match(html, /text\.textContent = 'SRC ' \+ count/);
+  assert.match(html, /Archify\.sourceEvidence\.installBeacons\(\)/);
+  assert.match(html, /querySelectorAll\('\[data-source-evidence-beacon\]'\)/);
+  assert.match(html, /data-source-evidence-original-label/);
 
   const svg = html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
   assert.doesNotMatch(svg, /src\/router\.js|github\.com\/example\/evidence-repo|source-evidence/);
@@ -104,6 +109,8 @@ test('repository evidence is opt-in and never appears in ordinary artifacts', ()
   const html = fs.readFileSync(output, 'utf8');
   assert.doesNotMatch(html, /id="archify-source-evidence-data"/);
   assert.match(html, /id="focus-evidence" hidden/);
+  const svg = html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
+  assert.doesNotMatch(svg, /source-evidence-beacon|data-source-evidence-count/);
 });
 
 test('evidence fails closed without a root, on wrong origin, missing blobs, or impossible lines', () => {

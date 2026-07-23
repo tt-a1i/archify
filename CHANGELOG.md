@@ -5,6 +5,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 ## [Unreleased]
 
 ### Added
+- **Verified Source Beacons.** Evidence-backed Architecture nodes now show one quiet viewer-only `SRC n` marker derived exclusively from the already verified repository payload. The node remains the single focus target and opens the existing Semantic Passport; screen-reader labels disclose the count, focus/routes/stories/guided views keep one coherent node state, and Classic, Signal Flow, Blueprint, dark, and light reuse the same proof-green vocabulary. Ordinary artifacts remain unchanged, while SVG, raster, Share Card, and WebM backgrounds strip the marker and restore the canonical node label. No parser, crawler, inferred relationship, panel, toolbar control, schema expansion, dependency, hosted runtime, or mobile product surface was added.
 - **Revision-verified Repository Evidence Passport.** Architecture diagrams can opt into public GitHub source links by declaring a repository URL, a full commit SHA, and one to three repo-relative sources per component, then passing `--repo-root` to `render`, `deliver`, `preview`, or `validate`. Archify verifies the local origin, commit, blobs, and optional line ranges before publishing; verified links appear in Semantic Passport and Node Finder while staying outside the canonical SVG and every visual export. Plain diagrams remain the default, other diagram modes reject the option, and private or unpinned evidence is deliberately out of scope.
 
 ### Fixed

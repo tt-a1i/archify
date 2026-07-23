@@ -3192,6 +3192,41 @@
       filter: drop-shadow(0 0 7px var(--frontend-stroke));
       outline: none;
     }
+    /* Verified Source Beacons are installed at runtime only for nodes whose
+       repository evidence passed the local revision/blob/line checks. They
+       live inside the owning node so every focus, route, story, and guided
+       view keeps one coherent opacity state. Export serialization removes
+       them before producing the canonical SVG or any derived visual. */
+    .source-evidence-beacon {
+      pointer-events: none;
+      opacity: 0.76;
+      transition: opacity 160ms ease, filter 160ms ease;
+    }
+    .source-evidence-beacon rect {
+      fill: color-mix(in srgb, var(--mask) 92%, var(--backend-stroke));
+      stroke: color-mix(in srgb, var(--backend-stroke) 82%, var(--panel-border));
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+    .source-evidence-beacon text {
+      fill: var(--backend-stroke);
+      font-size: 5.5px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-anchor: middle;
+      text-transform: uppercase;
+    }
+    svg [data-node-id]:hover .source-evidence-beacon,
+    svg [data-node-id]:focus-visible .source-evidence-beacon,
+    svg [data-node-id][data-focus-selected] .source-evidence-beacon {
+      opacity: 1;
+      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--backend-stroke) 72%, transparent));
+    }
+    svg[data-preset="signal-flow"] .source-evidence-beacon { opacity: 0.9; }
+    svg[data-preset="blueprint"] .source-evidence-beacon rect {
+      rx: 0.8px;
+      filter: none;
+    }
     svg [data-legend-kind][role="button"] { cursor: pointer; }
     svg [data-legend-kind]:focus { outline: none; }
     svg [data-legend-hit] {
@@ -3850,6 +3885,7 @@
       }
       .relationship-pulse-overlay { display: none !important; }
       .guided-view-chapter { transition: none !important; }
+      .source-evidence-beacon,
       svg [data-node-id], svg [data-edge-from], svg [data-detail], svg [data-detail-anchor], svg [data-legend-hit], svg { transition: none !important; }
     }
   </style>
@@ -4793,6 +4829,16 @@
         Array.prototype.forEach.call(clone.querySelectorAll('[data-relationship-hit-overlay]'), function (el) {
           el.remove();
         });
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-source-evidence-beacon]'), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-source-evidence-count]'), function (el) {
+          var originalLabel = el.getAttribute('data-source-evidence-original-label');
+          if (originalLabel == null || originalLabel === '') el.removeAttribute('aria-label');
+          else el.setAttribute('aria-label', originalLabel);
+          el.removeAttribute('data-source-evidence-count');
+          el.removeAttribute('data-source-evidence-original-label');
+        });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-story-step], [data-story-beat-state], [data-story-beat-step]'), function (el) {
           el.removeAttribute('data-story-step');
           el.removeAttribute('data-story-beat-state');
@@ -4869,7 +4915,7 @@
           !clone.hasAttribute('data-chapter-anchor') &&
           !clone.hasAttribute('data-chapter-preview') &&
           !clone.style.getPropertyValue('transform') &&
-          clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-detail], [data-detail-anchor]').length === 0;
+          clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]').length === 0;
 
         var vb = svg.viewBox.baseVal;
         var finiteSvgDimensions = Number.isFinite(vb.x) && Number.isFinite(vb.y) &&
@@ -6086,11 +6132,56 @@
     Archify.sourceEvidence = (function () {
       var element = document.getElementById('archify-source-evidence-data');
       var payload = null;
+      var svgNamespace = 'http://www.w3.org/2000/svg';
       if (element) {
         try {
           var parsed = JSON.parse(element.textContent || 'null');
           if (parsed && parsed.verified === true && parsed.repository && parsed.nodes) payload = parsed;
         } catch (_) {}
+      }
+      function installBeacons() {
+        if (!payload) return 0;
+        var svg = document.querySelector('.diagram-container svg');
+        if (!svg) return 0;
+        var installed = 0;
+        Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id]'), function (node) {
+          var id = node.getAttribute('data-node-id');
+          var sources = payload.nodes[id];
+          if (!Array.isArray(sources) || !sources.length || node.querySelector('[data-source-evidence-beacon]')) return;
+          var shape = node.querySelector('[data-animate="node"]') || node.querySelector('[class*="c-"]');
+          var box;
+          try { box = (shape || node).getBBox(); } catch (_) { return; }
+          if (!box || !Number.isFinite(box.x) || !Number.isFinite(box.y) || !Number.isFinite(box.width) || box.width < 36) return;
+
+          var count = sources.length;
+          var label = count + ' verified source' + (count === 1 ? '' : 's') + '; focus this node to inspect';
+          var beacon = document.createElementNS(svgNamespace, 'g');
+          beacon.classList.add('source-evidence-beacon');
+          beacon.setAttribute('data-source-evidence-beacon', '');
+          beacon.setAttribute('aria-hidden', 'true');
+          beacon.setAttribute('transform', 'translate(' + (box.x + box.width - 35) + ' ' + (box.y + 5) + ')');
+          var title = document.createElementNS(svgNamespace, 'title');
+          title.textContent = label;
+          var plate = document.createElementNS(svgNamespace, 'rect');
+          plate.setAttribute('width', '30');
+          plate.setAttribute('height', '12');
+          plate.setAttribute('rx', '6');
+          var text = document.createElementNS(svgNamespace, 'text');
+          text.setAttribute('x', '15');
+          text.setAttribute('y', '8.25');
+          text.textContent = 'SRC ' + count;
+          beacon.appendChild(title);
+          beacon.appendChild(plate);
+          beacon.appendChild(text);
+          node.appendChild(beacon);
+
+          var originalLabel = node.getAttribute('aria-label') || '';
+          node.setAttribute('data-source-evidence-count', String(count));
+          node.setAttribute('data-source-evidence-original-label', originalLabel);
+          node.setAttribute('aria-label', (originalLabel ? originalLabel + ', ' : '') + count + ' verified source reference' + (count === 1 ? '' : 's'));
+          installed += 1;
+        });
+        return installed;
       }
       return {
         available: function () { return Boolean(payload); },
@@ -6098,9 +6189,11 @@
         node: function (id) {
           var sources = payload && payload.nodes ? payload.nodes[id] : null;
           return Array.isArray(sources) ? sources.slice() : [];
-        }
+        },
+        installBeacons: installBeacons
       };
     })();
+    Archify.sourceEvidence.installBeacons();
 
     /* ============================================================
        Explore — stable-ID neighborhood focus + dependency-free pan/zoom.

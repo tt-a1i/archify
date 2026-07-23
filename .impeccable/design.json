@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-23T00:34:12Z",
+  "title": "Design System: Archify",
+  "extensions": {
+    "colorMeta": {
+      "canvas": { "role": "neutral", "displayName": "Midnight Canvas", "canonical": "#020617", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#cbd5e1", "#f8fafc"] },
+      "mask": { "role": "neutral", "displayName": "Ink Mask", "canonical": "#0F172A", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#94a3b8", "#e2e8f0", "#ffffff"] },
+      "ink": { "role": "neutral", "displayName": "Instrument Ink", "canonical": "#FFFFFF", "tonalRamp": ["#0f172a", "#334155", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0", "#f8fafc", "#ffffff"] },
+      "muted": { "role": "neutral", "displayName": "Quiet Copy", "canonical": "#94A3B8", "tonalRamp": ["#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#f8fafc"] },
+      "dim": { "role": "neutral", "displayName": "Dim Annotation", "canonical": "#475569", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#e2e8f0"] },
+      "border": { "role": "neutral", "displayName": "Structural Border", "canonical": "#1E293B", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#cbd5e1", "#f8fafc"] },
+      "frontend": { "role": "primary", "displayName": "Verified Cyan", "canonical": "#22D3EE", "tonalRamp": ["#083344", "#164e63", "#0e7490", "#0891b2", "#06b6d4", "#22d3ee", "#a5f3fc", "#ecfeff"] },
+      "backend": { "role": "secondary", "displayName": "Proof Green", "canonical": "#34D399", "tonalRamp": ["#022c22", "#064e3b", "#047857", "#059669", "#10b981", "#34d399", "#a7f3d0", "#ecfdf5"] },
+      "database": { "role": "secondary", "displayName": "Repository Violet", "canonical": "#A78BFA", "tonalRamp": ["#2e1065", "#4c1d95", "#6d28d9", "#7c3aed", "#8b5cf6", "#a78bfa", "#ddd6fe", "#f5f3ff"] },
+      "cloud": { "role": "tertiary", "displayName": "Cloud Amber", "canonical": "#FBBF24", "tonalRamp": ["#451a03", "#78350f", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fde68a", "#fffbeb"] },
+      "security": { "role": "tertiary", "displayName": "Boundary Rose", "canonical": "#FB7185", "tonalRamp": ["#4c0519", "#881337", "#be123c", "#e11d48", "#f43f5e", "#fb7185", "#fecdd3", "#fff1f2"] },
+      "messagebus": { "role": "tertiary", "displayName": "Transit Orange", "canonical": "#FB923C", "tonalRamp": ["#431407", "#7c2d12", "#c2410c", "#ea580c", "#f97316", "#fb923c", "#fed7aa", "#fff7ed"] },
+      "external": { "role": "neutral", "displayName": "External Slate", "canonical": "#94A3B8", "tonalRamp": ["#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#f8fafc"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Artifact Headline", "purpose": "The generated artifact title only." },
+      "title": { "displayName": "Panel Title", "purpose": "Cards, panels, and selected semantic objects." },
+      "body": { "displayName": "Technical Body", "purpose": "Explanatory copy and relationship detail." },
+      "label": { "displayName": "Instrument Label", "purpose": "Modes, states, compact metadata, and proof markers." }
+    },
+    "shadows": [
+      { "name": "canvas-lift", "value": "0 28px 80px rgba(0,0,0,0.34)", "purpose": "Signal Flow diagram surface only." },
+      { "name": "floating-panel", "value": "0 18px 48px rgba(0,0,0,0.30)", "purpose": "Temporary discovery panels and the Semantic Passport." },
+      { "name": "action-feedback", "value": "0 0 7px var(--frontend-stroke)", "purpose": "Active SVG focus only." }
+    ],
+    "motion": [
+      { "name": "state-fast", "value": "140ms ease", "purpose": "Compact state, border, and background feedback." },
+      { "name": "state-standard", "value": "180ms ease", "purpose": "Node focus, detail disclosure, and camera feedback." },
+      { "name": "camera-settle", "value": "420ms cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Finite semantic camera movement." }
+    ],
+    "breakpoints": [
+      { "name": "containment", "value": "720px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Toolbar Button",
+      "kind": "button",
+      "refersTo": "toolbar-button",
+      "description": "Compact desktop control with familiar text and a visible focus ring.",
+      "html": "<button class=\"ds-toolbar-button\">Explore</button>",
+      "css": ".ds-toolbar-button { min-height: 2.75rem; padding: 0.5rem 0.875rem; border: 1px solid #334155; border-radius: 0.5rem; background: rgba(15,23,42,0.8); color: #e2e8f0; font: 500 0.75rem/1.4 'JetBrains Mono', ui-monospace, monospace; transition: background 150ms ease, border-color 150ms ease; } .ds-toolbar-button:hover { background: rgba(15,23,42,0.95); border-color: #64748b; } .ds-toolbar-button:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; }"
+    },
+    {
+      "name": "Diagram Panel",
+      "kind": "card",
+      "refersTo": "diagram-panel",
+      "description": "The dominant tonal canvas container.",
+      "html": "<section class=\"ds-diagram-panel\"><strong>Architecture canvas</strong><small>Authoritative geometry stays dominant.</small></section>",
+      "css": ".ds-diagram-panel { display: grid; gap: 0.5rem; min-width: 18rem; padding: 1.5rem; border: 1px solid #1e293b; border-radius: 1rem; background: rgba(15,23,42,0.5); color: #fff; font-family: 'JetBrains Mono', ui-monospace, monospace; } .ds-diagram-panel small { color: #94a3b8; } .ds-diagram-panel:hover { border-color: #334155; } .ds-diagram-panel:focus-within { outline: 2px solid #22d3ee; outline-offset: 2px; }"
+    },
+    {
+      "name": "Node Finder Field",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "One continuous technical search field with no decorative split controls.",
+      "html": "<input class=\"ds-search-field\" placeholder=\"Search labels or IDs\" aria-label=\"Search labels or IDs\">",
+      "css": ".ds-search-field { width: 20rem; padding: 0.58rem 0.65rem; border: 1px solid #334155; border-radius: 0.5rem; background: #0f172a; color: #fff; font: 400 0.75rem/1.4 'JetBrains Mono', ui-monospace, monospace; transition: border-color 160ms ease, box-shadow 160ms ease; } .ds-search-field::placeholder { color: #7d8da1; } .ds-search-field:hover { border-color: #64748b; } .ds-search-field:focus-visible { outline: none; border-color: #22d3ee; box-shadow: 0 0 0 2px rgba(34,211,238,0.2); }"
+    },
+    {
+      "name": "Semantic Passport",
+      "kind": "custom",
+      "description": "One focused node's compact metadata, relationships, and optional verified sources.",
+      "html": "<aside class=\"ds-passport\"><span>SEMANTIC PASSPORT</span><strong>Entry Surfaces</strong><small>frontend · entry</small></aside>",
+      "css": ".ds-passport { display: grid; gap: 0.4rem; width: 18rem; padding: 0.75rem; border: 1px solid #22d3ee; border-radius: 0.82rem; background: #0f172a; color: #fff; box-shadow: 0 18px 48px rgba(0,0,0,0.3); font-family: 'JetBrains Mono', ui-monospace, monospace; } .ds-passport span { color: #22d3ee; font-size: 0.5rem; font-weight: 800; letter-spacing: 0.14em; } .ds-passport small { color: #94a3b8; } .ds-passport:focus-within { outline: 2px solid #22d3ee; outline-offset: 2px; }"
+    },
+    {
+      "name": "Verified Source Beacon",
+      "kind": "chip",
+      "refersTo": "evidence-beacon",
+      "description": "A quiet viewer-only count that identifies evidence-backed nodes.",
+      "html": "<span class=\"ds-evidence-beacon\">SRC 2</span>",
+      "css": ".ds-evidence-beacon { display: inline-grid; place-items: center; width: 30px; height: 12px; border: 1px solid #34d399; border-radius: 999px; background: #0f172a; color: #34d399; font: 800 5.5px/1 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.06em; transition: opacity 160ms ease, filter 160ms ease; } .ds-evidence-beacon:hover { filter: drop-shadow(0 0 4px rgba(52,211,153,0.72)); } .ds-evidence-beacon:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Evidence Console",
+    "overview": "Archify is a composed technical instrument, not a drawing suite. The canvas carries one spatial narrative; restrained controls and progressive disclosure let a reader move from the primary path to exact authored relationships, metadata, and verified code evidence without losing orientation. The visual system is precise, dark-first, and vivid only where semantics earn it. Light mode and Blueprint preserve the same vocabulary rather than becoming separate products. Motion has one bounded owner, finishes, and never carries meaning that disappears in a still frame. Desktop is the primary surface; narrow screens receive containment, not a second interface.",
+    "keyCharacteristics": [
+      "One dominant technical canvas with compact, low-interference chrome.",
+      "A fixed semantic color vocabulary shared by nodes, edges, legends, focus, and evidence.",
+      "Mono-forward typography, small labels, and deliberate density for engineering review.",
+      "Viewer state stays outside canonical exports; proof remains portable and deterministic.",
+      "State transitions are 140–200ms; authored story motion may be longer but finite and reader-controlled."
+    ],
+    "rules": [
+      { "name": "The Semantic Color Rule", "body": "Every saturated color maps to a node or relationship meaning; never add an accent merely to make a surface lively.", "section": "colors" },
+      { "name": "The Theme Parity Rule", "body": "Light, dark, Signal Flow, and Blueprint may change material and contrast, but must preserve category identity and information priority.", "section": "colors" },
+      { "name": "The One Voice Rule", "body": "UI and diagram chrome remain mono-forward; never introduce a display font inside the generated artifact.", "section": "typography" },
+      { "name": "The Legibility Floor Rule", "body": "Tiny labels are metadata, not prose. If a reader must parse a sentence, promote it to body size or disclose it on focus.", "section": "typography" },
+      { "name": "The Flat-at-Rest Rule", "body": "A static card or control uses border and tone; a shadow must explain layering or state.", "section": "elevation" },
+      { "name": "The Canonical Clean Rule", "body": "Viewer glow, overlays, focus, and temporary marks are removed from visual exports unless the export explicitly owns that narrative.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do make the primary path legible before adding secondary relationships or detail.",
+      "Do derive every focus, route, story, source link, receipt, and count from authored or locally verified evidence.",
+      "Do keep ordinary artifacts source-free and make repository evidence explicitly opt-in.",
+      "Do use 140–200ms transitions for control state and honor prefers-reduced-motion.",
+      "Do preserve keyboard access, visible focus, semantic labels, dark/light parity, and non-color state cues.",
+      "Do keep runtime exploration outside canonical SVG, raster, Share Card, and WebM backgrounds."
+    ],
+    "donts": [
+      "Don't build generic Mermaid beautifiers that change themes without improving information architecture.",
+      "Don't turn Archify into WYSIWYG drawing suites whose editing chrome becomes the product.",
+      "Don't ship motion-first graph demos that imply relationships or activity not present in the authored source.",
+      "Don't use dense dashboard shells, endless identical card grids, decorative glass, gradient text, and other AI-generated interface clichés.",
+      "Don't add vendor-icon catalogues or product-name matching that weaken Archify's portable semantic vocabulary.",
+      "Don't create another permanent panel when the Semantic Passport, Node Finder, or existing canvas can carry the capability.",
+      "Don't change the README Hero as a side effect of artifact or viewer iteration."
+    ]
+  }
+}

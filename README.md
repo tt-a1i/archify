@@ -150,7 +150,7 @@ Architecture examples: [`web-app`](examples/web-app.html) · [`Archify pipeline`
 - **Atomic validation before delivery** — schema, layout, HTML/SVG, route, and label-to-route clearance checks must all pass before a showcase artifact replaces the last known good output.
 - **Last-good live preview** — an optional desktop loop watches one JSON file, refreshes only after the latest candidate passes every gate, and keeps the previous verified diagram visible when a save is incomplete or invalid.
 - **Truthful interaction** — focus, routes, role comparison, and stories reuse authored nodes and relationships instead of inventing topology.
-- **Source evidence, only when requested** — Architecture nodes can open Git-verified files and line ranges pinned to one public commit; ordinary artifacts stay source-free.
+- **Source evidence, only when requested** — Evidence-backed Architecture nodes mark themselves `SRC n` and open Git-verified files and line ranges pinned to one public commit; ordinary artifacts stay source-free.
 - **Portable by default** — the result is one HTML file; exports remain full-diagram and free of temporary viewer state.
 
 Archify is not a general-purpose drawing editor or a Mermaid theme. It turns technical intent into a communication artifact.
