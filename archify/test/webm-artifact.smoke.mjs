@@ -295,6 +295,209 @@ try {
     assert.equal(ready, true, `${label} did not expose its browser export surface`);
   }
 
+  async function verifyArchitectureDeltaNavigator(file) {
+    const readyCondition = '!!document.querySelector("#review-play") && !document.querySelector("#review-play").disabled';
+    async function waitForSelected(changeKey, label) {
+      for (let attempt = 0; attempt < 80; attempt += 1) {
+        if (await evaluate(cdp, sessionId, `document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey === ${JSON.stringify(changeKey)}`)) return;
+        await delay(50);
+      }
+      assert.fail(`${label} did not select ${changeKey} within the bounded wait`);
+    }
+    async function waitForReviewFinished(label) {
+      for (let attempt = 0; attempt < 400; attempt += 1) {
+        const done = await evaluate(cdp, sessionId, `document.querySelector('#review-play').getAttribute('aria-pressed') === 'false' && document.querySelector('#review-play').textContent === 'Replay'`);
+        if (done) return;
+        await delay(50);
+      }
+      assert.fail(`${label} did not finish within the bounded wait`);
+    }
+    await navigateReady(file, readyCondition, 'architecture-delta navigator');
+    const initial = await evaluate(cdp, sessionId, `({
+      status: document.querySelector('#review-status').textContent,
+      selected: document.querySelectorAll('.change-row[aria-current="step"]').length,
+      current: document.querySelectorAll('[data-delta-review-current]').length,
+      rows: document.querySelectorAll('.change-row').length
+    })`);
+    assert.deepEqual(initial, { status: 'Overview · 11 authored changes', selected: 0, current: 0, rows: 11 });
+
+    await evaluate(cdp, sessionId, `document.querySelector('#review-play').click()`);
+    await waitForSelected('relationship:fraud-check', 'architecture-delta initial playback');
+    const advanced = await evaluate(cdp, sessionId, `({
+      selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey,
+      pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
+    })`);
+    assert.deepEqual(advanced, { selected: 'relationship:fraud-check', pressed: 'true' });
+
+    await evaluate(cdp, sessionId, `document.querySelector('[role="tab"][data-target="base"]').click()`);
+    const pausedKey = await evaluate(cdp, sessionId, `document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey`);
+    await delay(1550);
+    assert.equal(await evaluate(cdp, sessionId, `document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey`), pausedKey);
+    assert.equal(await evaluate(cdp, sessionId, `document.querySelector('#review-play').getAttribute('aria-pressed')`), 'false');
+
+    const overview = await evaluate(cdp, sessionId, `(() => {
+      document.querySelector('[role="tab"][data-target="delta"]').click();
+      document.querySelector('#review-overview').click();
+      return {
+        active: document.querySelector('[data-view="delta"]').hasAttribute('data-delta-review-active'),
+        current: document.querySelectorAll('[data-delta-review-current]').length,
+        selected: document.querySelectorAll('.change-row[aria-current="step"]').length
+      };
+    })()`);
+    assert.deepEqual(overview, { active: false, current: 0, selected: 0 });
+
+    await navigateReady(file, readyCondition, 'architecture-delta manual lifecycle navigator');
+    await evaluate(cdp, sessionId, `document.querySelector('#review-play').click()`);
+    await waitForSelected('relationship:fraud-check', 'architecture-delta previous control');
+    const previousPause = await evaluate(cdp, sessionId, `(() => {
+      document.querySelector('#review-previous').click();
+      return {
+        selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey,
+        pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
+      };
+    })()`);
+    assert.deepEqual(previousPause, { selected: 'component:fraud', pressed: 'false' });
+    await delay(1450);
+    assert.equal(await evaluate(cdp, sessionId, `document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey`), 'component:fraud');
+
+    await evaluate(cdp, sessionId, `document.querySelector('#review-play').click()`);
+    const nextPause = await evaluate(cdp, sessionId, `(() => {
+      document.querySelector('#review-next').click();
+      return {
+        selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey,
+        pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
+      };
+    })()`);
+    assert.deepEqual(nextPause, { selected: 'relationship:fraud-check', pressed: 'false' });
+
+    await evaluate(cdp, sessionId, `document.querySelector('#review-play').click()`);
+    const rowPause = await evaluate(cdp, sessionId, `(() => {
+      document.querySelector('.change-row[data-change-key="component:queue"]').click();
+      return {
+        selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey,
+        pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
+      };
+    })()`);
+    assert.deepEqual(rowPause, { selected: 'component:queue', pressed: 'false' });
+
+    await navigateReady(file, readyCondition, 'architecture-delta focus lifecycle navigator');
+    const focusedPause = await evaluate(cdp, sessionId, `(() => {
+      document.querySelector('#review-play').click();
+      document.querySelector('#review-next').focus();
+      return {
+        selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey,
+        pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
+      };
+    })()`);
+    assert.deepEqual(focusedPause, { selected: 'component:fraud', pressed: 'false' });
+    await delay(1450);
+    assert.equal(await evaluate(cdp, sessionId, `document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey`), 'component:fraud');
+
+    await navigateReady(file, readyCondition, 'architecture-delta hidden lifecycle navigator');
+    const hiddenPause = await evaluate(cdp, sessionId, `(() => {
+      document.querySelector('#review-play').click();
+      Object.defineProperty(document, 'hidden', { configurable: true, get: function () { return true; } });
+      document.dispatchEvent(new Event('visibilitychange'));
+      return {
+        hidden: document.hidden,
+        selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey,
+        pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
+      };
+    })()`);
+    assert.deepEqual(hiddenPause, { hidden: true, selected: 'component:fraud', pressed: 'false' });
+    await delay(1450);
+    assert.equal(await evaluate(cdp, sessionId, `document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey`), 'component:fraud');
+
+    await navigateReady(file, readyCondition, 'architecture-delta print lifecycle navigator');
+    const printPause = await evaluate(cdp, sessionId, `(() => {
+      document.querySelector('#review-play').click();
+      window.dispatchEvent(new Event('beforeprint'));
+      return {
+        status: document.querySelector('#review-status').textContent,
+        selected: document.querySelectorAll('.change-row[aria-current="step"]').length,
+        pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
+      };
+    })()`);
+    assert.deepEqual(printPause, { status: 'Overview · 11 authored changes', selected: 0, pressed: 'false' });
+    await delay(1450);
+    assert.equal(await evaluate(cdp, sessionId, `document.querySelectorAll('.change-row[aria-current="step"]').length`), 0);
+
+    const keyboard = await evaluate(cdp, sessionId, `(() => {
+      document.querySelector('details').open = true;
+      var first = document.querySelector('.change-row');
+      first.click();
+      first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      var focused = document.activeElement.dataset.changeKey;
+      document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      return { focused: focused, selected: document.querySelector('.change-row[aria-current="step"]').dataset.changeKey };
+    })()`);
+    assert.deepEqual(keyboard, { focused: 'relationship:fraud-check', selected: 'relationship:fraud-check' });
+
+    await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] }, sessionId);
+    await navigateReady(file, readyCondition, 'architecture-delta reduced-motion navigator');
+    await evaluate(cdp, sessionId, `document.querySelector('#review-play').click()`);
+    await delay(1550);
+    const reduced = await evaluate(cdp, sessionId, `({
+      selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey,
+      pressed: document.querySelector('#review-play').getAttribute('aria-pressed'),
+      nextDisabled: document.querySelector('#review-next').disabled
+    })`);
+    assert.deepEqual(reduced, { selected: 'component:fraud', pressed: 'false', nextDisabled: false });
+    await evaluate(cdp, sessionId, `document.querySelector('#review-next').click()`);
+
+    await evaluate(cdp, sessionId, `document.querySelector('.change-row').click()`);
+    await cdp.send('Emulation.setEmulatedMedia', { media: 'print' }, sessionId);
+    await delay(200);
+    const printState = await evaluate(cdp, sessionId, `({
+      strip: getComputedStyle(document.querySelector('.review-strip')).display,
+      base: getComputedStyle(document.querySelector('[data-view="base"]')).display,
+      delta: getComputedStyle(document.querySelector('[data-view="delta"]')).display,
+      head: getComputedStyle(document.querySelector('[data-view="head"]')).display,
+      current: getComputedStyle(document.querySelector('[data-delta-review-current]')).opacity,
+      same: getComputedStyle(document.querySelector('[data-view="delta"] [data-delta-state="same"]')).opacity
+    })`);
+    assert.deepEqual(printState, { strip: 'none', base: 'none', delta: 'block', head: 'none', current: '1', same: '1' });
+    await cdp.send('Emulation.setEmulatedMedia', { media: 'screen', features: [] }, sessionId);
+
+    await navigateReady(file, readyCondition, 'architecture-delta tamper navigator');
+    const tampered = await evaluate(cdp, sessionId, `(() => {
+      var companion = document.querySelector('[data-view="delta"] g[data-edge-id="fraud-check"]');
+      companion.parentNode.insertBefore(companion.cloneNode(true), companion.nextSibling);
+      document.querySelector('.change-row[data-change-key="relationship:fraud-check"]').click();
+      return {
+        status: document.querySelector('#review-status').textContent,
+        disabled: Array.from(document.querySelectorAll('.review-step,.change-row')).every(function (button) { return button.disabled; }),
+        canvases: document.querySelectorAll('[data-view]').length
+      };
+    })()`);
+    assert.deepEqual(tampered, { status: 'Review unavailable · compare identity mismatch', disabled: true, canvases: 3 });
+
+    await navigateReady(file, readyCondition, 'architecture-delta finite navigator');
+    await evaluate(cdp, sessionId, `document.querySelector('#review-play').click()`);
+    await waitForReviewFinished('architecture-delta finite playback');
+    const finished = await evaluate(cdp, sessionId, `({
+      selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey,
+      label: document.querySelector('#review-play').textContent,
+      pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
+    })`);
+    assert.deepEqual(finished, { selected: 'relationship:publish-order', label: 'Replay', pressed: 'false' });
+    await evaluate(cdp, sessionId, `document.querySelector('#review-play').click()`);
+    const replayStarted = await evaluate(cdp, sessionId, `({
+      selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey,
+      label: document.querySelector('#review-play').textContent,
+      pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
+    })`);
+    assert.deepEqual(replayStarted, { selected: 'component:fraud', label: 'Pause', pressed: 'true' });
+    await waitForReviewFinished('architecture-delta replay playback');
+    const replayFinished = await evaluate(cdp, sessionId, `({
+      selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey,
+      label: document.querySelector('#review-play').textContent,
+      pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
+    })`);
+    assert.deepEqual(replayFinished, { selected: 'relationship:publish-order', label: 'Replay', pressed: 'false' });
+    console.log('ok Architecture Delta navigator: exact identity, lifecycle, reduced motion, print, and finite review');
+  }
+
   async function captureShareCard(file, label) {
     await navigateReady(file, '!!(window.Archify && Archify.exportMenu && Archify.exportMenu.shareCard)', label);
     const sharePayload = await withTimeout(evaluate(cdp, sessionId, String.raw`(async function () {
@@ -1179,6 +1382,7 @@ try {
     console.log(`ok ${label} Reach Card: ${reachPayload.size} bytes, ${reachPayload.snapshot.nodeIds.length} nodes, ${reachPayload.snapshot.edges.length} authored links`);
   }
 
+  await verifyArchitectureDeltaNavigator(path.resolve(skillRoot, '../examples/checkout-platform-delta.html'));
   await captureShareCard(output, 'architecture-wide');
   await captureShareCard(sequenceOutput, 'sequence-tall');
   await captureCopiedShareCard(output, 'architecture-wide');

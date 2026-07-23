@@ -137,7 +137,7 @@ single-region placement, private database scope, or named boundary crossings
 are missing. It is never enabled silently and validates authored facts—not live
 infrastructure. See the [checked deployment proof](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership).
 
-For design or PR review, Architecture Delta compares two validated sources as Before / Delta / After plus a machine receipt—never as risk or merge safety.
+For design or PR review, Architecture Delta compares validated Before / Delta / After snapshots with a machine receipt. Select an exact authored change or play one finite Review—viewer-only, with no impact, risk, or merge-safety inference.
 
 `node archify/bin/archify.mjs compare architecture base.json head.json architecture-delta.html --json`
 
@@ -260,7 +260,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Roadmap](ROADMAP.md)
 - [Generated Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-Archify 2.12 includes typed IR across all five modes, real-repository proof, deterministic Architecture Delta review, verified live preview, authored reachability, optional finite motion, guided views, semantic search and relationship exploration, shareable deep links, 1200×630 diagram and route cards, browser-native WebM recording, explicit `standard` / `showcase` quality profiles, and an opt-in deployment ownership contract.
+Archify 2.12 includes typed IR across all five modes, real-repository proof, deterministic exact-ID Architecture Delta review, verified live preview, authored reachability, optional finite motion, guided views, semantic search and relationship exploration, shareable deep links, 1200×630 diagram and route cards, browser-native WebM recording, explicit `standard` / `showcase` quality profiles, and an opt-in deployment ownership contract.
 
 Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
 

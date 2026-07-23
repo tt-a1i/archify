@@ -3953,17 +3953,19 @@
       svg [data-node-id], svg [data-edge-from], svg [data-detail], svg [data-detail-anchor], svg [data-legend-hit], svg { transition: none !important; }
     }
 
-:root{color-scheme:dark;--d-add:#34d399;--d-remove:#fb7185;--d-change:#fbbf24;--d-move:#7dd3fc;--d-ink:#e6edf5;--d-muted:#8aa0b5;--d-line:#25384a}
+:root{color-scheme:dark;--d-add:#34d399;--d-remove:#fb7185;--d-change:#fbbf24;--d-move:#7dd3fc;--d-focus:#7dd3fc;--d-ink:#e6edf5;--d-muted:#8aa0b5;--d-line:#25384a}
 *{box-sizing:border-box}body{min-width:1080px;margin:0;background:#071019;color:var(--d-ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}.proof-page{width:min(1600px,calc(100vw - 64px));margin:auto;padding:30px 0 42px}.proof-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-bottom:20px;border-bottom:1px solid var(--d-line)}.eyebrow{margin:0 0 8px;color:#7dd3fc;font:700 11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em}.proof-head h1{margin:0;font-size:clamp(32px,4vw,56px);line-height:.96;letter-spacing:-.04em}.subtitle{margin:12px 0 0;color:var(--d-muted);font-size:14px}.metrics{display:flex;gap:9px}.metric{min-width:86px;padding:11px 13px;border:1px solid var(--d-line);border-radius:8px;background:#0b1722}.metric strong{display:block;font:700 23px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.metric span{display:block;margin-top:6px;color:var(--d-muted);font:700 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em}.add strong{color:var(--d-add)}.remove strong{color:var(--d-remove)}.change strong{color:var(--d-change)}
-.proof-tools{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:16px 0}.view-switch{display:inline-flex;padding:3px;border:1px solid var(--d-line);border-radius:8px;background:#0a141e}.view-switch button,.utility{border:0;border-radius:6px;background:transparent;color:var(--d-muted);padding:8px 14px;font:700 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;cursor:pointer}.view-switch button[aria-selected="true"]{background:#173047;color:#fff}.utility{border:1px solid var(--d-line)}.legend{display:flex;gap:16px;color:var(--d-muted);font:650 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.legend span{display:inline-flex;align-items:center;gap:6px}.legend i{width:22px;border-top:3px solid currentColor}.legend .add{color:var(--d-add)}.legend .remove{color:var(--d-remove)}.legend .remove i{border-top-style:dashed}.legend .change{color:var(--d-change)}.legend .change i{border-top-style:dotted}.legend .move{color:var(--d-move)}.legend .move i{border-top-style:double}
-.canvas{overflow:hidden;border:1px solid var(--d-line);border-radius:10px;background:#09141e;padding:12px;min-height:520px}.canvas svg{display:block;width:100%;height:auto;max-height:72vh}.canvas[hidden]{display:none}.canvas[data-view="delta"] [data-delta-state="same"]{opacity:.38}g[data-node-id][data-delta-state="added"]>rect:last-of-type{stroke:var(--d-add)!important;stroke-width:3!important}g[data-node-id][data-delta-state="removed"]>rect:last-of-type{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5}g[data-node-id][data-delta-state="changed"]>rect:last-of-type{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3}g[data-node-id][data-delta-state="moved"]>rect:last-of-type,g[data-node-id][data-delta-state="moved-from"]>rect:last-of-type{stroke:var(--d-move)!important;stroke-width:3!important;stroke-dasharray:8 3 2 3}g[data-node-id][data-delta-state="moved-from"],path[data-delta-state="moved-from"]{opacity:.42}path[data-delta-state="added"]{stroke:var(--d-add)!important;stroke-width:3!important}path[data-delta-state="removed"]{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5!important}path[data-delta-state="changed"]{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3!important}path[data-delta-state="rerouted"],path[data-delta-state="moved-from"]{stroke:var(--d-move)!important;stroke-width:2.5!important;stroke-dasharray:8 3 2 3!important}.delta-node-marker circle{fill:#071019;stroke:currentColor;stroke-width:1.5}.delta-node-marker text,.delta-edge-marker{fill:currentColor;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace}[data-delta-state="added"] .delta-node-marker,.delta-edge-marker[data-delta-state="added"]{color:var(--d-add)}[data-delta-state="removed"] .delta-node-marker,.delta-edge-marker[data-delta-state="removed"]{color:var(--d-remove)}[data-delta-state="changed"] .delta-node-marker,.delta-edge-marker[data-delta-state="changed"]{color:var(--d-change)}[data-delta-state="moved"] .delta-node-marker,[data-delta-state="moved-from"] .delta-node-marker,.delta-edge-marker[data-delta-state="moved-from"],.delta-edge-marker[data-delta-state="rerouted"]{color:var(--d-move)}.delta-edge-marker{paint-order:stroke;stroke:#071019;stroke-width:3px}
+.proof-tools{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:16px 0 10px}.view-switch{display:inline-flex;padding:3px;border:1px solid var(--d-line);border-radius:8px;background:#0a141e}.view-switch button,.utility,.review-step{border:0;border-radius:6px;background:transparent;color:var(--d-muted);padding:8px 14px;font:700 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;cursor:pointer}.view-switch button[aria-selected="true"]{background:#173047;color:#fff}.utility{border:1px solid var(--d-line)}.view-switch button:focus-visible,.utility:focus-visible,.review-step:focus-visible,.change-row:focus-visible{outline:2px solid var(--d-focus);outline-offset:2px}.utility:disabled,.review-step:disabled{cursor:not-allowed;opacity:.45}.legend{display:flex;gap:16px;color:var(--d-muted);font:650 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.legend span{display:inline-flex;align-items:center;gap:6px}.legend i{width:22px;border-top:3px solid currentColor}.legend .add{color:var(--d-add)}.legend .remove{color:var(--d-remove)}.legend .remove i{border-top-style:dashed}.legend .change{color:var(--d-change)}.legend .change i{border-top-style:dotted}.legend .move{color:var(--d-move)}.legend .move i{border-top-style:double}
+.review-strip{display:grid;grid-template-columns:auto auto auto auto minmax(0,1fr);align-items:center;gap:5px;margin:0 0 10px;padding:7px 8px;border-block:1px solid var(--d-line);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.review-step{min-height:34px;border:1px solid var(--d-line);padding-inline:11px}.review-step[aria-pressed="true"]{border-color:var(--d-focus);color:var(--d-ink)}.review-status{min-width:0;padding-left:9px;color:var(--d-muted);font-size:10px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.review-status strong{color:var(--d-ink);font-weight:750}.review-status[data-state="unavailable"]{color:var(--d-remove)}
+.canvas{overflow:hidden;border:1px solid var(--d-line);border-radius:10px;background:#09141e;padding:12px;min-height:520px}.canvas svg{display:block;width:100%;height:auto;max-height:72vh}.canvas[hidden]{display:none}.canvas[data-view="delta"] [data-delta-state="same"]{opacity:.38}.canvas[data-delta-review-active]{--review-same-opacity:.14;--review-change-opacity:.28}.canvas[data-delta-review-active] [data-delta-state="same"]{opacity:var(--review-same-opacity)!important}.canvas[data-delta-review-active] [data-delta-state]:not([data-delta-state="same"]):not([data-delta-review-current]){opacity:var(--review-change-opacity)!important}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:opacity .16s ease-out}g[data-node-id][data-delta-state="added"]>rect:last-of-type{stroke:var(--d-add)!important;stroke-width:3!important}g[data-node-id][data-delta-state="removed"]>rect:last-of-type{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5}g[data-node-id][data-delta-state="changed"]>rect:last-of-type{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3}g[data-node-id][data-delta-state="moved"]>rect:last-of-type,g[data-node-id][data-delta-state="moved-from"]>rect:last-of-type{stroke:var(--d-move)!important;stroke-width:3!important;stroke-dasharray:8 3 2 3}g[data-node-id][data-delta-state="moved-from"],path[data-delta-state="moved-from"]{opacity:.42}path[data-delta-state="added"]{stroke:var(--d-add)!important;stroke-width:3!important}path[data-delta-state="removed"]{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5!important}path[data-delta-state="changed"]{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3!important}path[data-delta-state="rerouted"],path[data-delta-state="moved-from"]{stroke:var(--d-move)!important;stroke-width:2.5!important;stroke-dasharray:8 3 2 3!important}.delta-node-marker circle{fill:#071019;stroke:currentColor;stroke-width:1.5}.delta-node-marker text,.delta-edge-marker{fill:currentColor;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace}[data-delta-state="added"] .delta-node-marker,.delta-edge-marker[data-delta-state="added"]{color:var(--d-add)}[data-delta-state="removed"] .delta-node-marker,.delta-edge-marker[data-delta-state="removed"]{color:var(--d-remove)}[data-delta-state="changed"] .delta-node-marker,.delta-edge-marker[data-delta-state="changed"]{color:var(--d-change)}[data-delta-state="moved"] .delta-node-marker,[data-delta-state="moved-from"] .delta-node-marker,.delta-edge-marker[data-delta-state="moved-from"],.delta-edge-marker[data-delta-state="rerouted"]{color:var(--d-move)}.delta-edge-marker{paint-order:stroke;stroke:#071019;stroke-width:3px}
 rect[data-graph-role="structural-frame"][data-delta-state="added"]{stroke:var(--d-add)!important;stroke-width:2.5!important}rect[data-graph-role="structural-frame"][data-delta-state="removed"]{stroke:var(--d-remove)!important;stroke-width:2.5!important;stroke-dasharray:7 5!important}rect[data-graph-role="structural-frame"][data-delta-state="changed"]{stroke:var(--d-change)!important;stroke-width:2.5!important;stroke-dasharray:2 3!important}rect[data-graph-role="structural-frame"][data-delta-state="moved-from"]{stroke:var(--d-move)!important;stroke-width:2!important;stroke-dasharray:8 3 2 3!important;opacity:.42}text[data-delta-boundary-state="added"]{fill:var(--d-add)!important}text[data-delta-boundary-state="removed"]{fill:var(--d-remove)!important}text[data-delta-boundary-state="changed"]{fill:var(--d-change)!important}text[data-delta-boundary-state="moved-from"]{fill:var(--d-move)!important;opacity:.55}
-details{margin-top:12px;border:1px solid var(--d-line);border-radius:9px;background:#0a141e}summary{padding:13px 15px;cursor:pointer;font-weight:700}.changes{list-style:none;margin:0;padding:0 15px 15px}.changes li{display:grid;grid-template-columns:30px 90px minmax(140px,1fr) minmax(100px,.7fr) minmax(120px,.8fr) minmax(140px,1.2fr);gap:10px;padding:9px 0;border-top:1px solid rgba(138,160,181,.16);font-size:11px;align-items:baseline}.token{font:800 13px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.changes code,.changes li>span:last-child{color:var(--d-muted)}.proof-foot{display:flex;justify-content:space-between;gap:24px;margin-top:14px;color:var(--d-muted);font:650 10px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}
-html[data-theme="dark"] body{background:#071019!important;background-image:none!important}html[data-theme="light"]{color-scheme:light;--d-ink:#10283c;--d-muted:#587187;--d-line:#c8d6e2}html[data-theme="light"] body{background:#eef3f7!important;background-image:none!important;color:var(--d-ink)}html[data-theme="light"] .metric,html[data-theme="light"] .view-switch,html[data-theme="light"] details{background:#fff}html[data-theme="light"] .canvas{background:#f8fbfd}html[data-theme="light"] .view-switch button[aria-selected="true"]{background:#dbeaf5;color:#10283c}html[data-theme="light"] .delta-node-marker circle{fill:#fff}html[data-preset="blueprint"] body{background-image:none!important}
-@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}@media print{body{min-width:0;background:#fff;color:#111}.proof-page{width:100%;padding:0}.proof-tools,details{display:none!important}.canvas{display:none!important}.canvas[data-view="delta"]{display:block!important;border:0}.proof-foot{color:#444}}
+details{margin-top:12px;border:1px solid var(--d-line);border-radius:9px;background:#0a141e}summary{padding:13px 15px;cursor:pointer;font-weight:700}.changes{list-style:none;margin:0;padding:0 8px 8px}.changes li{border-top:1px solid rgba(138,160,181,.16)}.change-row{display:grid;grid-template-columns:30px 90px minmax(140px,1fr) minmax(100px,.7fr) minmax(120px,.8fr) minmax(140px,1.2fr);gap:10px;width:100%;margin:0;padding:9px 7px;border:0;border-radius:5px;background:transparent;color:inherit;font:inherit;font-size:11px;text-align:left;align-items:baseline;cursor:pointer}.change-row:hover{background:rgba(125,211,252,.06)}.change-row[aria-current="step"]{background:rgba(125,211,252,.1);box-shadow:inset 0 0 0 1px var(--d-focus)}.change-row:disabled{cursor:default}.token{font:800 13px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.changes code,.change-row>span:last-child{color:var(--d-muted)}.proof-foot{display:flex;justify-content:space-between;gap:24px;margin-top:14px;color:var(--d-muted);font:650 10px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}
+html[data-theme="dark"] body{background:#071019!important;background-image:none!important}html[data-theme="light"]{color-scheme:light;--d-ink:#10283c;--d-muted:#587187;--d-line:#c8d6e2;--d-focus:#006b8f}html[data-theme="light"] body{background:#eef3f7!important;background-image:none!important;color:var(--d-ink)}html[data-theme="light"] .metric,html[data-theme="light"] .view-switch,html[data-theme="light"] details{background:#fff}html[data-theme="light"] .canvas{background:#f8fbfd}html[data-theme="light"] .view-switch button[aria-selected="true"]{background:#dbeaf5;color:#10283c}html[data-theme="light"] .delta-node-marker circle{fill:#fff}html[data-preset="blueprint"] body{background-image:none!important}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.canvas[data-delta-review-active] [data-delta-review-current]{transition:none!important}}@media print{body{min-width:0;background:#fff;color:#111}.proof-page{width:100%;padding:0}.proof-tools,.review-strip,details{display:none!important}.canvas{display:none!important}.canvas[data-view="delta"]{display:block!important;border:0}.canvas[data-delta-review-active]{--review-same-opacity:1;--review-change-opacity:1}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:none!important}.proof-foot{color:#444}}
 </style></head>
 <body><main class="proof-page"><header class="proof-head"><div><p class="eyebrow">ARCHITECTURE DELTA · AUTHORED SNAPSHOTS</p><h1>See what changed<br>before you merge.</h1><p class="subtitle">Checkout Platform — Baseline → Checkout Platform — Fraud Gate</p></div><div class="metrics"><div class="metric add"><strong>2</strong><span>ADDED</span></div><div class="metric remove"><strong>2</strong><span>REMOVED</span></div><div class="metric change"><strong>5</strong><span>CHANGED</span></div></div></header>
 <div class="proof-tools"><div class="view-switch" role="tablist" aria-label="Architecture snapshot"><button role="tab" data-target="base" aria-selected="false">Before</button><button role="tab" data-target="delta" aria-selected="true">Delta</button><button role="tab" data-target="head" aria-selected="false">After</button></div><div class="legend"><span class="add"><i></i>+ ADD</span><span class="remove"><i></i>− DEL</span><span class="change"><i></i>~ MOD</span><span class="move"><i></i>↔ MOVE</span></div><div><button class="utility" id="preset" type="button">Preset</button> <button class="utility" id="theme" type="button">Theme</button></div></div>
+<nav class="review-strip" aria-label="Authored change review"><button class="review-step" id="review-overview" type="button" disabled>Overview</button><button class="review-step" id="review-previous" type="button" aria-label="Previous authored change" disabled>←</button><button class="review-step" id="review-play" type="button" aria-pressed="false">Review</button><button class="review-step" id="review-next" type="button" aria-label="Next authored change" disabled>→</button><div class="review-status" id="review-status" role="status" aria-live="polite">Overview · 11 authored changes</div></nav>
 <section class="canvas" data-view="base" hidden><svg viewBox="0 0 1020 548" role="img" aria-labelledby="base-archify-diagram-title base-archify-diagram-description" data-preset="signal-flow" data-quality-profile="standard" data-quality-gates="advisory">
         <title id="base-archify-diagram-title">Checkout Platform — Baseline</title>
         <desc id="base-archify-diagram-description">Before fraud screening moved into the payment path</desc>
@@ -3990,11 +3992,11 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         <rect width="100%" height="100%" fill="url(#base-grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" x="190" y="70" width="610" height="410" rx="12" class="c-region" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope"/>
-        <text x="198" y="88" class="t-cloud" font-size="9" font-weight="600" data-delta-boundary-state="changed">Production region</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" x="190" y="70" width="610" height="410" rx="12" class="c-region" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope" data-delta-boundary-key="region:Production region"/>
+        <text x="198" y="88" class="t-cloud" font-size="9" font-weight="600" data-delta-state="changed" data-delta-boundary-state="changed" data-delta-boundary-key="region:Production region">Production region</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" x="400" y="220" width="400" height="110" rx="8" class="c-security-group" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope"/>
-        <text x="408" y="238" class="t-security" font-size="9" font-weight="600" data-delta-boundary-state="changed">Checkout trust zone</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" x="400" y="220" width="400" height="110" rx="8" class="c-security-group" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope" data-delta-boundary-key="security-group:Checkout trust zone"/>
+        <text x="408" y="238" class="t-security" font-size="9" font-weight="600" data-delta-state="changed" data-delta-boundary-state="changed" data-delta-boundary-key="security-group:Checkout trust zone">Checkout trust zone</text>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="orders" data-edge-to="payments" data-edge-label="authorize" data-edge-key="0" data-edge-id="authorize-payment" data-composition-points="770,280;850,280" d="M 770 280 L 850 280" class="a-security" stroke-width="1.5" marker-end="url(#base-arrowhead-security)" data-delta-state="changed" data-delta-classifications="geometry,topology"/>
@@ -4181,32 +4183,32 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         <rect width="100%" height="100%" fill="url(#delta-head-grid)" />
 
         <!-- Baseline boundary phantoms -->
-<rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" x="190" y="70" width="610" height="410" rx="12" class="c-region" stroke-width="1" data-delta-state="moved-from"/>
-        <text x="198" y="88" class="t-cloud" font-size="9" font-weight="600" data-delta-boundary-state="moved-from">Production region</text>
-<rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" x="400" y="220" width="400" height="110" rx="8" class="c-security-group" stroke-width="1" data-delta-state="moved-from"/>
-        <text x="408" y="238" class="t-security" font-size="9" font-weight="600" data-delta-boundary-state="moved-from">Checkout trust zone</text>
+<rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" x="190" y="70" width="610" height="410" rx="12" class="c-region" stroke-width="1" data-delta-state="moved-from" data-delta-classifications="scope" data-delta-boundary-key="region:Production region"/>
+        <text x="198" y="88" class="t-cloud" font-size="9" font-weight="600" data-delta-state="moved-from" data-delta-boundary-state="moved-from" data-delta-boundary-key="region:Production region">Production region</text>
+<rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" x="400" y="220" width="400" height="110" rx="8" class="c-security-group" stroke-width="1" data-delta-state="moved-from" data-delta-classifications="scope" data-delta-boundary-key="security-group:Checkout trust zone"/>
+        <text x="408" y="238" class="t-security" font-size="9" font-weight="600" data-delta-state="moved-from" data-delta-boundary-state="moved-from" data-delta-boundary-key="security-group:Checkout trust zone">Checkout trust zone</text>
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" x="190" y="70" width="610" height="430" rx="12" class="c-region" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope"/>
-        <text x="198" y="88" class="t-cloud" font-size="9" font-weight="600" data-delta-boundary-state="changed">Production region</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" x="190" y="70" width="610" height="430" rx="12" class="c-region" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope" data-delta-boundary-key="region:Production region"/>
+        <text x="198" y="88" class="t-cloud" font-size="9" font-weight="600" data-delta-state="changed" data-delta-boundary-state="changed" data-delta-boundary-key="region:Production region">Production region</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" x="400" y="70" width="400" height="260" rx="8" class="c-security-group" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope"/>
-        <text x="408" y="88" class="t-security" font-size="9" font-weight="600" data-delta-boundary-state="changed">Checkout trust zone</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" x="400" y="70" width="400" height="260" rx="8" class="c-security-group" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope" data-delta-boundary-key="security-group:Checkout trust zone"/>
+        <text x="408" y="88" class="t-security" font-size="9" font-weight="600" data-delta-state="changed" data-delta-boundary-state="changed" data-delta-boundary-key="security-group:Checkout trust zone">Checkout trust zone</text>
 
         <!-- Baseline relationship phantoms -->
-<path data-edge-from="orders" data-edge-to="payments" data-edge-label="authorize" data-edge-key="0" data-edge-id="authorize-payment" data-composition-points="770,280;850,280" d="M 770 280 L 850 280" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)" data-delta-state="removed"/>
-<g data-detail="context" data-edge-from="orders" data-edge-to="payments" data-edge-label="authorize" data-edge-key="0" data-edge-id="authorize-payment" data-delta-state="removed">
+<path data-edge-from="orders" data-edge-to="payments" data-edge-label="authorize" data-edge-key="0" data-edge-id="authorize-payment" data-composition-points="770,280;850,280" d="M 770 280 L 850 280" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)" data-delta-state="removed" data-delta-classifications="geometry,topology"/>
+<g data-detail="context" data-edge-from="orders" data-edge-to="payments" data-edge-label="authorize" data-edge-key="0" data-edge-id="authorize-payment" data-delta-state="removed" data-delta-classifications="geometry,topology">
           <rect x="783.4" y="260" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
           <text x="810" y="270" class="t-security" font-size="8" text-anchor="middle">authorize</text>
         </g>
 
-<path data-edge-from="checkout" data-edge-to="queue" data-edge-label="accepted" data-edge-key="5" data-edge-id="publish-order" data-composition-points="495,310;495,400" d="M 495 310 L 495 400" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)" data-delta-state="moved-from"/>
-<g data-detail="context" data-edge-from="checkout" data-edge-to="queue" data-edge-label="accepted" data-edge-key="5" data-edge-id="publish-order" data-delta-state="moved-from">
+<path data-edge-from="checkout" data-edge-to="queue" data-edge-label="accepted" data-edge-key="5" data-edge-id="publish-order" data-composition-points="495,310;495,400" d="M 495 310 L 495 400" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)" data-delta-state="moved-from" data-delta-classifications="geometry"/>
+<g data-detail="context" data-edge-from="checkout" data-edge-to="queue" data-edge-label="accepted" data-edge-key="5" data-edge-id="publish-order" data-delta-state="moved-from" data-delta-classifications="geometry">
           <rect x="470.8" y="356" width="48.4" height="14" rx="3" class="c-mask"/>
           <text x="495" y="366" class="t-messagebus" font-size="8" text-anchor="middle">accepted</text>
         </g>
-<path data-edge-from="checkout" data-edge-to="cache" data-edge-label="session" data-edge-key="6" data-edge-id="session-read" data-composition-points="495,250;495,160" d="M 495 250 L 495 160" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)" data-delta-state="removed"/>
-<g data-detail="context" data-edge-from="checkout" data-edge-to="cache" data-edge-label="session" data-edge-key="6" data-edge-id="session-read" data-delta-state="removed">
+<path data-edge-from="checkout" data-edge-to="cache" data-edge-label="session" data-edge-key="6" data-edge-id="session-read" data-composition-points="495,250;495,160" d="M 495 250 L 495 160" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)" data-delta-state="removed" data-delta-classifications="topology"/>
+<g data-detail="context" data-edge-from="checkout" data-edge-to="cache" data-edge-label="session" data-edge-key="6" data-edge-id="session-read" data-delta-state="removed" data-delta-classifications="topology">
           <rect x="473.2" y="164" width="43.6" height="14" rx="3" class="c-mask"/>
           <text x="495" y="174" class="t-muted" font-size="8" text-anchor="middle">session</text>
         </g>
@@ -4221,7 +4223,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         <path data-edge-from="checkout" data-edge-to="queue" data-edge-label="accepted" data-edge-key="6" data-edge-id="publish-order" data-composition-points="495,310;495,420" d="M 495 310 L 495 420" class="a-dashed" stroke-width="1.5" marker-end="url(#delta-head-arrowhead-dashed)" data-delta-state="rerouted" data-delta-classifications="geometry"/>
 
         <!-- Baseline removed and move-from component phantoms -->
-<g id="delta-base-node-cache" data-node-id="cache" data-node-label="Session Cache" role="group" aria-label="Session Cache, Redis, Production region" data-node-kind="database" data-node-sublabel="Redis" data-node-context="Production region" data-delta-state="removed">
+<g id="delta-base-node-cache" data-node-id="cache" data-node-label="Session Cache" role="group" aria-label="Session Cache, Redis, Production region" data-node-kind="database" data-node-sublabel="Redis" data-node-context="Production region" data-delta-state="removed" data-delta-classifications="semantic">
           <title>Session Cache · Redis · Production region</title>
           <rect x="430" y="100" width="130" height="60" rx="6" class="c-mask"/>
           <rect x="430" y="100" width="130" height="60" rx="6" class="c-database" stroke-width="1.5"/>
@@ -4234,7 +4236,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 
           <g class="delta-node-marker" aria-hidden="true"><circle cx="551" cy="109" r="8"/><text x="551" y="112" text-anchor="middle">−</text></g>
         </g>
-<g id="delta-base-node-queue" data-node-id="queue" data-node-label="Order Events" role="group" aria-label="Order Events, durable queue, Production region" data-node-kind="messagebus" data-node-sublabel="durable queue" data-node-context="Production region" data-delta-state="moved-from">
+<g id="delta-base-node-queue" data-node-id="queue" data-node-label="Order Events" role="group" aria-label="Order Events, durable queue, Production region" data-node-kind="messagebus" data-node-sublabel="durable queue" data-node-context="Production region" data-delta-state="moved-from" data-delta-classifications="geometry">
           <title>Order Events · durable queue · Production region</title>
           <rect x="430" y="400" width="130" height="60" rx="6" class="c-mask"/>
           <rect x="430" y="400" width="130" height="60" rx="6" class="c-messagebus" stroke-width="1.5"/>
@@ -4378,13 +4380,13 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         </g>
 
         <!-- Delta relationship symbols -->
-<text class="delta-edge-marker" data-delta-state="removed" x="779" y="273" aria-hidden="true">−</text>
-<text class="delta-edge-marker" data-delta-state="moved-from" x="504" y="303" aria-hidden="true">↔</text>
-<text class="delta-edge-marker" data-delta-state="removed" x="504" y="243" aria-hidden="true">−</text>
-<text class="delta-edge-marker" data-delta-state="added" x="779" y="273" aria-hidden="true">+</text>
-<text class="delta-edge-marker" data-delta-state="added" x="504" y="243" aria-hidden="true">+</text>
-<text class="delta-edge-marker" data-delta-state="changed" x="569" y="273" aria-hidden="true">~</text>
-<text class="delta-edge-marker" data-delta-state="rerouted" x="504" y="303" aria-hidden="true">↔</text>
+<text class="delta-edge-marker" data-delta-state="removed" data-edge-id="authorize-payment" x="779" y="273" aria-hidden="true">−</text>
+<text class="delta-edge-marker" data-delta-state="moved-from" data-edge-id="publish-order" x="504" y="303" aria-hidden="true">↔</text>
+<text class="delta-edge-marker" data-delta-state="removed" data-edge-id="session-read" x="504" y="243" aria-hidden="true">−</text>
+<text class="delta-edge-marker" data-delta-state="added" data-edge-id="authorize-payment" x="779" y="273" aria-hidden="true">+</text>
+<text class="delta-edge-marker" data-delta-state="added" data-edge-id="fraud-check" x="504" y="243" aria-hidden="true">+</text>
+<text class="delta-edge-marker" data-delta-state="changed" data-edge-id="persist-order" x="569" y="273" aria-hidden="true">~</text>
+<text class="delta-edge-marker" data-delta-state="rerouted" data-edge-id="publish-order" x="504" y="303" aria-hidden="true">↔</text>
 
         <!-- Legend -->
         <g data-legend-bridge>
@@ -4440,11 +4442,11 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         <rect width="100%" height="100%" fill="url(#head-grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" x="190" y="70" width="610" height="430" rx="12" class="c-region" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope"/>
-        <text x="198" y="88" class="t-cloud" font-size="9" font-weight="600" data-delta-boundary-state="changed">Production region</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" x="190" y="70" width="610" height="430" rx="12" class="c-region" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope" data-delta-boundary-key="region:Production region"/>
+        <text x="198" y="88" class="t-cloud" font-size="9" font-weight="600" data-delta-state="changed" data-delta-boundary-state="changed" data-delta-boundary-key="region:Production region">Production region</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" x="400" y="70" width="400" height="260" rx="8" class="c-security-group" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope"/>
-        <text x="408" y="88" class="t-security" font-size="9" font-weight="600" data-delta-boundary-state="changed">Checkout trust zone</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" x="400" y="70" width="400" height="260" rx="8" class="c-security-group" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope" data-delta-boundary-key="security-group:Checkout trust zone"/>
+        <text x="408" y="88" class="t-security" font-size="9" font-weight="600" data-delta-state="changed" data-delta-boundary-state="changed" data-delta-boundary-key="security-group:Checkout trust zone">Checkout trust zone</text>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="fraud" data-edge-to="payments" data-edge-label="authorize" data-edge-key="0" data-edge-id="authorize-payment" data-composition-points="770,130;820,130;915,130;915,250" d="M 770 130 L 812 130 Q 820 130 828 130 L 907 130 Q 915 130 915 138 L 915 250" class="a-security" stroke-width="1.5" marker-end="url(#head-arrowhead-security)" data-delta-state="changed" data-delta-classifications="geometry,topology"/>
@@ -4611,17 +4613,17 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
           </g>
         </g>
       </svg></section>
-<details><summary>Exact authored changes · 11</summary><ul class="changes"><li data-change-status="added"><span class="token">+</span><span>Component</span><strong>Fraud Gate</strong><code>fraud</code><span>semantic</span><span>identity</span></li>
-<li data-change-status="added"><span class="token">+</span><span>Relationship</span><strong>fraud-check</strong><code>fraud-check</code><span>topology</span><span>identity</span></li>
-<li data-change-status="changed"><span class="token">~</span><span>Component</span><strong>Checkout API</strong><code>checkout</code><span>semantic</span><span>/sublabel</span></li>
-<li data-change-status="changed"><span class="token">~</span><span>Relationship</span><strong>authorize-payment</strong><code>authorize-payment</code><span>geometry, topology</span><span>/from, /fromSide, /toSide, /via</span></li>
-<li data-change-status="changed"><span class="token">~</span><span>Relationship</span><strong>persist-order</strong><code>persist-order</code><span>semantic</span><span>/label</span></li>
-<li data-change-status="changed"><span class="token">~</span><span>region</span><strong>Production region</strong><code>region:Production region</code><span>scope</span><span>/wraps</span></li>
-<li data-change-status="changed"><span class="token">~</span><span>security-group</span><strong>Checkout trust zone</strong><code>security-group:Checkout trust zone</code><span>scope</span><span>/wraps</span></li>
-<li data-change-status="moved"><span class="token">↔</span><span>Component</span><strong>Order Events</strong><code>queue</code><span>geometry</span><span>/pos</span></li>
-<li data-change-status="removed"><span class="token">−</span><span>Component</span><strong>Session Cache</strong><code>cache</code><span>semantic</span><span>identity</span></li>
-<li data-change-status="removed"><span class="token">−</span><span>Relationship</span><strong>session-read</strong><code>session-read</code><span>topology</span><span>identity</span></li>
-<li data-change-status="rerouted"><span class="token">↔</span><span>Relationship</span><strong>publish-order</strong><code>publish-order</code><span>geometry</span><span>/labelDy</span></li></ul></details>
+<details><summary>Exact authored changes · 11</summary><ul class="changes"><li data-change-status="added"><button class="change-row" type="button" data-change-index="0" data-change-key="component:fraud" data-change-kind="component" data-change-id="fraud" data-change-label="Fraud Gate" data-change-status="added" data-change-classifications="semantic" data-change-target-signature="g:added:semantic"><span class="token">+</span><span>Component</span><strong>Fraud Gate</strong><code>fraud</code><span>semantic</span><span>identity</span></button></li>
+<li data-change-status="added"><button class="change-row" type="button" data-change-index="1" data-change-key="relationship:fraud-check" data-change-kind="relationship" data-change-id="fraud-check" data-change-label="screen" data-change-status="added" data-change-classifications="topology" data-change-target-signature="g:added:topology|path:added:topology|text:added:"><span class="token">+</span><span>Relationship</span><strong>screen</strong><code>fraud-check</code><span>topology</span><span>identity</span></button></li>
+<li data-change-status="changed"><button class="change-row" type="button" data-change-index="2" data-change-key="boundary:region:Production region" data-change-kind="boundary" data-change-id="region:Production region" data-change-label="Production region" data-change-status="changed" data-change-classifications="scope" data-change-target-signature="rect:changed:scope|rect:moved-from:scope|text:changed:|text:moved-from:"><span class="token">~</span><span>Boundary</span><strong>Production region</strong><code>region:Production region</code><span>scope</span><span>/wraps</span></button></li>
+<li data-change-status="changed"><button class="change-row" type="button" data-change-index="3" data-change-key="boundary:security-group:Checkout trust zone" data-change-kind="boundary" data-change-id="security-group:Checkout trust zone" data-change-label="Checkout trust zone" data-change-status="changed" data-change-classifications="scope" data-change-target-signature="rect:changed:scope|rect:moved-from:scope|text:changed:|text:moved-from:"><span class="token">~</span><span>Boundary</span><strong>Checkout trust zone</strong><code>security-group:Checkout trust zone</code><span>scope</span><span>/wraps</span></button></li>
+<li data-change-status="changed"><button class="change-row" type="button" data-change-index="4" data-change-key="component:checkout" data-change-kind="component" data-change-id="checkout" data-change-label="Checkout API" data-change-status="changed" data-change-classifications="semantic" data-change-target-signature="g:changed:semantic"><span class="token">~</span><span>Component</span><strong>Checkout API</strong><code>checkout</code><span>semantic</span><span>/sublabel</span></button></li>
+<li data-change-status="changed"><button class="change-row" type="button" data-change-index="5" data-change-key="relationship:authorize-payment" data-change-kind="relationship" data-change-id="authorize-payment" data-change-label="authorize" data-change-status="changed" data-change-classifications="geometry, topology" data-change-target-signature="g:changed:geometry,topology|g:removed:geometry,topology|path:changed:geometry,topology|path:removed:geometry,topology|text:added:|text:removed:"><span class="token">~</span><span>Relationship</span><strong>authorize</strong><code>authorize-payment</code><span>geometry, topology</span><span>/from, /fromSide, /toSide, /via</span></button></li>
+<li data-change-status="changed"><button class="change-row" type="button" data-change-index="6" data-change-key="relationship:persist-order" data-change-kind="relationship" data-change-id="persist-order" data-change-label="SQL tx" data-change-status="changed" data-change-classifications="semantic" data-change-target-signature="g:changed:semantic|path:changed:semantic|text:changed:"><span class="token">~</span><span>Relationship</span><strong>SQL tx</strong><code>persist-order</code><span>semantic</span><span>/label</span></button></li>
+<li data-change-status="moved"><button class="change-row" type="button" data-change-index="7" data-change-key="component:queue" data-change-kind="component" data-change-id="queue" data-change-label="Order Events" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>Order Events</strong><code>queue</code><span>geometry</span><span>/pos</span></button></li>
+<li data-change-status="removed"><button class="change-row" type="button" data-change-index="8" data-change-key="component:cache" data-change-kind="component" data-change-id="cache" data-change-label="Session Cache" data-change-status="removed" data-change-classifications="semantic" data-change-target-signature="g:removed:semantic"><span class="token">−</span><span>Component</span><strong>Session Cache</strong><code>cache</code><span>semantic</span><span>identity</span></button></li>
+<li data-change-status="removed"><button class="change-row" type="button" data-change-index="9" data-change-key="relationship:session-read" data-change-kind="relationship" data-change-id="session-read" data-change-label="session" data-change-status="removed" data-change-classifications="topology" data-change-target-signature="g:removed:topology|path:removed:topology|text:removed:"><span class="token">−</span><span>Relationship</span><strong>session</strong><code>session-read</code><span>topology</span><span>identity</span></button></li>
+<li data-change-status="rerouted"><button class="change-row" type="button" data-change-index="10" data-change-key="relationship:publish-order" data-change-kind="relationship" data-change-id="publish-order" data-change-label="accepted" data-change-status="rerouted" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:rerouted:geometry|path:moved-from:geometry|path:rerouted:geometry|text:moved-from:|text:rerouted:"><span class="token">↔</span><span>Relationship</span><strong>accepted</strong><code>publish-order</code><span>geometry</span><span>/labelDy</span></button></li></ul></details>
 <footer class="proof-foot"><span>Stable IDs only · completeness: complete · AUTHORED SNAPSHOTS</span><span>Authored IR only · no risk or mergeability inference</span></footer></main>
 <script id="archify-compare-receipt" type="application/json">{
   "schemaVersion": 1,
@@ -4840,4 +4842,263 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     "Boundary identity is conservatively derived from kind + label."
   ]
 }</script>
-<script>(()=>{const tabs=[...document.querySelectorAll('[role="tab"]')],views=[...document.querySelectorAll('[data-view]')];function show(id){tabs.forEach(t=>t.setAttribute('aria-selected',String(t.dataset.target===id)));views.forEach(v=>v.hidden=v.dataset.view!==id)}tabs.forEach((tab,index)=>{tab.addEventListener('click',()=>show(tab.dataset.target));tab.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();let next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(index+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;tabs[next].focus();show(tabs[next].dataset.target)})});document.querySelector('#theme').addEventListener('click',()=>{document.documentElement.dataset.theme=document.documentElement.dataset.theme==='dark'?'light':'dark'});const presets=['classic','signal-flow','blueprint'];document.querySelector('#preset').addEventListener('click',()=>{const now=document.documentElement.dataset.preset;document.documentElement.dataset.preset=presets[(presets.indexOf(now)+1)%presets.length]})})();</script></body></html>
+<script>(()=>{
+  const REVIEW_DWELL_MS = 1400;
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  const views = [...document.querySelectorAll('[data-view]')];
+  const deltaCanvas = document.querySelector('[data-view="delta"]');
+  const rowButtons = [...document.querySelectorAll('.change-row')];
+  const overviewButton = document.querySelector('#review-overview');
+  const previousButton = document.querySelector('#review-previous');
+  const playButton = document.querySelector('#review-play');
+  const nextButton = document.querySelector('#review-next');
+  const status = document.querySelector('#review-status');
+  const receiptNode = document.querySelector('#archify-compare-receipt');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let activeIndex = -1;
+  let playbackToken = 0;
+  let playbackTimer = 0;
+  let playing = false;
+  let reviewAvailable = false;
+  let reviewSources = [];
+
+  function show(id) {
+    tabs.forEach((tab) => tab.setAttribute('aria-selected', String(tab.dataset.target === id)));
+    views.forEach((view) => { view.hidden = view.dataset.view !== id; });
+  }
+
+  function stopPlayback() {
+    playbackToken += 1;
+    if (playbackTimer) window.clearTimeout(playbackTimer);
+    playbackTimer = 0;
+    playing = false;
+    playButton.setAttribute('aria-pressed', 'false');
+    playButton.textContent = activeIndex === rowButtons.length - 1 && rowButtons.length ? 'Replay' : 'Review';
+    status.setAttribute('aria-live', 'polite');
+  }
+
+  function failReview() {
+    stopPlayback();
+    reviewAvailable = false;
+    activeIndex = -1;
+    deltaCanvas?.removeAttribute('data-delta-review-active');
+    deltaCanvas?.querySelectorAll('[data-delta-review-current]').forEach((element) => element.removeAttribute('data-delta-review-current'));
+    rowButtons.forEach((row) => {
+      row.disabled = true;
+      row.tabIndex = -1;
+      row.removeAttribute('aria-current');
+    });
+    [overviewButton, previousButton, playButton, nextButton].forEach((button) => { button.disabled = true; });
+    status.dataset.state = 'unavailable';
+    status.textContent = 'Review unavailable · compare identity mismatch';
+  }
+
+  function receiptRows(receipt) {
+    const definitions = [
+      { collection: 'components', kind: 'component', id: 'id', statuses: ['added', 'changed', 'evidence-changed', 'removed', 'moved'] },
+      { collection: 'connections', kind: 'relationship', id: 'id', statuses: ['added', 'changed', 'removed', 'rerouted'] },
+      { collection: 'boundaries', kind: 'boundary', id: 'key', statuses: ['added', 'changed', 'removed', 'geometry-changed'] },
+    ];
+    const rows = [];
+    for (const definition of definitions) {
+      const changes = receipt.changes[definition.collection];
+      if (!Array.isArray(changes)) return null;
+      for (const change of changes) {
+        if (!change || typeof change !== 'object' || Array.isArray(change)) return null;
+        const id = change[definition.id];
+        if (typeof id !== 'string' || !id || !definition.statuses.includes(change.status)) return null;
+        if (!Array.isArray(change.classifications) || !change.classifications.length || change.classifications.some((value) => typeof value !== 'string')) return null;
+        if (new Set(change.classifications).size !== change.classifications.length) return null;
+        if (!Array.isArray(change.changedFields) || change.changedFields.some((value) => typeof value !== 'string')) return null;
+        rows.push({ ...change, kind: definition.kind, key: definition.kind + ':' + id, id });
+      }
+    }
+    return rows;
+  }
+
+  function exactTargets(row) {
+    const attribute = row.dataset.changeKind === 'component'
+      ? 'data-node-id'
+      : row.dataset.changeKind === 'relationship'
+        ? 'data-edge-id'
+        : 'data-delta-boundary-key';
+    return [...deltaCanvas.querySelectorAll('[' + attribute + ']')]
+      .filter((element) => element.getAttribute(attribute) === row.dataset.changeId);
+  }
+
+  function targetSignature(matches) {
+    return matches.map((element) => {
+      const tag = element.tagName.toLowerCase();
+      const state = element.dataset.deltaState || '';
+      const classifications = element.dataset.deltaClassifications || '';
+      return tag + ':' + state + ':' + classifications;
+    }).sort().join('|');
+  }
+
+  function targetsMatch(source, row, matches) {
+    if (!source || !matches.length || !row.dataset.changeTargetSignature) return false;
+    if (row.dataset.changeKind !== source.kind || row.dataset.changeId !== source.id || row.dataset.changeStatus !== source.status) return false;
+    if (row.dataset.changeClassifications !== source.classifications.join(', ')) return false;
+    return row.dataset.changeTargetSignature === targetSignature(matches);
+  }
+
+  function validateReview() {
+    try {
+      if (document.querySelectorAll('#archify-compare-receipt').length !== 1 || !receiptNode) return false;
+      if (!deltaCanvas || !['base', 'delta', 'head'].every((id) => document.querySelectorAll('[data-view="' + id + '"]').length === 1)) return false;
+      if (deltaCanvas.children.length !== 1 || deltaCanvas.firstElementChild?.tagName.toLowerCase() !== 'svg') return false;
+      const receipt = JSON.parse(receiptNode.textContent);
+      if (!receipt || receipt.schemaVersion !== 1 || receipt.command !== 'compare' || receipt.completeness !== 'complete' || !receipt.changes) return false;
+      const sources = receiptRows(receipt);
+      if (!sources || sources.length !== rowButtons.length) return false;
+      const sourceByKey = new Map(sources.map((source) => [source.key, source]));
+      if (sourceByKey.size !== sources.length) return false;
+      const seen = new Set();
+      const orderedSources = [];
+      for (let index = 0; index < rowButtons.length; index += 1) {
+        const row = rowButtons[index];
+        const source = sourceByKey.get(row.dataset.changeKey);
+        if (!source || seen.has(source.key) || row.dataset.changeIndex !== String(index)) return false;
+        const matches = exactTargets(row);
+        if (!targetsMatch(source, row, matches)) return false;
+        seen.add(source.key);
+        orderedSources.push(source);
+      }
+      if (seen.size !== sourceByKey.size) return false;
+      reviewSources = orderedSources;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function updateControls() {
+    overviewButton.disabled = !reviewAvailable || activeIndex < 0;
+    previousButton.disabled = !reviewAvailable || activeIndex <= 0;
+    nextButton.disabled = !reviewAvailable || activeIndex < 0 || activeIndex >= rowButtons.length - 1;
+  }
+
+  function selectChange(index, fromPlayback = false) {
+    if (!reviewAvailable || index < 0 || index >= rowButtons.length) return false;
+    const row = rowButtons[index];
+    const matches = exactTargets(row);
+    if (!targetsMatch(reviewSources[index], row, matches)) { failReview(); return false; }
+    show('delta');
+    deltaCanvas.querySelectorAll('[data-delta-review-current]').forEach((element) => element.removeAttribute('data-delta-review-current'));
+    matches.forEach((element) => element.setAttribute('data-delta-review-current', 'true'));
+    deltaCanvas.setAttribute('data-delta-review-active', 'true');
+    rowButtons.forEach((button, rowIndex) => {
+      button.tabIndex = rowIndex === index ? 0 : -1;
+      if (rowIndex === index) button.setAttribute('aria-current', 'step');
+      else button.removeAttribute('aria-current');
+    });
+    activeIndex = index;
+    updateControls();
+    const kind = row.dataset.changeKind.charAt(0).toUpperCase() + row.dataset.changeKind.slice(1);
+    status.textContent = String(index + 1).padStart(2, '0') + ' / ' + String(rowButtons.length).padStart(2, '0') + ' · ' + kind + ' · ' + row.dataset.changeLabel + ' [' + row.dataset.changeId + '] · ' + row.dataset.changeClassifications;
+    if (fromPlayback) status.setAttribute('aria-live', 'off');
+    return true;
+  }
+
+  function overview() {
+    if (!reviewAvailable) { failReview(); return; }
+    stopPlayback();
+    activeIndex = -1;
+    deltaCanvas.removeAttribute('data-delta-review-active');
+    deltaCanvas.querySelectorAll('[data-delta-review-current]').forEach((element) => element.removeAttribute('data-delta-review-current'));
+    rowButtons.forEach((row, index) => {
+      row.tabIndex = index === 0 ? 0 : -1;
+      row.removeAttribute('aria-current');
+    });
+    show('delta');
+    status.removeAttribute('data-state');
+    status.textContent = 'Overview · ' + rowButtons.length + ' authored changes';
+    updateControls();
+  }
+
+  function schedulePlayback(token) {
+    if (!playing || token !== playbackToken || activeIndex >= rowButtons.length - 1) {
+      if (activeIndex >= rowButtons.length - 1) stopPlayback();
+      return;
+    }
+    playbackTimer = window.setTimeout(() => {
+      if (!playing || token !== playbackToken) return;
+      if (!selectChange(activeIndex + 1, true)) return;
+      schedulePlayback(token);
+    }, REVIEW_DWELL_MS);
+  }
+
+  function startReview() {
+    if (!reviewAvailable) return;
+    if (playing) { stopPlayback(); return; }
+    stopPlayback();
+    if (!selectChange(0, false)) return;
+    if (reducedMotion.matches || rowButtons.length < 2) return;
+    playing = true;
+    const token = ++playbackToken;
+    playButton.textContent = 'Pause';
+    playButton.setAttribute('aria-pressed', 'true');
+    status.setAttribute('aria-live', 'off');
+    schedulePlayback(token);
+  }
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => { stopPlayback(); show(tab.dataset.target); });
+    tab.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      stopPlayback();
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+      tabs[next].focus();
+      show(tabs[next].dataset.target);
+    });
+  });
+
+  rowButtons.forEach((row, index) => {
+    row.tabIndex = index === 0 ? 0 : -1;
+    row.addEventListener('click', () => { stopPlayback(); selectChange(index); });
+    row.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        stopPlayback();
+        selectChange(index);
+        return;
+      }
+      if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      stopPlayback();
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? rowButtons.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + rowButtons.length) % rowButtons.length;
+      rowButtons.forEach((button, rowIndex) => { button.tabIndex = rowIndex === next ? 0 : -1; });
+      rowButtons[next].focus();
+    });
+  });
+
+  overviewButton.addEventListener('click', overview);
+  previousButton.addEventListener('click', () => { stopPlayback(); selectChange(activeIndex - 1); });
+  nextButton.addEventListener('click', () => { stopPlayback(); selectChange(activeIndex + 1); });
+  playButton.addEventListener('click', startReview);
+  document.addEventListener('focusin', (event) => {
+    if (playing && event.target.closest('button')) stopPlayback();
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopPlayback(); });
+  window.addEventListener('beforeprint', overview);
+  reducedMotion.addEventListener('change', () => { if (reducedMotion.matches) stopPlayback(); });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && activeIndex >= 0) {
+      event.preventDefault();
+      overview();
+      playButton.focus();
+    }
+  });
+
+  document.querySelector('#theme').addEventListener('click', () => { document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; });
+  const presets = ['classic', 'signal-flow', 'blueprint'];
+  document.querySelector('#preset').addEventListener('click', () => { const now = document.documentElement.dataset.preset; document.documentElement.dataset.preset = presets[(presets.indexOf(now) + 1) % presets.length]; });
+
+  reviewAvailable = validateReview();
+  if (!reviewAvailable) failReview();
+  else {
+    status.removeAttribute('data-state');
+    updateControls();
+  }
+})();</script></body></html>

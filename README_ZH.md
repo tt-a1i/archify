@@ -132,7 +132,7 @@ Redis Session 查询 -> PostgreSQL 回源。把缓存未命中作为次要路径
 它不会被静默开启，只校验作者写入的事实，不代表线上基础设施已经核验。可查看
 [通过校验的部署证明](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership)。
 
-做设计或 PR 评审时，Architecture Delta 把两份已校验源文件比较为 Before / Delta / After 和机器回执，不冒充风险或合并安全判断。
+做设计或 PR 评审时，Architecture Delta 生成已校验的 Before / Delta / After 和机器回执。精确选择任一作者变更，或播放一次有限 Review；全程只读，不推断影响、风险或合并安全。
 
 `node archify/bin/archify.mjs compare architecture base.json head.json architecture-delta.html --json`
 
@@ -259,7 +259,7 @@ Claude.ai 中的上传入口：
 - [路线图](ROADMAP.md)
 - [自动生成的 Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-Archify 2.12 已覆盖五种 Typed IR、真实仓库证明、确定性的 Architecture Delta 评审、验证后实时预览、作者可达性、可选有限动态、引导视图、语义搜索与关系探索、可分享深链、1200×630 整图与路径卡片、浏览器原生 WebM、显式 `standard` / `showcase` 质量档位，以及按需启用的部署所有权契约。
+Archify 2.12 已覆盖五种 Typed IR、真实仓库证明、基于精确 ID 的确定性 Architecture Delta 评审、验证后实时预览、作者可达性、可选有限动态、引导视图、语义搜索与关系探索、可分享深链、1200×630 整图与路径卡片、浏览器原生 WebM、显式 `standard` / `showcase` 质量档位，以及按需启用的部署所有权契约。
 
 自动 Mermaid Parser、通用自动布局、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。
 

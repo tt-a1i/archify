@@ -7,8 +7,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   ArchitectureDeltaError,
+  architectureDeltaChangeRows,
   canonicalArchitectureJson,
   compareArchitecture,
+  validateArchitectureDeltaHtml,
 } from '../delta/architecture-delta.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -74,6 +76,26 @@ test('canonical architecture ignores formatting, entity order, and set-like orde
   assert.equal(canonicalArchitectureJson(reordered), canonicalArchitectureJson(original));
 });
 
+test('change navigator order is exact-ID based, complete, unique, and stable', () => {
+  const receipt = compareArchitecture(read(baseFixture), read(headFixture));
+  const rows = architectureDeltaChangeRows(receipt);
+  assert.deepEqual(rows.map((row) => row.key), [
+    'component:fraud',
+    'relationship:fraud-check',
+    'boundary:region:Production region',
+    'boundary:security-group:Checkout trust zone',
+    'component:checkout',
+    'relationship:authorize-payment',
+    'relationship:persist-order',
+    'component:queue',
+    'component:cache',
+    'relationship:session-read',
+    'relationship:publish-order',
+  ]);
+  assert.equal(new Set(rows.map((row) => row.key)).size, rows.length);
+  assert.equal(rows.length, receipt.changes.components.length + receipt.changes.connections.length + receipt.changes.boundaries.length);
+});
+
 test('exact identity fails closed instead of guessing relationships or unrelated systems', () => {
   const base = read(baseFixture);
   const missingRelationship = read(headFixture);
@@ -93,6 +115,55 @@ test('exact identity fails closed instead of guessing relationships or unrelated
     () => compareArchitecture(base, unrelated),
     (error) => error instanceof ArchitectureDeltaError && error.code === 'delta/no-shared-component-id',
   );
+});
+
+test('evidence-only component changes keep an enabled exact review contract', () => {
+  const base = read(baseFixture);
+  const head = read(baseFixture);
+  base.components[0].sources = [{ path: 'src/entry.js', line: 1, label: 'baseline' }];
+  head.components[0].sources = [{ path: 'src/entry.js', line: 2, label: 'head' }];
+  const receipt = compareArchitecture(base, head);
+  assert.equal(receipt.changes.components.length, 1);
+  assert.equal(receipt.changes.components[0].status, 'evidence-changed');
+  assert.deepEqual(receipt.changes.components[0].classifications, ['evidence']);
+  const runtime = fs.readFileSync(path.join(skillRoot, 'delta/architecture-delta.mjs'), 'utf8');
+  assert.match(runtime, /statuses: \['added', 'changed', 'evidence-changed', 'removed', 'moved'\]/);
+});
+
+test('mixed semantic and geometry component changes retain both exact forms', () => {
+  const head = read(headFixture);
+  head.components.find((component) => component.id === 'queue').sublabel = 'durable queue v2';
+  const headPath = path.join(tmp, 'mixed-component-head.json');
+  const output = path.join(tmp, 'mixed-component-delta.html');
+  fs.writeFileSync(headPath, JSON.stringify(head));
+
+  const result = run(['compare', 'architecture', baseFixture, headPath, output, '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  const queue = receipt.changes.components.find((change) => change.id === 'queue');
+  assert.equal(queue.status, 'changed');
+  assert.deepEqual(queue.classifications, ['geometry', 'semantic']);
+  const html = fs.readFileSync(output, 'utf8');
+  assert.match(html, /data-change-key="component:queue"[^>]+data-change-target-signature="g:changed:geometry,semantic\|g:moved-from:geometry,semantic"/);
+  assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 8, checkCount: 8 });
+});
+
+test('mixed semantic and geometry relationship changes retain both exact routes', () => {
+  const head = read(headFixture);
+  head.connections.find((connection) => connection.id === 'publish-order').label = 'accepted event';
+  const headPath = path.join(tmp, 'mixed-relationship-head.json');
+  const output = path.join(tmp, 'mixed-relationship-delta.html');
+  fs.writeFileSync(headPath, JSON.stringify(head));
+
+  const result = run(['compare', 'architecture', baseFixture, headPath, output, '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  const publishOrder = receipt.changes.connections.find((change) => change.id === 'publish-order');
+  assert.equal(publishOrder.status, 'changed');
+  assert.deepEqual(publishOrder.classifications, ['geometry', 'semantic']);
+  const html = fs.readFileSync(output, 'utf8');
+  assert.match(html, /data-change-key="relationship:publish-order"[^>]+data-change-target-signature="g:changed:geometry,semantic\|g:moved-from:geometry,semantic\|path:changed:geometry,semantic\|path:moved-from:geometry,semantic\|text:changed:\|text:moved-from:"/);
+  assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 8, checkCount: 8 });
 });
 
 test('same-label node id changes remain one removal plus one addition', () => {
@@ -143,6 +214,26 @@ test('compare CLI writes a deterministic three-state artifact and complete sidec
   assert.match(firstHtml, /data-node-id="cache"[^>]+data-delta-state="removed"/);
   assert.match(firstHtml, /data-node-id="fraud"[^>]+data-delta-state="added"/);
   assert.match(firstHtml, /data-node-id="queue"[^>]+data-delta-state="moved-from"/);
+  assert.match(firstHtml, /aria-label="Authored change review"/);
+  assert.equal((firstHtml.match(/class="change-row"/g) || []).length, 11);
+  assert.match(firstHtml, /data-change-key="component:fraud"/);
+  assert.match(firstHtml, /data-change-key="relationship:authorize-payment"/);
+  assert.match(firstHtml, /data-change-key="boundary:region:Production region"/);
+  assert.match(firstHtml, /data-change-target-signature="[^"]+"/);
+  assert.match(firstHtml, /data-delta-boundary-key="region:Production region"/);
+  assert.match(firstHtml, /const REVIEW_DWELL_MS = 1400;/);
+  assert.match(firstHtml, /prefers-reduced-motion: reduce/);
+  assert.match(firstHtml, /:not\(\[data-delta-review-current\]\)/);
+  assert.match(firstHtml, /--review-same-opacity:1;--review-change-opacity:1/);
+  assert.match(firstHtml, /--d-focus:#006b8f/);
+  assert.match(firstHtml, /document\.querySelectorAll\('#archify-compare-receipt'\)\.length !== 1/);
+  assert.match(firstHtml, /targetsMatch\(reviewSources\[index\], row, matches\)/);
+  assert.match(firstHtml, /document\.addEventListener\('visibilitychange'/);
+  assert.match(firstHtml, /window\.addEventListener\('beforeprint', overview\)/);
+  assert.match(firstHtml, /aria-current', 'step'/);
+  assert.match(firstHtml, /event\.key === 'Enter' \|\| event\.key === ' '/);
+  assert.doesNotMatch(firstHtml, /localStorage|sessionStorage|history\.(?:pushState|replaceState)/);
+  assert.doesNotMatch(firstHtml, /setInterval\(/);
   assert.doesNotMatch(firstHtml, /\b(?:SAFE|LOW RISK|MERGEABLE|NO IMPACT|VERIFIED PR)\b/i);
 
   const receipt = JSON.parse(result.stdout);
@@ -152,6 +243,92 @@ test('compare CLI writes a deterministic three-state artifact and complete sidec
   assert.equal(receipt.validation.checksPassed, receipt.validation.checkCount);
   assert.equal(receipt.completeness, 'complete');
   assert.equal(JSON.stringify(receipt).includes(tmp), false);
+  assert.deepEqual(validateArchitectureDeltaHtml(firstHtml, receipt), { ok: true, checksPassed: 8, checkCount: 8 });
+});
+
+test('artifact validation fails closed on missing, duplicate, or self-blessed review identity', () => {
+  const output = path.join(tmp, 'review-identity.html');
+  const result = run(['compare', 'architecture', baseFixture, headFixture, output, '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  const html = fs.readFileSync(output, 'utf8');
+  const deltaSection = html.match(/<section class="canvas" data-view="delta">([\s\S]*?)<\/section>/)?.[1];
+  assert.ok(deltaSection);
+  const fraudTag = deltaSection.match(/<g\s+[^>]*\bdata-node-id="fraud"[^>]*>/)?.[0];
+  assert.ok(fraudTag);
+
+  const missing = html.replace(fraudTag, fraudTag.replace('data-node-id="fraud"', 'data-node-id="tampered"'));
+  assert.throws(
+    () => validateArchitectureDeltaHtml(missing, receipt),
+    (error) => error instanceof ArchitectureDeltaError
+      && error.code === 'delta/artifact-invalid'
+      && error.details.failures.includes('ambiguous Delta identity component:fraud'),
+  );
+
+  const duplicate = html.replace(fraudTag, `${fraudTag}${fraudTag}`);
+  assert.throws(
+    () => validateArchitectureDeltaHtml(duplicate, receipt),
+    (error) => error instanceof ArchitectureDeltaError
+      && error.code === 'delta/artifact-invalid'
+      && error.details.failures.includes('ambiguous Delta identity component:fraud'),
+  );
+
+  const relationshipGroup = deltaSection.match(/<g\s+[^>]*\bdata-edge-id="fraud-check"[^>]*>[\s\S]*?<\/g>/)?.[0];
+  assert.ok(relationshipGroup);
+  const duplicateCompanion = html.replace(relationshipGroup, `${relationshipGroup}${relationshipGroup}`);
+  assert.throws(
+    () => validateArchitectureDeltaHtml(duplicateCompanion, receipt),
+    (error) => error instanceof ArchitectureDeltaError
+      && error.code === 'delta/artifact-invalid'
+      && error.details.failures.includes('ambiguous Delta target signature relationship:fraud-check'),
+  );
+
+  const duplicateRowTag = duplicateCompanion.match(/<button class="change-row"[^>]*data-change-key="relationship:fraud-check"[^>]*>/)?.[0];
+  const storedSignature = duplicateRowTag?.match(/data-change-target-signature="([^"]+)"/)?.[1];
+  assert.ok(duplicateRowTag && storedSignature);
+  const selfBlessedSignature = [...storedSignature.split('|'), 'g:added:topology'].sort().join('|');
+  const selfBlessed = duplicateCompanion.replace(
+    duplicateRowTag,
+    duplicateRowTag.replace(`data-change-target-signature="${storedSignature}"`, `data-change-target-signature="${selfBlessedSignature}"`),
+  );
+  assert.throws(
+    () => validateArchitectureDeltaHtml(selfBlessed, receipt),
+    (error) => error instanceof ArchitectureDeltaError
+      && error.code === 'delta/artifact-invalid'
+      && error.details.failures.includes('ambiguous Delta target signature relationship:fraud-check'),
+  );
+
+  const missingCompanionState = html.replace(
+    relationshipGroup,
+    relationshipGroup.replace(/\sdata-delta-state="[^"]+"/, ''),
+  );
+  assert.throws(
+    () => validateArchitectureDeltaHtml(missingCompanionState, receipt),
+    (error) => error instanceof ArchitectureDeltaError
+      && error.code === 'delta/artifact-invalid'
+      && error.details.failures.includes('missing Delta target state relationship:fraud-check'),
+  );
+
+  const receiptNode = html.match(/<script id="archify-compare-receipt"[\s\S]*?<\/script>/)?.[0];
+  assert.ok(receiptNode);
+  const duplicateReceipt = html.replace(receiptNode, `${receiptNode}${receiptNode}`);
+  assert.throws(
+    () => validateArchitectureDeltaHtml(duplicateReceipt, receipt),
+    (error) => error instanceof ArchitectureDeltaError
+      && error.code === 'delta/artifact-invalid'
+      && error.details.failures.includes('expected exactly one embedded compare receipt'),
+  );
+
+  const extraDeltaSvg = html.replace(
+    '<section class="canvas" data-view="delta">',
+    '<section class="canvas" data-view="delta"><svg viewBox="0 0 1 1"></svg>',
+  );
+  assert.throws(
+    () => validateArchitectureDeltaHtml(extraDeltaSvg, receipt),
+    (error) => error instanceof ArchitectureDeltaError
+      && error.code === 'delta/artifact-invalid'
+      && error.details.failures.includes('expected exactly one root SVG in the Delta canvas'),
+  );
 });
 
 test('formatting-only input changes raw proof but not semantic hash or artifact bytes', () => {
