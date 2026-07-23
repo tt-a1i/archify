@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagram, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { componentBox, boundaryBox, connectionPath } from '../shared/layout-report.mjs';
+import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import {
   asArray,
@@ -276,7 +277,9 @@ function validateArchitecture() {
   }));
 
   if (problems.length) {
-    throw new Error(`Architecture layout validation failed:\n- ${problems.join('\n- ')}`);
+    throwDiagnosticProblems('Architecture layout validation failed', problems, {
+      subject: { diagramType: 'architecture' },
+    });
   }
 }
 

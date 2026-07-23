@@ -3,6 +3,9 @@ import path from 'node:path';
 import { applyTemplate, renderCards, esc } from './utils.mjs';
 import { validateSchema } from './validator.mjs';
 import { verifyRepositoryEvidence } from './repository-evidence.mjs';
+import { installRendererDiagnosticBoundary, throwDiagnosticProblems } from './diagnostics.mjs';
+
+installRendererDiagnosticBoundary();
 
 // Common CLI head: node render-<type>.mjs [input.json] [output.html]
 export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = process.argv }) {
@@ -80,7 +83,10 @@ export function validateRelationshipIds(diagramType, diagram) {
   });
 
   if (problems.length) {
-    throw new Error(`Relationship identity validation failed:\n- ${problems.join('\n- ')}`);
+    throwDiagnosticProblems('Relationship identity validation failed', problems, {
+      code: 'relationship/duplicate-id',
+      subject: { diagramType, collection },
+    });
   }
 }
 
@@ -111,7 +117,10 @@ export function validateGuidedViews(diagramType, diagram) {
   });
 
   if (problems.length) {
-    throw new Error(`Guided view validation failed:\n- ${problems.join('\n- ')}`);
+    throwDiagnosticProblems('Guided view validation failed', problems, {
+      code: 'guided-view/invalid',
+      subject: { diagramType, collection: 'meta.views' },
+    });
   }
 }
 

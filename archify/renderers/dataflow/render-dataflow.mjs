@@ -2,6 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagram, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
+import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import {
   asArray,
   isFinitePoint,
@@ -251,7 +252,9 @@ function validateDataflow() {
   }
 
   if (problems.length) {
-    throw new Error(`Data-flow layout validation failed:\n- ${problems.join('\n- ')}`);
+    throwDiagnosticProblems('Data-flow layout validation failed', problems, {
+      subject: { diagramType: 'dataflow' },
+    });
   }
 }
 

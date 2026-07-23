@@ -2,6 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagram, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
+import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import {
   asArray,
   isFinitePoint,
@@ -168,7 +169,9 @@ function validateWorkflow() {
     problems.push('Workflow "cards" must be an array.');
   }
   if (problems.length) {
-    throw new Error(`Workflow layout validation failed:\n- ${problems.join('\n- ')}`);
+    throwDiagnosticProblems('Workflow layout validation failed', problems, {
+      subject: { diagramType: 'workflow' },
+    });
   }
 
   const laneIds = new Set(workflow.lanes.map((lane) => lane.id));
@@ -388,7 +391,9 @@ function validateWorkflow() {
   }
 
   if (problems.length) {
-    throw new Error(`Workflow layout validation failed:\n- ${problems.join('\n- ')}`);
+    throwDiagnosticProblems('Workflow layout validation failed', problems, {
+      subject: { diagramType: 'workflow' },
+    });
   }
 }
 

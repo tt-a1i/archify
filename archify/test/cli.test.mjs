@@ -446,6 +446,9 @@ test('cli: deliver preserves the previous artifact when the final check fails', 
   const failure = JSON.parse(result.stdout);
   assert.equal(failure.ok, false);
   assert.equal(failure.stage, 'check');
+  assert.equal(failure.diagnostics[0].code, 'artifact/single-svg');
+  assert.equal(failure.diagnostics[0].subject.check, 'single_svg');
+  assert.ok(failure.diagnostics[0].supportedFixes.some((fix) => fix.includes('exactly one diagram SVG')));
   assert.equal(failure.checker.checks.find((entry) => entry.name === 'single_svg').ok, false);
   assert.equal(fs.readFileSync(out, 'utf8'), trustedPriorArtifact);
   assert.deepEqual(

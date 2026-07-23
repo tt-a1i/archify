@@ -2,6 +2,8 @@
 // pure; renderers own their layout tables and pass measured rects
 // ({x, y, width, height, cx, cy}) in.
 
+import { recordDiagnostic } from './diagnostics.mjs';
+
 // In degraded mode (no ajv) a type-wrong top-level field reaches the renderer.
 // Coerce non-arrays to [] so the module-level Maps build without throwing and
 // the friendly validator checks (which run later) report the real problem.
@@ -170,6 +172,17 @@ function sameRelationship(left, right) {
   return Boolean(left.id && right.id && left.id === right.id && left.from === right.from && left.to === right.to);
 }
 
+function relationshipSubject(diagramType, relationCollection, relationIndex, relation) {
+  return {
+    diagramType,
+    collection: relationCollection,
+    index: relationIndex,
+    ...(relation?.id ? { id: relation.id } : {}),
+    ...(relation?.from ? { from: relation.from } : {}),
+    ...(relation?.to ? { to: relation.to } : {}),
+  };
+}
+
 // One mechanical quality gate for every renderer-owned relationship path.
 // A renderer supplies its semantic obstacle set; source/target boxes are
 // always exempt because paths are expected to terminate on their boundaries.
@@ -215,9 +228,23 @@ export function cleanFlowProblems({
       const from = points[hitSegment].map(Math.round).join(', ');
       const to = points[hitSegment + 1].map(Math.round).join(', ');
       const relationId = relation.id ? ` id "${relation.id}"` : '';
-      problems.push(
-        `[clean-flow/edge-through-node] ${diagramType} ${relationCollection}[${relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" crosses ${obstacleKind} "${obstacle.id}" (unrelated to this relationship) on segment ${hitSegment} [${from}] -> [${to}] (${clearance}px clearance) — ${routeHint}.`
-      );
+      const message = `[clean-flow/edge-through-node] ${diagramType} ${relationCollection}[${relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" crosses ${obstacleKind} "${obstacle.id}" (unrelated to this relationship) on segment ${hitSegment} [${from}] -> [${to}] (${clearance}px clearance) — ${routeHint}.`;
+      recordDiagnostic({
+        code: 'clean-flow/edge-through-node',
+        severity: 'error',
+        message,
+        subject: relationshipSubject(diagramType, relationCollection, relationIndex, relation),
+        evidence: {
+          obstacleKind,
+          obstacleId: obstacle.id,
+          segmentIndex: hitSegment,
+          from: points[hitSegment],
+          to: points[hitSegment + 1],
+          clearancePx: clearance,
+        },
+        supportedFixes: [routeHint],
+      });
+      problems.push(message);
     }
   }
   return problems;
@@ -276,9 +303,21 @@ export function cleanCrossingProblems({
         return `${relationCollection}[${index}]${id} "${relation.from}" -> "${relation.to}"`;
       };
       const point = hit.point.map((value) => Math.round(value * 10) / 10).join(', ');
-      problems.push(
-        `[composition/proper-crossing] showcase ${diagramType} ${describe(left)} crosses ${describe(right)} at [${point}] (segments ${hit.leftSegment} and ${hit.rightSegment}) — ${routeHint}.`
-      );
+      const message = `[composition/proper-crossing] showcase ${diagramType} ${describe(left)} crosses ${describe(right)} at [${point}] (segments ${hit.leftSegment} and ${hit.rightSegment}) — ${routeHint}.`;
+      recordDiagnostic({
+        code: 'composition/proper-crossing',
+        severity: 'error',
+        message,
+        subject: relationshipSubject(diagramType, relationCollection, left.index, left.relation),
+        evidence: {
+          otherRelationship: relationshipSubject(diagramType, relationCollection, right.index, right.relation),
+          point: hit.point,
+          segmentIndex: hit.leftSegment,
+          otherSegmentIndex: hit.rightSegment,
+        },
+        supportedFixes: [routeHint],
+      });
+      problems.push(message);
     }
   }
   return problems;
@@ -367,7 +406,24 @@ export function cleanAmbiguousCorridorProblems({
     const length = Math.round(hit.overlapLength * 10) / 10;
     const from = hit.overlapStart.map((value) => Math.round(value * 10) / 10).join(', ');
     const to = hit.overlapEnd.map((value) => Math.round(value * 10) / 10).join(', ');
-    return `[composition/ambiguous-corridor] showcase ${diagramType} ${describe(hit.left)} shares a ${length}px corridor with ${describe(hit.right)} at [${from}] -> [${to}] (segments ${hit.leftSegment} and ${hit.rightSegment}; minimum ${minOverlapPx}px) — ${routeHint}.`;
+    const message = `[composition/ambiguous-corridor] showcase ${diagramType} ${describe(hit.left)} shares a ${length}px corridor with ${describe(hit.right)} at [${from}] -> [${to}] (segments ${hit.leftSegment} and ${hit.rightSegment}; minimum ${minOverlapPx}px) — ${routeHint}.`;
+    recordDiagnostic({
+      code: 'composition/ambiguous-corridor',
+      severity: 'error',
+      message,
+      subject: relationshipSubject(diagramType, relationCollection, hit.left.relationIndex, hit.left.relation),
+      evidence: {
+        otherRelationship: relationshipSubject(diagramType, relationCollection, hit.right.relationIndex, hit.right.relation),
+        overlapLengthPx: length,
+        minimumPx: minOverlapPx,
+        from: hit.overlapStart,
+        to: hit.overlapEnd,
+        segmentIndex: hit.leftSegment,
+        otherSegmentIndex: hit.rightSegment,
+      },
+      supportedFixes: [routeHint],
+    });
+    return message;
   });
 }
 
@@ -445,7 +501,25 @@ export function cleanBorderRunProblems({
     const length = Math.round(hit.overlapLength * 10) / 10;
     const from = hit.overlapStart.map((value) => Math.round(value * 10) / 10).join(', ');
     const to = hit.overlapEnd.map((value) => Math.round(value * 10) / 10).join(', ');
-    return `[composition/container-border-run] ${diagramType} ${relationCollection}[${hit.relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" follows ${frameKind} "${frameIdentity}" ${hit.side} border for ${length}px on segment ${hit.segmentIndex} [${from}] -> [${to}] — ${routeHint}.`;
+    const message = `[composition/container-border-run] ${diagramType} ${relationCollection}[${hit.relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" follows ${frameKind} "${frameIdentity}" ${hit.side} border for ${length}px on segment ${hit.segmentIndex} [${from}] -> [${to}] — ${routeHint}.`;
+    recordDiagnostic({
+      code: 'composition/container-border-run',
+      severity: 'error',
+      message,
+      subject: relationshipSubject(diagramType, relationCollection, hit.relationIndex, relation),
+      evidence: {
+        frameKind,
+        frameId: hit.frame?.id,
+        frameLabel: hit.frame?.label,
+        side: hit.side,
+        segmentIndex: hit.segmentIndex,
+        overlapLengthPx: length,
+        from: hit.overlapStart,
+        to: hit.overlapEnd,
+      },
+      supportedFixes: [routeHint],
+    });
+    return message;
   });
 }
 
@@ -576,7 +650,23 @@ export function cleanRouteRhythmProblems({
     const rule = hit.code === 'composition/micro-segment'
       ? `is below the ${microSegmentPx}px micro-segment floor`
       : `is below the ${interiorSegmentPx}px interior-segment floor`;
-    return `[${hit.code}] showcase ${diagramType} ${relationCollection}[${hit.relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" has a ${length}px ${hit.position} segment ${hit.segmentIndex} [${from}] -> [${to}] that ${rule} — ${routeHint}.`;
+    const message = `[${hit.code}] showcase ${diagramType} ${relationCollection}[${hit.relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" has a ${length}px ${hit.position} segment ${hit.segmentIndex} [${from}] -> [${to}] that ${rule} — ${routeHint}.`;
+    recordDiagnostic({
+      code: hit.code,
+      severity: 'error',
+      message,
+      subject: relationshipSubject(diagramType, relationCollection, hit.relationIndex, relation),
+      evidence: {
+        segmentIndex: hit.segmentIndex,
+        position: hit.position,
+        lengthPx: length,
+        minimumPx: hit.code === 'composition/micro-segment' ? microSegmentPx : interiorSegmentPx,
+        from: hit.start,
+        to: hit.end,
+      },
+      supportedFixes: [routeHint],
+    });
+    return message;
   });
 }
 
@@ -607,7 +697,25 @@ export function cleanLabelRouteClearanceProblems({
     const clearance = Math.round(hit.clearance * 10) / 10;
     const from = hit.start.map((value) => Math.round(value * 10) / 10).join(', ');
     const to = hit.end.map((value) => Math.round(value * 10) / 10).join(', ');
-    return `[composition/label-route-clearance] showcase ${diagramType} label "${hit.label?.label || hit.labelRelation?.label || ''}" on ${describe(hit.labelRelation, hit.labelRelationIndex)} is ${clearance}px from ${describe(hit.otherRelation, hit.otherRelationIndex)} segment ${hit.segmentIndex} [${from}] -> [${to}] (label rect ${formatRect(hit.rect)}; minimum ${threshold}px) — ${routeHint}.`;
+    const message = `[composition/label-route-clearance] showcase ${diagramType} label "${hit.label?.label || hit.labelRelation?.label || ''}" on ${describe(hit.labelRelation, hit.labelRelationIndex)} is ${clearance}px from ${describe(hit.otherRelation, hit.otherRelationIndex)} segment ${hit.segmentIndex} [${from}] -> [${to}] (label rect ${formatRect(hit.rect)}; minimum ${threshold}px) — ${routeHint}.`;
+    recordDiagnostic({
+      code: 'composition/label-route-clearance',
+      severity: 'error',
+      message,
+      subject: relationshipSubject(diagramType, relationCollection, hit.labelRelationIndex, hit.labelRelation),
+      evidence: {
+        label: hit.label?.label || hit.labelRelation?.label || '',
+        otherRelationship: relationshipSubject(diagramType, relationCollection, hit.otherRelationIndex, hit.otherRelation),
+        segmentIndex: hit.segmentIndex,
+        clearancePx: clearance,
+        minimumPx: threshold,
+        labelRect: hit.rect,
+        from: hit.start,
+        to: hit.end,
+      },
+      supportedFixes: [routeHint],
+    });
+    return message;
   });
 }
 

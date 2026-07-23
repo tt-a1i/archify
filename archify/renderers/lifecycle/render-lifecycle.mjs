@@ -2,6 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagram, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
+import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import {
   asArray,
   isFinitePoint,
@@ -279,7 +280,9 @@ function validateLifecycle() {
   }));
 
   if (problems.length) {
-    throw new Error(`Lifecycle layout validation failed:\n- ${problems.join('\n- ')}`);
+    throwDiagnosticProblems('Lifecycle layout validation failed', problems, {
+      subject: { diagramType: 'lifecycle' },
+    });
   }
 }
 

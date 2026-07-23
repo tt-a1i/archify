@@ -94,11 +94,141 @@ function extractRepoRootArgs(args) {
   return { rest, repoRoot: repoRoot ? path.resolve(repoRoot) : undefined };
 }
 
-function rendererEnv(quality, repoRoot) {
+function rendererEnv(quality, repoRoot, diagnosticJson = false) {
   return {
     ...(quality ? { ARCHIFY_QUALITY_PROFILE: quality } : {}),
     ...(repoRoot ? { ARCHIFY_REPO_ROOT: repoRoot } : {}),
+    ...(diagnosticJson ? { ARCHIFY_DIAGNOSTIC_FORMAT: 'json' } : {}),
   };
+}
+
+function diagnostic({ code, message, subject = {}, evidence = {}, supportedFixes = [], severity = 'error' }) {
+  return {
+    code,
+    severity,
+    message,
+    subject,
+    evidence,
+    supportedFixes,
+  };
+}
+
+function inputDiagnostic(error, inputPath) {
+  const isSyntax = error instanceof SyntaxError;
+  return diagnostic({
+    code: isSyntax ? 'input/json-parse' : 'input/read',
+    message: isSyntax
+      ? `Input JSON could not be parsed: ${error.message}`
+      : `Input could not be read: ${error.message}`,
+    subject: { input: inputPath },
+    evidence: {
+      ...(error?.code ? { systemCode: error.code } : {}),
+      reason: error.message,
+    },
+    supportedFixes: [isSyntax
+      ? 'repair the JSON syntax and run validation again'
+      : 'provide one readable JSON input file'],
+  });
+}
+
+function rendererFailure(result) {
+  if (result.error) {
+    return {
+      error: 'Renderer process could not start.',
+      diagnostics: [diagnostic({
+        code: 'internal/renderer-process',
+        message: 'Renderer process could not start.',
+        evidence: { reason: result.error.message },
+      })],
+    };
+  }
+  try {
+    const payload = JSON.parse((result.stderr || '').trim());
+    if (payload?.ok === false && Array.isArray(payload.diagnostics) && payload.diagnostics.length) {
+      return {
+        error: payload.error || payload.diagnostics[0].message,
+        diagnostics: payload.diagnostics,
+      };
+    }
+  } catch {
+    // The diagnostic boundary is intentionally fail-closed. Never copy a raw
+    // Node stack into a machine receipt when a renderer exits unexpectedly.
+  }
+  return {
+    error: 'Renderer failed before emitting a structured diagnostic.',
+    diagnostics: [diagnostic({
+      code: 'internal/unclassified',
+      message: 'Renderer failed before emitting a structured diagnostic.',
+      evidence: { exitCode: result.status ?? 1 },
+    })],
+  };
+}
+
+const COMPOSITION_CHECKS = new Set([
+  'label_route_clearance',
+  'relationship_crossings',
+  'relationship_corridors',
+  'container_border_runs',
+  'route_rhythm',
+]);
+
+const CHECK_FIXES = {
+  single_svg: ['remove additional SVG roots so the artifact contains exactly one diagram SVG'],
+  finite_svg: ['replace non-finite coordinates before rendering again'],
+  orthogonal_arrows: ['use renderer-supported orthogonal routing controls'],
+  legend_clearance: ['move the route or enlarge the viewBox so relationships do not enter the legend'],
+};
+
+const COMPOSITION_FIXES = {
+  'composition/proper-crossing': ['adjust route/via or channel coordinates so unrelated relationships use separate corridors'],
+  'composition/ambiguous-corridor': ['adjust route/via or channel coordinates so unrelated relationships do not visually merge'],
+  'composition/container-border-run': ['route across the frame perpendicularly through a clear opening'],
+  'composition/label-route-clearance': ['adjust labelAt, labelDx, labelDy, labelSegment, message y, or the other relationship route'],
+  'composition/micro-segment': ['move the route/channel/via point so every visible segment is at least 8px'],
+  'composition/short-interior-segment': ['move the route/channel/via point so every interior turn has at least 16px'],
+};
+
+function checkerDiagnostics(checker) {
+  const diagnostics = [];
+  for (const issue of checker?.composition?.issues || []) {
+    if (issue.severity !== 'error') continue;
+    const { severity, code, relationship, ...evidence } = issue;
+    diagnostics.push(diagnostic({
+      code,
+      severity,
+      message: `Final artifact failed ${code}.`,
+      subject: relationship ? { relationship } : { check: 'composition' },
+      evidence,
+      supportedFixes: COMPOSITION_FIXES[code] || [],
+    }));
+  }
+  for (const check of checker?.checks || []) {
+    if (check.ok || COMPOSITION_CHECKS.has(check.name)) continue;
+    diagnostics.push(diagnostic({
+      code: `artifact/${check.name.replaceAll('_', '-')}`,
+      message: (check.details || []).find(Boolean) || `Final artifact failed ${check.name}.`,
+      subject: { check: check.name },
+      evidence: { details: check.details || [] },
+      supportedFixes: CHECK_FIXES[check.name] || [],
+    }));
+  }
+  return diagnostics.length ? diagnostics : [diagnostic({
+    code: 'artifact/check-failed',
+    message: 'Final artifact check failed without a classified diagnostic.',
+    subject: { check: 'unknown' },
+    evidence: {},
+  })];
+}
+
+function formatDiagnostics(error, diagnostics = []) {
+  if (!diagnostics.length) return error;
+  return [
+    error,
+    ...diagnostics.map((entry) => {
+      const fix = entry.supportedFixes?.length ? ` Fix: ${entry.supportedFixes.join('; ')}.` : '';
+      return `[${entry.code}] ${entry.message}${fix}`;
+    }),
+  ].join('\n');
 }
 
 function assertEvidenceType(type, repoRoot) {
@@ -124,7 +254,7 @@ function commandRender(args) {
   if (result.status !== 0) exitFrom(result);
 }
 
-function reportDeliveryFailure({ json, stage, type, input, output, error, status = 1, checker }) {
+function reportDeliveryFailure({ json, stage, type, input, output, error, diagnostics = [], status = 1, checker }) {
   const receipt = {
     schemaVersion: 1,
     ok: false,
@@ -134,10 +264,28 @@ function reportDeliveryFailure({ json, stage, type, input, output, error, status
     input,
     output,
     error,
+    diagnostics,
     ...(checker ? { checker } : {}),
   };
   if (json) console.log(JSON.stringify(receipt, null, 2));
-  else console.error(error);
+  else console.error(formatDiagnostics(error, diagnostics));
+  process.exitCode = status;
+}
+
+function reportValidateFailure({ json, stage, type, input, error, diagnostics = [], status = 1, checker }) {
+  const receipt = {
+    schemaVersion: 1,
+    ok: false,
+    command: 'validate',
+    stage,
+    type,
+    input,
+    error,
+    diagnostics,
+    ...(checker ? { checker } : {}),
+  };
+  if (json) console.log(JSON.stringify(receipt, null, 2));
+  else console.error(formatDiagnostics(error, diagnostics));
   process.exitCode = status;
 }
 
@@ -171,6 +319,7 @@ async function commandDeliver(args) {
   try {
     diagram = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
   } catch (error) {
+    const repair = inputDiagnostic(error, inputPath);
     reportDeliveryFailure({
       json,
       stage: 'input',
@@ -178,6 +327,7 @@ async function commandDeliver(args) {
       input: inputPath,
       output: path.resolve(requestedOutput || `${type}.html`),
       error: `Could not read delivery input "${inputPath}": ${error.message}`,
+      diagnostics: [repair],
     });
     return;
   }
@@ -190,13 +340,21 @@ async function commandDeliver(args) {
   try {
     fs.mkdirSync(outputDirectory, { recursive: true });
   } catch (error) {
+    const message = `Could not create delivery directory "${outputDirectory}": ${error.message}`;
     reportDeliveryFailure({
       json,
       stage: 'prepare',
       type,
       input: inputPath,
       output: outputPath,
-      error: `Could not create delivery directory "${outputDirectory}": ${error.message}`,
+      error: message,
+      diagnostics: [diagnostic({
+        code: 'delivery/prepare-directory',
+        message,
+        subject: { outputDirectory },
+        evidence: { ...(error?.code ? { systemCode: error.code } : {}), reason: error.message },
+        supportedFixes: ['choose a writable output directory'],
+      })],
     });
     return;
   }
@@ -208,13 +366,21 @@ async function commandDeliver(args) {
   try {
     stagingDirectory = fs.mkdtempSync(path.join(outputDirectory, '.archify-delivery-'));
   } catch (error) {
+    const message = `Could not create a delivery candidate beside "${outputPath}": ${error.message}`;
     reportDeliveryFailure({
       json,
       stage: 'prepare',
       type,
       input: inputPath,
       output: outputPath,
-      error: `Could not create a delivery candidate beside "${outputPath}": ${error.message}`,
+      error: message,
+      diagnostics: [diagnostic({
+        code: 'delivery/prepare-candidate',
+        message,
+        subject: { output: outputPath },
+        evidence: { ...(error?.code ? { systemCode: error.code } : {}), reason: error.message },
+        supportedFixes: ['choose a writable output directory on the target filesystem'],
+      })],
     });
     return;
   }
@@ -223,18 +389,18 @@ async function commandDeliver(args) {
   try {
     const render = runNode([renderer, inputPath, candidatePath], {
       stdio: 'pipe',
-      env: rendererEnv(qualityArgs.quality, repoArgs.repoRoot),
+      env: rendererEnv(qualityArgs.quality, repoArgs.repoRoot, true),
     });
     if (render.status !== 0) {
-      if (render.stderr) process.stderr.write(render.stderr);
-      if (render.stdout) process.stderr.write(render.stdout);
+      const failure = rendererFailure(render);
       reportDeliveryFailure({
         json,
         stage: 'render',
         type,
         input: inputPath,
         output: outputPath,
-        error: (render.stderr || render.stdout || 'Renderer failed without a diagnostic.').trim(),
+        error: failure.error,
+        diagnostics: failure.diagnostics,
         status: render.status ?? 1,
       });
       return;
@@ -259,6 +425,7 @@ async function commandDeliver(args) {
         input: inputPath,
         output: outputPath,
         error: 'Final artifact check failed; the previous artifact was preserved.',
+        diagnostics: checkerDiagnostics(checker),
         status: check.status ?? 1,
         checker,
       });
@@ -269,13 +436,20 @@ async function commandDeliver(args) {
     try {
       result = JSON.parse(check.stdout);
     } catch (error) {
+      const message = `Could not parse the successful artifact-check receipt: ${error.message}`;
       reportDeliveryFailure({
         json,
         stage: 'receipt',
         type,
         input: inputPath,
         output: outputPath,
-        error: `Could not parse the successful artifact-check receipt: ${error.message}`,
+        error: message,
+        diagnostics: [diagnostic({
+          code: 'delivery/receipt-invalid',
+          message,
+          subject: { output: outputPath },
+          evidence: { reason: error.message },
+        })],
       });
       return;
     }
@@ -283,13 +457,20 @@ async function commandDeliver(args) {
     try {
       artifact = fs.readFileSync(candidatePath);
     } catch (error) {
+      const message = `Could not read the verified delivery candidate: ${error.message}`;
       reportDeliveryFailure({
         json,
         stage: 'receipt',
         type,
         input: inputPath,
         output: outputPath,
-        error: `Could not read the verified delivery candidate: ${error.message}`,
+        error: message,
+        diagnostics: [diagnostic({
+          code: 'delivery/candidate-unreadable',
+          message,
+          subject: { output: outputPath },
+          evidence: { ...(error?.code ? { systemCode: error.code } : {}), reason: error.message },
+        })],
       });
       return;
     }
@@ -297,13 +478,20 @@ async function commandDeliver(args) {
     try {
       sourceEvidence = sourceEvidenceFromArtifact(artifact);
     } catch (error) {
+      const message = `Could not read the repository evidence receipt: ${error.message}`;
       reportDeliveryFailure({
         json,
         stage: 'receipt',
         type,
         input: inputPath,
         output: outputPath,
-        error: `Could not read the repository evidence receipt: ${error.message}`,
+        error: message,
+        diagnostics: [diagnostic({
+          code: 'delivery/evidence-receipt-invalid',
+          message,
+          subject: { output: outputPath },
+          evidence: { reason: error.message },
+        })],
       });
       return;
     }
@@ -339,13 +527,21 @@ async function commandDeliver(args) {
     try {
       fs.renameSync(candidatePath, outputPath);
     } catch (error) {
+      const message = `Could not commit verified delivery "${outputPath}": ${error.message}`;
       reportDeliveryFailure({
         json,
         stage: 'commit',
         type,
         input: inputPath,
         output: outputPath,
-        error: `Could not commit verified delivery "${outputPath}": ${error.message}`,
+        error: message,
+        diagnostics: [diagnostic({
+          code: 'delivery/commit',
+          message,
+          subject: { output: outputPath },
+          evidence: { ...(error?.code ? { systemCode: error.code } : {}), reason: error.message },
+          supportedFixes: ['choose a replaceable file target on the same writable filesystem'],
+        })],
       });
       return;
     }
@@ -622,12 +818,20 @@ function commandValidate(args) {
     }
     const result = runNode([renderer, input, '/dev/null', '--layout-json'], {
       stdio: 'pipe',
-      env: rendererEnv(quality, repoRoot),
+      env: rendererEnv(quality, repoRoot, true),
     });
     if (result.status !== 0) {
-      if (result.stderr) process.stderr.write(result.stderr);
-      if (result.stdout) process.stdout.write(result.stdout);
-      process.exit(result.status ?? 1);
+      const failure = rendererFailure(result);
+      reportValidateFailure({
+        json,
+        stage: failure.diagnostics.some((entry) => entry.code.startsWith('input/')) ? 'input' : 'render',
+        type,
+        input: path.resolve(input),
+        error: failure.error,
+        diagnostics: failure.diagnostics,
+        status: result.status ?? 1,
+      });
+      return;
     }
     process.stdout.write(result.stdout);
     return;
@@ -640,23 +844,48 @@ function commandValidate(args) {
   try {
     const render = runNode([renderer, input, out], {
       stdio: 'pipe',
-      env: rendererEnv(quality, repoRoot),
+      env: rendererEnv(quality, repoRoot, true),
     });
     if (render.status !== 0) {
-      if (render.stderr) process.stderr.write(render.stderr);
-      if (render.stdout) process.stdout.write(render.stdout);
+      const failure = rendererFailure(render);
+      reportValidateFailure({
+        json,
+        stage: failure.diagnostics.some((entry) => entry.code.startsWith('input/')) ? 'input' : 'render',
+        type,
+        input: path.resolve(input),
+        error: failure.error,
+        diagnostics: failure.diagnostics,
+        status: render.status ?? 1,
+      });
       exitCode = render.status ?? 1;
     } else {
       const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), out], { stdio: 'pipe' });
       if (check.status !== 0) {
-        if (check.stdout) process.stdout.write(check.stdout);
-        if (check.stderr) process.stderr.write(check.stderr);
+        let checker;
+        try {
+          checker = JSON.parse(check.stdout);
+          checker.file = path.resolve(input);
+        } catch {
+          checker = { ok: false, diagnostic: 'Artifact checker failed without a parseable receipt.' };
+        }
+        reportValidateFailure({
+          json,
+          stage: 'check',
+          type,
+          input: path.resolve(input),
+          error: 'Final artifact check failed.',
+          diagnostics: checkerDiagnostics(checker),
+          checker,
+          status: check.status ?? 1,
+        });
         exitCode = check.status ?? 1;
       } else {
         const result = JSON.parse(check.stdout);
         if (json) {
           console.log(JSON.stringify({
+            schemaVersion: 1,
             ok: true,
+            command: 'validate',
             type,
             input: path.resolve(input),
             checks: result.checks,
@@ -671,7 +900,7 @@ function commandValidate(args) {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 
-  if (exitCode !== 0) process.exit(exitCode);
+  if (exitCode !== 0) process.exitCode = exitCode;
 }
 
 const [command, ...args] = process.argv.slice(2);

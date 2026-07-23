@@ -414,12 +414,21 @@ export async function startPreview(options) {
   }
 
   function publishFailure(receipt, stdout, stderr, candidatePath, snapshotPath) {
+    const repairDetails = receipt?.diagnostics
+      ?.slice(0, 12)
+      .map((entry) => {
+        const fix = entry.supportedFixes?.length ? `\nFix: ${entry.supportedFixes.join('; ')}` : '';
+        return `[${entry.code}] ${entry.message}${fix}`;
+      }) || [];
     const checkerDetails = receipt?.checker?.checks
       ?.filter((check) => !check.ok)
       .flatMap((check) => check.details || [])
       .filter(Boolean)
       .slice(0, 12) || [];
-    const diagnostic = [receipt?.error, ...checkerDetails].filter(Boolean).join('\n') || stderr || stdout;
+    const diagnostic = [
+      receipt?.error,
+      ...(repairDetails.length ? repairDetails : checkerDetails),
+    ].filter(Boolean).join('\n') || stderr || stdout;
     state.status = 'needs-fix';
     state.failure = {
       stage: receipt?.stage || 'render',
