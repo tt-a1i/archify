@@ -30,7 +30,7 @@ const RAW_RECIPES = [
       useWhen: 'Cloud reviews, production readiness, multi-region planning, or infrastructure ownership handoffs.',
       avoidWhen: 'Deployment facts are unknown or the real question is application behavior rather than placement.',
       include: ['regions and networks', 'workload ownership', 'stateful services', 'named boundary crossings'],
-      prompt: 'Use Archify to draw the production deployment topology. Group resources by region, network, cluster, and owner; show workloads and stateful services; label every cross-boundary mechanism. Do not invent deployment facts—mark unknown areas explicitly.',
+      prompt: 'Use Archify to draw the production deployment topology. Group resources by region, network, cluster, and owner; show workloads and stateful services; label every cross-boundary mechanism. Do not invent deployment facts—mark unknown areas explicitly. If the user wants a fail-closed deployment review, ask before setting meta.engineering_profile to deployment-ownership; otherwise leave the engineering profile unset.',
     },
     zh: {
       title: '部署与归属', question: '每个工作负载运行在哪里，哪些连接跨越了边界？',
@@ -38,7 +38,7 @@ const RAW_RECIPES = [
       useWhen: '适合云上评审、生产就绪、多区域规划和基础设施交接。',
       avoidWhen: '部署事实不清楚，或真正问题是应用行为而不是资源位置时不要使用。',
       include: ['区域与网络', '工作负载归属', '有状态服务', '明确的跨边界机制'],
-      prompt: '用 Archify 绘制生产部署拓扑。按区域、网络、集群和负责人分组，展示工作负载与有状态服务，并标注每一种跨边界机制。不要编造部署事实，不确定的区域要明确标出。',
+      prompt: '用 Archify 绘制生产部署拓扑。按区域、网络、集群和负责人分组，展示工作负载与有状态服务，并标注每一种跨边界机制。不要编造部署事实，不确定的区域要明确标出。如果用户需要失败即阻断的部署评审，先征得确认，再把 meta.engineering_profile 设为 deployment-ownership；否则不要启用工程画像。',
     },
   },
   {

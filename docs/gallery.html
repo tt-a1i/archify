@@ -180,6 +180,8 @@
     .live-flag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
     .card-body { padding: 22px 22px 20px; }
     .card-description { min-height: 44px; margin: 0 0 20px; color: var(--muted); font-size: 11px; line-height: 1.75; }
+    .engineering-proof { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: -6px 0 12px; padding: 9px 11px; border: 1px solid rgba(110, 231, 183, 0.36); border-radius: 2px; background: rgba(110, 231, 183, 0.055); color: var(--dim); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; }
+    .engineering-proof strong { color: var(--mint); font-size: 9px; font-weight: 600; white-space: nowrap; }
     .receipt { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); }
     .receipt-cell { min-width: 0; padding: 12px; border-right: 1px solid var(--line); }
     .receipt-cell:last-child { border-right: 0; }
@@ -238,6 +240,7 @@
       .card-title { font-size: 18px; }
       .preview-shell, .showcase-card.is-featured .preview-shell { height: 310px; }
       .card-body { padding: 18px 14px; }
+      .engineering-proof { align-items: flex-start; flex-direction: column; gap: 5px; }
       .receipt { grid-template-columns: 1fr 1fr; }
       .receipt-cell:nth-child(2) { border-right: 0; }
       .receipt-cell:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
@@ -348,11 +351,12 @@
             </div>
             <div class="card-body">
               <p class="card-description" data-en="Regions, private networks, workload owners, state, cross-region replication, audit evidence, and named boundary crossings." data-zh="展示区域、私有网络、工作负载归属、状态、跨区复制、审计证据和明确的边界穿越。">Regions, private networks, workload owners, state, cross-region replication, audit evidence, and named boundary crossings.</p>
+              <div class="engineering-proof" aria-label="Engineering profile validation"><span>Engineering profile</span><strong>DEPLOYMENT OWNERSHIP · PASS</strong></div>
               <div class="receipt" aria-label="Validation receipt">
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">12N · 12E</span></div>
-                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="023e6d18181fddc2a8408af23b0770669f053557784407b293a819b8d7782718">023e6d18181f</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="3a8d12813da45b465f3f633a8c4341760e300d10961768274511c2203b331e0b">3a8d12813da4</span></div>
               </div>
               <div class="card-actions">
                 <a class="card-link primary" href="gallery/artifacts/production-deployment.architecture.html?present=1&amp;play=1#view=request-boundary" target="_blank" rel="noopener" data-en="Play named chapter ↗" data-zh="播放命名章节 ↗">Play named chapter ↗</a>
@@ -679,6 +683,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "schemaVersion": 1,
       "visualPreset": "signal-flow",
       "animation": "trace",
+      "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 11,
       "artifactBytes": 598332,
@@ -776,12 +781,13 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "schemaVersion": 1,
       "visualPreset": "blueprint",
       "animation": "trace",
+      "engineeringProfile": "deployment-ownership",
       "nodeCount": 12,
       "edgeCount": 12,
-      "artifactBytes": 597488,
-      "artifactSha256": "023e6d18181fddc2a8408af23b0770669f053557784407b293a819b8d7782718",
-      "sourceBytes": 5308,
-      "sourceSha256": "c3c4ddc8fd8910d8d2bcf2ba97434017d6fa347eb4ee436d2fb519dd0f27c814",
+      "artifactBytes": 598656,
+      "artifactSha256": "3a8d12813da45b465f3f633a8c4341760e300d10961768274511c2203b331e0b",
+      "sourceBytes": 5546,
+      "sourceSha256": "03e647d057eb20d99f7fb4ba4ddfdd5d58a7a813865338680e968038e6a90e0f",
       "checks": [
         {
           "name": "single_svg",
@@ -873,6 +879,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "schemaVersion": 1,
       "visualPreset": "classic",
       "animation": "trace",
+      "engineeringProfile": null,
       "nodeCount": 7,
       "edgeCount": 12,
       "artifactBytes": 591979,
@@ -970,6 +977,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "schemaVersion": 1,
       "visualPreset": "classic",
       "animation": "trace",
+      "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 10,
       "artifactBytes": 594598,
@@ -1067,6 +1075,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "schemaVersion": 1,
       "visualPreset": "signal-flow",
       "animation": "trace",
+      "engineeringProfile": null,
       "nodeCount": 11,
       "edgeCount": 10,
       "artifactBytes": 594456,
@@ -1164,6 +1173,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "schemaVersion": 1,
       "visualPreset": "classic",
       "animation": "trace",
+      "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 10,
       "artifactBytes": 595989,
@@ -1261,6 +1271,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "schemaVersion": 1,
       "visualPreset": "signal-flow",
       "animation": "trace",
+      "engineeringProfile": null,
       "nodeCount": 7,
       "edgeCount": 14,
       "artifactBytes": 592764,
@@ -1358,6 +1369,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "schemaVersion": 1,
       "visualPreset": "signal-flow",
       "animation": "trace",
+      "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 12,
       "artifactBytes": 599944,
@@ -1455,6 +1467,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "schemaVersion": 1,
       "visualPreset": "classic",
       "animation": "trace",
+      "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 5,
       "artifactBytes": 588934,
@@ -1552,6 +1565,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "schemaVersion": 1,
       "visualPreset": "signal-flow",
       "animation": "trace",
+      "engineeringProfile": null,
       "nodeCount": 11,
       "edgeCount": 6,
       "artifactBytes": 590311,
@@ -1649,6 +1663,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "schemaVersion": 1,
       "visualPreset": "classic",
       "animation": "static",
+      "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 9,
       "artifactBytes": 589943,

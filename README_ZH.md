@@ -126,6 +126,11 @@ Redis Session 查询 -> PostgreSQL 回源。把缓存未命中作为次要路径
 | **Data Flow** | 数据管线、血缘、PII、下游消费者 | 来源、转换、存储、边界 |
 | **Lifecycle** | 状态、重试、等待、终态 | 状态、事件、重试与取消路径 |
 
+做生产部署评审时，Architecture 可以按需启用 `deployment-ownership`
+工程画像：负责人、单一区域归属、数据库私有边界或边界穿越机制缺失时会直接阻断。
+它不会被静默开启，只校验作者写入的事实，不代表线上基础设施已经核验。可查看
+[通过校验的部署证明](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership)。
+
 不知道选哪一种？打开[交互式场景指南](https://tt-a1i.github.io/archify/guide.html)，或直接询问零依赖 CLI：
 
 ```bash
@@ -247,7 +252,7 @@ Claude.ai 中的上传入口：
 - [路线图](ROADMAP.md)
 - [自动生成的 Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-Archify 2.12 已覆盖五种 Typed IR、真实仓库证明、验证后实时预览、作者可达性、可选有限动态、引导视图、语义搜索与关系探索、可分享深链、1200×630 整图与路径卡片、浏览器原生 WebM，以及显式 `standard` / `showcase` 质量档位。
+Archify 2.12 已覆盖五种 Typed IR、真实仓库证明、验证后实时预览、作者可达性、可选有限动态、引导视图、语义搜索与关系探索、可分享深链、1200×630 整图与路径卡片、浏览器原生 WebM、显式 `standard` / `showcase` 质量档位，以及按需启用的部署所有权契约。
 
 自动 Mermaid Parser、通用自动布局、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。
 

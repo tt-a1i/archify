@@ -56,6 +56,11 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
   assert.deepEqual(workflow.viewIds, ['happy-path', 'safety-gate', 'evidence-loop']);
   assert.equal(workflow.guidedPlayback, true);
 
+  const deployment = manifest.entries.find((entry) => entry.id === 'deployment-ownership');
+  assert.equal(deployment.engineeringProfile, 'deployment-ownership');
+  assert.ok(manifest.entries.filter((entry) => entry.id !== 'deployment-ownership')
+    .every((entry) => entry.engineeringProfile === null));
+
   for (const entry of manifest.entries) {
     const artifact = path.join(generatedRoot, entry.artifact.replace(/^gallery\//, 'gallery/'));
     const source = path.join(generatedRoot, entry.input.replace(/^gallery\//, 'gallery/'));
@@ -89,6 +94,8 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
   assert.match(html, /Proof,<br><em>not promises\.<\/em>/);
   assert.match(html, /Five lenses\. Eleven real stories\./);
   assert.match(html, /Composition<\/span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS/);
+  assert.match(html, /Engineering profile/);
+  assert.match(html, /DEPLOYMENT OWNERSHIP · PASS/);
   assert.match(html, /\.brand \{ min-height: 44px;/);
   assert.match(html, /\.filter-button \{\s+min-height: 44px;/);
   assert.match(html, /\.card-link \{ min-height: 44px;/);

@@ -8,6 +8,7 @@
     "visual_preset": "blueprint",
     "animation": "trace",
     "quality_profile": "showcase",
+    "engineering_profile": "deployment-ownership",
     "views": [
       {
         "id": "request-boundary",
@@ -46,13 +47,14 @@
   "boundaries": [
     { "kind": "region", "label": "AWS us-east-1 / production", "wraps": ["edge", "gateway", "api_a", "api_b", "redis", "postgres", "events", "worker", "audit"] },
     { "kind": "security-group", "label": "private application network", "wraps": ["api_a", "api_b", "redis", "postgres", "events", "worker"] },
-    { "kind": "region", "label": "AWS eu-west-1 / disaster recovery", "wraps": ["replica"] }
+    { "kind": "region", "label": "AWS eu-west-1 / disaster recovery", "wraps": ["replica"] },
+    { "kind": "security-group", "label": "DR private subnet", "wraps": ["replica"], "pad": 14 }
   ],
   "connections": [
     { "from": "clients", "to": "edge", "label": "HTTPS", "variant": "emphasis" },
     { "from": "edge", "to": "gateway", "label": "mTLS", "variant": "security" },
-    { "from": "gateway", "to": "api_a", "variant": "emphasis", "route": "orthogonal-h" },
-    { "from": "gateway", "to": "api_b", "variant": "emphasis", "route": "orthogonal-h" },
+    { "from": "gateway", "to": "api_a", "label": "VPC route", "variant": "emphasis", "route": "orthogonal-h", "labelAt": [594, 275] },
+    { "from": "gateway", "to": "api_b", "label": "VPC route", "variant": "emphasis", "route": "orthogonal-h", "labelAt": [594, 385] },
     { "from": "api_a", "to": "redis", "label": "cache", "route": "straight" },
     { "from": "api_b", "to": "postgres", "label": "SQL", "route": "straight" },
     { "from": "api_a", "to": "events", "label": "publish", "variant": "dashed", "fromSide": "top", "toSide": "top", "via": [[698, 170], [1103, 170]] },

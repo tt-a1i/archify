@@ -7,8 +7,8 @@
   "fps": 10,
   "frameCount": 54,
   "durationSeconds": 5.4,
-  "bytes": 1651715,
-  "sha256": "b85ea07c2de063904c64c23dc0912b3994ebeed3cb516339c1d681d5152fa58f",
+  "bytes": 1708413,
+  "sha256": "06526e75b813681bee1a8157774f2875603f6f75e1aa9497388aa810bff4e41e",
   "scenes": [
     {
       "id": "signal-flow",
@@ -17,16 +17,16 @@
       "view": "happy-path",
       "eyebrow": "WORKFLOW · SIGNAL FLOW",
       "title": "Agent Tool Call",
-      "receipt": "12 nodes · 11 edges · 8/8 checks"
+      "receipt": "12 nodes · 11 edges · 9/9 checks"
     },
     {
       "id": "blueprint",
       "artifact": "docs/gallery/artifacts/production-deployment.architecture.html",
-      "artifactSha256": "023e6d18181fddc2a8408af23b0770669f053557784407b293a819b8d7782718",
+      "artifactSha256": "3a8d12813da45b465f3f633a8c4341760e300d10961768274511c2203b331e0b",
       "view": "request-boundary",
       "eyebrow": "ARCHITECTURE · BLUEPRINT",
       "title": "Production Deployment",
-      "receipt": "12 nodes · 12 edges · 8/8 checks"
+      "receipt": "12 nodes · 12 edges · 9/9 checks"
     },
     {
       "id": "classic",
@@ -35,7 +35,7 @@
       "view": "cache-fallback",
       "eyebrow": "SEQUENCE · CLASSIC",
       "title": "Cache Miss Request",
-      "receipt": "7 participants · 12 messages · 8/8 checks"
+      "receipt": "7 participants · 12 messages · 9/9 checks"
     }
   ]
 }

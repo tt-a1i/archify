@@ -19,6 +19,7 @@
         "animation": { "enum": ["trace", "none"] },
         "visual_preset": { "enum": ["classic", "signal-flow", "blueprint"] },
         "quality_profile": { "enum": ["standard", "showcase"] },
+        "engineering_profile": { "enum": ["deployment-ownership"] },
         "repository": {
           "type": "object",
           "additionalProperties": false,

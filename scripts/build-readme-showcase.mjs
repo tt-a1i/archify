@@ -24,7 +24,7 @@ const scenes = [
     view: 'happy-path',
     eyebrow: 'WORKFLOW · SIGNAL FLOW',
     title: 'Agent Tool Call',
-    receipt: '12 nodes · 11 edges · 8/8 checks',
+    receipt: '12 nodes · 11 edges · 9/9 checks',
     accent: '#67e8f9',
   },
   {
@@ -33,7 +33,7 @@ const scenes = [
     view: 'request-boundary',
     eyebrow: 'ARCHITECTURE · BLUEPRINT',
     title: 'Production Deployment',
-    receipt: '12 nodes · 12 edges · 8/8 checks',
+    receipt: '12 nodes · 12 edges · 9/9 checks',
     accent: '#f6c453',
   },
   {
@@ -42,7 +42,7 @@ const scenes = [
     view: 'cache-fallback',
     eyebrow: 'SEQUENCE · CLASSIC',
     title: 'Cache Miss Request',
-    receipt: '7 participants · 12 messages · 8/8 checks',
+    receipt: '7 participants · 12 messages · 9/9 checks',
     accent: '#c4b5fd',
   },
 ];

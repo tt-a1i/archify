@@ -180,6 +180,8 @@
     .live-flag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
     .card-body { padding: 22px 22px 20px; }
     .card-description { min-height: 44px; margin: 0 0 20px; color: var(--muted); font-size: 11px; line-height: 1.75; }
+    .engineering-proof { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: -6px 0 12px; padding: 9px 11px; border: 1px solid rgba(110, 231, 183, 0.36); border-radius: 2px; background: rgba(110, 231, 183, 0.055); color: var(--dim); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; }
+    .engineering-proof strong { color: var(--mint); font-size: 9px; font-weight: 600; white-space: nowrap; }
     .receipt { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); }
     .receipt-cell { min-width: 0; padding: 12px; border-right: 1px solid var(--line); }
     .receipt-cell:last-child { border-right: 0; }
@@ -238,6 +240,7 @@
       .card-title { font-size: 18px; }
       .preview-shell, .showcase-card.is-featured .preview-shell { height: 310px; }
       .card-body { padding: 18px 14px; }
+      .engineering-proof { align-items: flex-start; flex-direction: column; gap: 5px; }
       .receipt { grid-template-columns: 1fr 1fr; }
       .receipt-cell:nth-child(2) { border-right: 0; }
       .receipt-cell:nth-child(-n+2) { border-bottom: 1px solid var(--line); }

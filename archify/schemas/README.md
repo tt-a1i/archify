@@ -84,6 +84,27 @@ blobs, and requested lines. Verified evidence is embedded outside the canonical
 SVG for the Semantic Passport and Node Finder; ordinary documents and visual
 exports carry no repository evidence.
 
+## Visual quality and engineering truth
+
+`meta.quality_profile` and `meta.engineering_profile` answer different
+questions. `quality_profile` is available in all five modes and controls how
+strictly Archify judges composition. `engineering_profile` is an optional
+Architecture-only semantic contract; omitting it preserves the ordinary v1
+behavior.
+
+The first engineering profile is `deployment-ownership`. Enable it only when
+the user wants a fail-closed deployment review and the source facts are known.
+It requires every non-external component to name an owner in `tag` and belong
+to exactly one `region`; the document must contain both `region` and
+`security-group` boundaries; every `database` must be inside a
+`security-group`; each security group must contain members from one shared
+region; and every connection whose region or security-group membership changes
+must name the real crossing mechanism in `label`.
+
+The profile validates only authored IR. It does not discover infrastructure,
+infer owners, or prove that a diagram matches a live environment. If a fact is
+unknown, leave the profile unset or obtain the fact instead of inventing it.
+
 `npm test` runs the generator in check mode and fails when the committed
 validators drift from their schemas.
 

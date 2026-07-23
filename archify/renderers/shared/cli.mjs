@@ -4,6 +4,7 @@ import { applyTemplate, renderCards, esc } from './utils.mjs';
 import { validateSchema } from './validator.mjs';
 import { verifyRepositoryEvidence } from './repository-evidence.mjs';
 import { installRendererDiagnosticBoundary, throwDiagnosticProblems } from './diagnostics.mjs';
+import { validateEngineeringProfile } from './engineering-profiles.mjs';
 
 installRendererDiagnosticBoundary();
 
@@ -15,6 +16,7 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
   validateSchema(diagramType, diagram);
   validateGuidedViews(diagramType, diagram);
   validateRelationshipIds(diagramType, diagram);
+  validateEngineeringProfile(diagramType, diagram);
   const sourceEvidence = verifyRepositoryEvidence(diagramType, diagram, process.env.ARCHIFY_REPO_ROOT);
   const template = fs.readFileSync(path.join(skillRoot, 'assets/template.html'), 'utf8');
   // Optional chaining: in degraded mode (no ajv) malformed input must still
@@ -128,10 +130,13 @@ export function validateGuidedViews(diagramType, diagram) {
 export function svgRootAttrs(meta, kind) {
   const animation = meta.animation === 'trace' ? ' data-animation="trace"' : '';
   const preset = ` data-preset="${esc(meta.visual_preset || 'classic')}"`;
+  const engineeringProfile = meta.engineering_profile
+    ? ` data-engineering-profile="${esc(meta.engineering_profile)}"`
+    : '';
   const requestedProfile = process.env.ARCHIFY_QUALITY_PROFILE || meta.quality_profile;
   const qualityProfile = requestedProfile === 'showcase' ? 'showcase' : 'standard';
   const advisory = requestedProfile ? '' : ' data-quality-gates="advisory"';
-  return `role="img" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset} data-quality-profile="${esc(qualityProfile)}"${advisory}`;
+  return `role="img" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset}${engineeringProfile} data-quality-profile="${esc(qualityProfile)}"${advisory}`;
 }
 
 // Keep the accessible name inside the SVG so it survives standalone SVG

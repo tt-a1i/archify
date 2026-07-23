@@ -130,6 +130,12 @@ Continue with focused requests such as `add Redis`, `move auth to the left`, or 
 | **Data Flow** | Pipelines, lineage, PII, consumers | Sources, transforms, stores, boundaries |
 | **Lifecycle** | States, retries, waits, terminal outcomes | States, events, retry and cancellation paths |
 
+For a production deployment review, Architecture can optionally enable the
+`deployment-ownership` engineering profile. It fails closed when owners,
+single-region placement, private database scope, or named boundary crossings
+are missing. It is never enabled silently and validates authored facts—not live
+infrastructure. See the [checked deployment proof](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership).
+
 Not sure which one fits? Use the [interactive scenario guide](https://tt-a1i.github.io/archify/guide.html), or ask the zero-dependency CLI:
 
 ```bash
@@ -247,7 +253,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Roadmap](ROADMAP.md)
 - [Generated Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-Archify 2.12 includes typed IR across all five modes, real-repository proof, verified live preview, authored reachability, optional finite motion, guided views, semantic search and relationship exploration, shareable deep links, 1200×630 diagram and route cards, browser-native WebM recording, and explicit `standard` / `showcase` quality profiles.
+Archify 2.12 includes typed IR across all five modes, real-repository proof, verified live preview, authored reachability, optional finite motion, guided views, semantic search and relationship exploration, shareable deep links, 1200×630 diagram and route cards, browser-native WebM recording, explicit `standard` / `showcase` quality profiles, and an opt-in deployment ownership contract.
 
 Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
 

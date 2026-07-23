@@ -202,6 +202,9 @@ function renderCard(entry, index) {
     : `${artifact}#focus=${encodeURIComponent(entry.focus)}`;
   const exploreEn = entry.view ? 'Play named chapter ↗' : 'Explore focus ↗';
   const exploreZh = entry.view ? '播放命名章节 ↗' : '探索聚焦路径 ↗';
+  const engineeringProof = entry.engineeringProfile
+    ? `\n              <div class="engineering-proof" aria-label="Engineering profile validation"><span>Engineering profile</span><strong>${esc(entry.engineeringProfile.replaceAll('-', ' ').toUpperCase())} · PASS</strong></div>`
+    : '';
   return `          <article class="${classes}" id="proof-${esc(entry.id)}" data-proof-id="${esc(entry.id)}" data-type="${esc(entry.type)}" style="--accent:${esc(entry.accent)}">
             <header class="card-header">
               <div class="card-index">${String(index + 1).padStart(2, '0')}</div>
@@ -216,7 +219,7 @@ function renderCard(entry, index) {
               <iframe src="${esc(artifact)}?embed=1&amp;theme=dark" data-src-base="${esc(artifact)}" title="${esc(entry.titleEn)} live Archify preview" loading="${entry.featured ? 'eager' : 'lazy'}"></iframe>
             </div>
             <div class="card-body">
-              <p class="card-description" data-en="${esc(entry.descriptionEn)}" data-zh="${esc(entry.descriptionZh)}">${esc(entry.descriptionEn)}</p>
+              <p class="card-description" data-en="${esc(entry.descriptionEn)}" data-zh="${esc(entry.descriptionZh)}">${esc(entry.descriptionEn)}</p>${engineeringProof}
               <div class="receipt" aria-label="Validation receipt">
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">${entry.checksPassed}/${entry.checkCount} pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ${entry.composition.status === 'pass' ? 'ok' : ''}" title="${entry.composition.metrics.properCrossings} crossings · ${entry.composition.metrics.containerBorderRuns} border runs · ${entry.composition.metrics.microSegmentCount} micro segments · ${entry.composition.metrics.shortInteriorSegmentCount} cramped turns">${esc(entry.composition.profile.toUpperCase())} · ${esc(entry.composition.status.toUpperCase())}</span></div>
@@ -268,6 +271,7 @@ for (const item of CASES) {
     schemaVersion: source.schema_version,
     visualPreset: source.meta.visual_preset || 'classic',
     animation: source.meta.animation || 'static',
+    engineeringProfile: source.meta.engineering_profile || null,
     viewCount: Array.isArray(source.meta.views) ? source.meta.views.length : 0,
     viewIds: Array.isArray(source.meta.views) ? source.meta.views.map((view) => view.id) : [],
     nodeCount: Array.isArray(source[nodeKey]) ? source[nodeKey].length : 0,
@@ -304,6 +308,7 @@ const manifest = {
     schemaVersion: entry.schemaVersion,
     visualPreset: entry.visualPreset,
     animation: entry.animation,
+    engineeringProfile: entry.engineeringProfile,
     nodeCount: entry.nodeCount,
     edgeCount: entry.edgeCount,
     artifactBytes: entry.artifactBytes,

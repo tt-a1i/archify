@@ -4103,7 +4103,7 @@
 
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="map">
-      <svg viewBox="0 0 1436 760" role="img" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="blueprint" data-quality-profile="showcase">
+      <svg viewBox="0 0 1436 760" role="img" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="blueprint" data-engineering-profile="deployment-ownership" data-quality-profile="showcase">
         <title id="archify-diagram-title">Production Deployment Ownership</title>
         <desc id="archify-diagram-description">Regions, network boundaries, workload owners, state, and named crossings</desc>
         <!-- Definitions -->
@@ -4138,11 +4138,14 @@
         <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" x="1010" y="580" width="186" height="112" rx="12" class="c-region" stroke-width="1"/>
         <text x="1018" y="598" class="t-cloud" font-size="9" font-weight="600">AWS eu-west-1 / disaster recovery</text>
 
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="3" x="1026" y="596" width="154" height="96" rx="8" class="c-security-group" stroke-width="1"/>
+        <text x="1034" y="614" class="t-security" font-size="9" font-weight="600">DR private subnet</text>
+
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="clients" data-edge-to="edge" data-edge-label="HTTPS" data-edge-key="0" data-composition-points="160,330;230,330" d="M 160 330 L 230 330" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="edge" data-edge-to="gateway" data-edge-label="mTLS" data-edge-key="1" data-composition-points="356,330;430,330" d="M 356 330 L 430 330" class="a-security" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="gateway" data-edge-to="api_a" data-edge-key="2" data-composition-points="558,330;594,330;594,226;630,226" d="M 558 330 L 586 330 Q 594 330 594 322 L 594 234 Q 594 226 602 226 L 630 226" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="gateway" data-edge-to="api_b" data-edge-key="3" data-composition-points="558,330;594,330;594,436;630,436" d="M 558 330 L 586 330 Q 594 330 594 338 L 594 428 Q 594 436 602 436 L 630 436" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="gateway" data-edge-to="api_a" data-edge-label="VPC route" data-edge-key="2" data-composition-points="558,330;594,330;594,226;630,226" d="M 558 330 L 586 330 Q 594 330 594 322 L 594 234 Q 594 226 602 226 L 630 226" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="gateway" data-edge-to="api_b" data-edge-label="VPC route" data-edge-key="3" data-composition-points="558,330;594,330;594,436;630,436" d="M 558 330 L 586 330 Q 594 330 594 338 L 594 428 Q 594 436 602 436 L 630 436" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="api_a" data-edge-to="redis" data-edge-label="cache" data-edge-key="4" data-composition-points="766,226;840,226" d="M 766 226 L 840 226" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="api_b" data-edge-to="postgres" data-edge-label="SQL" data-edge-key="5" data-composition-points="766,436;840,436" d="M 766 436 L 840 436" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="api_a" data-edge-to="events" data-edge-label="publish" data-edge-key="6" data-composition-points="698,195;698,170;1103,170;1103,300" d="M 698 195 L 698 178 Q 698 170 706 170 L 1095 170 Q 1103 170 1103 178 L 1103 300" class="a-dashed" data-animate="edge" style="--step:6" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
@@ -4267,8 +4270,8 @@
         <text data-detail="fine" x="1303" y="352" class="t-backend" font-size="7" text-anchor="middle">app team</text>
         </g>
 
-        <g id="node-replica" data-node-id="replica" data-node-label="DR Replica" tabindex="0" role="button" aria-label="Focus DR Replica, eu-west-1, AWS eu-west-1 / disaster recovery" aria-pressed="false" data-node-kind="database" data-node-sublabel="eu-west-1" data-node-tag="data team" data-node-context="AWS eu-west-1 / disaster recovery">
-          <title>DR Replica · eu-west-1 · AWS eu-west-1 / disaster recovery · data team</title>
+        <g id="node-replica" data-node-id="replica" data-node-label="DR Replica" tabindex="0" role="button" aria-label="Focus DR Replica, eu-west-1, AWS eu-west-1 / disaster recovery › DR private subnet" aria-pressed="false" data-node-kind="database" data-node-sublabel="eu-west-1" data-node-tag="data team" data-node-context="AWS eu-west-1 / disaster recovery › DR private subnet">
+          <title>DR Replica · eu-west-1 · AWS eu-west-1 / disaster recovery › DR private subnet · data team</title>
           <rect x="1040" y="610" width="126" height="62" rx="6" class="c-mask"/>
           <rect x="1040" y="610" width="126" height="62" rx="6" class="c-database" data-animate="node" style="--step:10" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(1046 616) scale(0.6875)">
@@ -4314,8 +4317,14 @@
           <rect x="378" y="310" width="30" height="14" rx="3" class="c-mask"/>
           <text x="393" y="320" class="t-security" font-size="8" text-anchor="middle">mTLS</text>
         </g>
-
-
+        <g data-detail="context" data-edge-from="gateway" data-edge-to="api_a" data-edge-label="VPC route" data-edge-key="2">
+          <rect x="567.4" y="265" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+          <text x="594" y="275" class="t-backend" font-size="8" text-anchor="middle">VPC route</text>
+        </g>
+        <g data-detail="context" data-edge-from="gateway" data-edge-to="api_b" data-edge-label="VPC route" data-edge-key="3">
+          <rect x="567.4" y="375" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+          <text x="594" y="385" class="t-backend" font-size="8" text-anchor="middle">VPC route</text>
+        </g>
         <g data-detail="context" data-edge-from="api_a" data-edge-to="redis" data-edge-label="cache" data-edge-key="4">
           <rect x="786" y="206" width="34" height="14" rx="3" class="c-mask"/>
           <text x="803" y="216" class="t-muted" font-size="8" text-anchor="middle">cache</text>

@@ -300,6 +300,11 @@ function sourceEvidenceFromArtifact(artifact) {
   return evidence;
 }
 
+function engineeringProfileFromArtifact(artifact) {
+  const match = artifact.toString('utf8').match(/<svg[^>]*\sdata-engineering-profile="([^"]+)"/);
+  return match ? match[1] : null;
+}
+
 async function commandDeliver(args) {
   const qualityArgs = extractQualityArgs(args);
   const repoArgs = extractRepoRootArgs(qualityArgs.rest);
@@ -495,6 +500,7 @@ async function commandDeliver(args) {
       });
       return;
     }
+    const engineeringProfile = engineeringProfileFromArtifact(artifact);
     const receipt = {
       schemaVersion: 1,
       ok: true,
@@ -511,6 +517,7 @@ async function commandDeliver(args) {
         checkCount: result.checks.length,
         compositionProfile: result.composition.profile,
         compositionStatus: result.composition.status,
+        ...(engineeringProfile ? { engineeringProfile } : {}),
         errors: result.composition.summary.errors,
         warnings: result.composition.summary.warnings,
       },
@@ -567,7 +574,10 @@ async function commandDeliver(args) {
       console.log(JSON.stringify(receipt, null, 2));
     } else {
       console.log(`delivered ${type} ${outputPath}`);
-      console.log(`${receipt.validation.checksPassed}/${receipt.validation.checkCount} artifact checks; composition ${receipt.validation.compositionProfile}: ${receipt.validation.compositionStatus}; sha256 ${receipt.artifact.sha256.slice(0, 12)}`);
+      const engineering = receipt.validation.engineeringProfile
+        ? `; engineering ${receipt.validation.engineeringProfile}: pass`
+        : '';
+      console.log(`${receipt.validation.checksPassed}/${receipt.validation.checkCount} artifact checks; composition ${receipt.validation.compositionProfile}: ${receipt.validation.compositionStatus}${engineering}; sha256 ${receipt.artifact.sha256.slice(0, 12)}`);
       if (receipt.open?.status === 'opened') console.log(`opened ${outputPath}`);
     }
   } finally {
@@ -881,6 +891,7 @@ function commandValidate(args) {
         exitCode = check.status ?? 1;
       } else {
         const result = JSON.parse(check.stdout);
+        const engineeringProfile = engineeringProfileFromArtifact(fs.readFileSync(out));
         if (json) {
           console.log(JSON.stringify({
             schemaVersion: 1,
@@ -890,9 +901,13 @@ function commandValidate(args) {
             input: path.resolve(input),
             checks: result.checks,
             composition: result.composition,
+            ...(engineeringProfile ? { engineeringProfile } : {}),
           }, null, 2));
         } else {
-          console.log(`ok ${type} ${path.resolve(input)} (${result.checks.length} artifact checks; composition ${result.composition.profile}: ${result.composition.summary.errors} errors, ${result.composition.summary.warnings} warnings)`);
+          const engineering = engineeringProfile
+            ? `; engineering ${engineeringProfile}: pass`
+            : '';
+          console.log(`ok ${type} ${path.resolve(input)} (${result.checks.length} artifact checks; composition ${result.composition.profile}: ${result.composition.summary.errors} errors, ${result.composition.summary.warnings} warnings${engineering})`);
         }
       }
     }

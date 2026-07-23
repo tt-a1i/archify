@@ -62,44 +62,31 @@ jobs:
           fi
 
   package-smoke:
-    runs-on: ubuntu-latest
+    name: package smoke (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate packaged skill without installing dependencies
+      - name: Extract packaged skill
+        if: runner.os != 'Windows'
         run: |
           set -euo pipefail
-          rm -rf /tmp/archify-package
-          mkdir -p /tmp/archify-package
-          unzip -q archify.zip -d /tmp/archify-package
-          cd /tmp/archify-package/archify
-          test ! -d node_modules
-          test ! -f package-lock.json
-          test ! -f scripts/generate-validators.mjs
-          node -e "const p=require('./package.json'); if (p.dependencies || p.devDependencies) process.exit(1)"
-
-          node bin/archify.mjs --help
-          node bin/archify.mjs doctor
-          node bin/archify.mjs demo /tmp/archify-demo
-          node bin/archify.mjs examples
-          node bin/archify.mjs render workflow examples/agent-tool-call.workflow.json /tmp/workflow.html
-          node bin/archify.mjs check /tmp/workflow.html
-          node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow-delivered.html --quality showcase --json
-          node_path="$(command -v node)"
-          mkdir -p /tmp/archify-empty-path
-          PATH=/tmp/archify-empty-path "$node_path" bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow-open-fallback.html --open --json > /tmp/workflow-open-receipt.json
-          node -e "const r=require('/tmp/workflow-open-receipt.json'); if (!r.ok || r.open?.status !== 'unsupported') process.exit(1)"
-
-          node bin/archify.mjs validate architecture examples/web-app.architecture.json --json
-          node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --json
-          node bin/archify.mjs validate sequence examples/cache-miss-request.sequence.json --json
-          node bin/archify.mjs validate dataflow examples/product-analytics.dataflow.json --json
-          node bin/archify.mjs validate lifecycle examples/agent-run.lifecycle.json --json
-
-          node -e "const fs=require('fs'); const p='examples/agent-tool-call.workflow.json'; const d=JSON.parse(fs.readFileSync(p)); d.nodes[0].colour='cyan'; fs.writeFileSync('/tmp/invalid-workflow.json', JSON.stringify(d))"
-          if node bin/archify.mjs validate workflow /tmp/invalid-workflow.json --json; then
-            echo '::error::packaged skill accepted schema-invalid input without node_modules'
-            exit 1
-          fi
+          package_root="$RUNNER_TEMP/archify-package"
+          rm -rf "$package_root"
+          mkdir -p "$package_root"
+          unzip -q archify.zip -d "$package_root"
+      - name: Extract packaged skill
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $packageRoot = Join-Path $env:RUNNER_TEMP 'archify-package'
+          if (Test-Path $packageRoot) { Remove-Item -Recurse -Force $packageRoot }
+          Expand-Archive -Path archify.zip -DestinationPath $packageRoot
+      - name: Validate packaged skill without installing dependencies
+        run: node scripts/package-smoke.mjs
