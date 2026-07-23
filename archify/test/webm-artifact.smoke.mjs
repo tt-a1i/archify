@@ -557,7 +557,46 @@ try {
       pressed: document.querySelector('#review-play').getAttribute('aria-pressed')
     })`);
     assert.deepEqual(replayFinished, { selected: 'relationship:publish-order', label: 'Replay', pressed: 'false' });
-    console.log('ok Architecture Delta navigator: exact identity, lifecycle, reduced motion, print, and finite review');
+
+    const exportProof = await withTimeout(evaluate(cdp, sessionId, String.raw`(async function () {
+      var frames = Array.from(document.querySelectorAll('.snapshot-frame'));
+      var explorers = frames.map(function (frame) {
+        var child = frame.contentWindow;
+        return Boolean(child && child.Archify && child.Archify.focus && child.Archify.routeProbe && child.document.querySelector('#btn-node-finder') && child.document.querySelector('#guided-view-play'));
+      });
+      var svgA = Archify.deltaExport.canonicalSvg();
+      document.querySelector('#theme').click();
+      document.querySelector('#preset').click();
+      document.querySelector('.change-row').click();
+      var svgB = Archify.deltaExport.canonicalSvg();
+      var parsed = new DOMParser().parseFromString(svgB, 'image/svg+xml');
+      var exportStyle = parsed.querySelector('style')?.textContent || '';
+      var blob = await Archify.deltaExport.shareCard();
+      var bytes = new Uint8Array(await blob.arrayBuffer());
+      return {
+        explorers: explorers,
+        stable: svgA === svgB,
+        reviewResidue: parsed.querySelectorAll('[data-delta-review-current]').length,
+        boundaryStyle: exportStyle.includes('text[data-delta-boundary-state="added"]{fill:#34d399!important}'),
+        markerStyle: exportStyle.includes('.delta-edge-marker[data-delta-state],.delta-boundary-marker[data-delta-state]{color:var(--delta)}'),
+        frameStyle: exportStyle.includes('rect[data-graph-role="structural-frame"]'),
+        boundaryMarkers: Array.from(parsed.querySelectorAll('.delta-boundary-marker')).map(function (marker) { return marker.textContent; }),
+        type: blob.type,
+        size: blob.size,
+        signature: Array.from(bytes.slice(0, 8)).map(function (byte) { return byte.toString(16).padStart(2, '0'); }).join('')
+      };
+    })()`, true), 15_000, 'Architecture Delta export');
+    assert.deepEqual(exportProof.explorers, [true, true]);
+    assert.equal(exportProof.stable, true);
+    assert.equal(exportProof.reviewResidue, 0);
+    assert.equal(exportProof.boundaryStyle, true);
+    assert.equal(exportProof.markerStyle, true);
+    assert.equal(exportProof.frameStyle, true);
+    assert.deepEqual(exportProof.boundaryMarkers, ['~', '~']);
+    assert.equal(exportProof.type, 'image/png');
+    assert.ok(exportProof.size > 20_000, `Architecture Delta Share Card is unexpectedly small (${exportProof.size} bytes)`);
+    assert.equal(exportProof.signature, '89504e470d0a1a0a');
+    console.log(`ok Architecture Delta navigator + export: exact identity, complete explorers, static SVG, and ${exportProof.size}-byte Share Card`);
   }
 
   async function captureShareCard(file, label) {

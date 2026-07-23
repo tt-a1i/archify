@@ -481,6 +481,8 @@ async function commandCompare(args) {
 
   const baseCandidate = path.join(stagingDirectory, 'base.html');
   const headCandidate = path.join(stagingDirectory, 'head.html');
+  const rawBaseCandidate = path.join(stagingDirectory, 'base.raw.html');
+  const rawHeadCandidate = path.join(stagingDirectory, 'head.raw.html');
   const canonicalBaseInput = path.join(stagingDirectory, 'base.architecture.json');
   const canonicalHeadInput = path.join(stagingDirectory, 'head.architecture.json');
   const htmlCandidate = path.join(stagingDirectory, path.basename(outputPath));
@@ -489,10 +491,8 @@ async function commandCompare(args) {
   try {
     let baseResult;
     let headResult;
-    fs.writeFileSync(canonicalBaseInput, JSON.stringify(canonicalArchitecture(base)));
-    fs.writeFileSync(canonicalHeadInput, JSON.stringify(canonicalArchitecture(head)));
     try {
-      baseResult = renderValidatedArchitecture(canonicalBaseInput, baseCandidate, qualityArgs.quality, repoArgs.repoRoot);
+      renderValidatedArchitecture(basePath, rawBaseCandidate, qualityArgs.quality, repoArgs.repoRoot);
     } catch (error) {
       const diagnosticEntry = error.diagnostics?.[0];
       reportCompareFailure({
@@ -506,7 +506,7 @@ async function commandCompare(args) {
       return;
     }
     try {
-      headResult = renderValidatedArchitecture(canonicalHeadInput, headCandidate, qualityArgs.quality, repoArgs.repoRoot);
+      renderValidatedArchitecture(headPath, rawHeadCandidate, qualityArgs.quality, repoArgs.repoRoot);
     } catch (error) {
       const diagnosticEntry = error.diagnostics?.[0];
       reportCompareFailure({
@@ -519,6 +519,14 @@ async function commandCompare(args) {
       });
       return;
     }
+
+    // Validation must see the exact authored inputs. Only after both sides
+    // pass do we canonicalize their collection order for deterministic SVG
+    // geometry and stable artifact bytes.
+    fs.writeFileSync(canonicalBaseInput, JSON.stringify(canonicalArchitecture(base)));
+    fs.writeFileSync(canonicalHeadInput, JSON.stringify(canonicalArchitecture(head)));
+    baseResult = renderValidatedArchitecture(canonicalBaseInput, baseCandidate, qualityArgs.quality, repoArgs.repoRoot);
+    headResult = renderValidatedArchitecture(canonicalHeadInput, headCandidate, qualityArgs.quality, repoArgs.repoRoot);
 
     const semanticHash = (diagram) => createHash('sha256').update(canonicalArchitectureJson(diagram)).digest('hex');
     let compareIr;
@@ -557,6 +565,8 @@ async function commandCompare(args) {
       baseSvg,
       deltaSvg,
       headSvg,
+      baseHtml: baseResult.html,
+      headHtml: headResult.html,
       artifactCss: extractArtifactCss(headResult.html),
     });
     const deltaValidation = validateArchitectureDeltaHtml(html, artifactIr);

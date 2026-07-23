@@ -145,7 +145,7 @@ test('mixed semantic and geometry component changes retain both exact forms', ()
   assert.deepEqual(queue.classifications, ['geometry', 'semantic']);
   const html = fs.readFileSync(output, 'utf8');
   assert.match(html, /data-change-key="component:queue"[^>]+data-change-target-signature="g:changed:geometry,semantic\|g:moved-from:geometry,semantic"/);
-  assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 8, checkCount: 8 });
+  assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
 });
 
 test('mixed semantic and geometry relationship changes retain both exact routes', () => {
@@ -163,7 +163,7 @@ test('mixed semantic and geometry relationship changes retain both exact routes'
   assert.deepEqual(publishOrder.classifications, ['geometry', 'semantic']);
   const html = fs.readFileSync(output, 'utf8');
   assert.match(html, /data-change-key="relationship:publish-order"[^>]+data-change-target-signature="g:changed:geometry,semantic\|g:moved-from:geometry,semantic\|path:changed:geometry,semantic\|path:moved-from:geometry,semantic\|text:changed:\|text:moved-from:"/);
-  assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 8, checkCount: 8 });
+  assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
 });
 
 test('same-label node id changes remain one removal plus one addition', () => {
@@ -221,6 +221,23 @@ test('compare CLI writes a deterministic three-state artifact and complete sidec
   assert.match(firstHtml, /data-change-key="boundary:region:Production region"/);
   assert.match(firstHtml, /data-change-target-signature="[^"]+"/);
   assert.match(firstHtml, /data-delta-boundary-key="region:Production region"/);
+  assert.equal((firstHtml.match(/class="snapshot-frame"/g) || []).length, 2);
+  assert.match(firstHtml, /title="Before architecture explorer"/);
+  assert.match(firstHtml, /title="After architecture explorer"/);
+  assert.match(firstHtml, /id="export-svg"[^>]*>Export SVG</);
+  assert.match(firstHtml, /id="share-card"[^>]*>Share Card</);
+  assert.match(firstHtml, /window\.Archify\.deltaExport = \{ canonicalSvg: canonicalDeltaSvg, shareCard/);
+  assert.match(firstHtml, /canvas\.width = 1200;[\s\S]*canvas\.height = 630;/);
+  assert.match(firstHtml, /structural-frame.*stroke:var\(--delta\)!important/);
+  assert.match(firstHtml, /structural-frame.*data-delta-state="changed".*stroke-dasharray:2 3!important/);
+  assert.match(firstHtml, /data-delta-boundary-state="added".*fill:#34d399!important/);
+  assert.match(firstHtml, /delta-boundary-marker\[data-delta-state\]\{color:var\(--delta\)\}/);
+  assert.match(firstHtml, /No authored architecture changes ·.*movementSummary/);
+  assert.match(firstHtml, /font-family:"JetBrains Mono",ui-monospace/);
+  assert.doesNotMatch(firstHtml, /font-family:Inter|body\{min-width:1080px/);
+  assert.match(firstHtml, /@media\(max-width:760px\)/);
+  assert.match(firstHtml, /\.canvas svg\{min-width:720px;max-height:none\}/);
+  assert.match(firstHtml, /\.changes\{overflow-x:auto\}/);
   assert.match(firstHtml, /const REVIEW_DWELL_MS = 1400;/);
   assert.match(firstHtml, /prefers-reduced-motion: reduce/);
   assert.match(firstHtml, /:not\(\[data-delta-review-current\]\)/);
@@ -232,9 +249,10 @@ test('compare CLI writes a deterministic three-state artifact and complete sidec
   assert.match(firstHtml, /window\.addEventListener\('beforeprint', overview\)/);
   assert.match(firstHtml, /aria-current', 'step'/);
   assert.match(firstHtml, /event\.key === 'Enter' \|\| event\.key === ' '/);
-  assert.doesNotMatch(firstHtml, /localStorage|sessionStorage|history\.(?:pushState|replaceState)/);
-  assert.doesNotMatch(firstHtml, /setInterval\(/);
-  assert.doesNotMatch(firstHtml, /\b(?:SAFE|LOW RISK|MERGEABLE|NO IMPACT|VERIFIED PR)\b/i);
+  const deltaShell = firstHtml.replace(/<iframe\b[^>]*><\/iframe>/g, '');
+  assert.doesNotMatch(deltaShell, /localStorage|sessionStorage|history\.(?:pushState|replaceState)/);
+  assert.doesNotMatch(deltaShell, /setInterval\(/);
+  assert.doesNotMatch(deltaShell, /\b(?:SAFE|LOW RISK|MERGEABLE|NO IMPACT|VERIFIED PR)\b/i);
 
   const receipt = JSON.parse(result.stdout);
   const sidecar = read(path.join(tmp, 'first.receipt.json'));
@@ -243,7 +261,7 @@ test('compare CLI writes a deterministic three-state artifact and complete sidec
   assert.equal(receipt.validation.checksPassed, receipt.validation.checkCount);
   assert.equal(receipt.completeness, 'complete');
   assert.equal(JSON.stringify(receipt).includes(tmp), false);
-  assert.deepEqual(validateArchitectureDeltaHtml(firstHtml, receipt), { ok: true, checksPassed: 8, checkCount: 8 });
+  assert.deepEqual(validateArchitectureDeltaHtml(firstHtml, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
 });
 
 test('artifact validation fails closed on missing, duplicate, or self-blessed review identity', () => {
@@ -368,6 +386,25 @@ test('compare failure preserves an existing trusted artifact', () => {
   assert.equal(receipt.ok, false);
   assert.equal(receipt.diagnostics[0].code, 'delta/relationship-id-required');
   assert.equal(fs.existsSync(path.join(tmp, 'preserved.receipt.json')), false);
+});
+
+test('compare validates raw snapshots before canonicalization can discard invalid fields', () => {
+  const invalid = read(baseFixture);
+  invalid.unknown_top_level_fact = true;
+  const invalidPath = path.join(tmp, 'invalid-raw-base.json');
+  const output = path.join(tmp, 'invalid-raw-base.html');
+  fs.writeFileSync(invalidPath, JSON.stringify(invalid));
+
+  const result = run(['compare', 'architecture', invalidPath, headFixture, output, '--json']);
+  assert.notEqual(result.status, 0);
+  assert.equal(fs.existsSync(output), false);
+  assert.equal(fs.existsSync(path.join(tmp, 'invalid-raw-base.receipt.json')), false);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.ok, false);
+  assert.equal(receipt.diagnostics[0].code, 'schema/additionalProperties');
+  assert.equal(receipt.diagnostics[0].subject.side, 'base');
+  assert.equal(receipt.diagnostics[0].subject.path, '/');
+  assert.equal(receipt.diagnostics[0].evidence.additionalProperty, 'unknown_top_level_fact');
 });
 
 test('compare commit preflights both targets before replacing a trusted pair', () => {

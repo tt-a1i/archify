@@ -354,7 +354,7 @@ function addState(tag, change, side, forcedState) {
 }
 
 function markerFor(state) {
-  return ({ added: '+', removed: '−', changed: '~', moved: '↔', 'moved-from': '↔', rerouted: '↔', 'evidence-changed': 'E' })[state] || '';
+  return ({ added: '+', removed: '−', changed: '~', moved: '↔', 'moved-from': '↔', rerouted: '↔', 'geometry-changed': '↔', 'evidence-changed': 'E' })[state] || '';
 }
 
 function addNodeMarker(group, state) {
@@ -493,6 +493,15 @@ function edgeSymbolMarkup(markup, state) {
   return `<text class="delta-edge-marker" data-delta-state="${state}"${edgeId ? ` data-edge-id="${esc(edgeId)}"` : ''} x="${Number(point[1]) + 9}" y="${Number(point[2]) - 7}" aria-hidden="true">${symbol}</text>`;
 }
 
+function boundarySymbolMarkup(markup, state) {
+  const symbol = markerFor(state);
+  const frame = markup.match(/<rect[^>]*\bx="([\d.-]+)"\s+y="([\d.-]+)"\s+width="([\d.-]+)"/);
+  if (!symbol || !frame) return '';
+  const x = Number(frame[1]) + Number(frame[3]) - 12;
+  const y = Number(frame[2]) + 16;
+  return `<text class="delta-boundary-marker" data-delta-state="${state}" x="${x}" y="${y}" text-anchor="middle" aria-hidden="true">${symbol}</text>`;
+}
+
 export function buildDeltaSvg(baseSvg, headSvg, receipt) {
   const [baseW, baseH] = viewBoxSize(baseSvg);
   const [headW, headH] = viewBoxSize(headSvg);
@@ -503,6 +512,7 @@ export function buildDeltaSvg(baseSvg, headSvg, receipt) {
   const baseEdgePhantoms = [];
   const baseBoundaryPhantoms = [];
   const edgeMarkers = [];
+  const boundaryMarkers = [];
 
   for (const change of nodes.values()) {
     if (change.status === 'removed') baseNodePhantoms.push(forceElementState(elementById(baseSvg, 'node', change.id), 'removed', change.classifications));
@@ -521,7 +531,11 @@ export function buildDeltaSvg(baseSvg, headSvg, receipt) {
   }
   for (const change of boundaries.values()) {
     const renderedKey = `${change.kind}:${esc(change.label)}`;
-    if (change.status === 'removed') baseBoundaryPhantoms.push(forceBoundaryState(boundaryPairByKey(baseSvg, renderedKey), 'removed', change.key, change.classifications));
+    if (change.status === 'removed') {
+      const phantom = forceBoundaryState(boundaryPairByKey(baseSvg, renderedKey), 'removed', change.key, change.classifications);
+      baseBoundaryPhantoms.push(phantom);
+      boundaryMarkers.push(boundarySymbolMarkup(phantom, 'removed'));
+    }
     else if (change.status === 'changed' || change.status === 'geometry-changed') {
       baseBoundaryPhantoms.push(forceBoundaryState(boundaryPairByKey(baseSvg, renderedKey), 'moved-from', change.key, change.classifications));
     }
@@ -539,7 +553,12 @@ export function buildDeltaSvg(baseSvg, headSvg, receipt) {
       edgeMarkers.push(edgeSymbolMarkup(current, change.status === 'changed' && change.classifications.includes('topology') ? 'added' : change.status));
     }
   }
-  delta = delta.replace('        <!-- Legend -->', `        <!-- Delta relationship symbols -->\n${edgeMarkers.filter(Boolean).join('\n')}\n\n        <!-- Legend -->`);
+  for (const change of boundaries.values()) {
+    if (!['added', 'changed', 'geometry-changed'].includes(change.status)) continue;
+    const renderedKey = `${change.kind}:${esc(change.label)}`;
+    boundaryMarkers.push(boundarySymbolMarkup(boundaryPairByKey(delta, renderedKey), change.status));
+  }
+  delta = delta.replace('        <!-- Legend -->', `        <!-- Delta relationship symbols -->\n${edgeMarkers.filter(Boolean).join('\n')}\n\n        <!-- Delta boundary symbols -->\n${boundaryMarkers.filter(Boolean).join('\n')}\n\n        <!-- Legend -->`);
   return prefixSvgIds(staticize(delta), 'delta');
 }
 
@@ -621,7 +640,7 @@ function expectedReviewTargetSignature(row) {
 
 const total = (summary, key) => summary.components[key] + summary.connections[key] + summary.boundaries[key];
 
-export function renderArchitectureDeltaHtml({ receipt, baseSvg, deltaSvg, headSvg, artifactCss }) {
+export function renderArchitectureDeltaHtml({ receipt, baseSvg, deltaSvg, headSvg, baseHtml = '', headHtml = '', artifactCss }) {
   const rows = architectureDeltaChangeRows(receipt);
   const changed = total(receipt.summary, 'changed');
   const proof = receipt.proofLevel === 'revision-pinned' ? 'REVISION-PINNED INPUTS' : 'AUTHORED SNAPSHOTS';
@@ -630,25 +649,32 @@ export function renderArchitectureDeltaHtml({ receipt, baseSvg, deltaSvg, headSv
     const targetSignature = expectedReviewTargetSignature(row);
     return `<li data-change-status="${esc(row.status)}"><button class="change-row" type="button" data-change-index="${index}" data-change-key="${esc(row.key)}" data-change-kind="${esc(row.kindKey)}" data-change-id="${esc(row.id)}" data-change-label="${esc(label)}" data-change-status="${esc(row.status)}" data-change-classifications="${esc(row.classifications.join(', '))}" data-change-target-signature="${esc(targetSignature)}"><span class="token">${esc(markerFor(row.status) || '~')}</span><span>${esc(row.kind)}</span><strong>${esc(label)}</strong><code>${esc(row.id)}</code><span>${esc(row.classifications.join(', '))}</span><span>${esc(row.changedFields.join(', ') || 'identity')}</span></button></li>`;
   }).join('\n') : '<li class="empty">No authored architecture changes.</li>';
+  const baseView = baseHtml
+    ? `<iframe class="snapshot-frame" title="Before architecture explorer" srcdoc="${esc(baseHtml)}"></iframe>`
+    : baseSvg;
+  const headView = headHtml
+    ? `<iframe class="snapshot-frame" title="After architecture explorer" srcdoc="${esc(headHtml)}"></iframe>`
+    : headSvg;
   const html = `<!doctype html>
 <html lang="en" data-theme="dark" data-preset="${esc(receipt.view.visualPreset)}">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(receipt.head.title)} Architecture Delta</title>
 <style>
 ${artifactCss}
 :root{color-scheme:dark;--d-add:#34d399;--d-remove:#fb7185;--d-change:#fbbf24;--d-move:#7dd3fc;--d-focus:#7dd3fc;--d-ink:#e6edf5;--d-muted:#8aa0b5;--d-line:#25384a}
-*{box-sizing:border-box}body{min-width:1080px;margin:0;background:#071019;color:var(--d-ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}.proof-page{width:min(1600px,calc(100vw - 64px));margin:auto;padding:30px 0 42px}.proof-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-bottom:20px;border-bottom:1px solid var(--d-line)}.eyebrow{margin:0 0 8px;color:#7dd3fc;font:700 11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em}.proof-head h1{margin:0;font-size:clamp(32px,4vw,56px);line-height:.96;letter-spacing:-.04em}.subtitle{margin:12px 0 0;color:var(--d-muted);font-size:14px}.metrics{display:flex;gap:9px}.metric{min-width:86px;padding:11px 13px;border:1px solid var(--d-line);border-radius:8px;background:#0b1722}.metric strong{display:block;font:700 23px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.metric span{display:block;margin-top:6px;color:var(--d-muted);font:700 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em}.add strong{color:var(--d-add)}.remove strong{color:var(--d-remove)}.change strong{color:var(--d-change)}
+*{box-sizing:border-box}body{margin:0;overflow-x:hidden;background:#071019;color:var(--d-ink);font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}.proof-page{width:min(1600px,calc(100vw - 64px));margin:auto;padding:30px 0 42px}.proof-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-bottom:20px;border-bottom:1px solid var(--d-line)}.eyebrow{margin:0 0 8px;color:#7dd3fc;font:700 11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em}.proof-head h1{margin:0;font-size:clamp(32px,4vw,56px);line-height:.96;letter-spacing:-.04em}.subtitle{margin:12px 0 0;color:var(--d-muted);font-size:14px}.metrics{display:flex;gap:9px}.metric{min-width:86px;padding:11px 13px;border:1px solid var(--d-line);border-radius:8px;background:#0b1722}.metric strong{display:block;font:700 23px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.metric span{display:block;margin-top:6px;color:var(--d-muted);font:700 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em}.add strong{color:var(--d-add)}.remove strong{color:var(--d-remove)}.change strong{color:var(--d-change)}
 .proof-tools{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:16px 0 10px}.view-switch{display:inline-flex;padding:3px;border:1px solid var(--d-line);border-radius:8px;background:#0a141e}.view-switch button,.utility,.review-step{border:0;border-radius:6px;background:transparent;color:var(--d-muted);padding:8px 14px;font:700 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;cursor:pointer}.view-switch button[aria-selected="true"]{background:#173047;color:#fff}.utility{border:1px solid var(--d-line)}.view-switch button:focus-visible,.utility:focus-visible,.review-step:focus-visible,.change-row:focus-visible{outline:2px solid var(--d-focus);outline-offset:2px}.utility:disabled,.review-step:disabled{cursor:not-allowed;opacity:.45}.legend{display:flex;gap:16px;color:var(--d-muted);font:650 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.legend span{display:inline-flex;align-items:center;gap:6px}.legend i{width:22px;border-top:3px solid currentColor}.legend .add{color:var(--d-add)}.legend .remove{color:var(--d-remove)}.legend .remove i{border-top-style:dashed}.legend .change{color:var(--d-change)}.legend .change i{border-top-style:dotted}.legend .move{color:var(--d-move)}.legend .move i{border-top-style:double}
 .review-strip{display:grid;grid-template-columns:auto auto auto auto minmax(0,1fr);align-items:center;gap:5px;margin:0 0 10px;padding:7px 8px;border-block:1px solid var(--d-line);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.review-step{min-height:34px;border:1px solid var(--d-line);padding-inline:11px}.review-step[aria-pressed="true"]{border-color:var(--d-focus);color:var(--d-ink)}.review-status{min-width:0;padding-left:9px;color:var(--d-muted);font-size:10px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.review-status strong{color:var(--d-ink);font-weight:750}.review-status[data-state="unavailable"]{color:var(--d-remove)}
-.canvas{overflow:hidden;border:1px solid var(--d-line);border-radius:10px;background:#09141e;padding:12px;min-height:520px}.canvas svg{display:block;width:100%;height:auto;max-height:72vh}.canvas[hidden]{display:none}.canvas[data-view="delta"] [data-delta-state="same"]{opacity:.38}.canvas[data-delta-review-active]{--review-same-opacity:.14;--review-change-opacity:.28}.canvas[data-delta-review-active] [data-delta-state="same"]{opacity:var(--review-same-opacity)!important}.canvas[data-delta-review-active] [data-delta-state]:not([data-delta-state="same"]):not([data-delta-review-current]){opacity:var(--review-change-opacity)!important}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:opacity .16s ease-out}g[data-node-id][data-delta-state="added"]>rect:last-of-type{stroke:var(--d-add)!important;stroke-width:3!important}g[data-node-id][data-delta-state="removed"]>rect:last-of-type{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5}g[data-node-id][data-delta-state="changed"]>rect:last-of-type{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3}g[data-node-id][data-delta-state="moved"]>rect:last-of-type,g[data-node-id][data-delta-state="moved-from"]>rect:last-of-type{stroke:var(--d-move)!important;stroke-width:3!important;stroke-dasharray:8 3 2 3}g[data-node-id][data-delta-state="moved-from"],path[data-delta-state="moved-from"]{opacity:.42}path[data-delta-state="added"]{stroke:var(--d-add)!important;stroke-width:3!important}path[data-delta-state="removed"]{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5!important}path[data-delta-state="changed"]{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3!important}path[data-delta-state="rerouted"],path[data-delta-state="moved-from"]{stroke:var(--d-move)!important;stroke-width:2.5!important;stroke-dasharray:8 3 2 3!important}.delta-node-marker circle{fill:#071019;stroke:currentColor;stroke-width:1.5}.delta-node-marker text,.delta-edge-marker{fill:currentColor;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace}[data-delta-state="added"] .delta-node-marker,.delta-edge-marker[data-delta-state="added"]{color:var(--d-add)}[data-delta-state="removed"] .delta-node-marker,.delta-edge-marker[data-delta-state="removed"]{color:var(--d-remove)}[data-delta-state="changed"] .delta-node-marker,.delta-edge-marker[data-delta-state="changed"]{color:var(--d-change)}[data-delta-state="moved"] .delta-node-marker,[data-delta-state="moved-from"] .delta-node-marker,.delta-edge-marker[data-delta-state="moved-from"],.delta-edge-marker[data-delta-state="rerouted"]{color:var(--d-move)}.delta-edge-marker{paint-order:stroke;stroke:#071019;stroke-width:3px}
+.canvas{overflow:hidden;border:1px solid var(--d-line);border-radius:10px;background:#09141e;padding:12px;min-height:520px}.canvas svg{display:block;width:100%;height:auto;max-height:72vh}.canvas[hidden]{display:none}.snapshot-frame{display:block;width:100%;height:min(76vh,920px);min-height:620px;border:0;border-radius:6px;background:#071019}.canvas[data-view="base"],.canvas[data-view="head"]{padding:0}.canvas[data-view="delta"] [data-delta-state="same"]{opacity:.38}.canvas[data-delta-review-active]{--review-same-opacity:.14;--review-change-opacity:.28}.canvas[data-delta-review-active] [data-delta-state="same"]{opacity:var(--review-same-opacity)!important}.canvas[data-delta-review-active] [data-delta-state]:not([data-delta-state="same"]):not([data-delta-review-current]){opacity:var(--review-change-opacity)!important}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:opacity .16s ease-out}g[data-node-id][data-delta-state="added"]>rect:last-of-type{stroke:var(--d-add)!important;stroke-width:3!important}g[data-node-id][data-delta-state="removed"]>rect:last-of-type{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5}g[data-node-id][data-delta-state="changed"]>rect:last-of-type{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3}g[data-node-id][data-delta-state="moved"]>rect:last-of-type,g[data-node-id][data-delta-state="moved-from"]>rect:last-of-type{stroke:var(--d-move)!important;stroke-width:3!important;stroke-dasharray:8 3 2 3}g[data-node-id][data-delta-state="moved-from"],path[data-delta-state="moved-from"]{opacity:.42}path[data-delta-state="added"]{stroke:var(--d-add)!important;stroke-width:3!important}path[data-delta-state="removed"]{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5!important}path[data-delta-state="changed"]{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3!important}path[data-delta-state="rerouted"],path[data-delta-state="moved-from"]{stroke:var(--d-move)!important;stroke-width:2.5!important;stroke-dasharray:8 3 2 3!important}.delta-node-marker circle{fill:#071019;stroke:currentColor;stroke-width:1.5}.delta-node-marker text,.delta-edge-marker,.delta-boundary-marker{fill:currentColor;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace}[data-delta-state="added"] .delta-node-marker,.delta-edge-marker[data-delta-state="added"],.delta-boundary-marker[data-delta-state="added"]{color:var(--d-add)}[data-delta-state="removed"] .delta-node-marker,.delta-edge-marker[data-delta-state="removed"],.delta-boundary-marker[data-delta-state="removed"]{color:var(--d-remove)}[data-delta-state="changed"] .delta-node-marker,.delta-edge-marker[data-delta-state="changed"],.delta-boundary-marker[data-delta-state="changed"]{color:var(--d-change)}[data-delta-state="moved"] .delta-node-marker,[data-delta-state="moved-from"] .delta-node-marker,.delta-edge-marker[data-delta-state="moved-from"],.delta-edge-marker[data-delta-state="rerouted"],.delta-boundary-marker[data-delta-state="geometry-changed"]{color:var(--d-move)}.delta-edge-marker,.delta-boundary-marker{paint-order:stroke;stroke:#071019;stroke-width:3px}
 rect[data-graph-role="structural-frame"][data-delta-state="added"]{stroke:var(--d-add)!important;stroke-width:2.5!important}rect[data-graph-role="structural-frame"][data-delta-state="removed"]{stroke:var(--d-remove)!important;stroke-width:2.5!important;stroke-dasharray:7 5!important}rect[data-graph-role="structural-frame"][data-delta-state="changed"]{stroke:var(--d-change)!important;stroke-width:2.5!important;stroke-dasharray:2 3!important}rect[data-graph-role="structural-frame"][data-delta-state="moved-from"]{stroke:var(--d-move)!important;stroke-width:2!important;stroke-dasharray:8 3 2 3!important;opacity:.42}text[data-delta-boundary-state="added"]{fill:var(--d-add)!important}text[data-delta-boundary-state="removed"]{fill:var(--d-remove)!important}text[data-delta-boundary-state="changed"]{fill:var(--d-change)!important}text[data-delta-boundary-state="moved-from"]{fill:var(--d-move)!important;opacity:.55}
 details{margin-top:12px;border:1px solid var(--d-line);border-radius:9px;background:#0a141e}summary{padding:13px 15px;cursor:pointer;font-weight:700}.changes{list-style:none;margin:0;padding:0 8px 8px}.changes li{border-top:1px solid rgba(138,160,181,.16)}.change-row{display:grid;grid-template-columns:30px 90px minmax(140px,1fr) minmax(100px,.7fr) minmax(120px,.8fr) minmax(140px,1.2fr);gap:10px;width:100%;margin:0;padding:9px 7px;border:0;border-radius:5px;background:transparent;color:inherit;font:inherit;font-size:11px;text-align:left;align-items:baseline;cursor:pointer}.change-row:hover{background:rgba(125,211,252,.06)}.change-row[aria-current="step"]{background:rgba(125,211,252,.1);box-shadow:inset 0 0 0 1px var(--d-focus)}.change-row:disabled{cursor:default}.token{font:800 13px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.changes code,.change-row>span:last-child{color:var(--d-muted)}.proof-foot{display:flex;justify-content:space-between;gap:24px;margin-top:14px;color:var(--d-muted);font:650 10px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}
 html[data-theme="dark"] body{background:#071019!important;background-image:none!important}html[data-theme="light"]{color-scheme:light;--d-ink:#10283c;--d-muted:#587187;--d-line:#c8d6e2;--d-focus:#006b8f}html[data-theme="light"] body{background:#eef3f7!important;background-image:none!important;color:var(--d-ink)}html[data-theme="light"] .metric,html[data-theme="light"] .view-switch,html[data-theme="light"] details{background:#fff}html[data-theme="light"] .canvas{background:#f8fbfd}html[data-theme="light"] .view-switch button[aria-selected="true"]{background:#dbeaf5;color:#10283c}html[data-theme="light"] .delta-node-marker circle{fill:#fff}html[data-preset="blueprint"] body{background-image:none!important}
+@media(max-width:760px){.proof-page{width:100%;padding:12px}.proof-head{grid-template-columns:1fr;gap:14px;align-items:start}.proof-head h1{font-size:32px}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.metric{min-width:0}.proof-tools{align-items:stretch;flex-wrap:wrap;gap:8px}.view-switch{display:flex;flex:1 1 100%}.view-switch button{flex:1;padding-inline:8px}.legend{flex-wrap:wrap;gap:8px}.proof-tools>div:last-child{margin-left:auto}.review-strip{grid-template-columns:auto auto auto auto}.review-status{grid-column:1/-1;padding:4px 2px 0}.canvas{min-height:0;padding:6px;overflow:auto}.canvas svg{min-width:720px;max-height:none}.snapshot-frame{min-width:720px}.changes{overflow-x:auto}.change-row{min-width:820px}.proof-foot{flex-direction:column;gap:4px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.canvas[data-delta-review-active] [data-delta-review-current]{transition:none!important}}@media print{body{min-width:0;background:#fff;color:#111}.proof-page{width:100%;padding:0}.proof-tools,.review-strip,details{display:none!important}.canvas{display:none!important}.canvas[data-view="delta"]{display:block!important;border:0}.canvas[data-delta-review-active]{--review-same-opacity:1;--review-change-opacity:1}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:none!important}.proof-foot{color:#444}}
 </style></head>
 <body><main class="proof-page"><header class="proof-head"><div><p class="eyebrow">ARCHITECTURE DELTA · ${proof}</p><h1>See what changed<br>before you merge.</h1><p class="subtitle">${esc(receipt.base.title)} → ${esc(receipt.head.title)}</p></div><div class="metrics"><div class="metric add"><strong>${total(receipt.summary, 'added')}</strong><span>ADDED</span></div><div class="metric remove"><strong>${total(receipt.summary, 'removed')}</strong><span>REMOVED</span></div><div class="metric change"><strong>${changed}</strong><span>CHANGED</span></div></div></header>
-<div class="proof-tools"><div class="view-switch" role="tablist" aria-label="Architecture snapshot"><button role="tab" data-target="base" aria-selected="false">Before</button><button role="tab" data-target="delta" aria-selected="true">Delta</button><button role="tab" data-target="head" aria-selected="false">After</button></div><div class="legend"><span class="add"><i></i>+ ADD</span><span class="remove"><i></i>− DEL</span><span class="change"><i></i>~ MOD</span><span class="move"><i></i>↔ MOVE</span></div><div><button class="utility" id="preset" type="button">Preset</button> <button class="utility" id="theme" type="button">Theme</button></div></div>
+<div class="proof-tools"><div class="view-switch" role="tablist" aria-label="Architecture snapshot"><button role="tab" data-target="base" aria-selected="false">Before</button><button role="tab" data-target="delta" aria-selected="true">Delta</button><button role="tab" data-target="head" aria-selected="false">After</button></div><div class="legend"><span class="add"><i></i>+ ADD</span><span class="remove"><i></i>− DEL</span><span class="change"><i></i>~ MOD</span><span class="move"><i></i>↔ MOVE</span></div><div><button class="utility" id="export-svg" type="button">Export SVG</button> <button class="utility" id="share-card" type="button">Share Card</button> <button class="utility" id="preset" type="button">Preset</button> <button class="utility" id="theme" type="button">Theme</button></div></div>
 <nav class="review-strip" aria-label="Authored change review"><button class="review-step" id="review-overview" type="button" disabled>Overview</button><button class="review-step" id="review-previous" type="button" aria-label="Previous authored change" disabled>←</button><button class="review-step" id="review-play" type="button" aria-pressed="false"${rows.length ? '' : ' disabled'}>Review</button><button class="review-step" id="review-next" type="button" aria-label="Next authored change" disabled>→</button><div class="review-status" id="review-status" role="status" aria-live="polite">Overview · ${rows.length} authored changes</div></nav>
-<section class="canvas" data-view="base" hidden>${baseSvg}</section><section class="canvas" data-view="delta">${deltaSvg}</section><section class="canvas" data-view="head" hidden>${headSvg}</section>
+<section class="canvas" data-view="base" hidden>${baseView}</section><section class="canvas" data-view="delta">${deltaSvg}</section><section class="canvas" data-view="head" hidden>${headView}</section>
 <details${rows.length <= 10 ? ' open' : ''}><summary>Exact authored changes · ${rows.length}</summary><ul class="changes">${rowHtml}</ul></details>
 <footer class="proof-foot"><span>Stable IDs only · completeness: complete · ${proof}</span><span>Authored IR only · no risk or mergeability inference</span></footer></main>
 <script id="archify-compare-receipt" type="application/json">${safeJson(receipt)}</script>
@@ -665,6 +691,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
   const status = document.querySelector('#review-status');
   const receiptNode = document.querySelector('#archify-compare-receipt');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const exportCss = ${safeJson(artifactCss)};
   let activeIndex = -1;
   let playbackToken = 0;
   let playbackTimer = 0;
@@ -852,6 +879,163 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     schedulePlayback(token);
   }
 
+  function canonicalDeltaSvg() {
+    const source = deltaCanvas?.querySelector(':scope > svg');
+    if (!source) throw new Error('Canonical Delta SVG is unavailable.');
+    const clone = source.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    clone.removeAttribute('style');
+    clone.querySelectorAll('[data-delta-review-current]').forEach((element) => element.removeAttribute('data-delta-review-current'));
+    const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+    style.textContent = exportCss + '\\n' +
+      '[data-delta-state="same"]{opacity:.38}' +
+      '[data-delta-state="added"]{--delta:#34d399}' +
+      '[data-delta-state="removed"]{--delta:#fb7185}' +
+      '[data-delta-state="changed"]{--delta:#fbbf24}' +
+      '[data-delta-state="moved"],[data-delta-state="moved-from"],[data-delta-state="rerouted"],[data-delta-state="geometry-changed"]{--delta:#7dd3fc}' +
+      'g[data-node-id][data-delta-state]:not([data-delta-state="same"])>rect:last-of-type{stroke:var(--delta)!important;stroke-width:3!important}' +
+      'path[data-delta-state]:not([data-delta-state="same"]){stroke:var(--delta)!important;stroke-width:3!important}' +
+      'rect[data-graph-role="structural-frame"][data-delta-state]:not([data-delta-state="same"]){stroke:var(--delta)!important;stroke-width:2.5!important}' +
+      'rect[data-graph-role="structural-frame"][data-delta-state="changed"]{stroke-dasharray:2 3!important}' +
+      '[data-delta-state="removed"],[data-delta-state="moved-from"]{stroke-dasharray:7 5!important}' +
+      '[data-delta-state="moved-from"]{opacity:.42}' +
+      '[data-delta-state]:not([data-delta-state="same"]) .delta-node-marker,.delta-edge-marker[data-delta-state],.delta-boundary-marker[data-delta-state]{color:var(--delta)}' +
+      'text[data-delta-boundary-state="added"]{fill:#34d399!important}text[data-delta-boundary-state="removed"]{fill:#fb7185!important}text[data-delta-boundary-state="changed"]{fill:#fbbf24!important}text[data-delta-boundary-state="moved-from"]{fill:#7dd3fc!important;opacity:.55}' +
+      '.delta-node-marker circle{fill:#071019;stroke:currentColor;stroke-width:1.5}.delta-node-marker text,.delta-edge-marker,.delta-boundary-marker{fill:currentColor;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace}';
+    clone.insertBefore(style, clone.firstChild);
+    return new XMLSerializer().serializeToString(clone);
+  }
+
+  function artifactName(suffix) {
+    const title = String(JSON.parse(receiptNode.textContent).head.title || 'architecture-delta')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'architecture-delta';
+    return title + suffix;
+  }
+
+  function downloadBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function recordExport(format, blob, dimensions) {
+    document.documentElement.dataset.archifyDeltaExport = JSON.stringify({
+      ok: true,
+      format,
+      bytes: blob.size,
+      mime: blob.type,
+      ...(dimensions || {}),
+    });
+  }
+
+  function exportCanonicalSvg() {
+    const blob = new Blob([canonicalDeltaSvg()], { type: 'image/svg+xml;charset=utf-8' });
+    downloadBlob(blob, artifactName('-architecture-delta.svg'));
+    recordExport('svg', blob);
+    return blob;
+  }
+
+  function loadSvgImage(blob) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(blob);
+      const image = new Image();
+      image.onload = () => { URL.revokeObjectURL(url); resolve(image); };
+      image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not rasterize canonical Delta SVG.')); };
+      image.src = url;
+    });
+  }
+
+  function pngBlob(canvas) {
+    return new Promise((resolve, reject) => canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error('Canvas returned no Share Card PNG.'));
+    }, 'image/png'));
+  }
+
+  async function shareCard() {
+    const receipt = JSON.parse(receiptNode.textContent);
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 630;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('2D canvas context unavailable for Architecture Delta Share Card.');
+    ctx.fillStyle = '#071019';
+    ctx.fillRect(0, 0, 1200, 630);
+    ctx.fillStyle = '#0b1722';
+    ctx.fillRect(34, 28, 1132, 574);
+    ctx.strokeStyle = '#25384a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(34, 28, 1132, 574);
+    ctx.font = '700 18px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.fillStyle = '#7dd3fc';
+    ctx.fillText('ARCHITECTURE DELTA', 66, 68);
+    ctx.font = '700 34px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.fillStyle = '#e6edf5';
+    const title = String(receipt.head.title || 'Architecture').slice(0, 46) + ' Architecture Delta';
+    ctx.fillText(title.slice(0, 58), 66, 112);
+    ctx.font = '700 17px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.fillStyle = '#8aa0b5';
+    const componentLine = 'COMPONENTS  +' + receipt.summary.components.added + '  ~' + receipt.summary.components.changed + '  −' + receipt.summary.components.removed;
+    const connectionLine = 'CONNECTIONS  +' + receipt.summary.connections.added + '  ~' + receipt.summary.connections.changed + '  −' + receipt.summary.connections.removed;
+    const boundaryLine = 'BOUNDARY SCOPE  +' + receipt.summary.boundaries.added + '  ~' + receipt.summary.boundaries.changed + '  −' + receipt.summary.boundaries.removed;
+    ctx.fillText(componentLine, 66, 151);
+    ctx.fillText(connectionLine, 420, 151);
+    ctx.fillText(boundaryLine, 786, 151);
+    ctx.font = '650 14px ui-monospace, SFMono-Regular, Menlo, monospace';
+    const authoredChanges = ['components', 'connections', 'boundaries'].reduce((sum, collection) => {
+      const summary = receipt.summary[collection];
+      return sum + summary.added + summary.changed + summary.removed;
+    }, 0);
+    const movementSummary = '↔ moved ' + receipt.summary.components.moved + ' · rerouted ' + receipt.summary.connections.rerouted + ' · presentation ' + (receipt.summary.presentationChanged ? 'changed' : 'unchanged');
+    const secondary = authoredChanges === 0
+      ? 'No authored architecture changes · ' + movementSummary
+      : movementSummary;
+    ctx.fillText(secondary, 66, 181);
+    const proofLine = receipt.proofLevel === 'revision-pinned'
+      ? 'REV ' + String(receipt.base.revision).slice(0, 8) + ' → ' + String(receipt.head.revision).slice(0, 8) + ' · REVISION-PINNED INPUTS'
+      : 'AUTHORED SNAPSHOTS';
+    ctx.textAlign = 'right';
+    ctx.fillText(proofLine, 1134, 181);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#09141e';
+    ctx.fillRect(66, 206, 1068, 358);
+    ctx.strokeStyle = '#25384a';
+    ctx.strokeRect(66, 206, 1068, 358);
+    const svgBlob = new Blob([canonicalDeltaSvg()], { type: 'image/svg+xml;charset=utf-8' });
+    const image = await loadSvgImage(svgBlob);
+    const ratio = Math.min(1024 / image.width, 322 / image.height);
+    const width = image.width * ratio;
+    const height = image.height * ratio;
+    ctx.drawImage(image, 600 - width / 2, 385 - height / 2, width, height);
+    ctx.font = '650 12px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.fillStyle = '#8aa0b5';
+    ctx.fillText('Stable authored IDs · static complete Delta · no risk or mergeability inference', 66, 588);
+    return pngBlob(canvas);
+  }
+
+  async function downloadShareCard() {
+    const blob = await shareCard();
+    downloadBlob(blob, artifactName('-architecture-delta-share-card.png'));
+    recordExport('share-card', blob, { width: 1200, height: 630 });
+    return blob;
+  }
+
+  window.Archify = window.Archify || {};
+  window.Archify.deltaExport = { canonicalSvg: canonicalDeltaSvg, shareCard, exportSvg: exportCanonicalSvg, downloadShareCard };
+  window.Archify.exportMenu = {
+    shareCard,
+    run(format) {
+      if (format === 'svg') return exportCanonicalSvg();
+      if (format === 'share-card') return downloadShareCard();
+      throw new Error('Unknown Architecture Delta export format: ' + format);
+    },
+  };
+
   tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => { stopPlayback(); show(tab.dataset.target); });
     tab.addEventListener('keydown', (event) => {
@@ -904,6 +1088,8 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
   document.querySelector('#theme').addEventListener('click', () => { document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; });
   const presets = ['classic', 'signal-flow', 'blueprint'];
   document.querySelector('#preset').addEventListener('click', () => { const now = document.documentElement.dataset.preset; document.documentElement.dataset.preset = presets[(presets.indexOf(now) + 1) % presets.length]; });
+  document.querySelector('#export-svg').addEventListener('click', exportCanonicalSvg);
+  document.querySelector('#share-card').addEventListener('click', () => { downloadShareCard().catch((error) => window.alert(error.message)); });
 
   reviewAvailable = validateReview();
   if (!reviewAvailable) failReview();
@@ -939,10 +1125,18 @@ export function validateArchitectureDeltaHtml(html, receipt) {
     }
   }
   if (!['base', 'delta', 'head'].every((id) => (html.match(new RegExp(`<section class="canvas" data-view="${id}"`, 'g')) || []).length === 1)) failures.push('expected one Before, Delta, and After canvas');
+  if ((html.match(/class="snapshot-frame" title="Before architecture explorer"/g) || []).length !== 1
+    || (html.match(/class="snapshot-frame" title="After architecture explorer"/g) || []).length !== 1) {
+    failures.push('Before and After must preserve one complete architecture explorer each');
+  }
   if (!svgBalanced || svgDepth !== 0 || svgRoots !== 1 || deltaMarkup.slice(0, rootStart).trim() || deltaMarkup.slice(rootEnd).trim()) failures.push('expected exactly one root SVG in the Delta canvas');
   if ((html.match(/id="archify-compare-receipt"/g) || []).length !== 1) failures.push('expected exactly one embedded compare receipt');
   if (!html.includes('aria-label="Authored change review"')) failures.push('missing exact-ID change navigator');
   if ((html.match(/class="change-row"/g) || []).length !== rows.length) failures.push('change navigator row count does not match the receipt');
+  if (!html.includes('id="export-svg"') || !html.includes('id="share-card"')
+    || !html.includes('window.Archify.deltaExport = { canonicalSvg: canonicalDeltaSvg, shareCard')) {
+    failures.push('missing canonical Delta SVG or Share Card export contract');
+  }
   for (const [index, row] of rows.entries()) {
     const safeKey = esc(row.key).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const rowMatches = [...html.matchAll(new RegExp(`<button class="change-row"[^>]*data-change-key="${safeKey}"[^>]*>`, 'g'))].map((match) => match[0]);
@@ -961,9 +1155,13 @@ export function validateArchitectureDeltaHtml(html, receipt) {
     const classifications = row.classifications.join(',');
     if (primary.some((tag) => tag.match(/\bdata-delta-classifications="([^"]*)"/)?.[1] !== classifications)) failures.push(`conflicting Delta classification ${row.key}`);
   }
-  if (/\b(?:SAFE|LOW RISK|MERGEABLE|NO IMPACT|VERIFIED PR)\b/i.test(html)) failures.push('contains a forbidden risk or mergeability claim');
+  // Before/After embed the complete existing explorer runtime. Validate claims
+  // made by the Delta shell itself, not implementation vocabulary inside an
+  // escaped srcdoc script (for example, "safe scale" in image export code).
+  const deltaShell = html.replace(/<iframe\b[^>]*><\/iframe>/g, '');
+  if (/\b(?:SAFE|LOW RISK|MERGEABLE|NO IMPACT|VERIFIED PR)\b/i.test(deltaShell)) failures.push('contains a forbidden risk or mergeability claim');
   if (/\b(?:NaN|Infinity)\b/.test(html)) failures.push('contains non-finite output');
   if (receipt.completeness !== 'complete') failures.push('receipt is not complete');
   if (failures.length) fail('delta/artifact-invalid', `Architecture Delta artifact failed validation: ${failures.join('; ')}.`, { failures });
-  return { ok: true, checksPassed: 8, checkCount: 8 };
+  return { ok: true, checksPassed: 10, checkCount: 10 };
 }
