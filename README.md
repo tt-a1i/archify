@@ -12,7 +12,7 @@
 
 **Turn a codebase or system description into a polished, interactive system map — directly in chat.**
 
-Archify is an agent skill for Cursor, Claude Code, Codex CLI, and OpenCode. Give it a system description or repository; get an interactive, shareable technical map.
+Archify is a portable Agent Skill for Raven, Cursor, Claude Code, Codex CLI, and OpenCode.
 
 - **Open it and present** — five technical diagram types, four visual presets, dark/light themes, and optional finite motion
 - **Review architecture changes before merge** — compare two validated snapshots as Before / Delta / After, with exact added, removed, changed, moved, and rerouted facts
@@ -29,13 +29,13 @@ Archify is an agent skill for Cursor, Claude Code, Codex CLI, and OpenCode. Give
 npx skills add tt-a1i/archify -g
 ```
 
-Using Cursor? Open the [agent-aware quick start](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) for exact global and project commands.
+Using Cursor? Open the [agent-aware quick start](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) for commands.
 
 Then ask your agent: `Use archify to map this repository's runtime architecture.`
 
 ## See Archify in action
 
-These are generated Archify artifacts, not product mockups. Click a frame to open its live, shareable state.
+These are real Archify artifacts; click to open them.
 
 <p align="center">
   <a href="https://tt-a1i.github.io/archify/gallery.html"><img src="docs/assets/archify-live-proof.gif" alt="Three verified Archify artifacts moving through Signal Flow, Blueprint, and Classic presets" width="960"/></a>
@@ -48,7 +48,7 @@ These are generated Archify artifacts, not product mockups. Click a frame to ope
 | [![Agent workflow playing one authored chapter](docs/assets/archify-demo-story.png)](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html?theme=dark&present=1&play=1#view=happy-path) | [![Cache-miss sequence showing the Web App to Postgres route](docs/assets/archify-demo-route.png)](https://tt-a1i.github.io/archify/gallery/artifacts/cache-miss.sequence.html?theme=dark&present=1#route=web~db) | [![Production architecture comparing backend and database roles](docs/assets/archify-demo-lens.png)](https://tt-a1i.github.io/archify/gallery/artifacts/production-deployment.architecture.html?theme=dark&present=1#lens=backend~database) |
 | Play one finite named chapter. | Inspect the shortest authored directed path. | Compare real traffic between semantic roles. |
 
-The [Proof Lab](https://tt-a1i.github.io/archify/gallery.html) contains all 11 checked-in scenarios, their JSON sources, named views, and validation receipts.
+The [Proof Lab](https://tt-a1i.github.io/archify/gallery.html) contains 11 checked scenarios and receipts.
 
 ### A real repository, mapped from source
 
@@ -94,13 +94,13 @@ For an explicit, non-interactive Cursor install:
 npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
 ```
 
-To try it without a permanent install:
+Raven direct install (no third-party installer): `curl -fsSL https://raw.githubusercontent.com/tt-a1i/archify/main/scripts/install-raven.sh -o install-raven.sh && bash install-raven.sh`. Default: `~/.raven/workspace/skills/archify`; customize with `--workspace <path>`, verify with `raven skill list --source workspace`. Codex one-off:
 
 ```bash
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-The same Skill works with `cursor`, `codex`, `claude-code`, and `opencode`; the [quick-start agent switcher](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) generates the exact command without maintaining vendor-specific forks. The packaged [`archify.zip`](archify.zip) also works without `npm install`.
+One portable Skill supports `raven`, `cursor`, `codex`, `claude-code`, and `opencode`; the [quick-start agent switcher](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) and committed [`archify.zip`](archify.zip) require no content fork or `npm install`.
 
 ### 2. Ask for one bounded view
 
@@ -245,6 +245,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 
 | Surface | Install location or method | Capability |
 |---|---|---|
+| **Raven** | `~/.raven/workspace/skills/archify` via `scripts/install-raven.sh` | Full renderer + validation workflow |
 | **Claude Code** | `~/.claude/skills/` or `.claude/skills/` | Full renderer + validation workflow |
 | **Codex CLI** | `~/.agents/skills/` or `.agents/skills/` | Full renderer + validation workflow |
 | **opencode** | `~/.config/opencode/skills/`, `.opencode/skills/`, or `.agents/skills/` | Full renderer + validation workflow |
