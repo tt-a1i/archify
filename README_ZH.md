@@ -29,6 +29,12 @@ npx skills add tt-a1i/archify -g
 
 然后告诉 Agent：`使用 archify 梳理这个仓库的运行时架构。`
 
+## ❤️ 赞助
+
+<a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven——绘制系统，保留上下文" width="100%"></a>
+
+本项目由专注 Agent 记忆基础设施的 [**EverMind**](https://github.com/EverMind-AI) 赞助。EverMind 旗下以记忆为核心、可自进化的 Agent Harness [**Raven**](https://github.com/EverMind-AI/Raven) 已支持 Archify Skill，让 Raven 工作流可以直接生成经过验证的交互式系统地图。
+
 ## 看看 Archify 能做什么
 
 下面都是真实生成的 Archify 成品，不是产品效果图。点击画面即可打开对应的可分享交互状态。

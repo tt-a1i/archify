@@ -33,6 +33,12 @@ Using Cursor? Open the [agent-aware quick start](https://tt-a1i.github.io/archif
 
 Then ask your agent: `Use archify to map this repository's runtime architecture.`
 
+## ❤️ Sponsor
+
+<a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven — Map the system. Keep the context." width="100%"></a>
+
+Sponsored by [**EverMind**](https://github.com/EverMind-AI), building memory infrastructure for agents. Its memory-first, self-evolving agent harness [**Raven**](https://github.com/EverMind-AI/Raven) supports Archify as a Skill, bringing verified, interactive system maps into Raven workflows.
+
 ## See Archify in action
 
 These are generated Archify artifacts, not product mockups. Click a frame to open its live, shareable state.
