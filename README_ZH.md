@@ -8,7 +8,7 @@
 
 **在对话里，把代码仓库或系统描述变成漂亮、可靠、可交互的系统地图。**
 
-Archify 是适用于 Raven、Cursor、Claude Code、Codex CLI 和 OpenCode 的可移植 Agent Skill。
+Archify 是适用于 Raven、Cursor、Claude Code、Codex CLI 和 OpenCode 的 Agent Skill。给它系统描述或代码仓库，就能得到可交互、可分享的专业技术地图。
 
 - **打开就是成品** —— 五种技术图、四套视觉预设、深浅主题，以及显式启用的有限动态
 - **合并前先看清架构变化** —— 把两份已校验快照对比为 Before / Delta / After，准确区分新增、删除、语义变化、移动和重路由
@@ -25,13 +25,13 @@ Archify 是适用于 Raven、Cursor、Claude Code、Codex CLI 和 OpenCode 的�
 npx skills add tt-a1i/archify -g
 ```
 
-使用 Cursor？打开[可切换 Agent 的快速开始页](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)获取命令。
+使用 Cursor？打开[可切换 Agent 的快速开始页](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)，即可获得准确的全局或当前仓库安装命令。
 
 然后告诉 Agent：`使用 archify 梳理这个仓库的运行时架构。`
 
 ## 看看 Archify 能做什么
 
-下面都是 Archify 真实生成的成品；点击即可打开。
+下面都是真实生成的 Archify 成品，不是产品效果图。点击画面即可打开对应的可分享交互状态。
 
 <p align="center">
   <a href="https://tt-a1i.github.io/archify/gallery.html"><img src="docs/assets/archify-live-proof.gif" alt="三个经过验证的 Archify 成品依次展示 Signal Flow、Blueprint 和 Classic 预设" width="960"/></a>
@@ -44,7 +44,7 @@ npx skills add tt-a1i/archify -g
 | [![Agent 工作流正在播放一个作者章节](docs/assets/archify-demo-story.png)](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html?theme=dark&present=1&play=1#view=happy-path) | [![缓存未命中时从 Web App 到 Postgres 的路径](docs/assets/archify-demo-route.png)](https://tt-a1i.github.io/archify/gallery/artifacts/cache-miss.sequence.html?theme=dark&present=1#route=web~db) | [![生产架构中后端与数据库角色的真实关系](docs/assets/archify-demo-lens.png)](https://tt-a1i.github.io/archify/gallery/artifacts/production-deployment.architecture.html?theme=dark&present=1#lens=backend~database) |
 | 播放一次有限的命名章节。 | 检查最短的作者有向路径。 | 对比语义角色之间的真实流量。 |
 
-[Proof Lab](https://tt-a1i.github.io/archify/gallery.html) 收录 11 个已验证场景和回执。
+[Proof Lab](https://tt-a1i.github.io/archify/gallery.html) 收录全部 11 个仓库内场景、JSON 源、命名视图和校验回执。
 
 ### 从真实仓库读出来，不是只靠 Prompt 画出来
 
@@ -90,13 +90,13 @@ npx skills add tt-a1i/archify -g
 npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
 ```
 
-Raven 可直接使用 Archify 自带的安装器，不依赖第三方 Skill 安装工具：`curl -fsSL https://raw.githubusercontent.com/tt-a1i/archify/main/scripts/install-raven.sh -o install-raven.sh && bash install-raven.sh`。默认安装到 `~/.raven/workspace/skills/archify`；自定义 Workspace 可传入 `--workspace <路径>`，再用 `raven skill list --source workspace` 验证。如果只想在 Codex 中临时体验：
+如果只想临时体验：
 
 ```bash
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-同一份 Skill 可用于 `raven`、`cursor`、`codex`、`claude-code` 和 `opencode`；Raven 直接安装器和[快速开始页的 Agent 切换器](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)安装的是同一份可移植 Skill，不维护内容分叉。仓库内的 [`archify.zip`](archify.zip) 也不需要执行 `npm install`。
+同一份 Skill 可用于 `raven`、`cursor`、`codex`、`claude-code` 和 `opencode`；[快速开始页的 Agent 切换器](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)会生成准确命令，不维护厂商专属分叉。仓库内的 [`archify.zip`](archify.zip) 也不需要执行 `npm install`；在 Raven 中，将其解压到 `~/.raven/workspace/skills` 即可。
 
 ### 2. 先画一个边界清楚的视图
 
@@ -240,7 +240,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 
 | 使用位置 | 安装位置或方法 | 能力 |
 |---|---|---|
-| **Raven** | 通过 `scripts/install-raven.sh` 安装到 `~/.raven/workspace/skills/archify` | 完整 Renderer + Validation 工作流 |
+| **Raven** | `~/.raven/workspace/skills/archify` | 完整 Renderer + Validation 工作流 |
 | **Claude Code** | `~/.claude/skills/` 或 `.claude/skills/` | 完整 Renderer + Validation 工作流 |
 | **Codex CLI** | `~/.agents/skills/` 或 `.agents/skills/` | 完整 Renderer + Validation 工作流 |
 | **opencode** | `~/.config/opencode/skills/`、`.opencode/skills/` 或 `.agents/skills/` | 完整 Renderer + Validation 工作流 |
