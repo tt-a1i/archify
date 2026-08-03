@@ -484,7 +484,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 const [, output] = process.argv.slice(2);
 if (path.basename(output) === 'head.html') {
-  fs.writeFileSync(process.env.ARCHIFY_TEST_RENDER_STARTED, output);
+  const marker = process.env.ARCHIFY_TEST_RENDER_STARTED;
+  const markerCandidate = marker + '.tmp';
+  fs.writeFileSync(markerCandidate, output);
+  fs.renameSync(markerCandidate, marker);
   await new Promise((resolve) => setTimeout(resolve, 500));
 }
 fs.writeFileSync(output, '<!doctype html><svg role="img"></svg>');
