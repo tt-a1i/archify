@@ -21,9 +21,9 @@ Archify is an agent skill for Raven, Cursor, Claude Code, Codex CLI, and OpenCod
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
-![Development Version](https://img.shields.io/badge/version-2.13.0--dev.0-0891b2?style=flat-square)
+![Stable Version](https://img.shields.io/badge/version-2.13.0-0891b2?style=flat-square)
 
-**Current development version:** `v2.13.0-dev.0` (unreleased; latest stable: `v2.12.0`). See [Unreleased](CHANGELOG.md#unreleased).
+**Current stable version:** `v2.13.0`. See [Changelog](CHANGELOG.md#2130--2026-08-03).
 
 **[Project page](https://tt-a1i.github.io/archify/)** · **[Scenario guide](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
 
@@ -269,7 +269,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Roadmap](ROADMAP.md)
 - [Generated Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-Unreleased `v2.13.0-dev.0` includes typed IR across all five modes, real-repository proof, deterministic exact-ID Architecture Delta review, verified live preview, authored reachability, optional finite motion, guided views, semantic search and relationship exploration, shareable deep links, 1200×630 diagram and route cards, browser-native WebM recording, explicit `standard` / `showcase` quality profiles, and an opt-in deployment ownership contract.
+Archify 2.13 includes typed IR across all five modes, real-repository proof, deterministic exact-ID Architecture Delta review, verified live preview, authored reachability, truthful configurable legends, optional finite motion, guided views, semantic search and relationship exploration, shareable deep links, 1200×630 diagram and route cards, browser-native WebM recording, explicit `standard` / `showcase` quality profiles, and an opt-in deployment ownership contract.
 
 Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
 

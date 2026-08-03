@@ -4,7 +4,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
-> Development identity: `v2.13.0-dev.0`. This checkout contains unreleased work and is not the published `v2.12.0` release.
+## [2.13.0] — 2026-08-03
 
 ### Added
 - **Truthful configurable legends.** All five typed renderers now resolve a strict additive `meta.legend` contract with `auto`, `all`, and `hidden` modes plus renderer-owned label and visibility overrides. The default legend names only semantic kinds present in typed IR; Lifecycle covers every valid state type, while Sequence/Dataflow message and flow keys remain visual-only unless exact node facts exist. Shared Unicode-aware measured rows keep labels aligned and bounded, custom wording reaches accessible Semantic Legend names without changing stable kinds or topology, and Architecture Delta classifies legend edits as presentation-only changes.
