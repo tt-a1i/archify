@@ -124,6 +124,35 @@ const CASES = [
     (d) => { d.components[0].label = 'An Extremely Long Component Label Overflow'; }, ['wider than component', 'shorten the label']],
   ['architecture: component overlap suggests fix', 'architecture',
     (d) => { d.components[1].pos = [...d.components[0].pos]; }, ['Suggested fix', 'move "']],
+
+  // ---- sublabel/tag fit: the same rule workflow has always had, on the rest ----
+  // These fields render as one unwrapped <text> per node. Without a width
+  // rule an over-long one passes validation and then paints over its
+  // neighbours, so every renderer must reject what shrink-to-fit cannot save.
+  ['architecture: component sublabel wider than its legible minimum', 'architecture',
+    (d) => { d.components[0].sublabel = 'This supporting sentence is far too long for one architecture component'; },
+    ['Sublabel', 'legible', 'widen size']],
+  ['architecture: component tag wider than its legible minimum', 'architecture',
+    (d) => { d.components[0].tag = 'This tag is far too long to sit inside one architecture component box'; },
+    ['Tag', 'legible', 'widen size']],
+  ['sequence: participant sublabel wider than its legible minimum', 'sequence',
+    (d) => { d.participants[0].sublabel = 'This supporting sentence is far too long for one sequence participant'; },
+    ['Sublabel', 'legible', 'shorten the sublabel']],
+  ['dataflow: node sublabel wider than its legible minimum', 'dataflow',
+    (d) => { d.nodes[0].sublabel = 'This supporting sentence is far too long for one data-flow node box'; },
+    ['Sublabel', 'legible', 'increase node.width']],
+  ['dataflow: node tag wider than its legible minimum', 'dataflow',
+    (d) => { d.nodes[0].tag = 'This tag is far too long to sit inside one data-flow node box'; },
+    ['Tag', 'legible', 'increase node.width']],
+  ['lifecycle: state sublabel wider than its legible minimum', 'lifecycle',
+    (d) => { d.states[0].sublabel = 'This supporting sentence is far too long for one lifecycle state box'; },
+    ['Sublabel', 'legible', 'increase state.width']],
+  ['lifecycle: state tag wider than its legible minimum', 'lifecycle',
+    (d) => { d.states[0].tag = 'This tag is far too long to sit inside one lifecycle state box'; },
+    ['Tag', 'legible', 'increase state.width']],
+  ['workflow: node tag wider than its legible minimum', 'workflow',
+    (d) => { d.nodes[0].tag = 'This tag is far too long to sit inside one workflow node box'; },
+    ['Tag', 'legible', 'increase node.width']],
 ];
 
 for (const [name, mode, mutate, expected] of CASES) {
@@ -138,6 +167,64 @@ for (const [name, mode, mutate, expected] of CASES) {
     }
   });
 }
+
+// ---- sublabel/tag shrink-to-fit: the render half of the same rule ----
+// Validation only rejects text that cannot fit even at its legible minimum.
+// Everything between "fits at the preferred size" and that floor must shrink,
+// not overflow — otherwise the common case still paints over its neighbours.
+const SHRINK_CASES = [
+  // [mode, mutate(doc), preferredFontSize, selector for the sublabel <text>]
+  ['architecture', (d) => { d.components[0].sublabel = 'Browser and mobile apps'; }, 9],
+  ['sequence', (d) => { d.participants[0].sublabel = 'long browser session'; }, 7],
+  ['dataflow', (d) => { d.nodes[0].sublabel = 'browser SDK and mobile SDK'; }, 7],
+  ['lifecycle', (d) => { d.states[0].sublabel = 'request accepted and queued'; }, 7],
+];
+
+for (const [mode, mutate, preferred] of SHRINK_CASES) {
+  test(`${mode}: an over-long sublabel shrinks to fit instead of overflowing`, () => {
+    const d = load(mode);
+    mutate(d);
+    const { code, stderr, outPath } = render(mode, d);
+    assert.equal(code, 0, stderr);
+    const html = fs.readFileSync(outPath, 'utf8');
+    const sub = html.match(/<text data-detail="context"[^>]*font-size="([\d.]+)"[^>]*>/);
+    assert.ok(sub, 'expected a sublabel <text> in the rendered SVG');
+    const fontSize = Number(sub[1]);
+    assert.ok(
+      fontSize < preferred,
+      `expected the sublabel to shrink below the ${preferred}px preferred size, got ${fontSize}`,
+    );
+    assert.ok(fontSize >= 6, `expected the sublabel to stay legible, got ${fontSize}`);
+  });
+}
+
+test('contract: a too-wide label is never redirected into sublabel', () => {
+  // Every renderer used to advise "move detail to sublabel" for an over-long
+  // label. Sublabels are measured now, so that advice would move the problem
+  // rather than fix it.
+  const LABELS = {
+    workflow: 'An Extremely Long Node Label That Overflows',
+    sequence: 'An Extremely Long Participant Label That Overflows',
+    dataflow: 'An Extremely Long Node Label That Overflows',
+    lifecycle: 'An Extremely Long State Label That Overflows',
+    architecture: 'An Extremely Long Component Label Overflow',
+  };
+  const FIELD = {
+    workflow: 'nodes', sequence: 'participants', dataflow: 'nodes',
+    lifecycle: 'states', architecture: 'components',
+  };
+  for (const [mode, label] of Object.entries(LABELS)) {
+    const d = load(mode);
+    d[FIELD[mode]][0].label = label;
+    const { code, stderr } = render(mode, d);
+    assert.notEqual(code, 0, `${mode}: expected non-zero exit; stderr:\n${stderr}`);
+    assert.ok(stderr.includes('wider than'), `${mode}: expected a width message:\n${stderr}`);
+    assert.ok(
+      !/move detail to sublabel/.test(stderr),
+      `${mode}: label advice still points at the measured sublabel field:\n${stderr}`,
+    );
+  }
+});
 
 // ---- error-message contract: threshold + remediation, not just a path ----
 test('contract: short-edge message carries both the px minimum and a fix verb', () => {

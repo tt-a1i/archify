@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
+import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagram, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
@@ -98,25 +99,15 @@ function measureNode(node) {
   };
 }
 
+// Font sizes for this renderer's node text; the fitting geometry is shared.
 const nodeTextFit = {
-  widthFactor: 0.6,
-  horizontalPadding: 8,
   labelPreferred: 11,
   labelMinimum: 9,
   sublabelPreferred: 8,
   sublabelMinimum: 6,
+  tagPreferred: 7,
+  tagMinimum: 6,
 };
-
-function fittedNodeFontSize(text, width, preferred, minimum) {
-  const units = Math.max(1, textUnits(text));
-  const available = Math.max(1, width - nodeTextFit.horizontalPadding);
-  const fitted = Math.min(preferred, available / (units * nodeTextFit.widthFactor));
-  return Math.max(minimum, Math.floor(fitted * 10) / 10);
-}
-
-function minimumNodeTextWidth(text, minimum) {
-  return textUnits(text) * minimum * nodeTextFit.widthFactor;
-}
 
 const nodes = new Map(asArray(workflow.nodes).map((node) => [node.id, measureNode(node)]));
 
@@ -226,13 +217,17 @@ function validateWorkflow() {
     }
     const estLabelW = textUnits(node.label) * 6.8;
     if (estLabelW > node.width + 6) {
-      problems.push(`Label "${node.label}" (~${Math.round(estLabelW)}px) is wider than node "${node.id}" (${node.width}px) — shorten the label, move detail to sublabel, or increase node.width.`);
+      problems.push(`Label "${node.label}" (~${Math.round(estLabelW)}px) is wider than node "${node.id}" (${node.width}px) — shorten the label or increase node.width.`);
     }
-    if (node.sublabel) {
-      const minimumSublabelW = minimumNodeTextWidth(node.sublabel, nodeTextFit.sublabelMinimum);
-      const availableSublabelW = node.width - nodeTextFit.horizontalPadding;
-      if (minimumSublabelW > availableSublabelW) {
-        problems.push(`Sublabel "${node.sublabel}" needs ~${Math.ceil(minimumSublabelW)}px at the ${nodeTextFit.sublabelMinimum}px legible minimum, but node "${node.id}" provides ${availableSublabelW}px — shorten the sublabel or increase node.width.`);
+    const availableTextW = availableNodeTextWidth(node.width);
+    for (const [field, value, minimum] of [
+      ['Sublabel', node.sublabel, nodeTextFit.sublabelMinimum],
+      ['Tag', node.tag, nodeTextFit.tagMinimum],
+    ]) {
+      if (!value) continue;
+      const minimumW = minimumNodeTextWidth(value, minimum);
+      if (minimumW > availableTextW) {
+        problems.push(`${field} "${value}" needs ~${Math.ceil(minimumW)}px at the ${minimum}px legible minimum, but node "${node.id}" provides ${availableTextW}px — shorten the ${field.toLowerCase()} or increase node.width.`);
       }
     }
 
@@ -547,7 +542,7 @@ function renderNode(node) {
     ? `\n          <text data-detail="context" x="${node.cx}" y="${node.y + 38}" class="t-muted" font-size="${sublabelFontSize}" text-anchor="middle">${esc(node.sublabel)}</text>`
     : '';
   const tag = node.tag
-    ? `\n        <text data-detail="fine" x="${node.cx}" y="${node.y + node.height - 12}" class="${accent}" font-size="7" text-anchor="middle">${esc(node.tag)}</text>`
+    ? `\n        <text data-detail="fine" x="${node.cx}" y="${node.y + node.height - 12}" class="${accent}" font-size="${fittedNodeFontSize(node.tag, node.width, nodeTextFit.tagPreferred, nodeTextFit.tagMinimum)}" text-anchor="middle">${esc(node.tag)}</text>`
     : '';
   const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context: nodeContext(node) };
   return `        <g ${focusNodeAttrs(node.id, node.label, passport)}>
