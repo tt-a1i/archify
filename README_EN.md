@@ -273,10 +273,6 @@ Archify 2.13 includes typed IR across all five modes, real-repository proof, det
 
 Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
 
-## Attribution
-
-Archify is a fork and rewrite of [Cocoon-AI/architecture-diagram-generator](https://github.com/Cocoon-AI/architecture-diagram-generator) v1.0. The original visual language remains credited to Cocoon AI; Archify 2.x adds themes, exports, typed renderers, validation, accessibility, interaction, and a unified CLI. Both projects use the MIT License.
-
 ## License
 
 [MIT](LICENSE) — free to use, modify, and distribute.
