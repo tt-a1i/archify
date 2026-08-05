@@ -35,7 +35,11 @@ Using Cursor? Open the [agent-aware quick start](https://tt-a1i.github.io/archif
 
 Then ask your agent: `Use archify to map this repository's runtime architecture.`
 
-## ❤️ Sponsor
+## ❤️ Sponsors
+
+<a href="https://apinebula.ai/ref/wywnaATT"><img src="docs/assets/sponsors/apinebula-archify.jpg" alt="APINEBULA — One API for leading AI models" width="100%"></a>
+
+Thanks to [**APINEBULA**](https://apinebula.ai/ref/wywnaATT) for sponsoring Archify. APINEBULA offers unified access to Claude, GPT, Gemini, and more. Register through [the Archify link](https://apinebula.ai/ref/wywnaATT) and use **`Archify`** for a **10% discount**.
 
 <a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven — Map the system. Keep the context." width="100%"></a>
 
