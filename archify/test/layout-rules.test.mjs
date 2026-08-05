@@ -198,6 +198,35 @@ for (const [mode, mutate, preferred] of SHRINK_CASES) {
   });
 }
 
+const TAG_SHRINK_CASES = [
+  // [mode, collection, tag, preferredFontSize]
+  ['architecture', 'components', 'owner: platform operations team', 7],
+  ['dataflow', 'nodes', 'owner: analytics platform', 7],
+  ['lifecycle', 'states', 'owner: platform operations pod', 7],
+  ['workflow', 'nodes', 'owner: runtime squad A', 7],
+];
+
+for (const [mode, collection, tag, preferred] of TAG_SHRINK_CASES) {
+  test(`${mode}: an over-long tag shrinks to fit instead of overflowing`, () => {
+    const d = load(mode);
+    d[collection][0].tag = tag;
+    const { code, stderr, outPath } = render(mode, d);
+    assert.equal(code, 0, stderr);
+    const html = fs.readFileSync(outPath, 'utf8');
+    const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = html.match(new RegExp(
+      `<text data-detail="fine"[^>]*font-size="([\\d.]+)"[^>]*>${escapedTag}</text>`,
+    ));
+    assert.ok(match, `expected a tag <text> for "${tag}" in the rendered SVG`);
+    const fontSize = Number(match[1]);
+    assert.ok(
+      fontSize < preferred,
+      `expected the tag to shrink below the ${preferred}px preferred size, got ${fontSize}`,
+    );
+    assert.ok(fontSize >= 6, `expected the tag to stay legible, got ${fontSize}`);
+  });
+}
+
 test('contract: a too-wide label is never redirected into sublabel', () => {
   // Every renderer used to advise "move detail to sublabel" for an over-long
   // label. Sublabels are measured now, so that advice would move the problem
