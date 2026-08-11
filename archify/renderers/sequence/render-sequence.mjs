@@ -22,17 +22,35 @@ const { diagram: sequence, template, outPath } = loadDiagram({
 const viewBox = sequence.meta?.viewBox || [920, 760];
 // The timeline scales with viewBox height: a taller viewBox gains message room,
 // a shorter one shrinks the readable band (validated below) instead of clipping.
+// `column_fit: "spread"` widens the lanes with the viewBox instead of keeping
+// the fixed 108px gap, so a wide canvas gains column distance and label room
+// rather than dead space on the right. The default stays "fixed" so existing
+// diagrams keep their coordinates.
+const columnFit = sequence.meta?.column_fit === 'spread' ? 'spread' : 'fixed';
+const participantCount = Math.max(1, asArray(sequence.participants).length);
+const sideMargin = 62;
+const participantW = columnFit === 'spread'
+  ? Math.max(86, Math.min(190, Math.round((viewBox[0] - sideMargin * 2) / participantCount) - 24))
+  : 86;
+const colGap = columnFit === 'spread' && participantCount > 1
+  ? Math.max(108, (viewBox[0] - 40 - sideMargin - participantW) / (participantCount - 1))
+  : 108;
+
 const layout = {
   topY: 72,
-  participantW: 86,
+  participantW,
   participantH: 54,
   lifelineTop: 142,
   lifelineBottom: viewBox[1] - 65,
   legendY: viewBox[1] - 54,
-  leftX: 62,
-  colGap: 108,
+  leftX: columnFit === 'spread' ? sideMargin + participantW / 2 : sideMargin,
+  colGap,
   labelH: 16
 };
+
+const participantBoxWidthNote = columnFit === 'spread'
+  ? `participant boxes are ${participantW}px for this viewBox width and ${participantCount} participants`
+  : `participant boxes are a fixed ${participantW}px unless meta.column_fit is "spread"`;
 
 const arrowClass = {
   ...arrowClassMap,
@@ -144,7 +162,7 @@ function validateSequence() {
       const availableTextW = availableNodeTextWidth(layout.participantW);
       const minimumW = minimumNodeTextWidth(participant.sublabel, participantTextFit.sublabelMinimum);
       if (minimumW > availableTextW) {
-        problems.push(`Sublabel "${participant.sublabel}" needs ~${Math.ceil(minimumW)}px at the ${participantTextFit.sublabelMinimum}px legible minimum, but participant "${participant.id}" provides ${availableTextW}px — shorten the sublabel (participant boxes are a fixed ${layout.participantW}px).`);
+        problems.push(`Sublabel "${participant.sublabel}" needs ~${Math.ceil(minimumW)}px at the ${participantTextFit.sublabelMinimum}px legible minimum, but participant "${participant.id}" provides ${availableTextW}px — shorten the sublabel (${participantBoxWidthNote}).`);
       }
     }
   }

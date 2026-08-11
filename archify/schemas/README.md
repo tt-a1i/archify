@@ -25,6 +25,13 @@ in generated HTML. Omit it, or set `"none"`, for the default static output.
 motion-forward presentation), `blueprint` (high-contrast engineering review),
 or `editorial` (warm publication-style design review and documentation).
 Presets change only viewer styling; they do not alter semantic IDs or geometry.
+Sequence `meta` additionally accepts `column_fit`. The default `fixed` keeps
+the historical 108px column gap and 86px participant boxes, so an authored
+diagram renders at the same coordinates no matter how wide its viewBox is.
+`spread` derives the gap and box width from the viewBox instead, which turns a
+wide canvas into column distance and label room rather than empty space on the
+right. Lane order, IDs, and message semantics are unchanged either way.
+
 It may also include up to five guided `views`. Each view has a unique `id`, a
 reader-facing `label`, a non-empty `focus` list of existing semantic node IDs,
 and an optional short `note`.
