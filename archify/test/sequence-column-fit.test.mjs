@@ -122,3 +122,16 @@ test('the sublabel diagnostic reports the width in force, not the historical con
   assert.match(stderr, /participant boxes are 190px for this viewBox width and 5 participants/);
   assert.doesNotMatch(stderr, /boxes are a fixed/, 'spread must not quote the fixed layout');
 });
+
+test('the fast authoring path explains when to opt into spread', () => {
+  const schema = JSON.parse(fs.readFileSync(path.join(skillRoot, 'schemas/sequence.schema.json'), 'utf8'));
+  const description = schema.properties.meta.properties.column_fit.description;
+  const skill = fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
+  const rendererReadme = fs.readFileSync(path.join(skillRoot, 'renderers/sequence/README.md'), 'utf8');
+
+  assert.match(description, /wide viewBox/);
+  assert.match(description, /meaningful participant labels/);
+  assert.match(skill, /do not shorten semantic labels before trying `spread`/);
+  assert.match(rendererReadme, /Use `"spread"` when a wide/);
+  assert.match(rendererReadme, /try `meta\.column_fit: "spread"` before shortening/);
+});

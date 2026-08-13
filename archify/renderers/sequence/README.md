@@ -57,8 +57,9 @@ not create edge facts.
 | Constant | Value |
 |----------|-------|
 | viewBox | default `[920, 760]`; schema minimum `[480, 480]` |
-| Participant boxes | 86×54 at y 72; centers at x = 62 + index×108 |
-| Participant count | last center + 43 must be ≤ width − 40 (8 fit at width 920) |
+| Participant boxes | `fixed` (default): 86×54 at y 72; `spread`: viewBox-relative width from 86px up to 190px |
+| Participant columns | `fixed`: centers at x = 62 + index×108; `spread`: columns distribute across the available viewBox width |
+| Participant count | the last box must end at or before width − 40; layouts that cannot fit fail closed |
 | Lifelines | from y 142 down to height − 65; band must be ≥120px tall |
 | Message `y` range | `[160, height − 83]` |
 | Message spacing | ≥28px vertical between messages that share horizontal space |
@@ -68,6 +69,15 @@ not create edge facts.
 
 `segments[].from/to` and `activations[].from/to` are y pixel coordinates, not
 participant ids; activations also require `to > from`.
+
+### Column fit
+
+Sequence diagrams use `meta.column_fit: "fixed"` by default so existing
+documents keep their historical coordinates. Use `"spread"` when a wide
+viewBox would otherwise leave empty space on the right or when meaningful
+participant labels do not fit the fixed 86px boxes. Spread derives box width
+and column distance from the viewBox while preserving participant order,
+lifelines, and message semantics.
 
 ## Design Rules
 
@@ -79,7 +89,8 @@ participant ids; activations also require `to > from`.
 - Use `return` for quiet response messages.
 - Use `dashed` for async trace, event, logging, and non-blocking work.
 - Use segments as light background guides; keep segment labels short.
-- Keep labels short enough to fit in narrow previews.
+- Keep labels concise, but try `meta.column_fit: "spread"` before shortening a
+  meaningful participant label just to fit the fixed boxes.
 
 Schema violations exit non-zero with path-prefixed messages annotated with the
 element's id or label. The renderer additionally fails when it can detect
