@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "RAG Pipeline",
+    "output": "rag-pipeline.html",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "query-path", "label": "Query path", "focus": ["user", "orchestrator", "retriever", "vectordb", "reranker", "llm"], "note": "Follow a user question from input to grounded answer through retrieval and generation." },
+      { "id": "ingestion", "label": "Document ingestion", "focus": ["sources", "loader", "chunker", "embedder", "vectordb"], "note": "How raw documents become searchable vector embeddings." },
+      { "id": "safety-and-cache", "label": "Safety and cache", "focus": ["guardrail", "orchestrator", "cache", "llm"], "note": "The guardrail intercepts harmful queries; the semantic cache avoids redundant LLM calls." }
+    ]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "User", "sublabel": "Chat / API", "pos": [40, 260], "size": [110, 56] },
+    { "id": "guardrail", "type": "security", "label": "Guardrail", "sublabel": "Input filter", "pos": [40, 100], "size": [110, 56], "tag": "PII + toxicity" },
+    { "id": "orchestrator", "type": "backend", "label": "Orchestrator", "sublabel": "LangGraph agent", "pos": [230, 260], "size": [140, 60] },
+    { "id": "cache", "type": "database", "label": "Semantic Cache", "sublabel": "Redis :6379", "pos": [230, 100], "size": [140, 56] },
+    { "id": "retriever", "type": "backend", "label": "Retriever", "sublabel": "Hybrid search", "pos": [450, 260], "size": [130, 60] },
+    { "id": "vectordb", "type": "database", "label": "Vector Store", "sublabel": "Milvus", "pos": [450, 410], "size": [130, 56], "tag": "HNSW index" },
+    { "id": "reranker", "type": "backend", "label": "Reranker", "sublabel": "Cross-encoder", "pos": [650, 260], "size": [130, 60] },
+    { "id": "llm", "type": "cloud", "label": "LLM", "sublabel": "Claude API", "pos": [850, 260], "size": [120, 60] },
+    { "id": "sources", "type": "external", "label": "Documents", "sublabel": "PDF / Web / DB", "pos": [230, 530], "size": [130, 56] },
+    { "id": "loader", "type": "backend", "label": "Loader", "sublabel": "Parse + extract", "pos": [430, 530], "size": [120, 56] },
+    { "id": "chunker", "type": "backend", "label": "Chunker", "sublabel": "Semantic split", "pos": [620, 530], "size": [120, 56] },
+    { "id": "embedder", "type": "cloud", "label": "Embedding", "sublabel": "text-embedding-3", "pos": [810, 530], "size": [130, 56] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Query Runtime", "wraps": ["orchestrator", "cache", "guardrail", "retriever", "reranker", "llm"] },
+    { "kind": "security-group", "label": "Ingestion Pipeline", "wraps": ["loader", "chunker", "embedder"] }
+  ],
+  "connections": [
+    { "id": "user-to-orchestrator", "from": "user", "to": "orchestrator", "label": "question", "variant": "emphasis" },
+    { "id": "guardrail-check", "from": "guardrail", "to": "orchestrator", "label": "policy check", "variant": "security", "fromSide": "right", "toSide": "top" },
+    { "id": "cache-lookup", "from": "orchestrator", "to": "cache", "label": "semantic match", "fromSide": "top", "toSide": "bottom", "labelDx": 40 },
+    { "id": "orchestrator-to-retriever", "from": "orchestrator", "to": "retriever", "label": "retrieve" },
+    { "id": "retriever-to-vectordb", "from": "retriever", "to": "vectordb", "label": "ANN search", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "retriever-to-reranker", "from": "retriever", "to": "reranker", "label": "top-k docs" },
+    { "id": "reranker-to-llm", "from": "reranker", "to": "llm", "label": "context" },
+    { "id": "llm-response", "from": "llm", "to": "orchestrator", "label": "grounded answer", "variant": "dashed", "fromSide": "top", "toSide": "top", "via": [[910, 180], [300, 180]] },
+    { "id": "sources-to-loader", "from": "sources", "to": "loader", "label": "raw docs", "variant": "dashed" },
+    { "id": "loader-to-chunker", "from": "loader", "to": "chunker", "label": "parsed text" },
+    { "id": "chunker-to-embedder", "from": "chunker", "to": "embedder", "label": "chunks" },
+    { "id": "embedder-to-vectordb", "from": "embedder", "to": "vectordb", "label": "vectors", "variant": "dashed", "fromSide": "top", "toSide": "top", "via": [[875, 480], [515, 480], [515, 380]] }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Retrieval", "items": ["Hybrid search: dense vectors + sparse BM25", "Cross-encoder reranker for precision", "Top-k context window management"] },
+    { "dot": "cyan", "title": "Generation", "items": ["Claude API for grounded generation", "Semantic cache reduces repeat LLM calls", "Streaming response with citations"] },
+    { "dot": "rose", "title": "Safety", "items": ["Input guardrail filters PII and toxic content", "Output grounding prevents hallucination", "Document-level access control in retriever"] }
+  ]
+}
