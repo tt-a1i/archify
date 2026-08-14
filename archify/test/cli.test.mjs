@@ -615,6 +615,19 @@ test('cli: rejects an unknown quality profile', () => {
   assert.match(result.stderr, /Expected standard or showcase/);
 });
 
+test('cli: rejects a quality flag without a value', () => {
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  for (const args of [
+    ['validate', 'workflow', input, '--json', '--quality'],
+    ['validate', 'workflow', input, '--quality', '--json'],
+    ['validate', 'workflow', input, '--quality='],
+  ]) {
+    const result = run(args);
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /--quality requires standard or showcase/);
+  }
+});
+
 test('cli: inspect emits architecture layout json', () => {
   const input = path.resolve(skillRoot, '../examples/archify-repo-grid.architecture.json');
   const result = run(['inspect', 'architecture', input]);

@@ -60,11 +60,13 @@ function extractQualityArgs(args) {
     const arg = args[index];
     if (arg === '--quality') {
       quality = args[index + 1];
+      if (!quality || quality.startsWith('--')) fail('--quality requires standard or showcase.');
       index += 1;
       continue;
     }
     if (arg.startsWith('--quality=')) {
       quality = arg.slice('--quality='.length);
+      if (!quality) fail('--quality requires standard or showcase.');
       continue;
     }
     rest.push(arg);
