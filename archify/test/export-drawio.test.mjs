@@ -327,7 +327,8 @@ test('cli: help lists export-drawio', () => {
 
 // ─── Strict mode: 1:1 shape/color/corner fidelity ──────────────────────────
 
-test('extractPalette resolves CSS vars, class rules, and blends translucent fills', () => {
+test('extractPalette resolves CSS vars, class rules, and blends translucent fills (dark fallback)', () => {
+  // No light block: custom templates keep working through the dark fallback.
   const css = `
     :root, [data-theme="dark"] {
       --bg: #020617;
@@ -353,6 +354,31 @@ test('extractPalette resolves CSS vars, class rules, and blends translucent fill
   assert.ok(region.fill.startsWith('#'));
 });
 
+test('extractPalette always resolves the light theme over the dark default', () => {
+  const css = `
+    :root, [data-theme="dark"] {
+      --bg: #020617; --mask: #0f172a; --text: #ffffff; --text-muted: #94a3b8;
+      --backend-fill: rgba(6, 78, 59, 0.4); --backend-stroke: #34d399;
+    }
+    [data-theme="light"] {
+      --bg: #f8fafc; --mask: #ffffff; --text: #0f172a; --text-muted: #64748b;
+      --backend-fill: rgba(52, 211, 153, 0.18); --backend-stroke: #059669;
+    }
+    [data-preset="signal-flow"][data-theme="light"] { --bg: #030711; }
+    .c-backend { fill: var(--backend-fill); stroke: var(--backend-stroke); }
+  `;
+  const palette = extractPalette(css);
+  // Light values win; the preset-scoped light block must not be picked up.
+  assert.equal(palette.bg, '#f8fafc');
+  assert.equal(palette.mask, '#ffffff');
+  assert.equal(palette.text, '#0f172a');
+  assert.equal(palette.textMuted, '#64748b');
+  // rgba(52,211,153,0.18) over the white light-theme mask → light composite.
+  const backend = palette.paletteFor('c-backend', 'mask');
+  assert.equal(backend.fill, '#daf7ed');
+  assert.equal(backend.stroke, '#059669');
+});
+
 test('strict build keeps rounded rectangles, exact radii, and colors', () => {
   const parsed = {
     viewBox: [400, 300],
@@ -370,6 +396,11 @@ test('strict build keeps rounded rectangles, exact radii, and colors', () => {
       --database-fill: rgba(76, 29, 149, 0.4); --database-stroke: #a78bfa;
       --cloud-stroke: #fbbf24; --security-stroke: #fb7185;
     }
+    [data-theme="light"] {
+      --bg: #f8fafc; --mask: #ffffff; --text: #0f172a; --text-muted: #64748b;
+      --database-fill: rgba(167, 139, 250, 0.2); --database-stroke: #7c3aed;
+      --cloud-stroke: #d97706; --security-stroke: #e11d48;
+    }
     .c-database { fill: var(--database-fill); stroke: var(--database-stroke); }
     .c-region { fill: rgba(251,191,36,0.05); stroke: var(--cloud-stroke); stroke-dasharray: 8,4; }
     .t-cloud { fill: var(--cloud-stroke); }
@@ -386,12 +417,13 @@ test('strict build keeps rounded rectangles, exact radii, and colors', () => {
   // Edge corner radius: measured 8 → arcSize=16.
   assert.match(xml, /arcSize=16/);
   // Edge keeps the security variant color and dash.
-  assert.match(xml, /strokeColor=#fb7185/);
+  assert.match(xml, /strokeColor=#e11d48/);
   assert.match(xml, /dashPattern=5 5/);
-  // Composited database fill over mask.
-  assert.match(xml, /fillColor=#271955/);
-  // Dark page background.
-  assert.match(xml, /background="#020617"/);
+  // Composited database fill over the light-theme white mask.
+  assert.match(xml, /fillColor=#ede8fe/);
+  // Always-light export: light page background and dark ink.
+  assert.match(xml, /background="#f8fafc"/);
+  assert.match(xml, /fontColor=#0f172a/);
 });
 
 test('cli: export-drawio --strict emits 1:1 styles for all five types', () => {
@@ -401,8 +433,11 @@ test('cli: export-drawio --strict emits 1:1 styles for all five types', () => {
     const result = run(['export-drawio', type, input, output, '--strict']);
     assert.equal(result.status, 0, result.stderr);
     const xml = fs.readFileSync(output, 'utf8');
-    // Dark background, exact radii, no built-in shape mapping.
-    assert.match(xml, /background="#020617"/, type);
+    // Always-light palette: light page background and dark ink, exact radii,
+    // no built-in shape mapping.
+    assert.match(xml, /background="#f8fafc"/, type);
+    assert.match(xml, /fontColor=#0f172a/, type);
+    assert.doesNotMatch(xml, /background="#020617"/, type);
     assert.match(xml, /absoluteArcSize=1/, type);
     assert.doesNotMatch(xml, /shape=cylinder3|shape=cloud|shape=shield/, type);
     // Real edge bindings survive strict mode.

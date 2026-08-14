@@ -6979,14 +6979,23 @@
       }
 
       // ---- draw.io strict export -----------------------------------------
-      // 1:1 fidelity variant: reads the LIVE SVG (computed styles resolve the
-      // current theme/preset) and emits the exact Archify shapes — same
-      // rounded rectangles, same composited fill/stroke colors, same corner
-      // radii (arcSize = 2 × radius on edges), same dash patterns.
+      // 1:1 fidelity variant: reads the LIVE SVG computed styles (exact
+      // composited fill/stroke colors, same corner radii — arcSize = 2 ×
+      // radius on edges — same dash patterns) but always force-resolves the
+      // artifact's LIGHT theme, so the exported file never depends on the
+      // reader's current theme or the browser preference behind it.
       function drawioParseColor(v) {
-        var m = String(v || '').trim().match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/);
-        if (!m) return null;
-        return { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] };
+        var s = String(v || '').trim();
+        var m = s.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/);
+        if (m) return { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] };
+        // Theme variables come back as their authored tokens (hex), while
+        // computed fill/stroke values arrive as rgb()/rgba().
+        var h = s.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+        if (h) {
+          var hex = h[1].length === 3 ? h[1].split('').map(function (c) { return c + c; }).join('') : h[1];
+          return { r: parseInt(hex.slice(0, 2), 16), g: parseInt(hex.slice(2, 4), 16), b: parseInt(hex.slice(4, 6), 16), a: 1 };
+        }
+        return null;
       }
       function drawioHex(c) {
         var h = function (n) { var s = Math.round(Math.max(0, Math.min(255, n))).toString(16); return s.length < 2 ? '0' + s : s; };
@@ -7004,12 +7013,28 @@
         var m = String(d || '').match(/L\s*(-?[\d.]+)\s+(-?[\d.]+)\s+Q\s*(-?[\d.]+)\s+(-?[\d.]+)/);
         return m ? Math.round(Math.hypot(+m[3] - +m[1], +m[4] - +m[2])) : 0;
       }
+      // Run `fn` with the artifact forced to its light theme and restore the
+      // reader's theme afterwards. The swap and restore happen inside one
+      // synchronous task, so the page never repaints in between; it only
+      // affects how the style reads below resolve.
+      function withLightTheme(fn) {
+        var root = document.documentElement;
+        var prev = root.getAttribute('data-theme');
+        root.setAttribute('data-theme', 'light');
+        try {
+          return fn();
+        } finally {
+          if (prev === null) root.removeAttribute('data-theme');
+          else root.setAttribute('data-theme', prev);
+        }
+      }
       function drawioStrictPalette(svgEl) {
         var cs = getComputedStyle(svgEl);
-        var mask = drawioParseColor(cs.getPropertyValue('--mask').trim()) || { r: 15, g: 23, b: 42, a: 1 };
-        var bg = drawioParseColor(cs.getPropertyValue('--bg').trim()) || { r: 2, g: 6, b: 23, a: 1 };
-        var text = drawioHex(drawioParseColor(cs.getPropertyValue('--text').trim()) || { r: 255, g: 255, b: 255, a: 1 });
-        var muted = drawioHex(drawioParseColor(cs.getPropertyValue('--text-muted').trim()) || { r: 148, g: 163, b: 184, a: 1 });
+        // Fallbacks are the light-theme values: the export is always light.
+        var mask = drawioParseColor(cs.getPropertyValue('--mask').trim()) || { r: 255, g: 255, b: 255, a: 1 };
+        var bg = drawioParseColor(cs.getPropertyValue('--bg').trim()) || { r: 248, g: 250, b: 252, a: 1 };
+        var text = drawioHex(drawioParseColor(cs.getPropertyValue('--text').trim()) || { r: 15, g: 23, b: 42, a: 1 });
+        var muted = drawioHex(drawioParseColor(cs.getPropertyValue('--text-muted').trim()) || { r: 100, g: 116, b: 139, a: 1 });
         return {
           mask: drawioHex(mask), maskC: mask, bg: drawioHex(bg), bgC: bg, text: text, textMuted: muted,
           of: function (el, base) {
@@ -7029,7 +7054,7 @@
           }
         };
       }
-      function drawioBuildStrictXml() {
+      function buildStrictXmlLight() {
         var svgEl = document.querySelector('.diagram-container svg');
         if (!svgEl) throw new Error('No diagram SVG found.');
         var P = drawioStrictPalette(svgEl);
@@ -7231,6 +7256,11 @@
         L.push('</' + 'mxGraphModel>');
         return L.join('\n');
       }
+      // Public entry: always a light-themed .drawio file, independent of the
+      // viewer's current theme (and the browser preference behind it).
+      function drawioBuildStrictXml() {
+        return withLightTheme(buildStrictXmlLight);
+      }
 
       function runExport(format) {
         var base = diagramFilename();
@@ -7259,9 +7289,10 @@
             })
           : format === 'drawio-strict'
           ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
-              // Strict reads the live SVG so computed styles resolve the
-              // reader's current theme; serializeSvg only supplies the
-              // canonical-state receipt.
+              // Strict reads the live SVG but force-resolves the light
+              // theme, so the file never follows the reader's current
+              // theme; serializeSvg only supplies the canonical-state
+              // receipt.
               var xml = drawioBuildStrictXml();
               var blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
               recordExportReceipt('drawio-strict', blob, d.canonicalStateClean);

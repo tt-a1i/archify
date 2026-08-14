@@ -615,20 +615,27 @@ function blendOver(fg, bg) {
 }
 
 /**
- * Extract the visual palette from the rendered artifact's CSS. Resolves the
- * dark-theme variable block (the artifact's default) plus the plain `.class`
- * rules (fill / stroke / stroke-dasharray). Preset-scoped rules such as
+ * Extract the visual palette from the rendered artifact's CSS. Variables
+ * always resolve from the LIGHT theme block so the exported diagram is a
+ * stable light-themed file regardless of the artifact's dark default or any
+ * viewer/browser theme preference. The dark `:root` block is only a fallback
+ * for custom templates that define no light theme. Preset-scoped rules such as
  * `svg[data-preset=…] .c-x` are intentionally skipped because their selectors
  * do not start at a class name.
  */
 export function extractPalette(css) {
   // Comments inside declaration blocks would break per-`;` splitting.
   const cleanCss = String(css || '').replace(/\/\*[\s\S]*?\*\//g, '');
-  // Variable blocks: ":root, [data-theme=\"dark\"] { ... }" (artifact default).
+  // Variable blocks. The light selector is anchored to line start so compound
+  // selectors (`[data-preset=…][data-theme="light"]`,
+  // `:root, [data-theme="dark"], [data-theme="light"]`) never match.
   const vars = {};
-  const rootBlock = cleanCss.match(/:root\s*,\s*\[data-theme="dark"\]\s*\{([^}]*)\}/);
-  if (rootBlock) {
-    for (const rawDecl of rootBlock[1].split(';')) {
+  const varBlock = cleanCss.match(/^[ \t]*\[data-theme="light"\]\s*\{([^}]*)\}/m)?.[1]
+    // Artifact default, used only when no light theme exists.
+    ?? cleanCss.match(/:root\s*,\s*\[data-theme="dark"\]\s*\{([^}]*)\}/)?.[1]
+    ?? '';
+  if (varBlock) {
+    for (const rawDecl of varBlock.split(';')) {
       const m = rawDecl.trim().match(/^([\w-]+)\s*:\s*(.+)$/);
       if (m) vars[m[1]] = m[2].trim();
     }

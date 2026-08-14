@@ -69,7 +69,8 @@ try {
 
   // 3. Extract the SVG and convert to draw.io XML. Strict mode additionally
   //    feeds the artifact CSS so shapes keep their exact Archify colors,
-  //    corner radii, and dash patterns.
+  //    corner radii, and dash patterns — always resolved from the light theme
+  //    so the .drawio file reads correctly under any draw.io theme.
   const html = fs.readFileSync(tmpHtml, 'utf8');
   const svg = extractSvgFromHtml(html);
   const css = html.match(/<style[^>]*>([\s\S]*?)<\/style>/)?.[1] || '';
