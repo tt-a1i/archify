@@ -562,3 +562,87 @@ test('cli: export-drawio sequence --strict restores the timeline', () => {
   assert.match(xml, /value="Request"/);
   assert.doesNotMatch(xml, /endArrow=none/);
 });
+
+// ─── Regressions from the draw.io export code review ────────────────────────
+
+test('buildDrawioXml escapes quotes in edge labels (raw-input callers)', () => {
+  const parsed = {
+    viewBox: [400, 300],
+    nodes: [
+      { id: 'a', kind: 'backend', label: 'A', x: 10, y: 10, width: 80, height: 40 },
+      { id: 'b', kind: 'backend', label: 'B', x: 200, y: 10, width: 80, height: 40 },
+    ],
+    edges: [{ from: 'a', to: 'b', label: 'say "hi" now', points: [[90, 30], [200, 30]] }],
+    boundaries: [],
+    lifelines: [],
+  };
+  const xml = buildDrawioXml(parsed, 'architecture');
+  // Attribute-safe: the quote survives as a single entity, never a raw ",
+  // so direct builder calls with un-escaped labels stay well-formed XML.
+  assert.match(xml, /value="say &quot;hi&quot; now"/);
+});
+
+test('wraps parenting survives a boundary skipped by the SVG parser', () => {
+  const parsed = {
+    viewBox: [400, 300],
+    nodes: [{ id: 'kept', kind: 'backend', label: 'Kept', x: 50, y: 50, width: 60, height: 30 }],
+    edges: [],
+    // Only the SECOND JSON boundary rendered; it kept its authored frame-id,
+    // so the parsed list is shorter than diagram.boundaries.
+    boundaries: [{ kind: 'region', label: 'Inner', frameId: '1', x: 40, y: 40, width: 200, height: 120 }],
+    lifelines: [],
+  };
+  const diagram = { boundaries: [{ wraps: ['ghost'] }, { wraps: ['kept'] }] };
+  const xml = buildDrawioXml(parsed, 'architecture', diagram);
+  // The surviving wrap resolves to the REAL parsed cell (boundary-0) instead
+  // of a positional boundary-1 that was never emitted.
+  assert.match(xml, /id="node-kept"[^>]*parent="boundary-0"/);
+  assert.doesNotMatch(xml, /parent="boundary-1"/);
+});
+
+test('sequence builder tolerates an empty participant set (no NaN geometry)', () => {
+  const parsed = { viewBox: [820, 760], nodes: [], edges: [], boundaries: [], lifelines: [], activations: [], edgeLabels: [] };
+  const palette = extractPalette('[data-theme="light"] { --bg: #f8fafc; --mask: #ffffff; --text: #0f172a; --text-muted: #64748b; }');
+  const xml = buildDrawioXmlSequence(parsed, palette, null, { strict: true });
+  assert.match(xml, /<mxGraphModel/);
+  assert.doesNotMatch(xml, /NaN/);
+});
+
+test('cli: export-drawio --strict default output uses the -strict.drawio suffix', () => {
+  const input = path.join(tmp, 'naming.json');
+  fs.copyFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), input);
+  const result = run(['export-drawio', 'architecture', input, '--strict']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.ok(
+    fs.existsSync(path.join(tmp, 'naming-strict.drawio')),
+    'default strict name matches the viewer button (-strict.drawio)',
+  );
+});
+
+// ─── Parity: viewer and Node converters stay in lockstep ────────────────────
+
+// The viewer's inline converter (assets/template.html) and the Node converter
+// (renderers/shared/svg-to-drawio.mjs) are hand-mirrored implementations of
+// the non-strict export. Extract the viewer section from the live template
+// and assert both produce byte-identical XML for a real artifact, so editing
+// one side without the other fails here instead of drifting silently.
+// (The strict and sequence paths need a live DOM for computed styles and so
+// cannot run under Node; this guards the shared regex-parsing core.)
+function viewerConverterFromTemplate() {
+  const template = fs.readFileSync(path.join(skillRoot, 'assets/template.html'), 'utf8');
+  const start = template.indexOf('var DRAWIO_KIND_STYLE');
+  const end = template.indexOf('// ---- draw.io strict export');
+  assert.ok(start !== -1 && end !== -1 && start < end, 'template.html drawio converter section not found — anchor moved?');
+  const documentShim = { documentElement: { getAttribute: () => 'architecture' } };
+  return new Function('document', `"use strict";\n${template.slice(start, end)}\nreturn archifySvgToDrawio;`)(documentShim);
+}
+
+test('viewer and Node non-strict converters emit identical XML', () => {
+  const htmlOut = path.join(tmp, 'parity.html');
+  const rendered = run(['render', 'architecture', path.join(skillRoot, 'examples/web-app.architecture.json'), htmlOut]);
+  assert.equal(rendered.status, 0, rendered.stderr);
+  const svg = extractSvgFromHtml(fs.readFileSync(htmlOut, 'utf8'));
+  const nodeXml = convertArchifyToDrawio(svg, 'architecture');
+  const viewerXml = viewerConverterFromTemplate()(svg);
+  assert.equal(viewerXml, nodeXml);
+});

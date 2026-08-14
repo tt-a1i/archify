@@ -26,13 +26,6 @@ function escapeAttr(value) {
   return String(value ?? '').replace(/[&"<>']/g, (ch) => ATTR_ESCAPE[ch]);
 }
 
-function escapeText(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
 /**
  * Extract the value of a `name="value"` attribute from an SVG element tag.
  * Returns null when absent.
@@ -45,6 +38,11 @@ function attr(tag, name) {
 
 // ─── SVG parsing ────────────────────────────────────────────────────────────
 
+// Attribute-order contract: node groups are emitted by nodeGroup() in
+// renderers/shared/cli.mjs (and mirrored by the viewer's drawioParseSvg in
+// assets/template.html) with `id` FIRST and the data-node-* attributes after.
+// The regexes below anchor on that order — keep the three call sites aligned
+// when adding or reordering attributes.
 const NODE_G_RE = /<g\s+id="node-[^"]*"[^>]*data-node-id="[^"]*"[^>]*>/g;
 const RECT_RE = /<rect\b[^>]*>/g;
 const NUM = '([-\\d.]+)';
@@ -465,13 +463,23 @@ function resolveContainerParents(parsed, diagram) {
   const boundaries = parsed.boundaries;
   if (!boundaries.length) return parents;
 
-  // Prefer explicit wraps from the JSON IR (architecture).
+  // Prefer explicit wraps from the JSON IR (architecture). The architecture
+  // renderer stamps each JSON boundary with its array index as
+  // data-composition-frame-id, so resolve membership by that id rather than
+  // by position: a boundary the SVG parser skipped (zero-size frames) then
+  // only loses its own wraps instead of shifting every later boundary onto
+  // the wrong frame — and onto a parent cell id that does not exist.
+  // Synthetic inputs without frame-ids keep the positional pairing.
   const explicit = Array.isArray(diagram?.boundaries);
   if (explicit) {
+    const stamped = boundaries.some((b) => b.frameId != null);
+    const parsedIndexOf = new Map(boundaries.map((b, i) => [b.frameId, i]));
     for (let i = 0; i < diagram.boundaries.length; i += 1) {
       const b = diagram.boundaries[i];
-      const drawioId = `boundary-${i}`;
-      const frame = boundaries[i] || { x: 0, y: 0 };
+      const parsedIndex = stamped ? parsedIndexOf.get(String(i)) : i;
+      if (parsedIndex === undefined) continue;
+      const frame = boundaries[parsedIndex];
+      const drawioId = `boundary-${parsedIndex}`;
       for (const wrappedId of b.wraps || []) {
         // Innermost wins: a node wrapped by multiple boundaries (e.g.
         // region + security-group) parents to the last/most-specific one.
@@ -583,7 +591,7 @@ export function buildDrawioXml(parsed, diagramType, diagram = null) {
     const targetId = nodeIdOf(edge.to);
     const id = edge.id ? `edge-${edge.id}` : `edge-${i}`;
     const style = VARIANT_EDGE_STYLE.default;
-    const value = edge.label ? escapeText(edge.label) : '';
+    const value = edge.label ? escapeAttr(edge.label) : '';
     const hasValidBinding = parsed.nodes.some((n) => n.id === edge.from)
       && parsed.nodes.some((n) => n.id === edge.to);
     if (!hasValidBinding) continue;
@@ -639,9 +647,11 @@ export function buildDrawioXmlSequence(parsed, palette, diagram = null, { strict
   const [vw, vh] = parsed.viewBox;
   const nodeById = new Map(parsed.nodes.map((n) => [n.id, n]));
   const FONT_STACK = 'JetBrains Mono,ui-monospace,Menlo,monospace';
-  const footY = parsed.lifelines.length
-    ? Math.max(...parsed.lifelines.map((l) => l.y2))
-    : Math.max(...parsed.nodes.map((n) => n.y + n.height + 60));
+  // Timeline foot: deepest lifeline end, else just below the last header,
+  // else a sane default when the artifact carries neither (viewer parity).
+  const footY = Math.max(0, ...parsed.lifelines.map((l) => l.y2))
+    || Math.max(0, ...parsed.nodes.map((n) => n.y + n.height + 60))
+    || 400;
   const colors = (className, base) => (
     strict && className && palette ? palette.paletteFor(className, base) : null
   );

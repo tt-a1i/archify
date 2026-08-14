@@ -50,10 +50,11 @@ if (!fs.existsSync(inputPath)) {
 }
 
 // Resolve output path: explicit arg, or replace .json/.html with .drawio
-// (strict mode appends "-strict" so both variants can coexist).
+// (strict appends "-strict", matching the viewer button's filename, so both
+// variants can coexist).
 const outputPath = outputArg
   ? path.resolve(outputArg)
-  : inputPath.replace(/\.(json|html)$/, strict ? '.strict.drawio' : '.drawio');
+  : inputPath.replace(/\.(json|html)$/, strict ? '-strict.drawio' : '.drawio');
 
 // 1. Read + validate the JSON IR (light parse; full schema validation happens
 //    inside the renderer via loadDiagram).
