@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="1080" dy="780" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1080" pageHeight="780" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="boundary-0" value="01 / Producers" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b0b0b0;verticalAlign=top;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="16" y="46" width="168" height="660" as="geometry"/>
+    </mxCell>
+    <mxCell id="boundary-1" value="02 / Transit" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b0b0b0;verticalAlign=top;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="231" y="46" width="168" height="660" as="geometry"/>
+    </mxCell>
+    <mxCell id="boundary-2" value="03 / Processors" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b0b0b0;verticalAlign=top;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="446" y="46" width="168" height="660" as="geometry"/>
+    </mxCell>
+    <mxCell id="boundary-3" value="04 / State + recovery" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b0b0b0;verticalAlign=top;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="661" y="46" width="168" height="660" as="geometry"/>
+    </mxCell>
+    <mxCell id="boundary-4" value="05 / Consumers" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b0b0b0;verticalAlign=top;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="876" y="46" width="168" height="660" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-checkout" value="&lt;b&gt;Checkout API&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;order producer · team commerce&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="boundary-0">
+      <mxGeometry x="28" y="82" width="112" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-billing" value="&lt;b&gt;Billing API&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;payment producer · team money&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="boundary-0">
+      <mxGeometry x="28" y="310" width="112" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-orders" value="&lt;b&gt;orders.v1&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;12 partitions · key: order_id&lt;/font&gt;" style="shape=queue;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="boundary-1">
+      <mxGeometry x="28" y="82" width="112" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-payments" value="&lt;b&gt;payments.v2&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;8 partitions · key: order_id&lt;/font&gt;" style="shape=queue;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="boundary-1">
+      <mxGeometry x="28" y="310" width="112" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-validate" value="&lt;b&gt;Order Validate&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;group fulfillment · ordered&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="boundary-2">
+      <mxGeometry x="28" y="82" width="112" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-enrich" value="&lt;b&gt;Payment Enrich&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;group analytics · at-least-once&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="boundary-2">
+      <mxGeometry x="28" y="310" width="112" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-state" value="&lt;b&gt;Order State&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;materialized view · idempotent&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="boundary-3">
+      <mxGeometry x="28" y="196" width="112" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-dlq" value="&lt;b&gt;events.dlq&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;poison events · 7-day retention&lt;/font&gt;" style="shape=queue;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="boundary-3">
+      <mxGeometry x="28" y="538" width="112" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-fulfillment" value="&lt;b&gt;Fulfillment&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;shipping workflow · consumer&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="boundary-4">
+      <mxGeometry x="28" y="82" width="112" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-analytics" value="&lt;b&gt;Analytics&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;streaming facts · consumer&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="boundary-4">
+      <mxGeometry x="28" y="310" width="112" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-replay" value="&lt;b&gt;Replay Tool&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;approved batch · operator gate&lt;/font&gt;" style="shape=shield;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="boundary-4">
+      <mxGeometry x="28" y="538" width="112" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-ops" value="&lt;b&gt;On-call&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;DLQ owner · SRE&lt;/font&gt;" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="boundary-4">
+      <mxGeometry x="28" y="406" width="112" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge-0" value="OrderPlaced" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-checkout" target="node-orders">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-1" value="PaymentCaptured" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-billing" target="node-payments">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-2" value="ordered orders" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-orders" target="node-validate">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-3" value="payment facts" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-payments" target="node-enrich">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-4" value="valid order" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-validate" target="node-state">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="630" y="157"/>
+          <mxPoint x="630" y="271"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-5" value="enriched payment" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-enrich" target="node-state">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="630" y="385"/>
+          <mxPoint x="630" y="271"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-6" value="ready orders" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-state" target="node-fulfillment">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="845" y="271"/>
+          <mxPoint x="845" y="157"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-7" value="order facts" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-state" target="node-analytics">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="845" y="271"/>
+          <mxPoint x="845" y="385"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-8" value="invalid event" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-validate" target="node-dlq">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="530" y="80"/>
+          <mxPoint x="20" y="80"/>
+          <mxPoint x="20" y="550"/>
+          <mxPoint x="745" y="550"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-9" value="poison event" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-enrich" target="node-dlq">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="586" y="668"/>
+          <mxPoint x="689" y="668"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-10" value="failure sample" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-dlq" target="node-ops">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="845" y="613"/>
+          <mxPoint x="845" y="481"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-11" value="approved replay" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-dlq" target="node-replay">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>

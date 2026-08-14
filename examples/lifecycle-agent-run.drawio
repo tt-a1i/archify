@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="980" dy="660" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="980" pageHeight="660" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="node-queued" value="&lt;b&gt;Queued&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;request accepted · entry&lt;/font&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="35" y="126" width="118" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-planning" value="&lt;b&gt;Planning&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;build task graph · model&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="189" y="126" width="118" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-executing" value="&lt;b&gt;Executing&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;tool calls · work&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="343" y="126" width="118" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-reviewing" value="&lt;b&gt;Reviewing&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;quality gate · check&lt;/font&gt;" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="497" y="126" width="118" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-completed" value="&lt;b&gt;Completed&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;final response · done&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="651" y="126" width="118" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-approval" value="&lt;b&gt;Needs Approval&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;human gate · pause&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="339" y="278" width="126" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-blocked" value="&lt;b&gt;Blocked&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;missing input · wait&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="493" y="278" width="126" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-failed" value="&lt;b&gt;Failed&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;recoverable error · retryable&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="339" y="356" width="126" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-cancelled" value="&lt;b&gt;Cancelled&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;user stopped · terminal&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="343" y="450" width="118" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-expired" value="&lt;b&gt;Expired&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;timeout · terminal&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="497" y="450" width="118" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge-approval-needed" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-executing" target="node-approval">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-review-blocked" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-reviewing" target="node-blocked">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="556" y="233"/>
+          <mxPoint x="556" y="233"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-execution-failed" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-executing" target="node-failed">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="320" y="157"/>
+          <mxPoint x="320" y="385"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-failed-retry" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-failed" target="node-executing">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="20" y="385"/>
+          <mxPoint x="20" y="80"/>
+          <mxPoint x="402" y="80"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-block-expired" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-blocked" target="node-expired">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-approval-cancelled" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-approval" target="node-cancelled">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="480" y="336"/>
+          <mxPoint x="480" y="432"/>
+          <mxPoint x="402" y="432"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>

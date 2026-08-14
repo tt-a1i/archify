@@ -68,7 +68,7 @@ test('style selection synchronizes page, picker, and canonical SVG without touch
 test('omitted visual preset opens as Classic and theme switching cannot change it', () => {
   const html = render('architecture');
   const themeRuntime = html.match(/Archify\.theme = \(function \(\) \{[\s\S]*?\n    \}\)\(\);/)?.[0] || '';
-  assert.match(html, /<html lang="en" data-theme="dark" data-preset="classic">/);
+  assert.match(html, /<html lang="en" data-theme="dark" data-preset="classic"/);
   assert.match(svgBlock(html), /<svg\b[^>]* data-preset="classic"/);
   assert.match(themeRuntime, /html\.setAttribute\('data-theme', theme\)/);
   assert.doesNotMatch(themeRuntime, /data-preset|Archify\.preset/);

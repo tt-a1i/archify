@@ -346,8 +346,9 @@ function renderActivation(activation) {
   const fill = componentFill[activation.type] || componentFill[participant.type] || 'c-external';
   const x = participant.cx - 5;
   const height = activation.to - activation.from;
-  return `        <rect x="${x}" y="${activation.from}" width="10" height="${height}" rx="3" class="c-mask"/>
-        <rect x="${x}" y="${activation.from}" width="10" height="${height}" rx="3" class="${fill}" stroke-width="1"/>`;
+  const identity = ` data-graph-role="activation" data-activation-participant="${esc(activation.participant)}"`;
+  return `        <rect${identity} x="${x}" y="${activation.from}" width="10" height="${height}" rx="3" class="c-mask"/>
+        <rect${identity} x="${x}" y="${activation.from}" width="10" height="${height}" rx="3" class="${fill}" stroke-width="1"/>`;
 }
 
 function messageLabel(message, x1, x2) {

@@ -52,6 +52,7 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
     visualPreset: meta.visual_preset || 'classic',
     guidedViews: meta.views || [],
     sourceEvidence,
+    diagramType,
   }));
   outputPathGuards.delete(outPath);
   console.log(outPath);
@@ -166,6 +167,10 @@ export function animateAttr(meta, kind, step) {
 // Stable semantic hooks for the standalone HTML explorer. IDs already pass
 // the schema's conservative identifier pattern; escape again at the markup
 // boundary so these helpers remain safe if that contract expands later.
+// Attribute-order contract: `id` must stay FIRST with data-node-* after —
+// the draw.io exporters regex-parse these groups and anchor on that order
+// (NODE_G_RE in renderers/shared/svg-to-drawio.mjs and the viewer's
+// drawioParseSvg in assets/template.html).
 export function focusNodeAttrs(id, label, metadata = {}) {
   const optional = [
     ['data-node-kind', metadata.kind],

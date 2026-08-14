@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-preset="classic">
+<html lang="en" data-theme="dark" data-preset="classic" data-diagram-type="dataflow">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -3424,6 +3424,11 @@
       -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 2.5l7 4v7l-7 4-7-4v-7zM3 6.5l7 4 7-4M10 10.5v7' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E");
       mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 2.5l7 4v7l-7 4-7-4v-7zM3 6.5l7 4 7-4M10 10.5v7' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E");
     }
+    .toolbar .export-menu button[data-format="drawio"]::before,
+    .toolbar .export-menu button[data-format="drawio-strict"]::before {
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect x='2.5' y='2.5' width='6' height='5' rx='1' fill='none' stroke='black' stroke-width='1.7'/%3E%3Crect x='11.5' y='12.5' width='6' height='5' rx='1' fill='none' stroke='black' stroke-width='1.7'/%3E%3Cpath d='M8.5 5h6v7.5' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect x='2.5' y='2.5' width='6' height='5' rx='1' fill='none' stroke='black' stroke-width='1.7'/%3E%3Crect x='11.5' y='12.5' width='6' height='5' rx='1' fill='none' stroke='black' stroke-width='1.7'/%3E%3Cpath d='M8.5 5h6v7.5' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E");
+    }
     .toolbar .export-menu button[data-format="share-card"],
     .toolbar .export-menu button[data-action="route-share-card"],
     .toolbar .export-menu button[data-action="reach-share-card"] {
@@ -4825,6 +4830,8 @@
         <div class="export-menu-section" role="group" aria-label="Vector and motion">
           <span class="export-menu-heading" aria-hidden="true">Vector &amp; motion</span>
           <button data-format="svg" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>SVG</strong><small class="hint">Editable vector</small></span></button>
+          <button data-format="drawio" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>draw.io</strong><small class="hint">Editable diagram</small></span></button>
+          <button data-format="drawio-strict" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>draw.io strict</strong><small class="hint">Exact shapes &amp; colors</small></span></button>
           <button data-format="webm" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>WebM</strong><small class="hint">6s motion</small></span></button>
         </div>
       </div>
@@ -6647,7 +6654,7 @@
       // WebP encoding (older Safari), so detect explicitly.
       function supports(format) {
         if (format === 'share-card') return true;
-        if (format === 'svg' || format === 'png') return true;
+        if (format === 'svg' || format === 'png' || format === 'drawio' || format === 'drawio-strict') return true;
         if (format === 'webm') return canRecordMotion();
         var mime = format === 'jpeg' ? 'image/jpeg' : 'image/webp';
         try {
@@ -6752,6 +6759,698 @@
         }
       });
 
+      // ---- draw.io export -------------------------------------------------
+      // Converts the canonical SVG into a draw.io mxGraphModel XML so the
+      // diagram can be opened and further edited in draw.io. Every edge is
+      // bound to its source/target vertex cell (dragging a box keeps its
+      // connections), and interior route waypoints are preserved. Mirrors
+      // the Node-side converter in renderers/shared/svg-to-drawio.mjs.
+      var DRAWIO_KIND_STYLE = {
+        frontend: 'rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;',
+        backend: 'rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;',
+        database: 'shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;',
+        cloud: 'ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;',
+        security: 'shape=shield;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;',
+        messagebus: 'shape=queue;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;',
+        external: 'shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;'
+      };
+      var DRAWIO_STATE_STYLE = {
+        start: 'ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;',
+        active: 'rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;',
+        waiting: 'rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;',
+        decision: 'rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;',
+        success: 'rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;',
+        failure: 'rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;',
+        neutral: 'rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;',
+        external: 'shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;'
+      };
+      var DRAWIO_FRAME_STYLE = {
+        region: 'rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9673a6;dashed=0;verticalAlign=top;fontStyle=1;',
+        'security-group': 'rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#d79b00;dashed=1;verticalAlign=top;fontStyle=1;',
+        lane: 'rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b0b0b0;verticalAlign=top;align=left;spacingLeft=8;',
+        'exception-lane': 'rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b85450;dashed=1;verticalAlign=top;align=left;spacingLeft=8;',
+        stage: 'rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b0b0b0;verticalAlign=top;align=center;fontStyle=1;',
+        group: 'rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;dashed=1;verticalAlign=top;',
+        segment: 'rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b0b0b0;verticalAlign=top;align=left;spacingLeft=8;'
+      };
+      function drawioEscapeAttr(v) {
+        return String(v == null ? '' : v).replace(/[&"<>']/g, function (ch) {
+          return ch === '&' ? '&amp;' : ch === '"' ? '&quot;' : ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : '&#39;';
+        });
+      }
+      function drawioAttr(tag, name) {
+        var m = tag.match(new RegExp('\\s' + name + '="([^"]*)"'));
+        return m ? m[1] : null;
+      }
+      function drawioParsePoints(value) {
+        if (!value) return [];
+        return value.split(';').filter(Boolean).map(function (pair) {
+          var c = pair.split(',').map(Number);
+          return [c[0], c[1]];
+        });
+      }
+      function drawioFindGroupClose(svg, openIndex) {
+        var depth = 1, i = openIndex;
+        while (depth > 0 && i < svg.length) {
+          var no = svg.indexOf('<g', i + 1), nc = svg.indexOf('</g>', i + 1);
+          if (nc === -1) return -1;
+          if (no !== -1 && no < nc) { depth += 1; i = no; }
+          else { depth -= 1; i = nc; }
+        }
+        return i;
+      }
+      // Parse the self-describing SVG into {viewBox, nodes, edges, boundaries, lifelines}.
+      function drawioParseSvg(svg) {
+        var vb = svg.match(new RegExp('<' + 'svg[^>]*\\bviewBox="0 0 (\\d+\\.?\\d*) (\\d+\\.?\\d*)"'));
+        var viewBox = vb ? [parseFloat(vb[1]), parseFloat(vb[2])] : [1000, 700];
+        // Nodes: <g id="node-..." data-node-id=...> with first inner <rect>.
+        var nodes = [];
+        var nodeMatches = Array.from(svg.matchAll(/<g\s+id="node-[^"]*"[^>]*\bdata-node-id="([^"]*)"[^>]*>/g));
+        nodeMatches.forEach(function (m) {
+          var open = m[0];
+          var ci = drawioFindGroupClose(svg, m.index);
+          var inner = svg.slice(m.index + open.length, ci);
+          var rm = inner.match(/<rect\b[^>]*>/);
+          if (!rm) return;
+          var box = rm[0];
+          nodes.push({
+            id: m[1],
+            kind: drawioAttr(open, 'data-node-kind') || 'backend',
+            label: drawioAttr(open, 'data-node-label') || '',
+            sublabel: drawioAttr(open, 'data-node-sublabel'),
+            tag: drawioAttr(open, 'data-node-tag'),
+            x: parseFloat(drawioAttr(box, 'x') || '0'),
+            y: parseFloat(drawioAttr(box, 'y') || '0'),
+            width: parseFloat(drawioAttr(box, 'width') || '0'),
+            height: parseFloat(drawioAttr(box, 'height') || '0')
+          });
+        });
+        // Edges: <path> with data-composition-points.
+        var edges = [];
+        var edgeMatches = Array.from(svg.matchAll(/<path\b[^>]*\bdata-composition-points="([^"]*)"[^>]*>/g));
+        edgeMatches.forEach(function (m) {
+          var tag = m[0];
+          var points = drawioParsePoints(m[1]);
+          if (points.length < 2) return;
+          var from = drawioAttr(tag, 'data-edge-from') || drawioAttr(tag, 'data-composition-edge-from');
+          var to = drawioAttr(tag, 'data-edge-to') || drawioAttr(tag, 'data-composition-edge-to');
+          if (!from || !to) return;
+          edges.push({
+            from: from, to: to,
+            label: drawioAttr(tag, 'data-edge-label') || drawioAttr(tag, 'data-composition-edge-label'),
+            id: drawioAttr(tag, 'data-edge-id') || drawioAttr(tag, 'data-composition-edge-id'),
+            points: points
+          });
+        });
+        // Boundaries: <rect data-graph-role="structural-frame">.
+        var boundaries = [];
+        var bMatches = Array.from(svg.matchAll(/<rect\b[^>]*\bdata-graph-role="structural-frame"[^>]*>/g));
+        bMatches.forEach(function (m) {
+          var tag = m[0];
+          var w = parseFloat(drawioAttr(tag, 'width') || '0');
+          var h = parseFloat(drawioAttr(tag, 'height') || '0');
+          if (w <= 0 || h <= 0) return;
+          var after = svg.slice(m.index + tag.length, m.index + tag.length + 300);
+          var tm = after.match(/<text\b[^>]*>([^<]*)<\/text>/);
+          boundaries.push({
+            kind: drawioAttr(tag, 'data-composition-frame-kind') || 'boundary',
+            label: tm ? tm[1].trim() : '',
+            x: parseFloat(drawioAttr(tag, 'x') || '0'),
+            y: parseFloat(drawioAttr(tag, 'y') || '0'),
+            width: w, height: h
+          });
+        });
+        // Sequence lifelines: vertical dashed paths.
+        var lifelines = [];
+        var llMatches = Array.from(svg.matchAll(/<path\b[^>]*\bd="M\s*(\d+\.?\d*)\s+(\d+\.?\d*)\s+L\s*\1\s+(\d+\.?\d*)"[^>]*stroke-dasharray/g));
+        llMatches.forEach(function (m) {
+          lifelines.push({ x: parseFloat(m[1]), y1: parseFloat(m[2]), y2: parseFloat(m[3]) });
+        });
+        return { viewBox: viewBox, nodes: nodes, edges: edges, boundaries: boundaries, lifelines: lifelines };
+      }
+      function drawioNodeStyle(node) {
+        // Lifecycle states carry their own type enum.
+        var diagramType = document.documentElement.getAttribute('data-diagram-type') || '';
+        if (diagramType === 'lifecycle' && DRAWIO_STATE_STYLE[node.kind]) return DRAWIO_STATE_STYLE[node.kind];
+        return DRAWIO_KIND_STYLE[node.kind] || DRAWIO_KIND_STYLE.backend;
+      }
+      function drawioBuildXml(parsed) {
+        var vw = parsed.viewBox[0], vh = parsed.viewBox[1];
+        // Resolve container parents: smallest boundary containing node center.
+        // Returns parentId + the boundary's origin (draw.io child coords are
+        // RELATIVE to their parent, so we must subtract the parent origin).
+        var parents = {};
+        var sorted = parsed.boundaries.map(function (b, i) {
+          return Object.assign({}, b, { drawioId: 'boundary-' + i });
+        }).sort(function (a, b) { return a.width * a.height - b.width * b.height; });
+        parsed.nodes.forEach(function (n) {
+          var cx = n.x + n.width / 2, cy = n.y + n.height / 2;
+          for (var i = 0; i < sorted.length; i++) {
+            var b = sorted[i];
+            if (cx >= b.x && cx <= b.x + b.width && cy >= b.y && cy <= b.y + b.height) {
+              parents[n.id] = { drawioId: b.drawioId, ox: b.x, oy: b.y }; break;
+            }
+          }
+        });
+        var vertexIds = {};
+        parsed.nodes.forEach(function (n) { vertexIds[n.id] = true; });
+        var lines = [];
+        lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+        lines.push('<' + 'mxGraphModel dx="' + Math.round(vw) + '" dy="' + Math.round(vh) + '" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="' + Math.round(vw) + '" pageHeight="' + Math.round(vh) + '" math="0" shadow="0">');
+        lines.push('  <root>');
+        lines.push('    <mxCell id="0"/>');
+        lines.push('    <mxCell id="1" parent="0"/>');
+        // Boundaries first (containers).
+        parsed.boundaries.forEach(function (b, i) {
+          var style = DRAWIO_FRAME_STYLE[b.kind] || DRAWIO_FRAME_STYLE.region;
+          lines.push('    <mxCell id="boundary-' + i + '" value="' + drawioEscapeAttr(b.label || b.kind) + '" style="' + style + '" vertex="1" parent="1">');
+          lines.push('      <mxGeometry x="' + Math.round(b.x) + '" y="' + Math.round(b.y) + '" width="' + Math.round(b.width) + '" height="' + Math.round(b.height) + '" as="geometry"/>');
+          lines.push('    </mxCell>');
+        });
+        // Nodes.
+        parsed.nodes.forEach(function (n) {
+          var style = drawioNodeStyle(n);
+          var pinfo = parents[n.id];
+          var parentId = pinfo ? pinfo.drawioId : '1';
+          var relX = n.x - (pinfo ? pinfo.ox : 0);
+          var relY = n.y - (pinfo ? pinfo.oy : 0);
+          var parts = [n.label, n.sublabel, n.tag].filter(Boolean);
+          var htmlVal = parts.length > 1
+            ? '<b>' + parts[0] + '</b><br/><font style="font-size:9px">' + parts.slice(1).join(' · ') + '</font>'
+            : n.label;
+          lines.push('    <mxCell id="node-' + n.id + '" value="' + drawioEscapeAttr(htmlVal) + '" style="' + style + '" vertex="1" parent="' + parentId + '">');
+          lines.push('      <mxGeometry x="' + Math.round(relX) + '" y="' + Math.round(relY) + '" width="' + Math.round(n.width) + '" height="' + Math.round(n.height) + '" as="geometry"/>');
+          lines.push('    </mxCell>');
+        });
+        // Sequence lifelines.
+        parsed.lifelines.forEach(function (ll) {
+          var id = 'lifeline-' + Math.round(ll.x) + '-' + Math.round(ll.y1);
+          lines.push('    <mxCell id="' + id + '" value="" style="endArrow=none;html=1;strokeColor=#999999;dashed=1;dashPattern=3 7;" edge="1" parent="1">');
+          lines.push('      <mxGeometry relative="1" as="geometry">');
+          lines.push('        <mxPoint x="' + Math.round(ll.x) + '" y="' + Math.round(ll.y1) + '" as="sourcePoint"/>');
+          lines.push('        <mxPoint x="' + Math.round(ll.x) + '" y="' + Math.round(ll.y2) + '" as="targetPoint"/>');
+          lines.push('      </mxGeometry>');
+          lines.push('    </mxCell>');
+        });
+        // Edges: real source/target binding + fixed interior waypoints.
+        parsed.edges.forEach(function (edge, i) {
+          if (!vertexIds[edge.from] || !vertexIds[edge.to]) return;
+          var id = edge.id ? 'edge-' + edge.id : 'edge-' + i;
+          var value = edge.label ? drawioEscapeAttr(edge.label) : '';
+          lines.push('    <mxCell id="' + id + '" value="' + value + '" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-' + edge.from + '" target="node-' + edge.to + '">');
+          lines.push('      <mxGeometry relative="1" as="geometry">');
+          // Interior waypoints only (draw.io computes endpoints from vertices).
+          if (edge.points.length > 2) {
+            lines.push('        <Array as="points">');
+            for (var p = 1; p < edge.points.length - 1; p++) {
+              lines.push('          <mxPoint x="' + Math.round(edge.points[p][0]) + '" y="' + Math.round(edge.points[p][1]) + '"/>');
+            }
+            lines.push('        </Array>');
+          }
+          lines.push('      </mxGeometry>');
+          lines.push('    </mxCell>');
+        });
+        lines.push('  </root>');
+        lines.push('</mxGraphModel>');
+        return lines.join('\n');
+      }
+      function archifySvgToDrawio(svgString) {
+        return drawioBuildXml(drawioParseSvg(svgString));
+      }
+
+      // ---- draw.io strict export -----------------------------------------
+      // 1:1 fidelity variant: reads the LIVE SVG computed styles (exact
+      // composited fill/stroke colors, same corner radii — arcSize = 2 ×
+      // radius on edges — same dash patterns) but always force-resolves the
+      // artifact's LIGHT theme, so the exported file never depends on the
+      // reader's current theme or the browser preference behind it.
+      function drawioParseColor(v) {
+        var s = String(v || '').trim();
+        var m = s.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/);
+        if (m) return { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] };
+        // Theme variables come back as their authored tokens (hex), while
+        // computed fill/stroke values arrive as rgb()/rgba().
+        var h = s.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+        if (h) {
+          var hex = h[1].length === 3 ? h[1].split('').map(function (c) { return c + c; }).join('') : h[1];
+          return { r: parseInt(hex.slice(0, 2), 16), g: parseInt(hex.slice(2, 4), 16), b: parseInt(hex.slice(4, 6), 16), a: 1 };
+        }
+        return null;
+      }
+      function drawioHex(c) {
+        var h = function (n) { var s = Math.round(Math.max(0, Math.min(255, n))).toString(16); return s.length < 2 ? '0' + s : s; };
+        return '#' + h(c.r) + h(c.g) + h(c.b);
+      }
+      function drawioBlend(fg, base) {
+        return { r: fg.r * fg.a + base.r * (1 - fg.a), g: fg.g * fg.a + base.g * (1 - fg.a), b: fg.b * fg.a + base.b * (1 - fg.a), a: 1 };
+      }
+      function drawioCssColor(v, base) {
+        var c = drawioParseColor(v);
+        if (!c) return null;
+        return drawioHex(c.a >= 1 ? c : drawioBlend(c, base));
+      }
+      function drawioRadiusFromD(d) {
+        var m = String(d || '').match(/L\s*(-?[\d.]+)\s+(-?[\d.]+)\s+Q\s*(-?[\d.]+)\s+(-?[\d.]+)/);
+        return m ? Math.round(Math.hypot(+m[3] - +m[1], +m[4] - +m[2])) : 0;
+      }
+      // Run `fn` with the artifact forced to its light theme and restore the
+      // reader's theme afterwards. The swap and restore happen inside one
+      // synchronous task, so the page never repaints in between; it only
+      // affects how the style reads below resolve.
+      function withLightTheme(fn) {
+        var root = document.documentElement;
+        var prev = root.getAttribute('data-theme');
+        root.setAttribute('data-theme', 'light');
+        try {
+          return fn();
+        } finally {
+          if (prev === null) root.removeAttribute('data-theme');
+          else root.setAttribute('data-theme', prev);
+        }
+      }
+      function drawioStrictPalette(svgEl) {
+        var cs = getComputedStyle(svgEl);
+        // Fallbacks are the light-theme values: the export is always light.
+        var mask = drawioParseColor(cs.getPropertyValue('--mask').trim()) || { r: 255, g: 255, b: 255, a: 1 };
+        var bg = drawioParseColor(cs.getPropertyValue('--bg').trim()) || { r: 248, g: 250, b: 252, a: 1 };
+        var text = drawioHex(drawioParseColor(cs.getPropertyValue('--text').trim()) || { r: 15, g: 23, b: 42, a: 1 });
+        var muted = drawioHex(drawioParseColor(cs.getPropertyValue('--text-muted').trim()) || { r: 100, g: 116, b: 139, a: 1 });
+        return {
+          mask: drawioHex(mask), maskC: mask, bg: drawioHex(bg), bgC: bg, text: text, textMuted: muted,
+          of: function (el, base) {
+            var s = getComputedStyle(el);
+            var b = base === 'mask' ? mask : bg;
+            var out = {};
+            var f = drawioCssColor(s.fill, b);
+            if (f) out.fill = f;
+            var st = drawioCssColor(s.stroke, b);
+            if (st) out.stroke = st;
+            var dash = s.strokeDasharray;
+            if (dash && dash !== 'none') {
+              var parts = dash.split(/[\s,]+/).map(Number).filter(function (n) { return n > 0; });
+              if (parts.length) out.dash = parts.join(' ');
+            }
+            return out;
+          }
+        };
+      }
+      function buildStrictXmlLight() {
+        var svgEl = document.querySelector('.diagram-container svg');
+        if (!svgEl) throw new Error('No diagram SVG found.');
+        var P = drawioStrictPalette(svgEl);
+        var FONT = 'JetBrains Mono,ui-monospace,Menlo,monospace';
+        var vb = (svgEl.getAttribute('viewBox') || '0 0 1000 700').split(/\s+/);
+        var vw = Math.round(+vb[2]), vh = Math.round(+vb[3]);
+        // -- nodes -----------------------------------------------------------
+        var nodes = [], nodeById = {};
+        svgEl.querySelectorAll('g[id^="node-"]').forEach(function (g) {
+          var fillRect = null;
+          g.querySelectorAll('rect').forEach(function (r) {
+            var cls = r.getAttribute('class') || '';
+            if (!fillRect && cls.indexOf('c-') === 0 && cls !== 'c-mask') fillRect = r;
+            else if (fillRect && cls !== 'c-mask' && +r.getAttribute('width') > +fillRect.getAttribute('width')) fillRect = r;
+          });
+          var geom = fillRect || g.querySelector('rect');
+          if (!geom) return;
+          var n = {
+            id: g.getAttribute('data-node-id'),
+            label: g.getAttribute('data-node-label') || '',
+            sublabel: g.getAttribute('data-node-sublabel'),
+            tag: g.getAttribute('data-node-tag'),
+            x: +geom.x.baseVal.value, y: +geom.y.baseVal.value,
+            width: +geom.width.baseVal.value, height: +geom.height.baseVal.value,
+            rx: +(fillRect ? fillRect.getAttribute('rx') : 0) || 0,
+            sw: +(fillRect ? fillRect.getAttribute('stroke-width') : 1.5) || 1.5,
+            fillRect: fillRect || geom
+          };
+          nodes.push(n); nodeById[n.id] = n;
+        });
+        // -- boundaries ------------------------------------------------------
+        var boundaries = [];
+        svgEl.querySelectorAll('rect[data-graph-role="structural-frame"]').forEach(function (r) {
+          boundaries.push({
+            kind: r.getAttribute('data-composition-frame-kind') || 'boundary',
+            x: +r.x.baseVal.value, y: +r.y.baseVal.value,
+            width: +r.width.baseVal.value, height: +r.height.baseVal.value,
+            rx: +r.getAttribute('rx') || 0, sw: +r.getAttribute('stroke-width') || 1,
+            el: r, textEl: null
+          });
+        });
+        // Boundary labels: the first <text> sibling following each frame rect.
+        boundaries.forEach(function (b) {
+          var t = b.el.nextElementSibling;
+          if (t && t.tagName.toLowerCase() === 'text') b.textEl = t;
+        });
+        // -- edges -----------------------------------------------------------
+        var edges = [];
+        svgEl.querySelectorAll('path[data-composition-points]').forEach(function (p) {
+          var from = p.getAttribute('data-edge-from') || p.getAttribute('data-composition-edge-from');
+          var to = p.getAttribute('data-edge-to') || p.getAttribute('data-composition-edge-to');
+          if (!from || !to) return;
+          var pts = (p.getAttribute('data-composition-points') || '').split(';').filter(Boolean).map(function (pair) {
+            var c = pair.split(',');
+            return [+c[0], +c[1]];
+          });
+          if (pts.length < 2) return;
+          edges.push({
+            from: from, to: to,
+            label: p.getAttribute('data-edge-label') || p.getAttribute('data-composition-edge-label'),
+            el: p, pts: pts,
+            sw: +p.getAttribute('stroke-width') || 1.5,
+            radius: drawioRadiusFromD(p.getAttribute('d'))
+          });
+        });
+        // -- edge labels (positioned <text> in data-detail groups) -----------
+        var edgeLabels = [];
+        svgEl.querySelectorAll('g[data-detail="context"][data-edge-from]').forEach(function (g) {
+          var t = g.querySelector('text');
+          if (!t) return;
+          edgeLabels.push({
+            from: g.getAttribute('data-edge-from'), to: g.getAttribute('data-edge-to'),
+            x: +t.getAttribute('x'), y: +t.getAttribute('y') - 4, el: t
+          });
+        });
+        // -- lifelines -------------------------------------------------------
+        var lifelines = [];
+        svgEl.querySelectorAll('path').forEach(function (p) {
+          if (p.hasAttribute('data-composition-points')) return;
+          var d = p.getAttribute('d') || '';
+          var m = d.match(/^M\s*(\d+\.?\d*)\s+(\d+\.?\d*)\s+L\s*\1\s+(\d+\.?\d*)$/);
+          if (!m) return;
+          if (getComputedStyle(p).strokeDasharray === 'none') return;
+          lifelines.push({ x: +m[1], y1: +m[2], y2: +m[3], el: p, sw: +p.getAttribute('stroke-width') || 0.8 });
+        });
+        // -- helpers ---------------------------------------------------------
+        function parents() {
+          var sorted = boundaries.map(function (b, i) { return Object.assign({}, b, { id: 'boundary-' + i }); })
+            .sort(function (a, b) { return a.width * a.height - b.width * b.height; });
+          var map = {};
+          nodes.forEach(function (n) {
+            var cx = n.x + n.width / 2, cy = n.y + n.height / 2;
+            for (var i = 0; i < sorted.length; i++) {
+              var b = sorted[i];
+              if (cx >= b.x && cx <= b.x + b.width && cy >= b.y && cy <= b.y + b.height) { map[n.id] = b; break; }
+            }
+          });
+          return map;
+        }
+        var pm = parents();
+        function fractionAlong(pts, target) {
+          var total = 0, segs = [];
+          for (var i = 0; i < pts.length - 1; i++) {
+            var len = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]) || 1;
+            segs.push({ ax: pts[i][0], ay: pts[i][1], dx: pts[i + 1][0] - pts[i][0], dy: pts[i + 1][1] - pts[i][1], len: len, start: total });
+            total += len;
+          }
+          var best = 1e30, result = 0.5;
+          segs.forEach(function (s) {
+            var t = Math.max(0, Math.min(1, ((target[0] - s.ax) * s.dx + (target[1] - s.ay) * s.dy) / (s.len * s.len)));
+            var dist = Math.hypot(target[0] - (s.ax + t * s.dx), target[1] - (s.ay + t * s.dy));
+            if (dist < best) { best = dist; result = (s.start + t * s.len) / (total || 1); }
+          });
+          return Math.max(0, Math.min(1, result));
+        }
+        function borderFrac(pt, node) {
+          if (!node) return null;
+          var f = function (v) { return v < 0.04 ? 0 : v > 0.96 ? 1 : Math.round(v * 100) / 100; };
+          return [f((pt[0] - node.x) / node.width), f((pt[1] - node.y) / node.height)];
+        }
+        // -- emit ------------------------------------------------------------
+        var L = [];
+        L.push('<?xml version="1.0" encoding="UTF-8"?>');
+        L.push('<' + 'mxGraphModel dx="' + vw + '" dy="' + vh + '" grid="0" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="' + vw + '" pageHeight="' + vh + '" math="0" shadow="0" background="' + P.bg + '">');
+        L.push('  <root>');
+        L.push('    <mxCell id="0"/>');
+        L.push('    <mxCell id="1" parent="0"/>');
+        boundaries.forEach(function (b, i) {
+          var c = P.of(b.el, 'bg');
+          var tc = b.textEl ? P.of(b.textEl, 'bg') : null;
+          var left = b.kind === 'lane' || b.kind === 'exception-lane' || b.kind === 'segment';
+          var style = ['rounded=' + (b.rx > 0 ? 1 : 0), b.rx > 0 ? 'absoluteArcSize=1;arcSize=' + Math.round(b.rx) : '',
+            'fillColor=' + (c.fill || 'none'), 'strokeColor=' + (c.stroke || '#666666'), 'strokeWidth=' + b.sw,
+            c.dash ? 'dashed=1;dashPattern=' + c.dash : '',
+            'fontColor=' + (tc && tc.fill ? tc.fill : P.textMuted), 'fontSize=9', 'fontFamily=' + FONT,
+            'whiteSpace=wrap', 'html=1', 'verticalAlign=top', left ? 'align=left;spacingLeft=8' : ''].filter(Boolean).join(';') + ';';
+          L.push('    <mxCell id="boundary-' + i + '" value="' + drawioEscapeAttr(b.textEl ? b.textEl.textContent : b.kind) + '" style="' + style + '" vertex="1" parent="1">');
+          L.push('      <mxGeometry x="' + Math.round(b.x) + '" y="' + Math.round(b.y) + '" width="' + Math.round(b.width) + '" height="' + Math.round(b.height) + '" as="geometry"/>');
+          L.push('    </mxCell>');
+        });
+        nodes.forEach(function (n) {
+          var c = P.of(n.fillRect, 'mask');
+          var p = pm[n.id];
+          var relX = n.x - (p ? p.x : 0), relY = n.y - (p ? p.y : 0);
+          var html = n.label;
+          if (n.sublabel || n.tag) {
+            html = '<b>' + n.label + '</b><br/>'
+              + (n.sublabel ? '<font style="font-size:8px" color="' + P.textMuted + '">' + n.sublabel + '</font>' : '')
+              + (n.sublabel && n.tag ? '<br/>' : '')
+              + (n.tag ? '<font style="font-size:7px" color="' + (c.stroke || P.text) + '">' + n.tag + '</font>' : '');
+          }
+          var style = ['rounded=' + (n.rx > 0 ? 1 : 0), n.rx > 0 ? 'absoluteArcSize=1;arcSize=' + Math.round(n.rx) : '',
+            'fillColor=' + (c.fill || '#d5e8d4'), 'strokeColor=' + (c.stroke || '#82b366'), 'strokeWidth=' + n.sw,
+            'fontColor=' + P.text, 'fontSize=11', 'fontFamily=' + FONT, 'whiteSpace=wrap', 'html=1', 'verticalAlign=middle']
+            .filter(Boolean).join(';') + ';';
+          L.push('    <mxCell id="node-' + n.id + '" value="' + drawioEscapeAttr(html) + '" style="' + style + '" vertex="1" parent="' + (p ? p.id : '1') + '">');
+          L.push('      <mxGeometry x="' + Math.round(relX) + '" y="' + Math.round(relY) + '" width="' + Math.round(n.width) + '" height="' + Math.round(n.height) + '" as="geometry"/>');
+          L.push('    </mxCell>');
+        });
+        lifelines.forEach(function (ll, i) {
+          var c = P.of(ll.el, 'bg');
+          L.push('    <mxCell id="lifeline-' + i + '" value="" style="endArrow=none;html=1;strokeColor=' + (c.stroke || '#999999') + ';strokeWidth=' + ll.sw + ';dashed=1;dashPattern=3 7;" edge="1" parent="1">');
+          L.push('      <mxGeometry relative="1" as="geometry">');
+          L.push('        <mxPoint x="' + Math.round(ll.x) + '" y="' + Math.round(ll.y1) + '" as="sourcePoint"/>');
+          L.push('        <mxPoint x="' + Math.round(ll.x) + '" y="' + Math.round(ll.y2) + '" as="targetPoint"/>');
+          L.push('      </mxGeometry>');
+          L.push('    </mxCell>');
+        });
+        edges.forEach(function (e, i) {
+          var src = nodeById[e.from], tgt = nodeById[e.to];
+          if (!src || !tgt) return;
+          var c = P.of(e.el, 'bg');
+          var lbl = edgeLabels.find(function (l) { return l.from === e.from && l.to === e.to; });
+          var lc = lbl ? P.of(lbl.el, 'bg') : null;
+          var style = ['edgeStyle=none', e.radius > 0 ? 'rounded=1;arcSize=' + e.radius * 2 : 'rounded=0',
+            'strokeColor=' + (c.stroke || '#666666'), 'strokeWidth=' + e.sw,
+            c.dash ? 'dashed=1;dashPattern=' + c.dash : '',
+            'endArrow=block', 'endFill=1', 'endSize=' + Math.max(4, Math.round(10 * e.sw)),
+            'fontColor=' + (lc && lc.fill ? lc.fill : P.textMuted), 'fontSize=8', 'fontFamily=' + FONT,
+            'labelBackgroundColor=' + P.mask, 'html=1'].filter(Boolean).join(';');
+          var exit = borderFrac(e.pts[0], src), entry = borderFrac(e.pts[e.pts.length - 1], tgt);
+          if (exit) style += ';exitX=' + exit[0] + ';exitY=' + exit[1] + ';exitDx=0;exitDy=0';
+          if (entry) style += ';entryX=' + entry[0] + ';entryY=' + entry[1] + ';entryDx=0;entryDy=0';
+          L.push('    <mxCell id="edge-' + i + '" value="' + (e.label ? drawioEscapeAttr(e.label) : '') + '" style="' + style + '" edge="1" parent="1" source="node-' + e.from + '" target="node-' + e.to + '">');
+          L.push('      <mxGeometry relative="1" as="geometry">');
+          if (lbl && e.label) {
+            var t = fractionAlong(e.pts, [lbl.x, lbl.y]);
+            L.push('        <mxGeometry x="' + (2 * t - 1).toFixed(3) + '" y="0" relative="1" as="geometry"/>');
+          }
+          if (e.pts.length > 2) {
+            L.push('        <Array as="points">');
+            for (var p = 1; p < e.pts.length - 1; p++) L.push('          <mxPoint x="' + Math.round(e.pts[p][0]) + '" y="' + Math.round(e.pts[p][1]) + '"/>');
+            L.push('        </Array>');
+          }
+          L.push('      </mxGeometry>');
+          L.push('    </mxCell>');
+        });
+        L.push('  </root>');
+        L.push('</' + 'mxGraphModel>');
+        return L.join('\n');
+      }
+
+      // ---- draw.io sequence export ----------------------------------------
+      // Sequence geometry is a timeline, not a node graph: participants are
+      // exported as draw.io UML lifelines spanning the full timeline so each
+      // message's authored y survives as an exit/entry fraction, activation
+      // bars become lifeline children, and segment bands keep their labels.
+      // Mirrors buildDrawioXmlSequence in renderers/shared/svg-to-drawio.mjs.
+      function drawioKindPair(kind) {
+        var style = DRAWIO_KIND_STYLE[kind] || DRAWIO_KIND_STYLE.backend;
+        var fill = style.match(/fillColor=(#[0-9a-f]{6})/i);
+        var stroke = style.match(/strokeColor=(#[0-9a-f]{6})/i);
+        return { fill: fill ? fill[1] : null, stroke: stroke ? stroke[1] : null };
+      }
+      function drawioBuildSequenceXml(strict) {
+        var svgEl = document.querySelector('.diagram-container svg');
+        if (!svgEl) throw new Error('No diagram SVG found.');
+        var P = drawioStrictPalette(svgEl);
+        var FONT = 'JetBrains Mono,ui-monospace,Menlo,monospace';
+        var vb = (svgEl.getAttribute('viewBox') || '0 0 1000 700').split(/\s+/);
+        var vw = Math.round(+vb[2]), vh = Math.round(+vb[3]);
+        // -- participants ---------------------------------------------------
+        var nodes = [], nodeById = {};
+        svgEl.querySelectorAll('g[id^="node-"]').forEach(function (g) {
+          var fillRect = null;
+          g.querySelectorAll('rect').forEach(function (r) {
+            var cls = r.getAttribute('class') || '';
+            if (!fillRect && cls.indexOf('c-') === 0 && cls !== 'c-mask') fillRect = r;
+          });
+          var geom = fillRect || g.querySelector('rect');
+          if (!geom) return;
+          var n = {
+            id: g.getAttribute('data-node-id'),
+            label: g.getAttribute('data-node-label') || '',
+            sublabel: g.getAttribute('data-node-sublabel'),
+            kind: g.getAttribute('data-node-kind') || 'backend',
+            x: +geom.x.baseVal.value, y: +geom.y.baseVal.value,
+            width: +geom.width.baseVal.value, height: +geom.height.baseVal.value,
+            rx: +(fillRect ? fillRect.getAttribute('rx') : 0) || 0,
+            sw: +(fillRect ? fillRect.getAttribute('stroke-width') : 1.5) || 1.5,
+            fillRect: fillRect || geom
+          };
+          nodes.push(n); nodeById[n.id] = n;
+        });
+        // -- timeline span: deepest dashed lifeline foot ---------------------
+        var footY = 0;
+        svgEl.querySelectorAll('path').forEach(function (p) {
+          if (p.hasAttribute('data-composition-points')) return;
+          var d = p.getAttribute('d') || '';
+          var m = d.match(/^M\s*(\d+\.?\d*)\s+(\d+\.?\d*)\s+L\s*\1\s+(\d+\.?\d*)$/);
+          if (m && getComputedStyle(p).strokeDasharray !== 'none') footY = Math.max(footY, +m[3]);
+        });
+        if (!footY) {
+          nodes.forEach(function (n) { footY = Math.max(footY, n.y + n.height + 60); });
+          if (!footY) footY = 400;
+        }
+        // -- segment bands + labels (labels dodge messages, live elsewhere) --
+        var segments = [];
+        var segLabels = {};
+        svgEl.querySelectorAll('g[data-graph-role="segment-label"]').forEach(function (g) {
+          segLabels[g.getAttribute('data-segment-id')] = (g.textContent || '').trim();
+        });
+        svgEl.querySelectorAll('rect[data-graph-role="structural-frame"]').forEach(function (r) {
+          var sid = r.getAttribute('data-composition-frame-id');
+          segments.push({
+            label: sid != null && segLabels[sid] ? segLabels[sid] : '',
+            x: +r.x.baseVal.value, y: +r.y.baseVal.value,
+            width: +r.width.baseVal.value, height: +r.height.baseVal.value,
+            rx: +r.getAttribute('rx') || 0, sw: +r.getAttribute('stroke-width') || 1,
+            el: r
+          });
+        });
+        // -- activation bars -------------------------------------------------
+        var activations = [];
+        svgEl.querySelectorAll('rect[data-graph-role="activation"]').forEach(function (r) {
+          var cls = r.getAttribute('class') || '';
+          if (!cls || cls === 'c-mask') return;
+          activations.push({
+            participant: r.getAttribute('data-activation-participant'),
+            x: +r.x.baseVal.value, y: +r.y.baseVal.value,
+            width: +r.width.baseVal.value, height: +r.height.baseVal.value,
+            rx: +r.getAttribute('rx') || 0, sw: +r.getAttribute('stroke-width') || 1,
+            el: r
+          });
+        });
+        // -- messages: label on the focus group, dash via computed style ----
+        var edges = [];
+        svgEl.querySelectorAll('path[data-composition-points]').forEach(function (p) {
+          var from = p.getAttribute('data-edge-from') || p.getAttribute('data-composition-edge-from');
+          var to = p.getAttribute('data-edge-to') || p.getAttribute('data-composition-edge-to');
+          if (!from || !to) return;
+          var pts = (p.getAttribute('data-composition-points') || '').split(';').filter(Boolean).map(function (pair) {
+            var c = pair.split(',');
+            return [+c[0], +c[1]];
+          });
+          if (pts.length < 2) return;
+          var label = p.getAttribute('data-edge-label') || p.getAttribute('data-composition-edge-label');
+          var owner = p.parentElement;
+          if (!label && owner && owner.tagName.toLowerCase() === 'g') label = owner.getAttribute('data-edge-label');
+          var dashParts = (getComputedStyle(p).strokeDasharray || '').split(/[\s,]+/).map(Number).filter(function (n) { return n > 0; });
+          edges.push({
+            from: from, to: to, id: p.getAttribute('data-edge-id') || p.getAttribute('data-composition-edge-id'),
+            label: label || '', pts: pts, el: p,
+            sw: +p.getAttribute('stroke-width') || 1.5,
+            dash: dashParts.length ? dashParts.join(' ') : ''
+          });
+        });
+        // -- emit ------------------------------------------------------------
+        var colorsOf = function (el, base) { return strict ? P.of(el, base) : null; };
+        var L = [];
+        L.push('<?xml version="1.0" encoding="UTF-8"?>');
+        L.push('<' + 'mxGraphModel dx="' + vw + '" dy="' + vh + '" grid="' + (strict ? 0 : 1) + '" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="' + vw + '" pageHeight="' + vh + '" math="0" shadow="0"' + (strict ? ' background="' + P.bg + '"' : '') + '>');
+        L.push('  <root>');
+        L.push('    <mxCell id="0"/>');
+        L.push('    <mxCell id="1" parent="0"/>');
+        segments.forEach(function (s, i) {
+          var c = colorsOf(s.el, 'bg');
+          var style = ['rounded=' + (s.rx > 0 ? 1 : 0), s.rx > 0 ? 'absoluteArcSize=1;arcSize=' + Math.round(s.rx) : '',
+            'fillColor=' + (c && c.fill ? c.fill : 'none'), 'strokeColor=' + (c && c.stroke ? c.stroke : '#b0b0b0'), 'strokeWidth=' + s.sw,
+            c && c.dash ? 'dashed=1;dashPattern=' + c.dash : '',
+            'fontColor=' + (strict ? P.textMuted : '#666666'), 'fontSize=9', 'fontFamily=' + FONT,
+            'whiteSpace=wrap', 'html=1', 'verticalAlign=top', 'align=left', 'spacingLeft=8'].filter(Boolean).join(';') + ';';
+          L.push('    <mxCell id="boundary-' + i + '" value="' + drawioEscapeAttr(s.label) + '" style="' + style + '" vertex="1" parent="1">');
+          L.push('      <mxGeometry x="' + Math.round(s.x) + '" y="' + Math.round(s.y) + '" width="' + Math.round(s.width) + '" height="' + Math.round(s.height) + '" as="geometry"/>');
+          L.push('    </mxCell>');
+        });
+        nodes.forEach(function (n) {
+          var c = colorsOf(n.fillRect, 'mask') || (strict ? null : drawioKindPair(n.kind));
+          var parts = [n.label, n.sublabel].filter(Boolean);
+          var html = parts.length > 1
+            ? '<b>' + parts[0] + '</b><br/><font style="font-size:8px" color="' + (strict ? P.textMuted : '#666666') + '">' + parts.slice(1).join(' · ') + '</font>'
+            : n.label;
+          var style = ['shape=umlLifeline', 'perimeter=lifelinePerimeter', 'size=' + Math.round(n.height),
+            'container=1', 'collapsible=0', 'recursiveResize=0', 'outlineConnect=0',
+            c && c.fill ? 'fillColor=' + c.fill : '',
+            c && c.stroke ? 'strokeColor=' + c.stroke : '',
+            'strokeWidth=' + n.sw,
+            'fontColor=' + (strict ? P.text : '#000000'), 'fontSize=11', 'fontFamily=' + FONT,
+            'whiteSpace=wrap', 'html=1'].filter(Boolean).join(';') + ';';
+          L.push('    <mxCell id="node-' + n.id + '" value="' + drawioEscapeAttr(html) + '" style="' + style + '" vertex="1" parent="1">');
+          L.push('      <mxGeometry x="' + Math.round(n.x) + '" y="' + Math.round(n.y) + '" width="' + Math.round(n.width) + '" height="' + Math.round(footY - n.y) + '" as="geometry"/>');
+          L.push('    </mxCell>');
+        });
+        activations.forEach(function (a, i) {
+          var participant = nodeById[a.participant];
+          if (!participant) return;
+          var c = colorsOf(a.el, 'mask') || (strict ? null : drawioKindPair(participant.kind));
+          var style = ['rounded=' + (a.rx > 0 ? 1 : 0), a.rx > 0 ? 'absoluteArcSize=1;arcSize=' + Math.round(a.rx) : '',
+            'fillColor=' + (c && c.fill ? c.fill : '#ffffff'), 'strokeColor=' + (c && c.stroke ? c.stroke : '#999999'),
+            'strokeWidth=' + a.sw, 'html=1'].filter(Boolean).join(';') + ';';
+          L.push('    <mxCell id="activation-' + i + '" value="" style="' + style + '" vertex="1" parent="node-' + participant.id + '">');
+          L.push('      <mxGeometry x="' + Math.round(a.x - participant.x) + '" y="' + Math.round(a.y - participant.y) + '" width="' + Math.round(a.width) + '" height="' + Math.round(a.height) + '" as="geometry"/>');
+          L.push('    </mxCell>');
+        });
+        edges.forEach(function (e, i) {
+          var src = nodeById[e.from], tgt = nodeById[e.to];
+          if (!src || !tgt) return;
+          var c = colorsOf(e.el, 'bg');
+          var frac = function (y, cell) { return Math.max(0, Math.min(1, (y - cell.y) / (footY - cell.y))).toFixed(3); };
+          var exitY = frac(e.pts[0][1], src), entryY = frac(e.pts[e.pts.length - 1][1], tgt);
+          var style = ['edgeStyle=none', 'rounded=0',
+            'strokeColor=' + (c && c.stroke ? c.stroke : '#666666'), 'strokeWidth=' + e.sw,
+            e.dash ? 'dashed=1;dashPattern=' + e.dash : '',
+            'endArrow=block', 'endFill=1', 'endSize=' + Math.max(4, Math.round(10 * e.sw)),
+            'fontColor=' + (strict ? P.textMuted : '#666666'), 'fontSize=8', 'fontFamily=' + FONT,
+            'labelBackgroundColor=' + (strict ? P.mask : '#ffffff'), 'html=1']
+            .filter(Boolean).join(';')
+            + ';exitX=0.5;exitY=' + exitY + ';exitDx=0;exitDy=0'
+            + ';entryX=0.5;entryY=' + entryY + ';entryDx=0;entryDy=0;';
+          L.push('    <mxCell id="edge-' + (e.id || i) + '" value="' + drawioEscapeAttr(e.label) + '" style="' + style + '" edge="1" parent="1" source="node-' + e.from + '" target="node-' + e.to + '">');
+          // Label geometry y=-1 lifts the label one label-height above the
+          // line, matching the Archify artifact.
+          L.push('      <mxGeometry x="0" y="-1" relative="1" as="geometry">');
+          if (e.pts.length > 2) {
+            L.push('        <Array as="points">');
+            for (var p = 1; p < e.pts.length - 1; p++) L.push('          <mxPoint x="' + Math.round(e.pts[p][0]) + '" y="' + Math.round(e.pts[p][1]) + '"/>');
+            L.push('        </Array>');
+          }
+          L.push('      </mxGeometry>');
+          L.push('    </mxCell>');
+        });
+        L.push('  </root>');
+        L.push('</' + 'mxGraphModel>');
+        return L.join('\n');
+      }
+      // Public entry: always a light-themed .drawio file, independent of the
+      // viewer's current theme (and the browser preference behind it).
+      // Sequence artifacts carry timeline geometry and route through the
+      // dedicated sequence builder instead.
+      function drawioBuildStrictXml() {
+        var isSequence = document.documentElement.getAttribute('data-diagram-type') === 'sequence';
+        return withLightTheme(function () {
+          return isSequence ? drawioBuildSequenceXml(true) : buildStrictXmlLight();
+        });
+      }
+
       function runExport(format) {
         var base = diagramFilename();
         close(true);
@@ -6768,6 +7467,30 @@
               var blob = new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' });
               recordExportReceipt('svg', blob, d.canonicalStateClean);
               download(blob, base + '.svg');
+            })
+          : format === 'drawio'
+          ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
+              // Sequence artifacts need live computed styles (timeline
+              // geometry), so they read the live SVG instead of the
+              // serialized string.
+              var isSequence = document.documentElement.getAttribute('data-diagram-type') === 'sequence';
+              var xml = isSequence ? drawioBuildSequenceXml(false) : archifySvgToDrawio(d.svgString);
+              var blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+              recordExportReceipt('drawio', blob, d.canonicalStateClean);
+              download(blob, base + '.drawio');
+              toast('Downloaded draw.io');
+            })
+          : format === 'drawio-strict'
+          ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
+              // Strict reads the live SVG but force-resolves the light
+              // theme, so the file never follows the reader's current
+              // theme; serializeSvg only supplies the canonical-state
+              // receipt.
+              var xml = drawioBuildStrictXml();
+              var blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+              recordExportReceipt('drawio-strict', blob, d.canonicalStateClean);
+              download(blob, base + '-strict.drawio');
+              toast('Downloaded draw.io (strict)');
             })
           : format === 'webm'
             ? recordWebm().then(function (blob) {
