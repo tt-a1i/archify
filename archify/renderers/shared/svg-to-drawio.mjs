@@ -218,8 +218,28 @@ function parseNodes(svg) {
  */
 const EDGE_POINTS_RE = /<path\b[^>]*\bdata-composition-points="([^"]*)"[^>]*>/g;
 
+/**
+ * Message labels for sequence diagrams live on the FOCUS GROUP wrapping the
+ * path (`<g data-edge-from=.. data-edge-label=..>`), not on the path itself.
+ * Index those labels so parseEdges can fall back to them.
+ */
+function outerEdgeLabels(svg) {
+  const byId = new Map();
+  const byPair = new Map();
+  const re = /<g\b[^>]*\bdata-edge-label="([^"]*)"[^>]*>/g;
+  for (const m of svg.matchAll(re)) {
+    const from = attr(m[0], 'data-edge-from');
+    const to = attr(m[0], 'data-edge-to');
+    const id = attr(m[0], 'data-edge-id');
+    if (id) byId.set(id, m[1]);
+    if (from && to) byPair.set(`${from}\u0000${to}`, m[1]);
+  }
+  return { byId, byPair };
+}
+
 function parseEdges(svg) {
   const edges = [];
+  const outer = outerEdgeLabels(svg);
   const matches = [...svg.matchAll(EDGE_POINTS_RE)];
   for (const m of matches) {
     const tag = m[0];
@@ -229,14 +249,17 @@ function parseEdges(svg) {
     const from = attr(tag, 'data-edge-from') || attr(tag, 'data-composition-edge-from');
     const to = attr(tag, 'data-edge-to') || attr(tag, 'data-composition-edge-to');
     if (!from || !to) continue;
-    const label = attr(tag, 'data-edge-label') || attr(tag, 'data-composition-edge-label');
     const id = attr(tag, 'data-edge-id') || attr(tag, 'data-composition-edge-id');
+    const label = attr(tag, 'data-edge-label') || attr(tag, 'data-composition-edge-label')
+      || (id ? outer.byId.get(id) : undefined) || outer.byPair.get(`${from}\u0000${to}`);
     edges.push({
-      from, to, label, id, points,
+      from, to, label: label ?? null, id, points,
       // Strict-mode visual fields.
       strokeClass: attr(tag, 'class'),
       strokeWidth: parseFloat(attr(tag, 'stroke-width') || '1.5'),
       radius: cornerRadiusFromD(attr(tag, 'd')),
+      // Sequence return messages carry their dash as an inline attribute.
+      inlineDash: attr(tag, 'stroke-dasharray'),
     });
   }
   return edges;
@@ -301,6 +324,46 @@ function parseLifelines(svg) {
 }
 
 /**
+ * Parse sequence activation bars: kind-colored rects carrying
+ * `data-graph-role="activation"` + `data-activation-participant`. The twin
+ * `c-mask` backdrop (same identity, no color info) is skipped.
+ */
+const ACTIVATION_RE = /<rect\b[^>]*\bdata-graph-role="activation"[^>]*>/g;
+
+function parseActivations(svg) {
+  const activations = [];
+  for (const m of svg.matchAll(ACTIVATION_RE)) {
+    const tag = m[0];
+    const cls = attr(tag, 'class') || '';
+    if (!cls || cls === 'c-mask') continue;
+    const box = parseRect(tag);
+    if (box.width <= 0 || box.height <= 0) continue;
+    activations.push({
+      participant: attr(tag, 'data-activation-participant'),
+      fillClass: cls,
+      rx: parseFloat(attr(tag, 'rx') || '0'),
+      strokeWidth: parseFloat(attr(tag, 'stroke-width') || '1'),
+      ...box,
+    });
+  }
+  return activations;
+}
+
+/**
+ * Sequence segment bands (Request/Fallback/…) render their labels as separate
+ * `g[data-graph-role="segment-label"]` groups (they dodge message labels), so
+ * match them back onto the boundary by segment id.
+ */
+const SEGMENT_LABEL_RE = /<g\b[^>]*\bdata-graph-role="segment-label"[^>]*\bdata-segment-id="([^"]*)"[^>]*>[\s\S]*?<text\b[^>]*>([^<]*)<\/text>/g;
+
+function applySegmentLabels(boundaries, svg) {
+  for (const m of svg.matchAll(SEGMENT_LABEL_RE)) {
+    const boundary = boundaries.find((b) => b.frameId === m[1]);
+    if (boundary) boundary.label = m[2].trim();
+  }
+}
+
+/**
  * Extract the full self-describing intermediate representation from an
  * Archify SVG string.
  */
@@ -309,12 +372,15 @@ export function parseArchifySvg(svg, _diagramType) {
   const viewBox = viewBoxMatch
     ? [parseFloat(viewBoxMatch[1]), parseFloat(viewBoxMatch[2])]
     : [1000, 700];
+  const boundaries = parseBoundaries(svg);
+  applySegmentLabels(boundaries, svg);
   return {
     viewBox,
     nodes: parseNodes(svg),
     edges: parseEdges(svg),
-    boundaries: parseBoundaries(svg),
+    boundaries,
     lifelines: parseLifelines(svg),
+    activations: parseActivations(svg),
     edgeLabels: parseEdgeLabels(svg),
   };
 }
@@ -547,17 +613,212 @@ export function buildDrawioXml(parsed, diagramType, diagram = null) {
   return lines.join('\n');
 }
 
+// ─── Sequence builder: timeline semantics via UML lifelines ────────────────
+
+/** draw.io kind palette for the non-strict sequence variant. */
+function kindColorPair(kind) {
+  const style = KIND_STYLE[kind] || KIND_STYLE.backend;
+  return {
+    fill: style.match(/fillColor=(#[0-9a-f]{6})/i)?.[1],
+    stroke: style.match(/strokeColor=(#[0-9a-f]{6})/i)?.[1],
+  };
+}
+
+/**
+ * Build the sequence mxGraphModel with draw.io's native UML lifeline model:
+ *  - participants become `shape=umlLifeline` cells spanning header→timeline
+ *    foot (rendered as header box + dashed line), so a message's authored y
+ *    survives as exitY/entryY fractions of the full timeline;
+ *  - activation bars become thin child rects of their lifeline;
+ *  - segment bands become labeled background frames;
+ *  - messages bind lifeline→lifeline with exact exit/entry y and keep their
+ *    labels and return-message dashes.
+ * With `strict: false` the same topology uses draw.io's default palette.
+ */
+export function buildDrawioXmlSequence(parsed, palette, diagram = null, { strict = true } = {}) {
+  const [vw, vh] = parsed.viewBox;
+  const nodeById = new Map(parsed.nodes.map((n) => [n.id, n]));
+  const FONT_STACK = 'JetBrains Mono,ui-monospace,Menlo,monospace';
+  const footY = parsed.lifelines.length
+    ? Math.max(...parsed.lifelines.map((l) => l.y2))
+    : Math.max(...parsed.nodes.map((n) => n.y + n.height + 60));
+  const colors = (className, base) => (
+    strict && className && palette ? palette.paletteFor(className, base) : null
+  );
+  const dashOf = (inline, classDash) => normalizeDash(inline) || normalizeDash(classDash);
+
+  const lines = [];
+  lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+  lines.push(
+    `<mxGraphModel dx="${Math.round(vw)}" dy="${Math.round(vh)}" grid="${strict ? 0 : 1}" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="${Math.round(vw)}" pageHeight="${Math.round(vh)}" math="0" shadow="0"${strict ? ` background="${palette.bg}"` : ''}>`,
+  );
+  lines.push('  <root>');
+  lines.push('    <mxCell id="0"/>');
+  lines.push('    <mxCell id="1" parent="0"/>');
+
+  // Segment bands (background frames, never parents of participants).
+  for (let i = 0; i < parsed.boundaries.length; i += 1) {
+    const b = parsed.boundaries[i];
+    const lane = colors(b.fillClass, 'bg');
+    const rx = Number.isFinite(b.rx) && b.rx > 0 ? Math.round(b.rx) : 0;
+    const style = [
+      'rounded=' + (rx > 0 ? 1 : 0),
+      ...(rx > 0 ? ['absoluteArcSize=1', `arcSize=${rx}`] : []),
+      `fillColor=${lane?.fill || 'none'}`,
+      `strokeColor=${lane?.stroke || '#b0b0b0'}`,
+      `strokeWidth=${b.strokeWidth || 1}`,
+      ...(dashOf(null, lane?.dash) ? ['dashed=1', `dashPattern=${dashOf(null, lane?.dash)}`] : []),
+      `fontColor=${strict ? palette.textMuted : '#666666'}`,
+      'fontSize=9',
+      `fontFamily=${FONT_STACK}`,
+      'whiteSpace=wrap',
+      'html=1',
+      'verticalAlign=top',
+      'align=left',
+      'spacingLeft=8',
+    ].join(';') + ';';
+    lines.push(
+      `    <mxCell id="boundary-${i}" value="${escapeAttr(b.label || '')}" style="${style}" vertex="1" parent="1">`,
+    );
+    lines.push(
+      `      <mxGeometry x="${Math.round(b.x)}" y="${Math.round(b.y)}" width="${Math.round(b.width)}" height="${Math.round(b.height)}" as="geometry"/>`,
+    );
+    lines.push('    </mxCell>');
+  }
+
+  // Participants as UML lifelines spanning the full timeline.
+  for (const node of parsed.nodes) {
+    const c = colors(node.fillClass, 'mask') || (strict ? null : kindColorPair(node.kind));
+    const labelParts = [node.label, node.sublabel].filter(Boolean);
+    const htmlValue = labelParts.length > 1
+      ? `<b>${labelParts[0]}</b><br/><font style="font-size:8px" color="${strict ? palette.textMuted : '#666666'}">${labelParts.slice(1).join(' · ')}</font>`
+      : node.label;
+    const style = [
+      'shape=umlLifeline',
+      'perimeter=lifelinePerimeter',
+      `size=${Math.round(node.height)}`,
+      'container=1',
+      'collapsible=0',
+      'recursiveResize=0',
+      'outlineConnect=0',
+      ...(c?.fill ? [`fillColor=${c.fill}`] : []),
+      ...(c?.stroke ? [`strokeColor=${c.stroke}`] : []),
+      `strokeWidth=${node.strokeWidth || 1.5}`,
+      `fontColor=${strict ? palette.text : '#000000'}`,
+      'fontSize=11',
+      `fontFamily=${FONT_STACK}`,
+      'whiteSpace=wrap',
+      'html=1',
+    ].join(';') + ';';
+    lines.push(
+      `    <mxCell id="node-${node.id}" value="${escapeAttr(htmlValue)}" style="${style}" vertex="1" parent="1">`,
+    );
+    lines.push(
+      `      <mxGeometry x="${Math.round(node.x)}" y="${Math.round(node.y)}" width="${Math.round(node.width)}" height="${Math.round(footY - node.y)}" as="geometry"/>`,
+    );
+    lines.push('    </mxCell>');
+  }
+
+  // Activation bars: thin child rects of their lifeline.
+  for (let i = 0; i < parsed.activations.length; i += 1) {
+    const act = parsed.activations[i];
+    const participant = act.participant ? nodeById.get(act.participant) : null;
+    const c = colors(act.fillClass, 'mask') || (strict ? null : kindColorPair(participant?.kind));
+    if (!participant) continue;
+    const rx = Number.isFinite(act.rx) && act.rx > 0 ? Math.round(act.rx) : 0;
+    const style = [
+      'rounded=' + (rx > 0 ? 1 : 0),
+      ...(rx > 0 ? ['absoluteArcSize=1', `arcSize=${rx}`] : []),
+      `fillColor=${c?.fill || '#ffffff'}`,
+      `strokeColor=${c?.stroke || '#999999'}`,
+      `strokeWidth=${act.strokeWidth || 1}`,
+      'html=1',
+    ].join(';') + ';';
+    lines.push(
+      `    <mxCell id="activation-${i}" value="" style="${style}" vertex="1" parent="node-${participant.id}">`,
+    );
+    lines.push(
+      `      <mxGeometry x="${Math.round(act.x - participant.x)}" y="${Math.round(act.y - participant.y)}" width="${Math.round(act.width)}" height="${Math.round(act.height)}" as="geometry"/>`,
+    );
+    lines.push('    </mxCell>');
+  }
+
+  // Messages: lifeline→lifeline edges with the authored y as exit/entry
+  // fractions of each endpoint's full timeline height.
+  for (let i = 0; i < parsed.edges.length; i += 1) {
+    const edge = parsed.edges[i];
+    const src = nodeById.get(edge.from);
+    const tgt = nodeById.get(edge.to);
+    if (!src || !tgt) continue;
+    const c = colors(edge.strokeClass, 'bg');
+    const sw = Number.isFinite(edge.strokeWidth) ? edge.strokeWidth : 1.5;
+    const labelText = parsed.edgeLabels?.find(
+      (l) => l.from === edge.from && l.to === edge.to && (l.label || '') === (edge.label || ''),
+    ) || parsed.edgeLabels?.find((l) => l.from === edge.from && l.to === edge.to);
+    const labelColors = strict && labelText?.className ? palette.paletteFor(labelText.className, 'bg') : null;
+    const dash = dashOf(edge.inlineDash, c?.dash);
+    const fracY = (y, cell) => Math.max(0, Math.min(1, (y - cell.y) / (footY - cell.y)));
+    const exitY = fracY(edge.points[0][1], src);
+    const entryY = fracY(edge.points[edge.points.length - 1][1], tgt);
+    const style = [
+      'edgeStyle=none',
+      'rounded=0',
+      `strokeColor=${c?.stroke || '#666666'}`,
+      `strokeWidth=${sw}`,
+      ...(dash ? ['dashed=1', `dashPattern=${dash}`] : []),
+      'endArrow=block',
+      'endFill=1',
+      `endSize=${Math.max(4, Math.round(10 * sw))}`,
+      `fontColor=${labelColors?.fill || (strict ? palette.textMuted : '#666666')}`,
+      'fontSize=8',
+      `fontFamily=${FONT_STACK}`,
+      `labelBackgroundColor=${strict ? palette.mask : '#ffffff'}`,
+      'html=1',
+    ].join(';')
+      + `;exitX=0.5;exitY=${exitY.toFixed(3)};exitDx=0;exitDy=0`
+      + `;entryX=0.5;entryY=${entryY.toFixed(3)};entryDx=0;entryDy=0;`;
+    const id = edge.id ? `edge-${edge.id}` : `edge-${i}`;
+    lines.push(
+      `    <mxCell id="${id}" value="${edge.label ? escapeAttr(edge.label) : ''}" style="${style}" edge="1" parent="1" source="node-${edge.from}" target="node-${edge.to}">`,
+    );
+    // Label geometry y=-1 lifts the label one label-height above the line,
+    // matching the Archify artifact (labels sit above their message).
+    lines.push('      <mxGeometry x="0" y="-1" relative="1" as="geometry">');
+    const interior = edge.points.slice(1, -1);
+    if (interior.length) {
+      lines.push('        <Array as="points">');
+      for (const [x, y] of interior) {
+        lines.push(`          <mxPoint x="${Math.round(x)}" y="${Math.round(y)}"/>`);
+      }
+      lines.push('        </Array>');
+    }
+    lines.push('      </mxGeometry>');
+    lines.push('    </mxCell>');
+  }
+
+  lines.push('  </root>');
+  lines.push('</mxGraphModel>');
+  return lines.join('\n');
+}
+
 /**
  * One-shot convenience: parse an Archify SVG and emit draw.io XML.
  * Pass `{ strict: true, css }` to emit the 1:1 visual-fidelity variant.
+ * Sequence diagrams always route through the dedicated sequence builder:
+ * their geometry is a timeline (lifelines + messages at authored y), not a
+ * node graph, so generic border-anchored edges would collapse the timeline.
  */
 export function convertArchifyToDrawio(svg, diagramType, diagram = null, options = {}) {
   const parsed = parseArchifySvg(svg, diagramType);
   if (options.strict) {
     const palette = extractPalette(options.css || '');
-    return buildDrawioXmlStrict(parsed, palette, diagramType, diagram);
+    return diagramType === 'sequence'
+      ? buildDrawioXmlSequence(parsed, palette, diagram, { strict: true })
+      : buildDrawioXmlStrict(parsed, palette, diagramType, diagram);
   }
-  return buildDrawioXml(parsed, diagramType, diagram);
+  return diagramType === 'sequence'
+    ? buildDrawioXmlSequence(parsed, null, diagram, { strict: false })
+    : buildDrawioXml(parsed, diagramType, diagram);
 }
 
 /**

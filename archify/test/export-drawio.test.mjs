@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { parseArchifySvg, buildDrawioXml, buildDrawioXmlStrict, extractPalette, convertArchifyToDrawio, extractSvgFromHtml } from '../renderers/shared/svg-to-drawio.mjs';
+import { parseArchifySvg, buildDrawioXml, buildDrawioXmlStrict, buildDrawioXmlSequence, extractPalette, convertArchifyToDrawio, extractSvgFromHtml } from '../renderers/shared/svg-to-drawio.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -454,4 +454,111 @@ test('cli: export-drawio --strict receipt reports strict mode', () => {
   const receipt = JSON.parse(result.stdout);
   assert.equal(receipt.ok, true);
   assert.equal(receipt.strict, true);
+});
+
+// ─── Sequence: timeline semantics via UML lifelines ────────────────────────
+
+test('parseArchifySvg enriches sequence artifacts (labels, activations, segments, dash)', () => {
+  const svg = `<svg viewBox="0 0 820 760">
+    <g data-edge-from="user" data-edge-to="web" data-edge-label="open page" data-edge-id="open-page">
+      <path data-composition-edge-from="user" data-composition-edge-to="web" data-composition-edge-id="open-page"
+            data-composition-points="69,185;163,185" d="M 69 185 L 163 185" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+      <g data-detail="context"><rect x="90" y="170" width="52" height="14" class="c-mask"/><text x="116" y="180" class="t-backend">open page</text></g>
+    </g>
+    <g data-edge-from="api" data-edge-to="user" data-edge-label="page" data-edge-id="page-render">
+      <path data-composition-edge-from="api" data-composition-edge-to="user" data-composition-edge-id="page-render"
+            data-composition-points="271,662;69,662" d="M 271 662 L 69 662" class="a-default" stroke-width="1.4" stroke-dasharray="3,5"/>
+    </g>
+    <rect data-graph-role="structural-frame" data-composition-frame-kind="segment" data-composition-frame-id="0"
+          x="48" y="150" width="724" height="145" rx="10" class="c-lane" stroke-width="1"/>
+    <g data-graph-role="segment-label" data-segment-id="0">
+      <rect x="56" y="128" width="60" height="18" rx="3" class="c-mask"/>
+      <text x="62" y="141" class="t-dim" font-size="9">Request</text>
+    </g>
+    <rect data-graph-role="activation" data-activation-participant="web" x="165" y="220" width="10" height="448" rx="3" class="c-mask"/>
+    <rect data-graph-role="activation" data-activation-participant="web" x="165" y="220" width="10" height="448" rx="3" class="c-frontend" stroke-width="1"/>
+    <path d="M 62 142 L 62 695" class="a-default" stroke-width="0.8" stroke-dasharray="3,7"/>
+  </svg>`;
+  const parsed = parseArchifySvg(svg, 'sequence');
+  assert.equal(parsed.edges.length, 2);
+  // Message label comes from the outer focus group, not the path.
+  assert.equal(parsed.edges[0].label, 'open page');
+  // Return-message dash lives as an inline path attribute.
+  assert.equal(parsed.edges[1].inlineDash, '3,5');
+  // One activation (the opaque c-mask twin is skipped), with identity.
+  assert.equal(parsed.activations.length, 1);
+  assert.equal(parsed.activations[0].participant, 'web');
+  assert.equal(parsed.activations[0].fillClass, 'c-frontend');
+  assert.equal(parsed.activations[0].height, 448);
+  // Segment label matched back onto the boundary by segment id.
+  assert.equal(parsed.boundaries.length, 1);
+  assert.equal(parsed.boundaries[0].label, 'Request');
+});
+
+test('sequence build maps the timeline onto UML lifelines', () => {
+  const parsed = {
+    viewBox: [820, 760],
+    nodes: [
+      { id: 'user', kind: 'external', label: 'user', x: 19, y: 72, width: 86, height: 54, rx: 6, strokeWidth: 1.5, fillClass: 'c-external' },
+      { id: 'web', kind: 'frontend', label: 'web', x: 127, y: 72, width: 86, height: 54, rx: 6, strokeWidth: 1.5, fillClass: 'c-frontend' },
+    ],
+    edges: [
+      { from: 'user', to: 'web', label: 'open page', id: 'open-page', points: [[69, 185], [163, 185]], strokeClass: 'a-default', strokeWidth: 1.4, radius: 0 },
+      { from: 'web', to: 'user', label: 'render', id: 'render', points: [[163, 625], [69, 625]], strokeClass: 'a-default', strokeWidth: 1.4, radius: 0, inlineDash: '3,5' },
+    ],
+    boundaries: [{ kind: 'segment', frameId: '0', label: 'Request', x: 48, y: 150, width: 724, height: 145, rx: 10, strokeWidth: 1, fillClass: 'c-lane' }],
+    lifelines: [{ x: 62, y1: 142, y2: 695 }, { x: 170, y1: 142, y2: 695 }],
+    activations: [{ participant: 'web', fillClass: 'c-frontend', rx: 3, strokeWidth: 1, x: 165, y: 220, width: 10, height: 448 }],
+    edgeLabels: [],
+  };
+  const palette = extractPalette(`
+    [data-theme="light"] {
+      --bg: #f8fafc; --mask: #ffffff; --text: #0f172a; --text-muted: #64748b;
+      --frontend-fill: rgba(34, 211, 238, 0.15); --frontend-stroke: #0891b2;
+      --external-fill: rgba(148, 163, 184, 0.18); --external-stroke: #64748b;
+    }
+    .c-frontend { fill: var(--frontend-fill); stroke: var(--frontend-stroke); }
+    .c-external { fill: var(--external-fill); stroke: var(--external-stroke); }
+    .c-lane { fill: rgba(248, 250, 252, 0.65); stroke: #cbd5e1; stroke-dasharray: 6,6; }
+    .a-default { stroke: #94a3b8; }
+  `);
+  const xml = buildDrawioXmlSequence(parsed, palette, 'sequence', { strict: true });
+  // Participants become full-timeline UML lifelines (foot 695 - top 72 = 623)
+  // with the header height preserved via size.
+  assert.match(xml, /shape=umlLifeline;perimeter=lifelinePerimeter/);
+  assert.match(xml, /size=54/);
+  assert.match(xml, /height="623"/);
+  // The authored message y survives as an exit fraction: (185-72)/623.
+  assert.match(xml, /exitX=0\.5;exitY=0\.181/);
+  assert.match(xml, /value="open page"/);
+  // Return message keeps its inline dash.
+  assert.match(xml, /dashPattern=3 5/);
+  // Activation is a kind-colored child of its lifeline.
+  assert.match(xml, /id="activation-0"[^>]*parent="node-web"/);
+  assert.match(xml, /fillColor=#def8fc/);
+  // Segment band keeps its authored label and lane dash.
+  assert.match(xml, /id="boundary-0" value="Request"/);
+  assert.match(xml, /dashPattern=6 6/);
+  // No floating lifeline edges remain.
+  assert.doesNotMatch(xml, /endArrow=none/);
+
+  // Non-strict keeps the same topology with draw.io's default palette.
+  const plain = buildDrawioXmlSequence(parsed, null, 'sequence', { strict: false });
+  assert.match(plain, /shape=umlLifeline/);
+  assert.match(plain, /exitX=0\.5;exitY=0\.181/);
+  assert.doesNotMatch(plain, /background="/);
+});
+
+test('cli: export-drawio sequence --strict restores the timeline', () => {
+  const input = path.join(skillRoot, 'examples/cache-miss-request.sequence.json');
+  const output = path.join(tmp, 'sequence-timeline.drawio');
+  const result = run(['export-drawio', 'sequence', input, output, '--strict']);
+  assert.equal(result.status, 0, result.stderr);
+  const xml = fs.readFileSync(output, 'utf8');
+  assert.match(xml, /shape=umlLifeline/);
+  assert.match(xml, /value="open page"/);
+  assert.match(xml, /exitX=0\.5;exitY=0\.181/);
+  assert.match(xml, /parent="node-web"/);
+  assert.match(xml, /value="Request"/);
+  assert.doesNotMatch(xml, /endArrow=none/);
 });

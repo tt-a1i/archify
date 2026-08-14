@@ -7217,10 +7217,199 @@
         L.push('</' + 'mxGraphModel>');
         return L.join('\n');
       }
+
+      // ---- draw.io sequence export ----------------------------------------
+      // Sequence geometry is a timeline, not a node graph: participants are
+      // exported as draw.io UML lifelines spanning the full timeline so each
+      // message's authored y survives as an exit/entry fraction, activation
+      // bars become lifeline children, and segment bands keep their labels.
+      // Mirrors buildDrawioXmlSequence in renderers/shared/svg-to-drawio.mjs.
+      function drawioKindPair(kind) {
+        var style = DRAWIO_KIND_STYLE[kind] || DRAWIO_KIND_STYLE.backend;
+        var fill = style.match(/fillColor=(#[0-9a-f]{6})/i);
+        var stroke = style.match(/strokeColor=(#[0-9a-f]{6})/i);
+        return { fill: fill ? fill[1] : null, stroke: stroke ? stroke[1] : null };
+      }
+      function drawioBuildSequenceXml(strict) {
+        var svgEl = document.querySelector('.diagram-container svg');
+        if (!svgEl) throw new Error('No diagram SVG found.');
+        var P = drawioStrictPalette(svgEl);
+        var FONT = 'JetBrains Mono,ui-monospace,Menlo,monospace';
+        var vb = (svgEl.getAttribute('viewBox') || '0 0 1000 700').split(/\s+/);
+        var vw = Math.round(+vb[2]), vh = Math.round(+vb[3]);
+        // -- participants ---------------------------------------------------
+        var nodes = [], nodeById = {};
+        svgEl.querySelectorAll('g[id^="node-"]').forEach(function (g) {
+          var fillRect = null;
+          g.querySelectorAll('rect').forEach(function (r) {
+            var cls = r.getAttribute('class') || '';
+            if (!fillRect && cls.indexOf('c-') === 0 && cls !== 'c-mask') fillRect = r;
+          });
+          var geom = fillRect || g.querySelector('rect');
+          if (!geom) return;
+          var n = {
+            id: g.getAttribute('data-node-id'),
+            label: g.getAttribute('data-node-label') || '',
+            sublabel: g.getAttribute('data-node-sublabel'),
+            kind: g.getAttribute('data-node-kind') || 'backend',
+            x: +geom.x.baseVal.value, y: +geom.y.baseVal.value,
+            width: +geom.width.baseVal.value, height: +geom.height.baseVal.value,
+            rx: +(fillRect ? fillRect.getAttribute('rx') : 0) || 0,
+            sw: +(fillRect ? fillRect.getAttribute('stroke-width') : 1.5) || 1.5,
+            fillRect: fillRect || geom
+          };
+          nodes.push(n); nodeById[n.id] = n;
+        });
+        // -- timeline span: deepest dashed lifeline foot ---------------------
+        var footY = 0;
+        svgEl.querySelectorAll('path').forEach(function (p) {
+          if (p.hasAttribute('data-composition-points')) return;
+          var d = p.getAttribute('d') || '';
+          var m = d.match(/^M\s*(\d+\.?\d*)\s+(\d+\.?\d*)\s+L\s*\1\s+(\d+\.?\d*)$/);
+          if (m && getComputedStyle(p).strokeDasharray !== 'none') footY = Math.max(footY, +m[3]);
+        });
+        if (!footY) {
+          nodes.forEach(function (n) { footY = Math.max(footY, n.y + n.height + 60); });
+          if (!footY) footY = 400;
+        }
+        // -- segment bands + labels (labels dodge messages, live elsewhere) --
+        var segments = [];
+        var segLabels = {};
+        svgEl.querySelectorAll('g[data-graph-role="segment-label"]').forEach(function (g) {
+          segLabels[g.getAttribute('data-segment-id')] = (g.textContent || '').trim();
+        });
+        svgEl.querySelectorAll('rect[data-graph-role="structural-frame"]').forEach(function (r) {
+          var sid = r.getAttribute('data-composition-frame-id');
+          segments.push({
+            label: sid != null && segLabels[sid] ? segLabels[sid] : '',
+            x: +r.x.baseVal.value, y: +r.y.baseVal.value,
+            width: +r.width.baseVal.value, height: +r.height.baseVal.value,
+            rx: +r.getAttribute('rx') || 0, sw: +r.getAttribute('stroke-width') || 1,
+            el: r
+          });
+        });
+        // -- activation bars -------------------------------------------------
+        var activations = [];
+        svgEl.querySelectorAll('rect[data-graph-role="activation"]').forEach(function (r) {
+          var cls = r.getAttribute('class') || '';
+          if (!cls || cls === 'c-mask') return;
+          activations.push({
+            participant: r.getAttribute('data-activation-participant'),
+            x: +r.x.baseVal.value, y: +r.y.baseVal.value,
+            width: +r.width.baseVal.value, height: +r.height.baseVal.value,
+            rx: +r.getAttribute('rx') || 0, sw: +r.getAttribute('stroke-width') || 1,
+            el: r
+          });
+        });
+        // -- messages: label on the focus group, dash via computed style ----
+        var edges = [];
+        svgEl.querySelectorAll('path[data-composition-points]').forEach(function (p) {
+          var from = p.getAttribute('data-edge-from') || p.getAttribute('data-composition-edge-from');
+          var to = p.getAttribute('data-edge-to') || p.getAttribute('data-composition-edge-to');
+          if (!from || !to) return;
+          var pts = (p.getAttribute('data-composition-points') || '').split(';').filter(Boolean).map(function (pair) {
+            var c = pair.split(',');
+            return [+c[0], +c[1]];
+          });
+          if (pts.length < 2) return;
+          var label = p.getAttribute('data-edge-label') || p.getAttribute('data-composition-edge-label');
+          var owner = p.parentElement;
+          if (!label && owner && owner.tagName.toLowerCase() === 'g') label = owner.getAttribute('data-edge-label');
+          var dashParts = (getComputedStyle(p).strokeDasharray || '').split(/[\s,]+/).map(Number).filter(function (n) { return n > 0; });
+          edges.push({
+            from: from, to: to, id: p.getAttribute('data-edge-id') || p.getAttribute('data-composition-edge-id'),
+            label: label || '', pts: pts, el: p,
+            sw: +p.getAttribute('stroke-width') || 1.5,
+            dash: dashParts.length ? dashParts.join(' ') : ''
+          });
+        });
+        // -- emit ------------------------------------------------------------
+        var colorsOf = function (el, base) { return strict ? P.of(el, base) : null; };
+        var L = [];
+        L.push('<?xml version="1.0" encoding="UTF-8"?>');
+        L.push('<' + 'mxGraphModel dx="' + vw + '" dy="' + vh + '" grid="' + (strict ? 0 : 1) + '" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="' + vw + '" pageHeight="' + vh + '" math="0" shadow="0"' + (strict ? ' background="' + P.bg + '"' : '') + '>');
+        L.push('  <root>');
+        L.push('    <mxCell id="0"/>');
+        L.push('    <mxCell id="1" parent="0"/>');
+        segments.forEach(function (s, i) {
+          var c = colorsOf(s.el, 'bg');
+          var style = ['rounded=' + (s.rx > 0 ? 1 : 0), s.rx > 0 ? 'absoluteArcSize=1;arcSize=' + Math.round(s.rx) : '',
+            'fillColor=' + (c && c.fill ? c.fill : 'none'), 'strokeColor=' + (c && c.stroke ? c.stroke : '#b0b0b0'), 'strokeWidth=' + s.sw,
+            c && c.dash ? 'dashed=1;dashPattern=' + c.dash : '',
+            'fontColor=' + (strict ? P.textMuted : '#666666'), 'fontSize=9', 'fontFamily=' + FONT,
+            'whiteSpace=wrap', 'html=1', 'verticalAlign=top', 'align=left', 'spacingLeft=8'].filter(Boolean).join(';') + ';';
+          L.push('    <mxCell id="boundary-' + i + '" value="' + drawioEscapeAttr(s.label) + '" style="' + style + '" vertex="1" parent="1">');
+          L.push('      <mxGeometry x="' + Math.round(s.x) + '" y="' + Math.round(s.y) + '" width="' + Math.round(s.width) + '" height="' + Math.round(s.height) + '" as="geometry"/>');
+          L.push('    </mxCell>');
+        });
+        nodes.forEach(function (n) {
+          var c = colorsOf(n.fillRect, 'mask') || (strict ? null : drawioKindPair(n.kind));
+          var parts = [n.label, n.sublabel].filter(Boolean);
+          var html = parts.length > 1
+            ? '<b>' + parts[0] + '</b><br/><font style="font-size:8px" color="' + (strict ? P.textMuted : '#666666') + '">' + parts.slice(1).join(' · ') + '</font>'
+            : n.label;
+          var style = ['shape=umlLifeline', 'perimeter=lifelinePerimeter', 'size=' + Math.round(n.height),
+            'container=1', 'collapsible=0', 'recursiveResize=0', 'outlineConnect=0',
+            c && c.fill ? 'fillColor=' + c.fill : '',
+            c && c.stroke ? 'strokeColor=' + c.stroke : '',
+            'strokeWidth=' + n.sw,
+            'fontColor=' + (strict ? P.text : '#000000'), 'fontSize=11', 'fontFamily=' + FONT,
+            'whiteSpace=wrap', 'html=1'].filter(Boolean).join(';') + ';';
+          L.push('    <mxCell id="node-' + n.id + '" value="' + drawioEscapeAttr(html) + '" style="' + style + '" vertex="1" parent="1">');
+          L.push('      <mxGeometry x="' + Math.round(n.x) + '" y="' + Math.round(n.y) + '" width="' + Math.round(n.width) + '" height="' + Math.round(footY - n.y) + '" as="geometry"/>');
+          L.push('    </mxCell>');
+        });
+        activations.forEach(function (a, i) {
+          var participant = nodeById[a.participant];
+          if (!participant) return;
+          var c = colorsOf(a.el, 'mask') || (strict ? null : drawioKindPair(participant.kind));
+          var style = ['rounded=' + (a.rx > 0 ? 1 : 0), a.rx > 0 ? 'absoluteArcSize=1;arcSize=' + Math.round(a.rx) : '',
+            'fillColor=' + (c && c.fill ? c.fill : '#ffffff'), 'strokeColor=' + (c && c.stroke ? c.stroke : '#999999'),
+            'strokeWidth=' + a.sw, 'html=1'].filter(Boolean).join(';') + ';';
+          L.push('    <mxCell id="activation-' + i + '" value="" style="' + style + '" vertex="1" parent="node-' + participant.id + '">');
+          L.push('      <mxGeometry x="' + Math.round(a.x - participant.x) + '" y="' + Math.round(a.y - participant.y) + '" width="' + Math.round(a.width) + '" height="' + Math.round(a.height) + '" as="geometry"/>');
+          L.push('    </mxCell>');
+        });
+        edges.forEach(function (e, i) {
+          var src = nodeById[e.from], tgt = nodeById[e.to];
+          if (!src || !tgt) return;
+          var c = colorsOf(e.el, 'bg');
+          var frac = function (y, cell) { return Math.max(0, Math.min(1, (y - cell.y) / (footY - cell.y))).toFixed(3); };
+          var exitY = frac(e.pts[0][1], src), entryY = frac(e.pts[e.pts.length - 1][1], tgt);
+          var style = ['edgeStyle=none', 'rounded=0',
+            'strokeColor=' + (c && c.stroke ? c.stroke : '#666666'), 'strokeWidth=' + e.sw,
+            e.dash ? 'dashed=1;dashPattern=' + e.dash : '',
+            'endArrow=block', 'endFill=1', 'endSize=' + Math.max(4, Math.round(10 * e.sw)),
+            'fontColor=' + (strict ? P.textMuted : '#666666'), 'fontSize=8', 'fontFamily=' + FONT,
+            'labelBackgroundColor=' + (strict ? P.mask : '#ffffff'), 'html=1']
+            .filter(Boolean).join(';')
+            + ';exitX=0.5;exitY=' + exitY + ';exitDx=0;exitDy=0'
+            + ';entryX=0.5;entryY=' + entryY + ';entryDx=0;entryDy=0;';
+          L.push('    <mxCell id="edge-' + (e.id || i) + '" value="' + drawioEscapeAttr(e.label) + '" style="' + style + '" edge="1" parent="1" source="node-' + e.from + '" target="node-' + e.to + '">');
+          // Label geometry y=-1 lifts the label one label-height above the
+          // line, matching the Archify artifact.
+          L.push('      <mxGeometry x="0" y="-1" relative="1" as="geometry">');
+          if (e.pts.length > 2) {
+            L.push('        <Array as="points">');
+            for (var p = 1; p < e.pts.length - 1; p++) L.push('          <mxPoint x="' + Math.round(e.pts[p][0]) + '" y="' + Math.round(e.pts[p][1]) + '"/>');
+            L.push('        </Array>');
+          }
+          L.push('      </mxGeometry>');
+          L.push('    </mxCell>');
+        });
+        L.push('  </root>');
+        L.push('</' + 'mxGraphModel>');
+        return L.join('\n');
+      }
       // Public entry: always a light-themed .drawio file, independent of the
       // viewer's current theme (and the browser preference behind it).
+      // Sequence artifacts carry timeline geometry and route through the
+      // dedicated sequence builder instead.
       function drawioBuildStrictXml() {
-        return withLightTheme(buildStrictXmlLight);
+        var isSequence = document.documentElement.getAttribute('data-diagram-type') === 'sequence';
+        return withLightTheme(function () {
+          return isSequence ? drawioBuildSequenceXml(true) : buildStrictXmlLight();
+        });
       }
 
       function runExport(format) {
@@ -7242,7 +7431,11 @@
             })
           : format === 'drawio'
           ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
-              var xml = archifySvgToDrawio(d.svgString);
+              // Sequence artifacts need live computed styles (timeline
+              // geometry), so they read the live SVG instead of the
+              // serialized string.
+              var isSequence = document.documentElement.getAttribute('data-diagram-type') === 'sequence';
+              var xml = isSequence ? drawioBuildSequenceXml(false) : archifySvgToDrawio(d.svgString);
               var blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
               recordExportReceipt('drawio', blob, d.canonicalStateClean);
               download(blob, base + '.drawio');
