@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="820" dy="760" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="820" pageHeight="760" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="boundary-0" value="segment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b0b0b0;verticalAlign=top;align=left;spacingLeft=8;" vertex="1" parent="1">
+      <mxGeometry x="48" y="150" width="724" height="145" as="geometry"/>
+    </mxCell>
+    <mxCell id="boundary-1" value="segment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b0b0b0;verticalAlign=top;align=left;spacingLeft=8;" vertex="1" parent="1">
+      <mxGeometry x="48" y="315" width="724" height="190" as="geometry"/>
+    </mxCell>
+    <mxCell id="boundary-2" value="segment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b0b0b0;verticalAlign=top;align=left;spacingLeft=8;" vertex="1" parent="1">
+      <mxGeometry x="48" y="525" width="724" height="140" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-user" value="&lt;b&gt;User&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;browser session&lt;/font&gt;" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="19" y="72" width="86" height="54" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-web" value="&lt;b&gt;Web App&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;React UI&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="127" y="72" width="86" height="54" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-api" value="&lt;b&gt;API&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;request handler&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="235" y="72" width="86" height="54" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-auth" value="&lt;b&gt;Auth&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;JWT verify&lt;/font&gt;" style="shape=shield;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="343" y="72" width="86" height="54" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-redis" value="&lt;b&gt;Redis&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;cache&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="451" y="72" width="86" height="54" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-db" value="&lt;b&gt;Postgres&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;source of truth&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="559" y="72" width="86" height="54" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-trace" value="&lt;b&gt;Trace&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;async event&lt;/font&gt;" style="shape=queue;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="667" y="72" width="86" height="54" as="geometry"/>
+    </mxCell>
+    <mxCell id="lifeline-62-142" value="" style="endArrow=none;html=1;strokeColor=#999999;dashed=1;dashPattern=3 7;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="62" y="142" as="sourcePoint"/>
+        <mxPoint x="62" y="695" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="lifeline-170-142" value="" style="endArrow=none;html=1;strokeColor=#999999;dashed=1;dashPattern=3 7;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="170" y="142" as="sourcePoint"/>
+        <mxPoint x="170" y="695" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="lifeline-278-142" value="" style="endArrow=none;html=1;strokeColor=#999999;dashed=1;dashPattern=3 7;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="278" y="142" as="sourcePoint"/>
+        <mxPoint x="278" y="695" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="lifeline-386-142" value="" style="endArrow=none;html=1;strokeColor=#999999;dashed=1;dashPattern=3 7;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="386" y="142" as="sourcePoint"/>
+        <mxPoint x="386" y="695" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="lifeline-494-142" value="" style="endArrow=none;html=1;strokeColor=#999999;dashed=1;dashPattern=3 7;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="494" y="142" as="sourcePoint"/>
+        <mxPoint x="494" y="695" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="lifeline-602-142" value="" style="endArrow=none;html=1;strokeColor=#999999;dashed=1;dashPattern=3 7;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="602" y="142" as="sourcePoint"/>
+        <mxPoint x="602" y="695" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="lifeline-710-142" value="" style="endArrow=none;html=1;strokeColor=#999999;dashed=1;dashPattern=3 7;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="710" y="142" as="sourcePoint"/>
+        <mxPoint x="710" y="695" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-open-page" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-user" target="node-web">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-dashboard-request" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-web" target="node-api">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-verify-jwt" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-api" target="node-auth">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-auth-claims" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-auth" target="node-api">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-cache-read" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-api" target="node-redis">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-cache-miss" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-redis" target="node-api">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-profile-query" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-api" target="node-db">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-profile-rows" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-db" target="node-api">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-cache-write" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-api" target="node-redis">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-trace-emit" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-api" target="node-trace">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-dashboard-response" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-api" target="node-web">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-page-render" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-web" target="node-user">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>

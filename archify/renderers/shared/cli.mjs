@@ -52,6 +52,7 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
     visualPreset: meta.visual_preset || 'classic',
     guidedViews: meta.views || [],
     sourceEvidence,
+    diagramType,
   }));
   outputPathGuards.delete(outPath);
   console.log(outPath);

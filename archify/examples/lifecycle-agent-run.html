@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-preset="classic">
+<html lang="en" data-theme="dark" data-preset="classic" data-diagram-type="lifecycle">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -3424,6 +3424,10 @@
       -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 2.5l7 4v7l-7 4-7-4v-7zM3 6.5l7 4 7-4M10 10.5v7' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E");
       mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 2.5l7 4v7l-7 4-7-4v-7zM3 6.5l7 4 7-4M10 10.5v7' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E");
     }
+    .toolbar .export-menu button[data-format="drawio"]::before {
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect x='2.5' y='2.5' width='6' height='5' rx='1' fill='none' stroke='black' stroke-width='1.7'/%3E%3Crect x='11.5' y='12.5' width='6' height='5' rx='1' fill='none' stroke='black' stroke-width='1.7'/%3E%3Cpath d='M8.5 5h6v7.5' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect x='2.5' y='2.5' width='6' height='5' rx='1' fill='none' stroke='black' stroke-width='1.7'/%3E%3Crect x='11.5' y='12.5' width='6' height='5' rx='1' fill='none' stroke='black' stroke-width='1.7'/%3E%3Cpath d='M8.5 5h6v7.5' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E");
+    }
     .toolbar .export-menu button[data-format="share-card"],
     .toolbar .export-menu button[data-action="route-share-card"],
     .toolbar .export-menu button[data-action="reach-share-card"] {
@@ -4825,6 +4829,7 @@
         <div class="export-menu-section" role="group" aria-label="Vector and motion">
           <span class="export-menu-heading" aria-hidden="true">Vector &amp; motion</span>
           <button data-format="svg" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>SVG</strong><small class="hint">Editable vector</small></span></button>
+          <button data-format="drawio" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>draw.io</strong><small class="hint">Editable diagram</small></span></button>
           <button data-format="webm" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>WebM</strong><small class="hint">6s motion</small></span></button>
         </div>
       </div>
@@ -6596,7 +6601,7 @@
       // WebP encoding (older Safari), so detect explicitly.
       function supports(format) {
         if (format === 'share-card') return true;
-        if (format === 'svg' || format === 'png') return true;
+        if (format === 'svg' || format === 'png' || format === 'drawio') return true;
         if (format === 'webm') return canRecordMotion();
         var mime = format === 'jpeg' ? 'image/jpeg' : 'image/webp';
         try {
@@ -6701,6 +6706,225 @@
         }
       });
 
+      // ---- draw.io export -------------------------------------------------
+      // Converts the canonical SVG into a draw.io mxGraphModel XML so the
+      // diagram can be opened and further edited in draw.io. Every edge is
+      // bound to its source/target vertex cell (dragging a box keeps its
+      // connections), and interior route waypoints are preserved. Mirrors
+      // the Node-side converter in renderers/shared/svg-to-drawio.mjs.
+      var DRAWIO_KIND_STYLE = {
+        frontend: 'rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;',
+        backend: 'rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;',
+        database: 'shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;',
+        cloud: 'ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;',
+        security: 'shape=shield;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;',
+        messagebus: 'shape=queue;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;',
+        external: 'shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;'
+      };
+      var DRAWIO_STATE_STYLE = {
+        start: 'ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;',
+        active: 'rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;',
+        waiting: 'rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;',
+        decision: 'rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;',
+        success: 'rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;',
+        failure: 'rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;',
+        neutral: 'rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;',
+        external: 'shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;'
+      };
+      var DRAWIO_FRAME_STYLE = {
+        region: 'rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9673a6;dashed=0;verticalAlign=top;fontStyle=1;',
+        'security-group': 'rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#d79b00;dashed=1;verticalAlign=top;fontStyle=1;',
+        lane: 'rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b0b0b0;verticalAlign=top;align=left;spacingLeft=8;',
+        'exception-lane': 'rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b85450;dashed=1;verticalAlign=top;align=left;spacingLeft=8;',
+        stage: 'rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b0b0b0;verticalAlign=top;align=center;fontStyle=1;',
+        group: 'rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;dashed=1;verticalAlign=top;',
+        segment: 'rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b0b0b0;verticalAlign=top;align=left;spacingLeft=8;'
+      };
+      function drawioEscapeAttr(v) {
+        return String(v == null ? '' : v).replace(/[&"<>']/g, function (ch) {
+          return ch === '&' ? '&amp;' : ch === '"' ? '&quot;' : ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : '&#39;';
+        });
+      }
+      function drawioAttr(tag, name) {
+        var m = tag.match(new RegExp('\\s' + name + '="([^"]*)"'));
+        return m ? m[1] : null;
+      }
+      function drawioParsePoints(value) {
+        if (!value) return [];
+        return value.split(';').filter(Boolean).map(function (pair) {
+          var c = pair.split(',').map(Number);
+          return [c[0], c[1]];
+        });
+      }
+      function drawioFindGroupClose(svg, openIndex) {
+        var depth = 1, i = openIndex;
+        while (depth > 0 && i < svg.length) {
+          var no = svg.indexOf('<g', i + 1), nc = svg.indexOf('</g>', i + 1);
+          if (nc === -1) return -1;
+          if (no !== -1 && no < nc) { depth += 1; i = no; }
+          else { depth -= 1; i = nc; }
+        }
+        return i;
+      }
+      // Parse the self-describing SVG into {viewBox, nodes, edges, boundaries, lifelines}.
+      function drawioParseSvg(svg) {
+        var vb = svg.match(new RegExp('<' + 'svg[^>]*\\bviewBox="0 0 (\\d+\\.?\\d*) (\\d+\\.?\\d*)"'));
+        var viewBox = vb ? [parseFloat(vb[1]), parseFloat(vb[2])] : [1000, 700];
+        // Nodes: <g id="node-..." data-node-id=...> with first inner <rect>.
+        var nodes = [];
+        var nodeMatches = Array.from(svg.matchAll(/<g\s+id="node-[^"]*"[^>]*\bdata-node-id="([^"]*)"[^>]*>/g));
+        nodeMatches.forEach(function (m) {
+          var open = m[0];
+          var ci = drawioFindGroupClose(svg, m.index);
+          var inner = svg.slice(m.index + open.length, ci);
+          var rm = inner.match(/<rect\b[^>]*>/);
+          if (!rm) return;
+          var box = rm[0];
+          nodes.push({
+            id: m[1],
+            kind: drawioAttr(open, 'data-node-kind') || 'backend',
+            label: drawioAttr(open, 'data-node-label') || '',
+            sublabel: drawioAttr(open, 'data-node-sublabel'),
+            tag: drawioAttr(open, 'data-node-tag'),
+            x: parseFloat(drawioAttr(box, 'x') || '0'),
+            y: parseFloat(drawioAttr(box, 'y') || '0'),
+            width: parseFloat(drawioAttr(box, 'width') || '0'),
+            height: parseFloat(drawioAttr(box, 'height') || '0')
+          });
+        });
+        // Edges: <path> with data-composition-points.
+        var edges = [];
+        var edgeMatches = Array.from(svg.matchAll(/<path\b[^>]*\bdata-composition-points="([^"]*)"[^>]*>/g));
+        edgeMatches.forEach(function (m) {
+          var tag = m[0];
+          var points = drawioParsePoints(m[1]);
+          if (points.length < 2) return;
+          var from = drawioAttr(tag, 'data-edge-from') || drawioAttr(tag, 'data-composition-edge-from');
+          var to = drawioAttr(tag, 'data-edge-to') || drawioAttr(tag, 'data-composition-edge-to');
+          if (!from || !to) return;
+          edges.push({
+            from: from, to: to,
+            label: drawioAttr(tag, 'data-edge-label') || drawioAttr(tag, 'data-composition-edge-label'),
+            id: drawioAttr(tag, 'data-edge-id') || drawioAttr(tag, 'data-composition-edge-id'),
+            points: points
+          });
+        });
+        // Boundaries: <rect data-graph-role="structural-frame">.
+        var boundaries = [];
+        var bMatches = Array.from(svg.matchAll(/<rect\b[^>]*\bdata-graph-role="structural-frame"[^>]*>/g));
+        bMatches.forEach(function (m) {
+          var tag = m[0];
+          var w = parseFloat(drawioAttr(tag, 'width') || '0');
+          var h = parseFloat(drawioAttr(tag, 'height') || '0');
+          if (w <= 0 || h <= 0) return;
+          var after = svg.slice(m.index + tag.length, m.index + tag.length + 300);
+          var tm = after.match(/<text\b[^>]*>([^<]*)<\/text>/);
+          boundaries.push({
+            kind: drawioAttr(tag, 'data-composition-frame-kind') || 'boundary',
+            label: tm ? tm[1].trim() : '',
+            x: parseFloat(drawioAttr(tag, 'x') || '0'),
+            y: parseFloat(drawioAttr(tag, 'y') || '0'),
+            width: w, height: h
+          });
+        });
+        // Sequence lifelines: vertical dashed paths.
+        var lifelines = [];
+        var llMatches = Array.from(svg.matchAll(/<path\b[^>]*\bd="M\s*(\d+\.?\d*)\s+(\d+\.?\d*)\s+L\s*\1\s+(\d+\.?\d*)"[^>]*stroke-dasharray/g));
+        llMatches.forEach(function (m) {
+          lifelines.push({ x: parseFloat(m[1]), y1: parseFloat(m[2]), y2: parseFloat(m[3]) });
+        });
+        return { viewBox: viewBox, nodes: nodes, edges: edges, boundaries: boundaries, lifelines: lifelines };
+      }
+      function drawioNodeStyle(node) {
+        // Lifecycle states carry their own type enum.
+        var diagramType = document.documentElement.getAttribute('data-diagram-type') || '';
+        if (diagramType === 'lifecycle' && DRAWIO_STATE_STYLE[node.kind]) return DRAWIO_STATE_STYLE[node.kind];
+        return DRAWIO_KIND_STYLE[node.kind] || DRAWIO_KIND_STYLE.backend;
+      }
+      function drawioBuildXml(parsed) {
+        var vw = parsed.viewBox[0], vh = parsed.viewBox[1];
+        // Resolve container parents: smallest boundary containing node center.
+        // Returns parentId + the boundary's origin (draw.io child coords are
+        // RELATIVE to their parent, so we must subtract the parent origin).
+        var parents = {};
+        var sorted = parsed.boundaries.map(function (b, i) {
+          return Object.assign({}, b, { drawioId: 'boundary-' + i });
+        }).sort(function (a, b) { return a.width * a.height - b.width * b.height; });
+        parsed.nodes.forEach(function (n) {
+          var cx = n.x + n.width / 2, cy = n.y + n.height / 2;
+          for (var i = 0; i < sorted.length; i++) {
+            var b = sorted[i];
+            if (cx >= b.x && cx <= b.x + b.width && cy >= b.y && cy <= b.y + b.height) {
+              parents[n.id] = { drawioId: b.drawioId, ox: b.x, oy: b.y }; break;
+            }
+          }
+        });
+        var vertexIds = {};
+        parsed.nodes.forEach(function (n) { vertexIds[n.id] = true; });
+        var lines = [];
+        lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+        lines.push('<' + 'mxGraphModel dx="' + Math.round(vw) + '" dy="' + Math.round(vh) + '" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="' + Math.round(vw) + '" pageHeight="' + Math.round(vh) + '" math="0" shadow="0">');
+        lines.push('  <root>');
+        lines.push('    <mxCell id="0"/>');
+        lines.push('    <mxCell id="1" parent="0"/>');
+        // Boundaries first (containers).
+        parsed.boundaries.forEach(function (b, i) {
+          var style = DRAWIO_FRAME_STYLE[b.kind] || DRAWIO_FRAME_STYLE.region;
+          lines.push('    <mxCell id="boundary-' + i + '" value="' + drawioEscapeAttr(b.label || b.kind) + '" style="' + style + '" vertex="1" parent="1">');
+          lines.push('      <mxGeometry x="' + Math.round(b.x) + '" y="' + Math.round(b.y) + '" width="' + Math.round(b.width) + '" height="' + Math.round(b.height) + '" as="geometry"/>');
+          lines.push('    </mxCell>');
+        });
+        // Nodes.
+        parsed.nodes.forEach(function (n) {
+          var style = drawioNodeStyle(n);
+          var pinfo = parents[n.id];
+          var parentId = pinfo ? pinfo.drawioId : '1';
+          var relX = n.x - (pinfo ? pinfo.ox : 0);
+          var relY = n.y - (pinfo ? pinfo.oy : 0);
+          var parts = [n.label, n.sublabel, n.tag].filter(Boolean);
+          var htmlVal = parts.length > 1
+            ? '<b>' + parts[0] + '</b><br/><font style="font-size:9px">' + parts.slice(1).join(' · ') + '</font>'
+            : n.label;
+          lines.push('    <mxCell id="node-' + n.id + '" value="' + drawioEscapeAttr(htmlVal) + '" style="' + style + '" vertex="1" parent="' + parentId + '">');
+          lines.push('      <mxGeometry x="' + Math.round(relX) + '" y="' + Math.round(relY) + '" width="' + Math.round(n.width) + '" height="' + Math.round(n.height) + '" as="geometry"/>');
+          lines.push('    </mxCell>');
+        });
+        // Sequence lifelines.
+        parsed.lifelines.forEach(function (ll) {
+          var id = 'lifeline-' + Math.round(ll.x) + '-' + Math.round(ll.y1);
+          lines.push('    <mxCell id="' + id + '" value="" style="endArrow=none;html=1;strokeColor=#999999;dashed=1;dashPattern=3 7;" edge="1" parent="1">');
+          lines.push('      <mxGeometry relative="1" as="geometry">');
+          lines.push('        <mxPoint x="' + Math.round(ll.x) + '" y="' + Math.round(ll.y1) + '" as="sourcePoint"/>');
+          lines.push('        <mxPoint x="' + Math.round(ll.x) + '" y="' + Math.round(ll.y2) + '" as="targetPoint"/>');
+          lines.push('      </mxGeometry>');
+          lines.push('    </mxCell>');
+        });
+        // Edges: real source/target binding + fixed interior waypoints.
+        parsed.edges.forEach(function (edge, i) {
+          if (!vertexIds[edge.from] || !vertexIds[edge.to]) return;
+          var id = edge.id ? 'edge-' + edge.id : 'edge-' + i;
+          var value = edge.label ? drawioEscapeAttr(edge.label) : '';
+          lines.push('    <mxCell id="' + id + '" value="' + value + '" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;" edge="1" parent="1" source="node-' + edge.from + '" target="node-' + edge.to + '">');
+          lines.push('      <mxGeometry relative="1" as="geometry">');
+          // Interior waypoints only (draw.io computes endpoints from vertices).
+          if (edge.points.length > 2) {
+            lines.push('        <Array as="points">');
+            for (var p = 1; p < edge.points.length - 1; p++) {
+              lines.push('          <mxPoint x="' + Math.round(edge.points[p][0]) + '" y="' + Math.round(edge.points[p][1]) + '"/>');
+            }
+            lines.push('        </Array>');
+          }
+          lines.push('      </mxGeometry>');
+          lines.push('    </mxCell>');
+        });
+        lines.push('  </root>');
+        lines.push('</mxGraphModel>');
+        return lines.join('\n');
+      }
+      function archifySvgToDrawio(svgString) {
+        return drawioBuildXml(drawioParseSvg(svgString));
+      }
+
       function runExport(format) {
         var base = diagramFilename();
         close(true);
@@ -6717,6 +6941,14 @@
               var blob = new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' });
               recordExportReceipt('svg', blob, d.canonicalStateClean);
               download(blob, base + '.svg');
+            })
+          : format === 'drawio'
+          ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
+              var xml = archifySvgToDrawio(d.svgString);
+              var blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+              recordExportReceipt('drawio', blob, d.canonicalStateClean);
+              download(blob, base + '.drawio');
+              toast('Downloaded draw.io');
             })
           : format === 'webm'
             ? recordWebm().then(function (blob) {

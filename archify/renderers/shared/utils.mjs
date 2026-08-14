@@ -111,7 +111,7 @@ const TEMPLATE_PLACEHOLDERS = [
   GUIDED_VIEWS_PLACEHOLDER,
 ];
 
-export function applyTemplate(template, { title, subtitle, svg, cards, visualPreset = 'classic', guidedViews = [], sourceEvidence = null }) {
+export function applyTemplate(template, { title, subtitle, svg, cards, visualPreset = 'classic', guidedViews = [], sourceEvidence = null, diagramType = '' }) {
   if (!SVG_SLOT_RE.test(template)) {
     throw new Error('applyTemplate: template missing ARCHIFY:SVG_SLOT sentinel');
   }
@@ -146,7 +146,7 @@ export function applyTemplate(template, { title, subtitle, svg, cards, visualPre
     ? `<p class="subtitle">${esc(subtitle)}</p>`
     : '';
   return template
-    .replace(TEMPLATE_PLACEHOLDERS[0], () => `<html lang="en" data-theme="dark" data-preset="${esc(visualPreset)}">`)
+    .replace(TEMPLATE_PLACEHOLDERS[0], () => `<html lang="en" data-theme="dark" data-preset="${esc(visualPreset)}"${diagramType ? ` data-diagram-type="${esc(diagramType)}"` : ''}>`)
     .replace(TEMPLATE_PLACEHOLDERS[1], () => `<title>${esc(title)} Diagram</title>`)
     .replace(TEMPLATE_PLACEHOLDERS[2], () => `<h1>${esc(title)}</h1>`)
     .replace(SUBTITLE_SLOT_RE, (_match, indent, newline = '') => renderedSubtitle
