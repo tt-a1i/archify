@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="1080" dy="588" grid="0" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1080" pageHeight="588" math="0" shadow="0" background="#020617">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="boundary-0" value="AWS Region: us-west-2" style="rounded=1;absoluteArcSize=1;arcSize=12;fillColor=#0e0f18;strokeColor=#fbbf24;strokeWidth=1;dashed=1;dashPattern=8 4;fontColor=#fbbf24;fontSize=9;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;whiteSpace=wrap;html=1;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="220" y="120" width="820" height="400" as="geometry"/>
+    </mxCell>
+    <mxCell id="boundary-1" value="sg-api :443/:8000" style="rounded=1;absoluteArcSize=1;arcSize=8;fillColor=none;strokeColor=#fb7185;strokeWidth=1;dashed=1;dashPattern=4 4;fontColor=#fb7185;fontSize=9;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;whiteSpace=wrap;html=1;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="430" y="270" width="400" height="110" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-users" value="&lt;b&gt;Users&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:8px&quot; color=&quot;#94a3b8&quot;&gt;Browser / Mobile&lt;/font&gt;" style="rounded=1;absoluteArcSize=1;arcSize=6;fillColor=#172033;strokeColor=#94a3b8;strokeWidth=1.5;fontColor=#ffffff;fontSize=11;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;whiteSpace=wrap;html=1;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="40" y="300" width="120" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-auth" value="&lt;b&gt;Auth Provider&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:8px&quot; color=&quot;#94a3b8&quot;&gt;OAuth 2.0&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:7px&quot; color=&quot;#fb7185&quot;&gt;JWT + PKCE&lt;/font&gt;" style="rounded=1;absoluteArcSize=1;arcSize=6;fillColor=#3f152f;strokeColor=#fb7185;strokeWidth=1.5;fontColor=#ffffff;fontSize=11;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;whiteSpace=wrap;html=1;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="40" y="110" width="120" height="64" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-cdn" value="&lt;b&gt;CloudFront&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:8px&quot; color=&quot;#94a3b8&quot;&gt;CDN&lt;/font&gt;" style="rounded=1;absoluteArcSize=1;arcSize=6;fillColor=#2f2022;strokeColor=#fbbf24;strokeWidth=1.5;fontColor=#ffffff;fontSize=11;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;whiteSpace=wrap;html=1;verticalAlign=middle;" vertex="1" parent="boundary-0">
+      <mxGeometry x="30" y="180" width="130" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-lb" value="&lt;b&gt;Load Balancer&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:8px&quot; color=&quot;#94a3b8&quot;&gt;HTTPS :443&lt;/font&gt;" style="rounded=1;absoluteArcSize=1;arcSize=6;fillColor=#2f2022;strokeColor=#fbbf24;strokeWidth=1.5;fontColor=#ffffff;fontSize=11;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;whiteSpace=wrap;html=1;verticalAlign=middle;" vertex="1" parent="boundary-1">
+      <mxGeometry x="30" y="30" width="130" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-api" value="&lt;b&gt;API Server&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:8px&quot; color=&quot;#94a3b8&quot;&gt;FastAPI :8000&lt;/font&gt;" style="rounded=1;absoluteArcSize=1;arcSize=6;fillColor=#0b2d31;strokeColor=#34d399;strokeWidth=1.5;fontColor=#ffffff;fontSize=11;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;whiteSpace=wrap;html=1;verticalAlign=middle;" vertex="1" parent="boundary-1">
+      <mxGeometry x="240" y="30" width="130" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-cache" value="&lt;b&gt;Redis&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:8px&quot; color=&quot;#94a3b8&quot;&gt;cache :6379&lt;/font&gt;" style="rounded=1;absoluteArcSize=1;arcSize=6;fillColor=#271955;strokeColor=#a78bfa;strokeWidth=1.5;fontColor=#ffffff;fontSize=11;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;whiteSpace=wrap;html=1;verticalAlign=middle;" vertex="1" parent="boundary-0">
+      <mxGeometry x="450" y="30" width="130" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-db" value="&lt;b&gt;PostgreSQL&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:8px&quot; color=&quot;#94a3b8&quot;&gt;primary :5432&lt;/font&gt;" style="rounded=1;absoluteArcSize=1;arcSize=6;fillColor=#271955;strokeColor=#a78bfa;strokeWidth=1.5;fontColor=#ffffff;fontSize=11;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;whiteSpace=wrap;html=1;verticalAlign=middle;" vertex="1" parent="boundary-0">
+      <mxGeometry x="660" y="180" width="130" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-s3" value="&lt;b&gt;S3&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:8px&quot; color=&quot;#94a3b8&quot;&gt;static assets&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:7px&quot; color=&quot;#fbbf24&quot;&gt;OAI protected&lt;/font&gt;" style="rounded=1;absoluteArcSize=1;arcSize=6;fillColor=#2f2022;strokeColor=#fbbf24;strokeWidth=1.5;fontColor=#ffffff;fontSize=11;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;whiteSpace=wrap;html=1;verticalAlign=middle;" vertex="1" parent="boundary-0">
+      <mxGeometry x="30" y="320" width="130" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-queue" value="&lt;b&gt;SQS&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:8px&quot; color=&quot;#94a3b8&quot;&gt;job queue&lt;/font&gt;" style="rounded=1;absoluteArcSize=1;arcSize=6;fillColor=#563c2f;strokeColor=#fb923c;strokeWidth=1.5;fontColor=#ffffff;fontSize=11;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;whiteSpace=wrap;html=1;verticalAlign=middle;" vertex="1" parent="boundary-0">
+      <mxGeometry x="450" y="320" width="130" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="node-worker" value="&lt;b&gt;Worker&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:8px&quot; color=&quot;#94a3b8&quot;&gt;async jobs&lt;/font&gt;" style="rounded=1;absoluteArcSize=1;arcSize=6;fillColor=#0b2d31;strokeColor=#34d399;strokeWidth=1.5;fontColor=#ffffff;fontSize=11;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;whiteSpace=wrap;html=1;verticalAlign=middle;" vertex="1" parent="boundary-0">
+      <mxGeometry x="660" y="320" width="130" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="edge-users-to-cdn" value="HTTPS" style="edgeStyle=none;rounded=0;strokeColor=#34d399;strokeWidth=1.8;endArrow=block;endFill=1;endSize=18;fontColor=#34d399;fontSize=8;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;labelBackgroundColor=#0f172a;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0" edge="1" parent="1" source="node-users" target="node-cdn">
+      <mxGeometry relative="1" as="geometry">
+        <mxGeometry x="0.000" y="0" relative="1" as="geometry"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-jwt-verification" value="verify JWT" style="edgeStyle=none;rounded=1;arcSize=16;strokeColor=#fb7185;strokeWidth=1.5;dashed=1;dashPattern=5 5;endArrow=block;endFill=1;endSize=15;fontColor=#fb7185;fontSize=8;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;labelBackgroundColor=#0f172a;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0" edge="1" parent="1" source="node-auth" target="node-api">
+      <mxGeometry relative="1" as="geometry">
+        <mxGeometry x="0.359" y="0" relative="1" as="geometry"/>
+        <Array as="points">
+          <mxPoint x="620" y="142"/>
+          <mxPoint x="620" y="246"/>
+          <mxPoint x="735" y="246"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-cdn-to-lb" value="" style="edgeStyle=none;rounded=0;strokeColor=#64748b;strokeWidth=1.5;endArrow=block;endFill=1;endSize=15;fontColor=#94a3b8;fontSize=8;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;labelBackgroundColor=#0f172a;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0" edge="1" parent="1" source="node-cdn" target="node-lb">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-static-assets" value="static" style="edgeStyle=none;rounded=0;strokeColor=#a78bfa;strokeWidth=1.5;dashed=1;dashPattern=4 4;endArrow=block;endFill=1;endSize=15;fontColor=#fb923c;fontSize=8;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;labelBackgroundColor=#0f172a;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0" edge="1" parent="1" source="node-cdn" target="node-s3">
+      <mxGeometry relative="1" as="geometry">
+        <mxGeometry x="0.100" y="0" relative="1" as="geometry"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-lb-to-api" value="" style="edgeStyle=none;rounded=0;strokeColor=#64748b;strokeWidth=1.5;endArrow=block;endFill=1;endSize=15;fontColor=#94a3b8;fontSize=8;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;labelBackgroundColor=#0f172a;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0" edge="1" parent="1" source="node-lb" target="node-api">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-cache-read-through" value="read-through" style="edgeStyle=none;rounded=0;strokeColor=#64748b;strokeWidth=1.5;endArrow=block;endFill=1;endSize=15;fontColor=#94a3b8;fontSize=8;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;labelBackgroundColor=#0f172a;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0" edge="1" parent="1" source="node-api" target="node-cache">
+      <mxGeometry relative="1" as="geometry">
+        <mxGeometry x="0.822" y="0" relative="1" as="geometry"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-api-sql" value="SQL" style="edgeStyle=none;rounded=0;strokeColor=#64748b;strokeWidth=1.5;endArrow=block;endFill=1;endSize=15;fontColor=#94a3b8;fontSize=8;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;labelBackgroundColor=#0f172a;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0" edge="1" parent="1" source="node-api" target="node-db">
+      <mxGeometry relative="1" as="geometry">
+        <mxGeometry x="0.000" y="0" relative="1" as="geometry"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-enqueue-job" value="enqueue" style="edgeStyle=none;rounded=0;strokeColor=#a78bfa;strokeWidth=1.5;dashed=1;dashPattern=4 4;endArrow=block;endFill=1;endSize=15;fontColor=#fb923c;fontSize=8;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;labelBackgroundColor=#0f172a;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0" edge="1" parent="1" source="node-api" target="node-queue">
+      <mxGeometry relative="1" as="geometry">
+        <mxGeometry x="0.100" y="0" relative="1" as="geometry"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="edge-queue-to-worker" value="" style="edgeStyle=none;rounded=0;strokeColor=#64748b;strokeWidth=1.5;endArrow=block;endFill=1;endSize=15;fontColor=#94a3b8;fontSize=8;fontFamily=JetBrains Mono,ui-monospace,Menlo,monospace;labelBackgroundColor=#0f172a;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0" edge="1" parent="1" source="node-queue" target="node-worker">
+      <mxGeometry relative="1" as="geometry">
+      </mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>

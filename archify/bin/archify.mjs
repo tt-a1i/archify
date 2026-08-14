@@ -26,7 +26,7 @@ function usage() {
   archify examples
   archify doctor
   archify demo [output-directory]
-  archify export-drawio <type> <input.json> [output.drawio] [--json]
+  archify export-drawio <type> <input.json> [output.drawio] [--strict] [--json]
 
 Types:
   architecture, workflow, sequence, dataflow, lifecycle
@@ -1159,7 +1159,8 @@ function commandCheck(args) {
 
 function commandExportDrawio(args) {
   const json = args.includes('--json');
-  const knownOptions = new Set(['--json']);
+  const strict = args.includes('--strict');
+  const knownOptions = new Set(['--json', '--strict']);
   const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) fail(`Unknown export-drawio option "${unknown[0]}".`);
   const positional = args.filter((arg) => !knownOptions.has(arg));
@@ -1168,7 +1169,7 @@ function commandExportDrawio(args) {
   rendererPath(type); // validates type against TYPES, fails(2) on unknown.
   const exporter = path.join(skillRoot, 'scripts/export-drawio.mjs');
   const result = runNode(
-    [exporter, type, input, ...(output ? [output] : [])],
+    [exporter, type, input, ...(output ? [output] : []), ...(strict ? ['--strict'] : [])],
     { stdio: json ? 'pipe' : 'inherit' },
   );
   if (result.status !== 0) {
@@ -1185,6 +1186,7 @@ function commandExportDrawio(args) {
     console.log(JSON.stringify({
       schemaVersion: 1, ok: true, command: 'export-drawio',
       type, input: path.resolve(input),
+      ...(strict ? { strict: true } : {}),
       ...(output ? { output: path.resolve(output) } : {}),
     }, null, 2));
   }

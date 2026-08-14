@@ -85,6 +85,68 @@ function firstRectInGroup(gOpenTag, groupCloseIndex, svg) {
 }
 
 /**
+ * Among the rects inside a node <g>, find the FILL rect: the c-* rect that is
+ * not the opaque c-mask backdrop. Sigil decoration rects are smaller, so the
+ * largest non-mask c- rect wins. Returns the full rect tag (for class/rx/
+ * stroke-width) or null.
+ */
+function fillRectInGroup(gOpenTag, groupCloseIndex, svg) {
+  const searchStart = gOpenTag.index + gOpenTag[0].length;
+  const inner = svg.slice(searchStart, groupCloseIndex);
+  let best = null;
+  let bestArea = -1;
+  for (const m of inner.matchAll(RECT_RE)) {
+    const cls = attr(m[0], 'class') || '';
+    if (!cls.startsWith('c-') || cls === 'c-mask') continue;
+    const box = parseRect(m[0]);
+    const area = box.width * box.height;
+    if (area > bestArea) {
+      bestArea = area;
+      best = m[0];
+    }
+  }
+  return best;
+}
+
+/**
+ * Measure the corner rounding radius from an SVG path's `d` attribute. The
+ * renderers round polyline corners with quadratic curves ("L a b Q cx cy d e");
+ * the radius is the distance from the incoming point to the control point.
+ * Returns 0 for sharp polylines.
+ */
+function cornerRadiusFromD(d) {
+  if (!d) return 0;
+  const m = d.match(/L\s*(-?[\d.]+)\s+(-?[\d.]+)\s+Q\s*(-?[\d.]+)\s+(-?[\d.]+)/);
+  if (!m) return 0;
+  const dx = parseFloat(m[3]) - parseFloat(m[1]);
+  const dy = parseFloat(m[4]) - parseFloat(m[2]);
+  return Math.round(Math.hypot(dx, dy));
+}
+
+/**
+ * Parse edge label groups: `<g data-detail="context" data-edge-from=...>`
+ * wrapping a mask rect plus a positioned <text>. The text x/y anchor gives the
+ * exact label position (y is the text baseline; the visual center sits ~4px
+ * above it at font-size 8).
+ */
+const EDGE_LABEL_RE = /<g\b[^>]*\bdata-detail="context"[^>]*\bdata-edge-from="([^"]*)"[^>]*\bdata-edge-to="([^"]*)"[^>]*>[\s\S]*?<text\b[^>]*\bx="(-?[\d.]+)"[^>]*\by="(-?[\d.]+)"[^>]*\bclass="([^"]*)"[^>]*>([^<]*)<\/text>/g;
+
+function parseEdgeLabels(svg) {
+  const labels = [];
+  for (const m of svg.matchAll(EDGE_LABEL_RE)) {
+    labels.push({
+      from: m[1],
+      to: m[2],
+      x: parseFloat(m[3]),
+      y: parseFloat(m[4]) - 4,
+      className: m[5],
+      label: m[6],
+    });
+  }
+  return labels;
+}
+
+/**
  * Locate the matching </g> for a <g ...> opening tag (naive depth scan).
  */
 function findGroupClose(svg, openIndex) {
@@ -115,8 +177,10 @@ function parseNodes(svg) {
   for (const m of matches) {
     const openTag = m[0];
     const closeIndex = findGroupClose(svg, m.index);
-    const box = firstRectInGroup({ index: m.index, [0]: openTag }, closeIndex, svg);
+    const gOpen = { index: m.index, [0]: openTag };
+    const box = firstRectInGroup(gOpen, closeIndex, svg);
     if (!box) continue;
+    const fillTag = fillRectInGroup(gOpen, closeIndex, svg) || '';
     nodes.push({
       id: attr(openTag, 'data-node-id'),
       kind: attr(openTag, 'data-node-kind') || 'backend',
@@ -127,6 +191,10 @@ function parseNodes(svg) {
       y: box.y,
       width: box.width,
       height: box.height,
+      // Strict-mode visual fields (all optional; fall back gracefully).
+      fillClass: fillTag ? attr(fillTag, 'class') : null,
+      rx: fillTag ? parseFloat(attr(fillTag, 'rx') || '0') : 0,
+      strokeWidth: fillTag ? parseFloat(attr(fillTag, 'stroke-width') || '1.5') : 1.5,
     });
   }
   return nodes;
@@ -163,7 +231,13 @@ function parseEdges(svg) {
     if (!from || !to) continue;
     const label = attr(tag, 'data-edge-label') || attr(tag, 'data-composition-edge-label');
     const id = attr(tag, 'data-edge-id') || attr(tag, 'data-composition-edge-id');
-    edges.push({ from, to, label, id, points });
+    edges.push({
+      from, to, label, id, points,
+      // Strict-mode visual fields.
+      strokeClass: attr(tag, 'class'),
+      strokeWidth: parseFloat(attr(tag, 'stroke-width') || '1.5'),
+      radius: cornerRadiusFromD(attr(tag, 'd')),
+    });
   }
   return edges;
 }
@@ -185,10 +259,21 @@ function parseBoundaries(svg) {
     if (box.width <= 0 || box.height <= 0) continue;
     // The boundary label lives in the <text> immediately following the rect.
     let label = '';
+    let labelClass = null;
     const afterRect = svg.slice(m.index + tag.length, m.index + tag.length + 300);
-    const textMatch = afterRect.match(/<text\b[^>]*>([^<]*)<\/text>/);
-    if (textMatch) label = textMatch[1].trim();
-    boundaries.push({ kind, frameId, label, ...box });
+    const textMatch = afterRect.match(/<text\b([^>]*)>([^<]*)<\/text>/);
+    if (textMatch) {
+      label = textMatch[2].trim();
+      labelClass = attr(`<text ${textMatch[1]}>`, 'class');
+    }
+    boundaries.push({
+      kind, frameId, label, ...box,
+      // Strict-mode visual fields.
+      fillClass: attr(tag, 'class'),
+      rx: parseFloat(attr(tag, 'rx') || '0'),
+      strokeWidth: parseFloat(attr(tag, 'stroke-width') || '1'),
+      labelClass,
+    });
   }
   return boundaries;
 }
@@ -199,10 +284,18 @@ function parseBoundaries(svg) {
  */
 function parseLifelines(svg) {
   const lifelines = [];
-  const re = /<path\b[^>]*\bd="M\s*(\d+\.?\d*)\s+(\d+\.?\d*)\s+L\s*\1\s+(\d+\.?\d*)"[^>]*stroke-dasharray/g;
+  // The stroke-dasharray guard keeps solid vertical edges (e.g. lifecycle
+  // drop transitions) from being mistaken for sequence lifelines.
+  const re = /<path\b[^>]*\bd="M\s*(\d+\.?\d*)\s+(\d+\.?\d*)\s+L\s*\1\s+(\d+\.?\d*)"[^>]*stroke-dasharray[^>]*>/g;
   const matches = [...svg.matchAll(re)];
   for (const m of matches) {
-    lifelines.push({ x: parseFloat(m[1]), y1: parseFloat(m[2]), y2: parseFloat(m[3]) });
+    lifelines.push({
+      x: parseFloat(m[1]),
+      y1: parseFloat(m[2]),
+      y2: parseFloat(m[3]),
+      strokeClass: attr(m[0], 'class'),
+      strokeWidth: parseFloat(attr(m[0], 'stroke-width') || '0.8'),
+    });
   }
   return lifelines;
 }
@@ -222,6 +315,7 @@ export function parseArchifySvg(svg, _diagramType) {
     edges: parseEdges(svg),
     boundaries: parseBoundaries(svg),
     lifelines: parseLifelines(svg),
+    edgeLabels: parseEdgeLabels(svg),
   };
 }
 
@@ -455,9 +549,14 @@ export function buildDrawioXml(parsed, diagramType, diagram = null) {
 
 /**
  * One-shot convenience: parse an Archify SVG and emit draw.io XML.
+ * Pass `{ strict: true, css }` to emit the 1:1 visual-fidelity variant.
  */
-export function convertArchifyToDrawio(svg, diagramType, diagram = null) {
+export function convertArchifyToDrawio(svg, diagramType, diagram = null, options = {}) {
   const parsed = parseArchifySvg(svg, diagramType);
+  if (options.strict) {
+    const palette = extractPalette(options.css || '');
+    return buildDrawioXmlStrict(parsed, palette, diagramType, diagram);
+  }
   return buildDrawioXml(parsed, diagramType, diagram);
 }
 
@@ -472,4 +571,355 @@ export function extractSvgFromHtml(html) {
     throw new Error('No <svg> element found in the rendered HTML artifact.');
   }
   return html.slice(start, end + '</svg>'.length);
+}
+
+// ─── Strict palette: resolve Archify CSS to concrete colors ────────────────
+
+function parseColorValue(value) {
+  const v = String(value).trim();
+  const rgba = v.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/);
+  if (rgba) {
+    return { r: parseFloat(rgba[1]), g: parseFloat(rgba[2]), b: parseFloat(rgba[3]), a: rgba[4] === undefined ? 1 : parseFloat(rgba[4]) };
+  }
+  const hex = v.match(/^#([0-9a-f]{6})$/i);
+  if (hex) {
+    return {
+      r: parseInt(hex[1].slice(0, 2), 16),
+      g: parseInt(hex[1].slice(2, 4), 16),
+      b: parseInt(hex[1].slice(4, 6), 16),
+      a: 1,
+    };
+  }
+  return null;
+}
+
+function colorToHex(c) {
+  const h = (n) => Math.round(Math.max(0, Math.min(255, n))).toString(16).padStart(2, '0');
+  return `#${h(c.r)}${h(c.g)}${h(c.b)}`;
+}
+
+/**
+ * Alpha-composite `fg` over an opaque `bg`. Semi-transparent Archify fills
+ * (e.g. rgba(8, 51, 68, 0.4)) sit on an opaque mask or page background, so the
+ * pre-composited hex reproduces the rendered pixel exactly in draw.io, which
+ * has no two-layer shape fill.
+ */
+function blendOver(fg, bg) {
+  const a = fg.a;
+  return {
+    r: fg.r * a + bg.r * (1 - a),
+    g: fg.g * a + bg.g * (1 - a),
+    b: fg.b * a + bg.b * (1 - a),
+    a: 1,
+  };
+}
+
+/**
+ * Extract the visual palette from the rendered artifact's CSS. Resolves the
+ * dark-theme variable block (the artifact's default) plus the plain `.class`
+ * rules (fill / stroke / stroke-dasharray). Preset-scoped rules such as
+ * `svg[data-preset=…] .c-x` are intentionally skipped because their selectors
+ * do not start at a class name.
+ */
+export function extractPalette(css) {
+  // Comments inside declaration blocks would break per-`;` splitting.
+  const cleanCss = String(css || '').replace(/\/\*[\s\S]*?\*\//g, '');
+  // Variable blocks: ":root, [data-theme=\"dark\"] { ... }" (artifact default).
+  const vars = {};
+  const rootBlock = cleanCss.match(/:root\s*,\s*\[data-theme="dark"\]\s*\{([^}]*)\}/);
+  if (rootBlock) {
+    for (const rawDecl of rootBlock[1].split(';')) {
+      const m = rawDecl.trim().match(/^([\w-]+)\s*:\s*(.+)$/);
+      if (m) vars[m[1]] = m[2].trim();
+    }
+  }
+  const resolveVar = (value) => {
+    let v = String(value || '').trim();
+    for (let depth = 0; depth < 8; depth += 1) {
+      const m = v.match(/^var\(\s*([\w-]+)\s*(?:,\s*([^)]+))?\)$/);
+      if (!m) return v;
+      v = vars[m[1]] ?? (m[2] ? m[2].trim() : '');
+    }
+    return v;
+  };
+  // Plain class rules only (line-start selectors).
+  const rules = {};
+  const ruleRe = /^[ \t]*\.([A-Za-z][\w-]*)\s*\{([^}]*)\}/gm;
+  for (const m of cleanCss.matchAll(ruleRe)) {
+    const decls = {};
+    for (const rawDecl of m[2].split(';')) {
+      const d = rawDecl.trim().match(/^([\w-]+)\s*:\s*(.+)$/);
+      if (d) decls[d[1]] = d[2].trim();
+    }
+    rules[m[1]] = decls;
+  }
+  const maskColor = parseColorValue(resolveVar(vars['--mask'] || '#ffffff')) || { r: 255, g: 255, b: 255, a: 1 };
+  const bgColor = parseColorValue(resolveVar(vars['--bg'] || '#ffffff')) || { r: 255, g: 255, b: 255, a: 1 };
+  const textColor = parseColorValue(resolveVar(vars['--text'] || '#000000')) || { r: 0, g: 0, b: 0, a: 1 };
+  const mutedColor = parseColorValue(resolveVar(vars['--text-muted'] || '#888888')) || { r: 136, g: 136, b: 136, a: 1 };
+
+  /**
+   * Resolve a class to concrete colors. `over` picks the compositing base:
+   * 'mask' for node fills (mask + translucent fill), 'bg' for frames.
+   */
+  const paletteFor = (className, over = 'mask') => {
+    const decls = rules[className];
+    if (!decls) return null;
+    const base = over === 'mask' ? maskColor : bgColor;
+    const out = {};
+    if (decls.fill) {
+      const raw = parseColorValue(resolveVar(decls.fill));
+      if (raw) out.fill = colorToHex(raw.a >= 1 ? raw : blendOver(raw, base));
+    }
+    if (decls.stroke) {
+      const raw = parseColorValue(resolveVar(decls.stroke));
+      if (raw) out.stroke = colorToHex(raw.a >= 1 ? raw : blendOver(raw, base));
+    }
+    if (decls['stroke-dasharray']) {
+      out.dash = resolveVar(decls['stroke-dasharray']).replace(/\s+/g, ' ').trim();
+    }
+    return out;
+  };
+
+  return {
+    paletteFor,
+    mask: colorToHex(maskColor),
+    bg: colorToHex(bgColor),
+    text: colorToHex(textColor),
+    textMuted: colorToHex(mutedColor),
+  };
+}
+
+// ─── Strict builder: 1:1 shape / color / corner fidelity ───────────────────
+
+const FALLBACK_NODE_FILL = '#d5e8d4';
+const FALLBACK_STROKE = '#82b366';
+
+function normalizeDash(dash) {
+  if (!dash) return null;
+  const parts = dash.split(/[\s,]+/).filter(Boolean).map(Number);
+  if (!parts.length || parts.some((n) => !Number.isFinite(n) || n <= 0)) return null;
+  return parts.join(' ');
+}
+
+/** Pin the exact authored connection point on a node border (0..1 floats). */
+function borderFraction(point, node) {
+  if (!node || !node.width || !node.height) return null;
+  const fx = (point[0] - node.x) / node.width;
+  const fy = (point[1] - node.y) / node.height;
+  // Snap near-border values so draw.io treats them as side anchors.
+  const snap = (v) => (v < 0.04 ? 0 : v > 0.96 ? 1 : Math.round(v * 100) / 100);
+  return [snap(fx), snap(fy)];
+}
+
+/**
+ * Fraction t∈[0,1] along the polyline where the point closest to `target`
+ * sits (used to position edge labels at their authored location).
+ */
+function fractionAlongPolyline(points, target) {
+  let total = 0;
+  const segs = [];
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const [ax, ay] = points[i];
+    const [bx, by] = points[i + 1];
+    const len = Math.hypot(bx - ax, by - ay) || 1;
+    segs.push({ ax, ay, dx: bx - ax, dy: by - ay, len, start: total });
+    total += len;
+  }
+  let best = Infinity;
+  let result = 0.5;
+  for (const s of segs) {
+    const t = Math.max(0, Math.min(1, ((target[0] - s.ax) * s.dx + (target[1] - s.ay) * s.dy) / (s.len * s.len)));
+    const px = s.ax + t * s.dx;
+    const py = s.ay + t * s.dy;
+    const dist = Math.hypot(target[0] - px, target[1] - py);
+    if (dist < best) {
+      best = dist;
+      result = (s.start + t * s.len) / (total || 1);
+    }
+  }
+  return Math.max(0, Math.min(1, result));
+}
+
+/**
+ * Build the strict (1:1) mxGraphModel: every node keeps the Archify rounded
+ * rectangle with its exact corner radius, exact composited fill/stroke colors,
+ * exact stroke width and dash pattern; edges keep their exact routed polyline
+ * with the measured corner radius (`arcSize` = 2 × radius in draw.io) and their
+ * exact anchor points pinned via exitX/exitY / entryX/entryY.
+ */
+export function buildDrawioXmlStrict(parsed, palette, diagramType, diagram = null) {
+  const [vw, vh] = parsed.viewBox;
+  const nodeParents = resolveContainerParents(parsed, diagram);
+  const nodeById = new Map(parsed.nodes.map((n) => [n.id, n]));
+  const FONT_STACK = 'JetBrains Mono,ui-monospace,Menlo,monospace';
+
+  const strictNodeStyle = (node) => {
+    const colors = node.fillClass ? palette.paletteFor(node.fillClass, 'mask') : null;
+    const rx = Number.isFinite(node.rx) && node.rx > 0 ? Math.round(node.rx) : 0;
+    const sw = Number.isFinite(node.strokeWidth) ? node.strokeWidth : 1.5;
+    return [
+      'rounded=' + (rx > 0 ? 1 : 0),
+      ...(rx > 0 ? ['absoluteArcSize=1', `arcSize=${rx}`] : []),
+      `fillColor=${colors?.fill || FALLBACK_NODE_FILL}`,
+      `strokeColor=${colors?.stroke || FALLBACK_STROKE}`,
+      `strokeWidth=${sw}`,
+      `fontColor=${palette.text}`,
+      'fontSize=11',
+      `fontFamily=${FONT_STACK}`,
+      'whiteSpace=wrap',
+      'html=1',
+      'verticalAlign=middle',
+    ].join(';') + ';';
+  };
+
+  const strictBoundaryStyle = (b) => {
+    const colors = b.fillClass ? palette.paletteFor(b.fillClass, 'bg') : null;
+    const rx = Number.isFinite(b.rx) && b.rx > 0 ? Math.round(b.rx) : 0;
+    const dash = normalizeDash(colors?.dash);
+    const labelColors = b.labelClass ? palette.paletteFor(b.labelClass, 'bg') : null;
+    const alignLeft = b.kind === 'lane' || b.kind === 'exception-lane' || b.kind === 'segment';
+    return [
+      'rounded=' + (rx > 0 ? 1 : 0),
+      ...(rx > 0 ? ['absoluteArcSize=1', `arcSize=${rx}`] : []),
+      `fillColor=${colors?.fill || 'none'}`,
+      `strokeColor=${colors?.stroke || '#666666'}`,
+      `strokeWidth=${b.strokeWidth || 1}`,
+      ...(dash ? ['dashed=1', `dashPattern=${dash}`] : []),
+      `fontColor=${labelColors?.fill || palette.textMuted}`,
+      'fontSize=9',
+      `fontFamily=${FONT_STACK}`,
+      'whiteSpace=wrap',
+      'html=1',
+      'verticalAlign=top',
+      ...(alignLeft ? ['align=left', 'spacingLeft=8'] : []),
+    ].join(';') + ';';
+  };
+
+  const labelFor = (edge, index) => parsed.edgeLabels?.find(
+    (l) => l.from === edge.from && l.to === edge.to && (l.label || '') === (edge.label || ''),
+  ) || parsed.edgeLabels?.find((l) => l.from === edge.from && l.to === edge.to);
+
+  const lines = [];
+  lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+  lines.push(
+    `<mxGraphModel dx="${Math.round(vw)}" dy="${Math.round(vh)}" grid="0" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="${Math.round(vw)}" pageHeight="${Math.round(vh)}" math="0" shadow="0" background="${palette.bg}">`,
+  );
+  lines.push('  <root>');
+  lines.push('    <mxCell id="0"/>');
+  lines.push('    <mxCell id="1" parent="0"/>');
+
+  // Boundaries.
+  for (let i = 0; i < parsed.boundaries.length; i += 1) {
+    const b = parsed.boundaries[i];
+    lines.push(
+      `    <mxCell id="boundary-${i}" value="${escapeAttr(b.label || b.kind)}" style="${strictBoundaryStyle(b)}" vertex="1" parent="1">`,
+    );
+    lines.push(
+      `      <mxGeometry x="${Math.round(b.x)}" y="${Math.round(b.y)}" width="${Math.round(b.width)}" height="${Math.round(b.height)}" as="geometry"/>`,
+    );
+    lines.push('    </mxCell>');
+  }
+
+  // Nodes.
+  for (const node of parsed.nodes) {
+    const parentInfo = nodeParents.get(node.id);
+    const parentId = parentInfo ? parentInfo.drawioId : '1';
+    const relX = node.x - (parentInfo ? parentInfo.offsetX : 0);
+    const relY = node.y - (parentInfo ? parentInfo.offsetY : 0);
+    const labelParts = [node.label, node.sublabel, node.tag].filter(Boolean);
+    const tagColor = node.fillClass ? (palette.paletteFor(node.fillClass, 'mask')?.stroke || palette.text) : palette.text;
+    const htmlValue = labelParts.length > 1
+      ? `<b>${node.label}</b><br/>`
+        + (node.sublabel ? `<font style="font-size:8px" color="${palette.textMuted}">${node.sublabel}</font>` : '')
+        + (node.sublabel && node.tag ? '<br/>' : '')
+        + (node.tag ? `<font style="font-size:7px" color="${tagColor}">${node.tag}</font>` : '')
+      : node.label;
+    lines.push(
+      `    <mxCell id="node-${node.id}" value="${escapeAttr(htmlValue)}" style="${strictNodeStyle(node)}" vertex="1" parent="${parentId}">`,
+    );
+    lines.push(
+      `      <mxGeometry x="${Math.round(relX)}" y="${Math.round(relY)}" width="${Math.round(node.width)}" height="${Math.round(node.height)}" as="geometry"/>`,
+    );
+    lines.push('    </mxCell>');
+  }
+
+  // Sequence lifelines.
+  for (const ll of parsed.lifelines) {
+    const id = `lifeline-${Math.round(ll.x)}-${Math.round(ll.y1)}`;
+    const colors = ll.strokeClass ? palette.paletteFor(ll.strokeClass, 'bg') : null;
+    const style = [
+      'endArrow=none',
+      'html=1',
+      `strokeColor=${colors?.stroke || '#999999'}`,
+      `strokeWidth=${ll.strokeWidth || 0.8}`,
+      'dashed=1',
+      'dashPattern=3 7',
+    ].join(';') + ';';
+    lines.push(`    <mxCell id="${id}" value="" style="${style}" edge="1" parent="1">`);
+    lines.push('      <mxGeometry relative="1" as="geometry">');
+    lines.push(`        <mxPoint x="${Math.round(ll.x)}" y="${Math.round(ll.y1)}" as="sourcePoint"/>`);
+    lines.push(`        <mxPoint x="${Math.round(ll.x)}" y="${Math.round(ll.y2)}" as="targetPoint"/>`);
+    lines.push('      </mxGeometry>');
+    lines.push('    </mxCell>');
+  }
+
+  // Edges.
+  for (let i = 0; i < parsed.edges.length; i += 1) {
+    const edge = parsed.edges[i];
+    const src = nodeById.get(edge.from);
+    const tgt = nodeById.get(edge.to);
+    if (!src || !tgt) continue;
+    const colors = edge.strokeClass ? palette.paletteFor(edge.strokeClass, 'bg') : null;
+    const sw = Number.isFinite(edge.strokeWidth) ? edge.strokeWidth : 1.5;
+    const dash = normalizeDash(colors?.dash);
+    const radius = Number.isFinite(edge.radius) ? edge.radius : 0;
+    const labelText = labelFor(edge, i);
+    const labelColors = labelText?.className ? palette.paletteFor(labelText.className, 'bg') : null;
+    const style = [
+      'edgeStyle=none',
+      ...(radius > 0 ? ['rounded=1', `arcSize=${radius * 2}`] : ['rounded=0']),
+      `strokeColor=${colors?.stroke || '#666666'}`,
+      `strokeWidth=${sw}`,
+      ...(dash ? ['dashed=1', `dashPattern=${dash}`] : []),
+      'endArrow=block',
+      'endFill=1',
+      `endSize=${Math.max(4, Math.round(10 * sw))}`,
+      `fontColor=${labelColors?.fill || palette.textMuted}`,
+      'fontSize=8',
+      `fontFamily=${FONT_STACK}`,
+      `labelBackgroundColor=${palette.mask}`,
+      'html=1',
+    ].join(';') + ';';
+
+    const exit = borderFraction(edge.points[0], src);
+    const entry = borderFraction(edge.points[edge.points.length - 1], tgt);
+    const styleAttrs = [
+      ...(exit ? [`exitX=${exit[0]}`, `exitY=${exit[1]}`, 'exitDx=0', 'exitDy=0'] : []),
+      ...(entry ? [`entryX=${entry[0]}`, `entryY=${entry[1]}`, 'entryDx=0', 'entryDy=0'] : []),
+    ].join(';');
+    const id = edge.id ? `edge-${edge.id}` : `edge-${i}`;
+    lines.push(
+      `    <mxCell id="${id}" value="${edge.label ? escapeAttr(edge.label) : ''}" style="${style}${styleAttrs}" edge="1" parent="1" source="node-${edge.from}" target="node-${edge.to}">`,
+    );
+    lines.push('      <mxGeometry relative="1" as="geometry">');
+    if (labelText && edge.label) {
+      const t = fractionAlongPolyline(edge.points, [labelText.x, labelText.y]);
+      lines.push(`        <mxGeometry x="${(2 * t - 1).toFixed(3)}" y="0" relative="1" as="geometry"/>`);
+    }
+    const interior = edge.points.slice(1, -1);
+    if (interior.length) {
+      lines.push('        <Array as="points">');
+      for (const [x, y] of interior) {
+        lines.push(`          <mxPoint x="${Math.round(x)}" y="${Math.round(y)}"/>`);
+      }
+      lines.push('        </Array>');
+    }
+    lines.push('      </mxGeometry>');
+    lines.push('    </mxCell>');
+  }
+
+  lines.push('  </root>');
+  lines.push('</mxGraphModel>');
+  return lines.join('\n');
 }

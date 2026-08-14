@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { parseArchifySvg, buildDrawioXml, convertArchifyToDrawio, extractSvgFromHtml } from '../renderers/shared/svg-to-drawio.mjs';
+import { parseArchifySvg, buildDrawioXml, buildDrawioXmlStrict, extractPalette, convertArchifyToDrawio, extractSvgFromHtml } from '../renderers/shared/svg-to-drawio.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -323,4 +323,100 @@ test('cli: help lists export-drawio', () => {
   const result = run(['--help']);
   assert.equal(result.status, 0);
   assert.match(result.stdout, /archify export-drawio <type>/);
+});
+
+// ─── Strict mode: 1:1 shape/color/corner fidelity ──────────────────────────
+
+test('extractPalette resolves CSS vars, class rules, and blends translucent fills', () => {
+  const css = `
+    :root, [data-theme="dark"] {
+      --bg: #020617;
+      --mask: #0f172a;
+      --text: #ffffff;
+      --backend-fill: rgba(6, 78, 59, 0.4);
+      /* a comment that must not break parsing */
+      --backend-stroke: #34d399;
+    }
+    .c-backend { fill: var(--backend-fill); stroke: var(--backend-stroke); }
+    .c-region  { fill: rgba(251, 191, 36, 0.05); stroke: #fbbf24; stroke-dasharray: 8,4; }
+  `;
+  const palette = extractPalette(css);
+  assert.equal(palette.bg, '#020617');
+  assert.equal(palette.mask, '#0f172a');
+  assert.equal(palette.text, '#ffffff');
+  // rgba(6,78,59,0.4) over mask #0f172a → exact composite.
+  const backend = palette.paletteFor('c-backend', 'mask');
+  assert.equal(backend.fill, '#0b2d31');
+  assert.equal(backend.stroke, '#34d399');
+  const region = palette.paletteFor('c-region', 'bg');
+  assert.equal(region.dash, '8,4');
+  assert.ok(region.fill.startsWith('#'));
+});
+
+test('strict build keeps rounded rectangles, exact radii, and colors', () => {
+  const parsed = {
+    viewBox: [400, 300],
+    nodes: [{ id: 'a', kind: 'database', label: 'DB', x: 10, y: 10, width: 80, height: 40, rx: 6, strokeWidth: 1.5, fillClass: 'c-database' }],
+    edges: [{
+      from: 'a', to: 'a', label: null, points: [[50, 30], [50, 30]], radius: 8, strokeWidth: 1.5, strokeClass: 'a-security',
+    }],
+    boundaries: [{ kind: 'region', label: 'R', x: 0, y: 0, width: 300, height: 200, rx: 12, strokeWidth: 1, fillClass: 'c-region', labelClass: 't-cloud' }],
+    lifelines: [],
+    edgeLabels: [],
+  };
+  const palette = extractPalette(`
+    :root, [data-theme="dark"] {
+      --bg: #020617; --mask: #0f172a; --text: #ffffff; --text-muted: #94a3b8;
+      --database-fill: rgba(76, 29, 149, 0.4); --database-stroke: #a78bfa;
+      --cloud-stroke: #fbbf24; --security-stroke: #fb7185;
+    }
+    .c-database { fill: var(--database-fill); stroke: var(--database-stroke); }
+    .c-region { fill: rgba(251,191,36,0.05); stroke: var(--cloud-stroke); stroke-dasharray: 8,4; }
+    .t-cloud { fill: var(--cloud-stroke); }
+    .a-security { stroke: var(--security-stroke); stroke-dasharray: 5,5; }
+  `);
+  const xml = buildDrawioXmlStrict(parsed, palette, 'architecture');
+  // No draw.io built-in shape substitutions — plain rounded rects.
+  assert.doesNotMatch(xml, /shape=cylinder|shape=cloud|shape=shield/);
+  // Exact corner radius: rx=6 → absoluteArcSize=1;arcSize=6.
+  assert.match(xml, /absoluteArcSize=1;arcSize=6;/);
+  // Boundary keeps rx=12 and its dashed pattern from CSS.
+  assert.match(xml, /arcSize=12;/);
+  assert.match(xml, /dashPattern=8 4/);
+  // Edge corner radius: measured 8 → arcSize=16.
+  assert.match(xml, /arcSize=16/);
+  // Edge keeps the security variant color and dash.
+  assert.match(xml, /strokeColor=#fb7185/);
+  assert.match(xml, /dashPattern=5 5/);
+  // Composited database fill over mask.
+  assert.match(xml, /fillColor=#271955/);
+  // Dark page background.
+  assert.match(xml, /background="#020617"/);
+});
+
+test('cli: export-drawio --strict emits 1:1 styles for all five types', () => {
+  for (const [type, file] of EXAMPLES) {
+    const input = path.join(skillRoot, 'examples', file);
+    const output = path.join(tmp, `${type}-strict.drawio`);
+    const result = run(['export-drawio', type, input, output, '--strict']);
+    assert.equal(result.status, 0, result.stderr);
+    const xml = fs.readFileSync(output, 'utf8');
+    // Dark background, exact radii, no built-in shape mapping.
+    assert.match(xml, /background="#020617"/, type);
+    assert.match(xml, /absoluteArcSize=1/, type);
+    assert.doesNotMatch(xml, /shape=cylinder3|shape=cloud|shape=shield/, type);
+    // Real edge bindings survive strict mode.
+    const sources = [...xml.matchAll(/source="(node-[^"]*)"/g)].length;
+    assert.ok(sources > 0, `${type} keeps bound edges`);
+  }
+});
+
+test('cli: export-drawio --strict receipt reports strict mode', () => {
+  const input = path.join(skillRoot, 'examples/web-app.architecture.json');
+  const output = path.join(tmp, 'strict-receipt.drawio');
+  const result = run(['export-drawio', 'architecture', input, output, '--strict', '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.ok, true);
+  assert.equal(receipt.strict, true);
 });
