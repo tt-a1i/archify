@@ -17,6 +17,7 @@ import {
   cleanCrossingProblems,
   cleanAmbiguousCorridorProblems,
   cleanBorderRunProblems,
+  cleanNearAxisDoglegProblems,
   cleanRouteRhythmProblems,
   cleanLabelRouteClearanceProblems,
   suggestLabelObstacleFix,
@@ -65,7 +66,12 @@ const layout = {
   // Boundary padding — the 30/50 rule that was a hand-arithmetic footgun
   // (CHANGELOG v2.2.1): 30px on top/left/right, plus 20px extra at the bottom.
   boundaryPad: 30,
+  boundaryTitleBand: 42,
   boundaryExtraBottom: 20,
+  nestedBoundaryGap: 32,
+  boundaryBoundaryGap: 14,
+  boundaryRouteGap: 14,
+  boundaryRouteSearch: 18,
   legendH: 28,
 };
 
@@ -105,6 +111,24 @@ function boundaryRect(boundary) {
   const maxX = Math.max(...members.map((m) => m.x + m.width));
   const maxY = Math.max(...members.map((m) => m.y + m.height));
   const pad = boundary.pad ?? layout.boundaryPad;
+  const topPad = Math.max(pad, layout.boundaryTitleBand);
+  return {
+    ...boundary,
+    x: minX - pad,
+    y: minY - topPad,
+    width: maxX - minX + pad * 2,
+    height: maxY - minY + topPad + layout.boundaryExtraBottom,
+  };
+}
+
+function legacyBoundaryRect(boundary) {
+  const members = asArray(boundary.wraps).map((id) => components.get(id)).filter(Boolean);
+  if (!members.length) return null;
+  const minX = Math.min(...members.map((member) => member.x));
+  const minY = Math.min(...members.map((member) => member.y));
+  const maxX = Math.max(...members.map((member) => member.x + member.width));
+  const maxY = Math.max(...members.map((member) => member.y + member.height));
+  const pad = boundary.pad ?? layout.boundaryPad;
   return {
     ...boundary,
     x: minX - pad,
@@ -115,7 +139,130 @@ function boundaryRect(boundary) {
 }
 
 const boundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
-const compositionFrames = boundaries.map((boundary, index) => ({
+const legacyCompositionFrames = asArray(arch.boundaries)
+  .map(legacyBoundaryRect)
+  .filter(Boolean)
+  .map((boundary, index) => ({
+    ...boundary,
+    id: boundary.id || index,
+    kind: boundary.kind || 'boundary',
+    radius: boundary.kind === 'security-group' ? 8 : 12,
+  }));
+
+function wrapsSet(boundary) {
+  return new Set(asArray(boundary.wraps));
+}
+
+function inferredBoundaryParent(child, childIndex) {
+  const childMembers = wrapsSet(child);
+  return boundaries
+    .map((boundary, index) => ({ boundary, index, members: wrapsSet(boundary) }))
+    .filter(({ index, members }) => (
+      index !== childIndex
+      && members.size > childMembers.size
+      && [...childMembers].every((id) => members.has(id))
+    ))
+    .sort((a, b) => a.members.size - b.members.size || a.index - b.index)[0];
+}
+
+function containNestedBoundary(parent, child) {
+  const gap = layout.nestedBoundaryGap;
+  const minX = Math.min(parent.x, child.x - gap);
+  const minY = Math.min(parent.y, child.y - gap);
+  const maxX = Math.max(parent.x + parent.width, child.x + child.width + gap);
+  const maxY = Math.max(parent.y + parent.height, child.y + child.height + gap);
+  parent.x = minX;
+  parent.y = minY;
+  parent.width = maxX - minX;
+  parent.height = maxY - minY;
+}
+
+function expandBoundaryAwayFromParallelRoutes(boundary) {
+  const gap = layout.boundaryRouteGap;
+  const search = layout.boundaryRouteSearch;
+  const original = {
+    left: boundary.x,
+    top: boundary.y,
+    right: boundary.x + boundary.width,
+    bottom: boundary.y + boundary.height,
+  };
+  let { left, top, right, bottom } = original;
+
+  for (const conn of asArray(arch.connections)) {
+    if (!components.has(conn.from) || !components.has(conn.to)) continue;
+    if (conn.via || (conn.route && conn.route !== 'auto')) continue;
+    const points = pathFor(conn).points;
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const [start, end] = [points[index], points[index + 1]];
+      if (start[0] === end[0]) {
+        const x = start[0];
+        const low = Math.min(start[1], end[1]);
+        const high = Math.max(start[1], end[1]);
+        if (high <= original.top || low >= original.bottom) continue;
+        if (Math.abs(x - original.left) < search) left = Math.min(left, x - gap);
+        if (Math.abs(x - original.right) < search) right = Math.max(right, x + gap);
+      } else if (start[1] === end[1]) {
+        const y = start[1];
+        const low = Math.min(start[0], end[0]);
+        const high = Math.max(start[0], end[0]);
+        if (high <= original.left || low >= original.right) continue;
+        if (Math.abs(y - original.top) < search) top = Math.min(top, y - gap);
+        if (Math.abs(y - original.bottom) < search) bottom = Math.max(bottom, y + gap);
+      }
+    }
+  }
+
+  boundary.x = left;
+  boundary.y = top;
+  boundary.width = right - left;
+  boundary.height = bottom - top;
+}
+
+function separateParallelBoundaryEdges() {
+  const gap = layout.boundaryBoundaryGap;
+  for (let index = 1; index < boundaries.length; index += 1) {
+    const boundary = boundaries[index];
+    for (let priorIndex = 0; priorIndex < index; priorIndex += 1) {
+      const prior = boundaries[priorIndex];
+      const boundaryRight = boundary.x + boundary.width;
+      const boundaryBottom = boundary.y + boundary.height;
+      const priorRight = prior.x + prior.width;
+      const priorBottom = prior.y + prior.height;
+      const verticalOverlap = Math.min(boundaryBottom, priorBottom) - Math.max(boundary.y, prior.y);
+      const horizontalOverlap = Math.min(boundaryRight, priorRight) - Math.max(boundary.x, prior.x);
+
+      if (verticalOverlap > 0 && Math.abs(boundary.x - prior.x) < gap) {
+        const right = boundaryRight;
+        boundary.x = prior.x - gap;
+        boundary.width = right - boundary.x;
+      }
+      if (verticalOverlap > 0 && Math.abs(boundaryRight - priorRight) < gap) {
+        boundary.width = priorRight + gap - boundary.x;
+      }
+      if (horizontalOverlap > 0 && Math.abs(boundary.y - prior.y) < gap) {
+        const bottom = boundaryBottom;
+        boundary.y = prior.y - gap;
+        boundary.height = bottom - boundary.y;
+      }
+      if (horizontalOverlap > 0 && Math.abs(boundaryBottom - priorBottom) < gap) {
+        boundary.height = priorBottom + gap - boundary.y;
+      }
+    }
+  }
+}
+
+function containAllNestedBoundaries() {
+  boundaries
+    .map((boundary, index) => ({ boundary, index, memberCount: wrapsSet(boundary).size }))
+    .sort((a, b) => a.memberCount - b.memberCount || a.index - b.index)
+    .forEach(({ boundary, index }) => {
+      const parent = inferredBoundaryParent(boundary, index);
+      if (parent) containNestedBoundary(parent.boundary, boundary);
+    });
+}
+
+containAllNestedBoundaries();
+let compositionFrames = boundaries.map((boundary, index) => ({
   ...boundary,
   id: boundary.id || index,
   kind: boundary.kind || 'boundary',
@@ -165,7 +312,7 @@ function autoViewBox() {
   ];
 }
 
-const viewBox = arch.meta?.viewBox || autoViewBox();
+let viewBox = arch.meta?.viewBox || autoViewBox();
 const legendY = () => viewBox[1] - 16;
 
 // ---- Validation: mechanical correctness, never layout taste -----------------
@@ -295,7 +442,9 @@ function validateArchitecture() {
     routeHint: 'adjust route/via or fromSide/toSide so unrelated connections do not visually merge'
   }));
   problems.push(...cleanBorderRunProblems({
-    relations: arch.connections,
+    relations: asArray(arch.connections).map((connection) => (
+      connection?.via || (connection?.route && connection.route !== 'auto') ? null : connection
+    )),
     endpointIds: new Set(components.keys()),
     frames: compositionFrames,
     pathFor,
@@ -303,6 +452,28 @@ function validateArchitecture() {
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
     routeHint: 'adjust route/via or fromSide/toSide so the connection crosses the boundary perpendicularly instead of following its border'
+  }));
+  problems.push(...cleanBorderRunProblems({
+    relations: asArray(arch.connections).map((connection) => (
+      connection?.via || (connection?.route && connection.route !== 'auto') ? connection : null
+    )),
+    endpointIds: new Set(components.keys()),
+    frames: legacyCompositionFrames,
+    pathFor,
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: arch.meta?.quality_profile,
+    routeHint: 'adjust route/via or fromSide/toSide so the explicit connection crosses the authored boundary perpendicularly instead of following its border'
+  }));
+  problems.push(...cleanNearAxisDoglegProblems({
+    relations: arch.connections,
+    endpointIds: new Set(components.keys()),
+    pathFor,
+    fromSideFor: (conn) => connectionSides(conn).fromSide,
+    toSideFor: (conn) => connectionSides(conn).toSide,
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: arch.meta?.quality_profile,
   }));
   problems.push(...cleanRouteRhythmProblems({
     relations: arch.connections,
@@ -689,6 +860,17 @@ function pathFor(conn) {
   pathCache.set(conn, routed);
   return routed;
 }
+
+boundaries.forEach(expandBoundaryAwayFromParallelRoutes);
+separateParallelBoundaryEdges();
+containAllNestedBoundaries();
+compositionFrames = boundaries.map((boundary, index) => ({
+  ...boundary,
+  id: boundary.id || index,
+  kind: boundary.kind || 'boundary',
+  radius: boundary.kind === 'security-group' ? 8 : 12,
+}));
+if (!arch.meta?.viewBox) viewBox = autoViewBox();
 
 // ---- Rendering ---------------------------------------------------------------
 function renderBoundary(b, index) {

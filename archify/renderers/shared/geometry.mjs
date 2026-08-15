@@ -749,6 +749,101 @@ export function collectRouteRhythmIssues({
   return issues;
 }
 
+export function collectNearAxisDoglegs({
+  routedRelations,
+  alignmentPx = 24,
+}) {
+  const issues = [];
+  for (const [fallbackIndex, routed] of asArray(routedRelations).entries()) {
+    const points = normalizeRoutePoints(routed?.points);
+    if (points.length < 3) continue;
+    const fromSide = routed?.fromSide;
+    const toSide = routed?.toSide;
+    const verticallyFacing = (
+      (fromSide === 'top' && toSide === 'bottom')
+      || (fromSide === 'bottom' && toSide === 'top')
+    );
+    const horizontallyFacing = (
+      (fromSide === 'left' && toSide === 'right')
+      || (fromSide === 'right' && toSide === 'left')
+    );
+    if (!verticallyFacing && !horizontallyFacing) continue;
+    const start = points[0];
+    const end = points.at(-1);
+    const axisDelta = verticallyFacing
+      ? Math.abs(start[0] - end[0])
+      : Math.abs(start[1] - end[1]);
+    if (axisDelta <= 0.0001 || axisDelta >= alignmentPx - 0.0001) continue;
+    issues.push({
+      relation: routed.relation,
+      relationIndex: Number.isInteger(routed.relationIndex) ? routed.relationIndex : fallbackIndex,
+      fromSide,
+      toSide,
+      axis: verticallyFacing ? 'vertical' : 'horizontal',
+      axisDelta,
+      bendCount: points.length - 2,
+      start,
+      end,
+    });
+  }
+  return issues;
+}
+
+export function cleanNearAxisDoglegProblems({
+  relations,
+  endpointIds,
+  pathFor,
+  fromSideFor,
+  toSideFor,
+  diagramType,
+  relationCollection,
+  profile,
+  alignmentPx = 24,
+}) {
+  const requestedProfile = process.env.ARCHIFY_QUALITY_PROFILE || profile;
+  if (requestedProfile !== 'showcase') return [];
+  const routedRelations = asArray(relations).map((relation, relationIndex) => {
+    if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') return null;
+    if (endpointIds && (!endpointIds.has(relation.from) || !endpointIds.has(relation.to))) return null;
+    if (relation.via || relation.channelX !== undefined || relation.channelY !== undefined
+        || (relation.route && relation.route !== 'auto') || relation.labelAt) return null;
+    return {
+      relation,
+      relationIndex,
+      points: pathFor(relation)?.points,
+      fromSide: fromSideFor(relation),
+      toSide: toSideFor(relation),
+    };
+  }).filter(Boolean);
+  return collectNearAxisDoglegs({ routedRelations, alignmentPx }).map((hit) => {
+    const relation = hit.relation || {};
+    const relationId = relation.id ? ` id "${relation.id}"` : '';
+    const delta = Math.round(hit.axisDelta * 10) / 10;
+    const start = hit.start.map((value) => Math.round(value * 10) / 10).join(', ');
+    const end = hit.end.map((value) => Math.round(value * 10) / 10).join(', ');
+    const routeHint = 'align the component centers and reserve the facing center port for this direct relationship; move side branches to another truthful side, or author an explicit straight route with a safe labelAt';
+    const message = `[composition/near-axis-dogleg] showcase ${diagramType} ${relationCollection}[${hit.relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" has ${hit.bendCount} bends although its facing ${hit.axis} ports differ by only ${delta}px [${start}] -> [${end}] — ${routeHint}.`;
+    recordDiagnostic({
+      code: 'composition/near-axis-dogleg',
+      severity: 'error',
+      message,
+      subject: relationshipSubject(diagramType, relationCollection, hit.relationIndex, relation),
+      evidence: {
+        axis: hit.axis,
+        axisDeltaPx: delta,
+        alignmentThresholdPx: alignmentPx,
+        bendCount: hit.bendCount,
+        fromSide: hit.fromSide,
+        toSide: hit.toSide,
+        start: hit.start,
+        end: hit.end,
+      },
+      supportedFixes: [routeHint],
+    });
+    return message;
+  });
+}
+
 export function cleanRouteRhythmProblems({
   relations,
   endpointIds,
