@@ -77,6 +77,7 @@ in the generated viewer.
 - Node anchors start at side midpoints. `left`/`right` change the horizontal endpoint; `top`/`bottom` change the vertical endpoint. For an automatic Architecture relationship, unobstructed facing ports whose axis offset is under 16px may share one horizontal or vertical axis when both endpoints retain the 16px corner gutter. If exactly one endpoint belongs to a spread group, only its unshared counterpart moves; relationships spread at both endpoints keep their distinct ports and outside bridge.
 - A side is a direction contract. The first and final route segment must be perpendicular and outward/inward in the named direction.
 - Automatic Port Spread is a default renderer behavior for architecture, workflow, data-flow, and lifecycle diagrams. Shared automatic endpoints spread deterministically and symmetrically with a 16px corner gutter. It does not apply to sequence messages, single relationships, or explicit `via`, `channelX`, `channelY`, `labelAt`, or non-`auto` routes.
+- Showcase reports `composition/near-axis-dogleg` when facing automatic ports finish less than 24px apart but the rendered relationship still bends. Treat it as an authoring decision: align the component centers and reserve the direct pair's port, or assign a side branch to another truthful side. Do not silently change authored endpoint sides in the renderer.
 - Showcase route rhythm: every nonzero segment must be at least 8px; every interior segment must be at least 16px. When spread ports are nearly parallel, the router uses a 24px endpoint stub and a 16px outside bridge instead of manufacturing a tiny dogleg.
 - Shared endpoint corridors are allowed only when they remain semantically unambiguous. Unrelated collinear overlap of 8px or more fails showcase.
 - Container borders are intentional pass-through geometry, but a long edge running along a structural border is not.
@@ -118,6 +119,8 @@ Run `validate` after every edit. Consume `diagnostics[]` by stable `code`, exact
 ### Architecture
 
 Use one left-to-right spine with short vertical branches. Prefer 6–12 primary components and group only real ownership, trust, process, or deployment boundaries. Boundaries do not replace relationships.
+
+Align deliberate top/bottom or left/right pairs on the same component-center axis before relying on automatic routing. When a shared port side contains one direct pair plus one side branch, reserve the center for the direct pair and move the side branch to another truthful port. A valid route is not yet polished when it bends only because near-aligned nodes or endpoint choices missed an available straight corridor.
 
 Grid placement is preferred when the schema supports it. Free positions are appropriate for a bounded exception, not for prose-level coordinate planning. Keep external actors outside the system boundary when that is factually true.
 

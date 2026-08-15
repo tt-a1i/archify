@@ -187,6 +187,7 @@ const COMPOSITION_FIXES = {
   'composition/proper-crossing': ['adjust route/via or channel coordinates so unrelated relationships use separate corridors'],
   'composition/ambiguous-corridor': ['adjust route/via or channel coordinates so unrelated relationships do not visually merge'],
   'composition/container-border-run': ['route across the frame perpendicularly through a clear opening'],
+  'composition/near-axis-dogleg': ['align component centers and reserve the facing center port for the direct relationship; move side branches to another truthful side, or use an explicit straight route with a safe labelAt'],
   'composition/label-route-clearance': ['adjust labelAt, labelDx, labelDy, labelSegment, message y, or the other relationship route'],
   'composition/micro-segment': ['move the route/channel/via point so every visible segment is at least 8px'],
   'composition/short-interior-segment': ['move the route/channel/via point so every interior turn has at least 16px'],
