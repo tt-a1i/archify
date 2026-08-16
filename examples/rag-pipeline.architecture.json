@@ -32,7 +32,7 @@
   "connections": [
     { "id": "user-to-guardrail", "from": "user", "to": "guardrail", "label": "question", "variant": "emphasis", "labelDy": -19 },
     { "id": "guardrail-to-orchestrator", "from": "guardrail", "to": "orchestrator", "label": "validated query", "variant": "security", "labelDy": -19 },
-    { "id": "cache-lookup", "from": "orchestrator", "to": "cache", "label": "semantic match", "fromSide": "top", "toSide": "bottom", "labelDx": 70 },
+    { "id": "cache-lookup", "from": "orchestrator", "to": "cache", "label": "semantic match", "fromSide": "top", "toSide": "bottom", "labelDx": -70 },
     { "id": "orchestrator-to-retriever", "from": "orchestrator", "to": "retriever", "label": "retrieve", "labelDy": -21 },
     { "id": "retriever-to-vectordb", "from": "retriever", "to": "vectordb", "label": "ANN search", "fromSide": "bottom", "toSide": "top", "labelAt": [570, 272] },
     { "id": "retriever-to-reranker", "from": "retriever", "to": "reranker", "label": "top-k docs", "labelDy": -21 },
