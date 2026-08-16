@@ -18,6 +18,8 @@ What user problem does this solve? Link the issue or showcase evidence when one 
 
 List exact commands and results. Do not write only “tests pass.”
 
+For CI-oriented validation and receipt handling, see the [CI and pull request integration guide](../docs/ci-integration.md).
+
 ## Visual evidence
 
 For visible changes, attach before/after final-artifact screenshots and state whether visual review passed, failed, or was skipped. Write “Not applicable” for non-visual changes.
