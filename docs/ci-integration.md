@@ -42,7 +42,7 @@ jobs:
         working-directory: archify
       - name: Validate source
         run: |
-          node bin/archify.mjs validate workflow ../examples/agent-tool-call.workflow.json \
+          node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json \
             --quality showcase --json > validation.json
         working-directory: archify
       - name: Upload validation receipt
