@@ -18,6 +18,14 @@ export function isFinitePoint(...coords) {
 }
 
 export function rectsOverlap(a, b, gap = 0) {
+  // Non-finite geometry means "unknown", not "overlapping". Every comparison
+  // below is false for NaN, so without this guard the negation reports a
+  // collision for every pair. Callers surface non-finite pos/size through their
+  // own diagnostic; reporting it again as an overlap buries that message under
+  // one bogus separation hint per pair.
+  if (!isFinitePoint(a.x, a.y, a.width, a.height, b.x, b.y, b.width, b.height)) {
+    return false;
+  }
   return !(
     a.x + a.width + gap <= b.x ||
     b.x + b.width + gap <= a.x ||

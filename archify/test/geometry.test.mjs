@@ -88,6 +88,18 @@ test('rectsOverlap: negative gap shrinks the hit box (label-collision convention
   assert.equal(rectsOverlap(rect(0, 0, 10, 10), rect(7, 0, 10, 10), -2), true);
 });
 
+test('rectsOverlap: non-finite geometry is not an overlap', () => {
+  // A component authored without pos lands here as NaN. Every comparison in the
+  // negated form is false for NaN, so the unguarded version reported a collision
+  // for every pair and buried the real "must include pos" diagnostic.
+  const nan = rect(Number.NaN, Number.NaN, 120, 60);
+  assert.equal(rectsOverlap(nan, nan, 8), false);
+  assert.equal(rectsOverlap(nan, rect(0, 0, 10, 10), 8), false);
+  assert.equal(rectsOverlap(rect(0, 0, 10, 10), nan, 8), false);
+  assert.equal(rectsOverlap(rect(0, 0, 10, 10), rect(20, 0, Number.NaN, 10)), false);
+  assert.equal(rectsOverlap(rect(0, 0, 10, 10), rect(5, 5, 10, Number.POSITIVE_INFINITY)), false);
+});
+
 test('segmentIntersectsRect: detects an edge crossing a node box', () => {
   assert.equal(segmentIntersectsRect({ start: [0, 5], end: [20, 5] }, rect(8, 0, 4, 10)), true);
   assert.equal(segmentIntersectsRect({ start: [0, 20], end: [20, 20] }, rect(8, 0, 4, 10)), false);
