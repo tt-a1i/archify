@@ -308,7 +308,7 @@ function renderParticipant(participant) {
   const sub = hasSub
     ? `\n          <text data-detail="context" x="${participant.cx}" y="${layout.topY + 39}" class="t-muted" font-size="${fittedNodeFontSize(participant.sublabel, layout.participantW, participantTextFit.sublabelPreferred, participantTextFit.sublabelMinimum)}" text-anchor="middle">${esc(participant.sublabel)}</text>`
     : '';
-  const brand = renderBrandMark(participant, { x: participant.x + layout.participantW - 24, y: layout.topY + 4 });
+  const brand = renderBrandMark(participant, { x: participant.x + layout.participantW - 22, y: layout.topY + 6 });
   const passport = { kind: participant.type, sublabel: participant.sublabel, context: 'Sequence participant', ...brandMetadataFor(participant) };
   return `        <g ${focusNodeAttrs(participant.id, participant.label, passport)}>
           ${focusNodeTitle(participant.label, passport)}

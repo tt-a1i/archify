@@ -420,7 +420,7 @@ function markAttrs(mark) {
   ].filter(Boolean).join(' ');
 }
 
-export function renderBrandMark(node, { x, y, size = 20 } = {}) {
+export function renderBrandMark(node, { x, y, size = 16 } = {}) {
   const mark = brandMarkFor(node);
   if (!mark) return '';
   const inset = 3;
@@ -435,8 +435,8 @@ export function renderBrandMark(node, { x, y, size = 20 } = {}) {
     content = `<g transform="scale(${scale})" class="brand-mark-fallback"><circle cx="10" cy="10" r="5.2"/><path d="M4.8 10h10.4M10 4.8c1.6 1.6 2.4 3.3 2.4 5.2s-.8 3.6-2.4 5.2M10 4.8C8.4 6.4 7.6 8.1 7.6 10s.8 3.6 2.4 5.2"/></g>`;
   }
   return `<g aria-hidden="true" ${markAttrs(mark)} class="brand-mark" transform="translate(${x} ${y})">
-            <rect width="${size}" height="${size}" rx="5" class="brand-mark-badge"/>
+            <rect width="${size}" height="${size}" rx="4" class="brand-mark-badge"/>
             ${content}
-            <rect width="${size}" height="${size}" rx="5" class="brand-mark-frame"/>
+            <rect width="${size}" height="${size}" rx="4" class="brand-mark-frame"/>
           </g>`;
 }

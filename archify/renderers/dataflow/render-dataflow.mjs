@@ -353,7 +353,7 @@ function renderNode(node) {
     : '';
   const stage = asArray(dataflow.stages)[node.stage];
   const context = stage ? `${String(node.stage + 1).padStart(2, '0')} / ${stage.label}` : 'Data-flow node';
-  const brand = renderBrandMark(node, { x: node.x + node.width - 24, y: node.y + 4 });
+  const brand = renderBrandMark(node, { x: node.x + node.width - 22, y: node.y + 6 });
   const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context, ...brandMetadataFor(node) };
   return `        <g ${focusNodeAttrs(node.id, node.label, passport)}>
           ${focusNodeTitle(node.label, passport)}

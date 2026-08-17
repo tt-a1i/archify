@@ -127,6 +127,24 @@ test('all five renderers keep the semantic sigil and add one export-safe brand b
     assert.match(html, /data-brand-mark="openai"[^>]+data-brand-status="preset"/i, type);
     assert.match(html, /class="semantic-sigil /, type);
     assert.match(html, /<title>[^<]*OpenAI<\/title>/i, type);
+
+    const [, collection] = cases[type];
+    const diagram = JSON.parse(fs.readFileSync(input, 'utf8'));
+    const block = nodeBlock(html, diagram[collection][0].id);
+    const frame = block.match(/<rect x="([-\d.]+)" y="([-\d.]+)" width="([-\d.]+)" height="([-\d.]+)" rx="[^"]+" class="c-mask"\/>/);
+    const semantic = block.match(/data-semantic-sigil[^>]+translate\(([-\d.]+) ([-\d.]+)\)/);
+    const brand = block.match(/data-brand-mark="openai"[^>]+translate\(([-\d.]+) ([-\d.]+)\)">\s*<rect width="([-\d.]+)" height="([-\d.]+)" rx="([-\d.]+)" class="brand-mark-badge"\/>/);
+    assert.ok(frame && semantic && brand, `${type}: expected node frame, semantic sigil, and brand badge`);
+
+    const [frameX, frameY, frameWidth] = frame.slice(1, 4).map(Number);
+    const [, semanticY] = semantic.slice(1, 3).map(Number);
+    const [brandX, brandY, brandWidth, brandHeight, brandRadius] = brand.slice(1, 6).map(Number);
+    assert.equal(brandWidth, 16, `${type}: brand badge width`);
+    assert.equal(brandHeight, 16, `${type}: brand badge height`);
+    assert.equal(brandRadius, 4, `${type}: brand badge radius`);
+    assert.equal(brandY - frameY, 6, `${type}: brand badge top inset`);
+    assert.equal(frameX + frameWidth - (brandX + brandWidth), 6, `${type}: brand badge right inset`);
+    assert.equal(brandY, semanticY, `${type}: brand and semantic marks share a top rail`);
   }
 });
 

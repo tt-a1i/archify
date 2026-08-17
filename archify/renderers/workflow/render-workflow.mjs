@@ -545,7 +545,7 @@ function renderNode(node) {
   const tag = node.tag
     ? `\n        <text data-detail="fine" x="${node.cx}" y="${node.y + node.height - 12}" class="${accent}" font-size="${fittedNodeFontSize(node.tag, node.width, nodeTextFit.tagPreferred, nodeTextFit.tagMinimum)}" text-anchor="middle">${esc(node.tag)}</text>`
     : '';
-  const brand = renderBrandMark(node, { x: node.x + node.width - 24, y: node.y + 4 });
+  const brand = renderBrandMark(node, { x: node.x + node.width - 22, y: node.y + 6 });
   const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context: nodeContext(node), ...brandMetadataFor(node) };
   return `        <g ${focusNodeAttrs(node.id, node.label, passport)}>
           ${focusNodeTitle(node.label, passport)}

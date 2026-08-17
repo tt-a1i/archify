@@ -729,7 +729,7 @@ function renderComponent(c) {
   const tag = c.tag
     ? `\n        <text data-detail="fine" x="${cx}" y="${c.y + c.height - 8}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="middle">${esc(c.tag)}</text>`
     : '';
-  const brand = renderBrandMark(c, { x: c.x + c.width - 24, y: c.y + 4 });
+  const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + 6 });
   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), ...brandMetadataFor(c) };
   return `        <g ${focusNodeAttrs(c.id, c.label, passport)}>
           ${focusNodeTitle(c.label, passport)}

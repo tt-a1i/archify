@@ -411,7 +411,7 @@ function renderState(state) {
   const step = state.step
     ? `\n        <text data-detail="fine" x="${state.x + (hasBrand ? 23 : 10)}" y="${state.y + 14}" class="${accent}" font-size="7" font-weight="700">${esc(state.step)}</text>`
     : '';
-  const brand = renderBrandMark(state, { x: state.x + state.width - 24, y: state.y + 4 });
+  const brand = renderBrandMark(state, { x: state.x + state.width - 22, y: state.y + 6 });
   const passport = { kind: state.type, sublabel: state.sublabel, tag: state.tag, context: laneLabels.get(state.lane) || 'Lifecycle state', ...brandMetadataFor(state) };
   return `        <g ${focusNodeAttrs(state.id, state.label, passport)}>
           ${focusNodeTitle(state.label, passport)}
