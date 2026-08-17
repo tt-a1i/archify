@@ -52,6 +52,7 @@ try {
   requireAbsent('node_modules');
   requireAbsent('package-lock.json');
   requireAbsent(path.join('scripts', 'generate-validators.mjs'));
+  requireAbsent(path.join('scripts', 'generate-brand-marks.mjs'));
   requireAbsent('test');
   requireAbsent('.hive');
   requireAbsent('.workbuddy');

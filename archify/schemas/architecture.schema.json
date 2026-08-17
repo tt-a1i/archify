@@ -92,6 +92,7 @@
           "label": { "type": "string", "minLength": 1 },
           "sublabel": { "type": "string" },
           "tag": { "type": "string" },
+          "brand": { "$ref": "common.schema.json#/$defs/brandMark" },
           "sources": {
             "type": "array",
             "minItems": 1,

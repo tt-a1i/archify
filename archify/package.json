@@ -12,6 +12,8 @@
     "node": ">=18"
   },
   "scripts": {
+    "generate:brand-marks": "node scripts/generate-brand-marks.mjs",
+    "check:brand-marks": "node scripts/generate-brand-marks.mjs --check",
     "generate:validators": "node scripts/generate-validators.mjs",
     "check:validators": "node scripts/generate-validators.mjs --check",
     "check:release-identity": "node ../scripts/check-release-identity.mjs",
@@ -20,10 +22,11 @@
     "build:start": "node ../scripts/build-start.mjs ../docs/start.html",
     "build:readme-showcase": "node ../scripts/build-readme-showcase.mjs",
     "test:webm": "node test/webm-artifact.smoke.mjs",
-    "test": "npm run check:validators && npm run check:release-identity && node test/golden.mjs && node ../scripts/run-tests.mjs",
+    "test": "npm run check:brand-marks && npm run check:validators && npm run check:release-identity && node test/golden.mjs && node ../scripts/run-tests.mjs",
     "render:examples": "node scripts/render-examples.mjs ../examples"
   },
   "devDependencies": {
-    "ajv": "^8.17.1"
+    "ajv": "^8.17.1",
+    "simple-icons": "16.28.0"
   }
 }

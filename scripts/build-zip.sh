@@ -25,6 +25,7 @@ fi
 rsync -a \
   --exclude 'node_modules' \
   --exclude 'test' \
+  --exclude 'scripts/generate-brand-marks.mjs' \
   --exclude 'scripts/generate-validators.mjs' \
   --exclude '.DS_Store' \
   --exclude '.hive' \

@@ -159,6 +159,9 @@
           "tag": {
             "type": "string"
           },
+          "brand": {
+            "$ref": "common.schema.json#/$defs/brandMark"
+          },
           "step": {
             "type": "string"
           },

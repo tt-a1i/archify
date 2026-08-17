@@ -1,11 +1,12 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
-import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagram, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
+import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { componentBox, boundaryBox, connectionPath } from '../shared/layout-report.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
+import { brandMetadataFor, renderBrandMark } from '../shared/brand-marks.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import {
   asArray,
@@ -49,7 +50,7 @@ const componentTextFit = {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const layoutJsonMode = process.argv.includes('--layout-json');
 const cliArgs = process.argv.filter((arg) => arg !== '--layout-json');
-const { diagram: arch, template, outPath, sourceEvidence } = loadDiagram({
+const { diagram: arch, template, outPath, sourceEvidence } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
   diagramType: 'architecture',
   defaultExample: 'web-app.architecture.json',
@@ -728,12 +729,13 @@ function renderComponent(c) {
   const tag = c.tag
     ? `\n        <text data-detail="fine" x="${cx}" y="${c.y + c.height - 8}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="middle">${esc(c.tag)}</text>`
     : '';
-  const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c) };
+  const brand = renderBrandMark(c, { x: c.x + c.width - 24, y: c.y + 4 });
+  const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), ...brandMetadataFor(c) };
   return `        <g ${focusNodeAttrs(c.id, c.label, passport)}>
           ${focusNodeTitle(c.label, passport)}
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="c-mask"/>
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
-          ${renderSemanticSigil(c.type, { x: c.x + 6, y: c.y + 6 })}
+          ${renderSemanticSigil(c.type, { x: c.x + 6, y: c.y + 6 })}${brand ? `\n          ${brand}` : ''}
           <text${hasSub ? ' data-detail-anchor' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}
         </g>`;
 }

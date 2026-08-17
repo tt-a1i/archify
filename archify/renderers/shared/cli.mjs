@@ -6,12 +6,15 @@ import { verifyRepositoryEvidence } from './repository-evidence.mjs';
 import { installRendererDiagnosticBoundary, throwDiagnosticProblems } from './diagnostics.mjs';
 import { validateEngineeringProfile } from './engineering-profiles.mjs';
 import { resolveOutputPath } from './output-path.mjs';
+import { prepareDiagramBrandMarks } from './brand-marks.mjs';
 
 installRendererDiagnosticBoundary();
 
 const outputPathGuards = new Map();
 
 // Common CLI head: node render-<type>.mjs [input.json] [output.html]
+// Keep this synchronous because callers also use it to establish the guarded
+// output path before testing a last-moment filesystem alias change.
 export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = process.argv }) {
   const skillRoot = path.resolve(rendererDir, '../..');
   const inputPath = path.resolve(argv[2] || path.join(skillRoot, 'examples', defaultExample));
@@ -34,6 +37,15 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
   const { outputPath: outPath } = resolveOutputPath(outputRequest);
   outputPathGuards.set(outPath, outputRequest);
   return { diagram, template, outPath, sourceEvidence };
+}
+
+// Brand URL capture is the only asynchronous authoring step. Typed renderers
+// opt into it through this wrapper without changing loadDiagram's long-lived
+// synchronous safety contract.
+export async function loadDiagramWithBrandMarks(options) {
+  const loaded = loadDiagram(options);
+  await prepareDiagramBrandMarks(options.diagramType, loaded.diagram);
+  return loaded;
 }
 
 const START_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
@@ -172,10 +184,14 @@ export function focusNodeAttrs(id, label, metadata = {}) {
     ['data-node-sublabel', metadata.sublabel],
     ['data-node-tag', metadata.tag],
     ['data-node-context', metadata.context],
+    ['data-node-brand', metadata.brand],
+    ['data-node-brand-id', metadata.brandId],
+    ['data-node-brand-status', metadata.brandStatus],
+    ['data-node-brand-source', metadata.brandSource],
   ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
     .map(([name, value]) => ` ${name}="${esc(String(value))}"`)
     .join('');
-  const detail = [metadata.sublabel, metadata.context]
+  const detail = [metadata.sublabel, metadata.context, metadata.brand]
     .filter((value) => value !== undefined && value !== null && String(value).trim() !== '')
     .join(', ');
   const aria = detail ? `Focus ${label}, ${detail}` : `Focus ${label}`;
@@ -185,7 +201,7 @@ export function focusNodeAttrs(id, label, metadata = {}) {
 // Native SVG titles preserve a compact details-on-demand fallback when the
 // canonical SVG is embedded inline outside the full Archify viewer.
 export function focusNodeTitle(label, metadata = {}) {
-  const parts = [label, metadata.sublabel, metadata.context, metadata.tag]
+  const parts = [label, metadata.sublabel, metadata.context, metadata.tag, metadata.brand]
     .filter((value) => value !== undefined && value !== null && String(value).trim() !== '');
   return `<title>${esc(parts.join(' · '))}</title>`;
 }

@@ -23,6 +23,7 @@ function usage() {
   archify check <output.html>
   archify visual-check <output.html> [--json]
   archify guide [scenario or question] [--json] [--lang en|zh]
+  archify brands [name, alias, domain, or category] [--json]
   archify examples
   archify doctor
   archify demo [output-directory]
@@ -1404,6 +1405,37 @@ async function commandGuide(args) {
   console.log(json ? JSON.stringify(result, null, 2) : guide.formatScenarioRecommendation(result));
 }
 
+async function commandBrands(args) {
+  const json = args.includes('--json');
+  const unknown = args.filter((arg) => arg.startsWith('--') && arg !== '--json');
+  if (unknown.length) fail(`Unknown brands option "${unknown[0]}".`);
+  const query = args.filter((arg) => arg !== '--json').join(' ').trim();
+  const { listBrandMarks } = await import('../renderers/shared/brand-marks.mjs');
+  const marks = listBrandMarks(query);
+  if (json) {
+    console.log(JSON.stringify({
+      schemaVersion: 1,
+      ok: true,
+      command: 'brands',
+      query,
+      count: marks.length,
+      marks,
+      fallback: 'Use an HTTP(S) URL in the brand field to capture an unknown site icon once and embed it in the standalone artifact.',
+    }, null, 2));
+    return;
+  }
+  if (!marks.length) {
+    console.log(`No built-in brand matched "${query}". Use an HTTP(S) URL in the brand field for site-icon capture.`);
+    return;
+  }
+  const grouped = Map.groupBy
+    ? Map.groupBy(marks, (mark) => mark.category)
+    : marks.reduce((map, mark) => map.set(mark.category, [...(map.get(mark.category) || []), mark]), new Map());
+  for (const [category, entries] of grouped) {
+    console.log(`${category}: ${entries.map((mark) => mark.id).join(', ')}`);
+  }
+}
+
 function commandDemo(args) {
   if (args.length > 1) fail(usage());
 
@@ -1570,6 +1602,9 @@ switch (command) {
     break;
   case 'guide':
     await commandGuide(args);
+    break;
+  case 'brands':
+    await commandBrands(args);
     break;
   case 'examples':
     commandExamples();

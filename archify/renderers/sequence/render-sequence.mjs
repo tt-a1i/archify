@@ -1,11 +1,12 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
-import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagram, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
+import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, routePointsValue, asArray, isFinitePoint } from '../shared/geometry.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
+import { brandMetadataFor, renderBrandMark } from '../shared/brand-marks.mjs';
 
 const participantTextFit = {
   sublabelPreferred: 7,
@@ -13,7 +14,7 @@ const participantTextFit = {
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const { diagram: sequence, template, outPath } = loadDiagram({
+const { diagram: sequence, template, outPath } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
   diagramType: 'sequence',
   defaultExample: 'cache-miss-request.sequence.json'
@@ -307,12 +308,13 @@ function renderParticipant(participant) {
   const sub = hasSub
     ? `\n          <text data-detail="context" x="${participant.cx}" y="${layout.topY + 39}" class="t-muted" font-size="${fittedNodeFontSize(participant.sublabel, layout.participantW, participantTextFit.sublabelPreferred, participantTextFit.sublabelMinimum)}" text-anchor="middle">${esc(participant.sublabel)}</text>`
     : '';
-  const passport = { kind: participant.type, sublabel: participant.sublabel, context: 'Sequence participant' };
+  const brand = renderBrandMark(participant, { x: participant.x + layout.participantW - 24, y: layout.topY + 4 });
+  const passport = { kind: participant.type, sublabel: participant.sublabel, context: 'Sequence participant', ...brandMetadataFor(participant) };
   return `        <g ${focusNodeAttrs(participant.id, participant.label, passport)}>
           ${focusNodeTitle(participant.label, passport)}
           <rect x="${participant.x}" y="${layout.topY}" width="${layout.participantW}" height="${layout.participantH}" rx="6" class="c-mask"/>
           <rect x="${participant.x}" y="${layout.topY}" width="${layout.participantW}" height="${layout.participantH}" rx="6" class="${fill}"${animateAttr(sequence.meta, 'node', participant.index)} stroke-width="1.5"/>
-          ${renderSemanticSigil(participant.type, { x: participant.x + 6, y: layout.topY + 6 })}
+          ${renderSemanticSigil(participant.type, { x: participant.x + 6, y: layout.topY + 6 })}${brand ? `\n          ${brand}` : ''}
           <text${hasSub ? ' data-detail-anchor' : ''} x="${participant.cx}" y="${layout.topY + 22}" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">${esc(participant.label)}</text>${sub}
         </g>`;
 }

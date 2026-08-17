@@ -22,7 +22,7 @@ Precise, composed, vivid. Archify should feel like a confident technical instrum
 - WYSIWYG drawing suites whose editing chrome becomes the product.
 - Motion-first graph demos that imply relationships or activity not present in the authored source.
 - Dense dashboard shells, endless identical card grids, decorative glass, gradient text, and other AI-generated interface clichés.
-- Vendor-icon catalogues or product-name matching that weaken Archify's portable semantic vocabulary.
+- Unbounded icon marketplaces or implicit product-name matching that can change identity without an authored `brand` fact.
 
 ## Design Principles
 
@@ -31,6 +31,7 @@ Precise, composed, vivid. Archify should feel like a confident technical instrum
 3. Progressive disclosure over permanent chrome: keep the canvas dominant and reuse focused tools instead of adding panels.
 4. Motion has one bounded owner: static meaning must remain complete, motion must be finite and reader-controlled, and exports stay clean.
 5. Portable proof: the default result is a self-contained artifact with deterministic validation and no required hosted runtime; intentional Route and Reach Share Card variants name their scope instead of pretending to be canonical.
+6. Identity without semantic drift: an optional built-in or captured brand mark may identify a real product, but it never replaces the portable node type, label, relationship, or evidence contract.
 
 ## Accessibility & Inclusion
 

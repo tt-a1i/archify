@@ -91,6 +91,15 @@ authored ID enables a stable `#relation=<id>` viewer link that survives array
 reordering. ID-less documents remain valid and their relationship pins stay
 local to the current page.
 
+Every semantic node collection (`components`, `nodes`, `participants`, and
+`states`) also accepts one optional `brand` string. Use a canonical ID returned
+by `archify brands --json`, or an HTTP(S) URL supplied by the user when no preset
+exists. Known IDs and known-brand domains use the bundled vector catalogue;
+unknown URLs resolve one bounded site icon during rendering and embed it into
+the standalone artifact. Invalid preset names fail with `brand/unknown`; an
+unavailable or unsafe URL degrades to a generic link badge without changing
+topology. Omitted `brand` preserves the prior output.
+
 ## schema_version policy
 
 `schema_version` is `"const": 1`. The constant pins the IR contract: a file
@@ -110,6 +119,7 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
 - `point` — an `[x, y]` pair of numbers (used by `via` and `labelAt`)
 - `componentType` — `frontend`, `backend`, `database`, `cloud`, `security`,
   `messagebus`, `external`
+- `brandMark` — one optional built-in brand ID or explicit HTTP(S) site URL
 - `variant` — `default`, `emphasis`, `security`, `dashed` (sequence messages
   extend this list locally with `return`)
 - `legendMode` and `legendEntry` — the shared strict mode and label/visibility
