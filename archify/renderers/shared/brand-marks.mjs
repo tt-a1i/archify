@@ -22,7 +22,7 @@ const MAX_HTML_BYTES = 256 * 1024;
 const MAX_IMAGE_BYTES = 1024 * 1024;
 const MAX_CAPTURE_CONCURRENCY = 3;
 const DEFAULT_CAPTURE_TIMEOUT_MS = 8000;
-const USER_AGENT = 'Archify/2.14 brand-preview';
+const USER_AGENT = 'Archify/2.15 brand-preview';
 
 function lookupForms(value) {
   const raw = String(value ?? '').trim().toLocaleLowerCase('en-US');

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="archify 2.14.0">
+  <meta name="generator" content="archify 2.15.0">
   <title>Archify Diagram</title>
   <script>
     // Resolve the theme before first paint so light-preference users don't
@@ -1683,6 +1683,11 @@
       text-transform: uppercase;
     }
     .semantic-passport-meta [data-passport="tag"] { color: var(--cloud-stroke); }
+    .semantic-passport-meta [data-passport="brand"] {
+      border-color: color-mix(in srgb, var(--messagebus-stroke) 52%, var(--toolbar-border));
+      color: var(--messagebus-stroke);
+      font-weight: 700;
+    }
     .semantic-passport-meta [hidden] { display: none; }
     html[data-preset="blueprint"] .semantic-passport-meta span,
     html[data-preset="blueprint"] .semantic-passport-meta code { border-radius: 0.1rem; }
@@ -3888,6 +3893,27 @@
     svg .s-messagebus { color: var(--messagebus-stroke); }
     svg .s-external   { color: var(--external-stroke); }
 
+    /* Brand Marks are authored identity badges. Their color is contained
+       inside one neutral plate so vendor color never replaces Archify's
+       semantic node and relationship vocabulary. */
+    svg .brand-mark { pointer-events: none; }
+    svg .brand-mark-badge { fill: #fff; stroke: none; }
+    svg .brand-mark-frame {
+      fill: none;
+      stroke: #cbd5e1;
+      stroke-width: 0.8;
+      vector-effect: non-scaling-stroke;
+    }
+    svg .brand-mark-fallback {
+      fill: none;
+      stroke: #475569;
+      stroke-width: 1.15;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    svg[data-preset="blueprint"] .brand-mark-badge,
+    svg[data-preset="blueprint"] .brand-mark-frame { rx: 1px; }
+
     /* Reading Depth is a viewer-only level-of-detail layer. MAP preserves the
        authored structure and primary labels, READ restores relationship labels
        and node context, and FULL restores tags and fine annotations. Semantic
@@ -5195,6 +5221,7 @@
               <span id="focus-kind" data-passport="kind"></span>
               <span id="focus-context" data-passport="context" hidden></span>
               <span id="focus-tag" data-passport="tag" hidden></span>
+              <span id="focus-brand" data-passport="brand" hidden></span>
               <code id="focus-id" data-passport="id"></code>
             </div>
             <div class="semantic-passport-evidence" id="focus-evidence" hidden aria-label="Verified source evidence">
@@ -7251,7 +7278,8 @@
           beacon.classList.add('source-evidence-beacon');
           beacon.setAttribute('data-source-evidence-beacon', '');
           beacon.setAttribute('aria-hidden', 'true');
-          beacon.setAttribute('transform', 'translate(' + (box.x + box.width - 35) + ' ' + (box.y + 5) + ')');
+          var brandOffset = node.hasAttribute('data-node-brand') ? 24 : 0;
+          beacon.setAttribute('transform', 'translate(' + (box.x + box.width - 35 - brandOffset) + ' ' + (box.y + 5) + ')');
           var title = document.createElementNS(svgNamespace, 'title');
           title.textContent = label;
           var plate = document.createElementNS(svgNamespace, 'rect');
@@ -7658,6 +7686,7 @@
         setPassportValue(kind, node.getAttribute('data-node-kind') || 'node');
         setPassportValue(context, node.getAttribute('data-node-context'));
         setPassportValue(tag, node.getAttribute('data-node-tag'));
+        setPassportValue(document.getElementById('focus-brand'), node.getAttribute('data-node-brand'));
         semanticId.textContent = id;
         semanticId.hidden = false;
         renderSourceEvidence(id);
@@ -11560,6 +11589,7 @@
         var sublabel = node.getAttribute('data-node-sublabel') || '';
         var context = node.getAttribute('data-node-context') || '';
         var tag = node.getAttribute('data-node-tag') || '';
+        var brand = node.getAttribute('data-node-brand') || '';
         var type = semanticType(node);
         var sources = Archify.sourceEvidence.node(id);
         var sourceSearch = sources.map(function (source) {
@@ -11572,9 +11602,10 @@
           sublabel: sublabel,
           context: context,
           tag: tag,
+          brand: brand,
           sources: sources,
           links: connectionsFor(id),
-          search: (id + ' ' + label + ' ' + type + ' ' + sublabel + ' ' + context + ' ' + tag + ' ' + sourceSearch + ' ' + text).toLowerCase(),
+          search: (id + ' ' + label + ' ' + type + ' ' + sublabel + ' ' + context + ' ' + tag + ' ' + sourceSearch + ' ' + text).toLowerCase() + ' ' + brand.toLowerCase(),
           node: node
         };
       });

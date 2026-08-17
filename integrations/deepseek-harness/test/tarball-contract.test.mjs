@@ -18,6 +18,7 @@ const FORBIDDEN = [
   '.hive',
   '.workbuddy',
   'probe-skills',
+  'generate-brand-marks.mjs',
   'generate-validators.mjs',
   'distribution-acceptance',
 ];

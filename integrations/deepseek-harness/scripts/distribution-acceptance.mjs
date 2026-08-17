@@ -215,6 +215,7 @@ const forbidden = packedFiles.filter((file) => (
   || file.includes('.hive')
   || file.includes('.workbuddy')
   || file.includes('probe-skills')
+  || file.includes('generate-brand-marks.mjs')
   || file.includes('generate-validators.mjs')
 ));
 if (packedPkg.name !== PACKAGE_NAME || packedPkg.version !== PACKAGE_VERSION || forbidden.length > 0) {

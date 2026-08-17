@@ -17,9 +17,9 @@ Archify 是适用于 Raven、Cursor、Claude Code、Codex CLI 和 OpenCode 的 A
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
-![稳定版本](https://img.shields.io/badge/version-2.14.0-0891b2?style=flat-square)
+![稳定版本](https://img.shields.io/badge/version-2.15.0-0891b2?style=flat-square)
 
-**当前稳定版本：** `v2.14.0`。详见[版本历史](CHANGELOG.md#2140--2026-08-11)。
+**当前稳定版本：** `v2.15.0`。详见[版本历史](CHANGELOG.md#2150--2026-08-17)。
 
 **[在线项目页](https://tt-a1i.github.io/archify/)** · **[场景选图指南](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
 

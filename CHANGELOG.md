@@ -4,6 +4,21 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
+## [2.15.0] — 2026-08-17
+
+### Added
+- **Authored brand identity.** All five diagram types accept an optional explicit `brand` on their primary nodes. Archify ships 107 provenance-backed vector marks, exposes `archify brands` discovery, and renders a compact upper-right badge without replacing the upper-left semantic sigil, node type, label, or topology. Unknown official URLs use an explicit digest-pinned capture command; render, validate, and deliver re-fetch bounded PNG/JPEG/WebP/ICO bytes, verify the authored SHA-256, embed the result into the standalone HTML, and fail closed on drift, malformed content, unsafe destinations, or a diagram-wide timeout. Remote SVG is rejected and ordinary diagrams remain unchanged.
+- **Sequence column fitting.** Sequence diagrams may opt into `meta.column_fit: "spread"` to use a wide authored viewBox while the existing fixed-width layout remains the default.
+- **DeepSeek Harness distribution.** The isolated `@tt-a1i/archify-dsh` Skill-only bundle adds explicit DSH installation without adding a DSH dependency, automatic probing, telemetry, or behavior changes for non-DSH users. Packaging and acceptance checks cover macOS, Linux, and Windows command resolution.
+
+### Changed
+- README and integration documentation now include a direct DeepSeek Harness quick start while keeping the canonical Archify Skill as the shared runtime.
+
+### Fixed
+- The CLI rejects `--quality` when no value follows instead of silently accepting an incomplete command.
+- Shared overlap checks ignore non-finite rectangles after the existing geometry diagnostics report them, avoiding duplicate pairwise noise.
+- The DeepSeek Harness tarball now excludes the brand catalogue generator, preserving byte-equivalent clean Skill contents with `archify.zip`.
+
 ## [2.14.0] — 2026-08-11
 
 ### Added

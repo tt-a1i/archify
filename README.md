@@ -21,9 +21,9 @@ Archify is an agent skill for Raven, Cursor, Claude Code, Codex CLI, and OpenCod
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
-![Stable Version](https://img.shields.io/badge/version-2.14.0-0891b2?style=flat-square)
+![Stable Version](https://img.shields.io/badge/version-2.15.0-0891b2?style=flat-square)
 
-**Current stable version:** `v2.14.0`. See [Changelog](CHANGELOG.md#2140--2026-08-11).
+**Current stable version:** `v2.15.0`. See [Changelog](CHANGELOG.md#2150--2026-08-17).
 
 **[Project page](https://tt-a1i.github.io/archify/)** · **[Scenario guide](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
 

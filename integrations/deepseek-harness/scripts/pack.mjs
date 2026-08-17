@@ -26,6 +26,7 @@ function excludeFromCleanSkill(sourceRoot, src) {
   if (parts.includes('.hive')) return true;
   if (parts.includes('.workbuddy')) return true;
   if (parts.some((part) => part.startsWith('.validator-check-'))) return true;
+  if (parts.join('/') === 'scripts/generate-brand-marks.mjs') return true;
   if (parts.join('/') === 'scripts/generate-validators.mjs') return true;
   return false;
 }
