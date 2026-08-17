@@ -300,8 +300,8 @@ function iconCandidates(html, pageUrl) {
   candidates.sort((left, right) => right.score - left.score);
   const fallback = new URL('/favicon.ico', pageUrl);
   const unique = new Map(candidates.map((candidate) => [candidate.url.href, candidate]));
-  if (!unique.has(fallback.href)) unique.set(fallback.href, { url: fallback, score: -1 });
-  return [...unique.values()].slice(0, 6);
+  unique.delete(fallback.href);
+  return [...unique.values()].slice(0, 5).concat({ url: fallback, score: -1 });
 }
 
 async function imageData(response) {
@@ -319,12 +319,26 @@ async function imageData(response) {
   }
   const buffer = await readLimited(response, MAX_IMAGE_BYTES);
   const signatureMatches = contentType === 'image/png'
-    ? buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    ? buffer.length >= 45
+      && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+      && buffer.readUInt32BE(8) === 13
+      && buffer.toString('ascii', 12, 16) === 'IHDR'
+      && buffer.readUInt32BE(16) > 0
+      && buffer.readUInt32BE(20) > 0
+      && buffer.toString('ascii', buffer.length - 8, buffer.length - 4) === 'IEND'
     : (contentType === 'image/jpeg'
-      ? buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff
+      ? buffer.length >= 20
+        && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff
+        && buffer.at(-2) === 0xff && buffer.at(-1) === 0xd9
       : (contentType === 'image/webp'
-        ? buffer.length >= 12 && buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP'
-        : buffer.length >= 4 && buffer[0] === 0 && buffer[1] === 0 && buffer[2] === 1 && buffer[3] === 0));
+        ? buffer.length >= 16
+          && buffer.toString('ascii', 0, 4) === 'RIFF'
+          && buffer.toString('ascii', 8, 12) === 'WEBP'
+          && buffer.readUInt32LE(4) + 8 <= buffer.length
+        : buffer.length >= 22
+          && buffer[0] === 0 && buffer[1] === 0 && buffer[2] === 1 && buffer[3] === 0
+          && buffer.readUInt16LE(4) > 0
+          && 6 + buffer.readUInt16LE(4) * 16 <= buffer.length));
   if (!signatureMatches) throw new Error(`brand asset bytes do not match ${contentType}`);
   return {
     dataUrl: `data:${contentType};base64,${buffer.toString('base64')}`,
@@ -333,14 +347,8 @@ async function imageData(response) {
   };
 }
 
-function pageTitle(html, hostname) {
-  const raw = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] || hostname;
-  return raw.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 80) || hostname;
-}
-
-async function captureRemoteBrand(value) {
+async function captureRemoteBrand(value, deadline = Date.now() + captureTimeoutMilliseconds()) {
   const sourceUrl = new URL(value);
-  const deadline = Date.now() + captureTimeoutMilliseconds();
   const fallback = (reason) => ({
     id: sourceUrl.hostname,
     title: sourceUrl.hostname,
@@ -378,7 +386,7 @@ async function captureRemoteBrand(value) {
         const image = await imageData(fetched.response);
         return {
           id: sourceUrl.hostname,
-          title: pageTitle(html, sourceUrl.hostname),
+          title: sourceUrl.hostname,
           category: 'link',
           kind: 'remote',
           status: 'captured',
@@ -415,9 +423,9 @@ export async function captureBrandReference(value) {
   };
 }
 
-function remoteBrand(value, cache) {
+function remoteBrand(value, cache, deadline) {
   const key = new URL(value).href;
-  if (!cache.has(key)) cache.set(key, captureRemoteBrand(key));
+  if (!cache.has(key)) cache.set(key, captureRemoteBrand(key, deadline));
   return cache.get(key);
 }
 
@@ -448,11 +456,12 @@ export async function prepareDiagramBrandMarks(diagramType, diagram) {
   const nodes = collection && Array.isArray(diagram[collection]) ? diagram[collection] : [];
   const unknown = [];
   const remoteByUrl = new Map();
+  const deadline = Date.now() + captureTimeoutMilliseconds();
   await mapConcurrent(nodes, MAX_CAPTURE_CONCURRENCY, async (node, index) => {
     if (!node.brand) return;
     if (typeof node.brand === 'object') {
       const url = asUrl(node.brand.url);
-      const resolved = url ? await remoteBrand(url.href, remoteByUrl) : null;
+      const resolved = url ? await remoteBrand(url.href, remoteByUrl, deadline) : null;
       if (!resolved || resolved.status !== 'captured') {
         unknown.push(`/${collection}/${index}/brand could not reproduce the pinned capture: ${resolved?.reason || 'invalid URL'}`);
         return;

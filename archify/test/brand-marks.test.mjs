@@ -276,7 +276,8 @@ test('capture command returns a digest-pinned brand object that renders reproduc
 
 test('a pinned brand fails closed when the remote icon digest changes', async () => {
   const firstIcon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
-  const changedIcon = Buffer.concat([firstIcon, Buffer.from('changed')]);
+  const changedIcon = Buffer.from(firstIcon);
+  changedIcon[45] ^= 1;
   let iconHits = 0;
   const server = http.createServer((request, response) => {
     if (request.url === '/mark.png') {
@@ -305,9 +306,41 @@ test('a pinned brand fails closed when the remote icon digest changes', async ()
   }
 });
 
+test('a pinned brand keeps identical artifact metadata when the remote page title changes', async () => {
+  const icon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  let pageHits = 0;
+  const server = http.createServer((request, response) => {
+    if (request.url === '/mark.png') {
+      response.writeHead(200, { 'content-type': 'image/png' });
+      response.end(icon);
+      return;
+    }
+    pageHits += 1;
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.end(`<!doctype html><title>Title ${pageHits}</title><link rel="icon" type="image/png" href="/mark.png">`);
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const url = `http://127.0.0.1:${address.port}/`;
+    const capture = await runCliAsync(['brands', 'capture', url, '--json'], { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' });
+    assert.equal(capture.status, 0, capture.stderr || capture.stdout);
+    const input = writeFixture('architecture', 'stable-title', JSON.parse(capture.stdout).brand);
+    const first = await renderAsync('architecture', input, 'stable-title-first', { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' });
+    const second = await renderAsync('architecture', input, 'stable-title-second', { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' });
+    assert.equal(first.status, 0, first.stderr || first.stdout);
+    assert.equal(second.status, 0, second.stderr || second.stdout);
+    assert.equal(first.html, second.html);
+    assert.match(first.html, /data-brand-title="127\.0\.0\.1"/);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
 test('each prepare call rechecks pinned remote bytes instead of trusting a process-wide cache', async () => {
   const firstIcon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
-  const changedIcon = Buffer.concat([firstIcon, Buffer.from('changed-again')]);
+  const changedIcon = Buffer.from(firstIcon);
+  changedIcon[45] ^= 1;
   let iconHits = 0;
   const server = http.createServer((request, response) => {
     if (request.url === '/mark.png') {
@@ -432,6 +465,37 @@ test('rendering many pinned brands limits concurrent remote capture work', async
   }
 });
 
+test('rendering many pinned brands shares one diagram capture deadline', async () => {
+  const icon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  const sha256 = createHash('sha256').update(icon).digest('hex');
+  const server = http.createServer((_request, response) => {
+    setTimeout(() => {
+      response.writeHead(200, { 'content-type': 'image/png' });
+      response.end(icon);
+    }, 80);
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const input = writeFixture('architecture', 'diagram-deadline', 'openai', (diagram) => {
+      diagram.components.forEach((node, index) => {
+        node.brand = {
+          url: `http://127.0.0.1:${address.port}/mark-${index}.png`,
+          sha256,
+        };
+      });
+    });
+    const rendered = await renderAsync('architecture', input, 'diagram-deadline', {
+      ARCHIFY_BRAND_ALLOW_PRIVATE: '1',
+      ARCHIFY_BRAND_CAPTURE_TIMEOUT_MS: '100',
+    });
+    assert.notEqual(rendered.status, 0, rendered.stdout);
+    assert.match(rendered.stderr, /abort|timed? ?out|timeout/i);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
 test('capture applies one total deadline across the page and icon requests', async () => {
   const icon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
   const server = http.createServer((request, response) => {
@@ -491,10 +555,66 @@ test('capture rejects remote SVG even when the document appears passive', async 
   }
 });
 
+test('unsupported SVG declarations cannot crowd out the favicon fallback', async () => {
+  const icon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  let fallbackHits = 0;
+  const server = http.createServer((request, response) => {
+    if (request.url === '/favicon.ico') {
+      fallbackHits += 1;
+      response.writeHead(200, { 'content-type': 'image/png' });
+      response.end(icon);
+      return;
+    }
+    if (request.url?.endsWith('.svg')) {
+      response.writeHead(200, { 'content-type': 'image/svg+xml' });
+      response.end('<svg xmlns="http://www.w3.org/2000/svg"/>');
+      return;
+    }
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.end(`<!doctype html><title>Fallback mark</title>${Array.from(
+      { length: 6 },
+      (_, index) => `<link rel="icon" type="image/svg+xml" href="/mark-${index}.svg">`,
+    ).join('')}`);
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const capture = await runCliAsync(
+      ['brands', 'capture', `http://127.0.0.1:${address.port}/`, '--json'],
+      { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' },
+    );
+    assert.equal(capture.status, 0, capture.stderr || capture.stdout);
+    const receipt = JSON.parse(capture.stdout);
+    assert.equal(receipt.evidence.contentType, 'image/png');
+    assert.equal(fallbackHits, 1);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
 test('capture rejects an image whose bytes do not match its declared media type', async () => {
   const server = http.createServer((_request, response) => {
     response.writeHead(200, { 'content-type': 'image/png' });
     response.end('<html>not a png</html>');
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const capture = await runCliAsync(
+      ['brands', 'capture', `http://127.0.0.1:${address.port}/mark.png`, '--json'],
+      { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' },
+    );
+    assert.notEqual(capture.status, 0, capture.stdout);
+    assert.match(capture.stderr, /do(?:es)? not match image\/png/i);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('capture rejects a truncated PNG that contains only its signature', async () => {
+  const server = http.createServer((_request, response) => {
+    response.writeHead(200, { 'content-type': 'image/png' });
+    response.end(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   try {
