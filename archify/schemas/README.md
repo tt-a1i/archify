@@ -92,13 +92,14 @@ reordering. ID-less documents remain valid and their relationship pins stay
 local to the current page.
 
 Every semantic node collection (`components`, `nodes`, `participants`, and
-`states`) also accepts one optional `brand` string. Use a canonical ID returned
-by `archify brands --json`, or an HTTP(S) URL supplied by the user when no preset
-exists. Known IDs and known-brand domains use the bundled vector catalogue;
-unknown URLs resolve one bounded site icon during rendering and embed it into
-the standalone artifact. Invalid preset names fail with `brand/unknown`; an
-unavailable or unsafe URL degrades to a generic link badge without changing
-topology. Omitted `brand` preserves the prior output.
+`states`) also accepts one optional `brand`: either a canonical string returned
+by `archify brands --json`, or a digest-pinned `{ "url", "sha256" }` object
+returned by `archify brands capture <url> --json`. Known IDs and known-brand
+domains use the bundled vector catalogue. Unknown URLs must be captured in that
+explicit command before authoring; render and validate never perform an
+unpinned network capture. Unsafe, unavailable, changed, or unsupported content
+fails closed with a brand diagnostic. Omitted `brand` preserves the prior
+output.
 
 ## schema_version policy
 

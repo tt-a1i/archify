@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
@@ -7,6 +8,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { BRAND_MARKS } from '../renderers/shared/generated-brand-marks.mjs';
+import { prepareDiagramBrandMarks } from '../renderers/shared/brand-marks.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, '..');
@@ -69,6 +71,23 @@ function renderAsync(type, input, name, env = {}) {
       output,
       html: fs.existsSync(output) ? fs.readFileSync(output, 'utf8') : '',
     }));
+  });
+}
+
+function runCliAsync(args, env = {}) {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [cli, ...args], {
+      cwd: skillRoot,
+      env: { ...process.env, ...env },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => { stdout += chunk; });
+    child.stderr.on('data', (chunk) => { stderr += chunk; });
+    child.on('close', (status) => resolve({ status, stdout, stderr }));
   });
 }
 
@@ -148,6 +167,35 @@ test('all five renderers keep the semantic sigil and add one export-safe brand b
   }
 });
 
+test('a branded node fails before its semantic sigil, label, and brand badge can overlap', () => {
+  const input = writeFixture('workflow', 'narrow-brand-rail', 'openai', (_diagram, node) => {
+    node.label = 'A';
+    delete node.sublabel;
+    node.width = 32;
+  });
+  const { result, html } = renderSync('workflow', input, 'narrow-brand-rail');
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.match(result.stderr, /brand top rail/i);
+  assert.equal(html, '');
+});
+
+test('every renderer enforces the same collision-free brand top rail', () => {
+  for (const type of ['architecture', 'sequence', 'dataflow', 'lifecycle']) {
+    const input = writeFixture(type, `narrow-brand-rail-${type}`, 'openai', (_diagram, node) => {
+      node.label = type === 'sequence' ? 'ABCDEFGHI' : 'A';
+      delete node.sublabel;
+      delete node.tag;
+      if (type === 'architecture') node.size = [32, 60];
+      if (type === 'dataflow' || type === 'lifecycle') node.width = 48;
+    });
+    const { result, html } = renderSync(type, input, `narrow-brand-rail-${type}`);
+    assert.equal(result.status, 1, `${type}: ${result.stderr || result.stdout}`);
+    assert.match(result.stderr, /brand top rail/i, type);
+    assert.equal(html, '', type);
+  }
+});
+
 test('branded lifecycle states move the semantic stamp left and keep the brand at upper right', () => {
   const input = writeFixture('lifecycle', 'lifecycle-placement', 'openai', (_diagram, node) => {
     node.step = '01';
@@ -170,40 +218,246 @@ test('known-brand URLs use the bundled vector instead of the network', () => {
   assert.doesNotMatch(html, /data-brand-status="captured"/);
 });
 
-test('unknown public-style links capture one site icon and embed it into the standalone HTML', async () => {
+test('unknown URL strings fail closed until an exact captured digest is authored', () => {
+  const input = writeFixture('architecture', 'unpinned-link', 'https://brand.example.invalid/');
+  const result = spawnSync(process.execPath, [cli, 'validate', 'architecture', input, '--json'], {
+    cwd: skillRoot,
+    encoding: 'utf8',
+  });
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.ok, false);
+  assert.ok(receipt.diagnostics.some((entry) => entry.code === 'brand/unpinned-url'));
+  assert.ok(receipt.diagnostics.some((entry) => entry.supportedFixes.some((fix) => fix.includes('brands capture'))));
+});
+
+test('capture command returns a digest-pinned brand object that renders reproducibly', async () => {
   let pageHits = 0;
   let iconHits = 0;
+  const icon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
   const server = http.createServer((request, response) => {
-    if (request.url === '/mark.svg') {
+    if (request.url === '/mark.png') {
       iconHits += 1;
-      response.writeHead(200, { 'content-type': 'image/svg+xml' });
-      response.end('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#7c3aed"/><path d="M6 17 12 5l6 12Z" fill="white"/></svg>');
+      response.writeHead(200, { 'content-type': 'image/png' });
+      response.end(icon);
       return;
     }
     pageHits += 1;
     response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-    response.end('<!doctype html><title>Example Studio</title><link rel="icon" type="image/svg+xml" href="/mark.svg"><h1>Example Studio</h1>');
+    response.end('<!doctype html><title>Example Studio</title><link rel="icon" type="image/png" href="/mark.png"><h1>Example Studio</h1>');
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-  const address = server.address();
-  const input = writeFixture('architecture', 'captured-link', `http://127.0.0.1:${address.port}/studio`);
-  const rendered = await renderAsync('architecture', input, 'captured-link', { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' });
-  await new Promise((resolve) => server.close(resolve));
+  try {
+    const address = server.address();
+    const url = `http://127.0.0.1:${address.port}/studio`;
+    const capture = await runCliAsync(['brands', 'capture', url, '--json'], { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' });
+    assert.equal(capture.status, 0, capture.stderr || capture.stdout);
+    const receipt = JSON.parse(capture.stdout);
+    assert.equal(receipt.ok, true);
+    assert.deepEqual(receipt.brand, {
+      url,
+      sha256: createHash('sha256').update(icon).digest('hex'),
+    });
 
-  assert.equal(rendered.status, 0, rendered.stderr || rendered.stdout);
-  assert.equal(pageHits, 1);
-  assert.equal(iconHits, 1);
-  assert.match(rendered.html, /data-brand-status="captured"/);
-  assert.match(rendered.html, /data:image\/svg\+xml;base64,/);
-  assert.match(rendered.html, /data-brand-sha256="[a-f0-9]{64}"/);
-  assert.ok(!rendered.html.includes('http://127.0.0.1') || rendered.html.includes('data-node-brand-source='));
+    const input = writeFixture('architecture', 'captured-link', receipt.brand);
+    const rendered = await renderAsync('architecture', input, 'captured-link', { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' });
+    assert.equal(rendered.status, 0, rendered.stderr || rendered.stdout);
+    assert.equal(pageHits, 2);
+    assert.equal(iconHits, 2);
+    assert.match(rendered.html, /data-brand-status="captured"/);
+    assert.match(rendered.html, /data:image\/png;base64,/);
+    assert.match(rendered.html, new RegExp(`data-brand-sha256="${receipt.brand.sha256}"`));
+    assert.ok(!rendered.html.includes('http://127.0.0.1') || rendered.html.includes('data-node-brand-source='));
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });
 
-test('remote SVG marks with active or external content degrade without embedding that SVG', async () => {
+test('a pinned brand fails closed when the remote icon digest changes', async () => {
+  const firstIcon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  const changedIcon = Buffer.concat([firstIcon, Buffer.from('changed')]);
+  let iconHits = 0;
   const server = http.createServer((request, response) => {
-    if (request.url === '/unsafe.svg') {
+    if (request.url === '/mark.png') {
+      iconHits += 1;
+      response.writeHead(200, { 'content-type': 'image/png' });
+      response.end(iconHits === 1 ? firstIcon : changedIcon);
+      return;
+    }
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.end('<!doctype html><title>Changing site</title><link rel="icon" type="image/png" href="/mark.png">');
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const url = `http://127.0.0.1:${address.port}/`;
+    const capture = await runCliAsync(['brands', 'capture', url, '--json'], { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' });
+    assert.equal(capture.status, 0, capture.stderr || capture.stdout);
+    const brand = JSON.parse(capture.stdout).brand;
+    const input = writeFixture('architecture', 'changed-digest', brand);
+    const result = await runCliAsync(['validate', 'architecture', input, '--json'], { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' });
+    assert.equal(result.status, 1, result.stderr || result.stdout);
+    const receipt = JSON.parse(result.stdout);
+    assert.equal(receipt.diagnostics.filter((entry) => entry.code === 'brand/digest-mismatch').length, 1);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('each prepare call rechecks pinned remote bytes instead of trusting a process-wide cache', async () => {
+  const firstIcon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  const changedIcon = Buffer.concat([firstIcon, Buffer.from('changed-again')]);
+  let iconHits = 0;
+  const server = http.createServer((request, response) => {
+    if (request.url === '/mark.png') {
+      iconHits += 1;
+      response.writeHead(200, { 'content-type': 'image/png' });
+      response.end(iconHits === 1 ? firstIcon : changedIcon);
+      return;
+    }
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.end('<!doctype html><title>Changing site</title><link rel="icon" type="image/png" href="/mark.png">');
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const priorAllowPrivate = process.env.ARCHIFY_BRAND_ALLOW_PRIVATE;
+  process.env.ARCHIFY_BRAND_ALLOW_PRIVATE = '1';
+  try {
+    const address = server.address();
+    const diagram = {
+      components: [{
+        id: 'remote',
+        label: 'Remote',
+        brand: {
+          url: `http://127.0.0.1:${address.port}/`,
+          sha256: createHash('sha256').update(firstIcon).digest('hex'),
+        },
+      }],
+    };
+    await prepareDiagramBrandMarks('architecture', diagram);
+    await assert.rejects(
+      prepareDiagramBrandMarks('architecture', diagram),
+      /brand digest changed/i,
+    );
+    assert.equal(iconHits, 2);
+  } finally {
+    if (priorAllowPrivate === undefined) delete process.env.ARCHIFY_BRAND_ALLOW_PRIVATE;
+    else process.env.ARCHIFY_BRAND_ALLOW_PRIVATE = priorAllowPrivate;
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('capture blocks IPv4-mapped IPv6 loopback and metadata destinations before connecting', async () => {
+  for (const url of [
+    'http://[::ffff:127.0.0.1]/',
+    'http://[::ffff:169.254.169.254]/',
+    'http://[::192.168.1.1]/',
+    'http://[64:ff9b::c0a8:101]/',
+    'http://[2002:c0a8:0101::]/',
+    'http://[ff02::1]/',
+    'http://192.0.2.1/',
+    'http://198.51.100.1/',
+    'http://203.0.113.1/',
+  ]) {
+    const capture = await runCliAsync(['brands', 'capture', url, '--json']);
+    assert.notEqual(capture.status, 0, `${url}: ${capture.stderr || capture.stdout}`);
+    assert.match(capture.stderr, /private brand links are not fetched/i, url);
+  }
+});
+
+test('capture requires the standard port for the selected web protocol', async () => {
+  for (const url of [
+    'http://brand.example.invalid:443/',
+    'https://brand.example.invalid:80/',
+    'https://github.com:80/',
+  ]) {
+    const capture = await runCliAsync(['brands', 'capture', url, '--json']);
+    assert.notEqual(capture.status, 0, capture.stdout);
+    assert.match(capture.stderr, /standard web port/i, url);
+  }
+});
+
+test('capture rejects credentials even when the URL domain matches a bundled preset', async () => {
+  const capture = await runCliAsync(['brands', 'capture', 'https://user:secret@github.com/', '--json']);
+  assert.notEqual(capture.status, 0, capture.stdout);
+  assert.match(capture.stderr, /cannot contain credentials/i);
+});
+
+test('rendering many pinned brands limits concurrent remote capture work', async () => {
+  const icon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  const sha256 = createHash('sha256').update(icon).digest('hex');
+  let active = 0;
+  let maximumActive = 0;
+  const server = http.createServer((request, response) => {
+    active += 1;
+    maximumActive = Math.max(maximumActive, active);
+    setTimeout(() => {
+      if (request.url.endsWith('.png')) {
+        response.writeHead(200, { 'content-type': 'image/png' });
+        active -= 1;
+        response.end(icon);
+      } else {
+        const suffix = request.url.replace(/^\/site-/, '');
+        response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+        active -= 1;
+        response.end(`<!doctype html><title>Site ${suffix}</title><link rel="icon" type="image/png" href="/mark-${suffix}.png">`);
+      }
+    }, 40);
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const input = writeFixture('architecture', 'bounded-capture', 'openai', (diagram) => {
+      diagram.components.forEach((node, index) => {
+        node.brand = {
+          url: `http://127.0.0.1:${address.port}/site-${index}`,
+          sha256,
+        };
+      });
+    });
+    const rendered = await renderAsync('architecture', input, 'bounded-capture', { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' });
+    assert.equal(rendered.status, 0, rendered.stderr || rendered.stdout);
+    assert.ok(maximumActive <= 3, `expected at most 3 concurrent requests, observed ${maximumActive}`);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('capture applies one total deadline across the page and icon requests', async () => {
+  const icon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  const server = http.createServer((request, response) => {
+    setTimeout(() => {
+      if (request.url === '/mark.png') {
+        response.writeHead(200, { 'content-type': 'image/png' });
+        response.end(icon);
+      } else {
+        response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+        response.end('<!doctype html><title>Slow site</title><link rel="icon" type="image/png" href="/mark.png">');
+      }
+    }, 100);
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const capture = await runCliAsync(
+      ['brands', 'capture', `http://127.0.0.1:${address.port}/`, '--json'],
+      {
+        ARCHIFY_BRAND_ALLOW_PRIVATE: '1',
+        ARCHIFY_BRAND_CAPTURE_TIMEOUT_MS: '150',
+      },
+    );
+    assert.notEqual(capture.status, 0, capture.stdout);
+    assert.match(capture.stderr, /abort|timed? ?out|timeout/i);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('capture rejects remote SVG even when the document appears passive', async () => {
+  const server = http.createServer((request, response) => {
+    if (request.url === '/mark.svg') {
       response.writeHead(200, { 'content-type': 'image/svg+xml' });
-      response.end('<svg xmlns="http://www.w3.org/2000/svg"><style>@import url("https://example.com/leak.css")</style><image href=https://example.com/leak.png /><rect width="24" height="24"/></svg>');
+      response.end('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24"/></svg>');
       return;
     }
     if (request.url === '/favicon.ico') {
@@ -212,31 +466,39 @@ test('remote SVG marks with active or external content degrade without embedding
       return;
     }
     response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-    response.end('<!doctype html><title>Unsafe mark</title><link rel="icon" type="image/svg+xml" href="/unsafe.svg">');
+    response.end('<!doctype html><title>SVG mark</title><link rel="icon" type="image/svg+xml" href="/mark.svg">');
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-  const address = server.address();
-  const input = writeFixture('architecture', 'unsafe-svg', `http://127.0.0.1:${address.port}/studio`);
-  const rendered = await renderAsync('architecture', input, 'unsafe-svg', { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' });
-  await new Promise((resolve) => server.close(resolve));
-
-  assert.equal(rendered.status, 0, rendered.stderr || rendered.stdout);
-  const id = JSON.parse(fs.readFileSync(input, 'utf8')).components[0].id;
-  const block = nodeBlock(rendered.html, id);
-  assert.match(block, /data-brand-status="unavailable"/);
-  assert.match(block, /class="brand-mark-fallback"/);
-  assert.doesNotMatch(block, /leak\.(?:css|png)|data:image\/svg\+xml/);
+  try {
+    const address = server.address();
+    const capture = await runCliAsync(
+      ['brands', 'capture', `http://127.0.0.1:${address.port}/studio`, '--json'],
+      { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' },
+    );
+    assert.notEqual(capture.status, 0, capture.stdout);
+    assert.match(capture.stderr, /unsupported brand image type image\/svg\+xml/i);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });
 
-test('unsafe or unavailable link capture degrades to a generic mark without failing the diagram', () => {
-  const input = writeFixture('architecture', 'blocked-link', 'http://127.0.0.1/brand');
-  const { result, html } = renderSync('architecture', input, 'blocked-link');
-  assert.equal(result.status, 0, result.stderr || result.stdout);
-  const id = JSON.parse(fs.readFileSync(input, 'utf8')).components[0].id;
-  const block = nodeBlock(html, id);
-  assert.match(block, /data-brand-status="unavailable"/);
-  assert.match(block, /class="brand-mark-fallback"/);
-  assert.doesNotMatch(block, /data:image\//);
+test('capture rejects an image whose bytes do not match its declared media type', async () => {
+  const server = http.createServer((_request, response) => {
+    response.writeHead(200, { 'content-type': 'image/png' });
+    response.end('<html>not a png</html>');
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const capture = await runCliAsync(
+      ['brands', 'capture', `http://127.0.0.1:${address.port}/mark.png`, '--json'],
+      { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' },
+    );
+    assert.notEqual(capture.status, 0, capture.stdout);
+    assert.match(capture.stderr, /do(?:es)? not match image\/png/i);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });
 
 test('unknown preset names fail with a repairable public CLI diagnostic', () => {

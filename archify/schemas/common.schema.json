@@ -21,12 +21,25 @@
       "enum": ["frontend", "backend", "database", "cloud", "security", "messagebus", "external"]
     },
     "brandMark": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 2048,
-      "anyOf": [
-        { "maxLength": 80, "pattern": "^[^\\r\\n]+$" },
-        { "pattern": "^https?://" }
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "anyOf": [
+            { "maxLength": 80, "pattern": "^[^\\r\\n]+$" },
+            { "pattern": "^https?://" }
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["url", "sha256"],
+          "properties": {
+            "url": { "type": "string", "minLength": 8, "maxLength": 2048, "pattern": "^https?://" },
+            "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          }
+        }
       ]
     },
     "variant": {

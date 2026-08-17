@@ -5,7 +5,7 @@ import https from 'node:https';
 import net from 'node:net';
 import { BRAND_MARKS } from './generated-brand-marks.mjs';
 import { throwDiagnosticError } from './diagnostics.mjs';
-import { esc } from './utils.mjs';
+import { esc, textUnits } from './utils.mjs';
 
 const COLLECTIONS = Object.freeze({
   architecture: 'components',
@@ -18,9 +18,10 @@ const MARK_BY_LOOKUP = new Map();
 const MARK_BY_DOMAIN = new Map();
 const RESOLVED_BY_NODE = new WeakMap();
 const RESOLVED_MARK = Symbol('archify.brandMark');
-const REMOTE_BY_URL = new Map();
 const MAX_HTML_BYTES = 256 * 1024;
 const MAX_IMAGE_BYTES = 1024 * 1024;
+const MAX_CAPTURE_CONCURRENCY = 3;
+const DEFAULT_CAPTURE_TIMEOUT_MS = 8000;
 const USER_AGENT = 'Archify/2.14 brand-preview';
 
 function lookupForms(value) {
@@ -84,31 +85,69 @@ function ipv4Private(address) {
     || (a === 100 && b >= 64 && b <= 127)
     || (a === 169 && b === 254)
     || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && (b === 0 || b === 2 || b === 88))
     || (a === 192 && b === 168)
-    || (a === 198 && (b === 18 || b === 19));
+    || (a === 198 && (b === 18 || b === 19 || b === 51))
+    || (a === 203 && b === 0);
 }
 
 function ipv6Private(address) {
   const normalized = address.toLocaleLowerCase('en-US').split('%')[0];
   if (normalized === '::' || normalized === '::1') return true;
-  if (normalized.startsWith('fc') || normalized.startsWith('fd') || /^fe[89ab]/.test(normalized)) return true;
-  const mapped = normalized.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-  return mapped ? ipv4Private(mapped[1]) : false;
+  if (normalized.startsWith('fc') || normalized.startsWith('fd') || normalized.startsWith('ff') || /^fe[89ab]/.test(normalized)) return true;
+  if (normalized.startsWith('64:ff9b:') || normalized.startsWith('100:')
+    || normalized.startsWith('2001:db8:') || normalized.startsWith('2002:')) return true;
+  const mappedDotted = normalized.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  if (mappedDotted) return ipv4Private(mappedDotted[1]);
+  const mappedHex = normalized.match(/::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if (mappedHex) {
+    const high = Number.parseInt(mappedHex[1], 16);
+    const low = Number.parseInt(mappedHex[2], 16);
+    return ipv4Private(`${high >>> 8}.${high & 255}.${low >>> 8}.${low & 255}`);
+  }
+  const compatibleHex = normalized.match(/^::([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if (compatibleHex) {
+    const high = Number.parseInt(compatibleHex[1], 16);
+    const low = Number.parseInt(compatibleHex[2], 16);
+    return ipv4Private(`${high >>> 8}.${high & 255}.${low >>> 8}.${low & 255}`);
+  }
+  return false;
 }
 
-async function resolveRequestTarget(url) {
+function validateUrlShape(url, allowPrivate = process.env.ARCHIFY_BRAND_ALLOW_PRIVATE === '1') {
   if (!['https:', 'http:'].includes(url.protocol)) throw new Error('only HTTP(S) brand links are supported');
   if (url.username || url.password) throw new Error('brand links cannot contain credentials');
-  const allowPrivate = process.env.ARCHIFY_BRAND_ALLOW_PRIVATE === '1';
-  if (!allowPrivate && url.port && !['80', '443'].includes(url.port)) {
+  const expectedPort = url.protocol === 'https:' ? '443' : '80';
+  if (!allowPrivate && url.port && url.port !== expectedPort) {
     throw new Error('brand links must use a standard web port');
   }
   const host = url.hostname.toLocaleLowerCase('en-US').replace(/\.$/, '').replace(/^\[|\]$/g, '');
   if (!allowPrivate && (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local'))) {
     throw new Error('private brand links are not fetched');
   }
+  return host;
+}
+
+function beforeDeadline(promise, deadline) {
+  const remaining = deadline - Date.now();
+  if (remaining <= 0) return Promise.reject(new Error('brand capture timed out'));
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('brand capture timed out')), remaining);
+    timer.unref?.();
+    promise.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (error) => { clearTimeout(timer); reject(error); },
+    );
+  });
+}
+
+async function resolveRequestTarget(url, deadline) {
+  const allowPrivate = process.env.ARCHIFY_BRAND_ALLOW_PRIVATE === '1';
+  const host = validateUrlShape(url, allowPrivate);
   const directFamily = net.isIP(host);
-  const addresses = directFamily ? [{ address: host, family: directFamily }] : await lookup(host, { all: true, verbatim: true });
+  const addresses = directFamily
+    ? [{ address: host, family: directFamily }]
+    : await beforeDeadline(lookup(host, { all: true, verbatim: true }), deadline);
   if (!addresses.length || (!allowPrivate && addresses.some(({ address, family }) => (
     family === 4 ? ipv4Private(address) : ipv6Private(address)
   )))) throw new Error('private brand links are not fetched');
@@ -123,12 +162,18 @@ function timeoutSignal(milliseconds) {
   return controller.signal;
 }
 
-function requestPinned(url, accept, target) {
+function captureTimeoutMilliseconds() {
+  const configured = Number(process.env.ARCHIFY_BRAND_CAPTURE_TIMEOUT_MS);
+  if (!Number.isFinite(configured)) return DEFAULT_CAPTURE_TIMEOUT_MS;
+  return Math.max(100, Math.min(30000, Math.round(configured)));
+}
+
+function requestPinned(url, accept, target, deadline) {
   return new Promise((resolve, reject) => {
     const transport = url.protocol === 'https:' ? https : http;
     const request = transport.request(url, {
       method: 'GET',
-      signal: timeoutSignal(4500),
+      signal: timeoutSignal(Math.max(1, Math.min(4500, deadline - Date.now()))),
       headers: { accept, 'user-agent': USER_AGENT },
       // Reuse the exact public address that passed validation. This closes the
       // DNS-rebinding gap between checking a hostname and opening its socket.
@@ -155,11 +200,12 @@ function requestPinned(url, accept, target) {
   });
 }
 
-async function checkedFetch(input, accept) {
+async function checkedFetch(input, accept, deadline) {
   let current = new URL(input);
   for (let redirects = 0; redirects <= 3; redirects += 1) {
-    const target = await resolveRequestTarget(current);
-    const response = await requestPinned(current, accept, target);
+    if (Date.now() >= deadline) throw new Error('brand capture timed out');
+    const target = await resolveRequestTarget(current, deadline);
+    const response = await requestPinned(current, accept, target, deadline);
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const location = response.headers.get('location');
       response.body.resume();
@@ -178,7 +224,10 @@ async function checkedFetch(input, accept) {
 
 async function readLimited(response, maximum) {
   const declared = Number(response.headers.get('content-length'));
-  if (Number.isFinite(declared) && declared > maximum) throw new Error('brand asset is too large');
+  if (Number.isFinite(declared) && declared > maximum) {
+    response.body?.destroy?.();
+    throw new Error('brand asset is too large');
+  }
   if (response.body && typeof response.body[Symbol.asyncIterator] === 'function') {
     const chunks = [];
     let total = 0;
@@ -248,24 +297,9 @@ function iconCandidates(html, pageUrl) {
   return [...unique.values()].slice(0, 6);
 }
 
-function safeSvg(buffer) {
-  const source = buffer.toString('utf8');
-  const externalReference = [...source.matchAll(/\b(?:href|src)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi)]
-    .some((match) => {
-      const value = (match[1] ?? match[2] ?? match[3] ?? '').trim().toLocaleLowerCase('en-US');
-      return value && !value.startsWith('#') && !value.startsWith('data:');
-    });
-  if (!/<svg\b/i.test(source)
-    || externalReference
-    || /<script\b|<style\b|<foreignObject\b|<!doctype\b|<!entity\b|\bon[a-z]+\s*=|url\s*\(/i.test(source)) {
-    throw new Error('remote SVG favicon contains unsupported active content');
-  }
-}
-
 async function imageData(response) {
   const contentType = (response.headers.get('content-type') || '').split(';')[0].trim().toLocaleLowerCase('en-US');
   const allowed = new Set([
-    'image/svg+xml',
     'image/png',
     'image/jpeg',
     'image/webp',
@@ -277,7 +311,14 @@ async function imageData(response) {
     throw new Error(`unsupported brand image type ${contentType || 'unknown'}`);
   }
   const buffer = await readLimited(response, MAX_IMAGE_BYTES);
-  if (contentType === 'image/svg+xml') safeSvg(buffer);
+  const signatureMatches = contentType === 'image/png'
+    ? buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    : (contentType === 'image/jpeg'
+      ? buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff
+      : (contentType === 'image/webp'
+        ? buffer.length >= 12 && buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP'
+        : buffer.length >= 4 && buffer[0] === 0 && buffer[1] === 0 && buffer[2] === 1 && buffer[3] === 0));
+  if (!signatureMatches) throw new Error(`brand asset bytes do not match ${contentType}`);
   return {
     dataUrl: `data:${contentType};base64,${buffer.toString('base64')}`,
     sha256: createHash('sha256').update(buffer).digest('hex'),
@@ -292,6 +333,7 @@ function pageTitle(html, hostname) {
 
 async function captureRemoteBrand(value) {
   const sourceUrl = new URL(value);
+  const deadline = Date.now() + captureTimeoutMilliseconds();
   const fallback = (reason) => ({
     id: sourceUrl.hostname,
     title: sourceUrl.hostname,
@@ -302,7 +344,7 @@ async function captureRemoteBrand(value) {
     reason,
   });
   try {
-    const page = await checkedFetch(sourceUrl, 'text/html,application/xhtml+xml,image/*;q=0.8');
+    const page = await checkedFetch(sourceUrl, 'text/html,application/xhtml+xml,image/*;q=0.8', deadline);
     const pageType = (page.response.headers.get('content-type') || '').toLocaleLowerCase('en-US');
     if (pageType.startsWith('image/')) {
       const image = await imageData(page.response);
@@ -322,9 +364,10 @@ async function captureRemoteBrand(value) {
       return fallback('linked page is not HTML');
     }
     const html = (await readLimited(page.response, MAX_HTML_BYTES)).toString('utf8');
+    const iconErrors = [];
     for (const candidate of iconCandidates(html, page.finalUrl)) {
       try {
-        const fetched = await checkedFetch(candidate.url, 'image/*');
+        const fetched = await checkedFetch(candidate.url, 'image/*', deadline);
         const image = await imageData(fetched.response);
         return {
           id: sourceUrl.hostname,
@@ -336,20 +379,39 @@ async function captureRemoteBrand(value) {
           resolvedUrl: fetched.finalUrl.href,
           ...image,
         };
-      } catch {
+      } catch (error) {
+        iconErrors.push(error);
         // Try the next declared favicon before using the generic link mark.
       }
     }
-    return fallback('no usable site icon was found');
+    const usefulError = iconErrors.find((error) => /unsupported brand image type/i.test(error?.message))
+      || iconErrors.at(-1);
+    return fallback(usefulError?.message || 'no usable site icon was found');
   } catch (error) {
     return fallback(error.message);
   }
 }
 
-function remoteBrand(value) {
+export async function captureBrandReference(value) {
+  const url = asUrl(value);
+  if (!url) throw new Error('brand capture requires one HTTP(S) URL');
+  validateUrlShape(url);
+  const preset = findBrandMark(url.href);
+  if (preset) return { brand: preset.id, resolved: { ...preset, kind: 'preset', status: 'preset' } };
+  const resolved = await captureRemoteBrand(url.href);
+  if (resolved.status !== 'captured' || !resolved.sha256) {
+    throw new Error(`brand capture failed: ${resolved.reason || 'no usable site icon was found'}`);
+  }
+  return {
+    brand: { url: url.href, sha256: resolved.sha256 },
+    resolved,
+  };
+}
+
+function remoteBrand(value, cache) {
   const key = new URL(value).href;
-  if (!REMOTE_BY_URL.has(key)) REMOTE_BY_URL.set(key, captureRemoteBrand(key));
-  return REMOTE_BY_URL.get(key);
+  if (!cache.has(key)) cache.set(key, captureRemoteBrand(key));
+  return cache.get(key);
 }
 
 function suggestions(value) {
@@ -362,12 +424,40 @@ function suggestions(value) {
     .map((entry) => entry.id);
 }
 
+async function mapConcurrent(values, limit, visit) {
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(limit, values.length) }, async () => {
+    while (cursor < values.length) {
+      const index = cursor;
+      cursor += 1;
+      await visit(values[index], index);
+    }
+  });
+  await Promise.all(workers);
+}
+
 export async function prepareDiagramBrandMarks(diagramType, diagram) {
   const collection = COLLECTIONS[diagramType];
   const nodes = collection && Array.isArray(diagram[collection]) ? diagram[collection] : [];
   const unknown = [];
-  await Promise.all(nodes.map(async (node, index) => {
+  const remoteByUrl = new Map();
+  await mapConcurrent(nodes, MAX_CAPTURE_CONCURRENCY, async (node, index) => {
     if (!node.brand) return;
+    if (typeof node.brand === 'object') {
+      const url = asUrl(node.brand.url);
+      const resolved = url ? await remoteBrand(url.href, remoteByUrl) : null;
+      if (!resolved || resolved.status !== 'captured') {
+        unknown.push(`/${collection}/${index}/brand could not reproduce the pinned capture: ${resolved?.reason || 'invalid URL'}`);
+        return;
+      }
+      if (resolved.sha256 !== node.brand.sha256) {
+        unknown.push(`/${collection}/${index}/brand digest changed: expected ${node.brand.sha256}, received ${resolved.sha256}`);
+        return;
+      }
+      node[RESOLVED_MARK] = resolved;
+      RESOLVED_BY_NODE.set(node, resolved);
+      return;
+    }
     const preset = findBrandMark(node.brand);
     if (preset) {
       const resolved = { ...preset, kind: 'preset', status: 'preset', sourceUrl: preset.provenance.source };
@@ -377,21 +467,23 @@ export async function prepareDiagramBrandMarks(diagramType, diagram) {
     }
     const url = asUrl(node.brand);
     if (url) {
-      const resolved = await remoteBrand(url.href);
-      node[RESOLVED_MARK] = resolved;
-      RESOLVED_BY_NODE.set(node, resolved);
+      unknown.push(`/${collection}/${index}/brand ${JSON.stringify(node.brand)} is an unpinned URL; capture it first with \`archify brands capture ${url.href} --json\``);
       return;
     }
     unknown.push(`/${collection}/${index}/brand ${JSON.stringify(node.brand)} is not a built-in brand; closest IDs: ${suggestions(node.brand).join(', ')}`);
-  }));
+  });
   if (unknown.length) {
     throwDiagnosticError(`Brand mark validation failed:\n- ${unknown.join('\n- ')}`, unknown.map((message) => ({
-      code: 'brand/unknown',
+      code: message.includes('is an unpinned URL') ? 'brand/unpinned-url'
+        : (message.includes('digest changed') ? 'brand/digest-mismatch'
+          : (message.includes('could not reproduce') ? 'brand/capture-unavailable' : 'brand/unknown')),
       severity: 'error',
       message,
       subject: { diagramType, collection },
       evidence: {},
-      supportedFixes: ['choose an ID from `archify brands`', 'provide an HTTP(S) brand URL for one-time site-icon capture'],
+      supportedFixes: message.includes('is an unpinned URL')
+        ? ['run `archify brands capture <url> --json` and author the returned digest-pinned brand object']
+        : ['choose an ID from `archify brands`', 'run `archify brands capture <url> --json` for an unknown official site'],
     })));
   }
 }
@@ -408,6 +500,19 @@ export function brandMetadataFor(node) {
     brandStatus: mark.status,
     brandSource: mark.sourceUrl,
   } : {};
+}
+
+export function brandLabelFitWidth(node, width) {
+  return brandMarkFor(node) ? Math.max(1, width - 48) : width;
+}
+
+export function brandTopRailProblem(node, width, minimumFontSize, subject = 'Node') {
+  if (!brandMarkFor(node)) return null;
+  const available = width - 48;
+  const required = textUnits(node.label) * minimumFontSize * 0.6;
+  if (available >= required) return null;
+  return `${subject} "${node.id}" brand top rail leaves ${Math.max(0, available)}px for its label, but `
+    + `"${node.label}" needs ~${Math.ceil(required)}px at the ${minimumFontSize}px legible minimum — widen the node or shorten the label.`;
 }
 
 function markAttrs(mark) {

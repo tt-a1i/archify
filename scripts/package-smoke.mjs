@@ -90,6 +90,14 @@ try {
 
   run(['--help']);
   run(['doctor']);
+  const brands = JSON.parse(run(['brands', 'openai', '--json']));
+  if (!brands.marks.some((mark) => mark.id === 'openai')) {
+    throw new Error('packaged brand catalogue did not resolve openai');
+  }
+  const capturedPreset = JSON.parse(run(['brands', 'capture', 'https://github.com/', '--json']));
+  if (capturedPreset.brand !== 'github' || capturedPreset.evidence.status !== 'preset') {
+    throw new Error('packaged brand capture did not resolve a known domain without network capture');
+  }
   run(['demo', path.join(scratch, 'demo')]);
   run(['examples']);
 
