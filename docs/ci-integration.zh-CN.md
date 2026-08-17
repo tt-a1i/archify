@@ -42,7 +42,7 @@ jobs:
         working-directory: archify
       - name: Validate source
         run: |
-          node bin/archify.mjs validate workflow ../examples/agent-tool-call.workflow.json \
+          node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json \
             --quality showcase --json > validation.json
         working-directory: archify
       - name: Upload validation receipt
@@ -60,7 +60,7 @@ jobs:
 当 CI 要生成 Release、文档网站或下游任务真正消费的 HTML 时，使用 `deliver`：
 
 ```bash
-node bin/archify.mjs deliver workflow ../examples/agent-tool-call.workflow.json \
+node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json \
   workflow.html --quality showcase --json > delivery.json
 ```
 
@@ -93,7 +93,7 @@ node bin/archify.mjs compare architecture base.json head.json \
 
 ## Package 新鲜度
 
-只修改文档时不需要重建 `archify.zip`。如果修改了 `archify/` 运行时代码、Schema、Renderer 行为或发布版 `SKILL.md`，请重新构建并比较仓库中的压缩包：
+仓库根目录下的 README、`docs/`、`CONTRIBUTING.md` 和 GitHub 模板等不在已打包 `archify/` 目录中的文档，不需要重建 `archify.zip`。`archify/` 目录内的文档，包括 references、examples 和发布版 `SKILL.md`，属于 Package 内容，修改后必须重建。请从仓库根目录运行脚本：
 
 ```bash
 scripts/build-zip.sh /tmp/archify-fresh.zip
@@ -101,5 +101,4 @@ scripts/build-zip.sh /tmp/archify-fresh.zip
 
 CI 的 `zip-freshness` Job 是最终依据。不要提交与当前 Package 内容不一致的压缩包。
 
-完整 Pull Request 检查项请阅读[贡献指南](../CONTRIBUTING.md)；诊断前缀和修复行为请阅读[排错指南](troubleshooting.zh-CN.md)。
-
+完整 Pull Request 检查项请阅读[贡献指南](../CONTRIBUTING.md)；原子交付和视觉复核边界请阅读[交付契约](../archify/references/delivery-contract.md)。

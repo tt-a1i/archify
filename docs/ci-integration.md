@@ -60,7 +60,7 @@ Use the diagram type that matches the input file. For a repository-evidence Arch
 Use `deliver` when CI must produce the exact HTML that a release, documentation site, or downstream job will consume:
 
 ```bash
-node bin/archify.mjs deliver workflow ../examples/agent-tool-call.workflow.json \
+node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json \
   workflow.html --quality showcase --json > delivery.json
 ```
 
@@ -93,7 +93,7 @@ For a successful `validate`, the important fields are `checks` and `composition`
 
 ## Package freshness
 
-Docs-only changes do not require rebuilding `archify.zip`. If a change touches `archify/` runtime files, schemas, renderer behavior, or the published `SKILL.md`, rebuild and compare the checked-in archive:
+Documentation outside the packaged `archify/` tree, including root README files, `docs/`, `CONTRIBUTING.md`, and GitHub templates, does not require rebuilding `archify.zip`. Documentation inside `archify/`, including references, examples, and the published `SKILL.md`, is packaged and does require a rebuild. Run the script from the repository root:
 
 ```bash
 scripts/build-zip.sh /tmp/archify-fresh.zip
@@ -101,5 +101,4 @@ scripts/build-zip.sh /tmp/archify-fresh.zip
 
 The CI `zip-freshness` job is the final authority. Do not commit an archive that differs from the current package contents.
 
-See [Contributing](../CONTRIBUTING.md) for the full pull-request checklist and [Troubleshooting](troubleshooting.md) for diagnostic prefixes and repair behavior.
-
+See [Contributing](../CONTRIBUTING.md) for the full pull-request checklist and [the delivery contract](../archify/references/delivery-contract.md) for atomic delivery and visual-review boundaries.

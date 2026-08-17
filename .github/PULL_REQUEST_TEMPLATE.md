@@ -18,7 +18,7 @@ What user problem does this solve? Link the issue or showcase evidence when one 
 
 List exact commands and results. Do not write only “tests pass.”
 
-For CI-oriented validation and receipt handling, see the [CI and pull request integration guide](../docs/ci-integration.md).
+For CI-oriented validation and receipt handling, see the [CI and pull request integration guide](https://github.com/tt-a1i/archify/blob/main/docs/ci-integration.md).
 
 ## Visual evidence
 
