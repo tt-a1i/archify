@@ -80,15 +80,17 @@ export function listBrandMarks(query = '') {
 function ipv4Private(address) {
   const parts = address.split('.').map(Number);
   if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return true;
-  const [a, b] = parts;
+  const [a, b, c] = parts;
   return a === 0 || a === 10 || a === 127 || a >= 224
     || (a === 100 && b >= 64 && b <= 127)
     || (a === 169 && b === 254)
     || (a === 172 && b >= 16 && b <= 31)
-    || (a === 192 && (b === 0 || b === 2 || b === 88))
+    || (a === 192 && b === 0 && (c === 0 || c === 2))
+    || (a === 192 && b === 88 && c === 99)
     || (a === 192 && b === 168)
-    || (a === 198 && (b === 18 || b === 19 || b === 51))
-    || (a === 203 && b === 0);
+    || (a === 198 && (b === 18 || b === 19))
+    || (a === 198 && b === 51 && c === 100)
+    || (a === 203 && b === 0 && c === 113);
 }
 
 function ipv6Private(address) {
@@ -112,6 +114,11 @@ function ipv6Private(address) {
     return ipv4Private(`${high >>> 8}.${high & 255}.${low >>> 8}.${low & 255}`);
   }
   return false;
+}
+
+export function isPrivateBrandAddress(address) {
+  const family = net.isIP(address);
+  return family === 4 ? ipv4Private(address) : (family === 6 ? ipv6Private(address) : true);
 }
 
 function validateUrlShape(url, allowPrivate = process.env.ARCHIFY_BRAND_ALLOW_PRIVATE === '1') {
@@ -148,9 +155,9 @@ async function resolveRequestTarget(url, deadline) {
   const addresses = directFamily
     ? [{ address: host, family: directFamily }]
     : await beforeDeadline(lookup(host, { all: true, verbatim: true }), deadline);
-  if (!addresses.length || (!allowPrivate && addresses.some(({ address, family }) => (
-    family === 4 ? ipv4Private(address) : ipv6Private(address)
-  )))) throw new Error('private brand links are not fetched');
+  if (!addresses.length || (!allowPrivate && addresses.some(({ address }) => isPrivateBrandAddress(address)))) {
+    throw new Error('private brand links are not fetched');
+  }
   return addresses[0];
 }
 

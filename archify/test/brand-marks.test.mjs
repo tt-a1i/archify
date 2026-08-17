@@ -8,7 +8,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { BRAND_MARKS } from '../renderers/shared/generated-brand-marks.mjs';
-import { prepareDiagramBrandMarks } from '../renderers/shared/brand-marks.mjs';
+import { isPrivateBrandAddress, prepareDiagramBrandMarks } from '../renderers/shared/brand-marks.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, '..');
@@ -362,6 +362,15 @@ test('capture blocks IPv4-mapped IPv6 loopback and metadata destinations before 
     const capture = await runCliAsync(['brands', 'capture', url, '--json']);
     assert.notEqual(capture.status, 0, `${url}: ${capture.stderr || capture.stdout}`);
     assert.match(capture.stderr, /private brand links are not fetched/i, url);
+  }
+});
+
+test('address classification blocks exact reserved ranges without rejecting adjacent public IPv4 space', () => {
+  for (const address of ['192.0.2.1', '192.88.99.1', '198.51.100.1', '203.0.113.1']) {
+    assert.equal(isPrivateBrandAddress(address), true, address);
+  }
+  for (const address of ['192.2.1.1', '192.88.98.1', '198.51.99.1', '203.0.112.1']) {
+    assert.equal(isPrivateBrandAddress(address), false, address);
   }
 });
 
