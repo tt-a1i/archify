@@ -260,8 +260,8 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 | Surface | Install location or method | Capability |
 |---|---|---|
 | **Raven** | Manual ZIP into `~/.raven/workspace/skills` → `~/.raven/workspace/skills/archify` | Full renderer + validation workflow |
-| **Claude Code** | `~/.claude/skills/` or `.claude/skills/` | Full renderer + validation workflow |
-| **Codex CLI** | `~/.agents/skills/` or `.agents/skills/` | Full renderer + validation workflow |
+| **Claude Code** | `tt-a1i/archify` plugin `archify` | Full renderer + validation workflow |
+| **Codex CLI** | `archify@archify` via `tt-a1i/archify` | Full renderer + validation workflow |
 | **opencode** | `~/.config/opencode/skills/`, `.opencode/skills/`, or `.agents/skills/` | Full renderer + validation workflow |
 | **Claude.ai** | Upload `archify.zip` under Settings → Capabilities → Skills | Depends on Node.js access in the sandbox |
 | **Project Knowledge** | Upload `archify.zip` to the project | Prompt-driven architecture fallback |

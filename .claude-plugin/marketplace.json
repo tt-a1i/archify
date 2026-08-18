@@ -1,0 +1,22 @@
+{
+  "name": "archify",
+  "description": "Verified architecture, workflow, sequence, data-flow, and lifecycle diagrams as standalone HTML",
+  "owner": {
+    "name": "tt-a1i",
+    "url": "https://github.com/tt-a1i"
+  },
+  "plugins": [
+    {
+      "name": "archify",
+      "source": "./archify",
+      "description": "Turn a codebase or system description into a polished, interactive system map.",
+      "version": "2.15.0",
+      "author": {
+        "name": "tt-a1i",
+        "url": "https://github.com/tt-a1i"
+      },
+      "category": "development",
+      "tags": ["architecture", "diagram", "workflow", "sequence", "data-flow", "lifecycle"]
+    }
+  ]
+}

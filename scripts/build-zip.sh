@@ -31,6 +31,11 @@ rsync -a \
   --exclude '.hive' \
   --exclude '.workbuddy' \
   --exclude '.validator-check-*' \
+  --exclude '.claude-plugin' \
+  --exclude '.codex-plugin' \
+  --exclude 'plugin.json' \
+  --exclude 'skills' \
+  --exclude 'agents' \
   "$repo_root/archify/" "$stage/archify/"
 node -e "
   const fs = require('fs');
