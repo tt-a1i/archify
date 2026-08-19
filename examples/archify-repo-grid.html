@@ -4329,6 +4329,9 @@
       opacity: 0.94;
       animation: archify-intent-trace-flow 1.15s linear 1 both;
     }
+    /* Direction names describe each edge relative to the focused node only.
+       The cloned geometry already runs from the authored source to target, so
+       incoming and outgoing signals must share the same playback direction. */
     .intent-trace-flow[data-direction="out"] {
       stroke: var(--frontend-stroke);
       filter: drop-shadow(0 0 4px var(--frontend-stroke));
@@ -4336,7 +4339,7 @@
     .intent-trace-flow[data-direction="in"] {
       stroke: var(--database-stroke);
       filter: drop-shadow(0 0 4px var(--database-stroke));
-      animation-direction: reverse;
+      animation-direction: normal;
     }
     .intent-trace-flow[data-direction="loop"] {
       stroke: var(--security-stroke);
