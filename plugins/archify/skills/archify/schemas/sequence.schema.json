@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/sequence.schema.json",
+  "title": "Archify Sequence Diagram",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "diagram_type",
+    "meta",
+    "participants",
+    "messages"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "diagram_type": {
+      "const": "sequence"
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        },
+        "animation": {
+          "enum": [
+            "trace",
+            "none"
+          ]
+        },
+        "visual_preset": {
+          "enum": [
+            "classic",
+            "signal-flow",
+            "blueprint",
+            "editorial"
+          ]
+        },
+        "quality_profile": {
+          "enum": [
+            "standard",
+            "showcase"
+          ]
+        },
+        "column_fit": {
+          "description": "Horizontal participant layout. Omit this field or use fixed for the stable 86px boxes and 108px gap. Use spread when a wide viewBox would leave unused horizontal space or meaningful participant labels do not fit the fixed boxes; spread derives wider boxes and gaps from the viewBox without changing participant order or message semantics.",
+          "enum": ["fixed", "spread"]
+        },
+        "views": {
+          "$ref": "common.schema.json#/$defs/guidedViews"
+        },
+        "legend": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": { "$ref": "common.schema.json#/$defs/legendMode" },
+            "entries": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "default": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "emphasis": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "security": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "dashed": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "return": { "$ref": "common.schema.json#/$defs/legendEntry" }
+              }
+            }
+          }
+        },
+        "viewBox": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "number",
+              "minimum": 480
+            },
+            {
+              "type": "number",
+              "minimum": 480
+            }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "participants": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "type": {
+            "$ref": "common.schema.json#/$defs/componentType"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sublabel": {
+            "type": "string"
+          },
+          "brand": {
+            "$ref": "common.schema.json#/$defs/brandMark"
+          }
+        }
+      }
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from",
+          "to",
+          "label"
+        ],
+        "properties": {
+          "from": {
+            "type": "number"
+          },
+          "to": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "messages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from",
+          "to",
+          "y",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "from": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "to": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "y": {
+            "type": "number",
+            "minimum": 160
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "variant": {
+            "enum": [
+              "default",
+              "emphasis",
+              "security",
+              "dashed",
+              "return"
+            ]
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "activations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "participant",
+          "from",
+          "to"
+        ],
+        "properties": {
+          "participant": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "from": {
+            "type": "number"
+          },
+          "to": {
+            "type": "number"
+          },
+          "type": {
+            "$ref": "common.schema.json#/$defs/componentType"
+          }
+        }
+      }
+    },
+    "cards": {
+      "$ref": "common.schema.json#/$defs/cards"
+    }
+  }
+}

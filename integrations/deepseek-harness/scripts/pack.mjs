@@ -5,61 +5,20 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnCliSync } from './resolve-cli.mjs';
+import { DEFAULT_SKILL_SOURCE, stageCleanSkill } from '../../../scripts/stage-clean-skill.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const integrationRoot = path.resolve(here, '..');
 const repoRoot = path.resolve(integrationRoot, '..', '..');
-const archifySource = path.join(repoRoot, 'archify');
+const archifySource = DEFAULT_SKILL_SOURCE;
 
 function argValue(flag) {
   const index = process.argv.indexOf(flag);
   return index === -1 ? undefined : process.argv[index + 1];
 }
 
-function excludeFromCleanSkill(sourceRoot, src) {
-  const relative = path.relative(sourceRoot, src);
-  if (!relative || relative === '.') return false;
-  const parts = relative.split(path.sep);
-  if (parts.includes('node_modules')) return true;
-  if (parts.includes('test')) return true;
-  if (parts.includes('.DS_Store')) return true;
-  if (parts.includes('.hive')) return true;
-  if (parts.includes('.workbuddy')) return true;
-  if (parts.some((part) => part.startsWith('.validator-check-'))) return true;
-  if (parts.join('/') === 'scripts/generate-brand-marks.mjs') return true;
-  if (parts.join('/') === 'scripts/generate-validators.mjs') return true;
-  return false;
-}
-
-function trackedArchifyFiles() {
-  const tracked = spawnCliSync('git', ['ls-files', '-z', '--', 'archify'], {
-    cwd: repoRoot,
-    encoding: 'utf8',
-  });
-  if (tracked.status !== 0) {
-    throw new Error(`unable to enumerate tracked Archify files: ${tracked.stderr || tracked.error?.message}`);
-  }
-  return tracked.stdout.split('\0').filter(Boolean);
-}
-
 function stageCleanArchify(dest) {
-  const validators = path.join(archifySource, 'renderers/shared/generated-validators.mjs');
-  if (!fs.existsSync(validators)) {
-    throw new Error('generated validators are missing — run npm run generate:validators in archify/');
-  }
-  for (const repoRelative of trackedArchifyFiles()) {
-    const src = path.join(repoRoot, ...repoRelative.split('/'));
-    if (excludeFromCleanSkill(archifySource, src)) continue;
-    const destination = path.join(dest, path.relative(archifySource, src));
-    fs.mkdirSync(path.dirname(destination), { recursive: true });
-    fs.copyFileSync(src, destination);
-  }
-  const packagePath = path.join(dest, 'package.json');
-  const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
-  delete pkg.scripts;
-  delete pkg.devDependencies;
-  fs.writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
-  fs.rmSync(path.join(dest, 'package-lock.json'), { force: true });
+  stageCleanSkill(archifySource, dest);
 }
 
 const json = process.argv.includes('--json');

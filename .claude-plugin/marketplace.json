@@ -8,9 +8,9 @@
   "plugins": [
     {
       "name": "archify",
-      "source": "./archify",
+      "source": "./plugins/archify",
       "description": "Turn a codebase or system description into a polished, interactive system map.",
-      "version": "2.15.0",
+      "version": "0.1.0",
       "author": {
         "name": "tt-a1i",
         "url": "https://github.com/tt-a1i"

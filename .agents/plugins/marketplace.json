@@ -8,7 +8,7 @@
       "name": "archify",
       "source": {
         "source": "local",
-        "path": "./archify"
+        "path": "./plugins/archify"
       },
       "policy": {
         "installation": "AVAILABLE",

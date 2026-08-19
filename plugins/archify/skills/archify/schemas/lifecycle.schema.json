@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/lifecycle.schema.json",
+  "title": "Archify Lifecycle Diagram",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "diagram_type",
+    "meta",
+    "lanes",
+    "states",
+    "transitions"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "diagram_type": {
+      "const": "lifecycle"
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        },
+        "animation": {
+          "enum": [
+            "trace",
+            "none"
+          ]
+        },
+        "visual_preset": {
+          "enum": [
+            "classic",
+            "signal-flow",
+            "blueprint",
+            "editorial"
+          ]
+        },
+        "quality_profile": {
+          "enum": [
+            "standard",
+            "showcase"
+          ]
+        },
+        "views": {
+          "$ref": "common.schema.json#/$defs/guidedViews"
+        },
+        "legend": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": { "$ref": "common.schema.json#/$defs/legendMode" },
+            "entries": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "start": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "active": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "waiting": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "decision": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "success": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "failure": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "neutral": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "external": { "$ref": "common.schema.json#/$defs/legendEntry" }
+              }
+            }
+          }
+        },
+        "viewBox": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "number",
+              "minimum": 420
+            },
+            {
+              "type": "number",
+              "minimum": 566
+            }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "lanes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "states": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "label",
+          "lane",
+          "col"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "type": {
+            "enum": [
+              "start",
+              "active",
+              "waiting",
+              "decision",
+              "success",
+              "failure",
+              "neutral",
+              "external"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sublabel": {
+            "type": "string"
+          },
+          "tag": {
+            "type": "string"
+          },
+          "brand": {
+            "$ref": "common.schema.json#/$defs/brandMark"
+          },
+          "step": {
+            "type": "string"
+          },
+          "lane": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "col": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4
+          },
+          "width": {
+            "type": "number",
+            "minimum": 48
+          },
+          "height": {
+            "type": "number",
+            "minimum": 36
+          },
+          "yOffset": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "from": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "to": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "label": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "variant": {
+            "$ref": "common.schema.json#/$defs/variant"
+          },
+          "route": {
+            "enum": [
+              "auto",
+              "straight",
+              "drop",
+              "bottom-channel",
+              "top-channel",
+              "right-channel",
+              "left-channel"
+            ]
+          },
+          "fromSide": {
+            "enum": [
+              "left",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "toSide": {
+            "enum": [
+              "left",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "channelX": {
+            "type": "number"
+          },
+          "channelY": {
+            "type": "number"
+          },
+          "cornerRadius": {
+            "type": "number",
+            "minimum": 0
+          },
+          "labelAt": {
+            "$ref": "common.schema.json#/$defs/point"
+          },
+          "labelDx": {
+            "type": "number"
+          },
+          "labelDy": {
+            "type": "number"
+          },
+          "labelSegment": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "via": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/point"
+            }
+          },
+          "width": {
+            "type": "number",
+            "minimum": 0.5
+          }
+        }
+      }
+    },
+    "cards": {
+      "$ref": "common.schema.json#/$defs/cards"
+    }
+  }
+}

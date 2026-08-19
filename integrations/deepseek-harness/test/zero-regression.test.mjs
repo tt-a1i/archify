@@ -14,9 +14,12 @@ function git(args) {
   return result.stdout.trim();
 }
 
-test('the repository still has exactly one checked-in Archify SKILL.md and no generated DSH payload', () => {
+test('the repository still has exactly one Skill SSoT and no generated DSH payload', () => {
   const skillFiles = git(['ls-files', '*SKILL.md']).split('\n').filter(Boolean);
-  assert.deepEqual(skillFiles, ['archify/SKILL.md']);
+  assert.deepEqual(skillFiles.sort(), [
+    'archify/SKILL.md',
+    'plugins/archify/skills/archify/SKILL.md',
+  ]);
   assert.equal(fs.existsSync(path.join(repoRoot, 'integrations/deepseek-harness/skills')), false);
   const trackedSkills = git(['ls-files', 'integrations/deepseek-harness/skills']);
   assert.equal(trackedSkills, '');

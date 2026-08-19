@@ -46,6 +46,39 @@ jobs:
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
 
+  plugin-leaf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Generated plugin leaf must match the Skill SSoT
+        run: node scripts/build-plugin-leaf.mjs --check
+      - name: Hosted-cwd doctor must pass from outside the skill directory
+        run: |
+          set -euo pipefail
+          if find archify plugins/archify -type l | grep -q .; then
+            echo '::error::plugin payload must not contain symlinks'
+            find archify plugins/archify -type l
+            exit 1
+          fi
+          node "$GITHUB_WORKSPACE/plugins/archify/skills/archify/bin/archify.mjs" doctor
+        working-directory: /tmp
+      - name: Symlink-disabled checkout still contains a runnable Skill
+        run: |
+          set -euo pipefail
+          git clone -c core.symlinks=false --quiet "$GITHUB_WORKSPACE" /tmp/archify-nosym
+          if find /tmp/archify-nosym/archify /tmp/archify-nosym/plugins/archify -type l | grep -q .; then
+            echo '::error::symlink-disabled checkout still has links'
+            find /tmp/archify-nosym/archify /tmp/archify-nosym/plugins/archify -type l
+            exit 1
+          fi
+          for required in SKILL.md bin/archify.mjs schemas/architecture.schema.json assets/template.html; do
+            test -f "/tmp/archify-nosym/plugins/archify/skills/archify/$required"
+          done
+          node /tmp/archify-nosym/plugins/archify/skills/archify/bin/archify.mjs doctor
+
   zip-freshness:
     runs-on: ubuntu-latest
     steps:

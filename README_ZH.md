@@ -255,8 +255,8 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 使用位置 | 安装位置或方法 | 能力 |
 |---|---|---|
 | **Raven** | ZIP 手动安装：将 `archify.zip` 解压到 `~/.raven/workspace/skills`，解压后会得到 `~/.raven/workspace/skills/archify` | 完整 Renderer + Validation 工作流 |
-| **Claude Code** | `tt-a1i/archify` plugin `archify` | 完整 Renderer + Validation 工作流 |
-| **Codex CLI** | `archify@archify` via `tt-a1i/archify` | 完整 Renderer + Validation 工作流 |
+| **Claude Code** | `tt-a1i/archify` 插件 `archify`，或 `npx skills add` | 完整 Renderer + Validation 工作流 |
+| **Codex CLI** | `archify@archify` via `tt-a1i/archify`，或 `npx skills add` | 完整 Renderer + Validation 工作流 |
 | **opencode** | `~/.config/opencode/skills/`、`.opencode/skills/` 或 `.agents/skills/` | 完整 Renderer + Validation 工作流 |
 | **Claude.ai** | Settings → Capabilities → Skills 中上传 `archify.zip` | 取决于沙箱是否提供 Node.js |
 | **Project Knowledge** | 把 `archify.zip` 上传到项目 | Prompt 驱动的 Architecture Fallback |
