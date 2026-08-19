@@ -595,6 +595,28 @@ test('textUnits follows wide and halfwidth East Asian presentation boundaries', 
   assert.equal(textUnits('ㄱ'), 2); // Hangul compatibility letter is wide
   assert.equal(textUnits('︐︙'), 4); // vertical punctuation forms are wide
   assert.equal(textUnits('ｶﾀｶﾅ'), 4); // halfwidth Katakana stays one unit per glyph
+  assert.equal(textUnits('ꥠ'), 2); // Hangul Jamo Extended-A is wide
+});
+
+test('textUnits counts emoji-presentation symbols in the BMP as wide', () => {
+  // These render at the same square advance as the supplementary-plane emoji,
+  // so counting them as one unit under-measures a label and lets it overflow
+  // its node while the layout receipt still reads clean.
+  assert.equal(textUnits('✅'), 2);
+  assert.equal(textUnits('⭐'), 2);
+  assert.equal(textUnits('⚡'), 2);
+  assert.equal(textUnits('⌛'), 2);
+  assert.equal(textUnits('⏰'), 2);
+  assert.equal(textUnits('⛔'), 2);
+  assert.equal(textUnits('❗'), 2);
+  assert.equal(textUnits('⬛'), 2);
+  assert.equal(textUnits('☕'), 2);
+  assert.equal(textUnits('♿'), 2);
+  assert.equal(textUnits('✅ Done'), 7);
+  // Narrow and ambiguous neighbours in the same blocks stay one unit.
+  assert.equal(textUnits('→'), 1); // rightwards arrow
+  assert.equal(textUnits('☎'), 1); // black telephone
+  assert.equal(textUnits('①'), 1); // circled digit one
 });
 
 test('semantic sigils cover every component and lifecycle kind without literal color', () => {

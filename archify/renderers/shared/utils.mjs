@@ -165,7 +165,13 @@ export function applyTemplate(template, { title, subtitle, svg, cards, visualPre
 // forms (notably U+FF61–U+FF9F Katakana) out of this set. The explicit ranges
 // also cover vertical punctuation and supplementary East Asian scripts that
 // literal glyph ranges made difficult to audit.
-const FULLWIDTH_RE = /[\u1100-\u115F\u2329-\u232A\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE10-\uFE19\uFE30-\uFE6F\uFF01-\uFF60\uFFE0-\uFFE6\u{16FE0}-\u{18DFF}\u{1AFF0}-\u{1AFFF}\u{1B000}-\u{1B2FF}\u{1F000}-\u{1FAFF}\u{20000}-\u{3FFFD}]/u;
+// Code points that take two columns of advance width: East Asian Wide and
+// Fullwidth per UAX #11. That takes in the BMP symbols carrying emoji
+// presentation (U+2705, U+2B50, U+26A1, U+231B, ...), which render at the same
+// square advance as the supplementary-plane emoji already listed here, and
+// Hangul Jamo Extended-A, wide like every other Hangul block. Spelled out as
+// ranges because V8 has no \p{East_Asian_Width=W} property escape.
+const FULLWIDTH_RE = /[\u1100-\u115F\u231A-\u231B\u2329-\u232A\u23E9-\u23EC\u23F0\u23F3\u25FD-\u25FE\u2614-\u2615\u2648-\u2653\u267F\u2693\u26A1\u26AA-\u26AB\u26BD-\u26BE\u26C4-\u26C5\u26CE\u26D4\u26EA\u26F2-\u26F3\u26F5\u26FA\u26FD\u2705\u270A-\u270B\u2728\u274C\u274E\u2753-\u2755\u2757\u2795-\u2797\u27B0\u27BF\u2B1B-\u2B1C\u2B50\u2B55\u2E80-\uA4CF\uA960-\uA97F\uAC00-\uD7A3\uF900-\uFAFF\uFE10-\uFE19\uFE30-\uFE6F\uFF01-\uFF60\uFFE0-\uFFE6\u{16FE0}-\u{18DFF}\u{1AFF0}-\u{1AFFF}\u{1B000}-\u{1B2FF}\u{1F000}-\u{1FAFF}\u{20000}-\u{3FFFD}]/u;
 
 export function textUnits(text) {
   let units = 0;
