@@ -57,6 +57,22 @@ test('Intent Trace derives exact one-hop direction from stable renderer relation
   assert.match(html, /counts\[direction\] \+= 1/);
 });
 
+test('Intent Trace keeps incoming and outgoing motion on authored source-to-target geometry', () => {
+  for (const [mode, example] of Object.entries(CASES)) {
+    const html = render(mode, example);
+    const incomingRule = html.match(/\.intent-trace-flow\[data-direction="in"\]\s*\{[\s\S]*?\}/)?.[0] || '';
+    assert.ok(incomingRule, `${mode}: expected the incoming Intent Trace style`);
+    assert.doesNotMatch(
+      incomingRule,
+      /animation-direction\s*:\s*reverse/,
+      `${mode}: incoming authored geometry must not be replayed from target to source`,
+    );
+    assert.match(incomingRule, /animation-direction\s*:\s*normal/, mode);
+    assert.match(html, /function traceGeometry\(shape, direction\)[\s\S]+shape\.cloneNode\(false\)/, mode);
+    assert.match(html, /@keyframes archify-intent-trace-flow[\s\S]+stroke-dashoffset: -1/, mode);
+  }
+});
+
 test('Intent Trace separates hover, keyboard, touch, and committed focus', () => {
   const html = render('sequence', CASES.sequence);
   assert.match(html, /window\.matchMedia\('\(hover: hover\) and \(pointer: fine\)'\)/);
