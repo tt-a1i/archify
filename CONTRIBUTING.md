@@ -35,6 +35,8 @@ A useful bug report contains:
 
 Do not replace deterministic evidence with a screenshot. For visual defects, keep both the validator result and the final rendered evidence.
 
+When a local validation or delivery run fails, see the [validation and delivery troubleshooting guide](docs/troubleshooting.md) before opening an issue. It explains the JSON receipt stages, diagnostic prefixes, and the difference between deterministic artifact checks and visual review.
+
 ## Community showcase submissions
 
 Showcase cases should be reproducible proof, not promotional screenshots. Submit the original prompt, agent/client, exact model, Archify version, redacted typed JSON, artifact, validation receipt, and truthful visual-review status through `.github/ISSUE_TEMPLATE/showcase.yml`.
