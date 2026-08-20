@@ -5,6 +5,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  copyableTrackedSkillPath,
+  stageCleanSkill,
+} from '../../scripts/stage-clean-skill.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -25,6 +29,34 @@ function assertRegularFile(filePath) {
   const stat = fs.lstatSync(filePath);
   assert.equal(stat.isSymbolicLink(), false, `${filePath} must not be a symlink`);
   assert.equal(stat.isFile(), true, `${filePath} must be a regular file`);
+}
+
+function git(cwd, args) {
+  const result = spawnSync('git', args, { cwd, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr || result.error?.message);
+  return result;
+}
+
+function initSkillFixture() {
+  const source = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-skill-fixture-'));
+  fs.writeFileSync(path.join(source, 'package.json'), `${JSON.stringify({ name: 'archify' }, null, 2)}\n`);
+  fs.writeFileSync(path.join(source, 'SKILL.md'), '# archify\n');
+  fs.mkdirSync(path.join(source, 'renderers', 'shared'), { recursive: true });
+  fs.writeFileSync(path.join(source, 'renderers', 'shared', 'generated-validators.mjs'), 'export default {};\n');
+  fs.mkdirSync(path.join(source, 'assets'), { recursive: true });
+  fs.writeFileSync(path.join(source, 'assets', 'template.html'), '<html></html>\n');
+  git(source, ['init']);
+  git(source, ['add', '.']);
+  git(source, [
+    '-c',
+    'user.email=archify-test@example.com',
+    '-c',
+    'user.name=archify-test',
+    'commit',
+    '-m',
+    'fixture',
+  ]);
+  return source;
 }
 
 test('Claude, Grok, and Codex marketplaces point at the generated plugin leaf', () => {
@@ -111,6 +143,81 @@ test('Pi package declares the existing skill directory and does not add runtime 
   assert.equal(root.dependencies, undefined);
   assert.equal(root.devDependencies, undefined);
   assert.ok(fs.existsSync(path.join(repoRoot, 'archify', 'SKILL.md')));
+});
+
+test('stageCleanSkill copies tracked files only and skips untracked Skill paths', () => {
+  const source = initSkillFixture();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-clean-skill-'));
+  const markerName = 'review-untracked-marker.txt';
+  fs.writeFileSync(path.join(source, markerName), 'should-not-pack\n');
+  try {
+    stageCleanSkill(source, dest);
+    assert.equal(fs.existsSync(path.join(dest, 'SKILL.md')), true);
+    assert.equal(fs.existsSync(path.join(dest, 'assets', 'template.html')), true);
+    assert.equal(fs.existsSync(path.join(dest, markerName)), false);
+  } finally {
+    fs.rmSync(source, { recursive: true, force: true });
+    fs.rmSync(dest, { recursive: true, force: true });
+  }
+});
+
+test('stageCleanSkill refuses to follow a tracked file symlink', () => {
+  const source = initSkillFixture();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-symlink-file-'));
+  try {
+    const secret = path.join(source, 'secret.txt');
+    fs.writeFileSync(secret, 'secret\n');
+    fs.rmSync(path.join(source, 'SKILL.md'));
+    fs.symlinkSync(secret, path.join(source, 'SKILL.md'));
+    git(source, ['add', 'SKILL.md']);
+    git(source, [
+      '-c',
+      'user.email=archify-test@example.com',
+      '-c',
+      'user.name=archify-test',
+      'commit',
+      '-m',
+      'symlink',
+    ]);
+    assert.throws(() => stageCleanSkill(source, dest), /refusing to follow source symlink: SKILL.md/);
+  } finally {
+    fs.rmSync(source, { recursive: true, force: true });
+    fs.rmSync(dest, { recursive: true, force: true });
+  }
+});
+
+test('stageCleanSkill refuses a tracked path that resolves outside the source root', () => {
+  const source = initSkillFixture();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-symlink-dir-'));
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-outside-'));
+  try {
+    fs.writeFileSync(path.join(outside, 'template.html'), 'pwned\n');
+    fs.rmSync(path.join(source, 'assets'), { recursive: true, force: true });
+    fs.symlinkSync(outside, path.join(source, 'assets'));
+    assert.throws(
+      () => stageCleanSkill(source, dest),
+      /refusing to follow source symlink: assets\/template.html/,
+    );
+  } finally {
+    fs.rmSync(source, { recursive: true, force: true });
+    fs.rmSync(dest, { recursive: true, force: true });
+    fs.rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test('copyableTrackedSkillPath refuses a leaf symlink without following it', () => {
+  const source = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-symlink-helper-'));
+  try {
+    const target = path.join(source, 'secret.txt');
+    fs.writeFileSync(target, 'secret\n');
+    fs.symlinkSync(target, path.join(source, 'SKILL.md'));
+    assert.throws(
+      () => copyableTrackedSkillPath(source, 'SKILL.md'),
+      /refusing to follow source symlink: SKILL.md/,
+    );
+  } finally {
+    fs.rmSync(source, { recursive: true, force: true });
+  }
 });
 
 test('the skill zip excludes host-plugin manifests so npx skills add stays unchanged', () => {

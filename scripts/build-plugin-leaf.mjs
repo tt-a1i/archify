@@ -17,6 +17,10 @@ const leafRoot = path.join(pluginRoot, 'skills', 'archify');
 const openaiYaml = path.join(pluginRoot, '.codex-plugin', 'openai.yaml');
 
 function installHostExtras(dest) {
+  const stat = fs.lstatSync(openaiYaml);
+  if (stat.isSymbolicLink() || !stat.isFile()) {
+    throw new Error(`refusing to follow source symlink: ${openaiYaml}`);
+  }
   const agentsDir = path.join(dest, 'agents');
   fs.mkdirSync(agentsDir, { recursive: true });
   fs.copyFileSync(openaiYaml, path.join(agentsDir, 'openai.yaml'));

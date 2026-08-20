@@ -20,10 +20,17 @@ const DEPENDENCY_FIELDS = [
 const LIFECYCLE_SCRIPTS = ['prepare', 'install', 'postinstall', 'preinstall'];
 
 test('adapter source lives only under integrations/deepseek-harness with no root workspace', () => {
-  assert.equal(fs.existsSync(path.join(repoRoot, 'package.json')), false);
+  const rootPkgPath = path.join(repoRoot, 'package.json');
   assert.equal(fs.existsSync(path.join(repoRoot, 'package-lock.json')), false);
   assert.equal(fs.existsSync(path.join(repoRoot, 'pnpm-workspace.yaml')), false);
   assert.equal(fs.existsSync(path.join(repoRoot, 'integrations/deepseek-harness/package.json')), true);
+  assert.equal(fs.existsSync(rootPkgPath), true);
+  const root = JSON.parse(fs.readFileSync(rootPkgPath, 'utf8'));
+  assert.equal(root.private, true);
+  assert.equal(root.workspaces, undefined);
+  assert.equal(root.dependencies, undefined);
+  assert.equal(root.devDependencies, undefined);
+  assert.deepEqual(root.pi, { skills: ['./archify'] });
 });
 
 test('publishable manifest is @tt-a1i/archify-dsh@0.1.0 with a DSH bundle patch and no install surface', () => {

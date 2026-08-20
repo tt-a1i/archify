@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -48,6 +49,58 @@ function walkTree(root, visit) {
   }
 }
 
+export function listTrackedSkillFiles(sourceRoot) {
+  const tracked = spawnSync('git', ['ls-files', '-z', '--', '.'], {
+    cwd: sourceRoot,
+    encoding: 'utf8',
+  });
+  if (tracked.error) {
+    throw new Error(`unable to enumerate tracked Skill files: ${tracked.error.message}`);
+  }
+  if (tracked.status !== 0) {
+    throw new Error(
+      `unable to enumerate tracked Skill files: ${tracked.stderr || `git ls-files exited ${tracked.status}`}`,
+    );
+  }
+  return tracked.stdout.split('\0').filter(Boolean);
+}
+
+function isInsideRoot(root, candidate) {
+  const relative = path.relative(root, candidate);
+  return relative === '' || (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+}
+
+export function copyableTrackedSkillPath(sourceRoot, relative) {
+  const sourceResolved = path.resolve(sourceRoot);
+  const src = path.resolve(sourceRoot, ...relative.split('/'));
+  if (!isInsideRoot(sourceResolved, src)) {
+    throw new Error(`tracked Skill path escapes source root: ${relative}`);
+  }
+  if (shouldExcludeFromCleanSkill(sourceRoot, src)) return null;
+
+  let stat;
+  try {
+    stat = fs.lstatSync(src);
+  } catch (error) {
+    if (error && error.code === 'ENOENT') {
+      throw new Error(`tracked Skill file is missing on disk: ${relative}`);
+    }
+    throw error;
+  }
+
+  if (stat.isSymbolicLink()) {
+    throw new Error(`refusing to follow source symlink: ${relative}`);
+  }
+  if (!stat.isFile()) return null;
+
+  const fileReal = fs.realpathSync(src);
+  const sourceReal = fs.realpathSync(sourceRoot);
+  if (!isInsideRoot(sourceReal, fileReal)) {
+    throw new Error(`refusing to follow source symlink: ${relative}`);
+  }
+  return src;
+}
+
 export function stageCleanSkill(sourceRoot, destRoot) {
   const validators = path.join(sourceRoot, 'renderers/shared/generated-validators.mjs');
   if (!fs.existsSync(validators)) {
@@ -56,22 +109,13 @@ export function stageCleanSkill(sourceRoot, destRoot) {
 
   fs.mkdirSync(destRoot, { recursive: true });
 
-  function walk(dir) {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const full = path.join(dir, entry.name);
-      if (shouldExcludeFromCleanSkill(sourceRoot, full)) continue;
-      if (entry.isDirectory() && !entry.isSymbolicLink()) {
-        walk(full);
-        continue;
-      }
-      if (entry.isDirectory()) continue;
-      const destination = path.join(destRoot, posixRelative(sourceRoot, full));
-      fs.mkdirSync(path.dirname(destination), { recursive: true });
-      fs.copyFileSync(full, destination);
-    }
+  for (const relative of listTrackedSkillFiles(sourceRoot)) {
+    const src = copyableTrackedSkillPath(sourceRoot, relative);
+    if (!src) continue;
+    const destination = path.join(destRoot, posixRelative(sourceRoot, src));
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.copyFileSync(src, destination);
   }
-
-  walk(sourceRoot);
 
   const packagePath = path.join(destRoot, 'package.json');
   const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));

@@ -47,7 +47,7 @@ Sponsored by [**EverMind**](https://github.com/EverMind-AI), building memory inf
 
 ## See Archify in action
 
-These are generated Archify artifacts, not product mockups. Click a frame to open its live, shareable state.
+Click a frame to open its live, shareable state.
 
 <p align="center">
   <a href="https://tt-a1i.github.io/archify/gallery.html"><img src="docs/assets/archify-live-proof.gif" alt="Three verified Archify artifacts moving through Signal Flow, Blueprint, and Classic presets" width="960"/></a>
@@ -276,7 +276,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Roadmap](ROADMAP.md)
 - [Generated Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
-Mermaid, auto-layout, hosted sharing, WYSIWYG: out of scope.
+Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
 
 ## License
 

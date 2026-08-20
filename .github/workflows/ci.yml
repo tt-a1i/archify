@@ -58,9 +58,9 @@ jobs:
       - name: Hosted-cwd doctor must pass from outside the skill directory
         run: |
           set -euo pipefail
-          if find archify plugins/archify -type l | grep -q .; then
+          if find "$GITHUB_WORKSPACE/archify" "$GITHUB_WORKSPACE/plugins/archify" -type l | grep -q .; then
             echo '::error::plugin payload must not contain symlinks'
-            find archify plugins/archify -type l
+            find "$GITHUB_WORKSPACE/archify" "$GITHUB_WORKSPACE/plugins/archify" -type l
             exit 1
           fi
           node "$GITHUB_WORKSPACE/plugins/archify/skills/archify/bin/archify.mjs" doctor
