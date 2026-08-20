@@ -10,6 +10,7 @@ import {
   asArray,
   isFinitePoint,
   rectsOverlap,
+  cleanEndpointSideProblems,
   cleanFlowProblems,
   cleanCrossingProblems,
   cleanAmbiguousCorridorProblems,
@@ -23,6 +24,7 @@ import {
   defaultFromSide,
   defaultToSide,
   chosenSide,
+  normalizeRoutePoints,
   roundedPath,
   routePointsValue,
   labelPoint,
@@ -227,6 +229,16 @@ function validateLifecycle() {
     }
   }
 
+  problems.push(...cleanEndpointSideProblems({
+    relations: lifecycle.transitions,
+    endpointIds: new Set(states.keys()),
+    pathFor,
+    diagramType: 'lifecycle',
+    relationCollection: 'transitions',
+    fromSideFor: (transition) => transitionSides(transition).fromSide,
+    toSideFor: (transition) => transitionSides(transition).toSide,
+    routeHint: 'keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross state borders perpendicularly',
+  }));
   problems.push(...cleanFlowProblems({
     relations: lifecycle.transitions,
     endpointIds: new Set(states.keys()),
@@ -318,7 +330,7 @@ function validateLifecycle() {
   }
 }
 
-function routeVia(transition, from, to, start, end) {
+function routeVia(transition, from, to, start, end, fromSide, toSide) {
   if (transition.via) return transition.via;
   switch (transition.route || 'auto') {
     case 'straight':
@@ -345,29 +357,93 @@ function routeVia(transition, from, to, start, end) {
     }
     case 'auto':
     default: {
-      if (from.lane === to.lane) return [];
-      const y = transition.channelY ?? (start[1] + end[1]) / 2;
-      return [[start[0], y], [end[0], y]];
+      if (start[0] === end[0] || start[1] === end[1]) return [];
+      const fromVertical = fromSide === 'top' || fromSide === 'bottom';
+      const toVertical = toSide === 'top' || toSide === 'bottom';
+      if (fromVertical !== toVertical) {
+        return [fromVertical ? [start[0], end[1]] : [end[0], start[1]]];
+      }
+      if (fromVertical) {
+        const y = transition.channelY ?? (start[1] + end[1]) / 2;
+        return [[start[0], y], [end[0], y]];
+      }
+      const x = transition.channelX ?? (start[0] + end[0]) / 2;
+      return [[x, start[1]], [x, end[1]]];
     }
   }
 }
 
 const pathCache = new Map();
-const automaticPorts = automaticPortSpread(lifecycle.transitions, states);
+
+function transitionSides(transition) {
+  const from = states.get(transition.from);
+  const to = states.get(transition.to);
+  return {
+    fromSide: chosenSide(transition.fromSide, defaultFromSide(from, to)),
+    toSide: chosenSide(transition.toSide, defaultToSide(from, to)),
+  };
+}
+
+const ENDPOINT_OUTWARD = {
+  left: [-1, 0],
+  right: [1, 0],
+  top: [0, -1],
+  bottom: [0, 1],
+};
+
+function repairTangentAuthoredVia(points, fromSide, toSide, stubPx = 10) {
+  if (points.length < 3) return points;
+  const start = points[0];
+  const end = points.at(-1);
+  const via = points.slice(1, -1).map((point) => [...point]);
+  const fromVector = ENDPOINT_OUTWARD[fromSide];
+  const toVector = ENDPOINT_OUTWARD[toSide];
+
+  if (fromVector) {
+    const first = via[0];
+    const tangent = fromVector[0] === 0 ? first[1] === start[1] : first[0] === start[0];
+    if (tangent) {
+      const stub = [start[0] + fromVector[0] * stubPx, start[1] + fromVector[1] * stubPx];
+      via[0] = fromVector[0] === 0 ? [first[0], stub[1]] : [stub[0], first[1]];
+      via.unshift(stub);
+    }
+  }
+
+  if (toVector) {
+    const lastIndex = via.length - 1;
+    const last = via[lastIndex];
+    const tangent = toVector[0] === 0 ? last[1] === end[1] : last[0] === end[0];
+    if (tangent) {
+      const stub = [end[0] + toVector[0] * stubPx, end[1] + toVector[1] * stubPx];
+      via[lastIndex] = toVector[0] === 0 ? [last[0], stub[1]] : [stub[0], last[1]];
+      via.push(stub);
+    }
+  }
+
+  return normalizeRoutePoints([start, ...via, end]);
+}
+
+const automaticPorts = automaticPortSpread(lifecycle.transitions, states, {
+  sideFor: (transition, endpoint) => transitionSides(transition)[endpoint === 'source' ? 'fromSide' : 'toSide'],
+});
 
 function pathFor(transition) {
   if (pathCache.has(transition)) return pathCache.get(transition);
   const from = states.get(transition.from);
   const to = states.get(transition.to);
   const ports = automaticPorts.get(transition);
-  const start = ports?.from || anchor(from, chosenSide(transition.fromSide, defaultFromSide(from, to)));
-  const end = ports?.to || anchor(to, chosenSide(transition.toSide, defaultToSide(from, to)));
-  let via = routeVia(transition, from, to, start, end);
+  const { fromSide, toSide } = transitionSides(transition);
+  const start = ports?.from || anchor(from, fromSide);
+  const end = ports?.to || anchor(to, toSide);
+  let via = routeVia(transition, from, to, start, end, fromSide, toSide);
   if (ports && !via.length && Math.abs(start[0] - end[0]) >= 4 && Math.abs(start[1] - end[1]) >= 4) {
     const midX = (start[0] + end[0]) / 2;
     via = [[midX, start[1]], [midX, end[1]]];
   }
-  const points = [start, ...via, end];
+  const authoredPoints = [start, ...via, end];
+  const points = transition.via
+    ? repairTangentAuthoredVia(authoredPoints, fromSide, toSide)
+    : authoredPoints;
   const routed = {
     d: roundedPath(points, transition.cornerRadius ?? 10),
     points

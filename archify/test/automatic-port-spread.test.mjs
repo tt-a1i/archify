@@ -253,7 +253,7 @@ test('architecture: an unspread near-aligned connection shares one horizontal ax
   assert.deepEqual(connectionPoints(html, 'console-controlplane'), [[430, 332], [500, 332]]);
 });
 
-test('workflow: automatic cross-lane fan-out spreads the shared source port', () => {
+test('workflow: automatic cross-lane fan-out selects distinct perpendicular source sides', () => {
   const html = render('workflow', {
     schema_version: 1,
     diagram_type: 'workflow',
@@ -276,9 +276,9 @@ test('workflow: automatic cross-lane fan-out spreads the shared source port', ()
     ],
   });
 
-  assert.deepEqual(connectionPoints(html, 'to-upper')[0], [134, 233]);
+  assert.deepEqual(connectionPoints(html, 'to-upper')[0], [88, 217]);
   assert.deepEqual(connectionPoints(html, 'to-middle')[0], [134, 243]);
-  assert.deepEqual(connectionPoints(html, 'to-lower')[0], [134, 253]);
+  assert.deepEqual(connectionPoints(html, 'to-lower')[0], [88, 269]);
 });
 
 test('dataflow: automatic fan-out spreads flows without changing their authored topology', () => {

@@ -10,6 +10,7 @@ import {
   asArray,
   isFinitePoint,
   rectsOverlap,
+  cleanEndpointSideProblems,
   cleanFlowProblems,
   cleanCrossingProblems,
   cleanAmbiguousCorridorProblems,
@@ -201,6 +202,16 @@ function validateDataflow() {
     }
   }
 
+  problems.push(...cleanEndpointSideProblems({
+    relations: dataflow.flows,
+    endpointIds: new Set(nodes.keys()),
+    pathFor,
+    diagramType: 'dataflow',
+    relationCollection: 'flows',
+    fromSideFor: (flow) => flowSides(flow).fromSide,
+    toSideFor: (flow) => flowSides(flow).toSide,
+    routeHint: 'keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross node borders perpendicularly',
+  }));
   problems.push(...cleanFlowProblems({
     relations: dataflow.flows,
     endpointIds: new Set(nodes.keys()),
@@ -321,15 +332,28 @@ function routeVia(flow, from, to, start, end) {
 }
 
 const pathCache = new Map();
-const automaticPorts = automaticPortSpread(dataflow.flows, nodes);
+
+function flowSides(flow) {
+  const from = nodes.get(flow.from);
+  const to = nodes.get(flow.to);
+  return {
+    fromSide: chosenSide(flow.fromSide, defaultFromSide(from, to)),
+    toSide: chosenSide(flow.toSide, defaultToSide(from, to)),
+  };
+}
+
+const automaticPorts = automaticPortSpread(dataflow.flows, nodes, {
+  sideFor: (flow, endpoint) => flowSides(flow)[endpoint === 'source' ? 'fromSide' : 'toSide'],
+});
 
 function pathFor(flow) {
   if (pathCache.has(flow)) return pathCache.get(flow);
   const from = nodes.get(flow.from);
   const to = nodes.get(flow.to);
   const ports = automaticPorts.get(flow);
-  const start = ports?.from || anchor(from, chosenSide(flow.fromSide, defaultFromSide(from, to)));
-  const end = ports?.to || anchor(to, chosenSide(flow.toSide, defaultToSide(from, to)));
+  const { fromSide, toSide } = flowSides(flow);
+  const start = ports?.from || anchor(from, fromSide);
+  const end = ports?.to || anchor(to, toSide);
   const points = [start, ...routeVia(flow, from, to, start, end), end];
   const routed = { d: polylinePath(points), points };
   pathCache.set(flow, routed);

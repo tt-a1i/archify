@@ -1107,7 +1107,7 @@ export function automaticPortRhythmBridge(
 // Keep conservative auto-routed fan-out/fan-in relationships visually
 // distinct without changing authored route controls. The returned map only
 // contains endpoints that belong to a shared automatic midpoint anchor.
-export function automaticPortSpread(relations, boxes, { gutter = 16, maxSpacing = 14 } = {}) {
+export function automaticPortSpread(relations, boxes, { gutter = 16, maxSpacing = 14, sideFor } = {}) {
   const groups = new Map();
   const spread = new Map();
 
@@ -1124,8 +1124,14 @@ export function automaticPortSpread(relations, boxes, { gutter = 16, maxSpacing 
     const from = boxes.get(relation.from);
     const to = boxes.get(relation.to);
     if (!from || !to) continue;
-    const fromSide = chosenSide(relation.fromSide, defaultFromSide(from, to));
-    const toSide = chosenSide(relation.toSide, defaultToSide(from, to));
+    const fromSide = chosenSide(
+      relation.fromSide,
+      sideFor?.(relation, 'source') || defaultFromSide(from, to),
+    );
+    const toSide = chosenSide(
+      relation.toSide,
+      sideFor?.(relation, 'target') || defaultToSide(from, to),
+    );
     add(relation, 'from', from, fromSide, to);
     add(relation, 'to', to, toSide, from);
   }

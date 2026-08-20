@@ -264,8 +264,8 @@ function validateArchitecture() {
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',
-    fromSideFor: (conn) => inferredAutoSide(conn, 'source'),
-    toSideFor: (conn) => inferredAutoSide(conn, 'target'),
+    fromSideFor: (conn) => connectionEndpointSide(conn, 'source'),
+    toSideFor: (conn) => connectionEndpointSide(conn, 'target'),
     routeHint: 'keep automatic routing so the renderer can use a side-aware bridge, or set truthful fromSide/toSide with perpendicular via segments',
   }));
   problems.push(...cleanFlowProblems({
@@ -662,10 +662,9 @@ function connectionSides(conn) {
   };
 }
 
-function inferredAutoSide(conn, endpoint) {
+function connectionEndpointSide(conn, endpoint) {
   const field = endpoint === 'source' ? 'fromSide' : 'toSide';
   if (conn[field] && conn[field] !== 'auto') return conn[field];
-  if (conn.via || (conn.route && conn.route !== 'auto')) return null;
   return connectionSides(conn)[field];
 }
 
