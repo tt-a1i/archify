@@ -4938,17 +4938,13 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" x="200" y="165" width="1196" height="382" rx="12" class="c-region" stroke-width="1"/>
-        <text x="208" y="183" class="t-cloud" font-size="9" font-weight="600">AWS us-east-1 / production</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="AWS us-east-1 / production" x="200" y="165" width="1196" height="382" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" x="600" y="165" width="796" height="322" rx="8" class="c-security-group" stroke-width="1"/>
-        <text x="608" y="183" class="t-security" font-size="9" font-weight="600">private application network</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" data-composition-frame-label="private application network" x="600" y="165" width="796" height="322" rx="8" class="c-security-group" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" x="1010" y="580" width="186" height="112" rx="12" class="c-region" stroke-width="1"/>
-        <text x="1018" y="598" class="t-cloud" font-size="9" font-weight="600">AWS eu-west-1 / disaster recovery</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="AWS eu-west-1 / disaster recovery" x="1010" y="580" width="186" height="112" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="3" x="1026" y="596" width="154" height="96" rx="8" class="c-security-group" stroke-width="1"/>
-        <text x="1034" y="614" class="t-security" font-size="9" font-weight="600">DR private subnet</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="3" data-composition-frame-label="DR private subnet" x="1026" y="588" width="154" height="104" rx="8" class="c-security-group" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="clients" data-edge-to="edge" data-edge-label="HTTPS" data-edge-key="0" data-composition-points="160,330;230,330" d="M 160 330 L 230 330" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
@@ -5159,6 +5155,27 @@
         <g data-detail="context" data-edge-from="worker" data-edge-to="observability" data-edge-label="OTLP" data-edge-key="11">
           <rect x="1288" y="203.5" width="30" height="14" rx="3" class="c-mask"/>
           <text x="1303" y="213.5" class="t-messagebus" font-size="8" text-anchor="middle">OTLP</text>
+        </g>
+
+        <!-- Boundary labels (foreground masks keep routes out of titles) -->
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="AWS us-east-1 / production">
+          <rect data-graph-role="structural-frame-label-mask" x="204" y="170" width="150.4" height="16" rx="3" class="c-mask"/>
+          <text x="208" y="183" class="t-cloud" font-size="9" font-weight="600">AWS us-east-1 / production</text>
+        </g>
+
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="security-group" data-composition-frame-label="private application network">
+          <rect data-graph-role="structural-frame-label-mask" x="604" y="170" width="155.8" height="16" rx="3" class="c-mask"/>
+          <text x="608" y="183" class="t-security" font-size="9" font-weight="600">private application network</text>
+        </g>
+
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="2" data-composition-frame-kind="region" data-composition-frame-label="AWS eu-west-1 / disaster recovery">
+          <rect data-graph-role="structural-frame-label-mask" x="1014" y="585" width="188.20000000000002" height="16" rx="3" class="c-mask"/>
+          <text x="1018" y="598" class="t-cloud" font-size="9" font-weight="600">AWS eu-west-1 / disaster recovery</text>
+        </g>
+
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="3" data-composition-frame-kind="security-group" data-composition-frame-label="DR private subnet">
+          <rect data-graph-role="structural-frame-label-mask" x="1030" y="593" width="101.80000000000001" height="16" rx="3" class="c-mask"/>
+          <text x="1034" y="606" class="t-security" font-size="9" font-weight="600">DR private subnet</text>
         </g>
 
         <!-- Legend -->

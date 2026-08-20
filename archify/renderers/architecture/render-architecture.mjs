@@ -67,6 +67,8 @@ const layout = {
   // (CHANGELOG v2.2.1): 30px on top/left/right, plus 20px extra at the bottom.
   boundaryPad: 30,
   boundaryExtraBottom: 20,
+  boundaryLabelBaseline: 18,
+  boundaryLabelClearance: 4,
   legendH: 28,
 };
 
@@ -106,13 +108,25 @@ function boundaryRect(boundary) {
   const maxX = Math.max(...members.map((m) => m.x + m.width));
   const maxY = Math.max(...members.map((m) => m.y + m.height));
   const pad = boundary.pad ?? layout.boundaryPad;
+  const topPad = Math.max(
+    pad,
+    layout.boundaryLabelBaseline + layout.boundaryLabelClearance,
+  );
   return {
     ...boundary,
     x: minX - pad,
-    y: minY - pad,
+    y: minY - topPad,
     width: maxX - minX + pad * 2,
-    height: maxY - minY + pad + layout.boundaryExtraBottom,
+    height: maxY - minY + topPad + layout.boundaryExtraBottom,
   };
+}
+
+function rectContains(outer, inner) {
+  const epsilon = 1e-9;
+  return outer.x <= inner.x + epsilon
+    && outer.y <= inner.y + epsilon
+    && outer.x + outer.width + epsilon >= inner.x + inner.width
+    && outer.y + outer.height + epsilon >= inner.y + inner.height;
 }
 
 const boundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
@@ -239,6 +253,57 @@ function validateArchitecture() {
   for (const boundary of asArray(arch.boundaries)) {
     for (const id of asArray(boundary.wraps)) {
       if (!components.has(id)) problems.push(`Boundary "${boundary.label}" wraps unknown component "${id}".`);
+    }
+  }
+  for (let leftIndex = 0; leftIndex < boundaries.length; leftIndex += 1) {
+    const left = boundaries[leftIndex];
+    const leftMembers = new Set(asArray(left.wraps));
+    for (let rightIndex = leftIndex + 1; rightIndex < boundaries.length; rightIndex += 1) {
+      const right = boundaries[rightIndex];
+      const rightMembers = new Set(asArray(right.wraps));
+      const shared = [...leftMembers].filter((id) => rightMembers.has(id));
+      const leftNested = [...leftMembers].every((id) => rightMembers.has(id));
+      const rightNested = [...rightMembers].every((id) => leftMembers.has(id));
+      if (shared.length && !leftNested && !rightNested) {
+        const leftOnly = [...leftMembers].filter((id) => !rightMembers.has(id));
+        const rightOnly = [...rightMembers].filter((id) => !leftMembers.has(id));
+        problems.push(
+          `Boundary "${left.label}" crosses boundary "${right.label}" because their memberships partially overlap `
+          + `(shared: ${shared.map((id) => `"${id}"`).join(', ')}; `
+          + `only in "${left.label}": ${leftOnly.map((id) => `"${id}"`).join(', ')}; `
+          + `only in "${right.label}": ${rightOnly.map((id) => `"${id}"`).join(', ')}) — `
+          + 'keep one boundary fully nested by removing outside members, or split the boundary.',
+        );
+        continue;
+      }
+
+      if (!rectsOverlap(left, right)) continue;
+      const leftContainsRight = rectContains(left, right);
+      const rightContainsLeft = rectContains(right, left);
+      if (!leftContainsRight && !rightContainsLeft) {
+        problems.push(
+          `Boundary "${left.label}" and boundary "${right.label}" final frames partially overlap — `
+          + 'adjust wraps, pad, or component positions so the frames are disjoint or one fully contains the other.',
+        );
+        continue;
+      }
+
+      if (!shared.length) {
+        problems.push(
+          `Boundary "${left.label}" and boundary "${right.label}" final frames overlap even though their memberships are disjoint — `
+          + 'adjust pad or component positions so the frames are disjoint, or make wraps express the intended nesting.',
+        );
+        continue;
+      }
+
+      const containmentMatchesMembership = (leftNested && rightContainsLeft)
+        || (rightNested && leftContainsRight);
+      if (!containmentMatchesMembership) {
+        problems.push(
+          `Boundary "${left.label}" and boundary "${right.label}" final frame containment contradicts their wraps membership — `
+          + 'reduce the inner boundary pad, move its components, or correct wraps so geometry and nesting agree.',
+        );
+      }
     }
   }
   for (const b of boundaries) {
@@ -693,12 +758,19 @@ function pathFor(conn) {
 }
 
 // ---- Rendering ---------------------------------------------------------------
-function renderBoundary(b, index) {
+function renderBoundaryFrame(b, index) {
   const cls = b.kind === 'security-group' ? 'c-security-group' : 'c-region';
-  const labelCls = b.kind === 'security-group' ? 't-security' : 't-cloud';
   const rx = b.kind === 'security-group' ? 8 : 12;
-  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-id="${index}" x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}" rx="${rx}" class="${cls}" stroke-width="1"/>
-        <text x="${b.x + 8}" y="${b.y + 18}" class="${labelCls}" font-size="9" font-weight="600">${esc(b.label)}</text>`;
+  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-id="${index}" data-composition-frame-label="${esc(b.label)}" x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}" rx="${rx}" class="${cls}" stroke-width="1"/>`;
+}
+
+function renderBoundaryLabel(b, index) {
+  const labelCls = b.kind === 'security-group' ? 't-security' : 't-cloud';
+  const labelWidth = Math.max(30, textUnits(b.label) * 5.4 + 10);
+  return `        <g data-graph-role="structural-frame-label" data-composition-frame-id="${index}" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-label="${esc(b.label)}">
+          <rect data-graph-role="structural-frame-label-mask" x="${b.x + 4}" y="${b.y + 5}" width="${labelWidth}" height="16" rx="3" class="c-mask"/>
+          <text x="${b.x + 8}" y="${b.y + layout.boundaryLabelBaseline}" class="${labelCls}" font-size="9" font-weight="600">${esc(b.label)}</text>
+        </g>`;
 }
 
 function renderConnectionPath(conn, index) {
@@ -782,7 +854,7 @@ ${renderDefinitions()}
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-${boundaries.map(renderBoundary).join('\n\n')}
+${boundaries.map(renderBoundaryFrame).join('\n\n')}
 
         <!-- Connection paths (before components for correct z-order) -->
 ${asArray(arch.connections).map(renderConnectionPath).join('\n')}
@@ -792,6 +864,9 @@ ${[...components.values()].map(renderComponent).join('\n\n')}
 
         <!-- Connection labels -->
 ${asArray(arch.connections).map(renderConnectionLabel).join('\n')}
+
+        <!-- Boundary labels (foreground masks keep routes out of titles) -->
+${boundaries.map(renderBoundaryLabel).join('\n\n')}
 
         <!-- Legend -->
 ${renderLegend()}

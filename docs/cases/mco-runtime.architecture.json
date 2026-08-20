@@ -59,8 +59,8 @@
       "type": "backend",
       "label": "Command Router",
       "sublabel": "run · review · doctor · session",
-      "pos": [390, 300],
-      "size": [150, 60],
+      "pos": [380, 300],
+      "size": [170, 60],
       "sources": [
         { "path": "runtime/cli.py", "line": 1945, "label": "CLI main" }
       ]
@@ -94,8 +94,8 @@
       "type": "backend",
       "label": "Invocation Workflow",
       "sublabel": "parallel · chain · debate · synthesize",
-      "pos": [820, 300],
-      "size": [170, 60],
+      "pos": [800, 300],
+      "size": [190, 60],
       "sources": [
         { "path": "runtime/invocation_runtime.py", "line": 696, "label": "Workflow entry" },
         { "path": "runtime/invocation_runtime.py", "line": 156, "label": "Single invocation" }
@@ -106,8 +106,8 @@
       "type": "messagebus",
       "label": "Provider Adapters",
       "sublabel": "shim / ACP · detect · run · poll · cancel",
-      "pos": [1050, 300],
-      "size": [170, 60],
+      "pos": [1030, 300],
+      "size": [210, 60],
       "sources": [
         { "path": "runtime/adapters/__init__.py", "line": 57, "label": "Adapter registry" },
         { "path": "runtime/contracts.py", "line": 77, "label": "Provider contract" }

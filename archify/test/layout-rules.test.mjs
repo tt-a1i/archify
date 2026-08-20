@@ -206,6 +206,10 @@ const CASES = [
     (d) => { d.connections[0].to = 'ghost'; }, ['unknown target "ghost"']],
   ['architecture: boundary wraps unknown component', 'architecture',
     (d) => { d.boundaries[0].wraps.push('ghost'); }, ['wraps unknown component "ghost"']],
+  ['architecture: a boundary cannot straddle another boundary', 'architecture',
+    (d) => { d.boundaries[1].wraps.push('auth'); }, ['crosses', 'boundary']],
+  ['architecture: nested memberships require final geometric containment', 'architecture',
+    (d) => { d.boundaries[1].pad = 260; }, ['final frames partially overlap', 'adjust wraps, pad, or component positions']],
   ['architecture: label wider than component', 'architecture',
     (d) => { d.components[0].label = 'An Extremely Long Component Label Overflow'; }, ['wider than component', 'shorten the label']],
   ['architecture: component sublabel wider than its legible minimum', 'architecture',
@@ -231,6 +235,53 @@ for (const [name, mode, mutate, expected] of CASES) {
     }
   });
 }
+
+test('architecture: boundary labels reserve readable space above wrapped components', () => {
+  const d = load('architecture');
+  d.boundaries = [{
+    kind: 'security-group',
+    label: 'Tool effects and permissions',
+    wraps: ['lb', 'api'],
+    pad: 14,
+  }];
+
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const label = html.match(
+    /<text x="[^"]+" y="([^"]+)" class="t-security" font-size="9" font-weight="600">Tool effects and permissions<\/text>/,
+  );
+  assert.ok(label, 'expected the security boundary label');
+  const labelBaseline = Number(label[1]);
+  const firstWrappedNodeY = Math.min(
+    workflowNodeRect(html, 'lb').y,
+    workflowNodeRect(html, 'api').y,
+  );
+  assert.ok(
+    labelBaseline <= firstWrappedNodeY - 4,
+    `expected the boundary label baseline (${labelBaseline}) to clear the first wrapped node (${firstWrappedNodeY})`,
+  );
+});
+
+test('architecture: boundary labels and their masks paint above relationship routes', () => {
+  const d = load('architecture');
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const lastRoute = html.lastIndexOf('data-composition-points=');
+  const firstBoundaryLabel = html.indexOf('data-graph-role="structural-frame-label"');
+  assert.ok(lastRoute >= 0, 'expected at least one rendered relationship route');
+  assert.ok(firstBoundaryLabel >= 0, 'expected a foreground boundary label group');
+  assert.ok(
+    firstBoundaryLabel > lastRoute,
+    'boundary labels must paint after relationship routes so routes cannot cross the title text',
+  );
+  assert.match(
+    html.slice(firstBoundaryLabel, firstBoundaryLabel + 500),
+    /data-graph-role="structural-frame-label-mask"/,
+    'expected an opaque mask behind the foreground boundary title',
+  );
+});
 
 // ---- sublabel/tag shrink-to-fit: the render half of the same rule ----
 // Validation only rejects text that cannot fit even at its legible minimum.

@@ -46,6 +46,8 @@ test('MCO proof is source-backed, reproducible, and linked from every README', (
   ]);
   assert.equal(source.components.length, 13);
   assert.equal(source.connections.length, 12);
+  assert.match(source.components.find((component) => component.id === 'router')?.sublabel || '', /\bdoctor\b/);
+  assert.match(source.components.find((component) => component.id === 'adapters')?.sublabel || '', /\bdetect\b/);
   assert.deepEqual(source.meta.repository, {
     url: 'https://github.com/mco-org/mco',
     revision: '9f1a1cf1afdc04d7b5406782b40dfec76d9bc798',

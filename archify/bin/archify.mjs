@@ -190,6 +190,7 @@ const COMPOSITION_FIXES = {
   'composition/ambiguous-corridor': ['adjust route/via or channel coordinates so unrelated relationships do not visually merge'],
   'composition/container-border-run': ['route across the frame perpendicularly through a clear opening'],
   'composition/label-route-clearance': ['adjust labelAt, labelDx, labelDy, labelSegment, message y, or the other relationship route'],
+  'composition/desktop-readability': ['reduce the viewBox width, shorten node copy, widen affected nodes, or split the diagram so node context remains at least 6px at a 1440px desktop viewport'],
   'composition/micro-segment': ['move the route/channel/via point so every visible segment is at least 8px'],
   'composition/short-interior-segment': ['move the route/channel/via point so every interior turn has at least 16px'],
 };

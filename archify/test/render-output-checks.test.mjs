@@ -11,9 +11,9 @@ const skillRoot = path.resolve(__dirname, '..');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-checks-'));
 const checker = path.join(skillRoot, 'scripts/check-render-output.mjs');
 
-function checkHtml(name, svgBody, profile = 'standard') {
+function checkHtml(name, svgBody, profile = 'standard', viewBox = '0 0 240 160') {
   const htmlPath = path.join(tmp, `${name}.html`);
-  fs.writeFileSync(htmlPath, `<!doctype html><html><body><svg viewBox="0 0 240 160" data-quality-profile="${profile}">${svgBody}</svg></body></html>`);
+  fs.writeFileSync(htmlPath, `<!doctype html><html><body><svg viewBox="${viewBox}" data-quality-profile="${profile}">${svgBody}</svg></body></html>`);
   try {
     const stdout = execFileSync('node', [checker, htmlPath], { encoding: 'utf8' });
     return { code: 0, result: JSON.parse(stdout) };
@@ -21,6 +21,44 @@ function checkHtml(name, svgBody, profile = 'standard') {
     return { code: err.status ?? 1, result: JSON.parse(String(err.stdout || '{}')) };
   }
 }
+
+test('render output check: showcase rejects node copy that becomes illegible at 1440px', () => {
+  const { code, result } = checkHtml('showcase-desktop-readability', `
+    <g data-node-id="tool-runtime">
+      <rect x="1398" y="266" width="194" height="70" rx="6" class="c-mask"/>
+      <text data-detail-anchor x="1495" y="299" class="t-primary" font-size="11">ToolRuntime</text>
+      <text data-detail="context" x="1495" y="315" class="t-muted" font-size="8.1">permissions and recovery</text>
+    </g>
+  `, 'showcase', '0 0 1994 804');
+
+  assert.notEqual(code, 0);
+  const issue = result.composition.issues.find(
+    (item) => item.code === 'composition/desktop-readability',
+  );
+  assert.equal(issue?.severity, 'error');
+  assert.equal(issue?.viewportWidth, 1440);
+  assert.ok(issue?.projectedFontPx < issue?.minimumProjectedFontPx);
+});
+
+test('render output check: compares exact projected size before rounding diagnostics', () => {
+  const sourceFontPx = 8.1;
+  const viewBoxWidth = 1826;
+  assert.ok(sourceFontPx * 1344 / viewBoxWidth < 6);
+
+  const { code, result } = checkHtml('showcase-desktop-readability-borderline', `
+    <g data-node-id="tool-runtime">
+      <rect x="100" y="100" width="194" height="70" rx="6" class="c-mask"/>
+      <text data-detail="context" x="197" y="140" class="t-muted" font-size="${sourceFontPx}">permissions and recovery</text>
+    </g>
+  `, 'showcase', `0 0 ${viewBoxWidth} 804`);
+
+  assert.notEqual(code, 0);
+  const issue = result.composition.issues.find(
+    (item) => item.code === 'composition/desktop-readability',
+  );
+  assert.equal(issue?.severity, 'error');
+  assert.ok(issue?.projectedFontPx < issue?.minimumProjectedFontPx);
+});
 
 test('render output check: accepts orthogonal arrows away from legend', () => {
   const { code, result } = checkHtml('clean', `
