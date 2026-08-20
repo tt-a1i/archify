@@ -269,9 +269,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 
 ## Reference and scope
 
-- [Schema reference](archify/schemas/README.md)
-- [Skill and renderer contract](archify/SKILL.md)
-- [Examples](archify/examples/)
+- [Schema reference](archify/schemas/README.md) · [Skill](archify/SKILL.md) · [Examples](archify/examples/) · [Agent cookbook](docs/authoring-cookbook.md)
 - [Changelog](CHANGELOG.md)
 - [Roadmap](ROADMAP.md)
 - [Generated Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
