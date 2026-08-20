@@ -69,6 +69,11 @@ const layout = {
   boundaryExtraBottom: 20,
   boundaryLabelBaseline: 18,
   boundaryLabelClearance: 4,
+  boundaryLabelFontPreferred: 9,
+  boundaryLabelFontMinimum: 6,
+  boundaryLabelMaskHeight: 16,
+  boundaryLabelRailGap: 2,
+  boundaryLabelFrameInset: 4,
   legendH: 28,
 };
 
@@ -90,6 +95,7 @@ function measureComponent(c) {
 }
 
 const components = new Map(asArray(arch.components).map((c) => [c.id, measureComponent(c)]));
+const enforcesBoundaryTitleComposition = Boolean(arch.meta?.quality_profile);
 const componentSteps = new Map();
 for (const [index, conn] of asArray(arch.connections).entries()) {
   if (!componentSteps.has(conn.from)) componentSteps.set(conn.from, index);
@@ -118,6 +124,7 @@ function boundaryRect(boundary) {
     y: minY - topPad,
     width: maxX - minX + pad * 2,
     height: maxY - minY + topPad + layout.boundaryExtraBottom,
+    memberTop: minY,
   };
 }
 
@@ -129,7 +136,87 @@ function rectContains(outer, inner) {
     && outer.y + outer.height + epsilon >= inner.y + inner.height;
 }
 
-const boundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
+function boundaryLabelWidth(label, fontSize) {
+  return Math.max(30, textUnits(label) * fontSize * 0.6 + 10);
+}
+
+function measureBoundaryTitle(boundary) {
+  const availableWidth = Math.max(0, boundary.width - layout.boundaryLabelFrameInset * 2);
+  const units = textUnits(boundary.label);
+  const fitted = units > 0
+    ? (availableWidth - 10) / (units * 0.6)
+    : layout.boundaryLabelFontPreferred;
+  const fontSize = Math.max(
+    layout.boundaryLabelFontMinimum,
+    Math.min(layout.boundaryLabelFontPreferred, fitted),
+  );
+  const desiredWidth = boundaryLabelWidth(boundary.label, fontSize);
+  return {
+    x: boundary.x + layout.boundaryLabelFrameInset,
+    y: boundary.memberTop
+      - layout.boundaryLabelClearance
+      - layout.boundaryLabelMaskHeight,
+    width: Math.min(availableWidth, desiredWidth),
+    height: layout.boundaryLabelMaskHeight,
+    fontSize,
+    availableWidth,
+    minimumWidth: boundaryLabelWidth(boundary.label, layout.boundaryLabelFontMinimum),
+  };
+}
+
+function horizontalOverlap(left, right) {
+  return left.x < right.x + right.width && left.x + left.width > right.x;
+}
+
+function layoutBoundaryTitles(rawBoundaries) {
+  const placedTitles = [];
+  const measured = new Map();
+  const ordered = rawBoundaries
+    .map((boundary, index) => ({ boundary, index }))
+    .sort((left, right) => {
+      const areaDelta = left.boundary.width * left.boundary.height
+        - right.boundary.width * right.boundary.height;
+      return areaDelta || left.index - right.index;
+    });
+
+  for (const { boundary, index } of ordered) {
+    const title = measureBoundaryTitle(boundary);
+    let guard = 0;
+    while (guard < rawBoundaries.length + components.size + 1) {
+      guard += 1;
+      const blockers = [
+        ...placedTitles,
+        ...components.values(),
+      ].filter((candidate) => horizontalOverlap(title, candidate) && rectsOverlap(title, candidate));
+      if (!blockers.length) break;
+      title.y = Math.min(
+        ...blockers.map((blocker) => blocker.y - layout.boundaryLabelRailGap - title.height),
+      );
+    }
+    placedTitles.push(title);
+    measured.set(index, title);
+  }
+
+  return rawBoundaries.map((boundary, index) => {
+    const title = measured.get(index);
+    const bottom = boundary.y + boundary.height;
+    // Profile-less schema-v1 inputs keep their legacy boundary geometry. A
+    // quality profile opts into the stricter title-composition contract and
+    // may expand the frame to contain an adapted title rail.
+    const y = enforcesBoundaryTitleComposition
+      ? Math.min(boundary.y, title.y - layout.boundaryLabelFrameInset)
+      : boundary.y;
+    return {
+      ...boundary,
+      y,
+      height: bottom - y,
+      title,
+    };
+  });
+}
+
+const rawBoundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
+const boundaries = layoutBoundaryTitles(rawBoundaries);
 const compositionFrames = boundaries.map((boundary, index) => ({
   ...boundary,
   id: boundary.id || index,
@@ -186,6 +273,7 @@ const legendY = () => viewBox[1] - 16;
 // ---- Validation: mechanical correctness, never layout taste -----------------
 function validateArchitecture() {
   const problems = [];
+  const requiresNestedBoundaryMembership = arch.meta?.engineering_profile === 'deployment-ownership';
   if (arch.schema_version !== 1) problems.push('Architecture files must set "schema_version": 1.');
   if (arch.diagram_type !== 'architecture') problems.push('Architecture files must set "diagram_type": "architecture".');
   if (!arch.meta?.title) problems.push('Architecture files must include meta.title.');
@@ -255,11 +343,49 @@ function validateArchitecture() {
       if (!components.has(id)) problems.push(`Boundary "${boundary.label}" wraps unknown component "${id}".`);
     }
   }
+  const viewBoxRect = { x: 0, y: 0, width: viewBox[0], height: viewBox[1] };
+  for (const boundary of boundaries) {
+    if (!enforcesBoundaryTitleComposition) continue;
+    if (boundary.title.minimumWidth > boundary.title.availableWidth) {
+      problems.push(
+        `Boundary label "${boundary.label}" needs ~${Math.ceil(boundary.title.minimumWidth)}px to fit at the `
+        + `${layout.boundaryLabelFontMinimum}px legible minimum, but its frame provides ${Math.floor(boundary.title.availableWidth)}px — `
+        + 'shorten the boundary label, increase pad, or widen the wrapped component layout.',
+      );
+    }
+    if (!rectContains(boundary, boundary.title)) {
+      problems.push(
+        `Boundary label "${boundary.label}" extends outside its final frame — shorten the label or increase boundary pad.`,
+      );
+    }
+    if (!rectContains(viewBoxRect, boundary.title)) {
+      problems.push(
+        `Boundary label "${boundary.label}" extends outside the viewBox — move wrapped components away from the canvas edge, shorten the label, or increase the viewBox.`,
+      );
+    }
+    for (const component of components.values()) {
+      if (!rectsOverlap(boundary.title, component)) continue;
+      problems.push(
+        `Boundary label "${boundary.label}" overlaps component "${component.id}" — move the component, increase boundary title space, or shorten the label.`,
+      );
+    }
+  }
   for (let leftIndex = 0; leftIndex < boundaries.length; leftIndex += 1) {
     const left = boundaries[leftIndex];
     const leftMembers = new Set(asArray(left.wraps));
     for (let rightIndex = leftIndex + 1; rightIndex < boundaries.length; rightIndex += 1) {
       const right = boundaries[rightIndex];
+      if (enforcesBoundaryTitleComposition && rectsOverlap(left.title, right.title)) {
+        problems.push(
+          `Boundary labels "${left.label}" and "${right.label}" overlap — shorten a label or increase boundary title space.`,
+        );
+      }
+      // Ordinary architecture boundaries are sets, not an implied ownership
+      // tree: orthogonal scopes such as runtime and compliance may share some
+      // components while each contains others. The opt-in deployment profile
+      // does promise hierarchical region/private-scope membership, so only it
+      // receives the stricter membership-to-frame containment contract.
+      if (!requiresNestedBoundaryMembership) continue;
       const rightMembers = new Set(asArray(right.wraps));
       const shared = [...leftMembers].filter((id) => rightMembers.has(id));
       const leftNested = [...leftMembers].every((id) => rightMembers.has(id));
@@ -394,6 +520,14 @@ function validateArchitecture() {
     for (const c of components.values()) {
       if (rectsOverlap(rect, c, -2)) {
         problems.push(`Label "${rect.label}" overlaps component "${c.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, c)}`);
+      }
+    }
+    if (enforcesBoundaryTitleComposition) {
+      for (const boundary of boundaries) {
+        if (!rectsOverlap(boundary.title, rect)) continue;
+        problems.push(
+          `Boundary label "${boundary.label}" overlaps connection label "${rect.label}" — move the boundary title rail by adjusting wrapped component positions, or move the connection label with labelAt/labelDx/labelDy/labelSegment.`,
+        );
       }
     }
   }
@@ -766,10 +900,9 @@ function renderBoundaryFrame(b, index) {
 
 function renderBoundaryLabel(b, index) {
   const labelCls = b.kind === 'security-group' ? 't-security' : 't-cloud';
-  const labelWidth = Math.max(30, textUnits(b.label) * 5.4 + 10);
   return `        <g data-graph-role="structural-frame-label" data-composition-frame-id="${index}" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-label="${esc(b.label)}">
-          <rect data-graph-role="structural-frame-label-mask" x="${b.x + 4}" y="${b.y + 5}" width="${labelWidth}" height="16" rx="3" class="c-mask"/>
-          <text x="${b.x + 8}" y="${b.y + layout.boundaryLabelBaseline}" class="${labelCls}" font-size="9" font-weight="600">${esc(b.label)}</text>
+          <rect data-graph-role="structural-frame-label-mask" x="${b.title.x}" y="${b.title.y}" width="${b.title.width}" height="${b.title.height}" rx="3" class="c-mask"/>
+          <text x="${b.title.x + 4}" y="${b.title.y + 13}" class="${labelCls}" font-size="${b.title.fontSize}" font-weight="600">${esc(b.label)}</text>
         </g>`;
 }
 
@@ -810,7 +943,7 @@ function renderComponent(c) {
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="c-mask"/>
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
           ${renderSemanticSigil(c.type, { x: c.x + 6, y: c.y + 6 })}${brand ? `\n          ${brand}` : ''}
-          <text${hasSub ? ' data-detail-anchor' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}
+          <text data-node-label${hasSub ? ' data-detail-anchor' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}
         </g>`;
 }
 

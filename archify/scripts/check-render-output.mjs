@@ -3,9 +3,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { collectAmbiguousCorridors, collectBorderRuns, collectLabelRouteClearance, collectRouteRhythmIssues, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
-
-const DESKTOP_READER_DIAGRAM_WIDTH = 1344;
-const MIN_PROJECTED_NODE_TEXT_PX = 6;
+import {
+  DESKTOP_READABILITY_VIEWPORT,
+  DESKTOP_READER_DIAGRAM_WIDTH,
+  MIN_PROJECTED_NODE_TEXT_PX,
+  projectedNodeTextPx,
+} from '../renderers/shared/desktop-readability.mjs';
 
 const input = process.argv[2];
 
@@ -205,11 +208,13 @@ if (svgMatches.length === 1) {
       ...(desktopReadabilityIssue ? [{
         severity: desktopReadabilityIsError ? 'error' : 'warning',
         code: 'composition/desktop-readability',
-        viewportWidth: 1440,
+        viewportWidth: DESKTOP_READABILITY_VIEWPORT.width,
+        viewportHeight: DESKTOP_READABILITY_VIEWPORT.height,
         availableDiagramWidth: DESKTOP_READER_DIAGRAM_WIDTH,
         viewBoxWidth: desktopReadabilityIssue.viewBoxWidth,
         scale: desktopReadabilityIssue.scale,
         text: desktopReadabilityIssue.text,
+        detail: desktopReadabilityIssue.detail,
         sourceFontPx: desktopReadabilityIssue.sourceFontPx,
         projectedFontPx: desktopReadabilityIssue.projectedFontPx,
         minimumProjectedFontPx: MIN_PROJECTED_NODE_TEXT_PX,
@@ -619,16 +624,17 @@ function collectDesktopReadability(svgAttrs, fragment) {
   if (!Number.isFinite(viewBoxWidth) || viewBoxWidth <= 0) return null;
   const scale = Math.min(1, DESKTOP_READER_DIAGRAM_WIDTH / viewBoxWidth);
   let worst = null;
-  for (const match of fragment.matchAll(/<text\b([^>]*\bdata-detail="context"[^>]*)>([\s\S]*?)<\/text>/gi)) {
+  for (const match of fragment.matchAll(/<text\b([^>]*(?:\bdata-node-label(?:\s|=|>)|\bdata-detail="context")[^>]*)>([\s\S]*?)<\/text>/gi)) {
     const attrs = parseAttrs(match[1]);
     const fontSize = Number.parseFloat(attrs['font-size'] || '');
     if (!Number.isFinite(fontSize)) continue;
-    const projected = fontSize * scale;
+    const projected = projectedNodeTextPx(fontSize, viewBoxWidth);
     if (projected >= MIN_PROJECTED_NODE_TEXT_PX) continue;
     const candidate = {
       viewBoxWidth,
       scale,
       text: stripTags(match[2]).trim(),
+      detail: /\bdata-node-label(?:\s|=|$)/i.test(match[1]) ? 'primary' : 'context',
       sourceFontPx: fontSize,
       projectedFontPx: projected,
     };

@@ -3,6 +3,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  DESKTOP_READABILITY_VIEWPORT,
+  DESKTOP_READER_DIAGRAM_WIDTH,
+  DESKTOP_READER_HORIZONTAL_CHROME,
+  DESKTOP_READER_MIN_WIDTH,
+} from '../renderers/shared/desktop-readability.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -22,6 +28,16 @@ test('wide desktop diagrams use one height-budgeted reader shell instead of brea
   assert.match(reader, /var availableSvgHeight = Math\.max\(1, window\.innerHeight - fixedHeight\)/);
   assert.match(reader, /var desiredWidth = availableSvgHeight \* ratio \+ chrome\.diagramX/);
   assert.match(reader, /html\.style\.setProperty\('--archify-reader-width', rounded \+ 'px'\)/);
+});
+
+test('desktop readability budget matches the minimum adaptive reader at 1440 by 900', () => {
+  assert.deepEqual(DESKTOP_READABILITY_VIEWPORT, { width: 1440, height: 900 });
+  assert.equal(DESKTOP_READER_MIN_WIDTH, 960);
+  assert.equal(DESKTOP_READER_HORIZONTAL_CHROME, 30);
+  assert.equal(DESKTOP_READER_DIAGRAM_WIDTH, 930);
+  assert.match(reader, new RegExp(`var MIN_READER_WIDTH = ${DESKTOP_READER_MIN_WIDTH}`));
+  assert.match(template, /@media \(min-width: 768px\) and \(max-height: 1100px\)[\s\S]*?\.diagram-container \{ padding: 0\.875rem; \}/);
+  assert.match(template, /\.diagram-container \{[\s\S]*?border: 1px solid var\(--panel-border\)/);
 });
 
 test('adaptive width preserves canonical SVG geometry and yields to specialized viewer modes', () => {

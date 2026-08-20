@@ -27,7 +27,7 @@ function sha256(file) {
   return createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }
 
-function fakeBrowser({ overflowAt, screenshotFailure } = {}) {
+function fakeBrowser({ overflowAt, unreadableAt, screenshotFailure } = {}) {
   const calls = [];
   return {
     calls,
@@ -38,12 +38,19 @@ function fakeBrowser({ overflowAt, screenshotFailure } = {}) {
       }
       if (screenshotPath) fs.writeFileSync(screenshotPath, png);
       const overflow = overflowAt?.({ width, height, theme }) || false;
+      const unreadable = unreadableAt?.({ width, height, theme }) || false;
       return {
         innerWidth: width,
         innerHeight: height,
         scrollWidth: width + (overflow ? 1 : 0),
         scrollHeight: height,
         resolvedTheme: theme,
+        readerWidth: 960,
+        diagramWidth: 930,
+        viewBoxWidth: 1300,
+        minimumProjectedNodeTextPx: unreadable ? 5.72 : 6.44,
+        minimumProjectedNodeText: unreadable ? 'Compact node' : 'Readable node',
+        minimumProjectedNodeTextDetail: unreadable ? 'primary' : 'context',
       };
     },
     async close() {},
@@ -106,6 +113,28 @@ test('visual-check returns 1 and preserves evidence when any viewport overflows'
     [[1600, 1000]],
   );
   assert.equal(fs.existsSync(sidecarPaths(input).contactSheet), true);
+});
+
+test('visual-check returns 1 when the real reader projects node text below 6px', async () => {
+  const input = artifact('unreadable.html');
+  const result = await runVisualCheck({
+    artifactPath: input,
+    chromePath: '/fake/chrome',
+    browserFactory: async () => fakeBrowser({
+      unreadableAt: ({ width, height, theme }) => width === 1440 && height === 900 && theme === 'light',
+    }),
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.receipt.status, 'fail');
+  assert.equal(result.receipt.readability.status, 'fail');
+  const desktop = result.receipt.readability.viewports.find(
+    (entry) => entry.width === 1440 && entry.height === 900,
+  );
+  assert.equal(desktop?.diagramWidth, 930);
+  assert.equal(desktop?.minimumProjectedNodeText, 'Compact node');
+  assert.equal(desktop?.minimumProjectedNodeTextDetail, 'primary');
+  assert.equal(desktop?.readabilityOk, false);
 });
 
 test('visual-check returns 1 and removes misleading capture sidecars on screenshot failure', async () => {

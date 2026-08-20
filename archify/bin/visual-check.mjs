@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { MIN_PROJECTED_NODE_TEXT_PX } from '../renderers/shared/desktop-readability.mjs';
 
 export const VISUAL_CHECK_VIEWPORTS = Object.freeze([
   Object.freeze({ width: 1440, height: 900 }),
@@ -303,13 +304,46 @@ class ChromeVisualBrowser {
       requestAnimationFrame(function () { requestAnimationFrame(resolve); });
     })`, true);
 
-    const metrics = await evaluate(this.cdp, sessionId, `({
-      innerWidth: window.innerWidth,
-      innerHeight: window.innerHeight,
-      scrollWidth: Math.ceil(document.documentElement.scrollWidth),
-      scrollHeight: Math.ceil(document.documentElement.scrollHeight),
-      resolvedTheme: document.documentElement.getAttribute('data-theme') || ''
-    })`);
+    const metrics = await evaluate(this.cdp, sessionId, `(function () {
+      var reader = document.querySelector('.container');
+      var diagram = document.querySelector('.diagram-container');
+      var svg = diagram && diagram.querySelector(':scope > svg');
+      var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
+      var diagramWidth = svg ? svg.getBoundingClientRect().width : 0;
+      var viewBoxWidth = viewBox ? viewBox.width : 0;
+      var scale = viewBoxWidth > 0 ? Math.min(1, diagramWidth / viewBoxWidth) : 0;
+      var minimum = null;
+      if (svg && scale > 0) {
+        Array.from(svg.querySelectorAll('text[data-node-label], text[data-detail="context"]')).forEach(function (text) {
+          var detail = text.hasAttribute('data-node-label') ? 'primary' : 'context';
+          if (detail === 'context' && !text.closest('[data-node-id]')) return;
+          var sourceFontPx = parseFloat(text.getAttribute('font-size') || '');
+          if (!Number.isFinite(sourceFontPx)) return;
+          var projectedFontPx = sourceFontPx * scale;
+          if (!minimum || projectedFontPx < minimum.projectedFontPx) {
+            minimum = {
+              text: (text.textContent || '').trim(),
+              detail: detail,
+              sourceFontPx: sourceFontPx,
+              projectedFontPx: projectedFontPx
+            };
+          }
+        });
+      }
+      return {
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        scrollWidth: Math.ceil(document.documentElement.scrollWidth),
+        scrollHeight: Math.ceil(document.documentElement.scrollHeight),
+        resolvedTheme: document.documentElement.getAttribute('data-theme') || '',
+        readerWidth: reader ? reader.getBoundingClientRect().width : 0,
+        diagramWidth: diagramWidth,
+        viewBoxWidth: viewBoxWidth,
+        minimumProjectedNodeTextPx: minimum ? minimum.projectedFontPx : null,
+        minimumProjectedNodeText: minimum ? minimum.text : null,
+        minimumProjectedNodeTextDetail: minimum ? minimum.detail : null
+      };
+    })()`);
     if (!metrics || !Number.isFinite(metrics.scrollWidth) || !Number.isFinite(metrics.scrollHeight)) {
       throw new Error('Chrome returned incomplete containment metrics.');
     }
@@ -356,6 +390,11 @@ function observation({ width, height, theme, metrics }) {
   const scrollHeight = Number(metrics.scrollHeight);
   const overflowX = scrollWidth > innerWidth;
   const overflowY = scrollHeight > innerHeight;
+  const minimumProjectedNodeTextPx = metrics.minimumProjectedNodeTextPx == null
+    ? null
+    : Number(metrics.minimumProjectedNodeTextPx);
+  const readabilityOk = minimumProjectedNodeTextPx == null
+    || minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX;
   return {
     width,
     height,
@@ -367,6 +406,14 @@ function observation({ width, height, theme, metrics }) {
     overflowX,
     overflowY,
     ok: !overflowX && !overflowY,
+    readerWidth: Number(metrics.readerWidth) || null,
+    diagramWidth: Number(metrics.diagramWidth) || null,
+    viewBoxWidth: Number(metrics.viewBoxWidth) || null,
+    minimumProjectedNodeTextPx,
+    minimumProjectedNodeText: metrics.minimumProjectedNodeText || null,
+    minimumProjectedNodeTextDetail: metrics.minimumProjectedNodeTextDetail || null,
+    minimumRequiredNodeTextPx: MIN_PROJECTED_NODE_TEXT_PX,
+    readabilityOk,
     resolvedTheme: metrics.resolvedTheme || theme,
   };
 }
@@ -411,6 +458,7 @@ function baseReceipt({ artifactPath, artifact, outputs, chrome }) {
     state: { detail: 'read', motion: 'still' },
     chrome,
     containment: { status: 'fail', viewports: [] },
+    readability: { status: 'fail', minimumProjectedNodeTextPx: MIN_PROJECTED_NODE_TEXT_PX, viewports: [] },
     captures: { status: 'fail', screenshots: [], contactSheet: null },
     sidecars: {
       receipt: path.basename(outputs.receipt),
@@ -450,6 +498,7 @@ export async function runVisualCheck({
   if (!resolvedChrome) {
     receipt.status = 'skipped';
     receipt.containment.status = 'skipped';
+    receipt.readability.status = 'skipped';
     receipt.captures.status = 'skipped';
     receipt.error = 'Chrome or Chromium is unavailable. Set ARCHIFY_CHROME to its executable path.';
     persistReceipt(outputs, receipt);
@@ -496,30 +545,34 @@ export async function runVisualCheck({
     receipt.containment.viewports = VISUAL_CHECK_VIEWPORTS.map(({ width, height }) => (
       observations.get(screenshotKey(width, height, 'light'))
     ));
+    receipt.readability.viewports = receipt.containment.viewports.map((entry) => ({ ...entry }));
     receipt.captures.screenshots = outputs.screenshots.map((entry) => ({
       ...observations.get(screenshotKey(entry.width, entry.height, entry.theme)),
       file: path.basename(entry.path),
     }));
     const allObservations = [...observations.values()];
     const containmentPass = allObservations.every((entry) => entry.ok);
+    const readabilityPass = receipt.readability.viewports.every((entry) => entry.readabilityOk);
     receipt.containment.status = containmentPass ? 'pass' : 'fail';
+    receipt.readability.status = readabilityPass ? 'pass' : 'fail';
     receipt.captures.status = 'pass';
     receipt.captures.contactSheet = path.basename(outputs.contactSheet);
-    receipt.status = containmentPass ? 'pass' : 'fail';
-    receipt.ok = containmentPass;
+    receipt.status = containmentPass && readabilityPass ? 'pass' : 'fail';
+    receipt.ok = containmentPass && readabilityPass;
     writeAtomic(outputs.contactSheet, contactSheetHtml({
       artifactPath: artifact,
       receipt,
       screenshots: receipt.captures.screenshots,
     }));
     persistReceipt(outputs, receipt);
-    return { exitCode: containmentPass ? EXIT.pass : EXIT.fail, receipt };
+    return { exitCode: receipt.ok ? EXIT.pass : EXIT.fail, receipt };
   } catch (error) {
     cleanupCaptureSidecars(outputs);
     receipt.status = 'fail';
     receipt.ok = false;
     receipt.error = error.message;
     receipt.containment.status = 'fail';
+    receipt.readability.status = 'fail';
     receipt.captures.status = 'fail';
     receipt.captures.screenshots = [];
     receipt.captures.contactSheet = null;

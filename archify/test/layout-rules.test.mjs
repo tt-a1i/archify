@@ -51,6 +51,28 @@ function render(mode, doc) {
   }
 }
 
+function validateCli(mode, doc, quality = 'showcase') {
+  const input = path.join(tmp, `${mode}-cli-${Math.abs(hash(JSON.stringify(doc)))}.json`);
+  fs.writeFileSync(input, JSON.stringify(doc));
+  try {
+    const stdout = execFileSync('node', [
+      path.join(skillRoot, 'bin', 'archify.mjs'),
+      'validate',
+      mode,
+      input,
+      '--quality',
+      quality,
+      '--json',
+    ], { encoding: 'utf8' });
+    return { code: 0, result: JSON.parse(stdout) };
+  } catch (err) {
+    return {
+      code: err.status ?? 1,
+      result: JSON.parse(String(err.stdout || '{}')),
+    };
+  }
+}
+
 function hash(s) {
   let h = 0;
   for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) | 0;
@@ -74,6 +96,41 @@ function workflowNodeRect(html, id) {
   assert.ok(match, `expected rendered workflow node rect for ${id}`);
   const [, x, y, width, height] = match.map(Number);
   return { x, y, width, height };
+}
+
+function boundaryFrameRect(html, index) {
+  const match = html.match(new RegExp(
+    `<rect data-graph-role="structural-frame"[^>]*data-composition-frame-id="${index}"[^>]*x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)"`,
+  ));
+  assert.ok(match, `expected boundary frame ${index}`);
+  const [, x, y, width, height] = match.map(Number);
+  return { x, y, width, height };
+}
+
+function boundaryTitleMasks(html) {
+  return [...html.matchAll(
+    /<g data-graph-role="structural-frame-label"[^>]*data-composition-frame-id="(\d+)"[^>]*>[\s\S]*?<rect data-graph-role="structural-frame-label-mask" x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)"/g,
+  )].map((match) => ({
+    index: Number(match[1]),
+    x: Number(match[2]),
+    y: Number(match[3]),
+    width: Number(match[4]),
+    height: Number(match[5]),
+  }));
+}
+
+function rectContainsRect(outer, inner) {
+  return outer.x <= inner.x
+    && outer.y <= inner.y
+    && outer.x + outer.width >= inner.x + inner.width
+    && outer.y + outer.height >= inner.y + inner.height;
+}
+
+function rectanglesOverlap(left, right) {
+  return left.x < right.x + right.width
+    && left.x + left.width > right.x
+    && left.y < right.y + right.height
+    && left.y + left.height > right.y;
 }
 
 function workflowEdgeLabelPoint(html, id) {
@@ -206,10 +263,48 @@ const CASES = [
     (d) => { d.connections[0].to = 'ghost'; }, ['unknown target "ghost"']],
   ['architecture: boundary wraps unknown component', 'architecture',
     (d) => { d.boundaries[0].wraps.push('ghost'); }, ['wraps unknown component "ghost"']],
-  ['architecture: a boundary cannot straddle another boundary', 'architecture',
-    (d) => { d.boundaries[1].wraps.push('auth'); }, ['crosses', 'boundary']],
-  ['architecture: nested memberships require final geometric containment', 'architecture',
-    (d) => { d.boundaries[1].pad = 260; }, ['final frames partially overlap', 'adjust wraps, pad, or component positions']],
+  ['architecture: boundary title must fit inside its own frame', 'architecture',
+    (d) => {
+      d.meta.quality_profile = 'standard';
+      d.meta.viewBox = [500, 400];
+      d.components = [{
+        id: 'narrow',
+        type: 'backend',
+        label: 'Narrow',
+        pos: [330, 100],
+        size: [128, 60],
+      }];
+      delete d.meta.views;
+      d.connections = [];
+      d.cards = [];
+      d.boundaries = [{
+        kind: 'region',
+        label: 'A boundary title that cannot fit its narrow authored frame',
+        wraps: ['narrow'],
+        pad: 0,
+      }];
+    }, ['Boundary label', 'fit', 'shorten']],
+  ['architecture: boundary title must stay inside the authored viewBox', 'architecture',
+    (d) => {
+      d.meta.quality_profile = 'standard';
+      d.meta.viewBox = [500, 400];
+      d.components = [{
+        id: 'near-top',
+        type: 'backend',
+        label: 'Near top',
+        pos: [120, 8],
+        size: [128, 60],
+      }];
+      delete d.meta.views;
+      d.connections = [];
+      d.cards = [];
+      d.boundaries = [{
+        kind: 'region',
+        label: 'Viewport title',
+        wraps: ['near-top'],
+        pad: 0,
+      }];
+    }, ['Boundary label', 'outside the viewBox', 'move wrapped components']],
   ['architecture: label wider than component', 'architecture',
     (d) => { d.components[0].label = 'An Extremely Long Component Label Overflow'; }, ['wider than component', 'shorten the label']],
   ['architecture: component sublabel wider than its legible minimum', 'architecture',
@@ -235,6 +330,80 @@ for (const [name, mode, mutate, expected] of CASES) {
     }
   });
 }
+
+test('architecture: ordinary boundaries may express orthogonal overlapping memberships', () => {
+  const d = load('architecture');
+  d.boundaries[1].wraps.push('auth');
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  assert.equal(rectanglesOverlap(boundaryFrameRect(html, 0), boundaryFrameRect(html, 1)), true);
+  const masks = boundaryTitleMasks(html);
+  assert.equal(masks.length, 2);
+  assert.equal(rectanglesOverlap(masks[0], masks[1]), false);
+});
+
+test('architecture: profile-less v1 keeps rendering when a boundary title cannot meet strict composition', () => {
+  const d = load('architecture');
+  delete d.meta.quality_profile;
+  d.meta.viewBox = [500, 400];
+  d.components = [{
+    id: 'narrow',
+    type: 'backend',
+    label: 'Narrow',
+    pos: [330, 100],
+    size: [128, 60],
+  }];
+  delete d.meta.views;
+  d.connections = [];
+  d.cards = [];
+  d.boundaries = [{
+    kind: 'region',
+    label: 'A boundary title that cannot fit its narrow authored frame',
+    wraps: ['narrow'],
+    pad: 0,
+  }];
+
+  const { code, stderr } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+});
+
+test('architecture: profile-less v1 keeps legacy boundary geometry at the top edge', () => {
+  const d = load('architecture');
+  delete d.meta.quality_profile;
+  d.meta.viewBox = [500, 400];
+  d.components = [{
+    id: 'near-top',
+    type: 'backend',
+    label: 'Near top',
+    pos: [120, 22],
+    size: [128, 60],
+  }];
+  delete d.meta.views;
+  d.connections = [];
+  d.cards = [];
+  d.boundaries = [{
+    kind: 'region',
+    label: 'Legacy top edge',
+    wraps: ['near-top'],
+    pad: 0,
+  }];
+
+  const { code, stderr } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+});
+
+test('architecture: deployment ownership requires nested membership geometry to agree', () => {
+  const d = JSON.parse(fs.readFileSync(
+    path.join(skillRoot, 'examples/production-deployment.architecture.json'),
+    'utf8',
+  ));
+  d.boundaries.find((boundary) => boundary.label === 'private application network').pad = 260;
+  const { code, stderr } = render('architecture', d);
+  assert.notEqual(code, 0);
+  assert.match(stderr, /final frames partially overlap/);
+  assert.match(stderr, /adjust wraps, pad, or component positions/);
+});
 
 test('architecture: boundary labels reserve readable space above wrapped components', () => {
   const d = load('architecture');
@@ -281,6 +450,68 @@ test('architecture: boundary labels and their masks paint above relationship rou
     /data-graph-role="structural-frame-label-mask"/,
     'expected an opaque mask behind the foreground boundary title',
   );
+});
+
+test('architecture: nested boundary title rails stay inside frames and avoid labels and nodes', () => {
+  const d = JSON.parse(fs.readFileSync(
+    path.join(skillRoot, 'examples/production-deployment.architecture.json'),
+    'utf8',
+  ));
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const masks = boundaryTitleMasks(html);
+  assert.equal(masks.length, d.boundaries.length);
+
+  for (const mask of masks) {
+    assert.ok(
+      rectContainsRect(boundaryFrameRect(html, mask.index), mask),
+      `boundary title mask ${mask.index} must stay inside its frame: ${JSON.stringify(mask)}`,
+    );
+    for (const component of d.components) {
+      assert.equal(
+        rectanglesOverlap(mask, workflowNodeRect(html, component.id)),
+        false,
+        `boundary title mask ${mask.index} overlaps component ${component.id}`,
+      );
+    }
+  }
+
+  for (let left = 0; left < masks.length; left += 1) {
+    for (let right = left + 1; right < masks.length; right += 1) {
+      assert.equal(
+        rectanglesOverlap(masks[left], masks[right]),
+        false,
+        `boundary title masks ${left} and ${right} overlap`,
+      );
+    }
+  }
+});
+
+test('architecture: boundary title masks cannot obscure connection labels', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Boundary and connection labels', quality_profile: 'standard', viewBox: [700, 500] },
+    components: [
+      { id: 'scoped', type: 'backend', label: 'Scoped', pos: [250, 100], size: [120, 60] },
+      { id: 'source', type: 'external', label: 'Source', pos: [50, 300], size: [100, 50] },
+      { id: 'target', type: 'external', label: 'Target', pos: [500, 300], size: [100, 50] },
+    ],
+    boundaries: [{ kind: 'region', label: 'Runtime scope', wraps: ['scoped'] }],
+    connections: [{
+      from: 'source',
+      to: 'target',
+      label: 'Route label',
+      route: 'straight',
+      labelAt: [270, 88],
+    }],
+  };
+
+  const { code, stderr } = render('architecture', d);
+  assert.notEqual(code, 0);
+  assert.match(stderr, /Boundary label "Runtime scope" overlaps connection label "Route label"/);
+  assert.match(stderr, /labelAt\/labelDx\/labelDy\/labelSegment/);
 });
 
 // ---- sublabel/tag shrink-to-fit: the render half of the same rule ----
@@ -519,7 +750,7 @@ test('workflow: explicit drop routing remains authoritative over the one-bend pr
   assert.equal(points[2][0], points[3][0]);
 });
 
-test('workflow: authored routing that follows an endpoint border is rejected generically', () => {
+test('workflow: authored endpoint sides that follow a border are rejected generically', () => {
   const d = {
     schema_version: 1,
     diagram_type: 'workflow',
@@ -532,7 +763,14 @@ test('workflow: authored routing that follows an endpoint border is rejected gen
       { id: 'target', lane: 'target-lane', col: 3, type: 'backend', label: 'Target' },
       { id: 'source', lane: 'source-lane', col: 1, type: 'backend', label: 'Source' },
     ],
-    edges: [{ id: 'invalid-drop', from: 'source', to: 'target', route: 'drop' }],
+    edges: [{
+      id: 'invalid-drop',
+      from: 'source',
+      to: 'target',
+      route: 'drop',
+      fromSide: 'right',
+      toSide: 'left',
+    }],
   };
   const { code, stderr } = render('workflow', d);
   assert.notEqual(code, 0);
@@ -540,7 +778,7 @@ test('workflow: authored routing that follows an endpoint border is rejected gen
   assert.match(stderr, /cross node borders perpendicularly/);
 });
 
-test('dataflow: authored routing that follows an inferred endpoint border is rejected generically', () => {
+test('dataflow: authored endpoint sides that follow a border are rejected generically', () => {
   const d = {
     schema_version: 1,
     diagram_type: 'dataflow',
@@ -550,7 +788,15 @@ test('dataflow: authored routing that follows an inferred endpoint border is rej
       { id: 'source', stage: 0, row: 0, type: 'backend', label: 'Source' },
       { id: 'target', stage: 1, row: 2, type: 'database', label: 'Target' },
     ],
-    flows: [{ id: 'invalid-bottom', from: 'source', to: 'target', label: 'payload', route: 'bottom-channel' }],
+    flows: [{
+      id: 'invalid-bottom',
+      from: 'source',
+      to: 'target',
+      label: 'payload',
+      route: 'bottom-channel',
+      fromSide: 'right',
+      toSide: 'left',
+    }],
   };
   const { code, stderr } = render('dataflow', d);
   assert.notEqual(code, 0);
@@ -582,8 +828,8 @@ test('lifecycle: automatic cross-lane routes avoid every state border', () => {
   );
 });
 
-test('lifecycle: legacy tangent via gains a perpendicular endpoint stub', () => {
-  const d = {
+function tangentViaLifecycle() {
+  return {
     schema_version: 1,
     diagram_type: 'lifecycle',
     meta: { title: 'Legacy tangent via compatibility' },
@@ -604,13 +850,38 @@ test('lifecycle: legacy tangent via gains a perpendicular endpoint stub', () => 
       via: [[320, 188], [320, 430], [402, 430]],
     }],
   };
+}
+
+test('lifecycle: legacy tangent via is rendered exactly instead of silently rewritten', () => {
+  const d = tangentViaLifecycle();
   const { code, stderr, outPath } = render('lifecycle', d);
   assert.equal(code, 0, stderr);
-  const html = fs.readFileSync(outPath, 'utf8');
-  assert.deepEqual(workflowEdgePoints(html, 'legacy-via'), [
-    [248, 188], [248, 198], [320, 198], [320, 430], [402, 430], [402, 450],
+  assert.deepEqual(workflowEdgePoints(fs.readFileSync(outPath, 'utf8'), 'legacy-via'), [
+    [248, 188], [320, 188], [320, 430], [402, 430], [402, 450],
   ]);
-  assertRelationshipsAvoidAllNodeBorders(html, d.transitions, d.states);
+});
+
+test('lifecycle: showcase rejects an authored tangent via without rewriting it', () => {
+  const d = tangentViaLifecycle();
+  d.meta.quality_profile = 'showcase';
+  const { code, stderr } = render('lifecycle', d);
+  assert.notEqual(code, 0);
+  assert.match(stderr, /\[clean-flow\/endpoint-side-direction\] lifecycle transitions\[0\] id "legacy-via"/);
+  assert.match(stderr, /first segment 0 \[248, 188\] -> \[320, 188\]/);
+  assert.match(stderr, /choose fromSide\/toSide and via points whose first and final segments cross state borders perpendicularly/);
+});
+
+test('lifecycle: authored tangent via returns a structured supported fix at the public validate seam', () => {
+  const d = tangentViaLifecycle();
+  d.meta.quality_profile = 'showcase';
+  const { code, result } = validateCli('lifecycle', d);
+  assert.notEqual(code, 0);
+  const diagnostic = result.diagnostics?.find(
+    (entry) => entry.code === 'clean-flow/endpoint-side-direction',
+  );
+  assert.ok(diagnostic, JSON.stringify(result, null, 2));
+  assert.equal(diagnostic.subject?.diagramType, 'lifecycle');
+  assert.ok(diagnostic.supportedFixes?.some((fix) => /via points/.test(fix)));
 });
 
 test('workflow: explicit labelAt remains authoritative on an automatic one-bend edge', () => {

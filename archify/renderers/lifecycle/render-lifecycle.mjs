@@ -24,7 +24,6 @@ import {
   defaultFromSide,
   defaultToSide,
   chosenSide,
-  normalizeRoutePoints,
   roundedPath,
   routePointsValue,
   labelPoint,
@@ -229,6 +228,10 @@ function validateLifecycle() {
     }
   }
 
+  // Pre-quality-profile v1 lifecycle files may contain tangent authored via
+  // segments. Preserve those coordinates exactly for compatibility: changing
+  // the path would falsify authored geometry. Explicit quality profiles opt
+  // into the perpendicular endpoint gate and receive an actionable failure.
   problems.push(...cleanEndpointSideProblems({
     relations: lifecycle.transitions,
     endpointIds: new Set(states.keys()),
@@ -237,6 +240,9 @@ function validateLifecycle() {
     relationCollection: 'transitions',
     fromSideFor: (transition) => transitionSides(transition).fromSide,
     toSideFor: (transition) => transitionSides(transition).toSide,
+    shouldCheckRelation: (transition) => (
+      Boolean(lifecycle.meta?.quality_profile) || !Array.isArray(transition.via)
+    ),
     routeHint: 'keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross state borders perpendicularly',
   }));
   problems.push(...cleanFlowProblems({
@@ -384,45 +390,6 @@ function transitionSides(transition) {
   };
 }
 
-const ENDPOINT_OUTWARD = {
-  left: [-1, 0],
-  right: [1, 0],
-  top: [0, -1],
-  bottom: [0, 1],
-};
-
-function repairTangentAuthoredVia(points, fromSide, toSide, stubPx = 10) {
-  if (points.length < 3) return points;
-  const start = points[0];
-  const end = points.at(-1);
-  const via = points.slice(1, -1).map((point) => [...point]);
-  const fromVector = ENDPOINT_OUTWARD[fromSide];
-  const toVector = ENDPOINT_OUTWARD[toSide];
-
-  if (fromVector) {
-    const first = via[0];
-    const tangent = fromVector[0] === 0 ? first[1] === start[1] : first[0] === start[0];
-    if (tangent) {
-      const stub = [start[0] + fromVector[0] * stubPx, start[1] + fromVector[1] * stubPx];
-      via[0] = fromVector[0] === 0 ? [first[0], stub[1]] : [stub[0], first[1]];
-      via.unshift(stub);
-    }
-  }
-
-  if (toVector) {
-    const lastIndex = via.length - 1;
-    const last = via[lastIndex];
-    const tangent = toVector[0] === 0 ? last[1] === end[1] : last[0] === end[0];
-    if (tangent) {
-      const stub = [end[0] + toVector[0] * stubPx, end[1] + toVector[1] * stubPx];
-      via[lastIndex] = toVector[0] === 0 ? [last[0], stub[1]] : [stub[0], last[1]];
-      via.push(stub);
-    }
-  }
-
-  return normalizeRoutePoints([start, ...via, end]);
-}
-
 const automaticPorts = automaticPortSpread(lifecycle.transitions, states, {
   sideFor: (transition, endpoint) => transitionSides(transition)[endpoint === 'source' ? 'fromSide' : 'toSide'],
 });
@@ -440,10 +407,7 @@ function pathFor(transition) {
     const midX = (start[0] + end[0]) / 2;
     via = [[midX, start[1]], [midX, end[1]]];
   }
-  const authoredPoints = [start, ...via, end];
-  const points = transition.via
-    ? repairTangentAuthoredVia(authoredPoints, fromSide, toSide)
-    : authoredPoints;
+  const points = [start, ...via, end];
   const routed = {
     d: roundedPath(points, transition.cornerRadius ?? 10),
     points
@@ -497,7 +461,7 @@ function renderState(state) {
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="c-mask"/>
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="${fill}"${animateAttr(lifecycle.meta, 'node', stateSteps.get(state.id))} stroke-width="1.5"/>
           ${renderSemanticSigil(state.type, { x: hasBrand ? state.x + 6 : state.x + state.width - 17, y: state.y + 6 })}${brand ? `\n          ${brand}` : ''}${step}
-          <text${hasSub ? ' data-detail-anchor' : ''} x="${state.cx}" y="${state.y + 21}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}
+          <text data-node-label${hasSub ? ' data-detail-anchor' : ''} x="${state.cx}" y="${state.y + 21}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}
         </g>`;
 }
 
