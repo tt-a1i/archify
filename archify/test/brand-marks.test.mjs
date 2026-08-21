@@ -274,6 +274,53 @@ test('capture command returns a digest-pinned brand object that renders reproduc
   }
 });
 
+test('capture stops after a split closing head before a large response body', async () => {
+  const icon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  const server = http.createServer((request, response) => {
+    if (request.url === '/mark.png') {
+      response.writeHead(200, { 'content-type': 'image/png' });
+      response.end(icon);
+      return;
+    }
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.write('<!doctype html><head><link rel="icon" type="image/png" href="/mark.png"></he');
+    setImmediate(() => response.end(`ad><body>${'x'.repeat(300 * 1024)}</body>`));
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const capture = await runCliAsync(
+      ['brands', 'capture', `http://127.0.0.1:${address.port}/`, '--json'],
+      { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' },
+    );
+    assert.equal(capture.status, 0, capture.stderr || capture.stdout);
+    const receipt = JSON.parse(capture.stdout);
+    assert.equal(receipt.evidence.contentType, 'image/png');
+    assert.equal(receipt.brand.sha256, createHash('sha256').update(icon).digest('hex'));
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('capture fails closed when the HTML head exceeds its byte limit', async () => {
+  const server = http.createServer((_request, response) => {
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.end(`<!doctype html><head>${'x'.repeat(300 * 1024)}</head>`);
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const capture = await runCliAsync(
+      ['brands', 'capture', `http://127.0.0.1:${address.port}/`, '--json'],
+      { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' },
+    );
+    assert.notEqual(capture.status, 0, capture.stdout);
+    assert.match(capture.stderr, /brand page head is too large/i);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
 test('a pinned brand fails closed when the remote icon digest changes', async () => {
   const firstIcon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
   const changedIcon = Buffer.from(firstIcon);
