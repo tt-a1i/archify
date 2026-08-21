@@ -269,6 +269,57 @@ async function readLimited(response, maximum) {
   return Buffer.concat(chunks, total);
 }
 
+function htmlHeadEnd(buffer) {
+  const source = buffer.toString('latin1').toLocaleLowerCase('en-US');
+  const start = source.indexOf('</head');
+  return start === -1 ? -1 : source.indexOf('>', start + 6) + 1;
+}
+
+async function readHtmlHead(response, maximum) {
+  const chunks = [];
+  let total = 0;
+  const append = (value) => {
+    const chunk = Buffer.from(value);
+    const accepted = chunk.subarray(0, Math.max(0, maximum - total));
+    chunks.push(accepted);
+    total += accepted.length;
+    const buffer = Buffer.concat(chunks, total);
+    const end = htmlHeadEnd(buffer);
+    if (end > 0) return buffer.subarray(0, end);
+    if (accepted.length < chunk.length || total === maximum) {
+      throw new Error('brand page head is too large');
+    }
+    return null;
+  };
+
+  if (response.body && typeof response.body[Symbol.asyncIterator] === 'function') {
+    for await (const value of response.body) {
+      const head = append(value);
+      if (head) {
+        response.body.destroy?.();
+        return head;
+      }
+    }
+    return Buffer.concat(chunks, total);
+  }
+  if (!response.body?.getReader) {
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const head = append(buffer);
+    return head || Buffer.concat(chunks, total);
+  }
+  const reader = response.body.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const head = append(value);
+    if (head) {
+      await reader.cancel();
+      return head;
+    }
+  }
+  return Buffer.concat(chunks, total);
+}
+
 function attribute(tag, name) {
   const match = tag.match(new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
   return match ? (match[1] ?? match[2] ?? match[3] ?? '') : '';
@@ -378,7 +429,7 @@ async function captureRemoteBrand(value, deadline = Date.now() + captureTimeoutM
       page.response.body?.destroy?.();
       return fallback('linked page is not HTML');
     }
-    const html = (await readLimited(page.response, MAX_HTML_BYTES)).toString('utf8');
+    const html = (await readHtmlHead(page.response, MAX_HTML_BYTES)).toString('utf8');
     const iconErrors = [];
     for (const candidate of iconCandidates(html, page.finalUrl)) {
       try {
