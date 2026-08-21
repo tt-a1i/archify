@@ -50,6 +50,7 @@ jobs:
         working-directory: archify
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
 
   zip-freshness:
     runs-on: ubuntu-latest

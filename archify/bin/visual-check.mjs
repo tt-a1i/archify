@@ -19,6 +19,7 @@ const CAPTURE_VIEWPORTS = Object.freeze([
 ]);
 const THEMES = Object.freeze(['light', 'dark']);
 const EXIT = Object.freeze({ pass: 0, fail: 1, skipped: 2 });
+export const CHROME_NO_SANDBOX_ENV = 'ARCHIFY_CHROME_NO_SANDBOX';
 
 function sha256(buffer) {
   return createHash('sha256').update(buffer).digest('hex');
@@ -135,16 +136,33 @@ export function findChrome({ env = process.env, platform = process.platform } = 
 }
 
 class PipeCdp {
-  constructor(child) {
+  constructor(child, { failureDetails = () => '' } = {}) {
     this.child = child;
+    this.failureDetails = failureDetails;
     this.nextId = 1;
     this.buffer = '';
     this.pending = new Map();
     this.waiters = [];
-    child.stdio[4].setEncoding('utf8');
-    child.stdio[4].on('data', (chunk) => this.consume(chunk));
-    child.once('error', (error) => this.failAll(error));
-    child.once('exit', (code) => this.failAll(new Error(`Chrome exited before visual-check completed (${code})`)));
+    this.writePipe = child.stdio[3];
+    this.readPipe = child.stdio[4];
+    this.readPipe.setEncoding('utf8');
+    this.readPipe.on('data', (chunk) => this.consume(chunk));
+    this.writePipe.on('error', (error) => this.failAll(this.failure('write pipe', error)));
+    this.readPipe.on('error', (error) => this.failAll(this.failure('read pipe', error)));
+    child.once('error', (error) => this.failAll(this.failure('process launch', error)));
+    child.once('close', (code, signal) => {
+      const ending = signal ? `signal ${signal}` : `exit code ${code}`;
+      this.failAll(this.failure('process exit', new Error(`Chrome closed with ${ending}`)));
+    });
+  }
+
+  failure(stage, error) {
+    const code = error?.code ? ` [${error.code}]` : '';
+    const details = this.failureDetails();
+    return new Error([
+      `Chrome DevTools ${stage} failed: ${error?.message || String(error)}${code}`,
+      details,
+    ].filter(Boolean).join('\n'));
   }
 
   consume(chunk) {
@@ -190,7 +208,13 @@ class PipeCdp {
         reject(new Error(`${method}: timed out after ${timeoutMs}ms`));
       }, timeoutMs);
       this.pending.set(id, { method, resolve, reject, timer });
-      this.child.stdio[3].write(`${JSON.stringify(message)}\0`);
+      try {
+        this.writePipe.write(`${JSON.stringify(message)}\0`, (error) => {
+          if (error) this.failAll(this.failure('write pipe', error));
+        });
+      } catch (error) {
+        this.failAll(this.failure('write pipe', error));
+      }
     });
   }
 
@@ -219,6 +243,35 @@ class PipeCdp {
   }
 }
 
+export function chromeVisualBrowserArgs(profileRoot, {
+  env = process.env,
+  getuid = typeof process.getuid === 'function' ? () => process.getuid() : null,
+} = {}) {
+  const args = [
+    '--headless=new',
+    '--remote-debugging-pipe',
+    '--disable-gpu',
+    '--hide-scrollbars',
+    '--disable-background-networking',
+    '--disable-component-update',
+    '--disable-default-apps',
+    '--disable-sync',
+    '--metrics-recording-only',
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--disable-background-timer-throttling',
+    '--disable-backgrounding-occluded-windows',
+    '--disable-renderer-backgrounding',
+    '--force-device-scale-factor=1',
+    `--user-data-dir=${profileRoot}`,
+    'about:blank',
+  ];
+  const rootUser = typeof getuid === 'function' && getuid() === 0;
+  const sandboxOptOut = env?.[CHROME_NO_SANDBOX_ENV] === '1';
+  if (rootUser || sandboxOptOut) args.unshift('--no-sandbox');
+  return args;
+}
+
 async function evaluate(cdp, sessionId, expression, awaitPromise = false) {
   const response = await cdp.send('Runtime.evaluate', {
     expression,
@@ -233,36 +286,35 @@ async function evaluate(cdp, sessionId, expression, awaitPromise = false) {
   return response.result?.value;
 }
 
-class ChromeVisualBrowser {
-  constructor(chromePath) {
+export class ChromeVisualBrowser {
+  constructor(chromePath, {
+    env = process.env,
+    getuid = typeof process.getuid === 'function' ? () => process.getuid() : null,
+    spawnImpl = spawn,
+  } = {}) {
     this.profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-visual-check-profile-'));
-    const args = [
-      '--headless=new',
-      '--remote-debugging-pipe',
-      '--disable-gpu',
-      '--hide-scrollbars',
-      '--disable-background-networking',
-      '--disable-component-update',
-      '--disable-default-apps',
-      '--disable-sync',
-      '--metrics-recording-only',
-      '--no-first-run',
-      '--no-default-browser-check',
-      '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows',
-      '--disable-renderer-backgrounding',
-      '--force-device-scale-factor=1',
-      `--user-data-dir=${this.profileRoot}`,
-      'about:blank',
-    ];
-    if (typeof process.getuid === 'function' && process.getuid() === 0) args.unshift('--no-sandbox');
-    this.child = spawn(chromePath, args, { stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe'] });
     this.stderr = '';
+    const args = chromeVisualBrowserArgs(this.profileRoot, { env, getuid });
+    this.child = spawnImpl(chromePath, args, { stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe'] });
     this.child.stderr.setEncoding('utf8');
     this.child.stderr.on('data', (chunk) => {
       this.stderr = `${this.stderr}${chunk}`.slice(-8000);
     });
-    this.cdp = new PipeCdp(this.child);
+    this.child.stderr.on('error', (error) => {
+      this.stderr = `${this.stderr}\nChrome stderr stream failed: ${error.message}`.trim().slice(-8000);
+    });
+    this.cdp = new PipeCdp(this.child, {
+      failureDetails: () => {
+        const exit = this.child.signalCode
+          ? `signal ${this.child.signalCode}`
+          : this.child.exitCode == null ? 'still running' : `exit code ${this.child.exitCode}`;
+        const stderr = this.stderr.trim();
+        return [
+          `Chrome process: ${exit}.`,
+          stderr ? `Chrome stderr:\n${stderr}` : '',
+        ].filter(Boolean).join('\n');
+      },
+    });
     this.sessionPromise = this.attach();
   }
 

@@ -1,13 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
 import {
+  ChromeVisualBrowser,
   VISUAL_CHECK_VIEWPORTS,
+  chromeVisualBrowserArgs,
   runVisualCheck,
   sidecarPaths,
 } from '../bin/visual-check.mjs';
@@ -56,6 +60,97 @@ function fakeBrowser({ overflowAt, unreadableAt, screenshotFailure } = {}) {
     async close() {},
   };
 }
+
+function fakeChromeChild() {
+  const child = new EventEmitter();
+  child.exitCode = null;
+  child.signalCode = null;
+  child.stderr = new PassThrough();
+  child.stdio = [null, null, child.stderr, new PassThrough(), new PassThrough()];
+  child.kill = (signal) => {
+    child.signalCode = signal;
+    queueMicrotask(() => {
+      child.emit('exit', null, signal);
+      child.emit('close', null, signal);
+    });
+    return true;
+  };
+  return child;
+}
+
+test('visual-check disables the Chrome sandbox only for root or an explicit environment opt-in', () => {
+  const profileRoot = path.join(tmp, 'chrome-profile');
+  const ordinary = chromeVisualBrowserArgs(profileRoot, { env: {}, getuid: () => 1001 });
+  const optedIn = chromeVisualBrowserArgs(profileRoot, {
+    env: { ARCHIFY_CHROME_NO_SANDBOX: '1' },
+    getuid: () => 1001,
+  });
+  const root = chromeVisualBrowserArgs(profileRoot, { env: {}, getuid: () => 0 });
+
+  assert.equal(ordinary.includes('--no-sandbox'), false);
+  assert.equal(optedIn.includes('--no-sandbox'), true);
+  assert.equal(root.includes('--no-sandbox'), true);
+});
+
+test('visual-check converts a Chrome DevTools pipe reset and captured stderr into a structured failure', async () => {
+  const input = artifact('chrome-pipe-reset.html');
+  const child = fakeChromeChild();
+
+  const result = await runVisualCheck({
+    artifactPath: input,
+    chromePath: '/fake/chrome',
+    browserFactory: async () => {
+      const browser = new ChromeVisualBrowser('/fake/chrome', {
+        env: { ARCHIFY_CHROME_NO_SANDBOX: '1' },
+        getuid: () => 1001,
+        spawnImpl: () => child,
+      });
+      setImmediate(() => {
+        child.stderr.write('Chrome sandbox initialization failed\n');
+        const error = new Error('read ECONNRESET');
+        error.code = 'ECONNRESET';
+        child.stdio[4].emit('error', error);
+      });
+      return browser;
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.receipt.status, 'fail');
+  assert.match(result.receipt.error, /Chrome DevTools read pipe failed/);
+  assert.match(result.receipt.error, /ECONNRESET/);
+  assert.match(result.receipt.error, /Chrome sandbox initialization failed/);
+  assert.equal(fs.existsSync(sidecarPaths(input).receipt), true);
+});
+
+test('visual-check reports Chrome early exit status and stderr without an uncaught exception', async () => {
+  const input = artifact('chrome-early-exit.html');
+  const child = fakeChromeChild();
+
+  const result = await runVisualCheck({
+    artifactPath: input,
+    chromePath: '/fake/chrome',
+    browserFactory: async () => {
+      const browser = new ChromeVisualBrowser('/fake/chrome', {
+        env: { ARCHIFY_CHROME_NO_SANDBOX: '1' },
+        getuid: () => 1001,
+        spawnImpl: () => child,
+      });
+      setImmediate(() => {
+        child.stderr.write('Chrome rejected its launch flags\n');
+        child.exitCode = 23;
+        child.emit('close', 23, null);
+      });
+      return browser;
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.receipt.status, 'fail');
+  assert.match(result.receipt.error, /Chrome DevTools process exit failed/);
+  assert.match(result.receipt.error, /exit code 23/);
+  assert.match(result.receipt.error, /Chrome rejected its launch flags/);
+});
 
 test('visual-check records four containment viewports and four endpoint theme captures', async () => {
   const input = artifact('passing.html');
