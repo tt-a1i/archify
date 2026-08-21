@@ -353,13 +353,25 @@ export class ChromeVisualBrowser {
       document.documentElement.setAttribute('data-motion', 'still');
       var panel = document.querySelector('.diagram-container');
       if (panel) panel.setAttribute('data-detail-level', 'read');
-      if (window.Archify && window.Archify.readerLayout && typeof window.Archify.readerLayout.whenStable === 'function') {
-        return window.Archify.readerLayout.whenStable();
-      }
       var fontsReady = document.fonts && document.fonts.ready
         ? document.fonts.ready.catch(function () {})
         : Promise.resolve();
       return fontsReady.then(function () {
+        if (window.Archify && Archify.readerLayout && typeof Archify.readerLayout.whenStable === 'function') {
+          return Archify.readerLayout.whenStable();
+        }
+      }).then(function () {
+        if (window.Archify && Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.whenStable === 'function') {
+          return Archify.viewerChromeLayout.whenStable();
+        }
+      }).then(function () {
+        if (window.Archify && Archify.readerLayout && typeof Archify.readerLayout.whenStable === 'function') {
+          return Archify.readerLayout.whenStable();
+        }
+      }).then(function () {
+        if (window.Archify && Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.whenStable === 'function') {
+          return Archify.viewerChromeLayout.whenStable();
+        }
         return new Promise(function (resolve) {
           requestAnimationFrame(function () { requestAnimationFrame(resolve); });
         });
@@ -370,6 +382,8 @@ export class ChromeVisualBrowser {
       var reader = document.querySelector('.container');
       var diagram = document.querySelector('.diagram-container');
       var svg = diagram && diagram.querySelector(':scope > svg');
+      var legend = svg && svg.querySelector('[data-legend]');
+      var navigationDock = diagram && diagram.querySelector('.diagram-nav');
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
       var diagramWidth = svg ? svg.getBoundingClientRect().width : 0;
       var viewBoxWidth = viewBox ? viewBox.width : 0;
@@ -394,6 +408,18 @@ export class ChromeVisualBrowser {
           }
         });
       }
+      function intersectionArea(a, b) {
+        if (!a || !b || !a.width || !a.height || !b.width || !b.height) return 0;
+        var width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+        var height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+        return width * height;
+      }
+      var legendRect = legend ? legend.getBoundingClientRect() : null;
+      var navigationDockRect = navigationDock ? navigationDock.getBoundingClientRect() : null;
+      var viewerChromeReceipt = window.Archify && Archify.viewerChromeLayout
+        && typeof Archify.viewerChromeLayout.receipt === 'function'
+        ? Archify.viewerChromeLayout.receipt()
+        : null;
       return {
         innerWidth: window.innerWidth,
         innerHeight: window.innerHeight,
@@ -405,7 +431,12 @@ export class ChromeVisualBrowser {
         viewBoxWidth: viewBoxWidth,
         minimumProjectedNodeTextPx: minimum ? minimum.projectedFontPx : null,
         minimumProjectedNodeText: minimum ? minimum.text : null,
-        minimumProjectedNodeTextDetail: minimum ? minimum.detail : null
+        minimumProjectedNodeTextDetail: minimum ? minimum.detail : null,
+        hasLegend: Boolean(legendRect && legendRect.width && legendRect.height),
+        hasNavigationDock: Boolean(navigationDockRect && navigationDockRect.width && navigationDockRect.height),
+        legendDockIntersectionArea: intersectionArea(legendRect, navigationDockRect),
+        viewerChromeReserve: viewerChromeReceipt ? viewerChromeReceipt.reserve : 0,
+        viewerChromeActive: viewerChromeReceipt ? viewerChromeReceipt.active : false
       };
     })()`);
     if (!metrics || !Number.isFinite(metrics.scrollWidth) || !Number.isFinite(metrics.scrollHeight)) {
@@ -459,6 +490,8 @@ function observation({ width, height, theme, metrics }) {
     : Number(metrics.minimumProjectedNodeTextPx);
   const readabilityOk = minimumProjectedNodeTextPx == null
     || minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX;
+  const legendDockIntersectionArea = Number(metrics.legendDockIntersectionArea) || 0;
+  const viewerChromeOk = legendDockIntersectionArea <= 0.5;
   return {
     width,
     height,
@@ -478,6 +511,12 @@ function observation({ width, height, theme, metrics }) {
     minimumProjectedNodeTextDetail: metrics.minimumProjectedNodeTextDetail || null,
     minimumRequiredNodeTextPx: MIN_PROJECTED_NODE_TEXT_PX,
     readabilityOk,
+    hasLegend: Boolean(metrics.hasLegend),
+    hasNavigationDock: Boolean(metrics.hasNavigationDock),
+    legendDockIntersectionArea,
+    viewerChromeReserve: Number(metrics.viewerChromeReserve) || 0,
+    viewerChromeActive: Boolean(metrics.viewerChromeActive),
+    viewerChromeOk,
     resolvedTheme: metrics.resolvedTheme || theme,
   };
 }
@@ -523,6 +562,7 @@ function baseReceipt({ artifactPath, artifact, outputs, chrome }) {
     chrome,
     containment: { status: 'fail', viewports: [] },
     readability: { status: 'fail', minimumProjectedNodeTextPx: MIN_PROJECTED_NODE_TEXT_PX, viewports: [] },
+    viewerChrome: { status: 'fail', viewports: [] },
     captures: { status: 'fail', screenshots: [], contactSheet: null },
     sidecars: {
       receipt: path.basename(outputs.receipt),
@@ -563,6 +603,7 @@ export async function runVisualCheck({
     receipt.status = 'skipped';
     receipt.containment.status = 'skipped';
     receipt.readability.status = 'skipped';
+    receipt.viewerChrome.status = 'skipped';
     receipt.captures.status = 'skipped';
     receipt.error = 'Chrome or Chromium is unavailable. Set ARCHIFY_CHROME to its executable path.';
     persistReceipt(outputs, receipt);
@@ -610,6 +651,7 @@ export async function runVisualCheck({
       observations.get(screenshotKey(width, height, 'light'))
     ));
     receipt.readability.viewports = receipt.containment.viewports.map((entry) => ({ ...entry }));
+    receipt.viewerChrome.viewports = receipt.containment.viewports.map((entry) => ({ ...entry }));
     receipt.captures.screenshots = outputs.screenshots.map((entry) => ({
       ...observations.get(screenshotKey(entry.width, entry.height, entry.theme)),
       file: path.basename(entry.path),
@@ -617,12 +659,14 @@ export async function runVisualCheck({
     const allObservations = [...observations.values()];
     const containmentPass = allObservations.every((entry) => entry.ok);
     const readabilityPass = receipt.readability.viewports.every((entry) => entry.readabilityOk);
+    const viewerChromePass = allObservations.every((entry) => entry.viewerChromeOk);
     receipt.containment.status = containmentPass ? 'pass' : 'fail';
     receipt.readability.status = readabilityPass ? 'pass' : 'fail';
+    receipt.viewerChrome.status = viewerChromePass ? 'pass' : 'fail';
     receipt.captures.status = 'pass';
     receipt.captures.contactSheet = path.basename(outputs.contactSheet);
-    receipt.status = containmentPass && readabilityPass ? 'pass' : 'fail';
-    receipt.ok = containmentPass && readabilityPass;
+    receipt.status = containmentPass && readabilityPass && viewerChromePass ? 'pass' : 'fail';
+    receipt.ok = containmentPass && readabilityPass && viewerChromePass;
     writeAtomic(outputs.contactSheet, contactSheetHtml({
       artifactPath: artifact,
       receipt,
@@ -637,6 +681,7 @@ export async function runVisualCheck({
     receipt.error = error.message;
     receipt.containment.status = 'fail';
     receipt.readability.status = 'fail';
+    receipt.viewerChrome.status = 'fail';
     receipt.captures.status = 'fail';
     receipt.captures.screenshots = [];
     receipt.captures.contactSheet = null;

@@ -31,7 +31,7 @@ function sha256(file) {
   return createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }
 
-function fakeBrowser({ overflowAt, unreadableAt, screenshotFailure } = {}) {
+function fakeBrowser({ overflowAt, unreadableAt, chromeCollisionAt, screenshotFailure } = {}) {
   const calls = [];
   return {
     calls,
@@ -43,6 +43,7 @@ function fakeBrowser({ overflowAt, unreadableAt, screenshotFailure } = {}) {
       if (screenshotPath) fs.writeFileSync(screenshotPath, png);
       const overflow = overflowAt?.({ width, height, theme }) || false;
       const unreadable = unreadableAt?.({ width, height, theme }) || false;
+      const chromeCollision = chromeCollisionAt?.({ width, height, theme }) || false;
       return {
         innerWidth: width,
         innerHeight: height,
@@ -55,6 +56,11 @@ function fakeBrowser({ overflowAt, unreadableAt, screenshotFailure } = {}) {
         minimumProjectedNodeTextPx: unreadable ? 5.72 : 6.44,
         minimumProjectedNodeText: unreadable ? 'Compact node' : 'Readable node',
         minimumProjectedNodeTextDetail: unreadable ? 'primary' : 'context',
+        hasLegend: true,
+        hasNavigationDock: true,
+        legendDockIntersectionArea: chromeCollision ? 42 : 0,
+        viewerChromeReserve: chromeCollision ? 0 : 44,
+        viewerChromeActive: !chromeCollision,
       };
     },
     async close() {},
@@ -165,6 +171,7 @@ test('visual-check records four containment viewports and four endpoint theme ca
   assert.equal(result.exitCode, 0);
   assert.equal(result.receipt.status, 'pass');
   assert.equal(result.receipt.visualReview, 'pending');
+  assert.equal(result.receipt.viewerChrome.status, 'pass');
   assert.equal(result.receipt.containment.viewports.length, VISUAL_CHECK_VIEWPORTS.length);
   assert.equal(result.receipt.containment.viewports.every((entry) => entry.ok), true);
   assert.deepEqual(
@@ -232,6 +239,28 @@ test('visual-check returns 1 when the real reader projects node text below 6px',
   assert.equal(desktop?.readabilityOk, false);
 });
 
+test('visual-check returns 1 when the navigation dock obscures the SVG legend', async () => {
+  const input = artifact('viewer-chrome-collision.html');
+  const result = await runVisualCheck({
+    artifactPath: input,
+    chromePath: '/fake/chrome',
+    browserFactory: async () => fakeBrowser({
+      chromeCollisionAt: ({ width, height, theme }) => (
+        width === 1920 && height === 1080 && theme === 'light'
+      ),
+    }),
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.receipt.status, 'fail');
+  assert.equal(result.receipt.viewerChrome.status, 'fail');
+  const desktop = result.receipt.viewerChrome.viewports.find(
+    (entry) => entry.width === 1920 && entry.height === 1080,
+  );
+  assert.equal(desktop?.legendDockIntersectionArea, 42);
+  assert.equal(desktop?.viewerChromeOk, false);
+});
+
 test('visual-check returns 1 and removes misleading capture sidecars on screenshot failure', async () => {
   const input = artifact('capture-failure.html');
   const outputs = sidecarPaths(input);
@@ -265,6 +294,7 @@ test('visual-check returns 2 with a truthful skipped receipt when Chrome is unav
   assert.equal(result.exitCode, 2);
   assert.equal(result.receipt.status, 'skipped');
   assert.equal(result.receipt.containment.status, 'skipped');
+  assert.equal(result.receipt.viewerChrome.status, 'skipped');
   assert.equal(result.receipt.captures.status, 'skipped');
   assert.equal(result.receipt.visualReview, 'pending');
   assert.equal(fs.existsSync(sidecarPaths(input).receipt), true);
