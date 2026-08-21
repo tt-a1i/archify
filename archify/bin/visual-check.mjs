@@ -368,6 +368,10 @@ export class ChromeVisualBrowser {
         if (window.Archify && Archify.readerLayout && typeof Archify.readerLayout.whenStable === 'function') {
           return Archify.readerLayout.whenStable();
         }
+      }).then(function () {
+        if (window.Archify && Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.whenStable === 'function') {
+          return Archify.viewerChromeLayout.whenStable();
+        }
         return new Promise(function (resolve) {
           requestAnimationFrame(function () { requestAnimationFrame(resolve); });
         });

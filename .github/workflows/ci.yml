@@ -51,6 +51,12 @@ jobs:
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - name: Verify Viewer chrome stays clear of SVG legends
+        run: node --test test/viewer-chrome-layout.test.mjs
+        working-directory: archify
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
 
   zip-freshness:
     runs-on: ubuntu-latest

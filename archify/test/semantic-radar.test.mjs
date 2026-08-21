@@ -74,7 +74,7 @@ test('Semantic Radar tracks desktop camera and mobile contained scroll', () => {
   assert.match(html, /function updateDocking\(\)/);
   assert.match(html, /chip\.style\.top = Math\.round\(top\) \+ 'px';[\s\S]+Archify\.radar\.sync\(\)/);
   assert.match(html, /activeRect\.left \+ activeRect\.width \/ 2 > window\.innerWidth \/ 2/);
-  assert.match(html, /var blockers = \[activeRect, lensRect\]\.filter/);
+  assert.match(html, /var blockers = \[activeRect, lensRect, legendRect, navRect\]\.filter/);
   assert.match(html, /candidates\.push\(rect\.top - 10 - panel\.offsetHeight, rect\.bottom \+ 10\)/);
   assert.match(html, /return candidate \+ panel\.offsetHeight <= rect\.top - 10 \|\| candidate >= rect\.bottom \+ 10/);
   assert.match(html, /--archify-radar-top/);

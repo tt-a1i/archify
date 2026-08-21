@@ -586,6 +586,7 @@
       justify-content: center;
       min-height: 0;
       padding: 0.75rem;
+      padding-bottom: calc(0.75rem + var(--archify-nav-reserve));
     }
     html[data-present="true"]:not([data-embed="true"]) .diagram-container > svg {
       width: 100%;
@@ -10627,6 +10628,46 @@
        embed, presentation, print, and non-wide diagrams retain their own
        established layout contracts.
        ============================================================ */
+    Archify.waitForStableLayout = function (options) {
+      options = options || {};
+      var maximumFrames = Math.max(1, Number(options.maximumFrames) || 240);
+      var fontsReady = document.fonts && document.fonts.ready
+        ? document.fonts.ready.catch(function () {})
+        : Promise.resolve();
+      return fontsReady.then(function () {
+        if (typeof options.schedule === 'function') options.schedule();
+        return new Promise(function (resolve, reject) {
+          var previous = '';
+          var stableFrames = 0;
+          var sampledFrames = 0;
+          function sample() {
+            sampledFrames += 1;
+            if (typeof options.pending === 'function' && options.pending()) {
+              previous = '';
+              stableFrames = 0;
+            } else {
+              var current = typeof options.snapshot === 'function' ? options.snapshot() : '';
+              if (current === previous) stableFrames += 1;
+              else {
+                previous = current;
+                stableFrames = 0;
+              }
+              if (stableFrames >= 3) {
+                resolve({ stable: true, snapshot: current, sampledFrames: sampledFrames });
+                return;
+              }
+            }
+            if (sampledFrames >= maximumFrames) {
+              reject(new Error(options.timeoutMessage || 'Layout did not reach stable dimensions.'));
+              return;
+            }
+            requestAnimationFrame(sample);
+          }
+          requestAnimationFrame(sample);
+        });
+      });
+    };
+
     Archify.readerLayout = (function () {
       var html = document.documentElement;
       var body = document.body;
@@ -10764,40 +10805,11 @@
         ].join('|');
       }
       function whenStable() {
-        var fontsReady = document.fonts && document.fonts.ready
-          ? document.fonts.ready.catch(function () {})
-          : Promise.resolve();
-        return fontsReady.then(function () {
-          schedule();
-          return new Promise(function (resolve, reject) {
-            var previous = '';
-            var stableFrames = 0;
-            var sampledFrames = 0;
-            function sample() {
-              sampledFrames += 1;
-              if (frame || settleFrame) {
-                previous = '';
-                stableFrames = 0;
-              } else {
-                var current = stableSnapshot();
-                if (current === previous) stableFrames += 1;
-                else {
-                  previous = current;
-                  stableFrames = 0;
-                }
-                if (stableFrames >= 3) {
-                  resolve({ stable: true, snapshot: current, sampledFrames: sampledFrames });
-                  return;
-                }
-              }
-              if (sampledFrames >= 240) {
-                reject(new Error('Adaptive reader layout did not reach stable dimensions.'));
-                return;
-              }
-              requestAnimationFrame(sample);
-            }
-            requestAnimationFrame(sample);
-          });
+        return Archify.waitForStableLayout({
+          schedule: schedule,
+          pending: function () { return Boolean(frame || settleFrame); },
+          snapshot: stableSnapshot,
+          timeoutMessage: 'Adaptive reader layout did not reach stable dimensions.'
         });
       }
 
@@ -10840,9 +10852,12 @@
       var frame = 0;
       var settleFrame = 0;
       var reserve = 0;
+      var collisionLatched = false;
+      var probingBaseline = false;
+      var probePromise = null;
+      var baselineIntersectionArea = 0;
       var lastReceipt = null;
       var SAFE_GAP = 10;
-      var MAX_STABLE_FRAMES = 240;
 
       function visible(element) {
         if (!element || element.hidden) return false;
@@ -10851,26 +10866,6 @@
       }
       function usable(rect) {
         return Boolean(rect && rect.width > 0 && rect.height > 0);
-      }
-      function shifted(rect, y) {
-        return {
-          left: rect.left,
-          right: rect.right,
-          top: rect.top + y,
-          bottom: rect.bottom + y,
-          width: rect.width,
-          height: rect.height
-        };
-      }
-      function inflated(rect, amount) {
-        return {
-          left: rect.left - amount,
-          right: rect.right + amount,
-          top: rect.top - amount,
-          bottom: rect.bottom + amount,
-          width: rect.width + amount * 2,
-          height: rect.height + amount * 2
-        };
       }
       function intersectionArea(a, b) {
         var width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
@@ -10882,12 +10877,12 @@
           container && svg && nav && legend &&
           window.innerWidth > 720 &&
           html.getAttribute('data-embed') !== 'true' &&
-          html.getAttribute('data-present') !== 'true' &&
           (!window.matchMedia || !window.matchMedia('print').matches) &&
           visible(nav) && visible(legend)
         );
       }
-      function writeReserve(next) {
+      function writeReserve(next, options) {
+        options = options || {};
         next = Math.max(0, Math.ceil(next));
         if (Math.abs(next - reserve) < 1) return false;
         reserve = next;
@@ -10901,15 +10896,19 @@
         if (Archify.readerLayout && typeof Archify.readerLayout.schedule === 'function') {
           Archify.readerLayout.schedule();
         }
-        if (settleFrame) cancelAnimationFrame(settleFrame);
-        settleFrame = requestAnimationFrame(function () {
-          settleFrame = 0;
-          schedule();
-        });
+        if (options.quiet !== true) {
+          if (settleFrame) cancelAnimationFrame(settleFrame);
+          settleFrame = requestAnimationFrame(function () {
+            settleFrame = 0;
+            schedule();
+          });
+        }
         return true;
       }
       function clear() {
-        writeReserve(0);
+        collisionLatched = false;
+        baselineIntersectionArea = 0;
+        writeReserve(0, { quiet: probingBaseline });
         lastReceipt = {
           eligible: false,
           active: false,
@@ -10922,6 +10921,7 @@
       }
       function measure() {
         frame = 0;
+        if (probingBaseline) return null;
         if (!eligible()) return clear();
 
         var navRect = nav.getBoundingClientRect();
@@ -10929,19 +10929,21 @@
         var svgRect = svg.getBoundingClientRect();
         if (!usable(navRect) || !usable(legendRect) || !usable(svgRect)) return clear();
 
-        /* Padding moves an absolutely bottom-anchored dock by exactly the
-           reserve amount. Reconstruct its zero-reserve position so the
-           collision decision cannot oscillate after the safe rail appears. */
-        var baselineNavRect = shifted(navRect, -reserve);
-        var baselineIntersectionArea = intersectionArea(
-          baselineNavRect,
-          inflated(legendRect, SAFE_GAP)
-        );
-        var nextReserve = baselineIntersectionArea > 0
-          ? Math.max(0, svgRect.bottom + SAFE_GAP - baselineNavRect.top)
-          : 0;
-
-        if (writeReserve(nextReserve)) return null;
+        var actualIntersectionArea = intersectionArea(navRect, legendRect);
+        if (!collisionLatched && reserve === 0) {
+          baselineIntersectionArea = actualIntersectionArea;
+          if (actualIntersectionArea > 0) {
+            collisionLatched = true;
+            if (writeReserve(Math.max(0, svgRect.bottom + SAFE_GAP - navRect.top))) return null;
+          }
+        } else if (collisionLatched && reserve > 0 && actualIntersectionArea > 0) {
+          /* Once zero-reserve geometry proves a collision, keep that decision
+             latched while Adaptive Reader incorporates the rail. If the first
+             rail is not quite tall enough (notably in Presentation flex
+             layout), grow only by the remaining vertical overlap. */
+          var remaining = Math.max(1, legendRect.bottom + SAFE_GAP - navRect.top);
+          if (writeReserve(reserve + remaining)) return null;
+        }
 
         navRect = nav.getBoundingClientRect();
         legendRect = legend.getBoundingClientRect();
@@ -10954,6 +10956,27 @@
           intersectionArea: Math.round(intersectionArea(navRect, legendRect) * 100) / 100
         };
         return lastReceipt;
+      }
+      function reprobe() {
+        if (probingBaseline) return probePromise || Promise.resolve(false);
+        if (!reserve && !collisionLatched) {
+          schedule();
+          return Promise.resolve(false);
+        }
+        probingBaseline = true;
+        collisionLatched = false;
+        baselineIntersectionArea = 0;
+        writeReserve(0, { quiet: true });
+        var readerReady = Archify.readerLayout && typeof Archify.readerLayout.whenStable === 'function'
+          ? Archify.readerLayout.whenStable().catch(function () {})
+          : Promise.resolve();
+        probePromise = readerReady.then(function () {
+          probingBaseline = false;
+          probePromise = null;
+          schedule();
+          return true;
+        });
+        return probePromise;
       }
       function schedule() {
         if (frame) return;
@@ -10971,63 +10994,38 @@
           Math.round(navRect.top * 100) / 100,
           Math.round(legendRect.left * 100) / 100,
           Math.round(legendRect.top * 100) / 100,
+          collisionLatched ? 'latched' : 'clear',
           lastReceipt ? lastReceipt.intersectionArea : ''
         ].join('|');
       }
       function whenStable() {
-        var fontsReady = document.fonts && document.fonts.ready
-          ? document.fonts.ready.catch(function () {})
-          : Promise.resolve();
-        return fontsReady.then(function () {
-          schedule();
-          return new Promise(function (resolve, reject) {
-            var previous = '';
-            var stableFrames = 0;
-            var sampledFrames = 0;
-            function sample() {
-              sampledFrames += 1;
-              if (frame || settleFrame) {
-                previous = '';
-                stableFrames = 0;
-              } else {
-                var current = stableSnapshot();
-                if (current === previous) stableFrames += 1;
-                else {
-                  previous = current;
-                  stableFrames = 0;
-                }
-                if (stableFrames >= 3) {
-                  resolve({ stable: true, snapshot: current, sampledFrames: sampledFrames });
-                  return;
-                }
-              }
-              if (sampledFrames >= MAX_STABLE_FRAMES) {
-                reject(new Error('Viewer chrome layout did not reach stable dimensions.'));
-                return;
-              }
-              requestAnimationFrame(sample);
-            }
-            requestAnimationFrame(sample);
-          });
+        return Archify.waitForStableLayout({
+          schedule: schedule,
+          pending: function () { return Boolean(frame || settleFrame || probingBaseline); },
+          snapshot: stableSnapshot,
+          timeoutMessage: 'Viewer chrome layout did not reach stable dimensions.'
         });
       }
 
-      window.addEventListener('resize', schedule, { passive: true });
+      window.addEventListener('resize', reprobe, { passive: true });
       window.addEventListener('load', schedule, { once: true });
       window.addEventListener('beforeprint', schedule);
-      window.addEventListener('afterprint', schedule);
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule).catch(function () {});
+      window.addEventListener('afterprint', reprobe);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(reprobe).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
         [nav, legend].forEach(function (element) { if (element) resizeObserver.observe(element); });
       }
       if (typeof MutationObserver === 'function') {
-        var contentObserver = new MutationObserver(schedule);
+        var contentObserver = new MutationObserver(function (records) {
+          var viewerModeChanged = records.some(function (record) { return record.target === html; });
+          if (viewerModeChanged) reprobe();
+          else schedule();
+        });
         if (legend) contentObserver.observe(legend, { attributes: true, childList: true, subtree: true });
-        if (nav) contentObserver.observe(nav, { attributes: true, childList: true, subtree: true });
         contentObserver.observe(html, {
           attributes: true,
-          attributeFilter: ['data-embed', 'data-present', 'data-preset']
+          attributeFilter: ['data-embed', 'data-present', 'data-preset', 'data-theme']
         });
       }
       schedule();
@@ -11035,6 +11033,7 @@
       return {
         measure: measure,
         schedule: schedule,
+        reprobe: reprobe,
         whenStable: whenStable,
         active: function () { return reserve > 0; },
         receipt: function () { return lastReceipt || measure(); }
@@ -11146,6 +11145,9 @@
         container.classList.toggle('is-pannable', state.scale > 1);
         svg.setAttribute('data-view-scale', String(state.scale));
         if (Archify.radar && typeof Archify.radar.sync === 'function') Archify.radar.sync();
+        if (Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.schedule === 'function') {
+          Archify.viewerChromeLayout.schedule();
+        }
       }
       function sampleRenderedState() {
         var transform = '';
@@ -11258,6 +11260,9 @@
         else stopCameraMotion('reset', false);
         state = { scale: 1, x: 0, y: 0, mode: 'overview' };
         apply();
+        if (Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.reprobe === 'function') {
+          Archify.viewerChromeLayout.reprobe();
+        }
       }
       function centerAt(logicalX, logicalY, options) {
         options = options || {};
@@ -11615,7 +11620,13 @@
         var panelRight = panelLeft + panel.offsetWidth;
         var lens = document.getElementById('focus-chip');
         var lensRect = lens && !lens.hidden ? lens.getBoundingClientRect() : null;
-        var blockers = [activeRect, lensRect].filter(function (rect) {
+        var legend = diagram.querySelector('[data-legend]');
+        var legendRect = legend && !legend.hidden && window.getComputedStyle(legend).display !== 'none'
+          ? legend.getBoundingClientRect() : null;
+        var nav = container.querySelector('.diagram-nav');
+        var navRect = nav && !nav.hidden && window.getComputedStyle(nav).display !== 'none'
+          ? nav.getBoundingClientRect() : null;
+        var blockers = [activeRect, lensRect, legendRect, navRect].filter(function (rect) {
           return rect && rect.right > panelLeft && rect.left < panelRight;
         });
         var desiredTop = bottomLimit - panel.offsetHeight;
@@ -13502,7 +13513,7 @@
       }
       function dockPanel(byId) {
         panel.removeAttribute('data-dock-side');
-        if (panel.hidden || !selectedKinds.length || window.innerWidth <= 720) return 'right';
+        if (panel.hidden || window.innerWidth <= 720) return 'right';
         var panelRect = panel.getBoundingClientRect();
         var containerRect = container.getBoundingClientRect();
         if (!panelRect.width || !panelRect.height) return 'right';
@@ -13515,6 +13526,17 @@
         var rightCandidate = { left: containerRect.right - 16 - width, right: containerRect.right - 16, top: top, bottom: panelRect.bottom };
         var leftScore = selectedRects.reduce(function (score, rect) { return score + overlapArea(leftCandidate, rect); }, 0);
         var rightScore = selectedRects.reduce(function (score, rect) { return score + overlapArea(rightCandidate, rect); }, 0);
+        var legend = svg.querySelector('[data-legend]');
+        var nav = container.querySelector('.diagram-nav');
+        var protectedRects = [legend, nav].filter(function (element) {
+          return element && !element.hidden && window.getComputedStyle(element).display !== 'none';
+        }).map(function (element) { return element.getBoundingClientRect(); });
+        leftScore += protectedRects.reduce(function (score, rect) {
+          return score + overlapArea(leftCandidate, rect) * 1000;
+        }, 0);
+        rightScore += protectedRects.reduce(function (score, rect) {
+          return score + overlapArea(rightCandidate, rect) * 1000;
+        }, 0);
         var side = leftScore < rightScore ? 'left' : 'right';
         panel.setAttribute('data-dock-side', side);
         return side;
