@@ -226,7 +226,79 @@ test('Semantic Radar stays above the measured MAP control strip', {
       Archify.radar.open();
     `);
     const controlGap = rects.controls.top - rects.radar.bottom;
-    assert.ok(controlGap >= 15 && controlGap <= 17, JSON.stringify({ ...rects, controlGap }, null, 2));
+    assert.ok(controlGap >= 15, JSON.stringify({ ...rects, controlGap }, null, 2));
+    assert.ok(
+      rects.radar.left < rects.controls.left,
+      `automatic placement should prefer the lower-left corner: ${JSON.stringify(rects, null, 2)}`,
+    );
+  } finally {
+    await browser.close();
+  }
+});
+
+test('Semantic Radar avoids an expanded mobile Passport without hiding a collision', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const artifact = path.join(tmp, 'radar-mobile-passport.html');
+  execFileSync(process.execPath, [
+    path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'),
+    path.join(skillRoot, 'examples', CASES.architecture),
+    artifact,
+  ]);
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const sessionId = await loadArtifact(browser, artifact, { width: 390, height: 600 });
+    const state = await evaluate(browser, sessionId, `(function () {
+      var container = document.querySelector('.diagram-container');
+      window.scrollTo(0, Math.max(0, container.offsetTop));
+      Archify.focus.set('lb', { toggle: false });
+      document.getElementById('btn-focus-relations').click();
+      Archify.radar.open();
+      return new Promise(function (resolve) {
+        setTimeout(function () {
+            var radar = document.getElementById('overview-map');
+            var radarRect = radar.getBoundingClientRect();
+            var passportRect = document.getElementById('focus-chip').getBoundingClientRect();
+            var containerRect = document.querySelector('.diagram-container').getBoundingClientRect();
+            var controlsRect = document.querySelector('.diagram-nav').getBoundingClientRect();
+            var legendRect = document.querySelector('[data-legend]').getBoundingClientRect();
+            resolve({
+              radar: { left: radarRect.left, top: radarRect.top, right: radarRect.right, bottom: radarRect.bottom },
+              passport: { left: passportRect.left, top: passportRect.top, right: passportRect.right, bottom: passportRect.bottom },
+              container: { left: containerRect.left, top: containerRect.top, right: containerRect.right, bottom: containerRect.bottom },
+              controls: { left: controlsRect.left, top: controlsRect.top, right: controlsRect.right, bottom: controlsRect.bottom },
+              legend: { left: legendRect.left, top: legendRect.top, right: legendRect.right, bottom: legendRect.bottom },
+              viewport: { width: window.innerWidth, height: window.innerHeight },
+              invalid: radar.getAttribute('data-placement-invalid'),
+              compact: radar.getAttribute('data-compact'),
+              unavailable: radar.getAttribute('data-placement-unavailable')
+            });
+        }, 180);
+      });
+    })()`, true);
+    assert.equal(overlaps(state.radar, state.passport, 10), false, JSON.stringify(state, null, 2));
+    assert.notEqual(state.invalid, 'true', JSON.stringify(state, null, 2));
+    assert.equal(state.compact, 'true', JSON.stringify(state, null, 2));
+
+    const restored = await evaluate(browser, sessionId, `(function () {
+      document.getElementById('btn-focus-clear').click();
+      return new Promise(function (resolve) {
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            var radar = document.getElementById('overview-map');
+            var rect = radar.getBoundingClientRect();
+            resolve({
+              compact: radar.getAttribute('data-compact'),
+              height: rect.height,
+              surfaceVisible: getComputedStyle(document.getElementById('overview-map-surface')).display !== 'none'
+            });
+          });
+        });
+      });
+    })()`, true);
+    assert.equal(restored.compact, null, JSON.stringify(restored, null, 2));
+    assert.equal(restored.surfaceVisible, true, JSON.stringify(restored, null, 2));
+    assert.ok(restored.height > state.radar.bottom - state.radar.top, JSON.stringify({ state, restored }, null, 2));
   } finally {
     await browser.close();
   }

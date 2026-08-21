@@ -1094,6 +1094,34 @@
       border-color: var(--security-stroke);
       box-shadow: 0 0 0 2px color-mix(in srgb, var(--security-stroke) 34%, transparent), 0 16px 42px rgba(0, 0, 0, 0.3);
     }
+    .overview-map[data-compact="true"] {
+      width: 6.75rem;
+    }
+    .overview-map[data-compact="true"] .overview-map-head {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 0.24rem;
+      min-height: 1.5rem;
+      padding: 0.05rem 0.16rem 0.05rem 0.32rem;
+      border-bottom: 0;
+    }
+    .overview-map[data-compact="true"] .overview-map-live {
+      width: 0.34rem;
+      height: 0.34rem;
+    }
+    .overview-map[data-compact="true"] .overview-map-copy strong {
+      font-size: 0.52rem;
+      letter-spacing: 0.08em;
+    }
+    .overview-map[data-compact="true"] .overview-map-copy small,
+    .overview-map[data-compact="true"] .overview-map-surface,
+    .overview-map[data-compact="true"] .overview-map-hint {
+      display: none;
+    }
+    .overview-map[data-compact="true"] .overview-map-close {
+      width: 1.15rem;
+      height: 1.15rem;
+      font-size: 0.72rem;
+    }
     .overview-map-live {
       width: 0.42rem;
       height: 0.42rem;
@@ -11300,6 +11328,8 @@
       var manualPosition = null;
       var lastPlacement = null;
       var syncFrame = 0;
+      var spaceRetryTimer = 0;
+      var spaceRetryCount = 0;
       var placementGap = 16;
 
       mapSvg.setAttribute('role', 'group');
@@ -11395,7 +11425,7 @@
           bounds: { left: left, top: top, right: right, bottom: bottom },
           hardBlockers: [lensRect, controlRect, legendRect].filter(Boolean),
           softBlockers: [activeRect].filter(Boolean),
-          preferredSide: activeRect && activeRect.left + activeRect.width / 2 > window.innerWidth / 2 ? 'left' : 'right'
+          preferredSide: !activeRect || activeRect.left + activeRect.width / 2 > window.innerWidth / 2 ? 'left' : 'right'
         };
       }
       function positionIsValid(position, context) {
@@ -11423,29 +11453,36 @@
         });
       }
       function nearbyCandidates(context, reference) {
-        if (!reference) return [];
         var bounds = context.bounds;
         var maximumLeft = bounds.right - panel.offsetWidth;
         var maximumTop = bounds.bottom - panel.offsetHeight;
-        var requested = {
+        var requested = reference ? {
           left: clamp(reference.left, bounds.left, maximumLeft),
           top: clamp(reference.top, bounds.top, maximumTop)
-        };
-        var candidates = [requested];
+        } : null;
+        var horizontal = [bounds.left, maximumLeft];
+        var vertical = [bounds.top, maximumTop];
+        if (requested) {
+          horizontal.push(requested.left);
+          vertical.push(requested.top);
+        }
         context.hardBlockers.forEach(function (blocker) {
-          candidates.push(
-            { left: blocker.left - placementGap - panel.offsetWidth, top: requested.top },
-            { left: blocker.right + placementGap, top: requested.top },
-            { left: requested.left, top: blocker.top - placementGap - panel.offsetHeight },
-            { left: requested.left, top: blocker.bottom + placementGap }
+          horizontal.push(
+            blocker.left - placementGap - panel.offsetWidth,
+            blocker.right + placementGap
+          );
+          vertical.push(
+            blocker.top - placementGap - panel.offsetHeight,
+            blocker.bottom + placementGap
           );
         });
-        return candidates.map(function (candidate) {
-          return {
-            left: clamp(candidate.left, bounds.left, maximumLeft),
-            top: clamp(candidate.top, bounds.top, maximumTop)
-          };
-        }).filter(function (candidate, index, all) {
+        horizontal = horizontal.map(function (left) { return clamp(left, bounds.left, maximumLeft); });
+        vertical = vertical.map(function (top) { return clamp(top, bounds.top, maximumTop); });
+        var candidates = [];
+        horizontal.forEach(function (left) {
+          vertical.forEach(function (top) { candidates.push({ left: left, top: top }); });
+        });
+        return candidates.filter(function (candidate, index, all) {
           return all.findIndex(function (other) { return other.left === candidate.left && other.top === candidate.top; }) === index;
         });
       }
@@ -11463,13 +11500,7 @@
         valid.sort(function (first, second) {
           return placementScore(first, context, reference) - placementScore(second, context, reference);
         });
-        if (valid.length) return valid[0];
-        var bounds = context.bounds;
-        var fallback = {
-          left: clamp(reference ? reference.left : bounds.right - panel.offsetWidth, bounds.left, bounds.right - panel.offsetWidth),
-          top: clamp(reference ? reference.top : bounds.bottom - panel.offsetHeight, bounds.top, bounds.bottom - panel.offsetHeight)
-        };
-        return fallback;
+        return valid.length ? valid[0] : null;
       }
       function applyPlacement(position, remember) {
         var useLeft = position.left + panel.offsetWidth / 2 <= window.innerWidth / 2;
@@ -11490,22 +11521,66 @@
         panel.removeAttribute('data-dock-side');
         panel.removeAttribute('data-panel-dragging');
         panel.removeAttribute('data-placement-invalid');
+        panel.removeAttribute('data-placement-degraded');
+        panel.removeAttribute('data-placement-unavailable');
+        panel.removeAttribute('data-compact');
+        panel.removeAttribute('title');
+        panel.style.removeProperty('visibility');
         panel.style.removeProperty('--archify-radar-right');
         panel.style.removeProperty('--archify-radar-left');
         panel.style.removeProperty('--archify-radar-top');
       }
       function updateDocking() {
         if (panel.hidden || panelDrag) return;
+        panel.removeAttribute('data-compact');
+        panel.removeAttribute('data-placement-degraded');
+        panel.removeAttribute('data-placement-invalid');
+        panel.removeAttribute('data-placement-unavailable');
+        panel.removeAttribute('title');
+        panel.style.removeProperty('visibility');
         var context = placementContext();
         if (!context) {
           resetDockingStyles();
-          return;
+          return false;
         }
+        var reference = manualPosition || lastPlacement;
         var placement = manualPosition && positionIsValid(manualPosition, context)
           ? manualPosition
-          : chooseRadarPlacement(context, manualPosition || lastPlacement);
-        if (manualPosition) manualPosition = { left: placement.left, top: placement.top };
+          : chooseRadarPlacement(context, reference);
+        var compact = false;
+        if (!placement) {
+          compact = true;
+          panel.setAttribute('data-compact', 'true');
+          panel.setAttribute('data-placement-degraded', 'true');
+          panel.setAttribute('title', 'Radar compacted to avoid covering the Semantic Passport or MAP controls.');
+          context = placementContext();
+          placement = chooseRadarPlacement(context, reference);
+        }
+        if (!placement) {
+          resetDockingStyles();
+          panel.setAttribute('data-placement-unavailable', 'true');
+          panel.style.setProperty('visibility', 'hidden');
+          trigger.setAttribute('aria-label', 'Close semantic radar waiting for more MAP space');
+          trigger.setAttribute('data-radar-space-limited', 'true');
+          trigger.title = 'Semantic radar needs more visible MAP space';
+          if (!spaceRetryTimer && spaceRetryCount < 4) {
+            spaceRetryCount += 1;
+            spaceRetryTimer = window.setTimeout(function () {
+              spaceRetryTimer = 0;
+              sync();
+            }, 60);
+          }
+          return false;
+        }
+        if (spaceRetryTimer) window.clearTimeout(spaceRetryTimer);
+        spaceRetryTimer = 0;
+        spaceRetryCount = 0;
+        trigger.removeAttribute('data-radar-space-limited');
+        trigger.setAttribute('aria-label', 'Close semantic radar');
+        trigger.title = 'Semantic radar (M)';
+        if (manualPosition && !compact) manualPosition = { left: placement.left, top: placement.top };
         applyPlacement(placement, true);
+        return true;
       }
       function syncNow() {
         syncFrame = 0;
@@ -11545,11 +11620,17 @@
         trigger.setAttribute('aria-expanded', next ? 'true' : 'false');
         trigger.setAttribute('aria-label', next ? 'Close semantic radar' : 'Open semantic radar');
         if (next) {
+          if (spaceRetryTimer) window.clearTimeout(spaceRetryTimer);
+          spaceRetryTimer = 0;
+          spaceRetryCount = 0;
           build();
           updateDocking();
           sync();
           if (options.focus === true) surface.focus();
         } else {
+          if (spaceRetryTimer) window.clearTimeout(spaceRetryTimer);
+          spaceRetryTimer = 0;
+          spaceRetryCount = 0;
           viewportDrag = null;
           panelDrag = null;
           container.classList.remove('is-panning');
@@ -11657,18 +11738,13 @@
         if (!context) return;
         if (cancel) {
           manualPosition = activeDrag.previousManual;
-          var restored = positionIsValid(activeDrag.start, context)
-            ? activeDrag.start
-            : chooseRadarPlacement(context, activeDrag.start);
-          applyPlacement(restored, true);
+          lastPlacement = { left: activeDrag.start.left, top: activeDrag.start.top };
+          updateDocking();
           return;
         }
         var requested = activeDrag.current;
-        var placement = positionIsValid(requested, context)
-          ? requested
-          : chooseRadarPlacement(context, requested);
-        manualPosition = { left: placement.left, top: placement.top };
-        applyPlacement(placement, true);
+        manualPosition = { left: requested.left, top: requested.top };
+        updateDocking();
       }
 
       trigger.addEventListener('click', toggle);
