@@ -595,6 +595,57 @@ test('textUnits follows wide and halfwidth East Asian presentation boundaries', 
   assert.equal(textUnits('ㄱ'), 2); // Hangul compatibility letter is wide
   assert.equal(textUnits('︐︙'), 4); // vertical punctuation forms are wide
   assert.equal(textUnits('ｶﾀｶﾅ'), 4); // halfwidth Katakana stays one unit per glyph
+  assert.equal(textUnits('ꥠ'), 2); // Hangul Jamo Extended-A is wide
+});
+
+test('textUnits counts emoji-presentation symbols in the BMP as wide', () => {
+  // These render at the same square advance as the supplementary-plane emoji,
+  // so counting them as one unit under-measures a label and lets it overflow
+  // its node while the layout receipt still reads clean.
+  assert.equal(textUnits('✅'), 2);
+  assert.equal(textUnits('⭐'), 2);
+  assert.equal(textUnits('⚡'), 2);
+  assert.equal(textUnits('⌛'), 2);
+  assert.equal(textUnits('⏰'), 2);
+  assert.equal(textUnits('⛔'), 2);
+  assert.equal(textUnits('❗'), 2);
+  assert.equal(textUnits('⬛'), 2);
+  assert.equal(textUnits('☕'), 2);
+  assert.equal(textUnits('♿'), 2);
+  assert.equal(textUnits('✅ Done'), 7);
+  // Narrow and ambiguous neighbours in the same blocks stay one unit.
+  assert.equal(textUnits('→'), 1); // rightwards arrow
+  assert.equal(textUnits('☎'), 1); // black telephone
+  assert.equal(textUnits('①'), 1); // circled digit one
+  // Unicode 16.0 moved these from Neutral to Wide.
+  assert.equal(textUnits('☰'), 2); // trigram for heaven
+  assert.equal(textUnits('☷'), 2); // trigram for earth
+  assert.equal(textUnits('⚊'), 2); // monogram for yang
+  assert.equal(textUnits('⚏'), 2); // digram for greater yin
+  // Hangul Jamo Extended-A stops at its last assigned jamo; the unassigned
+  // tail of the block defaults to Neutral.
+  assert.equal(textUnits('ꥼ'), 2);
+  assert.equal(textUnits('꥽'), 1);
+});
+
+test('textUnits measures a variation-selector sequence from the selector', () => {
+  // VS16 asks for emoji presentation: the pair renders as one square, so it
+  // must stay two units even though the base is now counted wide on its own.
+  assert.equal(textUnits('⭐️'), 2); // star
+  assert.equal(textUnits('✅️'), 2); // check mark button
+  assert.equal(textUnits('☕️'), 2); // hot beverage
+  assert.equal(textUnits('⚡️'), 2); // high voltage
+  // Same rule the other way: a narrow base forced to emoji presentation
+  // renders as a square and is two units, not one.
+  assert.equal(textUnits('✈️'), 2); // airplane
+  assert.equal(textUnits('❤️'), 2); // red heart
+  // VS15 asks for text presentation, which renders narrow.
+  assert.equal(textUnits('⭐︎'), 1);
+  assert.equal(textUnits('✈︎'), 1);
+  // The selector never adds width of its own, alone or in a run.
+  assert.equal(textUnits('️'), 0);
+  assert.equal(textUnits('✅️ Done'), 7);
+  assert.equal(textUnits('⭐️⭐️'), 4);
 });
 
 test('semantic sigils cover every component and lifecycle kind without literal color', () => {

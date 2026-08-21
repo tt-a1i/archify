@@ -271,6 +271,7 @@ Claude.ai 中的上传入口：
 - [Schema 说明](archify/schemas/README.md)
 - [Skill 与 Renderer 契约](archify/SKILL.md)
 - [示例](archify/examples/)
+- [Agent 编图手册](docs/authoring-cookbook.zh-CN.md) · [English](docs/authoring-cookbook.md)
 - [版本历史](CHANGELOG.md)
 - [路线图](ROADMAP.md)
 - [自动生成的 Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
