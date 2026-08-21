@@ -1095,28 +1095,22 @@
       box-shadow: 0 0 0 2px color-mix(in srgb, var(--security-stroke) 34%, transparent), 0 16px 42px rgba(0, 0, 0, 0.3);
     }
     .overview-map[data-compact="true"] {
-      width: 6.75rem;
+      width: 7.4rem;
     }
     .overview-map[data-compact="true"] .overview-map-head {
-      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) auto;
       gap: 0.24rem;
       min-height: 1.5rem;
       padding: 0.05rem 0.16rem 0.05rem 0.32rem;
       border-bottom: 0;
     }
-    .overview-map[data-compact="true"] .overview-map-live {
-      width: 0.34rem;
-      height: 0.34rem;
-    }
-    .overview-map[data-compact="true"] .overview-map-copy strong {
-      font-size: 0.52rem;
-      letter-spacing: 0.08em;
-    }
-    .overview-map[data-compact="true"] .overview-map-copy small,
+    .overview-map[data-compact="true"] .overview-map-live,
+    .overview-map[data-compact="true"] .overview-map-copy,
     .overview-map[data-compact="true"] .overview-map-surface,
     .overview-map[data-compact="true"] .overview-map-hint {
       display: none;
     }
+    .overview-map[data-compact="true"] .overview-map-expand { display: inline-flex; }
     .overview-map[data-compact="true"] .overview-map-close {
       width: 1.15rem;
       height: 1.15rem;
@@ -1151,6 +1145,26 @@
       white-space: nowrap;
       text-overflow: ellipsis;
     }
+    .overview-map-expand {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      height: 1.2rem;
+      padding: 0 0.34rem;
+      overflow: hidden;
+      border: 0;
+      border-radius: 0.3rem;
+      background: transparent;
+      color: var(--frontend-stroke);
+      font: inherit;
+      font-size: 0.49rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      cursor: pointer;
+    }
     .overview-map-close {
       width: 1.55rem;
       height: 1.55rem;
@@ -1163,8 +1177,11 @@
       font-size: 0.9rem;
       cursor: pointer;
     }
+    .overview-map-expand:hover,
+    .overview-map-expand:focus-visible,
     .overview-map-close:hover,
     .overview-map-close:focus-visible { background: var(--toolbar-hover); }
+    .overview-map-expand:focus-visible,
     .overview-map-close:focus-visible,
     .overview-map-surface:focus-visible,
     .overview-map-node:focus-visible {
@@ -1246,6 +1263,24 @@
       color: var(--frontend-stroke);
       background: var(--toolbar-hover);
     }
+    .overview-map-feedback {
+      position: absolute;
+      right: 1rem;
+      bottom: 4.15rem;
+      z-index: 13;
+      max-width: min(16rem, calc(100% - 2rem));
+      padding: 0.38rem 0.55rem;
+      border: 1px solid color-mix(in srgb, var(--frontend-stroke) 52%, var(--toolbar-border));
+      border-radius: 0.5rem;
+      background: var(--toolbar-menu-bg);
+      color: var(--toolbar-text);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      font-size: 0.52rem;
+      line-height: 1.35;
+      pointer-events: none;
+    }
+    .overview-map-feedback[hidden] { display: none; }
+    .focus-chip[data-radar-yielded="true"] { display: none !important; }
     .diagram-nav #btn-route-probe[aria-pressed="true"] {
       color: var(--backend-stroke);
       background: var(--toolbar-hover);
@@ -3619,6 +3654,7 @@
         left: var(--archify-radar-left, 0.5rem);
       }
       .overview-map-surface { height: 4rem; }
+      .overview-map-feedback { right: 0.5rem; bottom: 3.7rem; }
       .semantic-lens {
         right: 0.5rem;
         bottom: 3.7rem;
@@ -5343,11 +5379,13 @@
             <strong id="overview-map-title">Semantic radar</strong>
             <small id="overview-map-status" aria-live="polite">Building overview</small>
           </span>
+          <button class="overview-map-expand" id="overview-map-expand" type="button" aria-label="Open full semantic radar">Open radar</button>
           <button class="overview-map-close" id="overview-map-close" type="button" aria-label="Close semantic radar">&#215;</button>
         </div>
         <div class="overview-map-surface" id="overview-map-surface" tabindex="0" role="group" aria-label="Diagram overview. Click a node to focus it, or use arrow keys to pan."></div>
         <div class="overview-map-hint" aria-hidden="true"><span>Click node</span><span>Drag to pan</span></div>
       </div>
+      <p class="overview-map-feedback no-print" id="overview-map-feedback" role="status" aria-live="polite" hidden>Semantic radar needs more MAP space.</p>
       <div class="diagram-nav no-print" role="toolbar" aria-label="Diagram view controls">
         <button id="btn-route-probe" type="button" aria-label="Trace a directed route" aria-pressed="false" aria-controls="route-probe" title="Trace route (R)">PATH</button>
         <button id="btn-overview-map" type="button" aria-label="Open semantic radar" aria-expanded="false" aria-controls="overview-map" title="Semantic radar (M)">MAP</button>
@@ -11282,7 +11320,10 @@
       var status = document.getElementById('overview-map-status');
       var trigger = document.getElementById('btn-overview-map');
       var closeBtn = document.getElementById('overview-map-close');
+      var expandBtn = document.getElementById('overview-map-expand');
+      var feedback = document.getElementById('overview-map-feedback');
       var navigation = container.querySelector('.diagram-nav');
+      var passport = document.getElementById('focus-chip');
       var namespace = 'http://www.w3.org/2000/svg';
       var viewBox = diagram.viewBox && diagram.viewBox.baseVal;
       var mapSvg = document.createElementNS(namespace, 'svg');
@@ -11293,6 +11334,9 @@
       var panelDrag = null;
       var manualPosition = null;
       var lastPlacement = null;
+      var requestedOpen = false;
+      var passportYielded = false;
+      var passportPreviousAriaHidden = null;
       var syncFrame = 0;
       var spaceRetryTimer = 0;
       var spaceRetryCount = 0;
@@ -11452,19 +11496,21 @@
           return all.findIndex(function (other) { return other.left === candidate.left && other.top === candidate.top; }) === index;
         });
       }
-      function placementScore(position, context, reference) {
+      function placementScore(position, context, reference, softWeight) {
         var rect = panelRectAt(position);
         var referenceLeft = reference ? reference.left : (context.preferredSide === 'left' ? context.bounds.left : context.bounds.right - panel.offsetWidth);
         var referenceTop = reference ? reference.top : context.bounds.bottom - panel.offsetHeight;
         var distance = Math.pow(position.left - referenceLeft, 2) + Math.pow(position.top - referenceTop, 2);
         var softOverlap = context.softBlockers.reduce(function (total, blocker) { return total + intersectionArea(rect, blocker); }, 0);
-        return distance + softOverlap * 100;
+        return distance + softOverlap * softWeight;
       }
-      function chooseRadarPlacement(context, reference) {
+      function chooseRadarPlacement(context, reference, options) {
+        options = options || {};
+        var softWeight = Number.isFinite(options.softWeight) ? options.softWeight : 100;
         var candidates = nearbyCandidates(context, reference).concat(cornerCandidates(context));
         var valid = candidates.filter(function (candidate) { return positionIsValid(candidate, context); });
         valid.sort(function (first, second) {
-          return placementScore(first, context, reference) - placementScore(second, context, reference);
+          return placementScore(first, context, reference, softWeight) - placementScore(second, context, reference, softWeight);
         });
         return valid.length ? valid[0] : null;
       }
@@ -11497,7 +11543,9 @@
         panel.style.removeProperty('--archify-radar-top');
       }
       function updateDocking() {
-        if (panel.hidden || panelDrag) return;
+        var options = arguments[0] || {};
+        if (panel.hidden) return false;
+        if (panelDrag) return true;
         panel.removeAttribute('data-compact');
         panel.removeAttribute('data-placement-degraded');
         panel.removeAttribute('data-placement-invalid');
@@ -11510,48 +11558,121 @@
           return false;
         }
         var reference = manualPosition || lastPlacement;
+        var placementOptions = { softWeight: manualPosition ? 0 : 100 };
         var placement = manualPosition && positionIsValid(manualPosition, context)
           ? manualPosition
-          : chooseRadarPlacement(context, reference);
+          : chooseRadarPlacement(context, reference, placementOptions);
         var compact = false;
-        if (!placement) {
+        if (!placement && options.allowCompact !== false) {
           compact = true;
           panel.setAttribute('data-compact', 'true');
           panel.setAttribute('data-placement-degraded', 'true');
           panel.setAttribute('title', 'Radar compacted to avoid covering the Semantic Passport or MAP controls.');
           context = placementContext();
-          placement = chooseRadarPlacement(context, reference);
+          placement = chooseRadarPlacement(context, reference, placementOptions);
         }
         if (!placement) {
           resetDockingStyles();
           panel.setAttribute('data-placement-unavailable', 'true');
-          panel.style.setProperty('visibility', 'hidden');
-          trigger.setAttribute('aria-label', 'Close semantic radar waiting for more MAP space');
-          trigger.setAttribute('data-radar-space-limited', 'true');
-          trigger.title = 'Semantic radar needs more visible MAP space';
-          if (!spaceRetryTimer && spaceRetryCount < 4) {
-            spaceRetryCount += 1;
-            spaceRetryTimer = window.setTimeout(function () {
-              spaceRetryTimer = 0;
-              sync();
-            }, 60);
-          }
           return false;
         }
-        if (spaceRetryTimer) window.clearTimeout(spaceRetryTimer);
-        spaceRetryTimer = 0;
-        spaceRetryCount = 0;
-        trigger.removeAttribute('data-radar-space-limited');
-        trigger.setAttribute('aria-label', 'Close semantic radar');
-        trigger.title = 'Semantic radar (M)';
         if (manualPosition && !compact) manualPosition = { left: placement.left, top: placement.top };
         applyPlacement(placement, true);
         return true;
       }
+      function clearSpaceRetry() {
+        if (spaceRetryTimer) window.clearTimeout(spaceRetryTimer);
+        spaceRetryTimer = 0;
+      }
+      function yieldPassport() {
+        if (!passport || passport.hidden || passportYielded) return passportYielded;
+        passportPreviousAriaHidden = passport.getAttribute('aria-hidden');
+        passportYielded = true;
+        passport.setAttribute('data-radar-yielded', 'true');
+        passport.setAttribute('aria-hidden', 'true');
+        return true;
+      }
+      function restorePassport() {
+        if (!passport || !passportYielded) return;
+        passportYielded = false;
+        passport.removeAttribute('data-radar-yielded');
+        if (passportPreviousAriaHidden === null) passport.removeAttribute('aria-hidden');
+        else passport.setAttribute('aria-hidden', passportPreviousAriaHidden);
+        passportPreviousAriaHidden = null;
+      }
+      function reflectVisible() {
+        panel.hidden = false;
+        panel.removeAttribute('data-placement-unavailable');
+        trigger.setAttribute('aria-expanded', 'true');
+        trigger.removeAttribute('data-radar-space-limited');
+        trigger.setAttribute('aria-label', 'Close semantic radar');
+        trigger.title = 'Semantic radar (M)';
+        feedback.hidden = true;
+      }
+      function scheduleSpaceRetry() {
+        if (!requestedOpen || spaceRetryTimer || spaceRetryCount >= 4) return;
+        spaceRetryCount += 1;
+        spaceRetryTimer = window.setTimeout(function () {
+          spaceRetryTimer = 0;
+          attemptRequestedOpen();
+        }, 60);
+      }
+      function reflectUnavailable() {
+        restorePassport();
+        panel.hidden = true;
+        panel.setAttribute('data-placement-unavailable', 'true');
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.setAttribute('aria-label', 'Cancel semantic radar waiting for more MAP space');
+        trigger.setAttribute('data-radar-space-limited', 'true');
+        trigger.title = 'Semantic radar needs more visible MAP space';
+        feedback.hidden = false;
+        scheduleSpaceRetry();
+      }
+      function attemptRequestedOpen(options) {
+        options = options || {};
+        if (!requestedOpen) return false;
+        panel.hidden = false;
+        if (!updateDocking(options)) {
+          reflectUnavailable();
+          return false;
+        }
+        clearSpaceRetry();
+        spaceRetryCount = 0;
+        reflectVisible();
+        sync();
+        if (options.focus === true && !panel.hasAttribute('data-compact')) surface.focus();
+        return true;
+      }
+      function expandCompactRadar() {
+        if (!requestedOpen || panel.hidden || !panel.hasAttribute('data-compact')) return false;
+        yieldPassport();
+        if (!updateDocking({ allowCompact: false })) {
+          restorePassport();
+          if (!updateDocking()) {
+            reflectUnavailable();
+            return false;
+          }
+        }
+        reflectVisible();
+        sync();
+        if (!panel.hasAttribute('data-compact')) surface.focus();
+        return !panel.hasAttribute('data-compact');
+      }
       function syncNow() {
         syncFrame = 0;
         if (panel.hidden || !Archify.view || typeof Archify.view.logicalViewport !== 'function') return;
-        updateDocking();
+        if (!updateDocking()) {
+          reflectUnavailable();
+          return;
+        }
+        if (passportYielded && panel.hasAttribute('data-compact')) {
+          restorePassport();
+          if (!updateDocking()) {
+            reflectUnavailable();
+            return;
+          }
+        }
+        reflectVisible();
         var visible = Archify.view.logicalViewport();
         if (!visible) return;
         viewport.setAttribute('x', String(visible.x));
@@ -11572,6 +11693,10 @@
         });
       }
       function sync() {
+        if (requestedOpen && panel.hidden) {
+          attemptRequestedOpen();
+          return;
+        }
         if (syncFrame) return;
         syncFrame = requestAnimationFrame(syncNow);
       }
@@ -11582,30 +11707,31 @@
         if (next && Archify.semanticLens && Archify.semanticLens.isOpen()) {
           Archify.semanticLens.close({ restoreFocus: false });
         }
-        panel.hidden = !next;
-        trigger.setAttribute('aria-expanded', next ? 'true' : 'false');
-        trigger.setAttribute('aria-label', next ? 'Close semantic radar' : 'Open semantic radar');
+        requestedOpen = next;
         if (next) {
-          if (spaceRetryTimer) window.clearTimeout(spaceRetryTimer);
-          spaceRetryTimer = 0;
+          clearSpaceRetry();
           spaceRetryCount = 0;
           build();
-          updateDocking();
-          sync();
-          if (options.focus === true) surface.focus();
+          attemptRequestedOpen(options);
         } else {
-          if (spaceRetryTimer) window.clearTimeout(spaceRetryTimer);
-          spaceRetryTimer = 0;
+          clearSpaceRetry();
           spaceRetryCount = 0;
           viewportDrag = null;
           panelDrag = null;
           container.classList.remove('is-panning');
+          panel.hidden = true;
           resetDockingStyles();
+          restorePassport();
+          feedback.hidden = true;
+          trigger.setAttribute('aria-expanded', 'false');
+          trigger.removeAttribute('data-radar-space-limited');
+          trigger.setAttribute('aria-label', 'Open semantic radar');
+          trigger.title = 'Semantic radar (M)';
           if (options.restoreFocus === true) trigger.focus();
         }
         return next;
       }
-      function toggle() { return setOpen(panel.hidden, { focus: false }); }
+      function toggle() { return setOpen(!requestedOpen, { focus: false }); }
       function close(options) { return setOpen(false, options); }
       function bringNodeIntoWindow(node) {
         var delay = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 540;
@@ -11715,6 +11841,7 @@
 
       trigger.addEventListener('click', toggle);
       closeBtn.addEventListener('click', function () { close({ restoreFocus: true }); });
+      expandBtn.addEventListener('click', expandCompactRadar);
       panelHead.addEventListener('pointerdown', beginPanelDrag);
       panelHead.addEventListener('pointermove', movePanelDrag);
       panelHead.addEventListener('pointerup', function (event) { finishPanelDrag(event, false); });
@@ -11774,10 +11901,20 @@
           stopPropagation: function () { event.stopPropagation(); }
         }, true);
       }, true);
-      window.addEventListener('resize', sync);
-      window.addEventListener('scroll', function () { updateDocking(); sync(); }, { passive: true });
+      function reflow() {
+        if (!requestedOpen) return;
+        clearSpaceRetry();
+        spaceRetryCount = 0;
+        sync();
+      }
+      window.addEventListener('resize', reflow);
+      window.addEventListener('scroll', reflow, { passive: true });
       if (typeof ResizeObserver === 'function') {
-        var radarResizeObserver = new ResizeObserver(sync);
+        var radarResizeObserver = new ResizeObserver(function (entries) {
+          if (!requestedOpen) return;
+          if (panel.hidden && entries.every(function (entry) { return entry.target === panel; })) return;
+          reflow();
+        });
         [container, navigation, document.getElementById('focus-chip'), panel].filter(Boolean).forEach(function (element) {
           radarResizeObserver.observe(element);
         });
@@ -11790,7 +11927,7 @@
         toggle: toggle,
         sync: sync,
         focus: focusNode,
-        isOpen: function () { return !panel.hidden; },
+        isOpen: function () { return requestedOpen; },
         count: function () { return nodes.length; }
       };
     })();

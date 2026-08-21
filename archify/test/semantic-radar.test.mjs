@@ -144,6 +144,8 @@ test('all typed renderers inherit one viewer-only Semantic Radar', () => {
     const html = render(mode, example);
     assert.match(html, /id="overview-map" hidden role="region" aria-labelledby="overview-map-title"/, mode);
     assert.match(html, /id="overview-map-surface" tabindex="0" role="group"/, mode);
+    assert.match(html, /id="overview-map-expand"[^>]+aria-label="Open full semantic radar"/, mode);
+    assert.match(html, /id="overview-map-feedback" role="status" aria-live="polite" hidden/, mode);
     assert.match(html, /id="btn-overview-map"[^>]+aria-label="Open semantic radar"[^>]+aria-expanded="false"[^>]+aria-controls="overview-map"/, mode);
     assert.match(html, /Archify\.radar = \(function \(\)/, mode);
     assert.match(html, /document\.createElementNS\(namespace, 'svg'\)/, mode);
@@ -186,6 +188,7 @@ test('Semantic Radar tracks desktop camera and mobile contained scroll', () => {
   assert.match(html, /function cornerCandidates\(context\)/);
   assert.match(html, /function nearbyCandidates\(context, reference\)/);
   assert.match(html, /nearbyCandidates\(context, reference\)\.concat\(cornerCandidates\(context\)\)/);
+  assert.match(html, /var placementOptions = \{ softWeight: manualPosition \? 0 : 100 \}/);
   assert.match(html, /manualPosition && positionIsValid\(manualPosition, context\)/);
   assert.match(html, /panelHead\.addEventListener\('pointerdown', beginPanelDrag\)/);
   assert.match(html, /surface\.addEventListener\('pointerdown',[\s\S]+viewportDrag = \{ pointerId: event\.pointerId \}/);
@@ -280,25 +283,106 @@ test('Semantic Radar avoids an expanded mobile Passport without hiding a collisi
     assert.notEqual(state.invalid, 'true', JSON.stringify(state, null, 2));
     assert.equal(state.compact, 'true', JSON.stringify(state, null, 2));
 
-    const restored = await evaluate(browser, sessionId, `(function () {
-      document.getElementById('btn-focus-clear').click();
+    const expanded = await evaluate(browser, sessionId, `(function () {
+      document.getElementById('overview-map-expand').click();
       return new Promise(function (resolve) {
-        requestAnimationFrame(function () {
-          requestAnimationFrame(function () {
+        setTimeout(function () {
             var radar = document.getElementById('overview-map');
             var rect = radar.getBoundingClientRect();
+            var passport = document.getElementById('focus-chip');
             resolve({
               compact: radar.getAttribute('data-compact'),
               height: rect.height,
-              surfaceVisible: getComputedStyle(document.getElementById('overview-map-surface')).display !== 'none'
+              surfaceVisible: getComputedStyle(document.getElementById('overview-map-surface')).display !== 'none',
+              passportYielded: passport.getAttribute('data-radar-yielded'),
+              passportVisible: getComputedStyle(passport).display !== 'none'
             });
-          });
-        });
+        }, 120);
       });
     })()`, true);
-    assert.equal(restored.compact, null, JSON.stringify(restored, null, 2));
-    assert.equal(restored.surfaceVisible, true, JSON.stringify(restored, null, 2));
-    assert.ok(restored.height > state.radar.bottom - state.radar.top, JSON.stringify({ state, restored }, null, 2));
+    assert.equal(expanded.compact, null, JSON.stringify(expanded, null, 2));
+    assert.equal(expanded.surfaceVisible, true, JSON.stringify(expanded, null, 2));
+    assert.equal(expanded.passportYielded, 'true', JSON.stringify(expanded, null, 2));
+    assert.equal(expanded.passportVisible, false, JSON.stringify(expanded, null, 2));
+    assert.ok(expanded.height > state.radar.bottom - state.radar.top, JSON.stringify({ state, expanded }, null, 2));
+
+    const closed = await evaluate(browser, sessionId, `(function () {
+      document.getElementById('overview-map-close').click();
+      var passport = document.getElementById('focus-chip');
+      return {
+        radarHidden: document.getElementById('overview-map').hidden,
+        passportYielded: passport.getAttribute('data-radar-yielded'),
+        passportVisible: getComputedStyle(passport).display !== 'none'
+      };
+    })()`);
+    assert.equal(closed.radarHidden, true, JSON.stringify(closed, null, 2));
+    assert.equal(closed.passportYielded, null, JSON.stringify(closed, null, 2));
+    assert.equal(closed.passportVisible, true, JSON.stringify(closed, null, 2));
+  } finally {
+    await browser.close();
+  }
+});
+
+test('Semantic Radar reports a consistent unavailable state and recovers when space returns', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const artifact = path.join(tmp, 'radar-unavailable.html');
+  execFileSync(process.execPath, [
+    path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'),
+    path.join(skillRoot, 'examples', CASES.architecture),
+    artifact,
+  ]);
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const sessionId = await loadArtifact(browser, artifact, { width: 390, height: 300 });
+    const unavailable = await evaluate(browser, sessionId, `(function () {
+      var container = document.querySelector('.diagram-container');
+      window.scrollTo(0, Math.max(0, container.offsetTop));
+      Archify.focus.set('lb', { toggle: false });
+      document.getElementById('btn-focus-relations').click();
+      Archify.radar.open();
+      return new Promise(function (resolve) {
+        setTimeout(function () {
+          var panel = document.getElementById('overview-map');
+          var trigger = document.getElementById('btn-overview-map');
+          var feedback = document.getElementById('overview-map-feedback');
+          resolve({
+            panelHidden: panel.hidden,
+            expanded: trigger.getAttribute('aria-expanded'),
+            limited: trigger.getAttribute('data-radar-space-limited'),
+            feedbackHidden: feedback.hidden,
+            feedback: feedback.textContent.trim()
+          });
+        }, 260);
+      });
+    })()`, true);
+    assert.equal(unavailable.panelHidden, true, JSON.stringify(unavailable, null, 2));
+    assert.equal(unavailable.expanded, 'false', JSON.stringify(unavailable, null, 2));
+    assert.equal(unavailable.limited, 'true', JSON.stringify(unavailable, null, 2));
+    assert.equal(unavailable.feedbackHidden, false, JSON.stringify(unavailable, null, 2));
+    assert.match(unavailable.feedback, /space/i);
+
+    await browser.cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 390,
+      height: 600,
+      deviceScaleFactor: 1,
+      mobile: false,
+    }, sessionId);
+    const recovered = await evaluate(browser, sessionId, `new Promise(function (resolve) {
+      setTimeout(function () {
+        var panel = document.getElementById('overview-map');
+        var trigger = document.getElementById('btn-overview-map');
+        var feedback = document.getElementById('overview-map-feedback');
+        resolve({
+          panelHidden: panel.hidden,
+          expanded: trigger.getAttribute('aria-expanded'),
+          feedbackHidden: feedback.hidden
+        });
+      }, 260);
+    })`, true);
+    assert.equal(recovered.panelHidden, false, JSON.stringify(recovered, null, 2));
+    assert.equal(recovered.expanded, 'true', JSON.stringify(recovered, null, 2));
+    assert.equal(recovered.feedbackHidden, true, JSON.stringify(recovered, null, 2));
   } finally {
     await browser.close();
   }
@@ -357,10 +441,23 @@ test('Semantic Radar automatically avoids a tall Semantic Passport', {
       var radar = document.getElementById('overview-map').getBoundingClientRect();
       var head = document.querySelector('.overview-map-head').getBoundingClientRect();
       var passport = document.getElementById('focus-chip').getBoundingClientRect();
+      var active = document.querySelector('[data-focus-selected]');
+      var nearestLeft = passport.right + 16;
+      active.getBoundingClientRect = function () {
+        return {
+          left: nearestLeft,
+          top: radar.top,
+          right: nearestLeft + radar.width,
+          bottom: radar.top + radar.height,
+          width: radar.width,
+          height: radar.height
+        };
+      };
       return {
         radar: { left: radar.left, top: radar.top },
         head: { left: head.left, top: head.top, height: head.height },
-        requested: { left: passport.left + 20, top: passport.top + 20 }
+        requested: { left: passport.right + 8, top: radar.top },
+        nearest: { left: nearestLeft, top: radar.top }
       };
     })()`);
     await dragMouse(browser, sessionId, {
@@ -372,11 +469,8 @@ test('Semantic Radar automatically avoids a tall Semantic Passport', {
     });
     const snappedRects = await radarRects(browser, sessionId, '');
     assert.equal(overlaps(snappedRects.radar, snappedRects.passport, 10), false, JSON.stringify(snappedRects, null, 2));
-    assert.ok(
-      Math.abs(snappedRects.radar.left - dragGeometry.requested.left) > 2
-        || Math.abs(snappedRects.radar.top - dragGeometry.requested.top) > 2,
-      JSON.stringify({ dragGeometry, snappedRects }, null, 2),
-    );
+    assert.ok(Math.abs(snappedRects.radar.left - dragGeometry.nearest.left) <= 2, JSON.stringify({ dragGeometry, snappedRects }, null, 2));
+    assert.ok(Math.abs(snappedRects.radar.top - dragGeometry.nearest.top) <= 2, JSON.stringify({ dragGeometry, snappedRects }, null, 2));
   } finally {
     await browser.close();
   }
