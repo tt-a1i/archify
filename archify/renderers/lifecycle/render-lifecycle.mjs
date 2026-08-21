@@ -228,10 +228,10 @@ function validateLifecycle() {
     }
   }
 
-  // Pre-quality-profile v1 lifecycle files may contain tangent authored via
-  // segments. Preserve those coordinates exactly for compatibility: changing
-  // the path would falsify authored geometry. Explicit quality profiles opt
-  // into the perpendicular endpoint gate and receive an actionable failure.
+  // Authored via points are authoritative in schema v1, including under a
+  // quality profile. Preserve and render them exactly: applying the endpoint
+  // gate would either reject an existing typed input or require silently
+  // falsifying its geometry. Automatic routes still receive the side gate.
   problems.push(...cleanEndpointSideProblems({
     relations: lifecycle.transitions,
     endpointIds: new Set(states.keys()),
@@ -240,9 +240,7 @@ function validateLifecycle() {
     relationCollection: 'transitions',
     fromSideFor: (transition) => transitionSides(transition).fromSide,
     toSideFor: (transition) => transitionSides(transition).toSide,
-    shouldCheckRelation: (transition) => (
-      Boolean(lifecycle.meta?.quality_profile) || !Array.isArray(transition.via)
-    ),
+    shouldCheckRelation: (transition) => !Array.isArray(transition.via),
     routeHint: 'keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross state borders perpendicularly',
   }));
   problems.push(...cleanFlowProblems({

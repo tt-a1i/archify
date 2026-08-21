@@ -624,7 +624,11 @@ function collectDesktopReadability(svgAttrs, fragment) {
   if (!Number.isFinite(viewBoxWidth) || viewBoxWidth <= 0) return null;
   const scale = Math.min(1, DESKTOP_READER_DIAGRAM_WIDTH / viewBoxWidth);
   let worst = null;
-  for (const match of fragment.matchAll(/<text\b([^>]*(?:\bdata-node-label(?:\s|=|>)|\bdata-detail="context")[^>]*)>([\s\S]*?)<\/text>/gi)) {
+  for (const match of fragment.matchAll(/<text\b([^>]*)>([\s\S]*?)<\/text>/gi)) {
+    const primary = /\bdata-node-label(?:\s*=|\s|$)/i.test(match[1]);
+    const boundary = /\bdata-boundary-label(?:\s*=|\s|$)/i.test(match[1]);
+    const context = /\bdata-detail\s*=\s*"context"/i.test(match[1]);
+    if (!primary && !boundary && !context) continue;
     const attrs = parseAttrs(match[1]);
     const fontSize = Number.parseFloat(attrs['font-size'] || '');
     if (!Number.isFinite(fontSize)) continue;
@@ -634,7 +638,9 @@ function collectDesktopReadability(svgAttrs, fragment) {
       viewBoxWidth,
       scale,
       text: stripTags(match[2]).trim(),
-      detail: /\bdata-node-label(?:\s|=|$)/i.test(match[1]) ? 'primary' : 'context',
+      detail: primary
+        ? 'primary'
+        : boundary ? 'boundary' : 'context',
       sourceFontPx: fontSize,
       projectedFontPx: projected,
     };

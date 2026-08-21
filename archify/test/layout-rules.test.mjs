@@ -418,7 +418,7 @@ test('architecture: boundary labels reserve readable space above wrapped compone
   assert.equal(code, 0, stderr);
   const html = fs.readFileSync(outPath, 'utf8');
   const label = html.match(
-    /<text x="[^"]+" y="([^"]+)" class="t-security" font-size="9" font-weight="600">Tool effects and permissions<\/text>/,
+    /<text data-boundary-label x="[^"]+" y="([^"]+)" class="t-security" font-size="[^"]+" font-weight="600">Tool effects and permissions<\/text>/,
   );
   assert.ok(label, 'expected the security boundary label');
   const labelBaseline = Number(label[1]);
@@ -429,6 +429,39 @@ test('architecture: boundary labels reserve readable space above wrapped compone
   assert.ok(
     labelBaseline <= firstWrappedNodeY - 4,
     `expected the boundary label baseline (${labelBaseline}) to clear the first wrapped node (${firstWrappedNodeY})`,
+  );
+});
+
+test('architecture: auto viewBox keeps expanded boundary titles readable at desktop scale', () => {
+  const d = load('architecture');
+  delete d.meta.viewBox;
+  d.meta.quality_profile = 'showcase';
+  delete d.meta.views;
+  d.components = [{
+    id: 'node',
+    type: 'backend',
+    label: 'Current node',
+    pos: [800, 100],
+    size: [120, 60],
+  }];
+  d.connections = [];
+  d.cards = [];
+  d.boundaries = [{
+    kind: 'region',
+    label: 'Disaster recovery boundary Disaster recovery boundary Disaster recovery boundary',
+    wraps: ['node'],
+    pad: 30,
+  }];
+
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const viewBoxWidth = Number(html.match(/\bviewBox="0 0 ([\d.]+) [\d.]+"/)?.[1]);
+  const sourceFontPx = Number(html.match(/<text data-boundary-label[^>]*font-size="([\d.]+)"/)?.[1]);
+  const projectedFontPx = sourceFontPx * Math.min(1, 930 / viewBoxWidth);
+  assert.ok(
+    projectedFontPx >= 6,
+    `expected the final ${viewBoxWidth}px viewBox to project its ${sourceFontPx}px boundary title at 6px or larger, got ${projectedFontPx}px`,
   );
 });
 
@@ -861,28 +894,25 @@ test('lifecycle: legacy tangent via is rendered exactly instead of silently rewr
   ]);
 });
 
-test('lifecycle: showcase rejects an authored tangent via without rewriting it', () => {
-  const d = tangentViaLifecycle();
-  d.meta.quality_profile = 'showcase';
-  const { code, stderr } = render('lifecycle', d);
-  assert.notEqual(code, 0);
-  assert.match(stderr, /\[clean-flow\/endpoint-side-direction\] lifecycle transitions\[0\] id "legacy-via"/);
-  assert.match(stderr, /first segment 0 \[248, 188\] -> \[320, 188\]/);
-  assert.match(stderr, /choose fromSide\/toSide and via points whose first and final segments cross state borders perpendicularly/);
-});
+for (const qualityProfile of ['standard', 'showcase']) {
+  test(`lifecycle: ${qualityProfile} keeps an authored tangent via authoritative`, () => {
+    const d = tangentViaLifecycle();
+    d.meta.quality_profile = qualityProfile;
+    const { code, stderr, outPath } = render('lifecycle', d);
+    assert.equal(code, 0, stderr);
+    assert.deepEqual(workflowEdgePoints(fs.readFileSync(outPath, 'utf8'), 'legacy-via'), [
+      [248, 188], [320, 188], [320, 430], [402, 430], [402, 450],
+    ]);
+  });
 
-test('lifecycle: authored tangent via returns a structured supported fix at the public validate seam', () => {
-  const d = tangentViaLifecycle();
-  d.meta.quality_profile = 'showcase';
-  const { code, result } = validateCli('lifecycle', d);
-  assert.notEqual(code, 0);
-  const diagnostic = result.diagnostics?.find(
-    (entry) => entry.code === 'clean-flow/endpoint-side-direction',
-  );
-  assert.ok(diagnostic, JSON.stringify(result, null, 2));
-  assert.equal(diagnostic.subject?.diagramType, 'lifecycle');
-  assert.ok(diagnostic.supportedFixes?.some((fix) => /via points/.test(fix)));
-});
+  test(`lifecycle: public validate accepts an authoritative authored tangent via in ${qualityProfile}`, () => {
+    const d = tangentViaLifecycle();
+    d.meta.quality_profile = qualityProfile;
+    const { code, result } = validateCli('lifecycle', d);
+    assert.equal(code, 0, JSON.stringify(result, null, 2));
+    assert.equal(result.ok, true);
+  });
+}
 
 test('workflow: explicit labelAt remains authoritative on an automatic one-bend edge', () => {
   const d = JSON.parse(fs.readFileSync(

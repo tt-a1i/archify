@@ -10,3 +10,17 @@ export function projectedNodeTextPx(sourceFontPx, viewBoxWidth, diagramWidth = D
   }
   return sourceFontPx * Math.min(1, diagramWidth / viewBoxWidth);
 }
+
+export function minimumReadableSourceTextPx(
+  viewBoxWidth,
+  diagramWidth = DESKTOP_READER_DIAGRAM_WIDTH,
+  minimumProjectedPx = MIN_PROJECTED_NODE_TEXT_PX,
+) {
+  if (![viewBoxWidth, diagramWidth, minimumProjectedPx].every(Number.isFinite)
+    || viewBoxWidth <= 0
+    || diagramWidth <= 0
+    || minimumProjectedPx <= 0) {
+    return Number.NaN;
+  }
+  return minimumProjectedPx / Math.min(1, diagramWidth / viewBoxWidth);
+}

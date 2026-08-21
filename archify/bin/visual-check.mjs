@@ -297,12 +297,22 @@ class ChromeVisualBrowser {
     const navigation = await this.cdp.send('Page.navigate', { url: url.href }, sessionId);
     if (navigation.errorText) throw new Error(`Chrome navigation failed: ${navigation.errorText}`);
     await loaded;
-    await evaluate(this.cdp, sessionId, `new Promise(function (resolve) {
+    await evaluate(this.cdp, sessionId, `(function () {
       document.documentElement.setAttribute('data-motion', 'still');
       var panel = document.querySelector('.diagram-container');
       if (panel) panel.setAttribute('data-detail-level', 'read');
-      requestAnimationFrame(function () { requestAnimationFrame(resolve); });
-    })`, true);
+      if (window.Archify && window.Archify.readerLayout && typeof window.Archify.readerLayout.whenStable === 'function') {
+        return window.Archify.readerLayout.whenStable();
+      }
+      var fontsReady = document.fonts && document.fonts.ready
+        ? document.fonts.ready.catch(function () {})
+        : Promise.resolve();
+      return fontsReady.then(function () {
+        return new Promise(function (resolve) {
+          requestAnimationFrame(function () { requestAnimationFrame(resolve); });
+        });
+      });
+    })()`, true);
 
     const metrics = await evaluate(this.cdp, sessionId, `(function () {
       var reader = document.querySelector('.container');
@@ -314,8 +324,10 @@ class ChromeVisualBrowser {
       var scale = viewBoxWidth > 0 ? Math.min(1, diagramWidth / viewBoxWidth) : 0;
       var minimum = null;
       if (svg && scale > 0) {
-        Array.from(svg.querySelectorAll('text[data-node-label], text[data-detail="context"]')).forEach(function (text) {
-          var detail = text.hasAttribute('data-node-label') ? 'primary' : 'context';
+        Array.from(svg.querySelectorAll('text[data-node-label], text[data-boundary-label], text[data-detail="context"]')).forEach(function (text) {
+          var detail = text.hasAttribute('data-node-label')
+            ? 'primary'
+            : text.hasAttribute('data-boundary-label') ? 'boundary' : 'context';
           if (detail === 'context' && !text.closest('[data-node-id]')) return;
           var sourceFontPx = parseFloat(text.getAttribute('font-size') || '');
           if (!Number.isFinite(sourceFontPx)) return;

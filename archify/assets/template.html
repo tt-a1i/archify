@@ -2805,6 +2805,7 @@
       .card { padding: 1rem; }
     }
     @media (min-width: 768px) and (max-height: 920px) {
+      body { padding-block: 1.25rem; }
       .header { margin-bottom: 0.875rem; }
       .cards { margin-top: 0.75rem; }
     }
@@ -10589,6 +10590,60 @@
         if (frame) return;
         frame = requestAnimationFrame(measure);
       }
+      function stableSnapshot() {
+        var shellRect = shell ? shell.getBoundingClientRect() : { width: 0, height: 0 };
+        var diagramRect = diagram ? diagram.getBoundingClientRect() : { width: 0, height: 0 };
+        return [
+          lastWidth,
+          html.getAttribute('data-reader-layout') || '',
+          html.getAttribute('data-reader-overflow') || '',
+          Math.ceil(document.documentElement.scrollWidth),
+          Math.ceil(document.documentElement.scrollHeight),
+          Math.ceil(document.body.scrollWidth),
+          Math.ceil(document.body.scrollHeight),
+          Math.round(shellRect.width * 100) / 100,
+          Math.round(shellRect.height * 100) / 100,
+          Math.round(diagramRect.width * 100) / 100,
+          Math.round(diagramRect.height * 100) / 100
+        ].join('|');
+      }
+      function whenStable() {
+        var fontsReady = document.fonts && document.fonts.ready
+          ? document.fonts.ready.catch(function () {})
+          : Promise.resolve();
+        return fontsReady.then(function () {
+          schedule();
+          return new Promise(function (resolve, reject) {
+            var previous = '';
+            var stableFrames = 0;
+            var sampledFrames = 0;
+            function sample() {
+              sampledFrames += 1;
+              if (frame || settleFrame) {
+                previous = '';
+                stableFrames = 0;
+              } else {
+                var current = stableSnapshot();
+                if (current === previous) stableFrames += 1;
+                else {
+                  previous = current;
+                  stableFrames = 0;
+                }
+                if (stableFrames >= 3) {
+                  resolve({ stable: true, snapshot: current, sampledFrames: sampledFrames });
+                  return;
+                }
+              }
+              if (sampledFrames >= 240) {
+                reject(new Error('Adaptive reader layout did not reach stable dimensions.'));
+                return;
+              }
+              requestAnimationFrame(sample);
+            }
+            requestAnimationFrame(sample);
+          });
+        });
+      }
 
       window.addEventListener('resize', schedule, { passive: true });
       window.addEventListener('load', schedule, { once: true });
@@ -10608,6 +10663,7 @@
       return {
         measure: measure,
         schedule: schedule,
+        whenStable: whenStable,
         active: function () { return html.getAttribute('data-reader-layout') === 'adaptive'; },
         receipt: function () { return { ratio: ratio, width: lastWidth }; }
       };

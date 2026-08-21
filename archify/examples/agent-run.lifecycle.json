@@ -37,7 +37,7 @@
     { "id": "execution-failed", "from": "executing", "to": "failed", "variant": "security", "fromSide": "left", "toSide": "left", "via": [[320, 157], [320, 385]] },
     { "id": "failed-retry", "from": "failed", "to": "executing", "variant": "emphasis", "fromSide": "left", "toSide": "top", "via": [[20, 385], [20, 80], [402, 80]] },
     { "id": "block-expired", "from": "blocked", "to": "expired", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight" },
-    { "id": "approval-cancelled", "from": "approval", "to": "cancelled", "variant": "security", "fromSide": "bottom", "toSide": "top", "via": [[402, 346], [480, 346], [480, 432], [402, 432]] }
+    { "id": "approval-cancelled", "from": "approval", "to": "cancelled", "variant": "security", "fromSide": "bottom", "toSide": "top", "via": [[480, 336], [480, 432], [402, 432]] }
   ],
   "cards": [
     {

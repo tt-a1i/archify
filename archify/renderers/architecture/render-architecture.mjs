@@ -7,6 +7,7 @@ import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
+import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import {
   asArray,
@@ -140,27 +141,84 @@ function boundaryLabelWidth(label, fontSize) {
   return Math.max(30, textUnits(label) * fontSize * 0.6 + 10);
 }
 
-function measureBoundaryTitle(boundary) {
+const architectureLegendEntries = resolveLegend(
+  arch.meta?.legend,
+  LEGEND_CATALOG,
+  new Set([...components.values()].map((component) => component.type)),
+);
+
+function autoViewBoxFor(candidateBoundaries) {
+  const maxX = Math.max(
+    0,
+    ...[...components.values()].map((component) => component.x + component.width),
+    ...candidateBoundaries.map((boundary) => boundary.x + boundary.width),
+  );
+  const maxY = Math.max(
+    0,
+    ...[...components.values()].map((component) => component.y + component.height),
+    ...candidateBoundaries.map((boundary) => boundary.y + boundary.height),
+  );
+  let width = Math.ceil(maxX + layout.margin);
+  let footprint = legendFootprint(architectureLegendEntries, {
+    width: Math.max(1, width - layout.margin * 2),
+  });
+  if (footprint.minWidth > width - layout.margin * 2) {
+    width = Math.ceil(footprint.minWidth + layout.margin * 2);
+    footprint = legendFootprint(architectureLegendEntries, {
+      width: width - layout.margin * 2,
+    });
+  }
+  return [
+    width,
+    Math.ceil(maxY + layout.margin + layout.legendH + footprint.extraHeight),
+  ];
+}
+
+function resolvedViewBoxWidth(candidateBoundaries) {
+  if (Array.isArray(arch.meta?.viewBox) && Number.isFinite(arch.meta.viewBox[0])) {
+    return arch.meta.viewBox[0];
+  }
+  return autoViewBoxFor(candidateBoundaries)[0];
+}
+
+function expandBoundaryForReadableTitle(boundary, minimumFontSize) {
+  if (!enforcesBoundaryTitleComposition) return boundary;
+  const requiredWidth = boundaryLabelWidth(boundary.label, minimumFontSize)
+    + layout.boundaryLabelFrameInset * 2;
+  const extra = Math.max(0, requiredWidth - boundary.width);
+  if (!extra) return boundary;
+  return {
+    ...boundary,
+    x: boundary.x - extra / 2,
+    width: boundary.width + extra,
+  };
+}
+
+function measureBoundaryTitle(boundary, minimumFontSize) {
   const availableWidth = Math.max(0, boundary.width - layout.boundaryLabelFrameInset * 2);
   const units = textUnits(boundary.label);
   const fitted = units > 0
     ? (availableWidth - 10) / (units * 0.6)
     : layout.boundaryLabelFontPreferred;
+  const preferredFontSize = Math.max(layout.boundaryLabelFontPreferred, minimumFontSize);
   const fontSize = Math.max(
-    layout.boundaryLabelFontMinimum,
-    Math.min(layout.boundaryLabelFontPreferred, fitted),
+    minimumFontSize,
+    Math.min(preferredFontSize, fitted),
   );
   const desiredWidth = boundaryLabelWidth(boundary.label, fontSize);
+  const height = Math.max(layout.boundaryLabelMaskHeight, Math.ceil(fontSize + 7));
   return {
     x: boundary.x + layout.boundaryLabelFrameInset,
     y: boundary.memberTop
       - layout.boundaryLabelClearance
-      - layout.boundaryLabelMaskHeight,
+      - height,
     width: Math.min(availableWidth, desiredWidth),
-    height: layout.boundaryLabelMaskHeight,
+    height,
     fontSize,
+    minimumFontSize,
+    baselineOffset: fontSize + 4,
     availableWidth,
-    minimumWidth: boundaryLabelWidth(boundary.label, layout.boundaryLabelFontMinimum),
+    minimumWidth: boundaryLabelWidth(boundary.label, minimumFontSize),
   };
 }
 
@@ -168,7 +226,7 @@ function horizontalOverlap(left, right) {
   return left.x < right.x + right.width && left.x + left.width > right.x;
 }
 
-function layoutBoundaryTitles(rawBoundaries) {
+function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
   const placedTitles = [];
   const measured = new Map();
   const ordered = rawBoundaries
@@ -179,8 +237,10 @@ function layoutBoundaryTitles(rawBoundaries) {
       return areaDelta || left.index - right.index;
     });
 
-  for (const { boundary, index } of ordered) {
-    const title = measureBoundaryTitle(boundary);
+  for (const entry of ordered) {
+    const { index } = entry;
+    const boundary = expandBoundaryForReadableTitle(entry.boundary, minimumFontSize);
+    const title = measureBoundaryTitle(boundary, minimumFontSize);
     let guard = 0;
     while (guard < rawBoundaries.length + components.size + 1) {
       guard += 1;
@@ -194,11 +254,11 @@ function layoutBoundaryTitles(rawBoundaries) {
       );
     }
     placedTitles.push(title);
-    measured.set(index, title);
+    measured.set(index, { boundary, title });
   }
 
-  return rawBoundaries.map((boundary, index) => {
-    const title = measured.get(index);
+  return rawBoundaries.map((_boundary, index) => {
+    const { boundary, title } = measured.get(index);
     const bottom = boundary.y + boundary.height;
     // Profile-less schema-v1 inputs keep their legacy boundary geometry. A
     // quality profile opts into the stricter title-composition contract and
@@ -216,7 +276,43 @@ function layoutBoundaryTitles(rawBoundaries) {
 }
 
 const rawBoundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
-const boundaries = layoutBoundaryTitles(rawBoundaries);
+function resolveBoundaryTitles() {
+  if (!enforcesBoundaryTitleComposition || rawBoundaries.length === 0) {
+    return {
+      boundaries: layoutBoundaryTitles(rawBoundaries, layout.boundaryLabelFontMinimum),
+      readabilityProblem: null,
+    };
+  }
+
+  const maximumIterations = 32;
+  let candidateBoundaries = rawBoundaries;
+  for (let iteration = 0; iteration < maximumIterations; iteration += 1) {
+    const budgetViewBoxWidth = resolvedViewBoxWidth(candidateBoundaries);
+    const minimumFontSize = Math.max(
+      layout.boundaryLabelFontMinimum,
+      minimumReadableSourceTextPx(budgetViewBoxWidth) + 1e-6,
+    );
+    const nextBoundaries = layoutBoundaryTitles(rawBoundaries, minimumFontSize);
+    const finalViewBoxWidth = resolvedViewBoxWidth(nextBoundaries);
+    const finalMinimumFontSize = Math.max(
+      layout.boundaryLabelFontMinimum,
+      minimumReadableSourceTextPx(finalViewBoxWidth),
+    );
+    if (minimumFontSize >= finalMinimumFontSize) {
+      return { boundaries: nextBoundaries, readabilityProblem: null };
+    }
+    candidateBoundaries = nextBoundaries;
+  }
+
+  const finalViewBoxWidth = resolvedViewBoxWidth(candidateBoundaries);
+  return {
+    boundaries: candidateBoundaries,
+    readabilityProblem: `[composition/desktop-readability] Boundary title layout did not converge after ${maximumIterations} iterations for the final ${finalViewBoxWidth}px viewBox — shorten boundary labels, provide a wider authored viewBox, or move wrapped components closer to the left edge.`,
+  };
+}
+
+const resolvedBoundaryTitles = resolveBoundaryTitles();
+const boundaries = resolvedBoundaryTitles.boundaries;
 const compositionFrames = boundaries.map((boundary, index) => ({
   ...boundary,
   id: boundary.id || index,
@@ -232,47 +328,16 @@ function componentContext(component) {
   return scopes.length ? scopes.join(' › ') : 'Architecture component';
 }
 
-const architectureLegendEntries = resolveLegend(
-  arch.meta?.legend,
-  LEGEND_CATALOG,
-  new Set([...components.values()].map((component) => component.type)),
-);
-
 // ---- Auto viewBox: fit all geometry + the measured resolved legend ----------
-function autoViewBox() {
-  let maxX = 0;
-  let maxY = 0;
-  for (const c of components.values()) {
-    maxX = Math.max(maxX, c.x + c.width);
-    maxY = Math.max(maxY, c.y + c.height);
-  }
-  for (const b of boundaries) {
-    maxX = Math.max(maxX, b.x + b.width);
-    maxY = Math.max(maxY, b.y + b.height);
-  }
-
-  let width = Math.ceil(maxX + layout.margin);
-  let footprint = legendFootprint(architectureLegendEntries, {
-    width: Math.max(1, width - layout.margin * 2),
-  });
-  if (footprint.minWidth > width - layout.margin * 2) {
-    width = Math.ceil(footprint.minWidth + layout.margin * 2);
-    footprint = legendFootprint(architectureLegendEntries, {
-      width: width - layout.margin * 2,
-    });
-  }
-  return [
-    width,
-    Math.ceil(maxY + layout.margin + layout.legendH + footprint.extraHeight),
-  ];
-}
-
-const viewBox = arch.meta?.viewBox || autoViewBox();
+const viewBox = arch.meta?.viewBox || autoViewBoxFor(boundaries);
 const legendY = () => viewBox[1] - 16;
 
 // ---- Validation: mechanical correctness, never layout taste -----------------
 function validateArchitecture() {
   const problems = [];
+  if (resolvedBoundaryTitles.readabilityProblem) {
+    problems.push(resolvedBoundaryTitles.readabilityProblem);
+  }
   const requiresNestedBoundaryMembership = arch.meta?.engineering_profile === 'deployment-ownership';
   if (arch.schema_version !== 1) problems.push('Architecture files must set "schema_version": 1.');
   if (arch.diagram_type !== 'architecture') problems.push('Architecture files must set "diagram_type": "architecture".');
@@ -349,7 +414,7 @@ function validateArchitecture() {
     if (boundary.title.minimumWidth > boundary.title.availableWidth) {
       problems.push(
         `Boundary label "${boundary.label}" needs ~${Math.ceil(boundary.title.minimumWidth)}px to fit at the `
-        + `${layout.boundaryLabelFontMinimum}px legible minimum, but its frame provides ${Math.floor(boundary.title.availableWidth)}px — `
+        + `${Number(boundary.title.minimumFontSize.toFixed(2))}px desktop-readable source minimum, but its frame provides ${Math.floor(boundary.title.availableWidth)}px — `
         + 'shorten the boundary label, increase pad, or widen the wrapped component layout.',
       );
     }
@@ -902,7 +967,7 @@ function renderBoundaryLabel(b, index) {
   const labelCls = b.kind === 'security-group' ? 't-security' : 't-cloud';
   return `        <g data-graph-role="structural-frame-label" data-composition-frame-id="${index}" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-label="${esc(b.label)}">
           <rect data-graph-role="structural-frame-label-mask" x="${b.title.x}" y="${b.title.y}" width="${b.title.width}" height="${b.title.height}" rx="3" class="c-mask"/>
-          <text x="${b.title.x + 4}" y="${b.title.y + 13}" class="${labelCls}" font-size="${b.title.fontSize}" font-weight="600">${esc(b.label)}</text>
+          <text data-boundary-label x="${b.title.x + 4}" y="${b.title.y + b.title.baselineOffset}" class="${labelCls}" font-size="${b.title.fontSize}" font-weight="600">${esc(b.label)}</text>
         </g>`;
 }
 

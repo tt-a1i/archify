@@ -96,6 +96,22 @@ for (const [mode, filename] of Object.entries(OFFICIAL_V1_EXAMPLES)) {
   });
 }
 
+test('quality-profile lifecycle keeps the checked-in authored via authoritative', () => {
+  const doc = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/agent-run.lifecycle.json'), 'utf8'));
+  const transition = doc.transitions.find(({ id }) => id === 'approval-cancelled');
+  assert.deepEqual(transition.via, [[480, 336], [480, 432], [402, 432]]);
+
+  const rendered = render('lifecycle', doc);
+  assert.equal(rendered.code, 0, rendered.stderr);
+  const html = fs.readFileSync(rendered.output, 'utf8');
+  assert.match(
+    html,
+    /data-edge-id="approval-cancelled"[^>]*data-composition-points="[^"]*480,336;480,432;402,432[^"]*"/,
+  );
+  const validated = validate('lifecycle', doc);
+  assert.equal(validated.code, 0, validated.stderr);
+});
+
 test('legacy v1 architecture auto viewBox accommodates all seven implicit auto legend kinds', () => {
   const types = ['frontend', 'backend', 'database', 'cloud', 'security', 'messagebus', 'external'];
   const doc = {

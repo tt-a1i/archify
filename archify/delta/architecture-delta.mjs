@@ -513,6 +513,11 @@ function boundaryMarkupParts(markup) {
 function forceBoundaryState(markup, state, key, classifications = []) {
   return markup
     .replace(/^<rect[^>]+\/>/, (tag) => addState(tag, { classifications }, 'delta', state).replace(/\/>$/, ` data-delta-boundary-key="${esc(key)}"/>`))
+    .replace(
+      /<rect data-graph-role="structural-frame-label-mask"[^>]*\/>/,
+      (tag) => addState(tag, { classifications }, 'delta', state)
+        .replace(/\/>$/, ` data-delta-boundary-state="${state}" data-delta-boundary-mask-key="${esc(key)}"/>`),
+    )
     .replace(/<text[^>]*>/, (tag) => tag.replace(/>$/, ` data-delta-state="${state}" data-delta-boundary-state="${state}" data-delta-boundary-key="${esc(key)}">`));
 }
 
@@ -587,8 +592,7 @@ export function buildDeltaSvg(baseSvg, headSvg, receipt) {
   delta = delta.replace(/^<svg[^>]+>/, (tag) => tag.replace(/viewBox="[^"]+"/, `viewBox="0 0 ${Math.max(baseW, headW) + 24} ${Math.max(baseH, headH) + 24}"`));
   delta = delta.replace('        <!-- Boundaries (behind everything) -->', `        <!-- Baseline boundary frame phantoms -->\n${baseBoundaryFramePhantoms.filter(Boolean).join('\n')}\n\n        <!-- Boundaries (behind everything) -->`);
   delta = delta.replace('        <!-- Connection paths (before components for correct z-order) -->', `        <!-- Baseline relationship phantoms -->\n${baseEdgePhantoms.join('\n')}\n\n        <!-- Connection paths (before components for correct z-order) -->`);
-  delta = delta.replace('        <!-- Components -->', `        <!-- Baseline removed and move-from component phantoms -->\n${baseNodePhantoms.join('\n')}\n\n        <!-- Components -->`);
-  delta = delta.replace('        <!-- Boundary labels (foreground masks keep routes out of titles) -->', `        <!-- Baseline boundary label phantoms -->\n${baseBoundaryLabelPhantoms.filter(Boolean).join('\n')}\n\n        <!-- Boundary labels (foreground masks keep routes out of titles) -->`);
+  delta = delta.replace('        <!-- Components -->', `        <!-- Baseline boundary label phantoms (below current components) -->\n${baseBoundaryLabelPhantoms.filter(Boolean).join('\n')}\n\n        <!-- Baseline removed and move-from component phantoms -->\n${baseNodePhantoms.join('\n')}\n\n        <!-- Components -->`);
 
   for (const change of edges.values()) {
     if (change.status === 'added' || change.status === 'changed' || change.status === 'rerouted') {

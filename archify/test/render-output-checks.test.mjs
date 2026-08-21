@@ -78,6 +78,23 @@ test('render output check: includes primary node labels in desktop readability',
   assert.ok(issue?.projectedFontPx < issue?.minimumProjectedFontPx);
 });
 
+test('render output check: includes semantic boundary labels in desktop readability', () => {
+  const { code, result } = checkHtml('showcase-boundary-desktop-readability', `
+    <g data-graph-role="structural-frame-label">
+      <rect data-graph-role="structural-frame-label-mask" x="100" y="100" width="180" height="16" class="c-mask"/>
+      <text x="104" y="113" class="t-cloud" font-size="8.4" data-boundary-label>Disaster recovery boundary</text>
+    </g>
+  `, 'showcase', '0 0 1376 728');
+
+  assert.notEqual(code, 0);
+  const issue = result.composition.issues.find(
+    (item) => item.code === 'composition/desktop-readability',
+  );
+  assert.equal(issue?.text, 'Disaster recovery boundary');
+  assert.equal(issue?.detail, 'boundary');
+  assert.ok(issue?.projectedFontPx < issue?.minimumProjectedFontPx);
+});
+
 test('render output check: accepts orthogonal arrows away from legend', () => {
   const { code, result } = checkHtml('clean', `
     <path d="M 20 20 L 120 20 L 120 60" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>

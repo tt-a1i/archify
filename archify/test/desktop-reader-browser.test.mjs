@@ -29,17 +29,29 @@ test('production showcase is readable in the real 1440 by 900 adaptive reader', 
       'showcase',
     ], { cwd: skillRoot, encoding: 'utf8' });
 
-    const result = await runVisualCheck({ artifactPath: artifact, chromePath });
-    assert.equal(result.exitCode, 0, JSON.stringify(result.receipt, null, 2));
-    assert.equal(result.receipt.readability.status, 'pass', JSON.stringify(result.receipt, null, 2));
-    const desktop = result.receipt.readability.viewports.find(({ width, height }) => (
-      width === DESKTOP_READABILITY_VIEWPORT.width && height === DESKTOP_READABILITY_VIEWPORT.height
-    ));
-    assert.ok(desktop);
-    assert.equal(desktop.readerWidth, 960);
-    assert.equal(desktop.diagramWidth, 930);
-    assert.ok(desktop.minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX);
-    assert.equal(desktop.readabilityOk, true);
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      const result = await runVisualCheck({ artifactPath: artifact, chromePath });
+      assert.equal(result.exitCode, 0, `attempt ${attempt}: ${JSON.stringify(result.receipt, null, 2)}`);
+      assert.equal(result.receipt.readability.status, 'pass', `attempt ${attempt}: ${JSON.stringify(result.receipt, null, 2)}`);
+      const desktop = result.receipt.readability.viewports.find(({ width, height }) => (
+        width === DESKTOP_READABILITY_VIEWPORT.width && height === DESKTOP_READABILITY_VIEWPORT.height
+      ));
+      const darkDesktop = result.receipt.captures.screenshots.find(({ width, height, theme }) => (
+        width === DESKTOP_READABILITY_VIEWPORT.width
+        && height === DESKTOP_READABILITY_VIEWPORT.height
+        && theme === 'dark'
+      ));
+      for (const observation of [desktop, darkDesktop]) {
+        assert.ok(observation);
+        assert.equal(observation.readerWidth, 960);
+        assert.equal(observation.diagramWidth, 930);
+        assert.ok(observation.minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX);
+        assert.equal(observation.minimumProjectedNodeTextDetail, 'boundary');
+        assert.equal(observation.minimumProjectedNodeText, 'AWS eu-west-1 / disaster recovery');
+        assert.equal(observation.readabilityOk, true);
+        assert.equal(observation.scrollHeight, DESKTOP_READABILITY_VIEWPORT.height);
+      }
+    }
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
