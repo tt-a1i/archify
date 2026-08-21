@@ -722,10 +722,12 @@
     }
 
     .diagram-container {
+      --archify-nav-reserve: 0px;
       background: var(--panel);
       border-radius: 1rem;
       border: 1px solid var(--panel-border);
       padding: 1.5rem;
+      padding-bottom: calc(1.5rem + var(--archify-nav-reserve));
       overflow: hidden;
       position: relative;
     }
@@ -1052,7 +1054,7 @@
     .overview-map {
       position: absolute;
       right: 1rem;
-      bottom: 4.15rem;
+      bottom: calc(4.15rem + var(--archify-nav-reserve));
       z-index: 12;
       width: 11.25rem;
       overflow: hidden;
@@ -1226,7 +1228,7 @@
     .semantic-lens {
       position: absolute;
       right: 1rem;
-      bottom: 4.15rem;
+      bottom: calc(4.15rem + var(--archify-nav-reserve));
       z-index: 24;
       width: min(20rem, calc(100% - 2rem));
       overflow: hidden;
@@ -1401,7 +1403,7 @@
     .route-probe {
       position: absolute;
       left: 1rem;
-      bottom: 1rem;
+      bottom: calc(1rem + var(--archify-nav-reserve));
       z-index: 12;
       width: min(46rem, calc(100% - 25rem));
       min-width: 18rem;
@@ -2800,7 +2802,10 @@
        scrolling at 900–1080px heights. */
     @media (min-width: 768px) and (max-height: 1100px) {
       .header { margin-bottom: 1rem; }
-      .diagram-container { padding: 0.875rem; }
+      .diagram-container {
+        padding: 0.875rem;
+        padding-bottom: calc(0.875rem + var(--archify-nav-reserve));
+      }
       .cards { margin-top: 1rem; }
       .card { padding: 1rem; }
     }
@@ -2922,6 +2927,7 @@
       svg[data-chapter-preview] [data-node-id],
       svg[data-chapter-preview] [data-edge-from] { opacity: 1 !important; filter: none !important; }
       .diagram-container, .card { box-shadow: none; border-color: #e2e8f0; }
+      .diagram-container { --archify-nav-reserve: 0px !important; }
       html[data-preset="signal-flow"] .diagram-container,
       html[data-preset="signal-flow"] .card { background: #ffffff; }
       .cards { grid-template-columns: 1fr 1fr; }
@@ -10816,6 +10822,222 @@
         whenStable: whenStable,
         active: function () { return html.getAttribute('data-reader-layout') === 'adaptive'; },
         receipt: function () { return { ratio: ratio, width: lastWidth }; }
+      };
+    })();
+
+    /* ============================================================
+       Viewer Chrome Layout — keep HTML controls clear of the canonical SVG
+       legend without changing authored geometry. The dock keeps its existing
+       position unless its zero-reserve position would cover the legend; only
+       then does a small bottom safe rail become part of the reader budget.
+       ============================================================ */
+    Archify.viewerChromeLayout = (function () {
+      var html = document.documentElement;
+      var container = document.querySelector('.diagram-container');
+      var svg = container && container.querySelector(':scope > svg');
+      var nav = container && container.querySelector('.diagram-nav');
+      var legend = svg && svg.querySelector('[data-legend]');
+      var frame = 0;
+      var settleFrame = 0;
+      var reserve = 0;
+      var lastReceipt = null;
+      var SAFE_GAP = 10;
+      var MAX_STABLE_FRAMES = 240;
+
+      function visible(element) {
+        if (!element || element.hidden) return false;
+        var style = window.getComputedStyle(element);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+      }
+      function usable(rect) {
+        return Boolean(rect && rect.width > 0 && rect.height > 0);
+      }
+      function shifted(rect, y) {
+        return {
+          left: rect.left,
+          right: rect.right,
+          top: rect.top + y,
+          bottom: rect.bottom + y,
+          width: rect.width,
+          height: rect.height
+        };
+      }
+      function inflated(rect, amount) {
+        return {
+          left: rect.left - amount,
+          right: rect.right + amount,
+          top: rect.top - amount,
+          bottom: rect.bottom + amount,
+          width: rect.width + amount * 2,
+          height: rect.height + amount * 2
+        };
+      }
+      function intersectionArea(a, b) {
+        var width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+        var height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+        return width * height;
+      }
+      function eligible() {
+        return Boolean(
+          container && svg && nav && legend &&
+          window.innerWidth > 720 &&
+          html.getAttribute('data-embed') !== 'true' &&
+          html.getAttribute('data-present') !== 'true' &&
+          (!window.matchMedia || !window.matchMedia('print').matches) &&
+          visible(nav) && visible(legend)
+        );
+      }
+      function writeReserve(next) {
+        next = Math.max(0, Math.ceil(next));
+        if (Math.abs(next - reserve) < 1) return false;
+        reserve = next;
+        if (reserve) {
+          container.style.setProperty('--archify-nav-reserve', reserve + 'px');
+          container.setAttribute('data-nav-safe-rail', 'true');
+        } else {
+          container.style.removeProperty('--archify-nav-reserve');
+          container.removeAttribute('data-nav-safe-rail');
+        }
+        if (Archify.readerLayout && typeof Archify.readerLayout.schedule === 'function') {
+          Archify.readerLayout.schedule();
+        }
+        if (settleFrame) cancelAnimationFrame(settleFrame);
+        settleFrame = requestAnimationFrame(function () {
+          settleFrame = 0;
+          schedule();
+        });
+        return true;
+      }
+      function clear() {
+        writeReserve(0);
+        lastReceipt = {
+          eligible: false,
+          active: false,
+          reserve: 0,
+          gap: SAFE_GAP,
+          baselineIntersectionArea: 0,
+          intersectionArea: 0
+        };
+        return lastReceipt;
+      }
+      function measure() {
+        frame = 0;
+        if (!eligible()) return clear();
+
+        var navRect = nav.getBoundingClientRect();
+        var legendRect = legend.getBoundingClientRect();
+        var svgRect = svg.getBoundingClientRect();
+        if (!usable(navRect) || !usable(legendRect) || !usable(svgRect)) return clear();
+
+        /* Padding moves an absolutely bottom-anchored dock by exactly the
+           reserve amount. Reconstruct its zero-reserve position so the
+           collision decision cannot oscillate after the safe rail appears. */
+        var baselineNavRect = shifted(navRect, -reserve);
+        var baselineIntersectionArea = intersectionArea(
+          baselineNavRect,
+          inflated(legendRect, SAFE_GAP)
+        );
+        var nextReserve = baselineIntersectionArea > 0
+          ? Math.max(0, svgRect.bottom + SAFE_GAP - baselineNavRect.top)
+          : 0;
+
+        if (writeReserve(nextReserve)) return null;
+
+        navRect = nav.getBoundingClientRect();
+        legendRect = legend.getBoundingClientRect();
+        lastReceipt = {
+          eligible: true,
+          active: reserve > 0,
+          reserve: reserve,
+          gap: SAFE_GAP,
+          baselineIntersectionArea: Math.round(baselineIntersectionArea * 100) / 100,
+          intersectionArea: Math.round(intersectionArea(navRect, legendRect) * 100) / 100
+        };
+        return lastReceipt;
+      }
+      function schedule() {
+        if (frame) return;
+        frame = requestAnimationFrame(measure);
+      }
+      function stableSnapshot() {
+        var containerRect = container ? container.getBoundingClientRect() : { width: 0, height: 0 };
+        var navRect = nav ? nav.getBoundingClientRect() : { top: 0, left: 0 };
+        var legendRect = legend ? legend.getBoundingClientRect() : { top: 0, left: 0 };
+        return [
+          reserve,
+          Math.round(containerRect.width * 100) / 100,
+          Math.round(containerRect.height * 100) / 100,
+          Math.round(navRect.left * 100) / 100,
+          Math.round(navRect.top * 100) / 100,
+          Math.round(legendRect.left * 100) / 100,
+          Math.round(legendRect.top * 100) / 100,
+          lastReceipt ? lastReceipt.intersectionArea : ''
+        ].join('|');
+      }
+      function whenStable() {
+        var fontsReady = document.fonts && document.fonts.ready
+          ? document.fonts.ready.catch(function () {})
+          : Promise.resolve();
+        return fontsReady.then(function () {
+          schedule();
+          return new Promise(function (resolve, reject) {
+            var previous = '';
+            var stableFrames = 0;
+            var sampledFrames = 0;
+            function sample() {
+              sampledFrames += 1;
+              if (frame || settleFrame) {
+                previous = '';
+                stableFrames = 0;
+              } else {
+                var current = stableSnapshot();
+                if (current === previous) stableFrames += 1;
+                else {
+                  previous = current;
+                  stableFrames = 0;
+                }
+                if (stableFrames >= 3) {
+                  resolve({ stable: true, snapshot: current, sampledFrames: sampledFrames });
+                  return;
+                }
+              }
+              if (sampledFrames >= MAX_STABLE_FRAMES) {
+                reject(new Error('Viewer chrome layout did not reach stable dimensions.'));
+                return;
+              }
+              requestAnimationFrame(sample);
+            }
+            requestAnimationFrame(sample);
+          });
+        });
+      }
+
+      window.addEventListener('resize', schedule, { passive: true });
+      window.addEventListener('load', schedule, { once: true });
+      window.addEventListener('beforeprint', schedule);
+      window.addEventListener('afterprint', schedule);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule).catch(function () {});
+      if (typeof ResizeObserver === 'function') {
+        var resizeObserver = new ResizeObserver(schedule);
+        [nav, legend].forEach(function (element) { if (element) resizeObserver.observe(element); });
+      }
+      if (typeof MutationObserver === 'function') {
+        var contentObserver = new MutationObserver(schedule);
+        if (legend) contentObserver.observe(legend, { attributes: true, childList: true, subtree: true });
+        if (nav) contentObserver.observe(nav, { attributes: true, childList: true, subtree: true });
+        contentObserver.observe(html, {
+          attributes: true,
+          attributeFilter: ['data-embed', 'data-present', 'data-preset']
+        });
+      }
+      schedule();
+
+      return {
+        measure: measure,
+        schedule: schedule,
+        whenStable: whenStable,
+        active: function () { return reserve > 0; },
+        receipt: function () { return lastReceipt || measure(); }
       };
     })();
 
