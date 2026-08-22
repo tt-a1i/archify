@@ -96,7 +96,7 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
   assert.match(html, /Composition<\/span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS/);
   assert.match(html, /Engineering profile/);
   assert.match(html, /DEPLOYMENT OWNERSHIP · PASS/);
-  assert.match(html, /\.brand \{ min-height: 44px;/);
+  assert.match(html, /\.nav-logo \{[^}]*min-height: 44px;/);
   assert.match(html, /\.filter-button \{\s+min-height: 44px;/);
   assert.match(html, /\.card-link \{ min-height: 44px;/);
   assert.equal((html.match(/class="card-link create-link"/g) || []).length, 11);
