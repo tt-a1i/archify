@@ -73,11 +73,25 @@ test('contributor and pull-request guides keep proof changes reproducible and st
     '.github/ISSUE_TEMPLATE/bug-report.yml',
     'npm test',
     'node scripts/build-gallery.mjs docs',
-    'node scripts/build-zip.sh',
     'Do not include secrets',
+    'Agent-first',
+    'diagnostics[]',
+    'Start from the latest `main`',
+    'tracked-only, symlink-safe',
+    'is **skipped**, not passed',
   ]) {
     assert.match(contributing, new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), required);
   }
+  assert.match(
+    contributing,
+    /(?:^|\n)scripts\/build-zip\.sh \/tmp\/archify-contrib\.zip(?:\n|$)/,
+    'the archive builder must be documented as an executable shell script',
+  );
+  assert.doesNotMatch(
+    contributing,
+    /\bnode\s+scripts\/build-zip\.sh\b/,
+    'the shell archive builder must not be documented as a Node.js command',
+  );
   for (const required of [
     'Stability impact',
     'Tests run',

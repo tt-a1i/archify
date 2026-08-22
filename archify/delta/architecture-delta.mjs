@@ -417,22 +417,50 @@ function transformNodeGroups(svg, transform) {
   return parts.join('');
 }
 
-const BOUNDARY_PAIR_RE = /<rect data-graph-role="structural-frame"[^>]*data-composition-frame-kind="([^"]+)"[^>]*\/>\s*<text[^>]*>([^<]+)<\/text>/g;
+const BOUNDARY_FRAME_RE = /<rect data-graph-role="structural-frame"[^>]*data-composition-frame-kind="([^"]+)"[^>]*data-composition-frame-label="([^"]+)"[^>]*\/>/g;
+const BOUNDARY_LABEL_RE = /<g data-graph-role="structural-frame-label"[^>]*data-composition-frame-kind="([^"]+)"[^>]*data-composition-frame-label="([^"]+)"[^>]*>[\s\S]*?<\/g>/g;
 
-function transformBoundaryPairs(svg, transform) {
-  return svg.replace(BOUNDARY_PAIR_RE, (pair, kind, label) => transform(pair, `${kind}:${label}`));
+function boundaryElements(svg) {
+  const collect = (pattern, part) => [...svg.matchAll(pattern)].map((match) => ({
+    start: match.index,
+    end: match.index + match[0].length,
+    markup: match[0],
+    key: `${match[1]}:${match[2]}`,
+    part,
+  }));
+  return [
+    ...collect(BOUNDARY_FRAME_RE, 'frame'),
+    ...collect(BOUNDARY_LABEL_RE, 'label'),
+  ].sort((left, right) => left.start - right.start);
+}
+
+function transformBoundaryElements(svg, transform) {
+  let cursor = 0;
+  const parts = [];
+  for (const element of boundaryElements(svg)) {
+    parts.push(svg.slice(cursor, element.start));
+    parts.push(transform(element.markup, element.key, element.part));
+    cursor = element.end;
+  }
+  parts.push(svg.slice(cursor));
+  return parts.join('');
 }
 
 export function annotateArchitectureSideSvg(svg, receipt, side) {
   const nodes = changeMap(receipt.changes.components);
   const edges = changeMap(receipt.changes.connections);
   const boundaries = boundaryChangeMap(receipt.changes.boundaries);
-  let result = transformBoundaryPairs(svg, (pair, key) => {
+  let result = transformBoundaryElements(svg, (markup, key, part) => {
     const change = boundaries.get(key);
-    if (!change) return pair;
-    return pair
-      .replace(/^<rect[^>]+\/>/, (tag) => addState(tag, change, side).replace(/\/>$/, ` data-delta-boundary-key="${esc(change.key)}"/>`))
-      .replace(/<text[^>]*>/, (tag) => tag.replace(/>$/, ` data-delta-state="${change.status}" data-delta-boundary-state="${change.status}" data-delta-boundary-key="${esc(change.key)}">`));
+    if (!change) return markup;
+    if (part === 'frame') {
+      return addState(markup, change, side)
+        .replace(/\/>$/, ` data-delta-boundary-key="${esc(change.key)}"/>`);
+    }
+    return markup.replace(
+      /<text[^>]*>/,
+      (tag) => tag.replace(/>$/, ` data-delta-state="${change.status}" data-delta-boundary-state="${change.status}" data-delta-boundary-key="${esc(change.key)}">`),
+    );
   });
   result = transformNodeGroups(result, (group, id) => {
     const change = nodes.get(id);
@@ -469,16 +497,27 @@ function forceElementState(markup, state, classifications = []) {
   return result;
 }
 
-function boundaryPairByKey(svg, key) {
-  for (const match of svg.matchAll(BOUNDARY_PAIR_RE)) {
-    if (`${match[1]}:${match[2]}` === key) return match[0];
-  }
-  return '';
+function boundaryMarkupByKey(svg, key) {
+  return boundaryElements(svg)
+    .filter((element) => element.key === key)
+    .map((element) => element.markup)
+    .join('\n');
+}
+
+function boundaryMarkupParts(markup) {
+  const parts = { frame: '', label: '' };
+  for (const element of boundaryElements(markup)) parts[element.part] = element.markup;
+  return parts;
 }
 
 function forceBoundaryState(markup, state, key, classifications = []) {
   return markup
     .replace(/^<rect[^>]+\/>/, (tag) => addState(tag, { classifications }, 'delta', state).replace(/\/>$/, ` data-delta-boundary-key="${esc(key)}"/>`))
+    .replace(
+      /<rect data-graph-role="structural-frame-label-mask"[^>]*\/>/,
+      (tag) => addState(tag, { classifications }, 'delta', state)
+        .replace(/\/>$/, ` data-delta-boundary-state="${state}" data-delta-boundary-mask-key="${esc(key)}"/>`),
+    )
     .replace(/<text[^>]*>/, (tag) => tag.replace(/>$/, ` data-delta-state="${state}" data-delta-boundary-state="${state}" data-delta-boundary-key="${esc(key)}">`));
 }
 
@@ -512,7 +551,8 @@ export function buildDeltaSvg(baseSvg, headSvg, receipt) {
   const boundaries = boundaryChangeMap(receipt.changes.boundaries);
   const baseNodePhantoms = [];
   const baseEdgePhantoms = [];
-  const baseBoundaryPhantoms = [];
+  const baseBoundaryFramePhantoms = [];
+  const baseBoundaryLabelPhantoms = [];
   const edgeMarkers = [];
   const boundaryMarkers = [];
 
@@ -534,20 +574,25 @@ export function buildDeltaSvg(baseSvg, headSvg, receipt) {
   for (const change of boundaries.values()) {
     const renderedKey = `${change.kind}:${esc(change.label)}`;
     if (change.status === 'removed') {
-      const phantom = forceBoundaryState(boundaryPairByKey(baseSvg, renderedKey), 'removed', change.key, change.classifications);
-      baseBoundaryPhantoms.push(phantom);
+      const phantom = forceBoundaryState(boundaryMarkupByKey(baseSvg, renderedKey), 'removed', change.key, change.classifications);
+      const parts = boundaryMarkupParts(phantom);
+      baseBoundaryFramePhantoms.push(parts.frame);
+      baseBoundaryLabelPhantoms.push(parts.label);
       boundaryMarkers.push(boundarySymbolMarkup(phantom, 'removed'));
     }
     else if (change.status === 'changed' || change.status === 'geometry-changed') {
-      baseBoundaryPhantoms.push(forceBoundaryState(boundaryPairByKey(baseSvg, renderedKey), 'moved-from', change.key, change.classifications));
+      const phantom = forceBoundaryState(boundaryMarkupByKey(baseSvg, renderedKey), 'moved-from', change.key, change.classifications);
+      const parts = boundaryMarkupParts(phantom);
+      baseBoundaryFramePhantoms.push(parts.frame);
+      baseBoundaryLabelPhantoms.push(parts.label);
     }
   }
 
   let delta = annotateArchitectureSideSvg(headSvg, receipt, 'head');
   delta = delta.replace(/^<svg[^>]+>/, (tag) => tag.replace(/viewBox="[^"]+"/, `viewBox="0 0 ${Math.max(baseW, headW) + 24} ${Math.max(baseH, headH) + 24}"`));
-  delta = delta.replace('        <!-- Boundaries (behind everything) -->', `        <!-- Baseline boundary phantoms -->\n${baseBoundaryPhantoms.join('\n')}\n\n        <!-- Boundaries (behind everything) -->`);
+  delta = delta.replace('        <!-- Boundaries (behind everything) -->', `        <!-- Baseline boundary frame phantoms -->\n${baseBoundaryFramePhantoms.filter(Boolean).join('\n')}\n\n        <!-- Boundaries (behind everything) -->`);
   delta = delta.replace('        <!-- Connection paths (before components for correct z-order) -->', `        <!-- Baseline relationship phantoms -->\n${baseEdgePhantoms.join('\n')}\n\n        <!-- Connection paths (before components for correct z-order) -->`);
-  delta = delta.replace('        <!-- Components -->', `        <!-- Baseline removed and move-from component phantoms -->\n${baseNodePhantoms.join('\n')}\n\n        <!-- Components -->`);
+  delta = delta.replace('        <!-- Components -->', `        <!-- Baseline boundary label phantoms (below current components) -->\n${baseBoundaryLabelPhantoms.filter(Boolean).join('\n')}\n\n        <!-- Baseline removed and move-from component phantoms -->\n${baseNodePhantoms.join('\n')}\n\n        <!-- Components -->`);
 
   for (const change of edges.values()) {
     if (change.status === 'added' || change.status === 'changed' || change.status === 'rerouted') {
@@ -558,7 +603,7 @@ export function buildDeltaSvg(baseSvg, headSvg, receipt) {
   for (const change of boundaries.values()) {
     if (!['added', 'changed', 'geometry-changed'].includes(change.status)) continue;
     const renderedKey = `${change.kind}:${esc(change.label)}`;
-    boundaryMarkers.push(boundarySymbolMarkup(boundaryPairByKey(delta, renderedKey), change.status));
+    boundaryMarkers.push(boundarySymbolMarkup(boundaryMarkupByKey(delta, renderedKey), change.status));
   }
   delta = delta.replace('        <!-- Legend -->', `        <!-- Delta relationship symbols -->\n${edgeMarkers.filter(Boolean).join('\n')}\n\n        <!-- Delta boundary symbols -->\n${boundaryMarkers.filter(Boolean).join('\n')}\n\n        <!-- Legend -->`);
   return prefixSvgIds(staticize(delta), 'delta');

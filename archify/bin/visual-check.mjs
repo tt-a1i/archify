@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { MIN_PROJECTED_NODE_TEXT_PX } from '../renderers/shared/desktop-readability.mjs';
 
 export const VISUAL_CHECK_VIEWPORTS = Object.freeze([
   Object.freeze({ width: 1440, height: 900 }),
@@ -18,6 +19,7 @@ const CAPTURE_VIEWPORTS = Object.freeze([
 ]);
 const THEMES = Object.freeze(['light', 'dark']);
 const EXIT = Object.freeze({ pass: 0, fail: 1, skipped: 2 });
+export const CHROME_NO_SANDBOX_ENV = 'ARCHIFY_CHROME_NO_SANDBOX';
 
 function sha256(buffer) {
   return createHash('sha256').update(buffer).digest('hex');
@@ -134,16 +136,33 @@ export function findChrome({ env = process.env, platform = process.platform } = 
 }
 
 class PipeCdp {
-  constructor(child) {
+  constructor(child, { failureDetails = () => '' } = {}) {
     this.child = child;
+    this.failureDetails = failureDetails;
     this.nextId = 1;
     this.buffer = '';
     this.pending = new Map();
     this.waiters = [];
-    child.stdio[4].setEncoding('utf8');
-    child.stdio[4].on('data', (chunk) => this.consume(chunk));
-    child.once('error', (error) => this.failAll(error));
-    child.once('exit', (code) => this.failAll(new Error(`Chrome exited before visual-check completed (${code})`)));
+    this.writePipe = child.stdio[3];
+    this.readPipe = child.stdio[4];
+    this.readPipe.setEncoding('utf8');
+    this.readPipe.on('data', (chunk) => this.consume(chunk));
+    this.writePipe.on('error', (error) => this.failAll(this.failure('write pipe', error)));
+    this.readPipe.on('error', (error) => this.failAll(this.failure('read pipe', error)));
+    child.once('error', (error) => this.failAll(this.failure('process launch', error)));
+    child.once('close', (code, signal) => {
+      const ending = signal ? `signal ${signal}` : `exit code ${code}`;
+      this.failAll(this.failure('process exit', new Error(`Chrome closed with ${ending}`)));
+    });
+  }
+
+  failure(stage, error) {
+    const code = error?.code ? ` [${error.code}]` : '';
+    const details = this.failureDetails();
+    return new Error([
+      `Chrome DevTools ${stage} failed: ${error?.message || String(error)}${code}`,
+      details,
+    ].filter(Boolean).join('\n'));
   }
 
   consume(chunk) {
@@ -189,7 +208,13 @@ class PipeCdp {
         reject(new Error(`${method}: timed out after ${timeoutMs}ms`));
       }, timeoutMs);
       this.pending.set(id, { method, resolve, reject, timer });
-      this.child.stdio[3].write(`${JSON.stringify(message)}\0`);
+      try {
+        this.writePipe.write(`${JSON.stringify(message)}\0`, (error) => {
+          if (error) this.failAll(this.failure('write pipe', error));
+        });
+      } catch (error) {
+        this.failAll(this.failure('write pipe', error));
+      }
     });
   }
 
@@ -218,6 +243,35 @@ class PipeCdp {
   }
 }
 
+export function chromeVisualBrowserArgs(profileRoot, {
+  env = process.env,
+  getuid = typeof process.getuid === 'function' ? () => process.getuid() : null,
+} = {}) {
+  const args = [
+    '--headless=new',
+    '--remote-debugging-pipe',
+    '--disable-gpu',
+    '--hide-scrollbars',
+    '--disable-background-networking',
+    '--disable-component-update',
+    '--disable-default-apps',
+    '--disable-sync',
+    '--metrics-recording-only',
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--disable-background-timer-throttling',
+    '--disable-backgrounding-occluded-windows',
+    '--disable-renderer-backgrounding',
+    '--force-device-scale-factor=1',
+    `--user-data-dir=${profileRoot}`,
+    'about:blank',
+  ];
+  const rootUser = typeof getuid === 'function' && getuid() === 0;
+  const sandboxOptOut = env?.[CHROME_NO_SANDBOX_ENV] === '1';
+  if (rootUser || sandboxOptOut) args.unshift('--no-sandbox');
+  return args;
+}
+
 async function evaluate(cdp, sessionId, expression, awaitPromise = false) {
   const response = await cdp.send('Runtime.evaluate', {
     expression,
@@ -232,36 +286,35 @@ async function evaluate(cdp, sessionId, expression, awaitPromise = false) {
   return response.result?.value;
 }
 
-class ChromeVisualBrowser {
-  constructor(chromePath) {
+export class ChromeVisualBrowser {
+  constructor(chromePath, {
+    env = process.env,
+    getuid = typeof process.getuid === 'function' ? () => process.getuid() : null,
+    spawnImpl = spawn,
+  } = {}) {
     this.profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-visual-check-profile-'));
-    const args = [
-      '--headless=new',
-      '--remote-debugging-pipe',
-      '--disable-gpu',
-      '--hide-scrollbars',
-      '--disable-background-networking',
-      '--disable-component-update',
-      '--disable-default-apps',
-      '--disable-sync',
-      '--metrics-recording-only',
-      '--no-first-run',
-      '--no-default-browser-check',
-      '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows',
-      '--disable-renderer-backgrounding',
-      '--force-device-scale-factor=1',
-      `--user-data-dir=${this.profileRoot}`,
-      'about:blank',
-    ];
-    if (typeof process.getuid === 'function' && process.getuid() === 0) args.unshift('--no-sandbox');
-    this.child = spawn(chromePath, args, { stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe'] });
     this.stderr = '';
+    const args = chromeVisualBrowserArgs(this.profileRoot, { env, getuid });
+    this.child = spawnImpl(chromePath, args, { stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe'] });
     this.child.stderr.setEncoding('utf8');
     this.child.stderr.on('data', (chunk) => {
       this.stderr = `${this.stderr}${chunk}`.slice(-8000);
     });
-    this.cdp = new PipeCdp(this.child);
+    this.child.stderr.on('error', (error) => {
+      this.stderr = `${this.stderr}\nChrome stderr stream failed: ${error.message}`.trim().slice(-8000);
+    });
+    this.cdp = new PipeCdp(this.child, {
+      failureDetails: () => {
+        const exit = this.child.signalCode
+          ? `signal ${this.child.signalCode}`
+          : this.child.exitCode == null ? 'still running' : `exit code ${this.child.exitCode}`;
+        const stderr = this.stderr.trim();
+        return [
+          `Chrome process: ${exit}.`,
+          stderr ? `Chrome stderr:\n${stderr}` : '',
+        ].filter(Boolean).join('\n');
+      },
+    });
     this.sessionPromise = this.attach();
   }
 
@@ -296,20 +349,96 @@ class ChromeVisualBrowser {
     const navigation = await this.cdp.send('Page.navigate', { url: url.href }, sessionId);
     if (navigation.errorText) throw new Error(`Chrome navigation failed: ${navigation.errorText}`);
     await loaded;
-    await evaluate(this.cdp, sessionId, `new Promise(function (resolve) {
+    await evaluate(this.cdp, sessionId, `(function () {
       document.documentElement.setAttribute('data-motion', 'still');
       var panel = document.querySelector('.diagram-container');
       if (panel) panel.setAttribute('data-detail-level', 'read');
-      requestAnimationFrame(function () { requestAnimationFrame(resolve); });
-    })`, true);
+      var fontsReady = document.fonts && document.fonts.ready
+        ? document.fonts.ready.catch(function () {})
+        : Promise.resolve();
+      return fontsReady.then(function () {
+        if (window.Archify && Archify.readerLayout && typeof Archify.readerLayout.whenStable === 'function') {
+          return Archify.readerLayout.whenStable();
+        }
+      }).then(function () {
+        if (window.Archify && Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.whenStable === 'function') {
+          return Archify.viewerChromeLayout.whenStable();
+        }
+      }).then(function () {
+        if (window.Archify && Archify.readerLayout && typeof Archify.readerLayout.whenStable === 'function') {
+          return Archify.readerLayout.whenStable();
+        }
+      }).then(function () {
+        if (window.Archify && Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.whenStable === 'function') {
+          return Archify.viewerChromeLayout.whenStable();
+        }
+        return new Promise(function (resolve) {
+          requestAnimationFrame(function () { requestAnimationFrame(resolve); });
+        });
+      });
+    })()`, true);
 
-    const metrics = await evaluate(this.cdp, sessionId, `({
-      innerWidth: window.innerWidth,
-      innerHeight: window.innerHeight,
-      scrollWidth: Math.ceil(document.documentElement.scrollWidth),
-      scrollHeight: Math.ceil(document.documentElement.scrollHeight),
-      resolvedTheme: document.documentElement.getAttribute('data-theme') || ''
-    })`);
+    const metrics = await evaluate(this.cdp, sessionId, `(function () {
+      var reader = document.querySelector('.container');
+      var diagram = document.querySelector('.diagram-container');
+      var svg = diagram && diagram.querySelector(':scope > svg');
+      var legend = svg && svg.querySelector('[data-legend]');
+      var navigationDock = diagram && diagram.querySelector('.diagram-nav');
+      var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
+      var diagramWidth = svg ? svg.getBoundingClientRect().width : 0;
+      var viewBoxWidth = viewBox ? viewBox.width : 0;
+      var scale = viewBoxWidth > 0 ? Math.min(1, diagramWidth / viewBoxWidth) : 0;
+      var minimum = null;
+      if (svg && scale > 0) {
+        Array.from(svg.querySelectorAll('text[data-node-label], text[data-boundary-label], text[data-detail="context"]')).forEach(function (text) {
+          var detail = text.hasAttribute('data-node-label')
+            ? 'primary'
+            : text.hasAttribute('data-boundary-label') ? 'boundary' : 'context';
+          if (detail === 'context' && !text.closest('[data-node-id]')) return;
+          var sourceFontPx = parseFloat(text.getAttribute('font-size') || '');
+          if (!Number.isFinite(sourceFontPx)) return;
+          var projectedFontPx = sourceFontPx * scale;
+          if (!minimum || projectedFontPx < minimum.projectedFontPx) {
+            minimum = {
+              text: (text.textContent || '').trim(),
+              detail: detail,
+              sourceFontPx: sourceFontPx,
+              projectedFontPx: projectedFontPx
+            };
+          }
+        });
+      }
+      function intersectionArea(a, b) {
+        if (!a || !b || !a.width || !a.height || !b.width || !b.height) return 0;
+        var width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+        var height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+        return width * height;
+      }
+      var legendRect = legend ? legend.getBoundingClientRect() : null;
+      var navigationDockRect = navigationDock ? navigationDock.getBoundingClientRect() : null;
+      var viewerChromeReceipt = window.Archify && Archify.viewerChromeLayout
+        && typeof Archify.viewerChromeLayout.receipt === 'function'
+        ? Archify.viewerChromeLayout.receipt()
+        : null;
+      return {
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        scrollWidth: Math.ceil(document.documentElement.scrollWidth),
+        scrollHeight: Math.ceil(document.documentElement.scrollHeight),
+        resolvedTheme: document.documentElement.getAttribute('data-theme') || '',
+        readerWidth: reader ? reader.getBoundingClientRect().width : 0,
+        diagramWidth: diagramWidth,
+        viewBoxWidth: viewBoxWidth,
+        minimumProjectedNodeTextPx: minimum ? minimum.projectedFontPx : null,
+        minimumProjectedNodeText: minimum ? minimum.text : null,
+        minimumProjectedNodeTextDetail: minimum ? minimum.detail : null,
+        hasLegend: Boolean(legendRect && legendRect.width && legendRect.height),
+        hasNavigationDock: Boolean(navigationDockRect && navigationDockRect.width && navigationDockRect.height),
+        legendDockIntersectionArea: intersectionArea(legendRect, navigationDockRect),
+        viewerChromeReserve: viewerChromeReceipt ? viewerChromeReceipt.reserve : 0,
+        viewerChromeActive: viewerChromeReceipt ? viewerChromeReceipt.active : false
+      };
+    })()`);
     if (!metrics || !Number.isFinite(metrics.scrollWidth) || !Number.isFinite(metrics.scrollHeight)) {
       throw new Error('Chrome returned incomplete containment metrics.');
     }
@@ -356,6 +485,13 @@ function observation({ width, height, theme, metrics }) {
   const scrollHeight = Number(metrics.scrollHeight);
   const overflowX = scrollWidth > innerWidth;
   const overflowY = scrollHeight > innerHeight;
+  const minimumProjectedNodeTextPx = metrics.minimumProjectedNodeTextPx == null
+    ? null
+    : Number(metrics.minimumProjectedNodeTextPx);
+  const readabilityOk = minimumProjectedNodeTextPx == null
+    || minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX;
+  const legendDockIntersectionArea = Number(metrics.legendDockIntersectionArea) || 0;
+  const viewerChromeOk = legendDockIntersectionArea <= 0.5;
   return {
     width,
     height,
@@ -367,6 +503,20 @@ function observation({ width, height, theme, metrics }) {
     overflowX,
     overflowY,
     ok: !overflowX && !overflowY,
+    readerWidth: Number(metrics.readerWidth) || null,
+    diagramWidth: Number(metrics.diagramWidth) || null,
+    viewBoxWidth: Number(metrics.viewBoxWidth) || null,
+    minimumProjectedNodeTextPx,
+    minimumProjectedNodeText: metrics.minimumProjectedNodeText || null,
+    minimumProjectedNodeTextDetail: metrics.minimumProjectedNodeTextDetail || null,
+    minimumRequiredNodeTextPx: MIN_PROJECTED_NODE_TEXT_PX,
+    readabilityOk,
+    hasLegend: Boolean(metrics.hasLegend),
+    hasNavigationDock: Boolean(metrics.hasNavigationDock),
+    legendDockIntersectionArea,
+    viewerChromeReserve: Number(metrics.viewerChromeReserve) || 0,
+    viewerChromeActive: Boolean(metrics.viewerChromeActive),
+    viewerChromeOk,
     resolvedTheme: metrics.resolvedTheme || theme,
   };
 }
@@ -411,6 +561,8 @@ function baseReceipt({ artifactPath, artifact, outputs, chrome }) {
     state: { detail: 'read', motion: 'still' },
     chrome,
     containment: { status: 'fail', viewports: [] },
+    readability: { status: 'fail', minimumProjectedNodeTextPx: MIN_PROJECTED_NODE_TEXT_PX, viewports: [] },
+    viewerChrome: { status: 'fail', viewports: [] },
     captures: { status: 'fail', screenshots: [], contactSheet: null },
     sidecars: {
       receipt: path.basename(outputs.receipt),
@@ -450,6 +602,8 @@ export async function runVisualCheck({
   if (!resolvedChrome) {
     receipt.status = 'skipped';
     receipt.containment.status = 'skipped';
+    receipt.readability.status = 'skipped';
+    receipt.viewerChrome.status = 'skipped';
     receipt.captures.status = 'skipped';
     receipt.error = 'Chrome or Chromium is unavailable. Set ARCHIFY_CHROME to its executable path.';
     persistReceipt(outputs, receipt);
@@ -496,30 +650,38 @@ export async function runVisualCheck({
     receipt.containment.viewports = VISUAL_CHECK_VIEWPORTS.map(({ width, height }) => (
       observations.get(screenshotKey(width, height, 'light'))
     ));
+    receipt.readability.viewports = receipt.containment.viewports.map((entry) => ({ ...entry }));
+    receipt.viewerChrome.viewports = receipt.containment.viewports.map((entry) => ({ ...entry }));
     receipt.captures.screenshots = outputs.screenshots.map((entry) => ({
       ...observations.get(screenshotKey(entry.width, entry.height, entry.theme)),
       file: path.basename(entry.path),
     }));
     const allObservations = [...observations.values()];
     const containmentPass = allObservations.every((entry) => entry.ok);
+    const readabilityPass = receipt.readability.viewports.every((entry) => entry.readabilityOk);
+    const viewerChromePass = allObservations.every((entry) => entry.viewerChromeOk);
     receipt.containment.status = containmentPass ? 'pass' : 'fail';
+    receipt.readability.status = readabilityPass ? 'pass' : 'fail';
+    receipt.viewerChrome.status = viewerChromePass ? 'pass' : 'fail';
     receipt.captures.status = 'pass';
     receipt.captures.contactSheet = path.basename(outputs.contactSheet);
-    receipt.status = containmentPass ? 'pass' : 'fail';
-    receipt.ok = containmentPass;
+    receipt.status = containmentPass && readabilityPass && viewerChromePass ? 'pass' : 'fail';
+    receipt.ok = containmentPass && readabilityPass && viewerChromePass;
     writeAtomic(outputs.contactSheet, contactSheetHtml({
       artifactPath: artifact,
       receipt,
       screenshots: receipt.captures.screenshots,
     }));
     persistReceipt(outputs, receipt);
-    return { exitCode: containmentPass ? EXIT.pass : EXIT.fail, receipt };
+    return { exitCode: receipt.ok ? EXIT.pass : EXIT.fail, receipt };
   } catch (error) {
     cleanupCaptureSidecars(outputs);
     receipt.status = 'fail';
     receipt.ok = false;
     receipt.error = error.message;
     receipt.containment.status = 'fail';
+    receipt.readability.status = 'fail';
+    receipt.viewerChrome.status = 'fail';
     receipt.captures.status = 'fail';
     receipt.captures.screenshots = [];
     receipt.captures.contactSheet = null;

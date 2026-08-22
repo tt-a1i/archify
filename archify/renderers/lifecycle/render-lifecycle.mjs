@@ -10,6 +10,7 @@ import {
   asArray,
   isFinitePoint,
   rectsOverlap,
+  cleanEndpointSideProblems,
   cleanFlowProblems,
   cleanCrossingProblems,
   cleanAmbiguousCorridorProblems,
@@ -227,6 +228,21 @@ function validateLifecycle() {
     }
   }
 
+  // Authored via points are authoritative in schema v1, including under a
+  // quality profile. Preserve and render them exactly: applying the endpoint
+  // gate would either reject an existing typed input or require silently
+  // falsifying its geometry. Automatic routes still receive the side gate.
+  problems.push(...cleanEndpointSideProblems({
+    relations: lifecycle.transitions,
+    endpointIds: new Set(states.keys()),
+    pathFor,
+    diagramType: 'lifecycle',
+    relationCollection: 'transitions',
+    fromSideFor: (transition) => transitionSides(transition).fromSide,
+    toSideFor: (transition) => transitionSides(transition).toSide,
+    shouldCheckRelation: (transition) => !Array.isArray(transition.via),
+    routeHint: 'keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross state borders perpendicularly',
+  }));
   problems.push(...cleanFlowProblems({
     relations: lifecycle.transitions,
     endpointIds: new Set(states.keys()),
@@ -318,7 +334,7 @@ function validateLifecycle() {
   }
 }
 
-function routeVia(transition, from, to, start, end) {
+function routeVia(transition, from, to, start, end, fromSide, toSide) {
   if (transition.via) return transition.via;
   switch (transition.route || 'auto') {
     case 'straight':
@@ -345,24 +361,46 @@ function routeVia(transition, from, to, start, end) {
     }
     case 'auto':
     default: {
-      if (from.lane === to.lane) return [];
-      const y = transition.channelY ?? (start[1] + end[1]) / 2;
-      return [[start[0], y], [end[0], y]];
+      if (start[0] === end[0] || start[1] === end[1]) return [];
+      const fromVertical = fromSide === 'top' || fromSide === 'bottom';
+      const toVertical = toSide === 'top' || toSide === 'bottom';
+      if (fromVertical !== toVertical) {
+        return [fromVertical ? [start[0], end[1]] : [end[0], start[1]]];
+      }
+      if (fromVertical) {
+        const y = transition.channelY ?? (start[1] + end[1]) / 2;
+        return [[start[0], y], [end[0], y]];
+      }
+      const x = transition.channelX ?? (start[0] + end[0]) / 2;
+      return [[x, start[1]], [x, end[1]]];
     }
   }
 }
 
 const pathCache = new Map();
-const automaticPorts = automaticPortSpread(lifecycle.transitions, states);
+
+function transitionSides(transition) {
+  const from = states.get(transition.from);
+  const to = states.get(transition.to);
+  return {
+    fromSide: chosenSide(transition.fromSide, defaultFromSide(from, to)),
+    toSide: chosenSide(transition.toSide, defaultToSide(from, to)),
+  };
+}
+
+const automaticPorts = automaticPortSpread(lifecycle.transitions, states, {
+  sideFor: (transition, endpoint) => transitionSides(transition)[endpoint === 'source' ? 'fromSide' : 'toSide'],
+});
 
 function pathFor(transition) {
   if (pathCache.has(transition)) return pathCache.get(transition);
   const from = states.get(transition.from);
   const to = states.get(transition.to);
   const ports = automaticPorts.get(transition);
-  const start = ports?.from || anchor(from, chosenSide(transition.fromSide, defaultFromSide(from, to)));
-  const end = ports?.to || anchor(to, chosenSide(transition.toSide, defaultToSide(from, to)));
-  let via = routeVia(transition, from, to, start, end);
+  const { fromSide, toSide } = transitionSides(transition);
+  const start = ports?.from || anchor(from, fromSide);
+  const end = ports?.to || anchor(to, toSide);
+  let via = routeVia(transition, from, to, start, end, fromSide, toSide);
   if (ports && !via.length && Math.abs(start[0] - end[0]) >= 4 && Math.abs(start[1] - end[1]) >= 4) {
     const midX = (start[0] + end[0]) / 2;
     via = [[midX, start[1]], [midX, end[1]]];
@@ -421,7 +459,7 @@ function renderState(state) {
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="c-mask"/>
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="${fill}"${animateAttr(lifecycle.meta, 'node', stateSteps.get(state.id))} stroke-width="1.5"/>
           ${renderSemanticSigil(state.type, { x: hasBrand ? state.x + 6 : state.x + state.width - 17, y: state.y + 6 })}${brand ? `\n          ${brand}` : ''}${step}
-          <text${hasSub ? ' data-detail-anchor' : ''} x="${state.cx}" y="${state.y + 21}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}
+          <text data-node-label${hasSub ? ' data-detail-anchor' : ''} x="${state.cx}" y="${state.y + 21}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}
         </g>`;
 }
 

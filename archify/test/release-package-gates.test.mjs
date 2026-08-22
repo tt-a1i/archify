@@ -144,6 +144,37 @@ test('package smoke rejects every dependency metadata field in a built package',
   }
 });
 
+test('archive build excludes untracked files and external symlinks from the live working tree', () => {
+  const marker = `.package-negative-${process.pid}-${Date.now()}`;
+  const untracked = path.join(repoRoot, 'archify', `${marker}.txt`);
+  const externalRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-external-'));
+  const externalTarget = path.join(externalRoot, 'secret.txt');
+  const externalLink = path.join(repoRoot, 'archify', `${marker}.link`);
+  const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-negative-'));
+  const archive = path.join(outputRoot, 'archify.zip');
+
+  try {
+    fs.writeFileSync(untracked, 'must not ship\n');
+    fs.writeFileSync(externalTarget, 'external content must not ship\n');
+    fs.symlinkSync(externalTarget, externalLink, 'file');
+
+    const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+    });
+    assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
+
+    const listing = spawnSync('unzip', ['-Z1', archive], { encoding: 'utf8' });
+    assert.equal(listing.status, 0, `${listing.stdout}\n${listing.stderr}`);
+    assert.doesNotMatch(listing.stdout, new RegExp(marker), 'untracked files and symlinks must not enter the archive');
+  } finally {
+    fs.rmSync(untracked, { force: true });
+    fs.rmSync(externalLink, { force: true });
+    fs.rmSync(externalRoot, { recursive: true, force: true });
+    fs.rmSync(outputRoot, { recursive: true, force: true });
+  }
+});
+
 test('CI tests the declared Node floor plus every maintained current lane', () => {
   const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'archify', 'package.json'), 'utf8'));
   assert.equal(packageJson.engines?.node, '>=18');

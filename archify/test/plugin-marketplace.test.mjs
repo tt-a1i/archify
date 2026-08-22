@@ -135,6 +135,51 @@ test('the plugin leaf stays fresh against the Skill SSoT', () => {
   assert.match(check.stdout, /plugin leaf is fresh/);
 });
 
+test('the plugin release receipt matches host-visible bytes', () => {
+  const check = spawnSync(process.execPath, [path.join(repoRoot, 'scripts', 'check-plugin-release.mjs')], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  });
+  assert.equal(check.status, 0, check.stderr || check.stdout);
+  assert.match(check.stdout, /plugin release identity ok: 0\.1\.0/);
+});
+
+test('the plugin release gate rejects changed bytes without a version bump', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-plugin-release-'));
+  const gate = path.join(repoRoot, 'scripts', 'check-plugin-release.mjs');
+  const writeJson = (relative, value) => {
+    const target = path.join(fixture, relative);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, `${JSON.stringify(value, null, 2)}\n`);
+  };
+  try {
+    writeJson('.claude-plugin/marketplace.json', { plugins: [{ version: pluginVersion }] });
+    writeJson('.grok-plugin/marketplace.json', { plugins: [{ version: pluginVersion }] });
+    writeJson('.agents/plugins/marketplace.json', { plugins: [] });
+    writeJson('package.json', { name: 'archify', private: true });
+    for (const relative of [
+      'plugins/archify/plugin.json',
+      'plugins/archify/.claude-plugin/plugin.json',
+      'plugins/archify/.codex-plugin/plugin.json',
+    ]) {
+      writeJson(relative, { name: 'archify', version: pluginVersion });
+    }
+    fs.writeFileSync(path.join(fixture, 'plugins/archify/.codex-plugin/openai.yaml'), 'name: archify\n');
+    fs.mkdirSync(path.join(fixture, 'plugins/archify/skills/archify'), { recursive: true });
+    const payload = path.join(fixture, 'plugins/archify/skills/archify/SKILL.md');
+    fs.writeFileSync(payload, '# archify\n');
+
+    const receipt = spawnSync(process.execPath, [gate, '--root', fixture, '--write'], { encoding: 'utf8' });
+    assert.equal(receipt.status, 0, receipt.stderr || receipt.stdout);
+    fs.appendFileSync(payload, 'changed\n');
+    const check = spawnSync(process.execPath, [gate, '--root', fixture], { encoding: 'utf8' });
+    assert.notEqual(check.status, 0);
+    assert.match(check.stderr, /plugin bytes changed without a version increment/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
 test('Pi package declares the existing skill directory and does not add runtime deps', () => {
   const root = json('package.json');
   assert.equal(root.private, true);
@@ -222,11 +267,7 @@ test('copyableTrackedSkillPath refuses a leaf symlink without following it', () 
 
 test('the skill zip excludes host-plugin manifests so npx skills add stays unchanged', () => {
   const buildZip = read('scripts/build-zip.sh');
-  for (const exclude of ['.claude-plugin', '.codex-plugin', 'plugin.json', 'skills', 'agents']) {
-    assert.match(
-      buildZip,
-      new RegExp(`--exclude '${exclude.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`),
-      `${exclude} must stay out of archify.zip`,
-    );
-  }
+  assert.match(buildZip, /git -C "\$repo_root" ls-files -z -- archify/);
+  assert.doesNotMatch(buildZip, /\brsync\b/);
+  assert.doesNotMatch(buildZip, /plugins\/archify/, 'the plugin payload must stay out of archify.zip');
 });

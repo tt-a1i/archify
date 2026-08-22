@@ -96,19 +96,19 @@ Export 菜单支持复制 PNG，并下载静态或动态格式：
 npx skills add tt-a1i/archify -g
 ```
 
-显式、非交互地安装到 Cursor：
+以上 Skills CLI 命令仍是默认回退方案。原生插件 `0.1.0` 与 Skill `2.15.0` 独立版本管理，也可使用：
 
 ```bash
+# Claude Code
+claude plugin marketplace add tt-a1i/archify && claude plugin install archify
+# Codex CLI
+codex plugin marketplace add tt-a1i/archify && codex plugin add archify@archify
+# Grok
+grok plugin marketplace add tt-a1i/archify && grok plugin install archify --trust && grok plugin enable archify
+# Pi
+pi install git:github.com/tt-a1i/archify
 npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
 ```
-
-如果只想临时体验：
-
-```bash
-npx skills use tt-a1i/archify@archify --agent codex
-```
-
-DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@0.1.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。
 
 [Agent 切换器](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)只为 `cursor`、`codex`、`claude-code` 和 `opencode` 生成命令。Raven 仅支持 ZIP 手动安装：将 [`archify.zip`](archify.zip) 解压到 `~/.raven/workspace/skills`，解压后会得到 `~/.raven/workspace/skills/archify`；Raven 不属于切换器目标。
 
@@ -271,6 +271,7 @@ Claude.ai 中的上传入口：
 - [Schema 说明](archify/schemas/README.md)
 - [Skill 与 Renderer 契约](archify/SKILL.md)
 - [示例](archify/examples/)
+- [Agent 编图手册](docs/authoring-cookbook.zh-CN.md) · [English](docs/authoring-cookbook.md)
 - [版本历史](CHANGELOG.md)
 - [路线图](ROADMAP.md)
 - [自动生成的 Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
@@ -284,3 +285,5 @@ Claude.ai 中的上传入口：
 ## 参与贡献
 
 欢迎提交 Issue、Pull Request 和真实场景图。请先阅读[贡献指南](CONTRIBUTING.md)；遇到问题时使用可复现 Bug 表单，也可以通过[社区 Showcase 表单](https://github.com/tt-a1i/archify/issues/new?template=showcase.yml)提交已验证成品。
+
+较大的功能或行为调整请先通过 Issue 对齐价值、兼容边界和非目标，再基于最新 `main` 开发。一个 PR 尽量只解决一个问题；核心代码和回归测试先行，生成物最后统一重建。Archify 坚持 Agent-first，优先完善稳定的机器可读诊断和现有权威合同，避免新增容易与 CLI 漂移的重复说明。

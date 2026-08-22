@@ -9,34 +9,44 @@ if [[ "$out" != /* ]]; then
   out="$(pwd)/$out"
 fi
 
-# Stage a clean copy: node_modules never ships; test/ is repo-only (the golden
-# harness compares against ../examples at the repo root, which does not exist
-# in an installed skill); local agent coordination folders are also excluded so
-# a developer's working tree cannot leak into the distributable archive. The npm
-# scripts and build-only dependencies are stripped from the shipped
-# package.json. Runtime schema validation is provided by the committed
-# standalone validators, so installing the skill never requires npm install.
+# Stage only files tracked by Git. This keeps untracked working-tree content out
+# of the archive, and rejecting tracked paths that are symlinks prevents an
+# archive build from reading through links to content outside the repository.
+# test/ is repo-only (the golden harness compares against ../examples at the
+# repo root, which does not exist in an installed skill). The npm scripts and
+# build-only dependencies are stripped from the shipped package.json. Runtime
+# schema validation is provided by the committed standalone validators, so
+# installing the skill never requires npm install.
 stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
 if [[ ! -f "$repo_root/archify/renderers/shared/generated-validators.mjs" ]]; then
   echo 'generated validators are missing — run npm run generate:validators in archify/' >&2
   exit 1
 fi
-rsync -a \
-  --exclude 'node_modules' \
-  --exclude 'test' \
-  --exclude 'scripts/generate-brand-marks.mjs' \
-  --exclude 'scripts/generate-validators.mjs' \
-  --exclude '.DS_Store' \
-  --exclude '.hive' \
-  --exclude '.workbuddy' \
-  --exclude '.validator-check-*' \
-  --exclude '.claude-plugin' \
-  --exclude '.codex-plugin' \
-  --exclude 'plugin.json' \
-  --exclude 'skills' \
-  --exclude 'agents' \
-  "$repo_root/archify/" "$stage/archify/"
+while IFS= read -r -d '' tracked; do
+  case "$tracked" in
+    archify/test | archify/test/* | \
+    archify/package-lock.json | \
+    archify/scripts/generate-brand-marks.mjs | \
+    archify/scripts/generate-validators.mjs)
+      continue
+      ;;
+  esac
+
+  source="$repo_root/$tracked"
+  if [[ -L "$source" ]]; then
+    echo "refusing to package tracked symlink: $tracked" >&2
+    exit 1
+  fi
+  if [[ ! -f "$source" ]]; then
+    echo "tracked package input is missing or not a regular file: $tracked" >&2
+    exit 1
+  fi
+
+  target="$stage/$tracked"
+  mkdir -p "$(dirname "$target")"
+  cp -p "$source" "$target"
+done < <(git -C "$repo_root" ls-files -z -- archify)
 node -e "
   const fs = require('fs');
   const p = '$stage/archify/package.json';

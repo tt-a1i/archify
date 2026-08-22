@@ -45,6 +45,24 @@ jobs:
         working-directory: archify
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+      - name: Verify the real 1440x900 adaptive reader remains readable
+        run: node --test test/desktop-reader-browser.test.mjs
+        working-directory: archify
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - name: Verify Semantic Radar collision and drag behavior
+        run: node --test test/semantic-radar.test.mjs
+        working-directory: archify
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - name: Verify Viewer chrome stays clear of SVG legends
+        run: node --test test/viewer-chrome-layout.test.mjs
+        working-directory: archify
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
 
   plugin-leaf:
     runs-on: ubuntu-latest
@@ -55,6 +73,8 @@ jobs:
           node-version: 22
       - name: Generated plugin leaf must match the Skill SSoT
         run: node scripts/build-plugin-leaf.mjs --check
+      - name: Plugin bytes must match their immutable release identity
+        run: node scripts/check-plugin-release.mjs
       - name: Hosted-cwd doctor must pass from outside the skill directory
         run: |
           set -euo pipefail

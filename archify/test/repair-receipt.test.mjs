@@ -146,4 +146,36 @@ test('repair receipt: repository evidence failures retain a stable rule and exac
   assert.deepEqual(repair.supportedFixes, ['pass --repo-root with the matching local Git checkout']);
 });
 
+test('repair receipt: public validate reports borderline desktop readability with a supported fix', () => {
+  const input = writeFixture('borderline-readability.architecture.json', {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: {
+      title: 'Borderline desktop readability',
+      quality_profile: 'showcase',
+      viewBox: [1826, 804],
+    },
+    components: [{
+      id: 'tool-runtime',
+      type: 'security',
+      label: 'ToolRuntime',
+      sublabel: 'OpenAI · Anthropic · provider gateways',
+      pos: [100, 100],
+      size: [194, 70],
+    }],
+    connections: [],
+  });
+  const result = run(['validate', 'architecture', input, '--quality', 'showcase', '--json']);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.equal(result.stderr, '');
+  const repair = receipt(result).diagnostics.find(
+    (entry) => entry.code === 'composition/desktop-readability',
+  );
+  assert.ok(repair);
+  assert.deepEqual(repair.subject, { check: 'composition' });
+  assert.ok(repair.evidence.projectedFontPx < repair.evidence.minimumProjectedFontPx);
+  assert.ok(repair.supportedFixes.some((fix) => fix.includes('reduce the viewBox width')));
+});
+
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

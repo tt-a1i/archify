@@ -39,7 +39,7 @@
       "type": "external",
       "label": "Callers",
       "sublabel": "human · coding agent",
-      "pos": [20, 300],
+      "pos": [5, 250],
       "size": [130, 60]
     },
     {
@@ -47,8 +47,8 @@
       "type": "frontend",
       "label": "Entry Surfaces",
       "sublabel": "npm shim · Python CLI · MCP",
-      "pos": [190, 300],
-      "size": [150, 60],
+      "pos": [175, 250],
+      "size": [160, 60],
       "sources": [
         { "path": "bin/mco.js", "line": 1, "label": "npm entry" },
         { "path": "runtime/mcp_server.py", "line": 108, "end_line": 153, "label": "MCP entry" }
@@ -59,8 +59,8 @@
       "type": "backend",
       "label": "Command Router",
       "sublabel": "run · review · doctor · session",
-      "pos": [390, 300],
-      "size": [150, 60],
+      "pos": [360, 250],
+      "size": [180, 60],
       "sources": [
         { "path": "runtime/cli.py", "line": 1945, "label": "CLI main" }
       ]
@@ -70,8 +70,8 @@
       "type": "database",
       "label": "Config + Selection",
       "sublabel": "files · explicit provider team",
-      "pos": [600, 130],
-      "size": [160, 60],
+      "pos": [565, 110],
+      "size": [175, 60],
       "tag": "no silent team",
       "sources": [
         { "path": "runtime/config.py", "line": 24, "label": "Review config" }
@@ -82,8 +82,8 @@
       "type": "security",
       "label": "Execution Policy",
       "sublabel": "read_only · write · yolo",
-      "pos": [600, 300],
-      "size": [160, 60],
+      "pos": [565, 250],
+      "size": [175, 60],
       "tag": "explicit boundary",
       "sources": [
         { "path": "runtime/policy.py", "line": 34, "label": "Provider policy" }
@@ -94,8 +94,8 @@
       "type": "backend",
       "label": "Invocation Workflow",
       "sublabel": "parallel · chain · debate · synthesize",
-      "pos": [820, 300],
-      "size": [170, 60],
+      "pos": [765, 250],
+      "size": [220, 60],
       "sources": [
         { "path": "runtime/invocation_runtime.py", "line": 696, "label": "Workflow entry" },
         { "path": "runtime/invocation_runtime.py", "line": 156, "label": "Single invocation" }
@@ -106,8 +106,8 @@
       "type": "messagebus",
       "label": "Provider Adapters",
       "sublabel": "shim / ACP · detect · run · poll · cancel",
-      "pos": [1050, 300],
-      "size": [170, 60],
+      "pos": [1010, 250],
+      "size": [230, 60],
       "sources": [
         { "path": "runtime/adapters/__init__.py", "line": 57, "label": "Adapter registry" },
         { "path": "runtime/contracts.py", "line": 77, "label": "Provider contract" }
@@ -118,7 +118,7 @@
       "type": "external",
       "label": "Provider CLIs",
       "sublabel": "Claude · Codex · Pi · 7 more",
-      "pos": [1530, 300],
+      "pos": [1035, 0],
       "size": [180, 60]
     },
     {
@@ -126,8 +126,8 @@
       "type": "messagebus",
       "label": "Answer Transport",
       "sublabel": "plain · JSON · JSONL · ACP events",
-      "pos": [1050, 500],
-      "size": [170, 60],
+      "pos": [765, 420],
+      "size": [190, 60],
       "sources": [
         { "path": "runtime/answer_transport.py", "line": 79, "label": "Transport decoders" }
       ]
@@ -137,7 +137,7 @@
       "type": "cloud",
       "label": "Invocation Artifacts",
       "sublabel": "answers · result.md · run.json",
-      "pos": [1260, 500],
+      "pos": [1010, 420],
       "size": [170, 60],
       "tag": "raw evidence",
       "sources": [
@@ -149,7 +149,7 @@
       "type": "external",
       "label": "Output Consumers",
       "sublabel": "terminal · calling agent · CI",
-      "pos": [1530, 500],
+      "pos": [1005, 520],
       "size": [180, 60]
     },
     {
@@ -157,8 +157,8 @@
       "type": "backend",
       "label": "Session Daemon",
       "sublabel": "detached worker · Unix socket",
-      "pos": [385, 500],
-      "size": [160, 60],
+      "pos": [365, 420],
+      "size": [170, 60],
       "sources": [
         { "path": "runtime/session/daemon.py", "line": 50, "label": "Daemon context" }
       ]
@@ -168,8 +168,8 @@
       "type": "database",
       "label": "Session State",
       "sublabel": "state.json · history.jsonl",
-      "pos": [600, 500],
-      "size": [160, 60],
+      "pos": [565, 420],
+      "size": [170, 60],
       "tag": ".mco/sessions",
       "sources": [
         { "path": "runtime/session/state.py", "line": 25, "label": "Session state" }
@@ -232,14 +232,16 @@
       "from": "adapters",
       "to": "provider_clis",
       "label": "native CLI / ACP",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
     },
     {
       "id": "adapters-answer",
       "from": "adapters",
       "to": "answer_transport",
       "label": "decode events",
-      "labelAt": [1135, 430],
+      "labelAt": [995, 365],
       "fromSide": "bottom",
       "toSide": "top"
     },
@@ -254,14 +256,17 @@
       "from": "artifacts",
       "to": "consumers",
       "label": "raw answers",
-      "variant": "emphasis"
+      "labelAt": [1095, 510],
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
     },
     {
       "id": "router-session",
       "from": "router",
       "to": "session_daemon",
       "label": "start · send · resume",
-      "labelAt": [465, 430],
+      "labelAt": [450, 365],
       "variant": "dashed",
       "fromSide": "bottom",
       "toSide": "top",
@@ -272,6 +277,7 @@
       "from": "session_daemon",
       "to": "session_state",
       "label": "persist",
+      "labelAt": [550, 406],
       "variant": "dashed"
     }
   ],

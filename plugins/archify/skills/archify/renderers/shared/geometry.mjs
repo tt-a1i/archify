@@ -257,7 +257,11 @@ export function routeHonorsEndpointSides(points, fromSide, toSide) {
 
 // Explicit fromSide/toSide are authored geometry, so a tangent or backwards
 // endpoint segment changes their meaning. Fail this universally instead of
-// leaving a malformed arrow for visual review to discover.
+// leaving a malformed arrow for visual review to discover. Named routes and
+// authored via points already carry their own geometry semantics: when they
+// omit endpoint sides, do not invent a relative-position side and then reject
+// the route for disagreeing with that invention. Pure automatic routes may
+// still be checked against renderer-inferred sides.
 export function cleanEndpointSideProblems({
   relations,
   endpointIds,
@@ -266,17 +270,28 @@ export function cleanEndpointSideProblems({
   relationCollection,
   fromSideFor,
   toSideFor,
+  shouldCheckRelation = () => true,
   routeHint = 'align the first/final via segment with fromSide/toSide, change the side, or remove explicit routing so auto can choose a perpendicular approach',
 }) {
   const problems = [];
   for (const [relationIndex, relation] of asArray(relations).entries()) {
     if (!relation || !endpointIds?.has(relation.from) || !endpointIds?.has(relation.to)) continue;
+    if (!shouldCheckRelation(relation, relationIndex)) continue;
     const points = pathFor(relation)?.points;
     if (!Array.isArray(points) || points.length < 2) continue;
     const authoredFromSide = relation.fromSide && relation.fromSide !== 'auto' ? relation.fromSide : null;
     const authoredToSide = relation.toSide && relation.toSide !== 'auto' ? relation.toSide : null;
-    const fromSide = (typeof fromSideFor === 'function' ? fromSideFor(relation) : null) ?? authoredFromSide;
-    const toSide = (typeof toSideFor === 'function' ? toSideFor(relation) : null) ?? authoredToSide;
+    const hasAuthoredRouteGeometry = Boolean(
+      (relation.route && relation.route !== 'auto') || Array.isArray(relation.via),
+    );
+    const inferredFromSide = !hasAuthoredRouteGeometry && typeof fromSideFor === 'function'
+      ? fromSideFor(relation)
+      : null;
+    const inferredToSide = !hasAuthoredRouteGeometry && typeof toSideFor === 'function'
+      ? toSideFor(relation)
+      : null;
+    const fromSide = authoredFromSide ?? inferredFromSide;
+    const toSide = authoredToSide ?? inferredToSide;
     const checks = [
       fromSide
         ? { ...endpointSideIssue(points, 'source', fromSide), sideOrigin: authoredFromSide ? 'authored' : 'inferred' }
@@ -1107,7 +1122,7 @@ export function automaticPortRhythmBridge(
 // Keep conservative auto-routed fan-out/fan-in relationships visually
 // distinct without changing authored route controls. The returned map only
 // contains endpoints that belong to a shared automatic midpoint anchor.
-export function automaticPortSpread(relations, boxes, { gutter = 16, maxSpacing = 14 } = {}) {
+export function automaticPortSpread(relations, boxes, { gutter = 16, maxSpacing = 14, sideFor } = {}) {
   const groups = new Map();
   const spread = new Map();
 
@@ -1124,8 +1139,14 @@ export function automaticPortSpread(relations, boxes, { gutter = 16, maxSpacing 
     const from = boxes.get(relation.from);
     const to = boxes.get(relation.to);
     if (!from || !to) continue;
-    const fromSide = chosenSide(relation.fromSide, defaultFromSide(from, to));
-    const toSide = chosenSide(relation.toSide, defaultToSide(from, to));
+    const fromSide = chosenSide(
+      relation.fromSide,
+      sideFor?.(relation, 'source') || defaultFromSide(from, to),
+    );
+    const toSide = chosenSide(
+      relation.toSide,
+      sideFor?.(relation, 'target') || defaultToSide(from, to),
+    );
     add(relation, 'from', from, fromSide, to);
     add(relation, 'to', to, toSide, from);
   }

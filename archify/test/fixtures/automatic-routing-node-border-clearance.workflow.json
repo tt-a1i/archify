@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "自动连线节点边框避让回归",
+    "quality_profile": "showcase",
+    "viewBox": [720, 360]
+  },
+  "lanes": [
+    { "id": "orchestrator", "label": "Orchestrator PTY" },
+    { "id": "runtime", "label": "Hive Runtime" }
+  ],
+  "nodes": [
+    {
+      "id": "team_send",
+      "lane": "orchestrator",
+      "col": 2,
+      "type": "backend",
+      "label": "team send 派单",
+      "sublabel": "选择目标 Worker"
+    },
+    {
+      "id": "inject",
+      "lane": "runtime",
+      "col": 1,
+      "type": "security",
+      "label": "校验并注入输入",
+      "sublabel": "UI token → PTY stdin"
+    }
+  ],
+  "edges": [
+    {
+      "id": "stdin",
+      "from": "inject",
+      "to": "team_send",
+      "label": "PTY stdin",
+      "variant": "emphasis"
+    }
+  ]
+}

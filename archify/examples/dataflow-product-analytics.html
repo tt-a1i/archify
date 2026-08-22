@@ -586,6 +586,7 @@
       justify-content: center;
       min-height: 0;
       padding: 0.75rem;
+      padding-bottom: calc(0.75rem + var(--archify-nav-reserve));
     }
     html[data-present="true"]:not([data-embed="true"]) .diagram-container > svg {
       width: 100%;
@@ -722,10 +723,12 @@
     }
 
     .diagram-container {
+      --archify-nav-reserve: 0px;
       background: var(--panel);
       border-radius: 1rem;
       border: 1px solid var(--panel-border);
       padding: 1.5rem;
+      padding-bottom: calc(1.5rem + var(--archify-nav-reserve));
       overflow: hidden;
       position: relative;
     }
@@ -1052,7 +1055,7 @@
     .overview-map {
       position: absolute;
       right: 1rem;
-      bottom: 4.15rem;
+      bottom: calc(4.15rem + var(--archify-nav-reserve));
       z-index: 12;
       width: 11.25rem;
       overflow: hidden;
@@ -1085,6 +1088,36 @@
       padding: 0.42rem 0.48rem 0.38rem 0.55rem;
       border-bottom: 1px solid var(--toolbar-border);
       background: linear-gradient(110deg, color-mix(in srgb, var(--frontend-fill) 45%, transparent), transparent 68%);
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+    .overview-map[data-panel-dragging="true"] .overview-map-head { cursor: grabbing; }
+    .overview-map[data-placement-invalid="true"] {
+      border-color: var(--security-stroke);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--security-stroke) 34%, transparent), 0 16px 42px rgba(0, 0, 0, 0.3);
+    }
+    .overview-map[data-compact="true"] {
+      width: 7.4rem;
+    }
+    .overview-map[data-compact="true"] .overview-map-head {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.24rem;
+      min-height: 1.5rem;
+      padding: 0.05rem 0.16rem 0.05rem 0.32rem;
+      border-bottom: 0;
+    }
+    .overview-map[data-compact="true"] .overview-map-live,
+    .overview-map[data-compact="true"] .overview-map-copy,
+    .overview-map[data-compact="true"] .overview-map-surface,
+    .overview-map[data-compact="true"] .overview-map-hint {
+      display: none;
+    }
+    .overview-map[data-compact="true"] .overview-map-expand { display: inline-flex; }
+    .overview-map[data-compact="true"] .overview-map-close {
+      width: 1.15rem;
+      height: 1.15rem;
+      font-size: 0.72rem;
     }
     .overview-map-live {
       width: 0.42rem;
@@ -1115,6 +1148,26 @@
       white-space: nowrap;
       text-overflow: ellipsis;
     }
+    .overview-map-expand {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      height: 1.2rem;
+      padding: 0 0.34rem;
+      overflow: hidden;
+      border: 0;
+      border-radius: 0.3rem;
+      background: transparent;
+      color: var(--frontend-stroke);
+      font: inherit;
+      font-size: 0.49rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      cursor: pointer;
+    }
     .overview-map-close {
       width: 1.55rem;
       height: 1.55rem;
@@ -1127,8 +1180,11 @@
       font-size: 0.9rem;
       cursor: pointer;
     }
+    .overview-map-expand:hover,
+    .overview-map-expand:focus-visible,
     .overview-map-close:hover,
     .overview-map-close:focus-visible { background: var(--toolbar-hover); }
+    .overview-map-expand:focus-visible,
     .overview-map-close:focus-visible,
     .overview-map-surface:focus-visible,
     .overview-map-node:focus-visible {
@@ -1210,6 +1266,24 @@
       color: var(--frontend-stroke);
       background: var(--toolbar-hover);
     }
+    .overview-map-feedback {
+      position: absolute;
+      right: 1rem;
+      bottom: 4.15rem;
+      z-index: 13;
+      max-width: min(16rem, calc(100% - 2rem));
+      padding: 0.38rem 0.55rem;
+      border: 1px solid color-mix(in srgb, var(--frontend-stroke) 52%, var(--toolbar-border));
+      border-radius: 0.5rem;
+      background: var(--toolbar-menu-bg);
+      color: var(--toolbar-text);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      font-size: 0.52rem;
+      line-height: 1.35;
+      pointer-events: none;
+    }
+    .overview-map-feedback[hidden] { display: none; }
+    .focus-chip[data-radar-yielded="true"] { display: none !important; }
     .diagram-nav #btn-route-probe[aria-pressed="true"] {
       color: var(--backend-stroke);
       background: var(--toolbar-hover);
@@ -1226,7 +1300,7 @@
     .semantic-lens {
       position: absolute;
       right: 1rem;
-      bottom: 4.15rem;
+      bottom: calc(4.15rem + var(--archify-nav-reserve));
       z-index: 24;
       width: min(20rem, calc(100% - 2rem));
       overflow: hidden;
@@ -1401,7 +1475,7 @@
     .route-probe {
       position: absolute;
       left: 1rem;
-      bottom: 1rem;
+      bottom: calc(1rem + var(--archify-nav-reserve));
       z-index: 12;
       width: min(46rem, calc(100% - 25rem));
       min-width: 18rem;
@@ -2800,11 +2874,15 @@
        scrolling at 900–1080px heights. */
     @media (min-width: 768px) and (max-height: 1100px) {
       .header { margin-bottom: 1rem; }
-      .diagram-container { padding: 0.875rem; }
+      .diagram-container {
+        padding: 0.875rem;
+        padding-bottom: calc(0.875rem + var(--archify-nav-reserve));
+      }
       .cards { margin-top: 1rem; }
       .card { padding: 1rem; }
     }
     @media (min-width: 768px) and (max-height: 920px) {
+      body { padding-block: 1.25rem; }
       .header { margin-bottom: 0.875rem; }
       .cards { margin-top: 0.75rem; }
     }
@@ -2921,6 +2999,7 @@
       svg[data-chapter-preview] [data-node-id],
       svg[data-chapter-preview] [data-edge-from] { opacity: 1 !important; filter: none !important; }
       .diagram-container, .card { box-shadow: none; border-color: #e2e8f0; }
+      .diagram-container { --archify-nav-reserve: 0px !important; }
       html[data-preset="signal-flow"] .diagram-container,
       html[data-preset="signal-flow"] .card { background: #ffffff; }
       .cards { grid-template-columns: 1fr 1fr; }
@@ -3572,16 +3651,17 @@
         width: min(10.25rem, calc(100% - 1rem));
       }
       .overview-map[data-docked="true"] {
-        right: 0.5rem;
+        right: var(--archify-radar-right, 0.5rem);
         top: var(--archify-radar-top, 0.5rem);
         bottom: auto;
         transform: none !important;
       }
       .overview-map[data-docked="true"][data-dock-side="left"] {
         right: auto;
-        left: 0.5rem;
+        left: var(--archify-radar-left, 0.5rem);
       }
       .overview-map-surface { height: 4rem; }
+      .overview-map-feedback { right: 0.5rem; bottom: 3.7rem; }
       .semantic-lens {
         right: 0.5rem;
         bottom: 3.7rem;
@@ -4976,7 +5056,7 @@
             <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
-          <text data-detail-anchor x="100" y="149" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Web App</text>
+          <text data-node-label data-detail-anchor x="100" y="149" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Web App</text>
           <text data-detail="context" x="100" y="165" class="t-muted" font-size="7" text-anchor="middle">browser SDK</text>
         <text data-detail="fine" x="100" y="175" class="t-frontend" font-size="7" text-anchor="middle">events</text>
         </g>
@@ -4991,7 +5071,7 @@
             <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
-          <text data-detail-anchor x="100" y="377" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Mobile</text>
+          <text data-node-label data-detail-anchor x="100" y="377" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Mobile</text>
           <text data-detail="context" x="100" y="393" class="t-muted" font-size="7" text-anchor="middle">iOS / Android</text>
         <text data-detail="fine" x="100" y="403" class="t-frontend" font-size="7" text-anchor="middle">events</text>
         </g>
@@ -5003,7 +5083,7 @@
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(265 248) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-detail-anchor x="315" y="263" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Edge API</text>
+          <text data-node-label data-detail-anchor x="315" y="263" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Edge API</text>
           <text data-detail="context" x="315" y="279" class="t-muted" font-size="7" text-anchor="middle">collector</text>
         <text data-detail="fine" x="315" y="289" class="t-cloud" font-size="7" text-anchor="middle">TLS</text>
         </g>
@@ -5016,7 +5096,7 @@
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-detail-anchor x="530" y="149" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Consent Gate</text>
+          <text data-node-label data-detail-anchor x="530" y="149" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Consent Gate</text>
           <text data-detail="context" x="530" y="165" class="t-muted" font-size="7" text-anchor="middle">policy filter</text>
         <text data-detail="fine" x="530" y="175" class="t-security" font-size="7" text-anchor="middle">PII guard</text>
         </g>
@@ -5031,7 +5111,7 @@
             <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-detail-anchor x="530" y="377" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Event Stream</text>
+          <text data-node-label data-detail-anchor x="530" y="377" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Event Stream</text>
           <text data-detail="context" x="530" y="393" class="t-muted" font-size="7" text-anchor="middle">Kafka topic</text>
         <text data-detail="fine" x="530" y="403" class="t-messagebus" font-size="7" text-anchor="middle">ordered</text>
         </g>
@@ -5044,7 +5124,7 @@
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-detail-anchor x="745" y="149" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">PII Vault</text>
+          <text data-node-label data-detail-anchor x="745" y="149" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">PII Vault</text>
           <text data-detail="context" x="745" y="165" class="t-muted" font-size="7" text-anchor="middle">encrypted</text>
         <text data-detail="fine" x="745" y="175" class="t-security" font-size="7" text-anchor="middle">restricted</text>
         </g>
@@ -5057,7 +5137,7 @@
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-detail-anchor x="745" y="377" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Warehouse</text>
+          <text data-node-label data-detail-anchor x="745" y="377" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Warehouse</text>
           <text data-detail="context" x="745" y="393" class="t-muted" font-size="7" text-anchor="middle">analytics tables</text>
         <text data-detail="fine" x="745" y="403" class="t-database" font-size="7" text-anchor="middle">curated</text>
         </g>
@@ -5070,7 +5150,7 @@
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-detail-anchor x="745" y="605" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Feature Store</text>
+          <text data-node-label data-detail-anchor x="745" y="605" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Feature Store</text>
           <text data-detail="context" x="745" y="621" class="t-muted" font-size="7" text-anchor="middle">daily batch</text>
         <text data-detail="fine" x="745" y="631" class="t-database" font-size="7" text-anchor="middle">derived</text>
         </g>
@@ -5082,7 +5162,7 @@
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(910 248) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-detail-anchor x="960" y="263" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Dashboards</text>
+          <text data-node-label data-detail-anchor x="960" y="263" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Dashboards</text>
           <text data-detail="context" x="960" y="279" class="t-muted" font-size="7" text-anchor="middle">product metrics</text>
         <text data-detail="fine" x="960" y="289" class="t-backend" font-size="7" text-anchor="middle">SQL</text>
         </g>
@@ -5094,7 +5174,7 @@
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(910 590) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-detail-anchor x="960" y="605" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">ML Model</text>
+          <text data-node-label data-detail-anchor x="960" y="605" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">ML Model</text>
           <text data-detail="context" x="960" y="621" class="t-muted" font-size="7" text-anchor="middle">ranking job</text>
         <text data-detail="fine" x="960" y="631" class="t-backend" font-size="7" text-anchor="middle">features</text>
         </g>
@@ -5340,11 +5420,13 @@
             <strong id="overview-map-title">Semantic radar</strong>
             <small id="overview-map-status" aria-live="polite">Building overview</small>
           </span>
+          <button class="overview-map-expand" id="overview-map-expand" type="button" aria-label="Open full semantic radar">Open radar</button>
           <button class="overview-map-close" id="overview-map-close" type="button" aria-label="Close semantic radar">&#215;</button>
         </div>
         <div class="overview-map-surface" id="overview-map-surface" tabindex="0" role="group" aria-label="Diagram overview. Click a node to focus it, or use arrow keys to pan."></div>
         <div class="overview-map-hint" aria-hidden="true"><span>Click node</span><span>Drag to pan</span></div>
       </div>
+      <p class="overview-map-feedback no-print" id="overview-map-feedback" role="status" aria-live="polite" hidden>Semantic radar needs more MAP space.</p>
       <div class="diagram-nav no-print" role="toolbar" aria-label="Diagram view controls">
         <button id="btn-route-probe" type="button" aria-label="Trace a directed route" aria-pressed="false" aria-controls="route-probe" title="Trace route (R)">PATH</button>
         <button id="btn-overview-map" type="button" aria-label="Open semantic radar" aria-expanded="false" aria-controls="overview-map" title="Semantic radar (M)">MAP</button>
@@ -8373,6 +8455,45 @@
           preferred = nodeCenter - chip.offsetHeight / 2;
         }
         var top = Math.max(minTop, Math.min(maxTop, preferred));
+        var chipRect = chip.getBoundingClientRect();
+        var safeGap = 10;
+        var protectViewerChrome = !mobile || compactOnMobile || previewingOnMobile;
+        var protectedRects = (protectViewerChrome
+          ? [svg.querySelector('[data-legend]'), container.querySelector('.diagram-nav')]
+          : [])
+          .filter(function (element) {
+            if (!element || element.hidden) return false;
+            var style = window.getComputedStyle(element);
+            return style.display !== 'none' && style.visibility !== 'hidden';
+          })
+          .map(function (element) { return element.getBoundingClientRect(); })
+          .filter(function (rect) {
+            return rect.width > 0 && rect.height > 0 &&
+              chipRect.left < rect.right + safeGap && chipRect.right > rect.left - safeGap;
+          });
+        if (protectedRects.length) {
+          var candidates = [top, minTop, maxTop];
+          protectedRects.forEach(function (rect) {
+            candidates.push(
+              rect.top - containerRect.top - chip.offsetHeight - safeGap,
+              rect.bottom - containerRect.top + safeGap
+            );
+          });
+          var valid = candidates.map(function (candidate) {
+            return Math.max(minTop, Math.min(maxTop, candidate));
+          }).filter(function (candidate, index, all) {
+            if (all.indexOf(candidate) !== index) return false;
+            var candidateTop = containerRect.top + candidate;
+            var candidateBottom = candidateTop + chip.offsetHeight;
+            return protectedRects.every(function (rect) {
+              return candidateBottom <= rect.top - safeGap || candidateTop >= rect.bottom + safeGap;
+            });
+          });
+          valid.sort(function (first, second) {
+            return Math.abs(first - preferred) - Math.abs(second - preferred);
+          });
+          if (valid.length) top = valid[0];
+        }
         chip.style.top = Math.round(top) + 'px';
         if (Archify.radar && typeof Archify.radar.sync === 'function') Archify.radar.sync();
       }
@@ -8644,7 +8765,7 @@
         var target = event.target;
         if (chip.hidden || !target || typeof target.closest !== 'function' || chip.contains(target)) return;
         if (container.getAttribute('data-just-panned') === 'true') return;
-        if (target.closest('[data-node-id], [data-relationship-hit-key]')) return;
+        if (target.closest('[data-node-id], [data-relationship-hit-key], .overview-map')) return;
         clear();
       }, true);
       window.addEventListener('scroll', requestLensPlacement, { passive: true });
@@ -10581,6 +10702,46 @@
        embed, presentation, print, and non-wide diagrams retain their own
        established layout contracts.
        ============================================================ */
+    Archify.waitForStableLayout = function (options) {
+      options = options || {};
+      var maximumFrames = Math.max(1, Number(options.maximumFrames) || 240);
+      var fontsReady = document.fonts && document.fonts.ready
+        ? document.fonts.ready.catch(function () {})
+        : Promise.resolve();
+      return fontsReady.then(function () {
+        if (typeof options.schedule === 'function') options.schedule();
+        return new Promise(function (resolve, reject) {
+          var previous = '';
+          var stableFrames = 0;
+          var sampledFrames = 0;
+          function sample() {
+            sampledFrames += 1;
+            if (typeof options.pending === 'function' && options.pending()) {
+              previous = '';
+              stableFrames = 0;
+            } else {
+              var current = typeof options.snapshot === 'function' ? options.snapshot() : '';
+              if (current === previous) stableFrames += 1;
+              else {
+                previous = current;
+                stableFrames = 0;
+              }
+              if (stableFrames >= 3) {
+                resolve({ stable: true, snapshot: current, sampledFrames: sampledFrames });
+                return;
+              }
+            }
+            if (sampledFrames >= maximumFrames) {
+              reject(new Error(options.timeoutMessage || 'Layout did not reach stable dimensions.'));
+              return;
+            }
+            requestAnimationFrame(sample);
+          }
+          requestAnimationFrame(sample);
+        });
+      });
+    };
+
     Archify.readerLayout = (function () {
       var html = document.documentElement;
       var body = document.body;
@@ -10700,6 +10861,31 @@
         if (frame) return;
         frame = requestAnimationFrame(measure);
       }
+      function stableSnapshot() {
+        var shellRect = shell ? shell.getBoundingClientRect() : { width: 0, height: 0 };
+        var diagramRect = diagram ? diagram.getBoundingClientRect() : { width: 0, height: 0 };
+        return [
+          lastWidth,
+          html.getAttribute('data-reader-layout') || '',
+          html.getAttribute('data-reader-overflow') || '',
+          Math.ceil(document.documentElement.scrollWidth),
+          Math.ceil(document.documentElement.scrollHeight),
+          Math.ceil(document.body.scrollWidth),
+          Math.ceil(document.body.scrollHeight),
+          Math.round(shellRect.width * 100) / 100,
+          Math.round(shellRect.height * 100) / 100,
+          Math.round(diagramRect.width * 100) / 100,
+          Math.round(diagramRect.height * 100) / 100
+        ].join('|');
+      }
+      function whenStable() {
+        return Archify.waitForStableLayout({
+          schedule: schedule,
+          pending: function () { return Boolean(frame || settleFrame); },
+          snapshot: stableSnapshot,
+          timeoutMessage: 'Adaptive reader layout did not reach stable dimensions.'
+        });
+      }
 
       window.addEventListener('resize', schedule, { passive: true });
       window.addEventListener('load', schedule, { once: true });
@@ -10719,8 +10905,212 @@
       return {
         measure: measure,
         schedule: schedule,
+        whenStable: whenStable,
         active: function () { return html.getAttribute('data-reader-layout') === 'adaptive'; },
         receipt: function () { return { ratio: ratio, width: lastWidth }; }
+      };
+    })();
+
+    /* ============================================================
+       Viewer Chrome Layout — keep HTML controls clear of the canonical SVG
+       legend without changing authored geometry. The dock keeps its existing
+       position unless its zero-reserve position would cover the legend; only
+       then does a small bottom safe rail become part of the reader budget.
+       ============================================================ */
+    Archify.viewerChromeLayout = (function () {
+      var html = document.documentElement;
+      var container = document.querySelector('.diagram-container');
+      var svg = container && container.querySelector(':scope > svg');
+      var nav = container && container.querySelector('.diagram-nav');
+      var legend = svg && svg.querySelector('[data-legend]');
+      var frame = 0;
+      var settleFrame = 0;
+      var reserve = 0;
+      var collisionLatched = false;
+      var probingBaseline = false;
+      var probePromise = null;
+      var baselineIntersectionArea = 0;
+      var lastReceipt = null;
+      var SAFE_GAP = 10;
+
+      function visible(element) {
+        if (!element || element.hidden) return false;
+        var style = window.getComputedStyle(element);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+      }
+      function usable(rect) {
+        return Boolean(rect && rect.width > 0 && rect.height > 0);
+      }
+      function intersectionArea(a, b) {
+        var width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+        var height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+        return width * height;
+      }
+      function eligible() {
+        return Boolean(
+          container && svg && nav && legend &&
+          window.innerWidth > 720 &&
+          html.getAttribute('data-embed') !== 'true' &&
+          (!window.matchMedia || !window.matchMedia('print').matches) &&
+          visible(nav) && visible(legend)
+        );
+      }
+      function writeReserve(next, options) {
+        options = options || {};
+        next = Math.max(0, Math.ceil(next));
+        if (Math.abs(next - reserve) < 1) return false;
+        reserve = next;
+        if (reserve) {
+          container.style.setProperty('--archify-nav-reserve', reserve + 'px');
+          container.setAttribute('data-nav-safe-rail', 'true');
+        } else {
+          container.style.removeProperty('--archify-nav-reserve');
+          container.removeAttribute('data-nav-safe-rail');
+        }
+        if (Archify.readerLayout && typeof Archify.readerLayout.schedule === 'function') {
+          Archify.readerLayout.schedule();
+        }
+        if (options.quiet !== true) {
+          if (settleFrame) cancelAnimationFrame(settleFrame);
+          settleFrame = requestAnimationFrame(function () {
+            settleFrame = 0;
+            schedule();
+          });
+        }
+        return true;
+      }
+      function clear() {
+        collisionLatched = false;
+        baselineIntersectionArea = 0;
+        writeReserve(0, { quiet: probingBaseline });
+        lastReceipt = {
+          eligible: false,
+          active: false,
+          reserve: 0,
+          gap: SAFE_GAP,
+          baselineIntersectionArea: 0,
+          intersectionArea: 0
+        };
+        return lastReceipt;
+      }
+      function measure() {
+        frame = 0;
+        if (probingBaseline) return null;
+        if (!eligible()) return clear();
+
+        var navRect = nav.getBoundingClientRect();
+        var legendRect = legend.getBoundingClientRect();
+        var svgRect = svg.getBoundingClientRect();
+        if (!usable(navRect) || !usable(legendRect) || !usable(svgRect)) return clear();
+
+        var actualIntersectionArea = intersectionArea(navRect, legendRect);
+        if (!collisionLatched && reserve === 0) {
+          baselineIntersectionArea = actualIntersectionArea;
+          if (actualIntersectionArea > 0) {
+            collisionLatched = true;
+            if (writeReserve(Math.max(0, svgRect.bottom + SAFE_GAP - navRect.top))) return null;
+          }
+        } else if (collisionLatched && reserve > 0 && actualIntersectionArea > 0) {
+          /* Once zero-reserve geometry proves a collision, keep that decision
+             latched while Adaptive Reader incorporates the rail. If the first
+             rail is not quite tall enough (notably in Presentation flex
+             layout), grow only by the remaining vertical overlap. */
+          var remaining = Math.max(1, legendRect.bottom + SAFE_GAP - navRect.top);
+          if (writeReserve(reserve + remaining)) return null;
+        }
+
+        navRect = nav.getBoundingClientRect();
+        legendRect = legend.getBoundingClientRect();
+        lastReceipt = {
+          eligible: true,
+          active: reserve > 0,
+          reserve: reserve,
+          gap: SAFE_GAP,
+          baselineIntersectionArea: Math.round(baselineIntersectionArea * 100) / 100,
+          intersectionArea: Math.round(intersectionArea(navRect, legendRect) * 100) / 100
+        };
+        return lastReceipt;
+      }
+      function reprobe() {
+        if (probingBaseline) return probePromise || Promise.resolve(false);
+        if (!reserve && !collisionLatched) {
+          schedule();
+          return Promise.resolve(false);
+        }
+        probingBaseline = true;
+        collisionLatched = false;
+        baselineIntersectionArea = 0;
+        writeReserve(0, { quiet: true });
+        var readerReady = Archify.readerLayout && typeof Archify.readerLayout.whenStable === 'function'
+          ? Archify.readerLayout.whenStable().catch(function () {})
+          : Promise.resolve();
+        probePromise = readerReady.then(function () {
+          probingBaseline = false;
+          probePromise = null;
+          schedule();
+          return true;
+        });
+        return probePromise;
+      }
+      function schedule() {
+        if (frame) return;
+        frame = requestAnimationFrame(measure);
+      }
+      function stableSnapshot() {
+        var containerRect = container ? container.getBoundingClientRect() : { width: 0, height: 0 };
+        var navRect = nav ? nav.getBoundingClientRect() : { top: 0, left: 0 };
+        var legendRect = legend ? legend.getBoundingClientRect() : { top: 0, left: 0 };
+        return [
+          reserve,
+          Math.round(containerRect.width * 100) / 100,
+          Math.round(containerRect.height * 100) / 100,
+          Math.round(navRect.left * 100) / 100,
+          Math.round(navRect.top * 100) / 100,
+          Math.round(legendRect.left * 100) / 100,
+          Math.round(legendRect.top * 100) / 100,
+          collisionLatched ? 'latched' : 'clear',
+          lastReceipt ? lastReceipt.intersectionArea : ''
+        ].join('|');
+      }
+      function whenStable() {
+        return Archify.waitForStableLayout({
+          schedule: schedule,
+          pending: function () { return Boolean(frame || settleFrame || probingBaseline); },
+          snapshot: stableSnapshot,
+          timeoutMessage: 'Viewer chrome layout did not reach stable dimensions.'
+        });
+      }
+
+      window.addEventListener('resize', reprobe, { passive: true });
+      window.addEventListener('load', schedule, { once: true });
+      window.addEventListener('beforeprint', schedule);
+      window.addEventListener('afterprint', reprobe);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(reprobe).catch(function () {});
+      if (typeof ResizeObserver === 'function') {
+        var resizeObserver = new ResizeObserver(schedule);
+        [nav, legend].forEach(function (element) { if (element) resizeObserver.observe(element); });
+      }
+      if (typeof MutationObserver === 'function') {
+        var contentObserver = new MutationObserver(function (records) {
+          var viewerModeChanged = records.some(function (record) { return record.target === html; });
+          if (viewerModeChanged) reprobe();
+          else schedule();
+        });
+        if (legend) contentObserver.observe(legend, { attributes: true, childList: true, subtree: true });
+        contentObserver.observe(html, {
+          attributes: true,
+          attributeFilter: ['data-embed', 'data-present', 'data-preset', 'data-theme']
+        });
+      }
+      schedule();
+
+      return {
+        measure: measure,
+        schedule: schedule,
+        reprobe: reprobe,
+        whenStable: whenStable,
+        active: function () { return reserve > 0; },
+        receipt: function () { return lastReceipt || measure(); }
       };
     })();
 
@@ -10829,6 +11219,9 @@
         container.classList.toggle('is-pannable', state.scale > 1);
         svg.setAttribute('data-view-scale', String(state.scale));
         if (Archify.radar && typeof Archify.radar.sync === 'function') Archify.radar.sync();
+        if (Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.schedule === 'function') {
+          Archify.viewerChromeLayout.schedule();
+        }
       }
       function sampleRenderedState() {
         var transform = '';
@@ -10941,6 +11334,9 @@
         else stopCameraMotion('reset', false);
         state = { scale: 1, x: 0, y: 0, mode: 'overview' };
         apply();
+        if (Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.reprobe === 'function') {
+          Archify.viewerChromeLayout.reprobe();
+        }
       }
       function centerAt(logicalX, logicalY, options) {
         options = options || {};
@@ -11219,18 +11615,32 @@
       var container = document.querySelector('.diagram-container');
       var diagram = container.querySelector(':scope > svg');
       var panel = document.getElementById('overview-map');
+      var panelHead = panel.querySelector('.overview-map-head');
       var surface = document.getElementById('overview-map-surface');
       var status = document.getElementById('overview-map-status');
       var trigger = document.getElementById('btn-overview-map');
       var closeBtn = document.getElementById('overview-map-close');
+      var expandBtn = document.getElementById('overview-map-expand');
+      var feedback = document.getElementById('overview-map-feedback');
+      var navigation = container.querySelector('.diagram-nav');
+      var passport = document.getElementById('focus-chip');
       var namespace = 'http://www.w3.org/2000/svg';
       var viewBox = diagram.viewBox && diagram.viewBox.baseVal;
       var mapSvg = document.createElementNS(namespace, 'svg');
       var nodeLayer = document.createElementNS(namespace, 'g');
       var viewport = document.createElementNS(namespace, 'rect');
       var nodes = [];
-      var drag = null;
+      var viewportDrag = null;
+      var panelDrag = null;
+      var manualPosition = null;
+      var lastPlacement = null;
+      var requestedOpen = false;
+      var passportYielded = false;
+      var passportPreviousAriaHidden = null;
       var syncFrame = 0;
+      var spaceRetryTimer = 0;
+      var spaceRetryCount = 0;
+      var placementGap = 16;
 
       mapSvg.setAttribute('role', 'group');
       mapSvg.setAttribute('aria-label', 'Semantic diagram radar nodes');
@@ -11275,56 +11685,294 @@
         status.textContent = nodes.length + ' nodes · full map';
         return true;
       }
-      function updateDocking() {
-        if (panel.hidden) return;
-        var containerRect = container.getBoundingClientRect();
-        var intersectsWindow = containerRect.bottom > 12 && containerRect.top < window.innerHeight - 12;
-        if (!intersectsWindow) {
-          panel.removeAttribute('data-docked');
-          panel.removeAttribute('data-dock-side');
-          panel.style.removeProperty('--archify-radar-right');
-          panel.style.removeProperty('--archify-radar-left');
-          panel.style.removeProperty('--archify-radar-top');
-          return;
-        }
-        var active = diagram.querySelector('[data-focus-selected]');
-        var activeRect = active ? active.getBoundingClientRect() : null;
-        var dockLeft = !!(activeRect && activeRect.left + activeRect.width / 2 > window.innerWidth / 2);
-        var right = Math.max(16, window.innerWidth - Math.min(containerRect.right - 16, window.innerWidth - 16));
-        var left = Math.max(16, Math.min(containerRect.left + 16, window.innerWidth - panel.offsetWidth - 16));
-        var topLimit = Math.max(16, containerRect.top + 16);
-        var bottomLimit = Math.min(window.innerHeight - 16, containerRect.bottom - 16);
-        var panelLeft = dockLeft ? left : window.innerWidth - right - panel.offsetWidth;
-        var panelRight = panelLeft + panel.offsetWidth;
+      function visibleRect(element) {
+        if (!element || element.hidden) return null;
+        var rect = element.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0 || rect.right <= 0 || rect.bottom <= 0 || rect.left >= window.innerWidth || rect.top >= window.innerHeight) return null;
+        return { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height };
+      }
+      function panelRectAt(position) {
+        return {
+          left: position.left,
+          top: position.top,
+          right: position.left + panel.offsetWidth,
+          bottom: position.top + panel.offsetHeight,
+          width: panel.offsetWidth,
+          height: panel.offsetHeight
+        };
+      }
+      function rectsIntersect(first, second, gap) {
+        gap = Number(gap) || 0;
+        return first.left < second.right + gap &&
+          first.right > second.left - gap &&
+          first.top < second.bottom + gap &&
+          first.bottom > second.top - gap;
+      }
+      function intersectionArea(first, second) {
+        var width = Math.max(0, Math.min(first.right, second.right) - Math.max(first.left, second.left));
+        var height = Math.max(0, Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top));
+        return width * height;
+      }
+      function clamp(value, minimum, maximum) {
+        if (maximum < minimum) return minimum;
+        return Math.max(minimum, Math.min(maximum, value));
+      }
+      function placementContext() {
+        var containerRect = visibleRect(container);
+        if (!containerRect) return null;
+        var controlRect = visibleRect(navigation);
+        var left = Math.max(placementGap, containerRect.left + placementGap);
+        var top = Math.max(placementGap, containerRect.top + placementGap);
+        var right = Math.min(window.innerWidth - placementGap, containerRect.right - placementGap);
+        var bottom = Math.min(window.innerHeight - placementGap, containerRect.bottom - placementGap);
+        if (controlRect) bottom = Math.min(bottom, controlRect.top - placementGap);
         var lens = document.getElementById('focus-chip');
-        var lensRect = lens && !lens.hidden ? lens.getBoundingClientRect() : null;
-        var blockers = [activeRect, lensRect].filter(function (rect) {
-          return rect && rect.right > panelLeft && rect.left < panelRight;
+        var lensRect = visibleRect(lens);
+        var legendRect = visibleRect(diagram.querySelector('[data-legend]'));
+        var active = diagram.querySelector('[data-focus-selected]');
+        var activeRect = visibleRect(active);
+        return {
+          bounds: { left: left, top: top, right: right, bottom: bottom },
+          hardBlockers: [lensRect, controlRect, legendRect].filter(Boolean),
+          softBlockers: [activeRect].filter(Boolean),
+          preferredSide: !activeRect || activeRect.left + activeRect.width / 2 > window.innerWidth / 2 ? 'left' : 'right'
+        };
+      }
+      function positionIsValid(position, context) {
+        if (!position || !context) return false;
+        var rect = panelRectAt(position);
+        var bounds = context.bounds;
+        if (rect.left < bounds.left || rect.top < bounds.top || rect.right > bounds.right || rect.bottom > bounds.bottom) return false;
+        return context.hardBlockers.every(function (blocker) { return !rectsIntersect(rect, blocker, placementGap); });
+      }
+      function cornerCandidates(context) {
+        var bounds = context.bounds;
+        var left = bounds.left;
+        var right = Math.max(left, bounds.right - panel.offsetWidth);
+        var top = bounds.top;
+        var bottom = Math.max(top, bounds.bottom - panel.offsetHeight);
+        var preferredLeft = context.preferredSide === 'left' ? left : right;
+        var alternateLeft = context.preferredSide === 'left' ? right : left;
+        return [
+          { left: preferredLeft, top: bottom },
+          { left: alternateLeft, top: bottom },
+          { left: preferredLeft, top: top },
+          { left: alternateLeft, top: top }
+        ].filter(function (candidate, index, all) {
+          return all.findIndex(function (other) { return other.left === candidate.left && other.top === candidate.top; }) === index;
         });
-        var desiredTop = bottomLimit - panel.offsetHeight;
-        var candidates = [desiredTop, topLimit];
-        blockers.forEach(function (rect) {
-          candidates.push(rect.top - 10 - panel.offsetHeight, rect.bottom + 10);
+      }
+      function nearbyCandidates(context, reference) {
+        var bounds = context.bounds;
+        var maximumLeft = bounds.right - panel.offsetWidth;
+        var maximumTop = bounds.bottom - panel.offsetHeight;
+        var requested = reference ? {
+          left: clamp(reference.left, bounds.left, maximumLeft),
+          top: clamp(reference.top, bounds.top, maximumTop)
+        } : null;
+        var horizontal = [bounds.left, maximumLeft];
+        var vertical = [bounds.top, maximumTop];
+        if (requested) {
+          horizontal.push(requested.left);
+          vertical.push(requested.top);
+        }
+        context.hardBlockers.forEach(function (blocker) {
+          horizontal.push(
+            blocker.left - placementGap - panel.offsetWidth,
+            blocker.right + placementGap
+          );
+          vertical.push(
+            blocker.top - placementGap - panel.offsetHeight,
+            blocker.bottom + placementGap
+          );
         });
-        var valid = candidates.filter(function (candidate) {
-          if (candidate < topLimit || candidate + panel.offsetHeight > bottomLimit) return false;
-          return blockers.every(function (rect) {
-            return candidate + panel.offsetHeight <= rect.top - 10 || candidate >= rect.bottom + 10;
-          });
+        horizontal = horizontal.map(function (left) { return clamp(left, bounds.left, maximumLeft); });
+        vertical = vertical.map(function (top) { return clamp(top, bounds.top, maximumTop); });
+        var candidates = [];
+        horizontal.forEach(function (left) {
+          vertical.forEach(function (top) { candidates.push({ left: left, top: top }); });
         });
-        valid.sort(function (a, b) { return Math.abs(a - desiredTop) - Math.abs(b - desiredTop); });
-        var top = valid.length ? valid[0] : Math.max(topLimit, desiredTop);
-        top = Math.min(window.innerHeight - panel.offsetHeight - 16, top);
+        return candidates.filter(function (candidate, index, all) {
+          return all.findIndex(function (other) { return other.left === candidate.left && other.top === candidate.top; }) === index;
+        });
+      }
+      function placementScore(position, context, reference, softWeight) {
+        var rect = panelRectAt(position);
+        var referenceLeft = reference ? reference.left : (context.preferredSide === 'left' ? context.bounds.left : context.bounds.right - panel.offsetWidth);
+        var referenceTop = reference ? reference.top : context.bounds.bottom - panel.offsetHeight;
+        var distance = Math.pow(position.left - referenceLeft, 2) + Math.pow(position.top - referenceTop, 2);
+        var softOverlap = context.softBlockers.reduce(function (total, blocker) { return total + intersectionArea(rect, blocker); }, 0);
+        return distance + softOverlap * softWeight;
+      }
+      function chooseRadarPlacement(context, reference, options) {
+        options = options || {};
+        var softWeight = Number.isFinite(options.softWeight) ? options.softWeight : 100;
+        var candidates = nearbyCandidates(context, reference).concat(cornerCandidates(context));
+        var valid = candidates.filter(function (candidate) { return positionIsValid(candidate, context); });
+        valid.sort(function (first, second) {
+          return placementScore(first, context, reference, softWeight) - placementScore(second, context, reference, softWeight);
+        });
+        return valid.length ? valid[0] : null;
+      }
+      function applyPlacement(position, remember) {
+        var useLeft = position.left + panel.offsetWidth / 2 <= window.innerWidth / 2;
         panel.setAttribute('data-docked', 'true');
-        panel.setAttribute('data-dock-side', dockLeft ? 'left' : 'right');
-        panel.style.setProperty('--archify-radar-right', Math.round(right) + 'px');
-        panel.style.setProperty('--archify-radar-left', Math.round(left) + 'px');
-        panel.style.setProperty('--archify-radar-top', Math.round(Math.max(16, top)) + 'px');
+        panel.setAttribute('data-dock-side', useLeft ? 'left' : 'right');
+        if (useLeft) {
+          panel.style.setProperty('--archify-radar-left', Math.round(position.left) + 'px');
+          panel.style.removeProperty('--archify-radar-right');
+        } else {
+          panel.style.setProperty('--archify-radar-right', Math.round(window.innerWidth - position.left - panel.offsetWidth) + 'px');
+          panel.style.removeProperty('--archify-radar-left');
+        }
+        panel.style.setProperty('--archify-radar-top', Math.round(position.top) + 'px');
+        if (remember !== false) lastPlacement = { left: position.left, top: position.top };
+      }
+      function resetDockingStyles() {
+        panel.removeAttribute('data-docked');
+        panel.removeAttribute('data-dock-side');
+        panel.removeAttribute('data-panel-dragging');
+        panel.removeAttribute('data-placement-invalid');
+        panel.removeAttribute('data-placement-degraded');
+        panel.removeAttribute('data-placement-unavailable');
+        panel.removeAttribute('data-compact');
+        panel.removeAttribute('title');
+        panel.style.removeProperty('visibility');
+        panel.style.removeProperty('--archify-radar-right');
+        panel.style.removeProperty('--archify-radar-left');
+        panel.style.removeProperty('--archify-radar-top');
+      }
+      function updateDocking() {
+        var options = arguments[0] || {};
+        if (panel.hidden) return false;
+        if (panelDrag) return true;
+        panel.removeAttribute('data-compact');
+        panel.removeAttribute('data-placement-degraded');
+        panel.removeAttribute('data-placement-invalid');
+        panel.removeAttribute('data-placement-unavailable');
+        panel.removeAttribute('title');
+        panel.style.removeProperty('visibility');
+        var context = placementContext();
+        if (!context) {
+          resetDockingStyles();
+          return false;
+        }
+        var reference = manualPosition || lastPlacement;
+        var placementOptions = { softWeight: manualPosition ? 0 : 100 };
+        var placement = manualPosition && positionIsValid(manualPosition, context)
+          ? manualPosition
+          : chooseRadarPlacement(context, reference, placementOptions);
+        var compact = false;
+        if (!placement && options.allowCompact !== false) {
+          compact = true;
+          panel.setAttribute('data-compact', 'true');
+          panel.setAttribute('data-placement-degraded', 'true');
+          panel.setAttribute('title', 'Radar compacted to avoid covering the Semantic Passport or MAP controls.');
+          context = placementContext();
+          placement = chooseRadarPlacement(context, reference, placementOptions);
+        }
+        if (!placement) {
+          resetDockingStyles();
+          panel.setAttribute('data-placement-unavailable', 'true');
+          return false;
+        }
+        if (manualPosition && !compact) manualPosition = { left: placement.left, top: placement.top };
+        applyPlacement(placement, true);
+        return true;
+      }
+      function clearSpaceRetry() {
+        if (spaceRetryTimer) window.clearTimeout(spaceRetryTimer);
+        spaceRetryTimer = 0;
+      }
+      function yieldPassport() {
+        if (!passport || passport.hidden || passportYielded) return passportYielded;
+        passportPreviousAriaHidden = passport.getAttribute('aria-hidden');
+        passportYielded = true;
+        passport.setAttribute('data-radar-yielded', 'true');
+        passport.setAttribute('aria-hidden', 'true');
+        return true;
+      }
+      function restorePassport() {
+        if (!passport || !passportYielded) return;
+        passportYielded = false;
+        passport.removeAttribute('data-radar-yielded');
+        if (passportPreviousAriaHidden === null) passport.removeAttribute('aria-hidden');
+        else passport.setAttribute('aria-hidden', passportPreviousAriaHidden);
+        passportPreviousAriaHidden = null;
+      }
+      function reflectVisible() {
+        panel.hidden = false;
+        panel.removeAttribute('data-placement-unavailable');
+        trigger.setAttribute('aria-expanded', 'true');
+        trigger.removeAttribute('data-radar-space-limited');
+        trigger.setAttribute('aria-label', 'Close semantic radar');
+        trigger.title = 'Semantic radar (M)';
+        feedback.hidden = true;
+      }
+      function scheduleSpaceRetry() {
+        if (!requestedOpen || spaceRetryTimer || spaceRetryCount >= 4) return;
+        spaceRetryCount += 1;
+        spaceRetryTimer = window.setTimeout(function () {
+          spaceRetryTimer = 0;
+          attemptRequestedOpen();
+        }, 60);
+      }
+      function reflectUnavailable() {
+        restorePassport();
+        panel.hidden = true;
+        panel.setAttribute('data-placement-unavailable', 'true');
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.setAttribute('aria-label', 'Cancel semantic radar waiting for more MAP space');
+        trigger.setAttribute('data-radar-space-limited', 'true');
+        trigger.title = 'Semantic radar needs more visible MAP space';
+        feedback.hidden = false;
+        scheduleSpaceRetry();
+      }
+      function attemptRequestedOpen(options) {
+        options = options || {};
+        if (!requestedOpen) return false;
+        panel.hidden = false;
+        if (!updateDocking(options)) {
+          reflectUnavailable();
+          return false;
+        }
+        clearSpaceRetry();
+        spaceRetryCount = 0;
+        reflectVisible();
+        sync();
+        if (options.focus === true && !panel.hasAttribute('data-compact')) surface.focus();
+        return true;
+      }
+      function expandCompactRadar() {
+        if (!requestedOpen || panel.hidden || !panel.hasAttribute('data-compact')) return false;
+        yieldPassport();
+        if (!updateDocking({ allowCompact: false })) {
+          restorePassport();
+          if (!updateDocking()) {
+            reflectUnavailable();
+            return false;
+          }
+        }
+        reflectVisible();
+        sync();
+        if (!panel.hasAttribute('data-compact')) surface.focus();
+        return !panel.hasAttribute('data-compact');
       }
       function syncNow() {
         syncFrame = 0;
         if (panel.hidden || !Archify.view || typeof Archify.view.logicalViewport !== 'function') return;
-        updateDocking();
+        if (!updateDocking()) {
+          reflectUnavailable();
+          return;
+        }
+        if (passportYielded && panel.hasAttribute('data-compact')) {
+          restorePassport();
+          if (!updateDocking()) {
+            reflectUnavailable();
+            return;
+          }
+        }
+        reflectVisible();
         var visible = Archify.view.logicalViewport();
         if (!visible) return;
         viewport.setAttribute('x', String(visible.x));
@@ -11345,6 +11993,10 @@
         });
       }
       function sync() {
+        if (requestedOpen && panel.hidden) {
+          attemptRequestedOpen();
+          return;
+        }
         if (syncFrame) return;
         syncFrame = requestAnimationFrame(syncNow);
       }
@@ -11355,25 +12007,31 @@
         if (next && Archify.semanticLens && Archify.semanticLens.isOpen()) {
           Archify.semanticLens.close({ restoreFocus: false });
         }
-        panel.hidden = !next;
-        trigger.setAttribute('aria-expanded', next ? 'true' : 'false');
-        trigger.setAttribute('aria-label', next ? 'Close semantic radar' : 'Open semantic radar');
+        requestedOpen = next;
         if (next) {
+          clearSpaceRetry();
+          spaceRetryCount = 0;
           build();
-          updateDocking();
-          sync();
-          if (options.focus === true) surface.focus();
+          attemptRequestedOpen(options);
         } else {
-          panel.removeAttribute('data-docked');
-          panel.removeAttribute('data-dock-side');
-          panel.style.removeProperty('--archify-radar-right');
-          panel.style.removeProperty('--archify-radar-left');
-          panel.style.removeProperty('--archify-radar-top');
+          clearSpaceRetry();
+          spaceRetryCount = 0;
+          viewportDrag = null;
+          panelDrag = null;
+          container.classList.remove('is-panning');
+          panel.hidden = true;
+          resetDockingStyles();
+          restorePassport();
+          feedback.hidden = true;
+          trigger.setAttribute('aria-expanded', 'false');
+          trigger.removeAttribute('data-radar-space-limited');
+          trigger.setAttribute('aria-label', 'Open semantic radar');
+          trigger.title = 'Semantic radar (M)';
           if (options.restoreFocus === true) trigger.focus();
         }
         return next;
       }
-      function toggle() { return setOpen(panel.hidden, { focus: false }); }
+      function toggle() { return setOpen(!requestedOpen, { focus: false }); }
       function close(options) { return setOpen(false, options); }
       function bringNodeIntoWindow(node) {
         var delay = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 540;
@@ -11418,31 +12076,91 @@
         Archify.view.centerAt(point.x, point.y, { minimumScale: 1.5, instant: true });
         sync();
       }
-      function endDrag(event) {
-        if (!drag) return;
-        drag = null;
+      function endViewportDrag(event) {
+        if (!viewportDrag) return;
+        viewportDrag = null;
         panel.removeAttribute('data-dragging');
         container.classList.remove('is-panning');
         try { surface.releasePointerCapture(event.pointerId); } catch (_) {}
       }
+      function beginPanelDrag(event) {
+        if (event.button !== 0 || event.target.closest('button, a, input, [role="button"]')) return;
+        var context = placementContext();
+        if (!context) return;
+        var rect = panel.getBoundingClientRect();
+        event.preventDefault();
+        event.stopPropagation();
+        panelDrag = {
+          pointerId: event.pointerId,
+          originX: event.clientX,
+          originY: event.clientY,
+          start: { left: rect.left, top: rect.top },
+          current: { left: rect.left, top: rect.top },
+          previousManual: manualPosition ? { left: manualPosition.left, top: manualPosition.top } : null
+        };
+        panel.setAttribute('data-panel-dragging', 'true');
+        try { panelHead.setPointerCapture(event.pointerId); } catch (_) {}
+      }
+      function movePanelDrag(event) {
+        if (!panelDrag || panelDrag.pointerId !== event.pointerId) return;
+        var context = placementContext();
+        if (!context) return;
+        event.preventDefault();
+        event.stopPropagation();
+        var bounds = context.bounds;
+        var position = {
+          left: clamp(panelDrag.start.left + event.clientX - panelDrag.originX, bounds.left, bounds.right - panel.offsetWidth),
+          top: clamp(panelDrag.start.top + event.clientY - panelDrag.originY, bounds.top, bounds.bottom - panel.offsetHeight)
+        };
+        panelDrag.current = position;
+        if (positionIsValid(position, context)) panel.removeAttribute('data-placement-invalid');
+        else panel.setAttribute('data-placement-invalid', 'true');
+        applyPlacement(position, false);
+      }
+      function finishPanelDrag(event, cancel) {
+        if (!panelDrag || panelDrag.pointerId !== event.pointerId) return;
+        event.preventDefault();
+        event.stopPropagation();
+        var activeDrag = panelDrag;
+        panelDrag = null;
+        panel.removeAttribute('data-panel-dragging');
+        panel.removeAttribute('data-placement-invalid');
+        try { panelHead.releasePointerCapture(event.pointerId); } catch (_) {}
+        var context = placementContext();
+        if (!context) return;
+        if (cancel) {
+          manualPosition = activeDrag.previousManual;
+          lastPlacement = { left: activeDrag.start.left, top: activeDrag.start.top };
+          updateDocking();
+          return;
+        }
+        var requested = activeDrag.current;
+        manualPosition = { left: requested.left, top: requested.top };
+        updateDocking();
+      }
 
       trigger.addEventListener('click', toggle);
       closeBtn.addEventListener('click', function () { close({ restoreFocus: true }); });
+      expandBtn.addEventListener('click', expandCompactRadar);
+      panelHead.addEventListener('pointerdown', beginPanelDrag);
+      panelHead.addEventListener('pointermove', movePanelDrag);
+      panelHead.addEventListener('pointerup', function (event) { finishPanelDrag(event, false); });
+      panelHead.addEventListener('pointercancel', function (event) { finishPanelDrag(event, true); });
       surface.addEventListener('pointerdown', function (event) {
         if (event.button !== 0 || event.target.closest('[data-radar-node-id]')) return;
         event.preventDefault();
-        drag = { pointerId: event.pointerId };
+        viewportDrag = { pointerId: event.pointerId };
         panel.setAttribute('data-dragging', 'true');
         container.classList.add('is-panning');
         try { surface.setPointerCapture(event.pointerId); } catch (_) {}
         navigate(event);
       });
       surface.addEventListener('pointermove', function (event) {
-        if (!drag || drag.pointerId !== event.pointerId) return;
+        if (!viewportDrag || viewportDrag.pointerId !== event.pointerId) return;
         navigate(event);
       });
-      surface.addEventListener('pointerup', endDrag);
-      surface.addEventListener('pointercancel', endDrag);
+      surface.addEventListener('pointerup', endViewportDrag);
+      surface.addEventListener('pointercancel', endViewportDrag);
       surface.addEventListener('click', function (event) {
         var node = event.target.closest('[data-radar-node-id]');
         if (node) focusNode(node.getAttribute('data-radar-node-id'));
@@ -11475,8 +12193,32 @@
         Archify.view.centerAt(x, y, { minimumScale: 1.5, instant: true });
         sync();
       });
-      window.addEventListener('resize', sync);
-      window.addEventListener('scroll', function () { updateDocking(); sync(); }, { passive: true });
+      document.addEventListener('keydown', function (event) {
+        if (!panelDrag || event.key !== 'Escape') return;
+        finishPanelDrag({
+          pointerId: panelDrag.pointerId,
+          preventDefault: function () { event.preventDefault(); },
+          stopPropagation: function () { event.stopPropagation(); }
+        }, true);
+      }, true);
+      function reflow() {
+        if (!requestedOpen) return;
+        clearSpaceRetry();
+        spaceRetryCount = 0;
+        sync();
+      }
+      window.addEventListener('resize', reflow);
+      window.addEventListener('scroll', reflow, { passive: true });
+      if (typeof ResizeObserver === 'function') {
+        var radarResizeObserver = new ResizeObserver(function (entries) {
+          if (!requestedOpen) return;
+          if (panel.hidden && entries.every(function (entry) { return entry.target === panel; })) return;
+          reflow();
+        });
+        [container, navigation, document.getElementById('focus-chip'), panel].filter(Boolean).forEach(function (element) {
+          radarResizeObserver.observe(element);
+        });
+      }
       requestAnimationFrame(build);
 
       return {
@@ -11485,7 +12227,7 @@
         toggle: toggle,
         sync: sync,
         focus: focusNode,
-        isOpen: function () { return !panel.hidden; },
+        isOpen: function () { return requestedOpen; },
         count: function () { return nodes.length; }
       };
     })();
@@ -13185,7 +13927,7 @@
       }
       function dockPanel(byId) {
         panel.removeAttribute('data-dock-side');
-        if (panel.hidden || !selectedKinds.length || window.innerWidth <= 720) return 'right';
+        if (panel.hidden || window.innerWidth <= 720) return 'right';
         var panelRect = panel.getBoundingClientRect();
         var containerRect = container.getBoundingClientRect();
         if (!panelRect.width || !panelRect.height) return 'right';
@@ -13198,6 +13940,17 @@
         var rightCandidate = { left: containerRect.right - 16 - width, right: containerRect.right - 16, top: top, bottom: panelRect.bottom };
         var leftScore = selectedRects.reduce(function (score, rect) { return score + overlapArea(leftCandidate, rect); }, 0);
         var rightScore = selectedRects.reduce(function (score, rect) { return score + overlapArea(rightCandidate, rect); }, 0);
+        var legend = svg.querySelector('[data-legend]');
+        var nav = container.querySelector('.diagram-nav');
+        var protectedRects = [legend, nav].filter(function (element) {
+          return element && !element.hidden && window.getComputedStyle(element).display !== 'none';
+        }).map(function (element) { return element.getBoundingClientRect(); });
+        leftScore += protectedRects.reduce(function (score, rect) {
+          return score + overlapArea(leftCandidate, rect) * 1000;
+        }, 0);
+        rightScore += protectedRects.reduce(function (score, rect) {
+          return score + overlapArea(rightCandidate, rect) * 1000;
+        }, 0);
         var side = leftScore < rightScore ? 'left' : 'right';
         panel.setAttribute('data-dock-side', side);
         return side;

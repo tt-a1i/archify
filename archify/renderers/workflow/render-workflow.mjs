@@ -10,6 +10,8 @@ import {
   asArray,
   isFinitePoint,
   rectsOverlap,
+  segmentIntersectsRect,
+  cleanEndpointSideProblems,
   cleanFlowProblems,
   cleanCrossingProblems,
   cleanAmbiguousCorridorProblems,
@@ -23,6 +25,8 @@ import {
   defaultFromSide,
   defaultToSide,
   chosenSide,
+  normalizeRoutePoints,
+  routeHonorsEndpointSides,
   polylinePath,
   routePointsValue,
   labelPoint,
@@ -319,6 +323,16 @@ function validateWorkflow() {
     }
   }
 
+  problems.push(...cleanEndpointSideProblems({
+    relations: workflow.edges,
+    endpointIds: new Set(nodes.keys()),
+    pathFor,
+    diagramType: 'workflow',
+    relationCollection: 'edges',
+    fromSideFor: (edge) => edgeSides(edge).fromSide,
+    toSideFor: (edge) => edgeSides(edge).toSide,
+    routeHint: 'keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross node borders perpendicularly',
+  }));
   problems.push(...cleanFlowProblems({
     relations: workflow.edges,
     endpointIds: new Set(nodes.keys()),
@@ -393,7 +407,7 @@ function validateWorkflow() {
   const labelRects = [];
   for (const [edgeIndex, edge] of workflow.edges.entries()) {
     if (!edge.label || !nodes.has(edge.from) || !nodes.has(edge.to)) continue;
-    const [lx, ly] = labelPoint(edge, pathFor(edge).points);
+    const [lx, ly] = workflowEdgeLabelPoint(edge, pathFor(edge).points);
     const width = Math.max(30, textUnits(edge.label) * 4.8 + 10);
     labelRects.push({ relation: edge, relationIndex: edgeIndex, label: edge.label, x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly });
   }
@@ -453,7 +467,61 @@ function sameLaneAutoVia(start, end) {
   return [[midX, start[1]], [midX, end[1]]];
 }
 
-function routeVia(edge, from, to, start, end) {
+function routeClearsUnrelatedNodes(edge, points, clearance = 2) {
+  const endpointIds = new Set([edge.from, edge.to]);
+  for (const node of nodes.values()) {
+    if (endpointIds.has(node.id)) continue;
+    for (let index = 0; index < points.length - 1; index += 1) {
+      if (segmentIntersectsRect({ start: points[index], end: points[index + 1] }, node, clearance)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function oneBendCrossLaneVia(edge, start, end, fromSide, toSide) {
+  const fromVertical = fromSide === 'top' || fromSide === 'bottom';
+  const toVertical = toSide === 'top' || toSide === 'bottom';
+  if (fromVertical === toVertical) return null;
+
+  const corner = fromVertical ? [start[0], end[1]] : [end[0], start[1]];
+  const points = normalizeRoutePoints([start, corner, end]);
+  if (points.length !== 3 || !routeHonorsEndpointSides(points, fromSide, toSide)) return null;
+
+  const segmentsAreReadable = points.slice(0, -1).every((point, index) => (
+    Math.hypot(
+      points[index + 1][0] - point[0],
+      points[index + 1][1] - point[1],
+    ) >= 8
+  ));
+  if (!segmentsAreReadable || !routeClearsUnrelatedNodes(edge, points)) return null;
+  return points.slice(1, -1);
+}
+
+function automaticOneBendSides(edge, from, to) {
+  const automaticRoute = !edge.via && (!edge.route || edge.route === 'auto');
+  const automaticFrom = !edge.fromSide || edge.fromSide === 'auto';
+  const automaticTo = !edge.toSide || edge.toSide === 'auto';
+  if (!automaticRoute || !automaticFrom || !automaticTo || from.lane === to.lane) return null;
+  if (from.cx === to.cx || from.cy === to.cy) return null;
+  const verticalFrom = to.cy < from.cy ? 'top' : 'bottom';
+  const horizontalTo = to.cx < from.cx ? 'right' : 'left';
+  const horizontalFrom = to.cx < from.cx ? 'left' : 'right';
+  const verticalTo = to.cy < from.cy ? 'bottom' : 'top';
+  const candidates = [
+    { fromSide: verticalFrom, toSide: horizontalTo },
+    { fromSide: horizontalFrom, toSide: verticalTo },
+  ];
+
+  return candidates.find(({ fromSide, toSide }) => {
+    const start = anchor(from, fromSide);
+    const end = anchor(to, toSide);
+    return oneBendCrossLaneVia(edge, start, end, fromSide, toSide);
+  }) || null;
+}
+
+function routeVia(edge, from, to, start, end, fromSide, toSide) {
   if (edge.via) return edge.via;
   switch (edge.route || 'auto') {
     case 'straight':
@@ -481,6 +549,8 @@ function routeVia(edge, from, to, start, end) {
     case 'auto':
     default: {
       if (from.lane === to.lane) return sameLaneAutoVia(start, end);
+      const oneBendVia = oneBendCrossLaneVia(edge, start, end, fromSide, toSide);
+      if (oneBendVia) return oneBendVia;
       const y = gapYBetween(from.lane, to.lane, edge.bias ?? 0.5);
       return [[start[0], y], [end[0], y]];
     }
@@ -488,16 +558,45 @@ function routeVia(edge, from, to, start, end) {
 }
 
 const pathCache = new Map();
-const automaticPorts = automaticPortSpread(workflow.edges, nodes);
+
+function workflowEdgeLabelPoint(edge, points) {
+  if (edge.labelAt || Number.isInteger(edge.labelSegment) || points.length !== 3) {
+    return labelPoint(edge, points);
+  }
+  const segmentLengths = [0, 1].map((index) => Math.hypot(
+    points[index + 1][0] - points[index][0],
+    points[index + 1][1] - points[index][1],
+  ));
+  const labelSegment = segmentLengths[0] >= segmentLengths[1] ? 0 : 1;
+  const point = labelPoint({ ...edge, labelSegment }, points);
+  if (points[labelSegment][0] === points[labelSegment + 1][0]) point[1] += 10;
+  return point;
+}
+
+function edgeSides(edge) {
+  const from = nodes.get(edge.from);
+  const to = nodes.get(edge.to);
+  const oneBendSides = automaticOneBendSides(edge, from, to);
+  if (oneBendSides) return oneBendSides;
+  return {
+    fromSide: chosenSide(edge.fromSide, defaultFromSide(from, to)),
+    toSide: chosenSide(edge.toSide, defaultToSide(from, to)),
+  };
+}
+
+const automaticPorts = automaticPortSpread(workflow.edges, nodes, {
+  sideFor: (edge, endpoint) => edgeSides(edge)[endpoint === 'source' ? 'fromSide' : 'toSide'],
+});
 
 function pathFor(edge) {
   if (pathCache.has(edge)) return pathCache.get(edge);
   const from = nodes.get(edge.from);
   const to = nodes.get(edge.to);
   const ports = automaticPorts.get(edge);
-  const start = ports?.from || anchor(from, chosenSide(edge.fromSide, defaultFromSide(from, to)));
-  const end = ports?.to || anchor(to, chosenSide(edge.toSide, defaultToSide(from, to)));
-  const points = [start, ...routeVia(edge, from, to, start, end), end];
+  const { fromSide, toSide } = edgeSides(edge);
+  const start = ports?.from || anchor(from, fromSide);
+  const end = ports?.to || anchor(to, toSide);
+  const points = [start, ...routeVia(edge, from, to, start, end, fromSide, toSide), end];
   const routed = { d: polylinePath(points), points };
   pathCache.set(edge, routed);
   return routed;
@@ -554,7 +653,7 @@ function renderNode(node) {
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="c-mask"/>
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="${fill}"${animateAttr(workflow.meta, 'node', nodeStep(node))} stroke-width="1.5"/>
           ${renderSemanticSigil(node.type, { x: node.x + 6, y: node.y + 6 })}${brand ? `\n          ${brand}` : ''}
-          <text${hasSub ? ' data-detail-anchor' : ''} x="${node.cx}" y="${node.y + 21}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(node.label)}</text>${sub}${tag}
+          <text data-node-label${hasSub ? ' data-detail-anchor' : ''} x="${node.cx}" y="${node.y + 21}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(node.label)}</text>${sub}${tag}
         </g>`;
 }
 
@@ -568,7 +667,7 @@ function renderEdgePath(edge, index) {
 function renderEdgeLabel(edge, index) {
   if (!edge.label) return '';
   const routed = pathFor(edge);
-  const [lx, ly] = labelPoint(edge, routed.points);
+  const [lx, ly] = workflowEdgeLabelPoint(edge, routed.points);
   const labelW = Math.max(30, textUnits(edge.label) * 4.8 + 10);
   return `        <g data-detail="context" ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)}>
           <rect x="${lx - labelW / 2}" y="${ly - 10}" width="${labelW}" height="14" rx="3" class="c-mask"/>
