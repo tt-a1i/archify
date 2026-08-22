@@ -1,122 +1,168 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="archify guide [[ARCHIFY_VERSION]]">
   <title>Archify Scenario Guide — Choose the Right Diagram</title>
   <meta name="description" content="Describe the technical question you need to answer. Archify recommends a bounded diagram recipe, evidence checklist, and copy-ready prompt.">
-  <meta name="theme-color" content="#020617">
+  <meta name="theme-color" content="#eff2f1">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><polygon points='14,2 26,8 26,20 14,26 2,20 2,8' fill='%23083344' stroke='%2322d3ee' stroke-width='1.5'/><circle cx='14' cy='15' r='2.5' fill='%2322d3ee'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:#020617; --panel:rgba(9,18,36,.86); --panel-solid:#091224; --line:#1e2d46;
-      --text:#f4f8ff; --muted:#8da0ba; --dim:#53657c; --cyan:#2dd4e8; --cyan-soft:rgba(45,212,232,.11);
-      --green:#34d399; --amber:#fbbf24; --violet:#a78bfa; --rose:#fb7185; --blue:#60a5fa;
-      --shadow:0 24px 80px rgba(0,0,0,.38);
+      /* Drafted-sheet palette — shared with the project page */
+      --paper:#eff2f1; --paper-raised:#f8faf9;
+      --ink:#15181b; --ink-soft:#363c41; --muted:#60686d; --dim:#929a9e;
+      --line:rgba(20,23,26,0.14); --line-hi:rgba(20,23,26,0.3);
+      --accent:#e14a0e; --accent-soft:rgba(225,74,14,0.08);
+      --plate:#0f1216;
+      --emerald:#047857; --rose:#be123c; --violet:#6d28d9;
+      --font-display:'Fraunces','Songti SC','STSong',Georgia,serif;
+      --font-body:'Inter',-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+      --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+      --ease-out:cubic-bezier(.22,1,.36,1);
     }
-    * { box-sizing:border-box; }
+    *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
     html { scroll-behavior:smooth; }
-    body { margin:0; min-width:300px; color:var(--text); background:var(--bg); font-family:'JetBrains Mono',ui-monospace,monospace; overflow-x:hidden; }
-    body::before { content:''; position:fixed; inset:0; z-index:-2; background-image:linear-gradient(rgba(39,59,87,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(39,59,87,.25) 1px,transparent 1px); background-size:42px 42px; mask-image:linear-gradient(to bottom,#000 0%,transparent 74%); }
-    body::after { content:''; position:fixed; width:700px; height:700px; z-index:-1; left:50%; top:-470px; transform:translateX(-50%); background:radial-gradient(circle,rgba(45,212,232,.16),transparent 66%); pointer-events:none; }
+    body {
+      font-family:var(--font-body);
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+      background:var(--paper); color:var(--ink); min-height:100vh; overflow-x:hidden;
+    }
+    body::after {
+      content:''; position:fixed; inset:0; z-index:1000; pointer-events:none;
+      opacity:.05; mix-blend-mode:multiply;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+    }
+    ::selection { background:rgba(225,74,14,.18); color:var(--ink); }
     button,textarea { font:inherit; }
     button { color:inherit; }
     a { color:inherit; }
-    .shell { width:min(1180px,calc(100% - 48px)); margin:0 auto; }
-    .topbar { height:68px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(30,45,70,.75); }
-    .brand { display:flex; align-items:center; gap:11px; text-decoration:none; }
-    .brand-mark { width:30px; height:30px; display:grid; place-items:center; border:1px solid rgba(45,212,232,.5); background:var(--cyan-soft); clip-path:polygon(50% 0,94% 25%,94% 75%,50% 100%,6% 75%,6% 25%); color:var(--cyan); }
-    .brand-copy { display:grid; gap:2px; }
-    .brand-copy strong { font:700 14px 'Manrope',sans-serif; letter-spacing:.01em; }
-    .brand-copy small { color:var(--dim); font-size:9px; letter-spacing:.12em; text-transform:uppercase; }
-    .nav { display:flex; align-items:center; gap:18px; }
-    .nav a { color:var(--muted); text-decoration:none; font-size:11px; }
-    .nav a:hover { color:var(--text); }
-    .utility { border:1px solid var(--line); background:rgba(255,255,255,.025); border-radius:7px; padding:8px 11px; font-size:10px; cursor:pointer; }
-    .hero { padding:86px 0 52px; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr); gap:72px; align-items:end; }
-    .eyebrow { display:flex; align-items:center; gap:10px; color:var(--cyan); font-size:10px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; margin-bottom:20px; }
-    .eyebrow::before { content:''; width:32px; height:1px; background:var(--cyan); }
-    h1 { margin:0; max-width:770px; font:700 clamp(42px,6.2vw,76px)/.98 'Manrope',sans-serif; letter-spacing:-.055em; }
-    h1 em { color:var(--cyan); font-style:normal; }
-    .lede { max-width:680px; margin:25px 0 0; color:var(--muted); font-size:14px; line-height:1.8; }
-    .metrics { display:grid; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); }
-    .metric { display:flex; justify-content:space-between; align-items:center; padding:16px 18px; background:rgba(5,12,25,.92); }
-    .metric strong { font:700 23px 'Manrope',sans-serif; color:var(--cyan); }
-    .metric span { color:var(--muted); font-size:10px; line-height:1.45; text-align:right; }
-    .chooser { padding:20px; border:1px solid var(--line); border-radius:16px; background:linear-gradient(135deg,rgba(10,23,44,.94),rgba(5,12,25,.96)); box-shadow:var(--shadow); position:relative; overflow:hidden; }
-    .chooser::before { content:''; position:absolute; inset:0 auto auto 0; width:180px; height:1px; background:linear-gradient(90deg,var(--cyan),transparent); }
-    .chooser-head { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin-bottom:16px; }
-    .chooser-head h2 { margin:0 0 6px; font:700 17px 'Manrope',sans-serif; }
-    .chooser-head p { margin:0; color:var(--muted); font-size:10px; line-height:1.6; }
-    .kbd { flex:none; border:1px solid var(--line); border-radius:5px; padding:4px 7px; color:var(--dim); font-size:9px; }
-    textarea { width:100%; min-height:104px; resize:vertical; border:1px solid #273b57; border-radius:10px; padding:15px 16px; background:rgba(2,6,23,.72); color:var(--text); outline:none; font-size:12px; line-height:1.7; }
-    textarea::placeholder { color:#53657c; }
-    textarea:focus { border-color:var(--cyan); box-shadow:0 0 0 3px rgba(45,212,232,.09); }
-    .sample-row { margin:13px 0 17px; display:flex; gap:7px; flex-wrap:wrap; }
-    .chip { border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.025); color:var(--muted); padding:7px 10px; font-size:9px; cursor:pointer; }
-    .chip:hover { color:var(--cyan); border-color:rgba(45,212,232,.45); }
-    .actions { display:flex; align-items:center; gap:9px; }
-    .primary,.secondary { border-radius:8px; padding:10px 14px; border:1px solid transparent; font-size:10px; font-weight:700; cursor:pointer; }
-    .primary { background:var(--cyan); color:#021018; }
-    .primary:hover { background:#67e8f9; }
-    .secondary { background:transparent; border-color:var(--line); color:var(--muted); }
-    .secondary:hover { color:var(--text); }
-    .result { margin-top:18px; border:1px solid rgba(45,212,232,.25); border-radius:14px; background:rgba(2,8,19,.78); overflow:hidden; display:none; }
-    .result.visible { display:block; animation:reveal .28s ease-out; }
-    @keyframes reveal { from { opacity:0; transform:translateY(5px); } }
-    .result-main { padding:24px; display:grid; grid-template-columns:minmax(0,1.1fr) minmax(260px,.9fr); gap:28px; }
-    .result-kicker { color:var(--cyan); font-size:9px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
-    .result h3 { margin:8px 0 5px; font:700 26px 'Manrope',sans-serif; letter-spacing:-.025em; }
-    .result-question { margin:0; color:var(--text); font-size:12px; line-height:1.6; }
-    .result-summary { margin:16px 0 0; color:var(--muted); font-size:10px; line-height:1.75; }
-    .proof-link { display:inline-flex; align-items:center; margin-top:16px; padding:8px 10px; border:1px solid rgba(52,211,153,.3); border-radius:7px; background:rgba(52,211,153,.06); color:var(--green); text-decoration:none; font-size:8px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
-    .proof-link:hover { border-color:var(--green); background:rgba(52,211,153,.1); }
-    .boundary { display:grid; gap:10px; }
-    .boundary-item { border-left:2px solid var(--green); padding-left:12px; }
-    .boundary-item.avoid { border-color:var(--rose); }
-    .boundary-item small { display:block; margin-bottom:5px; color:var(--green); font-size:8px; letter-spacing:.12em; text-transform:uppercase; }
+    :focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:4px; }
+
+    .grid-bg {
+      position:fixed; inset:0; z-index:0; pointer-events:none;
+      background-image:linear-gradient(rgba(20,23,26,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(20,23,26,.045) 1px,transparent 1px);
+      background-size:56px 56px;
+      -webkit-mask-image:radial-gradient(ellipse 95% 62% at 50% -6%, black 12%, transparent 75%);
+      mask-image:radial-gradient(ellipse 95% 62% at 50% -6%, black 12%, transparent 75%);
+    }
+
+    /* NAV — same chrome as the project page */
+    nav { position:fixed; top:0; left:0; right:0; z-index:100; padding:0 2rem; height:60px; display:flex; align-items:center; justify-content:space-between; background:rgba(247,249,249,0.82); backdrop-filter:blur(14px) saturate(1.15); -webkit-backdrop-filter:blur(14px) saturate(1.15); border-bottom:1px solid var(--line); }
+    .nav-logo { display:flex; align-items:center; gap:.625rem; text-decoration:none; }
+    .nav-logo-text { font-family:var(--font-display); font-optical-sizing:auto; font-size:1.125rem; font-weight:500; color:var(--ink); letter-spacing:-.01em; }
+    .nav-logo-path { color:var(--dim); font-family:var(--font-mono); font-size:.625rem; font-weight:500; letter-spacing:.1em; }
+    .nav-right { display:flex; align-items:center; gap:1.25rem; }
+    .nav-link { font-family:var(--font-mono); font-size:.625rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color .18s var(--ease-out); }
+    .nav-link:hover { color:var(--ink); }
+    .nav-link[aria-current] { color:var(--accent); }
+    .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.55rem 1.15rem; border-radius:6px; font-family:var(--font-body); font-size:.8125rem; font-weight:500; letter-spacing:-.005em; cursor:pointer; text-decoration:none; transition:all .2s var(--ease-out); border:1px solid transparent; }
+    .btn-primary { background:var(--ink); color:var(--paper); }
+    .btn-primary:hover { background:#272c31; transform:translateY(-1px); }
+    .btn-lang { display:inline-flex; align-items:center; background:transparent; color:var(--muted); border:1px solid var(--line-hi); padding:.45rem .8rem; font-family:var(--font-mono); font-size:.5625rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase; min-width:44px; justify-content:center; border-radius:6px; cursor:pointer; transition:all .2s var(--ease-out); }
+    .btn-lang:hover { color:var(--ink); border-color:var(--ink); }
+
+    .shell { position:relative; z-index:1; width:min(1180px,calc(100% - 48px)); margin:0 auto; }
+
+    /* HERO */
+    .hero { padding:10rem 0 4rem; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr); gap:4.5rem; align-items:end; }
+    .lead-label { display:flex; align-items:center; gap:.875rem; margin-bottom:1.5rem; font-family:var(--font-mono); font-size:.625rem; font-weight:500; letter-spacing:.2em; color:var(--muted); text-transform:uppercase; }
+    .lead-label::before { content:''; width:2.75rem; height:1px; background:var(--line-hi); }
+    h1 { max-width:770px; font-family:var(--font-display); font-optical-sizing:auto; font-size:clamp(2.5rem,5vw,4.25rem); font-weight:400; line-height:1.06; letter-spacing:-.028em; color:var(--ink); text-wrap:balance; }
+    h1 em { font-style:italic; color:var(--accent); }
+    .lede { max-width:680px; margin-top:1.5rem; color:var(--muted); font-size:.9375rem; line-height:1.72; text-wrap:pretty; }
+    .metrics { display:grid; gap:1px; background:var(--line); border:1px solid var(--line-hi); border-radius:12px; overflow:hidden; }
+    .metric { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem 1.25rem; background:var(--paper-raised); }
+    .metric strong { font-family:var(--font-display); font-style:italic; font-optical-sizing:auto; font-weight:400; font-size:1.625rem; line-height:1; color:var(--ink); }
+    .metric span { color:var(--dim); font-family:var(--font-mono); font-size:.5625rem; letter-spacing:.14em; text-transform:uppercase; line-height:1.5; text-align:right; }
+
+    /* CHOOSER */
+    .chooser { padding:1.75rem 2rem 2rem; border:1px solid var(--line-hi); border-radius:14px; background:var(--paper-raised); position:relative; }
+    .chooser-head { display:flex; align-items:flex-start; justify-content:space-between; gap:1.25rem; margin-bottom:1.125rem; }
+    .chooser-head h2 { margin-bottom:.375rem; font-family:var(--font-display); font-optical-sizing:auto; font-size:1.5rem; font-weight:500; letter-spacing:-.02em; }
+    .chooser-head p { color:var(--muted); font-size:.8125rem; line-height:1.6; }
+    .kbd { flex:none; border:1px solid var(--line-hi); border-radius:5px; padding:.3rem .5rem; color:var(--dim); font-family:var(--font-mono); font-size:.5625rem; background:var(--paper); }
+    textarea { width:100%; min-height:104px; resize:vertical; border:1px solid var(--line-hi); border-radius:10px; padding:.9rem 1rem; background:var(--paper); color:var(--ink); outline:none; font-family:var(--font-mono); font-size:.75rem; line-height:1.7; transition:border-color .18s var(--ease-out),box-shadow .18s var(--ease-out); }
+    textarea::placeholder { color:var(--dim); }
+    textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+    .sample-row { margin:.875rem 0 1.125rem; display:flex; gap:.45rem; flex-wrap:wrap; }
+    .chip { border:1px solid var(--line); border-radius:999px; background:var(--paper); color:var(--muted); padding:.45rem .75rem; font-family:var(--font-mono); font-size:.5625rem; letter-spacing:.06em; cursor:pointer; transition:all .18s var(--ease-out); }
+    .chip:hover { color:var(--accent); border-color:var(--accent); }
+    .actions { display:flex; align-items:center; gap:.625rem; }
+    .primary,.secondary { min-height:44px; border-radius:8px; padding:.65rem 1.15rem; border:1px solid transparent; font-size:.8125rem; font-weight:500; cursor:pointer; transition:all .2s var(--ease-out); }
+    .primary { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+    .primary:hover { background:var(--accent); border-color:var(--accent); }
+    .secondary { background:transparent; border-color:var(--line-hi); color:var(--ink-soft); }
+    .secondary:hover { color:var(--ink); border-color:var(--ink); }
+
+    /* RESULT */
+    .result { margin-top:1.25rem; border:1px solid var(--line-hi); border-radius:14px; background:var(--paper-raised); overflow:hidden; display:none; }
+    .result.visible { display:block; animation:reveal .3s var(--ease-out); }
+    @keyframes reveal { from { opacity:0; transform:translateY(6px); } }
+    .result-main { padding:1.75rem 2rem; display:grid; grid-template-columns:minmax(0,1.1fr) minmax(260px,.9fr); gap:2rem; }
+    .result-kicker { color:var(--accent); font-family:var(--font-mono); font-size:.5625rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; }
+    .result h3 { margin:.5rem 0 .375rem; font-family:var(--font-display); font-optical-sizing:auto; font-size:1.625rem; font-weight:500; letter-spacing:-.02em; }
+    .result-question { color:var(--ink-soft); font-size:.875rem; font-weight:500; line-height:1.6; }
+    .result-summary { margin-top:.875rem; color:var(--muted); font-size:.8125rem; line-height:1.7; }
+    .proof-link { display:inline-flex; align-items:center; margin-top:1.125rem; padding:.5rem .75rem; border:1px solid rgba(4,120,87,.35); border-radius:999px; background:rgba(4,120,87,.06); color:var(--emerald); text-decoration:none; font-family:var(--font-mono); font-size:.5625rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; transition:all .18s var(--ease-out); }
+    .proof-link:hover { border-color:var(--emerald); background:rgba(4,120,87,.1); }
+    .boundary { display:grid; gap:1rem; align-content:start; }
+    .boundary-item small { display:block; margin-bottom:.375rem; color:var(--emerald); font-family:var(--font-mono); font-size:.5625rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; }
     .boundary-item.avoid small { color:var(--rose); }
-    .boundary-item p { margin:0; color:var(--muted); font-size:9px; line-height:1.65; }
+    .boundary-item p { color:var(--muted); font-size:.8125rem; line-height:1.65; }
     .result-grid { display:grid; grid-template-columns:minmax(230px,.7fr) minmax(0,1.3fr); border-top:1px solid var(--line); }
-    .checklist,.prompt-box { padding:21px 24px; }
+    .checklist,.prompt-box { padding:1.5rem 2rem; }
     .checklist { border-right:1px solid var(--line); }
-    .mini-heading { margin:0 0 12px; color:var(--dim); font-size:8px; letter-spacing:.12em; text-transform:uppercase; }
-    .checklist ul { list-style:none; padding:0; margin:0; display:grid; gap:9px; }
-    .checklist li { color:var(--muted); font-size:9px; line-height:1.5; display:flex; gap:8px; }
-    .checklist li::before { content:'✓'; color:var(--green); }
-    .presentation { display:flex; flex-wrap:wrap; gap:6px; margin-top:16px; }
-    .tag { padding:5px 7px; border-radius:5px; background:rgba(167,139,250,.1); color:var(--violet); font-size:8px; }
-    .prompt-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
-    .copy { border:0; background:none; color:var(--cyan); padding:0; font-size:8px; cursor:pointer; }
-    .prompt-text { margin:0; color:#c7d4e7; font-size:9px; line-height:1.75; }
-    .alternatives { padding:13px 24px; border-top:1px solid var(--line); color:var(--dim); font-size:8px; }
-    .alternatives button { margin-left:7px; padding:0; border:0; background:none; color:var(--muted); cursor:pointer; font-size:8px; }
-    .alternatives button:hover { color:var(--cyan); }
-    .library { padding:84px 0 110px; }
-    .section-head { display:flex; align-items:end; justify-content:space-between; gap:28px; margin-bottom:26px; }
-    .section-head h2 { margin:7px 0 0; font:700 clamp(28px,4vw,42px) 'Manrope',sans-serif; letter-spacing:-.04em; }
-    .section-head p { max-width:440px; margin:0; color:var(--muted); font-size:10px; line-height:1.7; }
-    .filters { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:18px; }
-    .filter { border:1px solid var(--line); border-radius:7px; background:rgba(255,255,255,.02); color:var(--muted); padding:8px 10px; font-size:9px; cursor:pointer; }
-    .filter.active { color:#031019; background:var(--cyan); border-color:var(--cyan); font-weight:700; }
-    .cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-    .card { min-width:0; min-height:206px; padding:19px; text-align:left; border:1px solid var(--line); border-radius:12px; background:rgba(7,15,30,.82); cursor:pointer; transition:transform .16s,border-color .16s,background .16s; position:relative; overflow:hidden; }
-    .card::before { content:''; position:absolute; inset:0 auto auto 0; width:70px; height:2px; background:var(--type-color,var(--cyan)); opacity:.7; }
-    .card:hover,.card:focus-visible { transform:translateY(-3px); border-color:var(--type-color,var(--cyan)); background:#0a162b; outline:none; }
-    .card-type { color:var(--type-color,var(--cyan)); font-size:8px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
-    .card h3 { margin:15px 0 8px; font:700 17px 'Manrope',sans-serif; letter-spacing:-.02em; }
-    .card-question { margin:0; color:#c3d0e3; font-size:9px; line-height:1.65; }
-    .card-summary { margin:12px 0 0; color:var(--dim); font-size:8px; line-height:1.6; }
-    .card-foot { position:absolute; left:19px; right:19px; bottom:17px; display:flex; justify-content:space-between; color:var(--dim); font-size:7px; }
-    footer { border-top:1px solid var(--line); padding:28px 0 38px; color:var(--dim); font-size:8px; }
-    footer .shell { display:flex; justify-content:space-between; gap:16px; }
+    .mini-heading { margin-bottom:.875rem; color:var(--dim); font-family:var(--font-mono); font-size:.5625rem; font-weight:500; letter-spacing:.16em; text-transform:uppercase; }
+    .checklist ul { list-style:none; display:grid; gap:.55rem; }
+    .checklist li { color:var(--muted); font-size:.75rem; line-height:1.55; display:flex; gap:.5rem; }
+    .checklist li::before { content:'✓'; color:var(--emerald); flex:0 0 auto; }
+    .presentation { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:1.125rem; }
+    .tag { padding:.35rem .6rem; border-radius:999px; border:1px solid var(--line); background:var(--paper); color:var(--muted); font-family:var(--font-mono); font-size:.5625rem; letter-spacing:.06em; }
+    .prompt-bar { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.75rem; }
+    .copy { border:0; background:none; color:var(--accent); padding:0; font-family:var(--font-mono); font-size:.5625rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; }
+    .copy:hover { color:var(--ink); }
+    .prompt-text { color:var(--ink-soft); font-family:var(--font-mono); font-size:.6875rem; line-height:1.75; white-space:pre-wrap; }
+    .alternatives { padding:.9rem 2rem; border-top:1px solid var(--line); color:var(--dim); font-size:.75rem; }
+    .alternatives button { margin-left:.5rem; padding:0; border:0; background:none; color:var(--muted); cursor:pointer; font-size:.75rem; text-decoration:underline; text-underline-offset:3px; text-decoration-color:var(--line-hi); }
+    .alternatives button:hover { color:var(--accent); text-decoration-color:var(--accent); }
+
+    /* LIBRARY */
+    .library { padding:5rem 0 6rem; }
+    .section-head { display:flex; align-items:end; justify-content:space-between; gap:1.75rem; margin-bottom:1.75rem; }
+    .section-head h2 { margin-top:.5rem; font-family:var(--font-display); font-optical-sizing:auto; font-size:clamp(1.75rem,3vw,2.5rem); font-weight:400; letter-spacing:-.026em; }
+    .section-head p { max-width:440px; color:var(--muted); font-size:.8125rem; line-height:1.7; }
+    .filters { display:flex; flex-wrap:wrap; gap:.45rem; margin-bottom:1.25rem; }
+    .filter { border:1px solid var(--line-hi); border-radius:999px; background:transparent; color:var(--muted); padding:.5rem .85rem; font-family:var(--font-mono); font-size:.5625rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; transition:all .18s var(--ease-out); }
+    .filter:hover { color:var(--ink); border-color:var(--ink); }
+    .filter.active { color:var(--paper); background:var(--ink); border-color:var(--ink); }
+    .cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+    .card { min-width:0; min-height:206px; padding:1.375rem 1.5rem; text-align:left; border:1px solid var(--line-hi); border-radius:12px; background:var(--paper-raised); cursor:pointer; transition:transform .22s var(--ease-out),border-color .22s var(--ease-out),box-shadow .22s var(--ease-out); position:relative; font-family:inherit; }
+    .card:hover,.card:focus-visible { transform:translateY(-3px); border-color:var(--ink); box-shadow:0 14px 36px rgba(20,23,26,.1); outline:none; }
+    .card-type { color:var(--type-color,var(--accent)); font-family:var(--font-mono); font-size:.5625rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; }
+    .card h3 { margin:.875rem 0 .5rem; font-family:var(--font-display); font-optical-sizing:auto; font-size:1.125rem; font-weight:500; letter-spacing:-.015em; color:var(--ink); }
+    .card-question { color:var(--ink-soft); font-size:.75rem; line-height:1.6; }
+    .card-summary { margin:.75rem 0 0; color:var(--dim); font-size:.6875rem; line-height:1.6; }
+    .card-foot { position:absolute; left:1.5rem; right:1.5rem; bottom:1.125rem; display:flex; justify-content:space-between; gap:.75rem; color:var(--dim); font-family:var(--font-mono); font-size:.5625rem; letter-spacing:.06em; }
+    .card { padding-bottom:2.75rem; }
+
+    footer { border-top:1px solid var(--line); padding:1.75rem 0 2.5rem; color:var(--dim); font-family:var(--font-mono); font-size:.625rem; letter-spacing:.04em; }
+    footer .shell { display:flex; justify-content:space-between; gap:1rem; }
+
+    /* ENTRANCE */
+    @keyframes rise { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+    .hero, .chooser, .library { animation:rise .7s var(--ease-out) both; }
+    .chooser { animation-delay:.08s; }
+    .library { animation-delay:.16s; }
+
     @media(max-width:900px) {
-      .hero { grid-template-columns:1fr; gap:36px; }
+      .hero { grid-template-columns:1fr; gap:2.25rem; padding-top:8.5rem; }
       .metrics { grid-template-columns:repeat(3,1fr); }
-      .metric { display:grid; gap:6px; }
+      .metric { display:grid; gap:.4rem; }
       .metric span { text-align:left; }
       .cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
       .result-main,.result-grid { grid-template-columns:1fr; }
@@ -124,44 +170,52 @@
     }
     @media(max-width:620px) {
       .shell { width:min(100% - 28px,1180px); }
-      .topbar { height:60px; }
-      .nav a { display:none; }
-      .hero { padding:62px 0 38px; }
-      h1 { font-size:42px; }
-      .lede { font-size:12px; }
+      nav { padding:0 1.25rem; }
+      .nav-right .nav-link { display:none; }
+      .hero { padding:7.5rem 0 2.5rem; }
+      h1 { font-size:2.2rem; }
+      .lede { font-size:.875rem; }
       .metrics { grid-template-columns:1fr; }
       .metric { display:flex; }
       .metric span { text-align:right; }
-      .chooser { padding:15px; border-radius:12px; }
+      .chooser { padding:1.25rem; }
       .chooser-head .kbd { display:none; }
       .sample-row { flex-wrap:nowrap; overflow:auto; padding-bottom:4px; }
       .chip { white-space:nowrap; }
-      .result-main { padding:19px; }
-      .checklist,.prompt-box { padding:18px 19px; }
+      .result-main { padding:1.25rem; }
+      .checklist,.prompt-box { padding:1.125rem 1.25rem; }
       .cards { grid-template-columns:1fr; }
       .section-head { align-items:flex-start; flex-direction:column; }
-      .library { padding:64px 0 80px; }
+      .library { padding:3.5rem 0 4.5rem; }
       footer .shell { flex-direction:column; }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      html { scroll-behavior:auto; }
+      .hero, .chooser, .library, .result.visible { animation:none; }
     }
   </style>
 </head>
 <body>
-  <header class="shell topbar">
-    <a class="brand" href="index.html" aria-label="Archify home">
-      <span class="brand-mark">◆</span>
-      <span class="brand-copy"><strong>Archify</strong><small data-i18n="versionLabel">Scenario guide / stable / v[[ARCHIFY_VERSION]]</small></span>
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <nav aria-label="Main navigation">
+    <a class="nav-logo" href="./" aria-label="Archify home">
+      <span class="nav-logo-text">Archify</span>
+      <span class="nav-logo-path">/ guide</span>
     </a>
-    <nav class="nav" aria-label="Main navigation">
-      <a href="gallery.html" data-i18n="navProof">Proof Lab</a>
-      <a href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
-      <button class="utility" id="language" type="button" aria-label="Switch language">中文</button>
-    </nav>
-  </header>
+    <div class="nav-right">
+      <a class="nav-link" href="guide.html" aria-current="page" data-i18n="navGuide">Guide</a>
+      <a class="nav-link" href="gallery.html" data-i18n="navProof">Proof Lab</a>
+      <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
+      <button class="btn-lang" id="language" type="button" aria-label="Switch language">中文</button>
+      <a class="btn btn-primary" href="start.html" data-i18n="navInstall">Install Skill</a>
+    </div>
+  </nav>
 
   <main class="shell">
     <section class="hero">
       <div>
-        <div class="eyebrow" data-i18n="eyebrow">Question-first diagramming</div>
+        <div class="lead-label" data-i18n="eyebrow">Question-first diagramming</div>
         <h1 data-i18n-html="headline">Choose the question.<br>Get the <em>right diagram.</em></h1>
         <p class="lede" data-i18n="lede">Describe what your audience needs to understand. Archify recommends one bounded visual recipe—plus the evidence it must contain, when not to use it, and a prompt you can copy.</p>
       </div>
@@ -188,7 +242,7 @@
 
     <section class="library" id="library">
       <div class="section-head">
-        <div><div class="eyebrow" data-i18n="libraryEyebrow">Recipe library</div><h2 data-i18n="libraryTitle">Eleven small, opinionated starting points.</h2></div>
+        <div><div class="lead-label" data-i18n="libraryEyebrow">Recipe library</div><h2 data-i18n="libraryTitle">Eleven small, opinionated starting points.</h2></div>
         <p data-i18n="libraryBody">Each recipe answers one technical question. That boundary keeps the result legible, reviewable, and honest about missing evidence.</p>
       </div>
       <div class="filters" id="filters" aria-label="Filter recipes"></div>
@@ -196,7 +250,7 @@
     </section>
   </main>
 
-  <footer><div class="shell"><span data-i18n="footerLeft">Generated from the same recipe source as the Archify CLI.</span><span>archify guide "your scenario"</span></div></footer>
+  <footer><div class="shell"><span data-i18n="footerLeft">Generated from the same recipe source as the Archify CLI.</span><span>archify guide "your scenario"</span><span data-i18n="versionLabel">Scenario guide / stable / v[[ARCHIFY_VERSION]]</span></div></footer>
 
   <script id="guide-data" type="application/json">[[GUIDE_JSON]]</script>
   <script>
@@ -204,18 +258,18 @@
       'use strict';
       var recipes = JSON.parse(document.getElementById('guide-data').textContent);
       var types = ['architecture','workflow','sequence','dataflow','lifecycle'];
-      var colors = { architecture:'#2dd4e8', workflow:'#34d399', sequence:'#a78bfa', dataflow:'#fbbf24', lifecycle:'#fb7185' };
+      var colors = { architecture:'#0891b2', workflow:'#047857', sequence:'#6d28d9', dataflow:'#b45309', lifecycle:'#be123c' };
       var language = localStorage.getItem('archify-guide-language') === 'zh' ? 'zh' : 'en';
       var activeType = 'all';
       var lastRecipe = null;
       var copy = {
         en: {
-          navProof:'Proof Lab',versionLabel:'Scenario guide / stable / v[[ARCHIFY_VERSION]]',eyebrow:'Question-first diagramming', headline:'Choose the question.<br>Get the <em>right diagram.</em>', lede:'Describe what your audience needs to understand. Archify recommends one bounded visual recipe—plus the evidence it must contain, when not to use it, and a prompt you can copy.',
+          navGuide:'Guide',navProof:'Proof Lab',navInstall:'Install Skill',versionLabel:'Scenario guide / stable / v[[ARCHIFY_VERSION]]',eyebrow:'Question-first diagramming', headline:'Choose the question.<br>Get the <em>right diagram.</em>', lede:'Describe what your audience needs to understand. Archify recommends one bounded visual recipe—plus the evidence it must contain, when not to use it, and a prompt you can copy.',
           metricRecipes:'real-world<br>recipes',metricModes:'typed diagram<br>modes',metricRuntime:'runtime<br>dependencies',chooserTitle:'What must the diagram explain?',chooserBody:'Write a situation, not a diagram type. Specific system facts produce a stronger recommendation.',placeholder:'Example: Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing.',recommend:'Recommend a recipe →',clear:'Clear',libraryEyebrow:'Recipe library',libraryTitle:'Eleven small, opinionated starting points.',libraryBody:'Each recipe answers one technical question. That boundary keeps the result legible, reviewable, and honest about missing evidence.',footerLeft:'Generated from the same recipe source as the Archify CLI.',all:'All recipes',recommended:'Recommended recipe',use:'Use when',avoid:'Avoid when',must:'Evidence to include',presentation:'Presentation',prompt:'Copy-ready prompt',copyPrompt:'Copy prompt',copied:'Copied',alternatives:'Other possible fits:',confidence:'confidence',open:'Open recipe',proofReady:'Verified proof',proofLink:'Open verified example ↗',
           samples:[['API + cache miss','Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing.'],['Kafka + DLQ','Map Kafka topics, ordered processors, consumer groups, replay, state stores, and the dead-letter queue.'],['Incident response','Show how responders detect, triage, mitigate, escalate, communicate, and verify recovery.']]
         },
         zh: {
-          navProof:'验证作品集',versionLabel:'场景指南 / 稳定版 / v[[ARCHIFY_VERSION]]',eyebrow:'先问题，后图表',headline:'先选对问题，<br>再得到<em>对的图。</em>',lede:'描述受众真正需要理解的内容。Archify 会推荐一个有边界的视觉配方，同时给出证据清单、禁用条件和可复制提示词。',
+          navGuide:'场景指南',navProof:'验证作品集',navInstall:'安装技能',versionLabel:'场景指南 / 稳定版 / v[[ARCHIFY_VERSION]]',eyebrow:'先问题，后图表',headline:'先选对问题，<br>再得到<em>对的图。</em>',lede:'描述受众真正需要理解的内容。Archify 会推荐一个有边界的视觉配方，同时给出证据清单、禁用条件和可复制提示词。',
           metricRecipes:'个真实场景<br>配方',metricModes:'种类型化<br>图表模式',metricRuntime:'个运行时<br>依赖',chooserTitle:'这张图必须解释什么？',chooserBody:'写清场景，不要只写图表类型。系统事实越具体，推荐越可靠。',placeholder:'例如：展示带 JWT 鉴权、Redis 缓存未命中、数据库回退和异步追踪的 API 请求。',recommend:'推荐配方 →',clear:'清空',libraryEyebrow:'配方库',libraryTitle:'十一个小而专的起点。',libraryBody:'每个配方只回答一个技术问题。清晰的边界让图更易读、可评审，也不会掩盖证据缺口。',footerLeft:'网页与 Archify CLI 使用同一份配方数据生成。',all:'全部配方',recommended:'推荐配方',use:'适合',avoid:'不要这样用',must:'必须包含的证据',presentation:'表现建议',prompt:'可直接复制的提示词',copyPrompt:'复制提示词',copied:'已复制',alternatives:'其他可能：',confidence:'置信度',open:'打开配方',proofReady:'已验证成品',proofLink:'打开验证成品 ↗',
           samples:[['API + 缓存未命中','展示带 JWT 鉴权、Redis 缓存未命中、数据库回退和异步追踪的 API 请求。'],['Kafka + 死信','梳理 Kafka Topic、有序处理器、消费者组、重放、状态存储和死信队列。'],['事故处置','展示响应者如何发现、分诊、缓解、升级、沟通并验证恢复。']]
         }
