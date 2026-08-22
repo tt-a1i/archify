@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Brand-aware AI delivery",
+    "quality_profile": "showcase",
+    "viewBox": [1120, 640],
+    "views": [
+      {
+        "id": "delivery-path",
+        "label": "Delivery path",
+        "focus": ["request", "claude", "github", "container", "edge", "customer"],
+        "note": "Follow one delivery from the request through the model, repository, container, and edge."
+      },
+      {
+        "id": "business-data",
+        "label": "Business and data",
+        "focus": ["container", "database", "billing"],
+        "note": "Inspect durable state and billing without losing the main delivery path."
+      }
+    ]
+  },
+  "components": [
+    { "id": "request", "type": "external", "label": "Product request", "sublabel": "Owner brief", "pos": [38, 260], "size": [138, 68] },
+    { "id": "claude", "type": "frontend", "label": "Claude", "sublabel": "Plan and author", "brand": "claude", "pos": [220, 260], "size": [138, 68] },
+    { "id": "github", "type": "messagebus", "label": "GitHub", "sublabel": "Review and merge", "brand": "github", "pos": [402, 260], "size": [138, 68] },
+    { "id": "container", "type": "backend", "label": "Docker service", "sublabel": "Build and run", "brand": "docker", "pos": [584, 260], "size": [138, 68] },
+    { "id": "edge", "type": "cloud", "label": "Cloudflare", "sublabel": "Global delivery", "brand": "cloudflare", "pos": [766, 260], "size": [138, 68] },
+    { "id": "customer", "type": "external", "label": "Customers", "sublabel": "Web and mobile", "pos": [948, 260], "size": [138, 68] },
+    { "id": "database", "type": "database", "label": "PostgreSQL", "sublabel": "Durable state", "brand": "postgresql", "pos": [584, 420], "size": [138, 68] },
+    { "id": "billing", "type": "external", "label": "Stripe", "sublabel": "Billing events", "brand": "stripe", "pos": [766, 420], "size": [138, 68] }
+  ],
+  "connections": [
+    { "id": "brief-to-claude", "from": "request", "to": "claude", "label": "brief", "variant": "emphasis" },
+    { "id": "claude-to-github", "from": "claude", "to": "github", "label": "change set", "labelDy": -28 },
+    { "id": "github-to-container", "from": "github", "to": "container", "label": "approved build", "labelDy": -28 },
+    { "id": "container-to-edge", "from": "container", "to": "edge", "label": "deploy" },
+    { "id": "edge-to-customer", "from": "edge", "to": "customer", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "container-to-database", "from": "container", "to": "database", "label": "SQL", "fromSide": "bottom", "toSide": "top", "labelAt": [625, 370] },
+    { "id": "container-to-billing", "from": "container", "to": "billing", "label": "create charge", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "via": [[653, 374], [835, 374]] },
+    { "id": "billing-to-database", "from": "billing", "to": "database", "label": "webhook", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Identity at a glance", "items": ["Semantic color still explains technical role", "Brand badges identify the actual products"] },
+    { "dot": "amber", "title": "Portable by default", "items": ["Preset marks ship inside Archify", "Every visual export keeps the same badge"] }
+  ]
+}

@@ -4,11 +4,17 @@ on:
   pull_request:
     paths:
       - 'integrations/deepseek-harness/**'
+      - 'scripts/stage-clean-skill.mjs'
+      - 'scripts/build-zip.sh'
+      - 'archify/**'
       - '.github/workflows/dsh.yml'
   push:
     branches: [main]
     paths:
       - 'integrations/deepseek-harness/**'
+      - 'scripts/stage-clean-skill.mjs'
+      - 'scripts/build-zip.sh'
+      - 'archify/**'
       - '.github/workflows/dsh.yml'
     tags:
       - 'archify-dsh-v*'

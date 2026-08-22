@@ -1,0 +1,7 @@
+interface:
+  display_name: "Archify"
+  short_description: "Verified architecture, workflow, sequence, data-flow, and lifecycle diagrams"
+  default_prompt: "Use $archify to map this repository's runtime architecture. Show 8–12 core components, one primary path, external dependencies, and trust boundaries. Put supporting detail in cards instead of adding more edges."
+
+policy:
+  allow_implicit_invocation: true

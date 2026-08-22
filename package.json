@@ -1,0 +1,16 @@
+{
+  "name": "archify",
+  "private": true,
+  "description": "Agent skill for verified architecture, workflow, sequence, data-flow, and lifecycle diagrams.",
+  "license": "MIT",
+  "keywords": ["pi-package", "agent-skill", "architecture-diagram"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tt-a1i/archify.git"
+  },
+  "homepage": "https://github.com/tt-a1i/archify#readme",
+  "bugs": "https://github.com/tt-a1i/archify/issues",
+  "pi": {
+    "skills": ["./archify"]
+  }
+}

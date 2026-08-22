@@ -96,19 +96,19 @@ Export 菜单支持复制 PNG，并下载静态或动态格式：
 npx skills add tt-a1i/archify -g
 ```
 
-显式、非交互地安装到 Cursor：
+以上 Skills CLI 命令仍是默认回退方案。原生插件 `0.1.0` 与 Skill `2.15.0` 独立版本管理，也可使用：
 
 ```bash
-npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
+# Claude Code
+claude plugin marketplace add tt-a1i/archify && claude plugin install archify
+# Codex CLI
+codex plugin marketplace add tt-a1i/archify && codex plugin add archify@archify
+# Grok
+grok plugin marketplace add tt-a1i/archify && grok plugin install archify --trust && grok plugin enable archify
+# Pi
+pi install git:github.com/tt-a1i/archify
+npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes  # Cursor（非交互式 Skills CLI）
 ```
-
-如果只想临时体验：
-
-```bash
-npx skills use tt-a1i/archify@archify --agent codex
-```
-
-DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@0.1.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。
 
 [Agent 切换器](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)只为 `cursor`、`codex`、`claude-code` 和 `opencode` 生成命令。Raven 仅支持 ZIP 手动安装：将 [`archify.zip`](archify.zip) 解压到 `~/.raven/workspace/skills`，解压后会得到 `~/.raven/workspace/skills/archify`；Raven 不属于切换器目标。
 
@@ -255,8 +255,8 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 使用位置 | 安装位置或方法 | 能力 |
 |---|---|---|
 | **Raven** | ZIP 手动安装：将 `archify.zip` 解压到 `~/.raven/workspace/skills`，解压后会得到 `~/.raven/workspace/skills/archify` | 完整 Renderer + Validation 工作流 |
-| **Claude Code** | `~/.claude/skills/` 或 `.claude/skills/` | 完整 Renderer + Validation 工作流 |
-| **Codex CLI** | `~/.agents/skills/` 或 `.agents/skills/` | 完整 Renderer + Validation 工作流 |
+| **Claude Code** | `tt-a1i/archify` 插件 `archify`，或 `npx skills add` | 完整 Renderer + Validation 工作流 |
+| **Codex CLI** | `tt-a1i/archify` 插件 `archify@archify`，或 `npx skills add` | 完整 Renderer + Validation 工作流 |
 | **opencode** | `~/.config/opencode/skills/`、`.opencode/skills/` 或 `.agents/skills/` | 完整 Renderer + Validation 工作流 |
 | **Claude.ai** | Settings → Capabilities → Skills 中上传 `archify.zip` | 取决于沙箱是否提供 Node.js |
 | **Project Knowledge** | 把 `archify.zip` 上传到项目 | Prompt 驱动的 Architecture Fallback |

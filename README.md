@@ -39,7 +39,7 @@ Then ask your agent: `Use archify to map this repository's runtime architecture.
 
 <a href="https://apinebula.ai/ref/wywnaATT"><img src="docs/assets/sponsors/apinebula-archify.jpg" alt="APINEBULA — One API for leading AI models" width="100%"></a>
 
-Thanks to [**APINEBULA**](https://apinebula.ai/ref/wywnaATT) for sponsoring Archify. APINEBULA offers unified access to Claude, GPT, Gemini, and more. Register through [the Archify link](https://apinebula.ai/ref/wywnaATT) and use **`Archify`** for a **10% discount**.
+Sponsored by [**APINEBULA**](https://apinebula.ai/ref/wywnaATT); use **`Archify`** for a **10% discount**.
 
 <a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven — Map the system. Keep the context." width="100%"></a>
 
@@ -47,7 +47,7 @@ Sponsored by [**EverMind**](https://github.com/EverMind-AI), building memory inf
 
 ## See Archify in action
 
-These are generated Archify artifacts, not product mockups. Click a frame to open its live, shareable state.
+Checked-in proofs are generated outputs, not product mockups; click one for its live state.
 
 <p align="center">
   <a href="https://tt-a1i.github.io/archify/gallery.html"><img src="docs/assets/archify-live-proof.gif" alt="Three verified Archify artifacts moving through Signal Flow, Blueprint, and Classic presets" width="960"/></a>
@@ -90,8 +90,6 @@ After tracing authored `Upstream` or `Downstream` reach, **Export → Reach Shar
 
 ![MCO downstream Reach Share Card showing authored relationships from Command Router](docs/assets/mco-runtime-reach-share-card.png)
 
-Open [`examples/web-app.html`](examples/web-app.html) locally to try the complete viewer.
-
 ## Quick start
 
 ### 1. Install
@@ -100,19 +98,20 @@ Open [`examples/web-app.html`](examples/web-app.html) locally to try the complet
 npx skills add tt-a1i/archify -g
 ```
 
-For an explicit, non-interactive Cursor install:
+Default fallback: Skills CLI above. Native plugins (`0.1.0`, independent from Skill `2.15.0`):
 
 ```bash
+# Claude Code
+claude plugin marketplace add tt-a1i/archify && claude plugin install archify
+# Codex CLI
+codex plugin marketplace add tt-a1i/archify && codex plugin add archify@archify
+# Grok
+grok plugin marketplace add tt-a1i/archify && grok plugin install archify --trust && grok plugin enable archify
+# Pi
+pi install git:github.com/tt-a1i/archify
+# Cursor (non-interactive Skills CLI)
 npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
 ```
-
-To try without installing:
-
-```bash
-npx skills use tt-a1i/archify@archify --agent codex
-```
-
-[DSH community opt-in](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@0.1.0`
 
 The [agent switcher](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, and `opencode`. For Raven's manual ZIP install, extract [`archify.zip`](archify.zip) into `~/.raven/workspace/skills`; it yields `~/.raven/workspace/skills/archify`. Raven is not a switcher target.
 
@@ -253,15 +252,13 @@ Omit `animation` for a truly static diagram. `classic` remains default; `editori
 
 Stable links can restore `#focus=<id>`, `#focus=<id>&reach=upstream|downstream`, `#relation=<id>`, `#route=<source>~<target>`, `#lens=<kind>~<kind>`, and `#view=<view-id>`. Reader-driven motion is finite, respects `prefers-reduced-motion`, and never enters canonical exports.
 
-The complete generation and viewer contract lives in [`archify/SKILL.md`](archify/SKILL.md).
-
 ## Installation options
 
 | Surface | Install location or method | Capability |
 |---|---|---|
-| **Raven** | Manual ZIP into `~/.raven/workspace/skills` → `~/.raven/workspace/skills/archify` | Full renderer + validation workflow |
-| **Claude Code** | `~/.claude/skills/` or `.claude/skills/` | Full renderer + validation workflow |
-| **Codex CLI** | `~/.agents/skills/` or `.agents/skills/` | Full renderer + validation workflow |
+| **Raven** | Manual ZIP into `~/.raven/workspace/skills` → `~/.raven/workspace/skills/archify` | Full workflow |
+| **Claude Code** | `tt-a1i/archify` plugin `archify`, or `npx skills add` | Full workflow |
+| **Codex CLI** | `archify@archify` via `tt-a1i/archify`, or `npx skills add` | Full workflow |
 | **opencode** | `~/.config/opencode/skills/`, `.opencode/skills/`, or `.agents/skills/` | Full renderer + validation workflow |
 | **Claude.ai** | Upload `archify.zip` under Settings → Capabilities → Skills | Depends on Node.js access in the sandbox |
 | **Project Knowledge** | Upload `archify.zip` to the project | Prompt-driven architecture fallback |
