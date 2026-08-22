@@ -107,7 +107,7 @@ codex plugin marketplace add tt-a1i/archify && codex plugin add archify@archify
 grok plugin marketplace add tt-a1i/archify && grok plugin install archify --trust && grok plugin enable archify
 # Pi
 pi install git:github.com/tt-a1i/archify
-npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
+npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes  # Cursor（非交互式 Skills CLI）
 ```
 
 [Agent 切换器](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)只为 `cursor`、`codex`、`claude-code` 和 `opencode` 生成命令。Raven 仅支持 ZIP 手动安装：将 [`archify.zip`](archify.zip) 解压到 `~/.raven/workspace/skills`，解压后会得到 `~/.raven/workspace/skills/archify`；Raven 不属于切换器目标。

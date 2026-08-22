@@ -175,6 +175,59 @@ test('the plugin release gate rejects changed bytes without a version bump', () 
     const check = spawnSync(process.execPath, [gate, '--root', fixture], { encoding: 'utf8' });
     assert.notEqual(check.status, 0);
     assert.match(check.stderr, /plugin bytes changed without a version increment/);
+
+    const rewrite = spawnSync(process.execPath, [gate, '--root', fixture, '--write'], { encoding: 'utf8' });
+    assert.notEqual(rewrite.status, 0);
+    assert.match(rewrite.stderr, /plugin bytes changed without a version increment/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('the plugin release gate refuses rewriting a deleted receipt under the same version', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-plugin-release-delete-'));
+  const gate = path.join(repoRoot, 'scripts', 'check-plugin-release.mjs');
+  const writeJson = (relative, value) => {
+    const target = path.join(fixture, relative);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, `${JSON.stringify(value, null, 2)}\n`);
+  };
+  try {
+    writeJson('.claude-plugin/marketplace.json', { plugins: [{ version: pluginVersion }] });
+    writeJson('.grok-plugin/marketplace.json', { plugins: [{ version: pluginVersion }] });
+    writeJson('.agents/plugins/marketplace.json', { plugins: [] });
+    writeJson('package.json', { name: 'archify', private: true });
+    for (const relative of [
+      'plugins/archify/plugin.json',
+      'plugins/archify/.claude-plugin/plugin.json',
+      'plugins/archify/.codex-plugin/plugin.json',
+    ]) {
+      writeJson(relative, { name: 'archify', version: pluginVersion });
+    }
+    fs.writeFileSync(path.join(fixture, 'plugins/archify/.codex-plugin/openai.yaml'), 'name: archify\n');
+    fs.mkdirSync(path.join(fixture, 'plugins/archify/skills/archify'), { recursive: true });
+    const payload = path.join(fixture, 'plugins/archify/skills/archify/SKILL.md');
+    fs.writeFileSync(payload, '# archify\n');
+
+    const receipt = spawnSync(process.execPath, [gate, '--root', fixture, '--write'], { encoding: 'utf8' });
+    assert.equal(receipt.status, 0, receipt.stderr || receipt.stdout);
+    git(fixture, ['init']);
+    git(fixture, ['add', '.']);
+    git(fixture, [
+      '-c',
+      'user.email=archify-test@example.com',
+      '-c',
+      'user.name=archify-test',
+      'commit',
+      '-m',
+      'receipt',
+    ]);
+
+    fs.appendFileSync(payload, 'changed\n');
+    fs.rmSync(path.join(fixture, 'plugins/archify/release-receipt.json'));
+    const deleteRewrite = spawnSync(process.execPath, [gate, '--root', fixture, '--write'], { encoding: 'utf8' });
+    assert.notEqual(deleteRewrite.status, 0);
+    assert.match(deleteRewrite.stderr, /plugin bytes changed without a version increment/);
   } finally {
     fs.rmSync(fixture, { recursive: true, force: true });
   }

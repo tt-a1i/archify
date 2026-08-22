@@ -21,15 +21,17 @@ function stageCleanArchify(dest) {
   stageCleanSkill(archifySource, dest);
 }
 
-function copyIntegrationFile(relative, dest = relative) {
-  const source = path.join(integrationRoot, relative);
+function copyRegularFile(source, dest) {
   const stat = fs.lstatSync(source);
   if (stat.isSymbolicLink() || !stat.isFile()) {
-    throw new Error(`refusing to package non-regular integration file: ${relative}`);
+    throw new Error(`refusing to package non-regular file: ${source}`);
   }
-  const target = path.join(stage, dest);
-  fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.copyFileSync(source, target);
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.copyFileSync(source, dest);
+}
+
+function copyIntegrationFile(relative, dest = relative) {
+  copyRegularFile(path.join(integrationRoot, relative), path.join(stage, dest));
 }
 
 const json = process.argv.includes('--json');
@@ -41,7 +43,7 @@ try {
   for (const relative of ['package.json', 'cordis.patch.yml', 'lib/index.js', 'README.md']) {
     copyIntegrationFile(relative);
   }
-  fs.copyFileSync(path.join(repoRoot, 'LICENSE'), path.join(stage, 'LICENSE'));
+  copyRegularFile(path.join(repoRoot, 'LICENSE'), path.join(stage, 'LICENSE'));
 
   const packed = spawnCliSync('npm', ['pack', '--json', '--pack-destination', stage], {
     cwd: stage,
