@@ -33,13 +33,12 @@ npx skills add tt-a1i/archify -g
 
 ## ❤️ 赞助伙伴
 
-<a href="https://apinebula.ai/ref/wywnaATT"><img src="docs/assets/sponsors/apinebula-archify.jpg" alt="APINEBULA——一个接口，接入全球顶尖 AI 模型" width="100%"></a>
+<table>
+  <tr><td align="center" width="240"><a href="https://apinebula.ai/ref/wywnaATT"><img src="docs/assets/sponsors/apinebula-archify.jpg" alt="APINEBULA" width="200" /></a><br/><strong><a href="https://apinebula.ai/ref/wywnaATT">APINEBULA</a></strong></td><td>感谢 APINEBULA 赞助 Archify。APINEBULA 通过统一接口提供 Claude、GPT、Gemini 等主流模型。通过 <a href="https://apinebula.ai/ref/wywnaATT">Archify 专属链接</a>注册并填写优惠码 <strong><code>Archify</code></strong>，即可享受<strong>9 折优惠</strong>。</td></tr>
+  <tr><td align="center" width="240"><a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven" width="200" /></a><br/><strong><a href="https://github.com/EverMind-AI">EverMind</a> · <a href="https://github.com/EverMind-AI/Raven">Raven</a></strong></td><td>感谢 EverMind 赞助 Archify。EverMind 专注 Agent 记忆基础设施，旗下 <a href="https://github.com/EverMind-AI/Raven"><strong>Raven</strong></a> 已支持 Archify Skill，让 Raven 工作流可以直接生成经过验证的交互式系统地图。</td></tr>
+</table>
 
-感谢 [**APINEBULA**](https://apinebula.ai/ref/wywnaATT) 赞助本项目。APINEBULA 是银河录像局旗下的企业级 AI 聚合平台，面向开发者、团队与企业用户提供稳定、高性价比的大模型 API 接入服务。平台通过统一接口聚合 Claude、GPT、Gemini 等主流满血模型，部分模型价格低至官方价格的 1 折，并支持企业级高并发、正式合同、对公打款与开票服务，适合 AI 编程、Agent 开发和业务系统集成等场景。通过 [Archify 专属链接](https://apinebula.ai/ref/wywnaATT) 注册并在充值时填写优惠码 **`Archify`**，即可享受 **9 折优惠**。
-
-<a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven——绘制系统，保留上下文" width="100%"></a>
-
-本项目由专注 Agent 记忆基础设施的 [**EverMind**](https://github.com/EverMind-AI) 赞助。EverMind 旗下以记忆为核心、可自进化的 Agent Harness [**Raven**](https://github.com/EverMind-AI/Raven) 已支持 Archify Skill，让 Raven 工作流可以直接生成经过验证的交互式系统地图。
+> 想赞助 Archify？[欢迎通过邮件联系我们。](mailto:2801884530@qq.com)
 
 ## 看看 Archify 能做什么
 

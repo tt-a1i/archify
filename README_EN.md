@@ -37,13 +37,12 @@ Then ask your agent: `Use archify to map this repository's runtime architecture.
 
 ## ❤️ Sponsors
 
-<a href="https://apinebula.ai/ref/wywnaATT"><img src="docs/assets/sponsors/apinebula-archify.jpg" alt="APINEBULA — One API for leading AI models" width="100%"></a>
+<table>
+  <tr><td align="center" width="240"><a href="https://apinebula.ai/ref/wywnaATT"><img src="docs/assets/sponsors/apinebula-archify.jpg" alt="APINEBULA" width="200" /></a><br/><strong><a href="https://apinebula.ai/ref/wywnaATT">APINEBULA</a></strong></td><td>APINEBULA sponsors Archify with one API for Claude, GPT, Gemini, and more. <a href="https://apinebula.ai/ref/wywnaATT">Register through Archify</a> and use <strong><code>Archify</code></strong> for <strong>10% off</strong>.</td></tr>
+  <tr><td align="center" width="240"><a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven" width="200" /></a><br/><strong><a href="https://github.com/EverMind-AI">EverMind</a> · <a href="https://github.com/EverMind-AI/Raven">Raven</a></strong></td><td>EverMind sponsors Archify and builds memory infrastructure for agents. Its <a href="https://github.com/EverMind-AI/Raven"><strong>Raven</strong></a> harness supports Archify as a Skill for verified, interactive system maps.</td></tr>
+</table>
 
-Thanks to [**APINEBULA**](https://apinebula.ai/ref/wywnaATT) for sponsoring Archify. APINEBULA offers unified access to Claude, GPT, Gemini, and more. Register through [the Archify link](https://apinebula.ai/ref/wywnaATT) and use **`Archify`** for a **10% discount**.
-
-<a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven — Map the system. Keep the context." width="100%"></a>
-
-Sponsored by [**EverMind**](https://github.com/EverMind-AI), building memory infrastructure for agents. Its memory-first, self-evolving agent harness [**Raven**](https://github.com/EverMind-AI/Raven) supports Archify as a Skill, bringing verified, interactive system maps into Raven workflows.
+> Want to sponsor Archify? [Contact us by email.](mailto:2801884530@qq.com)
 
 ## See Archify in action
 
