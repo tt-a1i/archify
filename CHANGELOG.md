@@ -4,9 +4,6 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
-### Changed
-- The five Diagram Types previews on the project page and in the READMEs are recaptured uniformly in the light theme with one framing rule (1440px viewport, 2× scale, diagram-plate crop), so dark surfaces stay reserved for live product plates and deliberate selected states.
-
 ## [2.15.0] — 2026-08-17
 
 ### Added
