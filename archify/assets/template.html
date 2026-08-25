@@ -4646,6 +4646,12 @@
       opacity: 0.28 !important;
       filter: grayscale(0.72) !important;
     }
+    /* The chapter's own edges stay fully lit (line + arrowhead) so the
+       hovered chain visibly lights up against the dimmed rest. */
+    svg[data-chapter-preview] [data-edge-from][data-chapter-preview-role="edge-live"] {
+      opacity: 1 !important;
+      filter: none !important;
+    }
     svg[data-preset="blueprint"][data-chapter-preview] [data-node-id] { filter: none !important; }
 
     /* Dashed boundary variants */
@@ -8409,7 +8415,11 @@
           node.removeAttribute('data-focus-selected');
           node.setAttribute('aria-pressed', 'false');
         });
-        edges().forEach(function (edge) { edge.removeAttribute('data-focus-match'); });
+        edges().forEach(function (edge) {
+          edge.removeAttribute('data-focus-match');
+          var originalMarker = edge.getAttribute('data-marker-original');
+          if (originalMarker) { edge.setAttribute('marker-end', originalMarker); edge.removeAttribute('data-marker-original'); }
+        });
         chip.hidden = true;
         label.textContent = '';
         detail.textContent = '';
@@ -8483,10 +8493,24 @@
         normalized.forEach(function (id) { selected[id] = true; related[id] = true; });
         var selectionMode = options.mode === 'selection' || normalized.length > 1;
 
+        function dimMarker(markerEnd) {
+          if (typeof markerEnd !== 'string') return markerEnd;
+          var m = markerEnd.match(/url\(#([^)]+)\)/);
+          if (!m || /dim$/.test(m[1])) return markerEnd;
+          return 'url(#' + m[1] + '-dim)';
+        }
         edges().forEach(function (edge) {
           var from = edge.getAttribute('data-edge-from');
           var to = edge.getAttribute('data-edge-to');
           var match = selectionMode ? selected[from] && selected[to] : selected[from] || selected[to];
+          // SVG markers do not inherit path opacity; swap the arrowhead to a
+          // translucent dim variant so focused chains visibly light up.
+          if (edge.getAttribute('data-marker-original') == null) {
+            edge.setAttribute('data-marker-original', edge.getAttribute('marker-end') || '');
+          }
+          edge.setAttribute('marker-end', match
+            ? (edge.getAttribute('data-marker-original') || '')
+            : dimMarker(edge.getAttribute('data-marker-original') || ''));
           if (!match) return;
           edge.setAttribute('data-focus-match', '');
           if (!selectionMode) { related[from] = true; related[to] = true; }
@@ -9322,6 +9346,9 @@
         Array.prototype.forEach.call(svg.querySelectorAll('[data-chapter-preview-role]'), function (node) {
           node.removeAttribute('data-chapter-preview-role');
         });
+        Array.prototype.forEach.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'), function (edge) {
+          edge.removeAttribute('data-chapter-preview-role');
+        });
         chapterButtons.forEach(function (button) { button.removeAttribute('data-preview-active'); });
         activePreviewIndex = -1;
         if (previewOwnerToken && Archify.motionGovernor) {
@@ -9363,6 +9390,27 @@
         Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id]'), function (node) {
           var role = roles[node.getAttribute('data-node-id')];
           if (role) node.setAttribute('data-chapter-preview-role', role);
+        });
+        // Preview must light up the chapter's own arrows too: shared SVG
+        // markers do not inherit path opacity, so swap unmatched edges to a
+        // translucent dim arrowhead (mirrors the focus logic in setMany).
+        var previewFocus = {};
+        views[index].focus.forEach(function (fid) { previewFocus[fid] = true; });
+        Array.prototype.forEach.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'), function (edge) {
+          if (edge.getAttribute('data-marker-original') == null) {
+            edge.setAttribute('data-marker-original', edge.getAttribute('marker-end') || '');
+          }
+          var pFrom = edge.getAttribute('data-edge-from');
+          var pTo = edge.getAttribute('data-edge-to');
+          var inChapter = previewFocus[pFrom] && previewFocus[pTo];
+          var original = edge.getAttribute('data-marker-original') || '';
+          var pm = original.match(/url\(#([^)]+)\)/);
+          edge.setAttribute('marker-end', inChapter
+            ? original
+            : (pm && !/dim$/.test(pm[1]) ? 'url(#' + pm[1] + '-dim)' : original));
+          // Keep the chapter's own edge paths fully lit during preview.
+          if (inChapter) edge.setAttribute('data-chapter-preview-role', 'edge-live');
+          else edge.removeAttribute('data-chapter-preview-role');
         });
         svg.setAttribute('data-chapter-preview', views[index].id);
         chapterButtons[index].setAttribute('data-preview-active', 'true');

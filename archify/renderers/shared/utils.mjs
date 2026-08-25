@@ -19,6 +19,21 @@ export function renderDefinitions() {
           <marker id="arrowhead-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" />
           </marker>
+          <!-- Dim variants: shared SVG markers are drawn independently of the
+               referencing path, so focus/preview dimming swaps marker-end to a
+               translucent arrowhead (markers do not inherit path opacity). -->
+          <marker id="arrowhead-dim" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-default" opacity="0.28" />
+          </marker>
+          <marker id="arrowhead-emphasis-dim" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-emphasis" opacity="0.28" />
+          </marker>
+          <marker id="arrowhead-security-dim" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-security" opacity="0.28" />
+          </marker>
+          <marker id="arrowhead-dashed-dim" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" opacity="0.28" />
+          </marker>
           <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
             <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
           </pattern>
