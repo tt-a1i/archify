@@ -6,6 +6,7 @@ import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
+import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import {
   asArray,
   isFinitePoint,
@@ -72,7 +73,8 @@ function nodeContext(node) {
   const phase = asArray(workflow.phases).find((candidate) => (
     node.col >= candidate.fromCol && node.col <= candidate.toCol
   ));
-  return [laneLabels.get(node.lane), group?.label, phase?.label].filter(Boolean).join(' › ') || 'Workflow node';
+  return [laneLabels.get(node.lane), group?.label, phase?.label].filter(Boolean).join(' › ')
+    || i18nText(workflow.meta.locale, 'node.context.workflow');
 }
 
 function laneTop(id) {
@@ -648,7 +650,7 @@ function renderNode(node) {
     : '';
   const brand = renderBrandMark(node, { x: node.x + node.width - 22, y: node.y + 6 });
   const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context: nodeContext(node), ...brandMetadataFor(node) };
-  return `        <g ${focusNodeAttrs(node.id, node.label, passport)}>
+  return `        <g ${focusNodeAttrs(node.id, node.label, passport, workflow.meta.locale)}>
           ${focusNodeTitle(node.label, passport)}
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="c-mask"/>
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="${fill}"${animateAttr(workflow.meta, 'node', nodeStep(node))} stroke-width="1.5"/>
@@ -676,20 +678,21 @@ function renderEdgeLabel(edge, index) {
 }
 
 const LEGEND_CATALOG = [
-  ['frontend', 'User UI'],
-  ['backend', 'Agent logic'],
-  ['security', 'Policy'],
-  ['messagebus', 'Tool action'],
-  ['database', 'Context / trace'],
-  ['cloud', 'Cloud service'],
-  ['external', 'External system'],
-].map(([kind, label]) => ({ kind, label }));
+  'frontend',
+  'backend',
+  'security',
+  'messagebus',
+  'database',
+  'cloud',
+  'external',
+].map((kind) => ({ kind, label: i18nText(workflow.meta.locale, `legend.workflow.${kind}`) }));
 
 function renderLegend() {
   const presentKinds = new Set([...nodes.values()].map((node) => node.type));
   const entries = resolveLegend(workflow.meta?.legend, LEGEND_CATALOG, presentKinds);
   return renderResolvedLegend({
     entries,
+    locale: workflow.meta.locale,
     layout: {
       x: 20,
       baselineY: legendY(),
@@ -706,7 +709,7 @@ function renderLegend() {
 
 function renderSvg() {
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(workflow.meta, 'workflow diagram')}>
-${svgAccessibleText(workflow.meta, 'workflow diagram')}
+${svgAccessibleText(workflow.meta, 'workflow')}
 ${renderDefinitions()}
 
         <!-- Background Grid -->

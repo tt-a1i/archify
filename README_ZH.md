@@ -17,9 +17,9 @@ Archify 是适用于 Raven、Cursor、Claude Code、Codex CLI 和 OpenCode 的 A
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
-![稳定版本](https://img.shields.io/badge/version-2.15.0-0891b2?style=flat-square)
+![开发版本](https://img.shields.io/badge/version-2.16.0--dev.0-0891b2?style=flat-square)
 
-**当前稳定版本：** `v2.15.0`。详见[版本历史](CHANGELOG.md#2150--2026-08-17)。
+**当前开发版本：** `v2.16.0-dev.0`。详见[版本历史](CHANGELOG.md#unreleased)。
 
 **[在线项目页](https://tt-a1i.github.io/archify/)** · **[场景选图指南](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
 
@@ -222,13 +222,14 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 ```json
 {
   "meta": {
+    "locale": "zh-CN",
     "animation": "trace",
     "visual_preset": "signal-flow"
   }
 }
 ```
 
-不设置 `animation` 时结果完全静态；`classic` 始终是默认视觉预设。设计评审、发布说明和技术文档可以显式选择 `editorial`，获得暖纸张与深墨色的编辑风格，同时保持几何完全不变。
+不设置 `animation` 时结果完全静态；`classic` 始终是默认视觉预设。设计评审、发布说明和技术文档可以显式选择 `editorial`，获得暖纸张与深墨色的编辑风格，同时保持几何完全不变。将 `meta.locale` 设为 `en` 或 `zh-CN`，可选择 `<html lang>`、默认图例、无障碍文案和所有固定 Viewer UI。作者编写的标题、节点、关系、章节和卡片不会被机器翻译。未带该字段的旧文件仍然有效，并默认使用英文。对于其他任何创作语言，应省略 `meta.locale`、保持 authored content 使用用户要求的语言，并主动告知用户固定 Viewer UI 与 `<html lang>` 回退为英文，因此该成品不属于完整本地化。
 
 ## 探索与分享
 
@@ -237,9 +238,9 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 打开事实型 Diagram Guide | <kbd>?</kbd> |
 | 查找并聚焦语义节点 | <kbd>/</kbd> |
 | 追踪作者定义的上游 / 下游可达范围 | 聚焦节点 → `Upstream` / `Downstream` |
-| 探查有向路径并逐站检查 | <kbd>R</kbd> 或 `PATH` |
-| 对比一种或两种语义角色 | <kbd>L</kbd> 或 `LENS` |
-| 打开实时全局雷达 | <kbd>M</kbd> 或 `MAP` |
+| 探查有向路径并逐站检查 | <kbd>R</kbd> 或“路径” |
+| 对比一种或两种语义角色 | <kbd>L</kbd> 或“透镜” |
+| 打开实时全局雷达 | <kbd>M</kbd> 或“地图” |
 | 播放故事 / 切换章节 | <kbd>P</kbd> / <kbd>[</kbd> <kbd>]</kbd> |
 | 进入 Presentation Stage | <kbd>F</kbd> |
 | 选择视觉风格（<kbd>S</kbd> 循环）/ 切换主题 / 打开 Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |

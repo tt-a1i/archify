@@ -8,6 +8,7 @@ import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLege
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
+import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import {
   asArray,
@@ -79,14 +80,14 @@ const layout = {
 };
 
 const LEGEND_CATALOG = [
-  ['frontend', 'Frontend'],
-  ['backend', 'Backend'],
-  ['database', 'Database'],
-  ['cloud', 'Cloud'],
-  ['security', 'Security'],
-  ['messagebus', 'Message bus'],
-  ['external', 'External'],
-].map(([kind, label]) => ({ kind, label }));
+  'frontend',
+  'backend',
+  'database',
+  'cloud',
+  'security',
+  'messagebus',
+  'external',
+].map((kind) => ({ kind, label: i18nText(arch.meta.locale, `legend.architecture.${kind}`) }));
 
 // ---- Measure components from free coordinates --------------------------------
 function measureComponent(c) {
@@ -325,7 +326,7 @@ function componentContext(component) {
     .filter((boundary) => asArray(boundary.wraps).includes(component.id))
     .sort((a, b) => (b.width * b.height) - (a.width * a.height))
     .map((boundary) => boundary.label);
-  return scopes.length ? scopes.join(' › ') : 'Architecture component';
+  return scopes.length ? scopes.join(' › ') : i18nText(arch.meta.locale, 'node.context.architecture');
 }
 
 // ---- Auto viewBox: fit all geometry + the measured resolved legend ----------
@@ -1003,7 +1004,7 @@ function renderComponent(c) {
   const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + 6 });
   const labelFontSize = fittedNodeFontSize(c.label, brandLabelFitWidth(c, c.width), 11, 8);
   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), ...brandMetadataFor(c) };
-  return `        <g ${focusNodeAttrs(c.id, c.label, passport)}>
+  return `        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}>
           ${focusNodeTitle(c.label, passport)}
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="c-mask"/>
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
@@ -1030,6 +1031,7 @@ function renderLegend() {
   );
   return renderResolvedLegend({
     entries,
+    locale: arch.meta.locale,
     layout: {
       x: layout.margin,
       baselineY: legendY(),
@@ -1045,7 +1047,7 @@ function renderLegend() {
 
 function renderSvg() {
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta, 'architecture diagram')}>
-${svgAccessibleText(arch.meta, 'architecture diagram')}
+${svgAccessibleText(arch.meta, 'architecture')}
 ${renderDefinitions()}
 
         <!-- Background Grid -->

@@ -6,6 +6,7 @@ import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
+import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import {
   asArray,
   isFinitePoint,
@@ -453,8 +454,14 @@ function renderState(state) {
     : '';
   const brand = renderBrandMark(state, { x: state.x + state.width - 22, y: state.y + 6 });
   const labelFontSize = fittedNodeFontSize(state.label, brandLabelFitWidth(state, state.width), 10, 8);
-  const passport = { kind: state.type, sublabel: state.sublabel, tag: state.tag, context: laneLabels.get(state.lane) || 'Lifecycle state', ...brandMetadataFor(state) };
-  return `        <g ${focusNodeAttrs(state.id, state.label, passport)}>
+  const passport = {
+    kind: state.type,
+    sublabel: state.sublabel,
+    tag: state.tag,
+    context: laneLabels.get(state.lane) || i18nText(lifecycle.meta.locale, 'node.context.lifecycle'),
+    ...brandMetadataFor(state),
+  };
+  return `        <g ${focusNodeAttrs(state.id, state.label, passport, lifecycle.meta.locale)}>
           ${focusNodeTitle(state.label, passport)}
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="c-mask"/>
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="${fill}"${animateAttr(lifecycle.meta, 'node', stateSteps.get(state.id))} stroke-width="1.5"/>
@@ -487,21 +494,22 @@ function renderTransitionLabel(transition, index) {
 }
 
 const LEGEND_CATALOG = [
-  ['start', 'start'],
-  ['active', 'active state'],
-  ['waiting', 'waiting'],
-  ['decision', 'decision'],
-  ['success', 'terminal success'],
-  ['failure', 'failure / exit'],
-  ['neutral', 'neutral'],
-  ['external', 'external'],
-].map(([kind, label]) => ({ kind, label }));
+  'start',
+  'active',
+  'waiting',
+  'decision',
+  'success',
+  'failure',
+  'neutral',
+  'external',
+].map((kind) => ({ kind, label: i18nText(lifecycle.meta.locale, `legend.lifecycle.${kind}`) }));
 
 function renderLegend() {
   const presentKinds = new Set([...states.values()].map((state) => state.type));
   const entries = resolveLegend(lifecycle.meta?.legend, LEGEND_CATALOG, presentKinds);
   return renderResolvedLegend({
     entries,
+    locale: lifecycle.meta.locale,
     layout: {
       x: 40,
       baselineY: legendY(),
@@ -525,7 +533,7 @@ function renderLifecycleRail() {
 
 function renderSvg() {
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(lifecycle.meta, 'lifecycle diagram')}>
-${svgAccessibleText(lifecycle.meta, 'lifecycle diagram')}
+${svgAccessibleText(lifecycle.meta, 'lifecycle')}
 ${renderDefinitions()}
 
         <!-- Background Grid -->

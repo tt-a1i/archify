@@ -96,7 +96,7 @@ test('runtime decoration derives counts from compiled node facts and stays viewe
   assert.match(html, /entry\.setAttribute\('role', 'button'\)/);
   assert.match(html, /legendBridge\.setAttribute\('role', legendEntries\.length >= 3 \? 'toolbar' : 'group'\)/);
   assert.match(html, /var visibleLabel = entry\.getAttribute\('data-legend-label'\) \|\| fact\.label/);
-  assert.match(html, /entry\.setAttribute\('aria-label', 'Inspect ' \+ visibleLabel/);
+  assert.match(html, /entry\.setAttribute\('aria-label', viewerCount\('viewer\.lens\.legend\.inspect', count/);
   assert.match(html, /if \(!legendBridge \|\| html\.getAttribute\('data-embed'\) === 'true'\) return false/);
   assert.doesNotMatch(svg, /data-legend-bridge-runtime|data-legend-count=|role="toolbar"/);
   assert.doesNotMatch(svg, /data-legend-kind="[^"]+"[^>]+(?:role=|aria-pressed=)/);

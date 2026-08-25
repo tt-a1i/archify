@@ -6,6 +6,7 @@ import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
+import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import {
   asArray,
   isFinitePoint,
@@ -378,11 +379,13 @@ function renderNode(node) {
     ? `\n        <text data-detail="fine" x="${node.cx}" y="${node.y + node.height - 11}" class="${accent}" font-size="${fittedNodeFontSize(node.tag, node.width, nodeTextFit.tagPreferred, nodeTextFit.tagMinimum)}" text-anchor="middle">${esc(node.tag)}</text>`
     : '';
   const stage = asArray(dataflow.stages)[node.stage];
-  const context = stage ? `${String(node.stage + 1).padStart(2, '0')} / ${stage.label}` : 'Data-flow node';
+  const context = stage
+    ? `${String(node.stage + 1).padStart(2, '0')} / ${stage.label}`
+    : i18nText(dataflow.meta.locale, 'node.context.dataflow');
   const brand = renderBrandMark(node, { x: node.x + node.width - 22, y: node.y + 6 });
   const labelFontSize = fittedNodeFontSize(node.label, brandLabelFitWidth(node, node.width), 10, 8);
   const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context, ...brandMetadataFor(node) };
-  return `        <g ${focusNodeAttrs(node.id, node.label, passport)}>
+  return `        <g ${focusNodeAttrs(node.id, node.label, passport, dataflow.meta.locale)}>
           ${focusNodeTitle(node.label, passport)}
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="c-mask"/>
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="${fill}"${animateAttr(dataflow.meta, 'node', nodeSteps.get(node.id))} stroke-width="1.5"/>
@@ -412,12 +415,15 @@ function renderFlowLabel(flow, index) {
 }
 
 const LEGEND_CATALOG = [
-  { kind: 'emphasis', label: 'primary data', className: 'a-emphasis', marker: 'arrowhead-emphasis', strokeWidth: 1.8, swatchWidth: 34, swatchGap: 9, interactive: false },
-  { kind: 'security', label: 'policy / PII', className: 'a-security', marker: 'arrowhead-security', swatchWidth: 34, swatchGap: 9, interactive: false },
-  { kind: 'dashed', label: 'async batch', className: 'a-dashed', marker: 'arrowhead-dashed', swatchWidth: 34, swatchGap: 9, interactive: false },
-  { kind: 'database', label: 'data store' },
-  { kind: 'default', label: 'data flow', className: 'a-default', marker: 'arrowhead', swatchWidth: 34, swatchGap: 9, interactive: false },
-];
+  { kind: 'emphasis', className: 'a-emphasis', marker: 'arrowhead-emphasis', strokeWidth: 1.8, swatchWidth: 34, swatchGap: 9, interactive: false },
+  { kind: 'security', className: 'a-security', marker: 'arrowhead-security', swatchWidth: 34, swatchGap: 9, interactive: false },
+  { kind: 'dashed', className: 'a-dashed', marker: 'arrowhead-dashed', swatchWidth: 34, swatchGap: 9, interactive: false },
+  { kind: 'database' },
+  { kind: 'default', className: 'a-default', marker: 'arrowhead', swatchWidth: 34, swatchGap: 9, interactive: false },
+].map((entry) => ({
+  ...entry,
+  label: i18nText(dataflow.meta.locale, `legend.dataflow.${entry.kind}`),
+}));
 
 function renderLegend() {
   const presentKinds = new Set(asArray(dataflow.flows).map((flow) => flow.variant || 'default'));
@@ -425,6 +431,7 @@ function renderLegend() {
   const entries = resolveLegend(dataflow.meta?.legend, LEGEND_CATALOG, presentKinds);
   return renderResolvedLegend({
     entries,
+    locale: dataflow.meta.locale,
     layout: {
       x: 40,
       baselineY: viewBox[1] - 36,
@@ -441,7 +448,7 @@ function renderLegend() {
 
 function renderSvg() {
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(dataflow.meta, 'data-flow diagram')}>
-${svgAccessibleText(dataflow.meta, 'data-flow diagram')}
+${svgAccessibleText(dataflow.meta, 'dataflow')}
 ${renderDefinitions()}
 
         <!-- Background Grid -->

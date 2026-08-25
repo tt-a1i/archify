@@ -31,7 +31,12 @@ function sha256(file) {
   return createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }
 
-function fakeBrowser({ overflowAt, unreadableAt, chromeCollisionAt, screenshotFailure } = {}) {
+function fakeBrowser({
+  overflowAt,
+  unreadableAt,
+  chromeCollisionAt,
+  screenshotFailure,
+} = {}) {
   const calls = [];
   return {
     calls,
@@ -191,6 +196,7 @@ test('visual-check records four containment viewports and four endpoint theme ca
   assert.equal(fs.existsSync(outputs.contactSheet), true);
   assert.equal(outputs.screenshots.every((entry) => fs.existsSync(entry.path)), true);
   const contactSheet = fs.readFileSync(outputs.contactSheet, 'utf8');
+  assert.match(contactSheet, /containment pass · readability pass · Viewer chrome pass/);
   for (const screenshot of outputs.screenshots) {
     assert.match(contactSheet, new RegExp(path.basename(screenshot.path).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     assert.doesNotMatch(contactSheet, new RegExp(screenshot.path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));

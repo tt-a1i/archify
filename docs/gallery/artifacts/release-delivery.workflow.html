@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="archify 2.15.0">
+  <meta name="generator" content="archify 2.16.0-dev.0">
   <title>Release Delivery Workflow Diagram</title>
   <script>
     // Resolve the theme before first paint so light-preference users don't
@@ -656,7 +656,7 @@
     }
 
     html[data-preset="signal-flow"] .header-row::after {
-      content: "SIGNAL FLOW";
+      content: attr(data-preset-badge-signal-flow);
       margin-left: auto;
       color: var(--frontend-stroke);
       border: 1px solid var(--frontend-stroke);
@@ -680,7 +680,7 @@
       animation: none;
     }
     html[data-preset="blueprint"] .header-row::after {
-      content: "BLUEPRINT / REV 01";
+      content: attr(data-preset-badge-blueprint);
       margin-left: auto;
       padding: 0.28rem 0.55rem;
       border-top: 1px solid var(--frontend-stroke);
@@ -709,7 +709,7 @@
       animation: none;
     }
     html[data-preset="editorial"] .header-row::after {
-      content: "EDITORIAL / FIELD NOTE";
+      content: attr(data-preset-badge-editorial);
       margin-left: auto;
       padding: 0.32rem 0 0.24rem;
       border-bottom: 2px solid var(--arrow-emphasis);
@@ -788,7 +788,7 @@
       border: 1px solid var(--panel-border);
       background: var(--panel);
       color: var(--arrow-emphasis);
-      content: "ARCHIFY / PLATE 04";
+      content: attr(data-preset-badge-editorial-plate);
       font-family: Georgia, 'Times New Roman', serif;
       font-size: 0.52rem;
       font-style: italic;
@@ -4943,7 +4943,10 @@
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <div class="header-row">
+      <div class="header-row"
+           data-preset-badge-signal-flow="SIGNAL FLOW"
+           data-preset-badge-blueprint="BLUEPRINT / REV 01"
+           data-preset-badge-editorial="EDITORIAL / FIELD NOTE">
         <div class="pulse-dot"></div>
         <h1>Release Delivery Workflow</h1>
       </div>
@@ -4951,6 +4954,7 @@
 
     <script id="archify-guided-views-data" type="application/json">[{"id":"commit-to-checks","label":"Commit to green build","focus":["commit","pull_request","build","checks"],"note":"Follow the change through reproducible build and blocking quality gates."},{"id":"approval-to-production","label":"Approve and promote","focus":["checks","approval","deploy","verify_prod","announce"],"note":"See who authorizes production and how success is verified."},{"id":"rollback-path","label":"Failure and rollback","focus":["checks","failed","verify_prod","rollback","deploy"],"note":"Isolate the two places where delivery stops or reverses safely."}]</script>
 
+    <script id="archify-i18n-data" type="application/json">{"locale":"en","messages":{"viewer.kind.frontend":"Frontend","viewer.kind.backend":"Backend","viewer.kind.database":"Database","viewer.kind.cloud":"Cloud","viewer.kind.security":"Security","viewer.kind.messagebus":"Message bus","viewer.kind.external":"External","viewer.kind.neutral":"Neutral","viewer.kind.node":"Node","viewer.kind.start":"Start","viewer.kind.active":"Active","viewer.kind.waiting":"Waiting","viewer.kind.decision":"Decision","viewer.kind.success":"Success","viewer.kind.failure":"Failure","viewer.toolbar.actions":"Diagram actions","viewer.theme.toggle.title":"Toggle theme (T)","viewer.theme.toggle":"Toggle color theme","viewer.theme.dark":"Dark","viewer.theme.light":"Light","viewer.preset.choose.title":"Choose visual style (S cycles)","viewer.preset.choose":"Choose visual style","viewer.preset.style":"Style","viewer.preset.menu":"Visual style","viewer.preset.identity":"Visual identity","viewer.preset.cycles":"S cycles","viewer.preset.classic":"Classic","viewer.preset.classic.short":"Classic","viewer.preset.classic.hint":"Stable technical default","viewer.preset.flow":"Signal Flow","viewer.preset.flow.short":"Flow","viewer.preset.flow.hint":"Motion-forward presentation","viewer.preset.blueprint":"Blueprint","viewer.preset.blueprint.hint":"Engineering review","viewer.preset.editorial":"Editorial","viewer.preset.editorial.hint":"Publication and launch notes","viewer.preset.badge.signalFlow":"SIGNAL FLOW","viewer.preset.badge.blueprint":"BLUEPRINT / REV 01","viewer.preset.badge.editorial":"EDITORIAL / FIELD NOTE","viewer.preset.badge.editorialPlate":"ARCHIFY / PLATE 04","viewer.preset.current":"Visual style: {style}. Choose visual style","viewer.motion.live":"Live","viewer.motion.still":"Still","viewer.motion.pause":"Pause motion","viewer.motion.resume":"Resume motion","viewer.motion.reduced":"Motion paused by reduced-motion preference","viewer.motion.hidden":"Motion paused while this page is hidden","viewer.motion.yielding":"Pause motion; currently yielding to {owner}","viewer.motion.yielding.title":"Live preview enabled · yielding to {owner}","viewer.owner.story":"the guided story","viewer.owner.chapter":"the active chapter","viewer.owner.chapterPreview":"the chapter delta preview","viewer.owner.handoff":"the chapter handoff","viewer.owner.route":"Route Probe","viewer.owner.lens":"Semantic Lens","viewer.owner.relationship":"Relationship Preview","viewer.owner.intent":"Intent Trace","viewer.owner.focus":"semantic focus","viewer.owner.legend":"legend preview","viewer.owner.reader":"reader interaction","viewer.present.enter":"Enter presentation stage","viewer.present.enter.title":"Presentation stage (F)","viewer.present.exit":"Exit presentation stage","viewer.present.exit.title":"Exit presentation stage (F or Escape)","viewer.present.present":"Present","viewer.present.exit.label":"Exit","viewer.export.button":"Export","viewer.export.button.title":"Export diagram (E)","viewer.export.diagram":"Export diagram","viewer.export.menu":"Export","viewer.export.subtitle":"Portable, clean outputs","viewer.export.share":"Share","viewer.export.shareCard":"Share Card","viewer.export.routeShareCard":"Route Share Card","viewer.export.reachShareCard":"Reach Share Card","viewer.export.copyShareCard":"Copy Share Card","viewer.export.copyDiagram":"Copy diagram","viewer.export.clipboardPng":"PNG to clipboard","viewer.export.raster":"Raster images","viewer.export.image":"Image","viewer.export.lossless":"Lossless image","viewer.export.compact":"Compact image","viewer.export.modern":"Modern image","viewer.export.vectorMotion":"Vector and motion","viewer.export.vectorMotion.heading":"Vector \u0026 motion","viewer.export.editable":"Editable vector","viewer.export.motion6s":"6s motion","viewer.export.unsupported":"Not supported by this browser","viewer.export.clipboardUnsupported":"Clipboard image write not supported by this browser","viewer.export.clipboardUnsupported.period":"Clipboard image write not supported by this browser.","viewer.export.clipboardUnsupported.short":"Clipboard image write not supported in this browser.","viewer.export.motionUnavailable":"Motion capture unavailable in this browser","viewer.export.webmUnavailable":"WebM unavailable in this browser","viewer.export.failed":"Export failed: {message}","viewer.export.unknownVariant":"Unknown Share Card variant: {variant}","viewer.export.routeRequired":"Trace a route before exporting a Route Share Card","viewer.export.reachRequired":"Trace authored reach before exporting a Reach Share Card","viewer.export.unknown":"unknown","viewer.export.routeFailed":"Route Share Card export failed: {message}","viewer.export.reachFailed":"Reach Share Card export failed: {message}","viewer.export.copyFailed":"Copy failed: {message}","viewer.export.copiedPng":"Copied PNG to clipboard","viewer.export.copiedShare":"Copied Share Card","viewer.export.downloadedShare":"Downloaded Share Card","viewer.export.downloadedRoute":"Downloaded Route Share Card","viewer.export.downloadedReach":"Downloaded Reach Share Card","viewer.export.downloadedWebm":"Downloaded WebM","viewer.export.recording":"Recording 6 seconds of motion…","viewer.export.card.routeSummary.one":"Route: {source} → {target} · {count} directed hop","viewer.export.card.routeSummary.other":"Route: {source} → {target} · {count} directed hops","viewer.export.card.reachSummary":"Authored {direction} from {origin} · {nodes} · {links} · max {hops}","viewer.export.card.node.one":"{count} node","viewer.export.card.node.other":"{count} nodes","viewer.export.card.link.one":"{count} link","viewer.export.card.link.other":"{count} links","viewer.export.card.hop.one":"{count} hop","viewer.export.card.hop.other":"{count} hops","viewer.export.card.routeBadge":"ARCHIFY · ROUTE · {hops}","viewer.export.card.reachBadge":"ARCHIFY · {direction} REACH","viewer.export.card.defaultBadge":"ARCHIFY · {preset} · {theme}","viewer.export.direction.upstream":"Upstream","viewer.export.direction.downstream":"Downstream","viewer.export.error.canvasUnavailable":"Canvas unavailable for {label}","viewer.export.error.contextUnavailable":"2D canvas context unavailable for {label}","viewer.export.error.toBlobUnavailable":"canvas.toBlob unavailable for {label}","viewer.export.error.toBlobNull":"canvas.toBlob returned no data for {label}","viewer.export.error.variantsCombined":"Share Card variants cannot be combined","viewer.export.error.viewerState":"Share Card export could not remove temporary viewer state","viewer.export.error.routeState":"Route Card export could not preserve the resolved route safely","viewer.export.error.reachState":"Reach Card export could not preserve authored reach safely","viewer.export.error.webmRequirements":"WebM motion export requires a trace animation and browser MediaRecorder support","viewer.export.error.mediaRecorder":"MediaRecorder failed","viewer.export.error.emptyWebm":"MediaRecorder produced an empty WebM","viewer.export.error.webmBackground":"SVG background could not be loaded for WebM export","viewer.guided.region":"Guided diagram views","viewer.guided.previous":"Previous guided view","viewer.guided.previous.title":"Previous guided view ([)","viewer.guided.next":"Next guided view","viewer.guided.next.title":"Next guided view (])","viewer.guided.views":"Guided views","viewer.guided.explore":"Explore this system","viewer.guided.intro":"Step through curated paths without changing the source diagram.","viewer.guided.trail":"Story trail","viewer.guided.beat":"Beat","viewer.guided.nextBeat":"Next","viewer.guided.play":"Play guided story","viewer.guided.play.title":"Play guided story (P)","viewer.guided.pause":"Pause guided story","viewer.guided.pause.title":"Pause guided story (P)","viewer.guided.replay":"Replay guided story","viewer.guided.replay.title":"Replay guided story (P)","viewer.guided.playStory":"Play story","viewer.guided.pauseStory":"Pause","viewer.guided.replayStory":"Replay story","viewer.guided.motionUnavailable":"Story playback unavailable while motion is Still","viewer.guided.enableMotion":"Switch motion to Live to play the guided story","viewer.guided.selectBeatLink":"Select a Story Beat to copy its exact link","viewer.guided.copyMoment":"Copy moment","viewer.guided.momentCopied":"Moment link copied","viewer.guided.momentCopyFailed":"Could not copy story moment link","viewer.guided.copied":"Copied","viewer.guided.copyFailed":"Copy failed","viewer.guided.showAll":"Show all","viewer.guided.showAll.aria":"Show entire diagram","viewer.guided.chapters":"Story chapters","viewer.guided.storyTrail":"Story trail for {label}: {count} beats","viewer.guided.chapter.open":"Open chapter {index} of {total}: {label}, {count} stops","viewer.guided.chapter.current":"Current chapter {index} of {total}: {label}, {count} stops","viewer.guided.chapter.selectedNodes":"{count} selected nodes","viewer.guided.chapter.stops":"{count} stops","viewer.guided.chapter.stop.one":"{count} stop","viewer.guided.chapter.stop.other":"{count} stops","viewer.guided.chapter.current.title":"{label} — current chapter, {count} stops","viewer.guided.chapter.delta.expanded":"{stay} stay, {enter} enter, {leave} leave","viewer.guided.chapter.delta.aria":"Open chapter {index} of {total}: {label}. Chapter focus delta: {delta}","viewer.guided.chapter.delta.title":"{label} — {delta} chapter focus","viewer.guided.handoff":"{from} → {to} · via {label}","viewer.guided.share.chapter":"Chapter {index} / {total}","viewer.guided.share.initial":"Chapter 01 / 01","viewer.guided.share.default":"Guided chapter","viewer.guided.state.ready":"Ready","viewer.guided.state.playing":"Playing","viewer.guided.state.settled":"Settled","viewer.guided.state.paused":"Paused","viewer.guided.state.pinned":"Pinned","viewer.guided.state.still":"Still","viewer.guided.share.step":"Step {index} / {total} · {label}","viewer.guided.share.staticMoment":"{step} · Static moment","viewer.guided.share.complete":"{count} steps complete · {note}","viewer.guided.share.settled":"Path settled for reading.","viewer.guided.share.staticPath":"{count} steps · Static path","viewer.guided.share.ready":"{count} steps · Ready","viewer.guided.share.aria":"{state} chapter {index} of {total}: {label}. {beat}. {route}","viewer.guided.beat.start":"Beat {index} / {total} · {label} · starting point","viewer.guided.beat.forward":"Beat {index} / {total} · {from} → {to}","viewer.guided.beat.reverse":"Beat {index} / {total} · {from} → {to} · reverse authored link","viewer.guided.beat.multiple":"Beat {index} / {total} · {from} ⇄ {to} · {count} authored links","viewer.guided.beat.group":"Beat {index} / {total} · {from} · {to} · grouped · no direct link","viewer.guided.beat.aria.prefix":"Story beat {index} of {total}: {label}. ","viewer.guided.beat.aria.start":"Starting point.","viewer.guided.beat.aria.forward":"From {from} through one authored forward relationship.","viewer.guided.beat.aria.reverse":"From {from}; the authored relationship points from {to} to {from}.","viewer.guided.beat.aria.multiple":"From {from} through {count} authored relationships; shown without arbitrary motion.","viewer.guided.beat.aria.group":"Grouped from {from} with no direct authored relationship.","viewer.guided.caption.start":"Starting point","viewer.guided.caption.grouped":"Grouped transition · no direct authored link","viewer.guided.caption.more":" +{count} more","viewer.guided.caption.reverse":"Reverse authored relationship","viewer.guided.caption.relationships":"{count} authored relationships","viewer.guided.caption.relationship":"Authored relationship","viewer.guided.caption.direction":"authored direction: {from} → {to}","viewer.guided.caption.starting":"Authored starting point","viewer.guided.beatLink":"Copy link to current story moment: Beat {index} of {total}: {label}","viewer.guided.noStory":"This diagram has no authored guided story.","viewer.guide.eyebrow":"Diagram guide","viewer.guide.close":"Close diagram guide","viewer.guide.inspecting":"Inspecting compiled semantics","viewer.guide.actions":"Diagram exploration actions","viewer.guide.find":"Find any node","viewer.guide.find.hint":"Search labels, responsibilities, kinds, and stable IDs.","viewer.guide.route":"Trace a route","viewer.guide.route.aria":"Trace a directed route","viewer.guide.route.hint":"Ask how two semantic nodes connect in authored direction.","viewer.guide.map":"See the whole system","viewer.guide.map.hint":"Open Semantic Radar with a live viewport and stable nodes.","viewer.guide.lens":"Compare semantic kinds","viewer.guide.lens.hint":"Count roles, reveal their traffic, and compare direct authored links.","viewer.guide.story":"Play the guided story","viewer.guide.story.hint":"Walk the authored chapters and real relationships.","viewer.guide.present":"Enter Presentation Stage","viewer.guide.present.hint":"Give the live diagram the viewport without changing export.","viewer.guide.shortcuts":"Additional keyboard shortcuts","viewer.guide.shortcut.export":"Export","viewer.guide.shortcut.theme":"Theme","viewer.guide.shortcut.style":"Style","viewer.guide.shortcut.reset":"Reset","viewer.guide.shortcut.zoomIn":"Zoom in","viewer.guide.shortcut.zoomOut":"Zoom out","viewer.guide.shortcut.close":"Close","viewer.guide.facts":"{nodes} · {relationships} · {views}","viewer.guide.fact.node.one":"{count} semantic node","viewer.guide.fact.node.other":"{count} semantic nodes","viewer.guide.fact.relationship.one":"{count} relationship","viewer.guide.fact.relationship.other":"{count} relationships","viewer.guide.fact.view.one":"{count} guided view","viewer.guide.fact.view.other":"{count} guided views","viewer.guide.story.available.one":"Walk {count} authored chapter and its real relationships.","viewer.guide.story.available.other":"Walk {count} authored chapters and their real relationships.","viewer.guide.story.unavailable":"No authored guided story in this diagram.","viewer.guide.open":"Open diagram guide","viewer.guide.noStory":"This diagram has no authored guided story.","viewer.finder.title":"Find a node","viewer.finder.close":"Close node finder","viewer.finder.placeholder":"Search labels or IDs","viewer.finder.search":"Search diagram nodes","viewer.finder.results":"Diagram nodes","viewer.finder.empty":"No matching nodes","viewer.finder.result.focus":"Focus {label}","viewer.finder.result.routeStart":"Choose {label} as route start","viewer.finder.result.routeTarget":"Choose {label} as route destination, {links}","viewer.finder.status.empty":"No matching nodes","viewer.finder.status.count.one":"{count} matching node","viewer.finder.status.count.other":"{count} matching nodes","viewer.finder.noun.nodes":"nodes","viewer.finder.link.one":"{count} link","viewer.finder.link.other":"{count} links","viewer.finder.result.focus.one":"Focus {label}, {count} related connection","viewer.finder.result.focus.other":"Focus {label}, {count} related connections","viewer.finder.status.filtered":"{visible} of {available} {noun}","viewer.finder.status.all":"{available} {noun}","viewer.passport.eyebrow":"Semantic passport","viewer.passport.metadata":"Node metadata","viewer.passport.evidence":"Verified source evidence","viewer.passport.verified":"Verified source","viewer.passport.reach":"Authored reach","viewer.passport.reach.trace":"Trace authored reachability","viewer.passport.upstream":"Upstream","viewer.passport.downstream":"Downstream","viewer.passport.upstream.trace":"Trace upstream authored reachability","viewer.passport.downstream.trace":"Trace downstream authored reachability","viewer.passport.close":"Close semantic passport","viewer.passport.copy":"Copy link","viewer.passport.copy.focus":"Copy link to focused node","viewer.passport.relations":"Relations","viewer.passport.relations.show":"Show connected relationships","viewer.passport.relations.hide":"Hide connected relationships","viewer.passport.relations.list":"Connected relationships","viewer.passport.copyRelation":"Copy relation","viewer.passport.copyNode":"Copy node","viewer.passport.copyPinned":"Copy link to pinned relationship","viewer.passport.copySource":"Copy link to source node","viewer.passport.copy.focused.success":"Focused node link copied","viewer.passport.copy.pinned.success":"Pinned relationship link copied","viewer.passport.copy.focused.failed":"Could not copy focused node link","viewer.passport.copy.pinned.failed":"Could not copy pinned relationship link","viewer.passport.relationship.none":"No connected relationships","viewer.passport.relationship.count.one":"{count} relation","viewer.passport.relationship.count.other":"{count} relations","viewer.passport.relationship.show.one":"Show {count} connected relationship","viewer.passport.relationship.show.other":"Show {count} connected relationships","viewer.passport.relationship.summary":"{out} outgoing · {in} incoming{loops}","viewer.passport.relationship.loops":" · {count} loop","viewer.passport.relationship.explorer":"Direct relationship explorer","viewer.passport.relationship.help":"Use arrow keys to explore relationships. Press Enter or Space to pin details; Escape clears.","viewer.passport.relationship.loopsBack":"loops back","viewer.passport.relationship.connectsTo":"connects to","viewer.passport.relationship.connectsFrom":"connects from","viewer.passport.relationship.pinned":"Pinned relationship · {from} → {to} · {label}","viewer.passport.relationship.inspect":"Inspect relationship {index} of {total}: {from} to {to}, {label}. Press Enter for details.","viewer.passport.relationship.group.out":"Outgoing","viewer.passport.relationship.group.in":"Incoming","viewer.passport.relationship.group.loop":"Self loops","viewer.passport.relationship.row":"{group}: {relationship}, {neighbor}","viewer.passport.relationship.direction.out":"OUT →","viewer.passport.relationship.direction.in":"← IN","viewer.passport.relationship.direction.loop":"LOOP","viewer.passport.sourceCount.one":"{count} verified source reference","viewer.passport.sourceCount.other":"{count} verified source references","viewer.passport.sourceMarker":"SRC","viewer.passport.beacon.one":"{count} verified source; focus this node to inspect","viewer.passport.beacon.other":"{count} verified sources; focus this node to inspect","viewer.passport.repository.open":"Open verified repository revision {revision}","viewer.passport.source.open":"Open verified source {path} at revision {revision}","viewer.passport.source.openLink":"Open ↗","viewer.passport.reach.upstream.one":"Trace {count} upstream authored node","viewer.passport.reach.upstream.other":"Trace {count} upstream authored nodes","viewer.passport.reach.downstream.one":"Trace {count} downstream authored node","viewer.passport.reach.downstream.other":"Trace {count} downstream authored nodes","viewer.passport.reach.noUpstream":"No upstream authored nodes","viewer.passport.reach.noDownstream":"No downstream authored nodes","viewer.passport.reach.status":"{direction} · {nodes} nodes · {links} links · max {hops} hops","viewer.route.eyebrow":"Route probe","viewer.route.start":"Choose a start node","viewer.route.start.find":"Find start","viewer.route.start.find.aria":"Find a route start","viewer.route.copy":"Copy link","viewer.route.copy.aria":"Copy link to traced route","viewer.route.clear":"Clear","viewer.route.clear.aria":"Clear route probe","viewer.route.traced":"Traced route","viewer.route.pickTwo":"Pick two semantic nodes on the diagram","viewer.route.pickOne":"Pick a semantic node on the diagram","viewer.route.controls":"Route journey controls","viewer.route.previous":"Previous route position","viewer.route.play":"Play route journey","viewer.route.pause":"Pause route journey","viewer.route.replay":"Replay route journey","viewer.route.next":"Next route position","viewer.route.journey":"Journey","viewer.route.pause.label":"Pause","viewer.route.replay.label":"Replay","viewer.route.overview":"Overview","viewer.route.overview.aria":"Show complete route overview","viewer.route.instructions":"Choose the source, then the destination. Direction matters.","viewer.route.destination":"Choose a destination from {label}","viewer.route.destination.find":"Find target","viewer.route.destination.find.aria":"Find a reachable route destination","viewer.route.differentDestination":"Choose a different destination","viewer.route.distinct":"A route needs two distinct semantic nodes.","viewer.route.unreachable":"No directed route to {label}","viewer.route.unreachable.detail":"{target} is not reachable from {source}. Pick a highlighted destination.","viewer.route.start.instructions":"Select the source. The next step will reveal only directed destinations.","viewer.route.copy.success":"Traced route link copied","viewer.route.copy.failed":"Could not copy traced route link","viewer.route.position":"Route position {index} of {total}: {label}","viewer.route.step":"Step {index} of {total} · {phase} · {label}","viewer.route.motionRequired":"Automatic journey requires Live motion","viewer.route.trigger.clear":"Clear traced route","viewer.route.overview.status":"{nodes} · {hops} · shortest authored route","viewer.route.overview.node.one":"{count} node","viewer.route.overview.node.other":"{count} nodes","viewer.route.overview.hop.one":"{count} directed hop","viewer.route.overview.hop.other":"{count} directed hops","viewer.route.phase.playing":"Playing","viewer.route.phase.complete":"Complete","viewer.route.phase.inspecting":"Inspecting","viewer.route.destination.count.one":"{count} directed destination available. Pick a highlighted node.","viewer.route.destination.count.other":"{count} directed destinations available. Pick a highlighted node.","viewer.route.noOutgoing":"No outgoing route starts here. Clear and choose another source.","viewer.route.result.title":"{source} to {target}","viewer.route.finder.source.title":"Choose route start","viewer.route.finder.source.placeholder":"Search route sources","viewer.route.finder.source.empty":"No matching route sources","viewer.route.finder.source.results":"Nodes that can start a route","viewer.route.finder.source.noun":"route sources","viewer.route.finder.source.badge":"start","viewer.route.finder.target.title":"Destination from {label}","viewer.route.finder.target.placeholder":"Search reachable destinations","viewer.route.finder.target.empty":"No matching reachable destinations","viewer.route.finder.target.results":"Reachable route destinations","viewer.route.finder.target.noun":"reachable destinations","viewer.route.hop.one":"{count} hop","viewer.route.hop.other":"{count} hops","viewer.lens.eyebrow":"Semantic lens","viewer.lens.title":"Compare system roles","viewer.lens.close":"Close semantic lens","viewer.lens.instruction":"Choose up to two semantic kinds. One reveals its real traffic; two compare only direct authored relationships.","viewer.lens.kinds":"Semantic kinds","viewer.lens.choose":"Choose a kind to inspect its nodes and touching relationships.","viewer.lens.copy":"Copy link to semantic lens","viewer.lens.clear":"Clear semantic lens","viewer.lens.open":"Open semantic lens","viewer.lens.openActive":"Open active semantic lens","viewer.lens.legend":"Semantic legend","viewer.lens.legend.inspect.one":"Inspect {label}, {count} node","viewer.lens.legend.inspect.other":"Inspect {label}, {count} nodes","viewer.lens.kind.count.one":"{label}, {count} node","viewer.lens.kind.count.other":"{label}, {count} nodes","viewer.lens.compare.one":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationship","viewer.lens.compare.other":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationships","viewer.lens.single":"{nodes} · {relationships} · connected peers remain visible","viewer.lens.node.one":"{count} {label} node","viewer.lens.node.other":"{count} {label} nodes","viewer.lens.relationship.one":"{count} touching relationship","viewer.lens.relationship.other":"{count} touching relationships","viewer.radar.title":"Semantic radar","viewer.radar.building":"Building overview","viewer.radar.openFull":"Open full semantic radar","viewer.radar.open":"Open radar","viewer.radar.close":"Close semantic radar","viewer.radar.surface":"Diagram overview. Click a node to focus it, or use arrow keys to pan.","viewer.radar.click":"Click node","viewer.radar.drag":"Drag to pan","viewer.radar.space":"Semantic radar needs more MAP space.","viewer.radar.nodes":"Semantic diagram radar nodes","viewer.radar.focus":"Focus {label} from Semantic Radar","viewer.radar.status":"{count} nodes · {viewport}","viewer.radar.fullMap":"{count} nodes · full map","viewer.radar.compacted":"Radar compacted to avoid covering the Semantic Passport or MAP controls.","viewer.radar.cancelWaiting":"Cancel semantic radar waiting for more MAP space","viewer.radar.needsSpace":"Semantic radar needs more visible MAP space","viewer.radar.viewport.full":"full map","viewer.radar.viewport.width":"{percent}% width","viewer.radar.viewport.scale":"{percent}% viewport","viewer.nav.controls":"Diagram view controls","viewer.nav.route":"Trace a directed route","viewer.nav.route.title":"Trace route (R)","viewer.nav.route.short":"PATH","viewer.nav.radar":"Open semantic radar","viewer.nav.radar.title":"Semantic radar (M)","viewer.nav.radar.short":"MAP","viewer.nav.lens":"Open semantic lens","viewer.nav.lens.title":"Semantic lens (L)","viewer.nav.lens.short":"LENS","viewer.nav.find":"Find a node","viewer.nav.find.title":"Find a node (/)","viewer.nav.guide":"Open diagram guide","viewer.nav.guide.title":"Diagram guide (?)","viewer.nav.zoomOut":"Zoom out","viewer.nav.zoomOut.title":"Zoom out (-)","viewer.nav.reset":"Reset diagram view","viewer.nav.reset.title":"Reset view (0)","viewer.nav.read":"READ","viewer.nav.zoomIn":"Zoom in","viewer.nav.zoomIn.title":"Zoom in (+)","viewer.nav.camera":"{hint}. Reset diagram view","viewer.nav.camera.title":"{semantic}{hint} · reset view (0)","viewer.nav.camera.semantic":"Semantic camera active · ","viewer.nav.level.map":"MAP","viewer.nav.level.read":"READ","viewer.nav.level.full":"FULL","viewer.nav.level.auto":"AUTO","viewer.nav.detail.map":"Zoom in to reveal relationship labels and node context","viewer.nav.detail.read":"Zoom in again to reveal tags and annotations","viewer.nav.detail.full":"Full diagram detail","viewer.intent.summary":"{label}. {out} outgoing, {in} incoming{loops}. {total} connections. Press Enter for details.","viewer.intent.loops":", {count} self loop","viewer.common.copied":"Copied","viewer.common.copyFailed":"Copy failed","viewer.common.copyLink":"Copy link","viewer.common.clear":"Clear","viewer.common.close":"Close"}}</script>
     <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
       <button id="guided-view-prev" type="button" aria-label="Previous guided view" title="Previous guided view ([)">&#8592;</button>
       <div class="guided-view-copy">
@@ -4991,8 +4995,9 @@
     </div>
 
     <!-- Main Diagram -->
-    <div class="diagram-container" data-detail-level="read">
-      <svg viewBox="0 0 720 900" role="img" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase">
+    <div class="diagram-container" data-detail-level="read"
+         data-preset-badge-editorial-plate="ARCHIFY / PLATE 04">
+      <svg viewBox="0 0 720 900" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase">
         <title id="archify-diagram-title">Release Delivery Workflow</title>
         <desc id="archify-diagram-description">A workflow diagram generated by Archify.</desc>
         <!-- Definitions -->
@@ -5474,6 +5479,37 @@
 
   <script>
     var Archify = {};
+    var archifyI18nData = (function () {
+      var node = document.getElementById('archify-i18n-data');
+      try { return JSON.parse(node ? node.textContent : '{}'); }
+      catch (_) { return { locale: 'en', messages: {} }; }
+    })();
+    Archify.locale = archifyI18nData.locale || 'en';
+
+    function viewerText(key, values) {
+      var messages = archifyI18nData.messages || {};
+      var template = Object.prototype.hasOwnProperty.call(messages, key) ? messages[key] : key;
+      return String(template).replace(/\{([a-zA-Z0-9_]+)\}/g, function (match, name) {
+        return values && Object.prototype.hasOwnProperty.call(values, name) ? String(values[name]) : match;
+      });
+    }
+
+    function viewerCount(key, count, values) {
+      var suffix = Number(count) === 1 ? '.one' : '.other';
+      var payload = Object.assign({}, values || {}, { count: count });
+      return viewerText(key + suffix, payload);
+    }
+
+    function viewerKindLabel(value) {
+      var normalized = String(value || 'node').toLowerCase();
+      var knownKey = 'viewer.kind.' + normalized;
+      var known = viewerText(knownKey);
+      if (known !== knownKey) return known;
+      return normalized
+        .replace(/messagebus/gi, 'message bus')
+        .replace(/[-_]+/g, ' ')
+        .replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
+    }
 
     function hasDrawableGeometry(element) {
       if (!element) return false;
@@ -5504,7 +5540,12 @@
        ============================================================ */
     Archify.preset = (function () {
       var PRESETS = ['classic', 'signal-flow', 'blueprint', 'editorial'];
-      var LABELS = { classic: 'Classic', 'signal-flow': 'Flow', blueprint: 'Blueprint', editorial: 'Editorial' };
+      var LABELS = {
+        classic: viewerText('viewer.preset.classic.short'),
+        'signal-flow': viewerText('viewer.preset.flow.short'),
+        blueprint: viewerText('viewer.preset.blueprint'),
+        editorial: viewerText('viewer.preset.editorial')
+      };
       var html = document.documentElement;
       var svg = document.querySelector('.diagram-container svg');
       var btn = document.getElementById('btn-preset');
@@ -5531,8 +5572,8 @@
         svg.setAttribute('data-preset', preset);
         btn.setAttribute('data-preset-option', preset);
         label.textContent = LABELS[preset];
-        btn.setAttribute('aria-label', 'Visual style: ' + LABELS[preset] + '. Choose visual style');
-        btn.title = 'Choose visual style (S cycles)';
+        btn.setAttribute('aria-label', viewerText('viewer.preset.current', { style: LABELS[preset] }));
+        btn.title = viewerText('viewer.preset.choose.title');
         options().forEach(function (option) {
           var selected = option.getAttribute('data-preset-value') === preset;
           option.setAttribute('aria-checked', String(selected));
@@ -5644,7 +5685,7 @@
 
       function apply(theme) {
         html.setAttribute('data-theme', theme);
-        label.textContent = theme === 'dark' ? 'Dark' : 'Light';
+        label.textContent = viewerText(theme === 'dark' ? 'viewer.theme.dark' : 'viewer.theme.light');
         btn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
       }
 
@@ -5692,6 +5733,18 @@
       var SHARE_CARD_HEIGHT = 630;
       var SHARE_CARD_PADDING = 36;
       var SHARE_CARD_HEADER = 112;
+
+      function exportError(key, values) {
+        var error = new Error(viewerText(key, values));
+        error.archifyViewerMessage = true;
+        return error;
+      }
+
+      function exportMessage(error) {
+        return error && error.archifyViewerMessage
+          ? error.message
+          : viewerText('viewer.export.unknown');
+      }
 
       function diagramFilename() {
         var title = (document.title || 'diagram')
@@ -6288,7 +6341,7 @@
                          format === 'webp' ? 'image/webp' : 'image/png';
               var quality = format === 'png' ? undefined : 0.95;
               canvas.toBlob(function (blob) {
-                if (!blob) reject(new Error('toBlob returned null for ' + format));
+                if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: format }));
                 else resolve(blob);
               }, mime, quality);
             } catch (error) {
@@ -6324,11 +6377,11 @@
 
       function canvas2dOrThrow(canvas, label) {
         if (!canvas || typeof canvas.getContext !== 'function') {
-          throw new Error('Canvas unavailable for ' + label);
+          throw exportError('viewer.export.error.canvasUnavailable', { label: label });
         }
         var ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('2D canvas context unavailable for ' + label);
-        if (typeof canvas.toBlob !== 'function') throw new Error('canvas.toBlob unavailable for ' + label);
+        if (!ctx) throw exportError('viewer.export.error.contextUnavailable', { label: label });
+        if (typeof canvas.toBlob !== 'function') throw exportError('viewer.export.error.toBlobUnavailable', { label: label });
         return ctx;
       }
 
@@ -6336,14 +6389,14 @@
         options = options || {};
         var routeSnapshot = options.routeSnapshot || null;
         var reachSnapshot = options.reachSnapshot || null;
-        if (routeSnapshot && reachSnapshot) return Promise.reject(new Error('Share Card variants cannot be combined'));
+        if (routeSnapshot && reachSnapshot) return Promise.reject(exportError('viewer.export.error.variantsCombined'));
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
         var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot });
-        if (!data.canonicalStateClean) return Promise.reject(new Error('Share Card export could not remove temporary viewer state'));
-        if (routeSnapshot && !data.routeStateClean) return Promise.reject(new Error('Route Card export could not preserve the resolved route safely'));
-        if (reachSnapshot && !data.reachStateClean) return Promise.reject(new Error('Reach Card export could not preserve authored reach safely'));
+        if (!data.canonicalStateClean) return Promise.reject(exportError('viewer.export.error.viewerState'));
+        if (routeSnapshot && !data.routeStateClean) return Promise.reject(exportError('viewer.export.error.routeState'));
+        if (reachSnapshot && !data.reachStateClean) return Promise.reject(exportError('viewer.export.error.reachState'));
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
 
@@ -6354,7 +6407,7 @@
               var canvas = document.createElement('canvas');
               canvas.width = SHARE_CARD_WIDTH;
               canvas.height = SHARE_CARD_HEIGHT;
-              var ctx = canvas2dOrThrow(canvas, 'Share Card');
+              var ctx = canvas2dOrThrow(canvas, viewerText('viewer.export.shareCard'));
               var computed = getComputedStyle(document.documentElement);
               var bg = computed.getPropertyValue('--bg').trim() || currentBg();
               var text = computed.getPropertyValue('--text').trim() || '#ffffff';
@@ -6367,21 +6420,37 @@
               var titleNode = document.querySelector('.header h1');
               var subtitleNode = document.querySelector('.header .subtitle');
               var title = titleNode ? titleNode.textContent : document.title;
+              var directionLabel = reachSnapshot
+                ? viewerText('viewer.export.direction.' + reachSnapshot.direction)
+                : '';
               var subtitle = routeSnapshot
-                ? 'Route: ' + routeSnapshot.source.label + ' → ' + routeSnapshot.target.label + ' · ' + routeSnapshot.hops + ' directed hops'
+                ? viewerCount('viewer.export.card.routeSummary', routeSnapshot.hops, {
+                    source: routeSnapshot.source.label,
+                    target: routeSnapshot.target.label
+                  })
                 : reachSnapshot
-                  ? 'Authored ' + reachSnapshot.direction + ' from ' + reachSnapshot.origin.label + ' · ' +
-                    (reachSnapshot.nodeIds.length - 1) + ' nodes · ' + reachSnapshot.edges.length +
-                    ' links · max ' + reachSnapshot.maxDepth + ' hops'
+                  ? viewerText('viewer.export.card.reachSummary', {
+                      direction: directionLabel,
+                      origin: reachSnapshot.origin.label,
+                      nodes: viewerCount('viewer.export.card.node', reachSnapshot.nodeIds.length - 1),
+                      links: viewerCount('viewer.export.card.link', reachSnapshot.edges.length),
+                      hops: viewerCount('viewer.export.card.hop', reachSnapshot.maxDepth)
+                    })
                   : subtitleNode ? subtitleNode.textContent : '';
               var preset = document.documentElement.getAttribute('data-preset') || 'classic';
               var theme = document.documentElement.getAttribute('data-theme') || 'dark';
-              var presetLabel = preset === 'signal-flow' ? 'FLOW' : preset.toUpperCase();
+              var presetKey = preset === 'signal-flow'
+                ? 'viewer.preset.flow.short'
+                : 'viewer.preset.' + preset;
+              var presetLabel = viewerText(presetKey).toUpperCase();
+              var themeLabel = viewerText('viewer.theme.' + theme).toUpperCase();
               var cardLabel = routeSnapshot
-                ? 'ARCHIFY · ROUTE · ' + routeSnapshot.hops + ' HOPS'
+                ? viewerText('viewer.export.card.routeBadge', {
+                    hops: viewerCount('viewer.export.card.hop', routeSnapshot.hops).toUpperCase()
+                  })
                 : reachSnapshot
-                  ? 'ARCHIFY · ' + reachSnapshot.direction.toUpperCase() + ' REACH'
-                  : 'ARCHIFY · ' + presetLabel + ' · ' + theme.toUpperCase();
+                  ? viewerText('viewer.export.card.reachBadge', { direction: directionLabel.toUpperCase() })
+                  : viewerText('viewer.export.card.defaultBadge', { preset: presetLabel, theme: themeLabel });
 
               ctx.fillStyle = bg;
               ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
@@ -6419,7 +6488,7 @@
               URL.revokeObjectURL(svgUrl);
 
               canvas.toBlob(function (blob) {
-                if (!blob) reject(new Error('toBlob returned null for Share Card'));
+                if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: viewerText('viewer.export.shareCard') }));
                 else resolve(blob);
               }, 'image/png');
             } catch (error) {
@@ -6439,17 +6508,17 @@
         options = options || {};
         if (!options.variant) return renderShareCard();
         if (options.variant !== 'route' && options.variant !== 'reach') {
-          return Promise.reject(new Error('Unknown Share Card variant: ' + options.variant));
+          return Promise.reject(exportError('viewer.export.unknownVariant', { variant: options.variant }));
         }
         if (options.variant === 'route') {
           var routeSnapshot = Archify.routeProbe && Archify.routeProbe.exportSnapshot();
-          if (!routeSnapshot) return Promise.reject(new Error('Trace a route before exporting a Route Share Card'));
+          if (!routeSnapshot) return Promise.reject(exportError('viewer.export.routeRequired'));
           return renderShareCard({ routeSnapshot: routeSnapshot });
         }
         var snapshot = Archify.focus && typeof Archify.focus.reachabilitySnapshot === 'function'
           ? Archify.focus.reachabilitySnapshot()
           : null;
-        if (!snapshot) return Promise.reject(new Error('Trace authored reach before exporting a Reach Share Card'));
+        if (!snapshot) return Promise.reject(exportError('viewer.export.reachRequired'));
         return renderShareCard({ reachSnapshot: snapshot });
       }
 
@@ -6483,7 +6552,7 @@
       function recordWebm(options) {
         options = options || {};
         if (!canRecordMotion()) {
-          return Promise.reject(new Error('WebM motion export requires a trace animation and browser MediaRecorder support'));
+          return Promise.reject(exportError('viewer.export.error.webmRequirements'));
         }
         var duration = Math.max(250, Number(options.duration) || MOTION_DURATION);
         var fps = Math.max(1, Number(options.fps) || MOTION_FPS);
@@ -6681,12 +6750,12 @@
             };
             recorder.onerror = function (event) {
               cleanup();
-              reject(event.error || new Error('MediaRecorder failed'));
+              reject(event.error || exportError('viewer.export.error.mediaRecorder'));
             };
             recorder.onstop = function () {
               cleanup();
               var blob = new Blob(chunks, { type: recorder.mimeType || mime });
-              if (!blob.size) reject(new Error('MediaRecorder produced an empty WebM'));
+              if (!blob.size) reject(exportError('viewer.export.error.emptyWebm'));
               else resolve(blob);
             };
             drawMotionFrame(ctx, backgroundImage, motionScene, 0);
@@ -6707,7 +6776,7 @@
           };
           backgroundImage.onerror = function () {
             URL.revokeObjectURL(sourceUrl);
-            reject(new Error('SVG background could not be loaded for WebM export'));
+            reject(exportError('viewer.export.error.webmBackground'));
           };
           backgroundImage.src = sourceUrl;
         });
@@ -6765,11 +6834,11 @@
       items().forEach(function (it) {
         if (it.dataset.format && !supports(it.dataset.format)) {
           it.disabled = true;
-          it.title = 'Not supported by this browser';
+          it.title = viewerText('viewer.export.unsupported');
         }
         if ((it.dataset.action === 'copy' || it.dataset.action === 'copy-share-card') && !canCopyImage()) {
           it.disabled = true;
-          it.title = 'Clipboard image write not supported by this browser';
+          it.title = viewerText('viewer.export.clipboardUnsupported');
         }
       });
 
@@ -6860,12 +6929,12 @@
         var base = diagramFilename();
         close(true);
         clearExportReceipt();
-        if (format === 'webm') toast('Recording 6 seconds of motion…');
+        if (format === 'webm') toast(viewerText('viewer.export.recording'));
         return (format === 'share-card'
           ? rasterizeShareCard().then(function (blob) {
               recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
               download(blob, base + '-share-card.png');
-              toast('Downloaded Share Card');
+              toast(viewerText('viewer.export.downloadedShare'));
             })
           : format === 'svg'
           ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
@@ -6878,7 +6947,7 @@
                 document.documentElement.setAttribute('data-last-motion-bytes', String(blob.size));
                 recordExportReceipt('webm', blob, true);
                 download(blob, base + '.webm');
-                toast('Downloaded WebM');
+                toast(viewerText('viewer.export.downloadedWebm'));
               })
           : rasterize(format).then(function (blob) {
               recordExportReceipt(format, blob, true);
@@ -6886,20 +6955,21 @@
             })
         ).catch(function (err) {
           console.error(err);
-          var message = err && err.message ? err.message : format;
+          var technicalMessage = err && err.message ? err.message : format;
+          var message = exportMessage(err);
           document.documentElement.setAttribute('data-last-export-error-format', format);
-          document.documentElement.setAttribute('data-last-export-error', message);
-          if (format === 'webm' && /MediaRecorder|WebM motion export|empty WebM/i.test(message)) {
+          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
+          if (format === 'webm') {
             var motionItem = menu.querySelector('button[data-format="webm"]');
             if (motionItem) {
               motionItem.disabled = true;
-              motionItem.title = 'Motion capture unavailable in this browser';
+              motionItem.title = viewerText('viewer.export.motionUnavailable');
               motionItem.style.opacity = '0.5';
             }
-            toast('WebM unavailable in this browser');
+            toast(viewerText('viewer.export.webmUnavailable'));
             return;
           }
-          alert('Export failed: ' + message);
+          alert(viewerText('viewer.export.failed', { message: message }));
         });
       }
 
@@ -6909,18 +6979,19 @@
         var snapshot = Archify.routeProbe && Archify.routeProbe.exportSnapshot();
         var blobPromise = snapshot
           ? renderShareCard({ routeSnapshot: snapshot })
-          : Promise.reject(new Error('Trace a route before exporting a Route Share Card'));
+          : Promise.reject(exportError('viewer.export.routeRequired'));
         return blobPromise.then(function (blob) {
           recordExportReceipt('share-card', blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, 'route', true);
           download(blob, diagramFilename() + '-route-share-card.png');
-          toast('Downloaded Route Share Card');
+          toast(viewerText('viewer.export.downloadedRoute'));
           return blob;
         }).catch(function (err) {
           console.error(err);
-          var message = err && err.message ? err.message : 'share-card';
+          var technicalMessage = err && err.message ? err.message : 'share-card';
+          var message = exportMessage(err);
           document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
-          document.documentElement.setAttribute('data-last-export-error', message);
-          alert('Route Share Card export failed: ' + message);
+          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
+          alert(viewerText('viewer.export.routeFailed', { message: message }));
         });
       }
 
@@ -6932,18 +7003,19 @@
           : null;
         var blobPromise = snapshot
           ? renderShareCard({ reachSnapshot: snapshot })
-          : Promise.reject(new Error('Trace authored reach before exporting a Reach Share Card'));
+          : Promise.reject(exportError('viewer.export.reachRequired'));
         return blobPromise.then(function (blob) {
           recordExportReceipt('share-card', blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, 'reach', false, true);
           download(blob, diagramFilename() + '-' + snapshot.direction + '-reach-share-card.png');
-          toast('Downloaded Reach Share Card');
+          toast(viewerText('viewer.export.downloadedReach'));
           return blob;
         }).catch(function (err) {
           console.error(err);
-          var message = err && err.message ? err.message : 'share-card';
+          var technicalMessage = err && err.message ? err.message : 'share-card';
+          var message = exportMessage(err);
           document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
-          document.documentElement.setAttribute('data-last-export-error', message);
-          alert('Reach Share Card export failed: ' + message);
+          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
+          alert(viewerText('viewer.export.reachFailed', { message: message }));
         });
       }
 
@@ -7008,21 +7080,22 @@
         close(true);
         clearExportReceipt();
         if (!canCopyImage()) {
-          alert('Clipboard image write not supported by this browser.');
+          alert(viewerText('viewer.export.clipboardUnsupported.period'));
           return;
         }
         var blobPromise = rasterizeShareCard();
         return writePngToClipboard(blobPromise).then(function () {
           return blobPromise.then(function (blob) {
             recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
-            toast('Copied Share Card');
+            toast(viewerText('viewer.export.copiedShare'));
           });
         }).catch(function (err) {
           console.error(err);
-          var message = err && err.message ? err.message : 'unknown';
+          var technicalMessage = err && err.message ? err.message : 'share-card';
+          var message = exportMessage(err);
           document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
-          document.documentElement.setAttribute('data-last-export-error', message);
-          alert('Copy failed: ' + message);
+          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
+          alert(viewerText('viewer.export.copyFailed', { message: message }));
         });
       }
 
@@ -7030,15 +7103,17 @@
         close(true);
         clearExportReceipt();
         if (!canCopyImage()) {
-          alert('Clipboard image write not supported in this browser.');
+          alert(viewerText('viewer.export.clipboardUnsupported.short'));
           return;
         }
         var blobPromise = rasterize('png');
         return writePngToClipboard(blobPromise).then(function () {
-          toast('Copied PNG to clipboard');
+          toast(viewerText('viewer.export.copiedPng'));
         }).catch(function (err) {
           console.error(err);
-          alert('Copy failed: ' + (err && err.message ? err.message : 'unknown'));
+          alert(viewerText('viewer.export.copyFailed', {
+            message: exportMessage(err)
+          }));
         });
       }
 
@@ -7164,17 +7239,17 @@
         return readerPaused || reducedMotion() || hasSuspension();
       }
       function ownerLabel(value) {
-        if (value === 'story') return 'the guided story';
-        if (value === 'chapter') return 'the active chapter';
-        if (value === 'chapter-preview') return 'the chapter delta preview';
-        if (value === 'handoff') return 'the chapter handoff';
-        if (value === 'route') return 'Route Probe';
-        if (value === 'lens') return 'Semantic Lens';
-        if (value === 'relationship') return 'Relationship Preview';
-        if (value === 'intent') return 'Intent Trace';
-        if (value === 'focus') return 'semantic focus';
-        if (value === 'legend') return 'legend preview';
-        return 'reader interaction';
+        if (value === 'story') return viewerText('viewer.owner.story');
+        if (value === 'chapter') return viewerText('viewer.owner.chapter');
+        if (value === 'chapter-preview') return viewerText('viewer.owner.chapterPreview');
+        if (value === 'handoff') return viewerText('viewer.owner.handoff');
+        if (value === 'route') return viewerText('viewer.owner.route');
+        if (value === 'lens') return viewerText('viewer.owner.lens');
+        if (value === 'relationship') return viewerText('viewer.owner.relationship');
+        if (value === 'intent') return viewerText('viewer.owner.intent');
+        if (value === 'focus') return viewerText('viewer.owner.focus');
+        if (value === 'legend') return viewerText('viewer.owner.legend');
+        return viewerText('viewer.owner.reader');
       }
       function render() {
         if (!capable) return;
@@ -7188,7 +7263,7 @@
         }
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
-        label.textContent = paused ? 'Still' : 'Live';
+        label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
@@ -7201,20 +7276,20 @@
         lastEffectivePaused = paused;
         if (Archify.routeProbe && typeof Archify.routeProbe.syncMotion === 'function') Archify.routeProbe.syncMotion();
         if (systemPaused) {
-          btn.setAttribute('aria-label', 'Motion paused by reduced-motion preference');
-          btn.title = 'Motion paused by reduced-motion preference';
+          btn.setAttribute('aria-label', viewerText('viewer.motion.reduced'));
+          btn.title = viewerText('viewer.motion.reduced');
         } else if (hasSuspension()) {
-          btn.setAttribute('aria-label', 'Motion paused while this page is hidden');
-          btn.title = 'Motion paused while this page is hidden';
+          btn.setAttribute('aria-label', viewerText('viewer.motion.hidden'));
+          btn.title = viewerText('viewer.motion.hidden');
         } else if (paused) {
-          btn.setAttribute('aria-label', 'Resume motion');
-          btn.title = 'Resume motion';
+          btn.setAttribute('aria-label', viewerText('viewer.motion.resume'));
+          btn.title = viewerText('viewer.motion.resume');
         } else if (owner) {
-          btn.setAttribute('aria-label', 'Pause motion; currently yielding to ' + ownerLabel(owner));
-          btn.title = 'Live preview enabled · yielding to ' + ownerLabel(owner);
+          btn.setAttribute('aria-label', viewerText('viewer.motion.yielding', { owner: ownerLabel(owner) }));
+          btn.title = viewerText('viewer.motion.yielding.title', { owner: ownerLabel(owner) });
         } else {
-          btn.setAttribute('aria-label', 'Pause motion');
-          btn.title = 'Pause motion';
+          btn.setAttribute('aria-label', viewerText('viewer.motion.pause'));
+          btn.title = viewerText('viewer.motion.pause');
         }
       }
       function setPaused(next, options) {
@@ -7385,7 +7460,7 @@
           if (!box || !Number.isFinite(box.x) || !Number.isFinite(box.y) || !Number.isFinite(box.width) || box.width < 36) return;
 
           var count = sources.length;
-          var label = count + ' verified source' + (count === 1 ? '' : 's') + '; focus this node to inspect';
+          var label = viewerCount('viewer.passport.beacon', count);
           var beacon = document.createElementNS(svgNamespace, 'g');
           beacon.classList.add('source-evidence-beacon');
           beacon.setAttribute('data-source-evidence-beacon', '');
@@ -7401,7 +7476,7 @@
           var text = document.createElementNS(svgNamespace, 'text');
           text.setAttribute('x', '15');
           text.setAttribute('y', '8.25');
-          text.textContent = 'SRC ' + count;
+          text.textContent = viewerText('viewer.passport.sourceMarker') + ' ' + count;
           beacon.appendChild(title);
           beacon.appendChild(plate);
           beacon.appendChild(text);
@@ -7410,7 +7485,7 @@
           var originalLabel = node.getAttribute('aria-label') || '';
           node.setAttribute('data-source-evidence-count', String(count));
           node.setAttribute('data-source-evidence-original-label', originalLabel);
-          node.setAttribute('aria-label', (originalLabel ? originalLabel + ', ' : '') + count + ' verified source reference' + (count === 1 ? '' : 's'));
+          node.setAttribute('aria-label', (originalLabel ? originalLabel + ', ' : '') + viewerCount('viewer.passport.sourceCount', count));
           installed += 1;
         });
         return installed;
@@ -7588,11 +7663,11 @@
         upstreamBtn.disabled = upstreamReach === 0;
         downstreamBtn.disabled = downstreamReach === 0;
         upstreamBtn.setAttribute('aria-label', upstreamReach
-          ? 'Trace ' + upstreamReach + ' upstream authored node' + (upstreamReach === 1 ? '' : 's')
-          : 'No upstream authored nodes');
+          ? viewerCount('viewer.passport.reach.upstream', upstreamReach)
+          : viewerText('viewer.passport.reach.noUpstream'));
         downstreamBtn.setAttribute('aria-label', downstreamReach
-          ? 'Trace ' + downstreamReach + ' downstream authored node' + (downstreamReach === 1 ? '' : 's')
-          : 'No downstream authored nodes');
+          ? viewerCount('viewer.passport.reach.downstream', downstreamReach)
+          : viewerText('viewer.passport.reach.noDownstream'));
         reachSection.hidden = false;
       }
       function applyReachability(direction, options) {
@@ -7638,11 +7713,15 @@
         var activeButton = direction === 'upstream' ? upstreamBtn : downstreamBtn;
         activeButton.setAttribute('aria-pressed', 'true');
         var reachableCount = result.nodeIds.length - 1;
-        var directionLabel = direction === 'upstream' ? 'Upstream' : 'Downstream';
-        reachStatus.textContent = directionLabel + ' · ' + reachableCount + ' node' +
-          (reachableCount === 1 ? '' : 's') + ' · ' + result.edgeKeys.length + ' link' +
-          (result.edgeKeys.length === 1 ? '' : 's') + ' · max ' + result.maxDepth + ' hop' +
-          (result.maxDepth === 1 ? '' : 's');
+        var directionLabel = viewerText(direction === 'upstream'
+          ? 'viewer.passport.upstream'
+          : 'viewer.passport.downstream');
+        reachStatus.textContent = viewerText('viewer.passport.reach.status', {
+          direction: directionLabel,
+          nodes: reachableCount,
+          links: result.edgeKeys.length,
+          hops: result.maxDepth
+        });
         reachStatus.hidden = false;
         if (Archify.exportMenu && typeof Archify.exportMenu.syncReachShare === 'function') {
           Archify.exportMenu.syncReachShare();
@@ -7769,7 +7848,7 @@
         var slug = repository.url.replace(/^https:\/\/github\.com\//, '').replace(/\/$/, '');
         repositoryLink.href = repository.url + '/tree/' + repository.revision;
         repositoryLink.textContent = slug + ' @ ' + repository.shortRevision;
-        repositoryLink.setAttribute('aria-label', 'Open verified repository revision ' + repository.revision);
+        repositoryLink.setAttribute('aria-label', viewerText('viewer.passport.repository.open', { revision: repository.revision }));
         sources.forEach(function (source) {
           var link = document.createElement('a');
           link.className = 'semantic-passport-source';
@@ -7777,13 +7856,13 @@
           link.target = '_blank';
           link.rel = 'noopener noreferrer';
           link.referrerPolicy = 'no-referrer';
-          link.setAttribute('aria-label', 'Open verified source ' + source.path + ' at revision ' + repository.shortRevision);
+          link.setAttribute('aria-label', viewerText('viewer.passport.source.open', { path: source.path, revision: repository.shortRevision }));
           var name = document.createElement('strong');
           name.textContent = source.label || source.path.split('/').pop() || source.path;
           var location = document.createElement('code');
           location.textContent = source.line
             ? 'L' + source.line + (source.endLine && source.endLine !== source.line ? '–' + source.endLine : '') + ' ↗'
-            : 'Open ↗';
+            : viewerText('viewer.passport.source.openLink');
           var sourcePath = document.createElement('small');
           sourcePath.textContent = source.path;
           link.appendChild(name);
@@ -7795,7 +7874,7 @@
       }
       function renderPassport(id, node) {
         setPassportValue(detail, node.getAttribute('data-node-sublabel'));
-        setPassportValue(kind, node.getAttribute('data-node-kind') || 'node');
+        setPassportValue(kind, viewerKindLabel(node.getAttribute('data-node-kind') || 'node'));
         setPassportValue(context, node.getAttribute('data-node-context'));
         setPassportValue(tag, node.getAttribute('data-node-tag'));
         setPassportValue(document.getElementById('focus-brand'), node.getAttribute('data-node-brand'));
@@ -7826,7 +7905,11 @@
             direction: direction,
             neighborId: neighborId,
             neighborLabel: neighbor ? nodeLabel(neighbor, neighborId) : neighborId,
-            label: edgeLabel || (direction === 'loop' ? 'loops back' : direction === 'out' ? 'connects to' : 'connects from')
+            label: edgeLabel || viewerText(direction === 'loop'
+              ? 'viewer.passport.relationship.loopsBack'
+              : direction === 'out'
+                ? 'viewer.passport.relationship.connectsTo'
+                : 'viewer.passport.relationship.connectsFrom')
           });
         });
         return relationships;
@@ -7869,7 +7952,9 @@
             fromLabel: byId[from] ? nodeLabel(byId[from], from) : from,
             toLabel: byId[to] ? nodeLabel(byId[to], to) : to,
             labelValue: labelValue,
-            label: labelValue || (from === to ? 'loops back' : 'connects to'),
+            label: labelValue || viewerText(from === to
+              ? 'viewer.passport.relationship.loopsBack'
+              : 'viewer.passport.relationship.connectsTo'),
             edge: edge,
             shapes: shapes,
             invalid: false
@@ -7896,14 +7981,14 @@
       function renderRelationshipCopyAction() {
         var record = pinnedRelationshipRecord();
         if (record && record.id) {
-          copyBtn.textContent = 'Copy relation';
-          copyBtn.setAttribute('aria-label', 'Copy link to pinned relationship');
+          copyBtn.textContent = viewerText('viewer.passport.copyRelation');
+          copyBtn.setAttribute('aria-label', viewerText('viewer.passport.copyPinned'));
         } else if (pinnedRelationshipKey) {
-          copyBtn.textContent = 'Copy node';
-          copyBtn.setAttribute('aria-label', 'Copy link to source node');
+          copyBtn.textContent = viewerText('viewer.passport.copyNode');
+          copyBtn.setAttribute('aria-label', viewerText('viewer.passport.copySource'));
         } else {
-          copyBtn.textContent = 'Copy link';
-          copyBtn.setAttribute('aria-label', 'Copy link to focused node');
+          copyBtn.textContent = viewerText('viewer.passport.copy');
+          copyBtn.setAttribute('aria-label', viewerText('viewer.passport.copy.focus'));
         }
       }
       function relationshipHitGeometry(shape, className) {
@@ -8222,7 +8307,11 @@
         var target = relationshipHitTarget(key);
         if (target) target.setAttribute('aria-pressed', 'true');
         renderRelationshipCopyAction();
-        summary.textContent = 'Pinned relationship · ' + record.fromLabel + ' → ' + record.toLabel + ' · ' + record.label;
+        summary.textContent = viewerText('viewer.passport.relationship.pinned', {
+          from: record.fromLabel,
+          to: record.toLabel,
+          label: record.label
+        });
         revealPinnedRelationship(record);
         if (options.updateUrl !== false && record.id) {
           try { history.replaceState(null, '', location.pathname + location.search + '#relation=' + encodeURIComponent(record.id)); } catch (_) {}
@@ -8241,10 +8330,10 @@
         relationshipHitOverlay.setAttribute('class', 'relationship-hit-overlay');
         relationshipHitOverlay.setAttribute('data-relationship-hit-overlay', '');
         relationshipHitOverlay.setAttribute('role', 'group');
-        relationshipHitOverlay.setAttribute('aria-label', 'Direct relationship explorer');
+        relationshipHitOverlay.setAttribute('aria-label', viewerText('viewer.passport.relationship.explorer'));
         var relationshipHelp = document.createElementNS(svgNamespace, 'desc');
         relationshipHelp.id = 'archify-relationship-help';
-        relationshipHelp.textContent = 'Use arrow keys to explore relationships. Press Enter or Space to pin details; Escape clears.';
+        relationshipHelp.textContent = viewerText('viewer.passport.relationship.help');
         relationshipHitOverlay.appendChild(relationshipHelp);
         records.forEach(function (record, index) {
           var target = document.createElementNS(svgNamespace, 'g');
@@ -8258,7 +8347,13 @@
           target.setAttribute('tabindex', index === 0 ? '0' : '-1');
           target.setAttribute('aria-pressed', 'false');
           target.setAttribute('aria-describedby', relationshipHelp.id);
-          var description = 'Inspect relationship ' + (index + 1) + ' of ' + records.length + ': ' + record.fromLabel + ' to ' + record.toLabel + ', ' + record.label + '. Press Enter for details.';
+          var description = viewerText('viewer.passport.relationship.inspect', {
+            index: index + 1,
+            total: records.length,
+            from: record.fromLabel,
+            to: record.toLabel,
+            label: record.label
+          });
           target.setAttribute('aria-label', description);
           var title = document.createElementNS(svgNamespace, 'title');
           title.textContent = record.fromLabel + ' \u2192 ' + record.toLabel + ' \u00b7 ' + record.label;
@@ -8354,25 +8449,29 @@
         var relationships = relationshipsFor(id, byId);
         chip.removeAttribute('data-relations-expanded');
         relationsBtn.setAttribute('aria-expanded', 'false');
-        relationsBtn.textContent = relationships.length + ' relation' + (relationships.length === 1 ? '' : 's');
-        relationsBtn.setAttribute('aria-label', 'Show ' + relationships.length + ' connected relationship' + (relationships.length === 1 ? '' : 's'));
+        relationsBtn.textContent = viewerCount('viewer.passport.relationship.count', relationships.length);
+        relationsBtn.setAttribute('aria-label', viewerCount('viewer.passport.relationship.show', relationships.length));
         var counts = { out: 0, in: 0, loop: 0 };
         relationships.forEach(function (relationship) { counts[relationship.direction] += 1; });
-        summary.textContent = counts.out + ' outgoing · ' + counts.in + ' incoming' + (counts.loop ? ' · ' + counts.loop + ' loop' : '');
+        summary.textContent = viewerText('viewer.passport.relationship.summary', {
+          out: counts.out,
+          in: counts.in,
+          loops: counts.loop ? viewerText('viewer.passport.relationship.loops', { count: counts.loop }) : ''
+        });
         renderReachabilityControls(id);
         relationshipList.textContent = '';
         if (!relationships.length) {
           var empty = document.createElement('p');
           empty.className = 'relationship-lens-empty';
-          empty.textContent = 'No connected relationships';
+          empty.textContent = viewerText('viewer.passport.relationship.none');
           relationshipList.appendChild(empty);
           return;
         }
 
         [
-          { id: 'out', label: 'Outgoing' },
-          { id: 'in', label: 'Incoming' },
-          { id: 'loop', label: 'Self loops' }
+          { id: 'out', label: viewerText('viewer.passport.relationship.group.out') },
+          { id: 'in', label: viewerText('viewer.passport.relationship.group.in') },
+          { id: 'loop', label: viewerText('viewer.passport.relationship.group.loop') }
         ].forEach(function (group) {
           var items = relationships.filter(function (relationship) { return relationship.direction === group.id; });
           if (!items.length) return;
@@ -8392,11 +8491,19 @@
             button.setAttribute('data-relationship-from', relationship.from);
             button.setAttribute('data-relationship-to', relationship.to);
             if (relationship.id) button.setAttribute('data-relationship-id', relationship.id);
-            button.setAttribute('aria-label', group.label + ': ' + relationship.label + ', ' + relationship.neighborLabel);
+            button.setAttribute('aria-label', viewerText('viewer.passport.relationship.row', {
+              group: group.label,
+              relationship: relationship.label,
+              neighbor: relationship.neighborLabel
+            }));
             var direction = document.createElement('span');
             direction.className = 'relationship-lens-direction';
             direction.setAttribute('aria-hidden', 'true');
-            direction.textContent = relationship.direction === 'out' ? 'OUT →' : relationship.direction === 'in' ? '← IN' : 'LOOP';
+            direction.textContent = viewerText(relationship.direction === 'out'
+              ? 'viewer.passport.relationship.direction.out'
+              : relationship.direction === 'in'
+                ? 'viewer.passport.relationship.direction.in'
+                : 'viewer.passport.relationship.direction.loop');
             var target = document.createElement('strong');
             target.textContent = relationship.neighborLabel;
             var relation = document.createElement('small');
@@ -8536,10 +8643,10 @@
         upstreamBtn.disabled = true;
         downstreamBtn.disabled = true;
         relationshipList.textContent = '';
-        copyBtn.textContent = 'Copy link';
-        copyBtn.setAttribute('aria-label', 'Copy link to focused node');
-        relationsBtn.textContent = 'Relations';
-        relationsBtn.setAttribute('aria-label', 'Show connected relationships');
+        copyBtn.textContent = viewerText('viewer.passport.copy');
+        copyBtn.setAttribute('aria-label', viewerText('viewer.passport.copy.focus'));
+        relationsBtn.textContent = viewerText('viewer.passport.relations');
+        relationsBtn.setAttribute('aria-label', viewerText('viewer.passport.relations.show'));
         relationsBtn.setAttribute('aria-expanded', 'false');
         chip.removeAttribute('data-relations-expanded');
         chip.style.removeProperty('top');
@@ -8607,7 +8714,7 @@
         svg.setAttribute('data-focus-active', normalized.join(' '));
         var defaultLabel = normalized.length === 1
           ? nodeLabel(byId[normalized[0]], normalized[0])
-          : normalized.length + ' selected nodes';
+          : viewerText('viewer.guided.chapter.selectedNodes', { count: normalized.length });
         label.textContent = options.label || defaultLabel;
         chip.hidden = options.hideChip === true || normalized.length !== 1 || selectionMode;
         if (!chip.hidden) {
@@ -8653,10 +8760,10 @@
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
         return copy.then(function (copied) {
-          copyBtn.textContent = copied ? 'Copied' : 'Copy failed';
+          copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
           copyBtn.setAttribute('aria-label', copied
-            ? (relationId ? 'Pinned relationship link copied' : 'Focused node link copied')
-            : (relationId ? 'Could not copy pinned relationship link' : 'Could not copy focused node link'));
+            ? viewerText(relationId ? 'viewer.passport.copy.pinned.success' : 'viewer.passport.copy.focused.success')
+            : viewerText(relationId ? 'viewer.passport.copy.pinned.failed' : 'viewer.passport.copy.focused.failed'));
           window.setTimeout(function () {
             renderRelationshipCopyAction();
           }, 1600);
@@ -8695,7 +8802,9 @@
         if (expanded) chip.removeAttribute('data-relations-expanded');
         else chip.setAttribute('data-relations-expanded', 'true');
         relationsBtn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-        relationsBtn.setAttribute('aria-label', expanded ? 'Show connected relationships' : 'Hide connected relationships');
+        relationsBtn.setAttribute('aria-label', viewerText(expanded
+          ? 'viewer.passport.relations.show'
+          : 'viewer.passport.relations.hide'));
         requestLensPlacement();
       });
       relationshipList.addEventListener('click', function (event) {
@@ -8981,9 +9090,13 @@
         svg.setAttribute('data-intent-trace-active', id);
         if (options.announce === true) {
           var total = counts.out + counts.in + counts.loop;
-          status.textContent = nodeLabel(selected, id) + '. ' + counts.out + ' outgoing, ' +
-            counts.in + ' incoming' + (counts.loop ? ', ' + counts.loop + ' self loop' : '') +
-            '. ' + total + ' connection' + (total === 1 ? '' : 's') + '. Press Enter for details.';
+          status.textContent = viewerText('viewer.intent.summary', {
+            label: nodeLabel(selected, id),
+            out: counts.out,
+            in: counts.in,
+            loops: counts.loop ? viewerText('viewer.intent.loops', { count: counts.loop }) : '',
+            total: total
+          });
         }
         return true;
       }
@@ -9286,8 +9399,11 @@
           drawHandoffAnchor(anchor);
           var node = findNode(anchor);
           var nodeLabel = node ? (node.getAttribute('data-node-label') || anchor) : anchor;
-          handoffReceipt.textContent = (previousIndex + 1 < 10 ? '0' : '') + (previousIndex + 1) +
-            ' \u2192 ' + (nextIndex + 1 < 10 ? '0' : '') + (nextIndex + 1) + ' \u00b7 via ' + nodeLabel;
+          handoffReceipt.textContent = viewerText('viewer.guided.handoff', {
+            from: (previousIndex + 1 < 10 ? '0' : '') + (previousIndex + 1),
+            to: (nextIndex + 1 < 10 ? '0' : '') + (nextIndex + 1),
+            label: nodeLabel
+          });
           handoffReceipt.hidden = false;
         }
         if (Archify.motionGovernor) {
@@ -9344,8 +9460,13 @@
           button.setAttribute('data-guided-view-id', view.id);
           button.setAttribute('aria-pressed', 'false');
           button.setAttribute('tabindex', index === 0 ? '0' : '-1');
-          button.setAttribute('aria-label', 'Open chapter ' + (index + 1) + ' of ' + views.length + ': ' + view.label + ', ' + view.focus.length + ' stops');
-          button.title = view.label + ' — ' + (view.note || view.focus.length + ' selected nodes');
+          button.setAttribute('aria-label', viewerText('viewer.guided.chapter.open', {
+            index: index + 1,
+            total: views.length,
+            label: view.label,
+            count: view.focus.length
+          }));
+          button.title = view.label + ' — ' + (view.note || viewerText('viewer.guided.chapter.selectedNodes', { count: view.focus.length }));
           var position = document.createElement('span');
           position.className = 'guided-view-chapter-index';
           position.setAttribute('aria-hidden', 'true');
@@ -9355,7 +9476,7 @@
           title.textContent = view.label;
           var stops = document.createElement('em');
           stops.className = 'guided-view-chapter-count';
-          stops.textContent = view.focus.length + ' stop' + (view.focus.length === 1 ? '' : 's');
+          stops.textContent = viewerCount('viewer.guided.chapter.stop', view.focus.length);
           var delta = document.createElement('span');
           delta.className = 'guided-view-chapter-delta';
           delta.hidden = true;
@@ -9388,20 +9509,40 @@
             stops.hidden = false;
             deltaLabel.hidden = true;
             button.removeAttribute('data-chapter-delta');
-            button.setAttribute('aria-label', 'Current chapter ' + (index + 1) + ' of ' + views.length + ': ' + views[index].label + ', ' + views[index].focus.length + ' stops');
-            button.title = views[index].label + ' — current chapter, ' + views[index].focus.length + ' stops';
+            button.setAttribute('aria-label', viewerText('viewer.guided.chapter.current', {
+              index: index + 1,
+              total: views.length,
+              label: views[index].label,
+              count: views[index].focus.length
+            }));
+            button.title = viewerText('viewer.guided.chapter.current.title', {
+              label: views[index].label,
+              count: views[index].focus.length
+            });
           } else {
             var delta = chapterDelta(activeIndex >= 0 ? views[activeIndex] : null, views[index]);
             var compact = '=' + delta.stay.length + ' +' + delta.enter.length + ' \u2212' + delta.leave.length;
-            var expanded = delta.stay.length + ' stay, ' + delta.enter.length + ' enter, ' + delta.leave.length + ' leave';
+            var expanded = viewerText('viewer.guided.chapter.delta.expanded', {
+              stay: delta.stay.length,
+              enter: delta.enter.length,
+              leave: delta.leave.length
+            });
             stops.hidden = true;
             deltaLabel.hidden = false;
             deltaLabel.querySelector('[data-delta-kind="stay"]').textContent = '=' + delta.stay.length;
             deltaLabel.querySelector('[data-delta-kind="enter"]').textContent = '+' + delta.enter.length;
             deltaLabel.querySelector('[data-delta-kind="leave"]').textContent = '\u2212' + delta.leave.length;
             button.setAttribute('data-chapter-delta', compact);
-            button.setAttribute('aria-label', 'Open chapter ' + (index + 1) + ' of ' + views.length + ': ' + views[index].label + '. Chapter focus delta: ' + expanded);
-            button.title = views[index].label + ' — ' + compact + ' chapter focus';
+            button.setAttribute('aria-label', viewerText('viewer.guided.chapter.delta.aria', {
+              index: index + 1,
+              total: views.length,
+              label: views[index].label,
+              delta: expanded
+            }));
+            button.title = viewerText('viewer.guided.chapter.delta.title', {
+              label: views[index].label,
+              delta: compact
+            });
           }
           if (current) button.setAttribute('aria-current', 'step');
           else button.removeAttribute('aria-current');
@@ -9529,33 +9670,44 @@
 
       function shareCueStatus(state) {
         return {
-          pending: 'Ready',
-          playing: 'Playing',
-          complete: 'Settled',
-          interrupted: 'Paused',
-          pinned: 'Pinned',
-          'reduced-motion': 'Still'
-        }[state] || 'Ready';
+          pending: viewerText('viewer.guided.state.ready'),
+          playing: viewerText('viewer.guided.state.playing'),
+          complete: viewerText('viewer.guided.state.settled'),
+          interrupted: viewerText('viewer.guided.state.paused'),
+          pinned: viewerText('viewer.guided.state.pinned'),
+          'reduced-motion': viewerText('viewer.guided.state.still')
+        }[state] || viewerText('viewer.guided.state.ready');
       }
 
       function shareCueBeatCopy(state, view, stops) {
         var total = stops.length;
         var activeStop = storyBeatIndex >= 0 ? stops[storyBeatIndex] : null;
         if ((state === 'playing' || state === 'interrupted') && activeStop) {
-          return 'Step ' + (storyBeatIndex + 1 < 10 ? '0' : '') + (storyBeatIndex + 1) + ' / ' +
-            (total < 10 ? '0' : '') + total + ' · ' + activeStop.textContent;
+          return viewerText('viewer.guided.share.step', {
+            index: (storyBeatIndex + 1 < 10 ? '0' : '') + (storyBeatIndex + 1),
+            total: (total < 10 ? '0' : '') + total,
+            label: activeStop.textContent
+          });
         }
         if (state === 'pinned' && activeStop) {
           return storyBeatCopy(storySteps[storyBeatIndex], total);
         }
         if (state === 'reduced-motion' && activeStop && hashBeatMatchesCurrent()) {
-          return 'Step ' + (storyBeatIndex + 1 < 10 ? '0' : '') + (storyBeatIndex + 1) + ' / ' +
-            (total < 10 ? '0' : '') + total + ' · ' + activeStop.textContent + ' · Static moment';
+          return viewerText('viewer.guided.share.staticMoment', {
+            step: viewerText('viewer.guided.share.step', {
+              index: (storyBeatIndex + 1 < 10 ? '0' : '') + (storyBeatIndex + 1),
+              total: (total < 10 ? '0' : '') + total,
+              label: activeStop.textContent
+            })
+          });
         }
-        if (state === 'complete') return total + ' steps complete · ' + (view.note || 'Path settled for reading.');
-        if (state === 'reduced-motion') return total + ' steps · Static path';
-        if (state === 'pending') return total + ' steps · Ready';
-        return view.note || view.focus.length + ' selected nodes';
+        if (state === 'complete') return viewerText('viewer.guided.share.complete', {
+          count: total,
+          note: view.note || viewerText('viewer.guided.share.settled')
+        });
+        if (state === 'reduced-motion') return viewerText('viewer.guided.share.staticPath', { count: total });
+        if (state === 'pending') return viewerText('viewer.guided.share.ready', { count: total });
+        return view.note || viewerText('viewer.guided.chapter.selectedNodes', { count: view.focus.length });
       }
 
       function renderShareCue() {
@@ -9580,11 +9732,21 @@
         shareCue.setAttribute('data-state', state);
         shareCue.setAttribute('aria-live', state === 'playing' ? 'off' : 'polite');
         shareCueState.textContent = shareCueStatus(state);
-        shareCueCount.textContent = 'Chapter ' + (activeIndex + 1 < 10 ? '0' : '') + (activeIndex + 1) + ' / ' + (views.length < 10 ? '0' : '') + views.length;
+        shareCueCount.textContent = viewerText('viewer.guided.share.chapter', {
+          index: (activeIndex + 1 < 10 ? '0' : '') + (activeIndex + 1),
+          total: (views.length < 10 ? '0' : '') + views.length
+        });
         shareCueLabel.textContent = view.label;
         shareCueNote.textContent = beatCopy;
         shareCueRoute.textContent = route;
-        shareCue.setAttribute('aria-label', shareCueStatus(state) + ' chapter ' + (activeIndex + 1) + ' of ' + views.length + ': ' + view.label + '. ' + beatCopy + '. ' + route);
+        shareCue.setAttribute('aria-label', viewerText('viewer.guided.share.aria', {
+          state: shareCueStatus(state),
+          index: activeIndex + 1,
+          total: views.length,
+          label: view.label,
+          beat: beatCopy,
+          route: route
+        }));
       }
 
       function setShareCueProgress(fraction) {
@@ -9675,24 +9837,24 @@
         if (!step) return '';
         var position = (step.index + 1 < 10 ? '0' : '') + (step.index + 1);
         var countValue = (total < 10 ? '0' : '') + total;
-        if (step.relation === 'start') return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.nodeLabel + ' \u00b7 starting point';
-        if (step.relation === 'forward') return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.previousLabel + ' \u2192 ' + step.nodeLabel;
-        if (step.relation === 'reverse') return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.nodeLabel + ' \u2192 ' + step.previousLabel + ' \u00b7 reverse authored link';
-        if (step.relation === 'multiple') return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.previousLabel + ' \u21c4 ' + step.nodeLabel + ' \u00b7 ' + step.edges.length + ' authored links';
-        return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.previousLabel + ' \u00b7 ' + step.nodeLabel + ' \u00b7 grouped \u00b7 no direct link';
+        if (step.relation === 'start') return viewerText('viewer.guided.beat.start', { index: position, total: countValue, label: step.nodeLabel });
+        if (step.relation === 'forward') return viewerText('viewer.guided.beat.forward', { index: position, total: countValue, from: step.previousLabel, to: step.nodeLabel });
+        if (step.relation === 'reverse') return viewerText('viewer.guided.beat.reverse', { index: position, total: countValue, from: step.nodeLabel, to: step.previousLabel });
+        if (step.relation === 'multiple') return viewerText('viewer.guided.beat.multiple', { index: position, total: countValue, from: step.previousLabel, to: step.nodeLabel, count: step.edges.length });
+        return viewerText('viewer.guided.beat.group', { index: position, total: countValue, from: step.previousLabel, to: step.nodeLabel });
       }
 
       function storyBeatAria(step, total) {
-        var prefix = 'Story beat ' + (step.index + 1) + ' of ' + total + ': ' + step.nodeLabel + '. ';
-        if (step.relation === 'start') return prefix + 'Starting point.';
-        if (step.relation === 'forward') return prefix + 'From ' + step.previousLabel + ' through one authored forward relationship.';
-        if (step.relation === 'reverse') return prefix + 'From ' + step.previousLabel + '; the authored relationship points from ' + step.nodeLabel + ' to ' + step.previousLabel + '.';
-        if (step.relation === 'multiple') return prefix + 'From ' + step.previousLabel + ' through ' + step.edges.length + ' authored relationships; shown without arbitrary motion.';
-        return prefix + 'Grouped from ' + step.previousLabel + ' with no direct authored relationship.';
+        var prefix = viewerText('viewer.guided.beat.aria.prefix', { index: step.index + 1, total: total, label: step.nodeLabel });
+        if (step.relation === 'start') return prefix + viewerText('viewer.guided.beat.aria.start');
+        if (step.relation === 'forward') return prefix + viewerText('viewer.guided.beat.aria.forward', { from: step.previousLabel });
+        if (step.relation === 'reverse') return prefix + viewerText('viewer.guided.beat.aria.reverse', { from: step.previousLabel, to: step.nodeLabel });
+        if (step.relation === 'multiple') return prefix + viewerText('viewer.guided.beat.aria.multiple', { from: step.previousLabel, count: step.edges.length });
+        return prefix + viewerText('viewer.guided.beat.aria.group', { from: step.previousLabel });
       }
 
       function storyCaptionRouteCopy(step) {
-        if (step.relation === 'start') return step.nodeLabel + ' · Starting point';
+        if (step.relation === 'start') return step.nodeLabel + ' · ' + viewerText('viewer.guided.caption.start');
         if (step.relation === 'reverse') return step.previousLabel + ' ← ' + step.nodeLabel;
         if (step.relation === 'multiple') return step.previousLabel + ' ⇄ ' + step.nodeLabel;
         if (step.relation === 'group') return step.previousLabel + ' · ' + step.nodeLabel;
@@ -9701,15 +9863,15 @@
 
       function storyCaptionDetailCopy(step) {
         var facts = [];
-        if (step.relation === 'group') facts.push('Grouped transition · no direct authored link');
-        else if (step.edgeLabels.length) facts.push(step.edgeLabels.slice(0, 3).join(' + ') + (step.edgeLabels.length > 3 ? ' +' + (step.edgeLabels.length - 3) + ' more' : ''));
-        else if (step.relation === 'reverse') facts.push('Reverse authored relationship');
-        else if (step.relation === 'multiple') facts.push(step.edges.length + ' authored relationships');
-        else if (step.relation !== 'start') facts.push('Authored relationship');
-        if (step.relation === 'reverse') facts.push('authored direction: ' + step.nodeLabel + ' → ' + step.previousLabel);
+        if (step.relation === 'group') facts.push(viewerText('viewer.guided.caption.grouped'));
+        else if (step.edgeLabels.length) facts.push(step.edgeLabels.slice(0, 3).join(' + ') + (step.edgeLabels.length > 3 ? viewerText('viewer.guided.caption.more', { count: step.edgeLabels.length - 3 }) : ''));
+        else if (step.relation === 'reverse') facts.push(viewerText('viewer.guided.caption.reverse'));
+        else if (step.relation === 'multiple') facts.push(viewerText('viewer.guided.caption.relationships', { count: step.edges.length }));
+        else if (step.relation !== 'start') facts.push(viewerText('viewer.guided.caption.relationship'));
+        if (step.relation === 'reverse') facts.push(viewerText('viewer.guided.caption.direction', { from: step.nodeLabel, to: step.previousLabel }));
         if (step.responsibility) facts.push(step.responsibility);
         if (step.context) facts.push(step.context);
-        if (!facts.length) facts.push('Authored starting point');
+        if (!facts.length) facts.push(viewerText('viewer.guided.caption.starting'));
         return facts.join(' · ');
       }
 
@@ -9765,17 +9927,17 @@
         if (beatLinkFeedbackTimer) clearTimeout(beatLinkFeedbackTimer);
         beatLinkFeedbackTimer = null;
         beatLink.removeAttribute('data-copy-state');
-        beatLinkLabel.textContent = 'Copy moment';
+        beatLinkLabel.textContent = viewerText('viewer.guided.copyMoment');
       }
 
       function syncBeatLink() {
         var step = storyBeatIndex >= 0 ? storySteps[storyBeatIndex] : null;
         var available = !!(activeIndex >= 0 && step && !currentHandoff);
         beatLink.disabled = !available;
-        if (!beatLink.hasAttribute('data-copy-state')) beatLinkLabel.textContent = 'Copy moment';
+        if (!beatLink.hasAttribute('data-copy-state')) beatLinkLabel.textContent = viewerText('viewer.guided.copyMoment');
         var description = available
-          ? 'Copy link to current story moment: Beat ' + (step.index + 1) + ' of ' + storySteps.length + ': ' + step.nodeLabel
-          : 'Select a Story Beat to copy its exact link';
+          ? viewerText('viewer.guided.beatLink', { index: step.index + 1, total: storySteps.length, label: step.nodeLabel })
+          : viewerText('viewer.guided.selectBeatLink');
         beatLink.setAttribute('aria-label', description);
         beatLink.title = description;
       }
@@ -9783,8 +9945,8 @@
       function setBeatLinkFeedback(copied) {
         resetBeatLinkFeedback();
         beatLink.setAttribute('data-copy-state', copied ? 'copied' : 'failed');
-        beatLinkLabel.textContent = copied ? 'Copied' : 'Copy failed';
-        beatLink.setAttribute('aria-label', copied ? 'Moment link copied' : 'Could not copy story moment link');
+        beatLinkLabel.textContent = viewerText(copied ? 'viewer.guided.copied' : 'viewer.guided.copyFailed');
+        beatLink.setAttribute('aria-label', viewerText(copied ? 'viewer.guided.momentCopied' : 'viewer.guided.momentCopyFailed'));
         beatLinkFeedbackTimer = setTimeout(function () {
           resetBeatLinkFeedback();
           syncBeatLink();
@@ -10038,7 +10200,7 @@
           stop.removeAttribute('aria-current');
         });
         note.setAttribute('aria-live', 'polite');
-        if (activeIndex >= 0) note.textContent = views[activeIndex].note || views[activeIndex].focus.length + ' selected nodes';
+        if (activeIndex >= 0) note.textContent = views[activeIndex].note || viewerText('viewer.guided.chapter.selectedNodes', { count: views[activeIndex].focus.length });
         renderStoryCaption(null, 0);
         renderShareCue();
         syncBeatLink();
@@ -10117,7 +10279,7 @@
           trail.appendChild(stop);
         });
         trail.hidden = labels.length === 0;
-        trail.setAttribute('aria-label', 'Story trail for ' + view.label + ': ' + labels.length + ' beats');
+        trail.setAttribute('aria-label', viewerText('viewer.guided.storyTrail', { label: view.label, count: labels.length }));
         trail.scrollLeft = 0;
         svg.setAttribute('data-story-active', view.id);
 
@@ -10196,21 +10358,39 @@
         syncStoryPlayback();
         play.disabled = !playing && !automaticPlaybackAllowed;
         play.setAttribute('aria-pressed', playing ? 'true' : 'false');
-        play.setAttribute('aria-label', playing ? 'Pause guided story' : (!automaticPlaybackAllowed ? 'Story playback unavailable while motion is Still' : (storyPlaybackComplete ? 'Replay guided story' : 'Play guided story')));
-        play.title = playing ? 'Pause guided story (P)' : (!automaticPlaybackAllowed ? 'Switch motion to Live to play the guided story' : (storyPlaybackComplete ? 'Replay guided story (P)' : 'Play guided story (P)'));
+        play.setAttribute('aria-label', viewerText(playing
+          ? 'viewer.guided.pause'
+          : !automaticPlaybackAllowed
+            ? 'viewer.guided.motionUnavailable'
+            : storyPlaybackComplete
+              ? 'viewer.guided.replay'
+              : 'viewer.guided.play'));
+        play.title = viewerText(playing
+          ? 'viewer.guided.pause.title'
+          : !automaticPlaybackAllowed
+            ? 'viewer.guided.enableMotion'
+            : storyPlaybackComplete
+              ? 'viewer.guided.replay.title'
+              : 'viewer.guided.play.title');
         playIcon.textContent = playing ? '\u2016' : '\u25b6';
-        playLabel.textContent = playing ? 'Pause' : (storyPlaybackComplete ? 'Replay story' : 'Play story');
+        playLabel.textContent = viewerText(playing
+          ? 'viewer.guided.pauseStory'
+          : storyPlaybackComplete
+            ? 'viewer.guided.replayStory'
+            : 'viewer.guided.playStory');
         if (storyCaption && !storyCaption.hidden) storyCaption.setAttribute('aria-live', playing ? 'off' : 'polite');
       }
 
       function render() {
         var view = views[activeIndex];
         count.textContent = activeIndex < 0 ? '0 / ' + views.length : (activeIndex + 1) + ' / ' + views.length;
-        label.textContent = view ? view.label : 'Explore this system';
+        label.textContent = view ? view.label : viewerText('viewer.guided.explore');
         note.setAttribute('aria-live', storyBeatIndex >= 0 ? 'off' : 'polite');
         note.textContent = storyBeatIndex >= 0
           ? storyBeatCopy(storySteps[storyBeatIndex], storySteps.length)
-          : (view ? (view.note || view.focus.length + ' selected nodes') : 'Step through curated paths without changing the source diagram.');
+          : (view
+            ? (view.note || viewerText('viewer.guided.chapter.selectedNodes', { count: view.focus.length }))
+            : viewerText('viewer.guided.intro'));
         prev.disabled = activeIndex < 0;
         next.disabled = activeIndex >= views.length - 1;
         all.disabled = activeIndex < 0;
@@ -11181,22 +11361,25 @@
         var semantic = state.mode === 'semantic' && state.scale > 1.01;
         var detail = detailLevel();
         var percent = Math.round(state.scale * 100) + '%';
-        var levelLabel = detail === 'map' ? 'MAP ' : detail === 'read' ? 'READ ' : 'FULL ';
+        var levelLabel = viewerText('viewer.nav.level.' + detail);
         var detailHint = detail === 'map'
-          ? 'Zoom in to reveal relationship labels and node context'
+          ? viewerText('viewer.nav.detail.map')
           : detail === 'read'
-            ? 'Zoom in again to reveal tags and annotations'
-            : 'Full diagram detail';
-        var resolvedLevel = (semantic ? 'AUTO ' : levelLabel).trim();
-        var showDetailLevel = resolvedLevel !== 'READ';
+            ? viewerText('viewer.nav.detail.read')
+            : viewerText('viewer.nav.detail.full');
+        var resolvedLevel = semantic ? viewerText('viewer.nav.level.auto') : levelLabel;
+        var showDetailLevel = semantic || detail !== 'read';
         if (resetDetailLabel) {
           resetDetailLabel.textContent = resolvedLevel;
           resetDetailLabel.hidden = !showDetailLevel;
         }
         if (resetPercentLabel) resetPercentLabel.textContent = percent;
         resetBtn.toggleAttribute('data-detail-visible', showDetailLevel);
-        resetBtn.title = (semantic ? 'Semantic camera active · ' : '') + detailHint + ' · reset view (0)';
-        resetBtn.setAttribute('aria-label', detailHint + '. Reset diagram view');
+        resetBtn.title = viewerText('viewer.nav.camera.title', {
+          semantic: semantic ? viewerText('viewer.nav.camera.semantic') : '',
+          hint: detailHint
+        });
+        resetBtn.setAttribute('aria-label', viewerText('viewer.nav.camera', { hint: detailHint }));
         resetBtn.setAttribute('data-detail-level', detail);
         container.setAttribute('data-detail-level', detail);
         container.setAttribute('data-camera-mode', state.mode);
@@ -11635,7 +11818,7 @@
       var placementGap = 16;
 
       mapSvg.setAttribute('role', 'group');
-      mapSvg.setAttribute('aria-label', 'Semantic diagram radar nodes');
+      mapSvg.setAttribute('aria-label', viewerText('viewer.radar.nodes'));
       mapSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
       nodeLayer.setAttribute('class', 'overview-map-nodes');
       viewport.setAttribute('class', 'overview-map-viewport');
@@ -11670,11 +11853,11 @@
           rect.setAttribute('data-kind', node.getAttribute('data-node-kind') || 'neutral');
           rect.setAttribute('tabindex', '0');
           rect.setAttribute('role', 'button');
-          rect.setAttribute('aria-label', 'Focus ' + nodeLabel(node, id) + ' from Semantic Radar');
+          rect.setAttribute('aria-label', viewerText('viewer.radar.focus', { label: nodeLabel(node, id) }));
           nodeLayer.appendChild(rect);
           nodes.push({ id: id, node: node, rect: rect });
         });
-        status.textContent = nodes.length + ' nodes · full map';
+        status.textContent = viewerText('viewer.radar.fullMap', { count: nodes.length });
         return true;
       }
       function visibleRect(element) {
@@ -11859,7 +12042,7 @@
           compact = true;
           panel.setAttribute('data-compact', 'true');
           panel.setAttribute('data-placement-degraded', 'true');
-          panel.setAttribute('title', 'Radar compacted to avoid covering the Semantic Passport or MAP controls.');
+          panel.setAttribute('title', viewerText('viewer.radar.compacted'));
           context = placementContext();
           placement = chooseRadarPlacement(context, reference, placementOptions);
         }
@@ -11897,8 +12080,8 @@
         panel.removeAttribute('data-placement-unavailable');
         trigger.setAttribute('aria-expanded', 'true');
         trigger.removeAttribute('data-radar-space-limited');
-        trigger.setAttribute('aria-label', 'Close semantic radar');
-        trigger.title = 'Semantic radar (M)';
+        trigger.setAttribute('aria-label', viewerText('viewer.radar.close'));
+        trigger.title = viewerText('viewer.nav.radar.title');
         feedback.hidden = true;
       }
       function scheduleSpaceRetry() {
@@ -11914,9 +12097,9 @@
         panel.hidden = true;
         panel.setAttribute('data-placement-unavailable', 'true');
         trigger.setAttribute('aria-expanded', 'false');
-        trigger.setAttribute('aria-label', 'Cancel semantic radar waiting for more MAP space');
+        trigger.setAttribute('aria-label', viewerText('viewer.radar.cancelWaiting'));
         trigger.setAttribute('data-radar-space-limited', 'true');
-        trigger.title = 'Semantic radar needs more visible MAP space';
+        trigger.title = viewerText('viewer.radar.needsSpace');
         feedback.hidden = false;
         scheduleSpaceRetry();
       }
@@ -11974,9 +12157,11 @@
         var full = visible.width >= viewBox.width * 0.98 && visible.height >= viewBox.height * 0.98;
         var mobileWide = window.innerWidth <= 720 && container.hasAttribute('data-wide-diagram');
         var viewportCopy = full
-          ? 'full map'
-          : (mobileWide ? Math.round(visible.width / viewBox.width * 100) + '% width' : Math.round(visible.scale * 100) + '% viewport');
-        status.textContent = nodes.length + ' nodes · ' + viewportCopy;
+          ? viewerText('viewer.radar.viewport.full')
+          : (mobileWide
+            ? viewerText('viewer.radar.viewport.width', { percent: Math.round(visible.width / viewBox.width * 100) })
+            : viewerText('viewer.radar.viewport.scale', { percent: Math.round(visible.scale * 100) }));
+        status.textContent = viewerText('viewer.radar.status', { count: nodes.length, viewport: viewportCopy });
         nodes.forEach(function (item) {
           var active = item.node.hasAttribute('data-focus-selected') ||
             item.node.getAttribute('data-story-beat-state') === 'active';
@@ -12017,8 +12202,8 @@
           feedback.hidden = true;
           trigger.setAttribute('aria-expanded', 'false');
           trigger.removeAttribute('data-radar-space-limited');
-          trigger.setAttribute('aria-label', 'Open semantic radar');
-          trigger.title = 'Semantic radar (M)';
+          trigger.setAttribute('aria-label', viewerText('viewer.nav.radar'));
+          trigger.title = viewerText('viewer.nav.radar.title');
           if (options.restoreFocus === true) trigger.focus();
         }
         return next;
@@ -12249,9 +12434,9 @@
 
       function render(next) {
         btn.setAttribute('aria-pressed', next ? 'true' : 'false');
-        btn.setAttribute('aria-label', next ? 'Exit presentation stage' : 'Enter presentation stage');
-        btn.title = next ? 'Exit presentation stage (F or Escape)' : 'Presentation stage (F)';
-        label.textContent = next ? 'Exit' : 'Present';
+        btn.setAttribute('aria-label', viewerText(next ? 'viewer.present.exit' : 'viewer.present.enter'));
+        btn.title = viewerText(next ? 'viewer.present.exit.title' : 'viewer.present.enter.title');
+        label.textContent = viewerText(next ? 'viewer.present.exit.label' : 'viewer.present.present');
       }
 
       function setActive(next, options) {
@@ -12320,11 +12505,11 @@
       function defaultContext() {
         return {
           kind: 'focus',
-          title: 'Find a node',
-          placeholder: 'Search labels or IDs',
-          empty: 'No matching nodes',
-          resultsLabel: 'Diagram nodes',
-          availableNoun: 'nodes',
+          title: viewerText('viewer.finder.title'),
+          placeholder: viewerText('viewer.finder.placeholder'),
+          empty: viewerText('viewer.finder.empty'),
+          resultsLabel: viewerText('viewer.finder.results'),
+          availableNoun: viewerText('viewer.finder.noun.nodes'),
           allowedIds: null,
           badges: null
         };
@@ -12449,13 +12634,13 @@
           var badge = context.badges && context.badges[item.id]
             ? context.badges[item.id]
             : context.kind === 'focus'
-              ? item.links + (item.links === 1 ? ' link' : ' links')
+              ? viewerCount('viewer.finder.link', item.links)
               : String(item.links);
           var action = context.kind === 'route-source'
-            ? 'Choose ' + item.label + ' as route start'
+            ? viewerText('viewer.finder.result.routeStart', { label: item.label })
             : context.kind === 'route-target'
-              ? 'Choose ' + item.label + ' as route destination, ' + badge
-              : 'Focus ' + item.label + ', ' + item.links + ' related connection' + (item.links === 1 ? '' : 's');
+              ? viewerText('viewer.finder.result.routeTarget', { label: item.label, links: badge })
+              : viewerCount('viewer.finder.result.focus', item.links, { label: item.label });
           button.setAttribute('aria-label', action);
 
           var name = document.createElement('strong');
@@ -12464,8 +12649,8 @@
           links.textContent = badge;
           links.title = context.kind === 'focus' ? badge : action;
           var meta = document.createElement('small');
-          meta.textContent = [item.type, item.id, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
-          meta.title = [item.type, item.id, item.context, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
+          meta.textContent = [viewerKindLabel(item.type), item.id, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
+          meta.title = [viewerKindLabel(item.type), item.id, item.context, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
           button.appendChild(name);
           button.appendChild(links);
           button.appendChild(meta);
@@ -12474,8 +12659,12 @@
         });
         empty.hidden = visibleItems.length !== 0;
         status.textContent = query
-          ? visibleItems.length + ' of ' + available.length + ' ' + context.availableNoun
-          : available.length + ' ' + context.availableNoun;
+          ? viewerText('viewer.finder.status.filtered', {
+              visible: visibleItems.length,
+              available: available.length,
+              noun: context.availableNoun
+            })
+          : viewerText('viewer.finder.status.all', { available: available.length, noun: context.availableNoun });
       }
 
       function open(options) {
@@ -12775,7 +12964,11 @@
             item.setAttribute('data-route-journey-index', String(index));
             item.setAttribute('data-route-node-id', id);
             item.setAttribute('tabindex', index === 0 ? '0' : '-1');
-            item.setAttribute('aria-label', 'Route position ' + (index + 1) + ' of ' + ids.length + ': ' + nodeLabel(byId[id], id));
+            item.setAttribute('aria-label', viewerText('viewer.route.position', {
+              index: index + 1,
+              total: ids.length,
+              label: nodeLabel(byId[id], id)
+            }));
           }
           item.className = 'route-probe-node';
           item.textContent = nodeLabel(byId[id], id);
@@ -12787,7 +12980,7 @@
       }
       function setTrigger(active) {
         trigger.setAttribute('aria-pressed', active ? 'true' : 'false');
-        trigger.setAttribute('aria-label', active ? 'Clear traced route' : 'Trace a directed route');
+        trigger.setAttribute('aria-label', viewerText(active ? 'viewer.route.trigger.clear' : 'viewer.guide.route.aria'));
       }
       function clear(options) {
         options = options || {};
@@ -12804,14 +12997,14 @@
         panel.hidden = true;
         panel.setAttribute('data-state', 'idle');
         panel.removeAttribute('data-finder-open');
-        title.textContent = 'Choose a start node';
-        renderPlaceholder('Pick two semantic nodes on the diagram');
-        status.textContent = 'Choose the source, then the destination. Direction matters.';
+        title.textContent = viewerText('viewer.route.start');
+        renderPlaceholder(viewerText('viewer.route.pickTwo'));
+        status.textContent = viewerText('viewer.route.instructions');
         findBtn.hidden = true;
-        findBtn.textContent = 'Find start';
-        findBtn.setAttribute('aria-label', 'Find a route start');
+        findBtn.textContent = viewerText('viewer.route.start.find');
+        findBtn.setAttribute('aria-label', viewerText('viewer.route.start.find.aria'));
         copyBtn.hidden = true;
-        copyBtn.textContent = 'Copy link';
+        copyBtn.textContent = viewerText('viewer.route.copy');
         if (Archify.exportMenu && typeof Archify.exportMenu.syncRouteShare === 'function') Archify.exportMenu.syncRouteShare();
         setTrigger(false);
         if (wasActive && options.preserveView !== true && Archify.view && typeof Archify.view.reset === 'function') {
@@ -12942,7 +13135,10 @@
           !Archify.motionGovernor.isPaused();
       }
       function routeOverviewStatus() {
-        return activeNodeIds.length + ' nodes · ' + activeEdges.length + ' directed hop' + (activeEdges.length === 1 ? '' : 's') + ' · shortest authored route';
+        return viewerText('viewer.route.overview.status', {
+          nodes: viewerCount('viewer.route.overview.node', activeNodeIds.length),
+          hops: viewerCount('viewer.route.overview.hop', activeEdges.length)
+        });
       }
       function centerJourneyButton(button) {
         if (!button) return;
@@ -12972,19 +13168,19 @@
         journeyPlayBtn.setAttribute('aria-pressed', journeyPlaying ? 'true' : 'false');
         if (journeyPlaying) {
           journeyPlayIcon.textContent = '\u275a\u275a';
-          journeyPlayLabel.textContent = 'Pause';
-          journeyPlayBtn.setAttribute('aria-label', 'Pause route journey');
-          journeyPlayBtn.title = 'Pause route journey';
+          journeyPlayLabel.textContent = viewerText('viewer.route.pause.label');
+          journeyPlayBtn.setAttribute('aria-label', viewerText('viewer.route.pause'));
+          journeyPlayBtn.title = viewerText('viewer.route.pause');
         } else if (journeyComplete || journeyIndex === activeNodeIds.length - 1) {
           journeyPlayIcon.textContent = '\u21bb';
-          journeyPlayLabel.textContent = 'Replay';
-          journeyPlayBtn.setAttribute('aria-label', 'Replay route journey');
-          journeyPlayBtn.title = canPlay ? 'Replay route journey' : 'Automatic journey requires Live motion';
+          journeyPlayLabel.textContent = viewerText('viewer.route.replay.label');
+          journeyPlayBtn.setAttribute('aria-label', viewerText('viewer.route.replay'));
+          journeyPlayBtn.title = viewerText(canPlay ? 'viewer.route.replay' : 'viewer.route.motionRequired');
         } else {
           journeyPlayIcon.textContent = '\u25b6';
-          journeyPlayLabel.textContent = 'Journey';
-          journeyPlayBtn.setAttribute('aria-label', 'Play route journey');
-          journeyPlayBtn.title = canPlay ? 'Play route journey' : 'Automatic journey requires Live motion';
+          journeyPlayLabel.textContent = viewerText('viewer.route.journey');
+          journeyPlayBtn.setAttribute('aria-label', viewerText('viewer.route.play'));
+          journeyPlayBtn.title = viewerText(canPlay ? 'viewer.route.play' : 'viewer.route.motionRequired');
         }
       }
       function journeyGeometry(shape) {
@@ -13075,8 +13271,17 @@
           else button.removeAttribute('aria-current');
         });
         if (options.center !== false) centerJourneyButton(buttons[journeyIndex]);
-        var phase = journeyPlaying ? 'Playing' : (journeyComplete ? 'Complete' : 'Inspecting');
-        status.textContent = 'Step ' + (journeyIndex + 1) + ' of ' + activeNodeIds.length + ' · ' + phase + ' · ' + nodeLabel(byId[activeNodeIds[journeyIndex]], activeNodeIds[journeyIndex]);
+        var phase = viewerText(journeyPlaying
+          ? 'viewer.route.phase.playing'
+          : journeyComplete
+            ? 'viewer.route.phase.complete'
+            : 'viewer.route.phase.inspecting');
+        status.textContent = viewerText('viewer.route.step', {
+          index: journeyIndex + 1,
+          total: activeNodeIds.length,
+          phase: phase,
+          label: nodeLabel(byId[activeNodeIds[journeyIndex]], activeNodeIds[journeyIndex])
+        });
         if (options.pulse === true && journeyIndex > 0) renderJourneyPulse(activeEdges[journeyIndex - 1]);
         if (options.reveal !== false && Archify.view && typeof Archify.view.reveal === 'function') {
           Archify.view.reveal(activeNodeIds.slice(Math.max(0, journeyIndex - 1), Math.min(activeNodeIds.length, journeyIndex + 2)), {
@@ -13248,15 +13453,15 @@
         });
         svg.setAttribute('data-route-picking', 'target');
         panel.setAttribute('data-state', 'target');
-        title.textContent = 'Choose a destination from ' + nodeLabel(byId[id], id);
+        title.textContent = viewerText('viewer.route.destination', { label: nodeLabel(byId[id], id) });
         renderPath([id]);
         var count = Math.max(0, Object.keys(reached).length - 1);
         status.textContent = count
-          ? count + ' directed destination' + (count === 1 ? '' : 's') + ' available. Pick a highlighted node.'
-          : 'No outgoing route starts here. Clear and choose another source.';
+          ? viewerCount('viewer.route.destination.count', count)
+          : viewerText('viewer.route.noOutgoing');
         findBtn.hidden = false;
-        findBtn.textContent = 'Find target';
-        findBtn.setAttribute('aria-label', 'Find a reachable route destination');
+        findBtn.textContent = viewerText('viewer.route.destination.find');
+        findBtn.setAttribute('aria-label', viewerText('viewer.route.destination.find.aria'));
         requestDocking();
         return true;
       }
@@ -13288,7 +13493,10 @@
         renderPath(result.nodes, { interactive: true });
         panel.setAttribute('data-state', 'result');
         panel.hidden = false;
-        title.textContent = nodeLabel(byId[startId], startId) + ' to ' + nodeLabel(byId[endId], endId);
+        title.textContent = viewerText('viewer.route.result.title', {
+          source: nodeLabel(byId[startId], startId),
+          target: nodeLabel(byId[endId], endId)
+        });
         findBtn.hidden = true;
         copyBtn.hidden = false;
         setTrigger(true);
@@ -13310,15 +13518,18 @@
         if (mode !== 'target') return false;
         if (id === startId) {
           panel.setAttribute('data-state', 'error');
-          title.textContent = 'Choose a different destination';
-          status.textContent = 'A route needs two distinct semantic nodes.';
+          title.textContent = viewerText('viewer.route.differentDestination');
+          status.textContent = viewerText('viewer.route.distinct');
           return false;
         }
         var result = shortestDirectedPath(startId, id);
         if (!result) {
           panel.setAttribute('data-state', 'error');
-          title.textContent = 'No directed route to ' + nodeLabel(byId[id], id);
-          status.textContent = nodeLabel(byId[id], id) + ' is not reachable from ' + nodeLabel(byId[startId], startId) + '. Pick a highlighted destination.';
+          title.textContent = viewerText('viewer.route.unreachable', { label: nodeLabel(byId[id], id) });
+          status.textContent = viewerText('viewer.route.unreachable.detail', {
+            target: nodeLabel(byId[id], id),
+            source: nodeLabel(byId[startId], startId)
+          });
           return false;
         }
         return showResult(result, options);
@@ -13346,12 +13557,12 @@
         panel.hidden = false;
         panel.setAttribute('data-state', 'source');
         svg.setAttribute('data-route-picking', 'source');
-        title.textContent = 'Choose a start node';
-        renderPlaceholder('Pick a semantic node on the diagram');
-        status.textContent = 'Select the source. The next step will reveal only directed destinations.';
+        title.textContent = viewerText('viewer.route.start');
+        renderPlaceholder(viewerText('viewer.route.pickOne'));
+        status.textContent = viewerText('viewer.route.start.instructions');
         findBtn.hidden = false;
-        findBtn.textContent = 'Find start';
-        findBtn.setAttribute('aria-label', 'Find a route start');
+        findBtn.textContent = viewerText('viewer.route.start.find');
+        findBtn.setAttribute('aria-label', viewerText('viewer.route.start.find.aria'));
         copyBtn.hidden = true;
         setTrigger(true);
         if (focused && nodesById()[focused]) chooseStart(focused);
@@ -13378,14 +13589,14 @@
             return outgoing[id] && outgoing[id].length;
           });
           var sourceBadges = {};
-          sourceIds.forEach(function (id) { sourceBadges[id] = 'start'; });
+          sourceIds.forEach(function (id) { sourceBadges[id] = viewerText('viewer.route.finder.source.badge'); });
           return {
             kind: 'route-source',
-            title: 'Choose route start',
-            placeholder: 'Search route sources',
-            empty: 'No matching route sources',
-            resultsLabel: 'Nodes that can start a route',
-            availableNoun: 'route sources',
+            title: viewerText('viewer.route.finder.source.title'),
+            placeholder: viewerText('viewer.route.finder.source.placeholder'),
+            empty: viewerText('viewer.route.finder.source.empty'),
+            resultsLabel: viewerText('viewer.route.finder.source.results'),
+            availableNoun: viewerText('viewer.route.finder.source.noun'),
             allowedIds: sourceIds,
             badges: sourceBadges
           };
@@ -13395,15 +13606,15 @@
           var targetIds = Object.keys(distances).filter(function (id) { return id !== startId && byId[id]; });
           var targetBadges = {};
           targetIds.forEach(function (id) {
-            targetBadges[id] = distances[id] + ' hop' + (distances[id] === 1 ? '' : 's');
+            targetBadges[id] = viewerCount('viewer.route.hop', distances[id]);
           });
           return {
             kind: 'route-target',
-            title: 'Destination from ' + nodeLabel(byId[startId], startId),
-            placeholder: 'Search reachable destinations',
-            empty: 'No matching reachable destinations',
-            resultsLabel: 'Reachable route destinations',
-            availableNoun: 'reachable destinations',
+            title: viewerText('viewer.route.finder.target.title', { label: nodeLabel(byId[startId], startId) }),
+            placeholder: viewerText('viewer.route.finder.target.placeholder'),
+            empty: viewerText('viewer.route.finder.target.empty'),
+            resultsLabel: viewerText('viewer.route.finder.target.results'),
+            availableNoun: viewerText('viewer.route.finder.target.noun'),
             allowedIds: targetIds,
             badges: targetBadges
           };
@@ -13444,11 +13655,11 @@
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
         return copy.then(function (copied) {
-          copyBtn.textContent = copied ? 'Copied' : 'Copy failed';
-          copyBtn.setAttribute('aria-label', copied ? 'Traced route link copied' : 'Could not copy traced route link');
+          copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
+          copyBtn.setAttribute('aria-label', viewerText(copied ? 'viewer.route.copy.success' : 'viewer.route.copy.failed'));
           window.setTimeout(function () {
-            copyBtn.textContent = 'Copy link';
-            copyBtn.setAttribute('aria-label', 'Copy link to traced route');
+            copyBtn.textContent = viewerText('viewer.route.copy');
+            copyBtn.setAttribute('aria-label', viewerText('viewer.route.copy.aria'));
           }, 1600);
           return copied;
         });
@@ -13601,12 +13812,6 @@
       var finePointerQuery = window.matchMedia ? window.matchMedia('(hover: hover) and (pointer: fine)') : null;
       var MAX_LENS_FLOW_EDGES = 24;
 
-      function kindLabel(value) {
-        return String(value || 'neutral')
-          .replace(/messagebus/gi, 'message bus')
-          .replace(/[-_]+/g, ' ')
-          .replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
-      }
       function nodesById() {
         var byId = {};
         Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id][data-node-kind]'), function (node) {
@@ -13621,7 +13826,7 @@
         Object.keys(byId).forEach(function (id) {
           var node = byId[id];
           var value = node.getAttribute('data-node-kind') || 'neutral';
-          var kind = kinds[value] || (kinds[value] = { id: value, label: kindLabel(value), nodes: [] });
+          var kind = kinds[value] || (kinds[value] = { id: value, label: viewerKindLabel(value), nodes: [] });
           kind.nodes.push(node);
         });
         return Object.keys(kinds).map(function (key) { return kinds[key]; }).sort(function (a, b) {
@@ -13725,7 +13930,7 @@
           entry.setAttribute('role', 'button');
           entry.setAttribute('tabindex', legendEntries.length ? '-1' : '0');
           var visibleLabel = entry.getAttribute('data-legend-label') || fact.label;
-          entry.setAttribute('aria-label', 'Inspect ' + visibleLabel + ', ' + count + ' node' + (count === 1 ? '' : 's'));
+          entry.setAttribute('aria-label', viewerCount('viewer.lens.legend.inspect', count, { label: visibleLabel }));
           entry.setAttribute('aria-pressed', 'false');
           entry.setAttribute('aria-haspopup', 'dialog');
           entry.setAttribute('aria-controls', 'semantic-lens');
@@ -13734,7 +13939,7 @@
         });
         if (!legendEntries.length) return false;
         legendBridge.setAttribute('role', legendEntries.length >= 3 ? 'toolbar' : 'group');
-        legendBridge.setAttribute('aria-label', 'Semantic legend');
+        legendBridge.setAttribute('aria-label', viewerText('viewer.lens.legend'));
         syncLegendBridge();
         layoutLegendBridge();
         try {
@@ -13882,7 +14087,7 @@
           button.className = 'semantic-lens-kind';
           button.setAttribute('data-kind', kind.id);
           button.setAttribute('aria-pressed', selectedKinds.indexOf(kind.id) >= 0 ? 'true' : 'false');
-          button.setAttribute('aria-label', kind.label + ', ' + kind.nodes.length + ' node' + (kind.nodes.length === 1 ? '' : 's'));
+          button.setAttribute('aria-label', viewerCount('viewer.lens.kind.count', kind.nodes.length, { label: kind.label }));
           button.disabled = selectedKinds.length >= 2 && selectedKinds.indexOf(kind.id) === -1;
           var swatch = document.createElement('span');
           swatch.className = 'semantic-lens-swatch';
@@ -13908,7 +14113,7 @@
       function updateTrigger() {
         var active = selectedKinds.length > 0;
         trigger.setAttribute('aria-pressed', active ? 'true' : 'false');
-        trigger.setAttribute('aria-label', active ? 'Open active semantic lens' : 'Open semantic lens');
+        trigger.setAttribute('aria-label', viewerText(active ? 'viewer.lens.openActive' : 'viewer.lens.open'));
         copyBtn.hidden = !active;
         syncLegendBridge();
       }
@@ -13954,7 +14159,7 @@
         var nodeKind = {};
         Object.keys(byId).forEach(function (id) { nodeKind[id] = byId[id].getAttribute('data-node-kind') || 'neutral'; });
         if (!selectedKinds.length) {
-          status.textContent = 'Choose a kind to inspect its nodes and touching relationships.';
+          status.textContent = viewerText('viewer.lens.choose');
           updateTrigger();
           renderKinds();
           dockPanel(byId);
@@ -14009,13 +14214,18 @@
         renderFlowOverlay(matchedFlow);
         if (crossKind) {
           var total = forward + reverse;
-          status.textContent = kindLabel(selectedKinds[0]) + ' → ' + kindLabel(selectedKinds[1]) + ': ' + forward + ' · ' +
-            kindLabel(selectedKinds[1]) + ' → ' + kindLabel(selectedKinds[0]) + ': ' + reverse + ' · ' +
-            total + ' direct relationship' + (total === 1 ? '' : 's');
+          status.textContent = viewerCount('viewer.lens.compare', total, {
+            first: viewerKindLabel(selectedKinds[0]),
+            second: viewerKindLabel(selectedKinds[1]),
+            forward: forward,
+            reverse: reverse
+          });
         } else {
           var nodeCount = collectKinds().filter(function (kind) { return kind.id === selectedKinds[0]; })[0].nodes.length;
-          status.textContent = nodeCount + ' ' + kindLabel(selectedKinds[0]) + ' node' + (nodeCount === 1 ? '' : 's') + ' · ' +
-            touching + ' touching relationship' + (touching === 1 ? '' : 's') + ' · connected peers remain visible';
+          status.textContent = viewerText('viewer.lens.single', {
+            nodes: viewerCount('viewer.lens.node', nodeCount, { label: viewerKindLabel(selectedKinds[0]) }),
+            relationships: viewerCount('viewer.lens.relationship', touching)
+          });
         }
         updateTrigger();
         renderKinds();
@@ -14088,7 +14298,7 @@
         panel.removeAttribute('data-dock-side');
         updateTrigger();
         renderKinds();
-        status.textContent = 'Choose a kind to inspect its nodes and touching relationships.';
+        status.textContent = viewerText('viewer.lens.choose');
         if (options.updateUrl !== false) updateHash();
         if (options.preserveView !== true && Archify.view && typeof Archify.view.reset === 'function') {
           Archify.view.reset({ automatic: true });
@@ -14116,8 +14326,8 @@
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
         return copy.then(function (copied) {
-          copyBtn.textContent = copied ? 'Copied' : 'Copy failed';
-          window.setTimeout(function () { copyBtn.textContent = 'Copy link'; }, 1600);
+          copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
+          window.setTimeout(function () { copyBtn.textContent = viewerText('viewer.common.copyLink'); }, 1600);
           return copied;
         });
       }
@@ -14289,14 +14499,16 @@
         var nodes = svg.querySelectorAll('[data-node-id]').length;
         var relationships = relationshipCount();
         var views = viewCount();
-        stats.textContent = nodes + ' semantic node' + (nodes === 1 ? '' : 's') + ' · ' +
-          relationships + ' relationship' + (relationships === 1 ? '' : 's') + ' · ' +
-          views + ' guided view' + (views === 1 ? '' : 's');
+        stats.textContent = viewerText('viewer.guide.facts', {
+          nodes: viewerCount('viewer.guide.fact.node', nodes),
+          relationships: viewerCount('viewer.guide.fact.relationship', relationships),
+          views: viewerCount('viewer.guide.fact.view', views)
+        });
         storyBtn.disabled = views === 0;
         storyBtn.setAttribute('aria-disabled', views === 0 ? 'true' : 'false');
         storyCopy.textContent = views
-          ? 'Walk ' + views + ' authored chapter' + (views === 1 ? '' : 's') + ' and their real relationships.'
-          : 'No authored guided story in this diagram.';
+          ? viewerCount('viewer.guide.story.available', views)
+          : viewerText('viewer.guide.story.unavailable');
       }
       function actionButtons() {
         return Array.prototype.slice.call(actions.querySelectorAll('.diagram-guide-action:not(:disabled)'));
@@ -14307,7 +14519,7 @@
         html.removeAttribute('data-guide-open');
         routePanel.removeAttribute('data-guide-open');
         trigger.setAttribute('aria-expanded', 'false');
-        trigger.setAttribute('aria-label', 'Open diagram guide');
+        trigger.setAttribute('aria-label', viewerText('viewer.guide.open'));
         feedback.textContent = '';
         if (options.restoreFocus !== false) trigger.focus();
         return false;
@@ -14330,7 +14542,7 @@
         html.setAttribute('data-guide-open', 'true');
         routePanel.setAttribute('data-guide-open', 'true');
         trigger.setAttribute('aria-expanded', 'true');
-        trigger.setAttribute('aria-label', 'Close diagram guide');
+        trigger.setAttribute('aria-label', viewerText('viewer.guide.close'));
         feedback.textContent = '';
         requestAnimationFrame(function () {
           var first = actionButtons()[0];
@@ -14342,7 +14554,7 @@
       function execute(action) {
         feedback.textContent = '';
         if (action === 'story' && !viewCount()) {
-          feedback.textContent = 'This diagram has no authored guided story.';
+          feedback.textContent = viewerText('viewer.guide.noStory');
           return false;
         }
         close({ restoreFocus: false });

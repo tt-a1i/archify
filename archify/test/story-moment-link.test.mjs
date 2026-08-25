@@ -69,8 +69,8 @@ test('copy feedback, one-shot playback, and reduced motion preserve the requeste
   assert.match(template, /navigator\.clipboard && typeof navigator\.clipboard\.writeText === 'function'/);
   assert.match(template, /navigator\.clipboard\.writeText\(value\)/);
   assert.match(template, /document\.execCommand\('copy'\)/);
-  assert.match(template, /beatLinkLabel\.textContent = copied \? 'Copied' : 'Copy failed'/);
-  assert.match(template, /Moment link copied/);
+  assert.match(template, /beatLinkLabel\.textContent = viewerText\(copied \? 'viewer\.guided\.copied' : 'viewer\.guided\.copyFailed'\)/);
+  assert.match(template, /viewerText\(copied \? 'viewer\.guided\.momentCopied' : 'viewer\.guided\.momentCopyFailed'\)/);
   assert.match(template, /function hashBeatMatchesCurrent\(\)/);
   assert.match(template, /if \(!storyAutomaticPlaybackAllowed\(\)\)[\s\S]*hashBeatMatchesCurrent\(\)[\s\S]*setAutoplayState\('reduced-motion'\)/);
   assert.match(template, /storyPlaybackScope = 'chapter'/);
@@ -84,7 +84,7 @@ test('the control keeps stable desktop/mobile geometry and existing viewer bound
   assert.match(template, /html\[data-embed="true"\][\s\S]*\.guided-views \{ display: none !important; \}/);
   assert.match(template, /html\[data-embed="true"\]\[data-share-moment="true"\] \.share-chapter-cue:not\(\[hidden\]\)/);
   assert.match(template, /pinnedMode = !shareMode && embedMode && hashBeatMatchesCurrent\(\)/);
-  assert.match(template, /pinned: 'Pinned'/);
+  assert.match(template, /pinned: viewerText\('viewer\.guided\.state\.pinned'\)/);
   assert.match(template, /@media print[\s\S]*\.guided-views/);
   assert.match(template, /syncStoryControlsDisabled\(\)[\s\S]*beatLink\.disabled =/);
   assert.match(template, /clone\.querySelectorAll\('\[data-story-overlay\], \[data-story-carrier-overlay\]'\)/);

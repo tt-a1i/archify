@@ -92,7 +92,7 @@ test('repository evidence is revision-verified, receipt-backed, searchable, and 
   assert.match(html, /renderSourceEvidence\(id\)/);
   assert.match(html, /referrerPolicy = 'no-referrer'/);
   assert.match(html, /classList\.add\('source-evidence-beacon'\)/);
-  assert.match(html, /text\.textContent = 'SRC ' \+ count/);
+  assert.match(html, /text\.textContent = viewerText\('viewer\.passport\.sourceMarker'\) \+ ' ' \+ count/);
   assert.match(html, /Archify\.sourceEvidence\.installBeacons\(\)/);
   assert.match(html, /querySelectorAll\('\[data-source-evidence-beacon\]'\)/);
   assert.match(html, /data-source-evidence-original-label/);

@@ -62,7 +62,8 @@ test('signal-flow preset reaches the page, SVG, and motion export surface', () =
   const html = render('workflow', CASES.workflow, 'trace', 'signal-flow');
   assert.match(html, /<html lang="en" data-theme="dark" data-preset="signal-flow">/);
   assert.match(svgBlock(html), /data-preset="signal-flow"/);
-  assert.match(html, /content: "SIGNAL FLOW"/);
+  assert.match(html, /content: attr\(data-preset-badge-signal-flow\)/);
+  assert.match(html, /data-preset-badge-signal-flow="SIGNAL FLOW"/);
   assert.match(html, /data-format="webm"/);
   assert.match(html, /data-last-motion-bytes/);
   assert.match(html, /Archify\.motion = \{ canRecord: canRecordMotion, recordWebm: recordWebm \}/);
@@ -99,7 +100,8 @@ test('blueprint preset reaches every visual surface without changing the default
   const html = render('architecture', CASES.architecture, null, 'blueprint');
   assert.match(html, /<html lang="en" data-theme="dark" data-preset="blueprint">/);
   assert.match(svgBlock(html), /data-preset="blueprint"/);
-  assert.match(html, /content: "BLUEPRINT \/ REV 01"/);
+  assert.match(html, /content: attr\(data-preset-badge-blueprint\)/);
+  assert.match(html, /data-preset-badge-blueprint="BLUEPRINT \/ REV 01"/);
   assert.match(html, /\[data-preset="blueprint"\]\[data-theme="dark"\]/);
   assert.match(html, /svg\[data-preset="blueprint"\] \.c-grid/);
   assert.match(html, /html\[data-preset="blueprint"\] \.guided-views/);
@@ -119,7 +121,10 @@ test('editorial preset reaches every visual surface and all five typed renderers
     const html = render(mode, example, null, 'editorial');
     assert.match(html, /<html lang="en" data-theme="dark" data-preset="editorial">/, mode);
     assert.match(svgBlock(html), /data-preset="editorial"/, mode);
-    assert.match(html, /content: "EDITORIAL \/ FIELD NOTE"/, mode);
+    assert.match(html, /content: attr\(data-preset-badge-editorial\)/, mode);
+    assert.match(html, /data-preset-badge-editorial="EDITORIAL \/ FIELD NOTE"/, mode);
+    assert.match(html, /content: attr\(data-preset-badge-editorial-plate\)/, mode);
+    assert.match(html, /data-preset-badge-editorial-plate="ARCHIFY \/ PLATE 04"/, mode);
     assert.match(html, /\[data-preset="editorial"\]\[data-theme="dark"\]/, mode);
     assert.match(html, /html\[data-preset="editorial"\] \.diagram-container/, mode);
     assert.match(html, /svg\[data-preset="editorial"\] \.story-trail-flow/, mode);

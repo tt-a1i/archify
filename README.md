@@ -21,9 +21,9 @@ Archify is an agent skill for Raven, Cursor, Claude Code, Codex CLI, and OpenCod
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
-![Stable Version](https://img.shields.io/badge/version-2.15.0-0891b2?style=flat-square)
+![Development Version](https://img.shields.io/badge/version-2.16.0--dev.0-0891b2?style=flat-square)
 
-**Current stable version:** `v2.15.0`. See [Changelog](CHANGELOG.md#2150--2026-08-17).
+**Current development version:** `v2.16.0-dev.0`. See [Changelog](CHANGELOG.md#unreleased).
 
 **[Project page](https://tt-a1i.github.io/archify/)** · **[Scenario guide](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
 
@@ -222,18 +222,19 @@ Use `deliver --open` for a one-shot interactive local handoff. It is off by defa
 
 On failure, `validate --json` and `deliver --json` still emit exactly one JSON object. Read `diagnostics[]` and change only the named subject using its `supportedFixes`; do not rewrite the whole diagram or exceed the Skill's two focused correction rounds. Deterministic diagnostics remain separate from visual review.
 
-Optional motion and presentation styling are explicit:
+Settings:
 
 ```json
 {
   "meta": {
+    "locale": "en",
     "animation": "trace",
     "visual_preset": "signal-flow"
   }
 }
 ```
 
-Omit `animation` for a truly static diagram. `classic` remains default; `editorial` adds a warm publication look.
+`meta.locale=en|zh-CN` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`—never authored content. Otherwise omit; preserve requested-language copy; disclose English fallback. Static omits `animation`; `classic` defaults.
 
 ## Explore and share the output
 

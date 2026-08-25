@@ -82,9 +82,9 @@ test('Route Probe hands large-diagram endpoint selection to a reachability-aware
   assert.match(html, /outgoing\[id\] && outgoing\[id\]\.length/);
   assert.match(html, /kind: 'route-target'/);
   assert.match(html, /Object\.keys\(distances\)\.filter/);
-  assert.match(html, /targetBadges\[id\] = distances\[id\] \+ ' hop'/);
+  assert.match(html, /targetBadges\[id\] = viewerCount\('viewer\.route\.hop', distances\[id\]\)/);
   assert.match(html, /Archify\.finder\.open\(\{ context: context \}\)/);
-  assert.match(html, /findBtn\.textContent = 'Find target'/);
+  assert.match(html, /findBtn\.textContent = viewerText\('viewer\.route\.destination\.find'\)/);
   assert.match(html, /panel\.setAttribute\('data-finder-open', 'true'\)/);
   assert.match(html, /\.route-probe\[data-finder-open="true"\]/);
 });

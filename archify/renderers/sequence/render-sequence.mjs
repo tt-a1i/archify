@@ -7,6 +7,7 @@ import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/l
 import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, routePointsValue, asArray, isFinitePoint } from '../shared/geometry.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
+import { translateMessage as i18nText } from '../shared/i18n.mjs';
 
 const participantTextFit = {
   sublabelPreferred: 7,
@@ -312,8 +313,13 @@ function renderParticipant(participant) {
     : '';
   const brand = renderBrandMark(participant, { x: participant.x + layout.participantW - 22, y: layout.topY + 6 });
   const labelFontSize = fittedNodeFontSize(participant.label, brandLabelFitWidth(participant, layout.participantW), 11, 8);
-  const passport = { kind: participant.type, sublabel: participant.sublabel, context: 'Sequence participant', ...brandMetadataFor(participant) };
-  return `        <g ${focusNodeAttrs(participant.id, participant.label, passport)}>
+  const passport = {
+    kind: participant.type,
+    sublabel: participant.sublabel,
+    context: i18nText(sequence.meta.locale, 'node.context.sequence'),
+    ...brandMetadataFor(participant),
+  };
+  return `        <g ${focusNodeAttrs(participant.id, participant.label, passport, sequence.meta.locale)}>
           ${focusNodeTitle(participant.label, passport)}
           <rect x="${participant.x}" y="${layout.topY}" width="${layout.participantW}" height="${layout.participantH}" rx="6" class="c-mask"/>
           <rect x="${participant.x}" y="${layout.topY}" width="${layout.participantW}" height="${layout.participantH}" rx="6" class="${fill}"${animateAttr(sequence.meta, 'node', participant.index)} stroke-width="1.5"/>
@@ -388,18 +394,25 @@ ${messageLabel(message, start, end)}${note}
 }
 
 const LEGEND_CATALOG = [
-  { kind: 'emphasis', label: 'request', className: 'a-emphasis', marker: 'arrowhead-emphasis', strokeWidth: 1.8 },
-  { kind: 'return', label: 'return', className: 'a-default', marker: 'arrowhead', dash: '3,5' },
-  { kind: 'security', label: 'security', className: 'a-security', marker: 'arrowhead-security' },
-  { kind: 'dashed', label: 'async trace', className: 'a-dashed', marker: 'arrowhead-dashed' },
-  { kind: 'default', label: 'default message', className: 'a-default', marker: 'arrowhead' },
-].map((entry) => ({ ...entry, interactive: false, swatchWidth: 34, swatchGap: 9 }));
+  { kind: 'emphasis', className: 'a-emphasis', marker: 'arrowhead-emphasis', strokeWidth: 1.8 },
+  { kind: 'return', className: 'a-default', marker: 'arrowhead', dash: '3,5' },
+  { kind: 'security', className: 'a-security', marker: 'arrowhead-security' },
+  { kind: 'dashed', className: 'a-dashed', marker: 'arrowhead-dashed' },
+  { kind: 'default', className: 'a-default', marker: 'arrowhead' },
+].map((entry) => ({
+  ...entry,
+  interactive: false,
+  swatchWidth: 34,
+  swatchGap: 9,
+  label: i18nText(sequence.meta.locale, `legend.sequence.${entry.kind}`),
+}));
 
 function renderLegend() {
   const presentKinds = new Set(asArray(sequence.messages).map((message) => message.variant || 'default'));
   const entries = resolveLegend(sequence.meta?.legend, LEGEND_CATALOG, presentKinds);
   return renderResolvedLegend({
     entries,
+    locale: sequence.meta.locale,
     layout: {
       x: 40,
       baselineY: layout.legendY,
@@ -415,7 +428,7 @@ function renderLegend() {
 function renderSvg() {
   const participantList = [...participants.values()];
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(sequence.meta, 'sequence diagram')}>
-${svgAccessibleText(sequence.meta, 'sequence diagram')}
+${svgAccessibleText(sequence.meta, 'sequence')}
 ${renderDefinitions()}
 
         <!-- Background Grid -->

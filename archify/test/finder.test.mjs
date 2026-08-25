@@ -64,10 +64,10 @@ test('finder presents one focused search control and a structured result list', 
   assert.match(html, /\.node-finder\s*\{[\s\S]*?display:\s*flex;[\s\S]*?max-height:\s*calc\(100% - 2rem\);/);
   assert.match(html, /\.node-finder-results\s*\{[\s\S]*?flex:\s*1 1 auto;[\s\S]*?min-height:\s*0;/);
   assert.match(html, /\.node-finder-result:not\(:last-child\)\s*\{/);
-  assert.match(html, /context\.kind === 'focus'\s*\? item\.links \+ \(item\.links === 1 \? ' link' : ' links'\)/);
-  assert.match(html, /\[item\.type, item\.id, item\.sublabel, item\.tag\]/);
+  assert.match(html, /context\.kind === 'focus'\s*\? viewerCount\('viewer\.finder\.link', item\.links\)/);
+  assert.match(html, /\[viewerKindLabel\(item\.type\), item\.id, item\.sublabel, item\.tag\]/);
   assert.doesNotMatch(html, /\[item\.type, item\.context, item\.sublabel, item\.tag, item\.id\]/);
-  assert.match(html, /query\s*\? visibleItems\.length \+ ' of ' \+ available\.length/);
+  assert.match(html, /viewerText\('viewer\.finder\.status\.filtered'/);
 });
 
 test('finder becomes a contextual Route Probe endpoint picker without changing semantic focus', () => {
@@ -80,8 +80,9 @@ test('finder becomes a contextual Route Probe endpoint picker without changing s
   assert.match(html, /reason: 'route-pick'/);
   assert.match(html, /data-context="route-source"/);
   assert.match(html, /data-context="route-target"/);
-  assert.match(html, /Choose ' \+ item\.label \+ ' as route destination, ' \+ badge/);
-  assert.match(html, /available\.length \+ ' ' \+ context\.availableNoun/);
+  assert.match(html, /viewerText\('viewer\.finder\.result\.routeTarget'/);
+  assert.match(html, /links: badge/);
+  assert.match(html, /viewerText\('viewer\.finder\.status\.all'/);
 });
 
 test('finder is keyboard accessible, mobile-pinned, and subordinate to embed mode', () => {

@@ -525,7 +525,7 @@ function contactSheetHtml({ artifactPath, receipt, screenshots }) {
   const cards = screenshots.map((entry) => `
       <figure>
         <img src="${htmlEscape(entry.file)}" alt="${htmlEscape(`${entry.theme} ${entry.width} by ${entry.height}`)}">
-        <figcaption><strong>${htmlEscape(entry.theme.toUpperCase())}</strong> · ${entry.width}×${entry.height} · containment ${entry.ok ? 'pass' : 'fail'}</figcaption>
+        <figcaption><strong>${htmlEscape(entry.theme.toUpperCase())}</strong> · ${entry.width}×${entry.height} · containment ${entry.ok ? 'pass' : 'fail'} · readability ${entry.readabilityOk ? 'pass' : 'fail'} · Viewer chrome ${entry.viewerChromeOk ? 'pass' : 'fail'}</figcaption>
       </figure>`).join('');
   return `<!doctype html>
 <html lang="en">
@@ -538,7 +538,7 @@ function contactSheetHtml({ artifactPath, receipt, screenshots }) {
 </style>
 </head>
 <body>
-<header><h1>Archify visual-check</h1><p>${htmlEscape(path.basename(artifactPath))} · automated containment ${htmlEscape(receipt.containment.status)} · visual review pending</p></header>
+<header><h1>Archify visual-check</h1><p>${htmlEscape(path.basename(artifactPath))} · containment ${htmlEscape(receipt.containment.status)} · readability ${htmlEscape(receipt.readability.status)} · Viewer chrome ${htmlEscape(receipt.viewerChrome.status)} · visual review pending</p></header>
 <main class="grid">${cards}
 </main>
 </body>

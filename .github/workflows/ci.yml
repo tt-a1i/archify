@@ -51,6 +51,12 @@ jobs:
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - name: Verify all five diagram modes localize Viewer interactions
+        run: node --test test/i18n.test.mjs
+        working-directory: archify
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
       - name: Verify Semantic Radar collision and drag behavior
         run: node --test test/semantic-radar.test.mjs
         working-directory: archify

@@ -66,8 +66,8 @@ test('relationship lens groups incoming, outgoing, and self-loop paths and follo
   assert.match(html, /id="relationship-lens-list" aria-label="Connected relationships"/);
   assert.match(html, /function relationshipsFor\(id, byId\)/);
   assert.match(html, /direction = from === id && to === id \? 'loop' : \(from === id \? 'out' : 'in'\)/);
-  assert.match(html, /\{ id: 'out', label: 'Outgoing' \}/);
-  assert.match(html, /\{ id: 'in', label: 'Incoming' \}/);
+  assert.match(html, /\{ id: 'out', label: viewerText\('viewer\.passport\.relationship\.group\.out'\) \}/);
+  assert.match(html, /\{ id: 'in', label: viewerText\('viewer\.passport\.relationship\.group\.in'\) \}/);
   assert.match(html, /data-relationship-target/);
   assert.match(html, /data-relationship-key/);
   assert.match(html, /data-relationship-from/);

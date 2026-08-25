@@ -29,6 +29,9 @@
           "type": "string",
           "minLength": 1
         },
+        "locale": {
+          "$ref": "common.schema.json#/$defs/locale"
+        },
         "subtitle": {
           "type": "string"
         },

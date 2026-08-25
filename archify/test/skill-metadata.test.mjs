@@ -49,11 +49,24 @@ test('main skill stays a bounded authoring router with progressive references', 
 });
 
 test('authored diagram copy follows the user language without translating technical identity', () => {
-  assert.match(skill, /language of the user's request/);
-  assert.match(skill, /guided-view labels\/notes.*legend label overrides.*card titles\/items/);
+  assert.match(skill, /one primary authored language/);
+  assert.match(skill, /Viewer locale/);
+  assert.match(skill, /meta\.locale:[^\n]*"en"[^\n]*"zh-CN"/);
+  assert.match(skill, /bilingual diagram still chooses one primary Viewer language/);
+  assert.match(skill, /fixed Viewer UI and `<html lang>` fall back to English/);
+  assert.match(skill, /unresolved_foreign_prose: 0/);
   assert.match(skill, /product names.*code identifiers.*protocols.*API paths.*environment names/);
-  assert.match(authoringContract, /non-English diagram[\s\S]*`meta\.legend\.entries`/);
-  assert.match(authoringContract, /renderer-owned viewer controls remain separate/);
+  assert.match(authoringContract, /`meta\.locale` controls only renderer-owned reader surfaces/);
+  assert.match(authoringContract, /outside `en` and `zh-CN`/);
+  assert.match(authoringContract, /artifact is\s+not fully localized/);
+  assert.match(authoringContract, /Do not silently substitute\s+`zh-CN` for another language or Chinese locale/);
+  assert.match(authoringContract, /It never translates authored content/);
+  assert.match(authoringContract, /Renderer-owned default legend labels follow `meta\.locale`/);
+  assert.match(authoringContract, /sources\[\]\.label/);
+  assert.match(authoringContract, /independent read-only\s+reviewer/);
+  assert.match(authoringContract, /The fallback\s+applies only to renderer-owned surfaces/);
+  assert.match(authoringContract, /Do not add an automatic language detector/);
+  assert.match(authoringContract, /language_review: passed/);
 });
 
 test('skill keeps the title hierarchy compact by default', () => {

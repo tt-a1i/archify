@@ -127,14 +127,16 @@ test('Route Share Card reuses one 1200x630 variant seam and publishes a truthful
   assert.match(html, /renderShareCard\(\{ routeSnapshot: snapshot \}\)/);
   assert.doesNotMatch(html, /function rasterizeRouteShareCard|routeShareCard:/);
   assert.match(html, /var title = titleNode \? titleNode\.textContent : document\.title;/);
-  assert.match(html, /'Route: ' \+ routeSnapshot\.source\.label \+ ' → ' \+ routeSnapshot\.target\.label \+ ' · ' \+ routeSnapshot\.hops \+ ' directed hops'/);
+  assert.match(html, /viewerCount\('viewer\.export\.card\.routeSummary', routeSnapshot\.hops/);
+  assert.match(html, /source: routeSnapshot\.source\.label/);
+  assert.match(html, /target: routeSnapshot\.target\.label/);
   assert.match(html, /recordExportReceipt\('share-card', blob, false, \{ width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT \}, 'route', true\)/);
   assert.match(html, /diagramFilename\(\) \+ '-route-share-card\.png'/);
   assert.match(html, /data-last-export-variant/);
   assert.match(html, /data-last-export-route-state-clean/);
   assert.match(html, /clearExportReceipt\(\);[\s\S]*?var snapshot = Archify\.routeProbe/);
   assert.match(html, /function runExport\(format\)[\s\S]*?clearExportReceipt\(\);/);
-  assert.match(html, /var ctx = canvas2dOrThrow\(canvas, 'Share Card'\)/);
+  assert.match(html, /var ctx = canvas2dOrThrow\(canvas, viewerText\('viewer\.export\.shareCard'\)\)/);
 });
 
 test('skill and READMEs describe the optional Export variant and show one real card without changing the hero', () => {

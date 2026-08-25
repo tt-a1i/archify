@@ -1310,7 +1310,7 @@ try {
     assert.match(routePayload.duplicateExportError, /Trace a route before exporting a Route Share Card/);
     assert.equal(routePayload.emptyGeometryRejected, true);
     assert.match(routePayload.emptyGeometryExportError, /Trace a route before exporting a Route Share Card/);
-    assert.match(routePayload.toBlobError, /toBlob returned null for Share Card/);
+    assert.match(routePayload.toBlobError, /canvas\.toBlob returned no data for Share Card/);
     assert.match(routePayload.missingToBlobError, /canvas\.toBlob unavailable for Share Card/);
     assert.match(routePayload.missingContextError, /2D canvas context unavailable for Share Card/);
     assert.ok(routePayload.imageDecodeError);

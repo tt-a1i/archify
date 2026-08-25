@@ -56,7 +56,7 @@ test('one roving target represents each exact stable edge key and authored direc
   assert.match(template, /relationshipHitOverlay\.setAttribute\('role', 'group'\)/);
   assert.match(template, /target\.setAttribute\('aria-describedby', relationshipHelp\.id\)/);
   assert.match(template, /target\.setAttribute\('tabindex', index === 0 \? '0' : '-1'\)/);
-  assert.match(template, /Inspect relationship .* of .*: .* to /);
+  assert.match(template, /viewerText\('viewer\.passport\.relationship\.inspect'/);
   assert.match(template, /relationshipEdgeShapes\(edge\)/);
   assert.match(template, /shape\.cloneNode\(false\)/);
   assert.match(template, /\.relationship-hit-rail \{[\s\S]*stroke: transparent;[\s\S]*stroke-width: 24/);
@@ -88,7 +88,7 @@ test('activation opens the existing source passport and pins its exact relations
   assert.match(template, /data-relationship-pin-active/);
   assert.match(template, /function clearRelationshipPreview\(options\)/);
   assert.match(template, /clearRelationshipPreview\(\{ clearPin: true \}\)/);
-  assert.match(template, /copyBtn\.textContent = 'Copy node'/);
+  assert.match(template, /copyBtn\.textContent = viewerText\('viewer\.passport\.copyNode'\)/);
   assert.match(template, /previewRelationship\(row\)/);
   assert.match(template, /inspectRelationship: inspectRelationship/);
   assert.match(template, /event\.key !== 'ArrowRight'/);

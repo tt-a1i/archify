@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="archify 2.15.0">
+  <meta name="generator" content="archify 2.16.0-dev.0">
   <title>[PROJECT NAME] Architecture Diagram</title>
   <script>
     // Resolve the theme before first paint so light-preference users don't
@@ -656,7 +656,7 @@
     }
 
     html[data-preset="signal-flow"] .header-row::after {
-      content: "SIGNAL FLOW";
+      content: attr(data-preset-badge-signal-flow);
       margin-left: auto;
       color: var(--frontend-stroke);
       border: 1px solid var(--frontend-stroke);
@@ -680,7 +680,7 @@
       animation: none;
     }
     html[data-preset="blueprint"] .header-row::after {
-      content: "BLUEPRINT / REV 01";
+      content: attr(data-preset-badge-blueprint);
       margin-left: auto;
       padding: 0.28rem 0.55rem;
       border-top: 1px solid var(--frontend-stroke);
@@ -709,7 +709,7 @@
       animation: none;
     }
     html[data-preset="editorial"] .header-row::after {
-      content: "EDITORIAL / FIELD NOTE";
+      content: attr(data-preset-badge-editorial);
       margin-left: auto;
       padding: 0.32rem 0 0.24rem;
       border-bottom: 2px solid var(--arrow-emphasis);
@@ -788,7 +788,7 @@
       border: 1px solid var(--panel-border);
       background: var(--panel);
       color: var(--arrow-emphasis);
-      content: "ARCHIFY / PLATE 04";
+      content: attr(data-preset-badge-editorial-plate);
       font-family: Georgia, 'Times New Roman', serif;
       font-size: 0.52rem;
       font-style: italic;
@@ -4845,96 +4845,96 @@
   <!-- Toolbar: theme, live visual style, trace motion, presentation stage, and export.
        Motion appears only for trace-enabled artifacts and has no shortcut;
        Keyboard: T toggles theme, S cycles style, F toggles the stage, E opens export. -->
-  <div class="toolbar" role="toolbar" aria-label="Diagram actions">
+  <div class="toolbar" role="toolbar" aria-label="{{i18n:viewer.toolbar.actions}}">
     <button id="btn-theme" type="button"
-            title="Toggle theme (T)"
-            aria-label="Toggle color theme"
+            title="{{i18n:viewer.theme.toggle.title}}"
+            aria-label="{{i18n:viewer.theme.toggle}}"
             aria-pressed="false">
       <span id="theme-icon" class="toolbar-icon" aria-hidden="true"></span>
-      <span id="theme-label">Dark</span>
+      <span id="theme-label">{{i18n:viewer.theme.dark}}</span>
     </button>
     <div class="preset-wrap">
       <button id="btn-preset" type="button"
-              title="Choose visual style (S cycles)"
-              aria-label="Choose visual style"
+              title="{{i18n:viewer.preset.choose.title}}"
+              aria-label="{{i18n:viewer.preset.choose}}"
               aria-haspopup="menu"
               aria-expanded="false"
               aria-controls="preset-menu"
               aria-keyshortcuts="S">
         <span class="preset-control-mark" aria-hidden="true"></span>
-        <span id="preset-label">Style</span>
+        <span id="preset-label">{{i18n:viewer.preset.style}}</span>
         <span class="toolbar-icon toolbar-chevron" aria-hidden="true"></span>
       </button>
-      <div class="preset-menu" id="preset-menu" role="menu" aria-label="Visual style">
-        <div class="preset-menu-heading" role="presentation"><span>Visual identity</span><span>S cycles</span></div>
+      <div class="preset-menu" id="preset-menu" role="menu" aria-label="{{i18n:viewer.preset.menu}}">
+        <div class="preset-menu-heading" role="presentation"><span>{{i18n:viewer.preset.identity}}</span><span>{{i18n:viewer.preset.cycles}}</span></div>
         <button class="preset-option" data-preset-value="classic" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">
           <span class="preset-option-swatch classic" aria-hidden="true"></span>
-          <span class="preset-option-copy"><strong>Classic</strong><small>Stable technical default</small></span>
+          <span class="preset-option-copy"><strong>{{i18n:viewer.preset.classic}}</strong><small>{{i18n:viewer.preset.classic.hint}}</small></span>
           <span class="preset-option-check" aria-hidden="true"></span>
         </button>
         <button class="preset-option" data-preset-value="signal-flow" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">
           <span class="preset-option-swatch signal-flow" aria-hidden="true"></span>
-          <span class="preset-option-copy"><strong>Signal Flow</strong><small>Motion-forward presentation</small></span>
+          <span class="preset-option-copy"><strong>{{i18n:viewer.preset.flow}}</strong><small>{{i18n:viewer.preset.flow.hint}}</small></span>
           <span class="preset-option-check" aria-hidden="true"></span>
         </button>
         <button class="preset-option" data-preset-value="blueprint" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">
           <span class="preset-option-swatch blueprint" aria-hidden="true"></span>
-          <span class="preset-option-copy"><strong>Blueprint</strong><small>Engineering review</small></span>
+          <span class="preset-option-copy"><strong>{{i18n:viewer.preset.blueprint}}</strong><small>{{i18n:viewer.preset.blueprint.hint}}</small></span>
           <span class="preset-option-check" aria-hidden="true"></span>
         </button>
         <button class="preset-option" data-preset-value="editorial" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">
           <span class="preset-option-swatch editorial" aria-hidden="true"></span>
-          <span class="preset-option-copy"><strong>Editorial</strong><small>Publication and launch notes</small></span>
+          <span class="preset-option-copy"><strong>{{i18n:viewer.preset.editorial}}</strong><small>{{i18n:viewer.preset.editorial.hint}}</small></span>
           <span class="preset-option-check" aria-hidden="true"></span>
         </button>
       </div>
     </div>
     <button id="btn-motion" type="button" hidden
-            title="Pause motion"
-            aria-label="Pause motion"
+            title="{{i18n:viewer.motion.pause}}"
+            aria-label="{{i18n:viewer.motion.pause}}"
             aria-pressed="true">
       <span class="motion-control-dot" aria-hidden="true"></span>
-      <span id="motion-label">Live</span>
+      <span id="motion-label">{{i18n:viewer.motion.live}}</span>
     </button>
     <button id="btn-present" type="button"
-            title="Presentation stage (F)"
-            aria-label="Enter presentation stage"
+            title="{{i18n:viewer.present.enter.title}}"
+            aria-label="{{i18n:viewer.present.enter}}"
             aria-pressed="false">
       <span id="present-icon" class="toolbar-icon" aria-hidden="true"></span>
-      <span id="present-label">Present</span>
+      <span id="present-label">{{i18n:viewer.present.present}}</span>
     </button>
     <div class="export-wrap">
       <button id="btn-export" type="button"
-              title="Export diagram (E)"
-              aria-label="Export diagram"
+              title="{{i18n:viewer.export.button.title}}"
+              aria-label="{{i18n:viewer.export.diagram}}"
               aria-haspopup="menu"
               aria-expanded="false"
               aria-controls="export-menu">
-        Export <span class="toolbar-icon toolbar-chevron" aria-hidden="true"></span>
+        {{i18n:viewer.export.button}} <span class="toolbar-icon toolbar-chevron" aria-hidden="true"></span>
       </button>
-      <div class="export-menu" id="export-menu" role="menu" aria-label="Export">
+      <div class="export-menu" id="export-menu" role="menu" aria-label="{{i18n:viewer.export.menu}}">
         <div class="export-menu-header" role="presentation">
-          <div><strong>Export diagram</strong><span>Portable, clean outputs</span></div>
+          <div><strong>{{i18n:viewer.export.diagram}}</strong><span>{{i18n:viewer.export.subtitle}}</span></div>
           <kbd>E</kbd>
         </div>
-        <div class="export-menu-section" role="group" aria-label="Share">
-          <span class="export-menu-heading" aria-hidden="true">Share</span>
-          <button data-format="share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>Share Card</strong><small class="hint">1200&times;630 PNG</small></span></button>
-          <button data-action="route-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled><span class="export-item-copy"><strong>Route Share Card</strong><small class="hint">1200&times;630 PNG</small></span></button>
-          <button data-action="reach-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled><span class="export-item-copy"><strong>Reach Share Card</strong><small class="hint">1200&times;630 PNG</small></span></button>
-          <button data-action="copy-share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>Copy Share Card</strong><small class="hint">PNG to clipboard</small></span></button>
-          <button data-action="copy" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>Copy diagram</strong><small class="hint">PNG to clipboard</small></span></button>
+        <div class="export-menu-section" role="group" aria-label="{{i18n:viewer.export.share}}">
+          <span class="export-menu-heading" aria-hidden="true">{{i18n:viewer.export.share}}</span>
+          <button data-format="share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>{{i18n:viewer.export.shareCard}}</strong><small class="hint">1200&times;630 PNG</small></span></button>
+          <button data-action="route-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled><span class="export-item-copy"><strong>{{i18n:viewer.export.routeShareCard}}</strong><small class="hint">1200&times;630 PNG</small></span></button>
+          <button data-action="reach-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled><span class="export-item-copy"><strong>{{i18n:viewer.export.reachShareCard}}</strong><small class="hint">1200&times;630 PNG</small></span></button>
+          <button data-action="copy-share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>{{i18n:viewer.export.copyShareCard}}</strong><small class="hint">{{i18n:viewer.export.clipboardPng}}</small></span></button>
+          <button data-action="copy" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>{{i18n:viewer.export.copyDiagram}}</strong><small class="hint">{{i18n:viewer.export.clipboardPng}}</small></span></button>
         </div>
-        <div class="export-menu-section" role="group" aria-label="Raster images">
-          <span class="export-menu-heading" aria-hidden="true">Image</span>
-          <button data-format="png" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>PNG</strong><small class="hint">Lossless image</small></span></button>
-          <button data-format="jpeg" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>JPEG</strong><small class="hint">Compact image</small></span></button>
-          <button data-format="webp" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>WebP</strong><small class="hint">Modern image</small></span></button>
+        <div class="export-menu-section" role="group" aria-label="{{i18n:viewer.export.raster}}">
+          <span class="export-menu-heading" aria-hidden="true">{{i18n:viewer.export.image}}</span>
+          <button data-format="png" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>PNG</strong><small class="hint">{{i18n:viewer.export.lossless}}</small></span></button>
+          <button data-format="jpeg" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>JPEG</strong><small class="hint">{{i18n:viewer.export.compact}}</small></span></button>
+          <button data-format="webp" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>WebP</strong><small class="hint">{{i18n:viewer.export.modern}}</small></span></button>
         </div>
-        <div class="export-menu-section" role="group" aria-label="Vector and motion">
-          <span class="export-menu-heading" aria-hidden="true">Vector &amp; motion</span>
-          <button data-format="svg" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>SVG</strong><small class="hint">Editable vector</small></span></button>
-          <button data-format="webm" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>WebM</strong><small class="hint">6s motion</small></span></button>
+        <div class="export-menu-section" role="group" aria-label="{{i18n:viewer.export.vectorMotion}}">
+          <span class="export-menu-heading" aria-hidden="true">{{i18n:viewer.export.vectorMotion.heading}}</span>
+          <button data-format="svg" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>SVG</strong><small class="hint">{{i18n:viewer.export.editable}}</small></span></button>
+          <button data-format="webm" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>WebM</strong><small class="hint">{{i18n:viewer.export.motion6s}}</small></span></button>
         </div>
       </div>
     </div>
@@ -4943,7 +4943,10 @@
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <div class="header-row">
+      <div class="header-row"
+           data-preset-badge-signal-flow="{{i18n:viewer.preset.badge.signalFlow}}"
+           data-preset-badge-blueprint="{{i18n:viewer.preset.badge.blueprint}}"
+           data-preset-badge-editorial="{{i18n:viewer.preset.badge.editorial}}">
         <div class="pulse-dot"></div>
         <h1>[PROJECT NAME] Architecture</h1>
       </div>
@@ -4952,47 +4955,49 @@
 
     <!-- ARCHIFY:GUIDED_VIEWS_DATA -->
     <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->
-    <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
-      <button id="guided-view-prev" type="button" aria-label="Previous guided view" title="Previous guided view ([)">&#8592;</button>
+    <!-- ARCHIFY:I18N_DATA -->
+    <div class="guided-views no-print" id="guided-views" hidden aria-label="{{i18n:viewer.guided.region}}">
+      <button id="guided-view-prev" type="button" aria-label="{{i18n:viewer.guided.previous}}" title="{{i18n:viewer.guided.previous.title}}">&#8592;</button>
       <div class="guided-view-copy">
         <div class="guided-view-meta">
-          <span>Guided views</span>
+          <span>{{i18n:viewer.guided.views}}</span>
           <span id="guided-view-count"></span>
           <span class="guided-view-progress" aria-hidden="true"><span id="guided-view-progress-bar"></span></span>
           <span class="guided-view-handoff" id="guided-view-handoff" hidden aria-hidden="true"></span>
         </div>
-        <strong id="guided-view-label">Explore this system</strong>
-        <small id="guided-view-note" aria-live="polite" aria-atomic="true">Step through curated paths without changing the source diagram.</small>
-        <div class="guided-view-trail" id="guided-view-trail" hidden role="group" aria-label="Story trail"></div>
+        <strong id="guided-view-label">{{i18n:viewer.guided.explore}}</strong>
+        <small id="guided-view-note" aria-live="polite" aria-atomic="true">{{i18n:viewer.guided.intro}}</small>
+        <div class="guided-view-trail" id="guided-view-trail" hidden role="group" aria-label="{{i18n:viewer.guided.trail}}"></div>
         <div class="guided-story-caption" id="guided-story-caption" hidden aria-live="polite" aria-atomic="true">
-          <span class="guided-story-caption-index" id="guided-story-caption-index">Beat</span>
+          <span class="guided-story-caption-index" id="guided-story-caption-index">{{i18n:viewer.guided.beat}}</span>
           <strong id="guided-story-caption-route"></strong>
           <small id="guided-story-caption-detail"></small>
           <span class="guided-story-caption-next" id="guided-story-caption-next" hidden aria-hidden="true">
-            <small>Next</small>
+            <small>{{i18n:viewer.guided.nextBeat}}</small>
             <strong id="guided-story-caption-next-label"></strong>
           </span>
         </div>
       </div>
-      <button id="guided-view-next" type="button" aria-label="Next guided view" title="Next guided view (])">&#8594;</button>
+      <button id="guided-view-next" type="button" aria-label="{{i18n:viewer.guided.next}}" title="{{i18n:viewer.guided.next.title}}">&#8594;</button>
       <div class="guided-view-actions">
-        <button class="guided-view-play" id="guided-view-play" type="button" aria-label="Play guided story" aria-pressed="false" title="Play guided story (P)">
+        <button class="guided-view-play" id="guided-view-play" type="button" aria-label="{{i18n:viewer.guided.play}}" aria-pressed="false" title="{{i18n:viewer.guided.play.title}}">
           <span id="guided-view-play-icon" aria-hidden="true">&#9654;</span>
-          <span id="guided-view-play-label">Play story</span>
+          <span id="guided-view-play-label">{{i18n:viewer.guided.playStory}}</span>
         </button>
-        <button class="guided-view-beat-link" id="guided-view-beat-link" type="button" aria-label="Select a Story Beat to copy its exact link" title="Select a Story Beat to copy its exact link" disabled>
+        <button class="guided-view-beat-link" id="guided-view-beat-link" type="button" aria-label="{{i18n:viewer.guided.selectBeatLink}}" title="{{i18n:viewer.guided.selectBeatLink}}" disabled>
           <span aria-hidden="true">&#35;</span>
-          <span id="guided-view-beat-link-label">Copy moment</span>
+          <span id="guided-view-beat-link-label">{{i18n:viewer.guided.copyMoment}}</span>
         </button>
-        <button class="guided-view-all" id="guided-view-all" type="button" aria-label="Show entire diagram">Show all</button>
+        <button class="guided-view-all" id="guided-view-all" type="button" aria-label="{{i18n:viewer.guided.showAll.aria}}">{{i18n:viewer.guided.showAll}}</button>
       </div>
-      <nav class="guided-view-index" id="guided-view-index" aria-label="Story chapters">
+      <nav class="guided-view-index" id="guided-view-index" aria-label="{{i18n:viewer.guided.chapters}}">
         <ol class="guided-view-chapters" id="guided-view-chapters"></ol>
       </nav>
     </div>
 
     <!-- Main Diagram -->
-    <div class="diagram-container" data-detail-level="read">
+    <div class="diagram-container" data-detail-level="read"
+         data-preset-badge-editorial-plate="{{i18n:viewer.preset.badge.editorialPlate}}">
       <!-- ARCHIFY:SVG_SLOT_START -->
       <svg viewBox="0 0 1000 680" role="img" aria-label="[PROJECT NAME] architecture diagram">
         <!-- Definitions -->
@@ -5144,11 +5149,11 @@
       <p class="intent-trace-status no-print" id="intent-trace-status" role="status" aria-live="polite" aria-atomic="true"></p>
       <div class="share-chapter-cue no-print" id="share-chapter-cue" hidden role="status" aria-live="polite">
         <div class="share-chapter-index">
-          <span class="share-chapter-state" id="share-chapter-state">Ready</span>
-          <span class="share-chapter-count" id="share-chapter-count">Chapter 01 / 01</span>
+          <span class="share-chapter-state" id="share-chapter-state">{{i18n:viewer.guided.state.ready}}</span>
+          <span class="share-chapter-count" id="share-chapter-count">{{i18n:viewer.guided.share.initial}}</span>
         </div>
         <div class="share-chapter-copy">
-          <strong id="share-chapter-label">Guided chapter</strong>
+          <strong id="share-chapter-label">{{i18n:viewer.guided.share.default}}</strong>
           <small id="share-chapter-note"></small>
         </div>
         <span class="share-chapter-route" id="share-chapter-route"></span>
@@ -5157,170 +5162,170 @@
       <div class="diagram-guide no-print" id="diagram-guide" hidden role="dialog" aria-modal="false" aria-labelledby="diagram-guide-title">
         <div class="diagram-guide-head">
           <span>
-            <span class="diagram-guide-eyebrow">Diagram guide</span>
-            <strong class="diagram-guide-title" id="diagram-guide-title">Explore this system</strong>
+            <span class="diagram-guide-eyebrow">{{i18n:viewer.guide.eyebrow}}</span>
+            <strong class="diagram-guide-title" id="diagram-guide-title">{{i18n:viewer.guided.explore}}</strong>
           </span>
-          <button class="diagram-guide-close" id="diagram-guide-close" type="button" aria-label="Close diagram guide">&#215;</button>
+          <button class="diagram-guide-close" id="diagram-guide-close" type="button" aria-label="{{i18n:viewer.guide.close}}">&#215;</button>
         </div>
-        <p class="diagram-guide-stats" id="diagram-guide-stats">Inspecting compiled semantics</p>
-        <div class="diagram-guide-actions" id="diagram-guide-actions" role="group" aria-label="Diagram exploration actions">
-          <button class="diagram-guide-action" type="button" data-guide-action="find" aria-label="Find any node">
+        <p class="diagram-guide-stats" id="diagram-guide-stats">{{i18n:viewer.guide.inspecting}}</p>
+        <div class="diagram-guide-actions" id="diagram-guide-actions" role="group" aria-label="{{i18n:viewer.guide.actions}}">
+          <button class="diagram-guide-action" type="button" data-guide-action="find" aria-label="{{i18n:viewer.guide.find}}">
             <span class="diagram-guide-index" aria-hidden="true">01</span>
-            <span class="diagram-guide-action-copy"><strong>Find any node</strong><small>Search labels, responsibilities, kinds, and stable IDs.</small></span>
+            <span class="diagram-guide-action-copy"><strong>{{i18n:viewer.guide.find}}</strong><small>{{i18n:viewer.guide.find.hint}}</small></span>
             <kbd aria-hidden="true">/</kbd>
           </button>
-          <button class="diagram-guide-action" type="button" data-guide-action="route" aria-label="Trace a directed route">
+          <button class="diagram-guide-action" type="button" data-guide-action="route" aria-label="{{i18n:viewer.guide.route.aria}}">
             <span class="diagram-guide-index" aria-hidden="true">02</span>
-            <span class="diagram-guide-action-copy"><strong>Trace a route</strong><small>Ask how two semantic nodes connect in authored direction.</small></span>
+            <span class="diagram-guide-action-copy"><strong>{{i18n:viewer.guide.route}}</strong><small>{{i18n:viewer.guide.route.hint}}</small></span>
             <kbd aria-hidden="true">R</kbd>
           </button>
-          <button class="diagram-guide-action" type="button" data-guide-action="map" aria-label="See the whole system">
+          <button class="diagram-guide-action" type="button" data-guide-action="map" aria-label="{{i18n:viewer.guide.map}}">
             <span class="diagram-guide-index" aria-hidden="true">03</span>
-            <span class="diagram-guide-action-copy"><strong>See the whole system</strong><small>Open Semantic Radar with a live viewport and stable nodes.</small></span>
+            <span class="diagram-guide-action-copy"><strong>{{i18n:viewer.guide.map}}</strong><small>{{i18n:viewer.guide.map.hint}}</small></span>
             <kbd aria-hidden="true">M</kbd>
           </button>
-          <button class="diagram-guide-action" type="button" data-guide-action="lens" aria-label="Compare semantic kinds">
+          <button class="diagram-guide-action" type="button" data-guide-action="lens" aria-label="{{i18n:viewer.guide.lens}}">
             <span class="diagram-guide-index" aria-hidden="true">04</span>
-            <span class="diagram-guide-action-copy"><strong>Compare semantic kinds</strong><small>Count roles, reveal their traffic, and compare direct authored links.</small></span>
+            <span class="diagram-guide-action-copy"><strong>{{i18n:viewer.guide.lens}}</strong><small>{{i18n:viewer.guide.lens.hint}}</small></span>
             <kbd aria-hidden="true">L</kbd>
           </button>
-          <button class="diagram-guide-action" type="button" data-guide-action="story" aria-label="Play the guided story">
+          <button class="diagram-guide-action" type="button" data-guide-action="story" aria-label="{{i18n:viewer.guide.story}}">
             <span class="diagram-guide-index" aria-hidden="true">05</span>
-            <span class="diagram-guide-action-copy"><strong>Play the guided story</strong><small id="diagram-guide-story-copy">Walk the authored chapters and real relationships.</small></span>
+            <span class="diagram-guide-action-copy"><strong>{{i18n:viewer.guide.story}}</strong><small id="diagram-guide-story-copy">{{i18n:viewer.guide.story.hint}}</small></span>
             <kbd aria-hidden="true">P</kbd>
           </button>
-          <button class="diagram-guide-action" type="button" data-guide-action="present" aria-label="Enter presentation stage">
+          <button class="diagram-guide-action" type="button" data-guide-action="present" aria-label="{{i18n:viewer.present.enter}}">
             <span class="diagram-guide-index" aria-hidden="true">06</span>
-            <span class="diagram-guide-action-copy"><strong>Enter Presentation Stage</strong><small>Give the live diagram the viewport without changing export.</small></span>
+            <span class="diagram-guide-action-copy"><strong>{{i18n:viewer.guide.present}}</strong><small>{{i18n:viewer.guide.present.hint}}</small></span>
             <kbd aria-hidden="true">F</kbd>
           </button>
         </div>
-        <div class="diagram-guide-shortcuts" aria-label="Additional keyboard shortcuts">
-          <span><kbd>E</kbd> Export</span><span><kbd>T</kbd> Theme</span><span><kbd>S</kbd> Style</span><span><kbd>0</kbd> Reset</span><span><kbd>+</kbd> Zoom in</span><span><kbd>-</kbd> Zoom out</span><span><kbd>Esc</kbd> Close</span>
+        <div class="diagram-guide-shortcuts" aria-label="{{i18n:viewer.guide.shortcuts}}">
+          <span><kbd>E</kbd> {{i18n:viewer.guide.shortcut.export}}</span><span><kbd>T</kbd> {{i18n:viewer.guide.shortcut.theme}}</span><span><kbd>S</kbd> {{i18n:viewer.guide.shortcut.style}}</span><span><kbd>0</kbd> {{i18n:viewer.guide.shortcut.reset}}</span><span><kbd>+</kbd> {{i18n:viewer.guide.shortcut.zoomIn}}</span><span><kbd>-</kbd> {{i18n:viewer.guide.shortcut.zoomOut}}</span><span><kbd>Esc</kbd> {{i18n:viewer.guide.shortcut.close}}</span>
         </div>
         <p class="diagram-guide-feedback" id="diagram-guide-feedback" aria-live="polite"></p>
       </div>
       <div class="node-finder no-print" id="node-finder" hidden role="dialog" aria-modal="false" aria-labelledby="node-finder-title">
         <div class="node-finder-head">
-          <strong id="node-finder-title">Find a node</strong>
-          <button class="node-finder-close" id="node-finder-close" type="button" aria-label="Close node finder">&#215;</button>
+          <strong id="node-finder-title">{{i18n:viewer.finder.title}}</strong>
+          <button class="node-finder-close" id="node-finder-close" type="button" aria-label="{{i18n:viewer.finder.close}}">&#215;</button>
         </div>
         <div class="node-finder-search">
           <span aria-hidden="true">&#8981;</span>
-          <input class="node-finder-input" id="node-finder-input" type="search" autocomplete="off" spellcheck="false" placeholder="Search labels or IDs" aria-label="Search diagram nodes" aria-describedby="node-finder-status">
+          <input class="node-finder-input" id="node-finder-input" type="search" autocomplete="off" spellcheck="false" placeholder="{{i18n:viewer.finder.placeholder}}" aria-label="{{i18n:viewer.finder.search}}" aria-describedby="node-finder-status">
           <kbd aria-hidden="true">/</kbd>
         </div>
-        <div class="node-finder-results" id="node-finder-results" role="group" aria-label="Diagram nodes"></div>
-        <p class="node-finder-empty" id="node-finder-empty" hidden>No matching nodes</p>
+        <div class="node-finder-results" id="node-finder-results" role="group" aria-label="{{i18n:viewer.finder.results}}"></div>
+        <p class="node-finder-empty" id="node-finder-empty" hidden>{{i18n:viewer.finder.empty}}</p>
         <p class="node-finder-status" id="node-finder-status" aria-live="polite"></p>
       </div>
       <div class="focus-chip relationship-lens no-print" id="focus-chip" hidden role="region" aria-labelledby="relationship-lens-title">
         <div class="relationship-lens-head">
           <div class="relationship-lens-copy">
-            <span class="relationship-lens-eyebrow">Semantic passport</span>
+            <span class="relationship-lens-eyebrow">{{i18n:viewer.passport.eyebrow}}</span>
             <strong class="relationship-lens-title" id="relationship-lens-title"><span id="focus-label"></span></strong>
             <span class="semantic-passport-detail" id="focus-detail" hidden></span>
-            <div class="semantic-passport-meta" id="focus-passport-meta" aria-label="Node metadata">
+            <div class="semantic-passport-meta" id="focus-passport-meta" aria-label="{{i18n:viewer.passport.metadata}}">
               <span id="focus-kind" data-passport="kind"></span>
               <span id="focus-context" data-passport="context" hidden></span>
               <span id="focus-tag" data-passport="tag" hidden></span>
               <span id="focus-brand" data-passport="brand" hidden></span>
               <code id="focus-id" data-passport="id"></code>
             </div>
-            <div class="semantic-passport-evidence" id="focus-evidence" hidden aria-label="Verified source evidence">
+            <div class="semantic-passport-evidence" id="focus-evidence" hidden aria-label="{{i18n:viewer.passport.evidence}}">
               <div class="semantic-passport-evidence-head">
-                <span class="semantic-passport-evidence-status">Verified source</span>
+                <span class="semantic-passport-evidence-status">{{i18n:viewer.passport.verified}}</span>
                 <a class="semantic-passport-repository" id="focus-repository" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer"></a>
               </div>
               <div class="semantic-passport-evidence-links" id="focus-evidence-links"></div>
             </div>
             <span class="relationship-lens-summary" id="focus-summary" aria-live="polite"></span>
             <div class="semantic-passport-reach" id="focus-reach" hidden>
-              <span class="semantic-passport-reach-label">Authored reach</span>
-              <div class="semantic-passport-reach-actions" role="group" aria-label="Trace authored reachability">
-                <button id="btn-reach-upstream" type="button" aria-label="Trace upstream authored reachability" aria-pressed="false">
-                  <span>Upstream</span><strong id="focus-reach-upstream-count">0</strong>
+              <span class="semantic-passport-reach-label">{{i18n:viewer.passport.reach}}</span>
+              <div class="semantic-passport-reach-actions" role="group" aria-label="{{i18n:viewer.passport.reach.trace}}">
+                <button id="btn-reach-upstream" type="button" aria-label="{{i18n:viewer.passport.upstream.trace}}" aria-pressed="false">
+                  <span>{{i18n:viewer.passport.upstream}}</span><strong id="focus-reach-upstream-count">0</strong>
                 </button>
-                <button id="btn-reach-downstream" type="button" aria-label="Trace downstream authored reachability" aria-pressed="false">
-                  <span>Downstream</span><strong id="focus-reach-downstream-count">0</strong>
+                <button id="btn-reach-downstream" type="button" aria-label="{{i18n:viewer.passport.downstream.trace}}" aria-pressed="false">
+                  <span>{{i18n:viewer.passport.downstream}}</span><strong id="focus-reach-downstream-count">0</strong>
                 </button>
               </div>
               <small class="semantic-passport-reach-status" id="focus-reach-status" hidden aria-live="polite"></small>
             </div>
           </div>
           <div class="relationship-lens-actions">
-            <button id="btn-focus-clear" type="button" aria-label="Close semantic passport" title="Close">&#215;</button>
-            <button id="btn-focus-copy" type="button" aria-label="Copy link to focused node">Copy link</button>
-            <button id="btn-focus-relations" type="button" aria-label="Show connected relationships" aria-expanded="false" aria-controls="relationship-lens-list">Relations</button>
+            <button id="btn-focus-clear" type="button" aria-label="{{i18n:viewer.passport.close}}" title="{{i18n:viewer.common.close}}">&#215;</button>
+            <button id="btn-focus-copy" type="button" aria-label="{{i18n:viewer.passport.copy.focus}}">{{i18n:viewer.passport.copy}}</button>
+            <button id="btn-focus-relations" type="button" aria-label="{{i18n:viewer.passport.relations.show}}" aria-expanded="false" aria-controls="relationship-lens-list">{{i18n:viewer.passport.relations}}</button>
           </div>
         </div>
-        <div class="relationship-lens-list" id="relationship-lens-list" aria-label="Connected relationships"></div>
+        <div class="relationship-lens-list" id="relationship-lens-list" aria-label="{{i18n:viewer.passport.relations.list}}"></div>
       </div>
       <div class="route-probe no-print" id="route-probe" hidden role="region" aria-labelledby="route-probe-title" data-state="idle">
         <div class="route-probe-head">
           <span class="route-probe-copy">
-            <span class="route-probe-eyebrow">Route probe</span>
-            <strong class="route-probe-title" id="route-probe-title">Choose a start node</strong>
+            <span class="route-probe-eyebrow">{{i18n:viewer.route.eyebrow}}</span>
+            <strong class="route-probe-title" id="route-probe-title">{{i18n:viewer.route.start}}</strong>
           </span>
           <span class="route-probe-actions">
-            <button class="route-probe-find" id="route-probe-find" type="button" aria-label="Find a route start" data-node-finder-trigger>Find start</button>
-            <button class="route-probe-copy-link" id="route-probe-copy" type="button" aria-label="Copy link to traced route" hidden>Copy link</button>
-            <button id="route-probe-clear" type="button" aria-label="Clear route probe">Clear</button>
+            <button class="route-probe-find" id="route-probe-find" type="button" aria-label="{{i18n:viewer.route.start.find.aria}}" data-node-finder-trigger>{{i18n:viewer.route.start.find}}</button>
+            <button class="route-probe-copy-link" id="route-probe-copy" type="button" aria-label="{{i18n:viewer.route.copy.aria}}" hidden>{{i18n:viewer.route.copy}}</button>
+            <button id="route-probe-clear" type="button" aria-label="{{i18n:viewer.route.clear.aria}}">{{i18n:viewer.route.clear}}</button>
           </span>
         </div>
-        <div class="route-probe-path" id="route-probe-path" aria-label="Traced route">
-          <span class="route-probe-placeholder">Pick two semantic nodes on the diagram</span>
+        <div class="route-probe-path" id="route-probe-path" aria-label="{{i18n:viewer.route.traced}}">
+          <span class="route-probe-placeholder">{{i18n:viewer.route.pickTwo}}</span>
         </div>
-        <div class="route-journey-controls" id="route-journey-controls" hidden role="group" aria-label="Route journey controls" data-playing="false">
-          <button id="route-journey-prev" type="button" aria-label="Previous route position" title="Previous route position">&#8592;</button>
-          <button class="route-journey-play" id="route-journey-play" type="button" aria-label="Play route journey" aria-pressed="false" title="Play route journey">
+        <div class="route-journey-controls" id="route-journey-controls" hidden role="group" aria-label="{{i18n:viewer.route.controls}}" data-playing="false">
+          <button id="route-journey-prev" type="button" aria-label="{{i18n:viewer.route.previous}}" title="{{i18n:viewer.route.previous}}">&#8592;</button>
+          <button class="route-journey-play" id="route-journey-play" type="button" aria-label="{{i18n:viewer.route.play}}" aria-pressed="false" title="{{i18n:viewer.route.play}}">
             <span id="route-journey-play-icon" aria-hidden="true">&#9654;</span>
-            <span id="route-journey-play-label">Journey</span>
+            <span id="route-journey-play-label">{{i18n:viewer.route.journey}}</span>
           </button>
-          <button id="route-journey-next" type="button" aria-label="Next route position" title="Next route position">&#8594;</button>
-          <button class="route-journey-overview" id="route-journey-overview" type="button" aria-label="Show complete route overview" title="Show complete route overview">Overview</button>
+          <button id="route-journey-next" type="button" aria-label="{{i18n:viewer.route.next}}" title="{{i18n:viewer.route.next}}">&#8594;</button>
+          <button class="route-journey-overview" id="route-journey-overview" type="button" aria-label="{{i18n:viewer.route.overview.aria}}" title="{{i18n:viewer.route.overview.aria}}">{{i18n:viewer.route.overview}}</button>
         </div>
-        <small class="route-probe-status" id="route-probe-status" aria-live="polite">Choose the source, then the destination. Direction matters.</small>
+        <small class="route-probe-status" id="route-probe-status" aria-live="polite">{{i18n:viewer.route.instructions}}</small>
       </div>
       <div class="semantic-lens no-print" id="semantic-lens" hidden role="dialog" aria-modal="false" aria-labelledby="semantic-lens-title">
         <div class="semantic-lens-head">
           <span>
-            <span class="semantic-lens-eyebrow">Semantic lens</span>
-            <strong class="semantic-lens-title" id="semantic-lens-title">Compare system roles</strong>
+            <span class="semantic-lens-eyebrow">{{i18n:viewer.lens.eyebrow}}</span>
+            <strong class="semantic-lens-title" id="semantic-lens-title">{{i18n:viewer.lens.title}}</strong>
           </span>
-          <button class="semantic-lens-close" id="semantic-lens-close" type="button" aria-label="Close semantic lens">&#215;</button>
+          <button class="semantic-lens-close" id="semantic-lens-close" type="button" aria-label="{{i18n:viewer.lens.close}}">&#215;</button>
         </div>
-        <p class="semantic-lens-instruction">Choose up to two semantic kinds. One reveals its real traffic; two compare only direct authored relationships.</p>
-        <div class="semantic-lens-kinds" id="semantic-lens-kinds" role="group" aria-label="Semantic kinds"></div>
-        <p class="semantic-lens-status" id="semantic-lens-status" aria-live="polite">Choose a kind to inspect its nodes and touching relationships.</p>
+        <p class="semantic-lens-instruction">{{i18n:viewer.lens.instruction}}</p>
+        <div class="semantic-lens-kinds" id="semantic-lens-kinds" role="group" aria-label="{{i18n:viewer.lens.kinds}}"></div>
+        <p class="semantic-lens-status" id="semantic-lens-status" aria-live="polite">{{i18n:viewer.lens.choose}}</p>
         <div class="semantic-lens-actions">
-          <button id="semantic-lens-copy" type="button" aria-label="Copy link to semantic lens" hidden>Copy link</button>
-          <button id="semantic-lens-clear" type="button" aria-label="Clear semantic lens">Clear</button>
+          <button id="semantic-lens-copy" type="button" aria-label="{{i18n:viewer.lens.copy}}" hidden>{{i18n:viewer.common.copyLink}}</button>
+          <button id="semantic-lens-clear" type="button" aria-label="{{i18n:viewer.lens.clear}}">{{i18n:viewer.common.clear}}</button>
         </div>
       </div>
       <div class="overview-map no-print" id="overview-map" hidden role="region" aria-labelledby="overview-map-title">
         <div class="overview-map-head">
           <span class="overview-map-live" aria-hidden="true"></span>
           <span class="overview-map-copy">
-            <strong id="overview-map-title">Semantic radar</strong>
-            <small id="overview-map-status" aria-live="polite">Building overview</small>
+            <strong id="overview-map-title">{{i18n:viewer.radar.title}}</strong>
+            <small id="overview-map-status" aria-live="polite">{{i18n:viewer.radar.building}}</small>
           </span>
-          <button class="overview-map-expand" id="overview-map-expand" type="button" aria-label="Open full semantic radar">Open radar</button>
-          <button class="overview-map-close" id="overview-map-close" type="button" aria-label="Close semantic radar">&#215;</button>
+          <button class="overview-map-expand" id="overview-map-expand" type="button" aria-label="{{i18n:viewer.radar.openFull}}">{{i18n:viewer.radar.open}}</button>
+          <button class="overview-map-close" id="overview-map-close" type="button" aria-label="{{i18n:viewer.radar.close}}">&#215;</button>
         </div>
-        <div class="overview-map-surface" id="overview-map-surface" tabindex="0" role="group" aria-label="Diagram overview. Click a node to focus it, or use arrow keys to pan."></div>
-        <div class="overview-map-hint" aria-hidden="true"><span>Click node</span><span>Drag to pan</span></div>
+        <div class="overview-map-surface" id="overview-map-surface" tabindex="0" role="group" aria-label="{{i18n:viewer.radar.surface}}"></div>
+        <div class="overview-map-hint" aria-hidden="true"><span>{{i18n:viewer.radar.click}}</span><span>{{i18n:viewer.radar.drag}}</span></div>
       </div>
-      <p class="overview-map-feedback no-print" id="overview-map-feedback" role="status" aria-live="polite" hidden>Semantic radar needs more MAP space.</p>
-      <div class="diagram-nav no-print" role="toolbar" aria-label="Diagram view controls">
-        <button id="btn-route-probe" type="button" aria-label="Trace a directed route" aria-pressed="false" aria-controls="route-probe" title="Trace route (R)">PATH</button>
-        <button id="btn-overview-map" type="button" aria-label="Open semantic radar" aria-expanded="false" aria-controls="overview-map" title="Semantic radar (M)">MAP</button>
-        <button id="btn-semantic-lens" type="button" aria-label="Open semantic lens" aria-haspopup="dialog" aria-expanded="false" aria-pressed="false" aria-controls="semantic-lens" title="Semantic lens (L)">LENS</button>
-        <button id="btn-node-finder" type="button" aria-label="Find a node" aria-haspopup="dialog" aria-expanded="false" aria-controls="node-finder" title="Find a node (/)" data-node-finder-trigger><span class="diagram-nav-icon find" aria-hidden="true"></span></button>
-        <button id="btn-diagram-guide" type="button" aria-label="Open diagram guide" aria-haspopup="dialog" aria-expanded="false" aria-controls="diagram-guide" title="Diagram guide (?)"><span class="diagram-nav-icon guide" aria-hidden="true"></span></button>
-        <button data-view="out" type="button" aria-label="Zoom out" title="Zoom out (-)"><span class="diagram-nav-icon minus" aria-hidden="true"></span></button>
-        <button data-view="reset" type="button" aria-label="Reset diagram view" title="Reset view (0)"><span class="diagram-nav-detail" data-view-detail hidden>READ</span><span class="diagram-nav-percent" data-view-percent>100%</span></button>
-        <button data-view="in" type="button" aria-label="Zoom in" title="Zoom in (+)"><span class="diagram-nav-icon plus" aria-hidden="true"></span></button>
+      <p class="overview-map-feedback no-print" id="overview-map-feedback" role="status" aria-live="polite" hidden>{{i18n:viewer.radar.space}}</p>
+      <div class="diagram-nav no-print" role="toolbar" aria-label="{{i18n:viewer.nav.controls}}">
+        <button id="btn-route-probe" type="button" aria-label="{{i18n:viewer.nav.route}}" aria-pressed="false" aria-controls="route-probe" title="{{i18n:viewer.nav.route.title}}">{{i18n:viewer.nav.route.short}}</button>
+        <button id="btn-overview-map" type="button" aria-label="{{i18n:viewer.nav.radar}}" aria-expanded="false" aria-controls="overview-map" title="{{i18n:viewer.nav.radar.title}}">{{i18n:viewer.nav.radar.short}}</button>
+        <button id="btn-semantic-lens" type="button" aria-label="{{i18n:viewer.nav.lens}}" aria-haspopup="dialog" aria-expanded="false" aria-pressed="false" aria-controls="semantic-lens" title="{{i18n:viewer.nav.lens.title}}">{{i18n:viewer.nav.lens.short}}</button>
+        <button id="btn-node-finder" type="button" aria-label="{{i18n:viewer.nav.find}}" aria-haspopup="dialog" aria-expanded="false" aria-controls="node-finder" title="{{i18n:viewer.nav.find.title}}" data-node-finder-trigger><span class="diagram-nav-icon find" aria-hidden="true"></span></button>
+        <button id="btn-diagram-guide" type="button" aria-label="{{i18n:viewer.nav.guide}}" aria-haspopup="dialog" aria-expanded="false" aria-controls="diagram-guide" title="{{i18n:viewer.nav.guide.title}}"><span class="diagram-nav-icon guide" aria-hidden="true"></span></button>
+        <button data-view="out" type="button" aria-label="{{i18n:viewer.nav.zoomOut}}" title="{{i18n:viewer.nav.zoomOut.title}}"><span class="diagram-nav-icon minus" aria-hidden="true"></span></button>
+        <button data-view="reset" type="button" aria-label="{{i18n:viewer.nav.reset}}" title="{{i18n:viewer.nav.reset.title}}"><span class="diagram-nav-detail" data-view-detail hidden>{{i18n:viewer.nav.read}}</span><span class="diagram-nav-percent" data-view-percent>100%</span></button>
+        <button data-view="in" type="button" aria-label="{{i18n:viewer.nav.zoomIn}}" title="{{i18n:viewer.nav.zoomIn.title}}"><span class="diagram-nav-icon plus" aria-hidden="true"></span></button>
       </div>
     </div>
 
@@ -5371,6 +5376,37 @@
 
   <script>
     var Archify = {};
+    var archifyI18nData = (function () {
+      var node = document.getElementById('archify-i18n-data');
+      try { return JSON.parse(node ? node.textContent : '{}'); }
+      catch (_) { return { locale: 'en', messages: {} }; }
+    })();
+    Archify.locale = archifyI18nData.locale || 'en';
+
+    function viewerText(key, values) {
+      var messages = archifyI18nData.messages || {};
+      var template = Object.prototype.hasOwnProperty.call(messages, key) ? messages[key] : key;
+      return String(template).replace(/\{([a-zA-Z0-9_]+)\}/g, function (match, name) {
+        return values && Object.prototype.hasOwnProperty.call(values, name) ? String(values[name]) : match;
+      });
+    }
+
+    function viewerCount(key, count, values) {
+      var suffix = Number(count) === 1 ? '.one' : '.other';
+      var payload = Object.assign({}, values || {}, { count: count });
+      return viewerText(key + suffix, payload);
+    }
+
+    function viewerKindLabel(value) {
+      var normalized = String(value || 'node').toLowerCase();
+      var knownKey = 'viewer.kind.' + normalized;
+      var known = viewerText(knownKey);
+      if (known !== knownKey) return known;
+      return normalized
+        .replace(/messagebus/gi, 'message bus')
+        .replace(/[-_]+/g, ' ')
+        .replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
+    }
 
     function hasDrawableGeometry(element) {
       if (!element) return false;
@@ -5401,7 +5437,12 @@
        ============================================================ */
     Archify.preset = (function () {
       var PRESETS = ['classic', 'signal-flow', 'blueprint', 'editorial'];
-      var LABELS = { classic: 'Classic', 'signal-flow': 'Flow', blueprint: 'Blueprint', editorial: 'Editorial' };
+      var LABELS = {
+        classic: viewerText('viewer.preset.classic.short'),
+        'signal-flow': viewerText('viewer.preset.flow.short'),
+        blueprint: viewerText('viewer.preset.blueprint'),
+        editorial: viewerText('viewer.preset.editorial')
+      };
       var html = document.documentElement;
       var svg = document.querySelector('.diagram-container svg');
       var btn = document.getElementById('btn-preset');
@@ -5428,8 +5469,8 @@
         svg.setAttribute('data-preset', preset);
         btn.setAttribute('data-preset-option', preset);
         label.textContent = LABELS[preset];
-        btn.setAttribute('aria-label', 'Visual style: ' + LABELS[preset] + '. Choose visual style');
-        btn.title = 'Choose visual style (S cycles)';
+        btn.setAttribute('aria-label', viewerText('viewer.preset.current', { style: LABELS[preset] }));
+        btn.title = viewerText('viewer.preset.choose.title');
         options().forEach(function (option) {
           var selected = option.getAttribute('data-preset-value') === preset;
           option.setAttribute('aria-checked', String(selected));
@@ -5541,7 +5582,7 @@
 
       function apply(theme) {
         html.setAttribute('data-theme', theme);
-        label.textContent = theme === 'dark' ? 'Dark' : 'Light';
+        label.textContent = viewerText(theme === 'dark' ? 'viewer.theme.dark' : 'viewer.theme.light');
         btn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
       }
 
@@ -5589,6 +5630,18 @@
       var SHARE_CARD_HEIGHT = 630;
       var SHARE_CARD_PADDING = 36;
       var SHARE_CARD_HEADER = 112;
+
+      function exportError(key, values) {
+        var error = new Error(viewerText(key, values));
+        error.archifyViewerMessage = true;
+        return error;
+      }
+
+      function exportMessage(error) {
+        return error && error.archifyViewerMessage
+          ? error.message
+          : viewerText('viewer.export.unknown');
+      }
 
       function diagramFilename() {
         var title = (document.title || 'diagram')
@@ -6185,7 +6238,7 @@
                          format === 'webp' ? 'image/webp' : 'image/png';
               var quality = format === 'png' ? undefined : 0.95;
               canvas.toBlob(function (blob) {
-                if (!blob) reject(new Error('toBlob returned null for ' + format));
+                if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: format }));
                 else resolve(blob);
               }, mime, quality);
             } catch (error) {
@@ -6221,11 +6274,11 @@
 
       function canvas2dOrThrow(canvas, label) {
         if (!canvas || typeof canvas.getContext !== 'function') {
-          throw new Error('Canvas unavailable for ' + label);
+          throw exportError('viewer.export.error.canvasUnavailable', { label: label });
         }
         var ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('2D canvas context unavailable for ' + label);
-        if (typeof canvas.toBlob !== 'function') throw new Error('canvas.toBlob unavailable for ' + label);
+        if (!ctx) throw exportError('viewer.export.error.contextUnavailable', { label: label });
+        if (typeof canvas.toBlob !== 'function') throw exportError('viewer.export.error.toBlobUnavailable', { label: label });
         return ctx;
       }
 
@@ -6233,14 +6286,14 @@
         options = options || {};
         var routeSnapshot = options.routeSnapshot || null;
         var reachSnapshot = options.reachSnapshot || null;
-        if (routeSnapshot && reachSnapshot) return Promise.reject(new Error('Share Card variants cannot be combined'));
+        if (routeSnapshot && reachSnapshot) return Promise.reject(exportError('viewer.export.error.variantsCombined'));
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
         var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot });
-        if (!data.canonicalStateClean) return Promise.reject(new Error('Share Card export could not remove temporary viewer state'));
-        if (routeSnapshot && !data.routeStateClean) return Promise.reject(new Error('Route Card export could not preserve the resolved route safely'));
-        if (reachSnapshot && !data.reachStateClean) return Promise.reject(new Error('Reach Card export could not preserve authored reach safely'));
+        if (!data.canonicalStateClean) return Promise.reject(exportError('viewer.export.error.viewerState'));
+        if (routeSnapshot && !data.routeStateClean) return Promise.reject(exportError('viewer.export.error.routeState'));
+        if (reachSnapshot && !data.reachStateClean) return Promise.reject(exportError('viewer.export.error.reachState'));
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
 
@@ -6251,7 +6304,7 @@
               var canvas = document.createElement('canvas');
               canvas.width = SHARE_CARD_WIDTH;
               canvas.height = SHARE_CARD_HEIGHT;
-              var ctx = canvas2dOrThrow(canvas, 'Share Card');
+              var ctx = canvas2dOrThrow(canvas, viewerText('viewer.export.shareCard'));
               var computed = getComputedStyle(document.documentElement);
               var bg = computed.getPropertyValue('--bg').trim() || currentBg();
               var text = computed.getPropertyValue('--text').trim() || '#ffffff';
@@ -6264,21 +6317,37 @@
               var titleNode = document.querySelector('.header h1');
               var subtitleNode = document.querySelector('.header .subtitle');
               var title = titleNode ? titleNode.textContent : document.title;
+              var directionLabel = reachSnapshot
+                ? viewerText('viewer.export.direction.' + reachSnapshot.direction)
+                : '';
               var subtitle = routeSnapshot
-                ? 'Route: ' + routeSnapshot.source.label + ' → ' + routeSnapshot.target.label + ' · ' + routeSnapshot.hops + ' directed hops'
+                ? viewerCount('viewer.export.card.routeSummary', routeSnapshot.hops, {
+                    source: routeSnapshot.source.label,
+                    target: routeSnapshot.target.label
+                  })
                 : reachSnapshot
-                  ? 'Authored ' + reachSnapshot.direction + ' from ' + reachSnapshot.origin.label + ' · ' +
-                    (reachSnapshot.nodeIds.length - 1) + ' nodes · ' + reachSnapshot.edges.length +
-                    ' links · max ' + reachSnapshot.maxDepth + ' hops'
+                  ? viewerText('viewer.export.card.reachSummary', {
+                      direction: directionLabel,
+                      origin: reachSnapshot.origin.label,
+                      nodes: viewerCount('viewer.export.card.node', reachSnapshot.nodeIds.length - 1),
+                      links: viewerCount('viewer.export.card.link', reachSnapshot.edges.length),
+                      hops: viewerCount('viewer.export.card.hop', reachSnapshot.maxDepth)
+                    })
                   : subtitleNode ? subtitleNode.textContent : '';
               var preset = document.documentElement.getAttribute('data-preset') || 'classic';
               var theme = document.documentElement.getAttribute('data-theme') || 'dark';
-              var presetLabel = preset === 'signal-flow' ? 'FLOW' : preset.toUpperCase();
+              var presetKey = preset === 'signal-flow'
+                ? 'viewer.preset.flow.short'
+                : 'viewer.preset.' + preset;
+              var presetLabel = viewerText(presetKey).toUpperCase();
+              var themeLabel = viewerText('viewer.theme.' + theme).toUpperCase();
               var cardLabel = routeSnapshot
-                ? 'ARCHIFY · ROUTE · ' + routeSnapshot.hops + ' HOPS'
+                ? viewerText('viewer.export.card.routeBadge', {
+                    hops: viewerCount('viewer.export.card.hop', routeSnapshot.hops).toUpperCase()
+                  })
                 : reachSnapshot
-                  ? 'ARCHIFY · ' + reachSnapshot.direction.toUpperCase() + ' REACH'
-                  : 'ARCHIFY · ' + presetLabel + ' · ' + theme.toUpperCase();
+                  ? viewerText('viewer.export.card.reachBadge', { direction: directionLabel.toUpperCase() })
+                  : viewerText('viewer.export.card.defaultBadge', { preset: presetLabel, theme: themeLabel });
 
               ctx.fillStyle = bg;
               ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
@@ -6316,7 +6385,7 @@
               URL.revokeObjectURL(svgUrl);
 
               canvas.toBlob(function (blob) {
-                if (!blob) reject(new Error('toBlob returned null for Share Card'));
+                if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: viewerText('viewer.export.shareCard') }));
                 else resolve(blob);
               }, 'image/png');
             } catch (error) {
@@ -6336,17 +6405,17 @@
         options = options || {};
         if (!options.variant) return renderShareCard();
         if (options.variant !== 'route' && options.variant !== 'reach') {
-          return Promise.reject(new Error('Unknown Share Card variant: ' + options.variant));
+          return Promise.reject(exportError('viewer.export.unknownVariant', { variant: options.variant }));
         }
         if (options.variant === 'route') {
           var routeSnapshot = Archify.routeProbe && Archify.routeProbe.exportSnapshot();
-          if (!routeSnapshot) return Promise.reject(new Error('Trace a route before exporting a Route Share Card'));
+          if (!routeSnapshot) return Promise.reject(exportError('viewer.export.routeRequired'));
           return renderShareCard({ routeSnapshot: routeSnapshot });
         }
         var snapshot = Archify.focus && typeof Archify.focus.reachabilitySnapshot === 'function'
           ? Archify.focus.reachabilitySnapshot()
           : null;
-        if (!snapshot) return Promise.reject(new Error('Trace authored reach before exporting a Reach Share Card'));
+        if (!snapshot) return Promise.reject(exportError('viewer.export.reachRequired'));
         return renderShareCard({ reachSnapshot: snapshot });
       }
 
@@ -6380,7 +6449,7 @@
       function recordWebm(options) {
         options = options || {};
         if (!canRecordMotion()) {
-          return Promise.reject(new Error('WebM motion export requires a trace animation and browser MediaRecorder support'));
+          return Promise.reject(exportError('viewer.export.error.webmRequirements'));
         }
         var duration = Math.max(250, Number(options.duration) || MOTION_DURATION);
         var fps = Math.max(1, Number(options.fps) || MOTION_FPS);
@@ -6578,12 +6647,12 @@
             };
             recorder.onerror = function (event) {
               cleanup();
-              reject(event.error || new Error('MediaRecorder failed'));
+              reject(event.error || exportError('viewer.export.error.mediaRecorder'));
             };
             recorder.onstop = function () {
               cleanup();
               var blob = new Blob(chunks, { type: recorder.mimeType || mime });
-              if (!blob.size) reject(new Error('MediaRecorder produced an empty WebM'));
+              if (!blob.size) reject(exportError('viewer.export.error.emptyWebm'));
               else resolve(blob);
             };
             drawMotionFrame(ctx, backgroundImage, motionScene, 0);
@@ -6604,7 +6673,7 @@
           };
           backgroundImage.onerror = function () {
             URL.revokeObjectURL(sourceUrl);
-            reject(new Error('SVG background could not be loaded for WebM export'));
+            reject(exportError('viewer.export.error.webmBackground'));
           };
           backgroundImage.src = sourceUrl;
         });
@@ -6662,11 +6731,11 @@
       items().forEach(function (it) {
         if (it.dataset.format && !supports(it.dataset.format)) {
           it.disabled = true;
-          it.title = 'Not supported by this browser';
+          it.title = viewerText('viewer.export.unsupported');
         }
         if ((it.dataset.action === 'copy' || it.dataset.action === 'copy-share-card') && !canCopyImage()) {
           it.disabled = true;
-          it.title = 'Clipboard image write not supported by this browser';
+          it.title = viewerText('viewer.export.clipboardUnsupported');
         }
       });
 
@@ -6757,12 +6826,12 @@
         var base = diagramFilename();
         close(true);
         clearExportReceipt();
-        if (format === 'webm') toast('Recording 6 seconds of motion…');
+        if (format === 'webm') toast(viewerText('viewer.export.recording'));
         return (format === 'share-card'
           ? rasterizeShareCard().then(function (blob) {
               recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
               download(blob, base + '-share-card.png');
-              toast('Downloaded Share Card');
+              toast(viewerText('viewer.export.downloadedShare'));
             })
           : format === 'svg'
           ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
@@ -6775,7 +6844,7 @@
                 document.documentElement.setAttribute('data-last-motion-bytes', String(blob.size));
                 recordExportReceipt('webm', blob, true);
                 download(blob, base + '.webm');
-                toast('Downloaded WebM');
+                toast(viewerText('viewer.export.downloadedWebm'));
               })
           : rasterize(format).then(function (blob) {
               recordExportReceipt(format, blob, true);
@@ -6783,20 +6852,21 @@
             })
         ).catch(function (err) {
           console.error(err);
-          var message = err && err.message ? err.message : format;
+          var technicalMessage = err && err.message ? err.message : format;
+          var message = exportMessage(err);
           document.documentElement.setAttribute('data-last-export-error-format', format);
-          document.documentElement.setAttribute('data-last-export-error', message);
-          if (format === 'webm' && /MediaRecorder|WebM motion export|empty WebM/i.test(message)) {
+          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
+          if (format === 'webm') {
             var motionItem = menu.querySelector('button[data-format="webm"]');
             if (motionItem) {
               motionItem.disabled = true;
-              motionItem.title = 'Motion capture unavailable in this browser';
+              motionItem.title = viewerText('viewer.export.motionUnavailable');
               motionItem.style.opacity = '0.5';
             }
-            toast('WebM unavailable in this browser');
+            toast(viewerText('viewer.export.webmUnavailable'));
             return;
           }
-          alert('Export failed: ' + message);
+          alert(viewerText('viewer.export.failed', { message: message }));
         });
       }
 
@@ -6806,18 +6876,19 @@
         var snapshot = Archify.routeProbe && Archify.routeProbe.exportSnapshot();
         var blobPromise = snapshot
           ? renderShareCard({ routeSnapshot: snapshot })
-          : Promise.reject(new Error('Trace a route before exporting a Route Share Card'));
+          : Promise.reject(exportError('viewer.export.routeRequired'));
         return blobPromise.then(function (blob) {
           recordExportReceipt('share-card', blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, 'route', true);
           download(blob, diagramFilename() + '-route-share-card.png');
-          toast('Downloaded Route Share Card');
+          toast(viewerText('viewer.export.downloadedRoute'));
           return blob;
         }).catch(function (err) {
           console.error(err);
-          var message = err && err.message ? err.message : 'share-card';
+          var technicalMessage = err && err.message ? err.message : 'share-card';
+          var message = exportMessage(err);
           document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
-          document.documentElement.setAttribute('data-last-export-error', message);
-          alert('Route Share Card export failed: ' + message);
+          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
+          alert(viewerText('viewer.export.routeFailed', { message: message }));
         });
       }
 
@@ -6829,18 +6900,19 @@
           : null;
         var blobPromise = snapshot
           ? renderShareCard({ reachSnapshot: snapshot })
-          : Promise.reject(new Error('Trace authored reach before exporting a Reach Share Card'));
+          : Promise.reject(exportError('viewer.export.reachRequired'));
         return blobPromise.then(function (blob) {
           recordExportReceipt('share-card', blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, 'reach', false, true);
           download(blob, diagramFilename() + '-' + snapshot.direction + '-reach-share-card.png');
-          toast('Downloaded Reach Share Card');
+          toast(viewerText('viewer.export.downloadedReach'));
           return blob;
         }).catch(function (err) {
           console.error(err);
-          var message = err && err.message ? err.message : 'share-card';
+          var technicalMessage = err && err.message ? err.message : 'share-card';
+          var message = exportMessage(err);
           document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
-          document.documentElement.setAttribute('data-last-export-error', message);
-          alert('Reach Share Card export failed: ' + message);
+          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
+          alert(viewerText('viewer.export.reachFailed', { message: message }));
         });
       }
 
@@ -6905,21 +6977,22 @@
         close(true);
         clearExportReceipt();
         if (!canCopyImage()) {
-          alert('Clipboard image write not supported by this browser.');
+          alert(viewerText('viewer.export.clipboardUnsupported.period'));
           return;
         }
         var blobPromise = rasterizeShareCard();
         return writePngToClipboard(blobPromise).then(function () {
           return blobPromise.then(function (blob) {
             recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
-            toast('Copied Share Card');
+            toast(viewerText('viewer.export.copiedShare'));
           });
         }).catch(function (err) {
           console.error(err);
-          var message = err && err.message ? err.message : 'unknown';
+          var technicalMessage = err && err.message ? err.message : 'share-card';
+          var message = exportMessage(err);
           document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
-          document.documentElement.setAttribute('data-last-export-error', message);
-          alert('Copy failed: ' + message);
+          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
+          alert(viewerText('viewer.export.copyFailed', { message: message }));
         });
       }
 
@@ -6927,15 +7000,17 @@
         close(true);
         clearExportReceipt();
         if (!canCopyImage()) {
-          alert('Clipboard image write not supported in this browser.');
+          alert(viewerText('viewer.export.clipboardUnsupported.short'));
           return;
         }
         var blobPromise = rasterize('png');
         return writePngToClipboard(blobPromise).then(function () {
-          toast('Copied PNG to clipboard');
+          toast(viewerText('viewer.export.copiedPng'));
         }).catch(function (err) {
           console.error(err);
-          alert('Copy failed: ' + (err && err.message ? err.message : 'unknown'));
+          alert(viewerText('viewer.export.copyFailed', {
+            message: exportMessage(err)
+          }));
         });
       }
 
@@ -7061,17 +7136,17 @@
         return readerPaused || reducedMotion() || hasSuspension();
       }
       function ownerLabel(value) {
-        if (value === 'story') return 'the guided story';
-        if (value === 'chapter') return 'the active chapter';
-        if (value === 'chapter-preview') return 'the chapter delta preview';
-        if (value === 'handoff') return 'the chapter handoff';
-        if (value === 'route') return 'Route Probe';
-        if (value === 'lens') return 'Semantic Lens';
-        if (value === 'relationship') return 'Relationship Preview';
-        if (value === 'intent') return 'Intent Trace';
-        if (value === 'focus') return 'semantic focus';
-        if (value === 'legend') return 'legend preview';
-        return 'reader interaction';
+        if (value === 'story') return viewerText('viewer.owner.story');
+        if (value === 'chapter') return viewerText('viewer.owner.chapter');
+        if (value === 'chapter-preview') return viewerText('viewer.owner.chapterPreview');
+        if (value === 'handoff') return viewerText('viewer.owner.handoff');
+        if (value === 'route') return viewerText('viewer.owner.route');
+        if (value === 'lens') return viewerText('viewer.owner.lens');
+        if (value === 'relationship') return viewerText('viewer.owner.relationship');
+        if (value === 'intent') return viewerText('viewer.owner.intent');
+        if (value === 'focus') return viewerText('viewer.owner.focus');
+        if (value === 'legend') return viewerText('viewer.owner.legend');
+        return viewerText('viewer.owner.reader');
       }
       function render() {
         if (!capable) return;
@@ -7085,7 +7160,7 @@
         }
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
-        label.textContent = paused ? 'Still' : 'Live';
+        label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
@@ -7098,20 +7173,20 @@
         lastEffectivePaused = paused;
         if (Archify.routeProbe && typeof Archify.routeProbe.syncMotion === 'function') Archify.routeProbe.syncMotion();
         if (systemPaused) {
-          btn.setAttribute('aria-label', 'Motion paused by reduced-motion preference');
-          btn.title = 'Motion paused by reduced-motion preference';
+          btn.setAttribute('aria-label', viewerText('viewer.motion.reduced'));
+          btn.title = viewerText('viewer.motion.reduced');
         } else if (hasSuspension()) {
-          btn.setAttribute('aria-label', 'Motion paused while this page is hidden');
-          btn.title = 'Motion paused while this page is hidden';
+          btn.setAttribute('aria-label', viewerText('viewer.motion.hidden'));
+          btn.title = viewerText('viewer.motion.hidden');
         } else if (paused) {
-          btn.setAttribute('aria-label', 'Resume motion');
-          btn.title = 'Resume motion';
+          btn.setAttribute('aria-label', viewerText('viewer.motion.resume'));
+          btn.title = viewerText('viewer.motion.resume');
         } else if (owner) {
-          btn.setAttribute('aria-label', 'Pause motion; currently yielding to ' + ownerLabel(owner));
-          btn.title = 'Live preview enabled · yielding to ' + ownerLabel(owner);
+          btn.setAttribute('aria-label', viewerText('viewer.motion.yielding', { owner: ownerLabel(owner) }));
+          btn.title = viewerText('viewer.motion.yielding.title', { owner: ownerLabel(owner) });
         } else {
-          btn.setAttribute('aria-label', 'Pause motion');
-          btn.title = 'Pause motion';
+          btn.setAttribute('aria-label', viewerText('viewer.motion.pause'));
+          btn.title = viewerText('viewer.motion.pause');
         }
       }
       function setPaused(next, options) {
@@ -7282,7 +7357,7 @@
           if (!box || !Number.isFinite(box.x) || !Number.isFinite(box.y) || !Number.isFinite(box.width) || box.width < 36) return;
 
           var count = sources.length;
-          var label = count + ' verified source' + (count === 1 ? '' : 's') + '; focus this node to inspect';
+          var label = viewerCount('viewer.passport.beacon', count);
           var beacon = document.createElementNS(svgNamespace, 'g');
           beacon.classList.add('source-evidence-beacon');
           beacon.setAttribute('data-source-evidence-beacon', '');
@@ -7298,7 +7373,7 @@
           var text = document.createElementNS(svgNamespace, 'text');
           text.setAttribute('x', '15');
           text.setAttribute('y', '8.25');
-          text.textContent = 'SRC ' + count;
+          text.textContent = viewerText('viewer.passport.sourceMarker') + ' ' + count;
           beacon.appendChild(title);
           beacon.appendChild(plate);
           beacon.appendChild(text);
@@ -7307,7 +7382,7 @@
           var originalLabel = node.getAttribute('aria-label') || '';
           node.setAttribute('data-source-evidence-count', String(count));
           node.setAttribute('data-source-evidence-original-label', originalLabel);
-          node.setAttribute('aria-label', (originalLabel ? originalLabel + ', ' : '') + count + ' verified source reference' + (count === 1 ? '' : 's'));
+          node.setAttribute('aria-label', (originalLabel ? originalLabel + ', ' : '') + viewerCount('viewer.passport.sourceCount', count));
           installed += 1;
         });
         return installed;
@@ -7485,11 +7560,11 @@
         upstreamBtn.disabled = upstreamReach === 0;
         downstreamBtn.disabled = downstreamReach === 0;
         upstreamBtn.setAttribute('aria-label', upstreamReach
-          ? 'Trace ' + upstreamReach + ' upstream authored node' + (upstreamReach === 1 ? '' : 's')
-          : 'No upstream authored nodes');
+          ? viewerCount('viewer.passport.reach.upstream', upstreamReach)
+          : viewerText('viewer.passport.reach.noUpstream'));
         downstreamBtn.setAttribute('aria-label', downstreamReach
-          ? 'Trace ' + downstreamReach + ' downstream authored node' + (downstreamReach === 1 ? '' : 's')
-          : 'No downstream authored nodes');
+          ? viewerCount('viewer.passport.reach.downstream', downstreamReach)
+          : viewerText('viewer.passport.reach.noDownstream'));
         reachSection.hidden = false;
       }
       function applyReachability(direction, options) {
@@ -7535,11 +7610,15 @@
         var activeButton = direction === 'upstream' ? upstreamBtn : downstreamBtn;
         activeButton.setAttribute('aria-pressed', 'true');
         var reachableCount = result.nodeIds.length - 1;
-        var directionLabel = direction === 'upstream' ? 'Upstream' : 'Downstream';
-        reachStatus.textContent = directionLabel + ' · ' + reachableCount + ' node' +
-          (reachableCount === 1 ? '' : 's') + ' · ' + result.edgeKeys.length + ' link' +
-          (result.edgeKeys.length === 1 ? '' : 's') + ' · max ' + result.maxDepth + ' hop' +
-          (result.maxDepth === 1 ? '' : 's');
+        var directionLabel = viewerText(direction === 'upstream'
+          ? 'viewer.passport.upstream'
+          : 'viewer.passport.downstream');
+        reachStatus.textContent = viewerText('viewer.passport.reach.status', {
+          direction: directionLabel,
+          nodes: reachableCount,
+          links: result.edgeKeys.length,
+          hops: result.maxDepth
+        });
         reachStatus.hidden = false;
         if (Archify.exportMenu && typeof Archify.exportMenu.syncReachShare === 'function') {
           Archify.exportMenu.syncReachShare();
@@ -7666,7 +7745,7 @@
         var slug = repository.url.replace(/^https:\/\/github\.com\//, '').replace(/\/$/, '');
         repositoryLink.href = repository.url + '/tree/' + repository.revision;
         repositoryLink.textContent = slug + ' @ ' + repository.shortRevision;
-        repositoryLink.setAttribute('aria-label', 'Open verified repository revision ' + repository.revision);
+        repositoryLink.setAttribute('aria-label', viewerText('viewer.passport.repository.open', { revision: repository.revision }));
         sources.forEach(function (source) {
           var link = document.createElement('a');
           link.className = 'semantic-passport-source';
@@ -7674,13 +7753,13 @@
           link.target = '_blank';
           link.rel = 'noopener noreferrer';
           link.referrerPolicy = 'no-referrer';
-          link.setAttribute('aria-label', 'Open verified source ' + source.path + ' at revision ' + repository.shortRevision);
+          link.setAttribute('aria-label', viewerText('viewer.passport.source.open', { path: source.path, revision: repository.shortRevision }));
           var name = document.createElement('strong');
           name.textContent = source.label || source.path.split('/').pop() || source.path;
           var location = document.createElement('code');
           location.textContent = source.line
             ? 'L' + source.line + (source.endLine && source.endLine !== source.line ? '–' + source.endLine : '') + ' ↗'
-            : 'Open ↗';
+            : viewerText('viewer.passport.source.openLink');
           var sourcePath = document.createElement('small');
           sourcePath.textContent = source.path;
           link.appendChild(name);
@@ -7692,7 +7771,7 @@
       }
       function renderPassport(id, node) {
         setPassportValue(detail, node.getAttribute('data-node-sublabel'));
-        setPassportValue(kind, node.getAttribute('data-node-kind') || 'node');
+        setPassportValue(kind, viewerKindLabel(node.getAttribute('data-node-kind') || 'node'));
         setPassportValue(context, node.getAttribute('data-node-context'));
         setPassportValue(tag, node.getAttribute('data-node-tag'));
         setPassportValue(document.getElementById('focus-brand'), node.getAttribute('data-node-brand'));
@@ -7723,7 +7802,11 @@
             direction: direction,
             neighborId: neighborId,
             neighborLabel: neighbor ? nodeLabel(neighbor, neighborId) : neighborId,
-            label: edgeLabel || (direction === 'loop' ? 'loops back' : direction === 'out' ? 'connects to' : 'connects from')
+            label: edgeLabel || viewerText(direction === 'loop'
+              ? 'viewer.passport.relationship.loopsBack'
+              : direction === 'out'
+                ? 'viewer.passport.relationship.connectsTo'
+                : 'viewer.passport.relationship.connectsFrom')
           });
         });
         return relationships;
@@ -7766,7 +7849,9 @@
             fromLabel: byId[from] ? nodeLabel(byId[from], from) : from,
             toLabel: byId[to] ? nodeLabel(byId[to], to) : to,
             labelValue: labelValue,
-            label: labelValue || (from === to ? 'loops back' : 'connects to'),
+            label: labelValue || viewerText(from === to
+              ? 'viewer.passport.relationship.loopsBack'
+              : 'viewer.passport.relationship.connectsTo'),
             edge: edge,
             shapes: shapes,
             invalid: false
@@ -7793,14 +7878,14 @@
       function renderRelationshipCopyAction() {
         var record = pinnedRelationshipRecord();
         if (record && record.id) {
-          copyBtn.textContent = 'Copy relation';
-          copyBtn.setAttribute('aria-label', 'Copy link to pinned relationship');
+          copyBtn.textContent = viewerText('viewer.passport.copyRelation');
+          copyBtn.setAttribute('aria-label', viewerText('viewer.passport.copyPinned'));
         } else if (pinnedRelationshipKey) {
-          copyBtn.textContent = 'Copy node';
-          copyBtn.setAttribute('aria-label', 'Copy link to source node');
+          copyBtn.textContent = viewerText('viewer.passport.copyNode');
+          copyBtn.setAttribute('aria-label', viewerText('viewer.passport.copySource'));
         } else {
-          copyBtn.textContent = 'Copy link';
-          copyBtn.setAttribute('aria-label', 'Copy link to focused node');
+          copyBtn.textContent = viewerText('viewer.passport.copy');
+          copyBtn.setAttribute('aria-label', viewerText('viewer.passport.copy.focus'));
         }
       }
       function relationshipHitGeometry(shape, className) {
@@ -8119,7 +8204,11 @@
         var target = relationshipHitTarget(key);
         if (target) target.setAttribute('aria-pressed', 'true');
         renderRelationshipCopyAction();
-        summary.textContent = 'Pinned relationship · ' + record.fromLabel + ' → ' + record.toLabel + ' · ' + record.label;
+        summary.textContent = viewerText('viewer.passport.relationship.pinned', {
+          from: record.fromLabel,
+          to: record.toLabel,
+          label: record.label
+        });
         revealPinnedRelationship(record);
         if (options.updateUrl !== false && record.id) {
           try { history.replaceState(null, '', location.pathname + location.search + '#relation=' + encodeURIComponent(record.id)); } catch (_) {}
@@ -8138,10 +8227,10 @@
         relationshipHitOverlay.setAttribute('class', 'relationship-hit-overlay');
         relationshipHitOverlay.setAttribute('data-relationship-hit-overlay', '');
         relationshipHitOverlay.setAttribute('role', 'group');
-        relationshipHitOverlay.setAttribute('aria-label', 'Direct relationship explorer');
+        relationshipHitOverlay.setAttribute('aria-label', viewerText('viewer.passport.relationship.explorer'));
         var relationshipHelp = document.createElementNS(svgNamespace, 'desc');
         relationshipHelp.id = 'archify-relationship-help';
-        relationshipHelp.textContent = 'Use arrow keys to explore relationships. Press Enter or Space to pin details; Escape clears.';
+        relationshipHelp.textContent = viewerText('viewer.passport.relationship.help');
         relationshipHitOverlay.appendChild(relationshipHelp);
         records.forEach(function (record, index) {
           var target = document.createElementNS(svgNamespace, 'g');
@@ -8155,7 +8244,13 @@
           target.setAttribute('tabindex', index === 0 ? '0' : '-1');
           target.setAttribute('aria-pressed', 'false');
           target.setAttribute('aria-describedby', relationshipHelp.id);
-          var description = 'Inspect relationship ' + (index + 1) + ' of ' + records.length + ': ' + record.fromLabel + ' to ' + record.toLabel + ', ' + record.label + '. Press Enter for details.';
+          var description = viewerText('viewer.passport.relationship.inspect', {
+            index: index + 1,
+            total: records.length,
+            from: record.fromLabel,
+            to: record.toLabel,
+            label: record.label
+          });
           target.setAttribute('aria-label', description);
           var title = document.createElementNS(svgNamespace, 'title');
           title.textContent = record.fromLabel + ' \u2192 ' + record.toLabel + ' \u00b7 ' + record.label;
@@ -8251,25 +8346,29 @@
         var relationships = relationshipsFor(id, byId);
         chip.removeAttribute('data-relations-expanded');
         relationsBtn.setAttribute('aria-expanded', 'false');
-        relationsBtn.textContent = relationships.length + ' relation' + (relationships.length === 1 ? '' : 's');
-        relationsBtn.setAttribute('aria-label', 'Show ' + relationships.length + ' connected relationship' + (relationships.length === 1 ? '' : 's'));
+        relationsBtn.textContent = viewerCount('viewer.passport.relationship.count', relationships.length);
+        relationsBtn.setAttribute('aria-label', viewerCount('viewer.passport.relationship.show', relationships.length));
         var counts = { out: 0, in: 0, loop: 0 };
         relationships.forEach(function (relationship) { counts[relationship.direction] += 1; });
-        summary.textContent = counts.out + ' outgoing · ' + counts.in + ' incoming' + (counts.loop ? ' · ' + counts.loop + ' loop' : '');
+        summary.textContent = viewerText('viewer.passport.relationship.summary', {
+          out: counts.out,
+          in: counts.in,
+          loops: counts.loop ? viewerText('viewer.passport.relationship.loops', { count: counts.loop }) : ''
+        });
         renderReachabilityControls(id);
         relationshipList.textContent = '';
         if (!relationships.length) {
           var empty = document.createElement('p');
           empty.className = 'relationship-lens-empty';
-          empty.textContent = 'No connected relationships';
+          empty.textContent = viewerText('viewer.passport.relationship.none');
           relationshipList.appendChild(empty);
           return;
         }
 
         [
-          { id: 'out', label: 'Outgoing' },
-          { id: 'in', label: 'Incoming' },
-          { id: 'loop', label: 'Self loops' }
+          { id: 'out', label: viewerText('viewer.passport.relationship.group.out') },
+          { id: 'in', label: viewerText('viewer.passport.relationship.group.in') },
+          { id: 'loop', label: viewerText('viewer.passport.relationship.group.loop') }
         ].forEach(function (group) {
           var items = relationships.filter(function (relationship) { return relationship.direction === group.id; });
           if (!items.length) return;
@@ -8289,11 +8388,19 @@
             button.setAttribute('data-relationship-from', relationship.from);
             button.setAttribute('data-relationship-to', relationship.to);
             if (relationship.id) button.setAttribute('data-relationship-id', relationship.id);
-            button.setAttribute('aria-label', group.label + ': ' + relationship.label + ', ' + relationship.neighborLabel);
+            button.setAttribute('aria-label', viewerText('viewer.passport.relationship.row', {
+              group: group.label,
+              relationship: relationship.label,
+              neighbor: relationship.neighborLabel
+            }));
             var direction = document.createElement('span');
             direction.className = 'relationship-lens-direction';
             direction.setAttribute('aria-hidden', 'true');
-            direction.textContent = relationship.direction === 'out' ? 'OUT →' : relationship.direction === 'in' ? '← IN' : 'LOOP';
+            direction.textContent = viewerText(relationship.direction === 'out'
+              ? 'viewer.passport.relationship.direction.out'
+              : relationship.direction === 'in'
+                ? 'viewer.passport.relationship.direction.in'
+                : 'viewer.passport.relationship.direction.loop');
             var target = document.createElement('strong');
             target.textContent = relationship.neighborLabel;
             var relation = document.createElement('small');
@@ -8433,10 +8540,10 @@
         upstreamBtn.disabled = true;
         downstreamBtn.disabled = true;
         relationshipList.textContent = '';
-        copyBtn.textContent = 'Copy link';
-        copyBtn.setAttribute('aria-label', 'Copy link to focused node');
-        relationsBtn.textContent = 'Relations';
-        relationsBtn.setAttribute('aria-label', 'Show connected relationships');
+        copyBtn.textContent = viewerText('viewer.passport.copy');
+        copyBtn.setAttribute('aria-label', viewerText('viewer.passport.copy.focus'));
+        relationsBtn.textContent = viewerText('viewer.passport.relations');
+        relationsBtn.setAttribute('aria-label', viewerText('viewer.passport.relations.show'));
         relationsBtn.setAttribute('aria-expanded', 'false');
         chip.removeAttribute('data-relations-expanded');
         chip.style.removeProperty('top');
@@ -8504,7 +8611,7 @@
         svg.setAttribute('data-focus-active', normalized.join(' '));
         var defaultLabel = normalized.length === 1
           ? nodeLabel(byId[normalized[0]], normalized[0])
-          : normalized.length + ' selected nodes';
+          : viewerText('viewer.guided.chapter.selectedNodes', { count: normalized.length });
         label.textContent = options.label || defaultLabel;
         chip.hidden = options.hideChip === true || normalized.length !== 1 || selectionMode;
         if (!chip.hidden) {
@@ -8550,10 +8657,10 @@
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
         return copy.then(function (copied) {
-          copyBtn.textContent = copied ? 'Copied' : 'Copy failed';
+          copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
           copyBtn.setAttribute('aria-label', copied
-            ? (relationId ? 'Pinned relationship link copied' : 'Focused node link copied')
-            : (relationId ? 'Could not copy pinned relationship link' : 'Could not copy focused node link'));
+            ? viewerText(relationId ? 'viewer.passport.copy.pinned.success' : 'viewer.passport.copy.focused.success')
+            : viewerText(relationId ? 'viewer.passport.copy.pinned.failed' : 'viewer.passport.copy.focused.failed'));
           window.setTimeout(function () {
             renderRelationshipCopyAction();
           }, 1600);
@@ -8592,7 +8699,9 @@
         if (expanded) chip.removeAttribute('data-relations-expanded');
         else chip.setAttribute('data-relations-expanded', 'true');
         relationsBtn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-        relationsBtn.setAttribute('aria-label', expanded ? 'Show connected relationships' : 'Hide connected relationships');
+        relationsBtn.setAttribute('aria-label', viewerText(expanded
+          ? 'viewer.passport.relations.show'
+          : 'viewer.passport.relations.hide'));
         requestLensPlacement();
       });
       relationshipList.addEventListener('click', function (event) {
@@ -8878,9 +8987,13 @@
         svg.setAttribute('data-intent-trace-active', id);
         if (options.announce === true) {
           var total = counts.out + counts.in + counts.loop;
-          status.textContent = nodeLabel(selected, id) + '. ' + counts.out + ' outgoing, ' +
-            counts.in + ' incoming' + (counts.loop ? ', ' + counts.loop + ' self loop' : '') +
-            '. ' + total + ' connection' + (total === 1 ? '' : 's') + '. Press Enter for details.';
+          status.textContent = viewerText('viewer.intent.summary', {
+            label: nodeLabel(selected, id),
+            out: counts.out,
+            in: counts.in,
+            loops: counts.loop ? viewerText('viewer.intent.loops', { count: counts.loop }) : '',
+            total: total
+          });
         }
         return true;
       }
@@ -9183,8 +9296,11 @@
           drawHandoffAnchor(anchor);
           var node = findNode(anchor);
           var nodeLabel = node ? (node.getAttribute('data-node-label') || anchor) : anchor;
-          handoffReceipt.textContent = (previousIndex + 1 < 10 ? '0' : '') + (previousIndex + 1) +
-            ' \u2192 ' + (nextIndex + 1 < 10 ? '0' : '') + (nextIndex + 1) + ' \u00b7 via ' + nodeLabel;
+          handoffReceipt.textContent = viewerText('viewer.guided.handoff', {
+            from: (previousIndex + 1 < 10 ? '0' : '') + (previousIndex + 1),
+            to: (nextIndex + 1 < 10 ? '0' : '') + (nextIndex + 1),
+            label: nodeLabel
+          });
           handoffReceipt.hidden = false;
         }
         if (Archify.motionGovernor) {
@@ -9241,8 +9357,13 @@
           button.setAttribute('data-guided-view-id', view.id);
           button.setAttribute('aria-pressed', 'false');
           button.setAttribute('tabindex', index === 0 ? '0' : '-1');
-          button.setAttribute('aria-label', 'Open chapter ' + (index + 1) + ' of ' + views.length + ': ' + view.label + ', ' + view.focus.length + ' stops');
-          button.title = view.label + ' — ' + (view.note || view.focus.length + ' selected nodes');
+          button.setAttribute('aria-label', viewerText('viewer.guided.chapter.open', {
+            index: index + 1,
+            total: views.length,
+            label: view.label,
+            count: view.focus.length
+          }));
+          button.title = view.label + ' — ' + (view.note || viewerText('viewer.guided.chapter.selectedNodes', { count: view.focus.length }));
           var position = document.createElement('span');
           position.className = 'guided-view-chapter-index';
           position.setAttribute('aria-hidden', 'true');
@@ -9252,7 +9373,7 @@
           title.textContent = view.label;
           var stops = document.createElement('em');
           stops.className = 'guided-view-chapter-count';
-          stops.textContent = view.focus.length + ' stop' + (view.focus.length === 1 ? '' : 's');
+          stops.textContent = viewerCount('viewer.guided.chapter.stop', view.focus.length);
           var delta = document.createElement('span');
           delta.className = 'guided-view-chapter-delta';
           delta.hidden = true;
@@ -9285,20 +9406,40 @@
             stops.hidden = false;
             deltaLabel.hidden = true;
             button.removeAttribute('data-chapter-delta');
-            button.setAttribute('aria-label', 'Current chapter ' + (index + 1) + ' of ' + views.length + ': ' + views[index].label + ', ' + views[index].focus.length + ' stops');
-            button.title = views[index].label + ' — current chapter, ' + views[index].focus.length + ' stops';
+            button.setAttribute('aria-label', viewerText('viewer.guided.chapter.current', {
+              index: index + 1,
+              total: views.length,
+              label: views[index].label,
+              count: views[index].focus.length
+            }));
+            button.title = viewerText('viewer.guided.chapter.current.title', {
+              label: views[index].label,
+              count: views[index].focus.length
+            });
           } else {
             var delta = chapterDelta(activeIndex >= 0 ? views[activeIndex] : null, views[index]);
             var compact = '=' + delta.stay.length + ' +' + delta.enter.length + ' \u2212' + delta.leave.length;
-            var expanded = delta.stay.length + ' stay, ' + delta.enter.length + ' enter, ' + delta.leave.length + ' leave';
+            var expanded = viewerText('viewer.guided.chapter.delta.expanded', {
+              stay: delta.stay.length,
+              enter: delta.enter.length,
+              leave: delta.leave.length
+            });
             stops.hidden = true;
             deltaLabel.hidden = false;
             deltaLabel.querySelector('[data-delta-kind="stay"]').textContent = '=' + delta.stay.length;
             deltaLabel.querySelector('[data-delta-kind="enter"]').textContent = '+' + delta.enter.length;
             deltaLabel.querySelector('[data-delta-kind="leave"]').textContent = '\u2212' + delta.leave.length;
             button.setAttribute('data-chapter-delta', compact);
-            button.setAttribute('aria-label', 'Open chapter ' + (index + 1) + ' of ' + views.length + ': ' + views[index].label + '. Chapter focus delta: ' + expanded);
-            button.title = views[index].label + ' — ' + compact + ' chapter focus';
+            button.setAttribute('aria-label', viewerText('viewer.guided.chapter.delta.aria', {
+              index: index + 1,
+              total: views.length,
+              label: views[index].label,
+              delta: expanded
+            }));
+            button.title = viewerText('viewer.guided.chapter.delta.title', {
+              label: views[index].label,
+              delta: compact
+            });
           }
           if (current) button.setAttribute('aria-current', 'step');
           else button.removeAttribute('aria-current');
@@ -9426,33 +9567,44 @@
 
       function shareCueStatus(state) {
         return {
-          pending: 'Ready',
-          playing: 'Playing',
-          complete: 'Settled',
-          interrupted: 'Paused',
-          pinned: 'Pinned',
-          'reduced-motion': 'Still'
-        }[state] || 'Ready';
+          pending: viewerText('viewer.guided.state.ready'),
+          playing: viewerText('viewer.guided.state.playing'),
+          complete: viewerText('viewer.guided.state.settled'),
+          interrupted: viewerText('viewer.guided.state.paused'),
+          pinned: viewerText('viewer.guided.state.pinned'),
+          'reduced-motion': viewerText('viewer.guided.state.still')
+        }[state] || viewerText('viewer.guided.state.ready');
       }
 
       function shareCueBeatCopy(state, view, stops) {
         var total = stops.length;
         var activeStop = storyBeatIndex >= 0 ? stops[storyBeatIndex] : null;
         if ((state === 'playing' || state === 'interrupted') && activeStop) {
-          return 'Step ' + (storyBeatIndex + 1 < 10 ? '0' : '') + (storyBeatIndex + 1) + ' / ' +
-            (total < 10 ? '0' : '') + total + ' · ' + activeStop.textContent;
+          return viewerText('viewer.guided.share.step', {
+            index: (storyBeatIndex + 1 < 10 ? '0' : '') + (storyBeatIndex + 1),
+            total: (total < 10 ? '0' : '') + total,
+            label: activeStop.textContent
+          });
         }
         if (state === 'pinned' && activeStop) {
           return storyBeatCopy(storySteps[storyBeatIndex], total);
         }
         if (state === 'reduced-motion' && activeStop && hashBeatMatchesCurrent()) {
-          return 'Step ' + (storyBeatIndex + 1 < 10 ? '0' : '') + (storyBeatIndex + 1) + ' / ' +
-            (total < 10 ? '0' : '') + total + ' · ' + activeStop.textContent + ' · Static moment';
+          return viewerText('viewer.guided.share.staticMoment', {
+            step: viewerText('viewer.guided.share.step', {
+              index: (storyBeatIndex + 1 < 10 ? '0' : '') + (storyBeatIndex + 1),
+              total: (total < 10 ? '0' : '') + total,
+              label: activeStop.textContent
+            })
+          });
         }
-        if (state === 'complete') return total + ' steps complete · ' + (view.note || 'Path settled for reading.');
-        if (state === 'reduced-motion') return total + ' steps · Static path';
-        if (state === 'pending') return total + ' steps · Ready';
-        return view.note || view.focus.length + ' selected nodes';
+        if (state === 'complete') return viewerText('viewer.guided.share.complete', {
+          count: total,
+          note: view.note || viewerText('viewer.guided.share.settled')
+        });
+        if (state === 'reduced-motion') return viewerText('viewer.guided.share.staticPath', { count: total });
+        if (state === 'pending') return viewerText('viewer.guided.share.ready', { count: total });
+        return view.note || viewerText('viewer.guided.chapter.selectedNodes', { count: view.focus.length });
       }
 
       function renderShareCue() {
@@ -9477,11 +9629,21 @@
         shareCue.setAttribute('data-state', state);
         shareCue.setAttribute('aria-live', state === 'playing' ? 'off' : 'polite');
         shareCueState.textContent = shareCueStatus(state);
-        shareCueCount.textContent = 'Chapter ' + (activeIndex + 1 < 10 ? '0' : '') + (activeIndex + 1) + ' / ' + (views.length < 10 ? '0' : '') + views.length;
+        shareCueCount.textContent = viewerText('viewer.guided.share.chapter', {
+          index: (activeIndex + 1 < 10 ? '0' : '') + (activeIndex + 1),
+          total: (views.length < 10 ? '0' : '') + views.length
+        });
         shareCueLabel.textContent = view.label;
         shareCueNote.textContent = beatCopy;
         shareCueRoute.textContent = route;
-        shareCue.setAttribute('aria-label', shareCueStatus(state) + ' chapter ' + (activeIndex + 1) + ' of ' + views.length + ': ' + view.label + '. ' + beatCopy + '. ' + route);
+        shareCue.setAttribute('aria-label', viewerText('viewer.guided.share.aria', {
+          state: shareCueStatus(state),
+          index: activeIndex + 1,
+          total: views.length,
+          label: view.label,
+          beat: beatCopy,
+          route: route
+        }));
       }
 
       function setShareCueProgress(fraction) {
@@ -9572,24 +9734,24 @@
         if (!step) return '';
         var position = (step.index + 1 < 10 ? '0' : '') + (step.index + 1);
         var countValue = (total < 10 ? '0' : '') + total;
-        if (step.relation === 'start') return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.nodeLabel + ' \u00b7 starting point';
-        if (step.relation === 'forward') return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.previousLabel + ' \u2192 ' + step.nodeLabel;
-        if (step.relation === 'reverse') return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.nodeLabel + ' \u2192 ' + step.previousLabel + ' \u00b7 reverse authored link';
-        if (step.relation === 'multiple') return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.previousLabel + ' \u21c4 ' + step.nodeLabel + ' \u00b7 ' + step.edges.length + ' authored links';
-        return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.previousLabel + ' \u00b7 ' + step.nodeLabel + ' \u00b7 grouped \u00b7 no direct link';
+        if (step.relation === 'start') return viewerText('viewer.guided.beat.start', { index: position, total: countValue, label: step.nodeLabel });
+        if (step.relation === 'forward') return viewerText('viewer.guided.beat.forward', { index: position, total: countValue, from: step.previousLabel, to: step.nodeLabel });
+        if (step.relation === 'reverse') return viewerText('viewer.guided.beat.reverse', { index: position, total: countValue, from: step.nodeLabel, to: step.previousLabel });
+        if (step.relation === 'multiple') return viewerText('viewer.guided.beat.multiple', { index: position, total: countValue, from: step.previousLabel, to: step.nodeLabel, count: step.edges.length });
+        return viewerText('viewer.guided.beat.group', { index: position, total: countValue, from: step.previousLabel, to: step.nodeLabel });
       }
 
       function storyBeatAria(step, total) {
-        var prefix = 'Story beat ' + (step.index + 1) + ' of ' + total + ': ' + step.nodeLabel + '. ';
-        if (step.relation === 'start') return prefix + 'Starting point.';
-        if (step.relation === 'forward') return prefix + 'From ' + step.previousLabel + ' through one authored forward relationship.';
-        if (step.relation === 'reverse') return prefix + 'From ' + step.previousLabel + '; the authored relationship points from ' + step.nodeLabel + ' to ' + step.previousLabel + '.';
-        if (step.relation === 'multiple') return prefix + 'From ' + step.previousLabel + ' through ' + step.edges.length + ' authored relationships; shown without arbitrary motion.';
-        return prefix + 'Grouped from ' + step.previousLabel + ' with no direct authored relationship.';
+        var prefix = viewerText('viewer.guided.beat.aria.prefix', { index: step.index + 1, total: total, label: step.nodeLabel });
+        if (step.relation === 'start') return prefix + viewerText('viewer.guided.beat.aria.start');
+        if (step.relation === 'forward') return prefix + viewerText('viewer.guided.beat.aria.forward', { from: step.previousLabel });
+        if (step.relation === 'reverse') return prefix + viewerText('viewer.guided.beat.aria.reverse', { from: step.previousLabel, to: step.nodeLabel });
+        if (step.relation === 'multiple') return prefix + viewerText('viewer.guided.beat.aria.multiple', { from: step.previousLabel, count: step.edges.length });
+        return prefix + viewerText('viewer.guided.beat.aria.group', { from: step.previousLabel });
       }
 
       function storyCaptionRouteCopy(step) {
-        if (step.relation === 'start') return step.nodeLabel + ' · Starting point';
+        if (step.relation === 'start') return step.nodeLabel + ' · ' + viewerText('viewer.guided.caption.start');
         if (step.relation === 'reverse') return step.previousLabel + ' ← ' + step.nodeLabel;
         if (step.relation === 'multiple') return step.previousLabel + ' ⇄ ' + step.nodeLabel;
         if (step.relation === 'group') return step.previousLabel + ' · ' + step.nodeLabel;
@@ -9598,15 +9760,15 @@
 
       function storyCaptionDetailCopy(step) {
         var facts = [];
-        if (step.relation === 'group') facts.push('Grouped transition · no direct authored link');
-        else if (step.edgeLabels.length) facts.push(step.edgeLabels.slice(0, 3).join(' + ') + (step.edgeLabels.length > 3 ? ' +' + (step.edgeLabels.length - 3) + ' more' : ''));
-        else if (step.relation === 'reverse') facts.push('Reverse authored relationship');
-        else if (step.relation === 'multiple') facts.push(step.edges.length + ' authored relationships');
-        else if (step.relation !== 'start') facts.push('Authored relationship');
-        if (step.relation === 'reverse') facts.push('authored direction: ' + step.nodeLabel + ' → ' + step.previousLabel);
+        if (step.relation === 'group') facts.push(viewerText('viewer.guided.caption.grouped'));
+        else if (step.edgeLabels.length) facts.push(step.edgeLabels.slice(0, 3).join(' + ') + (step.edgeLabels.length > 3 ? viewerText('viewer.guided.caption.more', { count: step.edgeLabels.length - 3 }) : ''));
+        else if (step.relation === 'reverse') facts.push(viewerText('viewer.guided.caption.reverse'));
+        else if (step.relation === 'multiple') facts.push(viewerText('viewer.guided.caption.relationships', { count: step.edges.length }));
+        else if (step.relation !== 'start') facts.push(viewerText('viewer.guided.caption.relationship'));
+        if (step.relation === 'reverse') facts.push(viewerText('viewer.guided.caption.direction', { from: step.nodeLabel, to: step.previousLabel }));
         if (step.responsibility) facts.push(step.responsibility);
         if (step.context) facts.push(step.context);
-        if (!facts.length) facts.push('Authored starting point');
+        if (!facts.length) facts.push(viewerText('viewer.guided.caption.starting'));
         return facts.join(' · ');
       }
 
@@ -9662,17 +9824,17 @@
         if (beatLinkFeedbackTimer) clearTimeout(beatLinkFeedbackTimer);
         beatLinkFeedbackTimer = null;
         beatLink.removeAttribute('data-copy-state');
-        beatLinkLabel.textContent = 'Copy moment';
+        beatLinkLabel.textContent = viewerText('viewer.guided.copyMoment');
       }
 
       function syncBeatLink() {
         var step = storyBeatIndex >= 0 ? storySteps[storyBeatIndex] : null;
         var available = !!(activeIndex >= 0 && step && !currentHandoff);
         beatLink.disabled = !available;
-        if (!beatLink.hasAttribute('data-copy-state')) beatLinkLabel.textContent = 'Copy moment';
+        if (!beatLink.hasAttribute('data-copy-state')) beatLinkLabel.textContent = viewerText('viewer.guided.copyMoment');
         var description = available
-          ? 'Copy link to current story moment: Beat ' + (step.index + 1) + ' of ' + storySteps.length + ': ' + step.nodeLabel
-          : 'Select a Story Beat to copy its exact link';
+          ? viewerText('viewer.guided.beatLink', { index: step.index + 1, total: storySteps.length, label: step.nodeLabel })
+          : viewerText('viewer.guided.selectBeatLink');
         beatLink.setAttribute('aria-label', description);
         beatLink.title = description;
       }
@@ -9680,8 +9842,8 @@
       function setBeatLinkFeedback(copied) {
         resetBeatLinkFeedback();
         beatLink.setAttribute('data-copy-state', copied ? 'copied' : 'failed');
-        beatLinkLabel.textContent = copied ? 'Copied' : 'Copy failed';
-        beatLink.setAttribute('aria-label', copied ? 'Moment link copied' : 'Could not copy story moment link');
+        beatLinkLabel.textContent = viewerText(copied ? 'viewer.guided.copied' : 'viewer.guided.copyFailed');
+        beatLink.setAttribute('aria-label', viewerText(copied ? 'viewer.guided.momentCopied' : 'viewer.guided.momentCopyFailed'));
         beatLinkFeedbackTimer = setTimeout(function () {
           resetBeatLinkFeedback();
           syncBeatLink();
@@ -9935,7 +10097,7 @@
           stop.removeAttribute('aria-current');
         });
         note.setAttribute('aria-live', 'polite');
-        if (activeIndex >= 0) note.textContent = views[activeIndex].note || views[activeIndex].focus.length + ' selected nodes';
+        if (activeIndex >= 0) note.textContent = views[activeIndex].note || viewerText('viewer.guided.chapter.selectedNodes', { count: views[activeIndex].focus.length });
         renderStoryCaption(null, 0);
         renderShareCue();
         syncBeatLink();
@@ -10014,7 +10176,7 @@
           trail.appendChild(stop);
         });
         trail.hidden = labels.length === 0;
-        trail.setAttribute('aria-label', 'Story trail for ' + view.label + ': ' + labels.length + ' beats');
+        trail.setAttribute('aria-label', viewerText('viewer.guided.storyTrail', { label: view.label, count: labels.length }));
         trail.scrollLeft = 0;
         svg.setAttribute('data-story-active', view.id);
 
@@ -10093,21 +10255,39 @@
         syncStoryPlayback();
         play.disabled = !playing && !automaticPlaybackAllowed;
         play.setAttribute('aria-pressed', playing ? 'true' : 'false');
-        play.setAttribute('aria-label', playing ? 'Pause guided story' : (!automaticPlaybackAllowed ? 'Story playback unavailable while motion is Still' : (storyPlaybackComplete ? 'Replay guided story' : 'Play guided story')));
-        play.title = playing ? 'Pause guided story (P)' : (!automaticPlaybackAllowed ? 'Switch motion to Live to play the guided story' : (storyPlaybackComplete ? 'Replay guided story (P)' : 'Play guided story (P)'));
+        play.setAttribute('aria-label', viewerText(playing
+          ? 'viewer.guided.pause'
+          : !automaticPlaybackAllowed
+            ? 'viewer.guided.motionUnavailable'
+            : storyPlaybackComplete
+              ? 'viewer.guided.replay'
+              : 'viewer.guided.play'));
+        play.title = viewerText(playing
+          ? 'viewer.guided.pause.title'
+          : !automaticPlaybackAllowed
+            ? 'viewer.guided.enableMotion'
+            : storyPlaybackComplete
+              ? 'viewer.guided.replay.title'
+              : 'viewer.guided.play.title');
         playIcon.textContent = playing ? '\u2016' : '\u25b6';
-        playLabel.textContent = playing ? 'Pause' : (storyPlaybackComplete ? 'Replay story' : 'Play story');
+        playLabel.textContent = viewerText(playing
+          ? 'viewer.guided.pauseStory'
+          : storyPlaybackComplete
+            ? 'viewer.guided.replayStory'
+            : 'viewer.guided.playStory');
         if (storyCaption && !storyCaption.hidden) storyCaption.setAttribute('aria-live', playing ? 'off' : 'polite');
       }
 
       function render() {
         var view = views[activeIndex];
         count.textContent = activeIndex < 0 ? '0 / ' + views.length : (activeIndex + 1) + ' / ' + views.length;
-        label.textContent = view ? view.label : 'Explore this system';
+        label.textContent = view ? view.label : viewerText('viewer.guided.explore');
         note.setAttribute('aria-live', storyBeatIndex >= 0 ? 'off' : 'polite');
         note.textContent = storyBeatIndex >= 0
           ? storyBeatCopy(storySteps[storyBeatIndex], storySteps.length)
-          : (view ? (view.note || view.focus.length + ' selected nodes') : 'Step through curated paths without changing the source diagram.');
+          : (view
+            ? (view.note || viewerText('viewer.guided.chapter.selectedNodes', { count: view.focus.length }))
+            : viewerText('viewer.guided.intro'));
         prev.disabled = activeIndex < 0;
         next.disabled = activeIndex >= views.length - 1;
         all.disabled = activeIndex < 0;
@@ -11078,22 +11258,25 @@
         var semantic = state.mode === 'semantic' && state.scale > 1.01;
         var detail = detailLevel();
         var percent = Math.round(state.scale * 100) + '%';
-        var levelLabel = detail === 'map' ? 'MAP ' : detail === 'read' ? 'READ ' : 'FULL ';
+        var levelLabel = viewerText('viewer.nav.level.' + detail);
         var detailHint = detail === 'map'
-          ? 'Zoom in to reveal relationship labels and node context'
+          ? viewerText('viewer.nav.detail.map')
           : detail === 'read'
-            ? 'Zoom in again to reveal tags and annotations'
-            : 'Full diagram detail';
-        var resolvedLevel = (semantic ? 'AUTO ' : levelLabel).trim();
-        var showDetailLevel = resolvedLevel !== 'READ';
+            ? viewerText('viewer.nav.detail.read')
+            : viewerText('viewer.nav.detail.full');
+        var resolvedLevel = semantic ? viewerText('viewer.nav.level.auto') : levelLabel;
+        var showDetailLevel = semantic || detail !== 'read';
         if (resetDetailLabel) {
           resetDetailLabel.textContent = resolvedLevel;
           resetDetailLabel.hidden = !showDetailLevel;
         }
         if (resetPercentLabel) resetPercentLabel.textContent = percent;
         resetBtn.toggleAttribute('data-detail-visible', showDetailLevel);
-        resetBtn.title = (semantic ? 'Semantic camera active · ' : '') + detailHint + ' · reset view (0)';
-        resetBtn.setAttribute('aria-label', detailHint + '. Reset diagram view');
+        resetBtn.title = viewerText('viewer.nav.camera.title', {
+          semantic: semantic ? viewerText('viewer.nav.camera.semantic') : '',
+          hint: detailHint
+        });
+        resetBtn.setAttribute('aria-label', viewerText('viewer.nav.camera', { hint: detailHint }));
         resetBtn.setAttribute('data-detail-level', detail);
         container.setAttribute('data-detail-level', detail);
         container.setAttribute('data-camera-mode', state.mode);
@@ -11532,7 +11715,7 @@
       var placementGap = 16;
 
       mapSvg.setAttribute('role', 'group');
-      mapSvg.setAttribute('aria-label', 'Semantic diagram radar nodes');
+      mapSvg.setAttribute('aria-label', viewerText('viewer.radar.nodes'));
       mapSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
       nodeLayer.setAttribute('class', 'overview-map-nodes');
       viewport.setAttribute('class', 'overview-map-viewport');
@@ -11567,11 +11750,11 @@
           rect.setAttribute('data-kind', node.getAttribute('data-node-kind') || 'neutral');
           rect.setAttribute('tabindex', '0');
           rect.setAttribute('role', 'button');
-          rect.setAttribute('aria-label', 'Focus ' + nodeLabel(node, id) + ' from Semantic Radar');
+          rect.setAttribute('aria-label', viewerText('viewer.radar.focus', { label: nodeLabel(node, id) }));
           nodeLayer.appendChild(rect);
           nodes.push({ id: id, node: node, rect: rect });
         });
-        status.textContent = nodes.length + ' nodes · full map';
+        status.textContent = viewerText('viewer.radar.fullMap', { count: nodes.length });
         return true;
       }
       function visibleRect(element) {
@@ -11756,7 +11939,7 @@
           compact = true;
           panel.setAttribute('data-compact', 'true');
           panel.setAttribute('data-placement-degraded', 'true');
-          panel.setAttribute('title', 'Radar compacted to avoid covering the Semantic Passport or MAP controls.');
+          panel.setAttribute('title', viewerText('viewer.radar.compacted'));
           context = placementContext();
           placement = chooseRadarPlacement(context, reference, placementOptions);
         }
@@ -11794,8 +11977,8 @@
         panel.removeAttribute('data-placement-unavailable');
         trigger.setAttribute('aria-expanded', 'true');
         trigger.removeAttribute('data-radar-space-limited');
-        trigger.setAttribute('aria-label', 'Close semantic radar');
-        trigger.title = 'Semantic radar (M)';
+        trigger.setAttribute('aria-label', viewerText('viewer.radar.close'));
+        trigger.title = viewerText('viewer.nav.radar.title');
         feedback.hidden = true;
       }
       function scheduleSpaceRetry() {
@@ -11811,9 +11994,9 @@
         panel.hidden = true;
         panel.setAttribute('data-placement-unavailable', 'true');
         trigger.setAttribute('aria-expanded', 'false');
-        trigger.setAttribute('aria-label', 'Cancel semantic radar waiting for more MAP space');
+        trigger.setAttribute('aria-label', viewerText('viewer.radar.cancelWaiting'));
         trigger.setAttribute('data-radar-space-limited', 'true');
-        trigger.title = 'Semantic radar needs more visible MAP space';
+        trigger.title = viewerText('viewer.radar.needsSpace');
         feedback.hidden = false;
         scheduleSpaceRetry();
       }
@@ -11871,9 +12054,11 @@
         var full = visible.width >= viewBox.width * 0.98 && visible.height >= viewBox.height * 0.98;
         var mobileWide = window.innerWidth <= 720 && container.hasAttribute('data-wide-diagram');
         var viewportCopy = full
-          ? 'full map'
-          : (mobileWide ? Math.round(visible.width / viewBox.width * 100) + '% width' : Math.round(visible.scale * 100) + '% viewport');
-        status.textContent = nodes.length + ' nodes · ' + viewportCopy;
+          ? viewerText('viewer.radar.viewport.full')
+          : (mobileWide
+            ? viewerText('viewer.radar.viewport.width', { percent: Math.round(visible.width / viewBox.width * 100) })
+            : viewerText('viewer.radar.viewport.scale', { percent: Math.round(visible.scale * 100) }));
+        status.textContent = viewerText('viewer.radar.status', { count: nodes.length, viewport: viewportCopy });
         nodes.forEach(function (item) {
           var active = item.node.hasAttribute('data-focus-selected') ||
             item.node.getAttribute('data-story-beat-state') === 'active';
@@ -11914,8 +12099,8 @@
           feedback.hidden = true;
           trigger.setAttribute('aria-expanded', 'false');
           trigger.removeAttribute('data-radar-space-limited');
-          trigger.setAttribute('aria-label', 'Open semantic radar');
-          trigger.title = 'Semantic radar (M)';
+          trigger.setAttribute('aria-label', viewerText('viewer.nav.radar'));
+          trigger.title = viewerText('viewer.nav.radar.title');
           if (options.restoreFocus === true) trigger.focus();
         }
         return next;
@@ -12146,9 +12331,9 @@
 
       function render(next) {
         btn.setAttribute('aria-pressed', next ? 'true' : 'false');
-        btn.setAttribute('aria-label', next ? 'Exit presentation stage' : 'Enter presentation stage');
-        btn.title = next ? 'Exit presentation stage (F or Escape)' : 'Presentation stage (F)';
-        label.textContent = next ? 'Exit' : 'Present';
+        btn.setAttribute('aria-label', viewerText(next ? 'viewer.present.exit' : 'viewer.present.enter'));
+        btn.title = viewerText(next ? 'viewer.present.exit.title' : 'viewer.present.enter.title');
+        label.textContent = viewerText(next ? 'viewer.present.exit.label' : 'viewer.present.present');
       }
 
       function setActive(next, options) {
@@ -12217,11 +12402,11 @@
       function defaultContext() {
         return {
           kind: 'focus',
-          title: 'Find a node',
-          placeholder: 'Search labels or IDs',
-          empty: 'No matching nodes',
-          resultsLabel: 'Diagram nodes',
-          availableNoun: 'nodes',
+          title: viewerText('viewer.finder.title'),
+          placeholder: viewerText('viewer.finder.placeholder'),
+          empty: viewerText('viewer.finder.empty'),
+          resultsLabel: viewerText('viewer.finder.results'),
+          availableNoun: viewerText('viewer.finder.noun.nodes'),
           allowedIds: null,
           badges: null
         };
@@ -12346,13 +12531,13 @@
           var badge = context.badges && context.badges[item.id]
             ? context.badges[item.id]
             : context.kind === 'focus'
-              ? item.links + (item.links === 1 ? ' link' : ' links')
+              ? viewerCount('viewer.finder.link', item.links)
               : String(item.links);
           var action = context.kind === 'route-source'
-            ? 'Choose ' + item.label + ' as route start'
+            ? viewerText('viewer.finder.result.routeStart', { label: item.label })
             : context.kind === 'route-target'
-              ? 'Choose ' + item.label + ' as route destination, ' + badge
-              : 'Focus ' + item.label + ', ' + item.links + ' related connection' + (item.links === 1 ? '' : 's');
+              ? viewerText('viewer.finder.result.routeTarget', { label: item.label, links: badge })
+              : viewerCount('viewer.finder.result.focus', item.links, { label: item.label });
           button.setAttribute('aria-label', action);
 
           var name = document.createElement('strong');
@@ -12361,8 +12546,8 @@
           links.textContent = badge;
           links.title = context.kind === 'focus' ? badge : action;
           var meta = document.createElement('small');
-          meta.textContent = [item.type, item.id, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
-          meta.title = [item.type, item.id, item.context, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
+          meta.textContent = [viewerKindLabel(item.type), item.id, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
+          meta.title = [viewerKindLabel(item.type), item.id, item.context, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
           button.appendChild(name);
           button.appendChild(links);
           button.appendChild(meta);
@@ -12371,8 +12556,12 @@
         });
         empty.hidden = visibleItems.length !== 0;
         status.textContent = query
-          ? visibleItems.length + ' of ' + available.length + ' ' + context.availableNoun
-          : available.length + ' ' + context.availableNoun;
+          ? viewerText('viewer.finder.status.filtered', {
+              visible: visibleItems.length,
+              available: available.length,
+              noun: context.availableNoun
+            })
+          : viewerText('viewer.finder.status.all', { available: available.length, noun: context.availableNoun });
       }
 
       function open(options) {
@@ -12672,7 +12861,11 @@
             item.setAttribute('data-route-journey-index', String(index));
             item.setAttribute('data-route-node-id', id);
             item.setAttribute('tabindex', index === 0 ? '0' : '-1');
-            item.setAttribute('aria-label', 'Route position ' + (index + 1) + ' of ' + ids.length + ': ' + nodeLabel(byId[id], id));
+            item.setAttribute('aria-label', viewerText('viewer.route.position', {
+              index: index + 1,
+              total: ids.length,
+              label: nodeLabel(byId[id], id)
+            }));
           }
           item.className = 'route-probe-node';
           item.textContent = nodeLabel(byId[id], id);
@@ -12684,7 +12877,7 @@
       }
       function setTrigger(active) {
         trigger.setAttribute('aria-pressed', active ? 'true' : 'false');
-        trigger.setAttribute('aria-label', active ? 'Clear traced route' : 'Trace a directed route');
+        trigger.setAttribute('aria-label', viewerText(active ? 'viewer.route.trigger.clear' : 'viewer.guide.route.aria'));
       }
       function clear(options) {
         options = options || {};
@@ -12701,14 +12894,14 @@
         panel.hidden = true;
         panel.setAttribute('data-state', 'idle');
         panel.removeAttribute('data-finder-open');
-        title.textContent = 'Choose a start node';
-        renderPlaceholder('Pick two semantic nodes on the diagram');
-        status.textContent = 'Choose the source, then the destination. Direction matters.';
+        title.textContent = viewerText('viewer.route.start');
+        renderPlaceholder(viewerText('viewer.route.pickTwo'));
+        status.textContent = viewerText('viewer.route.instructions');
         findBtn.hidden = true;
-        findBtn.textContent = 'Find start';
-        findBtn.setAttribute('aria-label', 'Find a route start');
+        findBtn.textContent = viewerText('viewer.route.start.find');
+        findBtn.setAttribute('aria-label', viewerText('viewer.route.start.find.aria'));
         copyBtn.hidden = true;
-        copyBtn.textContent = 'Copy link';
+        copyBtn.textContent = viewerText('viewer.route.copy');
         if (Archify.exportMenu && typeof Archify.exportMenu.syncRouteShare === 'function') Archify.exportMenu.syncRouteShare();
         setTrigger(false);
         if (wasActive && options.preserveView !== true && Archify.view && typeof Archify.view.reset === 'function') {
@@ -12839,7 +13032,10 @@
           !Archify.motionGovernor.isPaused();
       }
       function routeOverviewStatus() {
-        return activeNodeIds.length + ' nodes · ' + activeEdges.length + ' directed hop' + (activeEdges.length === 1 ? '' : 's') + ' · shortest authored route';
+        return viewerText('viewer.route.overview.status', {
+          nodes: viewerCount('viewer.route.overview.node', activeNodeIds.length),
+          hops: viewerCount('viewer.route.overview.hop', activeEdges.length)
+        });
       }
       function centerJourneyButton(button) {
         if (!button) return;
@@ -12869,19 +13065,19 @@
         journeyPlayBtn.setAttribute('aria-pressed', journeyPlaying ? 'true' : 'false');
         if (journeyPlaying) {
           journeyPlayIcon.textContent = '\u275a\u275a';
-          journeyPlayLabel.textContent = 'Pause';
-          journeyPlayBtn.setAttribute('aria-label', 'Pause route journey');
-          journeyPlayBtn.title = 'Pause route journey';
+          journeyPlayLabel.textContent = viewerText('viewer.route.pause.label');
+          journeyPlayBtn.setAttribute('aria-label', viewerText('viewer.route.pause'));
+          journeyPlayBtn.title = viewerText('viewer.route.pause');
         } else if (journeyComplete || journeyIndex === activeNodeIds.length - 1) {
           journeyPlayIcon.textContent = '\u21bb';
-          journeyPlayLabel.textContent = 'Replay';
-          journeyPlayBtn.setAttribute('aria-label', 'Replay route journey');
-          journeyPlayBtn.title = canPlay ? 'Replay route journey' : 'Automatic journey requires Live motion';
+          journeyPlayLabel.textContent = viewerText('viewer.route.replay.label');
+          journeyPlayBtn.setAttribute('aria-label', viewerText('viewer.route.replay'));
+          journeyPlayBtn.title = viewerText(canPlay ? 'viewer.route.replay' : 'viewer.route.motionRequired');
         } else {
           journeyPlayIcon.textContent = '\u25b6';
-          journeyPlayLabel.textContent = 'Journey';
-          journeyPlayBtn.setAttribute('aria-label', 'Play route journey');
-          journeyPlayBtn.title = canPlay ? 'Play route journey' : 'Automatic journey requires Live motion';
+          journeyPlayLabel.textContent = viewerText('viewer.route.journey');
+          journeyPlayBtn.setAttribute('aria-label', viewerText('viewer.route.play'));
+          journeyPlayBtn.title = viewerText(canPlay ? 'viewer.route.play' : 'viewer.route.motionRequired');
         }
       }
       function journeyGeometry(shape) {
@@ -12972,8 +13168,17 @@
           else button.removeAttribute('aria-current');
         });
         if (options.center !== false) centerJourneyButton(buttons[journeyIndex]);
-        var phase = journeyPlaying ? 'Playing' : (journeyComplete ? 'Complete' : 'Inspecting');
-        status.textContent = 'Step ' + (journeyIndex + 1) + ' of ' + activeNodeIds.length + ' · ' + phase + ' · ' + nodeLabel(byId[activeNodeIds[journeyIndex]], activeNodeIds[journeyIndex]);
+        var phase = viewerText(journeyPlaying
+          ? 'viewer.route.phase.playing'
+          : journeyComplete
+            ? 'viewer.route.phase.complete'
+            : 'viewer.route.phase.inspecting');
+        status.textContent = viewerText('viewer.route.step', {
+          index: journeyIndex + 1,
+          total: activeNodeIds.length,
+          phase: phase,
+          label: nodeLabel(byId[activeNodeIds[journeyIndex]], activeNodeIds[journeyIndex])
+        });
         if (options.pulse === true && journeyIndex > 0) renderJourneyPulse(activeEdges[journeyIndex - 1]);
         if (options.reveal !== false && Archify.view && typeof Archify.view.reveal === 'function') {
           Archify.view.reveal(activeNodeIds.slice(Math.max(0, journeyIndex - 1), Math.min(activeNodeIds.length, journeyIndex + 2)), {
@@ -13145,15 +13350,15 @@
         });
         svg.setAttribute('data-route-picking', 'target');
         panel.setAttribute('data-state', 'target');
-        title.textContent = 'Choose a destination from ' + nodeLabel(byId[id], id);
+        title.textContent = viewerText('viewer.route.destination', { label: nodeLabel(byId[id], id) });
         renderPath([id]);
         var count = Math.max(0, Object.keys(reached).length - 1);
         status.textContent = count
-          ? count + ' directed destination' + (count === 1 ? '' : 's') + ' available. Pick a highlighted node.'
-          : 'No outgoing route starts here. Clear and choose another source.';
+          ? viewerCount('viewer.route.destination.count', count)
+          : viewerText('viewer.route.noOutgoing');
         findBtn.hidden = false;
-        findBtn.textContent = 'Find target';
-        findBtn.setAttribute('aria-label', 'Find a reachable route destination');
+        findBtn.textContent = viewerText('viewer.route.destination.find');
+        findBtn.setAttribute('aria-label', viewerText('viewer.route.destination.find.aria'));
         requestDocking();
         return true;
       }
@@ -13185,7 +13390,10 @@
         renderPath(result.nodes, { interactive: true });
         panel.setAttribute('data-state', 'result');
         panel.hidden = false;
-        title.textContent = nodeLabel(byId[startId], startId) + ' to ' + nodeLabel(byId[endId], endId);
+        title.textContent = viewerText('viewer.route.result.title', {
+          source: nodeLabel(byId[startId], startId),
+          target: nodeLabel(byId[endId], endId)
+        });
         findBtn.hidden = true;
         copyBtn.hidden = false;
         setTrigger(true);
@@ -13207,15 +13415,18 @@
         if (mode !== 'target') return false;
         if (id === startId) {
           panel.setAttribute('data-state', 'error');
-          title.textContent = 'Choose a different destination';
-          status.textContent = 'A route needs two distinct semantic nodes.';
+          title.textContent = viewerText('viewer.route.differentDestination');
+          status.textContent = viewerText('viewer.route.distinct');
           return false;
         }
         var result = shortestDirectedPath(startId, id);
         if (!result) {
           panel.setAttribute('data-state', 'error');
-          title.textContent = 'No directed route to ' + nodeLabel(byId[id], id);
-          status.textContent = nodeLabel(byId[id], id) + ' is not reachable from ' + nodeLabel(byId[startId], startId) + '. Pick a highlighted destination.';
+          title.textContent = viewerText('viewer.route.unreachable', { label: nodeLabel(byId[id], id) });
+          status.textContent = viewerText('viewer.route.unreachable.detail', {
+            target: nodeLabel(byId[id], id),
+            source: nodeLabel(byId[startId], startId)
+          });
           return false;
         }
         return showResult(result, options);
@@ -13243,12 +13454,12 @@
         panel.hidden = false;
         panel.setAttribute('data-state', 'source');
         svg.setAttribute('data-route-picking', 'source');
-        title.textContent = 'Choose a start node';
-        renderPlaceholder('Pick a semantic node on the diagram');
-        status.textContent = 'Select the source. The next step will reveal only directed destinations.';
+        title.textContent = viewerText('viewer.route.start');
+        renderPlaceholder(viewerText('viewer.route.pickOne'));
+        status.textContent = viewerText('viewer.route.start.instructions');
         findBtn.hidden = false;
-        findBtn.textContent = 'Find start';
-        findBtn.setAttribute('aria-label', 'Find a route start');
+        findBtn.textContent = viewerText('viewer.route.start.find');
+        findBtn.setAttribute('aria-label', viewerText('viewer.route.start.find.aria'));
         copyBtn.hidden = true;
         setTrigger(true);
         if (focused && nodesById()[focused]) chooseStart(focused);
@@ -13275,14 +13486,14 @@
             return outgoing[id] && outgoing[id].length;
           });
           var sourceBadges = {};
-          sourceIds.forEach(function (id) { sourceBadges[id] = 'start'; });
+          sourceIds.forEach(function (id) { sourceBadges[id] = viewerText('viewer.route.finder.source.badge'); });
           return {
             kind: 'route-source',
-            title: 'Choose route start',
-            placeholder: 'Search route sources',
-            empty: 'No matching route sources',
-            resultsLabel: 'Nodes that can start a route',
-            availableNoun: 'route sources',
+            title: viewerText('viewer.route.finder.source.title'),
+            placeholder: viewerText('viewer.route.finder.source.placeholder'),
+            empty: viewerText('viewer.route.finder.source.empty'),
+            resultsLabel: viewerText('viewer.route.finder.source.results'),
+            availableNoun: viewerText('viewer.route.finder.source.noun'),
             allowedIds: sourceIds,
             badges: sourceBadges
           };
@@ -13292,15 +13503,15 @@
           var targetIds = Object.keys(distances).filter(function (id) { return id !== startId && byId[id]; });
           var targetBadges = {};
           targetIds.forEach(function (id) {
-            targetBadges[id] = distances[id] + ' hop' + (distances[id] === 1 ? '' : 's');
+            targetBadges[id] = viewerCount('viewer.route.hop', distances[id]);
           });
           return {
             kind: 'route-target',
-            title: 'Destination from ' + nodeLabel(byId[startId], startId),
-            placeholder: 'Search reachable destinations',
-            empty: 'No matching reachable destinations',
-            resultsLabel: 'Reachable route destinations',
-            availableNoun: 'reachable destinations',
+            title: viewerText('viewer.route.finder.target.title', { label: nodeLabel(byId[startId], startId) }),
+            placeholder: viewerText('viewer.route.finder.target.placeholder'),
+            empty: viewerText('viewer.route.finder.target.empty'),
+            resultsLabel: viewerText('viewer.route.finder.target.results'),
+            availableNoun: viewerText('viewer.route.finder.target.noun'),
             allowedIds: targetIds,
             badges: targetBadges
           };
@@ -13341,11 +13552,11 @@
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
         return copy.then(function (copied) {
-          copyBtn.textContent = copied ? 'Copied' : 'Copy failed';
-          copyBtn.setAttribute('aria-label', copied ? 'Traced route link copied' : 'Could not copy traced route link');
+          copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
+          copyBtn.setAttribute('aria-label', viewerText(copied ? 'viewer.route.copy.success' : 'viewer.route.copy.failed'));
           window.setTimeout(function () {
-            copyBtn.textContent = 'Copy link';
-            copyBtn.setAttribute('aria-label', 'Copy link to traced route');
+            copyBtn.textContent = viewerText('viewer.route.copy');
+            copyBtn.setAttribute('aria-label', viewerText('viewer.route.copy.aria'));
           }, 1600);
           return copied;
         });
@@ -13498,12 +13709,6 @@
       var finePointerQuery = window.matchMedia ? window.matchMedia('(hover: hover) and (pointer: fine)') : null;
       var MAX_LENS_FLOW_EDGES = 24;
 
-      function kindLabel(value) {
-        return String(value || 'neutral')
-          .replace(/messagebus/gi, 'message bus')
-          .replace(/[-_]+/g, ' ')
-          .replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
-      }
       function nodesById() {
         var byId = {};
         Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id][data-node-kind]'), function (node) {
@@ -13518,7 +13723,7 @@
         Object.keys(byId).forEach(function (id) {
           var node = byId[id];
           var value = node.getAttribute('data-node-kind') || 'neutral';
-          var kind = kinds[value] || (kinds[value] = { id: value, label: kindLabel(value), nodes: [] });
+          var kind = kinds[value] || (kinds[value] = { id: value, label: viewerKindLabel(value), nodes: [] });
           kind.nodes.push(node);
         });
         return Object.keys(kinds).map(function (key) { return kinds[key]; }).sort(function (a, b) {
@@ -13622,7 +13827,7 @@
           entry.setAttribute('role', 'button');
           entry.setAttribute('tabindex', legendEntries.length ? '-1' : '0');
           var visibleLabel = entry.getAttribute('data-legend-label') || fact.label;
-          entry.setAttribute('aria-label', 'Inspect ' + visibleLabel + ', ' + count + ' node' + (count === 1 ? '' : 's'));
+          entry.setAttribute('aria-label', viewerCount('viewer.lens.legend.inspect', count, { label: visibleLabel }));
           entry.setAttribute('aria-pressed', 'false');
           entry.setAttribute('aria-haspopup', 'dialog');
           entry.setAttribute('aria-controls', 'semantic-lens');
@@ -13631,7 +13836,7 @@
         });
         if (!legendEntries.length) return false;
         legendBridge.setAttribute('role', legendEntries.length >= 3 ? 'toolbar' : 'group');
-        legendBridge.setAttribute('aria-label', 'Semantic legend');
+        legendBridge.setAttribute('aria-label', viewerText('viewer.lens.legend'));
         syncLegendBridge();
         layoutLegendBridge();
         try {
@@ -13779,7 +13984,7 @@
           button.className = 'semantic-lens-kind';
           button.setAttribute('data-kind', kind.id);
           button.setAttribute('aria-pressed', selectedKinds.indexOf(kind.id) >= 0 ? 'true' : 'false');
-          button.setAttribute('aria-label', kind.label + ', ' + kind.nodes.length + ' node' + (kind.nodes.length === 1 ? '' : 's'));
+          button.setAttribute('aria-label', viewerCount('viewer.lens.kind.count', kind.nodes.length, { label: kind.label }));
           button.disabled = selectedKinds.length >= 2 && selectedKinds.indexOf(kind.id) === -1;
           var swatch = document.createElement('span');
           swatch.className = 'semantic-lens-swatch';
@@ -13805,7 +14010,7 @@
       function updateTrigger() {
         var active = selectedKinds.length > 0;
         trigger.setAttribute('aria-pressed', active ? 'true' : 'false');
-        trigger.setAttribute('aria-label', active ? 'Open active semantic lens' : 'Open semantic lens');
+        trigger.setAttribute('aria-label', viewerText(active ? 'viewer.lens.openActive' : 'viewer.lens.open'));
         copyBtn.hidden = !active;
         syncLegendBridge();
       }
@@ -13851,7 +14056,7 @@
         var nodeKind = {};
         Object.keys(byId).forEach(function (id) { nodeKind[id] = byId[id].getAttribute('data-node-kind') || 'neutral'; });
         if (!selectedKinds.length) {
-          status.textContent = 'Choose a kind to inspect its nodes and touching relationships.';
+          status.textContent = viewerText('viewer.lens.choose');
           updateTrigger();
           renderKinds();
           dockPanel(byId);
@@ -13906,13 +14111,18 @@
         renderFlowOverlay(matchedFlow);
         if (crossKind) {
           var total = forward + reverse;
-          status.textContent = kindLabel(selectedKinds[0]) + ' → ' + kindLabel(selectedKinds[1]) + ': ' + forward + ' · ' +
-            kindLabel(selectedKinds[1]) + ' → ' + kindLabel(selectedKinds[0]) + ': ' + reverse + ' · ' +
-            total + ' direct relationship' + (total === 1 ? '' : 's');
+          status.textContent = viewerCount('viewer.lens.compare', total, {
+            first: viewerKindLabel(selectedKinds[0]),
+            second: viewerKindLabel(selectedKinds[1]),
+            forward: forward,
+            reverse: reverse
+          });
         } else {
           var nodeCount = collectKinds().filter(function (kind) { return kind.id === selectedKinds[0]; })[0].nodes.length;
-          status.textContent = nodeCount + ' ' + kindLabel(selectedKinds[0]) + ' node' + (nodeCount === 1 ? '' : 's') + ' · ' +
-            touching + ' touching relationship' + (touching === 1 ? '' : 's') + ' · connected peers remain visible';
+          status.textContent = viewerText('viewer.lens.single', {
+            nodes: viewerCount('viewer.lens.node', nodeCount, { label: viewerKindLabel(selectedKinds[0]) }),
+            relationships: viewerCount('viewer.lens.relationship', touching)
+          });
         }
         updateTrigger();
         renderKinds();
@@ -13985,7 +14195,7 @@
         panel.removeAttribute('data-dock-side');
         updateTrigger();
         renderKinds();
-        status.textContent = 'Choose a kind to inspect its nodes and touching relationships.';
+        status.textContent = viewerText('viewer.lens.choose');
         if (options.updateUrl !== false) updateHash();
         if (options.preserveView !== true && Archify.view && typeof Archify.view.reset === 'function') {
           Archify.view.reset({ automatic: true });
@@ -14013,8 +14223,8 @@
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
         return copy.then(function (copied) {
-          copyBtn.textContent = copied ? 'Copied' : 'Copy failed';
-          window.setTimeout(function () { copyBtn.textContent = 'Copy link'; }, 1600);
+          copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
+          window.setTimeout(function () { copyBtn.textContent = viewerText('viewer.common.copyLink'); }, 1600);
           return copied;
         });
       }
@@ -14186,14 +14396,16 @@
         var nodes = svg.querySelectorAll('[data-node-id]').length;
         var relationships = relationshipCount();
         var views = viewCount();
-        stats.textContent = nodes + ' semantic node' + (nodes === 1 ? '' : 's') + ' · ' +
-          relationships + ' relationship' + (relationships === 1 ? '' : 's') + ' · ' +
-          views + ' guided view' + (views === 1 ? '' : 's');
+        stats.textContent = viewerText('viewer.guide.facts', {
+          nodes: viewerCount('viewer.guide.fact.node', nodes),
+          relationships: viewerCount('viewer.guide.fact.relationship', relationships),
+          views: viewerCount('viewer.guide.fact.view', views)
+        });
         storyBtn.disabled = views === 0;
         storyBtn.setAttribute('aria-disabled', views === 0 ? 'true' : 'false');
         storyCopy.textContent = views
-          ? 'Walk ' + views + ' authored chapter' + (views === 1 ? '' : 's') + ' and their real relationships.'
-          : 'No authored guided story in this diagram.';
+          ? viewerCount('viewer.guide.story.available', views)
+          : viewerText('viewer.guide.story.unavailable');
       }
       function actionButtons() {
         return Array.prototype.slice.call(actions.querySelectorAll('.diagram-guide-action:not(:disabled)'));
@@ -14204,7 +14416,7 @@
         html.removeAttribute('data-guide-open');
         routePanel.removeAttribute('data-guide-open');
         trigger.setAttribute('aria-expanded', 'false');
-        trigger.setAttribute('aria-label', 'Open diagram guide');
+        trigger.setAttribute('aria-label', viewerText('viewer.guide.open'));
         feedback.textContent = '';
         if (options.restoreFocus !== false) trigger.focus();
         return false;
@@ -14227,7 +14439,7 @@
         html.setAttribute('data-guide-open', 'true');
         routePanel.setAttribute('data-guide-open', 'true');
         trigger.setAttribute('aria-expanded', 'true');
-        trigger.setAttribute('aria-label', 'Close diagram guide');
+        trigger.setAttribute('aria-label', viewerText('viewer.guide.close'));
         feedback.textContent = '';
         requestAnimationFrame(function () {
           var first = actionButtons()[0];
@@ -14239,7 +14451,7 @@
       function execute(action) {
         feedback.textContent = '';
         if (action === 'story' && !viewCount()) {
-          feedback.textContent = 'This diagram has no authored guided story.';
+          feedback.textContent = viewerText('viewer.guide.noStory');
           return false;
         }
         close({ restoreFocus: false });
