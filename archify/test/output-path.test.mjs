@@ -75,15 +75,18 @@ test('future-path aliases follow the containing directory case and Unicode seman
   );
 });
 
-test('compare rejects case-only future targets before input work when the directory aliases case', () => {
+test('compare rejects case-only receipt aliases of an input when the directory aliases case', () => {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-compare-case-'));
   const caseInsensitive = directoryAliasesNames(cwd, 'ArchifyCaseProbe', 'archifycaseprobe');
+  const base = path.join(cwd, 'Base.JSON');
   const output = path.join(cwd, 'Future.HTML');
-  const receiptPath = path.join(cwd, 'future.html');
+  const receiptPath = path.join(cwd, 'base.json');
+  const baseSource = fs.readFileSync(baseFixture);
+  fs.writeFileSync(base, baseSource);
 
   const result = run([
     'compare', 'architecture',
-    path.join(cwd, 'missing-base.json'),
+    base,
     path.join(cwd, 'missing-head.json'),
     output,
     '--receipt', receiptPath,
@@ -94,9 +97,10 @@ test('compare rejects case-only future targets before input work when the direct
   const receipt = JSON.parse(result.stdout);
   assert.equal(
     receipt.diagnostics[0].code,
-    caseInsensitive ? 'output/target-alias' : 'delta/base-input',
+    caseInsensitive ? 'output/input-alias' : 'delta/head-input',
   );
   assert.equal(receipt.stage, caseInsensitive ? 'prepare' : 'input');
+  assert.deepEqual(fs.readFileSync(base), baseSource);
 });
 
 test('render reports an output symlink cycle as a structured output diagnostic', () => {
@@ -397,7 +401,8 @@ test('compare rejects a dangling receipt symlink to the future artifact path', (
   assert.equal(result.status, 1);
   const receipt = JSON.parse(result.stdout);
   assert.equal(receipt.stage, 'prepare');
-  assert.equal(receipt.diagnostics[0].code, 'output/target-alias');
+  // Symlink resolves to the .html artifact, so the receipt fails the .json extension guard.
+  assert.equal(receipt.diagnostics[0].code, 'output/cli-resolved-extension');
   assert.equal(fs.lstatSync(receiptPath).isSymbolicLink(), true);
   assert.equal(fs.existsSync(output), false);
 });
@@ -584,4 +589,56 @@ test('doctor reports a missing output-path safety runtime in an installed skill'
 
   assert.equal(result.status, 1);
   assert.match(result.stdout, /\[missing\] Output path safety runtime/);
+});
+
+test('deliver rejects a CLI output that escapes the working directory', () => {
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-cli-parent-'));
+  const cwd = path.join(parent, 'work');
+  fs.mkdirSync(cwd);
+  const input = path.join(cwd, 'diagram.workflow.json');
+  const escaped = path.join(parent, 'marker.env');
+  fs.copyFileSync(workflowFixture, input);
+  fs.writeFileSync(escaped, 'preserve-me\n');
+
+  const result = run(['deliver', 'workflow', input, '../marker.env', '--json'], cwd);
+
+  assert.equal(result.status, 1);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.ok, false);
+  assert.equal(receipt.diagnostics[0].code, 'output/cli-extension');
+  assert.equal(fs.readFileSync(escaped, 'utf8'), 'preserve-me\n');
+});
+
+test('deliver rejects a CLI .html path that escapes the working directory', () => {
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-cli-html-parent-'));
+  const cwd = path.join(parent, 'work');
+  fs.mkdirSync(cwd);
+  const input = path.join(cwd, 'diagram.workflow.json');
+  const escaped = path.join(parent, 'escaped.html');
+  fs.copyFileSync(workflowFixture, input);
+
+  const result = run(['deliver', 'workflow', input, '../escaped.html', '--json'], cwd);
+
+  assert.equal(result.status, 1);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.ok, false);
+  assert.equal(receipt.diagnostics[0].code, 'output/cli-outside-cwd');
+  assert.equal(fs.existsSync(escaped), false);
+});
+
+test('compare rejects a non-json CLI receipt path', () => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-cli-receipt-ext-'));
+  const output = path.join(cwd, 'delta.html');
+  const receiptPath = path.join(cwd, 'delta.receipt.html');
+
+  const result = run([
+    'compare', 'architecture', baseFixture, headFixture, output,
+    '--receipt', receiptPath, '--json',
+  ], cwd);
+
+  assert.equal(result.status, 1);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.stage, 'prepare');
+  assert.equal(receipt.diagnostics[0].code, 'output/cli-extension');
+  assert.equal(fs.existsSync(output), false);
 });
