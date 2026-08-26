@@ -418,7 +418,7 @@ test('architecture: boundary labels reserve readable space above wrapped compone
   assert.equal(code, 0, stderr);
   const html = fs.readFileSync(outPath, 'utf8');
   const label = html.match(
-    /<text data-boundary-label x="[^"]+" y="([^"]+)" class="t-security" font-size="[^"]+" font-weight="600">Tool effects and permissions<\/text>/,
+    /<text data-boundary-label="" x="[^"]+" y="([^"]+)" class="t-security" font-size="[^"]+" font-weight="600">Tool effects and permissions<\/text>/,
   );
   assert.ok(label, 'expected the security boundary label');
   const labelBaseline = Number(label[1]);

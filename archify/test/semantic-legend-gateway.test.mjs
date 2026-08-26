@@ -48,7 +48,7 @@ test('only legends with an exact node-kind meaning publish bridge entries', () =
   const architecture = canonicalSvg(render('architecture'));
   const architectureKinds = new Set(values(architecture, 'data-node-kind'));
   assert.deepEqual(new Set(values(architecture, 'data-legend-kind')), architectureKinds);
-  assert.equal((architecture.match(/data-legend-bridge(?:\s|>)/g) || []).length, 1);
+  assert.equal((architecture.match(/data-legend-bridge=""/g) || []).length, 1);
 
   const workflow = canonicalSvg(render('workflow', (document) => {
     // The production fixture intentionally fills its legend band with authored
@@ -81,7 +81,7 @@ test('only legends with an exact node-kind meaning publish bridge entries', () =
     'emphasis', 'security', 'dashed', 'database', 'default',
   ]);
   assert.deepEqual(values(dataflow, 'data-legend-kind'), ['database']);
-  assert.equal((dataflow.match(/data-legend-bridge(?:\s|>)/g) || []).length, 1);
+  assert.equal((dataflow.match(/data-legend-bridge=""/g) || []).length, 1);
   assert.ok(values(dataflow, 'data-node-kind').includes('database'));
   assert.match(dataflow, />Legend</);
 });

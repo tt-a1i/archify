@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { extractInlineSvgs, parseXml } from './helpers/xml.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -382,26 +383,44 @@ test('cli: deliver works from an installed skill without node_modules', () => {
   const installedRoot = path.join(tmp, 'installed-deliver-skill');
   copyInstalledSkill(installedRoot);
   const installedCli = path.join(installedRoot, 'bin/archify.mjs');
-  const cases = {
-    architecture: 'web-app.architecture.json',
-    workflow: 'agent-tool-call.workflow.json',
-    sequence: 'cache-miss-request.sequence.json',
-    dataflow: 'product-analytics.dataflow.json',
-    lifecycle: 'agent-run.lifecycle.json',
-  };
+  const cases = [
+    ['architecture-boundaries', 'architecture', 'production-deployment.architecture.json'],
+    ['architecture-issue-110', 'architecture', 'brand-aware-delivery.architecture.json'],
+    ['workflow', 'workflow', 'agent-tool-call.workflow.json'],
+    ['sequence', 'sequence', 'cache-miss-request.sequence.json'],
+    ['dataflow', 'dataflow', 'product-analytics.dataflow.json'],
+    ['lifecycle', 'lifecycle', 'agent-run.lifecycle.json'],
+  ];
 
-  for (const [type, example] of Object.entries(cases)) {
+  for (const [label, type, example] of cases) {
     const input = path.join(installedRoot, 'examples', example);
-    const out = path.join(tmp, `installed-${type}-delivery.html`);
+    const out = path.join(tmp, `installed-${label}-delivery.html`);
     const result = spawnSync(process.execPath, [installedCli, 'deliver', type, input, out, '--json'], {
       cwd: installedRoot,
       encoding: 'utf8',
     });
 
-    assert.equal(result.status, 0, `${type}: ${result.stderr}`);
-    assert.equal(JSON.parse(result.stdout).validation.checkCount, 9, type);
-    assert.equal(fs.existsSync(out), true, type);
+    assert.equal(result.status, 0, `${label}: ${result.stderr}`);
+    assert.equal(JSON.parse(result.stdout).validation.checkCount, 9, label);
+    assert.equal(fs.existsSync(out), true, label);
+    const [svg = ''] = extractInlineSvgs(fs.readFileSync(out, 'utf8'));
+    assert.notEqual(svg, '', `${label}: expected one delivered SVG`);
+    assert.doesNotThrow(() => parseXml(svg), `${label}: delivered SVG must be well-formed XML`);
   }
+});
+
+test('cli: deliver XML guard parses markup instead of scanning attribute-like text', () => {
+  assert.doesNotThrow(() => parseXml(
+    '<svg xmlns="http://www.w3.org/2000/svg" aria-label="mentions data-node-label safely"/>',
+  ));
+  assert.throws(
+    () => parseXml('<svg xmlns="http://www.w3.org/2000/svg" data-node-label></svg>'),
+    /attribute without value/i,
+  );
+  assert.throws(
+    () => parseXml('<svg xmlns="http://www.w3.org/2000/svg"><g></svg>'),
+    /unexpected close tag/i,
+  );
 });
 
 test('cli: preview runs from an installed skill without node_modules and exits cleanly', { timeout: 30000 }, async () => {

@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "ajv": "^8.17.1",
+    "saxes": "6.0.0",
     "simple-icons": "16.28.0"
   }
 }
