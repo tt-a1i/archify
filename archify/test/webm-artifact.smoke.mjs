@@ -371,7 +371,7 @@ try {
       url.searchParams.set('theme', theme);
       await navigateReady(url, '!!(window.Archify && Archify.semanticLens)', `legend ${theme}`);
       const result = await evaluate(cdp, sessionId, `(() => {
-        var svg = document.querySelector('.diagram-container > svg');
+        var svg = document.querySelector('.diagram-container > .diagram-stage > svg');
         var entries = Array.from(svg.querySelectorAll('[data-legend-semantic-kind]'));
         var vb = svg.viewBox.baseVal;
         return {
@@ -440,7 +440,7 @@ try {
 
     await navigateReady(outputs.custom, '!!(window.Archify && Archify.semanticLens && Archify.exportMenu)', 'custom legend runtime');
     const runtime = await evaluate(cdp, sessionId, String.raw`(async function () {
-      var svg = document.querySelector('.diagram-container > svg');
+      var svg = document.querySelector('.diagram-container > .diagram-stage > svg');
       var entries = Array.from(svg.querySelectorAll('[data-legend-semantic-kind]'));
       var interactive = entries.filter(function (entry) { return entry.hasAttribute('data-legend-kind'); });
       var first = interactive[0];
@@ -553,7 +553,7 @@ try {
       var chip = document.querySelector('#focus-chip');
       var close = document.querySelector('#btn-focus-clear');
       var container = document.querySelector('.diagram-container');
-      var svg = container.querySelector(':scope > svg');
+      var svg = container.querySelector(':scope > .diagram-stage > svg');
       var origin = svg.querySelector('[data-node-id="clients"]');
       var neighbor = svg.querySelector('[data-node-id]:not([data-node-id="clients"])');
       if (!origin || !neighbor) return { ok: false, error: 'missing smoke-test nodes' };

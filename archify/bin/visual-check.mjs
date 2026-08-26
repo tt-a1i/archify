@@ -381,7 +381,11 @@ export class ChromeVisualBrowser {
     const metrics = await evaluate(this.cdp, sessionId, `(function () {
       var reader = document.querySelector('.container');
       var diagram = document.querySelector('.diagram-container');
-      var svg = diagram && diagram.querySelector(':scope > svg');
+      var svg = diagram && (
+        diagram.querySelector(':scope > .diagram-stage > svg') ||
+        diagram.querySelector(':scope > svg')
+      );
+      var stage = diagram && (diagram.querySelector(':scope > .diagram-stage') || svg);
       var legend = svg && svg.querySelector('[data-legend]');
       var navigationDock = diagram && diagram.querySelector('.diagram-nav');
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
@@ -415,8 +419,9 @@ export class ChromeVisualBrowser {
         return width * height;
       }
       var legendRect = legend ? legend.getBoundingClientRect() : null;
-      var svgRect = svg ? svg.getBoundingClientRect() : null;
+      var stageRect = stage ? stage.getBoundingClientRect() : null;
       var navigationDockRect = navigationDock ? navigationDock.getBoundingClientRect() : null;
+      var stageDockIntersectionArea = intersectionArea(stageRect, navigationDockRect);
       var viewerChromeReceipt = window.Archify && Archify.viewerChromeLayout
         && typeof Archify.viewerChromeLayout.receipt === 'function'
         ? Archify.viewerChromeLayout.receipt()
@@ -435,9 +440,11 @@ export class ChromeVisualBrowser {
         minimumProjectedNodeTextDetail: minimum ? minimum.detail : null,
         hasLegend: Boolean(legendRect && legendRect.width && legendRect.height),
         hasNavigationDock: Boolean(navigationDockRect && navigationDockRect.width && navigationDockRect.height),
-        legendDockIntersectionArea: intersectionArea(legendRect, navigationDockRect),
-        dockStageIntersectionArea: intersectionArea(svgRect, navigationDockRect),
-        dockStageGap: svgRect && navigationDockRect ? navigationDockRect.top - svgRect.bottom : null,
+        legendDockIntersectionArea: stageDockIntersectionArea > 0
+          ? intersectionArea(legendRect, navigationDockRect)
+          : 0,
+        dockStageIntersectionArea: stageDockIntersectionArea,
+        dockStageGap: stageRect && navigationDockRect ? navigationDockRect.top - stageRect.bottom : null,
         viewerChromeRequiredGap: viewerChromeReceipt ? viewerChromeReceipt.gap : null,
         viewerChromeReserve: viewerChromeReceipt ? viewerChromeReceipt.reserve : 0,
         viewerChromeActive: viewerChromeReceipt ? viewerChromeReceipt.active : false

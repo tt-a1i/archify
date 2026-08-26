@@ -34,6 +34,25 @@ function render(mode, example) {
   return output;
 }
 
+function renderWithoutLegend() {
+  const source = JSON.parse(fs.readFileSync(
+    path.join(skillRoot, 'examples', CASES.architecture),
+    'utf8',
+  ));
+  source.meta = { ...source.meta, legend: { mode: 'hidden' } };
+  const input = path.join(tmp, 'architecture-no-legend.json');
+  const output = path.join(tmp, 'architecture-no-legend.html');
+  fs.writeFileSync(input, `${JSON.stringify(source, null, 2)}\n`);
+  execFileSync(process.execPath, [
+    path.join(skillRoot, 'bin', 'archify.mjs'),
+    'render',
+    'architecture',
+    input,
+    output,
+  ]);
+  return output;
+}
+
 function canonicalSvg(html) {
   return html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
 }
@@ -74,7 +93,7 @@ async function waitForLayout(browser, sessionId) {
           var container = document.querySelector('.diagram-container');
           var current = [
             rect(container),
-            rect(container && container.querySelector(':scope > svg')),
+            rect(container && container.querySelector(':scope > .diagram-stage > svg')),
             rect(document.querySelector('.diagram-nav')),
             rect(document.querySelector('[data-legend]')),
             rect(document.getElementById('semantic-lens')),
@@ -113,9 +132,10 @@ async function finalGeometry(browser, sessionId) {
         Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
     }
     var container = document.querySelector('.diagram-container');
+    var stage = container && container.querySelector(':scope > .diagram-stage');
     var legend = document.querySelector('[data-legend]');
     var nav = document.querySelector('.diagram-nav');
-    var svg = container && container.querySelector(':scope > svg');
+    var svg = container && container.querySelector(':scope > .diagram-stage > svg');
     var lens = document.getElementById('semantic-lens');
     var radar = document.getElementById('overview-map');
     var passport = document.getElementById('focus-chip');
@@ -141,11 +161,12 @@ async function finalGeometry(browser, sessionId) {
     }
     var legendRect = legend && getComputedStyle(legend).display !== 'none' ? legend.getBoundingClientRect() : null;
     var navRect = nav && getComputedStyle(nav).display !== 'none' ? nav.getBoundingClientRect() : null;
-    var svgRect = svg ? svg.getBoundingClientRect() : null;
+    var stageRect = stage ? stage.getBoundingClientRect() : null;
     var lensRect = lens && !lens.hidden && getComputedStyle(lens).display !== 'none' ? lens.getBoundingClientRect() : null;
     var radarRect = radar && !radar.hidden && getComputedStyle(radar).display !== 'none' ? radar.getBoundingClientRect() : null;
     var passportRect = passport && !passport.hidden && getComputedStyle(passport).display !== 'none' ? passport.getBoundingClientRect() : null;
-    var semanticDockIntersectionArea = navRect && svg
+    var stageDockIntersectionArea = area(stageRect, navRect);
+    var semanticDockIntersectionArea = stageDockIntersectionArea > 0 && navRect && svg
       ? Array.from(svg.querySelectorAll('[data-node-id]')).reduce(function (maximum, node) {
           return Math.max(maximum, area(node.getBoundingClientRect(), navRect));
         }, 0)
@@ -156,9 +177,9 @@ async function finalGeometry(browser, sessionId) {
       receiptEligible: chromeReceipt ? chromeReceipt.eligible : null,
       receiptStageIntersectionArea: chromeReceipt ? chromeReceipt.stageIntersectionArea : null,
       minimumProjectedNodeTextPx: minimumProjectedNodeTextPx,
-      stageGap: navRect && svgRect ? navRect.top - svgRect.bottom : null,
-      dockStageIntersectionArea: area(svgRect, navRect),
-      legendDockIntersectionArea: area(legendRect, navRect),
+      stageGap: navRect && stageRect ? navRect.top - stageRect.bottom : null,
+      dockStageIntersectionArea: stageDockIntersectionArea,
+      legendDockIntersectionArea: stageDockIntersectionArea > 0 ? area(legendRect, navRect) : 0,
       semanticDockIntersectionArea: semanticDockIntersectionArea,
       legendLensIntersectionArea: area(legendRect, lensRect),
       navLensIntersectionArea: area(navRect, lensRect),
@@ -181,6 +202,27 @@ async function finalGeometry(browser, sessionId) {
       receiptGap: chromeReceipt ? chromeReceipt.gap : null,
       navBottom: navRect ? navRect.bottom : null
     };
+  })()`);
+}
+
+async function edgePaintHitsUnderDock(browser, sessionId, selector) {
+  return evaluate(browser, sessionId, `(function () {
+    var edge = document.querySelector(${JSON.stringify(selector)});
+    var nav = document.querySelector('.diagram-nav');
+    if (!edge || !nav || typeof edge.getTotalLength !== 'function') return null;
+    var navRect = nav.getBoundingClientRect();
+    var matrix = edge.getScreenCTM();
+    var length = edge.getTotalLength();
+    var hits = [];
+    for (var offset = 0; offset <= length; offset += 0.25) {
+      var point = edge.getPointAtLength(offset).matrixTransform(matrix);
+      if (point.x < navRect.left || point.x > navRect.right || point.y < navRect.top || point.y > navRect.bottom) continue;
+      if (document.elementsFromPoint(point.x, point.y).includes(edge)) {
+        hits.push({ x: point.x, y: point.y });
+        if (hits.length >= 5) break;
+      }
+    }
+    return hits;
   })()`);
 }
 
@@ -261,13 +303,7 @@ test('an artifact with no Legend still receives the desktop stage rail', {
 }, async () => {
   const browser = new ChromeVisualBrowser(chromePath);
   try {
-    const sessionId = await load(browser, render('architecture', CASES.architecture));
-    await evaluate(browser, sessionId, `(function () {
-      var legend = document.querySelector('[data-legend]');
-      if (legend) legend.remove();
-      return Archify.viewerChromeLayout.reprobe();
-    })()`, true);
-    await waitForLayout(browser, sessionId);
+    const sessionId = await load(browser, renderWithoutLegend());
     const receipt = await finalGeometry(browser, sessionId);
 
     assert.equal(receipt.hasLegend, false, JSON.stringify(receipt));
@@ -418,7 +454,7 @@ test('manual zoom and pan reschedules Legend and Dock collision measurement', {
       var container = document.querySelector('.diagram-container');
       var zoomIn = document.querySelector('[data-view="in"]');
       for (var index = 0; index < 8; index += 1) zoomIn.click();
-      var svg = container.querySelector(':scope > svg');
+      var svg = container.querySelector(':scope > .diagram-stage > svg');
       var rect = svg.getBoundingClientRect();
       var pointer = { bubbles: true, pointerId: 7, button: 0 };
       var startX = rect.left + rect.width / 2;
@@ -438,7 +474,39 @@ test('manual zoom and pan reschedules Legend and Dock collision measurement', {
   }
 });
 
-test('zoom keeps the desktop rail bounded and reports transformed stage geometry truthfully', {
+test('camera pan clips authored relationship paint at the protected stage boundary', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const sessionId = await load(browser, render('architecture', CASES.architecture));
+    await evaluate(browser, sessionId, `(function () {
+      var container = document.querySelector('.diagram-container');
+      var zoomIn = document.querySelector('[data-view="in"]');
+      for (var index = 0; index < 8; index += 1) zoomIn.click();
+      var svg = container.querySelector(':scope > .diagram-stage > svg');
+      var rect = svg.getBoundingClientRect();
+      var pointer = { bubbles: true, pointerId: 11, button: 0 };
+      var startX = rect.left + rect.width / 2;
+      var startY = rect.top + rect.height / 2;
+      container.dispatchEvent(new PointerEvent('pointerdown', Object.assign({ clientX: startX, clientY: startY }, pointer)));
+      container.dispatchEvent(new PointerEvent('pointermove', Object.assign({ clientX: startX, clientY: startY + 500 }, pointer)));
+      container.dispatchEvent(new PointerEvent('pointerup', Object.assign({ clientX: startX, clientY: startY + 500 }, pointer)));
+    })()`);
+    await waitForLayout(browser, sessionId);
+    const hits = await edgePaintHitsUnderDock(
+      browser,
+      sessionId,
+      'path[data-edge-id="jwt-verification"][data-edge-from="auth"][data-edge-to="api"]',
+    );
+
+    assert.deepEqual(hits, [], JSON.stringify(hits));
+  } finally {
+    await browser.close();
+  }
+});
+
+test('zoom keeps the desktop rail stable and reports protected stage geometry', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
   const browser = new ChromeVisualBrowser(chromePath);
@@ -449,7 +517,7 @@ test('zoom keeps the desktop rail bounded and reports transformed stage geometry
       var container = document.querySelector('.diagram-container');
       var zoomIn = document.querySelector('[data-view="in"]');
       for (var index = 0; index < 8; index += 1) zoomIn.click();
-      var svg = container.querySelector(':scope > svg');
+      var svg = container.querySelector(':scope > .diagram-stage > svg');
       var rect = svg.getBoundingClientRect();
       var pointer = { bubbles: true, pointerId: 13, button: 0 };
       var startX = rect.left + rect.width / 2;
@@ -461,14 +529,9 @@ test('zoom keeps the desktop rail bounded and reports transformed stage geometry
     await waitForLayout(browser, sessionId);
     const zoomed = await finalGeometry(browser, sessionId);
 
-    assert.ok(
-      zoomed.reserve <= baseline.reserve + zoomed.containerHeight * 0.25 + 1,
-      JSON.stringify({ baseline, zoomed }),
-    );
-    assert.ok(
-      Math.abs(zoomed.receiptStageIntersectionArea - zoomed.dockStageIntersectionArea) <= 0.5,
-      JSON.stringify({ baseline, zoomed }),
-    );
+    assert.ok(Math.abs(zoomed.reserve - baseline.reserve) <= 1, JSON.stringify({ baseline, zoomed }));
+    assert.equal(zoomed.dockStageIntersectionArea, 0, JSON.stringify({ baseline, zoomed }));
+    assert.equal(zoomed.receiptStageIntersectionArea, 0, JSON.stringify({ baseline, zoomed }));
   } finally {
     await browser.close();
   }
@@ -486,7 +549,7 @@ test('Reset followed immediately by zoom and pan retains a collision-free deskto
       document.querySelector('[data-view="reset"]').click();
       var zoomIn = document.querySelector('[data-view="in"]');
       for (var index = 0; index < 8; index += 1) zoomIn.click();
-      var svg = container.querySelector(':scope > svg');
+      var svg = container.querySelector(':scope > .diagram-stage > svg');
       var rect = svg.getBoundingClientRect();
       var pointer = { bubbles: true, pointerId: 11, button: 0 };
       var startX = rect.left + rect.width / 2;
@@ -548,16 +611,21 @@ test('zoomed camera restores its bounded desktop rail after crossing the mobile 
   }
 });
 
-test('localized multiline Legends remain clear across themes, presets, and zoom levels', {
+test('localized multiline Legends remain clear across required viewports, themes, and presets', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
   const browser = new ChromeVisualBrowser(chromePath);
-  const cases = [
-    { preset: 'classic', theme: 'light', zoom: 1 },
-    { preset: 'signal-flow', theme: 'dark', zoom: 1.25 },
-    { preset: 'blueprint', theme: 'light', zoom: 2 },
-    { preset: 'editorial', theme: 'dark', zoom: 2 },
-  ];
+  const viewports = [[1440, 900], [1600, 1000], [1920, 1080], [2048, 1320]];
+  const cases = viewports.flatMap(([width, height]) => (
+    ['light', 'dark'].flatMap((theme) => (
+      ['classic', 'signal-flow', 'blueprint', 'editorial'].map((preset) => ({
+        width,
+        height,
+        theme,
+        preset,
+      }))
+    ))
+  ));
   try {
     const sessionId = await load(browser, render('architecture', CASES.architecture), { width: 1920, height: 1080 });
     await evaluate(browser, sessionId, `(function () {
@@ -577,13 +645,18 @@ test('localized multiline Legends remain clear across themes, presets, and zoom 
     })()`);
 
     for (const entry of cases) {
+      await browser.cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: entry.width,
+        height: entry.height,
+        deviceScaleFactor: 1,
+        mobile: false,
+      }, sessionId);
       await evaluate(browser, sessionId, `(function () {
         var html = document.documentElement;
         var nav = document.querySelector('.diagram-nav');
         html.setAttribute('data-preset', ${JSON.stringify(entry.preset)});
         html.setAttribute('data-theme', ${JSON.stringify(entry.theme)});
-        html.style.fontSize = ${JSON.stringify(`${entry.zoom * 100}%`)};
-        document.body.style.zoom = ${JSON.stringify(String(entry.zoom))};
+        document.querySelector('[data-view="reset"]').click();
         nav.removeAttribute('style');
         window.dispatchEvent(new Event('resize'));
       })()`);
@@ -595,10 +668,9 @@ test('localized multiline Legends remain clear across themes, presets, and zoom 
           var legend = document.querySelector('[data-legend]').getBoundingClientRect();
           var nav = document.querySelector('.diagram-nav');
           var containerRect = container.getBoundingClientRect();
-          var renderedZoom = nav.offsetHeight ? nav.getBoundingClientRect().height / nav.offsetHeight : ${entry.zoom};
           nav.style.right = '0';
           nav.style.left = '0';
-          nav.style.bottom = Math.max(0, (containerRect.bottom - legend.bottom) / renderedZoom) + 'px';
+          nav.style.bottom = Math.max(0, containerRect.bottom - legend.bottom) + 'px';
           nav.style.width = 'auto';
           window.dispatchEvent(new Event('resize'));
         })()`);
