@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
+import { MIN_PROJECTED_NODE_TEXT_PX } from '../renderers/shared/desktop-readability.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -118,16 +119,47 @@ async function finalGeometry(browser, sessionId) {
     var lens = document.getElementById('semantic-lens');
     var radar = document.getElementById('overview-map');
     var passport = document.getElementById('focus-chip');
+    var chromeReceipt = window.Archify && Archify.viewerChromeLayout
+      && typeof Archify.viewerChromeLayout.receipt === 'function'
+      ? Archify.viewerChromeLayout.receipt()
+      : null;
+    var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
+    var projectedScale = svg && viewBox && viewBox.width > 0
+      ? Math.min(1, svg.getBoundingClientRect().width / viewBox.width)
+      : 0;
+    var minimumProjectedNodeTextPx = null;
+    if (svg && projectedScale > 0) {
+      Array.from(svg.querySelectorAll('text[data-node-label], text[data-boundary-label], text[data-detail="context"]')).forEach(function (text) {
+        if (text.hasAttribute('data-detail') && !text.closest('[data-node-id]')) return;
+        var sourceFontPx = parseFloat(text.getAttribute('font-size') || '');
+        if (!Number.isFinite(sourceFontPx)) return;
+        var projectedFontPx = sourceFontPx * projectedScale;
+        if (minimumProjectedNodeTextPx == null || projectedFontPx < minimumProjectedNodeTextPx) {
+          minimumProjectedNodeTextPx = projectedFontPx;
+        }
+      });
+    }
     var legendRect = legend && getComputedStyle(legend).display !== 'none' ? legend.getBoundingClientRect() : null;
     var navRect = nav && getComputedStyle(nav).display !== 'none' ? nav.getBoundingClientRect() : null;
     var svgRect = svg ? svg.getBoundingClientRect() : null;
     var lensRect = lens && !lens.hidden && getComputedStyle(lens).display !== 'none' ? lens.getBoundingClientRect() : null;
     var radarRect = radar && !radar.hidden && getComputedStyle(radar).display !== 'none' ? radar.getBoundingClientRect() : null;
     var passportRect = passport && !passport.hidden && getComputedStyle(passport).display !== 'none' ? passport.getBoundingClientRect() : null;
+    var semanticDockIntersectionArea = navRect && svg
+      ? Array.from(svg.querySelectorAll('[data-node-id]')).reduce(function (maximum, node) {
+          return Math.max(maximum, area(node.getBoundingClientRect(), navRect));
+        }, 0)
+      : 0;
     return {
       reserve: parseFloat(getComputedStyle(container).getPropertyValue('--archify-nav-reserve')) || 0,
+      receiptReserve: chromeReceipt ? chromeReceipt.reserve : null,
+      receiptEligible: chromeReceipt ? chromeReceipt.eligible : null,
+      receiptStageIntersectionArea: chromeReceipt ? chromeReceipt.stageIntersectionArea : null,
+      minimumProjectedNodeTextPx: minimumProjectedNodeTextPx,
       stageGap: navRect && svgRect ? navRect.top - svgRect.bottom : null,
+      dockStageIntersectionArea: area(svgRect, navRect),
       legendDockIntersectionArea: area(legendRect, navRect),
+      semanticDockIntersectionArea: semanticDockIntersectionArea,
       legendLensIntersectionArea: area(legendRect, lensRect),
       navLensIntersectionArea: area(navRect, lensRect),
       legendRadarIntersectionArea: area(legendRect, radarRect),
@@ -139,7 +171,15 @@ async function finalGeometry(browser, sessionId) {
       navRect: navRect ? { left: navRect.left, right: navRect.right, top: navRect.top, bottom: navRect.bottom } : null,
       passportRect: passportRect ? { left: passportRect.left, right: passportRect.right, top: passportRect.top, bottom: passportRect.bottom } : null,
       radarRect: radarRect ? { left: radarRect.left, right: radarRect.right, top: radarRect.top, bottom: radarRect.bottom } : null,
-      hasLegend: Boolean(legendRect && legendRect.width && legendRect.height)
+      hasLegend: Boolean(legendRect && legendRect.width && legendRect.height),
+      scrollWidth: document.documentElement.scrollWidth,
+      scrollHeight: document.documentElement.scrollHeight,
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      containerBottom: container ? container.getBoundingClientRect().bottom : null,
+      containerHeight: container ? container.clientHeight : null,
+      receiptGap: chromeReceipt ? chromeReceipt.gap : null,
+      navBottom: navRect ? navRect.bottom : null
     };
   })()`);
 }
@@ -178,7 +218,65 @@ test('Viewer chrome remains outside the canonical SVG export boundary', () => {
   const html = fs.readFileSync(render('architecture', CASES.architecture), 'utf8');
   const svg = canonicalSvg(html);
   assert.match(svg, /data-legend/);
-  assert.doesNotMatch(svg, /diagram-nav|data-nav-safe-rail|viewerChromeLayout/);
+  assert.doesNotMatch(svg, /diagram-nav|data-nav-stage-rail|viewerChromeLayout/);
+});
+
+test('Dock Safe Rail keeps typed renderers clear across themes, Presentation, and low-height desktops', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  const matrix = Object.keys(CASES).flatMap((mode) => [
+    { mode, theme: 'light', width: 1440, height: 820, present: false },
+    { mode, theme: 'dark', width: 1440, height: 900, present: true },
+  ]);
+  try {
+    for (const entry of matrix) {
+      const query = `?theme=${entry.theme}${entry.present ? '&present=1' : ''}`;
+      const sessionId = await load(browser, render(entry.mode, CASES[entry.mode]), {
+        width: entry.width,
+        height: entry.height,
+        query,
+      });
+      const receipt = await finalGeometry(browser, sessionId);
+      const message = `${entry.mode}: ${JSON.stringify({ entry, receipt })}`;
+      assert.ok(receipt.reserve > 0, message);
+      assert.ok(receipt.stageGap >= 9, message);
+      assert.ok(receipt.scrollWidth <= receipt.innerWidth, message);
+      assert.ok(receipt.navBottom <= receipt.containerBottom + 0.5, message);
+      /* Normal artifacts intentionally keep supporting cards in document
+         flow on low-height pages. Presentation removes that document scroll
+         while every mode keeps the Viewer itself vertically contained. */
+      if (entry.present) {
+        assert.ok(receipt.scrollHeight <= receipt.innerHeight, message);
+      }
+      assert.ok(receipt.minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX, message);
+    }
+  } finally {
+    await browser.close();
+  }
+});
+
+test('an artifact with no Legend still receives the desktop stage rail', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const sessionId = await load(browser, render('architecture', CASES.architecture));
+    await evaluate(browser, sessionId, `(function () {
+      var legend = document.querySelector('[data-legend]');
+      if (legend) legend.remove();
+      return Archify.viewerChromeLayout.reprobe();
+    })()`, true);
+    await waitForLayout(browser, sessionId);
+    const receipt = await finalGeometry(browser, sessionId);
+
+    assert.equal(receipt.hasLegend, false, JSON.stringify(receipt));
+    assert.ok(receipt.reserve > 0, JSON.stringify(receipt));
+    assert.ok(receipt.stageGap >= 9, JSON.stringify(receipt));
+    assert.ok(receipt.navBottom <= receipt.containerBottom + 0.5, JSON.stringify(receipt));
+  } finally {
+    await browser.close();
+  }
 });
 
 test('Dock Safe Rail resolves a forced Legend collision across the shared diagram viewer', {
@@ -206,7 +304,8 @@ test('Dock Safe Rail resolves a forced Legend collision across the shared diagra
 
       if (setup.noLegend) {
         const receipt = await finalGeometry(browser, sessionId);
-        assert.equal(receipt.reserve, 0, mode);
+        assert.ok(receipt.reserve > 0, mode);
+        assert.ok(receipt.stageGap >= 9, mode);
         continue;
       }
       await waitForLayout(browser, sessionId);
@@ -253,7 +352,7 @@ test('Maka remains collision-free at the reported Retina-equivalent viewport', {
   }
 });
 
-test('a real 5px Legend gap keeps the zero-reserve layout unchanged', {
+test('a real 5px Legend gap keeps the stage rail and Legend clear', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
   const browser = new ChromeVisualBrowser(chromePath);
@@ -274,7 +373,8 @@ test('a real 5px Legend gap keeps the zero-reserve layout unchanged', {
     const receipt = await finalGeometry(browser, sessionId);
 
     assert.equal(receipt.legendDockIntersectionArea, 0, JSON.stringify(receipt));
-    assert.equal(receipt.reserve, 0, JSON.stringify(receipt));
+    assert.ok(receipt.reserve > 0, JSON.stringify(receipt));
+    assert.ok(receipt.stageGap >= 9, JSON.stringify(receipt));
   } finally {
     await browser.close();
   }
@@ -331,7 +431,118 @@ test('manual zoom and pan reschedules Legend and Dock collision measurement', {
     const receipt = await finalGeometry(browser, sessionId);
 
     assert.equal(receipt.legendDockIntersectionArea, 0, JSON.stringify(receipt));
+    assert.equal(receipt.semanticDockIntersectionArea, 0, JSON.stringify(receipt));
     assert.ok(receipt.reserve > 0, JSON.stringify(receipt));
+  } finally {
+    await browser.close();
+  }
+});
+
+test('zoom keeps the desktop rail bounded and reports transformed stage geometry truthfully', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const sessionId = await load(browser, render('architecture', CASES.architecture));
+    const baseline = await finalGeometry(browser, sessionId);
+    await evaluate(browser, sessionId, `(function () {
+      var container = document.querySelector('.diagram-container');
+      var zoomIn = document.querySelector('[data-view="in"]');
+      for (var index = 0; index < 8; index += 1) zoomIn.click();
+      var svg = container.querySelector(':scope > svg');
+      var rect = svg.getBoundingClientRect();
+      var pointer = { bubbles: true, pointerId: 13, button: 0 };
+      var startX = rect.left + rect.width / 2;
+      var startY = rect.top + rect.height / 2;
+      container.dispatchEvent(new PointerEvent('pointerdown', Object.assign({ clientX: startX, clientY: startY }, pointer)));
+      container.dispatchEvent(new PointerEvent('pointermove', Object.assign({ clientX: startX + 210, clientY: startY - 500 }, pointer)));
+      container.dispatchEvent(new PointerEvent('pointerup', Object.assign({ clientX: startX + 210, clientY: startY - 500 }, pointer)));
+    })()`);
+    await waitForLayout(browser, sessionId);
+    const zoomed = await finalGeometry(browser, sessionId);
+
+    assert.ok(
+      zoomed.reserve <= baseline.reserve + zoomed.containerHeight * 0.25 + 1,
+      JSON.stringify({ baseline, zoomed }),
+    );
+    assert.ok(
+      Math.abs(zoomed.receiptStageIntersectionArea - zoomed.dockStageIntersectionArea) <= 0.5,
+      JSON.stringify({ baseline, zoomed }),
+    );
+  } finally {
+    await browser.close();
+  }
+});
+
+test('Reset followed immediately by zoom and pan retains a collision-free desktop rail', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const sessionId = await load(browser, render('architecture', CASES.architecture));
+    const baseline = await finalGeometry(browser, sessionId);
+    await evaluate(browser, sessionId, `(function () {
+      var container = document.querySelector('.diagram-container');
+      document.querySelector('[data-view="reset"]').click();
+      var zoomIn = document.querySelector('[data-view="in"]');
+      for (var index = 0; index < 8; index += 1) zoomIn.click();
+      var svg = container.querySelector(':scope > svg');
+      var rect = svg.getBoundingClientRect();
+      var pointer = { bubbles: true, pointerId: 11, button: 0 };
+      var startX = rect.left + rect.width / 2;
+      var startY = rect.top + rect.height / 2;
+      container.dispatchEvent(new PointerEvent('pointerdown', Object.assign({ clientX: startX, clientY: startY }, pointer)));
+      container.dispatchEvent(new PointerEvent('pointermove', Object.assign({ clientX: startX, clientY: startY + 500 }, pointer)));
+      container.dispatchEvent(new PointerEvent('pointerup', Object.assign({ clientX: startX, clientY: startY + 500 }, pointer)));
+    })()`);
+    await waitForLayout(browser, sessionId);
+    const receipt = await finalGeometry(browser, sessionId);
+
+    assert.ok(receipt.reserve > 0, JSON.stringify({ baseline, receipt }));
+    assert.ok(receipt.reserve <= baseline.reserve + 1, JSON.stringify({ baseline, receipt }));
+    assert.equal(receipt.semanticDockIntersectionArea, 0, JSON.stringify({ baseline, receipt }));
+  } finally {
+    await browser.close();
+  }
+});
+
+test('zoomed camera restores its bounded desktop rail after crossing the mobile breakpoint', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const sessionId = await load(browser, render('architecture', CASES.architecture));
+    const baseline = await finalGeometry(browser, sessionId);
+    await evaluate(browser, sessionId, `(function () {
+      var zoomIn = document.querySelector('[data-view="in"]');
+      for (var index = 0; index < 8; index += 1) zoomIn.click();
+    })()`);
+    await waitForLayout(browser, sessionId);
+    const zoomed = await finalGeometry(browser, sessionId);
+
+    await browser.cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 720,
+      height: 900,
+      deviceScaleFactor: 1,
+      mobile: false,
+    }, sessionId);
+    await waitForLayout(browser, sessionId);
+    const mobile = await finalGeometry(browser, sessionId);
+    assert.equal(mobile.reserve, 0, JSON.stringify(mobile));
+
+    await browser.cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 1440,
+      height: 900,
+      deviceScaleFactor: 1,
+      mobile: false,
+    }, sessionId);
+    await waitForLayout(browser, sessionId);
+    const restored = await finalGeometry(browser, sessionId);
+
+    assert.ok(Math.abs(restored.reserve - baseline.reserve) <= 1, JSON.stringify({ baseline, zoomed, restored }));
+    assert.equal(restored.receiptReserve, restored.reserve, JSON.stringify(restored));
+    assert.equal(restored.receiptEligible, true, JSON.stringify(restored));
+    assert.ok(restored.scrollHeight <= restored.innerHeight, JSON.stringify(restored));
   } finally {
     await browser.close();
   }
@@ -462,7 +673,7 @@ test('Radar, Passport, Legend, and Dock remain mutually clear on desktop and nar
   }
 });
 
-test('mobile, embed, hidden Legend, and print keep reserve at zero', {
+test('mobile, embed, and print keep zero reserve while hidden Legends retain the stage rail', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
   const browser = new ChromeVisualBrowser(chromePath);
@@ -483,7 +694,8 @@ test('mobile, embed, hidden Legend, and print keep reserve at zero', {
     })()`);
     await waitForLayout(browser, sessionId);
     receipt = await finalGeometry(browser, sessionId);
-    assert.equal(receipt.reserve, 0, `hidden: ${JSON.stringify(receipt)}`);
+    assert.ok(receipt.reserve > 0, `hidden: ${JSON.stringify(receipt)}`);
+    assert.ok(receipt.stageGap >= 9, `hidden: ${JSON.stringify(receipt)}`);
 
     await browser.cdp.send('Emulation.setEmulatedMedia', { media: 'print' }, sessionId);
     await waitForLayout(browser, sessionId);

@@ -2885,6 +2885,11 @@
       body { padding-block: 1.25rem; }
       .header { margin-bottom: 0.875rem; }
       .cards { margin-top: 0.75rem; }
+      html[data-nav-stage-rail="true"] body { padding-block: 0.375rem; }
+      html[data-nav-stage-rail="true"] .header { margin-bottom: 0.5rem; }
+      html[data-nav-stage-rail="true"] .guided-views { margin-bottom: 0.375rem; }
+      html[data-nav-stage-rail="true"] .diagram-container[data-nav-stage-rail="true"] { padding-top: 0.5rem; }
+      html[data-nav-stage-rail="true"] .cards { margin-top: 0.375rem; }
     }
 
     html[data-preset="blueprint"] .card {
@@ -11093,9 +11098,9 @@
 
     /* ============================================================
        Viewer Chrome Layout — keep HTML controls clear of the canonical SVG
-       legend without changing authored geometry. The dock keeps its existing
-       position unless its zero-reserve position would cover the legend; only
-       then does a small bottom safe rail become part of the reader budget.
+       stage without changing authored geometry. The dock keeps its floating
+       appearance while a small bottom stage rail becomes part of the reader
+       budget whenever its zero-reserve position would enter the stage.
        ============================================================ */
     Archify.viewerChromeLayout = (function () {
       var html = document.documentElement;
@@ -11106,12 +11111,16 @@
       var frame = 0;
       var settleFrame = 0;
       var reserve = 0;
-      var collisionLatched = false;
+      var railLatched = false;
       var probingBaseline = false;
       var probePromise = null;
       var baselineIntersectionArea = 0;
+      var baselineStageGap = null;
+      var restorableReserve = 0;
+      var probeFallbackReserve = 0;
       var lastReceipt = null;
       var SAFE_GAP = 10;
+      var MAX_CAMERA_RESERVE_RATIO = 0.25;
 
       function visible(element) {
         if (!element || element.hidden) return false;
@@ -11128,12 +11137,16 @@
       }
       function eligible() {
         return Boolean(
-          container && svg && nav && legend &&
+          container && svg && nav &&
           window.innerWidth > 720 &&
           html.getAttribute('data-embed') !== 'true' &&
           (!window.matchMedia || !window.matchMedia('print').matches) &&
-          visible(nav) && visible(legend)
+          visible(nav)
         );
+      }
+      function cameraAtBaseline() {
+        var scale = Number(svg && svg.getAttribute('data-view-scale'));
+        return !Number.isFinite(scale) || Math.abs(scale - 1) < 0.001;
       }
       function writeReserve(next, options) {
         options = options || {};
@@ -11141,11 +11154,14 @@
         if (Math.abs(next - reserve) < 1) return false;
         reserve = next;
         if (reserve) {
+          if (options.remember !== false) restorableReserve = reserve;
           container.style.setProperty('--archify-nav-reserve', reserve + 'px');
-          container.setAttribute('data-nav-safe-rail', 'true');
+          container.setAttribute('data-nav-stage-rail', 'true');
+          html.setAttribute('data-nav-stage-rail', 'true');
         } else {
           container.style.removeProperty('--archify-nav-reserve');
-          container.removeAttribute('data-nav-safe-rail');
+          container.removeAttribute('data-nav-stage-rail');
+          html.removeAttribute('data-nav-stage-rail');
         }
         if (Archify.readerLayout && typeof Archify.readerLayout.schedule === 'function') {
           Archify.readerLayout.schedule();
@@ -11159,15 +11175,23 @@
         }
         return true;
       }
-      function clear() {
-        collisionLatched = false;
-        baselineIntersectionArea = 0;
+      function clear(options) {
+        options = options || {};
+        railLatched = false;
+        if (options.preserveBaseline !== true) {
+          baselineIntersectionArea = 0;
+          baselineStageGap = null;
+          restorableReserve = 0;
+        }
         writeReserve(0, { quiet: probingBaseline });
         lastReceipt = {
           eligible: false,
           active: false,
           reserve: 0,
           gap: SAFE_GAP,
+          baselineStageGap: null,
+          stageGap: null,
+          stageIntersectionArea: 0,
           baselineIntersectionArea: 0,
           intersectionArea: 0
         };
@@ -11176,50 +11200,98 @@
       function measure() {
         frame = 0;
         if (probingBaseline) return null;
-        if (!eligible()) return clear();
+        if (!eligible()) return clear({ preserveBaseline: !cameraAtBaseline() });
+
+        /* Camera transforms intentionally enlarge and translate the SVG for
+           exploration, so they must not redefine the reader's baseline rail.
+           Restore that baseline after temporary mobile/embed/print states;
+           transient Legend clearance stays bounded and is never remembered.
+           Report transformed geometry as-is, while Reset reprobes baseline. */
+        if (!cameraAtBaseline()) {
+          if (reserve === 0 && restorableReserve > 0) {
+            if (writeReserve(restorableReserve)) return null;
+          }
+          var cameraNavRect = nav.getBoundingClientRect();
+          var cameraLegendRect = visible(legend) ? legend.getBoundingClientRect() : null;
+          var cameraSvgRect = svg.getBoundingClientRect();
+          var cameraIntersectionArea = usable(cameraLegendRect)
+            ? intersectionArea(cameraNavRect, cameraLegendRect)
+            : 0;
+          if (reserve > 0 && cameraIntersectionArea > 0) {
+            var cameraRemaining = Math.max(1, cameraLegendRect.bottom + SAFE_GAP - cameraNavRect.top);
+            var cameraLimit = restorableReserve + container.clientHeight * MAX_CAMERA_RESERVE_RATIO;
+            var cameraReserve = Math.min(cameraLimit, reserve + cameraRemaining);
+            if (writeReserve(cameraReserve, { remember: false })) return null;
+          }
+          lastReceipt = {
+            eligible: true,
+            active: reserve > 0,
+            reserve: reserve,
+            gap: SAFE_GAP,
+            baselineStageGap: baselineStageGap == null ? null : Math.round(baselineStageGap * 100) / 100,
+            stageGap: Math.round((cameraNavRect.top - cameraSvgRect.bottom) * 100) / 100,
+            stageIntersectionArea: Math.round(intersectionArea(cameraNavRect, cameraSvgRect) * 100) / 100,
+            baselineIntersectionArea: Math.round(baselineIntersectionArea * 100) / 100,
+            intersectionArea: Math.round(cameraIntersectionArea * 100) / 100
+          };
+          return lastReceipt;
+        }
 
         var navRect = nav.getBoundingClientRect();
-        var legendRect = legend.getBoundingClientRect();
+        var legendRect = visible(legend) ? legend.getBoundingClientRect() : null;
         var svgRect = svg.getBoundingClientRect();
-        if (!usable(navRect) || !usable(legendRect) || !usable(svgRect)) return clear();
+        if (!usable(navRect) || !usable(svgRect)) return clear();
 
-        var actualIntersectionArea = intersectionArea(navRect, legendRect);
-        if (!collisionLatched && reserve === 0) {
+        var actualIntersectionArea = usable(legendRect) ? intersectionArea(navRect, legendRect) : 0;
+        var stageGap = navRect.top - svgRect.bottom;
+        if (!railLatched && reserve === 0) {
           baselineIntersectionArea = actualIntersectionArea;
-          if (actualIntersectionArea > 0) {
-            collisionLatched = true;
-            if (writeReserve(Math.max(0, svgRect.bottom + SAFE_GAP - navRect.top))) return null;
+          baselineStageGap = stageGap;
+          if (stageGap < SAFE_GAP) {
+            railLatched = true;
+            if (writeReserve(Math.max(0, SAFE_GAP - stageGap))) return null;
           }
-        } else if (collisionLatched && reserve > 0 && actualIntersectionArea > 0) {
-          /* Once zero-reserve geometry proves a collision, keep that decision
-             latched while Adaptive Reader incorporates the rail. If the first
-             rail is not quite tall enough (notably in Presentation flex
-             layout), grow only by the remaining vertical overlap. */
-          var remaining = Math.max(1, legendRect.bottom + SAFE_GAP - navRect.top);
+        } else if (railLatched && reserve > 0 && stageGap < SAFE_GAP) {
+          /* Keep the decision latched while Adaptive Reader incorporates the
+             rail. Presentation and rounded layout values can require one
+             bounded follow-up before the full stage gap is established. */
+          var remaining = Math.max(1, SAFE_GAP - stageGap);
           if (writeReserve(reserve + remaining)) return null;
         }
 
         navRect = nav.getBoundingClientRect();
-        legendRect = legend.getBoundingClientRect();
+        legendRect = visible(legend) ? legend.getBoundingClientRect() : null;
+        svgRect = svg.getBoundingClientRect();
+        stageGap = navRect.top - svgRect.bottom;
         lastReceipt = {
           eligible: true,
           active: reserve > 0,
           reserve: reserve,
           gap: SAFE_GAP,
+          baselineStageGap: baselineStageGap == null ? null : Math.round(baselineStageGap * 100) / 100,
+          stageGap: Math.round(stageGap * 100) / 100,
+          stageIntersectionArea: Math.round(intersectionArea(navRect, svgRect) * 100) / 100,
           baselineIntersectionArea: Math.round(baselineIntersectionArea * 100) / 100,
-          intersectionArea: Math.round(intersectionArea(navRect, legendRect) * 100) / 100
+          intersectionArea: Math.round((usable(legendRect) ? intersectionArea(navRect, legendRect) : 0) * 100) / 100
         };
         return lastReceipt;
       }
       function reprobe() {
         if (probingBaseline) return probePromise || Promise.resolve(false);
-        if (!reserve && !collisionLatched) {
+        if (!cameraAtBaseline()) {
           schedule();
           return Promise.resolve(false);
         }
+        if (!reserve && !railLatched && !restorableReserve) {
+          schedule();
+          return Promise.resolve(false);
+        }
+        probeFallbackReserve = restorableReserve || reserve;
         probingBaseline = true;
-        collisionLatched = false;
+        railLatched = false;
         baselineIntersectionArea = 0;
+        baselineStageGap = null;
+        restorableReserve = 0;
         writeReserve(0, { quiet: true });
         var readerReady = Archify.readerLayout && typeof Archify.readerLayout.whenStable === 'function'
           ? Archify.readerLayout.whenStable().catch(function () {})
@@ -11227,6 +11299,10 @@
         probePromise = readerReady.then(function () {
           probingBaseline = false;
           probePromise = null;
+          if (!cameraAtBaseline() && probeFallbackReserve > 0) {
+            restorableReserve = probeFallbackReserve;
+          }
+          probeFallbackReserve = 0;
           schedule();
           return true;
         });
@@ -11248,8 +11324,8 @@
           Math.round(navRect.top * 100) / 100,
           Math.round(legendRect.left * 100) / 100,
           Math.round(legendRect.top * 100) / 100,
-          collisionLatched ? 'latched' : 'clear',
-          lastReceipt ? lastReceipt.intersectionArea : ''
+          railLatched ? 'latched' : 'clear',
+          lastReceipt ? lastReceipt.stageGap : ''
         ].join('|');
       }
       function whenStable() {
@@ -11268,7 +11344,7 @@
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(reprobe).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
-        [nav, legend].forEach(function (element) { if (element) resizeObserver.observe(element); });
+        [nav, svg, legend].forEach(function (element) { if (element) resizeObserver.observe(element); });
       }
       if (typeof MutationObserver === 'function') {
         var contentObserver = new MutationObserver(function (records) {

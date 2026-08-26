@@ -415,6 +415,7 @@ export class ChromeVisualBrowser {
         return width * height;
       }
       var legendRect = legend ? legend.getBoundingClientRect() : null;
+      var svgRect = svg ? svg.getBoundingClientRect() : null;
       var navigationDockRect = navigationDock ? navigationDock.getBoundingClientRect() : null;
       var viewerChromeReceipt = window.Archify && Archify.viewerChromeLayout
         && typeof Archify.viewerChromeLayout.receipt === 'function'
@@ -435,6 +436,9 @@ export class ChromeVisualBrowser {
         hasLegend: Boolean(legendRect && legendRect.width && legendRect.height),
         hasNavigationDock: Boolean(navigationDockRect && navigationDockRect.width && navigationDockRect.height),
         legendDockIntersectionArea: intersectionArea(legendRect, navigationDockRect),
+        dockStageIntersectionArea: intersectionArea(svgRect, navigationDockRect),
+        dockStageGap: svgRect && navigationDockRect ? navigationDockRect.top - svgRect.bottom : null,
+        viewerChromeRequiredGap: viewerChromeReceipt ? viewerChromeReceipt.gap : null,
         viewerChromeReserve: viewerChromeReceipt ? viewerChromeReceipt.reserve : 0,
         viewerChromeActive: viewerChromeReceipt ? viewerChromeReceipt.active : false
       };
@@ -491,7 +495,18 @@ function observation({ width, height, theme, metrics }) {
   const readabilityOk = minimumProjectedNodeTextPx == null
     || minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX;
   const legendDockIntersectionArea = Number(metrics.legendDockIntersectionArea) || 0;
-  const viewerChromeOk = legendDockIntersectionArea <= 0.5;
+  const dockStageIntersectionArea = Number(metrics.dockStageIntersectionArea) || 0;
+  const dockStageGap = metrics.dockStageGap == null ? null : Number(metrics.dockStageGap);
+  const receiptDockStageGap = metrics.viewerChromeRequiredGap == null
+    ? null
+    : Number(metrics.viewerChromeRequiredGap);
+  const requiredDockStageGap = Number.isFinite(receiptDockStageGap) ? receiptDockStageGap : 0;
+  const viewerChromeStageOk = !metrics.hasNavigationDock || (
+    Number.isFinite(dockStageGap)
+    && dockStageIntersectionArea <= 0.5
+    && dockStageGap >= requiredDockStageGap - 1
+  );
+  const viewerChromeOk = legendDockIntersectionArea <= 0.5 && viewerChromeStageOk;
   return {
     width,
     height,
@@ -514,6 +529,10 @@ function observation({ width, height, theme, metrics }) {
     hasLegend: Boolean(metrics.hasLegend),
     hasNavigationDock: Boolean(metrics.hasNavigationDock),
     legendDockIntersectionArea,
+    dockStageIntersectionArea,
+    dockStageGap,
+    requiredDockStageGap,
+    viewerChromeStageOk,
     viewerChromeReserve: Number(metrics.viewerChromeReserve) || 0,
     viewerChromeActive: Boolean(metrics.viewerChromeActive),
     viewerChromeOk,

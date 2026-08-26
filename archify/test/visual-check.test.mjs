@@ -31,7 +31,7 @@ function sha256(file) {
   return createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }
 
-function fakeBrowser({ overflowAt, unreadableAt, chromeCollisionAt, screenshotFailure } = {}) {
+function fakeBrowser({ overflowAt, unreadableAt, chromeCollisionAt, stageCollisionAt, screenshotFailure } = {}) {
   const calls = [];
   return {
     calls,
@@ -44,6 +44,7 @@ function fakeBrowser({ overflowAt, unreadableAt, chromeCollisionAt, screenshotFa
       const overflow = overflowAt?.({ width, height, theme }) || false;
       const unreadable = unreadableAt?.({ width, height, theme }) || false;
       const chromeCollision = chromeCollisionAt?.({ width, height, theme }) || false;
+      const stageCollision = stageCollisionAt?.({ width, height, theme }) || false;
       return {
         innerWidth: width,
         innerHeight: height,
@@ -59,8 +60,11 @@ function fakeBrowser({ overflowAt, unreadableAt, chromeCollisionAt, screenshotFa
         hasLegend: true,
         hasNavigationDock: true,
         legendDockIntersectionArea: chromeCollision ? 42 : 0,
-        viewerChromeReserve: chromeCollision ? 0 : 44,
-        viewerChromeActive: !chromeCollision,
+        dockStageIntersectionArea: stageCollision ? 84 : 0,
+        dockStageGap: stageCollision ? -12 : 10,
+        viewerChromeRequiredGap: 10,
+        viewerChromeReserve: chromeCollision || stageCollision ? 0 : 44,
+        viewerChromeActive: !chromeCollision && !stageCollision,
       };
     },
     async close() {},
@@ -258,6 +262,31 @@ test('visual-check returns 1 when the navigation dock obscures the SVG legend', 
     (entry) => entry.width === 1920 && entry.height === 1080,
   );
   assert.equal(desktop?.legendDockIntersectionArea, 42);
+  assert.equal(desktop?.viewerChromeOk, false);
+});
+
+test('visual-check returns 1 when the navigation dock enters the SVG stage', async () => {
+  const input = artifact('viewer-stage-collision.html');
+  const result = await runVisualCheck({
+    artifactPath: input,
+    chromePath: '/fake/chrome',
+    browserFactory: async () => fakeBrowser({
+      stageCollisionAt: ({ width, height, theme }) => (
+        width === 1920 && height === 1080 && theme === 'light'
+      ),
+    }),
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.receipt.status, 'fail');
+  assert.equal(result.receipt.viewerChrome.status, 'fail');
+  const desktop = result.receipt.viewerChrome.viewports.find(
+    (entry) => entry.width === 1920 && entry.height === 1080,
+  );
+  assert.equal(desktop?.dockStageIntersectionArea, 84);
+  assert.equal(desktop?.dockStageGap, -12);
+  assert.equal(desktop?.requiredDockStageGap, 10);
+  assert.equal(desktop?.viewerChromeStageOk, false);
   assert.equal(desktop?.viewerChromeOk, false);
 });
 
