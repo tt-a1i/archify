@@ -178,6 +178,15 @@ const TYPE_LABELS = {
   lifecycle: 'Lifecycle',
 };
 
+// Print-depth type hues shared with the site palette (guide page uses the same map).
+const TYPE_ACCENTS = {
+  architecture: '#0891b2',
+  workflow: '#047857',
+  sequence: '#6d28d9',
+  dataflow: '#b45309',
+  lifecycle: '#be123c',
+};
+
 function digest(buffer) {
   return crypto.createHash('sha256').update(buffer).digest('hex');
 }
@@ -205,7 +214,7 @@ function renderCard(entry, index) {
   const engineeringProof = entry.engineeringProfile
     ? `\n              <div class="engineering-proof" aria-label="Engineering profile validation"><span>Engineering profile</span><strong>${esc(entry.engineeringProfile.replaceAll('-', ' ').toUpperCase())} · PASS</strong></div>`
     : '';
-  return `          <article class="${classes}" id="proof-${esc(entry.id)}" data-proof-id="${esc(entry.id)}" data-type="${esc(entry.type)}" style="--accent:${esc(entry.accent)}">
+  return `          <article class="${classes}" id="proof-${esc(entry.id)}" data-proof-id="${esc(entry.id)}" data-type="${esc(entry.type)}" style="--accent:${esc(TYPE_ACCENTS[entry.type] || entry.accent)}">
             <header class="card-header">
               <div class="card-index">${String(index + 1).padStart(2, '0')}</div>
               <div class="card-title-wrap">

@@ -86,7 +86,7 @@
     .btn-lang:hover { color:var(--ink); border-color:var(--ink); }
 
     .container { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:0 2rem; }
-    section { position:relative; padding:6.5rem 0; }
+    section { position:relative; padding:5.25rem 0; }
 
     /* FADE — develop-in like a photographic print */
     .fade-up { opacity:0; transform:translateY(18px); filter:blur(6px); transition:opacity .9s var(--ease-out),transform .9s var(--ease-out),filter .9s var(--ease-out); }
@@ -98,7 +98,7 @@
     /* ══════════════════════════════════════
        HERO — editorial bento: intro / live proof / specimen rail / stats
     ══════════════════════════════════════ */
-    .hero { position:relative; padding-top:9rem; padding-bottom:5.5rem; overflow:hidden; }
+    .hero { position:relative; padding-top:9rem; padding-bottom:4.5rem; overflow:hidden; }
     .hero::before { content:''; position:absolute; top:-140px; left:50%; transform:translateX(-50%); width:820px; height:480px; background:radial-gradient(closest-side,rgba(225,74,14,.06),transparent); pointer-events:none; }
     .hero-bento { display:grid; grid-template-columns:repeat(12,1fr); gap:var(--bento-gap); }
 
@@ -112,7 +112,6 @@
     .hero-sub { font-size:.9375rem; font-weight:400; color:var(--muted); line-height:1.72; max-width:480px; margin-bottom:1.75rem; text-wrap:pretty; }
     .hero-actions { display:flex; flex-wrap:wrap; align-items:center; gap:.625rem; }
     .hero-actions .btn { min-height:44px; padding:.65rem 1.375rem; font-size:.875rem; }
-    .hero-actions::after { content:'Arch — Wf — Seq — Dfl — Lfc · Png / Svg / Webm · 4×'; flex-basis:100%; margin-top:1.125rem; font-family:var(--font-mono); font-size:.5625rem; font-weight:500; letter-spacing:.26em; color:var(--dim); text-transform:uppercase; }
 
     /* MAIN PROOF — paper-mounted dark plate */
     .proof-main { grid-column:8 / 13; grid-row:1 / 3; position:relative; overflow:hidden; display:flex; flex-direction:column; border:1px solid var(--line-hi); border-radius:14px; background:var(--paper-raised); box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 30px 70px rgba(20,23,26,.16); }
@@ -233,17 +232,22 @@
     .export-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:1px; background:var(--line); border:1px solid var(--line-hi); border-radius:12px; overflow:hidden; }
     .export-item { background:var(--paper-raised); padding:1.375rem 1rem; text-align:center; transition:background .25s var(--ease-out); }
     .export-item:hover { background:var(--paper); }
-    .export-item .fmt { font-family:var(--font-mono); font-size:.6875rem; font-weight:600; letter-spacing:.12em; margin-bottom:.4rem; }
+    .export-item .fmt { font-family:var(--font-mono); font-size:.6875rem; font-weight:600; letter-spacing:.12em; margin-bottom:.4rem; color:var(--ink); }
     .export-item .desc { font-size:.6875rem; color:var(--dim); line-height:1.5; }
 
     /* ══════════════════════════════════════
-       PALETTE — one specimen strip card
+       PALETTE — mini nodes on light paper and dark plate
     ══════════════════════════════════════ */
     .palette-card { display:grid; grid-template-columns:repeat(7,1fr); gap:1.25rem; padding:1.75rem; background:var(--paper-raised); border:1px solid var(--line-hi); border-radius:14px; }
     .palette-chip { display:flex; flex-direction:column; gap:.75rem; }
-    .chip-swatch { height:88px; border-radius:8px; border:1px solid transparent; position:relative; overflow:hidden; transition:transform .3s var(--ease-out); }
-    .chip-swatch:hover { transform:translateY(-4px); }
-    .chip-swatch::after { content:''; position:absolute; inset:0; border-radius:inherit; border:1px solid rgba(20,23,26,.1); }
+    .chip-nodes { display:flex; flex-direction:column; gap:6px; }
+    .mini-node { display:flex; flex-direction:column; justify-content:center; gap:2px; height:46px; padding:0 .75rem; border-radius:8px; border:1.5px solid var(--node); background:var(--node-fill); transition:transform .3s var(--ease-out); }
+    .palette-chip:hover .mini-node { transform:translateY(-3px); }
+    .mini-node b { font-family:var(--font-mono); font-size:.625rem; font-weight:600; letter-spacing:.02em; color:var(--ink); }
+    .mini-node span { font-family:var(--font-mono); font-size:.5625rem; letter-spacing:.02em; color:var(--muted); }
+    .mini-node.dark { background:var(--plate); border-color:var(--node-dark); }
+    .mini-node.dark b { color:#e8edf2; }
+    .mini-node.dark span { color:#7d8894; }
     .chip-label { font-family:var(--font-mono); font-size:.625rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; }
     .chip-use { font-size:.6875rem; color:var(--dim); margin-top:.15rem; line-height:1.5; }
 
@@ -252,6 +256,9 @@
     ══════════════════════════════════════ */
     .quickstart-layout { display:grid; grid-template-columns:1.15fr .85fr; gap:var(--bento-gap); align-items:stretch; }
     .quickstart-layout > * { min-width:0; }
+    /* let the shortcut card match the steps card's height */
+    .quickstart-layout > .fade-up { display:flex; flex-direction:column; }
+    .quickstart-layout > .fade-up > .shortcut-box { flex:1; }
     .qs-card { background:var(--paper-raised); border:1px solid var(--line-hi); border-radius:14px; padding:2.25rem 2.5rem; }
     .steps { display:flex; flex-direction:column; }
     .step { display:grid; grid-template-columns:44px 1fr; gap:1.375rem; padding-bottom:2.25rem; position:relative; }
@@ -277,6 +284,23 @@
     .shortcut-row { display:flex; justify-content:space-between; align-items:center; font-size:.75rem; }
     .shortcut-row span { color:var(--muted); }
     kbd { background:var(--paper); border:1px solid var(--line-hi); padding:2px 7px; border-radius:5px; color:var(--ink-soft); font-family:var(--font-mono); font-size:.625rem; }
+
+    /* ══════════════════════════════════════
+       CLOSING CTA — one dark plate, one action
+    ══════════════════════════════════════ */
+    #cta { padding-top:1rem; }
+    .cta-card { position:relative; overflow:hidden; background:var(--plate); border:1px solid var(--ink); border-radius:16px; padding:4.25rem 3.5rem 3.75rem; text-align:center; }
+    .cta-card::before { content:''; position:absolute; top:-160px; left:50%; transform:translateX(-50%); width:640px; height:360px; background:radial-gradient(closest-side,rgba(225,74,14,.16),transparent); pointer-events:none; }
+    .cta-h { position:relative; font-family:var(--font-display); font-optical-sizing:auto; font-size:clamp(1.9rem,3.4vw,2.875rem); font-weight:400; letter-spacing:-.026em; line-height:1.12; color:var(--paper); margin-bottom:1rem; text-wrap:balance; }
+    .cta-h em { font-style:italic; color:var(--accent); }
+    .cta-sub { position:relative; max-width:520px; margin:0 auto 2rem; font-size:.9375rem; color:#98a1a9; line-height:1.72; text-wrap:pretty; }
+    .cta-actions { position:relative; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:1.375rem; }
+    .cta-install { display:inline-flex; align-items:center; gap:.5rem; min-height:46px; padding:.7rem 1.625rem; border-radius:8px; background:var(--paper); color:var(--ink); font-size:.875rem; font-weight:600; letter-spacing:-.005em; text-decoration:none; transition:background .2s var(--ease-out),color .2s var(--ease-out); }
+    .cta-install:hover { background:var(--accent); color:var(--paper); }
+    .cta-gh { font-family:var(--font-mono); font-size:.6875rem; letter-spacing:.06em; color:#7d8894; text-decoration:none; transition:color .18s var(--ease-out); }
+    .cta-gh:hover { color:var(--paper); }
+    .cta-cmd { position:relative; margin-top:2.25rem; font-family:var(--font-mono); font-size:.6875rem; letter-spacing:.03em; color:#5f6870; }
+    .cta-cmd b { font-weight:500; color:#aab3bb; }
 
     /* FOOTER — drawing title block */
     footer { position:relative; z-index:1; border-top:1px solid var(--line-hi); padding:3rem 2rem; }
@@ -346,6 +370,9 @@
       .export-grid { grid-template-columns:1fr 1fr; }
       .palette-card { grid-template-columns:repeat(2,1fr); padding:1.25rem; }
       .qs-card { padding:1.75rem 1.5rem; }
+      .cta-card { padding:3rem 1.5rem 2.5rem; }
+      .cta-actions { flex-direction:column; gap:1rem; }
+      .cta-install { width:100%; justify-content:center; }
       footer { padding:2rem 1.25rem; }
       .footer-inner { grid-template-columns:1fr; }
       .footer-left { border-right:0; border-bottom:1px solid var(--line); }
@@ -363,8 +390,8 @@
     </a>
     <div class="nav-right">
       <a class="nav-link" href="guide.html" data-i18n="nav-guide">Guide</a>
-      <a class="nav-link" href="gallery.html" data-i18n="nav-gallery">Gallery</a>
-      <a class="nav-link" href="#quickstart" data-i18n="nav-docs">Docs</a>
+      <a class="nav-link" href="gallery.html" data-i18n="nav-gallery">Proof Lab</a>
+      <a class="nav-link" href="start.html" data-i18n="nav-start">Start</a>
       <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
       <button class="btn btn-lang" id="btn-lang">中文</button>
       <a class="btn btn-primary" href="#quickstart" data-i18n="nav-install">Install Skill</a>
@@ -503,7 +530,7 @@
         <div class="type-card big fade-up" data-type="arch">
           <div class="type-media">
             <span class="type-tag">T·01</span>
-            <img src="assets/archify-dark.png" alt="Architecture diagram">
+            <img src="assets/archify-architecture.png" alt="Architecture diagram">
           </div>
           <div class="type-body">
             <h3 data-i18n="arch-h">Architecture</h3>
@@ -628,12 +655,12 @@
       <div class="fade-up d2">
         <p class="export-label-row" data-i18n="export-label">Export formats</p>
         <div class="export-grid">
-          <div class="export-item"><div class="fmt" style="color:var(--cyan)">PNG</div><div class="desc" data-i18n="exp-png">Transparent · 4× native</div></div>
-          <div class="export-item"><div class="fmt" style="color:var(--emerald)">JPEG</div><div class="desc" data-i18n="exp-jpg">Theme bg · 4× native</div></div>
-          <div class="export-item"><div class="fmt" style="color:var(--violet)">WEBP</div><div class="desc" data-i18n="exp-webp">Small · 4× native</div></div>
-          <div class="export-item"><div class="fmt" style="color:var(--amber)">SVG</div><div class="desc" data-i18n="exp-svg">Vector · dual-theme</div></div>
-          <div class="export-item"><div class="fmt" style="color:var(--orange)">WEBM</div><div class="desc" data-i18n="exp-webm">Motion · browser-native</div></div>
-          <div class="export-item"><div class="fmt" style="color:var(--rose)" data-i18n="exp-clip-fmt">Clipboard</div><div class="desc" data-i18n="exp-clip">Copy PNG · instant paste</div></div>
+          <div class="export-item"><div class="fmt">PNG</div><div class="desc" data-i18n="exp-png">Transparent · 4× native</div></div>
+          <div class="export-item"><div class="fmt">JPEG</div><div class="desc" data-i18n="exp-jpg">Theme bg · 4× native</div></div>
+          <div class="export-item"><div class="fmt">WEBP</div><div class="desc" data-i18n="exp-webp">Small · 4× native</div></div>
+          <div class="export-item"><div class="fmt">SVG</div><div class="desc" data-i18n="exp-svg">Vector · dual-theme</div></div>
+          <div class="export-item"><div class="fmt">WEBM</div><div class="desc" data-i18n="exp-webm">Motion · browser-native</div></div>
+          <div class="export-item"><div class="fmt" data-i18n="exp-clip-fmt">Clipboard</div><div class="desc" data-i18n="exp-clip">Copy PNG · instant paste</div></div>
         </div>
       </div>
     </div>
@@ -650,38 +677,59 @@
         <p class="section-body" style="margin-top:.5rem" data-i18n="palette-body">Seven component types. Each with coordinated dark and light variants that switch together via the theme toggle.</p>
       </div>
       <div class="palette-card fade-up">
-        <div class="palette-chip">
-          <div class="chip-swatch" style="background:var(--cyan-fill);border-color:var(--cyan)"></div>
+        <div class="palette-chip" style="--node:var(--cyan);--node-fill:var(--cyan-fill);--node-dark:#22d3ee">
+          <div class="chip-nodes">
+            <div class="mini-node"><b>Web App</b><span>React SPA</span></div>
+            <div class="mini-node dark"><b>Web App</b><span>React SPA</span></div>
+          </div>
           <div class="chip-label" style="color:var(--cyan)" data-i18n="chip-frontend">Frontend</div>
           <div class="chip-use" data-i18n="chip-frontend-use">Client apps, browsers, mobile, UI</div>
         </div>
-        <div class="palette-chip">
-          <div class="chip-swatch" style="background:var(--emerald-fill);border-color:var(--emerald)"></div>
+        <div class="palette-chip" style="--node:var(--emerald);--node-fill:var(--emerald-fill);--node-dark:#34d399">
+          <div class="chip-nodes">
+            <div class="mini-node"><b>API Server</b><span>Fastify :8080</span></div>
+            <div class="mini-node dark"><b>API Server</b><span>Fastify :8080</span></div>
+          </div>
           <div class="chip-label" style="color:var(--emerald)" data-i18n="chip-backend">Backend</div>
           <div class="chip-use" data-i18n="chip-backend-use">Services, APIs, workers, daemons</div>
         </div>
-        <div class="palette-chip">
-          <div class="chip-swatch" style="background:var(--violet-fill);border-color:var(--violet)"></div>
+        <div class="palette-chip" style="--node:var(--violet);--node-fill:var(--violet-fill);--node-dark:#a78bfa">
+          <div class="chip-nodes">
+            <div class="mini-node"><b>Postgres</b><span>primary :5432</span></div>
+            <div class="mini-node dark"><b>Postgres</b><span>primary :5432</span></div>
+          </div>
           <div class="chip-label" style="color:var(--violet)" data-i18n="chip-database">Database</div>
           <div class="chip-use" data-i18n="chip-database-use">DBs, caches, stores, AI/ML</div>
         </div>
-        <div class="palette-chip">
-          <div class="chip-swatch" style="background:var(--amber-fill);border-color:var(--amber)"></div>
+        <div class="palette-chip" style="--node:var(--amber);--node-fill:var(--amber-fill);--node-dark:#fbbf24">
+          <div class="chip-nodes">
+            <div class="mini-node"><b>CloudFront</b><span>CDN</span></div>
+            <div class="mini-node dark"><b>CloudFront</b><span>CDN</span></div>
+          </div>
           <div class="chip-label" style="color:var(--amber)" data-i18n="chip-cloud">Cloud</div>
           <div class="chip-use" data-i18n="chip-cloud-use">Managed services, infra</div>
         </div>
-        <div class="palette-chip">
-          <div class="chip-swatch" style="background:var(--rose-fill);border-color:var(--rose)"></div>
+        <div class="palette-chip" style="--node:var(--rose);--node-fill:var(--rose-fill);--node-dark:#fb7185">
+          <div class="chip-nodes">
+            <div class="mini-node"><b>Auth Provider</b><span>OAuth 2.0</span></div>
+            <div class="mini-node dark"><b>Auth Provider</b><span>OAuth 2.0</span></div>
+          </div>
           <div class="chip-label" style="color:var(--rose)" data-i18n="chip-security">Security</div>
           <div class="chip-use" data-i18n="chip-security-use">Auth, secrets, guards</div>
         </div>
-        <div class="palette-chip">
-          <div class="chip-swatch" style="background:var(--orange-fill);border-color:var(--orange)"></div>
+        <div class="palette-chip" style="--node:var(--orange);--node-fill:var(--orange-fill);--node-dark:#fb923c">
+          <div class="chip-nodes">
+            <div class="mini-node"><b>Kafka</b><span>events topic</span></div>
+            <div class="mini-node dark"><b>Kafka</b><span>events topic</span></div>
+          </div>
           <div class="chip-label" style="color:var(--orange)" data-i18n="chip-bus">Message Bus</div>
           <div class="chip-use" data-i18n="chip-bus-use">Kafka, RabbitMQ, SNS</div>
         </div>
-        <div class="palette-chip">
-          <div class="chip-swatch" style="background:var(--slate-fill);border-color:var(--slate)"></div>
+        <div class="palette-chip" style="--node:var(--slate);--node-fill:var(--slate-fill);--node-dark:#94a3b8">
+          <div class="chip-nodes">
+            <div class="mini-node"><b>Users</b><span>browser · mobile</span></div>
+            <div class="mini-node dark"><b>Users</b><span>browser · mobile</span></div>
+          </div>
           <div class="chip-label" style="color:var(--slate)" data-i18n="chip-external">External</div>
           <div class="chip-use" data-i18n="chip-external-use">Users, 3rd parties, generic</div>
         </div>
@@ -767,6 +815,21 @@
     </div>
   </section>
 
+  <!-- CLOSING CTA -->
+  <section id="cta">
+    <div class="container">
+      <div class="cta-card fade-up">
+        <h2 class="cta-h" data-i18n="cta-h">Describe it once.<br><em>Share the map.</em></h2>
+        <p class="cta-sub" data-i18n="cta-sub">One command installs the checked skill for Cursor, Claude Code, Codex, or OpenCode — and your next diagram is a chat message away.</p>
+        <div class="cta-actions">
+          <a class="cta-install" href="start.html" data-i18n="cta-install">Install the skill</a>
+          <a class="cta-gh" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">github.com/tt-a1i/archify ↗</a>
+        </div>
+        <p class="cta-cmd">$ <b>npx skills add tt-a1i/archify -g</b></p>
+      </div>
+    </div>
+  </section>
+
   <!-- FOOTER -->
   <footer>
     <div class="footer-inner">
@@ -790,7 +853,7 @@
   ══════════════════════════════════════ */
   const LANGS = {
     en: {
-      'nav-guide':'Guide','nav-gallery':'Gallery','nav-docs':'Docs','nav-install':'Install Skill',
+      'nav-guide':'Guide','nav-gallery':'Proof Lab','nav-start':'Start','nav-install':'Install Skill',
       'hero-badge':'Agent Skill &nbsp;·&nbsp; development &nbsp;·&nbsp; v2.16.0-dev.0',
       'hero-h1':'From plain English<br>to architecture <em>you can trust.</em>',
       'hero-sub':'Describe your system in chat. Archify generates a polished, explorable HTML diagram — with progressive MAP → READ → FULL detail, a semantic camera, path-aware stories, motion, and ultra-crisp export built in.',
@@ -844,10 +907,13 @@
       'step3-h':'Ask your agent to draw it','step3-p':'Tell your agent to use Archify. It generates a self-contained HTML file you can open in any browser and refine in chat.',
       'kbd-label':'Keyboard shortcuts','kbd-guide':'Diagram guide','kbd-theme':'Toggle theme','kbd-find':'Find node / route endpoint','kbd-route':'Trace, inspect, and play a route','kbd-radar':'Semantic radar','kbd-lens':'Compare semantic kinds','kbd-present':'Presentation stage','kbd-export':'Open export menu','kbd-focus':'Focus node','kbd-views':'Guided views','kbd-play':'Play story','kbd-zoom':'Reading depth / reset','kbd-nav':'Navigate menu','kbd-close':'Close menu',
       'footer-meta':'development &nbsp;·&nbsp; v2.16.0-dev.0 &nbsp;·&nbsp; MIT License<br>Based on Cocoon-AI/architecture-diagram-generator',
+      'cta-h':'Describe it once.<br><em>Share the map.</em>',
+      'cta-sub':'One command installs the checked skill for Cursor, Claude Code, Codex, or OpenCode — and your next diagram is a chat message away.',
+      'cta-install':'Install the skill',
       'footer-changelog':'Changelog','footer-license':'License'
     },
     zh: {
-      'nav-guide':'场景指南','nav-gallery':'作品集','nav-docs':'文档','nav-install':'安装技能',
+      'nav-guide':'场景指南','nav-gallery':'验证作品集','nav-start':'快速上手','nav-install':'安装技能',
       'hero-badge':'Agent 技能 &nbsp;·&nbsp; 开发版 &nbsp;·&nbsp; v2.16.0-dev.0',
       'hero-h1':'用自然语言，<br>生成<em>可信的架构图。</em>',
       'hero-sub':'在对话中描述你的系统，Archify 生成精美、可探索的 HTML 技术图——信息会按 MAP → READ → FULL 渐进展开，并内置语义镜头、路径故事、动态效果和超清导出。',
@@ -901,6 +967,9 @@
       'step3-h':'让 agent 绘制','step3-p':'告诉 agent 使用 Archify，它会生成可在任意浏览器打开的单文件 HTML，并可继续在对话中迭代。',
       'kbd-label':'键盘快捷键','kbd-guide':'图表指南','kbd-theme':'切换主题','kbd-find':'查找节点 / 路径端点','kbd-route':'探查、检查并播放路径','kbd-radar':'语义雷达','kbd-lens':'对比语义类型','kbd-present':'演示舞台','kbd-export':'打开导出菜单','kbd-focus':'聚焦节点','kbd-views':'引导视图','kbd-play':'播放故事','kbd-zoom':'阅读层级 / 复位','kbd-nav':'菜单导航','kbd-close':'关闭菜单',
       'footer-meta':'开发版 &nbsp;·&nbsp; v2.16.0-dev.0 &nbsp;·&nbsp; MIT 许可证<br>基于 Cocoon-AI/architecture-diagram-generator',
+      'cta-h':'描述一次，<br><em>分享这张图。</em>',
+      'cta-sub':'一条命令即可为 Cursor、Claude Code、Codex 或 OpenCode 安装经过检查的技能——你的下一张架构图，只差一句对话。',
+      'cta-install':'安装技能',
       'footer-changelog':'更新日志','footer-license':'许可证'
     }
   };
