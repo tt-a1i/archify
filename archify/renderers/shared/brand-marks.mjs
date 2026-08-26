@@ -269,6 +269,34 @@ async function readLimited(response, maximum) {
   return Buffer.concat(chunks, total);
 }
 
+// Icon <link> tags live in <head>, but a page's total byte size is driven by
+// its body. Capping the whole page at MAX_HTML_BYTES rejected pages with a
+// tiny head and a large body before a single icon candidate was even looked
+// at. Read incrementally and stop as soon as </head> appears instead of
+// reading (and counting) the rest of the page; only fail closed if the byte
+// budget runs out before a head close is seen.
+async function readHtmlHead(response, maximum) {
+  if (!response.body || typeof response.body[Symbol.asyncIterator] !== 'function') {
+    return (await readLimited(response, maximum)).toString('utf8');
+  }
+  const chunks = [];
+  let total = 0;
+  for await (const value of response.body) {
+    chunks.push(Buffer.from(value));
+    total += value.byteLength;
+    const soFar = Buffer.concat(chunks, total);
+    if (soFar.toString('latin1').toLocaleLowerCase('en-US').includes('</head')) {
+      response.body.destroy?.();
+      return soFar.toString('utf8');
+    }
+    if (total > maximum) {
+      response.body.destroy?.();
+      throw new Error('brand asset is too large');
+    }
+  }
+  return Buffer.concat(chunks, total).toString('utf8');
+}
+
 function attribute(tag, name) {
   const match = tag.match(new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
   return match ? (match[1] ?? match[2] ?? match[3] ?? '') : '';
@@ -378,7 +406,7 @@ async function captureRemoteBrand(value, deadline = Date.now() + captureTimeoutM
       page.response.body?.destroy?.();
       return fallback('linked page is not HTML');
     }
-    const html = (await readLimited(page.response, MAX_HTML_BYTES)).toString('utf8');
+    const html = await readHtmlHead(page.response, MAX_HTML_BYTES);
     const iconErrors = [];
     for (const candidate of iconCandidates(html, page.finalUrl)) {
       try {

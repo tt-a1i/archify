@@ -274,6 +274,90 @@ test('capture command returns a digest-pinned brand object that renders reproduc
   }
 });
 
+test('capture reads a small head even when the body is far larger than the byte cap', async () => {
+  const icon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  const server = http.createServer((request, response) => {
+    if (request.url === '/mark.png') {
+      response.writeHead(200, { 'content-type': 'image/png' });
+      response.end(icon);
+      return;
+    }
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.write('<!doctype html><head><title>Big Body</title><link rel="icon" type="image/png" href="/mark.png"></head><body>');
+    // Past the head close, so it must never be counted against the byte cap.
+    response.end('x'.repeat(300 * 1024));
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const url = `http://127.0.0.1:${address.port}/big`;
+    const capture = await runCliAsync(['brands', 'capture', url, '--json'], { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' });
+    assert.equal(capture.status, 0, capture.stderr || capture.stdout);
+    const receipt = JSON.parse(capture.stdout);
+    assert.equal(receipt.ok, true);
+    assert.deepEqual(receipt.brand, {
+      url,
+      sha256: createHash('sha256').update(icon).digest('hex'),
+    });
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('capture finds a head close split across separate response chunks', async () => {
+  const icon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  const server = http.createServer(async (request, response) => {
+    if (request.url === '/mark.png') {
+      response.writeHead(200, { 'content-type': 'image/png' });
+      response.end(icon);
+      return;
+    }
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.write('<!doctype html><head><title>Split</title><link rel="icon" type="image/png" href="/mark.png"></he');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    response.end('ad><body>hi</body>');
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const url = `http://127.0.0.1:${address.port}/split`;
+    const capture = await runCliAsync(['brands', 'capture', url, '--json'], { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' });
+    assert.equal(capture.status, 0, capture.stderr || capture.stdout);
+    const receipt = JSON.parse(capture.stdout);
+    assert.equal(receipt.ok, true);
+    assert.deepEqual(receipt.brand, {
+      url,
+      sha256: createHash('sha256').update(icon).digest('hex'),
+    });
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('capture still fails closed when the head itself exceeds the byte cap', async () => {
+  const server = http.createServer(async (request, response) => {
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.write('<!doctype html><head><title>Huge head</title>');
+    // Still inside <head>, and past the 256 KiB cap on its own. Flushed and
+    // awaited before </head> so the client reads it as a chunk that already
+    // exceeds the cap with no head close in sight yet, instead of Node
+    // coalescing every write into one chunk that contains </head> already.
+    response.write(`<!-- ${'x'.repeat(300 * 1024)} -->`);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    response.end('</head><body>never reached</body>');
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const url = `http://127.0.0.1:${address.port}/huge-head`;
+    const capture = await runCliAsync(['brands', 'capture', url, '--json'], { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' });
+    assert.equal(capture.status, 2, capture.stdout);
+    assert.match(capture.stderr, /brand asset is too large/);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
 test('a pinned brand fails closed when the remote icon digest changes', async () => {
   const firstIcon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
   const changedIcon = Buffer.from(firstIcon);
