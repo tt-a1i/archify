@@ -44,6 +44,8 @@ const AUTHORED_TEXT_KEYS = new Set([
   'note',
   'context',
   'responsibility',
+  'classification',
+  'step',
 ]);
 
 function authoredExample(type, locale) {
@@ -160,6 +162,18 @@ test('explicit en and zh-CN preserve complete authored field inventories across 
     const chinese = authoredExample(type, 'zh-CN');
     assert.equal(english.authored.length, chinese.authored.length, `${type}: authored shapes differ`);
     assert.ok(english.authored.length >= 10, `${type}: authored inventory is unexpectedly small`);
+    if (type === 'dataflow') {
+      assert.ok(
+        english.authored.includes(english.document.flows[0].classification),
+        'dataflow: classification is missing from the authored inventory',
+      );
+    }
+    if (type === 'lifecycle') {
+      assert.ok(
+        english.authored.includes(english.document.states[0].step),
+        'lifecycle: step is missing from the authored inventory',
+      );
+    }
 
     for (const candidate of [english, chinese]) {
       const locale = candidate.document.meta.locale;

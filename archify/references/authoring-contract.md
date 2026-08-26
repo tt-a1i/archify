@@ -65,59 +65,6 @@ Renderer-owned default legend labels follow `meta.locale`; author a
 `meta.legend.entries.*.label` override only when the diagram needs different
 domain wording, and keep that authored override in the primary language.
 
-### Authored-language gate
-
-Run this gate before the final validation when the authored language is not
-English, the artifact is bilingual, or the authored language differs from the
-Viewer locale. A passing geometry or schema receipt does not satisfy it.
-
-1. Record `authored_language` and `viewer_locale` separately. For an unsupported
-   authored language, `viewer_locale` is `en`, `meta.locale` is absent, and the
-   handoff must disclose the English Viewer fallback.
-2. Inventory every reader-facing authored string: title and subtitle; guided
-   view labels and notes; node, participant, state, stage, lane, phase, group,
-   and boundary labels; `label`, `sublabel`, `tag`, and `sources[].label` fields;
-   relationship or message labels; legend overrides; and card titles and items.
-3. Review every token outside the authored language. Preserve only exact
-   product names, code identifiers, commands, protocols, API paths, and
-   environment names. Translate generic roles, actions, nouns, adjectives, and
-   the explanatory words surrounding a preserved identifier.
-4. When delegation is available, give the candidate, authored language, Viewer
-   locale, and technical-identity exceptions to an independent read-only
-   reviewer. Resolve every reported generic foreign-language phrase. Without
-   delegation, perform the same exhaustive inventory yourself.
-5. Finish only when every inventoried string is accounted for and
-   `unresolved_foreign_prose` is `0`. A language repair changes the candidate,
-   so validate again before freezing and delivering it.
-
-Use positive mixed-phrase patterns:
-
-| Authored language | Incorrect | Correct |
-|---|---|---|
-| `zh-CN` | `Runtime Host protocol` | `Runtime Host 协议` |
-| `zh-CN` | `AI SDK request / stream` | `AI SDK 请求 / 流式响应` |
-| `ja` | `sessions / RuntimeEvent / artifacts` | `セッション / RuntimeEvent / Artifact` |
-| `de` | `tool call` | `Werkzeugaufruf` |
-
-Names such as `SessionManager`, `ToolRuntime`, `window.maka`, `IPC`, and `MCP`
-remain exact. Their presence does not justify English explanatory prose around
-them. Do not add an automatic language detector to the renderer or reject text
-merely because it contains ASCII; this gate is an authoring review with explicit
-identity exceptions.
-
-Report the result in the handoff rather than adding fields to the diagram
-schema:
-
-```text
-authored_language: ja
-viewer_locale: en
-authored_strings_checked: 84
-preserved_technical_terms: 23
-unresolved_foreign_prose: 0
-fallback_disclosed: true
-language_review: passed
-```
-
 ## Visual preset default
 
 Omit `meta.visual_preset` by default. The renderer then opens the diagram in

@@ -22,19 +22,17 @@ node bin/archify.mjs visual-check <output.html> --json
 ```
 
 The zero-dependency command uses Chrome/Chromium through the DevTools pipe. It
-measures light-theme containment, projected readability, and Viewer chrome at
-1440×900, 1600×1000, 1920×1080, and 2048×1320, then captures light/dark
-screenshots at 1440×900 and 2048×1320. Viewer chrome passes when the navigation
-Dock does not collide with the SVG Legend. The receipt also binds the source
-artifact SHA-256 and byte count, records READ plus Still runtime state, and
-always reports `visualReview: "pending"`; automated evidence cannot claim
-perceptual review.
+measures light-theme containment at 1440×900, 1600×1000, 1920×1080, and
+2048×1320, then captures light/dark screenshots at 1440×900 and 2048×1320. It
+writes four PNG sidecars, one relative-path HTML contact sheet, and one JSON
+receipt beside the artifact. The receipt binds the source artifact SHA-256 and
+byte count, records READ plus Still runtime state, and always reports
+`visualReview: "pending"`; automated evidence cannot claim perceptual review.
 
-Exit 0 means containment, readability, Viewer chrome, and captures passed. Exit
-1 means any automated gate or capture failed. Exit 2 means Chrome/Chromium was
-unavailable and the receipt status is `skipped`. Failed or skipped capture runs
-remove stale image/contact-sheet sidecars rather than presenting prior evidence
-as current.
+Exit 0 means every containment measurement and capture passed. Exit 1 means an
+overflow or capture failure. Exit 2 means Chrome/Chromium was unavailable and
+the receipt status is `skipped`. Failed or skipped capture runs remove stale
+image/contact-sheet sidecars rather than presenting prior evidence as current.
 
 ## Optional opening
 
@@ -54,7 +52,7 @@ Never start it by default. Do not use it for CI, unattended agents, remote shari
 
 ## Perceptual delivery gate
 
-Automated validation cannot prove visual polish. After deterministic delivery, inspect the actual HTML in a capable browser or render a screenshot with an image reader. Check both themes when changed, the default READ view, fixed Viewer controls against authored content, line crossings/corridors, label masks, node/card fit, focus/search/passport closure, and export cleanliness.
+Automated validation cannot prove visual polish. After deterministic delivery, inspect the actual HTML in a capable browser or render a screenshot with an image reader. Check both themes when changed, the default READ view, line crossings/corridors, label masks, node/card fit, focus/search/passport closure, and export cleanliness.
 
 For the default standalone desktop viewer, measure 1440×900, 1600×1000, and 1920×1080. When the artifact is intended for a large desktop display, also measure 2048×1320. A first-screen pass requires `document.documentElement.scrollWidth <= window.innerWidth` and `scrollHeight <= window.innerHeight` at every checked size. At the largest checked viewport, inspect the rendered composition for a conspicuous empty lower band: the main panel and necessary conclusion cards should use the available height as a balanced whole, not collapse into a shallow strip. If a desktop viewport overflows, repair the authored composition by removing only genuinely redundant content or compacting spacing before shrinking nodes, labels, or the main panel. Do not hide overflow, clip content, introduce an internal diagram scroller, or reduce node/label typography to make the measurement pass. Narrow/mobile containment may retain vertical page scrolling.
 
