@@ -219,7 +219,7 @@ const forbidden = packedFiles.filter((file) => (
 if (packedPkg.name !== PACKAGE_NAME || packedPkg.version !== PACKAGE_VERSION || forbidden.length > 0) {
   fail('tarball-inspect', 'packed identity or exclusions failed', { forbidden, packedPkg });
 }
-if (!packedFiles.includes('skills/archify/SKILL.md')) {
+if (!packedFiles.includes('.dsh-bundled-skills/archify/SKILL.md')) {
   fail('tarball-inspect', 'packed tarball is missing the clean Archify Skill');
 }
 pass('tarball-inspect', { fileCount: packedFiles.length });
@@ -388,7 +388,7 @@ const resourceInsidePackage = resourceRelative
   && !resourceRelative.startsWith(`..${path.sep}`)
   && resourceRelative !== '..'
   && !path.isAbsolute(resourceRelative);
-if (!resourceInsidePackage || !resourceReal.includes(`${path.sep}skills${path.sep}archify`)) {
+if (!resourceInsidePackage || !resourceReal.includes(`${path.sep}.dsh-bundled-skills${path.sep}archify`)) {
   fail('resource-base', 'Skill resource base is not inside the installed tarball package', {
     resourcePath: resourceReal,
     installedPackage: packageReal,
@@ -429,7 +429,8 @@ const zipBlob = run('git', ['hash-object', 'archify.zip'], { cwd: repoRoot });
 const pkgBlob = run('git', ['hash-object', 'archify/package.json'], { cwd: repoRoot });
 const skipFreshZipRebuild = process.platform === 'win32';
 const committedZip = path.join(repoRoot, 'archify.zip');
-const packedSkill = path.join(inspectRoot, 'package', 'skills', 'archify');
+const packedSkill = path.join(inspectRoot, 'package', '.dsh-bundled-skills', 'archify');
+const checkedInPayload = path.join(integrationRoot, '.dsh-bundled-skills', 'archify');
 let unzipContentsIdentical = false;
 let canonicalZipBytes = 'not-asserted';
 if (skipFreshZipRebuild) {
@@ -438,9 +439,9 @@ if (skipFreshZipRebuild) {
   fs.mkdirSync(checkedDir);
   fs.copyFileSync(committedZip, path.join(checkedDir, 'committed.zip'));
   requireStatus('zero-regression', run('tar', ['-xf', 'committed.zip'], { cwd: checkedDir }));
-  const compared = treesMatch(packedSkill, path.join(checkedDir, 'archify'), { normalizeTextEol: true });
+  const compared = treesMatch(packedSkill, checkedInPayload, { normalizeTextEol: true });
   if (!compared.ok) {
-    fail('zero-regression', 'packed skill drifted from the committed ZIP', compared);
+    fail('zero-regression', 'packed skill drifted from the checked-in static payload', compared);
   }
   unzipContentsIdentical = true;
 } else {
@@ -461,6 +462,10 @@ if (skipFreshZipRebuild) {
       fail('zero-regression', 'canonical Linux ZIP bytes drifted from the committed archive');
     }
     canonicalZipBytes = 'verified';
+  }
+  const compared = treesMatch(packedSkill, checkedInPayload);
+  if (!compared.ok) {
+    fail('zero-regression', 'packed skill drifted from the checked-in static payload', compared);
   }
   unzipContentsIdentical = true;
 }

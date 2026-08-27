@@ -26,6 +26,7 @@ function excludeFromCleanSkill(sourceRoot, src) {
   if (parts.includes('.hive')) return true;
   if (parts.includes('.workbuddy')) return true;
   if (parts.some((part) => part.startsWith('.validator-check-'))) return true;
+  if (parts[0] === 'examples' && parts.at(-1).endsWith('.html')) return true;
   if (parts.join('/') === 'scripts/generate-brand-marks.mjs') return true;
   if (parts.join('/') === 'scripts/generate-validators.mjs') return true;
   return false;
@@ -67,7 +68,7 @@ const out = argValue('--out');
 const stage = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-dsh-pack-'));
 
 try {
-  stageCleanArchify(path.join(stage, 'skills', 'archify'));
+  stageCleanArchify(path.join(stage, '.dsh-bundled-skills', 'archify'));
   fs.copyFileSync(path.join(integrationRoot, 'package.json'), path.join(stage, 'package.json'));
   fs.copyFileSync(path.join(integrationRoot, 'cordis.patch.yml'), path.join(stage, 'cordis.patch.yml'));
   fs.cpSync(path.join(integrationRoot, 'lib'), path.join(stage, 'lib'), { recursive: true });

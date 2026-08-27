@@ -48,13 +48,13 @@ test('pack command emits a real npm tarball with the expected identity and file 
       'lib/index.js',
       'README.md',
       'LICENSE',
-      'skills/archify/SKILL.md',
-      'skills/archify/bin/archify.mjs',
+      '.dsh-bundled-skills/archify/SKILL.md',
+      '.dsh-bundled-skills/archify/bin/archify.mjs',
     ]) {
       assert.ok(files.includes(required), `tarball missing ${required}`);
     }
-    const skillEntries = files.filter((file) => file === 'skills/archify/SKILL.md' || file.endsWith('/SKILL.md'));
-    assert.deepEqual(skillEntries, ['skills/archify/SKILL.md']);
+    const skillEntries = files.filter((file) => file === '.dsh-bundled-skills/archify/SKILL.md' || file.endsWith('/SKILL.md'));
+    assert.deepEqual(skillEntries, ['.dsh-bundled-skills/archify/SKILL.md']);
     for (const file of files) {
       for (const forbidden of FORBIDDEN) {
         assert.equal(file.includes(forbidden), false, `tarball contains forbidden ${file}`);
@@ -66,9 +66,8 @@ test('pack command emits a real npm tarball with the expected identity and file 
   }
 });
 
-test('packed Skill payload matches the existing ZIP clean-staging contract', () => {
+test('packed Skill payload matches the checked-in static runtime projection', () => {
   const { scratch, out, result } = packTarball();
-  const zipScratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-dsh-zip-stage-'));
   try {
     assert.equal(result.status, 0, result.stderr || result.stdout);
     const packedRoot = path.join(scratch, 'packed');
@@ -78,24 +77,13 @@ test('packed Skill payload matches the existing ZIP clean-staging contract', () 
       encoding: 'utf8',
     });
     assert.equal(tar.status, 0, tar.stderr);
-    const zipPath = path.join(zipScratch, 'archify.zip');
-    const zip = spawnSync('bash', [path.join(repoRoot, 'scripts', 'build-zip.sh'), zipPath], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    });
-    assert.equal(zip.status, 0, zip.stderr);
-    const zipRoot = path.join(zipScratch, 'unzipped');
-    fs.mkdirSync(zipRoot);
-    const unzip = spawnSync('unzip', ['-q', zipPath, '-d', zipRoot], { encoding: 'utf8' });
-    assert.equal(unzip.status, 0, unzip.stderr);
     const diff = spawnSync('diff', [
       '-r',
-      path.join(packedRoot, 'package', 'skills', 'archify'),
-      path.join(zipRoot, 'archify'),
+      path.join(packedRoot, 'package', '.dsh-bundled-skills', 'archify'),
+      path.join(integrationRoot, '.dsh-bundled-skills', 'archify'),
     ], { encoding: 'utf8' });
     assert.equal(diff.status, 0, diff.stdout || diff.stderr);
   } finally {
     fs.rmSync(scratch, { recursive: true, force: true });
-    fs.rmSync(zipScratch, { recursive: true, force: true });
   }
 });

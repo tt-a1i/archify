@@ -14,12 +14,15 @@ function git(args) {
   return result.stdout.trim();
 }
 
-test('the repository still has exactly one checked-in Archify SKILL.md and no generated DSH payload', () => {
+test('the repository keeps a hidden, checked-in DSH payload without duplicating normal Skills discovery', () => {
   const skillFiles = git(['ls-files', '*SKILL.md']).split('\n').filter(Boolean);
-  assert.deepEqual(skillFiles, ['archify/SKILL.md']);
+  assert.deepEqual(skillFiles, [
+    'archify/SKILL.md',
+    'integrations/deepseek-harness/.dsh-bundled-skills/archify/SKILL.md',
+  ]);
   assert.equal(fs.existsSync(path.join(repoRoot, 'integrations/deepseek-harness/skills')), false);
-  const trackedSkills = git(['ls-files', 'integrations/deepseek-harness/skills']);
-  assert.equal(trackedSkills, '');
+  const trackedPayload = git(['ls-files', 'integrations/deepseek-harness/.dsh-bundled-skills']);
+  assert.match(trackedPayload, /\.dsh-bundled-skills\/archify\/SKILL\.md/);
 });
 
 test('Archify core does not import, detect, or branch on DeepSeek Harness', () => {

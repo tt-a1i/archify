@@ -3,8 +3,8 @@
 # the DSH profile (Loader baseUrl), never as a path concatenated onto baseUrl.
 - insert:
     - id: archify-skill-filesystem
-      name: '@deepseek-ai/dsh-skill-filesystem'
+      name: '@tt-a1i/archify-dsh'
       config:
         providerName: archify-plugin
         includeDefaultRoots: false
-        bundledSkillDir: !!js process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('@tt-a1i/archify-dsh/package.json')), 'skills')
+        bundledSkillDir: !!js process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('@tt-a1i/archify-dsh/package.json')), '.dsh-bundled-skills')
