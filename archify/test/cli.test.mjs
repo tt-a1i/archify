@@ -662,6 +662,20 @@ test('cli: inspect emits architecture layout json', () => {
   assert.ok(parsed.connections.length >= 1);
 });
 
+test('cli: validate rejects unknown options and extra positionals', () => {
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  for (const args of [
+    ['validate', 'workflow', input, '--bogus'],
+    ['validate', 'workflow', input, 'extra.json'],
+    ['inspect', 'architecture', path.resolve(skillRoot, '../examples/archify-repo-grid.architecture.json'), '--bogus'],
+  ]) {
+    const result = run(args);
+    assert.equal(result.status, 2, `${args.join(' ')} should fail`);
+    if (args.includes('--bogus')) assert.match(result.stderr, /Unknown validate option "--bogus"/);
+    else assert.match(result.stderr, /Usage:/);
+  }
+});
+
 test('cli: validate returns renderer errors for bad input', () => {
   const input = path.join(tmp, 'bad.workflow.json');
   const validateTmp = path.join(tmp, 'validate-failure-tmp');
