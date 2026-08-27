@@ -1,3 +1,14 @@
+# Checked-in artifacts are compared byte-for-byte against renderer output and
+# staged into the canonical archify.zip. A CRLF checkout rewrites those bytes,
+# so pin every text file to LF in the working tree regardless of core.autocrlf.
+* text=auto eol=lf
+
+# Binary payloads must never be line-ending converted.
+*.gif binary
+*.jpg binary
+*.png binary
+*.zip binary
+
 # Generated diagram artifacts and built documentation surfaces.
 # Keep renderer/viewer templates and the hand-authored landing page visible to Linguist.
 /archify/examples/*.html linguist-generated=true
