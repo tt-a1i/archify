@@ -1492,9 +1492,12 @@ function commandValidate(args) {
   const repoRoot = repoArgs.repoRoot;
   const json = args.includes('--json');
   const layoutJson = args.includes('--layout-json');
-  const rest = args.filter((arg) => arg !== '--json' && arg !== '--layout-json');
+  const knownOptions = new Set(['--json', '--layout-json']);
+  const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
+  if (unknown.length) fail(`Unknown validate option "${unknown[0]}".`);
+  const rest = args.filter((arg) => !knownOptions.has(arg));
   const [type, input] = rest;
-  if (!type || !input) fail(usage());
+  if (!type || !input || rest.length > 2) fail(usage());
   assertEvidenceType(type, repoRoot);
   const renderer = rendererPath(type);
 
