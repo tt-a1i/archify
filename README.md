@@ -42,7 +42,7 @@ Then ask your agent: `Use archify to map this repository's runtime architecture.
   <tr><td align="center" width="240"><a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven" width="200" /></a><br/><strong><a href="https://github.com/EverMind-AI">EverMind</a> · <a href="https://github.com/EverMind-AI/Raven">Raven</a></strong></td><td>EverMind sponsors Archify and builds memory infrastructure for agents. Its <a href="https://github.com/EverMind-AI/Raven"><strong>Raven</strong></a> harness supports Archify as a Skill for verified, interactive system maps.</td></tr>
 </table>
 
-> Sponsor Archify: [email](mailto:2801884530@qq.com) · [LINUX DO](https://linux.do)
+> Want to sponsor Archify? [Contact us by email.](mailto:2801884530@qq.com)
 
 ## See Archify in action
 

@@ -38,7 +38,7 @@ npx skills add tt-a1i/archify -g
   <tr><td align="center" width="240"><a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven" width="200" /></a><br/><strong><a href="https://github.com/EverMind-AI">EverMind</a> · <a href="https://github.com/EverMind-AI/Raven">Raven</a></strong></td><td>感谢 EverMind 赞助 Archify。EverMind 专注 Agent 记忆基础设施，旗下 <a href="https://github.com/EverMind-AI/Raven"><strong>Raven</strong></a> 已支持 Archify Skill，让 Raven 工作流可以直接生成经过验证的交互式系统地图。</td></tr>
 </table>
 
-> 赞助 Archify：[邮件联系](mailto:2801884530@qq.com) · 社区友链：[LINUX DO](https://linux.do)
+> 想赞助 Archify？[欢迎通过邮件联系我们。](mailto:2801884530@qq.com)
 
 ## 看看 Archify 能做什么
 
