@@ -204,6 +204,10 @@ Archify is not a general-purpose drawing editor or a Mermaid theme. It turns tec
 | **Deliver** | A same-directory candidate is rendered and checked; only a passing artifact atomically replaces the target, then optional `--open` launches that exact file. |
 | **Iterate** | The agent updates the source while unrelated structure stays stable. |
 
+[![Archify's own delivery pipeline: agent hosts write typed JSON IR, gates check it, and deliver commits one HTML artifact](docs/assets/archify-repo-architecture.png)](examples/archify-repo.html)
+
+Archify maps itself with the same pipeline. Source: [`examples/archify-repo.architecture.json`](examples/archify-repo.architecture.json) — 12 components, 9/9 artifact checks, 0 errors, 0 warnings.
+
 Useful repository commands:
 
 ```bash

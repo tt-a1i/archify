@@ -3,7 +3,7 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Archify",
-    "subtitle": "Agent skill → JSON IR → typed renderers → standalone HTML",
+    "subtitle": "Agent skill → JSON IR → typed renderers → checked HTML artifact",
     "output": "examples/archify-repo.html"
   },
   "components": [
@@ -11,42 +11,72 @@
       "id": "user",
       "type": "external",
       "label": "You",
-      "sublabel": "NL or Mermaid",
-      "pos": [40, 300],
-      "size": [120, 60]
+      "sublabel": "system description",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        120,
+        60
+      ]
     },
     {
       "id": "agents",
       "type": "frontend",
       "label": "Agent Hosts",
-      "sublabel": "Claude · Codex · opencode",
-      "pos": [200, 300],
-      "size": [150, 60]
+      "pos": [
+        200,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sublabel": "Claude · Codex · Cursor"
     },
     {
       "id": "skill",
       "type": "frontend",
       "label": "SKILL.md",
-      "sublabel": "layout judgment",
-      "pos": [200, 140],
-      "size": [150, 60],
-      "tag": "prompt dialect"
+      "sublabel": "authoring contract",
+      "pos": [
+        200,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "tag": "layout judgment"
     },
     {
       "id": "ir",
       "type": "messagebus",
       "label": "JSON IR",
       "sublabel": "schema_version: 1",
-      "pos": [400, 300],
-      "size": [140, 60]
+      "pos": [
+        400,
+        320
+      ],
+      "size": [
+        140,
+        60
+      ]
     },
     {
       "id": "schemas",
       "type": "security",
-      "label": "JSON Schema",
+      "label": "Schema Gate",
       "sublabel": "ajv strict",
-      "pos": [400, 140],
-      "size": [140, 60],
+      "pos": [
+        400,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ],
       "tag": "fail-closed"
     },
     {
@@ -54,56 +84,115 @@
       "type": "backend",
       "label": "Renderers ×5",
       "sublabel": "layout checks",
-      "pos": [590, 300],
-      "size": [140, 60],
+      "pos": [
+        590,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ],
       "tag": "no auto-layout"
     },
     {
       "id": "template",
       "type": "frontend",
       "label": "template.html",
-      "sublabel": "theme + export",
-      "pos": [780, 300],
-      "size": [140, 60]
+      "sublabel": "viewer + export",
+      "pos": [
+        790,
+        320
+      ],
+      "size": [
+        140,
+        60
+      ]
     },
     {
-      "id": "checker",
+      "id": "deliver",
       "type": "security",
-      "label": "Output Check",
-      "sublabel": "SVG gates",
-      "pos": [970, 300],
-      "size": [140, 60]
+      "label": "Deliver Gate",
+      "sublabel": "9 artifact checks",
+      "pos": [
+        970,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "tag": "atomic swap"
     },
     {
       "id": "html",
       "type": "cloud",
       "label": "HTML Artifact",
       "sublabel": "single file",
-      "pos": [1160, 300],
-      "size": [140, 60]
+      "pos": [
+        1160,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
     },
     {
-      "id": "zip",
-      "type": "cloud",
-      "label": "archify.zip",
-      "sublabel": "skill package",
-      "pos": [1160, 140],
-      "size": [140, 60]
-    },
-    {
-      "id": "ci",
+      "id": "preview",
       "type": "backend",
-      "label": "CI Gates",
-      "sublabel": "golden + zip",
-      "pos": [590, 440],
-      "size": [140, 60]
+      "label": "Preview Loop",
+      "sublabel": "last-good watch",
+      "pos": [
+        400,
+        490
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "delta",
+      "type": "backend",
+      "label": "Architecture Delta",
+      "sublabel": "before / after",
+      "pos": [
+        790,
+        490
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "visual",
+      "type": "backend",
+      "label": "visual-check",
+      "sublabel": "containment",
+      "pos": [
+        1160,
+        490
+      ],
+      "size": [
+        150,
+        60
+      ]
     }
   ],
   "boundaries": [
     {
       "kind": "region",
       "label": "archify/ skill package",
-      "wraps": ["ir", "schemas", "renderers", "template", "checker"]
+      "wraps": [
+        "ir",
+        "schemas",
+        "renderers",
+        "template",
+        "deliver",
+        "preview",
+        "delta"
+      ]
     }
   ],
   "connections": [
@@ -143,28 +232,42 @@
     },
     {
       "from": "template",
-      "to": "checker",
+      "to": "deliver",
       "variant": "emphasis"
     },
     {
-      "from": "checker",
+      "from": "deliver",
       "to": "html",
-      "label": "deliver",
-      "variant": "emphasis"
+      "label": "atomic commit",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "from": "ir",
+      "to": "preview",
+      "label": "watch one source",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
     },
     {
       "from": "renderers",
-      "to": "ci",
+      "to": "delta",
+      "label": "compare snapshots",
       "variant": "dashed",
       "fromSide": "bottom",
-      "toSide": "top"
+      "toSide": "top",
+      "labelDy": 24
     },
     {
       "from": "html",
-      "to": "zip",
+      "to": "visual",
+      "label": "desktop evidence",
       "variant": "dashed",
-      "fromSide": "top",
-      "toSide": "bottom"
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
     }
   ],
   "cards": [
@@ -172,27 +275,27 @@
       "dot": "cyan",
       "title": "Agent loop",
       "items": [
-        "Claude / Codex / opencode load the skill",
-        "SKILL.md teaches layout judgment, not auto-layout",
-        "Mermaid is an input dialect via prompt, not a parser"
+        "Claude Code, Codex CLI, Cursor, and opencode load the same skill",
+        "SKILL.md teaches layout judgment instead of generic auto-layout",
+        "Mermaid is an input dialect read by the agent, never a parser"
       ]
     },
     {
       "dot": "emerald",
       "title": "Render path",
       "items": [
-        "JSON IR pins schema_version: 1",
-        "Five typed renderers: architecture / workflow / sequence / dataflow / lifecycle",
-        "template.html owns theme toggle and 4× export"
+        "Typed JSON IR pins schema_version: 1",
+        "Five renderers: architecture, workflow, sequence, dataflow, lifecycle",
+        "template.html owns theme, viewer runtime, and truthful export"
       ]
     },
     {
       "dot": "rose",
       "title": "Quality gates",
       "items": [
-        "ajv schema validation sits on the IR (fail-closed)",
-        "Renderer layout checks, then Output Check on the HTML",
-        "CI golden tests and zip freshness stay off the main path"
+        "Schema validation is fail-closed and returns machine-readable diagnostics",
+        "Deliver renders a candidate and swaps it in only after all checks pass",
+        "Preview, Delta, and visual-check stay off the delivery path"
       ]
     }
   ]

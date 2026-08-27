@@ -199,6 +199,10 @@ Archify 不是通用绘图编辑器，也不是 Mermaid 主题；它负责把技
 | **交付** | 在目标同目录生成并检查候选；只有通过门禁的结果才原子替换目标文件，随后可选用 `--open` 打开这个确切成品。 |
 | **迭代** | Agent 修改源文件，不干扰无关结构。 |
 
+[![Archify 自身的交付流水线：Agent 写出 Typed JSON IR，门禁逐项检查，Deliver 原子提交一个 HTML 成品](docs/assets/archify-repo-architecture.png)](examples/archify-repo.html)
+
+Archify 用同一条流水线绘制自己。源文件：[`examples/archify-repo.architecture.json`](examples/archify-repo.architecture.json) —— 12 个组件，9/9 项成品检查，0 错误 0 警告。
+
 仓库常用命令：
 
 ```bash
