@@ -61,10 +61,10 @@
     }
   ],
   "connections": [
-    { "id": "submit", "from": "callers", "to": "entry", "label": "task + selected agents", "variant": "emphasis", "route": "straight", "labelAt": [186, 276] },
+    { "id": "submit", "from": "callers", "to": "entry", "label": "task + selected agents", "variant": "emphasis", "route": "straight", "labelAt": [186, 244] },
     { "id": "parse", "from": "entry", "to": "router", "variant": "emphasis", "route": "straight" },
     { "id": "resolve", "from": "router", "to": "policy", "variant": "security", "route": "straight" },
-    { "id": "authorize", "from": "policy", "to": "invocation", "label": "validated scope", "variant": "security", "route": "straight", "labelAt": [794, 276] },
+    { "id": "authorize", "from": "policy", "to": "invocation", "label": "validated scope", "variant": "security", "route": "straight", "labelAt": [794, 244] },
     { "id": "schedule", "from": "invocation", "to": "adapters", "variant": "emphasis", "route": "straight" },
     { "id": "adapt", "from": "adapters", "to": "transport", "label": "provider contract", "variant": "emphasis", "route": "straight", "labelAt": [1219, 276] },
     { "id": "execute", "from": "transport", "to": "providers", "label": "native CLI", "variant": "emphasis", "route": "straight" },
