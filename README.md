@@ -12,7 +12,7 @@
 
 **Turn a codebase or system description into a polished, interactive system map — directly in chat.**
 
-Archify is an agent skill for Raven, Cursor, Claude Code, Codex CLI, and OpenCode. Give it a system description or repository; get an interactive, shareable technical map.
+Archify is a Node.js rendering and validation system for Cursor, Claude Code, Codex CLI, and OpenCode. Agents produce typed JSON IR; Archify deterministically compiles it into HTML/SVG.
 
 - **Open it and present** — five diagram types, four presets, dark/light themes, built-in brand marks, and finite motion
 - **Review architecture changes before merge** — compare two validated snapshots as Before / Delta / After, with exact added, removed, changed, moved, and rerouted facts
