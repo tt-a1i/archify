@@ -178,11 +178,12 @@ test('README stays scannable without deleting the visual proof set', () => {
     'archify-sequence.png',
     'archify-dataflow.png',
     'archify-lifecycle.png',
+    'archify-self-architecture.png',
   ];
 
   for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
-    assert.ok(readme.split('\n').length <= 290, `${filename}: README grew beyond the scannable line budget`);
+    assert.ok(readme.split('\n').length <= 294, `${filename}: README grew beyond the scannable line budget`);
     for (const asset of commonAssets) {
       assert.ok(readme.includes(`docs/assets/${asset}`), `${filename}: visual proof ${asset} was removed`);
     }
@@ -192,7 +193,7 @@ test('README stays scannable without deleting the visual proof set', () => {
   const wordCount = english.trim().split(/\s+/).length;
   const intro = english.slice(0, english.indexOf('![License]'));
   const introBullets = intro.match(/^- \*\*/gm) || [];
-  assert.ok(wordCount <= 2070, `README.md is too verbose again (${wordCount} words)`);
+  assert.ok(wordCount <= 2110, `README.md is too verbose again (${wordCount} words)`);
   assert.ok(introBullets.length <= 8, `README.md has too many top-level capability bullets (${introBullets.length})`);
 
   const chinese = fs.readFileSync(path.join(repoRoot, 'README_ZH.md'), 'utf8');
