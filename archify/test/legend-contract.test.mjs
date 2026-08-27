@@ -158,7 +158,7 @@ test('Dataflow database node facts are interactive while flow variants stay visu
   const databaseSvg = canonicalSvg(render('dataflow', withDatabase));
   assert.deepEqual(attrValues(databaseSvg, 'data-legend-semantic-kind'), ['database', 'default']);
   assert.deepEqual(attrValues(databaseSvg, 'data-legend-kind'), ['database']);
-  assert.equal((databaseSvg.match(/data-legend-bridge(?:\s|>)/g) || []).length, 1);
+  assert.equal((databaseSvg.match(/data-legend-bridge=""/g) || []).length, 1);
   assert.ok(attrValues(databaseSvg, 'data-node-kind').includes('database'));
 
   const forcedWithoutFact = canonicalSvg(render('dataflow', withLegend('dataflow', {

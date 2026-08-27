@@ -197,7 +197,7 @@ export function renderLegend({ entries, layout, renderSwatch, locale }) {
   if (!measured) return '';
   const hasInteractiveEntries = measured.entries.some((entry) => entry.interactive);
   const renderedFontSize = measured.fontSize < 8 ? measured.fontSize + 0.5 : measured.fontSize + 2;
-  const rootAttributes = hasInteractiveEntries ? ' data-legend data-legend-bridge' : ' data-legend';
+  const rootAttributes = hasInteractiveEntries ? ' data-legend="" data-legend-bridge=""' : ' data-legend=""';
   const parts = [
     `        <g${rootAttributes}>`,
     `          <text x="${layout.x}" y="${measured.titleY}" class="t-primary" font-size="12" font-weight="650">${esc(translateMessage(locale, 'legend.title'))}</text>`,
