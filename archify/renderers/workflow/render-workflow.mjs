@@ -51,10 +51,69 @@ const layout = {
   laneH: 104,
   laneGap: 20,
   laneTitleH: 30,
+  // Non-uniform by design (phase/group rhythm). Adjacent gaps are
+  // 132 / 80 / 130 / 70 / 125 px. Pairs 1↔2 and 3↔4 are too tight for
+  // default-width (92px) same-lane edges that must clear MIN_EDGE_LENGTH.
   colXs: [88, 220, 300, 430, 500, 625],
   nodeW: 92,
   nodeH: 52
 };
+
+/** Straight same-lane edges must clear this length (matches layout budget). */
+const MIN_EDGE_LENGTH = 28;
+
+/** Horizontal clearance between two column centers given node widths. */
+function columnPairClearance(colXs, fromCol, toCol, fromWidth, toWidth) {
+  return Math.abs(colXs[toCol] - colXs[fromCol]) - fromWidth / 2 - toWidth / 2;
+}
+
+/**
+ * Adjacent column pairs whose default routing would clear `minLength` for the
+ * given node widths. Used only to name legal alternatives in diagnostics.
+ */
+function adjacentColumnPairsClearingMinimum(colXs, fromWidth, toWidth, minLength = MIN_EDGE_LENGTH) {
+  const pairs = [];
+  for (let fromCol = 0; fromCol < colXs.length - 1; fromCol += 1) {
+    const toCol = fromCol + 1;
+    if (columnPairClearance(colXs, fromCol, toCol, fromWidth, toWidth) >= minLength) {
+      pairs.push(`${fromCol}→${toCol}`);
+    }
+  }
+  return pairs;
+}
+
+function shortEdgeRepairHint(from, to) {
+  const channelHint = 'route it through a channel';
+  if (
+    !from
+    || !to
+    || from.lane !== to.lane
+    || !Number.isInteger(from.col)
+    || !Number.isInteger(to.col)
+  ) {
+    return channelHint;
+  }
+
+  const legalPairs = adjacentColumnPairsClearingMinimum(
+    layout.colXs,
+    from.width || layout.nodeW,
+    to.width || layout.nodeW,
+  ).filter((pair) => {
+    const [a, b] = pair.split('→').map(Number);
+    const lo = Math.min(from.col, to.col);
+    const hi = Math.max(from.col, to.col);
+    return !(lo === a && hi === b);
+  });
+
+  if (legalPairs.length === 0) {
+    return `reduce node width, skip a column, or ${channelHint}`;
+  }
+
+  const listed = legalPairs.length === 1
+    ? `col ${legalPairs[0]}`
+    : `col ${legalPairs.slice(0, -1).join(', ')}, or ${legalPairs[legalPairs.length - 1]}`;
+  return `move one node onto a wider adjacent pair (${listed} clear ${MIN_EDGE_LENGTH}px at these widths), or ${channelHint}`;
+}
 
 // Content is 680px wide (laneX + laneW); auto height fits the lanes plus legend.
 const autoHeight = layout.laneY
@@ -318,8 +377,12 @@ function validateWorkflow() {
       if (routed.points.length === 2) {
         const [start, end] = routed.points;
         const segmentLength = Math.hypot(end[0] - start[0], end[1] - start[1]);
-        if (segmentLength < 28) {
-          problems.push(`Edge "${edge.from}" -> "${edge.to}" is too short (${Math.round(segmentLength)}px; minimum 28px) — drop its label or route it through a channel.`);
+        if (segmentLength < MIN_EDGE_LENGTH) {
+          const from = nodes.get(edge.from);
+          const to = nodes.get(edge.to);
+          problems.push(
+            `Edge "${edge.from}" -> "${edge.to}" is too short (${Math.round(segmentLength)}px; minimum ${MIN_EDGE_LENGTH}px). ${shortEdgeRepairHint(from, to)}.`,
+          );
         }
       }
     }

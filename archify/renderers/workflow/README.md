@@ -81,8 +81,10 @@ backed by rendered nodes receive Semantic Legend controls.
 | Legend row | y = lane bottom + 44; viewBox height must be ≥ legend y + 18 |
 
 Column-center gaps are 132 / 80 / 130 / 70 / 125 px: columns 1↔2 (80px) and
-3↔4 (70px) cannot both hold default-width 92px nodes in the same lane — skip a
-column or reduce `width`.
+3↔4 (70px) cannot both hold default-width 92px nodes in the same lane with a
+straight labeled edge that clears the 28px minimum. Use 0→1, 2→3, or 4→5,
+skip a column, reduce `width`, or route through a channel. The short-edge
+diagnostic names those legal adjacent pairs for the node widths in play.
 
 ## Design Rules
 

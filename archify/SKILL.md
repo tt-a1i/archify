@@ -38,6 +38,8 @@ Do not read `renderers/shared/geometry.mjs`, renderer source, validator source, 
 
 Lifecycle note: phase columns `0..4` occupy the main rail; event/outcome columns `0..2` align beneath later phases. A recoverable state uses `type: "failure"` plus a real transition back to the active state.
 
+Workflow note: column centers are not uniform (`col` 0..5 at x 88 / 220 / 300 / 430 / 500 / 625). Same-lane adjacent pairs 1↔2 and 3↔4 are too tight for default 92px nodes: a straight edge there fails the 28px minimum even when an identical edge one column over passes. Prefer 0→1, 2→3, or 4→5; otherwise skip a column, reduce `width`, or route through a channel. Details: `renderers/workflow/README.md`.
+
 ## Type router
 
 | Type | Use for |
