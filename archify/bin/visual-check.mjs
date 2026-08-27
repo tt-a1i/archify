@@ -382,8 +382,8 @@ export class ChromeVisualBrowser {
       var reader = document.querySelector('.container');
       var diagram = document.querySelector('.diagram-container');
       var svg = diagram && (
-        diagram.querySelector(':scope > .diagram-stage > svg') ||
-        diagram.querySelector(':scope > svg')
+        diagram.querySelector(':scope > svg') ||
+        diagram.querySelector(':scope > .diagram-stage > svg')
       );
       var stage = diagram && (diagram.querySelector(':scope > .diagram-stage') || svg);
       var legend = svg && svg.querySelector('[data-legend]');
@@ -419,7 +419,10 @@ export class ChromeVisualBrowser {
         return width * height;
       }
       var legendRect = legend ? legend.getBoundingClientRect() : null;
-      var stageRect = stage ? stage.getBoundingClientRect() : null;
+      var stageRect = window.Archify && Archify.viewerChromeLayout
+        && typeof Archify.viewerChromeLayout.stageRect === 'function'
+        ? Archify.viewerChromeLayout.stageRect()
+        : (stage ? stage.getBoundingClientRect() : null);
       var navigationDockRect = navigationDock ? navigationDock.getBoundingClientRect() : null;
       var stageDockIntersectionArea = intersectionArea(stageRect, navigationDockRect);
       var viewerChromeReceipt = window.Archify && Archify.viewerChromeLayout
@@ -572,6 +575,88 @@ function contactSheetHtml({ artifactPath, receipt, screenshots }) {
 `;
 }
 
+function viewportSubject(artifact, entry) {
+  return {
+    artifact,
+    viewport: { width: entry.width, height: entry.height, theme: entry.theme },
+  };
+}
+
+function failureDiagnostic({ code, message, subject, evidence, supportedFixes, severity = 'error' }) {
+  return { code, severity, message, subject, evidence, supportedFixes };
+}
+
+function observationDiagnostics({ artifact, allObservations, readabilityObservations }) {
+  const diagnostics = [];
+  for (const entry of allObservations) {
+    if (!entry.ok) {
+      diagnostics.push(failureDiagnostic({
+        code: 'viewer/viewport-overflow',
+        message: `The rendered artifact overflows the ${entry.width}x${entry.height} ${entry.theme} viewport.`,
+        subject: viewportSubject(artifact, entry),
+        evidence: {
+          innerWidth: entry.innerWidth,
+          innerHeight: entry.innerHeight,
+          scrollWidth: entry.scrollWidth,
+          scrollHeight: entry.scrollHeight,
+          overflowX: entry.overflowX,
+          overflowY: entry.overflowY,
+        },
+        supportedFixes: [
+          `contain the rendered layout within ${entry.width}x${entry.height}, then rerun visual-check`,
+        ],
+      }));
+    }
+    if (entry.legendDockIntersectionArea > 0.5) {
+      diagnostics.push(failureDiagnostic({
+        code: 'viewer/chrome-legend-clearance',
+        message: `The navigation Dock obscures the SVG Legend at ${entry.width}x${entry.height} (${entry.theme}).`,
+        subject: viewportSubject(artifact, entry),
+        evidence: { legendDockIntersectionArea: entry.legendDockIntersectionArea },
+        supportedFixes: [
+          'move the SVG Legend or Viewer Dock until legendDockIntersectionArea is 0, then rerun visual-check',
+        ],
+      }));
+    }
+    if (!entry.viewerChromeStageOk) {
+      const stageOverlapsDock = entry.dockStageIntersectionArea > 0.5;
+      diagnostics.push(failureDiagnostic({
+        code: 'viewer/chrome-stage-clearance',
+        message: stageOverlapsDock
+          ? `Navigation Dock enters the protected SVG stage at ${entry.width}x${entry.height} (${entry.theme}).`
+          : `Navigation Dock clearance from the protected SVG stage is below the required gap at ${entry.width}x${entry.height} (${entry.theme}).`,
+        subject: viewportSubject(artifact, entry),
+        evidence: {
+          dockStageIntersectionArea: entry.dockStageIntersectionArea,
+          dockStageGap: entry.dockStageGap,
+          requiredDockStageGap: entry.requiredDockStageGap,
+        },
+        supportedFixes: [
+          `adjust Viewer stage reservation or clipping until dockStageGap is at least ${entry.requiredDockStageGap} and dockStageIntersectionArea is 0, then rerun visual-check`,
+        ],
+      }));
+    }
+  }
+  for (const entry of readabilityObservations) {
+    if (entry.readabilityOk) continue;
+    diagnostics.push(failureDiagnostic({
+      code: 'viewer/projected-text-readability',
+      message: `Projected ${entry.minimumProjectedNodeTextDetail || 'node'} text is below the readability floor at ${entry.width}x${entry.height}.`,
+      subject: viewportSubject(artifact, entry),
+      evidence: {
+        text: entry.minimumProjectedNodeText,
+        detail: entry.minimumProjectedNodeTextDetail,
+        minimumProjectedNodeTextPx: entry.minimumProjectedNodeTextPx,
+        minimumRequiredNodeTextPx: entry.minimumRequiredNodeTextPx,
+      },
+      supportedFixes: [
+        `increase projected node text to at least ${entry.minimumRequiredNodeTextPx}px at ${entry.width}x${entry.height}, then rerun visual-check`,
+      ],
+    }));
+  }
+  return diagnostics;
+}
+
 function baseReceipt({ artifactPath, artifact, outputs, chrome }) {
   return {
     schemaVersion: 1,
@@ -586,6 +671,7 @@ function baseReceipt({ artifactPath, artifact, outputs, chrome }) {
     },
     state: { detail: 'read', motion: 'still' },
     chrome,
+    diagnostics: [],
     containment: { status: 'fail', viewports: [] },
     readability: { status: 'fail', minimumProjectedNodeTextPx: MIN_PROJECTED_NODE_TEXT_PX, viewports: [] },
     viewerChrome: { status: 'fail', viewports: [] },
@@ -632,6 +718,14 @@ export async function runVisualCheck({
     receipt.viewerChrome.status = 'skipped';
     receipt.captures.status = 'skipped';
     receipt.error = 'Chrome or Chromium is unavailable. Set ARCHIFY_CHROME to its executable path.';
+    receipt.diagnostics = [failureDiagnostic({
+      code: 'viewer/chrome-unavailable',
+      severity: 'warning',
+      message: receipt.error,
+      subject: { artifact },
+      evidence: { executable: null },
+      supportedFixes: ['set ARCHIFY_CHROME to a Chrome or Chromium executable and rerun visual-check'],
+    })];
     persistReceipt(outputs, receipt);
     return { exitCode: EXIT.skipped, receipt };
   }
@@ -686,6 +780,11 @@ export async function runVisualCheck({
     const containmentPass = allObservations.every((entry) => entry.ok);
     const readabilityPass = receipt.readability.viewports.every((entry) => entry.readabilityOk);
     const viewerChromePass = allObservations.every((entry) => entry.viewerChromeOk);
+    receipt.diagnostics = observationDiagnostics({
+      artifact,
+      allObservations,
+      readabilityObservations: receipt.readability.viewports,
+    });
     receipt.containment.status = containmentPass ? 'pass' : 'fail';
     receipt.readability.status = readabilityPass ? 'pass' : 'fail';
     receipt.viewerChrome.status = viewerChromePass ? 'pass' : 'fail';
@@ -711,6 +810,13 @@ export async function runVisualCheck({
     receipt.captures.status = 'fail';
     receipt.captures.screenshots = [];
     receipt.captures.contactSheet = null;
+    receipt.diagnostics = [failureDiagnostic({
+      code: 'viewer/visual-check-runtime',
+      message: 'visual-check could not complete its Chrome inspection.',
+      subject: { artifact },
+      evidence: { reason: error.message },
+      supportedFixes: ['resolve the reported Chrome inspection error, then rerun visual-check'],
+    })];
     persistReceipt(outputs, receipt);
     return { exitCode: EXIT.fail, receipt };
   } finally {

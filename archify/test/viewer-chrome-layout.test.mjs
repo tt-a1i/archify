@@ -93,7 +93,7 @@ async function waitForLayout(browser, sessionId) {
           var container = document.querySelector('.diagram-container');
           var current = [
             rect(container),
-            rect(container && container.querySelector(':scope > .diagram-stage > svg')),
+            rect(container && container.querySelector(':scope > svg')),
             rect(document.querySelector('.diagram-nav')),
             rect(document.querySelector('[data-legend]')),
             rect(document.getElementById('semantic-lens')),
@@ -132,10 +132,9 @@ async function finalGeometry(browser, sessionId) {
         Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
     }
     var container = document.querySelector('.diagram-container');
-    var stage = container && container.querySelector(':scope > .diagram-stage');
     var legend = document.querySelector('[data-legend]');
     var nav = document.querySelector('.diagram-nav');
-    var svg = container && container.querySelector(':scope > .diagram-stage > svg');
+    var svg = container && container.querySelector(':scope > svg');
     var lens = document.getElementById('semantic-lens');
     var radar = document.getElementById('overview-map');
     var passport = document.getElementById('focus-chip');
@@ -161,7 +160,10 @@ async function finalGeometry(browser, sessionId) {
     }
     var legendRect = legend && getComputedStyle(legend).display !== 'none' ? legend.getBoundingClientRect() : null;
     var navRect = nav && getComputedStyle(nav).display !== 'none' ? nav.getBoundingClientRect() : null;
-    var stageRect = stage ? stage.getBoundingClientRect() : null;
+    var stageRect = window.Archify && Archify.viewerChromeLayout
+      && typeof Archify.viewerChromeLayout.stageRect === 'function'
+      ? Archify.viewerChromeLayout.stageRect()
+      : null;
     var lensRect = lens && !lens.hidden && getComputedStyle(lens).display !== 'none' ? lens.getBoundingClientRect() : null;
     var radarRect = radar && !radar.hidden && getComputedStyle(radar).display !== 'none' ? radar.getBoundingClientRect() : null;
     var passportRect = passport && !passport.hidden && getComputedStyle(passport).display !== 'none' ? passport.getBoundingClientRect() : null;
@@ -246,11 +248,19 @@ async function load(browser, artifactPath, { width = 1440, height = 900, query =
 }
 
 test('the public CLI gives all typed renderers one final Viewer contract', () => {
+  const directChildSvg = /<div class="diagram-container"[^>]*>\s*<svg\b/;
+  assert.doesNotMatch(
+    '<div class="diagram-container"><section></section><svg>',
+    directChildSvg,
+    'the direct-child assertion must not cross an intervening wrapper',
+  );
   for (const [mode, example] of Object.entries(CASES)) {
     const output = render(mode, example);
     const html = fs.readFileSync(output, 'utf8');
     assert.match(html, /class="[^"]*\bdiagram-nav\b[^"]*"/, mode);
     assert.match(html, /data-legend/, mode);
+    assert.match(html, directChildSvg, `${mode} keeps the SVG as a direct child`);
+    assert.doesNotMatch(html, /class="diagram-stage"/, `${mode} does not re-nest the exported SVG`);
     assert.doesNotMatch(canonicalSvg(html), /nav-safe-rail|archify-nav-reserve|viewerChromeLayout/, mode);
     execFileSync(process.execPath, [path.join(skillRoot, 'bin', 'archify.mjs'), 'check', output]);
   }
@@ -283,6 +293,7 @@ test('Dock Safe Rail keeps typed renderers clear across themes, Presentation, an
       const message = `${entry.mode}: ${JSON.stringify({ entry, receipt })}`;
       assert.ok(receipt.reserve > 0, message);
       assert.ok(receipt.stageGap >= 9, message);
+      assert.equal(receipt.dockStageIntersectionArea, 0, message);
       assert.ok(receipt.scrollWidth <= receipt.innerWidth, message);
       assert.ok(receipt.navBottom <= receipt.containerBottom + 0.5, message);
       /* Normal artifacts intentionally keep supporting cards in document
@@ -454,7 +465,7 @@ test('manual zoom and pan reschedules Legend and Dock collision measurement', {
       var container = document.querySelector('.diagram-container');
       var zoomIn = document.querySelector('[data-view="in"]');
       for (var index = 0; index < 8; index += 1) zoomIn.click();
-      var svg = container.querySelector(':scope > .diagram-stage > svg');
+      var svg = container.querySelector(':scope > svg');
       var rect = svg.getBoundingClientRect();
       var pointer = { bubbles: true, pointerId: 7, button: 0 };
       var startX = rect.left + rect.width / 2;
@@ -484,7 +495,7 @@ test('camera pan clips authored relationship paint at the protected stage bounda
       var container = document.querySelector('.diagram-container');
       var zoomIn = document.querySelector('[data-view="in"]');
       for (var index = 0; index < 8; index += 1) zoomIn.click();
-      var svg = container.querySelector(':scope > .diagram-stage > svg');
+      var svg = container.querySelector(':scope > svg');
       var rect = svg.getBoundingClientRect();
       var pointer = { bubbles: true, pointerId: 11, button: 0 };
       var startX = rect.left + rect.width / 2;
@@ -506,6 +517,84 @@ test('camera pan clips authored relationship paint at the protected stage bounda
   }
 });
 
+test('live camera transitions keep authored relationship paint outside the Dock on every frame', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  const artifact = render('architecture', CASES.architecture);
+  const scenarios = [
+    { name: 'zoom-in', setupZoomClicks: 7, action: 'in', duration: 260, clearsClip: false },
+    { name: 'zoom-out', setupZoomClicks: 8, action: 'out', duration: 260, clearsClip: false },
+    { name: 'reset', setupZoomClicks: 8, action: 'reset', duration: 420, clearsClip: true },
+    { name: 'interrupted zoom', setupZoomClicks: 8, action: 'interrupt', duration: 420, clearsClip: false },
+  ];
+  try {
+    for (const scenario of scenarios) {
+      const sessionId = await load(browser, artifact);
+      const result = await evaluate(browser, sessionId, `(function () {
+        var scenario = ${JSON.stringify(scenario)};
+        var container = document.querySelector('.diagram-container');
+        var svg = container.querySelector(':scope > svg');
+        var zoomIn = document.querySelector('[data-view="in"]');
+        var zoomOut = document.querySelector('[data-view="out"]');
+        for (var index = 0; index < scenario.setupZoomClicks; index += 1) zoomIn.click();
+
+        var rect = svg.getBoundingClientRect();
+        var pointer = { bubbles: true, pointerId: 17, button: 0 };
+        var x = rect.left + rect.width / 2;
+        var y = rect.top + rect.height / 2;
+        container.dispatchEvent(new PointerEvent('pointerdown', Object.assign({ clientX: x, clientY: y }, pointer)));
+        container.dispatchEvent(new PointerEvent('pointermove', Object.assign({ clientX: x, clientY: y + 500 }, pointer)));
+        container.dispatchEvent(new PointerEvent('pointerup', Object.assign({ clientX: x, clientY: y + 500 }, pointer)));
+
+        document.documentElement.removeAttribute('data-motion');
+        return new Promise(function (resolve) {
+          requestAnimationFrame(function () {
+            if (scenario.action === 'in') zoomIn.click();
+            else if (scenario.action === 'out') zoomOut.click();
+            else if (scenario.action === 'reset') document.querySelector('[data-view="reset"]').click();
+            else {
+              zoomOut.click();
+              requestAnimationFrame(function () { zoomIn.click(); });
+            }
+            var edge = document.querySelector(
+              'path[data-edge-id="jwt-verification"][data-edge-from="auth"][data-edge-to="api"]'
+            );
+            var hits = [];
+            var started = performance.now();
+            function sample(now) {
+              var dock = document.querySelector('.diagram-nav').getBoundingClientRect();
+              var matrix = edge.getScreenCTM();
+              var length = edge.getTotalLength();
+              for (var offset = 0; offset <= length; offset += 0.25) {
+                var point = edge.getPointAtLength(offset).matrixTransform(matrix);
+                if (
+                  point.x >= dock.left && point.x <= dock.right &&
+                  point.y >= dock.top && point.y <= dock.bottom &&
+                  document.elementsFromPoint(point.x, point.y).includes(edge)
+                ) {
+                  hits.push({ ms: now - started, x: point.x, y: point.y });
+                  break;
+                }
+              }
+              if (now - started < scenario.duration) requestAnimationFrame(sample);
+              else resolve({ hits: hits, clipPath: svg.style.getPropertyValue('clip-path') });
+            }
+            requestAnimationFrame(sample);
+          });
+        });
+      })()`, true);
+
+      assert.deepEqual(result.hits, [], `${scenario.name}: ${JSON.stringify(result.hits)}`);
+      if (scenario.clearsClip) {
+        assert.equal(result.clipPath, '', `${scenario.name} retains runtime clip-path`);
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+});
+
 test('zoom keeps the desktop rail stable and reports protected stage geometry', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
@@ -517,7 +606,7 @@ test('zoom keeps the desktop rail stable and reports protected stage geometry', 
       var container = document.querySelector('.diagram-container');
       var zoomIn = document.querySelector('[data-view="in"]');
       for (var index = 0; index < 8; index += 1) zoomIn.click();
-      var svg = container.querySelector(':scope > .diagram-stage > svg');
+      var svg = container.querySelector(':scope > svg');
       var rect = svg.getBoundingClientRect();
       var pointer = { bubbles: true, pointerId: 13, button: 0 };
       var startX = rect.left + rect.width / 2;
@@ -549,7 +638,7 @@ test('Reset followed immediately by zoom and pan retains a collision-free deskto
       document.querySelector('[data-view="reset"]').click();
       var zoomIn = document.querySelector('[data-view="in"]');
       for (var index = 0; index < 8; index += 1) zoomIn.click();
-      var svg = container.querySelector(':scope > .diagram-stage > svg');
+      var svg = container.querySelector(':scope > svg');
       var rect = svg.getBoundingClientRect();
       var pointer = { bubbles: true, pointerId: 11, button: 0 };
       var startX = rect.left + rect.width / 2;
@@ -680,6 +769,8 @@ test('localized multiline Legends remain clear across required viewports, themes
       }
       assert.equal(receipt.legendDockIntersectionArea, 0, JSON.stringify({ ...entry, receipt }));
       assert.ok(receipt.reserve > 0, JSON.stringify({ ...entry, receipt }));
+      assert.equal(receipt.dockStageIntersectionArea, 0, JSON.stringify({ ...entry, receipt }));
+      assert.ok(receipt.stageGap >= 9, JSON.stringify({ ...entry, receipt }));
     }
   } finally {
     await browser.close();
