@@ -1485,10 +1485,6 @@ function commandDemo(args) {
   console.log('  archify render architecture <input.json> <output.html>');
 }
 
-function migrationDiagnostic({ code, message, subject = {}, evidence = {}, supportedFixes = [] }) {
-  return diagnostic({ code, message, subject, evidence, supportedFixes });
-}
-
 function migrationPathDiagnostics(error, sourcePath, destinationPath) {
   if (Array.isArray(error?.archifyDiagnostics) && error.archifyDiagnostics.length) {
     return error.archifyDiagnostics.map((entry) => ({
@@ -1498,7 +1494,7 @@ function migrationPathDiagnostics(error, sourcePath, destinationPath) {
       supportedFixes: [...(entry.supportedFixes || [])],
     }));
   }
-  return [migrationDiagnostic({
+  return [diagnostic({
     code: 'migration/path-preflight',
     message: 'Could not verify that the workflow migration paths are distinct.',
     subject: { source: sourcePath, destination: destinationPath },
@@ -1552,15 +1548,13 @@ function migrationReport({
     newRequiredViewBox,
   };
   if (!ok) {
-    const blockingDiagnostics = [
+    report.diagnostics = [
       ...migrationDiagnostics,
       ...newSchemaDiagnostics,
+      ...preExistingDiagnostics,
     ];
-    report.diagnostics = blockingDiagnostics.length
-      ? [...blockingDiagnostics, ...preExistingDiagnostics]
-      : [...preExistingDiagnostics];
     if (!report.diagnostics.length) {
-      report.diagnostics.push(migrationDiagnostic({
+      report.diagnostics.push(diagnostic({
         code: 'migration/internal',
         message: 'Workflow migration failed without a classified diagnostic.',
       }));
@@ -1568,12 +1562,6 @@ function migrationReport({
     report.error = report.diagnostics[0].message;
   }
   return report;
-}
-
-function emitMigrationFailure(report, json, status = 1) {
-  if (json) console.log(JSON.stringify(report, null, 2));
-  else console.error(formatDiagnostics(report.error, report.diagnostics));
-  process.exitCode = status;
 }
 
 function extractMigrationOptions(args) {
@@ -1620,18 +1608,26 @@ async function commandMigrate(args) {
   const destinationPath = path.resolve(destinationArgument);
   let sourceBytes;
   let sourceDocument;
-  try {
-    sourceBytes = fs.readFileSync(sourcePath);
-    sourceDocument = JSON.parse(sourceBytes.toString('utf8'));
-  } catch (error) {
-    const preExistingDiagnostics = [inputDiagnostic(error, sourcePath)];
-    emitMigrationFailure(migrationReport({
+  const reportMigrationFailure = ({ status = 1, ...details }) => {
+    const report = migrationReport({
+      ...details,
       ok: false,
       sourcePath,
       destinationPath,
       sourceBytes,
-      preExistingDiagnostics,
-    }), options.json);
+      fromSchemaVersion: sourceDocument?.schema_version,
+    });
+    if (options.json) console.log(JSON.stringify(report, null, 2));
+    else console.error(formatDiagnostics(report.error, report.diagnostics));
+    process.exitCode = status;
+  };
+  try {
+    sourceBytes = fs.readFileSync(sourcePath);
+    sourceDocument = JSON.parse(sourceBytes.toString('utf8'));
+  } catch (error) {
+    reportMigrationFailure({
+      preExistingDiagnostics: [inputDiagnostic(error, sourcePath)],
+    });
     return;
   }
   // Unlike render/validate, migrate has no --quality override. Pin every stage
@@ -1644,31 +1640,20 @@ async function commandMigrate(args) {
   try {
     sourceDestinationAlias = pathsAlias(sourcePath, destinationPath);
   } catch (error) {
-    emitMigrationFailure(migrationReport({
-      ok: false,
-      sourcePath,
-      destinationPath,
-      sourceBytes,
-      fromSchemaVersion: sourceDocument?.schema_version,
+    reportMigrationFailure({
       migrationDiagnostics: migrationPathDiagnostics(error, sourcePath, destinationPath),
-    }), options.json);
+    });
     return;
   }
   if (sourceDestinationAlias) {
-    const migrationDiagnostics = [migrationDiagnostic({
-      code: 'migration/source-destination',
-      message: 'Workflow migration source and destination must be different files.',
-      subject: { source: sourcePath, destination: destinationPath },
-      supportedFixes: ['choose a different destination path and keep the source unchanged'],
-    })];
-    emitMigrationFailure(migrationReport({
-      ok: false,
-      sourcePath,
-      destinationPath,
-      sourceBytes,
-      fromSchemaVersion: sourceDocument?.schema_version,
-      migrationDiagnostics,
-    }), options.json);
+    reportMigrationFailure({
+      migrationDiagnostics: [diagnostic({
+        code: 'migration/source-destination',
+        message: 'Workflow migration source and destination must be different files.',
+        subject: { source: sourcePath, destination: destinationPath },
+        supportedFixes: ['choose a different destination path and keep the source unchanged'],
+      })],
+    });
     return;
   }
 
@@ -1679,49 +1664,30 @@ async function commandMigrate(args) {
   } catch (error) {
     migration = {
       ok: false,
-      fromSchemaVersion: sourceDocument?.schema_version,
-      toSchemaVersion: 2,
-      preExistingDiagnostics: [],
-      migrationDiagnostics: [migrationDiagnostic({
+      migrationDiagnostics: [diagnostic({
         code: 'migration/internal',
         message: 'Workflow migration failed unexpectedly.',
         evidence: { reason: error.message },
         supportedFixes: ['report the source workflow and this diagnostic to the Archify maintainers'],
       })],
-      newSchemaDiagnostics: [],
-      changedCoordinates: [],
-      oldRequiredViewBox: null,
-      newRequiredViewBox: null,
     };
   }
 
   if (!migration.ok) {
-    emitMigrationFailure(migrationReport({
-      ...migration,
-      sourcePath,
-      destinationPath,
-      sourceBytes,
-      fromSchemaVersion: sourceDocument?.schema_version,
-    }), options.json);
+    reportMigrationFailure(migration);
     return;
   }
 
   if (fs.existsSync(destinationPath) && !fs.lstatSync(destinationPath).isFile()) {
-    const migrationDiagnostics = [migrationDiagnostic({
-      code: 'migration/destination-type',
-      message: 'Workflow migration destination must be a regular file path.',
-      subject: { destination: destinationPath },
-      supportedFixes: ['choose a destination path that is absent or names a regular file'],
-    })];
-    emitMigrationFailure(migrationReport({
+    reportMigrationFailure({
       ...migration,
-      ok: false,
-      sourcePath,
-      destinationPath,
-      sourceBytes,
-      fromSchemaVersion: sourceDocument.schema_version,
-      migrationDiagnostics: [...migration.migrationDiagnostics, ...migrationDiagnostics],
-    }), options.json);
+      migrationDiagnostics: [...migration.migrationDiagnostics, diagnostic({
+        code: 'migration/destination-type',
+        message: 'Workflow migration destination must be a regular file path.',
+        subject: { destination: destinationPath },
+        supportedFixes: ['choose a destination path that is absent or names a regular file'],
+      })],
+    });
     return;
   }
 
@@ -1731,22 +1697,16 @@ async function commandMigrate(args) {
     fs.mkdirSync(destinationDirectory, { recursive: true });
     stagingDirectory = fs.mkdtempSync(path.join(destinationDirectory, '.archify-migration-'));
   } catch (error) {
-    const migrationDiagnostics = [migrationDiagnostic({
-      code: 'migration/prepare-destination',
-      message: 'Could not prepare the workflow migration destination.',
-      subject: { destination: destinationPath },
-      evidence: { ...(error?.code ? { systemCode: error.code } : {}), reason: error.message },
-      supportedFixes: ['choose a writable destination directory'],
-    })];
-    emitMigrationFailure(migrationReport({
+    reportMigrationFailure({
       ...migration,
-      ok: false,
-      sourcePath,
-      destinationPath,
-      sourceBytes,
-      fromSchemaVersion: sourceDocument.schema_version,
-      migrationDiagnostics: [...migration.migrationDiagnostics, ...migrationDiagnostics],
-    }), options.json);
+      migrationDiagnostics: [...migration.migrationDiagnostics, diagnostic({
+        code: 'migration/prepare-destination',
+        message: 'Could not prepare the workflow migration destination.',
+        subject: { destination: destinationPath },
+        evidence: { ...(error?.code ? { systemCode: error.code } : {}), reason: error.message },
+        supportedFixes: ['choose a writable destination directory'],
+      })],
+    });
     return;
   }
 
@@ -1761,15 +1721,11 @@ async function commandMigrate(args) {
     });
     if (render.status !== 0) {
       const failure = rendererFailure(render);
-      emitMigrationFailure(migrationReport({
+      reportMigrationFailure({
         ...migration,
-        ok: false,
-        sourcePath,
-        destinationPath,
-        sourceBytes,
-        fromSchemaVersion: sourceDocument.schema_version,
         newSchemaDiagnostics: [...migration.newSchemaDiagnostics, ...failure.diagnostics],
-      }), options.json, render.status ?? 1);
+        status: render.status ?? 1,
+      });
       return;
     }
 
@@ -1783,56 +1739,40 @@ async function commandMigrate(args) {
       } catch {
         checker = null;
       }
-      emitMigrationFailure(migrationReport({
+      reportMigrationFailure({
         ...migration,
-        ok: false,
-        sourcePath,
-        destinationPath,
-        sourceBytes,
-        fromSchemaVersion: sourceDocument.schema_version,
         newSchemaDiagnostics: [
           ...migration.newSchemaDiagnostics,
           ...checkerDiagnostics(checker),
         ],
-      }), options.json, check.status ?? 1);
+        status: check.status ?? 1,
+      });
       return;
     }
 
     if (pathsAlias(sourcePath, destinationPath)) {
-      const migrationDiagnostics = [migrationDiagnostic({
-        code: 'migration/source-destination',
-        message: 'Workflow migration source and destination resolved to the same file before commit.',
-        subject: { source: sourcePath, destination: destinationPath },
-        supportedFixes: ['choose a different destination path and retry'],
-      })];
-      emitMigrationFailure(migrationReport({
+      reportMigrationFailure({
         ...migration,
-        ok: false,
-        sourcePath,
-        destinationPath,
-        sourceBytes,
-        fromSchemaVersion: sourceDocument.schema_version,
-        migrationDiagnostics: [...migration.migrationDiagnostics, ...migrationDiagnostics],
-      }), options.json);
+        migrationDiagnostics: [...migration.migrationDiagnostics, diagnostic({
+          code: 'migration/source-destination',
+          message: 'Workflow migration source and destination resolved to the same file before commit.',
+          subject: { source: sourcePath, destination: destinationPath },
+          supportedFixes: ['choose a different destination path and retry'],
+        })],
+      });
       return;
     }
     const currentSourceBytes = fs.readFileSync(sourcePath);
     if (!currentSourceBytes.equals(sourceBytes)) {
-      const migrationDiagnostics = [migrationDiagnostic({
-        code: 'migration/source-changed',
-        message: 'Workflow migration source changed while the destination was being verified.',
-        subject: { source: sourcePath },
-        supportedFixes: ['retry the migration from a stable workflow source file'],
-      })];
-      emitMigrationFailure(migrationReport({
+      reportMigrationFailure({
         ...migration,
-        ok: false,
-        sourcePath,
-        destinationPath,
-        sourceBytes,
-        fromSchemaVersion: sourceDocument.schema_version,
-        migrationDiagnostics: [...migration.migrationDiagnostics, ...migrationDiagnostics],
-      }), options.json);
+        migrationDiagnostics: [...migration.migrationDiagnostics, diagnostic({
+          code: 'migration/source-changed',
+          message: 'Workflow migration source changed while the destination was being verified.',
+          subject: { source: sourcePath },
+          supportedFixes: ['retry the migration from a stable workflow source file'],
+        })],
+      });
       return;
     }
 
@@ -1854,22 +1794,17 @@ async function commandMigrate(args) {
   } catch (error) {
     const migrationDiagnostics = Array.isArray(error?.archifyDiagnostics)
       ? migrationPathDiagnostics(error, sourcePath, destinationPath)
-      : [migrationDiagnostic({
+      : [diagnostic({
         code: 'migration/commit',
         message: 'Could not commit the verified workflow migration.',
         subject: { destination: destinationPath },
         evidence: { ...(error?.code ? { systemCode: error.code } : {}), reason: error.message },
         supportedFixes: ['choose a writable regular-file destination and retry'],
       })];
-    emitMigrationFailure(migrationReport({
+    reportMigrationFailure({
       ...migration,
-      ok: false,
-      sourcePath,
-      destinationPath,
-      sourceBytes,
-      fromSchemaVersion: sourceDocument.schema_version,
       migrationDiagnostics: [...migration.migrationDiagnostics, ...migrationDiagnostics],
-    }), options.json);
+    });
   } finally {
     try {
       fs.rmSync(stagingDirectory, { recursive: true, force: true });

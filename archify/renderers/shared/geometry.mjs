@@ -344,7 +344,6 @@ export function cleanFlowProblems({
   diagramType,
   relationCollection,
   obstacleKind,
-  profile,
   clearance = 2,
   routeHint = 'adjust fromSide/toSide, set route/via or channel coordinates, or move the obstacle'
 }) {
@@ -493,11 +492,7 @@ export function cleanCrossingProblems({
   mergeForwardCollinearWaypoints = false,
   routeHint = 'adjust route/via or channel coordinates so the relationships use separate corridors'
 }) {
-  const requestedProfile = profileIsAuthoritative
-    ? profile
-    : process.env.ARCHIFY_QUALITY_PROFILE || profile;
-  const activeProfile = requestedProfile === 'showcase' ? 'showcase' : 'standard';
-  if (activeProfile !== 'showcase') return [];
+  if (qualityProfileForGate(profile, profileIsAuthoritative) !== 'showcase') return [];
   const routed = asArray(relations).map((relation, index) => {
     if (!relation || !endpointIds.has(relation.from) || !endpointIds.has(relation.to)) return null;
     const points = pathFor(relation)?.points;
@@ -635,15 +630,8 @@ export function cleanAmbiguousCorridorProblems({
   routeHint = 'adjust route/via or channel coordinates so the relationships use separate corridors',
   minOverlapPx = 8,
 }) {
-  const requestedProfile = profileIsAuthoritative
-    ? profile
-    : process.env.ARCHIFY_QUALITY_PROFILE || profile;
-  if (requestedProfile !== 'showcase') return [];
-  const routedRelations = asArray(relations).map((relation, relationIndex) => {
-    if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') return null;
-    if (endpointIds && (!endpointIds.has(relation.from) || !endpointIds.has(relation.to))) return null;
-    return { relation, relationIndex, points: pathFor(relation)?.points };
-  }).filter(Boolean);
+  if (qualityProfileForGate(profile, profileIsAuthoritative) !== 'showcase') return [];
+  const routedRelations = collectEligibleRoutedRelations({ relations, endpointIds, pathFor });
 
   return collectAmbiguousCorridors({ routedRelations, minOverlapPx }).map((hit) => {
     const describe = ({ relation, relationIndex }) => {
@@ -735,14 +723,8 @@ export function cleanBorderRunProblems({
   profileIsAuthoritative = false,
   routeHint = 'adjust route/via or channel coordinates so the relationship crosses the frame perpendicularly through a clear opening'
 }) {
-  if (profileIsAuthoritative
-    ? !profile
-    : !process.env.ARCHIFY_QUALITY_PROFILE && !profile) return [];
-  const routedRelations = asArray(relations).map((relation, relationIndex) => {
-    if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') return null;
-    if (endpointIds && (!endpointIds.has(relation.from) || !endpointIds.has(relation.to))) return null;
-    return { relation, relationIndex, points: pathFor(relation)?.points };
-  }).filter(Boolean);
+  if (!qualityProfileForGate(profile, profileIsAuthoritative)) return [];
+  const routedRelations = collectEligibleRoutedRelations({ relations, endpointIds, pathFor });
   return collectBorderRuns({ routedRelations, frames }).map((hit) => {
     const relation = hit.relation || {};
     const relationId = relation.id ? ` id "${relation.id}"` : '';
@@ -885,15 +867,8 @@ export function cleanRouteRhythmProblems({
   interiorSegmentPx = 16,
   microSegmentPx = 8,
 }) {
-  const requestedProfile = profileIsAuthoritative
-    ? profile
-    : process.env.ARCHIFY_QUALITY_PROFILE || profile;
-  if (requestedProfile !== 'showcase') return [];
-  const routedRelations = asArray(relations).map((relation, relationIndex) => {
-    if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') return null;
-    if (endpointIds && (!endpointIds.has(relation.from) || !endpointIds.has(relation.to))) return null;
-    return { relation, relationIndex, points: pathFor(relation)?.points };
-  }).filter(Boolean);
+  if (qualityProfileForGate(profile, profileIsAuthoritative) !== 'showcase') return [];
+  const routedRelations = collectEligibleRoutedRelations({ relations, endpointIds, pathFor });
   return collectRouteRhythmIssues({ routedRelations, interiorSegmentPx, microSegmentPx }).map((hit) => {
     const relation = hit.relation || {};
     const relationId = relation.id ? ` id "${relation.id}"` : '';
@@ -935,15 +910,8 @@ export function cleanLabelRouteClearanceProblems({
   threshold = 4,
   routeHint = 'adjust labelAt, labelDx, labelDy, or labelSegment; otherwise adjust the other relationship route/via/channel',
 }) {
-  const requestedProfile = profileIsAuthoritative
-    ? profile
-    : process.env.ARCHIFY_QUALITY_PROFILE || profile;
-  if (requestedProfile !== 'showcase') return [];
-  const routedRelations = asArray(relations).map((relation, relationIndex) => {
-    if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') return null;
-    if (endpointIds && (!endpointIds.has(relation.from) || !endpointIds.has(relation.to))) return null;
-    return { relation, relationIndex, points: pathFor(relation)?.points };
-  }).filter(Boolean);
+  if (qualityProfileForGate(profile, profileIsAuthoritative) !== 'showcase') return [];
+  const routedRelations = collectEligibleRoutedRelations({ relations, endpointIds, pathFor });
   return collectLabelRouteClearance({ labels, routedRelations, threshold }).map((hit) => {
     const describe = (relation, relationIndex) => {
       const relationId = relation?.id ? ` id "${relation.id}"` : '';
@@ -973,6 +941,20 @@ export function cleanLabelRouteClearanceProblems({
     });
     return message;
   });
+}
+
+function qualityProfileForGate(profile, profileIsAuthoritative) {
+  return profileIsAuthoritative
+    ? profile
+    : process.env.ARCHIFY_QUALITY_PROFILE || profile;
+}
+
+function collectEligibleRoutedRelations({ relations, endpointIds, pathFor }) {
+  return asArray(relations).map((relation, relationIndex) => {
+    if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') return null;
+    if (endpointIds && (!endpointIds.has(relation.from) || !endpointIds.has(relation.to))) return null;
+    return { relation, relationIndex, points: pathFor(relation)?.points };
+  }).filter(Boolean);
 }
 
 function segmentPosition(index, segmentCount) {

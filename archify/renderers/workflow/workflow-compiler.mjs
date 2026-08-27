@@ -249,7 +249,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
         minimum: labelConstraintMinimum,
         contributors: [
           `rank ${earlier.col}→${later.col} direct clearance`,
-          `edge ${edge.id || `${edge.from}->${edge.to}`} label mask`,
+          `edge ${workflowEdgeName(edge)} label mask`,
           nodeWidthContributor(earlier),
           nodeWidthContributor(later),
         ],
@@ -566,11 +566,17 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
   };
 }
 
-function compilerFailureReceipt(contract, diagnostics) {
+function compilerFailure(contract, diagnostics, error = diagnostics.map(({ message }) => message).join('\n')) {
   return {
-    contract,
+    ok: false,
+    error,
     diagnostics,
+    receipt: { contract, diagnostics },
   };
+}
+
+function workflowEdgeName(edge) {
+  return edge.id || `${edge.from}->${edge.to}`;
 }
 
 function stableText(value) {
@@ -629,6 +635,123 @@ function canonicalReadableWorkflow(workflow) {
   };
 }
 
+function semanticContractDiagnostics(workflow) {
+  const checks = workflow.semanticChecks;
+  if (!checks) return [];
+
+  const nodeIds = new Set(asArray(workflow.nodes).map((node) => node.id));
+  const incoming = new Map([...nodeIds].map((id) => [id, 0]));
+  const outgoing = new Map([...nodeIds].map((id) => [id, 0]));
+  const adjacency = new Map([...nodeIds].map((id) => [id, new Set()]));
+  for (const edge of asArray(workflow.edges)) {
+    if (!nodeIds.has(edge.from) || !nodeIds.has(edge.to)) continue;
+    outgoing.set(edge.from, outgoing.get(edge.from) + 1);
+    incoming.set(edge.to, incoming.get(edge.to) + 1);
+    adjacency.get(edge.from).add(edge.to);
+  }
+
+  const diagnostics = [];
+  const diagnostic = (code, message, subject, evidence, supportedFixes) => ({
+    code,
+    severity: 'error',
+    message,
+    subject: { diagramType: 'workflow', ...subject },
+    evidence,
+    supportedFixes,
+  });
+  const referencedNodes = [
+    ...asArray(checks.allowedRoots).map((id, index) => ({ id, path: `/semanticChecks/allowedRoots/${index}` })),
+    ...asArray(checks.allowedTerminals).map((id, index) => ({ id, path: `/semanticChecks/allowedTerminals/${index}` })),
+    ...asArray(checks.requiredEdges).flatMap((relation, index) => [
+      { id: relation.from, path: `/semanticChecks/requiredEdges/${index}/from` },
+      { id: relation.to, path: `/semanticChecks/requiredEdges/${index}/to` },
+    ]),
+    ...asArray(checks.requiredPaths).flatMap((relation, index) => [
+      { id: relation.from, path: `/semanticChecks/requiredPaths/${index}/from` },
+      { id: relation.to, path: `/semanticChecks/requiredPaths/${index}/to` },
+    ]),
+  ];
+  for (const { id, path } of referencedNodes) {
+    if (nodeIds.has(id)) continue;
+    diagnostics.push(diagnostic(
+      'workflow/semantic-node-reference',
+      `Workflow semantic contract references unknown node "${id}" at ${path}.`,
+      { node: id, path },
+      { knownNodes: [...nodeIds] },
+      [`replace "${id}" with an existing node id`, 'add the missing node before compiling'],
+    ));
+  }
+  if (diagnostics.length) return diagnostics;
+
+  if (checks.allowedRoots !== undefined) {
+    const allowed = new Set(checks.allowedRoots);
+    for (const [node, count] of incoming) {
+      if (count > 0 || allowed.has(node)) continue;
+      diagnostics.push(diagnostic(
+        'workflow/unexpected-root',
+        `Workflow node "${node}" has no incoming edge and is not declared in semanticChecks.allowedRoots.`,
+        { node, path: '/semanticChecks/allowedRoots' },
+        { incomingEdges: 0, allowedRoots: [...allowed] },
+        [`add the missing incoming edge to "${node}"`, `declare "${node}" in semanticChecks.allowedRoots if it is an intentional source`],
+      ));
+    }
+  }
+
+  if (checks.allowedTerminals !== undefined) {
+    const allowed = new Set(checks.allowedTerminals);
+    for (const [node, count] of outgoing) {
+      if (count > 0 || allowed.has(node)) continue;
+      diagnostics.push(diagnostic(
+        'workflow/unexpected-terminal',
+        `Workflow node "${node}" has no outgoing edge and is not declared in semanticChecks.allowedTerminals.`,
+        { node, path: '/semanticChecks/allowedTerminals' },
+        { outgoingEdges: 0, allowedTerminals: [...allowed] },
+        [`add the missing outgoing edge from "${node}"`, `declare "${node}" in semanticChecks.allowedTerminals if it is an intentional sink`],
+      ));
+    }
+  }
+
+  const authoredEdges = new Set(asArray(workflow.edges).map((edge) => `${edge.from}\u0000${edge.to}`));
+  for (const [index, relation] of asArray(checks.requiredEdges).entries()) {
+    if (authoredEdges.has(`${relation.from}\u0000${relation.to}`)) continue;
+    diagnostics.push(diagnostic(
+      'workflow/required-edge',
+      `Workflow semantic contract requires edge "${relation.from}" -> "${relation.to}", but no authored edge matches it.`,
+      { from: relation.from, to: relation.to, path: `/semanticChecks/requiredEdges/${index}` },
+      { authoredEdgeCount: asArray(workflow.edges).length },
+      [`add an edge from "${relation.from}" to "${relation.to}" without deleting the semantic requirement`],
+    ));
+  }
+
+  function reachable(from, to) {
+    const visited = new Set([from]);
+    const pending = [from];
+    while (pending.length) {
+      const current = pending.shift();
+      if (current === to) return true;
+      for (const next of adjacency.get(current) || []) {
+        if (visited.has(next)) continue;
+        visited.add(next);
+        pending.push(next);
+      }
+    }
+    return false;
+  }
+
+  for (const [index, relation] of asArray(checks.requiredPaths).entries()) {
+    if (reachable(relation.from, relation.to)) continue;
+    diagnostics.push(diagnostic(
+      'workflow/required-path',
+      `Workflow semantic contract requires a directed path from "${relation.from}" to "${relation.to}", but none exists.`,
+      { from: relation.from, to: relation.to, path: `/semanticChecks/requiredPaths/${index}` },
+      { reachableNodes: [...new Set([relation.from, ...(adjacency.get(relation.from) || [])])] },
+      [`restore a directed path from "${relation.from}" to "${relation.to}" without weakening the semantic requirement`],
+    ));
+  }
+
+  return diagnostics;
+}
+
 function compileWorkflowInternal({
   workflow: inputWorkflow,
   qualityProfile,
@@ -644,12 +767,7 @@ function compileWorkflowInternal({
       evidence: {},
       supportedFixes: [],
     }];
-    return {
-      ok: false,
-      error: diagnostics[0].message,
-      diagnostics,
-      receipt: compilerFailureReceipt('fixed-v1', diagnostics),
-    };
+    return compilerFailure('fixed-v1', diagnostics, diagnostics[0].message);
   }
   const resolvedQualityProfile = qualityProfile || inputWorkflow.meta?.quality_profile;
   const authoredQualityProfile = inputWorkflow.meta?.quality_profile;
@@ -675,17 +793,19 @@ function compileWorkflowInternal({
       }];
   }
   if (inputDiagnostics.length) {
-    return {
-      ok: false,
-      error: inputDiagnostics.map(({ message }) => message).join('\n'),
-      diagnostics: inputDiagnostics,
-      receipt: compilerFailureReceipt(
-        inputWorkflow.schema_version === 2 ? 'readable-v2' : 'fixed-v1',
-        inputDiagnostics,
-      ),
-    };
+    return compilerFailure(
+      inputWorkflow.schema_version === 2 ? 'readable-v2' : 'fixed-v1',
+      inputDiagnostics,
+    );
   }
   const workflow = canonicalReadableWorkflow(qualityResolvedWorkflow);
+  const semanticDiagnostics = semanticContractDiagnostics(workflow);
+  if (semanticDiagnostics.length) {
+    return compilerFailure(
+      workflow.schema_version === 2 ? 'readable-v2' : 'fixed-v1',
+      semanticDiagnostics,
+    );
+  }
   const sourceIndexes = {
     lanes: new Map(asArray(qualityResolvedWorkflow.lanes).map((lane, index) => [lane, index])),
     nodes: new Map(asArray(qualityResolvedWorkflow.nodes).map((node, index) => [node, index])),
@@ -1115,7 +1235,7 @@ function verifiedEdgeFix(edge, message, mutator) {
 }
 
 function verifiedAutomaticRouteFix(edge, { clearSides = false } = {}) {
-  const edgeName = edge.id || `${edge.from}->${edge.to}`;
+  const edgeName = workflowEdgeName(edge);
   return verifiedEdgeFix(
     edge,
     clearSides
@@ -1140,7 +1260,7 @@ function authoredPinEvidence(edge, field) {
     ? edge[field].map((item) => (Array.isArray(item) ? [...item] : item))
     : edge[field];
   return {
-    edge: edge.id || `${edge.from}->${edge.to}`,
+    edge: workflowEdgeName(edge),
     field,
     ...(Number.isInteger(authoredEdgeIndex) ? { path: `/edges/${authoredEdgeIndex}/${field}` } : {}),
     value,
@@ -1172,7 +1292,7 @@ function verifiedPinRemovalAlternatives(edge, fields, reason) {
       })
     ));
     if (!removalSets.length) continue;
-    const edgeName = edge.id || `${edge.from}->${edge.to}`;
+    const edgeName = workflowEdgeName(edge);
     return {
       removalSets,
       supportedFixes: removalSets.map((fieldSet) => (
@@ -1251,7 +1371,7 @@ function verifiedPinReferenceAlternatives(candidateRefs, reason) {
         group.fields.push(ref.field);
       }
       const removals = grouped.map(({ edge, fields }) => (
-        `remove ${fields.join(' and ')} from edge "${edge.id || `${edge.from}->${edge.to}`}"`
+        `remove ${fields.join(' and ')} from edge "${workflowEdgeName(edge)}"`
       ));
       return { removalSet, message: `${removals.join(' and ')} ${reason}` };
     });
@@ -1314,7 +1434,7 @@ function verifiedRepairsWithLabelNudges(alternatives) {
 }
 
 function throwExplicitPinConflict(edge, invariant, evidence, supportedFixes = []) {
-  const message = `Workflow edge "${edge.id || `${edge.from}->${edge.to}`}" has explicit geometry that violates ${invariant}.`;
+  const message = `Workflow edge "${workflowEdgeName(edge)}" has explicit geometry that violates ${invariant}.`;
   const [onlyPin] = asArray(evidence?.conflictingPins);
   const authoredEdgeIndex = sourceIndexes.edges.get(edge);
   const pinPath = asArray(evidence?.conflictingPins).length === 1
@@ -1363,22 +1483,6 @@ function verifiedRouteGeometryPinAlternatives(
   );
 }
 
-function routePinEvidence(edge, segment = null) {
-  if (Array.isArray(edge.via)) {
-    return [authoredPinEvidence(edge, 'via')];
-  }
-  const orientation = segment ? segmentOrientation(segment.from, segment.to) : null;
-  const preferredField = orientation === 'vertical'
-    ? 'channelX'
-    : orientation === 'horizontal'
-      ? 'channelY'
-      : null;
-  const field = preferredField && edge[preferredField] !== undefined
-    ? preferredField
-    : presentChannelPins(edge)[0];
-  return field ? [authoredPinEvidence(edge, field)] : [];
-}
-
 function properOrthogonalIntersection(leftStart, leftEnd, rightStart, rightEnd) {
   const leftOrientation = segmentOrientation(leftStart, leftEnd);
   const rightOrientation = segmentOrientation(rightStart, rightEnd);
@@ -1408,7 +1512,7 @@ function verifiedLabelAtAlternatives(edge) {
     const next = [x + dx, y + dy];
     return verifiedEdgeFix(
       edge,
-      `set labelAt on edge "${edge.id || `${edge.from}->${edge.to}`}" to [${next[0]}, ${next[1]}]`,
+      `set labelAt on edge "${workflowEdgeName(edge)}" to [${next[0]}, ${next[1]}]`,
       (candidate) => { candidate.labelAt = next; },
     );
   }).filter(Boolean);
@@ -1419,7 +1523,7 @@ function verifiedLabelAtNudge(edge) {
   if (alternative) return alternative;
   return verifiedEdgeFix(
     edge,
-    `remove labelAt from edge "${edge.id || `${edge.from}->${edge.to}`}" so readable-v2 can use verified automatic label placement`,
+    `remove labelAt from edge "${workflowEdgeName(edge)}" so readable-v2 can use verified automatic label placement`,
     (candidate) => { delete candidate.labelAt; },
   );
 }
@@ -1812,7 +1916,7 @@ function validateReadablePinnedGeometry() {
   for (const edge of workflow.edges) {
     if (!nodes.has(edge.from) || !nodes.has(edge.to)) continue;
     validateReadableRouteControls(edge);
-    const edgeName = edge.id || `${edge.from}->${edge.to}`;
+    const edgeName = workflowEdgeName(edge);
     const edgeIndex = sourceIndexes.edges.get(edge);
     if (Array.isArray(edge.labelAt)) {
       const rect = labelRectFor(edge, workflow.edges.indexOf(edge));
@@ -2074,7 +2178,7 @@ function validateReadablePinnedGeometry() {
           compositionObstacle,
         }, [verifiedEdgeFix(
           edge,
-          `remove labelAt from edge "${edge.id || `${edge.from}->${edge.to}`}" so readable-v2 can use its verified automatic label placement`,
+          `remove labelAt from edge "${workflowEdgeName(edge)}" so readable-v2 can use its verified automatic label placement`,
           (candidate) => { delete candidate.labelAt; },
         )]);
       }
@@ -2267,13 +2371,11 @@ function validateWorkflow() {
   }));
   problems.push(...cleanFlowProblems({
     relations: workflow.edges,
-    endpointIds: new Set(nodes.keys()),
     obstacles: nodes.values(),
     pathFor,
     diagramType: 'workflow',
     relationCollection: 'edges',
     obstacleKind: 'node',
-    profile: workflow.meta?.quality_profile,
     routeHint: 'adjust fromSide/toSide, set route/via or channel coordinates, or move the node to a clearer lane/column'
   }));
   problems.push(...cleanCrossingProblems({
@@ -2463,7 +2565,7 @@ function validateReadableInputsBeforeRouting() {
     const edgeIndex = sourceIndexes.edges.get(edge);
     for (const [field, endpoint] of [['from', 'source'], ['to', 'target']]) {
       if (nodes.has(edge[field])) continue;
-      const message = `Workflow edge "${edge.id || `${edge.from}->${edge.to}`}" references unknown ${endpoint} "${edge[field]}".`;
+      const message = `Workflow edge "${workflowEdgeName(edge)}" references unknown ${endpoint} "${edge[field]}".`;
       const canonicalEdgeIndex = workflow.edges.indexOf(edge);
       const supportedFixes = availableNodeIds.flatMap((nodeId) => (
         acceptsFix((document) => {
@@ -3340,7 +3442,7 @@ function readableAutomaticVia(edge, from, to, start, end, fromSide, toSide) {
       candidateCount: rawCandidates.length,
     });
   }
-  const message = `Workflow edge "${edge.id || `${edge.from}->${edge.to}`}" has no feasible readable-v2 automatic route.`;
+  const message = `Workflow edge "${workflowEdgeName(edge)}" has no feasible readable-v2 automatic route.`;
   throwDiagnosticError(message, [{
     code: 'workflow/solver-budget-exhausted',
     severity: 'error',
@@ -3399,9 +3501,9 @@ function readablePresetVia(edge, from, to, start, end, fromSide, toSide) {
     && routeMatchesPresetFamily(preset, points, from, to)) {
     return points.slice(1, -1);
   }
-  const message = `Workflow edge "${edge.id || `${edge.from}->${edge.to}`}" cannot satisfy route preset "${preset}" under readable-v2 constraints (minimum 8px endpoint stubs, 16px interior turns, and 28px direct clearance).`;
+  const message = `Workflow edge "${workflowEdgeName(edge)}" cannot satisfy route preset "${preset}" under readable-v2 constraints (minimum 8px endpoint stubs, 16px interior turns, and 28px direct clearance).`;
   const edgeIndex = workflow.edges.indexOf(edge);
-  const edgeName = edge.id || `${edge.from}->${edge.to}`;
+  const edgeName = workflowEdgeName(edge);
   const supportedFixes = [];
   for (const candidatePreset of ['straight', 'drop', 'outside-right', 'return-left', 'bottom-channel', 'up-channel']) {
     if (candidatePreset === preset) continue;
@@ -4212,12 +4314,7 @@ ${renderLegend()}
   } catch (error) {
     if (!Array.isArray(error?.archifyDiagnostics)) throw error;
     const diagnostics = error.archifyDiagnostics.map((diagnostic) => ({ ...diagnostic }));
-    return {
-      ok: false,
-      error: error.message,
-      diagnostics,
-      receipt: compilerFailureReceipt(layout.contract, diagnostics),
-    };
+    return compilerFailure(layout.contract, diagnostics, error.message);
   }
 }
 
@@ -4239,12 +4336,7 @@ function feedbackFailure(request) {
     },
     supportedFixes: [],
   }];
-  return {
-    ok: false,
-    error: message,
-    diagnostics,
-    receipt: compilerFailureReceipt('readable-v2', diagnostics),
-  };
+  return compilerFailure('readable-v2', diagnostics, message);
 }
 
 function compileWorkflowWithFeedback({ workflow, qualityProfile, discoverFixes = true } = {}) {

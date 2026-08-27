@@ -170,6 +170,32 @@ a feasible side; an authored side restricts that endpoint to the named port.
 - Keep workflow examples compact enough to render well in narrow chat/browser
   previews.
 
+### Optional semantic checks
+
+Layout validation cannot infer domain truth from labels or cards. When source
+evidence establishes roots, terminals, mandatory direct relationships, or
+mandatory directed reachability, encode those facts in `semanticChecks`:
+
+```json
+"semanticChecks": {
+  "allowedRoots": ["request", "resource_catalog"],
+  "allowedTerminals": ["reply", "audit_log"],
+  "requiredEdges": [
+    { "from": "dispatch", "to": "dispatch_ledger" }
+  ],
+  "requiredPaths": [
+    { "from": "event_ledger", "to": "runtime_host" }
+  ]
+}
+```
+
+When `allowedRoots` or `allowedTerminals` is present, it is the complete allow
+list for zero-incoming or zero-outgoing nodes respectively. `requiredEdges`
+requires one exact authored direction; `requiredPaths` permits intermediate
+nodes but follows authored edge direction. These checks run before layout, do
+not alter SVG or receipt bytes, and must not be weakened merely to resolve a
+route or composition diagnostic. Omit fields whose domain facts are unknown.
+
 Schema violations exit non-zero with path-prefixed messages annotated with the
 element's id or label. The renderer additionally fails when it can detect
 layout problems, including node overlap, nodes outside their lanes, invalid
