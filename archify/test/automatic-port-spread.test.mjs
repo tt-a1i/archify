@@ -176,8 +176,8 @@ test('architecture: incoming and outgoing relationships keep distinct bottom por
   );
 });
 
-test('architecture: a near-aligned relationship keeps the outside bridge when both endpoints are spread', () => {
-  const html = render('architecture', {
+test('architecture: a near-aligned relationship keeps a straight route when both endpoints are spread', () => {
+  const doc = {
     schema_version: 1,
     diagram_type: 'architecture',
     meta: { title: 'Two-sided port competition' },
@@ -192,11 +192,15 @@ test('architecture: a near-aligned relationship keeps the outside bridge when bo
       { id: 'source-peer-target', from: 'source-peer', to: 'target', fromSide: 'top', toSide: 'bottom' },
       { id: 'source-target-peer', from: 'source', to: 'target-peer', fromSide: 'top', toSide: 'bottom' },
     ],
-  });
+  };
+  const html = render('architecture', doc);
 
   const points = connectionPoints(html, 'source-target');
-  assert.ok(points.length > 2);
-  assert.notEqual(points[0][0], points.at(-1)[0]);
+  assert.equal(points.length, 2);
+  assert.equal(points[0][0], points[1][0]);
+
+  const reversed = render('architecture', { ...doc, connections: [...doc.connections].reverse() });
+  assert.deepEqual(connectionPoints(reversed, 'source-target'), points);
 });
 
 test('architecture: a singly spread near-aligned relationship keeps the bridge when its direct axis is blocked', () => {
