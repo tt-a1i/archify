@@ -10,6 +10,12 @@ node bin/archify.mjs deliver <type> <candidate.json> <output.html> --quality sho
 
 Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. The JSON receipt includes SHA-256 and byte counts for both `specification` and `artifact`. Renderer, checker, receipt, or commit failure exits non-zero, removes private state, preserves the previous trusted artifact, and never invokes an opener.
 
+Run `visual-check` only after `deliver` exits zero for the current candidate. If
+delivery fails and the output path already exists, that path still names the
+previous trusted artifact; running `visual-check` then would measure and capture
+stale output, not the rejected candidate. Report the delivery diagnostics and
+repair the source before collecting new visual evidence.
+
 The deterministic receipt proves byte identity and automated checks. Never claim that the deterministic receipt includes visual review.
 
 ## Automated visual evidence

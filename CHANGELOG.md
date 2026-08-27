@@ -7,7 +7,11 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 Development identity: `v2.16.0-dev.0`
 
 ### Added
+- **Constraint-driven Workflow Compiler (#126).** Workflow schema v2 adds the `readable-v2` contract: columns `0..5` remain logical ranks while one measured scene owns node placement, phase/group frames, routes, semantic labels, content bounds, diagnostics, and SVG serialization. Valid schema v1 workflows stay on byte-stable `fixed-v1` geometry, `validate workflow ... --layout-json` exposes a stable author-facing compiler receipt, and `migrate workflow <source> <destination> --to-schema 2 --json` maps absolute coordinates non-destructively before writing only a fully checked destination. Adjacent-column capacity failures now report one causal diagnosis instead of cascading through short-edge, endpoint-direction, and label-overlap symptoms.
 - **Bounded Viewer localization.** All five renderers accept the optional `meta.locale` values `en` and `zh-CN`, localizing renderer-owned Viewer UI, accessibility copy, default legends, document titles, and language metadata without translating authored content. Omitted locale remains backward-compatible English, while unsupported authored languages retain their requested authored copy with an explicitly disclosed English Viewer fallback.
+
+### Changed
+- Workflow authoring now preserves semantic edge labels and repairs measured spacing or route constraints rather than treating label deletion as a geometry workaround. Documentation also makes `--repo-root` architecture-only, defines lifecycle event/terminal column `N` as aligned with main column `N + 2`, and warns that `visual-check` after failed delivery would inspect the preserved previous artifact.
 
 ## [2.15.0] — 2026-08-17
 
