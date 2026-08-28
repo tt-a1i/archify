@@ -1,0 +1,22 @@
+---
+title: Release Train Lifecycle
+---
+stateDiagram-v2
+    %% Runnable example for: archify import state
+    %% See archify/importers/README.md for the supported subset.
+    [*] --> Queued
+    Queued --> Building: change accepted
+    Building --> Verifying
+    state Verifying <<choice>>
+    Verifying --> Live: checks passed
+    Verifying --> Approval: policy hold
+    state "Needs Approval" as Approval
+    Approval --> Cancelled: denied
+    Live --> Paused: SLO regression
+    Paused --> RolledBack
+    Live --> [*]
+    Cancelled --> [*]
+    RolledBack --> [*]
+    note right of Paused
+        health gate open
+    end note

@@ -1,0 +1,8 @@
+stateDiagram
+    direction LR
+    [*] --> Idle
+    Idle : waiting for work
+    Idle --> Running
+    Running --> Idle
+    Running --> Done
+    Done --> [*]

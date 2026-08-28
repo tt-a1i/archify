@@ -1,0 +1,9 @@
+stateDiagram-v2
+    [*] --> Evil
+    state "<script>x</script>" as Evil
+    state "arrow --> here" as Sink
+    Evil --> Sink: "&amp;" <b>
+    Sink --> [*]
+    note right of Sink
+        "quoted" & #quot; </text>
+    end note
