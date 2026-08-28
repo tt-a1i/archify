@@ -13,7 +13,6 @@ const DEPENDENCY_FIELDS = [
   'dependencies',
   'devDependencies',
   'optionalDependencies',
-  'peerDependencies',
   'bundledDependencies',
   'bundleDependencies',
 ];
@@ -43,17 +42,20 @@ test('publishable manifest is @tt-a1i/archify-dsh@0.1.0 with a DSH bundle patch 
   for (const field of DEPENDENCY_FIELDS) {
     assert.equal(Object.prototype.hasOwnProperty.call(pkg, field), false, field);
   }
+  assert.deepEqual(pkg.peerDependencies, {
+    '@deepseek-ai/dsh-skill-filesystem': '>=0.1.0-rc.6 <0.2.0',
+  });
   for (const script of LIFECYCLE_SCRIPTS) {
     assert.equal(pkg.scripts?.[script], undefined, script);
   }
   assert.match(pkg.exports?.['./package.json'] || '', /package\.json/);
 });
 
-test('bundle patch inserts one uniquely named filesystem Skill provider resolved from the installed package', () => {
+test('bundle patch inserts one adapter-owned filesystem Skill provider resolved from the installed package', () => {
   const patch = fs.readFileSync(path.join(integrationRoot, 'cordis.patch.yml'), 'utf8');
   assert.match(patch, /^- insert:/m);
   assert.match(patch, /id:\s*archify-skill-filesystem/);
-  assert.match(patch, /name:\s*'@deepseek-ai\/dsh-skill-filesystem'/);
+  assert.match(patch, /name:\s*'@tt-a1i\/archify-dsh'/);
   assert.match(patch, /providerName:\s*archify-plugin/);
   assert.match(patch, /includeDefaultRoots:\s*false/);
   assert.match(patch, /bundledSkillDir:\s*!!js/);
@@ -68,6 +70,16 @@ test('bundle patch inserts one uniquely named filesystem Skill provider resolved
   assert.equal(insertBlocks.length, 1);
   const insertedIds = [...insertBlocks[0].matchAll(/^\s+- id:\s*(\S+)/gm)].map((match) => match[1]);
   assert.deepEqual(insertedIds, ['archify-skill-filesystem']);
+});
+
+test('adapter delegates only to DSH public Skill-filesystem surface', () => {
+  const source = fs.readFileSync(path.join(integrationRoot, 'lib', 'index.js'), 'utf8');
+  assert.match(source, /import \* as skillFilesystem from '@deepseek-ai\/dsh-skill-filesystem'/);
+  assert.match(source, /export const inject = \['skills'\]/);
+  assert.match(source, /export const Config = skillFilesystem\.Config/);
+  assert.match(source, /return skillFilesystem\.apply\(ctx, config\)/);
+  assert.match(source, /'\.dsh-bundled-skills'/);
+  assert.doesNotMatch(source, /child_process|spawn\(|exec\(|fetch\(|https?:\/\//);
 });
 
 test('distribution acceptance reserves stdout for its machine-readable JSON receipt', () => {

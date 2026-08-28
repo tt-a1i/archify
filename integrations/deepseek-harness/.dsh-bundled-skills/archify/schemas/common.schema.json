@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/common.schema.json",
+  "title": "Archify Shared Definitions",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+    },
+    "locale": {
+      "enum": ["en", "zh-CN"]
+    },
+    "point": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number" },
+        { "type": "number" }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "componentType": {
+      "enum": ["frontend", "backend", "database", "cloud", "security", "messagebus", "external"]
+    },
+    "brandMark": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "anyOf": [
+            { "maxLength": 80, "pattern": "^[^\\r\\n]+$" },
+            { "pattern": "^https?://" }
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["url", "sha256"],
+          "properties": {
+            "url": { "type": "string", "minLength": 8, "maxLength": 2048, "pattern": "^https?://" },
+            "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          }
+        }
+      ]
+    },
+    "variant": {
+      "enum": ["default", "emphasis", "security", "dashed"]
+    },
+    "legendMode": {
+      "enum": ["auto", "all", "hidden"]
+    },
+    "legendEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "visible": { "type": "boolean" }
+      }
+    },
+    "guidedViews": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "focus"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "label": { "type": "string", "minLength": 1, "maxLength": 48 },
+          "focus": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/id" }
+          },
+          "note": { "type": "string", "maxLength": 140 }
+        }
+      }
+    },
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["dot", "title", "items"],
+        "properties": {
+          "dot": { "enum": ["cyan", "emerald", "violet", "amber", "rose", "orange", "slate"] },
+          "title": { "type": "string", "minLength": 1 },
+          "items": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

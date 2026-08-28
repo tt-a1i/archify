@@ -1,8 +1,18 @@
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
+import * as skillFilesystem from '@deepseek-ai/dsh-skill-filesystem';
 
 export const name = 'archify-dsh';
+export const inject = ['skills'];
 export const PACKAGE_NAME = '@tt-a1i/archify-dsh';
+export const Config = skillFilesystem.Config;
+
+// Keep the Cordis patch owned by this package while delegating only to DSH's
+// documented filesystem Skill provider. This makes the runtime surface
+// explicit without patching or shadowing an official DSH package.
+export function apply(ctx, config = {}) {
+  return skillFilesystem.apply(ctx, config);
+}
 
 export function resolveArchifySkillRoot(profileBaseUrl) {
   if (!profileBaseUrl) {
@@ -17,5 +27,5 @@ export function resolveArchifySkillRoot(profileBaseUrl) {
       { cause: error },
     );
   }
-  return join(dirname(manifestPath), 'skills');
+  return join(dirname(manifestPath), '.dsh-bundled-skills');
 }
