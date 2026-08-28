@@ -222,6 +222,10 @@ function validateWorkflow() {
       problems.push(`Node "${node.id}" produced non-finite coordinates — check col, width, height, and yOffset are numbers.`);
       continue;
     }
+    if (node.width <= 0 || node.height <= 0) {
+      problems.push(`Node "${node.id}" has invalid size ${node.width}x${node.height} — width and height must be greater than 0.`);
+      continue;
+    }
     const estLabelW = textUnits(node.label) * 6.8;
     if (estLabelW > node.width + 6) {
       problems.push(`Label "${node.label}" (~${Math.round(estLabelW)}px) is wider than node "${node.id}" (${node.width}px) — shorten the label or increase node.width.`);
