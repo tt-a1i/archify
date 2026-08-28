@@ -75,8 +75,22 @@ test('distribution acceptance reserves stdout for its machine-readable JSON rece
     path.join(integrationRoot, 'scripts', 'distribution-acceptance.mjs'),
     'utf8',
   );
-  const runtimeInstall = source.match(/const runtimeInstall = run\([\s\S]*?\n\}\);/)?.[0] || '';
-  assert.match(runtimeInstall, /stdio:\s*\['ignore',\s*2,\s*2\]/);
+  assert.match(source, /runWithTransientNetworkRetry/);
+  assert.match(source, /run\('pnpm'/);
+  assert.match(source, /--allow-build=@deepseek-ai\/dsh-subprocess-local/);
+  assert.doesNotMatch(source, /--allow-build=\*/);
+  assert.match(source, /stdio:\s*\['ignore',\s*2,\s*2\]/);
   assert.doesNotMatch(source, /stdio:\s*['"]inherit['"]/);
   assert.equal([...source.matchAll(/process\.stdout\.write/g)].length, 2);
+});
+
+test('distribution receipt separates canonical ZIP bytes from cross-platform content checks', () => {
+  const source = fs.readFileSync(
+    path.join(integrationRoot, 'scripts', 'distribution-acceptance.mjs'),
+    'utf8',
+  );
+  assert.match(source, /canonicalZipBytes/);
+  assert.match(source, /crossPlatformZipCheck:\s*'extracted-content'/);
+  assert.doesNotMatch(source, /zipContainerBytesReproducible/);
+  assert.doesNotMatch(source, /rsync\/zip are not on GitHub Windows runners/);
 });

@@ -9,9 +9,23 @@ if [[ "$out" != /* ]]; then
   out="$(pwd)/$out"
 fi
 
-# Stage only files tracked by Git. This keeps untracked working-tree content out
-# of the archive, and rejecting tracked paths that are symlinks prevents an
-# archive build from reading through links to content outside the repository.
+# Runtime consumers support every Node version declared by archify/package.json,
+# but canonical ZIP bytes depend on the Node/zlib toolchain. CI and releases use
+# Node 22, so fail clearly instead of publishing different bytes from another
+# Node major.
+canonical_node_major=22
+node_version="$(node -p 'process.versions.node')"
+node_major="${node_version%%.*}"
+if [[ "$node_major" != "$canonical_node_major" ]]; then
+  echo "canonical archify.zip builds require Node $canonical_node_major (current: $node_version)" >&2
+  exit 1
+fi
+
+# Stage only files tracked by Git. Paths and modes come from the index, while
+# bytes intentionally come from the working tree so contributors can package
+# tracked edits before committing them. A conflicted index is never publishable.
+# Rejecting tracked paths that are symlinks prevents an archive build from
+# reading through links to content outside the repository.
 # test/ is repo-only (the golden harness compares against ../examples at the
 # repo root, which does not exist in an installed skill). The npm scripts and
 # build-only dependencies are stripped from the shipped package.json. Runtime
@@ -23,7 +37,15 @@ if [[ ! -f "$repo_root/archify/renderers/shared/generated-validators.mjs" ]]; th
   echo 'generated validators are missing — run npm run generate:validators in archify/' >&2
   exit 1
 fi
-while IFS= read -r -d '' tracked; do
+while IFS= read -r -d '' record; do
+  metadata="${record%%$'\t'*}"
+  tracked="${record#*$'\t'}"
+  tracked_mode="${metadata%% *}"
+  tracked_stage="${metadata##* }"
+  if [[ "$tracked_stage" != 0 ]]; then
+    echo "refusing to package unmerged index entry (stage $tracked_stage): $tracked" >&2
+    exit 1
+  fi
   case "$tracked" in
     archify/test | archify/test/* | \
     archify/package-lock.json | \
@@ -45,8 +67,16 @@ while IFS= read -r -d '' tracked; do
 
   target="$stage/$tracked"
   mkdir -p "$(dirname "$target")"
-  cp -p "$source" "$target"
-done < <(git -C "$repo_root" ls-files -z -- archify)
+  cp "$source" "$target"
+  case "$tracked_mode" in
+    100755) chmod 0755 "$target" ;;
+    100644) chmod 0644 "$target" ;;
+    *)
+      echo "unsupported tracked package mode $tracked_mode: $tracked" >&2
+      exit 1
+      ;;
+  esac
+done < <(git -C "$repo_root" ls-files --stage -z -- archify)
 node -e "
   const fs = require('fs');
   const p = '$stage/archify/package.json';
@@ -57,8 +87,6 @@ node -e "
 "
 rm -f "$stage/archify/package-lock.json"
 
-rm -f "$out"
-(cd "$stage" && zip -r -X -q "$out" archify)
+node "$repo_root/scripts/write-deterministic-zip.mjs" "$stage/archify" "$out"
 
-unzip -l "$out" | tail -1
 echo "built $out"

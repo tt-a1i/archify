@@ -57,21 +57,16 @@ jobs:
             echo "make_latest=true" >> "$GITHUB_OUTPUT"
           fi
       - name: Build skill archive
-        run: scripts/build-zip.sh
+        run: scripts/build-zip.sh /tmp/archify-built.zip
       - name: Validate the exact release archive without installing dependencies
         run: |
           set -euo pipefail
           package_root="$RUNNER_TEMP/archify-release-package"
           mkdir -p "$package_root"
-          unzip -q archify.zip -d "$package_root"
+          unzip -q /tmp/archify-built.zip -d "$package_root"
           node scripts/package-smoke.mjs "$package_root/archify"
       - name: Committed zip must match the build (same gate as CI)
-        run: |
-          mkdir /tmp/fresh /tmp/checked
-          unzip -q archify.zip -d /tmp/fresh
-          git checkout HEAD -- archify.zip
-          unzip -q archify.zip -d /tmp/checked
-          diff -r /tmp/fresh/archify /tmp/checked/archify
+        run: cmp -s /tmp/archify-built.zip archify.zip
       - name: Create GitHub Release with the zip attached
         uses: softprops/action-gh-release@v2
         with:

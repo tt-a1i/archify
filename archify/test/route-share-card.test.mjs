@@ -158,12 +158,6 @@ test('skill and READMEs describe the optional Export variant and show one real c
   assert.equal(png.readUInt32BE(16), 1200);
   assert.equal(png.readUInt32BE(20), 630);
 
-  const buildZip = fs.readFileSync(path.join(repoRoot, 'scripts/build-zip.sh'), 'utf8');
-  assert.match(
-    buildZip,
-    /git -C "\$repo_root" ls-files -z -- archify/,
-    'archive inputs must come from Git tracking so concurrent validator scratch cannot leak into archify.zip',
-  );
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

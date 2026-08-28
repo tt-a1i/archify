@@ -74,13 +74,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Rebuild archify.zip and compare contents
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Rebuild archify.zip and compare exact bytes
         run: |
-          (cd /tmp && "$GITHUB_WORKSPACE/scripts/build-zip.sh" fresh.zip)
-          mkdir /tmp/fresh /tmp/checked
-          unzip -q /tmp/fresh.zip -d /tmp/fresh
-          unzip -q archify.zip -d /tmp/checked
-          if ! diff -r /tmp/fresh/archify /tmp/checked/archify; then
+          scripts/build-zip.sh /tmp/fresh.zip
+          if ! cmp -s /tmp/fresh.zip archify.zip; then
             echo '::error::archify.zip is stale — run scripts/build-zip.sh and commit the result'
             exit 1
           fi
