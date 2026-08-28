@@ -196,6 +196,10 @@ const CASES = [
     ['Tag', 'legible', 'increase node.width']],
   ['workflow: viewBox width below schema min', 'workflow',
     (d) => { d.meta.viewBox = [699, 900]; }, ['700']],
+  ['workflow: node width must be positive', 'workflow',
+    (d) => { d.nodes[0].width = 0; }, ['/nodes/0/width', '>= 32']],
+  ['workflow: node height rejects negative dimensions', 'workflow',
+    (d) => { d.nodes[0].height = -10; }, ['/nodes/0/height', '>= 32']],
   ['workflow: nodes too close in a lane', 'workflow',
     (d) => { d.nodes.push({ ...d.nodes[0], id: 'dupe', col: d.nodes[0].col }); }, ['less than 8px apart']],
   ['workflow: empty group', 'workflow',
@@ -230,11 +234,19 @@ const CASES = [
   ['dataflow: node sublabel wider than its legible minimum', 'dataflow',
     (d) => { d.nodes[0].sublabel = 'This supporting sentence is far too long for one data-flow node box'; },
     ['Sublabel', 'legible', 'increase node.width']],
+  ['dataflow: node width must be positive', 'dataflow',
+    (d) => { d.nodes[0].width = 0; }, ['/nodes/0/width', '>= 48']],
+  ['dataflow: node height rejects negative dimensions', 'dataflow',
+    (d) => { d.nodes[0].height = -10; }, ['/nodes/0/height', '>= 36']],
   ['dataflow: node tag wider than its legible minimum', 'dataflow',
     (d) => { d.nodes[0].tag = 'This tag is far too long to sit inside one data-flow node box'; },
     ['Tag', 'legible', 'increase node.width']],
 
   // ---- lifecycle layout rules ----
+  ['lifecycle: state width must be positive', 'lifecycle',
+    (d) => { d.states[0].width = 0; }, ['/states/0/width', '>= 48']],
+  ['lifecycle: state height rejects negative dimensions', 'lifecycle',
+    (d) => { d.states[0].height = -10; }, ['/states/0/height', '>= 36']],
   ['lifecycle: missing reserved main lane', 'lifecycle',
     (d) => {
       d.lanes = d.lanes.map((l) => (l.id === 'main' ? { ...l, id: 'primary' } : l));

@@ -139,6 +139,12 @@ expectFailure('zero component height rejected by schema', 'architecture',
   (d) => { d.components[0].size = [120, 0]; }, '/components/0/size/1');
 expectFailure('negative component width rejected by schema', 'architecture',
   (d) => { d.components[0].size = [-1, 60]; }, '/components/0/size/0');
+expectFailure('zero node width rejected by schema', 'workflow',
+  (d) => { d.nodes[0].width = 0; }, '/nodes/0/width');
+expectFailure('negative node height rejected by schema', 'dataflow',
+  (d) => { d.nodes[0].height = -10; }, '/nodes/0/height');
+expectFailure('negative state width rejected by schema', 'lifecycle',
+  (d) => { d.states[0].width = -10; }, '/states/0/width');
 
 // ---------------------------------------------------------------------------
 console.log('template freshness (architecture example must carry the current template)');

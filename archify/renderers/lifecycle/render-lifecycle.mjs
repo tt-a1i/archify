@@ -180,6 +180,10 @@ function validateLifecycle() {
       problems.push(`State "${state.id}" produced non-finite coordinates — check col, width, height, and yOffset are numbers.`);
       continue;
     }
+    if (state.width <= 0 || state.height <= 0) {
+      problems.push(`State "${state.id}" has invalid size ${state.width}x${state.height} — width and height must be greater than 0.`);
+      continue;
+    }
     if (state.x < 32 || state.x + state.width > viewBox[0] - 32) {
       problems.push(`State "${state.id}" exceeds the horizontal bounds of the diagram — reduce state.width or increase meta.viewBox[0].`);
     }
