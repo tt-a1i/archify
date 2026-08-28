@@ -542,6 +542,19 @@ test('polylinePath emits M then L commands', () => {
   assert.equal(polylinePath([[0, 0], [10, 0], [10, 10]]), 'M 0 0 L 10 0 L 10 10');
 });
 
+test('polylinePath deduplicates consecutive identical points', () => {
+  // Issue #169: zero-length segments break marker-end orientation
+  const a = [10, 20];
+  const b = [30, 40];
+  const c = [50, 60];
+
+  // Duplicates removed
+  assert.equal(polylinePath([a, a, b, b]), `M ${a[0]} ${a[1]} L ${b[0]} ${b[1]}`);
+
+  // No duplicates - unchanged
+  assert.equal(polylinePath([a, b, c]), `M ${a[0]} ${a[1]} L ${b[0]} ${b[1]} L ${c[0]} ${c[1]}`);
+});
+
 test('roundedPath degrades to a polyline for <3 points or radius<=0', () => {
   assert.equal(roundedPath([[0, 0], [10, 0]], 10), 'M 0 0 L 10 0');
   assert.equal(roundedPath([[0, 0], [10, 0], [10, 10]], 0), 'M 0 0 L 10 0 L 10 10');

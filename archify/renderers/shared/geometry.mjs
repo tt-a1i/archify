@@ -1201,7 +1201,10 @@ export function chosenSide(side, fallback) {
 }
 
 export function polylinePath(points) {
-  return points.map(([x, y], index) => `${index === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ');
+  const deduped = points.filter((point, index) =>
+    index === 0 || point[0] !== points[index - 1][0] || point[1] !== points[index - 1][1]
+  );
+  return deduped.map(([x, y], index) => `${index === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ');
 }
 
 export function routePointsValue(points) {
