@@ -939,8 +939,10 @@ function workflowLegendRects() {
 }
 
 function measureNode(node) {
-  const width = node.width || layout.nodeW;
-  const height = node.height || (node.tag ? 68 : layout.nodeH);
+  // `??`, not `||`: an authored 0 is an invalid size validateWorkflow() must
+  // reject, not a missing size the default should fill in.
+  const width = node.width ?? layout.nodeW;
+  const height = node.height ?? (node.tag ? 68 : layout.nodeH);
   const cx = layout.colXs[node.col];
   const groupHeaderH = laneGroupHeaderH(node.lane);
   const contentH = laneHeight(node.lane) - layout.laneTitleH
@@ -2254,6 +2256,10 @@ function validateWorkflow() {
     }
     if (!isFinitePoint(node.x, node.y, node.cx, node.cy)) {
       problems.push(`Node "${node.id}" produced non-finite coordinates — check col, width, height, and yOffset are numbers.`);
+      continue;
+    }
+    if (node.width <= 0 || node.height <= 0) {
+      problems.push(`Node "${node.id}" has invalid size ${node.width}x${node.height} — width and height must be greater than 0.`);
       continue;
     }
     const estLabelW = textUnits(node.label) * 6.8;
