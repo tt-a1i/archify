@@ -745,6 +745,7 @@ function sideAwareBridgeCandidates(start, end, fromSide, toSide) {
 
 const AUTOMATIC_PORT_CORNER_GUTTER = 16;
 const AUTOMATIC_PORT_ALIGNMENT_DELTA = 16;
+const AUTOMATIC_PORT_DISTINCT_EPSILON = 0.5;
 
 function portHasCornerClearance(rect, side, point) {
   if (side === 'left' || side === 'right') {
@@ -756,6 +757,68 @@ function portHasCornerClearance(rect, side, point) {
     return point[0] >= rect.x + inset && point[0] <= rect.x + rect.width - inset;
   }
   return false;
+}
+
+// A spread port is distinct when no other relationship occupies the same slot
+// on the same component side. Compared against the shared spread map so the
+// check stays deterministic regardless of connection input order.
+function spreadPortIsDistinct(rect, side, point, exceptConn) {
+  for (const [relation, endpoints] of automaticPorts) {
+    if (relation === exceptConn || !endpoints) continue;
+    const sides = connectionSides(relation);
+    const competitors = [];
+    if (relation.from === rect.id && sides.fromSide === side && endpoints.from) competitors.push(endpoints.from);
+    if (relation.to === rect.id && sides.toSide === side && endpoints.to) competitors.push(endpoints.to);
+    for (const competitor of competitors) {
+      if (Math.hypot(competitor[0] - point[0], competitor[1] - point[1]) < AUTOMATIC_PORT_DISTINCT_EPSILON) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+// When both endpoints already occupy shared spread slots, prefer a zero-bend
+// shared axis for a near-aligned relationship, but only when the chosen slots
+// keep the competing ports distinct and the direct axis stays unobstructed.
+// Returns null to preserve the outside bridge when no compatible axis exists.
+function straightenSharedSpreadPorts(conn, from, to, start, end, fromSide, toSide, horizontallyFacing) {
+  const axisCoordinates = [];
+  const pushAxis = (value) => {
+    if (Number.isFinite(value)
+        && !axisCoordinates.some((existing) => Math.abs(existing - value) < AUTOMATIC_PORT_DISTINCT_EPSILON)) {
+      axisCoordinates.push(value);
+    }
+  };
+  if (horizontallyFacing) {
+    pushAxis(start[1]);
+    pushAxis(end[1]);
+    pushAxis(from.cy);
+    pushAxis(to.cy);
+    pushAxis((from.cy + to.cy) / 2);
+  } else {
+    pushAxis(start[0]);
+    pushAxis(end[0]);
+    pushAxis(from.cx);
+    pushAxis(to.cx);
+    pushAxis((from.cx + to.cx) / 2);
+  }
+  for (const coordinate of axisCoordinates) {
+    const candidate = horizontallyFacing
+      ? { start: [start[0], coordinate], end: [end[0], coordinate] }
+      : { start: [coordinate, start[1]], end: [coordinate, end[1]] };
+    const points = [candidate.start, candidate.end];
+    if (portHasCornerClearance(from, fromSide, candidate.start)
+        && portHasCornerClearance(to, toSide, candidate.end)
+        && spreadPortIsDistinct(from, fromSide, candidate.start, conn)
+        && spreadPortIsDistinct(to, toSide, candidate.end, conn)
+        && routeHonorsEndpointSides(points, fromSide, toSide)
+        && routeClearsEndpointComponents(points, from, to)
+        && routeClearsComponents(conn, points)) {
+      return candidate;
+    }
+  }
+  return null;
 }
 
 function alignFacingPorts(conn, from, to, start, end, fromSide, toSide, ports) {
@@ -778,23 +841,33 @@ function alignFacingPorts(conn, from, to, start, end, fromSide, toSide, ports) {
 
   const fromSpread = Boolean(ports?.from);
   const toSpread = Boolean(ports?.to);
-  if (fromSpread && toSpread) return { start, end };
+  const alignmentDelta = horizontallyFacing
+    ? Math.abs(start[1] - end[1])
+    : Math.abs(start[0] - end[0]);
+
+  if (fromSpread && toSpread) {
+    // Both endpoints already occupy shared spread slots. When the relationship
+    // is near-aligned, prefer a zero-bend shared axis if compatible slots keep
+    // the competing ports distinct; otherwise preserve the outside bridge.
+    if (alignmentDelta < AUTOMATIC_PORT_ALIGNMENT_DELTA) {
+      const straightened = straightenSharedSpreadPorts(
+        conn, from, to, start, end, fromSide, toSide, horizontallyFacing,
+      );
+      if (straightened) return straightened;
+    }
+    return { start, end };
+  }
   const hasExplicitSides = (
     (conn.fromSide && conn.fromSide !== 'auto')
     || (conn.toSide && conn.toSide !== 'auto')
   );
   if (!fromSpread && !toSpread && hasExplicitSides) return { start, end };
 
-  const alignmentDelta = horizontallyFacing
-    ? Math.abs(start[1] - end[1])
-    : Math.abs(start[0] - end[0]);
   if (alignmentDelta >= AUTOMATIC_PORT_ALIGNMENT_DELTA) return { start, end };
 
   // Keep the shared endpoint's distinct spread slot and move only the
   // relationship's unshared endpoint onto that axis. With no spread endpoint,
   // retain the existing least-movement choice between the two facing sides.
-  // If both endpoints are shared, preserve the outside bridge so no competing
-  // port is silently collapsed.
   const alignEndToStart = horizontallyFacing
     ? { start, end: [end[0], start[1]] }
     : { start, end: [start[0], end[1]] };
