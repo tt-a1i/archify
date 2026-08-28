@@ -26,10 +26,9 @@ Archify 是一套基于 Node.js 的渲染与校验系统，并以 Agent Skill �
 ```bash
 npx skills add tt-a1i/archify -g
 ```
-
 使用 Cursor？打开[可切换 Agent 的快速开始页](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)，即可获得准确的全局或当前仓库安装命令。
 
-然后告诉 Agent：`使用 archify 梳理这个仓库的运行时架构。`
+**不需要绑定代码库：**在任意 Agent 对话里描述系统即可。
 
 ## ❤️ 赞助伙伴
 
@@ -111,19 +110,18 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 
 [Agent 切换器](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)只为 `cursor`、`codex`、`claude-code` 和 `opencode` 生成命令。Raven 仅支持 ZIP 手动安装：将 [`archify.zip`](archify.zip) 解压到 `~/.raven/workspace/skills`，解压后会得到 `~/.raven/workspace/skills/archify`；Raven 不属于切换器目标。
 
-### 2. 先画一个边界清楚的视图
+### 2. 直接从描述开始——不需要代码库
+
+```text
+用 Archify 画出：Browser -> API -> Redis 缓存 -> PostgreSQL 回源。
+```
+
+需要源码证据时，打开仓库后改用：
 
 ```text
 分析这个仓库，然后使用 archify 生成一张高层运行时架构图。
 只保留 8–12 个核心组件，突出一条主要路径，并标出外部依赖与信任边界。
 辅助信息放进说明卡片，不要继续增加连线。
-```
-
-如果只想解释一条调用链：
-
-```text
-使用 archify 画出这条登录流程：Browser -> Web App -> API -> JWT 校验 ->
-Redis Session 查询 -> PostgreSQL 回源。把缓存未命中作为次要路径。
 ```
 
 ### 3. 在对话中细调

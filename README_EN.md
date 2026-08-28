@@ -33,7 +33,7 @@ npx skills add tt-a1i/archify -g
 
 Using Cursor? Open the [agent-aware quick start](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) for exact global and project commands.
 
-Then ask your agent: `Use archify to map this repository's runtime architecture.`
+**No repository is required:** describe the system in any agent chat.
 
 ## ❤️ Sponsors
 
@@ -115,19 +115,18 @@ npx skills use tt-a1i/archify@archify --agent codex
 
 The [agent switcher](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, and `opencode`. For Raven's manual ZIP install, extract [`archify.zip`](archify.zip) into `~/.raven/workspace/skills`; it yields `~/.raven/workspace/skills/archify`. Raven is not a switcher target.
 
-### 2. Ask for one bounded view
+### 2. Start from a description — no repository required
+
+```text
+Use Archify to draw: Browser -> API -> Redis cache -> PostgreSQL fallback.
+```
+
+For source evidence, open a repository and ask:
 
 ```text
 Analyze this repository, then use archify to create a high-level runtime architecture diagram.
 Show 8–12 core components, one primary path, external dependencies, and trust boundaries.
 Put supporting detail in cards instead of adding more edges.
-```
-
-For a focused flow:
-
-```text
-Use archify to draw this login flow: Browser -> Web App -> API -> JWT validation ->
-Redis session lookup -> PostgreSQL fallback. Keep the cache-miss path secondary.
 ```
 
 ### 3. Refine in chat
