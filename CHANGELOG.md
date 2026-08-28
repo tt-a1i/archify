@@ -8,6 +8,7 @@ Development identity: `v2.16.0-dev.0`
 
 ### Added
 - **Bounded Viewer localization.** All five renderers accept the optional `meta.locale` values `en` and `zh-CN`, localizing renderer-owned Viewer UI, accessibility copy, default legends, document titles, and language metadata without translating authored content. Omitted locale remains backward-compatible English, while unsupported authored languages retain their requested authored copy with an explicitly disclosed English Viewer fallback.
+- **Traditional Chinese Viewer locale.** `meta.locale` also accepts `zh-TW`. The catalog is hand-authored rather than script-converted from `zh-CN`, so it resolves one-to-many mappings correctly (`复制` → `複製`, never `復制`) and uses Taiwan terminology instead of glyph-only conversion (`資料庫`, `雲端服務`, `訊息匯流排`, `匯出`, `剪貼簿`, `預設`, `語意`). `zh-CN` and `zh-TW` are never substituted for one another. Regression coverage asserts that no Simplified-only character survives in the `zh-TW` column and that it does not degrade into a copy of `zh-CN`.
 
 ## [2.15.0] — 2026-08-17
 

@@ -420,3 +420,44 @@ test('Share Card and export failures use catalog messages instead of fixed Engli
     assert.ok(!template.includes(hardcoded), hardcoded);
   }
 });
+
+// zh-TW is a hand-authored locale, not a script conversion of zh-CN. These two
+// checks are what keep it that way: no Simplified-only glyph may survive, and
+// the catalog may not silently degrade into a copy of the zh-CN column.
+test('zh-TW carries no Simplified-only characters', () => {
+  const simplifiedOnly = '图说复导视语义关边线经统显现节击门问间络结环术车东马个们这来对时应实进运动过还没错单张组数据库网页级键约华丽';
+  for (const key of catalogKeys()) {
+    const message = translateMessage('zh-TW', key);
+    const found = [...message].filter((character) => simplifiedOnly.includes(character));
+    assert.deepEqual(found, [], `${key}: ${message}`);
+  }
+});
+
+test('zh-TW is authored separately from zh-CN', () => {
+  const keys = catalogKeys();
+  const differing = keys.filter((key) => translateMessage('zh-TW', key) !== translateMessage('zh-CN', key));
+  // Some entries legitimately match (bare placeholders, ARCHIFY badges, shared
+  // Latin product names), so require a strong majority rather than every key.
+  assert.ok(
+    differing.length > keys.length * 0.8,
+    `expected most zh-TW entries to differ from zh-CN, got ${differing.length}/${keys.length}`,
+  );
+});
+
+test('zh-TW uses Taiwan terminology rather than mainland equivalents', () => {
+  const expectations = [
+    ['legend.architecture.database', '資料庫'],
+    ['legend.architecture.cloud', '雲端服務'],
+    ['legend.architecture.messagebus', '訊息匯流排'],
+    ['viewer.export.button', '匯出'],
+    ['viewer.common.copied', '已複製'],
+    ['viewer.export.clipboardPng', '剪貼簿'],
+    ['viewer.present.present', '簡報'],
+  ];
+  for (const [key, expected] of expectations) {
+    assert.ok(
+      translateMessage('zh-TW', key).includes(expected),
+      `${key} should use ${expected}, got ${translateMessage('zh-TW', key)}`,
+    );
+  }
+});

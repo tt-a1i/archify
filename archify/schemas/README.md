@@ -21,7 +21,7 @@ level, so unknown fields are rejected rather than silently ignored.
 
 Every `meta` object also accepts `animation: "trace"` for opt-in SVG/CSS motion
 in generated HTML. Omit it, or set `"none"`, for the default static output.
-It also accepts `locale: "en" | "zh-CN"`. The field selects the fixed Viewer
+It also accepts `locale: "en" | "zh-CN" | "zh-TW"`. The field selects the fixed Viewer
 UI, renderer-owned default legend and accessibility copy, document-title
 suffix, and `<html lang>` value; it does not translate authored strings.
 Omitting it preserves legacy behavior and resolves to English. Unsupported
@@ -126,7 +126,7 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
 - `point` — an `[x, y]` pair of numbers (used by `via` and `labelAt`)
 - `componentType` — `frontend`, `backend`, `database`, `cloud`, `security`,
   `messagebus`, `external`
-- `locale` — the bounded renderer locale, `en` or `zh-CN`
+- `locale` — the bounded renderer locale, `en`, `zh-CN`, or `zh-TW`
 - `brandMark` — one optional built-in brand ID or explicit HTTP(S) site URL
 - `variant` — `default`, `emphasis`, `security`, `dashed` (sequence messages
   extend this list locally with `return`)
