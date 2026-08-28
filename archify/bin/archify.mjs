@@ -14,6 +14,7 @@ const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'life
 
 function usage() {
   return `Usage:
+  archify import <format> <input.mmd> [output.json] [--json]
   archify render <type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path (architecture only)]
   archify compare architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]
   archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path (architecture only)]
@@ -32,6 +33,9 @@ function usage() {
 
 Types:
   architecture, workflow, sequence, dataflow, lifecycle
+
+Import formats:
+  sequence (Mermaid sequenceDiagram)
 `;
 }
 
@@ -2023,6 +2027,113 @@ function commandValidate(args) {
   if (exitCode !== 0) process.exitCode = exitCode;
 }
 
+// Mermaid importers live in `archify/importers/`. Each entry names the module,
+// its exported entry point, and the receipt `source` tag so a new format is one
+// row rather than a new command.
+const IMPORT_FORMATS = new Map([
+  ['sequence', { module: 'sequence.mjs', entry: 'importSequence', source: 'mermaid-sequence' }],
+]);
+
+function importUsage() {
+  return `Usage: archify import <${[...IMPORT_FORMATS.keys()].join('|')}> <input.mmd> [output.json] [--json]`;
+}
+
+function reportImportFailure({ json, source, error, diagnostics }) {
+  const receipt = {
+    schemaVersion: 1,
+    command: 'import',
+    source,
+    ok: false,
+    error,
+    diagnostics,
+  };
+  if (json) console.log(JSON.stringify(receipt, null, 2));
+  else console.error(formatDiagnostics(error, diagnostics));
+  process.exit(1);
+}
+
+async function commandImport(args) {
+  const [format, ...rest] = args;
+  if (!format) fail(importUsage());
+  const target = IMPORT_FORMATS.get(format);
+  if (!target) fail(`Unsupported import format "${format}". Supported: ${[...IMPORT_FORMATS.keys()].join(', ')}`);
+
+  const json = rest.includes('--json');
+  const positional = [];
+  for (const arg of rest) {
+    if (arg === '--json') continue;
+    if (arg.startsWith('--')) fail(`Unknown import option "${arg}".\n\n${importUsage()}`);
+    positional.push(arg);
+  }
+  const [inputPath, outputPath] = positional;
+  if (!inputPath) fail(importUsage());
+  if (positional.length > 2) fail(`Unexpected argument "${positional[2]}".\n\n${importUsage()}`);
+
+  let source;
+  try {
+    source = fs.readFileSync(inputPath, 'utf8');
+  } catch (error) {
+    reportImportFailure({
+      json,
+      source: target.source,
+      error: `Input could not be read: ${error.message}`,
+      diagnostics: [diagnostic({
+        code: 'input/read',
+        message: `Input could not be read: ${error.message}`,
+        subject: { input: path.resolve(inputPath) },
+        evidence: { ...(error?.code ? { systemCode: error.code } : {}), reason: error.message },
+        supportedFixes: ['provide one readable Mermaid source file'],
+      })],
+    });
+    return;
+  }
+
+  const importerPath = path.join(skillRoot, 'importers', target.module);
+  const importer = await import(pathToFileURL(importerPath).href);
+  let result;
+  try {
+    result = importer[target.entry](source);
+  } catch (error) {
+    // A parser crash is still an input failure to the caller, so it leaves the
+    // same receipt shape instead of a stack trace.
+    reportImportFailure({
+      json,
+      source: target.source,
+      error: `Import failed without a diagnostic: ${error.message}`,
+      diagnostics: [diagnostic({
+        code: 'import/internal',
+        message: `Import failed without a diagnostic: ${error.message}`,
+        subject: { input: path.resolve(inputPath), format },
+        evidence: { errorName: error?.name || 'Error' },
+        supportedFixes: ['report this source file as an Archify importer bug'],
+      })],
+    });
+    return;
+  }
+
+  if (!result.ok) {
+    reportImportFailure({
+      json,
+      source: target.source,
+      error: result.diagnostics[0].message,
+      diagnostics: result.diagnostics,
+    });
+    return;
+  }
+
+  const irJson = `${JSON.stringify(result.ir, null, 2)}\n`;
+  if (outputPath) {
+    fs.writeFileSync(outputPath, irJson);
+  } else if (!json) {
+    process.stdout.write(irJson);
+  }
+  if (json) {
+    console.log(JSON.stringify({ ...result.receipt, input: path.resolve(inputPath), ...(outputPath ? { output: path.resolve(outputPath) } : {}) }, null, 2));
+  } else if (outputPath) {
+    console.error(`Imported ${result.receipt.participants} participants, ${result.receipt.messages} messages -> ${outputPath}`);
+  }
+}
+
 const [command, ...args] = process.argv.slice(2);
 
 try {
@@ -2032,6 +2143,9 @@ try {
     case '--help':
     case 'help':
       console.log(usage());
+      break;
+    case 'import':
+      await commandImport(args);
       break;
     case 'render':
       commandRender(args);

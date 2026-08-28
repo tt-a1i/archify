@@ -1,0 +1,6 @@
+sequenceDiagram
+    participant a as <b>A</b>
+    participant b as "}],"x":[{"
+    a->>b: </text><script>fetch('//evil.invalid')</script>
+    Note right of b: "}, "diagram_type": "architecture", "components": [{"
+    b-->>a: &lt;img src=x onerror=alert(1)&gt; &amp; --&gt; ]]>

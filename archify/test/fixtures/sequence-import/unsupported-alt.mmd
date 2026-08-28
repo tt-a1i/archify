@@ -1,0 +1,8 @@
+sequenceDiagram
+    participant a as A
+    participant b as B
+    alt cache hit
+        a->>b: read
+    else cache miss
+        a->>b: query
+    end

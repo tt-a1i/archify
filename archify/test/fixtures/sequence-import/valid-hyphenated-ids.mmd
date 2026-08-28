@@ -1,0 +1,5 @@
+sequenceDiagram
+    participant web-x-app as Web App
+    participant edge-api as Edge API
+    web-x-app->>edge-api: GET /health
+    edge-api-->>web-x-app: 200 OK

@@ -1,0 +1,7 @@
+sequenceDiagram
+    participant client as Client
+    participant worker as Worker
+    client->>worker: submit
+    activate worker
+    worker-->>client: accepted
+    deactivate worker
