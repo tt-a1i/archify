@@ -163,10 +163,14 @@ express cleanly here: duplicate view IDs, duplicate focus IDs, focus IDs that do
 not exist in the diagram's semantic collection, and duplicate authored
 relationship IDs within the mode's relationship collection.
 
-Architecture additionally supports opt-in, revision-pinned repository evidence.
-`meta.repository` names a public GitHub URL and full commit SHA; a component may
-carry one to three `sources` with repo-relative POSIX paths, optional line
-ranges, and optional labels. Shape is schema-checked, then the renderer requires
+All five modes support opt-in, revision-pinned repository evidence.
+`meta.repository` names the repository URL and full commit SHA, with optional
+`provider` (`github` or `gitee`) and `link_mode` (`web` or `local-only`; see the
+authoring contract); a node may carry one to three `sources` with repo-relative POSIX paths, optional line
+ranges, and optional labels. Sources are authored on the mode's own node
+collection — Architecture `components`, Workflow and Data Flow `nodes`,
+Sequence `participants`, Lifecycle `states` — and the verified payload is keyed
+by node id. Shape is schema-checked, then the renderer requires
 `--repo-root`: the local Git origin must match, and Git must prove the commit,
 blobs, and requested lines. Verified evidence is embedded outside the canonical
 SVG for the Semantic Passport and Node Finder; ordinary documents and visual
