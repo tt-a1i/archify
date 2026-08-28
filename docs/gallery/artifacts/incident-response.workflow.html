@@ -3958,6 +3958,12 @@
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
+    /* Relationship labels share the exact color token used by their path. */
+    .t-edge-default  { fill: var(--arrow); }
+    .t-edge-emphasis { fill: var(--arrow-emphasis); }
+    .t-edge-security { fill: var(--security-stroke); }
+    .t-edge-dashed   { fill: var(--database-stroke); }
+
     /* Semantic Sigils are small authored role stamps, not icons from a brand
        pack and not viewer controls. Prefix selectors with svg so the canonical
        export's SVG-only stylesheet collector keeps them automatically. */
@@ -5052,19 +5058,19 @@
         <!-- Phase headers -->
         <line x1="42" y1="35" x2="266" y2="35" class="a-default" stroke-width="1.1"/>
         <rect x="42" y="27" width="224" height="16" rx="4" class="c-mask"/>
-        <text x="154" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">Detect</text>
+        <text x="154" y="39" class="t-edge-default" font-size="8" font-weight="600" text-anchor="middle">Detect</text>
         <line x1="254" y1="35" x2="476" y2="35" class="a-emphasis" stroke-width="1.1"/>
         <rect x="254" y="27" width="222" height="16" rx="4" class="c-mask"/>
-        <text x="365" y="39" class="t-backend" font-size="8" font-weight="600" text-anchor="middle">Triage + mitigate</text>
+        <text x="365" y="39" class="t-edge-emphasis" font-size="8" font-weight="600" text-anchor="middle">Triage + mitigate</text>
         <line x1="454" y1="35" x2="671" y2="35" class="a-dashed" stroke-width="1.1"/>
         <rect x="454" y="27" width="217" height="16" rx="4" class="c-mask"/>
-        <text x="562.5" y="39" class="t-messagebus" font-size="8" font-weight="600" text-anchor="middle">Verify + close</text>
+        <text x="562.5" y="39" class="t-edge-dashed" font-size="8" font-weight="600" text-anchor="middle">Verify + close</text>
 
         <!-- Workflow groups -->
         <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-0" x="170" y="214" width="310" height="58" rx="9" class="c-lane" stroke-width="1"/>
-        <text x="180" y="228" class="t-backend" font-size="7" font-weight="600">Incident command</text>
+        <text x="180" y="228" class="t-edge-emphasis" font-size="7" font-weight="600">Incident command</text>
         <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-1" x="380" y="710" width="295" height="58" rx="9" class="c-security-group" stroke-width="1"/>
-        <text x="390" y="724" class="t-security" font-size="7" font-weight="600">If impact persists</text>
+        <text x="390" y="724" class="t-edge-security" font-size="7" font-weight="600">If impact persists</text>
 
         <!-- Edge paths -->
         <path data-edge-from="alert" data-edge-to="page" data-edge-label="page" data-edge-key="0" data-composition-points="88,145;88,166;220,166;220,217" d="M 88 145 L 88 166 L 220 166 L 220 217" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
@@ -5219,7 +5225,7 @@
         <!-- Edge labels -->
         <g data-detail="context" data-edge-from="alert" data-edge-to="page" data-edge-label="page" data-edge-key="0">
           <rect x="139" y="146" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="154" y="156" class="t-backend" font-size="8" text-anchor="middle">page</text>
+          <text x="154" y="156" class="t-edge-emphasis" font-size="8" text-anchor="middle">page</text>
         </g>
 
 

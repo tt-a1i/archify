@@ -3958,6 +3958,12 @@
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
+    /* Relationship labels share the exact color token used by their path. */
+    .t-edge-default  { fill: var(--arrow); }
+    .t-edge-emphasis { fill: var(--arrow-emphasis); }
+    .t-edge-security { fill: var(--security-stroke); }
+    .t-edge-dashed   { fill: var(--database-stroke); }
+
     /* Semantic Sigils are small authored role stamps, not icons from a brand
        pack and not viewer controls. Prefix selectors with svg so the canonical
        export's SVG-only stylesheet collector keeps them automatically. */
@@ -5194,52 +5200,52 @@
         <!-- Flow labels -->
         <g data-detail="context" data-edge-from="web" data-edge-to="edge" data-edge-label="clickstream" data-edge-key="0" data-edge-id="web-clickstream">
           <rect x="171.05" y="179" width="65.9" height="27" rx="4" class="c-mask"/>
-          <text x="204" y="190" class="t-backend" font-size="8" text-anchor="middle">clickstream</text>
+          <text x="204" y="190" class="t-edge-emphasis" font-size="8" text-anchor="middle">clickstream</text>
         <text data-detail="fine" x="204" y="201" class="t-dim" font-size="7" text-anchor="middle">user events</text>
         </g>
         <g data-detail="context" data-edge-from="mobile" data-edge-to="edge" data-edge-label="app events" data-edge-key="1" data-edge-id="mobile-events">
           <rect x="182.15" y="331" width="75.7" height="27" rx="4" class="c-mask"/>
-          <text x="220" y="342" class="t-muted" font-size="8" text-anchor="middle">app events</text>
+          <text x="220" y="342" class="t-edge-default" font-size="8" text-anchor="middle">app events</text>
         <text data-detail="fine" x="220" y="353" class="t-dim" font-size="7" text-anchor="middle">device events</text>
         </g>
         <g data-detail="context" data-edge-from="edge" data-edge-to="consent" data-edge-label="identity + consent" data-edge-key="2" data-edge-id="consent-enrichment">
           <rect x="331.9" y="89" width="100.2" height="27" rx="4" class="c-mask"/>
-          <text x="382" y="100" class="t-security" font-size="8" text-anchor="middle">identity + consent</text>
+          <text x="382" y="100" class="t-edge-security" font-size="8" text-anchor="middle">identity + consent</text>
         <text data-detail="fine" x="382" y="111" class="t-dim" font-size="7" text-anchor="middle">PII touch</text>
         </g>
         <g data-detail="context" data-edge-from="edge" data-edge-to="stream" data-edge-label="accepted events" data-edge-key="3" data-edge-id="accepted-events">
           <rect x="395.25" y="313" width="85.5" height="27" rx="4" class="c-mask"/>
-          <text x="438" y="324" class="t-backend" font-size="8" text-anchor="middle">accepted events</text>
+          <text x="438" y="324" class="t-edge-emphasis" font-size="8" text-anchor="middle">accepted events</text>
         <text data-detail="fine" x="438" y="335" class="t-dim" font-size="7" text-anchor="middle">append-only</text>
         </g>
         <g data-detail="context" data-edge-from="consent" data-edge-to="pii" data-edge-label="identity map" data-edge-key="4" data-edge-id="identity-map">
           <rect x="600.15" y="133" width="75.7" height="27" rx="4" class="c-mask"/>
-          <text x="638" y="144" class="t-security" font-size="8" text-anchor="middle">identity map</text>
+          <text x="638" y="144" class="t-edge-security" font-size="8" text-anchor="middle">identity map</text>
         <text data-detail="fine" x="638" y="155" class="t-dim" font-size="7" text-anchor="middle">encrypted PII</text>
         </g>
         <g data-detail="context" data-edge-from="stream" data-edge-to="warehouse" data-edge-label="normalized facts" data-edge-key="5" data-edge-id="normalized-facts">
           <rect x="592.8" y="361" width="90.4" height="27" rx="4" class="c-mask"/>
-          <text x="638" y="372" class="t-backend" font-size="8" text-anchor="middle">normalized facts</text>
+          <text x="638" y="372" class="t-edge-emphasis" font-size="8" text-anchor="middle">normalized facts</text>
         <text data-detail="fine" x="638" y="383" class="t-dim" font-size="7" text-anchor="middle">non-PII</text>
         </g>
         <g data-detail="context" data-edge-from="warehouse" data-edge-to="features" data-edge-label="daily aggregates" data-edge-key="6" data-edge-id="daily-aggregates">
           <rect x="699.8" y="485" width="90.4" height="27" rx="4" class="c-mask"/>
-          <text x="745" y="496" class="t-messagebus" font-size="8" text-anchor="middle">daily aggregates</text>
+          <text x="745" y="496" class="t-edge-dashed" font-size="8" text-anchor="middle">daily aggregates</text>
         <text data-detail="fine" x="745" y="507" class="t-dim" font-size="7" text-anchor="middle">batch</text>
         </g>
         <g data-detail="context" data-edge-from="warehouse" data-edge-to="dashboard" data-edge-label="metrics SQL" data-edge-key="7" data-edge-id="metrics-query">
           <rect x="797.05" y="315" width="65.9" height="27" rx="4" class="c-mask"/>
-          <text x="830" y="326" class="t-muted" font-size="8" text-anchor="middle">metrics SQL</text>
+          <text x="830" y="326" class="t-edge-default" font-size="8" text-anchor="middle">metrics SQL</text>
         <text data-detail="fine" x="830" y="337" class="t-dim" font-size="7" text-anchor="middle">read-only</text>
         </g>
         <g data-detail="context" data-edge-from="features" data-edge-to="model" data-edge-label="feature vectors" data-edge-key="8" data-edge-id="feature-vectors">
           <rect x="809.25" y="587" width="85.5" height="27" rx="4" class="c-mask"/>
-          <text x="852" y="598" class="t-messagebus" font-size="8" text-anchor="middle">feature vectors</text>
+          <text x="852" y="598" class="t-edge-dashed" font-size="8" text-anchor="middle">feature vectors</text>
         <text data-detail="fine" x="852" y="609" class="t-dim" font-size="7" text-anchor="middle">derived</text>
         </g>
         <g data-detail="context" data-edge-from="pii" data-edge-to="dashboard" data-edge-label="restricted join" data-edge-key="9" data-edge-id="restricted-join">
           <rect x="837.25" y="187" width="85.5" height="27" rx="4" class="c-mask"/>
-          <text x="880" y="198" class="t-security" font-size="8" text-anchor="middle">restricted join</text>
+          <text x="880" y="198" class="t-edge-security" font-size="8" text-anchor="middle">restricted join</text>
         <text data-detail="fine" x="880" y="209" class="t-dim" font-size="7" text-anchor="middle">approved only</text>
         </g>
 

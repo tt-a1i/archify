@@ -673,7 +673,7 @@ function renderEdgeLabel(edge, index) {
   const labelW = Math.max(30, textUnits(edge.label) * 4.8 + 10);
   return `        <g data-detail="context" ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)}>
           <rect x="${lx - labelW / 2}" y="${ly - 10}" width="${labelW}" height="14" rx="3" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${variantAccent(edge.variant, { dashed: 't-database' })}" font-size="8" text-anchor="middle">${esc(edge.label)}</text>
+          <text x="${lx}" y="${ly}" class="${variantAccent(edge.variant)}" font-size="8" text-anchor="middle">${esc(edge.label)}</text>
         </g>`;
 }
 
