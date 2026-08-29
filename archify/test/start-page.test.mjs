@@ -79,12 +79,17 @@ function executeStartPage(html) {
     },
   };
   const window = {
-    location: { search: '', pathname: '/start.html' },
+    location: { href: 'https://example.test/start.html', search: '', pathname: '/start.html' },
     isSecureContext: true,
     dispatchEvent() {},
+    ArchifySiteLanguage: {
+      read() { return 'en'; },
+      write(value) { return value; },
+    },
   };
   const context = {
     window,
+    ArchifySiteLanguage: window.ArchifySiteLanguage,
     document,
     navigator: { languages: ['en'], language: 'en', clipboard: { async writeText(value) { copied.push(value); } } },
     history: { replaceState(_state, _title, url) { replacedUrl = url; } },
@@ -93,6 +98,7 @@ function executeStartPage(html) {
       setItem(key, value) { stored.set(key, value); },
     },
     CustomEvent: class { constructor(name, options) { this.name = name; this.detail = options.detail; } },
+    URL,
     URLSearchParams,
     Set,
     Array,
@@ -151,9 +157,10 @@ test('start page: offers five bounded bilingual starts without ingesting source 
   assert.match(scriptMatch[1], /KNOWN_AGENTS\.has\(requestedAgent\)/);
   assert.match(scriptMatch[1], /KNOWN_SOURCES\.has\(requestedSource\)/);
   assert.match(scriptMatch[1], /KNOWN_INPUTS\.has\(requestedInput\)/);
-  assert.match(scriptMatch[1], /next\.set\('agent', agent\)/);
-  assert.match(scriptMatch[1], /next\.set\('source', source\)/);
-  assert.match(scriptMatch[1], /next\.set\('input', input\)/);
+  assert.match(scriptMatch[1], /next\.searchParams\.set\('agent', agent\)/);
+  assert.match(scriptMatch[1], /next\.searchParams\.set\('source', source\)/);
+  assert.match(scriptMatch[1], /next\.searchParams\.set\('input', input\)/);
+  assert.match(scriptMatch[1], /next\.searchParams\.delete\('lang'\)/);
   assert.match(scriptMatch[1], /--agent ' \+ agent \+ ' --global --copy --yes/);
   assert.match(scriptMatch[1], /--agent ' \+ agent \+ ' --copy --yes/);
   assert.match(scriptMatch[1], /function starterText\(\)/);
