@@ -17,6 +17,11 @@ if (!input || input === '-h' || input === '--help') {
   process.exit(input ? 0 : 2);
 }
 
+const handleInpute = () => {
+  console.error('Usage: node scripts/check-render-output.mjs <diagram.html>');
+  process.exit(2);
+}
+
 const htmlPath = path.resolve(input);
 let html;
 try {
