@@ -12,3 +12,6 @@
 # Deterministic build outputs committed for zero-install and release verification.
 /archify/renderers/shared/generated-brand-marks.mjs linguist-generated=true
 /archify/renderers/shared/generated-validators.mjs linguist-generated=true
+
+# Normalize line endings (fixes #144)
+* text=auto eol=lf
