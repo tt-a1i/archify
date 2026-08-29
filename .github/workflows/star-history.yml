@@ -1,0 +1,26 @@
+name: Star History
+
+on:
+  schedule:
+    - cron: '30 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: star-history
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: narayann7/star-history-action@a68d8f9d67ca20d55b682a264e69152dcf326e9c # v1.0.5
+        with:
+          output-dir: assets
+          update-readme: 'false'
+          commit: 'false'
+      - name: Publish charts with linear history
+        run: bash scripts/publish-star-history.sh star-history

@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { copySiteAssets } from './copy-site-assets.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -348,7 +349,9 @@ for (const [placeholder, value] of Object.entries(replacements)) {
 if (/\[\[[A-Z0-9_]+\]\]/.test(html)) {
   throw new Error('Gallery template contains unresolved placeholders');
 }
-fs.writeFileSync(path.join(outputRoot, 'gallery.html'), html);
+const galleryPath = path.join(outputRoot, 'gallery.html');
+copySiteAssets(galleryPath);
+fs.writeFileSync(galleryPath, html);
 
 console.log(`gallery ${manifest.entryCount} artifacts / ${manifest.checkCount} checks`);
 console.log(path.join(outputRoot, 'gallery.html'));

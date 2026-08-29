@@ -15,6 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/site-navigation.css">
   <style>
     :root {
       /* Drafted-sheet palette — shared with the project page */
@@ -54,18 +55,6 @@
       -webkit-mask-image:radial-gradient(ellipse 95% 62% at 50% -6%, black 12%, transparent 75%);
       mask-image:radial-gradient(ellipse 95% 62% at 50% -6%, black 12%, transparent 75%);
     }
-
-    /* NAV — same chrome as the project page */
-    nav { position:fixed; top:0; left:0; right:0; z-index:100; padding:0 2rem; height:60px; display:flex; align-items:center; justify-content:space-between; background:rgba(247,249,249,0.82); backdrop-filter:blur(14px) saturate(1.15); -webkit-backdrop-filter:blur(14px) saturate(1.15); border-bottom:1px solid var(--line); }
-    .nav-logo { display:flex; align-items:center; gap:.625rem; text-decoration:none; }
-    .nav-logo-text { font-family:var(--font-display); font-optical-sizing:auto; font-size:1.125rem; font-weight:500; color:var(--ink); letter-spacing:-.01em; }
-    .nav-logo-path { color:var(--dim); font-family:var(--font-mono); font-size:.625rem; font-weight:500; letter-spacing:.1em; }
-    .nav-right { display:flex; align-items:center; gap:1.25rem; }
-    .nav-link { font-family:var(--font-mono); font-size:.625rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color .18s var(--ease-out); }
-    .nav-link:hover { color:var(--ink); }
-    .nav-link[aria-current] { color:var(--accent); }
-    .btn-lang { display:inline-flex; align-items:center; background:transparent; color:var(--muted); border:1px solid var(--line-hi); padding:.45rem .8rem; font-family:var(--font-mono); font-size:.5625rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase; min-width:44px; justify-content:center; border-radius:6px; cursor:pointer; transition:all .2s var(--ease-out); }
-    .btn-lang:hover { color:var(--ink); border-color:var(--ink); }
 
     main { position:relative; z-index:1; width:min(1120px,calc(100% - 3rem)); margin:0 auto; padding:10rem 0 4rem; }
 
@@ -161,8 +150,6 @@
       .type-tab:last-child { grid-column:1 / -1; }
     }
     @media (max-width:560px) {
-      nav { padding:0 1.25rem; }
-      .nav-right .nav-link { display:none; }
       main { width:calc(100% - 1.5rem); padding-top:7rem; }
       h1 { font-size:2.2rem; }
       .panel { padding:1.5rem 1.25rem; }
@@ -180,7 +167,7 @@
 <body>
   <div class="grid-bg" aria-hidden="true"></div>
 
-  <nav aria-label="Primary navigation">
+  <nav class="site-nav" aria-label="Primary navigation">
     <a class="nav-logo" href="./" aria-label="Archify project page">
       <span class="nav-logo-text">Archify</span>
       <span class="nav-logo-path">/ start</span>
@@ -189,8 +176,9 @@
       <a class="nav-link" href="guide.html" data-en="Guide" data-zh="场景指南">Guide</a>
       <a class="nav-link" href="gallery.html" data-en="Proof Lab" data-zh="验证作品集">Proof Lab</a>
       <a class="nav-link" href="start.html" aria-current="page" data-en="Start" data-zh="快速上手">Start</a>
-      <a class="nav-link" href="https://github.com/tt-a1i/archify">GitHub</a>
+      <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
       <button class="btn-lang" id="language" type="button" aria-label="Switch language">中文</button>
+      <a class="btn btn-primary nav-cta" href="#install" data-en="Install Skill" data-zh="安装技能">Install Skill</a>
     </div>
   </nav>
 
@@ -218,7 +206,7 @@
     </section>
 
     <section class="workbench" aria-label="Archify quick start">
-      <article class="panel">
+      <article class="panel" id="install">
         <div class="panel-kicker"><b>01</b><span data-en="Install the skill" data-zh="安装 Skill">Install the skill</span></div>
         <h2 data-en="Keep the tool local." data-zh="让工具留在本地。">Keep the tool local.</h2>
         <p class="panel-intro" data-en="Choose Cursor, Codex, Claude Code, or OpenCode. The switcher gives each one the same checked Skill and zero-dependency renderers—no vendor-specific fork." data-zh="选择 Cursor、Codex、Claude Code 或 OpenCode。切换器为每个 Agent 提供同一份经过检查的 Skill 与零依赖渲染器，不维护厂商专属分叉。">Choose Cursor, Codex, Claude Code, or OpenCode. The switcher gives each one the same checked Skill and zero-dependency renderers—no vendor-specific fork.</p>
@@ -269,6 +257,7 @@
   </main>
 
   <script id="start-data" type="application/json">[[START_JSON]]</script>
+  <script src="assets/site-language.js"></script>
   <script>
     (function () {
       'use strict';
@@ -281,14 +270,11 @@
       var params = new URLSearchParams(window.location.search);
       var requestedType = params.get('type');
       var requestedAgent = params.get('agent');
-      var requestedLanguage = params.get('lang');
       var requestedSource = params.get('source');
       var type = KNOWN_TYPES.has(requestedType) ? requestedType : 'architecture';
       var agent = KNOWN_AGENTS.has(requestedAgent) ? requestedAgent : 'codex';
       var source = KNOWN_SOURCES.has(requestedSource) ? requestedSource : 'direct';
-      var language = requestedLanguage === 'zh' || requestedLanguage === 'en'
-        ? requestedLanguage
-        : ((navigator.languages && navigator.languages[0]) || navigator.language || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+      var language = ArchifySiteLanguage.read();
 
       var title = document.getElementById('recipe-title');
       var question = document.getElementById('recipe-question');
@@ -316,12 +302,12 @@
       }
 
       function updateUrl() {
-        var next = new URLSearchParams(window.location.search);
-        next.set('type', type);
-        next.set('agent', agent);
-        next.set('lang', language);
-        next.set('source', source);
-        history.replaceState(null, '', window.location.pathname + '?' + next.toString());
+        var next = new URL(window.location.href);
+        next.searchParams.set('type', type);
+        next.searchParams.set('agent', agent);
+        next.searchParams.delete('lang');
+        next.searchParams.set('source', source);
+        history.replaceState(null, '', next.pathname + next.search + next.hash);
       }
 
       function recordStep(step) {
@@ -352,6 +338,7 @@
       };
 
       function render() {
+        language = ArchifySiteLanguage.write(language);
         var recipe = DATA[type];
         var copy = recipe[language];
         updateStaticCopy();

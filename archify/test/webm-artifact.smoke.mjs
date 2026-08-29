@@ -1011,6 +1011,7 @@ try {
         function stableLiveSnapshot() {
           var clone = svg.cloneNode(true);
           clone.style.removeProperty('transform');
+          clone.style.removeProperty('clip-path');
           clone.removeAttribute('data-view-scale');
           Array.from(clone.querySelectorAll('[data-legend-bridge-runtime]')).forEach(function (element) { element.remove(); });
           return clone.outerHTML;
@@ -1514,6 +1515,7 @@ try {
         function stableLiveSnapshot() {
           var clone = svg.cloneNode(true);
           clone.style.removeProperty('transform');
+          clone.style.removeProperty('clip-path');
           clone.removeAttribute('data-view-scale');
           Array.from(clone.querySelectorAll('[data-legend-bridge-runtime]')).forEach(function (element) { element.remove(); });
           return clone.outerHTML;

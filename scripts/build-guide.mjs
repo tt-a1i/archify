@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { publicGuideData } from '../archify/recipes/scenarios.mjs';
+import { copySiteAssets } from './copy-site-assets.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -32,5 +33,6 @@ if (/\[\[[A-Z0-9_]+\]\]/.test(output)) {
 }
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+copySiteAssets(outputPath);
 fs.writeFileSync(outputPath, output);
 console.log(`Built ${outputPath} with ${publicGuideData().length} scenario recipes.`);

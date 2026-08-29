@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SCENARIO_RECIPES } from '../archify/recipes/scenarios.mjs';
+import { copySiteAssets } from './copy-site-assets.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -54,5 +55,6 @@ if (/\[\[[A-Z0-9_]+\]\]/.test(output)) {
 }
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+copySiteAssets(outputPath);
 fs.writeFileSync(outputPath, output);
 console.log(`Built ${outputPath} with ${Object.keys(startData).length} bounded starts.`);
