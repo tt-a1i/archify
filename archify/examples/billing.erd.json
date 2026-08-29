@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "title": "Billing Data Model",
+    "subtitle": "Users, orders, products, and payments",
+    "locale": "en",
+    "visual_preset": "classic",
+    "quality_profile": "showcase",
+    "viewBox": [1140, 600]
+  },
+  "entities": [
+    {
+      "id": "users",
+      "label": "users",
+      "kind": "transactional",
+      "pos": [40, 220],
+      "size": [190, 104],
+      "attributes": [
+        { "name": "id", "role": "primary" },
+        { "name": "email", "optional": false },
+        { "name": "display_name" }
+      ]
+    },
+    {
+      "id": "orders",
+      "label": "orders",
+      "kind": "transactional",
+      "pos": [320, 120],
+      "size": [190, 122],
+      "attributes": [
+        { "name": "id", "role": "primary" },
+        { "name": "user_id", "role": "foreign", "references": "users.id" },
+        { "name": "status" },
+        { "name": "total_cents" }
+      ]
+    },
+    {
+      "id": "products",
+      "label": "products",
+      "kind": "reference",
+      "pos": [320, 360],
+      "size": [190, 104],
+      "attributes": [
+        { "name": "id", "role": "primary" },
+        { "name": "sku" },
+        { "name": "unit_price_cents" }
+      ]
+    },
+    {
+      "id": "order_items",
+      "label": "order_items",
+      "kind": "junction",
+      "pos": [620, 230],
+      "size": [200, 140],
+      "attributes": [
+        { "name": "id", "role": "primary" },
+        { "name": "order_id", "role": "foreign", "references": "orders.id" },
+        { "name": "product_id", "role": "foreign", "references": "products.id" },
+        { "name": "quantity" }
+      ]
+    },
+    {
+      "id": "payments",
+      "label": "payments",
+      "kind": "transactional",
+      "pos": [920, 120],
+      "size": [190, 104],
+      "attributes": [
+        { "name": "id", "role": "primary" },
+        { "name": "order_id", "role": "foreign", "references": "orders.id" },
+        { "name": "amount_cents" }
+      ]
+    },
+    {
+      "id": "audit_events",
+      "label": "audit_events",
+      "kind": "event",
+      "pos": [620, 30],
+      "size": [200, 104],
+      "attributes": [
+        { "name": "id", "role": "primary" },
+        { "name": "order_id", "role": "foreign", "references": "orders.id" },
+        { "name": "kind" }
+      ]
+    },
+    {
+      "id": "payment_gateway",
+      "label": "payment_gateway",
+      "kind": "external",
+      "pos": [920, 360],
+      "size": [190, 86],
+      "attributes": [
+        { "name": "gateway_id" },
+        { "name": "name" }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "users_orders",
+      "from": "users",
+      "to": "orders",
+      "label": "places",
+      "cardinality": { "from": "1", "to": "0..N" }
+    },
+    {
+      "id": "orders_items",
+      "from": "orders",
+      "to": "order_items",
+      "label": "has lines",
+      "cardinality": { "from": "1", "to": "0..N" }
+    },
+    {
+      "id": "products_items",
+      "from": "products",
+      "to": "order_items",
+      "label": "listed in",
+      "cardinality": { "from": "1", "to": "0..N" }
+    },
+    {
+      "id": "orders_payments",
+      "from": "orders",
+      "to": "payments",
+      "label": "paid by",
+      "enforced_by": "payments.order_id",
+      "cardinality": { "from": "1", "to": "0..N" }
+    },
+    {
+      "id": "payments_gateway",
+      "from": "payments",
+      "to": "payment_gateway",
+      "label": "via",
+      "cardinality": { "from": "0..N", "to": "1" }
+    },
+    {
+      "id": "orders_audit",
+      "from": "audit_events",
+      "to": "orders",
+      "label": "records",
+      "cardinality": { "from": "0..N", "to": "1" }
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Primary keys",
+      "items": ["Every entity declares exactly one primary key attribute."]
+    },
+    {
+      "dot": "violet",
+      "title": "Foreign keys",
+      "items": ["Foreign-key attributes reference an existing entity.attribute pair."]
+    }
+  ]
+}
