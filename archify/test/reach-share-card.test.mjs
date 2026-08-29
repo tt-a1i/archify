@@ -129,7 +129,7 @@ test('Skill, product docs, and READMEs keep the optional truthful boundary expli
   assert.match(viewer, /authored reachability/i);
   assert.match(viewer, /download-only/i);
 
-  for (const readme of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const readme of ['README.md', 'README_EN.md', 'README_ZH.md', 'README_JA.md']) {
     const text = fs.readFileSync(path.join(repoRoot, readme), 'utf8');
     assert.match(text, /Reach Share Card/, readme);
     assert.match(text, /docs\/assets\/mco-runtime-reach-share-card\.png/, readme);

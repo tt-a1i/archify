@@ -47,16 +47,18 @@ test('DSH documentation identifies the published release and pinned candidate sn
   assert.match(integration, /working-tree edits are not package inputs/);
 });
 
-test('English and Chinese docs cover install, invoke, uninstall, community wording, and Produced Files', () => {
+test('English, Chinese, and Japanese docs cover install, invoke, uninstall, community wording, and Produced Files', () => {
   const englishRoot = read('README.md');
   const chineseRoot = read('README_ZH.md');
+  const japaneseRoot = read('README_JA.md');
   const integration = read('integrations/deepseek-harness/README.md');
   const english = [englishRoot, integration].join('\n');
   const chinese = [chineseRoot, integration].join('\n');
+  const japanese = [japaneseRoot, integration].join('\n');
   const publishedInstall = `dsh plugin --profile web add @tt-a1i/archify-dsh@${published.adapterVersion}`;
   const candidateInstall = `dsh plugin --profile web add @tt-a1i/archify-dsh@${candidate.adapterVersion}`;
 
-  for (const source of [english, chinese, englishRoot, chineseRoot]) {
+  for (const source of [english, chinese, japanese, englishRoot, chineseRoot, japaneseRoot]) {
     assert.ok(source.includes(publishedInstall));
     assert.ok(!source.includes(candidateInstall));
     assert.ok(source.includes(`@deepseek-ai/dsh@${published.dshVersion}`));
@@ -81,15 +83,25 @@ test('English and Chinese docs cover install, invoke, uninstall, community wordi
   assert.match(chinese, /Produced Files/);
   assert.match(chinese, /精确工作区路径/);
   assert.match(chinese, /遥测/);
+
+  assert.match(japanese, /コミュニティ統合/);
+  assert.match(japanese, /開発者プレビュー/);
+  assert.match(japanese, /DeepSeek 公式製品ではなく/);
+  assert.match(japanese, /Produced Files/);
+  assert.match(japanese, /正確なワークスペースパス/);
+  assert.match(japanese, /テレメトリ/);
 });
 
 test('Skills CLI, Cursor, Codex, Claude Code, OpenCode, and Raven remain the default main path', () => {
   const english = read('README.md');
   const chinese = read('README_ZH.md');
+  const japanese = read('README_JA.md');
   assert.match(english, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
   assert.match(chinese, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
+  assert.match(japanese, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
   assert.match(english, /## Quick start/);
   assert.match(chinese, /## 快速开始/);
+  assert.match(japanese, /## クイックスタート/);
   const dshEnglishIndex = english.indexOf('DeepSeek Harness');
   const quickStartIndex = english.indexOf('## Quick start');
   assert.ok(dshEnglishIndex > quickStartIndex, 'DSH docs must not precede the default quick start');

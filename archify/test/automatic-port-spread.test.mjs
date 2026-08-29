@@ -373,4 +373,5 @@ test('skill and READMEs describe automatic port spread as bounded default behavi
     assert.match(fs.readFileSync(path.join(repoRoot, file), 'utf8'), /shared automatic endpoints spread deterministically/);
   }
   assert.match(fs.readFileSync(path.join(repoRoot, 'README_ZH.md'), 'utf8'), /共享的自动端点会确定性展开/);
+  assert.match(fs.readFileSync(path.join(repoRoot, 'README_JA.md'), 'utf8'), /共有される自動接続点は決定論的に分散/);
 });

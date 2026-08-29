@@ -115,6 +115,8 @@ npx skills use tt-a1i/archify@archify --agent codex
 
 [エージェント切り替え](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)は `cursor`、`codex`、`claude-code`、`opencode` に対応しています。Raven に手動 ZIP でインストールする場合は、[`archify.zip`](archify.zip) を `~/.raven/workspace/skills` に展開してください。`~/.raven/workspace/skills/archify` が作成されます。Raven は切り替え対象には含まれません。
 
+Archify は固定の安定版マニフェストを GET して任意の更新リマインダーを表示することがありますが、更新をダウンロードしたりインストールしたりすることはありません。チェックに成功すると次回まで約 72 時間（±20%）待機し、失敗した場合はアクティブに使用していれば 6 時間後、その後は 24 時間後に再試行します。サーバーが受け取るのは通常の HTTP メタデータ（IP と時刻）だけで、バージョン、Agent、プロジェクトデータ、プロンプト、アカウント／デバイス ID、ETag は送信されません。更新するかどうか、いつ更新するかは常にあなたが決めます。`ARCHIFY_UPDATE_CHECK_DISABLED=1` を設定すると、ネットワーク通信とリマインダー状態の書き込みを無効化できます。
+
 ### 2. 範囲を絞ったビューを 1 つ依頼する
 
 ```text
@@ -144,9 +146,9 @@ Redis session lookup -> PostgreSQL fallback. Keep the cache-miss path secondary.
 | **Data Flow** | パイプライン、リネージ、PII、コンシューマー | ソース、変換、ストア、境界 |
 | **Lifecycle** | 状態、リトライ、待機、終端結果 | 状態、イベント、リトライおよびキャンセル経路 |
 
-本番デプロイのレビューでは、Architecture で `deployment-ownership` エンジニアリングプロファイルを任意で有効にできます。オーナー、単一リージョン配置、データベースのプライベートスコープ、名前付きの境界越えが欠けている場合は fail-closed で失敗します。暗黙的に有効化されることはなく、検証対象はライブのインフラではなく記述された事実です。[検証済みのデプロイ実証](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership)を参照してください。
+Architecture の任意プロファイル `deployment-ownership` は、記述されたオーナー、リージョン配置、データベースのプライベートスコープ、名前付きの境界越えが欠けている場合に fail-closed で失敗します。暗黙的に有効化されることはなく、ライブのインフラを検査することもありません。[検証済みのデプロイ実証](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership)を参照してください。
 
-設計レビューや PR レビューでは、Architecture Delta が検証済みの Before / Delta / After スナップショットを機械可読なレシート付きで比較します。記述された特定の変更を選ぶことも、有限の Review を 1 つ再生することもできます。ビューア専用であり、影響度・リスク・マージ安全性を推測することはありません。
+設計レビューや PR レビューでは、Architecture Delta が検証済みの Before / Delta / After スナップショットを機械可読なレシート付きで比較します。記述された変更を選ぶか、有限でビューア専用の Review を 1 つ再生してください。影響度・リスク・マージ安全性を推測することはありません。
 
 `node archify/bin/archify.mjs compare architecture base.json head.json architecture-delta.html --json`
 
@@ -212,11 +214,11 @@ node bin/archify.mjs preview workflow examples/agent-tool-call.workflow.json /tm
 node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow.html --quality showcase --open --json
 ```
 
-`preview` は既定で動くバックグラウンドサービスではなく、明示的に使うデスクトップ執筆モードです。`127.0.0.1` のランダムポートにのみバインドし、指定した 1 つの JSON ファイルを監視し、失敗時も直前の検証済み出力を保持し、Ctrl-C で停止します。テスト時や、表示されたローカル URL を自分で開きたい場合は `--no-open` を付けてください。生成される HTML にランタイムは一切追加されません。
+`preview` はループバック限定の明示的なデスクトップモードです。`127.0.0.1` のランダムポートで 1 つの JSON ファイルを監視し、失敗時も直前の検証済み出力を保持し、Ctrl-C で停止し、生成 HTML にランタイムを追加しません。テスト時や URL を自分で開きたい場合は `--no-open` を使ってください。
 
-一度きりの対話的なローカル受け渡しには `deliver --open` を使ってください。既定では無効で、検証済み成果物がコミットされたあとにのみ実行され、OS のオープナーが利用できなくても成功したデリバリを失敗に変えることはありません。JSON は stdout に、手動で開くための絶対パスは stderr に出力されます。
+`deliver --open` は、コミット後に一度だけ実行されるオプトインの受け渡しです。オープナーが失敗しても成功は維持され、JSON は stdout に、手動で開くための絶対パスは stderr に出力されます。
 
-失敗時でも、`validate --json` と `deliver --json` はちょうど 1 つの JSON オブジェクトを出力します。`diagnostics[]` を読み、その `supportedFixes` を使って指定された対象だけを変更してください。図全体を書き直したり、Skill が定める 2 回の集中的な修正ラウンドを超えたりしないでください。決定論的な診断は視覚的なレビューとは分離されています。
+失敗時でも、`validate --json` と `deliver --json` は 1 つの JSON オブジェクトを出力します。`diagnostics[]` の各対象について、その `supportedFixes` だけを Skill が定める 2 回の修正ラウンド内で適用してください。視覚的なレビューは引き続き分離されています。
 
 設定:
 
