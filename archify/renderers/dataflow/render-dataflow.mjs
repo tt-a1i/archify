@@ -142,6 +142,10 @@ function validateDataflow() {
       problems.push(`Node "${node.id}" produced non-finite coordinates — check stage, row, width, height, and yOffset are numbers.`);
       continue;
     }
+    if (node.width <= 0 || node.height <= 0) {
+      problems.push(`Node "${node.id}" has invalid size ${node.width}x${node.height} — width and height must be greater than 0.`);
+      continue;
+    }
     if (node.x < 24 || node.x + node.width > viewBox[0] - 24) {
       problems.push(`Node "${node.id}" exceeds the horizontal bounds of the viewBox — reduce node.width or increase meta.viewBox[0].`);
     }
