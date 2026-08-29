@@ -1,5 +1,6 @@
 import {
   escapeHtml as esc,
+  LOCALE_FONT_FALLBACKS,
   localizeTemplate,
   resolveLocale,
   translateMessage,
@@ -123,6 +124,20 @@ const TEMPLATE_PLACEHOLDERS = [
   GUIDED_VIEWS_PLACEHOLDER,
 ];
 
+// Each localized stack ends with the stack it replaces, so a second pass would
+// match inside its own output and nest the Japanese faces again. Skipping a
+// stack that is already localized keeps the rewrite idempotent. Function
+// replacers keep a literal `$&` or `$'` in a font name from being read as a
+// replacement pattern.
+function localizeFontStacks(template, locale) {
+  const fallbacks = LOCALE_FONT_FALLBACKS[locale];
+  if (!fallbacks) return template;
+  return fallbacks.reduce(
+    (html, [stack, localized]) => (html.includes(localized) ? html : html.replaceAll(stack, () => localized)),
+    template,
+  );
+}
+
 export function applyTemplate(template, {
   title,
   subtitle,
@@ -163,7 +178,7 @@ export function applyTemplate(template, {
     ? `<p class="subtitle">${esc(subtitle)}</p>`
     : '';
   const i18nData = `    <script id="archify-i18n-data" type="application/json">${i18nJson}</script>`;
-  const localizedTemplate = localizeTemplate(template, resolvedLocale);
+  const localizedTemplate = localizeFontStacks(localizeTemplate(template, resolvedLocale), resolvedLocale);
   const templateWithI18n = localizedTemplate.includes(I18N_PLACEHOLDER)
     ? localizedTemplate.replace(I18N_PLACEHOLDER, () => i18nData)
     : localizedTemplate.replace(GUIDED_VIEWS_PLACEHOLDER, () => `${i18nData}\n    ${GUIDED_VIEWS_PLACEHOLDER}`);
