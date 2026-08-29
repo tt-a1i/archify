@@ -18,6 +18,7 @@ import {
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   cleanLabelRouteClearanceProblems,
+  cleanLabelCanvasContainmentProblems,
   suggestLabelObstacleFix,
   suggestLabelPairFix,
   anchor,
@@ -298,7 +299,7 @@ function validateLifecycle() {
   for (const rect of labelRects) {
     for (const state of states.values()) {
       if (rectsOverlap(rect, state, -2)) {
-        problems.push(`Label "${rect.label}" overlaps state "${state.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, state, 'state')}`);
+        problems.push(`Label "${rect.label}" overlaps state "${state.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, state, 'state', viewBox)}`);
       }
     }
   }
@@ -314,6 +315,13 @@ function validateLifecycle() {
     labels: labelRects,
     endpointIds: new Set(states.keys()),
     pathFor,
+    diagramType: 'lifecycle',
+    relationCollection: 'transitions',
+    profile: lifecycle.meta?.quality_profile,
+  }));
+  problems.push(...cleanLabelCanvasContainmentProblems({
+    labels: labelRects,
+    viewBox,
     diagramType: 'lifecycle',
     relationCollection: 'transitions',
     profile: lifecycle.meta?.quality_profile,

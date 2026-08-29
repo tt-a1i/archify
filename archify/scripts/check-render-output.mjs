@@ -2,7 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { collectAmbiguousCorridors, collectBorderRuns, collectLabelRouteClearance, collectRouteRhythmIssues, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
+import { collectAmbiguousCorridors, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 import {
   DESKTOP_READABILITY_VIEWPORT,
   DESKTOP_READER_DIAGRAM_WIDTH,
@@ -42,6 +42,7 @@ let composition = {
     containerBorderRuns: 0,
     labelRouteClearanceIssues: 0,
     minLabelRouteClearance: null,
+    labelCanvasOverflowIssues: 0,
     maxBends: 0,
     routesOverSuggestedBends: 0,
     maxStretch: null,
@@ -113,21 +114,31 @@ if (svgMatches.length === 1) {
     routedRelations: arrows.map((arrow) => ({ relation: arrow, relationIndex: arrow.index, points: arrow.routePoints })),
     threshold: labelClearanceThreshold,
   });
+  // The renderers bound their own label rects, but `check` also re-measures an
+  // artifact it did not produce; see collectLabelCanvasOverflow in
+  // shared/geometry.mjs.
+  const labelCanvasOverflow = collectLabelCanvasOverflow({
+    labels: relationshipLabels,
+    viewBox: viewBoxSize(svgAttrs),
+  });
   const crossingIsError = qualityProfile === 'showcase';
   const corridorIsError = qualityProfile === 'showcase';
   const rhythmIsError = qualityProfile === 'showcase';
   const labelClearanceIsError = qualityProfile === 'showcase';
+  const labelContainmentIsError = qualityProfile === 'showcase';
   const desktopReadabilityIsError = qualityProfile === 'showcase';
   const compositionErrors = (qualityGatesEnforced ? containerBorderRuns.length : 0)
     + (crossingIsError ? relationshipCrossings.length : 0)
     + (corridorIsError ? ambiguousCorridors.length : 0)
     + (labelClearanceIsError ? labelRouteClearance.length : 0)
+    + (labelContainmentIsError ? labelCanvasOverflow.length : 0)
     + (rhythmIsError ? routeRhythmIssues.length : 0)
     + (desktopReadabilityIsError && desktopReadabilityIssue ? 1 : 0);
   const compositionWarnings = (qualityGatesEnforced ? 0 : containerBorderRuns.length)
     + (crossingIsError ? 0 : relationshipCrossings.length)
     + (corridorIsError ? 0 : ambiguousCorridors.length)
     + (labelClearanceIsError ? 0 : labelRouteClearance.length)
+    + (labelContainmentIsError ? 0 : labelCanvasOverflow.length)
     + (rhythmIsError ? 0 : routeRhythmIssues.length)
     + (desktopReadabilityIsError || !desktopReadabilityIssue ? 0 : 1);
   composition = {
@@ -143,6 +154,7 @@ if (svgMatches.length === 1) {
       ambiguousCorridors: ambiguousCorridors.length,
       containerBorderRuns: containerBorderRuns.length,
       labelRouteClearanceIssues: labelRouteClearance.length,
+      labelCanvasOverflowIssues: labelCanvasOverflow.length,
       minLabelRouteClearance: labelRouteMeasurements.length
         ? Math.round(Math.min(...labelRouteMeasurements.map((hit) => hit.clearance)) * 10) / 10
         : null,
@@ -176,6 +188,16 @@ if (svgMatches.length === 1) {
         threshold: hit.threshold,
         from: hit.start.map((value) => Math.round(value * 10) / 10),
         to: hit.end.map((value) => Math.round(value * 10) / 10),
+      })),
+      ...labelCanvasOverflow.map((hit) => ({
+        severity: labelContainmentIsError ? 'error' : 'warning',
+        code: 'composition/label-canvas-containment',
+        label: hit.label?.label || hit.relation?.label || '',
+        relationship: relationshipRecord(hit.relation),
+        labelRect: roundedRect(hit.rect),
+        viewBox: hit.viewBox,
+        overflowPx: hit.overflowPx,
+        detail: `[composition/label-canvas-containment] ${qualityProfile} label "${hit.label?.label || hit.relation?.label || ''}" on ${relationshipName(hit.relation)} extends past the ${describeLabelCanvasOverflow(hit)} (label rect ${formatRectDetail(hit.rect)}; viewBox ${hit.viewBox[0]}x${hit.viewBox[1]}) — adjust labelAt, labelDx, labelDy, or labelSegment; otherwise enlarge meta.viewBox.`,
       })),
       ...relationshipCrossings.map((hit) => ({
         severity: crossingIsError ? 'error' : 'warning',
@@ -618,9 +640,17 @@ function textBox(attrs, text) {
   };
 }
 
-function collectDesktopReadability(svgAttrs, fragment) {
+function viewBoxSize(svgAttrs) {
   const viewBox = String(svgAttrs.viewBox || '').trim().split(/[\s,]+/).map(Number);
-  const viewBoxWidth = viewBox.length === 4 ? viewBox[2] : Number.NaN;
+  return viewBox.length === 4 ? [viewBox[2], viewBox[3]] : [Number.NaN, Number.NaN];
+}
+
+function formatRectDetail(rect) {
+  return `[${Math.round(rect.x)}, ${Math.round(rect.y)}, ${Math.round(rect.width)}, ${Math.round(rect.height)}]`;
+}
+
+function collectDesktopReadability(svgAttrs, fragment) {
+  const [viewBoxWidth] = viewBoxSize(svgAttrs);
   if (!Number.isFinite(viewBoxWidth) || viewBoxWidth <= 0) return null;
   const scale = Math.min(1, DESKTOP_READER_DIAGRAM_WIDTH / viewBoxWidth);
   let worst = null;

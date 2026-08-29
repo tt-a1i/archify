@@ -234,6 +234,54 @@ test('render output check: relationship labels cannot hide another shared-source
   }
 });
 
+// `check` also runs against artifacts it did not produce, so a label the SVG
+// canvas clips has to be measurable from the emitted markup alone.
+test('render output check: a relationship label cannot leave the canvas', () => {
+  for (const profile of ['standard', 'showcase']) {
+    const { code, result } = checkHtml(`label-canvas-${profile}`, `
+      <path data-edge-key="0" data-edge-id="approved" data-edge-from="dlq" data-edge-to="replay" data-composition-points="20,60;200,60" d="M 20 60 L 200 60" class="a-default" marker-end="url(#arrowhead)"/>
+      <g data-detail="context" data-edge-key="0" data-edge-id="approved" data-edge-from="dlq" data-edge-to="replay" data-edge-label="approved replay">
+        <rect x="200" y="48" width="60" height="14" rx="3" class="c-mask"/>
+        <text x="230" y="58">approved replay</text>
+      </g>
+    `, profile);
+
+    assert.equal(result.composition.metrics.labelCanvasOverflowIssues, 1);
+    const issue = result.composition.issues.find((item) => item.code === 'composition/label-canvas-containment');
+    assert.equal(issue.label, 'approved replay');
+    assert.deepEqual(issue.labelRect, { x: 200, y: 48, width: 60, height: 14 });
+    assert.deepEqual(issue.viewBox, [240, 160]);
+    assert.deepEqual(issue.overflowPx, { right: 20 });
+    assert.match(issue.detail, /extends past the right edge by 20px/);
+    // The rule owns no named check: it fails the receipt through composition,
+    // exactly like composition/desktop-readability.
+    assert.equal(result.checks.length, 9);
+    assert.ok(result.checks.every((check) => check.ok));
+    if (profile === 'standard') {
+      assert.equal(code, 0);
+      assert.equal(issue.severity, 'warning');
+      assert.deepEqual(result.composition.summary, { errors: 0, warnings: 1 });
+    } else {
+      assert.notEqual(code, 0);
+      assert.equal(issue.severity, 'error');
+      assert.deepEqual(result.composition.summary, { errors: 1, warnings: 0 });
+      assert.equal(result.ok, false);
+    }
+  }
+});
+
+test('render output check: a contained relationship label reports no overflow', () => {
+  const { code, result } = checkHtml('label-canvas-contained', `
+    <path data-edge-key="0" data-edge-id="approved" data-edge-from="dlq" data-edge-to="replay" data-composition-points="20,60;200,60" d="M 20 60 L 200 60" class="a-default" marker-end="url(#arrowhead)"/>
+    <g data-detail="context" data-edge-key="0" data-edge-id="approved" data-edge-from="dlq" data-edge-to="replay" data-edge-label="approved replay">
+      <rect x="170" y="48" width="60" height="14" rx="3" class="c-mask"/>
+      <text x="200" y="58">approved replay</text>
+    </g>
+  `, 'showcase');
+  assert.equal(code, 0);
+  assert.equal(result.composition.metrics.labelCanvasOverflowIssues, 0);
+});
+
 test('render output check: repeated endpoint messages keep their own stable owner identity', () => {
   const { code, result } = checkHtml('sequence-repeated-endpoints', `
     <g data-edge-key="0" data-edge-from="client" data-edge-to="api" data-edge-label="first request">

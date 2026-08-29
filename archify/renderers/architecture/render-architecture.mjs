@@ -22,6 +22,7 @@ import {
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   cleanLabelRouteClearanceProblems,
+  cleanLabelCanvasContainmentProblems,
   suggestLabelObstacleFix,
   suggestComponentSeparation,
   anchor,
@@ -148,16 +149,43 @@ const architectureLegendEntries = resolveLegend(
   new Set([...components.values()].map((component) => component.type)),
 );
 
-function autoViewBoxFor(candidateBoundaries) {
+
+// One source for connection label geometry: the auto canvas has to cover the
+// same rects the containment rule measures, and the layout report has to
+// publish them.
+function connectionLabelRects() {
+  const rects = [];
+  for (const [relationIndex, conn] of asArray(arch.connections).entries()) {
+    if (!conn.label || !components.has(conn.from) || !components.has(conn.to)) continue;
+    const [lx, ly] = labelPoint(conn, pathFor(conn).points);
+    const width = Math.max(30, textUnits(conn.label) * 4.8 + 10);
+    rects.push({
+      relation: conn,
+      relationIndex,
+      label: conn.label,
+      x: lx - width / 2,
+      y: ly - 10,
+      width,
+      height: 14,
+      lx,
+      ly,
+    });
+  }
+  return rects;
+}
+
+function autoViewBoxFor(candidateBoundaries, extraRects = []) {
   const maxX = Math.max(
     0,
     ...[...components.values()].map((component) => component.x + component.width),
     ...candidateBoundaries.map((boundary) => boundary.x + boundary.width),
+    ...extraRects.map((rect) => rect.x + rect.width),
   );
   const maxY = Math.max(
     0,
     ...[...components.values()].map((component) => component.y + component.height),
     ...candidateBoundaries.map((boundary) => boundary.y + boundary.height),
+    ...extraRects.map((rect) => rect.y + rect.height),
   );
   let width = Math.ceil(maxX + layout.margin);
   let footprint = legendFootprint(architectureLegendEntries, {
@@ -330,7 +358,7 @@ function componentContext(component) {
 }
 
 // ---- Auto viewBox: fit all geometry + the measured resolved legend ----------
-const viewBox = arch.meta?.viewBox || autoViewBoxFor(boundaries);
+let viewBox = arch.meta?.viewBox || autoViewBoxFor(boundaries);
 const legendY = () => viewBox[1] - 16;
 
 // ---- Validation: mechanical correctness, never layout taste -----------------
@@ -564,17 +592,11 @@ function validateArchitecture() {
   }));
 
   // Connection labels must not land on top of components.
-  const labelRects = [];
-  for (const [connectionIndex, conn] of asArray(arch.connections).entries()) {
-    if (!conn.label || !components.has(conn.from) || !components.has(conn.to)) continue;
-    const [lx, ly] = labelPoint(conn, pathFor(conn).points);
-    const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
-    labelRects.push({ relation: conn, relationIndex: connectionIndex, label: conn.label, x: lx - w / 2, y: ly - 10, width: w, height: 14, lx, ly });
-  }
+  const labelRects = connectionLabelRects();
   for (const rect of labelRects) {
     for (const c of components.values()) {
       if (rectsOverlap(rect, c, -2)) {
-        problems.push(`Label "${rect.label}" overlaps component "${c.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, c)}`);
+        problems.push(`Label "${rect.label}" overlaps component "${c.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, c, 'component', viewBox)}`);
       }
     }
     if (enforcesBoundaryTitleComposition) {
@@ -595,6 +617,16 @@ function validateArchitecture() {
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
   }));
+  // See collectLabelCanvasOverflow in shared/geometry.mjs. An auto canvas now
+  // covers these rects, so this reports authored viewBoxes and the origin side,
+  // which growth cannot reach.
+  problems.push(...cleanLabelCanvasContainmentProblems({
+    labels: labelRects,
+    viewBox,
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: arch.meta?.quality_profile,
+  }));
 
   if (problems.length) {
     throwDiagnosticProblems('Architecture layout validation failed', problems, {
@@ -604,20 +636,14 @@ function validateArchitecture() {
 }
 
 function buildLayoutReport() {
-  const labels = [];
-  for (const conn of asArray(arch.connections)) {
-    if (!conn.label || !components.has(conn.from) || !components.has(conn.to)) continue;
-    const [lx, ly] = labelPoint(conn, pathFor(conn).points);
-    const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
-    labels.push({
-      text: conn.label,
-      x: Math.round(lx - w / 2),
-      y: Math.round(ly - 10),
-      width: Math.round(w),
-      height: 14,
-      labelAt: [Math.round(lx), Math.round(ly)],
-    });
-  }
+  const labels = connectionLabelRects().map((rect) => ({
+    text: rect.label,
+    x: Math.round(rect.x),
+    y: Math.round(rect.y),
+    width: Math.round(rect.width),
+    height: 14,
+    labelAt: [Math.round(rect.lx), Math.round(rect.ly)],
+  }));
   return {
     ok: true,
     diagram_type: 'architecture',
@@ -1061,6 +1087,13 @@ ${boundaries.map(renderBoundaryLabel).join('\n\n')}
 ${renderLegend()}
       </svg>`;
 }
+
+// Connection labels are diagram content, so an auto canvas that stops at the
+// component/boundary bbox clips them. Routing state only exists once the whole
+// module is initialized, so the auto canvas is grown here rather than inside
+// the boundary-title convergence above. An authored viewBox is never resized:
+// there the containment rule reports the clipping instead.
+if (!arch.meta?.viewBox) viewBox = autoViewBoxFor(boundaries, connectionLabelRects());
 
 validateArchitecture();
 if (layoutJsonMode) {
