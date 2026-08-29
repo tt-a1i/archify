@@ -139,6 +139,14 @@ expectFailure('zero component height rejected by schema', 'architecture',
   (d) => { d.components[0].size = [120, 0]; }, '/components/0/size/1');
 expectFailure('negative component width rejected by schema', 'architecture',
   (d) => { d.components[0].size = [-1, 60]; }, '/components/0/size/0');
+expectFailure('zero node width rejected in workflow', 'workflow',
+  (d) => { d.nodes[0].width = 0; }, 'must be >= 32');
+expectFailure('negative node height rejected in workflow', 'workflow',
+  (d) => { d.nodes[0].height = -10; }, 'must be >= 32');
+expectFailure('zero node width rejected in dataflow', 'dataflow',
+  (d) => { d.nodes[0].width = 0; }, 'must be >= 48');
+expectFailure('negative node height rejected in dataflow', 'dataflow',
+  (d) => { d.nodes[0].height = -5; }, 'must be >= 36');
 
 // ---------------------------------------------------------------------------
 console.log('template freshness (architecture example must carry the current template)');
