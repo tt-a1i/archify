@@ -3,3 +3,6 @@
 node_modules/
 .claude/
 .lore/
+
+# Unused generated metadata (Impeccable design tooling no longer used)
+.impeccable/
