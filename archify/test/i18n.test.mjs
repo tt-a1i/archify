@@ -134,7 +134,7 @@ async function loadArtifact(browser, artifactPath) {
 }
 
 test('zh-CN localizes renderer-owned output across all five modes without translating authored content', () => {
-  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN']);
+  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'zh-TW']);
   for (const type of Object.keys(EXAMPLES)) {
     const document = example(type);
     const authoredTitle = document.meta.title;
