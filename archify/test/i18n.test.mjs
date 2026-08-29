@@ -461,3 +461,17 @@ test('zh-TW uses Taiwan terminology rather than mainland equivalents', () => {
     );
   }
 });
+
+// Half-width punctuation next to CJK is the classic conversion artifact, so
+// both Chinese columns must reach for the full-width forms. `?` is exempt: it
+// names a keyboard key inside `viewer.nav.guide.title`, not sentence
+// punctuation, and zh-CN already keeps it half-width there.
+test('Chinese catalogs use full-width sentence punctuation', () => {
+  for (const locale of ['zh-CN', 'zh-TW']) {
+    for (const key of catalogKeys()) {
+      const message = translateMessage(locale, key);
+      const found = [...message].filter((character) => ',;:'.includes(character));
+      assert.deepEqual(found, [], `${locale} ${key}: ${message}`);
+    }
+  }
+});
