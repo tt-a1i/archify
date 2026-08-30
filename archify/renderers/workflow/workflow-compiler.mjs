@@ -46,6 +46,8 @@ import {
   defaultFromSide,
   defaultToSide,
   chosenSide,
+  markerEndpointSetback,
+  markerSafeRoutePoints,
   normalizeRoutePoints,
   routeHonorsEndpointSides,
   polylinePath,
@@ -1645,15 +1647,6 @@ function validateReadablePairwisePinConflicts() {
       : null
   )).filter(Boolean);
 
-  const labelRouteHit = collectLabelRouteClearance({
-    labels,
-    routedRelations,
-    threshold: 4,
-  }).find((hit) => (
-    Array.isArray(hit.labelRelation?.labelAt) || hasAuthoredRouteAssertions(hit.otherRelation)
-  ));
-  if (labelRouteHit) throwReadableLabelRoutePinConflict(labelRouteHit);
-
   for (let leftIndex = 0; leftIndex < labels.length; leftIndex += 1) {
     for (let rightIndex = leftIndex + 1; rightIndex < labels.length; rightIndex += 1) {
       const left = labels[leftIndex];
@@ -1662,6 +1655,15 @@ function validateReadablePairwisePinConflicts() {
       throwReadableLabelLabelPinConflict(left, right);
     }
   }
+
+  const labelRouteHit = collectLabelRouteClearance({
+    labels,
+    routedRelations,
+    threshold: 4,
+  }).find((hit) => (
+    Array.isArray(hit.labelRelation?.labelAt) || hasAuthoredRouteAssertions(hit.otherRelation)
+  ));
+  if (labelRouteHit) throwReadableLabelRoutePinConflict(labelRouteHit);
 
   const requestedProfile = workflow.meta?.quality_profile;
   if (requestedProfile !== 'showcase') return;
@@ -2367,6 +2369,13 @@ function validateWorkflow() {
     relationCollection: 'edges',
     fromSideFor: (edge) => edgeSides(edge).fromSide,
     toSideFor: (edge) => edgeSides(edge).toSide,
+    checkResolvedRouteSides: workflow.schema_version === 2,
+    endpointFor: (id) => nodes.get(id),
+    markerSetbackFor: (edge) => workflow.schema_version === 2
+      ? markerEndpointSetback({
+        strokeWidth: edge.width || (edge.variant === 'emphasis' ? 1.8 : 1.4),
+      })
+      : 0,
     routeHint: 'keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross node borders perpendicularly',
   }));
   problems.push(...cleanFlowProblems({
@@ -3939,7 +3948,11 @@ function pathFor(edge) {
         fromSide: planned.fromSide,
         toSide: planned.toSide,
       });
-      const routed = { d: polylinePath(planned.points), points: planned.points };
+      const strokeWidth = edge.width || (edge.variant === 'emphasis' ? 1.8 : 1.4);
+      const routed = {
+        d: polylinePath(markerSafeRoutePoints(planned.points, { strokeWidth })),
+        points: planned.points,
+      };
       pathCache.set(edge, routed);
       return routed;
     }
@@ -3963,7 +3976,11 @@ function pathFor(edge) {
       fromSide: planned.fromSide,
       toSide: planned.toSide,
     });
-    const routed = { d: polylinePath(planned.points), points: planned.points };
+    const strokeWidth = edge.width || (edge.variant === 'emphasis' ? 1.8 : 1.4);
+    const routed = {
+      d: polylinePath(markerSafeRoutePoints(planned.points, { strokeWidth })),
+      points: planned.points,
+    };
     pathCache.set(edge, routed);
     return routed;
   }
@@ -3976,7 +3993,11 @@ function pathFor(edge) {
   const points = workflow.schema_version === 2 && !hasAbsoluteRoutePins
     ? normalizeRoutePoints(authoredPoints)
     : authoredPoints;
-  const routed = { d: polylinePath(points), points };
+  const strokeWidth = edge.width || (edge.variant === 'emphasis' ? 1.8 : 1.4);
+  const paintedPoints = workflow.schema_version === 2
+    ? markerSafeRoutePoints(points, { strokeWidth })
+    : points;
+  const routed = { d: polylinePath(paintedPoints), points };
   pathCache.set(edge, routed);
   return routed;
 }

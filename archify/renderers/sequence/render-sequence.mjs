@@ -2,7 +2,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
+import {
+  componentBox,
+  connectionPath,
+  emitResolvedLayoutReport,
+  relationshipLabelBox,
+  resolvedLayoutReport,
+} from '../shared/layout-report.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { relationshipTextContainmentIssues } from '../shared/viewbox-containment.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, routePointsValue, asArray, isFinitePoint } from '../shared/geometry.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
@@ -15,10 +23,13 @@ const participantTextFit = {
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const layoutJsonMode = process.argv.includes('--layout-json');
+const cliArgs = process.argv.filter((arg) => arg !== '--layout-json');
 const { diagram: sequence, template, outPath } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
   diagramType: 'sequence',
-  defaultExample: 'cache-miss-request.sequence.json'
+  defaultExample: 'cache-miss-request.sequence.json',
+  argv: cliArgs,
 });
 
 const viewBox = sequence.meta?.viewBox || [920, 760];
@@ -99,6 +110,8 @@ function messageLabelBox(message, relationIndex = null) {
     y: message.y - 20,
     width,
     height: layout.labelH,
+    lx: geometry.center,
+    ly: message.y,
   };
 }
 
@@ -252,6 +265,12 @@ function validateSequence() {
       }
     }
   }
+  problems.push(...relationshipTextContainmentIssues({
+    labels: labelRects,
+    viewBox,
+    diagramType: 'sequence',
+    relationCollection: 'messages',
+  }));
   problems.push(...cleanLabelRouteClearanceProblems({
     relations: sequence.messages,
     labels: labelRects,
@@ -442,12 +461,69 @@ ${renderLegend()}
       </svg>`;
 }
 
-validateSequence();
-writeDiagram({
-  outPath,
-  template,
-  diagramType: 'sequence',
-  meta: sequence.meta,
-  svg: renderSvg(),
-  cards: sequence.cards,
-});
+function buildLayoutReport(validation) {
+  const relationships = asArray(sequence.messages)
+    .map((message, messageIndex) => ({ message, messageIndex, geometry: messageGeometry(message) }))
+    .filter(({ geometry }) => geometry)
+    .map(({ message, messageIndex, geometry }) => connectionPath(
+      message,
+      { points: [[geometry.start, message.y], [geometry.end, message.y]] },
+      [geometry.center, message.y - 10],
+      messageIndex,
+    ));
+  const labels = asArray(sequence.messages)
+    .map((message, messageIndex) => ({
+      message,
+      messageIndex,
+      box: messageLabelBox(message, messageIndex),
+      geometry: messageGeometry(message),
+    }))
+    .filter(({ box, geometry }) => box && geometry)
+    .map(({ message, messageIndex, box, geometry }) => relationshipLabelBox({
+      relation: message,
+      relationIndex: messageIndex,
+      x: box.x,
+      y: box.y,
+      width: box.width,
+      height: box.height,
+      lx: geometry.center,
+      ly: message.y - 10,
+    }));
+  return resolvedLayoutReport({
+    type: 'sequence',
+    viewBox,
+    validation,
+    entityKey: 'participants',
+    entities: [...participants.values()].map(componentBox),
+    relationships,
+    labels,
+    extras: {
+      segments: compositionFrames,
+      activations: asArray(sequence.activations).flatMap((activation) => {
+        const participant = participants.get(activation.participant);
+        if (!participant) return [];
+        return [{
+          participant: activation.participant,
+          x: participant.cx - 5,
+          y: activation.from,
+          width: 10,
+          height: activation.to - activation.from,
+        }];
+      }),
+    },
+  });
+}
+
+if (layoutJsonMode) {
+  emitResolvedLayoutReport({ validate: validateSequence, build: buildLayoutReport });
+} else {
+  validateSequence();
+  writeDiagram({
+    outPath,
+    template,
+    diagramType: 'sequence',
+    meta: sequence.meta,
+    svg: renderSvg(),
+    cards: sequence.cards,
+  });
+}

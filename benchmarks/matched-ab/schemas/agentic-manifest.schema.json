@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://archify.dev/schemas/matched-ab/agentic-manifest.v1.json",
+  "title": "Archify observed agentic A/B run manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "benchmarkId",
+    "runId",
+    "variant",
+    "executionMode",
+    "fixedInputs"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "archify.agentic-ab.manifest.v1" },
+    "benchmarkId": { "type": "string", "minLength": 1 },
+    "runId": { "type": "string", "minLength": 1 },
+    "variant": { "enum": ["A", "B"] },
+    "executionMode": { "const": "observed-agent-run" },
+    "fixedInputs": { "$ref": "#/$defs/fixedInputs" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "fixedInputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projectRevision",
+        "archifyRevision",
+        "skillSha256",
+        "promptSha256",
+        "configSha256",
+        "runtimeSha256",
+        "model",
+        "reasoningEffort"
+      ],
+      "properties": {
+        "projectRevision": { "type": "string", "minLength": 1 },
+        "archifyRevision": { "type": "string", "minLength": 1 },
+        "skillSha256": { "$ref": "#/$defs/digest" },
+        "promptSha256": { "$ref": "#/$defs/digest" },
+        "configSha256": { "$ref": "#/$defs/digest" },
+        "runtimeSha256": { "$ref": "#/$defs/digest" },
+        "model": { "type": "string", "minLength": 1 },
+        "reasoningEffort": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

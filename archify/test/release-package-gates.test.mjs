@@ -219,6 +219,116 @@ test('package smoke rejects every dependency or repository-only artifact', () =>
   }
 });
 
+test('package smoke fails closed when a shipped authoring runtime is omitted', () => {
+  const packageSmoke = path.join(repoRoot, 'scripts', 'package-smoke.mjs');
+  const requiredRuntimes = [
+    path.join('authoring', 'quality-contract.mjs'),
+    path.join('authoring', 'authoring-run.mjs'),
+    path.join('authoring', 'content-quality.mjs'),
+    path.join('authoring', 'semantic-requirements.mjs'),
+    path.join('authoring', 'candidate-preflight.mjs'),
+    path.join('authoring', 'repair-plan.mjs'),
+  ];
+
+  for (const missing of requiredRuntimes) {
+    const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-runtime-gate-'));
+    try {
+      fs.mkdirSync(path.join(fixture, 'bin'), { recursive: true });
+      fs.mkdirSync(path.join(fixture, 'authoring'), { recursive: true });
+      fs.writeFileSync(path.join(fixture, 'bin', 'archify.mjs'), '');
+      fs.writeFileSync(path.join(fixture, 'package.json'), '{"name":"archify-fixture"}\n');
+      fs.writeFileSync(
+        path.join(fixture, 'SKILL.md'),
+        'node bin/archify.mjs authoring-kit <type> --json --context-json --expect-contract aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n',
+      );
+      for (const runtime of requiredRuntimes.filter((relative) => relative !== missing)) {
+        fs.writeFileSync(path.join(fixture, runtime), 'export const fixture = true;\n');
+      }
+
+      const result = spawnSync(process.execPath, [packageSmoke, fixture], { encoding: 'utf8' });
+      assert.notEqual(result.status, 0, `${missing} omission must fail package smoke`);
+      assert.match(
+        `${result.stdout}\n${result.stderr}`,
+        new RegExp(`packaged authoring runtime is missing: ${missing.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`),
+      );
+    } finally {
+      fs.rmSync(fixture, { recursive: true, force: true });
+    }
+  }
+});
+
+test('package smoke requires one unambiguous quality-contract digest in packaged SKILL.md', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-contract-gate-'));
+  try {
+    fs.mkdirSync(path.join(fixture, 'bin'), { recursive: true });
+    fs.mkdirSync(path.join(fixture, 'authoring'), { recursive: true });
+    fs.writeFileSync(path.join(fixture, 'bin', 'archify.mjs'), '');
+    fs.writeFileSync(path.join(fixture, 'package.json'), '{"name":"archify-fixture"}\n');
+    fs.writeFileSync(path.join(fixture, 'authoring', 'quality-contract.mjs'), 'export const fixture = true;\n');
+    fs.writeFileSync(path.join(fixture, 'authoring', 'authoring-run.mjs'), 'export const fixture = true;\n');
+    fs.writeFileSync(path.join(fixture, 'authoring', 'content-quality.mjs'), 'export const fixture = true;\n');
+    fs.writeFileSync(path.join(fixture, 'authoring', 'semantic-requirements.mjs'), 'export const fixture = true;\n');
+    fs.writeFileSync(path.join(fixture, 'authoring', 'candidate-preflight.mjs'), 'export const fixture = true;\n');
+    fs.writeFileSync(path.join(fixture, 'authoring', 'repair-plan.mjs'), 'export const fixture = true;\n');
+    fs.writeFileSync(
+      path.join(fixture, 'SKILL.md'),
+      [
+        '--expect-contract aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        '--expect-contract bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        '',
+      ].join('\n'),
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      [path.join(repoRoot, 'scripts', 'package-smoke.mjs'), fixture],
+      { encoding: 'utf8' },
+    );
+    assert.notEqual(result.status, 0, 'ambiguous packaged contract must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /packaged SKILL\.md must contain exactly one --expect-contract <64hex>/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('package smoke validates the complete pinned authoring context in an explicit dependency-free fixture', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-authoring-smoke-'));
+  const sourceRoot = path.join(repoRoot, 'archify');
+  const packageRoot = path.join(fixture, 'archify');
+  const excludedRoots = new Set(['node_modules', 'test', '.hive', '.workbuddy']);
+  const excludedFiles = new Set([
+    'package-lock.json',
+    'scripts/generate-brand-marks.mjs',
+    'scripts/generate-validators.mjs',
+  ]);
+  try {
+    fs.cpSync(sourceRoot, packageRoot, {
+      recursive: true,
+      filter(source) {
+        const relative = path.relative(sourceRoot, source).split(path.sep).join('/');
+        if (!relative) return true;
+        const root = relative.split('/')[0];
+        return !excludedRoots.has(root) && !excludedFiles.has(relative);
+      },
+    });
+    const packagePath = path.join(packageRoot, 'package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+    delete packageJson.scripts;
+    delete packageJson.devDependencies;
+    fs.writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
+
+    const result = spawnSync(
+      process.execPath,
+      [path.join(repoRoot, 'scripts', 'package-smoke.mjs'), packageRoot],
+      { encoding: 'utf8' },
+    );
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    assert.match(result.stdout, /package smoke passed/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
 test('package smoke verifies the embedded notifier identity and local disable switch', () => {
   const source = fs.readFileSync(path.join(repoRoot, 'scripts', 'package-smoke.mjs'), 'utf8');
   assert.match(source, /scripts', 'check-update\.mjs/);

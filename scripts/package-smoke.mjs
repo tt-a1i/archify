@@ -16,10 +16,42 @@ const cli = path.join(skillRoot, 'bin', 'archify.mjs');
 const updateChecker = path.join(skillRoot, 'scripts', 'check-update.mjs');
 const updateContract = path.join(skillRoot, 'scripts', 'update-contract.mjs');
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-smoke-'));
+const authoringTypes = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'];
+const requiredAuthoringRuntimes = [
+  path.join('authoring', 'quality-contract.mjs'),
+  path.join('authoring', 'authoring-run.mjs'),
+  path.join('authoring', 'content-quality.mjs'),
+  path.join('authoring', 'semantic-requirements.mjs'),
+  path.join('authoring', 'candidate-preflight.mjs'),
+  path.join('authoring', 'repair-plan.mjs'),
+];
 
 function requireAbsent(relative) {
   if (fs.existsSync(path.join(skillRoot, relative))) {
     throw new Error(`packaged skill must not contain ${relative}`);
+  }
+}
+
+function requireAuthoringRuntime(relative) {
+  const target = path.join(skillRoot, relative);
+  let stat;
+  try {
+    stat = fs.statSync(target);
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+  }
+  if (!stat?.isFile()) {
+    throw new Error(`packaged authoring runtime is missing: ${relative}`);
+  }
+  return target;
+}
+
+async function importAuthoringRuntime(relative) {
+  const target = requireAuthoringRuntime(relative);
+  try {
+    return await import(`${pathToFileURL(target).href}?package-smoke=${process.pid}`);
+  } catch (error) {
+    throw new Error(`packaged authoring runtime failed to import: ${relative}: ${error.message}`);
   }
 }
 
@@ -59,6 +91,14 @@ try {
   requireAbsent('.hive');
   requireAbsent('.workbuddy');
 
+  for (const runtime of requiredAuthoringRuntimes) requireAuthoringRuntime(runtime);
+  const skill = fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
+  const contractMatches = [...skill.matchAll(/--expect-contract[ \t]+([a-f0-9]{64})(?![a-f0-9])/g)];
+  if (contractMatches.length !== 1) {
+    throw new Error('packaged SKILL.md must contain exactly one --expect-contract <64hex>');
+  }
+  const expectedContract = contractMatches[0][1];
+
   if (!fs.existsSync(updateChecker)) {
     throw new Error(`packaged update checker not found at ${updateChecker}`);
   }
@@ -81,7 +121,6 @@ try {
   if (declaredDependencyField) {
     throw new Error(`packaged skill must not declare dependency metadata: ${declaredDependencyField}`);
   }
-
   const skillRelease = JSON.parse(fs.readFileSync(path.join(skillRoot, 'skill-release.json'), 'utf8'));
   const contract = await import(pathToFileURL(updateContract).href);
   let validatedRelease;
@@ -155,7 +194,30 @@ try {
     throw new Error('packaged update checker did not persist a visible-notice acknowledgement');
   }
 
-  const skill = fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
+  const qualityContractRuntime = await importAuthoringRuntime(
+    path.join('authoring', 'quality-contract.mjs'),
+  );
+  if (qualityContractRuntime.QUALITY_CONTRACT_DIGEST !== expectedContract) {
+    throw new Error(`packaged SKILL.md contract ${expectedContract} does not match the runtime contract ${qualityContractRuntime.QUALITY_CONTRACT_DIGEST || '<missing>'}`);
+  }
+  const authoringRunRuntime = await importAuthoringRuntime(
+    path.join('authoring', 'authoring-run.mjs'),
+  );
+  if (typeof authoringRunRuntime.AuthoringRun !== 'function') {
+    throw new Error('packaged authoring runtime did not export AuthoringRun');
+  }
+  const candidatePreflightRuntime = await importAuthoringRuntime(
+    path.join('authoring', 'candidate-preflight.mjs'),
+  );
+  if (typeof candidatePreflightRuntime.runCandidatePreflightBatch !== 'function') {
+    throw new Error('packaged candidate preflight runtime did not export runCandidatePreflightBatch');
+  }
+  const repairPlanRuntime = await importAuthoringRuntime(
+    path.join('authoring', 'repair-plan.mjs'),
+  );
+  if (typeof repairPlanRuntime.createRepairPlan !== 'function') {
+    throw new Error('packaged repair-plan runtime did not export createRepairPlan');
+  }
   const skillReferences = [...skill.matchAll(
     /`((?:assets|bin|examples|recipes|references|renderers|schemas|scripts)\/[^`\s]+)`/g,
   )]
@@ -182,6 +244,43 @@ try {
   }
   run(['demo', path.join(scratch, 'demo')]);
   run(['examples']);
+
+  for (const type of authoringTypes) {
+    const packet = JSON.parse(run([
+      'authoring-kit',
+      type,
+      '--json',
+      '--context-json',
+      '--expect-contract',
+      expectedContract,
+    ]));
+    const contextFiles = ['schema', 'commonSchema'];
+    const projectOverview = packet.semanticScope?.profiles?.['project-overview']?.[type];
+    if (packet.type !== type || packet.contract?.quality?.sha256 !== expectedContract
+      || !contextFiles.every((name) => (
+        packet.files?.[name]?.document
+        && typeof packet.files[name].document === 'object'
+        && !Array.isArray(packet.files[name].document)
+      ))
+      || packet.files?.example?.omittedFromContext !== true
+      || packet.files?.example?.document !== undefined
+      || packet.shapeExample?.policy !== 'shape-only'
+      || packet.shapeExample?.document?.diagram_type !== type
+      || !/below project-overview density/i.test(packet.shapeExample?.instruction || '')
+      || packet.semanticScope?.defaultProfile !== 'project-overview'
+      || packet.semanticRequirementsTemplate?.document?.schemaVersion !== 2
+      || packet.semanticRequirementsTemplate?.document?.diagramType !== type
+      || packet.semanticRequirementsTemplate?.document?.scopeProfile !== 'project-overview'
+      || !projectOverview
+      || packet.semanticRequirementsTemplate.document.entities?.length
+        !== projectOverview.minimumRequiredEntities
+      || packet.semanticRequirementsTemplate.document.relationships?.length
+        !== projectOverview.minimumRequiredRelationships
+      || JSON.stringify(packet.layoutBudget?.targetPrimaryRange)
+        !== JSON.stringify(projectOverview.targetPrimaryRange)) {
+      throw new Error(`packaged ${type} authoring-kit did not return its complete pinned context`);
+    }
+  }
 
   const fixtures = [
     ['architecture', 'production-deployment.architecture.json'],
@@ -299,6 +398,16 @@ try {
   const failure = JSON.parse(runExpectFailure(['validate', 'workflow', invalidPath, '--json']));
   if (failure.ok || !failure.diagnostics?.some((diagnostic) => diagnostic.code === 'schema/additionalProperties')) {
     throw new Error('packaged skill did not return the expected unknown-field diagnostic');
+  }
+  const batchManifestPath = path.join(scratch, 'validate-batch.json');
+  fs.writeFileSync(batchManifestPath, JSON.stringify({
+    schemaVersion: 1,
+    candidates: [{ id: 'invalid-workflow', type: 'workflow', input: invalidPath }],
+  }));
+  const batchFailure = JSON.parse(runExpectFailure(['validate-batch', batchManifestPath, '--json']));
+  if (batchFailure.command !== 'validate-batch'
+    || batchFailure.candidates?.[0]?.repairPlan?.schemaVersion !== 1) {
+    throw new Error('packaged validate-batch did not execute candidate preflight and repair-plan runtimes');
   }
 
   const tangentEndpoint = {

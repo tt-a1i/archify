@@ -50,6 +50,62 @@ test('repair receipt: malformed JSON is one clean machine object without a Node 
   assert.doesNotMatch(result.stdout, /\n\s+at\s|file:\/\//);
 });
 
+test('repair receipt: persistent history requests structural reflow before bounded stop', () => {
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/agent-tool-call.workflow.json'), 'utf8'));
+  source.nodes[0].unexpected = true;
+  const input = writeFixture('history-schema.workflow.json', source);
+  const history = path.join(tmp, 'history-schema.workflow.repair-history.json');
+  const args = ['validate', 'workflow', input, '--repair-history', history, '--json'];
+
+  const first = run(args);
+  const second = run(args);
+  const third = run(args);
+
+  assert.equal(first.status, 1, first.stderr || first.stdout);
+  assert.equal(second.status, 1, second.stderr || second.stdout);
+  assert.equal(third.status, 1, third.stderr || third.stdout);
+  assert.equal(receipt(first).repairPlan.status, 'repair-required');
+  assert.equal(receipt(second).repairPlan.status, 'repair-required');
+  assert.equal(receipt(third).repairPlan.status, 'structural-reflow-required');
+  const persisted = JSON.parse(fs.readFileSync(history, 'utf8'));
+  assert.equal(persisted.schemaVersion, 1);
+  assert.equal(persisted.type, 'workflow');
+  assert.equal(persisted.input, input);
+  assert.equal(persisted.attempts.length, 3);
+});
+
+test('repair receipt: structural reflow mode is persisted for later stop decisions', () => {
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/agent-tool-call.workflow.json'), 'utf8'));
+  source.nodes[0].unexpected = true;
+  const input = writeFixture('history-reflow.workflow.json', source);
+  const history = path.join(tmp, 'history-reflow.workflow.repair-history.json');
+  const focused = ['validate', 'workflow', input, '--repair-history', history, '--json'];
+  const reflow = [...focused.slice(0, -1), '--repair-mode', 'structural-reflow', '--json'];
+
+  run(focused);
+  run(focused);
+  run(focused);
+  const result = run(reflow);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  const persisted = JSON.parse(fs.readFileSync(history, 'utf8'));
+  assert.equal(persisted.attempts.at(-1).repairMode, 'structural-reflow');
+});
+
+test('repair receipt: history can never overwrite or alias its candidate input', () => {
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/agent-tool-call.workflow.json'), 'utf8'));
+  source.nodes[0].unexpected = true;
+  const input = writeFixture('history-alias.workflow.json', source);
+  const before = fs.readFileSync(input, 'utf8');
+
+  const result = run(['validate', 'workflow', input, '--repair-history', input, '--json']);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.equal(fs.readFileSync(input, 'utf8'), before);
+  assert.equal(receipt(result).repairPlan.status, 'unavailable');
+  assert.match(receipt(result).repairPlan.reason, /must not replace or alias/i);
+});
+
 test('repair receipt: all five modes identify schema subjects and supported fixes', () => {
   const cases = {
     architecture: ['web-app.architecture.json', 'components'],
@@ -176,6 +232,58 @@ test('repair receipt: public validate reports borderline desktop readability wit
   assert.deepEqual(repair.subject, { check: 'composition' });
   assert.ok(repair.evidence.projectedFontPx < repair.evidence.minimumProjectedFontPx);
   assert.ok(repair.supportedFixes.some((fix) => fix.includes('reduce the viewBox width')));
+});
+
+test('repair receipt: lifecycle bounds expose required height and the exact yOffset interval', () => {
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/agent-run.lifecycle.json'), 'utf8'));
+  source.meta.viewBox[1] = 566;
+  const input = writeFixture('lifecycle-resolved-bounds.lifecycle.json', source);
+  const result = run(['validate', 'lifecycle', input, '--json']);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.equal(result.stderr, '');
+  const failure = receipt(result);
+  const repair = failure.diagnostics.find(
+    (entry) => entry.code === 'layout/lifecycle-state-vertical-bounds'
+      && entry.subject.id === 'cancelled',
+  );
+  assert.ok(repair, JSON.stringify(failure.diagnostics));
+  assert.deepEqual(repair.subject, {
+    diagramType: 'lifecycle',
+    path: '/states/8/yOffset',
+    id: 'cancelled',
+  });
+  assert.equal(repair.evidence.requiredViewBoxHeight, 630);
+  assert.deepEqual(repair.evidence.allowedYOffset, { min: -386, max: -64 });
+  assert.deepEqual(repair.evidence.allowedY, { min: 64, max: 386 });
+  assert.ok(repair.supportedFixes.some((fix) => fix.includes('meta.viewBox[1] to at least 630')));
+  assert.ok(repair.supportedFixes.some((fix) => fix.includes('yOffset between -386 and -64')));
+});
+
+test('repair receipt: architecture labels outside the viewBox identify one exact labelAt control', () => {
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+  source.connections[0].labelAt = [1078, 80];
+  const input = writeFixture('label-containment.architecture.json', source);
+  const result = run(['validate', 'architecture', input, '--json']);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.equal(result.stderr, '');
+  const failure = receipt(result);
+  const repair = failure.diagnostics.find(
+    (entry) => entry.code === 'composition/relationship-label-containment',
+  );
+  assert.ok(repair, JSON.stringify(failure.diagnostics));
+  assert.deepEqual(repair.subject, {
+    diagramType: 'architecture',
+    path: '/connections/0/labelAt',
+    id: 'users-to-cdn',
+  });
+  assert.equal(repair.evidence.viewBox.width, 1080);
+  assert.ok(repair.evidence.overflow.right > 0);
+  assert.ok(repair.evidence.allowedLabelAt.maxX < 1078);
+  assert.deepEqual(repair.supportedFixes, [
+    `set /connections/0/labelAt inside x ${repair.evidence.allowedLabelAt.minX}..${repair.evidence.allowedLabelAt.maxX} and y ${repair.evidence.allowedLabelAt.minY}..${repair.evidence.allowedLabelAt.maxY}`,
+  ]);
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

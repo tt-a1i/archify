@@ -95,6 +95,96 @@ test('render output check: includes semantic boundary labels in desktop readabil
   assert.ok(issue?.projectedFontPx < issue?.minimumProjectedFontPx);
 });
 
+test('render output check: reports every desktop readability violation with an exact viewBox limit', () => {
+  const { code, result } = checkHtml('showcase-all-desktop-readability', `
+    <g data-node-id="compact-node">
+      <rect x="100" y="100" width="160" height="70" rx="6" class="c-mask"/>
+      <text data-node-label x="180" y="126" class="t-primary" font-size="8">Compact node</text>
+      <text data-detail="context" x="180" y="146" class="t-muted" font-size="7.5">supporting context</text>
+    </g>
+  `, 'showcase', '0 0 1400 700');
+
+  assert.notEqual(code, 0);
+  const issues = result.composition.issues.filter(
+    (item) => item.code === 'composition/desktop-readability',
+  );
+  assert.equal(issues.length, 2);
+  assert.equal(result.composition.metrics.desktopReadabilityIssues, 2);
+  assert.equal(result.composition.summary.errors, 2);
+  assert.deepEqual(
+    issues.map((issue) => [issue.text, issue.maxViewBoxWidth]),
+    [
+      ['Compact node', 1240],
+      ['supporting context', 1162.5],
+    ],
+  );
+  assert.equal(
+    result.composition.metrics.minProjectedNodeTextPx,
+    7.5 * 930 / 1400,
+  );
+});
+
+test('render output check: rejects a relationship label mask outside the SVG viewBox', () => {
+  const { code, result } = checkHtml('relationship-label-viewbox-containment', `
+    <path data-edge-key="0" data-edge-id="handoff" data-edge-from="source" data-edge-to="target" data-composition-points="20,80;220,80" d="M 20 80 L 220 80" class="a-default" marker-end="url(#arrowhead)"/>
+    <g data-detail="context" data-edge-key="0" data-edge-id="handoff" data-edge-from="source" data-edge-to="target" data-edge-label="handoff">
+      <rect x="210" y="68" width="60" height="14" rx="3" class="c-mask"/>
+      <text x="240" y="78">handoff</text>
+    </g>
+  `, 'showcase', '0 0 240 160');
+
+  assert.notEqual(code, 0);
+  const issue = result.composition.issues.find(
+    (item) => item.code === 'composition/relationship-label-containment',
+  );
+  assert.equal(issue?.severity, 'error');
+  assert.deepEqual(issue?.subject, {
+    diagramType: 'artifact',
+    collectionIndex: 0,
+    id: 'handoff',
+  });
+  assert.doesNotMatch(issue?.supportedFixes.join('\n'), /\/relationships\//);
+  assert.deepEqual(issue?.evidence?.overflow, {
+    left: 0,
+    top: 0,
+    right: 30,
+    bottom: 0,
+  });
+  assert.deepEqual(issue?.evidence?.allowedTranslation, {
+    minDx: -210,
+    maxDx: -30,
+    minDy: -68,
+    maxDy: 78,
+  });
+});
+
+test('render output check: oversized relationship masks never suggest an impossible translation', () => {
+  const { code, result } = checkHtml('oversized-relationship-label-mask', `
+    <path data-edge-key="0" data-edge-id="wide" data-edge-from="source" data-edge-to="target" data-composition-points="20,80;220,80" d="M 20 80 L 220 80" class="a-default" marker-end="url(#arrowhead)"/>
+    <g data-detail="context" data-edge-key="0" data-edge-id="wide" data-edge-from="source" data-edge-to="target" data-edge-label="wide label">
+      <rect x="-30" y="68" width="300" height="14" rx="3" class="c-mask"/>
+      <text x="120" y="78">wide label</text>
+    </g>
+  `, 'showcase', '0 0 240 160');
+
+  assert.notEqual(code, 0);
+  const issue = result.composition.issues.find(
+    (item) => item.code === 'composition/relationship-label-containment',
+  );
+  assert.deepEqual(issue?.subject, {
+    diagramType: 'artifact',
+    collectionIndex: 0,
+    id: 'wide',
+  });
+  assert.equal(issue?.evidence?.translationFeasible?.x, false);
+  assert.equal(issue?.evidence?.allowedLabelAt, undefined);
+  assert.deepEqual(issue?.evidence?.minimumViewBox, { width: 300, height: 14 });
+  assert.equal('minDx' in issue.evidence.allowedTranslation, false);
+  assert.equal('maxDx' in issue.evidence.allowedTranslation, false);
+  assert.match(issue.supportedFixes.join('\n'), /shorten the source relationship label/);
+  assert.match(issue.supportedFixes.join('\n'), /increase \/meta\/viewBox\/0 to at least 300px/);
+});
+
 test('render output check: accepts orthogonal arrows away from legend', () => {
   const { code, result } = checkHtml('clean', `
     <path d="M 20 20 L 120 20 L 120 60" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>

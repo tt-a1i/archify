@@ -845,11 +845,11 @@ test('packaged skill puts a bounded ordinary-model path before progressive featu
   assert.ok(fastPath < progressiveReferences, 'fast authoring path must precede progressive references');
   assert.ok(skill.trimEnd().split('\n').length <= 160, 'ordinary authors must not ingest the viewer catalogue');
   for (const required of [
-    'one matching schema',
-    'one matching JSON example',
-    'the next tool action must write the candidate',
+    'authoring-kit <type> --json',
+    'parsed type schema, common schema, bounded shape-only exemplar',
+    'after freezing repository requirements, the next tool action must write the candidate',
     'Do not plan exact coordinates in prose',
-    'Fresh authorship means new stable IDs, domain wording, and layout',
+    'Fresh authorship means new stable IDs, domain wording, topology, and layout',
     'Write the candidate before inspecting renderer internals',
     'Start with automatic routes and labels',
     'Do not add `via`, `channelX`, `channelY`, or `labelAt` before a diagnostic',
@@ -861,10 +861,10 @@ test('packaged skill puts a bounded ordinary-model path before progressive featu
     'a showcase pass must report all 9 artifact checks with 0 composition errors and 0 warnings',
     'If the candidate omits or misspells the exact `meta.quality_profile` field',
     '`deliver` is the final acceptance command',
-    'deliver <type> <candidate.json> <output.html> --quality showcase --json',
+    'deliver <type> <candidate.json> <output.html> --quality showcase --require-authored-language <en|zh-CN> --json',
     'A non-zero exit can never be described as success',
     'Continue focused correction while the objective error count reaches a new minimum',
-    'If two consecutive rounds do not improve that best count',
+    'A plateau requests semantics-preserving structural reflow before bounded stop',
     'Do not read `renderers/shared/geometry.mjs`',
     'validate <type>',
     'supportedFixes',

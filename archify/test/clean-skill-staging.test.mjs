@@ -34,6 +34,8 @@ function repositoryFixture() {
   write(root, 'archify/skill-release.json', '{}\n');
   write(root, 'archify/scripts/check-update.mjs', 'export {};\n');
   write(root, 'archify/scripts/update-contract.mjs', 'export {};\n');
+  write(root, 'archify/authoring/content-quality.mjs', 'export {};\n');
+  write(root, 'archify/authoring/semantic-requirements.mjs', 'export {};\n');
   write(root, 'archify/renderers/shared/generated-validators.mjs', 'export {};\n');
   write(root, 'archify/test/repository-only.test.mjs', 'throw new Error();\n');
   git(root, ['init']);

@@ -2,15 +2,27 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
+import {
+  componentBox,
+  connectionPath,
+  emitResolvedLayoutReport,
+  relationshipLabelBox,
+  resolvedLayoutReport,
+} from '../shared/layout-report.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { relationshipLabelContainmentIssues } from '../shared/viewbox-containment.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
+import { maximumReadableViewBoxWidth } from '../shared/desktop-readability.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import {
   asArray,
   isFinitePoint,
   rectsOverlap,
+  entityOverlapIssue,
+  relationshipLabelObstacleIssue,
+  relationshipLabelPairIssue,
   cleanEndpointSideProblems,
   cleanFlowProblems,
   cleanCrossingProblems,
@@ -18,10 +30,12 @@ import {
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   cleanLabelRouteClearanceProblems,
-  suggestLabelObstacleFix,
-  suggestLabelPairFix,
   anchor,
   automaticPortSpread,
+  dedupeRoutePoints,
+  normalizeRoutePoints,
+  markerSafeRoutePoints,
+  markerEndpointSetback,
   defaultFromSide,
   defaultToSide,
   chosenSide,
@@ -42,10 +56,13 @@ const nodeTextFit = {
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const layoutJsonMode = process.argv.includes('--layout-json');
+const cliArgs = process.argv.filter((arg) => arg !== '--layout-json');
 const { diagram: dataflow, template, outPath } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
   diagramType: 'dataflow',
-  defaultExample: 'product-analytics.dataflow.json'
+  defaultExample: 'product-analytics.dataflow.json',
+  argv: cliArgs,
 });
 
 const viewBox = dataflow.meta?.viewBox || [940, 720];
@@ -106,6 +123,7 @@ function measureNode(node) {
 }
 
 const nodes = new Map(asArray(dataflow.nodes).map((node) => [node.id, measureNode(node)]));
+const nodeInputIndexes = new Map(asArray(dataflow.nodes).map((node, index) => [node.id, index]));
 const nodeSteps = new Map();
 for (const [index, flow] of asArray(dataflow.flows).entries()) {
   if (!nodeSteps.has(flow.from)) nodeSteps.set(flow.from, index);
@@ -115,14 +133,76 @@ for (const [index, node] of asArray(dataflow.nodes).entries()) {
   if (!nodeSteps.has(node.id)) nodeSteps.set(node.id, index);
 }
 
+function dataflowLayoutConstraints() {
+  const stageCount = asArray(dataflow.stages).length;
+  const minViewBoxWidth = stageCount
+    ? Math.ceil(stageX(stageCount - 1) + layout.stageW / 2 + 24)
+    : null;
+  const readableText = [];
+  for (const node of nodes.values()) {
+    const nodeIndex = nodeInputIndexes.get(node.id);
+    if (!Number.isInteger(nodeIndex) || !Number.isFinite(node.width)) continue;
+    const labelFont = fittedNodeFontSize(node.label, brandLabelFitWidth(node, node.width), 10, 8);
+    readableText.push({
+      path: `/nodes/${nodeIndex}/label`,
+      id: node.id,
+      text: node.label,
+      sourceFontPx: labelFont,
+      maxReadableViewBoxWidth: maximumReadableViewBoxWidth(labelFont),
+    });
+    if (node.sublabel) {
+      const sourceFontPx = fittedNodeFontSize(
+        node.sublabel,
+        node.width,
+        nodeTextFit.sublabelPreferred,
+        nodeTextFit.sublabelMinimum,
+      );
+      readableText.push({
+        path: `/nodes/${nodeIndex}/sublabel`,
+        id: node.id,
+        text: node.sublabel,
+        sourceFontPx,
+        maxReadableViewBoxWidth: maximumReadableViewBoxWidth(sourceFontPx),
+      });
+    }
+  }
+  const limitingText = readableText
+    .filter((entry) => Number.isFinite(entry.maxReadableViewBoxWidth))
+    .sort((left, right) => (
+      left.maxReadableViewBoxWidth - right.maxReadableViewBoxWidth
+      || left.path.localeCompare(right.path)
+    ))[0] || null;
+  return {
+    minViewBoxWidth,
+    maxReadableViewBoxWidth: limitingText
+      ? Math.round(limitingText.maxReadableViewBoxWidth * 1000) / 1000
+      : null,
+    limitingText,
+  };
+}
+
 function validateDataflow() {
   const problems = [];
   if (nodes.size !== asArray(dataflow.nodes).length) problems.push('Node ids must be unique.');
 
   const stageCount = asArray(dataflow.stages).length;
   for (const node of nodes.values()) {
+    const nodeIndex = nodeInputIndexes.get(node.id);
     if (typeof node.stage !== 'number' || node.stage < 0 || node.stage >= stageCount) {
-      problems.push(`Node "${node.id}" uses invalid stage ${node.stage} — valid stages are 0..${stageCount - 1}.`);
+      problems.push({
+        code: 'layout/dataflow-node-stage',
+        message: `Node "${node.id}" uses invalid stage ${node.stage} — valid stages are 0..${stageCount - 1}.`,
+        subject: {
+          path: `/nodes/${nodeIndex}/stage`,
+          id: node.id,
+        },
+        evidence: {
+          currentStage: node.stage,
+          allowedStage: { min: 0, max: stageCount - 1 },
+        },
+        supportedFixes: [`set /nodes/${nodeIndex}/stage to an integer between 0 and ${stageCount - 1}`],
+      });
+      continue;
     }
     if (typeof node.row !== 'number' || node.row < 0 || node.row >= layout.rowYs.length) {
       problems.push(`Node "${node.id}" uses invalid row ${node.row} — valid rows are 0..${layout.rowYs.length - 1}.`);
@@ -164,17 +244,47 @@ function validateDataflow() {
       const a = nodes.get(nodeList[i].id);
       const b = nodes.get(nodeList[j].id);
       if (rectsOverlap(a, b, 10)) {
-        problems.push(`Nodes "${a.id}" and "${b.id}" are less than 10px apart — move one to another stage/row or adjust yOffset.`);
+        problems.push(entityOverlapIssue({
+          diagramType: 'dataflow',
+          collection: 'nodes',
+          entity: b,
+          entityIndex: j,
+          otherEntity: a,
+          otherEntityIndex: i,
+          minimumGapPx: 10,
+          controls: ['stage', 'row', 'yOffset'],
+        }));
       }
     }
   }
 
-  for (const flow of asArray(dataflow.flows)) {
+  for (const [flowIndex, flow] of asArray(dataflow.flows).entries()) {
     if (!nodes.has(flow.from)) problems.push(`Flow "${flow.label || flow.from}" references unknown source "${flow.from}".`);
     if (!nodes.has(flow.to)) problems.push(`Flow "${flow.label || flow.to}" references unknown target "${flow.to}".`);
     if (!flow.label) problems.push(`Flow "${flow.from}" -> "${flow.to}" must include a short data label.`);
     if (nodes.has(flow.from) && nodes.has(flow.to)) {
       const routed = pathFor(flow);
+      if (routed.points.length < 2 || routed.points.some((point) => !isFinitePoint(...point))) {
+        problems.push({
+          code: 'layout/degenerate-route',
+          message: `Flow "${flow.label || `${flow.from} -> ${flow.to}`}" collapses to fewer than two finite route points — repair the endpoint node geometry or provide a finite route/via channel.`,
+          subject: {
+            diagramType: 'dataflow',
+            collection: 'flows',
+            index: flowIndex,
+            path: `/flows/${flowIndex}`,
+            ...(flow.id ? { id: flow.id } : {}),
+            from: flow.from,
+            to: flow.to,
+          },
+          evidence: { points: routed.points },
+          supportedFixes: [
+            'repair non-finite stage, row, width, height, or yOffset values on the endpoint nodes',
+            'provide at least two finite points using fromSide/toSide, via, or a named channel route',
+          ],
+        });
+        continue;
+      }
       const [start, end] = [routed.points[0], routed.points[routed.points.length - 1]];
       const distance = Math.hypot(end[0] - start[0], end[1] - start[1]);
       if (distance < 34) problems.push(`Flow "${flow.label}" is too short (${Math.round(distance)}px; minimum 34px) — route it through a channel or spread its nodes.`);
@@ -200,6 +310,11 @@ function validateDataflow() {
     relationCollection: 'flows',
     fromSideFor: (flow) => flowSides(flow).fromSide,
     toSideFor: (flow) => flowSides(flow).toSide,
+    checkResolvedRouteSides: true,
+    endpointFor: (id) => nodes.get(id),
+    markerSetbackFor: (flow) => markerEndpointSetback({
+      strokeWidth: flow.width || (flow.variant === 'emphasis' ? 1.8 : 1.4),
+    }),
     routeHint: 'keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross node borders perpendicularly',
   }));
   problems.push(...cleanFlowProblems({
@@ -252,24 +367,53 @@ function validateDataflow() {
   const labelRects = [];
   for (const [flowIndex, flow] of asArray(dataflow.flows).entries()) {
     if (!flow.label || !nodes.has(flow.from) || !nodes.has(flow.to)) continue;
-    const [lx, ly] = labelPoint(flow, pathFor(flow).points);
+    const points = pathFor(flow).points;
+    if (points.length < 2 || points.some((point) => !isFinitePoint(...point))) continue;
+    const [lx, ly] = labelPoint(flow, points);
     const { width, height } = flowLabelSize(flow);
     labelRects.push({ relation: flow, relationIndex: flowIndex, label: flow.label, x: lx - width / 2, y: ly - 11, width, height, lx, ly });
   }
   for (const rect of labelRects) {
     for (const node of nodes.values()) {
       if (rectsOverlap(rect, node, -2)) {
-        problems.push(`Label "${rect.label}" overlaps node "${node.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, node, 'node')}`);
+        problems.push(relationshipLabelObstacleIssue({
+          diagramType: 'dataflow',
+          relationCollection: 'flows',
+          relation: rect.relation,
+          relationIndex: rect.relationIndex,
+          labelRect: rect,
+          obstacleCollection: 'nodes',
+          obstacle: node,
+          obstacleIndex: nodeInputIndexes.get(node.id),
+          avoidRects: [...nodes.values()],
+          viewBox,
+        }));
       }
     }
   }
   for (let i = 0; i < labelRects.length; i += 1) {
     for (let j = i + 1; j < labelRects.length; j += 1) {
       if (rectsOverlap(labelRects[i], labelRects[j], -2)) {
-        problems.push(`Labels "${labelRects[i].label}" and "${labelRects[j].label}" overlap — adjust labelDx/labelDy.\n${suggestLabelPairFix(labelRects[i], labelRects[j])}`);
+        problems.push(relationshipLabelPairIssue({
+          diagramType: 'dataflow',
+          relationCollection: 'flows',
+          labelRect: labelRects[j],
+          otherLabelRect: labelRects[i],
+          avoidRects: [
+            ...nodes.values(),
+            ...labelRects.filter((entry) => entry !== labelRects[j]),
+          ],
+          viewBox,
+        }));
       }
     }
   }
+  problems.push(...relationshipLabelContainmentIssues({
+    labels: labelRects,
+    viewBox,
+    diagramType: 'dataflow',
+    relationCollection: 'flows',
+  }));
   problems.push(...cleanLabelRouteClearanceProblems({
     relations: dataflow.flows,
     labels: labelRects,
@@ -293,13 +437,31 @@ function validateDataflow() {
   }
 }
 
+function verticalChannelX(flow, from, to) {
+  if (Number.isFinite(flow.channelX)) return flow.channelX;
+  const fromCx = from.x + from.width / 2;
+  const toCx = to.x + to.width / 2;
+  const direction = toCx >= fromCx ? 1 : -1;
+  return fromCx + direction * (from.width / 2 + 44);
+}
+
+function sideFacingPoint(rect, point, fallback) {
+  if (!Array.isArray(point) || point.length !== 2) return fallback;
+  const cx = rect.x + rect.width / 2;
+  const cy = rect.y + rect.height / 2;
+  const dx = point[0] - cx;
+  const dy = point[1] - cy;
+  if (Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? 'right' : 'left';
+  return dy >= 0 ? 'bottom' : 'top';
+}
+
 function routeVia(flow, from, to, start, end) {
   if (flow.via) return flow.via;
   switch (flow.route || 'auto') {
     case 'straight':
       return [];
     case 'vertical-channel': {
-      const x = flow.channelX ?? start[0] + (end[0] > start[0] ? 44 : -44);
+      const x = verticalChannelX(flow, from, to);
       return [[x, start[1]], [x, end[1]]];
     }
     case 'bottom-channel': {
@@ -324,9 +486,28 @@ const pathCache = new Map();
 function flowSides(flow) {
   const from = nodes.get(flow.from);
   const to = nodes.get(flow.to);
+  const explicitVia = asArray(flow.via);
+  if (explicitVia.length) {
+    return {
+      fromSide: chosenSide(flow.fromSide, sideFacingPoint(from, explicitVia[0], defaultFromSide(from, to))),
+      toSide: chosenSide(flow.toSide, sideFacingPoint(to, explicitVia.at(-1), defaultToSide(from, to))),
+    };
+  }
+  if (flow.route === 'vertical-channel') {
+    const channelX = verticalChannelX(flow, from, to);
+    return {
+      fromSide: chosenSide(flow.fromSide, channelX >= from.x + from.width / 2 ? 'right' : 'left'),
+      toSide: chosenSide(flow.toSide, channelX >= to.x + to.width / 2 ? 'right' : 'left'),
+    };
+  }
+  const channelSide = flow.route === 'bottom-channel'
+    ? 'bottom'
+    : flow.route === 'top-channel'
+      ? 'top'
+      : null;
   return {
-    fromSide: chosenSide(flow.fromSide, defaultFromSide(from, to)),
-    toSide: chosenSide(flow.toSide, defaultToSide(from, to)),
+    fromSide: chosenSide(flow.fromSide, channelSide || defaultFromSide(from, to)),
+    toSide: chosenSide(flow.toSide, channelSide || defaultToSide(from, to)),
   };
 }
 
@@ -342,22 +523,10 @@ function pathFor(flow) {
   const { fromSide, toSide } = flowSides(flow);
   const start = ports?.from || anchor(from, fromSide);
   const end = ports?.to || anchor(to, toSide);
-  // Drop consecutive duplicate points so a purely vertical (or horizontal)
-  // auto-route never emits a zero-length final segment — SVG derives
-  // marker-end orientation from the last segment, and a degenerate segment
-  // leaves the arrowhead angle undefined (see #169).
   const rawPoints = [start, ...routeVia(flow, from, to, start, end), end];
-  const points = [];
-  for (const p of rawPoints) {
-    const prev = points.at(-1);
-    if (!prev || Math.abs(p[0] - prev[0]) > 0.0001 || Math.abs(p[1] - prev[1]) > 0.0001) {
-      points.push(p);
-    }
-  }
-  // Guard against an all-degenerate route (e.g. start === end): keep both
-  // endpoints so the path is still well-formed even if the marker is hidden.
-  if (points.length < 2) points.push(end);
-  const routed = { d: polylinePath(points), points };
+  const points = flow.via ? dedupeRoutePoints(rawPoints) : normalizeRoutePoints(rawPoints);
+  const strokeWidth = flow.width || (flow.variant === 'emphasis' ? 1.8 : 1.4);
+  const routed = { d: polylinePath(markerSafeRoutePoints(points, { strokeWidth })), points };
   pathCache.set(flow, routed);
   return routed;
 }
@@ -472,12 +641,54 @@ ${renderLegend()}
       </svg>`;
 }
 
-validateDataflow();
-writeDiagram({
-  outPath,
-  template,
-  diagramType: 'dataflow',
-  meta: dataflow.meta,
-  svg: renderSvg(),
-  cards: dataflow.cards,
-});
+function buildLayoutReport(validation) {
+  const relationships = asArray(dataflow.flows)
+    .map((flow, flowIndex) => ({ flow, flowIndex }))
+    .filter(({ flow }) => nodes.has(flow.from) && nodes.has(flow.to))
+    .map(({ flow, flowIndex }) => {
+      const routed = pathFor(flow);
+      return connectionPath(flow, routed, labelPoint(flow, routed.points), flowIndex);
+    });
+  const labels = asArray(dataflow.flows)
+    .map((flow, flowIndex) => ({ flow, flowIndex }))
+    .filter(({ flow }) => nodes.has(flow.from) && nodes.has(flow.to))
+    .map(({ flow, flowIndex }) => {
+      const [lx, ly] = labelPoint(flow, pathFor(flow).points);
+      const { width, height } = flowLabelSize(flow);
+      return relationshipLabelBox({
+        relation: flow,
+        relationIndex: flowIndex,
+        x: lx - width / 2,
+        y: ly - 11,
+        width,
+        height,
+        lx,
+        ly,
+      });
+    });
+  return resolvedLayoutReport({
+    type: 'dataflow',
+    viewBox,
+    validation,
+    entityKey: 'nodes',
+    entities: [...nodes.values()].map(componentBox),
+    relationships,
+    labels,
+    constraints: dataflowLayoutConstraints(),
+    extras: { stages: compositionFrames },
+  });
+}
+
+if (layoutJsonMode) {
+  emitResolvedLayoutReport({ validate: validateDataflow, build: buildLayoutReport });
+} else {
+  validateDataflow();
+  writeDiagram({
+    outPath,
+    template,
+    diagramType: 'dataflow',
+    meta: dataflow.meta,
+    svg: renderSvg(),
+    cards: dataflow.cards,
+  });
+}

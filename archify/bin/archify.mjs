@@ -12,17 +12,36 @@ const skillRoot = path.resolve(__dirname, '..');
 
 const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
 
+async function authoredLanguageAssessment(diagram, requiredLanguage) {
+  const module = await import('../authoring/authored-language.mjs');
+  return module.authoredLanguageAssessment(diagram, requiredLanguage);
+}
+
 function usage() {
   return `Usage:
   archify render <type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path (architecture only)]
   archify compare architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]
-  archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path (architecture only)]
+  archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path (architecture only)] [--require-authored-language en|zh-CN]
   archify preview <type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path (architecture only)]
-  archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path (architecture only)]
+  archify validate <type> <input.json> [--json] [--layout-json] [--preflight] [--repair-history path] [--repair-mode focused|structural-reflow] [--quality standard|showcase] [--repo-root path] [--require-authored-language en|zh-CN]
+  archify validate-batch <candidates.json> [--quality standard|showcase] [--json] (candidate entries may include requiredLanguage, repairHistory, and repairMode)
   archify migrate workflow <old.json> <new.json> --to-schema 2 [--json]
   archify inspect <type> <input.json>
   archify check <output.html>
-  archify visual-check <output.html> [--json]
+  archify visual-check <output.html>... [--preflight] [--json]
+  archify visual-check --probe [--json]
+  archify authoring-kit <type> [--json] [--context-json] [--expect-contract sha256]
+  archify authoring-run start <type> --run-id id --output directory --repo-root path --project-index file --requirements file --candidate file --scope-profile focused|project-overview --expect-contract sha256 [--require-authored-language en|zh-CN] [--json]
+  archify authoring-run finalize <authoring-run.json> --candidate path --evidence path --validation path [--json]
+  archify authoring-run stop <authoring-run.json> --status failed|blocked|aborted --reason code [--json]
+  archify project-index <repo-root> [--revision ref] [--output path] [--json]
+  archify project-index query <index.json> [--symbol name] [--import specifier] [--path prefix] [--language name] [--package name] [--max-results n] [--output path] [--json]
+  archify project-index source-search <index.json> --term text [--term text] [--path prefix] [--context n] [--max-results n] [--output path] [--json]
+  archify project-index inspect <index.json> --range path:start-end [--range path:start-end] [--max-results n] [--output path] [--json]
+  archify evidence-ledger create <index.json> <selections.json> [--output path] [--json]
+  archify evidence-ledger hydrate <index.json> <selections.json> [--output path] [--json]
+  archify evidence-ledger verify <ledger.json> --project-index <index.json> --repo-root path [--json]
+  archify run-suite --manifest <suite.json> --repo-root <checkout> --revision <full-commit-id> --output <directory> [--concurrency n] [--json]
   archify guide [scenario or question] [--json] [--lang en|zh]
   archify brands [name, alias, domain, or category] [--json]
   archify brands capture <url> [--json]
@@ -99,6 +118,51 @@ function extractRepoRootArgs(args) {
     rest.push(arg);
   }
   return { rest, repoRoot: repoRoot ? path.resolve(repoRoot) : undefined };
+}
+
+function extractPathOption(args, name) {
+  const rest = [];
+  let value;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === name) {
+      value = args[index + 1];
+      if (!value || value.startsWith('--')) fail(`${name} requires a path.`);
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith(`${name}=`)) {
+      value = arg.slice(name.length + 1);
+      if (!value) fail(`${name} requires a path.`);
+      continue;
+    }
+    rest.push(arg);
+  }
+  return { rest, value: value ? path.resolve(value) : undefined };
+}
+
+function extractEnumOption(args, name, allowed) {
+  const rest = [];
+  let value;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === name) {
+      value = args[index + 1];
+      if (!value || value.startsWith('--')) fail(`${name} requires one of: ${allowed.join(', ')}.`);
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith(`${name}=`)) {
+      value = arg.slice(name.length + 1);
+      if (!value) fail(`${name} requires one of: ${allowed.join(', ')}.`);
+      continue;
+    }
+    rest.push(arg);
+  }
+  if (value !== undefined && !allowed.includes(value)) {
+    fail(`Unknown ${name} value "${value}". Expected one of: ${allowed.join(', ')}.`);
+  }
+  return { rest, value };
 }
 
 function rendererEnv(quality, repoRoot, diagnosticJson = false) {
@@ -194,20 +258,46 @@ const COMPOSITION_FIXES = {
   'composition/desktop-readability': ['reduce the viewBox width, shorten node copy, widen affected nodes, or split the diagram so node context remains at least 6px at a 1440px desktop viewport'],
   'composition/micro-segment': ['move the route/channel/via point so every visible segment is at least 8px'],
   'composition/short-interior-segment': ['move the route/channel/via point so every interior turn has at least 16px'],
+  'composition/relationship-label-containment': ['move the single renderer-supported relationship label control inside the exact allowedLabelAt or allowedTranslation range'],
 };
+
+function compositionSupportedFixes(issue) {
+  if (Array.isArray(issue?.supportedFixes) && issue.supportedFixes.length) return issue.supportedFixes;
+  if (issue?.code === 'composition/desktop-readability' && Number.isFinite(issue.maxViewBoxWidth)) {
+    return [`reduce the viewBox width to at most ${issue.maxViewBoxWidth}px so the affected text projects to at least 6px at 1440px`];
+  }
+  return COMPOSITION_FIXES[issue?.code] || [];
+}
+
+function compositionMessage(issue) {
+  if (issue?.message) return issue.message;
+  if (issue?.code === 'composition/desktop-readability') {
+    return `Text ${JSON.stringify(issue.text || '')} projects to ${issue.projectedFontPx}px at the 1440px desktop viewport; use a viewBox width of at most ${issue.maxViewBoxWidth}px.`;
+  }
+  return `Final artifact failed ${issue?.code || 'a composition check'}.`;
+}
 
 function checkerDiagnostics(checker) {
   const diagnostics = [];
   for (const issue of checker?.composition?.issues || []) {
     if (issue.severity !== 'error') continue;
-    const { severity, code, relationship, ...evidence } = issue;
+    const {
+      severity,
+      code,
+      relationship,
+      message,
+      subject: structuredSubject,
+      evidence: structuredEvidence,
+      supportedFixes,
+      ...legacyEvidence
+    } = issue;
     diagnostics.push(diagnostic({
       code,
       severity,
-      message: `Final artifact failed ${code}.`,
-      subject: relationship ? { relationship } : { check: 'composition' },
-      evidence,
-      supportedFixes: COMPOSITION_FIXES[code] || [],
+      message: compositionMessage({ ...issue, message }),
+      subject: structuredSubject || (relationship ? { relationship } : { check: 'composition' }),
+      evidence: structuredEvidence || legacyEvidence,
+      supportedFixes: compositionSupportedFixes({ ...issue, supportedFixes }),
     }));
   }
   for (const check of checker?.checks || []) {
@@ -723,12 +813,98 @@ function reportArtifactFailure({ command, json, stage, type, input, output, erro
   process.exitCode = status;
 }
 
-function reportDeliveryFailure(options) {
-  reportArtifactFailure({ ...options, command: 'deliver' });
+async function persistRepairAttempt({ repairHistory, type, input, stage, diagnostics, repairMode = 'focused' }) {
+  if (!repairHistory) return null;
+  const { pathsAlias } = await import('../renderers/shared/output-path.mjs');
+  if (pathsAlias(repairHistory, input)) {
+    throw new Error(`Repair history must not replace or alias its candidate input: ${repairHistory}`);
+  }
+  let prior = [];
+  if (fs.existsSync(repairHistory)) {
+    const parsed = JSON.parse(fs.readFileSync(repairHistory, 'utf8'));
+    if (parsed?.schemaVersion !== 1 || !Array.isArray(parsed.attempts)) {
+      throw new Error(`Repair history is not a supported schemaVersion 1 document: ${repairHistory}`);
+    }
+    if (parsed.type !== type || path.resolve(parsed.input) !== path.resolve(input)) {
+      throw new Error(`Repair history belongs to ${parsed.type} ${parsed.input}, not ${type} ${input}.`);
+    }
+    prior = parsed.attempts;
+  }
+  const attempt = {
+    stage,
+    repairMode,
+    errorCount: diagnostics.length,
+    diagnostics,
+  };
+  const attempts = [...prior, attempt].slice(-64);
+  writeJsonAtomic(repairHistory, {
+    schemaVersion: 1,
+    type,
+    input: path.resolve(input),
+    attempts,
+  });
+  return {
+    path: repairHistory,
+    previousAttempts: prior.slice(-63),
+    attemptCount: attempts.length,
+  };
 }
 
-function reportValidateFailure(options) {
-  reportArtifactFailure({ ...options, command: 'validate' });
+async function reportValidateFailure({ json, stage, type, input, error, diagnostics = [], status = 1, checker, preflight, repairHistory, repairMode = 'focused' }) {
+  let candidate = null;
+  try {
+    candidate = JSON.parse(fs.readFileSync(path.resolve(input), 'utf8'));
+  } catch {
+    // Input diagnostics remain authoritative when the candidate cannot be read.
+  }
+  let repairPlan;
+  let repairHistoryReceipt;
+  try {
+    repairHistoryReceipt = await persistRepairAttempt({ repairHistory, type, input, stage, diagnostics, repairMode });
+    const { createRepairPlan } = await import('../authoring/repair-plan.mjs');
+    repairPlan = createRepairPlan({
+      type,
+      candidate,
+      stage,
+      diagnostics,
+      preflight,
+      attemptHistory: repairHistoryReceipt?.previousAttempts || [],
+      repairMode,
+    });
+  } catch (repairError) {
+    repairPlan = {
+      schemaVersion: 1,
+      type,
+      stage,
+      status: 'unavailable',
+      reason: repairError.message,
+      actions: [],
+    };
+  }
+  const receipt = {
+    schemaVersion: 1,
+    ok: false,
+    command: 'validate',
+    stage,
+    type,
+    input,
+    error,
+    diagnostics,
+    repairPlan,
+    ...(repairHistoryReceipt ? { repairHistory: {
+      path: repairHistoryReceipt.path,
+      attemptCount: repairHistoryReceipt.attemptCount,
+    } } : {}),
+    ...(checker ? { checker } : {}),
+    ...(preflight ? { preflight } : {}),
+  };
+  if (json) console.log(JSON.stringify(receipt, null, 2));
+  else console.error(formatDiagnostics(error, diagnostics));
+  process.exitCode = status;
+}
+
+function reportDeliveryFailure(options) {
+  reportArtifactFailure({ ...options, command: 'deliver' });
 }
 
 function sourceEvidenceFromArtifact(artifact) {
@@ -751,12 +927,13 @@ async function commandDeliver(args) {
   const { resolveOutputPath } = await import('../renderers/shared/output-path.mjs');
   const qualityArgs = extractQualityArgs(args);
   const repoArgs = extractRepoRootArgs(qualityArgs.rest);
-  const json = repoArgs.rest.includes('--json');
-  const open = repoArgs.rest.includes('--open');
+  const languageArgs = extractEnumOption(repoArgs.rest, '--require-authored-language', ['en', 'zh-CN']);
+  const json = languageArgs.rest.includes('--json');
+  const open = languageArgs.rest.includes('--open');
   const knownOptions = new Set(['--json', '--open']);
-  const unknown = repoArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
+  const unknown = languageArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) fail(`Unknown deliver option "${unknown[0]}".`);
-  const positional = repoArgs.rest.filter((arg) => !knownOptions.has(arg));
+  const positional = languageArgs.rest.filter((arg) => !knownOptions.has(arg));
   const [type, input, requestedOutput] = positional;
   if (!type || !input || positional.length > 3) fail(usage());
   assertEvidenceType(type, repoArgs.repoRoot);
@@ -778,6 +955,22 @@ async function commandDeliver(args) {
       output: path.resolve(requestedOutput || `${type}.html`),
       error: `Could not read delivery input "${inputPath}": ${error.message}`,
       diagnostics: [repair],
+    });
+    return;
+  }
+
+  const languageAssessment = languageArgs.value
+    ? await authoredLanguageAssessment(diagram, languageArgs.value)
+    : { diagnostics: [], receipt: null };
+  if (languageAssessment.diagnostics.length) {
+    reportDeliveryFailure({
+      json,
+      stage: 'language',
+      type,
+      input: inputPath,
+      output: path.resolve(requestedOutput || `${type}.html`),
+      error: 'Authored language validation failed.',
+      diagnostics: languageAssessment.diagnostics,
     });
     return;
   }
@@ -1010,6 +1203,7 @@ async function commandDeliver(args) {
         sha256: createHash('sha256').update(artifact).digest('hex'),
         bytes: artifact.byteLength,
       },
+      ...(languageAssessment.receipt ? { authoredLanguage: languageAssessment.receipt } : {}),
       validation: {
         checksPassed: result.checks.filter((checkItem) => checkItem.ok).length,
         checkCount: result.checks.length,
@@ -1155,52 +1349,665 @@ function commandCheck(args) {
 
 async function commandVisualCheck(args) {
   const json = args.includes('--json');
-  const knownOptions = new Set(['--json']);
+  const preflight = args.includes('--preflight');
+  const probe = args.includes('--probe');
+  const knownOptions = new Set(['--json', '--preflight', '--probe']);
   const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
   if (unknown.length) fail(`Unknown visual-check option "${unknown[0]}".`, 1);
   const positional = args.filter((arg) => !knownOptions.has(arg));
-  if (positional.length !== 1) fail(usage(), 1);
+  if (probe ? (preflight || positional.length !== 0) : positional.length === 0) fail(usage(), 1);
 
-  let runVisualCheck;
+  let visual;
   try {
-    ({ runVisualCheck } = await import('./visual-check.mjs'));
+    visual = await import('./visual-check.mjs');
   } catch (error) {
     fail(`Could not load visual-check: ${error.message}`, 1);
   }
 
-  let result;
-  try {
-    result = await runVisualCheck({ artifactPath: positional[0] });
-  } catch (error) {
-    if (json) {
-      console.log(JSON.stringify({
-        schemaVersion: 1,
-        ok: false,
-        command: 'visual-check',
-        status: 'fail',
-        visualReview: 'pending',
-        artifact: { path: path.resolve(positional[0]) },
-        error: error.message,
-      }, null, 2));
-    } else {
-      console.error(`visual-check failed: ${error.message}`);
+  if (probe) {
+    const result = await visual.probeVisualCheckCapability();
+    if (json) console.log(JSON.stringify(result.receipt, null, 2));
+    else {
+      console.log(`visual capability ${result.receipt.status}: ${result.receipt.chrome.executable || 'Chrome unavailable'}`);
+      if (result.receipt.error) console.error(result.receipt.error);
     }
-    process.exitCode = 1;
+    process.exitCode = result.exitCode;
     return;
   }
 
-  if (json) {
-    console.log(JSON.stringify(result.receipt, null, 2));
-  } else {
-    console.log(`visual-check ${result.receipt.status}: ${result.receipt.artifact.path}`);
-    console.log(`containment ${result.receipt.containment.status}; captures ${result.receipt.captures.status}; visual review pending`);
-    console.log(`receipt ${path.join(path.dirname(result.receipt.artifact.path), result.receipt.sidecars.receipt)}`);
-    if (result.receipt.captures.contactSheet) {
-      console.log(`contact sheet ${path.join(path.dirname(result.receipt.artifact.path), result.receipt.captures.contactSheet)}`);
+  if (positional.length > 1) {
+    const audit = visual.auditVisualCheckBatch(positional, {
+      mode: preflight ? 'preflight' : 'full',
+    });
+    if (!audit.ok) {
+      const command = preflight ? 'visual-preflight-batch' : 'visual-check-batch';
+      const failure = diagnostic({
+        code: audit.code,
+        message: audit.message,
+        subject: { artifacts: audit.artifacts.map((entry) => entry.path) },
+        evidence: { conflicts: audit.conflicts },
+        supportedFixes: [
+          'pass each delivered artifact exactly once',
+          'rename artifacts so every visual evidence sidecar has an independent path',
+        ],
+      });
+      const receipt = {
+        schemaVersion: visual.VISUAL_RECEIPT_SCHEMA_VERSION,
+        ok: false,
+        command,
+        status: 'fail',
+        audit: { status: 'fail', code: audit.code },
+        error: audit.message,
+        diagnostics: [failure],
+        artifacts: audit.artifacts.map((entry) => ({
+          schemaVersion: visual.VISUAL_RECEIPT_SCHEMA_VERSION,
+          ok: false,
+          command: preflight ? 'visual-preflight' : 'visual-check',
+          status: 'fail',
+          ...(preflight ? {} : { visualReview: 'pending' }),
+          artifact: { path: entry.path },
+          error: audit.message,
+          diagnostics: [failure],
+        })),
+      };
+      if (json) console.log(JSON.stringify(receipt, null, 2));
+      else {
+        console.log(`${receipt.command} fail: ${receipt.artifacts.length} artifacts`);
+        console.error(receipt.error);
+      }
+      process.exitCode = 1;
+      return;
     }
-    if (result.receipt.error) console.error(result.receipt.error);
   }
-  process.exitCode = result.exitCode;
+
+  const session = new visual.VisualCheckSession();
+  const results = [];
+  let capability;
+  try {
+    capability = await session.probe();
+    for (const [index, artifactPath] of positional.entries()) {
+      try {
+        const finalArtifact = index === positional.length - 1;
+        results.push(preflight
+          ? await session.preflight({ artifactPath, finalArtifact })
+          : await session.run({ artifactPath, finalArtifact }));
+      } catch (error) {
+        results.push({
+          exitCode: 1,
+          receipt: {
+            schemaVersion: visual.VISUAL_RECEIPT_SCHEMA_VERSION,
+            ok: false,
+            command: preflight ? 'visual-preflight' : 'visual-check',
+            status: 'fail',
+            ...(preflight ? {} : { visualReview: 'pending' }),
+            artifact: { path: path.resolve(artifactPath) },
+            error: error.message,
+            diagnostics: [diagnostic({
+              code: 'viewer/visual-check-runtime',
+              message: error.message,
+              subject: { artifact: path.resolve(artifactPath) },
+            })],
+          },
+        });
+      }
+    }
+  } finally {
+    await session.close();
+  }
+
+  if (results.length === 1) {
+    const [result] = results;
+    if (json) {
+      console.log(JSON.stringify(result.receipt, null, 2));
+    } else {
+      const artifactPath = result.receipt.artifact?.path || '(unknown artifact)';
+      console.log(`${result.receipt.command} ${result.receipt.status}: ${artifactPath}`);
+      const summary = [];
+      if (result.receipt.containment?.status) {
+        summary.push(`containment ${result.receipt.containment.status}`);
+      }
+      if (result.receipt.captures?.status) {
+        summary.push(`captures ${result.receipt.captures.status}`);
+      }
+      if (!preflight) summary.push(`visual review ${result.receipt.visualReview || 'pending'}`);
+      if (summary.length) console.log(summary.join('; '));
+      if (result.receipt.sidecars?.receipt && result.receipt.artifact?.path) {
+        console.log(`receipt ${path.join(path.dirname(artifactPath), result.receipt.sidecars.receipt)}`);
+      }
+      if (result.receipt.captures?.contactSheet && result.receipt.artifact?.path) {
+        console.log(`contact sheet ${path.join(path.dirname(artifactPath), result.receipt.captures.contactSheet)}`);
+      }
+      if (result.receipt.error) console.error(result.receipt.error);
+    }
+    process.exitCode = result.exitCode;
+    return;
+  }
+
+  const exitCode = results.every((result) => result.exitCode === 0)
+    ? 0
+    : results.every((result) => result.exitCode === 2) ? 2 : 1;
+  const receipt = {
+    schemaVersion: visual.VISUAL_RECEIPT_SCHEMA_VERSION,
+    ok: exitCode === 0,
+    command: preflight ? 'visual-preflight-batch' : 'visual-check-batch',
+    status: exitCode === 0 ? 'pass' : exitCode === 2 ? 'skipped' : 'fail',
+    capability,
+    artifacts: results.map((result) => result.receipt),
+  };
+  if (json) console.log(JSON.stringify(receipt, null, 2));
+  else {
+    console.log(`${receipt.command} ${receipt.status}: ${receipt.artifacts.length} artifacts`);
+    for (const artifact of receipt.artifacts) {
+      const artifactPath = artifact.artifact?.path || '(unknown artifact)';
+      console.log(`[${artifact.status}] ${artifactPath}`);
+      if (artifact.error) console.error(`${artifactPath}: ${artifact.error}`);
+    }
+    if (receipt.error) console.error(receipt.error);
+  }
+  process.exitCode = exitCode;
+}
+
+function writeJsonAtomic(targetInput, value) {
+  const target = path.resolve(targetInput);
+  const directory = path.dirname(target);
+  fs.mkdirSync(directory, { recursive: true });
+  const temporary = path.join(directory, `.${path.basename(target)}.${process.pid}.${Date.now()}.tmp`);
+  try {
+    fs.writeFileSync(temporary, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx', mode: 0o600 });
+    fs.renameSync(temporary, target);
+  } catch (error) {
+    fs.rmSync(temporary, { force: true });
+    throw error;
+  }
+  return target;
+}
+
+function utilityFailure(command, error, json) {
+  const diagnostics = Array.isArray(error?.archifyDiagnostics) && error.archifyDiagnostics.length
+    ? error.archifyDiagnostics
+    : [diagnostic({
+      code: error.code || `${command}/failed`,
+      message: error.message,
+      evidence: error.details || {},
+    })];
+  const receipt = {
+    schemaVersion: 1,
+    ok: false,
+    command,
+    error: error.message,
+    diagnostics,
+  };
+  if (json) console.log(JSON.stringify(receipt, null, 2));
+  else console.error(`${command} failed: ${error.message}`);
+  process.exitCode = 1;
+}
+
+async function commandAuthoringKit(args) {
+  let json = false;
+  let contextJson = false;
+  let expectContract;
+  const positional = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--json') {
+      json = true;
+      continue;
+    }
+    if (arg === '--context-json') {
+      contextJson = true;
+      continue;
+    }
+    if (arg === '--expect-contract') {
+      expectContract = args[index + 1];
+      if (!expectContract || expectContract.startsWith('--')) fail('--expect-contract requires a SHA-256 digest.');
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--expect-contract=')) {
+      expectContract = arg.slice('--expect-contract='.length);
+      if (!expectContract) fail('--expect-contract requires a SHA-256 digest.');
+      continue;
+    }
+    if (arg.startsWith('--')) fail(`Unknown authoring-kit option "${arg}".`);
+    positional.push(arg);
+  }
+  if (positional.length !== 1) fail(usage());
+  try {
+    const { loadAuthoringKit } = await import('../authoring/authoring-kit.mjs');
+    const packet = loadAuthoringKit(positional[0], {
+      skillRoot,
+      contextJson,
+      ...(expectContract ? { expectContract } : {}),
+    });
+    if (json) {
+      console.log(JSON.stringify(packet, null, contextJson ? 0 : 2));
+      return;
+    }
+    console.log(`Archify authoring kit: ${packet.type}`);
+    for (const [role, file] of Object.entries(packet.files)) {
+      console.log(`${role}: ${file.path} (${file.bytes} bytes; sha256 ${file.sha256})`);
+    }
+  } catch (error) {
+    utilityFailure('authoring-kit', error, json);
+  }
+}
+
+async function commandAuthoringRun(args) {
+  const [action, ...actionArgs] = args;
+  const positional = [];
+  const values = {};
+  let json = false;
+  const allowed = action === 'start'
+    ? new Set(['--run-id', '--output', '--repo-root', '--project-index', '--requirements', '--candidate', '--scope-profile', '--expect-contract', '--require-authored-language'])
+    : action === 'finalize'
+      ? new Set(['--candidate', '--evidence', '--validation'])
+      : action === 'stop'
+        ? new Set(['--status', '--reason'])
+      : null;
+  if (!allowed) fail(usage());
+  for (let index = 0; index < actionArgs.length; index += 1) {
+    const arg = actionArgs[index];
+    if (arg === '--json') {
+      json = true;
+      continue;
+    }
+    const option = [...allowed].find((candidate) => arg === candidate || arg.startsWith(`${candidate}=`));
+    if (option) {
+      const inline = arg.startsWith(`${option}=`);
+      const value = inline ? arg.slice(option.length + 1) : actionArgs[index + 1];
+      if (!value || (!inline && value.startsWith('--'))) fail(`${option} requires a value.`);
+      if (!inline) index += 1;
+      values[option] = value;
+      continue;
+    }
+    if (arg.startsWith('--')) fail(`Unknown authoring-run ${action} option "${arg}".`);
+    positional.push(arg);
+  }
+  if (action === 'start' && values['--require-authored-language']
+    && !['en', 'zh-CN'].includes(values['--require-authored-language'])) {
+    fail('Unknown --require-authored-language value. Expected one of: en, zh-CN.');
+  }
+  if (action === 'start' && values['--scope-profile']
+    && !['focused', 'project-overview'].includes(values['--scope-profile'])) {
+    fail('Unknown --scope-profile value. Expected one of: focused, project-overview.');
+  }
+  try {
+    const module = await import('../authoring/authoring-run.mjs');
+    if (action === 'start') {
+      if (positional.length !== 1 || !TYPES.has(positional[0])
+        || !values['--run-id'] || !values['--output']
+        || !values['--repo-root'] || !values['--project-index']
+        || !values['--requirements'] || !values['--candidate']
+        || !values['--scope-profile'] || !values['--expect-contract']) fail(usage());
+      const started = module.startAuthoringRun({
+        run: {
+          id: values['--run-id'],
+          diagramType: positional[0],
+          scopeProfile: values['--scope-profile'],
+          ...(values['--require-authored-language']
+            ? { requiredLanguage: values['--require-authored-language'] }
+            : {}),
+        },
+        outputDirectory: values['--output'],
+        repoRoot: values['--repo-root'],
+        projectIndexPath: values['--project-index'],
+        requirementsPath: values['--requirements'],
+        candidatePath: values['--candidate'],
+        expectContract: values['--expect-contract'],
+      });
+      const receipt = {
+        schemaVersion: 1,
+        ok: true,
+        command: 'authoring-run-start',
+        status: 'started',
+        envelope: started.envelope,
+        paths: started.paths,
+      };
+      if (json) console.log(JSON.stringify(receipt, null, 2));
+      else console.log(`Authoring run started: ${started.paths.envelopePath}`);
+      return;
+    }
+    if (action === 'stop') {
+      if (positional.length !== 1 || !values['--status'] || !values['--reason']
+        || !['failed', 'blocked', 'aborted'].includes(values['--status'])) fail(usage());
+      const stopped = module.terminalizeAuthoringRun({
+        envelopePath: positional[0],
+        status: values['--status'],
+        reason: values['--reason'],
+      });
+      const receipt = {
+        schemaVersion: 1,
+        ok: true,
+        command: 'authoring-run-stop',
+        status: stopped.timing.status,
+        timing: stopped.timing,
+        terminalReceipt: stopped.terminalReceipt,
+        paths: stopped.paths,
+      };
+      if (json) console.log(JSON.stringify(receipt, null, 2));
+      else {
+        console.log(`Authoring run ${stopped.timing.status}: ${stopped.paths.timingPath}`);
+        console.log(`Report: ${stopped.paths.reportPath}`);
+      }
+      return;
+    }
+    if (positional.length !== 1 || !values['--candidate']
+      || !values['--evidence'] || !values['--validation']) fail(usage());
+    const completed = module.finalizeAuthoringRun({
+      envelopePath: positional[0],
+      candidatePath: values['--candidate'],
+      evidencePath: values['--evidence'],
+      validationPath: values['--validation'],
+    });
+    const receipt = {
+      schemaVersion: 1,
+      ok: true,
+      command: 'authoring-run-finalize',
+      status: completed.report.status,
+      timing: completed.timing,
+      handoff: completed.handoff,
+      paths: completed.paths,
+    };
+    if (json) console.log(JSON.stringify(receipt, null, 2));
+    else {
+      console.log(`Authoring run ready: ${completed.paths.handoffPath}`);
+      console.log(`Timing: ${completed.paths.timingPath}`);
+      console.log(`Report: ${completed.paths.reportPath}`);
+    }
+  } catch (error) {
+    utilityFailure(`authoring-run-${action}`, error, json);
+  }
+}
+
+async function commandValidateBatch(args) {
+  const qualityArgs = extractQualityArgs(args);
+  const json = qualityArgs.rest.includes('--json');
+  const unknown = qualityArgs.rest.filter((arg) => arg.startsWith('--') && arg !== '--json');
+  if (unknown.length) fail(`Unknown validate-batch option "${unknown[0]}".`);
+  const positional = qualityArgs.rest.filter((arg) => arg !== '--json');
+  if (positional.length !== 1) fail(usage());
+  try {
+    const manifestPath = path.resolve(positional[0]);
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    if (manifest?.schemaVersion !== 1 || !Array.isArray(manifest.candidates)) {
+      throw new Error('validate-batch requires a schemaVersion 1 manifest with candidates[].');
+    }
+    const directory = path.dirname(manifestPath);
+    const candidates = manifest.candidates.map((candidate) => ({
+      ...candidate,
+      input: path.resolve(directory, candidate.input),
+      ...(candidate.repoRoot ? { repoRoot: path.resolve(directory, candidate.repoRoot) } : {}),
+      ...(candidate.repairHistory ? { repairHistory: path.resolve(directory, candidate.repairHistory) } : {}),
+    }));
+    const { runCandidatePreflightBatch } = await import('../authoring/candidate-preflight.mjs');
+    const result = await runCandidatePreflightBatch({
+      candidates,
+      skillRoot,
+      quality: qualityArgs.quality || 'showcase',
+    });
+    if (json) console.log(JSON.stringify(result.receipt, null, 2));
+    else console.log(`validate-batch ${result.receipt.status}: ${result.receipt.candidates.filter((candidate) => candidate.ok).length}/${result.receipt.candidates.length}`);
+    if (result.exitCode !== 0) process.exitCode = result.exitCode;
+  } catch (error) {
+    utilityFailure('validate-batch', error, json);
+  }
+}
+
+function utilityOptions(args, { allowRevision = false, allowRepoRoot = false, allowProjectIndex = false } = {}) {
+  const positional = [];
+  let json = false;
+  let output;
+  let revision;
+  let repoRoot;
+  let projectIndex;
+  const valueOptions = new Set([
+    '--output',
+    ...(allowRevision ? ['--revision'] : []),
+    ...(allowRepoRoot ? ['--repo-root'] : []),
+    ...(allowProjectIndex ? ['--project-index'] : []),
+  ]);
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--json') {
+      json = true;
+      continue;
+    }
+    if (valueOptions.has(arg)) {
+      const value = args[index + 1];
+      if (!value || value.startsWith('--')) fail(`${arg} requires a value.`);
+      if (arg === '--output') output = value;
+      if (arg === '--revision') revision = value;
+      if (arg === '--repo-root') repoRoot = path.resolve(value);
+      if (arg === '--project-index') projectIndex = path.resolve(value);
+      index += 1;
+      continue;
+    }
+    const matched = [...valueOptions].find((option) => arg.startsWith(`${option}=`));
+    if (matched) {
+      const value = arg.slice(matched.length + 1);
+      if (!value) fail(`${matched} requires a value.`);
+      if (matched === '--output') output = value;
+      if (matched === '--revision') revision = value;
+      if (matched === '--repo-root') repoRoot = path.resolve(value);
+      if (matched === '--project-index') projectIndex = path.resolve(value);
+      continue;
+    }
+    if (arg.startsWith('--')) fail(`Unknown option "${arg}".`);
+    positional.push(arg);
+  }
+  return { positional, json, output, revision, repoRoot, projectIndex };
+}
+
+async function commandProjectIndex(args) {
+  if (args[0] === 'source-search') {
+    const searchArgs = args.slice(1);
+    const positional = [];
+    const terms = [];
+    const paths = [];
+    let contextLines = 2;
+    let maxResults = 20;
+    let output;
+    let json = false;
+    for (let index = 0; index < searchArgs.length; index += 1) {
+      const arg = searchArgs[index];
+      if (arg === '--json') {
+        json = true;
+        continue;
+      }
+      const matchedValueOption = ['--term', '--path', '--context', '--context-lines', '--max-results', '--output']
+        .find((option) => arg === option || arg.startsWith(`${option}=`));
+      if (matchedValueOption) {
+        const inline = arg.startsWith(`${matchedValueOption}=`);
+        const value = inline ? arg.slice(matchedValueOption.length + 1) : searchArgs[index + 1];
+        if (!value || (!inline && value.startsWith('--'))) fail(`${matchedValueOption} requires a value.`);
+        if (!inline) index += 1;
+        if (matchedValueOption === '--term') terms.push(value);
+        else if (matchedValueOption === '--path') paths.push(value);
+        else if (matchedValueOption === '--context' || matchedValueOption === '--context-lines') contextLines = Number(value);
+        else if (matchedValueOption === '--max-results') maxResults = Number(value);
+        else output = value;
+        continue;
+      }
+      if (arg.startsWith('--')) fail(`Unknown project-index source-search option "${arg}".`);
+      positional.push(arg);
+    }
+    if (positional.length !== 1) fail(usage());
+    try {
+      const { searchProjectSource } = await import('../evidence/project-index.mjs');
+      const projectIndex = JSON.parse(fs.readFileSync(path.resolve(positional[0]), 'utf8'));
+      const receipt = searchProjectSource(projectIndex, {
+        terms,
+        paths,
+        contextLines,
+        maxResults,
+      });
+      const outputPath = output ? writeJsonAtomic(output, receipt) : null;
+      if (json || !outputPath) console.log(JSON.stringify(receipt, null, 2));
+      else console.log(`Project source search ready: ${outputPath} (${receipt.returned} matches)`);
+    } catch (error) {
+      utilityFailure('project-index-source-search', error, json);
+    }
+    return;
+  }
+  if (args[0] === 'inspect') {
+    const inspectArgs = args.slice(1);
+    const positional = [];
+    const ranges = [];
+    let maxResults = 20;
+    let output;
+    let json = false;
+    for (let index = 0; index < inspectArgs.length; index += 1) {
+      const arg = inspectArgs[index];
+      if (arg === '--json') {
+        json = true;
+        continue;
+      }
+      const matchedValueOption = ['--range', '--max-results', '--output']
+        .find((option) => arg === option || arg.startsWith(`${option}=`));
+      if (matchedValueOption) {
+        const inline = arg.startsWith(`${matchedValueOption}=`);
+        const value = inline ? arg.slice(matchedValueOption.length + 1) : inspectArgs[index + 1];
+        if (!value || (!inline && value.startsWith('--'))) fail(`${matchedValueOption} requires a value.`);
+        if (!inline) index += 1;
+        if (matchedValueOption === '--range') {
+          const match = value.match(/^(.+):([1-9]\d*)-([1-9]\d*)$/);
+          if (!match) fail('--range requires path:start-end with positive line numbers.');
+          ranges.push({ path: match[1], line: Number(match[2]), endLine: Number(match[3]) });
+        } else if (matchedValueOption === '--max-results') maxResults = Number(value);
+        else output = value;
+        continue;
+      }
+      if (arg.startsWith('--')) fail(`Unknown project-index inspect option "${arg}".`);
+      positional.push(arg);
+    }
+    if (positional.length !== 1) fail(usage());
+    try {
+      const { inspectProjectSource } = await import('../evidence/project-index.mjs');
+      const projectIndex = JSON.parse(fs.readFileSync(path.resolve(positional[0]), 'utf8'));
+      const receipt = inspectProjectSource(projectIndex, { ranges, maxResults });
+      const outputPath = output ? writeJsonAtomic(output, receipt) : null;
+      if (json || !outputPath) console.log(JSON.stringify(receipt, null, 2));
+      else console.log(`Project source inspection ready: ${outputPath} (${receipt.returned} ranges)`);
+    } catch (error) {
+      utilityFailure('project-index-source-inspect', error, json);
+    }
+    return;
+  }
+  if (args[0] === 'query') {
+    const queryArgs = args.slice(1);
+    const positional = [];
+    const criteria = { symbols: [], imports: [], paths: [], languages: [], packages: [] };
+    let json = false;
+    let output;
+    let maxResults = 20;
+    const optionMap = new Map([
+      ['--symbol', 'symbols'],
+      ['--symbols', 'symbols'],
+      ['--import', 'imports'],
+      ['--imports', 'imports'],
+      ['--path', 'paths'],
+      ['--language', 'languages'],
+      ['--package', 'packages'],
+    ]);
+    for (let index = 0; index < queryArgs.length; index += 1) {
+      const arg = queryArgs[index];
+      if (arg === '--json') {
+        json = true;
+        continue;
+      }
+      const mapped = optionMap.get(arg);
+      if (mapped) {
+        const value = queryArgs[index + 1];
+        if (!value || value.startsWith('--')) fail(`${arg} requires a value.`);
+        criteria[mapped].push(...value.split(',').map((entry) => entry.trim()).filter(Boolean));
+        index += 1;
+        continue;
+      }
+      if (arg === '--max-results' || arg === '--output') {
+        const value = queryArgs[index + 1];
+        if (!value || value.startsWith('--')) fail(`${arg} requires a value.`);
+        if (arg === '--max-results') maxResults = Number(value);
+        else output = value;
+        index += 1;
+        continue;
+      }
+      if (arg.startsWith('--')) fail(`Unknown project-index query option "${arg}".`);
+      positional.push(arg);
+    }
+    if (positional.length !== 1) fail(usage());
+    try {
+      const { queryProjectIndex } = await import('../evidence/project-index.mjs');
+      const projectIndex = JSON.parse(fs.readFileSync(path.resolve(positional[0]), 'utf8'));
+      const receipt = queryProjectIndex(projectIndex, { ...criteria, maxResults });
+      const outputPath = output ? writeJsonAtomic(output, receipt) : null;
+      if (json || !outputPath) console.log(JSON.stringify(receipt, null, 2));
+      else console.log(`Project index query ready: ${outputPath} (${receipt.summary.returned} results)`);
+    } catch (error) {
+      utilityFailure('project-index-query', error, json);
+    }
+    return;
+  }
+  const options = utilityOptions(args, { allowRevision: true });
+  if (options.positional.length !== 1) fail(usage());
+  try {
+    const { buildProjectIndex } = await import('../evidence/project-index.mjs');
+    const index = buildProjectIndex({
+      repoRoot: options.positional[0],
+      revision: options.revision || 'HEAD',
+    });
+    const output = options.output ? writeJsonAtomic(options.output, index) : null;
+    if (options.json || !output) {
+      console.log(JSON.stringify(index, null, 2));
+      return;
+    }
+    console.log(`Project index ready: ${output}`);
+    console.log(`${index.files.length} files; ${index.analysis.filesAnalyzed} analyzed; revision ${index.repository.revision}`);
+  } catch (error) {
+    utilityFailure('project-index', error, options.json);
+  }
+}
+
+async function commandEvidenceLedger(args) {
+  const [action, ...rest] = args;
+  const options = utilityOptions(rest, {
+    allowRepoRoot: action === 'verify',
+    allowProjectIndex: action === 'verify',
+  });
+  let module;
+  try {
+    module = await import('../evidence/project-index.mjs');
+  } catch (error) {
+    utilityFailure('evidence-ledger', error, options.json);
+    return;
+  }
+
+  try {
+    let result;
+    if (action === 'create' || action === 'hydrate') {
+      if (options.positional.length !== 2 || options.repoRoot) fail(usage());
+      const index = JSON.parse(fs.readFileSync(path.resolve(options.positional[0]), 'utf8'));
+      const selections = JSON.parse(fs.readFileSync(path.resolve(options.positional[1]), 'utf8'));
+      result = module.createEvidenceLedger(index, selections);
+    } else if (action === 'verify') {
+      if (options.positional.length !== 1 || !options.repoRoot || !options.projectIndex) fail(usage());
+      const ledger = JSON.parse(fs.readFileSync(path.resolve(options.positional[0]), 'utf8'));
+      const projectIndex = JSON.parse(fs.readFileSync(options.projectIndex, 'utf8'));
+      result = module.verifyEvidenceLedger(ledger, { repoRoot: options.repoRoot, projectIndex });
+    } else {
+      fail(usage());
+    }
+    const output = options.output ? writeJsonAtomic(options.output, result) : null;
+    if (options.json || !output) console.log(JSON.stringify(result, null, 2));
+    else console.log(`Evidence ledger ${action} complete: ${output}`);
+  } catch (error) {
+    utilityFailure('evidence-ledger', error, options.json);
+  }
+}
+
+async function commandRunSuite(args) {
+  const { main } = await import('./run-suite.mjs');
+  const exitCode = await main(args);
+  if (exitCode !== 0) process.exitCode = exitCode;
 }
 
 function commandExamples() {
@@ -1244,6 +2051,24 @@ async function commandDoctor() {
     label: 'Visual-check runtime',
     ok: fs.existsSync(visualCheckRuntime),
     missing: fs.existsSync(visualCheckRuntime) ? 0 : 1,
+  });
+
+  const optimizationRuntimes = [
+    path.join(skillRoot, 'authoring', 'authoring-kit.mjs'),
+    path.join(skillRoot, 'authoring', 'authoring-run.mjs'),
+    path.join(skillRoot, 'authoring', 'candidate-preflight.mjs'),
+    path.join(skillRoot, 'authoring', 'repair-plan.mjs'),
+    path.join(skillRoot, 'authoring', 'quality-contract.mjs'),
+    path.join(skillRoot, 'evidence', 'project-index.mjs'),
+    path.join(skillRoot, 'orchestration', 'suite-runner.mjs'),
+    path.join(skillRoot, 'orchestration', 'run-recorder.mjs'),
+    path.join(skillRoot, 'bin', 'run-suite.mjs'),
+  ];
+  const optimizationRuntimesMissing = optimizationRuntimes.filter((file) => !fs.existsSync(file)).length;
+  checks.push({
+    label: 'Authoring, evidence, and suite orchestration runtimes',
+    ok: optimizationRuntimesMissing === 0,
+    missing: optimizationRuntimesMissing,
   });
 
   const outputPathRuntime = path.join(skillRoot, 'renderers/shared/output-path.mjs');
@@ -1474,6 +2299,24 @@ function commandDemo(args) {
   console.log(`\nDemo ready: ${output}`);
   console.log('Next: open the HTML in your browser, then render your own diagram:');
   console.log('  archify render architecture <input.json> <output.html>');
+}
+
+function ephemeralPreflightReceipt(receipt) {
+  return {
+    ...receipt,
+    artifact: {
+      ...receipt.artifact,
+      ephemeral: true,
+    },
+    captures: {
+      ...receipt.captures,
+      retained: false,
+    },
+    sidecars: {
+      ...receipt.sidecars,
+      retained: false,
+    },
+  };
 }
 
 function migrationPathDiagnostics(error, sourcePath, destinationPath) {
@@ -1805,45 +2648,96 @@ async function commandMigrate(args) {
   }
 }
 
-function commandValidate(args) {
+async function commandValidate(args) {
   const qualityArgs = extractQualityArgs(args);
   const repoArgs = extractRepoRootArgs(qualityArgs.rest);
-  args = repoArgs.rest;
+  const repairHistoryArgs = extractPathOption(repoArgs.rest, '--repair-history');
+  const repairModeArgs = extractEnumOption(repairHistoryArgs.rest, '--repair-mode', ['focused', 'structural-reflow']);
+  const languageArgs = extractEnumOption(repairModeArgs.rest, '--require-authored-language', ['en', 'zh-CN']);
+  args = languageArgs.rest;
   const quality = qualityArgs.quality;
   const repoRoot = repoArgs.repoRoot;
-  const knownOptions = new Set(['--json', '--layout-json']);
-  const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
-  if (unknown.length) fail(`Unknown validate option "${unknown[0]}".`);
+  const repairHistory = repairHistoryArgs.value;
+  const repairMode = repairModeArgs.value || 'focused';
   const json = args.includes('--json');
   const layoutJson = args.includes('--layout-json');
+  const preflight = args.includes('--preflight');
+  const knownOptions = new Set(['--json', '--layout-json', '--preflight']);
+  const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
+  if (unknown.length) fail(`Unknown validate option "${unknown[0]}".`);
+  if (layoutJson && preflight) fail('--layout-json and --preflight cannot be combined.');
   const rest = args.filter((arg) => !knownOptions.has(arg));
   const [type, input] = rest;
   if (!type || !input || rest.length !== 2) fail(usage());
   assertEvidenceType(type, repoRoot);
   const renderer = rendererPath(type);
+  const inputPath = path.resolve(input);
+  let specification;
+  let diagram;
+  try {
+    specification = fs.readFileSync(inputPath);
+    diagram = JSON.parse(specification.toString('utf8'));
+  } catch (error) {
+    await reportValidateFailure({
+      json,
+      stage: 'input',
+      type,
+      input: inputPath,
+      error: `Could not read validation input "${inputPath}": ${error.message}`,
+      diagnostics: [inputDiagnostic(error, inputPath)],
+      repairHistory,
+      repairMode,
+    });
+    return;
+  }
+  const specificationReceipt = {
+    type,
+    bytes: specification.byteLength,
+    sha256: createHash('sha256').update(specification).digest('hex'),
+  };
+  let languageReceipt = null;
+
+  if (languageArgs.value) {
+    const assessment = await authoredLanguageAssessment(diagram, languageArgs.value);
+    languageReceipt = assessment.receipt;
+    if (assessment.diagnostics.length) {
+      await reportValidateFailure({
+        json,
+        stage: 'language',
+        type,
+        input: inputPath,
+        error: 'Authored language validation failed.',
+        diagnostics: assessment.diagnostics,
+        repairHistory,
+        repairMode,
+      });
+      return;
+    }
+  }
 
   if (layoutJson) {
-    if (!['architecture', 'workflow'].includes(type)) {
-      fail('--layout-json is currently supported for architecture and workflow diagrams only.');
-    }
-    const result = runNode([renderer, input, '/dev/null', '--layout-json'], {
+    const inspectOutput = path.join(os.tmpdir(), `archify-inspect-${process.pid}-${type}.html`);
+    const result = runNode([renderer, input, inspectOutput, '--layout-json'], {
       stdio: 'pipe',
       env: rendererEnv(quality, repoRoot, true),
     });
     if (result.status !== 0) {
       try {
-        const receipt = JSON.parse(result.stdout);
-        if (receipt?.contract && Array.isArray(receipt.diagnostics)) {
-          process.stdout.write(`${JSON.stringify(receipt, null, 2)}\n`);
+        const report = JSON.parse((result.stdout || '').trim());
+        if ((report?.schemaVersion === 1
+          && report?.type === type
+          && report?.validation?.status === 'fail'
+          && report?.resolved)
+          || (report?.contract && Array.isArray(report?.diagnostics))) {
+          process.stdout.write(result.stdout);
           process.exitCode = result.status ?? 1;
           return;
         }
       } catch {
-        // Fall through to the renderer failure contract when no compiler
-        // receipt was produced (for example, input JSON could not be read).
+        // Failures before the resolved-layout seam use renderer diagnostics.
       }
       const failure = rendererFailure(result);
-      reportValidateFailure({
+      await reportValidateFailure({
         json,
         stage: failure.diagnostics.some((entry) => entry.code.startsWith('input/')) ? 'input' : 'render',
         type,
@@ -1851,6 +2745,8 @@ function commandValidate(args) {
         error: failure.error,
         diagnostics: failure.diagnostics,
         status: result.status ?? 1,
+        repairHistory,
+        repairMode,
       });
       return;
     }
@@ -1860,16 +2756,18 @@ function commandValidate(args) {
 
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-validate-'));
   const out = path.join(tmp, `${type}.html`);
+  const frozenInput = path.join(tmp, 'specification.snapshot.json');
   let exitCode = 0;
 
   try {
-    const render = runNode([renderer, input, out], {
+    fs.writeFileSync(frozenInput, specification, { flag: 'wx', mode: 0o400 });
+    const render = runNode([renderer, frozenInput, out], {
       stdio: 'pipe',
       env: rendererEnv(quality, repoRoot, true),
     });
     if (render.status !== 0) {
       const failure = rendererFailure(render);
-      reportValidateFailure({
+      await reportValidateFailure({
         json,
         stage: failure.diagnostics.some((entry) => entry.code.startsWith('input/')) ? 'input' : 'render',
         type,
@@ -1877,6 +2775,8 @@ function commandValidate(args) {
         error: failure.error,
         diagnostics: failure.diagnostics,
         status: render.status ?? 1,
+        repairHistory,
+        repairMode,
       });
       exitCode = render.status ?? 1;
     } else {
@@ -1889,7 +2789,7 @@ function commandValidate(args) {
         } catch {
           checker = { ok: false, diagnostic: 'Artifact checker failed without a parseable receipt.' };
         }
-        reportValidateFailure({
+        await reportValidateFailure({
           json,
           stage: 'check',
           type,
@@ -1898,27 +2798,64 @@ function commandValidate(args) {
           diagnostics: checkerDiagnostics(checker),
           checker,
           status: check.status ?? 1,
+          repairHistory,
+          repairMode,
         });
         exitCode = check.status ?? 1;
       } else {
         const result = JSON.parse(check.stdout);
-        const engineeringProfile = engineeringProfileFromArtifact(fs.readFileSync(out));
-        if (json) {
+        const artifact = fs.readFileSync(out);
+        const artifactReceipt = {
+          bytes: artifact.byteLength,
+          sha256: createHash('sha256').update(artifact).digest('hex'),
+          ephemeral: true,
+        };
+        const engineeringProfile = engineeringProfileFromArtifact(artifact);
+        let preflightReceipt = null;
+        if (preflight) {
+          const { runVisualPreflight } = await import('./visual-check.mjs');
+          const browserResult = await runVisualPreflight({ artifactPath: out });
+          preflightReceipt = ephemeralPreflightReceipt(browserResult.receipt);
+          if (browserResult.exitCode !== 0) {
+            await reportValidateFailure({
+              json,
+              stage: 'preflight',
+              type,
+              input: path.resolve(input),
+              error: browserResult.receipt.error || `Viewport preflight ${browserResult.receipt.status}.`,
+              diagnostics: browserResult.receipt.diagnostics || [],
+              checker: result,
+              preflight: preflightReceipt,
+              status: browserResult.exitCode,
+              repairHistory,
+              repairMode,
+            });
+            exitCode = browserResult.exitCode;
+          }
+        }
+        if (exitCode === 0 && json) {
           console.log(JSON.stringify({
             schemaVersion: 1,
             ok: true,
             command: 'validate',
             type,
-            input: path.resolve(input),
+            input: inputPath,
+            specification: specificationReceipt,
+            artifact: artifactReceipt,
             checks: result.checks,
             composition: result.composition,
+            ...(languageReceipt ? { authoredLanguage: languageReceipt } : {}),
             ...(engineeringProfile ? { engineeringProfile } : {}),
+            ...(preflightReceipt ? { preflight: preflightReceipt } : {}),
           }, null, 2));
-        } else {
+        } else if (exitCode === 0) {
           const engineering = engineeringProfile
             ? `; engineering ${engineeringProfile}: pass`
             : '';
-          console.log(`ok ${type} ${path.resolve(input)} (${result.checks.length} artifact checks; composition ${result.composition.profile}: ${result.composition.summary.errors} errors, ${result.composition.summary.warnings} warnings${engineering})`);
+          const viewport = preflightReceipt
+            ? `; viewport preflight ${preflightReceipt.containment.viewports.filter((entry) => entry.ok).length}/${preflightReceipt.containment.viewports.length}`
+            : '';
+          console.log(`ok ${type} ${path.resolve(input)} (${result.checks.length} artifact checks; composition ${result.composition.profile}: ${result.composition.summary.errors} errors, ${result.composition.summary.warnings} warnings${engineering}${viewport})`);
         }
       }
     }
@@ -1951,22 +2888,37 @@ switch (command) {
     await commandPreview(args);
     break;
   case 'validate':
-    commandValidate(args);
+    await commandValidate(args);
+    break;
+  case 'validate-batch':
+    await commandValidateBatch(args);
     break;
   case 'migrate':
     await commandMigrate(args);
     break;
   case 'inspect':
-    if (args[0] !== 'architecture') {
-      fail('inspect is currently supported for architecture diagrams only.');
-    }
-    commandValidate([...args, '--layout-json']);
+    await commandValidate([...args, '--layout-json']);
     break;
   case 'check':
     commandCheck(args);
     break;
   case 'visual-check':
     await commandVisualCheck(args);
+    break;
+  case 'authoring-kit':
+    await commandAuthoringKit(args);
+    break;
+  case 'authoring-run':
+    await commandAuthoringRun(args);
+    break;
+  case 'project-index':
+    await commandProjectIndex(args);
+    break;
+  case 'evidence-ledger':
+    await commandEvidenceLedger(args);
+    break;
+  case 'run-suite':
+    await commandRunSuite(args);
     break;
   case 'guide':
     await commandGuide(args);

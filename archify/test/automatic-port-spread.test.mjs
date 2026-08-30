@@ -221,7 +221,7 @@ test('architecture: a singly spread near-aligned relationship keeps the bridge w
   assert.notEqual(points[0][0], points.at(-1)[0]);
 });
 
-test('architecture: single and explicitly positioned relationships keep legacy anchors', () => {
+test('architecture: explicit routes keep anchors while label placement still permits port spread', () => {
   const doc = fanOutArchitecture([
     { id: 'single', from: 'hub', to: 'middle' },
     { id: 'via', from: 'hub', to: 'upper', via: [[300, 310], [300, 130]] },
@@ -230,10 +230,54 @@ test('architecture: single and explicitly positioned relationships keep legacy a
   ]);
   const html = render('architecture', doc);
 
-  assert.deepEqual(connectionPoints(html, 'single'), [[220, 310], [500, 310]]);
+  assert.deepEqual(connectionPoints(html, 'single'), [[220, 317], [500, 317]]);
   assert.deepEqual(connectionPoints(html, 'via'), [[220, 310], [300, 310], [300, 130], [500, 130]]);
   assert.deepEqual(connectionPoints(html, 'fixed-route'), [[220, 310], [360, 310], [360, 490], [500, 490]]);
-  assert.deepEqual(connectionPoints(html, 'fixed-label'), [[220, 310], [360, 310], [360, 130], [500, 130]]);
+  assert.deepEqual(connectionPoints(html, 'fixed-label'), [[220, 303], [360, 303], [360, 130], [500, 130]]);
+});
+
+test('lifecycle: label placement does not collapse automatic hub ports or reverse one corridor', () => {
+  const doc = {
+    schema_version: 1,
+    diagram_type: 'lifecycle',
+    meta: { title: 'Lifecycle hub port regression', viewBox: [1080, 600] },
+    lanes: [
+      { id: 'main', label: 'Main' },
+      { id: 'terminal', label: 'Terminal' },
+      { id: 'tool', label: 'Tool' },
+      { id: 'recovery', label: 'Recovery' },
+    ],
+    states: [
+      { id: 'model-response', type: 'decision', label: 'Model response', lane: 'main', col: 2, width: 136 },
+      { id: 'completed', type: 'success', label: 'Completed', lane: 'main', col: 4 },
+      { id: 'failed', type: 'failure', label: 'Failed', lane: 'terminal', col: 0, yOffset: -30 },
+      { id: 'aborted', type: 'failure', label: 'Aborted', lane: 'terminal', col: 1, yOffset: -30 },
+      { id: 'tool-round', type: 'active', label: 'Tool round', lane: 'tool', col: 2, width: 160 },
+      { id: 'retryable', type: 'failure', label: 'Retryable', lane: 'recovery', col: 2, yOffset: 96 },
+    ],
+    transitions: [
+      { id: 'settle', from: 'model-response', to: 'completed', route: 'straight' },
+      { id: 'fail', from: 'model-response', to: 'failed', variant: 'security' },
+      { id: 'abort', from: 'model-response', to: 'aborted', variant: 'security' },
+      { id: 'dispatch', from: 'model-response', to: 'tool-round' },
+      { id: 'resume', from: 'tool-round', to: 'model-response', label: 'tool result', labelAt: [850, 228] },
+      { id: 'mark-retryable', from: 'tool-round', to: 'retryable', variant: 'security' },
+      { id: 'retry', from: 'retryable', to: 'model-response', label: 'next turn', labelAt: [850, 360] },
+    ],
+  };
+  const html = render('lifecycle', doc);
+  const incidentIds = ['settle', 'fail', 'abort', 'dispatch', 'resume', 'retry'];
+  const modelPorts = incidentIds.map((id) => {
+    const points = connectionPoints(html, id);
+    const transition = doc.transitions.find((entry) => entry.id === id);
+    return transition.from === 'model-response' ? points[0] : points.at(-1);
+  });
+
+  assert.equal(new Set(modelPorts.map((point) => point.join(','))).size, modelPorts.length);
+  assert.notDeepEqual(
+    connectionPoints(html, 'dispatch').slice(-2),
+    [...connectionPoints(html, 'resume').slice(0, 2)].reverse(),
+  );
 });
 
 test('architecture: an unspread near-aligned connection shares one horizontal axis', () => {
@@ -362,7 +406,8 @@ test('skill and READMEs describe automatic port spread as bounded default behavi
   const skill = fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
   assert.match(skill, /Automatic Port Spread is a default renderer behavior/);
   assert.match(skill, /single relationship|single relationships/);
-  assert.match(skill, /explicit `via`.*`channelX`.*`channelY`.*`labelAt`/);
+  assert.match(skill, /explicit `via`.*`channelX`.*`channelY`.*non-`auto` routes/);
+  assert.match(skill, /`labelAt` controls only label placement/);
   assert.match(skill, /facing automatic ports \(`left`\/`right` or `top`\/`bottom`\).*one shared axis/);
 
   const authoringContract = fs.readFileSync(path.join(skillRoot, 'references/authoring-contract.md'), 'utf8');

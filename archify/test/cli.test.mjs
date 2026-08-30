@@ -77,6 +77,12 @@ test('cli: help lists commands and diagram types', () => {
   assert.match(result.stdout, /archify deliver <type>/);
   assert.match(result.stdout, /archify preview <type>/);
   assert.match(result.stdout, /archify visual-check <output\.html>/);
+  assert.match(result.stdout, /archify authoring-kit <type>/);
+  assert.match(result.stdout, /archify authoring-run start <type>/);
+  assert.match(result.stdout, /archify authoring-run finalize <authoring-run\.json>/);
+  assert.match(result.stdout, /archify project-index source-search <index\.json>/);
+  assert.match(result.stdout, /archify project-index inspect <index\.json>/);
+  assert.match(result.stdout, /archify run-suite --manifest/);
   assert.match(result.stdout, /--open/);
   assert.match(result.stdout, /--repo-root path \(architecture only\)/);
   assert.match(result.stdout, /archify guide \[scenario or question\]/);
@@ -96,6 +102,7 @@ test('cli: doctor reports a complete installation is ready', () => {
   assert.match(result.stdout, /\[ok\] Progressive authoring references/);
   assert.match(result.stdout, /\[ok\] Architecture compare runtime and proof fixtures/);
   assert.match(result.stdout, /\[ok\] Standalone schema validators/);
+  assert.match(result.stdout, /\[ok\] Authoring, evidence, and suite orchestration runtimes/);
   assert.match(result.stdout, /\[ok\] architecture renderer, schema, and example/);
   assert.match(result.stdout, /\[ok\] lifecycle renderer, schema, and example/);
   assert.match(result.stdout, /Archify is ready\./);
@@ -740,12 +747,50 @@ test('cli: inspect emits architecture layout json', () => {
   assert.ok(parsed.connections.length >= 1);
 });
 
-test('cli: inspect remains architecture-only while workflow uses validate --layout-json', () => {
-  const input = path.join(skillRoot, 'examples', 'agent-tool-call.workflow.json');
-  const result = run(['inspect', 'workflow', input]);
-  assert.equal(result.status, 2);
-  assert.match(result.stderr, /inspect is currently supported for architecture diagrams only/);
-  assert.equal(result.stdout, '');
+test('cli: inspect emits the unified resolved-layout contract for architecture, sequence, dataflow, and lifecycle', () => {
+  const examples = {
+    architecture: ['web-app.architecture.json', 'components'],
+    sequence: ['cache-miss-request.sequence.json', 'participants'],
+    dataflow: ['product-analytics.dataflow.json', 'nodes'],
+    lifecycle: ['agent-run.lifecycle.json', 'states'],
+  };
+  for (const [type, [example, entityKey]] of Object.entries(examples)) {
+    const result = run(['inspect', type, path.join(skillRoot, 'examples', example)]);
+    assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
+    const parsed = JSON.parse(result.stdout);
+    assert.equal(parsed.ok, true);
+    assert.equal(parsed.type, type);
+    assert.equal(parsed.validation.status, 'pass');
+    assert.ok(parsed.resolved[entityKey].length > 0);
+    assert.ok(Array.isArray(parsed.resolved.relationships));
+    assert.ok(Array.isArray(parsed.resolved.labels));
+  }
+});
+
+test('cli: inspect workflow emits the stable compiler receipt', () => {
+  const result = run(['inspect', 'workflow', path.join(skillRoot, 'examples', 'agent-tool-call.workflow.json')]);
+  assert.equal(result.status, 0, result.stderr);
+  const parsed = JSON.parse(result.stdout);
+  assert.equal(parsed.contract, 'readable-v2');
+  assert.ok(parsed.nodes.length > 0);
+  assert.ok(parsed.edges.length > 0);
+  assert.deepEqual(parsed.diagnostics, []);
+});
+
+test('cli: inspect preserves partial resolved geometry on a validation failure', () => {
+  const input = path.join(tmp, 'overlapping.dataflow.json');
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/product-analytics.dataflow.json'), 'utf8'));
+  source.nodes.push({ ...source.nodes[0], id: 'overlapping-copy' });
+  fs.writeFileSync(input, JSON.stringify(source));
+
+  const result = run(['inspect', 'dataflow', input]);
+  assert.notEqual(result.status, 0);
+  assert.equal(result.stderr, '');
+  const parsed = JSON.parse(result.stdout);
+  assert.equal(parsed.ok, false);
+  assert.equal(parsed.validation.status, 'fail');
+  assert.ok(parsed.validation.diagnostics.length > 0);
+  assert.ok(parsed.resolved.nodes.length > 0);
 });
 
 test('cli: validate returns renderer errors for bad input', () => {

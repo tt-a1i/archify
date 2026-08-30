@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://archify.dev/schemas/matched-ab/machine-receipt.v1.json",
+  "title": "Archify matched A/B machine benchmark receipt",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "createdAt",
+    "manifest",
+    "provenance",
+    "schedule",
+    "runs",
+    "summary",
+    "quality"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "archify.matched-ab.receipt.v1" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "manifest": {
+      "type": "object",
+      "required": ["schemaVersion", "benchmarkId"],
+      "properties": {
+        "schemaVersion": { "const": "archify.matched-ab.manifest.v1" },
+        "benchmarkId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["manifestSha256", "fixedConfigSha256", "runtime", "sources"],
+      "properties": {
+        "manifestSha256": { "$ref": "#/$defs/digest" },
+        "fixedConfigSha256": { "$ref": "#/$defs/digest" },
+        "runtime": {
+          "type": "object",
+          "required": ["nodeVersion", "platform", "arch", "execPath"]
+        },
+        "sources": {
+          "type": "object",
+          "required": ["A", "B"],
+          "properties": {
+            "A": { "$ref": "#/$defs/source" },
+            "B": { "$ref": "#/$defs/source" }
+          }
+        }
+      }
+    },
+    "schedule": {
+      "type": "object",
+      "required": ["warmupPerVariant", "rounds", "order"],
+      "properties": {
+        "warmupPerVariant": { "type": "integer", "minimum": 0 },
+        "rounds": { "type": "integer", "minimum": 1 },
+        "order": { "const": "ABBA" }
+      }
+    },
+    "runs": {
+      "type": "array",
+      "minItems": 4,
+      "items": { "$ref": "#/$defs/run" }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["A", "B", "paired"],
+      "properties": {
+        "A": { "$ref": "#/$defs/variantSummary" },
+        "B": { "$ref": "#/$defs/variantSummary" },
+        "paired": {
+          "type": "object",
+          "required": [
+            "samples",
+            "medianDeltaMs",
+            "p95DeltaMs",
+            "medianDeltaPercent",
+            "p95DeltaPercent"
+          ]
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "required": ["ok", "semanticCoverage"],
+      "properties": {
+        "ok": { "const": true },
+        "semanticCoverage": { "$ref": "#/$defs/semanticCoverage" }
+      }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "source": {
+      "type": "object",
+      "required": ["label", "cwd", "revision"],
+      "properties": {
+        "label": { "type": "string" },
+        "cwd": { "type": "string" },
+        "revision": { "type": "string", "pattern": "^[a-f0-9]{40,64}$" }
+      }
+    },
+    "run": {
+      "type": "object",
+      "required": [
+        "phase",
+        "round",
+        "pair",
+        "position",
+        "variant",
+        "durationMs",
+        "observationSha256",
+        "semanticCoverage"
+      ],
+      "properties": {
+        "phase": { "enum": ["warmup", "measure"] },
+        "round": { "type": "integer", "minimum": 1 },
+        "pair": { "type": "integer", "minimum": 0 },
+        "position": { "type": "integer", "minimum": 1 },
+        "variant": { "enum": ["A", "B"] },
+        "durationMs": { "type": "number", "minimum": 0 },
+        "observationSha256": { "$ref": "#/$defs/digest" },
+        "semanticCoverage": { "$ref": "#/$defs/semanticCoverage" }
+      }
+    },
+    "variantSummary": {
+      "type": "object",
+      "required": ["samples", "medianMs", "p95Ms"],
+      "properties": {
+        "samples": { "type": "integer", "minimum": 1 },
+        "medianMs": { "type": "number", "minimum": 0 },
+        "p95Ms": { "type": "number", "minimum": 0 }
+      }
+    },
+    "semanticCoverage": {
+      "type": "object",
+      "required": ["facts", "nodes", "messages", "views"],
+      "properties": {
+        "facts": { "$ref": "#/$defs/semanticIds" },
+        "nodes": { "$ref": "#/$defs/semanticIds" },
+        "messages": { "$ref": "#/$defs/semanticIds" },
+        "views": { "$ref": "#/$defs/semanticIds" }
+      }
+    },
+    "semanticIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

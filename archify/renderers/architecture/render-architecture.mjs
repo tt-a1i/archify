@@ -2,8 +2,16 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
-import { componentBox, boundaryBox, connectionPath } from '../shared/layout-report.mjs';
+import {
+  boundaryBox,
+  componentBox,
+  connectionPath,
+  emitResolvedLayoutReport,
+  relationshipLabelBox,
+  resolvedLayoutReport,
+} from '../shared/layout-report.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { relationshipLabelContainmentIssues } from '../shared/viewbox-containment.mjs';
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
@@ -32,6 +40,8 @@ import {
   chosenSide,
   routeHonorsEndpointSides,
   normalizeRoutePoints,
+  markerSafeRoutePoints,
+  markerEndpointSetback,
   polylinePath,
   routePointsValue,
   roundedPath,
@@ -514,6 +524,10 @@ function validateArchitecture() {
     relationCollection: 'connections',
     fromSideFor: (conn) => connectionEndpointSide(conn, 'source'),
     toSideFor: (conn) => connectionEndpointSide(conn, 'target'),
+    endpointFor: (id) => components.get(id),
+    markerSetbackFor: (conn) => markerEndpointSetback({
+      strokeWidth: conn.width || (conn.variant === 'emphasis' ? 1.8 : 1.5),
+    }),
     routeHint: 'keep automatic routing so the renderer can use a side-aware bridge, or set truthful fromSide/toSide with perpendicular via segments',
   }));
   problems.push(...cleanFlowProblems({
@@ -571,6 +585,12 @@ function validateArchitecture() {
     const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
     labelRects.push({ relation: conn, relationIndex: connectionIndex, label: conn.label, x: lx - w / 2, y: ly - 10, width: w, height: 14, lx, ly });
   }
+  problems.push(...relationshipLabelContainmentIssues({
+    labels: labelRects,
+    viewBox,
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+  }));
   for (const rect of labelRects) {
     for (const c of components.values()) {
       if (rectsOverlap(rect, c, -2)) {
@@ -603,13 +623,25 @@ function validateArchitecture() {
   }
 }
 
-function buildLayoutReport() {
+function buildLayoutReport(validation) {
   const labels = [];
-  for (const conn of asArray(arch.connections)) {
+  const legacyLabels = [];
+  for (const [connectionIndex, conn] of asArray(arch.connections).entries()) {
     if (!conn.label || !components.has(conn.from) || !components.has(conn.to)) continue;
     const [lx, ly] = labelPoint(conn, pathFor(conn).points);
     const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
-    labels.push({
+    labels.push(relationshipLabelBox({
+      relation: conn,
+      relationIndex: connectionIndex,
+      label: conn.label,
+      x: lx - w / 2,
+      y: ly - 10,
+      width: w,
+      height: 14,
+      lx,
+      ly,
+    }));
+    legacyLabels.push({
       text: conn.label,
       x: Math.round(lx - w / 2),
       y: Math.round(ly - 10),
@@ -618,22 +650,74 @@ function buildLayoutReport() {
       labelAt: [Math.round(lx), Math.round(ly)],
     });
   }
-  return {
-    ok: true,
-    diagram_type: 'architecture',
-    layout: grid ? { mode: 'grid', ...grid } : { mode: 'free' },
-    viewBox,
-    components: [...components.values()].map(componentBox),
-    boundaries: boundaries.map(boundaryBox),
-    connections: asArray(arch.connections)
-      .filter((conn) => components.has(conn.from) && components.has(conn.to))
-      .map((conn) => {
+  const componentRecords = [...components.values()].map(componentBox);
+  const boundaryRecords = boundaries.map(boundaryBox);
+  const connectionRecords = asArray(arch.connections)
+    .map((conn, connectionIndex) => ({ conn, connectionIndex }))
+    .filter(({ conn }) => components.has(conn.from) && components.has(conn.to))
+    .map(({ conn, connectionIndex }) => {
         const routed = pathFor(conn);
         const labelAt = conn.label ? labelPoint(conn, routed.points) : null;
-        return connectionPath(conn, routed, labelAt);
-      }),
+        return connectionPath(conn, routed, labelAt, connectionIndex);
+      });
+  const resolvedLayout = grid ? { mode: 'grid', ...grid } : { mode: 'free' };
+  return resolvedLayoutReport({
+    type: 'architecture',
+    viewBox,
+    validation,
+    entityKey: 'components',
+    entities: componentRecords,
+    relationships: connectionRecords,
     labels,
-  };
+    extras: {
+      layout: resolvedLayout,
+      boundaries: boundaryRecords,
+    },
+    compatibility: {
+      layout: resolvedLayout,
+      // Keep the original architecture inspect aliases byte-for-byte compatible
+      // at their public seam. The versioned `resolved` record above deliberately
+      // retains sub-pixel precision and collection identity.
+      viewBox,
+      components: [...components.values()].map((component) => ({
+        id: component.id,
+        type: component.type,
+        label: component.label,
+        x: Math.round(component.x),
+        y: Math.round(component.y),
+        width: component.width,
+        height: component.height,
+        ...(Number.isInteger(component.row) ? { row: component.row } : {}),
+        ...(Number.isInteger(component.col) ? { col: component.col } : {}),
+        ...(Array.isArray(component.pos) ? { pos: component.pos.map(Math.round) } : {}),
+      })),
+      boundaries: boundaries.map((boundary) => ({
+        kind: boundary.kind,
+        label: boundary.label,
+        x: Math.round(boundary.x),
+        y: Math.round(boundary.y),
+        width: Math.round(boundary.width),
+        height: Math.round(boundary.height),
+        wraps: boundary.wraps,
+      })),
+      connections: asArray(arch.connections)
+        .filter((conn) => components.has(conn.from) && components.has(conn.to))
+        .map((conn) => {
+          const routed = pathFor(conn);
+          const labelAt = conn.label ? labelPoint(conn, routed.points) : null;
+          return {
+            from: conn.from,
+            to: conn.to,
+            label: conn.label ?? null,
+            variant: conn.variant ?? 'default',
+            route: conn.route ?? 'auto',
+            points: routed.points.map(([x, y]) => [Math.round(x), Math.round(y)]),
+            ...(labelAt ? { labelAt: labelAt.map(Math.round) } : {}),
+          };
+        }),
+      labels: legacyLabels,
+    },
+  });
 }
 
 // ---- Connection routing ------------------------------------------------------
@@ -940,8 +1024,10 @@ function pathFor(conn) {
     toSide,
     ports,
   );
-  const points = [start, ...routeVia(conn, from, to, start, end, fromSide, toSide), end];
-  const routed = { d: roundedPath(points, 8), points };
+  const authoredPoints = [start, ...routeVia(conn, from, to, start, end, fromSide, toSide), end];
+  const points = Array.isArray(conn.via) ? authoredPoints : normalizeRoutePoints(authoredPoints);
+  const strokeWidth = conn.width || (conn.variant === 'emphasis' ? 1.8 : 1.5);
+  const routed = { d: roundedPath(markerSafeRoutePoints(points, { strokeWidth }), 8), points };
   pathCache.set(conn, routed);
   return routed;
 }
@@ -1062,17 +1148,17 @@ ${renderLegend()}
       </svg>`;
 }
 
-validateArchitecture();
 if (layoutJsonMode) {
-  console.log(JSON.stringify(buildLayoutReport(), null, 2));
-  process.exit(0);
+  emitResolvedLayoutReport({ validate: validateArchitecture, build: buildLayoutReport });
+} else {
+  validateArchitecture();
+  writeDiagram({
+    outPath,
+    template,
+    diagramType: 'architecture',
+    meta: arch.meta,
+    svg: renderSvg(),
+    cards: arch.cards,
+    sourceEvidence,
+  });
 }
-writeDiagram({
-  outPath,
-  template,
-  diagramType: 'architecture',
-  meta: arch.meta,
-  svg: renderSvg(),
-  cards: arch.cards,
-  sourceEvidence,
-});

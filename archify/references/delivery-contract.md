@@ -2,11 +2,25 @@
 
 ## Validate and deliver
 
-Use `validate` after every candidate edit. Use final atomic delivery only after the candidate is frozen:
+Use `validate` after every candidate edit. Run the real-browser containment preflight on the first deterministic pass and again before freezing the candidate:
+
+```bash
+node bin/archify.mjs validate <type> <candidate.json> --quality showcase --repair-history <repair-history.json> --preflight --json
+```
+
+Use final atomic delivery only after the candidate is frozen:
 
 ```bash
 node bin/archify.mjs deliver <type> <candidate.json> <output.html> --quality showcase --json
 ```
+
+For several already-frozen candidates, create a schemaVersion 1 manifest with `candidates[]` entries (`id`, `type`, `input`, and architecture-only `repoRoot`) and run:
+
+```bash
+node bin/archify.mjs validate-batch <candidates.json> --quality showcase --json
+```
+
+The batch renders and deterministically checks every candidate, then reuses one reset Chrome session for all temporary pre-delivery artifacts. Every child receipt binds the candidate SHA-256; suite delivery fails if a candidate changes afterward. Its receipt records monotonic total time plus per-candidate `inputMs`, `renderMs`, `checkMs`, and `preflightMs`; these are process/browser measurements, not agent-message marker gaps.
 
 Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. The JSON receipt includes SHA-256 and byte counts for both `specification` and `artifact`. Renderer, checker, receipt, or commit failure exits non-zero, removes private state, preserves the previous trusted artifact, and never invokes an opener.
 
@@ -27,13 +41,21 @@ it:
 node bin/archify.mjs visual-check <output.html> --json
 ```
 
+For several artifacts, pass every path to one `visual-check` command so one capability probe and one reset browser session serve the batch. For repeatable suites, `run-suite` performs one upfront capability gate, revision-pinned isolated runs, preflight validation, delivery, final visual checks, and canonical timing/report receipts. It does not author diagram semantics.
+
 The zero-dependency command uses Chrome/Chromium through the DevTools pipe. It
 measures light-theme containment at 1440×900, 1600×1000, 1920×1080, and
 2048×1320, then captures light/dark screenshots at 1440×900 and 2048×1320. It
 writes four PNG sidecars, one relative-path HTML contact sheet, and one JSON
 receipt beside the artifact. The receipt binds the source artifact SHA-256 and
-byte count, records READ plus Still runtime state, and always reports
-`visualReview: "pending"`; automated evidence cannot claim perceptual review.
+byte count, records measured READ plus Still runtime state at every requested
+viewport/theme, and binds each screenshot's SHA-256, byte count, and measured
+PNG pixel dimensions. Full, preflight, and batch visual receipts use
+`schemaVersion: 2`; the independent capability-probe receipt remains v1. A
+stored v1 visual receipt predates these proofs and must fail closed in current
+consumers—rerun the visual command instead of silently upgrading it. Automated
+receipts always report `visualReview: "pending"`; automated evidence cannot
+claim perceptual review.
 
 Exit 0 means every containment measurement and capture passed. Exit 1 means an
 overflow or capture failure. Exit 2 means Chrome/Chromium was unavailable and

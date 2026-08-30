@@ -31,6 +31,7 @@ import {
   defaultToSide,
   chosenSide,
   routeHonorsEndpointSides,
+  markerSafeRoutePoints,
   polylinePath,
   roundedPath,
   labelPoint,
@@ -185,6 +186,58 @@ test('endpoint-side direction can fail closed on renderer-inferred automatic sid
   assert.equal(problems.length, 2);
   assert.match(problems[0], /inferred fromSide "left"/);
   assert.match(problems[1], /inferred toSide "right"/);
+});
+
+test('endpoint-side direction can verify renderer-resolved named route sides', () => {
+  const relation = {
+    id: 'bottom-return',
+    from: 'results',
+    to: 'messages',
+    route: 'bottom-channel',
+  };
+  const problems = cleanEndpointSideProblems({
+    relations: [relation],
+    endpointIds: new Set(['results', 'messages']),
+    pathFor: () => ({ points: [[530, 385], [530, 440], [156, 440], [156, 157]] }),
+    diagramType: 'dataflow',
+    relationCollection: 'flows',
+    fromSideFor: () => 'bottom',
+    toSideFor: () => 'bottom',
+    checkResolvedRouteSides: true,
+    endpointFor: (id) => ({
+      results: { x: 474, y: 356, width: 112, height: 58 },
+      messages: { x: 44, y: 128, width: 112, height: 58 },
+    })[id],
+  });
+  assert.equal(problems.length, 2);
+  assert.match(problems[0], /inferred fromSide "bottom"/);
+  assert.match(problems[1], /inferred toSide "bottom"/);
+});
+
+test('marker-safe route keeps logical anchors untouched and clears the target border in every direction', () => {
+  const logical = [[100, 100], [100, 200]];
+  assert.deepEqual(markerSafeRoutePoints(logical, { strokeWidth: 1.4 }), [
+    [100, 100], [100, 196.85],
+  ]);
+  assert.deepEqual(logical, [[100, 100], [100, 200]]);
+  assert.deepEqual(markerSafeRoutePoints([[200, 100], [100, 100]], { strokeWidth: 1.5 }), [
+    [200, 100], [103.25, 100],
+  ]);
+});
+
+test('endpoint gate rejects a final segment that cannot fit the marker setback', () => {
+  const relation = { id: 'cramped-arrow', from: 'source', to: 'target' };
+  const problems = cleanEndpointSideProblems({
+    relations: [relation],
+    endpointIds: new Set(['source', 'target']),
+    pathFor: () => ({ points: [[100, 100], [100, 102]] }),
+    diagramType: 'dataflow',
+    relationCollection: 'flows',
+    markerSetbackFor: () => 3.15,
+  });
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /\[clean-flow\/marker-clearance\]/);
+  assert.match(problems[0], /2px.*3\.15px/);
 });
 
 test('cleanFlowProblems reports collection index, ids, segment, clearance, and fix', () => {

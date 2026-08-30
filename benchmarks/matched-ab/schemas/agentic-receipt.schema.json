@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://archify.dev/schemas/matched-ab/agentic-receipt.v1.json",
+  "title": "Archify observed agentic A/B run receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "benchmarkId",
+    "runId",
+    "variant",
+    "measurement",
+    "fixedInputs",
+    "startedAtEpochMs",
+    "endedAtEpochMs",
+    "durationMs",
+    "stages",
+    "artifactSha256",
+    "qualityReceiptSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "archify.agentic-ab.receipt.v1" },
+    "benchmarkId": { "type": "string", "minLength": 1 },
+    "runId": { "type": "string", "minLength": 1 },
+    "variant": { "enum": ["A", "B"] },
+    "measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "clock"],
+      "properties": {
+        "kind": { "const": "observed" },
+        "clock": { "const": "epoch-ms" }
+      }
+    },
+    "fixedInputs": { "$ref": "agentic-manifest.schema.json#/$defs/fixedInputs" },
+    "startedAtEpochMs": { "type": "number", "minimum": 0 },
+    "endedAtEpochMs": { "type": "number", "minimum": 0 },
+    "durationMs": { "type": "number", "minimum": 0 },
+    "stages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "startedAtEpochMs", "endedAtEpochMs", "durationMs"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "startedAtEpochMs": { "type": "number", "minimum": 0 },
+          "endedAtEpochMs": { "type": "number", "minimum": 0 },
+          "durationMs": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "artifactSha256": { "$ref": "agentic-manifest.schema.json#/$defs/digest" },
+    "qualityReceiptSha256": { "$ref": "agentic-manifest.schema.json#/$defs/digest" }
+  }
+}

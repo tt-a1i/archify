@@ -24,3 +24,17 @@ export function minimumReadableSourceTextPx(
   }
   return minimumProjectedPx / Math.min(1, diagramWidth / viewBoxWidth);
 }
+
+export function maximumReadableViewBoxWidth(
+  sourceFontPx,
+  diagramWidth = DESKTOP_READER_DIAGRAM_WIDTH,
+  minimumProjectedPx = MIN_PROJECTED_NODE_TEXT_PX,
+) {
+  if (![sourceFontPx, diagramWidth, minimumProjectedPx].every(Number.isFinite)
+    || sourceFontPx < minimumProjectedPx
+    || diagramWidth <= 0
+    || minimumProjectedPx <= 0) {
+    return null;
+  }
+  return sourceFontPx * diagramWidth / minimumProjectedPx;
+}

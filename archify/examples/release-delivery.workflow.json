@@ -49,7 +49,7 @@
     { "from": "checks", "to": "approval", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
     { "from": "approval", "to": "deploy", "variant": "security", "route": "drop", "fromSide": "bottom", "toSide": "top" },
     { "from": "deploy", "to": "verify_prod" },
-    { "from": "verify_prod", "to": "announce", "label": "healthy", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "verify_prod", "to": "announce", "label": "healthy", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top", "labelAt": [625, 531] },
     { "from": "checks", "to": "failed", "label": "red", "variant": "security", "role": "error", "route": "drop", "fromSide": "bottom", "toSide": "top" },
     { "from": "verify_prod", "to": "rollback", "variant": "security", "role": "error", "route": "outside-right", "fromSide": "right", "toSide": "right" },
     { "from": "rollback", "to": "deploy", "label": "restore", "variant": "dashed", "role": "return", "route": "return-left", "fromSide": "left", "toSide": "left" }

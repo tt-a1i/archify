@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://archify.dev/schemas/matched-ab/machine-manifest.v1.json",
+  "title": "Archify matched A/B machine benchmark manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "benchmarkId", "machine", "quality"],
+  "properties": {
+    "schemaVersion": { "const": "archify.matched-ab.manifest.v1" },
+    "benchmarkId": { "type": "string", "minLength": 1 },
+    "machine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command",
+        "warmupPerVariant",
+        "rounds",
+        "order",
+        "timeoutMs",
+        "runtime",
+        "fixedConfig",
+        "variants"
+      ],
+      "properties": {
+        "command": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "warmupPerVariant": { "type": "integer", "minimum": 0 },
+        "rounds": { "type": "integer", "minimum": 1 },
+        "order": { "const": "ABBA" },
+        "timeoutMs": { "type": "integer", "minimum": 1 },
+        "env": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "runtime": { "$ref": "#/$defs/runtime" },
+        "fixedConfig": { "type": "object" },
+        "variants": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["A", "B"],
+          "properties": {
+            "A": { "$ref": "#/$defs/variant" },
+            "B": { "$ref": "#/$defs/variant" }
+          }
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["semanticCoverage"],
+      "properties": {
+        "semanticCoverage": { "$ref": "#/$defs/semanticCoverage" }
+      }
+    }
+  },
+  "$defs": {
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodeVersion", "platform", "arch"],
+      "properties": {
+        "nodeVersion": { "type": "string", "minLength": 1 },
+        "platform": { "type": "string", "minLength": 1 },
+        "arch": { "type": "string", "minLength": 1 }
+      }
+    },
+    "variant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cwd", "revision"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1 },
+        "cwd": { "type": "string", "minLength": 1 },
+        "revision": { "type": "string", "pattern": "^[a-f0-9]{40,64}$" }
+      }
+    },
+    "semanticCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["facts", "nodes", "messages", "views"],
+      "properties": {
+        "facts": { "$ref": "#/$defs/semanticIds" },
+        "nodes": { "$ref": "#/$defs/semanticIds" },
+        "messages": { "$ref": "#/$defs/semanticIds" },
+        "views": { "$ref": "#/$defs/semanticIds" }
+      }
+    },
+    "semanticIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

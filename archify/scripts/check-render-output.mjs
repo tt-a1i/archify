@@ -7,8 +7,10 @@ import {
   DESKTOP_READABILITY_VIEWPORT,
   DESKTOP_READER_DIAGRAM_WIDTH,
   MIN_PROJECTED_NODE_TEXT_PX,
+  maximumReadableViewBoxWidth,
   projectedNodeTextPx,
 } from '../renderers/shared/desktop-readability.mjs';
+import { relationshipLabelContainmentIssues } from '../renderers/shared/viewbox-containment.mjs';
 
 const input = process.argv[2];
 
@@ -75,7 +77,7 @@ if (svgMatches.length === 1) {
   addCheck('finite_svg', !/\b(?:NaN|undefined|Infinity|-Infinity)\b/.test(svg));
   const legendStart = svg.indexOf('<!-- Legend -->');
   const beforeLegend = legendStart >= 0 ? svg.slice(0, legendStart) : svg;
-  const desktopReadabilityIssue = collectDesktopReadability(svgAttrs, beforeLegend);
+  const desktopReadabilityIssues = collectDesktopReadability(svgAttrs, beforeLegend);
   const arrows = collectArrows(beforeLegend);
   const diagonal = arrows.flatMap((arrow) => diagonalStraightSegments(arrow).map((segment) => ({ arrow, ...segment })));
   addCheck(
@@ -102,6 +104,11 @@ if (svgMatches.length === 1) {
   const routeRhythmIssues = collectRouteRhythmIssues({ routedRelations: routedRelationships });
   const ambiguousCorridors = collectAmbiguousCorridors({ routedRelations: routedRelationships });
   const relationshipLabels = collectRelationshipLabelMasks(beforeLegend, arrows);
+  const relationshipLabelContainment = relationshipLabelContainmentIssues({
+    labels: relationshipLabels,
+    viewBox: String(svgAttrs.viewBox || '').trim().split(/[\s,]+/).map(Number),
+    diagramType: 'artifact',
+  });
   const labelClearanceThreshold = qualityProfile === 'showcase' ? 4 : 2;
   const labelRouteMeasurements = collectLabelRouteClearance({
     labels: relationshipLabels,
@@ -119,17 +126,18 @@ if (svgMatches.length === 1) {
   const labelClearanceIsError = qualityProfile === 'showcase';
   const desktopReadabilityIsError = qualityProfile === 'showcase';
   const compositionErrors = (qualityGatesEnforced ? containerBorderRuns.length : 0)
+    + relationshipLabelContainment.length
     + (crossingIsError ? relationshipCrossings.length : 0)
     + (corridorIsError ? ambiguousCorridors.length : 0)
     + (labelClearanceIsError ? labelRouteClearance.length : 0)
     + (rhythmIsError ? routeRhythmIssues.length : 0)
-    + (desktopReadabilityIsError && desktopReadabilityIssue ? 1 : 0);
+    + (desktopReadabilityIsError ? desktopReadabilityIssues.length : 0);
   const compositionWarnings = (qualityGatesEnforced ? 0 : containerBorderRuns.length)
     + (crossingIsError ? 0 : relationshipCrossings.length)
     + (corridorIsError ? 0 : ambiguousCorridors.length)
     + (labelClearanceIsError ? 0 : labelRouteClearance.length)
     + (rhythmIsError ? 0 : routeRhythmIssues.length)
-    + (desktopReadabilityIsError || !desktopReadabilityIssue ? 0 : 1);
+    + (desktopReadabilityIsError ? 0 : desktopReadabilityIssues.length);
   composition = {
     schemaVersion: 1,
     profile: qualityProfile,
@@ -143,11 +151,16 @@ if (svgMatches.length === 1) {
       ambiguousCorridors: ambiguousCorridors.length,
       containerBorderRuns: containerBorderRuns.length,
       labelRouteClearanceIssues: labelRouteClearance.length,
+      ...(relationshipLabelContainment.length
+        ? { relationshipLabelContainmentIssues: relationshipLabelContainment.length }
+        : {}),
       minLabelRouteClearance: labelRouteMeasurements.length
         ? Math.round(Math.min(...labelRouteMeasurements.map((hit) => hit.clearance)) * 10) / 10
         : null,
-      desktopReadabilityIssues: desktopReadabilityIssue ? 1 : 0,
-      minProjectedNodeTextPx: desktopReadabilityIssue?.projectedFontPx ?? null,
+      desktopReadabilityIssues: desktopReadabilityIssues.length,
+      minProjectedNodeTextPx: desktopReadabilityIssues.length
+        ? Math.min(...desktopReadabilityIssues.map((issue) => issue.projectedFontPx))
+        : null,
       ...roundedRouteMetrics(routeMetrics),
     },
     suggestedLimits: { bendsPerRelationship: 2, stretch: 1.35, segmentPx: 16, microSegmentPx: 8 },
@@ -177,6 +190,10 @@ if (svgMatches.length === 1) {
         from: hit.start.map((value) => Math.round(value * 10) / 10),
         to: hit.end.map((value) => Math.round(value * 10) / 10),
       })),
+      ...relationshipLabelContainment.map((issue) => ({
+        ...issue,
+        relationship: issue.evidence.relationship,
+      })),
       ...relationshipCrossings.map((hit) => ({
         severity: crossingIsError ? 'error' : 'warning',
         code: 'composition/proper-crossing',
@@ -205,7 +222,7 @@ if (svgMatches.length === 1) {
         from: hit.start.map((value) => Math.round(value * 10) / 10),
         to: hit.end.map((value) => Math.round(value * 10) / 10),
       })),
-      ...(desktopReadabilityIssue ? [{
+      ...desktopReadabilityIssues.map((desktopReadabilityIssue) => ({
         severity: desktopReadabilityIsError ? 'error' : 'warning',
         code: 'composition/desktop-readability',
         viewportWidth: DESKTOP_READABILITY_VIEWPORT.width,
@@ -218,7 +235,8 @@ if (svgMatches.length === 1) {
         sourceFontPx: desktopReadabilityIssue.sourceFontPx,
         projectedFontPx: desktopReadabilityIssue.projectedFontPx,
         minimumProjectedFontPx: MIN_PROJECTED_NODE_TEXT_PX,
-      }] : []),
+        maxViewBoxWidth: desktopReadabilityIssue.maxViewBoxWidth,
+      })),
     ],
   };
   addCheck(
@@ -621,9 +639,9 @@ function textBox(attrs, text) {
 function collectDesktopReadability(svgAttrs, fragment) {
   const viewBox = String(svgAttrs.viewBox || '').trim().split(/[\s,]+/).map(Number);
   const viewBoxWidth = viewBox.length === 4 ? viewBox[2] : Number.NaN;
-  if (!Number.isFinite(viewBoxWidth) || viewBoxWidth <= 0) return null;
+  if (!Number.isFinite(viewBoxWidth) || viewBoxWidth <= 0) return [];
   const scale = Math.min(1, DESKTOP_READER_DIAGRAM_WIDTH / viewBoxWidth);
-  let worst = null;
+  const issues = [];
   for (const match of fragment.matchAll(/<text\b([^>]*)>([\s\S]*?)<\/text>/gi)) {
     const primary = /\bdata-node-label(?:\s*=|\s|$)/i.test(match[1]);
     const boundary = /\bdata-boundary-label(?:\s*=|\s|$)/i.test(match[1]);
@@ -634,7 +652,7 @@ function collectDesktopReadability(svgAttrs, fragment) {
     if (!Number.isFinite(fontSize)) continue;
     const projected = projectedNodeTextPx(fontSize, viewBoxWidth);
     if (projected >= MIN_PROJECTED_NODE_TEXT_PX) continue;
-    const candidate = {
+    issues.push({
       viewBoxWidth,
       scale,
       text: stripTags(match[2]).trim(),
@@ -643,10 +661,10 @@ function collectDesktopReadability(svgAttrs, fragment) {
         : boundary ? 'boundary' : 'context',
       sourceFontPx: fontSize,
       projectedFontPx: projected,
-    };
-    if (!worst || candidate.projectedFontPx < worst.projectedFontPx) worst = candidate;
+      maxViewBoxWidth: maximumReadableViewBoxWidth(fontSize),
+    });
   }
-  return worst;
+  return issues;
 }
 
 function estimatedTextWidth(text, fontSize) {

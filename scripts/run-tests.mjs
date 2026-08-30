@@ -12,6 +12,8 @@ const testFiles = fs.readdirSync(testRoot)
   .filter((entry) => entry.endsWith('.test.mjs'))
   .sort()
   .map((entry) => path.join('test', entry));
+const matchedAbTest = path.join(repoRoot, 'benchmarks', 'matched-ab', 'test', 'matched-ab.test.mjs');
+if (fs.existsSync(matchedAbTest)) testFiles.push(matchedAbTest);
 
 const [major, minor] = process.versions.node.split('.').map(Number);
 const supportsConcurrencyFlag = major > 18 || (major === 18 && minor >= 19);

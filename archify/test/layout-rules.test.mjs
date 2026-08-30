@@ -98,6 +98,15 @@ function workflowNodeRect(html, id) {
   return { x, y, width, height };
 }
 
+function workflowLaneRect(html, index = 0) {
+  const match = html.match(new RegExp(
+    `<rect data-graph-role="structural-frame"[^>]*data-composition-frame-id="lane-${index}"[^>]*x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)"`,
+  ));
+  assert.ok(match, `expected workflow lane ${index}`);
+  const [, x, y, width, height] = match.map(Number);
+  return { x, y, width, height };
+}
+
 function boundaryFrameRect(html, index) {
   const match = html.match(new RegExp(
     `<rect data-graph-role="structural-frame"[^>]*data-composition-frame-id="${index}"[^>]*x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)"`,
@@ -665,13 +674,14 @@ test('workflow: same-lane offset auto edge stays orthogonal', () => {
       { id: 'left', lane: 'main', col: 1, type: 'backend', label: 'A', width: 32, height: 38, yOffset: -14 },
       { id: 'right', lane: 'main', col: 2, type: 'backend', label: 'B', width: 32, height: 38, yOffset: 14 },
     ],
-    edges: [{ from: 'left', to: 'right' }],
+    edges: [{ id: 'offset', from: 'left', to: 'right' }],
   };
   const { code, stderr, outPath } = render('workflow', d);
   assert.equal(code, 0, stderr);
   const html = fs.readFileSync(outPath, 'utf8');
-  assert.doesNotMatch(html, /M 236 105 L 284 133/);
-  assert.match(html, /M 236 105 L 260 105 L 260 133 L 284 133/);
+  assert.deepEqual(workflowEdgePoints(html, 'offset'), [
+    [236, 105], [260, 105], [260, 133], [284, 133],
+  ]);
 });
 
 test('workflow: automatic routing uses one bend and avoids every node border', () => {

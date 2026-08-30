@@ -2,15 +2,27 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
+import {
+  componentBox,
+  connectionPath,
+  emitResolvedLayoutReport,
+  relationshipLabelBox,
+  resolvedLayoutReport,
+} from '../shared/layout-report.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { relationshipLabelContainmentIssues } from '../shared/viewbox-containment.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
+import { maximumReadableViewBoxWidth } from '../shared/desktop-readability.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import {
   asArray,
   isFinitePoint,
   rectsOverlap,
+  entityOverlapIssue,
+  relationshipLabelObstacleIssue,
+  relationshipLabelPairIssue,
   cleanEndpointSideProblems,
   cleanFlowProblems,
   cleanCrossingProblems,
@@ -18,13 +30,15 @@ import {
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   cleanLabelRouteClearanceProblems,
-  suggestLabelObstacleFix,
-  suggestLabelPairFix,
   anchor,
   automaticPortSpread,
   defaultFromSide,
   defaultToSide,
   chosenSide,
+  dedupeRoutePoints,
+  normalizeRoutePoints,
+  markerSafeRoutePoints,
+  markerEndpointSetback,
   roundedPath,
   routePointsValue,
   labelPoint,
@@ -40,10 +54,13 @@ const stateTextFit = {
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const layoutJsonMode = process.argv.includes('--layout-json');
+const cliArgs = process.argv.filter((arg) => arg !== '--layout-json');
 const { diagram: lifecycle, template, outPath } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
   diagramType: 'lifecycle',
-  defaultExample: 'agent-run.lifecycle.json'
+  defaultExample: 'agent-run.lifecycle.json',
+  argv: cliArgs,
 });
 
 const viewBox = lifecycle.meta?.viewBox || [980, 660];
@@ -128,6 +145,7 @@ function measureState(state) {
 }
 
 const states = new Map(asArray(lifecycle.states).map((state) => [state.id, measureState(state)]));
+const stateInputIndexes = new Map(asArray(lifecycle.states).map((state, index) => [state.id, index]));
 const laneLabels = new Map(asArray(lifecycle.lanes).map((lane) => [lane.id, lane.label]));
 const stateSteps = new Map();
 for (const [index, transition] of asArray(lifecycle.transitions).entries()) {
@@ -138,6 +156,51 @@ for (const [index, state] of asArray(lifecycle.states).entries()) {
   if (!stateSteps.has(state.id)) stateSteps.set(state.id, index);
 }
 
+function lifecycleLayoutConstraints() {
+  const readableText = [];
+  for (const state of states.values()) {
+    const stateIndex = stateInputIndexes.get(state.id);
+    if (!Number.isInteger(stateIndex) || !Number.isFinite(state.width)) continue;
+    const labelFont = fittedNodeFontSize(state.label, brandLabelFitWidth(state, state.width), 10, 8);
+    readableText.push({
+      path: `/states/${stateIndex}/label`,
+      sourceFontPx: labelFont,
+      maxReadableViewBoxWidth: maximumReadableViewBoxWidth(labelFont),
+    });
+    if (state.sublabel) {
+      const sourceFontPx = fittedNodeFontSize(
+        state.sublabel,
+        state.width,
+        stateTextFit.sublabelPreferred,
+        stateTextFit.sublabelMinimum,
+      );
+      readableText.push({
+        path: `/states/${stateIndex}/sublabel`,
+        sourceFontPx,
+        maxReadableViewBoxWidth: maximumReadableViewBoxWidth(sourceFontPx),
+      });
+    }
+  }
+  const readableWidths = readableText
+    .map((entry) => entry.maxReadableViewBoxWidth)
+    .filter(Number.isFinite);
+  const finiteStates = [...states.values()].filter((state) => (
+    isFinitePoint(state.x, state.y, state.width, state.height)
+  ));
+  return {
+    minViewBoxWidth: finiteStates.length
+      ? Math.ceil(Math.max(...finiteStates.map((state) => state.x + state.width + 32)))
+      : null,
+    maxReadableViewBoxWidth: readableWidths.length
+      ? Math.round(Math.min(...readableWidths) * 1000) / 1000
+      : null,
+    minViewBoxHeight: Math.ceil(Math.max(
+      566,
+      ...finiteStates.map((state) => state.y + state.height + 122),
+    )),
+  };
+}
+
 function validateLifecycle() {
   const problems = [];
   if (states.size !== asArray(lifecycle.states).length) problems.push('State ids must be unique.');
@@ -145,7 +208,18 @@ function validateLifecycle() {
   // The three bands are fixed at y=112/264/436. Preserve the original
   // outcome/legend reserve even though measured legend rows now sit lower.
   if (lifecycleAreaBottom() + 4 < 448) {
-    problems.push(`viewBox height ${viewBox[1]} is too short for the fixed band layout — set meta.viewBox[1] to at least 566.`);
+    problems.push({
+      code: 'layout/lifecycle-viewbox-height',
+      message: `viewBox height ${viewBox[1]} is too short for the fixed band layout — set meta.viewBox[1] to at least 566.`,
+      subject: { path: '/meta/viewBox/1' },
+      evidence: {
+        currentViewBoxHeight: viewBox[1],
+        requiredViewBoxHeight: 566,
+        currentLifecycleAreaBottom: lifecycleAreaBottom(),
+        requiredLifecycleAreaBottom: 444,
+      },
+      supportedFixes: ['set meta.viewBox[1] to 566 or greater'],
+    });
   }
 
   const laneIds = new Set(asArray(lifecycle.lanes).map((lane) => lane.id));
@@ -177,7 +251,44 @@ function validateLifecycle() {
       problems.push(`State "${state.id}" exceeds the horizontal bounds of the diagram — reduce state.width or increase meta.viewBox[0].`);
     }
     if (state.y < 64 || state.y + state.height > lifecycleAreaBottom()) {
-      problems.push(`State "${state.id}" exceeds the vertical lifecycle area — keep y between 64 and ${lifecycleAreaBottom()} (adjust yOffset or increase meta.viewBox[1]).`);
+      const baseY = state.y - (state.yOffset || 0);
+      const allowedY = {
+        min: 64,
+        max: lifecycleAreaBottom() - state.height,
+      };
+      const allowedYOffset = {
+        min: allowedY.min - baseY,
+        max: allowedY.max - baseY,
+      };
+      const requiredViewBoxHeight = Math.ceil(state.y + state.height + 122);
+      const stateIndex = stateInputIndexes.get(state.id);
+      const fixes = [];
+      if (state.y + state.height > lifecycleAreaBottom()) {
+        fixes.push(`set meta.viewBox[1] to at least ${requiredViewBoxHeight}`);
+      }
+      fixes.push(`set /states/${stateIndex}/yOffset between ${allowedYOffset.min} and ${allowedYOffset.max}`);
+      const remedy = state.y + state.height > lifecycleAreaBottom()
+        ? `set meta.viewBox[1] to at least ${requiredViewBoxHeight}, or keep yOffset between ${allowedYOffset.min} and ${allowedYOffset.max}`
+        : `keep yOffset between ${allowedYOffset.min} and ${allowedYOffset.max}`;
+      problems.push({
+        code: 'layout/lifecycle-state-vertical-bounds',
+        message: `State "${state.id}" occupies y ${state.y}..${state.y + state.height}, outside the allowed top-left y range ${allowedY.min}..${allowedY.max} — ${remedy}.`,
+        subject: {
+          path: `/states/${stateIndex}/yOffset`,
+          id: state.id,
+        },
+        evidence: {
+          currentViewBoxHeight: viewBox[1],
+          requiredViewBoxHeight,
+          currentY: state.y,
+          stateHeight: state.height,
+          lifecycleAreaBottom: lifecycleAreaBottom(),
+          allowedY,
+          currentYOffset: state.yOffset || 0,
+          allowedYOffset,
+        },
+        supportedFixes: fixes,
+      });
     }
     const estLabelW = textUnits(state.label) * 6.2;
     if (estLabelW > state.width + 6) {
@@ -206,7 +317,16 @@ function validateLifecycle() {
   for (let i = 0; i < allStates.length; i += 1) {
     for (let j = i + 1; j < allStates.length; j += 1) {
       if (rectsOverlap(allStates[i], allStates[j], 10)) {
-        problems.push(`States "${allStates[i].id}" and "${allStates[j].id}" are less than 10px apart — move one to another col or separate them with yOffset (lanes other than "main"/"terminal" share one band).`);
+        problems.push(entityOverlapIssue({
+          diagramType: 'lifecycle',
+          collection: 'states',
+          entity: allStates[j],
+          entityIndex: stateInputIndexes.get(allStates[j].id),
+          otherEntity: allStates[i],
+          otherEntityIndex: stateInputIndexes.get(allStates[i].id),
+          minimumGapPx: 10,
+          controls: ['col', 'yOffset'],
+        }));
       }
     }
   }
@@ -234,6 +354,11 @@ function validateLifecycle() {
     relationCollection: 'transitions',
     fromSideFor: (transition) => transitionSides(transition).fromSide,
     toSideFor: (transition) => transitionSides(transition).toSide,
+    checkResolvedRouteSides: true,
+    endpointFor: (id) => states.get(id),
+    markerSetbackFor: (transition) => markerEndpointSetback({
+      strokeWidth: transition.width || (transition.variant === 'emphasis' ? 2 : 1.1),
+    }),
     shouldCheckRelation: (transition) => !Array.isArray(transition.via),
     routeHint: 'keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross state borders perpendicularly',
   }));
@@ -298,17 +423,44 @@ function validateLifecycle() {
   for (const rect of labelRects) {
     for (const state of states.values()) {
       if (rectsOverlap(rect, state, -2)) {
-        problems.push(`Label "${rect.label}" overlaps state "${state.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, state, 'state')}`);
+        problems.push(relationshipLabelObstacleIssue({
+          diagramType: 'lifecycle',
+          relationCollection: 'transitions',
+          relation: rect.relation,
+          relationIndex: rect.relationIndex,
+          labelRect: rect,
+          obstacleCollection: 'states',
+          obstacle: state,
+          obstacleIndex: stateInputIndexes.get(state.id),
+          avoidRects: [...states.values()],
+          viewBox,
+        }));
       }
     }
   }
   for (let i = 0; i < labelRects.length; i += 1) {
     for (let j = i + 1; j < labelRects.length; j += 1) {
       if (rectsOverlap(labelRects[i], labelRects[j], -2)) {
-        problems.push(`Labels "${labelRects[i].label}" and "${labelRects[j].label}" overlap — adjust labelDx/labelDy.\n${suggestLabelPairFix(labelRects[i], labelRects[j])}`);
+        problems.push(relationshipLabelPairIssue({
+          diagramType: 'lifecycle',
+          relationCollection: 'transitions',
+          labelRect: labelRects[j],
+          otherLabelRect: labelRects[i],
+          avoidRects: [
+            ...states.values(),
+            ...labelRects.filter((entry) => entry !== labelRects[j]),
+          ],
+          viewBox,
+        }));
       }
     }
   }
+  problems.push(...relationshipLabelContainmentIssues({
+    labels: labelRects,
+    viewBox,
+    diagramType: 'lifecycle',
+    relationCollection: 'transitions',
+  }));
   problems.push(...cleanLabelRouteClearanceProblems({
     relations: lifecycle.transitions,
     labels: labelRects,
@@ -371,12 +523,43 @@ function routeVia(transition, from, to, start, end, fromSide, toSide) {
 
 const pathCache = new Map();
 
+function sideFacingPoint(rect, point, fallback) {
+  if (!Array.isArray(point) || point.length !== 2) return fallback;
+  const cx = rect.x + rect.width / 2;
+  const cy = rect.y + rect.height / 2;
+  const dx = point[0] - cx;
+  const dy = point[1] - cy;
+  if (Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? 'right' : 'left';
+  return dy >= 0 ? 'bottom' : 'top';
+}
+
 function transitionSides(transition) {
   const from = states.get(transition.from);
   const to = states.get(transition.to);
+  const explicitVia = asArray(transition.via);
+  if (explicitVia.length) {
+    return {
+      fromSide: chosenSide(transition.fromSide, sideFacingPoint(from, explicitVia[0], defaultFromSide(from, to))),
+      toSide: chosenSide(transition.toSide, sideFacingPoint(to, explicitVia.at(-1), defaultToSide(from, to))),
+    };
+  }
+  if (transition.route === 'drop') {
+    const channelY = transition.channelY
+      ?? ((from.y + from.height / 2) + (to.y + to.height / 2)) / 2;
+    return {
+      fromSide: chosenSide(transition.fromSide, channelY >= from.y + from.height / 2 ? 'bottom' : 'top'),
+      toSide: chosenSide(transition.toSide, channelY >= to.y + to.height / 2 ? 'bottom' : 'top'),
+    };
+  }
+  const channelSide = ({
+    'bottom-channel': 'bottom',
+    'top-channel': 'top',
+    'right-channel': 'right',
+    'left-channel': 'left',
+  })[transition.route] || null;
   return {
-    fromSide: chosenSide(transition.fromSide, defaultFromSide(from, to)),
-    toSide: chosenSide(transition.toSide, defaultToSide(from, to)),
+    fromSide: chosenSide(transition.fromSide, channelSide || defaultFromSide(from, to)),
+    toSide: chosenSide(transition.toSide, channelSide || defaultToSide(from, to)),
   };
 }
 
@@ -397,9 +580,12 @@ function pathFor(transition) {
     const midX = (start[0] + end[0]) / 2;
     via = [[midX, start[1]], [midX, end[1]]];
   }
-  const points = [start, ...via, end];
+  const rawPoints = [start, ...via, end];
+  const points = transition.via ? dedupeRoutePoints(rawPoints) : normalizeRoutePoints(rawPoints);
   const routed = {
-    d: roundedPath(points, transition.cornerRadius ?? 10),
+    d: roundedPath(markerSafeRoutePoints(points, {
+      strokeWidth: transition.width || (transition.variant === 'emphasis' ? 2 : 1.1),
+    }), transition.cornerRadius ?? 10),
     points
   };
   pathCache.set(transition, routed);
@@ -513,15 +699,6 @@ function renderLegend() {
   });
 }
 
-function renderLifecycleRail() {
-  const mainCols = [...states.values()]
-    .filter((state) => bandFor(state.lane) === 'phase')
-    .map((state) => state.col);
-  if (!mainCols.length) return '';
-  const railEnd = layout.phaseXs[Math.max(...mainCols)] + 38;
-  return `        <path d="M 154 ${layout.phaseY + 31} L ${railEnd} ${layout.phaseY + 31}" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>`;
-}
-
 function renderSvg() {
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(lifecycle.meta)}>
 ${svgAccessibleText(lifecycle.meta, 'lifecycle')}
@@ -532,9 +709,6 @@ ${renderDefinitions()}
 
         <!-- Lifecycle bands -->
 ${renderBands()}
-
-        <!-- Primary lifecycle rail -->
-${renderLifecycleRail()}
 
         <!-- Transition paths -->
 ${asArray(lifecycle.transitions).map(renderTransitionPath).join('\n')}
@@ -550,12 +724,66 @@ ${renderLegend()}
       </svg>`;
 }
 
-validateLifecycle();
-writeDiagram({
-  outPath,
-  template,
-  diagramType: 'lifecycle',
-  meta: lifecycle.meta,
-  svg: renderSvg(),
-  cards: lifecycle.cards,
-});
+function buildLayoutReport(validation) {
+  const relationships = asArray(lifecycle.transitions)
+    .map((transition, transitionIndex) => ({ transition, transitionIndex }))
+    .filter(({ transition }) => states.has(transition.from) && states.has(transition.to))
+    .map(({ transition, transitionIndex }) => {
+      const routed = pathFor(transition);
+      const labelAt = transition.label ? labelPoint(transition, routed.points) : null;
+      return connectionPath(transition, routed, labelAt, transitionIndex);
+    });
+  const labels = asArray(lifecycle.transitions)
+    .map((transition, transitionIndex) => ({ transition, transitionIndex }))
+    .filter(({ transition }) => transition.label && states.has(transition.from) && states.has(transition.to))
+    .map(({ transition, transitionIndex }) => {
+      const [lx, ly] = labelPoint(transition, pathFor(transition).points);
+      const longestLine = Math.max(textUnits(transition.label), textUnits(transition.note || ''));
+      const width = Math.max(32, longestLine * 4.9 + 12);
+      const height = transition.note ? 27 : 16;
+      return relationshipLabelBox({
+        relation: transition,
+        relationIndex: transitionIndex,
+        x: lx - width / 2,
+        y: ly - 11,
+        width,
+        height,
+        lx,
+        ly,
+      });
+    });
+  const titles = bandTitles();
+  return resolvedLayoutReport({
+    type: 'lifecycle',
+    viewBox,
+    validation,
+    entityKey: 'states',
+    entities: [...states.values()].map(componentBox),
+    relationships,
+    labels,
+    constraints: lifecycleLayoutConstraints(),
+    extras: {
+      bands: [112, 264, 436].map((y, index) => ({
+        index,
+        label: titles[index],
+        y,
+        x1: 72,
+        x2: viewBox[0] - 72,
+      })),
+    },
+  });
+}
+
+if (layoutJsonMode) {
+  emitResolvedLayoutReport({ validate: validateLifecycle, build: buildLayoutReport });
+} else {
+  validateLifecycle();
+  writeDiagram({
+    outPath,
+    template,
+    diagramType: 'lifecycle',
+    meta: lifecycle.meta,
+    svg: renderSvg(),
+    cards: lifecycle.cards,
+  });
+}

@@ -1377,7 +1377,7 @@ test('readable-v2 classifies an automatic label colliding with a later authored 
   }
 });
 
-test('readable-v2 classifies an authored labelAt colliding with an earlier automatic label', () => {
+test('readable-v2 classifies an authored labelAt colliding with an earlier automatically spread route', () => {
   const document = oneLaneWorkflow([
     { id: 'a-auto', from: 'a', to: 'b', label: 'AUTO' },
     { id: 'z-pin', from: 'a', to: 'b', label: 'PIN', labelAt: [214, 119] },
@@ -1385,9 +1385,9 @@ test('readable-v2 classifies an authored labelAt colliding with an earlier autom
   document.meta.quality_profile = 'showcase';
 
   const result = compileWorkflow({ workflow: document });
-  assertExplicitPinConflict(result, 'labelAt colliding with an earlier automatic label');
+  assertExplicitPinConflict(result, 'labelAt colliding with an earlier automatic route');
   const diagnostic = result.diagnostics[0];
-  assert.equal(diagnostic.evidence.invariant, 'explicit label-label clearance');
+  assert.equal(diagnostic.evidence.invariant, 'explicit label-route clearance');
   assert.equal(diagnostic.subject.path, '/edges/1/labelAt');
   assert.deepEqual(diagnostic.evidence.conflictingPins, [{
     edge: 'z-pin',
@@ -1395,10 +1395,13 @@ test('readable-v2 classifies an authored labelAt colliding with an earlier autom
     path: '/edges/1/labelAt',
     value: [214, 119],
   }]);
-  assert.deepEqual(diagnostic.evidence.labelRects.map(({ edge, ...rect }) => ({ edge, ...rect })), [
-    { edge: 'z-pin', x: 199, y: 109, width: 30, height: 14 },
-    { edge: 'a-auto', x: 199, y: 99, width: 30, height: 14 },
-  ]);
+  assert.deepEqual(diagnostic.evidence.labelRect, { x: 199, y: 109, width: 30, height: 14 });
+  assert.deepEqual(diagnostic.evidence.collidedRoute, {
+    edge: 'a-auto',
+    from: 'a',
+    to: 'b',
+    points: [[140, 112], [288, 112]],
+  });
 
   for (const fix of diagnostic.supportedFixes) {
     const replacement = fix.match(/^set labelAt on edge "z-pin" to \[(-?\d+(?:\.\d+)?), (-?\d+(?:\.\d+)?)\]$/);

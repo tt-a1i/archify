@@ -3,7 +3,9 @@ import path from 'node:path';
 
 const DIAGNOSTIC_MODE = process.env.ARCHIFY_DIAGNOSTIC_FORMAT === 'json';
 const recorded = [];
-const recordedMessages = new Set();
+const recordedDiagnosticKeys = new Set();
+const recordedDiagnosticIndexesByMessage = new Map();
+const knownDiagnosticsByMessage = new Map();
 const boundaryKey = Symbol.for('archify.renderer-diagnostic-boundary');
 let recordingSuppressionDepth = 0;
 
@@ -29,11 +31,57 @@ function normalizedDiagnostic(diagnostic) {
   };
 }
 
+/**
+ * Build one normalized, machine-actionable layout issue.
+ *
+ * Layout validators historically accumulated strings. New validators can use
+ * this shape without forcing every existing rule to migrate at once.
+ */
+export function layoutIssue(issue, defaults = {}) {
+  const source = typeof issue === 'string' ? { message: issue } : plainObject(issue);
+  return normalizedDiagnostic({
+    ...defaults,
+    ...source,
+    subject: {
+      ...plainObject(defaults.subject),
+      ...plainObject(source.subject),
+    },
+    evidence: {
+      ...plainObject(defaults.evidence),
+      ...plainObject(source.evidence),
+    },
+    supportedFixes: source.supportedFixes ?? defaults.supportedFixes,
+  });
+}
+
 export function recordDiagnostic(diagnostic) {
-  if (!DIAGNOSTIC_MODE || recordingSuppressionDepth > 0) return;
+  if (recordingSuppressionDepth > 0) return;
   const normalized = normalizedDiagnostic(diagnostic);
-  if (recordedMessages.has(normalized.message)) return;
-  recordedMessages.add(normalized.message);
+  const messageKey = `${normalized.severity}\u0000${normalized.message}`;
+  const priorKnown = knownDiagnosticsByMessage.get(messageKey);
+  const specificity = (entry) => (
+    (entry.code === 'layout/constraint' || entry.code === 'internal/unclassified' ? 0 : 100)
+    + Object.keys(entry.subject).length * 4
+    + Object.keys(entry.evidence).length * 2
+    + entry.supportedFixes.length
+  );
+  if (!priorKnown || specificity(normalized) > specificity(priorKnown)) {
+    knownDiagnosticsByMessage.set(messageKey, normalized);
+  }
+  if (!DIAGNOSTIC_MODE) return;
+  const key = JSON.stringify(normalized);
+  if (recordedDiagnosticKeys.has(key)) return;
+  const priorIndex = recordedDiagnosticIndexesByMessage.get(messageKey);
+  if (priorIndex !== undefined) {
+    const prior = recorded[priorIndex];
+    if (specificity(normalized) > specificity(prior)) {
+      recorded[priorIndex] = normalized;
+      recordedDiagnosticKeys.add(key);
+    }
+    return;
+  }
+  recordedDiagnosticKeys.add(key);
+  recordedDiagnosticIndexesByMessage.set(messageKey, recorded.length);
   recorded.push(normalized);
 }
 
@@ -53,16 +101,26 @@ export function throwDiagnosticError(message, diagnostics) {
   throw error;
 }
 
-export function throwDiagnosticProblems(prefix, problems, { code = 'layout/constraint', subject = {} } = {}) {
-  const messages = (problems || []).map((problem) => String(problem));
-  const diagnostics = messages.map((message) => normalizedDiagnostic({
+export function throwDiagnosticProblems(prefix, problems, {
+  code = 'layout/constraint',
+  severity = 'error',
+  subject = {},
+  evidence = {},
+  supportedFixes = [],
+} = {}) {
+  const diagnostics = (problems || []).map((problem) => {
+    const known = typeof problem === 'string'
+      ? knownDiagnosticsByMessage.get(`${severity}\u0000${problem.trim()}`)
+      : null;
+    return layoutIssue(known || problem, {
       code,
-      severity: 'error',
-      message,
+      severity,
       subject,
-      evidence: {},
-      supportedFixes: [],
-    }));
+      evidence,
+      supportedFixes,
+    });
+  });
+  const messages = diagnostics.map((diagnostic) => diagnostic.message);
   throwDiagnosticError(`${prefix}:\n- ${messages.join('\n- ')}`, diagnostics);
 }
 
