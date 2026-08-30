@@ -158,10 +158,10 @@ test('GitHub Pages deploys docs only after every repository gate succeeds', () =
   assert.match(job, /current_main" == "\$GITHUB_SHA"/);
   assert.match(job, /Skipping obsolete Pages deployment/);
   assert.match(job, /if: steps\.deployment-head\.outputs\.current == 'true'/);
-  assert.match(job, /actions\/configure-pages@v5/);
+  assert.match(job, /actions\/configure-pages@v6/);
   assert.match(job, /actions\/upload-pages-artifact@v4/);
   assert.match(job, /path: docs/);
-  assert.match(job, /actions\/deploy-pages@v4/);
+  assert.match(job, /actions\/deploy-pages@v5/);
 });
 
 test('release tags with a SemVer prerelease are marked prerelease and never become latest', () => {
