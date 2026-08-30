@@ -131,6 +131,10 @@ function createRouteCandidateIndex(routes) {
     const y1 = Math.floor(bounds.y1 / ROUTE_INDEX_CELL_SIZE);
     const x2 = Math.floor(bounds.x2 / ROUTE_INDEX_CELL_SIZE);
     const y2 = Math.floor(bounds.y2 / ROUTE_INDEX_CELL_SIZE);
+    if (![x1, y1, x2, y2].every(Number.isSafeInteger)) {
+      globalRouteIndexes.push(routeIndex);
+      return;
+    }
     const cellCount = (x2 - x1 + 1) * (y2 - y1 + 1);
 
     // Very long routes are cheaper to test once per label than to duplicate
@@ -157,7 +161,9 @@ function createRouteCandidateIndex(routes) {
     const cellCount = (x2 - x1 + 1) * (y2 - y1 + 1);
 
     // A huge threshold offers no selectivity and can overflow cell iteration.
-    if (!Number.isSafeInteger(cellCount) || cellCount > Math.max(64, cells.size * 4)) return routes;
+    if (![x1, y1, x2, y2].every(Number.isSafeInteger)
+      || !Number.isSafeInteger(cellCount)
+      || cellCount > Math.max(64, cells.size * 4)) return routes;
 
     const routeIndexes = new Set(globalRouteIndexes);
     for (let y = y1; y <= y2; y += 1) {

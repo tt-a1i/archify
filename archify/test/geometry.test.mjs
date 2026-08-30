@@ -182,6 +182,32 @@ test('collectLabelRouteClearance keeps very long routes in the global candidate 
   assert.equal(hits[0].clearance, 0);
 });
 
+test('collectLabelRouteClearance falls back for unsafe finite grid coordinates', () => {
+  const owner = { id: 'owner', from: 'a', to: 'b' };
+  const unsafe = { id: 'unsafe', from: 'c', to: 'd' };
+  const hits = collectLabelRouteClearance({
+    labels: [{ relation: owner, relationIndex: 0, label: 'unsafe coordinate', ...rect(1e20, 1e20, 1e7, 1e7) }],
+    routedRelations: [{ relation: unsafe, relationIndex: 1, points: [[1e20 - 1e8, 1e20 + 5e6], [1e20 + 1e8, 1e20 + 5e6]] }],
+    threshold: 4,
+  });
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].otherRelation, unsafe);
+  assert.equal(hits[0].clearance, 0);
+});
+
+test('collectLabelRouteClearance falls back when threshold query is unselective', () => {
+  const owner = { id: 'owner', from: 'a', to: 'b' };
+  const other = { id: 'other', from: 'c', to: 'd' };
+  const hits = collectLabelRouteClearance({
+    labels: [{ relation: owner, relationIndex: 0, label: 'wide threshold', ...rect(100, 100, 10, 10) }],
+    routedRelations: [{ relation: other, relationIndex: 1, points: [[0, 105], [200, 105]] }],
+    threshold: 1e9,
+  });
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].otherRelation, other);
+  assert.equal(hits[0].clearance, 0);
+});
+
 test('collectLabelRouteClearance stays bounded for thousands of sparse routes', () => {
   const count = 3000;
   const routedRelations = Array.from({ length: count }, (_, index) => ({
