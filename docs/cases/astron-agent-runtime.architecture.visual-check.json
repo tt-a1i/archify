@@ -5,9 +5,9 @@
   "status": "pass",
   "visualReview": "pending",
   "artifact": {
-    "path": "D:\\_contribwork\\archify\\docs\\cases\\astron-agent-runtime.architecture.html",
-    "sha256": "6f8bf8a21f2b4cfa98864217ce32a1f675895ce6745e4a55e36730144a080bfd",
-    "bytes": 739486
+    "path": "docs/cases/astron-agent-runtime.architecture.html",
+    "sha256": "c8078acaa756d2a0f99342a6de42f704db030149fd76dc1f46e8c9cf3a4c71e4",
+    "bytes": 724888
   },
   "state": {
     "detail": "read",
@@ -15,7 +15,7 @@
   },
   "chrome": {
     "status": "available",
-    "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+    "executable": "chrome.exe"
   },
   "diagnostics": [],
   "containment": {
