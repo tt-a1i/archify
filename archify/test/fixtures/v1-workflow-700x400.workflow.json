@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Legacy narrow workflow",
+    "viewBox": [700, 400]
+  },
+  "lanes": [
+    { "id": "first", "label": "First" },
+    { "id": "second", "label": "Second" }
+  ],
+  "nodes": [
+    { "id": "node_0", "lane": "first", "col": 0, "type": "frontend", "label": "frontend" },
+    { "id": "node_1", "lane": "first", "col": 2, "type": "backend", "label": "backend" },
+    { "id": "node_2", "lane": "first", "col": 4, "type": "database", "label": "database" },
+    { "id": "node_3", "lane": "second", "col": 0, "type": "cloud", "label": "cloud" },
+    { "id": "node_4", "lane": "second", "col": 2, "type": "security", "label": "security" },
+    { "id": "node_5", "lane": "second", "col": 4, "type": "messagebus", "label": "messagebus" },
+    { "id": "node_6", "lane": "second", "col": 5, "type": "external", "label": "external" }
+  ],
+  "edges": []
+}

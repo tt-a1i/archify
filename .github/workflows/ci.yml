@@ -85,6 +85,61 @@ jobs:
             exit 1
           fi
 
+  published-update-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Public notifier manifest must reference an existing stable Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          manifest_version="$(node --input-type=module -e 'import fs from "node:fs"; import { validateStableUpdateManifest } from "./archify/scripts/update-contract.mjs"; process.stdout.write(validateStableUpdateManifest(JSON.parse(fs.readFileSync("./docs/skill-updates/archify/stable.json", "utf8"))).version);')"
+          latest_stable_tag="$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq 'select(.draft == false and .prerelease == false) | .tag_name')"
+          if [[ "$latest_stable_tag" != "v${manifest_version}" ]]; then
+            echo "::error::stable.json v${manifest_version} must match the latest published stable Release ${latest_stable_tag:-'(missing)'}"
+            exit 1
+          fi
+          release_asset_id="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v${manifest_version}" --jq 'select(.draft == false and .prerelease == false) | .assets[] | select(.name == "archify.zip") | .id')"
+          if [[ -z "$release_asset_id" ]]; then
+            echo "::error::v${manifest_version} must have a published stable GitHub Release with an archify.zip asset before stable.json is merged"
+            exit 1
+          fi
+          published_archive="$RUNNER_TEMP/archify-v${manifest_version}.zip"
+          gh api "repos/${GITHUB_REPOSITORY}/releases/assets/${release_asset_id}" \
+            -H 'Accept: application/octet-stream' > "$published_archive"
+          git fetch --force --no-tags --depth=1 origin \
+            "refs/tags/v${manifest_version}:refs/tags/v${manifest_version}"
+          tagged_archive="$RUNNER_TEMP/archify-tag-v${manifest_version}.zip"
+          git show "v${manifest_version}:archify.zip" > "$tagged_archive"
+          if ! cmp -s "$published_archive" "$tagged_archive"; then
+            echo "::error::the published archify.zip asset must byte-match archify.zip committed at v${manifest_version}"
+            exit 1
+          fi
+          node scripts/check-stable-update-manifest.mjs \
+            --archive "$published_archive" \
+            --tag "v${manifest_version}" \
+            --source-ref "v${manifest_version}"
+          if git cat-file -e "v${manifest_version}:scripts/stage-clean-skill.mjs" 2>/dev/null \
+            && git cat-file -e "v${manifest_version}:scripts/write-deterministic-zip.mjs" 2>/dev/null; then
+            tag_checkout="$RUNNER_TEMP/archify-tag-v${manifest_version}"
+            rebuilt_archive="$RUNNER_TEMP/archify-rebuilt-v${manifest_version}.zip"
+            git worktree add --detach "$tag_checkout" "v${manifest_version}"
+            "$tag_checkout/scripts/build-zip.sh" "$rebuilt_archive"
+            if ! cmp -s "$rebuilt_archive" "$tagged_archive"; then
+              echo "::error::archify.zip committed at v${manifest_version} is not the deterministic build of that tag"
+              exit 1
+            fi
+          elif [[ "$manifest_version" == "2.15.0" ]]; then
+            echo "::notice::v2.15.0 predates the deterministic builder; its published asset is bound to the exact tagged archive blob"
+          else
+            echo "::error::v${manifest_version} is missing the deterministic archive builder"
+            exit 1
+          fi
+
   package-smoke:
     name: package smoke (${{ matrix.os }})
     strategy:
@@ -114,3 +169,44 @@ jobs:
           Expand-Archive -Path archify.zip -DestinationPath $packageRoot
       - name: Validate packaged skill without installing dependencies
         run: node scripts/package-smoke.mjs
+
+  deploy-pages:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, webm-artifact, zip-freshness, published-update-manifest, package-smoke]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject an obsolete deployment run
+        id: deployment-head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          current_main="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          if [[ "$current_main" == "$GITHUB_SHA" ]]; then
+            echo 'current=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'current=false' >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping obsolete Pages deployment for ${GITHUB_SHA}; main is ${current_main}"
+          fi
+      - name: Configure GitHub Pages
+        if: steps.deployment-head.outputs.current == 'true'
+        uses: actions/configure-pages@v5
+      - name: Upload checked documentation
+        if: steps.deployment-head.outputs.current == 'true'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs
+      - name: Deploy checked documentation
+        if: steps.deployment-head.outputs.current == 'true'
+        id: deployment
+        uses: actions/deploy-pages@v4

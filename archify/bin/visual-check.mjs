@@ -4,18 +4,21 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { MIN_PROJECTED_NODE_TEXT_PX } from '../renderers/shared/desktop-readability.mjs';
+import {
+  DESKTOP_READABILITY_VIEWPORT,
+  MIN_PROJECTED_NODE_TEXT_PX,
+} from '../renderers/shared/desktop-readability.mjs';
 
 export const VISUAL_CHECK_VIEWPORTS = Object.freeze([
-  Object.freeze({ width: 1440, height: 900 }),
+  DESKTOP_READABILITY_VIEWPORT,
   Object.freeze({ width: 1600, height: 1000 }),
   Object.freeze({ width: 1920, height: 1080 }),
   Object.freeze({ width: 2048, height: 1320 }),
 ]);
 
 const CAPTURE_VIEWPORTS = Object.freeze([
-  Object.freeze({ width: 1440, height: 900 }),
-  Object.freeze({ width: 2048, height: 1320 }),
+  VISUAL_CHECK_VIEWPORTS[0],
+  VISUAL_CHECK_VIEWPORTS[VISUAL_CHECK_VIEWPORTS.length - 1],
 ]);
 const THEMES = Object.freeze(['light', 'dark']);
 const EXIT = Object.freeze({ pass: 0, fail: 1, skipped: 2 });

@@ -1,5 +1,8 @@
 # 让 AI 画架构图不难。难的是决定不画什么。
 
+> [!IMPORTANT]
+> 这是基于 Archify v2.6 的历史文章，用于保留当时的设计背景，不代表当前功能、命令或产品边界。最新能力与安装方式以 [README](../README.md) 为准；仍然有效的架构取舍以 [ROADMAP](../ROADMAP.md) 为准。
+
 ![Archify cover — 左边自动布局死路，右边手动布局活路](article-cover.jpg)
 
 一条命令：
@@ -164,7 +167,7 @@ Archify 的渲染器给你一个 lane/stage 网格（约束），但让你决定
 
 ---
 
-Archify 的 JSON IR 有一个强制字段叫 `schema_version: 1`。从第一天就强制了。打破性变更触发版本号升级，旧版本永远合法。
+Archify 的 JSON IR 从第一天就强制声明 `schema_version`。最初五种图都固定为 `schema_version: 1`；现在 Workflow 是明确的例外：v1 继续合法并保持旧版固定布局，v2 则显式选择新的可读性编译器。其他四种图仍固定为 v1。打破性变更触发版本号升级，旧版本永远合法。
 
 这一行比它前面 200 行的 SKILL.md 都更能说明问题。
 

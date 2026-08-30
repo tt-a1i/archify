@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "skillId": "archify",
+  "channel": "stable",
+  "version": "2.15.0",
+  "publishedAt": "2026-08-17T15:47:24Z",
+  "source": {
+    "repository": "https://github.com/tt-a1i/archify",
+    "ref": "v2.15.0",
+    "treeSha": "f748f9d0c4833061d657a55cbcd9707aecc73234"
+  },
+  "artifact": {
+    "sha256": "156f0d3cd6ba11706344683e3d94e6b6b44b5732bd3c8c81b75c267c3f5d04c4"
+  },
+  "summary": "Adds authored brand identity, sequence column fitting, and the DeepSeek Harness distribution.",
+  "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v2.15.0",
+  "severity": "normal"
+}

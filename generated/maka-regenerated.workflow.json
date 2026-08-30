@@ -1,0 +1,107 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Maka 托管执行、受控工具与可恢复事实",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "generated/maka-regenerated.workflow.html",
+    "views": [
+      {
+        "id": "turn_spine",
+        "label": "托管回合主链",
+        "focus": ["request_portal", "host_kernel", "session_owner", "turn_driver", "flow_adapter", "response_surface"],
+        "note": "请求进入 Runtime Host，由 SessionManager 编排回合并经 Flow 流式返回结果。"
+      },
+      {
+        "id": "guarded_effect",
+        "label": "受控工具副作用",
+        "focus": ["turn_driver", "boundary_gate", "tool_runtime", "artifact_store", "runtime_ledger"],
+        "note": "工具调用先通过 ExecutionBoundary，再发布文件结果并写入 RuntimeEvent 账本。"
+      },
+      {
+        "id": "durable_resume",
+        "label": "规范事实恢复",
+        "focus": ["runtime_ledger", "resume_planner", "host_kernel", "session_owner"],
+        "note": "恢复规划器读取事件与 Artifact 引用，验证后重新进入 Host 托管链。"
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "product_surface", "label": "产品请求与反馈" },
+    { "id": "managed_runtime", "label": "Runtime Host、Session 与 Turn" },
+    { "id": "bounded_execution", "label": "模型调用与受控副作用", "variant": "exception" },
+    { "id": "durable_state", "label": "Artifact、事件账本与恢复" }
+  ],
+  "phases": [
+    { "id": "host_intake", "label": "接入托管", "fromCol": 0, "toCol": 1 },
+    { "id": "turn_drive", "label": "编排并驱动 Turn", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "effect_record", "label": "执行与记账", "fromCol": 4, "toCol": 4, "variant": "security" },
+    { "id": "feedback_resume", "label": "反馈与恢复", "fromCol": 5, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "host_control", "label": "Host 执行权威", "lane": "managed_runtime", "fromCol": 1, "toCol": 3, "variant": "emphasis" },
+    { "id": "execution_guard", "label": "ExecutionBoundary", "lane": "bounded_execution", "fromCol": 3, "toCol": 5, "variant": "security" },
+    { "id": "durable_authority", "label": "规范恢复事实", "lane": "durable_state", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["request_portal", "host_kernel", "session_owner", "turn_driver", "flow_adapter", "response_surface"],
+  "semanticChecks": {
+    "allowedRoots": ["request_portal"],
+    "allowedTerminals": ["response_surface"],
+    "requiredEdges": [
+      { "from": "artifact_store", "to": "runtime_ledger" },
+      { "from": "runtime_ledger", "to": "resume_planner" },
+      { "from": "resume_planner", "to": "host_kernel" }
+    ],
+    "requiredPaths": [
+      { "from": "request_portal", "to": "response_surface" },
+      { "from": "tool_runtime", "to": "runtime_ledger" },
+      { "from": "runtime_ledger", "to": "session_owner" }
+    ]
+  },
+  "nodes": [
+    { "id": "request_portal", "lane": "product_surface", "col": 0, "type": "frontend", "label": "提交产品请求", "sublabel": "Desktop / CLI", "width": 122 },
+    { "id": "response_surface", "lane": "product_surface", "col": 5, "type": "frontend", "label": "流式反馈与终态", "sublabel": "界面更新及最终结果", "width": 132 },
+    { "id": "host_kernel", "lane": "managed_runtime", "col": 1, "type": "backend", "label": "RuntimeHostKernel", "sublabel": "根目录唯一执行权威", "width": 152 },
+    { "id": "session_owner", "lane": "managed_runtime", "col": 2, "type": "backend", "label": "SessionManager", "sublabel": "Session / Turn 所有者", "width": 146 },
+    { "id": "turn_driver", "lane": "managed_runtime", "col": 3, "type": "backend", "label": "AgentRun / RuntimeRunner", "sublabel": "事件驱动的 Turn 编排", "width": 170 },
+    { "id": "flow_adapter", "lane": "bounded_execution", "col": 4, "type": "cloud", "label": "AiSdkFlow / Backend", "sublabel": "模型调用与 RuntimeEvent 映射", "width": 150 },
+    { "id": "boundary_gate", "lane": "bounded_execution", "col": 3, "type": "security", "label": "ExecutionBoundary", "sublabel": "权限与 sandbox 准入", "width": 158 },
+    { "id": "tool_runtime", "lane": "bounded_execution", "col": 5, "type": "messagebus", "label": "ToolRuntime", "sublabel": "执行、终止与结果结算", "width": 148 },
+    { "id": "artifact_store", "lane": "durable_state", "col": 5, "type": "database", "label": "ArtifactStore", "sublabel": "文件结果与引用发布", "width": 144 },
+    { "id": "runtime_ledger", "lane": "durable_state", "col": 4, "type": "database", "label": "SqliteRuntimeStore", "sublabel": "RuntimeEvent 规范账本", "width": 158 },
+    { "id": "resume_planner", "lane": "durable_state", "col": 0, "type": "backend", "label": "RuntimeContinuationPlanner", "sublabel": "读取事实并验证恢复", "width": 186 }
+  ],
+  "edges": [
+    { "id": "open_host", "from": "request_portal", "to": "host_kernel", "label": "Host 连接", "variant": "emphasis", "role": "main" },
+    { "id": "submit_session_command", "from": "host_kernel", "to": "session_owner", "label": "托管命令", "variant": "emphasis", "role": "main" },
+    { "id": "start_or_resume_turn", "from": "session_owner", "to": "turn_driver", "label": "启动 / 续接", "variant": "emphasis", "role": "main" },
+    { "id": "dispatch_model_flow", "from": "turn_driver", "to": "flow_adapter", "label": "请求 / stream", "variant": "emphasis", "role": "main" },
+    { "id": "emit_response", "from": "flow_adapter", "to": "response_surface", "label": "增量事件", "variant": "emphasis", "role": "main" },
+    { "id": "ask_for_effect", "from": "turn_driver", "to": "boundary_gate", "label": "工具调用", "variant": "security", "role": "branch" },
+    { "id": "admit_effect", "from": "boundary_gate", "to": "tool_runtime", "label": "准入后执行", "variant": "security", "role": "branch" },
+    { "id": "publish_file_result", "from": "tool_runtime", "to": "artifact_store", "label": "文件型结果", "variant": "dashed", "role": "async" },
+    { "id": "record_artifact_ref", "from": "artifact_store", "to": "runtime_ledger", "label": "Artifact 引用", "variant": "dashed", "role": "return" },
+    { "id": "record_runtime_events", "from": "flow_adapter", "to": "runtime_ledger", "label": "写入 RuntimeEvent", "variant": "dashed", "role": "async", "bias": 0.2 },
+    { "id": "read_resume_facts", "from": "runtime_ledger", "to": "resume_planner", "label": "读取事件与 Artifact 引用", "variant": "dashed", "role": "return" },
+    { "id": "reenter_host", "from": "resume_planner", "to": "host_kernel", "label": "验证恢复计划", "variant": "emphasis", "role": "branch" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "托管权威不下沉",
+      "items": [
+        "RuntimeHostKernel 保持根目录唯一执行权威",
+        "SessionManager 与 RuntimeRunner 管理 Session、Turn 和续接"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "恢复依赖规范事实",
+      "items": [
+        "ArtifactStore 发布文件结果并把引用写入 RuntimeEvent",
+        "RuntimeContinuationPlanner 从 SQLite 账本恢复后重新进入 Host"
+      ]
+    }
+  ]
+}

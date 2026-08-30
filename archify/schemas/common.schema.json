@@ -10,6 +10,22 @@
     "locale": {
       "enum": ["en", "zh-CN"]
     },
+    "animation": {
+      "enum": ["trace", "none"]
+    },
+    "visualPreset": {
+      "enum": ["classic", "signal-flow", "blueprint", "editorial"]
+    },
+    "qualityProfile": {
+      "enum": ["standard", "showcase"]
+    },
+    "side": {
+      "enum": ["left", "right", "top", "bottom"]
+    },
+    "relationshipWidth": {
+      "type": "number",
+      "minimum": 0.5
+    },
     "point": {
       "type": "array",
       "prefixItems": [
