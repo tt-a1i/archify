@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Archify Start — From Artifact to First Diagram</title>
-  <meta name="description" content="Install Archify, copy one bounded prompt, and create a verifiable technical diagram without sending repository or diagram content to this page.">
+  <title>Archify Start — Describe It, Then See It</title>
+  <meta name="description" content="Create a verifiable technical diagram directly from a plain-language description, pasted Mermaid, or a repository. No repository is required.">
   <meta name="theme-color" content="#eff2f1">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Archify Start — One bounded prompt to a verifiable diagram">
-  <meta property="og:description" content="Choose a technical question, install Archify, and copy an exact prompt backed by a verified example.">
+  <meta property="og:title" content="Archify Start — Describe it, then see it">
+  <meta property="og:description" content="Start with a plain-language description, pasted Mermaid, or real code. No repository is required.">
   <meta property="og:url" content="https://tt-a1i.github.io/archify/start.html">
   <meta property="og:image" content="https://tt-a1i.github.io/archify/assets/archify-social-preview.png">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><polygon points='14,2 26,8 26,20 14,26 2,20 2,8' fill='%23083344' stroke='%2322d3ee' stroke-width='1.5'/><circle cx='14' cy='15' r='2.5' fill='%2322d3ee'/></svg>">
@@ -68,6 +68,18 @@
     .lead-copy { color:var(--muted); font-size:.9375rem; line-height:1.72; text-wrap:pretty; }
     .trust-line { display:flex; gap:.6rem; align-items:flex-start; margin-top:1.125rem; color:var(--emerald); font-family:var(--font-mono); font-size:.6875rem; line-height:1.65; }
     .trust-line::before { content:'✓'; flex:0 0 auto; }
+
+    /* INPUT PATH — make the no-repository path explicit before diagram choices */
+    .input-paths { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.625rem; margin-bottom:1.25rem; }
+    .input-path {
+      min-height:72px; padding:.85rem 1rem; text-align:left;
+      border:1px solid var(--line); border-radius:10px; background:var(--paper);
+      color:var(--muted); cursor:pointer; transition:all .18s var(--ease-out);
+    }
+    .input-path:hover { color:var(--ink); border-color:var(--line-hi); }
+    .input-path strong { display:block; margin-bottom:.3rem; color:inherit; font-size:.8125rem; font-weight:600; }
+    .input-path span { display:block; font-size:.6875rem; line-height:1.5; }
+    .input-path[aria-selected="true"] { border-color:var(--accent); background:var(--accent-soft); color:var(--ink); box-shadow:inset 3px 0 0 var(--accent); }
 
     /* TYPE TABS */
     .type-shell { margin-bottom:var(--bento-gap,14px); padding:1.25rem 1.5rem 1.5rem; border:1px solid var(--line-hi); border-radius:14px; background:var(--paper-raised); }
@@ -147,6 +159,7 @@
       .lead { grid-template-columns:1fr; gap:1.5rem; margin-bottom:2.5rem; }
       .workbench { grid-template-columns:1fr; }
       .type-tabs { grid-template-columns:repeat(2,1fr); }
+      .input-paths { grid-template-columns:1fr; }
       .type-tab:last-child { grid-column:1 / -1; }
     }
     @media (max-width:560px) {
@@ -185,16 +198,21 @@
   <main>
     <header class="lead">
       <div>
-        <p class="lead-label" data-en="From a real artifact to your own" data-zh="从真实成品到你自己的图">From a real artifact to your own</p>
-        <h1><span data-en="One install." data-zh="一次安装，">One install.</span><span class="title-gap" aria-hidden="true"> </span><em data-en="One bounded prompt." data-zh="一段有边界的提示词。">One bounded prompt.</em></h1>
+        <p class="lead-label" data-en="Start with words, Mermaid, or code" data-zh="从描述、Mermaid 或代码开始">Start with words, Mermaid, or code</p>
+        <h1><span data-en="Describe it." data-zh="直接说，">Describe it.</span><span class="title-gap" aria-hidden="true"> </span><em data-en="Archify maps it." data-zh="Archify 就能画。">Archify maps it.</em></h1>
       </div>
       <div>
-        <p class="lead-copy" data-en="Choose the technical question closest to the artifact you saw. Copy a tested starting prompt, then let your coding agent inspect the real repository before it draws." data-zh="选择最接近你刚才所看成品的技术问题。复制一段经过验证的起始提示词，再让编码智能体先检查真实仓库，然后作图。">Choose the technical question closest to the artifact you saw. Copy a tested starting prompt, then let your coding agent inspect the real repository before it draws.</p>
-        <div class="trust-line" data-en="No repository content or diagram data is sent to this page." data-zh="这个页面不会接收仓库内容或图表数据。">No repository content or diagram data is sent to this page.</div>
+        <p class="lead-copy" data-en="No repository is required. Describe a system or flow in a normal agent chat and Archify will turn it into a checked, interactive diagram. If code exists, the same skill can inspect it for evidence." data-zh="不需要绑定代码库。在任意 Agent 对话里用自然语言描述系统或流程，Archify 就会把它变成经过校验的交互图；如果有代码，也可以再让它读取仓库作为证据。">No repository is required. Describe a system or flow in a normal agent chat and Archify will turn it into a checked, interactive diagram. If code exists, the same skill can inspect it for evidence.</p>
+        <div class="trust-line" data-en="Your description is enough to make the first diagram." data-zh="只有一段描述，也足够画出第一张图。">Your description is enough to make the first diagram.</div>
       </div>
     </header>
 
     <section class="type-shell" aria-labelledby="type-label">
+      <p class="type-label"><span data-en="Choose how to start" data-zh="选择如何开始">Choose how to start</span><strong data-en="Repository optional" data-zh="代码库可选">Repository optional</strong></p>
+      <div class="input-paths" role="tablist" aria-label="Input source">
+        <button class="input-path" type="button" role="tab" data-input="description"><strong data-en="Just describe it" data-zh="直接描述">直接描述</strong><span data-en="Start in any chat. No files or repository needed." data-zh="在任意对话里开始，不需要文件或代码库。">Start in any chat. No files or repository needed.</span></button>
+        <button class="input-path" type="button" role="tab" data-input="repository"><strong data-en="Use a repository" data-zh="从代码库开始">Use a repository</strong><span data-en="Let the agent inspect code when source evidence matters." data-zh="需要源码证据时，再让 Agent 检查代码。">Let the agent inspect code when source evidence matters.</span></button>
+      </div>
       <p class="type-label" id="type-label"><span data-en="Choose the question shape" data-zh="选择问题形态">Choose the question shape</span><strong data-en="5 typed renderers" data-zh="5 种类型化渲染器">5 typed renderers</strong></p>
       <div class="type-tabs" role="tablist" aria-label="Diagram type">
         <button class="type-tab" type="button" role="tab" data-type="architecture" data-en="Architecture" data-zh="架构图">Architecture</button>
@@ -230,7 +248,7 @@
           <pre id="project-command">npx -y skills add tt-a1i/archify --skill archify --agent codex --copy --yes</pre>
         </div>
         <p class="secondary-note" data-en="Raven is supported through a manual ZIP installation, not a generated agent-switcher command. Extract archify.zip into ~/.raven/workspace/skills, which yields ~/.raven/workspace/skills/archify." data-zh="Raven 采用 ZIP 手动安装，不使用 Agent 切换器生成命令。将 archify.zip 解压到 ~/.raven/workspace/skills，解压后会得到 ~/.raven/workspace/skills/archify。">Raven is supported through a manual ZIP installation, not a generated agent-switcher command. Extract archify.zip into ~/.raven/workspace/skills, which yields ~/.raven/workspace/skills/archify.</p>
-        <p class="secondary-note" data-en="The Start link carries only your agent, language, diagram type, and a coarse source label. Journey events stay in this browser session and are never sent by Archify. No repository path, title, node, relationship, or source JSON is recorded." data-zh="Start 链接只携带 Agent、语言、图表类型和粗粒度来源标签。转化步骤只保存在当前浏览器会话中，Archify 不会发送这些数据，也不会记录仓库路径、标题、节点、关系或源 JSON。">The Start link carries only your agent, language, diagram type, and a coarse source label. Journey events stay in this browser session and are never sent by Archify. No repository path, title, node, relationship, or source JSON is recorded.</p>
+        <p class="secondary-note" data-en="The Start link carries only your agent, language, diagram type, input mode, and a coarse source label. Journey events stay in this browser session and are never sent by Archify. No repository path, title, node, relationship, or source JSON is recorded." data-zh="Start 链接只携带 Agent、语言、图表类型、输入模式和粗粒度来源标签。转化步骤只保存在当前浏览器会话中，Archify 不会发送这些数据，也不会记录仓库路径、标题、节点、关系或源 JSON。">The Start link carries only your agent, language, diagram type, input mode, and a coarse source label. Journey events stay in this browser session and are never sent by Archify. No repository path, title, node, relationship, or source JSON is recorded.</p>
       </article>
 
       <article class="panel" aria-live="polite">
@@ -256,7 +274,7 @@
     </footer>
   </main>
 
-  <script id="start-data" type="application/json">{"architecture":{"id":"system-overview","type":"architecture","proof":"web-app","presentation":{"preset":"classic","motion":"static","views":"optional"},"en":{"title":"System overview","question":"What exists, who owns it, and how is it connected?","summary":"A bounded map of core components, external dependencies, primary paths, and trust boundaries.","useWhen":"Onboarding, design reviews, repository orientation, or explaining a service landscape.","avoidWhen":"The audience needs exact call order, state transitions, or row-level data lineage.","include":["8–12 core components","one primary path","external dependencies","trust boundaries"],"prompt":"Analyze this repository, then use Archify to create a high-level architecture diagram. Show 8–12 core runtime components, one primary request or data path, external dependencies, ownership or trust boundaries, and put supporting detail in cards instead of adding more edges."},"zh":{"title":"系统总览","question":"系统里有什么、归谁负责、彼此如何连接？","summary":"用一张有边界的图展示核心组件、外部依赖、主路径和信任边界。","useWhen":"适合新人上手、方案评审、仓库梳理和服务全景说明。","avoidWhen":"如果重点是精确调用顺序、状态流转或字段级血缘，请换其他配方。","include":["8–12 个核心组件","一条主路径","外部依赖","归属或信任边界"],"prompt":"分析这个仓库，然后用 Archify 生成高层系统架构图。展示 8–12 个核心运行时组件、一条主要请求或数据路径、外部依赖、归属或信任边界；支持性细节放进卡片，不要继续堆连线。"}},"workflow":{"id":"agent-tool-call","type":"workflow","proof":"agent-tool-call","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"en":{"title":"Agent tool-call loop","question":"How does an agent plan, get permission, act, recover, and report?","summary":"A lane-based agent loop with policy gates, tool execution, exception recovery, evidence, and final response.","useWhen":"Explaining agent runtimes, MCP/tool orchestration, approvals, retries, or observability.","avoidWhen":"The goal is only to show static agent components or exact API message timing.","include":["request and planning","policy or approval gate","tool execution","exception and evidence paths"],"prompt":"Use Archify workflow mode to explain this agent tool-call loop. Separate user surface, agent runtime, policy boundary, exception handling, tool execution, and observability into lanes. Make the successful path primary and show approval, retry, blocked, and evidence paths explicitly."},"zh":{"title":"智能体工具调用","question":"智能体如何规划、获批、执行、恢复并汇报？","summary":"用泳道表达策略门、工具执行、异常恢复、证据和最终回复。","useWhen":"适合解释 Agent Runtime、MCP/工具编排、审批、重试和可观测性。","avoidWhen":"如果只想看静态组件，或重点是精确 API 消息时序，请换其他配方。","include":["请求与规划","策略或审批门","工具执行","异常与证据路径"],"prompt":"用 Archify 工作流模式解释这段智能体工具调用。把用户界面、Agent Runtime、策略边界、异常处理、工具执行和可观测性分成泳道；突出成功主路径，并明确展示审批、重试、阻塞和证据路径。"}},"sequence":{"id":"api-request","type":"sequence","proof":"cache-miss","presentation":{"preset":"classic","motion":"trace","views":"optional"},"en":{"title":"API request chain","question":"Who calls whom, in what order, and what returns?","summary":"A time-ordered request path with authentication, cache fallback, persistence, return traffic, and async trace.","useWhen":"API documentation, debugging request latency, auth reviews, or explaining cache fallback.","avoidWhen":"Order is unimportant and the audience only needs the stable service topology.","include":["callers and callees","request and return messages","fallback or error path","async side effects"],"prompt":"Use Archify sequence mode to show this request from caller to final response. Include authentication, cache hit or miss, persistence fallback, return messages, and asynchronous trace or event emission. Keep message labels short and order unambiguous."},"zh":{"title":"API 请求链","question":"谁调用谁、顺序如何、最终返回什么？","summary":"按时间展示鉴权、缓存回退、持久化、返回流量和异步追踪。","useWhen":"适合 API 文档、请求耗时排查、鉴权评审和缓存回退说明。","avoidWhen":"如果顺序不重要，受众只需要稳定的服务拓扑，请用架构图。","include":["调用方与被调用方","请求与返回消息","回退或错误路径","异步副作用"],"prompt":"用 Archify 时序模式展示从调用方到最终响应的完整请求。包含鉴权、缓存命中或未命中、持久化回退、返回消息，以及异步 Trace 或事件上报；消息标签保持简短，顺序必须明确。"}},"dataflow":{"id":"event-stream","type":"dataflow","proof":"event-stream","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"en":{"title":"Event-stream topology","question":"Which events move through which topics, processors, groups, and failure paths?","summary":"A stream map of producers, topics, ordered processors, consumer groups, state, replay, and DLQ.","useWhen":"Kafka/event-platform design, stream processing reviews, ownership, replay, and failure handling.","avoidWhen":"Topic names, consumer groups, and delivery semantics are not known—use a generic workflow instead.","include":["producers and event names","topics and ordering","processors and consumer groups","state, replay, and DLQ"],"prompt":"Use Archify dataflow mode to draw this event-stream topology. Name producers, events, topics, ordered processors, consumer groups, state stores, replay paths, and the DLQ. Show ownership and delivery semantics only when supported by evidence."},"zh":{"title":"事件流拓扑","question":"哪些事件经过哪些 Topic、处理器、消费者组和失败路径？","summary":"展示生产者、Topic、有序处理器、消费者组、状态、重放和 DLQ。","useWhen":"适合 Kafka/事件平台设计、流处理评审、归属、重放和失败处理。","avoidWhen":"如果 Topic、消费者组和投递语义都不清楚，请先用通用工作流，不要编造事件拓扑。","include":["生产者与事件名","Topic 与顺序","处理器与消费者组","状态、重放与 DLQ"],"prompt":"用 Archify 数据流模式绘制这段事件流拓扑。命名生产者、事件、Topic、有序处理器、消费者组、状态存储、重放路径和 DLQ；只有在证据充分时才标注归属和投递语义。"}},"lifecycle":{"id":"object-lifecycle","type":"lifecycle","proof":"agent-run","presentation":{"preset":"classic","motion":"trace","views":"optional"},"en":{"title":"Object lifecycle","question":"Which states exist, what events move between them, and how does it end?","summary":"A state model with active work, waits, retries, cancellation, failure, and explicit terminal outcomes.","useWhen":"Tasks, orders, tickets, subscriptions, jobs, agent runs, or any durable object with status.","avoidWhen":"The object has no durable state and the real question is participant interaction over time.","include":["start and active states","event-labelled transitions","wait and retry states","all terminal outcomes"],"prompt":"Use Archify lifecycle mode to model this object. Separate main progress, waiting or interruption states, and terminal outcomes. Label transitions with events, include retry, cancellation, timeout, success, and failure where real, and never hide an ending."},"zh":{"title":"对象生命周期","question":"有哪些状态、什么事件触发流转、最终如何结束？","summary":"展示执行、等待、重试、取消、失败以及明确终态的状态模型。","useWhen":"适合任务、订单、工单、订阅、作业、Agent Run 等带持久状态的对象。","avoidWhen":"对象没有持久状态，真正问题是参与者随时间的交互时，请使用时序图。","include":["开始与执行态","带事件的转换","等待与重试态","所有终态"],"prompt":"用 Archify 生命周期模式建模这个对象。分开主进度、等待或中断状态和终态；用事件标注转换，并在真实存在时展示重试、取消、超时、成功和失败，不能隐藏任何结束方式。"}}}</script>
+  <script id="start-data" type="application/json">{"architecture":{"id":"system-overview","type":"architecture","proof":"web-app","presentation":{"preset":"classic","motion":"static","views":"optional"},"en":{"title":"System overview","question":"What exists, who owns it, and how is it connected?","summary":"A bounded map of core components, external dependencies, primary paths, and trust boundaries.","useWhen":"Onboarding, design reviews, repository orientation, or explaining a service landscape.","avoidWhen":"The audience needs exact call order, state transitions, or row-level data lineage.","include":["8–12 core components","one primary path","external dependencies","trust boundaries"],"prompt":"Analyze this repository, then use Archify to create a high-level architecture diagram. Show 8–12 core runtime components, one primary request or data path, external dependencies, ownership or trust boundaries, and put supporting detail in cards instead of adding more edges.","descriptionPrompt":"Use Archify to turn this plain-language system description into a high-level architecture diagram: [describe the users, core components, primary path, external dependencies, and boundaries]. No repository is required. Ask only for missing facts that would materially change the diagram, mark any remaining unknowns instead of inventing them, and keep one obvious primary path across 8–12 core components.","repositoryPrompt":"Analyze this repository, then use Archify to create a high-level architecture diagram. Show 8–12 core runtime components, one primary request or data path, external dependencies, ownership or trust boundaries, and put supporting detail in cards instead of adding more edges."},"zh":{"title":"系统总览","question":"系统里有什么、归谁负责、彼此如何连接？","summary":"用一张有边界的图展示核心组件、外部依赖、主路径和信任边界。","useWhen":"适合新人上手、方案评审、仓库梳理和服务全景说明。","avoidWhen":"如果重点是精确调用顺序、状态流转或字段级血缘，请换其他配方。","include":["8–12 个核心组件","一条主路径","外部依赖","归属或信任边界"],"prompt":"分析这个仓库，然后用 Archify 生成高层系统架构图。展示 8–12 个核心运行时组件、一条主要请求或数据路径、外部依赖、归属或信任边界；支持性细节放进卡片，不要继续堆连线。","descriptionPrompt":"用 Archify 把下面这段自然语言系统描述画成高层架构图：[在这里描述用户、核心组件、主要路径、外部依赖和边界]。不需要代码库。只追问会实质影响图的缺失信息，其余不确定内容要标明而不是编造；保留 8–12 个核心组件和一条一眼可见的主路径。","repositoryPrompt":"分析这个仓库，然后用 Archify 生成高层系统架构图。展示 8–12 个核心运行时组件、一条主要请求或数据路径、外部依赖、归属或信任边界；支持性细节放进卡片，不要继续堆连线。"}},"workflow":{"id":"agent-tool-call","type":"workflow","proof":"agent-tool-call","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"en":{"title":"Agent tool-call loop","question":"How does an agent plan, get permission, act, recover, and report?","summary":"A lane-based agent loop with policy gates, tool execution, exception recovery, evidence, and final response.","useWhen":"Explaining agent runtimes, MCP/tool orchestration, approvals, retries, or observability.","avoidWhen":"The goal is only to show static agent components or exact API message timing.","include":["request and planning","policy or approval gate","tool execution","exception and evidence paths"],"prompt":"Use Archify workflow mode to explain this agent tool-call loop. Separate user surface, agent runtime, policy boundary, exception handling, tool execution, and observability into lanes. Make the successful path primary and show approval, retry, blocked, and evidence paths explicitly.","descriptionPrompt":"Use Archify workflow mode to turn this description into a diagram: [paste the actors, main steps, decisions, approvals, and exception paths]. Use lanes for distinct owners, keep one unmistakable happy path, and mark missing ownership or unresolved branches instead of inventing them.","repositoryPrompt":"Inspect this repository for evidence, then use Archify workflow mode to explain this agent tool-call loop. Separate user surface, agent runtime, policy boundary, exception handling, tool execution, and observability into lanes. Make the successful path primary and show approval, retry, blocked, and evidence paths explicitly. Do not invent behavior that the code does not support."},"zh":{"title":"智能体工具调用","question":"智能体如何规划、获批、执行、恢复并汇报？","summary":"用泳道表达策略门、工具执行、异常恢复、证据和最终回复。","useWhen":"适合解释 Agent Runtime、MCP/工具编排、审批、重试和可观测性。","avoidWhen":"如果只想看静态组件，或重点是精确 API 消息时序，请换其他配方。","include":["请求与规划","策略或审批门","工具执行","异常与证据路径"],"prompt":"用 Archify 工作流模式解释这段智能体工具调用。把用户界面、Agent Runtime、策略边界、异常处理、工具执行和可观测性分成泳道；突出成功主路径，并明确展示审批、重试、阻塞和证据路径。","descriptionPrompt":"用 Archify 工作流模式把下面的描述画成图：[粘贴参与者、主要步骤、决策、审批和异常路径]。不同负责方使用独立泳道，保留一条明确的成功主路径，缺失的负责人或未定分支要标明而不是编造。","repositoryPrompt":"先检查这个仓库里的相关证据，然后用 Archify 工作流模式解释这段智能体工具调用。把用户界面、Agent Runtime、策略边界、异常处理、工具执行和可观测性分成泳道；突出成功主路径，并明确展示审批、重试、阻塞和证据路径。不要编造代码无法支持的行为。"}},"sequence":{"id":"api-request","type":"sequence","proof":"cache-miss","presentation":{"preset":"classic","motion":"trace","views":"optional"},"en":{"title":"API request chain","question":"Who calls whom, in what order, and what returns?","summary":"A time-ordered request path with authentication, cache fallback, persistence, return traffic, and async trace.","useWhen":"API documentation, debugging request latency, auth reviews, or explaining cache fallback.","avoidWhen":"Order is unimportant and the audience only needs the stable service topology.","include":["callers and callees","request and return messages","fallback or error path","async side effects"],"prompt":"Use Archify sequence mode to show this request from caller to final response. Include authentication, cache hit or miss, persistence fallback, return messages, and asynchronous trace or event emission. Keep message labels short and order unambiguous.","descriptionPrompt":"Use Archify sequence mode to draw this interaction: [paste the participants, calls, returns, fallback, and asynchronous side effects]. Keep message order unambiguous, labels short, and unknown behavior explicit. No repository is required.","repositoryPrompt":"Inspect this repository for evidence, then use Archify sequence mode to show this request from caller to final response. Include authentication, cache hit or miss, persistence fallback, return messages, and asynchronous trace or event emission. Keep message labels short and order unambiguous. Do not invent behavior that the code does not support."},"zh":{"title":"API 请求链","question":"谁调用谁、顺序如何、最终返回什么？","summary":"按时间展示鉴权、缓存回退、持久化、返回流量和异步追踪。","useWhen":"适合 API 文档、请求耗时排查、鉴权评审和缓存回退说明。","avoidWhen":"如果顺序不重要，受众只需要稳定的服务拓扑，请用架构图。","include":["调用方与被调用方","请求与返回消息","回退或错误路径","异步副作用"],"prompt":"用 Archify 时序模式展示从调用方到最终响应的完整请求。包含鉴权、缓存命中或未命中、持久化回退、返回消息，以及异步 Trace 或事件上报；消息标签保持简短，顺序必须明确。","descriptionPrompt":"用 Archify 时序模式绘制下面的交互：[粘贴参与者、调用、返回、回退和异步副作用]。确保消息顺序无歧义、标签简短，并明确标注未知行为。不需要代码库。","repositoryPrompt":"先检查这个仓库里的相关证据，然后用 Archify 时序模式展示从调用方到最终响应的完整请求。包含鉴权、缓存命中或未命中、持久化回退、返回消息，以及异步 Trace 或事件上报；消息标签保持简短，顺序必须明确。不要编造代码无法支持的行为。"}},"dataflow":{"id":"event-stream","type":"dataflow","proof":"event-stream","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"en":{"title":"Event-stream topology","question":"Which events move through which topics, processors, groups, and failure paths?","summary":"A stream map of producers, topics, ordered processors, consumer groups, state, replay, and DLQ.","useWhen":"Kafka/event-platform design, stream processing reviews, ownership, replay, and failure handling.","avoidWhen":"Topic names, consumer groups, and delivery semantics are not known—use a generic workflow instead.","include":["producers and event names","topics and ordering","processors and consumer groups","state, replay, and DLQ"],"prompt":"Use Archify dataflow mode to draw this event-stream topology. Name producers, events, topics, ordered processors, consumer groups, state stores, replay paths, and the DLQ. Show ownership and delivery semantics only when supported by evidence.","descriptionPrompt":"Use Archify dataflow mode to map this data journey: [paste the sources, data assets, transforms, stores, boundaries, and consumers]. Label every flow, distinguish streaming from batch where relevant, and mark unknown classifications or ownership instead of inventing them.","repositoryPrompt":"Inspect this repository for evidence, then use Archify dataflow mode to draw this event-stream topology. Name producers, events, topics, ordered processors, consumer groups, state stores, replay paths, and the DLQ. Show ownership and delivery semantics only when supported by evidence. Do not invent behavior that the code does not support."},"zh":{"title":"事件流拓扑","question":"哪些事件经过哪些 Topic、处理器、消费者组和失败路径？","summary":"展示生产者、Topic、有序处理器、消费者组、状态、重放和 DLQ。","useWhen":"适合 Kafka/事件平台设计、流处理评审、归属、重放和失败处理。","avoidWhen":"如果 Topic、消费者组和投递语义都不清楚，请先用通用工作流，不要编造事件拓扑。","include":["生产者与事件名","Topic 与顺序","处理器与消费者组","状态、重放与 DLQ"],"prompt":"用 Archify 数据流模式绘制这段事件流拓扑。命名生产者、事件、Topic、有序处理器、消费者组、状态存储、重放路径和 DLQ；只有在证据充分时才标注归属和投递语义。","descriptionPrompt":"用 Archify 数据流模式梳理下面的数据路径：[粘贴来源、数据资产、转换、存储、边界和消费者]。为每条数据流标注名称，在有意义时区分流式与批处理，未知的分类或归属要标明而不是编造。","repositoryPrompt":"先检查这个仓库里的相关证据，然后用 Archify 数据流模式绘制这段事件流拓扑。命名生产者、事件、Topic、有序处理器、消费者组、状态存储、重放路径和 DLQ；只有在证据充分时才标注归属和投递语义。不要编造代码无法支持的行为。"}},"lifecycle":{"id":"object-lifecycle","type":"lifecycle","proof":"agent-run","presentation":{"preset":"classic","motion":"trace","views":"optional"},"en":{"title":"Object lifecycle","question":"Which states exist, what events move between them, and how does it end?","summary":"A state model with active work, waits, retries, cancellation, failure, and explicit terminal outcomes.","useWhen":"Tasks, orders, tickets, subscriptions, jobs, agent runs, or any durable object with status.","avoidWhen":"The object has no durable state and the real question is participant interaction over time.","include":["start and active states","event-labelled transitions","wait and retry states","all terminal outcomes"],"prompt":"Use Archify lifecycle mode to model this object. Separate main progress, waiting or interruption states, and terminal outcomes. Label transitions with events, include retry, cancellation, timeout, success, and failure where real, and never hide an ending.","descriptionPrompt":"Use Archify lifecycle mode to model this object: [paste its states, transition events, waits, retries, cancellation, and terminal outcomes]. Separate active, waiting, recoverable-failure, and terminal states, and never hide an ending. No repository is required.","repositoryPrompt":"Inspect this repository for evidence, then use Archify lifecycle mode to model this object. Separate main progress, waiting or interruption states, and terminal outcomes. Label transitions with events, include retry, cancellation, timeout, success, and failure where real, and never hide an ending. Do not invent behavior that the code does not support."},"zh":{"title":"对象生命周期","question":"有哪些状态、什么事件触发流转、最终如何结束？","summary":"展示执行、等待、重试、取消、失败以及明确终态的状态模型。","useWhen":"适合任务、订单、工单、订阅、作业、Agent Run 等带持久状态的对象。","avoidWhen":"对象没有持久状态，真正问题是参与者随时间的交互时，请使用时序图。","include":["开始与执行态","带事件的转换","等待与重试态","所有终态"],"prompt":"用 Archify 生命周期模式建模这个对象。分开主进度、等待或中断状态和终态；用事件标注转换，并在真实存在时展示重试、取消、超时、成功和失败，不能隐藏任何结束方式。","descriptionPrompt":"用 Archify 生命周期模式建模这个对象：[粘贴它的状态、转换事件、等待、重试、取消和终态]。分开执行、等待、可恢复失败和终态，不要隐藏任何结束方式。不需要代码库。","repositoryPrompt":"先检查这个仓库里的相关证据，然后用 Archify 生命周期模式建模这个对象。分开主进度、等待或中断状态和终态；用事件标注转换，并在真实存在时展示重试、取消、超时、成功和失败，不能隐藏任何结束方式。不要编造代码无法支持的行为。"}}}</script>
   <script src="assets/site-language.js"></script>
   <script>
     (function () {
@@ -265,15 +283,18 @@
       var DATA = JSON.parse(document.getElementById('start-data').textContent);
       var KNOWN_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
       var KNOWN_AGENTS = new Set(['cursor', 'codex', 'claude-code', 'opencode']);
+      var KNOWN_INPUTS = new Set(['description', 'repository']);
       var KNOWN_SOURCES = new Set(['artifact', 'gallery', 'readme', 'direct']);
       var EVENT_KEY = 'archify.start.events.v1';
       var params = new URLSearchParams(window.location.search);
       var requestedType = params.get('type');
       var requestedAgent = params.get('agent');
       var requestedSource = params.get('source');
+      var requestedInput = params.get('input');
       var type = KNOWN_TYPES.has(requestedType) ? requestedType : 'architecture';
       var agent = KNOWN_AGENTS.has(requestedAgent) ? requestedAgent : 'codex';
       var source = KNOWN_SOURCES.has(requestedSource) ? requestedSource : 'direct';
+      var input = KNOWN_INPUTS.has(requestedInput) ? requestedInput : 'description';
       var language = ArchifySiteLanguage.read();
 
       var title = document.getElementById('recipe-title');
@@ -307,6 +328,7 @@
         next.searchParams.set('agent', agent);
         next.searchParams.delete('lang');
         next.searchParams.set('source', source);
+        next.searchParams.set('input', input);
         history.replaceState(null, '', next.pathname + next.search + next.hash);
       }
 
@@ -337,6 +359,12 @@
         }
       };
 
+      function currentPrompt() {
+        return input === 'description'
+          ? DATA[type][language].descriptionPrompt
+          : DATA[type][language].repositoryPrompt;
+      }
+
       function render() {
         language = ArchifySiteLanguage.write(language);
         var recipe = DATA[type];
@@ -352,13 +380,18 @@
           button.setAttribute('aria-selected', String(active));
           button.tabIndex = active ? 0 : -1;
         });
+        document.querySelectorAll('[data-input]').forEach(function (button) {
+          var active = button.dataset.input === input;
+          button.setAttribute('aria-selected', String(active));
+          button.tabIndex = active ? 0 : -1;
+        });
         var agentName = document.querySelector('[data-agent="' + agent + '"]').textContent;
         agentState.textContent = agentName + (language === 'zh' ? ' · 同一份 Skill' : ' · same Skill');
         installCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --agent ' + agent + ' --global --copy --yes';
         projectCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --agent ' + agent + ' --copy --yes';
         title.textContent = copy.title;
         question.textContent = copy.question;
-        prompt.textContent = copy.prompt;
+        prompt.textContent = currentPrompt();
         includeList.replaceChildren.apply(includeList, copy.include.map(function (item) {
           var entry = document.createElement('li');
           entry.textContent = item;
@@ -389,10 +422,10 @@
         var agentName = document.querySelector('[data-agent="' + agent + '"]').textContent;
         if (language === 'zh') {
           return '为 ' + agentName + ' 安装 Archify：\n' + installCommand.textContent.trim()
-            + '\n\n然后在目标仓库中让 ' + agentName + ' 执行：\n' + DATA[type][language].prompt;
+            + (input === 'description' ? '\n\n然后在任意新对话中直接告诉 ' : '\n\n然后在目标仓库中让 ') + agentName + '：\n' + currentPrompt();
         }
         return 'Install Archify for ' + agentName + ':\n' + installCommand.textContent.trim()
-          + '\n\nThen, in your target repository, ask ' + agentName + ':\n' + DATA[type][language].prompt;
+          + (input === 'description' ? '\n\nThen start any new chat and tell ' : '\n\nThen, in your target repository, ask ') + agentName + ':\n' + currentPrompt();
       }
 
       async function copyText(text, step) {
@@ -444,6 +477,25 @@
         });
       });
 
+      document.querySelectorAll('[data-input]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          input = button.dataset.input;
+          render();
+        });
+        button.addEventListener('keydown', function (event) {
+          var buttons = Array.from(document.querySelectorAll('[data-input]'));
+          var index = buttons.indexOf(button);
+          if (event.key === 'ArrowRight' || event.key === 'ArrowDown') index = (index + 1) % buttons.length;
+          else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') index = (index - 1 + buttons.length) % buttons.length;
+          else if (event.key === 'Home') index = 0;
+          else if (event.key === 'End') index = buttons.length - 1;
+          else return;
+          event.preventDefault();
+          buttons[index].click();
+          buttons[index].focus();
+        });
+      });
+
       document.querySelectorAll('[data-copy-source]').forEach(function (button) {
         button.addEventListener('click', function () {
           var step = button.dataset.copySource === 'install-command' ? 'global_install_copy' : 'project_install_copy';
@@ -451,7 +503,7 @@
         });
       });
       document.getElementById('copy-prompt').addEventListener('click', function () {
-        copyText(DATA[type][language].prompt, 'prompt_copy');
+        copyText(currentPrompt(), 'prompt_copy');
       });
       document.getElementById('copy-starter').addEventListener('click', function () {
         copyText(starterText(), 'starter_copy');

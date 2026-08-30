@@ -196,6 +196,7 @@ test('README stays scannable without deleting the visual proof set', () => {
   for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     assert.ok(readme.split('\n').length <= 295, `${filename}: README grew beyond the scannable line budget`);
+    assert.match(readme, filename === 'README_ZH.md' ? /不需要绑定代码库/ : /No repository is required/);
     for (const asset of commonAssets) {
       assert.ok(readme.includes(`docs/assets/${asset}`), `${filename}: visual proof ${asset} was removed`);
     }
