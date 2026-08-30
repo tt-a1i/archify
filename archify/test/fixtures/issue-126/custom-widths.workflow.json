@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Sanitized custom widths",
+    "legend": { "mode": "hidden" }
+  },
+  "lanes": [
+    { "id": "main", "label": "Main flow" }
+  ],
+  "nodes": [
+    { "id": "compact", "lane": "main", "col": 1, "type": "frontend", "label": "In", "width": 32 },
+    { "id": "wide", "lane": "main", "col": 2, "type": "database", "label": "Sanitized downstream service", "width": 240 }
+  ],
+  "edges": [
+    { "id": "compact-wide", "from": "compact", "to": "wide" }
+  ]
+}
