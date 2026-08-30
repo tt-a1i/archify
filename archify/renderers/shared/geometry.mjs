@@ -104,8 +104,76 @@ export function segmentRectIntersectionLength(segment, rect) {
   return length * Math.max(0, leave - enter);
 }
 
+const ROUTE_INDEX_CELL_SIZE = 128;
+const ROUTE_INDEX_MAX_CELLS_PER_ROUTE = 256;
+
+function routeBounds(route) {
+  let x1 = Infinity;
+  let y1 = Infinity;
+  let x2 = -Infinity;
+  let y2 = -Infinity;
+  for (const [x, y] of route.points) {
+    x1 = Math.min(x1, x);
+    y1 = Math.min(y1, y);
+    x2 = Math.max(x2, x);
+    y2 = Math.max(y2, y);
+  }
+  return { x1, y1, x2, y2 };
+}
+
+function createRouteCandidateIndex(routes) {
+  const cells = new Map();
+  const globalRouteIndexes = [];
+
+  routes.forEach((route, routeIndex) => {
+    const bounds = routeBounds(route);
+    const x1 = Math.floor(bounds.x1 / ROUTE_INDEX_CELL_SIZE);
+    const y1 = Math.floor(bounds.y1 / ROUTE_INDEX_CELL_SIZE);
+    const x2 = Math.floor(bounds.x2 / ROUTE_INDEX_CELL_SIZE);
+    const y2 = Math.floor(bounds.y2 / ROUTE_INDEX_CELL_SIZE);
+    const cellCount = (x2 - x1 + 1) * (y2 - y1 + 1);
+
+    // Very long routes are cheaper to test once per label than to duplicate
+    // across a large part of the index.
+    if (!Number.isSafeInteger(cellCount) || cellCount > ROUTE_INDEX_MAX_CELLS_PER_ROUTE) {
+      globalRouteIndexes.push(routeIndex);
+      return;
+    }
+    for (let y = y1; y <= y2; y += 1) {
+      for (let x = x1; x <= x2; x += 1) {
+        const key = `${x}:${y}`;
+        const bucket = cells.get(key);
+        if (bucket) bucket.push(routeIndex);
+        else cells.set(key, [routeIndex]);
+      }
+    }
+  });
+
+  return function candidates(rect, threshold) {
+    const x1 = Math.floor((rect.x - threshold) / ROUTE_INDEX_CELL_SIZE);
+    const y1 = Math.floor((rect.y - threshold) / ROUTE_INDEX_CELL_SIZE);
+    const x2 = Math.floor((rect.x + rect.width + threshold) / ROUTE_INDEX_CELL_SIZE);
+    const y2 = Math.floor((rect.y + rect.height + threshold) / ROUTE_INDEX_CELL_SIZE);
+    const cellCount = (x2 - x1 + 1) * (y2 - y1 + 1);
+
+    // A huge threshold offers no selectivity and can overflow cell iteration.
+    if (!Number.isSafeInteger(cellCount) || cellCount > Math.max(64, cells.size * 4)) return routes;
+
+    const routeIndexes = new Set(globalRouteIndexes);
+    for (let y = y1; y <= y2; y += 1) {
+      for (let x = x1; x <= x2; x += 1) {
+        for (const routeIndex of cells.get(`${x}:${y}`) || []) routeIndexes.add(routeIndex);
+      }
+    }
+    return [...routeIndexes]
+      .sort((left, right) => left - right)
+      .map((routeIndex) => routes[routeIndex]);
+  };
+}
+
 export function collectLabelRouteClearance({ labels, routedRelations, threshold }) {
   if (!Number.isFinite(threshold) || threshold < 0) return [];
+  if (threshold === 0) return [];
   const routeCandidates = asArray(routedRelations).map((entry, fallbackIndex) => {
     const relation = entry?.relation || entry;
     const points = normalizeRoutePoints(entry?.points || relation?.routePoints);
@@ -125,6 +193,7 @@ export function collectLabelRouteClearance({ labels, routedRelations, threshold 
   });
   const hits = [];
   const seenLabels = new Set();
+  const candidateRoutes = createRouteCandidateIndex(routes);
 
   for (const [fallbackIndex, label] of asArray(labels).entries()) {
     const rect = label?.rect || label;
@@ -133,7 +202,7 @@ export function collectLabelRouteClearance({ labels, routedRelations, threshold 
     const labelIdentity = relationshipIdentity(label?.relation, relationIndex);
     if (seenLabels.has(labelIdentity)) continue;
     seenLabels.add(labelIdentity);
-    for (const route of routes) {
+    for (const route of candidateRoutes(rect, threshold)) {
       if (relationIndex === route.relationIndex || sameRelationship(label?.relation, route.relation)) continue;
       let nearest = null;
       for (let segmentIndex = 0; segmentIndex < route.points.length - 1; segmentIndex += 1) {
