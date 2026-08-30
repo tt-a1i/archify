@@ -105,7 +105,7 @@ function nodeBlock(html, id) {
 }
 
 test('generated catalog exposes a substantial, unique, provenance-backed preset library', () => {
-  assert.equal(BRAND_MARKS.length, 107);
+  assert.equal(BRAND_MARKS.length, 108);
   assert.equal(new Set(BRAND_MARKS.map((mark) => mark.id)).size, BRAND_MARKS.length);
   for (const mark of BRAND_MARKS) {
     assert.match(mark.id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
@@ -122,6 +122,8 @@ test('brand discovery resolves model names, aliases, domains, and Chinese channe
     ['GPT', 'openai'],
     ['Gemini', 'google-gemini'],
     ['github.com', 'github'],
+    ['Xquik', 'xquik'],
+    ['docs.xquik.com', 'xquik'],
     ['微信', 'wechat'],
   ]) {
     const result = spawnSync(process.execPath, [cli, 'brands', query, '--json'], {
@@ -218,6 +220,22 @@ test('known-brand URLs use the bundled vector instead of the network', () => {
   assert.doesNotMatch(html, /data-brand-status="captured"/);
 });
 
+test('Xquik resolves to its official bundled vector for lookup, capture, and rendering', async () => {
+  const capture = await runCliAsync(['brands', 'capture', 'https://xquik.com', '--json']);
+  assert.equal(capture.status, 0, capture.stderr || capture.stdout);
+  const receipt = JSON.parse(capture.stdout);
+  assert.deepEqual(receipt.brand, 'xquik');
+  assert.equal(receipt.evidence.status, 'preset');
+  assert.equal(receipt.evidence.source, 'https://xquik.com/icon.svg');
+
+  const input = writeFixture('architecture', 'xquik-preset', receipt.brand);
+  const { result, html } = renderSync('architecture', input, 'xquik-preset');
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.match(html, /data-node-brand="Xquik"/);
+  assert.match(html, /data-brand-mark="xquik"[^>]+data-brand-status="preset"/);
+  assert.match(html, /data-brand-source="https:\/\/xquik\.com\/icon\.svg"/);
+});
+
 test('unknown URL strings fail closed until an exact captured digest is authored', () => {
   const input = writeFixture('architecture', 'unpinned-link', 'https://brand.example.invalid/');
   const result = spawnSync(process.execPath, [cli, 'validate', 'architecture', input, '--json'], {
@@ -269,6 +287,72 @@ test('capture command returns a digest-pinned brand object that renders reproduc
     assert.match(rendered.html, /data:image\/png;base64,/);
     assert.match(rendered.html, new RegExp(`data-brand-sha256="${receipt.brand.sha256}"`));
     assert.ok(!rendered.html.includes('http://127.0.0.1') || rendered.html.includes('data-node-brand-source='));
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('capture stops after a split closing head before a large response body', async () => {
+  const icon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  const server = http.createServer((request, response) => {
+    if (request.url === '/mark.png') {
+      response.writeHead(200, { 'content-type': 'image/png' });
+      response.end(icon);
+      return;
+    }
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.write('<!doctype html><head><link rel="icon" type="image/png" href="/mark.png"></He');
+    setImmediate(() => response.end(`Ad><body>${'x'.repeat(300 * 1024)}</body>`));
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const capture = await runCliAsync(
+      ['brands', 'capture', `http://127.0.0.1:${address.port}/`, '--json'],
+      { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' },
+    );
+    assert.equal(capture.status, 0, capture.stderr || capture.stdout);
+    const receipt = JSON.parse(capture.stdout);
+    assert.equal(receipt.evidence.contentType, 'image/png');
+    assert.equal(receipt.brand.sha256, createHash('sha256').update(icon).digest('hex'));
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('capture fails closed when the HTML head exceeds its byte limit', async () => {
+  const server = http.createServer((_request, response) => {
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.end(`<!doctype html><head>${'x'.repeat(300 * 1024)}</head>`);
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const capture = await runCliAsync(
+      ['brands', 'capture', `http://127.0.0.1:${address.port}/`, '--json'],
+      { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' },
+    );
+    assert.notEqual(capture.status, 0, capture.stdout);
+    assert.match(capture.stderr, /brand page head is too large/i);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('capture does not mistake a closing header tag for the head boundary', async () => {
+  const server = http.createServer((_request, response) => {
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.end(`<!doctype html><head></header>${'x'.repeat(300 * 1024)}</head>`);
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const capture = await runCliAsync(
+      ['brands', 'capture', `http://127.0.0.1:${address.port}/`, '--json'],
+      { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' },
+    );
+    assert.notEqual(capture.status, 0, capture.stdout);
+    assert.match(capture.stderr, /brand page head is too large/i);
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }

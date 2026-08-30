@@ -180,6 +180,11 @@ try {
   if (capturedPreset.brand !== 'github' || capturedPreset.evidence.status !== 'preset') {
     throw new Error('packaged brand capture did not resolve a known domain without network capture');
   }
+  const xquikPreset = JSON.parse(run(['brands', 'capture', 'https://xquik.com/', '--json']));
+  if (xquikPreset.brand !== 'xquik' || xquikPreset.evidence.status !== 'preset'
+    || xquikPreset.evidence.source !== 'https://xquik.com/icon.svg') {
+    throw new Error('packaged brand catalogue did not resolve the official Xquik vector');
+  }
   run(['demo', path.join(scratch, 'demo')]);
   run(['examples']);
 
