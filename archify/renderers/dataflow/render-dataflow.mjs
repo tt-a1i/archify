@@ -90,8 +90,10 @@ function stageFrame(stage, index) {
 const compositionFrames = asArray(dataflow.stages).map(stageFrame);
 
 function measureNode(node) {
-  const width = node.width || layout.nodeW;
-  const height = node.height || layout.nodeH;
+  // `??`, not `||`: an authored 0 is an invalid size validateDataflow() must
+  // reject, not a missing size the default should fill in.
+  const width = node.width ?? layout.nodeW;
+  const height = node.height ?? layout.nodeH;
   const cx = stageX(node.stage);
   const y = layout.rowYs[node.row] + (node.yOffset || 0);
   return {
@@ -129,6 +131,10 @@ function validateDataflow() {
     }
     if (!isFinitePoint(node.x, node.y, node.cx, node.cy)) {
       problems.push(`Node "${node.id}" produced non-finite coordinates — check stage, row, width, height, and yOffset are numbers.`);
+      continue;
+    }
+    if (node.width <= 0 || node.height <= 0) {
+      problems.push(`Node "${node.id}" has invalid size ${node.width}x${node.height} — width and height must be greater than 0.`);
       continue;
     }
     if (node.x < 24 || node.x + node.width > viewBox[0] - 24) {

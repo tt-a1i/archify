@@ -4,6 +4,11 @@
 // regressed before — by mutating a valid example into exactly one violation
 // and asserting the renderer exits non-zero with the expected message.
 //
+// A few layout rules sit BEHIND the schema — the schema bounds the same value,
+// so the renderer's own guard never fires through a supported entry point.
+// Those use test/helpers/schema-free-render.mjs, which strips only the schema
+// layer, so the guard itself is what the assertion measures.
+//
 // It also locks the error-message CONTRACT: representative messages must carry
 // both the numeric threshold and a remediation hint, since the consumer is an
 // LLM that fixes the JSON from the message alone.
@@ -17,6 +22,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { renderWithoutSchema } from './helpers/schema-free-render.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -328,6 +334,69 @@ for (const [name, mode, mutate, expected] of CASES) {
     for (const sub of expected) {
       assert.ok(stderr.includes(sub), `expected "${sub}" in stderr:\n${stderr}`);
     }
+  });
+}
+
+// ---- non-positive node sizes (defense in depth) ----------------------------
+// The schemas already bound these dimensions, so the renderers' own size guards
+// are only reachable once schema validation is out of the way. Assert them
+// through the schema-free seam: these cases fail if a guard is deleted, which
+// the schema-level cases in golden.mjs cannot do. Both dimensions are always
+// authored so the expected message never depends on a renderer default.
+const SIZE_GUARD_CASES = [
+  ['workflow', 'Node', (d) => d.nodes[0]],
+  ['dataflow', 'Node', (d) => d.nodes[0]],
+  ['lifecycle', 'State', (d) => d.states[0]],
+];
+
+const NON_POSITIVE_SIZES = [
+  ['zero width', 0, 40],
+  ['zero height', 60, 0],
+  ['negative width', -10, 40],
+  ['negative height', 60, -10],
+];
+
+for (const [mode, subject, pick] of SIZE_GUARD_CASES) {
+  for (const [label, width, height] of NON_POSITIVE_SIZES) {
+    test(`${mode}: ${label} is rejected by the renderer's own layout guard`, () => {
+      const d = load(mode);
+      const target = pick(d);
+      target.width = width;
+      target.height = height;
+      const { code, stderr } = renderWithoutSchema(mode, d);
+      assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+      assert.doesNotMatch(stderr, /TypeError|is not a function|Cannot read/, `crashed instead of reporting:\n${stderr}`);
+      const expected = `${subject} "${target.id}" has invalid size ${width}x${height} — width and height must be greater than 0.`;
+      assert.ok(stderr.includes(expected), `expected "${expected}" in stderr:\n${stderr}`);
+    });
+  }
+}
+
+// The architecture renderer is the reference implementation issue #171 asks the
+// other three to match; lock it through the same seam.
+test("architecture: non-positive component size is rejected by the renderer's own layout guard", () => {
+  const d = load('architecture');
+  d.components[0].size = [0, 60];
+  const { code, stderr } = renderWithoutSchema('architecture', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.ok(
+    stderr.includes(`Component "${d.components[0].id}" has invalid size 0x60 — width and height must be greater than 0.`),
+    `expected the architecture size diagnostic in stderr:\n${stderr}`,
+  );
+});
+
+// The renderers reach those guards because they fall back with `??`, not `||`.
+// An omitted width/height must therefore still take the default box.
+for (const [mode, drop] of [
+  ['workflow', (d) => { delete d.nodes[0].width; delete d.nodes[0].height; }],
+  ['dataflow', (d) => { delete d.nodes[0].width; delete d.nodes[0].height; }],
+  ['lifecycle', (d) => { delete d.states[0].width; delete d.states[0].height; }],
+]) {
+  test(`${mode}: omitted width/height still renders with the default box`, () => {
+    const d = load(mode);
+    drop(d);
+    const { code, stderr } = render(mode, d);
+    assert.equal(code, 0, stderr);
   });
 }
 

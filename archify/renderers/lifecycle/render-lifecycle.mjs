@@ -107,8 +107,10 @@ function bandFor(lane) {
 function measureState(state) {
   const isPhase = bandFor(state.lane) === 'phase';
   const isOutcome = bandFor(state.lane) === 'outcome';
-  const width = state.width || (isPhase ? layout.phaseW : isOutcome ? layout.outcomeW : layout.eventW);
-  const height = state.height || (isPhase ? layout.phaseH : isOutcome ? layout.outcomeH : layout.eventH);
+  // `??`, not `||`: an authored 0 is an invalid size validateLifecycle() must
+  // reject, not a missing size the default should fill in.
+  const width = state.width ?? (isPhase ? layout.phaseW : isOutcome ? layout.outcomeW : layout.eventW);
+  const height = state.height ?? (isPhase ? layout.phaseH : isOutcome ? layout.outcomeH : layout.eventH);
   const xs = isPhase ? layout.phaseXs : isOutcome ? layout.outcomeXs : layout.eventXs;
   const cx = xs[state.col] ?? xs[xs.length - 1];
   const y = (
@@ -171,6 +173,10 @@ function validateLifecycle() {
     }
     if (!isFinitePoint(state.x, state.y, state.cx, state.cy)) {
       problems.push(`State "${state.id}" produced non-finite coordinates — check col, width, height, and yOffset are numbers.`);
+      continue;
+    }
+    if (state.width <= 0 || state.height <= 0) {
+      problems.push(`State "${state.id}" has invalid size ${state.width}x${state.height} — width and height must be greater than 0.`);
       continue;
     }
     if (state.x < 32 || state.x + state.width > viewBox[0] - 32) {
