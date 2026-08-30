@@ -1,6 +1,6 @@
 # Built-in brand marks
 
-Archify ships a bounded catalogue of 107 commonly used brands for architecture,
+Archify ships a bounded catalogue of 108 commonly used brands for architecture,
 workflow, sequence, data-flow, and lifecycle nodes. The mark is optional authored
 identity: it never replaces the node's semantic `type`, color, label, or
 relationships.
