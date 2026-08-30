@@ -157,42 +157,6 @@ function nodeStep(node) {
 
 function validateWorkflow() {
   const problems = [];
-  if (workflow.schema_version !== 1) {
-    problems.push('Workflow files must set "schema_version": 1.');
-  }
-  if (workflow.diagram_type !== 'workflow') {
-    problems.push(`Unsupported diagram_type "${workflow.diagram_type}". Expected "workflow".`);
-  }
-  if (!workflow.meta || !workflow.meta.title) {
-    problems.push('Workflow files must include meta.title.');
-  }
-  if (!Array.isArray(workflow.lanes) || !workflow.lanes.length) {
-    problems.push('Workflow files must include at least one lane.');
-  }
-  if (!Array.isArray(workflow.nodes)) {
-    problems.push('Workflow files must include a nodes array.');
-  }
-  if (!Array.isArray(workflow.edges)) {
-    problems.push('Workflow files must include an edges array.');
-  }
-  if (workflow.phases !== undefined && !Array.isArray(workflow.phases)) {
-    problems.push('Workflow "phases" must be an array.');
-  }
-  if (workflow.groups !== undefined && !Array.isArray(workflow.groups)) {
-    problems.push('Workflow "groups" must be an array.');
-  }
-  if (workflow.mainPath !== undefined && !Array.isArray(workflow.mainPath)) {
-    problems.push('Workflow "mainPath" must be an array of node ids.');
-  }
-  if (workflow.cards !== undefined && !Array.isArray(workflow.cards)) {
-    problems.push('Workflow "cards" must be an array.');
-  }
-  if (problems.length) {
-    throwDiagnosticProblems('Workflow layout validation failed', problems, {
-      subject: { diagramType: 'workflow' },
-    });
-  }
-
   const laneIds = new Set(workflow.lanes.map((lane) => lane.id));
   if (laneIds.size !== workflow.lanes.length) {
     problems.push('Lane ids must be unique.');
@@ -708,7 +672,7 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(workflow.meta, 'workflow diagram')}>
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(workflow.meta)}>
 ${svgAccessibleText(workflow.meta, 'workflow')}
 ${renderDefinitions()}
 

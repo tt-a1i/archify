@@ -48,6 +48,8 @@ node bin/archify.mjs preview <type> <input>.json <output>.html --quality showcas
 
 Preview watches one explicit input on loopback, binds each stable digest to a private snapshot, and advances only after the existing verified delivery pipeline passes. Invalid, half-written, deleted, or superseded input leaves the previous verified revision on screen and on disk. Identical bytes do not rebuild or reload.
 
+The preview runtime ships inside the zero-dependency Skill ZIP and must work without `node_modules`.
+
 Never start it by default. Do not use it for CI, unattended agents, remote sharing, or mobile use. `--no-open` is only for a user who will open the printed local URL or for loop testing. Stop it with Ctrl-C before handoff. Server state, port, source path, diagnostics, error text, and reload tokens must never enter the generated artifact or any export.
 
 ## Perceptual delivery gate

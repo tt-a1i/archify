@@ -40,24 +40,13 @@
           "type": "string"
         },
         "animation": {
-          "enum": [
-            "trace",
-            "none"
-          ]
+          "$ref": "common.schema.json#/$defs/animation"
         },
         "visual_preset": {
-          "enum": [
-            "classic",
-            "signal-flow",
-            "blueprint",
-            "editorial"
-          ]
+          "$ref": "common.schema.json#/$defs/visualPreset"
         },
         "quality_profile": {
-          "enum": [
-            "standard",
-            "showcase"
-          ]
+          "$ref": "common.schema.json#/$defs/qualityProfile"
         },
         "views": {
           "$ref": "common.schema.json#/$defs/guidedViews"
@@ -157,12 +146,7 @@
             "maximum": 5
           },
           "variant": {
-            "enum": [
-              "default",
-              "emphasis",
-              "security",
-              "dashed"
-            ]
+            "$ref": "common.schema.json#/$defs/variant"
           }
         }
       }
@@ -201,12 +185,7 @@
             "maximum": 5
           },
           "variant": {
-            "enum": [
-              "default",
-              "emphasis",
-              "security",
-              "dashed"
-            ]
+            "$ref": "common.schema.json#/$defs/variant"
           }
         }
       }
@@ -308,10 +287,10 @@
             ]
           },
           "fromSide": {
-            "$ref": "#/$defs/side"
+            "$ref": "common.schema.json#/$defs/side"
           },
           "toSide": {
-            "$ref": "#/$defs/side"
+            "$ref": "common.schema.json#/$defs/side"
           },
           "route": {
             "enum": [
@@ -355,24 +334,13 @@
             "maximum": 1
           },
           "width": {
-            "type": "number",
-            "minimum": 0.5
+            "$ref": "common.schema.json#/$defs/relationshipWidth"
           }
         }
       }
     },
     "cards": {
       "$ref": "common.schema.json#/$defs/cards"
-    }
-  },
-  "$defs": {
-    "side": {
-      "enum": [
-        "left",
-        "right",
-        "top",
-        "bottom"
-      ]
     }
   }
 }

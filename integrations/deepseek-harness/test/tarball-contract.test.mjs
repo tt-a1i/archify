@@ -10,6 +10,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const integrationRoot = path.resolve(here, '..');
 const repoRoot = path.resolve(integrationRoot, '..', '..');
 const packScript = path.join(integrationRoot, 'scripts', 'pack.mjs');
+const DSH_RELEASE_REF = 'archify-dsh-v0.1.0';
 
 const FORBIDDEN = [
   '/test/',
@@ -55,6 +56,13 @@ test('pack command emits a real npm tarball with the expected identity and file 
     }
     const skillEntries = files.filter((file) => file === 'skills/archify/SKILL.md' || file.endsWith('/SKILL.md'));
     assert.deepEqual(skillEntries, ['skills/archify/SKILL.md']);
+    for (const notifierFile of [
+      'skills/archify/skill-release.json',
+      'skills/archify/scripts/check-update.mjs',
+      'skills/archify/scripts/update-contract.mjs',
+    ]) {
+      assert.equal(files.includes(notifierFile), false, `DSH 0.1.0 must not contain ${notifierFile}`);
+    }
     for (const file of files) {
       for (const forbidden of FORBIDDEN) {
         assert.equal(file.includes(forbidden), false, `tarball contains forbidden ${file}`);
@@ -66,11 +74,11 @@ test('pack command emits a real npm tarball with the expected identity and file 
   }
 });
 
-test('packed Skill payload matches the existing ZIP clean-staging contract', () => {
+test('packed Skill payload remains byte-identical to the DSH 0.1.0 release tag', () => {
   const { scratch, out, result } = packTarball();
-  const zipScratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-dsh-zip-stage-'));
   try {
     assert.equal(result.status, 0, result.stderr || result.stdout);
+    const receipt = JSON.parse(result.stdout);
     const packedRoot = path.join(scratch, 'packed');
     fs.mkdirSync(packedRoot);
     const tar = spawnSync('tar', ['-xzf', path.basename(out), '-C', packedRoot], {
@@ -78,24 +86,31 @@ test('packed Skill payload matches the existing ZIP clean-staging contract', () 
       encoding: 'utf8',
     });
     assert.equal(tar.status, 0, tar.stderr);
-    const zipPath = path.join(zipScratch, 'archify.zip');
-    const zip = spawnSync('bash', [path.join(repoRoot, 'scripts', 'build-zip.sh'), zipPath], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    });
-    assert.equal(zip.status, 0, zip.stderr);
-    const zipRoot = path.join(zipScratch, 'unzipped');
-    fs.mkdirSync(zipRoot);
-    const unzip = spawnSync('unzip', ['-q', zipPath, '-d', zipRoot], { encoding: 'utf8' });
-    assert.equal(unzip.status, 0, unzip.stderr);
-    const diff = spawnSync('diff', [
-      '-r',
-      path.join(packedRoot, 'package', 'skills', 'archify'),
-      path.join(zipRoot, 'archify'),
-    ], { encoding: 'utf8' });
-    assert.equal(diff.status, 0, diff.stdout || diff.stderr);
+    const skillRoot = path.join(packedRoot, 'package', 'skills', 'archify');
+    const skillFiles = receipt.files
+      .map((file) => file.path.replace(/^package\//, ''))
+      .filter((file) => file.startsWith('skills/archify/'))
+      .filter((file) => file !== 'skills/archify/package.json');
+    for (const packagedPath of skillFiles) {
+      const relative = packagedPath.slice('skills/archify/'.length);
+      const tagged = spawnSync('git', [
+        'show',
+        `${DSH_RELEASE_REF}:archify/${relative}`,
+      ], {
+        cwd: repoRoot,
+        encoding: null,
+      });
+      assert.equal(tagged.status, 0, tagged.stderr?.toString('utf8'));
+      assert.deepEqual(
+        fs.readFileSync(path.join(skillRoot, ...relative.split('/'))),
+        tagged.stdout,
+        `${packagedPath} differs from ${DSH_RELEASE_REF}`,
+      );
+    }
+    const skillPackage = JSON.parse(fs.readFileSync(path.join(skillRoot, 'package.json'), 'utf8'));
+    assert.equal(skillPackage.version, '2.14.0');
+    assert.doesNotMatch(fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8'), /## Update awareness/);
   } finally {
     fs.rmSync(scratch, { recursive: true, force: true });
-    fs.rmSync(zipScratch, { recursive: true, force: true });
   }
 });

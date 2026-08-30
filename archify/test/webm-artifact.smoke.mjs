@@ -350,6 +350,7 @@ let targetId;
 try {
   cdp = await connectCdp(await devtoolsEndpoint(port, chromeProcess, () => chromeStderr));
   ({ targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' }));
+  await cdp.send('Target.activateTarget', { targetId });
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
   await cdp.send('Page.enable', {}, sessionId);
   await cdp.send('Runtime.enable', {}, sessionId);
@@ -357,6 +358,8 @@ try {
   async function navigateReady(file, condition, label) {
     const url = file instanceof URL ? file.href : pathToFileURL(file).href;
     await cdp.send('Page.navigate', { url }, sessionId);
+    await cdp.send('Page.bringToFront', {}, sessionId);
+    await cdp.send('Emulation.setFocusEmulationEnabled', { enabled: true }, sessionId);
     let ready = false;
     for (let attempt = 0; attempt < 100 && !ready; attempt += 1) {
       ready = await evaluate(cdp, sessionId, `document.readyState === "complete" && (${condition})`);
@@ -610,13 +613,25 @@ try {
   }
 
   async function verifyArchitectureDeltaNavigator(file) {
+    await cdp.send('Emulation.setEmulatedMedia', {
+      media: 'screen',
+      features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }],
+    }, sessionId);
     const readyCondition = '!!document.querySelector("#review-play") && !document.querySelector("#review-play").disabled';
     async function waitForSelected(changeKey, label) {
       for (let attempt = 0; attempt < 80; attempt += 1) {
         if (await evaluate(cdp, sessionId, `document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey === ${JSON.stringify(changeKey)}`)) return;
         await delay(50);
       }
-      assert.fail(`${label} did not select ${changeKey} within the bounded wait`);
+      const observed = await evaluate(cdp, sessionId, `({
+        selected: document.querySelector('.change-row[aria-current="step"]')?.dataset.changeKey || null,
+        pressed: document.querySelector('#review-play')?.getAttribute('aria-pressed'),
+        label: document.querySelector('#review-play')?.textContent,
+        status: document.querySelector('#review-status')?.textContent,
+        reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+        hidden: document.hidden
+      })`);
+      assert.fail(`${label} did not select ${changeKey} within the bounded wait: ${JSON.stringify(observed)}`);
     }
     async function waitForReviewFinished(label) {
       for (let attempt = 0; attempt < 400; attempt += 1) {
@@ -771,7 +786,10 @@ try {
       same: getComputedStyle(document.querySelector('[data-view="delta"] [data-delta-state="same"]')).opacity
     })`);
     assert.deepEqual(printState, { strip: 'none', base: 'none', delta: 'block', head: 'none', current: '1', same: '1' });
-    await cdp.send('Emulation.setEmulatedMedia', { media: 'screen', features: [] }, sessionId);
+    await cdp.send('Emulation.setEmulatedMedia', {
+      media: 'screen',
+      features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }],
+    }, sessionId);
 
     await navigateReady(file, readyCondition, 'architecture-delta tamper navigator');
     const tampered = await evaluate(cdp, sessionId, `(() => {

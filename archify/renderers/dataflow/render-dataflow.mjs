@@ -117,17 +117,6 @@ for (const [index, node] of asArray(dataflow.nodes).entries()) {
 
 function validateDataflow() {
   const problems = [];
-  if (dataflow.schema_version !== 1) problems.push('Data-flow files must set "schema_version": 1.');
-  if (dataflow.diagram_type !== 'dataflow') problems.push('Data-flow files must set "diagram_type": "dataflow".');
-  if (!dataflow.meta?.title) problems.push('Data-flow files must include meta.title.');
-  if (!Array.isArray(dataflow.stages) || dataflow.stages.length < 2) {
-    problems.push('Data-flow diagrams need at least two stages.');
-  }
-  if (!Array.isArray(dataflow.nodes) || dataflow.nodes.length < 2) {
-    problems.push('Data-flow diagrams need at least two nodes.');
-  }
-  if (!Array.isArray(dataflow.flows)) problems.push('Data-flow diagrams must include a flows array.');
-  if (dataflow.cards !== undefined && !Array.isArray(dataflow.cards)) problems.push('Data-flow "cards" must be an array.');
   if (nodes.size !== asArray(dataflow.nodes).length) problems.push('Node ids must be unique.');
 
   const stageCount = asArray(dataflow.stages).length;
@@ -447,7 +436,7 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(dataflow.meta, 'data-flow diagram')}>
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(dataflow.meta)}>
 ${svgAccessibleText(dataflow.meta, 'dataflow')}
 ${renderDefinitions()}
 

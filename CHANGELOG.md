@@ -7,7 +7,12 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 Development identity: `v2.16.0-dev.0`
 
 ### Added
+- **Optional embedded Skill update awareness.** The packaged Skill can perform a cached, notification-only stable-release check with a fixed trusted manifest URL, strict identity and response bounds, SemVer downgrade protection, per-installed-version state, two-stage visible-notice acknowledgement, and a one-second fail-silent timeout. It never downloads, installs, executes, or overwrites an update; the user remains the sole update decision owner. Release identity, final ZIP contents, stable tag/tree/archive digests, and cross-platform packaged execution are gated in tests and release automation.
 - **Bounded Viewer localization.** All five renderers accept the optional `meta.locale` values `en` and `zh-CN`, localizing renderer-owned Viewer UI, accessibility copy, default legends, document titles, and language metadata without translating authored content. Omitted locale remains backward-compatible English, while unsupported authored languages retain their requested authored copy with an explicitly disclosed English Viewer fallback.
+
+### Fixed
+- Skill packaging now stages only tracked regular files through one symlink-safe path shared by the release ZIP and DeepSeek Harness bundle, while preserving legitimate nested runtime test directories and rejecting stale or dependency-bearing artifacts.
+- Update checks use generation-fenced atomic cache snapshots, unconditional bounded requests without persistent server validators, and a Release-first publication gate that verifies the published archive digest and tagged Skill tree before a gated GitHub Pages deployment can expose a stable manifest.
 
 ## [2.15.0] — 2026-08-17
 

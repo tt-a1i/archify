@@ -134,20 +134,7 @@ function messagePath(message) {
 
 function validateSequence() {
   const problems = [];
-  if (sequence.schema_version !== 1) problems.push('Sequence files must set "schema_version": 1.');
-  if (sequence.diagram_type !== 'sequence') problems.push('Sequence files must set "diagram_type": "sequence".');
-  if (!sequence.meta?.title) problems.push('Sequence files must include meta.title.');
-  if (!Array.isArray(sequence.participants) || sequence.participants.length < 2) {
-    problems.push('Sequence diagrams need at least two participants.');
-  }
   if (participants.size !== asArray(sequence.participants).length) problems.push('Participant ids must be unique.');
-  if (!Array.isArray(sequence.messages) || sequence.messages.length < 1) {
-    problems.push('Sequence diagrams need at least one message.');
-  }
-  if (sequence.cards !== undefined && !Array.isArray(sequence.cards)) problems.push('Sequence "cards" must be an array.');
-  for (const arr of ['segments', 'activations']) {
-    if (sequence[arr] !== undefined && !Array.isArray(sequence[arr])) problems.push(`Sequence "${arr}" must be an array.`);
-  }
 
   if (layout.lifelineBottom - layout.lifelineTop < 120) {
     problems.push(`viewBox height ${viewBox[1]} leaves under 120px of timeline — set meta.viewBox[1] to at least ${layout.lifelineTop + 120 + 65}.`);
@@ -427,7 +414,7 @@ function renderLegend() {
 
 function renderSvg() {
   const participantList = [...participants.values()];
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(sequence.meta, 'sequence diagram')}>
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(sequence.meta)}>
 ${svgAccessibleText(sequence.meta, 'sequence')}
 ${renderDefinitions()}
 

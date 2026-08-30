@@ -22,6 +22,25 @@ function runCheck(root) {
   });
 }
 
+function stableUpdateManifest(version) {
+  return JSON.stringify({
+    schemaVersion: 1,
+    skillId: 'archify',
+    channel: 'stable',
+    version,
+    publishedAt: '2026-07-29T00:00:00Z',
+    source: {
+      repository: 'https://github.com/tt-a1i/archify',
+      ref: `v${version}`,
+      treeSha: 'a'.repeat(40),
+    },
+    artifact: { sha256: 'b'.repeat(64) },
+    summary: 'Published stable release.',
+    releaseNotes: `https://github.com/tt-a1i/archify/releases/tag/v${version}`,
+    severity: 'normal',
+  });
+}
+
 function writeValidDevelopmentFixture(root, overrides = {}) {
   const version = '2.13.0-dev.0';
   const english = [
@@ -41,6 +60,15 @@ function writeValidDevelopmentFixture(root, overrides = {}) {
   const files = {
     'archify/package.json': JSON.stringify({ version }),
     'archify/package-lock.json': JSON.stringify({ version, packages: { '': { version } } }),
+    'archify/skill-release.json': JSON.stringify({
+      schemaVersion: 1,
+      skillId: 'archify',
+      channel: 'development',
+      version,
+      source: { repository: 'https://github.com/tt-a1i/archify' },
+      updateManifestUrl: 'https://tt-a1i.github.io/archify/skill-updates/archify/stable.json',
+    }),
+    'docs/skill-updates/archify/stable.json': stableUpdateManifest('2.12.0'),
     'archify/SKILL.md': '---\nmetadata:\n  version: "2.13"\n---\n',
     'archify/assets/template.html': '<meta name="generator" content="archify 2.13.0-dev.0">',
     'CHANGELOG.md': [
@@ -90,6 +118,15 @@ function writeValidStableFixture(root, overrides = {}) {
   const files = {
     'archify/package.json': JSON.stringify({ version }),
     'archify/package-lock.json': JSON.stringify({ version, packages: { '': { version } } }),
+    'archify/skill-release.json': JSON.stringify({
+      schemaVersion: 1,
+      skillId: 'archify',
+      channel: 'stable',
+      version,
+      source: { repository: 'https://github.com/tt-a1i/archify' },
+      updateManifestUrl: 'https://tt-a1i.github.io/archify/skill-updates/archify/stable.json',
+    }),
+    'docs/skill-updates/archify/stable.json': stableUpdateManifest(version),
     'archify/SKILL.md': '---\nmetadata:\n  version: "2.13"\n---\n',
     'archify/assets/template.html': '<meta name="generator" content="archify 2.13.0">',
     'CHANGELOG.md': [
@@ -124,6 +161,136 @@ test('an empty Unreleased section accepts a coherent stable release identity', (
     const result = runCheck(fixture);
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /release identity ok: 2\.13\.0/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('stable release preparation allows only the immediate prior public manifest', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
+  try {
+    const changelog = [
+      '# Changelog',
+      '',
+      '## [Unreleased]',
+      '',
+      '## [2.13.0] — 2026-07-29',
+      '- Release being prepared.',
+      '',
+      '## [2.12.0] — 2026-07-23',
+      '- Previously published release.',
+      '',
+    ].join('\n');
+    writeValidStableFixture(fixture, {
+      'CHANGELOG.md': changelog,
+      'docs/skill-updates/archify/stable.json': stableUpdateManifest('2.12.0'),
+    });
+
+    const prior = runCheck(fixture);
+    assert.equal(prior.status, 0, prior.stderr);
+
+    writeFile(fixture, 'docs/skill-updates/archify/stable.json', stableUpdateManifest('2.11.0'));
+    const stale = runCheck(fixture);
+    assert.notEqual(stale.status, 0);
+    assert.match(stale.stderr, /immediate prior v2\.12\.0/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('the embedded update identity must match the package release exactly', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
+  try {
+    writeValidDevelopmentFixture(fixture, {
+      'archify/skill-release.json': JSON.stringify({
+        schemaVersion: 1,
+        skillId: 'archify',
+        channel: 'stable',
+        version: '2.12.0',
+        source: { repository: 'https://example.com/untrusted/archify' },
+        updateManifestUrl: 'https://example.com/latest.json',
+      }),
+    });
+
+    const result = runCheck(fixture);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /archify\/skill-release\.json must identify archify 2\.13\.0-dev\.0 as development/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('the published update manifest must track the newest stable changelog release', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
+  try {
+    writeValidDevelopmentFixture(fixture, {
+      'docs/skill-updates/archify/stable.json': stableUpdateManifest('2.11.0'),
+    });
+
+    const result = runCheck(fixture);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /stable\.json must describe the newest published stable v2\.12\.0/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('the published update manifest must use a canonical UTC timestamp', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
+  try {
+    const manifest = JSON.parse(stableUpdateManifest('2.12.0'));
+    manifest.publishedAt = '2026-07-29T08:00:00+08:00';
+    writeValidDevelopmentFixture(fixture, {
+      'docs/skill-updates/archify/stable.json': JSON.stringify(manifest),
+    });
+
+    const result = runCheck(fixture);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /stable\.json must describe the newest published stable v2\.12\.0/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('package identities reject leading-zero core and prerelease identifiers', () => {
+  for (const version of ['02.13.0', '2.13.0-dev.01']) {
+    const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
+    try {
+      writeValidDevelopmentFixture(fixture, {
+        'archify/package.json': JSON.stringify({ version }),
+      });
+      const result = runCheck(fixture);
+      assert.notEqual(result.status, 0);
+      assert.match(result.stderr, /not a supported SemVer identity/, version);
+    } finally {
+      fs.rmSync(fixture, { recursive: true, force: true });
+    }
+  }
+});
+
+test('the newest stable release is selected by SemVer rather than changelog order', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
+  try {
+    writeValidDevelopmentFixture(fixture, {
+      'CHANGELOG.md': [
+        '# Changelog',
+        '',
+        '## [Unreleased]',
+        '',
+        '> Development identity: `v2.13.0-dev.0`. Not a stable release.',
+        '',
+        '### Added',
+        '- Real unreleased work.',
+        '',
+        '## [2.11.0] — 2026-07-16',
+        '',
+        '## [2.12.0] — 2026-07-23',
+        '',
+      ].join('\n'),
+    });
+
+    const result = runCheck(fixture);
+    assert.equal(result.status, 0, result.stderr);
   } finally {
     fs.rmSync(fixture, { recursive: true, force: true });
   }
