@@ -61,6 +61,11 @@ backed by rendered states receive Semantic Legend controls.
 | Event | any other id | 278 | `col` 0–2 → x = 402, 556, 710 | 126×58 |
 | Outcome | `terminal` | 450 | `col` 0–2 → x = 402, 556, 710 | 118×58 |
 
+Event and terminal columns are intentionally offset from the main rail:
+event/terminal `col: N` uses the same x coordinate as main `col: N + 2`.
+For example, lower-band columns 0, 1, and 2 align beneath main columns 2, 3,
+and 4 respectively.
+
 | Constant | Value |
 |----------|-------|
 | viewBox | default `[980, 660]`; schema minimum `[420, 566]` |

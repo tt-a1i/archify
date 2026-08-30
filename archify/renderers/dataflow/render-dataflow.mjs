@@ -204,13 +204,11 @@ function validateDataflow() {
   }));
   problems.push(...cleanFlowProblems({
     relations: dataflow.flows,
-    endpointIds: new Set(nodes.keys()),
     obstacles: nodes.values(),
     pathFor,
     diagramType: 'dataflow',
     relationCollection: 'flows',
     obstacleKind: 'node',
-    profile: dataflow.meta?.quality_profile,
     routeHint: 'adjust fromSide/toSide, set route/via or channelX/channelY, or move the node to another stage/row'
   }));
   problems.push(...cleanCrossingProblems({

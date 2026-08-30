@@ -239,13 +239,11 @@ function validateLifecycle() {
   }));
   problems.push(...cleanFlowProblems({
     relations: lifecycle.transitions,
-    endpointIds: new Set(states.keys()),
     obstacles: states.values(),
     pathFor,
     diagramType: 'lifecycle',
     relationCollection: 'transitions',
     obstacleKind: 'state',
-    profile: lifecycle.meta?.quality_profile,
     routeHint: 'adjust fromSide/toSide, set route/via or channelX/channelY, or move the state with col/yOffset'
   }));
   problems.push(...cleanCrossingProblems({

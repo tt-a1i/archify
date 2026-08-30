@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Pinned coordinate migration",
+    "viewBox": [720, 700],
+    "legend": { "mode": "hidden" }
+  },
+  "lanes": [
+    { "id": "route", "label": "Explicit route" },
+    { "id": "label", "label": "Explicit label" },
+    { "id": "channel-source", "label": "Channel source" },
+    { "id": "channel-target", "label": "Channel target" }
+  ],
+  "nodes": [
+    { "id": "route-a", "lane": "route", "col": 0, "type": "backend", "label": "A" },
+    { "id": "route-b", "lane": "route", "col": 2, "type": "backend", "label": "B" },
+    { "id": "label-a", "lane": "label", "col": 2, "type": "backend", "label": "C" },
+    { "id": "label-b", "lane": "label", "col": 3, "type": "backend", "label": "D" },
+    { "id": "channel-a", "lane": "channel-source", "col": 1, "type": "backend", "label": "E" },
+    { "id": "channel-b", "lane": "channel-target", "col": 1, "type": "backend", "label": "F" }
+  ],
+  "edges": [
+    {
+      "id": "pinned-via",
+      "from": "route-a",
+      "to": "route-b",
+      "via": [[220, 119]]
+    },
+    {
+      "id": "pinned-label",
+      "from": "label-a",
+      "to": "label-b",
+      "label": "ok",
+      "labelAt": [365, 203]
+    },
+    {
+      "id": "pinned-channel",
+      "from": "channel-a",
+      "to": "channel-b",
+      "fromSide": "right",
+      "toSide": "right",
+      "route": "outside-right",
+      "channelX": 500
+    }
+  ]
+}

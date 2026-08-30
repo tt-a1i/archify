@@ -28,8 +28,8 @@ const CASES = [
     featured: true,
     titleEn: 'Agent Tool Call',
     titleZh: '智能体工具调用',
-    descriptionEn: 'A policy-aware agent loop with planning, approval, tool execution, exception handling, and observability lanes.',
-    descriptionZh: '包含规划、审批、工具执行、异常处理与可观测泳道的策略感知智能体闭环。',
+    descriptionEn: 'Four consolidated lanes trace a policy-aware agent loop across user interaction, agent runtime, policy and recovery, and tool execution with evidence.',
+    descriptionZh: '四条整合泳道呈现策略感知的智能体闭环：用户交互、智能体运行时、策略与恢复，以及带证据的工具执行。',
   },
   {
     id: 'deployment-ownership',

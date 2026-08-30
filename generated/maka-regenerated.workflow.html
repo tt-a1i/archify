@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-preset="signal-flow">
+<html lang="zh-CN" data-theme="dark" data-preset="classic">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="archify 2.16.0-dev.0">
-  <title>Agent Tool Call Workflow Diagram</title>
+  <title>Maka 托管执行、受控工具与可恢复事实</title>
   <script>
     // Resolve the theme before first paint so light-preference users don't
     // see a dark flash. The toolbar script below re-applies with UI state.
@@ -589,10 +589,8 @@
       padding-bottom: calc(0.75rem + var(--archify-nav-reserve));
     }
     html[data-present="true"]:not([data-embed="true"]) .diagram-container > svg {
-      flex: 1 1 auto;
-      height: 100%;
-      min-height: 0;
       width: 100%;
+      height: 100%;
       min-width: 0;
     }
     html[data-present="true"]:not([data-embed="true"]) .cards { display: none; }
@@ -2887,11 +2885,6 @@
       body { padding-block: 1.25rem; }
       .header { margin-bottom: 0.875rem; }
       .cards { margin-top: 0.75rem; }
-      html[data-nav-stage-rail="true"] body { padding-block: 0.375rem; }
-      html[data-nav-stage-rail="true"] .header { margin-bottom: 0.5rem; }
-      html[data-nav-stage-rail="true"] .guided-views { margin-bottom: 0.375rem; }
-      html[data-nav-stage-rail="true"] .diagram-container[data-nav-stage-rail="true"] { padding-top: 0.5rem; }
-      html[data-nav-stage-rail="true"] .cards { margin-top: 0.375rem; }
     }
 
     html[data-preset="blueprint"] .card {
@@ -4852,96 +4845,96 @@
   <!-- Toolbar: theme, live visual style, trace motion, presentation stage, and export.
        Motion appears only for trace-enabled artifacts and has no shortcut;
        Keyboard: T toggles theme, S cycles style, F toggles the stage, E opens export. -->
-  <div class="toolbar" role="toolbar" aria-label="Diagram actions">
+  <div class="toolbar" role="toolbar" aria-label="图表操作">
     <button id="btn-theme" type="button"
-            title="Toggle theme (T)"
-            aria-label="Toggle color theme"
+            title="切换主题（T）"
+            aria-label="切换颜色主题"
             aria-pressed="false">
       <span id="theme-icon" class="toolbar-icon" aria-hidden="true"></span>
-      <span id="theme-label">Dark</span>
+      <span id="theme-label">深色</span>
     </button>
     <div class="preset-wrap">
       <button id="btn-preset" type="button"
-              title="Choose visual style (S cycles)"
-              aria-label="Choose visual style"
+              title="选择视觉风格（S 循环切换）"
+              aria-label="选择视觉风格"
               aria-haspopup="menu"
               aria-expanded="false"
               aria-controls="preset-menu"
               aria-keyshortcuts="S">
         <span class="preset-control-mark" aria-hidden="true"></span>
-        <span id="preset-label">Style</span>
+        <span id="preset-label">风格</span>
         <span class="toolbar-icon toolbar-chevron" aria-hidden="true"></span>
       </button>
-      <div class="preset-menu" id="preset-menu" role="menu" aria-label="Visual style">
-        <div class="preset-menu-heading" role="presentation"><span>Visual identity</span><span>S cycles</span></div>
+      <div class="preset-menu" id="preset-menu" role="menu" aria-label="视觉风格">
+        <div class="preset-menu-heading" role="presentation"><span>视觉表达</span><span>S 循环切换</span></div>
         <button class="preset-option" data-preset-value="classic" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">
           <span class="preset-option-swatch classic" aria-hidden="true"></span>
-          <span class="preset-option-copy"><strong>Classic</strong><small>Stable technical default</small></span>
+          <span class="preset-option-copy"><strong>经典</strong><small>稳定的技术默认风格</small></span>
           <span class="preset-option-check" aria-hidden="true"></span>
         </button>
         <button class="preset-option" data-preset-value="signal-flow" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">
           <span class="preset-option-swatch signal-flow" aria-hidden="true"></span>
-          <span class="preset-option-copy"><strong>Signal Flow</strong><small>Motion-forward presentation</small></span>
+          <span class="preset-option-copy"><strong>信号流</strong><small>突出动态流向</small></span>
           <span class="preset-option-check" aria-hidden="true"></span>
         </button>
         <button class="preset-option" data-preset-value="blueprint" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">
           <span class="preset-option-swatch blueprint" aria-hidden="true"></span>
-          <span class="preset-option-copy"><strong>Blueprint</strong><small>Engineering review</small></span>
+          <span class="preset-option-copy"><strong>蓝图</strong><small>工程评审</small></span>
           <span class="preset-option-check" aria-hidden="true"></span>
         </button>
         <button class="preset-option" data-preset-value="editorial" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">
           <span class="preset-option-swatch editorial" aria-hidden="true"></span>
-          <span class="preset-option-copy"><strong>Editorial</strong><small>Publication and launch notes</small></span>
+          <span class="preset-option-copy"><strong>编辑风格</strong><small>适合发布与上线说明</small></span>
           <span class="preset-option-check" aria-hidden="true"></span>
         </button>
       </div>
     </div>
     <button id="btn-motion" type="button" hidden
-            title="Pause motion"
-            aria-label="Pause motion"
+            title="暂停动效"
+            aria-label="暂停动效"
             aria-pressed="true">
       <span class="motion-control-dot" aria-hidden="true"></span>
-      <span id="motion-label">Live</span>
+      <span id="motion-label">动态</span>
     </button>
     <button id="btn-present" type="button"
-            title="Presentation stage (F)"
-            aria-label="Enter presentation stage"
+            title="演示模式（F）"
+            aria-label="进入演示模式"
             aria-pressed="false">
       <span id="present-icon" class="toolbar-icon" aria-hidden="true"></span>
-      <span id="present-label">Present</span>
+      <span id="present-label">演示</span>
     </button>
     <div class="export-wrap">
       <button id="btn-export" type="button"
-              title="Export diagram (E)"
-              aria-label="Export diagram"
+              title="导出图表（E）"
+              aria-label="导出图表"
               aria-haspopup="menu"
               aria-expanded="false"
               aria-controls="export-menu">
-        Export <span class="toolbar-icon toolbar-chevron" aria-hidden="true"></span>
+        导出 <span class="toolbar-icon toolbar-chevron" aria-hidden="true"></span>
       </button>
-      <div class="export-menu" id="export-menu" role="menu" aria-label="Export">
+      <div class="export-menu" id="export-menu" role="menu" aria-label="导出">
         <div class="export-menu-header" role="presentation">
-          <div><strong>Export diagram</strong><span>Portable, clean outputs</span></div>
+          <div><strong>导出图表</strong><span>便携、整洁的输出</span></div>
           <kbd>E</kbd>
         </div>
-        <div class="export-menu-section" role="group" aria-label="Share">
-          <span class="export-menu-heading" aria-hidden="true">Share</span>
-          <button data-format="share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>Share Card</strong><small class="hint">1200&times;630 PNG</small></span></button>
-          <button data-action="route-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled><span class="export-item-copy"><strong>Route Share Card</strong><small class="hint">1200&times;630 PNG</small></span></button>
-          <button data-action="reach-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled><span class="export-item-copy"><strong>Reach Share Card</strong><small class="hint">1200&times;630 PNG</small></span></button>
-          <button data-action="copy-share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>Copy Share Card</strong><small class="hint">PNG to clipboard</small></span></button>
-          <button data-action="copy" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>Copy diagram</strong><small class="hint">PNG to clipboard</small></span></button>
+        <div class="export-menu-section" role="group" aria-label="分享">
+          <span class="export-menu-heading" aria-hidden="true">分享</span>
+          <button data-format="share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>分享卡片</strong><small class="hint">1200&times;630 PNG</small></span></button>
+          <button data-action="route-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled><span class="export-item-copy"><strong>路径分享卡片</strong><small class="hint">1200&times;630 PNG</small></span></button>
+          <button data-action="reach-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled><span class="export-item-copy"><strong>可达范围分享卡片</strong><small class="hint">1200&times;630 PNG</small></span></button>
+          <button data-action="copy-share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>复制分享卡片</strong><small class="hint">复制 PNG 到剪贴板</small></span></button>
+          <button data-action="copy" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>复制图表</strong><small class="hint">复制 PNG 到剪贴板</small></span></button>
         </div>
-        <div class="export-menu-section" role="group" aria-label="Raster images">
-          <span class="export-menu-heading" aria-hidden="true">Image</span>
-          <button data-format="png" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>PNG</strong><small class="hint">Lossless image</small></span></button>
-          <button data-format="jpeg" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>JPEG</strong><small class="hint">Compact image</small></span></button>
-          <button data-format="webp" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>WebP</strong><small class="hint">Modern image</small></span></button>
+        <div class="export-menu-section" role="group" aria-label="位图">
+          <span class="export-menu-heading" aria-hidden="true">图像</span>
+          <button data-format="png" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>PNG</strong><small class="hint">无损图像</small></span></button>
+          <button data-format="jpeg" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>JPEG</strong><small class="hint">紧凑图像</small></span></button>
+          <button data-format="webp" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>WebP</strong><small class="hint">现代图像格式</small></span></button>
         </div>
-        <div class="export-menu-section" role="group" aria-label="Vector and motion">
-          <span class="export-menu-heading" aria-hidden="true">Vector &amp; motion</span>
-          <button data-format="svg" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>SVG</strong><small class="hint">Editable vector</small></span></button>
-          <button data-format="webm" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>WebM</strong><small class="hint">6s motion</small></span></button>
+        <div class="export-menu-section" role="group" aria-label="矢量与动效">
+          <span class="export-menu-heading" aria-hidden="true">矢量与动效</span>
+          <button data-format="svg" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>SVG</strong><small class="hint">可编辑矢量图</small></span></button>
+          <button data-format="webm" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>WebM</strong><small class="hint">6 秒动效</small></span></button>
         </div>
       </div>
     </div>
@@ -4951,62 +4944,62 @@
     <!-- Header -->
     <div class="header">
       <div class="header-row"
-           data-preset-badge-signal-flow="SIGNAL FLOW"
-           data-preset-badge-blueprint="BLUEPRINT / REV 01"
-           data-preset-badge-editorial="EDITORIAL / FIELD NOTE">
+           data-preset-badge-signal-flow="信号流"
+           data-preset-badge-blueprint="蓝图 / 修订 01"
+           data-preset-badge-editorial="编辑风格 / 现场笔记">
         <div class="pulse-dot"></div>
-        <h1>Agent Tool Call Workflow</h1>
+        <h1>Maka 托管执行、受控工具与可恢复事实</h1>
       </div>
     </div>
 
-    <script id="archify-guided-views-data" type="application/json">[{"id":"happy-path","label":"Request to result","focus":["user","chat","planner","router","approval","tool","external","final"],"note":"Follow the successful request from user intent to the final reply."},{"id":"safety-gate","label":"Policy and recovery","focus":["router","approval","blocked","retry"],"note":"See where risky work stops, waits for consent, or returns for revision."},{"id":"evidence-loop","label":"Evidence and memory","focus":["external","store","trace"],"note":"Isolate the durable trace and context path behind the visible answer."}]</script>
+    <script id="archify-guided-views-data" type="application/json">[{"id":"turn_spine","label":"托管回合主链","focus":["request_portal","host_kernel","session_owner","turn_driver","flow_adapter","response_surface"],"note":"请求进入 Runtime Host，由 SessionManager 编排回合并经 Flow 流式返回结果。"},{"id":"guarded_effect","label":"受控工具副作用","focus":["turn_driver","boundary_gate","tool_runtime","artifact_store","runtime_ledger"],"note":"工具调用先通过 ExecutionBoundary，再发布文件结果并写入 RuntimeEvent 账本。"},{"id":"durable_resume","label":"规范事实恢复","focus":["runtime_ledger","resume_planner","host_kernel","session_owner"],"note":"恢复规划器读取事件与 Artifact 引用，验证后重新进入 Host 托管链。"}]</script>
 
-    <script id="archify-i18n-data" type="application/json">{"locale":"en","messages":{"viewer.kind.frontend":"Frontend","viewer.kind.backend":"Backend","viewer.kind.database":"Database","viewer.kind.cloud":"Cloud","viewer.kind.security":"Security","viewer.kind.messagebus":"Message bus","viewer.kind.external":"External","viewer.kind.neutral":"Neutral","viewer.kind.node":"Node","viewer.kind.start":"Start","viewer.kind.active":"Active","viewer.kind.waiting":"Waiting","viewer.kind.decision":"Decision","viewer.kind.success":"Success","viewer.kind.failure":"Failure","viewer.toolbar.actions":"Diagram actions","viewer.theme.toggle.title":"Toggle theme (T)","viewer.theme.toggle":"Toggle color theme","viewer.theme.dark":"Dark","viewer.theme.light":"Light","viewer.preset.choose.title":"Choose visual style (S cycles)","viewer.preset.choose":"Choose visual style","viewer.preset.style":"Style","viewer.preset.menu":"Visual style","viewer.preset.identity":"Visual identity","viewer.preset.cycles":"S cycles","viewer.preset.classic":"Classic","viewer.preset.classic.short":"Classic","viewer.preset.classic.hint":"Stable technical default","viewer.preset.flow":"Signal Flow","viewer.preset.flow.short":"Flow","viewer.preset.flow.hint":"Motion-forward presentation","viewer.preset.blueprint":"Blueprint","viewer.preset.blueprint.hint":"Engineering review","viewer.preset.editorial":"Editorial","viewer.preset.editorial.hint":"Publication and launch notes","viewer.preset.badge.signalFlow":"SIGNAL FLOW","viewer.preset.badge.blueprint":"BLUEPRINT / REV 01","viewer.preset.badge.editorial":"EDITORIAL / FIELD NOTE","viewer.preset.badge.editorialPlate":"ARCHIFY / PLATE 04","viewer.preset.current":"Visual style: {style}. Choose visual style","viewer.motion.live":"Live","viewer.motion.still":"Still","viewer.motion.pause":"Pause motion","viewer.motion.resume":"Resume motion","viewer.motion.reduced":"Motion paused by reduced-motion preference","viewer.motion.hidden":"Motion paused while this page is hidden","viewer.motion.yielding":"Pause motion; currently yielding to {owner}","viewer.motion.yielding.title":"Live preview enabled · yielding to {owner}","viewer.owner.story":"the guided story","viewer.owner.chapter":"the active chapter","viewer.owner.chapterPreview":"the chapter delta preview","viewer.owner.handoff":"the chapter handoff","viewer.owner.route":"Route Probe","viewer.owner.lens":"Semantic Lens","viewer.owner.relationship":"Relationship Preview","viewer.owner.intent":"Intent Trace","viewer.owner.focus":"semantic focus","viewer.owner.legend":"legend preview","viewer.owner.reader":"reader interaction","viewer.present.enter":"Enter presentation stage","viewer.present.enter.title":"Presentation stage (F)","viewer.present.exit":"Exit presentation stage","viewer.present.exit.title":"Exit presentation stage (F or Escape)","viewer.present.present":"Present","viewer.present.exit.label":"Exit","viewer.export.button":"Export","viewer.export.button.title":"Export diagram (E)","viewer.export.diagram":"Export diagram","viewer.export.menu":"Export","viewer.export.subtitle":"Portable, clean outputs","viewer.export.share":"Share","viewer.export.shareCard":"Share Card","viewer.export.routeShareCard":"Route Share Card","viewer.export.reachShareCard":"Reach Share Card","viewer.export.copyShareCard":"Copy Share Card","viewer.export.copyDiagram":"Copy diagram","viewer.export.clipboardPng":"PNG to clipboard","viewer.export.raster":"Raster images","viewer.export.image":"Image","viewer.export.lossless":"Lossless image","viewer.export.compact":"Compact image","viewer.export.modern":"Modern image","viewer.export.vectorMotion":"Vector and motion","viewer.export.vectorMotion.heading":"Vector \u0026 motion","viewer.export.editable":"Editable vector","viewer.export.motion6s":"6s motion","viewer.export.unsupported":"Not supported by this browser","viewer.export.clipboardUnsupported":"Clipboard image write not supported by this browser","viewer.export.clipboardUnsupported.period":"Clipboard image write not supported by this browser.","viewer.export.clipboardUnsupported.short":"Clipboard image write not supported in this browser.","viewer.export.motionUnavailable":"Motion capture unavailable in this browser","viewer.export.webmUnavailable":"WebM unavailable in this browser","viewer.export.failed":"Export failed: {message}","viewer.export.unknownVariant":"Unknown Share Card variant: {variant}","viewer.export.routeRequired":"Trace a route before exporting a Route Share Card","viewer.export.reachRequired":"Trace authored reach before exporting a Reach Share Card","viewer.export.unknown":"unknown","viewer.export.routeFailed":"Route Share Card export failed: {message}","viewer.export.reachFailed":"Reach Share Card export failed: {message}","viewer.export.copyFailed":"Copy failed: {message}","viewer.export.copiedPng":"Copied PNG to clipboard","viewer.export.copiedShare":"Copied Share Card","viewer.export.downloadedShare":"Downloaded Share Card","viewer.export.downloadedRoute":"Downloaded Route Share Card","viewer.export.downloadedReach":"Downloaded Reach Share Card","viewer.export.downloadedWebm":"Downloaded WebM","viewer.export.recording":"Recording 6 seconds of motion…","viewer.export.card.routeSummary.one":"Route: {source} → {target} · {count} directed hop","viewer.export.card.routeSummary.other":"Route: {source} → {target} · {count} directed hops","viewer.export.card.reachSummary":"Authored {direction} from {origin} · {nodes} · {links} · max {hops}","viewer.export.card.node.one":"{count} node","viewer.export.card.node.other":"{count} nodes","viewer.export.card.link.one":"{count} link","viewer.export.card.link.other":"{count} links","viewer.export.card.hop.one":"{count} hop","viewer.export.card.hop.other":"{count} hops","viewer.export.card.routeBadge":"ARCHIFY · ROUTE · {hops}","viewer.export.card.reachBadge":"ARCHIFY · {direction} REACH","viewer.export.card.defaultBadge":"ARCHIFY · {preset} · {theme}","viewer.export.direction.upstream":"Upstream","viewer.export.direction.downstream":"Downstream","viewer.export.error.canvasUnavailable":"Canvas unavailable for {label}","viewer.export.error.contextUnavailable":"2D canvas context unavailable for {label}","viewer.export.error.toBlobUnavailable":"canvas.toBlob unavailable for {label}","viewer.export.error.toBlobNull":"canvas.toBlob returned no data for {label}","viewer.export.error.variantsCombined":"Share Card variants cannot be combined","viewer.export.error.viewerState":"Share Card export could not remove temporary viewer state","viewer.export.error.routeState":"Route Card export could not preserve the resolved route safely","viewer.export.error.reachState":"Reach Card export could not preserve authored reach safely","viewer.export.error.webmRequirements":"WebM motion export requires a trace animation and browser MediaRecorder support","viewer.export.error.mediaRecorder":"MediaRecorder failed","viewer.export.error.emptyWebm":"MediaRecorder produced an empty WebM","viewer.export.error.webmBackground":"SVG background could not be loaded for WebM export","viewer.guided.region":"Guided diagram views","viewer.guided.previous":"Previous guided view","viewer.guided.previous.title":"Previous guided view ([)","viewer.guided.next":"Next guided view","viewer.guided.next.title":"Next guided view (])","viewer.guided.views":"Guided views","viewer.guided.explore":"Explore this system","viewer.guided.intro":"Step through curated paths without changing the source diagram.","viewer.guided.trail":"Story trail","viewer.guided.beat":"Beat","viewer.guided.nextBeat":"Next","viewer.guided.play":"Play guided story","viewer.guided.play.title":"Play guided story (P)","viewer.guided.pause":"Pause guided story","viewer.guided.pause.title":"Pause guided story (P)","viewer.guided.replay":"Replay guided story","viewer.guided.replay.title":"Replay guided story (P)","viewer.guided.playStory":"Play story","viewer.guided.pauseStory":"Pause","viewer.guided.replayStory":"Replay story","viewer.guided.motionUnavailable":"Story playback unavailable while motion is Still","viewer.guided.enableMotion":"Switch motion to Live to play the guided story","viewer.guided.selectBeatLink":"Select a Story Beat to copy its exact link","viewer.guided.copyMoment":"Copy moment","viewer.guided.momentCopied":"Moment link copied","viewer.guided.momentCopyFailed":"Could not copy story moment link","viewer.guided.copied":"Copied","viewer.guided.copyFailed":"Copy failed","viewer.guided.showAll":"Show all","viewer.guided.showAll.aria":"Show entire diagram","viewer.guided.chapters":"Story chapters","viewer.guided.storyTrail":"Story trail for {label}: {count} beats","viewer.guided.chapter.open":"Open chapter {index} of {total}: {label}, {count} stops","viewer.guided.chapter.current":"Current chapter {index} of {total}: {label}, {count} stops","viewer.guided.chapter.selectedNodes":"{count} selected nodes","viewer.guided.chapter.stops":"{count} stops","viewer.guided.chapter.stop.one":"{count} stop","viewer.guided.chapter.stop.other":"{count} stops","viewer.guided.chapter.current.title":"{label} — current chapter, {count} stops","viewer.guided.chapter.delta.expanded":"{stay} stay, {enter} enter, {leave} leave","viewer.guided.chapter.delta.aria":"Open chapter {index} of {total}: {label}. Chapter focus delta: {delta}","viewer.guided.chapter.delta.title":"{label} — {delta} chapter focus","viewer.guided.handoff":"{from} → {to} · via {label}","viewer.guided.share.chapter":"Chapter {index} / {total}","viewer.guided.share.initial":"Chapter 01 / 01","viewer.guided.share.default":"Guided chapter","viewer.guided.state.ready":"Ready","viewer.guided.state.playing":"Playing","viewer.guided.state.settled":"Settled","viewer.guided.state.paused":"Paused","viewer.guided.state.pinned":"Pinned","viewer.guided.state.still":"Still","viewer.guided.share.step":"Step {index} / {total} · {label}","viewer.guided.share.staticMoment":"{step} · Static moment","viewer.guided.share.complete":"{count} steps complete · {note}","viewer.guided.share.settled":"Path settled for reading.","viewer.guided.share.staticPath":"{count} steps · Static path","viewer.guided.share.ready":"{count} steps · Ready","viewer.guided.share.aria":"{state} chapter {index} of {total}: {label}. {beat}. {route}","viewer.guided.beat.start":"Beat {index} / {total} · {label} · starting point","viewer.guided.beat.forward":"Beat {index} / {total} · {from} → {to}","viewer.guided.beat.reverse":"Beat {index} / {total} · {from} → {to} · reverse authored link","viewer.guided.beat.multiple":"Beat {index} / {total} · {from} ⇄ {to} · {count} authored links","viewer.guided.beat.group":"Beat {index} / {total} · {from} · {to} · grouped · no direct link","viewer.guided.beat.aria.prefix":"Story beat {index} of {total}: {label}. ","viewer.guided.beat.aria.start":"Starting point.","viewer.guided.beat.aria.forward":"From {from} through one authored forward relationship.","viewer.guided.beat.aria.reverse":"From {from}; the authored relationship points from {to} to {from}.","viewer.guided.beat.aria.multiple":"From {from} through {count} authored relationships; shown without arbitrary motion.","viewer.guided.beat.aria.group":"Grouped from {from} with no direct authored relationship.","viewer.guided.caption.start":"Starting point","viewer.guided.caption.grouped":"Grouped transition · no direct authored link","viewer.guided.caption.more":" +{count} more","viewer.guided.caption.reverse":"Reverse authored relationship","viewer.guided.caption.relationships":"{count} authored relationships","viewer.guided.caption.relationship":"Authored relationship","viewer.guided.caption.direction":"authored direction: {from} → {to}","viewer.guided.caption.starting":"Authored starting point","viewer.guided.beatLink":"Copy link to current story moment: Beat {index} of {total}: {label}","viewer.guided.noStory":"This diagram has no authored guided story.","viewer.guide.eyebrow":"Diagram guide","viewer.guide.close":"Close diagram guide","viewer.guide.inspecting":"Inspecting compiled semantics","viewer.guide.actions":"Diagram exploration actions","viewer.guide.find":"Find any node","viewer.guide.find.hint":"Search labels, responsibilities, kinds, and stable IDs.","viewer.guide.route":"Trace a route","viewer.guide.route.aria":"Trace a directed route","viewer.guide.route.hint":"Ask how two semantic nodes connect in authored direction.","viewer.guide.map":"See the whole system","viewer.guide.map.hint":"Open Semantic Radar with a live viewport and stable nodes.","viewer.guide.lens":"Compare semantic kinds","viewer.guide.lens.hint":"Count roles, reveal their traffic, and compare direct authored links.","viewer.guide.story":"Play the guided story","viewer.guide.story.hint":"Walk the authored chapters and real relationships.","viewer.guide.present":"Enter Presentation Stage","viewer.guide.present.hint":"Give the live diagram the viewport without changing export.","viewer.guide.shortcuts":"Additional keyboard shortcuts","viewer.guide.shortcut.export":"Export","viewer.guide.shortcut.theme":"Theme","viewer.guide.shortcut.style":"Style","viewer.guide.shortcut.reset":"Reset","viewer.guide.shortcut.zoomIn":"Zoom in","viewer.guide.shortcut.zoomOut":"Zoom out","viewer.guide.shortcut.close":"Close","viewer.guide.facts":"{nodes} · {relationships} · {views}","viewer.guide.fact.node.one":"{count} semantic node","viewer.guide.fact.node.other":"{count} semantic nodes","viewer.guide.fact.relationship.one":"{count} relationship","viewer.guide.fact.relationship.other":"{count} relationships","viewer.guide.fact.view.one":"{count} guided view","viewer.guide.fact.view.other":"{count} guided views","viewer.guide.story.available.one":"Walk {count} authored chapter and its real relationships.","viewer.guide.story.available.other":"Walk {count} authored chapters and their real relationships.","viewer.guide.story.unavailable":"No authored guided story in this diagram.","viewer.guide.open":"Open diagram guide","viewer.guide.noStory":"This diagram has no authored guided story.","viewer.finder.title":"Find a node","viewer.finder.close":"Close node finder","viewer.finder.placeholder":"Search labels or IDs","viewer.finder.search":"Search diagram nodes","viewer.finder.results":"Diagram nodes","viewer.finder.empty":"No matching nodes","viewer.finder.result.focus":"Focus {label}","viewer.finder.result.routeStart":"Choose {label} as route start","viewer.finder.result.routeTarget":"Choose {label} as route destination, {links}","viewer.finder.status.empty":"No matching nodes","viewer.finder.status.count.one":"{count} matching node","viewer.finder.status.count.other":"{count} matching nodes","viewer.finder.noun.nodes":"nodes","viewer.finder.link.one":"{count} link","viewer.finder.link.other":"{count} links","viewer.finder.result.focus.one":"Focus {label}, {count} related connection","viewer.finder.result.focus.other":"Focus {label}, {count} related connections","viewer.finder.status.filtered":"{visible} of {available} {noun}","viewer.finder.status.all":"{available} {noun}","viewer.passport.eyebrow":"Semantic passport","viewer.passport.metadata":"Node metadata","viewer.passport.evidence":"Verified source evidence","viewer.passport.verified":"Verified source","viewer.passport.reach":"Authored reach","viewer.passport.reach.trace":"Trace authored reachability","viewer.passport.upstream":"Upstream","viewer.passport.downstream":"Downstream","viewer.passport.upstream.trace":"Trace upstream authored reachability","viewer.passport.downstream.trace":"Trace downstream authored reachability","viewer.passport.close":"Close semantic passport","viewer.passport.copy":"Copy link","viewer.passport.copy.focus":"Copy link to focused node","viewer.passport.relations":"Relations","viewer.passport.relations.show":"Show connected relationships","viewer.passport.relations.hide":"Hide connected relationships","viewer.passport.relations.list":"Connected relationships","viewer.passport.copyRelation":"Copy relation","viewer.passport.copyNode":"Copy node","viewer.passport.copyPinned":"Copy link to pinned relationship","viewer.passport.copySource":"Copy link to source node","viewer.passport.copy.focused.success":"Focused node link copied","viewer.passport.copy.pinned.success":"Pinned relationship link copied","viewer.passport.copy.focused.failed":"Could not copy focused node link","viewer.passport.copy.pinned.failed":"Could not copy pinned relationship link","viewer.passport.relationship.none":"No connected relationships","viewer.passport.relationship.count.one":"{count} relation","viewer.passport.relationship.count.other":"{count} relations","viewer.passport.relationship.show.one":"Show {count} connected relationship","viewer.passport.relationship.show.other":"Show {count} connected relationships","viewer.passport.relationship.summary":"{out} outgoing · {in} incoming{loops}","viewer.passport.relationship.loops":" · {count} loop","viewer.passport.relationship.explorer":"Direct relationship explorer","viewer.passport.relationship.help":"Use arrow keys to explore relationships. Press Enter or Space to pin details; Escape clears.","viewer.passport.relationship.loopsBack":"loops back","viewer.passport.relationship.connectsTo":"connects to","viewer.passport.relationship.connectsFrom":"connects from","viewer.passport.relationship.pinned":"Pinned relationship · {from} → {to} · {label}","viewer.passport.relationship.inspect":"Inspect relationship {index} of {total}: {from} to {to}, {label}. Press Enter for details.","viewer.passport.relationship.group.out":"Outgoing","viewer.passport.relationship.group.in":"Incoming","viewer.passport.relationship.group.loop":"Self loops","viewer.passport.relationship.row":"{group}: {relationship}, {neighbor}","viewer.passport.relationship.direction.out":"OUT →","viewer.passport.relationship.direction.in":"← IN","viewer.passport.relationship.direction.loop":"LOOP","viewer.passport.sourceCount.one":"{count} verified source reference","viewer.passport.sourceCount.other":"{count} verified source references","viewer.passport.sourceMarker":"SRC","viewer.passport.beacon.one":"{count} verified source; focus this node to inspect","viewer.passport.beacon.other":"{count} verified sources; focus this node to inspect","viewer.passport.repository.open":"Open verified repository revision {revision}","viewer.passport.source.open":"Open verified source {path} at revision {revision}","viewer.passport.source.openLink":"Open ↗","viewer.passport.reach.upstream.one":"Trace {count} upstream authored node","viewer.passport.reach.upstream.other":"Trace {count} upstream authored nodes","viewer.passport.reach.downstream.one":"Trace {count} downstream authored node","viewer.passport.reach.downstream.other":"Trace {count} downstream authored nodes","viewer.passport.reach.noUpstream":"No upstream authored nodes","viewer.passport.reach.noDownstream":"No downstream authored nodes","viewer.passport.reach.status":"{direction} · {nodes} nodes · {links} links · max {hops} hops","viewer.route.eyebrow":"Route probe","viewer.route.start":"Choose a start node","viewer.route.start.find":"Find start","viewer.route.start.find.aria":"Find a route start","viewer.route.copy":"Copy link","viewer.route.copy.aria":"Copy link to traced route","viewer.route.clear":"Clear","viewer.route.clear.aria":"Clear route probe","viewer.route.traced":"Traced route","viewer.route.pickTwo":"Pick two semantic nodes on the diagram","viewer.route.pickOne":"Pick a semantic node on the diagram","viewer.route.controls":"Route journey controls","viewer.route.previous":"Previous route position","viewer.route.play":"Play route journey","viewer.route.pause":"Pause route journey","viewer.route.replay":"Replay route journey","viewer.route.next":"Next route position","viewer.route.journey":"Journey","viewer.route.pause.label":"Pause","viewer.route.replay.label":"Replay","viewer.route.overview":"Overview","viewer.route.overview.aria":"Show complete route overview","viewer.route.instructions":"Choose the source, then the destination. Direction matters.","viewer.route.destination":"Choose a destination from {label}","viewer.route.destination.find":"Find target","viewer.route.destination.find.aria":"Find a reachable route destination","viewer.route.differentDestination":"Choose a different destination","viewer.route.distinct":"A route needs two distinct semantic nodes.","viewer.route.unreachable":"No directed route to {label}","viewer.route.unreachable.detail":"{target} is not reachable from {source}. Pick a highlighted destination.","viewer.route.start.instructions":"Select the source. The next step will reveal only directed destinations.","viewer.route.copy.success":"Traced route link copied","viewer.route.copy.failed":"Could not copy traced route link","viewer.route.position":"Route position {index} of {total}: {label}","viewer.route.step":"Step {index} of {total} · {phase} · {label}","viewer.route.motionRequired":"Automatic journey requires Live motion","viewer.route.trigger.clear":"Clear traced route","viewer.route.overview.status":"{nodes} · {hops} · shortest authored route","viewer.route.overview.node.one":"{count} node","viewer.route.overview.node.other":"{count} nodes","viewer.route.overview.hop.one":"{count} directed hop","viewer.route.overview.hop.other":"{count} directed hops","viewer.route.phase.playing":"Playing","viewer.route.phase.complete":"Complete","viewer.route.phase.inspecting":"Inspecting","viewer.route.destination.count.one":"{count} directed destination available. Pick a highlighted node.","viewer.route.destination.count.other":"{count} directed destinations available. Pick a highlighted node.","viewer.route.noOutgoing":"No outgoing route starts here. Clear and choose another source.","viewer.route.result.title":"{source} to {target}","viewer.route.finder.source.title":"Choose route start","viewer.route.finder.source.placeholder":"Search route sources","viewer.route.finder.source.empty":"No matching route sources","viewer.route.finder.source.results":"Nodes that can start a route","viewer.route.finder.source.noun":"route sources","viewer.route.finder.source.badge":"start","viewer.route.finder.target.title":"Destination from {label}","viewer.route.finder.target.placeholder":"Search reachable destinations","viewer.route.finder.target.empty":"No matching reachable destinations","viewer.route.finder.target.results":"Reachable route destinations","viewer.route.finder.target.noun":"reachable destinations","viewer.route.hop.one":"{count} hop","viewer.route.hop.other":"{count} hops","viewer.lens.eyebrow":"Semantic lens","viewer.lens.title":"Compare system roles","viewer.lens.close":"Close semantic lens","viewer.lens.instruction":"Choose up to two semantic kinds. One reveals its real traffic; two compare only direct authored relationships.","viewer.lens.kinds":"Semantic kinds","viewer.lens.choose":"Choose a kind to inspect its nodes and touching relationships.","viewer.lens.copy":"Copy link to semantic lens","viewer.lens.clear":"Clear semantic lens","viewer.lens.open":"Open semantic lens","viewer.lens.openActive":"Open active semantic lens","viewer.lens.legend":"Semantic legend","viewer.lens.legend.inspect.one":"Inspect {label}, {count} node","viewer.lens.legend.inspect.other":"Inspect {label}, {count} nodes","viewer.lens.kind.count.one":"{label}, {count} node","viewer.lens.kind.count.other":"{label}, {count} nodes","viewer.lens.compare.one":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationship","viewer.lens.compare.other":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationships","viewer.lens.single":"{nodes} · {relationships} · connected peers remain visible","viewer.lens.node.one":"{count} {label} node","viewer.lens.node.other":"{count} {label} nodes","viewer.lens.relationship.one":"{count} touching relationship","viewer.lens.relationship.other":"{count} touching relationships","viewer.radar.title":"Semantic radar","viewer.radar.building":"Building overview","viewer.radar.openFull":"Open full semantic radar","viewer.radar.open":"Open radar","viewer.radar.close":"Close semantic radar","viewer.radar.surface":"Diagram overview. Click a node to focus it, or use arrow keys to pan.","viewer.radar.click":"Click node","viewer.radar.drag":"Drag to pan","viewer.radar.space":"Semantic radar needs more MAP space.","viewer.radar.nodes":"Semantic diagram radar nodes","viewer.radar.focus":"Focus {label} from Semantic Radar","viewer.radar.status":"{count} nodes · {viewport}","viewer.radar.fullMap":"{count} nodes · full map","viewer.radar.compacted":"Radar compacted to avoid covering the Semantic Passport or MAP controls.","viewer.radar.cancelWaiting":"Cancel semantic radar waiting for more MAP space","viewer.radar.needsSpace":"Semantic radar needs more visible MAP space","viewer.radar.viewport.full":"full map","viewer.radar.viewport.width":"{percent}% width","viewer.radar.viewport.scale":"{percent}% viewport","viewer.nav.controls":"Diagram view controls","viewer.nav.route":"Trace a directed route","viewer.nav.route.title":"Trace route (R)","viewer.nav.route.short":"PATH","viewer.nav.radar":"Open semantic radar","viewer.nav.radar.title":"Semantic radar (M)","viewer.nav.radar.short":"MAP","viewer.nav.lens":"Open semantic lens","viewer.nav.lens.title":"Semantic lens (L)","viewer.nav.lens.short":"LENS","viewer.nav.find":"Find a node","viewer.nav.find.title":"Find a node (/)","viewer.nav.guide":"Open diagram guide","viewer.nav.guide.title":"Diagram guide (?)","viewer.nav.zoomOut":"Zoom out","viewer.nav.zoomOut.title":"Zoom out (-)","viewer.nav.reset":"Reset diagram view","viewer.nav.reset.title":"Reset view (0)","viewer.nav.read":"READ","viewer.nav.zoomIn":"Zoom in","viewer.nav.zoomIn.title":"Zoom in (+)","viewer.nav.camera":"{hint}. Reset diagram view","viewer.nav.camera.title":"{semantic}{hint} · reset view (0)","viewer.nav.camera.semantic":"Semantic camera active · ","viewer.nav.level.map":"MAP","viewer.nav.level.read":"READ","viewer.nav.level.full":"FULL","viewer.nav.level.auto":"AUTO","viewer.nav.detail.map":"Zoom in to reveal relationship labels and node context","viewer.nav.detail.read":"Zoom in again to reveal tags and annotations","viewer.nav.detail.full":"Full diagram detail","viewer.intent.summary":"{label}. {out} outgoing, {in} incoming{loops}. {total} connections. Press Enter for details.","viewer.intent.loops":", {count} self loop","viewer.common.copied":"Copied","viewer.common.copyFailed":"Copy failed","viewer.common.copyLink":"Copy link","viewer.common.clear":"Clear","viewer.common.close":"Close"}}</script>
-    <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
-      <button id="guided-view-prev" type="button" aria-label="Previous guided view" title="Previous guided view ([)">&#8592;</button>
+    <script id="archify-i18n-data" type="application/json">{"locale":"zh-CN","messages":{"viewer.kind.frontend":"前端","viewer.kind.backend":"后端","viewer.kind.database":"数据库","viewer.kind.cloud":"云服务","viewer.kind.security":"安全","viewer.kind.messagebus":"消息总线","viewer.kind.external":"外部系统","viewer.kind.neutral":"中性","viewer.kind.node":"节点","viewer.kind.start":"开始","viewer.kind.active":"活动","viewer.kind.waiting":"等待","viewer.kind.decision":"决策","viewer.kind.success":"成功","viewer.kind.failure":"失败","viewer.toolbar.actions":"图表操作","viewer.theme.toggle.title":"切换主题（T）","viewer.theme.toggle":"切换颜色主题","viewer.theme.dark":"深色","viewer.theme.light":"浅色","viewer.preset.choose.title":"选择视觉风格（S 循环切换）","viewer.preset.choose":"选择视觉风格","viewer.preset.style":"风格","viewer.preset.menu":"视觉风格","viewer.preset.identity":"视觉表达","viewer.preset.cycles":"S 循环切换","viewer.preset.classic":"经典","viewer.preset.classic.short":"经典","viewer.preset.classic.hint":"稳定的技术默认风格","viewer.preset.flow":"信号流","viewer.preset.flow.short":"流动","viewer.preset.flow.hint":"突出动态流向","viewer.preset.blueprint":"蓝图","viewer.preset.blueprint.hint":"工程评审","viewer.preset.editorial":"编辑风格","viewer.preset.editorial.hint":"适合发布与上线说明","viewer.preset.badge.signalFlow":"信号流","viewer.preset.badge.blueprint":"蓝图 / 修订 01","viewer.preset.badge.editorial":"编辑风格 / 现场笔记","viewer.preset.badge.editorialPlate":"ARCHIFY / 图版 04","viewer.preset.current":"当前视觉风格：{style}。选择视觉风格","viewer.motion.live":"动态","viewer.motion.still":"静态","viewer.motion.pause":"暂停动效","viewer.motion.resume":"恢复动效","viewer.motion.reduced":"已根据减少动态效果偏好暂停动效","viewer.motion.hidden":"页面不可见时已暂停动效","viewer.motion.yielding":"暂停动效；当前让位于{owner}","viewer.motion.yielding.title":"动态预览已启用 · 正在让位于{owner}","viewer.owner.story":"引导故事","viewer.owner.chapter":"当前章节","viewer.owner.chapterPreview":"章节差异预览","viewer.owner.handoff":"章节交接","viewer.owner.route":"路径探测","viewer.owner.lens":"语义透镜","viewer.owner.relationship":"关系预览","viewer.owner.intent":"意图追踪","viewer.owner.focus":"语义聚焦","viewer.owner.legend":"图例预览","viewer.owner.reader":"读者交互","viewer.present.enter":"进入演示模式","viewer.present.enter.title":"演示模式（F）","viewer.present.exit":"退出演示模式","viewer.present.exit.title":"退出演示模式（F 或 Escape）","viewer.present.present":"演示","viewer.present.exit.label":"退出","viewer.export.button":"导出","viewer.export.button.title":"导出图表（E）","viewer.export.diagram":"导出图表","viewer.export.menu":"导出","viewer.export.subtitle":"便携、整洁的输出","viewer.export.share":"分享","viewer.export.shareCard":"分享卡片","viewer.export.routeShareCard":"路径分享卡片","viewer.export.reachShareCard":"可达范围分享卡片","viewer.export.copyShareCard":"复制分享卡片","viewer.export.copyDiagram":"复制图表","viewer.export.clipboardPng":"复制 PNG 到剪贴板","viewer.export.raster":"位图","viewer.export.image":"图像","viewer.export.lossless":"无损图像","viewer.export.compact":"紧凑图像","viewer.export.modern":"现代图像格式","viewer.export.vectorMotion":"矢量与动效","viewer.export.vectorMotion.heading":"矢量与动效","viewer.export.editable":"可编辑矢量图","viewer.export.motion6s":"6 秒动效","viewer.export.unsupported":"当前浏览器不支持","viewer.export.clipboardUnsupported":"当前浏览器不支持写入图片剪贴板","viewer.export.clipboardUnsupported.period":"当前浏览器不支持写入图片剪贴板。","viewer.export.clipboardUnsupported.short":"此浏览器不支持写入图片剪贴板。","viewer.export.motionUnavailable":"当前浏览器无法录制动效","viewer.export.webmUnavailable":"当前浏览器不支持 WebM","viewer.export.failed":"导出失败：{message}","viewer.export.unknownVariant":"未知的分享卡片类型：{variant}","viewer.export.routeRequired":"请先追踪路径，再导出路径分享卡片","viewer.export.reachRequired":"请先追踪编写可达范围，再导出可达范围分享卡片","viewer.export.unknown":"未知错误","viewer.export.routeFailed":"路径分享卡片导出失败：{message}","viewer.export.reachFailed":"可达范围分享卡片导出失败：{message}","viewer.export.copyFailed":"复制失败：{message}","viewer.export.copiedPng":"已将 PNG 复制到剪贴板","viewer.export.copiedShare":"已复制分享卡片","viewer.export.downloadedShare":"已下载分享卡片","viewer.export.downloadedRoute":"已下载路径分享卡片","viewer.export.downloadedReach":"已下载可达范围分享卡片","viewer.export.downloadedWebm":"已下载 WebM","viewer.export.recording":"正在录制 6 秒动效…","viewer.export.card.routeSummary.one":"路径：{source} → {target} · {count} 个有向跳转","viewer.export.card.routeSummary.other":"路径：{source} → {target} · {count} 个有向跳转","viewer.export.card.reachSummary":"从{origin}开始的编写{direction} · {nodes} · {links} · 最深 {hops}","viewer.export.card.node.one":"{count} 个节点","viewer.export.card.node.other":"{count} 个节点","viewer.export.card.link.one":"{count} 条连接","viewer.export.card.link.other":"{count} 条连接","viewer.export.card.hop.one":"{count} 跳","viewer.export.card.hop.other":"{count} 跳","viewer.export.card.routeBadge":"ARCHIFY · 路径 · {hops}","viewer.export.card.reachBadge":"ARCHIFY · {direction}可达范围","viewer.export.card.defaultBadge":"ARCHIFY · {preset} · {theme}","viewer.export.direction.upstream":"上游","viewer.export.direction.downstream":"下游","viewer.export.error.canvasUnavailable":"无法为{label}使用画布","viewer.export.error.contextUnavailable":"无法为{label}创建二维画布上下文","viewer.export.error.toBlobUnavailable":"{label}无法使用 canvas.toBlob","viewer.export.error.toBlobNull":"{label}的 canvas.toBlob 未返回数据","viewer.export.error.variantsCombined":"无法同时组合多种分享卡片类型","viewer.export.error.viewerState":"分享卡片导出无法移除临时 Viewer 状态","viewer.export.error.routeState":"路径卡片导出无法安全保留已解析路径","viewer.export.error.reachState":"可达范围卡片导出无法安全保留编写的可达范围","viewer.export.error.webmRequirements":"WebM 动效导出需要追踪动画及浏览器 MediaRecorder 支持","viewer.export.error.mediaRecorder":"MediaRecorder 录制失败","viewer.export.error.emptyWebm":"MediaRecorder 生成了空的 WebM","viewer.export.error.webmBackground":"无法为 WebM 导出加载 SVG 背景","viewer.guided.region":"图表引导视图","viewer.guided.previous":"上一个引导视图","viewer.guided.previous.title":"上一个引导视图（[）","viewer.guided.next":"下一个引导视图","viewer.guided.next.title":"下一个引导视图（]）","viewer.guided.views":"引导视图","viewer.guided.explore":"探索此系统","viewer.guided.intro":"沿精选路径逐步查看，而不改变源图表。","viewer.guided.trail":"故事轨迹","viewer.guided.beat":"节点","viewer.guided.nextBeat":"下一步","viewer.guided.play":"播放引导故事","viewer.guided.play.title":"播放引导故事（P）","viewer.guided.pause":"暂停引导故事","viewer.guided.pause.title":"暂停引导故事（P）","viewer.guided.replay":"重播引导故事","viewer.guided.replay.title":"重播引导故事（P）","viewer.guided.playStory":"播放故事","viewer.guided.pauseStory":"暂停","viewer.guided.replayStory":"重播故事","viewer.guided.motionUnavailable":"静态模式下无法播放故事","viewer.guided.enableMotion":"切换为动态模式以播放引导故事","viewer.guided.selectBeatLink":"选择故事节点以复制其精确链接","viewer.guided.copyMoment":"复制此刻","viewer.guided.momentCopied":"已复制时刻链接","viewer.guided.momentCopyFailed":"无法复制故事时刻链接","viewer.guided.copied":"已复制","viewer.guided.copyFailed":"复制失败","viewer.guided.showAll":"显示全部","viewer.guided.showAll.aria":"显示完整图表","viewer.guided.chapters":"故事章节","viewer.guided.storyTrail":"{label}的故事轨迹：{count} 个节点","viewer.guided.chapter.open":"打开第 {index}/{total} 章：{label}，{count} 个停靠点","viewer.guided.chapter.current":"当前第 {index}/{total} 章：{label}，{count} 个停靠点","viewer.guided.chapter.selectedNodes":"已选择 {count} 个节点","viewer.guided.chapter.stops":"{count} 个停靠点","viewer.guided.chapter.stop.one":"{count} 个停靠点","viewer.guided.chapter.stop.other":"{count} 个停靠点","viewer.guided.chapter.current.title":"{label} — 当前章节，{count} 个停靠点","viewer.guided.chapter.delta.expanded":"{stay} 个保留，{enter} 个进入，{leave} 个离开","viewer.guided.chapter.delta.aria":"打开第 {index}/{total} 章：{label}。章节聚焦差异：{delta}","viewer.guided.chapter.delta.title":"{label} — 章节聚焦 {delta}","viewer.guided.handoff":"{from} → {to} · 经由{label}","viewer.guided.share.chapter":"章节 {index} / {total}","viewer.guided.share.initial":"章节 01 / 01","viewer.guided.share.default":"引导章节","viewer.guided.state.ready":"就绪","viewer.guided.state.playing":"播放中","viewer.guided.state.settled":"已完成","viewer.guided.state.paused":"已暂停","viewer.guided.state.pinned":"已固定","viewer.guided.state.still":"静态","viewer.guided.share.step":"步骤 {index} / {total} · {label}","viewer.guided.share.staticMoment":"{step} · 静态时刻","viewer.guided.share.complete":"{count} 个步骤已完成 · {note}","viewer.guided.share.settled":"路径已稳定，可供阅读。","viewer.guided.share.staticPath":"{count} 个步骤 · 静态路径","viewer.guided.share.ready":"{count} 个步骤 · 就绪","viewer.guided.share.aria":"{state}，第 {index}/{total} 章：{label}。{beat}。{route}","viewer.guided.beat.start":"节点 {index} / {total} · {label} · 起点","viewer.guided.beat.forward":"节点 {index} / {total} · {from} → {to}","viewer.guided.beat.reverse":"节点 {index} / {total} · {from} → {to} · 反向编写连接","viewer.guided.beat.multiple":"节点 {index} / {total} · {from} ⇄ {to} · {count} 条编写连接","viewer.guided.beat.group":"节点 {index} / {total} · {from} · {to} · 分组 · 无直接连接","viewer.guided.beat.aria.prefix":"故事节点 {index}/{total}：{label}。","viewer.guided.beat.aria.start":"起点。","viewer.guided.beat.aria.forward":"从{from}经一条正向编写关系到达。","viewer.guided.beat.aria.reverse":"从{from}出发；编写关系实际由{to}指向{from}。","viewer.guided.beat.aria.multiple":"从{from}经 {count} 条编写关系到达；不使用任意动效。","viewer.guided.beat.aria.group":"与{from}分组展示，没有直接编写关系。","viewer.guided.caption.start":"起点","viewer.guided.caption.grouped":"分组过渡 · 无直接编写连接","viewer.guided.caption.more":" +另外 {count} 条","viewer.guided.caption.reverse":"反向编写关系","viewer.guided.caption.relationships":"{count} 条编写关系","viewer.guided.caption.relationship":"编写关系","viewer.guided.caption.direction":"编写方向：{from} → {to}","viewer.guided.caption.starting":"编写起点","viewer.guided.beatLink":"复制当前故事时刻链接：第 {index}/{total} 个节点：{label}","viewer.guided.noStory":"此图表没有编写引导故事。","viewer.guide.eyebrow":"图表指南","viewer.guide.close":"关闭图表指南","viewer.guide.inspecting":"正在检查已编译语义","viewer.guide.actions":"图表探索操作","viewer.guide.find":"查找任意节点","viewer.guide.find.hint":"搜索标签、职责、类型和稳定 ID。","viewer.guide.route":"追踪路径","viewer.guide.route.aria":"追踪有向路径","viewer.guide.route.hint":"查看两个语义节点如何按编写方向连接。","viewer.guide.map":"查看完整系统","viewer.guide.map.hint":"打开带实时视口和稳定节点的语义雷达。","viewer.guide.lens":"比较语义类型","viewer.guide.lens.hint":"统计角色、显示流量并比较直接编写的连接。","viewer.guide.story":"播放引导故事","viewer.guide.story.hint":"浏览已编写的章节和真实关系。","viewer.guide.present":"进入演示模式","viewer.guide.present.hint":"让实时图表占满视口，同时不改变导出。","viewer.guide.shortcuts":"其他键盘快捷键","viewer.guide.shortcut.export":"导出","viewer.guide.shortcut.theme":"主题","viewer.guide.shortcut.style":"风格","viewer.guide.shortcut.reset":"重置","viewer.guide.shortcut.zoomIn":"放大","viewer.guide.shortcut.zoomOut":"缩小","viewer.guide.shortcut.close":"关闭","viewer.guide.facts":"{nodes} · {relationships} · {views}","viewer.guide.fact.node.one":"{count} 个语义节点","viewer.guide.fact.node.other":"{count} 个语义节点","viewer.guide.fact.relationship.one":"{count} 条关系","viewer.guide.fact.relationship.other":"{count} 条关系","viewer.guide.fact.view.one":"{count} 个引导视图","viewer.guide.fact.view.other":"{count} 个引导视图","viewer.guide.story.available.one":"浏览 {count} 个已编写章节及其真实关系。","viewer.guide.story.available.other":"浏览 {count} 个已编写章节及其真实关系。","viewer.guide.story.unavailable":"此图表没有编写引导故事。","viewer.guide.open":"打开图表指南","viewer.guide.noStory":"此图表没有编写引导故事。","viewer.finder.title":"查找节点","viewer.finder.close":"关闭节点查找器","viewer.finder.placeholder":"搜索标签或 ID","viewer.finder.search":"搜索图表节点","viewer.finder.results":"图表节点","viewer.finder.empty":"没有匹配的节点","viewer.finder.result.focus":"聚焦{label}","viewer.finder.result.routeStart":"选择{label}作为路径起点","viewer.finder.result.routeTarget":"选择{label}作为路径终点，{links}","viewer.finder.status.empty":"没有匹配的节点","viewer.finder.status.count.one":"{count} 个匹配节点","viewer.finder.status.count.other":"{count} 个匹配节点","viewer.finder.noun.nodes":"个节点","viewer.finder.link.one":"{count} 条连接","viewer.finder.link.other":"{count} 条连接","viewer.finder.result.focus.one":"聚焦{label}，{count} 条相关连接","viewer.finder.result.focus.other":"聚焦{label}，{count} 条相关连接","viewer.finder.status.filtered":"{visible}/{available} {noun}","viewer.finder.status.all":"{available} {noun}","viewer.passport.eyebrow":"语义护照","viewer.passport.metadata":"节点元数据","viewer.passport.evidence":"已验证的源代码证据","viewer.passport.verified":"已验证来源","viewer.passport.reach":"编写可达范围","viewer.passport.reach.trace":"追踪编写的可达性","viewer.passport.upstream":"上游","viewer.passport.downstream":"下游","viewer.passport.upstream.trace":"追踪上游编写可达性","viewer.passport.downstream.trace":"追踪下游编写可达性","viewer.passport.close":"关闭语义护照","viewer.passport.copy":"复制链接","viewer.passport.copy.focus":"复制聚焦节点的链接","viewer.passport.relations":"关系","viewer.passport.relations.show":"显示关联关系","viewer.passport.relations.hide":"隐藏关联关系","viewer.passport.relations.list":"关联关系","viewer.passport.copyRelation":"复制关系","viewer.passport.copyNode":"复制节点","viewer.passport.copyPinned":"复制固定关系的链接","viewer.passport.copySource":"复制来源节点的链接","viewer.passport.copy.focused.success":"已复制聚焦节点链接","viewer.passport.copy.pinned.success":"已复制固定关系链接","viewer.passport.copy.focused.failed":"无法复制聚焦节点链接","viewer.passport.copy.pinned.failed":"无法复制固定关系链接","viewer.passport.relationship.none":"没有关联关系","viewer.passport.relationship.count.one":"{count} 条关系","viewer.passport.relationship.count.other":"{count} 条关系","viewer.passport.relationship.show.one":"显示 {count} 条关联关系","viewer.passport.relationship.show.other":"显示 {count} 条关联关系","viewer.passport.relationship.summary":"{out} 条出向 · {in} 条入向{loops}","viewer.passport.relationship.loops":" · {count} 条自环","viewer.passport.relationship.explorer":"直接关系浏览器","viewer.passport.relationship.help":"使用方向键浏览关系。按 Enter 或空格键固定详情；按 Escape 清除。","viewer.passport.relationship.loopsBack":"回环","viewer.passport.relationship.connectsTo":"连接到","viewer.passport.relationship.connectsFrom":"连接自","viewer.passport.relationship.pinned":"已固定关系 · {from} → {to} · {label}","viewer.passport.relationship.inspect":"检查第 {index}/{total} 条关系：{from} 到 {to}，{label}。按 Enter 查看详情。","viewer.passport.relationship.group.out":"出向","viewer.passport.relationship.group.in":"入向","viewer.passport.relationship.group.loop":"自环","viewer.passport.relationship.row":"{group}：{relationship}，{neighbor}","viewer.passport.relationship.direction.out":"出 →","viewer.passport.relationship.direction.in":"← 入","viewer.passport.relationship.direction.loop":"自环","viewer.passport.sourceCount.one":"{count} 个已验证来源引用","viewer.passport.sourceCount.other":"{count} 个已验证来源引用","viewer.passport.sourceMarker":"来源","viewer.passport.beacon.one":"{count} 个已验证来源；聚焦此节点以检查","viewer.passport.beacon.other":"{count} 个已验证来源；聚焦此节点以检查","viewer.passport.repository.open":"打开已验证的仓库修订版本 {revision}","viewer.passport.source.open":"打开修订版本 {revision} 中已验证的来源 {path}","viewer.passport.source.openLink":"打开 ↗","viewer.passport.reach.upstream.one":"追踪 {count} 个上游编写节点","viewer.passport.reach.upstream.other":"追踪 {count} 个上游编写节点","viewer.passport.reach.downstream.one":"追踪 {count} 个下游编写节点","viewer.passport.reach.downstream.other":"追踪 {count} 个下游编写节点","viewer.passport.reach.noUpstream":"没有上游编写节点","viewer.passport.reach.noDownstream":"没有下游编写节点","viewer.passport.reach.status":"{direction} · {nodes} 个节点 · {links} 条连接 · 最深 {hops} 跳","viewer.route.eyebrow":"路径探测","viewer.route.start":"选择起点节点","viewer.route.start.find":"查找起点","viewer.route.start.find.aria":"查找路径起点","viewer.route.copy":"复制链接","viewer.route.copy.aria":"复制已追踪路径的链接","viewer.route.clear":"清除","viewer.route.clear.aria":"清除路径探测","viewer.route.traced":"已追踪路径","viewer.route.pickTwo":"在图表中选择两个语义节点","viewer.route.pickOne":"在图表中选择一个语义节点","viewer.route.controls":"路径旅程控制","viewer.route.previous":"上一个路径位置","viewer.route.play":"播放路径旅程","viewer.route.pause":"暂停路径旅程","viewer.route.replay":"重播路径旅程","viewer.route.next":"下一个路径位置","viewer.route.journey":"旅程","viewer.route.pause.label":"暂停","viewer.route.replay.label":"重播","viewer.route.overview":"总览","viewer.route.overview.aria":"显示完整路径总览","viewer.route.instructions":"先选择来源，再选择目标；方向很重要。","viewer.route.destination":"选择从{label}出发的目标","viewer.route.destination.find":"查找目标","viewer.route.destination.find.aria":"查找可达的路径目标","viewer.route.differentDestination":"选择其他目标","viewer.route.distinct":"一条路径需要两个不同的语义节点。","viewer.route.unreachable":"没有通往{label}的有向路径","viewer.route.unreachable.detail":"从{source}无法到达{target}。请选择高亮的目标。","viewer.route.start.instructions":"选择来源。下一步只会显示有向可达的目标。","viewer.route.copy.success":"已复制路径链接","viewer.route.copy.failed":"无法复制路径链接","viewer.route.position":"路径位置 {index}/{total}：{label}","viewer.route.step":"第 {index}/{total} 步 · {phase} · {label}","viewer.route.motionRequired":"自动旅程需要动态模式","viewer.route.trigger.clear":"清除已追踪路径","viewer.route.overview.status":"{nodes} · {hops} · 最短编写路径","viewer.route.overview.node.one":"{count} 个节点","viewer.route.overview.node.other":"{count} 个节点","viewer.route.overview.hop.one":"{count} 个有向跳转","viewer.route.overview.hop.other":"{count} 个有向跳转","viewer.route.phase.playing":"播放中","viewer.route.phase.complete":"已完成","viewer.route.phase.inspecting":"检查中","viewer.route.destination.count.one":"有 {count} 个有向目标可用。请选择高亮节点。","viewer.route.destination.count.other":"有 {count} 个有向目标可用。请选择高亮节点。","viewer.route.noOutgoing":"此处没有可用的出向路径。请清除后选择其他来源。","viewer.route.result.title":"{source} 到 {target}","viewer.route.finder.source.title":"选择路径起点","viewer.route.finder.source.placeholder":"搜索路径来源","viewer.route.finder.source.empty":"没有匹配的路径来源","viewer.route.finder.source.results":"可作为路径起点的节点","viewer.route.finder.source.noun":"个路径来源","viewer.route.finder.source.badge":"起点","viewer.route.finder.target.title":"从{label}出发的目标","viewer.route.finder.target.placeholder":"搜索可达目标","viewer.route.finder.target.empty":"没有匹配的可达目标","viewer.route.finder.target.results":"可达路径目标","viewer.route.finder.target.noun":"个可达目标","viewer.route.hop.one":"{count} 跳","viewer.route.hop.other":"{count} 跳","viewer.lens.eyebrow":"语义透镜","viewer.lens.title":"比较系统角色","viewer.lens.close":"关闭语义透镜","viewer.lens.instruction":"最多选择两种语义类型。选择一种可显示其真实流量；选择两种只比较直接编写的关系。","viewer.lens.kinds":"语义类型","viewer.lens.choose":"选择一种类型以检查其节点和相连关系。","viewer.lens.copy":"复制语义透镜链接","viewer.lens.clear":"清除语义透镜","viewer.lens.open":"打开语义透镜","viewer.lens.openActive":"打开当前语义透镜","viewer.lens.legend":"语义图例","viewer.lens.legend.inspect.one":"检查{label}，{count} 个节点","viewer.lens.legend.inspect.other":"检查{label}，{count} 个节点","viewer.lens.kind.count.one":"{label}，{count} 个节点","viewer.lens.kind.count.other":"{label}，{count} 个节点","viewer.lens.compare.one":"{first} → {second}：{forward} · {second} → {first}：{reverse} · 共 {count} 条直接关系","viewer.lens.compare.other":"{first} → {second}：{forward} · {second} → {first}：{reverse} · 共 {count} 条直接关系","viewer.lens.single":"{nodes} · {relationships} · 已连接节点保持可见","viewer.lens.node.one":"{count} 个{label}节点","viewer.lens.node.other":"{count} 个{label}节点","viewer.lens.relationship.one":"{count} 条相连关系","viewer.lens.relationship.other":"{count} 条相连关系","viewer.radar.title":"语义雷达","viewer.radar.building":"正在构建总览","viewer.radar.openFull":"打开完整语义雷达","viewer.radar.open":"打开雷达","viewer.radar.close":"关闭语义雷达","viewer.radar.surface":"图表总览。点击节点进行聚焦，或使用方向键平移。","viewer.radar.click":"点击节点","viewer.radar.drag":"拖动平移","viewer.radar.space":"语义雷达需要更多地图可见空间。","viewer.radar.nodes":"语义图表雷达节点","viewer.radar.focus":"从语义雷达聚焦{label}","viewer.radar.status":"{count} 个节点 · {viewport}","viewer.radar.fullMap":"{count} 个节点 · 完整地图","viewer.radar.compacted":"已收紧雷达，避免遮挡语义护照或地图控件。","viewer.radar.cancelWaiting":"取消等待更多地图空间的语义雷达","viewer.radar.needsSpace":"语义雷达需要更多可见地图空间","viewer.radar.viewport.full":"完整地图","viewer.radar.viewport.width":"宽度 {percent}%","viewer.radar.viewport.scale":"视口 {percent}%","viewer.nav.controls":"图表视图控制","viewer.nav.route":"追踪有向路径","viewer.nav.route.title":"追踪路径（R）","viewer.nav.route.short":"路径","viewer.nav.radar":"打开语义雷达","viewer.nav.radar.title":"语义雷达（M）","viewer.nav.radar.short":"地图","viewer.nav.lens":"打开语义透镜","viewer.nav.lens.title":"语义透镜（L）","viewer.nav.lens.short":"透镜","viewer.nav.find":"查找节点","viewer.nav.find.title":"查找节点（/）","viewer.nav.guide":"打开图表指南","viewer.nav.guide.title":"图表指南（?）","viewer.nav.zoomOut":"缩小","viewer.nav.zoomOut.title":"缩小（-）","viewer.nav.reset":"重置图表视图","viewer.nav.reset.title":"重置视图（0）","viewer.nav.read":"阅读","viewer.nav.zoomIn":"放大","viewer.nav.zoomIn.title":"放大（+）","viewer.nav.camera":"{hint}。重置图表视图","viewer.nav.camera.title":"{semantic}{hint} · 重置视图（0）","viewer.nav.camera.semantic":"语义相机已启用 · ","viewer.nav.level.map":"概览","viewer.nav.level.read":"阅读","viewer.nav.level.full":"完整","viewer.nav.level.auto":"自动","viewer.nav.detail.map":"放大以显示关系标签和节点上下文","viewer.nav.detail.read":"再次放大以显示标签和注释","viewer.nav.detail.full":"完整图表详情","viewer.intent.summary":"{label}。{out} 条出向，{in} 条入向{loops}。共 {total} 条连接。按 Enter 查看详情。","viewer.intent.loops":"，{count} 条自环","viewer.common.copied":"已复制","viewer.common.copyFailed":"复制失败","viewer.common.copyLink":"复制链接","viewer.common.clear":"清除","viewer.common.close":"关闭"}}</script>
+    <div class="guided-views no-print" id="guided-views" hidden aria-label="图表引导视图">
+      <button id="guided-view-prev" type="button" aria-label="上一个引导视图" title="上一个引导视图（[）">&#8592;</button>
       <div class="guided-view-copy">
         <div class="guided-view-meta">
-          <span>Guided views</span>
+          <span>引导视图</span>
           <span id="guided-view-count"></span>
           <span class="guided-view-progress" aria-hidden="true"><span id="guided-view-progress-bar"></span></span>
           <span class="guided-view-handoff" id="guided-view-handoff" hidden aria-hidden="true"></span>
         </div>
-        <strong id="guided-view-label">Explore this system</strong>
-        <small id="guided-view-note" aria-live="polite" aria-atomic="true">Step through curated paths without changing the source diagram.</small>
-        <div class="guided-view-trail" id="guided-view-trail" hidden role="group" aria-label="Story trail"></div>
+        <strong id="guided-view-label">探索此系统</strong>
+        <small id="guided-view-note" aria-live="polite" aria-atomic="true">沿精选路径逐步查看，而不改变源图表。</small>
+        <div class="guided-view-trail" id="guided-view-trail" hidden role="group" aria-label="故事轨迹"></div>
         <div class="guided-story-caption" id="guided-story-caption" hidden aria-live="polite" aria-atomic="true">
-          <span class="guided-story-caption-index" id="guided-story-caption-index">Beat</span>
+          <span class="guided-story-caption-index" id="guided-story-caption-index">节点</span>
           <strong id="guided-story-caption-route"></strong>
           <small id="guided-story-caption-detail"></small>
           <span class="guided-story-caption-next" id="guided-story-caption-next" hidden aria-hidden="true">
-            <small>Next</small>
+            <small>下一步</small>
             <strong id="guided-story-caption-next-label"></strong>
           </span>
         </div>
       </div>
-      <button id="guided-view-next" type="button" aria-label="Next guided view" title="Next guided view (])">&#8594;</button>
+      <button id="guided-view-next" type="button" aria-label="下一个引导视图" title="下一个引导视图（]）">&#8594;</button>
       <div class="guided-view-actions">
-        <button class="guided-view-play" id="guided-view-play" type="button" aria-label="Play guided story" aria-pressed="false" title="Play guided story (P)">
+        <button class="guided-view-play" id="guided-view-play" type="button" aria-label="播放引导故事" aria-pressed="false" title="播放引导故事（P）">
           <span id="guided-view-play-icon" aria-hidden="true">&#9654;</span>
-          <span id="guided-view-play-label">Play story</span>
+          <span id="guided-view-play-label">播放故事</span>
         </button>
-        <button class="guided-view-beat-link" id="guided-view-beat-link" type="button" aria-label="Select a Story Beat to copy its exact link" title="Select a Story Beat to copy its exact link" disabled>
+        <button class="guided-view-beat-link" id="guided-view-beat-link" type="button" aria-label="选择故事节点以复制其精确链接" title="选择故事节点以复制其精确链接" disabled>
           <span aria-hidden="true">&#35;</span>
-          <span id="guided-view-beat-link-label">Copy moment</span>
+          <span id="guided-view-beat-link-label">复制此刻</span>
         </button>
-        <button class="guided-view-all" id="guided-view-all" type="button" aria-label="Show entire diagram">Show all</button>
+        <button class="guided-view-all" id="guided-view-all" type="button" aria-label="显示完整图表">显示全部</button>
       </div>
-      <nav class="guided-view-index" id="guided-view-index" aria-label="Story chapters">
+      <nav class="guided-view-index" id="guided-view-index" aria-label="故事章节">
         <ol class="guided-view-chapters" id="guided-view-chapters"></ol>
       </nav>
     </div>
 
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
-         data-preset-badge-editorial-plate="ARCHIFY / PLATE 04">
-      <svg viewBox="0 0 1096 684" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="signal-flow" data-quality-profile="showcase">
-        <title id="archify-diagram-title">Agent Tool Call Workflow</title>
-        <desc id="archify-diagram-description">A workflow diagram generated by Archify.</desc>
+         data-preset-badge-editorial-plate="ARCHIFY / 图版 04">
+      <svg viewBox="0 0 1237 652" role="img" lang="zh-CN" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="showcase">
+        <title id="archify-diagram-title">Maka 托管执行、受控工具与可恢复事实</title>
+        <desc id="archify-diagram-description">由 Archify 生成的工作流图。</desc>
         <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -5030,272 +5023,276 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Swimlanes -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="1028" height="106" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / User Interface</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="1135" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / 产品请求与反馈</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="178" width="1028" height="114" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="200" class="t-dim" font-size="10" font-weight="600">02 / Agent Runtime</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="176" width="1135" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / Runtime Host、Session 与 Turn</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-2" x="40" y="312" width="1028" height="114" rx="10" class="c-lane" stroke-width="1"/>
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="exception-lane" data-composition-frame-id="lane-2-exception" x="46" y="318" width="1016" height="102" rx="8" class="c-security-group" stroke-width="1"/>
-        <text x="54" y="334" class="t-security" font-size="10" font-weight="600">EX / Policy &amp; Recovery</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-2" x="40" y="300" width="1135" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="exception-lane" data-composition-frame-id="lane-2-exception" x="46" y="306" width="1123" height="92" rx="8" class="c-security-group" stroke-width="1"/>
+        <text x="54" y="322" class="t-security" font-size="10" font-weight="600">EX / 模型调用与受控副作用</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-3" x="40" y="446" width="1028" height="114" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="468" class="t-dim" font-size="10" font-weight="600">04 / Tool Execution &amp; Evidence</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-3" x="40" y="424" width="1135" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="446" class="t-dim" font-size="10" font-weight="600">04 / Artifact、事件账本与恢复</text>
 
         <!-- Phase headers -->
-        <line x1="68" y1="35" x2="320" y2="35" class="a-default" stroke-width="1.1"/>
-        <rect x="68" y="27" width="252" height="16" rx="4" class="c-mask"/>
-        <text x="194" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">Intake</text>
-        <line x1="445.20000000000005" y1="35" x2="697.2" y2="35" class="a-emphasis" stroke-width="1.1"/>
-        <rect x="445.20000000000005" y="27" width="252.00000000000006" height="16" rx="4" class="c-mask"/>
-        <text x="571.2" y="39" class="t-backend" font-size="8" font-weight="600" text-anchor="middle">Plan + route</text>
-        <line x1="784" y1="35" x2="1036" y2="35" class="a-dashed" stroke-width="1.1"/>
-        <rect x="784" y="27" width="252" height="16" rx="4" class="c-mask"/>
-        <text x="910" y="39" class="t-messagebus" font-size="8" font-weight="600" text-anchor="middle">Execute + report</text>
+        <line x1="95" y1="35" x2="307" y2="35" class="a-default" stroke-width="1.1"/>
+        <rect x="95" y="27" width="212" height="16" rx="4" class="c-mask"/>
+        <text x="201" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">接入托管</text>
+        <line x1="420.3999999999999" y1="35" x2="741.2" y2="35" class="a-emphasis" stroke-width="1.1"/>
+        <rect x="420.3999999999999" y="27" width="320.80000000000007" height="16" rx="4" class="c-mask"/>
+        <text x="580.8" y="39" class="t-backend" font-size="8" font-weight="600" text-anchor="middle">编排并驱动 Turn</text>
+        <line x1="811.2" y1="35" x2="903.2" y2="35" class="a-security" stroke-width="1.1"/>
+        <rect x="811.2" y="27" width="92" height="16" rx="4" class="c-mask"/>
+        <text x="857.2" y="39" class="t-security" font-size="8" font-weight="600" text-anchor="middle">执行与记账</text>
+        <line x1="1042.6000000000001" y1="35" x2="1134.6000000000001" y2="35" class="a-dashed" stroke-width="1.1"/>
+        <rect x="1042.6000000000001" y="27" width="92" height="16" rx="4" class="c-mask"/>
+        <text x="1088.6000000000001" y="39" class="t-messagebus" font-size="8" font-weight="600" text-anchor="middle">反馈与恢复</text>
 
         <!-- Workflow groups -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-0" x="421.2" y="216" width="300.00000000000006" height="72" rx="9" class="c-lane" stroke-width="1"/>
-        <text x="431.2" y="214" class="t-backend" font-size="7" font-weight="600">Planning loop</text>
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-1" x="581.2" y="350" width="478.79999999999995" height="72" rx="9" class="c-security-group" stroke-width="1"/>
-        <text x="591.2" y="348" class="t-security" font-size="7" font-weight="600">Human or policy stop</text>
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-2" x="204" y="484" width="357.20000000000005" height="72" rx="9" class="c-lane" stroke-width="1"/>
-        <text x="214" y="482" class="t-messagebus" font-size="7" font-weight="600">Evidence path</text>
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-3" x="760" y="484" width="300" height="72" rx="9" class="c-lane" stroke-width="1"/>
-        <text x="770" y="482" class="t-messagebus" font-size="7" font-weight="600">Tool work</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-0" x="181" y="214" width="603.2" height="62" rx="9" class="c-lane" stroke-width="1"/>
+        <text x="191" y="212" class="t-backend" font-size="7" font-weight="600">Host 执行权威</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-1" x="612.2" y="338" width="554.4000000000001" height="62" rx="9" class="c-security-group" stroke-width="1"/>
+        <text x="622.2" y="336" class="t-security" font-size="7" font-weight="600">ExecutionBoundary</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-2" x="774.2" y="462" width="390.4000000000001" height="62" rx="9" class="c-lane" stroke-width="1"/>
+        <text x="784.2" y="460" class="t-messagebus" font-size="7" font-weight="600">规范恢复事实</text>
 
         <!-- Edge paths -->
-        <path data-edge-from="router" data-edge-to="approval" data-edge-label="needs approval?" data-edge-key="0" data-edge-id="approval-check" data-composition-points="651.2,279;651.2,302;569.2,302;569.2,387;585.2,387" d="M 651.2 279 L 651.2 302 L 569.2 302 L 569.2 387 L 585.2 387" class="a-security" data-animate="edge" style="--step:3" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="approval" data-edge-to="blocked" data-edge-label="denied" data-edge-key="1" data-edge-id="approval-denied" data-composition-points="651.2,421;651.2,442;830,442;830,413" d="M 651.2 421 L 651.2 442 L 830 442 L 830 413" class="a-security" data-animate="edge" style="--step:9" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="approval" data-edge-to="tool" data-edge-key="2" data-edge-id="approved-tool" data-composition-points="651.2,421;651.2,521;764,521" d="M 651.2 421 L 651.2 521 L 764 521" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="external" data-edge-to="final" data-edge-key="3" data-edge-id="external-reply" data-composition-points="1056,521;1080,521;1080,120;1056,120" d="M 1056 521 L 1080 521 L 1080 120 L 1056 120" class="a-emphasis" data-animate="edge" style="--step:6" stroke-width="1.2" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="chat" data-edge-to="planner" data-edge-label="plan" data-edge-key="4" data-edge-id="plan-request" data-composition-points="274,146;274,253;425.2,253" d="M 274 146 L 274 253 L 425.2 253" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="planner" data-edge-to="router" data-edge-key="5" data-edge-id="planner-route" data-composition-points="557.2,253;585.2,253" d="M 557.2 253 L 585.2 253" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="external" data-edge-to="trace" data-edge-label="record result" data-edge-key="6" data-edge-id="record-result" data-composition-points="990,547;990,579;491.2,579;491.2,547" d="M 990 547 L 990 579 L 491.2 579 L 491.2 547" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="user" data-edge-to="chat" data-edge-key="7" data-edge-id="request-chat" data-composition-points="180,120;208,120" d="M 180 120 L 208 120" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="blocked" data-edge-to="retry" data-edge-key="8" data-edge-id="retry-request" data-composition-points="896,387;924,387" d="M 896 387 L 924 387" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="tool" data-edge-to="external" data-edge-key="9" data-edge-id="tool-external-call" data-composition-points="896,521;924,521" d="M 896 521 L 924 521" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="store" data-edge-to="trace" data-edge-label="trace + memory" data-edge-key="10" data-edge-id="write-trace-memory" data-composition-points="340,521;425.2,521" d="M 340 521 L 425.2 521" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="boundary_gate" data-edge-to="tool_runtime" data-edge-label="准入后执行" data-edge-key="0" data-edge-id="admit_effect" data-composition-points="695.2,393;695.2,420;1088.6000000000001,420;1088.6000000000001,393" d="M 695.2 393 L 695.2 420 L 1088.6000000000001 420 L 1088.6000000000001 393" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="turn_driver" data-edge-to="boundary_gate" data-edge-label="工具调用" data-edge-key="1" data-edge-id="ask_for_effect" data-composition-points="695.2,269;695.2,290;600.2,290;600.2,367;616.2,367" d="M 695.2 269 L 695.2 290 L 600.2 290 L 600.2 367 L 616.2 367" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="turn_driver" data-edge-to="flow_adapter" data-edge-label="请求 / stream" data-edge-key="2" data-edge-id="dispatch_model_flow" data-composition-points="780.2,243;850.2,243;850.2,341" d="M 780.2 243 L 850.2 243 L 850.2 341" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="flow_adapter" data-edge-to="response_surface" data-edge-label="增量事件" data-edge-key="3" data-edge-id="emit_response" data-composition-points="864.2,341;864.2,119;1022.6000000000001,119" d="M 864.2 341 L 864.2 119 L 1022.6000000000001 119" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="request_portal" data-edge-to="host_kernel" data-edge-label="Host 连接" data-edge-key="4" data-edge-id="open_host" data-composition-points="141,145;141,166;353,166;353,243;337,243" d="M 141 145 L 141 166 L 353 166 L 353 243 L 337 243" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="tool_runtime" data-edge-to="artifact_store" data-edge-label="文件型结果" data-edge-key="5" data-edge-id="publish_file_result" data-composition-points="1162.6000000000001,367;1214.601,367;1214.601,491;1160.6000000000001,491" d="M 1162.6000000000001 367 L 1214.601 367 L 1214.601 491 L 1160.6000000000001 491" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="runtime_ledger" data-edge-to="resume_planner" data-edge-label="读取事件与 Artifact 引用" data-edge-key="6" data-edge-id="read_resume_facts" data-composition-points="778.2,491;234,491" d="M 778.2 491 L 234 491" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="artifact_store" data-edge-to="runtime_ledger" data-edge-label="Artifact 引用" data-edge-key="7" data-edge-id="record_artifact_ref" data-composition-points="1016.6000000000001,491;936.2,491" d="M 1016.6000000000001 491 L 936.2 491" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="flow_adapter" data-edge-to="runtime_ledger" data-edge-label="写入 RuntimeEvent" data-edge-key="8" data-edge-id="record_runtime_events" data-composition-points="857.2,341;857.2,325;1220.601,325;1220.601,533;857.2,533;857.2,517" d="M 857.2 341 L 857.2 325 L 1220.601 325 L 1220.601 533 L 857.2 533 L 857.2 517" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="resume_planner" data-edge-to="host_kernel" data-edge-label="验证恢复计划" data-edge-key="9" data-edge-id="reenter_host" data-composition-points="141,517;141,544;261,544;261,269" d="M 141 517 L 141 544 L 261 544 L 261 269" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="session_owner" data-edge-to="turn_driver" data-edge-label="启动 / 续接" data-edge-key="10" data-edge-id="start_or_resume_turn" data-composition-points="539.4,243;610.2,243" d="M 539.4 243 L 610.2 243" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="host_kernel" data-edge-to="session_owner" data-edge-label="托管命令" data-edge-key="11" data-edge-id="submit_session_command" data-composition-points="261,269;261,285;466.4,285;466.4,269" d="M 261 269 L 261 285 L 466.4 285 L 466.4 269" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Nodes -->
-        <g id="node-user" data-node-id="user" data-node-label="User" tabindex="0" role="button" aria-label="Focus User, asks for work, User Interface › Intake" aria-pressed="false" data-node-kind="external" data-node-sublabel="asks for work" data-node-context="User Interface › Intake">
-          <title>User · asks for work · User Interface › Intake</title>
-          <rect x="48" y="94" width="132" height="52" rx="6" class="c-mask"/>
-          <rect x="48" y="94" width="132" height="52" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(54 100) scale(0.6875)">
-            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
-            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="114" y="115" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">User</text>
-          <text data-detail="context" x="114" y="132" class="t-muted" font-size="8" text-anchor="middle">asks for work</text>
-        </g>
-
-        <g id="node-chat" data-node-id="chat" data-node-label="Chat Surface" tabindex="0" role="button" aria-label="Focus Chat Surface, thread + files, User Interface › Intake" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="thread + files" data-node-context="User Interface › Intake">
-          <title>Chat Surface · thread + files · User Interface › Intake</title>
-          <rect x="208" y="94" width="132" height="52" rx="6" class="c-mask"/>
-          <rect x="208" y="94" width="132" height="52" rx="6" class="c-frontend" data-animate="node" style="--step:1" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(214 100) scale(0.6875)">
+        <g id="node-request_portal" data-node-id="request_portal" data-node-label="提交产品请求" tabindex="0" role="button" aria-label="聚焦提交产品请求，Desktop / CLI, 产品请求与反馈 › 接入托管" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="Desktop / CLI" data-node-context="产品请求与反馈 › 接入托管">
+          <title>提交产品请求 · Desktop / CLI · 产品请求与反馈 › 接入托管</title>
+          <rect x="80" y="93" width="122" height="52" rx="6" class="c-mask"/>
+          <rect x="80" y="93" width="122" height="52" rx="6" class="c-frontend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(86 99) scale(0.6875)">
             <rect x="2" y="3" width="12" height="10" rx="2"/>
             <path d="M2 6.5h12"/>
             <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="274" y="115" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Chat Surface</text>
-          <text data-detail="context" x="274" y="132" class="t-muted" font-size="8" text-anchor="middle">thread + files</text>
+          <text data-node-label="" data-detail-anchor="" x="141" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">提交产品请求</text>
+          <text data-detail="context" x="141" y="131" class="t-muted" font-size="8" text-anchor="middle">Desktop / CLI</text>
         </g>
 
-        <g id="node-final" data-node-id="final" data-node-label="Final Reply" tabindex="0" role="button" aria-label="Focus Final Reply, answer + changes, User Interface › Execute + report" aria-pressed="false" data-node-kind="backend" data-node-sublabel="answer + changes" data-node-context="User Interface › Execute + report">
-          <title>Final Reply · answer + changes · User Interface › Execute + report</title>
-          <rect x="924" y="94" width="132" height="52" rx="6" class="c-mask"/>
-          <rect x="924" y="94" width="132" height="52" rx="6" class="c-backend" data-animate="node" style="--step:7" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(930 100) scale(0.6875)">
+        <g id="node-response_surface" data-node-id="response_surface" data-node-label="流式反馈与终态" tabindex="0" role="button" aria-label="聚焦流式反馈与终态，界面更新及最终结果, 产品请求与反馈 › 反馈与恢复" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="界面更新及最终结果" data-node-context="产品请求与反馈 › 反馈与恢复">
+          <title>流式反馈与终态 · 界面更新及最终结果 · 产品请求与反馈 › 反馈与恢复</title>
+          <rect x="1022.6000000000001" y="93" width="132" height="52" rx="6" class="c-mask"/>
+          <rect x="1022.6000000000001" y="93" width="132" height="52" rx="6" class="c-frontend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(1028.6000000000001 99) scale(0.6875)">
+            <rect x="2" y="3" width="12" height="10" rx="2"/>
+            <path d="M2 6.5h12"/>
+            <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
+            <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1088.6000000000001" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">流式反馈与终态</text>
+          <text data-detail="context" x="1088.6000000000001" y="131" class="t-muted" font-size="8" text-anchor="middle">界面更新及最终结果</text>
+        </g>
+
+        <g id="node-host_kernel" data-node-id="host_kernel" data-node-label="RuntimeHostKernel" tabindex="0" role="button" aria-label="聚焦RuntimeHostKernel，根目录唯一执行权威, Runtime Host、Session 与 Turn › Host 执行权威 › 接入托管" aria-pressed="false" data-node-kind="backend" data-node-sublabel="根目录唯一执行权威" data-node-context="Runtime Host、Session 与 Turn › Host 执行权威 › 接入托管">
+          <title>RuntimeHostKernel · 根目录唯一执行权威 · Runtime Host、Session 与 Turn › Host 执行权威 › 接入托管</title>
+          <rect x="185" y="217" width="152" height="52" rx="6" class="c-mask"/>
+          <rect x="185" y="217" width="152" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(191 223) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="990" y="115" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Final Reply</text>
-          <text data-detail="context" x="990" y="132" class="t-muted" font-size="8" text-anchor="middle">answer + changes</text>
+          <text data-node-label="" data-detail-anchor="" x="261" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">RuntimeHostKernel</text>
+          <text data-detail="context" x="261" y="255" class="t-muted" font-size="8" text-anchor="middle">根目录唯一执行权威</text>
         </g>
 
-        <g id="node-planner" data-node-id="planner" data-node-label="Agent Planner" tabindex="0" role="button" aria-label="Focus Agent Planner, plan next step, Agent Runtime › Planning loop › Plan + route" aria-pressed="false" data-node-kind="backend" data-node-sublabel="plan next step" data-node-tag="context aware" data-node-context="Agent Runtime › Planning loop › Plan + route">
-          <title>Agent Planner · plan next step · Agent Runtime › Planning loop › Plan + route · context aware</title>
-          <rect x="425.2" y="219" width="132" height="68" rx="6" class="c-mask"/>
-          <rect x="425.2" y="219" width="132" height="68" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(431.2 225) scale(0.6875)">
+        <g id="node-session_owner" data-node-id="session_owner" data-node-label="SessionManager" tabindex="0" role="button" aria-label="聚焦SessionManager，Session / Turn 所有者, Runtime Host、Session 与 Turn › Host 执行权威 › 编排并驱动 Turn" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Session / Turn 所有者" data-node-context="Runtime Host、Session 与 Turn › Host 执行权威 › 编排并驱动 Turn">
+          <title>SessionManager · Session / Turn 所有者 · Runtime Host、Session 与 Turn › Host 执行权威 › 编排并驱动 Turn</title>
+          <rect x="393.4" y="217" width="146" height="52" rx="6" class="c-mask"/>
+          <rect x="393.4" y="217" width="146" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(399.4 223) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="491.2" y="240" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Agent Planner</text>
-          <text data-detail="context" x="491.2" y="257" class="t-muted" font-size="8" text-anchor="middle">plan next step</text>
-        <text data-detail="fine" x="491.2" y="275" class="t-backend" font-size="7" text-anchor="middle">context aware</text>
+          <text data-node-label="" data-detail-anchor="" x="466.4" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">SessionManager</text>
+          <text data-detail="context" x="466.4" y="255" class="t-muted" font-size="8" text-anchor="middle">Session / Turn 所有者</text>
         </g>
 
-        <g id="node-router" data-node-id="router" data-node-label="Tool Router" tabindex="0" role="button" aria-label="Focus Tool Router, choose capability, Agent Runtime › Planning loop › Plan + route" aria-pressed="false" data-node-kind="backend" data-node-sublabel="choose capability" data-node-context="Agent Runtime › Planning loop › Plan + route">
-          <title>Tool Router · choose capability · Agent Runtime › Planning loop › Plan + route</title>
-          <rect x="585.2" y="227" width="132" height="52" rx="6" class="c-mask"/>
-          <rect x="585.2" y="227" width="132" height="52" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(591.2 233) scale(0.6875)">
+        <g id="node-turn_driver" data-node-id="turn_driver" data-node-label="AgentRun / RuntimeRunner" tabindex="0" role="button" aria-label="聚焦AgentRun / RuntimeRunner，事件驱动的 Turn 编排, Runtime Host、Session 与 Turn › Host 执行权威 › 编排并驱动 Turn" aria-pressed="false" data-node-kind="backend" data-node-sublabel="事件驱动的 Turn 编排" data-node-context="Runtime Host、Session 与 Turn › Host 执行权威 › 编排并驱动 Turn">
+          <title>AgentRun / RuntimeRunner · 事件驱动的 Turn 编排 · Runtime Host、Session 与 Turn › Host 执行权威 › 编排并驱动 Turn</title>
+          <rect x="610.2" y="217" width="170" height="52" rx="6" class="c-mask"/>
+          <rect x="610.2" y="217" width="170" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(616.2 223) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="651.2" y="248" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Tool Router</text>
-          <text data-detail="context" x="651.2" y="265" class="t-muted" font-size="8" text-anchor="middle">choose capability</text>
+          <text data-node-label="" data-detail-anchor="" x="695.2" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">AgentRun / RuntimeRunner</text>
+          <text data-detail="context" x="695.2" y="255" class="t-muted" font-size="8" text-anchor="middle">事件驱动的 Turn 编排</text>
         </g>
 
-        <g id="node-approval" data-node-id="approval" data-node-label="Approval Gate" tabindex="0" role="button" aria-label="Focus Approval Gate, scope + consent, Policy &amp; Recovery › Human or policy stop › Plan + route" aria-pressed="false" data-node-kind="security" data-node-sublabel="scope + consent" data-node-tag="block risky ops" data-node-context="Policy &amp; Recovery › Human or policy stop › Plan + route">
-          <title>Approval Gate · scope + consent · Policy &amp; Recovery › Human or policy stop › Plan + route · block risky ops</title>
-          <rect x="585.2" y="353" width="132" height="68" rx="6" class="c-mask"/>
-          <rect x="585.2" y="353" width="132" height="68" rx="6" class="c-security" data-animate="node" style="--step:4" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(591.2 359) scale(0.6875)">
+        <g id="node-boundary_gate" data-node-id="boundary_gate" data-node-label="ExecutionBoundary" tabindex="0" role="button" aria-label="聚焦ExecutionBoundary，权限与 sandbox 准入, 模型调用与受控副作用 › ExecutionBoundary › 编排并驱动 Turn" aria-pressed="false" data-node-kind="security" data-node-sublabel="权限与 sandbox 准入" data-node-context="模型调用与受控副作用 › ExecutionBoundary › 编排并驱动 Turn">
+          <title>ExecutionBoundary · 权限与 sandbox 准入 · 模型调用与受控副作用 › ExecutionBoundary › 编排并驱动 Turn</title>
+          <rect x="616.2" y="341" width="158" height="52" rx="6" class="c-mask"/>
+          <rect x="616.2" y="341" width="158" height="52" rx="6" class="c-security" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(622.2 347) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="651.2" y="374" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Approval Gate</text>
-          <text data-detail="context" x="651.2" y="391" class="t-muted" font-size="8" text-anchor="middle">scope + consent</text>
-        <text data-detail="fine" x="651.2" y="409" class="t-security" font-size="7" text-anchor="middle">block risky ops</text>
+          <text data-node-label="" data-detail-anchor="" x="695.2" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">ExecutionBoundary</text>
+          <text data-detail="context" x="695.2" y="379" class="t-muted" font-size="8" text-anchor="middle">权限与 sandbox 准入</text>
         </g>
 
-        <g id="node-blocked" data-node-id="blocked" data-node-label="Blocked" tabindex="0" role="button" aria-label="Focus Blocked, wait or reject, Policy &amp; Recovery › Human or policy stop › Execute + report" aria-pressed="false" data-node-kind="security" data-node-sublabel="wait or reject" data-node-context="Policy &amp; Recovery › Human or policy stop › Execute + report">
-          <title>Blocked · wait or reject · Policy &amp; Recovery › Human or policy stop › Execute + report</title>
-          <rect x="764" y="361" width="132" height="52" rx="6" class="c-mask"/>
-          <rect x="764" y="361" width="132" height="52" rx="6" class="c-security" data-animate="node" style="--step:12" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(770 367) scale(0.6875)">
-            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
-            <path d="m5.8 8 1.5 1.5 3-3"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="830" y="382" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Blocked</text>
-          <text data-detail="context" x="830" y="399" class="t-muted" font-size="8" text-anchor="middle">wait or reject</text>
-        </g>
-
-        <g id="node-retry" data-node-id="retry" data-node-label="Retry Path" tabindex="0" role="button" aria-label="Focus Retry Path, revise request, Policy &amp; Recovery › Human or policy stop › Execute + report" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="revise request" data-node-context="Policy &amp; Recovery › Human or policy stop › Execute + report">
-          <title>Retry Path · revise request · Policy &amp; Recovery › Human or policy stop › Execute + report</title>
-          <rect x="924" y="361" width="132" height="52" rx="6" class="c-mask"/>
-          <rect x="924" y="361" width="132" height="52" rx="6" class="c-messagebus" data-animate="node" style="--step:12" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(930 367) scale(0.6875)">
-            <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
-            <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
-            <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
-            <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="990" y="382" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Retry Path</text>
-          <text data-detail="context" x="990" y="399" class="t-muted" font-size="8" text-anchor="middle">revise request</text>
-        </g>
-
-        <g id="node-store" data-node-id="store" data-node-label="Context Store" tabindex="0" role="button" aria-label="Focus Context Store, repo + memory, Tool Execution &amp; Evidence › Evidence path › Intake" aria-pressed="false" data-node-kind="database" data-node-sublabel="repo + memory" data-node-context="Tool Execution &amp; Evidence › Evidence path › Intake">
-          <title>Context Store · repo + memory · Tool Execution &amp; Evidence › Evidence path › Intake</title>
-          <rect x="208" y="495" width="132" height="52" rx="6" class="c-mask"/>
-          <rect x="208" y="495" width="132" height="52" rx="6" class="c-database" data-animate="node" style="--step:12" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(214 501) scale(0.6875)">
-            <ellipse cx="8" cy="4" rx="5" ry="2"/>
-            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="274" y="516" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Context Store</text>
-          <text data-detail="context" x="274" y="533" class="t-muted" font-size="8" text-anchor="middle">repo + memory</text>
-        </g>
-
-        <g id="node-trace" data-node-id="trace" data-node-label="Trace Log" tabindex="0" role="button" aria-label="Focus Trace Log, events + output, Tool Execution &amp; Evidence › Evidence path › Plan + route" aria-pressed="false" data-node-kind="database" data-node-sublabel="events + output" data-node-context="Tool Execution &amp; Evidence › Evidence path › Plan + route">
-          <title>Trace Log · events + output · Tool Execution &amp; Evidence › Evidence path › Plan + route</title>
-          <rect x="425.2" y="495" width="132" height="52" rx="6" class="c-mask"/>
-          <rect x="425.2" y="495" width="132" height="52" rx="6" class="c-database" data-animate="node" style="--step:12" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(431.2 501) scale(0.6875)">
-            <ellipse cx="8" cy="4" rx="5" ry="2"/>
-            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="491.2" y="516" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Trace Log</text>
-          <text data-detail="context" x="491.2" y="533" class="t-muted" font-size="8" text-anchor="middle">events + output</text>
-        </g>
-
-        <g id="node-tool" data-node-id="tool" data-node-label="Tool Call" tabindex="0" role="button" aria-label="Focus Tool Call, shell / browser / MCP, Tool Execution &amp; Evidence › Tool work › Execute + report" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="shell / browser / MCP" data-node-tag="structured result" data-node-context="Tool Execution &amp; Evidence › Tool work › Execute + report">
-          <title>Tool Call · shell / browser / MCP · Tool Execution &amp; Evidence › Tool work › Execute + report · structured result</title>
-          <rect x="764" y="487" width="132" height="68" rx="6" class="c-mask"/>
-          <rect x="764" y="487" width="132" height="68" rx="6" class="c-messagebus" data-animate="node" style="--step:5" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(770 493) scale(0.6875)">
-            <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
-            <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
-            <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
-            <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="830" y="508" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Tool Call</text>
-          <text data-detail="context" x="830" y="525" class="t-muted" font-size="8" text-anchor="middle">shell / browser / MCP</text>
-        <text data-detail="fine" x="830" y="543" class="t-messagebus" font-size="7" text-anchor="middle">structured result</text>
-        </g>
-
-        <g id="node-external" data-node-id="external" data-node-label="External API" tabindex="0" role="button" aria-label="Focus External API, network service, Tool Execution &amp; Evidence › Tool work › Execute + report" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="network service" data-node-context="Tool Execution &amp; Evidence › Tool work › Execute + report">
-          <title>External API · network service · Tool Execution &amp; Evidence › Tool work › Execute + report</title>
-          <rect x="924" y="495" width="132" height="52" rx="6" class="c-mask"/>
-          <rect x="924" y="495" width="132" height="52" rx="6" class="c-cloud" data-animate="node" style="--step:6" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(930 501) scale(0.6875)">
+        <g id="node-flow_adapter" data-node-id="flow_adapter" data-node-label="AiSdkFlow / Backend" tabindex="0" role="button" aria-label="聚焦AiSdkFlow / Backend，模型调用与 RuntimeEvent 映射, 模型调用与受控副作用 › ExecutionBoundary › 执行与记账" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="模型调用与 RuntimeEvent 映射" data-node-context="模型调用与受控副作用 › ExecutionBoundary › 执行与记账">
+          <title>AiSdkFlow / Backend · 模型调用与 RuntimeEvent 映射 · 模型调用与受控副作用 › ExecutionBoundary › 执行与记账</title>
+          <rect x="782.2" y="341" width="150" height="52" rx="6" class="c-mask"/>
+          <rect x="782.2" y="341" width="150" height="52" rx="6" class="c-cloud" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(788.2 347) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="990" y="516" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">External API</text>
-          <text data-detail="context" x="990" y="533" class="t-muted" font-size="8" text-anchor="middle">network service</text>
+          <text data-node-label="" data-detail-anchor="" x="857.2" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">AiSdkFlow / Backend</text>
+          <text data-detail="context" x="857.2" y="379" class="t-muted" font-size="8" text-anchor="middle">模型调用与 RuntimeEvent 映射</text>
+        </g>
+
+        <g id="node-tool_runtime" data-node-id="tool_runtime" data-node-label="ToolRuntime" tabindex="0" role="button" aria-label="聚焦ToolRuntime，执行、终止与结果结算, 模型调用与受控副作用 › ExecutionBoundary › 反馈与恢复" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="执行、终止与结果结算" data-node-context="模型调用与受控副作用 › ExecutionBoundary › 反馈与恢复">
+          <title>ToolRuntime · 执行、终止与结果结算 · 模型调用与受控副作用 › ExecutionBoundary › 反馈与恢复</title>
+          <rect x="1014.6000000000001" y="341" width="148" height="52" rx="6" class="c-mask"/>
+          <rect x="1014.6000000000001" y="341" width="148" height="52" rx="6" class="c-messagebus" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(1020.6000000000001 347) scale(0.6875)">
+            <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
+            <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
+            <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
+            <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1088.6000000000001" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">ToolRuntime</text>
+          <text data-detail="context" x="1088.6000000000001" y="379" class="t-muted" font-size="8" text-anchor="middle">执行、终止与结果结算</text>
+        </g>
+
+        <g id="node-resume_planner" data-node-id="resume_planner" data-node-label="RuntimeContinuationPlanner" tabindex="0" role="button" aria-label="聚焦RuntimeContinuationPlanner，读取事实并验证恢复, Artifact、事件账本与恢复 › 接入托管" aria-pressed="false" data-node-kind="backend" data-node-sublabel="读取事实并验证恢复" data-node-context="Artifact、事件账本与恢复 › 接入托管">
+          <title>RuntimeContinuationPlanner · 读取事实并验证恢复 · Artifact、事件账本与恢复 › 接入托管</title>
+          <rect x="48" y="465" width="186" height="52" rx="6" class="c-mask"/>
+          <rect x="48" y="465" width="186" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(54 471) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="141" y="486" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">RuntimeContinuationPlanner</text>
+          <text data-detail="context" x="141" y="503" class="t-muted" font-size="8" text-anchor="middle">读取事实并验证恢复</text>
+        </g>
+
+        <g id="node-runtime_ledger" data-node-id="runtime_ledger" data-node-label="SqliteRuntimeStore" tabindex="0" role="button" aria-label="聚焦SqliteRuntimeStore，RuntimeEvent 规范账本, Artifact、事件账本与恢复 › 规范恢复事实 › 执行与记账" aria-pressed="false" data-node-kind="database" data-node-sublabel="RuntimeEvent 规范账本" data-node-context="Artifact、事件账本与恢复 › 规范恢复事实 › 执行与记账">
+          <title>SqliteRuntimeStore · RuntimeEvent 规范账本 · Artifact、事件账本与恢复 › 规范恢复事实 › 执行与记账</title>
+          <rect x="778.2" y="465" width="158" height="52" rx="6" class="c-mask"/>
+          <rect x="778.2" y="465" width="158" height="52" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(784.2 471) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="857.2" y="486" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">SqliteRuntimeStore</text>
+          <text data-detail="context" x="857.2" y="503" class="t-muted" font-size="8" text-anchor="middle">RuntimeEvent 规范账本</text>
+        </g>
+
+        <g id="node-artifact_store" data-node-id="artifact_store" data-node-label="ArtifactStore" tabindex="0" role="button" aria-label="聚焦ArtifactStore，文件结果与引用发布, Artifact、事件账本与恢复 › 规范恢复事实 › 反馈与恢复" aria-pressed="false" data-node-kind="database" data-node-sublabel="文件结果与引用发布" data-node-context="Artifact、事件账本与恢复 › 规范恢复事实 › 反馈与恢复">
+          <title>ArtifactStore · 文件结果与引用发布 · Artifact、事件账本与恢复 › 规范恢复事实 › 反馈与恢复</title>
+          <rect x="1016.6000000000001" y="465" width="144" height="52" rx="6" class="c-mask"/>
+          <rect x="1016.6000000000001" y="465" width="144" height="52" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(1022.6000000000001 471) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1088.6000000000001" y="486" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">ArtifactStore</text>
+          <text data-detail="context" x="1088.6000000000001" y="503" class="t-muted" font-size="8" text-anchor="middle">文件结果与引用发布</text>
         </g>
 
         <!-- Edge labels -->
-        <g data-detail="context" data-edge-from="router" data-edge-to="approval" data-edge-label="needs approval?" data-edge-key="0" data-edge-id="approval-check">
-          <rect x="569.2" y="282" width="82" height="14" rx="3" class="c-mask"/>
-          <text x="610.2" y="292" class="t-security" font-size="8" text-anchor="middle">needs approval?</text>
+        <g data-detail="context" data-edge-from="boundary_gate" data-edge-to="tool_runtime" data-edge-label="准入后执行" data-edge-key="0" data-edge-id="admit_effect">
+          <rect x="862.9000000000001" y="400" width="58" height="14" rx="3" class="c-mask"/>
+          <text x="891.9000000000001" y="410" class="t-security" font-size="8" text-anchor="middle">准入后执行</text>
         </g>
-        <g data-detail="context" data-edge-from="approval" data-edge-to="blocked" data-edge-label="denied" data-edge-key="1" data-edge-id="approval-denied">
-          <rect x="721.2" y="422" width="38.8" height="14" rx="3" class="c-mask"/>
-          <text x="740.6" y="432" class="t-security" font-size="8" text-anchor="middle">denied</text>
+        <g data-detail="context" data-edge-from="turn_driver" data-edge-to="boundary_gate" data-edge-label="工具调用" data-edge-key="1" data-edge-id="ask_for_effect">
+          <rect x="623.5" y="270" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="647.7" y="280" class="t-security" font-size="8" text-anchor="middle">工具调用</text>
         </g>
-
-
-        <g data-detail="context" data-edge-from="chat" data-edge-to="planner" data-edge-label="plan" data-edge-key="4" data-edge-id="plan-request">
-          <rect x="334.6" y="233" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="349.6" y="243" class="t-backend" font-size="8" text-anchor="middle">plan</text>
+        <g data-detail="context" data-edge-from="turn_driver" data-edge-to="flow_adapter" data-edge-label="请求 / stream" data-edge-key="2" data-edge-id="dispatch_model_flow">
+          <rect x="779" y="223" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="815.2" y="233" class="t-backend" font-size="8" text-anchor="middle">请求 / stream</text>
         </g>
-
-        <g data-detail="context" data-edge-from="external" data-edge-to="trace" data-edge-label="record result" data-edge-key="6" data-edge-id="record-result">
-          <rect x="704.4" y="559" width="72.4" height="14" rx="3" class="c-mask"/>
-          <text x="740.6" y="569" class="t-database" font-size="8" text-anchor="middle">record result</text>
+        <g data-detail="context" data-edge-from="flow_adapter" data-edge-to="response_surface" data-edge-label="增量事件" data-edge-key="3" data-edge-id="emit_response">
+          <rect x="919.2" y="99" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="943.4000000000001" y="109" class="t-backend" font-size="8" text-anchor="middle">增量事件</text>
         </g>
-
-
-
-        <g data-detail="context" data-edge-from="store" data-edge-to="trace" data-edge-label="trace + memory" data-edge-key="10" data-edge-id="write-trace-memory">
-          <rect x="344" y="501" width="77.2" height="14" rx="3" class="c-mask"/>
-          <text x="382.6" y="511" class="t-database" font-size="8" text-anchor="middle">trace + memory</text>
+        <g data-detail="context" data-edge-from="request_portal" data-edge-to="host_kernel" data-edge-label="Host 连接" data-edge-key="4" data-edge-id="open_host">
+          <rect x="220.4" y="146" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+          <text x="247" y="156" class="t-backend" font-size="8" text-anchor="middle">Host 连接</text>
+        </g>
+        <g data-detail="context" data-edge-from="tool_runtime" data-edge-to="artifact_store" data-edge-label="文件型结果" data-edge-key="5" data-edge-id="publish_file_result">
+          <rect x="1158.6005" y="471" width="58" height="14" rx="3" class="c-mask"/>
+          <text x="1187.6005" y="481" class="t-database" font-size="8" text-anchor="middle">文件型结果</text>
+        </g>
+        <g data-detail="context" data-edge-from="runtime_ledger" data-edge-to="resume_planner" data-edge-label="读取事件与 Artifact 引用" data-edge-key="6" data-edge-id="read_resume_facts">
+          <rect x="443.5" y="471" width="125.19999999999999" height="14" rx="3" class="c-mask"/>
+          <text x="506.1" y="481" class="t-database" font-size="8" text-anchor="middle">读取事件与 Artifact 引用</text>
+        </g>
+        <g data-detail="context" data-edge-from="artifact_store" data-edge-to="runtime_ledger" data-edge-label="Artifact 引用" data-edge-key="7" data-edge-id="record_artifact_ref">
+          <rect x="940.2" y="471" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="976.4000000000001" y="481" class="t-database" font-size="8" text-anchor="middle">Artifact 引用</text>
+        </g>
+        <g data-detail="context" data-edge-from="flow_adapter" data-edge-to="runtime_ledger" data-edge-label="写入 RuntimeEvent" data-edge-key="8" data-edge-id="record_runtime_events">
+          <rect x="993.1005000000002" y="305" width="91.6" height="14" rx="3" class="c-mask"/>
+          <text x="1038.9005000000002" y="315" class="t-database" font-size="8" text-anchor="middle">写入 RuntimeEvent</text>
+        </g>
+        <g data-detail="context" data-edge-from="resume_planner" data-edge-to="host_kernel" data-edge-label="验证恢复计划" data-edge-key="9" data-edge-id="reenter_host">
+          <rect x="167.2" y="524" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="201" y="534" class="t-backend" font-size="8" text-anchor="middle">验证恢复计划</text>
+        </g>
+        <g data-detail="context" data-edge-from="session_owner" data-edge-to="turn_driver" data-edge-label="启动 / 续接" data-edge-key="10" data-edge-id="start_or_resume_turn">
+          <rect x="543.4" y="223" width="62.8" height="14" rx="3" class="c-mask"/>
+          <text x="574.8" y="233" class="t-backend" font-size="8" text-anchor="middle">启动 / 续接</text>
+        </g>
+        <g data-detail="context" data-edge-from="host_kernel" data-edge-to="session_owner" data-edge-label="托管命令" data-edge-key="11" data-edge-id="submit_session_command">
+          <rect x="339.5" y="265" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="363.7" y="275" class="t-backend" font-size="8" text-anchor="middle">托管命令</text>
         </g>
 
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
-          <text x="20" y="584" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="User UI" data-legend-x="20" data-legend-baseline="604" data-legend-width="74">
-            <rect x="20" y="596" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
-            <text x="42" y="604" class="t-muted" font-size="7.5" font-weight="500">User UI</text>
+          <text x="20" y="552" class="t-primary" font-size="12" font-weight="650">图例</text>
+          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="用户界面" data-legend-x="20" data-legend-baseline="572" data-legend-width="78">
+            <rect x="20" y="564" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
+            <text x="42" y="572" class="t-muted" font-size="7.5" font-weight="500">用户界面</text>
           </g>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Agent logic" data-legend-x="101" data-legend-baseline="604" data-legend-width="91">
-            <rect x="101" y="596" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
-            <text x="123" y="604" class="t-muted" font-size="7.5" font-weight="500">Agent logic</text>
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Agent 逻辑" data-legend-x="105" data-legend-baseline="572" data-legend-width="87">
+            <rect x="105" y="564" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+            <text x="127" y="572" class="t-muted" font-size="7.5" font-weight="500">Agent 逻辑</text>
           </g>
-          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Policy" data-legend-x="199" data-legend-baseline="604" data-legend-width="70">
-            <rect x="199" y="596" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
-            <text x="221" y="604" class="t-muted" font-size="7.5" font-weight="500">Policy</text>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="策略" data-legend-x="199" data-legend-baseline="572" data-legend-width="61">
+            <rect x="199" y="564" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+            <text x="221" y="572" class="t-muted" font-size="7.5" font-weight="500">策略</text>
           </g>
-          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="Tool action" data-legend-x="276" data-legend-baseline="604" data-legend-width="91">
-            <rect x="276" y="596" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
-            <text x="298" y="604" class="t-muted" font-size="7.5" font-weight="500">Tool action</text>
+          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="工具操作" data-legend-x="267" data-legend-baseline="572" data-legend-width="78">
+            <rect x="267" y="564" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+            <text x="289" y="572" class="t-muted" font-size="7.5" font-weight="500">工具操作</text>
           </g>
-          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="Context / trace" data-legend-x="374" data-legend-baseline="604" data-legend-width="109">
-            <rect x="374" y="596" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
-            <text x="396" y="604" class="t-muted" font-size="7.5" font-weight="500">Context / trace</text>
+          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="上下文 / 追踪" data-legend-x="352" data-legend-baseline="572" data-legend-width="100">
+            <rect x="352" y="564" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+            <text x="374" y="572" class="t-muted" font-size="7.5" font-weight="500">上下文 / 追踪</text>
           </g>
-          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="Cloud service" data-legend-x="490" data-legend-baseline="604" data-legend-width="100">
-            <rect x="490" y="596" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
-            <text x="512" y="604" class="t-muted" font-size="7.5" font-weight="500">Cloud service</text>
-          </g>
-          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="External system" data-legend-x="597" data-legend-baseline="604" data-legend-width="109">
-            <rect x="597" y="596" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
-            <text x="619" y="604" class="t-muted" font-size="7.5" font-weight="500">External system</text>
+          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="云服务" data-legend-x="459" data-legend-baseline="572" data-legend-width="70">
+            <rect x="459" y="564" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+            <text x="481" y="572" class="t-muted" font-size="7.5" font-weight="500">云服务</text>
           </g>
         </g>
       </svg>
       <p class="intent-trace-status no-print" id="intent-trace-status" role="status" aria-live="polite" aria-atomic="true"></p>
       <div class="share-chapter-cue no-print" id="share-chapter-cue" hidden role="status" aria-live="polite">
         <div class="share-chapter-index">
-          <span class="share-chapter-state" id="share-chapter-state">Ready</span>
-          <span class="share-chapter-count" id="share-chapter-count">Chapter 01 / 01</span>
+          <span class="share-chapter-state" id="share-chapter-state">就绪</span>
+          <span class="share-chapter-count" id="share-chapter-count">章节 01 / 01</span>
         </div>
         <div class="share-chapter-copy">
-          <strong id="share-chapter-label">Guided chapter</strong>
+          <strong id="share-chapter-label">引导章节</strong>
           <small id="share-chapter-note"></small>
         </div>
         <span class="share-chapter-route" id="share-chapter-route"></span>
@@ -5304,170 +5301,170 @@
       <div class="diagram-guide no-print" id="diagram-guide" hidden role="dialog" aria-modal="false" aria-labelledby="diagram-guide-title">
         <div class="diagram-guide-head">
           <span>
-            <span class="diagram-guide-eyebrow">Diagram guide</span>
-            <strong class="diagram-guide-title" id="diagram-guide-title">Explore this system</strong>
+            <span class="diagram-guide-eyebrow">图表指南</span>
+            <strong class="diagram-guide-title" id="diagram-guide-title">探索此系统</strong>
           </span>
-          <button class="diagram-guide-close" id="diagram-guide-close" type="button" aria-label="Close diagram guide">&#215;</button>
+          <button class="diagram-guide-close" id="diagram-guide-close" type="button" aria-label="关闭图表指南">&#215;</button>
         </div>
-        <p class="diagram-guide-stats" id="diagram-guide-stats">Inspecting compiled semantics</p>
-        <div class="diagram-guide-actions" id="diagram-guide-actions" role="group" aria-label="Diagram exploration actions">
-          <button class="diagram-guide-action" type="button" data-guide-action="find" aria-label="Find any node">
+        <p class="diagram-guide-stats" id="diagram-guide-stats">正在检查已编译语义</p>
+        <div class="diagram-guide-actions" id="diagram-guide-actions" role="group" aria-label="图表探索操作">
+          <button class="diagram-guide-action" type="button" data-guide-action="find" aria-label="查找任意节点">
             <span class="diagram-guide-index" aria-hidden="true">01</span>
-            <span class="diagram-guide-action-copy"><strong>Find any node</strong><small>Search labels, responsibilities, kinds, and stable IDs.</small></span>
+            <span class="diagram-guide-action-copy"><strong>查找任意节点</strong><small>搜索标签、职责、类型和稳定 ID。</small></span>
             <kbd aria-hidden="true">/</kbd>
           </button>
-          <button class="diagram-guide-action" type="button" data-guide-action="route" aria-label="Trace a directed route">
+          <button class="diagram-guide-action" type="button" data-guide-action="route" aria-label="追踪有向路径">
             <span class="diagram-guide-index" aria-hidden="true">02</span>
-            <span class="diagram-guide-action-copy"><strong>Trace a route</strong><small>Ask how two semantic nodes connect in authored direction.</small></span>
+            <span class="diagram-guide-action-copy"><strong>追踪路径</strong><small>查看两个语义节点如何按编写方向连接。</small></span>
             <kbd aria-hidden="true">R</kbd>
           </button>
-          <button class="diagram-guide-action" type="button" data-guide-action="map" aria-label="See the whole system">
+          <button class="diagram-guide-action" type="button" data-guide-action="map" aria-label="查看完整系统">
             <span class="diagram-guide-index" aria-hidden="true">03</span>
-            <span class="diagram-guide-action-copy"><strong>See the whole system</strong><small>Open Semantic Radar with a live viewport and stable nodes.</small></span>
+            <span class="diagram-guide-action-copy"><strong>查看完整系统</strong><small>打开带实时视口和稳定节点的语义雷达。</small></span>
             <kbd aria-hidden="true">M</kbd>
           </button>
-          <button class="diagram-guide-action" type="button" data-guide-action="lens" aria-label="Compare semantic kinds">
+          <button class="diagram-guide-action" type="button" data-guide-action="lens" aria-label="比较语义类型">
             <span class="diagram-guide-index" aria-hidden="true">04</span>
-            <span class="diagram-guide-action-copy"><strong>Compare semantic kinds</strong><small>Count roles, reveal their traffic, and compare direct authored links.</small></span>
+            <span class="diagram-guide-action-copy"><strong>比较语义类型</strong><small>统计角色、显示流量并比较直接编写的连接。</small></span>
             <kbd aria-hidden="true">L</kbd>
           </button>
-          <button class="diagram-guide-action" type="button" data-guide-action="story" aria-label="Play the guided story">
+          <button class="diagram-guide-action" type="button" data-guide-action="story" aria-label="播放引导故事">
             <span class="diagram-guide-index" aria-hidden="true">05</span>
-            <span class="diagram-guide-action-copy"><strong>Play the guided story</strong><small id="diagram-guide-story-copy">Walk the authored chapters and real relationships.</small></span>
+            <span class="diagram-guide-action-copy"><strong>播放引导故事</strong><small id="diagram-guide-story-copy">浏览已编写的章节和真实关系。</small></span>
             <kbd aria-hidden="true">P</kbd>
           </button>
-          <button class="diagram-guide-action" type="button" data-guide-action="present" aria-label="Enter presentation stage">
+          <button class="diagram-guide-action" type="button" data-guide-action="present" aria-label="进入演示模式">
             <span class="diagram-guide-index" aria-hidden="true">06</span>
-            <span class="diagram-guide-action-copy"><strong>Enter Presentation Stage</strong><small>Give the live diagram the viewport without changing export.</small></span>
+            <span class="diagram-guide-action-copy"><strong>进入演示模式</strong><small>让实时图表占满视口，同时不改变导出。</small></span>
             <kbd aria-hidden="true">F</kbd>
           </button>
         </div>
-        <div class="diagram-guide-shortcuts" aria-label="Additional keyboard shortcuts">
-          <span><kbd>E</kbd> Export</span><span><kbd>T</kbd> Theme</span><span><kbd>S</kbd> Style</span><span><kbd>0</kbd> Reset</span><span><kbd>+</kbd> Zoom in</span><span><kbd>-</kbd> Zoom out</span><span><kbd>Esc</kbd> Close</span>
+        <div class="diagram-guide-shortcuts" aria-label="其他键盘快捷键">
+          <span><kbd>E</kbd> 导出</span><span><kbd>T</kbd> 主题</span><span><kbd>S</kbd> 风格</span><span><kbd>0</kbd> 重置</span><span><kbd>+</kbd> 放大</span><span><kbd>-</kbd> 缩小</span><span><kbd>Esc</kbd> 关闭</span>
         </div>
         <p class="diagram-guide-feedback" id="diagram-guide-feedback" aria-live="polite"></p>
       </div>
       <div class="node-finder no-print" id="node-finder" hidden role="dialog" aria-modal="false" aria-labelledby="node-finder-title">
         <div class="node-finder-head">
-          <strong id="node-finder-title">Find a node</strong>
-          <button class="node-finder-close" id="node-finder-close" type="button" aria-label="Close node finder">&#215;</button>
+          <strong id="node-finder-title">查找节点</strong>
+          <button class="node-finder-close" id="node-finder-close" type="button" aria-label="关闭节点查找器">&#215;</button>
         </div>
         <div class="node-finder-search">
           <span aria-hidden="true">&#8981;</span>
-          <input class="node-finder-input" id="node-finder-input" type="search" autocomplete="off" spellcheck="false" placeholder="Search labels or IDs" aria-label="Search diagram nodes" aria-describedby="node-finder-status">
+          <input class="node-finder-input" id="node-finder-input" type="search" autocomplete="off" spellcheck="false" placeholder="搜索标签或 ID" aria-label="搜索图表节点" aria-describedby="node-finder-status">
           <kbd aria-hidden="true">/</kbd>
         </div>
-        <div class="node-finder-results" id="node-finder-results" role="group" aria-label="Diagram nodes"></div>
-        <p class="node-finder-empty" id="node-finder-empty" hidden>No matching nodes</p>
+        <div class="node-finder-results" id="node-finder-results" role="group" aria-label="图表节点"></div>
+        <p class="node-finder-empty" id="node-finder-empty" hidden>没有匹配的节点</p>
         <p class="node-finder-status" id="node-finder-status" aria-live="polite"></p>
       </div>
       <div class="focus-chip relationship-lens no-print" id="focus-chip" hidden role="region" aria-labelledby="relationship-lens-title">
         <div class="relationship-lens-head">
           <div class="relationship-lens-copy">
-            <span class="relationship-lens-eyebrow">Semantic passport</span>
+            <span class="relationship-lens-eyebrow">语义护照</span>
             <strong class="relationship-lens-title" id="relationship-lens-title"><span id="focus-label"></span></strong>
             <span class="semantic-passport-detail" id="focus-detail" hidden></span>
-            <div class="semantic-passport-meta" id="focus-passport-meta" aria-label="Node metadata">
+            <div class="semantic-passport-meta" id="focus-passport-meta" aria-label="节点元数据">
               <span id="focus-kind" data-passport="kind"></span>
               <span id="focus-context" data-passport="context" hidden></span>
               <span id="focus-tag" data-passport="tag" hidden></span>
               <span id="focus-brand" data-passport="brand" hidden></span>
               <code id="focus-id" data-passport="id"></code>
             </div>
-            <div class="semantic-passport-evidence" id="focus-evidence" hidden aria-label="Verified source evidence">
+            <div class="semantic-passport-evidence" id="focus-evidence" hidden aria-label="已验证的源代码证据">
               <div class="semantic-passport-evidence-head">
-                <span class="semantic-passport-evidence-status">Verified source</span>
+                <span class="semantic-passport-evidence-status">已验证来源</span>
                 <a class="semantic-passport-repository" id="focus-repository" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer"></a>
               </div>
               <div class="semantic-passport-evidence-links" id="focus-evidence-links"></div>
             </div>
             <span class="relationship-lens-summary" id="focus-summary" aria-live="polite"></span>
             <div class="semantic-passport-reach" id="focus-reach" hidden>
-              <span class="semantic-passport-reach-label">Authored reach</span>
-              <div class="semantic-passport-reach-actions" role="group" aria-label="Trace authored reachability">
-                <button id="btn-reach-upstream" type="button" aria-label="Trace upstream authored reachability" aria-pressed="false">
-                  <span>Upstream</span><strong id="focus-reach-upstream-count">0</strong>
+              <span class="semantic-passport-reach-label">编写可达范围</span>
+              <div class="semantic-passport-reach-actions" role="group" aria-label="追踪编写的可达性">
+                <button id="btn-reach-upstream" type="button" aria-label="追踪上游编写可达性" aria-pressed="false">
+                  <span>上游</span><strong id="focus-reach-upstream-count">0</strong>
                 </button>
-                <button id="btn-reach-downstream" type="button" aria-label="Trace downstream authored reachability" aria-pressed="false">
-                  <span>Downstream</span><strong id="focus-reach-downstream-count">0</strong>
+                <button id="btn-reach-downstream" type="button" aria-label="追踪下游编写可达性" aria-pressed="false">
+                  <span>下游</span><strong id="focus-reach-downstream-count">0</strong>
                 </button>
               </div>
               <small class="semantic-passport-reach-status" id="focus-reach-status" hidden aria-live="polite"></small>
             </div>
           </div>
           <div class="relationship-lens-actions">
-            <button id="btn-focus-clear" type="button" aria-label="Close semantic passport" title="Close">&#215;</button>
-            <button id="btn-focus-copy" type="button" aria-label="Copy link to focused node">Copy link</button>
-            <button id="btn-focus-relations" type="button" aria-label="Show connected relationships" aria-expanded="false" aria-controls="relationship-lens-list">Relations</button>
+            <button id="btn-focus-clear" type="button" aria-label="关闭语义护照" title="关闭">&#215;</button>
+            <button id="btn-focus-copy" type="button" aria-label="复制聚焦节点的链接">复制链接</button>
+            <button id="btn-focus-relations" type="button" aria-label="显示关联关系" aria-expanded="false" aria-controls="relationship-lens-list">关系</button>
           </div>
         </div>
-        <div class="relationship-lens-list" id="relationship-lens-list" aria-label="Connected relationships"></div>
+        <div class="relationship-lens-list" id="relationship-lens-list" aria-label="关联关系"></div>
       </div>
       <div class="route-probe no-print" id="route-probe" hidden role="region" aria-labelledby="route-probe-title" data-state="idle">
         <div class="route-probe-head">
           <span class="route-probe-copy">
-            <span class="route-probe-eyebrow">Route probe</span>
-            <strong class="route-probe-title" id="route-probe-title">Choose a start node</strong>
+            <span class="route-probe-eyebrow">路径探测</span>
+            <strong class="route-probe-title" id="route-probe-title">选择起点节点</strong>
           </span>
           <span class="route-probe-actions">
-            <button class="route-probe-find" id="route-probe-find" type="button" aria-label="Find a route start" data-node-finder-trigger>Find start</button>
-            <button class="route-probe-copy-link" id="route-probe-copy" type="button" aria-label="Copy link to traced route" hidden>Copy link</button>
-            <button id="route-probe-clear" type="button" aria-label="Clear route probe">Clear</button>
+            <button class="route-probe-find" id="route-probe-find" type="button" aria-label="查找路径起点" data-node-finder-trigger>查找起点</button>
+            <button class="route-probe-copy-link" id="route-probe-copy" type="button" aria-label="复制已追踪路径的链接" hidden>复制链接</button>
+            <button id="route-probe-clear" type="button" aria-label="清除路径探测">清除</button>
           </span>
         </div>
-        <div class="route-probe-path" id="route-probe-path" aria-label="Traced route">
-          <span class="route-probe-placeholder">Pick two semantic nodes on the diagram</span>
+        <div class="route-probe-path" id="route-probe-path" aria-label="已追踪路径">
+          <span class="route-probe-placeholder">在图表中选择两个语义节点</span>
         </div>
-        <div class="route-journey-controls" id="route-journey-controls" hidden role="group" aria-label="Route journey controls" data-playing="false">
-          <button id="route-journey-prev" type="button" aria-label="Previous route position" title="Previous route position">&#8592;</button>
-          <button class="route-journey-play" id="route-journey-play" type="button" aria-label="Play route journey" aria-pressed="false" title="Play route journey">
+        <div class="route-journey-controls" id="route-journey-controls" hidden role="group" aria-label="路径旅程控制" data-playing="false">
+          <button id="route-journey-prev" type="button" aria-label="上一个路径位置" title="上一个路径位置">&#8592;</button>
+          <button class="route-journey-play" id="route-journey-play" type="button" aria-label="播放路径旅程" aria-pressed="false" title="播放路径旅程">
             <span id="route-journey-play-icon" aria-hidden="true">&#9654;</span>
-            <span id="route-journey-play-label">Journey</span>
+            <span id="route-journey-play-label">旅程</span>
           </button>
-          <button id="route-journey-next" type="button" aria-label="Next route position" title="Next route position">&#8594;</button>
-          <button class="route-journey-overview" id="route-journey-overview" type="button" aria-label="Show complete route overview" title="Show complete route overview">Overview</button>
+          <button id="route-journey-next" type="button" aria-label="下一个路径位置" title="下一个路径位置">&#8594;</button>
+          <button class="route-journey-overview" id="route-journey-overview" type="button" aria-label="显示完整路径总览" title="显示完整路径总览">总览</button>
         </div>
-        <small class="route-probe-status" id="route-probe-status" aria-live="polite">Choose the source, then the destination. Direction matters.</small>
+        <small class="route-probe-status" id="route-probe-status" aria-live="polite">先选择来源，再选择目标；方向很重要。</small>
       </div>
       <div class="semantic-lens no-print" id="semantic-lens" hidden role="dialog" aria-modal="false" aria-labelledby="semantic-lens-title">
         <div class="semantic-lens-head">
           <span>
-            <span class="semantic-lens-eyebrow">Semantic lens</span>
-            <strong class="semantic-lens-title" id="semantic-lens-title">Compare system roles</strong>
+            <span class="semantic-lens-eyebrow">语义透镜</span>
+            <strong class="semantic-lens-title" id="semantic-lens-title">比较系统角色</strong>
           </span>
-          <button class="semantic-lens-close" id="semantic-lens-close" type="button" aria-label="Close semantic lens">&#215;</button>
+          <button class="semantic-lens-close" id="semantic-lens-close" type="button" aria-label="关闭语义透镜">&#215;</button>
         </div>
-        <p class="semantic-lens-instruction">Choose up to two semantic kinds. One reveals its real traffic; two compare only direct authored relationships.</p>
-        <div class="semantic-lens-kinds" id="semantic-lens-kinds" role="group" aria-label="Semantic kinds"></div>
-        <p class="semantic-lens-status" id="semantic-lens-status" aria-live="polite">Choose a kind to inspect its nodes and touching relationships.</p>
+        <p class="semantic-lens-instruction">最多选择两种语义类型。选择一种可显示其真实流量；选择两种只比较直接编写的关系。</p>
+        <div class="semantic-lens-kinds" id="semantic-lens-kinds" role="group" aria-label="语义类型"></div>
+        <p class="semantic-lens-status" id="semantic-lens-status" aria-live="polite">选择一种类型以检查其节点和相连关系。</p>
         <div class="semantic-lens-actions">
-          <button id="semantic-lens-copy" type="button" aria-label="Copy link to semantic lens" hidden>Copy link</button>
-          <button id="semantic-lens-clear" type="button" aria-label="Clear semantic lens">Clear</button>
+          <button id="semantic-lens-copy" type="button" aria-label="复制语义透镜链接" hidden>复制链接</button>
+          <button id="semantic-lens-clear" type="button" aria-label="清除语义透镜">清除</button>
         </div>
       </div>
       <div class="overview-map no-print" id="overview-map" hidden role="region" aria-labelledby="overview-map-title">
         <div class="overview-map-head">
           <span class="overview-map-live" aria-hidden="true"></span>
           <span class="overview-map-copy">
-            <strong id="overview-map-title">Semantic radar</strong>
-            <small id="overview-map-status" aria-live="polite">Building overview</small>
+            <strong id="overview-map-title">语义雷达</strong>
+            <small id="overview-map-status" aria-live="polite">正在构建总览</small>
           </span>
-          <button class="overview-map-expand" id="overview-map-expand" type="button" aria-label="Open full semantic radar">Open radar</button>
-          <button class="overview-map-close" id="overview-map-close" type="button" aria-label="Close semantic radar">&#215;</button>
+          <button class="overview-map-expand" id="overview-map-expand" type="button" aria-label="打开完整语义雷达">打开雷达</button>
+          <button class="overview-map-close" id="overview-map-close" type="button" aria-label="关闭语义雷达">&#215;</button>
         </div>
-        <div class="overview-map-surface" id="overview-map-surface" tabindex="0" role="group" aria-label="Diagram overview. Click a node to focus it, or use arrow keys to pan."></div>
-        <div class="overview-map-hint" aria-hidden="true"><span>Click node</span><span>Drag to pan</span></div>
+        <div class="overview-map-surface" id="overview-map-surface" tabindex="0" role="group" aria-label="图表总览。点击节点进行聚焦，或使用方向键平移。"></div>
+        <div class="overview-map-hint" aria-hidden="true"><span>点击节点</span><span>拖动平移</span></div>
       </div>
-      <p class="overview-map-feedback no-print" id="overview-map-feedback" role="status" aria-live="polite" hidden>Semantic radar needs more MAP space.</p>
-      <div class="diagram-nav no-print" role="toolbar" aria-label="Diagram view controls">
-        <button id="btn-route-probe" type="button" aria-label="Trace a directed route" aria-pressed="false" aria-controls="route-probe" title="Trace route (R)">PATH</button>
-        <button id="btn-overview-map" type="button" aria-label="Open semantic radar" aria-expanded="false" aria-controls="overview-map" title="Semantic radar (M)">MAP</button>
-        <button id="btn-semantic-lens" type="button" aria-label="Open semantic lens" aria-haspopup="dialog" aria-expanded="false" aria-pressed="false" aria-controls="semantic-lens" title="Semantic lens (L)">LENS</button>
-        <button id="btn-node-finder" type="button" aria-label="Find a node" aria-haspopup="dialog" aria-expanded="false" aria-controls="node-finder" title="Find a node (/)" data-node-finder-trigger><span class="diagram-nav-icon find" aria-hidden="true"></span></button>
-        <button id="btn-diagram-guide" type="button" aria-label="Open diagram guide" aria-haspopup="dialog" aria-expanded="false" aria-controls="diagram-guide" title="Diagram guide (?)"><span class="diagram-nav-icon guide" aria-hidden="true"></span></button>
-        <button data-view="out" type="button" aria-label="Zoom out" title="Zoom out (-)"><span class="diagram-nav-icon minus" aria-hidden="true"></span></button>
-        <button data-view="reset" type="button" aria-label="Reset diagram view" title="Reset view (0)"><span class="diagram-nav-detail" data-view-detail hidden>READ</span><span class="diagram-nav-percent" data-view-percent>100%</span></button>
-        <button data-view="in" type="button" aria-label="Zoom in" title="Zoom in (+)"><span class="diagram-nav-icon plus" aria-hidden="true"></span></button>
+      <p class="overview-map-feedback no-print" id="overview-map-feedback" role="status" aria-live="polite" hidden>语义雷达需要更多地图可见空间。</p>
+      <div class="diagram-nav no-print" role="toolbar" aria-label="图表视图控制">
+        <button id="btn-route-probe" type="button" aria-label="追踪有向路径" aria-pressed="false" aria-controls="route-probe" title="追踪路径（R）">路径</button>
+        <button id="btn-overview-map" type="button" aria-label="打开语义雷达" aria-expanded="false" aria-controls="overview-map" title="语义雷达（M）">地图</button>
+        <button id="btn-semantic-lens" type="button" aria-label="打开语义透镜" aria-haspopup="dialog" aria-expanded="false" aria-pressed="false" aria-controls="semantic-lens" title="语义透镜（L）">透镜</button>
+        <button id="btn-node-finder" type="button" aria-label="查找节点" aria-haspopup="dialog" aria-expanded="false" aria-controls="node-finder" title="查找节点（/）" data-node-finder-trigger><span class="diagram-nav-icon find" aria-hidden="true"></span></button>
+        <button id="btn-diagram-guide" type="button" aria-label="打开图表指南" aria-haspopup="dialog" aria-expanded="false" aria-controls="diagram-guide" title="图表指南（?）"><span class="diagram-nav-icon guide" aria-hidden="true"></span></button>
+        <button data-view="out" type="button" aria-label="缩小" title="缩小（-）"><span class="diagram-nav-icon minus" aria-hidden="true"></span></button>
+        <button data-view="reset" type="button" aria-label="重置图表视图" title="重置视图（0）"><span class="diagram-nav-detail" data-view-detail hidden>阅读</span><span class="diagram-nav-percent" data-view-percent>100%</span></button>
+        <button data-view="in" type="button" aria-label="放大" title="放大（+）"><span class="diagram-nav-icon plus" aria-hidden="true"></span></button>
       </div>
     </div>
 
@@ -5475,23 +5472,23 @@
     <div class="cards">
       <div class="card">
         <div class="card-header">
-          <div class="card-dot cyan"></div>
-          <h3>Compiler Contract</h3>
+          <div class="card-dot emerald"></div>
+          <h3>托管权威不下沉</h3>
         </div>
         <ul>
-          <li>&bull; Lanes and columns determine node placement</li>
-          <li>&bull; Labels reserve clearance; routes stay orthogonal</li>
+          <li>&bull; RuntimeHostKernel 保持根目录唯一执行权威</li>
+          <li>&bull; SessionManager 与 RuntimeRunner 管理 Session、Turn 和续接</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
-          <div class="card-dot rose"></div>
-          <h3>Runtime Semantics</h3>
+          <div class="card-dot violet"></div>
+          <h3>恢复依赖规范事实</h3>
         </div>
         <ul>
-          <li>&bull; Approval gates risky work before tool execution</li>
-          <li>&bull; Evidence returns through isolated trace and memory</li>
+          <li>&bull; ArtifactStore 发布文件结果并把引用写入 RuntimeEvent</li>
+          <li>&bull; RuntimeContinuationPlanner 从 SQLite 账本恢复后重新进入 Host</li>
         </ul>
       </div>
     </div>
@@ -5969,7 +5966,6 @@
         // View transforms and neighborhood focus are HTML exploration state,
         // never part of a downloaded full-diagram artifact.
         clone.style.removeProperty('transform');
-        clone.style.removeProperty('clip-path');
         clone.removeAttribute('data-view-scale');
         clone.removeAttribute('data-focus-active');
         clone.removeAttribute('data-reach-active');
@@ -6144,7 +6140,6 @@
           !clone.hasAttribute('data-chapter-anchor') &&
           !clone.hasAttribute('data-chapter-preview') &&
           !clone.style.getPropertyValue('transform') &&
-          !clone.style.getPropertyValue('clip-path') &&
           clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]').length === 0;
 
         var vb = svg.viewBox.baseVal;
@@ -11108,9 +11103,9 @@
 
     /* ============================================================
        Viewer Chrome Layout — keep HTML controls clear of the canonical SVG
-       stage without changing authored geometry. The dock keeps its floating
-       appearance while a small bottom stage rail becomes part of the reader
-       budget whenever its zero-reserve position would enter the stage.
+       legend without changing authored geometry. The dock keeps its existing
+       position unless its zero-reserve position would cover the legend; only
+       then does a small bottom safe rail become part of the reader budget.
        ============================================================ */
     Archify.viewerChromeLayout = (function () {
       var html = document.documentElement;
@@ -11121,13 +11116,10 @@
       var frame = 0;
       var settleFrame = 0;
       var reserve = 0;
-      var railLatched = false;
+      var collisionLatched = false;
       var probingBaseline = false;
       var probePromise = null;
       var baselineIntersectionArea = 0;
-      var baselineStageGap = null;
-      var restorableReserve = 0;
-      var probeFallbackReserve = 0;
       var lastReceipt = null;
       var SAFE_GAP = 10;
 
@@ -11144,61 +11136,14 @@
         var height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
         return width * height;
       }
-      function protectedStageRect() {
-        if (!svg) return null;
-        var rect = svg.getBoundingClientRect();
-        var transform = '';
-        try { transform = window.getComputedStyle(svg).transform || ''; } catch (_) {}
-        var scaleX = 1;
-        var scaleY = 1;
-        var translateX = 0;
-        var translateY = 0;
-        var matrix = transform.match(/^matrix\(([^)]+)\)$/);
-        var matrix3d = transform.match(/^matrix3d\(([^)]+)\)$/);
-        if (matrix) {
-          var values = matrix[1].split(',').map(Number);
-          if (values.length === 6 && values.every(Number.isFinite)) {
-            scaleX = Math.abs(values[0]) || 1;
-            scaleY = Math.abs(values[3]) || 1;
-            translateX = values[4];
-            translateY = values[5];
-          }
-        } else if (matrix3d) {
-          var values3d = matrix3d[1].split(',').map(Number);
-          if (values3d.length === 16 && values3d.every(Number.isFinite)) {
-            scaleX = Math.abs(values3d[0]) || 1;
-            scaleY = Math.abs(values3d[5]) || 1;
-            translateX = values3d[12];
-            translateY = values3d[13];
-          }
-        }
-        var width = rect.width / scaleX;
-        var height = rect.height / scaleY;
-        var left = rect.left - translateX;
-        var top = rect.top - translateY;
-        return {
-          x: left,
-          y: top,
-          left: left,
-          top: top,
-          right: left + width,
-          bottom: top + height,
-          width: width,
-          height: height
-        };
-      }
       function eligible() {
         return Boolean(
-          container && svg && nav &&
+          container && svg && nav && legend &&
           window.innerWidth > 720 &&
           html.getAttribute('data-embed') !== 'true' &&
           (!window.matchMedia || !window.matchMedia('print').matches) &&
-          visible(nav)
+          visible(nav) && visible(legend)
         );
-      }
-      function cameraAtBaseline() {
-        var scale = Number(svg && svg.getAttribute('data-view-scale'));
-        return !Number.isFinite(scale) || Math.abs(scale - 1) < 0.001;
       }
       function writeReserve(next, options) {
         options = options || {};
@@ -11206,14 +11151,11 @@
         if (Math.abs(next - reserve) < 1) return false;
         reserve = next;
         if (reserve) {
-          if (options.remember !== false) restorableReserve = reserve;
           container.style.setProperty('--archify-nav-reserve', reserve + 'px');
-          container.setAttribute('data-nav-stage-rail', 'true');
-          html.setAttribute('data-nav-stage-rail', 'true');
+          container.setAttribute('data-nav-safe-rail', 'true');
         } else {
           container.style.removeProperty('--archify-nav-reserve');
-          container.removeAttribute('data-nav-stage-rail');
-          html.removeAttribute('data-nav-stage-rail');
+          container.removeAttribute('data-nav-safe-rail');
         }
         if (Archify.readerLayout && typeof Archify.readerLayout.schedule === 'function') {
           Archify.readerLayout.schedule();
@@ -11227,23 +11169,15 @@
         }
         return true;
       }
-      function clear(options) {
-        options = options || {};
-        railLatched = false;
-        if (options.preserveBaseline !== true) {
-          baselineIntersectionArea = 0;
-          baselineStageGap = null;
-          restorableReserve = 0;
-        }
+      function clear() {
+        collisionLatched = false;
+        baselineIntersectionArea = 0;
         writeReserve(0, { quiet: probingBaseline });
         lastReceipt = {
           eligible: false,
           active: false,
           reserve: 0,
           gap: SAFE_GAP,
-          baselineStageGap: null,
-          stageGap: null,
-          stageIntersectionArea: 0,
           baselineIntersectionArea: 0,
           intersectionArea: 0
         };
@@ -11252,93 +11186,50 @@
       function measure() {
         frame = 0;
         if (probingBaseline) return null;
-        if (!eligible()) return clear({ preserveBaseline: !cameraAtBaseline() });
-
-        /* Camera transforms enlarge and translate authored paint inside the
-           fixed, clipped root SVG viewport. They must not redefine the
-           reader's baseline rail.
-           Restore that baseline after temporary mobile/embed/print states.
-           Camera Reset preserves the established rail while viewport, mode,
-           and content changes remain responsible for baseline reprobes. */
-        if (!cameraAtBaseline()) {
-          if (reserve === 0 && restorableReserve > 0) {
-            if (writeReserve(restorableReserve)) return null;
-          }
-          var cameraNavRect = nav.getBoundingClientRect();
-          var cameraLegendRect = visible(legend) ? legend.getBoundingClientRect() : null;
-          var cameraStageRect = protectedStageRect();
-          var cameraIntersectionArea = usable(cameraLegendRect) && intersectionArea(cameraNavRect, cameraStageRect) > 0
-            ? intersectionArea(cameraNavRect, cameraLegendRect)
-            : 0;
-          lastReceipt = {
-            eligible: true,
-            active: reserve > 0,
-            reserve: reserve,
-            gap: SAFE_GAP,
-            baselineStageGap: baselineStageGap == null ? null : Math.round(baselineStageGap * 100) / 100,
-            stageGap: Math.round((cameraNavRect.top - cameraStageRect.bottom) * 100) / 100,
-            stageIntersectionArea: Math.round(intersectionArea(cameraNavRect, cameraStageRect) * 100) / 100,
-            baselineIntersectionArea: Math.round(baselineIntersectionArea * 100) / 100,
-            intersectionArea: Math.round(cameraIntersectionArea * 100) / 100
-          };
-          return lastReceipt;
-        }
+        if (!eligible()) return clear();
 
         var navRect = nav.getBoundingClientRect();
-        var legendRect = visible(legend) ? legend.getBoundingClientRect() : null;
-        var stageRect = protectedStageRect();
-        if (!usable(navRect) || !usable(stageRect)) return clear();
+        var legendRect = legend.getBoundingClientRect();
+        var svgRect = svg.getBoundingClientRect();
+        if (!usable(navRect) || !usable(legendRect) || !usable(svgRect)) return clear();
 
-        var actualIntersectionArea = usable(legendRect) ? intersectionArea(navRect, legendRect) : 0;
-        var stageGap = navRect.top - stageRect.bottom;
-        if (!railLatched && reserve === 0) {
+        var actualIntersectionArea = intersectionArea(navRect, legendRect);
+        if (!collisionLatched && reserve === 0) {
           baselineIntersectionArea = actualIntersectionArea;
-          baselineStageGap = stageGap;
-          if (stageGap < SAFE_GAP) {
-            railLatched = true;
-            if (writeReserve(Math.max(0, SAFE_GAP - stageGap))) return null;
+          if (actualIntersectionArea > 0) {
+            collisionLatched = true;
+            if (writeReserve(Math.max(0, svgRect.bottom + SAFE_GAP - navRect.top))) return null;
           }
-        } else if (railLatched && reserve > 0 && stageGap < SAFE_GAP) {
-          /* Keep the decision latched while Adaptive Reader incorporates the
-             rail. Presentation and rounded layout values can require one
-             bounded follow-up before the full stage gap is established. */
-          var remaining = Math.max(1, SAFE_GAP - stageGap);
+        } else if (collisionLatched && reserve > 0 && actualIntersectionArea > 0) {
+          /* Once zero-reserve geometry proves a collision, keep that decision
+             latched while Adaptive Reader incorporates the rail. If the first
+             rail is not quite tall enough (notably in Presentation flex
+             layout), grow only by the remaining vertical overlap. */
+          var remaining = Math.max(1, legendRect.bottom + SAFE_GAP - navRect.top);
           if (writeReserve(reserve + remaining)) return null;
         }
 
         navRect = nav.getBoundingClientRect();
-        legendRect = visible(legend) ? legend.getBoundingClientRect() : null;
-        stageRect = protectedStageRect();
-        stageGap = navRect.top - stageRect.bottom;
+        legendRect = legend.getBoundingClientRect();
         lastReceipt = {
           eligible: true,
           active: reserve > 0,
           reserve: reserve,
           gap: SAFE_GAP,
-          baselineStageGap: baselineStageGap == null ? null : Math.round(baselineStageGap * 100) / 100,
-          stageGap: Math.round(stageGap * 100) / 100,
-          stageIntersectionArea: Math.round(intersectionArea(navRect, stageRect) * 100) / 100,
           baselineIntersectionArea: Math.round(baselineIntersectionArea * 100) / 100,
-          intersectionArea: Math.round((usable(legendRect) ? intersectionArea(navRect, legendRect) : 0) * 100) / 100
+          intersectionArea: Math.round(intersectionArea(navRect, legendRect) * 100) / 100
         };
         return lastReceipt;
       }
       function reprobe() {
         if (probingBaseline) return probePromise || Promise.resolve(false);
-        if (!cameraAtBaseline()) {
+        if (!reserve && !collisionLatched) {
           schedule();
           return Promise.resolve(false);
         }
-        if (!reserve && !railLatched && !restorableReserve) {
-          schedule();
-          return Promise.resolve(false);
-        }
-        probeFallbackReserve = restorableReserve || reserve;
         probingBaseline = true;
-        railLatched = false;
+        collisionLatched = false;
         baselineIntersectionArea = 0;
-        baselineStageGap = null;
-        restorableReserve = 0;
         writeReserve(0, { quiet: true });
         var readerReady = Archify.readerLayout && typeof Archify.readerLayout.whenStable === 'function'
           ? Archify.readerLayout.whenStable().catch(function () {})
@@ -11346,10 +11237,6 @@
         probePromise = readerReady.then(function () {
           probingBaseline = false;
           probePromise = null;
-          if (!cameraAtBaseline() && probeFallbackReserve > 0) {
-            restorableReserve = probeFallbackReserve;
-          }
-          probeFallbackReserve = 0;
           schedule();
           return true;
         });
@@ -11371,8 +11258,8 @@
           Math.round(navRect.top * 100) / 100,
           Math.round(legendRect.left * 100) / 100,
           Math.round(legendRect.top * 100) / 100,
-          railLatched ? 'latched' : 'clear',
-          lastReceipt ? lastReceipt.stageGap : ''
+          collisionLatched ? 'latched' : 'clear',
+          lastReceipt ? lastReceipt.intersectionArea : ''
         ].join('|');
       }
       function whenStable() {
@@ -11391,7 +11278,7 @@
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(reprobe).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
-        [nav, svg, legend].forEach(function (element) { if (element) resizeObserver.observe(element); });
+        [nav, legend].forEach(function (element) { if (element) resizeObserver.observe(element); });
       }
       if (typeof MutationObserver === 'function') {
         var contentObserver = new MutationObserver(function (records) {
@@ -11412,7 +11299,6 @@
         schedule: schedule,
         reprobe: reprobe,
         whenStable: whenStable,
-        stageRect: protectedStageRect,
         active: function () { return reserve > 0; },
         receipt: function () { return lastReceipt || measure(); }
       };
@@ -11432,7 +11318,6 @@
       var cameraFrame = null;
       var cameraGeneration = 0;
       var cameraTransaction = null;
-      var clipFrame = 0;
       var resizeFrame = 0;
       var autoScrollUntil = 0;
 
@@ -11518,43 +11403,9 @@
         container.setAttribute('data-camera-mode', state.mode);
         container.setAttribute('data-camera-indicator', semantic ? 'true' : 'false');
       }
-      function clipToViewport(camera) {
-        camera = camera || state;
-        if (camera.scale <= 1.001) {
-          svg.style.removeProperty('clip-path');
-          return;
-        }
-        var width = svg.clientWidth || 1;
-        var height = svg.clientHeight || 1;
-        var scale = camera.scale;
-        var top = Math.max(0, Math.min(height, -camera.y / scale));
-        var left = Math.max(0, Math.min(width, -camera.x / scale));
-        var right = Math.max(0, Math.min(width, width - (width - camera.x) / scale));
-        var bottom = Math.max(0, Math.min(height, height - (height - camera.y) / scale));
-        svg.style.clipPath = 'inset(' + [top, right, bottom, left].map(function (value) {
-          return Math.round(value * 1000) / 1000 + 'px';
-        }).join(' ') + ')';
-      }
-      function cameraSettled(rendered) {
-        return Math.abs(rendered.scale - state.scale) < 0.001 &&
-          Math.abs(rendered.x - state.x) < 0.05 &&
-          Math.abs(rendered.y - state.y) < 0.05;
-      }
-      function syncViewportClip() {
-        if (clipFrame) cancelAnimationFrame(clipFrame);
-        clipFrame = 0;
-        function sample() {
-          clipFrame = 0;
-          var rendered = sampleRenderedState();
-          clipToViewport(rendered);
-          if (!cameraSettled(rendered)) clipFrame = requestAnimationFrame(sample);
-        }
-        sample();
-      }
       function apply() {
         clamp();
         svg.style.transform = 'translate(' + state.x + 'px,' + state.y + 'px) scale(' + state.scale + ')';
-        syncViewportClip();
         renderControls();
         outBtn.disabled = state.scale <= 1;
         inBtn.disabled = state.scale >= 3;
@@ -11676,6 +11527,9 @@
         else stopCameraMotion('reset', false);
         state = { scale: 1, x: 0, y: 0, mode: 'overview' };
         apply();
+        if (Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.reprobe === 'function') {
+          Archify.viewerChromeLayout.reprobe();
+        }
       }
       function centerAt(logicalX, logicalY, options) {
         options = options || {};

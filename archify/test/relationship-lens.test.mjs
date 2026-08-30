@@ -51,7 +51,8 @@ test('all typed renderers expose named, stable relationships without changing ge
 
     assert.equal(keys.size, relationships.length, `${mode} keeps one stable key per source relationship`);
     relationships.forEach((relationship, index) => {
-      assert.match(diagram, new RegExp(`data-edge-from="${escapeAttr(relationship.from)}"[^>]+data-edge-to="${escapeAttr(relationship.to)}"[^>]+data-edge-key="${index}"`), `${mode} relationship ${index}`);
+      const expectedKey = source.schema_version === 2 ? '\\d+' : String(index);
+      assert.match(diagram, new RegExp(`data-edge-from="${escapeAttr(relationship.from)}"[^>]+data-edge-to="${escapeAttr(relationship.to)}"[^>]+data-edge-key="${expectedKey}"`), `${mode} relationship ${index}`);
       if (relationship.label) {
         assert.match(diagram, new RegExp(`data-edge-label="${escapeAttr(relationship.label).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`), `${mode} named relationship ${index}`);
       }

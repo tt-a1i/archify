@@ -518,13 +518,11 @@ function validateArchitecture() {
   }));
   problems.push(...cleanFlowProblems({
     relations: arch.connections,
-    endpointIds: new Set(components.keys()),
     obstacles: components.values(),
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',
     obstacleKind: 'component',
-    profile: arch.meta?.quality_profile,
     routeHint: 'adjust fromSide/toSide, set route/via, or move the component'
   }));
   problems.push(...cleanCrossingProblems({
