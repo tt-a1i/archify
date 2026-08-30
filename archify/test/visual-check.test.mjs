@@ -31,7 +31,7 @@ function sha256(file) {
   return createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }
 
-function fakeBrowser({ overflowAt, unreadableAt, chromeCollisionAt, screenshotFailure } = {}) {
+function fakeBrowser({ overflowAt, unreadableAt, chromeCollisionAt, stageCollisionAt, stageGapAt, screenshotFailure } = {}) {
   const calls = [];
   return {
     calls,
@@ -44,6 +44,9 @@ function fakeBrowser({ overflowAt, unreadableAt, chromeCollisionAt, screenshotFa
       const overflow = overflowAt?.({ width, height, theme }) || false;
       const unreadable = unreadableAt?.({ width, height, theme }) || false;
       const chromeCollision = chromeCollisionAt?.({ width, height, theme }) || false;
+      const stageCollision = stageCollisionAt?.({ width, height, theme }) || false;
+      const dockStageGap = stageGapAt?.({ width, height, theme }) ?? (stageCollision ? -12 : 10);
+      const stageClearanceFailure = stageCollision || dockStageGap < 10;
       return {
         innerWidth: width,
         innerHeight: height,
@@ -59,8 +62,11 @@ function fakeBrowser({ overflowAt, unreadableAt, chromeCollisionAt, screenshotFa
         hasLegend: true,
         hasNavigationDock: true,
         legendDockIntersectionArea: chromeCollision ? 42 : 0,
-        viewerChromeReserve: chromeCollision ? 0 : 44,
-        viewerChromeActive: !chromeCollision,
+        dockStageIntersectionArea: stageCollision ? 84 : 0,
+        dockStageGap,
+        viewerChromeRequiredGap: 10,
+        viewerChromeReserve: chromeCollision || stageClearanceFailure ? 0 : 44,
+        viewerChromeActive: !chromeCollision && !stageClearanceFailure,
       };
     },
     async close() {},
@@ -126,6 +132,8 @@ test('visual-check converts a Chrome DevTools pipe reset and captured stderr int
   assert.match(result.receipt.error, /Chrome DevTools read pipe failed/);
   assert.match(result.receipt.error, /ECONNRESET/);
   assert.match(result.receipt.error, /Chrome sandbox initialization failed/);
+  assert.equal(result.receipt.diagnostics[0]?.code, 'viewer/visual-check-runtime');
+  assert.match(result.receipt.diagnostics[0]?.evidence?.reason || '', /ECONNRESET/);
   assert.equal(fs.existsSync(sidecarPaths(input).receipt), true);
 });
 
@@ -156,6 +164,7 @@ test('visual-check reports Chrome early exit status and stderr without an uncaug
   assert.match(result.receipt.error, /Chrome DevTools process exit failed/);
   assert.match(result.receipt.error, /exit code 23/);
   assert.match(result.receipt.error, /Chrome rejected its launch flags/);
+  assert.equal(result.receipt.diagnostics[0]?.code, 'viewer/visual-check-runtime');
 });
 
 test('visual-check records four containment viewports and four endpoint theme captures', async () => {
@@ -170,6 +179,7 @@ test('visual-check records four containment viewports and four endpoint theme ca
 
   assert.equal(result.exitCode, 0);
   assert.equal(result.receipt.status, 'pass');
+  assert.deepEqual(result.receipt.diagnostics, []);
   assert.equal(result.receipt.visualReview, 'pending');
   assert.equal(result.receipt.viewerChrome.status, 'pass');
   assert.equal(result.receipt.containment.viewports.length, VISUAL_CHECK_VIEWPORTS.length);
@@ -214,6 +224,14 @@ test('visual-check returns 1 and preserves evidence when any viewport overflows'
     result.receipt.containment.viewports.filter((entry) => !entry.ok).map((entry) => [entry.width, entry.height]),
     [[1600, 1000]],
   );
+  const diagnostic = result.receipt.diagnostics.find(
+    (entry) => entry.code === 'viewer/viewport-overflow',
+  );
+  assert.deepEqual(diagnostic?.subject, {
+    artifact: input,
+    viewport: { width: 1600, height: 1000, theme: 'light' },
+  });
+  assert.equal(diagnostic?.evidence?.scrollWidth, 1601);
   assert.equal(fs.existsSync(sidecarPaths(input).contactSheet), true);
 });
 
@@ -237,6 +255,12 @@ test('visual-check returns 1 when the real reader projects node text below 6px',
   assert.equal(desktop?.minimumProjectedNodeText, 'Compact node');
   assert.equal(desktop?.minimumProjectedNodeTextDetail, 'primary');
   assert.equal(desktop?.readabilityOk, false);
+  const diagnostic = result.receipt.diagnostics.find(
+    (entry) => entry.code === 'viewer/projected-text-readability',
+  );
+  assert.equal(diagnostic?.evidence?.text, 'Compact node');
+  assert.equal(diagnostic?.evidence?.minimumProjectedNodeTextPx, 5.72);
+  assert.equal(diagnostic?.evidence?.minimumRequiredNodeTextPx, 6);
 });
 
 test('visual-check returns 1 when the navigation dock obscures the SVG legend', async () => {
@@ -259,6 +283,72 @@ test('visual-check returns 1 when the navigation dock obscures the SVG legend', 
   );
   assert.equal(desktop?.legendDockIntersectionArea, 42);
   assert.equal(desktop?.viewerChromeOk, false);
+  const diagnostic = result.receipt.diagnostics.find(
+    (entry) => entry.code === 'viewer/chrome-legend-clearance',
+  );
+  assert.equal(diagnostic?.evidence?.legendDockIntersectionArea, 42);
+});
+
+test('visual-check returns 1 when the navigation dock enters the SVG stage', async () => {
+  const input = artifact('viewer-stage-collision.html');
+  const result = await runVisualCheck({
+    artifactPath: input,
+    chromePath: '/fake/chrome',
+    browserFactory: async () => fakeBrowser({
+      stageCollisionAt: ({ width, height, theme }) => (
+        width === 1920 && height === 1080 && theme === 'light'
+      ),
+    }),
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.receipt.status, 'fail');
+  assert.equal(result.receipt.viewerChrome.status, 'fail');
+  const desktop = result.receipt.viewerChrome.viewports.find(
+    (entry) => entry.width === 1920 && entry.height === 1080,
+  );
+  assert.equal(desktop?.dockStageIntersectionArea, 84);
+  assert.equal(desktop?.dockStageGap, -12);
+  assert.equal(desktop?.requiredDockStageGap, 10);
+  assert.equal(desktop?.viewerChromeStageOk, false);
+  assert.equal(desktop?.viewerChromeOk, false);
+  const diagnostic = result.receipt.diagnostics.find(
+    (entry) => entry.code === 'viewer/chrome-stage-clearance',
+  );
+  assert.deepEqual(diagnostic?.subject, {
+    artifact: input,
+    viewport: { width: 1920, height: 1080, theme: 'light' },
+  });
+  assert.deepEqual(diagnostic?.evidence, {
+    dockStageIntersectionArea: 84,
+    dockStageGap: -12,
+    requiredDockStageGap: 10,
+  });
+  assert.match(diagnostic?.message || '', /enters the protected SVG stage/);
+  assert.ok(diagnostic?.supportedFixes.some((fix) => fix.includes('dockStageGap')));
+  assert.equal(diagnostic?.supportedFixes.some((fix) => fix.includes('regenerate')), false);
+});
+
+test('visual-check describes insufficient stage clearance without claiming an overlap', async () => {
+  const input = artifact('viewer-stage-low-gap.html');
+  const result = await runVisualCheck({
+    artifactPath: input,
+    chromePath: '/fake/chrome',
+    browserFactory: async () => fakeBrowser({
+      stageGapAt: ({ width, height, theme }) => (
+        width === 1920 && height === 1080 && theme === 'light' ? 5 : 10
+      ),
+    }),
+  });
+
+  assert.equal(result.exitCode, 1);
+  const diagnostic = result.receipt.diagnostics.find(
+    (entry) => entry.code === 'viewer/chrome-stage-clearance',
+  );
+  assert.equal(diagnostic?.evidence?.dockStageIntersectionArea, 0);
+  assert.equal(diagnostic?.evidence?.dockStageGap, 5);
+  assert.match(diagnostic?.message || '', /clearance.*below the required gap/i);
+  assert.doesNotMatch(diagnostic?.message || '', /enters/i);
 });
 
 test('visual-check returns 1 and removes misleading capture sidecars on screenshot failure', async () => {
@@ -279,6 +369,8 @@ test('visual-check returns 1 and removes misleading capture sidecars on screensh
   assert.equal(result.receipt.status, 'fail');
   assert.equal(result.receipt.captures.status, 'fail');
   assert.match(result.receipt.error, /synthetic screenshot failure/);
+  assert.equal(result.receipt.diagnostics[0]?.code, 'viewer/visual-check-runtime');
+  assert.match(result.receipt.diagnostics[0]?.evidence?.reason || '', /synthetic screenshot failure/);
   assert.equal(fs.existsSync(outputs.contactSheet), false);
   assert.equal(outputs.screenshots.some((entry) => fs.existsSync(entry.path)), false);
   assert.equal(fs.existsSync(outputs.receipt), true);
@@ -297,6 +389,8 @@ test('visual-check returns 2 with a truthful skipped receipt when Chrome is unav
   assert.equal(result.receipt.viewerChrome.status, 'skipped');
   assert.equal(result.receipt.captures.status, 'skipped');
   assert.equal(result.receipt.visualReview, 'pending');
+  assert.equal(result.receipt.diagnostics[0]?.code, 'viewer/chrome-unavailable');
+  assert.ok(result.receipt.diagnostics[0]?.supportedFixes.some((fix) => fix.includes('ARCHIFY_CHROME')));
   assert.equal(fs.existsSync(sidecarPaths(input).receipt), true);
 });
 

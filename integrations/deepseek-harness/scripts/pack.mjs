@@ -9,15 +9,14 @@ import { spawnCliSync } from './resolve-cli.mjs';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const integrationRoot = path.resolve(here, '..');
 const repoRoot = path.resolve(integrationRoot, '..', '..');
-const archifySource = path.join(repoRoot, 'archify');
+const DSH_RELEASE_REF = 'archify-dsh-v0.1.0';
 
 function argValue(flag) {
   const index = process.argv.indexOf(flag);
   return index === -1 ? undefined : process.argv[index + 1];
 }
 
-function excludeFromCleanSkill(sourceRoot, src) {
-  const relative = path.relative(sourceRoot, src);
+function excludeFromCleanSkill(relative) {
   if (!relative || relative === '.') return false;
   const parts = relative.split(path.sep);
   if (parts.includes('node_modules')) return true;
@@ -31,28 +30,51 @@ function excludeFromCleanSkill(sourceRoot, src) {
   return false;
 }
 
-function trackedArchifyFiles() {
-  const tracked = spawnCliSync('git', ['ls-files', '-z', '--', 'archify'], {
+function releaseSnapshot(destination) {
+  const archive = spawnCliSync('git', ['archive', '--format=tar', DSH_RELEASE_REF], {
     cwd: repoRoot,
-    encoding: 'utf8',
+    encoding: null,
+    maxBuffer: 128 * 1024 * 1024,
   });
-  if (tracked.status !== 0) {
-    throw new Error(`unable to enumerate tracked Archify files: ${tracked.stderr || tracked.error?.message}`);
+  if (archive.status !== 0) {
+    throw new Error(`unable to read immutable DSH source ${DSH_RELEASE_REF}: ${archive.stderr?.toString('utf8') || archive.error?.message}`);
   }
-  return tracked.stdout.split('\0').filter(Boolean);
+  const extracted = spawnCliSync('tar', ['-xf', '-', '-C', destination], {
+    cwd: repoRoot,
+    input: archive.stdout,
+    encoding: 'utf8',
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  if (extracted.status !== 0) {
+    throw new Error(`unable to extract immutable DSH source ${DSH_RELEASE_REF}: ${extracted.stderr || extracted.error?.message}`);
+  }
 }
 
-function stageCleanArchify(dest) {
-  const validators = path.join(archifySource, 'renderers/shared/generated-validators.mjs');
-  if (!fs.existsSync(validators)) {
-    throw new Error('generated validators are missing — run npm run generate:validators in archify/');
+function regularFiles(root, directory = root) {
+  const files = [];
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const source = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...regularFiles(root, source));
+    } else if (entry.isFile()) {
+      files.push({ source, relative: path.relative(root, source) });
+    } else {
+      throw new Error(`immutable DSH source contains unsupported entry: ${path.relative(root, source)}`);
+    }
   }
-  for (const repoRelative of trackedArchifyFiles()) {
-    const src = path.join(repoRoot, ...repoRelative.split('/'));
-    if (excludeFromCleanSkill(archifySource, src)) continue;
-    const destination = path.join(dest, path.relative(archifySource, src));
+  return files;
+}
+
+function stageCleanArchify(sourceRoot, dest) {
+  const validators = path.join(sourceRoot, 'renderers/shared/generated-validators.mjs');
+  if (!fs.existsSync(validators)) {
+    throw new Error(`generated validators are missing from ${DSH_RELEASE_REF}`);
+  }
+  for (const { source, relative } of regularFiles(sourceRoot)) {
+    if (excludeFromCleanSkill(relative)) continue;
+    const destination = path.join(dest, relative);
     fs.mkdirSync(path.dirname(destination), { recursive: true });
-    fs.copyFileSync(src, destination);
+    fs.copyFileSync(source, destination);
   }
   const packagePath = path.join(dest, 'package.json');
   const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
@@ -65,14 +87,17 @@ function stageCleanArchify(dest) {
 const json = process.argv.includes('--json');
 const out = argValue('--out');
 const stage = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-dsh-pack-'));
+const snapshot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-dsh-source-'));
 
 try {
-  stageCleanArchify(path.join(stage, 'skills', 'archify'));
-  fs.copyFileSync(path.join(integrationRoot, 'package.json'), path.join(stage, 'package.json'));
-  fs.copyFileSync(path.join(integrationRoot, 'cordis.patch.yml'), path.join(stage, 'cordis.patch.yml'));
-  fs.cpSync(path.join(integrationRoot, 'lib'), path.join(stage, 'lib'), { recursive: true });
-  fs.copyFileSync(path.join(integrationRoot, 'README.md'), path.join(stage, 'README.md'));
-  fs.copyFileSync(path.join(repoRoot, 'LICENSE'), path.join(stage, 'LICENSE'));
+  releaseSnapshot(snapshot);
+  const releaseIntegration = path.join(snapshot, 'integrations', 'deepseek-harness');
+  stageCleanArchify(path.join(snapshot, 'archify'), path.join(stage, 'skills', 'archify'));
+  fs.copyFileSync(path.join(releaseIntegration, 'package.json'), path.join(stage, 'package.json'));
+  fs.copyFileSync(path.join(releaseIntegration, 'cordis.patch.yml'), path.join(stage, 'cordis.patch.yml'));
+  fs.cpSync(path.join(releaseIntegration, 'lib'), path.join(stage, 'lib'), { recursive: true });
+  fs.copyFileSync(path.join(releaseIntegration, 'README.md'), path.join(stage, 'README.md'));
+  fs.copyFileSync(path.join(snapshot, 'LICENSE'), path.join(stage, 'LICENSE'));
 
   const packed = spawnCliSync('npm', ['pack', '--json', '--pack-destination', stage], {
     cwd: stage,
@@ -122,4 +147,5 @@ try {
   else process.stdout.write(`${destination}\n`);
 } finally {
   fs.rmSync(stage, { recursive: true, force: true });
+  fs.rmSync(snapshot, { recursive: true, force: true });
 }

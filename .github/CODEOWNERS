@@ -2,3 +2,4 @@
 /.github/CODEOWNERS @tt-a1i
 /.github/workflows/** @tt-a1i
 /.github/actions/** @tt-a1i
+/SECURITY.md @tt-a1i
