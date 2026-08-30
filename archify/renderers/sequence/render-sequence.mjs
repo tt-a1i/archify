@@ -5,7 +5,7 @@ import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagra
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, routePointsValue, asArray, isFinitePoint } from '../shared/geometry.mjs';
-import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
+import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeTextWidth, sigilClearedLabelCenter, sigilLabelClearanceProblem, sigilLabelFitWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 
@@ -147,6 +147,8 @@ function validateSequence() {
     }
     const brandRailProblem = brandTopRailProblem(participant, layout.participantW, 8, 'Participant');
     if (brandRailProblem) problems.push(brandRailProblem);
+    const sigilClearance = sigilLabelClearanceProblem(participant.id, participant.label, layout.participantW, 8, 'Participant');
+    if (sigilClearance) problems.push(sigilClearance);
     // sublabel renders as a single unwrapped <text>; shrink-to-fit handles the
     // ordinary case, this rejects what it cannot rescue.
     if (participant.sublabel) {
@@ -297,7 +299,9 @@ function renderParticipant(participant) {
     ? `\n          <text data-detail="context" x="${participant.cx}" y="${layout.topY + 39}" class="t-muted" font-size="${fittedNodeFontSize(participant.sublabel, layout.participantW, participantTextFit.sublabelPreferred, participantTextFit.sublabelMinimum)}" text-anchor="middle">${esc(participant.sublabel)}</text>`
     : '';
   const brand = renderBrandMark(participant, { x: participant.x + layout.participantW - 22, y: layout.topY + 6 });
-  const labelFontSize = fittedNodeFontSize(participant.label, brandLabelFitWidth(participant, layout.participantW), 11, 8);
+  const labelFitWidth = Math.min(brandLabelFitWidth(participant, layout.participantW), sigilLabelFitWidth(layout.participantW));
+  const labelFontSize = fittedNodeFontSize(participant.label, labelFitWidth, 11, 8);
+  const labelCx = sigilClearedLabelCenter(participant.x, layout.participantW, nodeTextWidth(participant.label, labelFontSize));
   const passport = {
     kind: participant.type,
     sublabel: participant.sublabel,
@@ -309,7 +313,7 @@ function renderParticipant(participant) {
           <rect x="${participant.x}" y="${layout.topY}" width="${layout.participantW}" height="${layout.participantH}" rx="6" class="c-mask"/>
           <rect x="${participant.x}" y="${layout.topY}" width="${layout.participantW}" height="${layout.participantH}" rx="6" class="${fill}"${animateAttr(sequence.meta, 'node', participant.index)} stroke-width="1.5"/>
           ${renderSemanticSigil(participant.type, { x: participant.x + 6, y: layout.topY + 6 })}${brand ? `\n          ${brand}` : ''}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${participant.cx}" y="${layout.topY + 22}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(participant.label)}</text>${sub}
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${labelCx}" y="${layout.topY + 22}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(participant.label)}</text>${sub}
         </g>`;
 }
 

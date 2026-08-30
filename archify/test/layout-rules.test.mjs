@@ -227,6 +227,9 @@ const CASES = [
     (d) => {
       d.flows[0].via = [[195, 140], [195, 260]];
     }, ['diagonal segment', 'align via[0]']],
+  ['dataflow: node label cannot clear its semantic sigil', 'dataflow',
+    (d) => { d.nodes[0].width = 50; d.nodes[0].label = 'Ingester'; },
+    ['semantic sigil', 'legible minimum', 'widen the node']],
   ['dataflow: node sublabel wider than its legible minimum', 'dataflow',
     (d) => { d.nodes[0].sublabel = 'This supporting sentence is far too long for one data-flow node box'; },
     ['Sublabel', 'legible', 'increase node.width']],
