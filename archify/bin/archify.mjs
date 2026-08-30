@@ -705,15 +705,15 @@ function commandRender(args) {
   if (result.status !== 0) exitFrom(result);
 }
 
-function reportDeliveryFailure({ json, stage, type, input, output, error, diagnostics = [], status = 1, checker }) {
+function reportArtifactFailure({ command, json, stage, type, input, output, error, diagnostics = [], status = 1, checker }) {
   const receipt = {
     schemaVersion: 1,
     ok: false,
-    command: 'deliver',
+    command,
     stage,
     type,
     input,
-    output,
+    ...(output === undefined ? {} : { output }),
     error,
     diagnostics,
     ...(checker ? { checker } : {}),
@@ -723,21 +723,12 @@ function reportDeliveryFailure({ json, stage, type, input, output, error, diagno
   process.exitCode = status;
 }
 
-function reportValidateFailure({ json, stage, type, input, error, diagnostics = [], status = 1, checker }) {
-  const receipt = {
-    schemaVersion: 1,
-    ok: false,
-    command: 'validate',
-    stage,
-    type,
-    input,
-    error,
-    diagnostics,
-    ...(checker ? { checker } : {}),
-  };
-  if (json) console.log(JSON.stringify(receipt, null, 2));
-  else console.error(formatDiagnostics(error, diagnostics));
-  process.exitCode = status;
+function reportDeliveryFailure(options) {
+  reportArtifactFailure({ ...options, command: 'deliver' });
+}
+
+function reportValidateFailure(options) {
+  reportArtifactFailure({ ...options, command: 'validate' });
 }
 
 function sourceEvidenceFromArtifact(artifact) {

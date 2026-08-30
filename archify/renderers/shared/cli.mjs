@@ -26,8 +26,6 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
   validateEngineeringProfile(diagramType, diagram);
   const sourceEvidence = verifyRepositoryEvidence(diagramType, diagram, process.env.ARCHIFY_REPO_ROOT);
   const template = fs.readFileSync(path.join(skillRoot, 'assets/template.html'), 'utf8');
-  // Optional chaining: in degraded mode (no ajv) malformed input must still
-  // reach the renderer's friendly layout checks instead of crashing here.
   const outputRequest = {
     requestedOutput: argv[3],
     authoredOutput: diagram.meta?.output,
@@ -148,7 +146,7 @@ export function validateGuidedViews(diagramType, diagram) {
 }
 
 // Accessible name for the generated diagram SVG.
-export function svgRootAttrs(meta, kind) {
+export function svgRootAttrs(meta) {
   const animation = meta.animation === 'trace' ? ' data-animation="trace"' : '';
   const preset = ` data-preset="${esc(meta.visual_preset || 'classic')}"`;
   const engineeringProfile = meta.engineering_profile

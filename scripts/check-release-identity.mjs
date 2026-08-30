@@ -4,6 +4,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  compareSemver,
+  isStableCoreVersion,
+  parseSemver,
+  validateLocalRelease,
+  validateStableUpdateManifest,
+} from '../archify/scripts/update-contract.mjs';
+
 const scriptRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const rootFlag = process.argv.indexOf('--root');
 const repoRoot = rootFlag === -1 ? scriptRoot : path.resolve(process.argv[rootFlag + 1] || '');
@@ -33,11 +41,32 @@ function readJson(relativePath) {
   }
 }
 
-function compareCore(left, right) {
-  for (let index = 0; index < 3; index += 1) {
-    if (left[index] !== right[index]) return left[index] - right[index];
+function checkSkillRelease(value, version, isDevelopment) {
+  const expectedChannel = isDevelopment ? 'development' : 'stable';
+  try {
+    const release = validateLocalRelease(value);
+    if (release.version === version && release.channel === expectedChannel) return;
+  } catch {
+    // Report the repository-specific cross-artifact requirement below.
   }
-  return 0;
+  fail(`archify/skill-release.json must identify archify ${version} as ${expectedChannel}, use the official repository, and pin the trusted update manifest URL.`);
+}
+
+function checkStableUpdateManifest(value, expectedVersion, previousVersion, packageVersion, isDevelopment) {
+  try {
+    const manifest = validateStableUpdateManifest(value);
+    const allowedVersions = isDevelopment
+      ? [expectedVersion]
+      : [expectedVersion, previousVersion].filter(Boolean);
+    if (expectedVersion && allowedVersions.includes(manifest.version)
+      && (isDevelopment || packageVersion === expectedVersion)) return;
+  } catch {
+    // Report the repository-specific cross-artifact requirement below.
+  }
+  const releaseWindow = !isDevelopment && previousVersion
+    ? `newest stable v${expectedVersion} or immediate prior v${previousVersion} during the enforced post-Release publication window`
+    : `newest published stable v${expectedVersion || '(missing)'}`;
+  fail(`docs/skill-updates/archify/stable.json must describe the ${releaseWindow} with the fixed repository, immutable tree/archive digests, and official release-notes URL.`);
 }
 
 function shieldEscape(value) {
@@ -145,29 +174,53 @@ const nextRelease = afterUnreleased.search(/^## \[/m);
 const unreleased = nextRelease === -1 ? afterUnreleased : afterUnreleased.slice(0, nextRelease);
 const hasRealUnreleasedChanges = /^\s*-\s+\S/m.test(unreleased);
 const version = packageJson.version;
-const semver = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/.exec(version);
-const isDevelopment = Boolean(semver?.[4]);
+let parsedVersion = null;
+try {
+  parsedVersion = parseSemver(version);
+} catch {
+  // The consolidated error below owns package-version policy reporting.
+}
+const supportedPrerelease = parsedVersion?.prerelease === null
+  || (parsedVersion?.prerelease?.length === 2
+    && parsedVersion.prerelease[0] === 'dev'
+    && /^\d+$/.test(parsedVersion.prerelease[1]));
+const hasSupportedVersion = Boolean(parsedVersion && parsedVersion.build === null && supportedPrerelease);
+const isDevelopment = Boolean(hasSupportedVersion && parsedVersion.prerelease);
+const publishedLabels = [...changelog.matchAll(/^## \[([^\]]+)\]/gm)]
+  .map((match) => match[1])
+  .filter((label) => label !== 'Unreleased');
+for (const label of publishedLabels) {
+  if (!isStableCoreVersion(label)) fail(`CHANGELOG published version is not stable SemVer: ${label}.`);
+}
+const stableLabels = publishedLabels
+  .filter(isStableCoreVersion)
+  .sort((left, right) => compareSemver(right, left));
+const newestStableLabel = stableLabels[0] ?? null;
+const previousStableLabel = stableLabels[1] ?? null;
 
-if (!semver) {
+if (!hasSupportedVersion) {
   fail(`package version is not a supported SemVer identity: ${JSON.stringify(version)}`);
-} else if (hasRealUnreleasedChanges && !semver[4]) {
+} else if (hasRealUnreleasedChanges && !isDevelopment) {
   fail(`Unreleased changes require a prerelease package version; found stable ${version}.`);
 }
 
-if (semver && hasRealUnreleasedChanges) {
-  if (semver[4] && !/^dev\.\d+$/.test(semver[4])) {
-    fail(`Unreleased development identity must use a dev.N prerelease; found ${version}.`);
-  }
-  const published = [...changelog.matchAll(/^## \[(\d+)\.(\d+)\.(\d+)\]/gm)]
-    .map((match) => match.slice(1, 4).map(Number));
-  const newestPublished = published.sort((left, right) => compareCore(right, left))[0];
-  const currentCore = semver.slice(1, 4).map(Number);
-  if (newestPublished && compareCore(currentCore, newestPublished) <= 0) {
-    fail(`Unreleased package core ${currentCore.join('.')} must be newer than published ${newestPublished.join('.')}.`);
+if (hasSupportedVersion && hasRealUnreleasedChanges) {
+  const currentCore = parsedVersion.core.join('.');
+  if (newestStableLabel && compareSemver(currentCore, newestStableLabel) <= 0) {
+    fail(`Unreleased package core ${currentCore} must be newer than published ${newestStableLabel}.`);
   }
 }
 
-if (semver) {
+if (hasSupportedVersion) {
+  checkSkillRelease(readJson('archify/skill-release.json'), version, isDevelopment);
+  checkStableUpdateManifest(
+    readJson('docs/skill-updates/archify/stable.json'),
+    newestStableLabel,
+    previousStableLabel,
+    version,
+    isDevelopment,
+  );
+
   const lock = readJson('archify/package-lock.json');
   if (lock.version !== version || lock.packages?.['']?.version !== version) {
     fail(`archify/package-lock.json must match ${version} at the root and packages[""].`);
@@ -175,7 +228,7 @@ if (semver) {
 
   const skill = read('archify/SKILL.md');
   const skillVersion = skill.match(/^\s*version:\s*["']?([^"'\s]+)["']?\s*$/m)?.[1];
-  const expectedSkillVersion = `${semver[1]}.${semver[2]}`;
+  const expectedSkillVersion = `${parsedVersion.core[0]}.${parsedVersion.core[1]}`;
   if (skillVersion !== expectedSkillVersion) {
     fail(`archify/SKILL.md metadata version ${skillVersion || '(missing)'} must map to package ${version} as ${expectedSkillVersion}.`);
   }
@@ -198,7 +251,6 @@ if (semver) {
   checkRavenBoundary('README_ZH.md', chinese, 'zh');
   if (english !== englishMirror) fail('README_EN.md must remain byte-identical to README.md.');
 
-  const newestStableLabel = [...changelog.matchAll(/^## \[(\d+\.\d+\.\d+)\]/gm)][0]?.[1];
   if (newestStableLabel && isDevelopment) {
     const stableMinor = newestStableLabel.split('.').slice(0, 2).join('\\.');
     if (new RegExp(`Archify ${stableMinor} includes\\b`).test(english)

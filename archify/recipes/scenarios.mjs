@@ -303,7 +303,9 @@ export function recommendScenario(query, options = {}) {
 
 export function formatScenarioList(lang = 'en') {
   const isZh = lang === 'zh';
-  const heading = isZh ? 'Archify 场景配方（11）' : 'Archify scenario recipes (11)';
+  const heading = isZh
+    ? `Archify 场景配方（${SCENARIO_RECIPES.length}）`
+    : `Archify scenario recipes (${SCENARIO_RECIPES.length})`;
   const intro = isZh
     ? '先选择你要回答的问题，再选择图表类型。可运行：archify guide "你的场景"'
     : 'Choose the question before the diagram type. Run: archify guide "your scenario"';
