@@ -12475,7 +12475,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         if (options.reveal !== false &amp;&amp; Archify.view &amp;&amp; typeof Archify.view.reveal === &#39;function&#39;) {
           Archify.view.reveal(result.nodeIds, { includeNeighbors: false, reason: &#39;reachability&#39; });
         }
-        requestLensPlacement();
+        placeRelationshipLens();
         return true;
       }
       function reachabilitySnapshot() {
@@ -12950,7 +12950,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
           target.removeAttribute(&#39;data-preview-active&#39;);
         });
         renderRelationshipCopyAction();
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function previewRelationship(button, options) {
         options = options || {};
@@ -12977,7 +12977,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         if (!chip.hidden &amp;&amp; options.direct !== true) chip.setAttribute(&#39;data-relationship-previewing&#39;, &#39;true&#39;);
         activeRelationshipPreview = button;
         renderRelationshipPulse(key);
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function syncRelationshipPreview() {
         var next = pinnedRelationship || focusedRelationship || hoveredRelationship;
@@ -13258,7 +13258,10 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
       }
       var lensFrame = 0;
       function placeRelationshipLens() {
-        lensFrame = 0;
+        if (lensFrame) {
+          cancelAnimationFrame(lensFrame);
+          lensFrame = 0;
+        }
         if (chip.hidden || activeIds.length !== 1) return;
         var node = svg.querySelector(&#39;[data-node-id=&quot;&#39; + activeIds[0] + &#39;&quot;]&#39;);
         if (!node) return;
@@ -13459,7 +13462,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         chip.hidden = options.hideChip === true || normalized.length !== 1 || selectionMode;
         if (!chip.hidden) {
           renderRelationshipLens(normalized[0], byId);
-          requestLensPlacement();
+          placeRelationshipLens();
         }
         if (options.updateUrl !== false) {
           var key = options.urlKey || &#39;focus&#39;;
@@ -13545,7 +13548,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         relationsBtn.setAttribute(&#39;aria-label&#39;, viewerText(expanded
           ? &#39;viewer.passport.relations.show&#39;
           : &#39;viewer.passport.relations.hide&#39;));
-        requestLensPlacement();
+        placeRelationshipLens();
       });
       relationshipList.addEventListener(&#39;click&#39;, function (event) {
         var button = event.target.closest(&#39;[data-relationship-target]&#39;);
@@ -13661,7 +13664,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         reachabilitySnapshot: reachabilitySnapshot,
         inspectRelationship: inspectRelationship,
         inspectRelationshipById: inspectRelationshipById,
-        reposition: requestLensPlacement,
+        reposition: placeRelationshipLens,
         relationship: function () {
           var record = pinnedRelationshipRecord();
           return record ? { id: record.id || null, key: record.key, from: record.from, to: record.to, label: record.label } : null;
@@ -27555,7 +27558,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         if (options.reveal !== false &amp;&amp; Archify.view &amp;&amp; typeof Archify.view.reveal === &#39;function&#39;) {
           Archify.view.reveal(result.nodeIds, { includeNeighbors: false, reason: &#39;reachability&#39; });
         }
-        requestLensPlacement();
+        placeRelationshipLens();
         return true;
       }
       function reachabilitySnapshot() {
@@ -28030,7 +28033,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
           target.removeAttribute(&#39;data-preview-active&#39;);
         });
         renderRelationshipCopyAction();
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function previewRelationship(button, options) {
         options = options || {};
@@ -28057,7 +28060,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         if (!chip.hidden &amp;&amp; options.direct !== true) chip.setAttribute(&#39;data-relationship-previewing&#39;, &#39;true&#39;);
         activeRelationshipPreview = button;
         renderRelationshipPulse(key);
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function syncRelationshipPreview() {
         var next = pinnedRelationship || focusedRelationship || hoveredRelationship;
@@ -28338,7 +28341,10 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
       }
       var lensFrame = 0;
       function placeRelationshipLens() {
-        lensFrame = 0;
+        if (lensFrame) {
+          cancelAnimationFrame(lensFrame);
+          lensFrame = 0;
+        }
         if (chip.hidden || activeIds.length !== 1) return;
         var node = svg.querySelector(&#39;[data-node-id=&quot;&#39; + activeIds[0] + &#39;&quot;]&#39;);
         if (!node) return;
@@ -28539,7 +28545,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         chip.hidden = options.hideChip === true || normalized.length !== 1 || selectionMode;
         if (!chip.hidden) {
           renderRelationshipLens(normalized[0], byId);
-          requestLensPlacement();
+          placeRelationshipLens();
         }
         if (options.updateUrl !== false) {
           var key = options.urlKey || &#39;focus&#39;;
@@ -28625,7 +28631,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         relationsBtn.setAttribute(&#39;aria-label&#39;, viewerText(expanded
           ? &#39;viewer.passport.relations.show&#39;
           : &#39;viewer.passport.relations.hide&#39;));
-        requestLensPlacement();
+        placeRelationshipLens();
       });
       relationshipList.addEventListener(&#39;click&#39;, function (event) {
         var button = event.target.closest(&#39;[data-relationship-target]&#39;);
@@ -28741,7 +28747,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         reachabilitySnapshot: reachabilitySnapshot,
         inspectRelationship: inspectRelationship,
         inspectRelationshipById: inspectRelationshipById,
-        reposition: requestLensPlacement,
+        reposition: placeRelationshipLens,
         relationship: function () {
           var record = pinnedRelationshipRecord();
           return record ? { id: record.id || null, key: record.key, from: record.from, to: record.to, label: record.label } : null;
