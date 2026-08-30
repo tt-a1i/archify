@@ -7779,7 +7779,7 @@
         if (options.reveal !== false && Archify.view && typeof Archify.view.reveal === 'function') {
           Archify.view.reveal(result.nodeIds, { includeNeighbors: false, reason: 'reachability' });
         }
-        requestLensPlacement();
+        placeRelationshipLens();
         return true;
       }
       function reachabilitySnapshot() {
@@ -8254,7 +8254,7 @@
           target.removeAttribute('data-preview-active');
         });
         renderRelationshipCopyAction();
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function previewRelationship(button, options) {
         options = options || {};
@@ -8281,7 +8281,7 @@
         if (!chip.hidden && options.direct !== true) chip.setAttribute('data-relationship-previewing', 'true');
         activeRelationshipPreview = button;
         renderRelationshipPulse(key);
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function syncRelationshipPreview() {
         var next = pinnedRelationship || focusedRelationship || hoveredRelationship;
@@ -8562,7 +8562,10 @@
       }
       var lensFrame = 0;
       function placeRelationshipLens() {
-        lensFrame = 0;
+        if (lensFrame) {
+          cancelAnimationFrame(lensFrame);
+          lensFrame = 0;
+        }
         if (chip.hidden || activeIds.length !== 1) return;
         var node = svg.querySelector('[data-node-id="' + activeIds[0] + '"]');
         if (!node) return;
@@ -8763,7 +8766,7 @@
         chip.hidden = options.hideChip === true || normalized.length !== 1 || selectionMode;
         if (!chip.hidden) {
           renderRelationshipLens(normalized[0], byId);
-          requestLensPlacement();
+          placeRelationshipLens();
         }
         if (options.updateUrl !== false) {
           var key = options.urlKey || 'focus';
@@ -8849,7 +8852,7 @@
         relationsBtn.setAttribute('aria-label', viewerText(expanded
           ? 'viewer.passport.relations.show'
           : 'viewer.passport.relations.hide'));
-        requestLensPlacement();
+        placeRelationshipLens();
       });
       relationshipList.addEventListener('click', function (event) {
         var button = event.target.closest('[data-relationship-target]');
@@ -8965,7 +8968,7 @@
         reachabilitySnapshot: reachabilitySnapshot,
         inspectRelationship: inspectRelationship,
         inspectRelationshipById: inspectRelationshipById,
-        reposition: requestLensPlacement,
+        reposition: placeRelationshipLens,
         relationship: function () {
           var record = pinnedRelationshipRecord();
           return record ? { id: record.id || null, key: record.key, from: record.from, to: record.to, label: record.label } : null;

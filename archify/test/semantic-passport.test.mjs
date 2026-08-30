@@ -4,11 +4,14 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-semantic-passport-'));
+const chromePath = process.env.ARCHIFY_CHROME ? findChrome() : null;
 
 const CASES = {
   architecture: 'web-app.architecture.json',
@@ -30,6 +33,48 @@ function render(mode, example) {
 
 function svg(html) {
   return html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
+}
+
+async function evaluate(browser, sessionId, expression, awaitPromise = false) {
+  const response = await browser.cdp.send('Runtime.evaluate', {
+    expression,
+    awaitPromise,
+    returnByValue: true,
+  }, sessionId);
+  if (response.exceptionDetails) {
+    throw new Error(response.exceptionDetails.exception?.description
+      || response.exceptionDetails.text
+      || 'Runtime.evaluate failed');
+  }
+  return response.result?.value;
+}
+
+async function loadArtifact(browser, artifactPath, { width = 1440, height = 900 } = {}) {
+  const sessionId = await browser.sessionPromise;
+  await browser.cdp.send('Emulation.setDeviceMetricsOverride', {
+    width,
+    height,
+    deviceScaleFactor: 1,
+    mobile: false,
+  }, sessionId);
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', sessionId);
+  const navigation = await browser.cdp.send('Page.navigate', {
+    url: pathToFileURL(artifactPath).href,
+  }, sessionId);
+  if (navigation.errorText) throw new Error(`Chrome navigation failed: ${navigation.errorText}`);
+  await loaded;
+  await evaluate(browser, sessionId, `(function () {
+    document.documentElement.setAttribute('data-motion', 'still');
+    var fontsReady = document.fonts && document.fonts.ready
+      ? document.fonts.ready.catch(function () {})
+      : Promise.resolve();
+    return fontsReady.then(function () {
+      return new Promise(function (resolve) {
+        requestAnimationFrame(function () { requestAnimationFrame(resolve); });
+      });
+    });
+  })()`, true);
+  return sessionId;
 }
 
 test('all typed renderers emit details-on-demand metadata and native SVG titles', () => {
@@ -83,6 +128,62 @@ test('Relationship Lens renders one Semantic Passport and copyable stable focus 
   assert.match(html, /target\.closest\('\[data-node-id\], \[data-relationship-hit-key\], \.overview-map'\)/);
   assert.match(html, /document\.addEventListener\('click',[\s\S]+?clear\(\);\s+\}, true\);/);
   assert.match(html, /Archify\.focus\.clear\(\{ restoreFocus: true \}\)/);
+  assert.match(html, /renderRelationshipLens\(normalized\[0\],\s*byId\);\s*placeRelationshipLens\(\);/);
+  assert.match(html, /applyReachability[\s\S]*?placeRelationshipLens\(\);/);
+  assert.match(html, /clearRelationshipPreview[\s\S]*?renderRelationshipCopyAction\(\);\s*placeRelationshipLens\(\);/);
+  assert.match(html, /previewRelationship[\s\S]*?renderRelationshipPulse\(key\);\s*placeRelationshipLens\(\);/);
+  assert.match(html, /relationsBtn\.addEventListener\('click'[\s\S]*?placeRelationshipLens\(\);/);
+  assert.match(html, /reposition:\s*placeRelationshipLens/);
+});
+
+test('semantic passport computes and applies target top synchronously on open and switch without a 1-frame snap', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const artifact = path.join(tmp, 'passport-synchronous-placement.html');
+  execFileSync(process.execPath, [
+    path.join(skillRoot, 'bin', 'archify.mjs'),
+    'render',
+    'architecture',
+    path.join(skillRoot, 'examples', CASES.architecture),
+    artifact,
+  ]);
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const sessionId = await loadArtifact(browser, artifact, { width: 1440, height: 900 });
+    const result = await evaluate(browser, sessionId, `(function () {
+      var chip = document.getElementById('focus-chip');
+      var initialHidden = chip.hidden;
+      var initialTop = chip.style.top;
+
+      // Focus node 'auth' (top rank): must compute and apply top synchronously before next paint
+      Archify.focus.set('auth', { toggle: false });
+      var synchronousTopAuth = chip.style.top;
+      var hiddenAuth = chip.hidden;
+
+      // Switch focus to node 's3' (bottom rank): must update top synchronously without stale 1-frame delay
+      Archify.focus.set('s3', { toggle: false });
+      var synchronousTopS3 = chip.style.top;
+      var hiddenS3 = chip.hidden;
+
+      return {
+        initialHidden: initialHidden,
+        initialTop: initialTop,
+        synchronousTopAuth: synchronousTopAuth,
+        hiddenAuth: hiddenAuth,
+        synchronousTopS3: synchronousTopS3,
+        hiddenS3: hiddenS3
+      };
+    })()`);
+
+    assert.equal(result.initialHidden, true);
+    assert.equal(result.hiddenAuth, false);
+    assert.notEqual(result.synchronousTopAuth, '', 'passport target position must land synchronously before next paint');
+    assert.equal(result.hiddenS3, false);
+    assert.notEqual(result.synchronousTopS3, '', 'switched passport target position must land synchronously');
+    assert.notEqual(result.synchronousTopAuth, result.synchronousTopS3, 'target positions for different nodes must differ');
+  } finally {
+    await browser.close().catch(() => {});
+  }
 });
 
 test('Node Finder searches and presents the same passport facts', () => {
