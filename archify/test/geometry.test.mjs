@@ -151,6 +151,84 @@ test('collectLabelRouteClearance exempts only the owning relationship at an exac
   assert.equal(hits[0].otherRelation, sharedSource);
 });
 
+test('collectLabelRouteClearance indexes sparse routes without changing hit order', () => {
+  const owner = { id: 'owner', from: 'owner-a', to: 'owner-b' };
+  const routes = Array.from({ length: 500 }, (_, index) => ({
+    relation: { id: `route-${index}`, from: `a-${index}`, to: `b-${index}` },
+    relationIndex: index + 1,
+    points: [[0, index * 256], [100, index * 256]],
+  }));
+  const nearFirst = { relation: routes[12].relation, relationIndex: 13, points: [[0, 101], [100, 101]] };
+  const nearSecond = { relation: routes[4].relation, relationIndex: 5, points: [[0, 103], [100, 103]] };
+  routes[12] = nearFirst;
+  routes[4] = nearSecond;
+  const labels = [{ relation: owner, relationIndex: 0, label: 'indexed', ...rect(20, 100, 20, 1) }];
+
+  const hits = collectLabelRouteClearance({ labels, routedRelations: routes, threshold: 4 });
+  assert.deepEqual(hits.map((hit) => hit.otherRelationIndex), [5, 13]);
+  assert.deepEqual(hits.map((hit) => hit.clearance), [2, 0]);
+});
+
+test('collectLabelRouteClearance keeps very long routes in the global candidate set', () => {
+  const owner = { id: 'owner', from: 'a', to: 'b' };
+  const long = { id: 'long', from: 'c', to: 'd' };
+  const hits = collectLabelRouteClearance({
+    labels: [{ relation: owner, relationIndex: 0, label: 'long route', ...rect(50000, 10, 20, 10) }],
+    routedRelations: [{ relation: long, relationIndex: 1, points: [[0, 15], [100000, 15]] }],
+    threshold: 4,
+  });
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].otherRelation, long);
+  assert.equal(hits[0].clearance, 0);
+});
+
+test('collectLabelRouteClearance falls back for unsafe finite grid coordinates', () => {
+  const owner = { id: 'owner', from: 'a', to: 'b' };
+  const unsafe = { id: 'unsafe', from: 'c', to: 'd' };
+  const hits = collectLabelRouteClearance({
+    labels: [{ relation: owner, relationIndex: 0, label: 'unsafe coordinate', ...rect(1e20, 1e20, 1e7, 1e7) }],
+    routedRelations: [{ relation: unsafe, relationIndex: 1, points: [[1e20 - 1e8, 1e20 + 5e6], [1e20 + 1e8, 1e20 + 5e6]] }],
+    threshold: 4,
+  });
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].otherRelation, unsafe);
+  assert.equal(hits[0].clearance, 0);
+});
+
+test('collectLabelRouteClearance falls back when threshold query is unselective', () => {
+  const owner = { id: 'owner', from: 'a', to: 'b' };
+  const other = { id: 'other', from: 'c', to: 'd' };
+  const hits = collectLabelRouteClearance({
+    labels: [{ relation: owner, relationIndex: 0, label: 'wide threshold', ...rect(100, 100, 10, 10) }],
+    routedRelations: [{ relation: other, relationIndex: 1, points: [[0, 105], [200, 105]] }],
+    threshold: 1e9,
+  });
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].otherRelation, other);
+  assert.equal(hits[0].clearance, 0);
+});
+
+test('collectLabelRouteClearance stays bounded for thousands of sparse routes', () => {
+  const count = 3000;
+  const routedRelations = Array.from({ length: count }, (_, index) => ({
+    relation: { id: `route-${index}`, from: `a-${index}`, to: `b-${index}` },
+    relationIndex: index,
+    points: [[0, index * 20], [100, index * 20]],
+  }));
+  const labels = routedRelations.map((route, index) => ({
+    relation: route.relation,
+    relationIndex: index,
+    label: `label-${index}`,
+    ...rect(20, index * 20 - 2, 20, 4),
+  }));
+  const started = performance.now();
+  const hits = collectLabelRouteClearance({ labels, routedRelations, threshold: 2 });
+  const elapsed = performance.now() - started;
+
+  assert.deepEqual(hits, []);
+  assert.ok(elapsed < 1500, `expected sparse clearance scan under 1500ms, received ${elapsed.toFixed(1)}ms`);
+});
+
 test('endpoint-side direction distinguishes perpendicular entry from a tangent border run', () => {
   const clean = [[350, 160], [350, 200], [150, 200], [150, 240]];
   const tangent = [[350, 160], [350, 200], [100, 200], [100, 240], [150, 240]];
