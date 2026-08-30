@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SCENARIO_RECIPES } from '../archify/recipes/scenarios.mjs';
+import { SCENARIO_RECIPES, startPromptsFor } from '../archify/recipes/scenarios.mjs';
 import { copySiteAssets } from './copy-site-assets.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -25,13 +25,21 @@ const startData = Object.fromEntries(Object.entries(START_RECIPE_IDS).map(([type
   if (!recipe || recipe.type !== type) {
     throw new Error(`Missing canonical start recipe ${JSON.stringify(id)} for ${type}.`);
   }
+  const enPrompts = startPromptsFor(recipe, 'en');
+  const zhPrompts = startPromptsFor(recipe, 'zh');
   return [type, {
     id: recipe.id,
     type: recipe.type,
     proof: recipe.proof,
     presentation: recipe.presentation,
-    en: recipe.en,
-    zh: recipe.zh,
+    en: {
+      ...recipe.en,
+      ...enPrompts,
+    },
+    zh: {
+      ...recipe.zh,
+      ...zhPrompts,
+    },
   }];
 }));
 

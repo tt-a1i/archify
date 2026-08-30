@@ -217,8 +217,7 @@ test('cleanFlowProblems exempts endpoints and ignores missing endpoint geometry'
     pathFor: () => ({ points: [[20, 10], [80, 10]] }),
     diagramType: 'workflow',
     relationCollection: 'edges',
-    obstacleKind: 'node',
-    profile: 'standard'
+    obstacleKind: 'node'
   });
   assert.deepEqual(endpointOnly, []);
 
@@ -247,8 +246,7 @@ test('cleanFlowProblems uses clearance, reports the first segment, and deduplica
     pathFor: () => ({ points: [[0, -1], [20, -1], [0, 5], [20, 5]] }),
     diagramType: 'workflow',
     relationCollection: 'edges',
-    obstacleKind: 'node',
-    profile: 'standard'
+    obstacleKind: 'node'
   });
   assert.equal(problems.length, 1);
   assert.match(problems[0], /segment 0 \[0, -1\] -> \[20, -1\]/);

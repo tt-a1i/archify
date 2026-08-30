@@ -167,7 +167,7 @@ Archify 的渲染器给你一个 lane/stage 网格（约束），但让你决定
 
 ---
 
-Archify 的 JSON IR 有一个强制字段叫 `schema_version: 1`。从第一天就强制了。打破性变更触发版本号升级，旧版本永远合法。
+Archify 的 JSON IR 从第一天就强制声明 `schema_version`。最初五种图都固定为 `schema_version: 1`；现在 Workflow 是明确的例外：v1 继续合法并保持旧版固定布局，v2 则显式选择新的可读性编译器。其他四种图仍固定为 v1。打破性变更触发版本号升级，旧版本永远合法。
 
 这一行比它前面 200 行的 SKILL.md 都更能说明问题。
 

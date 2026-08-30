@@ -12,6 +12,16 @@ Read both the mode schema and `schemas/common.schema.json`. The mode schemas use
 
 Do not invent fields. Use the nearest matching example for structure, then author fresh IDs, wording, facts, and layout.
 
+## Workflow layout contracts
+
+Use schema v2 for new workflows and keep schema v1 when an existing source must
+retain fixed geometry. In both versions, `col` stays in `0..5` and semantic
+edge labels are never deleted as a spacing repair. Do not change only
+`schema_version` when absolute coordinates exist: follow the canonical
+[migration and layout-receipt contract](../renderers/workflow/README.md#migration-and-layout-receipt).
+The complete normative invariants live in the workflow renderer's
+[layout contracts](../renderers/workflow/README.md#layout-contracts).
+
 ## Legend contract
 
 Omit `meta.legend` for the truthful default: `auto` lists only semantic kinds
@@ -115,12 +125,15 @@ CJK characters count as two units
 
 Relationship labels are semantic data. If the gap is too small, move the label,
 adjust the route or spacing, then shorten the wording while preserving meaning.
-Only delete a label when both endpoints fully imply the relationship and it
-contains no protocol, action, direction, synchronous/asynchronous behavior, or
-cross-boundary mechanism. Explain why a deleted label is redundant. Never
-delete a meaningful label merely to pass `showcase`. Apply a diagnosed
-`labelAt`, `labelDx`/`labelDy`, or `labelSegment` before guessing several
-geometry controls at once.
+Omit only wording already fully implied by both endpoints and carrying no
+protocol, action, direction, synchronous/asynchronous behavior, or
+cross-boundary mechanism. Preserve every meaningful label.
+Deleting it is not a spacing repair. If a relationship starts unlabeled because
+its endpoints fully imply it, explain why the wording is redundant; this is a
+semantic authoring choice, not a spacing repair. In workflow v2, let the compiler
+allocate its measured mask before applying a diagnosed `labelAt`,
+`labelDx`/`labelDy`, or `labelSegment`. Apply one diagnosed geometry control at
+a time.
 
 ### Repair order
 
@@ -142,7 +155,11 @@ Grid placement is preferred when the schema supports it. Free positions are appr
 
 ### Workflow
 
-Lanes express responsibility or phase. Columns express progression. Keep the happy path monotonic; route retries and exception returns outside the main lane corridor.
+Lanes express responsibility or phase. Columns `0..5` express logical
+progression. Start new workflows on `readable-v2`; retain `fixed-v1` only for
+legacy geometry compatibility. Keep the happy path monotonic, preserve semantic
+edge labels, and route retries and exception returns outside the main lane
+corridor.
 
 ### Sequence
 
@@ -154,11 +171,20 @@ Stages express transformation or custody. Rows separate parallel streams. Label 
 
 ### Lifecycle
 
-Main phases use columns `0..4`; event and terminal bands use columns `0..2`. A recoverable failure needs a real transition back to an active state. A card or guided view saying “retry” is not topology.
+Main phases use columns `0..4`; event and terminal bands use columns `0..2`.
+Event/terminal column `N` aligns to the same x coordinate as main column
+`N + 2`. A recoverable failure needs a real transition back to an active state.
+A card or guided view saying “retry” is not topology.
 
 ## Repository evidence
 
-When the diagram must reflect real code, inspect repository entrypoints, runtime boundaries, storage, transports, and deployment configuration before authoring. Record only evidence you actually verified. Use `--repo-root <path>` when the chosen renderer supports evidence receipts. Never infer runtime causality from file proximity or naming alone.
+When an architecture diagram must reflect real code, inspect repository
+entrypoints, runtime boundaries, storage, transports, and deployment
+configuration before authoring. Record only evidence you actually verified.
+`--repo-root <path>` is architecture-only and is accepted by architecture
+`render`, `validate`, `deliver`, `preview`, and `compare`; workflow, sequence,
+dataflow, and lifecycle reject it. Never infer runtime causality from file
+proximity or naming alone.
 
 ## Hand-placed fallback
 

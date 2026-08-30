@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Archify Start — From Artifact to First Diagram</title>
-  <meta name="description" content="Install Archify, copy one bounded prompt, and create a verifiable technical diagram without sending repository or diagram content to this page.">
+  <title>Archify Start — Describe It, Then See It</title>
+  <meta name="description" content="Create a verifiable technical diagram directly from a plain-language description, pasted Mermaid, or a repository. No repository is required.">
   <meta name="theme-color" content="#eff2f1">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Archify Start — One bounded prompt to a verifiable diagram">
-  <meta property="og:description" content="Choose a technical question, install Archify, and copy an exact prompt backed by a verified example.">
+  <meta property="og:title" content="Archify Start — Describe it, then see it">
+  <meta property="og:description" content="Start with a plain-language description, pasted Mermaid, or real code. No repository is required.">
   <meta property="og:url" content="https://tt-a1i.github.io/archify/start.html">
   <meta property="og:image" content="https://tt-a1i.github.io/archify/assets/archify-social-preview.png">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><polygon points='14,2 26,8 26,20 14,26 2,20 2,8' fill='%23083344' stroke='%2322d3ee' stroke-width='1.5'/><circle cx='14' cy='15' r='2.5' fill='%2322d3ee'/></svg>">
@@ -68,6 +68,18 @@
     .lead-copy { color:var(--muted); font-size:.9375rem; line-height:1.72; text-wrap:pretty; }
     .trust-line { display:flex; gap:.6rem; align-items:flex-start; margin-top:1.125rem; color:var(--emerald); font-family:var(--font-mono); font-size:.6875rem; line-height:1.65; }
     .trust-line::before { content:'✓'; flex:0 0 auto; }
+
+    /* INPUT PATH — make the no-repository path explicit before diagram choices */
+    .input-paths { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.625rem; margin-bottom:1.25rem; }
+    .input-path {
+      min-height:72px; padding:.85rem 1rem; text-align:left;
+      border:1px solid var(--line); border-radius:10px; background:var(--paper);
+      color:var(--muted); cursor:pointer; transition:all .18s var(--ease-out);
+    }
+    .input-path:hover { color:var(--ink); border-color:var(--line-hi); }
+    .input-path strong { display:block; margin-bottom:.3rem; color:inherit; font-size:.8125rem; font-weight:600; }
+    .input-path span { display:block; font-size:.6875rem; line-height:1.5; }
+    .input-path[aria-selected="true"] { border-color:var(--accent); background:var(--accent-soft); color:var(--ink); box-shadow:inset 3px 0 0 var(--accent); }
 
     /* TYPE TABS */
     .type-shell { margin-bottom:var(--bento-gap,14px); padding:1.25rem 1.5rem 1.5rem; border:1px solid var(--line-hi); border-radius:14px; background:var(--paper-raised); }
@@ -147,6 +159,7 @@
       .lead { grid-template-columns:1fr; gap:1.5rem; margin-bottom:2.5rem; }
       .workbench { grid-template-columns:1fr; }
       .type-tabs { grid-template-columns:repeat(2,1fr); }
+      .input-paths { grid-template-columns:1fr; }
       .type-tab:last-child { grid-column:1 / -1; }
     }
     @media (max-width:560px) {
@@ -185,16 +198,21 @@
   <main>
     <header class="lead">
       <div>
-        <p class="lead-label" data-en="From a real artifact to your own" data-zh="从真实成品到你自己的图">From a real artifact to your own</p>
-        <h1><span data-en="One install." data-zh="一次安装，">One install.</span><span class="title-gap" aria-hidden="true"> </span><em data-en="One bounded prompt." data-zh="一段有边界的提示词。">One bounded prompt.</em></h1>
+        <p class="lead-label" data-en="Start with words, Mermaid, or code" data-zh="从描述、Mermaid 或代码开始">Start with words, Mermaid, or code</p>
+        <h1><span data-en="Describe it." data-zh="直接说，">Describe it.</span><span class="title-gap" aria-hidden="true"> </span><em data-en="Archify maps it." data-zh="Archify 就能画。">Archify maps it.</em></h1>
       </div>
       <div>
-        <p class="lead-copy" data-en="Choose the technical question closest to the artifact you saw. Copy a tested starting prompt, then let your coding agent inspect the real repository before it draws." data-zh="选择最接近你刚才所看成品的技术问题。复制一段经过验证的起始提示词，再让编码智能体先检查真实仓库，然后作图。">Choose the technical question closest to the artifact you saw. Copy a tested starting prompt, then let your coding agent inspect the real repository before it draws.</p>
-        <div class="trust-line" data-en="No repository content or diagram data is sent to this page." data-zh="这个页面不会接收仓库内容或图表数据。">No repository content or diagram data is sent to this page.</div>
+        <p class="lead-copy" data-en="No repository is required. Describe a system or flow in a normal agent chat and Archify will turn it into a checked, interactive diagram. If code exists, the same skill can inspect it for evidence." data-zh="不需要绑定代码库。在任意 Agent 对话里用自然语言描述系统或流程，Archify 就会把它变成经过校验的交互图；如果有代码，也可以再让它读取仓库作为证据。">No repository is required. Describe a system or flow in a normal agent chat and Archify will turn it into a checked, interactive diagram. If code exists, the same skill can inspect it for evidence.</p>
+        <div class="trust-line" data-en="Your description is enough to make the first diagram." data-zh="只有一段描述，也足够画出第一张图。">Your description is enough to make the first diagram.</div>
       </div>
     </header>
 
     <section class="type-shell" aria-labelledby="type-label">
+      <p class="type-label"><span data-en="Choose how to start" data-zh="选择如何开始">Choose how to start</span><strong data-en="Repository optional" data-zh="代码库可选">Repository optional</strong></p>
+      <div class="input-paths" role="tablist" aria-label="Input source">
+        <button class="input-path" type="button" role="tab" data-input="description"><strong data-en="Just describe it" data-zh="直接描述">直接描述</strong><span data-en="Start in any chat. No files or repository needed." data-zh="在任意对话里开始，不需要文件或代码库。">Start in any chat. No files or repository needed.</span></button>
+        <button class="input-path" type="button" role="tab" data-input="repository"><strong data-en="Use a repository" data-zh="从代码库开始">Use a repository</strong><span data-en="Let the agent inspect code when source evidence matters." data-zh="需要源码证据时，再让 Agent 检查代码。">Let the agent inspect code when source evidence matters.</span></button>
+      </div>
       <p class="type-label" id="type-label"><span data-en="Choose the question shape" data-zh="选择问题形态">Choose the question shape</span><strong data-en="5 typed renderers" data-zh="5 种类型化渲染器">5 typed renderers</strong></p>
       <div class="type-tabs" role="tablist" aria-label="Diagram type">
         <button class="type-tab" type="button" role="tab" data-type="architecture" data-en="Architecture" data-zh="架构图">Architecture</button>
@@ -230,7 +248,7 @@
           <pre id="project-command">npx -y skills add tt-a1i/archify --skill archify --agent codex --copy --yes</pre>
         </div>
         <p class="secondary-note" data-en="Raven is supported through a manual ZIP installation, not a generated agent-switcher command. Extract archify.zip into ~/.raven/workspace/skills, which yields ~/.raven/workspace/skills/archify." data-zh="Raven 采用 ZIP 手动安装，不使用 Agent 切换器生成命令。将 archify.zip 解压到 ~/.raven/workspace/skills，解压后会得到 ~/.raven/workspace/skills/archify。">Raven is supported through a manual ZIP installation, not a generated agent-switcher command. Extract archify.zip into ~/.raven/workspace/skills, which yields ~/.raven/workspace/skills/archify.</p>
-        <p class="secondary-note" data-en="The Start link carries only your agent, language, diagram type, and a coarse source label. Journey events stay in this browser session and are never sent by Archify. No repository path, title, node, relationship, or source JSON is recorded." data-zh="Start 链接只携带 Agent、语言、图表类型和粗粒度来源标签。转化步骤只保存在当前浏览器会话中，Archify 不会发送这些数据，也不会记录仓库路径、标题、节点、关系或源 JSON。">The Start link carries only your agent, language, diagram type, and a coarse source label. Journey events stay in this browser session and are never sent by Archify. No repository path, title, node, relationship, or source JSON is recorded.</p>
+        <p class="secondary-note" data-en="The Start link carries only your agent, language, diagram type, input mode, and a coarse source label. Journey events stay in this browser session and are never sent by Archify. No repository path, title, node, relationship, or source JSON is recorded." data-zh="Start 链接只携带 Agent、语言、图表类型、输入模式和粗粒度来源标签。转化步骤只保存在当前浏览器会话中，Archify 不会发送这些数据，也不会记录仓库路径、标题、节点、关系或源 JSON。">The Start link carries only your agent, language, diagram type, input mode, and a coarse source label. Journey events stay in this browser session and are never sent by Archify. No repository path, title, node, relationship, or source JSON is recorded.</p>
       </article>
 
       <article class="panel" aria-live="polite">
@@ -265,15 +283,18 @@
       var DATA = JSON.parse(document.getElementById('start-data').textContent);
       var KNOWN_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
       var KNOWN_AGENTS = new Set(['cursor', 'codex', 'claude-code', 'opencode']);
+      var KNOWN_INPUTS = new Set(['description', 'repository']);
       var KNOWN_SOURCES = new Set(['artifact', 'gallery', 'readme', 'direct']);
       var EVENT_KEY = 'archify.start.events.v1';
       var params = new URLSearchParams(window.location.search);
       var requestedType = params.get('type');
       var requestedAgent = params.get('agent');
       var requestedSource = params.get('source');
+      var requestedInput = params.get('input');
       var type = KNOWN_TYPES.has(requestedType) ? requestedType : 'architecture';
       var agent = KNOWN_AGENTS.has(requestedAgent) ? requestedAgent : 'codex';
       var source = KNOWN_SOURCES.has(requestedSource) ? requestedSource : 'direct';
+      var input = KNOWN_INPUTS.has(requestedInput) ? requestedInput : 'description';
       var language = ArchifySiteLanguage.read();
 
       var title = document.getElementById('recipe-title');
@@ -307,6 +328,7 @@
         next.searchParams.set('agent', agent);
         next.searchParams.delete('lang');
         next.searchParams.set('source', source);
+        next.searchParams.set('input', input);
         history.replaceState(null, '', next.pathname + next.search + next.hash);
       }
 
@@ -337,6 +359,12 @@
         }
       };
 
+      function currentPrompt() {
+        return input === 'description'
+          ? DATA[type][language].descriptionPrompt
+          : DATA[type][language].repositoryPrompt;
+      }
+
       function render() {
         language = ArchifySiteLanguage.write(language);
         var recipe = DATA[type];
@@ -352,13 +380,18 @@
           button.setAttribute('aria-selected', String(active));
           button.tabIndex = active ? 0 : -1;
         });
+        document.querySelectorAll('[data-input]').forEach(function (button) {
+          var active = button.dataset.input === input;
+          button.setAttribute('aria-selected', String(active));
+          button.tabIndex = active ? 0 : -1;
+        });
         var agentName = document.querySelector('[data-agent="' + agent + '"]').textContent;
         agentState.textContent = agentName + (language === 'zh' ? ' · 同一份 Skill' : ' · same Skill');
         installCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --agent ' + agent + ' --global --copy --yes';
         projectCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --agent ' + agent + ' --copy --yes';
         title.textContent = copy.title;
         question.textContent = copy.question;
-        prompt.textContent = copy.prompt;
+        prompt.textContent = currentPrompt();
         includeList.replaceChildren.apply(includeList, copy.include.map(function (item) {
           var entry = document.createElement('li');
           entry.textContent = item;
@@ -389,10 +422,10 @@
         var agentName = document.querySelector('[data-agent="' + agent + '"]').textContent;
         if (language === 'zh') {
           return '为 ' + agentName + ' 安装 Archify：\n' + installCommand.textContent.trim()
-            + '\n\n然后在目标仓库中让 ' + agentName + ' 执行：\n' + DATA[type][language].prompt;
+            + (input === 'description' ? '\n\n然后在任意新对话中直接告诉 ' : '\n\n然后在目标仓库中让 ') + agentName + '：\n' + currentPrompt();
         }
         return 'Install Archify for ' + agentName + ':\n' + installCommand.textContent.trim()
-          + '\n\nThen, in your target repository, ask ' + agentName + ':\n' + DATA[type][language].prompt;
+          + (input === 'description' ? '\n\nThen start any new chat and tell ' : '\n\nThen, in your target repository, ask ') + agentName + ':\n' + currentPrompt();
       }
 
       async function copyText(text, step) {
@@ -444,6 +477,25 @@
         });
       });
 
+      document.querySelectorAll('[data-input]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          input = button.dataset.input;
+          render();
+        });
+        button.addEventListener('keydown', function (event) {
+          var buttons = Array.from(document.querySelectorAll('[data-input]'));
+          var index = buttons.indexOf(button);
+          if (event.key === 'ArrowRight' || event.key === 'ArrowDown') index = (index + 1) % buttons.length;
+          else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') index = (index - 1 + buttons.length) % buttons.length;
+          else if (event.key === 'Home') index = 0;
+          else if (event.key === 'End') index = buttons.length - 1;
+          else return;
+          event.preventDefault();
+          buttons[index].click();
+          buttons[index].focus();
+        });
+      });
+
       document.querySelectorAll('[data-copy-source]').forEach(function (button) {
         button.addEventListener('click', function () {
           var step = button.dataset.copySource === 'install-command' ? 'global_install_copy' : 'project_install_copy';
@@ -451,7 +503,7 @@
         });
       });
       document.getElementById('copy-prompt').addEventListener('click', function () {
-        copyText(DATA[type][language].prompt, 'prompt_copy');
+        copyText(currentPrompt(), 'prompt_copy');
       });
       document.getElementById('copy-starter').addEventListener('click', function () {
         copyText(starterText(), 'starter_copy');

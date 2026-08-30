@@ -202,6 +202,49 @@ try {
     }
   }
 
+  const workflowLayout = JSON.parse(run([
+    'validate', 'workflow', path.join(skillRoot, 'examples', fixtures[1][1]),
+    '--layout-json', '--quality', 'showcase',
+  ]));
+  if (workflowLayout.contract !== 'readable-v2'
+    || workflowLayout.columns?.length !== 6
+    || workflowLayout.diagnostics?.length !== 0) {
+    throw new Error('packaged workflow compiler did not expose a passing readable-v2 layout receipt');
+  }
+
+  const legacyWorkflow = {
+    schema_version: 1,
+    diagram_type: 'workflow',
+    meta: { title: 'Package migration smoke', viewBox: [720, 400], legend: { mode: 'hidden' } },
+    lanes: [{ id: 'main', label: 'Main' }],
+    nodes: [
+      { id: 'source', lane: 'main', col: 0, type: 'frontend', label: 'Source' },
+      { id: 'target', lane: 'main', col: 2, type: 'backend', label: 'Target' },
+    ],
+    edges: [{ id: 'flow', from: 'source', to: 'target', label: 'request' }],
+  };
+  const legacyWorkflowPath = path.join(scratch, 'legacy.workflow.json');
+  const migratedWorkflowPath = path.join(scratch, 'migrated.workflow.json');
+  const migratedAgainPath = path.join(scratch, 'migrated-again.workflow.json');
+  fs.writeFileSync(legacyWorkflowPath, `${JSON.stringify(legacyWorkflow, null, 2)}\n`);
+  const migrationReceipt = JSON.parse(run([
+    'migrate', 'workflow', legacyWorkflowPath, migratedWorkflowPath,
+    '--to-schema', '2', '--json',
+  ]));
+  if (!migrationReceipt.ok || migrationReceipt.fromSchemaVersion !== 1
+    || migrationReceipt.toSchemaVersion !== 2 || !fs.existsSync(migratedWorkflowPath)) {
+    throw new Error('packaged workflow migrator did not produce a schema-v2 destination');
+  }
+  const idempotenceReceipt = JSON.parse(run([
+    'migrate', 'workflow', migratedWorkflowPath, migratedAgainPath,
+    '--to-schema', '2', '--json',
+  ]));
+  if (!idempotenceReceipt.ok || idempotenceReceipt.fromSchemaVersion !== 2
+    || idempotenceReceipt.source?.sha256 !== idempotenceReceipt.destination?.sha256
+    || !fs.readFileSync(migratedWorkflowPath).equals(fs.readFileSync(migratedAgainPath))) {
+    throw new Error('packaged workflow migrator did not preserve byte-identical v2 idempotence');
+  }
+
   const deployment = path.join(scratch, 'deployment.html');
   run(['render', 'architecture', path.join(skillRoot, 'examples', fixtures[0][1]), deployment]);
   run(['check', deployment]);

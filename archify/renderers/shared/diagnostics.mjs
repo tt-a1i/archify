@@ -5,6 +5,7 @@ const DIAGNOSTIC_MODE = process.env.ARCHIFY_DIAGNOSTIC_FORMAT === 'json';
 const recorded = [];
 const recordedMessages = new Set();
 const boundaryKey = Symbol.for('archify.renderer-diagnostic-boundary');
+let recordingSuppressionDepth = 0;
 
 function plainObject(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
@@ -22,15 +23,27 @@ function normalizedDiagnostic(diagnostic) {
     supportedFixes: Array.isArray(diagnostic?.supportedFixes)
       ? [...new Set(diagnostic.supportedFixes.map((fix) => String(fix).trim()).filter(Boolean))]
       : [],
+    ...(Array.isArray(diagnostic?.suppresses) ? {
+      suppresses: [...new Set(diagnostic.suppresses.map((code) => String(code).trim()).filter(Boolean))],
+    } : {}),
   };
 }
 
 export function recordDiagnostic(diagnostic) {
-  if (!DIAGNOSTIC_MODE) return;
+  if (!DIAGNOSTIC_MODE || recordingSuppressionDepth > 0) return;
   const normalized = normalizedDiagnostic(diagnostic);
   if (recordedMessages.has(normalized.message)) return;
   recordedMessages.add(normalized.message);
   recorded.push(normalized);
+}
+
+export function withDiagnosticRecordingSuppressed(callback) {
+  recordingSuppressionDepth += 1;
+  try {
+    return callback();
+  } finally {
+    recordingSuppressionDepth -= 1;
+  }
 }
 
 export function throwDiagnosticError(message, diagnostics) {
@@ -42,17 +55,15 @@ export function throwDiagnosticError(message, diagnostics) {
 
 export function throwDiagnosticProblems(prefix, problems, { code = 'layout/constraint', subject = {} } = {}) {
   const messages = (problems || []).map((problem) => String(problem));
-  for (const message of messages) {
-    recordDiagnostic({
+  const diagnostics = messages.map((message) => normalizedDiagnostic({
       code,
       severity: 'error',
       message,
       subject,
       evidence: {},
       supportedFixes: [],
-    });
-  }
-  throw new Error(`${prefix}:\n- ${messages.join('\n- ')}`);
+    }));
+  throwDiagnosticError(`${prefix}:\n- ${messages.join('\n- ')}`, diagnostics);
 }
 
 function fallbackDiagnostic(error) {

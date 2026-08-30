@@ -6,10 +6,109 @@ import os from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import { SCENARIO_RECIPES, startPromptsFor } from '../recipes/scenarios.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 const repoRoot = path.resolve(skillRoot, '..');
+
+class FakeElement {
+  constructor({ id = '', textContent = '', dataset = {} } = {}) {
+    this.id = id;
+    this.textContent = textContent;
+    this.dataset = dataset;
+    this.style = {};
+    this.attributes = {};
+    this.listeners = {};
+    this.tabIndex = 0;
+  }
+
+  setAttribute(name, value) { this.attributes[name] = String(value); }
+  getAttribute(name) { return this.attributes[name]; }
+  addEventListener(name, listener) { this.listeners[name] = listener; }
+  replaceChildren(...children) { this.children = children; }
+  appendChild() {}
+  remove() {}
+  select() {}
+  focus() { this.focused = true; }
+  click() { return this.listeners.click?.({ preventDefault() {} }); }
+  dispatchKey(key) { return this.listeners.keydown?.({ key, preventDefault() {} }); }
+}
+
+function executeStartPage(html) {
+  const dataMatch = html.match(/<script id="start-data" type="application\/json">([\s\S]*?)<\/script>/);
+  const scriptMatch = html.match(/<script>\n([\s\S]*?)\n  <\/script>\n<\/body>/);
+  assert.ok(dataMatch);
+  assert.ok(scriptMatch);
+
+  const ids = Object.fromEntries([
+    'recipe-title', 'recipe-question', 'recipe-prompt', 'include-list', 'proof-link',
+    'proof-meta', 'copy-status', 'language', 'agent-state', 'install-command',
+    'project-command', 'copy-prompt', 'copy-starter',
+  ].map((id) => [id, new FakeElement({ id })]));
+  ids['start-data'] = new FakeElement({ id: 'start-data', textContent: dataMatch[1] });
+
+  const types = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']
+    .map((type) => new FakeElement({ dataset: { type } }));
+  const agents = ['cursor', 'codex', 'claude-code', 'opencode']
+    .map((agent) => new FakeElement({ textContent: agent === 'codex' ? 'Codex' : agent, dataset: { agent } }));
+  const inputs = ['description', 'repository']
+    .map((input) => new FakeElement({ dataset: { input } }));
+  const copySources = ['install-command', 'project-command']
+    .map((copySource) => new FakeElement({ dataset: { copySource } }));
+  const copied = [];
+  const stored = new Map();
+  let replacedUrl = '';
+  const document = {
+    documentElement: {},
+    body: { appendChild() {} },
+    getElementById(id) { return ids[id]; },
+    createElement() { return new FakeElement(); },
+    execCommand() { return true; },
+    querySelector(selector) {
+      const match = selector.match(/^\[data-agent="([^"]+)"\]$/);
+      return match ? agents.find((element) => element.dataset.agent === match[1]) : null;
+    },
+    querySelectorAll(selector) {
+      if (selector === '[data-type]') return types;
+      if (selector === '[data-agent]') return agents;
+      if (selector === '[data-input]') return inputs;
+      if (selector === '[data-copy-source]') return copySources;
+      if (selector === '[data-en][data-zh]') return [];
+      return [];
+    },
+  };
+  const window = {
+    location: { href: 'https://example.test/start.html', search: '', pathname: '/start.html' },
+    isSecureContext: true,
+    dispatchEvent() {},
+    ArchifySiteLanguage: {
+      read() { return 'en'; },
+      write(value) { return value; },
+    },
+  };
+  const context = {
+    window,
+    ArchifySiteLanguage: window.ArchifySiteLanguage,
+    document,
+    navigator: { languages: ['en'], language: 'en', clipboard: { async writeText(value) { copied.push(value); } } },
+    history: { replaceState(_state, _title, url) { replacedUrl = url; } },
+    sessionStorage: {
+      getItem(key) { return stored.get(key) ?? null; },
+      setItem(key, value) { stored.set(key, value); },
+    },
+    CustomEvent: class { constructor(name, options) { this.name = name; this.detail = options.detail; } },
+    URL,
+    URLSearchParams,
+    Set,
+    Array,
+    JSON,
+    encodeURIComponent,
+  };
+  vm.createContext(context);
+  new vm.Script(scriptMatch[1]).runInContext(context);
+  return { data: JSON.parse(dataMatch[1]), ids, inputs, copied, window, getUrl: () => replacedUrl };
+}
 
 test('start page: checked-in HTML is reproducible from canonical scenario recipes', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-start-page-'));
@@ -33,21 +132,23 @@ test('start page: offers five bounded bilingual starts without ingesting source 
   for (const agent of ['cursor', 'codex', 'claude-code', 'opencode']) {
     assert.match(html, new RegExp(`role="tab" data-agent="${agent}"`));
   }
-  assert.match(html, /data-en="One install\."/);
-  assert.match(html, /data-en="One bounded prompt\."/);
-  assert.match(html, /data-zh="一次安装，"/);
-  assert.match(html, /data-zh="一段有边界的提示词。"/);
-  assert.match(html, /No repository content or diagram data is sent to this page\./);
-  assert.match(html, /这个页面不会接收仓库内容或图表数据/);
+  assert.match(html, /data-en="Describe it\."/);
+  assert.match(html, /data-en="Archify maps it\."/);
+  assert.match(html, /data-zh="直接说，"/);
+  assert.match(html, /data-zh="Archify 就能画。"/);
   assert.match(html, /id="copy-starter"/);
   assert.match(html, /data-en="Copy install \+ prompt"/);
   assert.match(html, /data-zh="复制安装命令 \+ 提示词"/);
+  assert.match(html, /data-en="No repository is required\./);
+  assert.match(html, /data-zh="不需要绑定代码库。/);
+  assert.match(html, /data-input="description"/);
+  assert.match(html, /data-input="repository"/);
 
   const dataMatch = html.match(/<script id="start-data" type="application\/json">([\s\S]*?)<\/script>/);
   assert.ok(dataMatch);
   const data = JSON.parse(dataMatch[1]);
   assert.deepEqual(Object.keys(data), ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
-  assert.ok(Object.values(data).every((entry) => entry.en.prompt && entry.zh.prompt && entry.proof));
+  assert.ok(Object.values(data).every((entry) => entry.en.prompt && entry.zh.prompt && entry.en.descriptionPrompt && entry.zh.descriptionPrompt && entry.en.repositoryPrompt && entry.zh.repositoryPrompt && entry.proof));
 
   const scriptMatch = html.match(/<script>\n([\s\S]*?)\n  <\/script>\n<\/body>/);
   assert.ok(scriptMatch);
@@ -55,8 +156,10 @@ test('start page: offers five bounded bilingual starts without ingesting source 
   assert.match(scriptMatch[1], /KNOWN_TYPES\.has\(requestedType\)/);
   assert.match(scriptMatch[1], /KNOWN_AGENTS\.has\(requestedAgent\)/);
   assert.match(scriptMatch[1], /KNOWN_SOURCES\.has\(requestedSource\)/);
+  assert.match(scriptMatch[1], /KNOWN_INPUTS\.has\(requestedInput\)/);
   assert.match(scriptMatch[1], /next\.searchParams\.set\('agent', agent\)/);
   assert.match(scriptMatch[1], /next\.searchParams\.set\('source', source\)/);
+  assert.match(scriptMatch[1], /next\.searchParams\.set\('input', input\)/);
   assert.match(scriptMatch[1], /next\.searchParams\.delete\('lang'\)/);
   assert.match(scriptMatch[1], /--agent ' \+ agent \+ ' --global --copy --yes/);
   assert.match(scriptMatch[1], /--agent ' \+ agent \+ ' --copy --yes/);
@@ -67,6 +170,63 @@ test('start page: offers five bounded bilingual starts without ingesting source 
   assert.match(scriptMatch[1], /textContent/);
   assert.match(scriptMatch[1], /replaceChildren/);
   assert.doesNotMatch(scriptMatch[1], /innerHTML/);
+});
+
+test('start page: canonical recipes own description and repository prompt variants', () => {
+  const selected = new Map([
+    ['architecture', 'system-overview'],
+    ['workflow', 'agent-tool-call'],
+    ['sequence', 'api-request'],
+    ['dataflow', 'event-stream'],
+    ['lifecycle', 'object-lifecycle'],
+  ]);
+  for (const [type, id] of selected) {
+    const recipe = SCENARIO_RECIPES.find((candidate) => candidate.id === id);
+    assert.equal(recipe?.type, type);
+    for (const language of ['en', 'zh']) {
+      const prompts = startPromptsFor(recipe, language);
+      assert.equal(prompts.descriptionPrompt, recipe.start[language].descriptionPrompt);
+      assert.ok(prompts.repositoryPrompt.toLowerCase().includes(recipe[language].prompt.toLowerCase()));
+    }
+  }
+});
+
+test('start page: input mode drives rendered prompt, copy, keyboard, and URL without changing event schema', async () => {
+  const html = fs.readFileSync(path.join(repoRoot, 'docs/start.html'), 'utf8');
+  const page = executeStartPage(html);
+  const descriptionPrompt = page.data.architecture.en.descriptionPrompt;
+  const repositoryPrompt = page.data.architecture.en.repositoryPrompt;
+
+  assert.equal(page.inputs[0].getAttribute('aria-selected'), 'true');
+  assert.equal(page.inputs[1].getAttribute('aria-selected'), 'false');
+  assert.equal(page.ids['recipe-prompt'].textContent, descriptionPrompt);
+  assert.equal(new URL(page.getUrl(), 'https://example.test').searchParams.get('input'), 'description');
+
+  page.inputs[1].click();
+  assert.equal(page.inputs[1].getAttribute('aria-selected'), 'true');
+  assert.equal(page.ids['recipe-prompt'].textContent, repositoryPrompt);
+  assert.equal(new URL(page.getUrl(), 'https://example.test').searchParams.get('input'), 'repository');
+
+  page.ids['copy-prompt'].click();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(page.copied.at(-1), repositoryPrompt);
+
+  page.inputs[1].dispatchKey('ArrowLeft');
+  assert.equal(page.inputs[0].getAttribute('aria-selected'), 'true');
+  assert.equal(page.inputs[0].focused, true);
+  assert.equal(page.ids['recipe-prompt'].textContent, descriptionPrompt);
+
+  page.ids['copy-starter'].click();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.match(page.copied.at(-1), /Then start any new chat and tell Codex:/);
+  assert.ok(page.copied.at(-1).endsWith(descriptionPrompt));
+
+  const [viewEvent, promptEvent, starterEvent] = page.window.ArchifyStartMetrics.snapshot();
+  for (const event of [viewEvent, promptEvent, starterEvent]) {
+    assert.deepEqual(Object.keys(event), ['schemaVersion', 'step', 'source', 'type', 'agent', 'language']);
+    assert.equal('input' in event, false);
+  }
+  assert.deepEqual([viewEvent.step, promptEvent.step, starterEvent.step], ['start_view', 'prompt_copy', 'starter_copy']);
 });
 
 test('generated artifacts omit the promotional footer and shortcut manual', () => {

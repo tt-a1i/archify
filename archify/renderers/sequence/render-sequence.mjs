@@ -175,13 +175,11 @@ function validateSequence() {
   // segment bands remain intentional pass-through geometry and are excluded.
   problems.push(...cleanFlowProblems({
     relations: sequence.messages,
-    endpointIds: new Set(participants.keys()),
     obstacles: participants.values(),
     pathFor: messagePath,
     diagramType: 'sequence',
     relationCollection: 'messages',
     obstacleKind: 'participant header',
-    profile: sequence.meta?.quality_profile,
     clearance: 0,
     routeHint: 'move the message y below the participant headers or reorder participants'
   }));
