@@ -49,13 +49,35 @@ jobs:
         shell: bash
         run: |
           version="${GITHUB_REF_NAME#v}"
-          if [[ "$version" == *-* ]]; then
+          channel="$(node --input-type=module -e 'import fs from "node:fs"; import { validateLocalRelease } from "./archify/scripts/update-contract.mjs"; const release = validateLocalRelease(JSON.parse(fs.readFileSync("./archify/skill-release.json", "utf8"))); if (release.version !== process.argv[1]) process.exit(1); process.stdout.write(release.channel);' "$version")"
+          if [[ "$channel" == "development" ]]; then
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
             echo "make_latest=false" >> "$GITHUB_OUTPUT"
           else
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
             echo "make_latest=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Stable release tag must be annotated
+        if: steps.release-kind.outputs.prerelease == 'false'
+        shell: bash
+        run: |
+          if [[ "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}" 2>/dev/null || true)" != "tag" ]]; then
+            echo "::error::stable releases require an annotated tag: ${GITHUB_REF_NAME}"
+            exit 1
+          fi
+      - name: Stable notifier manifest must remain on the previous release
+        if: steps.release-kind.outputs.prerelease == 'false'
+        run: |
+          node --input-type=module -e '
+            import fs from "node:fs";
+            import { compareSemver, validateStableUpdateManifest } from "./archify/scripts/update-contract.mjs";
+            const releasing = process.argv[1];
+            const published = validateStableUpdateManifest(JSON.parse(fs.readFileSync("./docs/skill-updates/archify/stable.json", "utf8")));
+            if (compareSemver(published.version, releasing) >= 0) {
+              console.error(`::error::stable.json must remain below v${releasing} until its GitHub Release exists; publish the manifest in a follow-up commit`);
+              process.exit(1);
+            }
+          ' "${GITHUB_REF_NAME#v}"
       - name: Build skill archive
         run: scripts/build-zip.sh /tmp/archify-built.zip
       - name: Validate the exact release archive without installing dependencies
@@ -74,3 +96,7 @@ jobs:
           generate_release_notes: true
           prerelease: ${{ steps.release-kind.outputs.prerelease }}
           make_latest: ${{ steps.release-kind.outputs.make_latest }}
+      - name: Record stable notifier publication follow-up
+        if: steps.release-kind.outputs.prerelease == 'false'
+        run: |
+          echo 'After the repository Pages source is set to GitHub Actions, publish docs/skill-updates/archify/stable.json in a follow-up commit; the gated deploy job will verify this Release, its archify.zip digest, and the tagged Skill tree before exposure.' >> "$GITHUB_STEP_SUMMARY"

@@ -55,8 +55,9 @@ test('start page: offers five bounded bilingual starts without ingesting source 
   assert.match(scriptMatch[1], /KNOWN_TYPES\.has\(requestedType\)/);
   assert.match(scriptMatch[1], /KNOWN_AGENTS\.has\(requestedAgent\)/);
   assert.match(scriptMatch[1], /KNOWN_SOURCES\.has\(requestedSource\)/);
-  assert.match(scriptMatch[1], /next\.set\('agent', agent\)/);
-  assert.match(scriptMatch[1], /next\.set\('source', source\)/);
+  assert.match(scriptMatch[1], /next\.searchParams\.set\('agent', agent\)/);
+  assert.match(scriptMatch[1], /next\.searchParams\.set\('source', source\)/);
+  assert.match(scriptMatch[1], /next\.searchParams\.delete\('lang'\)/);
   assert.match(scriptMatch[1], /--agent ' \+ agent \+ ' --global --copy --yes/);
   assert.match(scriptMatch[1], /--agent ' \+ agent \+ ' --copy --yes/);
   assert.match(scriptMatch[1], /function starterText\(\)/);

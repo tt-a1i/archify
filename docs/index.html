@@ -18,6 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/site-navigation.css">
   <style>
     :root {
       /* Drafted-sheet palette — warm paper, ink, one international-orange accent */
@@ -69,22 +70,11 @@
       mask-image:radial-gradient(ellipse 95% 62% at 50% -6%, black 12%, transparent 75%);
     }
 
-    /* NAV */
-    nav { position:fixed; top:0; left:0; right:0; z-index:100; padding:0 2rem; height:60px; display:flex; align-items:center; justify-content:space-between; background:rgba(247,249,249,0.82); backdrop-filter:blur(14px) saturate(1.15); -webkit-backdrop-filter:blur(14px) saturate(1.15); border-bottom:1px solid var(--line); }
-    .nav-logo { display:flex; align-items:center; gap:.625rem; text-decoration:none; }
-    .nav-logo-text { font-family:var(--font-display); font-optical-sizing:auto; font-size:1.125rem; font-weight:500; color:var(--ink); letter-spacing:-.01em; }
-    .nav-right { display:flex; align-items:center; gap:1.25rem; }
-    .nav-link { font-family:var(--font-mono); font-size:.625rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color .18s var(--ease-out); }
-    .nav-link:hover { color:var(--ink); }
-
     .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.55rem 1.15rem; border-radius:6px; font-family:var(--font-body); font-size:.8125rem; font-weight:500; letter-spacing:-.005em; cursor:pointer; text-decoration:none; transition:all .2s var(--ease-out); border:1px solid transparent; }
     .btn-primary { background:var(--ink); color:var(--paper); }
     .btn-primary:hover { background:#272c31; transform:translateY(-1px); }
     .btn-ghost { background:transparent; color:var(--ink-soft); border-color:var(--line-hi); }
     .btn-ghost:hover { color:var(--ink); border-color:var(--ink); transform:translateY(-1px); }
-    .btn-lang { background:transparent; color:var(--muted); border-color:var(--line-hi); padding:.45rem .8rem; font-family:var(--font-mono); font-size:.5625rem; letter-spacing:.12em; text-transform:uppercase; min-width:44px; justify-content:center; border-radius:6px; }
-    .btn-lang:hover { color:var(--ink); border-color:var(--ink); }
-
     .container { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:0 2rem; }
     section { position:relative; padding:5.25rem 0; }
 
@@ -343,7 +333,6 @@
       .quickstart-layout { grid-template-columns:1fr; }
     }
     @media(max-width:640px) {
-      nav { padding:0 1.25rem; }
       .container { padding:0 1.25rem; }
       section { padding:4rem 0; }
       .hero { padding-top:6.75rem; }
@@ -376,7 +365,6 @@
       footer { padding:2rem 1.25rem; }
       .footer-inner { grid-template-columns:1fr; }
       .footer-left { border-right:0; border-bottom:1px solid var(--line); }
-      .nav-right .nav-link { display:none; }
     }
   </style>
 </head>
@@ -384,7 +372,7 @@
   <div class="grid-bg" aria-hidden="true"></div>
 
   <!-- NAV -->
-  <nav>
+  <nav class="site-nav" aria-label="Primary navigation">
     <a class="nav-logo" href="#">
       <span class="nav-logo-text">Archify</span>
     </a>
@@ -394,7 +382,7 @@
       <a class="nav-link" href="start.html" data-i18n="nav-start">Start</a>
       <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
       <button class="btn btn-lang" id="btn-lang">中文</button>
-      <a class="btn btn-primary" href="#quickstart" data-i18n="nav-install">Install Skill</a>
+      <a class="btn btn-primary nav-cta" href="#quickstart" data-i18n="nav-install">Install Skill</a>
     </div>
   </nav>
 
@@ -847,6 +835,7 @@
     </div>
   </footer>
 
+  <script src="assets/site-language.js"></script>
   <script>
   /* ══════════════════════════════════════
      i18n strings
@@ -1001,7 +990,7 @@
     }
   };
 
-  let lang = localStorage.getItem('archify-lang') || 'en';
+  let lang = ArchifySiteLanguage.read();
   let activeProof = 'signal';
   const btnLang = document.getElementById('btn-lang');
   const proofStage = document.getElementById('hero-proof-stage');
@@ -1069,19 +1058,19 @@
   });
 
   function applyLang(l) {
-    lang = l;
-    localStorage.setItem('archify-lang', l);
-    document.documentElement.lang = l === 'zh' ? 'zh-CN' : 'en';
-    btnLang.textContent = l === 'zh' ? 'EN' : '中文';
-    const dict = LANGS[l];
+    lang = ArchifySiteLanguage.write(l);
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+    btnLang.textContent = lang === 'zh' ? 'EN' : '中文';
+    btnLang.setAttribute('aria-label', lang === 'zh' ? 'Switch to English' : '切换到中文');
+    const dict = LANGS[lang];
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const v = dict[el.dataset.i18n];
       if (v !== undefined) el.innerHTML = v;
     });
     fillRail();
     renderProof(activeProof);
-    document.getElementById('code-en').style.display = l === 'en' ? '' : 'none';
-    document.getElementById('code-zh').style.display = l === 'zh' ? '' : 'none';
+    document.getElementById('code-en').style.display = lang === 'en' ? '' : 'none';
+    document.getElementById('code-zh').style.display = lang === 'zh' ? '' : 'none';
   }
 
   btnLang.addEventListener('click', () => applyLang(lang === 'en' ? 'zh' : 'en'));

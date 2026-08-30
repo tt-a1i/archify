@@ -14,11 +14,12 @@ const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'life
 
 function usage() {
   return `Usage:
-  archify render <type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path]
+  archify render <type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path (architecture only)]
   archify compare architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]
-  archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path]
-  archify preview <type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]
-  archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path]
+  archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path (architecture only)]
+  archify preview <type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path (architecture only)]
+  archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path (architecture only)]
+  archify migrate workflow <old.json> <new.json> --to-schema 2 [--json]
   archify inspect <type> <input.json>
   archify check <output.html>
   archify visual-check <output.html> [--json]
@@ -704,15 +705,15 @@ function commandRender(args) {
   if (result.status !== 0) exitFrom(result);
 }
 
-function reportDeliveryFailure({ json, stage, type, input, output, error, diagnostics = [], status = 1, checker }) {
+function reportArtifactFailure({ command, json, stage, type, input, output, error, diagnostics = [], status = 1, checker }) {
   const receipt = {
     schemaVersion: 1,
     ok: false,
-    command: 'deliver',
+    command,
     stage,
     type,
     input,
-    output,
+    ...(output === undefined ? {} : { output }),
     error,
     diagnostics,
     ...(checker ? { checker } : {}),
@@ -722,21 +723,12 @@ function reportDeliveryFailure({ json, stage, type, input, output, error, diagno
   process.exitCode = status;
 }
 
-function reportValidateFailure({ json, stage, type, input, error, diagnostics = [], status = 1, checker }) {
-  const receipt = {
-    schemaVersion: 1,
-    ok: false,
-    command: 'validate',
-    stage,
-    type,
-    input,
-    error,
-    diagnostics,
-    ...(checker ? { checker } : {}),
-  };
-  if (json) console.log(JSON.stringify(receipt, null, 2));
-  else console.error(formatDiagnostics(error, diagnostics));
-  process.exitCode = status;
+function reportDeliveryFailure(options) {
+  reportArtifactFailure({ ...options, command: 'deliver' });
+}
+
+function reportValidateFailure(options) {
+  reportArtifactFailure({ ...options, command: 'validate' });
 }
 
 function sourceEvidenceFromArtifact(artifact) {
@@ -1484,29 +1476,372 @@ function commandDemo(args) {
   console.log('  archify render architecture <input.json> <output.html>');
 }
 
+function migrationPathDiagnostics(error, sourcePath, destinationPath) {
+  if (Array.isArray(error?.archifyDiagnostics) && error.archifyDiagnostics.length) {
+    return error.archifyDiagnostics.map((entry) => ({
+      ...entry,
+      subject: { ...(entry.subject || {}) },
+      evidence: { ...(entry.evidence || {}) },
+      supportedFixes: [...(entry.supportedFixes || [])],
+    }));
+  }
+  return [diagnostic({
+    code: 'migration/path-preflight',
+    message: 'Could not verify that the workflow migration paths are distinct.',
+    subject: { source: sourcePath, destination: destinationPath },
+    evidence: {
+      ...(error?.code ? { systemCode: error.code } : {}),
+      reason: error?.message || String(error),
+    },
+    supportedFixes: ['remove unsafe path aliases or choose a different destination path'],
+  })];
+}
+
+function migrationReport({
+  ok,
+  sourcePath,
+  destinationPath,
+  sourceBytes,
+  destinationBytes,
+  fromSchemaVersion,
+  preExistingDiagnostics = [],
+  migrationDiagnostics = [],
+  newSchemaDiagnostics = [],
+  changedCoordinates = [],
+  oldRequiredViewBox = null,
+  newRequiredViewBox = null,
+}) {
+  const report = {
+    ok,
+    command: 'migrate',
+    type: 'workflow',
+    source: {
+      path: sourcePath,
+      ...(sourceBytes ? {
+        sha256: createHash('sha256').update(sourceBytes).digest('hex'),
+        bytes: sourceBytes.length,
+      } : {}),
+    },
+    destination: {
+      path: destinationPath,
+      ...(destinationBytes ? {
+        sha256: createHash('sha256').update(destinationBytes).digest('hex'),
+        bytes: destinationBytes.length,
+      } : {}),
+    },
+    fromSchemaVersion: fromSchemaVersion ?? null,
+    toSchemaVersion: 2,
+    preExistingDiagnostics,
+    migrationDiagnostics,
+    newSchemaDiagnostics,
+    changedCoordinates,
+    oldRequiredViewBox,
+    newRequiredViewBox,
+  };
+  if (!ok) {
+    report.diagnostics = [
+      ...migrationDiagnostics,
+      ...newSchemaDiagnostics,
+      ...preExistingDiagnostics,
+    ];
+    if (!report.diagnostics.length) {
+      report.diagnostics.push(diagnostic({
+        code: 'migration/internal',
+        message: 'Workflow migration failed without a classified diagnostic.',
+      }));
+    }
+    report.error = report.diagnostics[0].message;
+  }
+  return report;
+}
+
+function extractMigrationOptions(args) {
+  const positional = [];
+  let json = false;
+  let toSchema;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--json') {
+      json = true;
+      continue;
+    }
+    if (arg === '--to-schema') {
+      toSchema = args[index + 1];
+      if (!toSchema || toSchema.startsWith('--')) fail('--to-schema requires a schema version.');
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--to-schema=')) {
+      toSchema = arg.slice('--to-schema='.length);
+      if (!toSchema) fail('--to-schema requires a schema version.');
+      continue;
+    }
+    if (arg.startsWith('--')) fail(`Unknown migrate option "${arg}".`);
+    positional.push(arg);
+  }
+  return { positional, json, toSchema };
+}
+
+async function commandMigrate(args) {
+  const options = extractMigrationOptions(args);
+  const [type, sourceArgument, destinationArgument] = options.positional;
+  if (
+    type !== 'workflow'
+    || !sourceArgument
+    || !destinationArgument
+    || options.positional.length !== 3
+    || options.toSchema !== '2'
+  ) {
+    fail('Usage: archify migrate workflow <old.json> <new.json> --to-schema 2 [--json]');
+  }
+
+  const sourcePath = path.resolve(sourceArgument);
+  const destinationPath = path.resolve(destinationArgument);
+  let sourceBytes;
+  let sourceDocument;
+  const reportMigrationFailure = ({ status = 1, ...details }) => {
+    const report = migrationReport({
+      ...details,
+      ok: false,
+      sourcePath,
+      destinationPath,
+      sourceBytes,
+      fromSchemaVersion: sourceDocument?.schema_version,
+    });
+    if (options.json) console.log(JSON.stringify(report, null, 2));
+    else console.error(formatDiagnostics(report.error, report.diagnostics));
+    process.exitCode = status;
+  };
+  try {
+    sourceBytes = fs.readFileSync(sourcePath);
+    sourceDocument = JSON.parse(sourceBytes.toString('utf8'));
+  } catch (error) {
+    reportMigrationFailure({
+      preExistingDiagnostics: [inputDiagnostic(error, sourcePath)],
+    });
+    return;
+  }
+  // Unlike render/validate, migrate has no --quality override. Pin every stage
+  // to the document's durable policy and scrub any ambient profile from the
+  // staged renderer by passing this value explicitly.
+  const activeQualityProfile = sourceDocument?.meta?.quality_profile || 'standard';
+
+  const { pathsAlias } = await import('../renderers/shared/output-path.mjs');
+  let sourceDestinationAlias;
+  try {
+    sourceDestinationAlias = pathsAlias(sourcePath, destinationPath);
+  } catch (error) {
+    reportMigrationFailure({
+      migrationDiagnostics: migrationPathDiagnostics(error, sourcePath, destinationPath),
+    });
+    return;
+  }
+  if (sourceDestinationAlias) {
+    reportMigrationFailure({
+      migrationDiagnostics: [diagnostic({
+        code: 'migration/source-destination',
+        message: 'Workflow migration source and destination must be different files.',
+        subject: { source: sourcePath, destination: destinationPath },
+        supportedFixes: ['choose a different destination path and keep the source unchanged'],
+      })],
+    });
+    return;
+  }
+
+  const { migrateWorkflowDocument, serializeMigratedWorkflow } = await import('../migrations/workflow-v2.mjs');
+  let migration;
+  try {
+    migration = migrateWorkflowDocument(sourceDocument);
+  } catch (error) {
+    migration = {
+      ok: false,
+      migrationDiagnostics: [diagnostic({
+        code: 'migration/internal',
+        message: 'Workflow migration failed unexpectedly.',
+        evidence: { reason: error.message },
+        supportedFixes: ['report the source workflow and this diagnostic to the Archify maintainers'],
+      })],
+    };
+  }
+
+  if (!migration.ok) {
+    reportMigrationFailure(migration);
+    return;
+  }
+
+  if (fs.existsSync(destinationPath) && !fs.lstatSync(destinationPath).isFile()) {
+    reportMigrationFailure({
+      ...migration,
+      migrationDiagnostics: [...migration.migrationDiagnostics, diagnostic({
+        code: 'migration/destination-type',
+        message: 'Workflow migration destination must be a regular file path.',
+        subject: { destination: destinationPath },
+        supportedFixes: ['choose a destination path that is absent or names a regular file'],
+      })],
+    });
+    return;
+  }
+
+  const destinationDirectory = path.dirname(destinationPath);
+  let stagingDirectory;
+  try {
+    fs.mkdirSync(destinationDirectory, { recursive: true });
+    stagingDirectory = fs.mkdtempSync(path.join(destinationDirectory, '.archify-migration-'));
+  } catch (error) {
+    reportMigrationFailure({
+      ...migration,
+      migrationDiagnostics: [...migration.migrationDiagnostics, diagnostic({
+        code: 'migration/prepare-destination',
+        message: 'Could not prepare the workflow migration destination.',
+        subject: { destination: destinationPath },
+        evidence: { ...(error?.code ? { systemCode: error.code } : {}), reason: error.message },
+        supportedFixes: ['choose a writable destination directory'],
+      })],
+    });
+    return;
+  }
+
+  const candidatePath = path.join(stagingDirectory, 'candidate.workflow.json');
+  const artifactPath = path.join(stagingDirectory, 'migration-check.html');
+  const destinationBytes = Buffer.from(serializeMigratedWorkflow(migration.document));
+  try {
+    fs.writeFileSync(candidatePath, destinationBytes, { flag: 'wx' });
+    const render = runNode([rendererPath('workflow'), candidatePath, artifactPath], {
+      stdio: 'pipe',
+      env: rendererEnv(activeQualityProfile, undefined, true),
+    });
+    if (render.status !== 0) {
+      const failure = rendererFailure(render);
+      reportMigrationFailure({
+        ...migration,
+        newSchemaDiagnostics: [...migration.newSchemaDiagnostics, ...failure.diagnostics],
+        status: render.status ?? 1,
+      });
+      return;
+    }
+
+    const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), artifactPath], {
+      stdio: 'pipe',
+    });
+    if (check.status !== 0) {
+      let checker;
+      try {
+        checker = JSON.parse(check.stdout);
+      } catch {
+        checker = null;
+      }
+      reportMigrationFailure({
+        ...migration,
+        newSchemaDiagnostics: [
+          ...migration.newSchemaDiagnostics,
+          ...checkerDiagnostics(checker),
+        ],
+        status: check.status ?? 1,
+      });
+      return;
+    }
+
+    if (pathsAlias(sourcePath, destinationPath)) {
+      reportMigrationFailure({
+        ...migration,
+        migrationDiagnostics: [...migration.migrationDiagnostics, diagnostic({
+          code: 'migration/source-destination',
+          message: 'Workflow migration source and destination resolved to the same file before commit.',
+          subject: { source: sourcePath, destination: destinationPath },
+          supportedFixes: ['choose a different destination path and retry'],
+        })],
+      });
+      return;
+    }
+    const currentSourceBytes = fs.readFileSync(sourcePath);
+    if (!currentSourceBytes.equals(sourceBytes)) {
+      reportMigrationFailure({
+        ...migration,
+        migrationDiagnostics: [...migration.migrationDiagnostics, diagnostic({
+          code: 'migration/source-changed',
+          message: 'Workflow migration source changed while the destination was being verified.',
+          subject: { source: sourcePath },
+          supportedFixes: ['retry the migration from a stable workflow source file'],
+        })],
+      });
+      return;
+    }
+
+    fs.renameSync(candidatePath, destinationPath);
+    const report = migrationReport({
+      ...migration,
+      sourcePath,
+      destinationPath,
+      sourceBytes,
+      destinationBytes,
+      fromSchemaVersion: sourceDocument.schema_version,
+    });
+    if (options.json) console.log(JSON.stringify(report, null, 2));
+    else if (sourceDocument.schema_version === 1) {
+      console.log(`migrated workflow schema v1→v2: ${sourcePath} → ${destinationPath}`);
+    } else {
+      console.log(`verified workflow schema v2 migration: ${sourcePath} → ${destinationPath}`);
+    }
+  } catch (error) {
+    const migrationDiagnostics = Array.isArray(error?.archifyDiagnostics)
+      ? migrationPathDiagnostics(error, sourcePath, destinationPath)
+      : [diagnostic({
+        code: 'migration/commit',
+        message: 'Could not commit the verified workflow migration.',
+        subject: { destination: destinationPath },
+        evidence: { ...(error?.code ? { systemCode: error.code } : {}), reason: error.message },
+        supportedFixes: ['choose a writable regular-file destination and retry'],
+      })];
+    reportMigrationFailure({
+      ...migration,
+      migrationDiagnostics: [...migration.migrationDiagnostics, ...migrationDiagnostics],
+    });
+  } finally {
+    try {
+      fs.rmSync(stagingDirectory, { recursive: true, force: true });
+    } catch (error) {
+      console.error(`Warning: could not remove workflow migration staging directory "${stagingDirectory}": ${error.message}`);
+    }
+  }
+}
+
 function commandValidate(args) {
   const qualityArgs = extractQualityArgs(args);
   const repoArgs = extractRepoRootArgs(qualityArgs.rest);
   args = repoArgs.rest;
   const quality = qualityArgs.quality;
   const repoRoot = repoArgs.repoRoot;
+  const knownOptions = new Set(['--json', '--layout-json']);
+  const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
+  if (unknown.length) fail(`Unknown validate option "${unknown[0]}".`);
   const json = args.includes('--json');
   const layoutJson = args.includes('--layout-json');
-  const rest = args.filter((arg) => arg !== '--json' && arg !== '--layout-json');
+  const rest = args.filter((arg) => !knownOptions.has(arg));
   const [type, input] = rest;
-  if (!type || !input) fail(usage());
+  if (!type || !input || rest.length !== 2) fail(usage());
   assertEvidenceType(type, repoRoot);
   const renderer = rendererPath(type);
 
   if (layoutJson) {
-    if (type !== 'architecture') {
-      fail('--layout-json is currently supported for architecture diagrams only.');
+    if (!['architecture', 'workflow'].includes(type)) {
+      fail('--layout-json is currently supported for architecture and workflow diagrams only.');
     }
     const result = runNode([renderer, input, '/dev/null', '--layout-json'], {
       stdio: 'pipe',
       env: rendererEnv(quality, repoRoot, true),
     });
     if (result.status !== 0) {
+      try {
+        const receipt = JSON.parse(result.stdout);
+        if (receipt?.contract && Array.isArray(receipt.diagnostics)) {
+          process.stdout.write(`${JSON.stringify(receipt, null, 2)}\n`);
+          process.exitCode = result.status ?? 1;
+          return;
+        }
+      } catch {
+        // Fall through to the renderer failure contract when no compiler
+        // receipt was produced (for example, input JSON could not be read).
+      }
       const failure = rendererFailure(result);
       reportValidateFailure({
         json,
@@ -1618,7 +1953,13 @@ switch (command) {
   case 'validate':
     commandValidate(args);
     break;
+  case 'migrate':
+    await commandMigrate(args);
+    break;
   case 'inspect':
+    if (args[0] !== 'architecture') {
+      fail('inspect is currently supported for architecture diagrams only.');
+    }
     commandValidate([...args, '--layout-json']);
     break;
   case 'check':

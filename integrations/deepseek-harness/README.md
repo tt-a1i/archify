@@ -4,7 +4,9 @@ Community DeepSeek Harness integration for [Archify](https://github.com/tt-a1i/a
 
 v0.1.0 is experimental compatibility with developer-preview **`@deepseek-ai/dsh@0.1.0-rc.6`** on Node.js **`^22.19.0 || >=24.0.0`**. It is not a stable cross-version guarantee.
 
-The package is a Skill-only bundle: it inserts one filesystem Skill provider named `archify-plugin` and exposes a clean copy of the existing Archify Skill. It does not register native render/validate/deliver tools, a custom Web client, Produced Files chips, telemetry, network access, credentials handling, background services, or `prepare` / `install` / `postinstall` hooks.
+The package is a Skill-only bundle: it inserts one filesystem Skill provider named `archify-plugin` and exposes the Archify 2.14 snapshot released with this package. It does not register native render/validate/deliver tools, a custom Web client, Produced Files chips, telemetry, network access, credentials handling, background services, or `prepare` / `install` / `postinstall` hooks.
+
+Release maintenance is immutable: rebuilding `0.1.0` reads its payload from the `archify-dsh-v0.1.0` tag. Later Archify changes, including the embedded update notifier, are intentionally excluded until a separately authorized DSH release receives a new version.
 
 ## Install
 

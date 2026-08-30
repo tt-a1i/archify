@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Sanitized semantic labels",
+    "legend": { "mode": "hidden" }
+  },
+  "lanes": [
+    { "id": "main", "label": "Main flow" }
+  ],
+  "nodes": [
+    { "id": "request", "lane": "main", "col": 3, "type": "frontend", "label": "Request" },
+    { "id": "result", "lane": "main", "col": 4, "type": "backend", "label": "Result" }
+  ],
+  "edges": [
+    { "id": "request-result", "from": "request", "to": "result", "label": "同步 ✅ ready" }
+  ]
+}
