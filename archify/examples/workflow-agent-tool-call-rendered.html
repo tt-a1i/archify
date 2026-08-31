@@ -5043,6 +5043,26 @@
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-3" x="40" y="446" width="1028" height="114" rx="10" class="c-lane" stroke-width="1"/>
         <text x="54" y="468" class="t-dim" font-size="10" font-weight="600">04 / Tool Execution &amp; Evidence</text>
 
+        <!-- Lane ownership bars (visible at rest, derived from nodes[].lane — no phases needed) -->
+        <rect data-lane-band="ui" x="40" y="52" width="3" height="106" fill="var(--frontend-stroke)" fill-opacity="0.9"/>
+        <rect data-lane-band="agent" x="40" y="178" width="3" height="114" fill="var(--backend-stroke)" fill-opacity="0.9"/>
+        <rect data-lane-band="policy" x="40" y="312" width="3" height="114" fill="var(--security-stroke)" fill-opacity="0.9"/>
+        <rect data-lane-band="tools" x="40" y="446" width="3" height="114" fill="var(--messagebus-stroke)" fill-opacity="0.9"/>
+
+        <!-- Phase column bands (additional cue when phases array is present) -->
+        <rect data-phase-band="intake" x="68" y="52" width="252" height="106" rx="6" fill="var(--text-dim)" fill-opacity="0.055" stroke="var(--text-dim)" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect data-phase-band="intake" x="68" y="178" width="252" height="114" rx="6" fill="var(--text-dim)" fill-opacity="0.055" stroke="var(--text-dim)" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect data-phase-band="intake" x="68" y="312" width="252" height="114" rx="6" fill="var(--text-dim)" fill-opacity="0.055" stroke="var(--text-dim)" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect data-phase-band="intake" x="68" y="446" width="252" height="114" rx="6" fill="var(--text-dim)" fill-opacity="0.055" stroke="var(--text-dim)" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect data-phase-band="reasoning" x="445.20000000000005" y="52" width="252.00000000000006" height="106" rx="6" fill="var(--backend-stroke)" fill-opacity="0.055" stroke="var(--backend-stroke)" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect data-phase-band="reasoning" x="445.20000000000005" y="178" width="252.00000000000006" height="114" rx="6" fill="var(--backend-stroke)" fill-opacity="0.055" stroke="var(--backend-stroke)" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect data-phase-band="reasoning" x="445.20000000000005" y="312" width="252.00000000000006" height="114" rx="6" fill="var(--backend-stroke)" fill-opacity="0.055" stroke="var(--backend-stroke)" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect data-phase-band="reasoning" x="445.20000000000005" y="446" width="252.00000000000006" height="114" rx="6" fill="var(--backend-stroke)" fill-opacity="0.055" stroke="var(--backend-stroke)" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect data-phase-band="execution" x="784" y="52" width="252" height="106" rx="6" fill="var(--messagebus-stroke)" fill-opacity="0.055" stroke="var(--messagebus-stroke)" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect data-phase-band="execution" x="784" y="178" width="252" height="114" rx="6" fill="var(--messagebus-stroke)" fill-opacity="0.055" stroke="var(--messagebus-stroke)" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect data-phase-band="execution" x="784" y="312" width="252" height="114" rx="6" fill="var(--messagebus-stroke)" fill-opacity="0.055" stroke="var(--messagebus-stroke)" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect data-phase-band="execution" x="784" y="446" width="252" height="114" rx="6" fill="var(--messagebus-stroke)" fill-opacity="0.055" stroke="var(--messagebus-stroke)" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="4 3"/>
+
         <!-- Phase headers -->
         <line x1="68" y1="35" x2="320" y2="35" class="a-default" stroke-width="1.1"/>
         <rect x="68" y="27" width="252" height="16" rx="4" class="c-mask"/>

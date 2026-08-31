@@ -1,4 +1,4 @@
-import path from 'node:path';
+﻿import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadDiagramWithBrandMarks, writeDiagram } from '../shared/cli.mjs';
 import { throwDiagnosticError } from '../shared/diagnostics.mjs';

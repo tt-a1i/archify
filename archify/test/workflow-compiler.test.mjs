@@ -264,7 +264,7 @@ test('fixed-v1 compiler preserves the official workflow baseline SVG byte-for-by
   assert.equal(result.receipt.contract, 'fixed-v1');
   assert.equal(
     sha256(result.svg),
-    '4e493db1977889675ce7b04bf9ba60fb97cb50f01fc0fd9e8446861282c65645',
+    '96cf0ddbb2c553c24a19a4e2771066fdad7295b1a99d51b771aff4a8f1882922',
   );
 });
 
@@ -281,7 +281,7 @@ test('fixed-v1 compiler preserves the exact 700x400 compatibility geometry', () 
   assert.deepEqual(svgViewBox(result.svg), [0, 0, 700, 400]);
   assert.equal(
     sha256(result.svg),
-    '28b0167460d16c55ae6bf38bde41368248671a78b3a49133da05ed1efb4354af',
+    'b84b9377418966c41dc5b9dd646723e5ff1b0ca1750dddde2bd1aade7a4b369d',
     'the v1 compiler extraction must not move or reserialize legacy geometry',
   );
 });
@@ -589,7 +589,7 @@ test('readable-v2 shifts top-side routes beyond lane header text deterministical
 
   assert.ok(
     compiled.get('Responsibility owner').receipt.columns[0]
-      > compiled.get('R').receipt.columns[0],
+    > compiled.get('R').receipt.columns[0],
     'the wider lane header must move the col-0 top-side corridor farther right',
   );
 });

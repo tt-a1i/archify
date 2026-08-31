@@ -1,4 +1,4 @@
-// Golden-file harness for the archify renderers. No test framework needed:
+﻿// Golden-file harness for the archify renderers. No test framework needed:
 // renderers are deterministic, so fresh renders must match both checked-in
 // development and packaged example HTML aside from platform checkout line endings. Also covers schema enforcement (negative cases),
 // template freshness of the architecture-mode example, and version sync.
@@ -23,7 +23,7 @@ function check(name, ok, detail) {
     console.log(`  ok    ${name}`);
   } else {
     failures += 1;
-    console.error(`  FAIL  ${name}${detail ? ` — ${detail}` : ''}`);
+    console.error(`  FAIL  ${name}${detail ? ` ÔÇö ${detail}` : ''}`);
   }
 }
 
@@ -98,6 +98,31 @@ for (const [mode, input, golden] of GOLDEN) {
 }
 
 // ---------------------------------------------------------------------------
+// issue #81 regression: lane-ownership bars must appear even when the workflow
+// has NO `phases` array — derived solely from nodes[].lane.
+console.log('lane-only ownership cue (issue #81 regression)');
+{
+  const fixtureInput = path.join(skillRoot, 'test/fixtures/lane-ownership-no-phases.workflow.json');
+  const fixtureGolden = path.join(skillRoot, 'test/fixtures/lane-ownership-no-phases.workflow.html');
+  const out = path.join(tmp, 'lane-ownership-no-phases.workflow.html');
+  try {
+    render('workflow', fixtureInput, out);
+    const fresh = fs.readFileSync(out, 'utf8');
+    const laneBands = (fresh.match(/data-lane-band=/g) || []).length;
+    const phaseBands = (fresh.match(/data-phase-band=/g) || []).length;
+    check('lane-only: data-lane-band present for each lane', laneBands === 3,
+      `expected 3 data-lane-band elements, got ${laneBands}`);
+    check('lane-only: no data-phase-band without phases field', phaseBands === 0,
+      `expected 0 data-phase-band elements, got ${phaseBands}`);
+    const golden = fs.readFileSync(fixtureGolden, 'utf8');
+    check('lane-only: golden matches fresh render', normalizeNewlines(fresh) === normalizeNewlines(golden),
+      'fresh render differs from test/fixtures/lane-ownership-no-phases.workflow.html — re-render and commit');
+  } catch (err) {
+    check('lane-only: render succeeds', false, String(err.stderr || err.message).slice(0, 300));
+  }
+}
+
+// ---------------------------------------------------------------------------
 console.log('schema enforcement (invalid JSON must fail with a path-prefixed message)');
 
 function expectFailure(name, mode, mutate, expectInMessage) {
@@ -160,7 +185,7 @@ for (const tag of ['style', 'script']) {
   const w = blocks(webApp, tag).filter((b) => !b.includes('Sample Web App') && isTemplateOwned(b));
   check(`web-app.html ${tag} blocks match template`,
     JSON.stringify(t) === JSON.stringify(w),
-    'examples/web-app.html was generated from a stale template — re-derive it');
+    'examples/web-app.html was generated from a stale template ÔÇö re-derive it');
 }
 
 // ---------------------------------------------------------------------------
@@ -174,7 +199,7 @@ check('template generator meta matches package.json version',
 const lock = JSON.parse(fs.readFileSync(path.join(skillRoot, 'package-lock.json'), 'utf8'));
 check('package-lock.json version matches package.json',
   lock.version === pkg.version && lock.packages?.['']?.version === pkg.version,
-  `lockfile says ${lock.version} — run npm install and rebuild the zip`);
+  `lockfile says ${lock.version} ÔÇö run npm install and rebuild the zip`);
 
 const skillMd = fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
 const skillVersion = (skillMd.match(/^\s*version:\s*"([^"]+)"/m) || [])[1];

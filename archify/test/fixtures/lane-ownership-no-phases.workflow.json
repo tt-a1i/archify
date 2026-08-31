@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Product development",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "p1", "label": "P1 | Initiation" },
+    { "id": "p2", "label": "P2 | Development" },
+    { "id": "p3", "label": "P3 | Validation" }
+  ],
+  "nodes": [
+    { "id": "proposal_1", "lane": "p1", "col": 1, "type": "security", "label": "First proposal" },
+    { "id": "development", "lane": "p2", "col": 3, "type": "backend", "label": "Dev confirm" },
+    { "id": "validation", "lane": "p3", "col": 5, "type": "backend", "label": "Validation" }
+  ],
+  "edges": [
+    { "from": "proposal_1", "to": "development" },
+    { "from": "development", "to": "validation" }
+  ]
+}
