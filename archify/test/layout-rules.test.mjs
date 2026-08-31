@@ -17,6 +17,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { minimumReadableSourceTextPx } from '../renderers/shared/desktop-readability.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -1263,6 +1264,49 @@ test('architecture: an auto viewBox grows to contain a wide connection label', (
   assert.match(pinned.stderr, /\[composition\/label-canvas-containment\]/);
 });
 
+// Boundary-title fonts are resolved against the same width the canvas actually
+// renders into. When a connection label alone widens the auto canvas past the
+// desktop reader width, the title font must rise with it — otherwise validate
+// would pass an artifact the desktop-readability check rejects.
+test('architecture: label-driven canvas growth keeps boundary titles at the readability floor', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Label-grown canvas', quality_profile: 'showcase' },
+    boundaries: [{
+      kind: 'region',
+      label: 'Shared production tenant isolation and compliance perimeter for the primary region',
+      wraps: ['a', 'b', 'c'],
+    }],
+    components: [
+      { id: 'a', type: 'frontend', label: 'A', pos: [60, 160], size: [140, 54] },
+      { id: 'b', type: 'backend', label: 'B', pos: [480, 160], size: [140, 54] },
+      { id: 'c', type: 'backend', label: 'C', pos: [860, 160], size: [140, 54] },
+      { id: 'd', type: 'database', label: 'D', pos: [860, 320], size: [140, 54] },
+    ],
+    connections: [{
+      id: 'c-to-d',
+      from: 'c',
+      to: 'd',
+      label: 'streaming replication of the full transaction journal with retries',
+      labelAt: [1310, 300],
+    }],
+  };
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const [, width] = html.match(/viewBox="0 0 (\d+) (\d+)"/).map(Number);
+  assert.ok(width > 1395, `expected the label to grow the canvas past 1395px, got ${width}`);
+  const floor = minimumReadableSourceTextPx(width);
+  const fonts = [...html.matchAll(/data-boundary-label=""[^>]*font-size="([\d.]+)"/g)]
+    .map(([, size]) => Number(size));
+  assert.equal(fonts.length, 1, 'expected exactly one boundary title');
+  assert.ok(
+    fonts[0] + 1e-6 >= floor,
+    `boundary title font ${fonts[0]} is below the ${floor}px floor for the ${width}px canvas`,
+  );
+});
+
 // The validator must not answer an off-canvas defect with another off-canvas
 // coordinate: every suggested labelAt has to keep the whole label rect inside.
 test('architecture: label obstacle fixes stay inside the viewBox', () => {
@@ -1289,7 +1333,7 @@ test('architecture: label obstacle fixes stay inside the viewBox', () => {
   assert.ok(rect, `expected a label rect in stderr:\n${stderr}`);
   const width = Number(rect[3]);
   const height = Number(rect[4]);
-  const suggestions = [...stderr.matchAll(/labelAt \[(-?\d+), (-?\d+)\]/g)].map(([, x, y]) => [Number(x), Number(y)]);
+  const suggestions = suggestedLabelAts(stderr);
   assert.ok(suggestions.length > 0, `expected at least one labelAt suggestion:\n${stderr}`);
   for (const [x, y] of suggestions) {
     assert.ok(x - width / 2 >= 0 && x + width / 2 <= 720, `labelAt [${x}, ${y}] leaves the 720px canvas width (label width ${width})`);

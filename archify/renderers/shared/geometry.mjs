@@ -979,6 +979,10 @@ export function collectLabelCanvasOverflow({ labels, viewBox, tolerance = 0.5 })
   for (const [fallbackIndex, label] of asArray(labels).entries()) {
     const rect = label?.rect || label;
     if (!rect || !isFinitePoint(rect.x, rect.y, rect.width, rect.height)) continue;
+    // `check` parses foreign markup, so a malformed negative-size rect is
+    // skipped like the other label collectors do — its flipped interval would
+    // otherwise read as contained.
+    if (rect.width < 0 || rect.height < 0) continue;
     const horizontal = axisCanvasOverflow(rect.x, rect.width, canvasWidth, originX);
     const vertical = axisCanvasOverflow(rect.y, rect.height, canvasHeight, originY);
     const overflow = {
@@ -1523,9 +1527,17 @@ function clampAnchorToCanvas(anchorValue, offset, size, extent) {
  *   rect inside the canvas.
  * The authored values therefore come from `labelRect.relation`, the authored
  * relationship the renderer already attaches to every label record.
+ * `obstacles` is every box the callers' own overlap loop tests (defaults to
+ * the named obstacle alone): a placement that merely traded the named obstacle
+ * for its neighbor would fail the same rule again when applied.
  */
-export function suggestLabelObstacleFix(labelRect, lx, ly, obstacle, obstacleKind = 'component', viewBox) {
-  const [canvasWidth, canvasHeight] = asArray(viewBox);
+export function suggestLabelObstacleFix(labelRect, lx, ly, obstacle, obstacleKind = 'component', viewBox, obstacles) {
+  // Renderer canvases are origin-zero [width, height] by schema, but read a
+  // 4-number [min-x, min-y, width, height] the same way the containment
+  // collector does — degraded no-ajv runs must not clamp against the origin
+  // pair as if it were the canvas size.
+  const box = asArray(viewBox);
+  const [canvasWidth, canvasHeight] = box.length === 4 ? box.slice(2) : box;
   const xOffset = labelRect.x - lx;
   const yOffset = labelRect.y - ly;
   const anchorX = clampAnchorToCanvas(lx, xOffset, labelRect.width, canvasWidth);
@@ -1535,22 +1547,27 @@ export function suggestLabelObstacleFix(labelRect, lx, ly, obstacle, obstacleKin
   // lifecycle note) back on the obstacle it must clear. The overlap filter
   // uses the callers' own detection call, so a surviving hint cannot re-raise
   // the problem it repairs.
+  const blockers = obstacles ? [...obstacles] : [obstacle];
   const placements = [
     { name: 'below', y: Math.round(obstacle.y + obstacle.height + 4 - yOffset) },
     { name: 'above', y: Math.round(obstacle.y - 4 - labelRect.height - yOffset) },
   ].filter(({ y }) => anchorX !== null
     && anchorFitsCanvas(y, yOffset, labelRect.height, canvasHeight)
-    && !rectsOverlap(
+    && blockers.every((blocker) => !rectsOverlap(
       { x: anchorX + xOffset, y: y + yOffset, width: labelRect.width, height: labelRect.height },
-      obstacle,
+      blocker,
       -2,
-    ));
+    )));
   const lines = [
     `  label rect: ${formatRect(labelRect)}`,
     `  ${obstacleKind} "${obstacle.id}" rect: ${formatRect(obstacle)}`,
   ];
   if (!placements.length) {
-    lines.push(`  Suggested fix: no position clears "${obstacle.id}" inside the ${canvasWidth}x${canvasHeight} viewBox — shorten the label, move the ${obstacleKind}, or enlarge meta.viewBox`);
+    // Only the vertical slots beside the named obstacle were tried, so an
+    // unclaimed spot elsewhere may still exist — never assert that none does.
+    lines.push(anchorX === null
+      ? `  Suggested fix: the ${Math.round(labelRect.width)}px label rect cannot fit the ${canvasWidth}x${canvasHeight} viewBox at any anchor — shorten the label or enlarge meta.viewBox`
+      : `  Suggested fix: no placement directly above or below "${obstacle.id}" stays clear inside the ${canvasWidth}x${canvasHeight} viewBox — move the label to an open area with labelAt, shorten the label, move the ${obstacleKind}, or enlarge meta.viewBox`);
     return lines.join('\n');
   }
   const authored = labelRect.relation || {};

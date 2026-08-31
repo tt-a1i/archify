@@ -2,7 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { collectAmbiguousCorridors, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
+import { collectAmbiguousCorridors, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 import {
   DESKTOP_READABILITY_VIEWPORT,
   DESKTOP_READER_DIAGRAM_WIDTH,
@@ -189,17 +189,20 @@ if (svgMatches.length === 1) {
         from: hit.start.map((value) => Math.round(value * 10) / 10),
         to: hit.end.map((value) => Math.round(value * 10) / 10),
       })),
-      ...labelCanvasOverflow.map((hit) => ({
-        severity: labelContainmentIsError ? 'error' : 'warning',
-        code: 'composition/label-canvas-containment',
-        label: hit.label?.label || hit.relation?.label || '',
-        relationship: relationshipRecord(hit.relation),
-        labelRect: roundedRect(hit.rect),
-        viewBox: hit.viewBox,
-        viewBoxOrigin: hit.viewBoxOrigin,
-        overflowPx: hit.overflowPx,
-        detail: `[composition/label-canvas-containment] ${qualityProfile} label "${hit.label?.label || hit.relation?.label || ''}" on ${relationshipName(hit.relation)} extends past the ${describeLabelCanvasOverflow(hit)} (label rect ${formatRectDetail(hit.rect)}; viewBox ${hit.viewBox[0]}x${hit.viewBox[1]}${hit.viewBoxOrigin.some(Boolean) ? ` at ${hit.viewBoxOrigin[0]},${hit.viewBoxOrigin[1]}` : ''}) — adjust labelAt, labelDx, labelDy, or labelSegment; otherwise enlarge meta.viewBox.`,
-      })),
+      ...labelCanvasOverflow.map((hit) => {
+        const label = hit.label?.label || hit.relation?.label || '';
+        return {
+          severity: labelContainmentIsError ? 'error' : 'warning',
+          code: 'composition/label-canvas-containment',
+          label,
+          relationship: relationshipRecord(hit.relation),
+          labelRect: roundedRect(hit.rect),
+          viewBox: hit.viewBox,
+          viewBoxOrigin: hit.viewBoxOrigin,
+          overflowPx: hit.overflowPx,
+          detail: `[composition/label-canvas-containment] ${qualityProfile} label "${label}" on ${relationshipName(hit.relation)} extends past the ${describeLabelCanvasOverflow(hit)} (label rect ${formatRect(hit.rect)}; viewBox ${hit.viewBox[0]}x${hit.viewBox[1]}${hit.viewBoxOrigin.some(Boolean) ? ` at ${hit.viewBoxOrigin[0]},${hit.viewBoxOrigin[1]}` : ''}) — use renderer-supported label controls (shorten the label or reorder participants for sequence; otherwise labelAt, labelDx, labelDy, or labelSegment), or enlarge meta.viewBox.`,
+        };
+      }),
       ...relationshipCrossings.map((hit) => ({
         severity: crossingIsError ? 'error' : 'warning',
         code: 'composition/proper-crossing',
@@ -650,10 +653,6 @@ function viewBoxRect(svgAttrs) {
 
 function viewBoxSize(svgAttrs) {
   return viewBoxRect(svgAttrs).slice(2);
-}
-
-function formatRectDetail(rect) {
-  return `[${Math.round(rect.x)}, ${Math.round(rect.y)}, ${Math.round(rect.width)}, ${Math.round(rect.height)}]`;
 }
 
 function collectDesktopReadability(svgAttrs, fragment) {

@@ -150,26 +150,23 @@ const architectureLegendEntries = resolveLegend(
 );
 
 
-// One source for connection label geometry: the auto canvas has to cover the
-// same rects the containment rule measures, and the layout report has to
-// publish them.
+// One source for connection label geometry: the rect the containment rule
+// measures is the rect the SVG mask draws, the auto canvas covers, the legend
+// avoids, and the layout report publishes.
+function connectionLabelBox(conn) {
+  if (!conn.label) return null;
+  const [lx, ly] = labelPoint(conn, pathFor(conn).points);
+  const width = Math.max(30, textUnits(conn.label) * 4.8 + 10);
+  return { x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly };
+}
+
 function connectionLabelRects() {
   const rects = [];
   for (const [relationIndex, conn] of asArray(arch.connections).entries()) {
-    if (!conn.label || !components.has(conn.from) || !components.has(conn.to)) continue;
-    const [lx, ly] = labelPoint(conn, pathFor(conn).points);
-    const width = Math.max(30, textUnits(conn.label) * 4.8 + 10);
-    rects.push({
-      relation: conn,
-      relationIndex,
-      label: conn.label,
-      x: lx - width / 2,
-      y: ly - 10,
-      width,
-      height: 14,
-      lx,
-      ly,
-    });
+    if (!components.has(conn.from) || !components.has(conn.to)) continue;
+    const box = connectionLabelBox(conn);
+    if (!box) continue;
+    rects.push({ relation: conn, relationIndex, label: conn.label, ...box });
   }
   return rects;
 }
@@ -207,7 +204,7 @@ function resolvedViewBoxWidth(candidateBoundaries) {
   if (Array.isArray(arch.meta?.viewBox) && Number.isFinite(arch.meta.viewBox[0])) {
     return arch.meta.viewBox[0];
   }
-  return autoViewBoxFor(candidateBoundaries)[0];
+  return autoViewBoxFor(candidateBoundaries, connectionLabels)[0];
 }
 
 function expandBoundaryForReadableTitle(boundary, minimumFontSize) {
@@ -304,6 +301,26 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
   });
 }
 
+// ---- Routing state ----------------------------------------------------------
+// Initialized before the boundary-title work below: connection label rects are
+// part of the derived canvas, so the title convergence must measure the same
+// width the diagram actually renders into (a title sized for a narrower canvas
+// would fall below the desktop-readability floor once labels grow it). Routing
+// reads only components and connections, never boundaries or the viewBox.
+const OUTWARD_SIDE_VECTOR = {
+  left: [-1, 0],
+  right: [1, 0],
+  top: [0, -1],
+  bottom: [0, 1],
+};
+const AUTOMATIC_PORT_CORNER_GUTTER = 16;
+const AUTOMATIC_PORT_ALIGNMENT_DELTA = 16;
+const pathCache = new Map();
+const automaticPorts = automaticPortSpread(arch.connections, components);
+// The auto canvas has to cover these rects; an authored viewBox is never
+// resized to fit them — there the containment rule reports the clipping.
+const connectionLabels = connectionLabelRects();
+
 const rawBoundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
 function resolveBoundaryTitles() {
   if (!enforcesBoundaryTitleComposition || rawBoundaries.length === 0) {
@@ -358,7 +375,10 @@ function componentContext(component) {
 }
 
 // ---- Auto viewBox: fit all geometry + the measured resolved legend ----------
-let viewBox = arch.meta?.viewBox || autoViewBoxFor(boundaries);
+// Connection labels are diagram content, so an auto canvas that stopped at the
+// component/boundary bbox would clip them; the label rects join the fit here
+// and in the title convergence above, which sizes fonts for this same width.
+const viewBox = arch.meta?.viewBox || autoViewBoxFor(boundaries, connectionLabels);
 const legendY = () => viewBox[1] - 16;
 
 // ---- Validation: mechanical correctness, never layout taste -----------------
@@ -592,11 +612,11 @@ function validateArchitecture() {
   }));
 
   // Connection labels must not land on top of components.
-  const labelRects = connectionLabelRects();
+  const labelRects = connectionLabels;
   for (const rect of labelRects) {
     for (const c of components.values()) {
       if (rectsOverlap(rect, c, -2)) {
-        problems.push(`Label "${rect.label}" overlaps component "${c.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, c, 'component', viewBox)}`);
+        problems.push(`Label "${rect.label}" overlaps component "${c.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, c, 'component', viewBox, components.values())}`);
       }
     }
     if (enforcesBoundaryTitleComposition) {
@@ -636,7 +656,7 @@ function validateArchitecture() {
 }
 
 function buildLayoutReport() {
-  const labels = connectionLabelRects().map((rect) => ({
+  const labels = connectionLabels.map((rect) => ({
     text: rect.label,
     x: Math.round(rect.x),
     y: Math.round(rect.y),
@@ -685,13 +705,6 @@ function routeClearsEndpointComponents(points, from, to) {
   }
   return true;
 }
-
-const OUTWARD_SIDE_VECTOR = {
-  left: [-1, 0],
-  right: [1, 0],
-  top: [0, -1],
-  bottom: [0, 1],
-};
 
 function outwardStub(point, side, distance = 24) {
   const [dx, dy] = OUTWARD_SIDE_VECTOR[side] || [0, 0];
@@ -757,9 +770,6 @@ function sideAwareBridgeCandidates(start, end, fromSide, toSide) {
     .filter((points) => routeHonorsEndpointSides(points, fromSide, toSide))
     .map((points) => points.slice(1, -1));
 }
-
-const AUTOMATIC_PORT_CORNER_GUTTER = 16;
-const AUTOMATIC_PORT_ALIGNMENT_DELTA = 16;
 
 function portHasCornerClearance(rect, side, point) {
   if (side === 'left' || side === 'right') {
@@ -931,8 +941,6 @@ function routeVia(conn, from, to, start, end, fromSide, toSide) {
   }
 }
 
-const pathCache = new Map();
-const automaticPorts = automaticPortSpread(arch.connections, components);
 function connectionSides(conn) {
   const from = components.get(conn.from);
   const to = components.get(conn.to);
@@ -995,12 +1003,11 @@ function renderConnectionPath(conn, index) {
 }
 
 function renderConnectionLabel(conn, index) {
-  if (!conn.label) return '';
-  const [lx, ly] = labelPoint(conn, pathFor(conn).points);
-  const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
+  const box = connectionLabelBox(conn);
+  if (!box) return '';
   return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}>
-          <rect x="${lx - w / 2}" y="${ly - 10}" width="${w}" height="14" rx="3" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${variantAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
+          <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
+          <text x="${box.lx}" y="${box.ly}" class="${variantAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
         </g>`;
 }
 
@@ -1032,12 +1039,7 @@ function renderLegend() {
   const entries = architectureLegendEntries;
   const relationshipObstacles = relationshipLegendObstacles(arch.connections, {
     pointsFor: (connection) => pathFor(connection).points,
-    labelRectFor: (connection) => {
-      if (!connection.label) return null;
-      const [x, y] = labelPoint(connection, pathFor(connection).points);
-      const width = Math.max(30, textUnits(connection.label) * 4.8 + 10);
-      return { x: x - width / 2, y: y - 10, width, height: 14 };
-    },
+    labelRectFor: connectionLabelBox,
   });
   const contentBottom = Math.max(
     0,
@@ -1087,13 +1089,6 @@ ${boundaries.map(renderBoundaryLabel).join('\n\n')}
 ${renderLegend()}
       </svg>`;
 }
-
-// Connection labels are diagram content, so an auto canvas that stops at the
-// component/boundary bbox clips them. Routing state only exists once the whole
-// module is initialized, so the auto canvas is grown here rather than inside
-// the boundary-title convergence above. An authored viewBox is never resized:
-// there the containment rule reports the clipping instead.
-if (!arch.meta?.viewBox) viewBox = autoViewBoxFor(boundaries, connectionLabelRects());
 
 validateArchitecture();
 if (layoutJsonMode) {

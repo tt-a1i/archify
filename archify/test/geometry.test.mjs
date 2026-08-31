@@ -843,12 +843,16 @@ test('suggestLabelObstacleFix keeps both two-line forms clear of the obstacle it
   }
 });
 
-test('suggestLabelObstacleFix reports when no in-canvas position clears the obstacle', () => {
+// Only the two vertical slots are tried, so the fallback must not claim that
+// no position exists anywhere — an open area elsewhere may still take the
+// label via labelAt.
+test('suggestLabelObstacleFix reports when neither vertical slot clears the obstacle', () => {
   const labelRect = { x: 40, y: 30, width: 120, height: 14, label: 'commit' };
   const obstacle = { id: 'store', x: 0, y: 0, width: 720, height: 400 };
   const hint = suggestLabelObstacleFix(labelRect, 100, 40, obstacle, 'component', [720, 400]);
-  assert.doesNotMatch(hint, /labelAt/);
-  assert.match(hint, /no position clears "store" inside the 720x400 viewBox/);
+  assert.doesNotMatch(hint, /set label/);
+  assert.match(hint, /no placement directly above or below "store" stays clear inside the 720x400 viewBox/);
+  assert.match(hint, /move the label to an open area with labelAt/);
 });
 
 test('suggestLabelObstacleFix offers no coordinate for a label wider than the canvas', () => {
@@ -856,7 +860,20 @@ test('suggestLabelObstacleFix offers no coordinate for a label wider than the ca
   const obstacle = { id: 'api', x: 200, y: 180, width: 140, height: 54 };
   const hint = suggestLabelObstacleFix(labelRect, 360, 200, obstacle, 'component', [720, 400]);
   assert.doesNotMatch(hint, /labelAt|labelDx|labelDy/);
-  assert.match(hint, /no position clears "api" inside the 720x400 viewBox — shorten the label/);
+  assert.match(hint, /800px label rect cannot fit the 720x400 viewBox at any anchor — shorten the label/);
+});
+
+// A placement that merely trades the named obstacle for its neighbor fails the
+// same rule on re-render, so the filter takes every box the caller checks.
+test('suggestLabelObstacleFix keeps placements clear of the other supplied obstacles', () => {
+  const labelRect = { x: 310, y: 100, width: 120, height: 14, label: 'check' };
+  const named = { id: 'a', x: 300, y: 80, width: 140, height: 50 };
+  const neighborBelow = { id: 'b', x: 300, y: 140, width: 140, height: 50 };
+  const hint = suggestLabelObstacleFix(
+    labelRect, 370, 110, named, 'component', [720, 400], [named, neighborBelow],
+  );
+  assert.doesNotMatch(hint, /\(below\)/, hint);
+  assert.match(hint, /set labelAt \[370, 72\][^;]*\(above\)/);
 });
 
 test('cleanLabelCanvasContainmentProblems names both edges a corner overhang crosses and stays off standard', () => {
