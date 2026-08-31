@@ -128,10 +128,13 @@ Architecture accepts a separate optional `semanticChecks` coverage contract.
 directed connections, `requiredPaths` checks directed reachability, and
 `requireExternalLabels` checks that every relationship touching an `external`
 component names its operation. Intentional exclusions are explicit `omissions`
-with a non-empty reason and one of the `component`, `edge`, `path`, or
+with a non-whitespace reason and one of the `component`, `edge`, `path`, or
 `external-label` kinds. Coverage diagnostics are embedded in rendered HTML and
 reported as non-blocking `architecture/semantic-*` warnings by artifact
-validation. Omitting the contract preserves existing Architecture behavior.
+validation. The embedded and checker receipts retain every evaluated
+requirement with a `represented`, `missing`, or `omitted` outcome and concrete
+evidence, so a passing receipt remains auditable. Omitting the contract
+preserves existing Architecture behavior.
 
 A file that validates today must keep validating and rendering within its
 declared version throughout the 2.x release line. Additive viewer,

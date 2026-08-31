@@ -36,20 +36,69 @@ function incompleteArchitecture() {
   };
 }
 
-test('architecture semantic coverage reports omitted components, edges, paths, and external labels', () => {
+function completeArchitecture() {
+  const architecture = incompleteArchitecture();
+  architecture.semanticChecks = {
+    requiredComponents: ['api'],
+    requiredEdges: [{ from: 'operator', to: 'api' }],
+    requiredPaths: [{ from: 'operator', to: 'api' }],
+    requireExternalLabels: true,
+  };
+  architecture.connections[1].label = 'SMTP send';
+  return architecture;
+}
+
+test('architecture semantic coverage records represented and missing requirements with evidence', () => {
   const coverage = evaluateArchitectureSemanticCoverage(incompleteArchitecture());
 
   assert.equal(coverage.status, 'warn');
-  assert.equal(coverage.summary.warnings, 4);
+  assert.deepEqual(coverage.summary, {
+    checked: 5,
+    represented: 1,
+    missing: 4,
+    omitted: 0,
+    warnings: 4,
+  });
+  assert.deepEqual(coverage.requirements.map((entry) => entry.status), [
+    'missing',
+    'missing',
+    'missing',
+    'represented',
+    'missing',
+  ]);
   assert.deepEqual(coverage.diagnostics.map((entry) => entry.code), [
     'architecture/semantic-required-component',
     'architecture/semantic-required-edge',
     'architecture/semantic-required-path',
     'architecture/semantic-external-label',
   ]);
+  for (const entry of coverage.diagnostics) {
+    assert.equal(entry.subject.diagramType, 'architecture');
+    assert.ok(entry.evidence && typeof entry.evidence === 'object');
+    assert.ok(Array.isArray(entry.supportedFixes) && entry.supportedFixes.length > 0);
+  }
 });
 
-test('architecture semantic coverage accepts explicit reasoned omissions', () => {
+test('passing coverage receipt preserves every represented requirement', () => {
+  const coverage = evaluateArchitectureSemanticCoverage(completeArchitecture());
+
+  assert.equal(coverage.status, 'pass');
+  assert.deepEqual(coverage.summary, {
+    checked: 5,
+    represented: 5,
+    missing: 0,
+    omitted: 0,
+    warnings: 0,
+  });
+  assert.equal(coverage.requirements.length, 5);
+  assert.ok(coverage.requirements.every((entry) => entry.status === 'represented'));
+  assert.deepEqual(
+    coverage.requirements.find((entry) => entry.subject.kind === 'path').evidence.path,
+    ['operator', 'api'],
+  );
+});
+
+test('architecture semantic coverage accepts explicit reasoned omissions and audits them', () => {
   const architecture = incompleteArchitecture();
   architecture.semanticChecks.omissions = [
     { kind: 'component', id: 'scheduler', reason: 'Not deployed in the inspected runtime profile.' },
@@ -60,9 +109,19 @@ test('architecture semantic coverage accepts explicit reasoned omissions', () =>
 
   const coverage = evaluateArchitectureSemanticCoverage(architecture);
   assert.equal(coverage.status, 'pass');
-  assert.equal(coverage.summary.warnings, 0);
+  assert.deepEqual(coverage.summary, {
+    checked: 5,
+    represented: 1,
+    missing: 0,
+    omitted: 4,
+    warnings: 0,
+  });
   assert.deepEqual(coverage.diagnostics, []);
-  assert.equal(coverage.omissions.length, 4);
+  assert.equal(coverage.requirements.filter((entry) => entry.status === 'omitted').length, 4);
+  assert.equal(
+    coverage.requirements.find((entry) => entry.status === 'omitted').evidence.reason,
+    architecture.semanticChecks.omissions[0].reason,
+  );
 });
 
 test('architecture semantic coverage is opt-in', () => {
@@ -71,13 +130,43 @@ test('architecture semantic coverage is opt-in', () => {
   assert.equal(evaluateArchitectureSemanticCoverage(architecture), null);
 });
 
-test('architecture semantic coverage rejects omissions without a reason', () => {
+test('required self-path passes only when the authored endpoint exists', () => {
   const architecture = incompleteArchitecture();
-  architecture.semanticChecks.omissions = [{ kind: 'component', id: 'scheduler', reason: '' }];
-  assert.throws(() => validateSchema('architecture', architecture), /semanticChecks\/omissions/);
+  architecture.semanticChecks = { requiredPaths: [{ from: 'missing', to: 'missing' }] };
+  const missing = evaluateArchitectureSemanticCoverage(architecture);
+  assert.equal(missing.status, 'warn');
+  assert.equal(missing.requirements[0].status, 'missing');
+  assert.deepEqual(missing.requirements[0].evidence, {
+    fromExists: false,
+    toExists: false,
+    reachableNodes: [],
+  });
+
+  architecture.semanticChecks = { requiredPaths: [{ from: 'api', to: 'api' }] };
+  const represented = evaluateArchitectureSemanticCoverage(architecture);
+  assert.equal(represented.status, 'pass');
+  assert.deepEqual(represented.requirements[0].evidence, { path: ['api'], hopCount: 0 });
 });
 
-test('validate embeds semantic coverage and exposes non-blocking warnings in its receipt', () => {
+test('architecture semantic coverage rejects empty and whitespace-only omission reasons', () => {
+  for (const omission of [
+    { kind: 'component', id: 'scheduler', reason: '' },
+    { kind: 'component', id: 'scheduler', reason: '   ' },
+    { kind: 'edge', from: 'api', to: 'ingestion', reason: '\t' },
+    { kind: 'path', from: 'api', to: 'mail', reason: '\n' },
+    { kind: 'external-label', from: 'ingestion', to: 'mail', reason: '  \t  ' },
+  ]) {
+    const architecture = incompleteArchitecture();
+    architecture.semanticChecks.omissions = [omission];
+    assert.throws(
+      () => validateSchema('architecture', architecture),
+      /semanticChecks\/omissions/,
+      JSON.stringify(omission),
+    );
+  }
+});
+
+test('validate embeds the auditable coverage ledger and non-blocking warnings in its receipt', () => {
   const input = path.join(tmp, 'incomplete.architecture.json');
   fs.writeFileSync(input, JSON.stringify(incompleteArchitecture(), null, 2));
 
@@ -91,6 +180,14 @@ test('validate embeds semantic coverage and exposes non-blocking warnings in its
   assert.equal(receipt.ok, true);
   assert.equal(receipt.composition.metrics.semanticCoverageWarnings, 4);
   assert.ok(receipt.composition.summary.warnings >= 4);
+  assert.deepEqual(receipt.composition.semanticCoverage.summary, {
+    checked: 5,
+    represented: 1,
+    missing: 4,
+    omitted: 0,
+    warnings: 4,
+  });
+  assert.equal(receipt.composition.semanticCoverage.requirements.length, 5);
   assert.deepEqual(
     receipt.composition.issues
       .filter((entry) => entry.code.startsWith('architecture/semantic-'))
@@ -102,6 +199,10 @@ test('validate embeds semantic coverage and exposes non-blocking warnings in its
       'architecture/semantic-external-label',
     ],
   );
+  for (const entry of receipt.composition.issues.filter((item) => item.code.startsWith('architecture/semantic-'))) {
+    assert.ok(entry.evidence && typeof entry.evidence === 'object');
+    assert.ok(Array.isArray(entry.supportedFixes) && entry.supportedFixes.length > 0);
+  }
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

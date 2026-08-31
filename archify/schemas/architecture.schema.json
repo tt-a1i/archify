@@ -216,7 +216,7 @@
           "properties": {
             "kind": { "const": "component" },
             "id": { "$ref": "common.schema.json#/$defs/id" },
-            "reason": { "type": "string", "minLength": 1 }
+            "reason": { "type": "string", "minLength": 1, "pattern": "\\S" }
           }
         },
         {
@@ -227,7 +227,7 @@
             "kind": { "enum": ["edge", "path", "external-label"] },
             "from": { "$ref": "common.schema.json#/$defs/id" },
             "to": { "$ref": "common.schema.json#/$defs/id" },
-            "reason": { "type": "string", "minLength": 1 }
+            "reason": { "type": "string", "minLength": 1, "pattern": "\\S" }
           }
         }
       ]

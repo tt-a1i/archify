@@ -278,6 +278,7 @@ if (semanticCoverageData?.error) {
 } else if (semanticCoverageData?.value) {
   const semanticCoverage = semanticCoverageData.value;
   const diagnostics = Array.isArray(semanticCoverage.diagnostics) ? semanticCoverage.diagnostics : [];
+  const requirements = Array.isArray(semanticCoverage.requirements) ? semanticCoverage.requirements : [];
   const warningCount = diagnostics.filter((item) => item?.severity === 'warning').length;
   composition.summary.warnings += warningCount;
   composition.metrics.semanticCoverageWarnings = warningCount;
@@ -286,6 +287,7 @@ if (semanticCoverageData?.error) {
     schemaVersion: semanticCoverage.schemaVersion,
     status: semanticCoverage.status,
     summary: semanticCoverage.summary,
+    requirements,
     omissions: semanticCoverage.omissions || [],
   };
   addCheck('semantic_coverage_data', true, [`found ${warningCount} semantic coverage warning(s)`]);

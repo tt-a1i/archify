@@ -194,10 +194,13 @@ end-to-end flows that may contain intermediate components. Set
 `requireExternalLabels: true` when every external-system relationship must name
 its operation or protocol. The renderer embeds non-blocking
 `architecture/semantic-*` warnings in the HTML receipt so an incomplete draft
-remains inspectable.
+remains inspectable. The same receipt keeps a requirement ledger: every checked
+component, edge, path, and external label is marked `represented`, `missing`,
+or `omitted` with concrete evidence. Review that ledger rather than treating a
+zero-warning summary as proof that the intended facts were actually checked.
 
 An intentional exclusion must be machine-readable in `omissions` and include a
-specific reason. Kinds are `component`, `edge`, `path`, and `external-label`;
+specific, non-whitespace reason. Kinds are `component`, `edge`, `path`, and `external-label`;
 component omissions use `id`, while relationship omissions use `from` and
 `to`. An omission documents scope; it is not evidence that a fact is absent.
 
