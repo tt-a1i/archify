@@ -54,6 +54,7 @@ let composition = {
     microSegmentCount: 0,
     desktopReadabilityIssues: 0,
     minProjectedNodeTextPx: null,
+    semanticCoverageWarnings: 0,
   },
   suggestedLimits: { bendsPerRelationship: 2, stretch: 1.35, segmentPx: 16, microSegmentPx: 8 },
   issues: [],
@@ -271,9 +272,38 @@ if (svgMatches.length === 1) {
   }
 }
 
+const semanticCoverageData = readSemanticCoverage(html);
+if (semanticCoverageData?.error) {
+  addCheck('semantic_coverage_data', false, [semanticCoverageData.error]);
+} else if (semanticCoverageData?.value) {
+  const semanticCoverage = semanticCoverageData.value;
+  const diagnostics = Array.isArray(semanticCoverage.diagnostics) ? semanticCoverage.diagnostics : [];
+  const warningCount = diagnostics.filter((item) => item?.severity === 'warning').length;
+  composition.summary.warnings += warningCount;
+  composition.metrics.semanticCoverageWarnings = warningCount;
+  composition.issues.push(...diagnostics);
+  composition.semanticCoverage = {
+    schemaVersion: semanticCoverage.schemaVersion,
+    status: semanticCoverage.status,
+    summary: semanticCoverage.summary,
+    omissions: semanticCoverage.omissions || [],
+  };
+  addCheck('semantic_coverage_data', true, [`found ${warningCount} semantic coverage warning(s)`]);
+}
+
 const ok = checks.every((check) => check.ok) && composition.status !== 'fail';
 console.log(JSON.stringify({ ok, file: htmlPath, checks, composition }, null, 2));
 process.exit(ok ? 0 : 1);
+
+function readSemanticCoverage(document) {
+  const match = document.match(/<script\b[^>]*\bid="archify-semantic-coverage-data"[^>]*>([\s\S]*?)<\/script>/i);
+  if (!match) return null;
+  try {
+    return { value: JSON.parse(match[1]) };
+  } catch (error) {
+    return { error: `archify semantic coverage payload is not valid JSON: ${error.message}` };
+  }
+}
 
 function collectArrows(fragment) {
   const arrows = [];

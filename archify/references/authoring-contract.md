@@ -186,6 +186,37 @@ configuration before authoring. Record only evidence you actually verified.
 dataflow, and lifecycle reject it. Never infer runtime causality from file
 proximity or naming alone.
 
+Translate that inspection into an explicit `semanticChecks` coverage ledger
+before arranging the diagram. Use `requiredComponents` for material runtime
+participants, including lifecycle schedulers and background workers;
+`requiredEdges` for direct calls or management paths; and `requiredPaths` for
+end-to-end flows that may contain intermediate components. Set
+`requireExternalLabels: true` when every external-system relationship must name
+its operation or protocol. The renderer embeds non-blocking
+`architecture/semantic-*` warnings in the HTML receipt so an incomplete draft
+remains inspectable.
+
+An intentional exclusion must be machine-readable in `omissions` and include a
+specific reason. Kinds are `component`, `edge`, `path`, and `external-label`;
+component omissions use `id`, while relationship omissions use `from` and
+`to`. An omission documents scope; it is not evidence that a fact is absent.
+
+```json
+"semanticChecks": {
+  "requiredComponents": ["api", "scheduler", "external-mail"],
+  "requiredEdges": [{ "from": "api", "to": "dispatch" }],
+  "requiredPaths": [{ "from": "scheduler", "to": "external-mail" }],
+  "requireExternalLabels": true,
+  "omissions": [
+    {
+      "kind": "component",
+      "id": "legacy-worker",
+      "reason": "Out of scope: disabled by the inspected deployment configuration."
+    }
+  ]
+}
+```
+
 ## Hand-placed fallback
 
 Use only when no renderer can run. Start from `assets/template.html`, keep semantic CSS classes, preserve the inline SVG/accessibility structure, and run the delivery visual checklist. Never introduce inline literal colors that break dark/light parity.

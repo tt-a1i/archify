@@ -123,6 +123,16 @@ The field is additive and geometry-neutral: omitting it preserves existing
 workflow behavior and including a satisfied contract does not change SVG or
 layout-receipt bytes.
 
+Architecture accepts a separate optional `semanticChecks` coverage contract.
+`requiredComponents` checks named participants, `requiredEdges` checks exact
+directed connections, `requiredPaths` checks directed reachability, and
+`requireExternalLabels` checks that every relationship touching an `external`
+component names its operation. Intentional exclusions are explicit `omissions`
+with a non-empty reason and one of the `component`, `edge`, `path`, or
+`external-label` kinds. Coverage diagnostics are embedded in rendered HTML and
+reported as non-blocking `architecture/semantic-*` warnings by artifact
+validation. Omitting the contract preserves existing Architecture behavior.
+
 A file that validates today must keep validating and rendering within its
 declared version throughout the 2.x release line. Additive viewer,
 accessibility, and presentation improvements may enhance generated HTML, but

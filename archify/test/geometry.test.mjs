@@ -737,3 +737,20 @@ test('applyTemplate requires the new evidence slot only when evidence is present
     sourceEvidence: { verified: true },
   }), /repository evidence requires placeholder/);
 });
+
+test('applyTemplate requires the semantic coverage slot only when coverage is present', () => {
+  const legacyTemplate = `<html lang="en" data-theme="dark" data-preset="[VISUAL PRESET]">
+<title>[PROJECT NAME] Architecture Diagram</title>
+<h1>[PROJECT NAME] Architecture</h1>
+<p class="subtitle">[Subtitle description]</p>
+<!-- ARCHIFY:GUIDED_VIEWS_DATA -->
+      <!-- ARCHIFY:SVG_SLOT_START --><svg></svg>      <!-- ARCHIFY:SVG_SLOT_END -->
+    <!-- ARCHIFY:CARDS_SLOT_START --><div></div>    <!-- ARCHIFY:CARDS_SLOT_END -->`;
+  assert.doesNotThrow(() => applyTemplate(legacyTemplate, {
+    title: 'Legacy', subtitle: '', svg: '<svg/>', cards: '',
+  }));
+  assert.throws(() => applyTemplate(legacyTemplate, {
+    title: 'Coverage', subtitle: '', svg: '<svg/>', cards: '',
+    semanticCoverage: { status: 'warn' },
+  }), /semantic coverage requires placeholder/);
+});

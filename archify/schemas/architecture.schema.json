@@ -80,6 +80,30 @@
         "cellH": { "type": "number", "minimum": 24 }
       }
     },
+    "semanticChecks": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "requiredComponents": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "requiredEdges": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/semanticEdge" }
+        },
+        "requiredPaths": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/semanticEdge" }
+        },
+        "requireExternalLabels": { "type": "boolean" },
+        "omissions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/semanticOmission" }
+        }
+      }
+    },
     "components": {
       "type": "array",
       "minItems": 1,
@@ -172,5 +196,41 @@
       }
     },
     "cards": { "$ref": "common.schema.json#/$defs/cards" }
+  },
+  "$defs": {
+    "semanticEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": { "$ref": "common.schema.json#/$defs/id" },
+        "to": { "$ref": "common.schema.json#/$defs/id" }
+      }
+    },
+    "semanticOmission": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "id", "reason"],
+          "properties": {
+            "kind": { "const": "component" },
+            "id": { "$ref": "common.schema.json#/$defs/id" },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "from", "to", "reason"],
+          "properties": {
+            "kind": { "enum": ["edge", "path", "external-label"] },
+            "from": { "$ref": "common.schema.json#/$defs/id" },
+            "to": { "$ref": "common.schema.json#/$defs/id" },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    }
   }
 }

@@ -10,6 +10,7 @@ import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandM
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
+import { evaluateArchitectureSemanticCoverage } from './semantic-coverage.mjs';
 import {
   asArray,
   isFinitePoint,
@@ -58,6 +59,7 @@ const { diagram: arch, template, outPath, sourceEvidence } = await loadDiagramWi
   defaultExample: 'web-app.architecture.json',
   argv: cliArgs,
 });
+const semanticCoverage = evaluateArchitectureSemanticCoverage(arch);
 
 const grid = gridLayout(arch);
 
@@ -633,6 +635,7 @@ function buildLayoutReport() {
         return connectionPath(conn, routed, labelAt);
       }),
     labels,
+    semanticCoverage,
   };
 }
 
@@ -1075,4 +1078,5 @@ writeDiagram({
   svg: renderSvg(),
   cards: arch.cards,
   sourceEvidence,
+  semanticCoverage,
 });
