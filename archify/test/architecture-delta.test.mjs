@@ -294,14 +294,13 @@ test('compare CLI writes a deterministic three-state artifact and complete sidec
   assert.match(firstHtml, /title="Before architecture explorer"/);
   assert.match(firstHtml, /title="After architecture explorer"/);
   assert.match(firstHtml, /id="export-svg"[^>]*>Export SVG</);
-  assert.match(firstHtml, /id="share-card"[^>]*>Share Card</);
-  assert.match(firstHtml, /window\.Archify\.deltaExport = \{ canonicalSvg: canonicalDeltaSvg, shareCard/);
-  assert.match(firstHtml, /canvas\.width = 1200;[\s\S]*canvas\.height = 630;/);
+  assert.match(firstHtml, /window\.Archify\.deltaExport = \{ canonicalSvg: canonicalDeltaSvg, exportSvg: exportCanonicalSvg \}/);
+  assert.match(firstHtml, /window\.Archify\.exportMenu = \{\s*run\(format\) \{\s*clearExportReceipt\(\);/);
+  assert.doesNotMatch(firstHtml, /share-card|Share Card|shareCard|downloadShareCard/);
   assert.match(firstHtml, /structural-frame.*stroke:var\(--delta\)!important/);
   assert.match(firstHtml, /structural-frame.*data-delta-state="changed".*stroke-dasharray:2 3!important/);
   assert.match(firstHtml, /data-delta-boundary-state="added".*fill:#34d399!important/);
   assert.match(firstHtml, /delta-boundary-marker\[data-delta-state\]\{color:var\(--delta\)\}/);
-  assert.match(firstHtml, /No authored architecture changes ·.*movementSummary/);
   assert.match(firstHtml, /font-family:"JetBrains Mono",ui-monospace/);
   assert.doesNotMatch(firstHtml, /font-family:Inter|body\{min-width:1080px/);
   assert.match(firstHtml, /@media\(max-width:760px\)/);

@@ -305,28 +305,12 @@ test('real Chrome keeps zh-CN Finder, Route, Export, and accessibility UI locali
       assert.equal(state.exportMenuOpen, true, type);
       assert.equal(state.exportLabel, '导出图表', type);
       assert.equal(state.exportMenuLabel, '导出', type);
-      assert.match(state.exportMenuText, /分享卡片/, type);
+      assert.match(state.exportMenuText, /复制图表/, type);
+      assert.doesNotMatch(state.exportMenuText, /分享卡片/, type);
       assert.deepEqual(state.presetBadges, {
         'signal-flow': { header: '信号流', plate: 'none' },
         blueprint: { header: '蓝图 / 修订 01', plate: '' },
         editorial: { header: '编辑风格 / 现场笔记', plate: 'ARCHIFY / 图版 04' },
-      }, type);
-
-      const shareCardFailure = await evaluate(browser, sessionId, `(async function () {
-        var originalGetContext = HTMLCanvasElement.prototype.getContext;
-        HTMLCanvasElement.prototype.getContext = function () { return null; };
-        try {
-          await Archify.exportMenu.shareCard();
-          return { rejected: false, message: '' };
-        } catch (error) {
-          return { rejected: true, message: String(error && error.message || error) };
-        } finally {
-          HTMLCanvasElement.prototype.getContext = originalGetContext;
-        }
-      })()`, true);
-      assert.deepEqual(shareCardFailure, {
-        rejected: true,
-        message: '无法为分享卡片创建二维画布上下文',
       }, type);
 
       const visual = spawnSync(process.execPath, [cli, 'visual-check', result.output, '--json'], {
@@ -399,22 +383,14 @@ test('runtime labels stay localized after composition', () => {
 
 });
 
-test('Share Card and export failures use catalog messages instead of fixed English', () => {
+test('export failures use catalog messages instead of fixed English', () => {
   assert.equal(
-    translateCount('zh-CN', 'viewer.export.card.routeSummary', 2, { source: '来源', target: '目标' }),
-    '路径：来源 → 目标 · 2 个有向跳转',
-  );
-  assert.equal(
-    translateMessage('zh-CN', 'viewer.export.error.toBlobNull', { label: '分享卡片' }),
-    '分享卡片的 canvas.toBlob 未返回数据',
+    translateMessage('zh-CN', 'viewer.export.error.toBlobNull', { label: 'PNG' }),
+    'PNG的 canvas.toBlob 未返回数据',
   );
 
   const template = fs.readFileSync(templatePath, 'utf8');
   for (const hardcoded of [
-    "'Route: '",
-    "'Share Card variants cannot be combined'",
-    "canvas2dOrThrow(canvas, 'Share Card')",
-    "'Share Card export could not remove temporary viewer state'",
     "'WebM motion export requires a trace animation and browser MediaRecorder support'",
   ]) {
     assert.ok(!template.includes(hardcoded), hardcoded);

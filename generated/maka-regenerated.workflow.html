@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="archify 2.16.0-dev.0">
+  <meta name="generator" content="archify 2.17.0-dev.0">
   <title>Maka 托管执行、受控工具与可恢复事实</title>
   <script>
     // Resolve the theme before first paint so light-preference users don't
@@ -589,8 +589,10 @@
       padding-bottom: calc(0.75rem + var(--archify-nav-reserve));
     }
     html[data-present="true"]:not([data-embed="true"]) .diagram-container > svg {
-      width: 100%;
+      flex: 1 1 auto;
       height: 100%;
+      min-height: 0;
+      width: 100%;
       min-width: 0;
     }
     html[data-present="true"]:not([data-embed="true"]) .cards { display: none; }
@@ -2885,6 +2887,11 @@
       body { padding-block: 1.25rem; }
       .header { margin-bottom: 0.875rem; }
       .cards { margin-top: 0.75rem; }
+      html[data-nav-stage-rail="true"] body { padding-block: 0.375rem; }
+      html[data-nav-stage-rail="true"] .header { margin-bottom: 0.5rem; }
+      html[data-nav-stage-rail="true"] .guided-views { margin-bottom: 0.375rem; }
+      html[data-nav-stage-rail="true"] .diagram-container[data-nav-stage-rail="true"] { padding-top: 0.5rem; }
+      html[data-nav-stage-rail="true"] .cards { margin-top: 0.375rem; }
     }
 
     html[data-preset="blueprint"] .card {
@@ -3487,12 +3494,6 @@
       mask-repeat: no-repeat;
       mask-size: contain;
     }
-    .toolbar .export-menu button[data-format="share-card"]::before,
-    .toolbar .export-menu button[data-action="route-share-card"]::before,
-    .toolbar .export-menu button[data-action="reach-share-card"]::before {
-      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='black' stroke-width='1.7' d='M3 4.5h14v11H3zM6 12l2.5-2.5 2 2 1.5-1.5 2 2'/%3E%3Ccircle cx='13.8' cy='7.3' r='1.2' fill='black'/%3E%3C/svg%3E");
-      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='black' stroke-width='1.7' d='M3 4.5h14v11H3zM6 12l2.5-2.5 2 2 1.5-1.5 2 2'/%3E%3Ccircle cx='13.8' cy='7.3' r='1.2' fill='black'/%3E%3C/svg%3E");
-    }
     .toolbar .export-menu button[data-action^="copy"]::before {
       -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect x='6' y='6' width='10' height='10' rx='1.5' fill='none' stroke='black' stroke-width='1.7'/%3E%3Cpath d='M4 13H3.5A1.5 1.5 0 012 11.5v-8A1.5 1.5 0 013.5 2h8A1.5 1.5 0 0113 3.5V4' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E");
       mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect x='6' y='6' width='10' height='10' rx='1.5' fill='none' stroke='black' stroke-width='1.7'/%3E%3Cpath d='M4 13H3.5A1.5 1.5 0 012 11.5v-8A1.5 1.5 0 013.5 2h8A1.5 1.5 0 0113 3.5V4' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E");
@@ -3507,14 +3508,6 @@
     .toolbar .export-menu button[data-format="webm"]::before {
       -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 2.5l7 4v7l-7 4-7-4v-7zM3 6.5l7 4 7-4M10 10.5v7' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E");
       mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 2.5l7 4v7l-7 4-7-4v-7zM3 6.5l7 4 7-4M10 10.5v7' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E");
-    }
-    .toolbar .export-menu button[data-format="share-card"],
-    .toolbar .export-menu button[data-action="route-share-card"],
-    .toolbar .export-menu button[data-action="reach-share-card"] {
-      min-height: 3.35rem;
-      color: var(--toolbar-text);
-      background: color-mix(in srgb, var(--frontend-stroke) 8%, transparent);
-      border-color: color-mix(in srgb, var(--frontend-stroke) 24%, var(--toolbar-border));
     }
     .toolbar .export-menu button[hidden] { display: none; }
     .toolbar .export-menu button:hover {
@@ -3904,10 +3897,7 @@
 
     @media (max-width: 420px) {
       .export-menu-section { grid-template-columns: 1fr; }
-      .export-menu-heading,
-      .toolbar .export-menu button[data-format="share-card"],
-      .toolbar .export-menu button[data-action="route-share-card"],
-      .toolbar .export-menu button[data-action="reach-share-card"] { grid-column: 1; }
+      .export-menu-heading { grid-column: 1; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -4919,10 +4909,6 @@
         </div>
         <div class="export-menu-section" role="group" aria-label="分享">
           <span class="export-menu-heading" aria-hidden="true">分享</span>
-          <button data-format="share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>分享卡片</strong><small class="hint">1200&times;630 PNG</small></span></button>
-          <button data-action="route-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled><span class="export-item-copy"><strong>路径分享卡片</strong><small class="hint">1200&times;630 PNG</small></span></button>
-          <button data-action="reach-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled><span class="export-item-copy"><strong>可达范围分享卡片</strong><small class="hint">1200&times;630 PNG</small></span></button>
-          <button data-action="copy-share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>复制分享卡片</strong><small class="hint">复制 PNG 到剪贴板</small></span></button>
           <button data-action="copy" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>复制图表</strong><small class="hint">复制 PNG 到剪贴板</small></span></button>
         </div>
         <div class="export-menu-section" role="group" aria-label="位图">
@@ -4954,7 +4940,7 @@
 
     <script id="archify-guided-views-data" type="application/json">[{"id":"turn_spine","label":"托管回合主链","focus":["request_portal","host_kernel","session_owner","turn_driver","flow_adapter","response_surface"],"note":"请求进入 Runtime Host，由 SessionManager 编排回合并经 Flow 流式返回结果。"},{"id":"guarded_effect","label":"受控工具副作用","focus":["turn_driver","boundary_gate","tool_runtime","artifact_store","runtime_ledger"],"note":"工具调用先通过 ExecutionBoundary，再发布文件结果并写入 RuntimeEvent 账本。"},{"id":"durable_resume","label":"规范事实恢复","focus":["runtime_ledger","resume_planner","host_kernel","session_owner"],"note":"恢复规划器读取事件与 Artifact 引用，验证后重新进入 Host 托管链。"}]</script>
 
-    <script id="archify-i18n-data" type="application/json">{"locale":"zh-CN","messages":{"viewer.kind.frontend":"前端","viewer.kind.backend":"后端","viewer.kind.database":"数据库","viewer.kind.cloud":"云服务","viewer.kind.security":"安全","viewer.kind.messagebus":"消息总线","viewer.kind.external":"外部系统","viewer.kind.neutral":"中性","viewer.kind.node":"节点","viewer.kind.start":"开始","viewer.kind.active":"活动","viewer.kind.waiting":"等待","viewer.kind.decision":"决策","viewer.kind.success":"成功","viewer.kind.failure":"失败","viewer.toolbar.actions":"图表操作","viewer.theme.toggle.title":"切换主题（T）","viewer.theme.toggle":"切换颜色主题","viewer.theme.dark":"深色","viewer.theme.light":"浅色","viewer.preset.choose.title":"选择视觉风格（S 循环切换）","viewer.preset.choose":"选择视觉风格","viewer.preset.style":"风格","viewer.preset.menu":"视觉风格","viewer.preset.identity":"视觉表达","viewer.preset.cycles":"S 循环切换","viewer.preset.classic":"经典","viewer.preset.classic.short":"经典","viewer.preset.classic.hint":"稳定的技术默认风格","viewer.preset.flow":"信号流","viewer.preset.flow.short":"流动","viewer.preset.flow.hint":"突出动态流向","viewer.preset.blueprint":"蓝图","viewer.preset.blueprint.hint":"工程评审","viewer.preset.editorial":"编辑风格","viewer.preset.editorial.hint":"适合发布与上线说明","viewer.preset.badge.signalFlow":"信号流","viewer.preset.badge.blueprint":"蓝图 / 修订 01","viewer.preset.badge.editorial":"编辑风格 / 现场笔记","viewer.preset.badge.editorialPlate":"ARCHIFY / 图版 04","viewer.preset.current":"当前视觉风格：{style}。选择视觉风格","viewer.motion.live":"动态","viewer.motion.still":"静态","viewer.motion.pause":"暂停动效","viewer.motion.resume":"恢复动效","viewer.motion.reduced":"已根据减少动态效果偏好暂停动效","viewer.motion.hidden":"页面不可见时已暂停动效","viewer.motion.yielding":"暂停动效；当前让位于{owner}","viewer.motion.yielding.title":"动态预览已启用 · 正在让位于{owner}","viewer.owner.story":"引导故事","viewer.owner.chapter":"当前章节","viewer.owner.chapterPreview":"章节差异预览","viewer.owner.handoff":"章节交接","viewer.owner.route":"路径探测","viewer.owner.lens":"语义透镜","viewer.owner.relationship":"关系预览","viewer.owner.intent":"意图追踪","viewer.owner.focus":"语义聚焦","viewer.owner.legend":"图例预览","viewer.owner.reader":"读者交互","viewer.present.enter":"进入演示模式","viewer.present.enter.title":"演示模式（F）","viewer.present.exit":"退出演示模式","viewer.present.exit.title":"退出演示模式（F 或 Escape）","viewer.present.present":"演示","viewer.present.exit.label":"退出","viewer.export.button":"导出","viewer.export.button.title":"导出图表（E）","viewer.export.diagram":"导出图表","viewer.export.menu":"导出","viewer.export.subtitle":"便携、整洁的输出","viewer.export.share":"分享","viewer.export.shareCard":"分享卡片","viewer.export.routeShareCard":"路径分享卡片","viewer.export.reachShareCard":"可达范围分享卡片","viewer.export.copyShareCard":"复制分享卡片","viewer.export.copyDiagram":"复制图表","viewer.export.clipboardPng":"复制 PNG 到剪贴板","viewer.export.raster":"位图","viewer.export.image":"图像","viewer.export.lossless":"无损图像","viewer.export.compact":"紧凑图像","viewer.export.modern":"现代图像格式","viewer.export.vectorMotion":"矢量与动效","viewer.export.vectorMotion.heading":"矢量与动效","viewer.export.editable":"可编辑矢量图","viewer.export.motion6s":"6 秒动效","viewer.export.unsupported":"当前浏览器不支持","viewer.export.clipboardUnsupported":"当前浏览器不支持写入图片剪贴板","viewer.export.clipboardUnsupported.period":"当前浏览器不支持写入图片剪贴板。","viewer.export.clipboardUnsupported.short":"此浏览器不支持写入图片剪贴板。","viewer.export.motionUnavailable":"当前浏览器无法录制动效","viewer.export.webmUnavailable":"当前浏览器不支持 WebM","viewer.export.failed":"导出失败：{message}","viewer.export.unknownVariant":"未知的分享卡片类型：{variant}","viewer.export.routeRequired":"请先追踪路径，再导出路径分享卡片","viewer.export.reachRequired":"请先追踪编写可达范围，再导出可达范围分享卡片","viewer.export.unknown":"未知错误","viewer.export.routeFailed":"路径分享卡片导出失败：{message}","viewer.export.reachFailed":"可达范围分享卡片导出失败：{message}","viewer.export.copyFailed":"复制失败：{message}","viewer.export.copiedPng":"已将 PNG 复制到剪贴板","viewer.export.copiedShare":"已复制分享卡片","viewer.export.downloadedShare":"已下载分享卡片","viewer.export.downloadedRoute":"已下载路径分享卡片","viewer.export.downloadedReach":"已下载可达范围分享卡片","viewer.export.downloadedWebm":"已下载 WebM","viewer.export.recording":"正在录制 6 秒动效…","viewer.export.card.routeSummary.one":"路径：{source} → {target} · {count} 个有向跳转","viewer.export.card.routeSummary.other":"路径：{source} → {target} · {count} 个有向跳转","viewer.export.card.reachSummary":"从{origin}开始的编写{direction} · {nodes} · {links} · 最深 {hops}","viewer.export.card.node.one":"{count} 个节点","viewer.export.card.node.other":"{count} 个节点","viewer.export.card.link.one":"{count} 条连接","viewer.export.card.link.other":"{count} 条连接","viewer.export.card.hop.one":"{count} 跳","viewer.export.card.hop.other":"{count} 跳","viewer.export.card.routeBadge":"ARCHIFY · 路径 · {hops}","viewer.export.card.reachBadge":"ARCHIFY · {direction}可达范围","viewer.export.card.defaultBadge":"ARCHIFY · {preset} · {theme}","viewer.export.direction.upstream":"上游","viewer.export.direction.downstream":"下游","viewer.export.error.canvasUnavailable":"无法为{label}使用画布","viewer.export.error.contextUnavailable":"无法为{label}创建二维画布上下文","viewer.export.error.toBlobUnavailable":"{label}无法使用 canvas.toBlob","viewer.export.error.toBlobNull":"{label}的 canvas.toBlob 未返回数据","viewer.export.error.variantsCombined":"无法同时组合多种分享卡片类型","viewer.export.error.viewerState":"分享卡片导出无法移除临时 Viewer 状态","viewer.export.error.routeState":"路径卡片导出无法安全保留已解析路径","viewer.export.error.reachState":"可达范围卡片导出无法安全保留编写的可达范围","viewer.export.error.webmRequirements":"WebM 动效导出需要追踪动画及浏览器 MediaRecorder 支持","viewer.export.error.mediaRecorder":"MediaRecorder 录制失败","viewer.export.error.emptyWebm":"MediaRecorder 生成了空的 WebM","viewer.export.error.webmBackground":"无法为 WebM 导出加载 SVG 背景","viewer.guided.region":"图表引导视图","viewer.guided.previous":"上一个引导视图","viewer.guided.previous.title":"上一个引导视图（[）","viewer.guided.next":"下一个引导视图","viewer.guided.next.title":"下一个引导视图（]）","viewer.guided.views":"引导视图","viewer.guided.explore":"探索此系统","viewer.guided.intro":"沿精选路径逐步查看，而不改变源图表。","viewer.guided.trail":"故事轨迹","viewer.guided.beat":"节点","viewer.guided.nextBeat":"下一步","viewer.guided.play":"播放引导故事","viewer.guided.play.title":"播放引导故事（P）","viewer.guided.pause":"暂停引导故事","viewer.guided.pause.title":"暂停引导故事（P）","viewer.guided.replay":"重播引导故事","viewer.guided.replay.title":"重播引导故事（P）","viewer.guided.playStory":"播放故事","viewer.guided.pauseStory":"暂停","viewer.guided.replayStory":"重播故事","viewer.guided.motionUnavailable":"静态模式下无法播放故事","viewer.guided.enableMotion":"切换为动态模式以播放引导故事","viewer.guided.selectBeatLink":"选择故事节点以复制其精确链接","viewer.guided.copyMoment":"复制此刻","viewer.guided.momentCopied":"已复制时刻链接","viewer.guided.momentCopyFailed":"无法复制故事时刻链接","viewer.guided.copied":"已复制","viewer.guided.copyFailed":"复制失败","viewer.guided.showAll":"显示全部","viewer.guided.showAll.aria":"显示完整图表","viewer.guided.chapters":"故事章节","viewer.guided.storyTrail":"{label}的故事轨迹：{count} 个节点","viewer.guided.chapter.open":"打开第 {index}/{total} 章：{label}，{count} 个停靠点","viewer.guided.chapter.current":"当前第 {index}/{total} 章：{label}，{count} 个停靠点","viewer.guided.chapter.selectedNodes":"已选择 {count} 个节点","viewer.guided.chapter.stops":"{count} 个停靠点","viewer.guided.chapter.stop.one":"{count} 个停靠点","viewer.guided.chapter.stop.other":"{count} 个停靠点","viewer.guided.chapter.current.title":"{label} — 当前章节，{count} 个停靠点","viewer.guided.chapter.delta.expanded":"{stay} 个保留，{enter} 个进入，{leave} 个离开","viewer.guided.chapter.delta.aria":"打开第 {index}/{total} 章：{label}。章节聚焦差异：{delta}","viewer.guided.chapter.delta.title":"{label} — 章节聚焦 {delta}","viewer.guided.handoff":"{from} → {to} · 经由{label}","viewer.guided.share.chapter":"章节 {index} / {total}","viewer.guided.share.initial":"章节 01 / 01","viewer.guided.share.default":"引导章节","viewer.guided.state.ready":"就绪","viewer.guided.state.playing":"播放中","viewer.guided.state.settled":"已完成","viewer.guided.state.paused":"已暂停","viewer.guided.state.pinned":"已固定","viewer.guided.state.still":"静态","viewer.guided.share.step":"步骤 {index} / {total} · {label}","viewer.guided.share.staticMoment":"{step} · 静态时刻","viewer.guided.share.complete":"{count} 个步骤已完成 · {note}","viewer.guided.share.settled":"路径已稳定，可供阅读。","viewer.guided.share.staticPath":"{count} 个步骤 · 静态路径","viewer.guided.share.ready":"{count} 个步骤 · 就绪","viewer.guided.share.aria":"{state}，第 {index}/{total} 章：{label}。{beat}。{route}","viewer.guided.beat.start":"节点 {index} / {total} · {label} · 起点","viewer.guided.beat.forward":"节点 {index} / {total} · {from} → {to}","viewer.guided.beat.reverse":"节点 {index} / {total} · {from} → {to} · 反向编写连接","viewer.guided.beat.multiple":"节点 {index} / {total} · {from} ⇄ {to} · {count} 条编写连接","viewer.guided.beat.group":"节点 {index} / {total} · {from} · {to} · 分组 · 无直接连接","viewer.guided.beat.aria.prefix":"故事节点 {index}/{total}：{label}。","viewer.guided.beat.aria.start":"起点。","viewer.guided.beat.aria.forward":"从{from}经一条正向编写关系到达。","viewer.guided.beat.aria.reverse":"从{from}出发；编写关系实际由{to}指向{from}。","viewer.guided.beat.aria.multiple":"从{from}经 {count} 条编写关系到达；不使用任意动效。","viewer.guided.beat.aria.group":"与{from}分组展示，没有直接编写关系。","viewer.guided.caption.start":"起点","viewer.guided.caption.grouped":"分组过渡 · 无直接编写连接","viewer.guided.caption.more":" +另外 {count} 条","viewer.guided.caption.reverse":"反向编写关系","viewer.guided.caption.relationships":"{count} 条编写关系","viewer.guided.caption.relationship":"编写关系","viewer.guided.caption.direction":"编写方向：{from} → {to}","viewer.guided.caption.starting":"编写起点","viewer.guided.beatLink":"复制当前故事时刻链接：第 {index}/{total} 个节点：{label}","viewer.guided.noStory":"此图表没有编写引导故事。","viewer.guide.eyebrow":"图表指南","viewer.guide.close":"关闭图表指南","viewer.guide.inspecting":"正在检查已编译语义","viewer.guide.actions":"图表探索操作","viewer.guide.find":"查找任意节点","viewer.guide.find.hint":"搜索标签、职责、类型和稳定 ID。","viewer.guide.route":"追踪路径","viewer.guide.route.aria":"追踪有向路径","viewer.guide.route.hint":"查看两个语义节点如何按编写方向连接。","viewer.guide.map":"查看完整系统","viewer.guide.map.hint":"打开带实时视口和稳定节点的语义雷达。","viewer.guide.lens":"比较语义类型","viewer.guide.lens.hint":"统计角色、显示流量并比较直接编写的连接。","viewer.guide.story":"播放引导故事","viewer.guide.story.hint":"浏览已编写的章节和真实关系。","viewer.guide.present":"进入演示模式","viewer.guide.present.hint":"让实时图表占满视口，同时不改变导出。","viewer.guide.shortcuts":"其他键盘快捷键","viewer.guide.shortcut.export":"导出","viewer.guide.shortcut.theme":"主题","viewer.guide.shortcut.style":"风格","viewer.guide.shortcut.reset":"重置","viewer.guide.shortcut.zoomIn":"放大","viewer.guide.shortcut.zoomOut":"缩小","viewer.guide.shortcut.close":"关闭","viewer.guide.facts":"{nodes} · {relationships} · {views}","viewer.guide.fact.node.one":"{count} 个语义节点","viewer.guide.fact.node.other":"{count} 个语义节点","viewer.guide.fact.relationship.one":"{count} 条关系","viewer.guide.fact.relationship.other":"{count} 条关系","viewer.guide.fact.view.one":"{count} 个引导视图","viewer.guide.fact.view.other":"{count} 个引导视图","viewer.guide.story.available.one":"浏览 {count} 个已编写章节及其真实关系。","viewer.guide.story.available.other":"浏览 {count} 个已编写章节及其真实关系。","viewer.guide.story.unavailable":"此图表没有编写引导故事。","viewer.guide.open":"打开图表指南","viewer.guide.noStory":"此图表没有编写引导故事。","viewer.finder.title":"查找节点","viewer.finder.close":"关闭节点查找器","viewer.finder.placeholder":"搜索标签或 ID","viewer.finder.search":"搜索图表节点","viewer.finder.results":"图表节点","viewer.finder.empty":"没有匹配的节点","viewer.finder.result.focus":"聚焦{label}","viewer.finder.result.routeStart":"选择{label}作为路径起点","viewer.finder.result.routeTarget":"选择{label}作为路径终点，{links}","viewer.finder.status.empty":"没有匹配的节点","viewer.finder.status.count.one":"{count} 个匹配节点","viewer.finder.status.count.other":"{count} 个匹配节点","viewer.finder.noun.nodes":"个节点","viewer.finder.link.one":"{count} 条连接","viewer.finder.link.other":"{count} 条连接","viewer.finder.result.focus.one":"聚焦{label}，{count} 条相关连接","viewer.finder.result.focus.other":"聚焦{label}，{count} 条相关连接","viewer.finder.status.filtered":"{visible}/{available} {noun}","viewer.finder.status.all":"{available} {noun}","viewer.passport.eyebrow":"语义护照","viewer.passport.metadata":"节点元数据","viewer.passport.evidence":"已验证的源代码证据","viewer.passport.verified":"已验证来源","viewer.passport.reach":"编写可达范围","viewer.passport.reach.trace":"追踪编写的可达性","viewer.passport.upstream":"上游","viewer.passport.downstream":"下游","viewer.passport.upstream.trace":"追踪上游编写可达性","viewer.passport.downstream.trace":"追踪下游编写可达性","viewer.passport.close":"关闭语义护照","viewer.passport.copy":"复制链接","viewer.passport.copy.focus":"复制聚焦节点的链接","viewer.passport.relations":"关系","viewer.passport.relations.show":"显示关联关系","viewer.passport.relations.hide":"隐藏关联关系","viewer.passport.relations.list":"关联关系","viewer.passport.copyRelation":"复制关系","viewer.passport.copyNode":"复制节点","viewer.passport.copyPinned":"复制固定关系的链接","viewer.passport.copySource":"复制来源节点的链接","viewer.passport.copy.focused.success":"已复制聚焦节点链接","viewer.passport.copy.pinned.success":"已复制固定关系链接","viewer.passport.copy.focused.failed":"无法复制聚焦节点链接","viewer.passport.copy.pinned.failed":"无法复制固定关系链接","viewer.passport.relationship.none":"没有关联关系","viewer.passport.relationship.count.one":"{count} 条关系","viewer.passport.relationship.count.other":"{count} 条关系","viewer.passport.relationship.show.one":"显示 {count} 条关联关系","viewer.passport.relationship.show.other":"显示 {count} 条关联关系","viewer.passport.relationship.summary":"{out} 条出向 · {in} 条入向{loops}","viewer.passport.relationship.loops":" · {count} 条自环","viewer.passport.relationship.explorer":"直接关系浏览器","viewer.passport.relationship.help":"使用方向键浏览关系。按 Enter 或空格键固定详情；按 Escape 清除。","viewer.passport.relationship.loopsBack":"回环","viewer.passport.relationship.connectsTo":"连接到","viewer.passport.relationship.connectsFrom":"连接自","viewer.passport.relationship.pinned":"已固定关系 · {from} → {to} · {label}","viewer.passport.relationship.inspect":"检查第 {index}/{total} 条关系：{from} 到 {to}，{label}。按 Enter 查看详情。","viewer.passport.relationship.group.out":"出向","viewer.passport.relationship.group.in":"入向","viewer.passport.relationship.group.loop":"自环","viewer.passport.relationship.row":"{group}：{relationship}，{neighbor}","viewer.passport.relationship.direction.out":"出 →","viewer.passport.relationship.direction.in":"← 入","viewer.passport.relationship.direction.loop":"自环","viewer.passport.sourceCount.one":"{count} 个已验证来源引用","viewer.passport.sourceCount.other":"{count} 个已验证来源引用","viewer.passport.sourceMarker":"来源","viewer.passport.beacon.one":"{count} 个已验证来源；聚焦此节点以检查","viewer.passport.beacon.other":"{count} 个已验证来源；聚焦此节点以检查","viewer.passport.repository.open":"打开已验证的仓库修订版本 {revision}","viewer.passport.source.open":"打开修订版本 {revision} 中已验证的来源 {path}","viewer.passport.source.openLink":"打开 ↗","viewer.passport.reach.upstream.one":"追踪 {count} 个上游编写节点","viewer.passport.reach.upstream.other":"追踪 {count} 个上游编写节点","viewer.passport.reach.downstream.one":"追踪 {count} 个下游编写节点","viewer.passport.reach.downstream.other":"追踪 {count} 个下游编写节点","viewer.passport.reach.noUpstream":"没有上游编写节点","viewer.passport.reach.noDownstream":"没有下游编写节点","viewer.passport.reach.status":"{direction} · {nodes} 个节点 · {links} 条连接 · 最深 {hops} 跳","viewer.route.eyebrow":"路径探测","viewer.route.start":"选择起点节点","viewer.route.start.find":"查找起点","viewer.route.start.find.aria":"查找路径起点","viewer.route.copy":"复制链接","viewer.route.copy.aria":"复制已追踪路径的链接","viewer.route.clear":"清除","viewer.route.clear.aria":"清除路径探测","viewer.route.traced":"已追踪路径","viewer.route.pickTwo":"在图表中选择两个语义节点","viewer.route.pickOne":"在图表中选择一个语义节点","viewer.route.controls":"路径旅程控制","viewer.route.previous":"上一个路径位置","viewer.route.play":"播放路径旅程","viewer.route.pause":"暂停路径旅程","viewer.route.replay":"重播路径旅程","viewer.route.next":"下一个路径位置","viewer.route.journey":"旅程","viewer.route.pause.label":"暂停","viewer.route.replay.label":"重播","viewer.route.overview":"总览","viewer.route.overview.aria":"显示完整路径总览","viewer.route.instructions":"先选择来源，再选择目标；方向很重要。","viewer.route.destination":"选择从{label}出发的目标","viewer.route.destination.find":"查找目标","viewer.route.destination.find.aria":"查找可达的路径目标","viewer.route.differentDestination":"选择其他目标","viewer.route.distinct":"一条路径需要两个不同的语义节点。","viewer.route.unreachable":"没有通往{label}的有向路径","viewer.route.unreachable.detail":"从{source}无法到达{target}。请选择高亮的目标。","viewer.route.start.instructions":"选择来源。下一步只会显示有向可达的目标。","viewer.route.copy.success":"已复制路径链接","viewer.route.copy.failed":"无法复制路径链接","viewer.route.position":"路径位置 {index}/{total}：{label}","viewer.route.step":"第 {index}/{total} 步 · {phase} · {label}","viewer.route.motionRequired":"自动旅程需要动态模式","viewer.route.trigger.clear":"清除已追踪路径","viewer.route.overview.status":"{nodes} · {hops} · 最短编写路径","viewer.route.overview.node.one":"{count} 个节点","viewer.route.overview.node.other":"{count} 个节点","viewer.route.overview.hop.one":"{count} 个有向跳转","viewer.route.overview.hop.other":"{count} 个有向跳转","viewer.route.phase.playing":"播放中","viewer.route.phase.complete":"已完成","viewer.route.phase.inspecting":"检查中","viewer.route.destination.count.one":"有 {count} 个有向目标可用。请选择高亮节点。","viewer.route.destination.count.other":"有 {count} 个有向目标可用。请选择高亮节点。","viewer.route.noOutgoing":"此处没有可用的出向路径。请清除后选择其他来源。","viewer.route.result.title":"{source} 到 {target}","viewer.route.finder.source.title":"选择路径起点","viewer.route.finder.source.placeholder":"搜索路径来源","viewer.route.finder.source.empty":"没有匹配的路径来源","viewer.route.finder.source.results":"可作为路径起点的节点","viewer.route.finder.source.noun":"个路径来源","viewer.route.finder.source.badge":"起点","viewer.route.finder.target.title":"从{label}出发的目标","viewer.route.finder.target.placeholder":"搜索可达目标","viewer.route.finder.target.empty":"没有匹配的可达目标","viewer.route.finder.target.results":"可达路径目标","viewer.route.finder.target.noun":"个可达目标","viewer.route.hop.one":"{count} 跳","viewer.route.hop.other":"{count} 跳","viewer.lens.eyebrow":"语义透镜","viewer.lens.title":"比较系统角色","viewer.lens.close":"关闭语义透镜","viewer.lens.instruction":"最多选择两种语义类型。选择一种可显示其真实流量；选择两种只比较直接编写的关系。","viewer.lens.kinds":"语义类型","viewer.lens.choose":"选择一种类型以检查其节点和相连关系。","viewer.lens.copy":"复制语义透镜链接","viewer.lens.clear":"清除语义透镜","viewer.lens.open":"打开语义透镜","viewer.lens.openActive":"打开当前语义透镜","viewer.lens.legend":"语义图例","viewer.lens.legend.inspect.one":"检查{label}，{count} 个节点","viewer.lens.legend.inspect.other":"检查{label}，{count} 个节点","viewer.lens.kind.count.one":"{label}，{count} 个节点","viewer.lens.kind.count.other":"{label}，{count} 个节点","viewer.lens.compare.one":"{first} → {second}：{forward} · {second} → {first}：{reverse} · 共 {count} 条直接关系","viewer.lens.compare.other":"{first} → {second}：{forward} · {second} → {first}：{reverse} · 共 {count} 条直接关系","viewer.lens.single":"{nodes} · {relationships} · 已连接节点保持可见","viewer.lens.node.one":"{count} 个{label}节点","viewer.lens.node.other":"{count} 个{label}节点","viewer.lens.relationship.one":"{count} 条相连关系","viewer.lens.relationship.other":"{count} 条相连关系","viewer.radar.title":"语义雷达","viewer.radar.building":"正在构建总览","viewer.radar.openFull":"打开完整语义雷达","viewer.radar.open":"打开雷达","viewer.radar.close":"关闭语义雷达","viewer.radar.surface":"图表总览。点击节点进行聚焦，或使用方向键平移。","viewer.radar.click":"点击节点","viewer.radar.drag":"拖动平移","viewer.radar.space":"语义雷达需要更多地图可见空间。","viewer.radar.nodes":"语义图表雷达节点","viewer.radar.focus":"从语义雷达聚焦{label}","viewer.radar.status":"{count} 个节点 · {viewport}","viewer.radar.fullMap":"{count} 个节点 · 完整地图","viewer.radar.compacted":"已收紧雷达，避免遮挡语义护照或地图控件。","viewer.radar.cancelWaiting":"取消等待更多地图空间的语义雷达","viewer.radar.needsSpace":"语义雷达需要更多可见地图空间","viewer.radar.viewport.full":"完整地图","viewer.radar.viewport.width":"宽度 {percent}%","viewer.radar.viewport.scale":"视口 {percent}%","viewer.nav.controls":"图表视图控制","viewer.nav.route":"追踪有向路径","viewer.nav.route.title":"追踪路径（R）","viewer.nav.route.short":"路径","viewer.nav.radar":"打开语义雷达","viewer.nav.radar.title":"语义雷达（M）","viewer.nav.radar.short":"地图","viewer.nav.lens":"打开语义透镜","viewer.nav.lens.title":"语义透镜（L）","viewer.nav.lens.short":"透镜","viewer.nav.find":"查找节点","viewer.nav.find.title":"查找节点（/）","viewer.nav.guide":"打开图表指南","viewer.nav.guide.title":"图表指南（?）","viewer.nav.zoomOut":"缩小","viewer.nav.zoomOut.title":"缩小（-）","viewer.nav.reset":"重置图表视图","viewer.nav.reset.title":"重置视图（0）","viewer.nav.read":"阅读","viewer.nav.zoomIn":"放大","viewer.nav.zoomIn.title":"放大（+）","viewer.nav.camera":"{hint}。重置图表视图","viewer.nav.camera.title":"{semantic}{hint} · 重置视图（0）","viewer.nav.camera.semantic":"语义相机已启用 · ","viewer.nav.level.map":"概览","viewer.nav.level.read":"阅读","viewer.nav.level.full":"完整","viewer.nav.level.auto":"自动","viewer.nav.detail.map":"放大以显示关系标签和节点上下文","viewer.nav.detail.read":"再次放大以显示标签和注释","viewer.nav.detail.full":"完整图表详情","viewer.intent.summary":"{label}。{out} 条出向，{in} 条入向{loops}。共 {total} 条连接。按 Enter 查看详情。","viewer.intent.loops":"，{count} 条自环","viewer.common.copied":"已复制","viewer.common.copyFailed":"复制失败","viewer.common.copyLink":"复制链接","viewer.common.clear":"清除","viewer.common.close":"关闭"}}</script>
+    <script id="archify-i18n-data" type="application/json">{"locale":"zh-CN","messages":{"viewer.kind.frontend":"前端","viewer.kind.backend":"后端","viewer.kind.database":"数据库","viewer.kind.cloud":"云服务","viewer.kind.security":"安全","viewer.kind.messagebus":"消息总线","viewer.kind.external":"外部系统","viewer.kind.neutral":"中性","viewer.kind.node":"节点","viewer.kind.start":"开始","viewer.kind.active":"活动","viewer.kind.waiting":"等待","viewer.kind.decision":"决策","viewer.kind.success":"成功","viewer.kind.failure":"失败","viewer.toolbar.actions":"图表操作","viewer.theme.toggle.title":"切换主题（T）","viewer.theme.toggle":"切换颜色主题","viewer.theme.dark":"深色","viewer.theme.light":"浅色","viewer.preset.choose.title":"选择视觉风格（S 循环切换）","viewer.preset.choose":"选择视觉风格","viewer.preset.style":"风格","viewer.preset.menu":"视觉风格","viewer.preset.identity":"视觉表达","viewer.preset.cycles":"S 循环切换","viewer.preset.classic":"经典","viewer.preset.classic.short":"经典","viewer.preset.classic.hint":"稳定的技术默认风格","viewer.preset.flow":"信号流","viewer.preset.flow.short":"流动","viewer.preset.flow.hint":"突出动态流向","viewer.preset.blueprint":"蓝图","viewer.preset.blueprint.hint":"工程评审","viewer.preset.editorial":"编辑风格","viewer.preset.editorial.hint":"适合发布与上线说明","viewer.preset.badge.signalFlow":"信号流","viewer.preset.badge.blueprint":"蓝图 / 修订 01","viewer.preset.badge.editorial":"编辑风格 / 现场笔记","viewer.preset.badge.editorialPlate":"ARCHIFY / 图版 04","viewer.preset.current":"当前视觉风格：{style}。选择视觉风格","viewer.motion.live":"动态","viewer.motion.still":"静态","viewer.motion.pause":"暂停动效","viewer.motion.resume":"恢复动效","viewer.motion.reduced":"已根据减少动态效果偏好暂停动效","viewer.motion.hidden":"页面不可见时已暂停动效","viewer.motion.yielding":"暂停动效；当前让位于{owner}","viewer.motion.yielding.title":"动态预览已启用 · 正在让位于{owner}","viewer.owner.story":"引导故事","viewer.owner.chapter":"当前章节","viewer.owner.chapterPreview":"章节差异预览","viewer.owner.handoff":"章节交接","viewer.owner.route":"路径探测","viewer.owner.lens":"语义透镜","viewer.owner.relationship":"关系预览","viewer.owner.intent":"意图追踪","viewer.owner.focus":"语义聚焦","viewer.owner.legend":"图例预览","viewer.owner.reader":"读者交互","viewer.present.enter":"进入演示模式","viewer.present.enter.title":"演示模式（F）","viewer.present.exit":"退出演示模式","viewer.present.exit.title":"退出演示模式（F 或 Escape）","viewer.present.present":"演示","viewer.present.exit.label":"退出","viewer.export.button":"导出","viewer.export.button.title":"导出图表（E）","viewer.export.diagram":"导出图表","viewer.export.menu":"导出","viewer.export.subtitle":"便携、整洁的输出","viewer.export.share":"分享","viewer.export.copyDiagram":"复制图表","viewer.export.clipboardPng":"复制 PNG 到剪贴板","viewer.export.raster":"位图","viewer.export.image":"图像","viewer.export.lossless":"无损图像","viewer.export.compact":"紧凑图像","viewer.export.modern":"现代图像格式","viewer.export.vectorMotion":"矢量与动效","viewer.export.vectorMotion.heading":"矢量与动效","viewer.export.editable":"可编辑矢量图","viewer.export.motion6s":"6 秒动效","viewer.export.unsupported":"当前浏览器不支持","viewer.export.clipboardUnsupported":"当前浏览器不支持写入图片剪贴板","viewer.export.clipboardUnsupported.short":"此浏览器不支持写入图片剪贴板。","viewer.export.motionUnavailable":"当前浏览器无法录制动效","viewer.export.webmUnavailable":"当前浏览器不支持 WebM","viewer.export.failed":"导出失败：{message}","viewer.export.unknown":"未知错误","viewer.export.copyFailed":"复制失败：{message}","viewer.export.copiedPng":"已将 PNG 复制到剪贴板","viewer.export.downloadedWebm":"已下载 WebM","viewer.export.recording":"正在录制 6 秒动效…","viewer.export.error.canvasUnavailable":"无法为{label}使用画布","viewer.export.error.contextUnavailable":"无法为{label}创建二维画布上下文","viewer.export.error.toBlobUnavailable":"{label}无法使用 canvas.toBlob","viewer.export.error.toBlobNull":"{label}的 canvas.toBlob 未返回数据","viewer.export.error.webmRequirements":"WebM 动效导出需要追踪动画及浏览器 MediaRecorder 支持","viewer.export.error.mediaRecorder":"MediaRecorder 录制失败","viewer.export.error.emptyWebm":"MediaRecorder 生成了空的 WebM","viewer.export.error.webmBackground":"无法为 WebM 导出加载 SVG 背景","viewer.guided.region":"图表引导视图","viewer.guided.previous":"上一个引导视图","viewer.guided.previous.title":"上一个引导视图（[）","viewer.guided.next":"下一个引导视图","viewer.guided.next.title":"下一个引导视图（]）","viewer.guided.views":"引导视图","viewer.guided.explore":"探索此系统","viewer.guided.intro":"沿精选路径逐步查看，而不改变源图表。","viewer.guided.trail":"故事轨迹","viewer.guided.beat":"节点","viewer.guided.nextBeat":"下一步","viewer.guided.play":"播放引导故事","viewer.guided.play.title":"播放引导故事（P）","viewer.guided.pause":"暂停引导故事","viewer.guided.pause.title":"暂停引导故事（P）","viewer.guided.replay":"重播引导故事","viewer.guided.replay.title":"重播引导故事（P）","viewer.guided.playStory":"播放故事","viewer.guided.pauseStory":"暂停","viewer.guided.replayStory":"重播故事","viewer.guided.motionUnavailable":"静态模式下无法播放故事","viewer.guided.enableMotion":"切换为动态模式以播放引导故事","viewer.guided.selectBeatLink":"选择故事节点以复制其精确链接","viewer.guided.copyMoment":"复制此刻","viewer.guided.momentCopied":"已复制时刻链接","viewer.guided.momentCopyFailed":"无法复制故事时刻链接","viewer.guided.copied":"已复制","viewer.guided.copyFailed":"复制失败","viewer.guided.showAll":"显示全部","viewer.guided.showAll.aria":"显示完整图表","viewer.guided.chapters":"故事章节","viewer.guided.storyTrail":"{label}的故事轨迹：{count} 个节点","viewer.guided.chapter.open":"打开第 {index}/{total} 章：{label}，{count} 个停靠点","viewer.guided.chapter.current":"当前第 {index}/{total} 章：{label}，{count} 个停靠点","viewer.guided.chapter.selectedNodes":"已选择 {count} 个节点","viewer.guided.chapter.stops":"{count} 个停靠点","viewer.guided.chapter.stop.one":"{count} 个停靠点","viewer.guided.chapter.stop.other":"{count} 个停靠点","viewer.guided.chapter.current.title":"{label} — 当前章节，{count} 个停靠点","viewer.guided.chapter.delta.expanded":"{stay} 个保留，{enter} 个进入，{leave} 个离开","viewer.guided.chapter.delta.aria":"打开第 {index}/{total} 章：{label}。章节聚焦差异：{delta}","viewer.guided.chapter.delta.title":"{label} — 章节聚焦 {delta}","viewer.guided.handoff":"{from} → {to} · 经由{label}","viewer.guided.share.chapter":"章节 {index} / {total}","viewer.guided.share.initial":"章节 01 / 01","viewer.guided.share.default":"引导章节","viewer.guided.state.ready":"就绪","viewer.guided.state.playing":"播放中","viewer.guided.state.settled":"已完成","viewer.guided.state.paused":"已暂停","viewer.guided.state.pinned":"已固定","viewer.guided.state.still":"静态","viewer.guided.share.step":"步骤 {index} / {total} · {label}","viewer.guided.share.staticMoment":"{step} · 静态时刻","viewer.guided.share.complete":"{count} 个步骤已完成 · {note}","viewer.guided.share.settled":"路径已稳定，可供阅读。","viewer.guided.share.staticPath":"{count} 个步骤 · 静态路径","viewer.guided.share.ready":"{count} 个步骤 · 就绪","viewer.guided.share.aria":"{state}，第 {index}/{total} 章：{label}。{beat}。{route}","viewer.guided.beat.start":"节点 {index} / {total} · {label} · 起点","viewer.guided.beat.forward":"节点 {index} / {total} · {from} → {to}","viewer.guided.beat.reverse":"节点 {index} / {total} · {from} → {to} · 反向编写连接","viewer.guided.beat.multiple":"节点 {index} / {total} · {from} ⇄ {to} · {count} 条编写连接","viewer.guided.beat.group":"节点 {index} / {total} · {from} · {to} · 分组 · 无直接连接","viewer.guided.beat.aria.prefix":"故事节点 {index}/{total}：{label}。","viewer.guided.beat.aria.start":"起点。","viewer.guided.beat.aria.forward":"从{from}经一条正向编写关系到达。","viewer.guided.beat.aria.reverse":"从{from}出发；编写关系实际由{to}指向{from}。","viewer.guided.beat.aria.multiple":"从{from}经 {count} 条编写关系到达；不使用任意动效。","viewer.guided.beat.aria.group":"与{from}分组展示，没有直接编写关系。","viewer.guided.caption.start":"起点","viewer.guided.caption.grouped":"分组过渡 · 无直接编写连接","viewer.guided.caption.more":" +另外 {count} 条","viewer.guided.caption.reverse":"反向编写关系","viewer.guided.caption.relationships":"{count} 条编写关系","viewer.guided.caption.relationship":"编写关系","viewer.guided.caption.direction":"编写方向：{from} → {to}","viewer.guided.caption.starting":"编写起点","viewer.guided.beatLink":"复制当前故事时刻链接：第 {index}/{total} 个节点：{label}","viewer.guided.noStory":"此图表没有编写引导故事。","viewer.guide.eyebrow":"图表指南","viewer.guide.close":"关闭图表指南","viewer.guide.inspecting":"正在检查已编译语义","viewer.guide.actions":"图表探索操作","viewer.guide.find":"查找任意节点","viewer.guide.find.hint":"搜索标签、职责、类型和稳定 ID。","viewer.guide.route":"追踪路径","viewer.guide.route.aria":"追踪有向路径","viewer.guide.route.hint":"查看两个语义节点如何按编写方向连接。","viewer.guide.map":"查看完整系统","viewer.guide.map.hint":"打开带实时视口和稳定节点的语义雷达。","viewer.guide.lens":"比较语义类型","viewer.guide.lens.hint":"统计角色、显示流量并比较直接编写的连接。","viewer.guide.story":"播放引导故事","viewer.guide.story.hint":"浏览已编写的章节和真实关系。","viewer.guide.present":"进入演示模式","viewer.guide.present.hint":"让实时图表占满视口，同时不改变导出。","viewer.guide.shortcuts":"其他键盘快捷键","viewer.guide.shortcut.export":"导出","viewer.guide.shortcut.theme":"主题","viewer.guide.shortcut.style":"风格","viewer.guide.shortcut.reset":"重置","viewer.guide.shortcut.zoomIn":"放大","viewer.guide.shortcut.zoomOut":"缩小","viewer.guide.shortcut.close":"关闭","viewer.guide.facts":"{nodes} · {relationships} · {views}","viewer.guide.fact.node.one":"{count} 个语义节点","viewer.guide.fact.node.other":"{count} 个语义节点","viewer.guide.fact.relationship.one":"{count} 条关系","viewer.guide.fact.relationship.other":"{count} 条关系","viewer.guide.fact.view.one":"{count} 个引导视图","viewer.guide.fact.view.other":"{count} 个引导视图","viewer.guide.story.available.one":"浏览 {count} 个已编写章节及其真实关系。","viewer.guide.story.available.other":"浏览 {count} 个已编写章节及其真实关系。","viewer.guide.story.unavailable":"此图表没有编写引导故事。","viewer.guide.open":"打开图表指南","viewer.guide.noStory":"此图表没有编写引导故事。","viewer.finder.title":"查找节点","viewer.finder.close":"关闭节点查找器","viewer.finder.placeholder":"搜索标签或 ID","viewer.finder.search":"搜索图表节点","viewer.finder.results":"图表节点","viewer.finder.empty":"没有匹配的节点","viewer.finder.result.focus":"聚焦{label}","viewer.finder.result.routeStart":"选择{label}作为路径起点","viewer.finder.result.routeTarget":"选择{label}作为路径终点，{links}","viewer.finder.status.empty":"没有匹配的节点","viewer.finder.status.count.one":"{count} 个匹配节点","viewer.finder.status.count.other":"{count} 个匹配节点","viewer.finder.noun.nodes":"个节点","viewer.finder.link.one":"{count} 条连接","viewer.finder.link.other":"{count} 条连接","viewer.finder.result.focus.one":"聚焦{label}，{count} 条相关连接","viewer.finder.result.focus.other":"聚焦{label}，{count} 条相关连接","viewer.finder.status.filtered":"{visible}/{available} {noun}","viewer.finder.status.all":"{available} {noun}","viewer.passport.eyebrow":"语义护照","viewer.passport.metadata":"节点元数据","viewer.passport.evidence":"已验证的源代码证据","viewer.passport.verified":"已验证来源","viewer.passport.reach":"编写可达范围","viewer.passport.reach.trace":"追踪编写的可达性","viewer.passport.upstream":"上游","viewer.passport.downstream":"下游","viewer.passport.upstream.trace":"追踪上游编写可达性","viewer.passport.downstream.trace":"追踪下游编写可达性","viewer.passport.close":"关闭语义护照","viewer.passport.copy":"复制链接","viewer.passport.copy.focus":"复制聚焦节点的链接","viewer.passport.relations":"关系","viewer.passport.relations.show":"显示关联关系","viewer.passport.relations.hide":"隐藏关联关系","viewer.passport.relations.list":"关联关系","viewer.passport.copyRelation":"复制关系","viewer.passport.copyNode":"复制节点","viewer.passport.copyPinned":"复制固定关系的链接","viewer.passport.copySource":"复制来源节点的链接","viewer.passport.copy.focused.success":"已复制聚焦节点链接","viewer.passport.copy.pinned.success":"已复制固定关系链接","viewer.passport.copy.focused.failed":"无法复制聚焦节点链接","viewer.passport.copy.pinned.failed":"无法复制固定关系链接","viewer.passport.relationship.none":"没有关联关系","viewer.passport.relationship.count.one":"{count} 条关系","viewer.passport.relationship.count.other":"{count} 条关系","viewer.passport.relationship.show.one":"显示 {count} 条关联关系","viewer.passport.relationship.show.other":"显示 {count} 条关联关系","viewer.passport.relationship.summary":"{out} 条出向 · {in} 条入向{loops}","viewer.passport.relationship.loops":" · {count} 条自环","viewer.passport.relationship.explorer":"直接关系浏览器","viewer.passport.relationship.help":"使用方向键浏览关系。按 Enter 或空格键固定详情；按 Escape 清除。","viewer.passport.relationship.loopsBack":"回环","viewer.passport.relationship.connectsTo":"连接到","viewer.passport.relationship.connectsFrom":"连接自","viewer.passport.relationship.pinned":"已固定关系 · {from} → {to} · {label}","viewer.passport.relationship.inspect":"检查第 {index}/{total} 条关系：{from} 到 {to}，{label}。按 Enter 查看详情。","viewer.passport.relationship.group.out":"出向","viewer.passport.relationship.group.in":"入向","viewer.passport.relationship.group.loop":"自环","viewer.passport.relationship.row":"{group}：{relationship}，{neighbor}","viewer.passport.relationship.direction.out":"出 →","viewer.passport.relationship.direction.in":"← 入","viewer.passport.relationship.direction.loop":"自环","viewer.passport.sourceCount.one":"{count} 个已验证来源引用","viewer.passport.sourceCount.other":"{count} 个已验证来源引用","viewer.passport.sourceMarker":"来源","viewer.passport.beacon.one":"{count} 个已验证来源；聚焦此节点以检查","viewer.passport.beacon.other":"{count} 个已验证来源；聚焦此节点以检查","viewer.passport.repository.open":"打开已验证的仓库修订版本 {revision}","viewer.passport.source.open":"打开修订版本 {revision} 中已验证的来源 {path}","viewer.passport.source.openLink":"打开 ↗","viewer.passport.reach.upstream.one":"追踪 {count} 个上游编写节点","viewer.passport.reach.upstream.other":"追踪 {count} 个上游编写节点","viewer.passport.reach.downstream.one":"追踪 {count} 个下游编写节点","viewer.passport.reach.downstream.other":"追踪 {count} 个下游编写节点","viewer.passport.reach.noUpstream":"没有上游编写节点","viewer.passport.reach.noDownstream":"没有下游编写节点","viewer.passport.reach.status":"{direction} · {nodes} 个节点 · {links} 条连接 · 最深 {hops} 跳","viewer.route.eyebrow":"路径探测","viewer.route.start":"选择起点节点","viewer.route.start.find":"查找起点","viewer.route.start.find.aria":"查找路径起点","viewer.route.copy":"复制链接","viewer.route.copy.aria":"复制已追踪路径的链接","viewer.route.clear":"清除","viewer.route.clear.aria":"清除路径探测","viewer.route.traced":"已追踪路径","viewer.route.pickTwo":"在图表中选择两个语义节点","viewer.route.pickOne":"在图表中选择一个语义节点","viewer.route.controls":"路径旅程控制","viewer.route.previous":"上一个路径位置","viewer.route.play":"播放路径旅程","viewer.route.pause":"暂停路径旅程","viewer.route.replay":"重播路径旅程","viewer.route.next":"下一个路径位置","viewer.route.journey":"旅程","viewer.route.pause.label":"暂停","viewer.route.replay.label":"重播","viewer.route.overview":"总览","viewer.route.overview.aria":"显示完整路径总览","viewer.route.instructions":"先选择来源，再选择目标；方向很重要。","viewer.route.destination":"选择从{label}出发的目标","viewer.route.destination.find":"查找目标","viewer.route.destination.find.aria":"查找可达的路径目标","viewer.route.differentDestination":"选择其他目标","viewer.route.distinct":"一条路径需要两个不同的语义节点。","viewer.route.unreachable":"没有通往{label}的有向路径","viewer.route.unreachable.detail":"从{source}无法到达{target}。请选择高亮的目标。","viewer.route.start.instructions":"选择来源。下一步只会显示有向可达的目标。","viewer.route.copy.success":"已复制路径链接","viewer.route.copy.failed":"无法复制路径链接","viewer.route.position":"路径位置 {index}/{total}：{label}","viewer.route.step":"第 {index}/{total} 步 · {phase} · {label}","viewer.route.motionRequired":"自动旅程需要动态模式","viewer.route.trigger.clear":"清除已追踪路径","viewer.route.overview.status":"{nodes} · {hops} · 最短编写路径","viewer.route.overview.node.one":"{count} 个节点","viewer.route.overview.node.other":"{count} 个节点","viewer.route.overview.hop.one":"{count} 个有向跳转","viewer.route.overview.hop.other":"{count} 个有向跳转","viewer.route.phase.playing":"播放中","viewer.route.phase.complete":"已完成","viewer.route.phase.inspecting":"检查中","viewer.route.destination.count.one":"有 {count} 个有向目标可用。请选择高亮节点。","viewer.route.destination.count.other":"有 {count} 个有向目标可用。请选择高亮节点。","viewer.route.noOutgoing":"此处没有可用的出向路径。请清除后选择其他来源。","viewer.route.result.title":"{source} 到 {target}","viewer.route.finder.source.title":"选择路径起点","viewer.route.finder.source.placeholder":"搜索路径来源","viewer.route.finder.source.empty":"没有匹配的路径来源","viewer.route.finder.source.results":"可作为路径起点的节点","viewer.route.finder.source.noun":"个路径来源","viewer.route.finder.source.badge":"起点","viewer.route.finder.target.title":"从{label}出发的目标","viewer.route.finder.target.placeholder":"搜索可达目标","viewer.route.finder.target.empty":"没有匹配的可达目标","viewer.route.finder.target.results":"可达路径目标","viewer.route.finder.target.noun":"个可达目标","viewer.route.hop.one":"{count} 跳","viewer.route.hop.other":"{count} 跳","viewer.lens.eyebrow":"语义透镜","viewer.lens.title":"比较系统角色","viewer.lens.close":"关闭语义透镜","viewer.lens.instruction":"最多选择两种语义类型。选择一种可显示其真实流量；选择两种只比较直接编写的关系。","viewer.lens.kinds":"语义类型","viewer.lens.choose":"选择一种类型以检查其节点和相连关系。","viewer.lens.copy":"复制语义透镜链接","viewer.lens.clear":"清除语义透镜","viewer.lens.open":"打开语义透镜","viewer.lens.openActive":"打开当前语义透镜","viewer.lens.legend":"语义图例","viewer.lens.legend.inspect.one":"检查{label}，{count} 个节点","viewer.lens.legend.inspect.other":"检查{label}，{count} 个节点","viewer.lens.kind.count.one":"{label}，{count} 个节点","viewer.lens.kind.count.other":"{label}，{count} 个节点","viewer.lens.compare.one":"{first} → {second}：{forward} · {second} → {first}：{reverse} · 共 {count} 条直接关系","viewer.lens.compare.other":"{first} → {second}：{forward} · {second} → {first}：{reverse} · 共 {count} 条直接关系","viewer.lens.single":"{nodes} · {relationships} · 已连接节点保持可见","viewer.lens.node.one":"{count} 个{label}节点","viewer.lens.node.other":"{count} 个{label}节点","viewer.lens.relationship.one":"{count} 条相连关系","viewer.lens.relationship.other":"{count} 条相连关系","viewer.radar.title":"语义雷达","viewer.radar.building":"正在构建总览","viewer.radar.openFull":"打开完整语义雷达","viewer.radar.open":"打开雷达","viewer.radar.close":"关闭语义雷达","viewer.radar.surface":"图表总览。点击节点进行聚焦，或使用方向键平移。","viewer.radar.click":"点击节点","viewer.radar.drag":"拖动平移","viewer.radar.space":"语义雷达需要更多地图可见空间。","viewer.radar.nodes":"语义图表雷达节点","viewer.radar.focus":"从语义雷达聚焦{label}","viewer.radar.status":"{count} 个节点 · {viewport}","viewer.radar.fullMap":"{count} 个节点 · 完整地图","viewer.radar.compacted":"已收紧雷达，避免遮挡语义护照或地图控件。","viewer.radar.cancelWaiting":"取消等待更多地图空间的语义雷达","viewer.radar.needsSpace":"语义雷达需要更多可见地图空间","viewer.radar.viewport.full":"完整地图","viewer.radar.viewport.width":"宽度 {percent}%","viewer.radar.viewport.scale":"视口 {percent}%","viewer.nav.controls":"图表视图控制","viewer.nav.route":"追踪有向路径","viewer.nav.route.title":"追踪路径（R）","viewer.nav.route.short":"路径","viewer.nav.radar":"打开语义雷达","viewer.nav.radar.title":"语义雷达（M）","viewer.nav.radar.short":"地图","viewer.nav.lens":"打开语义透镜","viewer.nav.lens.title":"语义透镜（L）","viewer.nav.lens.short":"透镜","viewer.nav.find":"查找节点","viewer.nav.find.title":"查找节点（/）","viewer.nav.guide":"打开图表指南","viewer.nav.guide.title":"图表指南（?）","viewer.nav.zoomOut":"缩小","viewer.nav.zoomOut.title":"缩小（-）","viewer.nav.reset":"重置图表视图","viewer.nav.reset.title":"重置视图（0）","viewer.nav.read":"阅读","viewer.nav.zoomIn":"放大","viewer.nav.zoomIn.title":"放大（+）","viewer.nav.camera":"{hint}。重置图表视图","viewer.nav.camera.title":"{semantic}{hint} · 重置视图（0）","viewer.nav.camera.semantic":"语义相机已启用 · ","viewer.nav.level.map":"概览","viewer.nav.level.read":"阅读","viewer.nav.level.full":"完整","viewer.nav.level.auto":"自动","viewer.nav.detail.map":"放大以显示关系标签和节点上下文","viewer.nav.detail.read":"再次放大以显示标签和注释","viewer.nav.detail.full":"完整图表详情","viewer.intent.summary":"{label}。{out} 条出向，{in} 条入向{loops}。共 {total} 条连接。按 Enter 查看详情。","viewer.intent.loops":"，{count} 条自环","viewer.common.copied":"已复制","viewer.common.copyFailed":"复制失败","viewer.common.copyLink":"复制链接","viewer.common.clear":"清除","viewer.common.close":"关闭"}}</script>
     <div class="guided-views no-print" id="guided-views" hidden aria-label="图表引导视图">
       <button id="guided-view-prev" type="button" aria-label="上一个引导视图" title="上一个引导视图（[）">&#8592;</button>
       <div class="guided-view-copy">
@@ -5732,7 +5718,7 @@
     })();
 
     /* ============================================================
-       Export — Share Card / PNG / JPEG / WebP / SVG / WebM and clipboard
+       Export — PNG / JPEG / WebP / SVG / WebM and clipboard
 
        Raster exports are always rendered at 4x source resolution for
        maximum sharpness. The trick: we set the serialized SVG's
@@ -5747,10 +5733,7 @@
       var RASTER_SCALE = 4;
       var MOTION_DURATION = 6000;
       var MOTION_FPS = 30;
-      var SHARE_CARD_WIDTH = 1200;
-      var SHARE_CARD_HEIGHT = 630;
-      var SHARE_CARD_PADDING = 36;
-      var SHARE_CARD_HEADER = 112;
+      var SUPPORTED_EXPORT_FORMATS = { svg: true, png: true, jpeg: true, webp: true, webm: true };
 
       function exportError(key, values) {
         var error = new Error(viewerText(key, values));
@@ -5792,168 +5775,6 @@
        *   self-themes when embedded in GitHub READMEs or other hosts that
        *   expose a color scheme. Used for "Download SVG".
        */
-      function applyRouteSnapshot(clone, snapshot) {
-        if (!snapshot || !Array.isArray(snapshot.nodeIds) || !Array.isArray(snapshot.edges) ||
-            snapshot.nodeIds.length < 2 || snapshot.edges.length !== snapshot.nodeIds.length - 1 ||
-            snapshot.hops !== snapshot.edges.length ||
-            !snapshot.source || !snapshot.target ||
-            snapshot.source.id !== snapshot.nodeIds[0] ||
-            snapshot.target.id !== snapshot.nodeIds[snapshot.nodeIds.length - 1]) return false;
-
-        clone.removeAttribute('data-animation');
-        Array.prototype.forEach.call(clone.querySelectorAll('[data-animate]'), function (element) {
-          element.removeAttribute('data-animate');
-          element.style.removeProperty('--step');
-        });
-
-        var cloneNodes = Array.prototype.slice.call(clone.querySelectorAll('[data-node-id]'));
-        var cloneEdges = Array.prototype.slice.call(clone.querySelectorAll('[data-edge-key]'));
-        var nodeIds = Object.create(null);
-        var edgeKeys = Object.create(null);
-        var nodeMatches = [];
-        var edgeMatches = [];
-
-        for (var nodeIndex = 0; nodeIndex < snapshot.nodeIds.length; nodeIndex++) {
-          var nodeId = snapshot.nodeIds[nodeIndex];
-          if (typeof nodeId !== 'string' || !nodeId || nodeIds[nodeId]) return false;
-          var matchedNodes = cloneNodes.filter(function (candidate) {
-            return candidate.getAttribute('data-node-id') === nodeId;
-          });
-          if (matchedNodes.length !== 1) return false;
-          nodeIds[nodeId] = true;
-          nodeMatches.push(matchedNodes);
-        }
-
-        for (var edgeIndex = 0; edgeIndex < snapshot.edges.length; edgeIndex++) {
-          var edge = snapshot.edges[edgeIndex];
-          var fromId = snapshot.nodeIds[edgeIndex];
-          var toId = snapshot.nodeIds[edgeIndex + 1];
-          if (!edge || typeof edge.key !== 'string' || !edge.key || edgeKeys[edge.key] ||
-              edge.from !== fromId || edge.to !== toId) return false;
-          var matchedEdges = cloneEdges.filter(function (candidate) {
-            return candidate.getAttribute('data-edge-key') === edge.key;
-          });
-          var drawableMatches = matchedEdges.filter(hasDrawableGeometry);
-          if (!matchedEdges.length || drawableMatches.length !== 1 || !matchedEdges.every(function (candidate) {
-            return candidate.getAttribute('data-edge-from') === edge.from &&
-              candidate.getAttribute('data-edge-to') === edge.to &&
-              (candidate.getAttribute('data-edge-id') || '') === (edge.id || '');
-          })) return false;
-          edgeKeys[edge.key] = true;
-          edgeMatches.push(matchedEdges);
-        }
-
-        clone.setAttribute('data-share-route', '');
-        nodeMatches.forEach(function (matches, step) {
-          matches.forEach(function (element) {
-            element.setAttribute('data-share-route-match', '');
-            element.setAttribute('data-share-route-step', String(step));
-            if (step === 0) element.setAttribute('data-share-route-start', '');
-            else if (step === snapshot.nodeIds.length - 1) element.setAttribute('data-share-route-end', '');
-            else element.setAttribute('data-share-route-middle', '');
-          });
-        });
-        edgeMatches.forEach(function (matches, step) {
-          matches.forEach(function (element) {
-            element.setAttribute('data-share-route-match', '');
-            element.setAttribute('data-share-route-step', String(step));
-          });
-        });
-
-        return clone.hasAttribute('data-share-route') &&
-          !clone.hasAttribute('data-animation') &&
-          !clone.hasAttribute('data-route-active') &&
-          !clone.hasAttribute('data-route-journey') &&
-          clone.querySelectorAll('[data-animate], [data-route-match], [data-route-step], [data-route-start], [data-route-end], [data-route-journey-state], [data-route-journey-current], [data-route-journey-overlay]').length === 0 &&
-          clone.querySelectorAll('[data-share-route-match]').length ===
-            nodeMatches.reduce(function (count, matches) { return count + matches.length; }, 0) +
-            edgeMatches.reduce(function (count, matches) { return count + matches.length; }, 0);
-      }
-
-      function applyReachSnapshot(clone, snapshot) {
-        if (!snapshot || (snapshot.direction !== 'upstream' && snapshot.direction !== 'downstream') ||
-            !snapshot.origin || typeof snapshot.origin.id !== 'string' || !snapshot.origin.id ||
-            typeof snapshot.origin.label !== 'string' || !snapshot.origin.label.trim() ||
-            !Array.isArray(snapshot.nodeIds) || snapshot.nodeIds.length < 2 ||
-            !Array.isArray(snapshot.edges) || !snapshot.edges.length ||
-            !snapshot.depths || typeof snapshot.depths !== 'object' ||
-            !Number.isInteger(snapshot.maxDepth) || snapshot.maxDepth < 1 ||
-            snapshot.nodeIds[0] !== snapshot.origin.id) return false;
-
-        clone.removeAttribute('data-animation');
-        Array.prototype.forEach.call(clone.querySelectorAll('[data-animate]'), function (element) {
-          element.removeAttribute('data-animate');
-          element.style.removeProperty('--step');
-        });
-
-        var cloneNodes = Array.prototype.slice.call(clone.querySelectorAll('[data-node-id]'));
-        var cloneEdges = Array.prototype.slice.call(clone.querySelectorAll('[data-edge-key]'));
-        var nodeIds = Object.create(null);
-        var edgeKeys = Object.create(null);
-        var nodeMatches = [];
-        var edgeMatches = [];
-        var measuredMaxDepth = 0;
-
-        for (var nodeIndex = 0; nodeIndex < snapshot.nodeIds.length; nodeIndex++) {
-          var nodeId = snapshot.nodeIds[nodeIndex];
-          var depth = snapshot.depths[nodeId];
-          if (typeof nodeId !== 'string' || !nodeId || nodeIds[nodeId] ||
-              !Number.isInteger(depth) || depth < 0 || depth > snapshot.maxDepth ||
-              (nodeId === snapshot.origin.id ? depth !== 0 : depth < 1)) return false;
-          var matchedNodes = cloneNodes.filter(function (candidate) {
-            return candidate.getAttribute('data-node-id') === nodeId;
-          });
-          if (matchedNodes.length !== 1) return false;
-          nodeIds[nodeId] = true;
-          measuredMaxDepth = Math.max(measuredMaxDepth, depth);
-          nodeMatches.push({ elements: matchedNodes, id: nodeId, depth: depth });
-        }
-        if (measuredMaxDepth !== snapshot.maxDepth) return false;
-
-        for (var edgeIndex = 0; edgeIndex < snapshot.edges.length; edgeIndex++) {
-          var edge = snapshot.edges[edgeIndex];
-          if (!edge || typeof edge.key !== 'string' || !edge.key || edgeKeys[edge.key] ||
-              !nodeIds[edge.from] || !nodeIds[edge.to] ||
-              !Number.isInteger(edge.depth) || edge.depth < 1 || edge.depth > snapshot.maxDepth ||
-              edge.depth !== Math.max(snapshot.depths[edge.from], snapshot.depths[edge.to])) return false;
-          var matchedEdges = cloneEdges.filter(function (candidate) {
-            return candidate.getAttribute('data-edge-key') === edge.key;
-          });
-          var drawableMatches = matchedEdges.filter(hasDrawableGeometry);
-          if (!matchedEdges.length || drawableMatches.length !== 1 || !matchedEdges.every(function (candidate) {
-            return candidate.getAttribute('data-edge-from') === edge.from &&
-              candidate.getAttribute('data-edge-to') === edge.to &&
-              (candidate.getAttribute('data-edge-id') || '') === (edge.id || '');
-          })) return false;
-          edgeKeys[edge.key] = true;
-          edgeMatches.push({ elements: matchedEdges, depth: edge.depth });
-        }
-
-        clone.setAttribute('data-share-reach', snapshot.direction);
-        nodeMatches.forEach(function (match) {
-          match.elements.forEach(function (element) {
-            element.setAttribute('data-share-reach-match', '');
-            element.setAttribute('data-share-reach-depth', String(match.depth));
-            if (match.id === snapshot.origin.id) element.setAttribute('data-share-reach-origin', '');
-          });
-        });
-        edgeMatches.forEach(function (match) {
-          match.elements.forEach(function (element) {
-            element.setAttribute('data-share-reach-match', '');
-            element.setAttribute('data-share-reach-depth', String(match.depth));
-          });
-        });
-
-        return clone.getAttribute('data-share-reach') === snapshot.direction &&
-          !clone.hasAttribute('data-animation') &&
-          !clone.hasAttribute('data-reach-active') &&
-          clone.querySelectorAll('[data-animate], [data-reach-match], [data-reach-origin], [data-reach-depth]').length === 0 &&
-          clone.querySelectorAll('[data-share-reach-origin]').length === 1 &&
-          clone.querySelectorAll('[data-share-reach-match]').length ===
-            nodeMatches.reduce(function (count, match) { return count + match.elements.length; }, 0) +
-            edgeMatches.reduce(function (count, match) { return count + match.elements.length; }, 0);
-      }
-
       function serializeSvg(scale, opts) {
         // scale: integer multiplier for intrinsic SVG pixel dimensions used by
         // the raster path. Defaults to 1 (natural size) for SVG download.
@@ -5966,6 +5787,7 @@
         // View transforms and neighborhood focus are HTML exploration state,
         // never part of a downloaded full-diagram artifact.
         clone.style.removeProperty('transform');
+        clone.style.removeProperty('clip-path');
         clone.removeAttribute('data-view-scale');
         clone.removeAttribute('data-focus-active');
         clone.removeAttribute('data-reach-active');
@@ -5980,8 +5802,6 @@
         clone.removeAttribute('data-route-picking');
         clone.removeAttribute('data-route-active');
         clone.removeAttribute('data-route-journey');
-        clone.removeAttribute('data-share-route');
-        clone.removeAttribute('data-share-reach');
         clone.removeAttribute('data-story-active');
         clone.removeAttribute('data-story-playing');
         clone.removeAttribute('data-story-beat');
@@ -6097,18 +5917,6 @@
           el.removeAttribute('data-route-journey-current');
           el.style.removeProperty('--route-step');
         });
-        Array.prototype.forEach.call(clone.querySelectorAll('[data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle]'), function (el) {
-          el.removeAttribute('data-share-route-match');
-          el.removeAttribute('data-share-route-step');
-          el.removeAttribute('data-share-route-start');
-          el.removeAttribute('data-share-route-end');
-          el.removeAttribute('data-share-route-middle');
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll('[data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth]'), function (el) {
-          el.removeAttribute('data-share-reach-match');
-          el.removeAttribute('data-share-reach-origin');
-          el.removeAttribute('data-share-reach-depth');
-        });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-detail], [data-detail-anchor]'), function (el) {
           el.removeAttribute('data-detail');
           el.removeAttribute('data-detail-anchor');
@@ -6129,8 +5937,6 @@
           !clone.hasAttribute('data-route-picking') &&
           !clone.hasAttribute('data-route-active') &&
           !clone.hasAttribute('data-route-journey') &&
-          !clone.hasAttribute('data-share-route') &&
-          !clone.hasAttribute('data-share-reach') &&
           !clone.hasAttribute('data-story-active') &&
           !clone.hasAttribute('data-story-playing') &&
           !clone.hasAttribute('data-story-beat') &&
@@ -6140,17 +5946,10 @@
           !clone.hasAttribute('data-chapter-anchor') &&
           !clone.hasAttribute('data-chapter-preview') &&
           !clone.style.getPropertyValue('transform') &&
-          clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]').length === 0;
+          !clone.style.getPropertyValue('clip-path') &&
+          clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]').length === 0;
 
         var vb = svg.viewBox.baseVal;
-        var finiteSvgDimensions = Number.isFinite(vb.x) && Number.isFinite(vb.y) &&
-          Number.isFinite(vb.width) && Number.isFinite(vb.height) && vb.width > 0 && vb.height > 0;
-        var routeStateClean = opts.routeSnapshot
-          ? canonicalStateClean && finiteSvgDimensions && applyRouteSnapshot(clone, opts.routeSnapshot)
-          : null;
-        var reachStateClean = opts.reachSnapshot
-          ? canonicalStateClean && finiteSvgDimensions && !opts.routeSnapshot && applyReachSnapshot(clone, opts.reachSnapshot)
-          : null;
         // Scale width/height so the browser rasterizes the vectors at target
         // resolution directly. viewBox stays unchanged so coordinates don't
         // shift. This is the key to sharp rasters — do NOT scale later via
@@ -6274,22 +6073,6 @@
           bgRect.setAttribute('fill', computed.getPropertyValue('--bg').trim() || '#ffffff');
         }
 
-        if (opts.routeSnapshot) {
-          style.textContent += "\nsvg[data-share-route] [data-node-id], svg[data-share-route] [data-edge-from] { opacity: 0.18; }\n" +
-            "svg[data-share-route] [data-share-route-match] { opacity: 1; }\n" +
-            "svg[data-share-route] [data-share-route-start] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 3; stroke-dasharray: 5 3; }\n" +
-            "svg[data-share-route] [data-share-route-middle] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 2.2; }\n" +
-            "svg[data-share-route] [data-share-route-end] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 3.4; stroke-dasharray: 1 0; }\n";
-        }
-        if (opts.reachSnapshot) {
-          style.textContent += "\nsvg[data-share-reach] [data-node-id], svg[data-share-reach] [data-edge-from] { opacity: 0.14; }\n" +
-            "svg[data-share-reach] [data-share-reach-match] { opacity: 1; }\n" +
-            "svg[data-share-reach] [data-edge-from][data-share-reach-match] { stroke-width: 1.55; }\n" +
-            "svg[data-share-reach=\"upstream\"] [data-share-reach-origin] > :is(rect, circle, polygon):not(.c-mask) { stroke: var(--database-stroke); stroke-width: 3.4; stroke-dasharray: 5 3; }\n" +
-            "svg[data-share-reach=\"downstream\"] [data-share-reach-origin] > :is(rect, circle, polygon):not(.c-mask) { stroke: var(--backend-stroke); stroke-width: 3.4; stroke-dasharray: 1 0; }\n" +
-            "svg[data-preset=\"blueprint\"][data-share-reach] [data-share-reach-origin], svg[data-preset=\"blueprint\"][data-share-reach] [data-edge-from][data-share-reach-match] { filter: none; }\n";
-        }
-
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
@@ -6297,9 +6080,7 @@
           svgString: new XMLSerializer().serializeToString(clone),
           width: vb.width * scale,
           height: vb.height * scale,
-          canonicalStateClean: canonicalStateClean,
-          routeStateClean: routeStateClean,
-          reachStateClean: reachStateClean
+          canonicalStateClean: canonicalStateClean
         };
       }
 
@@ -6375,24 +6156,6 @@
         });
       }
 
-      function fitCanvasText(ctx, text, maxWidth, startSize, minSize, weight) {
-        var value = String(text || '').trim();
-        var size = startSize;
-        var family = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-        while (size > minSize) {
-          ctx.font = (weight || '600') + ' ' + size + 'px ' + family;
-          if (ctx.measureText(value).width <= maxWidth) return value;
-          size -= 1;
-        }
-        ctx.font = (weight || '600') + ' ' + minSize + 'px ' + family;
-        if (ctx.measureText(value).width <= maxWidth) return value;
-        var suffix = '\u2026';
-        while (value.length > 1 && ctx.measureText(value + suffix).width > maxWidth) {
-          value = value.slice(0, -1);
-        }
-        return value + suffix;
-      }
-
       function canvas2dOrThrow(canvas, label) {
         if (!canvas || typeof canvas.getContext !== 'function') {
           throw exportError('viewer.export.error.canvasUnavailable', { label: label });
@@ -6401,143 +6164,6 @@
         if (!ctx) throw exportError('viewer.export.error.contextUnavailable', { label: label });
         if (typeof canvas.toBlob !== 'function') throw exportError('viewer.export.error.toBlobUnavailable', { label: label });
         return ctx;
-      }
-
-      function renderShareCard(options) {
-        options = options || {};
-        var routeSnapshot = options.routeSnapshot || null;
-        var reachSnapshot = options.reachSnapshot || null;
-        if (routeSnapshot && reachSnapshot) return Promise.reject(exportError('viewer.export.error.variantsCombined'));
-        var svg = document.querySelector('.diagram-container svg');
-        var vb = svg.viewBox.baseVal;
-        var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
-        var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot });
-        if (!data.canonicalStateClean) return Promise.reject(exportError('viewer.export.error.viewerState'));
-        if (routeSnapshot && !data.routeStateClean) return Promise.reject(exportError('viewer.export.error.routeState'));
-        if (reachSnapshot && !data.reachStateClean) return Promise.reject(exportError('viewer.export.error.reachState'));
-        var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
-        var svgUrl = URL.createObjectURL(svgBlob);
-
-        return new Promise(function (resolve, reject) {
-          var img = new Image();
-          img.onload = function () {
-            try {
-              var canvas = document.createElement('canvas');
-              canvas.width = SHARE_CARD_WIDTH;
-              canvas.height = SHARE_CARD_HEIGHT;
-              var ctx = canvas2dOrThrow(canvas, viewerText('viewer.export.shareCard'));
-              var computed = getComputedStyle(document.documentElement);
-              var bg = computed.getPropertyValue('--bg').trim() || currentBg();
-              var text = computed.getPropertyValue('--text').trim() || '#ffffff';
-              var muted = computed.getPropertyValue('--text-muted').trim() || '#94a3b8';
-              var border = computed.getPropertyValue('--panel-border').trim() || '#334155';
-              var accentProperty = reachSnapshot
-                ? (reachSnapshot.direction === 'upstream' ? '--database-stroke' : '--backend-stroke')
-                : '--frontend-stroke';
-              var accent = computed.getPropertyValue(accentProperty).trim() || '#22d3ee';
-              var titleNode = document.querySelector('.header h1');
-              var subtitleNode = document.querySelector('.header .subtitle');
-              var title = titleNode ? titleNode.textContent : document.title;
-              var directionLabel = reachSnapshot
-                ? viewerText('viewer.export.direction.' + reachSnapshot.direction)
-                : '';
-              var subtitle = routeSnapshot
-                ? viewerCount('viewer.export.card.routeSummary', routeSnapshot.hops, {
-                    source: routeSnapshot.source.label,
-                    target: routeSnapshot.target.label
-                  })
-                : reachSnapshot
-                  ? viewerText('viewer.export.card.reachSummary', {
-                      direction: directionLabel,
-                      origin: reachSnapshot.origin.label,
-                      nodes: viewerCount('viewer.export.card.node', reachSnapshot.nodeIds.length - 1),
-                      links: viewerCount('viewer.export.card.link', reachSnapshot.edges.length),
-                      hops: viewerCount('viewer.export.card.hop', reachSnapshot.maxDepth)
-                    })
-                  : subtitleNode ? subtitleNode.textContent : '';
-              var preset = document.documentElement.getAttribute('data-preset') || 'classic';
-              var theme = document.documentElement.getAttribute('data-theme') || 'dark';
-              var presetKey = preset === 'signal-flow'
-                ? 'viewer.preset.flow.short'
-                : 'viewer.preset.' + preset;
-              var presetLabel = viewerText(presetKey).toUpperCase();
-              var themeLabel = viewerText('viewer.theme.' + theme).toUpperCase();
-              var cardLabel = routeSnapshot
-                ? viewerText('viewer.export.card.routeBadge', {
-                    hops: viewerCount('viewer.export.card.hop', routeSnapshot.hops).toUpperCase()
-                  })
-                : reachSnapshot
-                  ? viewerText('viewer.export.card.reachBadge', { direction: directionLabel.toUpperCase() })
-                  : viewerText('viewer.export.card.defaultBadge', { preset: presetLabel, theme: themeLabel });
-
-              ctx.fillStyle = bg;
-              ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
-
-              ctx.fillStyle = accent;
-              ctx.fillRect(SHARE_CARD_PADDING, 27, 42, 3);
-
-              ctx.textBaseline = 'alphabetic';
-              ctx.fillStyle = text;
-              var fittedTitle = fitCanvasText(ctx, title, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 330, 29, 18, '700');
-              ctx.fillText(fittedTitle, SHARE_CARD_PADDING, 62);
-
-              ctx.fillStyle = muted;
-              var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 280, 13, 11, '500');
-              ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 87);
-
-              ctx.font = "600 12px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-              ctx.textAlign = 'right';
-              ctx.fillStyle = accent;
-              ctx.fillText(cardLabel, SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 50);
-              ctx.textAlign = 'left';
-
-              var availableWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
-              var availableHeight = SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING;
-              var fit = Math.min(availableWidth / data.width, availableHeight / data.height);
-              var drawWidth = data.width * fit;
-              var drawHeight = data.height * fit;
-              var drawX = SHARE_CARD_PADDING + (availableWidth - drawWidth) / 2;
-              var drawY = SHARE_CARD_HEADER + (availableHeight - drawHeight) / 2;
-
-              ctx.strokeStyle = border;
-              ctx.lineWidth = 1;
-              ctx.strokeRect(drawX - 0.5, drawY - 0.5, drawWidth + 1, drawHeight + 1);
-              ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-              URL.revokeObjectURL(svgUrl);
-
-              canvas.toBlob(function (blob) {
-                if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: viewerText('viewer.export.shareCard') }));
-                else resolve(blob);
-              }, 'image/png');
-            } catch (error) {
-              URL.revokeObjectURL(svgUrl);
-              reject(error);
-            }
-          };
-          img.onerror = function (e) {
-            URL.revokeObjectURL(svgUrl);
-            reject(e);
-          };
-          img.src = svgUrl;
-        });
-      }
-
-      function rasterizeShareCard(options) {
-        options = options || {};
-        if (!options.variant) return renderShareCard();
-        if (options.variant !== 'route' && options.variant !== 'reach') {
-          return Promise.reject(exportError('viewer.export.unknownVariant', { variant: options.variant }));
-        }
-        if (options.variant === 'route') {
-          var routeSnapshot = Archify.routeProbe && Archify.routeProbe.exportSnapshot();
-          if (!routeSnapshot) return Promise.reject(exportError('viewer.export.routeRequired'));
-          return renderShareCard({ routeSnapshot: routeSnapshot });
-        }
-        var snapshot = Archify.focus && typeof Archify.focus.reachabilitySnapshot === 'function'
-          ? Archify.focus.reachabilitySnapshot()
-          : null;
-        if (!snapshot) return Promise.reject(exportError('viewer.export.reachRequired'));
-        return renderShareCard({ reachSnapshot: snapshot });
       }
 
       function motionMimeType() {
@@ -6802,29 +6428,9 @@
 
       var menu = document.getElementById('export-menu');
       var btn = document.getElementById('btn-export');
-      var routeShareItem = menu.querySelector('button[data-action="route-share-card"]');
-      var reachShareItem = menu.querySelector('button[data-action="reach-share-card"]');
       var items = function () {
         return Array.prototype.slice.call(menu.querySelectorAll('button[role="menuitem"]'));
       };
-
-      function syncRouteShareItem() {
-        var snapshot = Archify.routeProbe && typeof Archify.routeProbe.exportSnapshot === 'function'
-          ? Archify.routeProbe.exportSnapshot()
-          : null;
-        routeShareItem.hidden = !snapshot;
-        routeShareItem.disabled = !snapshot;
-        return snapshot;
-      }
-
-      function syncReachShareItem() {
-        var snapshot = Archify.focus && typeof Archify.focus.reachabilitySnapshot === 'function'
-          ? Archify.focus.reachabilitySnapshot()
-          : null;
-        reachShareItem.hidden = !snapshot;
-        reachShareItem.disabled = !snapshot;
-        return snapshot;
-      }
 
       // ---- Clipboard support ----------------------------------------------
       function canCopyImage() {
@@ -6837,7 +6443,6 @@
       // canvas.toBlob('image/webp') silently returns a PNG on browsers without
       // WebP encoding (older Safari), so detect explicitly.
       function supports(format) {
-        if (format === 'share-card') return true;
         if (format === 'svg' || format === 'png') return true;
         if (format === 'webm') return canRecordMotion();
         var mime = format === 'jpeg' ? 'image/jpeg' : 'image/webp';
@@ -6854,7 +6459,7 @@
           it.disabled = true;
           it.title = viewerText('viewer.export.unsupported');
         }
-        if ((it.dataset.action === 'copy' || it.dataset.action === 'copy-share-card') && !canCopyImage()) {
+        if (it.dataset.action === 'copy' && !canCopyImage()) {
           it.disabled = true;
           it.title = viewerText('viewer.export.clipboardUnsupported');
         }
@@ -6883,8 +6488,6 @@
         if (Archify.preset && Archify.preset.isOpen()) Archify.preset.close(false);
         if (Archify.semanticLens && typeof Archify.semanticLens.clearPreview === 'function') Archify.semanticLens.clearPreview();
         if (Archify.semanticLens && Archify.semanticLens.isOpen()) Archify.semanticLens.close({ restoreFocus: false });
-        syncRouteShareItem();
-        syncReachShareItem();
         menu.classList.add('open');
         btn.setAttribute('aria-expanded', 'true');
         var available = items().filter(function (i) { return !i.hidden && !i.disabled; });
@@ -6944,17 +6547,14 @@
       });
 
       function runExport(format) {
+        clearExportReceipt();
+        if (!Object.prototype.hasOwnProperty.call(SUPPORTED_EXPORT_FORMATS, format)) {
+          return Promise.reject(new Error('Unsupported export format: ' + String(format)));
+        }
         var base = diagramFilename();
         close(true);
-        clearExportReceipt();
         if (format === 'webm') toast(viewerText('viewer.export.recording'));
-        return (format === 'share-card'
-          ? rasterizeShareCard().then(function (blob) {
-              recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
-              download(blob, base + '-share-card.png');
-              toast(viewerText('viewer.export.downloadedShare'));
-            })
-          : format === 'svg'
+        return (format === 'svg'
           ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
               var blob = new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' });
               recordExportReceipt('svg', blob, d.canonicalStateClean);
@@ -6991,92 +6591,19 @@
         });
       }
 
-      function runRouteShareCard() {
-        close(false);
-        clearExportReceipt();
-        var snapshot = Archify.routeProbe && Archify.routeProbe.exportSnapshot();
-        var blobPromise = snapshot
-          ? renderShareCard({ routeSnapshot: snapshot })
-          : Promise.reject(exportError('viewer.export.routeRequired'));
-        return blobPromise.then(function (blob) {
-          recordExportReceipt('share-card', blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, 'route', true);
-          download(blob, diagramFilename() + '-route-share-card.png');
-          toast(viewerText('viewer.export.downloadedRoute'));
-          return blob;
-        }).catch(function (err) {
-          console.error(err);
-          var technicalMessage = err && err.message ? err.message : 'share-card';
-          var message = exportMessage(err);
-          document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
-          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
-          alert(viewerText('viewer.export.routeFailed', { message: message }));
-        });
-      }
-
-      function runReachShareCard() {
-        close(false);
-        clearExportReceipt();
-        var snapshot = Archify.focus && typeof Archify.focus.reachabilitySnapshot === 'function'
-          ? Archify.focus.reachabilitySnapshot()
-          : null;
-        var blobPromise = snapshot
-          ? renderShareCard({ reachSnapshot: snapshot })
-          : Promise.reject(exportError('viewer.export.reachRequired'));
-        return blobPromise.then(function (blob) {
-          recordExportReceipt('share-card', blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, 'reach', false, true);
-          download(blob, diagramFilename() + '-' + snapshot.direction + '-reach-share-card.png');
-          toast(viewerText('viewer.export.downloadedReach'));
-          return blob;
-        }).catch(function (err) {
-          console.error(err);
-          var technicalMessage = err && err.message ? err.message : 'share-card';
-          var message = exportMessage(err);
-          document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
-          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
-          alert(viewerText('viewer.export.reachFailed', { message: message }));
-        });
-      }
-
       // A compact, machine-readable receipt for local QA and generated proof
       // galleries. It exposes no diagram contents, only the completed format,
       // byte count, and whether temporary viewer state was excluded.
-      function recordExportReceipt(format, blob, canonical, dimensions, variant, routeStateClean, reachStateClean) {
+      function recordExportReceipt(format, blob, canonical) {
         document.documentElement.setAttribute('data-last-export-format', format);
         document.documentElement.setAttribute('data-last-export-bytes', String(blob.size));
         document.documentElement.setAttribute('data-last-export-canonical', canonical ? 'true' : 'false');
-        if (variant) {
-          document.documentElement.setAttribute('data-last-export-variant', variant);
-        } else {
-          document.documentElement.removeAttribute('data-last-export-variant');
-        }
-        if (routeStateClean === true) {
-          document.documentElement.setAttribute('data-last-export-route-state-clean', 'true');
-        } else {
-          document.documentElement.removeAttribute('data-last-export-route-state-clean');
-        }
-        if (reachStateClean === true) {
-          document.documentElement.setAttribute('data-last-export-reach-state-clean', 'true');
-        } else {
-          document.documentElement.removeAttribute('data-last-export-reach-state-clean');
-        }
-        if (dimensions) {
-          document.documentElement.setAttribute('data-last-export-width', String(dimensions.width));
-          document.documentElement.setAttribute('data-last-export-height', String(dimensions.height));
-        } else {
-          document.documentElement.removeAttribute('data-last-export-width');
-          document.documentElement.removeAttribute('data-last-export-height');
-        }
       }
 
       function clearExportReceipt() {
         document.documentElement.removeAttribute('data-last-export-format');
         document.documentElement.removeAttribute('data-last-export-bytes');
         document.documentElement.removeAttribute('data-last-export-canonical');
-        document.documentElement.removeAttribute('data-last-export-width');
-        document.documentElement.removeAttribute('data-last-export-height');
-        document.documentElement.removeAttribute('data-last-export-variant');
-        document.documentElement.removeAttribute('data-last-export-route-state-clean');
-        document.documentElement.removeAttribute('data-last-export-reach-state-clean');
         document.documentElement.removeAttribute('data-last-export-error-format');
         document.documentElement.removeAttribute('data-last-export-error');
       }
@@ -7092,29 +6619,6 @@
             return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
           });
         }
-      }
-
-      function runCopyShareCard() {
-        close(true);
-        clearExportReceipt();
-        if (!canCopyImage()) {
-          alert(viewerText('viewer.export.clipboardUnsupported.period'));
-          return;
-        }
-        var blobPromise = rasterizeShareCard();
-        return writePngToClipboard(blobPromise).then(function () {
-          return blobPromise.then(function (blob) {
-            recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
-            toast(viewerText('viewer.export.copiedShare'));
-          });
-        }).catch(function (err) {
-          console.error(err);
-          var technicalMessage = err && err.message ? err.message : 'share-card';
-          var message = exportMessage(err);
-          document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
-          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
-          alert(viewerText('viewer.export.copyFailed', { message: message }));
-        });
       }
 
       function runCopy() {
@@ -7136,15 +6640,6 @@
       }
 
       menu.addEventListener('click', function (e) {
-        var routeShareCardBtn = e.target.closest('button[data-action="route-share-card"]');
-        if (routeShareCardBtn && !routeShareCardBtn.disabled && !routeShareCardBtn.hidden) { runRouteShareCard(); return; }
-
-        var reachShareCardBtn = e.target.closest('button[data-action="reach-share-card"]');
-        if (reachShareCardBtn && !reachShareCardBtn.disabled && !reachShareCardBtn.hidden) { runReachShareCard(); return; }
-
-        var copyShareCardBtn = e.target.closest('button[data-action="copy-share-card"]');
-        if (copyShareCardBtn && !copyShareCardBtn.disabled) { runCopyShareCard(); return; }
-
         var copyBtn = e.target.closest('button[data-action="copy"]');
         if (copyBtn && !copyBtn.disabled) { runCopy(); return; }
 
@@ -7158,12 +6653,7 @@
         close: close,
         isOpen: isOpen,
         run: runExport,
-        shareCard: rasterizeShareCard,
-        downloadRouteShareCard: runRouteShareCard,
-        downloadReachShareCard: runReachShareCard,
-        syncRouteShare: syncRouteShareItem,
-        syncReachShare: syncReachShareItem,
-        copyShareCard: runCopyShareCard
+        copyDiagram: runCopy
       };
 
       // Auto-open on page load for demo/screenshot purposes: ?openExport=1
@@ -7662,9 +7152,6 @@
         resetReachabilityButtons();
         reachStatus.textContent = '';
         reachStatus.hidden = true;
-        if (Archify.exportMenu && typeof Archify.exportMenu.syncReachShare === 'function') {
-          Archify.exportMenu.syncReachShare();
-        }
         if (options.updateUrl === true && activeIds.length === 1) {
           try {
             history.replaceState(null, '', location.pathname + location.search + '#focus=' + encodeURIComponent(activeIds[0]));
@@ -7741,9 +7228,6 @@
           hops: result.maxDepth
         });
         reachStatus.hidden = false;
-        if (Archify.exportMenu && typeof Archify.exportMenu.syncReachShare === 'function') {
-          Archify.exportMenu.syncReachShare();
-        }
         if (options.updateUrl !== false) {
           try {
             history.replaceState(null, '', location.pathname + location.search + '#focus=' +
@@ -7755,98 +7239,6 @@
         }
         requestLensPlacement();
         return true;
-      }
-      function reachabilitySnapshot() {
-        if (!activeReachability || activeIds.length !== 1 ||
-            (reachabilityMode !== 'upstream' && reachabilityMode !== 'downstream') ||
-            activeReachability.direction !== reachabilityMode ||
-            activeReachability.originId !== activeIds[0] ||
-            svg.getAttribute('data-reach-active') !== reachabilityMode) return null;
-
-        var originId = activeReachability.originId;
-        var nodeIds = activeReachability.nodeIds.slice();
-        var edgeKeys = activeReachability.edgeKeys.slice();
-        if (nodeIds.length < 2 || nodeIds[0] !== originId || !edgeKeys.length ||
-            !activeReachability.depths || !Number.isInteger(activeReachability.maxDepth) ||
-            activeReachability.maxDepth < 1) return null;
-
-        var allNodes = nodes();
-        var allEdges = edges();
-        var seenNodeIds = Object.create(null);
-        var seenEdgeKeys = Object.create(null);
-        var nodeIdSet = Object.create(null);
-        var depths = Object.create(null);
-        var originNode = null;
-        var measuredMaxDepth = 0;
-
-        if (nodeIds.some(function (id) {
-          var depth = activeReachability.depths[id];
-          var matches = allNodes.filter(function (node) {
-            return node.getAttribute('data-node-id') === id;
-          });
-          if (typeof id !== 'string' || !id || seenNodeIds[id] || matches.length !== 1 ||
-              !matches[0].hasAttribute('data-reach-match') ||
-              !Number.isInteger(depth) || depth < 0 || depth > activeReachability.maxDepth ||
-              (id === originId
-                ? (!matches[0].hasAttribute('data-reach-origin') || depth !== 0)
-                : depth < 1)) return true;
-          seenNodeIds[id] = true;
-          nodeIdSet[id] = true;
-          depths[id] = depth;
-          measuredMaxDepth = Math.max(measuredMaxDepth, depth);
-          if (id === originId) originNode = matches[0];
-          return false;
-        }) || !originNode || measuredMaxDepth !== activeReachability.maxDepth ||
-            allNodes.filter(function (node) { return node.hasAttribute('data-reach-match'); }).length !== nodeIds.length) return null;
-
-        var edgeRecords = [];
-        if (edgeKeys.some(function (key) {
-          if (typeof key !== 'string' || !key || seenEdgeKeys[key]) return true;
-          var fragments = allEdges.filter(function (edge) {
-            return edge.getAttribute('data-edge-key') === key;
-          });
-          var drawableFragments = fragments.filter(hasDrawableGeometry);
-          if (!fragments.length || drawableFragments.length !== 1 ||
-              !fragments.every(function (fragment) { return fragment.hasAttribute('data-reach-match'); })) return true;
-          var first = fragments[0];
-          var from = first.getAttribute('data-edge-from');
-          var to = first.getAttribute('data-edge-to');
-          var id = first.getAttribute('data-edge-id') || '';
-          var labelValue = first.getAttribute('data-edge-label') || '';
-          if (!nodeIdSet[from] || !nodeIdSet[to] || !fragments.every(function (fragment) {
-            return fragment.getAttribute('data-edge-from') === from &&
-              fragment.getAttribute('data-edge-to') === to &&
-              (fragment.getAttribute('data-edge-id') || '') === id;
-          })) return true;
-          seenEdgeKeys[key] = true;
-          edgeRecords.push({
-            key: key,
-            id: id,
-            from: from,
-            to: to,
-            label: labelValue,
-            depth: Math.max(depths[from], depths[to])
-          });
-          return false;
-        })) return null;
-
-        var liveEdgeKeys = Object.create(null);
-        if (allEdges.some(function (edge) {
-          if (!edge.hasAttribute('data-reach-match')) return false;
-          var key = edge.getAttribute('data-edge-key');
-          if (!key || !seenEdgeKeys[key]) return true;
-          liveEdgeKeys[key] = true;
-          return false;
-        }) || Object.keys(liveEdgeKeys).length !== edgeKeys.length) return null;
-
-        return {
-          direction: reachabilityMode,
-          origin: { id: originId, label: nodeLabel(originNode, originId) },
-          nodeIds: nodeIds,
-          depths: depths,
-          maxDepth: activeReachability.maxDepth,
-          edges: edgeRecords
-        };
       }
       function setPassportValue(element, value) {
         var normalized = value == null ? '' : String(value).trim();
@@ -8936,7 +8328,6 @@
         copyLink: copyFocusLink,
         reach: applyReachability,
         clearReach: clearReachability,
-        reachabilitySnapshot: reachabilitySnapshot,
         inspectRelationship: inspectRelationship,
         inspectRelationshipById: inspectRelationshipById,
         reposition: requestLensPlacement,
@@ -11103,9 +10494,9 @@
 
     /* ============================================================
        Viewer Chrome Layout — keep HTML controls clear of the canonical SVG
-       legend without changing authored geometry. The dock keeps its existing
-       position unless its zero-reserve position would cover the legend; only
-       then does a small bottom safe rail become part of the reader budget.
+       stage without changing authored geometry. The dock keeps its floating
+       appearance while a small bottom stage rail becomes part of the reader
+       budget whenever its zero-reserve position would enter the stage.
        ============================================================ */
     Archify.viewerChromeLayout = (function () {
       var html = document.documentElement;
@@ -11116,10 +10507,13 @@
       var frame = 0;
       var settleFrame = 0;
       var reserve = 0;
-      var collisionLatched = false;
+      var railLatched = false;
       var probingBaseline = false;
       var probePromise = null;
       var baselineIntersectionArea = 0;
+      var baselineStageGap = null;
+      var restorableReserve = 0;
+      var probeFallbackReserve = 0;
       var lastReceipt = null;
       var SAFE_GAP = 10;
 
@@ -11136,14 +10530,61 @@
         var height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
         return width * height;
       }
+      function protectedStageRect() {
+        if (!svg) return null;
+        var rect = svg.getBoundingClientRect();
+        var transform = '';
+        try { transform = window.getComputedStyle(svg).transform || ''; } catch (_) {}
+        var scaleX = 1;
+        var scaleY = 1;
+        var translateX = 0;
+        var translateY = 0;
+        var matrix = transform.match(/^matrix\(([^)]+)\)$/);
+        var matrix3d = transform.match(/^matrix3d\(([^)]+)\)$/);
+        if (matrix) {
+          var values = matrix[1].split(',').map(Number);
+          if (values.length === 6 && values.every(Number.isFinite)) {
+            scaleX = Math.abs(values[0]) || 1;
+            scaleY = Math.abs(values[3]) || 1;
+            translateX = values[4];
+            translateY = values[5];
+          }
+        } else if (matrix3d) {
+          var values3d = matrix3d[1].split(',').map(Number);
+          if (values3d.length === 16 && values3d.every(Number.isFinite)) {
+            scaleX = Math.abs(values3d[0]) || 1;
+            scaleY = Math.abs(values3d[5]) || 1;
+            translateX = values3d[12];
+            translateY = values3d[13];
+          }
+        }
+        var width = rect.width / scaleX;
+        var height = rect.height / scaleY;
+        var left = rect.left - translateX;
+        var top = rect.top - translateY;
+        return {
+          x: left,
+          y: top,
+          left: left,
+          top: top,
+          right: left + width,
+          bottom: top + height,
+          width: width,
+          height: height
+        };
+      }
       function eligible() {
         return Boolean(
-          container && svg && nav && legend &&
+          container && svg && nav &&
           window.innerWidth > 720 &&
           html.getAttribute('data-embed') !== 'true' &&
           (!window.matchMedia || !window.matchMedia('print').matches) &&
-          visible(nav) && visible(legend)
+          visible(nav)
         );
+      }
+      function cameraAtBaseline() {
+        var scale = Number(svg && svg.getAttribute('data-view-scale'));
+        return !Number.isFinite(scale) || Math.abs(scale - 1) < 0.001;
       }
       function writeReserve(next, options) {
         options = options || {};
@@ -11151,11 +10592,14 @@
         if (Math.abs(next - reserve) < 1) return false;
         reserve = next;
         if (reserve) {
+          if (options.remember !== false) restorableReserve = reserve;
           container.style.setProperty('--archify-nav-reserve', reserve + 'px');
-          container.setAttribute('data-nav-safe-rail', 'true');
+          container.setAttribute('data-nav-stage-rail', 'true');
+          html.setAttribute('data-nav-stage-rail', 'true');
         } else {
           container.style.removeProperty('--archify-nav-reserve');
-          container.removeAttribute('data-nav-safe-rail');
+          container.removeAttribute('data-nav-stage-rail');
+          html.removeAttribute('data-nav-stage-rail');
         }
         if (Archify.readerLayout && typeof Archify.readerLayout.schedule === 'function') {
           Archify.readerLayout.schedule();
@@ -11169,15 +10613,23 @@
         }
         return true;
       }
-      function clear() {
-        collisionLatched = false;
-        baselineIntersectionArea = 0;
+      function clear(options) {
+        options = options || {};
+        railLatched = false;
+        if (options.preserveBaseline !== true) {
+          baselineIntersectionArea = 0;
+          baselineStageGap = null;
+          restorableReserve = 0;
+        }
         writeReserve(0, { quiet: probingBaseline });
         lastReceipt = {
           eligible: false,
           active: false,
           reserve: 0,
           gap: SAFE_GAP,
+          baselineStageGap: null,
+          stageGap: null,
+          stageIntersectionArea: 0,
           baselineIntersectionArea: 0,
           intersectionArea: 0
         };
@@ -11186,50 +10638,93 @@
       function measure() {
         frame = 0;
         if (probingBaseline) return null;
-        if (!eligible()) return clear();
+        if (!eligible()) return clear({ preserveBaseline: !cameraAtBaseline() });
+
+        /* Camera transforms enlarge and translate authored paint inside the
+           fixed, clipped root SVG viewport. They must not redefine the
+           reader's baseline rail.
+           Restore that baseline after temporary mobile/embed/print states.
+           Camera Reset preserves the established rail while viewport, mode,
+           and content changes remain responsible for baseline reprobes. */
+        if (!cameraAtBaseline()) {
+          if (reserve === 0 && restorableReserve > 0) {
+            if (writeReserve(restorableReserve)) return null;
+          }
+          var cameraNavRect = nav.getBoundingClientRect();
+          var cameraLegendRect = visible(legend) ? legend.getBoundingClientRect() : null;
+          var cameraStageRect = protectedStageRect();
+          var cameraIntersectionArea = usable(cameraLegendRect) && intersectionArea(cameraNavRect, cameraStageRect) > 0
+            ? intersectionArea(cameraNavRect, cameraLegendRect)
+            : 0;
+          lastReceipt = {
+            eligible: true,
+            active: reserve > 0,
+            reserve: reserve,
+            gap: SAFE_GAP,
+            baselineStageGap: baselineStageGap == null ? null : Math.round(baselineStageGap * 100) / 100,
+            stageGap: Math.round((cameraNavRect.top - cameraStageRect.bottom) * 100) / 100,
+            stageIntersectionArea: Math.round(intersectionArea(cameraNavRect, cameraStageRect) * 100) / 100,
+            baselineIntersectionArea: Math.round(baselineIntersectionArea * 100) / 100,
+            intersectionArea: Math.round(cameraIntersectionArea * 100) / 100
+          };
+          return lastReceipt;
+        }
 
         var navRect = nav.getBoundingClientRect();
-        var legendRect = legend.getBoundingClientRect();
-        var svgRect = svg.getBoundingClientRect();
-        if (!usable(navRect) || !usable(legendRect) || !usable(svgRect)) return clear();
+        var legendRect = visible(legend) ? legend.getBoundingClientRect() : null;
+        var stageRect = protectedStageRect();
+        if (!usable(navRect) || !usable(stageRect)) return clear();
 
-        var actualIntersectionArea = intersectionArea(navRect, legendRect);
-        if (!collisionLatched && reserve === 0) {
+        var actualIntersectionArea = usable(legendRect) ? intersectionArea(navRect, legendRect) : 0;
+        var stageGap = navRect.top - stageRect.bottom;
+        if (!railLatched && reserve === 0) {
           baselineIntersectionArea = actualIntersectionArea;
-          if (actualIntersectionArea > 0) {
-            collisionLatched = true;
-            if (writeReserve(Math.max(0, svgRect.bottom + SAFE_GAP - navRect.top))) return null;
+          baselineStageGap = stageGap;
+          if (stageGap < SAFE_GAP) {
+            railLatched = true;
+            if (writeReserve(Math.max(0, SAFE_GAP - stageGap))) return null;
           }
-        } else if (collisionLatched && reserve > 0 && actualIntersectionArea > 0) {
-          /* Once zero-reserve geometry proves a collision, keep that decision
-             latched while Adaptive Reader incorporates the rail. If the first
-             rail is not quite tall enough (notably in Presentation flex
-             layout), grow only by the remaining vertical overlap. */
-          var remaining = Math.max(1, legendRect.bottom + SAFE_GAP - navRect.top);
+        } else if (railLatched && reserve > 0 && stageGap < SAFE_GAP) {
+          /* Keep the decision latched while Adaptive Reader incorporates the
+             rail. Presentation and rounded layout values can require one
+             bounded follow-up before the full stage gap is established. */
+          var remaining = Math.max(1, SAFE_GAP - stageGap);
           if (writeReserve(reserve + remaining)) return null;
         }
 
         navRect = nav.getBoundingClientRect();
-        legendRect = legend.getBoundingClientRect();
+        legendRect = visible(legend) ? legend.getBoundingClientRect() : null;
+        stageRect = protectedStageRect();
+        stageGap = navRect.top - stageRect.bottom;
         lastReceipt = {
           eligible: true,
           active: reserve > 0,
           reserve: reserve,
           gap: SAFE_GAP,
+          baselineStageGap: baselineStageGap == null ? null : Math.round(baselineStageGap * 100) / 100,
+          stageGap: Math.round(stageGap * 100) / 100,
+          stageIntersectionArea: Math.round(intersectionArea(navRect, stageRect) * 100) / 100,
           baselineIntersectionArea: Math.round(baselineIntersectionArea * 100) / 100,
-          intersectionArea: Math.round(intersectionArea(navRect, legendRect) * 100) / 100
+          intersectionArea: Math.round((usable(legendRect) ? intersectionArea(navRect, legendRect) : 0) * 100) / 100
         };
         return lastReceipt;
       }
       function reprobe() {
         if (probingBaseline) return probePromise || Promise.resolve(false);
-        if (!reserve && !collisionLatched) {
+        if (!cameraAtBaseline()) {
           schedule();
           return Promise.resolve(false);
         }
+        if (!reserve && !railLatched && !restorableReserve) {
+          schedule();
+          return Promise.resolve(false);
+        }
+        probeFallbackReserve = restorableReserve || reserve;
         probingBaseline = true;
-        collisionLatched = false;
+        railLatched = false;
         baselineIntersectionArea = 0;
+        baselineStageGap = null;
+        restorableReserve = 0;
         writeReserve(0, { quiet: true });
         var readerReady = Archify.readerLayout && typeof Archify.readerLayout.whenStable === 'function'
           ? Archify.readerLayout.whenStable().catch(function () {})
@@ -11237,6 +10732,10 @@
         probePromise = readerReady.then(function () {
           probingBaseline = false;
           probePromise = null;
+          if (!cameraAtBaseline() && probeFallbackReserve > 0) {
+            restorableReserve = probeFallbackReserve;
+          }
+          probeFallbackReserve = 0;
           schedule();
           return true;
         });
@@ -11258,8 +10757,8 @@
           Math.round(navRect.top * 100) / 100,
           Math.round(legendRect.left * 100) / 100,
           Math.round(legendRect.top * 100) / 100,
-          collisionLatched ? 'latched' : 'clear',
-          lastReceipt ? lastReceipt.intersectionArea : ''
+          railLatched ? 'latched' : 'clear',
+          lastReceipt ? lastReceipt.stageGap : ''
         ].join('|');
       }
       function whenStable() {
@@ -11278,7 +10777,7 @@
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(reprobe).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
-        [nav, legend].forEach(function (element) { if (element) resizeObserver.observe(element); });
+        [nav, svg, legend].forEach(function (element) { if (element) resizeObserver.observe(element); });
       }
       if (typeof MutationObserver === 'function') {
         var contentObserver = new MutationObserver(function (records) {
@@ -11299,6 +10798,7 @@
         schedule: schedule,
         reprobe: reprobe,
         whenStable: whenStable,
+        stageRect: protectedStageRect,
         active: function () { return reserve > 0; },
         receipt: function () { return lastReceipt || measure(); }
       };
@@ -11318,6 +10818,7 @@
       var cameraFrame = null;
       var cameraGeneration = 0;
       var cameraTransaction = null;
+      var clipFrame = 0;
       var resizeFrame = 0;
       var autoScrollUntil = 0;
 
@@ -11403,9 +10904,43 @@
         container.setAttribute('data-camera-mode', state.mode);
         container.setAttribute('data-camera-indicator', semantic ? 'true' : 'false');
       }
+      function clipToViewport(camera) {
+        camera = camera || state;
+        if (camera.scale <= 1.001) {
+          svg.style.removeProperty('clip-path');
+          return;
+        }
+        var width = svg.clientWidth || 1;
+        var height = svg.clientHeight || 1;
+        var scale = camera.scale;
+        var top = Math.max(0, Math.min(height, -camera.y / scale));
+        var left = Math.max(0, Math.min(width, -camera.x / scale));
+        var right = Math.max(0, Math.min(width, width - (width - camera.x) / scale));
+        var bottom = Math.max(0, Math.min(height, height - (height - camera.y) / scale));
+        svg.style.clipPath = 'inset(' + [top, right, bottom, left].map(function (value) {
+          return Math.round(value * 1000) / 1000 + 'px';
+        }).join(' ') + ')';
+      }
+      function cameraSettled(rendered) {
+        return Math.abs(rendered.scale - state.scale) < 0.001 &&
+          Math.abs(rendered.x - state.x) < 0.05 &&
+          Math.abs(rendered.y - state.y) < 0.05;
+      }
+      function syncViewportClip() {
+        if (clipFrame) cancelAnimationFrame(clipFrame);
+        clipFrame = 0;
+        function sample() {
+          clipFrame = 0;
+          var rendered = sampleRenderedState();
+          clipToViewport(rendered);
+          if (!cameraSettled(rendered)) clipFrame = requestAnimationFrame(sample);
+        }
+        sample();
+      }
       function apply() {
         clamp();
         svg.style.transform = 'translate(' + state.x + 'px,' + state.y + 'px) scale(' + state.scale + ')';
+        syncViewportClip();
         renderControls();
         outBtn.disabled = state.scale <= 1;
         inBtn.disabled = state.scale >= 3;
@@ -11527,9 +11062,6 @@
         else stopCameraMotion('reset', false);
         state = { scale: 1, x: 0, y: 0, mode: 'overview' };
         apply();
-        if (Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.reprobe === 'function') {
-          Archify.viewerChromeLayout.reprobe();
-        }
       }
       function centerAt(logicalX, logicalY, options) {
         options = options || {};
@@ -12823,54 +12355,6 @@
         return node.getAttribute('data-node-label') ||
           (node.getAttribute('aria-label') || fallback).replace(/^Focus\s+/, '').split(',')[0];
       }
-      function exportSnapshot() {
-        if (mode !== 'result' || activeNodeIds.length < 2 || activeEdges.length !== activeNodeIds.length - 1) return null;
-        var allNodes = nodes();
-        var byId = nodesById();
-        var seenNodeIds = Object.create(null);
-        var seenEdgeKeys = Object.create(null);
-        if (startId !== activeNodeIds[0] || endId !== activeNodeIds[activeNodeIds.length - 1] ||
-            activeNodeIds.some(function (id) {
-              if (seenNodeIds[id] || allNodes.filter(function (node) {
-                return node.getAttribute('data-node-id') === id;
-              }).length !== 1) return true;
-              seenNodeIds[id] = true;
-              return !byId[id];
-            }) ||
-            activeEdges.some(function (edge, index) {
-              if (!edge || !svg.contains(edge)) return true;
-              var edgeKey = edge.getAttribute('data-edge-key');
-              var edgeId = edge.getAttribute('data-edge-id') || '';
-              if (!edgeKey || seenEdgeKeys[edgeKey]) return true;
-              seenEdgeKeys[edgeKey] = true;
-              var fragments = Array.prototype.slice.call(svg.querySelectorAll('[data-edge-key]')).filter(function (candidate) {
-                return candidate.getAttribute('data-edge-key') === edgeKey;
-              });
-              var drawableFragments = fragments.filter(hasDrawableGeometry);
-              return !fragments.length || !fragments.every(function (fragment) {
-                return fragment.getAttribute('data-edge-from') === activeNodeIds[index] &&
-                  fragment.getAttribute('data-edge-to') === activeNodeIds[index + 1] &&
-                  (fragment.getAttribute('data-edge-id') || '') === edgeId;
-              }) || drawableFragments.length !== 1 || drawableFragments[0] !== edge ||
-                edge.getAttribute('data-edge-from') !== activeNodeIds[index] ||
-                edge.getAttribute('data-edge-to') !== activeNodeIds[index + 1];
-            })) return null;
-        return {
-          source: { id: startId, label: nodeLabel(byId[startId], startId) },
-          target: { id: endId, label: nodeLabel(byId[endId], endId) },
-          nodeIds: activeNodeIds.slice(),
-          hops: activeEdges.length,
-          edges: activeEdges.map(function (edge) {
-            return {
-              key: edge.getAttribute('data-edge-key'),
-              id: edge.getAttribute('data-edge-id') || '',
-              from: edge.getAttribute('data-edge-from'),
-              to: edge.getAttribute('data-edge-to'),
-              label: edge.getAttribute('data-edge-label') || ''
-            };
-          })
-        };
-      }
       function edgeShapes(edge) {
         if (/^(path|line|polyline)$/i.test(edge.tagName)) return [edge];
         return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
@@ -13023,7 +12507,6 @@
         findBtn.setAttribute('aria-label', viewerText('viewer.route.start.find.aria'));
         copyBtn.hidden = true;
         copyBtn.textContent = viewerText('viewer.route.copy');
-        if (Archify.exportMenu && typeof Archify.exportMenu.syncRouteShare === 'function') Archify.exportMenu.syncRouteShare();
         setTrigger(false);
         if (wasActive && options.preserveView !== true && Archify.view && typeof Archify.view.reset === 'function') {
           Archify.view.reset({ automatic: true });
@@ -13518,7 +13001,6 @@
         findBtn.hidden = true;
         copyBtn.hidden = false;
         setTrigger(true);
-        if (Archify.exportMenu && typeof Archify.exportMenu.syncRouteShare === 'function') Archify.exportMenu.syncRouteShare();
         if (options.updateUrl !== false) {
           replaceRouteHash(encodeURIComponent(startId) + '~' + encodeURIComponent(endId));
         }
@@ -13792,7 +13274,6 @@
         finderOpening: finderOpening,
         finderClosed: finderClosed,
         openFinder: openFinder,
-        exportSnapshot: exportSnapshot,
         active: function () { return mode === 'idle' ? null : mode; },
         result: function () {
           return mode === 'result'

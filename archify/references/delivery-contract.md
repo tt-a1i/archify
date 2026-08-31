@@ -88,4 +88,4 @@ visual_review: passed|skipped (image reader unavailable)|failed
 correction_rounds: 0|1|2
 ```
 
-Opening, preview status, Share Cards, and other viewer exports are not validation claims.
+Opening, preview status, and viewer exports are not validation claims.

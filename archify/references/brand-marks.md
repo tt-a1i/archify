@@ -57,7 +57,7 @@ of silently changing the artifact.
 
 The final artifact never fetches a brand asset when opened. Preset vectors and
 digest-verified captured site icons remain embedded in SVG, PNG, WebP, JPEG,
-Share Card, and WebM exports.
+copied PNG, and WebM exports.
 
 Use `node bin/archify.mjs brands --json` to inspect all canonical IDs, aliases,
 categories, domains, and provenance. Current categories cover AI, cloud,

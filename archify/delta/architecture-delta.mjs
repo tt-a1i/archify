@@ -719,7 +719,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.canvas[data-delta-review-active] [data-delta-review-current]{transition:none!important}}@media print{body{min-width:0;background:#fff;color:#111}.proof-page{width:100%;padding:0}.proof-tools,.review-strip,details{display:none!important}.canvas{display:none!important}.canvas[data-view="delta"]{display:block!important;border:0}.canvas[data-view="delta"] [data-delta-state="same"]{opacity:1!important;transition:none!important}.canvas[data-delta-review-active]{--review-same-opacity:1;--review-change-opacity:1}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:none!important}.proof-foot{color:#444}}
 </style></head>
 <body><main class="proof-page"><header class="proof-head"><div><p class="eyebrow">ARCHITECTURE DELTA · ${proof}</p><h1>See what changed<br>before you merge.</h1><p class="subtitle">${esc(receipt.base.title)} → ${esc(receipt.head.title)}</p></div><div class="metrics"><div class="metric add"><strong>${total(receipt.summary, 'added')}</strong><span>ADDED</span></div><div class="metric remove"><strong>${total(receipt.summary, 'removed')}</strong><span>REMOVED</span></div><div class="metric change"><strong>${changed}</strong><span>CHANGED</span></div></div></header>
-<div class="proof-tools"><div class="view-switch" role="tablist" aria-label="Architecture snapshot"><button role="tab" data-target="base" aria-selected="false">Before</button><button role="tab" data-target="delta" aria-selected="true">Delta</button><button role="tab" data-target="head" aria-selected="false">After</button></div><div class="legend"><span class="add"><i></i>+ ADD</span><span class="remove"><i></i>− DEL</span><span class="change"><i></i>~ MOD</span><span class="move"><i></i>↔ MOVE</span></div><div><button class="utility" id="export-svg" type="button">Export SVG</button> <button class="utility" id="share-card" type="button">Share Card</button> <button class="utility" id="preset" type="button">Preset</button> <button class="utility" id="theme" type="button">Theme</button></div></div>
+<div class="proof-tools"><div class="view-switch" role="tablist" aria-label="Architecture snapshot"><button role="tab" data-target="base" aria-selected="false">Before</button><button role="tab" data-target="delta" aria-selected="true">Delta</button><button role="tab" data-target="head" aria-selected="false">After</button></div><div class="legend"><span class="add"><i></i>+ ADD</span><span class="remove"><i></i>− DEL</span><span class="change"><i></i>~ MOD</span><span class="move"><i></i>↔ MOVE</span></div><div><button class="utility" id="export-svg" type="button">Export SVG</button> <button class="utility" id="preset" type="button">Preset</button> <button class="utility" id="theme" type="button">Theme</button></div></div>
 <nav class="review-strip" aria-label="Authored change review"><button class="review-step" id="review-overview" type="button" disabled>Overview</button><button class="review-step" id="review-previous" type="button" aria-label="Previous authored change" disabled>←</button><button class="review-step" id="review-play" type="button" aria-pressed="false"${rows.length ? '' : ' disabled'}>Review</button><button class="review-step" id="review-next" type="button" aria-label="Next authored change" disabled>→</button><div class="review-status" id="review-status" role="status" aria-live="polite">Overview · ${rows.length} authored changes</div></nav>
 <section class="canvas" data-view="base" hidden>${baseView}</section><section class="canvas" data-view="delta">${deltaSvg}</section><section class="canvas" data-view="head" hidden>${headView}</section>
 <details${rows.length <= 10 ? ' open' : ''}><summary>Exact authored changes · ${rows.length}</summary><ul class="changes">${rowHtml}</ul></details>
@@ -980,105 +980,24 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     });
   }
 
+  function clearExportReceipt() {
+    delete document.documentElement.dataset.archifyDeltaExport;
+  }
+
   function exportCanonicalSvg() {
+    clearExportReceipt();
     const blob = new Blob([canonicalDeltaSvg()], { type: 'image/svg+xml;charset=utf-8' });
     downloadBlob(blob, artifactName('-architecture-delta.svg'));
     recordExport('svg', blob);
     return blob;
   }
 
-  function loadSvgImage(blob) {
-    return new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(blob);
-      const image = new Image();
-      image.onload = () => { URL.revokeObjectURL(url); resolve(image); };
-      image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not rasterize canonical Delta SVG.')); };
-      image.src = url;
-    });
-  }
-
-  function pngBlob(canvas) {
-    return new Promise((resolve, reject) => canvas.toBlob((blob) => {
-      if (blob) resolve(blob);
-      else reject(new Error('Canvas returned no Share Card PNG.'));
-    }, 'image/png'));
-  }
-
-  async function shareCard() {
-    const receipt = JSON.parse(receiptNode.textContent);
-    const canvas = document.createElement('canvas');
-    canvas.width = 1200;
-    canvas.height = 630;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('2D canvas context unavailable for Architecture Delta Share Card.');
-    ctx.fillStyle = '#071019';
-    ctx.fillRect(0, 0, 1200, 630);
-    ctx.fillStyle = '#0b1722';
-    ctx.fillRect(34, 28, 1132, 574);
-    ctx.strokeStyle = '#25384a';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(34, 28, 1132, 574);
-    ctx.font = '700 18px ui-monospace, SFMono-Regular, Menlo, monospace';
-    ctx.fillStyle = '#7dd3fc';
-    ctx.fillText('ARCHITECTURE DELTA', 66, 68);
-    ctx.font = '700 34px ui-monospace, SFMono-Regular, Menlo, monospace';
-    ctx.fillStyle = '#e6edf5';
-    const title = String(receipt.head.title || 'Architecture').slice(0, 46) + ' Architecture Delta';
-    ctx.fillText(title.slice(0, 58), 66, 112);
-    ctx.font = '700 17px ui-monospace, SFMono-Regular, Menlo, monospace';
-    ctx.fillStyle = '#8aa0b5';
-    const componentLine = 'COMPONENTS  +' + receipt.summary.components.added + '  ~' + receipt.summary.components.changed + '  −' + receipt.summary.components.removed;
-    const connectionLine = 'CONNECTIONS  +' + receipt.summary.connections.added + '  ~' + receipt.summary.connections.changed + '  −' + receipt.summary.connections.removed;
-    const boundaryLine = 'BOUNDARY SCOPE  +' + receipt.summary.boundaries.added + '  ~' + receipt.summary.boundaries.changed + '  −' + receipt.summary.boundaries.removed;
-    ctx.fillText(componentLine, 66, 151);
-    ctx.fillText(connectionLine, 420, 151);
-    ctx.fillText(boundaryLine, 786, 151);
-    ctx.font = '650 14px ui-monospace, SFMono-Regular, Menlo, monospace';
-    const authoredChanges = ['components', 'connections', 'boundaries'].reduce((sum, collection) => {
-      const summary = receipt.summary[collection];
-      return sum + summary.added + summary.changed + summary.removed;
-    }, 0);
-    const movementSummary = '↔ moved ' + receipt.summary.components.moved + ' · rerouted ' + receipt.summary.connections.rerouted + ' · presentation ' + (receipt.summary.presentationChanged ? 'changed' : 'unchanged');
-    const secondary = authoredChanges === 0
-      ? 'No authored architecture changes · ' + movementSummary
-      : movementSummary;
-    ctx.fillText(secondary, 66, 181);
-    const proofLine = receipt.proofLevel === 'revision-pinned'
-      ? 'REV ' + String(receipt.base.revision).slice(0, 8) + ' → ' + String(receipt.head.revision).slice(0, 8) + ' · REVISION-PINNED INPUTS'
-      : 'AUTHORED SNAPSHOTS';
-    ctx.textAlign = 'right';
-    ctx.fillText(proofLine, 1134, 181);
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#09141e';
-    ctx.fillRect(66, 206, 1068, 358);
-    ctx.strokeStyle = '#25384a';
-    ctx.strokeRect(66, 206, 1068, 358);
-    const svgBlob = new Blob([canonicalDeltaSvg()], { type: 'image/svg+xml;charset=utf-8' });
-    const image = await loadSvgImage(svgBlob);
-    const ratio = Math.min(1024 / image.width, 322 / image.height);
-    const width = image.width * ratio;
-    const height = image.height * ratio;
-    ctx.drawImage(image, 600 - width / 2, 385 - height / 2, width, height);
-    ctx.font = '650 12px ui-monospace, SFMono-Regular, Menlo, monospace';
-    ctx.fillStyle = '#8aa0b5';
-    ctx.fillText('Stable authored IDs · static complete Delta · no risk or mergeability inference', 66, 588);
-    return pngBlob(canvas);
-  }
-
-  async function downloadShareCard() {
-    const blob = await shareCard();
-    downloadBlob(blob, artifactName('-architecture-delta-share-card.png'));
-    recordExport('share-card', blob, { width: 1200, height: 630 });
-    return blob;
-  }
-
   window.Archify = window.Archify || {};
-  window.Archify.deltaExport = { canonicalSvg: canonicalDeltaSvg, shareCard, exportSvg: exportCanonicalSvg, downloadShareCard };
+  window.Archify.deltaExport = { canonicalSvg: canonicalDeltaSvg, exportSvg: exportCanonicalSvg };
   window.Archify.exportMenu = {
-    shareCard,
     run(format) {
+      clearExportReceipt();
       if (format === 'svg') return exportCanonicalSvg();
-      if (format === 'share-card') return downloadShareCard();
       throw new Error('Unknown Architecture Delta export format: ' + format);
     },
   };
@@ -1136,7 +1055,6 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
   const presets = ['classic', 'signal-flow', 'blueprint'];
   document.querySelector('#preset').addEventListener('click', () => { const now = document.documentElement.dataset.preset; document.documentElement.dataset.preset = presets[(presets.indexOf(now) + 1) % presets.length]; });
   document.querySelector('#export-svg').addEventListener('click', exportCanonicalSvg);
-  document.querySelector('#share-card').addEventListener('click', () => { downloadShareCard().catch((error) => window.alert(error.message)); });
 
   reviewAvailable = validateReview();
   if (!reviewAvailable) failReview();
@@ -1180,9 +1098,9 @@ export function validateArchitectureDeltaHtml(html, receipt) {
   if ((html.match(/id="archify-compare-receipt"/g) || []).length !== 1) failures.push('expected exactly one embedded compare receipt');
   if (!html.includes('aria-label="Authored change review"')) failures.push('missing exact-ID change navigator');
   if ((html.match(/class="change-row"/g) || []).length !== rows.length) failures.push('change navigator row count does not match the receipt');
-  if (!html.includes('id="export-svg"') || !html.includes('id="share-card"')
-    || !html.includes('window.Archify.deltaExport = { canonicalSvg: canonicalDeltaSvg, shareCard')) {
-    failures.push('missing canonical Delta SVG or Share Card export contract');
+  if (!html.includes('id="export-svg"')
+    || !html.includes('window.Archify.deltaExport = { canonicalSvg: canonicalDeltaSvg, exportSvg: exportCanonicalSvg }')) {
+    failures.push('missing canonical Delta SVG export contract');
   }
   for (const [index, row] of rows.entries()) {
     const safeKey = esc(row.key).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

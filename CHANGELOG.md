@@ -4,6 +4,11 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
+Development identity: `v2.17.0-dev.0`
+
+### Removed
+- **Share Card exports (#229).** Removed ordinary, clipboard, Route, Reach, and Architecture Delta Share Card variants. The Viewer Share group now exposes only **Copy diagram**, which copies the complete authored topology through the existing high-resolution PNG pipeline.
+
 ## [2.16.0] — 2026-08-30
 
 ### Added

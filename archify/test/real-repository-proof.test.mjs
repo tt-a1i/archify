@@ -12,7 +12,6 @@ const skillRoot = path.resolve(__dirname, '..');
 const repoRoot = path.resolve(skillRoot, '..');
 const sourcePath = path.join(repoRoot, 'docs', 'cases', 'mco-runtime.architecture.json');
 const artifactPath = path.join(repoRoot, 'docs', 'cases', 'mco-runtime.architecture.html');
-const shareCardPath = path.join(repoRoot, 'docs', 'assets', 'mco-runtime-share-card.png');
 const experimentSourcePath = path.join(repoRoot, 'experiments', 'mco-showcase', 'mco-runtime.architecture.json');
 const experimentArtifactPath = path.join(repoRoot, 'experiments', 'mco-showcase', 'mco-runtime.html');
 const cli = path.join(skillRoot, 'bin', 'archify.mjs');
@@ -190,17 +189,11 @@ test('MCO public proof is source-backed, valid, and linked from every README', (
     fs.rmSync(noRootTmp, { recursive: true, force: true });
   }
 
-  const png = fs.readFileSync(shareCardPath);
-  assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
-  assert.equal(png.readUInt32BE(16), 1200);
-  assert.equal(png.readUInt32BE(20), 630);
-  assert.ok(png.byteLength > 20_000, 'MCO Share Card is unexpectedly small');
-
   const repositorySlug = new URL(source.meta.repository.url).pathname.replace(/^\/|\/$/g, '');
   const shortRevision = source.meta.repository.revision.slice(0, 7);
   for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
-    assert.match(readme, /docs\/assets\/mco-runtime-share-card\.png/);
+    assert.doesNotMatch(readme, /mco-runtime-(?:share-card|architecture)\.png/);
     assert.match(readme, /cases\/mco-runtime\.architecture\.html\?theme=dark&present=1#view=dispatch-path/);
     assert.match(readme, /docs\/cases\/mco-runtime\.architecture\.json/);
     assert.ok(readme.includes(`[\`${repositorySlug}\`](${source.meta.repository.url})`), `${filename}: repository link drifted`);

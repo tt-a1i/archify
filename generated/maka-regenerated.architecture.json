@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Maka 运行时系统架构",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/sunsunsun-java/maka",
+      "revision": "590d37ceafef1f3cfeaba7ee1c3a906b38b5dc62"
+    },
+    "output": "generated/maka-regenerated.architecture.html"
+  },
+  "components": [
+    { "id": "surfaces", "type": "frontend", "label": "Desktop / TUI / CLI / Bot", "sublabel": "产品入口与远程客户端", "pos": [40, 300], "size": [170, 68], "sources": [{ "path": "ARCHITECTURE.md", "line": 5, "label": "execution authority" }] },
+    { "id": "host", "type": "backend", "label": "Runtime Host", "sublabel": "唯一托管执行权威", "pos": [260, 300], "size": [160, 68], "tag": "public client / protocol", "sources": [{ "path": "ARCHITECTURE.md", "line": 22, "label": "host authority" }] },
+    { "id": "session", "type": "backend", "label": "SessionManager", "sublabel": "Session / Turn 生命周期", "pos": [480, 300], "size": [170, 68], "sources": [{ "path": "ARCHITECTURE.md", "line": 27, "label": "runtime lifecycle" }] },
+    { "id": "run", "type": "backend", "label": "AgentRun + RuntimeKernel", "sublabel": "回合编排与续接", "pos": [700, 300], "size": [190, 68], "sources": [{ "path": "ARCHITECTURE.md", "line": 30, "label": "runtime path" }] },
+    { "id": "tools", "type": "messagebus", "label": "Tool Runtime", "sublabel": "工具、权限与副作用", "pos": [940, 300], "size": [170, 68], "sources": [{ "path": "ARCHITECTURE.md", "line": 12, "label": "tool runtime" }] },
+    { "id": "events", "type": "database", "label": "Runtime Event Log", "sublabel": "模型 / 工具 / 终止事实", "pos": [700, 470], "size": [190, 68], "sources": [{ "path": "ARCHITECTURE.md", "line": 45, "label": "canonical facts" }] },
+    { "id": "projections", "type": "database", "label": "Runtime Projections", "sublabel": "Context / Session / UI / Recovery", "pos": [940, 470], "size": [200, 68], "sources": [{ "path": "ARCHITECTURE.md", "line": 16, "label": "projections" }] },
+    { "id": "graph", "type": "backend", "label": "Agent Graph Control Plane", "sublabel": "子 Session 依赖调度", "pos": [480, 140], "size": [190, 68], "sources": [{ "path": "ARCHITECTURE.md", "line": 47, "label": "graph scheduling" }] },
+    { "id": "providers", "type": "cloud", "label": "Model Providers", "sublabel": "Anthropic / OpenAI / Google 等", "pos": [940, 140], "size": [190, 68], "sources": [{ "path": "packages/runtime/package.json", "line": 1, "label": "runtime providers" }] },
+    { "id": "eval", "type": "backend", "label": "@maka/eval", "sublabel": "Experiment · Cell · Attempt · Result", "pos": [260, 520], "size": [190, 68], "sources": [{ "path": "ARCHITECTURE.md", "line": 18, "label": "eval boundary" }] },
+    { "id": "external", "type": "external", "label": "External Subjects", "sublabel": "外部被测对象", "pos": [40, 520], "size": [170, 68], "sources": [{ "path": "ARCHITECTURE.md", "line": 19, "label": "external subject" }] },
+    { "id": "storage", "type": "database", "label": "Interactive Runtime Storage", "sublabel": "SQLite 控制面与状态", "pos": [480, 520], "size": [190, 68], "sources": [{ "path": "ARCHITECTURE.md", "line": 29, "label": "storage boundary" }] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Maka Runtime", "wraps": ["host", "session", "run", "tools", "events", "projections", "graph", "providers", "storage"] },
+    { "kind": "security-group", "label": "Public execution boundary", "wraps": ["host", "tools", "eval"] }
+  ],
+  "connections": [
+    { "from": "surfaces", "to": "host", "label": "client / protocol", "variant": "emphasis", "labelDy": 58 },
+    { "from": "host", "to": "session", "label": "admit Session / Turn", "variant": "emphasis", "labelDy": 58 },
+    { "from": "session", "to": "run", "label": "start / resume", "variant": "emphasis", "labelDy": -28 },
+    { "from": "run", "to": "tools", "label": "tool calls", "variant": "security", "labelDy": 58 },
+    { "from": "run", "to": "events", "label": "append RuntimeEvent", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "from": "events", "to": "projections", "label": "derive projections", "variant": "dashed", "labelDy": -28 },
+    { "from": "graph", "to": "run", "label": "schedule child Sessions", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "from": "run", "to": "providers", "label": "model stream", "variant": "emphasis", "fromSide": "top", "toSide": "bottom" },
+    { "from": "session", "to": "storage", "label": "persist runtime state", "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "from": "eval", "to": "host", "label": "Maka subject boundary", "variant": "security", "fromSide": "top", "toSide": "bottom" },
+    { "from": "external", "to": "eval", "label": "experiment subject", "variant": "dashed", "labelDy": -28 },
+    { "from": "tools", "to": "events", "label": "tool result / termination", "variant": "dashed", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "唯一执行权威", "items": ["Desktop、TUI、CLI、Bot 都通过 Runtime Host 请求执行", "SessionManager 与 AgentRun 共同管理 Session、Turn 与续接"] },
+    { "dot": "violet", "title": "规范事实与投影", "items": ["Runtime Event Log 记录模型消息、工具调用、结果与终止事实", "Context、Session、UI、Recovery 都从事件派生，压缩不改写历史"] },
+    { "dot": "rose", "title": "评测边界", "items": ["@maka/eval 只负责实验、Cell、Attempt、结果选择与预算", "Maka subject 必须跨越 Runtime Host 公共协议边界"] }
+  ]
+}

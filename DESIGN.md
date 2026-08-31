@@ -217,10 +217,6 @@ canonical authored SVG content and therefore survive visual export.
 
 Semantic Passport offers two native, count-bearing actions: `Upstream` follows authored incoming relationships and `Downstream` follows authored outgoing relationships. The canvas keeps the focused origin plus the complete reachable subgraph strong while unrelated topology recedes. Upstream uses Repository Violet, downstream uses Proof Green, and Blueprint removes glow. The receipt says nodes, links, and maximum hops; it never says blast radius or breakage.
 
-### Reach Share Card
-
-An active reach query may expose one contextual **Export → Reach Share Card** item. The 1200×630 card keeps the full diagram as quiet context, preserves the selected origin and every matched authored node and link, and writes direction, origin, node count, link count, and maximum hops into the card header. Upstream retains Repository Violet; downstream retains Proof Green; Blueprint stays filter-free. The card is an explicit non-canonical reading variant, not runtime impact, causality, or breakage evidence. No animated state, live focus glow, camera transform, or unrelated viewer chrome enters the clone.
-
 ## Do's and Don'ts
 
 ### Do:
@@ -230,8 +226,8 @@ An active reach query may expose one contextual **Export → Reach Share Card** 
 - **Do** keep ordinary artifacts source-free and make repository evidence explicitly opt-in.
 - **Do** use 140–200ms transitions for control state and honor `prefers-reduced-motion`.
 - **Do** preserve keyboard access, visible focus, semantic labels, dark/light parity, and non-color state cues.
-- **Do** keep runtime exploration outside canonical SVG, raster, Share Card, and WebM backgrounds.
-- **Do** name an intentionally scoped Route or Reach Share Card in its header and machine-readable receipt.
+- **Do** keep runtime exploration outside canonical SVG, raster, copied PNG, and WebM backgrounds.
+- **Do** preserve the complete authored topology in every canonical visual export.
 
 ### Don't:
 
