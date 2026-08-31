@@ -203,7 +203,7 @@ jobs:
         uses: actions/configure-pages@v6
       - name: Upload checked documentation
         if: steps.deployment-head.outputs.current == 'true'
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: docs
       - name: Deploy checked documentation
