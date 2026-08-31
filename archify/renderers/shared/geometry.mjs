@@ -946,9 +946,9 @@ export function cleanLabelRouteClearanceProblems({
 // How far [start, start + size) leaves [0, extent), per end of one axis. This
 // is the single definition of "inside the canvas" that both the containment
 // rule and the repair hints measure against; an unknown extent bounds nothing.
-function axisCanvasOverflow(start, size, extent) {
+function axisCanvasOverflow(start, size, extent, origin = 0) {
   if (!Number.isFinite(extent)) return { start: 0, end: 0 };
-  return { start: -start, end: start + size - extent };
+  return { start: origin - start, end: start + size - (origin + extent) };
 }
 
 // THE CANVAS CONTAINMENT RATIONALE (referenced from the other call sites).
@@ -969,14 +969,18 @@ function axisCanvasOverflow(start, size, extent) {
 // overhang by a few pixels, and failing it there would break compatibility
 // instead of repairing a diagram.
 export function collectLabelCanvasOverflow({ labels, viewBox, tolerance = 0.5 }) {
-  const [canvasWidth, canvasHeight] = asArray(viewBox);
-  if (!isFinitePoint(canvasWidth, canvasHeight)) return [];
+  // Renderers author origin-zero canvases (meta.viewBox is [width, height] by
+  // schema), but `check` re-measures foreign artifacts whose SVG viewBox may
+  // carry a legal non-zero min-x/min-y; those pass all four numbers.
+  const box = asArray(viewBox);
+  const [originX, originY, canvasWidth, canvasHeight] = box.length === 4 ? box : [0, 0, box[0], box[1]];
+  if (!isFinitePoint(originX, originY, canvasWidth, canvasHeight)) return [];
   const hits = [];
   for (const [fallbackIndex, label] of asArray(labels).entries()) {
     const rect = label?.rect || label;
     if (!rect || !isFinitePoint(rect.x, rect.y, rect.width, rect.height)) continue;
-    const horizontal = axisCanvasOverflow(rect.x, rect.width, canvasWidth);
-    const vertical = axisCanvasOverflow(rect.y, rect.height, canvasHeight);
+    const horizontal = axisCanvasOverflow(rect.x, rect.width, canvasWidth, originX);
+    const vertical = axisCanvasOverflow(rect.y, rect.height, canvasHeight, originY);
     const overflow = {
       left: horizontal.start,
       right: horizontal.end,
@@ -991,6 +995,7 @@ export function collectLabelCanvasOverflow({ labels, viewBox, tolerance = 0.5 })
       relationIndex: Number.isInteger(label?.relationIndex) ? label.relationIndex : fallbackIndex,
       rect,
       viewBox: [canvasWidth, canvasHeight],
+      viewBoxOrigin: [originX, originY],
       sides,
       overflowPx: Object.fromEntries(sides.map((side) => [side, Math.round(overflow[side] * 10) / 10])),
       tolerance,
@@ -1524,11 +1529,22 @@ export function suggestLabelObstacleFix(labelRect, lx, ly, obstacle, obstacleKin
   const xOffset = labelRect.x - lx;
   const yOffset = labelRect.y - ly;
   const anchorX = clampAnchorToCanvas(lx, xOffset, labelRect.width, canvasWidth);
+  // The placement anchors are derived from the label's own rect, not from the
+  // obstacle alone: an obstacle-only "above" anchor assumes the 14px
+  // single-line rect and lands a 27px two-line rect (dataflow classification,
+  // lifecycle note) back on the obstacle it must clear. The overlap filter
+  // uses the callers' own detection call, so a surviving hint cannot re-raise
+  // the problem it repairs.
   const placements = [
-    { name: 'below', y: Math.round(obstacle.y + obstacle.height + 14) },
-    { name: 'above', y: Math.round(obstacle.y - 4) },
+    { name: 'below', y: Math.round(obstacle.y + obstacle.height + 4 - yOffset) },
+    { name: 'above', y: Math.round(obstacle.y - 4 - labelRect.height - yOffset) },
   ].filter(({ y }) => anchorX !== null
-    && anchorFitsCanvas(y, yOffset, labelRect.height, canvasHeight));
+    && anchorFitsCanvas(y, yOffset, labelRect.height, canvasHeight)
+    && !rectsOverlap(
+      { x: anchorX + xOffset, y: y + yOffset, width: labelRect.width, height: labelRect.height },
+      obstacle,
+      -2,
+    ));
   const lines = [
     `  label rect: ${formatRect(labelRect)}`,
     `  ${obstacleKind} "${obstacle.id}" rect: ${formatRect(obstacle)}`,

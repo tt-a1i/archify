@@ -1169,6 +1169,52 @@ test('lifecycle: showcase rejects a transition label that leaves the canvas', ()
   assert.match(stderr, /extends past the right edge by 64\.4px .*viewBox 980x660/);
 });
 
+// The repair side of the same contract: a suggested labelAt, applied verbatim,
+// must clear the obstacle the message names. Both 27px two-line forms used to
+// get an "above" hint that landed the rect back on the obstacle, so the
+// validator answered its own fix with the identical message.
+function suggestedLabelAts(stderr) {
+  return [...new Set(stderr.match(/set labelAt \[-?\d+, -?\d+\]/g) || [])]
+    .map((match) => match.match(/\[(-?\d+), (-?\d+)\]/).slice(1, 3).map(Number));
+}
+
+test('dataflow: obstacle hints for a two-line classification label survive being applied', () => {
+  const d = load('dataflow');
+  d.flows[0].labelAt = [100, 150];
+  const { code, stderr } = render('dataflow', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /Label "clickstream" overlaps node "web"/);
+  const suggestions = suggestedLabelAts(stderr);
+  assert.equal(suggestions.length, 2, stderr);
+  for (const labelAt of suggestions) {
+    const applied = load('dataflow');
+    applied.flows[0].labelAt = labelAt;
+    const result = render('dataflow', applied);
+    assert.equal(result.code, 0, `labelAt [${labelAt}]: ${result.stderr}`);
+  }
+});
+
+test('lifecycle: obstacle hints for a two-line note label survive being applied', () => {
+  const withLabel = (labelAt) => {
+    const d = load('lifecycle');
+    d.transitions[0].label = 'needs approval';
+    d.transitions[0].note = 'security gate';
+    d.transitions[0].labelAt = labelAt;
+    return d;
+  };
+  const { code, stderr } = render('lifecycle', withLabel([400, 180]));
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /Label "needs approval" overlaps state "executing"/);
+  const suggestions = suggestedLabelAts(stderr);
+  assert.equal(suggestions.length, 2, stderr);
+  for (const labelAt of suggestions) {
+    const result = render('lifecycle', withLabel(labelAt));
+    // The hint's contract covers the named obstacle and the canvas; a residual
+    // route-clearance issue at the new spot is that rule's own report.
+    assert.doesNotMatch(result.stderr, /overlaps state "executing"/, `labelAt [${labelAt}]: ${result.stderr}`);
+  }
+});
+
 test('sequence: showcase rejects a message label that leaves the canvas', () => {
   const d = load('sequence');
   d.messages = d.messages.slice(0, 1);

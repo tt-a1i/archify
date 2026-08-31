@@ -686,7 +686,7 @@ test('suggestLabelObstacleFix states its no-viewBox hint as replacement values',
   assert.equal(suggestLabelObstacleFix(labelRect, 124, 188, obstacle), [
     '  label rect: [100, 180, 48, 14]',
     '  component "memtool" rect: [30, 130, 230, 58]',
-    '  Suggested fix: set labelAt [124, 202] or set labelDy 14 (below); or set labelAt [124, 126] or set labelDy -62 (above)',
+    '  Suggested fix: set labelAt [124, 200] or set labelDy 12 (below); or set labelAt [124, 120] or set labelDy -68 (above)',
   ].join('\n'));
 });
 
@@ -728,7 +728,7 @@ test('suggestLabelObstacleFix offers no relative fix while labelAt is authored',
     label: 'synchronous call',
   };
   const hint = suggestLabelObstacleFix(labelRect, 660, 360, obstacle, 'component', [720, 400]);
-  assert.match(hint, /Suggested fix: set labelAt \[602, 332\] \(above\)$/);
+  assert.match(hint, /Suggested fix: set labelAt \[602, 328\] \(above\)$/);
   assert.doesNotMatch(hint, /labelD[xy]/);
 });
 
@@ -807,7 +807,40 @@ test('suggestLabelObstacleFix drops a placement that would only trade the obstac
   const obstacle = { id: 'store', x: 180, y: 336, width: 160, height: 54 };
   const hint = suggestLabelObstacleFix(labelRect, 260, 366, obstacle, 'component', [720, 400]);
   assert.doesNotMatch(hint, /\(below\)/);
-  assert.match(hint, /labelAt \[260, 332\].*\(above\)/);
+  assert.match(hint, /labelAt \[260, 328\].*\(above\)/);
+});
+
+// The obstacle-only above anchor assumed the 14px single-line rect: applied to
+// a 27px two-line rect (dataflow classification, lifecycle note) it left the
+// label 12px inside the obstacle and the validator repeated the same hint.
+test('suggestLabelObstacleFix keeps both two-line forms clear of the obstacle it names', () => {
+  const cases = [
+    { labelRect: { x: 67, y: 139, width: 66, height: 27, label: 'clickstream' },
+      lx: 100, ly: 150,
+      obstacle: { id: 'web', x: 44, y: 128, width: 112, height: 58 },
+      viewBox: [1080, 760] },
+    { labelRect: { x: 360, y: 169, width: 81, height: 27, label: 'needs approval' },
+      lx: 400, ly: 180,
+      obstacle: { id: 'executing', x: 343, y: 126, width: 118, height: 62 },
+      viewBox: [980, 660] },
+  ];
+  for (const { labelRect, lx, ly, obstacle, viewBox } of cases) {
+    const hint = suggestLabelObstacleFix(labelRect, lx, ly, obstacle, 'node', viewBox);
+    const placements = [...hint.matchAll(/set labelAt \[(-?\d+), (-?\d+)\][^;]*\((above|below)\)/g)];
+    assert.equal(placements.length, 2, hint);
+    for (const [, x, y] of placements) {
+      const applied = {
+        x: Number(x) + (labelRect.x - lx),
+        y: Number(y) + (labelRect.y - ly),
+        width: labelRect.width,
+        height: labelRect.height,
+      };
+      assert.ok(
+        !rectsOverlap(applied, obstacle, -2),
+        `${hint}\napplied rect [${applied.x}, ${applied.y}, ${applied.width}, ${applied.height}] lands on "${obstacle.id}"`,
+      );
+    }
+  }
 });
 
 test('suggestLabelObstacleFix reports when no in-canvas position clears the obstacle', () => {

@@ -282,6 +282,51 @@ test('render output check: a contained relationship label reports no overflow', 
   assert.equal(result.composition.metrics.labelCanvasOverflowIssues, 0);
 });
 
+// A foreign artifact may author a legal non-zero viewBox origin, so containment
+// is measured against [min-x, min-x + width], not [0, width]: measuring from
+// zero passed a label the canvas clips and rejected a contained one.
+test('render output check: label containment respects a positive viewBox origin', () => {
+  const svgFor = (rect) => `
+    <path data-edge-key="0" data-edge-from="a" data-edge-to="b" data-composition-points="110,80;330,80" d="M 110 80 L 330 80" class="a-default" marker-end="url(#arrowhead)"/>
+    <g data-edge-key="0" data-edge-from="a" data-edge-to="b" data-edge-label="ship">
+      <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="3" class="c-mask"/>
+      <text x="${rect.x + rect.width / 2}" y="${rect.y + 10}">ship</text>
+    </g>
+  `;
+
+  const contained = checkHtml('origin-positive-contained', svgFor({ x: 280, y: 48, width: 40, height: 14 }), 'showcase', '100 0 240 160');
+  assert.equal(contained.code, 0, JSON.stringify(contained.result.composition.issues));
+  assert.equal(contained.result.composition.metrics.labelCanvasOverflowIssues, 0);
+
+  const clipped = checkHtml('origin-positive-clipped', svgFor({ x: 80, y: 48, width: 60, height: 14 }), 'showcase', '100 0 240 160');
+  assert.notEqual(clipped.code, 0);
+  const issue = clipped.result.composition.issues.find((item) => item.code === 'composition/label-canvas-containment');
+  assert.deepEqual(issue.overflowPx, { left: 20 });
+  assert.deepEqual(issue.viewBoxOrigin, [100, 0]);
+  assert.match(issue.detail, /extends past the left edge by 20px \(label rect \[80, 48, 60, 14\]; viewBox 240x160 at 100,0\)/);
+});
+
+test('render output check: label containment respects a negative viewBox origin', () => {
+  const svgFor = (rect) => `
+    <path data-edge-key="0" data-edge-from="a" data-edge-to="b" data-composition-points="-40,80;170,80" d="M -40 80 L 170 80" class="a-default" marker-end="url(#arrowhead)"/>
+    <g data-edge-key="0" data-edge-from="a" data-edge-to="b" data-edge-label="ship">
+      <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="3" class="c-mask"/>
+      <text x="${rect.x + rect.width / 2}" y="${rect.y + 10}">ship</text>
+    </g>
+  `;
+
+  const contained = checkHtml('origin-negative-contained', svgFor({ x: -50, y: -30, width: 40, height: 14 }), 'showcase', '-60 -40 240 160');
+  assert.equal(contained.code, 0, JSON.stringify(contained.result.composition.issues));
+  assert.equal(contained.result.composition.metrics.labelCanvasOverflowIssues, 0);
+
+  const clipped = checkHtml('origin-negative-clipped', svgFor({ x: 150, y: 48, width: 60, height: 14 }), 'showcase', '-60 -40 240 160');
+  assert.notEqual(clipped.code, 0);
+  const issue = clipped.result.composition.issues.find((item) => item.code === 'composition/label-canvas-containment');
+  assert.deepEqual(issue.overflowPx, { right: 30 });
+  assert.deepEqual(issue.viewBoxOrigin, [-60, -40]);
+  assert.match(issue.detail, /extends past the right edge by 30px \(label rect \[150, 48, 60, 14\]; viewBox 240x160 at -60,-40\)/);
+});
+
 test('render output check: repeated endpoint messages keep their own stable owner identity', () => {
   const { code, result } = checkHtml('sequence-repeated-endpoints', `
     <g data-edge-key="0" data-edge-from="client" data-edge-to="api" data-edge-label="first request">

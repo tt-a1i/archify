@@ -119,7 +119,7 @@ if (svgMatches.length === 1) {
   // shared/geometry.mjs.
   const labelCanvasOverflow = collectLabelCanvasOverflow({
     labels: relationshipLabels,
-    viewBox: viewBoxSize(svgAttrs),
+    viewBox: viewBoxRect(svgAttrs),
   });
   const crossingIsError = qualityProfile === 'showcase';
   const corridorIsError = qualityProfile === 'showcase';
@@ -196,8 +196,9 @@ if (svgMatches.length === 1) {
         relationship: relationshipRecord(hit.relation),
         labelRect: roundedRect(hit.rect),
         viewBox: hit.viewBox,
+        viewBoxOrigin: hit.viewBoxOrigin,
         overflowPx: hit.overflowPx,
-        detail: `[composition/label-canvas-containment] ${qualityProfile} label "${hit.label?.label || hit.relation?.label || ''}" on ${relationshipName(hit.relation)} extends past the ${describeLabelCanvasOverflow(hit)} (label rect ${formatRectDetail(hit.rect)}; viewBox ${hit.viewBox[0]}x${hit.viewBox[1]}) — adjust labelAt, labelDx, labelDy, or labelSegment; otherwise enlarge meta.viewBox.`,
+        detail: `[composition/label-canvas-containment] ${qualityProfile} label "${hit.label?.label || hit.relation?.label || ''}" on ${relationshipName(hit.relation)} extends past the ${describeLabelCanvasOverflow(hit)} (label rect ${formatRectDetail(hit.rect)}; viewBox ${hit.viewBox[0]}x${hit.viewBox[1]}${hit.viewBoxOrigin.some(Boolean) ? ` at ${hit.viewBoxOrigin[0]},${hit.viewBoxOrigin[1]}` : ''}) — adjust labelAt, labelDx, labelDy, or labelSegment; otherwise enlarge meta.viewBox.`,
       })),
       ...relationshipCrossings.map((hit) => ({
         severity: crossingIsError ? 'error' : 'warning',
@@ -640,9 +641,15 @@ function textBox(attrs, text) {
   };
 }
 
-function viewBoxSize(svgAttrs) {
+// A foreign artifact may author a legal non-zero viewBox origin, so containment
+// needs all four numbers; sizing checks read the trailing pair.
+function viewBoxRect(svgAttrs) {
   const viewBox = String(svgAttrs.viewBox || '').trim().split(/[\s,]+/).map(Number);
-  return viewBox.length === 4 ? [viewBox[2], viewBox[3]] : [Number.NaN, Number.NaN];
+  return viewBox.length === 4 ? viewBox : [Number.NaN, Number.NaN, Number.NaN, Number.NaN];
+}
+
+function viewBoxSize(svgAttrs) {
+  return viewBoxRect(svgAttrs).slice(2);
 }
 
 function formatRectDetail(rect) {
