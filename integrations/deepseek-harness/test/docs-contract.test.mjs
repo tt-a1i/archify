@@ -29,7 +29,7 @@ test('English and Chinese docs cover install, invoke, uninstall, community wordi
   for (const source of [english, chinese, read('README.md'), read('README_ZH.md')]) {
     assert.match(source, /@tt-a1i\/archify-dsh@0\.1\.0/);
     assert.match(source, /@deepseek-ai\/dsh@0\.1\.0-rc\.6/);
-    assert.match(source, /\^22\.19\.0 \|\| >=24\.0\.0/);
+    assert.match(source.replaceAll('\\|', '|'), /\^22\.19\.0 \|\| >=24\.0\.0/);
     assert.match(source, /dsh plugin --profile web add @tt-a1i\/archify-dsh@0\.1\.0/);
     assert.match(source, /dsh plugin --profile web remove @tt-a1i\/archify-dsh/);
     assert.match(source, /Use the archify skill to map this repository's runtime architecture/);

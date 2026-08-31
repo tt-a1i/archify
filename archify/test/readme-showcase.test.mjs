@@ -135,6 +135,27 @@ test('all README languages keep the product hero and retain the verified animate
   );
 });
 
+test('README installation tables contain a complete DeepSeek Harness row', () => {
+  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+    const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
+    const row = readme.split('\n').find((line) => line.startsWith('| **DeepSeek Harness** |'));
+    assert.ok(row, `${filename}: DeepSeek Harness must be an installation table row`);
+    assert.equal(
+      (row.match(/(?<!\\)\|/g) || []).length,
+      4,
+      `${filename}: DeepSeek Harness must have exactly three table cells`,
+    );
+    assert.ok(
+      row.includes('Node `^22.19.0 \\|\\| >=24.0.0`'),
+      `${filename}: Node version pipes must be escaped inside the table row`,
+    );
+    assert.ok(
+      readme.includes(`${row}\n\n`),
+      `${filename}: installation table must end after the DeepSeek Harness row`,
+    );
+  }
+});
+
 test('README demos use checked-in captures and live deep links below the existing hero', () => {
   const demos = [
     {
