@@ -23,6 +23,7 @@ function usage() {
   archify inspect <type> <input.json>
   archify check <output.html>
   archify visual-check <output.html> [--json]
+  archify api-inventory <repository-path> <output.html> [--json]
   archify guide [scenario or question] [--json] [--lang en|zh]
   archify brands [name, alias, domain, or category] [--json]
   archify brands capture <url> [--json]
@@ -1203,6 +1204,52 @@ async function commandVisualCheck(args) {
   process.exitCode = result.exitCode;
 }
 
+async function commandApiInventory(args) {
+  const json = args.includes('--json');
+  const knownOptions = new Set(['--json']);
+  const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
+  if (unknown.length) fail(`Unknown api-inventory option "${unknown[0]}".`, 1);
+  const positional = args.filter((arg) => !knownOptions.has(arg));
+  if (positional.length !== 2) fail(usage(), 1);
+
+  let runApiInventory;
+  try {
+    ({ runApiInventory } = await import('./api-inventory.mjs'));
+  } catch (error) {
+    fail(`Could not load api-inventory: ${error.message}`, 1);
+  }
+
+  let result;
+  try {
+    result = await runApiInventory({ repoRoot: positional[0], artifactPath: positional[1] });
+  } catch (error) {
+    if (json) {
+      console.log(JSON.stringify({
+        schemaVersion: 1,
+        ok: false,
+        command: 'api-inventory',
+        status: 'fail',
+        artifact: { path: path.resolve(positional[1]) },
+        error: error.message,
+      }, null, 2));
+    } else {
+      console.error(`api-inventory failed: ${error.message}`);
+    }
+    process.exitCode = 1;
+    return;
+  }
+
+  if (json) {
+    console.log(JSON.stringify(result.receipt, null, 2));
+  } else {
+    console.log(`api-inventory ${result.receipt.status}: ${result.receipt.artifact.path}`);
+    for (const diagnostic of result.receipt.diagnostics) {
+      console.log(`${diagnostic.severity}: ${diagnostic.message}`);
+    }
+  }
+  process.exitCode = result.exitCode;
+}
+
 function commandExamples() {
   const result = runNode([path.join(skillRoot, 'scripts/render-examples.mjs')], { cwd: skillRoot });
   if (result.status !== 0) exitFrom(result);
@@ -1967,6 +2014,9 @@ switch (command) {
     break;
   case 'visual-check':
     await commandVisualCheck(args);
+    break;
+  case 'api-inventory':
+    await commandApiInventory(args);
     break;
   case 'guide':
     await commandGuide(args);
