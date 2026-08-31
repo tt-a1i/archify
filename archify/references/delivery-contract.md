@@ -42,9 +42,13 @@ byte count, identifies `evidenceKind: "automated-browser"`, records READ plus
 Still runtime state, and always reports `visualReview: "pending"`; automated
 browser evidence cannot claim perceptual review.
 
-Exit 0 means every containment measurement and capture passed. Exit 1 means an
-overflow or capture failure. Exit 2 means Chrome/Chromium was unavailable and
-the receipt status is `skipped`. Failed or skipped capture runs remove stale
+`browser_evidence` in the handoff records only the outcome of this automated command:
+
+- `passed` maps from exit 0 and receipt `status: "pass"` only after every required measurement and capture completes and passes.
+- `failed` maps from exit 1 and receipt `status: "fail"` when the inspection finds a defect, the command fails, or a runtime/capture error leaves the evidence incomplete.
+- `skipped` maps only from exit 2 and receipt `status: "skipped"` when Chrome/Chromium is unavailable and the inspection does not run.
+
+Runtime or capture failures leave incomplete evidence and must not be normalized to `skipped`. Failed or skipped capture runs remove stale
 image/contact-sheet sidecars rather than presenting prior evidence as current.
 They do not invalidate an already successful deterministic delivery, and they
 do not turn a perceptual visual review into passed or failed. Retry an
@@ -76,7 +80,7 @@ Automated validation and browser evidence cannot prove visual polish. After dete
 
 For the default standalone desktop viewer, measure 1440×900, 1600×1000, and 1920×1080. When the artifact is intended for a large desktop display, also measure 2048×1320. A first-screen pass requires `document.documentElement.scrollWidth <= window.innerWidth` and `scrollHeight <= window.innerHeight` at every checked size. At the largest checked viewport, inspect the rendered composition for a conspicuous empty lower band: the main panel and necessary conclusion cards should use the available height as a balanced whole, not collapse into a shallow strip. If a desktop viewport overflows, repair the authored composition by removing only genuinely redundant content or compacting spacing before shrinking nodes, labels, or the main panel. Do not hide overflow, clip content, introduce an internal diagram scroller, or reduce node/label typography to make the measurement pass. Narrow/mobile containment may retain vertical page scrolling.
 
-Equivalent manual browser evidence requires all four exact viewport measurements, both endpoint themes, and an artifact-bound record. An unconstrained browser glance can support perceptual review only. When `visual-check` cannot run, report `browser_evidence` as failed or skipped and report `visual_review` independently from what was actually inspected.
+A manual browser record is supplementary to the automated status. Reproducing the same coverage requires all four exact viewport measurements, both endpoint themes, and an artifact-bound record of the inspected SHA-256 and byte count. It never changes `browser_evidence`: when Chrome/Chromium is unavailable, that status remains `skipped` even when the manual browser record is complete and `visual_review: passed`; an automated `failed` result likewise remains `failed`. An unconstrained browser glance can support perceptual review only.
 
 Report exactly one truthful status:
 
@@ -102,5 +106,7 @@ browser_evidence: passed|failed|skipped
 visual_review: passed|skipped (image reader unavailable)|failed
 correction_rounds: 0|1|2
 ```
+
+Derive `browser_evidence` only from the latest artifact-bound `visual-check` receipt. Record any manual browser work separately with its artifact binding, viewport/theme scope, and observations; never use it or `visual_review` to overwrite the automated status.
 
 Opening, preview status, Share Cards, and other viewer exports are not validation claims.

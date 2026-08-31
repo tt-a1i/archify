@@ -103,6 +103,6 @@ node bin/archify.mjs compare architecture base.json head.json \
 node bin/archify.mjs visual-check web-app.html --json
 ```
 
-这份回执只证明有限范围内的运行时表现，并不批准视觉质量。仍需单独检查 HTML 或生成的截图。只有遵循[交付契约](../archify/references/delivery-contract.md)才能声称手工浏览器证据等价；不受约束的目检只影响视觉复核结论。
+这份回执只证明有限范围内的运行时表现，并不批准视觉质量。仍需单独检查 HTML 或生成的截图。记录补充性的手工浏览器工作时必须遵循[交付契约](../archify/references/delivery-contract.md)；不受约束的目检只影响视觉复核结论。
 
 自动化浏览器证据的规范覆盖、成品绑定、视觉复核状态和交付回执字段请参阅交付契约。编图不变量和有上限的修复循环请参阅 [Skill 契约](../archify/SKILL.md)。
