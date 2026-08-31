@@ -70,3 +70,19 @@ test('tracked browsable HTML embeds well-formed XML SVG', () => {
   assert.equal(checkoutSvgs?.direct.length, 1, 'Checkout must contain one comparison SVG');
   assert.equal(checkoutSvgs?.embedded.length, 2, 'Checkout must retain its base/head SVG snapshots');
 });
+
+test('legacy example URLs redirect to the current canonical artifacts', () => {
+  for (const [legacy, canonical] of [
+    ['examples/workflow-agent-tool-call.html', 'workflow-agent-tool-call-rendered.html'],
+    ['examples/sequence-cache-miss.html', 'sequence-cache-miss-request.html'],
+  ]) {
+    const html = fs.readFileSync(path.join(repoRoot, legacy), 'utf8');
+    assert.match(html, new RegExp(`<link rel="canonical" href="${canonical}">`));
+    assert.match(
+      html,
+      new RegExp(`window\\.location\\.replace\\("${canonical}" \\+ window\\.location\\.search \\+ window\\.location\\.hash\\)`),
+      `${legacy} must preserve query parameters and deep-link fragments`,
+    );
+    assert.equal(fs.existsSync(path.join(repoRoot, 'examples', canonical)), true);
+  }
+});

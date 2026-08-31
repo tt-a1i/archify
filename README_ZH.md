@@ -17,19 +17,18 @@ Archify 是一套基于 Node.js 的渲染与校验系统，并以 Agent Skill �
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
-![开发版本](https://img.shields.io/badge/version-2.16.0--dev.0-0891b2?style=flat-square)
+![稳定版本](https://img.shields.io/badge/version-2.16.0-0891b2?style=flat-square)
 
-**当前开发版本：** `v2.16.0-dev.0`。详见[版本历史](CHANGELOG.md#unreleased)。
+**当前稳定版本：** `v2.16.0`。详见[版本历史](CHANGELOG.md#2160--2026-08-30)。
 
 **[在线项目页](https://tt-a1i.github.io/archify/)** · **[场景选图指南](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
 
 ```bash
 npx skills add tt-a1i/archify -g
 ```
-
 使用 Cursor？打开[可切换 Agent 的快速开始页](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)，即可获得准确的全局或当前仓库安装命令。
 
-然后告诉 Agent：`使用 archify 梳理这个仓库的运行时架构。`
+**不需要绑定代码库：**在任意 Agent 对话里描述系统即可。
 
 ## ❤️ 赞助伙伴
 
@@ -107,23 +106,22 @@ npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy 
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@0.1.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。
+DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@0.1.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。[Agent 切换器](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)只为 `cursor`、`codex`、`claude-code` 和 `opencode` 生成命令。Raven 仅支持 ZIP 手动安装：将 [`archify.zip`](archify.zip) 解压到 `~/.raven/workspace/skills`，解压后会得到 `~/.raven/workspace/skills/archify`；Raven 不属于切换器目标。
 
-[Agent 切换器](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)只为 `cursor`、`codex`、`claude-code` 和 `opencode` 生成命令。Raven 仅支持 ZIP 手动安装：将 [`archify.zip`](archify.zip) 解压到 `~/.raven/workspace/skills`，解压后会得到 `~/.raven/workspace/skills/archify`；Raven 不属于切换器目标。
+安装后的 Skill 包含一个低频、失败静默的发布检查，它最多只显示可选更新提醒，绝不会自行下载或安装更新。一次成功检查后，下次网络请求通常约在 72 小时（±20%）后发出；检查失败后，活跃使用可能在首次 6 小时、后续 24 小时退避到期时重试。请求只访问 `https://tt-a1i.github.io/archify/skill-updates/archify/stable.json`。服务端会自然获得 IP、请求时间和常规 HTTP 元数据；检查器不会发送本地版本、Agent、项目数据、用户输入、账户/设备标识，也不会保存或回传 ETag。是否更新以及何时更新始终由你决定。如需完全关闭检查（包括网络请求和提醒状态写入），请在 Agent 环境中设置 `ARCHIFY_UPDATE_CHECK_DISABLED=1`。
 
-### 2. 先画一个边界清楚的视图
+### 2. 直接从描述开始——不需要代码库
+
+```text
+用 Archify 画出：Browser -> API -> Redis 缓存 -> PostgreSQL 回源。
+```
+
+需要源码证据时，打开仓库后改用：
 
 ```text
 分析这个仓库，然后使用 archify 生成一张高层运行时架构图。
 只保留 8–12 个核心组件，突出一条主要路径，并标出外部依赖与信任边界。
 辅助信息放进说明卡片，不要继续增加连线。
-```
-
-如果只想解释一条调用链：
-
-```text
-使用 archify 画出这条登录流程：Browser -> Web App -> API -> JWT 校验 ->
-Redis Session 查询 -> PostgreSQL 回源。把缓存未命中作为次要路径。
 ```
 
 ### 3. 在对话中细调

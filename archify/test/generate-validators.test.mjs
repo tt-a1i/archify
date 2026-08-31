@@ -4,9 +4,28 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { workflow as validateWorkflow } from '../renderers/shared/generated-validators.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
+
+function workflowDocument(schemaVersion) {
+  return {
+    schema_version: schemaVersion,
+    diagram_type: 'workflow',
+    meta: { title: 'Schema compatibility' },
+    lanes: [{ id: 'main', label: 'Main' }],
+    nodes: [{ id: 'step', lane: 'main', col: 0, type: 'backend', label: 'Step' }],
+    edges: [],
+  };
+}
+
+test('generated workflow validator accepts schema versions 1 and 2 only', () => {
+  assert.equal(validateWorkflow(workflowDocument(1)), true, JSON.stringify(validateWorkflow.errors));
+  assert.equal(validateWorkflow(workflowDocument(2)), true, JSON.stringify(validateWorkflow.errors));
+  assert.equal(validateWorkflow(workflowDocument(3)), false);
+  assert.deepEqual(validateWorkflow.errors?.[0]?.params.allowedValues, [1, 2]);
+});
 
 test('validator freshness check accepts CRLF checkouts', () => {
   const scratch = fs.mkdtempSync(path.join(skillRoot, '.validator-check-'));
