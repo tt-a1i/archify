@@ -17,6 +17,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { minimumReadableSourceTextPx } from '../renderers/shared/desktop-readability.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -35,7 +36,7 @@ function load(mode) {
 }
 
 // Returns { code, stderr }. Never throws on non-zero exit.
-function render(mode, doc) {
+function render(mode, doc, env = {}) {
   const input = path.join(tmp, `${mode}-${Math.abs(hash(JSON.stringify(doc)))}.json`);
   const outPath = path.join(tmp, `${mode}-${Math.abs(hash(JSON.stringify(doc)))}.html`);
   fs.writeFileSync(input, JSON.stringify(doc));
@@ -44,7 +45,7 @@ function render(mode, doc) {
       path.join(skillRoot, `renderers/${mode}/render-${mode}.mjs`),
       input,
       outPath,
-    ], { stdio: ['ignore', 'ignore', 'pipe'] });
+    ], { stdio: ['ignore', 'ignore', 'pipe'], env: { ...process.env, ...env } });
     return { code: 0, stderr: '', outPath };
   } catch (err) {
     return { code: err.status ?? 1, stderr: String(err.stderr || ''), outPath };
@@ -403,6 +404,49 @@ test('architecture: deployment ownership requires nested membership geometry to 
   assert.notEqual(code, 0);
   assert.match(stderr, /final frames partially overlap/);
   assert.match(stderr, /adjust wraps, pad, or component positions/);
+});
+
+test('architecture: showcase relationship labels stay readable in the desktop Reader', () => {
+  const d = JSON.parse(fs.readFileSync(
+    path.join(skillRoot, 'examples/production-deployment.architecture.json'),
+    'utf8',
+  ));
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const renderedViewBox = html.match(/<svg viewBox="0 0 ([^ ]+) [^"]+"/);
+  const label = html.match(
+    /<text x="[^"]+" y="[^"]+" class="[^"]+" font-size="([^"]+)" text-anchor="middle">HTTPS<\/text>/,
+  );
+  assert.ok(renderedViewBox, 'expected a rendered architecture viewBox');
+  assert.ok(label, 'expected the HTTPS relationship label');
+  assert.ok(
+    Number(label[1]) >= minimumReadableSourceTextPx(Number(renderedViewBox[1])),
+    `expected ${label[1]}px to satisfy the desktop Reader minimum`,
+  );
+});
+
+test('architecture: CLI quality override keeps relationship labels readable', () => {
+  const d = JSON.parse(fs.readFileSync(
+    path.join(skillRoot, 'examples/production-deployment.architecture.json'),
+    'utf8',
+  ));
+  delete d.meta.quality_profile;
+  const { code, stderr, outPath } = render('architecture', d, {
+    ARCHIFY_QUALITY_PROFILE: 'showcase',
+  });
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const renderedViewBox = html.match(/<svg viewBox="0 0 ([^ ]+) [^"]+"/);
+  const label = html.match(
+    /<text x="[^"]+" y="[^"]+" class="[^"]+" font-size="([^"]+)" text-anchor="middle">HTTPS<\/text>/,
+  );
+  assert.ok(renderedViewBox, 'expected a rendered architecture viewBox');
+  assert.ok(label, 'expected the HTTPS relationship label');
+  assert.ok(
+    Number(label[1]) >= minimumReadableSourceTextPx(Number(renderedViewBox[1])),
+    `expected CLI showcase override to emit a readable label, got ${label[1]}px`,
+  );
 });
 
 test('architecture: boundary labels reserve readable space above wrapped components', () => {

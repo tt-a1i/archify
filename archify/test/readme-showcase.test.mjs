@@ -90,7 +90,13 @@ function inspectGif(buffer) {
 
 test('README motion proof is compact, looping, and backed by current gallery artifacts', () => {
   const builder = fs.readFileSync(path.join(repoRoot, 'scripts', 'build-readme-showcase.mjs'), 'utf8');
-  assert.match(builder, /\?embed=1&play=1&theme=dark#view=/);
+  assert.match(builder, /\?embed=1&theme=dark#view=/);
+  assert.doesNotMatch(builder, /[?&]play=1/, 'the deterministic proof changes scenes instead of racing autoplay');
+  assert.doesNotMatch(builder, /function sleep\(/, 'capture must not sample wall-clock animation time');
+  assert.match(builder, /owner\.documentElement\.setAttribute\('data-motion','still'\)/);
+  assert.match(builder, /view\.reveal\(app\.guidedViews\.focus\(\),\{instant:true,reason:'showcase-capture'\}\)/);
+  assert.match(builder, /function waitForStableScreenshot/);
+  assert.match(builder, /current\.equals\(previous\)/);
   const buffer = fs.readFileSync(assetPath);
   const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
   const inspected = inspectGif(buffer);

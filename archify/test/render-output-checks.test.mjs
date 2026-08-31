@@ -60,6 +60,37 @@ test('render output check: compares exact projected size before rounding diagnos
   assert.ok(issue?.projectedFontPx < issue?.minimumProjectedFontPx);
 });
 
+test('render output check: inherits context detail from a relationship group', () => {
+  const { code, result } = checkHtml('showcase-inherited-context-readability', `
+    <g data-detail="context" data-edge-id="handoff">
+      <text x="660" y="300" font-size="8">provider contract</text>
+    </g>
+  `, 'showcase', '0 0 1317 600');
+
+  assert.notEqual(code, 0);
+  const issue = result.composition.issues.find(
+    (item) => item.code === 'composition/desktop-readability',
+  );
+  assert.equal(issue?.text, 'provider contract');
+  assert.equal(issue?.detail, 'context');
+  assert.ok(issue?.projectedFontPx < issue?.minimumProjectedFontPx);
+});
+
+test('render output check: nearest explicit fine detail overrides inherited context', () => {
+  const { code, result } = checkHtml('showcase-nested-fine-readability', `
+    <g data-detail="context" data-edge-id="handoff">
+      <text data-detail="fine" x="660" y="300" font-size="8">optional annotation</text>
+    </g>
+  `, 'showcase', '0 0 1317 600');
+
+  assert.equal(code, 0);
+  assert.equal(result.ok, true);
+  assert.equal(
+    result.composition.issues.some((item) => item.code === 'composition/desktop-readability'),
+    false,
+  );
+});
+
 test('render output check: includes primary node labels in desktop readability', () => {
   const { code, result } = checkHtml('showcase-primary-desktop-readability', `
     <g data-node-id="compact-node">

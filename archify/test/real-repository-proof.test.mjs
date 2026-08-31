@@ -15,6 +15,8 @@ const artifactPath = path.join(repoRoot, 'docs', 'cases', 'mco-runtime.architect
 const shareCardPath = path.join(repoRoot, 'docs', 'assets', 'mco-runtime-share-card.png');
 const experimentSourcePath = path.join(repoRoot, 'experiments', 'mco-showcase', 'mco-runtime.architecture.json');
 const experimentArtifactPath = path.join(repoRoot, 'experiments', 'mco-showcase', 'mco-runtime.html');
+const makaArtifactPath = path.join(repoRoot, 'generated', 'maka-regenerated.workflow.html');
+const templatePath = path.join(skillRoot, 'assets', 'template.html');
 const cli = path.join(skillRoot, 'bin', 'archify.mjs');
 const pinnedSource = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
 const pinnedRepository = pinnedSource.meta.repository;
@@ -31,6 +33,14 @@ function connectionLabelGeometry(html) {
   )].map((match) => [match[1], { x: Number(match[2]), y: Number(match[3]) }]));
 }
 
+function templateOwnedBlocks(html, tag) {
+  const pattern = new RegExp(`<${tag}[^>]*>[\\s\\S]*?<\\/${tag}>`, 'g');
+  return (html.match(pattern) || []).filter((block) => (
+    !block.includes('type="application/json"') &&
+    !block.includes('[PROJECT NAME]')
+  ));
+}
+
 function automaticMcoRoot() {
   const candidate = path.resolve(repoRoot, '..', 'mco');
   if (!fs.existsSync(path.join(candidate, '.git'))) return null;
@@ -45,6 +55,22 @@ function automaticMcoRoot() {
 const pinnedMcoRoot = process.env.ARCHIFY_MCO_REPO_ROOT
   ? path.resolve(process.env.ARCHIFY_MCO_REPO_ROOT)
   : automaticMcoRoot();
+
+test('README-linked and durable proof artifacts carry the current Viewer runtime', () => {
+  const template = fs.readFileSync(templatePath, 'utf8');
+  for (const artifact of [artifactPath, experimentArtifactPath, makaArtifactPath]) {
+    const html = fs.readFileSync(artifact, 'utf8');
+    for (const tag of ['style', 'script']) {
+      assert.deepEqual(
+        templateOwnedBlocks(html, tag),
+        templateOwnedBlocks(template, tag),
+        `${path.relative(repoRoot, artifact)} was generated from a stale Viewer template`,
+      );
+    }
+    assert.match(html, /data-responsive-drawer/);
+    assert.match(html, /id="relationship-lens-details-panel"/);
+  }
+});
 
 test('MCO showcase preserves checked-in connection-label geometry', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-mco-showcase-layout-'));
@@ -85,6 +111,10 @@ test('MCO showcase preserves checked-in connection-label geometry', () => {
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
+});
+
+test('checked-in MCO experiment satisfies the showcase quality contract', () => {
+  execFileSync(process.execPath, [cli, 'check', experimentArtifactPath], { encoding: 'utf8' });
 });
 
 test('checked-in MCO artifacts are byte-reproducible from the pinned repository revision', {

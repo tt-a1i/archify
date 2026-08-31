@@ -1179,7 +1179,7 @@ async function commandVisualCheck(args) {
         command: 'visual-check',
         status: 'fail',
         visualReview: 'pending',
-        artifact: { path: path.resolve(positional[0]) },
+        artifact: { path: path.basename(positional[0]) },
         error: error.message,
       }, null, 2));
     } else {
@@ -1192,11 +1192,12 @@ async function commandVisualCheck(args) {
   if (json) {
     console.log(JSON.stringify(result.receipt, null, 2));
   } else {
+    const deliveredArtifact = path.resolve(positional[0]);
     console.log(`visual-check ${result.receipt.status}: ${result.receipt.artifact.path}`);
     console.log(`containment ${result.receipt.containment.status}; captures ${result.receipt.captures.status}; visual review pending`);
-    console.log(`receipt ${path.join(path.dirname(result.receipt.artifact.path), result.receipt.sidecars.receipt)}`);
+    console.log(`receipt ${path.join(path.dirname(deliveredArtifact), result.receipt.sidecars.receipt)}`);
     if (result.receipt.captures.contactSheet) {
-      console.log(`contact sheet ${path.join(path.dirname(result.receipt.artifact.path), result.receipt.captures.contactSheet)}`);
+      console.log(`contact sheet ${path.join(path.dirname(deliveredArtifact), result.receipt.captures.contactSheet)}`);
     }
     if (result.receipt.error) console.error(result.receipt.error);
   }

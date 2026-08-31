@@ -84,7 +84,8 @@ test('latest intent, manual takeover, Still, reduced motion, and hidden pages cl
 test('mobile, embed, print, and canonical exports keep strict static boundaries', () => {
   const html = render('sequence');
   assert.match(html, /document\.documentElement\.getAttribute\('data-embed'\) === 'true'/);
-  assert.match(html, /cameraReceipt\(\{ scrollLeft: target \}/);
+  assert.match(html, /function scrollCameraTo\(scrollTarget, options\)/);
+  assert.match(html, /return scrollCameraTo\(target, options\)/);
   assert.match(html, /behavior: instant \? 'auto' : 'smooth'/);
   assert.match(html, /\.chapter-handoff-overlay \{ display: none !important; \}/);
   assert.match(html, /clone\.removeAttribute\('data-chapter-handoff'\)/);

@@ -51,10 +51,6 @@ function sha256(file) {
   return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 function executable(file) {
   try {
     fs.accessSync(file, fs.constants.X_OK);
@@ -99,7 +95,7 @@ function esc(value) {
 
 function wrapperHtml(scene, index) {
   const artifact = path.join(repoRoot, scene.artifact);
-  const artifactUrl = `${pathToFileURL(artifact).href}?embed=1&play=1&theme=dark#view=${encodeURIComponent(scene.view)}`;
+  const artifactUrl = `${pathToFileURL(artifact).href}?embed=1&theme=dark#view=${encodeURIComponent(scene.view)}`;
   return `<!doctype html>
 <html lang="en" style="--accent:${esc(scene.accent)};--fade:1">
 <head>
@@ -134,7 +130,20 @@ function wrapperHtml(scene, index) {
   <script>
     window.__archifyShowcaseReady=false;
     const frame=document.querySelector('iframe');
-    frame.addEventListener('load',()=>setTimeout(()=>{window.__archifyShowcaseReady=true},260),{once:true});
+    frame.addEventListener('load',()=>{
+      setTimeout(()=>{
+        try{
+          const owner=frame.contentDocument;
+          const app=frame.contentWindow.Archify;
+          owner.documentElement.setAttribute('data-motion','still');
+          if(app&&app.guidedViews&&app.view){
+            app.guidedViews.pause();
+            app.view.reveal(app.guidedViews.focus(),{instant:true,reason:'showcase-capture'})
+          }
+        }catch(_){}
+        window.__archifyShowcaseReady=true
+      },600)
+    },{once:true});
   </script>
 </body>
 </html>`;
@@ -230,6 +239,24 @@ async function evaluate(cdp, sessionId, expression, awaitPromise = false) {
   return result.result?.value;
 }
 
+async function captureScreenshot(cdp, sessionId) {
+  const screenshot = await cdp.send('Page.captureScreenshot', {
+    format: 'png', fromSurface: true, captureBeyondViewport: false,
+  }, sessionId, 60000);
+  return Buffer.from(screenshot.data, 'base64');
+}
+
+async function waitForStableScreenshot(cdp, sessionId) {
+  let previous = null;
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    await evaluate(cdp, sessionId, `new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`, true);
+    const current = await captureScreenshot(cdp, sessionId);
+    if (previous && current.equals(previous)) return current;
+    previous = current;
+  }
+  throw new Error('artifact did not reach a stable visual frame');
+}
+
 async function captureFrames(chromePath, tempRoot) {
   const profileRoot = path.join(tempRoot, 'profile');
   const framesRoot = path.join(tempRoot, 'frames');
@@ -277,15 +304,15 @@ async function captureFrames(chromePath, tempRoot) {
       await loaded;
       await evaluate(cdp, sessionId, `new Promise((resolve,reject)=>{const end=Date.now()+12000;const poll=()=>window.__archifyShowcaseReady?resolve(true):Date.now()>end?reject(new Error('artifact load timeout')):setTimeout(poll,40);poll()})`, true);
 
+      const screenshotsByFade = new Map();
       for (let i = 0; i < framesPerScene; i += 1) {
         const fade = i === 0 ? 0.82 : i === 1 ? 0.38 : i === framesPerScene - 1 ? 0.42 : 0;
-        await evaluate(cdp, sessionId, `document.documentElement.style.setProperty('--fade','${fade}')`);
-        if (i > 0) await sleep(88);
-        const screenshot = await cdp.send('Page.captureScreenshot', {
-          format: 'png', fromSurface: true, captureBeyondViewport: false,
-        }, sessionId, 20000);
+        if (!screenshotsByFade.has(fade)) {
+          await evaluate(cdp, sessionId, `document.documentElement.style.setProperty('--fade','${fade}')`);
+          screenshotsByFade.set(fade, await waitForStableScreenshot(cdp, sessionId));
+        }
         const filename = `frame-${String(frameIndex).padStart(4, '0')}.png`;
-        fs.writeFileSync(path.join(framesRoot, filename), Buffer.from(screenshot.data, 'base64'));
+        fs.writeFileSync(path.join(framesRoot, filename), screenshotsByFade.get(fade));
         frameIndex += 1;
       }
     }
@@ -295,7 +322,22 @@ async function captureFrames(chromePath, tempRoot) {
     throw error;
   } finally {
     cdp.failAll(new Error('capture finished'));
-    chrome.kill('SIGTERM');
+    await new Promise(resolve => {
+      if (chrome.exitCode !== null) {
+        resolve();
+        return;
+      }
+      var force = setTimeout(function () {
+        if (chrome.exitCode === null) chrome.kill('SIGKILL');
+      }, 2000);
+      var fallback = setTimeout(resolve, 4000);
+      chrome.once('exit', () => {
+        clearTimeout(force);
+        clearTimeout(fallback);
+        resolve();
+      });
+      chrome.kill('SIGTERM');
+    });
   }
 }
 

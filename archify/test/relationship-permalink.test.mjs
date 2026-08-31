@@ -108,7 +108,7 @@ test('the viewer restores and copies stable relation links without exposing nume
   assert.match(html, /copyBtn\.textContent = viewerText\('viewer\.passport\.copyRelation'\)/);
   assert.match(html, /'#relation=' \+ encodeURIComponent\(record\.id\)/);
   assert.match(html, /var relation = params\.get\('relation'\)/);
-  assert.match(html, /inspectRelationshipById\(relation, \{ updateUrl: false, toggle: false \}\)/);
+  assert.match(html, /inspectRelationshipById\(relation, \{[^}]*updateUrl: false,[^}]*toggle: false,[^}]*reveal: false[^}]*\}\)/);
   assert.match(html, /if \(html\.getAttribute\('data-embed'\) === 'true'\) return false/);
   assert.match(html, /if \(html\.getAttribute\('data-embed'\) === 'true' \|\|\s*!inspectRelationshipById/);
   assert.match(html, /params\.get\('focus'\) \|\| params\.get\('relation'\)/);

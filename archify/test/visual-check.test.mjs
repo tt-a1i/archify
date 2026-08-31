@@ -207,6 +207,35 @@ test('visual-check records four containment viewports and four endpoint theme ca
   }
 });
 
+test('visual-check receipts are byte-reproducible across different artifact roots', async () => {
+  const firstRoot = fs.mkdtempSync(path.join(tmp, 'receipt-root-a-'));
+  const secondRoot = fs.mkdtempSync(path.join(tmp, 'receipt-root-b-'));
+  const first = path.join(firstRoot, 'portable.html');
+  const second = path.join(secondRoot, 'portable.html');
+  const html = '<!doctype html><html><body><main>portable</main></body></html>\n';
+  fs.writeFileSync(first, html);
+  fs.writeFileSync(second, html);
+
+  const firstResult = await runVisualCheck({
+    artifactPath: first,
+    chromePath: '/first/machine/Google Chrome',
+    browserFactory: async () => fakeBrowser(),
+  });
+  const secondResult = await runVisualCheck({
+    artifactPath: second,
+    chromePath: '/second/machine/Google Chrome',
+    browserFactory: async () => fakeBrowser(),
+  });
+
+  assert.equal(firstResult.exitCode, 0);
+  assert.equal(secondResult.exitCode, 0);
+  assert.deepEqual(firstResult.receipt, secondResult.receipt);
+  assert.equal(firstResult.receipt.artifact.path, 'portable.html');
+  assert.equal(firstResult.receipt.chrome.executable, 'Google Chrome');
+  assert.doesNotMatch(JSON.stringify(firstResult.receipt), new RegExp(firstRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.doesNotMatch(JSON.stringify(secondResult.receipt), new RegExp(secondRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+});
+
 test('visual-check returns 1 and preserves evidence when any viewport overflows', async () => {
   const input = artifact('overflow.html');
   const result = await runVisualCheck({
@@ -228,7 +257,7 @@ test('visual-check returns 1 and preserves evidence when any viewport overflows'
     (entry) => entry.code === 'viewer/viewport-overflow',
   );
   assert.deepEqual(diagnostic?.subject, {
-    artifact: input,
+    artifact: path.basename(input),
     viewport: { width: 1600, height: 1000, theme: 'light' },
   });
   assert.equal(diagnostic?.evidence?.scrollWidth, 1601);
@@ -316,7 +345,7 @@ test('visual-check returns 1 when the navigation dock enters the SVG stage', asy
     (entry) => entry.code === 'viewer/chrome-stage-clearance',
   );
   assert.deepEqual(diagnostic?.subject, {
-    artifact: input,
+    artifact: path.basename(input),
     viewport: { width: 1920, height: 1080, theme: 'light' },
   });
   assert.deepEqual(diagnostic?.evidence, {

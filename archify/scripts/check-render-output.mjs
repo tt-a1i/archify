@@ -625,11 +625,12 @@ function collectDesktopReadability(svgAttrs, fragment) {
   const scale = Math.min(1, DESKTOP_READER_DIAGRAM_WIDTH / viewBoxWidth);
   let worst = null;
   for (const match of fragment.matchAll(/<text\b([^>]*)>([\s\S]*?)<\/text>/gi)) {
+    const attrs = parseAttrs(match[1]);
     const primary = /\bdata-node-label(?:\s*=|\s|$)/i.test(match[1]);
     const boundary = /\bdata-boundary-label(?:\s*=|\s|$)/i.test(match[1]);
-    const context = /\bdata-detail\s*=\s*"context"/i.test(match[1]);
+    const detail = attrs['data-detail'] || nearestAncestorDetail(fragment, match.index);
+    const context = detail === 'context';
     if (!primary && !boundary && !context) continue;
-    const attrs = parseAttrs(match[1]);
     const fontSize = Number.parseFloat(attrs['font-size'] || '');
     if (!Number.isFinite(fontSize)) continue;
     const projected = projectedNodeTextPx(fontSize, viewBoxWidth);
@@ -647,6 +648,31 @@ function collectDesktopReadability(svgAttrs, fragment) {
     if (!worst || candidate.projectedFontPx < worst.projectedFontPx) worst = candidate;
   }
   return worst;
+}
+
+function nearestAncestorDetail(fragment, offset) {
+  const stack = [];
+  const tagPattern = /<\/?([a-z][\w:.-]*)\b([^>]*)>/gi;
+  let match;
+  while ((match = tagPattern.exec(fragment)) && match.index < offset) {
+    const closing = match[0].startsWith('</');
+    const selfClosing = /\/\s*>$/.test(match[0]);
+    const name = match[1].toLowerCase();
+    if (closing) {
+      for (let index = stack.length - 1; index >= 0; index -= 1) {
+        const entry = stack[index];
+        stack.splice(index, 1);
+        if (entry.name === name) break;
+      }
+    } else if (!selfClosing) {
+      const attrs = parseAttrs(match[2]);
+      stack.push({ name, detail: attrs['data-detail'] || '' });
+    }
+  }
+  for (let index = stack.length - 1; index >= 0; index -= 1) {
+    if (stack[index].detail) return stack[index].detail;
+  }
+  return '';
 }
 
 function estimatedTextWidth(text, fontSize) {

@@ -66,6 +66,10 @@ test('Relationship Lens renders one Semantic Passport and copyable stable focus 
   assert.match(html, /id="focus-tag" data-passport="tag" hidden/);
   assert.match(html, /id="focus-id" data-passport="id"/);
   assert.match(html, /id="btn-focus-clear"[^>]+aria-label="Close semantic passport"[^>]+title="Close">&#215;<\/button>/);
+  assert.match(html, /id="btn-focus-details"[^>]+aria-label="Show full semantic passport"[^>]+aria-expanded="false"[^>]+aria-controls="relationship-lens-details-panel" hidden>Details<\/button>/);
+  assert.match(html, /id="relationship-lens-details-panel"/);
+  assert.match(html, /detailsPanel\.hidden = expandable && !expanded/);
+  assert.doesNotMatch(html, /id="btn-focus-details"[^>]+aria-controls="relationship-lens-body"/);
   assert.match(html, /id="btn-focus-copy"[^>]+aria-label="Copy link to focused node"/);
   assert.match(html, /id="btn-focus-relations"[^>]+aria-expanded="false"[^>]+aria-controls="relationship-lens-list"/);
   assert.match(html, /function renderPassport\(id, node\)/);
@@ -79,10 +83,31 @@ test('Relationship Lens renders one Semantic Passport and copyable stable focus 
   assert.match(html, /nodeTop - chip\.offsetHeight - gap/);
   assert.match(html, /focus-chip:not\(\[data-relations-expanded="true"\]\) \.relationship-lens-list \{ display: none; \}/);
   assert.match(html, /clearBtn\.addEventListener\('click', function \(\) \{ clear\(\{ restoreFocus: true \}\); \}\)/);
+  assert.match(html, /detailsBtn\.addEventListener\('click'/);
+  assert.match(html, /data-exploration-expanded/);
+  assert.match(html, /viewer\.passport\.details\.hide/);
   assert.match(html, /chip\.hidden \|\| !target \|\| typeof target\.closest !== 'function' \|\| chip\.contains\(target\)/);
   assert.match(html, /target\.closest\('\[data-node-id\], \[data-relationship-hit-key\], \.overview-map'\)/);
   assert.match(html, /document\.addEventListener\('click',[\s\S]+?clear\(\);\s+\}, true\);/);
   assert.match(html, /Archify\.focus\.clear\(\{ restoreFocus: true \}\)/);
+  assert.match(html, /relationshipBody\.contains\(document\.activeElement\)[\s\S]*document\.activeElement === detailsBtn[\s\S]*document\.activeElement === copyBtn[\s\S]*document\.activeElement === relationsBtn[\s\S]*detailsBtn\.focus/);
+});
+
+test('narrow viewers use a bounded bottom drawer and reserve canvas space', () => {
+  const html = render('architecture', CASES.architecture);
+  assert.match(html, /@media \(max-width: 1280px\) \{[\s\S]*\.focus-chip\[data-responsive-drawer="true"\]/);
+  assert.match(html, /max-height: min\([\s\S]*60dvh/);
+  assert.match(html, /Archify\.relationshipExplorationLayout = Object\.freeze\(\{[\s\S]*drawerMaxWidth: 1280/);
+  assert.match(html, /function responsiveDrawerEnabled\(\) \{[\s\S]*Archify\.relationshipExplorationLayout\.isDrawerViewport\(\)/);
+  assert.match(html, /chip\.setAttribute\('data-responsive-drawer', 'true'\)/);
+  assert.match(html, /function recoverHiddenExplorationFocus\(focused\)[\s\S]*focused\.offsetParent !== null[\s\S]*clearBtn\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(html, /var focused = chip\.contains\(activeElement\)[\s\S]*lastExplorationFocus : null/);
+  assert.match(html, /chip\.addEventListener\('focus',[\s\S]*lastExplorationFocus = event\.target[\s\S]*true\)/);
+  assert.match(html, /if \(changed\) recoverHiddenExplorationFocus\(focused\)/);
+  assert.match(html, /var canvasReserve = Math\.min\(220, Math\.max\(120, availableHeight \* 0\.42\)\)/);
+  assert.match(html, /passportAvailableHeight = Math\.max\(0, availableHeight - canvasReserve\)/);
+  assert.match(html, /if \(responsiveDrawer\) \{[\s\S]*bottom = Math\.min\(bottom, lensStart\)/);
+  assert.match(html, /reframeExploration\('relationship-list-toggle'\)/);
 });
 
 test('Node Finder searches and presents the same passport facts', () => {

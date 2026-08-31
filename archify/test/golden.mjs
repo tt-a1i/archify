@@ -97,6 +97,26 @@ for (const [mode, input, golden] of GOLDEN) {
   }
 }
 
+const ROOT_ARCHITECTURE_GOLDEN = [
+  ['archify-repo.architecture.json', 'archify-repo.html'],
+  ['archify-repo-grid.architecture.json', 'archify-repo-grid.html'],
+  ['maka-architecture.architecture.json', 'maka-architecture.html'],
+  ['rag-pipeline.architecture.json', 'rag-pipeline.html'],
+];
+
+for (const [input, golden] of ROOT_ARCHITECTURE_GOLDEN) {
+  const out = path.join(tmp, `root-${golden}`);
+  try {
+    render('architecture', path.join(repoRoot, 'examples', input), out);
+    const fresh = fs.readFileSync(out, 'utf8');
+    const checked = fs.readFileSync(path.join(repoRoot, 'examples', golden), 'utf8');
+    check(`architecture: public ${golden}`, normalizeNewlines(fresh) === normalizeNewlines(checked),
+      `fresh render differs from examples/${golden}; re-render the public architecture example`);
+  } catch (err) {
+    check(`architecture: public ${golden}`, false, String(err.stderr || err.message).slice(0, 300));
+  }
+}
+
 // ---------------------------------------------------------------------------
 console.log('schema enforcement (invalid JSON must fail with a path-prefixed message)');
 

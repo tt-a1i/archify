@@ -397,11 +397,13 @@ export class ChromeVisualBrowser {
       var scale = viewBoxWidth > 0 ? Math.min(1, diagramWidth / viewBoxWidth) : 0;
       var minimum = null;
       if (svg && scale > 0) {
-        Array.from(svg.querySelectorAll('text[data-node-label], text[data-boundary-label], text[data-detail="context"]')).forEach(function (text) {
+        Array.from(svg.querySelectorAll('text[data-node-label], text[data-boundary-label], text[data-detail], [data-detail="context"] text')).forEach(function (text) {
+          var detailNode = text.closest('[data-detail]');
+          var semanticDetail = detailNode ? detailNode.getAttribute('data-detail') : '';
           var detail = text.hasAttribute('data-node-label')
             ? 'primary'
-            : text.hasAttribute('data-boundary-label') ? 'boundary' : 'context';
-          if (detail === 'context' && !text.closest('[data-node-id]')) return;
+            : text.hasAttribute('data-boundary-label') ? 'boundary' : semanticDetail;
+          if (detail !== 'primary' && detail !== 'boundary' && detail !== 'context') return;
           var sourceFontPx = parseFloat(text.getAttribute('font-size') || '');
           if (!Number.isFinite(sourceFontPx)) return;
           var projectedFontPx = sourceFontPx * scale;
@@ -698,6 +700,7 @@ export async function runVisualCheck({
 } = {}) {
   if (!artifactPath) throw new Error('visual-check requires one delivered HTML artifact.');
   const artifact = path.resolve(artifactPath);
+  const receiptArtifact = path.basename(artifact);
   if (!/\.html?$/i.test(artifact)) throw new Error('visual-check requires an .html artifact.');
   const artifactBytes = fs.readFileSync(artifact);
   const outputs = sidecarPaths(artifact);
@@ -706,11 +709,11 @@ export async function runVisualCheck({
 
   const resolvedChrome = chromePath || resolveChrome();
   const receipt = baseReceipt({
-    artifactPath: artifact,
+    artifactPath: receiptArtifact,
     artifact: artifactBytes,
     outputs,
     chrome: resolvedChrome
-      ? { status: 'available', executable: resolvedChrome }
+      ? { status: 'available', executable: path.basename(resolvedChrome) }
       : { status: 'unavailable', executable: null },
   });
 
@@ -725,7 +728,7 @@ export async function runVisualCheck({
       code: 'viewer/chrome-unavailable',
       severity: 'warning',
       message: receipt.error,
-      subject: { artifact },
+      subject: { artifact: receiptArtifact },
       evidence: { executable: null },
       supportedFixes: ['set ARCHIFY_CHROME to a Chrome or Chromium executable and rerun visual-check'],
     })];
@@ -784,7 +787,7 @@ export async function runVisualCheck({
     const readabilityPass = receipt.readability.viewports.every((entry) => entry.readabilityOk);
     const viewerChromePass = allObservations.every((entry) => entry.viewerChromeOk);
     receipt.diagnostics = observationDiagnostics({
-      artifact,
+      artifact: receiptArtifact,
       allObservations,
       readabilityObservations: receipt.readability.viewports,
     });
@@ -816,7 +819,7 @@ export async function runVisualCheck({
     receipt.diagnostics = [failureDiagnostic({
       code: 'viewer/visual-check-runtime',
       message: 'visual-check could not complete its Chrome inspection.',
-      subject: { artifact },
+      subject: { artifact: receiptArtifact },
       evidence: { reason: error.message },
       supportedFixes: ['resolve the reported Chrome inspection error, then rerun visual-check'],
     })];

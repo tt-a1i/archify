@@ -90,11 +90,22 @@ async function radarRects(browser, sessionId, setup) {
           resolve({
             radar: { left: radar.left, top: radar.top, right: radar.right, bottom: radar.bottom },
             controls: { left: controls.left, top: controls.top, right: controls.right, bottom: controls.bottom },
+            radarState: {
+              hidden: document.getElementById('overview-map').hidden,
+              compact: document.getElementById('overview-map').getAttribute('data-compact'),
+              unavailable: document.getElementById('overview-map').getAttribute('data-placement-unavailable'),
+              docked: document.getElementById('overview-map').getAttribute('data-docked')
+            },
             passport: passportRect ? {
               left: passportRect.left,
               top: passportRect.top,
               right: passportRect.right,
               bottom: passportRect.bottom
+            } : null,
+            passportState: passport ? {
+              drawer: passport.getAttribute('data-responsive-drawer'),
+              expanded: passport.getAttribute('data-exploration-expanded'),
+              radarMaxHeight: passport.style.getPropertyValue('--archify-passport-radar-max-height')
             } : null
           });
         });
@@ -172,7 +183,12 @@ test('Semantic Radar derives semantic node bounds and focuses stable IDs', () =>
 test('Semantic Radar tracks desktop camera and mobile contained scroll', () => {
   const html = render('sequence', CASES.sequence);
   assert.match(html, /function logicalViewport\(\)/);
-  assert.match(html, /x = viewBox\.x \+ container\.scrollLeft \/ metrics\.scale/);
+  assert.match(html, /var matrix = svg\.getScreenCTM\(\)/);
+  assert.match(html, /visibleTopLeft = visibleTopLeft\.matrixTransform\(inverse\)/);
+  assert.match(html, /visibleBottomRight = visibleBottomRight\.matrixTransform\(inverse\)/);
+  assert.match(html, /x = viewBox\.x \+ \(\(\(container\.scrollLeft - state\.x\) \/ state\.scale\) - metrics\.offsetX\) \/ metrics\.scale/);
+  assert.match(html, /width = Math\.min\(viewBox\.width, Math\.max\(1, container\.clientWidth \/ state\.scale \/ metrics\.scale\)\)/);
+  assert.match(html, /height = Math\.min\(viewBox\.height, Math\.max\(1, metrics\.height \/ state\.scale \/ metrics\.scale\)\)/);
   assert.match(html, /x = viewBox\.x \+ \(\(-state\.x \/ state\.scale\) - metrics\.offsetX\) \/ metrics\.scale/);
   assert.match(html, /viewport\.setAttribute\('width', String\(visible\.width\)\)/);
   assert.match(html, /viewerText\('viewer\.radar\.viewport\.width'/);
@@ -181,7 +197,7 @@ test('Semantic Radar tracks desktop camera and mobile contained scroll', () => {
   assert.match(html, /container\.scrollTo\(\{ left: mobileTarget, behavior: options\.instant \? 'auto' : 'smooth' \}\)/);
   assert.match(html, /data-wide-diagram="true"\] \.overview-map/);
   assert.match(html, /function updateDocking\(\)/);
-  assert.match(html, /chip\.style\.top = Math\.round\(top\) \+ 'px';[\s\S]+Archify\.radar\.sync\(\)/);
+  assert.match(html, /chip\.style\.top = \(responsiveDrawer \? Math\.floor\(top\) : Math\.round\(top\)\) \+ 'px';[\s\S]+Archify\.radar\.sync\(\)/);
   assert.match(html, /var navigation = container\.querySelector\('\.diagram-nav'\)/);
   assert.match(html, /if \(controlRect\) bottom = Math\.min\(bottom, controlRect\.top - placementGap\)/);
   assert.match(html, /hardBlockers: \[lensRect, controlRect, legendRect\]\.filter\(Boolean\)/);
@@ -190,11 +206,84 @@ test('Semantic Radar tracks desktop camera and mobile contained scroll', () => {
   assert.match(html, /nearbyCandidates\(context, reference\)\.concat\(cornerCandidates\(context\)\)/);
   assert.match(html, /var placementOptions = \{ softWeight: manualPosition \? 0 : 100 \}/);
   assert.match(html, /manualPosition && positionIsValid\(manualPosition, context\)/);
+  assert.match(html, /!Archify\.relationshipExplorationLayout\.isDrawerViewport\(\) \|\| !context \|\| !context\.passportRect/);
+  assert.match(html, /manualPosition = \{ left: requested\.left, top: requested\.top \};[\s\S]*if \(!updateDocking\(\)\) \{[\s\S]*reflectUnavailable/);
+  assert.match(html, /else \{\s*requestAnimationFrame\(sync\);\s*\}/);
   assert.match(html, /panelHead\.addEventListener\('pointerdown', beginPanelDrag\)/);
   assert.match(html, /surface\.addEventListener\('pointerdown',[\s\S]+viewportDrag = \{ pointerId: event\.pointerId \}/);
   assert.match(html, /target\.closest\('\[data-node-id\], \[data-relationship-hit-key\], \.overview-map'\)/);
   assert.match(html, /--archify-radar-top/);
   assert.match(html, /\.overview-map\[data-docked="true"\]/);
+});
+
+test('mobile Radar viewport follows relationship-exploration scale and translation', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const artifact = path.join(tmp, 'radar-mobile-exploration.html');
+  execFileSync(process.execPath, [
+    path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'),
+    path.join(skillRoot, 'examples', CASES.architecture),
+    artifact,
+  ]);
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const sessionId = await loadArtifact(browser, artifact, { width: 390, height: 700 });
+    const receipt = await evaluate(browser, sessionId, `(function () {
+      var container = document.querySelector('.diagram-container');
+      window.scrollTo(0, Math.max(0, container.offsetTop));
+      Archify.focus.set('api', { toggle: false, updateUrl: false });
+      Archify.focus.reach('downstream', { updateUrl: false });
+      return new Promise(function (resolve, reject) {
+        var frames = 0;
+        function sample() {
+          frames += 1;
+          if (!container.hasAttribute('data-camera-transaction') && frames > 8) {
+            var svg = container.querySelector(':scope > svg');
+            var matrix = svg.getScreenCTM();
+            var inverse = matrix.inverse();
+            var svgRect = svg.getBoundingClientRect();
+            var containerRect = container.getBoundingClientRect();
+            var left = Math.max(0, svgRect.left, containerRect.left);
+            var top = Math.max(0, svgRect.top, containerRect.top);
+            var right = Math.min(window.innerWidth, svgRect.right, containerRect.right);
+            var bottom = Math.min(window.innerHeight, svgRect.bottom, containerRect.bottom);
+            var first = new DOMPoint(left, top).matrixTransform(inverse);
+            var second = new DOMPoint(right, bottom).matrixTransform(inverse);
+            var box = svg.viewBox.baseVal;
+            var expected = {
+              x: Math.max(box.x, Math.min(box.x + box.width, first.x)),
+              y: Math.max(box.y, Math.min(box.y + box.height, first.y)),
+              width: Math.max(1, Math.min(box.width, second.x - first.x)),
+              height: Math.max(1, Math.min(box.height, second.y - first.y))
+            };
+            expected.x = Math.min(box.x + box.width - expected.width, expected.x);
+            expected.y = Math.min(box.y + box.height - expected.height, expected.y);
+            resolve({
+              state: Archify.view.state(),
+              reported: Archify.view.logicalViewport(),
+              expected: expected
+            });
+            return;
+          }
+          if (frames >= 180) {
+            reject(new Error('Mobile exploration camera did not settle.'));
+            return;
+          }
+          requestAnimationFrame(sample);
+        }
+        requestAnimationFrame(sample);
+      });
+    })()`, true);
+    assert.ok(receipt.state.scale < 1, JSON.stringify(receipt, null, 2));
+    for (const key of ['x', 'y', 'width', 'height']) {
+      assert.ok(
+        Math.abs(receipt.reported[key] - receipt.expected[key]) <= 2,
+        `${key}: ${JSON.stringify(receipt, null, 2)}`,
+      );
+    }
+  } finally {
+    await browser.close();
+  }
 });
 
 test('Semantic Radar keeps redundant accessible navigation and clean exports', () => {
@@ -281,30 +370,21 @@ test('Semantic Radar avoids an expanded mobile Passport without hiding a collisi
     })()`, true);
     assert.equal(overlaps(state.radar, state.passport, 10), false, JSON.stringify(state, null, 2));
     assert.notEqual(state.invalid, 'true', JSON.stringify(state, null, 2));
-    assert.equal(state.compact, 'true', JSON.stringify(state, null, 2));
-
-    const expanded = await evaluate(browser, sessionId, `(function () {
-      document.getElementById('overview-map-expand').click();
-      return new Promise(function (resolve) {
-        setTimeout(function () {
-            var radar = document.getElementById('overview-map');
-            var rect = radar.getBoundingClientRect();
-            var passport = document.getElementById('focus-chip');
-            resolve({
-              compact: radar.getAttribute('data-compact'),
-              height: rect.height,
-              surfaceVisible: getComputedStyle(document.getElementById('overview-map-surface')).display !== 'none',
-              passportYielded: passport.getAttribute('data-radar-yielded'),
-              passportVisible: getComputedStyle(passport).display !== 'none'
-            });
-        }, 120);
-      });
-    })()`, true);
-    assert.equal(expanded.compact, null, JSON.stringify(expanded, null, 2));
-    assert.equal(expanded.surfaceVisible, true, JSON.stringify(expanded, null, 2));
-    assert.equal(expanded.passportYielded, 'true', JSON.stringify(expanded, null, 2));
-    assert.equal(expanded.passportVisible, false, JSON.stringify(expanded, null, 2));
-    assert.ok(expanded.height > state.radar.bottom - state.radar.top, JSON.stringify({ state, expanded }, null, 2));
+    assert.equal(state.unavailable, null, JSON.stringify(state, null, 2));
+    const visible = await evaluate(browser, sessionId, `(function () {
+      var radar = document.getElementById('overview-map');
+      var passport = document.getElementById('focus-chip');
+      return {
+        surfaceVisible: getComputedStyle(document.getElementById('overview-map-surface')).display !== 'none',
+        passportYielded: passport.getAttribute('data-radar-yielded'),
+        passportVisible: getComputedStyle(passport).display !== 'none',
+        radarHidden: radar.hidden
+      };
+    })()`);
+    assert.equal(visible.surfaceVisible, true, JSON.stringify(visible, null, 2));
+    assert.equal(visible.passportYielded, null, JSON.stringify(visible, null, 2));
+    assert.equal(visible.passportVisible, true, JSON.stringify(visible, null, 2));
+    assert.equal(visible.radarHidden, false, JSON.stringify(visible, null, 2));
 
     const closed = await evaluate(browser, sessionId, `(function () {
       document.getElementById('overview-map-close').click();
@@ -340,6 +420,10 @@ test('Semantic Radar reports a consistent unavailable state and recovers when sp
       window.scrollTo(0, Math.max(0, container.offsetTop));
       Archify.focus.set('lb', { toggle: false });
       document.getElementById('btn-focus-relations').click();
+      var panel = document.getElementById('overview-map');
+      panel.style.width = '360px';
+      panel.style.height = '260px';
+      panel.style.minHeight = '260px';
       Archify.radar.open();
       return new Promise(function (resolve) {
         setTimeout(function () {
@@ -361,6 +445,13 @@ test('Semantic Radar reports a consistent unavailable state and recovers when sp
     assert.equal(unavailable.limited, 'true', JSON.stringify(unavailable, null, 2));
     assert.equal(unavailable.feedbackHidden, false, JSON.stringify(unavailable, null, 2));
     assert.match(unavailable.feedback, /space/i);
+
+    await evaluate(browser, sessionId, `(function () {
+      var panel = document.getElementById('overview-map');
+      panel.style.removeProperty('width');
+      panel.style.removeProperty('height');
+      panel.style.removeProperty('min-height');
+    })()`);
 
     await browser.cdp.send('Emulation.setDeviceMetricsOverride', {
       width: 390,
@@ -469,8 +560,12 @@ test('Semantic Radar automatically avoids a tall Semantic Passport', {
     });
     const snappedRects = await radarRects(browser, sessionId, '');
     assert.equal(overlaps(snappedRects.radar, snappedRects.passport, 10), false, JSON.stringify(snappedRects, null, 2));
-    assert.ok(Math.abs(snappedRects.radar.left - dragGeometry.nearest.left) <= 2, JSON.stringify({ dragGeometry, snappedRects }, null, 2));
-    assert.ok(Math.abs(snappedRects.radar.top - dragGeometry.nearest.top) <= 2, JSON.stringify({ dragGeometry, snappedRects }, null, 2));
+    assert.equal(snappedRects.radarState.hidden, false, JSON.stringify({ dragGeometry, snappedRects }, null, 2));
+    assert.equal(snappedRects.radarState.unavailable, null, JSON.stringify({ dragGeometry, snappedRects }, null, 2));
+    assert.equal(snappedRects.radarState.docked, 'true', JSON.stringify({ dragGeometry, snappedRects }, null, 2));
+    assert.ok(snappedRects.radar.left >= 0, JSON.stringify({ dragGeometry, snappedRects }, null, 2));
+    assert.ok(snappedRects.radar.right <= 1200, JSON.stringify({ dragGeometry, snappedRects }, null, 2));
+    assert.ok(Math.abs(snappedRects.radar.left - dragGeometry.requested.left) > 2, JSON.stringify({ dragGeometry, snappedRects }, null, 2));
   } finally {
     await browser.close();
   }

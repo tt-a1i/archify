@@ -85,6 +85,16 @@ test('reachability stays explicit, deep-linkable, keyboard reachable, and export
   assert.match(template, /applyReachability\(reach, \{ updateUrl: false, toggle: false, reveal: false \}\)/);
   assert.match(template, /upstreamBtn\.addEventListener\('click'/);
   assert.match(template, /downstreamBtn\.addEventListener\('click'/);
+  assert.match(template, /setExplorationMode\('reach', true\)/);
+  assert.match(template, /data-exploration-compact="true"/);
+  assert.match(template, /@media \(min-width: 1281px\)/);
+  assert.match(template, /width: min\(27rem, calc\(100% - 2rem\)\)/);
+  assert.match(template, /grid-template-columns: minmax\(0, 1\.2fr\) minmax\(7\.5rem, 0\.8fr\)/);
+  assert.match(template, /min-height: 2\.5rem/);
+  assert.match(template, /border-bottom: 0/);
+  assert.match(template, /flex: 0 1 auto/);
+  assert.match(template, /data-responsive-drawer="true"\]\[data-exploration-compact="true"\][^{]*\{[^}]*width: auto/s);
+  assert.match(template, /activeReachability !== result \|\| reachabilityMode !== direction/);
   assert.match(template, /clone\.removeAttribute\('data-reach-active'\)/);
   assert.match(template, /clone\.querySelectorAll\('\[data-reach-match\], \[data-reach-origin\], \[data-reach-depth\]'/);
   assert.match(template, /!clone\.hasAttribute\('data-reach-active'\)/);

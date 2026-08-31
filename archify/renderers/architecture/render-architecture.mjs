@@ -58,6 +58,7 @@ const { diagram: arch, template, outPath, sourceEvidence } = await loadDiagramWi
   defaultExample: 'web-app.architecture.json',
   argv: cliArgs,
 });
+const activeQualityProfile = process.env.ARCHIFY_QUALITY_PROFILE || arch.meta?.quality_profile;
 
 const grid = gridLayout(arch);
 
@@ -97,7 +98,7 @@ function measureComponent(c) {
 }
 
 const components = new Map(asArray(arch.components).map((c) => [c.id, measureComponent(c)]));
-const enforcesBoundaryTitleComposition = Boolean(arch.meta?.quality_profile);
+const enforcesBoundaryTitleComposition = Boolean(activeQualityProfile);
 const componentSteps = new Map();
 for (const [index, conn] of asArray(arch.connections).entries()) {
   if (!componentSteps.has(conn.from)) componentSteps.set(conn.from, index);
@@ -332,6 +333,19 @@ function componentContext(component) {
 // ---- Auto viewBox: fit all geometry + the measured resolved legend ----------
 const viewBox = arch.meta?.viewBox || autoViewBoxFor(boundaries);
 const legendY = () => viewBox[1] - 16;
+const relationshipLabelFontSize = activeQualityProfile === 'showcase'
+  ? Math.max(8, Math.ceil(minimumReadableSourceTextPx(viewBox[0]) * 10) / 10)
+  : 8;
+
+function relationshipLabelBox(label, x, y) {
+  const width = Math.max(30, textUnits(label) * relationshipLabelFontSize * 0.6 + 10);
+  return {
+    x: x - width / 2,
+    y: y - relationshipLabelFontSize - 2,
+    width,
+    height: relationshipLabelFontSize + 6,
+  };
+}
 
 // ---- Validation: mechanical correctness, never layout taste -----------------
 function validateArchitecture() {
@@ -531,7 +545,7 @@ function validateArchitecture() {
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',
-    profile: arch.meta?.quality_profile,
+    profile: activeQualityProfile,
     routeHint: 'adjust route/via or fromSide/toSide so the connections use separate corridors'
   }));
   problems.push(...cleanAmbiguousCorridorProblems({
@@ -540,7 +554,7 @@ function validateArchitecture() {
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',
-    profile: arch.meta?.quality_profile,
+    profile: activeQualityProfile,
     routeHint: 'adjust route/via or fromSide/toSide so unrelated connections do not visually merge'
   }));
   problems.push(...cleanBorderRunProblems({
@@ -550,7 +564,7 @@ function validateArchitecture() {
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',
-    profile: arch.meta?.quality_profile,
+    profile: activeQualityProfile,
     routeHint: 'adjust route/via or fromSide/toSide so the connection crosses the boundary perpendicularly instead of following its border'
   }));
   problems.push(...cleanRouteRhythmProblems({
@@ -559,7 +573,7 @@ function validateArchitecture() {
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',
-    profile: arch.meta?.quality_profile,
+    profile: activeQualityProfile,
     routeHint: 'move route/via points into a wider corridor or move the component so every turn has room to read'
   }));
 
@@ -568,8 +582,8 @@ function validateArchitecture() {
   for (const [connectionIndex, conn] of asArray(arch.connections).entries()) {
     if (!conn.label || !components.has(conn.from) || !components.has(conn.to)) continue;
     const [lx, ly] = labelPoint(conn, pathFor(conn).points);
-    const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
-    labelRects.push({ relation: conn, relationIndex: connectionIndex, label: conn.label, x: lx - w / 2, y: ly - 10, width: w, height: 14, lx, ly });
+    const box = relationshipLabelBox(conn.label, lx, ly);
+    labelRects.push({ relation: conn, relationIndex: connectionIndex, label: conn.label, ...box, lx, ly });
   }
   for (const rect of labelRects) {
     for (const c of components.values()) {
@@ -593,7 +607,7 @@ function validateArchitecture() {
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',
-    profile: arch.meta?.quality_profile,
+    profile: activeQualityProfile,
   }));
 
   if (problems.length) {
@@ -608,13 +622,13 @@ function buildLayoutReport() {
   for (const conn of asArray(arch.connections)) {
     if (!conn.label || !components.has(conn.from) || !components.has(conn.to)) continue;
     const [lx, ly] = labelPoint(conn, pathFor(conn).points);
-    const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
+    const box = relationshipLabelBox(conn.label, lx, ly);
     labels.push({
       text: conn.label,
-      x: Math.round(lx - w / 2),
-      y: Math.round(ly - 10),
-      width: Math.round(w),
-      height: 14,
+      x: Math.round(box.x),
+      y: Math.round(box.y),
+      width: Math.round(box.width),
+      height: Math.round(box.height),
       labelAt: [Math.round(lx), Math.round(ly)],
     });
   }
@@ -971,10 +985,10 @@ function renderConnectionPath(conn, index) {
 function renderConnectionLabel(conn, index) {
   if (!conn.label) return '';
   const [lx, ly] = labelPoint(conn, pathFor(conn).points);
-  const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
+  const box = relationshipLabelBox(conn.label, lx, ly);
   return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}>
-          <rect x="${lx - w / 2}" y="${ly - 10}" width="${w}" height="14" rx="3" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${variantAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
+          <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
+          <text x="${lx}" y="${ly}" class="${variantAccent(conn.variant)}" font-size="${relationshipLabelFontSize}" text-anchor="middle">${esc(conn.label)}</text>
         </g>`;
 }
 
@@ -1009,8 +1023,7 @@ function renderLegend() {
     labelRectFor: (connection) => {
       if (!connection.label) return null;
       const [x, y] = labelPoint(connection, pathFor(connection).points);
-      const width = Math.max(30, textUnits(connection.label) * 4.8 + 10);
-      return { x: x - width / 2, y: y - 10, width, height: 14 };
+      return relationshipLabelBox(connection.label, x, y);
     },
   });
   const contentBottom = Math.max(
