@@ -1,6 +1,6 @@
 {
   "name": "archify",
-  "version": "2.16.0-dev.0",
+  "version": "2.16.0",
   "private": true,
   "type": "module",
   "description": "JSON-IR diagram renderers (architecture / workflow / sequence / dataflow / lifecycle).",
@@ -21,7 +21,7 @@
     "build:guide": "node ../scripts/build-guide.mjs ../docs/guide.html",
     "build:start": "node ../scripts/build-start.mjs ../docs/start.html",
     "build:readme-showcase": "node ../scripts/build-readme-showcase.mjs",
-    "test:webm": "node test/webm-artifact.smoke.mjs",
+    "test:webm": "node test/webm-artifact.smoke.mjs && node --test test/site-language-integration.mjs",
     "test": "npm run check:brand-marks && npm run check:validators && npm run check:release-identity && node test/golden.mjs && node ../scripts/run-tests.mjs",
     "render:examples": "node scripts/render-examples.mjs ../examples"
   },
@@ -30,5 +30,8 @@
     "parse5": "7.3.0",
     "saxes": "6.0.0",
     "simple-icons": "16.28.0"
+  },
+  "overrides": {
+    "fast-uri": "3.1.5"
   }
 }

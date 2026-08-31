@@ -4,11 +4,22 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
-Development identity: `v2.16.0-dev.0`
+### Added
+- **Traditional Chinese Viewer locale.** `meta.locale` also accepts `zh-TW`. The catalog is hand-authored rather than script-converted from `zh-CN`, so it resolves one-to-many mappings correctly (`复制` → `複製`, never `復制`) and uses Taiwan terminology instead of glyph-only conversion (`資料庫`, `雲端服務`, `訊息匯流排`, `匯出`, `剪貼簿`, `預設`, `語意`). `zh-CN` and `zh-TW` are never substituted for one another. Regression coverage asserts that no Simplified-only character survives in the `zh-TW` column and that it does not degrade into a copy of `zh-CN`.
+
+## [2.16.0] — 2026-08-30
 
 ### Added
+- **Constraint-driven Workflow Compiler (#126).** Workflow schema v2 adds the `readable-v2` contract: columns `0..5` remain logical ranks while one measured scene owns node placement, phase/group frames, routes, semantic labels, content bounds, diagnostics, and SVG serialization. Valid schema v1 workflows stay on byte-stable `fixed-v1` geometry, `validate workflow ... --layout-json` exposes a stable author-facing compiler receipt, and `migrate workflow <source> <destination> --to-schema 2 --json` maps absolute coordinates non-destructively before writing only a fully checked destination. Adjacent-column capacity failures now report one causal diagnosis instead of cascading through short-edge, endpoint-direction, and label-overlap symptoms.
 - **Bounded Viewer localization.** All five renderers accept the optional `meta.locale` values `en` and `zh-CN`, localizing renderer-owned Viewer UI, accessibility copy, default legends, document titles, and language metadata without translating authored content. Omitted locale remains backward-compatible English, while unsupported authored languages retain their requested authored copy with an explicitly disclosed English Viewer fallback.
-- **Traditional Chinese Viewer locale.** `meta.locale` also accepts `zh-TW`. The catalog is hand-authored rather than script-converted from `zh-CN`, so it resolves one-to-many mappings correctly (`复制` → `複製`, never `復制`) and uses Taiwan terminology instead of glyph-only conversion (`資料庫`, `雲端服務`, `訊息匯流排`, `匯出`, `剪貼簿`, `預設`, `語意`). `zh-CN` and `zh-TW` are never substituted for one another. Regression coverage asserts that no Simplified-only character survives in the `zh-TW` column and that it does not degrade into a copy of `zh-CN`.
+- **Optional embedded Skill update awareness.** The packaged Skill can perform a cached, notification-only stable-release check with a fixed trusted manifest URL, strict identity and response bounds, SemVer downgrade protection, per-installed-version state, two-stage visible-notice acknowledgement, and a one-second fail-silent timeout. It never downloads, installs, executes, or overwrites an update; the user remains the sole update decision owner. Release identity, final ZIP contents, stable tag/tree/archive digests, and cross-platform packaged execution are gated in tests and release automation.
+
+### Changed
+- Workflow authoring now preserves semantic edge labels and repairs measured spacing or route constraints rather than treating label deletion as a geometry workaround. Documentation also makes `--repo-root` architecture-only, defines lifecycle event/terminal column `N` as aligned with main column `N + 2`, and warns that `visual-check` after failed delivery would inspect the preserved previous artifact.
+
+### Fixed
+- Skill packaging now stages only tracked regular files through one symlink-safe path shared by the release ZIP and DeepSeek Harness bundle, while preserving legitimate nested runtime test directories and rejecting stale or dependency-bearing artifacts.
+- Update checks use generation-fenced atomic cache snapshots, unconditional bounded requests without persistent server validators, and a Release-first publication gate that verifies the published archive digest and tagged Skill tree before a gated GitHub Pages deployment can expose a stable manifest.
 
 ## [2.15.0] — 2026-08-17
 

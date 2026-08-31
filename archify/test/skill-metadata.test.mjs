@@ -48,6 +48,17 @@ test('main skill stays a bounded authoring router with progressive references', 
   }
 });
 
+test('update awareness is notification-only and never replaces the requested workflow', () => {
+  assert.match(skill, /`scripts\/check-update\.mjs`/);
+  assert.match(skill, /`silent`[\s\S]*without mentioning/i);
+  assert.match(skill, /`update_available`[\s\S]*compact notice/i);
+  assert.match(skill, /information, not permission/i);
+  assert.match(skill, /`severity` is `security`[\s\S]*security update[\s\S]*emphasis only, never user autonomy/i);
+  assert.match(skill, /continue the user's original task/i);
+  assert.match(skill, /installed version unchanged/i);
+  assert.doesNotMatch(skill, /npx skills update|gh skill update/i);
+});
+
 test('language behavior stays within the bounded locale contract', () => {
   assert.match(skill, /one primary authored language/);
   assert.match(skill, /explicit user choice; otherwise follow the request or conversation's dominant language/);

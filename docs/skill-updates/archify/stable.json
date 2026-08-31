@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "skillId": "archify",
+  "channel": "stable",
+  "version": "2.16.0",
+  "publishedAt": "2026-08-30T11:13:26Z",
+  "source": {
+    "repository": "https://github.com/tt-a1i/archify",
+    "ref": "v2.16.0",
+    "treeSha": "a198a3e0d03cd08eb582062a52dc4b0bd5b0aa4f"
+  },
+  "artifact": {
+    "sha256": "4c59fa6557a2385beaaef8c7219cc414573acc9f0c30a932d5053b0b20689a46"
+  },
+  "summary": "Adds constraint-driven compilation and update awareness, improves multilingual authoring and viewer behavior, and hardens reproducible releases.",
+  "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v2.16.0",
+  "severity": "normal"
+}

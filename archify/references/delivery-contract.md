@@ -10,6 +10,12 @@ node bin/archify.mjs deliver <type> <candidate.json> <output.html> --quality sho
 
 Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. The JSON receipt includes SHA-256 and byte counts for both `specification` and `artifact`. Renderer, checker, receipt, or commit failure exits non-zero, removes private state, preserves the previous trusted artifact, and never invokes an opener.
 
+Run `visual-check` only after `deliver` exits zero for the current candidate. If
+delivery fails and the output path already exists, that path still names the
+previous trusted artifact; running `visual-check` then would measure and capture
+stale output, not the rejected candidate. Report the delivery diagnostics and
+repair the source before collecting new visual evidence.
+
 The deterministic receipt proves byte identity and automated checks. Never claim that the deterministic receipt includes visual review.
 
 ## Automated visual evidence
@@ -47,6 +53,8 @@ node bin/archify.mjs preview <type> <input>.json <output>.html --quality showcas
 ```
 
 Preview watches one explicit input on loopback, binds each stable digest to a private snapshot, and advances only after the existing verified delivery pipeline passes. Invalid, half-written, deleted, or superseded input leaves the previous verified revision on screen and on disk. Identical bytes do not rebuild or reload.
+
+The preview runtime ships inside the zero-dependency Skill ZIP and must work without `node_modules`.
 
 Never start it by default. Do not use it for CI, unattended agents, remote sharing, or mobile use. `--no-open` is only for a user who will open the printed local URL or for loop testing. Stop it with Ctrl-C before handoff. Server state, port, source path, diagnostics, error text, and reload tokens must never enter the generated artifact or any export.
 

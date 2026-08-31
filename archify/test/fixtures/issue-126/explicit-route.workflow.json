@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Sanitized explicit route",
+    "viewBox": [900, 420],
+    "legend": { "mode": "hidden" }
+  },
+  "lanes": [
+    { "id": "source", "label": "Source" },
+    { "id": "target", "label": "Target" }
+  ],
+  "nodes": [
+    { "id": "producer", "lane": "source", "col": 1, "type": "backend", "label": "Producer" },
+    { "id": "consumer", "lane": "target", "col": 1, "type": "backend", "label": "Consumer" }
+  ],
+  "edges": [
+    {
+      "id": "producer-consumer",
+      "from": "producer",
+      "to": "consumer",
+      "fromSide": "right",
+      "toSide": "right",
+      "route": "outside-right",
+      "channelX": 720
+    }
+  ]
+}
