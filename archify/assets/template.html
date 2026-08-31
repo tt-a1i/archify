@@ -6303,6 +6303,12 @@
         if (!data.canonicalStateClean) return Promise.reject(exportError('viewer.export.error.viewerState'));
         if (routeSnapshot && !data.routeStateClean) return Promise.reject(exportError('viewer.export.error.routeState'));
         if (reachSnapshot && !data.reachStateClean) return Promise.reject(exportError('viewer.export.error.reachState'));
+
+        // Get receipt from DOM
+        var receiptNode = document.querySelector('#archify-compare-receipt');
+        if (!receiptNode) return Promise.reject(exportError('viewer.export.error.receiptMissing'));
+        var receipt = JSON.parse(receiptNode.textContent);
+
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
 
@@ -6352,16 +6358,16 @@
               // Draw the summary lines
               ctx.font = '700 17px ui-monospace, SFMono-Regular, Menlo, monospace';
               ctx.fillStyle = '#8aa0b5';
-              var componentLine = 'COMPONENTS  +' + data.headSummary.components.added + '  ~' + data.headSummary.components.changed + '  −' + data.headSummary.components.removed;
-              var connectionLine = 'CONNECTIONS  +' + data.headSummary.connections.added + '  ~' + data.headSummary.connections.changed + '  −' + data.headSummary.connections.removed;
-              var boundaryLine = 'BOUNDARY SCOPE  +' + data.headSummary.boundaries.added + '  ~' + data.headSummary.boundaries.changed + '  −' + data.headSummary.boundaries.removed;
+              var componentLine = 'COMPONENTS  +' + receipt.summary.components.added + '  ~' + receipt.summary.components.changed + '  −' + receipt.summary.components.removed;
+              var connectionLine = 'CONNECTIONS  +' + receipt.summary.connections.added + '  ~' + receipt.summary.connections.changed + '  −' + receipt.summary.connections.removed;
+              var boundaryLine = 'BOUNDARY SCOPE  +' + receipt.summary.boundaries.added + '  ~' + receipt.summary.boundaries.changed + '  −' + receipt.summary.boundaries.removed;
               ctx.fillText(componentLine, SHARE_CARD_PADDING * 2, SHARE_CARD_HEADER + 18 + 34 + 17);
               ctx.fillText(connectionLine, SHARE_CARD_PADDING * 2 + 354, SHARE_CARD_HEADER + 18 + 34 + 17);
               ctx.fillText(boundaryLine, SHARE_CARD_PADDING * 2 + 702, SHARE_CARD_HEADER + 18 + 34 + 17);
               // Draw the authored changes
               ctx.font = '650 14px ui-monospace, SFMono-Regular, Menlo, monospace';
               var authoredChanges = ['components', 'connections', 'boundaries'].reduce((sum, collection) => {
-                return sum + data.headSummary[collection].added + data.headSummary[collection].changed + data.headSummary[collection].removed;
+                return sum + receipt.summary[collection].added + receipt.summary[collection].changed + receipt.summary[collection].removed;
               }, 0);
               ctx.fillText('AUTHORED CHANGES  +' + authoredChanges, SHARE_CARD_PADDING * 2, SHARE_CARD_HEADER + 18 + 34 + 17 + 14 * 1.5);
               // Draw the diagram

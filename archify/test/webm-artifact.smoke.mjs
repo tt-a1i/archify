@@ -884,6 +884,7 @@ try {
         return { ok: false, error: String(error && error.message || error) };
       }
     })()`, true), 10_000, `${label} Share Card export`);
+    console.log("sharePayload:", sharePayload);
 
     assert.equal(sharePayload?.ok, true, sharePayload?.error || `${label} Share Card export failed`);
     assert.equal(sharePayload.type, 'image/png');
