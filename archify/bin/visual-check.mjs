@@ -564,13 +564,13 @@ function contactSheetHtml({ artifactPath, receipt, screenshots }) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Archify visual-check · ${htmlEscape(path.basename(artifactPath))}</title>
+<title>Archify automated browser evidence · ${htmlEscape(path.basename(artifactPath))}</title>
 <style>
 *{box-sizing:border-box}body{margin:0;padding:24px;background:#e9eef5;color:#172033;font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}header{max-width:1500px;margin:0 auto 18px}h1{margin:0 0 6px;font-size:20px}p{margin:0;color:#526176}.grid{max-width:1500px;margin:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}figure{margin:0;padding:10px;background:white;border:1px solid #c9d4e3;border-radius:12px;box-shadow:0 10px 30px rgba(15,23,42,.08)}img{display:block;width:100%;height:auto;border:1px solid #e2e8f0}figcaption{padding:9px 4px 2px;color:#526176}@media(max-width:900px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header><h1>Archify visual-check</h1><p>${htmlEscape(path.basename(artifactPath))} · automated containment ${htmlEscape(receipt.containment.status)} · visual review pending</p></header>
+<header><h1>Automated browser evidence</h1><p>${htmlEscape(path.basename(artifactPath))} · visual-check containment ${htmlEscape(receipt.containment.status)} · perceptual visual review pending</p></header>
 <main class="grid">${cards}
 </main>
 </body>
@@ -665,6 +665,7 @@ function baseReceipt({ artifactPath, artifact, outputs, chrome }) {
     schemaVersion: 1,
     ok: false,
     command: 'visual-check',
+    evidenceKind: 'automated-browser',
     status: 'fail',
     visualReview: 'pending',
     artifact: {
