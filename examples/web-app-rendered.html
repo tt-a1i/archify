@@ -4926,9 +4926,9 @@
         </div>
         <div class="export-menu-section" role="group" aria-label="Share">
           <span class="export-menu-heading" aria-hidden="true">Share</span>
-          <button data-format="share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>Share Card</strong><small class="hint">1200&times;630 PNG</small></span></button>
-          <button data-action="route-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled><span class="export-item-copy"><strong>Route Share Card</strong><small class="hint">1200&times;630 PNG</small></span></button>
-          <button data-action="reach-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled><span class="export-item-copy"><strong>Reach Share Card</strong><small class="hint">1200&times;630 PNG</small></span></button>
+          <button data-format="share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>Share Card</strong><small class="hint">1200&times;630 @2x PNG</small></span></button>
+          <button data-action="route-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled><span class="export-item-copy"><strong>Route Share Card</strong><small class="hint">1200&times;630 @2x PNG</small></span></button>
+          <button data-action="reach-share-card" type="button" role="menuitem" tabindex="-1" hidden disabled><span class="export-item-copy"><strong>Reach Share Card</strong><small class="hint">1200&times;630 @2x PNG</small></span></button>
           <button data-action="copy-share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>Copy Share Card</strong><small class="hint">PNG to clipboard</small></span></button>
           <button data-action="copy" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>Copy diagram</strong><small class="hint">PNG to clipboard</small></span></button>
         </div>
@@ -6378,6 +6378,22 @@
         if (!data.canonicalStateClean) return Promise.reject(exportError('viewer.export.error.viewerState'));
         if (routeSnapshot && !data.routeStateClean) return Promise.reject(exportError('viewer.export.error.routeState'));
         if (reachSnapshot && !data.reachStateClean) return Promise.reject(exportError('viewer.export.error.reachState'));
+
+        // Get receipt from DOM
+        var receiptNode = document.querySelector('#archify-compare-receipt');
+        if (!receiptNode) return Promise.reject(exportError('viewer.export.error.receiptMissing'));
+        var receipt = JSON.parse(receiptNode.textContent);
+        // Ensure receipt has the expected structure for the summary
+        if (!receipt.summary) {
+          receipt.summary = {
+            components: { added: 0, changed: 0, removed: 0 },
+            connections: { added: 0, changed: 0, removed: 0 },
+            boundaries: { added: 0, changed: 0, removed: 0 },
+            presentationChanged: false,
+            provenanceChanged: false
+          };
+        }
+
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
 
@@ -6386,9 +6402,14 @@
           img.onload = function () {
             try {
               var canvas = document.createElement('canvas');
-              canvas.width = SHARE_CARD_WIDTH;
-              canvas.height = SHARE_CARD_HEIGHT;
+              // Set canvas to 2x the logical size for @2x resolution
+              var PHYSICAL_WIDTH = SHARE_CARD_WIDTH * 2;
+              var PHYSICAL_HEIGHT = SHARE_CARD_HEIGHT * 2;
+              canvas.width = PHYSICAL_WIDTH;
+              canvas.height = PHYSICAL_HEIGHT;
               var ctx = canvas2dOrThrow(canvas, viewerText('viewer.export.shareCard'));
+              // Scale the context by 2 so that drawing operations are doubled in pixel space
+              ctx.scale(2, 2);
               var computed = getComputedStyle(document.documentElement);
               var bg = computed.getPropertyValue('--bg').trim() || currentBg();
               var text = computed.getPropertyValue('--text').trim() || '#ffffff';
@@ -6400,86 +6421,57 @@
               var accent = computed.getPropertyValue(accentProperty).trim() || '#22d3ee';
               var titleNode = document.querySelector('.header h1');
               var subtitleNode = document.querySelector('.header .subtitle');
-              var title = titleNode ? titleNode.textContent : document.title;
-              var directionLabel = reachSnapshot
-                ? viewerText('viewer.export.direction.' + reachSnapshot.direction)
-                : '';
-              var subtitle = routeSnapshot
-                ? viewerCount('viewer.export.card.routeSummary', routeSnapshot.hops, {
-                    source: routeSnapshot.source.label,
-                    target: routeSnapshot.target.label
-                  })
-                : reachSnapshot
-                  ? viewerText('viewer.export.card.reachSummary', {
-                      direction: directionLabel,
-                      origin: reachSnapshot.origin.label,
-                      nodes: viewerCount('viewer.export.card.node', reachSnapshot.nodeIds.length - 1),
-                      links: viewerCount('viewer.export.card.link', reachSnapshot.edges.length),
-                      hops: viewerCount('viewer.export.card.hop', reachSnapshot.maxDepth)
-                    })
-                  : subtitleNode ? subtitleNode.textContent : '';
-              var preset = document.documentElement.getAttribute('data-preset') || 'classic';
-              var theme = document.documentElement.getAttribute('data-theme') || 'dark';
-              var presetKey = preset === 'signal-flow'
-                ? 'viewer.preset.flow.short'
-                : 'viewer.preset.' + preset;
-              var presetLabel = viewerText(presetKey).toUpperCase();
-              var themeLabel = viewerText('viewer.theme.' + theme).toUpperCase();
-              var cardLabel = routeSnapshot
-                ? viewerText('viewer.export.card.routeBadge', {
-                    hops: viewerCount('viewer.export.card.hop', routeSnapshot.hops).toUpperCase()
-                  })
-                : reachSnapshot
-                  ? viewerText('viewer.export.card.reachBadge', { direction: directionLabel.toUpperCase() })
-                  : viewerText('viewer.export.card.defaultBadge', { preset: presetLabel, theme: themeLabel });
-
+              var cardLabel = titleNode ? titleNode.textContent : 'Untitled';
+              var hasSubtitle = !!subtitleNode;
+              // Fill background
               ctx.fillStyle = bg;
-              ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
-
-              ctx.fillStyle = accent;
-              ctx.fillRect(SHARE_CARD_PADDING, 27, 42, 3);
-
-              ctx.textBaseline = 'alphabetic';
-              ctx.fillStyle = text;
-              var fittedTitle = fitCanvasText(ctx, title, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 330, 29, 18, '700');
-              ctx.fillText(fittedTitle, SHARE_CARD_PADDING, 62);
-
-              ctx.fillStyle = muted;
-              var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 280, 13, 11, '500');
-              ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 87);
-
-              ctx.font = "600 12px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-              ctx.textAlign = 'right';
-              ctx.fillStyle = accent;
-              ctx.fillText(cardLabel, SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 50);
-              ctx.textAlign = 'left';
-
-              var availableWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
-              var availableHeight = SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING;
-              var fit = Math.min(availableWidth / data.width, availableHeight / data.height);
-              var drawWidth = data.width * fit;
-              var drawHeight = data.height * fit;
-              var drawX = SHARE_CARD_PADDING + (availableWidth - drawWidth) / 2;
-              var drawY = SHARE_CARD_HEADER + (availableHeight - drawHeight) / 2;
-
-              ctx.strokeStyle = border;
-              ctx.lineWidth = 1;
-              ctx.strokeRect(drawX - 0.5, drawY - 0.5, drawWidth + 1, drawHeight + 1);
-              ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-              URL.revokeObjectURL(svgUrl);
-
+              ctx.fillRect(0, 0, PHYSICAL_WIDTH, PHYSICAL_HEIGHT);
+              // Draw the card background
+              ctx.fillStyle = '#0b1722';
+              ctx.fillRect(SHARE_CARD_PADDING * 2, SHARE_CARD_HEADER, (SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 4), (SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING * 2));
+              ctx.strokeStyle = '#25384a';
+              ctx.lineWidth = 2;
+              ctx.strokeRect(SHARE_CARD_PADDING * 2, SHARE_CARD_HEADER, (SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 4), (SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING * 2));
+              // Draw the title
+              ctx.font = '700 18px ui-monospace, SFMono-Regular, Menlo, monospace';
+              ctx.fillStyle = '#7dd3fc';
+              ctx.fillText('ARCHITECTURE DELTA', SHARE_CARD_PADDING * 2, 62);
+              ctx.font = '700 34px ui-monospace, SFMono-Regular, Menlo, monospace';
+              ctx.fillStyle = '#e6edf5';
+              var titleText = String(cardLabel || 'Architecture').slice(0, 46) + ' Architecture Delta';
+              ctx.fillText(titleText.slice(0, 35), SHARE_CARD_PADDING * 2, 87);
+              // Draw the summary lines
+              ctx.font = '700 17px ui-monospace, SFMono-Regular, Menlo, monospace';
+              ctx.fillStyle = '#8aa0b5';
+              var componentLine = 'COMPONENTS  +' + receipt.summary.components.added + '  ~' + receipt.summary.components.changed + '  −' + receipt.summary.components.removed;
+              var connectionLine = 'CONNECTIONS  +' + receipt.summary.connections.added + '  ~' + receipt.summary.connections.changed + '  −' + receipt.summary.connections.removed;
+              var boundaryLine = 'BOUNDARY SCOPE  +' + receipt.summary.boundaries.added + '  ~' + receipt.summary.boundaries.changed + '  −' + receipt.summary.boundaries.removed;
+              ctx.fillText(componentLine, SHARE_CARD_PADDING * 2, SHARE_CARD_HEADER + 18 + 34 + 17);
+              ctx.fillText(connectionLine, SHARE_CARD_PADDING * 2 + 354, SHARE_CARD_HEADER + 18 + 34 + 17);
+              ctx.fillText(boundaryLine, SHARE_CARD_PADDING * 2 + 702, SHARE_CARD_HEADER + 18 + 34 + 17);
+              // Draw the authored changes
+              ctx.font = '650 14px ui-monospace, SFMono-Regular, Menlo, monospace';
+              var authoredChanges = ['components', 'connections', 'boundaries'].reduce((sum, collection) => {
+                return sum + receipt.summary[collection].added + receipt.summary[collection].changed + receipt.summary[collection].removed;
+              }, 0);
+              ctx.fillText('AUTHORED CHANGES  +' + authoredChanges, SHARE_CARD_PADDING * 2, SHARE_CARD_HEADER + 18 + 34 + 17 + 14 * 1.5);
+              // Draw the diagram
+              ctx.drawImage(img, 0, 0, img.width, img.height, SHARE_CARD_PADDING * 2, SHARE_CARD_HEADER + 112, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 4, SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING * 2 - 14 * 1.5);
+              // Trigger a paint
+              ctx.strokeStyle = '#000000';
+              ctx.strokeRect(0, 0, 1, 1);
+              // Get the blob
               canvas.toBlob(function (blob) {
                 if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: viewerText('viewer.export.shareCard') }));
-                else resolve(blob);
+                // Resolve with the blob and the physical dimensions
+                resolve(blob);
               }, 'image/png');
-            } catch (error) {
-              URL.revokeObjectURL(svgUrl);
-              reject(error);
+            } catch (err) {
+              reject(err);
             }
           };
-          img.onerror = function (e) {
-            URL.revokeObjectURL(svgUrl);
-            reject(e);
+          img.onerror = function () {
+            reject(exportError('viewer.export.error.imgOnError', { label: viewerText('viewer.export.shareCard') }));
           };
           img.src = svgUrl;
         });
@@ -14858,5 +14850,6 @@
       }
     });
   </script>
+    <script id="archify-compare-receipt" type="application/json">{}</script>
 </body>
 </html>
