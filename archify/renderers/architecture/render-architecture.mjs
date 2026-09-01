@@ -59,7 +59,7 @@ const { diagram: arch, template, outPath, sourceEvidence } = await loadDiagramWi
   defaultExample: 'web-app.architecture.json',
   argv: cliArgs,
 });
-const semanticCoverage = evaluateArchitectureSemanticCoverage(arch);
+const semanticCoverage = evaluateArchitectureSemanticCoverage(arch, sourceEvidence?.semanticFacts);
 
 const grid = gridLayout(arch);
 

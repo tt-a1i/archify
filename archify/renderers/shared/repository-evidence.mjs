@@ -5,6 +5,20 @@ import { throwDiagnosticError } from './diagnostics.mjs';
 
 const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
 const CONTROL_CHARACTER_RE = /[\u0000-\u001f\u007f]/;
+const RUNTIME_SOURCE_EXTENSIONS = new Set([
+  '.c', '.cc', '.cpp', '.cs', '.go', '.java', '.js', '.jsx', '.kt', '.kts',
+  '.mjs', '.php', '.py', '.rb', '.rs', '.scala', '.sh', '.ts', '.tsx',
+]);
+
+function lifecycleKind(sourcePath) {
+  const normalized = sourcePath.toLowerCase();
+  const extension = path.extname(normalized);
+  if (!RUNTIME_SOURCE_EXTENSIONS.has(extension)) return null;
+  if (/(^|\/)(?:test|tests|__tests__|fixtures?)(?:\/|$)|\.(?:test|spec)\.[^.]+$/i.test(sourcePath)) return null;
+  if (/(?:scheduler|schedulers|cron)/.test(normalized)) return 'scheduler';
+  if (/(?:worker|workers|background)/.test(normalized)) return 'background-worker';
+  return null;
+}
 
 function evidenceFailure(code, message, { subject = {}, evidence = {}, supportedFixes = [] } = {}) {
   throwDiagnosticError(message, [{
@@ -76,6 +90,17 @@ function sourceLineCount(content) {
   if (!content.length) return 0;
   const lines = content.split(/\r\n|\n|\r/);
   return lines.length - (/(?:\r\n|\n|\r)$/.test(content) ? 1 : 0);
+}
+
+function discoverRepositorySemanticFacts(repoRoot, revision) {
+  const files = gitValue(repoRoot, ['ls-tree', '-r', '--name-only', revision], `Could not list files at evidence revision ${revision}.`)
+    .split(/\r?\n/)
+    .filter(Boolean);
+  const lifecycleComponents = files.flatMap((sourcePath) => {
+    const kind = lifecycleKind(sourcePath);
+    return kind ? [{ kind, sourcePath, detection: 'runtime-source-path' }] : [];
+  });
+  return { schemaVersion: 1, lifecycleComponents };
 }
 
 export function hasRepositoryEvidence(diagramType, diagram) {
@@ -231,5 +256,6 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
     },
     referenceCount,
     nodes,
+    semanticFacts: discoverRepositorySemanticFacts(realRoot, revision),
   };
 }

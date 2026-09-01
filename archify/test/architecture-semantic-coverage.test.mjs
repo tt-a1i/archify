@@ -48,6 +48,45 @@ function completeArchitecture() {
   return architecture;
 }
 
+function git(repo, args) {
+  const result = spawnSync('git', ['-C', repo, ...args], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  return result.stdout.trim();
+}
+
+function repositoryBackedSchedulerFixture() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-semantic-discovery-'));
+  fs.mkdirSync(path.join(root, 'src'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'src', 'api.js'), 'export function handleRequest() {}\n');
+  fs.writeFileSync(path.join(root, 'src', 'scheduler.js'), 'export function runScheduler() {}\n');
+  git(root, ['init']);
+  git(root, ['config', 'user.name', 'Archify Tests']);
+  git(root, ['config', 'user.email', 'archify@example.test']);
+  git(root, ['remote', 'add', 'origin', 'https://github.com/example/semantic-discovery.git']);
+  git(root, ['add', 'src']);
+  git(root, ['commit', '-m', 'fixture']);
+  const revision = git(root, ['rev-parse', 'HEAD']);
+  const input = path.join(root, 'input.architecture.json');
+  fs.writeFileSync(input, JSON.stringify({
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: {
+      title: 'Repository semantic discovery fixture',
+      viewBox: [600, 240],
+      repository: { url: 'https://github.com/example/semantic-discovery', revision },
+    },
+    components: [{
+      id: 'api',
+      type: 'backend',
+      label: 'API',
+      pos: [220, 90],
+      sources: [{ path: 'src/api.js', line: 1 }],
+    }],
+    connections: [],
+  }, null, 2));
+  return { root, input };
+}
+
 test('architecture semantic coverage records represented and missing requirements with evidence', () => {
   const coverage = evaluateArchitectureSemanticCoverage(incompleteArchitecture());
 
@@ -130,6 +169,62 @@ test('architecture semantic coverage is opt-in', () => {
   assert.equal(evaluateArchitectureSemanticCoverage(architecture), null);
 });
 
+test('repository-backed validation discovers an omitted scheduler through the public CLI', () => {
+  const fixture = repositoryBackedSchedulerFixture();
+  try {
+    const result = spawnSync(process.execPath, [cli, 'validate', 'architecture', fixture.input, '--repo-root', fixture.root, '--json'], {
+      cwd: tmp,
+      encoding: 'utf8',
+    });
+
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const receipt = JSON.parse(result.stdout);
+    assert.equal(receipt.ok, true);
+    assert.equal(receipt.composition.semanticCoverage.status, 'warn');
+    assert.deepEqual(receipt.composition.semanticCoverage.summary, {
+      checked: 1,
+      represented: 0,
+      missing: 1,
+      omitted: 0,
+      warnings: 1,
+    });
+    const [requirement] = receipt.composition.semanticCoverage.requirements;
+    assert.equal(requirement.status, 'missing');
+    assert.equal(requirement.subject.sourcePath, 'src/scheduler.js');
+    assert.equal(requirement.subject.discoveredKind, 'scheduler');
+    assert.equal(requirement.evidence.discovery.detection, 'runtime-source-path');
+    const [warning] = receipt.composition.issues.filter((entry) => (
+      entry.code === 'architecture/semantic-discovered-lifecycle-component'
+    ));
+    assert.equal(warning.code, 'architecture/semantic-discovered-lifecycle-component');
+    assert.equal(warning.subject.sourcePath, 'src/scheduler.js');
+    assert.equal(warning.subject.discoveredKind, 'scheduler');
+    assert.equal(warning.evidence.discovery.detection, 'runtime-source-path');
+    assert.ok(warning.supportedFixes.length > 0);
+
+    const intentionallyOmitted = JSON.parse(fs.readFileSync(fixture.input, 'utf8'));
+    intentionallyOmitted.semanticChecks = {
+      omissions: [{
+        kind: 'repository-component',
+        path: 'src/scheduler.js',
+        reason: 'The scheduler is disabled in the reviewed deployment profile.',
+      }],
+    };
+    fs.writeFileSync(fixture.input, JSON.stringify(intentionallyOmitted, null, 2));
+    const omittedResult = spawnSync(process.execPath, [cli, 'validate', 'architecture', fixture.input, '--repo-root', fixture.root, '--json'], {
+      cwd: tmp,
+      encoding: 'utf8',
+    });
+    assert.equal(omittedResult.status, 0, omittedResult.stderr || omittedResult.stdout);
+    const omittedReceipt = JSON.parse(omittedResult.stdout);
+    assert.equal(omittedReceipt.composition.semanticCoverage.status, 'pass');
+    assert.equal(omittedReceipt.composition.semanticCoverage.requirements[0].status, 'omitted');
+    assert.equal(omittedReceipt.composition.semanticCoverage.requirements[0].evidence.reason, intentionallyOmitted.semanticChecks.omissions[0].reason);
+  } finally {
+    fs.rmSync(fixture.root, { recursive: true, force: true });
+  }
+});
+
 test('required self-path passes only when the authored endpoint exists', () => {
   const architecture = incompleteArchitecture();
   architecture.semanticChecks = { requiredPaths: [{ from: 'missing', to: 'missing' }] };
@@ -155,6 +250,7 @@ test('architecture semantic coverage rejects empty and whitespace-only omission 
     { kind: 'edge', from: 'api', to: 'ingestion', reason: '\t' },
     { kind: 'path', from: 'api', to: 'mail', reason: '\n' },
     { kind: 'external-label', from: 'ingestion', to: 'mail', reason: '  \t  ' },
+    { kind: 'repository-component', path: 'src/scheduler.js', reason: '\n' },
   ]) {
     const architecture = incompleteArchitecture();
     architecture.semanticChecks.omissions = [omission];

@@ -4,6 +4,7 @@ function edgeKey(from, to) {
 
 function omissionIndex(omissions = []) {
   const components = new Map();
+  const repositoryComponents = new Map();
   const edges = new Map();
   const paths = new Map();
   const externalLabels = new Map();
@@ -11,12 +12,13 @@ function omissionIndex(omissions = []) {
   for (const [index, omission] of omissions.entries()) {
     const record = { ...omission, index };
     if (omission.kind === 'component') components.set(omission.id, record);
+    if (omission.kind === 'repository-component') repositoryComponents.set(omission.path, record);
     if (omission.kind === 'edge') edges.set(edgeKey(omission.from, omission.to), record);
     if (omission.kind === 'path') paths.set(edgeKey(omission.from, omission.to), record);
     if (omission.kind === 'external-label') externalLabels.set(edgeKey(omission.from, omission.to), record);
   }
 
-  return { components, edges, paths, externalLabels };
+  return { components, repositoryComponents, edges, paths, externalLabels };
 }
 
 function findDirectedPath(adjacency, componentIds, from, to) {
@@ -94,12 +96,33 @@ function diagnostic(code, message, subjectValue, evidence, supportedFixes) {
   };
 }
 
-// Architecture coverage is an explicit authoring contract, not repository
-// inference. It checks only facts named by the author and remains non-blocking
-// so incomplete drafts can still render and be inspected.
-export function evaluateArchitectureSemanticCoverage(architecture) {
-  const checks = architecture.semanticChecks;
-  if (!checks) return null;
+function representedRepositoryComponent(components, fact) {
+  const kindTerms = fact.kind === 'scheduler'
+    ? ['scheduler', 'cron']
+    : ['worker', 'background'];
+  return components
+    .map(({ component, index }) => {
+      const sourceMatch = (component.sources || []).some((source) => source.path === fact.sourcePath);
+      const identity = [component.id, component.label, component.sublabel].filter(Boolean).join(' ').toLowerCase();
+      const identityMatch = kindTerms.some((term) => identity.includes(term));
+      if (!sourceMatch && !identityMatch) return null;
+      return {
+        componentIndex: index,
+        id: component.id,
+        type: component.type,
+        label: component.label,
+        match: sourceMatch ? 'source-path' : 'component-identity',
+      };
+    })
+    .filter(Boolean);
+}
+
+// Repository facts are discovered only from a revision-pinned local Git tree.
+// They add non-blocking checks alongside the author's explicit coverage ledger.
+export function evaluateArchitectureSemanticCoverage(architecture, repositoryFacts = null) {
+  const checks = architecture.semanticChecks || {};
+  const discoveredLifecycleComponents = repositoryFacts?.lifecycleComponents || [];
+  if (!architecture.semanticChecks && discoveredLifecycleComponents.length === 0) return null;
 
   const componentList = architecture.components || [];
   const components = new Map(componentList.map((component, index) => [component.id, { component, index }]));
@@ -119,6 +142,42 @@ export function evaluateArchitectureSemanticCoverage(architecture) {
   const omittedFacts = omissionIndex(checks.omissions);
   const requirements = [];
   const diagnostics = [];
+
+  for (const [index, fact] of discoveredLifecycleComponents.entries()) {
+    const subjectValue = subject('repository-component', {
+      discoveredKind: fact.kind,
+      sourcePath: fact.sourcePath,
+    }, `/repositoryDiscovery/lifecycleComponents/${index}`);
+    const matches = representedRepositoryComponent([...components.values()], fact);
+    const omission = omittedFacts.repositoryComponents.get(fact.sourcePath);
+    if (matches.length) {
+      requirements.push(represented(subjectValue, { discovery: fact, matchingComponents: matches }));
+      continue;
+    }
+    if (omission) {
+      requirements.push(omitted(subjectValue, omission));
+      continue;
+    }
+    const evidence = {
+      discovery: fact,
+      authoredComponents: componentList.map((component, componentIndex) => ({
+        componentIndex,
+        id: component.id,
+        label: component.label,
+      })),
+    };
+    requirements.push(missing(subjectValue, evidence));
+    diagnostics.push(diagnostic(
+      'architecture/semantic-discovered-lifecycle-component',
+      `Discovered ${fact.kind} source ${JSON.stringify(fact.sourcePath)} is not represented in the diagram. Add the component or record a reasoned repository-component omission.`,
+      subjectValue,
+      evidence,
+      [
+        `add a component for ${JSON.stringify(fact.sourcePath)} and cite it in sources`,
+        `add a repository-component omission for ${JSON.stringify(fact.sourcePath)} with a non-whitespace reason if it is intentionally out of scope`,
+      ],
+    ));
+  }
 
   for (const [index, id] of (checks.requiredComponents || []).entries()) {
     const subjectValue = subject('component', { id }, `/semanticChecks/requiredComponents/${index}`);

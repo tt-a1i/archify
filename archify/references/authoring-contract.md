@@ -187,7 +187,11 @@ dataflow, and lifecycle reject it. Never infer runtime causality from file
 proximity or naming alone.
 
 Translate that inspection into an explicit `semanticChecks` coverage ledger
-before arranging the diagram. Use `requiredComponents` for material runtime
+before arranging the diagram. When evidence is revision-pinned and verified,
+Archify also conservatively discovers lifecycle runtime candidates from tracked,
+non-test source paths containing `scheduler`, `cron`, `worker`, or `background`.
+Each candidate must be represented by a matching component (through its source
+path or identity) or explicitly omitted. Use `requiredComponents` for material runtime
 participants, including lifecycle schedulers and background workers;
 `requiredEdges` for direct calls or management paths; and `requiredPaths` for
 end-to-end flows that may contain intermediate components. Set
@@ -200,9 +204,11 @@ or `omitted` with concrete evidence. Review that ledger rather than treating a
 zero-warning summary as proof that the intended facts were actually checked.
 
 An intentional exclusion must be machine-readable in `omissions` and include a
-specific, non-whitespace reason. Kinds are `component`, `edge`, `path`, and `external-label`;
-component omissions use `id`, while relationship omissions use `from` and
-`to`. An omission documents scope; it is not evidence that a fact is absent.
+specific, non-whitespace reason. Kinds are `component`, `repository-component`,
+`edge`, `path`, and `external-label`; component omissions use `id`, discovered
+repository-component omissions use the exact repo-relative `path`, while
+relationship omissions use `from` and `to`. An omission documents scope; it is
+not evidence that a fact is absent.
 
 ```json
 "semanticChecks": {
@@ -215,6 +221,11 @@ component omissions use `id`, while relationship omissions use `from` and
       "kind": "component",
       "id": "legacy-worker",
       "reason": "Out of scope: disabled by the inspected deployment configuration."
+    },
+    {
+      "kind": "repository-component",
+      "path": "src/legacy-worker.js",
+      "reason": "Out of scope: this migration-only worker is disabled in the inspected deployment."
     }
   ]
 }

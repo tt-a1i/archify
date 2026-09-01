@@ -222,6 +222,16 @@
         {
           "type": "object",
           "additionalProperties": false,
+          "required": ["kind", "path", "reason"],
+          "properties": {
+            "kind": { "const": "repository-component" },
+            "path": { "type": "string", "minLength": 1, "pattern": "\\S" },
+            "reason": { "type": "string", "minLength": 1, "pattern": "\\S" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
           "required": ["kind", "from", "to", "reason"],
           "properties": {
             "kind": { "enum": ["edge", "path", "external-label"] },
