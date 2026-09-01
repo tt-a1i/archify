@@ -21,9 +21,9 @@ Archify is a Node.js rendering and validation system for Cursor, Claude Code, Co
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
-![Stable Version](https://img.shields.io/badge/version-2.16.0-0891b2?style=flat-square)
+![Development Version](https://img.shields.io/badge/version-2.17.0--dev.0-0891b2?style=flat-square)
 
-**Current stable version:** `v2.16.0`. See [Changelog](CHANGELOG.md#2160--2026-08-30).
+**Current development version:** `v2.17.0-dev.0`. See [Changelog](CHANGELOG.md#unreleased).
 
 **[Project page](https://tt-a1i.github.io/archify/)** · **[Scenario guide](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
 
