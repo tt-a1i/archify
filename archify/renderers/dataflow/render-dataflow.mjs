@@ -39,6 +39,10 @@ const nodeTextFit = {
   sublabelMinimum: 6,
   tagPreferred: 7,
   tagMinimum: 6,
+  // A stage header names a whole column, so it stops shrinking one step above
+  // the per-node floor rather than following node text down to 6px.
+  stageHeaderPreferred: 9,
+  stageHeaderMinimum: 7,
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -72,6 +76,21 @@ function flowLabelSize(flow) {
 
 function stageX(index) {
   return layout.leftX + index * layout.colGap;
+}
+
+// The ordinal prefix is part of what gets drawn, so measurement and rendering
+// have to read the header from the same place.
+function stageHeaderText(stage, index) {
+  return `${String(index + 1).padStart(2, '0')} / ${stage.label}`;
+}
+
+function stageHeaderFontSize(stage, index) {
+  return fittedNodeFontSize(
+    stageHeaderText(stage, index),
+    layout.stageW,
+    nodeTextFit.stageHeaderPreferred,
+    nodeTextFit.stageHeaderMinimum,
+  );
 }
 
 function stageFrame(stage, index) {
@@ -120,6 +139,20 @@ function validateDataflow() {
   if (nodes.size !== asArray(dataflow.nodes).length) problems.push('Node ids must be unique.');
 
   const stageCount = asArray(dataflow.stages).length;
+
+  // Stage headers render as single unwrapped <text> elements centred in a
+  // fixed-width frame, exactly like node text. Shrink-to-fit handles the
+  // ordinary case; this rejects what it cannot rescue, which would otherwise
+  // spill across the frame border and into the neighbouring header.
+  const availableStageHeaderW = availableNodeTextWidth(layout.stageW);
+  for (const [index, stage] of asArray(dataflow.stages).entries()) {
+    const header = stageHeaderText(stage, index);
+    const minimumW = minimumNodeTextWidth(header, nodeTextFit.stageHeaderMinimum);
+    if (minimumW > availableStageHeaderW) {
+      problems.push(`Stage header "${header}" needs ~${Math.ceil(minimumW)}px at the ${nodeTextFit.stageHeaderMinimum}px legible minimum, but the stage frame provides ${availableStageHeaderW}px — shorten stages[${index}].label.`);
+    }
+  }
+
   for (const node of nodes.values()) {
     if (typeof node.stage !== 'number' || node.stage < 0 || node.stage >= stageCount) {
       problems.push(`Node "${node.id}" uses invalid stage ${node.stage} — valid stages are 0..${stageCount - 1}.`);
@@ -366,7 +399,7 @@ function renderStage(stage, index) {
   const frame = compositionFrames[index];
   const cx = stageX(index);
   return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="stage" data-composition-frame-id="${index}" x="${frame.x}" y="${frame.y}" width="${frame.width}" height="${frame.height}" rx="${frame.radius}" class="c-lane" stroke-width="1"/>
-        <text x="${cx}" y="${layout.stageY + 22}" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">${String(index + 1).padStart(2, '0')} / ${esc(stage.label)}</text>`;
+        <text x="${cx}" y="${layout.stageY + 22}" class="t-dim" font-size="${stageHeaderFontSize(stage, index)}" font-weight="600" text-anchor="middle">${esc(stageHeaderText(stage, index))}</text>`;
 }
 
 function renderNode(node) {

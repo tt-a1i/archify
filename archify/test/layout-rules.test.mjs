@@ -17,6 +17,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { textUnits } from '../renderers/shared/utils.mjs';
+import { availableNodeTextWidth, nodeTextFit } from '../renderers/shared/text-fit.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -233,6 +235,9 @@ const CASES = [
   ['dataflow: node tag wider than its legible minimum', 'dataflow',
     (d) => { d.nodes[0].tag = 'This tag is far too long to sit inside one data-flow node box'; },
     ['Tag', 'legible', 'increase node.width']],
+  ['dataflow: stage header wider than its legible minimum', 'dataflow',
+    (d) => { d.stages[0].label = 'Stream Processing, Enrichment, and Deduplication'; },
+    ['Stage header', 'legible', 'shorten stages[0].label']],
 
   // ---- lifecycle layout rules ----
   ['lifecycle: missing reserved main lane', 'lifecycle',
@@ -605,6 +610,152 @@ for (const [mode, collection, tag, preferred] of TAG_SHRINK_CASES) {
     assert.ok(fontSize >= 6, `expected the tag to stay legible, got ${fontSize}`);
   });
 }
+
+// ---- data-flow stage headers: structural text, measured like node text ----
+// Stage headers belong to no node, so they used to bypass text-fit entirely:
+// a long one spilled past its fixed 168px frame and, with a long neighbour,
+// printed straight over the next header while the receipt stayed clean.
+// Locked as a contract, the way SHRINK_CASES pins its per-mode sizes: the
+// per-field preferred/minimum sizes deliberately live in each renderer, not in
+// the shared module.
+const DATAFLOW_STAGE_W = 168;
+const DATAFLOW_COL_GAP = 215;
+const STAGE_HEADER_PREFERRED = 9;
+const STAGE_HEADER_MINIMUM = 7;
+
+// Widest header the validator admits: the most units that still fit once the
+// text has shrunk to its legible floor. Derived, not hardcoded, so it tracks
+// the constants above.
+const STAGE_HEADER_MAX_UNITS = Math.floor(
+  availableNodeTextWidth(DATAFLOW_STAGE_W) / (STAGE_HEADER_MINIMUM * nodeTextFit.widthFactor),
+);
+
+// The renderer prepends a 5-unit "NN / " ordinal, so a label of N-5 ASCII
+// characters produces a header of exactly N units.
+function stageLabelOfUnits(units) {
+  return 'Stage header padded to width'.padEnd(units - 5, 'x').slice(0, units - 5);
+}
+
+// Advance width of a stage header at a given font size, using the same model
+// the renderer fits with.
+function headerWidth(text, fontSize) {
+  return textUnits(text) * fontSize * nodeTextFit.widthFactor;
+}
+
+function stageHeaders(html) {
+  return [...html.matchAll(/<text x="(\d+)" y="68"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)<\/text>/g)]
+    .map(([, cx, fontSize, text]) => ({ cx: Number(cx), fontSize: Number(fontSize), text }));
+}
+
+test('dataflow: shipped stage headers keep rendering at the preferred size', () => {
+  // Guards the artifacts: every checked-in stage label is short enough that
+  // fitting must be a no-op, so delivered HTML stays byte-identical.
+  const { code, stderr, outPath } = render('dataflow', load('dataflow'));
+  assert.equal(code, 0, stderr);
+  const headers = stageHeaders(fs.readFileSync(outPath, 'utf8'));
+  assert.equal(headers.length, load('dataflow').stages.length);
+  for (const header of headers) {
+    assert.equal(
+      header.fontSize,
+      STAGE_HEADER_PREFERRED,
+      `expected "${header.text}" to keep the preferred size, got ${header.fontSize}`,
+    );
+  }
+});
+
+test('dataflow: an over-long stage header shrinks to fit its frame', () => {
+  const d = load('dataflow');
+  // 37 text units including the "01 / " prefix the renderer prepends: too wide
+  // at 9px, rescuable above the legible floor.
+  d.stages[0].label = 'Stream Processing and Enrichment';
+  const { code, stderr, outPath } = render('dataflow', d);
+  assert.equal(code, 0, stderr);
+
+  const headers = stageHeaders(fs.readFileSync(outPath, 'utf8'));
+  const first = headers[0];
+  assert.ok(first, 'expected a stage header <text> in the rendered SVG');
+  assert.equal(first.text, `01 / ${d.stages[0].label}`);
+
+  assert.ok(
+    first.fontSize < STAGE_HEADER_PREFERRED,
+    `expected the header to shrink below ${STAGE_HEADER_PREFERRED}px, got ${first.fontSize}`,
+  );
+  assert.ok(
+    first.fontSize >= STAGE_HEADER_MINIMUM,
+    `expected the header to stay legible, got ${first.fontSize}`,
+  );
+
+  // The point of shrinking: it has to actually fit, not merely get smaller.
+  const available = availableNodeTextWidth(DATAFLOW_STAGE_W);
+  const width = headerWidth(first.text, first.fontSize);
+  assert.ok(
+    width <= available,
+    `expected the header to fit ${available}px, needs ${width.toFixed(1)}px`,
+  );
+});
+
+test('dataflow: no stage header pair the validator admits can overlap', () => {
+  // Headers are centred on stage centres a fixed colGap apart, so a pair
+  // collides once (w_a + w_b) / 2 exceeds colGap. This is the half of the fix
+  // the validation rule carries rather than shrink-to-fit: bounding each
+  // header by its own frame is what makes the worst admissible pair safe.
+  const widest = availableNodeTextWidth(DATAFLOW_STAGE_W);
+  assert.ok(
+    DATAFLOW_COL_GAP - widest > 0,
+    `two frame-filling headers would overlap by ${(widest - DATAFLOW_COL_GAP).toFixed(1)}px`,
+  );
+
+  // And the empirical form: genuinely the widest pair that still validates —
+  // both headers at the 38-unit cap, not merely two longish ones.
+  const d = load('dataflow');
+  d.stages[0].label = stageLabelOfUnits(STAGE_HEADER_MAX_UNITS);
+  d.stages[1].label = stageLabelOfUnits(STAGE_HEADER_MAX_UNITS);
+  assert.equal(textUnits(`01 / ${d.stages[0].label}`), STAGE_HEADER_MAX_UNITS);
+  assert.equal(textUnits(`02 / ${d.stages[1].label}`), STAGE_HEADER_MAX_UNITS);
+  const { code, stderr, outPath } = render('dataflow', d);
+  assert.equal(code, 0, stderr);
+
+  const headers = stageHeaders(fs.readFileSync(outPath, 'utf8'));
+  for (let i = 0; i + 1 < headers.length; i += 1) {
+    const a = headers[i];
+    const b = headers[i + 1];
+    assert.equal(b.cx - a.cx, DATAFLOW_COL_GAP);
+    const gap = DATAFLOW_COL_GAP - (headerWidth(a.text, a.fontSize) + headerWidth(b.text, b.fontSize)) / 2;
+    assert.ok(gap > 0, `headers ${i} and ${i + 1} overlap by ${(-gap).toFixed(1)}px`);
+  }
+});
+
+test('dataflow: the stage header cap admits its widest value and rejects one unit more', () => {
+  // Pins the boundary the collision invariant above depends on. If the floor or
+  // the frame width ever moves, this fails rather than silently widening what
+  // the validator lets through.
+  const admitted = load('dataflow');
+  admitted.stages[0].label = stageLabelOfUnits(STAGE_HEADER_MAX_UNITS);
+  assert.equal(
+    textUnits(`01 / ${admitted.stages[0].label}`),
+    STAGE_HEADER_MAX_UNITS,
+  );
+  assert.equal(render('dataflow', admitted).code, 0, `${STAGE_HEADER_MAX_UNITS} units should render`);
+
+  const rejected = load('dataflow');
+  rejected.stages[0].label = stageLabelOfUnits(STAGE_HEADER_MAX_UNITS + 1);
+  const attempt = render('dataflow', rejected);
+  assert.notEqual(attempt.code, 0, `${STAGE_HEADER_MAX_UNITS + 1} units should be rejected`);
+  assert.match(attempt.stderr, /Stage header .* legible minimum/);
+});
+
+test('dataflow: the header pair that used to overwrite itself is rejected', () => {
+  // 53 + 30 units. Before headers were measured this rendered header 0 at
+  // 286px inside its 168px frame, starting at x = -43 outside the viewBox, and
+  // printed over header 1 by 9px — with a 9/9 receipt.
+  const d = load('dataflow');
+  d.stages[0].label = 'Stream Processing, Enrichment, and Deduplication';
+  d.stages[1].label = 'Curated Warehouse Storage';
+  const { code, stderr } = render('dataflow', d);
+  assert.notEqual(code, 0, 'expected the colliding pair to be rejected');
+  assert.match(stderr, /Stage header "01 \/ Stream Processing, Enrichment, and Deduplication"/);
+  assert.match(stderr, /shorten stages\[0\]\.label/);
+});
 
 test('contract: a too-wide label is never redirected into sublabel', () => {
   // Every renderer used to advise "move detail to sublabel" for an over-long
