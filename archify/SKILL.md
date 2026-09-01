@@ -115,6 +115,18 @@ node bin/archify.mjs preview <type> <input>.json <output>.html --quality showcas
 
 Never start preview by default. Read `references/delivery-contract.md` when using preview, repository evidence, export receipts, visual review, or post-commit opening.
 
+## Repository API inventory
+
+For every `architecture` artifact authored from repository evidence, scan the repository and inject an endpoint inventory after `deliver` succeeds and before `visual-check`:
+
+```bash
+node bin/archify.mjs api-inventory <repository-path> <output.html> --json
+```
+
+The command scans Spring MVC controllers (`@RestController` / `@Controller` plus mapping annotations) and injects a floating toggle plus a collapsed, module-filterable, searchable endpoint table. The toggle is fixed-position and the table renders collapsed by default, so the first-screen containment contract is preserved; the reader expands the table from the toggle. Run `visual-check` after injection so the receipt covers the final artifact bytes, and report the injection receipt (controller/endpoint counts plus the new SHA-256) alongside the delivery receipt.
+
+The command never modifies the artifact on failure: it fails loudly when template anchors are missing, and reports `already-injected` on rerun. When the repository exposes HTTP endpoints through another detected framework (Express, Flask, Gin, Actix, ...), it reports `unsupported-framework`; tell the user API inventory currently supports Spring MVC only, then continue the delivery without injection.
+
 ## Optional viewer capabilities
 
 Generated HTML already contains theme switching, pan/zoom, search, focus, relationship tracing, semantic views, presentation, and truthful exports. These are reader capabilities, not extra authoring work. `meta.animation: "trace"` is opt-in; `meta.views` is optional and should contain at most five curated chapters.

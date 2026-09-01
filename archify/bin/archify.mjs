@@ -23,6 +23,7 @@ function usage() {
   archify inspect <type> <input.json>
   archify check <output.html>
   archify visual-check <output.html> [--json]
+  archify api-inventory <repository-path> <output.html> [--json]
   archify guide [scenario or question] [--json] [--lang en|zh]
   archify brands [name, alias, domain, or category] [--json]
   archify brands capture <url> [--json]
@@ -1205,6 +1206,96 @@ async function commandVisualCheck(args) {
   process.exitCode = result.exitCode;
 }
 
+// Usage / load failures must land in the diagnostics[] receipt contract when
+// --json is requested, not as prose on stderr.
+function apiFailureReceipt(code, message, subject, evidence, supportedFixes) {
+  return {
+    schemaVersion: 1,
+    ok: false,
+    command: 'api-inventory',
+    status: 'fail',
+    artifact: { path: subject.artifact || '' },
+    diagnostics: [{ code, severity: 'error', message, subject, evidence, supportedFixes }],
+  };
+}
+
+function apiUsageFail(json, message, subject) {
+  const receipt = apiFailureReceipt(
+    'api-inventory/usage',
+    message,
+    subject,
+    { arguments: subject.arguments ?? [] },
+    ['Run: node bin/archify.mjs api-inventory <repository-path> <output.html> [--json]'],
+  );
+  if (json) {
+    console.log(JSON.stringify(receipt, null, 2));
+    process.exitCode = 1;
+  } else {
+    fail(message, 1);
+  }
+}
+
+async function commandApiInventory(args) {
+  const json = args.includes('--json');
+  const knownOptions = new Set(['--json']);
+  const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
+  if (unknown.length) return apiUsageFail(json, `Unknown api-inventory option "${unknown[0]}".`, { option: unknown[0] });
+  const positional = args.filter((arg) => !knownOptions.has(arg));
+  if (positional.length !== 2) {
+    return apiUsageFail(json, `api-inventory requires exactly two positional arguments (repository-path, output.html); got ${positional.length}.`, { arguments: positional });
+  }
+
+  let runApiInventory;
+  try {
+    ({ runApiInventory } = await import('./api-inventory.mjs'));
+  } catch (error) {
+    const receipt = apiFailureReceipt(
+      'api-inventory/module-load',
+      `Could not load api-inventory: ${error.message}`,
+      { artifact: path.resolve(positional[1]) },
+      {},
+      ['Reinstall the archify skill directory; bin/api-inventory.mjs is missing or broken.'],
+    );
+    if (json) {
+      console.log(JSON.stringify(receipt, null, 2));
+      process.exitCode = 1;
+    } else {
+      fail(`Could not load api-inventory: ${error.message}`, 1);
+    }
+    return;
+  }
+
+  let result;
+  try {
+    result = await runApiInventory({ repoRoot: positional[0], artifactPath: positional[1] });
+  } catch (error) {
+    const receipt = apiFailureReceipt(
+      'api-inventory/execution',
+      error.message,
+      { artifact: path.resolve(positional[1]) },
+      { ...(error.code ? { systemCode: error.code } : {}) },
+      ['Report the failure with this receipt; the artifact was not modified.'],
+    );
+    if (json) {
+      console.log(JSON.stringify(receipt, null, 2));
+    } else {
+      console.error(`api-inventory failed: ${error.message}`);
+    }
+    process.exitCode = 1;
+    return;
+  }
+
+  if (json) {
+    console.log(JSON.stringify(result.receipt, null, 2));
+  } else {
+    console.log(`api-inventory ${result.receipt.status}: ${result.receipt.artifact.path}`);
+    for (const diagnostic of result.receipt.diagnostics) {
+      console.log(`${diagnostic.severity}: ${diagnostic.message}`);
+    }
+  }
+  process.exitCode = result.exitCode;
+}
+
 function commandExamples() {
   const result = runNode([path.join(skillRoot, 'scripts/render-examples.mjs')], { cwd: skillRoot });
   if (result.status !== 0) exitFrom(result);
@@ -1969,6 +2060,9 @@ switch (command) {
     break;
   case 'visual-check':
     await commandVisualCheck(args);
+    break;
+  case 'api-inventory':
+    await commandApiInventory(args);
     break;
   case 'guide':
     await commandGuide(args);
