@@ -1178,13 +1178,15 @@ async function commandVisualCheck(args) {
         schemaVersion: 1,
         ok: false,
         command: 'visual-check',
+        evidenceKind: 'automated-browser',
         status: 'fail',
         visualReview: 'pending',
         artifact: { path: path.resolve(positional[0]) },
         error: error.message,
       }, null, 2));
     } else {
-      console.error(`visual-check failed: ${error.message}`);
+      console.error(`automated browser evidence failed: ${error.message}`);
+      console.error('perceptual visual review pending');
     }
     process.exitCode = 1;
     return;
@@ -1193,8 +1195,8 @@ async function commandVisualCheck(args) {
   if (json) {
     console.log(JSON.stringify(result.receipt, null, 2));
   } else {
-    console.log(`visual-check ${result.receipt.status}: ${result.receipt.artifact.path}`);
-    console.log(`containment ${result.receipt.containment.status}; captures ${result.receipt.captures.status}; visual review pending`);
+    console.log(`automated browser evidence ${result.receipt.status}: ${result.receipt.artifact.path}`);
+    console.log(`visual-check containment ${result.receipt.containment.status}; captures ${result.receipt.captures.status}; perceptual visual review pending`);
     console.log(`receipt ${path.join(path.dirname(result.receipt.artifact.path), result.receipt.sidecars.receipt)}`);
     if (result.receipt.captures.contactSheet) {
       console.log(`contact sheet ${path.join(path.dirname(result.receipt.artifact.path), result.receipt.captures.contactSheet)}`);
