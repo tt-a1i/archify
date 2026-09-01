@@ -12,3 +12,7 @@
 # Deterministic build outputs committed for zero-install and release verification.
 /archify/renderers/shared/generated-brand-marks.mjs linguist-generated=true
 /archify/renderers/shared/generated-validators.mjs linguist-generated=true
+
+# Normalize line endings so working-tree bytes match the index on Windows (core.autocrlf=true).
+# See issue #144: tracked files materialized as CRLF on Windows, breaking byte-exact checks.
+* text=auto eol=lf

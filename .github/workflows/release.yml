@@ -11,11 +11,11 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Fetch exact tag object
         shell: bash
         run: git fetch --force --no-tags origin "+refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -93,7 +93,7 @@ jobs:
       - name: Committed zip must match the build (same gate as CI)
         run: cmp -s /tmp/archify-built.zip archify.zip
       - name: Create GitHub Release with the zip attached
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: archify.zip
           generate_release_notes: true

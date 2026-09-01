@@ -70,6 +70,7 @@ test('release prevents manifest preannouncement and smokes the exact archive bef
   assert.match(smoke, /node scripts\/package-smoke\.mjs "\$package_root\/archify"/);
   assert.doesNotMatch(smoke, /\bnpm\s+(?:ci|install)\b/);
   assert.match(freshness, /cmp -s \/tmp\/archify-built\.zip archify\.zip/);
+  assert.match(upload, /uses: softprops\/action-gh-release@v3\s/);
   assert.match(upload, /files: archify\.zip/);
   assert.match(followUp, /docs\/skill-updates\/archify\/stable\.json/);
 });
@@ -158,10 +159,11 @@ test('GitHub Pages deploys docs only after every repository gate succeeds', () =
   assert.match(job, /current_main" == "\$GITHUB_SHA"/);
   assert.match(job, /Skipping obsolete Pages deployment/);
   assert.match(job, /if: steps\.deployment-head\.outputs\.current == 'true'/);
-  assert.match(job, /actions\/configure-pages@v5/);
-  assert.match(job, /actions\/upload-pages-artifact@v4/);
+  assert.match(job, /actions\/configure-pages@v6/);
+  // v5 delegates to upload-artifact v7 (Node 24); v4 still embeds Node 20.
+  assert.match(job, /actions\/upload-pages-artifact@v5\s/);
   assert.match(job, /path: docs/);
-  assert.match(job, /actions\/deploy-pages@v4/);
+  assert.match(job, /actions\/deploy-pages@v5/);
 });
 
 test('release tags with a SemVer prerelease are marked prerelease and never become latest', () => {
