@@ -15,6 +15,7 @@ const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'life
 function usage() {
   return `Usage:
   archify render <type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path (architecture only)]
+  archify export <type> <input.json> <output.svg> [--format svg] [--quality standard|showcase] [--repo-root path (architecture only)] [--json]
   archify compare architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]
   archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path (architecture only)]
   archify preview <type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path (architecture only)]
@@ -1942,6 +1943,12 @@ switch (command) {
     break;
   case 'render':
     commandRender(args);
+    break;
+  case 'export':
+    {
+      const { commandExport } = await import('./export.mjs');
+      await commandExport(args);
+    }
     break;
   case 'compare':
     await commandCompare(args);
