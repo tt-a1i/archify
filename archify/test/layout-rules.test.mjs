@@ -623,6 +623,19 @@ const DATAFLOW_COL_GAP = 215;
 const STAGE_HEADER_PREFERRED = 9;
 const STAGE_HEADER_MINIMUM = 7;
 
+// Widest header the validator admits: the most units that still fit once the
+// text has shrunk to its legible floor. Derived, not hardcoded, so it tracks
+// the constants above.
+const STAGE_HEADER_MAX_UNITS = Math.floor(
+  availableNodeTextWidth(DATAFLOW_STAGE_W) / (STAGE_HEADER_MINIMUM * nodeTextFit.widthFactor),
+);
+
+// The renderer prepends a 5-unit "NN / " ordinal, so a label of N-5 ASCII
+// characters produces a header of exactly N units.
+function stageLabelOfUnits(units) {
+  return 'Stage header padded to width'.padEnd(units - 5, 'x').slice(0, units - 5);
+}
+
 // Advance width of a stage header at a given font size, using the same model
 // the renderer fits with.
 function headerWidth(text, fontSize) {
@@ -692,10 +705,13 @@ test('dataflow: no stage header pair the validator admits can overlap', () => {
     `two frame-filling headers would overlap by ${(widest - DATAFLOW_COL_GAP).toFixed(1)}px`,
   );
 
-  // And the empirical form: the widest pair that still validates.
+  // And the empirical form: genuinely the widest pair that still validates —
+  // both headers at the 38-unit cap, not merely two longish ones.
   const d = load('dataflow');
-  d.stages[0].label = 'Stream Processing and Enrichment';
-  d.stages[1].label = 'Curated Warehouse Storage Layer';
+  d.stages[0].label = stageLabelOfUnits(STAGE_HEADER_MAX_UNITS);
+  d.stages[1].label = stageLabelOfUnits(STAGE_HEADER_MAX_UNITS);
+  assert.equal(textUnits(`01 / ${d.stages[0].label}`), STAGE_HEADER_MAX_UNITS);
+  assert.equal(textUnits(`02 / ${d.stages[1].label}`), STAGE_HEADER_MAX_UNITS);
   const { code, stderr, outPath } = render('dataflow', d);
   assert.equal(code, 0, stderr);
 
@@ -707,6 +723,25 @@ test('dataflow: no stage header pair the validator admits can overlap', () => {
     const gap = DATAFLOW_COL_GAP - (headerWidth(a.text, a.fontSize) + headerWidth(b.text, b.fontSize)) / 2;
     assert.ok(gap > 0, `headers ${i} and ${i + 1} overlap by ${(-gap).toFixed(1)}px`);
   }
+});
+
+test('dataflow: the stage header cap admits its widest value and rejects one unit more', () => {
+  // Pins the boundary the collision invariant above depends on. If the floor or
+  // the frame width ever moves, this fails rather than silently widening what
+  // the validator lets through.
+  const admitted = load('dataflow');
+  admitted.stages[0].label = stageLabelOfUnits(STAGE_HEADER_MAX_UNITS);
+  assert.equal(
+    textUnits(`01 / ${admitted.stages[0].label}`),
+    STAGE_HEADER_MAX_UNITS,
+  );
+  assert.equal(render('dataflow', admitted).code, 0, `${STAGE_HEADER_MAX_UNITS} units should render`);
+
+  const rejected = load('dataflow');
+  rejected.stages[0].label = stageLabelOfUnits(STAGE_HEADER_MAX_UNITS + 1);
+  const attempt = render('dataflow', rejected);
+  assert.notEqual(attempt.code, 0, `${STAGE_HEADER_MAX_UNITS + 1} units should be rejected`);
+  assert.match(attempt.stderr, /Stage header .* legible minimum/);
 });
 
 test('dataflow: the header pair that used to overwrite itself is rejected', () => {
