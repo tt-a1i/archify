@@ -18,6 +18,24 @@ const canonicalZipTest = (name, fn) => test(name, {
     : `canonical ZIP builds require Node ${canonicalZipNodeMajor}`,
 }, fn);
 
+function spawnBuildZip(outputPath, options = {}) {
+  const script = path.join(repoRoot, 'scripts', 'build-zip.sh');
+  const { cwd = repoRoot, ...rest } = options;
+  if (process.platform === 'win32') {
+    const bashCandidates = [
+      process.env.BASH,
+      'C:\\Program Files\\Git\\bin\\bash.exe',
+      'bash',
+    ].filter(Boolean);
+    for (const bash of bashCandidates) {
+      if (bash.includes('\\') && !fs.existsSync(bash)) continue;
+      const result = spawnSync(bash, [script, outputPath], { cwd, encoding: 'utf8', ...rest });
+      if (result.status !== 127) return result;
+    }
+  }
+  return spawnSync(script, [outputPath], { cwd, encoding: 'utf8', ...rest });
+}
+
 function workflowStep(workflow, name) {
   const marker = `      - name: ${name}`;
   const start = workflow.indexOf(marker);
@@ -70,6 +88,7 @@ test('release prevents manifest preannouncement and smokes the exact archive bef
   assert.match(smoke, /node scripts\/package-smoke\.mjs "\$package_root\/archify"/);
   assert.doesNotMatch(smoke, /\bnpm\s+(?:ci|install)\b/);
   assert.match(freshness, /cmp -s \/tmp\/archify-built\.zip archify\.zip/);
+  assert.match(upload, /uses: softprops\/action-gh-release@v3\s/);
   assert.match(upload, /files: archify\.zip/);
   assert.match(followUp, /docs\/skill-updates\/archify\/stable\.json/);
 });
@@ -158,10 +177,11 @@ test('GitHub Pages deploys docs only after every repository gate succeeds', () =
   assert.match(job, /current_main" == "\$GITHUB_SHA"/);
   assert.match(job, /Skipping obsolete Pages deployment/);
   assert.match(job, /if: steps\.deployment-head\.outputs\.current == 'true'/);
-  assert.match(job, /actions\/configure-pages@v5/);
-  assert.match(job, /actions\/upload-pages-artifact@v4/);
+  assert.match(job, /actions\/configure-pages@v6/);
+  // v5 delegates to upload-artifact v7 (Node 24); v4 still embeds Node 20.
+  assert.match(job, /actions\/upload-pages-artifact@v5\s/);
   assert.match(job, /path: docs/);
-  assert.match(job, /actions\/deploy-pages@v4/);
+  assert.match(job, /actions\/deploy-pages@v5/);
 });
 
 test('release tags with a SemVer prerelease are marked prerelease and never become latest', () => {
@@ -228,6 +248,88 @@ test('package smoke verifies the embedded notifier identity and local disable sw
   assert.match(source, /reason !== 'disabled'/);
 });
 
+test('package smoke rejects a missing or modified distribution license', () => {
+  const packageSmoke = path.join(repoRoot, 'scripts', 'package-smoke.mjs');
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-license-gate-'));
+  try {
+    const staged = path.join(fixture, 'archify');
+    stageCleanSkill({ repoRoot, destination: staged });
+    const licensePath = path.join(staged, 'LICENSE');
+
+    fs.rmSync(licensePath);
+    let result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'missing LICENSE must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /packaged skill is missing LICENSE/);
+
+    const repositoryLicense = fs.readFileSync(path.join(repoRoot, 'LICENSE'), 'utf8');
+    fs.writeFileSync(
+      licensePath,
+      repositoryLicense.replace(
+        'Copyright (c) 2025 Cocoon AI',
+        'Copyright (c) 2025 Cocoon AI (original "architecture-diagram-generator")',
+      ),
+    );
+    result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'modified upstream notice must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /missing the exact Cocoon AI copyright line/);
+
+    fs.writeFileSync(licensePath, 'Copyright (c) 2025 Cocoon AI\n');
+    result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'truncated LICENSE must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /must byte-match the repository LICENSE/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('package smoke rejects missing, modified, or incomplete third-party notices', () => {
+  const packageSmoke = path.join(repoRoot, 'scripts', 'package-smoke.mjs');
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-notices-gate-'));
+  try {
+    const staged = path.join(fixture, 'archify');
+    stageCleanSkill({ repoRoot, destination: staged });
+    const noticesPath = path.join(staged, 'THIRD_PARTY_NOTICES.md');
+
+    fs.rmSync(noticesPath);
+    let result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'missing notices must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /missing THIRD_PARTY_NOTICES\.md/);
+
+    const repositoryNotices = fs.readFileSync(path.join(repoRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
+    fs.writeFileSync(noticesPath, repositoryNotices.replace('Simple Icons 16.28.0', 'Simple Icons'));
+    result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'modified notices must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /must byte-match the repository notice/);
+
+    fs.writeFileSync(noticesPath, 'Simple Icons 16.28.0\n');
+    result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'incomplete notices must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /packaged THIRD_PARTY_NOTICES\.md is incomplete/);
+
+    const comparisonRoot = path.join(fixture, 'comparison-root');
+    fs.mkdirSync(comparisonRoot);
+    fs.copyFileSync(path.join(repoRoot, 'LICENSE'), path.join(comparisonRoot, 'LICENSE'));
+    const synchronizedIncomplete = repositoryNotices
+      .replace(/## OpenAI mark[\s\S]*?## No additional rights granted/, '## No additional rights granted');
+    fs.writeFileSync(path.join(comparisonRoot, 'THIRD_PARTY_NOTICES.md'), synchronizedIncomplete);
+    fs.writeFileSync(noticesPath, synchronizedIncomplete);
+    result = spawnSync(process.execPath, [packageSmoke, staged], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        ARCHIFY_PACKAGE_SMOKE_NOTICE_ROOT: comparisonRoot,
+      },
+    });
+    assert.notEqual(result.status, 0, 'byte-identical incomplete notices must fail package smoke');
+    assert.match(
+      `${result.stdout}\n${result.stderr}`,
+      /repository THIRD_PARTY_NOTICES\.md is incomplete; missing required disclosure: .*OpenAI/,
+    );
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
 test('package smoke increments an arbitrary-precision SemVer patch without Number coercion', () => {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-bigint-version-'));
   const skillRoot = path.join(scratch, 'archify');
@@ -254,25 +356,25 @@ test('package smoke increments an arbitrary-precision SemVer patch without Numbe
   }
 });
 
-test('archive build refuses to silently omit required notifier files', () => {
+test('archive build refuses to silently omit required release files', () => {
   const buildSource = fs.readFileSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), 'utf8');
   const stageSource = fs.readFileSync(path.join(repoRoot, 'scripts', 'stage-clean-skill.mjs'), 'utf8');
   assert.match(buildSource, /stage-clean-skill\.mjs/);
+  assert.match(stageSource, /archify\/LICENSE/);
+  assert.match(stageSource, /archify\/THIRD_PARTY_NOTICES\.md/);
   assert.match(stageSource, /archify\/skill-release\.json/);
   assert.match(stageSource, /archify\/scripts\/check-update\.mjs/);
   assert.match(stageSource, /archify\/scripts\/update-contract\.mjs/);
   assert.match(stageSource, /git', \['ls-files', '--stage', '-z'/);
   assert.match(stageSource, /required package input is not tracked by Git/);
+  assert.match(stageSource, /required repository input is not tracked by Git/);
 });
 
 canonicalZipTest('package smoke rejects every dependency metadata field in a built package', () => {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-built-package-gate-'));
   try {
     const archive = path.join(fixture, 'archify.zip');
-    const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    });
+    const build = spawnBuildZip(archive);
     assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
 
     const extracted = path.join(fixture, 'extracted');
@@ -343,10 +445,7 @@ canonicalZipTest('archive build excludes untracked files and external symlinks f
     fs.writeFileSync(externalTarget, 'external content must not ship\n');
     fs.symlinkSync(externalTarget, externalLink, 'file');
 
-    const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    });
+    const build = spawnBuildZip(archive);
     assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
 
     const listing = spawnSync('unzip', ['-Z1', archive], { encoding: 'utf8' });
@@ -385,6 +484,10 @@ canonicalZipTest('archive build rejects an unmerged index and preserves an exist
     fs.copyFileSync(
       path.join(repoRoot, 'scripts', 'stage-clean-skill.mjs'),
       path.join(scripts, 'stage-clean-skill.mjs'),
+    );
+    fs.copyFileSync(
+      path.join(repoRoot, 'scripts', 'third-party-notices-contract.mjs'),
+      path.join(scripts, 'third-party-notices-contract.mjs'),
     );
     fs.writeFileSync(path.join(skill, 'renderers', 'shared', 'generated-validators.mjs'), 'export default {};\n');
     fs.writeFileSync(path.join(skill, 'scripts', 'check-update.mjs'), 'export {};\n');
@@ -431,10 +534,7 @@ test('archive build rejects non-canonical Node versions before publishing output
     const archive = path.join(outputRoot, 'archify.zip');
     const trusted = Buffer.from('existing canonical archive');
     fs.writeFileSync(archive, trusted);
-    const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    });
+    const build = spawnBuildZip(archive);
     assert.notEqual(build.status, 0, `${build.stdout}\n${build.stderr}`);
     assert.match(build.stderr, /canonical archify\.zip builds require Node 22/);
     assert.ok(fs.readFileSync(archive).equals(trusted), 'version rejection must preserve the canonical archive');
@@ -453,9 +553,7 @@ canonicalZipTest('archive build is byte-for-byte reproducible across caller time
       [utcArchive, 'UTC'],
       [honoluluArchive, 'Pacific/Honolulu'],
     ]) {
-      const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
-        cwd: repoRoot,
-        encoding: 'utf8',
+      const build = spawnBuildZip(archive, {
         env: { ...process.env, TZ: timezone },
       });
       assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);

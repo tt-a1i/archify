@@ -5,8 +5,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { assertThirdPartyNotices } from './third-party-notices-contract.mjs';
+
 const scriptRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const REQUIRED_INPUTS = new Set([
+  'archify/LICENSE',
+  'archify/THIRD_PARTY_NOTICES.md',
   'archify/renderers/shared/generated-validators.mjs',
   'archify/scripts/check-update.mjs',
   'archify/scripts/update-contract.mjs',
@@ -64,6 +68,16 @@ function trackedEntries(repoRoot) {
       relative,
     };
   });
+}
+
+function requireTrackedFile(repoRoot, relative) {
+  const result = spawnSync('git', ['ls-files', '--error-unmatch', '--', relative], {
+    cwd: repoRoot,
+    encoding: 'buffer',
+  });
+  if (result.status !== 0) {
+    throw new Error(`required repository input is not tracked by Git: ${relative}`);
+  }
 }
 
 function excluded(relative) {
@@ -175,6 +189,32 @@ function cleanPackageManifest(destination) {
   fs.writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
 }
 
+function validateThirdPartyNoticeInputs(repoRoot, packageEntries) {
+  const packagedEntry = packageEntries.find((entry) => (
+    entry.relative === 'archify/THIRD_PARTY_NOTICES.md'
+  ));
+  if (!packagedEntry) {
+    throw new Error('required package input is missing: archify/THIRD_PARTY_NOTICES.md');
+  }
+
+  const repositoryPath = path.join(repoRoot, 'THIRD_PARTY_NOTICES.md');
+  let repositoryNotices;
+  try {
+    const metadata = fs.lstatSync(repositoryPath);
+    if (!metadata.isFile() || metadata.isSymbolicLink()) throw new Error('not a regular file');
+    repositoryNotices = fs.readFileSync(repositoryPath);
+  } catch {
+    throw new Error('repository THIRD_PARTY_NOTICES.md is missing or unreadable');
+  }
+
+  const packagedNotices = packagedEntry.content;
+  assertThirdPartyNotices(repositoryNotices.toString('utf8'), 'repository THIRD_PARTY_NOTICES.md');
+  assertThirdPartyNotices(packagedNotices.toString('utf8'), 'archify/THIRD_PARTY_NOTICES.md');
+  if (!packagedNotices.equals(repositoryNotices)) {
+    throw new Error('archify/THIRD_PARTY_NOTICES.md must byte-match the repository notice');
+  }
+}
+
 export function stageCleanSkill({ repoRoot = scriptRoot, destination }) {
   const resolvedRoot = fs.realpathSync(path.resolve(repoRoot));
   if (!destination) throw new Error('clean Skill staging requires a destination');
@@ -195,11 +235,13 @@ export function stageCleanSkill({ repoRoot = scriptRoot, destination }) {
       throw new Error(`required package input is not tracked by Git: ${required}`);
     }
   }
+  requireTrackedFile(resolvedRoot, 'THIRD_PARTY_NOTICES.md');
 
   const packageEntries = entries
     .filter((entry) => !excluded(entry.relative))
     .map((entry) => preflightSourceEntry(resolvedRoot, entry))
     .map((entry) => snapshotSourceEntry(entry));
+  validateThirdPartyNoticeInputs(resolvedRoot, packageEntries);
 
   fs.mkdirSync(resolvedDestination, { recursive: true, mode: 0o755 });
   let fileCount = 0;

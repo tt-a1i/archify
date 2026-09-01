@@ -1,6 +1,6 @@
 # Archify Roadmap
 
-The current stable version is `v2.16.0`. [CHANGELOG.md](CHANGELOG.md) is the single owner for delivered feature history. This file owns architectural direction, retained rationale, and explicitly declined ideas.
+The current development line is `v2.17.0-dev.1`; it contains the work under Changelog Unreleased and is not a stable release. [CHANGELOG.md](CHANGELOG.md) is the single owner for delivered feature history. This file owns architectural direction, retained rationale, and explicitly declined ideas.
 
 <details>
 <summary>Archived delivered-slice context (frozen; no longer maintained as a second changelog)</summary>
@@ -160,7 +160,7 @@ Architecture diagrams use a free-coordinate component graph. The typed modes use
 
 | Phase | Deliverable | Target |
 |---|---|---|
-| ~~**Validate**~~ | ~~5-Mermaid blind-rate experiment~~ | **DONE — FAILED** (see below) |
+| ~~**Validate**~~ | ~~Original 5-Mermaid blind-rate experiment; 3 licensed inputs retained~~ | **DONE — FAILED** (see below) |
 | **P0** | JSON IR + JSON Schema validator + `schema_version` enforcement | **DONE** — shipped for architecture, workflow, sequence, dataflow, and lifecycle, enforced at runtime via ajv |
 | **P0.5** | Pure-JS renderers take IR → HTML using the existing template. Coordinates required (no auto-layout). | **DONE** — architecture, workflow, sequence, data-flow, and lifecycle renderers ship in `archify/renderers/` |
 | ~~**P1**~~ | ~~Mermaid flowchart parser → IR~~ | **KILLED** — experiment showed auto-layout + CSS is not enough |
@@ -170,7 +170,7 @@ Architecture diagrams use a free-coordinate component graph. The typed modes use
 
 ### Validation experiment — FAILED (2026-04-16)
 
-The experiment tested whether auto-layout (dagre) + archify CSS (version B) looked meaningfully better than stock Mermaid (version A). 5 real-world Mermaid flowcharts were rendered in three versions (A/B/C), randomized, and blind-rated by the project owner.
+The experiment tested whether auto-layout (dagre) + archify CSS (version B) looked meaningfully better than stock Mermaid (version A). The original run rendered five real-world Mermaid flowcharts in three versions (A/B/C), randomized them, and had the project owner blind-rate them. On 2026-09-01, two inputs and their derivatives were removed because their repositories did not provide verifiable redistribution licenses; the current tree retains three inputs and nine screenshots, so the original five-input run is no longer fully reproducible from HEAD.
 
 **Result:** Owner rated C (archify hand-placed) as good-looking; A and B as both not good-looking. B was not meaningfully better than A. Both pass criteria failed. Full data in `experiments/v3-mermaid-validation/RESULT.md`.
 

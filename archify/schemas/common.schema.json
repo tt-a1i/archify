@@ -8,7 +8,7 @@
       "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
     },
     "locale": {
-      "enum": ["en", "zh-CN", "zh-TW"]
+      "enum": ["en", "zh-CN"]
     },
     "animation": {
       "enum": ["trace", "none"]
