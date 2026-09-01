@@ -24,6 +24,23 @@ const THEMES = Object.freeze(['light', 'dark']);
 const EXIT = Object.freeze({ pass: 0, fail: 1, skipped: 2 });
 export const CHROME_NO_SANDBOX_ENV = 'ARCHIFY_CHROME_NO_SANDBOX';
 
+export function presentationPdfOptions() {
+  return {
+    landscape: false,
+    displayHeaderFooter: false,
+    printBackground: true,
+    preferCSSPageSize: false,
+    paperWidth: 13.3333333333,
+    paperHeight: 7.5,
+    marginTop: 0,
+    marginBottom: 0,
+    marginLeft: 0,
+    marginRight: 0,
+    generateTaggedPDF: true,
+    generateDocumentOutline: false,
+  };
+}
+
 function sha256(buffer) {
   return createHash('sha256').update(buffer).digest('hex');
 }
@@ -470,6 +487,57 @@ export class ChromeVisualBrowser {
       fs.writeFileSync(screenshotPath, Buffer.from(capture.data, 'base64'));
     }
     return metrics;
+  }
+
+  async loadPresentation({ artifactPath, width, height }) {
+    const sessionId = await this.sessionPromise;
+    await this.cdp.send('Emulation.setDeviceMetricsOverride', {
+      width,
+      height,
+      deviceScaleFactor: 1,
+      mobile: false,
+    }, sessionId);
+    const loaded = this.cdp.waitFor('Page.loadEventFired', sessionId);
+    const navigation = await this.cdp.send('Page.navigate', {
+      url: pathToFileURL(artifactPath).href,
+    }, sessionId);
+    if (navigation.errorText) throw new Error(`Chrome navigation failed: ${navigation.errorText}`);
+    await loaded;
+    return evaluate(this.cdp, sessionId, `(function () {
+      document.documentElement.setAttribute('data-motion', 'still');
+      var fontsReady = document.fonts && document.fonts.ready
+        ? document.fonts.ready.catch(function () {})
+        : Promise.resolve();
+      return fontsReady.then(function () {
+        return new Promise(function (resolve) {
+          requestAnimationFrame(function () { requestAnimationFrame(resolve); });
+        });
+      }).then(function () {
+        return {
+          visibleText: (document.body && document.body.innerText || '').replace(/\\s+/g, ' ').trim(),
+          scrollWidth: Math.ceil(document.documentElement.scrollWidth),
+          scrollHeight: Math.ceil(document.documentElement.scrollHeight)
+        };
+      });
+    })()`, true);
+  }
+
+  async capturePresentationPng(outputPath) {
+    const sessionId = await this.sessionPromise;
+    const capture = await this.cdp.send('Page.captureScreenshot', {
+      format: 'png',
+      fromSurface: true,
+      captureBeyondViewport: false,
+    }, sessionId, 30000);
+    if (!capture.data) throw new Error('Chrome returned an empty presentation screenshot.');
+    fs.writeFileSync(outputPath, Buffer.from(capture.data, 'base64'));
+  }
+
+  async printPresentationPdf(outputPath) {
+    const sessionId = await this.sessionPromise;
+    const result = await this.cdp.send('Page.printToPDF', presentationPdfOptions(), sessionId, 30000);
+    if (!result.data) throw new Error('Chrome returned an empty presentation PDF.');
+    fs.writeFileSync(outputPath, Buffer.from(result.data, 'base64'));
   }
 
   async close() {

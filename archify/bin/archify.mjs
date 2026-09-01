@@ -23,6 +23,7 @@ function usage() {
   archify inspect <type> <input.json>
   archify check <output.html>
   archify visual-check <output.html> [--json]
+  archify presentation-evidence <output.html> [--require-text <exact phrase>]... [--json]
   archify guide [scenario or question] [--json] [--lang en|zh]
   archify brands [name, alias, domain, or category] [--json]
   archify brands capture <url> [--json]
@@ -1205,6 +1206,54 @@ async function commandVisualCheck(args) {
   process.exitCode = result.exitCode;
 }
 
+async function commandPresentationEvidence(args) {
+  const positional = [];
+  const requiredText = [];
+  let json = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--json') {
+      json = true;
+      continue;
+    }
+    if (arg === '--require-text') {
+      const phrase = args[index + 1];
+      if (!phrase || phrase.startsWith('--')) fail('--require-text requires one exact phrase.', 1);
+      requiredText.push(phrase);
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--require-text=')) {
+      const phrase = arg.slice('--require-text='.length);
+      if (!phrase) fail('--require-text requires one exact phrase.', 1);
+      requiredText.push(phrase);
+      continue;
+    }
+    if (arg.startsWith('--')) fail(`Unknown presentation-evidence option "${arg}".`, 1);
+    positional.push(arg);
+  }
+  if (positional.length !== 1) fail('presentation-evidence requires one delivered HTML artifact.', 1);
+  let runPresentationEvidence;
+  try {
+    ({ runPresentationEvidence } = await import('./presentation-evidence.mjs'));
+  } catch (error) {
+    fail(`Could not load presentation-evidence: ${error.message}`, 1);
+  }
+  let result;
+  try {
+    result = await runPresentationEvidence({ artifactPath: positional[0], requiredText });
+  } catch (error) {
+    fail(error.message, 1);
+  }
+  if (json) console.log(JSON.stringify(result.receipt, null, 2));
+  else if (result.exitCode === 0) {
+    console.log('presentation-evidence packet created; perceptual visual review pending');
+  } else {
+    console.error(result.receipt.diagnostics?.[0]?.message || 'presentation-evidence failed');
+  }
+  process.exitCode = result.exitCode;
+}
+
 function commandExamples() {
   const result = runNode([path.join(skillRoot, 'scripts/render-examples.mjs')], { cwd: skillRoot });
   if (result.status !== 0) exitFrom(result);
@@ -1969,6 +2018,9 @@ switch (command) {
     break;
   case 'visual-check':
     await commandVisualCheck(args);
+    break;
+  case 'presentation-evidence':
+    await commandPresentationEvidence(args);
     break;
   case 'guide':
     await commandGuide(args);

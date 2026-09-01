@@ -56,6 +56,53 @@ environmental failure through the supported command in a browser-capable
 execution context when practical. Keep the packaged transport unchanged unless
 the failure reproduces through that seam in a capable environment.
 
+## Optional 16:9 presentation evidence
+
+For an already delivered local HTML artifact, create a review packet explicitly:
+
+```bash
+node bin/archify.mjs presentation-evidence <output.html> [--require-text "Exact label"]... --json
+```
+
+This is an additive headless companion command, not a second interactive export
+interface. It deliberately leaves the Viewer export UI and its full-diagram PNG
+composition unchanged. The command opens the local file directly with the same
+Chrome/DevTools pipe used by `visual-check`; it starts no listener and never
+modifies or rerenders the trusted HTML.
+
+An accepted packet atomically commits these source-bound sidecars beside the HTML:
+
+- an exact 3840x2160 PNG whose complete page must fit that canvas;
+- an independently rendered exact 1600x900 review PNG;
+- a one-page PDF with a verified `MediaBox` of `0 0 960 540` points (16:9);
+- a JSON receipt containing source/output SHA-256 values, byte counts, PNG
+  dimensions, PDF page count and geometry, `evidenceKind: "presentation-16x9"`,
+  and always `visualReview: "pending"`.
+
+Repeatable `--require-text` values are exact, case-sensitive phrases checked
+against settled visible DOM `innerText`. A missing phrase fails before an
+accepted packet. This proves that required labels were visible in the browser;
+it is not generic PDF text extraction. The zero-dependency verifier also records
+whether Chrome emitted tagged PDF structure, but reports PDF
+`searchableText: "unverified"`: embedded font encodings can require a real PDF
+text extractor, so the receipt never fabricates a searchability claim.
+
+Chrome absence maps to exit 2 and `status: "skipped"`, matching `visual-check`.
+All other errors map to exit 1 and `status: "fail"`. An ordinary skip or a
+runtime, containment, phrase, capture, or verification failure before packet
+commit removes every stale presentation payload and replaces any stale receipt
+with the new machine-readable failure or skip receipt. The trusted HTML remains
+unchanged.
+
+Packet commit is the exception to that cleanup rule. The command does not delete
+a prior complete four-file packet at startup. A successful commit replaces all
+four sidecars together using same-directory rollback backups. If any commit
+rename fails, the command restores every prior sidecar byte, including the prior
+trusted receipt, removes staged files and backups, and returns the new failure
+receipt on stdout only; it does not overwrite the restored receipt on disk.
+There is no `--mark-pass` option and successful evidence generation never grants
+perceptual approval.
+
 ## Optional opening
 
 Add `--open` only when the user wants an immediate local preview. It runs after that atomic commit, uses one argument-array OS opener with a five-second bound, and records `open.status`. Keep it off for CI, unattended agents, and non-interactive environments. Failure or unsupported opening does not invalidate delivery; its status proves only whether the local opener invocation succeeded.
