@@ -4221,6 +4221,7 @@
     }
     html[data-embed="true"] .semantic-lens-overlay { display: none; }
     svg[data-focus-active] [data-node-id],
+    svg[data-focus-active] [data-decorative],
     svg[data-focus-active] [data-edge-from] { opacity: 0.13; }
     svg[data-focus-active] [data-focus-match] { opacity: 1; }
     svg[data-focus-active] [data-focus-selected] {
@@ -4232,6 +4233,7 @@
        downstream walks outgoing edges. It never claims runtime causality and
        changes only viewer emphasis, not canonical geometry or export bytes. */
     svg[data-reach-active] [data-node-id],
+    svg[data-reach-active] [data-decorative],
     svg[data-reach-active] [data-edge-from] { opacity: 0.09; }
     svg[data-reach-active] [data-reach-match] { opacity: 1; }
     svg[data-reach-active="upstream"] [data-reach-origin] {
@@ -5038,7 +5040,7 @@
         <text x="72" y="424" class="t-dim" font-size="10" font-weight="600">03 / Terminal exits</text>
 
         <!-- Primary lifecycle rail -->
-        <path d="M 154 157 L 748 157" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-decorative="lifecycle-rail" d="M 154 157 L 748 157" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Transition paths -->
         <path data-edge-from="executing" data-edge-to="approval" data-edge-key="0" data-edge-id="approval-needed" data-composition-points="402,188;402,278" d="M 402 188 L 402 278" class="a-security" data-animate="edge" style="--step:0" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
