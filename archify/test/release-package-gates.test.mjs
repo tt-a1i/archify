@@ -18,6 +18,24 @@ const canonicalZipTest = (name, fn) => test(name, {
     : `canonical ZIP builds require Node ${canonicalZipNodeMajor}`,
 }, fn);
 
+function spawnBuildZip(outputPath, options = {}) {
+  const script = path.join(repoRoot, 'scripts', 'build-zip.sh');
+  const { cwd = repoRoot, ...rest } = options;
+  if (process.platform === 'win32') {
+    const bashCandidates = [
+      process.env.BASH,
+      'C:\\Program Files\\Git\\bin\\bash.exe',
+      'bash',
+    ].filter(Boolean);
+    for (const bash of bashCandidates) {
+      if (bash.includes('\\') && !fs.existsSync(bash)) continue;
+      const result = spawnSync(bash, [script, outputPath], { cwd, encoding: 'utf8', ...rest });
+      if (result.status !== 127) return result;
+    }
+  }
+  return spawnSync(script, [outputPath], { cwd, encoding: 'utf8', ...rest });
+}
+
 function workflowStep(workflow, name) {
   const marker = `      - name: ${name}`;
   const start = workflow.indexOf(marker);
@@ -32,6 +50,24 @@ function workflowJob(workflow, name) {
   assert.notEqual(start, -1, `workflow is missing the "${name}" job`);
   const next = workflow.slice(start + marker.length).search(/\n  [a-z][a-z0-9-]*:\n/);
   return workflow.slice(start, next === -1 ? workflow.length : start + marker.length + next);
+}
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\function workflowJob(workflow, name) {
+  const marker = `  ${name}:`;
+  const start = workflow.indexOf(marker);
+  assert.notEqual(start, -1, `workflow is missing the "${name}" job`);
+  const next = workflow.slice(start + marker.length).search(/\n  [a-z][a-z0-9-]*:\n/);
+  return workflow.slice(start, next === -1 ? workflow.length : start + marker.length + next);
+}
+');
+}
+
+function assertPinnedAction(section, action, sha, version) {
+  assert.match(
+    section,
+    new RegExp(`uses:\\s+${escapeRegExp(action)}@${sha}\\s+#\\s+${escapeRegExp(version)}(?:\\s|$)`),
+    `${action} must remain pinned to the reviewed ${version} commit`,
+  );
 }
 
 test('release prevents manifest preannouncement and smokes the exact archive before upload', () => {
@@ -70,6 +106,12 @@ test('release prevents manifest preannouncement and smokes the exact archive bef
   assert.match(smoke, /node scripts\/package-smoke\.mjs "\$package_root\/archify"/);
   assert.doesNotMatch(smoke, /\bnpm\s+(?:ci|install)\b/);
   assert.match(freshness, /cmp -s \/tmp\/archify-built\.zip archify\.zip/);
+  assertPinnedAction(
+    upload,
+    'softprops/action-gh-release',
+    'efb35369e0ad2afab669f228072c1b0d510eae64',
+    'v3.0.3',
+  );
   assert.match(upload, /files: archify\.zip/);
   assert.match(followUp, /docs\/skill-updates\/archify\/stable\.json/);
 });
@@ -158,10 +200,26 @@ test('GitHub Pages deploys docs only after every repository gate succeeds', () =
   assert.match(job, /current_main" == "\$GITHUB_SHA"/);
   assert.match(job, /Skipping obsolete Pages deployment/);
   assert.match(job, /if: steps\.deployment-head\.outputs\.current == 'true'/);
-  assert.match(job, /actions\/configure-pages@v5/);
-  assert.match(job, /actions\/upload-pages-artifact@v4/);
+  assertPinnedAction(
+    job,
+    'actions/configure-pages',
+    '45bfe0192ca1faeb007ade9deae92b16b8254a0d',
+    'v6.0.0',
+  );
+  // v5 delegates to upload-artifact v7 (Node 24); v4 still embeds Node 20.
+  assertPinnedAction(
+    job,
+    'actions/upload-pages-artifact',
+    'fc324d3547104276b827a68afc52ff2a11cc49c9',
+    'v5.0.0',
+  );
   assert.match(job, /path: docs/);
-  assert.match(job, /actions\/deploy-pages@v4/);
+  assertPinnedAction(
+    job,
+    'actions/deploy-pages',
+    'cd2ce8fcbc39b97be8ca5fce6e763baed58fa128',
+    'v5.0.0',
+  );
 });
 
 test('release tags with a SemVer prerelease are marked prerelease and never become latest', () => {
@@ -269,10 +327,7 @@ canonicalZipTest('package smoke rejects every dependency metadata field in a bui
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-built-package-gate-'));
   try {
     const archive = path.join(fixture, 'archify.zip');
-    const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    });
+    const build = spawnBuildZip(archive);
     assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
 
     const extracted = path.join(fixture, 'extracted');
@@ -343,10 +398,7 @@ canonicalZipTest('archive build excludes untracked files and external symlinks f
     fs.writeFileSync(externalTarget, 'external content must not ship\n');
     fs.symlinkSync(externalTarget, externalLink, 'file');
 
-    const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    });
+    const build = spawnBuildZip(archive);
     assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
 
     const listing = spawnSync('unzip', ['-Z1', archive], { encoding: 'utf8' });
@@ -431,10 +483,7 @@ test('archive build rejects non-canonical Node versions before publishing output
     const archive = path.join(outputRoot, 'archify.zip');
     const trusted = Buffer.from('existing canonical archive');
     fs.writeFileSync(archive, trusted);
-    const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    });
+    const build = spawnBuildZip(archive);
     assert.notEqual(build.status, 0, `${build.stdout}\n${build.stderr}`);
     assert.match(build.stderr, /canonical archify\.zip builds require Node 22/);
     assert.ok(fs.readFileSync(archive).equals(trusted), 'version rejection must preserve the canonical archive');
@@ -453,9 +502,7 @@ canonicalZipTest('archive build is byte-for-byte reproducible across caller time
       [utcArchive, 'UTC'],
       [honoluluArchive, 'Pacific/Honolulu'],
     ]) {
-      const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
-        cwd: repoRoot,
-        encoding: 'utf8',
+      const build = spawnBuildZip(archive, {
         env: { ...process.env, TZ: timezone },
       });
       assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);

@@ -95,7 +95,7 @@ Read `references/authoring-contract.md` only when you need field enums, spacing 
 
 ## Delivery
 
-Use `validate` during repair and `deliver` once for final acceptance. Delivery freezes the exact specification bytes into a private same-directory snapshot, renders and checks that snapshot, atomically commits the HTML, and reports SHA-256 plus byte counts for both specification and artifact.
+Use `validate` during repair and `deliver` once for final acceptance. Delivery freezes the exact specification bytes into a private same-directory snapshot, renders and checks that snapshot, atomically commits the HTML, and reports SHA-256 plus byte counts for both specification and artifact. This is deterministic artifact evidence; it does not exercise the Viewer in a browser.
 
 After delivery, collect bounded desktop evidence without modifying or rerendering the trusted HTML:
 
@@ -103,7 +103,9 @@ After delivery, collect bounded desktop evidence without modifying or rerenderin
 node bin/archify.mjs visual-check <output.html> --json
 ```
 
-`visual-check` measures containment at 1440×900, 1600×1000, 1920×1080, and 2048×1320; captures light/dark screenshots at the smallest and largest sizes; and writes a relative-path contact sheet plus JSON sidecars beside the artifact. Its automated receipt always reports `visualReview: "pending"`: screenshots are evidence for inspection, never an automatic polish claim. Exit 0 means containment and captures passed, 1 means overflow or capture failure, and 2 means Chrome/Chromium was unavailable and the receipt is `skipped`. The command never changes the delivered HTML.
+`visual-check` collects automated browser evidence from the exact delivered HTML without modifying or rerendering it. Its machine-readable measurements and screenshots do not approve perceptual polish. Follow `references/delivery-contract.md` for the canonical receipt fields, coverage, sidecars, exit behavior, and supplementary manual-record requirements.
+
+Keep the three claims separate: `deliver` proves deterministic artifact checks, `visual-check` proves bounded behavior in a real browser, and perceptual visual review requires an actual human or image-capable reviewer. Report browser evidence and perceptual review independently. An unconstrained glance can support only perceptual review; use the canonical delivery contract when recording supplementary manual browser work or handling an environmental failure.
 
 Add `--open` only when the user wants an immediate local preview. For an active desktop authoring loop, the optional command is:
 
@@ -132,4 +134,4 @@ When shell access is unavailable, hand-place architecture SVG into `assets/templ
 
 ## Output
 
-Return the checked HTML path, diagram type, validation summary, specification/artifact receipt, and truthful visual-review status. Do not claim success for a non-zero command or claim visual inspection you did not perform.
+Return the checked HTML path, diagram type, validation summary, specification/artifact receipt, browser-evidence status, and truthful visual-review status. Do not claim success for a non-zero command or claim visual inspection you did not perform.

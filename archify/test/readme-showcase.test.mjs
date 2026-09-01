@@ -135,6 +135,27 @@ test('all README languages keep the product hero and retain the verified animate
   );
 });
 
+test('README installation tables contain a complete DeepSeek Harness row', () => {
+  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+    const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
+    const row = readme.split('\n').find((line) => line.startsWith('| **DeepSeek Harness** |'));
+    assert.ok(row, `${filename}: DeepSeek Harness must be an installation table row`);
+    assert.equal(
+      (row.match(/(?<!\\)\|/g) || []).length,
+      4,
+      `${filename}: DeepSeek Harness must have exactly three table cells`,
+    );
+    assert.ok(
+      row.includes('Node `^22.19.0 \\|\\| >=24.0.0`'),
+      `${filename}: Node version pipes must be escaped inside the table row`,
+    );
+    assert.ok(
+      readme.includes(`${row}\n\n`),
+      `${filename}: installation table must end after the DeepSeek Harness row`,
+    );
+  }
+});
+
 test('README demos use checked-in captures and live deep links below the existing hero', () => {
   const demos = [
     {
@@ -230,6 +251,8 @@ test('all README languages end with the self-hosted star history chart', () => {
 
   assert.match(workflow, /permissions:\n  contents: write/);
   assert.match(workflow, /narayann7\/star-history-action@[0-9a-f]{40}/);
+  // Upstream PR #6 migrates setup-node to Node 24 without the v1.0.6 chart changes.
+  assert.match(workflow, /narayann7\/star-history-action@00dfada13f106e4114ee46728aa415857078e76c\s/);
   assert.match(workflow, /output-dir: assets/);
   assert.match(workflow, /update-readme: ['"]false['"]/);
   assert.match(workflow, /commit: ['"]false['"]/);
