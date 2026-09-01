@@ -932,21 +932,34 @@ function detectCoincidentRoutes({ relations, endpointIds, pathFor, diagramType, 
     const points = routed?.points;
     if (!Array.isArray(points) || points.length < 2) continue;
 
-    // Normalize route to be direction-agnostic
+    // Normalize route to be direction-agnostic using numeric endpoint comparison
+    const first = points[0];
+    const last = points[points.length - 1];
+
+    // Determine canonical direction by comparing endpoints numerically
+    // Use first point as primary comparator, then last point as tiebreaker
+    let useForward;
+    if (first[0] !== last[0]) {
+      useForward = first[0] < last[0];
+    } else if (first[1] !== last[1]) {
+      useForward = first[1] < last[1];
+    } else {
+      // Endpoints have same coordinates (shouldn't happen for valid routes)
+      useForward = true;
+    }
+
     const pointsStr = points.map(p => `${p[0]},${p[1]}`).join(';');
     const reverseStr = [...points].reverse().map(p => `${p[0]},${p[1]}`).join(';');
-    const normalized = pointsStr < reverseStr ? pointsStr : reverseStr;
+    const normalized = useForward ? pointsStr : reverseStr;
 
     if (routes.has(normalized)) {
       const existing = routes.get(normalized);
 
       // Check if this is actually a different connection (not the same one)
       if (existing.index !== index) {
-        // Determine if connections are anti-parallel by comparing point orders
+        // Both routes normalized to the same key. If original directions differ, they're anti-parallel.
         const existingPointsStr = existing.points.map(p => `${p[0]},${p[1]}`).join(';');
-        const isAntiParallel = pointsStr === existingPointsStr
-          ? false  // Same point order = same direction
-          : true;  // Opposite point order = anti-parallel
+        const isAntiParallel = (pointsStr !== existingPointsStr);
         const direction = isAntiParallel ? 'opposite directions' : 'same direction';
 
         const connId = conn.id ? ` id "${conn.id}"` : '';

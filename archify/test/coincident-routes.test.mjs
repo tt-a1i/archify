@@ -245,3 +245,55 @@ test('CLI --quality showcase override detects coincident routes even without sou
     if (fs.existsSync(tempOutput)) fs.unlinkSync(tempOutput);
   }
 });
+
+test('numeric coordinate normalization handles lexicographic edge cases', async () => {
+  // Regression test: coordinates like [50,300] vs [100,200] where lexicographic
+  // string comparison "100,200" < "50,300" would fail to detect coincidence
+  const json = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: {
+      title: 'Numeric normalization test',
+      quality_profile: 'showcase',
+      viewBox: [900, 420],
+    },
+    components: [
+      { id: 'a', type: 'backend', label: 'Node A', pos: [50, 170], size: [80, 62] },
+      { id: 'b', type: 'backend', label: 'Node B', pos: [200, 170], size: [80, 62] },
+    ],
+    connections: [
+      // These routes have coordinates where lexicographic comparison would fail:
+      // Route goes [50,201] -> [200,201] vs [200,201] -> [50,201]
+      { id: 'fwd', from: 'a', to: 'b', label: 'forward', labelAt: [125, 180] },
+      { id: 'rev', from: 'b', to: 'a', label: 'reverse', labelAt: [125, 220] },
+    ],
+  };
+
+  const tempInput = path.join(__dirname, 'temp-numeric-edge-case.json');
+  const tempOutput = path.join(__dirname, 'temp-numeric-edge-case.html');
+
+  try {
+    fs.writeFileSync(tempInput, JSON.stringify(json, null, 2));
+
+    await assert.rejects(
+      async () => {
+        await execAsync(
+          `node "${archifyBin}" deliver architecture "${tempInput}" "${tempOutput}" --quality showcase --json`
+        );
+      },
+      (err) => {
+        const result = JSON.parse(err.stdout);
+        assert.equal(result.ok, false, 'Should detect coincident routes');
+        const hasCoincidentDiagnostic = result.diagnostics?.some(
+          (d) => d.code === 'composition/coincident-routes' && d.evidence?.antiParallel === true
+        );
+        assert.ok(hasCoincidentDiagnostic, 'Should detect anti-parallel coincident routes with numeric normalization');
+        return true;
+      },
+      'Should detect coincidence even when lexicographic string comparison would fail'
+    );
+  } finally {
+    if (fs.existsSync(tempInput)) fs.unlinkSync(tempInput);
+    if (fs.existsSync(tempOutput)) fs.unlinkSync(tempOutput);
+  }
+});
