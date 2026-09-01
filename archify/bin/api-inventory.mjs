@@ -85,17 +85,95 @@ function walk(dir, out) {
   }
 }
 
-function extractPaths(annotationArgs) {
-  if (!annotationArgs) return [''];
-  const attr = annotationArgs.match(/(?:value|path)\s*=\s*(\{[^}]*\}|"[^"]*")/);
-  const segment = attr ? attr[1] : annotationArgs;
-  const values = [...segment.matchAll(/"([^"]*)"/g)].map((m) => m[1]);
-  return values.length ? values : [''];
+// Same-length mask of a Java source: comment bodies and string/char literal
+// contents become spaces, so mapping annotations inside comments or strings
+// are invisible to the scanner while byte offsets stay valid for slicing the
+// argument text back out of the unmasked source.
+function maskSource(src) {
+  let out = '';
+  let state = 'code';
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    const next = src[i + 1];
+    if (state === 'code') {
+      if (c === '/' && next === '/') { state = 'line'; out += '  '; i++; }
+      else if (c === '/' && next === '*') { state = 'block'; out += '  '; i++; }
+      else if (c === '"' || c === "'") { state = c === '"' ? 'string' : 'char'; out += c; }
+      else out += c;
+    } else if (state === 'line') {
+      if (c === '\n') { state = 'code'; out += c; } else out += ' ';
+    } else if (state === 'block') {
+      if (c === '*' && next === '/') { state = 'code'; out += '  '; i++; }
+      else out += c === '\n' ? '\n' : ' ';
+    } else { // string | char
+      if ((state === 'string' && c === '"') || (state === 'char' && c === "'")) { state = 'code'; out += c; }
+      else if (c === '\\' && next !== undefined) { out += '  '; i++; }
+      else out += c === '\n' ? '\n' : ' ';
+    }
+  }
+  return out;
 }
 
-function explicitVerb(annotationArgs) {
-  const m = annotationArgs && annotationArgs.match(/method\s*=\s*\{?\s*RequestMethod\.(\w+)/);
-  return m ? m[1].toUpperCase() : null;
+// Split masked annotation arguments on top-level commas. String contents are
+// blank in the mask, so commas and braces inside literals cannot split a part.
+function splitTopLevel(text) {
+  const parts = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '{' || c === '(') depth++;
+    else if (c === '}' || c === ')') depth--;
+    else if (c === ',' && depth === 0) { parts.push([start, i]); start = i + 1; }
+  }
+  parts.push([start, text.length]);
+  return parts;
+}
+
+// Interpret Spring mapping annotation arguments. Only the `value`/`path`
+// attributes — or a positional string / string-array — are endpoint paths;
+// other named attributes (consumes, produces, params, headers, ...) must never
+// be read as paths. Returns { paths: string[] | null, verbs: string[] | null }
+// where null means "not specified".
+function parseAnnotationArgs(args) {
+  if (!args) return { paths: null, verbs: null };
+  const masked = maskSource(args);
+  let paths = null;
+  let verbs = null;
+  let positionalTaken = false;
+  for (const [start, end] of splitTopLevel(masked)) {
+    const maskedPart = masked.slice(start, end);
+    const named = maskedPart.match(/^\s*([A-Za-z_$][\w$]*)\s*=/);
+    if (named) {
+      const name = named[1];
+      const valueStart = start + named[0].length;
+      const originalValue = args.slice(valueStart, end);
+      const maskedValue = masked.slice(valueStart, end);
+      if ((name === 'value' || name === 'path') && !paths) {
+        const values = [...originalValue.matchAll(/"([^"]*)"/g)].map((m) => m[1]);
+        if (values.length) paths = values;
+      } else if (name === 'method' && !verbs) {
+        verbs = [...maskedValue.matchAll(/RequestMethod\.(\w+)/g)].map((m) => m[1].toUpperCase());
+      }
+    } else if (!positionalTaken) {
+      positionalTaken = true;
+      const trimmed = maskedPart.trim();
+      if (trimmed.startsWith('"') || trimmed.startsWith('{')) {
+        const values = [...args.slice(start, end).matchAll(/"([^"]*)"/g)].map((m) => m[1]);
+        if (values.length) paths = values;
+      }
+    }
+  }
+  return { paths, verbs };
+}
+
+// Slice the argument text of a mapping match out of the unmasked source. The
+// match ran on the masked source, which has identical length and offsets.
+function originalArgs(source, match) {
+  if (match[3] === undefined) return '';
+  const whole = source.slice(match.index, match.index + match[0].length);
+  const open = whole.indexOf('(');
+  return whole.slice(open + 1, -1);
 }
 
 function classJavadocSummary(head) {
@@ -128,42 +206,59 @@ function scanRepository(repoRoot) {
     } catch {
       continue;
     }
-    if (!/(?:@RestController|@Controller)\b/.test(source)) continue;
-    const classMatch = source.match(/public\s+(?:abstract\s+)?class\s+(\w+)/);
+    const masked = maskSource(source);
+    if (!/(?:@RestController|@Controller)\b/.test(masked)) continue;
+    const classMatch = masked.match(/public\s+(?:abstract\s+)?class\s+(\w+)/);
     const controllerName = classMatch ? classMatch[1] : path.basename(filePath, '.java');
     const head = classMatch ? source.slice(0, classMatch.index) : '';
-    let base = '';
-    for (const m of head.matchAll(MAPPING_RE)) {
-      if (m[1] === 'RequestMapping') {
-        base = extractPaths(m[3])[0];
-        break;
+    // Class-level @RequestMapping: every base path and every verb restriction
+    // composes with each handler mapping, as Spring requires.
+    let basePaths = null;
+    let classVerbs = null;
+    if (classMatch) {
+      for (const m of masked.matchAll(MAPPING_RE)) {
+        if (m.index >= classMatch.index) break; // matchAll yields ascending indices
+        if (m[1] !== 'RequestMapping') continue;
+        const parsed = parseAnnotationArgs(originalArgs(source, m));
+        basePaths = parsed.paths && parsed.paths.length ? parsed.paths : [''];
+        classVerbs = parsed.verbs && parsed.verbs.length ? parsed.verbs : null;
+        break; // Spring allows one class-level mapping
       }
     }
-    for (const m of source.matchAll(MAPPING_RE)) {
-      const annotation = m[1];
-      const args = m[3] || '';
-      let verb;
-      let paths;
-      if (annotation === 'RequestMapping') {
-        const explicit = explicitVerb(args);
-        if (classMatch && m.index < classMatch.index && !explicit) continue; // class-level base path
-        verb = explicit || 'ANY';
-        paths = extractPaths(args);
+    for (const m of masked.matchAll(MAPPING_RE)) {
+      if (classMatch && m.index < classMatch.index) continue; // class-level annotations are not handlers
+      const parsed = parseAnnotationArgs(originalArgs(source, m));
+      let verbs;
+      if (m[1] === 'RequestMapping') {
+        verbs = parsed.verbs && parsed.verbs.length ? parsed.verbs : null;
       } else {
-        verb = VERB_FOR[annotation];
-        paths = extractPaths(args);
+        verbs = [VERB_FOR[m[1]]];
       }
-      for (const p of paths) {
-        let full = p ? `${base.replace(/\/+$/, '')}/${p.replace(/^\/+/, '')}` : base.replace(/\/+$/, '');
-        full = full.replace(/\/+$/, '');
-        if (!full.startsWith('/')) full = `/${full}`;
-        endpoints.push({
-          m: moduleFor(repoRoot, filePath),
-          c: controllerName,
-          v: verb,
-          p: full,
-          d: classJavadocSummary(head),
-        });
+      // Spring intersects class- and method-level verb restrictions; an empty
+      // intersection means the handler is simply not mapped.
+      if (classVerbs && verbs) {
+        verbs = verbs.filter((v) => classVerbs.includes(v));
+        if (!verbs.length) continue;
+      } else if (classVerbs) {
+        verbs = classVerbs;
+      }
+      if (!verbs) verbs = ['ANY'];
+      const methodPaths = parsed.paths && parsed.paths.length ? parsed.paths : [''];
+      for (const base of (basePaths || [''])) {
+        for (const p of methodPaths) {
+          let full = p ? `${base.replace(/\/+$/, '')}/${p.replace(/^\/+/, '')}` : base.replace(/\/+$/, '');
+          full = full.replace(/\/+$/, '');
+          if (!full.startsWith('/')) full = `/${full}`;
+          for (const verb of verbs) {
+            endpoints.push({
+              m: moduleFor(repoRoot, filePath),
+              c: controllerName,
+              v: verb,
+              p: full,
+              d: classJavadocSummary(head),
+            });
+          }
+        }
       }
     }
   }
@@ -544,7 +639,21 @@ export async function runApiInventory({ repoRoot, artifactPath } = {}) {
     return { exitCode: 1, receipt };
   }
 
-  const artifactBytes = fs.readFileSync(artifact);
+  let artifactBytes;
+  try {
+    artifactBytes = fs.readFileSync(artifact);
+  } catch (error) {
+    const receipt = baseReceipt({ artifactPath: artifact, artifact: Buffer.alloc(0) });
+    receipt.diagnostics.push({
+      code: 'api-inventory/artifact-unreadable',
+      severity: 'error',
+      message: `Artifact could not be read: ${error.message}`,
+      subject: { artifact },
+      evidence: { ...(error.code ? { systemCode: error.code } : {}) },
+      supportedFixes: ['Point api-inventory at a readable Archify HTML artifact produced by archify deliver.'],
+    });
+    return { exitCode: 1, receipt };
+  }
   const receipt = baseReceipt({ artifactPath: artifact, artifact: artifactBytes });
   if (!artifactBytes.includes('var Archify = {};')) {
     receipt.diagnostics.push({
@@ -603,8 +712,30 @@ export async function runApiInventory({ repoRoot, artifactPath } = {}) {
     return { exitCode: 1, receipt };
   }
 
+  // Never-modify-on-failure contract: write a private same-directory temp file
+  // fully, then rename over the artifact. A partial write (ENOSPC mid-file)
+  // must leave the delivered artifact byte-for-byte intact.
   const buffer = Buffer.from(result.html, 'utf8');
-  fs.writeFileSync(artifact, buffer);
+  const tempPath = `${artifact}.api-inventory-${process.pid}-${Date.now()}.tmp`;
+  try {
+    fs.writeFileSync(tempPath, buffer);
+    fs.renameSync(tempPath, artifact);
+  } catch (error) {
+    try {
+      fs.unlinkSync(tempPath);
+    } catch {
+      // Nothing to clean up (the temp file was never created).
+    }
+    receipt.diagnostics.push({
+      code: 'api-inventory/artifact-write-failed',
+      severity: 'error',
+      message: `Artifact could not be updated: ${error.message}`,
+      subject: { artifact },
+      evidence: { ...(error.code ? { systemCode: error.code } : {}) },
+      supportedFixes: ['Free up disk space or fix permissions in the artifact directory, then rerun api-inventory. The artifact was not modified.'],
+    });
+    return { exitCode: 1, receipt };
+  }
   receipt.status = 'injected';
   receipt.ok = true;
   receipt.artifact = { path: artifact, sha256: sha256(buffer), bytes: buffer.length };
