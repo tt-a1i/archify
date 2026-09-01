@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { componentBox, boundaryBox, connectionPath } from '../shared/layout-report.mjs';
-import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { throwDiagnosticProblems, recordDiagnostic } from '../shared/diagnostics.mjs';
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
@@ -596,6 +596,16 @@ function validateArchitecture() {
     profile: arch.meta?.quality_profile,
   }));
 
+  // Detect coincident routes (Issue #248)
+  if (arch.meta?.quality_profile === 'showcase') {
+    problems.push(...detectCoincidentRoutes({
+      relations: arch.connections,
+      pathFor,
+      diagramType: 'architecture',
+      relationCollection: 'connections',
+    }));
+  }
+
   if (problems.length) {
     throwDiagnosticProblems('Architecture layout validation failed', problems, {
       subject: { diagramType: 'architecture' },
@@ -903,6 +913,75 @@ function routeVia(conn, from, to, start, end, fromSide, toSide) {
       return sideSafe[0] || sideAware[0] || horizontalFirst;
     }
   }
+}
+
+// ---- Coincident route detection (Issue #248) --------------------------------
+function detectCoincidentRoutes({ relations, pathFor, diagramType, relationCollection }) {
+  const problems = [];
+  const routes = new Map(); // key: normalized route string, value: { conn, index, points }
+
+  for (const [index, conn] of asArray(relations).entries()) {
+    if (!conn.from || !conn.to) continue;
+
+    const routed = pathFor(conn);
+    const points = routed.points;
+
+    // Normalize route to be direction-agnostic
+    const pointsStr = points.map(p => `${p[0]},${p[1]}`).join(';');
+    const reverseStr = [...points].reverse().map(p => `${p[0]},${p[1]}`).join(';');
+    const normalized = pointsStr < reverseStr ? pointsStr : reverseStr;
+
+    if (routes.has(normalized)) {
+      const existing = routes.get(normalized);
+
+      // Check if this is actually a different connection (not the same one)
+      if (existing.index !== index) {
+        const isAntiParallel = pointsStr !== normalized; // reversed = anti-parallel
+        const direction = isAntiParallel ? 'opposite directions' : 'same direction';
+
+        const connId = conn.id ? ` id "${conn.id}"` : '';
+        const existingId = existing.conn.id ? ` id "${existing.conn.id}"` : '';
+
+        const message = `[composition/coincident-routes] showcase ${diagramType} ${relationCollection}[${index}]${connId} "${conn.from}" -> "${conn.to}" has identical geometry to ${relationCollection}[${existing.index}]${existingId} "${existing.conn.from}" -> "${existing.conn.to}" (${direction}) — readers cannot distinguish the connections. Remove labelAt from one or both to enable automatic port spreading, add explicit via points, or use channelX/channelY offset.`;
+
+        recordDiagnostic({
+          code: 'composition/coincident-routes',
+          severity: 'error',
+          message,
+          subject: {
+            diagramType,
+            collection: relationCollection,
+            index,
+            from: conn.from,
+            to: conn.to,
+          },
+          evidence: {
+            coincidentWith: {
+              index: existing.index,
+              from: existing.conn.from,
+              to: existing.conn.to,
+              id: existing.conn.id,
+            },
+            sharedPoints: pointsStr,
+            antiParallel: isAntiParallel,
+            reason: (conn.labelAt && existing.conn.labelAt) ? 'both-have-labelAt' : 'route-coincidence',
+          },
+          supportedFixes: [
+            'remove labelAt from one or both connections to enable automatic port spreading',
+            'add explicit via points to separate routes',
+            'use channelX or channelY offset',
+            'adjust fromSide/toSide',
+          ],
+        });
+
+        problems.push(message);
+      }
+    } else {
+      routes.set(normalized, { conn, index, points });
+    }
+  }
+
+  return problems;
 }
 
 const pathCache = new Map();
