@@ -965,7 +965,7 @@ function detectCoincidentRoutes({ relations, endpointIds, pathFor, diagramType, 
         const connId = conn.id ? ` id "${conn.id}"` : '';
         const existingId = existing.conn.id ? ` id "${existing.conn.id}"` : '';
 
-        const message = `[composition/coincident-routes] showcase ${diagramType} ${relationCollection}[${index}]${connId} "${conn.from}" -> "${conn.to}" has identical geometry to ${relationCollection}[${existing.index}]${existingId} "${existing.conn.from}" -> "${existing.conn.to}" (${direction}) — readers cannot distinguish the connections. Remove labelAt from one or both to enable automatic port spreading, add explicit via points, or use channelX/channelY offset.`;
+        const message = `[composition/coincident-routes] showcase ${diagramType} ${relationCollection}[${index}]${connId} "${conn.from}" -> "${conn.to}" has identical geometry to ${relationCollection}[${existing.index}]${existingId} "${existing.conn.from}" -> "${existing.conn.to}" (${direction}) — readers cannot distinguish the connections. Add explicit via points, use channelX/channelY offset, or adjust fromSide/toSide to separate routes.`;
 
         // Build evidence with actual endpoint comparison
         const bothHaveLabelAt = (conn.labelAt !== undefined && existing.conn.labelAt !== undefined);
@@ -993,17 +993,11 @@ function detectCoincidentRoutes({ relations, endpointIds, pathFor, diagramType, 
             antiParallel: isAntiParallel,
             reason: bothHaveLabelAt ? 'both-have-labelAt' : 'route-coincidence',
           },
-          supportedFixes: bothHaveLabelAt
-            ? [
-                'remove labelAt from one or both connections to enable automatic port spreading',
-                'add explicit via points to separate routes',
-                'use channelX or channelY offset',
-              ]
-            : [
-                'add explicit via points to separate routes',
-                'use channelX or channelY offset',
-                'adjust fromSide/toSide',
-              ],
+          supportedFixes: [
+            'add explicit via points to separate routes',
+            'use channelX or channelY offset to separate routes',
+            'adjust fromSide/toSide to create distinct paths',
+          ],
         });
 
         problems.push(message);
