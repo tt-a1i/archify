@@ -18,6 +18,24 @@ const canonicalZipTest = (name, fn) => test(name, {
     : `canonical ZIP builds require Node ${canonicalZipNodeMajor}`,
 }, fn);
 
+function spawnBuildZip(outputPath, options = {}) {
+  const script = path.join(repoRoot, 'scripts', 'build-zip.sh');
+  const { cwd = repoRoot, ...rest } = options;
+  if (process.platform === 'win32') {
+    const bashCandidates = [
+      process.env.BASH,
+      'C:\\Program Files\\Git\\bin\\bash.exe',
+      'bash',
+    ].filter(Boolean);
+    for (const bash of bashCandidates) {
+      if (bash.includes('\\') && !fs.existsSync(bash)) continue;
+      const result = spawnSync(bash, [script, outputPath], { cwd, encoding: 'utf8', ...rest });
+      if (result.status !== 127) return result;
+    }
+  }
+  return spawnSync(script, [outputPath], { cwd, encoding: 'utf8', ...rest });
+}
+
 function workflowStep(workflow, name) {
   const marker = `      - name: ${name}`;
   const start = workflow.indexOf(marker);
@@ -271,10 +289,7 @@ canonicalZipTest('package smoke rejects every dependency metadata field in a bui
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-built-package-gate-'));
   try {
     const archive = path.join(fixture, 'archify.zip');
-    const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    });
+    const build = spawnBuildZip(archive);
     assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
 
     const extracted = path.join(fixture, 'extracted');
@@ -345,10 +360,7 @@ canonicalZipTest('archive build excludes untracked files and external symlinks f
     fs.writeFileSync(externalTarget, 'external content must not ship\n');
     fs.symlinkSync(externalTarget, externalLink, 'file');
 
-    const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    });
+    const build = spawnBuildZip(archive);
     assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
 
     const listing = spawnSync('unzip', ['-Z1', archive], { encoding: 'utf8' });
@@ -433,10 +445,7 @@ test('archive build rejects non-canonical Node versions before publishing output
     const archive = path.join(outputRoot, 'archify.zip');
     const trusted = Buffer.from('existing canonical archive');
     fs.writeFileSync(archive, trusted);
-    const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    });
+    const build = spawnBuildZip(archive);
     assert.notEqual(build.status, 0, `${build.stdout}\n${build.stderr}`);
     assert.match(build.stderr, /canonical archify\.zip builds require Node 22/);
     assert.ok(fs.readFileSync(archive).equals(trusted), 'version rejection must preserve the canonical archive');
@@ -455,9 +464,7 @@ canonicalZipTest('archive build is byte-for-byte reproducible across caller time
       [utcArchive, 'UTC'],
       [honoluluArchive, 'Pacific/Honolulu'],
     ]) {
-      const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
-        cwd: repoRoot,
-        encoding: 'utf8',
+      const build = spawnBuildZip(archive, {
         env: { ...process.env, TZ: timezone },
       });
       assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
