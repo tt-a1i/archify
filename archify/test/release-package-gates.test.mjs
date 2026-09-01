@@ -51,22 +51,11 @@ function workflowJob(workflow, name) {
   const next = workflow.slice(start + marker.length).search(/\n  [a-z][a-z0-9-]*:\n/);
   return workflow.slice(start, next === -1 ? workflow.length : start + marker.length + next);
 }
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\function workflowJob(workflow, name) {
-  const marker = `  ${name}:`;
-  const start = workflow.indexOf(marker);
-  assert.notEqual(start, -1, `workflow is missing the "${name}" job`);
-  const next = workflow.slice(start + marker.length).search(/\n  [a-z][a-z0-9-]*:\n/);
-  return workflow.slice(start, next === -1 ? workflow.length : start + marker.length + next);
-}
-');
-}
-
 function assertPinnedAction(section, action, sha, version) {
-  assert.match(
-    section,
-    new RegExp(`uses:\\s+${escapeRegExp(action)}@${sha}\\s+#\\s+${escapeRegExp(version)}(?:\\s|$)`),
-    `${action} must remain pinned to the reviewed ${version} commit`,
+  const expected = `uses: ${action}@${sha} # ${version}`;
+  assert.ok(
+    section.includes(expected),
+    `${action} must remain pinned to the reviewed ${version} commit (${sha})`,
   );
 }
 
