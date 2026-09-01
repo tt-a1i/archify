@@ -121,6 +121,10 @@
             "type": "string",
             "minLength": 1
           },
+          "height": {
+            "type": "number",
+            "minimum": 104
+          },
           "variant": {
             "enum": [
               "normal",

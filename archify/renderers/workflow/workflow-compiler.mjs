@@ -87,13 +87,20 @@ class WorkflowLayoutFeedback extends Error {
   }
 }
 
-function createLegacyLayout() {
+function authoredLaneHeight(lane) {
+  return Number.isFinite(lane?.height) ? lane.height : 104;
+}
+
+function createLegacyLayout(workflow) {
+  const laneHeights = asArray(workflow.lanes).map(authoredLaneHeight);
+  const hasAuthoredLaneHeight = laneHeights.some((height) => height !== 104);
   return {
     contract: 'fixed-v1',
     laneX: 40,
     laneY: 52,
     laneW: 640,
     laneH: 104,
+    ...(hasAuthoredLaneHeight ? { laneHeights } : {}),
     laneGap: 20,
     laneTitleH: 30,
     colXs: [...LEGACY_COLUMN_CENTERS],
@@ -472,27 +479,50 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
       widthContributors.add(`lane ${widestLaneLabel.lane.id || widestLaneLabel.lane.label} label width`);
     }
   }
-  let maxVerticalExtent = 0;
-  const verticalExtentContributors = new Set();
-  for (const node of nodes) {
-    const yOffset = Number(node.yOffset) || 0;
-    const extent = authoredNodeHeight(node) / 2 + Math.abs(yOffset);
-    const contributor = `node ${node.id} height ${authoredNodeHeight(node)}px${yOffset ? ` with yOffset ${yOffset}px` : ''}`;
-    if (extent > maxVerticalExtent + 0.0001) {
-      maxVerticalExtent = extent;
-      verticalExtentContributors.clear();
-      verticalExtentContributors.add(contributor);
-    } else if (Math.abs(extent - maxVerticalExtent) <= 0.0001) {
-      verticalExtentContributors.add(contributor);
+  const authoredHeightLaneIds = new Set(asArray(workflow.lanes)
+    .filter((lane) => Number.isFinite(lane.height))
+    .map((lane) => lane.id));
+  const verticalExtent = (laneId) => {
+    let maximum = 0;
+    const contributors = new Set();
+    for (const node of nodes) {
+      if (laneId !== undefined && node.lane !== laneId) continue;
+      if (laneId === undefined && authoredHeightLaneIds.has(node.lane)) continue;
+      const yOffset = Number(node.yOffset) || 0;
+      const extent = authoredNodeHeight(node) / 2 + Math.abs(yOffset);
+      const contributor = `node ${node.id} height ${authoredNodeHeight(node)}px${yOffset ? ` with yOffset ${yOffset}px` : ''}`;
+      if (extent > maximum + 0.0001) {
+        maximum = extent;
+        contributors.clear();
+        contributors.add(contributor);
+      } else if (Math.abs(extent - maximum) <= 0.0001) {
+        contributors.add(contributor);
+      }
     }
+    return { maximum, contributors };
+  };
+  const sharedVerticalExtent = verticalExtent();
+  const laneH = 30 + Math.max(74, Math.ceil(sharedVerticalExtent.maximum * 2 + 8));
+  if (laneH > 104) {
+    for (const contributor of sharedVerticalExtent.contributors) heightContributors.add(contributor);
   }
-  const baseContentH = Math.max(74, Math.ceil(maxVerticalExtent * 2 + 8));
-  const laneH = 30 + baseContentH;
+  const laneBaseHeights = asArray(workflow.lanes).map((lane) => {
+    if (!authoredHeightLaneIds.has(lane.id)) return laneH;
+    const ownVerticalExtent = verticalExtent(lane.id);
+    const measuredHeight = 30 + Math.max(74, Math.ceil(ownVerticalExtent.maximum * 2 + 8));
+    const height = Math.max(authoredLaneHeight(lane), measuredHeight);
+    for (const contributor of ownVerticalExtent.contributors) heightContributors.add(contributor);
+    if (authoredLaneHeight(lane) > measuredHeight) {
+      heightContributors.add(`lane ${lane.id || lane.label} authored minimum height ${authoredLaneHeight(lane)}px`);
+    }
+    return height;
+  });
   const groupsByLane = new Map();
   for (const group of asArray(workflow.groups)) {
     groupsByLane.set(group.lane, [...(groupsByLane.get(group.lane) || []), group]);
   }
-  const groupLaneReserves = asArray(workflow.lanes).map((lane) => {
+  const groupLaneReserves = asArray(workflow.lanes).map((lane, laneIndex) => {
+    const baseContentH = laneBaseHeights[laneIndex] - 30;
     let header = 0;
     let footer = 0;
     for (const group of groupsByLane.get(lane.id) || []) {
@@ -523,7 +553,9 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
   });
   const groupHeaderHeights = groupLaneReserves.map(({ header }) => header);
   const groupFooterHeights = groupLaneReserves.map(({ footer }) => footer);
-  const laneHeights = groupLaneReserves.map(({ header, footer }) => laneH + header + footer);
+  const laneHeights = groupLaneReserves.map(({ header, footer }, index) => (
+    laneBaseHeights[index] + header + footer
+  ));
   const laneGap = Math.max(20, Math.ceil(layoutFeedback.laneGapMin || 0));
   for (const [index, reserve] of groupHeaderHeights.entries()) {
     if (!reserve) continue;
@@ -534,9 +566,6 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     if (!reserve) continue;
     const lane = asArray(workflow.lanes)[index];
     heightContributors.add(`lane ${lane.id || lane.label} group frame containment ${reserve}px`);
-  }
-  if (laneH > 104) {
-    for (const contributor of verticalExtentContributors) heightContributors.add(contributor);
   }
   if (laneGap > 20) {
     for (const contributor of asArray(layoutFeedback.laneGapContributors)) {
@@ -813,7 +842,7 @@ function compileWorkflowInternal({
   };
   const layout = workflow.schema_version === 2
     ? createReadableLayout(workflow, layoutFeedback)
-    : createLegacyLayout();
+    : createLegacyLayout(workflow);
 
 const LEGEND_CATALOG = [
   'frontend',
@@ -879,6 +908,16 @@ function nodeContext(node) {
 function laneHeight(idOrIndex) {
   const index = typeof idOrIndex === 'number' ? idOrIndex : laneIndex.get(idOrIndex);
   return layout.laneHeights?.[index] ?? layout.laneH;
+}
+
+function groupFrameHeight(group) {
+  if (workflow.schema_version === 2) {
+    return laneHeight(group.lane) - layout.laneTitleH
+      - GROUP_FRAME_TOP_INSET - GROUP_FRAME_BOTTOM_INSET;
+  }
+  const lane = asArray(workflow.lanes)[laneIndex.get(group.lane)];
+  const bottomInset = Number.isFinite(lane?.height) ? GROUP_FRAME_BOTTOM_INSET : 8;
+  return laneHeight(group.lane) - layout.laneTitleH - GROUP_FRAME_TOP_INSET - bottomInset;
 }
 
 function laneGroupHeaderH(idOrIndex) {
@@ -989,10 +1028,7 @@ function workflowCompositionFrames() {
       x: span.x,
       y: laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET,
       width: span.width,
-      height: workflow.schema_version === 2
-        ? laneHeight(group.lane) - layout.laneTitleH
-          - GROUP_FRAME_TOP_INSET - GROUP_FRAME_BOTTOM_INSET
-        : layout.laneH - layout.laneTitleH - 16,
+      height: groupFrameHeight(group),
       radius: 9,
     });
   }
@@ -4053,10 +4089,7 @@ function measuredContentBounds() {
       x: span.x,
       y: laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET,
       width: span.width,
-      height: workflow.schema_version === 2
-        ? laneHeight(group.lane) - layout.laneTitleH
-          - GROUP_FRAME_TOP_INSET - GROUP_FRAME_BOTTOM_INSET
-        : layout.laneH - layout.laneTitleH - 16,
+      height: groupFrameHeight(group),
     }, `group ${group.id}`);
     if (workflow.schema_version === 2) {
       const frameY = laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET;
@@ -4176,10 +4209,7 @@ function renderPhase(phase) {
 function renderGroup(group, index) {
   const span = groupSpan(group);
   const y = laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET;
-  const height = workflow.schema_version === 2
-    ? laneHeight(group.lane) - layout.laneTitleH
-      - GROUP_FRAME_TOP_INSET - GROUP_FRAME_BOTTOM_INSET
-    : layout.laneH - layout.laneTitleH - 16;
+  const height = groupFrameHeight(group);
   const cls = group.variant === 'security' ? 'c-security-group' : 'c-lane';
   const textClass = variantAccent(group.variant);
   const labelY = workflow.schema_version === 2 ? y + GROUP_LABEL_BASELINE_OFFSET : y + 14;

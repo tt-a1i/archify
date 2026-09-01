@@ -116,6 +116,14 @@ function groupFrameRect(svg, index = 0) {
   return numericRect(attributes);
 }
 
+function laneFrameRect(svg, index = 0) {
+  const attributes = svg.match(new RegExp(
+    `<rect\\b(?=[^>]*data-composition-frame-kind="lane")(?=[^>]*data-composition-frame-id="lane-${index}")([^>]*)/>`,
+  ))?.[1];
+  assert.ok(attributes, `expected rendered lane frame ${index}`);
+  return numericRect(attributes);
+}
+
 function asciiGroupLabelTextRect(svg, label) {
   const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const attributes = svg.match(new RegExp(`<text\\b([^>]*)>${escapedLabel}</text>`))?.[1];
@@ -311,6 +319,68 @@ test('fixed-v1 keeps valid phase and group spans independent of label measuremen
     /data-composition-frame-kind="group"[^>]* x="38" y="90" width="100"/,
     'v1 group spans must retain the legacy fixed 50px padding',
   );
+});
+
+test('issue #250: an explicit v1 lane height contains vertically stacked group stages', () => {
+  const workflow = {
+    schema_version: 1,
+    diagram_type: 'workflow',
+    meta: { title: 'Stacked cage', viewBox: [720, 640], legend: { mode: 'hidden' } },
+    lanes: [{ id: 'cage', label: 'One cage', height: 450 }],
+    groups: [{ id: 'group', label: 'Cage', lane: 'cage', fromCol: 1, toCol: 3, variant: 'security' }],
+    nodes: [
+      { id: 'a', lane: 'cage', col: 2, type: 'security', label: 'Stage A', yOffset: 0 },
+      { id: 'b', lane: 'cage', col: 2, type: 'security', label: 'Stage B', yOffset: 90 },
+      { id: 'c', lane: 'cage', col: 2, type: 'security', label: 'Stage C', yOffset: 180 },
+    ],
+    edges: [
+      { id: 'a-b', from: 'a', to: 'b', fromSide: 'bottom', toSide: 'top' },
+      { id: 'b-c', from: 'b', to: 'c', fromSide: 'bottom', toSide: 'top' },
+    ],
+  };
+
+  const result = compileSuccessfully(workflow);
+  assert.equal(result.receipt.contract, 'fixed-v1');
+  const group = groupFrameRect(result.svg);
+  assert.equal(laneFrameRect(result.svg).height, 450);
+  for (const id of ['a', 'b', 'c']) assertRectInsideRect(nodeRect(result.svg, id), group, `stacked node ${id}`);
+});
+
+test('issue #250: readable-v2 expands only the lane containing a vertical stack', () => {
+  const workflow = {
+    schema_version: 2,
+    diagram_type: 'workflow',
+    meta: { title: 'Per-lane stacked cage', legend: { mode: 'hidden' } },
+    lanes: [
+      { id: 'cage', label: 'One cage', height: 500 },
+      { id: 'worker', label: 'Worker' },
+    ],
+    groups: [{ id: 'group', label: 'Cage', lane: 'cage', fromCol: 1, toCol: 3, variant: 'security' }],
+    nodes: [
+      { id: 'a', lane: 'cage', col: 2, type: 'security', label: 'Stage A', yOffset: 0 },
+      { id: 'b', lane: 'cage', col: 2, type: 'security', label: 'Stage B', yOffset: 90 },
+      { id: 'c', lane: 'cage', col: 2, type: 'security', label: 'Stage C', yOffset: 180 },
+      { id: 'worker', lane: 'worker', col: 2, type: 'backend', label: 'Worker' },
+    ],
+    edges: [],
+  };
+
+  const result = compileSuccessfully(workflow);
+  assert.equal(result.receipt.contract, 'readable-v2');
+  const cage = laneFrameRect(result.svg, 0);
+  const worker = laneFrameRect(result.svg, 1);
+  assert.equal(cage.height, 500, 'authored minimum height must control the stacked lane');
+  assert.equal(worker.height, 104, 'unrelated lane must keep the baseline height');
+  const group = groupFrameRect(result.svg);
+  for (const id of ['a', 'b', 'c']) assertRectInsideRect(nodeRect(result.svg, id), group, `stacked node ${id}`);
+});
+
+test('workflow lane.height is schema-validated as a 104px minimum', () => {
+  const workflow = adjacentWorkflow();
+  workflow.lanes[0].height = 103;
+  const result = compileWorkflow({ workflow });
+  assert.equal(result.ok, false);
+  assert.match(result.error, /lanes\/0\/height/);
 });
 
 test('fixed-v1 reports one causal column-capacity diagnostic for issue #126', () => {

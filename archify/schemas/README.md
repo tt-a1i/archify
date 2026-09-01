@@ -114,6 +114,11 @@ compatibility contract; version 2 opts into the readable workflow compiler and
 can be produced explicitly with `archify migrate workflow ... --to-schema 2`.
 The other four diagram schemas keep `schema_version` pinned to `1`.
 
+Workflow `lanes[]` accepts optional `height` as a number of at least 104px. In
+v1 it raises only that authored lane above the legacy 104px default. In v2 it
+opts that lane into independent measurement, supplies an authored minimum, and
+lets the compiler grow that lane further without stretching unrelated lanes.
+
 Workflow also accepts optional `semanticChecks`. `allowedRoots` and
 `allowedTerminals` close the set of intentional graph sources and sinks;
 `requiredEdges` requires exact authored relationships; and `requiredPaths`
