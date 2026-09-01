@@ -17,6 +17,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { minimumReadableSourceTextPx } from '../renderers/shared/desktop-readability.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -1066,6 +1067,344 @@ test('sequence: showcase rejects a message label that hides an adjacent route', 
   assert.match(stderr, /\[composition\/label-route-clearance\] showcase sequence/);
   assert.match(stderr, /customer authorization context.*dashboard-request/);
 });
+
+// A label rect that leaves the viewBox is clipped by the SVG canvas, so the
+// artifact ships truncated text while every post-render check still passes.
+function offCanvasLabelDocument() {
+  return {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Off-canvas label', quality_profile: 'showcase', viewBox: [720, 400] },
+    components: [
+      { id: 'left', type: 'frontend', label: 'Left', pos: [60, 160], size: [120, 54] },
+      { id: 'right', type: 'backend', label: 'Right', pos: [420, 160], size: [120, 54] },
+    ],
+    connections: [{
+      id: 'left-to-right',
+      from: 'left',
+      to: 'right',
+      label: 'a very long edge label that runs off the canvas',
+      labelAt: [640, 140],
+    }],
+  };
+}
+
+test('architecture: showcase rejects a connection label that leaves the canvas', () => {
+  const { code, stderr } = render('architecture', offCanvasLabelDocument());
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-canvas-containment\] showcase architecture label "a very long edge label that runs off the canvas" on connections\[0\] id "left-to-right"/);
+  assert.match(stderr, /extends past the right edge by 37\.8px/);
+  assert.match(stderr, /viewBox 720x400/);
+  assert.match(stderr, /labelAt.*labelDx.*labelDy.*labelSegment/);
+});
+
+test('architecture: standard keeps a label that leaves the canvas renderable', () => {
+  const d = offCanvasLabelDocument();
+  d.meta.quality_profile = 'standard';
+  const { code, stderr } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+});
+
+// The same pin is a defect on the fixed-v1 canvas and a legitimate layout on
+// readable-v2; see collectLabelCanvasOverflow in renderers/shared/geometry.mjs.
+function offCanvasWorkflowLabelDocument(schemaVersion) {
+  return {
+    schema_version: schemaVersion,
+    diagram_type: 'workflow',
+    meta: {
+      title: 'Workflow label off canvas',
+      quality_profile: 'showcase',
+      viewBox: [720, 400],
+      legend: { mode: 'hidden' },
+    },
+    lanes: [{ id: 'main', label: 'Main flow' }],
+    nodes: [
+      { id: 'a', lane: 'main', col: 0, type: 'backend', label: 'A' },
+      { id: 'b', lane: 'main', col: 2, type: 'backend', label: 'B' },
+    ],
+    edges: [{ id: 'a-to-b', from: 'a', to: 'b', label: 'dispatch the planned tool call', labelAt: [700, 240] }],
+  };
+}
+
+test('workflow: showcase rejects a v1 edge label that leaves the canvas', () => {
+  const { code, stderr } = render('workflow', offCanvasWorkflowLabelDocument(1));
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-canvas-containment\] showcase workflow label "dispatch the planned tool call" on edges\[0\] id "a-to-b"/);
+  assert.match(stderr, /extends past the right edge by 57px \(label rect \[623, 230, 154, 14\]; viewBox 720x400\)/);
+});
+
+test('workflow: readable-v2 contains the same pinned label without this rule', () => {
+  const grown = offCanvasWorkflowLabelDocument(2);
+  delete grown.meta.viewBox;
+  const { code, stderr, outPath } = render('workflow', grown);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const [, width] = html.match(/viewBox="0 0 (\d+) (\d+)"/).map(Number);
+  assert.ok(width >= 777, `expected the v2 canvas to contain the label rect, got width ${width}`);
+
+  // An authored v2 viewBox that cannot hold the layout is already rejected by
+  // the compiler's own contract, with its own minimum in the message.
+  const pinned = render('workflow', offCanvasWorkflowLabelDocument(2));
+  assert.notEqual(pinned.code, 0, `expected non-zero exit; stderr:\n${pinned.stderr}`);
+  assert.match(pinned.stderr, /cannot contain the readable-v2 layout; minimum \d+×\d+/);
+  assert.doesNotMatch(pinned.stderr, /label-canvas-containment/);
+});
+
+test('dataflow: showcase rejects a flow label that leaves the canvas', () => {
+  const d = load('dataflow');
+  d.flows[0].label = 'clickstream ingest with enrichment';
+  d.flows[0].labelAt = [1070, 400];
+  const { code, stderr } = render('dataflow', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-canvas-containment\] showcase dataflow label "clickstream ingest with enrichment" on flows\[0\]/);
+  assert.match(stderr, /extends past the right edge by 79\.3px .*viewBox 1080x760/);
+});
+
+test('lifecycle: showcase rejects a transition label that leaves the canvas', () => {
+  const d = load('lifecycle');
+  d.transitions[0].label = 'operator approves the escalation';
+  d.transitions[0].labelAt = [960, 300];
+  const { code, stderr } = render('lifecycle', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-canvas-containment\] showcase lifecycle label "operator approves the escalation" on transitions\[0\]/);
+  assert.match(stderr, /extends past the right edge by 64\.4px .*viewBox 980x660/);
+});
+
+// The repair side of the same contract: a suggested labelAt, applied verbatim,
+// must clear the obstacle the message names. Both 27px two-line forms used to
+// get an "above" hint that landed the rect back on the obstacle, so the
+// validator answered its own fix with the identical message.
+function suggestedLabelAts(stderr) {
+  return [...new Set(stderr.match(/set labelAt \[-?\d+, -?\d+\]/g) || [])]
+    .map((match) => match.match(/\[(-?\d+), (-?\d+)\]/).slice(1, 3).map(Number));
+}
+
+test('dataflow: obstacle hints for a two-line classification label survive being applied', () => {
+  const d = load('dataflow');
+  d.flows[0].labelAt = [100, 150];
+  const { code, stderr } = render('dataflow', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /Label "clickstream" overlaps node "web"/);
+  const suggestions = suggestedLabelAts(stderr);
+  assert.equal(suggestions.length, 2, stderr);
+  for (const labelAt of suggestions) {
+    const applied = load('dataflow');
+    applied.flows[0].labelAt = labelAt;
+    const result = render('dataflow', applied);
+    assert.equal(result.code, 0, `labelAt [${labelAt}]: ${result.stderr}`);
+  }
+});
+
+test('lifecycle: obstacle hints for a two-line note label survive being applied', () => {
+  const withLabel = (labelAt) => {
+    const d = load('lifecycle');
+    d.transitions[0].label = 'needs approval';
+    d.transitions[0].note = 'security gate';
+    d.transitions[0].labelAt = labelAt;
+    return d;
+  };
+  const { code, stderr } = render('lifecycle', withLabel([400, 180]));
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /Label "needs approval" overlaps state "executing"/);
+  const suggestions = suggestedLabelAts(stderr);
+  assert.equal(suggestions.length, 2, stderr);
+  for (const labelAt of suggestions) {
+    const result = render('lifecycle', withLabel(labelAt));
+    // The hint's contract covers the named obstacle and the canvas; a residual
+    // route-clearance issue at the new spot is that rule's own report.
+    assert.doesNotMatch(result.stderr, /overlaps state "executing"/, `labelAt [${labelAt}]: ${result.stderr}`);
+  }
+});
+
+test('sequence: showcase rejects a message label that leaves the canvas', () => {
+  const d = load('sequence');
+  d.messages = d.messages.slice(0, 1);
+  d.messages[0].label = 'request the cached dashboard payload for the current reporting window and retry budget';
+  d.segments = [];
+  d.activations = [];
+  const { code, stderr } = render('sequence', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-canvas-containment\] showcase sequence label ".*" on messages\[0\]/);
+  assert.match(stderr, /extends past the left edge by 113\.6px .*viewBox 820x760/);
+  assert.match(stderr, /shorten the label, reorder participants, or enlarge meta\.viewBox/);
+});
+
+// An auto canvas is derived geometry, so it has to cover the label rects the
+// containment rule measures. An authored viewBox is the author's decision and
+// is never resized; there the rule reports the clipping instead.
+test('architecture: an auto viewBox grows to contain a wide connection label', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Auto canvas with a wide label', quality_profile: 'showcase' },
+    components: [
+      { id: 'left', type: 'frontend', label: 'Left', pos: [60, 160], size: [120, 54] },
+      { id: 'right', type: 'backend', label: 'Right', pos: [420, 160], size: [120, 54] },
+    ],
+    connections: [{
+      id: 'left-to-right',
+      from: 'left',
+      to: 'right',
+      label: 'a very long edge label that runs off the canvas',
+      labelAt: [640, 140],
+    }],
+  };
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const [, width] = html.match(/viewBox="0 0 (\d+) (\d+)"/).map(Number);
+  const mask = html.match(/<g data-detail="context"[^>]*>\s*<rect x="([\d.-]+)"[^>]*width="([\d.]+)"/);
+  const labelRight = Number(mask[1]) + Number(mask[2]);
+  assert.ok(labelRight <= width, `label right edge ${labelRight} exceeds the ${width}px auto canvas`);
+
+  const authored = structuredClone(d);
+  authored.meta.viewBox = [720, 400];
+  const pinned = render('architecture', authored);
+  assert.notEqual(pinned.code, 0, `expected non-zero exit; stderr:\n${pinned.stderr}`);
+  assert.match(pinned.stderr, /\[composition\/label-canvas-containment\]/);
+});
+
+// Boundary-title fonts are resolved against the same width the canvas actually
+// renders into. When a connection label alone widens the auto canvas past the
+// desktop reader width, the title font must rise with it — otherwise validate
+// would pass an artifact the desktop-readability check rejects.
+test('architecture: label-driven canvas growth keeps boundary titles at the readability floor', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Label-grown canvas', quality_profile: 'showcase' },
+    boundaries: [{
+      kind: 'region',
+      label: 'Shared production tenant isolation and compliance perimeter for the primary region',
+      wraps: ['a', 'b', 'c'],
+    }],
+    components: [
+      { id: 'a', type: 'frontend', label: 'A', pos: [60, 160], size: [140, 54] },
+      { id: 'b', type: 'backend', label: 'B', pos: [480, 160], size: [140, 54] },
+      { id: 'c', type: 'backend', label: 'C', pos: [860, 160], size: [140, 54] },
+      { id: 'd', type: 'database', label: 'D', pos: [860, 320], size: [140, 54] },
+    ],
+    connections: [{
+      id: 'c-to-d',
+      from: 'c',
+      to: 'd',
+      label: 'streaming replication of the full transaction journal with retries',
+      labelAt: [1310, 300],
+    }],
+  };
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const [, width] = html.match(/viewBox="0 0 (\d+) (\d+)"/).map(Number);
+  assert.ok(width > 1395, `expected the label to grow the canvas past 1395px, got ${width}`);
+  const floor = minimumReadableSourceTextPx(width);
+  const fonts = [...html.matchAll(/data-boundary-label=""[^>]*font-size="([\d.]+)"/g)]
+    .map(([, size]) => Number(size));
+  assert.equal(fonts.length, 1, 'expected exactly one boundary title');
+  assert.ok(
+    fonts[0] + 1e-6 >= floor,
+    `boundary title font ${fonts[0]} is below the ${floor}px floor for the ${width}px canvas`,
+  );
+});
+
+// The validator must not answer an off-canvas defect with another off-canvas
+// coordinate: every suggested labelAt has to keep the whole label rect inside.
+test('architecture: label obstacle fixes stay inside the viewBox', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Label on a component near the edge', quality_profile: 'showcase', viewBox: [720, 400] },
+    components: [
+      { id: 'left', type: 'frontend', label: 'Left', pos: [40, 180], size: [120, 54] },
+      { id: 'right', type: 'backend', label: 'Right', pos: [540, 336], size: [160, 54] },
+    ],
+    connections: [{
+      id: 'left-to-right',
+      from: 'left',
+      to: 'right',
+      label: 'synchronous call with retries and backoff',
+      labelAt: [660, 360],
+    }],
+  };
+  const { code, stderr } = render('architecture', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /overlaps component "right"/);
+  const rect = stderr.match(/label rect: \[(-?\d+), (-?\d+), (\d+), (\d+)\]/);
+  assert.ok(rect, `expected a label rect in stderr:\n${stderr}`);
+  const width = Number(rect[3]);
+  const height = Number(rect[4]);
+  const suggestions = suggestedLabelAts(stderr);
+  assert.ok(suggestions.length > 0, `expected at least one labelAt suggestion:\n${stderr}`);
+  for (const [x, y] of suggestions) {
+    assert.ok(x - width / 2 >= 0 && x + width / 2 <= 720, `labelAt [${x}, ${y}] leaves the 720px canvas width (label width ${width})`);
+    assert.ok(y - 10 >= 0 && y - 10 + height <= 400, `labelAt [${x}, ${y}] leaves the 400px canvas height (label height ${height})`);
+  }
+});
+
+// Reading the coordinates is not enough: a hint is only executable if applying
+// it to the document actually clears both the obstacle and the canvas edge.
+// The relative form is where that breaks — its delta has to be measured from
+// the document's own labelDx/labelDy, and it means nothing at all while an
+// authored labelAt is present, because labelPoint returns labelAt unchanged.
+function pinnedLabelDocument(labelControls) {
+  return {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Label pinned to the right edge', quality_profile: 'showcase', viewBox: [720, 400] },
+    components: [
+      { id: 'edge', type: 'cloud', label: 'Edge', pos: [560, 60], size: [140, 54] },
+      { id: 'sink', type: 'database', label: 'Sink', pos: [560, 240], size: [140, 54] },
+    ],
+    connections: [{
+      id: 'edge-to-sink',
+      from: 'edge',
+      to: 'sink',
+      label: 'batched telemetry upload with retry and backoff',
+      ...labelControls,
+    }],
+  };
+}
+
+function suggestedLabelFixes(stderr) {
+  const unique = new Map();
+  for (const [hint, x, y] of stderr.matchAll(/set labelAt \[(-?\d+), (-?\d+)\]/g)) {
+    unique.set(hint, { labelAt: [Number(x), Number(y)] });
+  }
+  for (const [hint, dx, dy] of stderr.matchAll(/set labelDx (-?\d+) with labelDy (-?\d+)/g)) {
+    unique.set(hint, { labelDx: Number(dx), labelDy: Number(dy) });
+  }
+  for (const [hint, dy] of stderr.matchAll(/or set (labelDy (-?\d+))/g)) {
+    unique.set(hint, { labelDy: Number(dy) });
+  }
+  return [...unique];
+}
+
+for (const [name, labelControls, expectedFixes] of [
+  ['no authored label controls', {}, 4],
+  ['an authored labelDx', { labelDx: 120 }, 4],
+  ['an authored labelAt', { labelAt: [660, 104] }, 2],
+]) {
+  test(`architecture: every label obstacle fix renders clean when applied to a document with ${name}`, () => {
+    const source = pinnedLabelDocument(labelControls);
+    const { code, stderr } = render('architecture', source);
+    assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+    assert.match(stderr, /overlaps component "edge"/);
+    assert.match(stderr, /\[composition\/label-canvas-containment\]/);
+
+    const fixes = suggestedLabelFixes(stderr);
+    assert.equal(fixes.length, expectedFixes, `unexpected suggestion set:\n${stderr}`);
+    // An authored labelAt outranks labelDx/labelDy, so a relative suggestion
+    // there would be a fix that changes nothing.
+    if (Array.isArray(labelControls.labelAt)) assert.doesNotMatch(stderr, /set labelD[xy] /);
+
+    for (const [hint, patch] of fixes) {
+      const repaired = structuredClone(source);
+      Object.assign(repaired.connections[0], patch);
+      const result = render('architecture', repaired);
+      assert.equal(result.code, 0, `applying "${hint}" still fails:\n${result.stderr}`);
+    }
+  });
+}
 
 function autoRoutePassThroughDocument(connection) {
   return {

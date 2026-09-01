@@ -943,6 +943,111 @@ export function cleanLabelRouteClearanceProblems({
   });
 }
 
+// How far [start, start + size) leaves [0, extent), per end of one axis. This
+// is the single definition of "inside the canvas" that both the containment
+// rule and the repair hints measure against; an unknown extent bounds nothing.
+function axisCanvasOverflow(start, size, extent, origin = 0) {
+  if (!Number.isFinite(extent)) return { start: 0, end: 0 };
+  return { start: origin - start, end: start + size - (origin + extent) };
+}
+
+// THE CANVAS CONTAINMENT RATIONALE (referenced from the other call sites).
+//
+// The SVG canvas clips whatever leaves the viewBox, so an edge label that
+// overhangs an edge ships as truncated text while every post-render check on
+// the emitted markup still passes: clipped text is still well-formed markup.
+// Renderers with a fixed canvas already bound their nodes, lanes, and legends
+// against it; edge label rects were the exception.
+//
+// Not applied to readable-v2 workflows: that compiler grows its canvas around
+// pinned label rects and rejects an authored viewBox that cannot hold the
+// result, so the only gap growth cannot close is the origin its own rule
+// already guards. Architecture's auto canvas grows the same way, which leaves
+// this rule reporting authored viewBoxes and the origin side.
+//
+// Showcase only: a standard document authored before the rule exists may
+// overhang by a few pixels, and failing it there would break compatibility
+// instead of repairing a diagram.
+export function collectLabelCanvasOverflow({ labels, viewBox, tolerance = 0.5 }) {
+  // Renderers author origin-zero canvases (meta.viewBox is [width, height] by
+  // schema), but `check` re-measures foreign artifacts whose SVG viewBox may
+  // carry a legal non-zero min-x/min-y; those pass all four numbers.
+  const box = asArray(viewBox);
+  const [originX, originY, canvasWidth, canvasHeight] = box.length === 4 ? box : [0, 0, box[0], box[1]];
+  if (!isFinitePoint(originX, originY, canvasWidth, canvasHeight)) return [];
+  const hits = [];
+  for (const [fallbackIndex, label] of asArray(labels).entries()) {
+    const rect = label?.rect || label;
+    if (!rect || !isFinitePoint(rect.x, rect.y, rect.width, rect.height)) continue;
+    // `check` parses foreign markup, so a malformed negative-size rect is
+    // skipped like the other label collectors do — its flipped interval would
+    // otherwise read as contained.
+    if (rect.width < 0 || rect.height < 0) continue;
+    const horizontal = axisCanvasOverflow(rect.x, rect.width, canvasWidth, originX);
+    const vertical = axisCanvasOverflow(rect.y, rect.height, canvasHeight, originY);
+    const overflow = {
+      left: horizontal.start,
+      right: horizontal.end,
+      top: vertical.start,
+      bottom: vertical.end,
+    };
+    const sides = Object.keys(overflow).filter((side) => overflow[side] > tolerance);
+    if (!sides.length) continue;
+    hits.push({
+      label,
+      relation: label?.relation,
+      relationIndex: Number.isInteger(label?.relationIndex) ? label.relationIndex : fallbackIndex,
+      rect,
+      viewBox: [canvasWidth, canvasHeight],
+      viewBoxOrigin: [originX, originY],
+      sides,
+      overflowPx: Object.fromEntries(sides.map((side) => [side, Math.round(overflow[side] * 10) / 10])),
+      tolerance,
+    });
+  }
+  return hits;
+}
+
+export function describeLabelCanvasOverflow(hit) {
+  return hit.sides.map((side) => `${side} edge by ${hit.overflowPx[side]}px`).join(' and ');
+}
+
+export function cleanLabelCanvasContainmentProblems({
+  labels,
+  viewBox,
+  diagramType,
+  relationCollection,
+  profile,
+  profileIsAuthoritative = false,
+  routeHint = 'adjust labelAt, labelDx, labelDy, or labelSegment; otherwise enlarge meta.viewBox',
+  // Label widths are estimated from the text, not measured, so sub-pixel
+  // overhang is rounding noise rather than a visible truncation.
+  tolerance = 0.5,
+}) {
+  if (qualityProfileForGate(profile, profileIsAuthoritative) !== 'showcase') return [];
+  return collectLabelCanvasOverflow({ labels, viewBox, tolerance }).map((hit) => {
+    const relation = hit.relation;
+    const relationId = relation?.id ? ` id "${relation.id}"` : '';
+    const labelText = hit.label?.label || relation?.label || '';
+    const message = `[composition/label-canvas-containment] showcase ${diagramType} label "${labelText}" on ${relationCollection}[${hit.relationIndex}]${relationId} "${relation?.from}" -> "${relation?.to}" extends past the ${describeLabelCanvasOverflow(hit)} (label rect ${formatRect(hit.rect)}; viewBox ${hit.viewBox[0]}x${hit.viewBox[1]}) — ${routeHint}.`;
+    recordDiagnostic({
+      code: 'composition/label-canvas-containment',
+      severity: 'error',
+      message,
+      subject: relationshipSubject(diagramType, relationCollection, hit.relationIndex, relation),
+      evidence: {
+        label: labelText,
+        labelRect: { x: hit.rect.x, y: hit.rect.y, width: hit.rect.width, height: hit.rect.height },
+        viewBox: hit.viewBox,
+        overflowPx: hit.overflowPx,
+        tolerancePx: hit.tolerance,
+      },
+      supportedFixes: [routeHint],
+    });
+    return message;
+  });
+}
+
 function qualityProfileForGate(profile, profileIsAuthoritative) {
   return profileIsAuthoritative
     ? profile
@@ -1386,22 +1491,114 @@ export function formatRect(r) {
   return `[${Math.round(r.x)}, ${Math.round(r.y)}, ${Math.round(r.width)}, ${Math.round(r.height)}]`;
 }
 
-function formatDelta(n) {
-  const v = Math.round(n);
-  return v >= 0 ? `+${v}` : String(v);
+function formatValue(n) {
+  return String(Math.round(n));
 }
 
-/** Actionable hint when an edge label rect hits a node/component box (#7). */
-export function suggestLabelObstacleFix(labelRect, lx, ly, obstacle, obstacleKind = 'component') {
-  const lxR = Math.round(lx);
-  const lyR = Math.round(ly);
-  const belowY = Math.round(obstacle.y + obstacle.height + 14);
-  const aboveY = Math.round(obstacle.y - 4);
-  return [
+// A label anchor is the text origin, so keeping a suggestion on the canvas
+// means moving the whole rect: offset is `rect - anchor` on that axis.
+function anchorFitsCanvas(anchorValue, offset, size, extent) {
+  const overflow = axisCanvasOverflow(anchorValue + offset, size, extent);
+  return overflow.start <= 0 && overflow.end <= 0;
+}
+
+// Suggestions are emitted as integers, so the real-valued bounds are tightened
+// inward with ceil/floor first: every integer between them keeps the whole rect
+// on the canvas, which a bound like 616.7 would not. Returns null when the rect
+// is wider than the canvas and no anchor can contain it.
+function clampAnchorToCanvas(anchorValue, offset, size, extent) {
+  const rounded = Math.round(anchorValue);
+  if (!Number.isFinite(extent)) return rounded;
+  const min = Math.ceil(-offset);
+  const max = Math.floor(extent - size - offset);
+  return max < min ? null : Math.min(Math.max(rounded, min), max);
+}
+
+/**
+ * Actionable hint when an edge label rect hits a node/component box (#7).
+ * Every suggested value is a replacement for the authored field, not an
+ * increment, and has to survive being applied to the document:
+ * - the absolute form is nudged along x so the rect stays on the canvas, and a
+ *   vertical placement that cannot fit is dropped rather than clamped, since
+ *   clamping it back would push the label onto the obstacle it must clear;
+ * - the relative form is offered only when labelDx/labelDy actually move this
+ *   label (labelPoint returns an authored labelAt as-is) and only when the
+ *   replacements, computed from the document's own labelDx/labelDy, land the
+ *   rect inside the canvas.
+ * The authored values therefore come from `labelRect.relation`, the authored
+ * relationship the renderer already attaches to every label record.
+ * `obstacles` is every box the callers' own overlap loop tests (defaults to
+ * the named obstacle alone): a placement that merely traded the named obstacle
+ * for its neighbor would fail the same rule again when applied.
+ */
+export function suggestLabelObstacleFix(labelRect, lx, ly, obstacle, obstacleKind = 'component', viewBox, obstacles) {
+  // Renderer canvases are origin-zero [width, height] by schema, but read a
+  // 4-number [min-x, min-y, width, height] the same way the containment
+  // collector does — degraded no-ajv runs must not clamp against the origin
+  // pair as if it were the canvas size.
+  const box = asArray(viewBox);
+  const [canvasWidth, canvasHeight] = box.length === 4 ? box.slice(2) : box;
+  const xOffset = labelRect.x - lx;
+  const yOffset = labelRect.y - ly;
+  const anchorX = clampAnchorToCanvas(lx, xOffset, labelRect.width, canvasWidth);
+  // The placement anchors are derived from the label's own rect, not from the
+  // obstacle alone: an obstacle-only "above" anchor assumes the 14px
+  // single-line rect and lands a 27px two-line rect (dataflow classification,
+  // lifecycle note) back on the obstacle it must clear. The overlap filter
+  // uses the callers' own detection call, so a surviving hint cannot re-raise
+  // the problem it repairs.
+  const blockers = obstacles ? [...obstacles] : [obstacle];
+  const placements = [
+    { name: 'below', y: Math.round(obstacle.y + obstacle.height + 4 - yOffset) },
+    { name: 'above', y: Math.round(obstacle.y - 4 - labelRect.height - yOffset) },
+  ].filter(({ y }) => anchorX !== null
+    && anchorFitsCanvas(y, yOffset, labelRect.height, canvasHeight)
+    && blockers.every((blocker) => !rectsOverlap(
+      { x: anchorX + xOffset, y: y + yOffset, width: labelRect.width, height: labelRect.height },
+      blocker,
+      -2,
+    )));
+  const lines = [
     `  label rect: ${formatRect(labelRect)}`,
     `  ${obstacleKind} "${obstacle.id}" rect: ${formatRect(obstacle)}`,
-    `  Suggested fix: labelAt [${lxR}, ${belowY}] or labelDy ${formatDelta(belowY - lyR)} (below); or labelAt [${lxR}, ${aboveY}] or labelDy ${formatDelta(aboveY - lyR)} (above)`,
-  ].join('\n');
+  ];
+  if (!placements.length) {
+    // Only the vertical slots beside the named obstacle were tried, so an
+    // unclaimed spot elsewhere may still exist — never assert that none does.
+    lines.push(anchorX === null
+      ? `  Suggested fix: the ${Math.round(labelRect.width)}px label rect cannot fit the ${canvasWidth}x${canvasHeight} viewBox at any anchor — shorten the label or enlarge meta.viewBox`
+      : `  Suggested fix: no placement directly above or below "${obstacle.id}" stays clear inside the ${canvasWidth}x${canvasHeight} viewBox — move the label to an open area with labelAt, shorten the label, move the ${obstacleKind}, or enlarge meta.viewBox`);
+    return lines.join('\n');
+  }
+  const authored = labelRect.relation || {};
+  const authoredDx = Number.isFinite(authored.labelDx) ? authored.labelDx : 0;
+  const authoredDy = Number.isFinite(authored.labelDy) ? authored.labelDy : 0;
+  const relativeHint = (y) => {
+    if (Array.isArray(authored.labelAt)) return null;
+    // Both replacements are measured from the automatic label point that the
+    // authored offsets are applied to, and against the unrounded anchor: a
+    // rounded base would shift the applied label by up to a pixel.
+    const dx = Math.round(authoredDx + anchorX - lx);
+    const dy = Math.round(authoredDy + y - ly);
+    // labelDx is authored as a number, so an authored fraction must not read as
+    // a needed nudge once the replacement is rounded to an integer.
+    const movesX = Math.abs(dx - authoredDx) >= 0.5;
+    const landsAtX = lx - authoredDx + (movesX ? dx : authoredDx);
+    const landsAtY = ly - authoredDy + dy;
+    if (!anchorFitsCanvas(landsAtX, xOffset, labelRect.width, canvasWidth)) return null;
+    if (!anchorFitsCanvas(landsAtY, yOffset, labelRect.height, canvasHeight)) return null;
+    return movesX
+      ? `set labelDx ${formatValue(dx)} with labelDy ${formatValue(dy)}`
+      : `set labelDy ${formatValue(dy)}`;
+  };
+  const hint = placements
+    .map(({ name, y }) => {
+      const relative = relativeHint(y);
+      return `set labelAt [${anchorX}, ${y}]${relative ? ` or ${relative}` : ''} (${name})`;
+    })
+    .join('; or ');
+  lines.push(`  Suggested fix: ${hint}`);
+  return lines.join('\n');
 }
 
 /** Hint when two edge labels collide. */

@@ -142,6 +142,7 @@ a time.
 3. Fix edge-through-node and endpoint-direction errors.
 4. Fix crossings, ambiguous corridors, border runs, and route rhythm.
 5. Fix label-to-node, label-to-label, then label-to-route clearance.
+6. Fix labels that leave the canvas: move the label with `labelAt`/`labelDx`/`labelDy`/`labelSegment`, or widen `meta.viewBox`. Suggested `labelDx`/`labelDy` values replace the authored field; they are not added to it.
 
 Run `validate` after every edit. Consume `diagnostics[]` by stable `code`, exact `subject`, measured `evidence`, and `supportedFixes`. If the diagnostic gives `labelAt`, use that point instead of estimating another offset.
 

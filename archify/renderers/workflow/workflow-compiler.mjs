@@ -34,6 +34,7 @@ import {
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   cleanLabelRouteClearanceProblems,
+  cleanLabelCanvasContainmentProblems,
   collectAmbiguousCorridors,
   collectLabelRouteClearance,
   collectBorderRuns,
@@ -2451,7 +2452,7 @@ function validateWorkflow() {
   for (const rect of labelRects) {
     for (const node of nodes.values()) {
       if (rectsOverlap(rect, node, -2)) {
-        problems.push(`Label "${rect.label}" overlaps node "${node.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, node, 'node')}`);
+        problems.push(`Label "${rect.label}" overlaps node "${node.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, node, 'node', viewBox, nodes.values())}`);
       }
     }
   }
@@ -2480,6 +2481,15 @@ function validateWorkflow() {
     if (legendY() + 18 > viewBox[1]) {
       problems.push(`Legend exceeds viewBox height ${viewBox[1]} — set meta.viewBox[1] to at least ${legendY() + 18}.`);
     }
+    // v1 only; see collectLabelCanvasOverflow in shared/geometry.mjs.
+    problems.push(...cleanLabelCanvasContainmentProblems({
+      labels: labelRects,
+      viewBox,
+      diagramType: 'workflow',
+      relationCollection: 'edges',
+      profile: workflow.meta?.quality_profile,
+      profileIsAuthoritative: true,
+    }));
   }
 
   if (problems.length) {

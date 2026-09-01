@@ -36,6 +36,7 @@ import {
   labelPoint,
   suggestLabelObstacleFix,
   suggestComponentSeparation,
+  cleanLabelCanvasContainmentProblems,
 } from '../renderers/shared/geometry.mjs';
 import { textUnits, applyTemplate, renderSemanticSigil } from '../renderers/shared/utils.mjs';
 
@@ -674,8 +675,256 @@ test('suggestLabelObstacleFix includes rects and labelAt/labelDy hints', () => {
   const hint = suggestLabelObstacleFix(labelRect, 124, 188, obstacle);
   assert.match(hint, /label rect: \[100, 180, 48, 14\]/);
   assert.match(hint, /component "memtool"/);
-  assert.match(hint, /Suggested fix: labelAt/);
-  assert.match(hint, /labelDy \+\d+/);
+  assert.match(hint, /Suggested fix: set labelAt/);
+  assert.match(hint, /set labelDy \d+/);
+});
+
+// Agents parse this hint, so pin the whole string for the no-viewBox contract.
+test('suggestLabelObstacleFix states its no-viewBox hint as replacement values', () => {
+  const labelRect = { x: 100, y: 180, width: 48, height: 14, label: '写入' };
+  const obstacle = { id: 'memtool', x: 30, y: 130, width: 230, height: 58 };
+  assert.equal(suggestLabelObstacleFix(labelRect, 124, 188, obstacle), [
+    '  label rect: [100, 180, 48, 14]',
+    '  component "memtool" rect: [30, 130, 230, 58]',
+    '  Suggested fix: set labelAt [124, 200] or set labelDy 12 (below); or set labelAt [124, 120] or set labelDy -68 (above)',
+  ].join('\n'));
+});
+
+test('suggestLabelObstacleFix carries an x nudge into the relative form', () => {
+  const labelRect = { x: 512, y: 94, width: 236, height: 14, label: 'batched telemetry upload' };
+  const obstacle = { id: 'edge', x: 560, y: 60, width: 140, height: 54 };
+  const hint = suggestLabelObstacleFix(labelRect, 630, 104, obstacle, 'component', [720, 400]);
+  assert.match(hint, /set labelAt \[602, 128\] or set labelDx -28 with labelDy 24 \(below\)/);
+  assert.doesNotMatch(hint, /or set labelDy /);
+});
+
+// labelDx/labelDy are offsets from the automatic label point, so a suggestion
+// has to be expressed relative to the values the document already carries.
+test('suggestLabelObstacleFix measures its relative fix from the authored labelDx', () => {
+  const obstacle = { id: 'edge', x: 560, y: 60, width: 140, height: 54 };
+  const authoredAnchor = 750; // automatic point 630 plus the authored labelDx
+  const labelRect = {
+    relation: { label: 'batched telemetry upload', labelDx: 120 },
+    x: authoredAnchor - 118,
+    y: 94,
+    width: 236,
+    height: 14,
+    label: 'batched telemetry upload',
+  };
+  const hint = suggestLabelObstacleFix(labelRect, authoredAnchor, 104, obstacle, 'component', [720, 400]);
+  // 120 + 602 - 750 lands the automatic point at the clamped anchor; the
+  // anchor-relative -148 would land it 120px away.
+  assert.match(hint, /set labelAt \[602, 128\] or set labelDx -28 with labelDy 24 \(below\)/);
+});
+
+test('suggestLabelObstacleFix offers no relative fix while labelAt is authored', () => {
+  const obstacle = { id: 'right', x: 540, y: 336, width: 160, height: 54 };
+  const labelRect = {
+    relation: { label: 'synchronous call', labelAt: [660, 360] },
+    x: 542,
+    y: 350,
+    width: 236,
+    height: 14,
+    label: 'synchronous call',
+  };
+  const hint = suggestLabelObstacleFix(labelRect, 660, 360, obstacle, 'component', [720, 400]);
+  assert.match(hint, /Suggested fix: set labelAt \[602, 328\] \(above\)$/);
+  assert.doesNotMatch(hint, /labelD[xy]/);
+});
+
+// The deltas are emitted as integers, so a fractional anchor sitting exactly on
+// a canvas bound cannot be expressed relatively without landing back outside.
+test('suggestLabelObstacleFix drops a relative fix that integer deltas cannot land inside', () => {
+  const obstacle = { id: 'api', x: 520, y: 180, width: 140, height: 54 };
+  const rectFor = (anchorX) => ({
+    relation: { label: 'edge' },
+    x: anchorX - 100,
+    y: 190,
+    width: 200,
+    height: 14,
+    label: 'edge',
+  });
+  assert.doesNotMatch(
+    suggestLabelObstacleFix(rectFor(620.5), 620.5, 200, obstacle, 'component', [720, 400]),
+    /labelD[xy]/,
+  );
+  assert.match(
+    suggestLabelObstacleFix(rectFor(620), 620, 200, obstacle, 'component', [720, 400]),
+    /set labelAt \[620, 248\] or set labelDy 48 \(below\)/,
+  );
+});
+
+// A rounded anchor as the measurement base adds its own residual to the
+// residual of rounding the suggestion, which can drift the applied label past
+// the containment tolerance. Measure from the real anchor instead.
+test('suggestLabelObstacleFix measures its relative fix from a fractional anchor', () => {
+  const anchorY = 200.6;
+  const labelRect = {
+    relation: { label: 'edge', labelDy: 0.3 },
+    x: 240,
+    y: anchorY - 10,
+    width: 120,
+    height: 14,
+    label: 'edge',
+  };
+  const obstacle = { id: 'api', x: 260, y: 180, width: 140, height: 54 };
+  const hint = suggestLabelObstacleFix(labelRect, 300, anchorY, obstacle, 'component', [720, 400]);
+  const suggested = Number(hint.match(/set labelDy (-?\d+) \(below\)/)[1]);
+  const placement = obstacle.y + obstacle.height + 14;
+  const landsAt = anchorY - labelRect.relation.labelDy + suggested;
+  assert.ok(
+    Math.abs(landsAt - placement) <= 0.5,
+    `labelDy ${suggested} lands the label at ${landsAt}, ${Math.abs(landsAt - placement)}px from the ${placement} placement`,
+  );
+});
+
+test('suggestLabelObstacleFix treats a fractional authored labelDx as no horizontal move', () => {
+  const labelRect = {
+    relation: { label: 'edge', labelDx: 40.4 },
+    x: 240,
+    y: 190,
+    width: 120,
+    height: 14,
+    label: 'edge',
+  };
+  const obstacle = { id: 'api', x: 260, y: 180, width: 140, height: 54 };
+  const hint = suggestLabelObstacleFix(labelRect, 300, 200, obstacle, 'component', [720, 400]);
+  assert.match(hint, /set labelAt \[300, 248\] or set labelDy 48 \(below\)/);
+  assert.doesNotMatch(hint, /labelDx/);
+});
+
+test('suggestLabelObstacleFix keeps its labelAt inside a supplied viewBox', () => {
+  const labelRect = { x: 596, y: 190, width: 160, height: 14, label: 'long edge label' };
+  const obstacle = { id: 'api', x: 560, y: 180, width: 140, height: 60 };
+  const hint = suggestLabelObstacleFix(labelRect, 676, 200, obstacle, 'component', [720, 400]);
+  const [, x, y] = hint.match(/labelAt \[(-?\d+), (-?\d+)\]/).map(Number);
+  assert.ok(x - labelRect.width / 2 >= 0 && x + labelRect.width / 2 <= 720, `labelAt x ${x} leaves the canvas`);
+  assert.ok(y - 10 >= 0 && y - 10 + labelRect.height <= 400, `labelAt y ${y} leaves the canvas`);
+});
+
+test('suggestLabelObstacleFix drops a placement that would only trade the obstacle for a clipped edge', () => {
+  const labelRect = { x: 200, y: 356, width: 120, height: 14, label: 'commit' };
+  const obstacle = { id: 'store', x: 180, y: 336, width: 160, height: 54 };
+  const hint = suggestLabelObstacleFix(labelRect, 260, 366, obstacle, 'component', [720, 400]);
+  assert.doesNotMatch(hint, /\(below\)/);
+  assert.match(hint, /labelAt \[260, 328\].*\(above\)/);
+});
+
+// The obstacle-only above anchor assumed the 14px single-line rect: applied to
+// a 27px two-line rect (dataflow classification, lifecycle note) it left the
+// label 12px inside the obstacle and the validator repeated the same hint.
+test('suggestLabelObstacleFix keeps both two-line forms clear of the obstacle it names', () => {
+  const cases = [
+    { labelRect: { x: 67, y: 139, width: 66, height: 27, label: 'clickstream' },
+      lx: 100, ly: 150,
+      obstacle: { id: 'web', x: 44, y: 128, width: 112, height: 58 },
+      viewBox: [1080, 760] },
+    { labelRect: { x: 360, y: 169, width: 81, height: 27, label: 'needs approval' },
+      lx: 400, ly: 180,
+      obstacle: { id: 'executing', x: 343, y: 126, width: 118, height: 62 },
+      viewBox: [980, 660] },
+  ];
+  for (const { labelRect, lx, ly, obstacle, viewBox } of cases) {
+    const hint = suggestLabelObstacleFix(labelRect, lx, ly, obstacle, 'node', viewBox);
+    const placements = [...hint.matchAll(/set labelAt \[(-?\d+), (-?\d+)\][^;]*\((above|below)\)/g)];
+    assert.equal(placements.length, 2, hint);
+    for (const [, x, y] of placements) {
+      const applied = {
+        x: Number(x) + (labelRect.x - lx),
+        y: Number(y) + (labelRect.y - ly),
+        width: labelRect.width,
+        height: labelRect.height,
+      };
+      assert.ok(
+        !rectsOverlap(applied, obstacle, -2),
+        `${hint}\napplied rect [${applied.x}, ${applied.y}, ${applied.width}, ${applied.height}] lands on "${obstacle.id}"`,
+      );
+    }
+  }
+});
+
+// Only the two vertical slots are tried, so the fallback must not claim that
+// no position exists anywhere — an open area elsewhere may still take the
+// label via labelAt.
+test('suggestLabelObstacleFix reports when neither vertical slot clears the obstacle', () => {
+  const labelRect = { x: 40, y: 30, width: 120, height: 14, label: 'commit' };
+  const obstacle = { id: 'store', x: 0, y: 0, width: 720, height: 400 };
+  const hint = suggestLabelObstacleFix(labelRect, 100, 40, obstacle, 'component', [720, 400]);
+  assert.doesNotMatch(hint, /set label/);
+  assert.match(hint, /no placement directly above or below "store" stays clear inside the 720x400 viewBox/);
+  assert.match(hint, /move the label to an open area with labelAt/);
+});
+
+test('suggestLabelObstacleFix offers no coordinate for a label wider than the canvas', () => {
+  const labelRect = { x: -40, y: 190, width: 800, height: 14, label: 'a label nobody can fit' };
+  const obstacle = { id: 'api', x: 200, y: 180, width: 140, height: 54 };
+  const hint = suggestLabelObstacleFix(labelRect, 360, 200, obstacle, 'component', [720, 400]);
+  assert.doesNotMatch(hint, /labelAt|labelDx|labelDy/);
+  assert.match(hint, /800px label rect cannot fit the 720x400 viewBox at any anchor — shorten the label/);
+});
+
+// A placement that merely trades the named obstacle for its neighbor fails the
+// same rule on re-render, so the filter takes every box the caller checks.
+test('suggestLabelObstacleFix keeps placements clear of the other supplied obstacles', () => {
+  const labelRect = { x: 310, y: 100, width: 120, height: 14, label: 'check' };
+  const named = { id: 'a', x: 300, y: 80, width: 140, height: 50 };
+  const neighborBelow = { id: 'b', x: 300, y: 140, width: 140, height: 50 };
+  const hint = suggestLabelObstacleFix(
+    labelRect, 370, 110, named, 'component', [720, 400], [named, neighborBelow],
+  );
+  assert.doesNotMatch(hint, /\(below\)/, hint);
+  assert.match(hint, /set labelAt \[370, 72\][^;]*\(above\)/);
+});
+
+test('cleanLabelCanvasContainmentProblems names both edges a corner overhang crosses and stays off standard', () => {
+  const labels = [{
+    relation: { id: 'a-to-b', from: 'a', to: 'b', label: 'over the corner' },
+    relationIndex: 0,
+    label: 'over the corner',
+    x: 680,
+    y: 392,
+    width: 60,
+    height: 14,
+  }];
+  const showcase = cleanLabelCanvasContainmentProblems({
+    labels,
+    viewBox: [720, 400],
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: 'showcase',
+  });
+  assert.equal(showcase.length, 1);
+  assert.match(showcase[0], /extends past the right edge by 20px and bottom edge by 6px/);
+  assert.deepEqual(cleanLabelCanvasContainmentProblems({
+    labels,
+    viewBox: [720, 400],
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: 'standard',
+  }), []);
+});
+
+// Label widths are estimated, so the rule has to sit above rounding noise and
+// below anything a reader would see as cut off.
+test('cleanLabelCanvasContainmentProblems ignores overhang under the 0.5px tolerance', () => {
+  const overhangingBy = (amount) => cleanLabelCanvasContainmentProblems({
+    labels: [{
+      relation: { id: 'a-to-b', from: 'a', to: 'b' },
+      relationIndex: 0,
+      label: 'edge',
+      x: 620 + amount,
+      y: 100,
+      width: 100,
+      height: 14,
+    }],
+    viewBox: [720, 400],
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: 'showcase',
+  });
+  assert.deepEqual(overhangingBy(0.4), []);
+  assert.equal(overhangingBy(0.6).length, 1);
+  assert.match(overhangingBy(0.6)[0], /extends past the right edge by 0\.6px/);
 });
 
 test('suggestComponentSeparation proposes nudged pos', () => {
