@@ -1669,13 +1669,39 @@
       font-size: 0.625rem;
     }
     .relationship-lens-head {
+      position: relative;
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: start;
       gap: 0.75rem;
-      padding: 0.7rem 0.75rem 0.65rem;
+      padding: 1rem 0.75rem 0.65rem;
       border-bottom: 1px solid var(--toolbar-border);
       background: linear-gradient(120deg, color-mix(in srgb, var(--frontend-fill) 34%, transparent), transparent 72%);
+    }
+    .relationship-lens-drag-handle {
+      position: absolute;
+      top: 0.12rem;
+      left: 50%;
+      width: 2.5rem;
+      height: 0.78rem;
+      padding: 0 !important;
+      transform: translateX(-50%);
+      color: var(--text-faint) !important;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+    .relationship-lens-drag-handle::before {
+      content: "";
+      display: block;
+      width: 1.25rem;
+      margin: auto;
+      border-top: 2px dotted currentColor;
+      opacity: 0.72;
+    }
+    .focus-chip[data-panel-dragging="true"] .relationship-lens-drag-handle { cursor: grabbing; }
+    @media (hover: none), (pointer: coarse) {
+      .relationship-lens-drag-handle { display: none; }
     }
     .relationship-lens-copy { min-width: 0; }
     .relationship-lens-actions {
@@ -3683,6 +3709,8 @@
         width: calc(100% - 1rem);
         max-width: none;
       }
+      .relationship-lens-head { padding-top: 0.7rem; }
+      .relationship-lens-drag-handle { display: none; }
       .relationship-lens-list { max-height: min(12rem, 38vh); }
       .relationship-lens-actions #btn-focus-relations { display: block; color: var(--database-stroke); }
       .focus-chip:not([data-relations-expanded="true"]) .relationship-lens-head { border-bottom-color: transparent; }
@@ -5228,6 +5256,7 @@
       </div>
       <div class="focus-chip relationship-lens no-print" id="focus-chip" hidden role="region" aria-labelledby="relationship-lens-title">
         <div class="relationship-lens-head">
+          <button class="relationship-lens-drag-handle" id="btn-focus-move" type="button" data-focus-drag-handle aria-label="{{i18n:viewer.passport.move}}" title="{{i18n:viewer.passport.move}}"></button>
           <div class="relationship-lens-copy">
             <span class="relationship-lens-eyebrow">{{i18n:viewer.passport.eyebrow}}</span>
             <strong class="relationship-lens-title" id="relationship-lens-title"><span id="focus-label"></span></strong>
@@ -7438,6 +7467,7 @@
       var copyBtn = document.getElementById('btn-focus-copy');
       var relationsBtn = document.getElementById('btn-focus-relations');
       var clearBtn = document.getElementById('btn-focus-clear');
+      var moveBtn = document.getElementById('btn-focus-move');
       var activeIds = [];
       var hoveredRelationship = null;
       var focusedRelationship = null;
@@ -7447,6 +7477,8 @@
       var relationshipHitOverlay = null;
       var relationshipHitTargets = [];
       var directPreviewTimer = null;
+      var lensDrag = null;
+      var manualLensPosition = null;
       var reachabilityMode = null;
       var activeReachability = null;
       var svgNamespace = 'http://www.w3.org/2000/svg';
@@ -8422,6 +8454,141 @@
           relationshipList.appendChild(section);
         });
       }
+      function lensPlacementBounds() {
+        var containerRect = container.getBoundingClientRect();
+        if (containerRect.width <= 0 || containerRect.height <= 0 || chip.offsetWidth <= 0 || chip.offsetHeight <= 0) return null;
+        var padding = window.innerWidth <= 720 ? 8 : 16;
+        var visibleLeft = Math.max(padding, -containerRect.left + padding);
+        var visibleRight = Math.min(
+          container.clientWidth - padding,
+          window.innerWidth - containerRect.left - padding
+        );
+        var visibleTop = Math.max(padding, -containerRect.top + padding);
+        var visibleBottom = Math.min(
+          container.clientHeight - padding,
+          window.innerHeight - containerRect.top - padding
+        );
+        var minLeft = visibleLeft;
+        var minTop = Math.min(visibleTop, Math.max(padding, visibleBottom - chip.offsetHeight));
+        return {
+          containerRect: containerRect,
+          minLeft: minLeft,
+          maxLeft: Math.max(minLeft, visibleRight - chip.offsetWidth),
+          minTop: minTop,
+          maxTop: Math.max(minTop, visibleBottom - chip.offsetHeight)
+        };
+      }
+      function manualLensPlacementAvailable() {
+        return window.innerWidth > 720 && (!finePointerQuery || finePointerQuery.matches);
+      }
+      function clampLensPosition(position, bounds) {
+        if (!position || !bounds) return null;
+        return {
+          left: Math.max(bounds.minLeft, Math.min(bounds.maxLeft, position.left)),
+          top: Math.max(bounds.minTop, Math.min(bounds.maxTop, position.top))
+        };
+      }
+      function currentLensPosition() {
+        var bounds = lensPlacementBounds();
+        if (!bounds) return null;
+        var rect = chip.getBoundingClientRect();
+        return clampLensPosition({
+          left: rect.left - bounds.containerRect.left,
+          top: rect.top - bounds.containerRect.top
+        }, bounds);
+      }
+      function applyManualLensPosition(position) {
+        if (!manualLensPlacementAvailable()) return false;
+        var bounds = lensPlacementBounds();
+        var clamped = clampLensPosition(position, bounds);
+        if (!clamped) return false;
+        manualLensPosition = clamped;
+        chip.setAttribute('data-manual-placement', 'true');
+        chip.style.left = Math.round(clamped.left) + 'px';
+        chip.style.top = Math.round(clamped.top) + 'px';
+        if (Archify.radar && typeof Archify.radar.sync === 'function') Archify.radar.sync();
+        return true;
+      }
+      function resetLensPlacement(options) {
+        options = options || {};
+        manualLensPosition = null;
+        chip.removeAttribute('data-manual-placement');
+        chip.style.removeProperty('left');
+        chip.style.removeProperty('top');
+        if (options.reposition !== false && !chip.hidden) requestLensPlacement();
+      }
+      function beginLensDrag(event) {
+        if (!manualLensPlacementAvailable() || event.button !== 0 || lensDrag) return;
+        var start = currentLensPosition();
+        if (!start) return;
+        event.preventDefault();
+        event.stopPropagation();
+        lensDrag = {
+          pointerId: event.pointerId,
+          originX: event.clientX,
+          originY: event.clientY,
+          start: start,
+          previousManual: manualLensPosition ? { left: manualLensPosition.left, top: manualLensPosition.top } : null,
+          moved: false
+        };
+        chip.setAttribute('data-panel-dragging', 'true');
+        try { moveBtn.setPointerCapture(event.pointerId); } catch (_) {}
+      }
+      function moveLensDrag(event) {
+        if (!lensDrag || lensDrag.pointerId !== event.pointerId) return;
+        var dx = event.clientX - lensDrag.originX;
+        var dy = event.clientY - lensDrag.originY;
+        if (!lensDrag.moved && Math.hypot(dx, dy) <= 3) return;
+        lensDrag.moved = true;
+        event.preventDefault();
+        event.stopPropagation();
+        applyManualLensPosition({ left: lensDrag.start.left + dx, top: lensDrag.start.top + dy });
+      }
+      function finishLensDrag(event, cancel) {
+        if (!lensDrag || lensDrag.pointerId !== event.pointerId) return;
+        event.preventDefault();
+        event.stopPropagation();
+        var activeDrag = lensDrag;
+        lensDrag = null;
+        chip.removeAttribute('data-panel-dragging');
+        try { moveBtn.releasePointerCapture(event.pointerId); } catch (_) {}
+        if (!cancel) return;
+        manualLensPosition = activeDrag.previousManual
+          ? { left: activeDrag.previousManual.left, top: activeDrag.previousManual.top }
+          : null;
+        if (manualLensPosition && manualLensPlacementAvailable()) {
+          applyManualLensPosition(manualLensPosition);
+        } else {
+          chip.removeAttribute('data-manual-placement');
+          chip.style.removeProperty('left');
+          chip.style.removeProperty('top');
+          if (!chip.hidden) requestLensPlacement();
+        }
+      }
+      function moveLensWithKeyboard(event) {
+        if (event.key === 'Home') {
+          event.preventDefault();
+          resetLensPlacement();
+          return;
+        }
+        if (event.metaKey || event.ctrlKey || event.altKey || !manualLensPlacementAvailable()) return;
+        var directions = {
+          ArrowLeft: [-1, 0],
+          ArrowRight: [1, 0],
+          ArrowUp: [0, -1],
+          ArrowDown: [0, 1]
+        };
+        var direction = directions[event.key];
+        if (!direction) return;
+        event.preventDefault();
+        var current = manualLensPosition || currentLensPosition();
+        if (!current) return;
+        var distance = event.shiftKey ? 4 : 16;
+        applyManualLensPosition({
+          left: current.left + direction[0] * distance,
+          top: current.top + direction[1] * distance
+        });
+      }
       var lensFrame = 0;
       function placeRelationshipLens() {
         lensFrame = 0;
@@ -8436,8 +8603,15 @@
         var visibleBottom = Math.min(containerRect.height - padding, window.innerHeight - containerRect.top - padding);
         var maxTop = Math.max(padding, visibleBottom - chip.offsetHeight);
         var minTop = Math.min(visibleTop, maxTop);
-        var nodeCenter = nodeRect.top - containerRect.top + nodeRect.height / 2;
         var mobile = window.innerWidth <= 720;
+        if (!manualLensPlacementAvailable()) {
+          chip.removeAttribute('data-manual-placement');
+          chip.style.removeProperty('left');
+        } else if (manualLensPosition) {
+          applyManualLensPosition(manualLensPosition);
+          return;
+        }
+        var nodeCenter = nodeRect.top - containerRect.top + nodeRect.height / 2;
         var previewingOnMobile = mobile && chip.getAttribute('data-relationship-previewing') === 'true';
         var compactOnMobile = mobile && chip.getAttribute('data-relations-expanded') !== 'true';
         var preferred;
@@ -8508,6 +8682,12 @@
       }
       function clear(options) {
         options = options || {};
+        if (lensDrag) {
+          var dragPointerId = lensDrag.pointerId;
+          lensDrag = null;
+          chip.removeAttribute('data-panel-dragging');
+          try { moveBtn.releasePointerCapture(dragPointerId); } catch (_) {}
+        }
         var restoreNode = options.restoreFocus === true && activeIds.length === 1
           ? svg.querySelector('[data-node-id="' + activeIds[0] + '"]')
           : null;
@@ -8555,7 +8735,7 @@
         relationsBtn.setAttribute('aria-label', viewerText('viewer.passport.relations.show'));
         relationsBtn.setAttribute('aria-expanded', 'false');
         chip.removeAttribute('data-relations-expanded');
-        chip.style.removeProperty('top');
+        if (options.preserveLensPlacement !== true) resetLensPlacement({ reposition: false });
         if (options.preserveView !== true && Archify.view && typeof Archify.view.reset === 'function') {
           Archify.view.reset({ automatic: true });
         }
@@ -8590,7 +8770,8 @@
           return true;
         }
 
-        clear({ updateUrl: false, preserveView: true });
+        var preserveLensPlacement = activeIds.length === 1 && normalized.length === 1 && !chip.hidden;
+        clear({ updateUrl: false, preserveView: true, preserveLensPlacement: preserveLensPlacement });
         activeIds = normalized;
         var selected = {};
         var related = {};
@@ -8699,6 +8880,17 @@
           Archify.view.reveal([id], { includeNeighbors: true, reason: 'focus' });
         }
       });
+      moveBtn.addEventListener('pointerdown', beginLensDrag);
+      moveBtn.addEventListener('pointermove', moveLensDrag);
+      moveBtn.addEventListener('pointerup', function (event) { finishLensDrag(event, false); });
+      moveBtn.addEventListener('pointercancel', function (event) { finishLensDrag(event, true); });
+      moveBtn.addEventListener('lostpointercapture', function (event) { finishLensDrag(event, true); });
+      moveBtn.addEventListener('dblclick', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        resetLensPlacement();
+      });
+      moveBtn.addEventListener('keydown', moveLensWithKeyboard);
       clearBtn.addEventListener('click', function () { clear({ restoreFocus: true }); });
       copyBtn.addEventListener('click', copyFocusLink);
       upstreamBtn.addEventListener('click', function () { applyReachability('upstream'); });

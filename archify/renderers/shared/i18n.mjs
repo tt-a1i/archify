@@ -347,6 +347,7 @@ const MESSAGE_PAIRS = {
   'viewer.passport.upstream.trace': ['Trace upstream authored reachability', '追踪上游编写可达性'],
   'viewer.passport.downstream.trace': ['Trace downstream authored reachability', '追踪下游编写可达性'],
   'viewer.passport.close': ['Close semantic passport', '关闭语义护照'],
+  'viewer.passport.move': ['Move semantic passport. Drag, use arrow keys, or press Home to reset.', '移动语义护照。可拖动、使用方向键移动，或按 Home 恢复自动位置。'],
   'viewer.passport.copy': ['Copy link', '复制链接'],
   'viewer.passport.copy.focus': ['Copy link to focused node', '复制聚焦节点的链接'],
   'viewer.passport.relations': ['Relations', '关系'],
