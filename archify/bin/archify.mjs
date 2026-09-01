@@ -1431,8 +1431,9 @@ async function commandBrands(args) {
     return;
   }
   const query = positional.join(' ').trim();
-  const { listBrandMarks } = await import('../renderers/shared/brand-marks.mjs');
+  const { listBrandMarks, listUnavailableBrandMarks } = await import('../renderers/shared/brand-marks.mjs');
   const marks = listBrandMarks(query);
+  const unavailable = listUnavailableBrandMarks(query);
   if (json) {
     console.log(JSON.stringify({
       schemaVersion: 1,
@@ -1441,8 +1442,20 @@ async function commandBrands(args) {
       query,
       count: marks.length,
       marks,
-      fallback: 'Run "archify brands capture <url> --json", then use the returned digest-pinned brand value.',
+      unavailable,
+      ...(unavailable.length ? {
+        supportedFixes: [
+          'Remove the `brand` field and keep the product name in the node label.',
+          'After an independent rights review, author an existing digest-pinned asset object directly.',
+        ],
+      } : {
+        fallback: 'Run "archify brands capture <url> --json", then use the returned digest-pinned brand value.',
+      }),
     }, null, 2));
+    return;
+  }
+  if (unavailable.length) {
+    console.log(`Built-in brand unavailable on rights HOLD: ${unavailable.map((entry) => entry.id).join(', ')}. Remove the brand field and keep the product name in the node label, or supply an independently reviewed digest-pinned asset.`);
     return;
   }
   if (!marks.length) {

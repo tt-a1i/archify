@@ -32,8 +32,11 @@ function repositoryFixture() {
   }));
   write(root, 'archify/package-lock.json', '{}\n');
   write(root, 'archify/skill-release.json', '{}\n');
+  write(root, 'archify/THIRD_PARTY_BRAND_ASSETS.md', '# Notice\n');
+  write(root, 'archify/brand-marks/rights.json', '{}\n');
   write(root, 'archify/scripts/check-update.mjs', 'export {};\n');
   write(root, 'archify/scripts/update-contract.mjs', 'export {};\n');
+  write(root, 'archify/renderers/shared/generated-brand-marks.mjs', 'export {};\n');
   write(root, 'archify/renderers/shared/generated-validators.mjs', 'export {};\n');
   write(root, 'archify/test/repository-only.test.mjs', 'throw new Error();\n');
   git(root, ['init']);

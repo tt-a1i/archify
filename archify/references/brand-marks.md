@@ -23,7 +23,10 @@ does; `brand` explains whose product it is.
    }
    ```
 
-3. If there is no catalogue match and the user supplied the official website,
+3. If the receipt returns `unavailable`, omit `brand` and keep the product name
+   in `label`. Do not work around a bundled rights `HOLD` with a different alias.
+
+4. If there is no catalogue match and the user supplied the official website,
    capture its icon explicitly:
 
    ```bash
@@ -44,10 +47,11 @@ does; `brand` explains whose product it is.
    }
    ```
 
-4. If there is no match and no user-provided URL, omit `brand`. Do not invent a
+5. If there is no match and no user-provided URL, omit `brand`. Do not invent a
    URL or silently assign a visually similar company.
 
-Known-brand URLs resolve to the bundled vector instead of using the network.
+Known enabled-brand URLs resolve to the bundled vector instead of using the
+network. Known held IDs, aliases, and URL strings fail as `brand/unavailable`.
 Unknown URL capture accepts only bounded raster image formats, blocks
 credentials, nonstandard public ports, and private or link-local destinations,
 uses bounded concurrency and one total deadline, and returns the captured
@@ -59,7 +63,10 @@ The final artifact never fetches a brand asset when opened. Preset vectors and
 digest-verified captured site icons remain embedded in SVG, PNG, WebP, JPEG,
 Share Card, and WebM exports.
 
-Use `node bin/archify.mjs brands --json` to inspect all canonical IDs, aliases,
-categories, domains, and provenance. Current categories cover AI, cloud,
+Use `node bin/archify.mjs brands --json` to inspect enabled canonical IDs,
+aliases, categories, domains, provenance, and rights decisions. A direct query
+also explains matching held entries. Enabled means present in this release, not
+legally cleared or covered by Archify's MIT license; see
+`THIRD_PARTY_BRAND_ASSETS.md`. Current categories cover AI, cloud,
 engineering, data, collaboration, business systems, channels, languages, and
 frameworks.

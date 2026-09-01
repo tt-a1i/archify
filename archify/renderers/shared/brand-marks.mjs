@@ -3,7 +3,7 @@ import { lookup } from 'node:dns/promises';
 import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
-import { BRAND_MARKS } from './generated-brand-marks.mjs';
+import { BRAND_MARKS, BRAND_MARK_POLICIES } from './generated-brand-marks.mjs';
 import { throwDiagnosticError } from './diagnostics.mjs';
 import { esc, textUnits } from './utils.mjs';
 
@@ -16,6 +16,8 @@ const COLLECTIONS = Object.freeze({
 });
 const MARK_BY_LOOKUP = new Map();
 const MARK_BY_DOMAIN = new Map();
+const POLICY_BY_LOOKUP = new Map();
+const POLICY_BY_DOMAIN = new Map();
 const RESOLVED_BY_NODE = new WeakMap();
 const RESOLVED_MARK = Symbol('archify.brandMark');
 const MAX_HTML_BYTES = 256 * 1024;
@@ -41,6 +43,15 @@ for (const mark of BRAND_MARKS) {
   for (const domain of mark.domains) MARK_BY_DOMAIN.set(domain, mark);
 }
 
+for (const policy of BRAND_MARK_POLICIES) {
+  for (const value of [policy.id, policy.title, ...policy.aliases]) {
+    for (const form of lookupForms(value)) {
+      if (!POLICY_BY_LOOKUP.has(form)) POLICY_BY_LOOKUP.set(form, policy);
+    }
+  }
+  for (const domain of policy.domains) POLICY_BY_DOMAIN.set(domain, policy);
+}
+
 function asUrl(value) {
   try {
     const url = new URL(String(value));
@@ -50,12 +61,21 @@ function asUrl(value) {
   }
 }
 
-function domainMark(hostname) {
+function domainEntry(hostname, entries) {
   const host = hostname.toLocaleLowerCase('en-US').replace(/\.$/, '');
-  const candidates = [...MARK_BY_DOMAIN.entries()]
+  const candidates = [...entries.entries()]
     .filter(([domain]) => host === domain || host.endsWith(`.${domain}`))
     .sort(([left], [right]) => right.length - left.length);
   return candidates[0]?.[1] || null;
+}
+
+
+function domainMark(hostname) {
+  return domainEntry(hostname, MARK_BY_DOMAIN);
+}
+
+function domainPolicy(hostname) {
+  return domainEntry(hostname, POLICY_BY_DOMAIN);
 }
 
 export function findBrandMark(value) {
@@ -68,6 +88,16 @@ export function findBrandMark(value) {
   return null;
 }
 
+export function findBrandPolicy(value) {
+  const url = asUrl(value);
+  if (url) return domainPolicy(url.hostname);
+  for (const form of lookupForms(value)) {
+    const policy = POLICY_BY_LOOKUP.get(form);
+    if (policy) return policy;
+  }
+  return null;
+}
+
 export function listBrandMarks(query = '') {
   const needle = String(query).trim().toLocaleLowerCase('en-US');
   return BRAND_MARKS.filter((mark) => {
@@ -75,6 +105,14 @@ export function listBrandMarks(query = '') {
     return [mark.id, mark.title, mark.category, ...mark.aliases, ...mark.domains]
       .some((value) => String(value).toLocaleLowerCase('en-US').includes(needle));
   }).map(({ path, ...mark }) => mark);
+}
+
+export function listUnavailableBrandMarks(query = '') {
+  const needle = String(query).trim().toLocaleLowerCase('en-US');
+  if (!needle) return [];
+  return BRAND_MARK_POLICIES.filter((policy) => policy.rightsDecision === 'HOLD')
+    .filter((policy) => [policy.id, policy.title, policy.category, ...policy.aliases, ...policy.domains]
+      .some((value) => String(value).toLocaleLowerCase('en-US').includes(needle)));
 }
 
 function ipv4Private(address) {
@@ -207,10 +245,14 @@ function requestPinned(url, accept, target, deadline) {
   });
 }
 
-async function checkedFetch(input, accept, deadline) {
+async function checkedFetch(input, accept, deadline, { rejectHeldDomains = false } = {}) {
   let current = new URL(input);
   for (let redirects = 0; redirects <= 3; redirects += 1) {
     if (Date.now() >= deadline) throw new Error('brand capture timed out');
+    const policy = rejectHeldDomains ? findBrandPolicy(current.href) : null;
+    if (policy?.rightsDecision === 'HOLD') {
+      throw new Error(`brand ${policy.id} is unavailable because the bundled asset is on rights HOLD`);
+    }
     const target = await resolveRequestTarget(current, deadline);
     const response = await requestPinned(current, accept, target, deadline);
     if ([301, 302, 303, 307, 308].includes(response.status)) {
@@ -347,7 +389,11 @@ async function imageData(response) {
   };
 }
 
-async function captureRemoteBrand(value, deadline = Date.now() + captureTimeoutMilliseconds()) {
+async function captureRemoteBrand(
+  value,
+  deadline = Date.now() + captureTimeoutMilliseconds(),
+  { rejectHeldDomains = false } = {},
+) {
   const sourceUrl = new URL(value);
   const fallback = (reason) => ({
     id: sourceUrl.hostname,
@@ -359,7 +405,12 @@ async function captureRemoteBrand(value, deadline = Date.now() + captureTimeoutM
     reason,
   });
   try {
-    const page = await checkedFetch(sourceUrl, 'text/html,application/xhtml+xml,image/*;q=0.8', deadline);
+    const page = await checkedFetch(
+      sourceUrl,
+      'text/html,application/xhtml+xml,image/*;q=0.8',
+      deadline,
+      { rejectHeldDomains },
+    );
     const pageType = (page.response.headers.get('content-type') || '').toLocaleLowerCase('en-US');
     if (pageType.startsWith('image/')) {
       const image = await imageData(page.response);
@@ -382,7 +433,7 @@ async function captureRemoteBrand(value, deadline = Date.now() + captureTimeoutM
     const iconErrors = [];
     for (const candidate of iconCandidates(html, page.finalUrl)) {
       try {
-        const fetched = await checkedFetch(candidate.url, 'image/*', deadline);
+        const fetched = await checkedFetch(candidate.url, 'image/*', deadline, { rejectHeldDomains });
         const image = await imageData(fetched.response);
         return {
           id: sourceUrl.hostname,
@@ -411,9 +462,13 @@ export async function captureBrandReference(value) {
   const url = asUrl(value);
   if (!url) throw new Error('brand capture requires one HTTP(S) URL');
   validateUrlShape(url);
+  const policy = findBrandPolicy(url.href);
+  if (policy?.rightsDecision === 'HOLD') {
+    throw new Error(`brand ${policy.id} is unavailable because the bundled asset is on rights HOLD`);
+  }
   const preset = findBrandMark(url.href);
   if (preset) return { brand: preset.id, resolved: { ...preset, kind: 'preset', status: 'preset' } };
-  const resolved = await captureRemoteBrand(url.href);
+  const resolved = await captureRemoteBrand(url.href, undefined, { rejectHeldDomains: true });
   if (resolved.status !== 'captured' || !resolved.sha256) {
     throw new Error(`brand capture failed: ${resolved.reason || 'no usable site icon was found'}`);
   }
@@ -455,6 +510,7 @@ export async function prepareDiagramBrandMarks(diagramType, diagram) {
   const collection = COLLECTIONS[diagramType];
   const nodes = collection && Array.isArray(diagram[collection]) ? diagram[collection] : [];
   const unknown = [];
+  const unavailable = [];
   const remoteByUrl = new Map();
   const deadline = Date.now() + captureTimeoutMilliseconds();
   await mapConcurrent(nodes, MAX_CAPTURE_CONCURRENCY, async (node, index) => {
@@ -474,6 +530,24 @@ export async function prepareDiagramBrandMarks(diagramType, diagram) {
       RESOLVED_BY_NODE.set(node, resolved);
       return;
     }
+    const policy = findBrandPolicy(node.brand);
+    if (policy?.rightsDecision === 'HOLD') {
+      const message = `/${collection}/${index}/brand ${JSON.stringify(node.brand)} is unavailable because the bundled asset is on rights HOLD; remove the brand field and keep the product name in the node label`;
+      unavailable.push({
+        code: 'brand/unavailable',
+        severity: 'error',
+        message,
+        subject: { diagramType, collection, path: `/${collection}/${index}/brand`, nodeId: node.id },
+        evidence: {
+          brandId: policy.id,
+          rightsDecision: policy.rightsDecision,
+          reviewedAt: policy.reviewedAt,
+          assetRevision: policy.assetRevision,
+        },
+        supportedFixes: ['remove the `brand` field and keep the product name in the node label'],
+      });
+      return;
+    }
     const preset = findBrandMark(node.brand);
     if (preset) {
       const resolved = { ...preset, kind: 'preset', status: 'preset', sourceUrl: preset.provenance.source };
@@ -488,8 +562,7 @@ export async function prepareDiagramBrandMarks(diagramType, diagram) {
     }
     unknown.push(`/${collection}/${index}/brand ${JSON.stringify(node.brand)} is not a built-in brand; closest IDs: ${suggestions(node.brand).join(', ')}`);
   });
-  if (unknown.length) {
-    throwDiagnosticError(`Brand mark validation failed:\n- ${unknown.join('\n- ')}`, unknown.map((message) => ({
+  const diagnostics = [...unavailable, ...unknown.map((message) => ({
       code: message.includes('is an unpinned URL') ? 'brand/unpinned-url'
         : (message.includes('digest changed') ? 'brand/digest-mismatch'
           : (message.includes('could not reproduce') ? 'brand/capture-unavailable' : 'brand/unknown')),
@@ -500,7 +573,9 @@ export async function prepareDiagramBrandMarks(diagramType, diagram) {
       supportedFixes: message.includes('is an unpinned URL')
         ? ['run `archify brands capture <url> --json` and author the returned digest-pinned brand object']
         : ['choose an ID from `archify brands`', 'run `archify brands capture <url> --json` for an unknown official site'],
-    })));
+    }))];
+  if (diagnostics.length) {
+    throwDiagnosticError(`Brand mark validation failed:\n- ${diagnostics.map(({ message }) => message).join('\n- ')}`, diagnostics);
   }
 }
 
@@ -515,6 +590,8 @@ export function brandMetadataFor(node) {
     brandId: mark.id,
     brandStatus: mark.status,
     brandSource: mark.sourceUrl,
+    brandRightsDecision: mark.rightsDecision || 'USER_SUPPLIED',
+    brandMitCovered: mark.mitCovered === true,
   } : {};
 }
 
@@ -536,6 +613,8 @@ function markAttrs(mark) {
     `data-brand-mark="${esc(mark.id)}"`,
     `data-brand-title="${esc(mark.title)}"`,
     `data-brand-status="${esc(mark.status)}"`,
+    `data-brand-rights-decision="${esc(mark.rightsDecision || 'USER_SUPPLIED')}"`,
+    `data-brand-mit-covered="${mark.mitCovered === true ? 'true' : 'false'}"`,
     mark.sourceUrl ? `data-brand-source="${esc(mark.sourceUrl)}"` : '',
     mark.sha256 ? `data-brand-sha256="${esc(mark.sha256)}"` : '',
   ].filter(Boolean).join(' ');

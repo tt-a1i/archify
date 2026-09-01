@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { BRAND_MARKS } from '../renderers/shared/generated-brand-marks.mjs';
+import { BRAND_MARKS, BRAND_MARK_POLICIES } from '../renderers/shared/generated-brand-marks.mjs';
 import { isPrivateBrandAddress, prepareDiagramBrandMarks } from '../renderers/shared/brand-marks.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -104,8 +104,12 @@ function nodeBlock(html, id) {
   return html.slice(start, candidates.length ? Math.min(...candidates) : html.length);
 }
 
-test('generated catalog exposes a substantial, unique, provenance-backed preset library', () => {
-  assert.equal(BRAND_MARKS.length, 107);
+test('generated catalog exposes 63 renderable marks and a complete fail-closed rights ledger', () => {
+  assert.equal(BRAND_MARKS.length, 63);
+  assert.equal(BRAND_MARK_POLICIES.length, 107);
+  assert.equal(BRAND_MARK_POLICIES.filter((policy) => policy.rightsDecision === 'HOLD').length, 44);
+  assert.equal(BRAND_MARK_POLICIES.filter((policy) => policy.rightsDecision === 'KEEP_WITH_NOTICE').length, 13);
+  assert.equal(BRAND_MARK_POLICIES.filter((policy) => policy.rightsDecision === 'COUNSEL').length, 50);
   assert.equal(new Set(BRAND_MARKS.map((mark) => mark.id)).size, BRAND_MARKS.length);
   for (const mark of BRAND_MARKS) {
     assert.match(mark.id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
@@ -114,6 +118,14 @@ test('generated catalog exposes a substantial, unique, provenance-backed preset 
     assert.match(mark.hex, /^[0-9A-F]{6}$/i);
     assert.match(mark.path, /^[Mm]/);
     assert.ok(mark.provenance?.source);
+    assert.notEqual(mark.rightsDecision, 'HOLD');
+    assert.equal(mark.mitCovered, false);
+  }
+  const renderable = new Set(BRAND_MARKS.map((mark) => mark.id));
+  for (const policy of BRAND_MARK_POLICIES.filter((entry) => entry.rightsDecision === 'HOLD')) {
+    assert.equal(renderable.has(policy.id), false, policy.id);
+    assert.equal('path' in policy, false, policy.id);
+    assert.equal('hex' in policy, false, policy.id);
   }
 });
 
@@ -121,7 +133,7 @@ test('brand discovery resolves model names, aliases, domains, and Chinese channe
   for (const [query, expected] of [
     ['GPT', 'openai'],
     ['Gemini', 'google-gemini'],
-    ['github.com', 'github'],
+    ['cloudflare.com', 'cloudflare'],
     ['微信', 'wechat'],
   ]) {
     const result = spawnSync(process.execPath, [cli, 'brands', query, '--json'], {
@@ -133,6 +145,19 @@ test('brand discovery resolves model names, aliases, domains, and Chinese channe
     assert.equal(receipt.ok, true);
     assert.ok(receipt.marks.some((mark) => mark.id === expected), query);
   }
+});
+
+test('CLI omits held assets from the catalogue and explains direct held queries', () => {
+  const result = spawnSync(process.execPath, [cli, 'brands', 'github.com', '--json'], {
+    cwd: skillRoot,
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.marks.some((mark) => mark.id === 'github'), false);
+  assert.ok(receipt.unavailable.some((policy) => policy.id === 'github' && policy.rightsDecision === 'HOLD'));
+  assert.equal('fallback' in receipt, false);
+  assert.ok(receipt.supportedFixes.some((fix) => fix.includes('Remove the `brand` field')));
 });
 
 test('all five renderers keep the semantic sigil and add one export-safe brand badge', () => {
@@ -210,12 +235,32 @@ test('branded lifecycle states move the semantic stamp left and keep the brand a
   assert.match(block, /data-detail="fine"[^>]+>01<\/text>/);
 });
 
-test('known-brand URLs use the bundled vector instead of the network', () => {
-  const input = writeFixture('architecture', 'known-domain', 'https://github.com/tt-a1i/archify');
+test('known enabled-brand URLs use the bundled vector instead of the network', () => {
+  const input = writeFixture('architecture', 'known-domain', 'https://cloudflare.com/');
   const { result, html } = renderSync('architecture', input, 'known-domain');
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.match(html, /data-brand-mark="github"[^>]+data-brand-status="preset"/);
+  assert.match(html, /data-brand-mark="cloudflare"[^>]+data-brand-status="preset"/);
   assert.doesNotMatch(html, /data-brand-status="captured"/);
+});
+
+test('all five renderers reject held IDs and domains with an actionable unavailable diagnostic', () => {
+  for (const [type, brand] of Object.keys(cases).flatMap((type) => [
+    [type, 'github'],
+    [type, 'https://github.com/tt-a1i/archify'],
+  ])) {
+    const input = writeFixture(type, `held-${brand.startsWith('http') ? 'domain' : 'id'}-${type}`, brand);
+    const result = spawnSync(process.execPath, [cli, 'validate', type, input, '--json'], {
+      cwd: skillRoot,
+      encoding: 'utf8',
+    });
+    assert.equal(result.status, 1, `${type} ${brand}: ${result.stderr || result.stdout}`);
+    const receipt = JSON.parse(result.stdout);
+    assert.ok(receipt.diagnostics.some((entry) => entry.code === 'brand/unavailable'
+      && entry.subject.path.endsWith('/brand')
+      && entry.evidence.rightsDecision === 'HOLD'
+      && entry.evidence.assetRevision === 'simple-icons@16.28.0'), `${type} ${brand}`);
+    assert.ok(receipt.diagnostics.some((entry) => entry.supportedFixes.some((fix) => fix.includes('remove the `brand` field'))));
+  }
 });
 
 test('unknown URL strings fail closed until an exact captured digest is authored', () => {
@@ -425,6 +470,14 @@ test('capture rejects credentials even when the URL domain matches a bundled pre
   assert.match(capture.stderr, /cannot contain credentials/i);
 });
 
+test('capture refuses held domains while existing digest-pinned objects stay user-controlled', async () => {
+  for (const url of ['https://github.com/', 'https://www.typescriptlang.org/']) {
+    const capture = await runCliAsync(['brands', 'capture', url, '--json']);
+    assert.notEqual(capture.status, 0, capture.stdout);
+    assert.match(capture.stderr, /rights HOLD/i, url);
+  }
+});
+
 test('rendering many pinned brands limits concurrent remote capture work', async () => {
   const icon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
   const sha256 = createHash('sha256').update(icon).digest('hex');
@@ -521,6 +574,55 @@ test('capture applies one total deadline across the page and icon requests', asy
     );
     assert.notEqual(capture.status, 0, capture.stdout);
     assert.match(capture.stderr, /abort|timed? ?out|timeout/i);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('capture rejects an unknown entry URL that redirects to a held brand domain', async () => {
+  const server = http.createServer((_request, response) => {
+    response.writeHead(302, { location: 'https://github.com/' });
+    response.end();
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const capture = await runCliAsync(
+      ['brands', 'capture', `http://127.0.0.1:${address.port}/`, '--json'],
+      { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' },
+    );
+    assert.notEqual(capture.status, 0, capture.stdout);
+    assert.match(capture.stderr, /brand github is unavailable.*rights HOLD/i);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('capture skips a held cross-domain icon and uses a safe same-origin fallback', async () => {
+  const icon = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  let fallbackHits = 0;
+  const server = http.createServer((request, response) => {
+    if (request.url === '/favicon.ico') {
+      fallbackHits += 1;
+      response.writeHead(200, { 'content-type': 'image/png' });
+      response.end(icon);
+      return;
+    }
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.end('<!doctype html><title>Safe fallback</title><link rel="icon" href="https://github.com/favicon.ico">');
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    const capture = await runCliAsync(
+      ['brands', 'capture', `http://127.0.0.1:${address.port}/`, '--json'],
+      { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' },
+    );
+    assert.equal(capture.status, 0, capture.stderr || capture.stdout);
+    const receipt = JSON.parse(capture.stdout);
+    assert.equal(receipt.evidence.contentType, 'image/png');
+    assert.equal(receipt.brand.sha256, createHash('sha256').update(icon).digest('hex'));
+    assert.equal(fallbackHits, 1);
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }

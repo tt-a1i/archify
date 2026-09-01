@@ -23,12 +23,12 @@
   "components": [
     { "id": "request", "type": "external", "label": "Product request", "sublabel": "Owner brief", "pos": [38, 260], "size": [138, 68] },
     { "id": "claude", "type": "frontend", "label": "Claude", "sublabel": "Plan and author", "brand": "claude", "pos": [220, 260], "size": [138, 68] },
-    { "id": "github", "type": "messagebus", "label": "GitHub", "sublabel": "Review and merge", "brand": "github", "pos": [402, 260], "size": [138, 68] },
-    { "id": "container", "type": "backend", "label": "Docker service", "sublabel": "Build and run", "brand": "docker", "pos": [584, 260], "size": [138, 68] },
+    { "id": "github", "type": "messagebus", "label": "GitHub", "sublabel": "Review and merge", "pos": [402, 260], "size": [138, 68] },
+    { "id": "container", "type": "backend", "label": "Docker service", "sublabel": "Build and run", "pos": [584, 260], "size": [138, 68] },
     { "id": "edge", "type": "cloud", "label": "Cloudflare", "sublabel": "Global delivery", "brand": "cloudflare", "pos": [766, 260], "size": [138, 68] },
     { "id": "customer", "type": "external", "label": "Customers", "sublabel": "Web and mobile", "pos": [948, 260], "size": [138, 68] },
     { "id": "database", "type": "database", "label": "PostgreSQL", "sublabel": "Durable state", "brand": "postgresql", "pos": [584, 420], "size": [138, 68] },
-    { "id": "billing", "type": "external", "label": "Stripe", "sublabel": "Billing events", "brand": "stripe", "pos": [766, 420], "size": [138, 68] }
+    { "id": "billing", "type": "external", "label": "Stripe", "sublabel": "Billing events", "pos": [766, 420], "size": [138, 68] }
   ],
   "connections": [
     { "id": "brief-to-claude", "from": "request", "to": "claude", "label": "brief", "variant": "emphasis" },

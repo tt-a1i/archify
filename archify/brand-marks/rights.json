@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-09-01",
+  "assetRevision": "simple-icons@16.28.0",
+  "policy": "These decisions control Archify's bundled catalogue only. They are not legal clearance, trademark permission, or a sublicense of third-party marks.",
+  "decisions": {
+    "HOLD": [
+      "github", "gitlab", "docker", "terraform", "ansible", "circleci", "grafana", "datadog",
+      "openrouter", "perplexity", "railway", "fly-io", "alibaba-cloud", "firebase",
+      "typescript", "go", "react", "vue", "next-js", "spring", "mysql", "mongodb", "redis",
+      "apache-kafka", "rabbitmq", "clickhouse", "elasticsearch", "influxdb", "apache-airflow",
+      "notion", "zoom", "asana", "miro", "stripe", "shopify", "hubspot", "paypal", "intercom",
+      "zendesk", "woocommerce", "youtube", "tiktok", "reddit", "pinterest"
+    ],
+    "KEEP_WITH_NOTICE": [
+      "kubernetes", "jenkins", "openai", "deepseek", "mistral-ai", "google-cloud", "vercel",
+      "netlify", "neon", "rust", "angular", "flask", "telegram"
+    ],
+    "COUNSEL": [
+      "claude", "anthropic", "google-gemini", "qwen", "meta", "hugging-face", "ollama", "replicate",
+      "cloudflare", "digitalocean", "render", "cloudinary", "supabase", "bitbucket", "pulumi",
+      "github-actions", "argo", "helm", "prometheus", "sentry", "pagerduty", "postgresql",
+      "opensearch", "snowflake", "databricks", "planetscale", "prisma", "sqlite", "mariadb",
+      "figma", "jira", "linear", "discord", "trello", "airtable", "wordpress", "wechat", "x",
+      "instagram", "facebook", "whatsapp", "python", "javascript", "node-js", "pytorch", "tensorflow",
+      "svelte", "django", "fastapi", "dotnet"
+    ]
+  },
+  "notices": {
+    "kubernetes": { "evidence": ["https://github.com/kubernetes/kubernetes/blob/cac53883f4714452f3084a22e4be20d042a9df33/logo/LICENSE", "https://www.linuxfoundation.org/legal/trademark-usage"] },
+    "jenkins": { "evidence": ["https://www.jenkins.io/artwork/"] },
+    "openai": { "evidence": ["https://openai.com/brand/"] },
+    "deepseek": { "evidence": ["https://github.com/deepseek-ai/deepseek-harness/blob/master/BRAND_GUIDELINES.md"] },
+    "mistral-ai": { "evidence": ["https://mistral.ai/brand/"] },
+    "google-cloud": { "evidence": ["https://cloud.google.com/icons", "https://about.google/brand-resource-center/guidance/"] },
+    "vercel": { "evidence": ["https://vercel.com/geist/brands"] },
+    "netlify": { "evidence": ["https://www.netlify.com/about/#press"] },
+    "neon": { "evidence": ["https://neon.com/brand"] },
+    "rust": { "evidence": ["https://rustfoundation.org/policy/rust-trademark-policy/", "https://creativecommons.org/licenses/by-sa/4.0/"] },
+    "angular": { "evidence": ["https://angular.dev/press-kit", "https://creativecommons.org/licenses/by/4.0/"] },
+    "flask": { "evidence": ["https://github.com/pallets/flask/blob/85c5d93cbd049c4bd0679c36fd1ddcae8c37b642/LICENSE.txt"], "fullLicenseText": "BSD-3-Clause" },
+    "telegram": { "evidence": ["https://telegram.org/tour/screenshots"] },
+    "javascript": { "evidence": ["https://github.com/voodootikigod/logo.js/blob/1544bdeed6d618a6cfe4f0650d04ab8d9cfa76d9/LICENSE"], "fullLicenseText": "MIT" },
+    "dotnet": { "evidence": ["https://github.com/dotnet/brand/blob/c7d0f51b8ec59531332d05fb27a5b758a7a3d689/README.md", "https://creativecommons.org/publicdomain/zero/1.0/"] }
+  }
+}

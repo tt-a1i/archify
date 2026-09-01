@@ -23,6 +23,12 @@ function requireAbsent(relative) {
   }
 }
 
+function requirePresent(relative) {
+  if (!fs.existsSync(path.join(skillRoot, relative))) {
+    throw new Error(`packaged skill must contain ${relative}`);
+  }
+}
+
 function run(args, options = {}) {
   const result = spawnSync(process.execPath, [cli, ...args], {
     cwd: skillRoot,
@@ -176,9 +182,33 @@ try {
   if (!brands.marks.some((mark) => mark.id === 'openai')) {
     throw new Error('packaged brand catalogue did not resolve openai');
   }
-  const capturedPreset = JSON.parse(run(['brands', 'capture', 'https://github.com/', '--json']));
-  if (capturedPreset.brand !== 'github' || capturedPreset.evidence.status !== 'preset') {
+  const capturedPreset = JSON.parse(run(['brands', 'capture', 'https://cloudflare.com/', '--json']));
+  if (capturedPreset.brand !== 'cloudflare' || capturedPreset.evidence.status !== 'preset') {
     throw new Error('packaged brand capture did not resolve a known domain without network capture');
+  }
+  const held = JSON.parse(run(['brands', 'github.com', '--json']));
+  if (held.marks.some((mark) => mark.id === 'github')
+    || !held.unavailable.some((policy) => policy.id === 'github' && policy.rightsDecision === 'HOLD')) {
+    throw new Error('packaged brand catalogue did not enforce the rights HOLD policy');
+  }
+  requirePresent('THIRD_PARTY_BRAND_ASSETS.md');
+  requirePresent(path.join('brand-marks', 'rights.json'));
+  const rights = JSON.parse(fs.readFileSync(path.join(skillRoot, 'brand-marks', 'rights.json'), 'utf8'));
+  const generated = await import(pathToFileURL(path.join(
+    skillRoot,
+    'renderers',
+    'shared',
+    'generated-brand-marks.mjs',
+  )).href);
+  const renderableIds = new Set(generated.BRAND_MARKS.map((mark) => mark.id));
+  const policies = new Map(generated.BRAND_MARK_POLICIES.map((policy) => [policy.id, policy]));
+  if (rights.decisions.HOLD.length !== 44) throw new Error('packaged rights ledger must contain 44 HOLD IDs');
+  for (const id of rights.decisions.HOLD) {
+    const policy = policies.get(id);
+    if (renderableIds.has(id) || !policy || policy.rightsDecision !== 'HOLD'
+      || Object.hasOwn(policy, 'path') || Object.hasOwn(policy, 'hex')) {
+      throw new Error(`packaged rights HOLD leaked renderable asset data for ${id}`);
+    }
   }
   run(['demo', path.join(scratch, 'demo')]);
   run(['examples']);

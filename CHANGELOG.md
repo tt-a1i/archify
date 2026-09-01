@@ -4,6 +4,11 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
+> Development identity: `v2.17.0-dev.0`. Not a stable release.
+
+### Changed
+- **Fail-closed third-party brand rights gate.** The generated runtime now excludes 44 known-conflict bundled logo assets, reports their IDs, aliases, and domains as `brand/unavailable`, preserves ordinary labels and independently digest-pinned user assets, and ships a 107-item machine-readable decision ledger plus an explicit third-party rights notice. The remaining 63 marks are disclosed as enabled third-party assets, not as MIT-covered or legally cleared.
+
 ## [2.16.0] — 2026-08-30
 
 ### Added
