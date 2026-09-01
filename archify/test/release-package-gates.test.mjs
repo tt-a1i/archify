@@ -248,6 +248,40 @@ test('package smoke verifies the embedded notifier identity and local disable sw
   assert.match(source, /reason !== 'disabled'/);
 });
 
+test('package smoke rejects a missing or modified distribution license', () => {
+  const packageSmoke = path.join(repoRoot, 'scripts', 'package-smoke.mjs');
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-license-gate-'));
+  try {
+    const staged = path.join(fixture, 'archify');
+    stageCleanSkill({ repoRoot, destination: staged });
+    const licensePath = path.join(staged, 'LICENSE');
+
+    fs.rmSync(licensePath);
+    let result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'missing LICENSE must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /packaged skill is missing LICENSE/);
+
+    const repositoryLicense = fs.readFileSync(path.join(repoRoot, 'LICENSE'), 'utf8');
+    fs.writeFileSync(
+      licensePath,
+      repositoryLicense.replace(
+        'Copyright (c) 2025 Cocoon AI',
+        'Copyright (c) 2025 Cocoon AI (original "architecture-diagram-generator")',
+      ),
+    );
+    result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'modified upstream notice must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /missing the exact Cocoon AI copyright line/);
+
+    fs.writeFileSync(licensePath, 'Copyright (c) 2025 Cocoon AI\n');
+    result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'truncated LICENSE must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /must byte-match the repository LICENSE/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
 test('package smoke increments an arbitrary-precision SemVer patch without Number coercion', () => {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-bigint-version-'));
   const skillRoot = path.join(scratch, 'archify');
@@ -274,10 +308,11 @@ test('package smoke increments an arbitrary-precision SemVer patch without Numbe
   }
 });
 
-test('archive build refuses to silently omit required notifier files', () => {
+test('archive build refuses to silently omit required release files', () => {
   const buildSource = fs.readFileSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), 'utf8');
   const stageSource = fs.readFileSync(path.join(repoRoot, 'scripts', 'stage-clean-skill.mjs'), 'utf8');
   assert.match(buildSource, /stage-clean-skill\.mjs/);
+  assert.match(stageSource, /archify\/LICENSE/);
   assert.match(stageSource, /archify\/skill-release\.json/);
   assert.match(stageSource, /archify\/scripts\/check-update\.mjs/);
   assert.match(stageSource, /archify\/scripts\/update-contract\.mjs/);

@@ -280,6 +280,8 @@ Claude.ai 中的上传入口：
 
 [MIT](LICENSE) —— 可以自由使用、修改和分发。
 
+Archify 基于 Cocoon AI 以 MIT 许可发布的 [`architecture-diagram-generator` 1.0](https://github.com/Cocoon-AI/architecture-diagram-generator/tree/aff12bcf0f861995362e90273060acd0b68a1702) 开发；[LICENSE](LICENSE) 保留了上游版权声明和完整 MIT 条款。
+
 ## 参与贡献
 
 欢迎提交 Issue、Pull Request 和真实场景图。请先阅读[贡献指南](CONTRIBUTING.md)；遇到问题时使用可复现 Bug 表单，也可以通过[社区 Showcase 表单](https://github.com/tt-a1i/archify/issues/new?template=showcase.yml)提交已验证成品。

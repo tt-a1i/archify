@@ -275,7 +275,9 @@ Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSI
 
 ## License
 
-[MIT](LICENSE) — free to use, modify, and distribute.
+[MIT](LICENSE).
+
+Based on Cocoon AI's MIT-licensed [`architecture-diagram-generator` 1.0](https://github.com/Cocoon-AI/architecture-diagram-generator/tree/aff12bcf0f861995362e90273060acd0b68a1702). Its notice and terms remain in [LICENSE](LICENSE).
 
 ## Contributing
 
