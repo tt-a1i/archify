@@ -16,8 +16,9 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: narayann7/star-history-action@a68d8f9d67ca20d55b682a264e69152dcf326e9c # v1.0.5
+      - uses: actions/checkout@v5
+      # Upstream PR #6: Node 24 migration, before v1.0.6's chart-rendering changes.
+      - uses: narayann7/star-history-action@00dfada13f106e4114ee46728aa415857078e76c
         with:
           output-dir: assets
           update-readme: 'false'

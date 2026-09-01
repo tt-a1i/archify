@@ -12,8 +12,8 @@ jobs:
       matrix:
         node-version: [18, 20, 22, 24]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -28,8 +28,8 @@ jobs:
   webm-artifact:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Provision a known Chrome runtime
@@ -73,8 +73,8 @@ jobs:
   zip-freshness:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Rebuild archify.zip and compare exact bytes
@@ -88,8 +88,8 @@ jobs:
   published-update-manifest:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Public notifier manifest must reference an existing stable Release
@@ -148,8 +148,8 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Extract packaged skill
@@ -185,7 +185,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Reject an obsolete deployment run
         id: deployment-head
         env:
@@ -200,13 +200,13 @@ jobs:
           fi
       - name: Configure GitHub Pages
         if: steps.deployment-head.outputs.current == 'true'
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Upload checked documentation
         if: steps.deployment-head.outputs.current == 'true'
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: docs
       - name: Deploy checked documentation
         if: steps.deployment-head.outputs.current == 'true'
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

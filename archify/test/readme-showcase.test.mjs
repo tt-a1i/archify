@@ -230,6 +230,8 @@ test('all README languages end with the self-hosted star history chart', () => {
 
   assert.match(workflow, /permissions:\n  contents: write/);
   assert.match(workflow, /narayann7\/star-history-action@[0-9a-f]{40}/);
+  // Upstream PR #6 migrates setup-node to Node 24 without the v1.0.6 chart changes.
+  assert.match(workflow, /narayann7\/star-history-action@00dfada13f106e4114ee46728aa415857078e76c\s/);
   assert.match(workflow, /output-dir: assets/);
   assert.match(workflow, /update-readme: ['"]false['"]/);
   assert.match(workflow, /commit: ['"]false['"]/);

@@ -243,9 +243,33 @@ test('cli: visual-check returns a skipped receipt with exit 2 when Chrome is una
   assert.equal(result.status, 2, result.stderr);
   const receipt = JSON.parse(result.stdout);
   assert.equal(receipt.status, 'skipped');
+  assert.equal(receipt.evidenceKind, 'automated-browser');
   assert.equal(receipt.visualReview, 'pending');
   assert.equal(receipt.chrome.status, 'unavailable');
   assert.equal(fs.existsSync(out.replace(/\.html$/, '.visual-check.json')), true);
+});
+
+test('cli: visual-check describes human output as automated browser evidence, not visual approval', () => {
+  const out = path.join(tmp, 'visual-check-browser-evidence.html');
+  fs.writeFileSync(out, '<!doctype html><html><body>delivered</body></html>');
+  const missingChrome = path.join(tmp, 'missing-browser-evidence-chrome');
+  const result = run(['visual-check', out], {
+    env: { ...process.env, ARCHIFY_CHROME: missingChrome },
+  });
+
+  assert.equal(result.status, 2, result.stderr);
+  assert.match(result.stdout, /automated browser evidence skipped:/i);
+  assert.match(result.stdout, /perceptual visual review pending/i);
+  assert.doesNotMatch(result.stdout, /^visual-check skipped:/m);
+});
+
+test('cli: visual-check keeps automated and perceptual claims separate on input failure', () => {
+  const result = run(['visual-check', path.join(tmp, 'missing-browser-evidence.html')]);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /automated browser evidence failed:/i);
+  assert.match(result.stderr, /perceptual visual review pending/i);
+  assert.doesNotMatch(result.stderr, /^visual-check failed:/m);
 });
 
 test('cli: deliver atomically writes a checked artifact and structured receipt', () => {
