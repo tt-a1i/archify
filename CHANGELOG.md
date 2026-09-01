@@ -4,6 +4,12 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
+> Development identity: `v2.17.0-dev.0`. Not a stable release.
+
+### Fixed
+- **License provenance in distributions.** Source and packaged Skill distributions retain Cocoon AI's exact MIT copyright notice, package staging and smoke tests fail closed when the notice or LICENSE is missing or altered, and the deterministic ZIP carries the same LICENSE bytes as the repository.
+- **Unsupported experiment source chains.** The Hivenue and Taiga Mermaid inputs and their generated derivatives are removed from the current tree because no verifiable redistribution license was available; the retained validation evidence now reports the remaining 3-source / 9-artifact set without rewriting historical results.
+
 ## [2.16.0] — 2026-08-30
 
 ### Added

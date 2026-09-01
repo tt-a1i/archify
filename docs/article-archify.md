@@ -35,13 +35,13 @@ Archify 的 Roadmap 里有一段不常出现在开源项目中的文字：
 
 为了验证这个判断，作者做了一个盲测实验。
 
-五张真实 Mermaid 流程图，每张渲染三个版本：
+原始实验用了五张真实 Mermaid 流程图，每张渲染三个版本：
 
 - **版本 A**：原生 Mermaid，dagre 布局，默认主题。
 - **版本 B**：同样 dagre 布局，但换上 archify 的深色配色、JetBrains Mono 字体、slate-900 背景。布局不动——只换皮。
 - **版本 C**：archify 手动布局——Claude 分配语义类（`c-frontend`、`c-backend`、`c-security` 等），手动摆放坐标，archify CSS 是最后一步。
 
-15 张截图打乱、去标签，盲评 1-10 分。
+原始 15 张截图打乱、去标签，盲评 1-10 分。2026-09-01 因其中两个来源仓库没有可核验的再分发许可，当前仓库已移除这两组输入和衍生物，仅保留 3 图、9 张截图；因此原始 5 图实验无法再从当前 HEAD 完整复现。
 
 结论写在 `experiments/v3-mermaid-validation/RESULT.md` 里，只一行：
 

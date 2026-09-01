@@ -59,6 +59,23 @@ try {
   requireAbsent('.hive');
   requireAbsent('.workbuddy');
 
+  const packageLicensePath = path.join(skillRoot, 'LICENSE');
+  if (!fs.existsSync(packageLicensePath)) {
+    throw new Error('packaged skill is missing LICENSE');
+  }
+  const packageLicense = fs.readFileSync(packageLicensePath, 'utf8');
+  const packageLicenseLines = packageLicense.split(/\r?\n/);
+  if (!packageLicenseLines.includes('Copyright (c) 2025 Cocoon AI')) {
+    throw new Error('packaged LICENSE is missing the exact Cocoon AI copyright line');
+  }
+  const repositoryLicense = fs.readFileSync(path.join(repoRoot, 'LICENSE'), 'utf8');
+  if (packageLicense !== repositoryLicense) {
+    throw new Error('packaged LICENSE must byte-match the repository LICENSE');
+  }
+  if (!packageLicense.includes('The above copyright notice and this permission notice shall be included in all')) {
+    throw new Error('packaged LICENSE is missing the MIT notice-preservation terms');
+  }
+
   if (!fs.existsSync(updateChecker)) {
     throw new Error(`packaged update checker not found at ${updateChecker}`);
   }
