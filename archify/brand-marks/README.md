@@ -7,7 +7,10 @@ relationships.
 
 The rights gate currently makes 63 marks renderable and places 44 known-conflict
 assets on `HOLD`. A held ID, alias, or domain fails with `brand/unavailable`;
-remove the `brand` field and keep the product name in the authored label. The
+remove the `brand` field and keep the product name in the authored label. A
+diagnostic may suggest an explicit, brand-neutral `capability`; these marks are
+hand-authored Archify geometry covered by the repository MIT license and are
+kept separate from brand paths, metadata, aliases, and domains. The
 remaining marks are "enabled", not "approved" or "cleared". See `rights.json`
 and the packaged `THIRD_PARTY_BRAND_ASSETS.md` for the exact boundary.
 

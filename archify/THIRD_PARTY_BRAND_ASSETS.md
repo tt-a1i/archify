@@ -1,5 +1,10 @@
 # Third-party brand assets
 
+Archify's `capability` glyphs are original, brand-neutral project artwork
+distributed under Archify's MIT license. They are not third-party marks,
+rights clearance, or automatic substitutes for any vendor identity. Product
+names remain authored text and may carry separate trademark considerations.
+
 Archify's MIT license covers Archify's code. It does **not** license third-party
 brand names, logos, trademarks, or artwork bundled for referential diagrams.
 Those assets remain the property of their respective owners. Their presence does

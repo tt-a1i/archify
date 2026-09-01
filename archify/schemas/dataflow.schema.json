@@ -118,6 +118,10 @@
           "stage",
           "row"
         ],
+        "dependentSchemas": {
+          "brand": { "properties": { "capability": false } },
+          "capability": { "properties": { "brand": false } }
+        },
         "properties": {
           "id": {
             "$ref": "common.schema.json#/$defs/id"
@@ -137,6 +141,9 @@
           },
           "brand": {
             "$ref": "common.schema.json#/$defs/brandMark"
+          },
+          "capability": {
+            "$ref": "common.schema.json#/$defs/capabilityMark"
           },
           "stage": {
             "type": "integer",

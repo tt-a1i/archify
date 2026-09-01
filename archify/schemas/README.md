@@ -107,6 +107,14 @@ unpinned network capture. Unsafe, unavailable, changed, or unsupported content
 fails closed with a brand diagnostic. Omitted `brand` preserves the prior
 output.
 
+The same nodes may instead declare one optional `capability`, selected from
+`archify capabilities --json`. Capability marks are first-party, neutral
+Archify glyphs that describe a technical or business role without claiming a
+vendor identity. `brand` and `capability` are mutually exclusive and Archify
+never infers, substitutes, or migrates one into the other. Product names may
+remain authored in `label`; authors must choose the capability that truthfully
+describes the node.
+
 ## schema_version policy
 
 Workflow supports schema versions 1 and 2. Version 1 remains the fixed-layout
@@ -140,6 +148,7 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
   `messagebus`, `external`
 - `locale` — the bounded renderer locale, `en` or `zh-CN`
 - `brandMark` — one optional built-in brand ID or explicit HTTP(S) site URL
+- `capabilityMark` — one optional first-party neutral capability glyph ID
 - `variant` — `default`, `emphasis`, `security`, `dashed` (sequence messages
   extend this list locally with `return`)
 - `legendMode` and `legendEntry` — the shared strict mode and label/visibility

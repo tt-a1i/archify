@@ -1759,7 +1759,8 @@
       text-transform: uppercase;
     }
     .semantic-passport-meta [data-passport="tag"] { color: var(--cloud-stroke); }
-    .semantic-passport-meta [data-passport="brand"] {
+    .semantic-passport-meta [data-passport="brand"],
+    .semantic-passport-meta [data-passport="capability"] {
       border-color: color-mix(in srgb, var(--messagebus-stroke) 52%, var(--toolbar-border));
       color: var(--messagebus-stroke);
       font-weight: 700;
@@ -3998,8 +3999,29 @@
       stroke-linecap: round;
       stroke-linejoin: round;
     }
+    /* Capability Marks are Archify-authored, brand-neutral identity badges.
+       They share the physical rail with Brand Marks but never share brand
+       metadata, vendor colors, or third-party artwork. */
+    svg .capability-mark { pointer-events: none; }
+    svg .capability-mark-badge { fill: #fff; stroke: none; }
+    svg .capability-mark-frame {
+      fill: none;
+      stroke: #cbd5e1;
+      stroke-width: 0.8;
+      vector-effect: non-scaling-stroke;
+    }
+    svg .capability-mark-glyph {
+      fill: none;
+      stroke: #475569;
+      stroke-width: 1.25;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
     svg[data-preset="blueprint"] .brand-mark-badge,
-    svg[data-preset="blueprint"] .brand-mark-frame { rx: 1px; }
+    svg[data-preset="blueprint"] .brand-mark-frame,
+    svg[data-preset="blueprint"] .capability-mark-badge,
+    svg[data-preset="blueprint"] .capability-mark-frame { rx: 1px; }
 
     /* Reading Depth is a viewer-only level-of-detail layer. MAP preserves the
        authored structure and primary labels, READ restores relationship labels
@@ -5344,6 +5366,7 @@
               <span id="focus-context" data-passport="context" hidden></span>
               <span id="focus-tag" data-passport="tag" hidden></span>
               <span id="focus-brand" data-passport="brand" hidden></span>
+              <span id="focus-capability" data-passport="capability" hidden></span>
               <code id="focus-id" data-passport="id"></code>
             </div>
             <div class="semantic-passport-evidence" id="focus-evidence" hidden aria-label="Verified source evidence">
@@ -7474,7 +7497,7 @@
           beacon.classList.add('source-evidence-beacon');
           beacon.setAttribute('data-source-evidence-beacon', '');
           beacon.setAttribute('aria-hidden', 'true');
-          var brandOffset = node.hasAttribute('data-node-brand') ? 24 : 0;
+          var brandOffset = node.hasAttribute('data-node-brand') || node.hasAttribute('data-node-capability') ? 24 : 0;
           beacon.setAttribute('transform', 'translate(' + (box.x + box.width - 35 - brandOffset) + ' ' + (box.y + 5) + ')');
           var title = document.createElementNS(svgNamespace, 'title');
           title.textContent = label;
@@ -7887,6 +7910,7 @@
         setPassportValue(context, node.getAttribute('data-node-context'));
         setPassportValue(tag, node.getAttribute('data-node-tag'));
         setPassportValue(document.getElementById('focus-brand'), node.getAttribute('data-node-brand'));
+        setPassportValue(document.getElementById('focus-capability'), node.getAttribute('data-node-capability'));
         semanticId.textContent = id;
         semanticId.hidden = false;
         renderSourceEvidence(id);
@@ -12697,6 +12721,7 @@
         var context = node.getAttribute('data-node-context') || '';
         var tag = node.getAttribute('data-node-tag') || '';
         var brand = node.getAttribute('data-node-brand') || '';
+        var capability = node.getAttribute('data-node-capability') || '';
         var type = semanticType(node);
         var sources = Archify.sourceEvidence.node(id);
         var sourceSearch = sources.map(function (source) {
@@ -12712,7 +12737,7 @@
           brand: brand,
           sources: sources,
           links: connectionsFor(id),
-          search: (id + ' ' + label + ' ' + type + ' ' + sublabel + ' ' + context + ' ' + tag + ' ' + sourceSearch + ' ' + text).toLowerCase() + ' ' + brand.toLowerCase(),
+          search: (id + ' ' + label + ' ' + type + ' ' + sublabel + ' ' + context + ' ' + tag + ' ' + sourceSearch + ' ' + text).toLowerCase() + ' ' + brand.toLowerCase() + ' ' + capability.toLowerCase(),
           node: node
         };
       });

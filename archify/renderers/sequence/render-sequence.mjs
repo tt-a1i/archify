@@ -6,7 +6,7 @@ import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, routePointsValue, asArray, isFinitePoint } from '../shared/geometry.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
-import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
+import { identityLabelFitWidth, identityMetadataFor, identityTopRailProblem, renderIdentityMark } from '../shared/identity-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 
 const participantTextFit = {
@@ -145,7 +145,7 @@ function validateSequence() {
     if (estLabelW > layout.participantW + 6) {
       problems.push(`Label "${participant.label}" (~${Math.round(estLabelW)}px) is wider than the ${layout.participantW}px participant box — shorten it.`);
     }
-    const brandRailProblem = brandTopRailProblem(participant, layout.participantW, 8, 'Participant');
+    const brandRailProblem = identityTopRailProblem(participant, layout.participantW, 8, 'Participant');
     if (brandRailProblem) problems.push(brandRailProblem);
     // sublabel renders as a single unwrapped <text>; shrink-to-fit handles the
     // ordinary case, this rejects what it cannot rescue.
@@ -296,13 +296,13 @@ function renderParticipant(participant) {
   const sub = hasSub
     ? `\n          <text data-detail="context" x="${participant.cx}" y="${layout.topY + 39}" class="t-muted" font-size="${fittedNodeFontSize(participant.sublabel, layout.participantW, participantTextFit.sublabelPreferred, participantTextFit.sublabelMinimum)}" text-anchor="middle">${esc(participant.sublabel)}</text>`
     : '';
-  const brand = renderBrandMark(participant, { x: participant.x + layout.participantW - 22, y: layout.topY + 6 });
-  const labelFontSize = fittedNodeFontSize(participant.label, brandLabelFitWidth(participant, layout.participantW), 11, 8);
+  const brand = renderIdentityMark(participant, { x: participant.x + layout.participantW - 22, y: layout.topY + 6 });
+  const labelFontSize = fittedNodeFontSize(participant.label, identityLabelFitWidth(participant, layout.participantW), 11, 8);
   const passport = {
     kind: participant.type,
     sublabel: participant.sublabel,
     context: i18nText(sequence.meta.locale, 'node.context.sequence'),
-    ...brandMetadataFor(participant),
+    ...identityMetadataFor(participant),
   };
   return `        <g ${focusNodeAttrs(participant.id, participant.label, passport, sequence.meta.locale)}>
           ${focusNodeTitle(participant.label, passport)}

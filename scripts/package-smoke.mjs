@@ -178,6 +178,8 @@ try {
 
   run(['--help']);
   run(['doctor']);
+  requirePresent(path.join('renderers', 'shared', 'capability-marks.mjs'));
+  requirePresent(path.join('renderers', 'shared', 'identity-marks.mjs'));
   const brands = JSON.parse(run(['brands', 'openai', '--json']));
   if (!brands.marks.some((mark) => mark.id === 'openai')) {
     throw new Error('packaged brand catalogue did not resolve openai');
@@ -188,8 +190,16 @@ try {
   }
   const held = JSON.parse(run(['brands', 'github.com', '--json']));
   if (held.marks.some((mark) => mark.id === 'github')
-    || !held.unavailable.some((policy) => policy.id === 'github' && policy.rightsDecision === 'HOLD')) {
+    || !held.unavailable.some((policy) => policy.id === 'github'
+      && policy.rightsDecision === 'HOLD'
+      && policy.suggestedCapability === 'source-control')) {
     throw new Error('packaged brand catalogue did not enforce the rights HOLD policy');
+  }
+  const capabilityCatalogue = JSON.parse(run(['capabilities', '--json']));
+  if (capabilityCatalogue.count !== 28
+    || capabilityCatalogue.capabilities.length !== 28
+    || !capabilityCatalogue.capabilities.some((mark) => mark.id === 'source-control')) {
+    throw new Error('packaged capability catalogue is incomplete');
   }
   requirePresent('THIRD_PARTY_BRAND_ASSETS.md');
   requirePresent(path.join('brand-marks', 'rights.json'));
@@ -200,13 +210,29 @@ try {
     'shared',
     'generated-brand-marks.mjs',
   )).href);
+  const capabilityModule = await import(pathToFileURL(path.join(
+    skillRoot,
+    'renderers',
+    'shared',
+    'capability-marks.mjs',
+  )).href);
+  const capabilityIds = new Set(capabilityModule.CAPABILITY_MARKS.map((mark) => mark.id));
+  if (capabilityIds.size !== 28
+    || capabilityModule.CAPABILITY_MARKS.some((mark) => Object.hasOwn(mark, 'path')
+      || Object.hasOwn(mark, 'hex')
+      || Object.hasOwn(mark, 'source'))) {
+    throw new Error('packaged capability catalogue leaked brand-style asset metadata');
+  }
   const renderableIds = new Set(generated.BRAND_MARKS.map((mark) => mark.id));
   const policies = new Map(generated.BRAND_MARK_POLICIES.map((policy) => [policy.id, policy]));
   if (rights.decisions.HOLD.length !== 44) throw new Error('packaged rights ledger must contain 44 HOLD IDs');
   for (const id of rights.decisions.HOLD) {
     const policy = policies.get(id);
+    const suggestedCapability = rights.suggestedCapabilities?.[id];
     if (renderableIds.has(id) || !policy || policy.rightsDecision !== 'HOLD'
-      || Object.hasOwn(policy, 'path') || Object.hasOwn(policy, 'hex')) {
+      || Object.hasOwn(policy, 'path') || Object.hasOwn(policy, 'hex')
+      || !capabilityIds.has(suggestedCapability)
+      || policy.suggestedCapability !== suggestedCapability) {
       throw new Error(`packaged rights HOLD leaked renderable asset data for ${id}`);
     }
   }
@@ -278,6 +304,33 @@ try {
   const deployment = path.join(scratch, 'deployment.html');
   run(['render', 'architecture', path.join(skillRoot, 'examples', fixtures[0][1]), deployment]);
   run(['check', deployment]);
+
+  const capabilityArtifact = path.join(scratch, 'capability.html');
+  run(['render', 'architecture', path.join(
+    skillRoot,
+    'examples',
+    'brand-aware-delivery.architecture.json',
+  ), capabilityArtifact]);
+  const capabilityHtml = fs.readFileSync(capabilityArtifact, 'utf8');
+  for (const capability of ['source-control', 'container', 'payments']) {
+    if (!capabilityHtml.includes(`data-capability-mark="${capability}"`)) {
+      throw new Error(`packaged renderer omitted explicit capability ${capability}`);
+    }
+  }
+
+  const heldFixture = JSON.parse(fs.readFileSync(path.join(
+    skillRoot,
+    'examples',
+    'brand-aware-delivery.architecture.json',
+  ), 'utf8'));
+  heldFixture.components[2].brand = 'github';
+  delete heldFixture.components[2].capability;
+  const heldFixturePath = path.join(scratch, 'held-brand.architecture.json');
+  fs.writeFileSync(heldFixturePath, `${JSON.stringify(heldFixture, null, 2)}\n`);
+  const heldFailure = runExpectFailure(['validate', 'architecture', heldFixturePath, '--json']);
+  if (!heldFailure.includes('brand/unavailable')) {
+    throw new Error('packaged renderer silently converted a held brand into a capability');
+  }
 
   const compareReceipt = JSON.parse(run([
     'compare', 'architecture',

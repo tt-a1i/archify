@@ -532,7 +532,7 @@ export async function prepareDiagramBrandMarks(diagramType, diagram) {
     }
     const policy = findBrandPolicy(node.brand);
     if (policy?.rightsDecision === 'HOLD') {
-      const message = `/${collection}/${index}/brand ${JSON.stringify(node.brand)} is unavailable because the bundled asset is on rights HOLD; remove the brand field and keep the product name in the node label`;
+      const message = `/${collection}/${index}/brand ${JSON.stringify(node.brand)} is unavailable because the bundled asset is on rights HOLD; remove the brand field, keep the product name in the node label, and explicitly author capability ${JSON.stringify(policy.suggestedCapability)} only if it describes this node`;
       unavailable.push({
         code: 'brand/unavailable',
         severity: 'error',
@@ -543,8 +543,12 @@ export async function prepareDiagramBrandMarks(diagramType, diagram) {
           rightsDecision: policy.rightsDecision,
           reviewedAt: policy.reviewedAt,
           assetRevision: policy.assetRevision,
+          suggestedCapability: policy.suggestedCapability,
         },
-        supportedFixes: ['remove the `brand` field and keep the product name in the node label'],
+        supportedFixes: [
+          'remove the `brand` field and keep the product name in the node label',
+          `author \`capability: ${JSON.stringify(policy.suggestedCapability)}\` after confirming that capability describes the node`,
+        ],
       });
       return;
     }

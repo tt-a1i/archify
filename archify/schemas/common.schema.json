@@ -39,6 +39,16 @@
     "componentType": {
       "enum": ["frontend", "backend", "database", "cloud", "security", "messagebus", "external"]
     },
+    "capabilityMark": {
+      "enum": [
+        "source-control", "delivery", "container", "infrastructure", "observability",
+        "ai-routing", "ai-search", "application-platform", "cloud-platform", "language",
+        "ui-framework", "application-framework", "relational-database", "document-database",
+        "cache", "event-stream", "message-queue", "analytics-store", "search-index",
+        "time-series-store", "orchestration", "collaboration", "payments", "commerce",
+        "crm", "support", "media-channel", "community-channel"
+      ]
+    },
     "brandMark": {
       "oneOf": [
         {

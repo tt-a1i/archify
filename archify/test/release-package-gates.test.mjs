@@ -342,6 +342,8 @@ canonicalZipTest('built archives contain the embedded notifier runtime', () => {
     assert.ok(entries.has('archify/THIRD_PARTY_BRAND_ASSETS.md'));
     assert.ok(entries.has('archify/brand-marks/rights.json'));
     assert.ok(entries.has('archify/renderers/shared/generated-brand-marks.mjs'));
+    assert.ok(entries.has('archify/renderers/shared/capability-marks.mjs'));
+    assert.ok(entries.has('archify/renderers/shared/identity-marks.mjs'));
     assert.ok(entries.has('archify/scripts/check-update.mjs'));
     assert.ok(entries.has('archify/scripts/update-contract.mjs'));
   } finally {

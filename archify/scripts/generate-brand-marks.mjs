@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as simpleIcons from 'simple-icons';
+import { CAPABILITY_MARKS } from '../renderers/shared/capability-marks.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -54,6 +55,7 @@ if (rights.schemaVersion !== 1 || !rights.decisions || typeof rights.decisions !
 }
 
 const expectedDecisionCounts = Object.freeze({ HOLD: 44, KEEP_WITH_NOTICE: 13, COUNSEL: 50 });
+const capabilityIds = new Set(CAPABILITY_MARKS.map((mark) => mark.id));
 const decisionById = new Map();
 for (const [decision, expectedCount] of Object.entries(expectedDecisionCounts)) {
   const entries = rights.decisions[decision];
@@ -70,6 +72,20 @@ for (const id of rights.decisions.KEEP_WITH_NOTICE) {
   if (!Array.isArray(evidence) || evidence.length === 0 || evidence.some((url) => !/^https:\/\//.test(url))) {
     fail(`KEEP_WITH_NOTICE ${id} requires at least one HTTPS evidence URL`);
   }
+}
+if (!rights.suggestedCapabilities || typeof rights.suggestedCapabilities !== 'object'
+  || Array.isArray(rights.suggestedCapabilities)) {
+  fail('rights.json must contain suggestedCapabilities for every HOLD ID');
+}
+if (Object.keys(rights.suggestedCapabilities).length !== rights.decisions.HOLD.length) {
+  fail('rights.json suggestedCapabilities must cover exactly the HOLD IDs');
+}
+for (const id of rights.decisions.HOLD) {
+  const capability = rights.suggestedCapabilities[id];
+  if (!capabilityIds.has(capability)) fail(`HOLD ${id} has invalid suggested capability ${capability}`);
+}
+for (const id of Object.keys(rights.suggestedCapabilities)) {
+  if (!rights.decisions.HOLD.includes(id)) fail(`suggested capability references non-HOLD ID ${id}`);
 }
 
 const ids = new Set();
@@ -161,6 +177,7 @@ const generated = catalog.marks.map((entry, index) => {
     mitCovered: false,
     reviewedAt: rights.reviewedAt,
     assetRevision: rights.assetRevision,
+    ...(rightsDecision === 'HOLD' ? { suggestedCapability: rights.suggestedCapabilities[entry.id] } : {}),
     ...(rightsDecision === 'KEEP_WITH_NOTICE' ? { evidence: rights.notices[entry.id].evidence } : {}),
   };
   policies.push(policy);

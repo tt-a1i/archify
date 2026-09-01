@@ -8,6 +8,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { BRAND_MARKS, BRAND_MARK_POLICIES } from '../renderers/shared/generated-brand-marks.mjs';
+import { CAPABILITY_MARKS } from '../renderers/shared/capability-marks.mjs';
 import { isPrivateBrandAddress, prepareDiagramBrandMarks } from '../renderers/shared/brand-marks.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -105,6 +106,7 @@ function nodeBlock(html, id) {
 }
 
 test('generated catalog exposes 63 renderable marks and a complete fail-closed rights ledger', () => {
+  const rights = JSON.parse(fs.readFileSync(path.join(skillRoot, 'brand-marks', 'rights.json'), 'utf8'));
   assert.equal(BRAND_MARKS.length, 63);
   assert.equal(BRAND_MARK_POLICIES.length, 107);
   assert.equal(BRAND_MARK_POLICIES.filter((policy) => policy.rightsDecision === 'HOLD').length, 44);
@@ -126,6 +128,23 @@ test('generated catalog exposes 63 renderable marks and a complete fail-closed r
     assert.equal(renderable.has(policy.id), false, policy.id);
     assert.equal('path' in policy, false, policy.id);
     assert.equal('hex' in policy, false, policy.id);
+    assert.match(rights.suggestedCapabilities?.[policy.id] || '', /^[a-z]+(?:-[a-z]+)*$/, policy.id);
+  }
+});
+
+test('capability registry is first-party, neutral, and synchronized with the public schema', () => {
+  const commonSchema = JSON.parse(fs.readFileSync(path.join(skillRoot, 'schemas', 'common.schema.json'), 'utf8'));
+  assert.deepEqual(
+    [...CAPABILITY_MARKS.map((mark) => mark.id)].sort(),
+    [...commonSchema.$defs.capabilityMark.enum].sort(),
+  );
+  assert.equal(new Set(CAPABILITY_MARKS.map((mark) => mark.id)).size, CAPABILITY_MARKS.length);
+  for (const mark of CAPABILITY_MARKS) {
+    assert.deepEqual(Object.keys(mark).sort(), ['glyph', 'id', 'title']);
+    assert.match(mark.id, /^[a-z]+(?:-[a-z]+)*$/);
+    assert.ok(mark.title);
+    assert.match(mark.glyph, /^</);
+    assert.doesNotMatch(mark.glyph, /#[0-9a-f]{3,8}|data-brand|https?:|simple-icons/i);
   }
 });
 
@@ -145,6 +164,20 @@ test('brand discovery resolves model names, aliases, domains, and Chinese channe
     assert.equal(receipt.ok, true);
     assert.ok(receipt.marks.some((mark) => mark.id === expected), query);
   }
+});
+
+test('capability discovery lists only neutral first-party identities', () => {
+  const result = spawnSync(process.execPath, [cli, 'capabilities', 'source', '--json'], {
+    cwd: skillRoot,
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.ok, true);
+  assert.equal(receipt.command, 'capabilities');
+  assert.ok(receipt.capabilities.some((mark) => mark.id === 'source-control'));
+  assert.match(receipt.boundary, /not brand logos or rights clearance/i);
+  assert.equal(receipt.capabilities.some((mark) => Object.hasOwn(mark, 'path') || Object.hasOwn(mark, 'hex')), false);
 });
 
 test('CLI omits held assets from the catalogue and explains direct held queries', () => {
@@ -258,8 +291,56 @@ test('all five renderers reject held IDs and domains with an actionable unavaila
     assert.ok(receipt.diagnostics.some((entry) => entry.code === 'brand/unavailable'
       && entry.subject.path.endsWith('/brand')
       && entry.evidence.rightsDecision === 'HOLD'
+      && entry.evidence.suggestedCapability
       && entry.evidence.assetRevision === 'simple-icons@16.28.0'), `${type} ${brand}`);
-    assert.ok(receipt.diagnostics.some((entry) => entry.supportedFixes.some((fix) => fix.includes('remove the `brand` field'))));
+    assert.ok(receipt.diagnostics.some((entry) => entry.supportedFixes.some((fix) => fix.includes('author `capability:'))));
+  }
+});
+
+test('all five renderers accept an explicit neutral capability without brand metadata', () => {
+  for (const type of Object.keys(cases)) {
+    const input = writeFixture(type, `capability-${type}`, undefined, (_diagram, node) => {
+      node.capability = 'source-control';
+      if (type === 'lifecycle') node.step = node.step || '01';
+    });
+    const { result, html } = renderSync(type, input, `capability-${type}`);
+    assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
+    assert.match(html, /data-semantic-sigil=/, type);
+    assert.match(html, /data-capability-mark="source-control"/, type);
+    assert.match(html, /data-identity-kind="capability"/, type);
+    assert.match(html, /data-node-capability="Source control"/, type);
+    assert.doesNotMatch(html, /data-node-brand=/, type);
+    assert.doesNotMatch(html, /data-brand-(?:mark|title|status|source|rights)/, type);
+  }
+});
+
+test('every neutral capability glyph renders as capability-only SVG metadata', () => {
+  for (const mark of CAPABILITY_MARKS) {
+    const input = writeFixture('architecture', `capability-glyph-${mark.id}`, undefined, (_diagram, node) => {
+      node.capability = mark.id;
+    });
+    const { result, html } = renderSync('architecture', input, `capability-glyph-${mark.id}`);
+    assert.equal(result.status, 0, `${mark.id}: ${result.stderr || result.stdout}`);
+    assert.match(html, new RegExp(`data-capability-mark="${mark.id}"`), mark.id);
+    assert.match(html, /data-identity-kind="capability"/, mark.id);
+    assert.doesNotMatch(html, /data-node-brand=|data-brand-(?:mark|title|status|source|rights)/, mark.id);
+  }
+});
+
+test('capability is explicit, bounded, and mutually exclusive with brand', () => {
+  for (const [name, capability, brand] of [
+    ['unknown-capability', 'github', undefined],
+    ['brand-capability-conflict', 'source-control', 'openai'],
+  ]) {
+    const input = writeFixture('architecture', name, brand, (_diagram, node) => {
+      node.capability = capability;
+    });
+    const result = spawnSync(process.execPath, [cli, 'validate', 'architecture', input, '--json'], {
+      cwd: skillRoot,
+      encoding: 'utf8',
+    });
+    assert.equal(result.status, 1, result.stderr || result.stdout);
+    assert.equal(JSON.parse(result.stdout).ok, false);
   }
 });
 
@@ -749,8 +830,10 @@ test('viewer exposes brand identity to Passport and Finder while keeping source 
   const template = fs.readFileSync(path.join(skillRoot, 'assets', 'template.html'), 'utf8');
   assert.match(template, /id="focus-brand" data-passport="brand" hidden/);
   assert.match(template, /node\.getAttribute\('data-node-brand'\)/);
-  assert.match(template, /brandOffset = node\.hasAttribute\('data-node-brand'\) \? 24 : 0/);
-  assert.match(template, /sourceSearch \+ ' ' \+ text\)\.toLowerCase\(\) \+ ' ' \+ brand\.toLowerCase\(\)/);
+  assert.match(template, /node\.hasAttribute\('data-node-brand'\) \|\| node\.hasAttribute\('data-node-capability'\) \? 24 : 0/);
+  assert.match(template, /id="focus-capability" data-passport="capability" hidden/);
+  assert.match(template, /node\.getAttribute\('data-node-capability'\)/);
+  assert.match(template, /brand\.toLowerCase\(\) \+ ' ' \+ capability\.toLowerCase\(\)/);
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

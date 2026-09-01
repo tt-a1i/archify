@@ -188,10 +188,12 @@ export function focusNodeAttrs(id, label, metadata = {}, locale) {
     ['data-node-brand-id', metadata.brandId],
     ['data-node-brand-status', metadata.brandStatus],
     ['data-node-brand-source', metadata.brandSource],
+    ['data-node-capability', metadata.capability],
+    ['data-node-capability-id', metadata.capabilityId],
   ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
     .map(([name, value]) => ` ${name}="${esc(String(value))}"`)
     .join('');
-  const detail = [metadata.sublabel, metadata.context, metadata.brand]
+  const detail = [metadata.sublabel, metadata.context, metadata.brand, metadata.capability]
     .filter((value) => value !== undefined && value !== null && String(value).trim() !== '')
     .join(', ');
   const aria = detail
@@ -203,7 +205,7 @@ export function focusNodeAttrs(id, label, metadata = {}, locale) {
 // Native SVG titles preserve a compact details-on-demand fallback when the
 // canonical SVG is embedded inline outside the full Archify viewer.
 export function focusNodeTitle(label, metadata = {}) {
-  const parts = [label, metadata.sublabel, metadata.context, metadata.tag, metadata.brand]
+  const parts = [label, metadata.sublabel, metadata.context, metadata.tag, metadata.brand, metadata.capability]
     .filter((value) => value !== undefined && value !== null && String(value).trim() !== '');
   return `<title>${esc(parts.join(' · '))}</title>`;
 }

@@ -24,6 +24,7 @@ function usage() {
   archify check <output.html>
   archify visual-check <output.html> [--json]
   archify guide [scenario or question] [--json] [--lang en|zh]
+  archify capabilities [name] [--json]
   archify brands [name, alias, domain, or category] [--json]
   archify brands capture <url> [--json]
   archify examples
@@ -1446,6 +1447,7 @@ async function commandBrands(args) {
       ...(unavailable.length ? {
         supportedFixes: [
           'Remove the `brand` field and keep the product name in the node label.',
+          `After confirming the node role, author one suggested neutral capability: ${[...new Set(unavailable.map((entry) => entry.suggestedCapability).filter(Boolean))].join(', ')}.`,
           'After an independent rights review, author an existing digest-pinned asset object directly.',
         ],
       } : {
@@ -1455,7 +1457,8 @@ async function commandBrands(args) {
     return;
   }
   if (unavailable.length) {
-    console.log(`Built-in brand unavailable on rights HOLD: ${unavailable.map((entry) => entry.id).join(', ')}. Remove the brand field and keep the product name in the node label, or supply an independently reviewed digest-pinned asset.`);
+    const suggestions = [...new Set(unavailable.map((entry) => entry.suggestedCapability).filter(Boolean))];
+    console.log(`Built-in brand unavailable on rights HOLD: ${unavailable.map((entry) => entry.id).join(', ')}. Remove the brand field and keep the product name in the node label${suggestions.length ? `; after confirming the node role, consider capability ${suggestions.join(', ')}` : ''}; or supply an independently reviewed digest-pinned asset.`);
     return;
   }
   if (!marks.length) {
@@ -1468,6 +1471,33 @@ async function commandBrands(args) {
   for (const [category, entries] of grouped) {
     console.log(`${category}: ${entries.map((mark) => mark.id).join(', ')}`);
   }
+}
+
+async function commandCapabilities(args) {
+  const json = args.includes('--json');
+  const unknown = args.filter((arg) => arg.startsWith('--') && arg !== '--json');
+  if (unknown.length) fail(`Unknown capabilities option "${unknown[0]}".`);
+  const query = args.filter((arg) => arg !== '--json').join(' ').trim().toLocaleLowerCase('en-US');
+  const { CAPABILITY_MARKS } = await import('../renderers/shared/capability-marks.mjs');
+  const capabilities = CAPABILITY_MARKS.filter((mark) => !query
+    || mark.id.includes(query)
+    || mark.title.toLocaleLowerCase('en-US').includes(query));
+  if (json) {
+    console.log(JSON.stringify({
+      schemaVersion: 1,
+      ok: true,
+      command: 'capabilities',
+      count: capabilities.length,
+      capabilities: capabilities.map(({ id, title }) => ({ id, title })),
+      boundary: 'Capability marks are Archify-authored neutral symbols, not brand logos or rights clearance.',
+    }, null, 2));
+    return;
+  }
+  if (!capabilities.length) {
+    console.log(`No capability matched "${query}". Run "archify capabilities --json" to list supported IDs.`);
+    return;
+  }
+  for (const mark of capabilities) console.log(`${mark.id}\t${mark.title}`);
 }
 
 function commandDemo(args) {
@@ -1988,6 +2018,9 @@ switch (command) {
     break;
   case 'brands':
     await commandBrands(args);
+    break;
+  case 'capabilities':
+    await commandCapabilities(args);
     break;
   case 'examples':
     commandExamples();

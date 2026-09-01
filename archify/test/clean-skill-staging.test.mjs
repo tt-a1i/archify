@@ -38,6 +38,8 @@ function repositoryFixture() {
   write(root, 'archify/scripts/update-contract.mjs', 'export {};\n');
   write(root, 'archify/renderers/shared/generated-brand-marks.mjs', 'export {};\n');
   write(root, 'archify/renderers/shared/generated-validators.mjs', 'export {};\n');
+  write(root, 'archify/renderers/shared/capability-marks.mjs', 'export {};\n');
+  write(root, 'archify/renderers/shared/identity-marks.mjs', 'export {};\n');
   write(root, 'archify/test/repository-only.test.mjs', 'throw new Error();\n');
   git(root, ['init']);
   return root;

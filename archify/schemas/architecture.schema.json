@@ -87,6 +87,10 @@
         "type": "object",
         "additionalProperties": false,
         "required": ["id", "type", "label"],
+        "dependentSchemas": {
+          "brand": { "properties": { "capability": false } },
+          "capability": { "properties": { "brand": false } }
+        },
         "properties": {
           "id": { "$ref": "common.schema.json#/$defs/id" },
           "type": { "$ref": "common.schema.json#/$defs/componentType" },
@@ -94,6 +98,7 @@
           "sublabel": { "type": "string" },
           "tag": { "type": "string" },
           "brand": { "$ref": "common.schema.json#/$defs/brandMark" },
+          "capability": { "$ref": "common.schema.json#/$defs/capabilityMark" },
           "sources": {
             "type": "array",
             "minItems": 1,

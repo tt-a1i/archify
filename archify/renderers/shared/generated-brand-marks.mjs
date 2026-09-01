@@ -1326,7 +1326,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "cloud-platform"
   },
   {
     "id": "angular",
@@ -1356,7 +1357,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "infrastructure"
   },
   {
     "id": "anthropic",
@@ -1384,7 +1386,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "orchestration"
   },
   {
     "id": "apache-kafka",
@@ -1399,7 +1402,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "event-stream"
   },
   {
     "id": "argo",
@@ -1428,7 +1432,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "collaboration"
   },
   {
     "id": "bitbucket",
@@ -1456,7 +1461,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "delivery"
   },
   {
     "id": "claude",
@@ -1484,7 +1490,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "analytics-store"
   },
   {
     "id": "cloudflare",
@@ -1536,7 +1543,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "observability"
   },
   {
     "id": "deepseek",
@@ -1606,7 +1614,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "container"
   },
   {
     "id": "dotnet",
@@ -1636,7 +1645,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "search-index"
   },
   {
     "id": "facebook",
@@ -1688,7 +1698,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "application-platform"
   },
   {
     "id": "flask",
@@ -1719,7 +1730,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "application-platform"
   },
   {
     "id": "github",
@@ -1732,7 +1744,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "source-control"
   },
   {
     "id": "github-actions",
@@ -1756,7 +1769,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "source-control"
   },
   {
     "id": "go",
@@ -1771,7 +1785,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "language"
   },
   {
     "id": "google-cloud",
@@ -1819,7 +1834,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "observability"
   },
   {
     "id": "helm",
@@ -1845,7 +1861,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "crm"
   },
   {
     "id": "hugging-face",
@@ -1875,7 +1892,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "time-series-store"
   },
   {
     "id": "instagram",
@@ -1901,7 +1919,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "support"
   },
   {
     "id": "javascript",
@@ -2018,7 +2037,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "collaboration"
   },
   {
     "id": "mistral-ai",
@@ -2051,7 +2071,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "document-database"
   },
   {
     "id": "mysql",
@@ -2064,7 +2085,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "relational-database"
   },
   {
     "id": "neon",
@@ -2112,7 +2134,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "ui-framework"
   },
   {
     "id": "node-js",
@@ -2141,7 +2164,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "collaboration"
   },
   {
     "id": "ollama",
@@ -2190,7 +2214,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "ai-routing"
   },
   {
     "id": "opensearch",
@@ -2233,7 +2258,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "payments"
   },
   {
     "id": "perplexity",
@@ -2246,7 +2272,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "ai-search"
   },
   {
     "id": "pinterest",
@@ -2259,7 +2286,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "community-channel"
   },
   {
     "id": "planetscale",
@@ -2382,7 +2410,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "message-queue"
   },
   {
     "id": "railway",
@@ -2396,7 +2425,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "application-platform"
   },
   {
     "id": "react",
@@ -2411,7 +2441,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "ui-framework"
   },
   {
     "id": "reddit",
@@ -2424,7 +2455,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "community-channel"
   },
   {
     "id": "redis",
@@ -2437,7 +2469,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "cache"
   },
   {
     "id": "render",
@@ -2506,7 +2539,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "commerce"
   },
   {
     "id": "snowflake",
@@ -2534,7 +2568,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "application-framework"
   },
   {
     "id": "sqlite",
@@ -2560,7 +2595,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "payments"
   },
   {
     "id": "supabase",
@@ -2629,7 +2665,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "infrastructure"
   },
   {
     "id": "tiktok",
@@ -2646,7 +2683,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "media-channel"
   },
   {
     "id": "trello",
@@ -2674,7 +2712,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "language"
   },
   {
     "id": "vercel",
@@ -2706,7 +2745,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "ui-framework"
   },
   {
     "id": "wechat",
@@ -2750,7 +2790,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "commerce"
   },
   {
     "id": "wordpress",
@@ -2794,7 +2835,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "media-channel"
   },
   {
     "id": "zendesk",
@@ -2807,7 +2849,8 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "support"
   },
   {
     "id": "zoom",
@@ -2820,6 +2863,7 @@ export const BRAND_MARK_POLICIES = Object.freeze([
     "rightsDecision": "HOLD",
     "mitCovered": false,
     "reviewedAt": "2026-09-01",
-    "assetRevision": "simple-icons@16.28.0"
+    "assetRevision": "simple-icons@16.28.0",
+    "suggestedCapability": "collaboration"
   }
 ]);

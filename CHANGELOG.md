@@ -6,6 +6,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v2.17.0-dev.0`. Not a stable release.
 
+### Added
+- **Brand-neutral capability marks.** All five diagram types accept an explicit `capability` on primary nodes, rendering one of 28 Archify-authored neutral glyphs in the existing identity rail. `brand` and `capability` are mutually exclusive, held brands never auto-convert, and `archify capabilities` lists the bounded public IDs.
+
 ### Changed
 - **Fail-closed third-party brand rights gate.** The generated runtime now excludes 44 known-conflict bundled logo assets, reports their IDs, aliases, and domains as `brand/unavailable`, preserves ordinary labels and independently digest-pinned user assets, and ships a 107-item machine-readable decision ledger plus an explicit third-party rights notice. The remaining 63 marks are disclosed as enabled third-party assets, not as MIT-covered or legally cleared.
 

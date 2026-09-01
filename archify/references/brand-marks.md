@@ -24,7 +24,18 @@ does; `brand` explains whose product it is.
    ```
 
 3. If the receipt returns `unavailable`, omit `brand` and keep the product name
-   in `label`. Do not work around a bundled rights `HOLD` with a different alias.
+   in `label`. The receipt may suggest a neutral `capability`; author it only
+   after confirming that it describes the node. Do not work around a bundled
+   rights `HOLD` with a different alias.
+
+   ```json
+   {
+     "id": "repository",
+     "type": "external",
+     "label": "GitHub",
+     "capability": "source-control"
+   }
+   ```
 
 4. If there is no catalogue match and the user supplied the official website,
    capture its icon explicitly:
@@ -49,6 +60,24 @@ does; `brand` explains whose product it is.
 
 5. If there is no match and no user-provided URL, omit `brand`. Do not invent a
    URL or silently assign a visually similar company.
+
+## Neutral capability marks
+
+`capability` is an optional, explicit, Archify-authored functional identity. It
+uses the same upper-right badge slot as `brand`, so the two fields are mutually
+exclusive. Capability marks do not contain vendor artwork, colors, names,
+aliases, or domains, and never imply that a held brand was restored or cleared.
+The node's semantic `type` and label remain authoritative.
+
+List or search the supported IDs with:
+
+```bash
+node bin/archify.mjs capabilities --json
+node bin/archify.mjs capabilities "source" --json
+```
+
+Archify never infers `capability` from `brand`, `label`, an alias, or a URL. A
+suggestion in `brand/unavailable` is a repair option, not an automatic migration.
 
 Known enabled-brand URLs resolve to the bundled vector instead of using the
 network. Known held IDs, aliases, and URL strings fail as `brand/unavailable`.
