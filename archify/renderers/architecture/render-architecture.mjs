@@ -40,6 +40,7 @@ import {
   componentText,
   arrowClassMap,
   variantAccent,
+  qualityProfileForGate,
 } from '../shared/geometry.mjs';
 
 const componentTextFit = {
@@ -597,14 +598,14 @@ function validateArchitecture() {
   }));
 
   // Detect coincident routes (Issue #248)
-  if (arch.meta?.quality_profile === 'showcase') {
-    problems.push(...detectCoincidentRoutes({
-      relations: arch.connections,
-      pathFor,
-      diagramType: 'architecture',
-      relationCollection: 'connections',
-    }));
-  }
+  problems.push(...detectCoincidentRoutes({
+    relations: arch.connections,
+    endpointIds: new Set(components.keys()),
+    pathFor,
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: arch.meta?.quality_profile,
+  }));
 
   if (problems.length) {
     throwDiagnosticProblems('Architecture layout validation failed', problems, {
@@ -916,15 +917,20 @@ function routeVia(conn, from, to, start, end, fromSide, toSide) {
 }
 
 // ---- Coincident route detection (Issue #248) --------------------------------
-function detectCoincidentRoutes({ relations, pathFor, diagramType, relationCollection }) {
+function detectCoincidentRoutes({ relations, endpointIds, pathFor, diagramType, relationCollection, profile }) {
+  if (qualityProfileForGate(profile) !== 'showcase') return [];
+
   const problems = [];
   const routes = new Map(); // key: normalized route string, value: { conn, index, points }
 
   for (const [index, conn] of asArray(relations).entries()) {
-    if (!conn.from || !conn.to) continue;
+    // Skip invalid connections
+    if (!conn || typeof conn.from !== 'string' || typeof conn.to !== 'string') continue;
+    if (!endpointIds.has(conn.from) || !endpointIds.has(conn.to)) continue;
 
     const routed = pathFor(conn);
-    const points = routed.points;
+    const points = routed?.points;
+    if (!Array.isArray(points) || points.length < 2) continue;
 
     // Normalize route to be direction-agnostic
     const pointsStr = points.map(p => `${p[0]},${p[1]}`).join(';');
@@ -936,13 +942,20 @@ function detectCoincidentRoutes({ relations, pathFor, diagramType, relationColle
 
       // Check if this is actually a different connection (not the same one)
       if (existing.index !== index) {
-        const isAntiParallel = pointsStr !== normalized; // reversed = anti-parallel
+        // Determine if connections are anti-parallel by comparing point orders
+        const existingPointsStr = existing.points.map(p => `${p[0]},${p[1]}`).join(';');
+        const isAntiParallel = pointsStr === existingPointsStr
+          ? false  // Same point order = same direction
+          : true;  // Opposite point order = anti-parallel
         const direction = isAntiParallel ? 'opposite directions' : 'same direction';
 
         const connId = conn.id ? ` id "${conn.id}"` : '';
         const existingId = existing.conn.id ? ` id "${existing.conn.id}"` : '';
 
         const message = `[composition/coincident-routes] showcase ${diagramType} ${relationCollection}[${index}]${connId} "${conn.from}" -> "${conn.to}" has identical geometry to ${relationCollection}[${existing.index}]${existingId} "${existing.conn.from}" -> "${existing.conn.to}" (${direction}) — readers cannot distinguish the connections. Remove labelAt from one or both to enable automatic port spreading, add explicit via points, or use channelX/channelY offset.`;
+
+        // Build evidence with actual endpoint comparison
+        const bothHaveLabelAt = (conn.labelAt !== undefined && existing.conn.labelAt !== undefined);
 
         recordDiagnostic({
           code: 'composition/coincident-routes',
@@ -954,6 +967,7 @@ function detectCoincidentRoutes({ relations, pathFor, diagramType, relationColle
             index,
             from: conn.from,
             to: conn.to,
+            id: conn.id,
           },
           evidence: {
             coincidentWith: {
@@ -962,16 +976,21 @@ function detectCoincidentRoutes({ relations, pathFor, diagramType, relationColle
               to: existing.conn.to,
               id: existing.conn.id,
             },
-            sharedPoints: pointsStr,
+            sharedPoints: normalized,
             antiParallel: isAntiParallel,
-            reason: (conn.labelAt && existing.conn.labelAt) ? 'both-have-labelAt' : 'route-coincidence',
+            reason: bothHaveLabelAt ? 'both-have-labelAt' : 'route-coincidence',
           },
-          supportedFixes: [
-            'remove labelAt from one or both connections to enable automatic port spreading',
-            'add explicit via points to separate routes',
-            'use channelX or channelY offset',
-            'adjust fromSide/toSide',
-          ],
+          supportedFixes: bothHaveLabelAt
+            ? [
+                'remove labelAt from one or both connections to enable automatic port spreading',
+                'add explicit via points to separate routes',
+                'use channelX or channelY offset',
+              ]
+            : [
+                'add explicit via points to separate routes',
+                'use channelX or channelY offset',
+                'adjust fromSide/toSide',
+              ],
         });
 
         problems.push(message);
