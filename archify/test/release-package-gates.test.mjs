@@ -282,6 +282,34 @@ test('package smoke rejects a missing or modified distribution license', () => {
   }
 });
 
+test('package smoke rejects missing, modified, or incomplete third-party notices', () => {
+  const packageSmoke = path.join(repoRoot, 'scripts', 'package-smoke.mjs');
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-notices-gate-'));
+  try {
+    const staged = path.join(fixture, 'archify');
+    stageCleanSkill({ repoRoot, destination: staged });
+    const noticesPath = path.join(staged, 'THIRD_PARTY_NOTICES.md');
+
+    fs.rmSync(noticesPath);
+    let result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'missing notices must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /missing THIRD_PARTY_NOTICES\.md/);
+
+    const repositoryNotices = fs.readFileSync(path.join(repoRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
+    fs.writeFileSync(noticesPath, repositoryNotices.replace('Simple Icons 16.28.0', 'Simple Icons'));
+    result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'modified notices must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /must byte-match the repository notice/);
+
+    fs.writeFileSync(noticesPath, 'Simple Icons 16.28.0\n');
+    result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'incomplete notices must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /must byte-match the repository notice/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
 test('package smoke increments an arbitrary-precision SemVer patch without Number coercion', () => {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-bigint-version-'));
   const skillRoot = path.join(scratch, 'archify');
@@ -313,6 +341,7 @@ test('archive build refuses to silently omit required release files', () => {
   const stageSource = fs.readFileSync(path.join(repoRoot, 'scripts', 'stage-clean-skill.mjs'), 'utf8');
   assert.match(buildSource, /stage-clean-skill\.mjs/);
   assert.match(stageSource, /archify\/LICENSE/);
+  assert.match(stageSource, /archify\/THIRD_PARTY_NOTICES\.md/);
   assert.match(stageSource, /archify\/skill-release\.json/);
   assert.match(stageSource, /archify\/scripts\/check-update\.mjs/);
   assert.match(stageSource, /archify\/scripts\/update-contract\.mjs/);

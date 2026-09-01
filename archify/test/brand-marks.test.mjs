@@ -22,6 +22,19 @@ const cases = {
   lifecycle: ['agent-run.lifecycle.json', 'states'],
 };
 
+test('third-party notices cover every recorded individual mark license', () => {
+  const notices = fs.readFileSync(path.join(skillRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
+  const licensedMarks = BRAND_MARKS.filter((mark) => mark.provenance?.license);
+
+  assert.equal(licensedMarks.length, 8, 'pinned Simple Icons license inventory changed');
+  for (const mark of licensedMarks) {
+    assert.match(notices, new RegExp(`\\| ${mark.title.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')} \\|`));
+    assert.ok(notices.includes(mark.provenance.source), `${mark.id} source must be disclosed`);
+    assert.ok(notices.includes(mark.provenance.license.type), `${mark.id} license must be disclosed`);
+  }
+  assert.match(notices, /does not grant rights\s+that Archify does not hold/);
+});
+
 function writeFixture(type, name, brand, customize) {
   const [example, collection] = cases[type];
   const value = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', example), 'utf8'));

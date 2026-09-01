@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 const scriptRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const REQUIRED_INPUTS = new Set([
   'archify/LICENSE',
+  'archify/THIRD_PARTY_NOTICES.md',
   'archify/renderers/shared/generated-validators.mjs',
   'archify/scripts/check-update.mjs',
   'archify/scripts/update-contract.mjs',

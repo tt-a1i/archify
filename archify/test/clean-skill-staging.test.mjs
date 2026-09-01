@@ -26,6 +26,7 @@ function write(root, relative, content, mode = null) {
 function repositoryFixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-clean-stage-'));
   write(root, 'archify/LICENSE', 'MIT License\n');
+  write(root, 'archify/THIRD_PARTY_NOTICES.md', 'Third-party notices\n');
   write(root, 'archify/package.json', JSON.stringify({
     name: 'archify-fixture',
     scripts: { test: 'node --test' },

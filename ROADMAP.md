@@ -1,6 +1,6 @@
 # Archify Roadmap
 
-The current development line is `v2.17.0-dev.0`; it contains the work under Changelog Unreleased and is not a stable release. [CHANGELOG.md](CHANGELOG.md) is the single owner for delivered feature history. This file owns architectural direction, retained rationale, and explicitly declined ideas.
+The current development line is `v2.17.0-dev.1`; it contains the work under Changelog Unreleased and is not a stable release. [CHANGELOG.md](CHANGELOG.md) is the single owner for delivered feature history. This file owns architectural direction, retained rationale, and explicitly declined ideas.
 
 <details>
 <summary>Archived delivered-slice context (frozen; no longer maintained as a second changelog)</summary>
