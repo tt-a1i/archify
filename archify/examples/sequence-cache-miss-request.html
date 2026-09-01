@@ -4221,6 +4221,7 @@
     }
     html[data-embed="true"] .semantic-lens-overlay { display: none; }
     svg[data-focus-active] [data-node-id],
+    svg[data-focus-active] [data-decorative],
     svg[data-focus-active] [data-edge-from] { opacity: 0.13; }
     svg[data-focus-active] [data-focus-match] { opacity: 1; }
     svg[data-focus-active] [data-focus-selected] {
@@ -4232,6 +4233,7 @@
        downstream walks outgoing edges. It never claims runtime causality and
        changes only viewer emphasis, not canonical geometry or export bytes. */
     svg[data-reach-active] [data-node-id],
+    svg[data-reach-active] [data-decorative],
     svg[data-reach-active] [data-edge-from] { opacity: 0.09; }
     svg[data-reach-active] [data-reach-match] { opacity: 1; }
     svg[data-reach-active="upstream"] [data-reach-origin] {
