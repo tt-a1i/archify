@@ -582,7 +582,7 @@ const TAG_SHRINK_CASES = [
   ['architecture', 'components', 'owner: platform operations team', 7],
   ['dataflow', 'nodes', 'owner: analytics platform', 7],
   ['lifecycle', 'states', 'owner: platform operations pod', 7],
-  ['workflow', 'nodes', 'owner: runtime squad A', 7],
+  ['workflow', 'nodes', 'owner: runtime execution squad A', 7],
 ];
 
 for (const [mode, collection, tag, preferred] of TAG_SHRINK_CASES) {
@@ -928,6 +928,7 @@ test('workflow: explicit labelAt remains authoritative on an automatic one-bend 
 
 test('workflow: bounded font fitting keeps an ordinary long sublabel inside its node', () => {
   const d = load('workflow');
+  d.nodes[0].width = 92;
   d.nodes[0].sublabel = 'shell / browser / MCP';
   const { code, stderr, outPath } = render('workflow', d);
   assert.equal(code, 0, stderr);
@@ -1011,12 +1012,34 @@ test('architecture: showcase rejects a connection label that hides another route
 });
 
 test('workflow: showcase rejects an edge label that hides another route', () => {
-  const d = load('workflow');
-  d.edges.find((edge) => edge.id === 'plan-request').labelAt = [562, 491];
+  const d = {
+    schema_version: 1,
+    diagram_type: 'workflow',
+    meta: {
+      title: 'Workflow label-route clearance',
+      quality_profile: 'showcase',
+      viewBox: [720, 400],
+      legend: { mode: 'hidden' },
+    },
+    lanes: [
+      { id: 'label', label: 'Label owner' },
+      { id: 'route', label: 'Other route' },
+    ],
+    nodes: [
+      { id: 'a', lane: 'label', col: 0, type: 'backend', label: 'A' },
+      { id: 'b', lane: 'label', col: 2, type: 'backend', label: 'B' },
+      { id: 'c', lane: 'route', col: 0, type: 'backend', label: 'C' },
+      { id: 'd', lane: 'route', col: 2, type: 'backend', label: 'D' },
+    ],
+    edges: [
+      { id: 'labeled-edge', from: 'a', to: 'b', label: 'plan', labelAt: [200, 243] },
+      { id: 'other-route', from: 'c', to: 'd' },
+    ],
+  };
   const { code, stderr } = render('workflow', d);
   assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
   assert.match(stderr, /\[composition\/label-route-clearance\] showcase workflow/);
-  assert.match(stderr, /plan.*retry-request/);
+  assert.match(stderr, /plan.*other-route/);
 });
 
 test('lifecycle: showcase rejects a transition label that hides another route', () => {
@@ -1192,6 +1215,32 @@ test('architecture: showcase rejects an unrelated proper edge crossing', () => {
   assert.match(stderr, /at \[240, 190\]/);
   assert.match(stderr, /segments 1 and 1/);
   assert.match(stderr, /route\/via|fromSide\/toSide/);
+});
+
+test('architecture: showcase preserves a straight-through explicit waypoint as an authored touch', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: {
+      title: 'Forward-collinear waypoint compatibility',
+      quality_profile: 'showcase',
+      viewBox: [600, 320],
+      legend: { mode: 'hidden' },
+    },
+    components: [
+      { id: 'a', type: 'backend', label: 'A', pos: [50, 100], size: [80, 60] },
+      { id: 'b', type: 'backend', label: 'B', pos: [450, 100], size: [80, 60] },
+      { id: 'c', type: 'backend', label: 'C', pos: [260, 0], size: [80, 60] },
+      { id: 'd', type: 'backend', label: 'D', pos: [260, 200], size: [80, 60] },
+    ],
+    connections: [
+      { id: 'horizontal', from: 'a', to: 'b', via: [[300, 130]] },
+      { id: 'vertical', from: 'c', to: 'd' },
+    ],
+  };
+
+  const { code, stderr } = render('architecture', d);
+  assert.equal(code, 0, stderr);
 });
 
 test('architecture: standard keeps the same proper crossing renderable', () => {

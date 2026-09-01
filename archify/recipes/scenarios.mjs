@@ -2,6 +2,10 @@ const RAW_RECIPES = [
   {
     id: 'system-overview', type: 'architecture', proof: 'web-app',
     presentation: { preset: 'classic', motion: 'static', views: 'optional' },
+    start: {
+      en: { descriptionPrompt: 'Use Archify to turn this plain-language system description into a high-level architecture diagram: [describe the users, core components, primary path, external dependencies, and boundaries]. No repository is required. Ask only for missing facts that would materially change the diagram, mark any remaining unknowns instead of inventing them, and keep one obvious primary path across 8–12 core components.' },
+      zh: { descriptionPrompt: '用 Archify 把下面这段自然语言系统描述画成高层架构图：[在这里描述用户、核心组件、主要路径、外部依赖和边界]。不需要代码库。只追问会实质影响图的缺失信息，其余不确定内容要标明而不是编造；保留 8–12 个核心组件和一条一眼可见的主路径。' },
+    },
     signals: [['system overview', 12], ['architecture', 10], ['components', 6], ['services', 4], ['repository', 5], ['trust boundary', 8], ['架构', 10], ['系统总览', 12], ['组件', 6], ['服务', 4], ['仓库', 5], ['信任边界', 8]],
     en: {
       title: 'System overview', question: 'What exists, who owns it, and how is it connected?',
@@ -44,6 +48,10 @@ const RAW_RECIPES = [
   {
     id: 'agent-tool-call', type: 'workflow', proof: 'agent-tool-call',
     presentation: { preset: 'signal-flow', motion: 'trace', views: 'recommended' },
+    start: {
+      en: { descriptionPrompt: 'Use Archify workflow mode to turn this description into a diagram: [paste the actors, main steps, decisions, approvals, and exception paths]. Use lanes for distinct owners, keep one unmistakable happy path, and mark missing ownership or unresolved branches instead of inventing them.' },
+      zh: { descriptionPrompt: '用 Archify 工作流模式把下面的描述画成图：[粘贴参与者、主要步骤、决策、审批和异常路径]。不同负责方使用独立泳道，保留一条明确的成功主路径，缺失的负责人或未定分支要标明而不是编造。' },
+    },
     signals: [['agent tool call', 16], ['tool call', 12], ['approval gate', 10], ['human in the loop', 9], ['mcp', 7], ['planner', 6], ['agent loop', 10], ['智能体工具调用', 16], ['工具调用', 12], ['审批门', 10], ['人在回路', 9], ['规划器', 6], ['智能体循环', 10]],
     en: {
       title: 'Agent tool-call loop', question: 'How does an agent plan, get permission, act, recover, and report?',
@@ -107,6 +115,10 @@ const RAW_RECIPES = [
   {
     id: 'api-request', type: 'sequence', proof: 'cache-miss',
     presentation: { preset: 'classic', motion: 'trace', views: 'optional' },
+    start: {
+      en: { descriptionPrompt: 'Use Archify sequence mode to draw this interaction: [paste the participants, calls, returns, fallback, and asynchronous side effects]. Keep message order unambiguous, labels short, and unknown behavior explicit. No repository is required.' },
+      zh: { descriptionPrompt: '用 Archify 时序模式绘制下面的交互：[粘贴参与者、调用、返回、回退和异步副作用]。确保消息顺序无歧义、标签简短，并明确标注未知行为。不需要代码库。' },
+    },
     signals: [['api request', 14], ['request response', 12], ['call chain', 11], ['cache miss', 13], ['jwt', 8], ['who calls whom', 12], ['api 请求', 14], ['请求响应', 12], ['调用链', 11], ['缓存未命中', 13], ['谁调用谁', 12], ['鉴权链路', 9]],
     en: {
       title: 'API request chain', question: 'Who calls whom, in what order, and what returns?',
@@ -170,6 +182,10 @@ const RAW_RECIPES = [
   {
     id: 'event-stream', type: 'dataflow', proof: 'event-stream',
     presentation: { preset: 'signal-flow', motion: 'trace', views: 'recommended' },
+    start: {
+      en: { descriptionPrompt: 'Use Archify dataflow mode to map this data journey: [paste the sources, data assets, transforms, stores, boundaries, and consumers]. Label every flow, distinguish streaming from batch where relevant, and mark unknown classifications or ownership instead of inventing them.' },
+      zh: { descriptionPrompt: '用 Archify 数据流模式梳理下面的数据路径：[粘贴来源、数据资产、转换、存储、边界和消费者]。为每条数据流标注名称，在有意义时区分流式与批处理，未知的分类或归属要标明而不是编造。' },
+    },
     signals: [['event stream', 15], ['kafka topology', 14], ['topic', 8], ['consumer group', 11], ['dead letter', 10], ['dlq', 10], ['事件流', 15], ['kafka 拓扑', 14], ['主题', 7], ['消费者组', 11], ['死信', 10], ['事件地铁图', 12]],
     en: {
       title: 'Event-stream topology', question: 'Which events move through which topics, processors, groups, and failure paths?',
@@ -191,6 +207,10 @@ const RAW_RECIPES = [
   {
     id: 'object-lifecycle', type: 'lifecycle', proof: 'agent-run',
     presentation: { preset: 'classic', motion: 'trace', views: 'optional' },
+    start: {
+      en: { descriptionPrompt: 'Use Archify lifecycle mode to model this object: [paste its states, transition events, waits, retries, cancellation, and terminal outcomes]. Separate active, waiting, recoverable-failure, and terminal states, and never hide an ending. No repository is required.' },
+      zh: { descriptionPrompt: '用 Archify 生命周期模式建模这个对象：[粘贴它的状态、转换事件、等待、重试、取消和终态]。分开执行、等待、可恢复失败和终态，不要隐藏任何结束方式。不需要代码库。' },
+    },
     signals: [['state machine', 15], ['object lifecycle', 14], ['status transition', 11], ['terminal state', 9], ['retry state', 8], ['状态机', 15], ['生命周期', 13], ['状态流转', 11], ['终态', 9], ['等待态', 8], ['重试状态', 8]],
     en: {
       title: 'Object lifecycle', question: 'Which states exist, what events move between them, and how does it end?',
@@ -235,6 +255,10 @@ const RAW_RECIPES = [
 export const SCENARIO_RECIPES = Object.freeze(RAW_RECIPES.map((recipe) => Object.freeze({
   ...recipe,
   presentation: Object.freeze({ ...recipe.presentation }),
+  ...(recipe.start ? { start: Object.freeze({
+    en: Object.freeze({ ...recipe.start.en }),
+    zh: Object.freeze({ ...recipe.start.zh }),
+  }) } : {}),
   signals: Object.freeze(recipe.signals.map((signal) => Object.freeze(signal.slice()))),
   en: Object.freeze({ ...recipe.en, include: Object.freeze(recipe.en.include.slice()) }),
   zh: Object.freeze({ ...recipe.zh, include: Object.freeze(recipe.zh.include.slice()) }),
@@ -242,6 +266,21 @@ export const SCENARIO_RECIPES = Object.freeze(RAW_RECIPES.map((recipe) => Object
 
 export function detectGuideLanguage(value = '') {
   return /[\u3400-\u9fff]/u.test(value) ? 'zh' : 'en';
+}
+
+export function startPromptsFor(recipe, lang = 'en') {
+  const language = lang === 'zh' ? 'zh' : 'en';
+  const copy = recipe[language];
+  const descriptionPrompt = recipe.start?.[language]?.descriptionPrompt;
+  if (!descriptionPrompt) {
+    throw new Error(`Scenario recipe ${JSON.stringify(recipe.id)} does not define a ${language} start prompt.`);
+  }
+  const repositoryPrompt = recipe.type === 'architecture'
+    ? copy.prompt
+    : language === 'zh'
+      ? `先检查这个仓库里的相关证据，然后${copy.prompt}不要编造代码无法支持的行为。`
+      : `Inspect this repository for evidence, then ${copy.prompt.charAt(0).toLowerCase()}${copy.prompt.slice(1)} Do not invent behavior that the code does not support.`;
+  return { descriptionPrompt, repositoryPrompt };
 }
 
 function normalized(value) {
@@ -303,7 +342,9 @@ export function recommendScenario(query, options = {}) {
 
 export function formatScenarioList(lang = 'en') {
   const isZh = lang === 'zh';
-  const heading = isZh ? 'Archify 场景配方（11）' : 'Archify scenario recipes (11)';
+  const heading = isZh
+    ? `Archify 场景配方（${SCENARIO_RECIPES.length}）`
+    : `Archify scenario recipes (${SCENARIO_RECIPES.length})`;
   const intro = isZh
     ? '先选择你要回答的问题，再选择图表类型。可运行：archify guide "你的场景"'
     : 'Choose the question before the diagram type. Run: archify guide "your scenario"';

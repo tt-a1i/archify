@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { publicGuideData } from '../archify/recipes/scenarios.mjs';
+import { copySiteAssets } from './copy-site-assets.mjs';
+import { diagramTypeCopyReplacements } from './site-copy.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -17,6 +19,7 @@ const guideJson = JSON.stringify(publicGuideData())
   .replaceAll('>', '\\u003e');
 
 const replacements = {
+  ...diagramTypeCopyReplacements(),
   '[[ARCHIFY_VERSION]]': packageJson.version,
   '[[RECIPE_COUNT]]': String(publicGuideData().length),
   '[[GUIDE_JSON]]': guideJson,
@@ -32,5 +35,6 @@ if (/\[\[[A-Z0-9_]+\]\]/.test(output)) {
 }
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+copySiteAssets(outputPath);
 fs.writeFileSync(outputPath, output);
 console.log(`Built ${outputPath} with ${publicGuideData().length} scenario recipes.`);

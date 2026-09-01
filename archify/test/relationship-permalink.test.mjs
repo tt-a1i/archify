@@ -36,18 +36,22 @@ function canonicalSvg(html) {
   return html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
 }
 
+function relationshipKey(html, id) {
+  return html.match(new RegExp(`data-edge-key="(\\d+)" data-edge-id="${id}"`))?.[1] ?? null;
+}
+
 test('all typed renderers preserve optional authored relationship ids beside runtime keys', () => {
   for (const mode of Object.keys(CASES)) {
     const doc = fixture(mode);
     doc[CASES[mode].collection][0].id = 'shareable-relation';
     const { result, html } = run(mode, doc, 'stable-id');
     assert.equal(result.status, 0, `${mode}: ${result.stderr}`);
-    assert.match(html, /data-edge-key="0" data-edge-id="shareable-relation"/, mode);
+    assert.match(html, /data-edge-key="\d+" data-edge-id="shareable-relation"/, mode);
     assert.match(canonicalSvg(html), /data-edge-id="shareable-relation"/, mode);
   }
 });
 
-test('authored relationship identity survives source-order changes while runtime keys remain private', () => {
+test('authored relationship identity and readable-v2 compiler keys survive source-order changes', () => {
   const original = fixture('workflow');
   const reordered = fixture('workflow');
   const moved = reordered.edges.shift();
@@ -57,8 +61,11 @@ test('authored relationship identity survives source-order changes while runtime
   const second = run('workflow', reordered, 'reordered');
   assert.equal(first.result.status, 0, first.result.stderr);
   assert.equal(second.result.status, 0, second.result.stderr);
-  assert.match(first.html, /data-edge-key="0" data-edge-id="request-chat"/);
-  assert.match(second.html, /data-edge-key="1" data-edge-id="request-chat"/);
+  assert.notEqual(relationshipKey(first.html, 'request-chat'), null);
+  assert.equal(
+    relationshipKey(second.html, 'request-chat'),
+    relationshipKey(first.html, 'request-chat'),
+  );
   assert.match(first.html, /'#relation=' \+ encodeURIComponent\(record\.id\)/);
   assert.match(second.html, /'#relation=' \+ encodeURIComponent\(record\.id\)/);
 });

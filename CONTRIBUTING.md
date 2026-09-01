@@ -9,7 +9,7 @@ Stability comes before feature count. A small change with a real reproduction, a
 - Found a renderer, validator, package, or viewer problem? Use [the bug report form](.github/ISSUE_TEMPLATE/bug-report.yml).
 - Made a useful real-world diagram? Use [the showcase form](.github/ISSUE_TEMPLATE/showcase.yml).
 - Want to change a schema, renderer contract, validation rule, installation path, export, or other product behavior? Open or link an issue before implementing it. Agree on the user value, compatibility boundary, and non-goals first.
-- Found a security vulnerability? Do not publish exploit details or secrets. Use GitHub's private security reporting for this repository.
+- Found a security vulnerability? Follow [the security policy](SECURITY.md). Do not publish exploit details or secrets.
 
 Small documentation corrections and narrowly scoped test fixes do not require a planning issue. Large documentation surfaces do: prefer improving the canonical Skill, contract, diagnostic, or existing guide over creating a second explanation of the same behavior.
 
@@ -75,7 +75,7 @@ cd archify
 ARCHIFY_CHROME="/path/to/chrome" node --test test/desktop-reader-browser.test.mjs
 ```
 
-A browser test that was skipped because Chrome was unavailable is **skipped**, not passed. Report that status exactly.
+A browser test that was skipped because Chrome was unavailable is **skipped**, not passed. Report automated browser evidence independently from perceptual visual review. Follow the [delivery contract](archify/references/delivery-contract.md) when recording supplementary manual browser work; an unconstrained glance supports only perceptual review.
 
 ### CLI, receipts, and delivery
 
