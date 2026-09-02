@@ -74,6 +74,7 @@ const READABLE_CANDIDATE_COST_PRIORITY = Object.freeze([
 const MAX_READABLE_LAYOUT_FEEDBACK_ROUNDS = 3;
 const GROUP_FRAME_TOP_INSET = 8;
 const GROUP_FRAME_BOTTOM_INSET = 4;
+const LEGACY_GROUP_FRAME_BOTTOM_INSET = 8;
 const GROUP_LABEL_BASELINE_OFFSET = -2;
 const GROUP_LABEL_MASK_ASCENT = 10;
 const GROUP_LABEL_MASK_H = 14;
@@ -510,10 +511,15 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     if (!authoredHeightLaneIds.has(lane.id)) return laneH;
     const ownVerticalExtent = verticalExtent(lane.id);
     const measuredHeight = 30 + Math.max(74, Math.ceil(ownVerticalExtent.maximum * 2 + 8));
-    const height = Math.max(authoredLaneHeight(lane), measuredHeight);
-    for (const contributor of ownVerticalExtent.contributors) heightContributors.add(contributor);
-    if (authoredLaneHeight(lane) > measuredHeight) {
-      heightContributors.add(`lane ${lane.id || lane.label} authored minimum height ${authoredLaneHeight(lane)}px`);
+    const authoredHeight = authoredLaneHeight(lane);
+    const height = Math.max(authoredHeight, measuredHeight);
+    if (measuredHeight > authoredHeight + 0.0001) {
+      for (const contributor of ownVerticalExtent.contributors) heightContributors.add(contributor);
+    } else if (authoredHeight > measuredHeight + 0.0001) {
+      heightContributors.add(`lane ${lane.id || lane.label} authored minimum height ${authoredHeight}px`);
+    } else if (height > 104) {
+      for (const contributor of ownVerticalExtent.contributors) heightContributors.add(contributor);
+      heightContributors.add(`lane ${lane.id || lane.label} authored minimum height ${authoredHeight}px`);
     }
     return height;
   });
@@ -602,6 +608,17 @@ function compilerFailure(contract, diagnostics, error = diagnostics.map(({ messa
     diagnostics,
     receipt: { contract, diagnostics },
   };
+}
+
+function workflowSchemaSupportedFixes(diagnostic) {
+  const path = diagnostic?.subject?.path;
+  const limit = diagnostic?.evidence?.limit;
+  if (diagnostic?.code === 'schema/minimum'
+    && /^\/lanes\/\d+\/height$/.test(path || '')
+    && Number.isFinite(limit)) {
+    return [`set ${path} to at least ${limit}`];
+  }
+  return [];
 }
 
 function workflowEdgeName(edge) {
@@ -810,7 +827,7 @@ function compileWorkflowInternal({
     inputDiagnostics = Array.isArray(error?.archifyDiagnostics)
       ? error.archifyDiagnostics.map((diagnostic) => ({
           ...diagnostic,
-          supportedFixes: [],
+          supportedFixes: workflowSchemaSupportedFixes(diagnostic),
         }))
       : [{
         code: 'workflow/input-contract',
@@ -915,9 +932,18 @@ function groupFrameHeight(group) {
     return laneHeight(group.lane) - layout.laneTitleH
       - GROUP_FRAME_TOP_INSET - GROUP_FRAME_BOTTOM_INSET;
   }
-  const lane = asArray(workflow.lanes)[laneIndex.get(group.lane)];
-  const bottomInset = Number.isFinite(lane?.height) ? GROUP_FRAME_BOTTOM_INSET : 8;
-  return laneHeight(group.lane) - layout.laneTitleH - GROUP_FRAME_TOP_INSET - bottomInset;
+  return laneHeight(group.lane) - layout.laneTitleH
+    - GROUP_FRAME_TOP_INSET - LEGACY_GROUP_FRAME_BOTTOM_INSET;
+}
+
+function groupFrameRect(group) {
+  const span = groupSpan(group);
+  return {
+    x: span.x,
+    y: laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET,
+    width: span.width,
+    height: groupFrameHeight(group),
+  };
 }
 
 function laneGroupHeaderH(idOrIndex) {
@@ -1020,15 +1046,12 @@ function workflowCompositionFrames() {
     }
   }
   for (const [index, group] of asArray(workflow.groups).entries()) {
-    const span = groupSpan(group);
+    const frame = groupFrameRect(group);
     frames.push({
       id: `group-${index}`,
       label: group.label,
       kind: 'group',
-      x: span.x,
-      y: laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET,
-      width: span.width,
-      height: groupFrameHeight(group),
+      ...frame,
       radius: 9,
     });
   }
@@ -1066,13 +1089,12 @@ function workflowSceneLabelObstacles() {
     if (!laneIndex.has(group.lane)
       || !Number.isInteger(group.fromCol) || !Number.isInteger(group.toCol)
       || group.fromCol < 0 || group.toCol >= layout.colXs.length || group.fromCol > group.toCol) continue;
-    const span = groupSpan(group);
-    const frameY = laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET;
-    const labelBaseline = frameY + GROUP_LABEL_BASELINE_OFFSET;
+    const frame = groupFrameRect(group);
+    const labelBaseline = frame.y + GROUP_LABEL_BASELINE_OFFSET;
     obstacles.push({
       kind: 'group-label',
       id: group.id ?? null,
-      x: span.x + 10,
+      x: frame.x + 10,
       y: labelBaseline - GROUP_LABEL_MASK_ASCENT,
       width: textUnits(group.label) * 5.6,
       height: GROUP_LABEL_MASK_H,
@@ -1102,6 +1124,72 @@ function nodeStep(node) {
       qualityProfile: resolvedQualityProfile,
       discoverFixes: false,
     }).ok);
+  }
+
+  function validateGroupFrameContainment() {
+    for (const group of asArray(workflow.groups)) {
+      const lanePosition = laneIndex.get(group.lane);
+      if (!Number.isInteger(lanePosition)
+        || !Number.isInteger(group.fromCol) || !Number.isInteger(group.toCol)
+        || group.fromCol < 0 || group.toCol >= layout.colXs.length
+        || group.fromCol > group.toCol) continue;
+      const lane = workflow.lanes[lanePosition];
+      const hasCustomLegacyHeight = Number.isFinite(lane?.height) && lane.height !== 104;
+      if (workflow.schema_version === 1 && !hasCustomLegacyHeight) continue;
+
+      const frame = groupFrameRect(group);
+      const violations = [...nodes.values()].flatMap((node) => {
+        if (node.lane !== group.lane || node.col < group.fromCol || node.col > group.toCol
+          || !isFinitePoint(node.x, node.y, node.width, node.height)) return [];
+        const topPx = Math.max(0, frame.y - node.y);
+        const bottomPx = Math.max(0, node.y + node.height - (frame.y + frame.height));
+        const maximumPx = Math.max(topPx, bottomPx);
+        return maximumPx > 0.0001 ? [{ node, topPx, bottomPx, maximumPx }] : [];
+      }).sort((left, right) => right.maximumPx - left.maximumPx
+        || stableCompare(left.node.id, right.node.id));
+      if (!violations.length) continue;
+
+      const violation = violations[0];
+      const currentHeight = laneHeight(lanePosition);
+      const candidateHeight = Math.max(
+        104,
+        Math.ceil(currentHeight + violation.maximumPx * 2),
+      );
+      const sourceLaneIndex = sourceIndexes.lanes.get(lane) ?? lanePosition;
+      const supportedFixes = acceptsFix((document) => {
+        document.lanes[lanePosition].height = candidateHeight;
+      }) ? [`set /lanes/${sourceLaneIndex}/height to verified minimum ${candidateHeight}px`] : [];
+      const message = `Workflow node "${violation.node.id}" extends outside group "${group.id}" in lane "${lane.id}".`;
+      throwDiagnosticError(message, [{
+        code: 'workflow/group-containment',
+        severity: 'error',
+        message,
+        subject: {
+          diagramType: 'workflow',
+          lane: lane.id,
+          group: group.id,
+          node: violation.node.id,
+          path: `/lanes/${sourceLaneIndex}/height`,
+        },
+        evidence: {
+          groupRect: {
+            x: frame.x, y: frame.y, width: frame.width, height: frame.height,
+          },
+          nodeRect: {
+            x: violation.node.x,
+            y: violation.node.y,
+            width: violation.node.width,
+            height: violation.node.height,
+          },
+          overflow: {
+            topPx: violation.topPx,
+            bottomPx: violation.bottomPx,
+          },
+          authoredLaneHeightPx: authoredLaneHeight(lane),
+        },
+        supportedFixes,
+      }]);
+    }
   }
 
   function verifiedLegacyAlternative(edge, from, to, requiredClearance) {
@@ -2262,6 +2350,7 @@ function validateWorkflow() {
   }
 
   enforceLegacyColumnCapacity();
+  validateGroupFrameContainment();
 
   const laneIds = new Set(workflow.lanes.map((lane) => lane.id));
   if (laneIds.size !== workflow.lanes.length) {
@@ -4084,18 +4173,12 @@ function measuredContentBounds() {
   for (const group of asArray(workflow.groups)) {
     if (!laneIndex.has(group.lane) || !Number.isInteger(group.fromCol) || !Number.isInteger(group.toCol)
       || group.fromCol < 0 || group.toCol >= layout.colXs.length || group.fromCol > group.toCol) continue;
-    const span = groupSpan(group);
-    includeRect({
-      x: span.x,
-      y: laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET,
-      width: span.width,
-      height: groupFrameHeight(group),
-    }, `group ${group.id}`);
+    const frame = groupFrameRect(group);
+    includeRect(frame, `group ${group.id}`);
     if (workflow.schema_version === 2) {
-      const frameY = laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET;
-      const labelBaseline = frameY + GROUP_LABEL_BASELINE_OFFSET;
+      const labelBaseline = frame.y + GROUP_LABEL_BASELINE_OFFSET;
       includeRect({
-        x: span.x + 10,
+        x: frame.x + 10,
         y: labelBaseline - GROUP_LABEL_MASK_ASCENT,
         width: textUnits(group.label) * 5.6,
         height: GROUP_LABEL_MASK_H,
@@ -4207,14 +4290,14 @@ function renderPhase(phase) {
 }
 
 function renderGroup(group, index) {
-  const span = groupSpan(group);
-  const y = laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET;
-  const height = groupFrameHeight(group);
+  const frame = groupFrameRect(group);
   const cls = group.variant === 'security' ? 'c-security-group' : 'c-lane';
   const textClass = variantAccent(group.variant);
-  const labelY = workflow.schema_version === 2 ? y + GROUP_LABEL_BASELINE_OFFSET : y + 14;
-  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-${index}" x="${span.x}" y="${y}" width="${span.width}" height="${height}" rx="9" class="${cls}" stroke-width="1"/>
-        <text x="${span.x + 10}" y="${labelY}" class="${textClass}" font-size="7" font-weight="600">${esc(group.label)}</text>`;
+  const labelY = workflow.schema_version === 2
+    ? frame.y + GROUP_LABEL_BASELINE_OFFSET
+    : frame.y + 14;
+  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-${index}" x="${frame.x}" y="${frame.y}" width="${frame.width}" height="${frame.height}" rx="9" class="${cls}" stroke-width="1"/>
+        <text x="${frame.x + 10}" y="${labelY}" class="${textClass}" font-size="7" font-weight="600">${esc(group.label)}</text>`;
 }
 
 function renderNode(node) {

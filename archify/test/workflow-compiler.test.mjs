@@ -229,6 +229,53 @@ function adjacentWorkflow({
   return workflow;
 }
 
+function stackedGroupWorkflow({
+  schemaVersion = 1,
+  laneHeight,
+  offsets = [0, 90, 180],
+  includeWorkerLane = false,
+} = {}) {
+  return {
+    schema_version: schemaVersion,
+    diagram_type: 'workflow',
+    meta: {
+      title: 'Stacked cage',
+      legend: { mode: 'hidden' },
+      ...(schemaVersion === 1 ? { viewBox: [720, 640] } : {}),
+    },
+    lanes: [
+      {
+        id: 'cage',
+        label: 'One cage',
+        ...(laneHeight === undefined ? {} : { height: laneHeight }),
+      },
+      ...(includeWorkerLane ? [{ id: 'worker', label: 'Worker' }] : []),
+    ],
+    groups: [{
+      id: 'group',
+      label: 'Cage',
+      lane: 'cage',
+      fromCol: 1,
+      toCol: 3,
+      variant: 'security',
+    }],
+    nodes: [
+      ...offsets.map((yOffset, index) => ({
+        id: String.fromCharCode('a'.charCodeAt(0) + index),
+        lane: 'cage',
+        col: 2,
+        type: 'security',
+        label: `Stage ${String.fromCharCode('A'.charCodeAt(0) + index)}`,
+        yOffset,
+      })),
+      ...(includeWorkerLane ? [{
+        id: 'worker', lane: 'worker', col: 2, type: 'backend', label: 'Worker',
+      }] : []),
+    ],
+    edges: [],
+  };
+}
+
 function assertReadableAdjacentResult(result, { label, widths = [92, 92] } = {}) {
   assert.equal(result.receipt.contract, 'readable-v2');
   assert.deepEqual(result.receipt.viewBox, svgViewBox(result.svg).slice(2));
@@ -321,58 +368,74 @@ test('fixed-v1 keeps valid phase and group spans independent of label measuremen
   );
 });
 
-test('issue #250: an explicit v1 lane height contains vertically stacked group stages', () => {
-  const workflow = {
-    schema_version: 1,
-    diagram_type: 'workflow',
-    meta: { title: 'Stacked cage', viewBox: [720, 640], legend: { mode: 'hidden' } },
-    lanes: [{ id: 'cage', label: 'One cage', height: 450 }],
-    groups: [{ id: 'group', label: 'Cage', lane: 'cage', fromCol: 1, toCol: 3, variant: 'security' }],
-    nodes: [
-      { id: 'a', lane: 'cage', col: 2, type: 'security', label: 'Stage A', yOffset: 0 },
-      { id: 'b', lane: 'cage', col: 2, type: 'security', label: 'Stage B', yOffset: 90 },
-      { id: 'c', lane: 'cage', col: 2, type: 'security', label: 'Stage C', yOffset: 180 },
-    ],
-    edges: [
-      { id: 'a-b', from: 'a', to: 'b', fromSide: 'bottom', toSide: 'top' },
-      { id: 'b-c', from: 'b', to: 'c', fromSide: 'bottom', toSide: 'top' },
-    ],
-  };
+test('fixed-v1 treats an explicit default lane height exactly like the omitted default', () => {
+  const omitted = stackedGroupWorkflow({ offsets: [0] });
+  const explicit = clone(omitted);
+  explicit.lanes[0].height = 104;
 
-  const result = compileSuccessfully(workflow);
-  assert.equal(result.receipt.contract, 'fixed-v1');
-  const group = groupFrameRect(result.svg);
-  assert.equal(laneFrameRect(result.svg).height, 450);
-  for (const id of ['a', 'b', 'c']) assertRectInsideRect(nodeRect(result.svg, id), group, `stacked node ${id}`);
+  const omittedResult = compileSuccessfully(omitted);
+  const explicitResult = compileSuccessfully(explicit);
+  assert.equal(explicitResult.svg, omittedResult.svg);
+  assert.deepEqual(explicitResult.receipt, omittedResult.receipt);
+  assert.equal(groupFrameRect(explicitResult.svg).height, 58);
 });
 
+for (const { name, offsets } of [
+  { name: 'bottom', offsets: [0, 90, 180] },
+  { name: 'top', offsets: [-180, -90, 0] },
+]) {
+  test(`issue #250: fixed-v1 rejects a custom lane height that lets a node escape the group ${name}`, () => {
+    const result = compileWorkflow({
+      workflow: stackedGroupWorkflow({ laneHeight: 442, offsets }),
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.svg, undefined);
+    assert.equal(result.diagnostics.length, 1, JSON.stringify(result.diagnostics, null, 2));
+    const [diagnostic] = result.diagnostics;
+    assert.equal(diagnostic.code, 'workflow/group-containment');
+    assert.equal(diagnostic.subject.path, '/lanes/0/height');
+    assert.equal(diagnostic.subject.group, 'group');
+    assert.equal(diagnostic.evidence.authoredLaneHeightPx, 442);
+    assert.ok(
+      diagnostic.evidence.overflow.topPx > 0 || diagnostic.evidence.overflow.bottomPx > 0,
+      JSON.stringify(diagnostic.evidence, null, 2),
+    );
+    assert.deepEqual(diagnostic.supportedFixes, [
+      'set /lanes/0/height to verified minimum 458px',
+    ]);
+  });
+
+  test(`issue #250: fixed-v1 exact-fit height contains a vertical stack at the group ${name}`, () => {
+    const result = compileSuccessfully(stackedGroupWorkflow({ laneHeight: 458, offsets }));
+    assert.equal(result.receipt.contract, 'fixed-v1');
+    const group = groupFrameRect(result.svg);
+    assert.equal(laneFrameRect(result.svg).height, 458);
+    for (const id of ['a', 'b', 'c']) {
+      assertRectInsideRect(nodeRect(result.svg, id), group, `stacked node ${id}`);
+    }
+  });
+}
+
 test('issue #250: readable-v2 expands only the lane containing a vertical stack', () => {
-  const workflow = {
-    schema_version: 2,
-    diagram_type: 'workflow',
-    meta: { title: 'Per-lane stacked cage', legend: { mode: 'hidden' } },
-    lanes: [
-      { id: 'cage', label: 'One cage', height: 500 },
-      { id: 'worker', label: 'Worker' },
-    ],
-    groups: [{ id: 'group', label: 'Cage', lane: 'cage', fromCol: 1, toCol: 3, variant: 'security' }],
-    nodes: [
-      { id: 'a', lane: 'cage', col: 2, type: 'security', label: 'Stage A', yOffset: 0 },
-      { id: 'b', lane: 'cage', col: 2, type: 'security', label: 'Stage B', yOffset: 90 },
-      { id: 'c', lane: 'cage', col: 2, type: 'security', label: 'Stage C', yOffset: 180 },
-      { id: 'worker', lane: 'worker', col: 2, type: 'backend', label: 'Worker' },
-    ],
-    edges: [],
-  };
+  const workflow = stackedGroupWorkflow({
+    schemaVersion: 2,
+    laneHeight: 104,
+    includeWorkerLane: true,
+  });
 
   const result = compileSuccessfully(workflow);
   assert.equal(result.receipt.contract, 'readable-v2');
   const cage = laneFrameRect(result.svg, 0);
   const worker = laneFrameRect(result.svg, 1);
-  assert.equal(cage.height, 500, 'authored minimum height must control the stacked lane');
+  assert.ok(cage.height > 104, 'the vertical stack must auto-grow its lane beyond the authored minimum');
   assert.equal(worker.height, 104, 'unrelated lane must keep the baseline height');
   const group = groupFrameRect(result.svg);
-  for (const id of ['a', 'b', 'c']) assertRectInsideRect(nodeRect(result.svg, id), group, `stacked node ${id}`);
+  for (const id of ['a', 'b', 'c']) {
+    const node = nodeRect(result.svg, id);
+    assertRectInsideRect(node, group, `stacked node ${id}`);
+    assertRectInsideViewBox(node, svgViewBox(result.svg), `stacked node ${id}`);
+  }
 });
 
 test('workflow lane.height is schema-validated as a 104px minimum', () => {
@@ -381,6 +444,9 @@ test('workflow lane.height is schema-validated as a 104px minimum', () => {
   const result = compileWorkflow({ workflow });
   assert.equal(result.ok, false);
   assert.match(result.error, /lanes\/0\/height/);
+  assert.deepEqual(result.diagnostics[0].supportedFixes, [
+    'set /lanes/0/height to at least 104',
+  ]);
 });
 
 test('fixed-v1 reports one causal column-capacity diagnostic for issue #126', () => {
@@ -821,6 +887,41 @@ test('explicit viewBox height capacity names the authored tall node without nami
     contributors.some((contributor) => /legend/i.test(contributor)),
     false,
     `a hidden legend must not be named as a height contributor: ${JSON.stringify(contributors)}`,
+  );
+});
+
+test('explicit viewBox height capacity names a causal lane minimum without blaming its ordinary node', () => {
+  const result = compileWorkflow({
+    workflow: {
+      schema_version: 2,
+      diagram_type: 'workflow',
+      meta: {
+        title: 'Authored lane height capacity',
+        legend: { mode: 'hidden' },
+        viewBox: [1200, 280],
+      },
+      lanes: [{ id: 'main', label: 'Main', height: 500 }],
+      nodes: [{
+        id: 'ordinary', lane: 'main', col: 0, type: 'backend', label: 'Ordinary',
+      }],
+      edges: [],
+    },
+    qualityProfile: 'showcase',
+  });
+
+  assert.equal(result.ok, false);
+  const diagnostic = result.diagnostics.find(({ code }) => code === 'workflow/viewbox-capacity');
+  assert.ok(diagnostic, JSON.stringify(result.diagnostics, null, 2));
+  assert.ok(
+    diagnostic.evidence.contributors.includes('lane main authored minimum height 500px'),
+    JSON.stringify(diagnostic.evidence.contributors),
+  );
+  assert.equal(
+    diagnostic.evidence.contributors.some((contributor) => (
+      /node ordinary\b/i.test(contributor) && /height 52px/i.test(contributor)
+    )),
+    false,
+    `an ordinary node is not causal for the 500px lane: ${JSON.stringify(diagnostic.evidence.contributors)}`,
   );
 });
 

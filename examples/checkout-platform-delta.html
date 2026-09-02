@@ -15693,7 +15693,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
       }
       function eligible() {
         return Boolean(
-          shell &amp;&amp; diagram &amp;&amp; svg &amp;&amp; ratio &gt;= WIDE_RATIO &amp;&amp;
+          shell &amp;&amp; diagram &amp;&amp; svg &amp;&amp; ratio &gt; 0 &amp;&amp;
           window.innerWidth &gt;= MIN_DESKTOP_WIDTH &amp;&amp;
           html.getAttribute(&#39;data-embed&#39;) !== &#39;true&#39; &amp;&amp;
           html.getAttribute(&#39;data-present&#39;) !== &#39;true&#39; &amp;&amp;
@@ -15753,7 +15753,10 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         }
         var chrome = chromeMetrics();
         var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
-        var minWidth = Math.min(MIN_READER_WIDTH, viewportCap);
+        var sourceWidth = viewBox &amp;&amp; viewBox.width &gt; 0
+          ? viewBox.width + chrome.diagramX
+          : MIN_READER_WIDTH;
+        var minWidth = Math.min(MIN_READER_WIDTH, sourceWidth, viewportCap);
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
           outerHeight(header) + outerHeight(guided) + outerHeight(cards);
@@ -30773,7 +30776,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
       }
       function eligible() {
         return Boolean(
-          shell &amp;&amp; diagram &amp;&amp; svg &amp;&amp; ratio &gt;= WIDE_RATIO &amp;&amp;
+          shell &amp;&amp; diagram &amp;&amp; svg &amp;&amp; ratio &gt; 0 &amp;&amp;
           window.innerWidth &gt;= MIN_DESKTOP_WIDTH &amp;&amp;
           html.getAttribute(&#39;data-embed&#39;) !== &#39;true&#39; &amp;&amp;
           html.getAttribute(&#39;data-present&#39;) !== &#39;true&#39; &amp;&amp;
@@ -30833,7 +30836,10 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         }
         var chrome = chromeMetrics();
         var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
-        var minWidth = Math.min(MIN_READER_WIDTH, viewportCap);
+        var sourceWidth = viewBox &amp;&amp; viewBox.width &gt; 0
+          ? viewBox.width + chrome.diagramX
+          : MIN_READER_WIDTH;
+        var minWidth = Math.min(MIN_READER_WIDTH, sourceWidth, viewportCap);
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
           outerHeight(header) + outerHeight(guided) + outerHeight(cards);
