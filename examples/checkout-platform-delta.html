@@ -15675,6 +15675,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
       var MIN_DESKTOP_WIDTH = 1024;
       var MIN_READER_WIDTH = 960;
       var MAX_READER_WIDTH = 1920;
+      var MIN_PROJECTED_NODE_TEXT_PX = 6;
       var SAFE_BOTTOM_GAP = 12;
 
       if (diagram &amp;&amp; ratio &gt;= WIDE_RATIO) {
@@ -15693,6 +15694,21 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         if (!visible(element)) return 0;
         var style = window.getComputedStyle(element);
         return element.getBoundingClientRect().height + number(style.marginTop) + number(style.marginBottom);
+      }
+      function minimumReadableScale() {
+        var sourceMinimum = null;
+        Array.from(svg.querySelectorAll(
+          &#39;text[data-node-label], text[data-boundary-label], text[data-detail=&quot;context&quot;]&#39;
+        )).forEach(function (text) {
+          if (text.getAttribute(&#39;data-detail&#39;) === &#39;context&#39; &amp;&amp; !text.closest(&#39;[data-node-id]&#39;)) return;
+          var sourceFontPx = parseFloat(text.getAttribute(&#39;font-size&#39;) || &#39;&#39;);
+          if (Number.isFinite(sourceFontPx)) {
+            sourceMinimum = sourceMinimum == null ? sourceFontPx : Math.min(sourceMinimum, sourceFontPx);
+          }
+        });
+        return sourceMinimum != null
+          ? Math.min(1, MIN_PROJECTED_NODE_TEXT_PX / sourceMinimum)
+          : 1;
       }
       function eligible() {
         return Boolean(
@@ -15756,11 +15772,11 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         }
         var chrome = chromeMetrics();
         var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
-        var sourceWidth = viewBox &amp;&amp; viewBox.width &gt; 0
-          ? viewBox.width + chrome.diagramX
+        var readableWidth = viewBox &amp;&amp; viewBox.width &gt; 0
+          ? viewBox.width * minimumReadableScale() + chrome.diagramX
           : MIN_READER_WIDTH;
         var minWidth = Math.min(
-          intrinsicHeightFit &amp;&amp; ratio &lt; WIDE_RATIO ? sourceWidth : MIN_READER_WIDTH,
+          intrinsicHeightFit &amp;&amp; ratio &lt; WIDE_RATIO ? readableWidth : MIN_READER_WIDTH,
           viewportCap
         );
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
@@ -30763,6 +30779,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
       var MIN_DESKTOP_WIDTH = 1024;
       var MIN_READER_WIDTH = 960;
       var MAX_READER_WIDTH = 1920;
+      var MIN_PROJECTED_NODE_TEXT_PX = 6;
       var SAFE_BOTTOM_GAP = 12;
 
       if (diagram &amp;&amp; ratio &gt;= WIDE_RATIO) {
@@ -30781,6 +30798,21 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         if (!visible(element)) return 0;
         var style = window.getComputedStyle(element);
         return element.getBoundingClientRect().height + number(style.marginTop) + number(style.marginBottom);
+      }
+      function minimumReadableScale() {
+        var sourceMinimum = null;
+        Array.from(svg.querySelectorAll(
+          &#39;text[data-node-label], text[data-boundary-label], text[data-detail=&quot;context&quot;]&#39;
+        )).forEach(function (text) {
+          if (text.getAttribute(&#39;data-detail&#39;) === &#39;context&#39; &amp;&amp; !text.closest(&#39;[data-node-id]&#39;)) return;
+          var sourceFontPx = parseFloat(text.getAttribute(&#39;font-size&#39;) || &#39;&#39;);
+          if (Number.isFinite(sourceFontPx)) {
+            sourceMinimum = sourceMinimum == null ? sourceFontPx : Math.min(sourceMinimum, sourceFontPx);
+          }
+        });
+        return sourceMinimum != null
+          ? Math.min(1, MIN_PROJECTED_NODE_TEXT_PX / sourceMinimum)
+          : 1;
       }
       function eligible() {
         return Boolean(
@@ -30844,11 +30876,11 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         }
         var chrome = chromeMetrics();
         var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
-        var sourceWidth = viewBox &amp;&amp; viewBox.width &gt; 0
-          ? viewBox.width + chrome.diagramX
+        var readableWidth = viewBox &amp;&amp; viewBox.width &gt; 0
+          ? viewBox.width * minimumReadableScale() + chrome.diagramX
           : MIN_READER_WIDTH;
         var minWidth = Math.min(
-          intrinsicHeightFit &amp;&amp; ratio &lt; WIDE_RATIO ? sourceWidth : MIN_READER_WIDTH,
+          intrinsicHeightFit &amp;&amp; ratio &lt; WIDE_RATIO ? readableWidth : MIN_READER_WIDTH,
           viewportCap
         );
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
