@@ -6,9 +6,10 @@ Use `validate` after every candidate edit. Use final atomic delivery only after 
 
 ```bash
 node bin/archify.mjs deliver <type> <candidate.json> <output.html> --quality showcase --json
+node bin/archify.mjs deliver <type> <candidate.json> <output.svg> --format svg --theme auto|light|dark --quality showcase --json
 ```
 
-Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. The JSON receipt includes SHA-256 and byte counts for both `specification` and `artifact`. Renderer, checker, receipt, or commit failure exits non-zero, removes private state, preserves the previous trusted artifact, and never invokes an opener.
+Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. HTML remains the default. The HTML receipt shape is unchanged. SVG requires an explicit `.svg` path; `auto` produces the same dual-theme document as Viewer export, while `light` and `dark` are fixed. SVG retains the complete nine-check HTML validation path, uses the shared standalone finaliser, and adds seven standalone-document checks. Its JSON receipt adds `format`, `theme`, and `svgValidation`. Both formats include SHA-256 and byte counts for `specification` and `artifact`. Renderer, checker, receipt, or commit failure exits non-zero, removes private state, preserves the previous trusted artifact, and never invokes an opener.
 
 Run `visual-check` only after `deliver` exits zero for the current candidate. If
 delivery fails and the output path already exists, that path still names the
@@ -55,6 +56,8 @@ do not turn a perceptual visual review into passed or failed. Retry an
 environmental failure through the supported command in a browser-capable
 execution context when practical. Keep the packaged transport unchanged unless
 the failure reproduces through that seam in a capable environment.
+
+`visual-check` accepts HTML only. For standalone SVG, inspect the delivered file itself in the requested fixed theme, or in both resolved themes for `auto`. Development and release tests compare the shared Viewer and CLI finaliser at the decoded-pixel level; a normal delivery receipt does not claim that browser comparison.
 
 ## Optional opening
 

@@ -43,6 +43,20 @@ test('skill uses atomic verified delivery for the final artifact', () => {
   assert.match(delivery, /never claim that the deterministic receipt includes visual review/i);
 });
 
+test('delivery documents SVG as an additive format on the existing verified path', () => {
+  for (const [name, source] of [['SKILL.md', skill], ['delivery contract', delivery]]) {
+    assert.match(source, /--format svg/, name);
+    assert.match(source, /HTML remains the default/i, name);
+    assert.match(source, /explicit .*\.svg/i, name);
+    assert.match(source, /auto[\s\S]*dual-theme/i, name);
+    assert.match(source, /light[\s\S]*dark[\s\S]*fixed/i, name);
+    assert.match(source, /shared standalone finaliser|same standalone finaliser/i, name);
+  }
+  assert.match(delivery, /receipt adds `format`, `theme`, and `svgValidation`/i);
+  assert.match(delivery, /HTML receipt shape is unchanged/i);
+  assert.match(delivery, /`visual-check` accepts HTML only/i);
+});
+
 test('skill keeps optional opening behind the verified commit and outside automation', () => {
   assert.match(delivery, /Add `--open` only when the user wants an immediate local preview/);
   assert.match(delivery, /runs after that atomic commit/);

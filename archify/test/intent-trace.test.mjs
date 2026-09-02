@@ -29,7 +29,7 @@ function render(mode, example) {
 }
 
 function canonicalSvg(html) {
-  return html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
+  return html.match(/<svg(?=[\s>])[\s\S]*?<\/svg>/)?.[0] || '';
 }
 
 test('all typed renderers inherit one geometry-neutral Intent Trace', () => {
@@ -39,7 +39,7 @@ test('all typed renderers inherit one geometry-neutral Intent Trace', () => {
     assert.match(html, /id="intent-trace-status" role="status" aria-live="polite" aria-atomic="true"/, mode);
     assert.match(html, /svg\.setAttribute\('data-intent-trace-active', id\)/, mode);
     assert.match(html, /data-intent-trace-overlay/, mode);
-    assert.equal((html.match(/<svg\b/g) || []).length, 1, `${mode} keeps one static canonical SVG`);
+    assert.equal((html.match(/<svg(?=[\s>])/g) || []).length, 1, `${mode} keeps one static canonical SVG`);
     assert.doesNotMatch(canonicalSvg(html), /data-intent-trace|intent-trace-flow/, mode);
   }
 });

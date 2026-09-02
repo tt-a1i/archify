@@ -29,7 +29,7 @@ function render(mode, example) {
 }
 
 function canonicalSvg(html) {
-  return html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
+  return html.match(/<svg(?=[\s>])[\s\S]*?<\/svg>/)?.[0] || '';
 }
 
 test('all typed renderers inherit one viewer-only Route Probe', () => {
@@ -39,7 +39,7 @@ test('all typed renderers inherit one viewer-only Route Probe', () => {
     assert.match(html, /id="btn-route-probe"[^>]+aria-label="Trace a directed route"[^>]+aria-pressed="false"[^>]+aria-controls="route-probe"/, mode);
     assert.match(html, /Archify\.routeProbe = \(function \(\)/, mode);
     assert.match(html, /Route Probe — shortest directed path over compiled semantics/, mode);
-    assert.equal((html.match(/<svg\b/g) || []).length, 1, `${mode} keeps one static canonical SVG`);
+    assert.equal((html.match(/<svg(?=[\s>])/g) || []).length, 1, `${mode} keeps one static canonical SVG`);
     assert.doesNotMatch(canonicalSvg(html), /data-route-|route-probe-flow/, mode);
   }
 });

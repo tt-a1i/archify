@@ -5,6 +5,7 @@ import {
   translateMessage,
   viewerCatalog,
 } from './i18n.mjs';
+import { standaloneSvgBuilderSource } from './svg-export.mjs';
 
 export { esc };
 
@@ -108,6 +109,7 @@ const SUBTITLE_SLOT_RE = /^([ \t]*)<p class="subtitle">\[Subtitle description\]<
 const GUIDED_VIEWS_PLACEHOLDER = '<!-- ARCHIFY:GUIDED_VIEWS_DATA -->';
 const SOURCE_EVIDENCE_PLACEHOLDER = '    <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->';
 const I18N_PLACEHOLDER = '    <!-- ARCHIFY:I18N_DATA -->';
+const SVG_EXPORT_FINALIZER_PLACEHOLDER = '/* ARCHIFY:SVG_EXPORT_FINALIZER */';
 
 function serializeScriptJson(value) {
   return JSON.stringify(value)
@@ -167,7 +169,10 @@ export function applyTemplate(template, {
   const templateWithI18n = localizedTemplate.includes(I18N_PLACEHOLDER)
     ? localizedTemplate.replace(I18N_PLACEHOLDER, () => i18nData)
     : localizedTemplate.replace(GUIDED_VIEWS_PLACEHOLDER, () => `${i18nData}\n    ${GUIDED_VIEWS_PLACEHOLDER}`);
-  return templateWithI18n
+  const templateWithSvgExport = templateWithI18n.includes(SVG_EXPORT_FINALIZER_PLACEHOLDER)
+    ? templateWithI18n.replace(SVG_EXPORT_FINALIZER_PLACEHOLDER, () => standaloneSvgBuilderSource())
+    : templateWithI18n;
+  return templateWithSvgExport
     .replace(TEMPLATE_PLACEHOLDERS[0], () => `<html lang="${esc(resolvedLocale)}" data-theme="dark" data-preset="${esc(visualPreset)}">`)
     .replace(TEMPLATE_PLACEHOLDERS[1], () => `<title>${esc(translateMessage(resolvedLocale, 'page.title', { title }))}</title>`)
     .replace(TEMPLATE_PLACEHOLDERS[2], () => `<h1>${esc(title)}</h1>`)

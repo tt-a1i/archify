@@ -115,6 +115,28 @@ test('repository evidence is revision-verified, receipt-backed, searchable, and 
   assert.doesNotMatch(svg, /src\/router\.js|github\.com\/example\/evidence-repo|source-evidence/);
 });
 
+test('SVG delivery keeps the verified repository receipt while excluding Viewer-only evidence', () => {
+  const data = fixture();
+  const output = path.join(data.root, 'verified.svg');
+  const result = run([
+    'deliver', 'architecture', data.input, output,
+    '--format', 'svg', '--theme', 'auto', '--repo-root', data.root, '--json',
+  ]);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.evidence, {
+    verified: true,
+    repository: 'https://github.com/example/evidence-repo',
+    revision: data.revision,
+    references: 2,
+  });
+  assert.deepEqual(receipt.svgValidation, { checksPassed: 16, checkCount: 16 });
+  const svg = fs.readFileSync(output, 'utf8');
+  const diagramMarkup = svg.replace(/<style\b[^>]*>[\s\S]*?<\/style>/i, '');
+  assert.doesNotMatch(diagramMarkup, /src\/router\.js|github\.com\/example\/evidence-repo|source-evidence/);
+});
+
 test('repository evidence is opt-in and never appears in ordinary artifacts', () => {
   const output = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'archify-no-evidence-')), 'plain.html');
   const input = path.join(skillRoot, 'examples', 'web-app.architecture.json');

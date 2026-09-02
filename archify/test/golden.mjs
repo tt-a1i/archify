@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { standaloneSvgBuilderSource } from '../renderers/shared/svg-export.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -149,14 +150,18 @@ function blocks(html, tag) {
 }
 
 const template = fs.readFileSync(path.join(skillRoot, 'assets/template.html'), 'utf8');
+const renderedTemplate = template.replace(
+  '/* ARCHIFY:SVG_EXPORT_FINALIZER */',
+  standaloneSvgBuilderSource(),
+);
 const webApp = fs.readFileSync(path.join(repoRoot, 'examples/web-app.html'), 'utf8');
-// <style> and <script> blocks pass through applyTemplate untouched, so the
-// architecture-mode example must contain them verbatim or it has drifted.
+// Template-owned style and script blocks must remain current. The shared SVG
+// finaliser is injected into the generated script at render time.
 for (const tag of ['style', 'script']) {
   // The guided-view JSON script is generated from meta.views; compare only
   // template-owned executable scripts, not per-diagram data payloads.
   const isTemplateOwned = (block) => !block.includes('type="application/json"');
-  const t = blocks(template, tag).filter((b) => !b.includes('[PROJECT NAME]') && isTemplateOwned(b));
+  const t = blocks(renderedTemplate, tag).filter((b) => !b.includes('[PROJECT NAME]') && isTemplateOwned(b));
   const w = blocks(webApp, tag).filter((b) => !b.includes('Sample Web App') && isTemplateOwned(b));
   check(`web-app.html ${tag} blocks match template`,
     JSON.stringify(t) === JSON.stringify(w),

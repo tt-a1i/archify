@@ -8,6 +8,7 @@ import { validateEngineeringProfile } from './engineering-profiles.mjs';
 import { resolveOutputPath } from './output-path.mjs';
 import { prepareDiagramBrandMarks } from './brand-marks.mjs';
 import { resolveLocale, translateMessage } from './i18n.mjs';
+import { renderStandaloneSvg } from './svg-export.mjs';
 
 installRendererDiagnosticBoundary();
 
@@ -54,17 +55,29 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
   if (!START_TYPES.has(diagramType)) throw new Error(`writeDiagram: unknown diagram type ${JSON.stringify(diagramType)}`);
   const outputGuard = outputPathGuards.get(outPath);
   if (outputGuard) resolveOutputPath(outputGuard);
+  const outputFormat = process.env.ARCHIFY_OUTPUT_FORMAT || 'html';
+  if (!['html', 'svg'].includes(outputFormat)) {
+    throw new Error(`writeDiagram: unknown output format ${JSON.stringify(outputFormat)}`);
+  }
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, applyTemplate(template, {
-    title: meta.title,
-    subtitle: meta.subtitle,
-    svg,
-    cards: renderCards(cards),
-    locale: meta.locale,
-    visualPreset: meta.visual_preset || 'classic',
-    guidedViews: meta.views || [],
-    sourceEvidence,
-  }));
+  const artifact = outputFormat === 'svg'
+    ? renderStandaloneSvg({
+        svg,
+        template,
+        preset: meta.visual_preset || 'classic',
+        theme: process.env.ARCHIFY_SVG_THEME || 'auto',
+      })
+    : applyTemplate(template, {
+        title: meta.title,
+        subtitle: meta.subtitle,
+        svg,
+        cards: renderCards(cards),
+        locale: meta.locale,
+        visualPreset: meta.visual_preset || 'classic',
+        guidedViews: meta.views || [],
+        sourceEvidence,
+      });
+  fs.writeFileSync(outPath, artifact);
   outputPathGuards.delete(outPath);
   console.log(outPath);
 }
