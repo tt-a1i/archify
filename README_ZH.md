@@ -54,7 +54,7 @@ npx skills add tt-a1i/archify -g
 | [![Agent 工作流正在播放一个作者章节](docs/assets/archify-demo-story.png)](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html?theme=dark&present=1&play=1#view=happy-path) | [![缓存未命中时从 Web App 到 Postgres 的路径](docs/assets/archify-demo-route.png)](https://tt-a1i.github.io/archify/gallery/artifacts/cache-miss.sequence.html?theme=dark&present=1#route=web~db) | [![生产架构中后端与数据库角色的真实关系](docs/assets/archify-demo-lens.png)](https://tt-a1i.github.io/archify/gallery/artifacts/production-deployment.architecture.html?theme=dark&present=1#lens=backend~database) |
 | 播放一次有限的命名章节。 | 检查最短的作者有向路径。 | 对比语义角色之间的真实流量。 |
 
-[Proof Lab](https://tt-a1i.github.io/archify/gallery.html) 收录全部 11 个仓库内场景、JSON 源、命名视图和校验回执。
+[Proof Lab](https://tt-a1i.github.io/archify/gallery.html) 收录仓库内场景、JSON 源、命名视图和校验回执。
 
 ### 从真实仓库读出来，不是只靠 Prompt 画出来
 
@@ -172,7 +172,7 @@ Lifecycle 区分正常进展、等待、重试和终态：
 
 ![Lifecycle 示例](docs/assets/archify-lifecycle.png)
 
-Architecture 示例：[`Web App`](examples/web-app.html) · [`Archify Pipeline`](examples/archify-repo.html) · [`Grid 布局`](examples/archify-repo-grid.html) · [`桌面 Agent`](examples/maka-architecture.html)
+Architecture 示例：[`Web App`](examples/web-app.html) · [`Archify Pipeline`](examples/archify-repo.html) · [`Grid 布局`](examples/archify-repo-grid.html) · [`桌面 Agent`](examples/maka-architecture.html) · [`一层组件内部架构`](archify/examples/transformer-layer.architecture.json)
 
 ## 为什么用 Archify
 
@@ -183,7 +183,7 @@ Architecture 示例：[`Web App`](examples/web-app.html) · [`Archify Pipeline`]
 - **保留最后好图的实时预览** —— 可选桌面循环只监听一个 JSON；只有最新候选通过全部门禁才刷新，半写入或无效保存时继续显示上一份验证成品。
 - **交互不编造拓扑** —— 聚焦、上下游可达范围、精确路径、角色对比和故事都复用作者定义的节点与关系，也不把图上可达误报成真实运行时影响。
 - **只在需要时附源码证据** —— 有证据的 Architecture 节点会显示 `SRC n`，并可打开由 Git 校验、固定到公开 commit 的文件与行号；普通成品不携带源码信息。
-- **结果默认便携** —— 一个 HTML 文件即可分享；导出永远是完整原图，不携带临时 Viewer 状态。
+- **结果默认便携** —— 一个 HTML 文件即可分享；导出默认使用完整主架构且不携带临时 Viewer 状态。打开作者定义的单层子架构后，也可通过显式导出目标仅导出该子架构。
 
 Archify 不是通用绘图编辑器，也不是 Mermaid 主题；它负责把技术意图变成可交流的成品。
 

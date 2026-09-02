@@ -59,7 +59,7 @@ These are generated Archify artifacts, not product mockups. Click a frame to ope
 | [![Agent workflow playing one authored chapter](docs/assets/archify-demo-story.png)](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html?theme=dark&present=1&play=1#view=happy-path) | [![Cache-miss sequence showing the Web App to Postgres route](docs/assets/archify-demo-route.png)](https://tt-a1i.github.io/archify/gallery/artifacts/cache-miss.sequence.html?theme=dark&present=1#route=web~db) | [![Production architecture comparing backend and database roles](docs/assets/archify-demo-lens.png)](https://tt-a1i.github.io/archify/gallery/artifacts/production-deployment.architecture.html?theme=dark&present=1#lens=backend~database) |
 | Play one finite named chapter. | Inspect the shortest authored directed path. | Compare real traffic between semantic roles. |
 
-The [Proof Lab](https://tt-a1i.github.io/archify/gallery.html) contains all 11 checked-in scenarios, their JSON sources, named views, and validation receipts.
+The [Proof Lab](https://tt-a1i.github.io/archify/gallery.html) contains the checked-in scenarios, their JSON sources, named views, and validation receipts.
 
 ### A real repository, mapped from source
 
@@ -176,7 +176,7 @@ Lifecycle separates progress, waits, retries, and terminal outcomes:
 
 ![Lifecycle example](docs/assets/archify-lifecycle.png)
 
-Architecture examples: [`web-app`](examples/web-app.html) · [`Archify pipeline`](examples/archify-repo.html) · [`grid placement`](examples/archify-repo-grid.html) · [`desktop agent`](examples/maka-architecture.html)
+Architecture examples: [`web-app`](examples/web-app.html) · [`Archify pipeline`](examples/archify-repo.html) · [`grid placement`](examples/archify-repo-grid.html) · [`desktop agent`](examples/maka-architecture.html) · [`one-level component internals`](archify/examples/transformer-layer.architecture.json)
 
 ## Why Archify
 
@@ -187,7 +187,7 @@ Architecture examples: [`web-app`](examples/web-app.html) · [`Archify pipeline`
 - **Last-good live preview** — an optional desktop loop watches one JSON file, refreshes only after the latest candidate passes every gate, and keeps the previous verified diagram visible when a save is incomplete or invalid.
 - **Truthful interaction** — focus, upstream/downstream reach, exact routes, role comparison, and stories reuse authored nodes and relationships instead of inventing topology or claiming runtime impact.
 - **Source evidence, only when requested** — Evidence-backed Architecture nodes mark themselves `SRC n` and open Git-verified files and line ranges pinned to one public commit; ordinary artifacts stay source-free.
-- **Portable by default** — the result is one HTML file; exports remain full-diagram and free of temporary viewer state.
+- **Portable by default** — one HTML file. Export defaults to the main diagram and can target an open subarchitecture.
 
 Archify is not a general-purpose drawing editor or a Mermaid theme. It turns technical intent into a communication artifact.
 

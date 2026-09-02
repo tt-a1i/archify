@@ -25,6 +25,31 @@ const RAW_RECIPES = [
     },
   },
   {
+    id: 'transformer-internals', type: 'architecture', proof: 'transformer-layer',
+    presentation: { preset: 'blueprint', motion: 'static', views: 'optional' },
+    start: {
+      en: { descriptionPrompt: 'Use Archify architecture mode to show this system at two authored levels: [describe the complete parent components, then the exact internals of one existing component]. Preserve the parent design unchanged, add one optional subarchitecture with 1–12 local components, and do not invent cross-scope relationships.' },
+      zh: { descriptionPrompt: '用 Archify 架构模式分两层展示这个系统：[先描述完整的父级组件，再描述其中一个既有组件的确切内部结构]。完整保留父图设计，只为既有组件增量添加包含 1–12 个局部组件的可选 subarchitecture，不要编造跨作用域关系。' },
+    },
+    signals: [['component internals', 16], ['subarchitecture', 16], ['transformer layer', 14], ['residual path', 10], ['nested architecture', 12], ['组件内部', 16], ['子架构', 16], ['transformer 层', 14], ['残差路径', 10], ['局部架构', 12]],
+    en: {
+      title: 'Component internals', question: 'What exact topology exists inside one parent component?',
+      summary: 'An unchanged parent architecture with one additive, authored local graph for detailed inspection.',
+      useWhen: 'A system overview needs one truthful implementation-level drill-down without flattening the whole diagram.',
+      avoidWhen: 'More than one nesting level is required, or local nodes need relationships to parent-scope nodes.',
+      include: ['complete unchanged parent map', 'one-level local component graph', 'local-only boundaries and connections', 'exact residual or branch paths'],
+      prompt: 'Use Archify architecture mode to preserve the complete parent system and add subarchitecture to the one existing component whose internals matter. Do not remove, replace, or reposition any parent component, boundary, connection, card, or authored coordinate. Keep child IDs local to that parent, use 1–12 child components, preserve exact local branches and residual paths, and do not add nested subarchitectures or cross-scope edges.',
+    },
+    zh: {
+      title: '组件内部架构', question: '一个父级组件内部究竟包含怎样的拓扑？',
+      summary: '完整保留父图，并为一个既有组件增量添加受限、作者明确编写的一层局部关系图。',
+      useWhen: '系统总览只需要一个真实的实现级下钻，同时又不应把全部细节摊平到父图时。',
+      avoidWhen: '需要两层以上嵌套，或局部节点必须直接连接父级节点时不要使用。',
+      include: ['完整且不变的父级架构', '一层局部组件图', '局部边界与连接', '明确的分支或残差路径'],
+      prompt: '使用 Archify 架构模式完整保留父级系统，并只在需要展开内部细节的既有组件上增量添加 subarchitecture。不要删除、替换或移动任何父级组件、边界、连接、卡片和既有坐标。子组件 ID 仅在该父组件内有效，数量限制为 1–12 个；保留真实的局部分支和残差路径，不添加递归子架构或跨作用域连线。',
+    },
+  },
+  {
     id: 'deployment-ownership', type: 'architecture', proof: 'deployment-ownership',
     presentation: { preset: 'blueprint', motion: 'trace', views: 'recommended' },
     signals: [['deployment topology', 14], ['region', 7], ['vpc', 9], ['cluster', 6], ['availability zone', 8], ['ownership', 7], ['cloud deployment', 12], ['部署拓扑', 14], ['区域', 6], ['集群', 6], ['可用区', 8], ['资源归属', 9], ['跨区', 8]],
