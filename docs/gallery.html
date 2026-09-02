@@ -8,11 +8,15 @@
   <meta name="description" content="A generated gallery of validated, self-contained Archify diagrams. Every preview links to its exact JSON source and interactive HTML artifact.">
   <meta name="theme-color" content="#eff2f1">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><polygon points='14,2 26,8 26,20 14,26 2,20 2,8' fill='%23083344' stroke='%2322d3ee' stroke-width='1.5'/><circle cx='14' cy='15' r='2.5' fill='%2322d3ee'/></svg>">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/site-navigation.css">
   <style>
+    /* Offline-first typography: prefer locally installed JetBrains Mono and
+       fall through to system stacks. Gallery pages must not request third-party
+       font hosts. */
+    @font-face { font-family: 'JetBrains Mono'; font-weight: 400; src: local('JetBrains Mono'), local('JetBrainsMono-Regular'); }
+    @font-face { font-family: 'JetBrains Mono'; font-weight: 500; src: local('JetBrains Mono Medium'), local('JetBrainsMono-Medium'); }
+    @font-face { font-family: 'JetBrains Mono'; font-weight: 600; src: local('JetBrains Mono SemiBold'), local('JetBrainsMono-SemiBold'); }
+    @font-face { font-family: 'JetBrains Mono'; font-weight: 700; src: local('JetBrains Mono Bold'), local('JetBrainsMono-Bold'); }
     :root {
       /* Drafted-sheet palette — shared with the project page */
       --paper-site:#eff2f1; --paper-raised:#f8faf9;
@@ -21,9 +25,9 @@
       --accent-site:#e14a0e; --accent-soft:rgba(225,74,14,0.08);
       --plate:#0f1216;
       --emerald:#047857;
-      --font-display:'Fraunces','Songti SC','STSong',Georgia,serif;
-      --font-body:'Inter',-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
-      --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+      --font-display:'Songti SC','STSong',Georgia,'Times New Roman',serif;
+      --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+      --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
       --ease-out:cubic-bezier(.22,1,.36,1);
       --content: 1320px;
     }
