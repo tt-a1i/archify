@@ -1,0 +1,27 @@
+name: Star History
+
+on:
+  schedule:
+    - cron: '30 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: star-history
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # Upstream PR #6: Node 24 migration, before v1.0.6's chart-rendering changes.
+      - uses: narayann7/star-history-action@00dfada13f106e4114ee46728aa415857078e76c
+        with:
+          output-dir: assets
+          update-readme: 'false'
+          commit: 'false'
+      - name: Publish charts with linear history
+        run: bash scripts/publish-star-history.sh star-history

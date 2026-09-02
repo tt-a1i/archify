@@ -41,7 +41,7 @@ test('all guided renderers expose one runtime-built named chapter rail', () => {
     assert.match(html, /views\.forEach\(function \(view, index\)/, mode);
     assert.match(html, /position\.textContent = \(index \+ 1 < 10 \? '0' : ''\) \+ \(index \+ 1\)/, mode);
     assert.match(html, /title\.textContent = view\.label/, mode);
-    assert.match(html, /stops\.textContent = view\.focus\.length \+ ' stop'/, mode);
+    assert.match(html, /stops\.textContent = viewerCount\('viewer\.guided\.chapter\.stop', view\.focus\.length\)/, mode);
     assert.doesNotMatch(canonicalSvg(html), /guided-view-chapter|data-chapter-position/, mode);
   }
 });

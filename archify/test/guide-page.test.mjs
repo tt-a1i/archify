@@ -27,7 +27,18 @@ test('guide page: checked-in HTML is reproducible from the shared recipe source'
 
 test('guide page: ships bilingual recipes and syntactically valid interaction code', () => {
   const html = fs.readFileSync(path.join(repoRoot, 'docs/guide.html'), 'utf8');
+  const packageVersion = JSON.parse(
+    fs.readFileSync(path.join(skillRoot, 'package.json'), 'utf8'),
+  ).version;
+  const releaseIdentity = packageVersion.includes('-') ? 'development' : 'stable';
+  const staticVersionLabel = html.match(
+    /<span data-i18n="versionLabel">([^<]+)<\/span>/,
+  );
   assert.doesNotMatch(html, /\[\[[A-Z0-9_]+\]\]/);
+  assert.equal(
+    staticVersionLabel?.[1],
+    `Scenario guide / ${releaseIdentity} / v${packageVersion}`,
+  );
   assert.match(html, /Question-first diagramming/);
   assert.match(html, /先问题，后图表/);
   assert.match(html, /archify guide &quot;your scenario&quot;|archify guide "your scenario"/);

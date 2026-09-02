@@ -8,6 +8,7 @@ import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLege
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
+import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import {
   asArray,
@@ -79,14 +80,14 @@ const layout = {
 };
 
 const LEGEND_CATALOG = [
-  ['frontend', 'Frontend'],
-  ['backend', 'Backend'],
-  ['database', 'Database'],
-  ['cloud', 'Cloud'],
-  ['security', 'Security'],
-  ['messagebus', 'Message bus'],
-  ['external', 'External'],
-].map(([kind, label]) => ({ kind, label }));
+  'frontend',
+  'backend',
+  'database',
+  'cloud',
+  'security',
+  'messagebus',
+  'external',
+].map((kind) => ({ kind, label: i18nText(arch.meta.locale, `legend.architecture.${kind}`) }));
 
 // ---- Measure components from free coordinates --------------------------------
 function measureComponent(c) {
@@ -325,7 +326,7 @@ function componentContext(component) {
     .filter((boundary) => asArray(boundary.wraps).includes(component.id))
     .sort((a, b) => (b.width * b.height) - (a.width * a.height))
     .map((boundary) => boundary.label);
-  return scopes.length ? scopes.join(' › ') : 'Architecture component';
+  return scopes.length ? scopes.join(' › ') : i18nText(arch.meta.locale, 'node.context.architecture');
 }
 
 // ---- Auto viewBox: fit all geometry + the measured resolved legend ----------
@@ -339,15 +340,6 @@ function validateArchitecture() {
     problems.push(resolvedBoundaryTitles.readabilityProblem);
   }
   const requiresNestedBoundaryMembership = arch.meta?.engineering_profile === 'deployment-ownership';
-  if (arch.schema_version !== 1) problems.push('Architecture files must set "schema_version": 1.');
-  if (arch.diagram_type !== 'architecture') problems.push('Architecture files must set "diagram_type": "architecture".');
-  if (!arch.meta?.title) problems.push('Architecture files must include meta.title.');
-  if (!Array.isArray(arch.components) || arch.components.length < 1) {
-    problems.push('Architecture diagrams need at least one component.');
-  }
-  if (arch.connections !== undefined && !Array.isArray(arch.connections)) problems.push('Architecture "connections" must be an array.');
-  if (arch.boundaries !== undefined && !Array.isArray(arch.boundaries)) problems.push('Architecture "boundaries" must be an array.');
-  if (arch.cards !== undefined && !Array.isArray(arch.cards)) problems.push('Architecture "cards" must be an array.');
   if (components.size !== asArray(arch.components).length) problems.push('Component ids must be unique.');
   if (grid) {
     validateGridPlacement(arch, grid, problems);
@@ -526,13 +518,11 @@ function validateArchitecture() {
   }));
   problems.push(...cleanFlowProblems({
     relations: arch.connections,
-    endpointIds: new Set(components.keys()),
     obstacles: components.values(),
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',
     obstacleKind: 'component',
-    profile: arch.meta?.quality_profile,
     routeHint: 'adjust fromSide/toSide, set route/via, or move the component'
   }));
   problems.push(...cleanCrossingProblems({
@@ -967,7 +957,7 @@ function renderBoundaryLabel(b, index) {
   const labelCls = b.kind === 'security-group' ? 't-security' : 't-cloud';
   return `        <g data-graph-role="structural-frame-label" data-composition-frame-id="${index}" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-label="${esc(b.label)}">
           <rect data-graph-role="structural-frame-label-mask" x="${b.title.x}" y="${b.title.y}" width="${b.title.width}" height="${b.title.height}" rx="3" class="c-mask"/>
-          <text data-boundary-label x="${b.title.x + 4}" y="${b.title.y + b.title.baselineOffset}" class="${labelCls}" font-size="${b.title.fontSize}" font-weight="600">${esc(b.label)}</text>
+          <text data-boundary-label="" x="${b.title.x + 4}" y="${b.title.y + b.title.baselineOffset}" class="${labelCls}" font-size="${b.title.fontSize}" font-weight="600">${esc(b.label)}</text>
         </g>`;
 }
 
@@ -1003,12 +993,12 @@ function renderComponent(c) {
   const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + 6 });
   const labelFontSize = fittedNodeFontSize(c.label, brandLabelFitWidth(c, c.width), 11, 8);
   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), ...brandMetadataFor(c) };
-  return `        <g ${focusNodeAttrs(c.id, c.label, passport)}>
+  return `        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}>
           ${focusNodeTitle(c.label, passport)}
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="c-mask"/>
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
           ${renderSemanticSigil(c.type, { x: c.x + 6, y: c.y + 6 })}${brand ? `\n          ${brand}` : ''}
-          <text data-node-label${hasSub ? ' data-detail-anchor' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}
         </g>`;
 }
 
@@ -1030,6 +1020,7 @@ function renderLegend() {
   );
   return renderResolvedLegend({
     entries,
+    locale: arch.meta.locale,
     layout: {
       x: layout.margin,
       baselineY: legendY(),
@@ -1044,8 +1035,8 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta, 'architecture diagram')}>
-${svgAccessibleText(arch.meta, 'architecture diagram')}
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)}>
+${svgAccessibleText(arch.meta, 'architecture')}
 ${renderDefinitions()}
 
         <!-- Background Grid -->

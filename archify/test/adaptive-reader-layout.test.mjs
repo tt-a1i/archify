@@ -39,6 +39,7 @@ test('desktop readability budget matches the minimum adaptive reader at 1440 by 
   assert.equal(DESKTOP_READER_HORIZONTAL_CHROME, 30);
   assert.equal(DESKTOP_READER_DIAGRAM_WIDTH, 930);
   assert.match(reader, new RegExp(`var MIN_READER_WIDTH = ${DESKTOP_READER_MIN_WIDTH}`));
+  assert.match(template, /html\[data-nav-stage-rail="true"\] body \{ padding-block: 0\.375rem; \}/);
   assert.match(template, /@media \(min-width: 768px\) and \(max-height: 1100px\)[\s\S]*?\.diagram-container \{[\s\S]*?padding: 0\.875rem;[\s\S]*?padding-bottom: calc\(0\.875rem \+ var\(--archify-nav-reserve\)\);/);
   assert.match(template, /@media \(min-width: 768px\) and \(max-height: 920px\)[\s\S]*?body \{ padding-block: 1\.25rem; \}/);
   assert.match(template, /\.diagram-container \{[\s\S]*?border: 1px solid var\(--panel-border\)/);

@@ -80,7 +80,7 @@ for (const [mode, config] of Object.entries(CASES)) {
     assert.match(guided.html, /data-share-playback="true"\] \.diagram-container \{\s*padding-top: 4\.25rem/);
     assert.match(guided.html, /function renderShareCue\(\)/);
     assert.match(guided.html, /function shareCueBeatCopy\(state, view, stops\)/);
-    assert.match(guided.html, /Step ' \+ \(storyBeatIndex \+ 1 < 10/);
+    assert.match(guided.html, /viewerText\('viewer\.guided\.share\.step'/);
     assert.match(guided.html, /shareCue\.setAttribute\('aria-live', state === 'playing' \? 'off' : 'polite'\)/);
     assert.match(guided.html, /function scheduleStoryPlayback\(\)/);
     assert.match(guided.html, /storyBeatTimer = setTimeout/);

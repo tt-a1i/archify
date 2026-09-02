@@ -108,7 +108,9 @@ test('Reach Share Card reuses the 1200x630 seam and publishes a truthful scoped 
   assert.match(html, /Archify\.focus\.reachabilitySnapshot\(\)/);
   assert.match(html, /renderShareCard\(\{ reachSnapshot: snapshot \}\)/);
   assert.doesNotMatch(html, /function rasterizeReachShareCard|reachShareCard:/);
-  assert.match(html, /'Authored ' \+ reachSnapshot\.direction \+ ' from ' \+ reachSnapshot\.origin\.label/);
+  assert.match(html, /viewerText\('viewer\.export\.card\.reachSummary'/);
+  assert.match(html, /direction: directionLabel/);
+  assert.match(html, /origin: reachSnapshot\.origin\.label/);
   assert.match(html, /reachSnapshot\.nodeIds\.length - 1/);
   assert.match(html, /reachSnapshot\.edges\.length/);
   assert.match(html, /reachSnapshot\.maxDepth/);

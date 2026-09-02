@@ -21,6 +21,12 @@ level, so unknown fields are rejected rather than silently ignored.
 
 Every `meta` object also accepts `animation: "trace"` for opt-in SVG/CSS motion
 in generated HTML. Omit it, or set `"none"`, for the default static output.
+It also accepts `locale: "en" | "zh-CN"`. The field selects the fixed Viewer
+UI, renderer-owned default legend and accessibility copy, document-title
+suffix, and `<html lang>` value; it does not translate authored strings.
+Omitting it preserves legacy behavior and resolves to English. Unsupported
+locale values fail schema validation instead of being guessed or silently
+rewritten.
 `visual_preset` accepts `classic` (the stable default), `signal-flow` (luminous
 motion-forward presentation), `blueprint` (high-contrast engineering review),
 or `editorial` (warm publication-style design review and documentation).
@@ -39,7 +45,7 @@ and an optional short `note`.
 ### Legend presentation contract
 
 Every `meta` object accepts the same optional legend shape without changing
-`schema_version: 1`:
+the schema version already selected for that renderer:
 
 ```json
 "legend": {
@@ -103,14 +109,26 @@ output.
 
 ## schema_version policy
 
-`schema_version` is `"const": 1`. The constant pins the IR contract: a file
-that validates today keeps validating and rendering on every 2.x release.
-Additive viewer, accessibility, and presentation improvements may enhance the
-generated HTML, but they must not reinterpret authored IR or turn a previously
-valid profile-less v1 file into a new hard layout failure. A breaking change to
-any IR shape bumps the constant to `2`; renderers will then reject version-1
-files with a clear schema error instead of misrendering them. Additive,
-backwards-compatible fields do not bump the version.
+Workflow supports schema versions 1 and 2. Version 1 remains the fixed-layout
+compatibility contract; version 2 opts into the readable workflow compiler and
+can be produced explicitly with `archify migrate workflow ... --to-schema 2`.
+The other four diagram schemas keep `schema_version` pinned to `1`.
+
+Workflow also accepts optional `semanticChecks`. `allowedRoots` and
+`allowedTerminals` close the set of intentional graph sources and sinks;
+`requiredEdges` requires exact authored relationships; and `requiredPaths`
+requires directed reachability while allowing intermediate nodes. The compiler
+evaluates these facts before layout and returns typed `workflow/*` diagnostics.
+The field is additive and geometry-neutral: omitting it preserves existing
+workflow behavior and including a satisfied contract does not change SVG or
+layout-receipt bytes.
+
+A file that validates today must keep validating and rendering within its
+declared version throughout the 2.x release line. Additive viewer,
+accessibility, and presentation improvements may enhance generated HTML, but
+they must not reinterpret authored IR or turn a previously valid profile-less
+v1 file into a new hard layout failure. Breaking IR changes require a new
+version; additive, backwards-compatible fields do not.
 
 ## Shared definitions (common.schema.json)
 
@@ -120,6 +138,7 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
 - `point` — an `[x, y]` pair of numbers (used by `via` and `labelAt`)
 - `componentType` — `frontend`, `backend`, `database`, `cloud`, `security`,
   `messagebus`, `external`
+- `locale` — the bounded renderer locale, `en` or `zh-CN`
 - `brandMark` — one optional built-in brand ID or explicit HTTP(S) site URL
 - `variant` — `default`, `emphasis`, `security`, `dashed` (sequence messages
   extend this list locally with `return`)

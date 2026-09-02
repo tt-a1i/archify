@@ -75,7 +75,7 @@ test('exact stable-ID set math powers truthful counts and the existing handoff',
   assert.match(html, /leave: previousFocus\.filter\(function \(id\) \{ return !destinationIds\[id\]; \}\)/);
   assert.match(html, /var delta = chapterDelta\(previous, destination\);[\s\S]*?chapterAnchor\(previous, destination, outgoingBeatIndex, delta\)/);
   assert.match(html, /var compact = '=' \+ delta\.stay\.length \+ ' \+' \+ delta\.enter\.length \+ ' \\u2212' \+ delta\.leave\.length/);
-  assert.match(html, /Chapter focus delta: ' \+ expanded/);
+  assert.match(html, /viewerText\('viewer\.guided\.chapter\.delta\.aria'/);
   assert.doesNotMatch(html, /inferChapterDelta|matchChapterLabel|nearestKind/);
 
   let adjacent = 0;

@@ -14,11 +14,12 @@
       "required": ["title"],
       "properties": {
         "title": { "type": "string", "minLength": 1 },
+        "locale": { "$ref": "common.schema.json#/$defs/locale" },
         "subtitle": { "type": "string" },
         "output": { "type": "string" },
-        "animation": { "enum": ["trace", "none"] },
-        "visual_preset": { "enum": ["classic", "signal-flow", "blueprint", "editorial"] },
-        "quality_profile": { "enum": ["standard", "showcase"] },
+        "animation": { "$ref": "common.schema.json#/$defs/animation" },
+        "visual_preset": { "$ref": "common.schema.json#/$defs/visualPreset" },
+        "quality_profile": { "$ref": "common.schema.json#/$defs/qualityProfile" },
         "engineering_profile": { "enum": ["deployment-ownership"] },
         "repository": {
           "type": "object",
@@ -155,8 +156,8 @@
           "to": { "$ref": "common.schema.json#/$defs/id" },
           "label": { "type": "string" },
           "variant": { "$ref": "common.schema.json#/$defs/variant" },
-          "fromSide": { "enum": ["left", "right", "top", "bottom"] },
-          "toSide": { "enum": ["left", "right", "top", "bottom"] },
+          "fromSide": { "$ref": "common.schema.json#/$defs/side" },
+          "toSide": { "$ref": "common.schema.json#/$defs/side" },
           "route": { "enum": ["auto", "straight", "orthogonal-h", "orthogonal-v"] },
           "via": {
             "type": "array",
@@ -166,7 +167,7 @@
           "labelDx": { "type": "number" },
           "labelDy": { "type": "number" },
           "labelSegment": { "type": "integer", "minimum": 0 },
-          "width": { "type": "number", "minimum": 0.5 }
+          "width": { "$ref": "common.schema.json#/$defs/relationshipWidth" }
         }
       }
     },

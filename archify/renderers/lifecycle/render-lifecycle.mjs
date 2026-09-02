@@ -6,6 +6,7 @@ import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
+import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import {
   asArray,
   isFinitePoint,
@@ -139,13 +140,6 @@ for (const [index, state] of asArray(lifecycle.states).entries()) {
 
 function validateLifecycle() {
   const problems = [];
-  if (lifecycle.schema_version !== 1) problems.push('Lifecycle files must set "schema_version": 1.');
-  if (lifecycle.diagram_type !== 'lifecycle') problems.push('Lifecycle files must set "diagram_type": "lifecycle".');
-  if (!lifecycle.meta?.title) problems.push('Lifecycle files must include meta.title.');
-  if (!Array.isArray(lifecycle.lanes) || lifecycle.lanes.length < 1) problems.push('Lifecycle diagrams need at least one lane.');
-  if (!Array.isArray(lifecycle.states) || lifecycle.states.length < 2) problems.push('Lifecycle diagrams need at least two states.');
-  if (!Array.isArray(lifecycle.transitions)) problems.push('Lifecycle diagrams must include a transitions array.');
-  if (lifecycle.cards !== undefined && !Array.isArray(lifecycle.cards)) problems.push('Lifecycle "cards" must be an array.');
   if (states.size !== asArray(lifecycle.states).length) problems.push('State ids must be unique.');
 
   // The three bands are fixed at y=112/264/436. Preserve the original
@@ -245,13 +239,11 @@ function validateLifecycle() {
   }));
   problems.push(...cleanFlowProblems({
     relations: lifecycle.transitions,
-    endpointIds: new Set(states.keys()),
     obstacles: states.values(),
     pathFor,
     diagramType: 'lifecycle',
     relationCollection: 'transitions',
     obstacleKind: 'state',
-    profile: lifecycle.meta?.quality_profile,
     routeHint: 'adjust fromSide/toSide, set route/via or channelX/channelY, or move the state with col/yOffset'
   }));
   problems.push(...cleanCrossingProblems({
@@ -453,13 +445,19 @@ function renderState(state) {
     : '';
   const brand = renderBrandMark(state, { x: state.x + state.width - 22, y: state.y + 6 });
   const labelFontSize = fittedNodeFontSize(state.label, brandLabelFitWidth(state, state.width), 10, 8);
-  const passport = { kind: state.type, sublabel: state.sublabel, tag: state.tag, context: laneLabels.get(state.lane) || 'Lifecycle state', ...brandMetadataFor(state) };
-  return `        <g ${focusNodeAttrs(state.id, state.label, passport)}>
+  const passport = {
+    kind: state.type,
+    sublabel: state.sublabel,
+    tag: state.tag,
+    context: laneLabels.get(state.lane) || i18nText(lifecycle.meta.locale, 'node.context.lifecycle'),
+    ...brandMetadataFor(state),
+  };
+  return `        <g ${focusNodeAttrs(state.id, state.label, passport, lifecycle.meta.locale)}>
           ${focusNodeTitle(state.label, passport)}
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="c-mask"/>
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="${fill}"${animateAttr(lifecycle.meta, 'node', stateSteps.get(state.id))} stroke-width="1.5"/>
           ${renderSemanticSigil(state.type, { x: hasBrand ? state.x + 6 : state.x + state.width - 17, y: state.y + 6 })}${brand ? `\n          ${brand}` : ''}${step}
-          <text data-node-label${hasSub ? ' data-detail-anchor' : ''} x="${state.cx}" y="${state.y + 21}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${state.cx}" y="${state.y + 21}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}
         </g>`;
 }
 
@@ -487,21 +485,22 @@ function renderTransitionLabel(transition, index) {
 }
 
 const LEGEND_CATALOG = [
-  ['start', 'start'],
-  ['active', 'active state'],
-  ['waiting', 'waiting'],
-  ['decision', 'decision'],
-  ['success', 'terminal success'],
-  ['failure', 'failure / exit'],
-  ['neutral', 'neutral'],
-  ['external', 'external'],
-].map(([kind, label]) => ({ kind, label }));
+  'start',
+  'active',
+  'waiting',
+  'decision',
+  'success',
+  'failure',
+  'neutral',
+  'external',
+].map((kind) => ({ kind, label: i18nText(lifecycle.meta.locale, `legend.lifecycle.${kind}`) }));
 
 function renderLegend() {
   const presentKinds = new Set([...states.values()].map((state) => state.type));
   const entries = resolveLegend(lifecycle.meta?.legend, LEGEND_CATALOG, presentKinds);
   return renderResolvedLegend({
     entries,
+    locale: lifecycle.meta.locale,
     layout: {
       x: 40,
       baselineY: legendY(),
@@ -524,8 +523,8 @@ function renderLifecycleRail() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(lifecycle.meta, 'lifecycle diagram')}>
-${svgAccessibleText(lifecycle.meta, 'lifecycle diagram')}
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(lifecycle.meta)}>
+${svgAccessibleText(lifecycle.meta, 'lifecycle')}
 ${renderDefinitions()}
 
         <!-- Background Grid -->

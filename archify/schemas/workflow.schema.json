@@ -14,7 +14,10 @@
   ],
   "properties": {
     "schema_version": {
-      "const": 1
+      "enum": [
+        1,
+        2
+      ]
     },
     "diagram_type": {
       "const": "workflow"
@@ -29,6 +32,9 @@
         "title": {
           "type": "string",
           "minLength": 1
+        },
+        "locale": {
+          "$ref": "common.schema.json#/$defs/locale"
         },
         "subtitle": {
           "type": "string"
@@ -215,6 +221,37 @@
         "$ref": "common.schema.json#/$defs/id"
       }
     },
+    "semanticChecks": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "allowedRoots": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/id"
+          }
+        },
+        "allowedTerminals": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/id"
+          }
+        },
+        "requiredEdges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/semanticRelation"
+          }
+        },
+        "requiredPaths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/semanticRelation"
+          }
+        }
+      }
+    },
     "nodes": {
       "type": "array",
       "minItems": 1,
@@ -363,6 +400,22 @@
     }
   },
   "$defs": {
+    "semanticRelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "to": {
+          "$ref": "common.schema.json#/$defs/id"
+        }
+      }
+    },
     "side": {
       "enum": [
         "left",

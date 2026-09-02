@@ -64,7 +64,7 @@ test('a position owns its exact ordered incoming edge while the full route remai
 test('route chips provide one roving tab stop, native activation, and manual ownership', () => {
   assert.match(template, /item\.setAttribute\('data-route-journey-index', String\(index\)\)/);
   assert.match(template, /item\.setAttribute\('tabindex', index === 0 \? '0' : '-1'\)/);
-  assert.match(template, /item\.setAttribute\('aria-label', 'Route position ' \+ \(index \+ 1\) \+ ' of ' \+ ids\.length/);
+  assert.match(template, /item\.setAttribute\('aria-label', viewerText\('viewer\.route\.position'/);
   assert.match(template, /path\.addEventListener\('focusin'[\s\S]*?pauseJourney\(\{ preserveElapsed: true \}\)/);
   assert.match(template, /path\.addEventListener\('keydown'[\s\S]*?event\.key === 'ArrowRight'/);
   assert.match(template, /else if \(event\.key === 'Home'\) next = 0/);

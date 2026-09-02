@@ -55,6 +55,20 @@ function evidencePayload(html) {
   return JSON.parse(match[1]);
 }
 
+test('repository evidence accepts canonical HTTPS and common SSH remotes', () => {
+  const data = fixture();
+  const output = path.join(data.root, 'remote-form.html');
+  for (const remote of [
+    'https://github.com/example/evidence-repo.git/',
+    'git@github.com:example/evidence-repo.git',
+    'ssh://git@github.com/example/evidence-repo.git',
+  ]) {
+    git(data.root, 'remote', 'set-url', 'origin', remote);
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 0, `${remote}: ${result.stderr || result.stdout}`);
+  }
+});
+
 async function waitForState(url, predicate, timeoutMs = 12000) {
   const started = Date.now();
   let latest;
@@ -92,7 +106,7 @@ test('repository evidence is revision-verified, receipt-backed, searchable, and 
   assert.match(html, /renderSourceEvidence\(id\)/);
   assert.match(html, /referrerPolicy = 'no-referrer'/);
   assert.match(html, /classList\.add\('source-evidence-beacon'\)/);
-  assert.match(html, /text\.textContent = 'SRC ' \+ count/);
+  assert.match(html, /text\.textContent = viewerText\('viewer\.passport\.sourceMarker'\) \+ ' ' \+ count/);
   assert.match(html, /Archify\.sourceEvidence\.installBeacons\(\)/);
   assert.match(html, /querySelectorAll\('\[data-source-evidence-beacon\]'\)/);
   assert.match(html, /data-source-evidence-original-label/);

@@ -149,7 +149,7 @@ test('all typed renderers inherit one viewer-only Semantic Radar', () => {
     assert.match(html, /id="btn-overview-map"[^>]+aria-label="Open semantic radar"[^>]+aria-expanded="false"[^>]+aria-controls="overview-map"/, mode);
     assert.match(html, /Archify\.radar = \(function \(\)/, mode);
     assert.match(html, /document\.createElementNS\(namespace, 'svg'\)/, mode);
-    assert.match(html, /mapSvg\.setAttribute\('aria-label', 'Semantic diagram radar nodes'\)/, mode);
+    assert.match(html, /mapSvg\.setAttribute\('aria-label', viewerText\('viewer\.radar\.nodes'\)\)/, mode);
     assert.match(html, /diagram\.querySelectorAll\('\[data-node-id\]'\)/, mode);
     assert.equal((html.match(/<svg\b/g) || []).length, 1, `${mode} keeps one static canonical SVG`);
     assert.doesNotMatch(canonicalSvg(html), /overview-map|Semantic radar|data-radar-node-id/, mode);
@@ -161,7 +161,7 @@ test('Semantic Radar derives semantic node bounds and focuses stable IDs', () =>
   assert.match(html, /box = node\.getBBox\(\)/);
   assert.match(html, /rect\.setAttribute\('data-radar-node-id', id\)/);
   assert.match(html, /rect\.setAttribute\('data-kind', node\.getAttribute\('data-node-kind'\) \|\| 'neutral'\)/);
-  assert.match(html, /rect\.setAttribute\('aria-label', 'Focus ' \+ nodeLabel\(node, id\) \+ ' from Semantic Radar'\)/);
+  assert.match(html, /rect\.setAttribute\('aria-label', viewerText\('viewer\.radar\.focus'/);
   assert.match(html, /Archify\.focus\.set\(id, \{ toggle: false \}\)/);
   assert.match(html, /Archify\.view\.reveal\(\[id\], \{ includeNeighbors: true, reason: 'radar' \}\)/);
   assert.match(html, /function bringNodeIntoWindow\(node\)/);
@@ -175,7 +175,7 @@ test('Semantic Radar tracks desktop camera and mobile contained scroll', () => {
   assert.match(html, /x = viewBox\.x \+ container\.scrollLeft \/ metrics\.scale/);
   assert.match(html, /x = viewBox\.x \+ \(\(-state\.x \/ state\.scale\) - metrics\.offsetX\) \/ metrics\.scale/);
   assert.match(html, /viewport\.setAttribute\('width', String\(visible\.width\)\)/);
-  assert.match(html, /mobileWide \? Math\.round\(visible\.width \/ viewBox\.width \* 100\) \+ '% width'/);
+  assert.match(html, /viewerText\('viewer\.radar\.viewport\.width'/);
   assert.match(html, /function centerAt\(logicalX, logicalY, options\)/);
   assert.match(html, /minimumScale: 1\.5, instant: true/);
   assert.match(html, /container\.scrollTo\(\{ left: mobileTarget, behavior: options\.instant \? 'auto' : 'smooth' \}\)/);

@@ -50,8 +50,8 @@ test('Diagram Guide reports compiled semantic facts and honest story availabilit
   assert.match(html, /edge\.getAttribute\('data-edge-key'\)/);
   assert.match(html, /return Archify\.guidedViews && Number\(Archify\.guidedViews\.count\) \|\| 0/);
   assert.match(html, /storyBtn\.disabled = views === 0/);
-  assert.match(html, /views \+ ' guided view'/);
-  assert.match(html, /No authored guided story in this diagram/);
+  assert.match(html, /viewerCount\('viewer\.guide\.fact\.view', views\)/);
+  assert.match(html, /viewerText\('viewer\.guide\.story\.unavailable'\)/);
 });
 
 test('Diagram Guide delegates its task rows to existing production interactions', () => {

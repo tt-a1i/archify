@@ -1,6 +1,7 @@
 import { throwDiagnosticError } from './diagnostics.mjs';
 import { rectsOverlap, segmentIntersectsRect } from './geometry.mjs';
 import { esc, textUnits } from './utils.mjs';
+import { translateMessage } from './i18n.mjs';
 
 const DEFAULT_FONT_SIZE = 8;
 const DEFAULT_ITEM_GAP = 22;
@@ -190,16 +191,16 @@ export function measureLegend(entries, {
   };
 }
 
-export function renderLegend({ entries, layout, renderSwatch }) {
+export function renderLegend({ entries, layout, renderSwatch, locale }) {
   if (!entries.length) return '';
   const measured = measureLegend(entries, layout);
   if (!measured) return '';
   const hasInteractiveEntries = measured.entries.some((entry) => entry.interactive);
   const renderedFontSize = measured.fontSize < 8 ? measured.fontSize + 0.5 : measured.fontSize + 2;
-  const rootAttributes = hasInteractiveEntries ? ' data-legend data-legend-bridge' : ' data-legend';
+  const rootAttributes = hasInteractiveEntries ? ' data-legend="" data-legend-bridge=""' : ' data-legend=""';
   const parts = [
     `        <g${rootAttributes}>`,
-    `          <text x="${layout.x}" y="${measured.titleY}" class="t-primary" font-size="12" font-weight="650">Legend</text>`,
+    `          <text x="${layout.x}" y="${measured.titleY}" class="t-primary" font-size="12" font-weight="650">${esc(translateMessage(locale, 'legend.title'))}</text>`,
   ];
 
   for (const entry of measured.entries) {

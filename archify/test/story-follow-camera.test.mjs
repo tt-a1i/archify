@@ -81,7 +81,7 @@ test('adaptive dwell, Still, reduced motion, hidden pages, and print keep camera
   assert.match(template, /function storyAutomaticPlaybackAllowed\(\)/);
   assert.match(template, /Archify\.motionGovernor && Archify\.motionGovernor\.capable\) return !Archify\.motionGovernor\.isPaused\(\)/);
   assert.match(template, /play\.disabled = !playing && !automaticPlaybackAllowed/);
-  assert.match(template, /Story playback unavailable while motion is Still/);
+  assert.match(template, /'viewer\.guided\.motionUnavailable'/);
   assert.match(template, /function startPlayback\(\) \{[\s\S]*?if \(!storyAutomaticPlaybackAllowed\(\)\)/);
   assert.match(template, /if \(shouldPlay && svg\.getAttribute\('data-story-playing'\) !== 'true'\)/);
   assert.match(template, /else if \(!shouldPlay && svg\.hasAttribute\('data-story-playing'\)\)/);

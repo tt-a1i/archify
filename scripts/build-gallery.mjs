@@ -5,6 +5,8 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { copySiteAssets } from './copy-site-assets.mjs';
+import { DIAGRAM_TYPE_LABELS, diagramTypeCopyReplacements } from './site-copy.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -27,8 +29,8 @@ const CASES = [
     featured: true,
     titleEn: 'Agent Tool Call',
     titleZh: '智能体工具调用',
-    descriptionEn: 'A policy-aware agent loop with planning, approval, tool execution, exception handling, and observability lanes.',
-    descriptionZh: '包含规划、审批、工具执行、异常处理与可观测泳道的策略感知智能体闭环。',
+    descriptionEn: 'Four consolidated lanes trace a policy-aware agent loop across user interaction, agent runtime, policy and recovery, and tool execution with evidence.',
+    descriptionZh: '四条整合泳道呈现策略感知的智能体闭环：用户交互、智能体运行时、策略与恢复，以及带证据的工具执行。',
   },
   {
     id: 'deployment-ownership',
@@ -170,12 +172,13 @@ const SHAPES = {
   lifecycle: ['states', 'transitions'],
 };
 
-const TYPE_LABELS = {
-  architecture: 'Architecture',
-  workflow: 'Workflow',
-  sequence: 'Sequence',
-  dataflow: 'Data flow',
-  lifecycle: 'Lifecycle',
+// Print-depth type hues shared with the site palette (guide page uses the same map).
+const TYPE_ACCENTS = {
+  architecture: '#0891b2',
+  workflow: '#047857',
+  sequence: '#6d28d9',
+  dataflow: '#b45309',
+  lifecycle: '#be123c',
 };
 
 function digest(buffer) {
@@ -205,11 +208,11 @@ function renderCard(entry, index) {
   const engineeringProof = entry.engineeringProfile
     ? `\n              <div class="engineering-proof" aria-label="Engineering profile validation"><span>Engineering profile</span><strong>${esc(entry.engineeringProfile.replaceAll('-', ' ').toUpperCase())} · PASS</strong></div>`
     : '';
-  return `          <article class="${classes}" id="proof-${esc(entry.id)}" data-proof-id="${esc(entry.id)}" data-type="${esc(entry.type)}" style="--accent:${esc(entry.accent)}">
+  return `          <article class="${classes}" id="proof-${esc(entry.id)}" data-proof-id="${esc(entry.id)}" data-type="${esc(entry.type)}" style="--accent:${esc(TYPE_ACCENTS[entry.type] || entry.accent)}">
             <header class="card-header">
               <div class="card-index">${String(index + 1).padStart(2, '0')}</div>
               <div class="card-title-wrap">
-                <div class="card-kicker">${esc(TYPE_LABELS[entry.type])} / ${entry.nodeCount} nodes${entry.viewCount ? ` / ${entry.viewCount} views · play` : ''}</div>
+                <div class="card-kicker">${esc(DIAGRAM_TYPE_LABELS.en[entry.type])} / ${entry.nodeCount} nodes${entry.viewCount ? ` / ${entry.viewCount} views · play` : ''}</div>
                 <h3 class="card-title" data-en="${esc(entry.titleEn)}" data-zh="${esc(entry.titleZh)}">${esc(entry.titleEn)}</h3>
               </div>
               <div class="card-mode">${esc(mode)}</div>
@@ -325,6 +328,7 @@ const manifestJson = JSON.stringify(manifest, null, 2);
 fs.writeFileSync(path.join(outputRoot, 'gallery', 'manifest.json'), `${manifestJson}\n`);
 
 const replacements = {
+  ...diagramTypeCopyReplacements(),
   '[[ARCHIFY_VERSION]]': packageJson.version,
   '[[ENTRY_COUNT]]': String(manifest.entryCount),
   '[[CHECK_COUNT]]': String(manifest.checkCount),
@@ -339,7 +343,9 @@ for (const [placeholder, value] of Object.entries(replacements)) {
 if (/\[\[[A-Z0-9_]+\]\]/.test(html)) {
   throw new Error('Gallery template contains unresolved placeholders');
 }
-fs.writeFileSync(path.join(outputRoot, 'gallery.html'), html);
+const galleryPath = path.join(outputRoot, 'gallery.html');
+copySiteAssets(galleryPath);
+fs.writeFileSync(galleryPath, html);
 
 console.log(`gallery ${manifest.entryCount} artifacts / ${manifest.checkCount} checks`);
 console.log(path.join(outputRoot, 'gallery.html'));

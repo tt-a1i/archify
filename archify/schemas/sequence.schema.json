@@ -29,6 +29,9 @@
           "type": "string",
           "minLength": 1
         },
+        "locale": {
+          "$ref": "common.schema.json#/$defs/locale"
+        },
         "subtitle": {
           "type": "string"
         },
@@ -36,24 +39,13 @@
           "type": "string"
         },
         "animation": {
-          "enum": [
-            "trace",
-            "none"
-          ]
+          "$ref": "common.schema.json#/$defs/animation"
         },
         "visual_preset": {
-          "enum": [
-            "classic",
-            "signal-flow",
-            "blueprint",
-            "editorial"
-          ]
+          "$ref": "common.schema.json#/$defs/visualPreset"
         },
         "quality_profile": {
-          "enum": [
-            "standard",
-            "showcase"
-          ]
+          "$ref": "common.schema.json#/$defs/qualityProfile"
         },
         "column_fit": {
           "description": "Horizontal participant layout. Omit this field or use fixed for the stable 86px boxes and 108px gap. Use spread when a wide viewBox would leave unused horizontal space or meaningful participant labels do not fit the fixed boxes; spread derives wider boxes and gaps from the viewBox without changing participant order or message semantics.",

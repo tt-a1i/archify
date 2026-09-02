@@ -64,7 +64,7 @@ test('handoff holds one truthful anchor then settles through one finite camera t
   assert.match(html, /var eased = 1 - Math\.pow\(1 - fraction, 3\)/);
   assert.match(html, /Archify\.motionGovernor\.claim\('handoff'/);
   assert.match(html, /Archify\.motionGovernor\.release\(handoff\.ownerToken\)/);
-  assert.match(html, /' \\u2192 '.*' \\u00b7 via '/s);
+  assert.match(html, /handoffReceipt\.textContent = viewerText\('viewer\.guided\.handoff'/);
   assert.doesNotMatch(html, /chapter-handoff[^\n]+infinite/);
 });
 

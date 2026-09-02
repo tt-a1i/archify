@@ -1,6 +1,9 @@
 # Archify Roadmap
 
-The current stable version is `v2.15.0`. Across the current stable version, the coordinate-stability work uses JSON IR plus typed renderers for architecture, workflow, sequence, data-flow, and lifecycle diagrams. Workflow diagrams also have phase/group/exception-lane structure, happy-path linting, trace animation, and route-crossing guards. The shared viewer adds deterministic semantic node IDs, optional author-controlled relationship IDs with durable `#relation=` links, a pre-click Intent Trace for exact one-hop traffic, a two-endpoint Route Probe with an inspectable Route Journey over deterministic shortest authored paths, searchable Node Finder navigation, read-only one-hop focus with a renderer-owned Semantic Passport and copyable focus link, upstream/downstream Authored Reachability, a runtime-built Semantic Radar for desktop viewport navigation, bounded typed guided views with a visible Named Chapter Rail, pre-commit Chapter Delta Preview, Shared Anchor Handoff, and path-aware Semantic Story Beats, a reader-controlled Live/Still Motion Governor, share-ready one-shot chapters with a title/route/step/state/progress cue, a viewport-filling Presentation Stage, Semantic Camera framing, pan/zoom, four reader-switchable visual presets with a direct Style Picker, optional authored brand marks, a contain-only 1200×630 Share Card, route-focused Route Share Card and authored-reach Reach Share Card variants, and browser-native WebM export. A generated Proof Lab publishes 11 live scenario artifacts with their exact sources, three named reader views, 99 artifact checks, and named composition receipts; its preview grid stays static while deliberate proof links play one named chapter once. The landing-page Live Proof Stage promotes three of those generated artifacts into the first bounded motion proof, and the README motion reel carries the same proof-first story onto GitHub without claiming SVG animation support. A question-first scenario guide maps concrete user needs to those 11 bounded recipes across the five modes, with one shared source for CLI and GitHub Pages and direct proof navigation. A unified CLI (`bin/archify.mjs`) wraps guide, render, preview, deliver, validate, check, visual-check, brands, and examples, with optional last-good desktop preview, verified post-commit open handoffs, and bounded viewport evidence. This file records the design decisions that led there, plus the ideas that were explicitly declined. The original v2.4 / v2.5 backlog (export-scale URL param, color-blind palette, gzip+base64 share links) was considered and dropped — see [Not planned](#not-planned) for the rationale on each.
+The current development line is `v2.17.0-dev.1`; it contains the work under Changelog Unreleased and is not a stable release. [CHANGELOG.md](CHANGELOG.md) is the single owner for delivered feature history. This file owns architectural direction, retained rationale, and explicitly declined ideas.
+
+<details>
+<summary>Archived delivered-slice context (frozen; no longer maintained as a second changelog)</summary>
 
 The latest stability and viewer slice adds `archify visual-check` as a small evidence tool rather than an automatic visual verdict: it measures four desktop viewports, captures light/dark endpoint screenshots, writes a contact sheet, and leaves human review pending. The same slice gives wide diagrams a height-budgeted first screen, keeps near-aligned singly spread links straight without weakening obstacle or explicit-route behavior, preserves relationship-label semantics and explicit deployment-profile selection, follows the user's language for visible copy, and reduces toolbar/dock prominence while retaining 44px mobile targets. Classic remains the default in both themes. No schema expansion, general auto-layout engine, browser dependency in the installed package, hosted service, telemetry, or new mobile product surface was added.
 
@@ -84,6 +87,8 @@ The previous viewer slice turned the counted two-kind Semantic Lens into a delib
 
 This roadmap was rewritten on 2026-04-16 after three independent design reviews, and updated the same day after a visual-quality validation experiment conclusively failed (see `experiments/v3-mermaid-validation/RESULT.md`).
 
+</details>
+
 ---
 
 ## JSON IR for coordinate stability
@@ -155,7 +160,7 @@ Architecture diagrams use a free-coordinate component graph. The typed modes use
 
 | Phase | Deliverable | Target |
 |---|---|---|
-| ~~**Validate**~~ | ~~5-Mermaid blind-rate experiment~~ | **DONE — FAILED** (see below) |
+| ~~**Validate**~~ | ~~Original 5-Mermaid blind-rate experiment; 3 licensed inputs retained~~ | **DONE — FAILED** (see below) |
 | **P0** | JSON IR + JSON Schema validator + `schema_version` enforcement | **DONE** — shipped for architecture, workflow, sequence, dataflow, and lifecycle, enforced at runtime via ajv |
 | **P0.5** | Pure-JS renderers take IR → HTML using the existing template. Coordinates required (no auto-layout). | **DONE** — architecture, workflow, sequence, data-flow, and lifecycle renderers ship in `archify/renderers/` |
 | ~~**P1**~~ | ~~Mermaid flowchart parser → IR~~ | **KILLED** — experiment showed auto-layout + CSS is not enough |
@@ -165,7 +170,7 @@ Architecture diagrams use a free-coordinate component graph. The typed modes use
 
 ### Validation experiment — FAILED (2026-04-16)
 
-The experiment tested whether auto-layout (dagre) + archify CSS (version B) looked meaningfully better than stock Mermaid (version A). 5 real-world Mermaid flowcharts were rendered in three versions (A/B/C), randomized, and blind-rated by the project owner.
+The experiment tested whether auto-layout (dagre) + archify CSS (version B) looked meaningfully better than stock Mermaid (version A). The original run rendered five real-world Mermaid flowcharts in three versions (A/B/C), randomized them, and had the project owner blind-rate them. On 2026-09-01, two inputs and their derivatives were removed because their repositories did not provide verifiable redistribution licenses; the current tree retains three inputs and nine screenshots, so the original five-input run is no longer fully reproducible from HEAD.
 
 **Result:** Owner rated C (archify hand-placed) as good-looking; A and B as both not good-looking. B was not meaningfully better than A. Both pass criteria failed. Full data in `experiments/v3-mermaid-validation/RESULT.md`.
 

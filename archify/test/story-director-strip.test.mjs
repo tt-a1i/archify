@@ -49,18 +49,18 @@ test('captions derive only authored edge labels and existing node facts', () => 
   assert.match(template, /responsibility: node \? \(node\.getAttribute\('data-node-sublabel'\) \|\| ''\) : ''/);
   assert.match(template, /context: node \? \(node\.getAttribute\('data-node-context'\) \|\| ''\) : ''/);
   assert.match(template, /step\.edgeLabels\.slice\(0, 3\)\.join\(' \+ '\)/);
-  assert.match(template, /Grouped transition · no direct authored link/);
-  assert.match(template, /if \(!facts\.length\) facts\.push\('Authored starting point'\)/);
-  assert.match(template, /authored direction: ' \+ step\.nodeLabel \+ ' → ' \+ step\.previousLabel/);
+  assert.match(template, /viewerText\('viewer\.guided\.caption\.grouped'\)/);
+  assert.match(template, /if \(!facts\.length\) facts\.push\(viewerText\('viewer\.guided\.caption\.starting'\)\)/);
+  assert.match(template, /viewerText\('viewer\.guided\.caption\.direction'/);
   assert.doesNotMatch(template, /inferred relationship|likely transition|calls service/);
 });
 
 test('route copy preserves start, forward, reverse, multiple, and grouped semantics', () => {
-  assert.match(template, /step\.relation === 'start'\) return step\.nodeLabel \+ ' · Starting point'/);
-  assert.match(template, /step\.relation === 'reverse'\) return step\.previousLabel \+ ' ← ' \+ step\.nodeLabel/);
-  assert.match(template, /step\.relation === 'multiple'\) return step\.previousLabel \+ ' ⇄ ' \+ step\.nodeLabel/);
-  assert.match(template, /step\.relation === 'group'\) return step\.previousLabel \+ ' · ' \+ step\.nodeLabel/);
-  assert.match(template, /return step\.previousLabel \+ ' → ' \+ step\.nodeLabel/);
+  assert.match(template, /viewerText\('viewer\.guided\.beat\.start'/);
+  assert.match(template, /viewerText\('viewer\.guided\.beat\.forward'/);
+  assert.match(template, /viewerText\('viewer\.guided\.beat\.reverse'/);
+  assert.match(template, /viewerText\('viewer\.guided\.beat\.multiple'/);
+  assert.match(template, /viewerText\('viewer\.guided\.beat\.group'/);
 });
 
 test('playback announcements and motion remain reader-controlled', () => {

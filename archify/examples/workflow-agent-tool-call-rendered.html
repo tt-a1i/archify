@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="archify 2.15.0">
+  <meta name="generator" content="archify 2.17.0-dev.1">
   <title>Agent Tool Call Workflow Diagram</title>
   <script>
     // Resolve the theme before first paint so light-preference users don't
@@ -589,8 +589,10 @@
       padding-bottom: calc(0.75rem + var(--archify-nav-reserve));
     }
     html[data-present="true"]:not([data-embed="true"]) .diagram-container > svg {
-      width: 100%;
+      flex: 1 1 auto;
       height: 100%;
+      min-height: 0;
+      width: 100%;
       min-width: 0;
     }
     html[data-present="true"]:not([data-embed="true"]) .cards { display: none; }
@@ -656,7 +658,7 @@
     }
 
     html[data-preset="signal-flow"] .header-row::after {
-      content: "SIGNAL FLOW";
+      content: attr(data-preset-badge-signal-flow);
       margin-left: auto;
       color: var(--frontend-stroke);
       border: 1px solid var(--frontend-stroke);
@@ -680,7 +682,7 @@
       animation: none;
     }
     html[data-preset="blueprint"] .header-row::after {
-      content: "BLUEPRINT / REV 01";
+      content: attr(data-preset-badge-blueprint);
       margin-left: auto;
       padding: 0.28rem 0.55rem;
       border-top: 1px solid var(--frontend-stroke);
@@ -709,7 +711,7 @@
       animation: none;
     }
     html[data-preset="editorial"] .header-row::after {
-      content: "EDITORIAL / FIELD NOTE";
+      content: attr(data-preset-badge-editorial);
       margin-left: auto;
       padding: 0.32rem 0 0.24rem;
       border-bottom: 2px solid var(--arrow-emphasis);
@@ -788,7 +790,7 @@
       border: 1px solid var(--panel-border);
       background: var(--panel);
       color: var(--arrow-emphasis);
-      content: "ARCHIFY / PLATE 04";
+      content: attr(data-preset-badge-editorial-plate);
       font-family: Georgia, 'Times New Roman', serif;
       font-size: 0.52rem;
       font-style: italic;
@@ -2885,6 +2887,11 @@
       body { padding-block: 1.25rem; }
       .header { margin-bottom: 0.875rem; }
       .cards { margin-top: 0.75rem; }
+      html[data-nav-stage-rail="true"] body { padding-block: 0.375rem; }
+      html[data-nav-stage-rail="true"] .header { margin-bottom: 0.5rem; }
+      html[data-nav-stage-rail="true"] .guided-views { margin-bottom: 0.375rem; }
+      html[data-nav-stage-rail="true"] .diagram-container[data-nav-stage-rail="true"] { padding-top: 0.5rem; }
+      html[data-nav-stage-rail="true"] .cards { margin-top: 0.375rem; }
     }
 
     html[data-preset="blueprint"] .card {
@@ -4943,7 +4950,10 @@
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <div class="header-row">
+      <div class="header-row"
+           data-preset-badge-signal-flow="SIGNAL FLOW"
+           data-preset-badge-blueprint="BLUEPRINT / REV 01"
+           data-preset-badge-editorial="EDITORIAL / FIELD NOTE">
         <div class="pulse-dot"></div>
         <h1>Agent Tool Call Workflow</h1>
       </div>
@@ -4951,6 +4961,7 @@
 
     <script id="archify-guided-views-data" type="application/json">[{"id":"happy-path","label":"Request to result","focus":["user","chat","planner","router","approval","tool","external","final"],"note":"Follow the successful request from user intent to the final reply."},{"id":"safety-gate","label":"Policy and recovery","focus":["router","approval","blocked","retry"],"note":"See where risky work stops, waits for consent, or returns for revision."},{"id":"evidence-loop","label":"Evidence and memory","focus":["external","store","trace"],"note":"Isolate the durable trace and context path behind the visible answer."}]</script>
 
+    <script id="archify-i18n-data" type="application/json">{"locale":"en","messages":{"viewer.kind.frontend":"Frontend","viewer.kind.backend":"Backend","viewer.kind.database":"Database","viewer.kind.cloud":"Cloud","viewer.kind.security":"Security","viewer.kind.messagebus":"Message bus","viewer.kind.external":"External","viewer.kind.neutral":"Neutral","viewer.kind.node":"Node","viewer.kind.start":"Start","viewer.kind.active":"Active","viewer.kind.waiting":"Waiting","viewer.kind.decision":"Decision","viewer.kind.success":"Success","viewer.kind.failure":"Failure","viewer.toolbar.actions":"Diagram actions","viewer.theme.toggle.title":"Toggle theme (T)","viewer.theme.toggle":"Toggle color theme","viewer.theme.dark":"Dark","viewer.theme.light":"Light","viewer.preset.choose.title":"Choose visual style (S cycles)","viewer.preset.choose":"Choose visual style","viewer.preset.style":"Style","viewer.preset.menu":"Visual style","viewer.preset.identity":"Visual identity","viewer.preset.cycles":"S cycles","viewer.preset.classic":"Classic","viewer.preset.classic.short":"Classic","viewer.preset.classic.hint":"Stable technical default","viewer.preset.flow":"Signal Flow","viewer.preset.flow.short":"Flow","viewer.preset.flow.hint":"Motion-forward presentation","viewer.preset.blueprint":"Blueprint","viewer.preset.blueprint.hint":"Engineering review","viewer.preset.editorial":"Editorial","viewer.preset.editorial.hint":"Publication and launch notes","viewer.preset.badge.signalFlow":"SIGNAL FLOW","viewer.preset.badge.blueprint":"BLUEPRINT / REV 01","viewer.preset.badge.editorial":"EDITORIAL / FIELD NOTE","viewer.preset.badge.editorialPlate":"ARCHIFY / PLATE 04","viewer.preset.current":"Visual style: {style}. Choose visual style","viewer.motion.live":"Live","viewer.motion.still":"Still","viewer.motion.pause":"Pause motion","viewer.motion.resume":"Resume motion","viewer.motion.reduced":"Motion paused by reduced-motion preference","viewer.motion.hidden":"Motion paused while this page is hidden","viewer.motion.yielding":"Pause motion; currently yielding to {owner}","viewer.motion.yielding.title":"Live preview enabled · yielding to {owner}","viewer.owner.story":"the guided story","viewer.owner.chapter":"the active chapter","viewer.owner.chapterPreview":"the chapter delta preview","viewer.owner.handoff":"the chapter handoff","viewer.owner.route":"Route Probe","viewer.owner.lens":"Semantic Lens","viewer.owner.relationship":"Relationship Preview","viewer.owner.intent":"Intent Trace","viewer.owner.focus":"semantic focus","viewer.owner.legend":"legend preview","viewer.owner.reader":"reader interaction","viewer.present.enter":"Enter presentation stage","viewer.present.enter.title":"Presentation stage (F)","viewer.present.exit":"Exit presentation stage","viewer.present.exit.title":"Exit presentation stage (F or Escape)","viewer.present.present":"Present","viewer.present.exit.label":"Exit","viewer.export.button":"Export","viewer.export.button.title":"Export diagram (E)","viewer.export.diagram":"Export diagram","viewer.export.menu":"Export","viewer.export.subtitle":"Portable, clean outputs","viewer.export.share":"Share","viewer.export.shareCard":"Share Card","viewer.export.routeShareCard":"Route Share Card","viewer.export.reachShareCard":"Reach Share Card","viewer.export.copyShareCard":"Copy Share Card","viewer.export.copyDiagram":"Copy diagram","viewer.export.clipboardPng":"PNG to clipboard","viewer.export.raster":"Raster images","viewer.export.image":"Image","viewer.export.lossless":"Lossless image","viewer.export.compact":"Compact image","viewer.export.modern":"Modern image","viewer.export.vectorMotion":"Vector and motion","viewer.export.vectorMotion.heading":"Vector \u0026 motion","viewer.export.editable":"Editable vector","viewer.export.motion6s":"6s motion","viewer.export.unsupported":"Not supported by this browser","viewer.export.clipboardUnsupported":"Clipboard image write not supported by this browser","viewer.export.clipboardUnsupported.period":"Clipboard image write not supported by this browser.","viewer.export.clipboardUnsupported.short":"Clipboard image write not supported in this browser.","viewer.export.motionUnavailable":"Motion capture unavailable in this browser","viewer.export.webmUnavailable":"WebM unavailable in this browser","viewer.export.failed":"Export failed: {message}","viewer.export.unknownVariant":"Unknown Share Card variant: {variant}","viewer.export.routeRequired":"Trace a route before exporting a Route Share Card","viewer.export.reachRequired":"Trace authored reach before exporting a Reach Share Card","viewer.export.unknown":"unknown","viewer.export.routeFailed":"Route Share Card export failed: {message}","viewer.export.reachFailed":"Reach Share Card export failed: {message}","viewer.export.copyFailed":"Copy failed: {message}","viewer.export.copiedPng":"Copied PNG to clipboard","viewer.export.copiedShare":"Copied Share Card","viewer.export.downloadedShare":"Downloaded Share Card","viewer.export.downloadedRoute":"Downloaded Route Share Card","viewer.export.downloadedReach":"Downloaded Reach Share Card","viewer.export.downloadedWebm":"Downloaded WebM","viewer.export.recording":"Recording 6 seconds of motion…","viewer.export.card.routeSummary.one":"Route: {source} → {target} · {count} directed hop","viewer.export.card.routeSummary.other":"Route: {source} → {target} · {count} directed hops","viewer.export.card.reachSummary":"Authored {direction} from {origin} · {nodes} · {links} · max {hops}","viewer.export.card.node.one":"{count} node","viewer.export.card.node.other":"{count} nodes","viewer.export.card.link.one":"{count} link","viewer.export.card.link.other":"{count} links","viewer.export.card.hop.one":"{count} hop","viewer.export.card.hop.other":"{count} hops","viewer.export.card.routeBadge":"ARCHIFY · ROUTE · {hops}","viewer.export.card.reachBadge":"ARCHIFY · {direction} REACH","viewer.export.card.defaultBadge":"ARCHIFY · {preset} · {theme}","viewer.export.direction.upstream":"Upstream","viewer.export.direction.downstream":"Downstream","viewer.export.error.canvasUnavailable":"Canvas unavailable for {label}","viewer.export.error.contextUnavailable":"2D canvas context unavailable for {label}","viewer.export.error.toBlobUnavailable":"canvas.toBlob unavailable for {label}","viewer.export.error.toBlobNull":"canvas.toBlob returned no data for {label}","viewer.export.error.variantsCombined":"Share Card variants cannot be combined","viewer.export.error.viewerState":"Share Card export could not remove temporary viewer state","viewer.export.error.routeState":"Route Card export could not preserve the resolved route safely","viewer.export.error.reachState":"Reach Card export could not preserve authored reach safely","viewer.export.error.webmRequirements":"WebM motion export requires a trace animation and browser MediaRecorder support","viewer.export.error.mediaRecorder":"MediaRecorder failed","viewer.export.error.emptyWebm":"MediaRecorder produced an empty WebM","viewer.export.error.webmBackground":"SVG background could not be loaded for WebM export","viewer.guided.region":"Guided diagram views","viewer.guided.previous":"Previous guided view","viewer.guided.previous.title":"Previous guided view ([)","viewer.guided.next":"Next guided view","viewer.guided.next.title":"Next guided view (])","viewer.guided.views":"Guided views","viewer.guided.explore":"Explore this system","viewer.guided.intro":"Step through curated paths without changing the source diagram.","viewer.guided.trail":"Story trail","viewer.guided.beat":"Beat","viewer.guided.nextBeat":"Next","viewer.guided.play":"Play guided story","viewer.guided.play.title":"Play guided story (P)","viewer.guided.pause":"Pause guided story","viewer.guided.pause.title":"Pause guided story (P)","viewer.guided.replay":"Replay guided story","viewer.guided.replay.title":"Replay guided story (P)","viewer.guided.playStory":"Play story","viewer.guided.pauseStory":"Pause","viewer.guided.replayStory":"Replay story","viewer.guided.motionUnavailable":"Story playback unavailable while motion is Still","viewer.guided.enableMotion":"Switch motion to Live to play the guided story","viewer.guided.selectBeatLink":"Select a Story Beat to copy its exact link","viewer.guided.copyMoment":"Copy moment","viewer.guided.momentCopied":"Moment link copied","viewer.guided.momentCopyFailed":"Could not copy story moment link","viewer.guided.copied":"Copied","viewer.guided.copyFailed":"Copy failed","viewer.guided.showAll":"Show all","viewer.guided.showAll.aria":"Show entire diagram","viewer.guided.chapters":"Story chapters","viewer.guided.storyTrail":"Story trail for {label}: {count} beats","viewer.guided.chapter.open":"Open chapter {index} of {total}: {label}, {count} stops","viewer.guided.chapter.current":"Current chapter {index} of {total}: {label}, {count} stops","viewer.guided.chapter.selectedNodes":"{count} selected nodes","viewer.guided.chapter.stops":"{count} stops","viewer.guided.chapter.stop.one":"{count} stop","viewer.guided.chapter.stop.other":"{count} stops","viewer.guided.chapter.current.title":"{label} — current chapter, {count} stops","viewer.guided.chapter.delta.expanded":"{stay} stay, {enter} enter, {leave} leave","viewer.guided.chapter.delta.aria":"Open chapter {index} of {total}: {label}. Chapter focus delta: {delta}","viewer.guided.chapter.delta.title":"{label} — {delta} chapter focus","viewer.guided.handoff":"{from} → {to} · via {label}","viewer.guided.share.chapter":"Chapter {index} / {total}","viewer.guided.share.initial":"Chapter 01 / 01","viewer.guided.share.default":"Guided chapter","viewer.guided.state.ready":"Ready","viewer.guided.state.playing":"Playing","viewer.guided.state.settled":"Settled","viewer.guided.state.paused":"Paused","viewer.guided.state.pinned":"Pinned","viewer.guided.state.still":"Still","viewer.guided.share.step":"Step {index} / {total} · {label}","viewer.guided.share.staticMoment":"{step} · Static moment","viewer.guided.share.complete":"{count} steps complete · {note}","viewer.guided.share.settled":"Path settled for reading.","viewer.guided.share.staticPath":"{count} steps · Static path","viewer.guided.share.ready":"{count} steps · Ready","viewer.guided.share.aria":"{state} chapter {index} of {total}: {label}. {beat}. {route}","viewer.guided.beat.start":"Beat {index} / {total} · {label} · starting point","viewer.guided.beat.forward":"Beat {index} / {total} · {from} → {to}","viewer.guided.beat.reverse":"Beat {index} / {total} · {from} → {to} · reverse authored link","viewer.guided.beat.multiple":"Beat {index} / {total} · {from} ⇄ {to} · {count} authored links","viewer.guided.beat.group":"Beat {index} / {total} · {from} · {to} · grouped · no direct link","viewer.guided.beat.aria.prefix":"Story beat {index} of {total}: {label}. ","viewer.guided.beat.aria.start":"Starting point.","viewer.guided.beat.aria.forward":"From {from} through one authored forward relationship.","viewer.guided.beat.aria.reverse":"From {from}; the authored relationship points from {to} to {from}.","viewer.guided.beat.aria.multiple":"From {from} through {count} authored relationships; shown without arbitrary motion.","viewer.guided.beat.aria.group":"Grouped from {from} with no direct authored relationship.","viewer.guided.caption.start":"Starting point","viewer.guided.caption.grouped":"Grouped transition · no direct authored link","viewer.guided.caption.more":" +{count} more","viewer.guided.caption.reverse":"Reverse authored relationship","viewer.guided.caption.relationships":"{count} authored relationships","viewer.guided.caption.relationship":"Authored relationship","viewer.guided.caption.direction":"authored direction: {from} → {to}","viewer.guided.caption.starting":"Authored starting point","viewer.guided.beatLink":"Copy link to current story moment: Beat {index} of {total}: {label}","viewer.guided.noStory":"This diagram has no authored guided story.","viewer.guide.eyebrow":"Diagram guide","viewer.guide.close":"Close diagram guide","viewer.guide.inspecting":"Inspecting compiled semantics","viewer.guide.actions":"Diagram exploration actions","viewer.guide.find":"Find any node","viewer.guide.find.hint":"Search labels, responsibilities, kinds, and stable IDs.","viewer.guide.route":"Trace a route","viewer.guide.route.aria":"Trace a directed route","viewer.guide.route.hint":"Ask how two semantic nodes connect in authored direction.","viewer.guide.map":"See the whole system","viewer.guide.map.hint":"Open Semantic Radar with a live viewport and stable nodes.","viewer.guide.lens":"Compare semantic kinds","viewer.guide.lens.hint":"Count roles, reveal their traffic, and compare direct authored links.","viewer.guide.story":"Play the guided story","viewer.guide.story.hint":"Walk the authored chapters and real relationships.","viewer.guide.present":"Enter Presentation Stage","viewer.guide.present.hint":"Give the live diagram the viewport without changing export.","viewer.guide.shortcuts":"Additional keyboard shortcuts","viewer.guide.shortcut.export":"Export","viewer.guide.shortcut.theme":"Theme","viewer.guide.shortcut.style":"Style","viewer.guide.shortcut.reset":"Reset","viewer.guide.shortcut.zoomIn":"Zoom in","viewer.guide.shortcut.zoomOut":"Zoom out","viewer.guide.shortcut.close":"Close","viewer.guide.facts":"{nodes} · {relationships} · {views}","viewer.guide.fact.node.one":"{count} semantic node","viewer.guide.fact.node.other":"{count} semantic nodes","viewer.guide.fact.relationship.one":"{count} relationship","viewer.guide.fact.relationship.other":"{count} relationships","viewer.guide.fact.view.one":"{count} guided view","viewer.guide.fact.view.other":"{count} guided views","viewer.guide.story.available.one":"Walk {count} authored chapter and its real relationships.","viewer.guide.story.available.other":"Walk {count} authored chapters and their real relationships.","viewer.guide.story.unavailable":"No authored guided story in this diagram.","viewer.guide.open":"Open diagram guide","viewer.guide.noStory":"This diagram has no authored guided story.","viewer.finder.title":"Find a node","viewer.finder.close":"Close node finder","viewer.finder.placeholder":"Search labels or IDs","viewer.finder.search":"Search diagram nodes","viewer.finder.results":"Diagram nodes","viewer.finder.empty":"No matching nodes","viewer.finder.result.focus":"Focus {label}","viewer.finder.result.routeStart":"Choose {label} as route start","viewer.finder.result.routeTarget":"Choose {label} as route destination, {links}","viewer.finder.status.empty":"No matching nodes","viewer.finder.status.count.one":"{count} matching node","viewer.finder.status.count.other":"{count} matching nodes","viewer.finder.noun.nodes":"nodes","viewer.finder.link.one":"{count} link","viewer.finder.link.other":"{count} links","viewer.finder.result.focus.one":"Focus {label}, {count} related connection","viewer.finder.result.focus.other":"Focus {label}, {count} related connections","viewer.finder.status.filtered":"{visible} of {available} {noun}","viewer.finder.status.all":"{available} {noun}","viewer.passport.eyebrow":"Semantic passport","viewer.passport.metadata":"Node metadata","viewer.passport.evidence":"Verified source evidence","viewer.passport.verified":"Verified source","viewer.passport.reach":"Authored reach","viewer.passport.reach.trace":"Trace authored reachability","viewer.passport.upstream":"Upstream","viewer.passport.downstream":"Downstream","viewer.passport.upstream.trace":"Trace upstream authored reachability","viewer.passport.downstream.trace":"Trace downstream authored reachability","viewer.passport.close":"Close semantic passport","viewer.passport.copy":"Copy link","viewer.passport.copy.focus":"Copy link to focused node","viewer.passport.relations":"Relations","viewer.passport.relations.show":"Show connected relationships","viewer.passport.relations.hide":"Hide connected relationships","viewer.passport.relations.list":"Connected relationships","viewer.passport.copyRelation":"Copy relation","viewer.passport.copyNode":"Copy node","viewer.passport.copyPinned":"Copy link to pinned relationship","viewer.passport.copySource":"Copy link to source node","viewer.passport.copy.focused.success":"Focused node link copied","viewer.passport.copy.pinned.success":"Pinned relationship link copied","viewer.passport.copy.focused.failed":"Could not copy focused node link","viewer.passport.copy.pinned.failed":"Could not copy pinned relationship link","viewer.passport.relationship.none":"No connected relationships","viewer.passport.relationship.count.one":"{count} relation","viewer.passport.relationship.count.other":"{count} relations","viewer.passport.relationship.show.one":"Show {count} connected relationship","viewer.passport.relationship.show.other":"Show {count} connected relationships","viewer.passport.relationship.summary":"{out} outgoing · {in} incoming{loops}","viewer.passport.relationship.loops":" · {count} loop","viewer.passport.relationship.explorer":"Direct relationship explorer","viewer.passport.relationship.help":"Use arrow keys to explore relationships. Press Enter or Space to pin details; Escape clears.","viewer.passport.relationship.loopsBack":"loops back","viewer.passport.relationship.connectsTo":"connects to","viewer.passport.relationship.connectsFrom":"connects from","viewer.passport.relationship.pinned":"Pinned relationship · {from} → {to} · {label}","viewer.passport.relationship.inspect":"Inspect relationship {index} of {total}: {from} to {to}, {label}. Press Enter for details.","viewer.passport.relationship.group.out":"Outgoing","viewer.passport.relationship.group.in":"Incoming","viewer.passport.relationship.group.loop":"Self loops","viewer.passport.relationship.row":"{group}: {relationship}, {neighbor}","viewer.passport.relationship.direction.out":"OUT →","viewer.passport.relationship.direction.in":"← IN","viewer.passport.relationship.direction.loop":"LOOP","viewer.passport.sourceCount.one":"{count} verified source reference","viewer.passport.sourceCount.other":"{count} verified source references","viewer.passport.sourceMarker":"SRC","viewer.passport.beacon.one":"{count} verified source; focus this node to inspect","viewer.passport.beacon.other":"{count} verified sources; focus this node to inspect","viewer.passport.repository.open":"Open verified repository revision {revision}","viewer.passport.source.open":"Open verified source {path} at revision {revision}","viewer.passport.source.openLink":"Open ↗","viewer.passport.reach.upstream.one":"Trace {count} upstream authored node","viewer.passport.reach.upstream.other":"Trace {count} upstream authored nodes","viewer.passport.reach.downstream.one":"Trace {count} downstream authored node","viewer.passport.reach.downstream.other":"Trace {count} downstream authored nodes","viewer.passport.reach.noUpstream":"No upstream authored nodes","viewer.passport.reach.noDownstream":"No downstream authored nodes","viewer.passport.reach.status":"{direction} · {nodes} nodes · {links} links · max {hops} hops","viewer.route.eyebrow":"Route probe","viewer.route.start":"Choose a start node","viewer.route.start.find":"Find start","viewer.route.start.find.aria":"Find a route start","viewer.route.copy":"Copy link","viewer.route.copy.aria":"Copy link to traced route","viewer.route.clear":"Clear","viewer.route.clear.aria":"Clear route probe","viewer.route.traced":"Traced route","viewer.route.pickTwo":"Pick two semantic nodes on the diagram","viewer.route.pickOne":"Pick a semantic node on the diagram","viewer.route.controls":"Route journey controls","viewer.route.previous":"Previous route position","viewer.route.play":"Play route journey","viewer.route.pause":"Pause route journey","viewer.route.replay":"Replay route journey","viewer.route.next":"Next route position","viewer.route.journey":"Journey","viewer.route.pause.label":"Pause","viewer.route.replay.label":"Replay","viewer.route.overview":"Overview","viewer.route.overview.aria":"Show complete route overview","viewer.route.instructions":"Choose the source, then the destination. Direction matters.","viewer.route.destination":"Choose a destination from {label}","viewer.route.destination.find":"Find target","viewer.route.destination.find.aria":"Find a reachable route destination","viewer.route.differentDestination":"Choose a different destination","viewer.route.distinct":"A route needs two distinct semantic nodes.","viewer.route.unreachable":"No directed route to {label}","viewer.route.unreachable.detail":"{target} is not reachable from {source}. Pick a highlighted destination.","viewer.route.start.instructions":"Select the source. The next step will reveal only directed destinations.","viewer.route.copy.success":"Traced route link copied","viewer.route.copy.failed":"Could not copy traced route link","viewer.route.position":"Route position {index} of {total}: {label}","viewer.route.step":"Step {index} of {total} · {phase} · {label}","viewer.route.motionRequired":"Automatic journey requires Live motion","viewer.route.trigger.clear":"Clear traced route","viewer.route.overview.status":"{nodes} · {hops} · shortest authored route","viewer.route.overview.node.one":"{count} node","viewer.route.overview.node.other":"{count} nodes","viewer.route.overview.hop.one":"{count} directed hop","viewer.route.overview.hop.other":"{count} directed hops","viewer.route.phase.playing":"Playing","viewer.route.phase.complete":"Complete","viewer.route.phase.inspecting":"Inspecting","viewer.route.destination.count.one":"{count} directed destination available. Pick a highlighted node.","viewer.route.destination.count.other":"{count} directed destinations available. Pick a highlighted node.","viewer.route.noOutgoing":"No outgoing route starts here. Clear and choose another source.","viewer.route.result.title":"{source} to {target}","viewer.route.finder.source.title":"Choose route start","viewer.route.finder.source.placeholder":"Search route sources","viewer.route.finder.source.empty":"No matching route sources","viewer.route.finder.source.results":"Nodes that can start a route","viewer.route.finder.source.noun":"route sources","viewer.route.finder.source.badge":"start","viewer.route.finder.target.title":"Destination from {label}","viewer.route.finder.target.placeholder":"Search reachable destinations","viewer.route.finder.target.empty":"No matching reachable destinations","viewer.route.finder.target.results":"Reachable route destinations","viewer.route.finder.target.noun":"reachable destinations","viewer.route.hop.one":"{count} hop","viewer.route.hop.other":"{count} hops","viewer.lens.eyebrow":"Semantic lens","viewer.lens.title":"Compare system roles","viewer.lens.close":"Close semantic lens","viewer.lens.instruction":"Choose up to two semantic kinds. One reveals its real traffic; two compare only direct authored relationships.","viewer.lens.kinds":"Semantic kinds","viewer.lens.choose":"Choose a kind to inspect its nodes and touching relationships.","viewer.lens.copy":"Copy link to semantic lens","viewer.lens.clear":"Clear semantic lens","viewer.lens.open":"Open semantic lens","viewer.lens.openActive":"Open active semantic lens","viewer.lens.legend":"Semantic legend","viewer.lens.legend.inspect.one":"Inspect {label}, {count} node","viewer.lens.legend.inspect.other":"Inspect {label}, {count} nodes","viewer.lens.kind.count.one":"{label}, {count} node","viewer.lens.kind.count.other":"{label}, {count} nodes","viewer.lens.compare.one":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationship","viewer.lens.compare.other":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationships","viewer.lens.single":"{nodes} · {relationships} · connected peers remain visible","viewer.lens.node.one":"{count} {label} node","viewer.lens.node.other":"{count} {label} nodes","viewer.lens.relationship.one":"{count} touching relationship","viewer.lens.relationship.other":"{count} touching relationships","viewer.radar.title":"Semantic radar","viewer.radar.building":"Building overview","viewer.radar.openFull":"Open full semantic radar","viewer.radar.open":"Open radar","viewer.radar.close":"Close semantic radar","viewer.radar.surface":"Diagram overview. Click a node to focus it, or use arrow keys to pan.","viewer.radar.click":"Click node","viewer.radar.drag":"Drag to pan","viewer.radar.space":"Semantic radar needs more MAP space.","viewer.radar.nodes":"Semantic diagram radar nodes","viewer.radar.focus":"Focus {label} from Semantic Radar","viewer.radar.status":"{count} nodes · {viewport}","viewer.radar.fullMap":"{count} nodes · full map","viewer.radar.compacted":"Radar compacted to avoid covering the Semantic Passport or MAP controls.","viewer.radar.cancelWaiting":"Cancel semantic radar waiting for more MAP space","viewer.radar.needsSpace":"Semantic radar needs more visible MAP space","viewer.radar.viewport.full":"full map","viewer.radar.viewport.width":"{percent}% width","viewer.radar.viewport.scale":"{percent}% viewport","viewer.nav.controls":"Diagram view controls","viewer.nav.route":"Trace a directed route","viewer.nav.route.title":"Trace route (R)","viewer.nav.route.short":"PATH","viewer.nav.radar":"Open semantic radar","viewer.nav.radar.title":"Semantic radar (M)","viewer.nav.radar.short":"MAP","viewer.nav.lens":"Open semantic lens","viewer.nav.lens.title":"Semantic lens (L)","viewer.nav.lens.short":"LENS","viewer.nav.find":"Find a node","viewer.nav.find.title":"Find a node (/)","viewer.nav.guide":"Open diagram guide","viewer.nav.guide.title":"Diagram guide (?)","viewer.nav.zoomOut":"Zoom out","viewer.nav.zoomOut.title":"Zoom out (-)","viewer.nav.reset":"Reset diagram view","viewer.nav.reset.title":"Reset view (0)","viewer.nav.read":"READ","viewer.nav.zoomIn":"Zoom in","viewer.nav.zoomIn.title":"Zoom in (+)","viewer.nav.camera":"{hint}. Reset diagram view","viewer.nav.camera.title":"{semantic}{hint} · reset view (0)","viewer.nav.camera.semantic":"Semantic camera active · ","viewer.nav.level.map":"MAP","viewer.nav.level.read":"READ","viewer.nav.level.full":"FULL","viewer.nav.level.auto":"AUTO","viewer.nav.detail.map":"Zoom in to reveal relationship labels and node context","viewer.nav.detail.read":"Zoom in again to reveal tags and annotations","viewer.nav.detail.full":"Full diagram detail","viewer.intent.summary":"{label}. {out} outgoing, {in} incoming{loops}. {total} connections. Press Enter for details.","viewer.intent.loops":", {count} self loop","viewer.common.copied":"Copied","viewer.common.copyFailed":"Copy failed","viewer.common.copyLink":"Copy link","viewer.common.clear":"Clear","viewer.common.close":"Close"}}</script>
     <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
       <button id="guided-view-prev" type="button" aria-label="Previous guided view" title="Previous guided view ([)">&#8592;</button>
       <div class="guided-view-copy">
@@ -4991,8 +5002,9 @@
     </div>
 
     <!-- Main Diagram -->
-    <div class="diagram-container" data-detail-level="read">
-      <svg viewBox="0 0 720 900" role="img" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="signal-flow" data-quality-profile="showcase">
+    <div class="diagram-container" data-detail-level="read"
+         data-preset-badge-editorial-plate="ARCHIFY / PLATE 04">
+      <svg viewBox="0 0 1096 684" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="signal-flow" data-quality-profile="showcase">
         <title id="archify-diagram-title">Agent Tool Call Workflow</title>
         <desc id="archify-diagram-description">A workflow diagram generated by Archify.</desc>
         <!-- Definitions -->
@@ -5018,237 +5030,263 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Swimlanes -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="1028" height="106" rx="10" class="c-lane" stroke-width="1"/>
         <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / User Interface</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="176" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / Agent Runtime</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="178" width="1028" height="114" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="200" class="t-dim" font-size="10" font-weight="600">02 / Agent Runtime</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-2" x="40" y="300" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="322" class="t-dim" font-size="10" font-weight="600">03 / Policy Boundary</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-2" x="40" y="312" width="1028" height="114" rx="10" class="c-lane" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="exception-lane" data-composition-frame-id="lane-2-exception" x="46" y="318" width="1016" height="102" rx="8" class="c-security-group" stroke-width="1"/>
+        <text x="54" y="334" class="t-security" font-size="10" font-weight="600">EX / Policy &amp; Recovery</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-3" x="40" y="424" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="exception-lane" data-composition-frame-id="lane-3-exception" x="46" y="430" width="628" height="92" rx="8" class="c-security-group" stroke-width="1"/>
-        <text x="54" y="446" class="t-security" font-size="10" font-weight="600">EX / Exception Handling</text>
-
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-4" x="40" y="548" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="570" class="t-dim" font-size="10" font-weight="600">05 / Tool Execution</text>
-
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-5" x="40" y="672" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="694" class="t-dim" font-size="10" font-weight="600">06 / Observability</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-3" x="40" y="446" width="1028" height="114" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="468" class="t-dim" font-size="10" font-weight="600">04 / Tool Execution &amp; Evidence</text>
 
         <!-- Phase headers -->
-        <line x1="42" y1="35" x2="266" y2="35" class="a-default" stroke-width="1.1"/>
-        <rect x="42" y="27" width="224" height="16" rx="4" class="c-mask"/>
-        <text x="154" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">Intake</text>
-        <line x1="254" y1="35" x2="476" y2="35" class="a-emphasis" stroke-width="1.1"/>
-        <rect x="254" y="27" width="222" height="16" rx="4" class="c-mask"/>
-        <text x="365" y="39" class="t-backend" font-size="8" font-weight="600" text-anchor="middle">Plan + route</text>
-        <line x1="454" y1="35" x2="671" y2="35" class="a-dashed" stroke-width="1.1"/>
-        <rect x="454" y="27" width="217" height="16" rx="4" class="c-mask"/>
-        <text x="562.5" y="39" class="t-messagebus" font-size="8" font-weight="600" text-anchor="middle">Execute + report</text>
+        <line x1="68" y1="35" x2="320" y2="35" class="a-default" stroke-width="1.1"/>
+        <rect x="68" y="27" width="252" height="16" rx="4" class="c-mask"/>
+        <text x="194" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">Intake</text>
+        <line x1="445.20000000000005" y1="35" x2="697.2" y2="35" class="a-emphasis" stroke-width="1.1"/>
+        <rect x="445.20000000000005" y="27" width="252.00000000000006" height="16" rx="4" class="c-mask"/>
+        <text x="571.2" y="39" class="t-backend" font-size="8" font-weight="600" text-anchor="middle">Plan + route</text>
+        <line x1="784" y1="35" x2="1036" y2="35" class="a-dashed" stroke-width="1.1"/>
+        <rect x="784" y="27" width="252" height="16" rx="4" class="c-mask"/>
+        <text x="910" y="39" class="t-messagebus" font-size="8" font-weight="600" text-anchor="middle">Execute + report</text>
 
         <!-- Workflow groups -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-0" x="250" y="214" width="230" height="58" rx="9" class="c-lane" stroke-width="1"/>
-        <text x="260" y="228" class="t-backend" font-size="7" font-weight="600">Planning loop</text>
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-1" x="450" y="586" width="225" height="58" rx="9" class="c-lane" stroke-width="1"/>
-        <text x="460" y="600" class="t-messagebus" font-size="7" font-weight="600">Tool work</text>
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-2" x="380" y="462" width="295" height="58" rx="9" class="c-security-group" stroke-width="1"/>
-        <text x="390" y="476" class="t-security" font-size="7" font-weight="600">Human or policy stop</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-0" x="421.2" y="216" width="300.00000000000006" height="72" rx="9" class="c-lane" stroke-width="1"/>
+        <text x="431.2" y="214" class="t-backend" font-size="7" font-weight="600">Planning loop</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-1" x="581.2" y="350" width="478.79999999999995" height="72" rx="9" class="c-security-group" stroke-width="1"/>
+        <text x="591.2" y="348" class="t-security" font-size="7" font-weight="600">Human or policy stop</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-2" x="204" y="484" width="357.20000000000005" height="72" rx="9" class="c-lane" stroke-width="1"/>
+        <text x="214" y="482" class="t-messagebus" font-size="7" font-weight="600">Evidence path</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-3" x="760" y="484" width="300" height="72" rx="9" class="c-lane" stroke-width="1"/>
+        <text x="770" y="482" class="t-messagebus" font-size="7" font-weight="600">Tool work</text>
 
         <!-- Edge paths -->
-        <path data-edge-from="user" data-edge-to="chat" data-edge-key="0" data-edge-id="request-chat" data-composition-points="134,119;174,119" d="M 134 119 L 174 119" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="chat" data-edge-to="planner" data-edge-label="plan" data-edge-key="1" data-edge-id="plan-request" data-composition-points="220,145;220,166;300,166;300,209" d="M 220 145 L 220 166 L 300 166 L 300 209" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="planner" data-edge-to="router" data-edge-key="2" data-edge-id="planner-route" data-composition-points="346,243;384,243" d="M 346 243 L 384 243" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="router" data-edge-to="approval" data-edge-label="needs approval?" data-edge-key="3" data-edge-id="approval-check" data-composition-points="430,269;430,290;430,290;430,333" d="M 430 269 L 430 290 L 430 290 L 430 333" class="a-security" data-animate="edge" style="--step:3" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="approval" data-edge-to="tool" data-edge-key="4" data-edge-id="approved-tool" data-composition-points="384,367;356,367;356,615;454,615" d="M 384 367 L 356 367 L 356 615 L 454 615" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="approval" data-edge-to="blocked" data-edge-label="denied" data-edge-key="5" data-edge-id="approval-denied" data-composition-points="430,401;430,414;500,414;500,465" d="M 430 401 L 430 414 L 500 414 L 500 465" class="a-security" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="blocked" data-edge-to="retry" data-edge-key="6" data-edge-id="retry-request" data-composition-points="546,491;579,491" d="M 546 491 L 579 491" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="tool" data-edge-to="external" data-edge-key="7" data-edge-id="tool-external-call" data-composition-points="546,615;579,615" d="M 546 615 L 579 615" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="external" data-edge-to="final" data-edge-key="8" data-edge-id="external-reply" data-composition-points="671,615;692,615;692,119;671,119" d="M 671 615 L 692 615 L 692 119 L 671 119" class="a-emphasis" data-animate="edge" style="--step:6" stroke-width="1.2" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="external" data-edge-to="trace" data-edge-label="record result" data-edge-key="9" data-edge-id="record-result" data-composition-points="625,641;625,797;500,797;500,765" d="M 625 641 L 625 797 L 500 797 L 500 765" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="store" data-edge-to="trace" data-edge-label="trace + memory" data-edge-key="10" data-edge-id="write-trace-memory" data-composition-points="266,739;454,739" d="M 266 739 L 454 739" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="router" data-edge-to="approval" data-edge-label="needs approval?" data-edge-key="0" data-edge-id="approval-check" data-composition-points="651.2,279;651.2,302;569.2,302;569.2,387;585.2,387" d="M 651.2 279 L 651.2 302 L 569.2 302 L 569.2 387 L 585.2 387" class="a-security" data-animate="edge" style="--step:3" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="approval" data-edge-to="blocked" data-edge-label="denied" data-edge-key="1" data-edge-id="approval-denied" data-composition-points="651.2,421;651.2,442;830,442;830,413" d="M 651.2 421 L 651.2 442 L 830 442 L 830 413" class="a-security" data-animate="edge" style="--step:9" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="approval" data-edge-to="tool" data-edge-key="2" data-edge-id="approved-tool" data-composition-points="651.2,421;651.2,521;764,521" d="M 651.2 421 L 651.2 521 L 764 521" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="external" data-edge-to="final" data-edge-key="3" data-edge-id="external-reply" data-composition-points="1056,521;1080,521;1080,120;1056,120" d="M 1056 521 L 1080 521 L 1080 120 L 1056 120" class="a-emphasis" data-animate="edge" style="--step:6" stroke-width="1.2" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="chat" data-edge-to="planner" data-edge-label="plan" data-edge-key="4" data-edge-id="plan-request" data-composition-points="274,146;274,253;425.2,253" d="M 274 146 L 274 253 L 425.2 253" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="planner" data-edge-to="router" data-edge-key="5" data-edge-id="planner-route" data-composition-points="557.2,253;585.2,253" d="M 557.2 253 L 585.2 253" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="external" data-edge-to="trace" data-edge-label="record result" data-edge-key="6" data-edge-id="record-result" data-composition-points="990,547;990,579;491.2,579;491.2,547" d="M 990 547 L 990 579 L 491.2 579 L 491.2 547" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="user" data-edge-to="chat" data-edge-key="7" data-edge-id="request-chat" data-composition-points="180,120;208,120" d="M 180 120 L 208 120" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="blocked" data-edge-to="retry" data-edge-key="8" data-edge-id="retry-request" data-composition-points="896,387;924,387" d="M 896 387 L 924 387" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="tool" data-edge-to="external" data-edge-key="9" data-edge-id="tool-external-call" data-composition-points="896,521;924,521" d="M 896 521 L 924 521" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="store" data-edge-to="trace" data-edge-label="trace + memory" data-edge-key="10" data-edge-id="write-trace-memory" data-composition-points="340,521;425.2,521" d="M 340 521 L 425.2 521" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Nodes -->
         <g id="node-user" data-node-id="user" data-node-label="User" tabindex="0" role="button" aria-label="Focus User, asks for work, User Interface › Intake" aria-pressed="false" data-node-kind="external" data-node-sublabel="asks for work" data-node-context="User Interface › Intake">
           <title>User · asks for work · User Interface › Intake</title>
-          <rect x="42" y="93" width="92" height="52" rx="6" class="c-mask"/>
-          <rect x="42" y="93" width="92" height="52" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(48 99) scale(0.6875)">
+          <rect x="48" y="94" width="132" height="52" rx="6" class="c-mask"/>
+          <rect x="48" y="94" width="132" height="52" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(54 100) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label data-detail-anchor x="88" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">User</text>
-          <text data-detail="context" x="88" y="131" class="t-muted" font-size="8" text-anchor="middle">asks for work</text>
+          <text data-node-label="" data-detail-anchor="" x="114" y="115" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">User</text>
+          <text data-detail="context" x="114" y="132" class="t-muted" font-size="8" text-anchor="middle">asks for work</text>
         </g>
 
         <g id="node-chat" data-node-id="chat" data-node-label="Chat Surface" tabindex="0" role="button" aria-label="Focus Chat Surface, thread + files, User Interface › Intake" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="thread + files" data-node-context="User Interface › Intake">
           <title>Chat Surface · thread + files · User Interface › Intake</title>
-          <rect x="174" y="93" width="92" height="52" rx="6" class="c-mask"/>
-          <rect x="174" y="93" width="92" height="52" rx="6" class="c-frontend" data-animate="node" style="--step:1" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(180 99) scale(0.6875)">
+          <rect x="208" y="94" width="132" height="52" rx="6" class="c-mask"/>
+          <rect x="208" y="94" width="132" height="52" rx="6" class="c-frontend" data-animate="node" style="--step:1" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(214 100) scale(0.6875)">
             <rect x="2" y="3" width="12" height="10" rx="2"/>
             <path d="M2 6.5h12"/>
             <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
-          <text data-node-label data-detail-anchor x="220" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Chat Surface</text>
-          <text data-detail="context" x="220" y="131" class="t-muted" font-size="8" text-anchor="middle">thread + files</text>
+          <text data-node-label="" data-detail-anchor="" x="274" y="115" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Chat Surface</text>
+          <text data-detail="context" x="274" y="132" class="t-muted" font-size="8" text-anchor="middle">thread + files</text>
         </g>
 
         <g id="node-final" data-node-id="final" data-node-label="Final Reply" tabindex="0" role="button" aria-label="Focus Final Reply, answer + changes, User Interface › Execute + report" aria-pressed="false" data-node-kind="backend" data-node-sublabel="answer + changes" data-node-context="User Interface › Execute + report">
           <title>Final Reply · answer + changes · User Interface › Execute + report</title>
-          <rect x="579" y="93" width="92" height="52" rx="6" class="c-mask"/>
-          <rect x="579" y="93" width="92" height="52" rx="6" class="c-backend" data-animate="node" style="--step:7" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(585 99) scale(0.6875)">
+          <rect x="924" y="94" width="132" height="52" rx="6" class="c-mask"/>
+          <rect x="924" y="94" width="132" height="52" rx="6" class="c-backend" data-animate="node" style="--step:7" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(930 100) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label data-detail-anchor x="625" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Final Reply</text>
-          <text data-detail="context" x="625" y="131" class="t-muted" font-size="8" text-anchor="middle">answer + changes</text>
+          <text data-node-label="" data-detail-anchor="" x="990" y="115" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Final Reply</text>
+          <text data-detail="context" x="990" y="132" class="t-muted" font-size="8" text-anchor="middle">answer + changes</text>
         </g>
 
         <g id="node-planner" data-node-id="planner" data-node-label="Agent Planner" tabindex="0" role="button" aria-label="Focus Agent Planner, plan next step, Agent Runtime › Planning loop › Plan + route" aria-pressed="false" data-node-kind="backend" data-node-sublabel="plan next step" data-node-tag="context aware" data-node-context="Agent Runtime › Planning loop › Plan + route">
           <title>Agent Planner · plan next step · Agent Runtime › Planning loop › Plan + route · context aware</title>
-          <rect x="254" y="209" width="92" height="68" rx="6" class="c-mask"/>
-          <rect x="254" y="209" width="92" height="68" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(260 215) scale(0.6875)">
+          <rect x="425.2" y="219" width="132" height="68" rx="6" class="c-mask"/>
+          <rect x="425.2" y="219" width="132" height="68" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(431.2 225) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label data-detail-anchor x="300" y="230" class="t-primary" font-size="10.7" font-weight="600" text-anchor="middle">Agent Planner</text>
-          <text data-detail="context" x="300" y="247" class="t-muted" font-size="8" text-anchor="middle">plan next step</text>
-        <text data-detail="fine" x="300" y="265" class="t-backend" font-size="7" text-anchor="middle">context aware</text>
+          <text data-node-label="" data-detail-anchor="" x="491.2" y="240" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Agent Planner</text>
+          <text data-detail="context" x="491.2" y="257" class="t-muted" font-size="8" text-anchor="middle">plan next step</text>
+        <text data-detail="fine" x="491.2" y="275" class="t-backend" font-size="7" text-anchor="middle">context aware</text>
         </g>
 
         <g id="node-router" data-node-id="router" data-node-label="Tool Router" tabindex="0" role="button" aria-label="Focus Tool Router, choose capability, Agent Runtime › Planning loop › Plan + route" aria-pressed="false" data-node-kind="backend" data-node-sublabel="choose capability" data-node-context="Agent Runtime › Planning loop › Plan + route">
           <title>Tool Router · choose capability · Agent Runtime › Planning loop › Plan + route</title>
-          <rect x="384" y="217" width="92" height="52" rx="6" class="c-mask"/>
-          <rect x="384" y="217" width="92" height="52" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(390 223) scale(0.6875)">
+          <rect x="585.2" y="227" width="132" height="52" rx="6" class="c-mask"/>
+          <rect x="585.2" y="227" width="132" height="52" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(591.2 233) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label data-detail-anchor x="430" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Tool Router</text>
-          <text data-detail="context" x="430" y="255" class="t-muted" font-size="8" text-anchor="middle">choose capability</text>
+          <text data-node-label="" data-detail-anchor="" x="651.2" y="248" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Tool Router</text>
+          <text data-detail="context" x="651.2" y="265" class="t-muted" font-size="8" text-anchor="middle">choose capability</text>
         </g>
 
-        <g id="node-approval" data-node-id="approval" data-node-label="Approval Gate" tabindex="0" role="button" aria-label="Focus Approval Gate, scope + consent, Policy Boundary › Plan + route" aria-pressed="false" data-node-kind="security" data-node-sublabel="scope + consent" data-node-tag="block risky ops" data-node-context="Policy Boundary › Plan + route">
-          <title>Approval Gate · scope + consent · Policy Boundary › Plan + route · block risky ops</title>
-          <rect x="384" y="333" width="92" height="68" rx="6" class="c-mask"/>
-          <rect x="384" y="333" width="92" height="68" rx="6" class="c-security" data-animate="node" style="--step:4" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(390 339) scale(0.6875)">
+        <g id="node-approval" data-node-id="approval" data-node-label="Approval Gate" tabindex="0" role="button" aria-label="Focus Approval Gate, scope + consent, Policy &amp; Recovery › Human or policy stop › Plan + route" aria-pressed="false" data-node-kind="security" data-node-sublabel="scope + consent" data-node-tag="block risky ops" data-node-context="Policy &amp; Recovery › Human or policy stop › Plan + route">
+          <title>Approval Gate · scope + consent · Policy &amp; Recovery › Human or policy stop › Plan + route · block risky ops</title>
+          <rect x="585.2" y="353" width="132" height="68" rx="6" class="c-mask"/>
+          <rect x="585.2" y="353" width="132" height="68" rx="6" class="c-security" data-animate="node" style="--step:4" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(591.2 359) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label data-detail-anchor x="430" y="354" class="t-primary" font-size="10.7" font-weight="600" text-anchor="middle">Approval Gate</text>
-          <text data-detail="context" x="430" y="371" class="t-muted" font-size="8" text-anchor="middle">scope + consent</text>
-        <text data-detail="fine" x="430" y="389" class="t-security" font-size="7" text-anchor="middle">block risky ops</text>
+          <text data-node-label="" data-detail-anchor="" x="651.2" y="374" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Approval Gate</text>
+          <text data-detail="context" x="651.2" y="391" class="t-muted" font-size="8" text-anchor="middle">scope + consent</text>
+        <text data-detail="fine" x="651.2" y="409" class="t-security" font-size="7" text-anchor="middle">block risky ops</text>
         </g>
 
-        <g id="node-blocked" data-node-id="blocked" data-node-label="Blocked" tabindex="0" role="button" aria-label="Focus Blocked, wait or reject, Exception Handling › Human or policy stop › Execute + report" aria-pressed="false" data-node-kind="security" data-node-sublabel="wait or reject" data-node-context="Exception Handling › Human or policy stop › Execute + report">
-          <title>Blocked · wait or reject · Exception Handling › Human or policy stop › Execute + report</title>
-          <rect x="454" y="465" width="92" height="52" rx="6" class="c-mask"/>
-          <rect x="454" y="465" width="92" height="52" rx="6" class="c-security" data-animate="node" style="--step:12" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(460 471) scale(0.6875)">
+        <g id="node-blocked" data-node-id="blocked" data-node-label="Blocked" tabindex="0" role="button" aria-label="Focus Blocked, wait or reject, Policy &amp; Recovery › Human or policy stop › Execute + report" aria-pressed="false" data-node-kind="security" data-node-sublabel="wait or reject" data-node-context="Policy &amp; Recovery › Human or policy stop › Execute + report">
+          <title>Blocked · wait or reject · Policy &amp; Recovery › Human or policy stop › Execute + report</title>
+          <rect x="764" y="361" width="132" height="52" rx="6" class="c-mask"/>
+          <rect x="764" y="361" width="132" height="52" rx="6" class="c-security" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(770 367) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label data-detail-anchor x="500" y="486" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Blocked</text>
-          <text data-detail="context" x="500" y="503" class="t-muted" font-size="8" text-anchor="middle">wait or reject</text>
+          <text data-node-label="" data-detail-anchor="" x="830" y="382" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Blocked</text>
+          <text data-detail="context" x="830" y="399" class="t-muted" font-size="8" text-anchor="middle">wait or reject</text>
         </g>
 
-        <g id="node-retry" data-node-id="retry" data-node-label="Retry Path" tabindex="0" role="button" aria-label="Focus Retry Path, revise request, Exception Handling › Human or policy stop › Execute + report" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="revise request" data-node-context="Exception Handling › Human or policy stop › Execute + report">
-          <title>Retry Path · revise request · Exception Handling › Human or policy stop › Execute + report</title>
-          <rect x="579" y="465" width="92" height="52" rx="6" class="c-mask"/>
-          <rect x="579" y="465" width="92" height="52" rx="6" class="c-messagebus" data-animate="node" style="--step:12" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(585 471) scale(0.6875)">
+        <g id="node-retry" data-node-id="retry" data-node-label="Retry Path" tabindex="0" role="button" aria-label="Focus Retry Path, revise request, Policy &amp; Recovery › Human or policy stop › Execute + report" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="revise request" data-node-context="Policy &amp; Recovery › Human or policy stop › Execute + report">
+          <title>Retry Path · revise request · Policy &amp; Recovery › Human or policy stop › Execute + report</title>
+          <rect x="924" y="361" width="132" height="52" rx="6" class="c-mask"/>
+          <rect x="924" y="361" width="132" height="52" rx="6" class="c-messagebus" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(930 367) scale(0.6875)">
             <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
             <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
             <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-node-label data-detail-anchor x="625" y="486" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Retry Path</text>
-          <text data-detail="context" x="625" y="503" class="t-muted" font-size="8" text-anchor="middle">revise request</text>
+          <text data-node-label="" data-detail-anchor="" x="990" y="382" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Retry Path</text>
+          <text data-detail="context" x="990" y="399" class="t-muted" font-size="8" text-anchor="middle">revise request</text>
         </g>
 
-        <g id="node-tool" data-node-id="tool" data-node-label="Tool Call" tabindex="0" role="button" aria-label="Focus Tool Call, shell / browser / MCP, Tool Execution › Tool work › Execute + report" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="shell / browser / MCP" data-node-tag="structured result" data-node-context="Tool Execution › Tool work › Execute + report">
-          <title>Tool Call · shell / browser / MCP · Tool Execution › Tool work › Execute + report · structured result</title>
-          <rect x="454" y="581" width="92" height="68" rx="6" class="c-mask"/>
-          <rect x="454" y="581" width="92" height="68" rx="6" class="c-messagebus" data-animate="node" style="--step:5" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(460 587) scale(0.6875)">
+        <g id="node-store" data-node-id="store" data-node-label="Context Store" tabindex="0" role="button" aria-label="Focus Context Store, repo + memory, Tool Execution &amp; Evidence › Evidence path › Intake" aria-pressed="false" data-node-kind="database" data-node-sublabel="repo + memory" data-node-context="Tool Execution &amp; Evidence › Evidence path › Intake">
+          <title>Context Store · repo + memory · Tool Execution &amp; Evidence › Evidence path › Intake</title>
+          <rect x="208" y="495" width="132" height="52" rx="6" class="c-mask"/>
+          <rect x="208" y="495" width="132" height="52" rx="6" class="c-database" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(214 501) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="274" y="516" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Context Store</text>
+          <text data-detail="context" x="274" y="533" class="t-muted" font-size="8" text-anchor="middle">repo + memory</text>
+        </g>
+
+        <g id="node-trace" data-node-id="trace" data-node-label="Trace Log" tabindex="0" role="button" aria-label="Focus Trace Log, events + output, Tool Execution &amp; Evidence › Evidence path › Plan + route" aria-pressed="false" data-node-kind="database" data-node-sublabel="events + output" data-node-context="Tool Execution &amp; Evidence › Evidence path › Plan + route">
+          <title>Trace Log · events + output · Tool Execution &amp; Evidence › Evidence path › Plan + route</title>
+          <rect x="425.2" y="495" width="132" height="52" rx="6" class="c-mask"/>
+          <rect x="425.2" y="495" width="132" height="52" rx="6" class="c-database" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(431.2 501) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="491.2" y="516" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Trace Log</text>
+          <text data-detail="context" x="491.2" y="533" class="t-muted" font-size="8" text-anchor="middle">events + output</text>
+        </g>
+
+        <g id="node-tool" data-node-id="tool" data-node-label="Tool Call" tabindex="0" role="button" aria-label="Focus Tool Call, shell / browser / MCP, Tool Execution &amp; Evidence › Tool work › Execute + report" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="shell / browser / MCP" data-node-tag="structured result" data-node-context="Tool Execution &amp; Evidence › Tool work › Execute + report">
+          <title>Tool Call · shell / browser / MCP · Tool Execution &amp; Evidence › Tool work › Execute + report · structured result</title>
+          <rect x="764" y="487" width="132" height="68" rx="6" class="c-mask"/>
+          <rect x="764" y="487" width="132" height="68" rx="6" class="c-messagebus" data-animate="node" style="--step:5" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(770 493) scale(0.6875)">
             <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
             <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
             <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-node-label data-detail-anchor x="500" y="602" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Tool Call</text>
-          <text data-detail="context" x="500" y="619" class="t-muted" font-size="6.6" text-anchor="middle">shell / browser / MCP</text>
-        <text data-detail="fine" x="500" y="637" class="t-messagebus" font-size="7" text-anchor="middle">structured result</text>
+          <text data-node-label="" data-detail-anchor="" x="830" y="508" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Tool Call</text>
+          <text data-detail="context" x="830" y="525" class="t-muted" font-size="8" text-anchor="middle">shell / browser / MCP</text>
+        <text data-detail="fine" x="830" y="543" class="t-messagebus" font-size="7" text-anchor="middle">structured result</text>
         </g>
 
-        <g id="node-external" data-node-id="external" data-node-label="External API" tabindex="0" role="button" aria-label="Focus External API, network service, Tool Execution › Tool work › Execute + report" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="network service" data-node-context="Tool Execution › Tool work › Execute + report">
-          <title>External API · network service · Tool Execution › Tool work › Execute + report</title>
-          <rect x="579" y="589" width="92" height="52" rx="6" class="c-mask"/>
-          <rect x="579" y="589" width="92" height="52" rx="6" class="c-cloud" data-animate="node" style="--step:6" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(585 595) scale(0.6875)">
+        <g id="node-external" data-node-id="external" data-node-label="External API" tabindex="0" role="button" aria-label="Focus External API, network service, Tool Execution &amp; Evidence › Tool work › Execute + report" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="network service" data-node-context="Tool Execution &amp; Evidence › Tool work › Execute + report">
+          <title>External API · network service · Tool Execution &amp; Evidence › Tool work › Execute + report</title>
+          <rect x="924" y="495" width="132" height="52" rx="6" class="c-mask"/>
+          <rect x="924" y="495" width="132" height="52" rx="6" class="c-cloud" data-animate="node" style="--step:6" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(930 501) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label data-detail-anchor x="625" y="610" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">External API</text>
-          <text data-detail="context" x="625" y="627" class="t-muted" font-size="8" text-anchor="middle">network service</text>
-        </g>
-
-        <g id="node-store" data-node-id="store" data-node-label="Context Store" tabindex="0" role="button" aria-label="Focus Context Store, repo + memory, Observability › Intake" aria-pressed="false" data-node-kind="database" data-node-sublabel="repo + memory" data-node-context="Observability › Intake">
-          <title>Context Store · repo + memory · Observability › Intake</title>
-          <rect x="174" y="713" width="92" height="52" rx="6" class="c-mask"/>
-          <rect x="174" y="713" width="92" height="52" rx="6" class="c-database" data-animate="node" style="--step:12" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(180 719) scale(0.6875)">
-            <ellipse cx="8" cy="4" rx="5" ry="2"/>
-            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
-          </g>
-          <text data-node-label data-detail-anchor x="220" y="734" class="t-primary" font-size="10.7" font-weight="600" text-anchor="middle">Context Store</text>
-          <text data-detail="context" x="220" y="751" class="t-muted" font-size="8" text-anchor="middle">repo + memory</text>
-        </g>
-
-        <g id="node-trace" data-node-id="trace" data-node-label="Trace Log" tabindex="0" role="button" aria-label="Focus Trace Log, events + output, Observability › Execute + report" aria-pressed="false" data-node-kind="database" data-node-sublabel="events + output" data-node-context="Observability › Execute + report">
-          <title>Trace Log · events + output · Observability › Execute + report</title>
-          <rect x="454" y="713" width="92" height="52" rx="6" class="c-mask"/>
-          <rect x="454" y="713" width="92" height="52" rx="6" class="c-database" data-animate="node" style="--step:12" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(460 719) scale(0.6875)">
-            <ellipse cx="8" cy="4" rx="5" ry="2"/>
-            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
-          </g>
-          <text data-node-label data-detail-anchor x="500" y="734" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Trace Log</text>
-          <text data-detail="context" x="500" y="751" class="t-muted" font-size="8" text-anchor="middle">events + output</text>
+          <text data-node-label="" data-detail-anchor="" x="990" y="516" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">External API</text>
+          <text data-detail="context" x="990" y="533" class="t-muted" font-size="8" text-anchor="middle">network service</text>
         </g>
 
         <!-- Edge labels -->
-
-        <g data-detail="context" data-edge-from="chat" data-edge-to="planner" data-edge-label="plan" data-edge-key="1" data-edge-id="plan-request">
-          <rect x="245" y="146" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="260" y="156" class="t-backend" font-size="8" text-anchor="middle">plan</text>
+        <g data-detail="context" data-edge-from="router" data-edge-to="approval" data-edge-label="needs approval?" data-edge-key="0" data-edge-id="approval-check">
+          <rect x="569.2" y="282" width="82" height="14" rx="3" class="c-mask"/>
+          <text x="610.2" y="292" class="t-security" font-size="8" text-anchor="middle">needs approval?</text>
         </g>
-
-        <g data-detail="context" data-edge-from="router" data-edge-to="approval" data-edge-label="needs approval?" data-edge-key="3" data-edge-id="approval-check">
-          <rect x="423" y="277.5" width="82" height="14" rx="3" class="c-mask"/>
-          <text x="464" y="287.5" class="t-security" font-size="8" text-anchor="middle">needs approval?</text>
-        </g>
-
-        <g data-detail="context" data-edge-from="approval" data-edge-to="blocked" data-edge-label="denied" data-edge-key="5" data-edge-id="approval-denied">
-          <rect x="445.6" y="406" width="38.8" height="14" rx="3" class="c-mask"/>
-          <text x="465" y="416" class="t-security" font-size="8" text-anchor="middle">denied</text>
+        <g data-detail="context" data-edge-from="approval" data-edge-to="blocked" data-edge-label="denied" data-edge-key="1" data-edge-id="approval-denied">
+          <rect x="721.2" y="422" width="38.8" height="14" rx="3" class="c-mask"/>
+          <text x="740.6" y="432" class="t-security" font-size="8" text-anchor="middle">denied</text>
         </g>
 
 
-
-        <g data-detail="context" data-edge-from="external" data-edge-to="trace" data-edge-label="record result" data-edge-key="9" data-edge-id="record-result">
-          <rect x="526.3" y="777" width="72.4" height="14" rx="3" class="c-mask"/>
-          <text x="562.5" y="787" class="t-database" font-size="8" text-anchor="middle">record result</text>
+        <g data-detail="context" data-edge-from="chat" data-edge-to="planner" data-edge-label="plan" data-edge-key="4" data-edge-id="plan-request">
+          <rect x="334.6" y="233" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="349.6" y="243" class="t-backend" font-size="8" text-anchor="middle">plan</text>
         </g>
+
+        <g data-detail="context" data-edge-from="external" data-edge-to="trace" data-edge-label="record result" data-edge-key="6" data-edge-id="record-result">
+          <rect x="704.4" y="559" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="740.6" y="569" class="t-database" font-size="8" text-anchor="middle">record result</text>
+        </g>
+
+
+
         <g data-detail="context" data-edge-from="store" data-edge-to="trace" data-edge-label="trace + memory" data-edge-key="10" data-edge-id="write-trace-memory">
-          <rect x="326.4" y="725" width="77.2" height="14" rx="3" class="c-mask"/>
-          <text x="365" y="735" class="t-database" font-size="8" text-anchor="middle">trace + memory</text>
+          <rect x="344" y="501" width="77.2" height="14" rx="3" class="c-mask"/>
+          <text x="382.6" y="511" class="t-database" font-size="8" text-anchor="middle">trace + memory</text>
         </g>
 
         <!-- Legend -->
-
+        <g data-legend="" data-legend-bridge="">
+          <text x="20" y="584" class="t-primary" font-size="12" font-weight="650">Legend</text>
+          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="User UI" data-legend-x="20" data-legend-baseline="604" data-legend-width="74">
+            <rect x="20" y="596" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
+            <text x="42" y="604" class="t-muted" font-size="7.5" font-weight="500">User UI</text>
+          </g>
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Agent logic" data-legend-x="101" data-legend-baseline="604" data-legend-width="91">
+            <rect x="101" y="596" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+            <text x="123" y="604" class="t-muted" font-size="7.5" font-weight="500">Agent logic</text>
+          </g>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Policy" data-legend-x="199" data-legend-baseline="604" data-legend-width="70">
+            <rect x="199" y="596" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+            <text x="221" y="604" class="t-muted" font-size="7.5" font-weight="500">Policy</text>
+          </g>
+          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="Tool action" data-legend-x="276" data-legend-baseline="604" data-legend-width="91">
+            <rect x="276" y="596" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+            <text x="298" y="604" class="t-muted" font-size="7.5" font-weight="500">Tool action</text>
+          </g>
+          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="Context / trace" data-legend-x="374" data-legend-baseline="604" data-legend-width="109">
+            <rect x="374" y="596" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+            <text x="396" y="604" class="t-muted" font-size="7.5" font-weight="500">Context / trace</text>
+          </g>
+          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="Cloud service" data-legend-x="490" data-legend-baseline="604" data-legend-width="100">
+            <rect x="490" y="596" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+            <text x="512" y="604" class="t-muted" font-size="7.5" font-weight="500">Cloud service</text>
+          </g>
+          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="External system" data-legend-x="597" data-legend-baseline="604" data-legend-width="109">
+            <rect x="597" y="596" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
+            <text x="619" y="604" class="t-muted" font-size="7.5" font-weight="500">External system</text>
+          </g>
+        </g>
       </svg>
       <p class="intent-trace-status no-print" id="intent-trace-status" role="status" aria-live="polite" aria-atomic="true"></p>
       <div class="share-chapter-cue no-print" id="share-chapter-cue" hidden role="status" aria-live="polite">
@@ -5438,39 +5476,22 @@
       <div class="card">
         <div class="card-header">
           <div class="card-dot cyan"></div>
-          <h3>Renderer Rules</h3>
+          <h3>Compiler Contract</h3>
         </div>
         <ul>
           <li>&bull; Lanes and columns determine node placement</li>
-          <li>&bull; Edges attach to explicit node anchors</li>
-          <li>&bull; Cross-lane paths use orthogonal routing</li>
-          <li>&bull; Short adjacent links stay unlabeled</li>
+          <li>&bull; Labels reserve clearance; routes stay orthogonal</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
           <div class="card-dot rose"></div>
-          <h3>Workflow Semantics</h3>
+          <h3>Runtime Semantics</h3>
         </div>
         <ul>
-          <li>&bull; Approval is a first-class policy step</li>
-          <li>&bull; Consent gates are visible in the main path</li>
-          <li>&bull; External calls stay inside the tool lane</li>
-          <li>&bull; Trace writes are separate from the hot path</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-dot emerald"></div>
-          <h3>Why It Matters</h3>
-        </div>
-        <ul>
-          <li>&bull; This is closer to a diagram_type renderer</li>
-          <li>&bull; The graph can be edited without SVG surgery</li>
-          <li>&bull; Layout rules can be tested and improved</li>
-          <li>&bull; A future IR can reuse this shape directly</li>
+          <li>&bull; Approval gates risky work before tool execution</li>
+          <li>&bull; Evidence returns through isolated trace and memory</li>
         </ul>
       </div>
     </div>
@@ -5479,6 +5500,37 @@
 
   <script>
     var Archify = {};
+    var archifyI18nData = (function () {
+      var node = document.getElementById('archify-i18n-data');
+      try { return JSON.parse(node ? node.textContent : '{}'); }
+      catch (_) { return { locale: 'en', messages: {} }; }
+    })();
+    Archify.locale = archifyI18nData.locale || 'en';
+
+    function viewerText(key, values) {
+      var messages = archifyI18nData.messages || {};
+      var template = Object.prototype.hasOwnProperty.call(messages, key) ? messages[key] : key;
+      return String(template).replace(/\{([a-zA-Z0-9_]+)\}/g, function (match, name) {
+        return values && Object.prototype.hasOwnProperty.call(values, name) ? String(values[name]) : match;
+      });
+    }
+
+    function viewerCount(key, count, values) {
+      var suffix = Number(count) === 1 ? '.one' : '.other';
+      var payload = Object.assign({}, values || {}, { count: count });
+      return viewerText(key + suffix, payload);
+    }
+
+    function viewerKindLabel(value) {
+      var normalized = String(value || 'node').toLowerCase();
+      var knownKey = 'viewer.kind.' + normalized;
+      var known = viewerText(knownKey);
+      if (known !== knownKey) return known;
+      return normalized
+        .replace(/messagebus/gi, 'message bus')
+        .replace(/[-_]+/g, ' ')
+        .replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
+    }
 
     function hasDrawableGeometry(element) {
       if (!element) return false;
@@ -5509,7 +5561,12 @@
        ============================================================ */
     Archify.preset = (function () {
       var PRESETS = ['classic', 'signal-flow', 'blueprint', 'editorial'];
-      var LABELS = { classic: 'Classic', 'signal-flow': 'Flow', blueprint: 'Blueprint', editorial: 'Editorial' };
+      var LABELS = {
+        classic: viewerText('viewer.preset.classic.short'),
+        'signal-flow': viewerText('viewer.preset.flow.short'),
+        blueprint: viewerText('viewer.preset.blueprint'),
+        editorial: viewerText('viewer.preset.editorial')
+      };
       var html = document.documentElement;
       var svg = document.querySelector('.diagram-container svg');
       var btn = document.getElementById('btn-preset');
@@ -5536,8 +5593,8 @@
         svg.setAttribute('data-preset', preset);
         btn.setAttribute('data-preset-option', preset);
         label.textContent = LABELS[preset];
-        btn.setAttribute('aria-label', 'Visual style: ' + LABELS[preset] + '. Choose visual style');
-        btn.title = 'Choose visual style (S cycles)';
+        btn.setAttribute('aria-label', viewerText('viewer.preset.current', { style: LABELS[preset] }));
+        btn.title = viewerText('viewer.preset.choose.title');
         options().forEach(function (option) {
           var selected = option.getAttribute('data-preset-value') === preset;
           option.setAttribute('aria-checked', String(selected));
@@ -5649,7 +5706,7 @@
 
       function apply(theme) {
         html.setAttribute('data-theme', theme);
-        label.textContent = theme === 'dark' ? 'Dark' : 'Light';
+        label.textContent = viewerText(theme === 'dark' ? 'viewer.theme.dark' : 'viewer.theme.light');
         btn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
       }
 
@@ -5697,6 +5754,18 @@
       var SHARE_CARD_HEIGHT = 630;
       var SHARE_CARD_PADDING = 36;
       var SHARE_CARD_HEADER = 112;
+
+      function exportError(key, values) {
+        var error = new Error(viewerText(key, values));
+        error.archifyViewerMessage = true;
+        return error;
+      }
+
+      function exportMessage(error) {
+        return error && error.archifyViewerMessage
+          ? error.message
+          : viewerText('viewer.export.unknown');
+      }
 
       function diagramFilename() {
         var title = (document.title || 'diagram')
@@ -5900,6 +5969,7 @@
         // View transforms and neighborhood focus are HTML exploration state,
         // never part of a downloaded full-diagram artifact.
         clone.style.removeProperty('transform');
+        clone.style.removeProperty('clip-path');
         clone.removeAttribute('data-view-scale');
         clone.removeAttribute('data-focus-active');
         clone.removeAttribute('data-reach-active');
@@ -6074,6 +6144,7 @@
           !clone.hasAttribute('data-chapter-anchor') &&
           !clone.hasAttribute('data-chapter-preview') &&
           !clone.style.getPropertyValue('transform') &&
+          !clone.style.getPropertyValue('clip-path') &&
           clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]').length === 0;
 
         var vb = svg.viewBox.baseVal;
@@ -6293,7 +6364,7 @@
                          format === 'webp' ? 'image/webp' : 'image/png';
               var quality = format === 'png' ? undefined : 0.95;
               canvas.toBlob(function (blob) {
-                if (!blob) reject(new Error('toBlob returned null for ' + format));
+                if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: format }));
                 else resolve(blob);
               }, mime, quality);
             } catch (error) {
@@ -6329,11 +6400,11 @@
 
       function canvas2dOrThrow(canvas, label) {
         if (!canvas || typeof canvas.getContext !== 'function') {
-          throw new Error('Canvas unavailable for ' + label);
+          throw exportError('viewer.export.error.canvasUnavailable', { label: label });
         }
         var ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('2D canvas context unavailable for ' + label);
-        if (typeof canvas.toBlob !== 'function') throw new Error('canvas.toBlob unavailable for ' + label);
+        if (!ctx) throw exportError('viewer.export.error.contextUnavailable', { label: label });
+        if (typeof canvas.toBlob !== 'function') throw exportError('viewer.export.error.toBlobUnavailable', { label: label });
         return ctx;
       }
 
@@ -6341,14 +6412,14 @@
         options = options || {};
         var routeSnapshot = options.routeSnapshot || null;
         var reachSnapshot = options.reachSnapshot || null;
-        if (routeSnapshot && reachSnapshot) return Promise.reject(new Error('Share Card variants cannot be combined'));
+        if (routeSnapshot && reachSnapshot) return Promise.reject(exportError('viewer.export.error.variantsCombined'));
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
         var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot });
-        if (!data.canonicalStateClean) return Promise.reject(new Error('Share Card export could not remove temporary viewer state'));
-        if (routeSnapshot && !data.routeStateClean) return Promise.reject(new Error('Route Card export could not preserve the resolved route safely'));
-        if (reachSnapshot && !data.reachStateClean) return Promise.reject(new Error('Reach Card export could not preserve authored reach safely'));
+        if (!data.canonicalStateClean) return Promise.reject(exportError('viewer.export.error.viewerState'));
+        if (routeSnapshot && !data.routeStateClean) return Promise.reject(exportError('viewer.export.error.routeState'));
+        if (reachSnapshot && !data.reachStateClean) return Promise.reject(exportError('viewer.export.error.reachState'));
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
 
@@ -6359,7 +6430,7 @@
               var canvas = document.createElement('canvas');
               canvas.width = SHARE_CARD_WIDTH;
               canvas.height = SHARE_CARD_HEIGHT;
-              var ctx = canvas2dOrThrow(canvas, 'Share Card');
+              var ctx = canvas2dOrThrow(canvas, viewerText('viewer.export.shareCard'));
               var computed = getComputedStyle(document.documentElement);
               var bg = computed.getPropertyValue('--bg').trim() || currentBg();
               var text = computed.getPropertyValue('--text').trim() || '#ffffff';
@@ -6372,21 +6443,37 @@
               var titleNode = document.querySelector('.header h1');
               var subtitleNode = document.querySelector('.header .subtitle');
               var title = titleNode ? titleNode.textContent : document.title;
+              var directionLabel = reachSnapshot
+                ? viewerText('viewer.export.direction.' + reachSnapshot.direction)
+                : '';
               var subtitle = routeSnapshot
-                ? 'Route: ' + routeSnapshot.source.label + ' → ' + routeSnapshot.target.label + ' · ' + routeSnapshot.hops + ' directed hops'
+                ? viewerCount('viewer.export.card.routeSummary', routeSnapshot.hops, {
+                    source: routeSnapshot.source.label,
+                    target: routeSnapshot.target.label
+                  })
                 : reachSnapshot
-                  ? 'Authored ' + reachSnapshot.direction + ' from ' + reachSnapshot.origin.label + ' · ' +
-                    (reachSnapshot.nodeIds.length - 1) + ' nodes · ' + reachSnapshot.edges.length +
-                    ' links · max ' + reachSnapshot.maxDepth + ' hops'
+                  ? viewerText('viewer.export.card.reachSummary', {
+                      direction: directionLabel,
+                      origin: reachSnapshot.origin.label,
+                      nodes: viewerCount('viewer.export.card.node', reachSnapshot.nodeIds.length - 1),
+                      links: viewerCount('viewer.export.card.link', reachSnapshot.edges.length),
+                      hops: viewerCount('viewer.export.card.hop', reachSnapshot.maxDepth)
+                    })
                   : subtitleNode ? subtitleNode.textContent : '';
               var preset = document.documentElement.getAttribute('data-preset') || 'classic';
               var theme = document.documentElement.getAttribute('data-theme') || 'dark';
-              var presetLabel = preset === 'signal-flow' ? 'FLOW' : preset.toUpperCase();
+              var presetKey = preset === 'signal-flow'
+                ? 'viewer.preset.flow.short'
+                : 'viewer.preset.' + preset;
+              var presetLabel = viewerText(presetKey).toUpperCase();
+              var themeLabel = viewerText('viewer.theme.' + theme).toUpperCase();
               var cardLabel = routeSnapshot
-                ? 'ARCHIFY · ROUTE · ' + routeSnapshot.hops + ' HOPS'
+                ? viewerText('viewer.export.card.routeBadge', {
+                    hops: viewerCount('viewer.export.card.hop', routeSnapshot.hops).toUpperCase()
+                  })
                 : reachSnapshot
-                  ? 'ARCHIFY · ' + reachSnapshot.direction.toUpperCase() + ' REACH'
-                  : 'ARCHIFY · ' + presetLabel + ' · ' + theme.toUpperCase();
+                  ? viewerText('viewer.export.card.reachBadge', { direction: directionLabel.toUpperCase() })
+                  : viewerText('viewer.export.card.defaultBadge', { preset: presetLabel, theme: themeLabel });
 
               ctx.fillStyle = bg;
               ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
@@ -6424,7 +6511,7 @@
               URL.revokeObjectURL(svgUrl);
 
               canvas.toBlob(function (blob) {
-                if (!blob) reject(new Error('toBlob returned null for Share Card'));
+                if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: viewerText('viewer.export.shareCard') }));
                 else resolve(blob);
               }, 'image/png');
             } catch (error) {
@@ -6444,17 +6531,17 @@
         options = options || {};
         if (!options.variant) return renderShareCard();
         if (options.variant !== 'route' && options.variant !== 'reach') {
-          return Promise.reject(new Error('Unknown Share Card variant: ' + options.variant));
+          return Promise.reject(exportError('viewer.export.unknownVariant', { variant: options.variant }));
         }
         if (options.variant === 'route') {
           var routeSnapshot = Archify.routeProbe && Archify.routeProbe.exportSnapshot();
-          if (!routeSnapshot) return Promise.reject(new Error('Trace a route before exporting a Route Share Card'));
+          if (!routeSnapshot) return Promise.reject(exportError('viewer.export.routeRequired'));
           return renderShareCard({ routeSnapshot: routeSnapshot });
         }
         var snapshot = Archify.focus && typeof Archify.focus.reachabilitySnapshot === 'function'
           ? Archify.focus.reachabilitySnapshot()
           : null;
-        if (!snapshot) return Promise.reject(new Error('Trace authored reach before exporting a Reach Share Card'));
+        if (!snapshot) return Promise.reject(exportError('viewer.export.reachRequired'));
         return renderShareCard({ reachSnapshot: snapshot });
       }
 
@@ -6488,7 +6575,7 @@
       function recordWebm(options) {
         options = options || {};
         if (!canRecordMotion()) {
-          return Promise.reject(new Error('WebM motion export requires a trace animation and browser MediaRecorder support'));
+          return Promise.reject(exportError('viewer.export.error.webmRequirements'));
         }
         var duration = Math.max(250, Number(options.duration) || MOTION_DURATION);
         var fps = Math.max(1, Number(options.fps) || MOTION_FPS);
@@ -6686,12 +6773,12 @@
             };
             recorder.onerror = function (event) {
               cleanup();
-              reject(event.error || new Error('MediaRecorder failed'));
+              reject(event.error || exportError('viewer.export.error.mediaRecorder'));
             };
             recorder.onstop = function () {
               cleanup();
               var blob = new Blob(chunks, { type: recorder.mimeType || mime });
-              if (!blob.size) reject(new Error('MediaRecorder produced an empty WebM'));
+              if (!blob.size) reject(exportError('viewer.export.error.emptyWebm'));
               else resolve(blob);
             };
             drawMotionFrame(ctx, backgroundImage, motionScene, 0);
@@ -6712,7 +6799,7 @@
           };
           backgroundImage.onerror = function () {
             URL.revokeObjectURL(sourceUrl);
-            reject(new Error('SVG background could not be loaded for WebM export'));
+            reject(exportError('viewer.export.error.webmBackground'));
           };
           backgroundImage.src = sourceUrl;
         });
@@ -6770,11 +6857,11 @@
       items().forEach(function (it) {
         if (it.dataset.format && !supports(it.dataset.format)) {
           it.disabled = true;
-          it.title = 'Not supported by this browser';
+          it.title = viewerText('viewer.export.unsupported');
         }
         if ((it.dataset.action === 'copy' || it.dataset.action === 'copy-share-card') && !canCopyImage()) {
           it.disabled = true;
-          it.title = 'Clipboard image write not supported by this browser';
+          it.title = viewerText('viewer.export.clipboardUnsupported');
         }
       });
 
@@ -6865,12 +6952,12 @@
         var base = diagramFilename();
         close(true);
         clearExportReceipt();
-        if (format === 'webm') toast('Recording 6 seconds of motion…');
+        if (format === 'webm') toast(viewerText('viewer.export.recording'));
         return (format === 'share-card'
           ? rasterizeShareCard().then(function (blob) {
               recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
               download(blob, base + '-share-card.png');
-              toast('Downloaded Share Card');
+              toast(viewerText('viewer.export.downloadedShare'));
             })
           : format === 'svg'
           ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
@@ -6883,7 +6970,7 @@
                 document.documentElement.setAttribute('data-last-motion-bytes', String(blob.size));
                 recordExportReceipt('webm', blob, true);
                 download(blob, base + '.webm');
-                toast('Downloaded WebM');
+                toast(viewerText('viewer.export.downloadedWebm'));
               })
           : rasterize(format).then(function (blob) {
               recordExportReceipt(format, blob, true);
@@ -6891,20 +6978,21 @@
             })
         ).catch(function (err) {
           console.error(err);
-          var message = err && err.message ? err.message : format;
+          var technicalMessage = err && err.message ? err.message : format;
+          var message = exportMessage(err);
           document.documentElement.setAttribute('data-last-export-error-format', format);
-          document.documentElement.setAttribute('data-last-export-error', message);
-          if (format === 'webm' && /MediaRecorder|WebM motion export|empty WebM/i.test(message)) {
+          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
+          if (format === 'webm') {
             var motionItem = menu.querySelector('button[data-format="webm"]');
             if (motionItem) {
               motionItem.disabled = true;
-              motionItem.title = 'Motion capture unavailable in this browser';
+              motionItem.title = viewerText('viewer.export.motionUnavailable');
               motionItem.style.opacity = '0.5';
             }
-            toast('WebM unavailable in this browser');
+            toast(viewerText('viewer.export.webmUnavailable'));
             return;
           }
-          alert('Export failed: ' + message);
+          alert(viewerText('viewer.export.failed', { message: message }));
         });
       }
 
@@ -6914,18 +7002,19 @@
         var snapshot = Archify.routeProbe && Archify.routeProbe.exportSnapshot();
         var blobPromise = snapshot
           ? renderShareCard({ routeSnapshot: snapshot })
-          : Promise.reject(new Error('Trace a route before exporting a Route Share Card'));
+          : Promise.reject(exportError('viewer.export.routeRequired'));
         return blobPromise.then(function (blob) {
           recordExportReceipt('share-card', blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, 'route', true);
           download(blob, diagramFilename() + '-route-share-card.png');
-          toast('Downloaded Route Share Card');
+          toast(viewerText('viewer.export.downloadedRoute'));
           return blob;
         }).catch(function (err) {
           console.error(err);
-          var message = err && err.message ? err.message : 'share-card';
+          var technicalMessage = err && err.message ? err.message : 'share-card';
+          var message = exportMessage(err);
           document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
-          document.documentElement.setAttribute('data-last-export-error', message);
-          alert('Route Share Card export failed: ' + message);
+          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
+          alert(viewerText('viewer.export.routeFailed', { message: message }));
         });
       }
 
@@ -6937,18 +7026,19 @@
           : null;
         var blobPromise = snapshot
           ? renderShareCard({ reachSnapshot: snapshot })
-          : Promise.reject(new Error('Trace authored reach before exporting a Reach Share Card'));
+          : Promise.reject(exportError('viewer.export.reachRequired'));
         return blobPromise.then(function (blob) {
           recordExportReceipt('share-card', blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, 'reach', false, true);
           download(blob, diagramFilename() + '-' + snapshot.direction + '-reach-share-card.png');
-          toast('Downloaded Reach Share Card');
+          toast(viewerText('viewer.export.downloadedReach'));
           return blob;
         }).catch(function (err) {
           console.error(err);
-          var message = err && err.message ? err.message : 'share-card';
+          var technicalMessage = err && err.message ? err.message : 'share-card';
+          var message = exportMessage(err);
           document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
-          document.documentElement.setAttribute('data-last-export-error', message);
-          alert('Reach Share Card export failed: ' + message);
+          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
+          alert(viewerText('viewer.export.reachFailed', { message: message }));
         });
       }
 
@@ -7013,21 +7103,22 @@
         close(true);
         clearExportReceipt();
         if (!canCopyImage()) {
-          alert('Clipboard image write not supported by this browser.');
+          alert(viewerText('viewer.export.clipboardUnsupported.period'));
           return;
         }
         var blobPromise = rasterizeShareCard();
         return writePngToClipboard(blobPromise).then(function () {
           return blobPromise.then(function (blob) {
             recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
-            toast('Copied Share Card');
+            toast(viewerText('viewer.export.copiedShare'));
           });
         }).catch(function (err) {
           console.error(err);
-          var message = err && err.message ? err.message : 'unknown';
+          var technicalMessage = err && err.message ? err.message : 'share-card';
+          var message = exportMessage(err);
           document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
-          document.documentElement.setAttribute('data-last-export-error', message);
-          alert('Copy failed: ' + message);
+          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
+          alert(viewerText('viewer.export.copyFailed', { message: message }));
         });
       }
 
@@ -7035,15 +7126,17 @@
         close(true);
         clearExportReceipt();
         if (!canCopyImage()) {
-          alert('Clipboard image write not supported in this browser.');
+          alert(viewerText('viewer.export.clipboardUnsupported.short'));
           return;
         }
         var blobPromise = rasterize('png');
         return writePngToClipboard(blobPromise).then(function () {
-          toast('Copied PNG to clipboard');
+          toast(viewerText('viewer.export.copiedPng'));
         }).catch(function (err) {
           console.error(err);
-          alert('Copy failed: ' + (err && err.message ? err.message : 'unknown'));
+          alert(viewerText('viewer.export.copyFailed', {
+            message: exportMessage(err)
+          }));
         });
       }
 
@@ -7169,17 +7262,17 @@
         return readerPaused || reducedMotion() || hasSuspension();
       }
       function ownerLabel(value) {
-        if (value === 'story') return 'the guided story';
-        if (value === 'chapter') return 'the active chapter';
-        if (value === 'chapter-preview') return 'the chapter delta preview';
-        if (value === 'handoff') return 'the chapter handoff';
-        if (value === 'route') return 'Route Probe';
-        if (value === 'lens') return 'Semantic Lens';
-        if (value === 'relationship') return 'Relationship Preview';
-        if (value === 'intent') return 'Intent Trace';
-        if (value === 'focus') return 'semantic focus';
-        if (value === 'legend') return 'legend preview';
-        return 'reader interaction';
+        if (value === 'story') return viewerText('viewer.owner.story');
+        if (value === 'chapter') return viewerText('viewer.owner.chapter');
+        if (value === 'chapter-preview') return viewerText('viewer.owner.chapterPreview');
+        if (value === 'handoff') return viewerText('viewer.owner.handoff');
+        if (value === 'route') return viewerText('viewer.owner.route');
+        if (value === 'lens') return viewerText('viewer.owner.lens');
+        if (value === 'relationship') return viewerText('viewer.owner.relationship');
+        if (value === 'intent') return viewerText('viewer.owner.intent');
+        if (value === 'focus') return viewerText('viewer.owner.focus');
+        if (value === 'legend') return viewerText('viewer.owner.legend');
+        return viewerText('viewer.owner.reader');
       }
       function render() {
         if (!capable) return;
@@ -7193,7 +7286,7 @@
         }
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
-        label.textContent = paused ? 'Still' : 'Live';
+        label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
@@ -7206,20 +7299,20 @@
         lastEffectivePaused = paused;
         if (Archify.routeProbe && typeof Archify.routeProbe.syncMotion === 'function') Archify.routeProbe.syncMotion();
         if (systemPaused) {
-          btn.setAttribute('aria-label', 'Motion paused by reduced-motion preference');
-          btn.title = 'Motion paused by reduced-motion preference';
+          btn.setAttribute('aria-label', viewerText('viewer.motion.reduced'));
+          btn.title = viewerText('viewer.motion.reduced');
         } else if (hasSuspension()) {
-          btn.setAttribute('aria-label', 'Motion paused while this page is hidden');
-          btn.title = 'Motion paused while this page is hidden';
+          btn.setAttribute('aria-label', viewerText('viewer.motion.hidden'));
+          btn.title = viewerText('viewer.motion.hidden');
         } else if (paused) {
-          btn.setAttribute('aria-label', 'Resume motion');
-          btn.title = 'Resume motion';
+          btn.setAttribute('aria-label', viewerText('viewer.motion.resume'));
+          btn.title = viewerText('viewer.motion.resume');
         } else if (owner) {
-          btn.setAttribute('aria-label', 'Pause motion; currently yielding to ' + ownerLabel(owner));
-          btn.title = 'Live preview enabled · yielding to ' + ownerLabel(owner);
+          btn.setAttribute('aria-label', viewerText('viewer.motion.yielding', { owner: ownerLabel(owner) }));
+          btn.title = viewerText('viewer.motion.yielding.title', { owner: ownerLabel(owner) });
         } else {
-          btn.setAttribute('aria-label', 'Pause motion');
-          btn.title = 'Pause motion';
+          btn.setAttribute('aria-label', viewerText('viewer.motion.pause'));
+          btn.title = viewerText('viewer.motion.pause');
         }
       }
       function setPaused(next, options) {
@@ -7390,7 +7483,7 @@
           if (!box || !Number.isFinite(box.x) || !Number.isFinite(box.y) || !Number.isFinite(box.width) || box.width < 36) return;
 
           var count = sources.length;
-          var label = count + ' verified source' + (count === 1 ? '' : 's') + '; focus this node to inspect';
+          var label = viewerCount('viewer.passport.beacon', count);
           var beacon = document.createElementNS(svgNamespace, 'g');
           beacon.classList.add('source-evidence-beacon');
           beacon.setAttribute('data-source-evidence-beacon', '');
@@ -7406,7 +7499,7 @@
           var text = document.createElementNS(svgNamespace, 'text');
           text.setAttribute('x', '15');
           text.setAttribute('y', '8.25');
-          text.textContent = 'SRC ' + count;
+          text.textContent = viewerText('viewer.passport.sourceMarker') + ' ' + count;
           beacon.appendChild(title);
           beacon.appendChild(plate);
           beacon.appendChild(text);
@@ -7415,7 +7508,7 @@
           var originalLabel = node.getAttribute('aria-label') || '';
           node.setAttribute('data-source-evidence-count', String(count));
           node.setAttribute('data-source-evidence-original-label', originalLabel);
-          node.setAttribute('aria-label', (originalLabel ? originalLabel + ', ' : '') + count + ' verified source reference' + (count === 1 ? '' : 's'));
+          node.setAttribute('aria-label', (originalLabel ? originalLabel + ', ' : '') + viewerCount('viewer.passport.sourceCount', count));
           installed += 1;
         });
         return installed;
@@ -7593,11 +7686,11 @@
         upstreamBtn.disabled = upstreamReach === 0;
         downstreamBtn.disabled = downstreamReach === 0;
         upstreamBtn.setAttribute('aria-label', upstreamReach
-          ? 'Trace ' + upstreamReach + ' upstream authored node' + (upstreamReach === 1 ? '' : 's')
-          : 'No upstream authored nodes');
+          ? viewerCount('viewer.passport.reach.upstream', upstreamReach)
+          : viewerText('viewer.passport.reach.noUpstream'));
         downstreamBtn.setAttribute('aria-label', downstreamReach
-          ? 'Trace ' + downstreamReach + ' downstream authored node' + (downstreamReach === 1 ? '' : 's')
-          : 'No downstream authored nodes');
+          ? viewerCount('viewer.passport.reach.downstream', downstreamReach)
+          : viewerText('viewer.passport.reach.noDownstream'));
         reachSection.hidden = false;
       }
       function applyReachability(direction, options) {
@@ -7643,11 +7736,15 @@
         var activeButton = direction === 'upstream' ? upstreamBtn : downstreamBtn;
         activeButton.setAttribute('aria-pressed', 'true');
         var reachableCount = result.nodeIds.length - 1;
-        var directionLabel = direction === 'upstream' ? 'Upstream' : 'Downstream';
-        reachStatus.textContent = directionLabel + ' · ' + reachableCount + ' node' +
-          (reachableCount === 1 ? '' : 's') + ' · ' + result.edgeKeys.length + ' link' +
-          (result.edgeKeys.length === 1 ? '' : 's') + ' · max ' + result.maxDepth + ' hop' +
-          (result.maxDepth === 1 ? '' : 's');
+        var directionLabel = viewerText(direction === 'upstream'
+          ? 'viewer.passport.upstream'
+          : 'viewer.passport.downstream');
+        reachStatus.textContent = viewerText('viewer.passport.reach.status', {
+          direction: directionLabel,
+          nodes: reachableCount,
+          links: result.edgeKeys.length,
+          hops: result.maxDepth
+        });
         reachStatus.hidden = false;
         if (Archify.exportMenu && typeof Archify.exportMenu.syncReachShare === 'function') {
           Archify.exportMenu.syncReachShare();
@@ -7774,7 +7871,7 @@
         var slug = repository.url.replace(/^https:\/\/github\.com\//, '').replace(/\/$/, '');
         repositoryLink.href = repository.url + '/tree/' + repository.revision;
         repositoryLink.textContent = slug + ' @ ' + repository.shortRevision;
-        repositoryLink.setAttribute('aria-label', 'Open verified repository revision ' + repository.revision);
+        repositoryLink.setAttribute('aria-label', viewerText('viewer.passport.repository.open', { revision: repository.revision }));
         sources.forEach(function (source) {
           var link = document.createElement('a');
           link.className = 'semantic-passport-source';
@@ -7782,13 +7879,13 @@
           link.target = '_blank';
           link.rel = 'noopener noreferrer';
           link.referrerPolicy = 'no-referrer';
-          link.setAttribute('aria-label', 'Open verified source ' + source.path + ' at revision ' + repository.shortRevision);
+          link.setAttribute('aria-label', viewerText('viewer.passport.source.open', { path: source.path, revision: repository.shortRevision }));
           var name = document.createElement('strong');
           name.textContent = source.label || source.path.split('/').pop() || source.path;
           var location = document.createElement('code');
           location.textContent = source.line
             ? 'L' + source.line + (source.endLine && source.endLine !== source.line ? '–' + source.endLine : '') + ' ↗'
-            : 'Open ↗';
+            : viewerText('viewer.passport.source.openLink');
           var sourcePath = document.createElement('small');
           sourcePath.textContent = source.path;
           link.appendChild(name);
@@ -7800,7 +7897,7 @@
       }
       function renderPassport(id, node) {
         setPassportValue(detail, node.getAttribute('data-node-sublabel'));
-        setPassportValue(kind, node.getAttribute('data-node-kind') || 'node');
+        setPassportValue(kind, viewerKindLabel(node.getAttribute('data-node-kind') || 'node'));
         setPassportValue(context, node.getAttribute('data-node-context'));
         setPassportValue(tag, node.getAttribute('data-node-tag'));
         setPassportValue(document.getElementById('focus-brand'), node.getAttribute('data-node-brand'));
@@ -7831,7 +7928,11 @@
             direction: direction,
             neighborId: neighborId,
             neighborLabel: neighbor ? nodeLabel(neighbor, neighborId) : neighborId,
-            label: edgeLabel || (direction === 'loop' ? 'loops back' : direction === 'out' ? 'connects to' : 'connects from')
+            label: edgeLabel || viewerText(direction === 'loop'
+              ? 'viewer.passport.relationship.loopsBack'
+              : direction === 'out'
+                ? 'viewer.passport.relationship.connectsTo'
+                : 'viewer.passport.relationship.connectsFrom')
           });
         });
         return relationships;
@@ -7874,7 +7975,9 @@
             fromLabel: byId[from] ? nodeLabel(byId[from], from) : from,
             toLabel: byId[to] ? nodeLabel(byId[to], to) : to,
             labelValue: labelValue,
-            label: labelValue || (from === to ? 'loops back' : 'connects to'),
+            label: labelValue || viewerText(from === to
+              ? 'viewer.passport.relationship.loopsBack'
+              : 'viewer.passport.relationship.connectsTo'),
             edge: edge,
             shapes: shapes,
             invalid: false
@@ -7901,14 +8004,14 @@
       function renderRelationshipCopyAction() {
         var record = pinnedRelationshipRecord();
         if (record && record.id) {
-          copyBtn.textContent = 'Copy relation';
-          copyBtn.setAttribute('aria-label', 'Copy link to pinned relationship');
+          copyBtn.textContent = viewerText('viewer.passport.copyRelation');
+          copyBtn.setAttribute('aria-label', viewerText('viewer.passport.copyPinned'));
         } else if (pinnedRelationshipKey) {
-          copyBtn.textContent = 'Copy node';
-          copyBtn.setAttribute('aria-label', 'Copy link to source node');
+          copyBtn.textContent = viewerText('viewer.passport.copyNode');
+          copyBtn.setAttribute('aria-label', viewerText('viewer.passport.copySource'));
         } else {
-          copyBtn.textContent = 'Copy link';
-          copyBtn.setAttribute('aria-label', 'Copy link to focused node');
+          copyBtn.textContent = viewerText('viewer.passport.copy');
+          copyBtn.setAttribute('aria-label', viewerText('viewer.passport.copy.focus'));
         }
       }
       function relationshipHitGeometry(shape, className) {
@@ -8227,7 +8330,11 @@
         var target = relationshipHitTarget(key);
         if (target) target.setAttribute('aria-pressed', 'true');
         renderRelationshipCopyAction();
-        summary.textContent = 'Pinned relationship · ' + record.fromLabel + ' → ' + record.toLabel + ' · ' + record.label;
+        summary.textContent = viewerText('viewer.passport.relationship.pinned', {
+          from: record.fromLabel,
+          to: record.toLabel,
+          label: record.label
+        });
         revealPinnedRelationship(record);
         if (options.updateUrl !== false && record.id) {
           try { history.replaceState(null, '', location.pathname + location.search + '#relation=' + encodeURIComponent(record.id)); } catch (_) {}
@@ -8246,10 +8353,10 @@
         relationshipHitOverlay.setAttribute('class', 'relationship-hit-overlay');
         relationshipHitOverlay.setAttribute('data-relationship-hit-overlay', '');
         relationshipHitOverlay.setAttribute('role', 'group');
-        relationshipHitOverlay.setAttribute('aria-label', 'Direct relationship explorer');
+        relationshipHitOverlay.setAttribute('aria-label', viewerText('viewer.passport.relationship.explorer'));
         var relationshipHelp = document.createElementNS(svgNamespace, 'desc');
         relationshipHelp.id = 'archify-relationship-help';
-        relationshipHelp.textContent = 'Use arrow keys to explore relationships. Press Enter or Space to pin details; Escape clears.';
+        relationshipHelp.textContent = viewerText('viewer.passport.relationship.help');
         relationshipHitOverlay.appendChild(relationshipHelp);
         records.forEach(function (record, index) {
           var target = document.createElementNS(svgNamespace, 'g');
@@ -8263,7 +8370,13 @@
           target.setAttribute('tabindex', index === 0 ? '0' : '-1');
           target.setAttribute('aria-pressed', 'false');
           target.setAttribute('aria-describedby', relationshipHelp.id);
-          var description = 'Inspect relationship ' + (index + 1) + ' of ' + records.length + ': ' + record.fromLabel + ' to ' + record.toLabel + ', ' + record.label + '. Press Enter for details.';
+          var description = viewerText('viewer.passport.relationship.inspect', {
+            index: index + 1,
+            total: records.length,
+            from: record.fromLabel,
+            to: record.toLabel,
+            label: record.label
+          });
           target.setAttribute('aria-label', description);
           var title = document.createElementNS(svgNamespace, 'title');
           title.textContent = record.fromLabel + ' \u2192 ' + record.toLabel + ' \u00b7 ' + record.label;
@@ -8359,25 +8472,29 @@
         var relationships = relationshipsFor(id, byId);
         chip.removeAttribute('data-relations-expanded');
         relationsBtn.setAttribute('aria-expanded', 'false');
-        relationsBtn.textContent = relationships.length + ' relation' + (relationships.length === 1 ? '' : 's');
-        relationsBtn.setAttribute('aria-label', 'Show ' + relationships.length + ' connected relationship' + (relationships.length === 1 ? '' : 's'));
+        relationsBtn.textContent = viewerCount('viewer.passport.relationship.count', relationships.length);
+        relationsBtn.setAttribute('aria-label', viewerCount('viewer.passport.relationship.show', relationships.length));
         var counts = { out: 0, in: 0, loop: 0 };
         relationships.forEach(function (relationship) { counts[relationship.direction] += 1; });
-        summary.textContent = counts.out + ' outgoing · ' + counts.in + ' incoming' + (counts.loop ? ' · ' + counts.loop + ' loop' : '');
+        summary.textContent = viewerText('viewer.passport.relationship.summary', {
+          out: counts.out,
+          in: counts.in,
+          loops: counts.loop ? viewerText('viewer.passport.relationship.loops', { count: counts.loop }) : ''
+        });
         renderReachabilityControls(id);
         relationshipList.textContent = '';
         if (!relationships.length) {
           var empty = document.createElement('p');
           empty.className = 'relationship-lens-empty';
-          empty.textContent = 'No connected relationships';
+          empty.textContent = viewerText('viewer.passport.relationship.none');
           relationshipList.appendChild(empty);
           return;
         }
 
         [
-          { id: 'out', label: 'Outgoing' },
-          { id: 'in', label: 'Incoming' },
-          { id: 'loop', label: 'Self loops' }
+          { id: 'out', label: viewerText('viewer.passport.relationship.group.out') },
+          { id: 'in', label: viewerText('viewer.passport.relationship.group.in') },
+          { id: 'loop', label: viewerText('viewer.passport.relationship.group.loop') }
         ].forEach(function (group) {
           var items = relationships.filter(function (relationship) { return relationship.direction === group.id; });
           if (!items.length) return;
@@ -8397,11 +8514,19 @@
             button.setAttribute('data-relationship-from', relationship.from);
             button.setAttribute('data-relationship-to', relationship.to);
             if (relationship.id) button.setAttribute('data-relationship-id', relationship.id);
-            button.setAttribute('aria-label', group.label + ': ' + relationship.label + ', ' + relationship.neighborLabel);
+            button.setAttribute('aria-label', viewerText('viewer.passport.relationship.row', {
+              group: group.label,
+              relationship: relationship.label,
+              neighbor: relationship.neighborLabel
+            }));
             var direction = document.createElement('span');
             direction.className = 'relationship-lens-direction';
             direction.setAttribute('aria-hidden', 'true');
-            direction.textContent = relationship.direction === 'out' ? 'OUT →' : relationship.direction === 'in' ? '← IN' : 'LOOP';
+            direction.textContent = viewerText(relationship.direction === 'out'
+              ? 'viewer.passport.relationship.direction.out'
+              : relationship.direction === 'in'
+                ? 'viewer.passport.relationship.direction.in'
+                : 'viewer.passport.relationship.direction.loop');
             var target = document.createElement('strong');
             target.textContent = relationship.neighborLabel;
             var relation = document.createElement('small');
@@ -8541,10 +8666,10 @@
         upstreamBtn.disabled = true;
         downstreamBtn.disabled = true;
         relationshipList.textContent = '';
-        copyBtn.textContent = 'Copy link';
-        copyBtn.setAttribute('aria-label', 'Copy link to focused node');
-        relationsBtn.textContent = 'Relations';
-        relationsBtn.setAttribute('aria-label', 'Show connected relationships');
+        copyBtn.textContent = viewerText('viewer.passport.copy');
+        copyBtn.setAttribute('aria-label', viewerText('viewer.passport.copy.focus'));
+        relationsBtn.textContent = viewerText('viewer.passport.relations');
+        relationsBtn.setAttribute('aria-label', viewerText('viewer.passport.relations.show'));
         relationsBtn.setAttribute('aria-expanded', 'false');
         chip.removeAttribute('data-relations-expanded');
         chip.style.removeProperty('top');
@@ -8612,7 +8737,7 @@
         svg.setAttribute('data-focus-active', normalized.join(' '));
         var defaultLabel = normalized.length === 1
           ? nodeLabel(byId[normalized[0]], normalized[0])
-          : normalized.length + ' selected nodes';
+          : viewerText('viewer.guided.chapter.selectedNodes', { count: normalized.length });
         label.textContent = options.label || defaultLabel;
         chip.hidden = options.hideChip === true || normalized.length !== 1 || selectionMode;
         if (!chip.hidden) {
@@ -8658,10 +8783,10 @@
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
         return copy.then(function (copied) {
-          copyBtn.textContent = copied ? 'Copied' : 'Copy failed';
+          copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
           copyBtn.setAttribute('aria-label', copied
-            ? (relationId ? 'Pinned relationship link copied' : 'Focused node link copied')
-            : (relationId ? 'Could not copy pinned relationship link' : 'Could not copy focused node link'));
+            ? viewerText(relationId ? 'viewer.passport.copy.pinned.success' : 'viewer.passport.copy.focused.success')
+            : viewerText(relationId ? 'viewer.passport.copy.pinned.failed' : 'viewer.passport.copy.focused.failed'));
           window.setTimeout(function () {
             renderRelationshipCopyAction();
           }, 1600);
@@ -8700,7 +8825,9 @@
         if (expanded) chip.removeAttribute('data-relations-expanded');
         else chip.setAttribute('data-relations-expanded', 'true');
         relationsBtn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-        relationsBtn.setAttribute('aria-label', expanded ? 'Show connected relationships' : 'Hide connected relationships');
+        relationsBtn.setAttribute('aria-label', viewerText(expanded
+          ? 'viewer.passport.relations.show'
+          : 'viewer.passport.relations.hide'));
         requestLensPlacement();
       });
       relationshipList.addEventListener('click', function (event) {
@@ -8986,9 +9113,13 @@
         svg.setAttribute('data-intent-trace-active', id);
         if (options.announce === true) {
           var total = counts.out + counts.in + counts.loop;
-          status.textContent = nodeLabel(selected, id) + '. ' + counts.out + ' outgoing, ' +
-            counts.in + ' incoming' + (counts.loop ? ', ' + counts.loop + ' self loop' : '') +
-            '. ' + total + ' connection' + (total === 1 ? '' : 's') + '. Press Enter for details.';
+          status.textContent = viewerText('viewer.intent.summary', {
+            label: nodeLabel(selected, id),
+            out: counts.out,
+            in: counts.in,
+            loops: counts.loop ? viewerText('viewer.intent.loops', { count: counts.loop }) : '',
+            total: total
+          });
         }
         return true;
       }
@@ -9291,8 +9422,11 @@
           drawHandoffAnchor(anchor);
           var node = findNode(anchor);
           var nodeLabel = node ? (node.getAttribute('data-node-label') || anchor) : anchor;
-          handoffReceipt.textContent = (previousIndex + 1 < 10 ? '0' : '') + (previousIndex + 1) +
-            ' \u2192 ' + (nextIndex + 1 < 10 ? '0' : '') + (nextIndex + 1) + ' \u00b7 via ' + nodeLabel;
+          handoffReceipt.textContent = viewerText('viewer.guided.handoff', {
+            from: (previousIndex + 1 < 10 ? '0' : '') + (previousIndex + 1),
+            to: (nextIndex + 1 < 10 ? '0' : '') + (nextIndex + 1),
+            label: nodeLabel
+          });
           handoffReceipt.hidden = false;
         }
         if (Archify.motionGovernor) {
@@ -9349,8 +9483,13 @@
           button.setAttribute('data-guided-view-id', view.id);
           button.setAttribute('aria-pressed', 'false');
           button.setAttribute('tabindex', index === 0 ? '0' : '-1');
-          button.setAttribute('aria-label', 'Open chapter ' + (index + 1) + ' of ' + views.length + ': ' + view.label + ', ' + view.focus.length + ' stops');
-          button.title = view.label + ' — ' + (view.note || view.focus.length + ' selected nodes');
+          button.setAttribute('aria-label', viewerText('viewer.guided.chapter.open', {
+            index: index + 1,
+            total: views.length,
+            label: view.label,
+            count: view.focus.length
+          }));
+          button.title = view.label + ' — ' + (view.note || viewerText('viewer.guided.chapter.selectedNodes', { count: view.focus.length }));
           var position = document.createElement('span');
           position.className = 'guided-view-chapter-index';
           position.setAttribute('aria-hidden', 'true');
@@ -9360,7 +9499,7 @@
           title.textContent = view.label;
           var stops = document.createElement('em');
           stops.className = 'guided-view-chapter-count';
-          stops.textContent = view.focus.length + ' stop' + (view.focus.length === 1 ? '' : 's');
+          stops.textContent = viewerCount('viewer.guided.chapter.stop', view.focus.length);
           var delta = document.createElement('span');
           delta.className = 'guided-view-chapter-delta';
           delta.hidden = true;
@@ -9393,20 +9532,40 @@
             stops.hidden = false;
             deltaLabel.hidden = true;
             button.removeAttribute('data-chapter-delta');
-            button.setAttribute('aria-label', 'Current chapter ' + (index + 1) + ' of ' + views.length + ': ' + views[index].label + ', ' + views[index].focus.length + ' stops');
-            button.title = views[index].label + ' — current chapter, ' + views[index].focus.length + ' stops';
+            button.setAttribute('aria-label', viewerText('viewer.guided.chapter.current', {
+              index: index + 1,
+              total: views.length,
+              label: views[index].label,
+              count: views[index].focus.length
+            }));
+            button.title = viewerText('viewer.guided.chapter.current.title', {
+              label: views[index].label,
+              count: views[index].focus.length
+            });
           } else {
             var delta = chapterDelta(activeIndex >= 0 ? views[activeIndex] : null, views[index]);
             var compact = '=' + delta.stay.length + ' +' + delta.enter.length + ' \u2212' + delta.leave.length;
-            var expanded = delta.stay.length + ' stay, ' + delta.enter.length + ' enter, ' + delta.leave.length + ' leave';
+            var expanded = viewerText('viewer.guided.chapter.delta.expanded', {
+              stay: delta.stay.length,
+              enter: delta.enter.length,
+              leave: delta.leave.length
+            });
             stops.hidden = true;
             deltaLabel.hidden = false;
             deltaLabel.querySelector('[data-delta-kind="stay"]').textContent = '=' + delta.stay.length;
             deltaLabel.querySelector('[data-delta-kind="enter"]').textContent = '+' + delta.enter.length;
             deltaLabel.querySelector('[data-delta-kind="leave"]').textContent = '\u2212' + delta.leave.length;
             button.setAttribute('data-chapter-delta', compact);
-            button.setAttribute('aria-label', 'Open chapter ' + (index + 1) + ' of ' + views.length + ': ' + views[index].label + '. Chapter focus delta: ' + expanded);
-            button.title = views[index].label + ' — ' + compact + ' chapter focus';
+            button.setAttribute('aria-label', viewerText('viewer.guided.chapter.delta.aria', {
+              index: index + 1,
+              total: views.length,
+              label: views[index].label,
+              delta: expanded
+            }));
+            button.title = viewerText('viewer.guided.chapter.delta.title', {
+              label: views[index].label,
+              delta: compact
+            });
           }
           if (current) button.setAttribute('aria-current', 'step');
           else button.removeAttribute('aria-current');
@@ -9534,33 +9693,44 @@
 
       function shareCueStatus(state) {
         return {
-          pending: 'Ready',
-          playing: 'Playing',
-          complete: 'Settled',
-          interrupted: 'Paused',
-          pinned: 'Pinned',
-          'reduced-motion': 'Still'
-        }[state] || 'Ready';
+          pending: viewerText('viewer.guided.state.ready'),
+          playing: viewerText('viewer.guided.state.playing'),
+          complete: viewerText('viewer.guided.state.settled'),
+          interrupted: viewerText('viewer.guided.state.paused'),
+          pinned: viewerText('viewer.guided.state.pinned'),
+          'reduced-motion': viewerText('viewer.guided.state.still')
+        }[state] || viewerText('viewer.guided.state.ready');
       }
 
       function shareCueBeatCopy(state, view, stops) {
         var total = stops.length;
         var activeStop = storyBeatIndex >= 0 ? stops[storyBeatIndex] : null;
         if ((state === 'playing' || state === 'interrupted') && activeStop) {
-          return 'Step ' + (storyBeatIndex + 1 < 10 ? '0' : '') + (storyBeatIndex + 1) + ' / ' +
-            (total < 10 ? '0' : '') + total + ' · ' + activeStop.textContent;
+          return viewerText('viewer.guided.share.step', {
+            index: (storyBeatIndex + 1 < 10 ? '0' : '') + (storyBeatIndex + 1),
+            total: (total < 10 ? '0' : '') + total,
+            label: activeStop.textContent
+          });
         }
         if (state === 'pinned' && activeStop) {
           return storyBeatCopy(storySteps[storyBeatIndex], total);
         }
         if (state === 'reduced-motion' && activeStop && hashBeatMatchesCurrent()) {
-          return 'Step ' + (storyBeatIndex + 1 < 10 ? '0' : '') + (storyBeatIndex + 1) + ' / ' +
-            (total < 10 ? '0' : '') + total + ' · ' + activeStop.textContent + ' · Static moment';
+          return viewerText('viewer.guided.share.staticMoment', {
+            step: viewerText('viewer.guided.share.step', {
+              index: (storyBeatIndex + 1 < 10 ? '0' : '') + (storyBeatIndex + 1),
+              total: (total < 10 ? '0' : '') + total,
+              label: activeStop.textContent
+            })
+          });
         }
-        if (state === 'complete') return total + ' steps complete · ' + (view.note || 'Path settled for reading.');
-        if (state === 'reduced-motion') return total + ' steps · Static path';
-        if (state === 'pending') return total + ' steps · Ready';
-        return view.note || view.focus.length + ' selected nodes';
+        if (state === 'complete') return viewerText('viewer.guided.share.complete', {
+          count: total,
+          note: view.note || viewerText('viewer.guided.share.settled')
+        });
+        if (state === 'reduced-motion') return viewerText('viewer.guided.share.staticPath', { count: total });
+        if (state === 'pending') return viewerText('viewer.guided.share.ready', { count: total });
+        return view.note || viewerText('viewer.guided.chapter.selectedNodes', { count: view.focus.length });
       }
 
       function renderShareCue() {
@@ -9585,11 +9755,21 @@
         shareCue.setAttribute('data-state', state);
         shareCue.setAttribute('aria-live', state === 'playing' ? 'off' : 'polite');
         shareCueState.textContent = shareCueStatus(state);
-        shareCueCount.textContent = 'Chapter ' + (activeIndex + 1 < 10 ? '0' : '') + (activeIndex + 1) + ' / ' + (views.length < 10 ? '0' : '') + views.length;
+        shareCueCount.textContent = viewerText('viewer.guided.share.chapter', {
+          index: (activeIndex + 1 < 10 ? '0' : '') + (activeIndex + 1),
+          total: (views.length < 10 ? '0' : '') + views.length
+        });
         shareCueLabel.textContent = view.label;
         shareCueNote.textContent = beatCopy;
         shareCueRoute.textContent = route;
-        shareCue.setAttribute('aria-label', shareCueStatus(state) + ' chapter ' + (activeIndex + 1) + ' of ' + views.length + ': ' + view.label + '. ' + beatCopy + '. ' + route);
+        shareCue.setAttribute('aria-label', viewerText('viewer.guided.share.aria', {
+          state: shareCueStatus(state),
+          index: activeIndex + 1,
+          total: views.length,
+          label: view.label,
+          beat: beatCopy,
+          route: route
+        }));
       }
 
       function setShareCueProgress(fraction) {
@@ -9680,24 +9860,24 @@
         if (!step) return '';
         var position = (step.index + 1 < 10 ? '0' : '') + (step.index + 1);
         var countValue = (total < 10 ? '0' : '') + total;
-        if (step.relation === 'start') return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.nodeLabel + ' \u00b7 starting point';
-        if (step.relation === 'forward') return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.previousLabel + ' \u2192 ' + step.nodeLabel;
-        if (step.relation === 'reverse') return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.nodeLabel + ' \u2192 ' + step.previousLabel + ' \u00b7 reverse authored link';
-        if (step.relation === 'multiple') return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.previousLabel + ' \u21c4 ' + step.nodeLabel + ' \u00b7 ' + step.edges.length + ' authored links';
-        return 'Beat ' + position + ' / ' + countValue + ' \u00b7 ' + step.previousLabel + ' \u00b7 ' + step.nodeLabel + ' \u00b7 grouped \u00b7 no direct link';
+        if (step.relation === 'start') return viewerText('viewer.guided.beat.start', { index: position, total: countValue, label: step.nodeLabel });
+        if (step.relation === 'forward') return viewerText('viewer.guided.beat.forward', { index: position, total: countValue, from: step.previousLabel, to: step.nodeLabel });
+        if (step.relation === 'reverse') return viewerText('viewer.guided.beat.reverse', { index: position, total: countValue, from: step.nodeLabel, to: step.previousLabel });
+        if (step.relation === 'multiple') return viewerText('viewer.guided.beat.multiple', { index: position, total: countValue, from: step.previousLabel, to: step.nodeLabel, count: step.edges.length });
+        return viewerText('viewer.guided.beat.group', { index: position, total: countValue, from: step.previousLabel, to: step.nodeLabel });
       }
 
       function storyBeatAria(step, total) {
-        var prefix = 'Story beat ' + (step.index + 1) + ' of ' + total + ': ' + step.nodeLabel + '. ';
-        if (step.relation === 'start') return prefix + 'Starting point.';
-        if (step.relation === 'forward') return prefix + 'From ' + step.previousLabel + ' through one authored forward relationship.';
-        if (step.relation === 'reverse') return prefix + 'From ' + step.previousLabel + '; the authored relationship points from ' + step.nodeLabel + ' to ' + step.previousLabel + '.';
-        if (step.relation === 'multiple') return prefix + 'From ' + step.previousLabel + ' through ' + step.edges.length + ' authored relationships; shown without arbitrary motion.';
-        return prefix + 'Grouped from ' + step.previousLabel + ' with no direct authored relationship.';
+        var prefix = viewerText('viewer.guided.beat.aria.prefix', { index: step.index + 1, total: total, label: step.nodeLabel });
+        if (step.relation === 'start') return prefix + viewerText('viewer.guided.beat.aria.start');
+        if (step.relation === 'forward') return prefix + viewerText('viewer.guided.beat.aria.forward', { from: step.previousLabel });
+        if (step.relation === 'reverse') return prefix + viewerText('viewer.guided.beat.aria.reverse', { from: step.previousLabel, to: step.nodeLabel });
+        if (step.relation === 'multiple') return prefix + viewerText('viewer.guided.beat.aria.multiple', { from: step.previousLabel, count: step.edges.length });
+        return prefix + viewerText('viewer.guided.beat.aria.group', { from: step.previousLabel });
       }
 
       function storyCaptionRouteCopy(step) {
-        if (step.relation === 'start') return step.nodeLabel + ' · Starting point';
+        if (step.relation === 'start') return step.nodeLabel + ' · ' + viewerText('viewer.guided.caption.start');
         if (step.relation === 'reverse') return step.previousLabel + ' ← ' + step.nodeLabel;
         if (step.relation === 'multiple') return step.previousLabel + ' ⇄ ' + step.nodeLabel;
         if (step.relation === 'group') return step.previousLabel + ' · ' + step.nodeLabel;
@@ -9706,15 +9886,15 @@
 
       function storyCaptionDetailCopy(step) {
         var facts = [];
-        if (step.relation === 'group') facts.push('Grouped transition · no direct authored link');
-        else if (step.edgeLabels.length) facts.push(step.edgeLabels.slice(0, 3).join(' + ') + (step.edgeLabels.length > 3 ? ' +' + (step.edgeLabels.length - 3) + ' more' : ''));
-        else if (step.relation === 'reverse') facts.push('Reverse authored relationship');
-        else if (step.relation === 'multiple') facts.push(step.edges.length + ' authored relationships');
-        else if (step.relation !== 'start') facts.push('Authored relationship');
-        if (step.relation === 'reverse') facts.push('authored direction: ' + step.nodeLabel + ' → ' + step.previousLabel);
+        if (step.relation === 'group') facts.push(viewerText('viewer.guided.caption.grouped'));
+        else if (step.edgeLabels.length) facts.push(step.edgeLabels.slice(0, 3).join(' + ') + (step.edgeLabels.length > 3 ? viewerText('viewer.guided.caption.more', { count: step.edgeLabels.length - 3 }) : ''));
+        else if (step.relation === 'reverse') facts.push(viewerText('viewer.guided.caption.reverse'));
+        else if (step.relation === 'multiple') facts.push(viewerText('viewer.guided.caption.relationships', { count: step.edges.length }));
+        else if (step.relation !== 'start') facts.push(viewerText('viewer.guided.caption.relationship'));
+        if (step.relation === 'reverse') facts.push(viewerText('viewer.guided.caption.direction', { from: step.nodeLabel, to: step.previousLabel }));
         if (step.responsibility) facts.push(step.responsibility);
         if (step.context) facts.push(step.context);
-        if (!facts.length) facts.push('Authored starting point');
+        if (!facts.length) facts.push(viewerText('viewer.guided.caption.starting'));
         return facts.join(' · ');
       }
 
@@ -9770,17 +9950,17 @@
         if (beatLinkFeedbackTimer) clearTimeout(beatLinkFeedbackTimer);
         beatLinkFeedbackTimer = null;
         beatLink.removeAttribute('data-copy-state');
-        beatLinkLabel.textContent = 'Copy moment';
+        beatLinkLabel.textContent = viewerText('viewer.guided.copyMoment');
       }
 
       function syncBeatLink() {
         var step = storyBeatIndex >= 0 ? storySteps[storyBeatIndex] : null;
         var available = !!(activeIndex >= 0 && step && !currentHandoff);
         beatLink.disabled = !available;
-        if (!beatLink.hasAttribute('data-copy-state')) beatLinkLabel.textContent = 'Copy moment';
+        if (!beatLink.hasAttribute('data-copy-state')) beatLinkLabel.textContent = viewerText('viewer.guided.copyMoment');
         var description = available
-          ? 'Copy link to current story moment: Beat ' + (step.index + 1) + ' of ' + storySteps.length + ': ' + step.nodeLabel
-          : 'Select a Story Beat to copy its exact link';
+          ? viewerText('viewer.guided.beatLink', { index: step.index + 1, total: storySteps.length, label: step.nodeLabel })
+          : viewerText('viewer.guided.selectBeatLink');
         beatLink.setAttribute('aria-label', description);
         beatLink.title = description;
       }
@@ -9788,8 +9968,8 @@
       function setBeatLinkFeedback(copied) {
         resetBeatLinkFeedback();
         beatLink.setAttribute('data-copy-state', copied ? 'copied' : 'failed');
-        beatLinkLabel.textContent = copied ? 'Copied' : 'Copy failed';
-        beatLink.setAttribute('aria-label', copied ? 'Moment link copied' : 'Could not copy story moment link');
+        beatLinkLabel.textContent = viewerText(copied ? 'viewer.guided.copied' : 'viewer.guided.copyFailed');
+        beatLink.setAttribute('aria-label', viewerText(copied ? 'viewer.guided.momentCopied' : 'viewer.guided.momentCopyFailed'));
         beatLinkFeedbackTimer = setTimeout(function () {
           resetBeatLinkFeedback();
           syncBeatLink();
@@ -10043,7 +10223,7 @@
           stop.removeAttribute('aria-current');
         });
         note.setAttribute('aria-live', 'polite');
-        if (activeIndex >= 0) note.textContent = views[activeIndex].note || views[activeIndex].focus.length + ' selected nodes';
+        if (activeIndex >= 0) note.textContent = views[activeIndex].note || viewerText('viewer.guided.chapter.selectedNodes', { count: views[activeIndex].focus.length });
         renderStoryCaption(null, 0);
         renderShareCue();
         syncBeatLink();
@@ -10122,7 +10302,7 @@
           trail.appendChild(stop);
         });
         trail.hidden = labels.length === 0;
-        trail.setAttribute('aria-label', 'Story trail for ' + view.label + ': ' + labels.length + ' beats');
+        trail.setAttribute('aria-label', viewerText('viewer.guided.storyTrail', { label: view.label, count: labels.length }));
         trail.scrollLeft = 0;
         svg.setAttribute('data-story-active', view.id);
 
@@ -10201,21 +10381,39 @@
         syncStoryPlayback();
         play.disabled = !playing && !automaticPlaybackAllowed;
         play.setAttribute('aria-pressed', playing ? 'true' : 'false');
-        play.setAttribute('aria-label', playing ? 'Pause guided story' : (!automaticPlaybackAllowed ? 'Story playback unavailable while motion is Still' : (storyPlaybackComplete ? 'Replay guided story' : 'Play guided story')));
-        play.title = playing ? 'Pause guided story (P)' : (!automaticPlaybackAllowed ? 'Switch motion to Live to play the guided story' : (storyPlaybackComplete ? 'Replay guided story (P)' : 'Play guided story (P)'));
+        play.setAttribute('aria-label', viewerText(playing
+          ? 'viewer.guided.pause'
+          : !automaticPlaybackAllowed
+            ? 'viewer.guided.motionUnavailable'
+            : storyPlaybackComplete
+              ? 'viewer.guided.replay'
+              : 'viewer.guided.play'));
+        play.title = viewerText(playing
+          ? 'viewer.guided.pause.title'
+          : !automaticPlaybackAllowed
+            ? 'viewer.guided.enableMotion'
+            : storyPlaybackComplete
+              ? 'viewer.guided.replay.title'
+              : 'viewer.guided.play.title');
         playIcon.textContent = playing ? '\u2016' : '\u25b6';
-        playLabel.textContent = playing ? 'Pause' : (storyPlaybackComplete ? 'Replay story' : 'Play story');
+        playLabel.textContent = viewerText(playing
+          ? 'viewer.guided.pauseStory'
+          : storyPlaybackComplete
+            ? 'viewer.guided.replayStory'
+            : 'viewer.guided.playStory');
         if (storyCaption && !storyCaption.hidden) storyCaption.setAttribute('aria-live', playing ? 'off' : 'polite');
       }
 
       function render() {
         var view = views[activeIndex];
         count.textContent = activeIndex < 0 ? '0 / ' + views.length : (activeIndex + 1) + ' / ' + views.length;
-        label.textContent = view ? view.label : 'Explore this system';
+        label.textContent = view ? view.label : viewerText('viewer.guided.explore');
         note.setAttribute('aria-live', storyBeatIndex >= 0 ? 'off' : 'polite');
         note.textContent = storyBeatIndex >= 0
           ? storyBeatCopy(storySteps[storyBeatIndex], storySteps.length)
-          : (view ? (view.note || view.focus.length + ' selected nodes') : 'Step through curated paths without changing the source diagram.');
+          : (view
+            ? (view.note || viewerText('viewer.guided.chapter.selectedNodes', { count: view.focus.length }))
+            : viewerText('viewer.guided.intro'));
         prev.disabled = activeIndex < 0;
         next.disabled = activeIndex >= views.length - 1;
         all.disabled = activeIndex < 0;
@@ -10910,9 +11108,9 @@
 
     /* ============================================================
        Viewer Chrome Layout — keep HTML controls clear of the canonical SVG
-       legend without changing authored geometry. The dock keeps its existing
-       position unless its zero-reserve position would cover the legend; only
-       then does a small bottom safe rail become part of the reader budget.
+       stage without changing authored geometry. The dock keeps its floating
+       appearance while a small bottom stage rail becomes part of the reader
+       budget whenever its zero-reserve position would enter the stage.
        ============================================================ */
     Archify.viewerChromeLayout = (function () {
       var html = document.documentElement;
@@ -10923,10 +11121,13 @@
       var frame = 0;
       var settleFrame = 0;
       var reserve = 0;
-      var collisionLatched = false;
+      var railLatched = false;
       var probingBaseline = false;
       var probePromise = null;
       var baselineIntersectionArea = 0;
+      var baselineStageGap = null;
+      var restorableReserve = 0;
+      var probeFallbackReserve = 0;
       var lastReceipt = null;
       var SAFE_GAP = 10;
 
@@ -10943,14 +11144,61 @@
         var height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
         return width * height;
       }
+      function protectedStageRect() {
+        if (!svg) return null;
+        var rect = svg.getBoundingClientRect();
+        var transform = '';
+        try { transform = window.getComputedStyle(svg).transform || ''; } catch (_) {}
+        var scaleX = 1;
+        var scaleY = 1;
+        var translateX = 0;
+        var translateY = 0;
+        var matrix = transform.match(/^matrix\(([^)]+)\)$/);
+        var matrix3d = transform.match(/^matrix3d\(([^)]+)\)$/);
+        if (matrix) {
+          var values = matrix[1].split(',').map(Number);
+          if (values.length === 6 && values.every(Number.isFinite)) {
+            scaleX = Math.abs(values[0]) || 1;
+            scaleY = Math.abs(values[3]) || 1;
+            translateX = values[4];
+            translateY = values[5];
+          }
+        } else if (matrix3d) {
+          var values3d = matrix3d[1].split(',').map(Number);
+          if (values3d.length === 16 && values3d.every(Number.isFinite)) {
+            scaleX = Math.abs(values3d[0]) || 1;
+            scaleY = Math.abs(values3d[5]) || 1;
+            translateX = values3d[12];
+            translateY = values3d[13];
+          }
+        }
+        var width = rect.width / scaleX;
+        var height = rect.height / scaleY;
+        var left = rect.left - translateX;
+        var top = rect.top - translateY;
+        return {
+          x: left,
+          y: top,
+          left: left,
+          top: top,
+          right: left + width,
+          bottom: top + height,
+          width: width,
+          height: height
+        };
+      }
       function eligible() {
         return Boolean(
-          container && svg && nav && legend &&
+          container && svg && nav &&
           window.innerWidth > 720 &&
           html.getAttribute('data-embed') !== 'true' &&
           (!window.matchMedia || !window.matchMedia('print').matches) &&
-          visible(nav) && visible(legend)
+          visible(nav)
         );
+      }
+      function cameraAtBaseline() {
+        var scale = Number(svg && svg.getAttribute('data-view-scale'));
+        return !Number.isFinite(scale) || Math.abs(scale - 1) < 0.001;
       }
       function writeReserve(next, options) {
         options = options || {};
@@ -10958,11 +11206,14 @@
         if (Math.abs(next - reserve) < 1) return false;
         reserve = next;
         if (reserve) {
+          if (options.remember !== false) restorableReserve = reserve;
           container.style.setProperty('--archify-nav-reserve', reserve + 'px');
-          container.setAttribute('data-nav-safe-rail', 'true');
+          container.setAttribute('data-nav-stage-rail', 'true');
+          html.setAttribute('data-nav-stage-rail', 'true');
         } else {
           container.style.removeProperty('--archify-nav-reserve');
-          container.removeAttribute('data-nav-safe-rail');
+          container.removeAttribute('data-nav-stage-rail');
+          html.removeAttribute('data-nav-stage-rail');
         }
         if (Archify.readerLayout && typeof Archify.readerLayout.schedule === 'function') {
           Archify.readerLayout.schedule();
@@ -10976,15 +11227,23 @@
         }
         return true;
       }
-      function clear() {
-        collisionLatched = false;
-        baselineIntersectionArea = 0;
+      function clear(options) {
+        options = options || {};
+        railLatched = false;
+        if (options.preserveBaseline !== true) {
+          baselineIntersectionArea = 0;
+          baselineStageGap = null;
+          restorableReserve = 0;
+        }
         writeReserve(0, { quiet: probingBaseline });
         lastReceipt = {
           eligible: false,
           active: false,
           reserve: 0,
           gap: SAFE_GAP,
+          baselineStageGap: null,
+          stageGap: null,
+          stageIntersectionArea: 0,
           baselineIntersectionArea: 0,
           intersectionArea: 0
         };
@@ -10993,50 +11252,93 @@
       function measure() {
         frame = 0;
         if (probingBaseline) return null;
-        if (!eligible()) return clear();
+        if (!eligible()) return clear({ preserveBaseline: !cameraAtBaseline() });
+
+        /* Camera transforms enlarge and translate authored paint inside the
+           fixed, clipped root SVG viewport. They must not redefine the
+           reader's baseline rail.
+           Restore that baseline after temporary mobile/embed/print states.
+           Camera Reset preserves the established rail while viewport, mode,
+           and content changes remain responsible for baseline reprobes. */
+        if (!cameraAtBaseline()) {
+          if (reserve === 0 && restorableReserve > 0) {
+            if (writeReserve(restorableReserve)) return null;
+          }
+          var cameraNavRect = nav.getBoundingClientRect();
+          var cameraLegendRect = visible(legend) ? legend.getBoundingClientRect() : null;
+          var cameraStageRect = protectedStageRect();
+          var cameraIntersectionArea = usable(cameraLegendRect) && intersectionArea(cameraNavRect, cameraStageRect) > 0
+            ? intersectionArea(cameraNavRect, cameraLegendRect)
+            : 0;
+          lastReceipt = {
+            eligible: true,
+            active: reserve > 0,
+            reserve: reserve,
+            gap: SAFE_GAP,
+            baselineStageGap: baselineStageGap == null ? null : Math.round(baselineStageGap * 100) / 100,
+            stageGap: Math.round((cameraNavRect.top - cameraStageRect.bottom) * 100) / 100,
+            stageIntersectionArea: Math.round(intersectionArea(cameraNavRect, cameraStageRect) * 100) / 100,
+            baselineIntersectionArea: Math.round(baselineIntersectionArea * 100) / 100,
+            intersectionArea: Math.round(cameraIntersectionArea * 100) / 100
+          };
+          return lastReceipt;
+        }
 
         var navRect = nav.getBoundingClientRect();
-        var legendRect = legend.getBoundingClientRect();
-        var svgRect = svg.getBoundingClientRect();
-        if (!usable(navRect) || !usable(legendRect) || !usable(svgRect)) return clear();
+        var legendRect = visible(legend) ? legend.getBoundingClientRect() : null;
+        var stageRect = protectedStageRect();
+        if (!usable(navRect) || !usable(stageRect)) return clear();
 
-        var actualIntersectionArea = intersectionArea(navRect, legendRect);
-        if (!collisionLatched && reserve === 0) {
+        var actualIntersectionArea = usable(legendRect) ? intersectionArea(navRect, legendRect) : 0;
+        var stageGap = navRect.top - stageRect.bottom;
+        if (!railLatched && reserve === 0) {
           baselineIntersectionArea = actualIntersectionArea;
-          if (actualIntersectionArea > 0) {
-            collisionLatched = true;
-            if (writeReserve(Math.max(0, svgRect.bottom + SAFE_GAP - navRect.top))) return null;
+          baselineStageGap = stageGap;
+          if (stageGap < SAFE_GAP) {
+            railLatched = true;
+            if (writeReserve(Math.max(0, SAFE_GAP - stageGap))) return null;
           }
-        } else if (collisionLatched && reserve > 0 && actualIntersectionArea > 0) {
-          /* Once zero-reserve geometry proves a collision, keep that decision
-             latched while Adaptive Reader incorporates the rail. If the first
-             rail is not quite tall enough (notably in Presentation flex
-             layout), grow only by the remaining vertical overlap. */
-          var remaining = Math.max(1, legendRect.bottom + SAFE_GAP - navRect.top);
+        } else if (railLatched && reserve > 0 && stageGap < SAFE_GAP) {
+          /* Keep the decision latched while Adaptive Reader incorporates the
+             rail. Presentation and rounded layout values can require one
+             bounded follow-up before the full stage gap is established. */
+          var remaining = Math.max(1, SAFE_GAP - stageGap);
           if (writeReserve(reserve + remaining)) return null;
         }
 
         navRect = nav.getBoundingClientRect();
-        legendRect = legend.getBoundingClientRect();
+        legendRect = visible(legend) ? legend.getBoundingClientRect() : null;
+        stageRect = protectedStageRect();
+        stageGap = navRect.top - stageRect.bottom;
         lastReceipt = {
           eligible: true,
           active: reserve > 0,
           reserve: reserve,
           gap: SAFE_GAP,
+          baselineStageGap: baselineStageGap == null ? null : Math.round(baselineStageGap * 100) / 100,
+          stageGap: Math.round(stageGap * 100) / 100,
+          stageIntersectionArea: Math.round(intersectionArea(navRect, stageRect) * 100) / 100,
           baselineIntersectionArea: Math.round(baselineIntersectionArea * 100) / 100,
-          intersectionArea: Math.round(intersectionArea(navRect, legendRect) * 100) / 100
+          intersectionArea: Math.round((usable(legendRect) ? intersectionArea(navRect, legendRect) : 0) * 100) / 100
         };
         return lastReceipt;
       }
       function reprobe() {
         if (probingBaseline) return probePromise || Promise.resolve(false);
-        if (!reserve && !collisionLatched) {
+        if (!cameraAtBaseline()) {
           schedule();
           return Promise.resolve(false);
         }
+        if (!reserve && !railLatched && !restorableReserve) {
+          schedule();
+          return Promise.resolve(false);
+        }
+        probeFallbackReserve = restorableReserve || reserve;
         probingBaseline = true;
-        collisionLatched = false;
+        railLatched = false;
         baselineIntersectionArea = 0;
+        baselineStageGap = null;
+        restorableReserve = 0;
         writeReserve(0, { quiet: true });
         var readerReady = Archify.readerLayout && typeof Archify.readerLayout.whenStable === 'function'
           ? Archify.readerLayout.whenStable().catch(function () {})
@@ -11044,6 +11346,10 @@
         probePromise = readerReady.then(function () {
           probingBaseline = false;
           probePromise = null;
+          if (!cameraAtBaseline() && probeFallbackReserve > 0) {
+            restorableReserve = probeFallbackReserve;
+          }
+          probeFallbackReserve = 0;
           schedule();
           return true;
         });
@@ -11065,8 +11371,8 @@
           Math.round(navRect.top * 100) / 100,
           Math.round(legendRect.left * 100) / 100,
           Math.round(legendRect.top * 100) / 100,
-          collisionLatched ? 'latched' : 'clear',
-          lastReceipt ? lastReceipt.intersectionArea : ''
+          railLatched ? 'latched' : 'clear',
+          lastReceipt ? lastReceipt.stageGap : ''
         ].join('|');
       }
       function whenStable() {
@@ -11085,7 +11391,7 @@
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(reprobe).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
-        [nav, legend].forEach(function (element) { if (element) resizeObserver.observe(element); });
+        [nav, svg, legend].forEach(function (element) { if (element) resizeObserver.observe(element); });
       }
       if (typeof MutationObserver === 'function') {
         var contentObserver = new MutationObserver(function (records) {
@@ -11106,6 +11412,7 @@
         schedule: schedule,
         reprobe: reprobe,
         whenStable: whenStable,
+        stageRect: protectedStageRect,
         active: function () { return reserve > 0; },
         receipt: function () { return lastReceipt || measure(); }
       };
@@ -11125,6 +11432,7 @@
       var cameraFrame = null;
       var cameraGeneration = 0;
       var cameraTransaction = null;
+      var clipFrame = 0;
       var resizeFrame = 0;
       var autoScrollUntil = 0;
 
@@ -11186,30 +11494,67 @@
         var semantic = state.mode === 'semantic' && state.scale > 1.01;
         var detail = detailLevel();
         var percent = Math.round(state.scale * 100) + '%';
-        var levelLabel = detail === 'map' ? 'MAP ' : detail === 'read' ? 'READ ' : 'FULL ';
+        var levelLabel = viewerText('viewer.nav.level.' + detail);
         var detailHint = detail === 'map'
-          ? 'Zoom in to reveal relationship labels and node context'
+          ? viewerText('viewer.nav.detail.map')
           : detail === 'read'
-            ? 'Zoom in again to reveal tags and annotations'
-            : 'Full diagram detail';
-        var resolvedLevel = (semantic ? 'AUTO ' : levelLabel).trim();
-        var showDetailLevel = resolvedLevel !== 'READ';
+            ? viewerText('viewer.nav.detail.read')
+            : viewerText('viewer.nav.detail.full');
+        var resolvedLevel = semantic ? viewerText('viewer.nav.level.auto') : levelLabel;
+        var showDetailLevel = semantic || detail !== 'read';
         if (resetDetailLabel) {
           resetDetailLabel.textContent = resolvedLevel;
           resetDetailLabel.hidden = !showDetailLevel;
         }
         if (resetPercentLabel) resetPercentLabel.textContent = percent;
         resetBtn.toggleAttribute('data-detail-visible', showDetailLevel);
-        resetBtn.title = (semantic ? 'Semantic camera active · ' : '') + detailHint + ' · reset view (0)';
-        resetBtn.setAttribute('aria-label', detailHint + '. Reset diagram view');
+        resetBtn.title = viewerText('viewer.nav.camera.title', {
+          semantic: semantic ? viewerText('viewer.nav.camera.semantic') : '',
+          hint: detailHint
+        });
+        resetBtn.setAttribute('aria-label', viewerText('viewer.nav.camera', { hint: detailHint }));
         resetBtn.setAttribute('data-detail-level', detail);
         container.setAttribute('data-detail-level', detail);
         container.setAttribute('data-camera-mode', state.mode);
         container.setAttribute('data-camera-indicator', semantic ? 'true' : 'false');
       }
+      function clipToViewport(camera) {
+        camera = camera || state;
+        if (camera.scale <= 1.001) {
+          svg.style.removeProperty('clip-path');
+          return;
+        }
+        var width = svg.clientWidth || 1;
+        var height = svg.clientHeight || 1;
+        var scale = camera.scale;
+        var top = Math.max(0, Math.min(height, -camera.y / scale));
+        var left = Math.max(0, Math.min(width, -camera.x / scale));
+        var right = Math.max(0, Math.min(width, width - (width - camera.x) / scale));
+        var bottom = Math.max(0, Math.min(height, height - (height - camera.y) / scale));
+        svg.style.clipPath = 'inset(' + [top, right, bottom, left].map(function (value) {
+          return Math.round(value * 1000) / 1000 + 'px';
+        }).join(' ') + ')';
+      }
+      function cameraSettled(rendered) {
+        return Math.abs(rendered.scale - state.scale) < 0.001 &&
+          Math.abs(rendered.x - state.x) < 0.05 &&
+          Math.abs(rendered.y - state.y) < 0.05;
+      }
+      function syncViewportClip() {
+        if (clipFrame) cancelAnimationFrame(clipFrame);
+        clipFrame = 0;
+        function sample() {
+          clipFrame = 0;
+          var rendered = sampleRenderedState();
+          clipToViewport(rendered);
+          if (!cameraSettled(rendered)) clipFrame = requestAnimationFrame(sample);
+        }
+        sample();
+      }
       function apply() {
         clamp();
         svg.style.transform = 'translate(' + state.x + 'px,' + state.y + 'px) scale(' + state.scale + ')';
+        syncViewportClip();
         renderControls();
         outBtn.disabled = state.scale <= 1;
         inBtn.disabled = state.scale >= 3;
@@ -11331,9 +11676,6 @@
         else stopCameraMotion('reset', false);
         state = { scale: 1, x: 0, y: 0, mode: 'overview' };
         apply();
-        if (Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.reprobe === 'function') {
-          Archify.viewerChromeLayout.reprobe();
-        }
       }
       function centerAt(logicalX, logicalY, options) {
         options = options || {};
@@ -11640,7 +11982,7 @@
       var placementGap = 16;
 
       mapSvg.setAttribute('role', 'group');
-      mapSvg.setAttribute('aria-label', 'Semantic diagram radar nodes');
+      mapSvg.setAttribute('aria-label', viewerText('viewer.radar.nodes'));
       mapSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
       nodeLayer.setAttribute('class', 'overview-map-nodes');
       viewport.setAttribute('class', 'overview-map-viewport');
@@ -11675,11 +12017,11 @@
           rect.setAttribute('data-kind', node.getAttribute('data-node-kind') || 'neutral');
           rect.setAttribute('tabindex', '0');
           rect.setAttribute('role', 'button');
-          rect.setAttribute('aria-label', 'Focus ' + nodeLabel(node, id) + ' from Semantic Radar');
+          rect.setAttribute('aria-label', viewerText('viewer.radar.focus', { label: nodeLabel(node, id) }));
           nodeLayer.appendChild(rect);
           nodes.push({ id: id, node: node, rect: rect });
         });
-        status.textContent = nodes.length + ' nodes · full map';
+        status.textContent = viewerText('viewer.radar.fullMap', { count: nodes.length });
         return true;
       }
       function visibleRect(element) {
@@ -11864,7 +12206,7 @@
           compact = true;
           panel.setAttribute('data-compact', 'true');
           panel.setAttribute('data-placement-degraded', 'true');
-          panel.setAttribute('title', 'Radar compacted to avoid covering the Semantic Passport or MAP controls.');
+          panel.setAttribute('title', viewerText('viewer.radar.compacted'));
           context = placementContext();
           placement = chooseRadarPlacement(context, reference, placementOptions);
         }
@@ -11902,8 +12244,8 @@
         panel.removeAttribute('data-placement-unavailable');
         trigger.setAttribute('aria-expanded', 'true');
         trigger.removeAttribute('data-radar-space-limited');
-        trigger.setAttribute('aria-label', 'Close semantic radar');
-        trigger.title = 'Semantic radar (M)';
+        trigger.setAttribute('aria-label', viewerText('viewer.radar.close'));
+        trigger.title = viewerText('viewer.nav.radar.title');
         feedback.hidden = true;
       }
       function scheduleSpaceRetry() {
@@ -11919,9 +12261,9 @@
         panel.hidden = true;
         panel.setAttribute('data-placement-unavailable', 'true');
         trigger.setAttribute('aria-expanded', 'false');
-        trigger.setAttribute('aria-label', 'Cancel semantic radar waiting for more MAP space');
+        trigger.setAttribute('aria-label', viewerText('viewer.radar.cancelWaiting'));
         trigger.setAttribute('data-radar-space-limited', 'true');
-        trigger.title = 'Semantic radar needs more visible MAP space';
+        trigger.title = viewerText('viewer.radar.needsSpace');
         feedback.hidden = false;
         scheduleSpaceRetry();
       }
@@ -11979,9 +12321,11 @@
         var full = visible.width >= viewBox.width * 0.98 && visible.height >= viewBox.height * 0.98;
         var mobileWide = window.innerWidth <= 720 && container.hasAttribute('data-wide-diagram');
         var viewportCopy = full
-          ? 'full map'
-          : (mobileWide ? Math.round(visible.width / viewBox.width * 100) + '% width' : Math.round(visible.scale * 100) + '% viewport');
-        status.textContent = nodes.length + ' nodes · ' + viewportCopy;
+          ? viewerText('viewer.radar.viewport.full')
+          : (mobileWide
+            ? viewerText('viewer.radar.viewport.width', { percent: Math.round(visible.width / viewBox.width * 100) })
+            : viewerText('viewer.radar.viewport.scale', { percent: Math.round(visible.scale * 100) }));
+        status.textContent = viewerText('viewer.radar.status', { count: nodes.length, viewport: viewportCopy });
         nodes.forEach(function (item) {
           var active = item.node.hasAttribute('data-focus-selected') ||
             item.node.getAttribute('data-story-beat-state') === 'active';
@@ -12022,8 +12366,8 @@
           feedback.hidden = true;
           trigger.setAttribute('aria-expanded', 'false');
           trigger.removeAttribute('data-radar-space-limited');
-          trigger.setAttribute('aria-label', 'Open semantic radar');
-          trigger.title = 'Semantic radar (M)';
+          trigger.setAttribute('aria-label', viewerText('viewer.nav.radar'));
+          trigger.title = viewerText('viewer.nav.radar.title');
           if (options.restoreFocus === true) trigger.focus();
         }
         return next;
@@ -12254,9 +12598,9 @@
 
       function render(next) {
         btn.setAttribute('aria-pressed', next ? 'true' : 'false');
-        btn.setAttribute('aria-label', next ? 'Exit presentation stage' : 'Enter presentation stage');
-        btn.title = next ? 'Exit presentation stage (F or Escape)' : 'Presentation stage (F)';
-        label.textContent = next ? 'Exit' : 'Present';
+        btn.setAttribute('aria-label', viewerText(next ? 'viewer.present.exit' : 'viewer.present.enter'));
+        btn.title = viewerText(next ? 'viewer.present.exit.title' : 'viewer.present.enter.title');
+        label.textContent = viewerText(next ? 'viewer.present.exit.label' : 'viewer.present.present');
       }
 
       function setActive(next, options) {
@@ -12325,11 +12669,11 @@
       function defaultContext() {
         return {
           kind: 'focus',
-          title: 'Find a node',
-          placeholder: 'Search labels or IDs',
-          empty: 'No matching nodes',
-          resultsLabel: 'Diagram nodes',
-          availableNoun: 'nodes',
+          title: viewerText('viewer.finder.title'),
+          placeholder: viewerText('viewer.finder.placeholder'),
+          empty: viewerText('viewer.finder.empty'),
+          resultsLabel: viewerText('viewer.finder.results'),
+          availableNoun: viewerText('viewer.finder.noun.nodes'),
           allowedIds: null,
           badges: null
         };
@@ -12454,13 +12798,13 @@
           var badge = context.badges && context.badges[item.id]
             ? context.badges[item.id]
             : context.kind === 'focus'
-              ? item.links + (item.links === 1 ? ' link' : ' links')
+              ? viewerCount('viewer.finder.link', item.links)
               : String(item.links);
           var action = context.kind === 'route-source'
-            ? 'Choose ' + item.label + ' as route start'
+            ? viewerText('viewer.finder.result.routeStart', { label: item.label })
             : context.kind === 'route-target'
-              ? 'Choose ' + item.label + ' as route destination, ' + badge
-              : 'Focus ' + item.label + ', ' + item.links + ' related connection' + (item.links === 1 ? '' : 's');
+              ? viewerText('viewer.finder.result.routeTarget', { label: item.label, links: badge })
+              : viewerCount('viewer.finder.result.focus', item.links, { label: item.label });
           button.setAttribute('aria-label', action);
 
           var name = document.createElement('strong');
@@ -12469,8 +12813,8 @@
           links.textContent = badge;
           links.title = context.kind === 'focus' ? badge : action;
           var meta = document.createElement('small');
-          meta.textContent = [item.type, item.id, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
-          meta.title = [item.type, item.id, item.context, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
+          meta.textContent = [viewerKindLabel(item.type), item.id, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
+          meta.title = [viewerKindLabel(item.type), item.id, item.context, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
           button.appendChild(name);
           button.appendChild(links);
           button.appendChild(meta);
@@ -12479,8 +12823,12 @@
         });
         empty.hidden = visibleItems.length !== 0;
         status.textContent = query
-          ? visibleItems.length + ' of ' + available.length + ' ' + context.availableNoun
-          : available.length + ' ' + context.availableNoun;
+          ? viewerText('viewer.finder.status.filtered', {
+              visible: visibleItems.length,
+              available: available.length,
+              noun: context.availableNoun
+            })
+          : viewerText('viewer.finder.status.all', { available: available.length, noun: context.availableNoun });
       }
 
       function open(options) {
@@ -12780,7 +13128,11 @@
             item.setAttribute('data-route-journey-index', String(index));
             item.setAttribute('data-route-node-id', id);
             item.setAttribute('tabindex', index === 0 ? '0' : '-1');
-            item.setAttribute('aria-label', 'Route position ' + (index + 1) + ' of ' + ids.length + ': ' + nodeLabel(byId[id], id));
+            item.setAttribute('aria-label', viewerText('viewer.route.position', {
+              index: index + 1,
+              total: ids.length,
+              label: nodeLabel(byId[id], id)
+            }));
           }
           item.className = 'route-probe-node';
           item.textContent = nodeLabel(byId[id], id);
@@ -12792,7 +13144,7 @@
       }
       function setTrigger(active) {
         trigger.setAttribute('aria-pressed', active ? 'true' : 'false');
-        trigger.setAttribute('aria-label', active ? 'Clear traced route' : 'Trace a directed route');
+        trigger.setAttribute('aria-label', viewerText(active ? 'viewer.route.trigger.clear' : 'viewer.guide.route.aria'));
       }
       function clear(options) {
         options = options || {};
@@ -12809,14 +13161,14 @@
         panel.hidden = true;
         panel.setAttribute('data-state', 'idle');
         panel.removeAttribute('data-finder-open');
-        title.textContent = 'Choose a start node';
-        renderPlaceholder('Pick two semantic nodes on the diagram');
-        status.textContent = 'Choose the source, then the destination. Direction matters.';
+        title.textContent = viewerText('viewer.route.start');
+        renderPlaceholder(viewerText('viewer.route.pickTwo'));
+        status.textContent = viewerText('viewer.route.instructions');
         findBtn.hidden = true;
-        findBtn.textContent = 'Find start';
-        findBtn.setAttribute('aria-label', 'Find a route start');
+        findBtn.textContent = viewerText('viewer.route.start.find');
+        findBtn.setAttribute('aria-label', viewerText('viewer.route.start.find.aria'));
         copyBtn.hidden = true;
-        copyBtn.textContent = 'Copy link';
+        copyBtn.textContent = viewerText('viewer.route.copy');
         if (Archify.exportMenu && typeof Archify.exportMenu.syncRouteShare === 'function') Archify.exportMenu.syncRouteShare();
         setTrigger(false);
         if (wasActive && options.preserveView !== true && Archify.view && typeof Archify.view.reset === 'function') {
@@ -12947,7 +13299,10 @@
           !Archify.motionGovernor.isPaused();
       }
       function routeOverviewStatus() {
-        return activeNodeIds.length + ' nodes · ' + activeEdges.length + ' directed hop' + (activeEdges.length === 1 ? '' : 's') + ' · shortest authored route';
+        return viewerText('viewer.route.overview.status', {
+          nodes: viewerCount('viewer.route.overview.node', activeNodeIds.length),
+          hops: viewerCount('viewer.route.overview.hop', activeEdges.length)
+        });
       }
       function centerJourneyButton(button) {
         if (!button) return;
@@ -12977,19 +13332,19 @@
         journeyPlayBtn.setAttribute('aria-pressed', journeyPlaying ? 'true' : 'false');
         if (journeyPlaying) {
           journeyPlayIcon.textContent = '\u275a\u275a';
-          journeyPlayLabel.textContent = 'Pause';
-          journeyPlayBtn.setAttribute('aria-label', 'Pause route journey');
-          journeyPlayBtn.title = 'Pause route journey';
+          journeyPlayLabel.textContent = viewerText('viewer.route.pause.label');
+          journeyPlayBtn.setAttribute('aria-label', viewerText('viewer.route.pause'));
+          journeyPlayBtn.title = viewerText('viewer.route.pause');
         } else if (journeyComplete || journeyIndex === activeNodeIds.length - 1) {
           journeyPlayIcon.textContent = '\u21bb';
-          journeyPlayLabel.textContent = 'Replay';
-          journeyPlayBtn.setAttribute('aria-label', 'Replay route journey');
-          journeyPlayBtn.title = canPlay ? 'Replay route journey' : 'Automatic journey requires Live motion';
+          journeyPlayLabel.textContent = viewerText('viewer.route.replay.label');
+          journeyPlayBtn.setAttribute('aria-label', viewerText('viewer.route.replay'));
+          journeyPlayBtn.title = viewerText(canPlay ? 'viewer.route.replay' : 'viewer.route.motionRequired');
         } else {
           journeyPlayIcon.textContent = '\u25b6';
-          journeyPlayLabel.textContent = 'Journey';
-          journeyPlayBtn.setAttribute('aria-label', 'Play route journey');
-          journeyPlayBtn.title = canPlay ? 'Play route journey' : 'Automatic journey requires Live motion';
+          journeyPlayLabel.textContent = viewerText('viewer.route.journey');
+          journeyPlayBtn.setAttribute('aria-label', viewerText('viewer.route.play'));
+          journeyPlayBtn.title = viewerText(canPlay ? 'viewer.route.play' : 'viewer.route.motionRequired');
         }
       }
       function journeyGeometry(shape) {
@@ -13080,8 +13435,17 @@
           else button.removeAttribute('aria-current');
         });
         if (options.center !== false) centerJourneyButton(buttons[journeyIndex]);
-        var phase = journeyPlaying ? 'Playing' : (journeyComplete ? 'Complete' : 'Inspecting');
-        status.textContent = 'Step ' + (journeyIndex + 1) + ' of ' + activeNodeIds.length + ' · ' + phase + ' · ' + nodeLabel(byId[activeNodeIds[journeyIndex]], activeNodeIds[journeyIndex]);
+        var phase = viewerText(journeyPlaying
+          ? 'viewer.route.phase.playing'
+          : journeyComplete
+            ? 'viewer.route.phase.complete'
+            : 'viewer.route.phase.inspecting');
+        status.textContent = viewerText('viewer.route.step', {
+          index: journeyIndex + 1,
+          total: activeNodeIds.length,
+          phase: phase,
+          label: nodeLabel(byId[activeNodeIds[journeyIndex]], activeNodeIds[journeyIndex])
+        });
         if (options.pulse === true && journeyIndex > 0) renderJourneyPulse(activeEdges[journeyIndex - 1]);
         if (options.reveal !== false && Archify.view && typeof Archify.view.reveal === 'function') {
           Archify.view.reveal(activeNodeIds.slice(Math.max(0, journeyIndex - 1), Math.min(activeNodeIds.length, journeyIndex + 2)), {
@@ -13253,15 +13617,15 @@
         });
         svg.setAttribute('data-route-picking', 'target');
         panel.setAttribute('data-state', 'target');
-        title.textContent = 'Choose a destination from ' + nodeLabel(byId[id], id);
+        title.textContent = viewerText('viewer.route.destination', { label: nodeLabel(byId[id], id) });
         renderPath([id]);
         var count = Math.max(0, Object.keys(reached).length - 1);
         status.textContent = count
-          ? count + ' directed destination' + (count === 1 ? '' : 's') + ' available. Pick a highlighted node.'
-          : 'No outgoing route starts here. Clear and choose another source.';
+          ? viewerCount('viewer.route.destination.count', count)
+          : viewerText('viewer.route.noOutgoing');
         findBtn.hidden = false;
-        findBtn.textContent = 'Find target';
-        findBtn.setAttribute('aria-label', 'Find a reachable route destination');
+        findBtn.textContent = viewerText('viewer.route.destination.find');
+        findBtn.setAttribute('aria-label', viewerText('viewer.route.destination.find.aria'));
         requestDocking();
         return true;
       }
@@ -13293,7 +13657,10 @@
         renderPath(result.nodes, { interactive: true });
         panel.setAttribute('data-state', 'result');
         panel.hidden = false;
-        title.textContent = nodeLabel(byId[startId], startId) + ' to ' + nodeLabel(byId[endId], endId);
+        title.textContent = viewerText('viewer.route.result.title', {
+          source: nodeLabel(byId[startId], startId),
+          target: nodeLabel(byId[endId], endId)
+        });
         findBtn.hidden = true;
         copyBtn.hidden = false;
         setTrigger(true);
@@ -13315,15 +13682,18 @@
         if (mode !== 'target') return false;
         if (id === startId) {
           panel.setAttribute('data-state', 'error');
-          title.textContent = 'Choose a different destination';
-          status.textContent = 'A route needs two distinct semantic nodes.';
+          title.textContent = viewerText('viewer.route.differentDestination');
+          status.textContent = viewerText('viewer.route.distinct');
           return false;
         }
         var result = shortestDirectedPath(startId, id);
         if (!result) {
           panel.setAttribute('data-state', 'error');
-          title.textContent = 'No directed route to ' + nodeLabel(byId[id], id);
-          status.textContent = nodeLabel(byId[id], id) + ' is not reachable from ' + nodeLabel(byId[startId], startId) + '. Pick a highlighted destination.';
+          title.textContent = viewerText('viewer.route.unreachable', { label: nodeLabel(byId[id], id) });
+          status.textContent = viewerText('viewer.route.unreachable.detail', {
+            target: nodeLabel(byId[id], id),
+            source: nodeLabel(byId[startId], startId)
+          });
           return false;
         }
         return showResult(result, options);
@@ -13351,12 +13721,12 @@
         panel.hidden = false;
         panel.setAttribute('data-state', 'source');
         svg.setAttribute('data-route-picking', 'source');
-        title.textContent = 'Choose a start node';
-        renderPlaceholder('Pick a semantic node on the diagram');
-        status.textContent = 'Select the source. The next step will reveal only directed destinations.';
+        title.textContent = viewerText('viewer.route.start');
+        renderPlaceholder(viewerText('viewer.route.pickOne'));
+        status.textContent = viewerText('viewer.route.start.instructions');
         findBtn.hidden = false;
-        findBtn.textContent = 'Find start';
-        findBtn.setAttribute('aria-label', 'Find a route start');
+        findBtn.textContent = viewerText('viewer.route.start.find');
+        findBtn.setAttribute('aria-label', viewerText('viewer.route.start.find.aria'));
         copyBtn.hidden = true;
         setTrigger(true);
         if (focused && nodesById()[focused]) chooseStart(focused);
@@ -13383,14 +13753,14 @@
             return outgoing[id] && outgoing[id].length;
           });
           var sourceBadges = {};
-          sourceIds.forEach(function (id) { sourceBadges[id] = 'start'; });
+          sourceIds.forEach(function (id) { sourceBadges[id] = viewerText('viewer.route.finder.source.badge'); });
           return {
             kind: 'route-source',
-            title: 'Choose route start',
-            placeholder: 'Search route sources',
-            empty: 'No matching route sources',
-            resultsLabel: 'Nodes that can start a route',
-            availableNoun: 'route sources',
+            title: viewerText('viewer.route.finder.source.title'),
+            placeholder: viewerText('viewer.route.finder.source.placeholder'),
+            empty: viewerText('viewer.route.finder.source.empty'),
+            resultsLabel: viewerText('viewer.route.finder.source.results'),
+            availableNoun: viewerText('viewer.route.finder.source.noun'),
             allowedIds: sourceIds,
             badges: sourceBadges
           };
@@ -13400,15 +13770,15 @@
           var targetIds = Object.keys(distances).filter(function (id) { return id !== startId && byId[id]; });
           var targetBadges = {};
           targetIds.forEach(function (id) {
-            targetBadges[id] = distances[id] + ' hop' + (distances[id] === 1 ? '' : 's');
+            targetBadges[id] = viewerCount('viewer.route.hop', distances[id]);
           });
           return {
             kind: 'route-target',
-            title: 'Destination from ' + nodeLabel(byId[startId], startId),
-            placeholder: 'Search reachable destinations',
-            empty: 'No matching reachable destinations',
-            resultsLabel: 'Reachable route destinations',
-            availableNoun: 'reachable destinations',
+            title: viewerText('viewer.route.finder.target.title', { label: nodeLabel(byId[startId], startId) }),
+            placeholder: viewerText('viewer.route.finder.target.placeholder'),
+            empty: viewerText('viewer.route.finder.target.empty'),
+            resultsLabel: viewerText('viewer.route.finder.target.results'),
+            availableNoun: viewerText('viewer.route.finder.target.noun'),
             allowedIds: targetIds,
             badges: targetBadges
           };
@@ -13449,11 +13819,11 @@
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
         return copy.then(function (copied) {
-          copyBtn.textContent = copied ? 'Copied' : 'Copy failed';
-          copyBtn.setAttribute('aria-label', copied ? 'Traced route link copied' : 'Could not copy traced route link');
+          copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
+          copyBtn.setAttribute('aria-label', viewerText(copied ? 'viewer.route.copy.success' : 'viewer.route.copy.failed'));
           window.setTimeout(function () {
-            copyBtn.textContent = 'Copy link';
-            copyBtn.setAttribute('aria-label', 'Copy link to traced route');
+            copyBtn.textContent = viewerText('viewer.route.copy');
+            copyBtn.setAttribute('aria-label', viewerText('viewer.route.copy.aria'));
           }, 1600);
           return copied;
         });
@@ -13606,12 +13976,6 @@
       var finePointerQuery = window.matchMedia ? window.matchMedia('(hover: hover) and (pointer: fine)') : null;
       var MAX_LENS_FLOW_EDGES = 24;
 
-      function kindLabel(value) {
-        return String(value || 'neutral')
-          .replace(/messagebus/gi, 'message bus')
-          .replace(/[-_]+/g, ' ')
-          .replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
-      }
       function nodesById() {
         var byId = {};
         Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id][data-node-kind]'), function (node) {
@@ -13626,7 +13990,7 @@
         Object.keys(byId).forEach(function (id) {
           var node = byId[id];
           var value = node.getAttribute('data-node-kind') || 'neutral';
-          var kind = kinds[value] || (kinds[value] = { id: value, label: kindLabel(value), nodes: [] });
+          var kind = kinds[value] || (kinds[value] = { id: value, label: viewerKindLabel(value), nodes: [] });
           kind.nodes.push(node);
         });
         return Object.keys(kinds).map(function (key) { return kinds[key]; }).sort(function (a, b) {
@@ -13730,7 +14094,7 @@
           entry.setAttribute('role', 'button');
           entry.setAttribute('tabindex', legendEntries.length ? '-1' : '0');
           var visibleLabel = entry.getAttribute('data-legend-label') || fact.label;
-          entry.setAttribute('aria-label', 'Inspect ' + visibleLabel + ', ' + count + ' node' + (count === 1 ? '' : 's'));
+          entry.setAttribute('aria-label', viewerCount('viewer.lens.legend.inspect', count, { label: visibleLabel }));
           entry.setAttribute('aria-pressed', 'false');
           entry.setAttribute('aria-haspopup', 'dialog');
           entry.setAttribute('aria-controls', 'semantic-lens');
@@ -13739,7 +14103,7 @@
         });
         if (!legendEntries.length) return false;
         legendBridge.setAttribute('role', legendEntries.length >= 3 ? 'toolbar' : 'group');
-        legendBridge.setAttribute('aria-label', 'Semantic legend');
+        legendBridge.setAttribute('aria-label', viewerText('viewer.lens.legend'));
         syncLegendBridge();
         layoutLegendBridge();
         try {
@@ -13887,7 +14251,7 @@
           button.className = 'semantic-lens-kind';
           button.setAttribute('data-kind', kind.id);
           button.setAttribute('aria-pressed', selectedKinds.indexOf(kind.id) >= 0 ? 'true' : 'false');
-          button.setAttribute('aria-label', kind.label + ', ' + kind.nodes.length + ' node' + (kind.nodes.length === 1 ? '' : 's'));
+          button.setAttribute('aria-label', viewerCount('viewer.lens.kind.count', kind.nodes.length, { label: kind.label }));
           button.disabled = selectedKinds.length >= 2 && selectedKinds.indexOf(kind.id) === -1;
           var swatch = document.createElement('span');
           swatch.className = 'semantic-lens-swatch';
@@ -13913,7 +14277,7 @@
       function updateTrigger() {
         var active = selectedKinds.length > 0;
         trigger.setAttribute('aria-pressed', active ? 'true' : 'false');
-        trigger.setAttribute('aria-label', active ? 'Open active semantic lens' : 'Open semantic lens');
+        trigger.setAttribute('aria-label', viewerText(active ? 'viewer.lens.openActive' : 'viewer.lens.open'));
         copyBtn.hidden = !active;
         syncLegendBridge();
       }
@@ -13959,7 +14323,7 @@
         var nodeKind = {};
         Object.keys(byId).forEach(function (id) { nodeKind[id] = byId[id].getAttribute('data-node-kind') || 'neutral'; });
         if (!selectedKinds.length) {
-          status.textContent = 'Choose a kind to inspect its nodes and touching relationships.';
+          status.textContent = viewerText('viewer.lens.choose');
           updateTrigger();
           renderKinds();
           dockPanel(byId);
@@ -14014,13 +14378,18 @@
         renderFlowOverlay(matchedFlow);
         if (crossKind) {
           var total = forward + reverse;
-          status.textContent = kindLabel(selectedKinds[0]) + ' → ' + kindLabel(selectedKinds[1]) + ': ' + forward + ' · ' +
-            kindLabel(selectedKinds[1]) + ' → ' + kindLabel(selectedKinds[0]) + ': ' + reverse + ' · ' +
-            total + ' direct relationship' + (total === 1 ? '' : 's');
+          status.textContent = viewerCount('viewer.lens.compare', total, {
+            first: viewerKindLabel(selectedKinds[0]),
+            second: viewerKindLabel(selectedKinds[1]),
+            forward: forward,
+            reverse: reverse
+          });
         } else {
           var nodeCount = collectKinds().filter(function (kind) { return kind.id === selectedKinds[0]; })[0].nodes.length;
-          status.textContent = nodeCount + ' ' + kindLabel(selectedKinds[0]) + ' node' + (nodeCount === 1 ? '' : 's') + ' · ' +
-            touching + ' touching relationship' + (touching === 1 ? '' : 's') + ' · connected peers remain visible';
+          status.textContent = viewerText('viewer.lens.single', {
+            nodes: viewerCount('viewer.lens.node', nodeCount, { label: viewerKindLabel(selectedKinds[0]) }),
+            relationships: viewerCount('viewer.lens.relationship', touching)
+          });
         }
         updateTrigger();
         renderKinds();
@@ -14093,7 +14462,7 @@
         panel.removeAttribute('data-dock-side');
         updateTrigger();
         renderKinds();
-        status.textContent = 'Choose a kind to inspect its nodes and touching relationships.';
+        status.textContent = viewerText('viewer.lens.choose');
         if (options.updateUrl !== false) updateHash();
         if (options.preserveView !== true && Archify.view && typeof Archify.view.reset === 'function') {
           Archify.view.reset({ automatic: true });
@@ -14121,8 +14490,8 @@
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
         return copy.then(function (copied) {
-          copyBtn.textContent = copied ? 'Copied' : 'Copy failed';
-          window.setTimeout(function () { copyBtn.textContent = 'Copy link'; }, 1600);
+          copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
+          window.setTimeout(function () { copyBtn.textContent = viewerText('viewer.common.copyLink'); }, 1600);
           return copied;
         });
       }
@@ -14294,14 +14663,16 @@
         var nodes = svg.querySelectorAll('[data-node-id]').length;
         var relationships = relationshipCount();
         var views = viewCount();
-        stats.textContent = nodes + ' semantic node' + (nodes === 1 ? '' : 's') + ' · ' +
-          relationships + ' relationship' + (relationships === 1 ? '' : 's') + ' · ' +
-          views + ' guided view' + (views === 1 ? '' : 's');
+        stats.textContent = viewerText('viewer.guide.facts', {
+          nodes: viewerCount('viewer.guide.fact.node', nodes),
+          relationships: viewerCount('viewer.guide.fact.relationship', relationships),
+          views: viewerCount('viewer.guide.fact.view', views)
+        });
         storyBtn.disabled = views === 0;
         storyBtn.setAttribute('aria-disabled', views === 0 ? 'true' : 'false');
         storyCopy.textContent = views
-          ? 'Walk ' + views + ' authored chapter' + (views === 1 ? '' : 's') + ' and their real relationships.'
-          : 'No authored guided story in this diagram.';
+          ? viewerCount('viewer.guide.story.available', views)
+          : viewerText('viewer.guide.story.unavailable');
       }
       function actionButtons() {
         return Array.prototype.slice.call(actions.querySelectorAll('.diagram-guide-action:not(:disabled)'));
@@ -14312,7 +14683,7 @@
         html.removeAttribute('data-guide-open');
         routePanel.removeAttribute('data-guide-open');
         trigger.setAttribute('aria-expanded', 'false');
-        trigger.setAttribute('aria-label', 'Open diagram guide');
+        trigger.setAttribute('aria-label', viewerText('viewer.guide.open'));
         feedback.textContent = '';
         if (options.restoreFocus !== false) trigger.focus();
         return false;
@@ -14335,7 +14706,7 @@
         html.setAttribute('data-guide-open', 'true');
         routePanel.setAttribute('data-guide-open', 'true');
         trigger.setAttribute('aria-expanded', 'true');
-        trigger.setAttribute('aria-label', 'Close diagram guide');
+        trigger.setAttribute('aria-label', viewerText('viewer.guide.close'));
         feedback.textContent = '';
         requestAnimationFrame(function () {
           var first = actionButtons()[0];
@@ -14347,7 +14718,7 @@
       function execute(action) {
         feedback.textContent = '';
         if (action === 'story' && !viewCount()) {
-          feedback.textContent = 'This diagram has no authored guided story.';
+          feedback.textContent = viewerText('viewer.guide.noStory');
           return false;
         }
         close({ restoreFocus: false });
