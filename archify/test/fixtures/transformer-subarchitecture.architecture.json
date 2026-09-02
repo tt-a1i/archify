@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Transformer Model Overview",
+    "subtitle": "Open the Transformer layer to inspect its authored local topology"
+  },
+  "components": [
+    { "id": "tokens", "type": "external", "label": "Input Tokens", "pos": [40, 220], "size": [130, 64] },
+    {
+      "id": "transformer",
+      "type": "backend",
+      "label": "Transformer Layer",
+      "sublabel": "Attention + SwiGLU FFN",
+      "pos": [260, 190],
+      "size": [190, 124],
+      "subarchitecture": {
+        "title": "Transformer Layer Internals",
+        "components": [
+          { "id": "layer_input", "type": "external", "label": "Layer Input", "pos": [40, 180], "size": [110, 56] },
+          { "id": "norm_1", "type": "backend", "label": "RMSNorm", "pos": [190, 180], "size": [110, 56] },
+          { "id": "attention", "type": "backend", "label": "Attention", "sublabel": "Q / K / V", "pos": [340, 180], "size": [110, 56] },
+          { "id": "residual_1", "type": "backend", "label": "Residual Add", "pos": [490, 180], "size": [110, 56] },
+          { "id": "norm_2", "type": "backend", "label": "RMSNorm", "pos": [640, 180], "size": [110, 56] },
+          { "id": "ffn", "type": "backend", "label": "SwiGLU FFN", "pos": [790, 180], "size": [110, 56] },
+          { "id": "residual_2", "type": "backend", "label": "Residual Add", "pos": [940, 180], "size": [110, 56] }
+        ],
+        "boundaries": [
+          { "kind": "region", "label": "Self-Attention Block", "wraps": ["norm_1", "attention"], "pad": 20 }
+        ],
+        "connections": [
+          { "id": "input_to_norm", "from": "layer_input", "to": "norm_1" },
+          { "id": "norm_to_attention", "from": "norm_1", "to": "attention" },
+          { "id": "attention_to_add", "from": "attention", "to": "residual_1" },
+          { "id": "add_to_norm", "from": "residual_1", "to": "norm_2" },
+          { "id": "norm_to_ffn", "from": "norm_2", "to": "ffn" },
+          { "id": "ffn_to_add", "from": "ffn", "to": "residual_2" },
+          {
+            "id": "attention_residual",
+            "from": "layer_input",
+            "to": "residual_1",
+            "label": "Residual Skip 1",
+            "variant": "dashed",
+            "fromSide": "top",
+            "toSide": "top",
+            "route": "orthogonal-h",
+            "via": [[95, 100], [545, 100]],
+            "labelAt": [320, 90],
+            "labelSegment": 1
+          },
+          {
+            "id": "ffn_residual",
+            "from": "residual_1",
+            "to": "residual_2",
+            "label": "Residual Skip 2",
+            "variant": "dashed",
+            "fromSide": "bottom",
+            "toSide": "bottom",
+            "route": "orthogonal-h",
+            "via": [[545, 310], [995, 310]],
+            "labelAt": [770, 324],
+            "labelSegment": 1
+          }
+        ]
+      }
+    },
+    { "id": "hidden_states", "type": "external", "label": "Hidden States", "pos": [560, 220], "size": [140, 64] }
+  ],
+  "connections": [
+    { "id": "tokens_to_transformer", "from": "tokens", "to": "transformer" },
+    { "id": "transformer_to_hidden", "from": "transformer", "to": "hidden_states" }
+  ]
+}

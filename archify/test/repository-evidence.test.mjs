@@ -55,6 +55,24 @@ function evidencePayload(html) {
   return JSON.parse(match[1]);
 }
 
+function clearTopLevelSources(diagram) {
+  for (const component of diagram.components) delete component.sources;
+}
+
+function addLocalSource(parent, source, { id = 'shared', label = 'Shared local child' } = {}) {
+  parent.subarchitecture = {
+    title: `${parent.label} internals`,
+    components: [{
+      id,
+      type: 'backend',
+      label,
+      pos: [60, 60],
+      size: [180, 72],
+      sources: [source],
+    }],
+  };
+}
+
 test('repository evidence accepts canonical HTTPS and common SSH remotes', () => {
   const data = fixture();
   const output = path.join(data.root, 'remote-form.html');
@@ -113,6 +131,109 @@ test('repository evidence is revision-verified, receipt-backed, searchable, and 
 
   const svg = html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
   assert.doesNotMatch(svg, /src\/router\.js|github\.com\/example\/evidence-repo|source-evidence/);
+});
+
+test('repository evidence preserves parent nodes and isolates duplicate child IDs by parent scope', () => {
+  const data = fixture();
+  const firstParent = data.diagram.components[0];
+  const secondParent = data.diagram.components[1];
+  addLocalSource(firstParent, { path: 'src/router.js', line: 2 });
+  addLocalSource(secondParent, { path: 'src/store.js', line: 1 });
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram, null, 2));
+
+  const output = path.join(data.root, 'scoped-evidence.html');
+  const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.evidence.references, 4);
+  const evidence = evidencePayload(fs.readFileSync(output, 'utf8'));
+  assert.equal(evidence.referenceCount, 4);
+  assert.equal(evidence.nodes[firstParent.id].length, 2);
+  assert.deepEqual(Object.keys(evidence.nodes), [firstParent.id]);
+  assert.equal(evidence.subgraphs[firstParent.id].nodes.shared[0].path, 'src/router.js');
+  assert.equal(evidence.subgraphs[secondParent.id].nodes.shared[0].path, 'src/store.js');
+  assert.notDeepEqual(
+    evidence.subgraphs[firstParent.id].nodes.shared,
+    evidence.subgraphs[secondParent.id].nodes.shared,
+  );
+});
+
+test('child-only sources satisfy repository evidence source requirements', () => {
+  const data = fixture();
+  clearTopLevelSources(data.diagram);
+  const parent = data.diagram.components[0];
+  addLocalSource(parent, { path: 'src/router.js', line: 1, end_line: 3 });
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram, null, 2));
+
+  const output = path.join(data.root, 'child-only-evidence.html');
+  const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+
+  const evidence = evidencePayload(fs.readFileSync(output, 'utf8'));
+  assert.equal(evidence.referenceCount, 1);
+  assert.deepEqual(Object.keys(evidence.nodes), []);
+  assert.equal(
+    evidence.subgraphs[parent.id].nodes.shared[0].href,
+    `https://github.com/example/evidence-repo/blob/${data.revision}/src/router.js#L1-L3`,
+  );
+});
+
+test('child source diagnostics retain the complete authored path', () => {
+  const data = fixture();
+  clearTopLevelSources(data.diagram);
+  addLocalSource(data.diagram.components[0], { path: '../outside.js' }, { id: 'invalid_child' });
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram, null, 2));
+
+  const output = path.join(data.root, 'invalid-child-evidence.html');
+  const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  const diagnostic = receipt.diagnostics.find((entry) => entry.code === 'repository-evidence/path-escape');
+  assert.ok(diagnostic, JSON.stringify(receipt.diagnostics, null, 2));
+  assert.equal(
+    diagnostic.subject.path,
+    '/components/0/subarchitecture/components/0/sources/0/path',
+  );
+});
+
+test('child sources require repository metadata while repository metadata still requires a source in some scope', () => {
+  const childWithoutRepository = fixture();
+  clearTopLevelSources(childWithoutRepository.diagram);
+  delete childWithoutRepository.diagram.meta.repository;
+  addLocalSource(childWithoutRepository.diagram.components[0], { path: 'src/router.js' });
+  fs.writeFileSync(childWithoutRepository.input, JSON.stringify(childWithoutRepository.diagram, null, 2));
+
+  let result = run([
+    'deliver',
+    'architecture',
+    childWithoutRepository.input,
+    path.join(childWithoutRepository.root, 'repository-required.html'),
+    '--json',
+  ]);
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  let receipt = JSON.parse(result.stdout);
+  let diagnostic = receipt.diagnostics.find((entry) => entry.code === 'repository-evidence/repository-required');
+  assert.ok(diagnostic, JSON.stringify(receipt.diagnostics, null, 2));
+  assert.equal(diagnostic.subject.path, '/meta/repository');
+
+  const repositoryWithoutSources = fixture();
+  clearTopLevelSources(repositoryWithoutSources.diagram);
+  fs.writeFileSync(repositoryWithoutSources.input, JSON.stringify(repositoryWithoutSources.diagram, null, 2));
+  result = run([
+    'deliver',
+    'architecture',
+    repositoryWithoutSources.input,
+    path.join(repositoryWithoutSources.root, 'source-required.html'),
+    '--repo-root',
+    repositoryWithoutSources.root,
+    '--json',
+  ]);
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  receipt = JSON.parse(result.stdout);
+  diagnostic = receipt.diagnostics.find((entry) => entry.code === 'repository-evidence/source-required');
+  assert.ok(diagnostic, JSON.stringify(receipt.diagnostics, null, 2));
+  assert.equal(diagnostic.subject.path, '/meta/repository');
 });
 
 test('repository evidence is opt-in and never appears in ordinary artifacts', () => {

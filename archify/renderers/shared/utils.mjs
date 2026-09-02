@@ -8,22 +8,32 @@ import {
 
 export { esc };
 
-export function renderDefinitions() {
+function identityPrefix(options) {
+  return options && typeof options === 'object' && typeof options.identityPrefix === 'string'
+    ? options.identityPrefix
+    : '';
+}
+
+export function scopedSvgId(id, options = {}) {
+  return esc(`${identityPrefix(options)}${id}`);
+}
+
+export function renderDefinitions(options = {}) {
   return `        <!-- Definitions -->
         <defs>
-          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <marker id="${scopedSvgId('arrowhead', options)}" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" class="m-default" />
           </marker>
-          <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <marker id="${scopedSvgId('arrowhead-emphasis', options)}" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" class="m-emphasis" />
           </marker>
-          <marker id="arrowhead-security" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <marker id="${scopedSvgId('arrowhead-security', options)}" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" class="m-security" />
           </marker>
-          <marker id="arrowhead-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <marker id="${scopedSvgId('arrowhead-dashed', options)}" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" />
           </marker>
-          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <pattern id="${scopedSvgId('grid', options)}" width="40" height="40" patternUnits="userSpaceOnUse">
             <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
           </pattern>
         </defs>`;
@@ -104,6 +114,7 @@ ${card.items.map((item) => `          <li>&bull; ${esc(item)}</li>`).join('\n')}
 
 const SVG_SLOT_RE = /      <!-- ARCHIFY:SVG_SLOT_START -->[\s\S]*?      <!-- ARCHIFY:SVG_SLOT_END -->/;
 const CARDS_SLOT_RE = /    <!-- ARCHIFY:CARDS_SLOT_START -->[\s\S]*?    <!-- ARCHIFY:CARDS_SLOT_END -->/;
+const SUBARCHITECTURES_SLOT_RE = /\r?\n    <!-- ARCHIFY:SUBARCHITECTURES_SLOT_START -->[\s\S]*?    <!-- ARCHIFY:SUBARCHITECTURES_SLOT_END -->\r?\n/;
 const SUBTITLE_SLOT_RE = /^([ \t]*)<p class="subtitle">\[Subtitle description\]<\/p>[ \t]*(\r?\n)?/m;
 const GUIDED_VIEWS_PLACEHOLDER = '<!-- ARCHIFY:GUIDED_VIEWS_DATA -->';
 const SOURCE_EVIDENCE_PLACEHOLDER = '    <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->';
@@ -132,6 +143,7 @@ export function applyTemplate(template, {
   visualPreset = 'classic',
   guidedViews = [],
   sourceEvidence = null,
+  subarchitectureTemplates = '',
 }) {
   if (!SVG_SLOT_RE.test(template)) {
     throw new Error('applyTemplate: template missing ARCHIFY:SVG_SLOT sentinel');
@@ -152,6 +164,9 @@ export function applyTemplate(template, {
   // becomes mandatory only for the opt-in evidence path.
   if (sourceEvidence && !template.includes(SOURCE_EVIDENCE_PLACEHOLDER)) {
     throw new Error(`applyTemplate: repository evidence requires placeholder ${JSON.stringify(SOURCE_EVIDENCE_PLACEHOLDER)}`);
+  }
+  if (subarchitectureTemplates && !SUBARCHITECTURES_SLOT_RE.test(template)) {
+    throw new Error('applyTemplate: subarchitectures require ARCHIFY:SUBARCHITECTURES_SLOT sentinel');
   }
   // Function replacers: a literal `$&`, `$'`, `$\`` or `$$` in titles, labels,
   // or rendered SVG must not be interpreted as a replacement pattern.
@@ -175,6 +190,9 @@ export function applyTemplate(template, {
       ? `${indent}${renderedSubtitle}${newline}`
       : '')
     .replace(SVG_SLOT_RE, () => svg)
+    .replace(SUBARCHITECTURES_SLOT_RE, () => subarchitectureTemplates
+      ? `\n${subarchitectureTemplates}`
+      : '')
     .replace(CARDS_SLOT_RE, () => cards)
     .replace(GUIDED_VIEWS_PLACEHOLDER, () => `<script id="archify-guided-views-data" type="application/json">${guidedViewsJson}</script>`)
     .replace(SOURCE_EVIDENCE_PLACEHOLDER, () => sourceEvidence

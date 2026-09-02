@@ -79,7 +79,7 @@ test('signal-flow preset reaches the page, SVG, and motion export surface', () =
   assert.match(html, /WebM unavailable in this browser/);
   assert.match(html, /Motion capture unavailable in this browser/);
   assert.match(html, /canonicalStateClean: canonicalStateClean/);
-  assert.match(html, /recordExportReceipt\('svg', blob, d\.canonicalStateClean\)/);
+  assert.match(html, /recordExportReceipt\('svg', blob, d\.canonicalStateClean, null, null, false, false, descriptor\.target\)/);
 });
 
 test('webm renders an explicit time-varying canvas scene instead of replaying one cached SVG bitmap', () => {

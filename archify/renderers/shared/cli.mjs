@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { applyTemplate, renderCards, esc } from './utils.mjs';
+import { validateArchitectureSubarchitectures } from '../architecture/subarchitecture-validation.mjs';
+import { applyTemplate, renderCards, esc, scopedSvgId } from './utils.mjs';
 import { validateSchema } from './validator.mjs';
 import { verifyRepositoryEvidence } from './repository-evidence.mjs';
 import { installRendererDiagnosticBoundary, throwDiagnosticProblems } from './diagnostics.mjs';
@@ -21,6 +22,7 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
   const inputPath = path.resolve(argv[2] || path.join(skillRoot, 'examples', defaultExample));
   const diagram = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
   validateSchema(diagramType, diagram);
+  if (diagramType === 'architecture') validateArchitectureSubarchitectures(diagram);
   validateGuidedViews(diagramType, diagram);
   validateRelationshipIds(diagramType, diagram);
   validateEngineeringProfile(diagramType, diagram);
@@ -50,7 +52,7 @@ export async function loadDiagramWithBrandMarks(options) {
 const START_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
 
 // Common CLI tail: fill the template and write the standalone HTML file.
-export function writeDiagram({ outPath, template, diagramType, meta, svg, cards, sourceEvidence = null }) {
+export function writeDiagram({ outPath, template, diagramType, meta, svg, cards, sourceEvidence = null, subarchitectureTemplates = '' }) {
   if (!START_TYPES.has(diagramType)) throw new Error(`writeDiagram: unknown diagram type ${JSON.stringify(diagramType)}`);
   const outputGuard = outputPathGuards.get(outPath);
   if (outputGuard) resolveOutputPath(outputGuard);
@@ -64,6 +66,7 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
     visualPreset: meta.visual_preset || 'classic',
     guidedViews: meta.views || [],
     sourceEvidence,
+    subarchitectureTemplates,
   }));
   outputPathGuards.delete(outPath);
   console.log(outPath);
@@ -146,7 +149,7 @@ export function validateGuidedViews(diagramType, diagram) {
 }
 
 // Accessible name for the generated diagram SVG.
-export function svgRootAttrs(meta) {
+export function svgRootAttrs(meta, options = {}) {
   const animation = meta.animation === 'trace' ? ' data-animation="trace"' : '';
   const preset = ` data-preset="${esc(meta.visual_preset || 'classic')}"`;
   const engineeringProfile = meta.engineering_profile
@@ -155,15 +158,15 @@ export function svgRootAttrs(meta) {
   const requestedProfile = process.env.ARCHIFY_QUALITY_PROFILE || meta.quality_profile;
   const qualityProfile = requestedProfile === 'showcase' ? 'showcase' : 'standard';
   const advisory = requestedProfile ? '' : ' data-quality-gates="advisory"';
-  return `role="img" lang="${esc(resolveLocale(meta.locale))}" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset}${engineeringProfile} data-quality-profile="${esc(qualityProfile)}"${advisory}`;
+  return `role="img" lang="${esc(resolveLocale(meta.locale))}" aria-labelledby="${scopedSvgId('archify-diagram-title', options)} ${scopedSvgId('archify-diagram-description', options)}"${animation}${preset}${engineeringProfile} data-quality-profile="${esc(qualityProfile)}"${advisory}`;
 }
 
 // Keep the accessible name inside the SVG so it survives standalone SVG
 // export and embedding. The fixed IDs are deterministic because an Archify
 // artifact intentionally contains one primary diagram SVG.
-export function svgAccessibleText(meta, kind) {
+export function svgAccessibleText(meta, kind, options = {}) {
   const description = meta.subtitle || translateMessage(meta.locale, `diagram.description.${kind}`);
-  return `        <title id="archify-diagram-title">${esc(meta.title)}</title>\n        <desc id="archify-diagram-description">${esc(description)}</desc>`;
+  return `        <title id="${scopedSvgId('archify-diagram-title', options)}">${esc(meta.title)}</title>\n        <desc id="${scopedSvgId('archify-diagram-description', options)}">${esc(description)}</desc>`;
 }
 
 export function animateAttr(meta, kind, step) {
@@ -178,7 +181,7 @@ export function animateAttr(meta, kind, step) {
 // Stable semantic hooks for the standalone HTML explorer. IDs already pass
 // the schema's conservative identifier pattern; escape again at the markup
 // boundary so these helpers remain safe if that contract expands later.
-export function focusNodeAttrs(id, label, metadata = {}, locale) {
+export function focusNodeAttrs(id, label, metadata = {}, locale, options = {}) {
   const optional = [
     ['data-node-kind', metadata.kind],
     ['data-node-sublabel', metadata.sublabel],
@@ -197,7 +200,7 @@ export function focusNodeAttrs(id, label, metadata = {}, locale) {
   const aria = detail
     ? translateMessage(locale, 'node.focus.detail', { label, detail })
     : translateMessage(locale, 'node.focus', { label });
-  return `id="node-${esc(id)}" data-node-id="${esc(id)}" data-node-label="${esc(label)}" tabindex="0" role="button" aria-label="${esc(aria)}" aria-pressed="false"${optional}`;
+  return `id="${scopedSvgId(`node-${id}`, options)}" data-node-id="${esc(id)}" data-node-label="${esc(label)}" tabindex="0" role="button" aria-label="${esc(aria)}" aria-pressed="false"${optional}`;
 }
 
 // Native SVG titles preserve a compact details-on-demand fallback when the

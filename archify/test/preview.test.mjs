@@ -132,7 +132,7 @@ test('preview: invalid candidates preserve the last verified artifact and repair
     fs.writeFileSync(input, JSON.stringify(source));
     const schemaFailed = await waitForState(preview.url, (state) => state.status === 'needs-fix' && state.generation === 4, 'schema failure did not report render stage');
     assert.equal(schemaFailed.failure.stage, 'render');
-    assert.match(schemaFailed.failure.message, /\/components\/0.*additional properties/i);
+    assert.match(schemaFailed.failure.message, /\/components\/0.*(?:additional|unevaluated) properties/i);
     assert.doesNotMatch(schemaFailed.failure.message, /file:\/\/|\/Users\/|node:internal/);
     assert.equal(sha256(output), firstSha, 'schema failure replaced the last verified output');
 

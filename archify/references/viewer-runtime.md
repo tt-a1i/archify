@@ -28,6 +28,8 @@ Story transitions classify only the exact relationship between adjacent authored
 
 The export menu can copy/download full-diagram PNG, download JPEG/WebP, download a dual-theme SVG, and record a trace-enabled WebM. Viewer state—Guide, Lens, finder, focus, route, story, camera, radar, presentation, motion ownership, and temporary overlays—must be removed from canonical export.
 
+When one authored subarchitecture is open, the menu reveals an explicit **Main architecture / Current subarchitecture** target selector. The main architecture remains the default. The subarchitecture target reuses the same canonical cleanup and PNG/JPEG/WebP/SVG/clipboard/Share Card paths, but its source is exactly the one mounted child SVG: the parent graph, drawer, Semantic Passport, and temporary local focus or Intent Trace state never enter the result. Route/Reach Share Cards and trace WebM remain parent-only because their snapshots belong to the canonical parent runtime. Closing or invalidating the child resets the target to main and fails closed rather than exporting mixed content.
+
 ### Share Card
 
 The optional 1200×630 Share Card PNG is for README, release, social, or launch previews. It uses the current theme and visual preset, contains the complete canonical diagram without cropping, and never claims validation. Copy Share Card reuses the same canonical PNG when clipboard image writes are supported.

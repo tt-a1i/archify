@@ -56,7 +56,7 @@ test('Share Card uses contain-only canonical geometry with fixed safe areas', ()
   assert.match(html, /throw exportError\('viewer\.export\.error\.toBlobUnavailable'/);
   assert.match(html, /img\.onload = function \(\) \{\s*try \{/);
   assert.match(html, /function rasterizeShareCard\(options\)[\s\S]*?if \(!options\.variant\) return renderShareCard\(\);/);
-  assert.match(html, /function renderShareCard\(options\)[\s\S]*?serializeSvg\(sourceScale, \{ routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot \}\)/);
+  assert.match(html, /function renderShareCard\(options\)[\s\S]*?sourceSvg: svg,[\s\S]*?routeSnapshot: routeSnapshot,[\s\S]*?reachSnapshot: reachSnapshot/);
   assert.match(html, /fitCanvasText\(ctx, title, [^)]+\)/);
   assert.match(html, /ARCHIFY ·/);
   assert.doesNotMatch(svgBlock(html), /share-card|Share Card|ARCHIFY ·/);
@@ -64,7 +64,7 @@ test('Share Card uses contain-only canonical geometry with fixed safe areas', ()
 
 test('Share Card is a canonical PNG with exact receipt dimensions and filename', () => {
   const html = render('workflow');
-  assert.match(html, /recordExportReceipt\('share-card', blob, true, \{ width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT \}\)/);
+  assert.match(html, /recordExportReceipt\('share-card', blob, true, \{ width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT \}, null, false, false, descriptor\.target\)/);
   assert.match(html, /base \+ '-share-card\.png'/);
   assert.match(html, /data-last-export-width/);
   assert.match(html, /data-last-export-height/);
@@ -76,12 +76,12 @@ test('Copy Share Card reuses one canonical card blob and writes only PNG to the 
   const html = render('architecture');
   assert.match(html, /data-action="copy-share-card"/);
   assert.match(html, /Copy Share Card[\s\S]*?<small class="hint">PNG to clipboard<\/small>/);
-  assert.match(html, /function runCopyShareCard\(\)[\s\S]*?var blobPromise = rasterizeShareCard\(\);/);
+  assert.match(html, /function runCopyShareCard\(\)[\s\S]*?var blobPromise = renderShareCard\(\{[\s\S]*?sourceSvg: descriptor\.sourceSvg/);
   const copyBlock = html.match(/function runCopyShareCard\(\) \{[\s\S]*?\n      \}/)?.[0] || '';
-  assert.equal((copyBlock.match(/rasterizeShareCard\(\)/g) || []).length, 1);
+  assert.equal((copyBlock.match(/renderShareCard\(\{/g) || []).length, 1);
   assert.match(copyBlock, /writePngToClipboard\(blobPromise\)/);
   assert.match(html, /new ClipboardItem\(\{ 'image\/png': blobPromise \}\)/);
-  assert.match(copyBlock, /recordExportReceipt\('share-card', blob, true, \{ width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT \}\)/);
+  assert.match(copyBlock, /recordExportReceipt\('share-card', blob, true, \{ width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT \}, null, false, false, descriptor\.target\)/);
   assert.match(copyBlock, /toast\(viewerText\('viewer\.export\.copiedShare'\)\)/);
   assert.match(html, /copyShareCard: runCopyShareCard/);
 });
@@ -98,7 +98,7 @@ test('Copy Share Card fails closed when image clipboard writing is unavailable',
 
 test('ordinary Copy PNG keeps its existing full-diagram raster path', () => {
   const html = render('sequence');
-  assert.match(html, /function runCopy\(\)[\s\S]*?var blobPromise = rasterize\('png'\);/);
+  assert.match(html, /function runCopy\(\)[\s\S]*?var blobPromise = rasterize\('png', \{ sourceSvg: descriptor\.sourceSvg \}\);/);
   assert.match(html, /runCopy\(\)[\s\S]*?writePngToClipboard\(blobPromise\)/);
   assert.doesNotMatch(svgBlock(html), /copy-share-card|Copy Share Card/);
 });
@@ -108,7 +108,7 @@ test('Share Card stays viewer-only and reuses export cleanup instead of source s
   assert.match(html, /html\[data-embed="true"\] \.toolbar/);
   assert.match(html, /@media print[\s\S]*?\.toolbar/);
   assert.match(html, /function rasterizeShareCard\(options\)[\s\S]*?if \(!options\.variant\) return renderShareCard\(\);/);
-  assert.match(html, /function renderShareCard\(options\)[\s\S]*?serializeSvg\(sourceScale, \{ routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot \}\)/);
+  assert.match(html, /function renderShareCard\(options\)[\s\S]*?sourceSvg: svg,[\s\S]*?routeSnapshot: routeSnapshot,[\s\S]*?reachSnapshot: reachSnapshot/);
   assert.match(html, /if \(!data\.canonicalStateClean\) return Promise\.reject\(exportError\('viewer\.export\.error\.viewerState'\)\);/);
   assert.match(html, /canonicalStateClean/);
   assert.doesNotMatch(svgBlock(html), /data-last-export-|data-format="share-card"/);

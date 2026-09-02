@@ -153,6 +153,36 @@ Use one left-to-right spine with short vertical branches. Prefer 6–12 primary 
 
 Grid placement is preferred when the schema supports it. Free positions are appropriate for a bounded exception, not for prose-level coordinate planning. Keep external actors outside the system boundary when that is factually true.
 
+A top-level component may optionally own one authored `subarchitecture`. This is
+an exact one-level drill-down, not a recursive graph: it requires a title and
+1–12 local components, may define its own grid layout, boundaries, and
+connections, and uses the same seven component types as the parent graph. Local
+component IDs must be unique within their parent scope (the same local ID may be
+reused under a different parent). Every local connection endpoint and boundary
+member must resolve inside that same scope; parent-to-child, child-to-parent, and
+child-to-sibling-scope relationships are invalid. Local components cannot own
+another `subarchitecture`. Use
+[`examples/transformer-layer.architecture.json`](../examples/transformer-layer.architecture.json)
+as the field-shape reference.
+
+Adding this field is an append-only operation on an existing parent design.
+Preserve the parent's complete component, boundary, connection, card, and
+geometry collections byte-for-byte whenever the source already exists. Do not
+delete a parent node, change its role, or move it into the child graph to make
+room for the drill-down. A local node may repeat implementation detail already
+summarized at parent level; that duplication is intentional because the two
+graphs answer questions at different scopes.
+
+The drill-down is a Viewer inspection surface only. Print and embed continue
+to use the canonical parent SVG. Exports default to the main architecture; when
+a child graph is open, an explicit current-subarchitecture target may export
+the exact mounted child graph through the canonical export cleanup path. There
+is no combined parent-and-child export contract, and Route, Reachability, and
+WebM remain parent-only. On the ordinary Viewer surface, focusing the parent
+component behaves exactly as before and exposes an explicit internals action in
+its existing Semantic Passport. The drill-down must not add a normal-flow card
+or otherwise change the initial parent reader width.
+
 ### Workflow
 
 Lanes express responsibility or phase. Columns `0..5` express logical

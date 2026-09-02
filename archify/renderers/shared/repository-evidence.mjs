@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { iterateArchitectureComponents } from './architecture-components.mjs';
 import { throwDiagnosticError } from './diagnostics.mjs';
 
 const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
@@ -80,8 +81,11 @@ function sourceLineCount(content) {
 
 export function hasRepositoryEvidence(diagramType, diagram) {
   if (diagramType !== 'architecture') return false;
-  const components = Array.isArray(diagram?.components) ? diagram.components : [];
-  return Boolean(diagram?.meta?.repository) || components.some((component) => Array.isArray(component?.sources) && component.sources.length);
+  if (diagram?.meta?.repository) return true;
+  for (const { component } of iterateArchitectureComponents(diagram)) {
+    if (Array.isArray(component?.sources) && component.sources.length) return true;
+  }
+  return false;
 }
 
 export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
@@ -157,13 +161,18 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   }
 
   const nodes = Object.create(null);
+  const subgraphs = Object.create(null);
   let referenceCount = 0;
-  const components = Array.isArray(diagram.components) ? diagram.components : [];
-  for (const [componentIndex, component] of components.entries()) {
+  for (const {
+    component,
+    parentId,
+    path: componentPath,
+  } of iterateArchitectureComponents(diagram)) {
     if (!Array.isArray(component.sources) || component.sources.length === 0) continue;
     const verified = [];
     for (const [sourceIndex, authored] of component.sources.entries()) {
-      const where = `/components/${componentIndex}/sources/${sourceIndex}/path`;
+      const sourcePath = `${componentPath}/sources/${sourceIndex}`;
+      const where = `${sourcePath}/path`;
       const source = {
         path: verifiedSourcePath(authored.path, where),
         ...(authored.line ? { line: authored.line } : {}),
@@ -171,14 +180,22 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
         ...(authored.label ? { label: authored.label } : {}),
       };
       if (source.endLine && !source.line) {
-        evidenceFailure('repository-evidence/line-required', `/components/${componentIndex}/sources/${sourceIndex}/end_line requires line.`, {
-          subject: { path: `/components/${componentIndex}/sources/${sourceIndex}/end_line`, componentId: component.id },
+        evidenceFailure('repository-evidence/line-required', `${sourcePath}/end_line requires line.`, {
+          subject: {
+            path: `${sourcePath}/end_line`,
+            componentId: component.id,
+            ...(parentId != null ? { parentId } : {}),
+          },
           supportedFixes: ['add line or remove end_line'],
         });
       }
       if (source.endLine && source.endLine < source.line) {
-        evidenceFailure('repository-evidence/line-range-invalid', `/components/${componentIndex}/sources/${sourceIndex}/end_line must be greater than or equal to line.`, {
-          subject: { path: `/components/${componentIndex}/sources/${sourceIndex}`, componentId: component.id },
+        evidenceFailure('repository-evidence/line-range-invalid', `${sourcePath}/end_line must be greater than or equal to line.`, {
+          subject: {
+            path: sourcePath,
+            componentId: component.id,
+            ...(parentId != null ? { parentId } : {}),
+          },
           evidence: { line: source.line, endLine: source.endLine },
           supportedFixes: ['use an end_line greater than or equal to line'],
         });
@@ -187,7 +204,11 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       const type = runGit(realRoot, ['cat-file', '-t', object]);
       if (type.status !== 0 || type.stdout.trim() !== 'blob') {
         evidenceFailure('repository-evidence/file-missing', `${where} does not identify a file at revision ${revision}.`, {
-          subject: { path: where, componentId: component.id },
+          subject: {
+            path: where,
+            componentId: component.id,
+            ...(parentId != null ? { parentId } : {}),
+          },
           evidence: { sourcePath: source.path, revision },
           supportedFixes: ['use a file path that exists at the pinned revision'],
         });
@@ -195,15 +216,23 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       if (source.line) {
         const content = runGit(realRoot, ['show', object]);
         if (content.status !== 0) evidenceFailure('repository-evidence/file-unreadable', `${where} could not be read at revision ${revision}.`, {
-          subject: { path: where, componentId: component.id },
+          subject: {
+            path: where,
+            componentId: component.id,
+            ...(parentId != null ? { parentId } : {}),
+          },
           evidence: { sourcePath: source.path, revision },
           supportedFixes: ['verify the pinned blob is readable in the local checkout'],
         });
         const lineCount = sourceLineCount(content.stdout);
         const requestedLine = source.endLine || source.line;
         if (requestedLine > lineCount) {
-          evidenceFailure('repository-evidence/line-out-of-range', `/components/${componentIndex}/sources/${sourceIndex} requests line ${requestedLine}, but ${source.path} has ${lineCount} lines at revision ${revision}.`, {
-            subject: { path: `/components/${componentIndex}/sources/${sourceIndex}`, componentId: component.id },
+          evidenceFailure('repository-evidence/line-out-of-range', `${sourcePath} requests line ${requestedLine}, but ${source.path} has ${lineCount} lines at revision ${revision}.`, {
+            subject: {
+              path: sourcePath,
+              componentId: component.id,
+              ...(parentId != null ? { parentId } : {}),
+            },
             evidence: { sourcePath: source.path, requestedLine, lineCount, revision },
             supportedFixes: ['use a line range that exists at the pinned revision'],
           });
@@ -212,7 +241,13 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       verified.push({ ...source, href: sourceHref(repository.url.replace(/\.git\/?$/i, '').replace(/\/$/, ''), revision, source) });
       referenceCount += 1;
     }
-    nodes[component.id] = verified;
+    if (parentId == null) {
+      nodes[component.id] = verified;
+    } else {
+      const subgraph = subgraphs[parentId] || { nodes: Object.create(null) };
+      subgraph.nodes[component.id] = verified;
+      subgraphs[parentId] = subgraph;
+    }
   }
   if (referenceCount === 0) {
     evidenceFailure('repository-evidence/source-required', '/meta/repository requires at least one component source reference.', {
@@ -231,5 +266,6 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
     },
     referenceCount,
     nodes,
+    ...(Object.keys(subgraphs).length ? { subgraphs } : {}),
   };
 }

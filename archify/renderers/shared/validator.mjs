@@ -43,18 +43,24 @@ export function validateSchema(diagramType, data) {
   if (!validate(data)) {
     const diagnostics = validate.errors.map((error) => {
       const annotated = annotatedPath(error.instancePath, data);
+      const diagnosticKeyword = error.keyword === 'unevaluatedProperties'
+        ? 'additionalProperties'
+        : error.keyword;
       const subject = {
         diagramType,
         path: annotated.path,
         ...(annotated.identity != null ? { identity: String(annotated.identity) } : {}),
       };
+      const unsupportedProperty = error.params?.additionalProperty
+        ?? error.params?.unevaluatedProperty;
       const evidence = {
-        keyword: error.keyword,
+        keyword: diagnosticKeyword,
         expected: error.schema,
         ...error.params,
+        ...(unsupportedProperty != null ? { additionalProperty: unsupportedProperty } : {}),
       };
       const supportedFixes = {
-        additionalProperties: [`remove unsupported property ${JSON.stringify(error.params?.additionalProperty)}`],
+        additionalProperties: [`remove unsupported property ${JSON.stringify(unsupportedProperty)}`],
         required: [`add required property ${JSON.stringify(error.params?.missingProperty)}`],
         type: [`use ${JSON.stringify(error.params?.type)} at ${annotated.path}`],
         enum: [`choose one of ${JSON.stringify(error.params?.allowedValues || [])}`],
@@ -65,12 +71,12 @@ export function validateSchema(diagramType, data) {
         maxItems: [`provide at most ${error.params?.limit} item(s)`],
         minLength: [`provide at least ${error.params?.limit} character(s)`],
         maxLength: [`provide at most ${error.params?.limit} character(s)`],
-      }[error.keyword] || [];
+      }[diagnosticKeyword] || [];
       const detail = error.params && Object.keys(error.params).length
         ? ` ${JSON.stringify(error.params)}`
         : '';
       return {
-        code: `schema/${error.keyword}`,
+        code: `schema/${diagnosticKeyword}`,
         severity: 'error',
         message: `${annotatePath(error.instancePath, data)} ${error.message}${detail}`,
         subject,

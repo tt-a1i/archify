@@ -8,15 +8,15 @@ import {
   recommendScenario,
 } from '../recipes/scenarios.mjs';
 
-test('guide: exposes 11 unique recipes across every diagram type', () => {
-  assert.equal(SCENARIO_RECIPES.length, 11);
-  assert.equal(new Set(SCENARIO_RECIPES.map((recipe) => recipe.id)).size, 11);
+test('guide: exposes 12 unique recipes across every diagram type', () => {
+  assert.equal(SCENARIO_RECIPES.length, 12);
+  assert.equal(new Set(SCENARIO_RECIPES.map((recipe) => recipe.id)).size, 12);
   assert.deepEqual(
     Object.fromEntries(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'].map((type) => [
       type,
       SCENARIO_RECIPES.filter((recipe) => recipe.type === type).length,
     ])),
-    { architecture: 2, workflow: 3, sequence: 2, dataflow: 2, lifecycle: 2 },
+    { architecture: 3, workflow: 3, sequence: 2, dataflow: 2, lifecycle: 2 },
   );
 });
 
@@ -71,7 +71,7 @@ test('guide: exact ids win and unknown questions fall back honestly', () => {
 
 test('guide: public data includes both languages and weighted signals', () => {
   const data = publicGuideData();
-  assert.equal(data.length, 11);
+  assert.equal(data.length, 12);
   for (const recipe of data) {
     assert.ok(recipe.en.title);
     assert.ok(recipe.zh.title);

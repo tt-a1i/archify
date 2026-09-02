@@ -3,6 +3,7 @@ import { lookup } from 'node:dns/promises';
 import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
+import { iterateArchitectureComponents } from './architecture-components.mjs';
 import { BRAND_MARKS } from './generated-brand-marks.mjs';
 import { throwDiagnosticError } from './diagnostics.mjs';
 import { esc, textUnits } from './utils.mjs';
@@ -454,20 +455,41 @@ async function mapConcurrent(values, limit, visit) {
 export async function prepareDiagramBrandMarks(diagramType, diagram) {
   const collection = COLLECTIONS[diagramType];
   const nodes = collection && Array.isArray(diagram[collection]) ? diagram[collection] : [];
-  const unknown = [];
+  const entries = diagramType === 'architecture'
+    ? [...iterateArchitectureComponents(diagram)]
+    : nodes.map((component, index) => ({
+      component,
+      parentId: null,
+      path: `/${collection}/${index}`,
+      scope: 'main',
+    }));
+  const unknown = new Array(entries.length);
   const remoteByUrl = new Map();
   const deadline = Date.now() + captureTimeoutMilliseconds();
-  await mapConcurrent(nodes, MAX_CAPTURE_CONCURRENCY, async (node, index) => {
+  await mapConcurrent(entries, MAX_CAPTURE_CONCURRENCY, async (entry, index) => {
+    const {
+      component: node,
+      parentId,
+      path,
+    } = entry;
     if (!node.brand) return;
+    const brandPath = `${path}/brand`;
+    const recordUnknown = (message) => {
+      unknown[index] = {
+        message,
+        path: brandPath,
+        parentId,
+      };
+    };
     if (typeof node.brand === 'object') {
       const url = asUrl(node.brand.url);
       const resolved = url ? await remoteBrand(url.href, remoteByUrl, deadline) : null;
       if (!resolved || resolved.status !== 'captured') {
-        unknown.push(`/${collection}/${index}/brand could not reproduce the pinned capture: ${resolved?.reason || 'invalid URL'}`);
+        recordUnknown(`${brandPath} could not reproduce the pinned capture: ${resolved?.reason || 'invalid URL'}`);
         return;
       }
       if (resolved.sha256 !== node.brand.sha256) {
-        unknown.push(`/${collection}/${index}/brand digest changed: expected ${node.brand.sha256}, received ${resolved.sha256}`);
+        recordUnknown(`${brandPath} digest changed: expected ${node.brand.sha256}, received ${resolved.sha256}`);
         return;
       }
       node[RESOLVED_MARK] = resolved;
@@ -483,19 +505,29 @@ export async function prepareDiagramBrandMarks(diagramType, diagram) {
     }
     const url = asUrl(node.brand);
     if (url) {
-      unknown.push(`/${collection}/${index}/brand ${JSON.stringify(node.brand)} is an unpinned URL; capture it first with \`archify brands capture ${url.href} --json\``);
+      recordUnknown(`${brandPath} ${JSON.stringify(node.brand)} is an unpinned URL; capture it first with \`archify brands capture ${url.href} --json\``);
       return;
     }
-    unknown.push(`/${collection}/${index}/brand ${JSON.stringify(node.brand)} is not a built-in brand; closest IDs: ${suggestions(node.brand).join(', ')}`);
+    recordUnknown(`${brandPath} ${JSON.stringify(node.brand)} is not a built-in brand; closest IDs: ${suggestions(node.brand).join(', ')}`);
   });
-  if (unknown.length) {
-    throwDiagnosticError(`Brand mark validation failed:\n- ${unknown.join('\n- ')}`, unknown.map((message) => ({
+  const problems = unknown.filter(Boolean);
+  if (problems.length) {
+    throwDiagnosticError(`Brand mark validation failed:\n- ${problems.map(({ message }) => message).join('\n- ')}`, problems.map(({
+      message,
+      path,
+      parentId,
+    }) => ({
       code: message.includes('is an unpinned URL') ? 'brand/unpinned-url'
         : (message.includes('digest changed') ? 'brand/digest-mismatch'
           : (message.includes('could not reproduce') ? 'brand/capture-unavailable' : 'brand/unknown')),
       severity: 'error',
       message,
-      subject: { diagramType, collection },
+      subject: {
+        diagramType,
+        collection,
+        path,
+        ...(parentId != null ? { parentId } : {}),
+      },
       evidence: {},
       supportedFixes: message.includes('is an unpinned URL')
         ? ['run `archify brands capture <url> --json` and author the returned digest-pinned brand object']

@@ -63,8 +63,12 @@ function addCheck(name, ok, details = []) {
   checks.push({ name, ok, details });
 }
 
-const svgMatches = [...html.matchAll(/<svg\b[\s\S]*?<\/svg>/gi)];
-addCheck('single_svg', svgMatches.length === 1, [`found ${svgMatches.length} <svg> block(s)`]);
+const htmlWithoutSubarchitectures = html.replace(
+  /<template\b[^>]*\bdata-subarchitecture-parent="[^"]+"[^>]*>[\s\S]*?<\/template>/gi,
+  '',
+);
+const svgMatches = [...htmlWithoutSubarchitectures.matchAll(/<svg\b[\s\S]*?<\/svg>/gi)];
+addCheck('single_svg', svgMatches.length === 1, [`found ${svgMatches.length} canonical <svg> block(s)`]);
 
 if (svgMatches.length === 1) {
   const svg = svgMatches[0][0];
