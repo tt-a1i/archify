@@ -7,7 +7,7 @@ import { installRendererDiagnosticBoundary, throwDiagnosticProblems } from './di
 import { validateEngineeringProfile } from './engineering-profiles.mjs';
 import { resolveOutputPath } from './output-path.mjs';
 import { prepareDiagramBrandMarks } from './brand-marks.mjs';
-import { resolveLocale, translateMessage } from './i18n.mjs';
+import { localeLanguageTag, resolveLocale, translateMessage } from './i18n.mjs';
 
 installRendererDiagnosticBoundary();
 
@@ -155,7 +155,7 @@ export function svgRootAttrs(meta) {
   const requestedProfile = process.env.ARCHIFY_QUALITY_PROFILE || meta.quality_profile;
   const qualityProfile = requestedProfile === 'showcase' ? 'showcase' : 'standard';
   const advisory = requestedProfile ? '' : ' data-quality-gates="advisory"';
-  return `role="img" lang="${esc(resolveLocale(meta.locale))}" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset}${engineeringProfile} data-quality-profile="${esc(qualityProfile)}"${advisory}`;
+  return `role="img" lang="${esc(localeLanguageTag(meta.locale))}" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset}${engineeringProfile} data-quality-profile="${esc(qualityProfile)}"${advisory}`;
 }
 
 // Keep the accessible name inside the SVG so it survives standalone SVG

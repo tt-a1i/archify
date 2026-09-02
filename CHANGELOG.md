@@ -6,6 +6,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
+### Added
+- **Portuguese Viewer locale.** All five renderers accept `meta.locale: "pt"`, localizing renderer-owned Viewer UI, accessibility copy, default legends, and document titles into European Portuguese without translating authored content. The locale identifier stays `pt` while the artifact publishes `<html lang="pt-PT">` and the matching SVG `lang`, so the stated variety matches the shipped wording. `en` and `zh-CN` behavior, omitted-locale English fallback, and rejection of unsupported locale values such as `pt-PT` are unchanged.
+
 ### Fixed
 - **License provenance in distributions.** Source and packaged Skill distributions retain Cocoon AI's exact MIT copyright notice, package staging and smoke tests fail closed when the notice or LICENSE is missing or altered, and the deterministic ZIP carries the same LICENSE bytes as the repository.
 - **Third-party mark notices in distributions.** Source and packaged Skill distributions now identify the pinned Simple Icons collection, disclose all individual icon licenses recorded by that version, preserve source and brand-guideline links, and state that Archify's MIT license does not replace third-party copyright or trademark terms. Package staging and smoke tests fail closed when the notice is missing or altered.
