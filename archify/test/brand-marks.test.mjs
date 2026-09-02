@@ -9,6 +9,10 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { BRAND_MARKS } from '../renderers/shared/generated-brand-marks.mjs';
 import { isPrivateBrandAddress, prepareDiagramBrandMarks } from '../renderers/shared/brand-marks.mjs';
+import {
+  THIRD_PARTY_NOTICE_DISCLOSURE_COUNT,
+  validateThirdPartyNotices,
+} from '../../scripts/third-party-notices-contract.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, '..');
@@ -21,6 +25,25 @@ const cases = {
   dataflow: ['product-analytics.dataflow.json', 'nodes'],
   lifecycle: ['agent-run.lifecycle.json', 'states'],
 };
+
+test('third-party notices cover every recorded individual mark license', () => {
+  const notices = fs.readFileSync(path.join(skillRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
+  const licensedMarks = BRAND_MARKS.filter((mark) => mark.provenance?.license);
+
+  assert.equal(THIRD_PARTY_NOTICE_DISCLOSURE_COUNT, 34, 'notice contract changed without review');
+  assert.deepEqual(validateThirdPartyNotices(notices), { ok: true, missing: [] });
+  assert.equal(licensedMarks.length, 8, 'pinned Simple Icons license inventory changed');
+  for (const mark of licensedMarks) {
+    assert.match(notices, new RegExp(`\\| ${mark.title.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')} \\|`));
+    assert.ok(notices.includes(mark.provenance.source), `${mark.id} source must be disclosed`);
+    assert.ok(notices.includes(mark.provenance.license.type), `${mark.id} license must be disclosed`);
+  }
+  assert.match(notices, /OpenAI brand guidelines/);
+  assert.match(notices, /does not state or imply endorsement by OpenAI/);
+  assert.match(notices, /does not imply sponsorship, endorsement, partnership/);
+  assert.match(notices, /commercial, promotional, or redistributive use/);
+  assert.match(notices, /does not grant rights\s+that Archify does not hold/);
+});
 
 function writeFixture(type, name, brand, customize) {
   const [example, collection] = cases[type];

@@ -9,6 +9,10 @@ import { fileURLToPath } from 'node:url';
 import { stageCleanSkill } from '../../scripts/stage-clean-skill.mjs';
 
 const stagerPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../scripts/stage-clean-skill.mjs');
+const canonicalNotices = fs.readFileSync(
+  path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../THIRD_PARTY_NOTICES.md'),
+  'utf8',
+);
 
 function git(root, args) {
   const result = spawnSync('git', args, { cwd: root, encoding: 'utf8' });
@@ -25,7 +29,9 @@ function write(root, relative, content, mode = null) {
 
 function repositoryFixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-clean-stage-'));
+  write(root, 'THIRD_PARTY_NOTICES.md', canonicalNotices);
   write(root, 'archify/LICENSE', 'MIT License\n');
+  write(root, 'archify/THIRD_PARTY_NOTICES.md', canonicalNotices);
   write(root, 'archify/package.json', JSON.stringify({
     name: 'archify-fixture',
     scripts: { test: 'node --test' },
@@ -38,8 +44,48 @@ function repositoryFixture() {
   write(root, 'archify/renderers/shared/generated-validators.mjs', 'export {};\n');
   write(root, 'archify/test/repository-only.test.mjs', 'throw new Error();\n');
   git(root, ['init']);
+  git(root, ['add', 'THIRD_PARTY_NOTICES.md']);
   return root;
 }
+
+test('clean staging rejects a packaged notice that diverges from the repository notice', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  try {
+    git(root, ['add', '.']);
+    fs.writeFileSync(
+      path.join(root, 'archify', 'THIRD_PARTY_NOTICES.md'),
+      canonicalNotices.replace('Simple Icons 16.28.0', 'Simple Icons 16.28.0 modified'),
+    );
+
+    assert.throws(
+      () => stageCleanSkill({ repoRoot: root, destination }),
+      /must byte-match the repository notice/,
+    );
+    assert.equal(fs.existsSync(destination), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging rejects byte-identical but incomplete repository and packaged notices', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  try {
+    const incomplete = canonicalNotices.replace(/## OpenAI mark[\s\S]*?## No additional rights granted/, '## No additional rights granted');
+    fs.writeFileSync(path.join(root, 'THIRD_PARTY_NOTICES.md'), incomplete);
+    fs.writeFileSync(path.join(root, 'archify', 'THIRD_PARTY_NOTICES.md'), incomplete);
+    git(root, ['add', '.']);
+
+    assert.throws(
+      () => stageCleanSkill({ repoRoot: root, destination }),
+      /repository THIRD_PARTY_NOTICES\.md is incomplete; missing required disclosure: .*OpenAI/,
+    );
+    assert.equal(fs.existsSync(destination), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test('clean staging preserves index modes and strips repository-only package metadata', () => {
   const root = repositoryFixture();

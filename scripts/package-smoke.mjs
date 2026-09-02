@@ -6,8 +6,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { assertThirdPartyNotices } from './third-party-notices-contract.mjs';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
+const noticeComparisonRoot = path.resolve(
+  process.env.ARCHIFY_PACKAGE_SMOKE_NOTICE_ROOT || repoRoot,
+);
 const defaultPackageRoot = process.env.RUNNER_TEMP
   ? path.join(process.env.RUNNER_TEMP, 'archify-package', 'archify')
   : path.join(repoRoot, 'archify');
@@ -74,6 +79,18 @@ try {
   }
   if (!packageLicense.includes('The above copyright notice and this permission notice shall be included in all')) {
     throw new Error('packaged LICENSE is missing the MIT notice-preservation terms');
+  }
+
+  const packageNoticesPath = path.join(skillRoot, 'THIRD_PARTY_NOTICES.md');
+  if (!fs.existsSync(packageNoticesPath)) {
+    throw new Error('packaged skill is missing THIRD_PARTY_NOTICES.md');
+  }
+  const packageNotices = fs.readFileSync(packageNoticesPath, 'utf8');
+  const repositoryNotices = fs.readFileSync(path.join(noticeComparisonRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
+  assertThirdPartyNotices(repositoryNotices, 'repository THIRD_PARTY_NOTICES.md');
+  assertThirdPartyNotices(packageNotices, 'packaged THIRD_PARTY_NOTICES.md');
+  if (packageNotices !== repositoryNotices) {
+    throw new Error('packaged THIRD_PARTY_NOTICES.md must byte-match the repository notice');
   }
 
   if (!fs.existsSync(updateChecker)) {

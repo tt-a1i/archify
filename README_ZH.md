@@ -17,9 +17,9 @@ Archify 是一套基于 Node.js 的渲染与校验系统，并以 Agent Skill �
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
-![开发版本](https://img.shields.io/badge/version-2.17.0--dev.0-0891b2?style=flat-square)
+![开发版本](https://img.shields.io/badge/version-2.17.0--dev.1-0891b2?style=flat-square)
 
-**当前开发版本：** `v2.17.0-dev.0`。详见[版本历史](CHANGELOG.md#unreleased)。
+**当前开发版本：** `v2.17.0-dev.1`。详见[版本历史](CHANGELOG.md#unreleased)。
 
 **[在线项目页](https://tt-a1i.github.io/archify/)** · **[场景选图指南](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
 

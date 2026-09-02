@@ -282,6 +282,54 @@ test('package smoke rejects a missing or modified distribution license', () => {
   }
 });
 
+test('package smoke rejects missing, modified, or incomplete third-party notices', () => {
+  const packageSmoke = path.join(repoRoot, 'scripts', 'package-smoke.mjs');
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-notices-gate-'));
+  try {
+    const staged = path.join(fixture, 'archify');
+    stageCleanSkill({ repoRoot, destination: staged });
+    const noticesPath = path.join(staged, 'THIRD_PARTY_NOTICES.md');
+
+    fs.rmSync(noticesPath);
+    let result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'missing notices must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /missing THIRD_PARTY_NOTICES\.md/);
+
+    const repositoryNotices = fs.readFileSync(path.join(repoRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
+    fs.writeFileSync(noticesPath, repositoryNotices.replace('Simple Icons 16.28.0', 'Simple Icons'));
+    result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'modified notices must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /must byte-match the repository notice/);
+
+    fs.writeFileSync(noticesPath, 'Simple Icons 16.28.0\n');
+    result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0, 'incomplete notices must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /packaged THIRD_PARTY_NOTICES\.md is incomplete/);
+
+    const comparisonRoot = path.join(fixture, 'comparison-root');
+    fs.mkdirSync(comparisonRoot);
+    fs.copyFileSync(path.join(repoRoot, 'LICENSE'), path.join(comparisonRoot, 'LICENSE'));
+    const synchronizedIncomplete = repositoryNotices
+      .replace(/## OpenAI mark[\s\S]*?## No additional rights granted/, '## No additional rights granted');
+    fs.writeFileSync(path.join(comparisonRoot, 'THIRD_PARTY_NOTICES.md'), synchronizedIncomplete);
+    fs.writeFileSync(noticesPath, synchronizedIncomplete);
+    result = spawnSync(process.execPath, [packageSmoke, staged], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        ARCHIFY_PACKAGE_SMOKE_NOTICE_ROOT: comparisonRoot,
+      },
+    });
+    assert.notEqual(result.status, 0, 'byte-identical incomplete notices must fail package smoke');
+    assert.match(
+      `${result.stdout}\n${result.stderr}`,
+      /repository THIRD_PARTY_NOTICES\.md is incomplete; missing required disclosure: .*OpenAI/,
+    );
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
 test('package smoke increments an arbitrary-precision SemVer patch without Number coercion', () => {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-bigint-version-'));
   const skillRoot = path.join(scratch, 'archify');
@@ -313,11 +361,13 @@ test('archive build refuses to silently omit required release files', () => {
   const stageSource = fs.readFileSync(path.join(repoRoot, 'scripts', 'stage-clean-skill.mjs'), 'utf8');
   assert.match(buildSource, /stage-clean-skill\.mjs/);
   assert.match(stageSource, /archify\/LICENSE/);
+  assert.match(stageSource, /archify\/THIRD_PARTY_NOTICES\.md/);
   assert.match(stageSource, /archify\/skill-release\.json/);
   assert.match(stageSource, /archify\/scripts\/check-update\.mjs/);
   assert.match(stageSource, /archify\/scripts\/update-contract\.mjs/);
   assert.match(stageSource, /git', \['ls-files', '--stage', '-z'/);
   assert.match(stageSource, /required package input is not tracked by Git/);
+  assert.match(stageSource, /required repository input is not tracked by Git/);
 });
 
 canonicalZipTest('package smoke rejects every dependency metadata field in a built package', () => {
@@ -434,6 +484,10 @@ canonicalZipTest('archive build rejects an unmerged index and preserves an exist
     fs.copyFileSync(
       path.join(repoRoot, 'scripts', 'stage-clean-skill.mjs'),
       path.join(scripts, 'stage-clean-skill.mjs'),
+    );
+    fs.copyFileSync(
+      path.join(repoRoot, 'scripts', 'third-party-notices-contract.mjs'),
+      path.join(scripts, 'third-party-notices-contract.mjs'),
     );
     fs.writeFileSync(path.join(skill, 'renderers', 'shared', 'generated-validators.mjs'), 'export default {};\n');
     fs.writeFileSync(path.join(skill, 'scripts', 'check-update.mjs'), 'export {};\n');
