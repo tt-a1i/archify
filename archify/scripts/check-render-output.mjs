@@ -13,7 +13,7 @@ import {
 const input = process.argv[2];
 
 if (!input || input === '-h' || input === '--help') {
-  console.error('Usage: node scripts/check-render-output.mjs <diagram.html>');
+  console.error('Usage: node scripts/check-render-output.mjs <diagram.html|diagram.svg>');
   process.exit(input ? 0 : 2);
 }
 
@@ -31,6 +31,7 @@ try {
 }
 
 const checks = [];
+const standaloneSvgDocument = html.trimStart().startsWith('<svg');
 let composition = {
   schemaVersion: 1,
   profile: 'standard',
@@ -268,6 +269,54 @@ if (svgMatches.length === 1) {
     );
   } else {
     addCheck('legend_clearance', true, ['no legend marker found']);
+  }
+
+  if (standaloneSvgDocument) {
+    const trimmed = html.trim();
+    const viewBox = (svgAttrs.viewBox || '').trim().split(/[\s,]+/).map(Number);
+    const width = Number(svgAttrs.width);
+    const height = Number(svgAttrs.height);
+    const styles = [...svg.matchAll(/<style\b[^>]*>[\s\S]*?<\/style>/gi)].map((match) => match[0]);
+    const style = styles.join('\n');
+    const diagramMarkup = svg.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
+    const theme = svgAttrs['data-theme'];
+    const localResource = (value) => value.startsWith('#')
+      || /^data:image\/(?:png|jpeg|webp|x-icon|vnd\.microsoft\.icon);base64,[a-z0-9+/=]+$/i.test(value);
+    const externalAttributes = [...svg.matchAll(/\b(?:href|src)="([^"]*)"/gi)]
+      .map((match) => match[1])
+      .filter((value) => value && !localResource(value));
+    const externalCss = [...svg.matchAll(/\burl\(\s*(['"]?)([^)'"\s]+)\1\s*\)/gi)]
+      .map((match) => match[2])
+      .filter((value) => value && !localResource(value));
+
+    addCheck('standalone_document',
+      trimmed.startsWith('<svg') && trimmed.endsWith('</svg>') && svgAttrs.xmlns === 'http://www.w3.org/2000/svg',
+      ['standalone SVG must contain only one namespaced root element']);
+    addCheck('intrinsic_size',
+      viewBox.length === 4 && viewBox.every(Number.isFinite) && viewBox[2] > 0 && viewBox[3] > 0
+        && width === viewBox[2] && height === viewBox[3],
+      [`viewBox=${svgAttrs.viewBox || ''}; width=${svgAttrs.width || ''}; height=${svgAttrs.height || ''}`]);
+    addCheck('standalone_background',
+      /^<svg\b[^>]*>\s*<style\b[^>]*>[\s\S]*?<\/style><rect\s+width="100%"\s+height="100%"\s+(?:class="c-bg-rect"|fill="[^"]+")\s*\/>/i.test(trimmed),
+      ['standalone SVG must paint its canonical background immediately after its style']);
+    addCheck('standalone_theme',
+      styles.length === 1 && (
+        (!theme && /@media\s*\(prefers-color-scheme:\s*light\)/.test(style)
+          && /svg\[data-theme="light"\]/.test(style)
+          && /svg\[data-theme="dark"\]/.test(style))
+        || (['light', 'dark'].includes(theme) && !/@media\s*\(prefers-color-scheme:\s*light\)/.test(style))
+      ),
+      [`theme=${theme || 'auto'}; style blocks=${styles.length}`]);
+    addCheck('standalone_resources',
+      externalAttributes.length === 0 && externalCss.length === 0 && !/<(?:html|body|script)\b/i.test(svg),
+      [...externalAttributes, ...externalCss]);
+    addCheck('standalone_accessibility',
+      svgAttrs.role === 'img' && Boolean(svgAttrs.lang) && Boolean(svgAttrs['aria-labelledby'])
+        && /<title\b[^>]*>/.test(svg) && /<desc\b[^>]*>/.test(svg),
+      ['standalone SVG requires role, language, labelled title, and description']);
+    addCheck('canonical_state',
+      !/\bdata-(?:view-scale|focus-active|reach-active|lens-active|legend-preview-active|relationship-preview-active|relationship-direct-active|intent-trace-active|route-picking|route-active|route-journey|share-route|share-reach|story-active|story-playing|story-beat|story-next|story-follow|chapter-handoff|chapter-anchor|chapter-preview)=/i.test(diagramMarkup),
+      ['standalone SVG must not retain transient Viewer state']);
   }
 }
 

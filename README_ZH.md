@@ -194,7 +194,7 @@ Archify 不是通用绘图编辑器，也不是 Mermaid 主题；它负责把技
 | **生成** | Agent 根据描述创建 Typed JSON IR。 |
 | **校验** | 内置 Validator 和布局规则检查源文件；失败时用机器可读 JSON 指出准确的局部修复。 |
 | **预览（可选）** | 仅 loopback 的桌面会话监听一个源文件，只刷新验证版本；失败时保留最后好图。 |
-| **交付** | 在目标同目录生成并检查候选；只有通过门禁的结果才原子替换目标文件，随后可选用 `--open` 打开这个确切成品。 |
+| **交付** | 在目标同目录生成并检查 HTML 或 SVG 候选；只有通过门禁的结果才原子替换目标文件，随后可选用 `--open` 打开这个确切成品。 |
 | **迭代** | Agent 修改源文件，不干扰无关结构。 |
 
 仓库常用命令：
@@ -207,7 +207,10 @@ node bin/archify.mjs guide "展示 CI/CD 检查、审批、部署和回滚"
 node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --quality showcase --json
 node bin/archify.mjs preview workflow examples/agent-tool-call.workflow.json /tmp/workflow.html --quality showcase
 node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow.html --quality showcase --open --json
+node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow.svg --format svg --theme auto --quality showcase --json
 ```
+
+HTML 仍是默认交付格式。独立 SVG 必须提供明确的 `.svg` 输出路径并使用 `--format svg`；`--theme auto` 保留 Viewer 导出的深浅双主题行为，`light` 和 `dark` 则生成固定主题文件。SVG 与 HTML 共用冻结输入、九项成品检查、输出路径防护、提交前别名复查和原子替换，并额外执行七项独立 SVG 文档检查。`archify check` 支持两种格式；`visual-check` 仍只用于交互式 HTML Viewer。
 
 `preview` 是显式启用的桌面创作模式，不是默认后台服务：它只在随机端口监听 `127.0.0.1`，只观察指定 JSON，失败时保留上一份验证输出，并通过 Ctrl-C 停止。测试或准备手动打开打印出的本地 URL 时可加 `--no-open`。生成的 HTML 不会携带 Preview Runtime。
 

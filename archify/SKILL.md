@@ -95,7 +95,14 @@ Read `references/authoring-contract.md` only when you need field enums, spacing 
 
 ## Delivery
 
-Use `validate` during repair and `deliver` once for final acceptance. Delivery freezes the exact specification bytes into a private same-directory snapshot, renders and checks that snapshot, atomically commits the HTML, and reports SHA-256 plus byte counts for both specification and artifact. This is deterministic artifact evidence; it does not exercise the Viewer in a browser.
+Use `validate` during repair and `deliver` once for final acceptance. Delivery freezes the exact specification bytes into a private same-directory snapshot, renders and checks that snapshot, atomically commits the artifact, and reports SHA-256 plus byte counts for both specification and artifact. HTML remains the default. When the user explicitly requests standalone SVG, provide an explicit `.svg` path and use one of:
+
+```bash
+node bin/archify.mjs deliver <type> <candidate.json> <output.svg> --format svg --theme auto --quality showcase --json
+node bin/archify.mjs deliver <type> <candidate.json> <output.svg> --format svg --theme light|dark --quality showcase --json
+```
+
+`auto` is the Viewer-compatible dual-theme SVG; `light` and `dark` are fixed. SVG delivery retains the complete HTML validation path, then applies the same standalone finaliser as Viewer export, runs the standalone SVG checks, rechecks output aliases, and atomically replaces the target. Its receipt adds `format`, `theme`, and `svgValidation`; the HTML receipt stays unchanged.
 
 After delivery, collect bounded desktop evidence without modifying or rerendering the trusted HTML:
 
@@ -134,4 +141,4 @@ When shell access is unavailable, hand-place architecture SVG into `assets/templ
 
 ## Output
 
-Return the checked HTML path, diagram type, validation summary, specification/artifact receipt, browser-evidence status, and truthful visual-review status. Do not claim success for a non-zero command or claim visual inspection you did not perform.
+Return the checked artifact path and format, diagram type, validation summary, specification/artifact receipt, and truthful visual-review status. For HTML, also return browser-evidence status. Do not claim success for a non-zero command or claim visual inspection you did not perform.

@@ -198,7 +198,7 @@ Archify is not a general-purpose drawing editor or a Mermaid theme. It turns tec
 | **Generate** | The agent creates typed JSON IR from your description. |
 | **Validate** | Bundled validators and layout rules check the source; failures identify the exact local repair in machine-readable JSON. |
 | **Preview (optional)** | A loopback-only desktop session watches one source and reloads only verified revisions; failures keep the last-good artifact. |
-| **Deliver** | A same-directory candidate is rendered and checked; only a passing artifact atomically replaces the target, then optional `--open` launches that exact file. |
+| **Deliver** | A same-directory HTML or SVG candidate is rendered and checked; only a passing artifact atomically replaces the target, then optional `--open` launches that exact file. |
 | **Iterate** | The agent updates the source while unrelated structure stays stable. |
 
 Useful repository commands:
@@ -211,13 +211,16 @@ node bin/archify.mjs guide "Show CI/CD checks, approval, deploy, and rollback"
 node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --quality showcase --json
 node bin/archify.mjs preview workflow examples/agent-tool-call.workflow.json /tmp/workflow.html --quality showcase
 node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow.html --quality showcase --open --json
+node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tmp/workflow.svg --format svg --theme auto --quality showcase --json
 ```
 
-`preview` is an explicit loopback-only desktop mode: it watches one JSON file on a random `127.0.0.1` port, keeps the last verified output through failures, stops with Ctrl-C, and adds no generated-HTML runtime. Use `--no-open` for tests or manual URL opening.
+HTML remains the default. Standalone SVG requires `--format svg` and an explicit `.svg` path. `--theme auto|light|dark` controls colour. Both formats use frozen input, path guards, atomic replacement, and `check`; `visual-check` is HTML-only.
 
-`deliver --open` is an opt-in one-shot handoff after commit. Opener failure preserves success; JSON remains on stdout and the absolute fallback path goes to stderr.
+`preview` runs an explicit `127.0.0.1` watcher, preserves the last verified output through failures, and stops with Ctrl-C. Use `--no-open` for tests or manual URL opening.
 
-On failure, `validate --json` and `deliver --json` emit one JSON object. Apply only each `diagnostics[]` subject's `supportedFixes`, within the Skill's two correction rounds; visual review remains separate.
+`deliver --open` opens the committed artefact; opener failure does not undo success.
+
+Machine-readable failures identify the subject and supported fixes; visual review remains separate.
 
 Settings:
 

@@ -292,6 +292,20 @@ test('capture command returns a digest-pinned brand object that renders reproduc
     assert.match(rendered.html, /data:image\/png;base64,/);
     assert.match(rendered.html, new RegExp(`data-brand-sha256="${receipt.brand.sha256}"`));
     assert.ok(!rendered.html.includes('http://127.0.0.1') || rendered.html.includes('data-node-brand-source='));
+
+    const svgOutput = path.join(tmp, 'captured-link.svg');
+    const delivered = await runCliAsync([
+      'deliver', 'architecture', input, svgOutput,
+      '--format', 'svg', '--theme', 'auto', '--quality', 'showcase', '--json',
+    ], { ARCHIFY_BRAND_ALLOW_PRIVATE: '1' });
+    assert.equal(delivered.status, 0, delivered.stderr || delivered.stdout);
+    assert.deepEqual(JSON.parse(delivered.stdout).svgValidation, { checksPassed: 16, checkCount: 16 });
+    const svg = fs.readFileSync(svgOutput, 'utf8');
+    assert.match(svg, /data-brand-status="captured"/);
+    assert.match(svg, /href="data:image\/png;base64,/);
+    assert.doesNotMatch(svg, /<(?:html|body|script)\b/i);
+    assert.equal(pageHits, 4);
+    assert.equal(iconHits, 4);
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }

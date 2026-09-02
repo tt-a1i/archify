@@ -40,6 +40,7 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   </noscript>
   <style>
+    /* ARCHIFY:SVG_EXPORT_THEME_START */
     /* ==========================================================
        THEME VARIABLES — switch by toggling [data-theme] on <html>
        ========================================================== */
@@ -347,6 +348,7 @@
       --toolbar-hover: #fffdf8;
       --toolbar-menu-bg: #fbf8f1;
     }
+    /* ARCHIFY:SVG_EXPORT_THEME_END */
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -897,6 +899,7 @@
       transition: none !important;
     }
 
+    /* ARCHIFY:SVG_EXPORT_STYLE_START */
     svg {
       width: 100%;
       min-width: min(900px, 100%);
@@ -904,6 +907,7 @@
       transform-origin: 0 0;
       transition: transform 0.18s ease;
     }
+    /* ARCHIFY:SVG_EXPORT_STYLE_END */
 
     .diagram-container.is-camera-moving svg {
       transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
@@ -3932,6 +3936,7 @@
       .guided-view-handoff { max-width: 6.5rem; }
     }
 
+    /* ARCHIFY:SVG_EXPORT_STYLE_START */
     /* ==========================================================
        SVG SEMANTIC CLASSES — use these instead of inline fill/stroke
        ========================================================== */
@@ -4787,6 +4792,7 @@
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.48; transform: scale(0.78); }
     }
+    /* ARCHIFY:SVG_EXPORT_STYLE_END */
     @media (prefers-reduced-motion: reduce) {
       html[data-preset="signal-flow"] .diagram-container::before {
         animation: none !important;
@@ -5943,6 +5949,51 @@
             edgeMatches.reduce(function (count, match) { return count + match.elements.length; }, 0);
       }
 
+      var buildStandaloneSvg = (function buildStandaloneSvg(svgMarkup, options = {}) {
+  function xmlText(value) {
+    return String(value).replace(/[&<]/g, function (character) {
+      return character === '&' ? '&amp;' : '&lt;';
+    });
+  }
+  function xmlAttribute(value) {
+    return String(value).replace(/[&"<>]/g, function (character) {
+      return { '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[character];
+    });
+  }
+
+  var rootEnd = svgMarkup.indexOf('>');
+  var closeStart = svgMarkup.lastIndexOf('</svg>');
+  if (rootEnd < 0 || closeStart <= rootEnd || !/^\s*<svg\b/.test(svgMarkup.slice(0, rootEnd + 1))) {
+    throw new Error('SVG export received malformed root markup.');
+  }
+
+  var fontFallback = [400, 500, 600, 700].map(function (weight) {
+    return "@font-face { font-family: 'JetBrains Mono'; font-weight: " + weight +
+      "; src: local('JetBrains Mono'), local('JetBrainsMono-Regular'); }";
+  }).join('\n');
+  var styleText = fontFallback + "\n" +
+    "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
+    String(options.hostStyle || '') + "\n";
+  var background;
+  if (options.theme === 'auto') {
+    styleText += ":root, svg { " + options.darkVars + " }\n" +
+      "@media (prefers-color-scheme: light) { :root, svg { " + options.lightVars + " } }\n" +
+      "svg[data-theme=\"light\"] { " + options.lightVars + " }\n" +
+      "svg[data-theme=\"dark\"] { " + options.darkVars + " }\n" +
+      "rect.c-bg-rect { fill: var(--bg); }\n";
+    background = '<rect width="100%" height="100%" class="c-bg-rect"/>';
+  } else {
+    styleText += ":root, svg { " + options.vars + " }\n";
+    background = '<rect width="100%" height="100%" fill="' +
+      xmlAttribute(options.background || '#ffffff') + '"/>';
+  }
+  styleText += String(options.extraStyle || '');
+
+  return svgMarkup.slice(0, rootEnd + 1) +
+    '<style>' + xmlText(styleText) + '</style>' + background +
+    svgMarkup.slice(rootEnd + 1);
+});
+
       function serializeSvg(scale, opts) {
         // scale: integer multiplier for intrinsic SVG pixel dimensions used by
         // the raster path. Defaults to 1 (natural size) for SVG download.
@@ -5956,6 +6007,7 @@
         // never part of a downloaded full-diagram artifact.
         clone.style.removeProperty('transform');
         clone.style.removeProperty('clip-path');
+        if (!clone.getAttribute('style')) clone.removeAttribute('style');
         clone.removeAttribute('data-view-scale');
         clone.removeAttribute('data-focus-active');
         clone.removeAttribute('data-reach-active');
@@ -6204,76 +6256,32 @@
           }
         }
 
-        // Prepend a local()-only @font-face block for each weight so that the
-        // sandboxed image-rendering context used during PNG/JPEG/WebP export
-        // can find JetBrains Mono if the user has it installed locally, and
-        // falls through cleanly to the monospace stack otherwise. The usual
-        // Google-Fonts <link> in the host document is unreachable from the
-        // serialized SVG, so url()-sourced faces would just hang.
-        var fontFallback = [400, 500, 600, 700].map(function (w) {
-          return "@font-face { font-family: 'JetBrains Mono'; font-weight: " + w +
-                 "; src: local('JetBrains Mono'), local('JetBrainsMono-Regular'); }";
-        }).join('\n');
-
-        var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-        var bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        bgRect.setAttribute('width', '100%');
-        bgRect.setAttribute('height', '100%');
-
+        var theme = autoTheme
+          ? 'auto'
+          : document.documentElement.getAttribute('data-theme') || 'dark';
+        var darkVars = resolveVars('dark');
+        var lightVars = resolveVars('light');
+        var vars = theme === 'light' ? lightVars : darkVars;
+        var background = '#ffffff';
         if (autoTheme) {
-          // Dual-theme SVG. Dark is the default (so hosts without
-          // prefers-color-scheme still render), light swaps in via media
-          // query, and svg[data-theme="..."] still lets downstream
-          // consumers force a specific theme.
-          var darkVars = resolveVars('dark');
-          var lightVars = resolveVars('light');
-
-          style.textContent =
-            fontFallback + "\n" +
-            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
-            hostStyle + "\n" +
-            ":root, svg { " + darkVars + " }\n" +
-            "@media (prefers-color-scheme: light) { :root, svg { " + lightVars + " } }\n" +
-            "svg[data-theme=\"light\"] { " + lightVars + " }\n" +
-            "svg[data-theme=\"dark\"] { " + darkVars + " }\n" +
-            "rect.c-bg-rect { fill: var(--bg); }\n";
-
-          // Don't lock the serialized SVG to the viewer's current theme.
           clone.removeAttribute('data-theme');
-          // Background follows the CSS variable, not a fixed color, so it
-          // swaps with the media query.
-          bgRect.setAttribute('class', 'c-bg-rect');
         } else {
-          // Raster path: lock to the viewer's current theme.
-          var theme = document.documentElement.getAttribute('data-theme') || 'dark';
           var themeHost = document.querySelector('[data-theme="' + theme + '"]') || document.documentElement;
           var computed = getComputedStyle(themeHost);
-          var vars = varNames.map(function (n) {
-            return n + ': ' + computed.getPropertyValue(n).trim() + ';';
-          }).join(' ');
-
-          // IMPORTANT: inject the resolved variables AFTER hostStyle,
-          // otherwise hostStyle's ":root, [data-theme=\"dark\"] { ... }" rule
-          // overrides our chosen theme via later-in-cascade equal-specificity.
-          // Keep this order.
-          style.textContent =
-            fontFallback + "\n" +
-            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
-            hostStyle + "\n" +
-            ":root, svg { " + vars + " }\n";
-
-          bgRect.setAttribute('fill', computed.getPropertyValue('--bg').trim() || '#ffffff');
+          background = computed.getPropertyValue('--bg').trim() || background;
+          clone.setAttribute('data-theme', theme);
         }
 
+        var extraStyle = '';
         if (opts.routeSnapshot) {
-          style.textContent += "\nsvg[data-share-route] [data-node-id], svg[data-share-route] [data-edge-from] { opacity: 0.18; }\n" +
+          extraStyle += "\nsvg[data-share-route] [data-node-id], svg[data-share-route] [data-edge-from] { opacity: 0.18; }\n" +
             "svg[data-share-route] [data-share-route-match] { opacity: 1; }\n" +
             "svg[data-share-route] [data-share-route-start] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 3; stroke-dasharray: 5 3; }\n" +
             "svg[data-share-route] [data-share-route-middle] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 2.2; }\n" +
             "svg[data-share-route] [data-share-route-end] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 3.4; stroke-dasharray: 1 0; }\n";
         }
         if (opts.reachSnapshot) {
-          style.textContent += "\nsvg[data-share-reach] [data-node-id], svg[data-share-reach] [data-edge-from] { opacity: 0.14; }\n" +
+          extraStyle += "\nsvg[data-share-reach] [data-node-id], svg[data-share-reach] [data-edge-from] { opacity: 0.14; }\n" +
             "svg[data-share-reach] [data-share-reach-match] { opacity: 1; }\n" +
             "svg[data-share-reach] [data-edge-from][data-share-reach-match] { stroke-width: 1.55; }\n" +
             "svg[data-share-reach=\"upstream\"] [data-share-reach-origin] > :is(rect, circle, polygon):not(.c-mask) { stroke: var(--database-stroke); stroke-width: 3.4; stroke-dasharray: 5 3; }\n" +
@@ -6281,11 +6289,16 @@
             "svg[data-preset=\"blueprint\"][data-share-reach] [data-share-reach-origin], svg[data-preset=\"blueprint\"][data-share-reach] [data-edge-from][data-share-reach-match] { filter: none; }\n";
         }
 
-        clone.insertBefore(style, clone.firstChild);
-        clone.insertBefore(bgRect, style.nextSibling);
-
         return {
-          svgString: new XMLSerializer().serializeToString(clone),
+          svgString: buildStandaloneSvg(new XMLSerializer().serializeToString(clone), {
+            hostStyle: hostStyle,
+            theme: theme,
+            darkVars: darkVars,
+            lightVars: lightVars,
+            vars: vars,
+            background: background,
+            extraStyle: extraStyle
+          }),
           width: vb.width * scale,
           height: vb.height * scale,
           canonicalStateClean: canonicalStateClean,

@@ -16,12 +16,12 @@ function usage() {
   return `Usage:
   archify render <type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path (architecture only)]
   archify compare architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]
-  archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path (architecture only)]
+  archify deliver <type> <input.json> [output.html] [--format html|svg] [--theme auto|light|dark (SVG only)] [--json] [--open] [--quality standard|showcase] [--repo-root path (architecture only)]
   archify preview <type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path (architecture only)]
   archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path (architecture only)]
   archify migrate workflow <old.json> <new.json> --to-schema 2 [--json]
   archify inspect <type> <input.json>
-  archify check <output.html>
+  archify check <output.html|output.svg>
   archify visual-check <output.html> [--json]
   archify guide [scenario or question] [--json] [--lang en|zh]
   archify brands [name, alias, domain, or category] [--json]
@@ -103,6 +103,8 @@ function extractRepoRootArgs(args) {
 
 function rendererEnv(quality, repoRoot, diagnosticJson = false) {
   return {
+    ARCHIFY_OUTPUT_FORMAT: 'html',
+    ARCHIFY_SVG_THEME: 'auto',
     ...(quality ? { ARCHIFY_QUALITY_PROFILE: quality } : {}),
     ...(repoRoot ? { ARCHIFY_REPO_ROOT: repoRoot } : {}),
     ...(diagnosticJson ? { ARCHIFY_DIAGNOSTIC_FORMAT: 'json' } : {}),
@@ -731,6 +733,65 @@ function reportValidateFailure(options) {
   reportArtifactFailure({ ...options, command: 'validate' });
 }
 
+function extractDeliverOptions(args) {
+  const positional = [];
+  let format = 'html';
+  let theme = 'auto';
+  let formatSeen = false;
+  let themeSeen = false;
+  let json = false;
+  let open = false;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--json') {
+      json = true;
+    } else if (arg === '--open') {
+      open = true;
+    } else if (arg === '--format' || arg === '--theme') {
+      const option = arg.slice(2);
+      const value = args[index + 1];
+      if (!value || value.startsWith('--')) throw new Error(`${arg} requires a value.`);
+      if (option === 'format') {
+        if (formatSeen) throw new Error('--format may be provided only once.');
+        format = value;
+        formatSeen = true;
+      } else {
+        if (themeSeen) throw new Error('--theme may be provided only once.');
+        theme = value;
+        themeSeen = true;
+      }
+      index += 1;
+    } else if (arg.startsWith('--format=') || arg.startsWith('--theme=')) {
+      const option = arg.startsWith('--format=') ? 'format' : 'theme';
+      const value = arg.slice(option.length + 3);
+      if (!value) throw new Error(`--${option} requires a value.`);
+      if (option === 'format') {
+        if (formatSeen) throw new Error('--format may be provided only once.');
+        format = value;
+        formatSeen = true;
+      } else {
+        if (themeSeen) throw new Error('--theme may be provided only once.');
+        theme = value;
+        themeSeen = true;
+      }
+    } else if (arg.startsWith('--')) {
+      throw new Error(`Unknown deliver option "${arg}".`);
+    } else {
+      positional.push(arg);
+    }
+  }
+
+  if (!['html', 'svg'].includes(format)) {
+    throw new Error(`Unknown delivery format "${format}". Expected html or svg.`);
+  }
+  if (!['auto', 'light', 'dark'].includes(theme)) {
+    throw new Error(`Unknown SVG theme "${theme}". Expected auto, light, or dark.`);
+  }
+  if (themeSeen && format !== 'svg') throw new Error('--theme is available only with --format svg.');
+  return { positional, format, theme, json, open };
+}
+
 function sourceEvidenceFromArtifact(artifact) {
   const html = artifact.toString('utf8');
   const match = html.match(/<script id="archify-source-evidence-data" type="application\/json">([\s\S]*?)<\/script>/);
@@ -751,14 +812,50 @@ async function commandDeliver(args) {
   const { resolveOutputPath } = await import('../renderers/shared/output-path.mjs');
   const qualityArgs = extractQualityArgs(args);
   const repoArgs = extractRepoRootArgs(qualityArgs.rest);
-  const json = repoArgs.rest.includes('--json');
-  const open = repoArgs.rest.includes('--open');
-  const knownOptions = new Set(['--json', '--open']);
-  const unknown = repoArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
-  if (unknown.length) fail(`Unknown deliver option "${unknown[0]}".`);
-  const positional = repoArgs.rest.filter((arg) => !knownOptions.has(arg));
+  let options;
+  try {
+    options = extractDeliverOptions(repoArgs.rest);
+  } catch (error) {
+    const rawPositional = repoArgs.rest.filter((arg) => !arg.startsWith('--'));
+    reportDeliveryFailure({
+      json: repoArgs.rest.includes('--json'),
+      stage: 'options',
+      type: rawPositional[0],
+      input: rawPositional[1] ? path.resolve(rawPositional[1]) : undefined,
+      output: rawPositional[2] ? path.resolve(rawPositional[2]) : undefined,
+      error: error.message,
+      diagnostics: [diagnostic({
+        code: 'delivery/options',
+        message: error.message,
+        subject: {},
+        supportedFixes: ['use --format html|svg and --theme auto|light|dark only as documented'],
+      })],
+      status: 2,
+    });
+    return;
+  }
+  const { positional, format, theme, json, open } = options;
   const [type, input, requestedOutput] = positional;
   if (!type || !input || positional.length > 3) fail(usage());
+  if (format === 'svg' && (!requestedOutput || path.extname(requestedOutput).toLowerCase() !== '.svg')) {
+    const message = 'SVG delivery requires an explicit output path ending in .svg.';
+    reportDeliveryFailure({
+      json,
+      stage: 'options',
+      type,
+      input: path.resolve(input),
+      output: requestedOutput ? path.resolve(requestedOutput) : undefined,
+      error: message,
+      diagnostics: [diagnostic({
+        code: 'delivery/svg-output-path',
+        message,
+        subject: requestedOutput ? { output: path.resolve(requestedOutput) } : {},
+        supportedFixes: ['provide an explicit .svg output path after the input JSON'],
+      })],
+      status: 2,
+    });
+    return;
+  }
   assertEvidenceType(type, repoArgs.repoRoot);
 
   const renderer = rendererPath(type);
@@ -775,14 +872,14 @@ async function commandDeliver(args) {
       stage: 'input',
       type,
       input: inputPath,
-      output: path.resolve(requestedOutput || `${type}.html`),
+      output: path.resolve(requestedOutput || `${type}.${format}`),
       error: `Could not read delivery input "${inputPath}": ${error.message}`,
       diagnostics: [repair],
     });
     return;
   }
 
-  const authoredOutput = typeof diagram?.meta?.output === 'string' && diagram.meta.output
+  const authoredOutput = format === 'html' && typeof diagram?.meta?.output === 'string' && diagram.meta.output
     ? diagram.meta.output
     : undefined;
   let outputPath;
@@ -790,11 +887,11 @@ async function commandDeliver(args) {
     ({ outputPath } = resolveOutputPath({
       requestedOutput,
       authoredOutput,
-      defaultOutput: `${type}.html`,
+      defaultOutput: `${type}.${format}`,
       inputPaths: [inputPath],
     }));
   } catch (error) {
-    const attemptedOutput = path.resolve(requestedOutput || authoredOutput || `${type}.html`);
+    const attemptedOutput = path.resolve(requestedOutput || authoredOutput || `${type}.${format}`);
     reportDeliveryFailure({
       json,
       stage: 'prepare',
@@ -861,6 +958,9 @@ async function commandDeliver(args) {
     return;
   }
   const candidatePath = path.join(stagingDirectory, path.basename(outputPath));
+  const htmlCandidatePath = format === 'svg'
+    ? path.join(stagingDirectory, 'validated.html')
+    : candidatePath;
   const specificationSnapshotPath = path.join(stagingDirectory, 'specification.snapshot.json');
 
   try {
@@ -886,7 +986,7 @@ async function commandDeliver(args) {
       return;
     }
 
-    const render = runNode([renderer, specificationSnapshotPath, candidatePath], {
+    const render = runNode([renderer, specificationSnapshotPath, htmlCandidatePath], {
       stdio: 'pipe',
       env: rendererEnv(qualityArgs.quality, repoArgs.repoRoot, true),
     });
@@ -905,7 +1005,7 @@ async function commandDeliver(args) {
       return;
     }
 
-    const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), candidatePath], {
+    const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), htmlCandidatePath], {
       stdio: 'pipe',
     });
     if (check.status !== 0) {
@@ -952,9 +1052,82 @@ async function commandDeliver(args) {
       });
       return;
     }
+    let svgResult = null;
+    if (format === 'svg') {
+      const finalise = runNode([renderer, specificationSnapshotPath, candidatePath], {
+        stdio: 'pipe',
+        env: {
+          ...rendererEnv(qualityArgs.quality, repoArgs.repoRoot, true),
+          ARCHIFY_OUTPUT_FORMAT: 'svg',
+          ARCHIFY_SVG_THEME: theme,
+        },
+      });
+      if (finalise.status !== 0) {
+        const failure = rendererFailure(finalise);
+        reportDeliveryFailure({
+          json,
+          stage: 'finalise',
+          type,
+          input: inputPath,
+          output: outputPath,
+          error: failure.error,
+          diagnostics: failure.diagnostics,
+          status: finalise.status ?? 1,
+        });
+        return;
+      }
+
+      const svgCheck = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), candidatePath], {
+        stdio: 'pipe',
+      });
+      if (svgCheck.status !== 0) {
+        if (svgCheck.stderr) process.stderr.write(svgCheck.stderr);
+        let checker;
+        try {
+          checker = JSON.parse(svgCheck.stdout);
+          checker.file = outputPath;
+        } catch {
+          checker = { ok: false, file: outputPath, diagnostic: svgCheck.stdout.trim() };
+        }
+        reportDeliveryFailure({
+          json,
+          stage: 'svg-check',
+          type,
+          input: inputPath,
+          output: outputPath,
+          error: 'Final SVG check failed; the previous artifact was preserved.',
+          diagnostics: checkerDiagnostics(checker),
+          status: svgCheck.status ?? 1,
+          checker,
+        });
+        return;
+      }
+      try {
+        svgResult = JSON.parse(svgCheck.stdout);
+      } catch (error) {
+        const message = `Could not parse the successful SVG-check receipt: ${error.message}`;
+        reportDeliveryFailure({
+          json,
+          stage: 'receipt',
+          type,
+          input: inputPath,
+          output: outputPath,
+          error: message,
+          diagnostics: [diagnostic({
+            code: 'delivery/svg-receipt-invalid',
+            message,
+            subject: { output: outputPath },
+            evidence: { reason: error.message },
+          })],
+        });
+        return;
+      }
+    }
     let artifact;
+    let validatedHtml;
     try {
       artifact = fs.readFileSync(candidatePath);
+      validatedHtml = format === 'svg' ? fs.readFileSync(htmlCandidatePath) : artifact;
     } catch (error) {
       const message = `Could not read the verified delivery candidate: ${error.message}`;
       reportDeliveryFailure({
@@ -975,7 +1148,7 @@ async function commandDeliver(args) {
     }
     let sourceEvidence;
     try {
-      sourceEvidence = sourceEvidenceFromArtifact(artifact);
+      sourceEvidence = sourceEvidenceFromArtifact(validatedHtml);
     } catch (error) {
       const message = `Could not read the repository evidence receipt: ${error.message}`;
       reportDeliveryFailure({
@@ -994,7 +1167,7 @@ async function commandDeliver(args) {
       });
       return;
     }
-    const engineeringProfile = engineeringProfileFromArtifact(artifact);
+    const engineeringProfile = engineeringProfileFromArtifact(validatedHtml);
     const receipt = {
       schemaVersion: 1,
       ok: true,
@@ -1002,6 +1175,7 @@ async function commandDeliver(args) {
       type,
       input: inputPath,
       output: outputPath,
+      ...(format === 'svg' ? { format, theme } : {}),
       specification: {
         sha256: createHash('sha256').update(specification).digest('hex'),
         bytes: specification.byteLength,
@@ -1019,6 +1193,12 @@ async function commandDeliver(args) {
         errors: result.composition.summary.errors,
         warnings: result.composition.summary.warnings,
       },
+      ...(svgResult ? {
+        svgValidation: {
+          checksPassed: svgResult.checks.filter((checkItem) => checkItem.ok).length,
+          checkCount: svgResult.checks.length,
+        },
+      } : {}),
       ...(sourceEvidence ? {
         evidence: {
           verified: true,
@@ -1033,7 +1213,7 @@ async function commandDeliver(args) {
       resolveOutputPath({
         requestedOutput,
         authoredOutput,
-        defaultOutput: `${type}.html`,
+        defaultOutput: `${type}.${format}`,
         inputPaths: [inputPath],
       });
     } catch (error) {
@@ -1147,9 +1327,9 @@ async function commandPreview(args) {
 }
 
 function commandCheck(args) {
-  const [html] = args;
-  if (!html) fail(usage());
-  const result = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), html]);
+  const [artifact] = args;
+  if (!artifact || args.length !== 1) fail(usage());
+  const result = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), artifact]);
   if (result.status !== 0) exitFrom(result);
 }
 
