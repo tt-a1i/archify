@@ -145,6 +145,12 @@ growth with a legal channel instead of widening every downstream rank. Measured
 multi-row legends participate in intrinsic height and explicit viewBox
 capacity.
 
+When an authored `lane.height` makes an implicit readable-v2 canvas taller
+than the 104px baseline, the compiled SVG opts into the desktop Viewer's
+height budget. The Viewer changes only the outer reader width so the complete
+lane remains on screen; canonical SVG geometry and explicit `meta.viewBox`
+workflows retain their authored contracts.
+
 Authored `via`, `labelAt`, `channelX`, and `channelY` are absolute hard pins in
 v2; an infeasible pin returns `workflow/explicit-pin-conflict` rather than being
 silently moved. `fromSide` and `toSide` remain direction constraints. A route

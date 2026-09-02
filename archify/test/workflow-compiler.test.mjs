@@ -438,6 +438,41 @@ test('issue #250: readable-v2 expands only the lane containing a vertical stack'
   }
 });
 
+test('issue #250: an intrinsic readable-v2 tall lane opts into height-aware reader fitting', () => {
+  const workflow = stackedGroupWorkflow({
+    schemaVersion: 2,
+    laneHeight: 104,
+  });
+
+  const result = compileSuccessfully(workflow);
+  const svgRoot = result.svg.match(/<svg\b[^>]*>/)?.[0];
+  assert.ok(svgRoot, 'expected an SVG root');
+  assert.equal(attribute(svgRoot, 'data-reader-fit'), 'intrinsic-height');
+});
+
+test('height-aware reader fitting stays off for authored canvases, fixed-v1, and baseline lanes', () => {
+  const intrinsicTall = stackedGroupWorkflow({ schemaVersion: 2, laneHeight: 104 });
+  const intrinsicResult = compileSuccessfully(intrinsicTall);
+  const authoredCanvas = clone(intrinsicTall);
+  authoredCanvas.meta.viewBox = [...intrinsicResult.receipt.requiredViewBox];
+
+  const cases = [
+    ['authored readable-v2 canvas', authoredCanvas],
+    ['fixed-v1 workflow', stackedGroupWorkflow({ laneHeight: 458 })],
+    ['baseline readable-v2 lane', adjacentWorkflow()],
+  ];
+  for (const [description, workflow] of cases) {
+    const result = compileSuccessfully(workflow);
+    const svgRoot = result.svg.match(/<svg\b[^>]*>/)?.[0];
+    assert.ok(svgRoot, `${description}: expected an SVG root`);
+    assert.equal(
+      attributeOrUndefined(svgRoot, 'data-reader-fit'),
+      undefined,
+      `${description}: must retain the established Viewer contract`,
+    );
+  }
+});
+
 test('workflow lane.height is schema-validated as a 104px minimum', () => {
   const workflow = adjacentWorkflow();
   workflow.lanes[0].height = 103;

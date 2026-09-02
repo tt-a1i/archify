@@ -4486,7 +4486,14 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(workflow.meta, 'workflow diagram')}>
+  const readerFit = workflow.schema_version === 2
+    && !workflow.meta?.viewBox
+    && asArray(workflow.lanes).some((lane, index) => (
+      Number.isFinite(lane.height) && laneHeight(index) > 104
+    ))
+    ? ' data-reader-fit="intrinsic-height"'
+    : '';
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit} ${svgRootAttrs(workflow.meta, 'workflow diagram')}>
 ${svgAccessibleText(workflow.meta, 'workflow')}
 ${renderDefinitions()}
 
