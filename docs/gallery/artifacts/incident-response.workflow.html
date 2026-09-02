@@ -31,15 +31,14 @@
       } catch (_) {}
     })();
   </script>
-  <!-- Async font load: a blackholed network must not block first paint.
-       The body font stack falls back to system monospace until it lands. -->
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-        rel="stylesheet" media="print" onload="this.media='all'">
-  <noscript>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  </noscript>
   <style>
+    /* Offline-first typography: prefer a locally installed JetBrains Mono and
+       fall through to the system monospace stack. Delivered HTML must not
+       request third-party font hosts. */
+    @font-face { font-family: 'JetBrains Mono'; font-weight: 400; src: local('JetBrains Mono'), local('JetBrainsMono-Regular'); }
+    @font-face { font-family: 'JetBrains Mono'; font-weight: 500; src: local('JetBrains Mono Medium'), local('JetBrainsMono-Medium'); }
+    @font-face { font-family: 'JetBrains Mono'; font-weight: 600; src: local('JetBrains Mono SemiBold'), local('JetBrainsMono-SemiBold'); }
+    @font-face { font-family: 'JetBrains Mono'; font-weight: 700; src: local('JetBrains Mono Bold'), local('JetBrainsMono-Bold'); }
     /* ==========================================================
        THEME VARIABLES — switch by toggling [data-theme] on <html>
        ========================================================== */
@@ -6181,9 +6180,9 @@
         // Prepend a local()-only @font-face block for each weight so that the
         // sandboxed image-rendering context used during PNG/JPEG/WebP export
         // can find JetBrains Mono if the user has it installed locally, and
-        // falls through cleanly to the monospace stack otherwise. The usual
-        // Google-Fonts <link> in the host document is unreachable from the
-        // serialized SVG, so url()-sourced faces would just hang.
+        // falls through cleanly to the monospace stack otherwise. Remote font
+        // hosts are unreachable from the serialized SVG, so url()-sourced
+        // faces would just hang.
         var fontFallback = [400, 500, 600, 700].map(function (w) {
           return "@font-face { font-family: 'JetBrains Mono'; font-weight: " + w +
                  "; src: local('JetBrains Mono'), local('JetBrainsMono-Regular'); }";
