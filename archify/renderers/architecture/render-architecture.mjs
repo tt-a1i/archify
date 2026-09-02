@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { componentBox, boundaryBox, connectionPath } from '../shared/layout-report.mjs';
-import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { throwDiagnosticProblems, recordDiagnostic } from '../shared/diagnostics.mjs';
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
@@ -40,6 +40,7 @@ import {
   componentText,
   arrowClassMap,
   variantAccent,
+  qualityProfileForGate,
 } from '../shared/geometry.mjs';
 
 const componentTextFit = {
@@ -596,6 +597,16 @@ function validateArchitecture() {
     profile: arch.meta?.quality_profile,
   }));
 
+  // Detect coincident routes (Issue #248)
+  problems.push(...detectCoincidentRoutes({
+    relations: arch.connections,
+    endpointIds: new Set(components.keys()),
+    pathFor,
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: arch.meta?.quality_profile,
+  }));
+
   if (problems.length) {
     throwDiagnosticProblems('Architecture layout validation failed', problems, {
       subject: { diagramType: 'architecture' },
@@ -903,6 +914,100 @@ function routeVia(conn, from, to, start, end, fromSide, toSide) {
       return sideSafe[0] || sideAware[0] || horizontalFirst;
     }
   }
+}
+
+// ---- Coincident route detection (Issue #248) --------------------------------
+function detectCoincidentRoutes({ relations, endpointIds, pathFor, diagramType, relationCollection, profile }) {
+  if (qualityProfileForGate(profile) !== 'showcase') return [];
+
+  const problems = [];
+  const routes = new Map(); // key: normalized route string, value: { conn, index, points }
+
+  for (const [index, conn] of asArray(relations).entries()) {
+    // Skip invalid connections
+    if (!conn || typeof conn.from !== 'string' || typeof conn.to !== 'string') continue;
+    if (!endpointIds.has(conn.from) || !endpointIds.has(conn.to)) continue;
+
+    const routed = pathFor(conn);
+    const points = routed?.points;
+    if (!Array.isArray(points) || points.length < 2) continue;
+
+    // Normalize route to be direction-agnostic using numeric endpoint comparison
+    const first = points[0];
+    const last = points[points.length - 1];
+
+    // Determine canonical direction by comparing endpoints numerically
+    // Use first point as primary comparator, then last point as tiebreaker
+    let useForward;
+    if (first[0] !== last[0]) {
+      useForward = first[0] < last[0];
+    } else if (first[1] !== last[1]) {
+      useForward = first[1] < last[1];
+    } else {
+      // Endpoints have same coordinates (shouldn't happen for valid routes)
+      useForward = true;
+    }
+
+    const pointsStr = points.map(p => `${p[0]},${p[1]}`).join(';');
+    const reverseStr = [...points].reverse().map(p => `${p[0]},${p[1]}`).join(';');
+    const normalized = useForward ? pointsStr : reverseStr;
+
+    if (routes.has(normalized)) {
+      const existing = routes.get(normalized);
+
+      // Check if this is actually a different connection (not the same one)
+      if (existing.index !== index) {
+        // Both routes normalized to the same key. If original directions differ, they're anti-parallel.
+        const existingPointsStr = existing.points.map(p => `${p[0]},${p[1]}`).join(';');
+        const isAntiParallel = (pointsStr !== existingPointsStr);
+        const direction = isAntiParallel ? 'opposite directions' : 'same direction';
+
+        const connId = conn.id ? ` id "${conn.id}"` : '';
+        const existingId = existing.conn.id ? ` id "${existing.conn.id}"` : '';
+
+        const message = `[composition/coincident-routes] showcase ${diagramType} ${relationCollection}[${index}]${connId} "${conn.from}" -> "${conn.to}" has identical geometry to ${relationCollection}[${existing.index}]${existingId} "${existing.conn.from}" -> "${existing.conn.to}" (${direction}) — readers cannot distinguish the connections. Add explicit via points, use channelX/channelY offset, or adjust fromSide/toSide to separate routes.`;
+
+        // Build evidence with actual endpoint comparison
+        const bothHaveLabelAt = (conn.labelAt !== undefined && existing.conn.labelAt !== undefined);
+
+        recordDiagnostic({
+          code: 'composition/coincident-routes',
+          severity: 'error',
+          message,
+          subject: {
+            diagramType,
+            collection: relationCollection,
+            index,
+            from: conn.from,
+            to: conn.to,
+            id: conn.id,
+          },
+          evidence: {
+            coincidentWith: {
+              index: existing.index,
+              from: existing.conn.from,
+              to: existing.conn.to,
+              id: existing.conn.id,
+            },
+            sharedPoints: normalized,
+            antiParallel: isAntiParallel,
+            reason: bothHaveLabelAt ? 'both-have-labelAt' : 'route-coincidence',
+          },
+          supportedFixes: [
+            'add explicit via points to separate routes',
+            'use channelX or channelY offset to separate routes',
+            'adjust fromSide/toSide to create distinct paths',
+          ],
+        });
+
+        problems.push(message);
+      }
+    } else {
+      routes.set(normalized, { conn, index, points });
+    }
+  }
+
+  return problems;
 }
 
 const pathCache = new Map();
