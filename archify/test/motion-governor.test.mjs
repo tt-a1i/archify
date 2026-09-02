@@ -104,7 +104,7 @@ test('motion control is mobile-contained, embed-safe, and export-neutral', () =>
   assert.match(html, /html\[data-embed="true"\] \.diagram-container::before/);
   assert.match(html, /html\[data-share-playback="true"\] \.diagram-container::before/);
   assert.match(html, /Still also parks bounded[\s\S]*?viewer signals without discarding their static meaning/);
-  assert.match(html, /recordExportReceipt\('svg', blob, d\.canonicalStateClean\)/);
+  assert.match(html, /recordExportReceipt\('svg', blob, d\.canonicalStateClean, null, null, false, false, descriptor\.target\)/);
   assert.doesNotMatch(svgBlock(html), /btn-motion|data-motion=|data-motion-owner/);
 });
 
