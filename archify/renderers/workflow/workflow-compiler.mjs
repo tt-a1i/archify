@@ -610,15 +610,26 @@ function compilerFailure(contract, diagnostics, error = diagnostics.map(({ messa
   };
 }
 
-function workflowSchemaSupportedFixes(diagnostic) {
+function workflowSchemaSupportedFixes(diagnostic, {
+  workflow,
+  qualityProfile,
+  discoverFixes,
+}) {
+  if (!discoverFixes) return [];
   const path = diagnostic?.subject?.path;
   const limit = diagnostic?.evidence?.limit;
-  if (diagnostic?.code === 'schema/minimum'
-    && /^\/lanes\/\d+\/height$/.test(path || '')
-    && Number.isFinite(limit)) {
-    return [`set ${path} to at least ${limit}`];
-  }
-  return [];
+  const match = String(path || '').match(/^\/lanes\/(\d+)\/height$/);
+  if (diagnostic?.code !== 'schema/minimum' || !match || !Number.isFinite(limit)) return [];
+  const lanePosition = Number(match[1]);
+  if (!workflow?.lanes?.[lanePosition]) return [];
+  const candidate = cloneWorkflow(workflow);
+  candidate.lanes[lanePosition].height = limit;
+  const accepted = withDiagnosticRecordingSuppressed(() => compileWorkflowWithFeedback({
+    workflow: candidate,
+    qualityProfile,
+    discoverFixes: false,
+  }).ok);
+  return accepted ? [`set ${path} to at least ${limit}`] : [];
 }
 
 function workflowEdgeName(edge) {
@@ -827,7 +838,11 @@ function compileWorkflowInternal({
     inputDiagnostics = Array.isArray(error?.archifyDiagnostics)
       ? error.archifyDiagnostics.map((diagnostic) => ({
           ...diagnostic,
-          supportedFixes: workflowSchemaSupportedFixes(diagnostic),
+          supportedFixes: workflowSchemaSupportedFixes(diagnostic, {
+            workflow: qualityResolvedWorkflow,
+            qualityProfile: resolvedQualityProfile,
+            discoverFixes,
+          }),
         }))
       : [{
         code: 'workflow/input-contract',
@@ -854,6 +869,7 @@ function compileWorkflowInternal({
   }
   const sourceIndexes = {
     lanes: new Map(asArray(qualityResolvedWorkflow.lanes).map((lane, index) => [lane, index])),
+    groups: new Map(asArray(qualityResolvedWorkflow.groups).map((group, index) => [group, index])),
     nodes: new Map(asArray(qualityResolvedWorkflow.nodes).map((node, index) => [node, index])),
     edges: new Map(asArray(qualityResolvedWorkflow.edges).map((edge, index) => [edge, index])),
   };
@@ -943,6 +959,20 @@ function groupFrameRect(group) {
     y: laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET,
     width: span.width,
     height: groupFrameHeight(group),
+  };
+}
+
+function groupLabelRect(group) {
+  const frame = groupFrameRect(group);
+  const baseline = workflow.schema_version === 2
+    ? frame.y + GROUP_LABEL_BASELINE_OFFSET
+    : frame.y + 14;
+  return {
+    x: frame.x + 10,
+    y: baseline - GROUP_LABEL_MASK_ASCENT,
+    width: textUnits(group.label) * 5.6,
+    height: GROUP_LABEL_MASK_H,
+    baseline,
   };
 }
 
@@ -1089,15 +1119,14 @@ function workflowSceneLabelObstacles() {
     if (!laneIndex.has(group.lane)
       || !Number.isInteger(group.fromCol) || !Number.isInteger(group.toCol)
       || group.fromCol < 0 || group.toCol >= layout.colXs.length || group.fromCol > group.toCol) continue;
-    const frame = groupFrameRect(group);
-    const labelBaseline = frame.y + GROUP_LABEL_BASELINE_OFFSET;
+    const label = groupLabelRect(group);
     obstacles.push({
       kind: 'group-label',
       id: group.id ?? null,
-      x: frame.x + 10,
-      y: labelBaseline - GROUP_LABEL_MASK_ASCENT,
-      width: textUnits(group.label) * 5.6,
-      height: GROUP_LABEL_MASK_H,
+      x: label.x,
+      y: label.y,
+      width: label.width,
+      height: label.height,
     });
   }
   return obstacles;
@@ -1127,7 +1156,8 @@ function nodeStep(node) {
   }
 
   function validateGroupFrameContainment() {
-    for (const group of asArray(workflow.groups)) {
+    const violations = [];
+    for (const [groupPosition, group] of asArray(workflow.groups).entries()) {
       const lanePosition = laneIndex.get(group.lane);
       if (!Number.isInteger(lanePosition)
         || !Number.isInteger(group.fromCol) || !Number.isInteger(group.toCol)
@@ -1138,58 +1168,163 @@ function nodeStep(node) {
       if (workflow.schema_version === 1 && !hasCustomLegacyHeight) continue;
 
       const frame = groupFrameRect(group);
-      const violations = [...nodes.values()].flatMap((node) => {
+      const label = groupLabelRect(group);
+      for (const node of nodes.values()) {
         if (node.lane !== group.lane || node.col < group.fromCol || node.col > group.toCol
-          || !isFinitePoint(node.x, node.y, node.width, node.height)) return [];
-        const topPx = Math.max(0, frame.y - node.y);
+          || !isFinitePoint(node.x, node.y, node.width, node.height)) continue;
+        const labelOverlapsHorizontally = node.x < label.x + label.width
+          && label.x < node.x + node.width;
+        const labelOverlapsVertically = node.y < label.y + label.height
+          && label.y < node.y + node.height;
+        const labelClearancePx = labelOverlapsHorizontally && labelOverlapsVertically
+          ? Math.max(0, label.y + label.height - node.y)
+          : 0;
+        const leftPx = Math.max(0, frame.x - node.x);
+        const rightPx = Math.max(0, node.x + node.width - (frame.x + frame.width));
+        const topPx = Math.max(0, frame.y - node.y, labelClearancePx);
         const bottomPx = Math.max(0, node.y + node.height - (frame.y + frame.height));
-        const maximumPx = Math.max(topPx, bottomPx);
-        return maximumPx > 0.0001 ? [{ node, topPx, bottomPx, maximumPx }] : [];
-      }).sort((left, right) => right.maximumPx - left.maximumPx
-        || stableCompare(left.node.id, right.node.id));
-      if (!violations.length) continue;
-
-      const violation = violations[0];
-      const currentHeight = laneHeight(lanePosition);
-      const candidateHeight = Math.max(
-        104,
-        Math.ceil(currentHeight + violation.maximumPx * 2),
-      );
-      const sourceLaneIndex = sourceIndexes.lanes.get(lane) ?? lanePosition;
-      const supportedFixes = acceptsFix((document) => {
-        document.lanes[lanePosition].height = candidateHeight;
-      }) ? [`set /lanes/${sourceLaneIndex}/height to verified minimum ${candidateHeight}px`] : [];
-      const message = `Workflow node "${violation.node.id}" extends outside group "${group.id}" in lane "${lane.id}".`;
-      throwDiagnosticError(message, [{
-        code: 'workflow/group-containment',
-        severity: 'error',
-        message,
-        subject: {
-          diagramType: 'workflow',
-          lane: lane.id,
-          group: group.id,
-          node: violation.node.id,
-          path: `/lanes/${sourceLaneIndex}/height`,
-        },
-        evidence: {
-          groupRect: {
-            x: frame.x, y: frame.y, width: frame.width, height: frame.height,
-          },
-          nodeRect: {
-            x: violation.node.x,
-            y: violation.node.y,
-            width: violation.node.width,
-            height: violation.node.height,
-          },
-          overflow: {
-            topPx: violation.topPx,
-            bottomPx: violation.bottomPx,
-          },
-          authoredLaneHeightPx: authoredLaneHeight(lane),
-        },
-        supportedFixes,
-      }]);
+        const verticalPx = Math.max(topPx, bottomPx);
+        const horizontalPx = Math.max(leftPx, rightPx);
+        const maximumPx = Math.max(verticalPx, horizontalPx);
+        if (maximumPx <= 0.0001) continue;
+        violations.push({
+          group,
+          groupPosition,
+          lane,
+          lanePosition,
+          frame,
+          label,
+          node,
+          leftPx,
+          rightPx,
+          topPx,
+          bottomPx,
+          labelClearancePx,
+          verticalPx,
+          horizontalPx,
+          maximumPx,
+        });
+      }
     }
+    if (!violations.length) return;
+
+    violations.sort((left, right) => left.groupPosition - right.groupPosition
+      || right.maximumPx - left.maximumPx
+      || stableCompare(left.node.id, right.node.id));
+    const laneTargets = new Map();
+    for (const violation of violations) {
+      if (violation.verticalPx <= 0.0001) continue;
+      const current = laneTargets.get(violation.lanePosition) || {
+        lane: violation.lane,
+        sourceIndex: sourceIndexes.lanes.get(violation.lane) ?? violation.lanePosition,
+        overflowPx: 0,
+      };
+      current.overflowPx = Math.max(current.overflowPx, violation.verticalPx);
+      laneTargets.set(violation.lanePosition, current);
+    }
+    const serializedPixel = (value) => Math.round(value * 1e9) / 1e9;
+    for (const [lanePosition, target] of laneTargets) {
+      target.height = serializedPixel(Math.max(
+        104,
+        laneHeight(lanePosition) + target.overflowPx * 2,
+      ));
+    }
+
+    const groupTargets = new Map();
+    for (const violation of violations) {
+      if (violation.horizontalPx <= 0.0001 || groupTargets.has(violation.group)) continue;
+      const horizontalViolations = violations.filter((candidate) => (
+        candidate.group === violation.group && candidate.horizontalPx > 0.0001
+      ));
+      const ranges = [];
+      for (let fromCol = 0; fromCol <= violation.group.fromCol; fromCol += 1) {
+        for (let toCol = violation.group.toCol; toCol < layout.colXs.length; toCol += 1) {
+          const frame = groupFrameRect({ ...violation.group, fromCol, toCol });
+          if (!horizontalViolations.every(({ node }) => (
+            node.x >= frame.x - 0.0001
+            && node.x + node.width <= frame.x + frame.width + 0.0001
+          ))) continue;
+          ranges.push({
+            fromCol,
+            toCol,
+            expansion: violation.group.fromCol - fromCol + toCol - violation.group.toCol,
+          });
+        }
+      }
+      ranges.sort((left, right) => left.expansion - right.expansion
+        || left.toCol - left.fromCol - (right.toCol - right.fromCol)
+        || left.fromCol - right.fromCol);
+      if (!ranges.length) continue;
+      groupTargets.set(violation.group, {
+        ...ranges[0],
+        canonicalIndex: violation.groupPosition,
+        sourceIndex: sourceIndexes.groups.get(violation.group) ?? violation.groupPosition,
+      });
+    }
+
+    const repairParts = [
+      ...[...laneTargets.values()]
+        .sort((left, right) => left.sourceIndex - right.sourceIndex)
+        .map(({ sourceIndex, height }) => (
+          `set /lanes/${sourceIndex}/height to verified sufficient height ${height}px`
+        )),
+      ...[...groupTargets.values()]
+        .sort((left, right) => left.sourceIndex - right.sourceIndex)
+        .map(({ sourceIndex, fromCol, toCol }) => (
+          `set /groups/${sourceIndex} column span to ${fromCol}..${toCol}`
+        )),
+    ];
+    const accepted = repairParts.length > 0 && acceptsFix((document) => {
+      for (const [lanePosition, { height }] of laneTargets) {
+        document.lanes[lanePosition].height = height;
+      }
+      for (const { canonicalIndex, fromCol, toCol } of groupTargets.values()) {
+        document.groups[canonicalIndex].fromCol = fromCol;
+        document.groups[canonicalIndex].toCol = toCol;
+      }
+    });
+
+    const violation = violations[0];
+    const sourceLaneIndex = sourceIndexes.lanes.get(violation.lane) ?? violation.lanePosition;
+    const sourceGroupIndex = sourceIndexes.groups.get(violation.group) ?? violation.groupPosition;
+    const message = `Workflow node "${violation.node.id}" does not fit inside group "${violation.group.id}" in lane "${violation.lane.id}".`;
+    throwDiagnosticError(message, [{
+      code: 'workflow/group-containment',
+      severity: 'error',
+      message,
+      subject: {
+        diagramType: 'workflow',
+        lane: violation.lane.id,
+        group: violation.group.id,
+        node: violation.node.id,
+        path: violation.verticalPx > 0.0001
+          ? `/lanes/${sourceLaneIndex}/height`
+          : `/groups/${sourceGroupIndex}`,
+      },
+      evidence: {
+        groupRect: {
+          x: violation.frame.x,
+          y: violation.frame.y,
+          width: violation.frame.width,
+          height: violation.frame.height,
+        },
+        nodeRect: {
+          x: violation.node.x,
+          y: violation.node.y,
+          width: violation.node.width,
+          height: violation.node.height,
+        },
+        overflow: {
+          leftPx: violation.leftPx,
+          rightPx: violation.rightPx,
+          topPx: violation.topPx,
+          bottomPx: violation.bottomPx,
+        },
+        labelClearancePx: violation.labelClearancePx,
+        authoredLaneHeightPx: authoredLaneHeight(violation.lane),
+      },
+      supportedFixes: accepted ? [repairParts.join('; ')] : [],
+    }]);
   }
 
   function verifiedLegacyAlternative(edge, from, to, requiredClearance) {
@@ -2350,7 +2485,6 @@ function validateWorkflow() {
   }
 
   enforceLegacyColumnCapacity();
-  validateGroupFrameContainment();
 
   const laneIds = new Set(workflow.lanes.map((lane) => lane.id));
   if (laneIds.size !== workflow.lanes.length) {
@@ -2612,6 +2746,7 @@ function validateWorkflow() {
       subject: { diagramType: 'workflow' },
     });
   }
+  validateGroupFrameContainment();
 }
 
 function validateReadableInputsBeforeRouting() {
@@ -4176,13 +4311,7 @@ function measuredContentBounds() {
     const frame = groupFrameRect(group);
     includeRect(frame, `group ${group.id}`);
     if (workflow.schema_version === 2) {
-      const labelBaseline = frame.y + GROUP_LABEL_BASELINE_OFFSET;
-      includeRect({
-        x: frame.x + 10,
-        y: labelBaseline - GROUP_LABEL_MASK_ASCENT,
-        width: textUnits(group.label) * 5.6,
-        height: GROUP_LABEL_MASK_H,
-      }, `group ${group.id} label`);
+      includeRect(groupLabelRect(group), `group ${group.id} label`);
     }
   }
   if (workflowLegendEntries.length) {
@@ -4291,13 +4420,11 @@ function renderPhase(phase) {
 
 function renderGroup(group, index) {
   const frame = groupFrameRect(group);
+  const label = groupLabelRect(group);
   const cls = group.variant === 'security' ? 'c-security-group' : 'c-lane';
   const textClass = variantAccent(group.variant);
-  const labelY = workflow.schema_version === 2
-    ? frame.y + GROUP_LABEL_BASELINE_OFFSET
-    : frame.y + 14;
   return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-${index}" x="${frame.x}" y="${frame.y}" width="${frame.width}" height="${frame.height}" rx="9" class="${cls}" stroke-width="1"/>
-        <text x="${frame.x + 10}" y="${labelY}" class="${textClass}" font-size="7" font-weight="600">${esc(group.label)}</text>`;
+        <text x="${label.x}" y="${label.baseline}" class="${textClass}" font-size="7" font-weight="600">${esc(group.label)}</text>`;
 }
 
 function renderNode(node) {

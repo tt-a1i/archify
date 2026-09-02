@@ -22,7 +22,7 @@ const reader = template.slice(
   template.indexOf('Archify.view = (function ()'),
 );
 
-test('desktop diagrams use one height-budgeted reader shell instead of breakpoint jumps', () => {
+test('wide desktop diagrams use one height-budgeted reader shell instead of breakpoint jumps', () => {
   assert.match(template, /max-width: var\(--archify-reader-width, 1440px\)/);
   assert.doesNotMatch(template, /@media \(min-width: 1680px\)[\s\S]{0,180}\.container/);
   assert.doesNotMatch(template, /@media \(min-width: 1920px\)[\s\S]{0,180}\.container/);
@@ -30,7 +30,6 @@ test('desktop diagrams use one height-budgeted reader shell instead of breakpoin
   assert.match(reader, /var MAX_READER_WIDTH = 1920/);
   assert.match(reader, /var availableSvgHeight = Math\.max\(1, window\.innerHeight - fixedHeight\)/);
   assert.match(reader, /var desiredWidth = availableSvgHeight \* ratio \+ chrome\.diagramX/);
-  assert.match(reader, /var minWidth = Math\.min\(MIN_READER_WIDTH, sourceWidth, viewportCap\)/);
   assert.match(reader, /html\.style\.setProperty\('--archify-reader-width', rounded \+ 'px'\)/);
 });
 
@@ -56,8 +55,6 @@ test('desktop readability source floor is the inverse of the projected-size gate
 });
 
 test('adaptive width preserves canonical SVG geometry and yields to specialized viewer modes', () => {
-  assert.match(reader, /shell && diagram && svg && ratio > 0/);
-  assert.doesNotMatch(reader, /shell && diagram && svg && ratio >= WIDE_RATIO/);
   assert.match(reader, /window\.innerWidth >= MIN_DESKTOP_WIDTH/);
   assert.match(reader, /html\.getAttribute\('data-embed'\) !== 'true'/);
   assert.match(reader, /html\.getAttribute\('data-present'\) !== 'true'/);

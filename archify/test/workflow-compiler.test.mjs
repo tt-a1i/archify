@@ -402,7 +402,7 @@ for (const { name, offsets } of [
       JSON.stringify(diagnostic.evidence, null, 2),
     );
     assert.deepEqual(diagnostic.supportedFixes, [
-      'set /lanes/0/height to verified minimum 458px',
+      'set /lanes/0/height to verified sufficient height 458px',
     ]);
   });
 
@@ -447,6 +447,106 @@ test('workflow lane.height is schema-validated as a 104px minimum', () => {
   assert.deepEqual(result.diagnostics[0].supportedFixes, [
     'set /lanes/0/height to at least 104',
   ]);
+});
+
+test('lane.height schema repairs are advertised only when the complete candidate recompiles', () => {
+  const workflow = stackedGroupWorkflow({ laneHeight: 103 });
+  const result = compileWorkflow({ workflow });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.diagnostics[0].code, 'schema/minimum');
+  assert.deepEqual(result.diagnostics[0].supportedFixes, []);
+  const repaired = clone(workflow);
+  repaired.lanes[0].height = 104;
+  assert.equal(compileWorkflow({ workflow: repaired }).ok, false);
+});
+
+test('group containment rejects horizontal member overflow with a verified span repair', () => {
+  const workflow = stackedGroupWorkflow({ laneHeight: 200, offsets: [0] });
+  workflow.groups[0].fromCol = 2;
+  workflow.groups[0].toCol = 2;
+  workflow.nodes[0].width = 160;
+
+  const result = compileWorkflow({ workflow });
+  assert.equal(result.ok, false);
+  const [diagnostic] = result.diagnostics;
+  assert.equal(diagnostic.code, 'workflow/group-containment');
+  assert.ok(diagnostic.evidence.overflow.leftPx > 0);
+  assert.ok(diagnostic.evidence.overflow.rightPx > 0);
+  assert.deepEqual(diagnostic.supportedFixes, [
+    'set /groups/0 column span to 1..3',
+  ]);
+});
+
+test('group containment keeps a negative exact-fit member clear of its v1 label', () => {
+  const workflow = stackedGroupWorkflow({ laneHeight: 458, offsets: [-180, -90, 0] });
+  workflow.groups[0].fromCol = 2;
+  workflow.groups[0].toCol = 2;
+
+  const result = compileWorkflow({ workflow });
+  assert.equal(result.ok, false);
+  const [diagnostic] = result.diagnostics;
+  assert.equal(diagnostic.code, 'workflow/group-containment');
+  assert.ok(diagnostic.evidence.labelClearancePx > 0);
+  assert.deepEqual(diagnostic.supportedFixes, [
+    'set /lanes/0/height to verified sufficient height 494px',
+  ]);
+
+  workflow.lanes[0].height = 494;
+  const repaired = compileSuccessfully(workflow);
+  assert.equal(
+    rectsOverlap(nodeRect(repaired.svg, 'a'), asciiGroupLabelTextRect(repaired.svg, 'Cage')),
+    false,
+  );
+});
+
+test('group containment aggregates every group in a lane before verifying a height repair', () => {
+  const workflow = stackedGroupWorkflow({ laneHeight: 200, offsets: [55, 59] });
+  workflow.groups = [
+    { id: 'small', label: 'Small', lane: 'cage', fromCol: 1, toCol: 1 },
+    { id: 'large', label: 'Large', lane: 'cage', fromCol: 3, toCol: 3 },
+  ];
+  workflow.nodes[0].col = 1;
+  workflow.nodes[1].col = 3;
+
+  const result = compileWorkflow({ workflow });
+  assert.equal(result.ok, false);
+  assert.equal(result.diagnostics[0].subject.group, 'small');
+  assert.deepEqual(result.diagnostics[0].supportedFixes, [
+    'set /lanes/0/height to verified sufficient height 216px',
+  ]);
+});
+
+test('group containment preserves an exact decimal repair inside explicit viewBox capacity', () => {
+  const workflow = stackedGroupWorkflow({ laneHeight: 442, offsets: [0, 90, 172.1] });
+  workflow.meta.viewBox = [720, 556.5];
+
+  const result = compileWorkflow({ workflow });
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.diagnostics[0].supportedFixes, [
+    'set /lanes/0/height to verified sufficient height 442.2px',
+  ]);
+
+  workflow.lanes[0].height = 442.2;
+  assert.equal(compileWorkflow({ workflow }).ok, true);
+  workflow.lanes[0].height = 443;
+  assert.equal(compileWorkflow({ workflow }).ok, false);
+});
+
+test('structural identity errors remain primary over derivative group containment', () => {
+  const workflow = stackedGroupWorkflow({ laneHeight: 442 });
+  workflow.groups.push({
+    ...workflow.groups[0],
+    label: 'Duplicate identity',
+  });
+
+  const result = compileWorkflow({ workflow });
+  assert.equal(result.ok, false);
+  assert.match(result.error, /Group ids must be unique/);
+  assert.equal(
+    result.diagnostics.some(({ code }) => code === 'workflow/group-containment'),
+    false,
+  );
 });
 
 test('fixed-v1 reports one causal column-capacity diagnostic for issue #126', () => {
