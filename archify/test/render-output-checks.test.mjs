@@ -12,8 +12,12 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-checks-'));
 const checker = path.join(skillRoot, 'scripts/check-render-output.mjs');
 
 function checkHtml(name, svgBody, profile = 'standard', viewBox = '0 0 240 160') {
+  return checkDocument(name, `<!doctype html><html><body><svg viewBox="${viewBox}" data-quality-profile="${profile}">${svgBody}</svg></body></html>`);
+}
+
+function checkDocument(name, html) {
   const htmlPath = path.join(tmp, `${name}.html`);
-  fs.writeFileSync(htmlPath, `<!doctype html><html><body><svg viewBox="${viewBox}" data-quality-profile="${profile}">${svgBody}</svg></body></html>`);
+  fs.writeFileSync(htmlPath, html);
   try {
     const stdout = execFileSync('node', [checker, htmlPath], { encoding: 'utf8' });
     return { code: 0, result: JSON.parse(stdout) };
@@ -21,6 +25,27 @@ function checkHtml(name, svgBody, profile = 'standard', viewBox = '0 0 240 160')
     return { code: err.status ?? 1, result: JSON.parse(String(err.stdout || '{}')) };
   }
 }
+
+function subarchitectureDocument(templateMarkup) {
+  return `<!doctype html><html><body>
+    <div class="diagram-container"><svg viewBox="0 0 240 160" data-quality-profile="standard"></svg></div>
+    ${templateMarkup}
+  </body></html>`;
+}
+
+test('render output check: accepts one canonical SVG plus one inert scoped subarchitecture template', () => {
+  const { code, result } = checkDocument('valid-subarchitecture-template', subarchitectureDocument(`
+    <template data-subarchitecture-parent="transformer" data-subarchitecture-title="Transformer Layer">
+      <svg viewBox="0 0 240 160" aria-labelledby="sub-transformer-title">
+        <title id="sub-transformer-title">Transformer Layer</title>
+        <defs><pattern id="sub-transformer-grid"></pattern></defs>
+        <rect fill="url(#sub-transformer-grid)"/>
+        <g id="sub-transformer-node-attention" data-node-id="attention"></g>
+      </svg>
+    </template>`));
+  assert.equal(code, 0);
+  assert.equal(result.checks.find((item) => item.name === 'single_svg')?.ok, true);
+});
 
 test('render output check: showcase rejects node copy that becomes illegible at 1440px', () => {
   const { code, result } = checkHtml('showcase-desktop-readability', `

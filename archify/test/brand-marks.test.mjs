@@ -8,7 +8,11 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { BRAND_MARKS } from '../renderers/shared/generated-brand-marks.mjs';
-import { isPrivateBrandAddress, prepareDiagramBrandMarks } from '../renderers/shared/brand-marks.mjs';
+import {
+  brandMarkFor,
+  isPrivateBrandAddress,
+  prepareDiagramBrandMarks,
+} from '../renderers/shared/brand-marks.mjs';
 import {
   THIRD_PARTY_NOTICE_DISCLOSURE_COUNT,
   validateThirdPartyNotices,
@@ -156,6 +160,73 @@ test('brand discovery resolves model names, aliases, domains, and Chinese channe
     assert.equal(receipt.ok, true);
     assert.ok(receipt.marks.some((mark) => mark.id === expected), query);
   }
+});
+
+test('architecture brand preparation traverses one-level children without conflating duplicate local IDs', async () => {
+  const firstChild = {
+    id: 'shared',
+    type: 'backend',
+    label: 'First shared child',
+    brand: 'openai',
+  };
+  const secondChild = {
+    id: 'shared',
+    type: 'backend',
+    label: 'Second shared child',
+    brand: 'github',
+  };
+  const diagram = {
+    components: [
+      {
+        id: 'first_parent',
+        type: 'backend',
+        label: 'First parent',
+        subarchitecture: { title: 'First local graph', components: [firstChild] },
+      },
+      {
+        id: 'second_parent',
+        type: 'backend',
+        label: 'Second parent',
+        subarchitecture: { title: 'Second local graph', components: [secondChild] },
+      },
+    ],
+  };
+
+  await prepareDiagramBrandMarks('architecture', diagram);
+
+  assert.equal(brandMarkFor(firstChild)?.id, 'openai');
+  assert.equal(brandMarkFor(secondChild)?.id, 'github');
+});
+
+test('unknown child brands report their complete authored path', async () => {
+  const diagram = {
+    components: [{
+      id: 'parent',
+      type: 'backend',
+      label: 'Parent',
+      subarchitecture: {
+        title: 'Local graph',
+        components: [{
+          id: 'child',
+          type: 'backend',
+          label: 'Child',
+          brand: 'open-aii',
+        }],
+      },
+    }],
+  };
+
+  await assert.rejects(
+    prepareDiagramBrandMarks('architecture', diagram),
+    (error) => {
+      const diagnostic = error.archifyDiagnostics?.find((entry) => entry.code === 'brand/unknown');
+      assert.ok(diagnostic, JSON.stringify(error.archifyDiagnostics, null, 2));
+      assert.equal(diagnostic.subject.path, '/components/0/subarchitecture/components/0/brand');
+      assert.match(diagnostic.message, /^\/components\/0\/subarchitecture\/components\/0\/brand /);
+      assert.ok(diagnostic.supportedFixes.some((fix) => fix.includes('archify brands')));
+      return true;
+    },
+  );
 });
 
 test('all five renderers keep the semantic sigil and add one export-safe brand badge', () => {
