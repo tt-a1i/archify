@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "skillId": "archify",
-  "channel": "stable",
-  "version": "2.16.0",
+  "channel": "development",
+  "version": "2.17.0-dev.1",
   "source": {
     "repository": "https://github.com/tt-a1i/archify"
   },
