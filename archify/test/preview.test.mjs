@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
@@ -220,6 +221,7 @@ test('preview: a superseded slow candidate can never become a published revision
   const deliveryCli = path.join(tmp, 'fake-delivery.mjs');
   fs.writeFileSync(deliveryCli, `
 import { createHash } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 const [, , input, output] = process.argv.slice(2);
 const source = JSON.parse(fs.readFileSync(input, 'utf8'));
@@ -266,6 +268,7 @@ test('preview: each delivery reads the immutable bytes bound to its observed dig
   const readMarker = path.join(tmp, 'delivery-read.txt');
   fs.writeFileSync(deliveryCli, `
 import { createHash } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 const [, , input, output] = process.argv.slice(2);
 await new Promise((resolve) => setTimeout(resolve, 120));
@@ -319,6 +322,7 @@ test('preview: commit rechecks the live digest when watcher and poll have not se
   const deliveryCli = path.join(tmp, 'commit-race-delivery.mjs');
   fs.writeFileSync(deliveryCli, `
 import { createHash } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 const [, , input, output] = process.argv.slice(2);
 const source = JSON.parse(fs.readFileSync(input, 'utf8'));
@@ -374,6 +378,7 @@ test('preview: stopping drains an active delivery without publishing it', { time
   fs.writeFileSync(input, JSON.stringify({ title: 'Do not publish after stop' }));
   fs.writeFileSync(deliveryCli, `
 import { createHash } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 const [, , , output] = process.argv.slice(2);
 await new Promise((resolve) => setTimeout(resolve, 450));
@@ -496,4 +501,34 @@ test('preview: all five typed renderers reach a verified first revision', { time
       await preview.stop();
     }
   }
+});
+
+
+test('preview: polling continues after an asynchronous watcher error', { timeout: 30000 }, async (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-preview-watch-error-'));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const input = path.join(tmp, 'diagram.architecture.json');
+  const output = path.join(tmp, 'diagram.html');
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+  fs.writeFileSync(input, JSON.stringify(source));
+
+  const watcher = new EventEmitter();
+  let closeCount = 0;
+  watcher.close = () => { closeCount += 1; };
+  t.mock.method(fs, 'watch', () => watcher);
+  const preview = await startPreview({ type: 'architecture', input, output, open: false, pollMs: 40, debounceMs: 20 });
+  try {
+    await waitForState(preview.url, (state) => state.status === 'verified' && state.revision === 1, 'initial artifact did not verify');
+    watcher.emit('error', Object.assign(new Error('watch limit reached'), { code: 'EMFILE' }));
+    assert.equal(closeCount, 1, 'the failed watcher must be closed');
+    source.meta.title = 'Recovered using polling';
+    fs.writeFileSync(input, JSON.stringify(source));
+    await waitForState(preview.url, (state) => state.status === 'verified' && state.revision === 2, 'polling did not publish the edited source');
+    const artifact = await (await fetch(new URL('/artifact.html', preview.url))).text();
+    assert.match(artifact, /Recovered using polling/);
+  } finally {
+    await preview.stop();
+  }
+  assert.equal(closeCount, 1, 'shutdown must not close the failed watcher again');
+  await assert.rejects(fetch(preview.url));
 });
