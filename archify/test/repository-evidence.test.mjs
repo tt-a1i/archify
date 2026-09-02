@@ -215,3 +215,51 @@ test('live preview forwards repo-root and publishes only verified evidence', { t
     await preview.stop();
   }
 });
+
+// Regression: `--repo-root` was compared against `git rev-parse --show-toplevel`
+// with a strict `!==`. On Windows the volume is case-insensitive and `path.resolve`
+// preserves the case the caller typed, so the SAME directory was accepted as
+// `C:\repo` and rejected as `c:\repo` with `repository-evidence/root-not-top-level`.
+// These three tests pin both halves of the contract: the comparison follows
+// filesystem semantics, and the guard itself still rejects a root that is not the
+// Git top-level directory.
+test('evidence root accepts either drive-letter case for one Windows directory', {
+  skip: process.platform !== 'win32',
+}, () => {
+  const data = fixture();
+  assert.match(data.root, /^[A-Za-z]:/, 'fixture root must be an absolute Windows path');
+  for (const drive of [data.root[0].toLowerCase(), data.root[0].toUpperCase()]) {
+    const repoRoot = drive + data.root.slice(1);
+    const output = path.join(data.root, `drive-${drive}.html`);
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', repoRoot, '--json']);
+    assert.equal(result.status, 0, `${repoRoot}: ${result.stderr || result.stdout}`);
+    assert.equal(JSON.parse(result.stdout).evidence.verified, true);
+    assert.equal(evidencePayload(fs.readFileSync(output, 'utf8')).repository.revision, data.revision);
+  }
+});
+
+test('evidence root must still be the Git top-level directory, not a subdirectory', () => {
+  const data = fixture();
+  const output = path.join(data.root, 'subdirectory-root.html');
+  const result = run(['deliver', 'architecture', data.input, output, '--repo-root', path.join(data.root, 'src'), '--json']);
+
+  assert.equal(result.status, 1);
+  const repair = JSON.parse(result.stdout).diagnostics[0];
+  assert.equal(repair.code, 'repository-evidence/root-not-top-level');
+  assert.equal(repair.subject.repoRoot, fs.realpathSync(path.join(data.root, 'src')));
+  assert.match(repair.supportedFixes[0], new RegExp(`^pass --repo-root .*${path.basename(data.root)}$`));
+  assert.equal(fs.existsSync(output), false);
+});
+
+test('evidence root must still be a Git repository', () => {
+  const data = fixture();
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-evidence-not-a-repo-'));
+  const output = path.join(data.root, 'non-git-root.html');
+  const result = run(['deliver', 'architecture', data.input, output, '--repo-root', outside, '--json']);
+
+  assert.equal(result.status, 1);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.diagnostics[0].code, 'repository-evidence/git-command');
+  assert.match(receipt.error, /is not a Git repository/);
+  assert.equal(fs.existsSync(output), false);
+});
