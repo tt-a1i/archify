@@ -149,7 +149,11 @@ When an authored `lane.height` makes an implicit readable-v2 canvas taller
 than the 104px baseline, the compiled SVG opts into the desktop Viewer's
 height budget. The Viewer changes only the outer reader width so the complete
 lane remains on screen; canonical SVG geometry and explicit `meta.viewBox`
-workflows retain their authored contracts.
+workflows retain their authored contracts. When necessary, the Viewer may
+scale below the intrinsic 1:1 width only as far as the 6px projected node-text
+floor. If the complete workflow still cannot fit at that readable scale,
+`visual-check` reports the remaining viewport overflow instead of clipping or
+introducing an internal scroller.
 
 Authored `via`, `labelAt`, `channelX`, and `channelY` are absolute hard pins in
 v2; an infeasible pin returns `workflow/explicit-pin-conflict` rather than being

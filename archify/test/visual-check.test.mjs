@@ -31,7 +31,17 @@ function sha256(file) {
   return createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }
 
-function fakeBrowser({ overflowAt, unreadableAt, chromeCollisionAt, stageCollisionAt, stageGapAt, screenshotFailure } = {}) {
+function fakeBrowser({
+  overflowAt,
+  unreadableAt,
+  internalScrollAt,
+  clippedContentAt,
+  themeMismatchAt,
+  chromeCollisionAt,
+  stageCollisionAt,
+  stageGapAt,
+  screenshotFailure,
+} = {}) {
   const calls = [];
   return {
     calls,
@@ -43,6 +53,8 @@ function fakeBrowser({ overflowAt, unreadableAt, chromeCollisionAt, stageCollisi
       if (screenshotPath) fs.writeFileSync(screenshotPath, png);
       const overflow = overflowAt?.({ width, height, theme }) || false;
       const unreadable = unreadableAt?.({ width, height, theme }) || false;
+      const internalScroll = internalScrollAt?.({ width, height, theme }) || false;
+      const clippedContent = clippedContentAt?.({ width, height, theme }) || false;
       const chromeCollision = chromeCollisionAt?.({ width, height, theme }) || false;
       const stageCollision = stageCollisionAt?.({ width, height, theme }) || false;
       const dockStageGap = stageGapAt?.({ width, height, theme }) ?? (stageCollision ? -12 : 10);
@@ -52,10 +64,23 @@ function fakeBrowser({ overflowAt, unreadableAt, chromeCollisionAt, stageCollisi
         innerHeight: height,
         scrollWidth: width + (overflow ? 1 : 0),
         scrollHeight: height,
-        resolvedTheme: theme,
+        resolvedTheme: themeMismatchAt?.({ width, height, theme })
+          ? (theme === 'dark' ? 'light' : 'dark')
+          : theme,
         readerWidth: 960,
         diagramWidth: 930,
         viewBoxWidth: 1300,
+        diagramClientWidth: 930,
+        diagramClientHeight: 620,
+        diagramScrollWidth: 930 + (internalScroll ? 20 : 0),
+        diagramScrollHeight: 620 + (internalScroll ? 20 : 0),
+        stageClientWidth: 930,
+        stageClientHeight: 560,
+        stageScrollWidth: 930,
+        stageScrollHeight: 560,
+        internalScrollOk: !internalScroll,
+        contentVisibilityOk: !clippedContent,
+        clippedContent: clippedContent ? ['node:stageC'] : [],
         minimumProjectedNodeTextPx: unreadable ? 5.72 : 6.44,
         minimumProjectedNodeText: unreadable ? 'Compact node' : 'Readable node',
         minimumProjectedNodeTextDetail: unreadable ? 'primary' : 'context',
@@ -236,6 +261,80 @@ test('visual-check returns 1 and preserves evidence when any viewport overflows'
   });
   assert.equal(diagnostic?.evidence?.scrollWidth, 1601);
   assert.equal(fs.existsSync(sidecarPaths(input).contactSheet), true);
+});
+
+test('visual-check rejects an internal diagram scroll range even when the page fits', async () => {
+  const input = artifact('internal-scroll.html');
+  const result = await runVisualCheck({
+    artifactPath: input,
+    chromePath: '/fake/chrome',
+    browserFactory: async () => fakeBrowser({
+      internalScrollAt: ({ width, height, theme }) => (
+        width === 1440 && height === 900 && theme === 'light'
+      ),
+    }),
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.receipt.containment.status, 'fail');
+  const diagnostic = result.receipt.diagnostics.find(
+    (entry) => entry.code === 'viewer/internal-scroll',
+  );
+  assert.deepEqual(diagnostic?.evidence, {
+    diagramClientWidth: 930,
+    diagramClientHeight: 620,
+    diagramScrollWidth: 950,
+    diagramScrollHeight: 640,
+    stageClientWidth: 930,
+    stageClientHeight: 560,
+    stageScrollWidth: 930,
+    stageScrollHeight: 560,
+  });
+});
+
+test('visual-check rejects clipped workflow content even when page and panel dimensions fit', async () => {
+  const input = artifact('clipped-content.html');
+  const result = await runVisualCheck({
+    artifactPath: input,
+    chromePath: '/fake/chrome',
+    browserFactory: async () => fakeBrowser({
+      clippedContentAt: ({ width, height, theme }) => (
+        width === 1440 && height === 900 && theme === 'light'
+      ),
+    }),
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.receipt.containment.status, 'fail');
+  const diagnostic = result.receipt.diagnostics.find(
+    (entry) => entry.code === 'viewer/content-clipping',
+  );
+  assert.deepEqual(diagnostic?.evidence, {
+    clippedContent: ['node:stageC'],
+  });
+});
+
+test('visual-check rejects a capture whose resolved theme differs from the requested theme', async () => {
+  const input = artifact('theme-mismatch.html');
+  const result = await runVisualCheck({
+    artifactPath: input,
+    chromePath: '/fake/chrome',
+    browserFactory: async () => fakeBrowser({
+      themeMismatchAt: ({ width, height, theme }) => (
+        width === 1440 && height === 900 && theme === 'dark'
+      ),
+    }),
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.receipt.captures.status, 'fail');
+  const diagnostic = result.receipt.diagnostics.find(
+    (entry) => entry.code === 'viewer/theme-mismatch',
+  );
+  assert.deepEqual(diagnostic?.evidence, {
+    requestedTheme: 'dark',
+    resolvedTheme: 'light',
+  });
 });
 
 test('visual-check returns 1 when the real reader projects node text below 6px', async () => {
