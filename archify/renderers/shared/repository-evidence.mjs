@@ -6,6 +6,15 @@ import { throwDiagnosticError } from './diagnostics.mjs';
 const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
 const CONTROL_CHARACTER_RE = /[\u0000-\u001f\u007f]/;
 
+// Compare two already-realpath-resolved absolute paths with filesystem semantics.
+// On Windows the volume is case-insensitive and `path.resolve` preserves whatever
+// case the caller typed, while `git rev-parse --show-toplevel` always reports the
+// repository's own form. A strict `!==` therefore rejected `--repo-root c:/repo`
+// and accepted `C:/repo` for the SAME directory.
+function samePath(a, b) {
+  return process.platform === 'win32' ? a.toLowerCase() === b.toLowerCase() : a === b;
+}
+
 function evidenceFailure(code, message, { subject = {}, evidence = {}, supportedFixes = [] } = {}) {
   throwDiagnosticError(message, [{
     code,
@@ -130,7 +139,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
     });
   }
   const gitRoot = gitValue(realRoot, ['rev-parse', '--show-toplevel'], `Evidence root "${realRoot}" is not a Git repository.`);
-  if (fs.realpathSync(gitRoot) !== realRoot) {
+  if (!samePath(fs.realpathSync(gitRoot), realRoot)) {
     evidenceFailure('repository-evidence/root-not-top-level', `Evidence root must be the Git top-level directory: ${gitRoot}`, {
       subject: { repoRoot: realRoot },
       evidence: { gitTopLevel: gitRoot },
