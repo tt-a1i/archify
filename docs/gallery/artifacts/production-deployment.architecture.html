@@ -601,10 +601,11 @@
       color: var(--frontend-stroke);
     }
 
-    /* The reader owns only the outer scale. Wide diagrams keep one authored
-       SVG/viewBox while the runtime chooses a desktop width from the actual
-       vertical budget. This avoids device-specific files and breakpoint
-       jumps between a laptop and a tall monitor. */
+    /* The reader owns only the outer scale. Wide diagrams and compiler-marked
+       intrinsic tall workflows keep one authored SVG/viewBox while the runtime
+       chooses a desktop width from the actual vertical budget. This avoids
+       device-specific files and breakpoint jumps between a laptop and a tall
+       monitor. */
     .container {
       width: 100%;
       max-width: var(--archify-reader-width, 1440px);
@@ -10917,10 +10918,10 @@
     /* ============================================================
        Adaptive Reader Shell — one diagram across laptop and monitor.
        The canonical SVG and viewBox never change. On ordinary desktop pages,
-       wide diagrams receive only enough outer width to use the available
-       height without pushing summary cards below the viewport. Mobile,
-       embed, presentation, print, and non-wide diagrams retain their own
-       established layout contracts.
+       wide diagrams and compiler-approved intrinsic tall workflows receive
+       only enough outer width to use the available height without pushing
+       summary cards below the viewport. Mobile, embed, presentation, print,
+       and unmarked non-wide diagrams retain their established contracts.
        ============================================================ */
     Archify.waitForStableLayout = function (options) {
       options = options || {};
@@ -10973,6 +10974,7 @@
       var cards = shell && shell.querySelector('.cards');
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
+      var intrinsicHeightFit = svg && svg.getAttribute('data-reader-fit') === 'intrinsic-height';
       var frame = 0;
       var settleFrame = 0;
       var lastWidth = 0;
@@ -11001,7 +11003,7 @@
       }
       function eligible() {
         return Boolean(
-          shell && diagram && svg && ratio >= WIDE_RATIO &&
+          shell && diagram && svg && (ratio >= WIDE_RATIO || intrinsicHeightFit) &&
           window.innerWidth >= MIN_DESKTOP_WIDTH &&
           html.getAttribute('data-embed') !== 'true' &&
           html.getAttribute('data-present') !== 'true' &&
@@ -11061,7 +11063,13 @@
         }
         var chrome = chromeMetrics();
         var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
-        var minWidth = Math.min(MIN_READER_WIDTH, viewportCap);
+        var sourceWidth = viewBox && viewBox.width > 0
+          ? viewBox.width + chrome.diagramX
+          : MIN_READER_WIDTH;
+        var minWidth = Math.min(
+          intrinsicHeightFit && ratio < WIDE_RATIO ? sourceWidth : MIN_READER_WIDTH,
+          viewportCap
+        );
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
           outerHeight(header) + outerHeight(guided) + outerHeight(cards);
