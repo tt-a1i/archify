@@ -6,8 +6,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { assertThirdPartyNotices } from './third-party-notices-contract.mjs';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
+const noticeComparisonRoot = path.resolve(
+  process.env.ARCHIFY_PACKAGE_SMOKE_NOTICE_ROOT || repoRoot,
+);
 const defaultPackageRoot = process.env.RUNNER_TEMP
   ? path.join(process.env.RUNNER_TEMP, 'archify-package', 'archify')
   : path.join(repoRoot, 'archify');
@@ -81,18 +86,11 @@ try {
     throw new Error('packaged skill is missing THIRD_PARTY_NOTICES.md');
   }
   const packageNotices = fs.readFileSync(packageNoticesPath, 'utf8');
-  const repositoryNotices = fs.readFileSync(path.join(repoRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
+  const repositoryNotices = fs.readFileSync(path.join(noticeComparisonRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
+  assertThirdPartyNotices(repositoryNotices, 'repository THIRD_PARTY_NOTICES.md');
+  assertThirdPartyNotices(packageNotices, 'packaged THIRD_PARTY_NOTICES.md');
   if (packageNotices !== repositoryNotices) {
     throw new Error('packaged THIRD_PARTY_NOTICES.md must byte-match the repository notice');
-  }
-  for (const requiredNotice of [
-    'Simple Icons 16.28.0',
-    'CC-BY-NC-SA-4.0',
-    'does not grant rights',
-  ]) {
-    if (!packageNotices.includes(requiredNotice)) {
-      throw new Error(`packaged THIRD_PARTY_NOTICES.md is missing required disclosure: ${requiredNotice}`);
-    }
   }
 
   if (!fs.existsSync(updateChecker)) {

@@ -304,7 +304,27 @@ test('package smoke rejects missing, modified, or incomplete third-party notices
     fs.writeFileSync(noticesPath, 'Simple Icons 16.28.0\n');
     result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
     assert.notEqual(result.status, 0, 'incomplete notices must fail package smoke');
-    assert.match(`${result.stdout}\n${result.stderr}`, /must byte-match the repository notice/);
+    assert.match(`${result.stdout}\n${result.stderr}`, /packaged THIRD_PARTY_NOTICES\.md is incomplete/);
+
+    const comparisonRoot = path.join(fixture, 'comparison-root');
+    fs.mkdirSync(comparisonRoot);
+    fs.copyFileSync(path.join(repoRoot, 'LICENSE'), path.join(comparisonRoot, 'LICENSE'));
+    const synchronizedIncomplete = repositoryNotices
+      .replace(/## OpenAI mark[\s\S]*?## No additional rights granted/, '## No additional rights granted');
+    fs.writeFileSync(path.join(comparisonRoot, 'THIRD_PARTY_NOTICES.md'), synchronizedIncomplete);
+    fs.writeFileSync(noticesPath, synchronizedIncomplete);
+    result = spawnSync(process.execPath, [packageSmoke, staged], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        ARCHIFY_PACKAGE_SMOKE_NOTICE_ROOT: comparisonRoot,
+      },
+    });
+    assert.notEqual(result.status, 0, 'byte-identical incomplete notices must fail package smoke');
+    assert.match(
+      `${result.stdout}\n${result.stderr}`,
+      /repository THIRD_PARTY_NOTICES\.md is incomplete; missing required disclosure: .*OpenAI/,
+    );
   } finally {
     fs.rmSync(fixture, { recursive: true, force: true });
   }
@@ -347,6 +367,7 @@ test('archive build refuses to silently omit required release files', () => {
   assert.match(stageSource, /archify\/scripts\/update-contract\.mjs/);
   assert.match(stageSource, /git', \['ls-files', '--stage', '-z'/);
   assert.match(stageSource, /required package input is not tracked by Git/);
+  assert.match(stageSource, /required repository input is not tracked by Git/);
 });
 
 canonicalZipTest('package smoke rejects every dependency metadata field in a built package', () => {
@@ -463,6 +484,10 @@ canonicalZipTest('archive build rejects an unmerged index and preserves an exist
     fs.copyFileSync(
       path.join(repoRoot, 'scripts', 'stage-clean-skill.mjs'),
       path.join(scripts, 'stage-clean-skill.mjs'),
+    );
+    fs.copyFileSync(
+      path.join(repoRoot, 'scripts', 'third-party-notices-contract.mjs'),
+      path.join(scripts, 'third-party-notices-contract.mjs'),
     );
     fs.writeFileSync(path.join(skill, 'renderers', 'shared', 'generated-validators.mjs'), 'export default {};\n');
     fs.writeFileSync(path.join(skill, 'scripts', 'check-update.mjs'), 'export {};\n');
