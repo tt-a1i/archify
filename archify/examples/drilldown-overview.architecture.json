@@ -3,8 +3,8 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Drilldown Overview",
-    "locale": "zh-CN",
-    "subtitle": "单击聚焦；Passport 选子图；Ctrl/双击打开列表第一项",
+    "locale": "en",
+    "subtitle": "Click to focus; pick a child in Passport; Ctrl/double-click opens the first entry",
     "output": "examples/drilldown-overview.html",
     "quality_profile": "standard",
     "viewBox": [900, 420]
@@ -13,7 +13,7 @@
     {
       "id": "edge",
       "type": "cloud",
-      "label": "边缘接入",
+      "label": "Edge Ingress",
       "sublabel": "CDN / LB",
       "pos": [60, 160],
       "size": [140, 70]
@@ -21,20 +21,20 @@
     {
       "id": "api",
       "type": "backend",
-      "label": "API 服务",
-      "sublabel": "可下钻到多类子图",
+      "label": "API Service",
+      "sublabel": "Drill into child diagrams",
       "pos": [340, 160],
       "size": [180, 70],
       "tag": "drilldown",
       "drilldowns": [
         {
           "href": "drilldown-api-dataflow.html",
-          "label": "API 数据流",
+          "label": "API dataflow",
           "diagram_type": "dataflow"
         },
         {
           "href": "drilldown-api-sequence.html",
-          "label": "缓存未命中时序",
+          "label": "Cache-miss sequence",
           "diagram_type": "sequence"
         }
       ]
@@ -42,7 +42,7 @@
     {
       "id": "db",
       "type": "database",
-      "label": "数据库",
+      "label": "Database",
       "sublabel": "PostgreSQL",
       "pos": [640, 160],
       "size": [150, 70]
@@ -55,11 +55,11 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "下钻约定",
+      "title": "Drilldown contract",
       "items": [
-        "单击节点 → Semantic Passport",
-        "Passport 列出全部子图，自行选择",
-        "Ctrl+单击 / 双击 → 打开排在最上面那张"
+        "Click a node → Semantic Passport",
+        "Passport lists every child; pick one",
+        "Ctrl+click / double-click → open the first entry"
       ]
     }
   ]

@@ -3,8 +3,8 @@
   "diagram_type": "sequence",
   "meta": {
     "title": "API Cache Miss Sequence",
-    "locale": "zh-CN",
-    "subtitle": "同一 API 节点的第二张子图（Passport 列表第二项）",
+    "locale": "en",
+    "subtitle": "Second child of the same API node (Passport list entry #2)",
     "output": "examples/drilldown-api-sequence.html",
     "parentHref": "drilldown-overview.html",
     "quality_profile": "standard",
@@ -27,10 +27,10 @@
   "cards": [
     {
       "dot": "violet",
-      "title": "多目标",
+      "title": "Multi-target",
       "items": [
-        "总览 API 节点 Passport 可选本图或数据流图",
-        "Ctrl/双击默认打开列表第一项（数据流）"
+        "Overview API Passport can open this sequence or the dataflow",
+        "Ctrl/double-click opens the first list entry (dataflow)"
       ]
     }
   ]

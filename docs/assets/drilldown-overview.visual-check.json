@@ -6,9 +6,9 @@
   "status": "pass",
   "visualReview": "pending",
   "artifact": {
-    "path": "/tmp/archify-visual/drilldown-overview.html",
-    "sha256": "214631c959e3be204ce1d3880996ccd3b6c6d6adf80e2a5f922c0430215328ad",
-    "bytes": 710686
+    "path": "/tmp/archify-visual-en/drilldown-overview.html",
+    "sha256": "d9762b130663b6ebcefb75468f4b609858dfd049809d9780b87c36bccd0ad575",
+    "bytes": 711191
   },
   "state": {
     "detail": "read",
