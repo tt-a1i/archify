@@ -122,7 +122,6 @@ const TEMPLATE_PLACEHOLDERS = [
   '<title>[PROJECT NAME] Architecture Diagram</title>',
   '<h1>[PROJECT NAME] Architecture</h1>',
   GUIDED_VIEWS_PLACEHOLDER,
-  MOTION_DATA_PLACEHOLDER,
 ];
 
 export function applyTemplate(template, {
@@ -155,6 +154,11 @@ export function applyTemplate(template, {
   // becomes mandatory only for the opt-in evidence path.
   if (sourceEvidence && !template.includes(SOURCE_EVIDENCE_PLACEHOLDER)) {
     throw new Error(`applyTemplate: repository evidence requires placeholder ${JSON.stringify(SOURCE_EVIDENCE_PLACEHOLDER)}`);
+  }
+  // Authored playback pacing is likewise opt-in: the motion data slot is
+  // required only when a diagram carries meta.motion.
+  if (motion && !template.includes(MOTION_DATA_PLACEHOLDER)) {
+    throw new Error(`applyTemplate: authored motion requires placeholder ${JSON.stringify(MOTION_DATA_PLACEHOLDER)}`);
   }
   // Function replacers: a literal `$&`, `$'`, `$\`` or `$$` in titles, labels,
   // or rendered SVG must not be interpreted as a replacement pattern.

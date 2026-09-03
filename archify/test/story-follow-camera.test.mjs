@@ -71,7 +71,8 @@ test('playback and deliberate beat activation follow while stable moment restora
 });
 
 test('adaptive dwell, Still, reduced motion, hidden pages, and print keep camera motion bounded', () => {
-  assert.match(template, /var STORY_FOLLOW_MIN_DWELL_MS = 1100/);
+  assert.match(template, /var STORY_FOLLOW_MIN_DWELL_MS = Archify\.motionConfig\.dwell\.storyFollowMinMs/);
+  assert.match(template, /storyFollowMinMs: 1100/);
   assert.match(template, /var STORY_FOLLOW_DURATION_MS = 320/);
   assert.match(template, /Math\.max\(STORY_FOLLOW_MIN_DWELL_MS, VIEW_INTERVAL_MS \/ Math\.max\(1, total\)\)/);
   assert.match(template, /storyBeatDwellMs = storyBeatDwell\(total\)/);
