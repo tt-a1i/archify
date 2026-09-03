@@ -385,7 +385,8 @@ function renderNode(node) {
     : i18nText(dataflow.meta.locale, 'node.context.dataflow');
   const brand = renderBrandMark(node, { x: node.x + node.width - 22, y: node.y + 6 });
   const labelFontSize = fittedNodeFontSize(node.label, brandLabelFitWidth(node, node.width), 10, 8);
-  const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context, ...brandMetadataFor(node) };
+  // drilldowns 透传到 focusNodeAttrs → data-node-drilldowns，供 Passport 多选 / Ctrl 默认首项
+  const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context, drilldowns: node.drilldowns, ...brandMetadataFor(node) };
   return `        <g ${focusNodeAttrs(node.id, node.label, passport, dataflow.meta.locale)}>
           ${focusNodeTitle(node.label, passport)}
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="c-mask"/>

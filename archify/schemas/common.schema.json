@@ -110,6 +110,37 @@
           }
         }
       }
+    },
+    "relativeHtmlHref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "Relative HTML href only (no scheme). Used for cross-diagram drilldown/back navigation.",
+      "pattern": "^(?!.*://)(?!javascript:)(?![a-zA-Z][a-zA-Z0-9+.-]*:)[A-Za-z0-9._~!\\$'()*+,;=:@/?#%-]+\\.html([?#][A-Za-z0-9._~!\\$'()*+,;=:@/?#%-]*)?$"
+    },
+    "diagramTypeName": {
+      "enum": ["architecture", "workflow", "sequence", "dataflow", "lifecycle"]
+    },
+    "drilldownTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["href", "label"],
+      "properties": {
+        "href": { "$ref": "#/$defs/relativeHtmlHref" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "diagram_type": { "$ref": "#/$defs/diagramTypeName" }
+      }
+    },
+    "drilldowns": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "description": "Ordered child diagrams. Passport lists all; Ctrl+click / double-click opens the first entry.",
+      "items": { "$ref": "#/$defs/drilldownTarget" }
+    },
+    "parentHref": {
+      "$ref": "#/$defs/relativeHtmlHref",
+      "description": "Authored parent diagram for the Back control. Runtime may also use ?from=."
     }
   }
 }

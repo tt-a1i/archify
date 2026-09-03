@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "API Cache Miss Sequence",
+    "locale": "en",
+    "subtitle": "Second child of the same API node (Passport list entry #2)",
+    "output": "examples/drilldown-api-sequence.html",
+    "parentHref": "drilldown-overview.html",
+    "quality_profile": "standard",
+    "viewBox": [720, 560]
+  },
+  "participants": [
+    { "id": "client", "type": "frontend", "label": "Client", "sublabel": "UI" },
+    { "id": "api", "type": "backend", "label": "API", "sublabel": "handler" },
+    { "id": "cache", "type": "database", "label": "Cache", "sublabel": "Redis" },
+    { "id": "db", "type": "database", "label": "DB", "sublabel": "PG" }
+  ],
+  "messages": [
+    { "from": "client", "to": "api", "y": 180, "label": "GET /resource", "variant": "emphasis" },
+    { "from": "api", "to": "cache", "y": 240, "label": "GET key", "variant": "default" },
+    { "from": "cache", "to": "api", "y": 290, "label": "miss", "variant": "return" },
+    { "from": "api", "to": "db", "y": 350, "label": "SELECT", "variant": "emphasis" },
+    { "from": "db", "to": "api", "y": 400, "label": "row", "variant": "return" },
+    { "from": "api", "to": "client", "y": 460, "label": "200 OK", "variant": "return" }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Multi-target",
+      "items": [
+        "Overview API Passport can open this sequence or the dataflow",
+        "Ctrl/double-click opens the first list entry (dataflow)"
+      ]
+    }
+  ]
+}

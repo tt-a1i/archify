@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "API Request Dataflow",
+    "locale": "en",
+    "subtitle": "Child diagram from the API node; use Back to return to the overview",
+    "output": "examples/drilldown-api-dataflow.html",
+    "parentHref": "drilldown-overview.html",
+    "quality_profile": "standard",
+    "viewBox": [960, 520]
+  },
+  "stages": [
+    { "label": "Client" },
+    { "label": "Edge" },
+    { "label": "Service" },
+    { "label": "Store" }
+  ],
+  "nodes": [
+    { "id": "client", "type": "frontend", "label": "Client", "sublabel": "App", "stage": 0, "row": 1 },
+    { "id": "edge", "type": "cloud", "label": "Edge", "sublabel": "TLS", "stage": 1, "row": 1 },
+    { "id": "api", "type": "backend", "label": "API", "sublabel": "handler", "stage": 2, "row": 1, "tag": "hot" },
+    { "id": "cache", "type": "database", "label": "Cache", "sublabel": "Redis", "stage": 3, "row": 0 },
+    { "id": "db", "type": "database", "label": "Primary DB", "sublabel": "PG", "stage": 3, "row": 2 }
+  ],
+  "flows": [
+    { "from": "client", "to": "edge", "label": "request", "variant": "emphasis" },
+    { "from": "edge", "to": "api", "label": "forward", "variant": "emphasis" },
+    { "from": "api", "to": "cache", "label": "lookup", "variant": "default" },
+    { "from": "api", "to": "db", "label": "miss → query", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Back navigation",
+      "items": [
+        "meta.parentHref → return to overview",
+        "Or use the ?from= query carried on drilldown"
+      ]
+    }
+  ]
+}

@@ -48,6 +48,9 @@
         "quality_profile": {
           "$ref": "common.schema.json#/$defs/qualityProfile"
         },
+        "parentHref": {
+          "$ref": "common.schema.json#/$defs/parentHref"
+        },
         "views": {
           "$ref": "common.schema.json#/$defs/guidedViews"
         },
@@ -153,6 +156,9 @@
           },
           "brand": {
             "$ref": "common.schema.json#/$defs/brandMark"
+          },
+          "drilldowns": {
+            "$ref": "common.schema.json#/$defs/drilldowns"
           },
           "step": {
             "type": "string"

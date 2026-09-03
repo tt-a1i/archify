@@ -47,6 +47,9 @@
         "quality_profile": {
           "$ref": "common.schema.json#/$defs/qualityProfile"
         },
+        "parentHref": {
+          "$ref": "common.schema.json#/$defs/parentHref"
+        },
         "column_fit": {
           "description": "Horizontal participant layout. Omit this field or use fixed for the stable 86px boxes and 108px gap. Use spread when a wide viewBox would leave unused horizontal space or meaningful participant labels do not fit the fixed boxes; spread derives wider boxes and gaps from the viewBox without changing participant order or message semantics.",
           "enum": ["fixed", "spread"]
@@ -117,6 +120,9 @@
           },
           "brand": {
             "$ref": "common.schema.json#/$defs/brandMark"
+          },
+          "drilldowns": {
+            "$ref": "common.schema.json#/$defs/drilldowns"
           }
         }
       }

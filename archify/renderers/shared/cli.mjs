@@ -152,10 +152,14 @@ export function svgRootAttrs(meta) {
   const engineeringProfile = meta.engineering_profile
     ? ` data-engineering-profile="${esc(meta.engineering_profile)}"`
     : '';
+  // 子图返回上一级：作者写在 meta.parentHref；Viewer 也会读 URL ?from= 作兜底
+  const parentHref = meta.parentHref && String(meta.parentHref).trim()
+    ? ` data-parent-href="${esc(String(meta.parentHref).trim())}"`
+    : '';
   const requestedProfile = process.env.ARCHIFY_QUALITY_PROFILE || meta.quality_profile;
   const qualityProfile = requestedProfile === 'showcase' ? 'showcase' : 'standard';
   const advisory = requestedProfile ? '' : ' data-quality-gates="advisory"';
-  return `role="img" lang="${esc(resolveLocale(meta.locale))}" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset}${engineeringProfile} data-quality-profile="${esc(qualityProfile)}"${advisory}`;
+  return `role="img" lang="${esc(resolveLocale(meta.locale))}" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset}${engineeringProfile}${parentHref} data-quality-profile="${esc(qualityProfile)}"${advisory}`;
 }
 
 // Keep the accessible name inside the SVG so it survives standalone SVG
@@ -178,6 +182,28 @@ export function animateAttr(meta, kind, step) {
 // Stable semantic hooks for the standalone HTML explorer. IDs already pass
 // the schema's conservative identifier pattern; escape again at the markup
 // boundary so these helpers remain safe if that contract expands later.
+
+/**
+ * 规范化节点上的 drilldowns 数组，供 SVG data-node-drilldowns 与 Passport 共用。
+ * 只保留合法相对 .html 目标；顺序即 Passport 展示顺序，首项为 Ctrl/双击默认跳转。
+ */
+export function normalizeDrilldowns(raw) {
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+  return raw
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') return null;
+      const href = entry.href != null ? String(entry.href).trim() : '';
+      const label = entry.label != null ? String(entry.label).trim() : '';
+      if (!href || !label) return null;
+      const out = { href, label };
+      if (entry.diagram_type != null && String(entry.diagram_type).trim() !== '') {
+        out.diagram_type = String(entry.diagram_type).trim();
+      }
+      return out;
+    })
+    .filter(Boolean);
+}
+
 export function focusNodeAttrs(id, label, metadata = {}, locale) {
   const optional = [
     ['data-node-kind', metadata.kind],
@@ -191,13 +217,18 @@ export function focusNodeAttrs(id, label, metadata = {}, locale) {
   ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
     .map(([name, value]) => ` ${name}="${esc(String(value))}"`)
     .join('');
+  // 多目标下钻：JSON 写入属性；Viewer 在 Passport 列链接，Ctrl/双击走首项
+  const drilldowns = normalizeDrilldowns(metadata.drilldowns);
+  const drilldownAttr = drilldowns.length
+    ? ` data-node-drilldowns="${esc(JSON.stringify(drilldowns))}"`
+    : '';
   const detail = [metadata.sublabel, metadata.context, metadata.brand]
     .filter((value) => value !== undefined && value !== null && String(value).trim() !== '')
     .join(', ');
   const aria = detail
     ? translateMessage(locale, 'node.focus.detail', { label, detail })
     : translateMessage(locale, 'node.focus', { label });
-  return `id="node-${esc(id)}" data-node-id="${esc(id)}" data-node-label="${esc(label)}" tabindex="0" role="button" aria-label="${esc(aria)}" aria-pressed="false"${optional}`;
+  return `id="node-${esc(id)}" data-node-id="${esc(id)}" data-node-label="${esc(label)}" tabindex="0" role="button" aria-label="${esc(aria)}" aria-pressed="false"${optional}${drilldownAttr}`;
 }
 
 // Native SVG titles preserve a compact details-on-demand fallback when the
