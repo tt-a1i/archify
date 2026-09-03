@@ -13,6 +13,21 @@
     "animation": {
       "enum": ["trace", "none"]
     },
+    "motion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dwell": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "storyFollowMinMs": { "type": "integer", "minimum": 1100, "maximum": 60000 },
+            "journeyStepMs": { "type": "integer", "minimum": 1100, "maximum": 60000 },
+            "viewIntervalMs": { "type": "integer", "minimum": 1100, "maximum": 60000 }
+          }
+        }
+      }
+    },
     "visualPreset": {
       "enum": ["classic", "signal-flow", "blueprint", "editorial"]
     },

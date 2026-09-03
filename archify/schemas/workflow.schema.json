@@ -48,6 +48,7 @@
             "none"
           ]
         },
+        "motion": { "$ref": "common.schema.json#/$defs/motion" },
         "visual_preset": {
           "enum": [
             "classic",
