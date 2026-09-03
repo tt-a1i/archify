@@ -445,11 +445,13 @@ function renderState(state) {
     : '';
   const brand = renderBrandMark(state, { x: state.x + state.width - 22, y: state.y + 6 });
   const labelFontSize = fittedNodeFontSize(state.label, brandLabelFitWidth(state, state.width), 10, 8);
+  // drilldowns 透传到 focusNodeAttrs → data-node-drilldowns，供 Passport 多选 / Ctrl 默认首项
   const passport = {
     kind: state.type,
     sublabel: state.sublabel,
     tag: state.tag,
     context: laneLabels.get(state.lane) || i18nText(lifecycle.meta.locale, 'node.context.lifecycle'),
+    drilldowns: state.drilldowns,
     ...brandMetadataFor(state),
   };
   return `        <g ${focusNodeAttrs(state.id, state.label, passport, lifecycle.meta.locale)}>

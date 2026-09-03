@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "API Request Dataflow",
+    "locale": "zh-CN",
+    "subtitle": "从 API 节点下钻的子图示例；可用返回上一级回到总览",
+    "output": "examples/drilldown-api-dataflow.html",
+    "parentHref": "drilldown-overview.html",
+    "quality_profile": "standard",
+    "viewBox": [960, 520]
+  },
+  "stages": [
+    { "label": "Client" },
+    { "label": "Edge" },
+    { "label": "Service" },
+    { "label": "Store" }
+  ],
+  "nodes": [
+    { "id": "client", "type": "frontend", "label": "客户端", "sublabel": "App", "stage": 0, "row": 1 },
+    { "id": "edge", "type": "cloud", "label": "边缘", "sublabel": "TLS", "stage": 1, "row": 1 },
+    { "id": "api", "type": "backend", "label": "API", "sublabel": "handler", "stage": 2, "row": 1, "tag": "hot" },
+    { "id": "cache", "type": "database", "label": "缓存", "sublabel": "Redis", "stage": 3, "row": 0 },
+    { "id": "db", "type": "database", "label": "主库", "sublabel": "PG", "stage": 3, "row": 2 }
+  ],
+  "flows": [
+    { "from": "client", "to": "edge", "label": "request", "variant": "emphasis" },
+    { "from": "edge", "to": "api", "label": "forward", "variant": "emphasis" },
+    { "from": "api", "to": "cache", "label": "lookup", "variant": "default" },
+    { "from": "api", "to": "db", "label": "miss → query", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "返回",
+      "items": [
+        "meta.parentHref → 返回总览",
+        "或使用跳转时附带的 ?from="
+      ]
+    }
+  ]
+}

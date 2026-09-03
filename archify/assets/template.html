@@ -1767,6 +1767,104 @@
     .semantic-passport-meta [hidden] { display: none; }
     html[data-preset="blueprint"] .semantic-passport-meta span,
     html[data-preset="blueprint"] .semantic-passport-meta code { border-radius: 0.1rem; }
+    /* 跨图下钻：Passport 列出全部子图；首项即 Ctrl/双击默认目标 */
+    .semantic-passport-drilldowns {
+      display: grid;
+      gap: 0.28rem;
+      margin-top: 0.52rem;
+      padding-top: 0.48rem;
+      border-top: 1px solid color-mix(in srgb, var(--toolbar-border) 76%, transparent);
+    }
+    .semantic-passport-drilldowns[hidden] { display: none; }
+    .semantic-passport-drilldowns-label {
+      color: var(--text-faint);
+      font-size: 0.5rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .semantic-passport-drilldowns-list {
+      display: grid;
+      gap: 0.22rem;
+    }
+    .semantic-passport-drilldown {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      min-height: 2rem;
+      padding: 0.32rem 0.5rem;
+      border: 1px solid color-mix(in srgb, var(--toolbar-border) 86%, transparent);
+      border-radius: 0.35rem;
+      background: color-mix(in srgb, var(--panel) 70%, transparent);
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+    .semantic-passport-drilldown:hover,
+    .semantic-passport-drilldown:focus-visible {
+      color: var(--backend-stroke);
+      border-color: color-mix(in srgb, var(--backend-stroke) 42%, var(--toolbar-border));
+    }
+    .semantic-passport-drilldown:focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--backend-stroke) 55%, transparent);
+      outline-offset: 1px;
+    }
+    .semantic-passport-drilldown small {
+      color: var(--text-faint);
+      font-size: 0.5625rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .semantic-passport-drilldowns-hint {
+      color: var(--text-faint);
+      font-size: 0.5625rem;
+      line-height: 1.35;
+    }
+    /* 返回上一级：放在页眉显眼位置，不进 Passport */
+    .parent-back-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin: 0 0 0.85rem;
+    }
+    .parent-back-bar[hidden] { display: none !important; }
+    .parent-back-bar button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      min-height: 2.35rem;
+      padding: 0.4rem 0.9rem 0.4rem 0.7rem;
+      border: 1px solid color-mix(in srgb, var(--backend-stroke) 48%, var(--toolbar-border));
+      border-radius: 0.55rem;
+      background: color-mix(in srgb, var(--backend-stroke) 14%, var(--panel));
+      color: var(--backend-stroke);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--backend-stroke) 12%, transparent);
+    }
+    .parent-back-bar button:hover,
+    .parent-back-bar button:focus-visible {
+      background: color-mix(in srgb, var(--backend-stroke) 22%, var(--panel));
+      border-color: color-mix(in srgb, var(--backend-stroke) 68%, var(--toolbar-border));
+      color: var(--text);
+    }
+    .parent-back-bar button:focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--backend-stroke) 55%, transparent);
+      outline-offset: 2px;
+    }
+    .parent-back-bar button .parent-back-arrow {
+      font-size: 1rem;
+      line-height: 1;
+      opacity: 0.92;
+    }
+    html[data-preset="blueprint"] .parent-back-bar button { border-radius: 0.15rem; }
+    svg [data-node-id][data-node-drilldowns] { cursor: pointer; }
+
     .semantic-passport-evidence {
       margin-top: 0.52rem;
       padding: 0.5rem;
@@ -4950,6 +5048,12 @@
   <div class="container">
     <!-- Header -->
     <div class="header">
+      <div class="parent-back-bar no-print" id="parent-back-bar" hidden>
+        <button id="btn-parent-back" type="button" aria-label="{{i18n:viewer.passport.back.aria}}" title="{{i18n:viewer.nav.back.title}}">
+          <span class="parent-back-arrow" aria-hidden="true">&#8592;</span>
+          <span>{{i18n:viewer.passport.back}}</span>
+        </button>
+      </div>
       <div class="header-row"
            data-preset-badge-signal-flow="{{i18n:viewer.preset.badge.signalFlow}}"
            data-preset-badge-blueprint="{{i18n:viewer.preset.badge.blueprint}}"
@@ -5245,6 +5349,11 @@
                 <a class="semantic-passport-repository" id="focus-repository" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer"></a>
               </div>
               <div class="semantic-passport-evidence-links" id="focus-evidence-links"></div>
+            </div>
+            <div class="semantic-passport-drilldowns" id="focus-drilldowns" hidden>
+              <span class="semantic-passport-drilldowns-label">{{i18n:viewer.passport.drilldowns}}</span>
+              <div class="semantic-passport-drilldowns-list" id="focus-drilldowns-list" role="group" aria-label="{{i18n:viewer.passport.drilldowns.list}}"></div>
+              <small class="semantic-passport-drilldowns-hint">{{i18n:viewer.passport.drilldowns.hint}}</small>
             </div>
             <span class="relationship-lens-summary" id="focus-summary" aria-live="polite"></span>
             <div class="semantic-passport-reach" id="focus-reach" hidden>
@@ -7439,6 +7548,10 @@
       var relationsBtn = document.getElementById('btn-focus-relations');
       var clearBtn = document.getElementById('btn-focus-clear');
       var activeIds = [];
+      var parentBackBar = document.getElementById('parent-back-bar');
+      var parentBackBtn = document.getElementById('btn-parent-back');
+      var drilldownsSection = document.getElementById('focus-drilldowns');
+      var drilldownsList = document.getElementById('focus-drilldowns-list');
       var hoveredRelationship = null;
       var focusedRelationship = null;
       var pinnedRelationship = null;
@@ -7786,8 +7899,131 @@
         setPassportValue(document.getElementById('focus-brand'), node.getAttribute('data-node-brand'));
         semanticId.textContent = id;
         semanticId.hidden = false;
+        renderDrilldowns(node);
         renderSourceEvidence(id);
       }
+      /**
+       * 仅允许相对 .html（与 schema relativeHtmlHref 对齐），拒绝协议/绝对 URL，防注入跳转。
+       */
+      function isSafeRelativeHtmlHref(value) {
+        if (typeof value !== 'string') return false;
+        var href = value.trim();
+        if (!href || href.length > 512) return false;
+        if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(href) || href.indexOf('//') !== -1) return false;
+        return /\.html([?#]|$)/i.test(href);
+      }
+      function currentPageHref() {
+        var parts = (location.pathname || '').split('/');
+        return parts[parts.length - 1] || '';
+      }
+      /**
+       * 跳子图时带上 ?from=当前页，子图无 meta.parentHref 时仍可返回。
+       */
+      function hrefWithFrom(targetHref) {
+        if (!isSafeRelativeHtmlHref(targetHref)) return null;
+        var from = currentPageHref();
+        if (!from || !isSafeRelativeHtmlHref(from)) return targetHref.trim();
+        try {
+          var next = targetHref.trim();
+          var hashIndex = next.indexOf('#');
+          var hash = hashIndex >= 0 ? next.slice(hashIndex) : '';
+          var withoutHash = hashIndex >= 0 ? next.slice(0, hashIndex) : next;
+          var queryIndex = withoutHash.indexOf('?');
+          var path = queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
+          var params = new URLSearchParams(queryIndex >= 0 ? withoutHash.slice(queryIndex + 1) : '');
+          params.set('from', from);
+          var query = params.toString();
+          return path + (query ? '?' + query : '') + hash;
+        } catch (_) {
+          return targetHref.trim();
+        }
+      }
+      function resolveParentHref() {
+        try {
+          var from = new URLSearchParams(location.search).get('from');
+          if (from && isSafeRelativeHtmlHref(from)) return from.trim();
+        } catch (_) {}
+        var authored = svg.getAttribute('data-parent-href');
+        if (authored && isSafeRelativeHtmlHref(authored)) return authored.trim();
+        return null;
+      }
+      function navigateToRelativeHtml(href) {
+        var next = hrefWithFrom(href);
+        if (!next) return false;
+        location.assign(next);
+        return true;
+      }
+      function navigateToParent() {
+        var parent = resolveParentHref();
+        if (!parent) return false;
+        location.assign(parent);
+        return true;
+      }
+      function syncParentBackControls() {
+        var parent = resolveParentHref();
+        if (parentBackBar) parentBackBar.hidden = !parent;
+        if (parentBackBtn) {
+          if (parent) parentBackBtn.setAttribute('data-parent-href', parent);
+          else parentBackBtn.removeAttribute('data-parent-href');
+        }
+      }
+      function parseNodeDrilldowns(node) {
+        if (!node) return [];
+        var raw = node.getAttribute('data-node-drilldowns');
+        if (!raw) return [];
+        try {
+          var list = JSON.parse(raw);
+          if (!Array.isArray(list)) return [];
+          return list.filter(function (entry) {
+            return entry
+              && typeof entry === 'object'
+              && isSafeRelativeHtmlHref(entry.href)
+              && entry.label
+              && String(entry.label).trim();
+          }).map(function (entry) {
+            return {
+              href: String(entry.href).trim(),
+              label: String(entry.label).trim(),
+              diagram_type: entry.diagram_type ? String(entry.diagram_type).trim() : ''
+            };
+          });
+        } catch (_) {
+          return [];
+        }
+      }
+      function openPrimaryDrilldown(node) {
+        var targets = parseNodeDrilldowns(node);
+        if (!targets.length) return false;
+        return navigateToRelativeHtml(targets[0].href);
+      }
+
+      function renderDrilldowns(node) {
+        if (!drilldownsSection || !drilldownsList) return;
+        drilldownsList.textContent = '';
+        var targets = parseNodeDrilldowns(node);
+        if (!targets.length) {
+          drilldownsSection.hidden = true;
+          return;
+        }
+        targets.forEach(function (target, index) {
+          var link = document.createElement('a');
+          link.className = 'semantic-passport-drilldown';
+          link.href = hrefWithFrom(target.href) || target.href;
+          link.setAttribute('data-drilldown-index', String(index));
+          link.setAttribute('aria-label', viewerText('viewer.passport.drilldowns.open', { label: target.label }));
+          var title = document.createElement('span');
+          title.textContent = target.label;
+          link.appendChild(title);
+          if (target.diagram_type) {
+            var type = document.createElement('small');
+            type.textContent = target.diagram_type;
+            link.appendChild(type);
+          }
+          drilldownsList.appendChild(link);
+        });
+        drilldownsSection.hidden = false;
+      }
+
       function relationshipsFor(id, byId) {
         var seen = {};
         var relationships = [];
@@ -8689,6 +8925,16 @@
         }
         else if (activeIds.length) clear();
       });
+      // 双击同样默认打开排在最上面的子图（与 Ctrl+单击一致）
+      svg.addEventListener('dblclick', function (event) {
+        if (container.getAttribute('data-just-panned') === 'true') return;
+        var node = event.target.closest('[data-node-id]');
+        if (!node) return;
+        if (openPrimaryDrilldown(node)) {
+          event.preventDefault();
+        }
+      });
+
       svg.addEventListener('keydown', function (event) {
         var node = event.target.closest('[data-node-id]');
         if (!node || (event.key !== 'Enter' && event.key !== ' ')) return;
@@ -8701,6 +8947,10 @@
       });
       clearBtn.addEventListener('click', function () { clear({ restoreFocus: true }); });
       copyBtn.addEventListener('click', copyFocusLink);
+      if (parentBackBtn) {
+        parentBackBtn.addEventListener('click', function () { navigateToParent(); });
+      }
+      syncParentBackControls();
       upstreamBtn.addEventListener('click', function () { applyReachability('upstream'); });
       downstreamBtn.addEventListener('click', function () { applyReachability('downstream'); });
       relationsBtn.addEventListener('click', function () {
@@ -9038,6 +9288,11 @@
       svg.addEventListener('focusin', function (event) {
         var node = event.target.closest('[data-node-id]');
         if (!node) return;
+          // Ctrl/Cmd+单击：跳过 focus，直接打开 Passport 列表第一项子图
+          if ((event.ctrlKey || event.metaKey) && openPrimaryDrilldown(node)) {
+            event.preventDefault();
+            return;
+          }
         focusedNode = node;
         show(node.getAttribute('data-node-id'), { announce: true });
       });

@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Drilldown Overview",
+    "locale": "zh-CN",
+    "subtitle": "单击聚焦；Passport 选子图；Ctrl/双击打开列表第一项",
+    "output": "examples/drilldown-overview.html",
+    "quality_profile": "standard",
+    "viewBox": [900, 420]
+  },
+  "components": [
+    {
+      "id": "edge",
+      "type": "cloud",
+      "label": "边缘接入",
+      "sublabel": "CDN / LB",
+      "pos": [60, 160],
+      "size": [140, 70]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API 服务",
+      "sublabel": "可下钻到多类子图",
+      "pos": [340, 160],
+      "size": [180, 70],
+      "tag": "drilldown",
+      "drilldowns": [
+        {
+          "href": "drilldown-api-dataflow.html",
+          "label": "API 数据流",
+          "diagram_type": "dataflow"
+        },
+        {
+          "href": "drilldown-api-sequence.html",
+          "label": "缓存未命中时序",
+          "diagram_type": "sequence"
+        }
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "数据库",
+      "sublabel": "PostgreSQL",
+      "pos": [640, 160],
+      "size": [150, 70]
+    }
+  ],
+  "connections": [
+    { "from": "edge", "to": "api", "label": "HTTPS", "variant": "emphasis" },
+    { "from": "api", "to": "db", "label": "SQL", "variant": "default" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "下钻约定",
+      "items": [
+        "单击节点 → Semantic Passport",
+        "Passport 列出全部子图，自行选择",
+        "Ctrl+单击 / 双击 → 打开排在最上面那张"
+      ]
+    }
+  ]
+}

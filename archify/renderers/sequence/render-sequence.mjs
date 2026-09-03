@@ -298,10 +298,12 @@ function renderParticipant(participant) {
     : '';
   const brand = renderBrandMark(participant, { x: participant.x + layout.participantW - 22, y: layout.topY + 6 });
   const labelFontSize = fittedNodeFontSize(participant.label, brandLabelFitWidth(participant, layout.participantW), 11, 8);
+  // drilldowns 透传到 focusNodeAttrs → data-node-drilldowns，供 Passport 多选 / Ctrl 默认首项
   const passport = {
     kind: participant.type,
     sublabel: participant.sublabel,
     context: i18nText(sequence.meta.locale, 'node.context.sequence'),
+    drilldowns: participant.drilldowns,
     ...brandMetadataFor(participant),
   };
   return `        <g ${focusNodeAttrs(participant.id, participant.label, passport, sequence.meta.locale)}>
