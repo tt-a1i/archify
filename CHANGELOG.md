@@ -6,6 +6,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
+### Added
+- **Progressive approval details (#84).** Workflow nodes may opt into typed initiator, approver, deliverable, and existing-edge `reworkPath` facts. The compiler rejects missing, duplicate, unknown, ambiguous, or discontinuous detail references without changing overview geometry; focused nodes expose one collapsed Semantic Passport section, Node Finder searches the same facts, and the Export menu plus layout receipt explicitly identify visual exports as overview-only. Ordinary workflows remain unchanged and authors no longer need parallel detail cards.
+
 ### Fixed
 - **License provenance in distributions.** Source and packaged Skill distributions retain Cocoon AI's exact MIT copyright notice, package staging and smoke tests fail closed when the notice or LICENSE is missing or altered, and the deterministic ZIP carries the same LICENSE bytes as the repository.
 - **Third-party mark notices in distributions.** Source and packaged Skill distributions now identify the pinned Simple Icons collection, disclose all individual icon licenses recorded by that version, preserve source and brand-guideline links, and state that Archify's MIT license does not replace third-party copyright or trademark terms. Package staging and smoke tests fail closed when the notice is missing or altered.

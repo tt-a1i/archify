@@ -128,7 +128,7 @@ For source evidence, open a repository and ask:
 ```text
 Analyze this repository, then use archify to create a high-level runtime architecture diagram.
 Show 8–12 core components, one primary path, external dependencies, and trust boundaries.
-Put supporting detail in cards instead of adding more edges.
+Put non-critical supporting detail in cards instead of adding more edges.
 ```
 
 ### 3. Refine in chat
@@ -163,6 +163,8 @@ node archify/bin/archify.mjs guide "Map Kafka topics, consumer groups, replay, a
 Workflow keeps the happy path clear across lanes:
 
 ![Workflow example](docs/assets/archify-workflow.png)
+
+Workflows support expandable, export-aware [approval details](archify/renderers/workflow/README.md#opt-in-approval-details).
 
 Sequence explains one interaction over time:
 

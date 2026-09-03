@@ -98,6 +98,46 @@ The default legend derives component kinds from `nodes[].type`. Supported
 visibility may be overridden through the shared legend contract; only kinds
 backed by rendered nodes receive Semantic Legend controls.
 
+## Opt-in approval details
+
+When a business approval gate needs decision facts that would make summary
+cards overflow the first screen, attach one typed `approval` object to that
+node:
+
+```json
+{
+  "id": "release-approval",
+  "lane": "governance",
+  "col": 3,
+  "type": "security",
+  "label": "Release approval",
+  "approval": {
+    "initiator": "Release manager",
+    "approvers": ["Security owner", "Service owner"],
+    "deliverables": ["Signed checklist", "Rollback evidence"],
+    "reworkPath": ["approval-rejected", "changes-resubmitted"]
+  }
+}
+```
+
+`initiator`, `approvers`, `deliverables`, and `reworkPath` are all required
+once `approval` is present. Each `reworkPath` value is an existing edge ID;
+the referenced edges must form one directed, contiguous path beginning at the
+approval node. Archify derives the readable path from those edges and their
+target nodes, so authors do not repeat route facts in the node or in cards.
+Repeated approval facts and unknown, duplicate, or discontinuous edge
+references fail before layout.
+
+The feature is absent by default and does not change diagram geometry. In the
+HTML viewer, focus the node and expand **Approval details** in its Semantic
+Passport. Node Finder searches those facts. Visual exports remain explicit
+overview exports: PNG, JPEG, WebP, SVG, Share Card, and WebM do not render the
+expanded Passport. The export menu states this when approval details exist;
+the self-contained HTML remains the detail artifact, while downloaded SVG
+retains its accessible node metadata and native title. The layout receipt adds
+`detailStrategy: { interactive: "semantic-passport", staticExport: "overview" }`
+only for workflows that opt in.
+
 ## Layout contracts
 
 ### Fixed v1

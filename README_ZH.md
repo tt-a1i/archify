@@ -121,7 +121,7 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 ```text
 分析这个仓库，然后使用 archify 生成一张高层运行时架构图。
 只保留 8–12 个核心组件，突出一条主要路径，并标出外部依赖与信任边界。
-辅助信息放进说明卡片，不要继续增加连线。
+非关键辅助信息放进说明卡片，不要继续增加连线。
 ```
 
 ### 3. 在对话中细调
@@ -159,6 +159,8 @@ node archify/bin/archify.mjs guide "梳理 Kafka Topic、消费者组、重放�
 Workflow 用泳道保持主路径清晰：
 
 ![Workflow 示例](docs/assets/archify-workflow.png)
+
+Workflow 支持可展开并明确导出范围的[审批详情](archify/renderers/workflow/README.md#opt-in-approval-details)。
 
 Sequence 解释一次交互随时间如何推进：
 

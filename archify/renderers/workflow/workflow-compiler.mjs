@@ -752,6 +752,96 @@ function semanticContractDiagnostics(workflow) {
   return diagnostics;
 }
 
+function approvalContractDiagnostics(workflow) {
+  const edgeReferences = new Map();
+  for (const [index, edge] of asArray(workflow.edges).entries()) {
+    if (!edge.id) continue;
+    edgeReferences.set(edge.id, [...(edgeReferences.get(edge.id) || []), { edge, index }]);
+  }
+
+  const diagnostics = [];
+  const availableEdgeIds = [...edgeReferences.keys()].sort(stableCompare);
+  for (const [nodeIndex, node] of asArray(workflow.nodes).entries()) {
+    if (!node.approval) continue;
+    for (const field of ['approvers', 'deliverables', 'reworkPath']) {
+      const seen = new Map();
+      for (const [valueIndex, value] of node.approval[field].entries()) {
+        if (!seen.has(value)) {
+          seen.set(value, valueIndex);
+          continue;
+        }
+        diagnostics.push({
+          code: 'workflow/approval-duplicate-detail',
+          severity: 'error',
+          message: `Approval node "${node.id}" repeats ${JSON.stringify(value)} in ${field}.`,
+          subject: {
+            diagramType: 'workflow',
+            node: node.id,
+            path: `/nodes/${nodeIndex}/approval/${field}/${valueIndex}`,
+          },
+          evidence: {
+            field,
+            value,
+            firstPath: `/nodes/${nodeIndex}/approval/${field}/${seen.get(value)}`,
+          },
+          supportedFixes: [`remove the duplicate ${field} entry at index ${valueIndex}`],
+        });
+      }
+    }
+    let expectedFrom = node.id;
+    for (const [pathIndex, edgeId] of node.approval.reworkPath.entries()) {
+      const path = `/nodes/${nodeIndex}/approval/reworkPath/${pathIndex}`;
+      const references = edgeReferences.get(edgeId) || [];
+      if (references.length !== 1) {
+        const ambiguous = references.length > 1;
+        diagnostics.push({
+          code: ambiguous
+            ? 'workflow/approval-rework-ambiguous-reference'
+            : 'workflow/approval-rework-reference',
+          severity: 'error',
+          message: ambiguous
+            ? `Approval node "${node.id}" references duplicate edge id "${edgeId}" in its reworkPath.`
+            : `Approval node "${node.id}" references unknown edge id "${edgeId}" in its reworkPath.`,
+          subject: { diagramType: 'workflow', node: node.id, edge: edgeId, path },
+          evidence: ambiguous
+            ? { edgeId, matchingPaths: references.map(({ index }) => `/edges/${index}/id`) }
+            : { edgeId, availableEdgeIds },
+          supportedFixes: ambiguous
+            ? ['give every referenced rework edge a unique id']
+            : [
+                `replace "${edgeId}" with an existing edge id`,
+                'add an id to the intended authored rework edge, then reference that id',
+              ],
+        });
+        break;
+      }
+
+      const { edge, index: edgeIndex } = references[0];
+      if (edge.from !== expectedFrom) {
+        diagnostics.push({
+          code: 'workflow/approval-rework-continuity',
+          severity: 'error',
+          message: `Approval node "${node.id}" has a discontinuous reworkPath at edge "${edgeId}": expected an edge from "${expectedFrom}", found "${edge.from}" -> "${edge.to}".`,
+          subject: { diagramType: 'workflow', node: node.id, edge: edgeId, path },
+          evidence: {
+            expectedFrom,
+            actualFrom: edge.from,
+            actualTo: edge.to,
+            edgePath: `/edges/${edgeIndex}`,
+          },
+          supportedFixes: [
+            `reference an authored edge whose source is "${expectedFrom}" at ${path}`,
+            `connect edge "${edgeId}" from "${expectedFrom}" if that is the intended rework path`,
+          ],
+        });
+        break;
+      }
+      expectedFrom = edge.to;
+    }
+  }
+  return diagnostics;
+}
+
 function compileWorkflowInternal({
   workflow: inputWorkflow,
   qualityProfile,
@@ -796,6 +886,13 @@ function compileWorkflowInternal({
     return compilerFailure(
       inputWorkflow.schema_version === 2 ? 'readable-v2' : 'fixed-v1',
       inputDiagnostics,
+    );
+  }
+  const approvalDiagnostics = approvalContractDiagnostics(qualityResolvedWorkflow);
+  if (approvalDiagnostics.length) {
+    return compilerFailure(
+      inputWorkflow.schema_version === 2 ? 'readable-v2' : 'fixed-v1',
+      approvalDiagnostics,
     );
   }
   const workflow = canonicalReadableWorkflow(qualityResolvedWorkflow);
@@ -969,6 +1066,35 @@ const nodeTextFit = {
 };
 
 const nodes = new Map(asArray(workflow.nodes).map((node) => [node.id, measureNode(node)]));
+const edgesById = new Map(asArray(workflow.edges)
+  .filter((edge) => edge.id)
+  .map((edge) => [edge.id, edge]));
+const hasApprovalDetails = [...nodes.values()].some((node) => node.approval);
+
+function approvalPassport(node) {
+  if (!node.approval) return null;
+  const reworkSteps = [node.label];
+  for (const edgeId of node.approval.reworkPath) {
+    const edge = edgesById.get(edgeId);
+    const target = nodes.get(edge.to);
+    reworkSteps.push(`${edge.label ? `${edge.label}: ` : ''}${target?.label || edge.to}`);
+  }
+  const reworkLabel = reworkSteps.join(' → ');
+  const details = {
+    initiator: node.approval.initiator,
+    approvers: [...node.approval.approvers],
+    deliverables: [...node.approval.deliverables],
+    reworkPath: [...node.approval.reworkPath],
+    reworkLabel,
+  };
+  const summary = [
+    `${i18nText(workflow.meta.locale, 'viewer.passport.approval.initiator')}: ${details.initiator}`,
+    `${i18nText(workflow.meta.locale, 'viewer.passport.approval.approvers')}: ${details.approvers.join(', ')}`,
+    `${i18nText(workflow.meta.locale, 'viewer.passport.approval.deliverables')}: ${details.deliverables.join(', ')}`,
+    `${i18nText(workflow.meta.locale, 'viewer.passport.approval.rework')}: ${details.reworkLabel}`,
+  ].join(' · ');
+  return { details, summary };
+}
 
 function workflowCompositionFrames() {
   const frames = [];
@@ -4202,7 +4328,19 @@ function renderNode(node) {
     ? `\n        <text data-detail="fine" x="${node.cx}" y="${node.y + node.height - 12}" class="${accent}" font-size="${fittedNodeFontSize(node.tag, node.width, nodeTextFit.tagPreferred, nodeTextFit.tagMinimum)}" text-anchor="middle">${esc(node.tag)}</text>`
     : '';
   const brand = renderBrandMark(node, { x: node.x + node.width - 22, y: node.y + 6 });
-  const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context: nodeContext(node), ...brandMetadataFor(node) };
+  const approval = approvalPassport(node);
+  const passport = {
+    kind: node.type,
+    sublabel: node.sublabel,
+    tag: node.tag,
+    context: nodeContext(node),
+    ...brandMetadataFor(node),
+    ...(approval ? {
+      approval: JSON.stringify(approval.details),
+      approvalHint: i18nText(workflow.meta.locale, 'viewer.passport.approval.available'),
+      approvalSummary: approval.summary,
+    } : {}),
+  };
   return `        <g ${focusNodeAttrs(node.id, node.label, passport, workflow.meta.locale)}>
           ${focusNodeTitle(node.label, passport)}
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="c-mask"/>
@@ -4246,7 +4384,8 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(workflow.meta, 'workflow diagram')}>
+  const staticExportScope = hasApprovalDetails ? ' data-static-export-scope="overview"' : '';
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(workflow.meta, 'workflow diagram')}${staticExportScope}>
 ${svgAccessibleText(workflow.meta, 'workflow')}
 ${renderDefinitions()}
 
@@ -4308,6 +4447,12 @@ ${renderLegend()}
         const [x, y] = workflowEdgeLabelPoint(edge, pathFor(edge).points);
         return [{ edge: edge.id ?? null, label: edge.label, x, y, width: workflowLabelWidth(edge.label), height: 14 }];
       }),
+      ...(hasApprovalDetails ? {
+        detailStrategy: {
+          interactive: 'semantic-passport',
+          staticExport: 'overview',
+        },
+      } : {}),
       diagnostics: [],
     };
     return { ok: true, svg, receipt };

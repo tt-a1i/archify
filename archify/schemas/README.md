@@ -38,6 +38,14 @@ diagram renders at the same coordinates no matter how wide its viewBox is.
 wide canvas into column distance and label room rather than empty space on the
 right. Lane order, IDs, and message semantics are unchanged either way.
 
+Workflow nodes may opt into an `approval` object for compact business-gate
+detail. Once present, it requires a non-empty `initiator`, non-empty
+`approvers` and `deliverables` arrays, and a non-empty `reworkPath` array of
+edge IDs. The workflow compiler additionally requires those edge IDs to be
+unique references that form a contiguous directed path starting at that node.
+The field adds Semantic Passport detail and does not alter layout geometry;
+visual exports remain overview-only.
+
 It may also include up to five guided `views`. Each view has a unique `id`, a
 reader-facing `label`, a non-empty `focus` list of existing semantic node IDs,
 and an optional short `note`.

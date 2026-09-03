@@ -22,6 +22,14 @@ edge labels are never deleted as a spacing repair. Do not change only
 The complete normative invariants live in the workflow renderer's
 [layout contracts](../renderers/workflow/README.md#layout-contracts).
 
+For a business approval gate whose initiator, approvers, deliverables, and
+rework path are all decision-critical, put those facts once in the node's
+optional `approval` object. `reworkPath` contains existing edge IDs in traversal
+order, beginning at that node; do not restate the path or approval facts in
+cards. Omit `approval` from ordinary technical workflow nodes. The full shape
+and overview-export behavior are documented in
+[Opt-in approval details](../renderers/workflow/README.md#opt-in-approval-details).
+
 ## Legend contract
 
 Omit `meta.legend` for the truthful default: `auto` lists only semantic kinds
