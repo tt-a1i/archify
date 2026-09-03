@@ -51,6 +51,12 @@ jobs:
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - name: Verify the full-diagram-page export (menu, PNG dimensions, fallback, fail-closed)
+        run: node --test test/export-page.test.mjs
+        working-directory: archify
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
       - name: Verify all five diagram modes localize Viewer interactions
         run: node --test test/i18n.test.mjs
         working-directory: archify

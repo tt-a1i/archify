@@ -4934,6 +4934,7 @@
         </div>
         <div class="export-menu-section" role="group" aria-label="{{i18n:viewer.export.raster}}">
           <span class="export-menu-heading" aria-hidden="true">{{i18n:viewer.export.image}}</span>
+          <button data-format="page" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>{{i18n:viewer.export.page}}</strong><small class="hint">{{i18n:viewer.export.pageHint}}</small></span></button>
           <button data-format="png" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>PNG</strong><small class="hint">{{i18n:viewer.export.lossless}}</small></span></button>
           <button data-format="jpeg" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>JPEG</strong><small class="hint">{{i18n:viewer.export.compact}}</small></span></button>
           <button data-format="webp" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>WebP</strong><small class="hint">{{i18n:viewer.export.modern}}</small></span></button>
@@ -6428,6 +6429,248 @@
         return renderShareCard({ reachSnapshot: snapshot });
       }
 
+      // Full-content export: title header + full-width diagram + closing
+      // cards, without the toolbar or any other interactive chrome. Layout
+      // mirrors the reading view (header, diagram, cards) on one tall canvas
+      // so the artifact reads like the delivered page, not the fixed 1200x630
+      // share card.
+      // Word-wrap text into lines that fit maxWidth, hard-breaking overlong
+      // tokens by character. The page export must never silently truncate
+      // card content, so this is the only path card items take to the canvas.
+      function wrapCanvasText(ctx, text, maxWidth) {
+        var lines = [];
+        var words = String(text).split(/\s+/).filter(Boolean);
+        var current = '';
+        function push(line) { lines.push(line); }
+        function commit() { if (current) { push(current); current = ''; } }
+        words.forEach(function (word) {
+          while (word && ctx.measureText(word).width > maxWidth) {
+            var cut = 1;
+            while (cut < word.length && ctx.measureText(word.slice(0, cut + 1)).width <= maxWidth) cut += 1;
+            var piece = word.slice(0, cut);
+            var next = current ? current + ' ' + piece : piece;
+            if (current && ctx.measureText(next).width > maxWidth) { commit(); current = piece; }
+            else current = next;
+            word = word.slice(cut);
+          }
+          if (!word) return;
+          var next = current ? current + ' ' + word : word;
+          if (current && ctx.measureText(next).width > maxWidth) { commit(); current = word; }
+          else current = next;
+        });
+        commit();
+        return lines.length ? lines : [''];
+      }
+
+      function renderPageExport() {
+        var svg = document.querySelector('.diagram-container svg');
+        if (!svg) return Promise.reject(exportError('viewer.export.error.viewerState'));
+
+        // Pre-flight the canvas dimensions BEFORE rasterizing the SVG, using
+        // the authored viewBox aspect (serializeSvg preserves it). This makes
+        // the 2x→1x fallback and the over-cap fail-closed decision synchronous
+        // and cheap: an oversized diagram never pays for a huge SVG raster.
+        var vb = svg.viewBox.baseVal;
+        var PAGE_WIDTH = 1600;
+        var EXPORT_PAGE_SCALE = 2;
+        var pad = 48;
+        var titleBlock = 96;
+        var diagramWidth = PAGE_WIDTH - pad * 2;
+        var diagramHeight = Math.round(diagramWidth * (vb.height / vb.width));
+        var cardHeaderHeight = 40;
+        var cardLineHeight = 26;
+        var cardPad = 24;
+        var cardGap = 20;
+        var cardCount = document.querySelectorAll('.cards .card').length;
+        var cardHeights = Array.prototype.map.call(document.querySelectorAll('.cards .card'), function (card) {
+          return cardHeaderHeight + card.querySelectorAll('li').length * cardLineHeight + cardPad * 2;
+        });
+        var cardsHeight = cardCount ? (Math.max.apply(null, cardHeights) + 8) : 0;
+        var canvasHeight = pad + titleBlock + diagramHeight + 24
+          + (cardCount ? cardsHeight + pad : 0);
+
+        var canvasWidth = PAGE_WIDTH * EXPORT_PAGE_SCALE;
+        var canvasHeightPx = canvasHeight * EXPORT_PAGE_SCALE;
+        if (canvasWidth * canvasHeightPx > MAX_CANVAS_PIXELS) {
+          EXPORT_PAGE_SCALE = 1;
+          canvasWidth = PAGE_WIDTH * EXPORT_PAGE_SCALE;
+          canvasHeightPx = canvasHeight * EXPORT_PAGE_SCALE;
+        }
+        if (canvasWidth * canvasHeightPx > MAX_CANVAS_PIXELS) {
+          return Promise.reject(exportError('viewer.export.error.tooLarge', {
+            label: viewerText('viewer.export.page'),
+            width: canvasWidth,
+            height: canvasHeightPx,
+          }));
+        }
+
+        var sourceScale = Math.min(4, pickSafeScale(vb.width, vb.height));
+        var data = serializeSvg(sourceScale);
+        if (!data.canonicalStateClean) return Promise.reject(exportError('viewer.export.error.viewerState'));
+        var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
+        var svgUrl = URL.createObjectURL(svgBlob);
+
+        return new Promise(function (resolve, reject) {
+          var img = new Image();
+          img.onload = function () {
+            try {
+              var computed = getComputedStyle(document.documentElement);
+              var bg = computed.getPropertyValue('--bg').trim() || currentBg();
+              var panel = computed.getPropertyValue('--panel').trim() || bg;
+              var text = computed.getPropertyValue('--text').trim() || '#ffffff';
+              var muted = computed.getPropertyValue('--text-muted').trim() || '#94a3b8';
+              var border = computed.getPropertyValue('--panel-border').trim() || '#334155';
+              var accent = computed.getPropertyValue('--frontend-stroke').trim() || '#22d3ee';
+
+              var titleNode = document.querySelector('.header h1');
+              var subtitleNode = document.querySelector('.header .subtitle');
+              var title = titleNode ? titleNode.textContent : document.title;
+              var subtitle = subtitleNode ? subtitleNode.textContent : '';
+
+              var cardNodes = Array.prototype.slice.call(document.querySelectorAll('.cards .card'));
+              var measureCanvas = document.createElement('canvas');
+              var measureCtx = measureCanvas.getContext('2d');
+              var PAGE_ITEM_FONT = "500 14px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+              var cards = cardNodes.map(function (node) {
+                var dot = node.querySelector('.card-dot');
+                var dotClass = dot ? dot.className.replace('card-dot', '').trim() : '';
+                var dotColorVar = {
+                  cyan: '--frontend-stroke', emerald: '--backend-stroke', violet: '--database-stroke',
+                  amber: '--cloud-stroke', rose: '--security-stroke', orange: '--messagebus-stroke',
+                  slate: '--external-stroke'
+                }[dotClass] || '--frontend-stroke';
+                return {
+                  title: node.querySelector('h3') ? node.querySelector('h3').textContent : '',
+                  items: Array.prototype.map.call(node.querySelectorAll('li'), function (li) { return li.textContent; }),
+                  accent: computed.getPropertyValue(dotColorVar).trim() || accent
+                };
+              });
+
+              // Word-wrap every card item so long content wraps instead of
+              // being truncated (complete-content contract), then let the
+              // wrapped line count drive the real canvas budget. The
+              // synchronous pre-flight above stays as an early lower-bound
+              // guard; this is the authoritative sizing pass.
+              var gap = cardGap;
+              var cardWidth = cards.length ? Math.floor((diagramWidth - gap * (cards.length - 1)) / cards.length) : 0;
+              var itemMaxWidth = Math.max(40, cardWidth - cardPad * 2);
+              measureCtx.font = PAGE_ITEM_FONT;
+              cards.forEach(function (card) {
+                card.itemLines = [];
+                card.items.forEach(function (item) {
+                  card.itemLines.push(wrapCanvasText(measureCtx, item, itemMaxWidth));
+                });
+                card.totalLines = card.itemLines.reduce(function (sum, lines) { return sum + lines.length; }, 0);
+              });
+              var wrappedCardsHeight = cards.length
+                ? (Math.max.apply(null, cards.map(function (card) {
+                    return cardHeaderHeight + card.totalLines * cardLineHeight + cardPad * 2;
+                  })) + 8)
+                : 0;
+              cardsHeight = wrappedCardsHeight;
+              canvasHeight = pad + titleBlock + diagramHeight + 24
+                + (cards.length ? cardsHeight + pad : 0);
+              canvasWidth = PAGE_WIDTH * EXPORT_PAGE_SCALE;
+              canvasHeightPx = canvasHeight * EXPORT_PAGE_SCALE;
+              if (canvasWidth * canvasHeightPx > MAX_CANVAS_PIXELS) {
+                EXPORT_PAGE_SCALE = 1;
+                canvasWidth = PAGE_WIDTH * EXPORT_PAGE_SCALE;
+                canvasHeightPx = canvasHeight * EXPORT_PAGE_SCALE;
+              }
+              if (canvasWidth * canvasHeightPx > MAX_CANVAS_PIXELS) {
+                throw exportError('viewer.export.error.tooLarge', {
+                  label: viewerText('viewer.export.page'),
+                  width: canvasWidth,
+                  height: canvasHeightPx,
+                });
+              }
+
+              // Logical layout space is 1600 wide; render at EXPORT_PAGE_SCALE
+              // (2x) so the download is a crisp 3200px-wide image. All draw
+              // coordinates stay in logical pixels via ctx.setTransform.
+              var canvas = document.createElement('canvas');
+              canvas.width = canvasWidth;
+              canvas.height = canvasHeightPx;
+              var ctx = canvas2dOrThrow(canvas, viewerText('viewer.export.page'));
+              ctx.setTransform(EXPORT_PAGE_SCALE, 0, 0, EXPORT_PAGE_SCALE, 0, 0);
+
+              ctx.fillStyle = bg;
+              ctx.fillRect(0, 0, PAGE_WIDTH, canvasHeight);
+
+              // Title block
+              var y = pad;
+              ctx.fillStyle = accent;
+              ctx.fillRect(pad, y, 42, 4);
+              y += 34;
+              ctx.textBaseline = 'alphabetic';
+              ctx.textAlign = 'left';
+              ctx.fillStyle = text;
+              ctx.font = "700 30px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+              ctx.fillText(fitCanvasText(ctx, title, PAGE_WIDTH - pad * 2, 30, 16, '700'), pad, y);
+              if (subtitle) {
+                y += 30;
+                ctx.fillStyle = muted;
+                ctx.font = "500 15px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+                ctx.fillText(fitCanvasText(ctx, subtitle, PAGE_WIDTH - pad * 2, 15, 11, '500'), pad, y);
+              }
+
+              // Diagram panel
+              var panelY = pad + titleBlock;
+              ctx.fillStyle = panel;
+              ctx.strokeStyle = border;
+              ctx.lineWidth = 1;
+              ctx.fillRect(pad - 1, panelY - 1, diagramWidth + 2, diagramHeight + 2);
+              ctx.drawImage(img, pad, panelY, diagramWidth, diagramHeight);
+
+              // Cards row
+              if (cards.length) {
+                var cardsY = panelY + diagramHeight + 24;
+                var gap = cardGap;
+                var cardWidth = Math.floor((diagramWidth - gap * (cards.length - 1)) / cards.length);
+                cards.forEach(function (card, index) {
+                  var x = pad + index * (cardWidth + gap);
+                  ctx.fillStyle = panel;
+                  ctx.strokeStyle = border;
+                  ctx.fillRect(x, cardsY, cardWidth, cardsHeight - 8);
+                  ctx.strokeRect(x + 0.5, cardsY + 0.5, cardWidth - 1, cardsHeight - 9);
+                  var cy = cardsY + cardPad;
+                  ctx.fillStyle = card.accent;
+                  ctx.beginPath();
+                  ctx.arc(x + cardPad + 5, cy + 5, 5, 0, Math.PI * 2);
+                  ctx.fill();
+                  ctx.fillStyle = text;
+                  ctx.font = "700 16px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+                  ctx.fillText(fitCanvasText(ctx, card.title, cardWidth - cardPad * 2 - 20, 16, 12, '700'), x + cardPad + 16, cy + 12);
+                  cy += cardHeaderHeight;
+                  ctx.font = PAGE_ITEM_FONT;
+                  ctx.fillStyle = muted;
+                  card.itemLines.forEach(function (lines) {
+                    lines.forEach(function (line) {
+                      ctx.fillText(line, x + cardPad, cy);
+                      cy += cardLineHeight;
+                    });
+                  });
+                });
+              }
+
+              canvas.toBlob(function (blob) {
+                if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: viewerText('viewer.export.page') }));
+                else resolve({ blob: blob, width: canvas.width, height: canvas.height, scale: EXPORT_PAGE_SCALE });
+              }, 'image/png');
+            } catch (error) {
+              reject(error);
+            } finally {
+              URL.revokeObjectURL(svgUrl);
+            }
+          };
+          img.onerror = function (e) {
+            URL.revokeObjectURL(svgUrl);
+            reject(e);
+          };
+          img.src = svgUrl;
+        });
+      }
+
       function motionMimeType() {
         if (typeof MediaRecorder === 'undefined') return '';
         var candidates = [
@@ -6726,7 +6969,7 @@
       // WebP encoding (older Safari), so detect explicitly.
       function supports(format) {
         if (format === 'share-card') return true;
-        if (format === 'svg' || format === 'png') return true;
+        if (format === 'svg' || format === 'png' || format === 'page') return true;
         if (format === 'webm') return canRecordMotion();
         var mime = format === 'jpeg' ? 'image/jpeg' : 'image/webp';
         try {
@@ -6841,6 +7084,12 @@
               recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
               download(blob, base + '-share-card.png');
               toast(viewerText('viewer.export.downloadedShare'));
+            })
+          : format === 'page'
+          ? renderPageExport().then(function (result) {
+              recordExportReceipt('page', result.blob, true, { width: result.width, height: result.height });
+              download(result.blob, base + '-page.png');
+              toast(viewerText('viewer.export.downloadedPage'));
             })
           : format === 'svg'
           ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
