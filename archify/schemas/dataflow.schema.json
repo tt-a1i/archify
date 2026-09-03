@@ -42,6 +42,7 @@
         "animation": {
           "$ref": "common.schema.json#/$defs/animation"
         },
+        "motion": { "$ref": "common.schema.json#/$defs/motion" },
         "visual_preset": {
           "$ref": "common.schema.json#/$defs/visualPreset"
         },

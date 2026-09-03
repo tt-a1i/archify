@@ -59,7 +59,8 @@ for (const [mode, config] of Object.entries(CASES)) {
     assert.match(guided.html, /#view=/);
     assert.match(guided.html, /addEventListener\('hashchange', syncViewFromHash\)/);
     assert.match(guided.html, /id="guided-view-play"/);
-    assert.match(guided.html, /VIEW_INTERVAL_MS = 3200/);
+    assert.match(guided.html, /VIEW_INTERVAL_MS = Archify\.motionConfig\.dwell\.viewIntervalMs/);
+    assert.match(guided.html, /viewIntervalMs: 3200/);
     assert.match(guided.html, /visibilitychange/);
     assert.match(guided.html, /play: startPlayback/);
     assert.match(guided.html, /playCurrent: startCurrentViewPlayback/);

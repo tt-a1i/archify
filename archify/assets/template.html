@@ -4963,6 +4963,7 @@
     <!-- ARCHIFY:GUIDED_VIEWS_DATA -->
     <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->
     <!-- ARCHIFY:I18N_DATA -->
+    <!-- ARCHIFY:MOTION_DATA -->
     <div class="guided-views no-print" id="guided-views" hidden aria-label="{{i18n:viewer.guided.region}}">
       <button id="guided-view-prev" type="button" aria-label="{{i18n:viewer.guided.previous}}" title="{{i18n:viewer.guided.previous.title}}">&#8592;</button>
       <div class="guided-view-copy">
@@ -5389,6 +5390,25 @@
       catch (_) { return { locale: 'en', messages: {} }; }
     })();
     Archify.locale = archifyI18nData.locale || 'en';
+
+    // Authored playback pacing. Delivered artifacts may carry an optional
+    // motion data block (meta.motion.dwell); absent authored values fall back
+    // to the readability-floor defaults that keep the camera-settle contract.
+    Archify.motionConfig = (function () {
+      var node = document.getElementById('archify-motion-data');
+      var authored = {};
+      try { authored = node ? JSON.parse(node.textContent || '{}') : {}; }
+      catch (_) { authored = {}; }
+      var dwell = (authored && authored.dwell) || {};
+      var DEFAULTS = { storyFollowMinMs: 1100, journeyStepMs: 1100, viewIntervalMs: 3200 };
+      return {
+        dwell: {
+          storyFollowMinMs: Number.isFinite(dwell.storyFollowMinMs) ? dwell.storyFollowMinMs : DEFAULTS.storyFollowMinMs,
+          journeyStepMs: Number.isFinite(dwell.journeyStepMs) ? dwell.journeyStepMs : DEFAULTS.journeyStepMs,
+          viewIntervalMs: Number.isFinite(dwell.viewIntervalMs) ? dwell.viewIntervalMs : DEFAULTS.viewIntervalMs
+        }
+      };
+    })();
 
     function viewerText(key, values) {
       var messages = archifyI18nData.messages || {};
@@ -9110,8 +9130,8 @@
       var storyPulseOwnerToken = 0;
       var storyPulseGeneration = 0;
       var autoplayPending = false;
-      var VIEW_INTERVAL_MS = 3200;
-      var STORY_FOLLOW_MIN_DWELL_MS = 1100;
+      var VIEW_INTERVAL_MS = Archify.motionConfig.dwell.viewIntervalMs;
+      var STORY_FOLLOW_MIN_DWELL_MS = Archify.motionConfig.dwell.storyFollowMinMs;
       var STORY_FOLLOW_DURATION_MS = 320;
       var chapterButtons = [];
       var handoffGeneration = 0;
@@ -12835,7 +12855,7 @@
       var journeyStartedAt = 0;
       var journeyElapsedMs = 0;
       var journeyOwnerToken = 0;
-      var JOURNEY_DWELL_MS = 1100;
+      var JOURNEY_DWELL_MS = Archify.motionConfig.dwell.journeyStepMs;
 
       function nodes() {
         return Array.prototype.slice.call(svg.querySelectorAll('[data-node-id]'));

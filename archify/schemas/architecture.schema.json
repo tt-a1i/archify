@@ -18,6 +18,7 @@
         "subtitle": { "type": "string" },
         "output": { "type": "string" },
         "animation": { "$ref": "common.schema.json#/$defs/animation" },
+        "motion": { "$ref": "common.schema.json#/$defs/motion" },
         "visual_preset": { "$ref": "common.schema.json#/$defs/visualPreset" },
         "quality_profile": { "$ref": "common.schema.json#/$defs/qualityProfile" },
         "engineering_profile": { "enum": ["deployment-ownership"] },

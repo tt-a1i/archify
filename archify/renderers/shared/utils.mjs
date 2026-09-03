@@ -108,6 +108,7 @@ const SUBTITLE_SLOT_RE = /^([ \t]*)<p class="subtitle">\[Subtitle description\]<
 const GUIDED_VIEWS_PLACEHOLDER = '<!-- ARCHIFY:GUIDED_VIEWS_DATA -->';
 const SOURCE_EVIDENCE_PLACEHOLDER = '    <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->';
 const I18N_PLACEHOLDER = '    <!-- ARCHIFY:I18N_DATA -->';
+const MOTION_DATA_PLACEHOLDER = '    <!-- ARCHIFY:MOTION_DATA -->';
 
 function serializeScriptJson(value) {
   return JSON.stringify(value)
@@ -132,6 +133,7 @@ export function applyTemplate(template, {
   visualPreset = 'classic',
   guidedViews = [],
   sourceEvidence = null,
+  motion = null,
 }) {
   if (!SVG_SLOT_RE.test(template)) {
     throw new Error('applyTemplate: template missing ARCHIFY:SVG_SLOT sentinel');
@@ -153,10 +155,16 @@ export function applyTemplate(template, {
   if (sourceEvidence && !template.includes(SOURCE_EVIDENCE_PLACEHOLDER)) {
     throw new Error(`applyTemplate: repository evidence requires placeholder ${JSON.stringify(SOURCE_EVIDENCE_PLACEHOLDER)}`);
   }
+  // Authored playback pacing is likewise opt-in: the motion data slot is
+  // required only when a diagram carries meta.motion.
+  if (motion && !template.includes(MOTION_DATA_PLACEHOLDER)) {
+    throw new Error(`applyTemplate: authored motion requires placeholder ${JSON.stringify(MOTION_DATA_PLACEHOLDER)}`);
+  }
   // Function replacers: a literal `$&`, `$'`, `$\`` or `$$` in titles, labels,
   // or rendered SVG must not be interpreted as a replacement pattern.
   const guidedViewsJson = serializeScriptJson(guidedViews);
   const sourceEvidenceJson = serializeScriptJson(sourceEvidence);
+  const motionJson = serializeScriptJson(motion || {});
   const resolvedLocale = resolveLocale(locale);
   const i18nJson = serializeScriptJson({ locale: resolvedLocale, messages: viewerCatalog(resolvedLocale) });
   const renderedSubtitle = typeof subtitle === 'string' && subtitle.trim()
@@ -179,6 +187,9 @@ export function applyTemplate(template, {
     .replace(GUIDED_VIEWS_PLACEHOLDER, () => `<script id="archify-guided-views-data" type="application/json">${guidedViewsJson}</script>`)
     .replace(SOURCE_EVIDENCE_PLACEHOLDER, () => sourceEvidence
       ? `    <script id="archify-source-evidence-data" type="application/json">${sourceEvidenceJson}</script>`
+      : '')
+    .replace(MOTION_DATA_PLACEHOLDER, () => motion
+      ? `    <script id="archify-motion-data" type="application/json">${motionJson}</script>`
       : '');
 }
 

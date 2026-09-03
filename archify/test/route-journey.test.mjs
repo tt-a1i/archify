@@ -75,7 +75,8 @@ test('route chips provide one roving tab stop, native activation, and manual own
 });
 
 test('playback is explicit, finite, resumable, and never leaks position into the route URL', () => {
-  assert.match(template, /var JOURNEY_DWELL_MS = 1100/);
+  assert.match(template, /var JOURNEY_DWELL_MS = Archify\.motionConfig\.dwell\.journeyStepMs/);
+  assert.match(template, /journeyStepMs: 1100/);
   assert.match(template, /journeyGeneration \+= 1/);
   assert.match(template, /generation !== journeyGeneration \|\| !journeyPlaying/);
   assert.match(template, /JOURNEY_DWELL_MS - journeyElapsedMs/);
