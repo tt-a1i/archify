@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { componentBox, boundaryBox, connectionPath } from '../shared/layout-report.mjs';
-import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { recordDiagnostic, throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
@@ -22,6 +22,7 @@ import {
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   cleanLabelRouteClearanceProblems,
+  qualityProfileForGate,
   suggestLabelObstacleFix,
   suggestComponentSeparation,
   anchor,
@@ -98,6 +99,10 @@ function measureComponent(c) {
 
 const components = new Map(asArray(arch.components).map((c) => [c.id, measureComponent(c)]));
 const enforcesBoundaryTitleComposition = Boolean(arch.meta?.quality_profile);
+// Effective quality profile for composition gates: a forced --quality /
+// ARCHIFY_QUALITY_PROFILE override wins over the authored profile, matching the
+// shared geometry helpers every other composition rule uses.
+const effectiveQualityProfile = qualityProfileForGate(arch.meta?.quality_profile, false);
 const componentSteps = new Map();
 for (const [index, conn] of asArray(arch.connections).entries()) {
   if (!componentSteps.has(conn.from)) componentSteps.set(conn.from, index);
@@ -227,6 +232,10 @@ function horizontalOverlap(left, right) {
   return left.x < right.x + right.width && left.x + left.width > right.x;
 }
 
+function verticalOverlap(left, right) {
+  return left.y < right.y + right.height && left.y + left.height > right.y;
+}
+
 function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
   const placedTitles = [];
   const measured = new Map();
@@ -333,6 +342,96 @@ function componentContext(component) {
 const viewBox = arch.meta?.viewBox || autoViewBoxFor(boundaries);
 const legendY = () => viewBox[1] - 16;
 
+// ---- Boundary frame clearance (showcase composition) ------------------------
+// Frame geometry is "wrapped member bbox + pad". When a nested boundary wraps a
+// strict subset whose members reach the same extremes as the containing
+// boundary's members, the nested frame can sit flush with (or even cross) the
+// containing frame. Under the effective showcase profile this is a composition
+// error with a stable code; standard/absent profiles keep today's behavior.
+const BOUNDARY_FRAME_MINIMUM_INSET = 8;
+const BOUNDARY_PAD_FIX = 'adjust the nested or containing boundary pad';
+const BOUNDARY_MEMBER_FIX = "move the extreme wrapped member or spread the containing boundary's members";
+const BOUNDARY_CLEARANCE_FIX = {
+  left: BOUNDARY_PAD_FIX,
+  right: BOUNDARY_PAD_FIX,
+  top: BOUNDARY_MEMBER_FIX,
+  bottom: BOUNDARY_MEMBER_FIX,
+};
+
+function boundaryFrameInsets(nested, containing) {
+  return {
+    left: nested.x - containing.x,
+    right: containing.x + containing.width - (nested.x + nested.width),
+    top: nested.y - containing.y,
+    bottom: containing.y + containing.height - (nested.y + nested.height),
+  };
+}
+
+// Report pixel measurements truncated toward zero at one decimal so a failing
+// inset can never display as meeting the 8px floor it was rejected for.
+function truncPx(value) {
+  return Math.trunc(value * 10) / 10;
+}
+
+function reportBoundaryFrameClearance(problems, containing, containingIndex, nested, nestedIndex, edge, insets) {
+  const inset = insets[edge];
+  const distanceText = inset < 0
+    ? `${-truncPx(inset)}px across the containing frame's ${edge} edge`
+    : `only ${truncPx(inset)}px inside the containing frame`;
+  const nestedName = nested.label || nested.id || `#${nestedIndex}`;
+  const containingName = containing.label || containing.id || `#${containingIndex}`;
+  const fix = BOUNDARY_CLEARANCE_FIX[edge];
+  const message = `[composition/boundary-frame-clearance] showcase architecture boundary "${nestedName}" is strictly nested inside boundary "${containingName}" but its ${edge} edge sits ${distanceText} (minimum ${BOUNDARY_FRAME_MINIMUM_INSET}px) — ${fix}.`;
+  recordDiagnostic({
+    code: 'composition/boundary-frame-clearance',
+    severity: 'error',
+    message,
+    subject: { diagramType: 'architecture', collection: 'boundaries' },
+    evidence: {
+      container: { index: containingIndex, id: containing.id ?? null, label: containing.label, kind: containing.kind },
+      nested: { index: nestedIndex, id: nested.id ?? null, label: nested.label, kind: nested.kind },
+      edge,
+      insetPx: truncPx(inset),
+      minimumPx: BOUNDARY_FRAME_MINIMUM_INSET,
+      insets: {
+        left: truncPx(insets.left),
+        top: truncPx(insets.top),
+        right: truncPx(insets.right),
+        bottom: truncPx(insets.bottom),
+      },
+    },
+    supportedFixes: [fix],
+  });
+  problems.push(message);
+}
+
+function reportStrictNestedFrameClearance(problems, left, leftIndex, right, rightIndex, leftMembers, rightMembers, leftNested, rightNested) {
+  if (effectiveQualityProfile !== 'showcase') return;
+  const leftInRight = leftNested && leftMembers.size < rightMembers.size;
+  const rightInLeft = rightNested && rightMembers.size < leftMembers.size;
+  if (!leftInRight && !rightInLeft) return;
+  const [containing, containingIndex, nested, nestedIndex] = leftInRight
+    ? [right, rightIndex, left, leftIndex]
+    : [left, leftIndex, right, rightIndex];
+  const insets = boundaryFrameInsets(nested, containing);
+  for (const edge of ['left', 'top', 'right', 'bottom']) {
+    const spansOverlap = (edge === 'left' || edge === 'right')
+      ? verticalOverlap(nested, containing)
+      : horizontalOverlap(nested, containing);
+    if (!spansOverlap) continue;
+    if (insets[edge] + 1e-6 >= BOUNDARY_FRAME_MINIMUM_INSET) continue;
+    reportBoundaryFrameClearance(
+      problems,
+      containing,
+      containingIndex,
+      nested,
+      nestedIndex,
+      edge,
+      insets,
+    );
+  }
+}
+
 // ---- Validation: mechanical correctness, never layout taste -----------------
 function validateArchitecture() {
   const problems = [];
@@ -432,21 +531,41 @@ function validateArchitecture() {
     const leftMembers = new Set(asArray(left.wraps));
     for (let rightIndex = leftIndex + 1; rightIndex < boundaries.length; rightIndex += 1) {
       const right = boundaries[rightIndex];
+      // Membership relation is fixed per pair and shared by the showcase frame-
+      // clearance gate and the deployment-ownership containment gate below.
+      const rightMembers = new Set(asArray(right.wraps));
+      const shared = [...leftMembers].filter((id) => rightMembers.has(id));
+      const leftNested = [...leftMembers].every((id) => rightMembers.has(id));
+      const rightNested = [...rightMembers].every((id) => leftMembers.has(id));
       if (enforcesBoundaryTitleComposition && rectsOverlap(left.title, right.title)) {
         problems.push(
           `Boundary labels "${left.label}" and "${right.label}" overlap — shorten a label or increase boundary title space.`,
         );
       }
+      // Showcase-gated boundary frame clearance. Strictly-nested memberships
+      // (one `wraps` set is a strict subset of the other) promise visual
+      // nesting; when the nested frame shares member extremes with its
+      // containing frame it can render flush with — or even cross — the outer
+      // border. Report any edge whose inset is below the 8px minimum. Pairs
+      // whose memberships merely cross-cut (runtime/compliance style set
+      // semantics) are ordinary orthogonal scopes and never flagged here.
+      reportStrictNestedFrameClearance(
+        problems,
+        left,
+        leftIndex,
+        right,
+        rightIndex,
+        leftMembers,
+        rightMembers,
+        leftNested,
+        rightNested,
+      );
       // Ordinary architecture boundaries are sets, not an implied ownership
       // tree: orthogonal scopes such as runtime and compliance may share some
       // components while each contains others. The opt-in deployment profile
       // does promise hierarchical region/private-scope membership, so only it
       // receives the stricter membership-to-frame containment contract.
       if (!requiresNestedBoundaryMembership) continue;
-      const rightMembers = new Set(asArray(right.wraps));
-      const shared = [...leftMembers].filter((id) => rightMembers.has(id));
-      const leftNested = [...leftMembers].every((id) => rightMembers.has(id));
-      const rightNested = [...rightMembers].every((id) => leftMembers.has(id));
       if (shared.length && !leftNested && !rightNested) {
         const leftOnly = [...leftMembers].filter((id) => !rightMembers.has(id));
         const rightOnly = [...rightMembers].filter((id) => !leftMembers.has(id));
@@ -768,11 +887,6 @@ function alignFacingPorts(conn, from, to, start, end, fromSide, toSide, ports) {
   const fromSpread = Boolean(ports?.from);
   const toSpread = Boolean(ports?.to);
   if (fromSpread && toSpread) return { start, end };
-  const hasExplicitSides = (
-    (conn.fromSide && conn.fromSide !== 'auto')
-    || (conn.toSide && conn.toSide !== 'auto')
-  );
-  if (!fromSpread && !toSpread && hasExplicitSides) return { start, end };
 
   const alignmentDelta = horizontallyFacing
     ? Math.abs(start[1] - end[1])

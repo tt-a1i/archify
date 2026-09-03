@@ -44,8 +44,8 @@
     { "id": "observability", "type": "external", "label": "Observability", "sublabel": "metrics + traces", "pos": [1240, 85], "size": [126, 62], "tag": "SRE" }
   ],
   "boundaries": [
-    { "kind": "region", "label": "AWS us-east-1 / production", "wraps": ["edge", "gateway", "api_a", "api_b", "redis", "postgres", "events", "worker", "audit"] },
-    { "kind": "security-group", "label": "private application network", "wraps": ["api_a", "api_b", "redis", "postgres", "events", "worker"] },
+    { "kind": "region", "label": "AWS us-east-1 / production", "wraps": ["edge", "gateway", "api_a", "api_b", "redis", "postgres", "events", "worker", "audit"], "pad": 36 },
+    { "kind": "security-group", "label": "private application network", "wraps": ["api_a", "api_b", "redis", "postgres", "events", "worker"], "pad": 26 },
     { "kind": "region", "label": "AWS eu-west-1 / disaster recovery", "wraps": ["replica"] },
     { "kind": "security-group", "label": "DR private subnet", "wraps": ["replica"], "pad": 14 }
   ],
