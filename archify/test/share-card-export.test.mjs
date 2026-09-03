@@ -37,7 +37,7 @@ test('all five renderers expose one explicit 1200x630 Share Card export', () => 
   for (const mode of Object.keys(CASES)) {
     const html = render(mode);
     assert.match(html, /data-format="share-card"/, mode);
-    assert.match(html, /Share Card[\s\S]*?1200(?:&times;|×)630(?:\s*@2x)?\s*PNG/, mode);
+    assert.match(html, /Share Card[\s\S]*?1200(?:&times;|×)630 PNG/, mode);
     assert.match(html, /var SHARE_CARD_WIDTH = 1200;/, mode);
     assert.match(html, /var SHARE_CARD_HEIGHT = 630;/, mode);
     assert.match(html, /function rasterizeShareCard\(options\)/, mode);

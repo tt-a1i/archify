@@ -519,7 +519,8 @@ function renderLifecycleRail() {
     .map((state) => state.col);
   if (!mainCols.length) return '';
   const railEnd = layout.phaseXs[Math.max(...mainCols)] + 38;
-  return `        <path data-decorative="lifecycle-rail" d="M 154 ${layout.phaseY + 31} L ${railEnd} ${layout.phaseY + 31}" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>`;
+  return `        <path d="M 154 ${layout.phaseY + 31} L ${railEnd} ${layout.phaseY + 31}" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>`;
+}
 
 function renderSvg() {
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(lifecycle.meta)}>

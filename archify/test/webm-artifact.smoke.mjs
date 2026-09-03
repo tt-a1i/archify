@@ -884,7 +884,6 @@ try {
         return { ok: false, error: String(error && error.message || error) };
       }
     })()`, true), 10_000, `${label} Share Card export`);
-    console.log("sharePayload:", sharePayload);
 
     assert.equal(sharePayload?.ok, true, sharePayload?.error || `${label} Share Card export failed`);
     assert.equal(sharePayload.type, 'image/png');
@@ -892,8 +891,8 @@ try {
 
     const png = Buffer.from(sharePayload.base64, 'base64');
     assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${label} output is not a PNG`);
-    assert.equal(png.readUInt32BE(16), 2400, `${label} Share Card width`);
-    assert.equal(png.readUInt32BE(20), 1260, `${label} Share Card height`);
+    assert.equal(png.readUInt32BE(16), 1200, `${label} Share Card width`);
+    assert.equal(png.readUInt32BE(20), 630, `${label} Share Card height`);
 
     const pngPath = path.join(tmp, `${label}.share-card.png`);
     fs.writeFileSync(pngPath, png);
@@ -967,8 +966,8 @@ try {
     assert.ok(copiedPayload.size > 20_000, `${label} copied Share Card is unexpectedly small`);
     const png = Buffer.from(copiedPayload.base64, 'base64');
     assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${label} copied output is not a PNG`);
-    assert.equal(png.readUInt32BE(16), 2400, `${label} copied Share Card width`);
-    assert.equal(png.readUInt32BE(20), 1260, `${label} copied Share Card height`);
+    assert.equal(png.readUInt32BE(16), 1200, `${label} copied Share Card width`);
+    assert.equal(png.readUInt32BE(20), 630, `${label} copied Share Card height`);
     assert.deepEqual(copiedPayload.receipt, {
       format: 'share-card',
       width: '1200',
@@ -1297,8 +1296,8 @@ try {
     assert.ok(routePayload.size > 20_000, `${label} Route Card is unexpectedly small (${routePayload.size} bytes)`);
     const png = Buffer.from(routePayload.base64, 'base64');
     assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${label} Route Card is not a PNG`);
-    assert.equal(png.readUInt32BE(16), 2400, `${label} Route Card width`);
-    assert.equal(png.readUInt32BE(20), 1260, `${label} Route Card height`);
+    assert.equal(png.readUInt32BE(16), 1200, `${label} Route Card width`);
+    assert.equal(png.readUInt32BE(20), 630, `${label} Route Card height`);
     const pngPath = path.join(tmp, `${label}.route-share-card.png`);
     fs.writeFileSync(pngPath, png);
     const sampledPixels = execFileSync(ffmpeg, [
@@ -1482,8 +1481,8 @@ try {
     assert.equal(matrix.results.length, 8);
     for (const result of matrix.results) {
       assert.equal(result.type, 'image/png', `${label} ${result.preset}/${result.theme} MIME`);
-      assert.equal(result.width, 2400, `${label} ${result.preset}/${result.theme} width`);
-      assert.equal(result.height, 1260, `${label} ${result.preset}/${result.theme} height`);
+      assert.equal(result.width, 1200, `${label} ${result.preset}/${result.theme} width`);
+      assert.equal(result.height, 630, `${label} ${result.preset}/${result.theme} height`);
       assert.ok(result.size > 20_000, `${label} ${result.preset}/${result.theme} is unexpectedly small`);
       assert.equal(result.identity, matrix.identity, `${label} ${result.preset}/${result.theme} changed route identity`);
     }
@@ -1702,8 +1701,8 @@ try {
     assert.ok(reachPayload.size > 20_000, `${label} Reach Card is unexpectedly small (${reachPayload.size} bytes)`);
     const png = Buffer.from(reachPayload.base64, 'base64');
     assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${label} Reach Card is not a PNG`);
-    assert.equal(png.readUInt32BE(16), 2400, `${label} Reach Card width`);
-    assert.equal(png.readUInt32BE(20), 1260, `${label} Reach Card height`);
+    assert.equal(png.readUInt32BE(16), 1200, `${label} Reach Card width`);
+    assert.equal(png.readUInt32BE(20), 630, `${label} Reach Card height`);
     if (options.outputPath) {
       fs.mkdirSync(path.dirname(options.outputPath), { recursive: true });
       fs.writeFileSync(options.outputPath, png);
@@ -1748,8 +1747,8 @@ try {
       assert.equal(new Set(reachPayload.matrix.map((entry) => entry.hash)).size, 8, `${label} Reach presets/themes should produce eight distinct PNGs`);
       for (const entry of reachPayload.matrix) {
         assert.equal(entry.type, 'image/png');
-        assert.equal(entry.width, 2400);
-        assert.equal(entry.height, 1260);
+        assert.equal(entry.width, 1200);
+        assert.equal(entry.height, 630);
         assert.ok(entry.size > 20_000);
       }
     }

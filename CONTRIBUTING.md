@@ -75,7 +75,7 @@ cd archify
 ARCHIFY_CHROME="/path/to/chrome" node --test test/desktop-reader-browser.test.mjs
 ```
 
-A browser test that was skipped because Chrome was unavailable is **skipped**, not passed. Report that status exactly.
+A browser test that was skipped because Chrome was unavailable is **skipped**, not passed. Report automated browser evidence independently from perceptual visual review. Follow the [delivery contract](archify/references/delivery-contract.md) when recording supplementary manual browser work; an unconstrained glance supports only perceptual review.
 
 ### CLI, receipts, and delivery
 

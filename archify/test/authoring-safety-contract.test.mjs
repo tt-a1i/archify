@@ -42,10 +42,13 @@ test('visual-check stays a pending sidecar receipt instead of a polish claim', (
     path.join(skillRoot, 'references', 'delivery-contract.md'),
     'utf8',
   );
-  for (const [name, source] of [['SKILL.md', skill], ['delivery contract', deliveryContract]]) {
-    assert.match(source, /visual-check <output\.html> --json/, name);
-    assert.match(source, /1440×900[\s\S]*1600×1000[\s\S]*1920×1080[\s\S]*2048×1320/, name);
-    assert.match(source, /visualReview: "pending"/, name);
-    assert.match(source, /never changes.*delivered|without (?:rerendering or )?modifying/i, name);
-  }
+  assert.match(skill, /visual-check <output\.html> --json/);
+  assert.match(skill, /automated browser evidence[\s\S]*perceptual visual review/i);
+  assert.match(skill, /references\/delivery-contract\.md/);
+  assert.match(skill, /without (?:rerendering or )?modifying/i);
+
+  assert.match(deliveryContract, /visual-check <output\.html> --json/);
+  assert.match(deliveryContract, /1440×900[\s\S]*1600×1000[\s\S]*1920×1080[\s\S]*2048×1320/);
+  assert.match(deliveryContract, /visualReview: "pending"/);
+  assert.match(deliveryContract, /never changes.*delivered|without (?:rerendering or )?modifying/i);
 });

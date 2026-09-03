@@ -179,6 +179,7 @@ test('visual-check records four containment viewports and four endpoint theme ca
 
   assert.equal(result.exitCode, 0);
   assert.equal(result.receipt.status, 'pass');
+  assert.equal(result.receipt.evidenceKind, 'automated-browser');
   assert.deepEqual(result.receipt.diagnostics, []);
   assert.equal(result.receipt.visualReview, 'pending');
   assert.equal(result.receipt.viewerChrome.status, 'pass');
@@ -201,6 +202,8 @@ test('visual-check records four containment viewports and four endpoint theme ca
   assert.equal(fs.existsSync(outputs.contactSheet), true);
   assert.equal(outputs.screenshots.every((entry) => fs.existsSync(entry.path)), true);
   const contactSheet = fs.readFileSync(outputs.contactSheet, 'utf8');
+  assert.match(contactSheet, /Automated browser evidence/);
+  assert.match(contactSheet, /perceptual visual review pending/);
   for (const screenshot of outputs.screenshots) {
     assert.match(contactSheet, new RegExp(path.basename(screenshot.path).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     assert.doesNotMatch(contactSheet, new RegExp(screenshot.path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
