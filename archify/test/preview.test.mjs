@@ -221,7 +221,6 @@ test('preview: a superseded slow candidate can never become a published revision
   const deliveryCli = path.join(tmp, 'fake-delivery.mjs');
   fs.writeFileSync(deliveryCli, `
 import { createHash } from 'node:crypto';
-import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 const [, , input, output] = process.argv.slice(2);
 const source = JSON.parse(fs.readFileSync(input, 'utf8'));
@@ -268,7 +267,6 @@ test('preview: each delivery reads the immutable bytes bound to its observed dig
   const readMarker = path.join(tmp, 'delivery-read.txt');
   fs.writeFileSync(deliveryCli, `
 import { createHash } from 'node:crypto';
-import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 const [, , input, output] = process.argv.slice(2);
 await new Promise((resolve) => setTimeout(resolve, 120));
@@ -322,7 +320,6 @@ test('preview: commit rechecks the live digest when watcher and poll have not se
   const deliveryCli = path.join(tmp, 'commit-race-delivery.mjs');
   fs.writeFileSync(deliveryCli, `
 import { createHash } from 'node:crypto';
-import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 const [, , input, output] = process.argv.slice(2);
 const source = JSON.parse(fs.readFileSync(input, 'utf8'));
@@ -378,7 +375,6 @@ test('preview: stopping drains an active delivery without publishing it', { time
   fs.writeFileSync(input, JSON.stringify({ title: 'Do not publish after stop' }));
   fs.writeFileSync(deliveryCli, `
 import { createHash } from 'node:crypto';
-import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 const [, , , output] = process.argv.slice(2);
 await new Promise((resolve) => setTimeout(resolve, 450));
