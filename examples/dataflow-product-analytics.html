@@ -5504,7 +5504,7 @@
 
     // Authored playback pacing. Delivered artifacts may carry an optional
     // motion data block (meta.motion.dwell); absent authored values fall back
-    // to the readable-dwell defaults that keep the camera settle contract.
+    // to the readability-floor defaults that keep the camera-settle contract.
     Archify.motionConfig = (function () {
       var node = document.getElementById('archify-motion-data');
       var authored = {};

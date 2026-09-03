@@ -45,7 +45,7 @@ function authoredHtml(html) {
   return match ? JSON.parse(match[1]) : null;
 }
 
-test('authored meta.motion emits an effective motion block and overrides the readable-dwell defaults in every renderer', () => {
+test('authored meta.motion emits an effective motion block and overrides the readability-floor defaults in every renderer', () => {
   for (const mode of Object.keys(CASES)) {
     const doc = fixture(mode);
     doc.meta.motion = structuredClone(AUTHORS);
@@ -63,19 +63,17 @@ test('authored meta.motion emits an effective motion block and overrides the rea
   }
 });
 
-test('absent meta.motion emits no motion block and keeps the readable-dwell defaults', () => {
+test('absent meta.motion emits no motion block and keeps the readability-floor defaults', () => {
   for (const mode of Object.keys(CASES)) {
     const { result, html } = run(mode, fixture(mode), 'plain');
     assert.equal(result.status, 0, `${mode}: ${result.stderr}`);
     assert.equal(authoredHtml(html), null, `${mode}: authored-less render must carry no motion data block`);
-    // The shared resolver keeps the camera-settle floor as the fallback.
-    assert.match(html, /storyFollowMinMs: 1100/, mode);
-    assert.match(html, /journeyStepMs: 1100/, mode);
-    assert.match(html, /viewIntervalMs: 3200/, mode);
+    // The shared resolver keeps the readability floor as the fallback.
+    assert.match(html, /var DEFAULTS = \{ storyFollowMinMs: 1100, journeyStepMs: 1100, viewIntervalMs: 3200 \}/, mode);
   }
 });
 
-test('a partial dwell object leaves unset keys at their readable-dwell defaults', () => {
+test('a partial dwell object leaves unset keys at their readability-floor defaults', () => {
   const doc = fixture('architecture');
   doc.meta.motion = { dwell: { journeyStepMs: 2400 } };
   const { result, html } = run('architecture', doc, 'partial');
@@ -86,6 +84,14 @@ test('a partial dwell object leaves unset keys at their readable-dwell defaults'
   assert.equal(parsed.dwell.storyFollowMinMs, undefined);
   assert.equal(parsed.dwell.viewIntervalMs, undefined);
   // The template resolver falls back per-key when a field is absent.
-  assert.match(html, /storyFollowMinMs: 1100/);
-  assert.match(html, /viewIntervalMs: 3200/);
+  assert.match(html, /storyFollowMinMs: Number\.isFinite\(dwell\.storyFollowMinMs\) \? dwell\.storyFollowMinMs : DEFAULTS\.storyFollowMinMs/);
+  assert.match(html, /viewIntervalMs: Number\.isFinite\(dwell\.viewIntervalMs\) \? dwell\.viewIntervalMs : DEFAULTS\.viewIntervalMs/);
+});
+
+test('out-of-bounds authored dwell is rejected by schema validation', () => {
+  const doc = fixture('architecture');
+  doc.meta.motion = { dwell: { storyFollowMinMs: 10 } };
+  const { result } = run('architecture', doc, 'out-of-bounds');
+  assert.notEqual(result.status, 0, 'a dwell below the readability floor must fail validation');
+  assert.match(result.stderr, /storyFollowMinMs/, 'the rejection must name the offending field');
 });
