@@ -6,6 +6,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
+### Added
+- **Hermes Agent community opt-in.** `integrations/hermes-agent` is a Skill-only directory plugin: it registers the existing Node Archify `SKILL.md` for Hermes. The documented install is `hermes skills install skills-sh/tt-a1i/archify/archify -y` (published GitHub Skill). A checkout symlink remains the local-dev path. Hermes still runs `node bin/archify.mjs`. This is not an official Nous product and is not an agent-switcher target.
+
 ### Fixed
 - **License provenance in distributions.** Source and packaged Skill distributions retain Cocoon AI's exact MIT copyright notice, package staging and smoke tests fail closed when the notice or LICENSE is missing or altered, and the deterministic ZIP carries the same LICENSE bytes as the repository.
 - **Third-party mark notices in distributions.** Source and packaged Skill distributions now identify the pinned Simple Icons collection, disclose all individual icon licenses recorded by that version, preserve source and brand-guideline links, and state that Archify's MIT license does not replace third-party copyright or trademark terms. Package staging and smoke tests fail closed when the notice is missing or altered.

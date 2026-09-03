@@ -1,0 +1,9 @@
+name: archify
+version: 0.1.0
+description: Skill-only Archify plugin. Hermes loads the existing Node diagram skill; render, validate, and deliver still run as node bin/archify.mjs. Not an official Nous Research product.
+author: tt-a1i
+kind: standalone
+platforms:
+  - linux
+  - macos
+  - windows
