@@ -22,7 +22,7 @@ function usage() {
   archify migrate workflow <old.json> <new.json> --to-schema 2 [--json]
   archify inspect <type> <input.json>
   archify check <output.html>
-  archify visual-check <output.html> [--json]
+  archify visual-check <output.html> [--json] [--out-dir <dir>]
   archify guide [scenario or question] [--json] [--lang en|zh]
   archify brands [name, alias, domain, or category] [--json]
   archify brands capture <url> [--json]
@@ -99,6 +99,27 @@ function extractRepoRootArgs(args) {
     rest.push(arg);
   }
   return { rest, repoRoot: repoRoot ? path.resolve(repoRoot) : undefined };
+}
+
+function extractOutDirArgs(args) {
+  const rest = [];
+  let outDir;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--out-dir') {
+      outDir = args[index + 1];
+      if (!outDir || outDir.startsWith('--')) fail('--out-dir requires a directory path.');
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--out-dir=')) {
+      outDir = arg.slice('--out-dir='.length);
+      if (!outDir) fail('--out-dir requires a directory path.');
+      continue;
+    }
+    rest.push(arg);
+  }
+  return { rest, outDir: outDir ? path.resolve(outDir) : undefined };
 }
 
 function rendererEnv(quality, repoRoot, diagnosticJson = false) {
@@ -1153,7 +1174,8 @@ function commandCheck(args) {
   if (result.status !== 0) exitFrom(result);
 }
 
-async function commandVisualCheck(args) {
+async function commandVisualCheck(rawArgs) {
+  const { rest: args, outDir } = extractOutDirArgs(rawArgs);
   const json = args.includes('--json');
   const knownOptions = new Set(['--json']);
   const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
@@ -1170,7 +1192,7 @@ async function commandVisualCheck(args) {
 
   let result;
   try {
-    result = await runVisualCheck({ artifactPath: positional[0] });
+    result = await runVisualCheck({ artifactPath: positional[0], outDir });
   } catch (error) {
     if (json) {
       console.log(JSON.stringify({
@@ -1194,11 +1216,12 @@ async function commandVisualCheck(args) {
   if (json) {
     console.log(JSON.stringify(result.receipt, null, 2));
   } else {
+    const sidecarDirectory = outDir || path.dirname(result.receipt.artifact.path);
     console.log(`automated browser evidence ${result.receipt.status}: ${result.receipt.artifact.path}`);
     console.log(`visual-check containment ${result.receipt.containment.status}; captures ${result.receipt.captures.status}; perceptual visual review pending`);
-    console.log(`receipt ${path.join(path.dirname(result.receipt.artifact.path), result.receipt.sidecars.receipt)}`);
+    console.log(`receipt ${path.join(sidecarDirectory, result.receipt.sidecars.receipt)}`);
     if (result.receipt.captures.contactSheet) {
-      console.log(`contact sheet ${path.join(path.dirname(result.receipt.artifact.path), result.receipt.captures.contactSheet)}`);
+      console.log(`contact sheet ${path.join(sidecarDirectory, result.receipt.captures.contactSheet)}`);
     }
     if (result.receipt.error) console.error(result.receipt.error);
   }
