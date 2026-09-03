@@ -185,7 +185,8 @@
     {
       "kind": "security-group",
       "label": "explicit execution-policy boundary",
-      "wraps": ["policy", "workflow", "adapters"]
+      "wraps": ["policy", "workflow", "adapters"],
+      "pad": 22
     }
   ],
   "connections": [

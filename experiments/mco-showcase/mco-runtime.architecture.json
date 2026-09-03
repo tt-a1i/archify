@@ -52,7 +52,8 @@
     {
       "kind": "region",
       "label": "MCO local package / Python runtime",
-      "wraps": ["entry", "router", "policy", "invocation", "adapters", "transport", "session", "session_state", "artifacts"]
+      "wraps": ["entry", "router", "policy", "invocation", "adapters", "transport", "session", "session_state", "artifacts"],
+      "pad": 40
     },
     {
       "kind": "security-group",

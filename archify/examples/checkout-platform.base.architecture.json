@@ -17,7 +17,7 @@
   ],
   "boundaries": [
     { "kind": "region", "label": "Production region", "wraps": ["edge", "checkout", "cache", "orders", "queue", "worker"] },
-    { "kind": "security-group", "label": "Checkout trust zone", "wraps": ["checkout", "orders"] }
+    { "kind": "security-group", "label": "Checkout trust zone", "wraps": ["checkout", "orders"], "pad": 22 }
   ],
   "connections": [
     { "id": "buyer-request", "from": "buyers", "to": "edge", "label": "HTTPS", "variant": "emphasis" },
