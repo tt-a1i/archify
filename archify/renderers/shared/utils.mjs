@@ -108,6 +108,7 @@ const SUBTITLE_SLOT_RE = /^([ \t]*)<p class="subtitle">\[Subtitle description\]<
 const GUIDED_VIEWS_PLACEHOLDER = '<!-- ARCHIFY:GUIDED_VIEWS_DATA -->';
 const SOURCE_EVIDENCE_PLACEHOLDER = '    <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->';
 const I18N_PLACEHOLDER = '    <!-- ARCHIFY:I18N_DATA -->';
+const MOTION_DATA_PLACEHOLDER = '    <!-- ARCHIFY:MOTION_DATA -->';
 
 function serializeScriptJson(value) {
   return JSON.stringify(value)
@@ -121,6 +122,7 @@ const TEMPLATE_PLACEHOLDERS = [
   '<title>[PROJECT NAME] Architecture Diagram</title>',
   '<h1>[PROJECT NAME] Architecture</h1>',
   GUIDED_VIEWS_PLACEHOLDER,
+  MOTION_DATA_PLACEHOLDER,
 ];
 
 export function applyTemplate(template, {
@@ -132,6 +134,7 @@ export function applyTemplate(template, {
   visualPreset = 'classic',
   guidedViews = [],
   sourceEvidence = null,
+  motion = null,
 }) {
   if (!SVG_SLOT_RE.test(template)) {
     throw new Error('applyTemplate: template missing ARCHIFY:SVG_SLOT sentinel');
@@ -157,6 +160,7 @@ export function applyTemplate(template, {
   // or rendered SVG must not be interpreted as a replacement pattern.
   const guidedViewsJson = serializeScriptJson(guidedViews);
   const sourceEvidenceJson = serializeScriptJson(sourceEvidence);
+  const motionJson = serializeScriptJson(motion || {});
   const resolvedLocale = resolveLocale(locale);
   const i18nJson = serializeScriptJson({ locale: resolvedLocale, messages: viewerCatalog(resolvedLocale) });
   const renderedSubtitle = typeof subtitle === 'string' && subtitle.trim()
@@ -179,6 +183,9 @@ export function applyTemplate(template, {
     .replace(GUIDED_VIEWS_PLACEHOLDER, () => `<script id="archify-guided-views-data" type="application/json">${guidedViewsJson}</script>`)
     .replace(SOURCE_EVIDENCE_PLACEHOLDER, () => sourceEvidence
       ? `    <script id="archify-source-evidence-data" type="application/json">${sourceEvidenceJson}</script>`
+      : '')
+    .replace(MOTION_DATA_PLACEHOLDER, () => motion
+      ? `    <script id="archify-motion-data" type="application/json">${motionJson}</script>`
       : '');
 }
 
