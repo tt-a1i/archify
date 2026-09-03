@@ -84,3 +84,13 @@ test('reader exposes an explicit stable-dimensions contract for browser evidence
   assert.match(reader, /stableFrames >= 3/);
   assert.match(reader, /whenStable: whenStable/);
 });
+
+test('settled overflow width is sticky so measure and settleOverflow cannot oscillate', () => {
+  // Regression: when appended content makes the page taller than the viewport,
+  // measure() kept re-growing the width while settleOverflow() kept shrinking
+  // it, so ResizeObserver retriggered them forever (visible flicker).
+  assert.match(reader, /var settledWidth = 0;/);
+  assert.match(reader, /settledWidth = Math\.max\(minWidth, lastWidth - overflow \* ratio - 4\);/);
+  assert.match(reader, /if \(settledWidth && width > settledWidth\) width = settledWidth;/);
+  assert.match(reader, /\} else \{\s*settledWidth = 0;\s*html\.removeAttribute\('data-reader-overflow'\);/);
+});

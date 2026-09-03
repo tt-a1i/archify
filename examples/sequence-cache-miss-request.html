@@ -10960,6 +10960,7 @@
       var frame = 0;
       var settleFrame = 0;
       var lastWidth = 0;
+      var settledWidth = 0;
       var WIDE_RATIO = 1.55;
       var MIN_DESKTOP_WIDTH = 1024;
       var MIN_READER_WIDTH = 960;
@@ -11028,11 +11029,13 @@
             document.body.scrollHeight
           ) - window.innerHeight;
           if (overflow > 1 && lastWidth > minWidth) {
-            applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4));
+            settledWidth = Math.max(minWidth, lastWidth - overflow * ratio - 4);
+            applyWidth(settledWidth);
             html.setAttribute('data-reader-overflow', 'reduced');
           } else if (overflow > 1) {
             html.setAttribute('data-reader-overflow', 'authored');
           } else {
+            settledWidth = 0;
             html.removeAttribute('data-reader-overflow');
           }
         });
@@ -11052,6 +11055,7 @@
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
         var desiredWidth = availableSvgHeight * ratio + chrome.diagramX;
         var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth));
+        if (settledWidth && width > settledWidth) width = settledWidth;
         applyWidth(width);
         settleOverflow(minWidth);
         return {
