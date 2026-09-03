@@ -50,7 +50,7 @@ function executeStartPage(html) {
 
   const types = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']
     .map((type) => new FakeElement({ dataset: { type } }));
-  const agents = ['cursor', 'codex', 'claude-code', 'opencode']
+  const agents = ['cursor', 'codex', 'claude-code', 'opencode', 'github-copilot']
     .map((agent) => new FakeElement({ textContent: agent === 'codex' ? 'Codex' : agent, dataset: { agent } }));
   const inputs = ['description', 'repository']
     .map((input) => new FakeElement({ dataset: { input } }));
@@ -129,7 +129,7 @@ test('start page: offers five bounded bilingual starts without ingesting source 
   assert.doesNotMatch(html, /\[\[[A-Z0-9_]+\]\]/);
   assert.match(html, /npx -y skills add tt-a1i\/archify --skill archify --agent codex --global --copy --yes/);
   assert.match(html, /npx -y skills add tt-a1i\/archify --skill archify --agent codex --copy --yes/);
-  for (const agent of ['cursor', 'codex', 'claude-code', 'opencode']) {
+  for (const agent of ['cursor', 'codex', 'claude-code', 'opencode', 'github-copilot']) {
     assert.match(html, new RegExp(`role="tab" data-agent="${agent}"`));
   }
   assert.match(html, /data-en="Describe it\."/);

@@ -6,6 +6,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
+### Added
+- **GitHub Copilot agent-switcher target.** The Start page agent switcher, README EN/ZH quick start, and landing copy add `github-copilot` alongside `cursor`, `codex`, `claude-code`, and `opencode`. It installs the same checked Skill and zero-dependency renderers via `npx skills add tt-a1i/archify --skill archify --agent github-copilot ...`; no vendor-specific fork, renderer, or schema behavior was added.
+
 ### Fixed
 - **License provenance in distributions.** Source and packaged Skill distributions retain Cocoon AI's exact MIT copyright notice, package staging and smoke tests fail closed when the notice or LICENSE is missing or altered, and the deterministic ZIP carries the same LICENSE bytes as the repository.
 - **Third-party mark notices in distributions.** Source and packaged Skill distributions now identify the pinned Simple Icons collection, disclose all individual icon licenses recorded by that version, preserve source and brand-guideline links, and state that Archify's MIT license does not replace third-party copyright or trademark terms. Package staging and smoke tests fail closed when the notice is missing or altered.
