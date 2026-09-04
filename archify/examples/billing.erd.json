@@ -131,6 +131,8 @@
       "from": "payments",
       "to": "payment_gateway",
       "label": "via",
+      "labelDx": 34,
+      "labelDy": 24,
       "cardinality": { "from": "0..N", "to": "1" }
     },
     {

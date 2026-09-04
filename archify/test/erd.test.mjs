@@ -127,4 +127,45 @@ test('erd: schema rejects unknown top-level properties', () => {
   expectFailure('extra property', (d) => { d.bogus = true; }, 'additional properties');
 });
 
+test('erd: a foreign role without references fails closed', () => {
+  expectFailure('foreign role without references', (d) => {
+    delete d.entities.find((e) => e.id === 'orders').attributes.find((a) => a.name === 'user_id').references;
+  }, 'without a references target');
+});
+
+test('erd: orphan rule applies when relationships are empty', () => {
+  expectFailure('orphan with zero relationships', (d) => { d.relationships = []; }, 'orphan');
+});
+
+test('erd: rendered paths carry finite coordinates', () => {
+  const { result, output } = render(base());
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const html = fs.readFileSync(output, 'utf8');
+  assert.ok(!/M undefined/.test(html), 'route must not contain undefined coordinates');
+  assert.ok(!/L undefined/.test(html), 'route must not contain undefined coordinates');
+  assert.ok(!/NaN/.test(html.match(/data-composition-points="[^"]*"/g)?.join(' ') ?? ''), 'composition points must be finite');
+});
+
+test('erd: authored positions survive when a peer omits pos', () => {
+  const diagram = {
+    schema_version: 1,
+    diagram_type: 'erd',
+    meta: { title: 'Position probe', quality_profile: 'standard' },
+    entities: [
+      { id: 'a', label: 'A', kind: 'reference', pos: [400, 300], attributes: [{ name: 'id', role: 'primary' }] },
+      { id: 'b', label: 'B', kind: 'reference', attributes: [{ name: 'id', role: 'primary' }] },
+    ],
+    relationships: [{ id: 'r', from: 'a', to: 'b', cardinality: { from: '1', to: '0..N' } }],
+  };
+  const input = path.join(tmp, `pos-${Math.random().toString(36).slice(2)}.json`);
+  fs.writeFileSync(input, JSON.stringify(diagram));
+  const output = path.join(tmp, 'pos-out.html');
+  const result = spawnSync(process.execPath, [
+    path.join(skillRoot, 'bin', 'archify.mjs'), 'render', 'erd', input, output,
+  ], { cwd: skillRoot, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const html = fs.readFileSync(output, 'utf8');
+  assert.ok(html.includes('x="400" y="300"'), 'authored entity position must be preserved');
+});
+
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

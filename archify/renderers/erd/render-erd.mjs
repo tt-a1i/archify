@@ -97,19 +97,34 @@ for (const e of entities) {
   components.set(e.id, { ...e, width, height, x: 0, y: 0, cx: 0, cy: 0 });
 }
 
-// Positions: if every entity carries pos, use them; otherwise auto-grid all.
-const positioned = entities.every((e) => Array.isArray(e.pos) && e.pos.length === 2);
-if (positioned) {
-  for (const e of entities) {
+// Positions are authored per entity: preserve every explicit pos, grid only
+// entities that omit it. Never rewrite authored geometry because one peer
+// omitted its position (typed/manual-layout contract).
+const missingPosition = [];
+for (const e of entities) {
+  if (Array.isArray(e.pos) && e.pos.length === 2) {
     placeEntity(e, e.pos[0], e.pos[1]);
+  } else {
+    missingPosition.push(e);
   }
-} else {
+}
+if (missingPosition.length) {
   const cols = Math.max(1, Math.ceil(Math.sqrt(entities.length)));
   const cellW = 240;
   const cellH = 170;
-  entities.forEach((e, i) => {
-    placeEntity(e, 40 + (i % cols) * cellW, 40 + Math.floor(i / cols) * cellH);
-  });
+  let slot = 0;
+  const occupied = new Set(entities.filter((e) => Array.isArray(e.pos) && e.pos.length === 2).map((e) => `${e.pos[0]},${e.pos[1]}`));
+  for (const e of missingPosition) {
+    let x;
+    let y;
+    do {
+      x = 40 + (slot % cols) * cellW;
+      y = 40 + Math.floor(slot / cols) * cellH;
+      slot += 1;
+    } while (occupied.has(`${x},${y}`));
+    occupied.add(`${x},${y}`);
+    placeEntity(e, x, y);
+  }
 }
 
 // ---------------------------------------------------------------------------
