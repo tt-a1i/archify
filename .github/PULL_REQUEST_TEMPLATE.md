@@ -20,7 +20,21 @@ List exact commands and results. Do not write only “tests pass.”
 
 ## Visual evidence
 
-For visible changes, attach before/after final-artifact screenshots and state whether visual review passed, failed, or was skipped. Write “Not applicable” for non-visual changes.
+For visible changes, attach comparable final-artifact screenshots generated from the same input. For non-visual changes, write “Not applicable” and briefly explain why.
+
+### Before
+
+<!-- Attach the result before this change. -->
+
+### After
+
+<!-- Attach the result after this change. -->
+
+- Reproduction input or fixture:
+- Viewport, theme, preset, or diagram mode:
+- Visual review: passed / failed / skipped / Not applicable
+
+Visible changes must reach `passed` before final review or merge. Draft pull requests may report `failed` or `skipped` while evidence or fixes are still in progress.
 
 ## Generated artifacts
 

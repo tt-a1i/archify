@@ -124,9 +124,11 @@ A useful bug report or fix contains:
 2. The smallest redacted typed JSON that still reproduces the failure.
 3. The complete machine-readable validation receipt or exact error.
 4. Expected versus actual behavior.
-5. A final-artifact screenshot only when the problem is visual.
+5. The current final-artifact screenshot when the problem is visual. Mark subtle defects in the image and describe the expected visual result. Screenshots are not required for non-visual problems.
 
 Do not replace deterministic evidence with a screenshot. For visual defects, keep both the validator result and final rendered evidence.
+
+A pull request that changes the final diagram, Viewer, or public page appearance or interaction must include comparable before/after final-artifact screenshots. Generate both from the same input and keep the viewport, theme, preset, diagram mode, zoom, and page state consistent. Cover only the combinations affected by the change; use GIF or WebM when static screenshots cannot demonstrate an interaction. Draft pull requests may report visual review as `failed` or `skipped`, but visible changes must reach `passed` before final review or merge. A non-visual pull request must write `Not applicable` in its Visual evidence section and briefly explain why.
 
 ## Community showcase submissions
 
@@ -140,7 +142,8 @@ Maintainers may ask for a smaller source file, rerun validation, or decline a ca
 - Complete `.github/PULL_REQUEST_TEMPLATE.md` with exact commands and numeric results; do not write only “tests pass.”
 - Add or update a regression test for behavioral changes.
 - Confirm existing public examples and compatibility fixtures still behave as intended.
-- State `visual review: passed`, `failed`, or `skipped` truthfully for visible changes.
+- Attach comparable before/after final-artifact screenshots for visible changes, or explain why visual evidence is not applicable.
+- State `visual review: passed`, `failed`, or `skipped` truthfully for visible changes; it must reach `passed` before final review or merge.
 - Confirm remote CI actually ran on the current head. Local green checks do not mean GitHub CI passed, and zero checks is not green.
 - Remove unrelated files, debug output, local paths, generated noise, and sensitive data from the diff.
 

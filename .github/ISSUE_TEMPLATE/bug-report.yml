@@ -86,11 +86,25 @@ body:
     validations:
       required: true
 
-  - type: textarea
+  - type: dropdown
+    id: visual_impact
+    attributes:
+      label: Is this a visual problem?
+      description: Visual problems affect the final diagram, Viewer, or public page appearance or interaction.
+      options:
+        - Yes — I attached the current final-artifact screenshot below
+        - No — a screenshot is not applicable
+    validations:
+      required: true
+
+  - type: upload
     id: screenshot
     attributes:
-      label: Optional final-artifact screenshot
-      description: Drag in a screenshot when the problem is visual. Mark the defect if it is subtle.
+      label: Current visual result
+      description: For visual problems, upload the current final-artifact screenshot and mark the defect if it is subtle.
+    validations:
+      required: false
+      accept: ".png,.jpg,.jpeg,.webp,.gif"
 
   - type: textarea
     id: environment

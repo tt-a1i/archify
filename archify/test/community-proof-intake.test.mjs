@@ -53,6 +53,8 @@ test('bug intake captures a minimal deterministic reproduction before visual dia
     'id: validation_receipt',
     'id: expected',
     'id: actual',
+    'id: visual_impact',
+    'id: screenshot',
     'id: environment',
     'id: sensitive_data',
   ]) {
@@ -60,8 +62,19 @@ test('bug intake captures a minimal deterministic reproduction before visual dia
   }
   assert.ok(
     template.indexOf('id: validation_receipt') < template.indexOf('id: screenshot'),
-    'deterministic evidence should be requested before optional visual evidence',
+    'deterministic evidence should be requested before visual evidence',
   );
+  const screenshotBlock = template.slice(
+    template.indexOf('id: screenshot'),
+    template.indexOf('id: environment'),
+  );
+  assert.match(template, /type: upload\s+id: screenshot/);
+  assert.match(screenshotBlock, /required:\s*false/);
+  assert.match(screenshotBlock, /For visual problems, upload/i);
+  assert.doesNotMatch(screenshotBlock, /Required for visual problems/i);
+  assert.match(template, /Yes — I attached the current final-artifact screenshot below/);
+  assert.match(template, /No — a screenshot is not applicable/);
+  assert.match(template, /accept: "\.png,\.jpg,\.jpeg,\.webp,\.gif"/);
 });
 
 test('contributor and pull-request guides keep proof changes reproducible and stability-first', () => {
@@ -97,8 +110,16 @@ test('contributor and pull-request guides keep proof changes reproducible and st
     'Tests run',
     'Generated artifacts',
     'Visual evidence',
+    '### Before',
+    '### After',
+    'Visual review: passed / failed / skipped / Not applicable',
     'No unrelated changes',
   ]) {
     assert.match(pullRequest, new RegExp(required), required);
   }
+  assert.match(contributing, /comparable before\/after final-artifact screenshots/i);
+  assert.match(contributing, /same input/i);
+  assert.match(contributing, /visible changes must reach `passed` before final review or merge/i);
+  assert.match(contributing, /non-visual pull request must write `Not applicable`/i);
+  assert.match(pullRequest, /Visible changes must reach `passed` before final review or merge/i);
 });
