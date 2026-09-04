@@ -10,15 +10,15 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 
-const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
+const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd']);
 
 function usage() {
   return `Usage:
-  archify render <type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path (architecture only)]
+  archify render <type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path (architecture and erd only)]
   archify compare architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]
-  archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path (architecture only)]
-  archify preview <type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path (architecture only)]
-  archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path (architecture only)]
+  archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path (architecture and erd only)]
+  archify preview <type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path (architecture and erd only)]
+  archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path (architecture and erd only)]
   archify migrate workflow <old.json> <new.json> --to-schema 2 [--json]
   archify inspect <type> <input.json>
   archify check <output.html>
@@ -31,7 +31,7 @@ function usage() {
   archify demo [output-directory]
 
 Types:
-  architecture, workflow, sequence, dataflow, lifecycle
+  architecture, workflow, sequence, dataflow, lifecycle, erd
 `;
 }
 
@@ -240,8 +240,11 @@ function formatDiagnostics(error, diagnostics = []) {
 }
 
 function assertEvidenceType(type, repoRoot) {
-  if (repoRoot && type !== 'architecture') {
-    fail('--repo-root is currently supported for architecture diagrams only.');
+  // Keep in sync with EVIDENCE_SURFACES in renderers/shared/repository-evidence.mjs.
+  // Inline (not imported) so `doctor` still runs from an incomplete installation.
+  const evidenceTypes = ['architecture', 'erd'];
+  if (repoRoot && !evidenceTypes.includes(type)) {
+    fail(`--repo-root is currently supported for ${evidenceTypes.join(' and ')} diagrams only.`);
   }
 }
 
@@ -1311,6 +1314,7 @@ async function commandDoctor() {
     sequence: 'cache-miss-request.sequence.json',
     dataflow: 'product-analytics.dataflow.json',
     lifecycle: 'agent-run.lifecycle.json',
+    erd: 'billing.erd.json',
   };
 
   for (const type of TYPES) {

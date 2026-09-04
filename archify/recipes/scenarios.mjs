@@ -250,6 +250,31 @@ const RAW_RECIPES = [
       prompt: '用 Archify 生命周期模式建模部署对象。展示排队、构建、验证、等待审批、晋级、回滚以及所有终态，并标注允许每次状态转换的事件和守卫条件。',
     },
   },
+  {
+    id: 'data-model', type: 'erd', proof: 'billing',
+    presentation: { preset: 'classic', motion: 'static', views: 'optional' },
+    start: {
+      en: { descriptionPrompt: 'Use Archify erd mode to map this data model: [paste the entities, attributes, primary and foreign keys, and relationship cardinality]. Keep at most 12 primary entities, declare cardinality on both ends of every relationship, and mark unknown ownership instead of inventing it. No repository is required unless the diagram must reflect real code.' },
+      zh: { descriptionPrompt: '用 Archify erd 模式绘制这个数据模型：[粘贴实体、属性、主键与外键，以及关系基数]。主要实体不超过 12 个，每条关系的两端都要声明基数，不确定的归属要标明而不是编造。除非图表必须反映真实代码，否则不需要代码库。' },
+    },
+    signals: [['data model', 15], ['entity relationship', 14], ['erd', 14], ['database schema', 12], ['foreign key', 11], ['primary key', 9], ['cardinality', 10], ['one-to-many', 8], ['数据模型', 15], ['实体关系', 14], ['数据库表结构', 12], ['外键', 11], ['主键', 9], ['基数', 10]],
+    en: {
+      title: 'Data model', question: 'What entities exist, how are they related, and what enforces it?',
+      summary: 'A bounded entity-relationship map of entities, attributes, keys, and relationship cardinality.',
+      useWhen: 'Onboarding to a schema, reviewing migrations or ORM models, or discussing data design.',
+      avoidWhen: 'The audience needs data movement or lineage rather than the shape of the data itself.',
+      include: ['at most 12 primary entities', 'attributes with keys', 'both-end cardinality', 'enforcing foreign keys'],
+      prompt: 'Use Archify erd mode to map this data model. Show at most 12 primary entities with their attributes, mark exactly one primary key per entity, declare cardinality on both ends of every relationship, and link each relationship to its enforcing foreign key where real. Put secondary detail in cards instead of adding more entities.',
+    },
+    zh: {
+      title: '数据模型', question: '有哪些实体、它们如何关联、靠什么约束？',
+      summary: '用一张有边界的 ER 图展示实体、属性、主键外键和关系基数。',
+      useWhen: '适合表结构上手、评审迁移或 ORM 模型，以及数据设计讨论。',
+      avoidWhen: '如果重点是数据流转或血缘，而不是数据本身的形状，请用数据流图。',
+      include: ['不超过 12 个主要实体', '带主键的属性', '两端基数', '起约束作用的外键'],
+      prompt: '用 Archify erd 模式绘制这个数据模型。展示不超过 12 个主要实体及其属性，每个实体最多一个主键，每条关系的两端都要声明基数，并在真实存在时把关系关联到起约束作用的外键；次要细节放进卡片，不要继续堆实体。',
+    },
+  },
 ];
 
 export const SCENARIO_RECIPES = Object.freeze(RAW_RECIPES.map((recipe) => Object.freeze({
