@@ -7449,6 +7449,7 @@
       var directPreviewTimer = null;
       var reachabilityMode = null;
       var activeReachability = null;
+      var reachabilityPreviewing = false;
       var svgNamespace = 'http://www.w3.org/2000/svg';
       var reducedMotionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
       var finePointerQuery = window.matchMedia ? window.matchMedia('(hover: hover) and (pointer: fine)') : null;
@@ -7536,6 +7537,7 @@
         options = options || {};
         reachabilityMode = null;
         activeReachability = null;
+        reachabilityPreviewing = false;
         svg.removeAttribute('data-reach-active');
         chip.removeAttribute('data-reach-mode');
         nodes().forEach(function (node) {
@@ -7579,7 +7581,7 @@
       function applyReachability(direction, options) {
         options = options || {};
         if (activeIds.length !== 1 || (direction !== 'upstream' && direction !== 'downstream')) return false;
-        if (reachabilityMode === direction && options.toggle !== false) {
+        if (reachabilityMode === direction && options.toggle !== false && !reachabilityPreviewing) {
           clearReachability({ updateUrl: options.updateUrl !== false });
           return true;
         }
@@ -7591,6 +7593,7 @@
         clearRelationshipPreview({ clearPin: true });
         clearReachability({ updateUrl: false });
         reachabilityMode = direction;
+        reachabilityPreviewing = options.preview === true;
         activeReachability = result;
         var edgeKeySet = Object.create(null);
         result.edgeKeys.forEach(function (key) { edgeKeySet[key] = true; });
@@ -7632,7 +7635,7 @@
         if (Archify.exportMenu && typeof Archify.exportMenu.syncReachShare === 'function') {
           Archify.exportMenu.syncReachShare();
         }
-        if (options.updateUrl !== false) {
+        if (options.updateUrl !== false && !reachabilityPreviewing) {
           try {
             history.replaceState(null, '', location.pathname + location.search + '#focus=' +
               encodeURIComponent(activeIds[0]) + '&reach=' + direction);
@@ -7643,6 +7646,10 @@
         }
         requestLensPlacement();
         return true;
+      }
+      function previewReachability(direction) {
+        if (activeIds.length !== 1) return false;
+        return applyReachability(direction, { preview: true, toggle: false, updateUrl: false, reveal: false });
       }
       function reachabilitySnapshot() {
         if (!activeReachability || activeIds.length !== 1 ||
@@ -8703,6 +8710,21 @@
       copyBtn.addEventListener('click', copyFocusLink);
       upstreamBtn.addEventListener('click', function () { applyReachability('upstream'); });
       downstreamBtn.addEventListener('click', function () { applyReachability('downstream'); });
+      [[upstreamBtn, 'upstream'], [downstreamBtn, 'downstream']].forEach(function (entry) {
+        var button = entry[0];
+        var direction = entry[1];
+        button.addEventListener('pointerenter', function (event) {
+          if (event.pointerType === 'touch') return;
+          previewReachability(direction);
+        });
+        button.addEventListener('pointerleave', function () {
+          if (reachabilityPreviewing) clearReachability({ updateUrl: false });
+        });
+        button.addEventListener('focus', function () { previewReachability(direction); });
+        button.addEventListener('blur', function () {
+          if (reachabilityPreviewing) clearReachability({ updateUrl: false });
+        });
+      });
       relationsBtn.addEventListener('click', function () {
         var expanded = chip.getAttribute('data-relations-expanded') === 'true';
         if (expanded) chip.removeAttribute('data-relations-expanded');
@@ -14120,6 +14142,7 @@
       function cleanSvgState() {
         removeFlowOverlay();
         svg.removeAttribute('data-lens-active');
+        svg.removeAttribute('data-lens-mode');
         Array.prototype.forEach.call(svg.querySelectorAll('[data-lens-match], [data-lens-selected], [data-lens-peer]'), function (element) {
           element.removeAttribute('data-lens-match');
           element.removeAttribute('data-lens-selected');
@@ -14135,7 +14158,7 @@
           button.setAttribute('data-kind', kind.id);
           button.setAttribute('aria-pressed', selectedKinds.indexOf(kind.id) >= 0 ? 'true' : 'false');
           button.setAttribute('aria-label', viewerCount('viewer.lens.kind.count', kind.nodes.length, { label: kind.label }));
-          button.disabled = selectedKinds.length >= 2 && selectedKinds.indexOf(kind.id) === -1;
+          button.disabled = selectedKinds.length >= 4 && selectedKinds.indexOf(kind.id) === -1;
           var swatch = document.createElement('span');
           swatch.className = 'semantic-lens-swatch';
           swatch.setAttribute('aria-hidden', 'true');
@@ -14226,6 +14249,7 @@
         var forward = 0;
         var reverse = 0;
         var crossKind = selectedKinds.length === 2;
+        var roleComparison = selectedKinds.length >= 2;
         var matchedFlow = [];
         edgeGroups().forEach(function (edge) {
           var fromKind = nodeKind[edge.from];
@@ -14234,6 +14258,9 @@
           if (crossKind) {
             if (fromKind === selectedKinds[0] && toKind === selectedKinds[1]) { match = true; forward += 1; }
             if (fromKind === selectedKinds[1] && toKind === selectedKinds[0]) { match = true; reverse += 1; }
+          } else if (roleComparison) {
+            match = Boolean(chosen[fromKind] || chosen[toKind]);
+            if (match) touching += 1;
           } else if (fromKind === selectedKinds[0] || toKind === selectedKinds[0]) {
             match = true;
             touching += 1;
@@ -14258,6 +14285,7 @@
         });
 
         svg.setAttribute('data-lens-active', selectedKinds.join(' '));
+        svg.setAttribute('data-lens-mode', roleComparison ? 'role-comparison' : 'node-inspection');
         renderFlowOverlay(matchedFlow);
         if (crossKind) {
           var total = forward + reverse;
@@ -14266,6 +14294,11 @@
             second: viewerKindLabel(selectedKinds[1]),
             forward: forward,
             reverse: reverse
+          });
+        } else if (roleComparison) {
+          status.textContent = viewerText('viewer.lens.multi', {
+            kinds: selectedKinds.length,
+            relationships: touching
           });
         } else {
           var nodeCount = collectKinds().filter(function (kind) { return kind.id === selectedKinds[0]; })[0].nodes.length;
@@ -14303,7 +14336,7 @@
         var index = selectedKinds.indexOf(kind);
         if (index >= 0) selectedKinds.splice(index, 1);
         else {
-          if (selectedKinds.length >= 2) return false;
+          if (selectedKinds.length >= 4) return false;
           if (!selectedKinds.length) prepareForLens();
           selectedKinds.push(kind);
         }
@@ -14389,7 +14422,7 @@
           var available = collectKinds().map(function (kind) { return kind.id; });
           var requested = value.split('~').filter(function (kind, index, list) {
             return available.indexOf(kind) >= 0 && list.indexOf(kind) === index;
-          }).slice(0, 2);
+          }).slice(0, 4);
           if (!requested.length) return;
           prepareForLens();
           selectedKinds = requested;

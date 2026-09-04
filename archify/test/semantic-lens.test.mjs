@@ -43,18 +43,21 @@ test('all typed renderers inherit one viewer-only Semantic Lens', () => {
   }
 });
 
-test('Semantic Lens derives honest kind counts and compares at most two roles', () => {
+test('Semantic Lens derives honest kind counts and supports bounded role comparison', () => {
   const html = render('workflow', CASES.workflow);
   assert.match(html, /function collectKinds\(\)/);
   assert.match(html, /kind\.nodes\.push\(node\)/);
-  assert.match(html, /Choose up to two semantic kinds/);
-  assert.match(html, /if \(selectedKinds\.length >= 2\) return false/);
+  assert.match(html, /Choose one kind to inspect, or up to four kinds/);
+  assert.match(html, /if \(selectedKinds\.length >= 4\) return false/);
+  assert.match(html, /selectedKinds\.length >= 4 && selectedKinds\.indexOf\(kind\.id\) === -1/);
   assert.match(html, /var crossKind = selectedKinds\.length === 2/);
   assert.match(html, /fromKind === selectedKinds\[0\] && toKind === selectedKinds\[1\]/);
   assert.match(html, /fromKind === selectedKinds\[1\] && toKind === selectedKinds\[0\]/);
   assert.match(html, /direct relationship/);
   assert.match(html, /data-lens-peer/);
   assert.match(html, /data-lens-selected/);
+  assert.match(html, /viewer\.lens\.multi/);
+  assert.match(html, /data-lens-mode/);
 });
 
 test('Semantic Lens is shareable and yields cleanly to stronger reader intent', () => {
@@ -72,6 +75,9 @@ test('Semantic Lens is shareable and yields cleanly to stronger reader intent', 
   assert.match(html, /e\.key === 'l' \|\| e\.key === 'L'/);
   assert.match(html, /e\.key === 'Escape' && Archify\.semanticLens\.isOpen\(\)/);
   assert.match(html, /e\.key === 'Escape' && Archify\.semanticLens\.active\(\)/);
+  assert.match(html, /function previewReachability\(direction\)/);
+  assert.match(html, /button\.addEventListener\('pointerenter'/);
+  assert.match(html, /button\.addEventListener\('focus'/);
 });
 
 test('Semantic Lens preserves Reading Depth, mobile containment, print, embed, and export boundaries', () => {
