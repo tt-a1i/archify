@@ -78,7 +78,7 @@ test('cli: help lists commands and diagram types', () => {
   assert.match(result.stdout, /archify preview <type>/);
   assert.match(result.stdout, /archify visual-check <output\.html>/);
   assert.match(result.stdout, /--open/);
-  assert.match(result.stdout, /--repo-root path \(architecture only\)/);
+  assert.match(result.stdout, /--repo-root path \(architecture and erd only\)/);
   assert.match(result.stdout, /archify guide \[scenario or question\]/);
   assert.match(result.stdout, /archify doctor/);
   assert.match(result.stdout, /archify demo \[output-directory\]/);
