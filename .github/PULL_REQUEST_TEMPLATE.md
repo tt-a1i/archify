@@ -20,21 +20,14 @@ List exact commands and results. Do not write only “tests pass.”
 
 ## Visual evidence
 
-For visible changes, attach comparable final-artifact screenshots generated from the same input. For non-visual changes, write “Not applicable” and briefly explain why.
+Provide enough evidence to evaluate whether the intended user value was achieved. Use screenshots, recordings, or reproducible steps as appropriate to the affected behavior. For non-visual changes, write “Not applicable” and briefly explain why.
 
-### Before
+- Evidence provided:
+- Comparison conditions, when applicable (input, viewport, theme, preset, diagram mode, zoom, and page state):
+- Automated or browser checks:
+- Perceptual visual review: passed / failed / skipped / Not applicable
 
-<!-- Attach the result before this change. -->
-
-### After
-
-<!-- Attach the result after this change. -->
-
-- Reproduction input or fixture:
-- Viewport, theme, preset, or diagram mode:
-- Visual review: passed / failed / skipped / Not applicable
-
-Visible changes must reach `passed` before final review or merge. Draft pull requests may report `failed` or `skipped` while evidence or fixes are still in progress.
+When presenting a before/after comparison, keep its conditions genuinely comparable. Report automated or browser evidence separately from perceptual review; an automated check does not establish a perceptual pass.
 
 ## Generated artifacts
 

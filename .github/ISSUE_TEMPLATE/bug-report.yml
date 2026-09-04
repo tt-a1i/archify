@@ -86,25 +86,13 @@ body:
     validations:
       required: true
 
-  - type: dropdown
-    id: visual_impact
-    attributes:
-      label: Is this a visual problem?
-      description: Visual problems affect the final diagram, Viewer, or public page appearance or interaction.
-      options:
-        - Yes — I attached the current final-artifact screenshot below
-        - No — a screenshot is not applicable
-    validations:
-      required: true
-
   - type: upload
-    id: screenshot
+    id: visual_evidence
     attributes:
-      label: Current visual result
-      description: For visual problems, upload the current final-artifact screenshot and mark the defect if it is subtle.
+      label: Supporting visual evidence
+      description: When it helps reviewers evaluate a visual problem, upload screenshots or recordings and mark subtle defects. Reproducible steps above may be enough when media would not add useful context.
     validations:
       required: false
-      accept: ".png,.jpg,.jpeg,.webp,.gif"
 
   - type: textarea
     id: environment
