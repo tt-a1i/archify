@@ -140,13 +140,6 @@ for (const [index, state] of asArray(lifecycle.states).entries()) {
 
 function validateLifecycle() {
   const problems = [];
-  if (lifecycle.schema_version !== 1) problems.push('Lifecycle files must set "schema_version": 1.');
-  if (lifecycle.diagram_type !== 'lifecycle') problems.push('Lifecycle files must set "diagram_type": "lifecycle".');
-  if (!lifecycle.meta?.title) problems.push('Lifecycle files must include meta.title.');
-  if (!Array.isArray(lifecycle.lanes) || lifecycle.lanes.length < 1) problems.push('Lifecycle diagrams need at least one lane.');
-  if (!Array.isArray(lifecycle.states) || lifecycle.states.length < 2) problems.push('Lifecycle diagrams need at least two states.');
-  if (!Array.isArray(lifecycle.transitions)) problems.push('Lifecycle diagrams must include a transitions array.');
-  if (lifecycle.cards !== undefined && !Array.isArray(lifecycle.cards)) problems.push('Lifecycle "cards" must be an array.');
   if (states.size !== asArray(lifecycle.states).length) problems.push('State ids must be unique.');
 
   // The three bands are fixed at y=112/264/436. Preserve the original
@@ -246,13 +239,11 @@ function validateLifecycle() {
   }));
   problems.push(...cleanFlowProblems({
     relations: lifecycle.transitions,
-    endpointIds: new Set(states.keys()),
     obstacles: states.values(),
     pathFor,
     diagramType: 'lifecycle',
     relationCollection: 'transitions',
     obstacleKind: 'state',
-    profile: lifecycle.meta?.quality_profile,
     routeHint: 'adjust fromSide/toSide, set route/via or channelX/channelY, or move the state with col/yOffset'
   }));
   problems.push(...cleanCrossingProblems({
@@ -532,7 +523,7 @@ function renderLifecycleRail() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(lifecycle.meta, 'lifecycle diagram')}>
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(lifecycle.meta)}>
 ${svgAccessibleText(lifecycle.meta, 'lifecycle')}
 ${renderDefinitions()}
 

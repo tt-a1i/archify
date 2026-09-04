@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="archify gallery 2.16.0-dev.0">
+  <meta name="generator" content="archify gallery 2.17.0-dev.1">
   <title>Archify Proof Lab — Generated Diagram Gallery</title>
   <meta name="description" content="A generated gallery of validated, self-contained Archify diagrams. Every preview links to its exact JSON source and interactive HTML artifact.">
   <meta name="theme-color" content="#eff2f1">
@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/site-navigation.css">
   <style>
     :root {
       /* Drafted-sheet palette — shared with the project page */
@@ -53,21 +54,9 @@
     }
     .shell { position:relative; z-index:1; width: min(var(--content), calc(100% - 48px)); margin: 0 auto; }
 
-    /* NAV — same chrome as the project page */
-    nav { position:fixed; top:0; left:0; right:0; z-index:100; padding:0 2rem; height:60px; display:flex; align-items:center; justify-content:space-between; background:rgba(247,249,249,0.82); backdrop-filter:blur(14px) saturate(1.15); -webkit-backdrop-filter:blur(14px) saturate(1.15); border-bottom:1px solid var(--line); }
-    .nav-logo { display:flex; align-items:center; gap:.625rem; min-height: 44px; text-decoration:none; }
-    .nav-logo-text { font-family:var(--font-display); font-optical-sizing:auto; font-size:1.125rem; font-weight:500; color:var(--ink-site); letter-spacing:-.01em; }
-    .nav-logo-path { color:var(--dim); font-family:var(--font-mono); font-size:.625rem; font-weight:500; letter-spacing:.1em; }
-    .nav-right { display:flex; align-items:center; gap:1.25rem; }
-    .nav-link { font-family:var(--font-mono); font-size:.625rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color .18s var(--ease-out); }
-    .nav-link:hover { color:var(--ink-site); }
-    .nav-link[aria-current] { color:var(--accent-site); }
     .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.55rem 1.15rem; border-radius:6px; font-family:var(--font-body); font-size:.8125rem; font-weight:500; letter-spacing:-.005em; cursor:pointer; text-decoration:none; transition:all .2s var(--ease-out); border:1px solid transparent; }
     .btn-primary { background:var(--ink-site); color:var(--paper-site); }
     .btn-primary:hover { background:#272c31; transform:translateY(-1px); }
-    .btn-lang { display:inline-flex; align-items:center; background:transparent; color:var(--muted); border:1px solid var(--line-hi); padding:.45rem .8rem; font-family:var(--font-mono); font-size:.5625rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase; min-width:44px; justify-content:center; border-radius:6px; cursor:pointer; transition:all .2s var(--ease-out); }
-    .btn-lang:hover { color:var(--ink-site); border-color:var(--ink-site); }
-
     /* HERO */
     .hero { padding: 10rem 0 4.5rem; }
     .hero-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(310px, 0.55fr); gap: 4.5rem; align-items: end; }
@@ -95,6 +84,7 @@
     .controls { padding: 1.25rem 0; border-top:1px solid var(--line); border-bottom: 1px solid var(--line); }
     .controls-inner { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; }
     .filter-group { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem; }
+    .controls-actions { display:flex; align-items:center; justify-content:flex-end; gap:1rem; }
     .filter-button {
       min-height: 44px;
       padding: 0 .85rem;
@@ -198,14 +188,13 @@
     }
     @media (max-width: 640px) {
       .shell { width: min(100% - 28px, var(--content)); }
-      nav { padding:0 1.25rem; }
-      .nav-right .nav-link { display:none; }
       .hero { padding: 7.5rem 0 3rem; }
       .hero h1 { font-size: clamp(2.25rem, 11vw, 3rem); }
       .proof-board { grid-template-columns: 1fr; }
       .proof-row { grid-template-columns: 72px 1fr; min-height: 54px; border-right: 0; border-bottom:1px solid var(--line); }
       .proof-row:last-child { border-bottom:0; }
       .controls-inner, .section-intro { align-items: flex-start; flex-direction: column; }
+      .controls-actions { width:100%; justify-content:space-between; }
       .controls-note, .section-intro p { text-align: left; }
       .filter-group { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
       .card-header { grid-template-columns: 48px 1fr; }
@@ -235,18 +224,18 @@
 <body>
   <div class="grid-bg" aria-hidden="true"></div>
 
-  <nav aria-label="Main navigation">
+  <nav class="site-nav" aria-label="Primary navigation">
     <a class="nav-logo" href="./" aria-label="Back to Archify home">
       <span class="nav-logo-text">Archify</span>
-      <span class="nav-logo-path">/ proof lab</span>
+      <span class="nav-logo-path" data-en="/ proof lab" data-zh="/ 验证作品集">/ proof lab</span>
     </a>
     <div class="nav-right">
       <a class="nav-link" href="guide.html" data-en="Guide" data-zh="场景指南">Guide</a>
       <a class="nav-link" href="gallery.html" aria-current="page" data-en="Proof Lab" data-zh="验证作品集">Proof Lab</a>
+      <a class="nav-link" href="start.html" data-en="Start" data-zh="快速上手">Start</a>
       <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
-      <button class="btn-lang" id="preview-theme" type="button">Preview: dark</button>
       <button class="btn-lang" id="language" type="button" aria-label="Switch language">中文</button>
-      <a class="btn btn-primary" href="start.html" data-en="Install Skill" data-zh="安装技能">Install Skill</a>
+      <a class="btn btn-primary nav-cta" href="start.html" data-en="Install Skill" data-zh="安装技能">Install Skill</a>
     </div>
   </nav>
 
@@ -269,14 +258,17 @@
     <section class="controls" aria-label="Gallery controls">
       <div class="shell controls-inner">
         <div class="filter-group" role="group" aria-label="Filter diagrams by type">
-          <button class="filter-button" type="button" data-filter="all" aria-pressed="true">All / 11</button>
-          <button class="filter-button" type="button" data-filter="architecture" aria-pressed="false">Architecture</button>
-          <button class="filter-button" type="button" data-filter="workflow" aria-pressed="false">Workflow</button>
-          <button class="filter-button" type="button" data-filter="sequence" aria-pressed="false">Sequence</button>
-          <button class="filter-button" type="button" data-filter="dataflow" aria-pressed="false">Data flow</button>
-          <button class="filter-button" type="button" data-filter="lifecycle" aria-pressed="false">Lifecycle</button>
+          <button class="filter-button" type="button" data-filter="all" aria-pressed="true" data-en="All / 11" data-zh="全部配方 / 11">All / 11</button>
+          <button class="filter-button" type="button" data-filter="architecture" aria-pressed="false" data-en="Architecture" data-zh="架构图">Architecture</button>
+          <button class="filter-button" type="button" data-filter="workflow" aria-pressed="false" data-en="Workflow" data-zh="工作流">Workflow</button>
+          <button class="filter-button" type="button" data-filter="sequence" aria-pressed="false" data-en="Sequence" data-zh="时序图">Sequence</button>
+          <button class="filter-button" type="button" data-filter="dataflow" aria-pressed="false" data-en="Data flow" data-zh="数据流">Data flow</button>
+          <button class="filter-button" type="button" data-filter="lifecycle" aria-pressed="false" data-en="Lifecycle" data-zh="生命周期">Lifecycle</button>
         </div>
-        <div class="controls-note" data-en="Live HTML previews · open any artifact to explore" data-zh="实时 HTML 预览 · 打开任意成品继续探索">Live HTML previews · open any artifact to explore</div>
+        <div class="controls-actions">
+          <button class="filter-button" id="preview-theme" type="button">Preview: dark</button>
+          <div class="controls-note" data-en="Live HTML previews · open any artifact to explore" data-zh="实时 HTML 预览 · 打开任意成品继续探索">Live HTML previews · open any artifact to explore</div>
+        </div>
       </div>
     </section>
 
@@ -301,12 +293,12 @@
               <iframe src="gallery/artifacts/agent-tool-call.workflow.html?embed=1&amp;theme=dark" data-src-base="gallery/artifacts/agent-tool-call.workflow.html" title="Agent Tool Call live Archify preview" loading="eager"></iframe>
             </div>
             <div class="card-body">
-              <p class="card-description" data-en="A policy-aware agent loop with planning, approval, tool execution, exception handling, and observability lanes." data-zh="包含规划、审批、工具执行、异常处理与可观测泳道的策略感知智能体闭环。">A policy-aware agent loop with planning, approval, tool execution, exception handling, and observability lanes.</p>
+              <p class="card-description" data-en="Four consolidated lanes trace a policy-aware agent loop across user interaction, agent runtime, policy and recovery, and tool execution with evidence." data-zh="四条整合泳道呈现策略感知的智能体闭环：用户交互、智能体运行时、策略与恢复，以及带证据的工具执行。">Four consolidated lanes trace a policy-aware agent loop across user interaction, agent runtime, policy and recovery, and tool execution with evidence.</p>
               <div class="receipt" aria-label="Validation receipt">
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">12N · 11E</span></div>
-                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="76322a20d6dace7c37ba81f8ca8a93f95ae7f56d56b4bf2124ff62123ac321dc">76322a20d6da</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="1992954ecc4ccea2a7d8f75835ebc429381f9b5ffa8e0d27d9a3dd354071ce9c">1992954ecc4c</span></div>
               </div>
               <div class="card-actions">
                 <a class="card-link primary" href="gallery/artifacts/agent-tool-call.workflow.html?present=1&amp;play=1#view=happy-path" target="_blank" rel="noopener" data-en="Play named chapter ↗" data-zh="播放命名章节 ↗">Play named chapter ↗</a>
@@ -336,7 +328,7 @@
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">12N · 12E</span></div>
-                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="2599b3e126c3d18cf2300a2cc83efa6a7fd6cd3a67c6d209daea6eabc6f5245f">2599b3e126c3</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="9aedac2719539c54d88a3919553fd2d664841f5198da98582991a1f254dc2089">9aedac271953</span></div>
               </div>
               <div class="card-actions">
                 <a class="card-link primary" href="gallery/artifacts/production-deployment.architecture.html?present=1&amp;play=1#view=request-boundary" target="_blank" rel="noopener" data-en="Play named chapter ↗" data-zh="播放命名章节 ↗">Play named chapter ↗</a>
@@ -365,7 +357,7 @@
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">7N · 12E</span></div>
-                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="94d067515da75d17d1ed25b406831b71c17f74bc750e8804023f790c011fa1ba">94d067515da7</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="701f624494c36350433eaee1bca6747b15838be6c2ff7b9cdcc971014c74fbe8">701f624494c3</span></div>
               </div>
               <div class="card-actions">
                 <a class="card-link primary" href="gallery/artifacts/cache-miss.sequence.html?present=1&amp;play=1#view=cache-fallback" target="_blank" rel="noopener" data-en="Play named chapter ↗" data-zh="播放命名章节 ↗">Play named chapter ↗</a>
@@ -394,7 +386,7 @@
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">10N · 10E</span></div>
-                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="9e8f6c4d2f3dac66943175589e60342a11e5347fed6888eac13e8b6ba369208f">9e8f6c4d2f3d</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="31b81e8c33e787ace2567da5685eaa6adcf8c8b224a38e2ebbeb37b9eda05e98">31b81e8c33e7</span></div>
               </div>
               <div class="card-actions">
                 <a class="card-link primary" href="gallery/artifacts/release-delivery.workflow.html?present=1&amp;play=1#view=approval-to-production" target="_blank" rel="noopener" data-en="Play named chapter ↗" data-zh="播放命名章节 ↗">Play named chapter ↗</a>
@@ -423,7 +415,7 @@
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">11N · 10E</span></div>
-                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="ca28468ccc905e04a5ea1e77c26c6028cbdd1f0ed36ad28eb21fd05851ef5a83">ca28468ccc90</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="e1ae74cb033215bc0f29e00712b938ec4d4368befcaeadc2cd56dcbfffb7534a">e1ae74cb0332</span></div>
               </div>
               <div class="card-actions">
                 <a class="card-link primary" href="gallery/artifacts/incident-response.workflow.html?present=1&amp;play=1#view=mitigate-and-verify" target="_blank" rel="noopener" data-en="Play named chapter ↗" data-zh="播放命名章节 ↗">Play named chapter ↗</a>
@@ -452,7 +444,7 @@
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">10N · 10E</span></div>
-                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="3bb96e400186da5e47b81d545b2c079fcd5579d535199f2680689cf3ad416a8a">3bb96e400186</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="914129ff263b0cdcd7b5630b80eeb08d0a76d4adc3a04f292cd223cbeacbe555">914129ff263b</span></div>
               </div>
               <div class="card-actions">
                 <a class="card-link primary" href="gallery/artifacts/product-analytics.dataflow.html?present=1&amp;play=1#view=consent-boundary" target="_blank" rel="noopener" data-en="Play named chapter ↗" data-zh="播放命名章节 ↗">Play named chapter ↗</a>
@@ -481,7 +473,7 @@
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">7N · 14E</span></div>
-                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="039714fbb6d2a698cdd38aa973d61f352ad170027333242f22758f9cef2eaa14">039714fbb6d2</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="0b84c8244f7dc1f0fb5831a278c8e909d99eb4cbb028740b57a85612e16997c9">0b84c8244f7d</span></div>
               </div>
               <div class="card-actions">
                 <a class="card-link primary" href="gallery/artifacts/async-job-roundtrip.sequence.html?present=1&amp;play=1#view=work-and-retry" target="_blank" rel="noopener" data-en="Play named chapter ↗" data-zh="播放命名章节 ↗">Play named chapter ↗</a>
@@ -510,7 +502,7 @@
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">12N · 12E</span></div>
-                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="425a1d62302d50dff13a5ab1aa2ac6e7c52fea8a35e2e83b75f0cd10d1bc06a8">425a1d62302d</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="093c9615cbec70afac11139f8d046ce27b9d9c9bd81f5c7dc7454b58d8347e91">093c9615cbec</span></div>
               </div>
               <div class="card-actions">
                 <a class="card-link primary" href="gallery/artifacts/event-stream.dataflow.html?present=1&amp;play=1#view=order-transit" target="_blank" rel="noopener" data-en="Play named chapter ↗" data-zh="播放命名章节 ↗">Play named chapter ↗</a>
@@ -539,7 +531,7 @@
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">10N · 6E</span></div>
-                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="bd13f1cb147fed53002efe600b11a4e1d8a75e3a13b08644daf010cdbf790468">bd13f1cb147f</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="1363d2fffd62c21d95a6c0af4d2eb698b88f56561c883034bd34065c84a09a2c">1363d2fffd62</span></div>
               </div>
               <div class="card-actions">
                 <a class="card-link primary" href="gallery/artifacts/agent-run.lifecycle.html?present=1&amp;play=1#view=main-lifecycle" target="_blank" rel="noopener" data-en="Play named chapter ↗" data-zh="播放命名章节 ↗">Play named chapter ↗</a>
@@ -568,7 +560,7 @@
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">11N · 6E</span></div>
-                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="a3c6a862830f3a522aad4e7339a406e5bb4b1dcab1969b34d9f0bfb5bdd00dae">a3c6a862830f</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="9556a18d4406c025c8d979a509eaa09e07f6d68064329d0328c04bf0f60422cb">9556a18d4406</span></div>
               </div>
               <div class="card-actions">
                 <a class="card-link primary" href="gallery/artifacts/deployment-release.lifecycle.html?present=1&amp;play=1#view=rollback-outcomes" target="_blank" rel="noopener" data-en="Play named chapter ↗" data-zh="播放命名章节 ↗">Play named chapter ↗</a>
@@ -597,7 +589,7 @@
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">10N · 9E</span></div>
-                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="caed76c7d2bf84b8c166757780bbe919a2b3c1919772e19bfcd17a742aa6a49d">caed76c7d2bf</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="2896f0d59782986081e39bc62bab748a5aea819c18e656d45373ebfebc265e7b">2896f0d59782</span></div>
               </div>
               <div class="card-actions">
                 <a class="card-link primary" href="gallery/artifacts/web-app.architecture.html?present=1&amp;play=1#view=request-path" target="_blank" rel="noopener" data-en="Play named chapter ↗" data-zh="播放命名章节 ↗">Play named chapter ↗</a>
@@ -650,14 +642,14 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
   <footer>
     <div class="shell footer-inner">
       <span data-en="Generated from Archify's checked-in examples. No hand-authored capability claims." data-zh="由 Archify 仓库内示例自动生成，不手写可能过期的能力声明。">Generated from Archify's checked-in examples. No hand-authored capability claims.</span>
-      <span data-en="Archify v2.16.0-dev.0 · development · MIT" data-zh="Archify v2.16.0-dev.0 · 开发版 · MIT">Archify v2.16.0-dev.0 · development · MIT</span>
+      <span data-en="Archify v2.17.0-dev.1 · development · MIT" data-zh="Archify v2.17.0-dev.1 · 开发版 · MIT">Archify v2.17.0-dev.1 · development · MIT</span>
     </div>
   </footer>
 
   <script id="gallery-manifest" type="application/json">{
   "schemaVersion": 1,
   "generator": "scripts/build-gallery.mjs",
-  "archifyVersion": "2.16.0-dev.0",
+  "archifyVersion": "2.17.0-dev.1",
   "entryCount": 11,
   "checkCount": 99,
   "entries": [
@@ -677,16 +669,16 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
         "evidence-loop"
       ],
       "guidedPlayback": true,
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "visualPreset": "signal-flow",
       "animation": "trace",
       "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 11,
-      "artifactBytes": 720788,
-      "artifactSha256": "76322a20d6dace7c37ba81f8ca8a93f95ae7f56d56b4bf2124ff62123ac321dc",
-      "sourceBytes": 6367,
-      "sourceSha256": "9c94c8c0b2104478b77befb4cc5e343d381acba6e66645ab17616fde20b60e05",
+      "artifactBytes": 723375,
+      "artifactSha256": "1992954ecc4ccea2a7d8f75835ebc429381f9b5ffa8e0d27d9a3dd354071ce9c",
+      "sourceBytes": 5687,
+      "sourceSha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
       "checks": [
         {
           "name": "single_svg",
@@ -738,17 +730,17 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
           "labelRouteClearanceIssues": 0,
-          "minLabelRouteClearance": 52.1,
+          "minLabelRouteClearance": 29,
           "desktopReadabilityIssues": 0,
           "minProjectedNodeTextPx": null,
-          "maxBends": 2,
-          "routesOverSuggestedBends": 0,
-          "maxStretch": 1.257,
+          "maxBends": 3,
+          "routesOverSuggestedBends": 1,
+          "maxStretch": 1.225,
           "routesOverSuggestedStretch": 0,
-          "minSegmentPx": 13,
-          "minInteriorSegmentPx": 70,
-          "shortSegmentCount": 1,
-          "shortEndpointSegmentCount": 1,
+          "minSegmentPx": 16,
+          "minInteriorSegmentPx": 82,
+          "shortSegmentCount": 0,
+          "shortEndpointSegmentCount": 0,
           "shortInteriorSegmentCount": 0,
           "microSegmentCount": 0
         },
@@ -784,7 +776,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "nodeCount": 12,
       "edgeCount": 12,
       "artifactBytes": 725205,
-      "artifactSha256": "2599b3e126c3d18cf2300a2cc83efa6a7fd6cd3a67c6d209daea6eabc6f5245f",
+      "artifactSha256": "9aedac2719539c54d88a3919553fd2d664841f5198da98582991a1f254dc2089",
       "sourceBytes": 5476,
       "sourceSha256": "ec484aa8576664fdb207b543fa49486b23273faccb7a5071e1a0becfb48c22eb",
       "checks": [
@@ -884,7 +876,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "nodeCount": 7,
       "edgeCount": 12,
       "artifactBytes": 717130,
-      "artifactSha256": "94d067515da75d17d1ed25b406831b71c17f74bc750e8804023f790c011fa1ba",
+      "artifactSha256": "701f624494c36350433eaee1bca6747b15838be6c2ff7b9cdcc971014c74fbe8",
       "sourceBytes": 4345,
       "sourceSha256": "4bbaa6ca3cd4036002fd5d0f3a332eb922cec69d09bac3d7925f95beb4308389",
       "checks": [
@@ -984,7 +976,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "nodeCount": 10,
       "edgeCount": 10,
       "artifactBytes": 719571,
-      "artifactSha256": "9e8f6c4d2f3dac66943175589e60342a11e5347fed6888eac13e8b6ba369208f",
+      "artifactSha256": "31b81e8c33e787ace2567da5685eaa6adcf8c8b224a38e2ebbeb37b9eda05e98",
       "sourceBytes": 5164,
       "sourceSha256": "e5c880417eac1623923c3dd5461e0c78acd762e1621a28bd53fc14a84cad6a91",
       "checks": [
@@ -1084,7 +1076,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "nodeCount": 11,
       "edgeCount": 10,
       "artifactBytes": 716886,
-      "artifactSha256": "ca28468ccc905e04a5ea1e77c26c6028cbdd1f0ed36ad28eb21fd05851ef5a83",
+      "artifactSha256": "e1ae74cb033215bc0f29e00712b938ec4d4368befcaeadc2cd56dcbfffb7534a",
       "sourceBytes": 5375,
       "sourceSha256": "5c760c82eee545dfb7da38a4e628059d7891af4cfbfc13c8a7009ea64f69aa1b",
       "checks": [
@@ -1184,7 +1176,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "nodeCount": 10,
       "edgeCount": 10,
       "artifactBytes": 720833,
-      "artifactSha256": "3bb96e400186da5e47b81d545b2c079fcd5579d535199f2680689cf3ad416a8a",
+      "artifactSha256": "914129ff263b0cdcd7b5630b80eeb08d0a76d4adc3a04f292cd223cbeacbe555",
       "sourceBytes": 5627,
       "sourceSha256": "6fa38a7ccedf96da592d60b392783b846188eaa3ec9136c6dc06ca020e43a110",
       "checks": [
@@ -1284,7 +1276,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "nodeCount": 7,
       "edgeCount": 14,
       "artifactBytes": 717540,
-      "artifactSha256": "039714fbb6d2a698cdd38aa973d61f352ad170027333242f22758f9cef2eaa14",
+      "artifactSha256": "0b84c8244f7dc1f0fb5831a278c8e909d99eb4cbb028740b57a85612e16997c9",
       "sourceBytes": 4370,
       "sourceSha256": "545f20920c89b69c2bb1f15508d5543fddbeb15cffba61e102206e04bd5a5cd9",
       "checks": [
@@ -1384,7 +1376,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "nodeCount": 12,
       "edgeCount": 12,
       "artifactBytes": 724813,
-      "artifactSha256": "425a1d62302d50dff13a5ab1aa2ac6e7c52fea8a35e2e83b75f0cd10d1bc06a8",
+      "artifactSha256": "093c9615cbec70afac11139f8d046ce27b9d9c9bd81f5c7dc7454b58d8347e91",
       "sourceBytes": 5433,
       "sourceSha256": "a92d6597ddbe164f395da32a7d4b33cfae08edd7d9600a6fb45a2058e5bbb43e",
       "checks": [
@@ -1484,7 +1476,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "nodeCount": 10,
       "edgeCount": 6,
       "artifactBytes": 714419,
-      "artifactSha256": "bd13f1cb147fed53002efe600b11a4e1d8a75e3a13b08644daf010cdbf790468",
+      "artifactSha256": "1363d2fffd62c21d95a6c0af4d2eb698b88f56561c883034bd34065c84a09a2c",
       "sourceBytes": 4417,
       "sourceSha256": "af939579dcafc8b4c49f09594591577994398aee57a57369d4c791dfc0d85a42",
       "checks": [
@@ -1584,7 +1576,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "nodeCount": 11,
       "edgeCount": 6,
       "artifactBytes": 715411,
-      "artifactSha256": "a3c6a862830f3a522aad4e7339a406e5bb4b1dcab1969b34d9f0bfb5bdd00dae",
+      "artifactSha256": "9556a18d4406c025c8d979a509eaa09e07f6d68064329d0328c04bf0f60422cb",
       "sourceBytes": 4274,
       "sourceSha256": "735c2c5819266e6ea2a71775b6eefce98b53030ce90cb721dc8e1d022ce5be71",
       "checks": [
@@ -1684,7 +1676,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "nodeCount": 10,
       "edgeCount": 9,
       "artifactBytes": 715531,
-      "artifactSha256": "caed76c7d2bf84b8c166757780bbe919a2b3c1919772e19bfcd17a742aa6a49d",
+      "artifactSha256": "2896f0d59782986081e39bc62bab748a5aea819c18e656d45373ebfebc265e7b",
       "sourceBytes": 3793,
       "sourceSha256": "483350f5297df682aba4e4a0fa491307ce3d3abd725ae4df07fab177490752cf",
       "checks": [
@@ -1763,22 +1755,24 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
     }
   ]
 }</script>
+  <script src="assets/site-language.js"></script>
   <script>
     (function () {
       var cards = Array.prototype.slice.call(document.querySelectorAll('.showcase-card'));
       var filterButtons = Array.prototype.slice.call(document.querySelectorAll('[data-filter]'));
       var empty = document.getElementById('empty-state');
       var previewTheme = 'dark';
-      var language = localStorage.getItem('archify-gallery-language') || 'en';
+      var language = ArchifySiteLanguage.read();
 
       function applyLanguage(next) {
-        language = next === 'zh' ? 'zh' : 'en';
+        language = ArchifySiteLanguage.write(next);
         document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
-        localStorage.setItem('archify-gallery-language', language);
         document.querySelectorAll('[data-en][data-zh]').forEach(function (node) {
           node.innerHTML = node.getAttribute(language === 'zh' ? 'data-zh' : 'data-en');
         });
-        document.getElementById('language').textContent = language === 'zh' ? 'EN' : '中文';
+        var languageButton = document.getElementById('language');
+        languageButton.textContent = language === 'zh' ? 'EN' : '中文';
+        languageButton.setAttribute('aria-label', language === 'zh' ? 'Switch to English' : '切换到中文');
       }
 
       function applyFilter(type, updateUrl) {

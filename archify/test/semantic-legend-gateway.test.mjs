@@ -56,7 +56,7 @@ test('only legends with an exact node-kind meaning publish bridge entries', () =
     // semantic bridge contract focused by rendering the same typed nodes with
     // an explicit full legend and no relationship geometry in the band.
     document.meta.legend = { mode: 'all' };
-    document.meta.viewBox = [1200, 900];
+    delete document.meta.viewBox;
     document.edges = [];
     delete document.mainPath;
   }));

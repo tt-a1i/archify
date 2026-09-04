@@ -340,15 +340,6 @@ function validateArchitecture() {
     problems.push(resolvedBoundaryTitles.readabilityProblem);
   }
   const requiresNestedBoundaryMembership = arch.meta?.engineering_profile === 'deployment-ownership';
-  if (arch.schema_version !== 1) problems.push('Architecture files must set "schema_version": 1.');
-  if (arch.diagram_type !== 'architecture') problems.push('Architecture files must set "diagram_type": "architecture".');
-  if (!arch.meta?.title) problems.push('Architecture files must include meta.title.');
-  if (!Array.isArray(arch.components) || arch.components.length < 1) {
-    problems.push('Architecture diagrams need at least one component.');
-  }
-  if (arch.connections !== undefined && !Array.isArray(arch.connections)) problems.push('Architecture "connections" must be an array.');
-  if (arch.boundaries !== undefined && !Array.isArray(arch.boundaries)) problems.push('Architecture "boundaries" must be an array.');
-  if (arch.cards !== undefined && !Array.isArray(arch.cards)) problems.push('Architecture "cards" must be an array.');
   if (components.size !== asArray(arch.components).length) problems.push('Component ids must be unique.');
   if (grid) {
     validateGridPlacement(arch, grid, problems);
@@ -527,13 +518,11 @@ function validateArchitecture() {
   }));
   problems.push(...cleanFlowProblems({
     relations: arch.connections,
-    endpointIds: new Set(components.keys()),
     obstacles: components.values(),
     pathFor,
     diagramType: 'architecture',
     relationCollection: 'connections',
     obstacleKind: 'component',
-    profile: arch.meta?.quality_profile,
     routeHint: 'adjust fromSide/toSide, set route/via, or move the component'
   }));
   problems.push(...cleanCrossingProblems({
@@ -1046,7 +1035,7 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta, 'architecture diagram')}>
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)}>
 ${svgAccessibleText(arch.meta, 'architecture')}
 ${renderDefinitions()}
 

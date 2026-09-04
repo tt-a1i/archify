@@ -15,6 +15,13 @@ test('README.md and README_EN.md stay byte-identical after the DSH docs', () => 
   assert.equal(read('README.md'), read('README_EN.md'));
 });
 
+test('DSH 0.1.0 documentation keeps its released Skill snapshot immutable', () => {
+  const integration = read('integrations/deepseek-harness/README.md');
+  assert.match(integration, /Archify 2\.14 snapshot/);
+  assert.match(integration, /archify-dsh-v0\.1\.0/);
+  assert.match(integration, /update notifier[\s\S]*intentionally excluded/);
+});
+
 test('English and Chinese docs cover install, invoke, uninstall, community wording, and Produced Files', () => {
   const english = [read('README.md'), read('integrations/deepseek-harness/README.md')].join('\n');
   const chinese = [read('README_ZH.md'), read('integrations/deepseek-harness/README.md')].join('\n');
@@ -22,7 +29,7 @@ test('English and Chinese docs cover install, invoke, uninstall, community wordi
   for (const source of [english, chinese, read('README.md'), read('README_ZH.md')]) {
     assert.match(source, /@tt-a1i\/archify-dsh@0\.1\.0/);
     assert.match(source, /@deepseek-ai\/dsh@0\.1\.0-rc\.6/);
-    assert.match(source, /\^22\.19\.0 \|\| >=24\.0\.0/);
+    assert.match(source.replaceAll('\\|', '|'), /\^22\.19\.0 \|\| >=24\.0\.0/);
     assert.match(source, /dsh plugin --profile web add @tt-a1i\/archify-dsh@0\.1\.0/);
     assert.match(source, /dsh plugin --profile web remove @tt-a1i\/archify-dsh/);
     assert.match(source, /Use the archify skill to map this repository's runtime architecture/);
