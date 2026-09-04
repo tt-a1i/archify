@@ -176,11 +176,11 @@ test('evidence fails closed without a root, on wrong origin, missing blobs, or i
   assert.equal(fs.readFileSync(output, 'utf8'), 'trusted previous artifact');
 });
 
-test('--repo-root stays bounded to architecture and schema limits evidence shape', () => {
+test('--repo-root stays bounded to evidence-bearing types and schema limits evidence shape', () => {
   const data = fixture();
   let result = run(['render', 'workflow', path.join(skillRoot, 'examples', 'agent-tool-call.workflow.json'), '--repo-root', data.root]);
   assert.equal(result.status, 2);
-  assert.match(result.stderr, /architecture diagrams only/);
+  assert.match(result.stderr, /architecture and erd diagrams only/);
 
   data.diagram.components[0].sources = [
     { path: 'src/router.js' },
@@ -190,6 +190,90 @@ test('--repo-root stays bounded to architecture and schema limits evidence shape
   ];
   fs.writeFileSync(data.input, JSON.stringify(data.diagram));
   result = run(['validate', 'architecture', data.input, '--repo-root', data.root]);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /must NOT have more than 3 items/);
+});
+
+function erdFixture() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-evidence-erd-'));
+  fs.mkdirSync(path.join(root, 'db'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'db', 'users.sql'), 'CREATE TABLE users (\n  id INTEGER PRIMARY KEY,\n  email TEXT NOT NULL\n);\n');
+  fs.writeFileSync(path.join(root, 'db', 'orders.sql'), 'CREATE TABLE orders (\n  id INTEGER PRIMARY KEY\n);\n');
+  git(root, 'init');
+  git(root, 'config', 'user.name', 'Archify Tests');
+  git(root, 'config', 'user.email', 'archify@example.test');
+  git(root, 'remote', 'add', 'origin', 'git@github.com:example/evidence-repo.git');
+  git(root, 'add', '.');
+  git(root, 'commit', '-m', 'fixture');
+  const revision = git(root, 'rev-parse', 'HEAD');
+
+  const diagram = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'billing.erd.json'), 'utf8'));
+  diagram.meta.repository = { url: 'https://github.com/example/evidence-repo', revision };
+  diagram.entities.find((e) => e.id === 'users').sources = [
+    { path: 'db/users.sql', line: 1, end_line: 4, label: 'users table' },
+  ];
+  diagram.entities.find((e) => e.id === 'orders').sources = [{ path: 'db/orders.sql', line: 2 }];
+  const input = path.join(root, 'diagram.erd.json');
+  fs.writeFileSync(input, JSON.stringify(diagram, null, 2));
+  return { root, revision, diagram, input };
+}
+
+test('erd entity sources are revision-verified and reported with entity pointers', () => {
+  const data = erdFixture();
+  const output = path.join(data.root, 'erd-verified.html');
+  let result = run(['deliver', 'erd', data.input, output, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.evidence, {
+    verified: true,
+    repository: 'https://github.com/example/evidence-repo',
+    revision: data.revision,
+    references: 2,
+  });
+
+  const evidence = evidencePayload(fs.readFileSync(output, 'utf8'));
+  assert.equal(evidence.verified, true);
+  assert.equal(evidence.repository.shortRevision, data.revision.slice(0, 7));
+  assert.ok(evidence.nodes.users, 'entity evidence must be keyed by entity id');
+  assert.equal(evidence.nodes.users[0].path, 'db/users.sql');
+  assert.ok(evidence.nodes.users[0].href.includes(data.revision));
+
+  // Diagnostics must use /entities/... pointers, not /components/... ones.
+  data.diagram.entities.find((e) => e.id === 'users').sources = [{ path: 'db/missing.sql' }];
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  result = run(['deliver', 'erd', data.input, output, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 1);
+  assert.match(JSON.parse(result.stdout).error, /\/entities\/0\/sources\/0\/path/);
+});
+
+test('erd sources must stay inside the repository and within the pinned file', () => {
+  const data = erdFixture();
+  const output = path.join(data.root, 'erd-bounds.html');
+
+  data.diagram.entities.find((e) => e.id === 'users').sources = [{ path: '../outside.sql' }];
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  let result = run(['deliver', 'erd', data.input, output, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 1);
+  assert.match(JSON.parse(result.stdout).error, /must stay inside the repository/);
+
+  data.diagram.entities.find((e) => e.id === 'users').sources = [{ path: 'db/users.sql', line: 99 }];
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  result = run(['deliver', 'erd', data.input, output, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 1);
+  assert.match(JSON.parse(result.stdout).error, /requests line 99/);
+});
+
+test('erd source arrays obey the same 1-3 item bound as architecture', () => {
+  const data = erdFixture();
+  data.diagram.entities.find((e) => e.id === 'users').sources = [
+    { path: 'db/users.sql' },
+    { path: 'db/users.sql' },
+    { path: 'db/users.sql' },
+    { path: 'db/users.sql' },
+  ];
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const result = run(['validate', 'erd', data.input, '--repo-root', data.root]);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /must NOT have more than 3 items/);
 });

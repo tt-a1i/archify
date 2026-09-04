@@ -1332,9 +1332,12 @@ export function roundedPath(points, radius) {
 export function labelPoint(item, points) {
   if (item.labelAt) return item.labelAt;
   if (points.length === 2) {
+    // Use the true midpoint on both axes. Anchoring y to the first point was
+    // identical for horizontal routes, but for vertical routes it pushed the
+    // label above the source endpoint — often inside the source node itself.
     return [
       (points[0][0] + points[1][0]) / 2 + (item.labelDx || 0),
-      points[0][1] - 10 + (item.labelDy || 0)
+      (points[0][1] + points[1][1]) / 2 - 10 + (item.labelDy || 0)
     ];
   }
   const segmentIndex = Math.min(points.length - 2, Math.max(0, item.labelSegment ?? 1));

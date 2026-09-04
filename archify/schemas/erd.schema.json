@@ -94,6 +94,24 @@
           "items": false,
           "minItems": 2,
           "maxItems": 2
+        },
+        "repository": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "url",
+            "revision"
+          ],
+          "properties": {
+            "url": {
+              "type": "string",
+              "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\\.git)?/?$"
+            },
+            "revision": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{40}$"
+            }
+          }
         }
       }
     },
@@ -160,7 +178,35 @@
           },
           "sources": {
             "type": "array",
-            "items": { "type": "string" }
+            "minItems": 1,
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 240
+                },
+                "line": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "end_line": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 48
+                }
+              }
+            }
           },
           "attributes": {
             "type": "array",

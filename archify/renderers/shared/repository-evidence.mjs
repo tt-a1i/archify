@@ -78,17 +78,33 @@ function sourceLineCount(content) {
   return lines.length - (/(?:\r\n|\n|\r)$/.test(content) ? 1 : 0);
 }
 
+// One evidence surface per diagram type: the collection of nodes that may
+// declare source references and the JSON pointer prefix used in diagnostics.
+const EVIDENCE_SURFACES = {
+  architecture: { collection: 'components', pointer: '/components' },
+  erd: { collection: 'entities', pointer: '/entities' },
+};
+
+// Single source of truth for which diagram types may carry --repo-root
+// evidence, so the CLI gate and the verifier can never drift apart.
+export const REPOSITORY_EVIDENCE_TYPES = Object.freeze(Object.keys(EVIDENCE_SURFACES));
+
+export function supportsRepositoryEvidence(diagramType) {
+  return Object.hasOwn(EVIDENCE_SURFACES, diagramType);
+}
+
 export function hasRepositoryEvidence(diagramType, diagram) {
-  if (diagramType !== 'architecture') return false;
-  const components = Array.isArray(diagram?.components) ? diagram.components : [];
-  return Boolean(diagram?.meta?.repository) || components.some((component) => Array.isArray(component?.sources) && component.sources.length);
+  const surface = EVIDENCE_SURFACES[diagramType];
+  if (!surface) return false;
+  const nodes = Array.isArray(diagram?.[surface.collection]) ? diagram[surface.collection] : [];
+  return Boolean(diagram?.meta?.repository) || nodes.some((node) => Array.isArray(node?.sources) && node.sources.length);
 }
 
 export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   if (!hasRepositoryEvidence(diagramType, diagram)) return null;
-  if (diagramType !== 'architecture') evidenceFailure('repository-evidence/type-unsupported', 'Repository evidence is currently supported for architecture diagrams only.', {
+  if (!EVIDENCE_SURFACES[diagramType]) evidenceFailure('repository-evidence/type-unsupported', 'Repository evidence is currently supported for architecture and erd diagrams only.', {
     subject: { diagramType },
-    supportedFixes: ['use architecture mode or remove repository evidence'],
+    supportedFixes: ['use architecture or erd mode, or remove repository evidence'],
   });
 
   const repository = diagram.meta?.repository;
@@ -158,12 +174,13 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
 
   const nodes = Object.create(null);
   let referenceCount = 0;
-  const components = Array.isArray(diagram.components) ? diagram.components : [];
-  for (const [componentIndex, component] of components.entries()) {
-    if (!Array.isArray(component.sources) || component.sources.length === 0) continue;
+  const surface = EVIDENCE_SURFACES[diagramType];
+  const evidenceNodes = Array.isArray(diagram[surface.collection]) ? diagram[surface.collection] : [];
+  for (const [nodeIndex, node] of evidenceNodes.entries()) {
+    if (!Array.isArray(node.sources) || node.sources.length === 0) continue;
     const verified = [];
-    for (const [sourceIndex, authored] of component.sources.entries()) {
-      const where = `/components/${componentIndex}/sources/${sourceIndex}/path`;
+    for (const [sourceIndex, authored] of node.sources.entries()) {
+      const where = `${surface.pointer}/${nodeIndex}/sources/${sourceIndex}/path`;
       const source = {
         path: verifiedSourcePath(authored.path, where),
         ...(authored.line ? { line: authored.line } : {}),
@@ -171,14 +188,14 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
         ...(authored.label ? { label: authored.label } : {}),
       };
       if (source.endLine && !source.line) {
-        evidenceFailure('repository-evidence/line-required', `/components/${componentIndex}/sources/${sourceIndex}/end_line requires line.`, {
-          subject: { path: `/components/${componentIndex}/sources/${sourceIndex}/end_line`, componentId: component.id },
+        evidenceFailure('repository-evidence/line-required', `${surface.pointer}/${nodeIndex}/sources/${sourceIndex}/end_line requires line.`, {
+          subject: { path: `${surface.pointer}/${nodeIndex}/sources/${sourceIndex}/end_line`, componentId: node.id },
           supportedFixes: ['add line or remove end_line'],
         });
       }
       if (source.endLine && source.endLine < source.line) {
-        evidenceFailure('repository-evidence/line-range-invalid', `/components/${componentIndex}/sources/${sourceIndex}/end_line must be greater than or equal to line.`, {
-          subject: { path: `/components/${componentIndex}/sources/${sourceIndex}`, componentId: component.id },
+        evidenceFailure('repository-evidence/line-range-invalid', `${surface.pointer}/${nodeIndex}/sources/${sourceIndex}/end_line must be greater than or equal to line.`, {
+          subject: { path: `${surface.pointer}/${nodeIndex}/sources/${sourceIndex}`, componentId: node.id },
           evidence: { line: source.line, endLine: source.endLine },
           supportedFixes: ['use an end_line greater than or equal to line'],
         });
@@ -187,7 +204,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       const type = runGit(realRoot, ['cat-file', '-t', object]);
       if (type.status !== 0 || type.stdout.trim() !== 'blob') {
         evidenceFailure('repository-evidence/file-missing', `${where} does not identify a file at revision ${revision}.`, {
-          subject: { path: where, componentId: component.id },
+          subject: { path: where, componentId: node.id },
           evidence: { sourcePath: source.path, revision },
           supportedFixes: ['use a file path that exists at the pinned revision'],
         });
@@ -195,15 +212,15 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       if (source.line) {
         const content = runGit(realRoot, ['show', object]);
         if (content.status !== 0) evidenceFailure('repository-evidence/file-unreadable', `${where} could not be read at revision ${revision}.`, {
-          subject: { path: where, componentId: component.id },
+          subject: { path: where, componentId: node.id },
           evidence: { sourcePath: source.path, revision },
           supportedFixes: ['verify the pinned blob is readable in the local checkout'],
         });
         const lineCount = sourceLineCount(content.stdout);
         const requestedLine = source.endLine || source.line;
         if (requestedLine > lineCount) {
-          evidenceFailure('repository-evidence/line-out-of-range', `/components/${componentIndex}/sources/${sourceIndex} requests line ${requestedLine}, but ${source.path} has ${lineCount} lines at revision ${revision}.`, {
-            subject: { path: `/components/${componentIndex}/sources/${sourceIndex}`, componentId: component.id },
+          evidenceFailure('repository-evidence/line-out-of-range', `${surface.pointer}/${nodeIndex}/sources/${sourceIndex} requests line ${requestedLine}, but ${source.path} has ${lineCount} lines at revision ${revision}.`, {
+            subject: { path: `${surface.pointer}/${nodeIndex}/sources/${sourceIndex}`, componentId: node.id },
             evidence: { sourcePath: source.path, requestedLine, lineCount, revision },
             supportedFixes: ['use a line range that exists at the pinned revision'],
           });
@@ -212,12 +229,12 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       verified.push({ ...source, href: sourceHref(repository.url.replace(/\.git\/?$/i, '').replace(/\/$/, ''), revision, source) });
       referenceCount += 1;
     }
-    nodes[component.id] = verified;
+    nodes[node.id] = verified;
   }
   if (referenceCount === 0) {
-    evidenceFailure('repository-evidence/source-required', '/meta/repository requires at least one component source reference.', {
+    evidenceFailure('repository-evidence/source-required', '/meta/repository requires at least one verified source reference.', {
       subject: { path: '/meta/repository' },
-      supportedFixes: ['add at least one verified component source or remove repository metadata'],
+      supportedFixes: ['add at least one verified source or remove repository metadata'],
     });
   }
 

@@ -79,29 +79,36 @@ function entityHeight(e) {
   return HEADER_H + rows * ROW_H + PAD_Y;
 }
 
+// Geometry helpers (anchor, port spreading, obstacle avoidance) address a rect
+// through x/y/width/height plus the cx/cy centre. Both must stay in sync:
+// a missing centre silently degrades every routed path to NaN coordinates.
+function placeEntity(e, x, y) {
+  const rect = components.get(e.id);
+  rect.x = x;
+  rect.y = y;
+  rect.cx = x + rect.width / 2;
+  rect.cy = y + rect.height / 2;
+}
+
 const components = new Map();
 for (const e of entities) {
   const width = e.size ? e.size[0] : (e.width ?? entityWidth(e));
   const height = e.size ? e.size[1] : (e.height ?? entityHeight(e));
-  components.set(e.id, { ...e, width, height, x: 0, y: 0 });
+  components.set(e.id, { ...e, width, height, x: 0, y: 0, cx: 0, cy: 0 });
 }
 
 // Positions: if every entity carries pos, use them; otherwise auto-grid all.
 const positioned = entities.every((e) => Array.isArray(e.pos) && e.pos.length === 2);
 if (positioned) {
   for (const e of entities) {
-    const rect = components.get(e.id);
-    rect.x = e.pos[0];
-    rect.y = e.pos[1];
+    placeEntity(e, e.pos[0], e.pos[1]);
   }
 } else {
   const cols = Math.max(1, Math.ceil(Math.sqrt(entities.length)));
   const cellW = 240;
   const cellH = 170;
   entities.forEach((e, i) => {
-    const rect = components.get(e.id);
-    rect.x = 40 + (i % cols) * cellW;
-    rect.y = 40 + Math.floor(i / cols) * cellH;
+    placeEntity(e, 40 + (i % cols) * cellW, 40 + Math.floor(i / cols) * cellH);
   });
 }
 
@@ -444,7 +451,9 @@ function validateErd() {
       }
       names.add(a.name);
       if (a.role === 'primary') primaryCount += 1;
-      if ((a.role === 'foreign' || a.references) && a.references) {
+      if (a.role === 'foreign' && !a.references) {
+        problems.push(`Attribute "${e.id}.${a.name}" declares role "foreign" without a references target; declare references as "entity.attribute" or drop the foreign role.`);
+      } else if (a.references) {
         const [ent, attr] = a.references.split('.');
         const target = components.get(ent);
         if (!target) {
@@ -471,16 +480,14 @@ function validateErd() {
     }
   }
 
-  if (connections.length > 0) {
-    const referenced = new Set();
-    for (const r of connections) {
-      referenced.add(r.from);
-      referenced.add(r.to);
-    }
-    for (const e of entities) {
-      if (!referenced.has(e.id) && !e.standalone) {
-        problems.push(`Entity "${e.id}" is not connected by any relationship (orphan). Set "standalone": true if it is intentionally disconnected.`);
-      }
+  const referenced = new Set();
+  for (const r of connections) {
+    referenced.add(r.from);
+    referenced.add(r.to);
+  }
+  for (const e of entities) {
+    if (!referenced.has(e.id) && !e.standalone) {
+      problems.push(`Entity "${e.id}" is not connected by any relationship (orphan). Set "standalone": true if it is intentionally disconnected.`);
     }
   }
 
@@ -604,7 +611,10 @@ function renderEntity(e, index) {
   const text = entityText[e.kind] || 't-backend';
   const rx = 8;
   let s = '';
-  s += `        <g data-graph-role="node" data-node-id="${esc(e.id)}" data-node-kind="${esc(e.kind)}"${focusNodeAttrs(e.id, e.label, { kind: e.kind, sublabel: e.sublabel, tag: e.tag, context: 'entity' }, erd.meta.locale)}>`;
+  // focusNodeAttrs already emits data-node-id and data-node-kind; duplicating
+  // them here concatenated the last attribute onto the next without whitespace
+  // and produced SVG that was not well-formed XML.
+  s += `        <g ${focusNodeAttrs(e.id, e.label, { kind: e.kind, sublabel: e.sublabel, tag: e.tag, context: 'entity' }, erd.meta.locale)}>`;
   s += `<rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="${rx}" class="${fill}" stroke-width="1"/>`;
   const headerY = rect.y + HEADER_H;
   s += `<line x1="${rect.x + 1}" y1="${headerY}" x2="${rect.x + rect.width - 1}" y2="${headerY}" stroke="#8b949e" stroke-width="1" opacity="0.5"/>`;
