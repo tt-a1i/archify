@@ -319,3 +319,82 @@ export function resolveOutputPath({
     source,
   };
 }
+
+/**
+ * Detect every aliasing form between an import input and its intended output:
+ * the same path, a symlink resolving to the input, or a hard link sharing the
+ * input's inode. Returns true when writing the output would replace the input.
+ *
+ * @param {string} inputPath
+ * @param {string} outputPath
+ * @returns {boolean}
+ */
+export function importOutputAliasesInput(inputPath, outputPath) {
+  let inputReal = null;
+  try {
+    inputReal = fs.realpathSync(path.resolve(inputPath));
+  } catch {
+    return false; // unreadable input is reported by the read path
+  }
+  let outputReal = null;
+  try {
+    outputReal = fs.realpathSync(path.resolve(outputPath));
+  } catch {
+    return false; // output does not exist yet — nothing to alias
+  }
+  if (inputReal === outputReal) return true;
+  try {
+    const inputStat = fs.statSync(inputReal);
+    const outputStat = fs.statSync(outputReal);
+    if (inputStat.dev === outputStat.dev && inputStat.ino === outputStat.ino) return true;
+  } catch {
+    // realpathSync succeeded above, so stat on the same paths cannot fail
+  }
+  return false;
+}
+
+/**
+ * Commit the import result through a non-following atomic candidate/rename.
+ *
+ * The aliasing preflight runs before parsing; the output path can change while
+ * the input parses (e.g. an output symlink re-pointed at the input). The
+ * candidate is created with O_CREAT|O_EXCL in the output's directory — never
+ * at the output path itself — and rename(2) replaces a symlink instead of
+ * following it, so no swap between the preflight and the commit can make this
+ * write reach the Mermaid source through a symlink. The alias recheck at the
+ * commit point reports the same `input/output-alias` condition as the
+ * preflight instead of silently replacing a symlink that now resolves to the
+ * input.
+ *
+ * @param {string} inputPath
+ * @param {string} outputPath
+ * @param {string} data
+ * @returns {{ ok: true } | { ok: false, reason: 'input/output-alias' }}
+ * @throws {Error} when the output cannot be written (propagated to the CLI's
+ *   `output/write` receipt handling); the candidate file is removed first.
+ */
+export function commitImportOutput(inputPath, outputPath, data) {
+  if (importOutputAliasesInput(inputPath, outputPath)) {
+    return { ok: false, reason: 'input/output-alias' };
+  }
+  const resolved = path.resolve(outputPath);
+  const candidate = path.join(
+    path.dirname(resolved),
+    `.archify-import-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.tmp`,
+  );
+  let fd;
+  try {
+    fd = fs.openSync(candidate, 'wx');
+    fs.writeFileSync(fd, data);
+    fs.fsyncSync(fd);
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
+  }
+  try {
+    fs.renameSync(candidate, resolved);
+  } catch (error) {
+    try { fs.rmSync(candidate, { force: true }); } catch { /* best effort */ }
+    throw error;
+  }
+  return { ok: true };
+}
