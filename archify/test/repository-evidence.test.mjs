@@ -69,6 +69,23 @@ test('repository evidence accepts canonical HTTPS and common SSH remotes', () =>
   }
 });
 
+test('repository evidence accepts self-hosted HTTPS and SSH remotes', () => {
+  const data = fixture();
+  data.diagram.meta.repository.url = 'https://git.example.internal/platform/evidence-repo';
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram, null, 2));
+  const output = path.join(data.root, 'self-hosted.html');
+  for (const remote of [
+    'https://git.example.internal/platform/evidence-repo.git/',
+    'git@git.example.internal:platform/evidence-repo.git',
+    'ssh://git@git.example.internal/platform/evidence-repo.git',
+  ]) {
+    git(data.root, 'remote', 'set-url', 'origin', remote);
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 0, `${remote}: ${result.stderr || result.stdout}`);
+    assert.equal(JSON.parse(result.stdout).evidence.repository, data.diagram.meta.repository.url);
+  }
+});
+
 async function waitForState(url, predicate, timeoutMs = 12000) {
   const started = Date.now();
   let latest;

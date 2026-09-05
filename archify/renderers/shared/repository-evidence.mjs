@@ -38,10 +38,12 @@ function gitValue(repoRoot, args, failure) {
   return result.stdout.trim();
 }
 
-function githubSlug(value) {
+function originSlug(value) {
   const raw = String(value || '').trim();
-  const match = raw.match(/^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/i);
-  return match ? `${match[1]}/${match[2]}`.toLowerCase() : null;
+  const match = raw.match(/^(?:https:\/\/([^/\s]+)\/|git@([^:/\s]+):|ssh:\/\/git@([^/\s]+)\/)([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/i);
+  if (!match) return null;
+  const host = (match[1] || match[2] || match[3]).toLowerCase();
+  return `${host}/${match[4]}/${match[5]}`.toLowerCase();
 }
 
 function verifiedSourcePath(value, where) {
@@ -103,9 +105,9 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       supportedFixes: ['pin one full 40-character commit SHA'],
     });
   }
-  const authoredSlug = githubSlug(repository.url);
-  if (!authoredSlug || !String(repository.url).startsWith('https://github.com/')) {
-    evidenceFailure('repository-evidence/url-invalid', '/meta/repository/url must be a public https://github.com owner/repository URL.', {
+  const authoredSlug = originSlug(repository.url);
+  if (!authoredSlug || !/^https:\/\/[^/\s]+\/[^/\s]+\/[^/\s]+?(?:\.git)?\/?$/i.test(String(repository.url))) {
+    evidenceFailure('repository-evidence/url-invalid', '/meta/repository/url must be an https repository URL with host, owner, and repository.', {
       subject: { path: '/meta/repository/url' },
       evidence: { repositoryUrl: repository.url },
       supportedFixes: ['use the canonical public GitHub HTTPS repository URL'],
@@ -138,7 +140,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
     });
   }
   const origin = gitValue(realRoot, ['remote', 'get-url', 'origin'], 'Evidence repository must have an origin remote.');
-  if (githubSlug(origin) !== authoredSlug) {
+  if (originSlug(origin) !== authoredSlug) {
     evidenceFailure('repository-evidence/origin-mismatch', `Evidence repository origin ${JSON.stringify(origin)} does not match ${JSON.stringify(repository.url)}.`, {
       subject: { repoRoot: realRoot },
       evidence: { localOrigin: origin, authoredRepository: repository.url },

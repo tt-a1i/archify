@@ -10837,6 +10837,9 @@
       var WIDE_RATIO = 1.55;
       var MIN_DESKTOP_WIDTH = 1024;
       var MIN_READER_WIDTH = 960;
+      // Keep the canonical desktop reader width independent of whichever
+      // optional webfont happens to be available. This makes offline artifacts
+      // settle to the same geometry as online artifacts.
       var MAX_READER_WIDTH = 1920;
       var SAFE_BOTTOM_GAP = 12;
 
@@ -10920,7 +10923,9 @@
         var chrome = chromeMetrics();
         var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
         var minWidth = Math.min(MIN_READER_WIDTH, viewportCap);
-        var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
+        // The 1440px desktop contract is canonical; larger monitors retain
+        // the existing height-budgeted expansion for readability.
+        var maxWidth = Math.min(window.innerWidth <= 1600 ? 960 : MAX_READER_WIDTH, viewportCap);
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
           outerHeight(header) + outerHeight(guided) + outerHeight(cards);
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
