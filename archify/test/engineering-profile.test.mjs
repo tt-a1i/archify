@@ -118,6 +118,29 @@ test('deployment ownership crossing math follows authored membership instead of 
     .some((diagnostic) => diagnostic.code === 'engineering/deployment-crossing-mechanism'));
 });
 
+test('deployment ownership crossing mechanisms include named boundary endpoints', () => {
+  const cases = [
+    ['scope-0', 'scope-2', [0, 2, 3]],
+    ['scope-0', 'clients', [0]],
+    ['clients', 'scope-0', [0]],
+    ['scope-1', 'audit', [1]],
+  ];
+  for (const [from, to, crossedIndexes] of cases) {
+    const candidate = clone(example);
+    candidate.boundaries.forEach((boundary, index) => { boundary.id = `scope-${index}`; });
+    candidate.connections = [{ from, to }];
+
+    const diagnostics = deploymentOwnershipDiagnostics(candidate);
+    assert.equal(diagnostics.length, 1, `${from}->${to}`);
+    assert.equal(diagnostics[0].code, 'engineering/deployment-crossing-mechanism');
+    assert.deepEqual(diagnostics[0].evidence.crossedBoundaries.map((boundary) => boundary.boundaryIndex), crossedIndexes);
+    assert.deepEqual(diagnostics[0].supportedFixes, ['set /connections/0/label to the real cross-boundary mechanism']);
+
+    candidate.connections[0].label = 'mTLS';
+    assert.deepEqual(deploymentOwnershipDiagnostics(candidate), []);
+  }
+});
+
 test('other diagram modes reject the architecture-only engineering profile', () => {
   const fixtures = [
     ['workflow', 'agent-tool-call.workflow.json'],

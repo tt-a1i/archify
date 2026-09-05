@@ -153,6 +153,24 @@ Use one left-to-right spine with short vertical branches. Prefer 6–12 primary 
 
 Grid placement is preferred when the schema supports it. Free positions are appropriate for a bounded exception, not for prose-level coordinate planning. Keep external actors outside the system boundary when that is factually true.
 
+Give a boundary an optional `id` when a relationship belongs to the region or
+security group itself. `connections[].from` and `to` can then name that boundary
+or a component; IDs must be unique across both collections. Anchors use the final
+visible frame, including title-fit expansion, and retain the existing
+`fromSide`/`toSide`, `route`, `via`, label, and automatic port-spread controls.
+Named boundaries participate in focus, guided views, reach, and route exploration;
+`wraps` does not create edges to their members. Component inventory and legend
+remain component-only.
+
+Boundary endpoints are outward-facing interfaces. A connection between a boundary
+and an endpoint contained by its final frame fails with
+`architecture/boundary-endpoint-contained`: use `wraps` for membership and connect
+concrete components for traffic inside a scope. Inward-facing boundary ports are
+not part of this contract. Omit `id` to preserve an anonymous structural boundary.
+For example, `{"id":"zone-a","kind":"region","label":"Zone A","wraps":["api"]}`
+can connect to a disjoint `zone-b` through
+`{"from":"zone-a","to":"zone-b","label":"HTTPS"}`.
+
 ### Workflow
 
 Lanes express responsibility or phase. Columns `0..5` express logical

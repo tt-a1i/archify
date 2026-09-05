@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Connections at the zone boundary",
+    "subtitle": "Boundary interfaces preserve the relationship between zones, without inventing a proxy service.",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "viewBox": [
+      940,
+      350
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "Client",
+      "pos": [
+        60,
+        180
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API",
+      "pos": [
+        300,
+        180
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Worker",
+      "pos": [
+        540,
+        180
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "audit",
+      "type": "external",
+      "label": "Audit service",
+      "pos": [
+        780,
+        180
+      ],
+      "size": [
+        120,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "id": "application-zone",
+      "kind": "region",
+      "label": "Application zone",
+      "wraps": [
+        "api"
+      ]
+    },
+    {
+      "id": "data-zone",
+      "kind": "security-group",
+      "label": "Data zone",
+      "wraps": [
+        "worker"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-zone",
+      "from": "client",
+      "to": "application-zone",
+      "label": "HTTPS"
+    },
+    {
+      "id": "zone-to-zone",
+      "from": "application-zone",
+      "to": "data-zone",
+      "label": "RPC"
+    },
+    {
+      "id": "zone-to-audit",
+      "from": "data-zone",
+      "to": "audit",
+      "label": "Events"
+    }
+  ]
+}

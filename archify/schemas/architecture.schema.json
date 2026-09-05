@@ -133,6 +133,7 @@
         "additionalProperties": false,
         "required": ["kind", "label", "wraps"],
         "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
           "kind": { "enum": ["region", "security-group"] },
           "label": { "type": "string", "minLength": 1 },
           "wraps": {

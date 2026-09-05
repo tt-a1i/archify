@@ -116,14 +116,18 @@ export function deploymentOwnershipDiagnostics(diagram) {
     });
   });
 
+  const boundaryMembers = new Map(boundaries.filter((boundary) => boundary.id)
+    .map((boundary) => [boundary.id, boundary.wraps]));
   connections.forEach((connection, index) => {
+    const fromMembers = boundaryMembers.get(connection.from) ?? [connection.from];
+    const toMembers = boundaryMembers.get(connection.to) ?? [connection.to];
     const crossedBoundaries = boundaries
       .map((boundary, boundaryIndex) => ({
         boundaryIndex,
         kind: boundary.kind,
         label: boundary.label,
-        fromInside: boundary.wraps.includes(connection.from),
-        toInside: boundary.wraps.includes(connection.to),
+        fromInside: fromMembers.every((id) => boundary.wraps.includes(id)),
+        toInside: toMembers.every((id) => boundary.wraps.includes(id)),
       }))
       .filter((boundary) => DEPLOYMENT_BOUNDARY_KINDS.has(boundary.kind) && boundary.fromInside !== boundary.toInside);
     if (crossedBoundaries.length === 0 || (typeof connection.label === 'string' && connection.label.trim() !== '')) return;
