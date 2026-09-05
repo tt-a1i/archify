@@ -22,6 +22,7 @@ const MESSAGE_PAIRS = {
   'node.focus.detail': ['Focus {label}, {detail}', '聚焦{label}，{detail}'],
   'node.context.architecture': ['Architecture component', '架构组件'],
   'node.context.workflow': ['Workflow node', '工作流节点'],
+  'node.context.cognition': ['Knowledge card', '知识卡'],
   'node.context.sequence': ['Sequence participant', '时序参与者'],
   'node.context.dataflow': ['Data-flow node', '数据流节点'],
   'node.context.lifecycle': ['Lifecycle state', '生命周期状态'],
@@ -59,6 +60,13 @@ const MESSAGE_PAIRS = {
   'legend.lifecycle.failure': ['failure / exit', '失败 / 退出'],
   'legend.lifecycle.neutral': ['neutral', '中性状态'],
   'legend.lifecycle.external': ['external', '外部状态'],
+
+  'legend.cognition.subject': ['Question entry', '问题入口'],
+  'legend.cognition.accept': ['Accepted card', '命中的知识卡'],
+  'legend.cognition.branch': ['Lower-score branch', '低分分支'],
+  'legend.cognition.defer': ['Condition not closed', '条件未闭合'],
+  'legend.cognition.reject': ['Negative route', '负路由'],
+  'legend.cognition.blindspot': ['Blindspot', '盲区'],
 
   'viewer.kind.frontend': ['Frontend', '前端'],
   'viewer.kind.backend': ['Backend', '后端'],

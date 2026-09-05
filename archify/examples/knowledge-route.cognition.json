@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "diagram_type": "cognition",
+  "meta": {
+    "title": "Cognition Route: Triangle Interior Angles",
+    "locale": "en",
+    "subtitle": "How a conditional-knowledge router answered one question",
+    "question": "What is the sum of the interior angles of a triangle?",
+    "verdict": "resolved",
+    "animation": "trace"
+  },
+  "lanes": [
+    {
+      "id": "mathLane",
+      "label": "Math · Elementary"
+    },
+    {
+      "id": "branchLane",
+      "label": "Math · Lower branches"
+    },
+    {
+      "id": "rejectedLane",
+      "label": "Rejected & Outside",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "question",
+    "triangleCard"
+  ],
+  "nodes": [
+    {
+      "id": "question",
+      "lane": "mathLane",
+      "col": 0,
+      "kind": "subject",
+      "verdict": "accept",
+      "label": "Question",
+      "confidence": 1
+    },
+    {
+      "id": "triangleCard",
+      "lane": "mathLane",
+      "col": 1,
+      "kind": "atomic",
+      "verdict": "accept",
+      "label": "Angle sum",
+      "sublabel": "score 7 · index hit",
+      "tag": "E2",
+      "card_hit": true,
+      "confidence": 0.88,
+      "edu_level": "E2",
+      "direct_answer": "The interior angles of a triangle sum to 180 degrees."
+    },
+    {
+      "id": "similarCard",
+      "lane": "branchLane",
+      "col": 1,
+      "kind": "atomic",
+      "verdict": "branch",
+      "label": "Similarity",
+      "sublabel": "score 2 · lower rank",
+      "card_hit": false,
+      "confidence": 0.22
+    },
+    {
+      "id": "quadraticCard",
+      "lane": "rejectedLane",
+      "col": 1,
+      "kind": "atomic",
+      "verdict": "reject",
+      "label": "Quadratics",
+      "sublabel": "excluded",
+      "card_hit": false,
+      "confidence": 0.05
+    },
+    {
+      "id": "quantumRegion",
+      "lane": "rejectedLane",
+      "col": 2,
+      "kind": "blindspot",
+      "verdict": "blindspot",
+      "label": "Quantum gravity",
+      "sublabel": "outside knowledge",
+      "card_hit": false,
+      "width": 112
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "question",
+      "to": "triangleCard",
+      "role": "main",
+      "label": "0.88",
+      "width": 3
+    },
+    {
+      "id": "e2",
+      "from": "question",
+      "to": "similarCard",
+      "role": "branch",
+      "label": "0.22",
+      "width": 1
+    },
+    {
+      "id": "e3",
+      "from": "question",
+      "to": "quadraticCard",
+      "role": "reject",
+      "variant": "dashed",
+      "label": "negative route",
+      "route": "return-left",
+      "fromSide": "left",
+      "toSide": "left",
+      "labelAt": [
+        115,
+        381
+      ]
+    },
+    {
+      "id": "e4",
+      "from": "question",
+      "to": "quantumRegion",
+      "role": "defer",
+      "variant": "dashed",
+      "label": "condition not closed",
+      "route": "bottom-channel",
+      "channelY": 166,
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        443,
+        254
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Why this answer is trustworthy",
+      "items": [
+        "triangleCard was selected by the deterministic annotation index (card_hit: true), not fuzzy matching.",
+        "Its conditional space declares depth E2; the question satisfied every activation condition.",
+        "Lower-scoring branches stay visible instead of being silently dropped."
+      ]
+    }
+  ]
+}

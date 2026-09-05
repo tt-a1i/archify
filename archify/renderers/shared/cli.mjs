@@ -47,7 +47,7 @@ export async function loadDiagramWithBrandMarks(options) {
   return loaded;
 }
 
-const START_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
+const START_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'cognition']);
 
 // Common CLI tail: fill the template and write the standalone HTML file.
 export function writeDiagram({ outPath, template, diagramType, meta, svg, cards, sourceEvidence = null }) {
@@ -75,6 +75,7 @@ const SEMANTIC_COLLECTIONS = {
   sequence: 'participants',
   dataflow: 'nodes',
   lifecycle: 'states',
+  cognition: 'nodes',
 };
 
 const RELATIONSHIP_COLLECTIONS = {
@@ -83,6 +84,7 @@ const RELATIONSHIP_COLLECTIONS = {
   sequence: 'messages',
   dataflow: 'flows',
   lifecycle: 'transitions',
+  cognition: 'edges',
 };
 
 // Relationship IDs are optional for backwards compatibility, but once an

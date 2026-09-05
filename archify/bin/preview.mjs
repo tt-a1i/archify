@@ -15,7 +15,7 @@ const defaultDebounceMs = 400;
 const defaultPollMs = 800;
 const defaultStopGraceMs = 3000;
 const defaultStopKillMs = 750;
-const diagramTypes = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
+const diagramTypes = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'cognition']);
 
 function sha256(value) {
   return createHash('sha256').update(value).digest('hex');

@@ -1,0 +1,348 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/cognition.schema.json",
+  "title": "Archify Cognition Diagram",
+  "description": "How a reasoning system routed one question through its own knowledge: which conditional knowledge cards accepted, deferred, or rejected it, with the evidence and confidence of every hop. Unlike the external-system diagrams (architecture/workflow/sequence/dataflow/lifecycle), a cognition diagram renders the system's internal routing semantics: verdicts, deterministic index hits, conditional-space declarations, negative routes, and direct answers.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "diagram_type",
+    "meta",
+    "lanes",
+    "nodes",
+    "edges"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "diagram_type": {
+      "const": "cognition"
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locale": {
+          "$ref": "common.schema.json#/$defs/locale"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        },
+        "animation": {
+          "enum": [
+            "trace",
+            "none"
+          ]
+        },
+        "visual_preset": {
+          "enum": [
+            "classic",
+            "signal-flow",
+            "blueprint",
+            "editorial"
+          ]
+        },
+        "quality_profile": {
+          "enum": [
+            "standard",
+            "showcase"
+          ]
+        },
+        "views": {
+          "$ref": "common.schema.json#/$defs/guidedViews"
+        },
+        "legend": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": { "$ref": "common.schema.json#/$defs/legendMode" },
+            "entries": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "accept": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "branch": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "defer": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "reject": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "blindspot": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "external": { "$ref": "common.schema.json#/$defs/legendEntry" }
+              }
+            }
+          }
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The question the cognition system was asked; the diagram explains how it was routed."
+        },
+        "verdict": {
+          "enum": [
+            "resolved",
+            "deferred",
+            "blindspot"
+          ],
+          "description": "Overall routing outcome: at least one card accepted (resolved), the question fell to lower-confidence branches (deferred), or no conditional knowledge applied (blindspot)."
+        },
+        "viewBox": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "number",
+              "minimum": 700
+            },
+            {
+              "type": "number",
+              "minimum": 240
+            }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "lanes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "variant": {
+            "enum": [
+              "normal",
+              "exception"
+            ]
+          }
+        }
+      }
+    },
+    "mainPath": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "common.schema.json#/$defs/id"
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "lane",
+          "col",
+          "kind",
+          "verdict",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "lane": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "col": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5
+          },
+          "kind": {
+            "enum": [
+              "subject",
+              "composite",
+              "atomic",
+              "barrier",
+              "blindspot"
+            ],
+            "description": "subject = the question entry point; composite = a composite knowledge node that narrows the question; atomic = one conditional knowledge card; barrier = a negative-route gate (unapplicable condition); blindspot = a region outside current knowledge."
+          },
+          "verdict": {
+            "enum": [
+              "accept",
+              "branch",
+              "defer",
+              "reject",
+              "blindspot"
+            ],
+            "description": "How this node fared for the routed question: accept (selected, confident), branch (plausible but lower score), defer (conditional space not closed), reject (excluded by unapplicable conditions), blindspot (outside knowledge)."
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sublabel": {
+            "type": "string"
+          },
+          "tag": {
+            "type": "string"
+          },
+          "card_hit": {
+            "type": "boolean",
+            "description": "True when the node was selected by the deterministic annotation index (not fuzzy matching) — the auditability anchor of the route."
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Normalized routing confidence; renders as edge/node weight and may surface in the node sublabel."
+          },
+          "edu_level": {
+            "enum": [
+              "E1",
+              "E2",
+              "E3",
+              "E4",
+              "E5"
+            ],
+            "description": "Conditional-space declaration: the knowledge depth level this card declares (E1 introductory … E5 specialist). Cognition-specific; external-system diagrams have no equivalent."
+          },
+          "direct_answer": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "The knowledge card's direct answer, rendered on/near the accepted node."
+          },
+          "width": {
+            "type": "number",
+            "minimum": 32
+          },
+          "height": {
+            "type": "number",
+            "minimum": 32
+          },
+          "yOffset": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "from": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "to": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "label": {
+            "type": "string"
+          },
+          "variant": {
+            "$ref": "common.schema.json#/$defs/variant"
+          },
+          "role": {
+            "enum": [
+              "main",
+              "branch",
+              "defer",
+              "reject"
+            ],
+            "description": "Routing semantics of this hop: main (followed), branch (considered, lower score), defer (condition not closed), reject (negative route)."
+          },
+          "fromSide": {
+            "$ref": "#/$defs/side"
+          },
+          "toSide": {
+            "$ref": "#/$defs/side"
+          },
+          "route": {
+            "enum": [
+              "auto",
+              "straight",
+              "drop",
+              "outside-right",
+              "return-left",
+              "bottom-channel",
+              "up-channel"
+            ]
+          },
+          "via": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/point"
+            }
+          },
+          "labelAt": {
+            "$ref": "common.schema.json#/$defs/point"
+          },
+          "labelDx": {
+            "type": "number"
+          },
+          "labelDy": {
+            "type": "number"
+          },
+          "labelSegment": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "channelX": {
+            "type": "number"
+          },
+          "channelY": {
+            "type": "number"
+          },
+          "bias": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "width": {
+            "type": "number",
+            "minimum": 0.5,
+            "description": "Stroke width; authors commonly map this to the hop's confidence so the confidence chain is visible at a glance."
+          }
+        }
+      }
+    },
+    "cards": {
+      "$ref": "common.schema.json#/$defs/cards"
+    }
+  },
+  "$defs": {
+    "side": {
+      "enum": [
+        "left",
+        "right",
+        "top",
+        "bottom"
+      ]
+    }
+  }
+}
