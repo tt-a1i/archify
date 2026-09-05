@@ -1155,7 +1155,7 @@ async function commandPreview(args) {
 
 function commandCheck(args) {
   const [html] = args;
-  if (!html) fail(usage());
+  if (!html || args.length !== 1 || html.startsWith('--')) fail(usage());
   const result = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), html]);
   if (result.status !== 0) exitFrom(result);
 }
@@ -1212,12 +1212,14 @@ async function commandVisualCheck(args) {
   process.exitCode = result.exitCode;
 }
 
-function commandExamples() {
+function commandExamples(args = []) {
+  if (args.length) fail(usage());
   const result = runNode([path.join(skillRoot, 'scripts/render-examples.mjs')], { cwd: skillRoot });
   if (result.status !== 0) exitFrom(result);
 }
 
-async function commandDoctor() {
+async function commandDoctor(args = []) {
+  if (args.length) fail(usage());
   const checks = [];
   const nodeMajor = Number.parseInt(process.versions.node.split('.')[0], 10);
   checks.push({
@@ -1465,7 +1467,7 @@ async function commandBrands(args) {
 }
 
 function commandDemo(args) {
-  if (args.length > 1) fail(usage());
+  if (args.length > 1 || args[0]?.startsWith('--')) fail(usage());
 
   const outputDirectory = path.resolve(args[0] || process.cwd());
   const output = path.join(outputDirectory, 'archify-demo.html');
@@ -1984,10 +1986,10 @@ switch (command) {
     await commandBrands(args);
     break;
   case 'examples':
-    commandExamples();
+    commandExamples(args);
     break;
   case 'doctor':
-    await commandDoctor();
+    await commandDoctor(args);
     break;
   case 'demo':
     commandDemo(args);
