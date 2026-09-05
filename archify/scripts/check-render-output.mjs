@@ -273,7 +273,8 @@ if (svgMatches.length === 1) {
 
 const ok = checks.every((check) => check.ok) && composition.status !== 'fail';
 console.log(JSON.stringify({ ok, file: htmlPath, checks, composition }, null, 2));
-process.exit(ok ? 0 : 1);
+// Let pending stdout writes drain: large receipts are asynchronous when piped.
+process.exitCode = ok ? 0 : 1;
 
 function collectArrows(fragment) {
   const arrows = [];
