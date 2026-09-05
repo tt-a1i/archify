@@ -339,6 +339,7 @@ export function cleanEndpointSideProblems({
 // simply not be supplied as obstacles.
 export function cleanFlowProblems({
   relations,
+  endpointIds,
   obstacles,
   pathFor,
   diagramType,
@@ -353,10 +354,10 @@ export function cleanFlowProblems({
   // quality_profile; standard/showcase still control stricter visual budgets.
   const problems = [];
   const obstacleList = [...obstacles];
-  const obstacleIds = new Set(obstacleList.map((obstacle) => obstacle?.id));
+  const knownEndpointIds = endpointIds ?? new Set(obstacleList.map((obstacle) => obstacle?.id));
   for (const [relationIndex, relation] of asArray(relations).entries()) {
     if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') continue;
-    if (!obstacleIds.has(relation.from) || !obstacleIds.has(relation.to)) continue;
+    if (!knownEndpointIds.has(relation.from) || !knownEndpointIds.has(relation.to)) continue;
     const points = pathFor(relation)?.points;
     if (!Array.isArray(points) || points.length < 2) continue;
     if (!points.every((point) => Array.isArray(point) && point.length === 2 && isFinitePoint(...point))) continue;

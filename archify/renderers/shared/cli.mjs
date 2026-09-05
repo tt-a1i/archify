@@ -119,6 +119,11 @@ export function validateGuidedViews(diagramType, diagram) {
   if (!Array.isArray(views) || views.length === 0) return;
   const collection = SEMANTIC_COLLECTIONS[diagramType];
   const semanticIds = new Set((diagram[collection] || []).map((item) => item.id));
+  if (diagramType === 'architecture') {
+    for (const boundary of diagram.boundaries || []) {
+      if (boundary.id) semanticIds.add(boundary.id);
+    }
+  }
   const seen = new Set();
   const problems = [];
 

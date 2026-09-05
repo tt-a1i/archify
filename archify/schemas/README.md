@@ -163,6 +163,11 @@ express cleanly here: duplicate view IDs, duplicate focus IDs, focus IDs that do
 not exist in the diagram's semantic collection, and duplicate authored
 relationship IDs within the mode's relationship collection.
 
+Architecture boundaries may have an optional `id`, unique across components and
+boundaries, so a connection can name the final boundary frame as its endpoint.
+See the [architecture authoring contract](../references/authoring-contract.md#architecture)
+for outward-facing scope, routing controls, and semantic exploration.
+
 Architecture additionally supports opt-in, revision-pinned repository evidence.
 `meta.repository` names a public GitHub URL and full commit SHA; a component may
 carry one to three `sources` with repo-relative POSIX paths, optional line

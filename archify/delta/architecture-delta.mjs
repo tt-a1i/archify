@@ -124,7 +124,7 @@ function boundaryIndex(boundaries, side) {
     fail('delta/boundary-key-ambiguous', `${side} boundary kind + label keys must be unique.`, {
       side,
       boundaries: sorted(new Set(ambiguous)),
-      supportedFixes: ['rename one duplicate boundary or add stable boundary ids in a future schema version'],
+      supportedFixes: ['rename one duplicate boundary so kind + label keys are unique'],
     });
   }
   return index;
@@ -158,7 +158,7 @@ const CONNECTION_FIELDS = {
   semantic: ['label', 'variant'],
   geometry: ['fromSide', 'toSide', 'route', 'via', 'labelAt', 'labelDx', 'labelDy', 'labelSegment', 'width'],
 };
-const BOUNDARY_FIELDS = { scope: ['wraps'], geometry: ['pad'] };
+const BOUNDARY_FIELDS = { scope: ['id', 'wraps'], geometry: ['pad'] };
 
 function statusFor(classifications, kind) {
   if (classifications.some((value) => ['topology', 'semantic', 'scope'].includes(value))) return 'changed';
@@ -463,6 +463,8 @@ export function annotateArchitectureSideSvg(svg, receipt, side) {
     );
   });
   result = transformNodeGroups(result, (group, id) => {
+    // Addressable boundary frames keep their boundary state, not component state.
+    if (group.includes('data-graph-role="structural-frame"')) return group;
     const change = nodes.get(id);
     if ((side === 'base' && change?.status === 'added') || (side === 'head' && change?.status === 'removed')) return group;
     const tagged = group.replace(/^<g[^>]+>/, (tag) => addState(tag, change, side));
