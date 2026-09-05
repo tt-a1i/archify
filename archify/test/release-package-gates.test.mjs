@@ -51,6 +51,13 @@ function workflowJob(workflow, name) {
   const next = workflow.slice(start + marker.length).search(/\n  [a-z][a-z0-9-]*:\n/);
   return workflow.slice(start, next === -1 ? workflow.length : start + marker.length + next);
 }
+function assertPinnedAction(section, action, sha, version) {
+  const expected = `uses: ${action}@${sha} # ${version}`;
+  assert.ok(
+    section.includes(expected),
+    `${action} must remain pinned to the reviewed ${version} commit (${sha})`,
+  );
+}
 
 test('release prevents manifest preannouncement and smokes the exact archive before upload', () => {
   const workflow = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'release.yml'), 'utf8');
@@ -88,7 +95,12 @@ test('release prevents manifest preannouncement and smokes the exact archive bef
   assert.match(smoke, /node scripts\/package-smoke\.mjs "\$package_root\/archify"/);
   assert.doesNotMatch(smoke, /\bnpm\s+(?:ci|install)\b/);
   assert.match(freshness, /cmp -s \/tmp\/archify-built\.zip archify\.zip/);
-  assert.match(upload, /uses: softprops\/action-gh-release@v3\s/);
+  assertPinnedAction(
+    upload,
+    'softprops/action-gh-release',
+    'efb35369e0ad2afab669f228072c1b0d510eae64',
+    'v3.0.3',
+  );
   assert.match(upload, /files: archify\.zip/);
   assert.match(followUp, /docs\/skill-updates\/archify\/stable\.json/);
 });
@@ -177,11 +189,26 @@ test('GitHub Pages deploys docs only after every repository gate succeeds', () =
   assert.match(job, /current_main" == "\$GITHUB_SHA"/);
   assert.match(job, /Skipping obsolete Pages deployment/);
   assert.match(job, /if: steps\.deployment-head\.outputs\.current == 'true'/);
-  assert.match(job, /actions\/configure-pages@v6/);
+  assertPinnedAction(
+    job,
+    'actions/configure-pages',
+    '45bfe0192ca1faeb007ade9deae92b16b8254a0d',
+    'v6.0.0',
+  );
   // v5 delegates to upload-artifact v7 (Node 24); v4 still embeds Node 20.
-  assert.match(job, /actions\/upload-pages-artifact@v5\s/);
+  assertPinnedAction(
+    job,
+    'actions/upload-pages-artifact',
+    'fc324d3547104276b827a68afc52ff2a11cc49c9',
+    'v5.0.0',
+  );
   assert.match(job, /path: docs/);
-  assert.match(job, /actions\/deploy-pages@v5/);
+  assertPinnedAction(
+    job,
+    'actions/deploy-pages',
+    'cd2ce8fcbc39b97be8ca5fce6e763baed58fa128',
+    'v5.0.0',
+  );
 });
 
 test('release tags with a SemVer prerelease are marked prerelease and never become latest', () => {
