@@ -21,6 +21,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 ### Changed
 - Workflow authoring now preserves semantic edge labels and repairs measured spacing or route constraints rather than treating label deletion as a geometry workaround. Documentation also makes `--repo-root` architecture-only, defines lifecycle event/terminal column `N` as aligned with main column `N + 2`, and warns that `visual-check` after failed delivery would inspect the preserved previous artifact.
 
+### Changed
+- **Japanese entry point under the same maintenance contract.** `README_JA.md` joins the language switcher and every README parity check: product hero placement, animated proof and demo deep links, share-card and real-repository proofs, the update-awareness disclosure, the DSH quick start, the self-hosted Star History ending, and release-identity validation of the version badge, the Japanese development marker, and the Raven manual-ZIP boundary. The English word budget now measures prose with the language switcher excluded, so adding a language no longer relaxes it.
+
 ### Fixed
 - Skill packaging now stages only tracked regular files through one symlink-safe path shared by the release ZIP and DeepSeek Harness bundle, while preserving legitimate nested runtime test directories and rejecting stale or dependency-bearing artifacts.
 - Update checks use generation-fenced atomic cache snapshots, unconditional bounded requests without persistent server validators, and a Release-first publication gate that verifies the published archive digest and tagged Skill tree before a gated GitHub Pages deployment can expose a stable manifest.

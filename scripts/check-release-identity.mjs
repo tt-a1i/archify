@@ -78,11 +78,15 @@ function versionLabels(source) {
     .map((match) => match[1]);
 }
 
+const readmeMarkers = {
+  en: { development: 'Current development version:', stable: 'Current stable version:' },
+  zh: { development: '当前开发版本：', stable: '当前稳定版本：' },
+  ja: { development: '現在の開発版:', stable: '現在の安定版:' },
+};
+
 function checkReadme(relativePath, source, version, language, isDevelopment) {
   const badge = `/badge/version-${shieldEscape(version)}-`;
-  const markerLabel = language === 'zh'
-    ? isDevelopment ? '当前开发版本：' : '当前稳定版本：'
-    : isDevelopment ? 'Current development version:' : 'Current stable version:';
+  const markerLabel = readmeMarkers[language][isDevelopment ? 'development' : 'stable'];
   const identity = isDevelopment ? 'development' : 'stable';
   const hasMarker = source.split('\n').some((line) => line.includes(markerLabel) && line.includes(`\`v${version}\``));
   if (!source.includes(badge) || !hasMarker) {
@@ -107,9 +111,12 @@ function checkRavenBoundary(relativePath, source, language) {
   const pathBoundary = String.raw`(?=$|[\s\x60'"<>,.;:，；。])`;
   const hasEnglishManual = /manual ZIP/i.test(source);
   const hasChineseManual = /(?:手动[^\n<]{0,40}ZIP|ZIP[^\n<]{0,40}手动)/i.test(source);
+  const hasJapaneseManual = /(?:手動[^\n<]{0,40}ZIP|ZIP[^\n<]{0,40}手動)/i.test(source);
   const hasRequiredCopy = language === 'both'
     ? hasEnglishManual && hasChineseManual
-    : language === 'zh' ? hasChineseManual : hasEnglishManual;
+    : language === 'zh' ? hasChineseManual
+      : language === 'ja' ? hasJapaneseManual
+        : hasEnglishManual;
   const englishExtractsIntoParent = new RegExp(
     String.raw`(?:extract|unpack)[^\n]{0,180}archify\.zip[^\n]{0,180}(?:into|to)\s*[\x60'"<]*${installParent}${pathBoundary}`,
     'i',
@@ -126,16 +133,30 @@ function checkRavenBoundary(relativePath, source, language) {
     String.raw`(?:得到|生成|产生|最终位于)[^\n]{0,120}${installedRoot}`,
     'i',
   ).test(source);
+  const japaneseExtractsIntoParent = new RegExp(
+    String.raw`archify\.zip[^\n]{0,120}[\x60'"<]*${installParent}${pathBoundary}[^\n]{0,20}(?:に|へ)\s*(?:展開|解凍)`,
+    'i',
+  ).test(source);
+  const japaneseExplainsInstalledRoot = new RegExp(
+    String.raw`${installedRoot}[^\n]{0,40}(?:が|は)[^\n]{0,20}(?:作成|生成|でき)`,
+    'i',
+  ).test(source);
   const hasCorrectDestination = language === 'both'
     ? englishExtractsIntoParent && englishExplainsInstalledRoot
       && chineseExtractsIntoParent && chineseExplainsInstalledRoot
     : language === 'zh'
       ? chineseExtractsIntoParent && chineseExplainsInstalledRoot
-      : englishExtractsIntoParent && englishExplainsInstalledRoot;
+      : language === 'ja'
+        ? japaneseExtractsIntoParent && japaneseExplainsInstalledRoot
+        : englishExtractsIntoParent && englishExplainsInstalledRoot;
   const nestedDestination = new RegExp(
     String.raw`(?:\b(?:extract|unpack)[^\n]{0,220}(?:into|to)|解压(?:到|至))\s*[\x60'"<]*${installedRoot}`,
     'i',
-  ).test(source);
+  ).test(source)
+    || new RegExp(
+      String.raw`${installedRoot}[^\n]{0,4}(?:に|へ)[^\n]{0,4}(?:展開|解凍)`,
+      'i',
+    ).test(source);
   const inventsSwitcher = /data-agent=["']raven["']/i.test(source)
     || /--agent\s+raven\b/i.test(source)
     || /[?&]agent=raven\b/i.test(source);
@@ -249,12 +270,15 @@ if (hasSupportedVersion) {
   const english = read('README.md');
   const englishMirror = read('README_EN.md');
   const chinese = read('README_ZH.md');
+  const japanese = read('README_JA.md');
   checkReadme('README.md', english, version, 'en', isDevelopment);
   checkReadme('README_EN.md', englishMirror, version, 'en', isDevelopment);
   checkReadme('README_ZH.md', chinese, version, 'zh', isDevelopment);
+  checkReadme('README_JA.md', japanese, version, 'ja', isDevelopment);
   checkRavenBoundary('README.md', english, 'en');
   checkRavenBoundary('README_EN.md', englishMirror, 'en');
   checkRavenBoundary('README_ZH.md', chinese, 'zh');
+  checkRavenBoundary('README_JA.md', japanese, 'ja');
   if (english !== englishMirror) fail('README_EN.md must remain byte-identical to README.md.');
 
   if (newestStableLabel && isDevelopment) {
