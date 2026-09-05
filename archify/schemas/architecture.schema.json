@@ -28,7 +28,7 @@
           "properties": {
             "url": {
               "type": "string",
-              "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\\.git)?/?$"
+              "pattern": "^https://[^/\\s]+/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\\.git)?/?$"
             },
             "revision": { "type": "string", "pattern": "^[a-fA-F0-9]{40}$" }
           }
