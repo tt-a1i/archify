@@ -77,7 +77,18 @@ const SIGIL_SHAPE = {
 // A quiet, renderer-owned role stamp. It is authored SVG content rather than a
 // viewer overlay, so it survives canonical export while adding no focus target,
 // accessible name, layout box, or interaction state of its own.
-export function renderSemanticSigil(kind, { x, y, size = 11 } = {}) {
+// The sigil is drawn `SEMANTIC_SIGIL_INSET` px in from a node corner at
+// `SEMANTIC_SIGIL_SIZE` px square, so it occupies that corner out to
+// `SEMANTIC_SIGIL_FOOTPRINT` px from the node edge. Node labels are centred in
+// the same vertical band, so a label wide enough to reach the corner paints
+// over the icon unless it clears this footprint (#199). Exported so the label
+// fitting in `text-fit.mjs` measures against the geometry actually rendered
+// here instead of a second copy of these numbers.
+export const SEMANTIC_SIGIL_INSET = 6;
+export const SEMANTIC_SIGIL_SIZE = 11;
+export const SEMANTIC_SIGIL_FOOTPRINT = SEMANTIC_SIGIL_INSET + SEMANTIC_SIGIL_SIZE;
+
+export function renderSemanticSigil(kind, { x, y, size = SEMANTIC_SIGIL_SIZE } = {}) {
   const normalized = Object.hasOwn(SIGIL_SHAPE, kind) ? kind : 'neutral';
   const tone = SIGIL_TONE[normalized] || 'external';
   const scale = size / 16;
