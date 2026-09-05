@@ -13,15 +13,16 @@ for (const autocrlf of ['true', 'input', 'false']) {
     const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-checkout-eol-'));
     const source = path.join(fixture, 'source');
     const checkout = path.join(fixture, 'checkout');
+    const emptyConfig = path.join(fixture, 'empty-git-config');
     // Ignore caller Git configuration, attributes, repository paths, and signing hooks.
     const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
     Object.assign(env, {
       GIT_CONFIG_NOSYSTEM: '1',
-      GIT_CONFIG_GLOBAL: os.devNull,
+      GIT_CONFIG_GLOBAL: emptyConfig,
       GIT_ATTR_NOSYSTEM: '1',
     });
     const runGit = (cwd, args) => {
-      const result = spawnSync('git', ['-c', `core.attributesFile=${os.devNull}`, ...args], {
+      const result = spawnSync('git', ['-c', `core.attributesFile=${emptyConfig}`, ...args], {
         cwd, env, timeout: 30_000,
       });
       assert.equal(result.status, 0, `git ${args.join(' ')}: ${result.error || result.stderr}`);
@@ -29,6 +30,7 @@ for (const autocrlf of ['true', 'input', 'false']) {
     };
 
     try {
+      fs.writeFileSync(emptyConfig, '');
       fs.mkdirSync(source);
       runGit(source, ['init', '--quiet', '--template=']);
       runGit(source, ['config', 'core.autocrlf', 'false']);
