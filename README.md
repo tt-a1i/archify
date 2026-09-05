@@ -25,7 +25,7 @@ Archify is a Node.js rendering and validation system for Cursor, Claude Code, Co
 
 **Current development version:** `v2.17.0-dev.1`. See [Changelog](CHANGELOG.md#unreleased).
 
-**[Project page](https://tt-a1i.github.io/archify/)** · **[Scenario guide](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
+**[Project](https://tt-a1i.github.io/archify/)** · **[Guide](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)** · **[X](https://x.com/t20000622yy)**
 
 ```bash
 npx skills add tt-a1i/archify -g
