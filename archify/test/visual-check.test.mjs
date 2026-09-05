@@ -210,6 +210,48 @@ test('visual-check records four containment viewports and four endpoint theme ca
   }
 });
 
+test('sidecarPaths places outputs in outDir instead of beside the artifact', () => {
+  const input = artifact('outdir-source.html');
+  const separateDir = path.join(tmp, 'evidence-nested', 'deeper');
+  assert.equal(fs.existsSync(separateDir), false, 'precondition: outDir must not exist yet');
+
+  const outputs = sidecarPaths(input, { outDir: separateDir });
+
+  assert.equal(fs.existsSync(separateDir), true, 'sidecarPaths must create a missing outDir');
+  assert.equal(path.dirname(outputs.receipt), separateDir);
+  assert.equal(path.dirname(outputs.contactSheet), separateDir);
+  assert.equal(outputs.screenshots.every((entry) => path.dirname(entry.path) === separateDir), true);
+  assert.equal(path.basename(outputs.receipt), 'outdir-source.visual-check.json');
+
+  // Omitting outDir keeps the existing beside-the-artifact behavior unchanged.
+  const defaultOutputs = sidecarPaths(input);
+  assert.equal(path.dirname(defaultOutputs.receipt), path.dirname(input));
+});
+
+test('visual-check writes all sidecars into --out-dir end-to-end, none beside the artifact', async () => {
+  const input = artifact('outdir-e2e.html');
+  const outDir = path.join(tmp, 'outdir-e2e-evidence');
+  const browser = fakeBrowser();
+  const result = await runVisualCheck({
+    artifactPath: input,
+    outDir,
+    chromePath: '/fake/chrome',
+    browserFactory: async () => browser,
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.equal(result.receipt.status, 'pass');
+
+  const outputs = sidecarPaths(input, { outDir });
+  assert.equal(fs.existsSync(outputs.receipt), true);
+  assert.equal(fs.existsSync(outputs.contactSheet), true);
+  assert.equal(outputs.screenshots.every((entry) => fs.existsSync(entry.path)), true);
+
+  const besideArtifact = sidecarPaths(input);
+  assert.equal(fs.existsSync(besideArtifact.receipt), false, 'no sidecar should land beside the artifact when outDir is set');
+  assert.equal(fs.existsSync(besideArtifact.contactSheet), false);
+});
+
 test('visual-check returns 1 and preserves evidence when any viewport overflows', async () => {
   const input = artifact('overflow.html');
   const result = await runVisualCheck({

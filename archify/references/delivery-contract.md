@@ -37,7 +37,10 @@ The zero-dependency command uses Chrome/Chromium through the DevTools pipe. It
 measures light-theme containment at 1440×900, 1600×1000, 1920×1080, and
 2048×1320, then captures light/dark screenshots at 1440×900 and 2048×1320. It
 writes four PNG sidecars, one relative-path HTML contact sheet, and one JSON
-receipt beside the artifact. The receipt binds the source artifact SHA-256 and
+receipt beside the artifact by default — pass `--out-dir <dir>` to write all of
+them into a separate directory instead (created if missing) when a project
+keeps its testing/evidence artifacts apart from the delivered `.json`/`.html`
+result pair. The receipt binds the source artifact SHA-256 and
 byte count, identifies `evidenceKind: "automated-browser"`, records READ plus
 Still runtime state, and always reports `visualReview: "pending"`; automated
 browser evidence cannot claim perceptual review.
