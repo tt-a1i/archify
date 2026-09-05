@@ -584,7 +584,7 @@ test('cli: invalid source output metadata still fails inside the renderer', () =
 
 test('cli: deliver reports commit failure without a false success receipt', () => {
   const input = path.join(skillRoot, 'examples/web-app.architecture.json');
-  const outputDirectory = path.join(tmp, 'commit-target-is-a-directory');
+  const outputDirectory = path.join(tmp, 'commit-target-is-a-directory.html');
   fs.mkdirSync(outputDirectory, { recursive: true });
 
   const result = run(['deliver', 'architecture', input, outputDirectory, '--json']);

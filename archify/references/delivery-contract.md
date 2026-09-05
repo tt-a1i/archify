@@ -2,7 +2,15 @@
 
 ## Validate and deliver
 
-Use `validate` after every candidate edit. Use final atomic delivery only after the candidate is frozen:
+Use `validate` after every candidate edit. CLI HTML output paths must end in `.html`, including after symbolic-link resolution.
+Compare receipt paths must end in `.json`. Explicit CLI paths may be absolute or
+outside the current working directory; authored `meta.output` remains confined
+to that directory. A type mismatch fails before writing with
+`output/cli-extension` or `output/cli-resolved-extension`. These checks prevent
+accidental file-type overwrites; they do not sandbox explicit CLI directories
+or prevent replacement of an existing artifact of the expected type.
+
+Use final atomic delivery only after the candidate is frozen:
 
 ```bash
 node bin/archify.mjs deliver <type> <candidate.json> <output.html> --quality showcase --json
