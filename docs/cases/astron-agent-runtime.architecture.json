@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Astron Agent 运行时架构",
+    "locale": "zh-CN",
+    "output": "docs/cases/astron-agent-runtime.architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/iflytek/astron-agent",
+      "revision": "a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1"
+    },
+    "views": [
+      {
+        "id": "chat-path",
+        "label": "对话与工具路径",
+        "focus": ["users", "console_ui", "console_api", "agent_service", "plugin_services", "external_ai"],
+        "note": "从控制台请求进入 Agent 执行，再通过插件访问外部模型、讯飞能力与 RPA 执行器。"
+      },
+      {
+        "id": "workflow-path",
+        "label": "工作流执行路径",
+        "focus": ["console_api", "workflow_service", "knowledge_service", "plugin_services", "event_bus"],
+        "note": "管理 API 调用工作流服务；知识节点、插件节点与 Kafka 事件承担分支能力。"
+      },
+      {
+        "id": "state-boundary",
+        "label": "租户与状态边界",
+        "focus": ["tenant_service", "console_api", "agent_service", "workflow_service", "knowledge_service", "state_storage"],
+        "note": "租户服务提供空间隔离；核心服务通过数据库、Redis 与 MinIO 保存结构化状态、会话和文件。"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "用户与 Agent 客户端",
+      "sublabel": "浏览器 · API 调用方",
+      "pos": [10, 220],
+      "size": [150, 64]
+    },
+    {
+      "id": "console_ui",
+      "type": "frontend",
+      "label": "Console Frontend",
+      "sublabel": "React · Vite · 可视化编排",
+      "pos": [190, 220],
+      "size": [170, 64],
+      "sources": [
+        { "path": "console/frontend/src/main.tsx", "label": "SPA 入口" },
+        { "path": "docs/PROJECT_MODULES.md", "label": "模块职责" }
+      ]
+    },
+    {
+      "id": "console_api",
+      "type": "backend",
+      "label": "Console Backend",
+      "sublabel": "Spring Boot · REST · SSE",
+      "pos": [400, 220],
+      "size": [180, 64],
+      "sources": [
+        { "path": "console/backend/hub/pom.xml", "label": "Hub 模块" },
+        { "path": "docs/PROJECT_MODULES.md", "label": "管理 API 职责" }
+      ]
+    },
+    {
+      "id": "agent_service",
+      "type": "backend",
+      "label": "Agent Service",
+      "sublabel": "FastAPI · Agent 执行引擎",
+      "pos": [620, 220],
+      "size": [180, 64],
+      "sources": [
+        { "path": "core/agent/main.py", "label": "服务入口" },
+        { "path": "docs/PROJECT_MODULES.md", "label": "Agent 职责" }
+      ]
+    },
+    {
+      "id": "plugin_services",
+      "type": "backend",
+      "label": "Plugin Services",
+      "sublabel": "AI Tools · Link · RPA",
+      "pos": [850, 220],
+      "size": [190, 64],
+      "sources": [
+        { "path": "core/plugin/aitools/main.py", "label": "AI Tools 入口" },
+        { "path": "core/plugin/link/main.py", "label": "Link 入口" },
+        { "path": "core/plugin/rpa/main.py", "label": "RPA 入口" }
+      ]
+    },
+    {
+      "id": "external_ai",
+      "type": "external",
+      "label": "外部模型与执行器",
+      "sublabel": "LLM · iFLYTEK API · RPA",
+      "pos": [1090, 220],
+      "size": [190, 64]
+    },
+    {
+      "id": "tenant_service",
+      "type": "security",
+      "label": "Tenant Service",
+      "sublabel": "Go · 空间隔离 · 配额",
+      "pos": [400, 40],
+      "size": [180, 64],
+      "tag": "tenant context",
+      "sources": [
+        { "path": "core/tenant/main.go", "line": 9, "label": "Go 入口" },
+        { "path": "docs/PROJECT_MODULES.md", "label": "租户职责" }
+      ]
+    },
+    {
+      "id": "workflow_service",
+      "type": "backend",
+      "label": "Workflow Service",
+      "sublabel": "FastAPI · 编排与调试",
+      "pos": [450, 420],
+      "size": [180, 64],
+      "sources": [
+        { "path": "core/workflow/main.py", "line": 100, "label": "FastAPI 入口" },
+        { "path": "docs/PROJECT_MODULES.md", "label": "工作流职责" }
+      ]
+    },
+    {
+      "id": "knowledge_service",
+      "type": "backend",
+      "label": "Knowledge Service",
+      "sublabel": "FastAPI · RAG · 检索",
+      "pos": [700, 420],
+      "size": [180, 64],
+      "sources": [
+        { "path": "core/knowledge/main.py", "line": 44, "label": "FastAPI 入口" },
+        { "path": "docs/PROJECT_MODULES.md", "label": "知识服务职责" }
+      ]
+    },
+    {
+      "id": "state_storage",
+      "type": "database",
+      "label": "状态与对象存储",
+      "sublabel": "MySQL · PostgreSQL · Redis · MinIO",
+      "pos": [700, 610],
+      "size": [230, 64],
+      "sources": [
+        { "path": "docker/astronAgent/docker-compose.yaml", "label": "部署服务" },
+        { "path": "docs/PROJECT_MODULES.md", "label": "数据基础设施" }
+      ]
+    },
+    {
+      "id": "event_bus",
+      "type": "messagebus",
+      "label": "Kafka Event Bus",
+      "sublabel": "workflow · knowledge · agent events",
+      "pos": [450, 610],
+      "size": [210, 64],
+      "sources": [
+        { "path": "core/workflow/extensions/middleware/asynchronous/celery_app.py", "line": 29, "label": "Kafka broker" },
+        { "path": "docs/PROJECT_MODULES.md", "label": "事件主题" }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Astron Platform Services",
+      "wraps": ["console_ui", "console_api", "tenant_service", "agent_service", "workflow_service", "knowledge_service", "plugin_services"]
+    },
+    {
+      "kind": "region",
+      "label": "Data & Messaging",
+      "wraps": ["state_storage", "event_bus"]
+    }
+  ],
+  "connections": [
+    { "id": "users-ui", "from": "users", "to": "console_ui", "label": "HTTPS", "labelAt": [175, 304], "variant": "emphasis" },
+    { "id": "ui-api", "from": "console_ui", "to": "console_api", "label": "REST / SSE", "labelAt": [375, 304], "variant": "emphasis" },
+    { "id": "api-agent", "from": "console_api", "to": "agent_service", "label": "chat / agent API", "labelAt": [595, 304], "variant": "emphasis" },
+    { "id": "agent-plugins", "from": "agent_service", "to": "plugin_services", "label": "tool invocation", "labelAt": [825, 304], "variant": "emphasis" },
+    { "id": "plugins-external", "from": "plugin_services", "to": "external_ai", "label": "HTTP / gRPC", "labelAt": [1065, 304], "variant": "emphasis" },
+    { "id": "api-tenant", "from": "console_api", "to": "tenant_service", "label": "space / permission", "labelAt": [490, 150], "variant": "security", "fromSide": "top", "toSide": "bottom" },
+    { "id": "api-workflow", "from": "console_api", "to": "workflow_service", "label": "workflow API", "labelAt": [430, 355], "fromSide": "bottom", "toSide": "top" },
+    { "id": "agent-knowledge", "from": "agent_service", "to": "knowledge_service", "label": "RAG retrieval", "labelAt": [750, 355], "fromSide": "bottom", "toSide": "top" },
+    { "id": "workflow-knowledge", "from": "workflow_service", "to": "knowledge_service", "label": "knowledge node", "labelAt": [665, 506] },
+    { "id": "workflow-events", "from": "workflow_service", "to": "event_bus", "label": "workflow-events", "labelAt": [540, 560], "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "id": "knowledge-storage", "from": "knowledge_service", "to": "state_storage", "label": "documents / cache", "labelAt": [790, 560], "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "交互入口",
+      "items": [
+        "React Console 提供 Agent、Workflow、Knowledge 与实时对话界面",
+        "Spring Boot 管理 API 通过 Tenant Service 获取空间、组织与资源配额上下文"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "执行与扩展",
+      "items": [
+        "Agent Service 负责 Agent 生命周期、会话与工具调用",
+        "Workflow、Knowledge 与 Plugin 服务提供编排、RAG、AI Tools、Link 和 RPA 能力"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "公开仓库证据",
+      "items": [
+        "Repository snapshot: github.com/iflytek/astron-agent @ a77c92a9",
+        "Evidence: entrypoints, module guide, Docker Compose, Kafka configuration"
+      ]
+    }
+  ]
+}
