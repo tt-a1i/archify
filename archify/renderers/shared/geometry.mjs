@@ -1370,16 +1370,17 @@ export const arrowClassMap = {
   dashed: ['a-dashed', 'arrowhead-dashed']
 };
 
-// Label accent per edge variant. Workflow colors dashed (async trace) labels
-// like the trace store it points at; the other renderers use the bus color.
-export function variantAccent(variant, { dashed = 't-messagebus' } = {}) {
+// Relationship labels use the same theme token as their path. Keep this map
+// edge-specific: node-kind text colors only coincide with some path colors in
+// the classic preset and must not define the relationship's visual meaning.
+export function variantAccent(variant) {
   return variant === 'security'
-    ? 't-security'
+    ? 't-edge-security'
     : variant === 'emphasis'
-      ? 't-backend'
+      ? 't-edge-emphasis'
       : variant === 'dashed'
-        ? dashed
-        : 't-muted';
+        ? 't-edge-dashed'
+        : 't-edge-default';
 }
 
 export function formatRect(r) {

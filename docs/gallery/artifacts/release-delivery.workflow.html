@@ -3958,6 +3958,12 @@
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
+    /* Relationship labels share the exact color token used by their path. */
+    .t-edge-default  { fill: var(--arrow); }
+    .t-edge-emphasis { fill: var(--arrow-emphasis); }
+    .t-edge-security { fill: var(--security-stroke); }
+    .t-edge-dashed   { fill: var(--database-stroke); }
+
     /* Semantic Sigils are small authored role stamps, not icons from a brand
        pack and not viewer controls. Prefix selectors with svg so the canonical
        export's SVG-only stylesheet collector keeps them automatically. */
@@ -5052,19 +5058,19 @@
         <!-- Phase headers -->
         <line x1="42" y1="35" x2="266" y2="35" class="a-default" stroke-width="1.1"/>
         <rect x="42" y="27" width="224" height="16" rx="4" class="c-mask"/>
-        <text x="154" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">Change</text>
+        <text x="154" y="39" class="t-edge-default" font-size="8" font-weight="600" text-anchor="middle">Change</text>
         <line x1="254" y1="35" x2="476" y2="35" class="a-emphasis" stroke-width="1.1"/>
         <rect x="254" y="27" width="222" height="16" rx="4" class="c-mask"/>
-        <text x="365" y="39" class="t-backend" font-size="8" font-weight="600" text-anchor="middle">Build + verify</text>
+        <text x="365" y="39" class="t-edge-emphasis" font-size="8" font-weight="600" text-anchor="middle">Build + verify</text>
         <line x1="454" y1="35" x2="671" y2="35" class="a-dashed" stroke-width="1.1"/>
         <rect x="454" y="27" width="217" height="16" rx="4" class="c-mask"/>
-        <text x="562.5" y="39" class="t-messagebus" font-size="8" font-weight="600" text-anchor="middle">Promote + observe</text>
+        <text x="562.5" y="39" class="t-edge-dashed" font-size="8" font-weight="600" text-anchor="middle">Promote + observe</text>
 
         <!-- Workflow groups -->
         <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-0" x="250" y="214" width="230" height="58" rx="9" class="c-lane" stroke-width="1"/>
-        <text x="260" y="228" class="t-backend" font-size="7" font-weight="600">Blocking checks</text>
+        <text x="260" y="228" class="t-edge-emphasis" font-size="7" font-weight="600">Blocking checks</text>
         <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-1" x="380" y="710" width="295" height="58" rx="9" class="c-security-group" stroke-width="1"/>
-        <text x="390" y="724" class="t-security" font-size="7" font-weight="600">Recovery path</text>
+        <text x="390" y="724" class="t-edge-security" font-size="7" font-weight="600">Recovery path</text>
 
         <!-- Edge paths -->
         <path data-edge-from="commit" data-edge-to="pull_request" data-edge-key="0" data-composition-points="134,119;174,119" d="M 134 119 L 174 119" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.4" marker-end="url(#arrowhead)"/>
@@ -5211,7 +5217,7 @@
 
         <g data-detail="context" data-edge-from="pull_request" data-edge-to="build" data-edge-label="merge" data-edge-key="1">
           <rect x="243" y="146" width="34" height="14" rx="3" class="c-mask"/>
-          <text x="260" y="156" class="t-backend" font-size="8" text-anchor="middle">merge</text>
+          <text x="260" y="156" class="t-edge-emphasis" font-size="8" text-anchor="middle">merge</text>
         </g>
 
 
@@ -5219,16 +5225,16 @@
 
         <g data-detail="context" data-edge-from="verify_prod" data-edge-to="announce" data-edge-label="healthy" data-edge-key="6">
           <rect x="603.2" y="518" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="625" y="528" class="t-backend" font-size="8" text-anchor="middle">healthy</text>
+          <text x="625" y="528" class="t-edge-emphasis" font-size="8" text-anchor="middle">healthy</text>
         </g>
         <g data-detail="context" data-edge-from="checks" data-edge-to="failed" data-edge-label="red" data-edge-key="7">
           <rect x="350" y="456" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="365" y="466" class="t-security" font-size="8" text-anchor="middle">red</text>
+          <text x="365" y="466" class="t-edge-security" font-size="8" text-anchor="middle">red</text>
         </g>
 
         <g data-detail="context" data-edge-from="rollback" data-edge-to="deploy" data-edge-label="restore" data-edge-key="9">
           <rect x="404.2" y="595" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="426" y="605" class="t-database" font-size="8" text-anchor="middle">restore</text>
+          <text x="426" y="605" class="t-edge-dashed" font-size="8" text-anchor="middle">restore</text>
         </g>
 
         <!-- Legend -->

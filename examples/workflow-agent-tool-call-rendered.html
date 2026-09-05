@@ -3958,6 +3958,12 @@
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
+    /* Relationship labels share the exact color token used by their path. */
+    .t-edge-default  { fill: var(--arrow); }
+    .t-edge-emphasis { fill: var(--arrow-emphasis); }
+    .t-edge-security { fill: var(--security-stroke); }
+    .t-edge-dashed   { fill: var(--database-stroke); }
+
     /* Semantic Sigils are small authored role stamps, not icons from a brand
        pack and not viewer controls. Prefix selectors with svg so the canonical
        export's SVG-only stylesheet collector keeps them automatically. */
@@ -5046,23 +5052,23 @@
         <!-- Phase headers -->
         <line x1="68" y1="35" x2="320" y2="35" class="a-default" stroke-width="1.1"/>
         <rect x="68" y="27" width="252" height="16" rx="4" class="c-mask"/>
-        <text x="194" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">Intake</text>
+        <text x="194" y="39" class="t-edge-default" font-size="8" font-weight="600" text-anchor="middle">Intake</text>
         <line x1="445.20000000000005" y1="35" x2="697.2" y2="35" class="a-emphasis" stroke-width="1.1"/>
         <rect x="445.20000000000005" y="27" width="252.00000000000006" height="16" rx="4" class="c-mask"/>
-        <text x="571.2" y="39" class="t-backend" font-size="8" font-weight="600" text-anchor="middle">Plan + route</text>
+        <text x="571.2" y="39" class="t-edge-emphasis" font-size="8" font-weight="600" text-anchor="middle">Plan + route</text>
         <line x1="784" y1="35" x2="1036" y2="35" class="a-dashed" stroke-width="1.1"/>
         <rect x="784" y="27" width="252" height="16" rx="4" class="c-mask"/>
-        <text x="910" y="39" class="t-messagebus" font-size="8" font-weight="600" text-anchor="middle">Execute + report</text>
+        <text x="910" y="39" class="t-edge-dashed" font-size="8" font-weight="600" text-anchor="middle">Execute + report</text>
 
         <!-- Workflow groups -->
         <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-0" x="421.2" y="216" width="300.00000000000006" height="72" rx="9" class="c-lane" stroke-width="1"/>
-        <text x="431.2" y="214" class="t-backend" font-size="7" font-weight="600">Planning loop</text>
+        <text x="431.2" y="214" class="t-edge-emphasis" font-size="7" font-weight="600">Planning loop</text>
         <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-1" x="581.2" y="350" width="478.79999999999995" height="72" rx="9" class="c-security-group" stroke-width="1"/>
-        <text x="591.2" y="348" class="t-security" font-size="7" font-weight="600">Human or policy stop</text>
+        <text x="591.2" y="348" class="t-edge-security" font-size="7" font-weight="600">Human or policy stop</text>
         <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-2" x="204" y="484" width="357.20000000000005" height="72" rx="9" class="c-lane" stroke-width="1"/>
-        <text x="214" y="482" class="t-messagebus" font-size="7" font-weight="600">Evidence path</text>
+        <text x="214" y="482" class="t-edge-dashed" font-size="7" font-weight="600">Evidence path</text>
         <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-3" x="760" y="484" width="300" height="72" rx="9" class="c-lane" stroke-width="1"/>
-        <text x="770" y="482" class="t-messagebus" font-size="7" font-weight="600">Tool work</text>
+        <text x="770" y="482" class="t-edge-dashed" font-size="7" font-weight="600">Tool work</text>
 
         <!-- Edge paths -->
         <path data-edge-from="router" data-edge-to="approval" data-edge-label="needs approval?" data-edge-key="0" data-edge-id="approval-check" data-composition-points="651.2,279;651.2,302;569.2,302;569.2,387;585.2,387" d="M 651.2 279 L 651.2 302 L 569.2 302 L 569.2 387 L 585.2 387" class="a-security" data-animate="edge" style="--step:3" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
@@ -5230,29 +5236,29 @@
         <!-- Edge labels -->
         <g data-detail="context" data-edge-from="router" data-edge-to="approval" data-edge-label="needs approval?" data-edge-key="0" data-edge-id="approval-check">
           <rect x="569.2" y="282" width="82" height="14" rx="3" class="c-mask"/>
-          <text x="610.2" y="292" class="t-security" font-size="8" text-anchor="middle">needs approval?</text>
+          <text x="610.2" y="292" class="t-edge-security" font-size="8" text-anchor="middle">needs approval?</text>
         </g>
         <g data-detail="context" data-edge-from="approval" data-edge-to="blocked" data-edge-label="denied" data-edge-key="1" data-edge-id="approval-denied">
           <rect x="721.2" y="422" width="38.8" height="14" rx="3" class="c-mask"/>
-          <text x="740.6" y="432" class="t-security" font-size="8" text-anchor="middle">denied</text>
+          <text x="740.6" y="432" class="t-edge-security" font-size="8" text-anchor="middle">denied</text>
         </g>
 
 
         <g data-detail="context" data-edge-from="chat" data-edge-to="planner" data-edge-label="plan" data-edge-key="4" data-edge-id="plan-request">
           <rect x="334.6" y="233" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="349.6" y="243" class="t-backend" font-size="8" text-anchor="middle">plan</text>
+          <text x="349.6" y="243" class="t-edge-emphasis" font-size="8" text-anchor="middle">plan</text>
         </g>
 
         <g data-detail="context" data-edge-from="external" data-edge-to="trace" data-edge-label="record result" data-edge-key="6" data-edge-id="record-result">
           <rect x="704.4" y="559" width="72.4" height="14" rx="3" class="c-mask"/>
-          <text x="740.6" y="569" class="t-database" font-size="8" text-anchor="middle">record result</text>
+          <text x="740.6" y="569" class="t-edge-dashed" font-size="8" text-anchor="middle">record result</text>
         </g>
 
 
 
         <g data-detail="context" data-edge-from="store" data-edge-to="trace" data-edge-label="trace + memory" data-edge-key="10" data-edge-id="write-trace-memory">
           <rect x="344" y="501" width="77.2" height="14" rx="3" class="c-mask"/>
-          <text x="382.6" y="511" class="t-database" font-size="8" text-anchor="middle">trace + memory</text>
+          <text x="382.6" y="511" class="t-edge-dashed" font-size="8" text-anchor="middle">trace + memory</text>
         </g>
 
         <!-- Legend -->

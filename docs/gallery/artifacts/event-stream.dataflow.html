@@ -3958,6 +3958,12 @@
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
+    /* Relationship labels share the exact color token used by their path. */
+    .t-edge-default  { fill: var(--arrow); }
+    .t-edge-emphasis { fill: var(--arrow-emphasis); }
+    .t-edge-security { fill: var(--security-stroke); }
+    .t-edge-dashed   { fill: var(--database-stroke); }
+
     /* Semantic Sigils are small authored role stamps, not icons from a brand
        pack and not viewer controls. Prefix selectors with svg so the canonical
        export's SVG-only stylesheet collector keeps them automatically. */
@@ -5223,62 +5229,62 @@
         <!-- Flow labels -->
         <g data-detail="context" data-edge-from="checkout" data-edge-to="orders" data-edge-label="OrderPlaced" data-edge-key="0">
           <rect x="174.55" y="136" width="65.9" height="27" rx="4" class="c-mask"/>
-          <text x="207.5" y="147" class="t-backend" font-size="8" text-anchor="middle">OrderPlaced</text>
+          <text x="207.5" y="147" class="t-edge-emphasis" font-size="8" text-anchor="middle">OrderPlaced</text>
         <text data-detail="fine" x="207.5" y="158" class="t-dim" font-size="7" text-anchor="middle">schema v1</text>
         </g>
         <g data-detail="context" data-edge-from="billing" data-edge-to="payments" data-edge-label="PaymentCaptured" data-edge-key="1">
           <rect x="164.75" y="364" width="85.5" height="27" rx="4" class="c-mask"/>
-          <text x="207.5" y="375" class="t-backend" font-size="8" text-anchor="middle">PaymentCaptured</text>
+          <text x="207.5" y="375" class="t-edge-emphasis" font-size="8" text-anchor="middle">PaymentCaptured</text>
         <text data-detail="fine" x="207.5" y="386" class="t-dim" font-size="7" text-anchor="middle">schema v2</text>
         </g>
         <g data-detail="context" data-edge-from="orders" data-edge-to="validate" data-edge-label="ordered orders" data-edge-key="2">
           <rect x="382.2" y="136" width="80.6" height="27" rx="4" class="c-mask"/>
-          <text x="422.5" y="147" class="t-backend" font-size="8" text-anchor="middle">ordered orders</text>
+          <text x="422.5" y="147" class="t-edge-emphasis" font-size="8" text-anchor="middle">ordered orders</text>
         <text data-detail="fine" x="422.5" y="158" class="t-dim" font-size="7" text-anchor="middle">consumer group</text>
         </g>
         <g data-detail="context" data-edge-from="payments" data-edge-to="enrich" data-edge-label="payment facts" data-edge-key="3">
           <rect x="384.65" y="364" width="75.7" height="27" rx="4" class="c-mask"/>
-          <text x="422.5" y="375" class="t-backend" font-size="8" text-anchor="middle">payment facts</text>
+          <text x="422.5" y="375" class="t-edge-emphasis" font-size="8" text-anchor="middle">payment facts</text>
         <text data-detail="fine" x="422.5" y="386" class="t-dim" font-size="7" text-anchor="middle">at-least-once</text>
         </g>
         <g data-detail="context" data-edge-from="validate" data-edge-to="state" data-edge-label="valid order" data-edge-key="4">
           <rect x="597.05" y="193" width="65.9" height="27" rx="4" class="c-mask"/>
-          <text x="630" y="204" class="t-backend" font-size="8" text-anchor="middle">valid order</text>
+          <text x="630" y="204" class="t-edge-emphasis" font-size="8" text-anchor="middle">valid order</text>
         <text data-detail="fine" x="630" y="215" class="t-dim" font-size="7" text-anchor="middle">idempotent</text>
         </g>
         <g data-detail="context" data-edge-from="enrich" data-edge-to="state" data-edge-label="enriched payment" data-edge-key="5">
           <rect x="584.8" y="307" width="90.4" height="27" rx="4" class="c-mask"/>
-          <text x="630" y="318" class="t-muted" font-size="8" text-anchor="middle">enriched payment</text>
+          <text x="630" y="318" class="t-edge-default" font-size="8" text-anchor="middle">enriched payment</text>
         <text data-detail="fine" x="630" y="329" class="t-dim" font-size="7" text-anchor="middle">idempotent</text>
         </g>
         <g data-detail="context" data-edge-from="state" data-edge-to="fulfillment" data-edge-label="ready orders" data-edge-key="6">
           <rect x="809.6" y="193" width="70.8" height="27" rx="4" class="c-mask"/>
-          <text x="845" y="204" class="t-backend" font-size="8" text-anchor="middle">ready orders</text>
+          <text x="845" y="204" class="t-edge-emphasis" font-size="8" text-anchor="middle">ready orders</text>
         <text data-detail="fine" x="845" y="215" class="t-dim" font-size="7" text-anchor="middle">read model</text>
         </g>
         <g data-detail="context" data-edge-from="state" data-edge-to="analytics" data-edge-label="order facts" data-edge-key="7">
           <rect x="812.05" y="307" width="65.9" height="27" rx="4" class="c-mask"/>
-          <text x="845" y="318" class="t-muted" font-size="8" text-anchor="middle">order facts</text>
+          <text x="845" y="318" class="t-edge-default" font-size="8" text-anchor="middle">order facts</text>
         <text data-detail="fine" x="845" y="329" class="t-dim" font-size="7" text-anchor="middle">non-PII</text>
         </g>
         <g data-detail="context" data-edge-from="validate" data-edge-to="dlq" data-edge-label="invalid event" data-edge-key="8">
           <rect x="262.15" y="539" width="75.7" height="27" rx="4" class="c-mask"/>
-          <text x="300" y="550" class="t-security" font-size="8" text-anchor="middle">invalid event</text>
+          <text x="300" y="550" class="t-edge-security" font-size="8" text-anchor="middle">invalid event</text>
         <text data-detail="fine" x="300" y="561" class="t-dim" font-size="7" text-anchor="middle">dead letter</text>
         </g>
         <g data-detail="context" data-edge-from="enrich" data-edge-to="dlq" data-edge-label="poison event" data-edge-key="9">
           <rect x="602.1" y="677" width="70.8" height="27" rx="4" class="c-mask"/>
-          <text x="637.5" y="688" class="t-security" font-size="8" text-anchor="middle">poison event</text>
+          <text x="637.5" y="688" class="t-edge-security" font-size="8" text-anchor="middle">poison event</text>
         <text data-detail="fine" x="637.5" y="699" class="t-dim" font-size="7" text-anchor="middle">dead letter</text>
         </g>
         <g data-detail="context" data-edge-from="dlq" data-edge-to="ops" data-edge-label="failure sample" data-edge-key="10">
           <rect x="804.7" y="526" width="80.6" height="27" rx="4" class="c-mask"/>
-          <text x="845" y="537" class="t-security" font-size="8" text-anchor="middle">failure sample</text>
+          <text x="845" y="537" class="t-edge-security" font-size="8" text-anchor="middle">failure sample</text>
         <text data-detail="fine" x="845" y="548" class="t-dim" font-size="7" text-anchor="middle">restricted</text>
         </g>
         <g data-detail="context" data-edge-from="dlq" data-edge-to="replay" data-edge-label="approved replay" data-edge-key="11">
           <rect x="809.75" y="622" width="85.5" height="27" rx="4" class="c-mask"/>
-          <text x="852.5" y="633" class="t-messagebus" font-size="8" text-anchor="middle">approved replay</text>
+          <text x="852.5" y="633" class="t-edge-dashed" font-size="8" text-anchor="middle">approved replay</text>
         <text data-detail="fine" x="852.5" y="644" class="t-dim" font-size="7" text-anchor="middle">audited batch</text>
         </g>
 

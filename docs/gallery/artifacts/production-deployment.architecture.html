@@ -3958,6 +3958,12 @@
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
+    /* Relationship labels share the exact color token used by their path. */
+    .t-edge-default  { fill: var(--arrow); }
+    .t-edge-emphasis { fill: var(--arrow-emphasis); }
+    .t-edge-security { fill: var(--security-stroke); }
+    .t-edge-dashed   { fill: var(--database-stroke); }
+
     /* Semantic Sigils are small authored role stamps, not icons from a brand
        pack and not viewer controls. Prefix selectors with svg so the canonical
        export's SVG-only stylesheet collector keeps them automatically. */
@@ -5208,45 +5214,45 @@
         <!-- Connection labels -->
         <g data-detail="context" data-edge-from="clients" data-edge-to="edge" data-edge-label="HTTPS" data-edge-key="0">
           <rect x="178" y="310" width="34" height="14" rx="3" class="c-mask"/>
-          <text x="195" y="320" class="t-backend" font-size="8" text-anchor="middle">HTTPS</text>
+          <text x="195" y="320" class="t-edge-emphasis" font-size="8" text-anchor="middle">HTTPS</text>
         </g>
         <g data-detail="context" data-edge-from="edge" data-edge-to="gateway" data-edge-label="mTLS" data-edge-key="1">
           <rect x="378" y="310" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="393" y="320" class="t-security" font-size="8" text-anchor="middle">mTLS</text>
+          <text x="393" y="320" class="t-edge-security" font-size="8" text-anchor="middle">mTLS</text>
         </g>
         <g data-detail="context" data-edge-from="gateway" data-edge-to="api_a" data-edge-label="VPC route" data-edge-key="2">
           <rect x="567.4" y="265" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-          <text x="594" y="275" class="t-backend" font-size="8" text-anchor="middle">VPC route</text>
+          <text x="594" y="275" class="t-edge-emphasis" font-size="8" text-anchor="middle">VPC route</text>
         </g>
         <g data-detail="context" data-edge-from="gateway" data-edge-to="api_b" data-edge-label="VPC route" data-edge-key="3">
           <rect x="567.4" y="375" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-          <text x="594" y="385" class="t-backend" font-size="8" text-anchor="middle">VPC route</text>
+          <text x="594" y="385" class="t-edge-emphasis" font-size="8" text-anchor="middle">VPC route</text>
         </g>
         <g data-detail="context" data-edge-from="api_a" data-edge-to="redis" data-edge-label="cache" data-edge-key="4">
           <rect x="786" y="206" width="34" height="14" rx="3" class="c-mask"/>
-          <text x="803" y="216" class="t-muted" font-size="8" text-anchor="middle">cache</text>
+          <text x="803" y="216" class="t-edge-default" font-size="8" text-anchor="middle">cache</text>
         </g>
         <g data-detail="context" data-edge-from="api_b" data-edge-to="postgres" data-edge-label="SQL" data-edge-key="5">
           <rect x="788" y="416" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="803" y="426" class="t-muted" font-size="8" text-anchor="middle">SQL</text>
+          <text x="803" y="426" class="t-edge-default" font-size="8" text-anchor="middle">SQL</text>
         </g>
         <g data-detail="context" data-edge-from="api_a" data-edge-to="events" data-edge-label="publish" data-edge-key="6">
           <rect x="878.7" y="150" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="900.5" y="160" class="t-messagebus" font-size="8" text-anchor="middle">publish</text>
+          <text x="900.5" y="160" class="t-edge-dashed" font-size="8" text-anchor="middle">publish</text>
         </g>
 
 
         <g data-detail="context" data-edge-from="postgres" data-edge-to="replica" data-edge-label="cross-region WAL" data-edge-key="9">
           <rect x="959.6" y="519" width="86.8" height="14" rx="3" class="c-mask"/>
-          <text x="1003" y="529" class="t-security" font-size="8" text-anchor="middle">cross-region WAL</text>
+          <text x="1003" y="529" class="t-edge-security" font-size="8" text-anchor="middle">cross-region WAL</text>
         </g>
         <g data-detail="context" data-edge-from="worker" data-edge-to="audit" data-edge-label="evidence" data-edge-key="10">
           <rect x="1228.8" y="398" width="48.4" height="14" rx="3" class="c-mask"/>
-          <text x="1253" y="408" class="t-messagebus" font-size="8" text-anchor="middle">evidence</text>
+          <text x="1253" y="408" class="t-edge-dashed" font-size="8" text-anchor="middle">evidence</text>
         </g>
         <g data-detail="context" data-edge-from="worker" data-edge-to="observability" data-edge-label="OTLP" data-edge-key="11">
           <rect x="1238" y="203.5" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="1253" y="213.5" class="t-messagebus" font-size="8" text-anchor="middle">OTLP</text>
+          <text x="1253" y="213.5" class="t-edge-dashed" font-size="8" text-anchor="middle">OTLP</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->

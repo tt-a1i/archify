@@ -3958,6 +3958,12 @@
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
+    /* Relationship labels share the exact color token used by their path. */
+    .t-edge-default  { fill: var(--arrow); }
+    .t-edge-emphasis { fill: var(--arrow-emphasis); }
+    .t-edge-security { fill: var(--security-stroke); }
+    .t-edge-dashed   { fill: var(--database-stroke); }
+
     /* Semantic Sigils are small authored role stamps, not icons from a brand
        pack and not viewer controls. Prefix selectors with svg so the canonical
        export's SVG-only stylesheet collector keeps them automatically. */
@@ -5168,29 +5174,29 @@
         <!-- Connection labels -->
         <g data-detail="context" data-edge-from="users" data-edge-to="cdn" data-edge-label="HTTPS" data-edge-key="0" data-edge-id="users-to-cdn">
           <rect x="188" y="310" width="34" height="14" rx="3" class="c-mask"/>
-          <text x="205" y="320" class="t-backend" font-size="8" text-anchor="middle">HTTPS</text>
+          <text x="205" y="320" class="t-edge-emphasis" font-size="8" text-anchor="middle">HTTPS</text>
         </g>
         <g data-detail="context" data-edge-from="auth" data-edge-to="api" data-edge-label="verify JWT" data-edge-key="1" data-edge-id="jwt-verification">
           <rect x="591" y="174" width="58" height="14" rx="3" class="c-mask"/>
-          <text x="620" y="184" class="t-security" font-size="8" text-anchor="middle">verify JWT</text>
+          <text x="620" y="184" class="t-edge-security" font-size="8" text-anchor="middle">verify JWT</text>
         </g>
 
         <g data-detail="context" data-edge-from="cdn" data-edge-to="s3" data-edge-label="static" data-edge-key="3" data-edge-id="static-assets">
           <rect x="295.6" y="398" width="38.8" height="14" rx="3" class="c-mask"/>
-          <text x="315" y="408" class="t-messagebus" font-size="8" text-anchor="middle">static</text>
+          <text x="315" y="408" class="t-edge-dashed" font-size="8" text-anchor="middle">static</text>
         </g>
 
         <g data-detail="context" data-edge-from="api" data-edge-to="cache" data-edge-label="read-through" data-edge-key="5" data-edge-id="cache-read-through">
           <rect x="701.2" y="212" width="67.6" height="14" rx="3" class="c-mask"/>
-          <text x="735" y="222" class="t-muted" font-size="8" text-anchor="middle">read-through</text>
+          <text x="735" y="222" class="t-edge-default" font-size="8" text-anchor="middle">read-through</text>
         </g>
         <g data-detail="context" data-edge-from="api" data-edge-to="db" data-edge-label="SQL" data-edge-key="6" data-edge-id="api-sql">
           <rect x="825" y="310" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="840" y="320" class="t-muted" font-size="8" text-anchor="middle">SQL</text>
+          <text x="840" y="320" class="t-edge-default" font-size="8" text-anchor="middle">SQL</text>
         </g>
         <g data-detail="context" data-edge-from="api" data-edge-to="queue" data-edge-label="enqueue" data-edge-key="7" data-edge-id="enqueue-job">
           <rect x="713.2" y="398" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="735" y="408" class="t-messagebus" font-size="8" text-anchor="middle">enqueue</text>
+          <text x="735" y="408" class="t-edge-dashed" font-size="8" text-anchor="middle">enqueue</text>
         </g>
 
 
