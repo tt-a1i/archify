@@ -1849,6 +1849,99 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .semantic-passport-approval {
+      margin-top: 0.52rem;
+      padding-top: 0.45rem;
+      border-top: 1px solid color-mix(in srgb, var(--security-stroke) 38%, var(--toolbar-border));
+    }
+    .semantic-passport-approval[hidden] { display: none; }
+    .semantic-passport-approval summary {
+      display: flex;
+      align-items: center;
+      gap: 0.38rem;
+      min-height: 2rem;
+      padding: 0.18rem 0;
+      color: var(--security-stroke);
+      cursor: pointer;
+      list-style: none;
+      font-size: 0.625rem;
+      font-weight: 750;
+      touch-action: manipulation;
+    }
+    .semantic-passport-approval summary::-webkit-details-marker { display: none; }
+    .semantic-passport-approval summary:focus-visible {
+      border-radius: 0.28rem;
+      outline: 2px solid color-mix(in srgb, var(--security-stroke) 76%, var(--text));
+      outline-offset: 2px;
+    }
+    .semantic-passport-approval summary::before {
+      content: '+';
+      display: grid;
+      width: 1rem;
+      height: 1rem;
+      flex: none;
+      place-items: center;
+      border: 1px solid color-mix(in srgb, var(--security-stroke) 58%, var(--toolbar-border));
+      border-radius: 50%;
+      font-size: 0.7rem;
+      line-height: 1;
+    }
+    .semantic-passport-approval[open] summary::before { content: '\2212'; }
+    .semantic-passport-approval summary small {
+      margin-left: auto;
+      color: var(--text-faint);
+      font-size: 0.525rem;
+      font-weight: 500;
+      line-height: 1.35;
+      text-align: right;
+    }
+    .semantic-passport-approval-body {
+      max-height: min(14rem, 34vh);
+      margin-top: 0.42rem;
+      padding: 0.48rem 0.25rem 0.1rem 1.38rem;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--security-stroke) transparent;
+    }
+    .semantic-passport-approval dl {
+      display: grid;
+      grid-template-columns: 5.25rem minmax(0, 1fr);
+      gap: 0.34rem 0.5rem;
+      margin: 0;
+    }
+    .semantic-passport-approval dt {
+      color: var(--text-faint);
+      font-size: 0.5625rem;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+    .semantic-passport-approval dd {
+      min-width: 0;
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.625rem;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+    .semantic-passport-approval ul {
+      display: grid;
+      gap: 0.16rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .semantic-passport-approval li::before {
+      content: '\2022';
+      margin-right: 0.35rem;
+      color: var(--security-stroke);
+    }
+    .semantic-passport-approval-scope {
+      display: block;
+      margin-top: 0.48rem;
+      color: var(--text-faint);
+      font-size: 0.5625rem;
+      line-height: 1.45;
+    }
     .relationship-lens-summary {
       display: block;
       margin-top: 0.12rem;
@@ -3424,6 +3517,17 @@
       font-size: 0.54rem;
       font-weight: 600;
     }
+    .export-detail-scope {
+      margin: 0 0.55rem 0.55rem;
+      padding: 0.42rem 0.5rem;
+      border: 1px solid color-mix(in srgb, var(--security-stroke) 42%, var(--toolbar-border));
+      border-radius: 0.35rem;
+      background: color-mix(in srgb, var(--security-fill) 34%, transparent);
+      color: var(--text-muted);
+      font-size: 0.625rem;
+      line-height: 1.45;
+    }
+    .export-detail-scope[hidden] { display: none; }
     .export-menu-section {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
@@ -3683,6 +3787,7 @@
         width: calc(100% - 1rem);
         max-width: none;
       }
+      .semantic-passport-approval summary { min-height: 2.75rem; }
       .relationship-lens-list { max-height: min(12rem, 38vh); }
       .relationship-lens-actions #btn-focus-relations { display: block; color: var(--database-stroke); }
       .focus-chip:not([data-relations-expanded="true"]) .relationship-lens-head { border-bottom-color: transparent; }
@@ -4924,6 +5029,7 @@
           <div><strong>{{i18n:viewer.export.diagram}}</strong><span>{{i18n:viewer.export.subtitle}}</span></div>
           <kbd>E</kbd>
         </div>
+        <p id="export-detail-scope" class="export-detail-scope" hidden role="note">{{i18n:viewer.passport.approval.exportScope}}</p>
         <div class="export-menu-section" role="group" aria-label="{{i18n:viewer.export.share}}">
           <span class="export-menu-heading" aria-hidden="true">{{i18n:viewer.export.share}}</span>
           <button data-format="share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>{{i18n:viewer.export.shareCard}}</strong><small class="hint">1200&times;630 PNG</small></span></button>
@@ -5239,6 +5345,25 @@
               <span id="focus-brand" data-passport="brand" hidden></span>
               <code id="focus-id" data-passport="id"></code>
             </div>
+            <details class="semantic-passport-approval" id="focus-approval" hidden>
+              <summary>
+                <span>{{i18n:viewer.passport.approval.title}}</span>
+                <small id="focus-approval-counts"></small>
+              </summary>
+              <div class="semantic-passport-approval-body">
+                <dl>
+                  <dt>{{i18n:viewer.passport.approval.initiator}}</dt>
+                  <dd id="focus-approval-initiator"></dd>
+                  <dt>{{i18n:viewer.passport.approval.approvers}}</dt>
+                  <dd><ul id="focus-approval-approvers"></ul></dd>
+                  <dt>{{i18n:viewer.passport.approval.deliverables}}</dt>
+                  <dd><ul id="focus-approval-deliverables"></ul></dd>
+                  <dt>{{i18n:viewer.passport.approval.rework}}</dt>
+                  <dd id="focus-approval-rework"></dd>
+                </dl>
+                <small class="semantic-passport-approval-scope">{{i18n:viewer.passport.approval.exportScope}}</small>
+              </div>
+            </details>
             <div class="semantic-passport-evidence" id="focus-evidence" hidden aria-label="{{i18n:viewer.passport.evidence}}">
               <div class="semantic-passport-evidence-head">
                 <span class="semantic-passport-evidence-status">{{i18n:viewer.passport.verified}}</span>
@@ -5637,6 +5762,12 @@
       var SHARE_CARD_HEIGHT = 630;
       var SHARE_CARD_PADDING = 36;
       var SHARE_CARD_HEADER = 112;
+      var exportDetailScope = document.getElementById('export-detail-scope');
+      var authoredSvg = document.querySelector('.diagram-container svg');
+      if (exportDetailScope && authoredSvg
+        && authoredSvg.getAttribute('data-static-export-scope') === 'overview') {
+        exportDetailScope.hidden = false;
+      }
 
       function exportError(key, values) {
         var error = new Error(viewerText(key, values));
@@ -7424,6 +7555,12 @@
       var context = document.getElementById('focus-context');
       var tag = document.getElementById('focus-tag');
       var semanticId = document.getElementById('focus-id');
+      var approval = document.getElementById('focus-approval');
+      var approvalCounts = document.getElementById('focus-approval-counts');
+      var approvalInitiator = document.getElementById('focus-approval-initiator');
+      var approvalApprovers = document.getElementById('focus-approval-approvers');
+      var approvalDeliverables = document.getElementById('focus-approval-deliverables');
+      var approvalRework = document.getElementById('focus-approval-rework');
       var evidence = document.getElementById('focus-evidence');
       var repositoryLink = document.getElementById('focus-repository');
       var evidenceLinks = document.getElementById('focus-evidence-links');
@@ -7778,6 +7915,47 @@
         });
         evidence.hidden = false;
       }
+      function clearApprovalDetails() {
+        approval.open = false;
+        approval.hidden = true;
+        approvalCounts.textContent = '';
+        approvalInitiator.textContent = '';
+        approvalApprovers.textContent = '';
+        approvalDeliverables.textContent = '';
+        approvalRework.textContent = '';
+      }
+      function renderApprovalList(container, values) {
+        container.textContent = '';
+        values.forEach(function (value) {
+          var item = document.createElement('li');
+          item.textContent = value;
+          container.appendChild(item);
+        });
+      }
+      function renderApprovalDetails(node) {
+        var data = null;
+        try { data = JSON.parse(node.getAttribute('data-node-approval') || 'null'); }
+        catch (_) { data = null; }
+        if (!data || typeof data.initiator !== 'string'
+          || !Array.isArray(data.approvers) || !Array.isArray(data.deliverables)
+          || typeof data.reworkLabel !== 'string') {
+          clearApprovalDetails();
+          return;
+        }
+        approvalInitiator.textContent = data.initiator;
+        renderApprovalList(approvalApprovers, data.approvers);
+        renderApprovalList(approvalDeliverables, data.deliverables);
+        approvalRework.textContent = data.reworkLabel;
+        approvalCounts.textContent = viewerCount(
+          'viewer.passport.approval.approverCount',
+          data.approvers.length
+        ) + ' \u00b7 ' + viewerCount(
+          'viewer.passport.approval.deliverableCount',
+          data.deliverables.length
+        );
+        approval.open = false;
+        approval.hidden = false;
+      }
       function renderPassport(id, node) {
         setPassportValue(detail, node.getAttribute('data-node-sublabel'));
         setPassportValue(kind, viewerKindLabel(node.getAttribute('data-node-kind') || 'node'));
@@ -7786,6 +7964,7 @@
         setPassportValue(document.getElementById('focus-brand'), node.getAttribute('data-node-brand'));
         semanticId.textContent = id;
         semanticId.hidden = false;
+        renderApprovalDetails(node);
         renderSourceEvidence(id);
       }
       function relationshipsFor(id, byId) {
@@ -8538,6 +8717,7 @@
         tag.hidden = true;
         semanticId.textContent = '';
         semanticId.hidden = true;
+        clearApprovalDetails();
         evidence.hidden = true;
         evidenceLinks.textContent = '';
         repositoryLink.removeAttribute('href');
@@ -8701,6 +8881,7 @@
       });
       clearBtn.addEventListener('click', function () { clear({ restoreFocus: true }); });
       copyBtn.addEventListener('click', copyFocusLink);
+      approval.addEventListener('toggle', requestLensPlacement);
       upstreamBtn.addEventListener('click', function () { applyReachability('upstream'); });
       downstreamBtn.addEventListener('click', function () { applyReachability('downstream'); });
       relationsBtn.addEventListener('click', function () {
@@ -12594,6 +12775,7 @@
         var context = node.getAttribute('data-node-context') || '';
         var tag = node.getAttribute('data-node-tag') || '';
         var brand = node.getAttribute('data-node-brand') || '';
+        var approvalDetails = node.getAttribute('data-node-approval') || '';
         var type = semanticType(node);
         var sources = Archify.sourceEvidence.node(id);
         var sourceSearch = sources.map(function (source) {
@@ -12609,7 +12791,7 @@
           brand: brand,
           sources: sources,
           links: connectionsFor(id),
-          search: (id + ' ' + label + ' ' + type + ' ' + sublabel + ' ' + context + ' ' + tag + ' ' + sourceSearch + ' ' + text).toLowerCase() + ' ' + brand.toLowerCase(),
+          search: (id + ' ' + label + ' ' + type + ' ' + sublabel + ' ' + context + ' ' + tag + ' ' + sourceSearch + ' ' + text + ' ' + approvalDetails).toLowerCase() + ' ' + brand.toLowerCase(),
           node: node
         };
       });
