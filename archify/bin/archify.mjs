@@ -473,6 +473,7 @@ async function commandCompare(args) {
       defaultOutput: compareReceiptPath(outputPath),
       inputPaths: [basePath, headPath],
       otherOutputPaths: [outputPath],
+      requiredExtension: '.json',
     }));
   } catch (error) {
     const outputDiagnostic = error.archifyDiagnostics?.[0];
@@ -646,6 +647,7 @@ async function commandCompare(args) {
         defaultOutput: compareReceiptPath(currentOutput),
         inputPaths: [basePath, headPath],
         otherOutputPaths: [currentOutput],
+        requiredExtension: '.json',
       });
     } catch (error) {
       const outputDiagnostic = error.archifyDiagnostics?.[0];

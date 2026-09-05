@@ -247,6 +247,11 @@ export class OutputPathError extends Error {
   }
 }
 
+function normalizeRequiredExtension(extension) {
+  const value = String(extension || '.html').trim().toLowerCase();
+  return value.startsWith('.') ? value : `.${value}`;
+}
+
 export function resolveOutputPath({
   requestedOutput,
   authoredOutput,
@@ -255,9 +260,20 @@ export function resolveOutputPath({
   inputDescription = 'an input',
   otherOutputPaths = [],
   cwd = process.cwd(),
+  // Artifact outputs default to .html. Compare receipts pass '.json'.
+  requiredExtension = '.html',
 }) {
   const rawOutput = requestedOutput || authoredOutput || defaultOutput;
   const source = requestedOutput ? 'cli' : (authoredOutput ? 'meta' : 'default');
+  const extension = source === 'meta' ? '.html' : normalizeRequiredExtension(requiredExtension);
+  const label = source === 'meta' ? 'meta.output' : 'CLI output';
+  const relativeFix = source === 'meta'
+    ? `set meta.output to a relative ${extension} path inside the current working directory`
+    : `pass a relative ${extension} path inside the current working directory`;
+  const sandboxSource = source === 'meta' || source === 'cli';
+
+  // meta.output must stay authored-relative. CLI absolute paths are still
+  // resolved, then rejected by the shared cwd containment check below.
   if (
     source === 'meta'
     && (path.isAbsolute(rawOutput) || path.posix.isAbsolute(rawOutput) || path.win32.isAbsolute(rawOutput))
@@ -269,29 +285,35 @@ export function resolveOutputPath({
       supportedFixes: ['set meta.output to a relative .html path inside the current working directory'],
     });
   }
-  if (source === 'meta' && path.extname(rawOutput).toLowerCase() !== '.html') {
-    throw new OutputPathError('meta.output must target an .html file.', {
-      code: 'output/meta-extension',
-      message: 'meta.output must target an .html file.',
-      subject: { output: rawOutput },
-      supportedFixes: ['change meta.output to a path ending in .html'],
+  if (sandboxSource && path.extname(rawOutput).toLowerCase() !== extension) {
+    throw new OutputPathError(`${label} must target a ${extension} file.`, {
+      code: source === 'meta' ? 'output/meta-extension' : 'output/cli-extension',
+      message: `${label} must target a ${extension} file.`,
+      subject: { output: rawOutput, requiredExtension: extension },
+      supportedFixes: [
+        source === 'meta'
+          ? 'change meta.output to a path ending in .html'
+          : `change the CLI output path to end in ${extension}`,
+      ],
     });
   }
   const outputPath = path.resolve(cwd, rawOutput);
-  if (source === 'meta' && path.extname(canonicalFuturePath(outputPath)).toLowerCase() !== '.html') {
-    throw new OutputPathError('meta.output must resolve to an .html file.', {
-      code: 'output/meta-resolved-extension',
-      message: 'meta.output must resolve to an .html file after symbolic links are followed.',
-      subject: { output: rawOutput },
-      supportedFixes: ['remove the symbolic-link alias or point it to an .html target inside the current working directory'],
+  if (sandboxSource && path.extname(canonicalFuturePath(outputPath)).toLowerCase() !== extension) {
+    throw new OutputPathError(`${label} must resolve to a ${extension} file.`, {
+      code: source === 'meta' ? 'output/meta-resolved-extension' : 'output/cli-resolved-extension',
+      message: `${label} must resolve to a ${extension} file after symbolic links are followed.`,
+      subject: { output: rawOutput, requiredExtension: extension },
+      supportedFixes: [
+        `remove the symbolic-link alias or point it to a ${extension} target inside the current working directory`,
+      ],
     });
   }
-  if (source === 'meta' && !pathIsInside(cwd, outputPath)) {
-    throw new OutputPathError('meta.output must stay inside the current working directory.', {
-      code: 'output/meta-outside-cwd',
-      message: 'meta.output must stay inside the current working directory after symbolic links are resolved.',
+  if (sandboxSource && !pathIsInside(cwd, outputPath)) {
+    throw new OutputPathError(`${label} must stay inside the current working directory.`, {
+      code: source === 'meta' ? 'output/meta-outside-cwd' : 'output/cli-outside-cwd',
+      message: `${label} must stay inside the current working directory after symbolic links are resolved.`,
       subject: { output: rawOutput, cwd: path.resolve(cwd) },
-      supportedFixes: ['set meta.output to a relative .html path inside the current working directory'],
+      supportedFixes: [relativeFix],
     });
   }
 
