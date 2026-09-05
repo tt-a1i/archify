@@ -1859,13 +1859,21 @@
       display: flex;
       align-items: center;
       gap: 0.38rem;
+      min-height: 2rem;
+      padding: 0.18rem 0;
       color: var(--security-stroke);
       cursor: pointer;
       list-style: none;
-      font-size: 0.5625rem;
+      font-size: 0.625rem;
       font-weight: 750;
+      touch-action: manipulation;
     }
     .semantic-passport-approval summary::-webkit-details-marker { display: none; }
+    .semantic-passport-approval summary:focus-visible {
+      border-radius: 0.28rem;
+      outline: 2px solid color-mix(in srgb, var(--security-stroke) 76%, var(--text));
+      outline-offset: 2px;
+    }
     .semantic-passport-approval summary::before {
       content: '+';
       display: grid;
@@ -1882,8 +1890,10 @@
     .semantic-passport-approval summary small {
       margin-left: auto;
       color: var(--text-faint);
-      font-size: 0.48rem;
+      font-size: 0.525rem;
       font-weight: 500;
+      line-height: 1.35;
+      text-align: right;
     }
     .semantic-passport-approval-body {
       max-height: min(14rem, 34vh);
@@ -1901,15 +1911,16 @@
     }
     .semantic-passport-approval dt {
       color: var(--text-faint);
-      font-size: 0.5rem;
+      font-size: 0.5625rem;
       font-weight: 700;
+      line-height: 1.45;
     }
     .semantic-passport-approval dd {
       min-width: 0;
       margin: 0;
       color: var(--text-muted);
-      font-size: 0.525rem;
-      line-height: 1.45;
+      font-size: 0.625rem;
+      line-height: 1.5;
       overflow-wrap: anywhere;
     }
     .semantic-passport-approval ul {
@@ -1928,7 +1939,7 @@
       display: block;
       margin-top: 0.48rem;
       color: var(--text-faint);
-      font-size: 0.475rem;
+      font-size: 0.5625rem;
       line-height: 1.45;
     }
     .relationship-lens-summary {
@@ -3509,10 +3520,11 @@
     .export-detail-scope {
       margin: 0 0.55rem 0.55rem;
       padding: 0.42rem 0.5rem;
-      border-left: 2px solid var(--security-stroke);
+      border: 1px solid color-mix(in srgb, var(--security-stroke) 42%, var(--toolbar-border));
+      border-radius: 0.35rem;
       background: color-mix(in srgb, var(--security-fill) 34%, transparent);
       color: var(--text-muted);
-      font-size: 0.525rem;
+      font-size: 0.625rem;
       line-height: 1.45;
     }
     .export-detail-scope[hidden] { display: none; }
@@ -3775,6 +3787,7 @@
         width: calc(100% - 1rem);
         max-width: none;
       }
+      .semantic-passport-approval summary { min-height: 2.75rem; }
       .relationship-lens-list { max-height: min(12rem, 38vh); }
       .relationship-lens-actions #btn-focus-relations { display: block; color: var(--database-stroke); }
       .focus-chip:not([data-relations-expanded="true"]) .relationship-lens-head { border-bottom-color: transparent; }
@@ -5016,7 +5029,7 @@
           <div><strong>{{i18n:viewer.export.diagram}}</strong><span>{{i18n:viewer.export.subtitle}}</span></div>
           <kbd>E</kbd>
         </div>
-        <p id="export-detail-scope" class="export-detail-scope" hidden>{{i18n:viewer.passport.approval.exportScope}}</p>
+        <p id="export-detail-scope" class="export-detail-scope" hidden role="note">{{i18n:viewer.passport.approval.exportScope}}</p>
         <div class="export-menu-section" role="group" aria-label="{{i18n:viewer.export.share}}">
           <span class="export-menu-heading" aria-hidden="true">{{i18n:viewer.export.share}}</span>
           <button data-format="share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>{{i18n:viewer.export.shareCard}}</strong><small class="hint">1200&times;630 PNG</small></span></button>

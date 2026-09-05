@@ -121,12 +121,14 @@ node:
 ```
 
 `initiator`, `approvers`, `deliverables`, and `reworkPath` are all required
-once `approval` is present. Each `reworkPath` value is an existing edge ID;
-the referenced edges must form one directed, contiguous path beginning at the
-approval node. Archify derives the readable path from those edges and their
-target nodes, so authors do not repeat route facts in the node or in cards.
-Repeated approval facts and unknown, duplicate, or discontinuous edge
-references fail before layout.
+once `approval` is present, and human-readable facts must contain a
+non-whitespace character. Each `reworkPath` value is an existing edge ID; the
+referenced edges must form one directed, contiguous path beginning at the
+approval node.
+Archify derives the readable path from those edges and their target nodes, so
+authors do not repeat route facts in the node or in cards. Approval facts that
+become equal after Unicode and display-whitespace normalization, plus unknown,
+duplicate, or discontinuous edge references, fail before layout.
 
 The feature is absent by default and does not change diagram geometry. In the
 HTML viewer, focus the node and expand **Approval details** in its Semantic

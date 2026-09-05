@@ -53,15 +53,26 @@ test('bug intake captures a minimal deterministic reproduction before visual dia
     'id: validation_receipt',
     'id: expected',
     'id: actual',
+    'id: visual_evidence',
     'id: environment',
     'id: sensitive_data',
   ]) {
     assert.match(template, new RegExp(field), field);
   }
   assert.ok(
-    template.indexOf('id: validation_receipt') < template.indexOf('id: screenshot'),
-    'deterministic evidence should be requested before optional visual evidence',
+    template.indexOf('id: validation_receipt') < template.indexOf('id: visual_evidence'),
+    'deterministic evidence should be requested before visual evidence',
   );
+  const evidenceBlock = template.slice(
+    template.indexOf('id: visual_evidence'),
+    template.indexOf('id: environment'),
+  );
+  assert.match(template, /type: upload\s+id: visual_evidence/);
+  assert.match(evidenceBlock, /required:\s*false/);
+  assert.match(evidenceBlock, /screenshots or recordings/i);
+  assert.match(evidenceBlock, /Reproducible steps above may be enough/i);
+  assert.doesNotMatch(evidenceBlock, /Required for visual problems/i);
+  assert.doesNotMatch(evidenceBlock, /accept:/);
 });
 
 test('contributor and pull-request guides keep proof changes reproducible and stability-first', () => {
@@ -97,8 +108,20 @@ test('contributor and pull-request guides keep proof changes reproducible and st
     'Tests run',
     'Generated artifacts',
     'Visual evidence',
+    'Evidence provided:',
+    'Automated or browser checks:',
+    'Perceptual visual review: passed / failed / skipped / Not applicable',
     'No unrelated changes',
   ]) {
     assert.match(pullRequest, new RegExp(required), required);
   }
+  assert.match(contributing, /enough evidence to evaluate whether the intended user value was achieved/i);
+  assert.match(contributing, /screenshots, recordings, or reproducible steps/i);
+  assert.match(contributing, /same input/i);
+  assert.match(contributing, /automated or browser evidence separately from perceptual review/i);
+  assert.match(contributing, /non-visual pull request must write `Not applicable`/i);
+  assert.match(pullRequest, /screenshots, recordings, or reproducible steps/i);
+  assert.match(pullRequest, /automated or browser evidence separately from perceptual review/i);
+  assert.doesNotMatch(contributing, /must reach `passed` before final review or merge/i);
+  assert.doesNotMatch(pullRequest, /must reach `passed` before final review or merge/i);
 });

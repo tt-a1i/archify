@@ -766,8 +766,11 @@ function approvalContractDiagnostics(workflow) {
     for (const field of ['approvers', 'deliverables', 'reworkPath']) {
       const seen = new Map();
       for (const [valueIndex, value] of node.approval[field].entries()) {
-        if (!seen.has(value)) {
-          seen.set(value, valueIndex);
+        const normalizedValue = field === 'reworkPath'
+          ? value
+          : value.normalize('NFC').trim().replace(/\s+/gu, ' ');
+        if (!seen.has(normalizedValue)) {
+          seen.set(normalizedValue, valueIndex);
           continue;
         }
         diagnostics.push({
@@ -782,7 +785,8 @@ function approvalContractDiagnostics(workflow) {
           evidence: {
             field,
             value,
-            firstPath: `/nodes/${nodeIndex}/approval/${field}/${seen.get(value)}`,
+            normalizedValue,
+            firstPath: `/nodes/${nodeIndex}/approval/${field}/${seen.get(normalizedValue)}`,
           },
           supportedFixes: [`remove the duplicate ${field} entry at index ${valueIndex}`],
         });

@@ -166,14 +166,38 @@ test('approval details fail closed when required or repeated facts would be lost
     instancePath === '/nodes/5/approval' && params.missingProperty === 'deliverables'
   )), JSON.stringify(validateWorkflowSchema.errors, null, 2));
 
+  const blankCases = [
+    {
+      path: '/nodes/5/approval/initiator',
+      update: (approval) => { approval.initiator = ' \t '; },
+    },
+    {
+      path: '/nodes/5/approval/approvers/0',
+      update: (approval) => { approval.approvers[0] = '\u00a0'; },
+    },
+    {
+      path: '/nodes/5/approval/deliverables/0',
+      update: (approval) => { approval.deliverables[0] = '\n'; },
+    },
+  ];
+  for (const blankCase of blankCases) {
+    const blank = approvalWorkflow();
+    blankCase.update(blank.nodes.find(({ id }) => id === 'approval').approval);
+    assert.equal(validateWorkflowSchema(blank), false);
+    assert.ok(validateWorkflowSchema.errors?.some(({ instancePath, keyword }) => (
+      instancePath === blankCase.path && keyword === 'pattern'
+    )), JSON.stringify(validateWorkflowSchema.errors, null, 2));
+  }
+
   const repeated = approvalWorkflow();
-  repeated.nodes.find(({ id }) => id === 'approval').approval.approvers.push('Security owner');
+  repeated.nodes.find(({ id }) => id === 'approval').approval.approvers.push('  Security   owner\t');
   const repeatedResult = compileWorkflow({ workflow: repeated });
   assert.equal(repeatedResult.ok, false);
   assert.ok(repeatedResult.diagnostics.some(({ code, subject, evidence }) => (
     code === 'workflow/approval-duplicate-detail'
       && subject.path === '/nodes/5/approval/approvers/2'
       && evidence.firstPath === '/nodes/5/approval/approvers/0'
+      && evidence.normalizedValue === 'Security owner'
   )), JSON.stringify(repeatedResult.diagnostics, null, 2));
 });
 
@@ -218,7 +242,13 @@ test('ordinary workflows keep approval affordances hidden and emit no approval m
 test('real Chrome reveals approval facts without growing the first-screen document', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser approval-detail regression.',
 }, async () => {
-  const result = render(approvalWorkflow(), 'approval-details-browser');
+  const document = approvalWorkflow();
+  document.nodes.find(({ id }) => id === 'approval').approval.deliverables.push(
+    ...Array.from({ length: 16 }, (_, index) => (
+      `Evidence package ${index + 1} with deployment, rollback, and audit records`
+    )),
+  );
+  const result = render(document, 'approval-details-browser');
   assert.equal(result.status, 0, result.stderr);
   const browser = new ChromeVisualBrowser(chromePath);
   try {
@@ -236,6 +266,11 @@ test('real Chrome reveals approval facts without growing the first-screen docume
         requestAnimationFrame(function () { requestAnimationFrame(resolve); });
       });
       var chipRect = document.getElementById('focus-chip').getBoundingClientRect();
+      var approvalBody = detail.querySelector('.semantic-passport-approval-body');
+      var approvalValue = detail.querySelector('dd');
+      var approvalScope = detail.querySelector('.semantic-passport-approval-scope');
+      var approvalSummary = detail.querySelector('summary');
+      var summaryRect = approvalSummary.getBoundingClientRect();
       var input = document.getElementById('node-finder-input');
       Archify.finder.open();
       input.value = 'Rollback evidence';
@@ -254,7 +289,12 @@ test('real Chrome reveals approval facts without growing the first-screen docume
         afterHeight: document.documentElement.scrollHeight,
         viewportHeight: window.innerHeight,
         chipTop: chipRect.top,
-        chipBottom: chipRect.bottom
+        chipBottom: chipRect.bottom,
+        approvalBodyScrollable: approvalBody.scrollHeight > approvalBody.clientHeight,
+        approvalValueFontSize: parseFloat(getComputedStyle(approvalValue).fontSize),
+        approvalScopeFontSize: parseFloat(getComputedStyle(approvalScope).fontSize),
+        approvalSummaryFontSize: parseFloat(getComputedStyle(approvalSummary).fontSize),
+        summaryHeight: summaryRect.height
       };
     })()`, true);
 
@@ -273,6 +313,38 @@ test('real Chrome reveals approval facts without growing the first-screen docume
     assert.ok(state.beforeHeight <= state.viewportHeight, JSON.stringify(state));
     assert.ok(state.afterHeight <= state.viewportHeight, JSON.stringify(state));
     assert.ok(state.chipTop >= 0 && state.chipBottom <= state.viewportHeight, JSON.stringify(state));
+    assert.equal(state.approvalBodyScrollable, true, JSON.stringify(state));
+    assert.ok(state.approvalValueFontSize >= 10, JSON.stringify(state));
+    assert.ok(state.approvalScopeFontSize >= 9, JSON.stringify(state));
+    assert.ok(state.approvalSummaryFontSize >= 10, JSON.stringify(state));
+
+    await evaluate(browser, sessionId, 'Archify.finder.close({ restoreFocus: false })');
+    await browser.cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 1,
+      mobile: true,
+    }, sessionId);
+    const mobileState = await evaluate(browser, sessionId, `(async function () {
+      await new Promise(function (resolve) {
+        requestAnimationFrame(function () { requestAnimationFrame(resolve); });
+      });
+      var chipRect = document.getElementById('focus-chip').getBoundingClientRect();
+      var summaryRect = document.querySelector('#focus-approval summary').getBoundingClientRect();
+      return {
+        documentWidth: document.documentElement.scrollWidth,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        chipLeft: chipRect.left,
+        chipRight: chipRect.right,
+        chipBottom: chipRect.bottom,
+        summaryHeight: summaryRect.height
+      };
+    })()`, true);
+    assert.ok(mobileState.documentWidth <= mobileState.viewportWidth, JSON.stringify(mobileState));
+    assert.ok(mobileState.chipLeft >= 0 && mobileState.chipRight <= mobileState.viewportWidth, JSON.stringify(mobileState));
+    assert.ok(mobileState.chipBottom <= mobileState.viewportHeight, JSON.stringify(mobileState));
+    assert.ok(mobileState.summaryHeight >= 44, JSON.stringify(mobileState));
   } finally {
     await browser.close();
   }
