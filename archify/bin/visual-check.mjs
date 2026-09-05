@@ -394,6 +394,51 @@ export class ChromeVisualBrowser {
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
       var diagramWidth = svg ? svg.getBoundingClientRect().width : 0;
       var viewBoxWidth = viewBox ? viewBox.width : 0;
+      var diagramClientWidth = diagram ? diagram.clientWidth : 0;
+      var diagramClientHeight = diagram ? diagram.clientHeight : 0;
+      var diagramScrollWidth = diagram ? diagram.scrollWidth : 0;
+      var diagramScrollHeight = diagram ? diagram.scrollHeight : 0;
+      var stageClientWidth = stage ? stage.clientWidth : 0;
+      var stageClientHeight = stage ? stage.clientHeight : 0;
+      var stageScrollWidth = stage ? stage.scrollWidth : 0;
+      var stageScrollHeight = stage ? stage.scrollHeight : 0;
+      var internalScrollOk = (
+        diagramScrollWidth <= diagramClientWidth + 1
+        && diagramScrollHeight <= diagramClientHeight + 1
+        && stageScrollWidth <= stageClientWidth + 1
+        && stageScrollHeight <= stageClientHeight + 1
+      );
+      var diagramRect = diagram ? diagram.getBoundingClientRect() : null;
+      var svgRect = svg ? svg.getBoundingClientRect() : null;
+      var viewportRect = {
+        left: 0,
+        top: 0,
+        right: window.innerWidth,
+        bottom: window.innerHeight
+      };
+      function containsRect(outer, inner) {
+        if (!outer || !inner || !inner.width || !inner.height) return false;
+        return inner.left >= outer.left - 1
+          && inner.top >= outer.top - 1
+          && inner.right <= outer.right + 1
+          && inner.bottom <= outer.bottom + 1;
+      }
+      var clippedContent = svg ? Array.from(svg.querySelectorAll(
+        '[data-node-id], [data-composition-frame-kind="group"]'
+      )).filter(function (element) {
+        var rect = element.getBoundingClientRect();
+        return !containsRect(svgRect, rect)
+          || !containsRect(diagramRect, rect)
+          || !containsRect(viewportRect, rect);
+      }).map(function (element) {
+        if (element.hasAttribute('data-node-id')) {
+          return 'node:' + element.getAttribute('data-node-id');
+        }
+        return 'frame:'
+          + element.getAttribute('data-composition-frame-kind') + ':'
+          + element.getAttribute('data-composition-frame-id');
+      }) : [];
+      var contentVisibilityOk = clippedContent.length === 0;
       var scale = viewBoxWidth > 0 ? Math.min(1, diagramWidth / viewBoxWidth) : 0;
       var minimum = null;
       if (svg && scale > 0) {
@@ -441,6 +486,17 @@ export class ChromeVisualBrowser {
         readerWidth: reader ? reader.getBoundingClientRect().width : 0,
         diagramWidth: diagramWidth,
         viewBoxWidth: viewBoxWidth,
+        diagramClientWidth: diagramClientWidth,
+        diagramClientHeight: diagramClientHeight,
+        diagramScrollWidth: diagramScrollWidth,
+        diagramScrollHeight: diagramScrollHeight,
+        stageClientWidth: stageClientWidth,
+        stageClientHeight: stageClientHeight,
+        stageScrollWidth: stageScrollWidth,
+        stageScrollHeight: stageScrollHeight,
+        internalScrollOk: internalScrollOk,
+        contentVisibilityOk: contentVisibilityOk,
+        clippedContent: clippedContent,
         minimumProjectedNodeTextPx: minimum ? minimum.projectedFontPx : null,
         minimumProjectedNodeText: minimum ? minimum.text : null,
         minimumProjectedNodeTextDetail: minimum ? minimum.detail : null,
@@ -507,6 +563,11 @@ function observation({ width, height, theme, metrics }) {
     : Number(metrics.minimumProjectedNodeTextPx);
   const readabilityOk = minimumProjectedNodeTextPx == null
     || minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX;
+  const internalScrollOk = metrics.internalScrollOk !== false;
+  const contentVisibilityOk = metrics.contentVisibilityOk !== false;
+  const clippedContent = Array.isArray(metrics.clippedContent) ? metrics.clippedContent : [];
+  const resolvedTheme = metrics.resolvedTheme || '';
+  const themeOk = resolvedTheme === theme;
   const legendDockIntersectionArea = Number(metrics.legendDockIntersectionArea) || 0;
   const dockStageIntersectionArea = Number(metrics.dockStageIntersectionArea) || 0;
   const dockStageGap = metrics.dockStageGap == null ? null : Number(metrics.dockStageGap);
@@ -530,10 +591,21 @@ function observation({ width, height, theme, metrics }) {
     scrollHeight,
     overflowX,
     overflowY,
-    ok: !overflowX && !overflowY,
+    ok: !overflowX && !overflowY && internalScrollOk && contentVisibilityOk,
     readerWidth: Number(metrics.readerWidth) || null,
     diagramWidth: Number(metrics.diagramWidth) || null,
     viewBoxWidth: Number(metrics.viewBoxWidth) || null,
+    diagramClientWidth: Number(metrics.diagramClientWidth) || 0,
+    diagramClientHeight: Number(metrics.diagramClientHeight) || 0,
+    diagramScrollWidth: Number(metrics.diagramScrollWidth) || 0,
+    diagramScrollHeight: Number(metrics.diagramScrollHeight) || 0,
+    stageClientWidth: Number(metrics.stageClientWidth) || 0,
+    stageClientHeight: Number(metrics.stageClientHeight) || 0,
+    stageScrollWidth: Number(metrics.stageScrollWidth) || 0,
+    stageScrollHeight: Number(metrics.stageScrollHeight) || 0,
+    internalScrollOk,
+    contentVisibilityOk,
+    clippedContent,
     minimumProjectedNodeTextPx,
     minimumProjectedNodeText: metrics.minimumProjectedNodeText || null,
     minimumProjectedNodeTextDetail: metrics.minimumProjectedNodeTextDetail || null,
@@ -549,7 +621,8 @@ function observation({ width, height, theme, metrics }) {
     viewerChromeReserve: Number(metrics.viewerChromeReserve) || 0,
     viewerChromeActive: Boolean(metrics.viewerChromeActive),
     viewerChromeOk,
-    resolvedTheme: metrics.resolvedTheme || theme,
+    resolvedTheme,
+    themeOk,
   };
 }
 
@@ -592,7 +665,7 @@ function failureDiagnostic({ code, message, subject, evidence, supportedFixes, s
 function observationDiagnostics({ artifact, allObservations, readabilityObservations }) {
   const diagnostics = [];
   for (const entry of allObservations) {
-    if (!entry.ok) {
+    if (entry.overflowX || entry.overflowY) {
       diagnostics.push(failureDiagnostic({
         code: 'viewer/viewport-overflow',
         message: `The rendered artifact overflows the ${entry.width}x${entry.height} ${entry.theme} viewport.`,
@@ -607,6 +680,51 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
         },
         supportedFixes: [
           `contain the rendered layout within ${entry.width}x${entry.height}, then rerun visual-check`,
+        ],
+      }));
+    }
+    if (!entry.internalScrollOk) {
+      diagnostics.push(failureDiagnostic({
+        code: 'viewer/internal-scroll',
+        message: `The diagram introduces an internal scroll range at ${entry.width}x${entry.height} (${entry.theme}).`,
+        subject: viewportSubject(artifact, entry),
+        evidence: {
+          diagramClientWidth: entry.diagramClientWidth,
+          diagramClientHeight: entry.diagramClientHeight,
+          diagramScrollWidth: entry.diagramScrollWidth,
+          diagramScrollHeight: entry.diagramScrollHeight,
+          stageClientWidth: entry.stageClientWidth,
+          stageClientHeight: entry.stageClientHeight,
+          stageScrollWidth: entry.stageScrollWidth,
+          stageScrollHeight: entry.stageScrollHeight,
+        },
+        supportedFixes: [
+          'remove the diagram or SVG stage scroll range without clipping content, then rerun visual-check',
+        ],
+      }));
+    }
+    if (!entry.contentVisibilityOk) {
+      diagnostics.push(failureDiagnostic({
+        code: 'viewer/content-clipping',
+        message: `Rendered workflow content is clipped at ${entry.width}x${entry.height} (${entry.theme}).`,
+        subject: viewportSubject(artifact, entry),
+        evidence: { clippedContent: entry.clippedContent },
+        supportedFixes: [
+          'keep every workflow group and node inside the SVG, diagram panel, and viewport, then rerun visual-check',
+        ],
+      }));
+    }
+    if (!entry.themeOk) {
+      diagnostics.push(failureDiagnostic({
+        code: 'viewer/theme-mismatch',
+        message: `The Viewer resolved ${entry.resolvedTheme || 'no theme'} instead of the requested ${entry.theme} theme.`,
+        subject: viewportSubject(artifact, entry),
+        evidence: {
+          requestedTheme: entry.theme,
+          resolvedTheme: entry.resolvedTheme,
+        },
+        supportedFixes: [
+          `make the Viewer resolve the requested ${entry.theme} theme before capturing evidence`,
         ],
       }));
     }
@@ -784,6 +902,7 @@ export async function runVisualCheck({
     const containmentPass = allObservations.every((entry) => entry.ok);
     const readabilityPass = receipt.readability.viewports.every((entry) => entry.readabilityOk);
     const viewerChromePass = allObservations.every((entry) => entry.viewerChromeOk);
+    const capturePass = allObservations.every((entry) => entry.themeOk);
     receipt.diagnostics = observationDiagnostics({
       artifact,
       allObservations,
@@ -792,10 +911,10 @@ export async function runVisualCheck({
     receipt.containment.status = containmentPass ? 'pass' : 'fail';
     receipt.readability.status = readabilityPass ? 'pass' : 'fail';
     receipt.viewerChrome.status = viewerChromePass ? 'pass' : 'fail';
-    receipt.captures.status = 'pass';
+    receipt.captures.status = capturePass ? 'pass' : 'fail';
     receipt.captures.contactSheet = path.basename(outputs.contactSheet);
-    receipt.status = containmentPass && readabilityPass && viewerChromePass ? 'pass' : 'fail';
-    receipt.ok = containmentPass && readabilityPass && viewerChromePass;
+    receipt.status = containmentPass && readabilityPass && viewerChromePass && capturePass ? 'pass' : 'fail';
+    receipt.ok = containmentPass && readabilityPass && viewerChromePass && capturePass;
     writeAtomic(outputs.contactSheet, contactSheetHtml({
       artifactPath: artifact,
       receipt,

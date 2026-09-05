@@ -105,7 +105,7 @@ backed by rendered nodes receive Semantic Legend controls.
 | Constant | Value |
 |----------|-------|
 | viewBox | default `[720, auto]` — auto height = 52 + lanes×104 + (lanes−1)×20 + 124 |
-| Lane frame | x 40, width 640, height 104, gap 20; first lane top at y 52 |
+| Lane frame | x 40, width 640, default height 104, gap 20; first lane top at y 52. Set optional `lane.height` (≥104) to make one legacy lane taller without changing other lanes. |
 | Lane title strip | top 30px of each lane; node boxes must stay below it |
 | Column centers (`col` 0–5) | x = 88, 220, 300, 430, 500, 625 |
 | Phase headers | Optional `phases[]` render above the first lane, spanning `fromCol..toCol` |
@@ -133,6 +133,7 @@ a verified migration-to-v2 repair; v1 never falls through to adaptive layout.
 | Automatic route rhythm | direct segment ≥28px; endpoint stub ≥8px; interior turn segment ≥16px |
 | Implicit viewBox | intrinsic content bounds plus contract padding |
 | Explicit viewBox | containment capacity; too-small input reports exact `requiredViewBox` and contributors |
+| Lane height | Optional `lane.height` (≥104) opts that lane into independent measured height and supplies its authored minimum, so one vertically stacked group grows only its own lane. |
 
 The compiler applies constraints only to actual related or overlapping
 same-lane nodes, so a wide node in an unrelated lane does not expand every
@@ -143,6 +144,16 @@ validation and SVG serialization. Long automatic labels compare direct-gutter
 growth with a legal channel instead of widening every downstream rank. Measured
 multi-row legends participate in intrinsic height and explicit viewBox
 capacity.
+
+When an authored `lane.height` makes an implicit readable-v2 canvas taller
+than the 104px baseline, the compiled SVG opts into the desktop Viewer's
+height budget. The Viewer changes only the outer reader width so the complete
+lane remains on screen; canonical SVG geometry and explicit `meta.viewBox`
+workflows retain their authored contracts. When necessary, the Viewer may
+scale below the intrinsic 1:1 width only as far as the 6px projected node-text
+floor. If the complete workflow still cannot fit at that readable scale,
+`visual-check` reports the remaining viewport overflow instead of clipping or
+introducing an internal scroller.
 
 Authored `via`, `labelAt`, `channelX`, and `channelY` are absolute hard pins in
 v2; an infeasible pin returns `workflow/explicit-pin-conflict` rather than being
@@ -156,6 +167,7 @@ a feasible side; an authored side restricts that endpoint to the named port.
 - Use lanes for ownership or runtime boundaries.
 - Use phase headers for high-level story beats such as Intake, Plan, Execute, and Report.
 - Use groups for parallel checks, branch handling, or bounded work within a lane; every group must contain at least one node.
+- For sequential stages stacked inside one container, use one v2 lane and one group, keep the stages in one column with increasing `yOffset`, set that lane's `height` to the intended minimum, and omit `meta.viewBox` unless a fixed canvas is required. The compiler then expands that lane only.
 - Use `lane.variant: "exception"` for human wait, denial, retry, fallback, and failure lanes instead of mixing those paths into the happy path.
 - Set `mainPath` when the diagram has a clear happy path; the renderer validates that consecutive ids have matching edges and move left-to-right.
 - Place nodes with lane IDs and `col` indexes in `0..5`, not raw SVG coordinates.
