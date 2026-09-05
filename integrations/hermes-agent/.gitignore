@@ -1,0 +1,4 @@
+# Optional packed Skill copy used only when this plugin is shipped outside the repo.
+skills/
+__pycache__/
+*.py[cod]
