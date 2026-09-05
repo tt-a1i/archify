@@ -20,7 +20,14 @@ List exact commands and results. Do not write only “tests pass.”
 
 ## Visual evidence
 
-For visible changes, attach before/after final-artifact screenshots and state whether visual review passed, failed, or was skipped. Write “Not applicable” for non-visual changes.
+Provide enough evidence to evaluate whether the intended user value was achieved. Use screenshots, recordings, or reproducible steps as appropriate to the affected behavior. For non-visual changes, write “Not applicable” and briefly explain why.
+
+- Evidence provided:
+- Comparison conditions, when applicable (input, viewport, theme, preset, diagram mode, zoom, and page state):
+- Automated or browser checks:
+- Perceptual visual review: passed / failed / skipped / Not applicable
+
+When presenting a before/after comparison, keep its conditions genuinely comparable. Report automated or browser evidence separately from perceptual review; an automated check does not establish a perceptual pass.
 
 ## Generated artifacts
 
