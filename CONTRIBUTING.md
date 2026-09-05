@@ -124,9 +124,11 @@ A useful bug report or fix contains:
 2. The smallest redacted typed JSON that still reproduces the failure.
 3. The complete machine-readable validation receipt or exact error.
 4. Expected versus actual behavior.
-5. A final-artifact screenshot only when the problem is visual.
+5. Enough visual evidence to evaluate the problem when it is visual. Use screenshots, recordings, or reproducible steps as appropriate, mark subtle defects when useful, and describe the expected visual result. Media is not required when it would not add useful context.
 
-Do not replace deterministic evidence with a screenshot. For visual defects, keep both the validator result and final rendered evidence.
+Do not replace deterministic evidence with visual evidence. For visual defects, keep both the validator result and final rendered evidence.
+
+A pull request that changes the final diagram, Viewer, or public page appearance or interaction must provide enough evidence to evaluate whether the intended user value was achieved. Use screenshots, recordings, or reproducible steps as appropriate to the affected behavior. When presenting a before/after comparison, generate both states from the same input and keep the viewport, theme, preset, diagram mode, zoom, and page state comparable. Report automated or browser evidence separately from perceptual review; an automated check does not establish a perceptual pass. A non-visual pull request must write `Not applicable` in its Visual evidence section and briefly explain why. Remove sensitive data from every submitted artifact.
 
 ## Community showcase submissions
 
@@ -140,7 +142,8 @@ Maintainers may ask for a smaller source file, rerun validation, or decline a ca
 - Complete `.github/PULL_REQUEST_TEMPLATE.md` with exact commands and numeric results; do not write only “tests pass.”
 - Add or update a regression test for behavioral changes.
 - Confirm existing public examples and compatibility fixtures still behave as intended.
-- State `visual review: passed`, `failed`, or `skipped` truthfully for visible changes.
+- Provide enough evidence to evaluate the intended user value, using screenshots, recordings, or reproducible steps as appropriate, or explain why visual evidence is not applicable.
+- Report automated or browser evidence separately from perceptual review, and state each result truthfully.
 - Confirm remote CI actually ran on the current head. Local green checks do not mean GitHub CI passed, and zero checks is not green.
 - Remove unrelated files, debug output, local paths, generated noise, and sensitive data from the diff.
 

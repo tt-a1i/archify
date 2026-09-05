@@ -807,3 +807,28 @@ test('cli: validate rejects an unknown type without leaking a temp directory', (
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
+
+test('render rejects a mistyped option instead of writing a file named after it', () => {
+  const dir = fs.mkdtempSync(path.join(tmp, 'render-guard-'));
+  const spec = path.join(dir, 'spec.json');
+  fs.copyFileSync(path.join(skillRoot, '../examples/archify-repo.architecture.json'), spec);
+
+  // Without the guard this wrote a 600KB file literally named `--json` and
+  // never wrote out.html, exiting 0.
+  const result = run(['render', 'architecture', spec, '--json', 'out.html'], { cwd: dir });
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Unknown render option/);
+  assert.deepEqual(fs.readdirSync(dir), ['spec.json']);
+});
+
+test('render rejects an extra positional argument', () => {
+  const dir = fs.mkdtempSync(path.join(tmp, 'render-arity-'));
+  const spec = path.join(dir, 'spec.json');
+  fs.copyFileSync(path.join(skillRoot, '../examples/archify-repo.architecture.json'), spec);
+
+  const result = run(['render', 'architecture', spec, 'out.html', 'extra.html'], { cwd: dir });
+
+  assert.notEqual(result.status, 0);
+  assert.deepEqual(fs.readdirSync(dir), ['spec.json']);
+});
