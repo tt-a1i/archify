@@ -23,6 +23,7 @@ function usage() {
   archify inspect <type> <input.json>
   archify check <output.html>
   archify visual-check <output.html> [--json]
+  archify export svg <output.html> [output.svg] [--theme auto|dark|light] [--json]
   archify guide [scenario or question] [--json] [--lang en|zh]
   archify brands [name, alias, domain, or category] [--json]
   archify brands capture <url> [--json]
@@ -1217,6 +1218,83 @@ async function commandVisualCheck(args) {
   process.exitCode = result.exitCode;
 }
 
+function extractThemeArgs(args) {
+  const rest = [];
+  let theme;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--theme') {
+      theme = args[index + 1];
+      if (!theme || theme.startsWith('--')) fail('--theme requires auto, dark, or light.', 1);
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--theme=')) {
+      theme = arg.slice('--theme='.length);
+      if (!theme) fail('--theme requires auto, dark, or light.', 1);
+      continue;
+    }
+    rest.push(arg);
+  }
+  if (theme !== undefined && !['auto', 'dark', 'light'].includes(theme)) {
+    fail(`Unknown theme "${theme}". Expected auto, dark, or light.`, 1);
+  }
+  return { rest, theme };
+}
+
+async function commandExport(args) {
+  const [format, ...formatArgs] = args;
+  if (format !== 'svg') fail(`export is currently supported for svg only.\n\n${usage()}`, 1);
+
+  const themeArgs = extractThemeArgs(formatArgs);
+  const json = themeArgs.rest.includes('--json');
+  const knownOptions = new Set(['--json']);
+  const unknown = themeArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
+  if (unknown.length) fail(`Unknown export option "${unknown[0]}".`, 1);
+  const positional = themeArgs.rest.filter((arg) => !knownOptions.has(arg));
+  if (positional.length < 1 || positional.length > 2) fail(usage(), 1);
+
+  let runExportSvg;
+  try {
+    ({ runExportSvg } = await import('./export-svg.mjs'));
+  } catch (error) {
+    fail(`Could not load export: ${error.message}`, 1);
+  }
+
+  let result;
+  try {
+    result = await runExportSvg({
+      artifactPath: positional[0],
+      output: positional[1],
+      theme: themeArgs.theme || 'auto',
+    });
+  } catch (error) {
+    if (json) {
+      console.log(JSON.stringify({
+        schemaVersion: 1,
+        ok: false,
+        command: 'export svg',
+        status: 'fail',
+        artifact: { path: path.resolve(positional[0]) },
+        error: error.message,
+      }, null, 2));
+    } else {
+      console.error(`export svg failed: ${error.message}`);
+    }
+    process.exitCode = 1;
+    return;
+  }
+
+  if (json) {
+    console.log(JSON.stringify(result.receipt, null, 2));
+  } else if (result.receipt.ok) {
+    console.log(result.receipt.output.path);
+  } else {
+    console.error(`export svg ${result.receipt.status}: ${result.receipt.error}`);
+  }
+  process.exitCode = result.exitCode;
+}
+
 function commandExamples() {
   const result = runNode([path.join(skillRoot, 'scripts/render-examples.mjs')], { cwd: skillRoot });
   if (result.status !== 0) exitFrom(result);
@@ -1258,6 +1336,13 @@ async function commandDoctor() {
     label: 'Visual-check runtime',
     ok: fs.existsSync(visualCheckRuntime),
     missing: fs.existsSync(visualCheckRuntime) ? 0 : 1,
+  });
+
+  const exportRuntime = path.join(skillRoot, 'bin/export-svg.mjs');
+  checks.push({
+    label: 'SVG export runtime',
+    ok: fs.existsSync(exportRuntime),
+    missing: fs.existsSync(exportRuntime) ? 0 : 1,
   });
 
   const outputPathRuntime = path.join(skillRoot, 'renderers/shared/output-path.mjs');
@@ -1983,6 +2068,9 @@ switch (command) {
     break;
   case 'visual-check':
     await commandVisualCheck(args);
+    break;
+  case 'export':
+    await commandExport(args);
     break;
   case 'guide':
     await commandGuide(args);

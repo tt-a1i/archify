@@ -28,6 +28,8 @@ Story transitions classify only the exact relationship between adjacent authored
 
 The export menu can copy/download full-diagram PNG, download JPEG/WebP, download a dual-theme SVG, and record a trace-enabled WebM. Viewer state—Guide, Lens, finder, focus, route, story, camera, radar, presentation, motion ownership, and temporary overlays—must be removed from canonical export.
 
+`Archify.exportMenu.svgDocument({ autoTheme })` returns the same standalone SVG document the menu downloads, so a headless caller can obtain it without a browser download. `archify export svg <output.html> [output.svg]` uses it; `--theme dark|light` locks the SVG to one theme instead of emitting both. The inline SVG copied out of the artifact by hand is not this document: it has no namespace and no styles, because both live in the host HTML.
+
 ### Share Card
 
 The optional 1200×630 Share Card PNG is for README, release, social, or launch previews. It uses the current theme and visual preset, contains the complete canonical diagram without cropping, and never claims validation. Copy Share Card reuses the same canonical PNG when clipboard image writes are supported.
