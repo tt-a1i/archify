@@ -46,6 +46,17 @@ test('the zero-dependency archive works from the canonical Cursor-visible agent 
     execFileSync('unzip', ['-q', path.join(repoRoot, 'archify.zip'), '-d', agentSkills]);
     const installed = path.join(agentSkills, 'archify');
     const cli = path.join(installed, 'bin', 'archify.mjs');
+
+    if (process.platform !== 'win32') {
+      assert.equal(
+        fs.statSync(cli).mode & 0o777,
+        0o755,
+        'the extracted CLI must retain its Unix executable mode',
+      );
+      const directDoctor = execFileSync(cli, ['doctor'], { encoding: 'utf8' });
+      assert.match(directDoctor, /Archify is ready\./);
+    }
+
     const doctor = execFileSync(process.execPath, [cli, 'doctor'], { encoding: 'utf8' });
     assert.match(doctor, /Archify is ready\./);
 
