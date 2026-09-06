@@ -444,12 +444,14 @@ async function commandCompare(args) {
 
   const basePath = path.resolve(baseInput);
   const headPath = path.resolve(headInput);
+  const receiptTarget = options.receipt || compareReceiptPath(path.resolve(requestedOutput || 'architecture-delta.html'));
   let outputPath;
   try {
     ({ outputPath } = resolveOutputPath({
       requestedOutput,
       defaultOutput: 'architecture-delta.html',
       inputPaths: [basePath, headPath],
+      otherOutputPaths: [path.resolve(receiptTarget)],
     }));
   } catch (error) {
     const outputDiagnostic = error.archifyDiagnostics?.[0];
@@ -471,6 +473,7 @@ async function commandCompare(args) {
     ({ outputPath: receiptPath } = resolveOutputPath({
       requestedOutput: options.receipt || compareReceiptPath(outputPath),
       defaultOutput: compareReceiptPath(outputPath),
+      requiredExtension: '.json',
       inputPaths: [basePath, headPath],
       otherOutputPaths: [outputPath],
     }));
@@ -640,10 +643,12 @@ async function commandCompare(args) {
         requestedOutput,
         defaultOutput: 'architecture-delta.html',
         inputPaths: [basePath, headPath],
+        otherOutputPaths: [receiptPath],
       }).outputPath;
       resolveOutputPath({
         requestedOutput: options.receipt || compareReceiptPath(currentOutput),
         defaultOutput: compareReceiptPath(currentOutput),
+        requiredExtension: '.json',
         inputPaths: [basePath, headPath],
         otherOutputPaths: [currentOutput],
       });
@@ -1835,7 +1840,9 @@ function commandValidate(args) {
     if (!['architecture', 'workflow'].includes(type)) {
       fail('--layout-json is currently supported for architecture and workflow diagrams only.');
     }
-    const result = runNode([renderer, input, '/dev/null', '--layout-json'], {
+    // Layout mode emits JSON without writing HTML; keep its unused target typed.
+    const layoutOutput = path.join(os.tmpdir(), `archify-layout-${process.pid}-${type}.html`);
+    const result = runNode([renderer, input, layoutOutput, '--layout-json'], {
       stdio: 'pipe',
       env: rendererEnv(quality, repoRoot, true),
     });
