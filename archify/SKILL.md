@@ -105,6 +105,12 @@ node bin/archify.mjs visual-check <output.html> --json
 
 `visual-check` collects automated browser evidence from the exact delivered HTML without modifying or rerendering it. Its machine-readable measurements and screenshots do not approve perceptual polish. Follow `references/delivery-contract.md` for the canonical receipt fields, coverage, sidecars, exit behavior, and supplementary manual-record requirements.
 
+When the diagram has to leave the viewer as a vector—a slide, a print layout, an editor—export it instead of copying the inline SVG out of the HTML, which carries no namespace and no styles:
+
+```bash
+node bin/archify.mjs export svg <output.html> [output.svg] [--theme auto|dark|light]
+```
+
 Keep the three claims separate: `deliver` proves deterministic artifact checks, `visual-check` proves bounded behavior in a real browser, and perceptual visual review requires an actual human or image-capable reviewer. Report browser evidence and perceptual review independently. An unconstrained glance can support only perceptual review; use the canonical delivery contract when recording supplementary manual browser work or handling an environmental failure.
 
 Add `--open` only when the user wants an immediate local preview. For an active desktop authoring loop, the optional command is:

@@ -337,6 +337,25 @@ export class ChromeVisualBrowser {
     return attached.sessionId;
   }
 
+  // Load a delivered artifact and return the attached session. Kept separate
+  // from inspect() so other read-only commands can reuse the same launched
+  // Chrome and pipe transport without repeating the navigation contract.
+  async load({ artifactPath, theme }) {
+    const sessionId = await this.sessionPromise;
+    const url = new URL(pathToFileURL(artifactPath).href);
+    if (theme) url.searchParams.set('theme', theme);
+    const loaded = this.cdp.waitFor('Page.loadEventFired', sessionId);
+    const navigation = await this.cdp.send('Page.navigate', { url: url.href }, sessionId);
+    if (navigation.errorText) throw new Error(`Chrome navigation failed: ${navigation.errorText}`);
+    await loaded;
+    return sessionId;
+  }
+
+  async evaluate(expression, { awaitPromise = false } = {}) {
+    const sessionId = await this.sessionPromise;
+    return evaluate(this.cdp, sessionId, expression, awaitPromise);
+  }
+
   async inspect({ artifactPath, width, height, theme, screenshotPath }) {
     const sessionId = await this.sessionPromise;
     await this.cdp.send('Emulation.setDeviceMetricsOverride', {
@@ -346,12 +365,7 @@ export class ChromeVisualBrowser {
       mobile: false,
     }, sessionId);
 
-    const url = new URL(pathToFileURL(artifactPath).href);
-    url.searchParams.set('theme', theme);
-    const loaded = this.cdp.waitFor('Page.loadEventFired', sessionId);
-    const navigation = await this.cdp.send('Page.navigate', { url: url.href }, sessionId);
-    if (navigation.errorText) throw new Error(`Chrome navigation failed: ${navigation.errorText}`);
-    await loaded;
+    await this.load({ artifactPath, theme });
     await evaluate(this.cdp, sessionId, `(function () {
       document.documentElement.setAttribute('data-motion', 'still');
       var panel = document.querySelector('.diagram-container');
