@@ -13,6 +13,51 @@ const repoRoot = path.resolve(skillRoot, '..');
 const assetPath = path.join(repoRoot, 'docs', 'assets', 'archify-live-proof.gif');
 const receiptPath = path.join(repoRoot, 'docs', 'assets', 'archify-live-proof.json');
 
+const readmeLanguages = [
+  {
+    file: 'README.md',
+    label: 'English',
+    links: ['./README_ZH.md', './README_JA.md'],
+    demos: '## See Archify in action',
+    preview: '## Preview',
+    quickStart: '## Quick start',
+    contributing: '## Contributing',
+  },
+  {
+    file: 'README_EN.md',
+    label: 'English',
+    links: ['./README_ZH.md', './README_JA.md'],
+    demos: '## See Archify in action',
+    preview: '## Preview',
+    quickStart: '## Quick start',
+    contributing: '## Contributing',
+  },
+  {
+    file: 'README_ZH.md',
+    label: '简体中文',
+    links: ['./README.md', './README_JA.md'],
+    demos: '## 看看 Archify 能做什么',
+    preview: '## 预览',
+    quickStart: '## 快速开始',
+    contributing: '## 参与贡献',
+  },
+  {
+    file: 'README_JA.md',
+    label: '日本語',
+    links: ['./README.md', './README_ZH.md'],
+    demos: '## 実際の Archify',
+    preview: '## プレビュー',
+    quickStart: '## クイックスタート',
+    contributing: '## コントリビュート',
+  },
+];
+
+function sectionIndex(readme, filename, heading) {
+  const index = readme.indexOf(heading);
+  assert.ok(index >= 0, `${filename}: section heading ${heading} is missing`);
+  return index;
+}
+
 function sha256(file) {
   return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }
@@ -116,13 +161,31 @@ test('README motion proof is compact, looping, and backed by current gallery art
   }
 });
 
+test('every README keeps a complete language switcher', () => {
+  for (const language of readmeLanguages) {
+    const readme = fs.readFileSync(path.join(repoRoot, language.file), 'utf8');
+    const switcher = readme.slice(0, readme.indexOf('</p>'));
+    for (const { label } of readmeLanguages) {
+      assert.ok(switcher.includes(label), `${language.file}: language switcher is missing ${label}`);
+    }
+    assert.ok(
+      switcher.includes(`<strong>${language.label}</strong>`),
+      `${language.file}: language switcher must mark ${language.label} as the current language`,
+    );
+    for (const link of language.links) {
+      assert.ok(switcher.includes(`href="${link}"`), `${language.file}: language switcher must link ${link}`);
+    }
+  }
+});
+
 test('all README languages keep the product hero and retain the verified animated proof', () => {
-  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const language of readmeLanguages) {
+    const filename = language.file;
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     const heroIndex = readme.indexOf('docs/assets/archify-readme-hero.png');
     const titleIndex = readme.indexOf('# Archify');
     const proofIndex = readme.indexOf('docs/assets/archify-live-proof.gif');
-    const demosIndex = Math.max(readme.indexOf('## See Archify in action'), readme.indexOf('## 看看 Archify 能做什么'));
+    const demosIndex = sectionIndex(readme, filename, language.demos);
     assert.ok(heroIndex >= 0 && heroIndex < titleIndex, `${filename}: product hero is not above the title`);
     assert.ok(proofIndex > demosIndex, `${filename}: animated proof must live in the demo section`);
     assert.match(readme, /docs\/assets\/archify-live-proof\.gif/);
@@ -180,13 +243,14 @@ test('README demos use checked-in captures and live deep links below the existin
     assert.ok(buffer.byteLength < 400 * 1024, `${demo.asset}: capture is too large`);
   }
 
-  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const language of readmeLanguages) {
+    const filename = language.file;
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     const heroIndex = readme.indexOf('docs/assets/archify-readme-hero.png');
     const proofIndex = readme.indexOf('docs/assets/archify-live-proof.gif');
-    const previewIndex = Math.max(readme.indexOf('## Preview'), readme.indexOf('## 预览'));
-    const demosIndex = Math.max(readme.indexOf('## See Archify in action'), readme.indexOf('## 看看 Archify 能做什么'));
-    const quickStartIndex = Math.max(readme.indexOf('## Quick start'), readme.indexOf('## 快速开始'));
+    const previewIndex = sectionIndex(readme, filename, language.preview);
+    const demosIndex = sectionIndex(readme, filename, language.demos);
+    const quickStartIndex = sectionIndex(readme, filename, language.quickStart);
     assert.ok(heroIndex >= 0 && heroIndex < demosIndex, `${filename}: existing hero proof moved`);
     assert.ok(demosIndex < previewIndex && previewIndex < quickStartIndex, `${filename}: demo section is misplaced`);
     assert.ok(demosIndex < proofIndex && proofIndex < previewIndex, `${filename}: animated proof is outside the demo section`);
@@ -214,7 +278,7 @@ test('README stays scannable without deleting the visual proof set', () => {
     'archify-lifecycle.png',
   ];
 
-  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const { file: filename } of readmeLanguages) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     assert.ok(readme.split('\n').length <= 295, `${filename}: README grew beyond the scannable line budget`);
     assert.match(readme, filename === 'README_ZH.md' ? /不需要绑定代码库/ : /No repository is required/);
@@ -224,10 +288,12 @@ test('README stays scannable without deleting the visual proof set', () => {
   }
 
   const english = fs.readFileSync(path.join(repoRoot, 'README.md'), 'utf8');
-  const wordCount = english.trim().split(/\s+/).length;
+  const switcher = english.match(/^<p align="center">\n[^\n]*README_ZH\.md[^\n]*\n<\/p>\n/);
+  assert.ok(switcher, 'README.md must open with the language switcher paragraph');
+  const wordCount = english.slice(switcher[0].length).trim().split(/\s+/).length;
   const intro = english.slice(0, english.indexOf('![License]'));
   const introBullets = intro.match(/^- \*\*/gm) || [];
-  assert.ok(wordCount <= 2085, `README.md is too verbose again (${wordCount} words)`);
+  assert.ok(wordCount <= 2078, `README.md prose is too verbose again (${wordCount} words, language switcher excluded)`);
   assert.ok(introBullets.length <= 8, `README.md has too many top-level capability bullets (${introBullets.length})`);
 
   const chinese = fs.readFileSync(path.join(repoRoot, 'README_ZH.md'), 'utf8');
@@ -239,11 +305,12 @@ test('all README languages end with the self-hosted star history chart', () => {
   const darkChart = 'https://raw.githubusercontent.com/tt-a1i/archify/star-history/assets/star-history-dark.svg';
   const workflow = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'star-history.yml'), 'utf8');
 
-  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const language of readmeLanguages) {
+    const filename = language.file;
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
-    const sectionIndex = readme.lastIndexOf('## Star History');
-    const contributingIndex = Math.max(readme.indexOf('## Contributing'), readme.indexOf('## 参与贡献'));
-    assert.ok(sectionIndex > contributingIndex, `${filename}: Star History must follow Contributing`);
+    const starHistoryIndex = readme.lastIndexOf('## Star History');
+    const contributingIndex = sectionIndex(readme, filename, language.contributing);
+    assert.ok(starHistoryIndex > contributingIndex, `${filename}: Star History must follow Contributing`);
     assert.ok(readme.includes(lightChart), `${filename}: missing light star history chart`);
     assert.ok(readme.includes(darkChart), `${filename}: missing dark star history chart`);
     assert.equal(readme.trimEnd().endsWith('</p>'), true, `${filename}: Star History must remain the final section`);

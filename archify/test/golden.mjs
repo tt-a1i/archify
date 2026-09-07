@@ -183,7 +183,7 @@ check('SKILL.md metadata version matches package.json major.minor',
   !!packageMajorMinor && skillVersion === packageMajorMinor,
   `SKILL.md says ${skillVersion}, package.json says ${pkg.version}`);
 
-for (const readmeName of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+for (const readmeName of ['README.md', 'README_EN.md', 'README_ZH.md', 'README_JA.md']) {
   const readme = fs.readFileSync(path.join(repoRoot, readmeName), 'utf8');
   const badgeVersions = shieldsBadgeMessages(readme, 'version');
   check(`${readmeName} badge matches package.json version`,
