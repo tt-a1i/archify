@@ -4191,6 +4191,12 @@ function renderNode(node) {
   const fill = componentFill[node.type] || 'c-external';
   const accent = componentText[node.type] || 't-muted';
   const hasSub = node.sublabel != null && node.sublabel !== '';
+  // NOTE: the semantic-sigil clearance rule (#199) is deliberately NOT applied
+  // to workflow. The fixed-v1 contract freezes this compiler's SVG
+  // byte-for-byte (test/workflow-compiler.test.mjs), so the label cannot be
+  // re-centred away from the sigil, and reporting the overlap instead would
+  // reject the packaged incident-response example by ~6px. Both need a
+  // maintainer decision; the other renderers carry the rule.
   const labelFontSize = fittedNodeFontSize(node.label, brandLabelFitWidth(node, node.width), nodeTextFit.labelPreferred, nodeTextFit.labelMinimum);
   const sublabelFontSize = hasSub
     ? fittedNodeFontSize(node.sublabel, node.width, nodeTextFit.sublabelPreferred, nodeTextFit.sublabelMinimum)

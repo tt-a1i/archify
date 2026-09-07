@@ -4,7 +4,7 @@ import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../share
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
-import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
+import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeTextWidth, sigilClearedLabelCenter, sigilLabelClearanceProblem, sigilLabelFitWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import {
@@ -143,6 +143,8 @@ function validateDataflow() {
     }
     const brandRailProblem = brandTopRailProblem(node, node.width, 8);
     if (brandRailProblem) problems.push(brandRailProblem);
+    const sigilClearance = sigilLabelClearanceProblem(node.id, node.label, node.width, 8);
+    if (sigilClearance) problems.push(sigilClearance);
     // sublabel and tag render as single unwrapped <text> elements; shrink-to-fit
     // handles the ordinary case, this rejects what it cannot rescue.
     const availableTextW = availableNodeTextWidth(node.width);
@@ -384,14 +386,16 @@ function renderNode(node) {
     ? `${String(node.stage + 1).padStart(2, '0')} / ${stage.label}`
     : i18nText(dataflow.meta.locale, 'node.context.dataflow');
   const brand = renderBrandMark(node, { x: node.x + node.width - 22, y: node.y + 6 });
-  const labelFontSize = fittedNodeFontSize(node.label, brandLabelFitWidth(node, node.width), 10, 8);
+  const labelFitWidth = Math.min(brandLabelFitWidth(node, node.width), sigilLabelFitWidth(node.width));
+  const labelFontSize = fittedNodeFontSize(node.label, labelFitWidth, 10, 8);
+  const labelCx = sigilClearedLabelCenter(node.x, node.width, nodeTextWidth(node.label, labelFontSize));
   const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context, ...brandMetadataFor(node) };
   return `        <g ${focusNodeAttrs(node.id, node.label, passport, dataflow.meta.locale)}>
           ${focusNodeTitle(node.label, passport)}
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="c-mask"/>
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="${fill}"${animateAttr(dataflow.meta, 'node', nodeSteps.get(node.id))} stroke-width="1.5"/>
           ${renderSemanticSigil(node.type, { x: node.x + 6, y: node.y + 6 })}${brand ? `\n          ${brand}` : ''}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${node.cx}" y="${node.y + 21}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(node.label)}</text>${sub}${tag}
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${labelCx}" y="${node.y + 21}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(node.label)}</text>${sub}${tag}
         </g>`;
 }
 
