@@ -719,7 +719,15 @@ test('cli: rejects a quality flag without a value', () => {
   ]) {
     const result = run(args);
     assert.equal(result.status, 2);
-    assert.match(result.stderr, /--quality requires standard or showcase/);
+    if (args.includes('--json')) {
+      assert.equal(result.stderr, '');
+      const receipt = JSON.parse(result.stdout);
+      assert.equal(receipt.ok, false);
+      assert.equal(receipt.stage, 'arguments');
+      assert.match(receipt.error, /--quality requires standard or showcase/);
+    } else {
+      assert.match(result.stderr, /--quality requires standard or showcase/);
+    }
   }
 });
 
@@ -731,12 +739,18 @@ test('cli: validate rejects unknown flags, layout-json assignment typos, and ext
       pattern: /Unknown validate option "--bogus"/,
     },
     {
+      args: ['validate', 'workflow', input, '--layout-json', '--bogus', '--json'],
+      pattern: /Unknown validate option "--bogus"/,
+      json: true,
+    },
+    {
       args: ['validate', 'workflow', input, '--layout-json=true'],
       pattern: /Unknown validate option "--layout-json=true"/,
     },
     {
       args: ['validate', 'workflow', input, '--layout-json=true', '--json'],
       pattern: /Unknown validate option "--layout-json=true"/,
+      json: true,
     },
     {
       args: ['validate', 'workflow', input, 'unexpected-output.html', '--layout-json'],
@@ -744,11 +758,19 @@ test('cli: validate rejects unknown flags, layout-json assignment typos, and ext
     },
   ];
 
-  for (const { args, pattern } of cases) {
+  for (const { args, pattern, json } of cases) {
     const result = run(args);
     assert.equal(result.status, 2, `${args.join(' ')}\n${result.stderr}\n${result.stdout}`);
-    assert.equal(result.stdout, '');
-    assert.match(result.stderr, pattern);
+    if (json) {
+      assert.equal(result.stderr, '');
+      const receipt = JSON.parse(result.stdout);
+      assert.equal(receipt.ok, false);
+      assert.equal(receipt.stage, 'arguments');
+      assert.match(receipt.error, pattern);
+    } else {
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, pattern);
+    }
   }
 });
 

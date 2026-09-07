@@ -35,7 +35,22 @@ Types:
 `;
 }
 
+let jsonMode = false;
+let currentCommand = '';
+
 function fail(message, code = 2) {
+  if (jsonMode) {
+    console.log(JSON.stringify({
+      schemaVersion: 1,
+      ok: false,
+      command: currentCommand,
+      stage: 'arguments',
+      error: message,
+      diagnostics: [{ code: 'arguments/invalid', severity: 'error', message }],
+    }, null, 2));
+    process.exitCode = code;
+    process.exit(code);
+  }
   console.error(message);
   process.exit(code);
 }
@@ -761,9 +776,10 @@ function engineeringProfileFromArtifact(artifact) {
 
 async function commandDeliver(args) {
   const { resolveOutputPath } = await import('../renderers/shared/output-path.mjs');
+  const json = args.includes('--json');
+  if (json) { jsonMode = true; currentCommand = 'deliver'; }
   const qualityArgs = extractQualityArgs(args);
   const repoArgs = extractRepoRootArgs(qualityArgs.rest);
-  const json = repoArgs.rest.includes('--json');
   const open = repoArgs.rest.includes('--open');
   const knownOptions = new Set(['--json', '--open']);
   const unknown = repoArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
@@ -1820,6 +1836,8 @@ async function commandMigrate(args) {
 }
 
 function commandValidate(args) {
+  const json = args.includes('--json');
+  if (json) { jsonMode = true; currentCommand = 'validate'; }
   const qualityArgs = extractQualityArgs(args);
   const repoArgs = extractRepoRootArgs(qualityArgs.rest);
   args = repoArgs.rest;
@@ -1827,9 +1845,8 @@ function commandValidate(args) {
   const repoRoot = repoArgs.repoRoot;
   const knownOptions = new Set(['--json', '--layout-json']);
   const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
-  if (unknown.length) fail(`Unknown validate option "${unknown[0]}".`);
-  const json = args.includes('--json');
   const layoutJson = args.includes('--layout-json');
+  if (unknown.length) fail(`Unknown validate option "${unknown[0]}".`);
   const rest = args.filter((arg) => !knownOptions.has(arg));
   const [type, input] = rest;
   if (!type || !input || rest.length !== 2) fail(usage());
