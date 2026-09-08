@@ -51,6 +51,15 @@ jobs:
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - name: Install offline font test parser
+        run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: archify
+      - name: Verify offline fonts and independent SVG/raster exports
+        run: node --test test/offline-font-browser.test.mjs
+        working-directory: archify
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
       - name: Verify all five diagram modes localize Viewer interactions
         run: node --test test/i18n.test.mjs
         working-directory: archify

@@ -289,3 +289,36 @@ test('clean staging reports the Git spawn error when Git cannot start', () => {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+// Historical DSH snapshots predate embedded fonts and must remain packageable.
+for (const fontPath of [null, 'archify/assets/template.html', 'archify/examples/standalone.html']) {
+  const embedded = fontPath !== null;
+  test(`clean staging applies font disclosures to snapshot contents (fontPath=${fontPath})`, () => {
+    const root = repositoryFixture();
+    const destination = path.join(root, 'staged-skill');
+    try {
+      const legacy = canonicalNotices.replace(/## JetBrains Mono[\s\S]*?(?=\n## |$)/, '');
+      write(root, 'THIRD_PARTY_NOTICES.md', legacy);
+      write(root, 'archify/THIRD_PARTY_NOTICES.md', legacy);
+      write(root, 'archify/assets/template.html', '<html>legacy viewer</html>');
+      if (embedded) write(root, fontPath, '@font-face { src: url(data:font/woff2;base64,fixture); }');
+      write(root, 'archify/assets/JetBrainsMono-OFL.txt', 'fixture license');
+      git(root, ['add', '.']);
+      if (embedded) {
+        assert.throws(() => stageCleanSkill({ repoRoot: root, destination }), /missing required disclosure: JetBrains Mono/);
+        assert.equal(fs.existsSync(destination), false);
+        write(root, 'THIRD_PARTY_NOTICES.md', canonicalNotices);
+        write(root, 'archify/THIRD_PARTY_NOTICES.md', canonicalNotices);
+        stageCleanSkill({ repoRoot: root, destination });
+        assert.equal(fs.readFileSync(path.join(destination, 'assets/JetBrainsMono-OFL.txt'), 'utf8'), 'fixture license');
+        fs.rmSync(destination, { recursive: true });
+        fs.unlinkSync(path.join(root, 'archify/assets/JetBrainsMono-OFL.txt'));
+        git(root, ['add', '.']);
+        assert.throws(() => stageCleanSkill({ repoRoot: root, destination }), /requires assets\/JetBrainsMono-OFL.txt/);
+      } else {
+        stageCleanSkill({ repoRoot: root, destination });
+        assert.equal(fs.readFileSync(path.join(destination, 'THIRD_PARTY_NOTICES.md'), 'utf8'), legacy);
+      }
+    } finally { fs.rmSync(root, { recursive: true, force: true }); }
+  });
+}
