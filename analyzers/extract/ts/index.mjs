@@ -141,7 +141,9 @@ function resolve(specifier, containingFile, absRoot, fileSet) {
   const resolvedFile = result.resolvedModule?.resolvedFileName;
   if (!resolvedFile) return { reason: 'unknown' };
   const rel = toPosix(path.relative(absRoot, resolvedFile));
-  if (rel.startsWith('..')) return { reason: 'outside' };
+  // Only a parent-directory result is outside the root; an in-root directory whose
+  // name merely starts with ".." (e.g. "..generated/") must not be misclassified.
+  if (rel === '..' || rel.startsWith('../')) return { reason: 'outside' };
   if (!fileSet.has(rel)) return { reason: 'unknown' };
   return { to: rel };
 }

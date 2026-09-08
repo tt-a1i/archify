@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 
 const SCHEMA_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'schemas');
-const ajv = new Ajv2020({ allErrors: true, strict: true });
+const ajv = new Ajv2020({ allErrors: true, strict: true, strictRequired: false });
 const cache = new Map();
 
 export function validator(name) {

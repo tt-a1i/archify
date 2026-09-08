@@ -75,3 +75,42 @@ test('repository roots are relative to Git through directory aliases', (t) => {
   assert.equal(describeRepository(alias).root, '.');
   assert.equal(describeRepository(path.join(alias, 'sub')).root, 'sub');
 });
+
+test('an in-root directory whose name starts with ".." is not classified as outside', (t) => {
+  const root = fixture(t, {
+    '..generated/table.mjs': 'export const table = [];\n',
+    'entry.mjs': "import { table } from './..generated/table.mjs';\nexport { table };\n",
+  });
+  const out = path.join(root, 'facts.json');
+  const result = extract(root, ['--out', out, '--json']);
+  assert.equal(result.status, 0, result.stdout);
+  const facts = JSON.parse(fs.readFileSync(out, 'utf8'));
+  const edge = facts.imports.find((i) => i.from === 'entry.mjs');
+  assert.equal(edge.resolved, true);
+  assert.equal(edge.to, '..generated/table.mjs');
+  assert.deepEqual(facts.unresolved, { external: 0, outside: 0, unknown: 0 });
+});
+
+test('raw-facts schema requires unresolved counters and enforces the resolved/to invariant', async () => {
+  const { schemaErrors } = await import('../extract/shared/schema.mjs');
+  const base = {
+    schema_version: 1,
+    repository: { root: '.', revision: null, language: 'ts', adapter: 'typescript@test' },
+    files: [{ path: 'a.mjs', loc: 1, role: 'source' }],
+    imports: [],
+    symbols: [],
+    calls: [],
+    unresolved: { external: 0, outside: 0, unknown: 0 },
+  };
+  assert.deepEqual(schemaErrors('raw-facts', base), []);
+
+  const { unresolved, ...missingCounters } = base;
+  assert.ok(schemaErrors('raw-facts', missingCounters).length, 'missing unresolved must fail');
+  assert.ok(schemaErrors('raw-facts', { ...base, unresolved: { external: 0 } }).length, 'partial counters must fail');
+
+  const edge = { from: 'a.mjs', specifier: './b.mjs', kind: 'static', line: 1 };
+  assert.ok(schemaErrors('raw-facts', { ...base, imports: [{ ...edge, resolved: true }] }).length, 'resolved without to must fail');
+  assert.ok(schemaErrors('raw-facts', { ...base, imports: [{ ...edge, resolved: false, to: 'b.mjs' }] }).length, 'unresolved with to must fail');
+  assert.deepEqual(schemaErrors('raw-facts', { ...base, imports: [{ ...edge, resolved: true, to: 'b.mjs' }] }), []);
+  assert.deepEqual(schemaErrors('raw-facts', { ...base, imports: [{ ...edge, resolved: false }] }), []);
+});

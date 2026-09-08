@@ -2,14 +2,15 @@
 // the first half of the M1 acceptance gate (the second half is the module graph).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { REPO_ROOT, runCli } from './helpers.mjs';
 import { schemaErrors } from '../extract/shared/schema.mjs';
 
 const ARCHIFY = path.join(REPO_ROOT, 'archify');
-const OUT_A = path.join(process.env.TMPDIR || '/tmp', 'archify-analyzers-self-a.json');
-const OUT_B = path.join(process.env.TMPDIR || '/tmp', 'archify-analyzers-self-b.json');
+const OUT_A = path.join(process.env.TMPDIR || os.tmpdir(), 'archify-analyzers-self-a.json');
+const OUT_B = path.join(process.env.TMPDIR || os.tmpdir(), 'archify-analyzers-self-b.json');
 
 function edges(facts, from) {
   return facts.imports.filter((i) => i.from === from && i.resolved).map((i) => i.to).sort();
@@ -26,7 +27,10 @@ test('extract: archify/ self-bootstrap passes schema and is byte-for-byte determ
 });
 
 test('extract: hand-verified import lists for two archify files', () => {
-  const facts = JSON.parse(fs.readFileSync(OUT_A, 'utf8'));
+  // Independent of test ordering: this test produces its own extraction.
+  const OUT_C = path.join(process.env.TMPDIR || os.tmpdir(), 'archify-analyzers-self-c.json');
+  assert.equal(runCli(['extract', ARCHIFY, '--out', OUT_C]).status, 0);
+  const facts = JSON.parse(fs.readFileSync(OUT_C, 'utf8'));
   // renderers/shared/validator.mjs — verified by hand against its two import lines.
   assert.deepEqual(edges(facts, 'renderers/shared/validator.mjs'), [
     'renderers/shared/diagnostics.mjs',

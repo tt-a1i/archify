@@ -4,7 +4,7 @@
   "title": "Archify Analyzers raw facts",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "repository", "files", "imports", "symbols", "calls"],
+  "required": ["schema_version", "repository", "files", "imports", "symbols", "calls", "unresolved"],
   "properties": {
     "schema_version": { "const": 1 },
     "repository": {
@@ -45,7 +45,10 @@
           "line": { "type": "integer", "minimum": 1 },
           "resolved": { "type": "boolean" },
           "names": { "type": "array", "items": { "type": "string" } }
-        }
+        },
+        "if": { "properties": { "resolved": { "const": true } } },
+        "then": { "required": ["to"] },
+        "else": { "not": { "required": ["to"] } }
       }
     },
     "symbols": { "type": "array", "description": "Reserved for M2 (Symbol Graph).", "items": { "type": "object" } },
@@ -53,6 +56,7 @@
     "unresolved": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["external", "outside", "unknown"],
       "properties": {
         "external": { "type": "integer", "minimum": 0, "description": "Bare or node: specifiers." },
         "outside": { "type": "integer", "minimum": 0, "description": "Resolved to a file outside the analyzed root." },

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { ANALYZERS_ROOT, runCli } from './helpers.mjs';
@@ -7,7 +8,7 @@ import { ANALYZERS_ROOT, runCli } from './helpers.mjs';
 const FIXTURE = path.join(ANALYZERS_ROOT, 'test', 'fixtures', 'ts-basic');
 
 test('extract: synthetic fixture yields the expected files, imports, and unresolved counts', () => {
-  const result = runCli(['extract', FIXTURE, '--json', '--out', path.join(process.env.TMPDIR || '/tmp', 'archify-analyzers-fixture.json')]);
+  const result = runCli(['extract', FIXTURE, '--json', '--out', path.join(process.env.TMPDIR || os.tmpdir(), 'archify-analyzers-fixture.json')]);
   assert.equal(result.status, 0, result.stderr);
   const facts = JSON.parse(fs.readFileSync(result.json.out, 'utf8'));
   const expected = JSON.parse(fs.readFileSync(path.join(FIXTURE, 'expected.json'), 'utf8'));
