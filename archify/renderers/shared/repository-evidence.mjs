@@ -38,8 +38,18 @@ function gitValue(repoRoot, args, failure) {
   return result.stdout.trim();
 }
 
+function redactRemoteUrl(value) {
+  // Strip userinfo for any http(s) remote so rejected origins cannot leak credentials.
+  return String(value || '').replace(/^(https?:\/\/)[^/@\s]+@/i, '$1REDACTED@');
+}
+
+function normalizeRemoteForSlug(value) {
+  // Strip HTTPS userinfo so credentialed remotes share identity with canonical URLs.
+  return String(value || '').trim().replace(/^https:\/\/[^/@\s]+@/i, 'https://');
+}
+
 function githubSlug(value) {
-  const raw = String(value || '').trim();
+  const raw = normalizeRemoteForSlug(value);
   const match = raw.match(/^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/i);
   return match ? `${match[1]}/${match[2]}`.toLowerCase() : null;
 }
@@ -139,9 +149,10 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   }
   const origin = gitValue(realRoot, ['remote', 'get-url', 'origin'], 'Evidence repository must have an origin remote.');
   if (githubSlug(origin) !== authoredSlug) {
-    evidenceFailure('repository-evidence/origin-mismatch', `Evidence repository origin ${JSON.stringify(origin)} does not match ${JSON.stringify(repository.url)}.`, {
+    const safeOrigin = redactRemoteUrl(origin);
+    evidenceFailure('repository-evidence/origin-mismatch', `Evidence repository origin ${JSON.stringify(safeOrigin)} does not match ${JSON.stringify(repository.url)}.`, {
       subject: { repoRoot: realRoot },
-      evidence: { localOrigin: origin, authoredRepository: repository.url },
+      evidence: { localOrigin: safeOrigin, authoredRepository: repository.url },
       supportedFixes: ['use the matching local checkout or correct the authored repository URL'],
     });
   }
