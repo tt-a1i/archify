@@ -272,6 +272,7 @@ Claude.ai 中的上传入口：
 - [Agent 编图手册](docs/authoring-cookbook.zh-CN.md) · [English](docs/authoring-cookbook.md)
 - [版本历史](CHANGELOG.md)
 - [路线图](ROADMAP.md)
+- [分层阅读](archify/references/layered-reading.md)：离线总览与显式细节关联，保留阅读位置并统一主题。
 - [自动生成的 Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
 自动 Mermaid Parser、通用自动布局、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。

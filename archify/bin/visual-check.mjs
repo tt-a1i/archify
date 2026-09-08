@@ -397,8 +397,8 @@ export class ChromeVisualBrowser {
       var scale = viewBoxWidth > 0 ? Math.min(1, diagramWidth / viewBoxWidth) : 0;
       var minimum = null;
       if (svg && scale > 0) {
-        Array.from(svg.querySelectorAll('text[data-node-label], text[data-boundary-label], text[data-detail="context"]')).forEach(function (text) {
-          var detail = text.hasAttribute('data-node-label')
+        Array.from(svg.querySelectorAll('text[data-node-label], text[data-boundary-label], text[data-detail="context"], [data-edge-id] g[data-detail="context"] > text')).forEach(function (text) {
+          var detail = text.closest('[data-edge-id]') ? 'message' : text.hasAttribute('data-node-label')
             ? 'primary'
             : text.hasAttribute('data-boundary-label') ? 'boundary' : 'context';
           if (detail === 'context' && !text.closest('[data-node-id]')) return;

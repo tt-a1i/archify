@@ -269,6 +269,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Schema reference](archify/schemas/README.md) · [Skill](archify/SKILL.md) · [Examples](archify/examples/) · [Agent cookbook](docs/authoring-cookbook.md)
 - [Changelog](CHANGELOG.md)
 - [Roadmap](ROADMAP.md)
+- [Layered reading](archify/references/layered-reading.md): an offline overview with explicit detail links, preserved reading position and shared themes.
 - [Generated Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
 Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.

@@ -135,3 +135,11 @@ test('the fast authoring path explains when to opt into spread', () => {
   assert.match(rendererReadme, /Use `"spread"` when a wide/);
   assert.match(rendererReadme, /try `meta\.column_fit: "spread"` before shortening/);
 });
+
+test('message names use readable primary type with a plate wide enough for the same text', () => {
+  const html = render(wideSequence('spread'));
+  const match = html.match(/<rect x="[^"]+" y="[^"]+" width="([^"]+)" height="[^"]+" rx="3" class="c-mask"\/>\s*<text[^>]*font-size="([^"]+)"[^>]*>authorize<\/text>/);
+  assert.ok(match, 'message and its plate are present');
+  assert.ok(Number(match[2]) >= 11, 'primary message text should be at least 11 source px');
+  assert.ok(Number(match[1]) >= 9 * 6.4 + 12, 'plate must fit the larger monospace text');
+});

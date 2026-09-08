@@ -118,3 +118,7 @@ correction_rounds: 0|1|2
 Derive `browser_evidence` only from the latest artifact-bound `visual-check` receipt. Record any manual browser work separately with its artifact binding, viewport/theme scope, and observations; never use it or `visual_review` to overwrite the automated status.
 
 Opening, preview status, Share Cards, and other viewer exports are not validation claims.
+
+## Multiple authored diagrams
+
+For an overview linked to separately authored details, see [layered reading](layered-reading.md). The atlas receipt covers composition and exact embedded child bytes; child `visual-check` results do not establish atlas browser acceptance.

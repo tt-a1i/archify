@@ -5191,112 +5191,112 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g data-edge-from="client" data-edge-to="api" data-edge-label="POST /jobs" data-edge-key="0">
           <path data-composition-edge-from="client" data-composition-edge-to="api" data-composition-points="69,180;163,180" d="M 69 180 L 163 180" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <g data-detail="context">
-          <rect x="84" y="160" width="64" height="16" rx="3" class="c-mask"/>
-          <text x="116" y="170" class="t-backend" font-size="9" text-anchor="middle">POST /jobs</text>
+          <rect x="77" y="160" width="78" height="18" rx="3" class="c-mask"/>
+          <text x="116" y="170" class="t-backend" font-size="11" text-anchor="middle">POST /jobs</text>
         </g>
         </g>
 
         <g data-edge-from="api" data-edge-to="queue" data-edge-label="enqueue job" data-edge-key="1">
           <path data-composition-edge-from="api" data-composition-edge-to="queue" data-composition-points="177,222;271,222" d="M 177 222 L 271 222" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <g data-detail="context">
-          <rect x="189.4" y="202" width="69.2" height="16" rx="3" class="c-mask"/>
-          <text x="224" y="212" class="t-backend" font-size="9" text-anchor="middle">enqueue job</text>
+          <rect x="181.7" y="202" width="84.6" height="18" rx="3" class="c-mask"/>
+          <text x="224" y="212" class="t-backend" font-size="11" text-anchor="middle">enqueue job</text>
         </g>
         </g>
 
         <g data-edge-from="api" data-edge-to="client" data-edge-label="202 + job id" data-edge-key="2">
           <path data-composition-edge-from="api" data-composition-edge-to="client" data-composition-points="163,264;69,264" d="M 163 264 L 69 264" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.4" stroke-dasharray="3,5" marker-end="url(#arrowhead)"/>
         <g data-detail="context">
-          <rect x="78.8" y="244" width="74.4" height="16" rx="3" class="c-mask"/>
-          <text x="116" y="254" class="t-muted" font-size="9" text-anchor="middle">202 + job id</text>
+          <rect x="70.4" y="244" width="91.19999999999999" height="18" rx="3" class="c-mask"/>
+          <text x="116" y="254" class="t-muted" font-size="11" text-anchor="middle">202 + job id</text>
         </g>
         </g>
 
         <g data-edge-from="queue" data-edge-to="worker" data-edge-label="deliver" data-edge-key="3">
           <path data-composition-edge-from="queue" data-composition-edge-to="worker" data-composition-points="285,326;379,326" d="M 285 326 L 379 326" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <g data-detail="context">
-          <rect x="307.8" y="306" width="48.4" height="16" rx="3" class="c-mask"/>
-          <text x="332" y="316" class="t-backend" font-size="9" text-anchor="middle">deliver</text>
+          <rect x="302.9" y="306" width="58.199999999999996" height="18" rx="3" class="c-mask"/>
+          <text x="332" y="316" class="t-backend" font-size="11" text-anchor="middle">deliver</text>
         </g>
         </g>
 
         <g data-edge-from="worker" data-edge-to="provider" data-edge-label="perform work" data-edge-key="4">
           <path data-composition-edge-from="worker" data-composition-edge-to="provider" data-composition-points="393,368;487,368" d="M 393 368 L 487 368" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <g data-detail="context">
-          <rect x="402.8" y="348" width="74.4" height="16" rx="3" class="c-mask"/>
-          <text x="440" y="358" class="t-backend" font-size="9" text-anchor="middle">perform work</text>
+          <rect x="394.4" y="348" width="91.19999999999999" height="18" rx="3" class="c-mask"/>
+          <text x="440" y="358" class="t-backend" font-size="11" text-anchor="middle">perform work</text>
         </g>
         </g>
 
         <g data-edge-from="provider" data-edge-to="worker" data-edge-label="result / timeout" data-edge-key="5">
           <path data-composition-edge-from="provider" data-composition-edge-to="worker" data-composition-points="487,410;393,410" d="M 487 410 L 393 410" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.4" stroke-dasharray="3,5" marker-end="url(#arrowhead)"/>
         <g data-detail="context">
-          <rect x="392.4" y="390" width="95.2" height="16" rx="3" class="c-mask"/>
-          <text x="440" y="400" class="t-muted" font-size="9" text-anchor="middle">result / timeout</text>
+          <rect x="381.2" y="390" width="117.6" height="18" rx="3" class="c-mask"/>
+          <text x="440" y="400" class="t-muted" font-size="11" text-anchor="middle">result / timeout</text>
         </g>
         </g>
 
         <g data-edge-from="worker" data-edge-to="queue" data-edge-label="retry if timeout" data-edge-key="6">
           <path data-composition-edge-from="worker" data-composition-edge-to="queue" data-composition-points="379,452;285,452" d="M 379 452 L 285 452" class="a-dashed" data-animate="edge" style="--step:6" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <g data-detail="context">
-          <rect x="284.4" y="432" width="95.2" height="16" rx="3" class="c-mask"/>
-          <text x="332" y="442" class="t-messagebus" font-size="9" text-anchor="middle">retry if timeout</text>
+          <rect x="273.2" y="432" width="117.6" height="18" rx="3" class="c-mask"/>
+          <text x="332" y="442" class="t-messagebus" font-size="11" text-anchor="middle">retry if timeout</text>
         </g>
         </g>
 
         <g data-edge-from="worker" data-edge-to="store" data-edge-label="persist final state" data-edge-key="7">
           <path data-composition-edge-from="worker" data-composition-edge-to="store" data-composition-points="393,494;595,494" d="M 393 494 L 595 494" class="a-emphasis" data-animate="edge" style="--step:7" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <g data-detail="context">
-          <rect x="438.6" y="474" width="110.8" height="16" rx="3" class="c-mask"/>
-          <text x="494" y="484" class="t-backend" font-size="9" text-anchor="middle">persist final state</text>
+          <rect x="425.3" y="474" width="137.39999999999998" height="18" rx="3" class="c-mask"/>
+          <text x="494" y="484" class="t-backend" font-size="11" text-anchor="middle">persist final state</text>
         </g>
         </g>
 
         <g data-edge-from="worker" data-edge-to="notify" data-edge-label="job.completed" data-edge-key="8">
           <path data-composition-edge-from="worker" data-composition-edge-to="notify" data-composition-points="393,566;703,566" d="M 393 566 L 703 566" class="a-dashed" data-animate="edge" style="--step:8" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <g data-detail="context">
-          <rect x="508.2" y="546" width="79.60000000000001" height="16" rx="3" class="c-mask"/>
-          <text x="548" y="556" class="t-messagebus" font-size="9" text-anchor="middle">job.completed</text>
+          <rect x="499.1" y="546" width="97.8" height="18" rx="3" class="c-mask"/>
+          <text x="548" y="556" class="t-messagebus" font-size="11" text-anchor="middle">job.completed</text>
         </g>
         </g>
 
         <g data-edge-from="notify" data-edge-to="client" data-edge-label="signed webhook" data-edge-key="9">
           <path data-composition-edge-from="notify" data-composition-edge-to="client" data-composition-points="703,608;69,608" d="M 703 608 L 69 608" class="a-dashed" data-animate="edge" style="--step:9" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <g data-detail="context">
-          <rect x="343.6" y="588" width="84.8" height="16" rx="3" class="c-mask"/>
-          <text x="386" y="598" class="t-messagebus" font-size="9" text-anchor="middle">signed webhook</text>
+          <rect x="333.8" y="588" width="104.39999999999999" height="18" rx="3" class="c-mask"/>
+          <text x="386" y="598" class="t-messagebus" font-size="11" text-anchor="middle">signed webhook</text>
         </g>
         </g>
 
         <g data-edge-from="client" data-edge-to="api" data-edge-label="GET /jobs/:id" data-edge-key="10">
           <path data-composition-edge-from="client" data-composition-edge-to="api" data-composition-points="69,650;163,650" d="M 69 650 L 163 650" class="a-default" data-animate="edge" style="--step:10" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <g data-detail="context">
-          <rect x="76.19999999999999" y="630" width="79.60000000000001" height="16" rx="3" class="c-mask"/>
-          <text x="116" y="640" class="t-backend" font-size="9" text-anchor="middle">GET /jobs/:id</text>
+          <rect x="67.1" y="630" width="97.8" height="18" rx="3" class="c-mask"/>
+          <text x="116" y="640" class="t-backend" font-size="11" text-anchor="middle">GET /jobs/:id</text>
         </g>
         </g>
 
         <g data-edge-from="api" data-edge-to="store" data-edge-label="read status" data-edge-key="11">
           <path data-composition-edge-from="api" data-composition-edge-to="store" data-composition-points="177,692;595,692" d="M 177 692 L 595 692" class="a-default" data-animate="edge" style="--step:11" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <g data-detail="context">
-          <rect x="351.4" y="672" width="69.2" height="16" rx="3" class="c-mask"/>
-          <text x="386" y="682" class="t-backend" font-size="9" text-anchor="middle">read status</text>
+          <rect x="343.7" y="672" width="84.6" height="18" rx="3" class="c-mask"/>
+          <text x="386" y="682" class="t-backend" font-size="11" text-anchor="middle">read status</text>
         </g>
         </g>
 
         <g data-edge-from="store" data-edge-to="api" data-edge-label="completed" data-edge-key="12">
           <path data-composition-edge-from="store" data-composition-edge-to="api" data-composition-points="595,734;177,734" d="M 595 734 L 177 734" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" stroke-dasharray="3,5" marker-end="url(#arrowhead)"/>
         <g data-detail="context">
-          <rect x="356.6" y="714" width="58.800000000000004" height="16" rx="3" class="c-mask"/>
-          <text x="386" y="724" class="t-muted" font-size="9" text-anchor="middle">completed</text>
+          <rect x="350.3" y="714" width="71.4" height="18" rx="3" class="c-mask"/>
+          <text x="386" y="724" class="t-muted" font-size="11" text-anchor="middle">completed</text>
         </g>
         </g>
 
         <g data-edge-from="api" data-edge-to="client" data-edge-label="200 final result" data-edge-key="13">
           <path data-composition-edge-from="api" data-composition-edge-to="client" data-composition-points="163,776;69,776" d="M 163 776 L 69 776" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" stroke-dasharray="3,5" marker-end="url(#arrowhead)"/>
         <g data-detail="context">
-          <rect x="68.4" y="756" width="95.2" height="16" rx="3" class="c-mask"/>
-          <text x="116" y="766" class="t-muted" font-size="9" text-anchor="middle">200 final result</text>
+          <rect x="57.2" y="756" width="117.6" height="18" rx="3" class="c-mask"/>
+          <text x="116" y="766" class="t-muted" font-size="11" text-anchor="middle">200 final result</text>
         </g>
         </g>
 
