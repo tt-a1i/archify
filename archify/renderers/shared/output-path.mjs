@@ -255,6 +255,7 @@ export function resolveOutputPath({
   inputDescription = 'an input',
   otherOutputPaths = [],
   cwd = process.cwd(),
+  requiredExtension = '.html',
 }) {
   const rawOutput = requestedOutput || authoredOutput || defaultOutput;
   const source = requestedOutput ? 'cli' : (authoredOutput ? 'meta' : 'default');
@@ -312,6 +313,24 @@ export function resolveOutputPath({
       subject: { output: outputPath, conflictingOutput: path.resolve(otherOutputPath) },
       supportedFixes: ['choose distinct paths for every generated output'],
     });
+  }
+
+  // Keep explicit CLI directories unrestricted, but reject mistaken file types.
+  // Alias checks above retain priority when a target would overwrite an input.
+  if (source === 'cli') {
+    const resolvedOutput = canonicalFuturePath(outputPath);
+    const authoredMatches = path.extname(rawOutput).toLowerCase() === requiredExtension;
+    const resolvedMatches = path.extname(resolvedOutput).toLowerCase() === requiredExtension;
+    if (!authoredMatches || !resolvedMatches) {
+      const message = `CLI output must ${authoredMatches ? 'resolve to' : 'target'} a ${requiredExtension} file.`;
+      throw new OutputPathError(message, {
+        code: authoredMatches ? 'output/cli-resolved-extension' : 'output/cli-extension',
+        message,
+        subject: { output: rawOutput },
+        evidence: { resolvedOutput, requiredExtension },
+        supportedFixes: [`choose a path ending in ${requiredExtension} whose symbolic-link target also ends in ${requiredExtension}`],
+      });
+    }
   }
 
   return {

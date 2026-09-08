@@ -38,6 +38,19 @@ function gitValue(repoRoot, args, failure) {
   return result.stdout.trim();
 }
 
+function redactRemoteUrl(value) {
+  try {
+    const url = new URL(value);
+    if (url.username || url.password) {
+      url.username = 'REDACTED';
+      url.password = '';
+    }
+    return url.href;
+  } catch {
+    return '[unsupported repository URL]';
+  }
+}
+
 function repositoryAddress(value) {
   const raw = String(value || '').trim();
   if (!raw || /[\s\\?#]/.test(raw)) return null;
@@ -173,11 +186,12 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   const local = repositoryAddress(origin);
   if (!local || local.hostname !== authored.hostname || local.repositoryPath !== authored.repositoryPath
     || (local.protocol !== 'ssh:' && local.port !== authored.port)) {
-    // Never echo the remote: userinfo and even malformed remote strings may
-    // contain credentials. The authored URL has already been checked above.
-    evidenceFailure('repository-evidence/origin-mismatch', `Evidence repository origin does not match ${JSON.stringify(repository.url)}.`, {
+    // Only expose a parsed address with userinfo removed. Unsupported remote
+    // strings (including query-bearing URLs) may contain credentials anywhere.
+    const safeOrigin = local ? redactRemoteUrl(origin) : '[unsupported repository URL]';
+    evidenceFailure('repository-evidence/origin-mismatch', `Evidence repository origin ${JSON.stringify(safeOrigin)} does not match ${JSON.stringify(repository.url)}.`, {
       subject: { repoRoot: realRoot },
-      evidence: { authoredRepository: repository.url },
+      evidence: { localOrigin: safeOrigin, authoredRepository: repository.url },
       supportedFixes: ['use the matching local checkout or correct the authored repository URL'],
     });
   }
