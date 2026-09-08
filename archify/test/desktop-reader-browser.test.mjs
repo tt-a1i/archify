@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { findChrome, runVisualCheck } from '../bin/visual-check.mjs';
+import { ChromeVisualBrowser, findChrome, runVisualCheck } from '../bin/visual-check.mjs';
 import { DESKTOP_READABILITY_VIEWPORT, MIN_PROJECTED_NODE_TEXT_PX } from '../renderers/shared/desktop-readability.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -72,6 +72,55 @@ test('production showcase is readable in the real 1440 by 900 adaptive reader', 
         assert.equal(observation.minimumProjectedNodeText, 'AWS eu-west-1 / disaster recovery');
         assert.equal(observation.readabilityOk, true);
         assert.equal(observation.scrollHeight, DESKTOP_READABILITY_VIEWPORT.height);
+      }
+    }
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('offline workflow viewport repair retains order semantics and identifies overflowing lane frames', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const fixtureRoot = path.join(skillRoot, 'test/fixtures/workflow-viewport');
+  const failed = JSON.parse(fs.readFileSync(path.join(fixtureRoot, 'order-overflow.workflow.json'), 'utf8'));
+  const repaired = JSON.parse(fs.readFileSync(path.join(fixtureRoot, 'order-reflow.workflow.json'), 'utf8'));
+  const meaning = ({ lane, col, yOffset, ...node }) => node;
+  assert.deepEqual(failed.nodes.map(meaning), repaired.nodes.map(meaning));
+  for (const key of ['edges', 'semanticChecks', 'mainPath', 'cards', 'phases', 'meta']) {
+    assert.deepEqual(repaired[key], failed[key], key);
+  }
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-workflow-viewport-'));
+  try {
+    for (const name of ['order-overflow', 'order-reflow']) {
+      const artifact = path.join(tmp, `${name}.html`);
+      execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'deliver', 'workflow',
+        path.join(fixtureRoot, `${name}.workflow.json`), artifact, '--quality', 'showcase', '--json'], { cwd: skillRoot });
+      const result = await runVisualCheck({
+        artifactPath: artifact, chromePath,
+        browserFactory: async (executable) => {
+          const browser = new ChromeVisualBrowser(executable);
+          try {
+            const session = await browser.sessionPromise;
+            await browser.cdp.send('Network.enable', {}, session);
+            await browser.cdp.send('Network.setBlockedURLs', { urls: ['http://*', 'https://*'] }, session);
+            return browser;
+          } catch (error) {
+            await browser.close();
+            throw error;
+          }
+        },
+      });
+      if (name === 'order-overflow') {
+        assert.equal(result.exitCode, 1);
+        const diagnostic = result.receipt.diagnostics.find(({ code }) => code === 'viewer/viewport-overflow');
+        assert.ok(diagnostic, JSON.stringify(result.receipt));
+        assert.equal(diagnostic.evidence.workflowLanes[0].frameId, 'lane-0');
+        assert.equal(diagnostic.evidence.workflowLanes[0].nodeCount, 12);
+        assert.ok(diagnostic.evidence.workflowLanes[0].spaceAboveNodesPx > 100);
+      } else {
+        assert.equal(result.exitCode, 0, JSON.stringify(result.receipt));
+        assert.equal(result.receipt.containment.status, 'pass');
       }
     }
   } finally {

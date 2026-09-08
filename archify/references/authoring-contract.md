@@ -161,6 +161,27 @@ legacy geometry compatibility. Keep the happy path monotonic, preserve semantic
 edge labels, and route retries and exception returns outside the main lane
 corridor.
 
+#### Workflow viewport repair
+
+When `viewer/viewport-overflow` includes `workflowLanes`, inspect the tallest
+rendered frames and their node span before changing the source. Measurements
+are CSS pixels; space above/below nodes includes lane titles and routing, so it
+is not a removable-space budget. Frame IDs identify rendered lane indices.
+
+Run `validate workflow <source.json> --layout-json` and match those frames to
+source lanes and nodes. Check whether many steps share the last logical column
+and use large `yOffset` values. Readable-v2 currently reserves symmetric space
+around offsets and shares the base content height between lanes, so increasing
+one offset can enlarge otherwise sparse lanes.
+
+Where the source's ownership and explicit geometry permit, redistribute steps
+across logical columns and meaningful lanes, keeping the main path monotonic.
+Preserve every required node, relationship, label and semantic check. If ownership
+or absolute pins prevent reflow, report that constraint instead of merging lanes
+or moving pins automatically. Validate the changed JSON, deliver a fresh HTML,
+then rerun browser checks and inspect the first screen; a static pass alone does
+not settle viewport fit. These are repair directions, not guaranteed coordinates.
+
 ### Sequence
 
 Participants are ordered by conversation role. Messages own their vertical order. Use return/async/security variants for meaning, not decoration; sequence does not use Automatic Port Spread.

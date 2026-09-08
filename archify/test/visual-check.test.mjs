@@ -398,3 +398,26 @@ test('visual-check returns 2 with a truthful skipped receipt when Chrome is unav
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
+
+test('vertical workflow overflow reports measured frames and conditional reflow guidance without changing the artifact', async () => {
+  const file = artifact('workflow-overflow.html');
+  const before = sha256(file);
+  const browser = fakeBrowser();
+  const inspect = browser.inspect.bind(browser);
+  const lanes = [{ frameId: 'lane-0', heightPx: 720, nodeCount: 12, nodeIds: ['wait', 'cancel'], nodeSpanPx: 480, spaceAboveNodesPx: 180, spaceBelowNodesPx: 60 }];
+  browser.inspect = async (args) => ({ ...(await inspect(args)), scrollHeight: args.height + 599, workflowLanes: lanes });
+  const result = await runVisualCheck({ artifactPath: file, chromePath: '/fake/chrome', browserFactory: async () => browser });
+  assert.equal(result.exitCode, 1);
+  const diagnostic = result.receipt.diagnostics.find(({ code }) => code === 'viewer/viewport-overflow');
+  assert.deepEqual(diagnostic.evidence.workflowLanes, lanes);
+  assert.match(diagnostic.evidence.measurement, /not guaranteed removable/);
+  assert.match(diagnostic.supportedFixes.join('\n'), /--layout-json/);
+  assert.match(diagnostic.supportedFixes.join('\n'), /ownership and explicit geometry permit/);
+  assert.match(diagnostic.supportedFixes.join('\n'), /not a verified coordinate fix/);
+  assert.equal(sha256(file), before);
+  browser.inspect = async (args) => ({ ...(await inspect(args)), scrollWidth: args.width + 1, workflowLanes: lanes });
+  const horizontal = await runVisualCheck({ artifactPath: file, chromePath: '/fake/chrome', browserFactory: async () => browser });
+  const horizontalOverflow = horizontal.receipt.diagnostics.find(({ code }) => code === 'viewer/viewport-overflow');
+  assert.equal(horizontalOverflow.evidence.workflowLanes, undefined);
+  assert.equal(horizontalOverflow.supportedFixes.length, 1);
+});

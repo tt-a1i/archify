@@ -432,6 +432,29 @@ export class ChromeVisualBrowser {
         && typeof Archify.viewerChromeLayout.receipt === 'function'
         ? Archify.viewerChromeLayout.receipt()
         : null;
+      // Read rendered boxes only; source ownership, offsets and hard pins are unknown.
+      var workflowLanes = svg ? Array.from(svg.querySelectorAll('rect[data-composition-frame-kind="lane"]')).map(function (lane) {
+        var rect = lane.getBoundingClientRect();
+        var members = Array.from(svg.querySelectorAll('g[data-node-id]')).map(function (node) {
+          var box = node.querySelector('rect');
+          if (!box) return null;
+          var bounds = box.getBoundingClientRect();
+          if (bounds.top < rect.top - 1 || bounds.bottom > rect.bottom + 1
+            || bounds.left < rect.left - 1 || bounds.right > rect.right + 1) return null;
+          return { id: node.getAttribute('data-node-id'), top: bounds.top, bottom: bounds.bottom };
+        }).filter(Boolean);
+        var top = members.length ? Math.min.apply(null, members.map(function (node) { return node.top; })) : null;
+        var bottom = members.length ? Math.max.apply(null, members.map(function (node) { return node.bottom; })) : null;
+        return {
+          frameId: lane.getAttribute('data-composition-frame-id'),
+          heightPx: Math.round(rect.height),
+          nodeCount: members.length,
+          nodeIds: members.slice(0, 12).map(function (node) { return node.id; }),
+          nodeSpanPx: top === null ? null : Math.round(bottom - top),
+          spaceAboveNodesPx: top === null ? null : Math.round(top - rect.top),
+          spaceBelowNodesPx: bottom === null ? null : Math.round(rect.bottom - bottom)
+        };
+      }).sort(function (a, b) { return b.heightPx - a.heightPx; }).slice(0, 6) : [];
       return {
         innerWidth: window.innerWidth,
         innerHeight: window.innerHeight,
@@ -441,6 +464,7 @@ export class ChromeVisualBrowser {
         readerWidth: reader ? reader.getBoundingClientRect().width : 0,
         diagramWidth: diagramWidth,
         viewBoxWidth: viewBoxWidth,
+        workflowLanes: workflowLanes,
         minimumProjectedNodeTextPx: minimum ? minimum.projectedFontPx : null,
         minimumProjectedNodeText: minimum ? minimum.text : null,
         minimumProjectedNodeTextDetail: minimum ? minimum.detail : null,
@@ -534,6 +558,7 @@ function observation({ width, height, theme, metrics }) {
     readerWidth: Number(metrics.readerWidth) || null,
     diagramWidth: Number(metrics.diagramWidth) || null,
     viewBoxWidth: Number(metrics.viewBoxWidth) || null,
+    ...(metrics.workflowLanes?.length ? { workflowLanes: metrics.workflowLanes } : {}),
     minimumProjectedNodeTextPx,
     minimumProjectedNodeText: metrics.minimumProjectedNodeText || null,
     minimumProjectedNodeTextDetail: metrics.minimumProjectedNodeTextDetail || null,
@@ -604,9 +629,17 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
           scrollHeight: entry.scrollHeight,
           overflowX: entry.overflowX,
           overflowY: entry.overflowY,
+          ...(entry.overflowY && entry.workflowLanes?.length ? {
+            workflowLanes: entry.workflowLanes,
+            measurement: 'CSS pixels; rendered node boxes geometrically contained in each lane frame; spaces include headers and routing, not guaranteed removable space',
+          } : {}),
         },
         supportedFixes: [
-          `contain the rendered layout within ${entry.width}x${entry.height}, then rerun visual-check`,
+          ...(entry.overflowY && entry.workflowLanes?.length ? [
+            'run validate workflow <source.json> --layout-json and compare the tallest rendered lane frames with source lanes, col and yOffset; frame IDs are rendered indices, not source lane IDs',
+            'where ownership and explicit geometry permit, distribute stacked steps across logical columns and meaningful lanes before increasing yOffset; preserve nodes, branches, labels and hard pins',
+            'read references/authoring-contract.md#workflow-viewport-repair, then validate and deliver the changed source before rerunning visual-check on the new artifact; this is inspection guidance, not a verified coordinate fix',
+          ] : [`contain the rendered layout within ${entry.width}x${entry.height}, then rerun visual-check`]),
         ],
       }));
     }
