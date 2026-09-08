@@ -433,3 +433,15 @@ test('render output check: endpoint stubs from 8px pass while cramped interior t
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
+
+test('readability node ownership survives nested groups and does not leak after closing', () => {
+  const nested = checkHtml('nested-owner', `
+    <g data-node-id="outer"><g/><g><text data-detail="context" font-size="7">Repeated</text></g></g>
+  `, 'showcase', '0 0 1200 400');
+  assert.equal(nested.result.composition.issues[0].nodeId, 'outer');
+  const loose = checkHtml('closed-owner', `
+    <g data-node-id="outer"><g><text data-node-label font-size="12">Readable</text></g></g>
+    <text data-boundary-label font-size="7">Repeated</text>
+  `, 'showcase', '0 0 1200 400');
+  assert.equal(loose.result.composition.issues[0].nodeId, undefined);
+});

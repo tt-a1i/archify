@@ -173,9 +173,38 @@ test('repair receipt: public validate reports borderline desktop readability wit
     (entry) => entry.code === 'composition/desktop-readability',
   );
   assert.ok(repair);
-  assert.deepEqual(repair.subject, { check: 'composition' });
+  assert.deepEqual(repair.subject, { check: 'composition', nodeId: 'tool-runtime' });
   assert.ok(repair.evidence.projectedFontPx < repair.evidence.minimumProjectedFontPx);
   assert.ok(repair.supportedFixes.some((fix) => fix.includes('reduce the viewBox width')));
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
+
+test('repair receipt: readability identifies the failing node despite repeated copy', () => {
+  for (const command of ['validate', 'deliver']) {
+    for (const failingIndex of [0, 1]) {
+      const ids = ['billing-worker', 'email-worker'];
+      const input = writeFixture(`readability-${command}-${failingIndex}.json`, {
+        schema_version: 1, diagram_type: 'architecture',
+        meta: { title: 'Worker pools', viewBox: [1200, 400] },
+        components: ids.map((id, i) => ({
+          id, type: 'backend', label: 'Worker', sublabel: 'Processes queued jobs',
+          pos: [80 + i * 420, 100], size: [i === failingIndex ? 100 : 300, 70],
+        })),
+        connections: [],
+      });
+      const output = path.join(tmp, `readability-${command}-${failingIndex}.html`);
+      const result = run([command, 'architecture', input,
+        ...(command === 'deliver' ? [output] : []), '--quality', 'showcase', '--json']);
+      assert.equal(result.status, 1);
+      const failure = receipt(result);
+      assert.equal(failure.stage, 'check');
+      const diagnostics = failure.diagnostics.filter(d => d.code === 'composition/desktop-readability');
+      assert.equal(diagnostics.length, 1);
+      assert.deepEqual(diagnostics[0].subject, { check: 'composition', nodeId: ids[failingIndex] });
+      assert.equal(diagnostics[0].evidence.text, 'Processes queued jobs');
+      assert.equal(diagnostics[0].evidence.projectedFontPx, 5.6575);
+      assert.equal(fs.existsSync(output), false);
+    }
+  }
+});
