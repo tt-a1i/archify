@@ -33,12 +33,12 @@ test('wide desktop diagrams use one height-budgeted reader shell instead of brea
   assert.match(reader, /html\.style\.setProperty\('--archify-reader-width', rounded \+ 'px'\)/);
 });
 
-test('compiler-approved intrinsic tall workflows reuse the height budget without widening eligibility', () => {
+test('compiler-measured intrinsic tall workflows reuse the height budget without widening eligibility', () => {
   assert.match(reader, /svg\.getAttribute\('data-reader-fit'\) === 'intrinsic-height'/);
-  assert.match(reader, /ratio >= WIDE_RATIO \|\| intrinsicHeightFit/);
+  assert.match(reader, /ratio >= WIDE_RATIO \|\| measuredHeightFit/);
   assert.match(reader, /var MIN_PROJECTED_NODE_TEXT_PX = 6/);
   assert.match(reader, /viewBox\.width \* minimumReadableScale\(\) \+ chrome\.diagramX/);
-  assert.match(reader, /intrinsicHeightFit && ratio < WIDE_RATIO \? readableWidth : MIN_READER_WIDTH/);
+  assert.match(reader, /measuredHeightFit && ratio < WIDE_RATIO \? readableWidth : MIN_READER_WIDTH/);
   assert.doesNotMatch(reader, /function eligible\(\)[\s\S]{0,240}ratio > 0/);
 });
 

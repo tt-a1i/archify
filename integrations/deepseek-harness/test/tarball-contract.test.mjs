@@ -10,7 +10,8 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const integrationRoot = path.resolve(here, '..');
 const repoRoot = path.resolve(integrationRoot, '..', '..');
 const packScript = path.join(integrationRoot, 'scripts', 'pack.mjs');
-const DSH_RELEASE_REF = 'archify-dsh-v0.1.0';
+const release = JSON.parse(fs.readFileSync(path.join(integrationRoot, 'release.json'), 'utf8'));
+const DSH_RELEASE_REF = release.sourceCommit;
 
 const FORBIDDEN = [
   '/test/',
@@ -26,7 +27,7 @@ const FORBIDDEN = [
 
 function packTarball() {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-dsh-tarball-'));
-  const out = path.join(scratch, 'tt-a1i-archify-dsh-0.1.0.tgz');
+  const out = path.join(scratch, 'tt-a1i-archify-dsh-0.2.0.tgz');
   const result = spawnSync(process.execPath, [packScript, '--out', out, '--json'], {
     cwd: repoRoot,
     encoding: 'utf8',
@@ -40,7 +41,7 @@ test('pack command emits a real npm tarball with the expected identity and file 
     assert.equal(result.status, 0, result.stderr || result.stdout);
     const receipt = JSON.parse(result.stdout);
     assert.equal(receipt.name, '@tt-a1i/archify-dsh');
-    assert.equal(receipt.version, '0.1.0');
+    assert.equal(receipt.version, '0.2.0');
     assert.equal(fs.existsSync(out), true);
     const files = receipt.files.map((file) => file.path.replace(/^package\//, ''));
     for (const required of [
@@ -51,6 +52,9 @@ test('pack command emits a real npm tarball with the expected identity and file 
       'LICENSE',
       'skills/archify/SKILL.md',
       'skills/archify/bin/archify.mjs',
+      'skills/archify/LICENSE',
+      'skills/archify/THIRD_PARTY_NOTICES.md',
+      'release.json',
     ]) {
       assert.ok(files.includes(required), `tarball missing ${required}`);
     }
@@ -61,7 +65,7 @@ test('pack command emits a real npm tarball with the expected identity and file 
       'skills/archify/scripts/check-update.mjs',
       'skills/archify/scripts/update-contract.mjs',
     ]) {
-      assert.equal(files.includes(notifierFile), false, `DSH 0.1.0 must not contain ${notifierFile}`);
+      assert.equal(files.includes(notifierFile), true, `DSH 0.2.0 must contain ${notifierFile}`);
     }
     for (const file of files) {
       for (const forbidden of FORBIDDEN) {
@@ -74,7 +78,7 @@ test('pack command emits a real npm tarball with the expected identity and file 
   }
 });
 
-test('packed Skill payload remains byte-identical to the DSH 0.1.0 release tag', () => {
+test('packed Skill payload remains byte-identical to the declared immutable source commit', () => {
   const { scratch, out, result } = packTarball();
   try {
     assert.equal(result.status, 0, result.stderr || result.stdout);
@@ -87,6 +91,7 @@ test('packed Skill payload remains byte-identical to the DSH 0.1.0 release tag',
     });
     assert.equal(tar.status, 0, tar.stderr);
     const skillRoot = path.join(packedRoot, 'package', 'skills', 'archify');
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(packedRoot, 'package', 'release.json'), 'utf8')), release);
     const skillFiles = receipt.files
       .map((file) => file.path.replace(/^package\//, ''))
       .filter((file) => file.startsWith('skills/archify/'))
@@ -108,8 +113,8 @@ test('packed Skill payload remains byte-identical to the DSH 0.1.0 release tag',
       );
     }
     const skillPackage = JSON.parse(fs.readFileSync(path.join(skillRoot, 'package.json'), 'utf8'));
-    assert.equal(skillPackage.version, '2.14.0');
-    assert.doesNotMatch(fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8'), /## Update awareness/);
+    assert.equal(skillPackage.version, release.skillVersion);
+    assert.match(fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8'), /## Update awareness/);
   } finally {
     fs.rmSync(scratch, { recursive: true, force: true });
   }

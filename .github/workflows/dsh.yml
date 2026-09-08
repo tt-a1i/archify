@@ -5,11 +5,15 @@ on:
     paths:
       - 'integrations/deepseek-harness/**'
       - '.github/workflows/dsh.yml'
+      - 'scripts/stage-clean-skill.mjs'
+      - 'scripts/third-party-notices-contract.mjs'
   push:
     branches: [main]
     paths:
       - 'integrations/deepseek-harness/**'
       - '.github/workflows/dsh.yml'
+      - 'scripts/stage-clean-skill.mjs'
+      - 'scripts/third-party-notices-contract.mjs'
     tags:
       - 'archify-dsh-v*'
   schedule:
@@ -79,6 +83,9 @@ jobs:
       - uses: pnpm/action-setup@v5
         with:
           version: 10
+      - name: Adapter staging regressions on the release host
+        run: node --test integrations/deepseek-harness/test/adapter-staging.test.mjs
+        shell: bash
       - name: Real DSH distribution acceptance
         run: node integrations/deepseek-harness/scripts/distribution-acceptance.mjs
         shell: bash

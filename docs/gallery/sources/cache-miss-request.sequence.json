@@ -4,7 +4,8 @@
   "meta": {
     "title": "Cache Miss Request Sequence",
     "output": "examples/sequence-cache-miss-request.html",
-    "viewBox": [820, 760],
+    "viewBox": [1080, 560],
+    "column_fit": "spread",
     "animation": "trace",
     "quality_profile": "showcase",
     "views": [
@@ -23,31 +24,31 @@
     { "id": "trace", "type": "messagebus", "label": "Trace", "sublabel": "async event" }
   ],
   "segments": [
-    { "from": 150, "to": 295, "label": "Request" },
-    { "from": 315, "to": 505, "label": "Fallback" },
-    { "from": 525, "to": 665, "label": "Response + trace" }
+    { "from": 150, "to": 250, "label": "Request" },
+    { "from": 260, "to": 370, "label": "Fallback" },
+    { "from": 380, "to": 480, "label": "Response + trace" }
   ],
   "messages": [
-    { "id": "open-page", "from": "user", "to": "web", "y": 185, "label": "open page", "variant": "default" },
-    { "id": "dashboard-request", "from": "web", "to": "api", "y": 228, "label": "GET /dashboard", "variant": "emphasis" },
-    { "id": "verify-jwt", "from": "api", "to": "auth", "y": 270, "label": "verify JWT", "variant": "security" },
-    { "id": "auth-claims", "from": "auth", "to": "api", "y": 305, "label": "claims ok", "variant": "return" },
-    { "id": "cache-read", "from": "api", "to": "redis", "y": 354, "label": "read cache", "variant": "default" },
-    { "id": "cache-miss", "from": "redis", "to": "api", "y": 391, "label": "miss", "variant": "return" },
-    { "id": "profile-query", "from": "api", "to": "db", "y": 443, "label": "query profile + metrics", "variant": "emphasis" },
-    { "id": "profile-rows", "from": "db", "to": "api", "y": 489, "label": "rows", "variant": "return" },
-    { "id": "cache-write", "from": "api", "to": "redis", "y": 536, "label": "set cache", "variant": "dashed" },
-    { "id": "trace-emit", "from": "api", "to": "trace", "y": 580, "label": "emit trace", "variant": "dashed" },
-    { "id": "dashboard-response", "from": "api", "to": "web", "y": 625, "label": "200 JSON", "variant": "return" },
-    { "id": "page-render", "from": "web", "to": "user", "y": 662, "label": "render", "variant": "return" }
+    { "id": "open-page", "from": "user", "to": "web", "y": 160, "label": "open page", "variant": "default" },
+    { "id": "dashboard-request", "from": "web", "to": "api", "y": 185, "label": "GET /dashboard", "variant": "emphasis" },
+    { "id": "verify-jwt", "from": "api", "to": "auth", "y": 210, "label": "verify JWT", "variant": "security" },
+    { "id": "auth-claims", "from": "auth", "to": "api", "y": 238, "label": "claims ok", "variant": "return" },
+    { "id": "cache-read", "from": "api", "to": "redis", "y": 270, "label": "read cache", "variant": "default" },
+    { "id": "cache-miss", "from": "redis", "to": "api", "y": 298, "label": "miss", "variant": "return" },
+    { "id": "profile-query", "from": "api", "to": "db", "y": 330, "label": "query profile + metrics", "variant": "emphasis" },
+    { "id": "profile-rows", "from": "db", "to": "api", "y": 358, "label": "rows", "variant": "return" },
+    { "id": "cache-write", "from": "api", "to": "redis", "y": 390, "label": "set cache", "variant": "dashed" },
+    { "id": "trace-emit", "from": "api", "to": "trace", "y": 418, "label": "emit trace", "variant": "dashed" },
+    { "id": "dashboard-response", "from": "api", "to": "web", "y": 443, "label": "200 JSON", "variant": "return" },
+    { "id": "page-render", "from": "web", "to": "user", "y": 468, "label": "render", "variant": "return" }
   ],
   "activations": [
-    { "participant": "web", "from": 220, "to": 668, "type": "frontend" },
-    { "participant": "api", "from": 228, "to": 632, "type": "backend" },
-    { "participant": "auth", "from": 265, "to": 310, "type": "security" },
-    { "participant": "redis", "from": 349, "to": 398, "type": "database" },
-    { "participant": "db", "from": 438, "to": 496, "type": "database" },
-    { "participant": "trace", "from": 575, "to": 630, "type": "messagebus" }
+    { "participant": "web", "from": 180, "to": 474, "type": "frontend" },
+    { "participant": "api", "from": 185, "to": 450, "type": "backend" },
+    { "participant": "auth", "from": 205, "to": 244, "type": "security" },
+    { "participant": "redis", "from": 265, "to": 304, "type": "database" },
+    { "participant": "db", "from": 325, "to": 364, "type": "database" },
+    { "participant": "trace", "from": 413, "to": 449, "type": "messagebus" }
   ],
   "cards": [
     {

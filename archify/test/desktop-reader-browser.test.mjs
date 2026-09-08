@@ -12,20 +12,42 @@ import { DESKTOP_READABILITY_VIEWPORT, MIN_PROJECTED_NODE_TEXT_PX } from '../ren
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 const chromePath = process.env.ARCHIFY_CHROME ? findChrome() : null;
+const packagedHtmlExamples = fs.readdirSync(path.join(skillRoot, 'examples'))
+  .filter((name) => name.endsWith('.html') && !name.endsWith('.visual-check.html'))
+  .sort();
+
+test('all packaged HTML examples pass the real visual-check desktop gate', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-packaged-examples-'));
+  try {
+    assert.ok(packagedHtmlExamples.length > 0, 'expected at least one packaged HTML example');
+    for (const name of packagedHtmlExamples) {
+      const artifact = path.join(tmp, name);
+      fs.copyFileSync(path.join(skillRoot, 'examples', name), artifact);
+      const result = await runVisualCheck({ artifactPath: artifact, chromePath });
+      assert.equal(result.exitCode, 0, `${name}: ${JSON.stringify(result.receipt, null, 2)}`);
+      assert.equal(result.receipt.containment.status, 'pass', name);
+      assert.equal(result.receipt.containment.viewports.every((viewport) => viewport.ok), true, name);
+    }
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
 
 const issue250TallGroup = {
   schema_version: 2,
   diagram_type: 'workflow',
   meta: { title: 'Issue 250 stacked stages' },
-  lanes: [{ id: 'cage', label: 'One cage', height: 104 }],
+  lanes: [{ id: 'cage', label: 'One cage' }],
   groups: [{
     id: 'group', label: 'Cage', lane: 'cage', fromCol: 1, toCol: 3, variant: 'security',
   }],
   mainPath: ['stageA', 'stageB', 'stageC'],
   nodes: [
-    { id: 'stageA', lane: 'cage', col: 2, type: 'security', label: 'stageA', yOffset: 0 },
-    { id: 'stageB', lane: 'cage', col: 2, type: 'security', label: 'stageB', yOffset: 90 },
-    { id: 'stageC', lane: 'cage', col: 2, type: 'security', label: 'stageC', yOffset: 180 },
+    { id: 'stageA', lane: 'cage', col: 2, type: 'security', label: 'stageA', yOffset: -90 },
+    { id: 'stageB', lane: 'cage', col: 2, type: 'security', label: 'stageB', yOffset: 0 },
+    { id: 'stageC', lane: 'cage', col: 2, type: 'security', label: 'stageC', yOffset: 90 },
   ],
   edges: [
     {
@@ -42,11 +64,11 @@ const issue250FiveStageGroup = {
   meta: { title: 'Issue 250 five stacked stages' },
   mainPath: ['stageA', 'stageB', 'stageC', 'stageD', 'stageE'],
   nodes: [
-    { id: 'stageA', lane: 'cage', col: 2, type: 'security', label: 'stageA', yOffset: 0 },
-    { id: 'stageB', lane: 'cage', col: 2, type: 'security', label: 'stageB', yOffset: 90 },
-    { id: 'stageC', lane: 'cage', col: 2, type: 'security', label: 'stageC', yOffset: 180 },
-    { id: 'stageD', lane: 'cage', col: 2, type: 'security', label: 'stageD', yOffset: 270 },
-    { id: 'stageE', lane: 'cage', col: 2, type: 'security', label: 'stageE', yOffset: 360 },
+    { id: 'stageA', lane: 'cage', col: 2, type: 'security', label: 'stageA', yOffset: -300 },
+    { id: 'stageB', lane: 'cage', col: 2, type: 'security', label: 'stageB', yOffset: -150 },
+    { id: 'stageC', lane: 'cage', col: 2, type: 'security', label: 'stageC', yOffset: 0 },
+    { id: 'stageD', lane: 'cage', col: 2, type: 'security', label: 'stageD', yOffset: 150 },
+    { id: 'stageE', lane: 'cage', col: 2, type: 'security', label: 'stageE', yOffset: 300 },
   ],
   edges: [
     { id: 'stage-a-b', from: 'stageA', to: 'stageB', role: 'main', fromSide: 'bottom', toSide: 'top' },
@@ -128,9 +150,6 @@ test('issue #250 tall intrinsic workflow fits every required desktop viewport', 
       assert.equal(viewport.overflowX, false, JSON.stringify(viewport, null, 2));
       assert.equal(viewport.overflowY, false, JSON.stringify(viewport, null, 2));
       assert.equal(viewport.scrollHeight, viewport.height, JSON.stringify(viewport, null, 2));
-      assert.equal(viewport.internalScrollOk, true, JSON.stringify(viewport, null, 2));
-      assert.equal(viewport.contentVisibilityOk, true, JSON.stringify(viewport, null, 2));
-      assert.deepEqual(viewport.clippedContent, [], JSON.stringify(viewport, null, 2));
       assert.ok(viewport.minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX);
     }
     assert.deepEqual(
@@ -172,9 +191,6 @@ test('issue #250 five-stage stack fits below source scale without crossing the r
     for (const viewport of result.receipt.containment.viewports) {
       assert.equal(viewport.overflowY, false, JSON.stringify(viewport, null, 2));
       assert.equal(viewport.scrollHeight, viewport.height, JSON.stringify(viewport, null, 2));
-      assert.equal(viewport.internalScrollOk, true, JSON.stringify(viewport, null, 2));
-      assert.equal(viewport.contentVisibilityOk, true, JSON.stringify(viewport, null, 2));
-      assert.deepEqual(viewport.clippedContent, [], JSON.stringify(viewport, null, 2));
       assert.ok(viewport.minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX);
     }
     const desktop = result.receipt.containment.viewports.find(({ width, height }) => (

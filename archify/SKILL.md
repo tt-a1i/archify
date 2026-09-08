@@ -47,9 +47,10 @@ Do not read `renderers/shared/geometry.mjs`, renderer source, validator source, 
 
 Workflow note: use schema v2 for new workflows; preserve schema v1 when an
 existing source needs fixed legacy geometry. For sequential stages stacked in
-one container, use one v2 lane and one group with increasing node `yOffset`, set
-that lane's `height` (≥104), and omit `meta.viewBox`; readable-v2 then measures
-that lane independently. Keep semantic edge labels and act on the compiler
+one container, use one v2 lane and one group, omit `meta.viewBox`, and place the
+nodes around the lane content center with symmetric `yOffset` values such as
+`-90 / 0 / 90`; readable-v2 measures that lane independently when no absolute
+route pins are present. Keep semantic edge labels and act on the compiler
 diagnostic. The canonical layout, pin, migration, and receipt contract is in
 [`renderers/workflow/README.md`](renderers/workflow/README.md#layout-contracts).
 

@@ -557,7 +557,10 @@ test('architecture: boundary title masks cannot obscure connection labels', () =
 const SHRINK_CASES = [
   // [mode, mutate(doc), preferredFontSize, selector for the sublabel <text>]
   ['architecture', (d) => { d.components[0].sublabel = 'Browser and mobile apps'; }, 9],
-  ['sequence', (d) => { d.participants[0].sublabel = 'long browser session'; }, 7],
+  ['sequence', (d) => {
+    d.meta.column_fit = 'fixed';
+    d.participants[0].sublabel = 'long browser session';
+  }, 7],
   ['dataflow', (d) => { d.nodes[0].sublabel = 'browser SDK and mobile SDK'; }, 7],
   ['lifecycle', (d) => { d.states[0].sublabel = 'request accepted and queued'; }, 7],
 ];
@@ -1351,7 +1354,7 @@ test('dataflow: stage border run is blocking and the inter-stage gutter passes',
 
 test('sequence: a message cannot masquerade as a time-segment border', () => {
   const d = load('sequence');
-  d.messages.find((message) => message.id === 'cache-read').y = 315;
+  d.messages.find((message) => message.id === 'cache-read').y = d.segments[1].from;
   const { code, stderr } = render('sequence', d);
   assert.notEqual(code, 0);
   assert.match(stderr, /\[composition\/container-border-run\] sequence messages\[4\] id "cache-read"/);
@@ -1451,6 +1454,8 @@ test('sequence: segment title badge clears a nearby first message label', () => 
 
 test('sequence: segment label exceeding segment frame available width fails layout validation with remediation', () => {
   const d = load('sequence');
+  d.meta.viewBox[0] = 820;
+  d.meta.column_fit = 'fixed';
   d.segments[0].label = 'Phase 1: Dual-Certificate mTLS Handshake & Distributed Token Verification Protocol Negotiation'.repeat(2);
 
   const { code, stderr } = render('sequence', d);
@@ -1464,7 +1469,7 @@ test('sequence: segment label exceeding segment frame available width fails layo
 });
 
 test('sequence: segment label boundary containment within canvas vs segment frame and exact-fit', () => {
-  // Available width in default sequence fixture (viewBox[0] = 820):
+  // Available width in this fixed-column boundary scenario (viewBox[0] = 820):
   // frame right edge = 820 - 48 = 772
   // labelBox.x = 56
   // availableWidth = 772 - 56 = 716px
@@ -1474,6 +1479,8 @@ test('sequence: segment label boundary containment within canvas vs segment fram
 
   // 1. Fits within canvas (777.2 <= 820) but exceeds segment frame (777.2 > 772)
   const dExceed = load('sequence');
+  dExceed.meta.viewBox[0] = 820;
+  dExceed.meta.column_fit = 'fixed';
   dExceed.segments[0].label = 'A'.repeat(136);
   const resExceed = render('sequence', dExceed);
   assert.equal(resExceed.code, 1, 'label exceeding segment frame must fail even if within canvas');
@@ -1481,6 +1488,8 @@ test('sequence: segment label boundary containment within canvas vs segment fram
 
   // 2. Exact-fit case at the frame's right edge (56 + 716 = 772 === 820 - 48)
   const dExact = load('sequence');
+  dExact.meta.viewBox[0] = 820;
+  dExact.meta.column_fit = 'fixed';
   dExact.segments[0].label = 'A'.repeat(135);
   const resExact = render('sequence', dExact);
   assert.equal(resExact.code, 0, `exact-fit label at segment frame boundary must pass cleanly: ${resExact.stderr}`);
