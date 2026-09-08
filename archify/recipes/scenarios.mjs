@@ -250,6 +250,27 @@ const RAW_RECIPES = [
       prompt: '用 Archify 生命周期模式建模部署对象。展示排队、构建、验证、等待审批、晋级、回滚以及所有终态，并标注允许每次状态转换的事件和守卫条件。',
     },
   },
+  {
+    id: 'layout-repair', type: 'architecture', proof: 'web-app',
+    presentation: { preset: 'classic', motion: 'static', views: 'optional' },
+    signals: [['overflow', 16], ['viewport overflow', 18], ['viewport', 10], ['scrollheight', 14], ['overlap', 12], ['label overlap', 12], ['label overlaps', 12], ['edge through node', 14], ['edge-through-node', 14], ['crossing', 10], ['via', 8], ['layout repair', 16], ['fix layout', 14], ['repair', 6], ['修复', 10], ['溢出', 16], ['视口溢出', 18], ['重叠', 12], ['压标签', 12], ['穿节点', 14], ['布局修复', 16], ['交叉', 10]],
+    en: {
+      title: 'Layout repair playbook', question: 'Why does a validating diagram still overflow, cross, or collide — and in what order do I fix it?',
+      summary: 'The repair loop for a candidate that passes validate but fails visual containment or shows crossings and label collisions.',
+      useWhen: 'visual-check reports viewport overflow, diagnostics report edge-through-node / endpoint-side-direction / label overlap, or the composition needs a layer-band re-layout.',
+      avoidWhen: 'The candidate has not been written yet, or the question is which diagram type to choose.',
+      include: ['repair order: schema → overlap → direction → crossings → labels', 'via direction contract', 'viewport height budget', 'diagnosed supportedFixes over hand estimates'],
+      prompt: 'Repair the existing Archify candidate using its own diagnostics: fix only the diagnosed subject, verify evidence, and apply supportedFixes (labelAt/labelDy points are exact, use them as-is). Obey the via contract: via[0] shares x with a top/bottom departure point and y with a left/right one, and endpoints sit at side midpoints. For visual-check overflow use the viewport height budget (chrome ~51px + 930×viewBoxH/viewBoxW + cards) and repair card copy first, then widen the x span, then compact y. For layer semantics: vertical = support/data flow bottom-up, same-band left-to-right = processing order; stagger multiple exits from one node across distinct channels.',
+    },
+    zh: {
+      title: '布局修复手册', question: '已通过校验的图为什么仍溢出、交叉、压标签，按什么顺序修？',
+      summary: '针对 validate 通过但 visual-check 溢出、或存在连线穿节点/标签碰撞的修复循环。',
+      useWhen: 'visual-check 报视口溢出、诊断报 edge-through-node / endpoint-side-direction / label overlap，或需要分层带重排。',
+      avoidWhen: '候选 JSON 还没写出来，或问题只是选哪种图类型。',
+      include: ['修复顺序：schema → 重叠 → 方向 → 交叉 → 标签', 'via 方向契约', '视口高度预算', '按 supportedFixes 修而非自己估坐标'],
+      prompt: '用候选 JSON 自己的诊断修复它：只改诊断指出的 subject，核对 evidence，直接采用 supportedFixes 给出的 labelAt/labelDy 精确坐标。严守 via 契约：via[0] 在 top/bottom 出线时与出线点同 x、left/right 出线时同 y，出线点在边中心不可自选。visual-check 溢出用视口高度预算（chrome 约 51px + 930×viewBox高/viewBox宽 + cards 区），修复顺序：先精简卡片文案、再加宽 x 跨度、最后压缩 y。分层语义：上下=自下而上支撑/数据流，同层左→右=处理顺序；一个节点多出线时错开出线通道。',
+    },
+  },
 ];
 
 export const SCENARIO_RECIPES = Object.freeze(RAW_RECIPES.map((recipe) => Object.freeze({
