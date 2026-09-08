@@ -1824,8 +1824,8 @@
       color: var(--text-muted);
       text-decoration: none;
     }
-    .semantic-passport-source:hover,
-    .semantic-passport-source:focus-visible {
+    a.semantic-passport-source:hover,
+    a.semantic-passport-source:focus-visible {
       border-color: color-mix(in srgb, var(--backend-stroke) 42%, transparent);
       background: color-mix(in srgb, var(--backend-fill) 32%, transparent);
       color: var(--text);
@@ -7744,6 +7744,7 @@
       function renderSourceEvidence(id) {
         evidenceLinks.textContent = '';
         repositoryLink.removeAttribute('href');
+        repositoryLink.removeAttribute('aria-label');
         repositoryLink.textContent = '';
         var sources = Archify.sourceEvidence.node(id);
         var repository = Archify.sourceEvidence.repository();
@@ -7751,24 +7752,28 @@
           evidence.hidden = true;
           return;
         }
-        var slug = repository.url.replace(/^https:\/\/github\.com\//, '').replace(/\/$/, '');
-        repositoryLink.href = repository.url + '/tree/' + repository.revision;
-        repositoryLink.textContent = slug + ' @ ' + repository.shortRevision;
-        repositoryLink.setAttribute('aria-label', viewerText('viewer.passport.repository.open', { revision: repository.revision }));
+        repositoryLink.textContent = repository.label + ' @ ' + repository.shortRevision;
+        if (repository.href) {
+          repositoryLink.href = repository.href;
+          repositoryLink.setAttribute('aria-label', viewerText('viewer.passport.repository.open', { revision: repository.revision }));
+        }
+        evidence.title = viewerText('viewer.passport.verificationScope');
         sources.forEach(function (source) {
-          var link = document.createElement('a');
+          var link = document.createElement(source.href ? 'a' : 'div');
           link.className = 'semantic-passport-source';
-          link.href = source.href;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          link.referrerPolicy = 'no-referrer';
-          link.setAttribute('aria-label', viewerText('viewer.passport.source.open', { path: source.path, revision: repository.shortRevision }));
+          if (source.href) {
+            link.href = source.href;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.referrerPolicy = 'no-referrer';
+            link.setAttribute('aria-label', viewerText('viewer.passport.source.open', { path: source.path, revision: repository.shortRevision }));
+          }
           var name = document.createElement('strong');
           name.textContent = source.label || source.path.split('/').pop() || source.path;
           var location = document.createElement('code');
           location.textContent = source.line
-            ? 'L' + source.line + (source.endLine && source.endLine !== source.line ? '–' + source.endLine : '') + ' ↗'
-            : viewerText('viewer.passport.source.openLink');
+            ? 'L' + source.line + (source.endLine && source.endLine !== source.line ? '–' + source.endLine : '') + (source.href ? ' ↗' : '')
+            : source.href ? viewerText('viewer.passport.source.openLink') : '';
           var sourcePath = document.createElement('small');
           sourcePath.textContent = source.path;
           link.appendChild(name);

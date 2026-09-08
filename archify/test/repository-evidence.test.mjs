@@ -6,6 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { startPreview } from '../bin/preview.mjs';
+import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, '..');
@@ -54,6 +55,297 @@ function evidencePayload(html) {
   assert.ok(match, 'verified evidence payload missing');
   return JSON.parse(match[1]);
 }
+
+test('Gitee evidence generates provider-specific revision and line links', () => {
+  const data = fixture();
+  data.diagram.meta.repository.url = 'https://gitee.com/example/evidence-repo';
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const output = path.join(data.root, 'gitee.html');
+  for (const remote of [
+    'https://gitee.com/example/evidence-repo.git/',
+    'git@gitee.com:example/evidence-repo.git',
+    'ssh://git@gitee.com/example/evidence-repo.git',
+  ]) {
+    git(data.root, 'remote', 'set-url', 'origin', remote);
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const evidence = evidencePayload(fs.readFileSync(output, 'utf8'));
+    assert.equal(evidence.repository.href, `https://gitee.com/example/evidence-repo/tree/${data.revision}`);
+    assert.equal(evidence.nodes.users[0].href, `https://gitee.com/example/evidence-repo/blob/${data.revision}/src/router.js#L1-3`);
+    assert.equal(evidence.nodes.users[1].href, `https://gitee.com/example/evidence-repo/blob/${data.revision}/src/store.js#L1`);
+  }
+});
+
+test('local-only evidence verifies HTTP self-hosted origins without generating links', () => {
+  const data = fixture();
+  data.diagram.meta.repository = {
+    url: 'http://git.example.internal:3000/Platform/Services/evidence-repo',
+    revision: data.revision,
+    link_mode: 'local-only',
+  };
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  git(data.root, 'remote', 'set-url', 'origin', data.diagram.meta.repository.url);
+  // Evidence is read from the pinned commit, not from the current working file.
+  fs.writeFileSync(path.join(data.root, 'src/router.js'), 'changed\n');
+  const output = path.join(data.root, 'local.html');
+  const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.equal(JSON.parse(result.stdout).evidence.linkMode, 'local-only');
+  const evidence = evidencePayload(fs.readFileSync(output, 'utf8'));
+  assert.equal(evidence.verified, true);
+  assert.equal(evidence.repository.href, undefined);
+  assert.equal(evidence.repository.linkMode, 'local-only');
+  assert.equal(evidence.nodes.users[0].endLine, 3);
+  assert.ok(evidence.nodes.users.every((source) => !Object.hasOwn(source, 'href')));
+});
+
+test('local-only supports nested HTTPS and Git SSH identities with bounded port equivalence', () => {
+  const data = fixture();
+  const output = path.join(data.root, 'portable.html');
+  for (const [url, remote] of [
+    ['https://git.internal/Platform/Services/repo.git', 'https://git.internal:443/Platform/Services/repo.git'],
+    ['ssh://git@git.internal/Platform/Services/repo', 'ssh://git@git.internal:22/Platform/Services/repo'],
+    ['ssh://git@git.internal:2222/Platform/repo.git', 'ssh://git@git.internal:2222/Platform/repo.git'],
+    ['git@git.internal:Platform/repo', 'git@git.internal:Platform/repo'],
+    ['git@git.internal:/Platform/repo', 'ssh://git@git.internal/Platform/repo'],
+    ['http://git.internal:3000/Platform/repo.git', 'http://user:SYNTHETIC_TOKEN@git.internal:3000/Platform/repo.git'],
+    ['https://git.internal/Platform/repo.git', 'https://user:SYNTHETIC_TOKEN@git.internal/Platform/repo.git'],
+    ['git@git.internal:Platform/repo%41', 'git@git.internal:Platform/repo%41'],
+    ['ssh://git@git.internal/Platform/repo%41', 'ssh://git@git.internal/Platform/repoA'],
+  ]) {
+    data.diagram.meta.repository = { url, revision: data.revision, link_mode: 'local-only' };
+    fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+    git(data.root, 'remote', 'set-url', 'origin', remote);
+    const result = run(['render', 'architecture', data.input, output, '--repo-root', data.root]);
+    assert.equal(result.status, 0, `${url}: ${result.stderr}`);
+    const html = fs.readFileSync(output, 'utf8');
+    assert.doesNotMatch(html, /SYNTHETIC_TOKEN/);
+    assert.equal(evidencePayload(html).repository.href, undefined);
+  }
+});
+
+for (const [name, url, origin] of [
+  ['relative versus absolute SSH paths', 'ssh://git@git.internal/Team/repo', 'git@git.internal:Team/repo'],
+  ['literal percent escapes in SCP paths', 'git@git.internal:Team/repoA', 'git@git.internal:Team/repo%41'],
+]) {
+  test(`local-only rejects ${name} before replacing a trusted artifact`, () => {
+    const data = fixture();
+    data.diagram.meta.repository = { url, revision: data.revision, link_mode: 'local-only' };
+    fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+    git(data.root, 'remote', 'set-url', 'origin', origin);
+    const output = path.join(data.root, 'trusted.html');
+    fs.writeFileSync(output, 'trusted previous artifact');
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 1, 'different Git paths must not verify as the declared repository');
+    assert.ok(JSON.parse(result.stdout).diagnostics.some(({ code }) => code === 'repository-evidence/origin-mismatch'));
+    assert.equal(fs.readFileSync(output, 'utf8'), 'trusted previous artifact');
+  });
+}
+
+test('local-only rejects different hosts, paths, path case, endpoints and guessed prefixes', () => {
+  const data = fixture();
+  const output = path.join(data.root, 'trusted.html');
+  fs.writeFileSync(output, 'trusted previous artifact');
+  for (const [url, remote] of [
+    ['https://git.internal/Team/repo', 'https://other.internal/Team/repo'],
+    ['https://git.internal/Team/repo', 'https://git.internal/Team/other'],
+    ['https://git.internal/Team/repo', 'https://git.internal/team/repo'],
+    ['https://git.internal/Team/repo', 'http://git.internal/Team/repo'],
+    ['https://git.internal/Team/repo', 'https://git.internal:8443/Team/repo'],
+    ['ssh://git@git.internal:2222/Team/repo', 'ssh://git@git.internal:2223/Team/repo'],
+    ['https://git.internal:2222/Team/repo', 'ssh://git@git.internal:2222/Team/repo'],
+    ['https://git.internal/Team/repo', 'git@ssh-alias:Team/repo'],
+    ['https://git.internal/Team/repo', 'https://git.internal/scm/Team/repo'],
+    ['https://git.internal/Team/repo', 'https://git.internal/Team/ignored/../repo'],
+    ['https://git.internal/Team/repo', 'git@git.internal:Team/repo'],
+    ['https://git.internal/Team/repo', 'ssh://git@git.internal/Team/repo'],
+    ['git@git.internal:Team/repo', 'git@git.internal:Team/repo.git'],
+    ['http://git.internal/Team/repo', 'http://git.internal/Team/repo.git'],
+  ]) {
+    data.diagram.meta.repository = { url, revision: data.revision, link_mode: 'local-only' };
+    fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+    git(data.root, 'remote', 'set-url', 'origin', remote);
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 1, `${url} must differ from ${remote}`);
+    assert.ok(JSON.parse(result.stdout).diagnostics.some(({ code }) => code === 'repository-evidence/origin-mismatch'));
+    assert.equal(fs.readFileSync(output, 'utf8'), 'trusted previous artifact');
+  }
+});
+
+test('local-only preserves root, origin, commit, blob, path and line checks', () => {
+  const data = fixture();
+  data.diagram.meta.repository.url = 'http://git.internal/team/repo';
+  data.diagram.meta.repository.link_mode = 'local-only';
+  git(data.root, 'remote', 'set-url', 'origin', 'http://git.internal/team/repo');
+  const output = path.join(data.root, 'trusted.html');
+  fs.writeFileSync(output, 'trusted previous artifact');
+  const original = structuredClone(data.diagram);
+  const cases = [
+    ['repository-evidence/root-required', () => {}, []],
+    ['repository-evidence/revision-unavailable', (diagram) => { diagram.meta.repository.revision = '0'.repeat(40); }],
+    ['repository-evidence/file-missing', (diagram) => { diagram.components[0].sources = [{ path: 'src/missing.js' }]; }],
+    ['repository-evidence/file-missing', (diagram) => { diagram.components[0].sources = [{ path: 'src' }]; }],
+    ['repository-evidence/path-escape', (diagram) => { diagram.components[0].sources = [{ path: '../outside.js' }]; }],
+    ['repository-evidence/path-escape', (diagram) => { diagram.components[0].sources = [{ path: '.git/config' }]; }],
+    ['repository-evidence/line-out-of-range', (diagram) => { diagram.components[0].sources = [{ path: 'src/router.js', line: 4 }]; }],
+    ['repository-evidence/line-range-invalid', (diagram) => { diagram.components[0].sources = [{ path: 'src/router.js', line: 3, end_line: 1 }]; }],
+  ];
+  for (const [expectedCode, change, roots = ['--repo-root', data.root]] of cases) {
+    const diagram = structuredClone(original);
+    change(diagram);
+    fs.writeFileSync(data.input, JSON.stringify(diagram));
+    const result = run(['deliver', 'architecture', data.input, output, ...roots, '--json']);
+    assert.equal(result.status, 1);
+    assert.ok(JSON.parse(result.stdout).diagnostics.some(({ code }) => code === expectedCode), result.stdout);
+    assert.equal(fs.readFileSync(output, 'utf8'), 'trusted previous artifact');
+  }
+  fs.writeFileSync(data.input, JSON.stringify(original));
+  git(data.root, 'remote', 'remove', 'origin');
+  const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /must have an origin/);
+});
+
+test('unsupported web providers and invalid authored addresses fail without exposing credentials', () => {
+  const data = fixture();
+  for (const repository of [
+    { url: 'https://git.internal/team/repo' },
+    { url: 'https://gitee.com/team/repo', provider: 'github' },
+    { url: 'https://git.internal/team/repo', provider: 'gitee' },
+    { url: 'https://user:SYNTHETIC_TOKEN@gitee.com/team/repo' },
+    { url: 'https://gitee.com/team/repo?token=SYNTHETIC_TOKEN' },
+    { url: 'https://gitee.com/team/repo#SYNTHETIC_TOKEN' },
+    { url: 'https://gitee.com/team/%2e%2e/repo' },
+    { url: 'https://gitee.com/team%2Frepo' },
+    { url: 'file:///tmp/repo', link_mode: 'local-only' },
+    { url: 'javascript:alert(1)', link_mode: 'local-only' },
+    { link_mode: 'local-only' },
+  ]) {
+    data.diagram.meta.repository = { revision: data.revision, ...repository };
+    fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+    const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 1, JSON.stringify(repository));
+    assert.doesNotMatch(result.stdout + result.stderr, /SYNTHETIC_TOKEN/);
+  }
+});
+
+test('portable origin failures redact HTTP credentials and query tokens', () => {
+  const data = fixture();
+  data.diagram.meta.repository = { url: 'http://git.internal/Team/repo', revision: data.revision, link_mode: 'local-only' };
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  for (const origin of [
+    'http://user:SYNTHETIC_TOKEN@git.internal/Team/other',
+    'http://git.internal/Team/repo?token=SYNTHETIC_TOKEN',
+    'https://user:SYNTHETIC_TOKEN@git.internal/Team/repo',
+  ]) {
+    git(data.root, 'remote', 'set-url', 'origin', origin);
+    const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 1);
+    assert.doesNotMatch(result.stdout + result.stderr, /SYNTHETIC_TOKEN/);
+  }
+});
+
+test('explicit providers retain GitHub links and encode Gitee source paths', () => {
+  const data = fixture();
+  fs.writeFileSync(path.join(data.root, 'src', '中文 # router.js'), 'one\ntwo\n');
+  git(data.root, 'add', 'src');
+  git(data.root, 'commit', '-m', 'encoded source path');
+  const revision = git(data.root, 'rev-parse', 'HEAD');
+  data.diagram.components[0].sources = [{ path: 'src/中文 # router.js', line: 1, end_line: 2 }];
+  for (const provider of ['github', 'gitee']) {
+    data.diagram.meta.repository = { url: `https://${provider}.com/example/evidence-repo.git/`, revision, provider };
+    git(data.root, 'remote', 'set-url', 'origin', `git@${provider}.com:example/evidence-repo.git`);
+    fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+    const output = path.join(data.root, `${provider}.html`);
+    const result = run(['render', 'architecture', data.input, output, '--repo-root', data.root]);
+    assert.equal(result.status, 0, result.stderr);
+    const evidence = evidencePayload(fs.readFileSync(output, 'utf8'));
+    assert.equal(evidence.nodes.users[0].href, `https://${provider}.com/example/evidence-repo/blob/${revision}/src/${encodeURIComponent('中文 # router.js')}#L1-${provider === 'github' ? 'L' : ''}2`);
+  }
+});
+
+test('local-only preview and compare publish only revision-verified evidence', { timeout: 20000 }, async () => {
+  const data = fixture();
+  data.diagram.meta.repository.url = 'http://git.internal/Team/repo';
+  data.diagram.meta.repository.link_mode = 'local-only';
+  git(data.root, 'remote', 'set-url', 'origin', 'http://git.internal/Team/repo');
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const head = path.join(data.root, 'head.architecture.json');
+  fs.writeFileSync(head, JSON.stringify(data.diagram));
+  const compared = path.join(data.root, 'compared.html');
+  const result = run(['compare', 'architecture', data.input, head, compared, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.equal(JSON.parse(result.stdout).proofLevel, 'revision-pinned');
+  assert.match(fs.readFileSync(compared, 'utf8'), /local-only/);
+  const preview = await startPreview({ type: 'architecture', input: data.input, output: path.join(data.root, 'preview-local.html'), repoRoot: data.root, open: false, debounceMs: 30, pollMs: 60 });
+  try {
+    const state = await waitForState(preview.url, (candidate) => candidate.status === 'verified');
+    const before = await (await fetch(new URL('/artifact.html', preview.url))).text();
+    assert.equal(evidencePayload(before).repository.href, undefined);
+    data.diagram.components[0].sources[0].line = 999;
+    delete data.diagram.components[0].sources[0].end_line;
+    fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+    const failed = await waitForState(preview.url, (candidate) => candidate.status === 'needs-fix');
+    assert.equal(failed.revision, state.revision);
+    assert.equal(await (await fetch(new URL('/artifact.html', preview.url))).text(), before);
+  } finally { await preview.stop(); }
+});
+
+test('browser renders local-only sources as searchable text and web sources as links', {
+  skip: process.env.ARCHIFY_CHROME ? false : 'Set ARCHIFY_CHROME to run evidence browser checks.',
+  timeout: 60000,
+}, async () => {
+  const data = fixture();
+  const browser = new ChromeVisualBrowser(findChrome());
+  try {
+    for (const mode of ['github', 'gitee', 'local-only']) {
+      const local = mode === 'local-only';
+      const url = local ? 'http://git.internal/Team/repo' : `https://${mode}.com/example/evidence-repo`;
+      data.diagram.meta.repository = { url, revision: data.revision, ...(local ? { link_mode: mode } : {}) };
+      git(data.root, 'remote', 'set-url', 'origin', url);
+      fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+      const artifactPath = path.join(data.root, `${mode}.html`);
+      const result = run(['deliver', 'architecture', data.input, artifactPath, '--repo-root', data.root, '--json']);
+      assert.equal(result.status, 0, result.stderr || result.stdout);
+      for (const theme of ['light', 'dark']) {
+        await browser.inspect({ artifactPath, width: 1440, height: 900, theme });
+        const sessionId = await browser.sessionPromise;
+        const response = await browser.cdp.send('Runtime.evaluate', {
+          expression: `(() => {
+            document.querySelector('[data-node-id="users"]').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            const panel = document.getElementById('focus-evidence');
+            const rows = [...panel.querySelectorAll('.semantic-passport-source')];
+            const input = document.getElementById('node-finder-input');
+            input.value = 'src/router.js';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            return {
+              visible: !panel.hidden,
+              links: rows.filter(row => row.tagName === 'A').map(row => row.getAttribute('href')),
+              paths: rows.map(row => row.querySelector('small').textContent),
+              locations: rows.map(row => row.querySelector('code').textContent),
+              repositoryHref: document.getElementById('focus-repository').getAttribute('href'),
+              scope: panel.title,
+              beacon: !!document.querySelector('[data-node-id="users"] [data-source-evidence-beacon]'),
+              invalidLinks: [...panel.querySelectorAll('a[href]')].some(a => /undefined|javascript:/.test(a.getAttribute('href'))),
+              search: document.getElementById('node-finder-results').textContent
+            };
+          })()`, returnByValue: true,
+        }, sessionId);
+        assert.equal(response.exceptionDetails, undefined);
+        const observed = response.result.value;
+        assert.equal(observed.visible, true);
+        assert.equal(observed.beacon, true);
+        assert.equal(observed.invalidLinks, false);
+        assert.deepEqual(observed.paths, ['src/router.js', 'src/store.js']);
+        assert.match(observed.scope, /local Git/);
+        assert.match(observed.search, /Users/);
+        assert.equal(observed.links.length, local ? 0 : 2);
+        assert.equal(observed.locations[0], local ? 'L1–3' : 'L1–3 ↗');
+        assert.equal(observed.repositoryHref, local ? null : `${url}/tree/${data.revision}`);
+      }
+    }
+  } finally { await browser.close(); }
+});
 
 test('repository evidence accepts canonical HTTPS and common SSH remotes', () => {
   const data = fixture();

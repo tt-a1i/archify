@@ -1102,6 +1102,7 @@ async function commandDeliver(args) {
           repository: sourceEvidence.repository.url,
           revision: sourceEvidence.repository.revision,
           references: sourceEvidence.referenceCount,
+          ...(sourceEvidence.repository.linkMode ? { linkMode: sourceEvidence.repository.linkMode } : {}),
         },
       } : {}),
     };
