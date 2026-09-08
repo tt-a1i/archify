@@ -3,6 +3,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { resolveOutputPath } from "../renderers/shared/output-path.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const fingerprint = (bytes) => ({
@@ -28,15 +29,10 @@ function fields(value, names, subject) {
   for (const key of Object.keys(value))
     if (!names.includes(key)) reject(`Unknown field "${key}".`, subject);
 }
-function canonical(file) {
-  return fs.existsSync(file)
-    ? fs.realpathSync(file)
-    : path.join(fs.realpathSync(path.dirname(file)), path.basename(file));
-}
 
 export function buildAtlas(input, output) {
   const inputPath = fs.realpathSync(input),
-    outputPath = path.resolve(output);
+    outputPath = resolveOutputPath({ requestedOutput: output, inputPaths: [inputPath] }).outputPath;
   const manifestBytes = fs.readFileSync(inputPath);
   const manifest = JSON.parse(manifestBytes);
   fields(
@@ -134,10 +130,8 @@ export function buildAtlas(input, output) {
       !manifest.links.some((link) => link.details.includes(id))
     )
       reject("Every detail must be reachable from the overview.", { id });
-  if (inputs.includes(canonical(outputPath)))
-    reject("Output must not replace the manifest or a child artifact.", {
-      output,
-    });
+  const outputRequest = { requestedOutput: outputPath, inputPaths: inputs };
+  resolveOutputPath(outputRequest);
   const data = JSON.stringify({ ...manifest, diagrams }).replace(
     /</g,
     "\\u003c",
@@ -155,6 +149,7 @@ export function buildAtlas(input, output) {
   try {
     const candidate = path.join(staging, "atlas.html");
     fs.writeFileSync(candidate, html);
+    resolveOutputPath(outputRequest);
     fs.renameSync(candidate, outputPath);
   } finally {
     fs.rmSync(staging, { recursive: true, force: true });
@@ -187,7 +182,7 @@ export function commandAtlas(args) {
         : `Atlas written: ${receipt.artifact.path}; browser and perceptual review pending`,
     );
   } catch (error) {
-    const diagnostic = error.diagnostic || {
+    const diagnostic = error.diagnostic || error.archifyDiagnostics?.[0] || {
       code: "atlas/input-or-delivery",
       severity: "error",
       message: error.message,

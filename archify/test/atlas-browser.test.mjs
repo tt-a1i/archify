@@ -173,6 +173,10 @@ test(
         true,
       );
     }
+    await evaluate(`${frame}.contentWindow.Archify.exportMenu.run('svg')`);
+    assert.equal(await evaluate(`${frame}.contentDocument.documentElement.getAttribute('data-last-export-canonical')`), 'true');
+    assert.equal(await evaluate(`${frame}.contentDocument.documentElement.getAttribute('data-last-export-format')`), 'svg');
+    assert.ok(await evaluate(`${frame}.contentDocument.querySelectorAll('span[data-atlas-icon] svg').length`) > 0);
     if (process.env.ARCHIFY_READING_EVIDENCE) {
       fs.mkdirSync(process.env.ARCHIFY_READING_EVIDENCE, { recursive: true });
       for (const mode of ["light", "dark"]) {

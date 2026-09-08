@@ -80,3 +80,17 @@ test("atlas refuses to overwrite a source or manifest", (t) => {
   assert.equal(run(child).status, 1);
   assert.deepEqual(fs.readFileSync(child), before);
 });
+
+test('atlas preserves non-HTML targets and uses shared path diagnostics', (t) => {
+  const { run, output } = setup(t);
+  const target = path.join(path.dirname(output), 'existing.json');
+  fs.writeFileSync(target, '{"keep":true}');
+  const direct = run(target);
+  assert.equal(direct.status, 1);
+  assert.equal(direct.receipt.diagnostics[0].code, 'output/cli-extension');
+  fs.symlinkSync(target, output);
+  const linked = run();
+  assert.equal(linked.status, 1);
+  assert.equal(linked.receipt.diagnostics[0].code, 'output/cli-resolved-extension');
+  assert.equal(fs.readFileSync(target, 'utf8'), '{"keep":true}');
+});

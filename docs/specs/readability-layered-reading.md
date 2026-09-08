@@ -4,7 +4,7 @@ Agreed scope: improve default reading quality and let readers move from an overv
 
 ## Acceptance
 
-- Sequence message names are primary reading content. Use a readable default size, measure matching label plates, preserve authored messages and geometry, and include message text in real browser readability evidence.
+- Sequence message names are primary reading content. Use a readable showcase size, retain standard legacy sizing, measure matching label plates, preserve authored messages and geometry, and include message text in real browser readability evidence.
 - Preserve standard schema-v1 input compatibility. New geometry acceptance restrictions must not be introduced merely for taste.
 - An opt-in `atlas` CLI packages existing checked Archify HTML files with explicit overview-node-to-detail associations in one offline HTML. Existing Focus/Views/Story remain the right choice for detail within the same topology.
 - Readers can choose among multiple explicitly linked details, return to the exact overview reading state, and keep a common theme. Keyboard navigation is supported. No inferred relationships, automatic diagram splitting, hosted runtime, editing interface, or permanent directory panel.

@@ -115,6 +115,8 @@ node bin/archify.mjs preview <type> <input>.json <output>.html --quality showcas
 
 Never start preview by default. Read `references/delivery-contract.md` when using preview, repository evidence, export receipts, visual review, or post-commit opening.
 
+For separately authored overview/detail diagrams, read [layered reading](references/layered-reading.md) and use its explicit atlas manifest. Prefer existing Focus, Views and Story when one topology can explain the detail.
+
 ## Optional viewer capabilities
 
 Generated HTML already contains theme switching, pan/zoom, search, focus, relationship tracing, semantic views, presentation, and truthful exports. These are reader capabilities, not extra authoring work. `meta.animation: "trace"` is opt-in; `meta.views` is optional and should contain at most five curated chapters.
