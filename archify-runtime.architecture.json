@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Archify Runtime Architecture",
+    "subtitle": "How a typed JSON spec becomes a self-contained interactive HTML diagram",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/tt-a1i/archify.git",
+      "revision": "4be6da578b99fb3a5afaa2eea2fedcc956c1381e"
+    },
+    "views": [
+      {
+        "id": "render-path",
+        "label": "Main render path",
+        "focus": ["agent", "cli", "loader", "renderer", "template", "artifact"],
+        "note": "Follow one diagram command from invocation to the delivered HTML artifact."
+      },
+      {
+        "id": "validation-and-layout",
+        "label": "Validation and layout",
+        "focus": ["spec", "validator", "renderer", "layout"],
+        "note": "See how the JSON IR is validated and then laid out by the geometry engine."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "agent",
+      "type": "external",
+      "label": "Agent / User",
+      "sublabel": "CLI invoker",
+      "pos": [60, 220],
+      "size": [120, 60]
+    },
+    {
+      "id": "cli",
+      "type": "backend",
+      "label": "archify CLI",
+      "sublabel": "bin/archify.mjs",
+      "brand": "node-js",
+      "sources": [
+        {
+          "path": "archify/bin/archify.mjs",
+          "label": "CLI entry"
+        }
+      ],
+      "pos": [260, 220],
+      "size": [130, 60]
+    },
+    {
+      "id": "spec",
+      "type": "database",
+      "label": "Typed JSON IR",
+      "sublabel": "diagram spec",
+      "pos": [260, 360],
+      "size": [130, 60]
+    },
+    {
+      "id": "validator",
+      "type": "security",
+      "label": "Schema Validator",
+      "sublabel": "JSON Schema",
+      "sources": [
+        {
+          "path": "archify/renderers/shared/validator.mjs",
+          "label": "Validator"
+        }
+      ],
+      "pos": [460, 360],
+      "size": [130, 60]
+    },
+    {
+      "id": "loader",
+      "type": "backend",
+      "label": "Renderer Loader",
+      "sublabel": "cli.mjs",
+      "sources": [
+        {
+          "path": "archify/renderers/shared/cli.mjs",
+          "label": "Loader"
+        }
+      ],
+      "pos": [460, 220],
+      "size": [130, 60]
+    },
+    {
+      "id": "brandmarks",
+      "type": "database",
+      "label": "Brand Marks",
+      "sublabel": "catalog.json",
+      "sources": [
+        {
+          "path": "archify/brand-marks/catalog.json",
+          "label": "Catalog"
+        }
+      ],
+      "pos": [460, 80],
+      "size": [130, 60]
+    },
+    {
+      "id": "renderer",
+      "type": "backend",
+      "label": "Diagram Renderer",
+      "sublabel": "5 type renderers",
+      "sources": [
+        {
+          "path": "archify/renderers/architecture/render-architecture.mjs",
+          "label": "Renderer"
+        }
+      ],
+      "pos": [660, 220],
+      "size": [150, 60]
+    },
+    {
+      "id": "layout",
+      "type": "backend",
+      "label": "Layout Engine",
+      "sublabel": "grid + geometry",
+      "sources": [
+        {
+          "path": "archify/renderers/shared/geometry.mjs",
+          "label": "Geometry"
+        }
+      ],
+      "pos": [660, 360],
+      "size": [150, 60]
+    },
+    {
+      "id": "template",
+      "type": "cloud",
+      "label": "HTML Template",
+      "sublabel": "viewer shell",
+      "sources": [
+        {
+          "path": "archify/assets/template.html",
+          "label": "Template"
+        }
+      ],
+      "pos": [880, 220],
+      "size": [130, 60]
+    },
+    {
+      "id": "artifact",
+      "type": "cloud",
+      "label": "HTML Artifact",
+      "sublabel": "standalone output",
+      "pos": [1080, 220],
+      "size": [130, 60]
+    },
+    {
+      "id": "visualcheck",
+      "type": "backend",
+      "label": "Visual Checker",
+      "sublabel": "bin/visual-check.mjs",
+      "sources": [
+        {
+          "path": "archify/bin/visual-check.mjs",
+          "label": "Visual check"
+        }
+      ],
+      "pos": [1080, 360],
+      "size": [130, 60]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Archify runtime",
+      "wraps": ["cli", "spec", "validator", "loader", "brandmarks", "renderer", "layout", "template", "artifact", "visualcheck"],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "invoke-cli",
+      "from": "agent",
+      "to": "cli",
+      "label": "invoke command",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cli-reads-spec",
+      "from": "cli",
+      "to": "spec",
+      "label": "read spec",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "cli-dispatch",
+      "from": "cli",
+      "to": "loader",
+      "label": "dispatch"
+    },
+    {
+      "id": "validate-spec",
+      "from": "spec",
+      "to": "validator",
+      "label": "validate",
+      "variant": "security"
+    },
+    {
+      "id": "validated-to-loader",
+      "from": "validator",
+      "to": "loader",
+      "label": "valid",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "load-brands",
+      "from": "loader",
+      "to": "brandmarks",
+      "label": "load marks",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "loader-to-renderer",
+      "from": "loader",
+      "to": "renderer",
+      "label": "render"
+    },
+    {
+      "id": "renderer-to-layout",
+      "from": "renderer",
+      "to": "layout",
+      "label": "compute layout",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "renderer-to-template",
+      "from": "renderer",
+      "to": "template",
+      "label": "wrap SVG"
+    },
+    {
+      "id": "template-to-artifact",
+      "from": "template",
+      "to": "artifact",
+      "label": "emit HTML"
+    },
+    {
+      "id": "check-artifact",
+      "from": "artifact",
+      "to": "visualcheck",
+      "label": "verify",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "dashed",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Input",
+      "items": ["Typed JSON IR describes nodes, edges, boundaries, and cards", "Optional repository evidence grounds the map in real source files"]
+    },
+    {
+      "dot": "emerald",
+      "title": "Rendering pipeline",
+      "items": ["CLI dispatches to one of five type-specific renderers", "Shared loader, validator, geometry engine, and legend resolver", "Brand marks catalog decorates known product nodes"]
+    },
+    {
+      "dot": "violet",
+      "title": "Output",
+      "items": ["Self-contained HTML with embedded SVG and viewer runtime", "Visual checker confirms desktop containment before handoff"]
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "代码发布工作流",
+    "subtitle": "从开发者推送代码到自动部署测试环境",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1100, 404],
+    "views": [
+      {
+        "id": "happy-path",
+        "label": "正常发布路径",
+        "focus": ["push", "build", "test", "merge", "deploy"],
+        "note": "追踪一次代码提交如何自动走到测试环境。"
+      },
+      {
+        "id": "ci-stage",
+        "label": "CI 阶段",
+        "focus": ["build", "test"],
+        "note": "聚焦构建和自动化测试。"
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "developer", "label": "开发者" },
+    { "id": "pipeline", "label": "CI/CD 流水线" }
+  ],
+  "phases": [
+    { "id": "change", "label": "提交变更", "fromCol": 0, "toCol": 0 },
+    { "id": "verify", "label": "构建与测试", "fromCol": 1, "toCol": 2, "variant": "emphasis" },
+    { "id": "release", "label": "合并与部署", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "ci-pipeline", "label": "CI 流水线", "lane": "pipeline", "fromCol": 0, "toCol": 2, "variant": "emphasis" }
+  ],
+  "mainPath": ["push", "build", "test", "merge", "deploy"],
+  "nodes": [
+    { "id": "push", "lane": "developer", "col": 0, "type": "frontend", "label": "推送代码" },
+    { "id": "build", "lane": "pipeline", "col": 0, "type": "backend", "label": "CI 构建", "tag": "触发" },
+    { "id": "test", "lane": "pipeline", "col": 2, "type": "security", "label": "自动化测试", "tag": "门禁" },
+    { "id": "merge", "lane": "pipeline", "col": 4, "type": "database", "label": "合并到主分支" },
+    { "id": "deploy", "lane": "pipeline", "col": 5, "type": "cloud", "label": "自动部署" }
+  ],
+  "edges": [
+    { "from": "push", "to": "build", "label": "触发", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "build", "to": "test", "label": "构建产物" },
+    { "from": "test", "to": "merge", "label": "通过", "variant": "emphasis" },
+    { "from": "merge", "to": "deploy", "label": "自动", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "起点", "items": ["开发者推送代码到远程仓库", "推送事件触发 CI 流水线"] },
+    { "dot": "emerald", "title": "自动交付", "items": ["CI 构建并运行测试", "通过后合并到主分支并部署测试环境"] }
+  ]
+}

@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "电商系统架构",
+    "subtitle": "React 前端 + 订单 / 支付服务，部署在阿里云",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "views": [
+      {
+        "id": "order-flow",
+        "label": "订单流程",
+        "focus": ["users", "react-app", "api-gateway", "order-service", "postgres", "redis"],
+        "note": "追踪一笔订单从浏览器到数据库和缓存的完整路径。"
+      },
+      {
+        "id": "payment-flow",
+        "label": "支付流程",
+        "focus": ["users", "react-app", "api-gateway", "payment-service", "postgres"],
+        "note": "追踪支付请求如何到达支付服务。"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "用户",
+      "sublabel": "浏览器 / App",
+      "pos": [80, 220],
+      "size": [120, 60]
+    },
+    {
+      "id": "react-app",
+      "type": "frontend",
+      "label": "React 应用",
+      "sublabel": "前端",
+      "brand": "react",
+      "pos": [280, 220],
+      "size": [130, 60]
+    },
+    {
+      "id": "api-gateway",
+      "type": "backend",
+      "label": "API 网关",
+      "sublabel": "HTTPS / 路由",
+      "pos": [500, 220],
+      "size": [130, 60]
+    },
+    {
+      "id": "order-service",
+      "type": "backend",
+      "label": "订单服务",
+      "sublabel": "Order Service",
+      "pos": [720, 120],
+      "size": [130, 60]
+    },
+    {
+      "id": "payment-service",
+      "type": "backend",
+      "label": "支付服务",
+      "sublabel": "Payment Service",
+      "pos": [960, 120],
+      "size": [130, 60]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "缓存",
+      "brand": "redis",
+      "pos": [500, 380],
+      "size": [130, 60]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "主数据库",
+      "brand": "postgresql",
+      "pos": [840, 380],
+      "size": [130, 60]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "阿里云",
+      "wraps": ["react-app", "api-gateway", "order-service", "payment-service", "redis", "postgres"],
+      "pad": 28
+    }
+  ],
+  "connections": [
+    {
+      "id": "users-to-react",
+      "from": "users",
+      "to": "react-app",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "react-to-gateway",
+      "from": "react-app",
+      "to": "api-gateway",
+      "label": "REST API"
+    },
+    {
+      "id": "gateway-to-order",
+      "from": "api-gateway",
+      "to": "order-service",
+      "label": "路由"
+    },
+    {
+      "id": "gateway-to-payment",
+      "from": "api-gateway",
+      "to": "payment-service",
+      "label": "路由",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [[650, 250], [650, 90], [950, 90], [950, 150]]
+    },
+    {
+      "id": "gateway-to-redis",
+      "from": "api-gateway",
+      "to": "redis",
+      "label": "读缓存",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "order-to-postgres",
+      "from": "order-service",
+      "to": "postgres",
+      "label": "SQL",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "payment-to-postgres",
+      "from": "payment-service",
+      "to": "postgres",
+      "label": "SQL",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "order-to-redis",
+      "from": "order-service",
+      "to": "redis",
+      "label": "缓存",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "入口层",
+      "items": ["React 前端面向用户", "API 网关统一接收 HTTPS 请求并路由"]
+    },
+    {
+      "dot": "emerald",
+      "title": "业务服务",
+      "items": ["订单服务处理下单、查询", "支付服务处理收款、状态更新"]
+    },
+    {
+      "dot": "violet",
+      "title": "数据层",
+      "items": ["PostgreSQL 保存订单与支付主数据", "Redis 加速热点读取"]
+    }
+  ]
+}
