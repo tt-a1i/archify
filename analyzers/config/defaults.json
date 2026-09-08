@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "include": ["**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+  "exclude": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/coverage/**",
+    "**/*.d.ts"
+  ],
+  "roles": {
+    "test": ["**/test/**", "**/tests/**", "**/__tests__/**", "**/*.test.*", "**/*.spec.*"],
+    "generated": ["**/generated-*", "**/*.generated.*"]
+  }
+}

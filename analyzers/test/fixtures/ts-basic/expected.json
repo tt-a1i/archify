@@ -1,0 +1,20 @@
+{
+  "files": [
+    { "path": "src/generated-table.mjs", "loc": 1, "role": "generated" },
+    { "path": "src/index.mjs", "loc": 10, "role": "source" },
+    { "path": "src/lib/helper.mjs", "loc": 2, "role": "source" },
+    { "path": "src/lib/lazy.mjs", "loc": 1, "role": "source" },
+    { "path": "test/index.test.mjs", "loc": 2, "role": "test" }
+  ],
+  "imports": [
+    { "from": "src/index.mjs", "specifier": "node:fs", "kind": "static", "line": 1, "resolved": false, "names": ["default"] },
+    { "from": "src/index.mjs", "specifier": "./lib/helper.mjs", "kind": "static", "line": 2, "resolved": true, "names": ["helper", "other"], "to": "src/lib/helper.mjs" },
+    { "from": "src/index.mjs", "specifier": "./lib/helper.mjs", "kind": "export", "line": 3, "resolved": true, "names": ["helper"], "to": "src/lib/helper.mjs" },
+    { "from": "src/index.mjs", "specifier": "./generated-table.mjs", "kind": "static", "line": 4, "resolved": true, "names": ["*"], "to": "src/generated-table.mjs" },
+    { "from": "src/index.mjs", "specifier": "./lib/lazy.mjs", "kind": "dynamic", "line": 7, "resolved": true, "to": "src/lib/lazy.mjs" },
+    { "from": "src/index.mjs", "specifier": "./lib/does-not-exist.mjs", "kind": "dynamic", "line": 8, "resolved": false },
+    { "from": "test/index.test.mjs", "specifier": "../src/index.mjs", "kind": "static", "line": 1, "resolved": true, "names": ["main"], "to": "src/index.mjs" },
+    { "from": "test/index.test.mjs", "specifier": "../src/lib/helper.mjs", "kind": "require", "line": 2, "resolved": true, "to": "src/lib/helper.mjs" }
+  ],
+  "unresolved": { "external": 1, "outside": 0, "unknown": 1 }
+}

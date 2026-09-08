@@ -1,0 +1,18 @@
+{
+  "name": "archify-analyzers",
+  "version": "0.1.0-dev.1",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic, evidence-first static analysis that feeds Archify architecture IR.",
+  "license": "MIT",
+  "bin": { "archify-analyze": "./bin/analyze.mjs" },
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "extract:self": "node bin/analyze.mjs extract ../archify --out ../out/raw-facts.json"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "typescript": "^5.6.0"
+  }
+}
