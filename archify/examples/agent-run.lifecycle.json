@@ -4,7 +4,7 @@
   "meta": {
     "title": "Agent Run Lifecycle",
     "output": "examples/lifecycle-agent-run.html",
-    "viewBox": [980, 660],
+    "viewBox": [1030, 630],
     "animation": "trace",
     "quality_profile": "showcase",
     "views": [
@@ -42,29 +42,18 @@
   "cards": [
     {
       "dot": "emerald",
-      "title": "Main Path",
+      "title": "Main Path + Waits",
       "items": [
         "The run has five ordered phases from queue to completion",
-        "The primary lifecycle is carried by one horizontal rail",
-        "Completion is a phase, not a detached side box"
-      ]
-    },
-    {
-      "dot": "amber",
-      "title": "Human + Input Gates",
-      "items": [
-        "Approval pauses execution without ending the run",
-        "Blocked waits for missing user input",
-        "Wait states remain non-terminal until cancellation or expiry"
+        "Approval and missing input pause the run without ending it"
       ]
     },
     {
       "dot": "rose",
-      "title": "Terminal + Recovery",
+      "title": "Recovery + Terminal Exits",
       "items": [
         "Failed loops back while retry budget remains",
-        "Cancelled and Expired are exits from the lifecycle",
-        "Terminal exits do not point back into active execution"
+        "Cancelled and Expired are terminal exits with no return path"
       ]
     }
   ]

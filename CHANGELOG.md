@@ -7,6 +7,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
 ### Fixed
+- **DSH plugin refresh.** Adapter 0.2.0 pins the current Archify development snapshot, includes the newer runtime and CLI fixes, and targets DSH 0.1.2-rc.1. Release metadata replaces the frozen 0.1.0 packaging source; the tarball uses the canonical clean-Skill stager and documents independent plugin upgrades.
 - **Machine-readable CLI argument failures (#330).** `validate --json` and `deliver --json` now keep invalid or missing option values, unknown options and diagram types, unsupported option combinations, and usage errors inside one versioned failure receipt on stdout. These failures use the `arguments` stage, stable diagnostic codes, and exit status 2, while human-mode stderr behavior remains unchanged.
 - **Complete artifact-check receipts (#311).** The checker now lets stdout drain before exiting, so large JSON receipts remain complete through pipes. Validation, delivery, and architecture comparison retain their original success/failure status without truncated-JSON errors.
 - **CLI output file types (#124).** Render, deliver, preview, and compare reject non-HTML artifact targets and compare rejects non-JSON receipt targets, including through symbolic links. Explicit absolute and parent-directory outputs remain supported; internal validation and inspection continue to work.

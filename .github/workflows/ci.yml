@@ -45,7 +45,7 @@ jobs:
         working-directory: archify
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-      - name: Verify the real 1440x900 adaptive reader remains readable
+      - name: Verify packaged examples and the adaptive reader in a real browser
         run: node --test test/desktop-reader-browser.test.mjs
         working-directory: archify
         env:
