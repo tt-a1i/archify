@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
@@ -496,4 +497,34 @@ test('preview: all five typed renderers reach a verified first revision', { time
       await preview.stop();
     }
   }
+});
+
+
+test('preview: polling continues after an asynchronous watcher error', { timeout: 30000 }, async (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-preview-watch-error-'));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const input = path.join(tmp, 'diagram.architecture.json');
+  const output = path.join(tmp, 'diagram.html');
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+  fs.writeFileSync(input, JSON.stringify(source));
+
+  const watcher = new EventEmitter();
+  let closeCount = 0;
+  watcher.close = () => { closeCount += 1; };
+  t.mock.method(fs, 'watch', () => watcher);
+  const preview = await startPreview({ type: 'architecture', input, output, open: false, pollMs: 40, debounceMs: 20 });
+  try {
+    await waitForState(preview.url, (state) => state.status === 'verified' && state.revision === 1, 'initial artifact did not verify');
+    watcher.emit('error', Object.assign(new Error('watch limit reached'), { code: 'EMFILE' }));
+    assert.equal(closeCount, 1, 'the failed watcher must be closed');
+    source.meta.title = 'Recovered using polling';
+    fs.writeFileSync(input, JSON.stringify(source));
+    await waitForState(preview.url, (state) => state.status === 'verified' && state.revision === 2, 'polling did not publish the edited source');
+    const artifact = await (await fetch(new URL('/artifact.html', preview.url))).text();
+    assert.match(artifact, /Recovered using polling/);
+  } finally {
+    await preview.stop();
+  }
+  assert.equal(closeCount, 1, 'shutdown must not close the failed watcher again');
+  await assert.rejects(fetch(preview.url));
 });

@@ -45,8 +45,17 @@ jobs:
         working-directory: archify
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-      - name: Verify the real 1440x900 adaptive reader remains readable
+      - name: Verify packaged examples and the adaptive reader in a real browser
         run: node --test test/desktop-reader-browser.test.mjs
+        working-directory: archify
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - name: Install offline font test parser
+        run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: archify
+      - name: Verify offline fonts and independent SVG/raster exports
+        run: node --test test/offline-font-browser.test.mjs
         working-directory: archify
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}

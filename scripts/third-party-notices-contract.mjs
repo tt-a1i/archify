@@ -35,21 +35,29 @@ const REQUIRED_DISCLOSURES = [
   ['clearance boundary', 'does not state that every packaged mark has\nbeen cleared for every commercial, promotional, or redistributive use'],
 ];
 
-export function validateThirdPartyNotices(content) {
+const FONT_DISCLOSURES = [
+  ['JetBrains Mono section', '## JetBrains Mono'],
+  ['JetBrains Mono source', 'https://github.com/JetBrains/JetBrainsMono'],
+  ['JetBrains Mono license', 'SIL Open Font License 1.1'],
+  ['JetBrains Mono license file', '`assets/JetBrainsMono-OFL.txt`'],
+  ['embedded-font treatment', 'embed the JetBrains Mono variable font\nsubsets served by Google Fonts'],
+];
+
+export function validateThirdPartyNotices(content, { embeddedFonts = true } = {}) {
   if (typeof content !== 'string' || content.length === 0) {
     return { ok: false, missing: ['non-empty notice'] };
   }
-  const missing = REQUIRED_DISCLOSURES
+  const missing = [...REQUIRED_DISCLOSURES, ...(embeddedFonts ? FONT_DISCLOSURES : [])]
     .filter(([, fragment]) => !content.includes(fragment))
     .map(([label]) => label);
   return { ok: missing.length === 0, missing };
 }
 
-export function assertThirdPartyNotices(content, subject = 'THIRD_PARTY_NOTICES.md') {
-  const result = validateThirdPartyNotices(content);
+export function assertThirdPartyNotices(content, subject = 'THIRD_PARTY_NOTICES.md', options) {
+  const result = validateThirdPartyNotices(content, options);
   if (!result.ok) {
     throw new Error(`${subject} is incomplete; missing required disclosure: ${result.missing.join(', ')}`);
   }
 }
 
-export const THIRD_PARTY_NOTICE_DISCLOSURE_COUNT = REQUIRED_DISCLOSURES.length;
+export const THIRD_PARTY_NOTICE_DISCLOSURE_COUNT = REQUIRED_DISCLOSURES.length + FONT_DISCLOSURES.length;
