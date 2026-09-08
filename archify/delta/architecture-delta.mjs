@@ -33,8 +33,11 @@ function sortedBy(values, keyFor) {
 
 function normalizeRepository(repository) {
   if (!repository) return undefined;
+  const url = new URL(repository.url);
+  url.pathname = url.pathname.replace(/\.git\/?$/i, '').replace(/\/$/, '');
+  if (url.hostname === 'github.com') url.pathname = url.pathname.toLowerCase();
   return {
-    url: String(repository.url || '').trim().replace(/\.git\/?$/i, '').replace(/\/$/, '').toLowerCase(),
+    url: url.href,
     revision: String(repository.revision || '').toLowerCase(),
   };
 }

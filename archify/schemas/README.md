@@ -176,6 +176,8 @@ Repository URLs must be credential-free and contain no query, fragment, or dot
 path segments. HTTP is accepted when explicitly authored for an HTTP-only
 server; no network requests or protocol upgrades/downgrades are performed.
 Origins may use HTTP(S), `ssh://[user@]host/path`, or `[user@]host:path`.
+SCP-style paths must be relative: `host:/path` is rejected because it addresses
+an absolute filesystem path rather than a path relative to the SSH user's home.
 Identity compares the host and complete repository path (including nested
 namespaces), ignoring a trailing `.git` and slash. Hostnames are case-insensitive;
 paths preserve case except on GitHub, which retains its existing behavior.

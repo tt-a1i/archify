@@ -115,6 +115,7 @@ test('self-hosted evidence rejects different identities and ambiguous transport 
   const output = path.join(data.root, 'identity-mismatch.html');
   fs.writeFileSync(output, 'trusted previous artifact');
   for (const [url, remote, code] of [
+    ['https://git.example.internal/team/repo', 'git@git.example.internal:/team/repo.git', 'origin-mismatch'],
     ['https://git.example.internal/team/repo', 'https://other.example.internal/team/repo.git', 'origin-mismatch'],
     ['https://git.example.internal/team/repo', 'https://git.example.internal/other/repo.git', 'origin-mismatch'],
     ['https://git.example.internal/team/Repo', 'https://git.example.internal/team/repo.git', 'origin-mismatch'],

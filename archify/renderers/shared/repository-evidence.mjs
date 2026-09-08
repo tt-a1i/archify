@@ -51,7 +51,7 @@ function repositoryAddress(value) {
       // Check the authored path before URL can silently resolve dot segments.
       repositoryPath = raw.slice(pathStart + 1);
     } else {
-      const scp = raw.match(/^(?:[^@/:]+@)?(\[[0-9a-f:]+\]|[^@/:]+):\/?(.+)$/i);
+      const scp = raw.match(/^(?:[^@/:]+@)?(\[[0-9a-f:]+\]|[^@/:]+):(.+)$/i);
       if (!scp) return null;
       url = new URL(`ssh://${scp[1]}/${scp[2]}`);
       repositoryPath = scp[2];

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -265,6 +265,45 @@ test('repository mismatch fails and verified matching revisions remain evidence-
   const receipt = compareArchitecture(base, head, { baseVerified: true, headVerified: true });
   assert.equal(receipt.proofLevel, 'revision-pinned');
   assert.equal(receipt.summary.provenanceChanged, true);
+});
+
+test('compare CLI preserves self-hosted repository paths through canonical rendering', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-delta-evidence-'));
+  const git = (...args) => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  try {
+    fs.writeFileSync(path.join(root, 'source.js'), 'export const value = 1;\n');
+    git('init');
+    git('config', 'user.name', 'Archify Tests');
+    git('config', 'user.email', 'archify@example.test');
+    git('add', '.');
+    git('commit', '-m', 'fixture');
+    git('remote', 'add', 'origin', 'https://git.example.internal/Team/Repo.git');
+    const revision = git('rev-parse', 'HEAD');
+    const basePath = path.join(root, 'base.json');
+    const headPath = path.join(root, 'head.json');
+    const output = path.join(root, 'compare.html');
+    for (const [baseUrl, headUrl, origin] of [
+      ['https://git.example.internal/Team/Repo', 'https://git.example.internal/Team/Repo', 'ssh://git@git.example.internal/Team/Repo.git'],
+      ['https://git.example.internal/Team/Repo', 'https://GIT.EXAMPLE.INTERNAL:443/Team/Repo.git/', 'https://git.example.internal/Team/Repo.git'],
+      ['https://github.com/Example/Repo', 'https://github.com/example/repo.git/', 'git@github.com:example/repo.git'],
+    ]) {
+      git('remote', 'set-url', 'origin', origin);
+      const base = read(baseFixture);
+      base.meta.repository = { url: baseUrl, revision };
+      base.components[0].sources = [{ path: 'source.js', line: 1 }];
+      const head = structuredClone(base);
+      head.meta.repository.url = headUrl;
+      fs.writeFileSync(basePath, JSON.stringify(base));
+      fs.writeFileSync(headPath, JSON.stringify(head));
+      const result = run(['compare', 'architecture', basePath, headPath, output, '--repo-root', root, '--json']);
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+      assert.equal(JSON.parse(result.stdout).proofLevel, 'revision-pinned');
+      assert.equal(JSON.parse(result.stdout).summary.provenanceChanged, false);
+      assert.ok(fs.existsSync(output));
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('compare CLI writes a deterministic three-state artifact and complete sidecar receipt', () => {
