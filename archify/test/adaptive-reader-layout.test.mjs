@@ -27,7 +27,8 @@ test('wide desktop diagrams use one height-budgeted reader shell instead of brea
   assert.doesNotMatch(template, /@media \(min-width: 1680px\)[\s\S]{0,180}\.container/);
   assert.doesNotMatch(template, /@media \(min-width: 1920px\)[\s\S]{0,180}\.container/);
   assert.match(reader, /var WIDE_RATIO = 1\.55/);
-  assert.match(reader, /window\.innerWidth <= 1600 \? 960 : MAX_READER_WIDTH/);
+  assert.match(reader, /var COMPACT_DESKTOP_HEIGHT = 900/);
+  assert.match(reader, /window\.innerHeight <= COMPACT_DESKTOP_HEIGHT \? MIN_READER_WIDTH : MAX_READER_WIDTH/);
   assert.match(reader, /var availableSvgHeight = Math\.max\(1, window\.innerHeight - fixedHeight\)/);
   assert.match(reader, /var desiredWidth = availableSvgHeight \* ratio \+ chrome\.diagramX/);
   assert.match(reader, /html\.style\.setProperty\('--archify-reader-width', rounded \+ 'px'\)/);
