@@ -49,6 +49,13 @@ const { diagram: dataflow, template, outPath } = await loadDiagramWithBrandMarks
 });
 
 const viewBox = dataflow.meta?.viewBox || [940, 720];
+// Rows are laid out on a fixed pitch from a fixed top, and their count grows
+// with the canvas height: a 720px canvas keeps the historical five rows, a
+// taller meta.viewBox[1] buys more rows instead of clipping the same five.
+const rowTop = 128;
+const rowPitch = 114;
+// 74 is layout.stageBottomPad below — kept literal to avoid a TDZ cycle.
+const rowCount = Math.max(5, Math.floor((viewBox[1] - 74 - rowTop) / rowPitch) + 1);
 const layout = {
   stageY: 46,
   stageH: 36,
@@ -58,7 +65,7 @@ const layout = {
   stageW: 168,
   nodeW: 112,
   nodeH: 58,
-  rowYs: [128, 242, 356, 470, 584],
+  rowYs: Array.from({ length: rowCount }, (_, i) => rowTop + i * rowPitch),
   labelH: 16
 };
 
@@ -143,17 +150,34 @@ function validateDataflow() {
     }
     const brandRailProblem = brandTopRailProblem(node, node.width, 8);
     if (brandRailProblem) problems.push(brandRailProblem);
-    // sublabel and tag render as single unwrapped <text> elements; shrink-to-fit
-    // handles the ordinary case, this rejects what it cannot rescue.
+    // sublabel renders one <text> per "\n"-separated line and tag as a
+    // single unwrapped element; shrink-to-fit handles the ordinary case,
+    // this rejects what it cannot rescue.
+    const subLines = node.sublabel ? String(node.sublabel).split('\n') : [];
     const availableTextW = availableNodeTextWidth(node.width);
     for (const [field, value, minimum] of [
-      ['Sublabel', node.sublabel, nodeTextFit.sublabelMinimum],
+      ['Sublabel', subLines.length > 1 ? null : node.sublabel, nodeTextFit.sublabelMinimum],
       ['Tag', node.tag, nodeTextFit.tagMinimum],
     ]) {
       if (!value) continue;
       const minimumW = minimumNodeTextWidth(value, minimum);
       if (minimumW > availableTextW) {
         problems.push(`${field} "${value}" needs ~${Math.ceil(minimumW)}px at the ${minimum}px legible minimum, but node "${node.id}" provides ${availableTextW}px — shorten the ${field.toLowerCase()} or increase node.width.`);
+      }
+    }
+    for (const line of subLines.length > 1 ? subLines : []) {
+      const minimumW = minimumNodeTextWidth(line, nodeTextFit.sublabelMinimum);
+      if (minimumW > availableTextW) {
+        problems.push(`Sublabel line "${line}" needs ~${Math.ceil(minimumW)}px at the ${nodeTextFit.sublabelMinimum}px legible minimum, but node "${node.id}" provides ${availableTextW}px — shorten the line or increase node.width.`);
+      }
+    }
+    // Vertical fit: lines start at y+37 on a 12px pitch; the tag owns the
+    // bottom 11px band. A multi-line sublabel must declare enough height.
+    if (subLines.length > 1) {
+      const blockBottom = 37 + (subLines.length - 1) * 12 + 5;
+      const limit = node.tag ? node.height - 14 : node.height - 6;
+      if (blockBottom > limit) {
+        problems.push(`Sublabel of node "${node.id}" needs height ≥ ${blockBottom + (node.tag ? 14 : 6)} for its ${subLines.length} lines (plus tag), but the node is ${node.height}px tall.`);
       }
     }
   }
@@ -373,9 +397,10 @@ function renderNode(node) {
   const fill = componentFill[node.type] || 'c-external';
   const accent = componentText[node.type] || 't-muted';
   const hasSub = node.sublabel != null && node.sublabel !== '';
-  const sub = hasSub
-    ? `\n          <text data-detail="context" x="${node.cx}" y="${node.y + 37}" class="t-muted" font-size="${fittedNodeFontSize(node.sublabel, node.width, nodeTextFit.sublabelPreferred, nodeTextFit.sublabelMinimum)}" text-anchor="middle">${esc(node.sublabel)}</text>`
-    : '';
+  const subLines = hasSub ? String(node.sublabel).split('\n') : [];
+  const sub = subLines
+    .map((line, i) => `\n          <text data-detail="context" x="${node.cx}" y="${node.y + 37 + i * 12}" class="t-muted" font-size="${fittedNodeFontSize(line, node.width, nodeTextFit.sublabelPreferred, nodeTextFit.sublabelMinimum)}" text-anchor="middle">${esc(line)}</text>`)
+    .join('');
   const tag = node.tag
     ? `\n        <text data-detail="fine" x="${node.cx}" y="${node.y + node.height - 11}" class="${accent}" font-size="${fittedNodeFontSize(node.tag, node.width, nodeTextFit.tagPreferred, nodeTextFit.tagMinimum)}" text-anchor="middle">${esc(node.tag)}</text>`
     : '';
