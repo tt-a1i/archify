@@ -7,6 +7,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
 ### Fixed
+- **Machine-readable CLI argument failures (#330).** `validate --json` and `deliver --json` now keep invalid or missing option values, unknown options and diagram types, unsupported option combinations, and usage errors inside one versioned failure receipt on stdout. These failures use the `arguments` stage, stable diagnostic codes, and exit status 2, while human-mode stderr behavior remains unchanged.
 - **Complete artifact-check receipts (#311).** The checker now lets stdout drain before exiting, so large JSON receipts remain complete through pipes. Validation, delivery, and architecture comparison retain their original success/failure status without truncated-JSON errors.
 - **CLI output file types (#124).** Render, deliver, preview, and compare reject non-HTML artifact targets and compare rejects non-JSON receipt targets, including through symbolic links. Explicit absolute and parent-directory outputs remain supported; internal validation and inspection continue to work.
 - **License provenance in distributions.** Source and packaged Skill distributions retain Cocoon AI's exact MIT copyright notice, package staging and smoke tests fail closed when the notice or LICENSE is missing or altered, and the deterministic ZIP carries the same LICENSE bytes as the repository.

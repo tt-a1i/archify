@@ -713,8 +713,8 @@ test('cli: rejects an unknown quality profile', () => {
 test('cli: rejects a quality flag without a value', () => {
   const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
   for (const args of [
-    ['validate', 'workflow', input, '--json', '--quality'],
-    ['validate', 'workflow', input, '--quality', '--json'],
+    ['validate', 'workflow', input, '--quality'],
+    ['deliver', 'workflow', input, '--quality='],
     ['validate', 'workflow', input, '--quality='],
   ]) {
     const result = run(args);
@@ -735,10 +735,6 @@ test('cli: validate rejects unknown flags, layout-json assignment typos, and ext
       pattern: /Unknown validate option "--layout-json=true"/,
     },
     {
-      args: ['validate', 'workflow', input, '--layout-json=true', '--json'],
-      pattern: /Unknown validate option "--layout-json=true"/,
-    },
-    {
       args: ['validate', 'workflow', input, 'unexpected-output.html', '--layout-json'],
       pattern: /Usage:/,
     },
@@ -749,6 +745,125 @@ test('cli: validate rejects unknown flags, layout-json assignment typos, and ext
     assert.equal(result.status, 2, `${args.join(' ')}\n${result.stderr}\n${result.stdout}`);
     assert.equal(result.stdout, '');
     assert.match(result.stderr, pattern);
+  }
+});
+
+test('cli: validate and deliver keep argument failures machine-readable with --json', () => {
+  const workflow = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  const sequence = path.join(skillRoot, 'examples/cache-miss-request.sequence.json');
+  const cases = [
+    {
+      args: ['validate', '--json'],
+      command: 'validate',
+      code: 'cli/usage',
+    },
+    {
+      args: ['validate', '--json', 'workflow', workflow, '--quality', 'hero'],
+      command: 'validate',
+      code: 'cli/invalid-option-value',
+      subject: { option: '--quality' },
+    },
+    {
+      args: ['validate', 'workflow', workflow, '--quality', '--json'],
+      command: 'validate',
+      code: 'cli/missing-option-value',
+      subject: { option: '--quality' },
+    },
+    {
+      args: ['validate', 'workflow', workflow, '--quality=', '--json'],
+      command: 'validate',
+      code: 'cli/missing-option-value',
+      subject: { option: '--quality' },
+    },
+    {
+      args: ['validate', 'workflow', workflow, '--layout-json=true', '--json'],
+      command: 'validate',
+      code: 'cli/unknown-option',
+      subject: { option: '--layout-json=true' },
+    },
+    {
+      args: ['validate', '--bogus', 'payload', 'workflow', workflow, '--json'],
+      command: 'validate',
+      code: 'cli/unknown-option',
+      subject: { option: '--bogus' },
+    },
+    {
+      args: ['validate', 'workflow', workflow, 'unexpected-output.html', '--json'],
+      command: 'validate',
+      code: 'cli/usage',
+    },
+    {
+      args: ['validate', 'unknown', workflow, '--json'],
+      command: 'validate',
+      code: 'cli/unknown-diagram-type',
+      subject: { type: 'unknown' },
+    },
+    {
+      args: ['validate', 'workflow', workflow, '--repo-root', '.', '--json'],
+      command: 'validate',
+      code: 'cli/unsupported-option',
+      subject: { option: '--repo-root', type: 'workflow' },
+    },
+    {
+      args: ['validate', 'architecture', workflow, '--repo-root=', '--json'],
+      command: 'validate',
+      code: 'cli/missing-option-value',
+      subject: { option: '--repo-root' },
+    },
+    {
+      args: ['validate', 'sequence', sequence, '--layout-json', '--json'],
+      command: 'validate',
+      code: 'cli/unsupported-option',
+      subject: { option: '--layout-json', type: 'sequence' },
+    },
+    {
+      args: ['deliver', '--json', 'workflow', workflow, '--bogus'],
+      command: 'deliver',
+      code: 'cli/unknown-option',
+      subject: { option: '--bogus' },
+    },
+    {
+      args: ['deliver', '--json'],
+      command: 'deliver',
+      code: 'cli/usage',
+    },
+    {
+      args: ['deliver', 'workflow', workflow, '--repo-root', '--json'],
+      command: 'deliver',
+      code: 'cli/missing-option-value',
+      subject: { option: '--repo-root' },
+    },
+    {
+      args: ['deliver', 'unknown', workflow, '--json'],
+      command: 'deliver',
+      code: 'cli/unknown-diagram-type',
+      subject: { type: 'unknown' },
+    },
+    {
+      args: ['deliver', 'workflow', workflow, 'diagram.html', 'extra.html', '--json'],
+      command: 'deliver',
+      code: 'cli/usage',
+    },
+  ];
+
+  for (const { args, command, code, subject = {} } of cases) {
+    const result = run(args);
+    assert.equal(result.status, 2, `${args.join(' ')}\n${result.stderr}\n${result.stdout}`);
+    assert.equal(result.stderr, '');
+    const failure = JSON.parse(result.stdout);
+    assert.equal(failure.schemaVersion, 1);
+    assert.equal(failure.ok, false);
+    assert.equal(failure.command, command);
+    assert.equal(failure.stage, 'arguments');
+    assert.equal('type' in failure, false);
+    assert.equal('input' in failure, false);
+    assert.equal(failure.diagnostics.length, 1);
+    assert.equal(failure.diagnostics[0].code, code);
+    assert.equal(failure.diagnostics[0].severity, 'error');
+    assert.deepEqual(failure.diagnostics[0].subject, { command, ...subject });
+    assert.ok(failure.diagnostics[0].supportedFixes.length > 0);
+    assert.equal('stack' in failure, false);
+    assert.equal('stack' in failure.diagnostics[0], false);
   }
 });
 
