@@ -1,3 +1,5 @@
+import { fail } from './diagnostics.mjs';
+
 // Minimal glob → RegExp for include/exclude/role patterns.
 // Supports **, *, ?, and {a,b}. Paths are POSIX, repo-relative, no leading "./".
 export function globToRegExp(glob) {
@@ -13,6 +15,9 @@ export function globToRegExp(glob) {
     } else if (ch === '?') re += '[^/]';
     else if (ch === '{') {
       const end = glob.indexOf('}', i);
+      if (end === -1) fail('cli/config-invalid', 'Unclosed brace in glob pattern.', {
+        subject: { pattern: glob }, supportedFixes: ['close the brace in the configured glob pattern'],
+      });
       re += `(?:${glob.slice(i + 1, end).split(',').map(escape).join('|')})`;
       i = end;
     } else re += escape(ch);

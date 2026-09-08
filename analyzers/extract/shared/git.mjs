@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import { toPosix } from './files.mjs';
 
@@ -12,7 +13,7 @@ function git(cwd, args) {
 export function describeRepository(analyzedRoot) {
   const top = git(analyzedRoot, ['rev-parse', '--show-toplevel']);
   if (!top) return { revision: null, root: '.' };
-  const rel = toPosix(path.relative(path.resolve(top), analyzedRoot)) || '.';
+  const rel = toPosix(path.relative(fs.realpathSync(top), fs.realpathSync(analyzedRoot))) || '.';
   const revision = git(analyzedRoot, ['rev-parse', 'HEAD']);
   return { revision: revision && /^[a-f0-9]{40}$/.test(revision) ? revision : null, root: rel };
 }

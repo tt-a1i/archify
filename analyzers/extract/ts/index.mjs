@@ -1,6 +1,6 @@
 // TypeScript Compiler API adapter (JS + TS via allowJs). M1 scope: files and
-// import edges only. Symbols and calls stay empty until M2 introduces a Program.
-import fs from 'node:fs';
+// import edges only. A no-resolution Program supplies lexical binding information;
+// exported symbols and calls stay empty until M2.
 import path from 'node:path';
 import ts from 'typescript';
 import { classifyRole, lineCount, listFiles, toPosix } from '../shared/files.mjs';
@@ -25,17 +25,19 @@ export function extract(root, config) {
   const absRoot = path.resolve(root);
   const files = listFiles(absRoot, config);
   const fileSet = new Set(files);
+  const program = ts.createProgram(files.map((rel) => path.join(absRoot, rel)), {
+    ...COMPILER_OPTIONS, noResolve: true, noLib: true, types: [],
+  });
+  const checker = program.getTypeChecker();
   const imports = [];
   const unresolved = { external: 0, outside: 0, unknown: 0 };
   const fileRecords = [];
 
   for (const rel of files) {
     const abs = path.join(absRoot, rel);
-    const content = fs.readFileSync(abs, 'utf8');
-    fileRecords.push({ path: rel, loc: lineCount(content), role: classifyRole(rel, config.roles) });
-
-    const source = ts.createSourceFile(abs, content, ts.ScriptTarget.ESNext, true, scriptKind(rel));
-    for (const found of collectImports(source)) {
+    const source = program.getSourceFile(abs);
+    fileRecords.push({ path: rel, loc: lineCount(source.text), role: classifyRole(rel, config.roles) });
+    for (const found of collectImports(source, checker)) {
       const record = { from: rel, specifier: found.specifier, kind: found.kind, line: found.line, resolved: false };
       if (found.names.length) record.names = found.names;
       const target = resolve(found.specifier, abs, absRoot, fileSet);
@@ -45,7 +47,7 @@ export function extract(root, config) {
     }
   }
 
-  imports.sort((a, b) => a.from.localeCompare(b.from) || a.line - b.line || a.specifier.localeCompare(b.specifier));
+  imports.sort((a, b) => compareText(a.from, b.from) || a.line - b.line || compareText(a.specifier, b.specifier));
 
   const repo = describeRepository(absRoot);
   return {
@@ -59,28 +61,29 @@ export function extract(root, config) {
   };
 }
 
-function scriptKind(rel) {
-  if (/\.tsx$/.test(rel)) return ts.ScriptKind.TSX;
-  if (/\.jsx$/.test(rel)) return ts.ScriptKind.JSX;
-  if (/\.[mc]?ts$/.test(rel)) return ts.ScriptKind.TS;
-  return ts.ScriptKind.JS;
+function compareText(a, b) {
+  return a < b ? -1 : a > b ? 1 : 0;
 }
 
 function lineOf(source, node) {
   return source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
 }
 
-function collectImports(source) {
+function collectImports(source, checker) {
   const found = [];
   const visit = (node) => {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
       found.push({ specifier: node.moduleSpecifier.text, kind: 'static', line: lineOf(source, node), names: importedNames(node.importClause) });
+    } else if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)
+      && node.moduleReference.expression && ts.isStringLiteral(node.moduleReference.expression)) {
+      found.push({ specifier: node.moduleReference.expression.text, kind: 'require', line: lineOf(source, node), names: ['*'] });
     } else if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
       found.push({ specifier: node.moduleSpecifier.text, kind: 'export', line: lineOf(source, node), names: exportedNames(node.exportClause) });
     } else if (ts.isCallExpression(node) && node.arguments.length && ts.isStringLiteralLike(node.arguments[0])) {
       if (node.expression.kind === ts.SyntaxKind.ImportKeyword) {
         found.push({ specifier: node.arguments[0].text, kind: 'dynamic', line: lineOf(source, node), names: [] });
-      } else if (ts.isIdentifier(node.expression) && node.expression.text === 'require') {
+      } else if (ts.isIdentifier(node.expression) && node.expression.text === 'require'
+        && isModuleRequire(node.expression, checker)) {
         found.push({ specifier: node.arguments[0].text, kind: 'require', line: lineOf(source, node), names: [] });
       }
     }
@@ -88,6 +91,25 @@ function collectImports(source) {
   };
   visit(source);
   return found;
+}
+
+// Native CommonJS require has no source declaration. Also preserve the common
+// ESM createRequire pattern, but never infer an arbitrary local function is a loader.
+function isModuleRequire(identifier, checker) {
+  const declarations = checker.getSymbolAtLocation(identifier)?.declarations || [];
+  if (!declarations.length) return true;
+  if (declarations.length !== 1) return false;
+  const declaration = declarations[0];
+  if (!ts.isVariableDeclaration(declaration) || !declaration.initializer
+    || !ts.isCallExpression(declaration.initializer)) return false;
+  const factory = declaration.initializer.expression;
+  if (!ts.isIdentifier(factory)) return false;
+  const imported = checker.getSymbolAtLocation(factory)?.declarations?.[0];
+  if (!imported || !ts.isImportSpecifier(imported)
+    || (imported.propertyName || imported.name).text !== 'createRequire') return false;
+  const statement = imported.parent.parent.parent;
+  return ts.isImportDeclaration(statement) && ts.isStringLiteral(statement.moduleSpecifier)
+    && ['node:module', 'module'].includes(statement.moduleSpecifier.text);
 }
 
 function importedNames(clause) {
