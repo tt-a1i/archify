@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { throwDiagnosticError } from './diagnostics.mjs';
+import { parseRepositoryRemote, redactRepositoryRemote, repositorySourceHref } from './repository-location.mjs';
 
 const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
 const CONTROL_CHARACTER_RE = /[\u0000-\u001f\u007f]/;
@@ -38,22 +39,6 @@ function gitValue(repoRoot, args, failure) {
   return result.stdout.trim();
 }
 
-function redactRemoteUrl(value) {
-  // Strip userinfo for any http(s) remote so rejected origins cannot leak credentials.
-  return String(value || '').replace(/^(https?:\/\/)[^/@\s]+@/i, '$1REDACTED@');
-}
-
-function normalizeRemoteForSlug(value) {
-  // Strip HTTPS userinfo so credentialed remotes share identity with canonical URLs.
-  return String(value || '').trim().replace(/^https:\/\/[^/@\s]+@/i, 'https://');
-}
-
-function githubSlug(value) {
-  const raw = normalizeRemoteForSlug(value);
-  const match = raw.match(/^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/i);
-  return match ? `${match[1]}/${match[2]}`.toLowerCase() : null;
-}
-
 function verifiedSourcePath(value, where) {
   const sourcePath = String(value || '');
   if (!sourcePath || sourcePath.startsWith('/') || sourcePath.includes('\\') || CONTROL_CHARACTER_RE.test(sourcePath)) {
@@ -72,14 +57,6 @@ function verifiedSourcePath(value, where) {
     });
   }
   return segments.join('/');
-}
-
-function sourceHref(repositoryUrl, revision, source) {
-  const encodedPath = source.path.split('/').map(encodeURIComponent).join('/');
-  const lineFragment = source.line
-    ? `#L${source.line}${source.endLine && source.endLine !== source.line ? `-L${source.endLine}` : ''}`
-    : '';
-  return `${repositoryUrl}/blob/${revision}/${encodedPath}${lineFragment}`;
 }
 
 function sourceLineCount(content) {
@@ -104,7 +81,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   const repository = diagram.meta?.repository;
   if (!repository) evidenceFailure('repository-evidence/repository-required', 'Repository evidence requires /meta/repository.', {
     subject: { path: '/meta/repository' },
-    supportedFixes: ['add the pinned public repository metadata or remove component sources'],
+    supportedFixes: ['add the pinned repository metadata or remove component sources'],
   });
   if (!FULL_SHA_RE.test(repository.revision || '')) {
     evidenceFailure('repository-evidence/revision-invalid', '/meta/repository/revision must be a full 40-character commit SHA.', {
@@ -113,12 +90,25 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       supportedFixes: ['pin one full 40-character commit SHA'],
     });
   }
-  const authoredSlug = githubSlug(repository.url);
-  if (!authoredSlug || !String(repository.url).startsWith('https://github.com/')) {
-    evidenceFailure('repository-evidence/url-invalid', '/meta/repository/url must be a public https://github.com owner/repository URL.', {
+  const location = parseRepositoryRemote(repository.url, { authored: true });
+  if (!location) {
+    evidenceFailure('repository-evidence/url-invalid', '/meta/repository/url must be a credential-free HTTP(S) or Git SSH repository address without query, fragment, or dot segments.', {
       subject: { path: '/meta/repository/url' },
-      evidence: { repositoryUrl: repository.url },
-      supportedFixes: ['use the canonical public GitHub HTTPS repository URL'],
+      supportedFixes: ['declare the matching repository address without credentials; use link_mode: local-only for internal repositories'],
+    });
+  }
+  const linkMode = repository.link_mode ?? 'web';
+  if (!['web', 'local-only'].includes(linkMode)) evidenceFailure('repository-evidence/link-mode-invalid', 'Repository link_mode must be web or local-only.');
+  if (repository.provider !== undefined && (!['github', 'gitee'].includes(repository.provider) || repository.provider !== location.provider)) {
+    evidenceFailure('repository-evidence/provider-invalid', 'Repository provider must match its supported public host (github.com or gitee.com).', {
+      subject: { path: '/meta/repository/provider' },
+      supportedFixes: ['use the matching provider or omit provider and select link_mode: local-only'],
+    });
+  }
+  if (linkMode === 'web' && (!location.provider || location.protocol !== 'https:' || location.endpoint !== 'standard' || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(location.path))) {
+    evidenceFailure('repository-evidence/links-unsupported', 'Web source links require a canonical GitHub or Gitee HTTPS owner/repository URL.', {
+      subject: { path: '/meta/repository/url' },
+      supportedFixes: ['use a canonical GitHub or Gitee URL, or select link_mode: local-only to retain local verification without web links'],
     });
   }
   if (!repoRootInput) {
@@ -148,8 +138,8 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
     });
   }
   const origin = gitValue(realRoot, ['remote', 'get-url', 'origin'], 'Evidence repository must have an origin remote.');
-  if (githubSlug(origin) !== authoredSlug) {
-    const safeOrigin = redactRemoteUrl(origin);
+  if (parseRepositoryRemote(origin)?.identity !== location.identity) {
+    const safeOrigin = redactRepositoryRemote(origin);
     evidenceFailure('repository-evidence/origin-mismatch', `Evidence repository origin ${JSON.stringify(safeOrigin)} does not match ${JSON.stringify(repository.url)}.`, {
       subject: { repoRoot: realRoot },
       evidence: { localOrigin: safeOrigin, authoredRepository: repository.url },
@@ -220,7 +210,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
           });
         }
       }
-      verified.push({ ...source, href: sourceHref(repository.url.replace(/\.git\/?$/i, '').replace(/\/$/, ''), revision, source) });
+      verified.push({ ...source, ...(linkMode === 'web' ? { href: repositorySourceHref(location.provider, location.url, revision, source) } : {}) });
       referenceCount += 1;
     }
     nodes[component.id] = verified;
@@ -236,9 +226,11 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
     schemaVersion: 1,
     verified: true,
     repository: {
-      url: repository.url.replace(/\.git\/?$/i, '').replace(/\/$/, ''),
+      url: location.url,
       revision,
       shortRevision: revision.slice(0, 7),
+      label: location.provider === 'github' ? location.path : location.url.replace(/^(?:https?:\/\/|ssh:\/\/git@|git@)/, ''),
+      ...(linkMode === 'web' ? { href: `${location.url}/tree/${revision}` } : { linkMode }),
     },
     referenceCount,
     nodes,

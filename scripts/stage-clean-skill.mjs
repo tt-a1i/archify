@@ -207,9 +207,13 @@ function validateThirdPartyNoticeInputs(repoRoot, packageEntries) {
     throw new Error('repository THIRD_PARTY_NOTICES.md is missing or unreadable');
   }
 
+  const embeddedFonts = packageEntries.some((entry) => entry.content.includes('data:font/woff2'));
+  if (embeddedFonts && !packageEntries.some((entry) => entry.relative === 'archify/assets/JetBrainsMono-OFL.txt')) {
+    throw new Error('embedded viewer font requires assets/JetBrainsMono-OFL.txt');
+  }
   const packagedNotices = packagedEntry.content;
-  assertThirdPartyNotices(repositoryNotices.toString('utf8'), 'repository THIRD_PARTY_NOTICES.md');
-  assertThirdPartyNotices(packagedNotices.toString('utf8'), 'archify/THIRD_PARTY_NOTICES.md');
+  assertThirdPartyNotices(repositoryNotices.toString('utf8'), 'repository THIRD_PARTY_NOTICES.md', { embeddedFonts });
+  assertThirdPartyNotices(packagedNotices.toString('utf8'), 'archify/THIRD_PARTY_NOTICES.md', { embeddedFonts });
   if (!packagedNotices.equals(repositoryNotices)) {
     throw new Error('archify/THIRD_PARTY_NOTICES.md must byte-match the repository notice');
   }
