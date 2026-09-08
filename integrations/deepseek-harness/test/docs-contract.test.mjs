@@ -11,26 +11,56 @@ function read(relativePath) {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 }
 
+const manifest = JSON.parse(read('integrations/deepseek-harness/package.json'));
+const release = JSON.parse(read('integrations/deepseek-harness/release.json'));
+const published = Object.freeze({
+  adapterVersion: '0.1.0',
+  skillVersion: '2.14.0',
+  dshVersion: '0.1.0-rc.6',
+});
+const candidate = Object.freeze({
+  adapterVersion: manifest.version,
+  skillVersion: release.skillVersion,
+  dshVersion: release.dshVersion,
+  sourceCommit: release.sourceCommit,
+});
+
 test('README.md and README_EN.md stay byte-identical after the DSH docs', () => {
   assert.equal(read('README.md'), read('README_EN.md'));
 });
 
-test('DSH 0.1.0 documentation keeps its released Skill snapshot immutable', () => {
+test('DSH documentation identifies the published release and pinned candidate snapshot', () => {
   const integration = read('integrations/deepseek-harness/README.md');
-  assert.match(integration, /Archify 2\.14 snapshot/);
-  assert.match(integration, /archify-dsh-v0\.1\.0/);
-  assert.match(integration, /update notifier[\s\S]*intentionally excluded/);
+  assert.ok(integration.includes(`currently published npm package is **v${published.adapterVersion}**`));
+  assert.ok(integration.includes(`@deepseek-ai/dsh@${published.dshVersion}`));
+  assert.ok(integration.includes(`Archify Skill **${published.skillVersion}**`));
+  assert.ok(integration.includes(`pending **v${candidate.adapterVersion}** release`));
+  assert.ok(integration.includes(`Archify ${candidate.skillVersion}`));
+  assert.ok(integration.includes(candidate.sourceCommit));
+  assert.ok(integration.includes(`@deepseek-ai/dsh@${candidate.dshVersion}`));
+  assert.match(integration, /not published or available as an npm install yet/);
+  assert.match(integration, /not an Archify 2\.17 stable release/);
+  assert.match(integration, /notification-only/);
+  assert.match(integration, /does not update an already installed plugin/);
+  assert.match(integration, /repository root is not a DSH package/);
+  assert.match(integration, /current adapter Git HEAD blob/);
+  assert.match(integration, /working-tree edits are not package inputs/);
 });
 
 test('English and Chinese docs cover install, invoke, uninstall, community wording, and Produced Files', () => {
-  const english = [read('README.md'), read('integrations/deepseek-harness/README.md')].join('\n');
-  const chinese = [read('README_ZH.md'), read('integrations/deepseek-harness/README.md')].join('\n');
+  const englishRoot = read('README.md');
+  const chineseRoot = read('README_ZH.md');
+  const integration = read('integrations/deepseek-harness/README.md');
+  const english = [englishRoot, integration].join('\n');
+  const chinese = [chineseRoot, integration].join('\n');
+  const publishedInstall = `dsh plugin --profile web add @tt-a1i/archify-dsh@${published.adapterVersion}`;
+  const candidateInstall = `dsh plugin --profile web add @tt-a1i/archify-dsh@${candidate.adapterVersion}`;
 
-  for (const source of [english, chinese, read('README.md'), read('README_ZH.md')]) {
-    assert.match(source, /@tt-a1i\/archify-dsh@0\.1\.0/);
-    assert.match(source, /@deepseek-ai\/dsh@0\.1\.0-rc\.6/);
-    assert.match(source.replaceAll('\\|', '|'), /\^22\.19\.0 \|\| >=24\.0\.0/);
-    assert.match(source, /dsh plugin --profile web add @tt-a1i\/archify-dsh@0\.1\.0/);
+  for (const source of [english, chinese, englishRoot, chineseRoot]) {
+    assert.ok(source.includes(publishedInstall));
+    assert.ok(!source.includes(candidateInstall));
+    assert.ok(source.includes(`@deepseek-ai/dsh@${published.dshVersion}`));
+    assert.ok(source.replaceAll('\\|', '|').includes(manifest.engines.node));
     assert.match(source, /dsh plugin --profile web remove @tt-a1i\/archify-dsh/);
     assert.match(source, /Use the archify skill to map this repository's runtime architecture/);
     assert.doesNotMatch(source, /dsh plugin[^\n]*github:tt-a1i\/archify/);

@@ -214,6 +214,9 @@ const CASES = [
     (d) => { d.messages[0].y = 9000; }, ['outside the readable timeline', 'keep y between']],
   ['sequence: segment to <= from', 'sequence',
     (d) => { d.segments = [{ from: 400, to: 300, label: 'bad' }]; }, ['invalid y range', 'greater than']],
+  ['sequence: segment label exceeds segment frame available width', 'sequence',
+    (d) => { d.segments[0].label = 'Long Segment Label '.repeat(10); },
+    ['exceeds the segment frame\'s available width', 'increase meta.viewBox[0]']],
   ['sequence: participant sublabel wider than its legible minimum', 'sequence',
     (d) => { d.participants[0].sublabel = 'This supporting sentence is far too long for one sequence participant'; },
     ['Sublabel', 'legible', 'shorten the sublabel']],
@@ -1444,6 +1447,43 @@ test('sequence: segment title badge clears a nearby first message label', () => 
     && segmentY < messageY + messageH
     && segmentY + segmentH > messageY;
   assert.equal(overlaps, false, 'segment title badge must not cover the first message label');
+});
+
+test('sequence: segment label exceeding segment frame available width fails layout validation with remediation', () => {
+  const d = load('sequence');
+  d.segments[0].label = 'Phase 1: Dual-Certificate mTLS Handshake & Distributed Token Verification Protocol Negotiation'.repeat(2);
+
+  const { code, stderr } = render('sequence', d);
+  assert.equal(code, 1);
+  assert.match(stderr, /Segment "Phase 1: Dual-Certificate mTLS Handshake & Distributed Token Verification Protocol NegotiationPhase 1: Dual-Certificate mTLS Handshake & Distributed Token Verification Protocol Negotiation" label \(~992px\) exceeds the segment frame's available width \(716px\) — shorten the label or increase meta\.viewBox\[0\] to at least 1096\./);
+
+  // Remediating by increasing viewBox[0] to the suggested minimum allows it to pass cleanly
+  d.meta.viewBox[0] = 1096;
+  const fixed = render('sequence', d);
+  assert.equal(fixed.code, 0, fixed.stderr);
+});
+
+test('sequence: segment label boundary containment within canvas vs segment frame and exact-fit', () => {
+  // Available width in default sequence fixture (viewBox[0] = 820):
+  // frame right edge = 820 - 48 = 772
+  // labelBox.x = 56
+  // availableWidth = 772 - 56 = 716px
+  // 135 ASCII units -> labelW = 135 * 5.2 + 14 = 716px -> label right edge = 56 + 716 = 772px (exact fit)
+  // 136 ASCII units -> labelW = 136 * 5.2 + 14 = 721.2px -> label right edge = 56 + 721.2 = 777.2px
+  // (777.2px <= 820 canvas width, but > 772 segment frame edge)
+
+  // 1. Fits within canvas (777.2 <= 820) but exceeds segment frame (777.2 > 772)
+  const dExceed = load('sequence');
+  dExceed.segments[0].label = 'A'.repeat(136);
+  const resExceed = render('sequence', dExceed);
+  assert.equal(resExceed.code, 1, 'label exceeding segment frame must fail even if within canvas');
+  assert.match(resExceed.stderr, /label \(~721px\) exceeds the segment frame's available width \(716px\) — shorten the label or increase meta\.viewBox\[0\] to at least 826\./);
+
+  // 2. Exact-fit case at the frame's right edge (56 + 716 = 772 === 820 - 48)
+  const dExact = load('sequence');
+  dExact.segments[0].label = 'A'.repeat(135);
+  const resExact = render('sequence', dExact);
+  assert.equal(resExact.code, 0, `exact-fit label at segment frame boundary must pass cleanly: ${resExact.stderr}`);
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

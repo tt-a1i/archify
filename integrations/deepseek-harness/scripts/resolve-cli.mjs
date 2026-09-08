@@ -36,6 +36,22 @@ function nodeCliPath(command, {
 
 export function resolveCliInvocation(command, args = [], options = {}) {
   const platform = options.platform || process.platform;
+  if (platform === 'win32' && command === 'pnpm') {
+    const env = options.env || process.env;
+    const existsSync = options.existsSync || fs.existsSync;
+    const execPath = options.execPath || process.execPath;
+    const roots = [path.win32.dirname(execPath), env.PNPM_HOME,
+      ...(env.PATH || env.Path || env.path || '').split(';')].filter(Boolean);
+    // action-setup and npm-global installs expose pnpm.cmd, which cannot be
+    // spawned directly without a shell. Launch its JS entry with Node instead.
+    const candidates = roots.flatMap((root) => [
+      path.win32.join(root, '..', 'pnpm', 'bin', 'pnpm.cjs'),
+      path.win32.join(root, 'node_modules', 'pnpm', 'bin', 'pnpm.cjs'),
+    ]);
+    const cliPath = candidates.find((candidate) => existsSync(candidate));
+    if (cliPath) return { command: execPath, args: [cliPath, ...args] };
+    // Standalone pnpm distributions still provide a native pnpm.exe.
+  }
   if (platform === 'win32' && command === 'tar') {
     const env = options.env || process.env;
     const existsSync = options.existsSync || fs.existsSync;

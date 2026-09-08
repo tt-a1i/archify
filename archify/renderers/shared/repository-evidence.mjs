@@ -38,12 +38,20 @@ function gitValue(repoRoot, args, failure) {
   return result.stdout.trim();
 }
 
-function originSlug(value) {
-  const raw = String(value || '').trim();
-  const match = raw.match(/^(?:https:\/\/([^/\s]+)\/|git@([^:/\s]+):|ssh:\/\/git@([^/\s]+)\/)([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/i);
-  if (!match) return null;
-  const host = (match[1] || match[2] || match[3]).toLowerCase();
-  return `${host}/${match[4]}/${match[5]}`.toLowerCase();
+function redactRemoteUrl(value) {
+  // Strip userinfo for any http(s) remote so rejected origins cannot leak credentials.
+  return String(value || '').replace(/^(https?:\/\/)[^/@\s]+@/i, '$1REDACTED@');
+}
+
+function normalizeRemoteForSlug(value) {
+  // Strip HTTPS userinfo so credentialed remotes share identity with canonical URLs.
+  return String(value || '').trim().replace(/^https:\/\/[^/@\s]+@/i, 'https://');
+}
+
+function githubSlug(value) {
+  const raw = normalizeRemoteForSlug(value);
+  const match = raw.match(/^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/i);
+  return match ? `${match[1]}/${match[2]}`.toLowerCase() : null;
 }
 
 function verifiedSourcePath(value, where) {
@@ -105,9 +113,9 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       supportedFixes: ['pin one full 40-character commit SHA'],
     });
   }
-  const authoredSlug = originSlug(repository.url);
-  if (!authoredSlug || !/^https:\/\/[^/\s]+\/[^/\s]+\/[^/\s]+?(?:\.git)?\/?$/i.test(String(repository.url))) {
-    evidenceFailure('repository-evidence/url-invalid', '/meta/repository/url must be an https repository URL with host, owner, and repository.', {
+  const authoredSlug = githubSlug(repository.url);
+  if (!authoredSlug || !String(repository.url).startsWith('https://github.com/')) {
+    evidenceFailure('repository-evidence/url-invalid', '/meta/repository/url must be a public https://github.com owner/repository URL.', {
       subject: { path: '/meta/repository/url' },
       evidence: { repositoryUrl: repository.url },
       supportedFixes: ['use the canonical public GitHub HTTPS repository URL'],
@@ -140,10 +148,11 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
     });
   }
   const origin = gitValue(realRoot, ['remote', 'get-url', 'origin'], 'Evidence repository must have an origin remote.');
-  if (originSlug(origin) !== authoredSlug) {
-    evidenceFailure('repository-evidence/origin-mismatch', `Evidence repository origin ${JSON.stringify(origin)} does not match ${JSON.stringify(repository.url)}.`, {
+  if (githubSlug(origin) !== authoredSlug) {
+    const safeOrigin = redactRemoteUrl(origin);
+    evidenceFailure('repository-evidence/origin-mismatch', `Evidence repository origin ${JSON.stringify(safeOrigin)} does not match ${JSON.stringify(repository.url)}.`, {
       subject: { repoRoot: realRoot },
-      evidence: { localOrigin: origin, authoredRepository: repository.url },
+      evidence: { localOrigin: safeOrigin, authoredRepository: repository.url },
       supportedFixes: ['use the matching local checkout or correct the authored repository URL'],
     });
   }
