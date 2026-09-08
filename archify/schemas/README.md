@@ -164,13 +164,30 @@ not exist in the diagram's semantic collection, and duplicate authored
 relationship IDs within the mode's relationship collection.
 
 Architecture additionally supports opt-in, revision-pinned repository evidence.
-`meta.repository` names a public GitHub URL and full commit SHA; a component may
+`meta.repository` names an HTTP(S) repository URL and full commit SHA; a component may
 carry one to three `sources` with repo-relative POSIX paths, optional line
 ranges, and optional labels. Shape is schema-checked, then the renderer requires
 `--repo-root`: the local Git origin must match, and Git must prove the commit,
 blobs, and requested lines. Verified evidence is embedded outside the canonical
 SVG for the Semantic Passport and Node Finder; ordinary documents and visual
 exports carry no repository evidence.
+
+Repository URLs must be credential-free and contain no query, fragment, or dot
+path segments. HTTP is accepted when explicitly authored for an HTTP-only
+server; no network requests or protocol upgrades/downgrades are performed.
+Origins may use HTTP(S), `ssh://[user@]host/path`, or `[user@]host:path`.
+Identity compares the host and complete repository path (including nested
+namespaces), ignoring a trailing `.git` and slash. Hostnames are case-insensitive;
+paths preserve case except on GitHub, which retains its existing behavior.
+HTTP(S) non-default ports must match. Cross-protocol HTTP/HTTPS matching is
+allowed when both use their default ports or the same non-default port. SSH can
+match a default-port Web URL only on SSH port 22 (explicit or omitted).
+Other SSH/Web port mappings fail with `repository-evidence/origin-ambiguous`;
+use a matching HTTP(S) origin for these deployments. Host aliases and different
+repository paths are not inferred. Origin credentials never enter evidence or
+diagnostics. Web source links retain the existing `/blob/` and `/tree/` route
+convention; identity verification does not establish that a forge supports those
+routes.
 
 ## Visual quality and engineering truth
 

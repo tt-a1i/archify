@@ -86,6 +86,120 @@ test('repository evidence accepts self-hosted HTTPS and SSH remotes', () => {
   }
 });
 
+test('self-hosted repository identities support HTTP, namespaces, and canonical remote forms', () => {
+  const data = fixture();
+  const output = path.join(data.root, 'identity.html');
+  for (const [url, remote] of [
+    ['http://gitea.internal:3000/team/repo', 'http://gitea.internal:3000/team/repo.git'],
+    ['https://git.example.internal/team/repo', 'http://git.example.internal/team/repo.git'],
+    ['https://git.example.internal/team/subgroup/Repo', 'git@git.example.internal:team/subgroup/Repo.git'],
+    ['https://git.example.internal/team/Repo', 'ssh://deploy@GIT.EXAMPLE.INTERNAL:22/team/Repo.git'],
+    ['https://git.example.internal/team/repo', 'https://git.example.internal:443/team/repo.git/'],
+    ['https://git.example.internal:8443/team/repo', 'https://git.example.internal:8443/team/repo.git'],
+    ['https://github.com/Example/Evidence-Repo.git/', 'git@github.com:example/evidence-repo.git'],
+  ]) {
+    data.diagram.meta.repository.url = url;
+    fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+    git(data.root, 'remote', 'set-url', 'origin', remote);
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 0, `${remote}: ${result.stderr || result.stdout}`);
+    const canonicalUrl = url.replace(/\.git\/?$/i, '').replace(/\/$/, '');
+    assert.equal(JSON.parse(result.stdout).evidence.repository, canonicalUrl);
+    const payload = evidencePayload(fs.readFileSync(output, 'utf8'));
+    assert.equal(payload.nodes.users[0].href, `${canonicalUrl}/blob/${data.revision}/src/router.js#L1-L3`);
+  }
+});
+
+test('self-hosted evidence rejects different identities and ambiguous transport endpoints', () => {
+  const data = fixture();
+  const output = path.join(data.root, 'identity-mismatch.html');
+  fs.writeFileSync(output, 'trusted previous artifact');
+  for (const [url, remote, code] of [
+    ['https://git.example.internal/team/repo', 'https://other.example.internal/team/repo.git', 'origin-mismatch'],
+    ['https://git.example.internal/team/repo', 'https://git.example.internal/other/repo.git', 'origin-mismatch'],
+    ['https://git.example.internal/team/Repo', 'https://git.example.internal/team/repo.git', 'origin-mismatch'],
+    ['https://git.example.internal:8443/team/repo', 'https://git.example.internal:9443/team/repo.git', 'origin-mismatch'],
+    ['https://git.example.internal/team/repo', 'ssh://git@git.example.internal:2222/team/repo.git', 'origin-ambiguous'],
+    ['https://git.example.internal:8443/team/repo', 'git@git.example.internal:team/repo.git', 'origin-ambiguous'],
+  ]) {
+    data.diagram.meta.repository.url = url;
+    fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+    git(data.root, 'remote', 'set-url', 'origin', remote);
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 1, remote);
+    assert.ok(JSON.parse(result.stdout).diagnostics.some((item) => item.code === `repository-evidence/${code}`), result.stdout);
+    assert.equal(fs.readFileSync(output, 'utf8'), 'trusted previous artifact');
+  }
+});
+
+test('repository metadata rejects credentials and non-canonical URLs without echoing secrets', () => {
+  const data = fixture();
+  const output = path.join(data.root, 'unsafe-url.html');
+  fs.writeFileSync(output, 'trusted previous artifact');
+  const secret = 'synthetic-review-credential';
+  for (const url of [
+    `https://reader:${secret}@git.example.internal/team/repo`,
+    `https://git.example.internal/team/repo?token=${secret}`,
+    `https://git.example.internal/team/repo#${secret}`,
+    'https://git.example.internal/team/../repo',
+    'https://git.example.internal/team/./repo',
+    'https://git.example.internal:99999/team/repo',
+    'https://git.example.internal/team/%2e%2e/repo',
+    'https://git.example.internal\\other/team/repo',
+  ]) {
+    data.diagram.meta.repository.url = url;
+    fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+    git(data.root, 'remote', 'set-url', 'origin', url);
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 1, 'unsafe repository URL must be rejected');
+    assert.ok(JSON.parse(result.stdout).diagnostics.length, result.stdout);
+    assert.ok(!(result.stdout + result.stderr).includes(secret), 'receipt must not echo credentials');
+    assert.equal(fs.readFileSync(output, 'utf8'), 'trusted previous artifact');
+  }
+});
+
+test('repository origin credentials are excluded from successful artifacts and failure receipts', () => {
+  const data = fixture();
+  data.diagram.meta.repository.url = 'https://git.example.internal/team/repo';
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const output = path.join(data.root, 'origin-credentials.html');
+  const secret = 'synthetic-origin-credential';
+  for (const [remote, status] of [
+    [`https://reader:${secret}@git.example.internal/team/repo.git`, 0],
+    [`https://reader:${secret}@other.example.internal/team/repo.git`, 1],
+    [`https://git.example.internal/team/repo.git?token=${secret}`, 1],
+    [`invalid-remote-${secret}`, 1],
+  ]) {
+    git(data.root, 'remote', 'set-url', 'origin', remote);
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, status, 'origin credentials must not affect identity');
+    assert.ok(!(result.stdout + result.stderr).includes(secret), 'receipt must not echo origin credentials');
+    assert.ok(!fs.readFileSync(output, 'utf8').includes(secret), 'artifact must not contain origin credentials');
+  }
+});
+
+test('self-hosted evidence still requires the pinned commit, contained files, and valid lines', () => {
+  const data = fixture();
+  data.diagram.meta.repository.url = 'http://gitea.internal:3000/team/repo';
+  git(data.root, 'remote', 'set-url', 'origin', 'http://gitea.internal:3000/team/repo.git');
+  const output = path.join(data.root, 'invalid-evidence.html');
+  fs.writeFileSync(output, 'trusted previous artifact');
+  for (const [revision, source, code] of [
+    ['0'.repeat(40), { path: 'src/router.js' }, 'revision-unavailable'],
+    [data.revision, { path: '../outside.js' }, 'path-escape'],
+    [data.revision, { path: 'src/missing.js' }, 'file-missing'],
+    [data.revision, { path: 'src/router.js', line: 99 }, 'line-out-of-range'],
+  ]) {
+    data.diagram.meta.repository.revision = revision;
+    data.diagram.components[0].sources = [source];
+    fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 1);
+    assert.ok(JSON.parse(result.stdout).diagnostics.some((item) => item.code === `repository-evidence/${code}`), result.stdout);
+    assert.equal(fs.readFileSync(output, 'utf8'), 'trusted previous artifact');
+  }
+});
+
 async function waitForState(url, predicate, timeoutMs = 12000) {
   const started = Date.now();
   let latest;

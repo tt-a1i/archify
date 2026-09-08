@@ -38,12 +38,43 @@ function gitValue(repoRoot, args, failure) {
   return result.stdout.trim();
 }
 
-function originSlug(value) {
+function repositoryAddress(value) {
   const raw = String(value || '').trim();
-  const match = raw.match(/^(?:https:\/\/([^/\s]+)\/|git@([^:/\s]+):|ssh:\/\/git@([^/\s]+)\/)([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/i);
-  if (!match) return null;
-  const host = (match[1] || match[2] || match[3]).toLowerCase();
-  return `${host}/${match[4]}/${match[5]}`.toLowerCase();
+  if (!raw || /[\s\\?#]/.test(raw)) return null;
+  let url;
+  let repositoryPath;
+  try {
+    if (/^(?:https?|ssh):\/\//i.test(raw)) {
+      url = new URL(raw);
+      const pathStart = raw.indexOf('/', raw.indexOf('://') + 3);
+      if (pathStart === -1) return null;
+      // Check the authored path before URL can silently resolve dot segments.
+      repositoryPath = raw.slice(pathStart + 1);
+    } else {
+      const scp = raw.match(/^(?:[^@/:]+@)?(\[[0-9a-f:]+\]|[^@/:]+):\/?(.+)$/i);
+      if (!scp) return null;
+      url = new URL(`ssh://${scp[1]}/${scp[2]}`);
+      repositoryPath = scp[2];
+    }
+  } catch {
+    return null;
+  }
+  repositoryPath = repositoryPath.replace(/\/$/, '').replace(/\.git$/i, '');
+  const segments = repositoryPath.split('/');
+  if (segments.length < 2 || segments.some((segment) => (
+    !/^[A-Za-z0-9_.-]+$/.test(segment) || segment === '.' || segment === '..'
+  ))) return null;
+  const hostname = url.hostname.toLowerCase();
+  // Preserve GitHub's existing case-insensitive identity without assuming all
+  // self-hosted repository paths have the same semantics.
+  if (hostname === 'github.com') repositoryPath = repositoryPath.toLowerCase();
+  return {
+    hostname,
+    repositoryPath,
+    protocol: url.protocol,
+    port: url.port,
+    hasCredentials: Boolean(url.username || url.password),
+  };
 }
 
 function verifiedSourcePath(value, where) {
@@ -96,7 +127,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   const repository = diagram.meta?.repository;
   if (!repository) evidenceFailure('repository-evidence/repository-required', 'Repository evidence requires /meta/repository.', {
     subject: { path: '/meta/repository' },
-    supportedFixes: ['add the pinned public repository metadata or remove component sources'],
+    supportedFixes: ['add the pinned repository metadata or remove component sources'],
   });
   if (!FULL_SHA_RE.test(repository.revision || '')) {
     evidenceFailure('repository-evidence/revision-invalid', '/meta/repository/revision must be a full 40-character commit SHA.', {
@@ -105,12 +136,11 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       supportedFixes: ['pin one full 40-character commit SHA'],
     });
   }
-  const authoredSlug = originSlug(repository.url);
-  if (!authoredSlug || !/^https:\/\/[^/\s]+\/[^/\s]+\/[^/\s]+?(?:\.git)?\/?$/i.test(String(repository.url))) {
-    evidenceFailure('repository-evidence/url-invalid', '/meta/repository/url must be an https repository URL with host, owner, and repository.', {
+  const authored = repositoryAddress(repository.url);
+  if (!authored || !['http:', 'https:'].includes(authored.protocol) || authored.hasCredentials) {
+    evidenceFailure('repository-evidence/url-invalid', '/meta/repository/url must be a canonical HTTP(S) repository URL without credentials, query, fragment, or dot path segments.', {
       subject: { path: '/meta/repository/url' },
-      evidence: { repositoryUrl: repository.url },
-      supportedFixes: ['use the canonical public GitHub HTTPS repository URL'],
+      supportedFixes: ['use the credential-free HTTP(S) repository URL matching the local origin'],
     });
   }
   if (!repoRootInput) {
@@ -140,11 +170,22 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
     });
   }
   const origin = gitValue(realRoot, ['remote', 'get-url', 'origin'], 'Evidence repository must have an origin remote.');
-  if (originSlug(origin) !== authoredSlug) {
-    evidenceFailure('repository-evidence/origin-mismatch', `Evidence repository origin ${JSON.stringify(origin)} does not match ${JSON.stringify(repository.url)}.`, {
+  const local = repositoryAddress(origin);
+  if (!local || local.hostname !== authored.hostname || local.repositoryPath !== authored.repositoryPath
+    || (local.protocol !== 'ssh:' && local.port !== authored.port)) {
+    // Never echo the remote: userinfo and even malformed remote strings may
+    // contain credentials. The authored URL has already been checked above.
+    evidenceFailure('repository-evidence/origin-mismatch', `Evidence repository origin does not match ${JSON.stringify(repository.url)}.`, {
       subject: { repoRoot: realRoot },
-      evidence: { localOrigin: origin, authoredRepository: repository.url },
+      evidence: { authoredRepository: repository.url },
       supportedFixes: ['use the matching local checkout or correct the authored repository URL'],
+    });
+  }
+  if (local.protocol === 'ssh:' && (authored.port || (local.port && local.port !== '22'))) {
+    evidenceFailure('repository-evidence/origin-ambiguous', 'Cannot infer repository identity across SSH and HTTP(S) endpoints with non-default ports.', {
+      subject: { repoRoot: realRoot },
+      evidence: { authoredRepository: repository.url },
+      supportedFixes: ['use an HTTP(S) origin with the same host, port, and repository path as the authored URL'],
     });
   }
 
