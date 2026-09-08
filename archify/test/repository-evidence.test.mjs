@@ -6,6 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { startPreview } from '../bin/preview.mjs';
+import { sameResolvedDirectory } from '../renderers/shared/repository-evidence.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, '..');
@@ -54,6 +55,18 @@ function evidencePayload(html) {
   assert.ok(match, 'verified evidence payload missing');
   return JSON.parse(match[1]);
 }
+
+test('sameResolvedDirectory treats differently-cased Windows drive letters as the same directory (#274)', () => {
+  assert.equal(sameResolvedDirectory('c:\\work\\evidence-repo', 'C:\\work\\evidence-repo', 'win32'), true);
+  assert.equal(sameResolvedDirectory('C:\\Work\\Evidence-Repo', 'c:\\work\\evidence-repo', 'win32'), true);
+  assert.equal(sameResolvedDirectory('C:\\work\\repo-a', 'C:\\work\\repo-b', 'win32'), false);
+});
+
+test('sameResolvedDirectory stays case-sensitive on POSIX (real defect there, not a Windows quirk)', () => {
+  assert.equal(sameResolvedDirectory('/work/evidence-repo', '/work/evidence-repo', 'linux'), true);
+  assert.equal(sameResolvedDirectory('/work/Evidence-Repo', '/work/evidence-repo', 'linux'), false);
+  assert.equal(sameResolvedDirectory('/work/Evidence-Repo', '/work/evidence-repo', 'darwin'), false);
+});
 
 test('repository evidence accepts canonical HTTPS and common SSH remotes', () => {
   const data = fixture();

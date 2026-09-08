@@ -6,6 +6,34 @@ import { throwDiagnosticError } from './diagnostics.mjs';
 const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
 const CONTROL_CHARACTER_RE = /[\u0000-\u001f\u007f]/;
 
+// Two Windows-only path-identity defects, both fixed together below:
+//
+// 1. (#274) fs.realpathSync does not normalize drive-letter case: resolving
+//    "c:\work\repo" and "C:\work\repo" both succeed but each can return its
+//    own input case rather than a single on-disk canonical form, so two
+//    spellings of the identical directory compare unequal under strict
+//    `!==`. Windows volumes are case-insensitive (case-preserving only), so
+//    path identity there must be checked case-insensitively -- handled by
+//    sameResolvedDirectory() below. POSIX volumes are case-sensitive, where
+//    the original strict comparison remains correct.
+// 2. Plain fs.realpathSync does not resolve legacy 8.3 short-name aliases
+//    (e.g. "JULIAN~1") to their long canonical form, but external tools
+//    like `git rev-parse --show-toplevel` report the long form. Any
+//    Windows account whose profile directory contains a space or exceeds 8
+//    characters (short-name generation's usual trigger) gets a short alias
+//    for its user directory, so any evidence root under it -- including a
+//    default OS temp dir -- fails this check even with identical drive
+//    letter case and identical everything else. `fs.realpathSync.native`
+//    calls the real Win32 GetFinalPathNameByHandleW syscall instead of
+//    Node's own JS symlink-walking implementation, which does resolve
+//    short names to their long form on both inputs consistently -- used at
+//    both realpath call sites in verifyRepositoryEvidence() below instead
+//    of plain fs.realpathSync.
+export function sameResolvedDirectory(a, b, platform = process.platform) {
+  if (platform === 'win32') return a.toLowerCase() === b.toLowerCase();
+  return a === b;
+}
+
 function evidenceFailure(code, message, { subject = {}, evidence = {}, supportedFixes = [] } = {}) {
   throwDiagnosticError(message, [{
     code,
@@ -121,7 +149,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   const requestedRoot = path.resolve(repoRootInput);
   let realRoot;
   try {
-    realRoot = fs.realpathSync(requestedRoot);
+    realRoot = fs.realpathSync.native(requestedRoot);
   } catch (error) {
     evidenceFailure('repository-evidence/root-unreadable', `Could not resolve evidence repository root "${requestedRoot}": ${error.message}`, {
       subject: { repoRoot: requestedRoot },
@@ -130,7 +158,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
     });
   }
   const gitRoot = gitValue(realRoot, ['rev-parse', '--show-toplevel'], `Evidence root "${realRoot}" is not a Git repository.`);
-  if (fs.realpathSync(gitRoot) !== realRoot) {
+  if (!sameResolvedDirectory(fs.realpathSync.native(gitRoot), realRoot)) {
     evidenceFailure('repository-evidence/root-not-top-level', `Evidence root must be the Git top-level directory: ${gitRoot}`, {
       subject: { repoRoot: realRoot },
       evidence: { gitTopLevel: gitRoot },
