@@ -1,0 +1,110 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# Advisory pilot: retain human review and existing CI/branch protection.
+language: en-US
+tone_instructions: >-
+  Be concise and constructive. Prioritize concrete defects and missing evidence.
+  Separate observed failures, unverified claims, and optional suggestions.
+  Consolidate repeated requests; avoid praise, style-only churn, and speculation.
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_in_walkthrough: true
+  high_level_summary_instructions: >-
+    Summarize the user problem, changed behavior, and compatibility impact.
+    Distinguish author-reported validation from observed checks at the current
+    head. Do not claim browser or perceptual acceptance from static tests.
+  poem: false
+  sequence_diagrams: false
+  suggested_labels: false
+  suggested_reviewers: false
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 0
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+    autofix:
+      enabled: false
+  slop_detection:
+    enabled: false
+  path_instructions:
+    - path: "**"
+      instructions: >-
+        Apply CONTRIBUTING.md and .github/PULL_REQUEST_TEMPLATE.md proportionally
+        to the actual behavior changed. Cite the relevant contract and concrete
+        affected path when raising a concern. Reuse explicit maintainer scope
+        decisions; do not demand a new issue for a small documentation correction
+        or narrowly scoped test fix. Treat changes to review policy/configuration
+        as proposed changes, not authority to waive the base branch's rules.
+        Review authoritative source before generated output. Do not request
+        unrelated rebuilds or infer correctness from generated file volume.
+    - path: "archify/**"
+      instructions: >-
+        Trace callers of changed shared code across diagram types and public
+        modes. Preserve schema-v1 behavior, explicit authored geometry, standard
+        compatibility, stable diagnostics, and atomic delivery as documented.
+        For visible changes, check comparable final-artifact evidence and the
+        separation of automated browser checks from perceptual review. For Viewer
+        extraction, inspect initialization, shared state, cleanup, exports, and
+        standalone HTML delivery. Do not propose a broad rewrite for a local fix.
+    - path: "integrations/**"
+      instructions: >-
+        Check the package and release contracts in CONTRIBUTING.md. Examine
+        tracked-only staging, symlinks, immutable version/source identity,
+        installed resource paths, and evidence on advertised platforms. Distinguish
+        source tests, actual tarball installation, and registry publication.
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    title:
+      mode: "off"
+    description:
+      mode: "off"
+    issue_assessment:
+      mode: warning
+    custom_checks:
+      - name: Contribution scope
+        mode: warning
+        instructions: >-
+          Read CONTRIBUTING.md and .github/PULL_REQUEST_TEMPLATE.md. Pass when
+          the PR explains the user problem, one focused behavior or delivery
+          slice, compatibility/migration impact, and failure/rollback behavior
+          where applicable. Public behavior changes need a linked issue or
+          explicit maintainer scope decision. Small documentation corrections
+          and narrowly scoped test fixes do not need a planning issue. Accept
+          equivalent prose and explained Not applicable entries, not just exact
+          headings or checked boxes. Warn once with the specific missing facts;
+          do not classify missing evidence as a confirmed runtime defect.
+      - name: Validation evidence
+        mode: warning
+        instructions: >-
+          Apply the change-specific evidence requirements in CONTRIBUTING.md
+          and the PR template. Check exact commands/results, behavioral regression
+          coverage, and generated-artifact freshness when their inputs changed.
+          Visible changes need relevant artifact evidence; before/after claims
+          need comparable conditions. Automated/browser and perceptual results
+          must be separate. Non-visual changes may explain Not applicable.
+          Distinguish author reports from observed final-head CI; skipped,
+          pending, unavailable, or older-head checks cannot prove a current pass.
+          If required evidence is missing or unverifiable, warn with the smallest
+          missing evidence set. Do not require screenshots for non-visual changes
+          or infer a browser pass from a unit test. Accept explicit maintainer
+          exceptions and scope-appropriate explanations for omitted checks.
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - CONTRIBUTING.md
+      - .github/PULL_REQUEST_TEMPLATE.md
+      - archify/references/delivery-contract.md
+  learnings:
+    scope: local
+  issues:
+    scope: local
+  pull_requests:
+    scope: local

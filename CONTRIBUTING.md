@@ -149,6 +149,21 @@ Maintainers may ask for a smaller source file, rerun validation, or decline a ca
 
 Maintainers may ask for a large PR to be split or rebuilt from current `main` when generated artifacts, stale history, or overlapping implementations make the behavior difficult to review safely.
 
+## Automated review pilot
+
+Once the CodeRabbit GitHub App is enabled for this repository, the root
+[configuration](.coderabbit.yaml) requests automatic reviews of ready PRs and
+subsequent pushes. It uses this guide and the PR template for advisory scope and
+validation-evidence checks. Drafts are excluded. Missing evidence is a request
+for clarification, not proof of a code defect; explain a false positive in the PR.
+
+CodeRabbit does not replace required CI, browser/perceptual acceptance, or a
+maintainer's merge decision. To request a review after fixing an unavailable or
+skipped run, comment `@coderabbitai review`. Maintainers should assess the first
+5–10 reviewed PRs for useful findings, false positives, review time, and repeated
+evidence requests before expanding the pilot. Pause automatic reviews by setting
+`reviews.auto_review.enabled: false`; this does not change CI or branch protection.
+
 ## License
 
 By contributing, you agree that your contribution is provided under the repository's [MIT License](LICENSE). Only submit work you created or have the right to contribute.
