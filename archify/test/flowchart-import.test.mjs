@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { parseFlowchart, importFlowchart } from '../importers/flowchart.mjs';
-import { commitImportOutput, importOutputAliasesInput } from '../renderers/shared/output-path.mjs';
+import { commitImportOutput, OutputPathError } from '../renderers/shared/output-path.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -407,7 +407,7 @@ test('CLI import rejects an output path that aliases the input and preserves the
     assert.notEqual(result.status, 0, 'Expected non-zero exit for an aliased output path');
     const receipt = JSON.parse(result.stdout.trim());
     assert.equal(receipt.ok, false);
-    assert.ok(receipt.diagnostics.some((d) => d.code === 'input/output-alias'));
+    assert.ok(receipt.diagnostics.some((d) => d.code === 'output/input-alias'));
     assert.equal(
       fs.readFileSync(src, 'utf8'),
       'flowchart LR\n  A[Alpha] --> B[Beta]\n',
@@ -432,7 +432,7 @@ test('CLI import rejects a hard-linked output alias by inode identity', () => {
     });
     assert.notEqual(result.status, 0, 'Expected non-zero exit for a hard-linked output alias');
     const receipt = JSON.parse(result.stdout.trim());
-    assert.ok(receipt.diagnostics.some((d) => d.code === 'input/output-alias'));
+    assert.ok(receipt.diagnostics.some((d) => d.code === 'output/input-alias'));
     assert.equal(
       fs.readFileSync(src, 'utf8'),
       'flowchart LR\n  A[Alpha] --> B[Beta]\n',
@@ -447,7 +447,7 @@ test('CLI import returns a stable receipt when the output path is a directory', 
   const cli = path.join(skillRoot, 'bin', 'archify.mjs');
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-eisdir-'));
   const src = path.join(tmpDir, 'diagram.mmd');
-  const outDir = path.join(tmpDir, 'out');
+  const outDir = path.join(tmpDir, 'out.json');
   fs.mkdirSync(outDir);
   fs.writeFileSync(src, 'flowchart LR\n  A[Alpha] --> B[Beta]\n');
   try {
@@ -544,7 +544,42 @@ test('commitImportOutput removes the candidate and throws when the output cannot
   }
 });
 
-test('CLI import through a symlinked output preserves the symlink target (race-safe end to end)', () => {
+test('commitImportOutput removes the candidate when the write itself fails', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-commit-ewrite-'));
+  const src = path.join(tmpDir, 'diagram.mmd');
+  const out = path.join(tmpDir, 'out.json');
+  fs.writeFileSync(src, 'flowchart LR\n  A[Alpha] --> B[Beta]\n');
+  try {
+    // A non-string/non-Buffer payload makes writeFileSync throw after the
+    // candidate was created — the same leak path as ENOSPC/EIO on write.
+    assert.throws(() => commitImportOutput(src, out, undefined), TypeError);
+    const leftovers = fs.readdirSync(tmpDir).filter((name) => name.startsWith('.archify-import-'));
+    assert.equal(leftovers.length, 0, 'A failed write must not leak its candidate file');
+    assert.equal(fs.existsSync(out), false, 'A failed write must not create the output');
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test('commitImportOutput propagates a symbolic-link cycle as OutputPathError instead of writing', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-commit-eloop-'));
+  const src = path.join(tmpDir, 'diagram.mmd');
+  const loop = path.join(tmpDir, 'loop.json');
+  fs.writeFileSync(src, 'flowchart LR\n  A[Alpha] --> B[Beta]\n');
+  fs.symlinkSync(loop, loop);
+  try {
+    // A cycle cannot be proven non-aliasing; the shared contract diagnoses it
+    // instead of silently replacing a link on the cycle via rename(2).
+    assert.throws(() => commitImportOutput(src, loop, '{"ir":true}\n'), OutputPathError);
+    assert.equal(fs.readFileSync(src, 'utf8'), 'flowchart LR\n  A[Alpha] --> B[Beta]\n', 'The Mermaid source must be preserved');
+    const leftovers = fs.readdirSync(tmpDir).filter((name) => name.startsWith('.archify-import-'));
+    assert.equal(leftovers.length, 0, 'A refused commit must leave no candidate files behind');
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test('CLI import refuses a symlinked output resolving to a non-JSON target and preserves both files', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-ioctl-race-'));
   const src = path.join(tmpDir, 'diagram.mmd');
   const target = path.join(tmpDir, 'precious.txt');
@@ -553,33 +588,62 @@ test('CLI import through a symlinked output preserves the symlink target (race-s
   fs.writeFileSync(target, 'user data that must survive');
   fs.symlinkSync(target, out);
   try {
-    const result = runCliImport(['import', 'flowchart', src, out]);
-    assert.equal(result.status, 0, `Expected import to succeed: ${result.stderr}`);
+    // The shared output-path contract refuses an output that resolves through
+    // a symlink to a non-.json target instead of silently replacing the link.
+    const result = runCliImport(['import', 'flowchart', src, out, '--json']);
+    assert.notEqual(result.status, 0, 'Expected the import to refuse a symlink resolving to a non-JSON target');
+    const receipt = JSON.parse(result.stdout.trim());
+    assert.equal(receipt.ok, false);
+    assert.ok(receipt.diagnostics.some((d) => d.code === 'output/cli-resolved-extension'));
     assert.equal(
       fs.readFileSync(target, 'utf8'),
       'user data that must survive',
-      'Writing the output must never follow a symlink out of the source-preservation contract',
+      'The symlink target must keep its original content',
     );
-    const ir = JSON.parse(fs.readFileSync(out, 'utf8'));
-    assert.equal(ir.diagram_type, 'architecture');
+    assert.equal(fs.lstatSync(out).isSymbolicLink(), true, 'The refused import must not touch the symlink');
+    assert.equal(
+      fs.readFileSync(src, 'utf8'),
+      'flowchart LR\n  A[Alpha] --> B[Beta]\n',
+      'The Mermaid source must be preserved',
+    );
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });
 
-test('importOutputAliasesInput still detects same-path and hard-link aliases', () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-alias-detect-'));
+test('CLI import refuses a non-JSON output path before parsing or writing', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-ext-'));
   const src = path.join(tmpDir, 'diagram.mmd');
-  const linked = path.join(tmpDir, 'linked.json');
-  const other = path.join(tmpDir, 'other.json');
-  fs.writeFileSync(src, 'flowchart LR\n  A[Alpha] --> B[Beta]\n');
-  fs.writeFileSync(other, '{}');
-  fs.linkSync(src, linked);
+  const out = path.join(tmpDir, 'output.txt');
+  const source = 'flowchart LR\n  A[Alpha] --> B[Beta]\n';
+  fs.writeFileSync(src, source);
   try {
-    assert.equal(importOutputAliasesInput(src, src), true);
-    assert.equal(importOutputAliasesInput(src, linked), true);
-    assert.equal(importOutputAliasesInput(src, other), false);
-    assert.equal(importOutputAliasesInput(src, path.join(tmpDir, 'missing.json')), false);
+    const result = runCliImport(['import', 'flowchart', src, out, '--json']);
+    assert.notEqual(result.status, 0, 'Expected the import to refuse a non-.json output path');
+    const receipt = JSON.parse(result.stdout.trim());
+    assert.equal(receipt.ok, false);
+    assert.ok(receipt.diagnostics.some((d) => d.code === 'output/cli-extension'));
+    assert.equal(fs.readFileSync(src, 'utf8'), source, 'The Mermaid source must be preserved');
+    assert.equal(fs.existsSync(out), false, 'No output file may be created for a refused path');
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test('CLI import refuses an output path on a symbolic-link cycle', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-eloop-'));
+  const src = path.join(tmpDir, 'diagram.mmd');
+  const loop = path.join(tmpDir, 'loop.json');
+  const source = 'flowchart LR\n  A[Alpha] --> B[Beta]\n';
+  fs.writeFileSync(src, source);
+  fs.symlinkSync(loop, loop);
+  try {
+    const result = runCliImport(['import', 'flowchart', src, loop, '--json']);
+    assert.notEqual(result.status, 0, 'Expected the import to refuse a symbolic-link cycle output');
+    const receipt = JSON.parse(result.stdout.trim());
+    assert.equal(receipt.ok, false);
+    assert.ok(receipt.diagnostics.some((d) => d.code === 'output/symlink-cycle'));
+    assert.equal(fs.readFileSync(src, 'utf8'), source, 'The Mermaid source must be preserved');
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }

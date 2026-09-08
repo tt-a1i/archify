@@ -340,39 +340,6 @@ export function resolveOutputPath({
 }
 
 /**
- * Detect every aliasing form between an import input and its intended output:
- * the same path, a symlink resolving to the input, or a hard link sharing the
- * input's inode. Returns true when writing the output would replace the input.
- *
- * @param {string} inputPath
- * @param {string} outputPath
- * @returns {boolean}
- */
-export function importOutputAliasesInput(inputPath, outputPath) {
-  let inputReal = null;
-  try {
-    inputReal = fs.realpathSync(path.resolve(inputPath));
-  } catch {
-    return false; // unreadable input is reported by the read path
-  }
-  let outputReal = null;
-  try {
-    outputReal = fs.realpathSync(path.resolve(outputPath));
-  } catch {
-    return false; // output does not exist yet — nothing to alias
-  }
-  if (inputReal === outputReal) return true;
-  try {
-    const inputStat = fs.statSync(inputReal);
-    const outputStat = fs.statSync(outputReal);
-    if (inputStat.dev === outputStat.dev && inputStat.ino === outputStat.ino) return true;
-  } catch {
-    // realpathSync succeeded above, so stat on the same paths cannot fail
-  }
-  return false;
-}
-
-/**
  * Commit the import result through a non-following atomic candidate/rename.
  *
  * The aliasing preflight runs before parsing; the output path can change while
@@ -389,11 +356,19 @@ export function importOutputAliasesInput(inputPath, outputPath) {
  * @param {string} outputPath
  * @param {string} data
  * @returns {{ ok: true } | { ok: false, reason: 'input/output-alias' }}
+ * @throws {OutputPathError} when an output path on a symbolic-link cycle
+ *   cannot be proven non-aliasing (`output/symlink-cycle`; the caller maps
+ *   `archifyDiagnostics` into its receipt).
  * @throws {Error} when the output cannot be written (propagated to the CLI's
- *   `output/write` receipt handling); the candidate file is removed first.
+ *   `output/write` receipt handling); the candidate file is removed first —
+ *   including when opening, writing, or fsync-ing it fails.
  */
 export function commitImportOutput(inputPath, outputPath, data) {
-  if (importOutputAliasesInput(inputPath, outputPath)) {
+  // Same shared aliasing contract as resolveOutputPath: identical paths,
+  // symlinks resolving to the input, hard links sharing the input's inode,
+  // and future-path aliases. A symbolic-link cycle is not provably
+  // non-aliasing, so pathsAlias throws instead of returning false.
+  if (pathsAlias(inputPath, outputPath)) {
     return { ok: false, reason: 'input/output-alias' };
   }
   const resolved = path.resolve(outputPath);
@@ -404,10 +379,21 @@ export function commitImportOutput(inputPath, outputPath, data) {
   let fd;
   try {
     fd = fs.openSync(candidate, 'wx');
-    fs.writeFileSync(fd, data);
-    fs.fsyncSync(fd);
-  } finally {
-    if (fd !== undefined) fs.closeSync(fd);
+    try {
+      fs.writeFileSync(fd, data);
+      fs.fsyncSync(fd);
+    } finally {
+      // Best-effort close: the data is already durable via fsync, and a close
+      // failure must not mask the original write/fsync error below.
+      try { fs.closeSync(fd); } catch { /* best effort */ }
+    }
+  } catch (error) {
+    // The candidate exists only if openSync succeeded; the forced removal is
+    // a no-op otherwise. Without this a failed open-past-creation, write, or
+    // fsync would leak one candidate file per run (the rename path below
+    // cleans up only itself).
+    try { fs.rmSync(candidate, { force: true }); } catch { /* best effort */ }
+    throw error;
   }
   try {
     fs.renameSync(candidate, resolved);

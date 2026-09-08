@@ -2028,7 +2028,7 @@ async function commandImport(args) {
   // The output-commit safety runtime is loaded like the rest of the
   // output-path runtime so an installed skill missing it reports a structured
   // doctor/diagnostic failure instead of crashing the CLI at startup.
-  const { commitImportOutput, importOutputAliasesInput } = await import('../renderers/shared/output-path.mjs');
+  const { commitImportOutput, resolveOutputPath } = await import('../renderers/shared/output-path.mjs');
   const [format, ...rest] = args;
   if (!format) fail('Usage: archify import flowchart <input.mmd> [output.json] [--json]');
   if (format !== 'flowchart') fail(`Unsupported import format "${format}". Supported: flowchart`);
@@ -2068,24 +2068,38 @@ async function commandImport(args) {
     process.exit(1);
   }
 
-  if (outputPath && importOutputAliasesInput(inputPath, outputPath)) {
-    const receipt = {
-      schemaVersion: 1,
-      command: 'import',
-      source: 'mermaid-flowchart',
-      ok: false,
-      error: 'Output path aliases the input file.',
-      diagnostics: [diagnostic({
-        code: 'input/output-alias',
-        message: `Output path "${outputPath}" resolves to the input file; writing it would replace the Mermaid source with the import result.`,
-        subject: { input: inputPath, output: outputPath },
-        evidence: { input: path.resolve(inputPath), output: path.resolve(outputPath) },
-        supportedFixes: ['choose a different output path so the Mermaid source is preserved'],
-      })],
-    };
-    if (json) console.log(JSON.stringify(receipt, null, 2));
-    else console.error(formatDiagnostics(receipt.error, receipt.diagnostics));
-    process.exit(1);
+  if (outputPath) {
+    // Resolve the output through the same shared contract as deliver/compare:
+    // input-alias detection (including future-path aliases and hard links),
+    // symbolic-link cycle refusal, and the documented [output.json] extension
+    // contract — before any parsing or writing happens.
+    try {
+      resolveOutputPath({
+        requestedOutput: outputPath,
+        requiredExtension: '.json',
+        inputPaths: [inputPath],
+        inputDescription: 'the Mermaid source',
+      });
+    } catch (error) {
+      const diagnostics = error.archifyDiagnostics ?? [diagnostic({
+        code: 'output/path-resolution',
+        message: error.message,
+        subject: { output: outputPath },
+        evidence: { reason: error.message },
+        supportedFixes: ['choose a safe output path and retry'],
+      })];
+      const receipt = {
+        schemaVersion: 1,
+        command: 'import',
+        source: 'mermaid-flowchart',
+        ok: false,
+        error: error.message,
+        diagnostics,
+      };
+      if (json) console.log(JSON.stringify(receipt, null, 2));
+      else console.error(formatDiagnostics(receipt.error, receipt.diagnostics));
+      process.exit(1);
+    }
   }
 
   const { importFlowchart } = await import(pathToFileURL(path.join(skillRoot, 'importers', 'flowchart.mjs')).href);
@@ -2132,6 +2146,23 @@ async function commandImport(args) {
         process.exit(1);
       }
     } catch (error) {
+      if (error.archifyDiagnostics) {
+        // A commit-time path recheck hit a condition the shared contract
+        // diagnoses (for example a symbolic-link cycle swapped in after the
+        // preflight). Report that diagnostic instead of a generic write
+        // failure so the receipt names the actual contract violation.
+        const receipt = {
+          schemaVersion: 1,
+          command: 'import',
+          source: 'mermaid-flowchart',
+          ok: false,
+          error: error.message,
+          diagnostics: error.archifyDiagnostics,
+        };
+        if (json) console.log(JSON.stringify(receipt, null, 2));
+        else console.error(formatDiagnostics(receipt.error, receipt.diagnostics));
+        process.exit(1);
+      }
       const receipt = {
         schemaVersion: 1,
         command: 'import',

@@ -17,7 +17,7 @@ process phases. After import, continue through the normal gates:
 ```bash
 node bin/archify.mjs import flowchart input.mmd imported.json --json
 node bin/archify.mjs validate architecture imported.json --quality showcase --json
-node bin/archify.mjs deliver architecture imported.json output.html --json
+node bin/archify.mjs deliver architecture imported.json output.html --quality showcase --json
 ```
 
 An imported IR passes the same validation and delivery gates as hand-authored
@@ -144,7 +144,7 @@ EOF
 node bin/archify.mjs import flowchart /tmp/api-flow.mmd /tmp/api-flow.json --json
 # → {"ok": true, "components": 4, "connections": 3, ...}
 node bin/archify.mjs validate architecture /tmp/api-flow.json --quality showcase --json
-node bin/archify.mjs deliver architecture /tmp/api-flow.json /tmp/api-flow.html --json
+node bin/archify.mjs deliver architecture /tmp/api-flow.json /tmp/api-flow.html --quality showcase --json
 ```
 
 Regression fixtures live in `test/fixtures/flowchart/` and cover valid,
