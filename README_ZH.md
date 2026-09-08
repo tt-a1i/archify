@@ -130,13 +130,13 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 
 ## 选择合适的图表
 
-| 类型 | 最适合 | Prompt 中应包含 |
+| 类型 | 可复制的 Prompt | 已验证示例 |
 |---|---|---|
-| **Architecture** | 组件、服务、存储和系统边界 | 范围、核心组件、主要路径 |
-| **Workflow** | CI/CD、审批、工具调用、Runbook | 参与者、顺序、分支、异常 |
-| **Sequence** | API 调用、缓存回源、鉴权、异步链路 | 调用方、被调用方、返回、时序 |
-| **Data Flow** | 数据管线、血缘、PII、下游消费者 | 来源、转换、存储、边界 |
-| **Lifecycle** | 状态、重试、等待、终态 | 状态、事件、重试与取消路径 |
+| **Architecture** | `使用 Archify 梳理运行时组件、边界和主要路径。` | [生产部署架构](https://tt-a1i.github.io/archify/gallery/artifacts/production-deployment.architecture.html) |
+| **Workflow** | `使用 Archify 梳理参与者、分支、审批和重试。` | [Agent 工具调用工作流](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html) |
+| **Sequence** | `使用 Archify 梳理这个 API 请求、响应和失败路径。` | [异步任务往返序列](https://tt-a1i.github.io/archify/gallery/artifacts/async-job-roundtrip.sequence.html) |
+| **Data Flow** | `使用 Archify 梳理来源、转换、存储和边界。` | [事件流数据流](https://tt-a1i.github.io/archify/gallery/artifacts/event-stream.dataflow.html) |
+| **Lifecycle** | `使用 Archify 梳理状态、事件、重试和终态。` | [Agent 运行生命周期](https://tt-a1i.github.io/archify/gallery/artifacts/agent-run.lifecycle.html) |
 
 做生产部署评审时，Architecture 可以按需启用 `deployment-ownership`
 工程画像：负责人、单一区域归属、数据库私有边界或边界穿越机制缺失时会直接阻断。
