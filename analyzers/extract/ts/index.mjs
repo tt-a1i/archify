@@ -102,6 +102,10 @@ function isModuleRequire(identifier, checker) {
   const declaration = declarations[0];
   if (!ts.isVariableDeclaration(declaration) || !declaration.initializer
     || !ts.isCallExpression(declaration.initializer)) return false;
+  const args = declaration.initializer.arguments;
+  const base = args[0];
+  if (args.length !== 1 || !ts.isPropertyAccessExpression(base) || base.name.text !== 'url'
+    || !ts.isMetaProperty(base.expression) || base.expression.keywordToken !== ts.SyntaxKind.ImportKeyword) return false;
   const factory = declaration.initializer.expression;
   if (!ts.isIdentifier(factory)) return false;
   const imported = checker.getSymbolAtLocation(factory)?.declarations?.[0];

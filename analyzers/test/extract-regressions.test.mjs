@@ -32,6 +32,9 @@ export {};
     'loader.mjs': `import { createRequire as makeRequire } from 'node:module';
 const require = makeRequire(import.meta.url);
 require('./dep');`,
+    'other-base.mjs': `import { createRequire } from 'node:module';
+const require = createRequire('/another/project/entry.mjs');
+require('./dep');`,
     'arrow.ts': `export const f = (require: (s: string) => string) => require('./dep');`,
   });
   const result = extract(root);
@@ -41,6 +44,7 @@ require('./dep');`,
     { from: 'entry.ts', line: 2, to: 'dep.ts', kind: 'require' },
     { from: 'loader.mjs', line: 1, to: undefined, kind: 'static' },
     { from: 'loader.mjs', line: 3, to: 'dep.ts', kind: 'require' },
+    { from: 'other-base.mjs', line: 1, to: undefined, kind: 'static' },
   ]);
 });
 test('extract rejects an unmatched configured brace without hanging or writing output', (t) => {
