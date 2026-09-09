@@ -59,6 +59,15 @@ let composition = {
   issues: [],
 };
 
+const NON_FINITE_TOKEN = /\b(?:NaN|undefined|Infinity)\b/;
+const NUMERIC_ATTRS = new Set([
+  'x', 'y', 'x1', 'y1', 'x2', 'y2', 'dx', 'dy', 'cx', 'cy', 'r', 'rx', 'ry', 'fx', 'fy',
+  'width', 'height', 'd', 'points', 'transform', 'viewBox', 'offset', 'opacity',
+  'fill-opacity', 'stroke-opacity', 'font-size', 'stroke-width', 'stroke-dasharray',
+  'stroke-dashoffset', 'stroke-miterlimit', 'textLength', 'startOffset', 'rotate',
+  'markerWidth', 'markerHeight', 'refX', 'refY', 'patternTransform', 'gradientTransform',
+]);
+
 function addCheck(name, ok, details = []) {
   checks.push({ name, ok, details });
 }
@@ -72,7 +81,8 @@ if (svgMatches.length === 1) {
   const svgAttrs = parseAttrs(svgRoot);
   const qualityProfile = svgAttrs['data-quality-profile'] || 'standard';
   const qualityGatesEnforced = svgAttrs['data-quality-gates'] !== 'advisory';
-  addCheck('finite_svg', !/\b(?:NaN|undefined|Infinity|-Infinity)\b/.test(svg));
+  const nonFiniteAttrs = collectNonFiniteAttrs(svg);
+  addCheck('finite_svg', nonFiniteAttrs.length === 0, nonFiniteAttrs);
   const legendStart = svg.indexOf('<!-- Legend -->');
   const beforeLegend = legendStart >= 0 ? svg.slice(0, legendStart) : svg;
   const desktopReadabilityIssue = collectDesktopReadability(svgAttrs, beforeLegend);
@@ -811,6 +821,21 @@ function padBox(box, padding) {
     x2: box.x2 + padding,
     y2: box.y2 + padding,
   };
+}
+
+// Only geometry/numeric attributes are scanned: authored prose such as node
+// tags, <title> text, aria-labels, or data-* attributes may legitimately
+// mention "NaN" or "Infinity" without any coordinate being non-finite.
+function collectNonFiniteAttrs(svg) {
+  const details = [];
+  for (const match of svg.matchAll(/<([A-Za-z][\w:-]*)\b[^>]*>/g)) {
+    const attrs = parseAttrs(match[0]);
+    for (const [name, value] of Object.entries(attrs)) {
+      if (!NUMERIC_ATTRS.has(name) || !NON_FINITE_TOKEN.test(value)) continue;
+      details.push(`${match[1]} ${name}="${value}"`);
+    }
+  }
+  return details;
 }
 
 function parseAttrs(tag) {

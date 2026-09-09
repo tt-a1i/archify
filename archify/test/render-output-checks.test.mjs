@@ -433,3 +433,37 @@ test('render output check: endpoint stubs from 8px pass while cramped interior t
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
+
+test('render output check: finite_svg ignores prose that mentions NaN or Infinity', () => {
+  const { result } = checkHtml('finite-prose', `
+    <g data-node-id="solver" data-node-tag="returns a NaN leaf" aria-label="Focus Solver">
+      <title>Solver · returns a NaN leaf · Infinity guard</title>
+      <rect x="40" y="40" width="200" height="74" rx="6" class="c-mask"/>
+      <text x="140" y="70" class="t-primary" font-size="11" text-anchor="middle">Solver</text>
+      <text data-detail="fine" x="140" y="106" class="t-backend" font-size="7">returns a NaN leaf</text>
+    </g>
+    <!-- Legend -->
+    <text x="40" y="140" class="t-primary" font-size="10">Legend</text>
+  `);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, true);
+  assert.deepEqual(check.details, []);
+});
+
+test('render output check: finite_svg reports the attribute carrying a non-finite value', () => {
+  const { code, result } = checkHtml('finite-attr', `
+    <rect x="NaN" y="40" width="200" height="74" rx="6" class="c-mask"/>
+    <path d="M 20 20 L undefined 20" class="a-default" stroke-width="1.4"/>
+    <text x="140" y="Infinity" class="t-primary" font-size="11">Solver</text>
+    <!-- Legend -->
+    <text x="40" y="140" class="t-primary" font-size="10">Legend</text>
+  `);
+  assert.notEqual(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'rect x="NaN"',
+    'path d="M 20 20 L undefined 20"',
+    'text y="Infinity"',
+  ]);
+});
