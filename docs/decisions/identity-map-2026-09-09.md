@@ -61,6 +61,10 @@ Reproduced verbatim.
 - 交互是「原地下潜」：父图缩为面包屑 + 剪影，子图在同一画布展开；返回后父图坐标一像素不动。变化投影从父到子透传。
 - 对外措辞只说「理解变化」「定位」。
 
+### 3(a). `uncovered` noise class: option 2 (2026-09-09)
+
+Three external maps (Hono / FastAPI / Hugo) showed raw `uncovered` of 7% / 99% / 66% against product-only 0% / 0% / 11%. The maintainer chose **option 2**: an optional sidecar `presets[]` of `docs`, `tests`, `ci`, `lockfiles`, `generated`. Hits are the existing `excluded` state with `matchedGlob` `preset:<name>`. No sixth file state. Undeclared presets do nothing; `--lint` only suggests them. Precedence: explicit `excluded`, then component globs (ownership wins over presets, so `archify/test/**` stays `touched`), then declared presets, then `uncovered`. Child sidecars inherit parent presets at projection time and may declare only a subset. `locatorVersion` is 2.
+
 ---
 
 ## 3. Drilldown contract
@@ -868,3 +872,7 @@ remain.
 10. **`docs/cases/archify-self/` is checked in.** Regenerating it requires `archify bundle` and
     two `locate` runs (`docs/cases/archify-self/README.md`); whether these belong under a CI
     freshness check is undecided.
+11. **Noise classes vs `uncovered`** — **resolved (option 2).** `uncovered` stays one of the
+    five file states. Authors declare `presets` on the sidecar; matching paths are `excluded`.
+    See [§3(a)](#3a-uncovered-noise-class-option-2-2026-09-09). The FastAPI-shaped 99% raw
+    uncovered ratio is no longer the public signal.

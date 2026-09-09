@@ -5,9 +5,9 @@ asks to author or lint a component ownership sidecar. Ordinary diagram generatio
 `locate`.
 
 `archify locate` is pure computation. It reads Git output, one validated diagram JSON, and one
-validated ownership sidecar, and writes a deterministic receipt plus an annotated HTML view. It
-never calls a model, never edits the map, and never infers runtime impact. Its own receipt says
-so:
+validated ownership sidecar, and writes a deterministic receipt. Range mode also writes a small
+receipt-only HTML report; `--lint` writes the receipt only. It never calls a model, never edits
+the map, and never infers runtime impact. Its own receipt says so:
 
 ```
 Path ownership only; no runtime impact, causality, risk, or mergeability is inferred.
@@ -32,8 +32,8 @@ archify locate --lint [<rev>] --map <map.json> --out <dir> [--ownership <file>] 
   request, pass the merge base as `<base>`. Both endpoints must exist locally.
 - `--map` accepts any of the five diagram types. Only architecture maps produce an annotated
   canvas; the other four produce a receipt-only HTML shell.
-- `--out <dir>` is required. It receives `locate.receipt.json` and `locate.html`, both committed
-  by atomic rename.
+- `--out <dir>` is required. Range mode writes `locate.receipt.json` and `locate.html`. `--lint`
+  writes `locate.receipt.json` only.
 - `--ownership` defaults to the map path with `.json` replaced by `.ownership.json`.
 - `--repo-root` defaults to the Git top-level containing the map, and must itself be a top-level.
 - `--facts` takes two raw-facts JSON files and contributes import-edge observations only.
@@ -51,6 +51,7 @@ The sidecar is a separate file; no diagram schema field changes. Minimal shape:
   "kind": "ownership",
   "map": "archify-self.json",
   "excluded": ["archify.zip", "**/package-lock.json"],
+  "presets": ["docs", "tests", "ci", "lockfiles", "generated"],
   "components": [
     { "id": "cli", "globs": ["archify/bin/**"] },
     { "id": "renderers-shared", "globs": ["archify/renderers/shared/**"], "child_map": "render-pipeline.json" }
@@ -86,13 +87,44 @@ globs and no precedence rules.
 
 Each path is classified once, in this order:
 
-1. matches an `excluded` glob → `excluded`; component globs are not consulted.
-2. otherwise, count matching components: zero → `uncovered`; exactly one → `touched`; two or more
-   → `ambiguous`, with every candidate id listed.
+1. matches an explicit `excluded` glob → `excluded`; component globs are not consulted.
+2. otherwise, count matching components: exactly one → `touched`; two or more → `ambiguous`, with
+   every candidate id listed.
+3. otherwise, if the path matches a **declared** ownership preset → `excluded` with
+   `matchedGlob` `preset:<name>`.
+4. otherwise → `uncovered`.
 
-Ambiguity is reported, never resolved. There is no last-match-wins and no specificity ranking; the
-repair is to narrow a glob. A `touched` or `excluded` entry records the exact `matchedGlob`, so
-every attribution is auditable without rerunning the matcher.
+A path owned by a component stays `touched` even when a declared preset would also match
+(ownership wins over presets). Explicit `excluded` still applies first, so a parent exclusion
+inherited by a child still carves generated files out of a broad child glob. Presets that are
+not declared do nothing. Ambiguity is reported, never resolved. There is no last-match-wins and
+no specificity ranking; the repair is to narrow a glob. A `touched` or `excluded` entry records
+the exact `matchedGlob` (`preset:<name>` for a preset hit), so every attribution is auditable
+without rerunning the matcher.
+
+### Presets
+
+`presets` is an optional unique array of `docs`, `tests`, `ci`, `lockfiles`, `generated`. The
+glob lists live in one place, `OWNERSHIP_PRESETS` in `archify/locate/ownership.mjs`, and are
+locked to `locatorVersion` 2:
+
+| Preset | Globs |
+|---|---|
+| `docs` | `**/*.md`, `docs/**`, `**/LICENSE*`, `**/NOTICE*` |
+| `tests` | `**/test/**`, `**/tests/**`, `**/__tests__/**`, `**/*.test.*`, `**/*.spec.*`, `**/*_test.go`, `**/test_*.py`, `**/testdata/**`, `**/fixtures/**` |
+| `ci` | `.github/**`, `.gitlab-ci.yml`, `.circleci/**`, `**/Dockerfile*`, plus root-only `*.yml` and `*.yaml` |
+| `lockfiles` | `**/package-lock.json`, `**/pnpm-lock.yaml`, `**/yarn.lock`, `**/go.sum`, `**/Cargo.lock`, `**/poetry.lock`, `**/uv.lock`, `**/requirements*.txt` |
+| `generated` | `**/*.min.js`, `**/*.map`, `**/dist/**`, `**/build/**`, `**/__generated__/**`, `**/*.snap`, `**/*.png`, `**/*.gif`, `**/*.webp`, `**/*.zip` |
+
+`ci` uses single-segment `*.yml` / `*.yaml` so root files such as `dependabot.yml` are excluded
+without swallowing `config/`, `charts/`, or other nested YAML trees. `.github/**` already covers
+GitHub Actions.
+
+`--lint` does not fail on uncovered paths. For each **undeclared** preset that would have
+matched at least one currently-`uncovered` tracked file, the lint receipt gains an advisory
+`supportedFixes` entry, in enum order, of the form
+`declare presets: ["tests"] to exclude 41 uncovered paths`. That is a suggestion, not a
+failure.
 
 A rename contributes **two** file entries — the base path and the head path — marked with
 `side: "base"` / `side: "head"` and cross-linked by `renamedFrom` / `renamedTo`. If the two sides
@@ -118,9 +150,9 @@ imprecise here. `componentId: null` in a fact is an explicit unknown, never a gu
 are recorded as observed and are never reconciled against the map's authored `connections`,
 because most authored relationships are not import edges.
 
-The rendered HTML enforces the same boundary: it refuses to emit output containing `SAFE`,
-`LOW RISK`, `MERGEABLE`, `NO IMPACT`, or `VERIFIED PR`, and it uses amber and red rather than a
-success colour.
+The rendered HTML enforces the same boundary: it refuses to emit chrome containing `SAFE`,
+`LOW RISK`, `MERGEABLE`, `NO IMPACT`, or `VERIFIED PR`. The forbid-list runs over the page's
+own strings, never over embedded receipt JSON or file-path data.
 
 ## Outputs
 
@@ -129,11 +161,11 @@ fields:
 
 | Field | Contents |
 |---|---|
-| `schemaVersion`, `ok`, `command`, `locatorVersion`, `completeness` | `1`, `true`, `"locate"`, `1`, `"complete"` |
+| `schemaVersion`, `ok`, `command`, `locatorVersion`, `completeness` | `1`, `true`, `"locate"`, `2`, `"complete"` |
 | `mode` | `"range"` or `"lint"` |
 | `repository` | `root` is the literal `"."`; `base`+`head` in range mode, `revision` in lint mode; `url` and `linkMode` copied from `meta.repository` |
 | `map` | `path`, `diagramType`, `semanticSha256`, and — for a map that pins a revision — `revision` and `mapBehindBy` |
-| `ownership` | `path`, `sha256` of the raw sidecar bytes, and the `parent` link when the map is a drilldown child |
+| `ownership` | `path`, `sha256` of the raw sidecar bytes, `presets` (the declared list in effect), and the `parent` link when the map is a drilldown child |
 | `review` | `required`, `blocking[]`, `advisory[]` |
 | `summary` | file counts and component counts |
 | `files` | one entry per classified path, sorted by path |
@@ -178,16 +210,18 @@ The comparison never changes locate's own result: the receipt is still written, 
 
 ### HTML
 
-`<out>/locate.html` embeds the receipt as
-`<script id="archify-locate-receipt" type="application/json">`. For an architecture map it also
-renders the map's SVG with `data-locate-state` on each node group, dimming everything except
-`touched` and `stale`, alongside per-component blocks and the uncovered / ambiguous / excluded
-lists. When a comparison was attached, it links to it. For the other four diagram types the file
-is a minimal receipt carrier.
+Range mode writes `<out>/locate.html` as a small self-contained report (not the shared viewer).
+It embeds the receipt as `<script id="archify-locate-receipt" type="application/json">` and
+renders, in order: a header (map path relative to the repo root, full 40-character base/head
+SHAs, sidecar sha256, presets in effect); **Paths outside the map** first (the `uncovered`
+list grouped by top-level prefix, count in the heading, empty state `None` rather than hidden);
+then the components table; then excluded files grouped by `matchedGlob` (preset hits collapsed
+as `preset:<name>`); then advisories; then the raw receipt in a `<details>`. `--lint` does not
+write this file.
 
-`--bundle <dir>` additionally embeds
-`<script id="archify-locate-projection" type="application/json">` into a copy of the bundle's
-entry HTML. See `drilldown-bundles.md` for how the viewer consumes it.
+`--bundle <dir>` still writes `<map-stem>.locate.html`, a copy of the bundle entry with
+`data-locate-state` applied by the viewer from the embedded projection. See
+`drilldown-bundles.md`.
 
 ## Exit codes
 
@@ -216,17 +250,19 @@ path string; `locate/out-directory` for the output directory;
 
 1. Write one entry per map component. Start from directory-level globs — one component per
    directory is the shape that holds up best.
-2. Put generated output, packaged artifacts, and lockfiles in `excluded`. On a repository that
-   checks in rendered artifacts this is not optional: without it the projection drowns in
-   generated files.
-3. Run `archify locate --lint HEAD --map <map.json> --out /tmp/lint --json`.
+2. Put generated output, packaged artifacts, and lockfiles in `excluded`, or declare the
+   matching `presets`. On a repository that checks in rendered artifacts this is not optional:
+   without it the projection drowns in generated files.
+3. Run `archify locate --lint HEAD --map <map.json> --out /tmp/lint --json`. Lint writes a
+   receipt only; it does not write HTML. Read `supportedFixes` for undeclared-preset suggestions.
 4. Fix every `ambiguous` path. The glob language has no negation, so the repair is usually to
    replace a broad glob with a brace enumeration. For example, when
    `archify/scripts/generate-validators.mjs` belongs to `schemas`, the sibling component cannot
    use `archify/scripts/**`; it enumerates its own files instead:
    `archify/scripts/{check-render-output,check-update,generate-brand-marks,render-examples,update-contract}.mjs`.
-5. Read the `uncovered` count but do not chase it to zero. Lint reports it and does not fail.
-   Requiring full coverage turns a ten-component map into a file-tree mirror.
+5. Read the `uncovered` count but do not chase it to zero. After declaring presets, leftover
+   `uncovered` paths are the product holes the map has not claimed. Lint reports them and does
+   not fail. Requiring full coverage turns a ten-component map into a file-tree mirror.
 
 Maintenance is discrete rather than continuous: a replay of 100 commits on this repository needed
 a sidecar edit in 9 of them, ten one-line edits in total, and six of those ten were "the
@@ -237,18 +273,19 @@ repository grew a new top-level directory".
 A child diagram's sidecar declares `parent: { map, component }`, and the parent component
 declares `child_map`. Both must point at each other. Every glob in the child sidecar, including
 `excluded`, must be a syntactic subset of one glob of the parent component that declares the
-drilldown. The check is one function, `validateChildOwnershipSubset`
-(`archify/locate/ownership.mjs:222-248`), shared with `archify bundle`. It is conservative:
+drilldown. A child may declare `presets` only as a subset of the parent's declared presets;
+a violation uses the same `locate/ownership-not-subset` (or `bundle/ownership-not-subset`)
+code. The check is one function, `validateChildOwnershipSubset`
+(`archify/locate/ownership.mjs`), shared with `archify bundle`. It is conservative:
 everything it accepts is a true subset, and it may reject a glob that is in fact narrower. So
 `archify/renderers/**` covers `archify/renderers/shared/**`, but `archify/scripts/*.mjs` does
 not cover `archify/scripts/**`. Repair a rejected glob by rewriting it as a literal extension
 of a parent glob, or by widening the parent.
 
-Parent `excluded` is inherited at projection time (`inheritParentExcluded`,
-`archify/locate/ownership.mjs:251-257`): `locate --bundle` and the parent receipt's `inside`
-counts treat a parent-excluded path as `excluded` even when a child glob would match it
-(`archify/locate/locate.mjs:141`, `archify/locate/cli.mjs:304`). The child sidecar does not
-repeat parent exclusions.
+Parent `excluded` and parent `presets` are inherited at projection time (`inheritParentExcluded`):
+`locate --bundle` and the parent receipt's `inside` counts treat a parent-excluded path as
+`excluded` even when a child glob would match it, and they apply the parent's presets. The
+child sidecar does not have to repeat parent exclusions or presets.
 
 A parent component with a child gets `childMap` and `inside: { touched, uncovered, ambiguous,
 excluded }` in the receipt — the child classifier run only over range paths that match the

@@ -71,10 +71,11 @@ architecture entry.
    entry sidecar must be named `<entryId>.ownership.json`; otherwise the bundle fails with
    `bundle/ownership-missing` (`archify/bundle/diagram-bundle.mjs:219-228`). Every child
    glob — `components[].globs` **and** `excluded` — must be a syntactic subset of the parent
-   component's globs (`validateChildOwnershipSubset`, `archify/locate/ownership.mjs:222-248`).
-   Parent `excluded` is inherited at projection time and does not have to be repeated — see
-   `locate.md`. A child `parent` pointer that names a missing map or sidecar is
-   `locate/ownership-parent-missing`.
+   component's globs (`validateChildOwnershipSubset`, `archify/locate/ownership.mjs`).
+   A child may declare `presets` only as a subset of the parent's declared presets; the same
+   subset-violation code applies. Parent `excluded` and parent `presets` are inherited at
+   projection time and do not have to be repeated — see `locate.md`. A child `parent` pointer
+   that names a missing map or sidecar is `locate/ownership-parent-missing`.
 5. Run `archify bundle <dir>`.
 
 The entry is inferred: it is the unique diagram that declares drilldowns and is not itself a
@@ -156,9 +157,10 @@ is that `artifact_sha256` pins the entry's pre-injection bytes.
 10. when a sidecar is listed: the file exists, its digest matches, it parses, and every child
     sidecar glob (component globs and `excluded`) is a subset of the parent component that
     declares the drilldown (`validateChildOwnershipSubset` via
-    `archify/bundle/diagram-bundle.mjs:126-133` and `:569-577`). Parent `excluded` is inherited
-    at locate projection time, not re-checked as a cover relation. The sidecar file, when
-    present, must be `<entryId>.ownership.json`.
+    `archify/bundle/diagram-bundle.mjs`). Child `presets` must be a subset of the parent
+    sidecar's `presets`. Parent `excluded` and `presets` are inherited at locate projection
+    time, not re-checked as a cover relation. The sidecar file, when present, must be
+    `<entryId>.ownership.json`.
 
 Failure codes are `bundle/entry-level`, `bundle/child-level`, `bundle/max-depth`,
 `bundle/duplicate-id`, `bundle/duplicate-file`, `bundle/file-path`, `bundle/file-missing`,
@@ -234,12 +236,40 @@ The breadcrumb stays and the return path still works. The same fact is reported 
 `archify locate … --bundle <dir>` writes a copy of the entry HTML carrying
 `<script id="archify-locate-projection" type="application/json">`. The entry applies component
 states to its own nodes on load, and forwards the child's node states after a successful
-handshake.
+handshake. The locate CLI also stamps `data-locate-uncovered-count="<n>"` on the first `<svg>`
+of that copy. The viewer still has to wire a chip beside the Passport; this payload is the
+contract for that follow-up.
+
+Projection JSON shape (locatorVersion 2):
+
+```json
+{
+  "schemaVersion": 1,
+  "base": "<40-char sha>",
+  "head": "<40-char sha>",
+  "components": {
+    "<id>": { "state": "touched|untouched|stale", "files_touched_inside": 0 }
+  },
+  "children": {
+    "<child-id>": { "nodes": { "<id>": "touched|untouched" } }
+  },
+  "uncovered": {
+    "count": 3,
+    "prefixes": ["internal", "related"]
+  }
+}
+```
+
+`uncovered.prefixes` is the sorted unique set of first path segments (or the filename when the
+path has no `/`) of `uncovered` files in the entry receipt. `uncovered.count` is the number of
+those files and matches `data-locate-uncovered-count`. An empty uncovered set is
+`{ "count": 0, "prefixes": [] }`, not an omitted field.
 
 The visual rules are deliberately narrow. Untouched nodes dim; `touched` and `stale` stay lit. The
 parent chip reads "N FILES TOUCHED INSIDE" and is hidden when the count is zero — a clean
-projection is an empty list, not a reassurance. There are no check marks, no green, and no risk
-or merge vocabulary; `stale` gets its own non-green treatment. With no projection attached, no
+projection is an empty list, not a reassurance. The uncovered chip, once wired, should have equal
+weight to the touched count and use no colour-as-risk. There are no check marks, no green, and no
+risk or merge vocabulary; `stale` gets its own non-green treatment. With no projection attached, no
 projection attributes are written and every node renders fully lit.
 
 A lit node means one thing: at least one changed path in the range matched that component's
