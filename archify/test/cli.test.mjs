@@ -1130,7 +1130,7 @@ test('cli: locate workflow map writes receipt-only html', () => {
   assert.equal(receipt.command, 'locate');
   assert.equal(receipt.map.diagramType, 'workflow');
   const html = fs.readFileSync(path.join(out, 'locate.html'), 'utf8');
-  assert.match(html, /Locate receipt only\./);
+  assert.match(html, /Paths outside the map/);
   assert.ok(fs.existsSync(path.join(out, 'locate.receipt.json')));
 });
 
@@ -1149,8 +1149,28 @@ test('cli: locate lifecycle map writes receipt-only html', () => {
   assert.equal(receipt.command, 'locate');
   assert.equal(receipt.map.diagramType, 'lifecycle');
   const html = fs.readFileSync(path.join(out, 'locate.html'), 'utf8');
-  assert.match(html, /Locate receipt only\./);
+  assert.match(html, /Paths outside the map/);
   assert.ok(fs.existsSync(path.join(out, 'locate.receipt.json')));
+});
+
+test('cli: locate --lint writes receipt only and no HTML', () => {
+  const { root } = locateCliRepo();
+  const out = path.join(root, 'out');
+  const result = run([
+    'locate', '--lint', 'HEAD',
+    '--map', path.join(root, 'map.architecture.json'),
+    '--repo-root', root,
+    '--out', out,
+    '--json',
+  ]);
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.mode, 'lint');
+  assert.equal(receipt.locatorVersion, 2);
+  assert.ok(fs.existsSync(path.join(out, 'locate.receipt.json')));
+  assert.equal(fs.existsSync(path.join(out, 'locate.html')), false);
+  assert.ok(Array.isArray(receipt.supportedFixes));
+  assert.ok(receipt.supportedFixes.some((line) => line.includes('declare presets: ["docs"]')));
 });
 
 test('cli: locate treats an absent pinned map revision as advisory', async () => {

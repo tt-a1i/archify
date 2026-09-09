@@ -27,11 +27,9 @@ import {
   locateLint,
   locateRange,
 } from './locate.mjs';
-import { renderLocateHtmlFromArtifact, validateLocateHtml } from './locate-html.mjs';
+import { renderLocateHtml, stampUncoveredCount, validateLocateHtml } from './locate-html.mjs';
 
 const cliPath = fileURLToPath(new URL('../bin/archify.mjs', import.meta.url));
-
-const safeJson = (value) => JSON.stringify(value, null, 2).replaceAll('<', '\\u003c').replaceAll('>', '\\u003e').replaceAll('&', '\\u0026');
 
 function need(args, index, flag, fail) {
   const value = args[index];
@@ -216,6 +214,19 @@ function prepareOutDir(out) {
   return dir;
 }
 
+function commitReceiptOnly({ receiptCandidate, outputReceipt, stagingDirectory }) {
+  if (fs.existsSync(outputReceipt)) {
+    const existing = fs.lstatSync(outputReceipt);
+    if (!existing.isFile()) {
+      locateFail('locate/out-directory', 'Existing receipt target is not a regular file.', {
+        evidence: { target: outputReceipt },
+      });
+    }
+    fs.renameSync(outputReceipt, path.join(stagingDirectory, '.previous-receipt'));
+  }
+  fs.renameSync(receiptCandidate, outputReceipt);
+}
+
 function commitLocatePair({ htmlCandidate, receiptCandidate, outputHtml, outputReceipt, stagingDirectory }) {
   const targets = [
     { label: 'HTML artifact', target: outputHtml, candidate: htmlCandidate, backup: path.join(stagingDirectory, '.previous-html') },
@@ -313,7 +324,10 @@ function writeBundleProjection({
   const projection = buildLocateProjection({ base, head, entryReceipt: receipt, childReceipts });
   const sourceHtmlPath = entryHtmlPath(bundleDir, manifest);
   const entryHtml = fs.readFileSync(sourceHtmlPath, 'utf8');
-  const projected = embedProjection(entryHtml, projection);
+  const projected = stampUncoveredCount(
+    embedProjection(entryHtml, projection),
+    projection.uncovered?.count || 0,
+  );
   const mapBase = path.basename(mapPath || sourceHtmlPath).replace(/\.json$/i, '').replace(/\.html$/i, '');
   const fileName = `${mapBase}.locate.html`;
   const copied = [];
@@ -388,10 +402,6 @@ function attachCompare({ type, root, base, head, mapPath, outDir, stagingDirecto
   return compared
     ? { status: 'compared', receiptPath: 'compare/map-delta.receipt.json', htmlPath: 'compare/map-delta.html', exitCode: 0 }
     : { status: 'compare-failed', exitCode: result.status ?? 1 };
-}
-
-function receiptOnlyHtml(receipt) {
-  return `<!DOCTYPE html><html><body><p>Locate receipt only.</p><script id="archify-locate-receipt" type="application/json">${safeJson(receipt)}</script></body></html>`;
 }
 
 function ambiguousDiagnostics(receipt) {
@@ -492,29 +502,27 @@ export async function commandLocate(args, ctx) {
       if (attached.status === 'compared') mapDeltaHref = attached.htmlPath;
     }
 
-    let html = receiptOnlyHtml(receipt);
-    if (map.diagram_type === 'architecture' && ctx.renderValidatedArchitecture) {
-      const rendered = path.join(stagingDirectory, 'map.html');
-      ctx.renderValidatedArchitecture(mapAbs, rendered, undefined, root);
-      html = renderLocateHtmlFromArtifact({
-        receipt,
-        mapHtml: fs.readFileSync(rendered, 'utf8'),
-        mapDeltaHref,
+    const receiptCandidate = path.join(stagingDirectory, 'locate.receipt.json');
+    fs.writeFileSync(receiptCandidate, `${JSON.stringify(receipt, null, 2)}\n`);
+    if (options.lint) {
+      commitReceiptOnly({
+        receiptCandidate,
+        outputReceipt: receiptPath,
+        stagingDirectory,
+      });
+    } else {
+      const html = renderLocateHtml({ receipt, mapDeltaHref });
+      validateLocateHtml(html, receipt);
+      const htmlCandidate = path.join(stagingDirectory, 'locate.html');
+      fs.writeFileSync(htmlCandidate, html);
+      commitLocatePair({
+        htmlCandidate,
+        receiptCandidate,
+        outputHtml: htmlPath,
+        outputReceipt: receiptPath,
+        stagingDirectory,
       });
     }
-    validateLocateHtml(html, receipt, { diagramType: map.diagram_type });
-
-    const htmlCandidate = path.join(stagingDirectory, 'locate.html');
-    const receiptCandidate = path.join(stagingDirectory, 'locate.receipt.json');
-    fs.writeFileSync(htmlCandidate, html);
-    fs.writeFileSync(receiptCandidate, `${JSON.stringify(receipt, null, 2)}\n`);
-    commitLocatePair({
-      htmlCandidate,
-      receiptCandidate,
-      outputHtml: htmlPath,
-      outputReceipt: receiptPath,
-      stagingDirectory,
-    });
 
     if (options.bundle) {
       writeBundleProjection({
@@ -548,7 +556,7 @@ export async function commandLocate(args, ctx) {
       const files = receipt.summary.files;
       console.log(`locate ${receipt.mode} ${receipt.map.path} ${files.touched} touched / ${files.uncovered} uncovered / ${files.ambiguous} ambiguous / ${files.excluded} excluded`);
       console.log(`receipt ${receiptPath}`);
-      console.log(`html ${htmlPath}`);
+      if (!options.lint) console.log(`html ${htmlPath}`);
     }
   } catch (error) {
     if (error instanceof LocateError) {
