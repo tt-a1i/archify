@@ -1,7 +1,9 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { once } from 'node:events';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -12,6 +14,7 @@ const diagnostics = new URL('../renderers/shared/diagnostics.mjs', import.meta.u
 const LARGE_DIAGNOSTIC_COUNT = 400;
 const SMALL_DIAGNOSTIC_COUNT = 2;
 const LARGEST_COMMON_PIPE_BUFFER = 64 * 1024;
+const STALLED_READER_MS = 300;
 
 function crashingRenderer(t, count) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-diagnostic-boundary-'));
@@ -63,6 +66,34 @@ test('the renderer boundary delivers a receipt larger than the pipe buffer', t =
   assert.equal(receipt.source, 'renderer');
   assert.equal(receipt.diagnostics.length, LARGE_DIAGNOSTIC_COUNT);
   assert.deepEqual([...new Set(receipt.diagnostics.map(entry => entry.code))], ['layout/constraint']);
+  assert.equal(receipt.diagnostics.at(-1).subject.transition, LARGE_DIAGNOSTIC_COUNT - 1);
+});
+
+test('the renderer boundary waits for a stalled reader instead of truncating', async t => {
+  const script = crashingRenderer(t, LARGE_DIAGNOSTIC_COUNT);
+  const child = spawn(process.execPath, [script], {
+    env: { ...process.env, ARCHIFY_DIAGNOSTIC_FORMAT: 'json' },
+    stdio: ['ignore', 'ignore', 'pipe'],
+  });
+  t.after(() => child.kill('SIGKILL'));
+
+  // A parent that has not started reading fills the pipe, so every write
+  // reports EAGAIN. A fixed retry budget expires here in a few milliseconds and
+  // delivers a truncated receipt, which is the same data loss under a different
+  // trigger.
+  const chunks = [];
+  child.stderr.on('data', (chunk) => chunks.push(chunk));
+  child.stderr.pause();
+  const delivered = once(child.stderr, 'end');
+  const exited = once(child, 'exit');
+
+  await delay(STALLED_READER_MS);
+  child.stderr.resume();
+  await delivered;
+
+  assert.deepEqual(await exited, [1, null]);
+  const receipt = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  assert.equal(receipt.diagnostics.length, LARGE_DIAGNOSTIC_COUNT);
   assert.equal(receipt.diagnostics.at(-1).subject.transition, LARGE_DIAGNOSTIC_COUNT - 1);
 });
 

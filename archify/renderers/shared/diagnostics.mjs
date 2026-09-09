@@ -111,6 +111,18 @@ function rendererFailure(error) {
   };
 }
 
+const readerSignal = new Int32Array(new SharedArrayBuffer(4));
+
+function waitForReader() {
+  // Sleep instead of spinning on EAGAIN. A retry budget looks like a safeguard
+  // and behaves like a truncation gate: a spinning loop burns thousands of
+  // attempts in a few milliseconds, so a reader that is merely slow to start
+  // exhausts it and loses the tail of the receipt. Waiting costs nothing while
+  // the reader catches up, and a reader that goes away raises EPIPE, which the
+  // caller already treats as a real write failure.
+  Atomics.wait(readerSignal, 0, 0, 1);
+}
+
 export function installRendererDiagnosticBoundary() {
   if (!DIAGNOSTIC_MODE || globalThis[boundaryKey]) return;
   globalThis[boundaryKey] = true;
@@ -123,17 +135,19 @@ export function installRendererDiagnosticBoundary() {
       // large diagnostic payloads mid-JSON, so the parent CLI's JSON.parse
       // failed and the fail-closed boundary reported internal/unclassified
       // instead of the diagnostics we had already computed. Loop until drained.
-      // A full pipe also makes writeSync throw EAGAIN; retry rather than treat
-      // it as a stream failure, otherwise the tail is dropped just the same.
+      // A full pipe also makes writeSync throw EAGAIN; wait for the reader
+      // rather than treat it as a stream failure, otherwise the tail is
+      // dropped just the same.
       const buffer = Buffer.from(payload, 'utf8');
       let written = 0;
-      let attempts = 0;
-      while (written < buffer.length && attempts < 10000) {
-        attempts += 1;
+      while (written < buffer.length) {
         try {
           written += fs.writeSync(process.stderr.fd, buffer, written, buffer.length - written);
         } catch (writeError) {
-          if (writeError?.code === 'EAGAIN') continue;
+          if (writeError?.code === 'EAGAIN') {
+            waitForReader();
+            continue;
+          }
           throw writeError;
         }
       }
