@@ -117,7 +117,26 @@ export function installRendererDiagnosticBoundary() {
   process.on('uncaughtException', (error) => {
     const payload = `${JSON.stringify(rendererFailure(error))}\n`;
     try {
-      fs.writeSync(process.stderr.fd, payload);
+      // stderr may be a pipe. fs.writeSync performs a PARTIAL write once the
+      // payload exceeds the OS pipe buffer (8KB on macOS) and returns the byte
+      // count actually written. Ignoring that return value silently truncated
+      // large diagnostic payloads mid-JSON, so the parent CLI's JSON.parse
+      // failed and the fail-closed boundary reported internal/unclassified
+      // instead of the diagnostics we had already computed. Loop until drained.
+      // A full pipe also makes writeSync throw EAGAIN; retry rather than treat
+      // it as a stream failure, otherwise the tail is dropped just the same.
+      const buffer = Buffer.from(payload, 'utf8');
+      let written = 0;
+      let attempts = 0;
+      while (written < buffer.length && attempts < 10000) {
+        attempts += 1;
+        try {
+          written += fs.writeSync(process.stderr.fd, buffer, written, buffer.length - written);
+        } catch (writeError) {
+          if (writeError?.code === 'EAGAIN') continue;
+          throw writeError;
+        }
+      }
     } catch {
       // The renderer is already failing. Avoid replacing its real error with a
       // secondary stream failure; the parent CLI still has the exit status.
