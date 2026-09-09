@@ -4397,8 +4397,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       gap: 0.55rem;
       min-height: 0;
     }
-    html[data-drilldown-level="1"] .archify-drilldown-host { display: flex; }
-    html[data-drilldown-level="1"] .diagram-container > svg[data-bundle-role="entry"] { display: none; }
+    html[data-drilldown-level="1"] .archify-drilldown-host {
+      display: flex;
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      overflow: auto;
+      background: var(--panel);
+    }
+    html[data-drilldown-level="1"] .diagram-container > svg[data-bundle-role="entry"] {
+      visibility: hidden;
+      pointer-events: none;
+    }
     .archify-drilldown-crumb {
       display: flex;
       flex-wrap: wrap;
@@ -11065,6 +11075,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var style = window.getComputedStyle(element);
         return element.getBoundingClientRect().height + number(style.marginTop) + number(style.marginBottom);
       }
+      function descended() {
+        return Boolean(html.getAttribute('data-drilldown-level'));
+      }
       function eligible() {
         return Boolean(
           shell && diagram && svg && ratio >= WIDE_RATIO &&
@@ -11104,7 +11117,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (settleFrame) cancelAnimationFrame(settleFrame);
         settleFrame = requestAnimationFrame(function () {
           settleFrame = 0;
-          if (!eligible() || !lastWidth) return;
+          if (descended() || !eligible() || !lastWidth) return;
           var overflow = Math.max(
             document.documentElement.scrollHeight,
             document.body.scrollHeight
@@ -11121,6 +11134,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function measure() {
         frame = 0;
+        if (descended()) {
+          return lastWidth ? { ratio: ratio, width: lastWidth } : null;
+        }
         if (!eligible()) {
           clear();
           return null;
@@ -11144,7 +11160,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         };
       }
       function schedule() {
-        if (frame) return;
+        if (descended() || frame) return;
         frame = requestAnimationFrame(measure);
       }
       function stableSnapshot() {
@@ -11222,6 +11238,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var lastReceipt = null;
       var SAFE_GAP = 10;
 
+      function descended() {
+        return Boolean(html.getAttribute('data-drilldown-level'));
+      }
       function visible(element) {
         if (!element || element.hidden) return false;
         var style = window.getComputedStyle(element);
@@ -11342,6 +11361,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function measure() {
         frame = 0;
+        if (descended()) return lastReceipt;
         if (probingBaseline) return null;
         if (!eligible()) return clear({ preserveBaseline: !cameraAtBaseline() });
 
@@ -11447,7 +11467,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return probePromise;
       }
       function schedule() {
-        if (frame) return;
+        if (descended() || frame) return;
         frame = requestAnimationFrame(measure);
       }
       function stableSnapshot() {
@@ -15255,10 +15275,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           file: child.file
         };
         buildSilhouette(componentId);
+        setState(1, 'descending');
         if (host) host.hidden = false;
         if (stale) { stale.hidden = true; stale.textContent = ''; }
-        if (svg) svg.hidden = true;
-        setState(1, 'descending');
         renderCrumb(current.entryTitle, current.componentLabel, current.childTitle);
         var file = resolveChildFile(readManifest(), childId);
         if (!file) {
@@ -15301,7 +15320,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (silhouette) silhouette.innerHTML = '';
         if (crumb) crumb.textContent = '';
         function reveal() {
-          if (svg) svg.hidden = false;
           if (host) host.hidden = true;
           current = null;
           setState(0, '');

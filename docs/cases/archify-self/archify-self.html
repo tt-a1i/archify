@@ -4397,8 +4397,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       gap: 0.55rem;
       min-height: 0;
     }
-    html[data-drilldown-level="1"] .archify-drilldown-host { display: flex; }
-    html[data-drilldown-level="1"] .diagram-container > svg[data-bundle-role="entry"] { display: none; }
+    html[data-drilldown-level="1"] .archify-drilldown-host {
+      display: flex;
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      overflow: auto;
+      background: var(--panel);
+    }
+    html[data-drilldown-level="1"] .diagram-container > svg[data-bundle-role="entry"] {
+      visibility: hidden;
+      pointer-events: none;
+    }
     .archify-drilldown-crumb {
       display: flex;
       flex-wrap: wrap;
@@ -11095,6 +11105,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var style = window.getComputedStyle(element);
         return element.getBoundingClientRect().height + number(style.marginTop) + number(style.marginBottom);
       }
+      function descended() {
+        return Boolean(html.getAttribute('data-drilldown-level'));
+      }
       function eligible() {
         return Boolean(
           shell && diagram && svg && ratio >= WIDE_RATIO &&
@@ -11134,7 +11147,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (settleFrame) cancelAnimationFrame(settleFrame);
         settleFrame = requestAnimationFrame(function () {
           settleFrame = 0;
-          if (!eligible() || !lastWidth) return;
+          if (descended() || !eligible() || !lastWidth) return;
           var overflow = Math.max(
             document.documentElement.scrollHeight,
             document.body.scrollHeight
@@ -11151,6 +11164,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function measure() {
         frame = 0;
+        if (descended()) {
+          return lastWidth ? { ratio: ratio, width: lastWidth } : null;
+        }
         if (!eligible()) {
           clear();
           return null;
@@ -11174,7 +11190,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         };
       }
       function schedule() {
-        if (frame) return;
+        if (descended() || frame) return;
         frame = requestAnimationFrame(measure);
       }
       function stableSnapshot() {
@@ -11252,6 +11268,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var lastReceipt = null;
       var SAFE_GAP = 10;
 
+      function descended() {
+        return Boolean(html.getAttribute('data-drilldown-level'));
+      }
       function visible(element) {
         if (!element || element.hidden) return false;
         var style = window.getComputedStyle(element);
@@ -11372,6 +11391,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function measure() {
         frame = 0;
+        if (descended()) return lastReceipt;
         if (probingBaseline) return null;
         if (!eligible()) return clear({ preserveBaseline: !cameraAtBaseline() });
 
@@ -11477,7 +11497,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return probePromise;
       }
       function schedule() {
-        if (frame) return;
+        if (descended() || frame) return;
         frame = requestAnimationFrame(measure);
       }
       function stableSnapshot() {
@@ -15285,10 +15305,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           file: child.file
         };
         buildSilhouette(componentId);
+        setState(1, 'descending');
         if (host) host.hidden = false;
         if (stale) { stale.hidden = true; stale.textContent = ''; }
-        if (svg) svg.hidden = true;
-        setState(1, 'descending');
         renderCrumb(current.entryTitle, current.componentLabel, current.childTitle);
         var file = resolveChildFile(readManifest(), childId);
         if (!file) {
@@ -15331,7 +15350,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (silhouette) silhouette.innerHTML = '';
         if (crumb) crumb.textContent = '';
         function reveal() {
-          if (svg) svg.hidden = false;
           if (host) host.hidden = true;
           current = null;
           setState(0, '');
@@ -15538,7 +15556,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       "level": 1,
       "node_count": 6,
       "spec_sha256": "225dde84cd7bf33711ac2dad9133a4d416bdd59088b52a23c28b8ef37167770d",
-      "artifact_sha256": "ed2dbad47aa2a5986d84bd969e8ab6730812dc5ef2f81f1e8abff892ff57c01a"
+      "artifact_sha256": "ddb4da0c92a140ecdf90bd14f94edf65590119eb4f067fd02a06ed236a62918c"
     },
     {
       "id": "archify-self",
@@ -15548,7 +15566,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       "level": 0,
       "node_count": 10,
       "spec_sha256": "f9340173481809e8d6d39849b2d8c7c0242e3e5601b23a4d6e3496cbc47f2a5e",
-      "artifact_sha256": "af6ab3616dc703cc91fd89cae7ea6f318e56bf14259d9592191a10de6ad0d465"
+      "artifact_sha256": "78b648c05c4e957ce2eec776d8f50a7b8fd2918a67b8ee732a6c28d4e674f85c"
     },
     {
       "id": "render-pipeline",
@@ -15558,7 +15576,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       "level": 1,
       "node_count": 7,
       "spec_sha256": "3d951943eab20ed26aa6c4aff4e168075a4ea19e9e893947ba29c7d7c8c635a2",
-      "artifact_sha256": "6a157366ee180d361f8ef46219a33546101c9d7bba07245168f158f57bcd27e3"
+      "artifact_sha256": "29761028e9c62ea8938d6175d748264fc2eada80edc4453a50c2218c50ec8ae9"
     }
   ],
   "drilldowns": [
@@ -15577,7 +15595,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   ],
   "ownership": {
     "file": "archify-self.ownership.json",
-    "sha256": "f4d57bce1a2d75991d092d1f810c8c88b9d4a9e252f4ba55311a0e6aa1d48bbd"
+    "sha256": "f406522926c25d4805e93a8637a36d47570f3b084e6375bf15cd58ce073a17dd"
   }
 }
 </script>

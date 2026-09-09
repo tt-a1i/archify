@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "ok": true,
   "command": "locate",
-  "locatorVersion": 1,
+  "locatorVersion": 2,
   "mode": "range",
   "completeness": "complete",
   "repository": {
@@ -21,7 +21,14 @@
   },
   "ownership": {
     "path": "docs/cases/archify-self/archify-self.ownership.json",
-    "sha256": "f4d57bce1a2d75991d092d1f810c8c88b9d4a9e252f4ba55311a0e6aa1d48bbd"
+    "sha256": "f406522926c25d4805e93a8637a36d47570f3b084e6375bf15cd58ce073a17dd",
+    "presets": [
+      "docs",
+      "tests",
+      "ci",
+      "lockfiles",
+      "generated"
+    ]
   },
   "review": {
     "required": false,
@@ -34,9 +41,9 @@
   "summary": {
     "files": {
       "touched": 7,
-      "uncovered": 14,
+      "uncovered": 3,
       "ambiguous": 0,
-      "excluded": 29,
+      "excluded": 40,
       "total": 50
     },
     "components": {
@@ -50,17 +57,20 @@
     {
       "path": ".github/workflows/ci.yml",
       "changeType": "M",
-      "state": "uncovered"
+      "state": "excluded",
+      "matchedGlob": "preset:ci"
     },
     {
       "path": "CHANGELOG.md",
       "changeType": "M",
-      "state": "uncovered"
+      "state": "excluded",
+      "matchedGlob": "preset:docs"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
       "changeType": "M",
-      "state": "uncovered"
+      "state": "excluded",
+      "matchedGlob": "preset:docs"
     },
     {
       "path": "archify.zip",
@@ -71,7 +81,8 @@
     {
       "path": "archify/THIRD_PARTY_NOTICES.md",
       "changeType": "M",
-      "state": "uncovered"
+      "state": "excluded",
+      "matchedGlob": "preset:docs"
     },
     {
       "path": "archify/assets/JetBrainsMono-OFL.txt",
@@ -155,32 +166,38 @@
     {
       "path": "docs/assets/archify-live-proof.gif",
       "changeType": "M",
-      "state": "uncovered"
+      "state": "excluded",
+      "matchedGlob": "preset:docs"
     },
     {
       "path": "docs/assets/archify-live-proof.json",
       "changeType": "M",
-      "state": "uncovered"
+      "state": "excluded",
+      "matchedGlob": "preset:docs"
     },
     {
       "path": "docs/assets/mco-runtime-reach-share-card.png",
       "changeType": "M",
-      "state": "uncovered"
+      "state": "excluded",
+      "matchedGlob": "preset:docs"
     },
     {
       "path": "docs/assets/mco-runtime-share-card.png",
       "changeType": "M",
-      "state": "uncovered"
+      "state": "excluded",
+      "matchedGlob": "preset:docs"
     },
     {
       "path": "docs/cases/mco-runtime.architecture.html",
       "changeType": "M",
-      "state": "uncovered"
+      "state": "excluded",
+      "matchedGlob": "preset:docs"
     },
     {
       "path": "docs/gallery.html",
       "changeType": "M",
-      "state": "uncovered"
+      "state": "excluded",
+      "matchedGlob": "preset:docs"
     },
     {
       "path": "docs/gallery/artifacts/agent-run.lifecycle.html",
@@ -251,7 +268,8 @@
     {
       "path": "docs/gallery/manifest.json",
       "changeType": "M",
-      "state": "uncovered"
+      "state": "excluded",
+      "matchedGlob": "preset:docs"
     },
     {
       "path": "examples/archify-repo-grid.html",

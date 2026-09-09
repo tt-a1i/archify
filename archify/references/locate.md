@@ -320,12 +320,14 @@ node archify/bin/archify.mjs locate --lint HEAD \
 Only `locate.receipt.json` is kept under each PR folder; the HTML and any `compare/` directory
 are deleted after regeneration.
 
-The first range covers 50 paths: 7 touched, 14 uncovered, 29 excluded, 0 ambiguous; 2 of 10
+The first range covers 50 paths: 7 touched, 3 uncovered, 40 excluded, 0 ambiguous; 2 of 10
 components touched, 0 stale. `review.required` is `false` with advisories `files_uncovered` and
-`map_behind` — the map pins revision `1072200`, eight commits behind that range's head. Both
-drilldown parents report `inside: { touched: 0, uncovered: 0, ambiguous: 0, excluded: 0 }`
-because no range path matches `archify/renderers/**`. The second range covers 25 paths with
-nothing touched and 24 uncovered, which is a real and useful answer: 22 of those paths are a
-new top-level `analyzers/` directory that the map does not yet claim, so the honest report is
-"this change lands outside the map", not a touched component. Its drilldown parents are also
-`inside` all zeros.
+`map_behind` — the map pins revision `1072200`, eight commits behind that range's head. The
+three leftover uncovered paths are `scripts/*.mjs` product holes; docs/CI noise is now
+`preset:docs` / `preset:ci`. Both drilldown parents report
+`inside: { touched: 0, uncovered: 0, ambiguous: 0, excluded: 0 }` because no range path
+matches `archify/renderers/**`. The second range covers 25 paths with nothing touched and 24
+uncovered, which is a real and useful answer: 22 of those paths are a new top-level
+`analyzers/` directory that the map does not yet claim, so the honest report is "this change
+lands outside the map", not a touched component. Its drilldown parents are also `inside` all
+zeros.

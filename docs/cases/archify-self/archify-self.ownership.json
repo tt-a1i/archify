@@ -11,6 +11,7 @@
     "examples/*.receipt.json",
     "docs/gallery/artifacts/**"
   ],
+  "presets": ["docs", "tests", "ci", "lockfiles", "generated"],
   "components": [
     { "id": "cli", "globs": ["archify/bin/**"] },
     {
