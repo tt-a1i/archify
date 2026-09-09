@@ -6,10 +6,16 @@ import {
   sortedBy,
 } from '../delta/architecture-delta.mjs';
 import { locateFail } from './error.mjs';
-import { classifyPath, componentLabel, inheritParentExcluded } from './ownership.mjs';
+import {
+  classifyPath,
+  componentLabel,
+  declaredPresets,
+  inheritParentExcluded,
+  undeclaredPresetSuggestions,
+} from './ownership.mjs';
 import { matchesGlob } from './glob.mjs';
 
-export const LOCATOR_VERSION = 1;
+export const LOCATOR_VERSION = 2;
 
 const LIMITATIONS = [
   'Path ownership only; no runtime impact, causality, risk, or mergeability is inferred.',
@@ -287,6 +293,7 @@ function finishReceipt({
     ownership: {
       path: ownershipPath,
       sha256: ownershipSha256,
+      presets: declaredPresets(ownership),
       ...(ownership.parent ? {
         parent: { map: ownership.parent.map, component: ownership.parent.component },
       } : {}),
@@ -372,7 +379,7 @@ export function locateLint({
   const repository = { root: '.', revision };
   if (repositoryUrl) repository.url = repositoryUrl;
   if (linkMode) repository.linkMode = linkMode;
-  return finishReceipt({
+  const receipt = finishReceipt({
     mode: 'lint',
     map,
     ownership,
@@ -386,6 +393,22 @@ export function locateLint({
     mapBehindBy,
     mapRevisionUnavailable,
   });
+  const suggestions = undeclaredPresetSuggestions(files, ownership);
+  if (suggestions.length) receipt.supportedFixes = suggestions;
+  return receipt;
+}
+
+export function topLevelPrefix(filePath) {
+  const slash = String(filePath).indexOf('/');
+  return slash === -1 ? String(filePath) : String(filePath).slice(0, slash);
+}
+
+export function uncoveredPrefixList(files) {
+  const prefixes = new Set();
+  for (const file of files || []) {
+    if (file.state === 'uncovered') prefixes.add(topLevelPrefix(file.path));
+  }
+  return [...prefixes].sort(codepointOrder);
 }
 
 export function buildLocateProjection({ base, head, entryReceipt, childReceipts = {} }) {
@@ -404,7 +427,18 @@ export function buildLocateProjection({ base, head, entryReceipt, childReceipts 
     }
     children[childId] = { nodes };
   }
-  return { schemaVersion: 1, base, head, components, children };
+  const uncoveredFiles = (entryReceipt.files || []).filter((file) => file.state === 'uncovered');
+  return {
+    schemaVersion: 1,
+    base,
+    head,
+    components,
+    children,
+    uncovered: {
+      count: uncoveredFiles.length,
+      prefixes: uncoveredPrefixList(entryReceipt.files),
+    },
+  };
 }
 
 export function embedProjection(entryHtml, projection) {

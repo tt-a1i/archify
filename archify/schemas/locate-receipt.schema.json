@@ -26,7 +26,12 @@
     "schemaVersion": { "const": 1 },
     "ok": { "const": true },
     "command": { "const": "locate" },
-    "locatorVersion": { "type": "integer", "minimum": 1 },
+    "locatorVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2,
+      "description": "1 = pre-preset classifier. 2 = ownership.presets in effect; matchedGlob may be preset:<name>."
+    },
     "mode": { "enum": ["range", "lint"] },
     "completeness": { "const": "complete" },
 
@@ -106,8 +111,19 @@
             "map": { "$ref": "#/$defs/repoPath" },
             "component": { "$ref": "common.schema.json#/$defs/id" }
           }
+        },
+        "presets": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "The sidecar's declared presets that were in effect for this receipt. Empty when none were declared. Child projections record the inherited union.",
+          "items": { "enum": ["docs", "tests", "ci", "lockfiles", "generated"] }
         }
       }
+    },
+    "supportedFixes": {
+      "type": "array",
+      "description": "Lint-only advisory suggestions. Present when undeclared presets would exclude currently-uncovered tracked paths. Never fails the run.",
+      "items": { "type": "string", "minLength": 1 }
     },
 
     "review": {
@@ -391,7 +407,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 240,
-      "pattern": "^(?:\\*\\*|(?:[A-Za-z0-9._\\-?{},@+]|\\*(?!\\*))+)(?:/(?:\\*\\*|(?:[A-Za-z0-9._\\-?{},@+]|\\*(?!\\*))+))*$"
+      "pattern": "^(?:preset:(?:docs|tests|ci|lockfiles|generated)|(?:\\*\\*|(?:[A-Za-z0-9._\\-?{},@+]|\\*(?!\\*))+)(?:/(?:\\*\\*|(?:[A-Za-z0-9._\\-?{},@+]|\\*(?!\\*))+))*)$"
     },
     "attributedPath": {
       "type": "object",

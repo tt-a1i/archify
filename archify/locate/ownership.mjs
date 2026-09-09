@@ -5,6 +5,107 @@ import { validateSchema } from '../renderers/shared/validator.mjs';
 import { LocateError, locateFail } from './error.mjs';
 import { expandBraces, matchesGlob, subsumes } from './glob.mjs';
 
+export const OWNERSHIP_PRESET_NAMES = Object.freeze(['docs', 'tests', 'ci', 'lockfiles', 'generated']);
+
+/**
+ * Conservative, language-agnostic noise globs. Locked to locatorVersion 2.
+ *
+ * `ci` uses root-only `*.yml` / `*.yaml` (single-segment globs). `**\/*.yml`
+ * would swallow config/, charts/, and nested workflow trees; `.github/**`
+ * already covers GitHub Actions, and `.gitlab-ci.yml` / `.circleci/**` are
+ * named explicitly.
+ */
+export const OWNERSHIP_PRESETS = Object.freeze({
+  docs: Object.freeze(['**/*.md', 'docs/**', '**/LICENSE*', '**/NOTICE*']),
+  tests: Object.freeze([
+    '**/test/**',
+    '**/tests/**',
+    '**/__tests__/**',
+    '**/*.test.*',
+    '**/*.spec.*',
+    '**/*_test.go',
+    '**/test_*.py',
+    '**/testdata/**',
+    '**/fixtures/**',
+  ]),
+  ci: Object.freeze([
+    '.github/**',
+    '.gitlab-ci.yml',
+    '.circleci/**',
+    '**/Dockerfile*',
+    '*.yml',
+    '*.yaml',
+  ]),
+  lockfiles: Object.freeze([
+    '**/package-lock.json',
+    '**/pnpm-lock.yaml',
+    '**/yarn.lock',
+    '**/go.sum',
+    '**/Cargo.lock',
+    '**/poetry.lock',
+    '**/uv.lock',
+    '**/requirements*.txt',
+  ]),
+  generated: Object.freeze([
+    '**/*.min.js',
+    '**/*.map',
+    '**/dist/**',
+    '**/build/**',
+    '**/__generated__/**',
+    '**/*.snap',
+    '**/*.png',
+    '**/*.gif',
+    '**/*.webp',
+    '**/*.zip',
+  ]),
+});
+
+export function declaredPresets(ownership) {
+  const named = new Set(Array.isArray(ownership?.presets) ? ownership.presets : []);
+  return OWNERSHIP_PRESET_NAMES.filter((name) => named.has(name));
+}
+
+export function mergePresets(parentPresets, childPresets) {
+  const named = new Set([...(parentPresets || []), ...(childPresets || [])]);
+  return OWNERSHIP_PRESET_NAMES.filter((name) => named.has(name));
+}
+
+export function presetMatchedGlob(name) {
+  return `preset:${name}`;
+}
+
+export function pathMatchesPreset(filePath, name) {
+  const globs = OWNERSHIP_PRESETS[name];
+  if (!globs) return false;
+  return globs.some((glob) => matchesGlob(glob, filePath));
+}
+
+export function matchDeclaredPreset(filePath, ownership) {
+  for (const name of declaredPresets(ownership)) {
+    if (pathMatchesPreset(filePath, name)) {
+      return { state: 'excluded', matchedGlob: presetMatchedGlob(name) };
+    }
+  }
+  return null;
+}
+
+export function undeclaredPresetSuggestions(files, ownership) {
+  const declared = new Set(declaredPresets(ownership));
+  const uncovered = (files || []).filter((file) => file.state === 'uncovered');
+  const suggestions = [];
+  for (const name of OWNERSHIP_PRESET_NAMES) {
+    if (declared.has(name)) continue;
+    let count = 0;
+    for (const file of uncovered) {
+      if (pathMatchesPreset(file.path, name)) count += 1;
+    }
+    if (count > 0) {
+      suggestions.push(`declare presets: ["${name}"] to exclude ${count} uncovered paths`);
+    }
+  }
+  return suggestions;
+}
+
 export function defaultOwnershipPath(mapPath) {
   const resolved = path.resolve(mapPath);
   return resolved.toLowerCase().endsWith('.json')
@@ -43,7 +144,17 @@ function mapLabel(map, id) {
   return id;
 }
 
+function assertPresetGlobs() {
+  for (const name of OWNERSHIP_PRESET_NAMES) {
+    for (const glob of OWNERSHIP_PRESETS[name]) {
+      expandBraces(glob);
+      matchesGlob(glob, '__archify_glob_probe__');
+    }
+  }
+}
+
 export function assertGlobs(ownership) {
+  assertPresetGlobs();
   const globs = [
     ...(ownership.excluded || []),
     ...ownership.components.flatMap((component) => component.globs || []),
@@ -229,6 +340,19 @@ export function validateChildOwnershipSubset(parentSidecar, parentComponentId, c
     ...childComponents.flatMap((component) => component.globs || []),
   ];
   const failures = [];
+  const childPresets = Array.isArray(childSidecar?.presets) ? childSidecar.presets : [];
+  if (childPresets.length) {
+    const parentSet = new Set(Array.isArray(parentSidecar?.presets) ? parentSidecar.presets : []);
+    for (const name of childPresets) {
+      if (!parentSet.has(name)) {
+        failures.push({
+          code,
+          message: `Child preset ${JSON.stringify(name)} is not a subset of the parent sidecar presets.`,
+          glob: presetMatchedGlob(name),
+        });
+      }
+    }
+  }
   for (const glob of childGlobs) {
     const covered = parentGlobs.some((parentGlob) => {
       try {
@@ -253,15 +377,18 @@ export function inheritParentExcluded(parentSidecar, childSidecar) {
   return {
     ...childSidecar,
     excluded: [...(parentSidecar?.excluded || []), ...(childSidecar.excluded || [])],
+    presets: mergePresets(parentSidecar?.presets, childSidecar?.presets),
   };
 }
 
 export function classifyPath(filePath, ownership) {
+  // Explicit excluded still applies first so inheritParentExcluded keeps carving
+  // generated/lockfile paths out of a child's broad directory glob.
   for (const glob of ownership.excluded || []) {
     if (matchesGlob(glob, filePath)) return { state: 'excluded', matchedGlob: glob };
   }
   const hits = [];
-  for (const component of ownership.components) {
+  for (const component of ownership.components || []) {
     for (const glob of component.globs || []) {
       if (matchesGlob(glob, filePath)) {
         hits.push({ id: component.id, glob });
@@ -269,12 +396,17 @@ export function classifyPath(filePath, ownership) {
       }
     }
   }
-  if (hits.length === 0) return { state: 'uncovered' };
   if (hits.length === 1) return { state: 'touched', componentId: hits[0].id, matchedGlob: hits[0].glob };
-  return {
-    state: 'ambiguous',
-    candidates: [...new Set(hits.map((hit) => hit.id))].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0)),
-  };
+  if (hits.length > 1) {
+    return {
+      state: 'ambiguous',
+      candidates: [...new Set(hits.map((hit) => hit.id))].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0)),
+    };
+  }
+  // Ownership beats presets: an owned test file stays touched. Undeclared presets do nothing.
+  const preset = matchDeclaredPreset(filePath, ownership);
+  if (preset) return preset;
+  return { state: 'uncovered' };
 }
 
 export function componentLabel(map, id) {

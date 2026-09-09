@@ -25,8 +25,16 @@
     "excluded": {
       "type": "array",
       "maxItems": 200,
-      "description": "Repository paths that no component owns (generated output, lockfiles, packaged artifacts). Applied before component matching.",
+      "description": "Repository paths that no component owns (generated output, lockfiles, packaged artifacts). Applied before component matching. Declared presets run after both and also produce excluded.",
       "items": { "$ref": "#/$defs/glob" }
+    },
+    "presets": {
+      "type": "array",
+      "uniqueItems": true,
+      "description": "Named noise classes. A path that matches a declared preset and is not already touched, ambiguous, or explicitly excluded is classified excluded with matchedGlob preset:<name>. Undeclared presets do nothing. Glob lists live in OWNERSHIP_PRESETS (ownership.mjs) and are locked to locatorVersion 2.",
+      "items": {
+        "enum": ["docs", "tests", "ci", "lockfiles", "generated"]
+      }
     },
     "components": {
       "type": "array",

@@ -119,6 +119,8 @@ test('bundle projection copies entry HTML and embeds locate projection', () => {
   assert.equal(projection.components.viewer.files_touched_inside, childReceipt.summary.files.touched);
   assert.equal(projection.children['child-viewer'].nodes.template, 'touched');
   assert.equal(projection.children['child-viewer'].nodes.runtime, 'untouched');
+  assert.equal(projection.uncovered.count, entryReceipt.summary.files.uncovered);
+  assert.ok(Array.isArray(projection.uncovered.prefixes));
 
   const projected = embedProjection(entryHtml, projection);
   const out = path.join(dir, 'parent.architecture.locate.html');
