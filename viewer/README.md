@@ -6,6 +6,7 @@ transactions, `semantic-radar.js` for the overview map, `motion-governor.js` for
 motion mode and ownership, `node-finder.js` for node search and endpoint picking,
 `intent-trace.js` for hover/focus previews, `semantic-lens.js` for type selection
 and legend previews, `route-probe.js` for directed paths and Route Journey,
+`guided-views.js` for authored chapters and Story playback,
 `export-cleanup.js` for SVG export cleanup, and
 `template.source.html` for the rest of the Viewer.
 `archify/assets/template.html` is the committed
@@ -15,12 +16,116 @@ Skill. These maintainer sources live outside the packaged `archify/` directory.
 From `archify/`, run `npm run generate:viewer` after editing any source.
 `npm run check:viewer` verifies freshness without writing; `npm test` includes
 that check. Assembly inserts each fragment verbatim at its fixed marker.
-Reader, Chrome Layout, Camera, Radar, Motion Governor, Finder, Intent Trace, Semantic Lens and Route Probe
+Reader, Chrome Layout, Camera, Radar, Motion Governor, Finder, Intent Trace, Semantic Lens, Route Probe and Guided Views
 extractions preserve delivered HTML bytes. Export cleanup adds a
 private function and a call, changing script bytes but preserving cleanup order
 and SVG output. All fragments retain classic-script scope and initialization order.
 Generated output is not a second editing
 surface; release identity changes also belong in `template.source.html`.
+
+## Guided Views / Story contract
+
+The complete IIFE initializes once after Focus/flowTokens and Intent Trace, before
+Reader/Chrome Layout/Camera. Camera and Lens remain call-time lookups; the delayed
+initial Story follow must still work before Camera exists. Payload parsing, initial
+focus filtering, cold panel state, chapter index, listeners, synchronous hash
+restoration and pending share playback's double rAF retain their original order.
+Required panel, Trail, payload and direct diagram SVG nodes remain required.
+
+With authored chapters the interface is `count` plus seventeen methods: `activate`,
+`showAll`, `play`, `playCurrent`, `pause`, `beatLink`, `copyBeatLink`, `cancelHandoff`,
+`settleHandoff`, `clearPreview`, `isPlaying`, `handoff`, `active`, `preview`, `delta`,
+`beat` and `focus`. Empty chapters, including the JSON parse-error fallback, return
+only `count: 0` and `active`. The fragment does not add missing methods or normalize
+arbitrary invalid JSON types. Initial focus filtering removes unknown/repeated IDs
+in authored order; it is not a new dynamic graph index or kind filter.
+
+- Guided Views owns chapter/beat selection, Story steps, playing/scope/completion,
+  elapsed/dwell/timer and separate generations, handoff objects and promises,
+  pointer/focus preview intents, Motion tokens, autoplay pending and copy feedback.
+  Returned focus/delta/beat arrays are copies. Focus owns selected graph semantics
+  and the shared flowTokens implementation; Camera owns reveal transactions.
+- Activation preserves Focus's setMany options and the existing order of pause,
+  preview cleanup, old handoff cancellation, Trail rendering, new handoff, controls
+  and URL updates. `showAll`, `pause`, `clearPreview`, `cancelHandoff` and
+  `settleHandoff` have different effects. Existing options and return values remain;
+  no common reset or stronger panel exclusion rule is added.
+- The chapter rail uses roving tabindex, clamped Left/Right, Home/End and native
+  button activation. Focus can preview without activating. Trail beat buttons use
+  click/Enter/Space and focusin pauses playback; they do not gain Route Journey's
+  arrow navigation. SVG capture listeners release a curated chapter before normal
+  exploration continues. The captured P/bracket/Escape keys retain editor/Guide
+  guards and propagation differences; the template's global shortcuts stay put.
+- Delta uses authored stable-ID intersections and order. Handoff anchors prefer
+  the outgoing beat when shared, then search the old chapter backwards. No labels
+  or geometry infer relationships. Pointer/focus previews are independent intents;
+  the newest valid intent wins and clearing one may reveal the other. Hover/touch
+  and relatedTarget filters remain. Setting intent can pause playback before
+  checking preview eligibility. Presentation cleanup is distinct from intent reset.
+- Preview blocking still depends on hidden/playing/handoff/embed/print and the
+  existing Route/Lens/Intent/relationship/Focus attributes. MutationObserver and
+  Motion preemption keep their original callbacks; release is not a universal
+  promise that no other owner or remaining intent exists.
+- Handoff retains first/same chapter and static fallbacks, a 110ms anchor hold,
+  420ms Camera transaction, holding/no-anchor/settling state, receipt, role/anchor
+  overlays and temporarily disabled beat/copy controls. Settle commits the target;
+  cancel does not force target commit. Old hold/Camera/afterHandoff callbacks retain
+  their different identity/playing/generation checks, not a common cancellation API.
+- Story follow frames previous/current/next nodes with padding 64, maxScale 1.65
+  and duration 320. Initial deferred rAF, reason/manual/linked/instant options and
+  settled/interrupted receipts remain. Camera manual takeover and Motion/Guide
+  callers keep their existing pause/settle responsibilities.
+- Story steps follow authored chapter order, classifying adjacent-node relations
+  as start/forward/reverse/multiple/group from direct edges. A group is not a
+  computed path. Edge-key/fallback-key deduplication keeps DOM order and replaces
+  an initially shapeless fragment with a later shape-bearing one. Shape presence
+  is not Route's exportSnapshot drawable-validity check.
+- Overlay shallow clones preserve path/line/polyline geometry and transform, the
+  exact attribute removal list, insertion point, and node/edge step assignments.
+  No shapes means no Story overlay. Beat states are past/active/next/pending, with
+  original caption, note, ARIA, progress and next-node updates. Shared geometry is
+  not recomputed or reversed for the story's reading order.
+- A pulse requires one forward/reverse relationship and the existing motion
+  conditions. Carrier creation uses flowTokens with 0.78s and the original placement.
+  Pulse cleanup uses animationend plus its generation; there is no Route-style
+  fallback timer. Claim/release/preempt and release:false stay intact. Governor
+  also derives chapter/story ownership from SVG state, independently of tokens.
+- Each beat dwells for max(1100, 3200 / max(1, total)) milliseconds. Pause normally
+  retains elapsed time; resume uses the remainder, fresh beats reset it. Date.now,
+  timer clearing and generation checks remain. Whole-story play can cross chapters
+  after handoff; playCurrent has chapter scope and does not advance to another
+  chapter. Repeated starts and replay retain their own existing effects.
+- Automatic playback, pulse motion and handoff eligibility are different checks.
+  Non-trace does not prohibit all Story playback. `play=1` marks pending single
+  chapter playback, attempted after initial double rAF or visibility restoration.
+  Consumed playback does not restart merely on visible, but pending playback can
+  start there. Linked static moments and reduced-motion share outcomes keep their
+  original beat/overview decisions and pending/playing/complete/interrupted/pinned
+  presentation. Embed is not a blanket public-method guard.
+- Chapter updates replace hash with view while preserving pathname/query. Moment
+  links encode view/beat, remove play from the returned URL and leave the page URL
+  alone. Initial/hashchange restoration, handoff deferral and latest-intent checks
+  remain; unknown view/beat, empty hash and Focus/Relation/Route hashes retain their
+  different existing effects. Manual beat selection does not write every step URL.
+- Copy pauses as before, returns false without a moment, and uses clipboard with
+  textarea/execCommand fallback. The 1600ms feedback timer is reset by existing
+  cleanup, but a still-pending copy promise can complete after the chapter clears.
+  No promise cancellation or shared Route copy helper is introduced.
+- Guided Views produces data-story-*/data-chapter-* SVG/node/edge state, panel
+  data-active-view/data-playing/data-autoplay, chapter-button state, Trail/caption/
+  progress styles and Share Cue HTML/ARIA. CSS owns Shelf/Director layout, themes,
+  responsive scrolling, Still/reduced-motion, print and embed rendering. Export
+  owns cleanup of Story/carrier/handoff/preview/follow clones. Export first focuses
+  its trigger, clearing focus-backed chapter preview; pointer-backed intent can
+  remain. This input handoff precedes clone cleanup. Serialization is
+  distinct from later download clicks and their global input effects.
+
+`guided-views-browser.test.mjs` supplements the Story/Chapter source and SVG checks
+with real navigation, timing, handoff, preview, links and exports. Graph, clock,
+Camera receipt, visibility and clipboard fixtures expose specific edge cases;
+real Camera, input, animation and complete playback are also exercised. Fixtures
+are not evidence for OS clipboard permission, background throttling or arbitrary
+screen/content collision freedom.
 
 ## Route Probe contract
 
