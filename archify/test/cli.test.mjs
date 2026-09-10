@@ -545,6 +545,39 @@ test('cli: deliver reports renderer failure as json and preserves the previous a
   assert.equal(failure.stage, 'render');
   assert.match(failure.error, /schema validation failed/i);
   assert.equal(fs.readFileSync(out, 'utf8'), trustedPriorArtifact);
+  const provenance = JSON.parse(fs.readFileSync(out.replace(/\.html$/, '.delivery.json'), 'utf8'));
+  assert.equal(provenance.status, 'failed');
+  assert.equal(provenance.stage, 'render');
+  assert.equal(provenance.artifact.sha256, sha256(out));
+
+  const checked = run(['check', out, '--json']);
+  assert.equal(checked.status, 1);
+  assert.equal(JSON.parse(checked.stdout).provenance, 'failed');
+
+  const visual = run(['visual-check', out, '--json']);
+  assert.equal(visual.status, 1);
+  assert.equal(JSON.parse(visual.stdout).provenance, 'failed');
+});
+
+test('cli: a later successful delivery replaces stale provenance with an artifact-bound receipt', () => {
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  const out = path.join(tmp, 'delivery-provenance-recovers.html');
+  fs.writeFileSync(out, '<!doctype html><title>old artifact</title>\n');
+  fs.writeFileSync(out.replace(/\.html$/, '.delivery.json'), JSON.stringify({ status: 'failed' }));
+
+  const delivered = run(['deliver', 'workflow', input, out, '--json']);
+  assert.equal(delivered.status, 0, delivered.stderr);
+  const receipt = JSON.parse(delivered.stdout);
+  const provenance = JSON.parse(fs.readFileSync(out.replace(/\.html$/, '.delivery.json'), 'utf8'));
+  assert.equal(provenance.status, 'current');
+  assert.deepEqual(provenance.specification, receipt.specification);
+  assert.deepEqual(provenance.artifact, receipt.artifact);
+  assert.equal(run(['check', out, '--json']).status, 0);
+
+  fs.appendFileSync(out, '<!-- changed after delivery -->');
+  const checked = run(['check', out, '--json']);
+  assert.equal(checked.status, 1);
+  assert.equal(JSON.parse(checked.stdout).provenance, 'mismatch');
 });
 
 test('cli: deliver reports unreadable input as json without touching the target', () => {

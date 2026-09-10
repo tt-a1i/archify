@@ -97,6 +97,12 @@ Read `references/authoring-contract.md` only when you need field enums, spacing 
 
 Use `validate` during repair and `deliver` once for final acceptance. Delivery freezes the exact specification bytes into a private same-directory snapshot, renders and checks that snapshot, atomically commits the HTML, and reports SHA-256 plus byte counts for both specification and artifact. This is deterministic artifact evidence; it does not exercise the Viewer in a browser.
 
+`deliver` maintains `<output-stem>.delivery.json` as provenance for the latest
+attempt. A failed attempt that preserves an older HTML marks it stale; do not
+remove that marker or treat a later `check` / `visual-check` failure as an
+artifact pass. A successful delivery replaces the marker with hashes bound to
+the committed specification and HTML.
+
 After delivery, collect bounded desktop evidence without modifying or rerendering the trusted HTML:
 
 ```bash

@@ -2,6 +2,15 @@
 
 ## Validate and deliver
 
+Each `deliver` attempt also owns `<output-stem>.delivery.json`. A successful
+delivery records `status: "current"` together with the specification and
+artifact SHA-256/byte counts. If a later attempt fails while preserving an
+existing artifact, Archify replaces that sidecar with `status: "failed"` and
+the preserved artifact identity. `check` and `visual-check` fail closed on that
+marker, on an unreadable marker, or when a current marker does not match the
+artifact bytes. Artifacts without this sidecar remain supported for backward
+compatibility and for the lower-level `render` command.
+
 Use `validate` after every candidate edit. CLI HTML output paths must end in `.html`, including after symbolic-link resolution.
 Compare receipt paths must end in `.json`. Explicit CLI paths may be absolute or
 outside the current working directory; authored `meta.output` remains confined
