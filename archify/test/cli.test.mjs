@@ -159,7 +159,7 @@ test('cli: guide lists all scenario recipes by diagram type', () => {
   const result = run(['guide']);
 
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /Archify scenario recipes \(11\)/);
+  assert.match(result.stdout, /Archify scenario recipes \(12\)/);
   for (const type of ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']) {
     assert.match(result.stdout, new RegExp(`\\[${type}\\]`));
   }
@@ -199,6 +199,38 @@ test('cli: guide works from an installed skill without node_modules', () => {
 
   assert.equal(result.status, 0, result.stderr);
   assert.equal(JSON.parse(result.stdout).recommendation.id, 'incident-runbook');
+});
+
+test('cli: guide returns repair steps, via semantics, and viewport checks as JSON', () => {
+  const result = run(['guide', 'viewport overflow', '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  const parsed = JSON.parse(result.stdout);
+  assert.equal(parsed.recommendation.id, 'layout-repair');
+  assert.equal(parsed.confidence, 'high');
+  assert.ok(parsed.matchedSignals.includes('viewport overflow'));
+  const prompt = parsed.recommendation.prompt;
+  assert.match(prompt, /schema.*overlap.*direction.*crossings.*labels/s);
+  assert.match(prompt, /\[start, \.\.\.via, end\]/);
+  assert.match(prompt, /absolute.*\[x, y\]/);
+  assert.match(prompt, /1440×900.*1600×1000.*1920×1080.*2048×1320/);
+  assert.match(prompt, /scrollWidth <= window\.innerWidth/);
+  assert.match(prompt, /scrollHeight <= window\.innerHeight/);
+  assert.match(prompt, /validate.*diagnostics\[\].*supportedFixes/);
+});
+
+test('cli: guide prints localized repair advice, including an explicit language override', () => {
+  for (const args of [
+    ['guide', '视口溢出，标签重叠，修复顺序'],
+    ['guide', 'how do via waypoints work', '--lang', 'zh'],
+  ]) {
+    const result = run(args);
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /推荐: 布局修复/);
+    assert.match(result.stdout, /schema.*重叠.*方向.*交叉.*标签/s);
+    assert.match(result.stdout, /\[start, \.\.\.via, end\]/);
+    assert.match(result.stdout, /scrollHeight <= window\.innerHeight/);
+    assert.match(result.stdout, /validate/);
+  }
 });
 
 test('cli: demo creates a ready-to-open diagram in a chosen directory', () => {

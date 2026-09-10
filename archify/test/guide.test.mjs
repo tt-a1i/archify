@@ -8,15 +8,15 @@ import {
   recommendScenario,
 } from '../recipes/scenarios.mjs';
 
-test('guide: exposes 11 unique recipes across every diagram type', () => {
-  assert.equal(SCENARIO_RECIPES.length, 11);
-  assert.equal(new Set(SCENARIO_RECIPES.map((recipe) => recipe.id)).size, 11);
+test('guide: exposes 12 unique recipes across every diagram type, including repair', () => {
+  assert.equal(SCENARIO_RECIPES.length, 12);
+  assert.equal(new Set(SCENARIO_RECIPES.map((recipe) => recipe.id)).size, 12);
   assert.deepEqual(
     Object.fromEntries(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'].map((type) => [
       type,
       SCENARIO_RECIPES.filter((recipe) => recipe.type === type).length,
     ])),
-    { architecture: 2, workflow: 3, sequence: 2, dataflow: 2, lifecycle: 2 },
+    { architecture: 3, workflow: 3, sequence: 2, dataflow: 2, lifecycle: 2 },
   );
 });
 
@@ -51,10 +51,42 @@ test('guide: representative scenarios map to specialized recipes', () => {
     ['梳理 ETL 数仓 PII 数据血缘', 'data-lineage'],
     ['deployment lifecycle approval rollback state', 'deployment-lifecycle'],
     ['agent tool call approval gate MCP', 'agent-tool-call'],
+    ['Show a system overview via an architecture diagram', 'system-overview'],
+    ['Draw deployment topology with named boundary crossings', 'deployment-ownership'],
+    ['Explain an API request via a webhook callback', 'async-roundtrip'],
   ];
 
   for (const [query, expected] of cases) {
     assert.equal(recommendScenario(query).recommendation.id, expected, query);
+  }
+});
+
+test('guide: repair questions select actionable repair guidance in both languages', () => {
+  const queries = [
+    'viewport overflow', 'why does it still overflow', 'scrollHeight', 'scrollWidth',
+    'overlap', 'label overlap', 'edge through node', 'crossing', 'via',
+    'how do via waypoints work', 'layout repair', 'which fix order', 'repair order',
+    'architecture label overlap', 'workflow layout repair', 'sequence viewport overflow',
+    'dataflow edge through node', 'lifecycle layout repair',
+    '视口溢出', '为什么还是溢出', '滚动高度', '滚动宽度', '节点重叠', '标签重叠',
+    '连线穿过节点', '连线交叉', '途经点', '布局修复', '修复顺序', '架构图标签重叠',
+  ];
+  for (const query of queries) {
+    const result = recommendScenario(query);
+    assert.equal(result.recommendation.id, 'layout-repair', query);
+    assert.notEqual(result.confidence, 'low', query);
+    assert.ok(result.matchedSignals.length > 0, query);
+  }
+});
+
+test('guide: repair recipe supports exact selection and explicit language overrides', () => {
+  for (const lang of ['en', 'zh']) {
+    const exact = recommendScenario('layout-repair', { lang });
+    assert.equal(exact.recommendation.id, 'layout-repair');
+    assert.equal(exact.confidence, 'high');
+    assert.equal(exact.lang, lang);
+    assert.equal(recommendScenario('viewport overflow', { lang }).recommendation.prompt, exact.recommendation.prompt);
+    assert.equal(recommendScenario('视口溢出', { lang }).recommendation.prompt, exact.recommendation.prompt);
   }
 });
 
@@ -71,7 +103,7 @@ test('guide: exact ids win and unknown questions fall back honestly', () => {
 
 test('guide: public data includes both languages and weighted signals', () => {
   const data = publicGuideData();
-  assert.equal(data.length, 11);
+  assert.equal(data.length, 12);
   for (const recipe of data) {
     assert.ok(recipe.en.title);
     assert.ok(recipe.zh.title);
