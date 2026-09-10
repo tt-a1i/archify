@@ -36,6 +36,7 @@ import {
   labelPoint,
   suggestLabelObstacleFix,
   suggestComponentSeparation,
+  suggestClearingVia,
 } from '../renderers/shared/geometry.mjs';
 import { textUnits, applyTemplate, renderSemanticSigil } from '../renderers/shared/utils.mjs';
 
@@ -250,6 +251,122 @@ test('cleanFlowProblems uses clearance, reports the first segment, and deduplica
   });
   assert.equal(problems.length, 1);
   assert.match(problems[0], /segment 0 \[0, -1\] -> \[20, -1\]/);
+});
+
+test('suggestClearingVia returns a 2-point elbow that verifiably clears a blocking obstacle', () => {
+  const source = { id: 'source', ...rect(0, 0, 20, 20) };
+  const target = { id: 'target', ...rect(200, 100, 20, 20) };
+  // Sits in the middle of the x-corridor only (both the source and target
+  // columns at x=10/x=210 stay clear regardless of height) -- a full-width
+  // blocker would make any 2-point elbow topologically impossible, since
+  // both verticals together must cover the entire [20, 100] span.
+  const blocker = { id: 'blocker', ...rect(90, 20, 40, 60) };
+
+  const via = suggestClearingVia({
+    sourceRect: source,
+    targetRect: target,
+    fromSide: 'bottom',
+    toSide: 'top',
+    obstacles: [source, target, blocker],
+  });
+
+  assert.ok(Array.isArray(via) && via.length === 2, 'expected a verified 2-point via candidate');
+  const start = anchor(source, 'bottom');
+  const end = anchor(target, 'top');
+  const points = [start, ...via, end];
+  assert.equal(routeHonorsEndpointSides(points, 'bottom', 'top'), true);
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const segment = { start: points[index], end: points[index + 1] };
+    assert.equal(segmentIntersectsRect(segment, blocker, 2), false, `segment ${index} must clear the blocker`);
+  }
+});
+
+test('suggestClearingVia returns null rather than a wrong guess when no side of the lane is clear', () => {
+  const source = { id: 'source', ...rect(0, 0, 20, 20) };
+  const target = { id: 'target', ...rect(200, 100, 20, 20) };
+  // Two blockers straddling the entire [20, 100] band with no gap at all.
+  const blockerA = { id: 'blockerA', ...rect(-10, 20, 240, 35) };
+  const blockerB = { id: 'blockerB', ...rect(-10, 65, 240, 35) };
+
+  const via = suggestClearingVia({
+    sourceRect: source,
+    targetRect: target,
+    fromSide: 'bottom',
+    toSide: 'top',
+    obstacles: [source, target, blockerA, blockerB],
+  });
+  assert.equal(via, null);
+});
+
+test('suggestClearingVia declines mixed side combinations rather than guessing', () => {
+  const source = { id: 'source', ...rect(0, 0, 20, 20) };
+  const target = { id: 'target', ...rect(200, 100, 20, 20) };
+  const via = suggestClearingVia({
+    sourceRect: source,
+    targetRect: target,
+    fromSide: 'right',
+    toSide: 'top',
+    obstacles: [source, target],
+  });
+  assert.equal(via, null);
+});
+
+test('cleanFlowProblems includes a verified "via" suggestion in the message and evidence when one clears the obstacle', () => {
+  const source = { id: 'source', ...rect(0, 0, 20, 20) };
+  const target = { id: 'target', ...rect(200, 100, 20, 20) };
+  // Sits in the middle of the x-corridor only (both the source and target
+  // columns at x=10/x=210 stay clear regardless of height) -- a full-width
+  // blocker would make any 2-point elbow topologically impossible, since
+  // both verticals together must cover the entire [20, 100] span.
+  const blocker = { id: 'blocker', ...rect(90, 20, 40, 60) };
+  const relations = [{ id: 'edge', from: 'source', to: 'target', fromSide: 'bottom', toSide: 'top' }];
+  const problems = cleanFlowProblems({
+    relations,
+    obstacles: [source, target, blocker],
+    // A naive straight-ish path that actually crosses the blocker.
+    pathFor: () => ({ points: [[10, 20], [10, 60], [210, 60], [210, 100]] }),
+    diagramType: 'lifecycle',
+    relationCollection: 'transitions',
+    obstacleKind: 'state',
+  });
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /set "via":/);
+  assert.doesNotMatch(problems[0], /adjust fromSide\/toSide, set route\/via or channel coordinates, or move the obstacle/);
+});
+
+test('cleanEndpointSideProblems includes a verified "via" suggestion when obstacles are supplied', () => {
+  const source = { id: 'source', ...rect(0, 0, 20, 20) };
+  const target = { id: 'target', ...rect(200, 100, 20, 20) };
+  // Sits in the middle of the x-corridor only (both the source and target
+  // columns at x=10/x=210 stay clear regardless of height) -- a full-width
+  // blocker would make any 2-point elbow topologically impossible, since
+  // both verticals together must cover the entire [20, 100] span.
+  const blocker = { id: 'blocker', ...rect(90, 20, 40, 60) };
+  // A route whose first segment does not leave "bottom" perpendicularly.
+  const problems = cleanEndpointSideProblems({
+    relations: [{ id: 'edge', from: 'source', to: 'target', fromSide: 'bottom', toSide: 'top' }],
+    endpointIds: new Set(['source', 'target']),
+    pathFor: () => ({ points: [[10, 20], [210, 100]] }),
+    diagramType: 'lifecycle',
+    relationCollection: 'transitions',
+    obstacles: [source, target, blocker],
+  });
+  assert.equal(problems.length > 0, true);
+  assert.match(problems[0], /set "via":/);
+});
+
+test('cleanEndpointSideProblems falls back to the generic hint when no obstacles are supplied (backward compatible)', () => {
+  const problems = cleanEndpointSideProblems({
+    relations: [{ id: 'edge', from: 'source', to: 'target', fromSide: 'bottom', toSide: 'top' }],
+    endpointIds: new Set(['source', 'target']),
+    pathFor: () => ({ points: [[10, 20], [210, 100]] }),
+    diagramType: 'lifecycle',
+    relationCollection: 'transitions',
+    routeHint: 'keep automatic routing, or choose fromSide/toSide and via points',
+  });
+  assert.equal(problems.length > 0, true);
+  assert.match(problems[0], /keep automatic routing, or choose fromSide\/toSide and via points/);
+  assert.doesNotMatch(problems[0], /set "via":/);
 });
 
 test('cleanCrossingProblems reports one deterministic proper X in showcase', () => {
