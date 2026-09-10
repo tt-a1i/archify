@@ -134,7 +134,7 @@ async function loadArtifact(browser, artifactPath) {
 }
 
 test('zh-CN localizes renderer-owned output across all five modes without translating authored content', () => {
-  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN']);
+  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'es']);
   for (const type of Object.keys(EXAMPLES)) {
     const document = example(type);
     const authoredTitle = document.meta.title;
@@ -152,6 +152,28 @@ test('zh-CN localizes renderer-owned output across all five modes without transl
     assert.match(result.html, new RegExp(`<desc id="archify-diagram-description">\u7531 Archify \u751f\u6210\u7684`));
     assert.match(result.html, /"locale":"zh-CN"/);
     assert.match(result.html, />\u5bfc\u51fa\u56fe\u8868</);
+    assert.doesNotMatch(result.html, /\{\{i18n:/);
+  }
+});
+
+test('es localizes renderer-owned output across all five modes without translating authored content', () => {
+  for (const type of Object.keys(EXAMPLES)) {
+    const document = example(type);
+    const authoredTitle = document.meta.title;
+    document.meta.locale = 'es';
+    delete document.meta.subtitle;
+
+    const result = run(type, document);
+    assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
+    assert.match(result.html, /^<!DOCTYPE html>\n<html lang="es"/);
+    assert.match(result.html, /<svg\b[^>]*\blang="es"/);
+    assert.ok(result.html.includes(`<title>${authoredTitle} · Diagrama</title>`), `${type}: authored title changed`);
+    assert.ok(result.html.includes(`<h1>${authoredTitle}</h1>`), `${type}: authored heading changed`);
+    assert.match(result.html, /<text\b[^>]*>Leyenda<\/text>/);
+    assert.match(result.html, /aria-label="Enfocar/);
+    assert.match(result.html, /<desc id="archify-diagram-description">Un diagrama de /);
+    assert.match(result.html, /"locale":"es"/);
+    assert.match(result.html, />Exportar diagrama</);
     assert.doesNotMatch(result.html, /\{\{i18n:/);
   }
 });
