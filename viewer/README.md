@@ -4,7 +4,7 @@ Edit `reader-layout.js` for Adaptive Reader Layout, `viewer-chrome-layout.js`
 for navigation clearance, `viewer-camera.js` for camera interactions and
 transactions, `semantic-radar.js` for the overview map, `motion-governor.js` for
 motion mode and ownership, `node-finder.js` for node search and endpoint picking,
-`export-cleanup.js` for SVG export cleanup, and
+`intent-trace.js` for hover/focus previews, `export-cleanup.js` for SVG export cleanup, and
 `template.source.html` for the rest of the Viewer.
 `archify/assets/template.html` is the committed
 generated artifact, consumed unchanged by all five renderers and the installed
@@ -13,11 +13,73 @@ Skill. These maintainer sources live outside the packaged `archify/` directory.
 From `archify/`, run `npm run generate:viewer` after editing any source.
 `npm run check:viewer` verifies freshness without writing; `npm test` includes
 that check. Assembly inserts each fragment verbatim at its fixed marker.
-Reader, Chrome Layout, Camera, Radar, Motion Governor and Finder extractions preserve delivered HTML bytes. Export cleanup adds a
+Reader, Chrome Layout, Camera, Radar, Motion Governor, Finder and Intent Trace
+extractions preserve delivered HTML bytes. Export cleanup adds a
 private function and a call, changing script bytes but preserving cleanup order
 and SVG output. All fragments retain classic-script scope and initialization order.
 Generated output is not a second editing
 surface; release identity changes also belong in `template.source.html`.
+
+## Intent Trace contract
+
+The complete IIFE initializes once after Focus and before Guided Views, with
+the existing classic-script scope and listener order. Its interface remains
+`show(id, options)`, `clear(options)` and `active()`. It requires the diagram's
+direct SVG child, `#intent-trace-status`, document root and shared `viewerText`.
+Focus/Route active queries are runtime lookups; Route initializes later.
+
+- Intent owns active ID, hovered/focused node references, the entry timer,
+  preview overlay, Intent node/edge attributes and status text. Its listeners
+  last for the page lifetime; there is no mount/unmount API or persistent index.
+- `show` first rejects empty IDs or blocked requests, silently clearing the old
+  preview and returning false. An already-active ID returns true without
+  rebuilding, announcing or cancelling a pending entry timer. Other IDs clear
+  the old preview before lookup, including unknown IDs, which return false.
+  Isolated nodes can be active without an inserted overlay.
+- `clear` returns undefined, cancels the entry timer, clears active ID, removes
+  overlay/Intent attributes, and normally clears status. `announce:false`
+  retains status. It does not erase hovered/focused references, so later input
+  can reuse them. Only `show` with `announce === true` writes status; repeated,
+  rejected or silent requests can retain previous text.
+- Fine-pointer non-touch pointerover schedules entry after 90ms, or an
+  asynchronous 0ms under system reduced motion. Internal pointer transitions
+  are ignored through relatedTarget. `matchMedia` absence retains the current
+  fine-pointer fallback. User Still mode does not change this delay rule.
+- The entry callback checks the hovered reference before showing. Native
+  focusin records focus and shows immediately; pointerout/focusout update their
+  reference and run sync, which prefers focused over hovered. This local
+  preference does not extend to every scheduled callback. The existing
+  duplicate-show and retained-reference behavior is not a global priority or
+  suppression mechanism.
+- Non-node container pointerdown and window blur silently clear. Global Escape
+  remains in the template with its existing capability priority. Blocking is
+  evaluated by show: embed, Guide, panning, Lens, Story, relationship preview,
+  and active Focus/Route. Changing a blocking attribute alone does not install
+  a new observer or promise immediate cleanup; callers retain their effects.
+- Every actual build reads semantic nodes and directed relationships from the
+  SVG. Counts deduplicate by edge key, or from/to/label fallback; DOM edge
+  members are still all marked/cloned. Self-loops are counted once as loops.
+  Only path/line/polyline shapes are shallow-cloned, using the existing attribute
+  removal list, wrapper transform and insertion position. Author geometry is
+  preserved; `pathLength=1` normalizes animation, not coordinates.
+- Incoming/outgoing labels describe direction relative to the previewed node.
+  Both animate along authored source-to-target geometry; incoming is not
+  reversed. The single 1.15s CSS animation does not clear the preview on end.
+  Reduced motion/Still retain the existing static preview styles.
+- Intent writes `data-intent-trace-active`, node/edge match and node-selected
+  attributes and the aria-hidden overlay. Existing CSS owns opacity, direction,
+  theme/preset and motion rendering; the overlay remains pointer-transparent.
+  Motion Governor observes the active attribute to derive ownership; Intent
+  never claims or releases an owner. Export Cleanup strips cloned Intent state,
+  while Intent clears the live diagram. Neither dependency moves into this file.
+
+`intent-trace.test.mjs` retains generated-output checks. The browser test covers
+five-mode initialization, real pointer/native focus handoffs, bounded timer
+cleanup, isolated timer and SVG fixtures, blockers and actual callers, real CSS
+completion, Motion ownership, reduced motion, themes and SVG export. Fixtures
+do not claim touchscreen hardware, background throttling or screen-reader
+verification. The extraction narrows maintenance scope without redesigning the
+existing runtime collaboration.
 
 ## Node Finder contract
 

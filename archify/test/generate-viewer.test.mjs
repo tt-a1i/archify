@@ -14,7 +14,8 @@ const cameraMarker = '/* ARCHIFY:CAMERA */';
 const radarMarker = '/* ARCHIFY:RADAR */';
 const motionMarker = '/* ARCHIFY:MOTION_GOVERNOR */';
 const finderMarker = '/* ARCHIFY:NODE_FINDER */';
-const fragments = { reader: marker, cleanup: cleanupMarker, chrome: chromeMarker, camera: cameraMarker, radar: radarMarker, motion: motionMarker, finder: finderMarker };
+const intentMarker = '/* ARCHIFY:INTENT_TRACE */';
+const fragments = { reader: marker, cleanup: cleanupMarker, chrome: chromeMarker, camera: cameraMarker, radar: radarMarker, motion: motionMarker, finder: finderMarker, intent: intentMarker };
 
 function fixture(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-viewer-build-'));
@@ -35,6 +36,7 @@ function fixture(t) {
     radar: path.join(root, 'viewer/semantic-radar.js'),
     motion: path.join(root, 'viewer/motion-governor.js'),
     finder: path.join(root, 'viewer/node-finder.js'),
+    intent: path.join(root, 'viewer/intent-trace.js'),
     run: (...args) => spawnSync(process.execPath, [path.join(root, 'scripts/generate-viewer.mjs'), ...args], {
       cwd: os.tmpdir(), encoding: 'utf8',
     }),
@@ -57,7 +59,7 @@ test('the committed Viewer rebuilds deterministically outside the repository wor
 
 test('editing any authoritative source requires explicit regeneration', (t) => {
   const f = fixture(t);
-  for (const input of [f.shell, f.reader, f.cleanup, f.chrome, f.camera, f.radar, f.motion, f.finder]) {
+  for (const input of [f.shell, f.reader, f.cleanup, f.chrome, f.camera, f.radar, f.motion, f.finder, f.intent]) {
     const previous = fs.readFileSync(f.output);
     fs.appendFileSync(input, '\n/* source change */\n');
     const stale = f.run('--check');
@@ -105,16 +107,17 @@ for (const [fragment, slot] of Object.entries(fragments)) {
 test('assembly preserves literal replacement tokens, Unicode and source line endings', (t) => {
   const f = fixture(t);
   const reader = '// $& $\' $` $$ 中文 \u{1f5fa}\r\n(function () {})();\r\n';
-  fs.writeFileSync(f.shell, `<script>\r\n${finderMarker}${motionMarker}${radarMarker}${cameraMarker}${chromeMarker}${cleanupMarker}${marker}</script>\n`);
+  fs.writeFileSync(f.shell, `<script>\r\n${intentMarker}${finderMarker}${motionMarker}${radarMarker}${cameraMarker}${chromeMarker}${cleanupMarker}${marker}</script>\n`);
   fs.writeFileSync(f.cleanup, reader);
   fs.writeFileSync(f.chrome, reader);
   fs.writeFileSync(f.camera, reader);
   fs.writeFileSync(f.radar, reader);
   fs.writeFileSync(f.motion, reader);
   fs.writeFileSync(f.finder, reader);
+  fs.writeFileSync(f.intent, reader);
   fs.writeFileSync(f.reader, reader);
   assert.equal(f.run().status, 0);
-  assert.equal(fs.readFileSync(f.output, 'utf8'), `<script>\r\n${reader}${reader}${reader}${reader}${reader}${reader}${reader}</script>\n`);
+  assert.equal(fs.readFileSync(f.output, 'utf8'), `<script>\r\n${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}</script>\n`);
   assert.equal(f.run('--check').status, 0);
 });
 

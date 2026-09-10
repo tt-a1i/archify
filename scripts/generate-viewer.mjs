@@ -13,6 +13,7 @@ const fragments = [
   ['/* ARCHIFY:RADAR */', 'semantic-radar.js'],
   ['/* ARCHIFY:MOTION_GOVERNOR */', 'motion-governor.js'],
   ['/* ARCHIFY:NODE_FINDER */', 'node-finder.js'],
+  ['/* ARCHIFY:INTENT_TRACE */', 'intent-trace.js'],
   ['/* ARCHIFY:EXPORT_CLEANUP */', 'export-cleanup.js'],
 ];
 

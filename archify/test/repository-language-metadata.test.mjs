@@ -44,6 +44,7 @@ test('repository language metadata separates generated artifacts from implementa
     'viewer/semantic-radar.js',
     'viewer/motion-governor.js',
     'viewer/node-finder.js',
+    'viewer/intent-trace.js',
     'viewer/export-cleanup.js',
     'scripts/generate-viewer.mjs',
     'scripts/gallery-template.html',
