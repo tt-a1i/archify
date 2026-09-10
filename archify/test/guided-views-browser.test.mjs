@@ -5,8 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
-import { spawnDesktopChrome, desktopPointerCheck } from './helpers/desktop-pointer.mjs';
+import { findChrome } from '../bin/visual-check.mjs';
+import { desktopBrowser, desktopPointerCheck } from './helpers/desktop-browser.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
@@ -40,7 +40,10 @@ test('Guided Views preserves chapters, Story playback and handoff contracts', {
   execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), traceInput, files.trace]);
   // HTML fixtures isolate invalid payloads and graph shapes outside renderer validation.
   function variant(name, views, setup = '') {
-    const html = fs.readFileSync(files.trace, 'utf8').replace(
+    const original = fs.readFileSync(files.trace, 'utf8');
+    assert.match(original, /<script id="archify-guided-views-data"[^>]*>[\s\S]*?<\/script>/, 'Guided Views data fixture anchor');
+    assert.ok(original.includes('    var Archify = {};'), 'Guided Views setup fixture anchor');
+    const html = original.replace(
       /(<script id="archify-guided-views-data"[^>]*>)[\s\S]*?(<\/script>)/,
       (_, start, end) => start + (typeof views === 'string' ? views : JSON.stringify(views)) + end,
     ).replace('    var Archify = {};', setup + '\n    var Archify = {};');
@@ -62,7 +65,7 @@ test('Guided Views preserves chapters, Story playback and handoff contracts', {
       '<polyline data-edge-from="api" data-edge-to="lb" data-edge-key="d" points="510,110 370,110"/>' +
       ['users','cdn','lb','api','db','cache'].map((id,i)=>'<g tabindex="0" data-node-id="'+id+'" data-node-label="'+id+'" data-node-kind="backend"><rect x="'+(50+i*140)+'" y="80" width="80" height="40"/><text x="'+(50+i*140)+'" y="100">'+id+'</text></g>').join('');
   `);
-  const browser = new ChromeVisualBrowser(chrome, { spawnImpl: spawnDesktopChrome });
+  const browser = desktopBrowser(chrome);
   t.after(() => browser.close());
   const session = await browser.sessionPromise;
   const checkPointer = await desktopPointerCheck(browser, session);

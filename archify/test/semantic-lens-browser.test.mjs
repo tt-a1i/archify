@@ -5,8 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
-import { spawnDesktopChrome, desktopPointerCheck } from './helpers/desktop-pointer.mjs';
+import { findChrome } from '../bin/visual-check.mjs';
+import { desktopBrowser, desktopPointerCheck } from './helpers/desktop-browser.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
@@ -40,6 +40,7 @@ test('Semantic Lens preserves selection, legend preview and panel contracts', {
   execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), traceInput, files.trace]);
   // Initialization fixtures alter only inputs immediately before Lens captures DOM/media.
   const original = fs.readFileSync(files.architecture, 'utf8');
+  assert.ok(original.includes('    Archify.semanticLens = (function () {'), 'Lens fixture anchor');
   for (const [name, source] of Object.entries({
     absent: `document.querySelector('[data-legend-bridge]').remove();`,
     small: `document.querySelectorAll('[data-legend-kind]').forEach((e,i)=>{if(i>1)e.remove();});`,
@@ -49,7 +50,7 @@ test('Semantic Lens preserves selection, legend preview and panel contracts', {
     files[name] = path.join(scratch, name + '.html');
     fs.writeFileSync(files[name], original.replace('    Archify.semanticLens = (function () {', source + '\n    Archify.semanticLens = (function () {'));
   }
-  const browser = new ChromeVisualBrowser(chrome, { spawnImpl: spawnDesktopChrome });
+  const browser = desktopBrowser(chrome);
   t.after(() => browser.close());
   const session = await browser.sessionPromise;
   const checkPointer = await desktopPointerCheck(browser, session);
@@ -326,7 +327,7 @@ test('Semantic Lens preserves selection, legend preview and panel contracts', {
     assert.deepEqual(docking, ['left', 'right', 'right']); records.push({ scenario: 'docking-fixture', sides: docking });
     for (const width of [720, 721, 1440]) {
       await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false });
-      await run(`lensWait(()=>innerWidth===${width});Archify.viewerChromeLayout.whenStable()`);
+      await run(`lensWait(()=>innerWidth===${width}).then(()=>Archify.viewerChromeLayout.whenStable())`);
       const dock = await run(`document.getElementById('semantic-lens').getAttribute('data-dock-side')`);
       if (width === 720) assert.equal(dock, null); else assert.ok(['left', 'right'].includes(dock));
       assert.equal(await run(`Array.from(document.querySelectorAll('[data-legend-hit]'),n=>Number(n.getAttribute('width'))).every(w=>w>=24)`), true);

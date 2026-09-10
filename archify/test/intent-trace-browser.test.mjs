@@ -5,8 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
-import { spawnDesktopChrome, desktopPointerCheck } from './helpers/desktop-pointer.mjs';
+import { findChrome } from '../bin/visual-check.mjs';
+import { desktopBrowser, desktopPointerCheck } from './helpers/desktop-browser.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
@@ -39,7 +39,7 @@ test('Intent Trace preserves input handoffs, transient geometry and cleanup', {
   fs.writeFileSync(traceInput, JSON.stringify(trace)); files.trace = path.join(scratch, 'trace.html');
   execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), traceInput, files.trace]);
 
-  const browser = new ChromeVisualBrowser(chrome, { spawnImpl: spawnDesktopChrome });
+  const browser = desktopBrowser(chrome);
   t.after(() => browser.close());
   const session = await browser.sessionPromise;
   const checkPointer = await desktopPointerCheck(browser, session);

@@ -36,7 +36,9 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
   // A controlled metadata fixture exercises the Finder's input boundary;
   // repository verification and brand rendering have their own tests.
   files.metadata = path.join(scratch, 'metadata.html');
-  fs.writeFileSync(files.metadata, fs.readFileSync(files.architecture, 'utf8').replace(
+  const metadataSource = fs.readFileSync(files.architecture, 'utf8');
+  assert.ok(metadataSource.includes('    Archify.finder = (function () {'), 'Finder fixture anchor');
+  fs.writeFileSync(files.metadata, metadataSource.replace(
     '    Archify.finder = (function () {', `
     document.querySelector('[data-node-id="api"]').setAttribute('data-node-brand', 'finder-brand-token');
     var finderOriginalSources = Archify.sourceEvidence.node;

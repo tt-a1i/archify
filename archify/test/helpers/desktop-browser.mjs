@@ -1,12 +1,15 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { ChromeVisualBrowser } from '../../bin/visual-check.mjs';
 
 // Test-only Blink settings: headless hosts may have no physical mouse.
 // Disabling touch emulation would restore those host defaults and undo this.
 const pointerSettings = '--blink-settings=availableHoverTypes=2,primaryHoverType=2,availablePointerTypes=4,primaryPointerType=4';
 
-export function spawnDesktopChrome(command, args, options) {
-  return spawn(command, [pointerSettings, ...args], options);
+export function desktopBrowser(chrome) {
+  return new ChromeVisualBrowser(chrome, {
+    spawnImpl: (command, args, options) => spawn(command, [pointerSettings, ...args], options),
+  });
 }
 
 export async function desktopPointerCheck(browser, session) {
