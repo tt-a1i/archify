@@ -1,7 +1,8 @@
 # Viewer source
 
-Edit `reader-layout.js` for Adaptive Reader Layout, `export-cleanup.js` for
-SVG export cleanup, and `template.source.html` for the rest of the Viewer.
+Edit `reader-layout.js` for Adaptive Reader Layout, `viewer-chrome-layout.js`
+for navigation clearance, `export-cleanup.js` for SVG export cleanup, and
+`template.source.html` for the rest of the Viewer.
 `archify/assets/template.html` is the committed
 generated artifact, consumed unchanged by all five renderers and the installed
 Skill. These maintainer sources live outside the packaged `archify/` directory.
@@ -9,9 +10,9 @@ Skill. These maintainer sources live outside the packaged `archify/` directory.
 From `archify/`, run `npm run generate:viewer` after editing any source.
 `npm run check:viewer` verifies freshness without writing; `npm test` includes
 that check. Assembly inserts each fragment verbatim at its fixed marker.
-Reader's extraction preserved delivered HTML bytes. Export cleanup adds a
+Reader and Chrome Layout extractions preserve delivered HTML bytes. Export cleanup adds a
 private function and a call, changing script bytes but preserving cleanup order
-and SVG output. Both retain classic-script scope and initialization order.
+and SVG output. All fragments retain classic-script scope and initialization order.
 Generated output is not a second editing
 surface; release identity changes also belong in `template.source.html`.
 
@@ -43,6 +44,50 @@ surface; release identity changes also belong in `template.source.html`.
   consecutive stable dimensions; its default 240-frame sampling limit starts
   after font readiness. It is not a wall-clock timeout for stalled fonts or
   background pages. Keep this helper shared with Viewer Chrome Layout.
+
+## Viewer Chrome Layout contract
+
+The IIFE initializes once after the shared waiter and Reader Layout, before
+Camera (`Archify.view`). Its interface remains `measure`, `schedule`, `reprobe`,
+`whenStable`, `stageRect`, `active`, and `receipt`. `measure` may return null while
+probing or arranging follow-up work; `receipt` may measure if no receipt exists.
+
+- `schedule` coalesces a measurement into one animation frame. Camera calls it
+  after applying transforms. It does not request a fresh zero-reserve baseline.
+- `reprobe` temporarily removes the rail, waits for Reader's `whenStable` and
+  schedules measurement again. Concurrent probes reuse the pending Promise.
+  A non-baseline camera or an empty baseline only schedules and resolves false;
+  a completed probe resolves true. Reader rejection is caught as before.
+- Writing a changed reserve calls Reader's `schedule`. Chrome's `whenStable`
+  uses the shared waiter, including font readiness and the pending frame/probe
+  checks. It has the same sampling limits described in the Reader contract.
+
+| Owned state | Meaning and lifetime |
+| --- | --- |
+| Container `--archify-nav-reserve`; container and html `data-nav-stage-rail` | Current visible rail. Clearing removes these inline values/attributes. |
+| Reserve and rail latch | Keep the clearance decision stable while Reader incorporates the extra space. |
+| Baseline gap/intersection and restorable reserve | Preserve the unzoomed layout reference. Temporary ineligibility while zoomed can retain the recovery baseline even though the visible rail is zero. |
+| Probe fallback and pending Promise | If Camera changes during a probe, retain the prior reserve for recovery. They settle through the existing Reader Promise chain. |
+| Measurement frame, follow-up frame, receipt, event/observer subscriptions | Page lifetime. There is no unmount/destroy; leaving eligibility is a layout state change, not module disposal. |
+
+Eligibility requires the container, direct-child SVG, visible navigation, width
+above 720px, no embed mode and no print media. This differs from Reader's 1024px
+threshold. Presentation is eligible when its navigation is visible. A hidden or
+absent legend does not disable protection of the SVG stage. `stageRect` removes
+camera scale/translation from measured geometry; it never rewrites SVG geometry.
+
+Resize, load, print, font readiness and the existing observers retain their
+original roles. ResizeObserver watches navigation/SVG/legend size;
+MutationObserver watches legend content and the root embed/presentation/preset/
+theme attributes. Camera Reset preserves the established rail; viewport, mode
+and content changes are responsible for baseline reprobes. Optional observer
+fallbacks remain event-driven, without a new polling mechanism.
+
+CSS stays in the shell: reserve affects container and floating-panel spacing,
+while root rail state also changes header/chapter/card spacing. Reader reads the
+resulting layout rather than importing Chrome's private state. Keeping this
+contract beside the source localizes navigation-clearance maintenance; the
+Reader/Chrome feedback and Camera/CSS dependencies still exist.
 
 ## Export cleanup contract
 

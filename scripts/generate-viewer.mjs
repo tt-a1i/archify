@@ -8,6 +8,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'archify/assets/template.html');
 const fragments = [
   ['/* ARCHIFY:READER_LAYOUT */', 'reader-layout.js'],
+  ['/* ARCHIFY:CHROME_LAYOUT */', 'viewer-chrome-layout.js'],
   ['/* ARCHIFY:EXPORT_CLEANUP */', 'export-cleanup.js'],
 ];
 

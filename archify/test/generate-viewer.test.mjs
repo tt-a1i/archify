@@ -9,6 +9,8 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const marker = '/* ARCHIFY:READER_LAYOUT */';
 const cleanupMarker = '/* ARCHIFY:EXPORT_CLEANUP */';
+const chromeMarker = '/* ARCHIFY:CHROME_LAYOUT */';
+const fragments = { reader: marker, cleanup: cleanupMarker, chrome: chromeMarker };
 
 function fixture(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-viewer-build-'));
@@ -24,6 +26,7 @@ function fixture(t) {
     shell: path.join(root, 'viewer/template.source.html'),
     reader: path.join(root, 'viewer/reader-layout.js'),
     cleanup: path.join(root, 'viewer/export-cleanup.js'),
+    chrome: path.join(root, 'viewer/viewer-chrome-layout.js'),
     run: (...args) => spawnSync(process.execPath, [path.join(root, 'scripts/generate-viewer.mjs'), ...args], {
       cwd: os.tmpdir(), encoding: 'utf8',
     }),
@@ -46,7 +49,7 @@ test('the committed Viewer rebuilds deterministically outside the repository wor
 
 test('editing any authoritative source requires explicit regeneration', (t) => {
   const f = fixture(t);
-  for (const input of [f.shell, f.reader, f.cleanup]) {
+  for (const input of [f.shell, f.reader, f.cleanup, f.chrome]) {
     const previous = fs.readFileSync(f.output);
     fs.appendFileSync(input, '\n/* source change */\n');
     const stale = f.run('--check');
@@ -68,20 +71,18 @@ test('a missing generated template is stale and can be regenerated', (t) => {
   assert.equal(f.run('--check').status, 0);
 });
 
-for (const fragment of ['reader', 'cleanup']) {
-  for (const failure of ['missing shell', 'missing fragment', 'missing marker', 'duplicate marker', 'empty fragment', 'own marker', 'other marker']) {
+for (const [fragment, slot] of Object.entries(fragments)) {
+  for (const failure of ['missing shell', 'missing fragment', 'missing marker', 'duplicate marker', 'empty fragment', ...Object.keys(fragments).map(name => `${name} marker`)]) {
     test(`assembly rejects ${fragment}: ${failure} without overwriting a valid artifact`, (t) => {
       const f = fixture(t);
-      const slot = fragment === 'reader' ? marker : cleanupMarker;
-      const otherSlot = fragment === 'reader' ? cleanupMarker : marker;
       const previous = fs.readFileSync(f.output);
       if (failure === 'missing shell') fs.unlinkSync(f.shell);
       if (failure === 'missing fragment') fs.unlinkSync(f[fragment]);
       if (failure === 'missing marker') fs.writeFileSync(f.shell, fs.readFileSync(f.shell, 'utf8').replace(slot, ''));
       if (failure === 'duplicate marker') fs.appendFileSync(f.shell, slot);
       if (failure === 'empty fragment') fs.writeFileSync(f[fragment], ' \n');
-      if (failure === 'own marker') fs.appendFileSync(f[fragment], slot);
-      if (failure === 'other marker') fs.appendFileSync(f[fragment], otherSlot);
+      const embeddedSlot = fragments[failure.replace(/ marker$/, '')];
+      if (embeddedSlot) fs.appendFileSync(f[fragment], embeddedSlot);
       for (const args of [[], ['--check']]) {
         const result = f.run(...args);
         assert.equal(result.status, 1, failure);
@@ -96,11 +97,12 @@ for (const fragment of ['reader', 'cleanup']) {
 test('assembly preserves literal replacement tokens, Unicode and source line endings', (t) => {
   const f = fixture(t);
   const reader = '// $& $\' $` $$ 中文 \u{1f5fa}\r\n(function () {})();\r\n';
-  fs.writeFileSync(f.shell, `<script>\r\n${cleanupMarker}${marker}</script>\n`);
+  fs.writeFileSync(f.shell, `<script>\r\n${chromeMarker}${cleanupMarker}${marker}</script>\n`);
   fs.writeFileSync(f.cleanup, reader);
+  fs.writeFileSync(f.chrome, reader);
   fs.writeFileSync(f.reader, reader);
   assert.equal(f.run().status, 0);
-  assert.equal(fs.readFileSync(f.output, 'utf8'), `<script>\r\n${reader}${reader}</script>\n`);
+  assert.equal(fs.readFileSync(f.output, 'utf8'), `<script>\r\n${reader}${reader}${reader}</script>\n`);
   assert.equal(f.run('--check').status, 0);
 });
 
