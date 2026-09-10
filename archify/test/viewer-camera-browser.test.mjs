@@ -93,8 +93,7 @@ test('Camera preserves transactions, rendered state and real caller handoffs', {
     await loaded;
     await stable();
   }
-  async function snapshot(label) {
-    const value = await run(`(() => {
+  const snapshotExpression = `(() => {
       const c = document.querySelector('.diagram-container'), svg = c.querySelector(':scope > svg');
       const rect = e => { const r = e.getBoundingClientRect(); return [r.x,r.y,r.width,r.height]; };
       return { state: Archify.view.state(), viewport: Archify.view.logicalViewport(),
@@ -105,7 +104,9 @@ test('Camera preserves transactions, rendered state and real caller handoffs', {
         mode: c.getAttribute('data-camera-mode'), detail: c.getAttribute('data-detail-level'),
         viewBox: svg.getAttribute('viewBox'), errors: cameraErrors,
         external: performance.getEntriesByType('resource').map(e => e.name).filter(n => /^https?:/.test(n)) };
-    })()`);
+    })()`;
+  async function snapshot(label, captured) {
+    const value = captured || await run(snapshotExpression);
     assert.deepEqual(value.errors, [], label);
     assert.deepEqual(value.external, [], label);
     records.push({ label, ...value });
@@ -191,21 +192,29 @@ test('Camera preserves transactions, rendered state and real caller handoffs', {
   await t.test('running transactions complete, replace, cancel and yield to manual navigation', async () => {
     for (const theme of ['dark', 'light']) {
       await load('architecture', { theme });
-      await run(`window.cameraA = Archify.view.reveal(['api'], { duration: 520 });
-        window.cameraSamples = [];
+      // Start and observe in one page evaluation: CDP round trips may outlast
+      // the animation, so the middle snapshot must be captured in its frame.
+      const animation = await run(`(async () => {
+        const camera = Archify.view.reveal(['api'], { duration: 520 });
+        const samples = [];
+        let middle = null;
         function sampleCamera() {
           const svg = document.querySelector('.diagram-container > svg');
-          cameraSamples.push({ state: Archify.view.state(), transform: getComputedStyle(svg).transform, clip: svg.style.clipPath, settled: cameraA.settled });
-          if (!cameraA.settled) requestAnimationFrame(sampleCamera);
+          const state = Archify.view.state();
+          samples.push({ state, transform: getComputedStyle(svg).transform, clip: svg.style.clipPath, settled: camera.settled });
+          if (!middle && !camera.settled && state.scale > 1.15) middle = ${snapshotExpression};
+          if (!camera.settled) requestAnimationFrame(sampleCamera);
         }
-        requestAnimationFrame(sampleCamera);`);
-      await run('cameraWait(() => !cameraA.settled && Archify.view.state().scale > 1.15)', true);
-      const middle = await snapshot(`animation-middle-${theme}`);
+        requestAnimationFrame(sampleCamera);
+        const outcome = await camera.finished;
+        return { middle, samples, outcome };
+      })()`, true);
+      assert.ok(animation.middle, 'the running animation must yield a middle snapshot');
+      const middle = await snapshot(`animation-middle-${theme}`, animation.middle);
       assert.ok(middle.state.scale > 1 && middle.state.scale < 2.15);
-      await screenshot(`animation-middle-${theme}`);
-      assert.equal(await run('cameraA.finished.then(r => r.state)', true), 'complete');
-      assert.ok(await run('cameraSamples.filter(s => !s.settled && s.clip).length > 1'));
-      if (evidence) fs.writeFileSync(path.join(evidence, `animation-${theme}.json`), JSON.stringify(await run('cameraSamples'), null, 2));
+      assert.equal(animation.outcome.state, 'complete');
+      assert.ok(animation.samples.filter(s => !s.settled && s.clip).length > 1);
+      if (evidence) fs.writeFileSync(path.join(evidence, `animation-${theme}.json`), JSON.stringify(animation.samples, null, 2));
       await stable();
       await snapshot(`animation-final-${theme}`);
       await screenshot(`animation-final-${theme}`);
@@ -216,6 +225,7 @@ test('Camera preserves transactions, rendered state and real caller handoffs', {
         v.reset({ automatic: true });
         const first = v.reveal(['api'], { duration: 520 });
         await cameraWait(() => !first.settled && v.state().scale > 1.05);
+        const before = v.state();
         let second;
         if (action === 'replace') second = v.reveal(['db'], { instant: true });
         else if (action === 'cancel' || action === 'commit') first.cancel('test-stop', action === 'commit');
@@ -226,15 +236,19 @@ test('Camera preserves transactions, rendered state and real caller handoffs', {
         const ended = v.state();
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         results.push({ action, outcome: outcome.state, repeated, settled: first.settled,
+          before, ended, target: first.target,
           unchanged: JSON.stringify(ended) === JSON.stringify(v.state()),
-          committed: action !== 'commit' || ended.scale === first.target.scale,
           next: second ? (await second.finished).state : null });
       }
       return results;
     })()`, true);
     assert.deepEqual(results.map(r => r.outcome), ['replaced', 'test-stop', 'test-stop', 'manual', 'reset']);
     for (const r of results) {
-      assert.equal(r.repeated, false); assert.equal(r.settled, true); assert.equal(r.unchanged, true); assert.equal(r.committed, true);
+      assert.equal(r.repeated, false); assert.equal(r.settled, true); assert.equal(r.unchanged, true);
+      if (r.action === 'cancel' || r.action === 'commit') {
+        assert.notDeepEqual(r.before, r.target, 'cancellation must occur before reaching the target');
+        assert.deepEqual(r.ended, r.action === 'commit' ? r.target : r.before, r.action);
+      }
     }
     records.push({ label: 'transaction-results', results });
     await stable();
