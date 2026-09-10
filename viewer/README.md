@@ -4,7 +4,8 @@ Edit `reader-layout.js` for Adaptive Reader Layout, `viewer-chrome-layout.js`
 for navigation clearance, `viewer-camera.js` for camera interactions and
 transactions, `semantic-radar.js` for the overview map, `motion-governor.js` for
 motion mode and ownership, `node-finder.js` for node search and endpoint picking,
-`intent-trace.js` for hover/focus previews, `export-cleanup.js` for SVG export cleanup, and
+`intent-trace.js` for hover/focus previews, `semantic-lens.js` for type selection
+and legend previews, `export-cleanup.js` for SVG export cleanup, and
 `template.source.html` for the rest of the Viewer.
 `archify/assets/template.html` is the committed
 generated artifact, consumed unchanged by all five renderers and the installed
@@ -13,12 +14,97 @@ Skill. These maintainer sources live outside the packaged `archify/` directory.
 From `archify/`, run `npm run generate:viewer` after editing any source.
 `npm run check:viewer` verifies freshness without writing; `npm test` includes
 that check. Assembly inserts each fragment verbatim at its fixed marker.
-Reader, Chrome Layout, Camera, Radar, Motion Governor, Finder and Intent Trace
+Reader, Chrome Layout, Camera, Radar, Motion Governor, Finder, Intent Trace and Semantic Lens
 extractions preserve delivered HTML bytes. Export cleanup adds a
 private function and a call, changing script bytes but preserving cleanup order
 and SVG output. All fragments retain classic-script scope and initialization order.
 Generated output is not a second editing
 surface; release identity changes also belong in `template.source.html`.
+
+## Semantic Lens contract
+
+The complete IIFE initializes once after Route Probe and before Guide, in the
+existing classic-script scope. Legend decoration, listeners, `renderKinds()` and
+`syncFromHash()` retain their order. The ten methods remain `open`, `close`,
+`toggle`, `clear`, `clearPreview`, `select`, `copyLink`, `isOpen`, `active`, and
+`kinds`. Required inputs are the document root, diagram container/direct SVG,
+Lens controls and shared translation helpers; Legend Bridge is optional.
+
+- Selection, legend preview and panel visibility are separate states. Lens owns
+  selected kinds, legend entry/input references, active preview, opener, runtime
+  decoration, flow overlay and page-lifetime listeners/callbacks. `active()`
+  returns a copied array or null; `isOpen()` reads panel visibility; `kinds()`
+  dynamically collects counts. There is no mount/unmount API or persistent index.
+- Collection requires node ID and kind, keeps the first element per nonempty ID,
+  and treats empty kind as neutral. Sort is count descending then translated
+  label. Relationships group by edge key, otherwise from/to/label. Single-kind
+  selection marks touching relationships and peers; two kinds include only
+  direct cross-kind relationships, with direction relative to selection order.
+- `select` clears legend preview before validation. Unknown or third kinds return
+  false; existing kinds toggle off. Removing the last kind returns false without
+  the Camera reset performed by explicit `clear`. Adding the first kind clears
+  Focus, Route, Guided Views and Intent in that order, with existing options.
+  These real callers can affect Camera; the second kind does not repeat prepare.
+- `close` returns false and hides only the panel, retaining selection, hash and
+  flow. It normally restores the current opener's focus. `clear` returns false,
+  clears selection/Lens SVG state and docking, updates URL unless disabled,
+  resets Camera unless `preserveView:true`, and closes only for `closePanel:true`.
+  It does not itself clear legend preview. `clearPreview` returns undefined,
+  clears preview attributes but retains hovered/focused references, selection,
+  URL and panel state. A false return is not a guarantee of no side effects.
+- `open` rejects embed early, records the opener, closes Export/Finder/Radar/Guide
+  as currently implemented, renders and opens the panel, then docks/focuses in
+  rAF. It does not introduce a universal preview cleanup. Repeated/rapid calls
+  retain pending-frame ordering. Guide is initialized later and stays a runtime
+  lookup. Other module callers and the global L/Escape shortcuts stay in the shell.
+- Legend decoration is initialization-only. Zero-count entries get hit/badge
+  decoration but no button role; positive entries use roving tabindex and count
+  ARIA. One or two available entries use group, three or more use toolbar.
+  No bridge or embed skips decoration. Fonts-ready and resize remeasure authored
+  children, excluding runtime decoration, with the existing getBBox fallback.
+- Fine-pointer non-touch hover and native focus drive preview; focused entries
+  win during sync and relatedTarget guards internal transitions. Media query is
+  captured at initialization. Selection, open panel, Presentation, Focus, Intent,
+  Route, Story and relationship preview gate new previews. The same active entry
+  can return early before checking blockers; no new observer guarantees instant
+  cleanup when another attribute changes. Preview writes node/edge match, selected
+  and peer attributes without committing selection, URL or flow overlay.
+- Legend arrows wrap; Home/End and Enter/Space preserve keyboard behavior and
+  opener restoration. Activation still opens after a rejected third selection.
+  Panel buttons rerender during click, so outside-click detection must retain
+  composedPath as well as contains and launcher exemptions. The dialog remains
+  non-modal; no focus trap or panel coordinator is introduced.
+- Flow count measures relationship groups. Zero/embed produces no overlay;
+  more than 24 sets quiet density without dropping matches/counts. Returning to
+  24 restores flow. Only each group's first member supplies transform/shapes;
+  unlike Intent, later members are not cloned. Shallow path/line/polyline clones
+  preserve authored geometry, the removal list, pathLength=1, direction and
+  step-times-0.08s delay. No shapes can mean an active selection without overlay.
+- URL updates replace the hash, preserving pathname/query. Hash restoration
+  filters unknown/duplicate kinds and keeps the first two, without opening or
+  normalizing the URL. Missing/empty lens clears an existing selection while
+  preserving view and URL; a nonempty all-invalid value retains selection.
+  Copy prefers clipboard then textarea/execCommand fallback, cleans the field
+  and restores feedback after 1600ms. It has no cancellation/debounce contract.
+- Docking removes the side attribute first. Hidden, width <=720 and zero-size
+  panels return right without writing it. Desktop compares selected-node overlap
+  plus legend/nav overlap weighted 1000, with 16px margins and ties going right.
+  Open/select and selected-open resize retain their triggers; no Camera observer
+  or guarantee of collision-free layout at every size is added.
+- Lens writes `data-lens-*`, `data-legend-preview-*`, legend decoration and panel
+  DOM/ARIA. Existing CSS owns themes, opacity, flow directions, reduced/Still,
+  print/embed and responsive rendering. Motion Governor observes semantic state
+  to derive owner; Lens does not claim/release it. Export Cleanup strips clone
+  state and decoration; it remains in its own module. Export serialization and
+  subsequent download/global-click effects are distinct observations.
+
+`semantic-lens-browser.test.mjs` covers five-mode initialization, trusted input,
+real capability handoffs, cleanup, URL/copy, themes, motion and SVG export.
+Explicit DOM/media/geometry/clipboard fixtures isolate boundary inputs; they do
+not certify touch hardware, OS clipboard permission, screen readers or arbitrary
+layout collision freedom. Static Lens/legend/flow checks remain useful alongside
+browser checks. This split narrows maintenance scope while preserving runtime
+collaboration and single-file delivery.
 
 ## Intent Trace contract
 
