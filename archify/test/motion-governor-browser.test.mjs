@@ -58,8 +58,8 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
   async function load(mode = 'architecture', { theme = 'dark', reduced = false, fixture = '', preserveStorage = false, query = '' } = {}) {
     const expectedNavigation = ++navigationId;
     if (startup) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: startup });
-    ({ identifier: startup } = await send('Page.addScriptToEvaluateOnNewDocument', { source: `
-      window.motionStartupRuns = (window.motionStartupRuns || []).concat(${expectedNavigation});
+    ({ identifier: startup } = await send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {
+      if (new URL(location.href).searchParams.get('testNavigation') !== '${expectedNavigation}') return;
       window.motionNavigation = ${expectedNavigation};
       try { window.motionStartupPreference = localStorage.getItem('archify-motion'); }
       catch (error) { window.motionStartupPreference = String(error); }
@@ -85,7 +85,7 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
       });
       ${preserveStorage ? '' : "try { localStorage.removeItem('archify-motion'); } catch (_) {}"}
       ${fixture}
-    ` }));
+    })();` }));
     await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
     await media(reduced);
     const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
@@ -148,7 +148,7 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     assert.equal(await run(`localStorage.getItem('archify-motion')`), 'still');
     for (let reload = 0; reload < 5; reload++) {
       await load('architecture', { preserveStorage: true });
-      const stored = await run(`({scripts:motionStartupRuns,initial:motionStartupPreference,current:localStorage.getItem('archify-motion'),navigation:motionNavigation,url:location.href})`);
+      const stored = await run(`({initial:motionStartupPreference,current:localStorage.getItem('archify-motion'),navigation:motionNavigation,url:location.href})`);
       assert.equal((await snapshot('stored-still-' + reload)).mode, 'still', JSON.stringify(stored));
     }
     assert.equal(await run(`Archify.motionGovernor.setMode('live', {persist:false})`), 'live');
