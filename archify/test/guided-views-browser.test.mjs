@@ -46,6 +46,8 @@ test('Guided Views preserves chapters, Story playback and handoff contracts', {
     files[name] = path.join(scratch, name + '.html'); fs.writeFileSync(files[name], html);
   }
   const chapter = (id, focus) => ({ id, label: id, focus, note: 'Chapter ' + id });
+  const scrollNodes = ['users','cdn','lb','api','db','cache','worker'];
+  variant('scroll', Array.from({length: 9}, (_, i) => chapter('chapter-' + i, scrollNodes)));
   variant('empty', []); variant('invalid', '{');
   variant('filtered', [chapter('filtered', ['users', 'unknown', 'users', 'cdn']), chapter('empty', ['unknown']), chapter('solo', ['db'])]);
   variant('short', [chapter('one', ['users', 'cdn']), chapter('two', ['cdn', 'lb'])]);
@@ -398,8 +400,50 @@ test('Guided Views preserves chapters, Story playback and handoff contracts', {
       await load(); await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await run('Archify.viewerChromeLayout.whenStable()');
       await run(`document.querySelector(${JSON.stringify(chapterButton('request-path'))}).focus()`);await key('End','End',35);await key('Enter','Enter',13);await settled();
       await run(`document.querySelector(${JSON.stringify(stop('worker'))}).focus()`);await key('Enter','Enter',13);await settled();
-      const scroll=await run(`(()=>{const c=document.getElementById('guided-view-chapters'),t=document.getElementById('guided-view-trail');return {width:innerWidth,chapterVisible:c.clientWidth>0,trailVisible:t.clientWidth>0,chapterScroll:c.scrollLeft>=0,trailScroll:t.scrollLeft>=0};})()`);
-      assert.equal(scroll.chapterVisible,true);assert.equal(scroll.trailVisible,true);records.push({scenario:'layout-'+width,...scroll});
+      assert.equal(await run('Archify.guidedViews.active()'), 'async-work');
+      assert.equal(await run('Archify.guidedViews.beat().nodeId'), 'worker');
+    }
+    for(const width of [390,720,1440]) {
+      await load('scroll');
+      await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});
+      await run('Archify.viewerChromeLayout.whenStable()');
+      // Keyboard activation must reveal and center off-screen items itself.
+      // preventScroll keeps native focus scrolling from concealing a regression.
+      for(const index of [8,4,0]) {
+        const chapterId='chapter-'+index;
+        await run(`document.querySelector(${JSON.stringify(chapterButton(chapterId))}).focus({preventScroll:true})`);
+        await key('Enter','Enter',13);await settled();await run('Archify.viewerChromeLayout.whenStable()');
+        assert.equal(await run('Archify.guidedViews.active()'),chapterId);
+        for(const nodeId of [null,'worker','api','users']) {
+          if(nodeId) {
+            await run(`document.querySelector(${JSON.stringify(stop(nodeId))}).focus({preventScroll:true})`);
+            await key('Enter','Enter',13);await settled();
+            assert.equal(await run('Archify.guidedViews.beat().nodeId'),nodeId);
+          }
+          const scroll=await run(`(()=>{
+            function measure(container,selector) {
+              const c=document.getElementById(container),item=c.querySelector(selector),r=item.getBoundingClientRect(),box=c.getBoundingClientRect();
+              const left=box.left+c.clientLeft,right=left+c.clientWidth;
+              return {itemWidth:r.width,leftGap:r.left-left,rightGap:right-r.right,
+                centerDelta:(r.left+r.right-left-right)/2,scroll:c.scrollLeft,maxScroll:c.scrollWidth-c.clientWidth};
+            }
+            return ${nodeId ? `{trail:measure('guided-view-trail','[data-story-node="${nodeId}"]')}` : `{chapter:measure('guided-view-chapters','[data-guided-view-id="${chapterId}"]')}`};
+          })()`);
+          for(const [name,position] of Object.entries(scroll)) {
+            const context=JSON.stringify({width,chapterId,nodeId,name,...position});
+            assert.ok(position.itemWidth>0 && position.leftGap>=-1 && position.rightGap>=-1,'selected item is fully visible: '+context);
+            assert.ok(Math.abs(position.centerDelta)<=1 ||
+              (position.scroll<=1 && position.centerDelta<0) ||
+              (position.scroll>=position.maxScroll-1 && position.centerDelta>0),'centered or clamped at the corresponding edge: '+context);
+            if(width===390) assert.ok(position.maxScroll>20,'fixture genuinely overflows: '+context);
+          }
+          records.push({scenario:'scroll-'+width+'-'+chapterId+'-'+nodeId,...scroll});
+          if(width===390 && index===4 && nodeId==='api') {
+            await run(`document.getElementById('guided-view-trail').scrollLeft=0;new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+            assert.equal(await run(`document.getElementById('guided-view-trail').scrollLeft`),0,'manual scrolling alone must not recenter the active beat');
+          }
+        }
+      }
     }
     for(const suffix of ['&embed=1#view=request-path&beat=lb','&embed=1&play=1#view=request-path&beat=lb']) {
       await load('trace',{suffix});await settled();await run(`storyWait(()=>Archify.guidedViews.beat()?.nodeId==='lb')`);

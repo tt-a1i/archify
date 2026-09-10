@@ -10217,7 +10217,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       function centerStoryStop(stop) {
         if (!stop || !trail) return false;
-        var target = Math.max(0, stop.offsetLeft - (trail.clientWidth - stop.offsetWidth) / 2);
+        var bounds = stop.getBoundingClientRect();
+        var viewportLeft = trail.getBoundingClientRect().left + trail.clientLeft;
+        var target = Math.max(0, trail.scrollLeft + bounds.left - viewportLeft - (trail.clientWidth - bounds.width) / 2);
         trail.scrollLeft = target;
         return true;
       }
@@ -10966,6 +10968,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           renderPlayback();
         });
         storyMotionObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-motion'] });
+      }
+      if (typeof ResizeObserver === 'function') {
+        var chapterViewportWidth = chapterList.clientWidth;
+        var trailViewportWidth = trail.clientWidth;
+        var storyScrollObserver = new ResizeObserver(function () {
+          var chapterWidth = chapterList.clientWidth;
+          var trailWidth = trail.clientWidth;
+          if (chapterWidth !== chapterViewportWidth && activeIndex >= 0) centerChapterButton(chapterButtons[activeIndex]);
+          if (trailWidth !== trailViewportWidth && storyBeatIndex >= 0) {
+            centerStoryStop(trail.querySelectorAll('[data-story-node]')[storyBeatIndex]);
+          }
+          chapterViewportWidth = chapterWidth;
+          trailViewportWidth = trailWidth;
+        });
+        storyScrollObserver.observe(chapterList);
+        storyScrollObserver.observe(trail);
       }
       window.addEventListener('beforeprint', function () {
         clearChapterPreview({ clearIntents: true });

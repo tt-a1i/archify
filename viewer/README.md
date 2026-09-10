@@ -25,6 +25,13 @@ surface; release identity changes also belong in `template.source.html`.
 
 ## Guided Views / Story contract
 
+Chapter and Trail scrolling use their own viewports. Trail centering measures DOM
+rectangles rather than an ancestor-relative offset. A page-lifetime ResizeObserver
+watches both scroll containers and recenters the active item only when its viewport
+width changes; scrolling alone does not recenter it. Without ResizeObserver, direct
+selection still centers the item. This is a follow-up behavior fix, not part of the
+original byte-preserving extraction.
+
 The complete IIFE initializes once after Focus/flowTokens and Intent Trace, before
 Reader/Chrome Layout/Camera. Camera and Lens remain call-time lookups; the delayed
 initial Story follow must still work before Camera exists. Payload parsing, initial
