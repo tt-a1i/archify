@@ -874,6 +874,7 @@ test('Chrome Layout preserves scheduling, mode restoration and Reader handoffs',
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async (t) => {
   const browser = new ChromeVisualBrowser(chromePath);
+  t.after(() => browser.close());
   const evidence = process.env.ARCHIFY_CHROME_LAYOUT_EVIDENCE;
   if (evidence) fs.mkdirSync(evidence, { recursive: true });
   const observations = [];
@@ -1097,7 +1098,6 @@ test('Chrome Layout preserves scheduling, mode restoration and Reader handoffs',
     });
   } finally {
     if (evidence) fs.writeFileSync(path.join(evidence, 'observations.json'), JSON.stringify(observations, null, 2) + '\n');
-    await browser.close();
   }
 });
 

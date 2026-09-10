@@ -5,7 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
+import { findChrome } from '../bin/visual-check.mjs';
+import { desktopBrowser, assertDesktopPointer } from './helpers/desktop-browser.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
@@ -40,11 +41,13 @@ test('Focus preserves semantic selection, relationships, reachability and shared
   const graphSetup = `var fixtureSvg=document.querySelector('.diagram-container > svg');fixtureSvg.setAttribute('viewBox','0 0 1200 500');fixtureSvg.setAttribute('data-animation','trace');fixtureSvg.innerHTML=${JSON.stringify(graph)};`;
   function variant(name, setup) {
     files[name] = path.join(scratch, name + '.html');
-    fs.writeFileSync(files[name], fs.readFileSync(files.architecture, 'utf8').replace('    var Archify = {};', setup + '\n    var Archify = {};'));
+    const original = fs.readFileSync(files.architecture, 'utf8');
+    assert.ok(original.includes('    var Archify = {};'), 'Focus fixture anchor');
+    fs.writeFileSync(files[name], original.replace('    var Archify = {};', setup + '\n    var Archify = {};'));
   }
   variant('graph', graphSetup);
   variant('no-geometry', graphSetup + `document.querySelector('[data-edge-key="f"] path').remove();`);
-  const browser = new ChromeVisualBrowser(chrome);
+  const browser = desktopBrowser(chrome);
   t.after(() => browser.close());
   const session = await browser.sessionPromise;
   const send = (method, params = {}) => browser.cdp.send(method, params, session);
@@ -68,8 +71,7 @@ test('Focus preserves semantic selection, relationships, reachability and shared
     await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:reduced?'reduce':'no-preference'}]});
     const loaded=browser.cdp.waitFor('Page.loadEventFired',session);
     await send('Page.navigate',{url:pathToFileURL(files[mode]).href+'?theme='+theme+'&keep=yes&run='+(++navigationId)+hash});await loaded;
-    // Navigation can restore a headless host's absent pointer. Establish CDP mouse input here.
-    await send('Emulation.setTouchEmulationEnabled',{enabled:false});
+    await assertDesktopPointer(browser, session);
     await run('document.fonts.ready');await stable();
   }
   async function stable() {
