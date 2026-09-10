@@ -68,6 +68,8 @@ test('Focus preserves semantic selection, relationships, reachability and shared
     await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:reduced?'reduce':'no-preference'}]});
     const loaded=browser.cdp.waitFor('Page.loadEventFired',session);
     await send('Page.navigate',{url:pathToFileURL(files[mode]).href+'?theme='+theme+'&keep=yes&run='+(++navigationId)+hash});await loaded;
+    // Navigation can restore a headless host's absent pointer. Establish CDP mouse input here.
+    await send('Emulation.setTouchEmulationEnabled',{enabled:false});
     await run('document.fonts.ready');await stable();
   }
   async function stable() {

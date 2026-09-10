@@ -84,7 +84,10 @@ test('Intent Trace preserves input handoffs, transient geometry and cleanup', {
     await media(reduced);
     const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
     await send('Page.navigate', { url: pathToFileURL(files[mode]).href + `?theme=${theme}` });
-    await loaded; await run('document.fonts.ready'); await run('Archify.viewerChromeLayout.whenStable()');
+    await loaded;
+    // Navigation can restore a headless host's absent pointer. Establish CDP mouse input here.
+    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await run('document.fonts.ready'); await run('Archify.viewerChromeLayout.whenStable()');
   }
   async function point(selector) {
     return run(`(()=>{const r=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);
