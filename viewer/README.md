@@ -2,7 +2,8 @@
 
 Edit `reader-layout.js` for Adaptive Reader Layout, `viewer-chrome-layout.js`
 for navigation clearance, `viewer-camera.js` for camera interactions and
-transactions, `semantic-radar.js` for the overview map, `export-cleanup.js` for SVG export cleanup, and
+transactions, `semantic-radar.js` for the overview map, `motion-governor.js` for
+motion mode and ownership, `export-cleanup.js` for SVG export cleanup, and
 `template.source.html` for the rest of the Viewer.
 `archify/assets/template.html` is the committed
 generated artifact, consumed unchanged by all five renderers and the installed
@@ -11,7 +12,7 @@ Skill. These maintainer sources live outside the packaged `archify/` directory.
 From `archify/`, run `npm run generate:viewer` after editing any source.
 `npm run check:viewer` verifies freshness without writing; `npm test` includes
 that check. Assembly inserts each fragment verbatim at its fixed marker.
-Reader, Chrome Layout, Camera and Radar extractions preserve delivered HTML bytes. Export cleanup adds a
+Reader, Chrome Layout, Camera, Radar and Motion Governor extractions preserve delivered HTML bytes. Export cleanup adds a
 private function and a call, changing script bytes but preserving cleanup order
 and SVG output. All fragments retain classic-script scope and initialization order.
 Generated output is not a second editing
@@ -210,6 +211,68 @@ and Chrome's navigation reserve affect measured placement without transferring
 ownership. Embed/print and narrow-screen presentation retain their existing CSS
 and caller rules, rather than a new universal Radar eligibility gate. Export
 continues cloning only the canonical diagram, excluding the runtime map SVG.
+
+## Motion Governor contract
+
+`motion-governor.js` initializes `Archify.motionGovernor` once after Export,
+before Source Evidence and Focus. It captures the initial trace capability,
+main SVG, controls and reduced-motion query. Guided Views and Route initialize
+later; their existence checks remain necessary. The final `syncVisibility()`,
+`publishOwner()`, `render()` calls keep their original order. CSS, controls,
+translation helpers and authored animation metadata stay in their existing sources.
+
+The interface is `capable` plus `pause`, `resume`, `toggle`, `setMode`, `mode`,
+`claim`, `release`, `suspend`, `isPaused`, and `owner`. Capability is fixed from
+the initial SVG `data-animation="trace"`. Non-trace pages hide the control, clear
+the existing root motion attributes, and return inert methods: false for pause/
+resume/toggle/release, zero for claim, still for modes, true for isPaused, an
+empty owner, and a suspension function returning false. That branch does not
+install the trace listeners or run its visibility initialization.
+
+For trace pages, pause/resume/toggle return the reader's pause intent, while
+mode/isPaused report effective pause: reader intent OR reduced motion OR a
+nonempty suspension table. Thus resume can return false while mode remains still.
+setMode treats only `still` as a pause request, returns effective mode and honors
+`persist:false`. The storage key remains `archify-motion`; user pause writes
+`still`, resume removes it, and storage errors are ignored. System suspension
+does not become a persisted user preference. Becoming live does not restart
+Story/Route playback or replay an already settled ambient pass.
+
+Explicit claims override derived owners. Without a claim, SVG attributes select
+Story playing/follow, chapter, route, lens, relationship, intent, focus, legend,
+then empty, in that order. A semantic owner can coexist with live mode. Claiming
+even the same name clears the previous claim and invokes its cleanup before
+publishing a new token/owner. Cleanup errors are caught; synchronous reentry keeps
+the existing call order without a new guard or queue. Releasing the current token
+does not run cleanup, advances the token and falls back to current SVG state.
+Stale/repeated releases return false. Claims are not a stack of resumable owners.
+
+| State / dependency | Ownership and coordination |
+| --- | --- |
+| Reader pause, suspension table, previous effective-pause value | Governor owns these. Ordinary suspend keys count references; each returned release function succeeds once. Visibility directly sets/deletes the same table's `visibility` key, so a caller using that key does not have independent counting guarantees. |
+| Explicit/derived owner, token and cleanup callback | Governor owns arbitration. Guided handoff, chapter preview, Story and Route provide cleanup; their decorations and transaction state remain caller-owned. |
+| Root motion/owner/capable/document-hidden attributes and button hidden/disabled/ARIA/text/title | Governor writes them; CSS consumes them. System preference, suspension, reader pause and owner retain their existing label precedence. Only the system preference disables the button. |
+| Ambient started flag and pending element set | Governor starts at most one ambient pass and finishes it on the existing animation boundary or suppression paths. |
+| Button/media/visibility/mutation/animation subscriptions | Page lifetime, no destroy method. Owner observation is installed only when initially non-embed and supported; it watches the explicit SVG attribute list. |
+
+Entering effective pause pauses Story, settles handoff, and pauses Route Journey
+with elapsed time preserved, using the existing reason priority and call order.
+Route syncMotion retains its render-time notification. The previous-pause guard
+does not imply a universal once-only guarantee under synchronous caller reentry.
+
+Ambient starts from the initial edge/node animation targets. Animationend and
+animationcancel remove event targets from the pending set; unrelated targets
+are ignored, and an empty set settles and detaches those listeners. There is no
+animation-name filter, timeout or polling loop. Empty targets settle as empty;
+pause, owner, embed, share playback or document-hidden suppress the pass through
+the existing render paths. Settle reason can be overwritten by a later render;
+it is not immutable history. Runtime root-mode changes do not install additional
+listeners or guarantee immediate reevaluation without an existing render trigger.
+
+The Governor manages these Viewer signals, not every animation on the page.
+Camera retains its transactions and CSS transitions; Export retains its separate
+WebM canvas timeline. Authored geometry/IDs and canonical export cleanup remain
+unchanged by this source extraction.
 
 ## Export cleanup contract
 

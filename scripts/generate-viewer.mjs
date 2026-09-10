@@ -11,6 +11,7 @@ const fragments = [
   ['/* ARCHIFY:CHROME_LAYOUT */', 'viewer-chrome-layout.js'],
   ['/* ARCHIFY:CAMERA */', 'viewer-camera.js'],
   ['/* ARCHIFY:RADAR */', 'semantic-radar.js'],
+  ['/* ARCHIFY:MOTION_GOVERNOR */', 'motion-governor.js'],
   ['/* ARCHIFY:EXPORT_CLEANUP */', 'export-cleanup.js'],
 ];
 
