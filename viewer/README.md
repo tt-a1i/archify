@@ -1,7 +1,8 @@
 # Viewer source
 
 Edit `reader-layout.js` for Adaptive Reader Layout, `viewer-chrome-layout.js`
-for navigation clearance, `export-cleanup.js` for SVG export cleanup, and
+for navigation clearance, `viewer-camera.js` for camera interactions and
+transactions, `export-cleanup.js` for SVG export cleanup, and
 `template.source.html` for the rest of the Viewer.
 `archify/assets/template.html` is the committed
 generated artifact, consumed unchanged by all five renderers and the installed
@@ -10,7 +11,7 @@ Skill. These maintainer sources live outside the packaged `archify/` directory.
 From `archify/`, run `npm run generate:viewer` after editing any source.
 `npm run check:viewer` verifies freshness without writing; `npm test` includes
 that check. Assembly inserts each fragment verbatim at its fixed marker.
-Reader and Chrome Layout extractions preserve delivered HTML bytes. Export cleanup adds a
+Reader, Chrome Layout and Camera extractions preserve delivered HTML bytes. Export cleanup adds a
 private function and a call, changing script bytes but preserving cleanup order
 and SVG output. All fragments retain classic-script scope and initialization order.
 Generated output is not a second editing
@@ -88,6 +89,67 @@ while root rail state also changes header/chapter/card spacing. Reader reads the
 resulting layout rather than importing Chrome's private state. Keeping this
 contract beside the source localizes navigation-clearance maintenance; the
 Reader/Chrome feedback and Camera/CSS dependencies still exist.
+
+## Camera contract
+
+`viewer-camera.js` initializes `Archify.view` once, after Reader and Chrome
+Layout, before Radar. It captures the diagram container, its first SVG, required
+zoom/reset controls and the initial viewBox. The existing `apply()`,
+`pinControls()` and next-frame semantic sync stay in that order. Focus and Guided
+Views already exist; checks for later modules and deferred callers remain needed.
+The shared `viewerText` helper stays in classic-script scope.
+
+The interface remains `zoomIn`, `zoomOut`, `reset`, `reveal`, `centerAt`,
+`logicalViewport`, `sync`, and `state`. `state()` returns a copy of scale/x/y/mode;
+the modes are overview, manual and semantic. Zoom and Reset return undefined;
+`centerAt` returns a boolean, `logicalViewport` can return null, and `sync`
+delegates to `reveal` or returns false. Manual Reset interrupts callers, whereas
+`reset({ automatic: true })` stops camera motion without the manual takeover path.
+
+`reveal` returns a transaction or false, with branch-specific side effects.
+Desktop empty/unknown targets can return before changing the camera. At widths
+up to 720px it first stops motion and applies a semantic scale-1 state; a wide
+diagram can then return false for missing targets. A non-wide mobile diagram
+returns an immediately completed transaction even without targets. Do not turn
+these branches into a uniform Promise or assume false means no state change.
+
+Transactions expose `id`, `state`, `target`, `settled`, `frame`, `timer`,
+`finished`, `resolve` and `cancel(reason, commitTarget)`. `finished` resolves to
+`{ id, state }` through the existing completion path. Replacement, manual
+takeover, Reset and explicit cancellation preserve their distinct reasons;
+repeated cancellation returns false. Committing a target during cancellation
+differs from leaving the current state. Object/settled checks and cancellation
+of frames/timers prevent superseded camera work from advancing; callers retain
+their own stale-result checks. These fields are documented compatibility facts,
+not an invitation for callers to manage the private scheduler.
+
+Desktop transactions use animation frames. Wide mobile diagrams use contained
+scrolling, the existing 460ms completion timer and automatic-scroll guard;
+completion does not certify that native smooth scrolling has ended. The instant,
+reduced-motion and call-time hidden-page branches keep their existing outcomes.
+Camera does not subscribe to every later visibility/media change: Guided Views,
+Motion Governor and other callers retain their own responsibilities.
+
+| State / dependency | Ownership and coordination |
+| --- | --- |
+| Scale/x/y/mode, drag, transaction generation/object, camera frame/timer, clip/resize frames, automatic-scroll guard | Camera owns its page-lifetime state and pointer/scroll/resize/hashchange subscriptions. There is no destroy method. |
+| SVG `transform`, `clip-path`, `data-view-scale` | Camera applies runtime transforms and clipping without rewriting authored geometry, viewBox or semantic IDs. Export cleanup removes these from its clone. |
+| Container detail/camera attributes, `is-pannable`, camera movement/transaction flags, `data-just-panned`, `--archify-scroll-x` | Camera updates controls, drag suppression and mobile control positioning. `is-panning` is also used by Radar surface dragging; it is not exclusively owned by Camera. |
+| Zoom/Reset labels, disabled state, detail attributes, title and ARIA text | Camera renders controls through shared translation helpers; associated CSS stays in the shell. |
+| Reader width/wide-diagram classification; Chrome navigation reserve | Owned by the layout modules. Camera consumes geometry and classification; `apply()` schedules Chrome and synchronizes Radar. |
+| Focus / Guided Views / Route | Finishing transactions repositions Focus. Manual takeover cancels guided handoffs and pauses Story and Route Journey, preserving Route elapsed time as before. Semantic sync prioritizes Guided Views over Focus. |
+
+Focus, Guided Views/Story, Finder, Route and Radar reveal semantic targets;
+Radar also consumes `logicalViewport` and calls `centerAt`. Presentation resets
+and schedules semantic sync. Guide and keyboard shortcuts invoke navigation
+commands. Camera samples rendered transforms when manual input takes over,
+rather than treating the intended target as the current painted position.
+
+Transaction completion, rendered transform/clip convergence and Reader/Chrome
+layout stability are different observations. `finished` is not a page-wide
+stability promise. CSS transitions and the clip sampler remain coordinated with
+the existing layout feedback. Extraction localizes camera maintenance without
+removing these runtime dependencies.
 
 ## Export cleanup contract
 
