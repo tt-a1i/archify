@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'archify/assets/template.html');
 const fragments = [
+  ['/* ARCHIFY:EXPORT */', 'export.js'],
   ['/* ARCHIFY:READER_LAYOUT */', 'reader-layout.js'],
   ['/* ARCHIFY:CHROME_LAYOUT */', 'viewer-chrome-layout.js'],
   ['/* ARCHIFY:CAMERA */', 'viewer-camera.js'],
@@ -31,7 +32,10 @@ try {
     const source = fs.readFileSync(path.join(root, 'viewer', filename), 'utf8');
     const parts = generated.split(marker);
     if (parts.length !== 2) throw new Error(`Viewer source must contain exactly one ${filename} marker.`);
-    if (!source.trim() || fragments.some(([slot]) => source.includes(slot))) {
+    // Export owns the sole nested fragment; expand it before Cleanup.
+    const childMarker = filename === 'export.js' ? '/* ARCHIFY:EXPORT_CLEANUP */' : null;
+    if (!source.trim() || (childMarker && source.split(childMarker).length !== 2) ||
+        fragments.some(([slot]) => source.includes(slot) && slot !== childMarker)) {
       throw new Error(`${filename} source is empty or contains an unresolved marker.`);
     }
     // Preserve classic-script scope, execution position and literal source bytes,

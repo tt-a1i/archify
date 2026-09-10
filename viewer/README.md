@@ -8,7 +8,8 @@ motion mode and ownership, `node-finder.js` for node search and endpoint picking
 and legend previews, `route-probe.js` for directed paths and Route Journey,
 `guided-views.js` for authored chapters and Story playback,
 `focus.js` for semantic selection, relationships, reachability and shared flow tokens,
-`export-cleanup.js` for SVG export cleanup, and
+`export.js` for export menus, serialization, images, cards, clipboard and WebM,
+`export-cleanup.js` for its private SVG clone cleanup, and
 `template.source.html` for the rest of the Viewer.
 `archify/assets/template.html` is the committed
 generated artifact, consumed unchanged by all five renderers and the installed
@@ -17,12 +18,111 @@ Skill. These maintainer sources live outside the packaged `archify/` directory.
 From `archify/`, run `npm run generate:viewer` after editing any source.
 `npm run check:viewer` verifies freshness without writing; `npm test` includes
 that check. Assembly inserts each fragment verbatim at its fixed marker.
-Reader, Chrome Layout, Camera, Radar, Motion Governor, Finder, Intent Trace, Semantic Lens, Route Probe, Guided Views and Focus
+Reader, Chrome Layout, Camera, Radar, Motion Governor, Finder, Intent Trace, Semantic Lens, Route Probe, Guided Views, Focus and Export
 extractions preserve delivered HTML bytes. Export cleanup adds a
 private function and a call, changing script bytes but preserving cleanup order
 and SVG output. All fragments retain classic-script scope and initialization order.
 Generated output is not a second editing
 surface; release identity changes also belong in `template.source.html`.
+
+## Export contract
+
+`export.js` contains the complete Export heading and IIFE. It initializes once
+at its original position after Theme/Preset and before Motion Governor and
+Source Evidence. `export-cleanup.js` stays private to that closure. Assembly has
+one explicit child relationship: Export must contain exactly one EXPORT_CLEANUP
+marker and no other known marker. The shell owns EXPORT; all other fragments
+reject nested markers. Export is expanded before Cleanup in the fixed list,
+without changing the generated script's execution order. This is not a recursive
+loader or a second runtime initialization step.
+
+### Interface and dependencies
+
+The interface includes all ten `Archify.exportMenu` methods: open, close, isOpen,
+run, shareCard, downloadRouteShareCard, downloadReachShareCard, syncRouteShare,
+syncReachShare and copyShareCard. The same closure installs
+`Archify.motion.canRecord` and `recordWebm`; this recording capability is distinct
+from Motion Governor. Return values and synchronous/asynchronous failure modes
+are part of the interface, not normalized by the extraction.
+
+- Initialization requires the export menu, trigger and Route/Reach menu items;
+  it probes format/clipboard/recording support, registers listeners and creates
+  one toast live region. Later calls require the main diagram SVG and use the
+  existing header, document title, font style and computed theme/preset styles.
+- Shared viewerText, viewerCount and hasDrawableGeometry remain in classic-script
+  scope. The last helper verifies drawable semantic edges in export snapshots.
+- Menu open looks up Preset and Semantic Lens at call time, preserving optional
+  checks, close arguments and preview clearing. Route Probe and Focus provide
+  exportSnapshot/reachabilitySnapshot at sync/export time; their later script
+  positions do not justify early capture or new initialization dependencies.
+- Preset, Lens, Finder and Presentation close Export through its existing
+  interface. Guide/Presentation open it; Route Probe and Focus synchronize their
+  share items. The DOM menu routes clicks to the private ordinary PNG copy path.
+  External consumers of Archify.motion retain both recording methods.
+
+### DOM, styles and output state
+
+- Menu state is its open class plus the trigger's aria-expanded. Navigation skips
+  hidden/disabled items; ArrowUp/Down wrap, Home/End select endpoints, Escape
+  restores trigger focus, Tab/outside clicks close without forced restoration.
+  Ordinary export/copy uses close(true); Route/Reach downloads use close(false).
+- The query openExport=1 waits for fonts and two animation frames; without the
+  Font Loading API it retains the 200ms fallback. No new readiness coordinator
+  is introduced. Toast reuses role=status, a frame callback and a 1500ms timer.
+- shareCard returns a PNG Blob and does not download or write a receipt. Semantic
+  variants re-read their current provider, reject unavailable/invalid snapshots,
+  and retain the existing clone geometry/identity checks. Menu visibility does
+  not grant a stale snapshot permission to export after Route/Reach is cleared.
+- Downloaded SVG embeds both themes. Raster/card/recording serialization locks
+  current theme variables after host CSS. CSS rule filtering, stylesheet order,
+  cross-origin cssRules catches, embedded fonts and temporary theme probes stay
+  unchanged. Moving CSS can change export output even when the live page looks
+  similar; styles remain in the main template.
+- Cleanup affects the clone. Canonical output excludes transient camera/focus/
+  preview/route/story state; semantic cards intentionally apply their own share
+  markers and styles afterwards. This does not promise that menu-driven focus
+  changes leave all live preview state untouched.
+- Raster scale chooses the largest fitting member of 4/3/2/1, falling back to 1
+  even when that size exceeds the advisory pixel cap. Cards remain 1200x630.
+  File names, MIME probes, quality and background choices remain unchanged.
+- run clears old export receipts before starting. Success writes format/bytes/
+  canonical and optional dimensions/variant/clean flags. Route/Reach downloads
+  return their Blob and mark canonical=false. Their failures report share-card
+  errors and alert. Regular run resolves through its existing handlers; failures
+  record an error and alert, except WebM disables its item and shows a toast.
+- Ordinary PNG copy only toasts on success; card copy also writes a card receipt.
+  Their failure receipt behavior differs. Unsupported copy can return undefined.
+  ClipboardItem construction with a Promise stays inside the user gesture;
+  synchronous rejection falls back to a Blob, asynchronous write rejection does
+  not take that fallback. SVG serialization can throw before run constructs its
+  Promise chain. No common wrapper changes these distinctions.
+
+### Resources and verification
+
+| Owner/path | Lifetime |
+| --- | --- |
+| Auto-theme probes | Detached after computed-style sampling, including finally on failure |
+| Download URL/anchor | Anchor appended/clicked/removed synchronously; URL revoked after 1000ms |
+| Raster/card SVG URL | Lives until Image load/draw or error; revoked before toBlob completion, with existing catch cleanup |
+| Recording background URL | Survives background loading and recording; released on image error, recorder-constructor failure or recorder cleanup |
+| Recording tracks/rAF | Constructor failure stops created tracks; recorder error/stop uses existing guarded cleanup to stop tracks and cancel the frame callback |
+| Recording/toast timers | Preserve existing bounded callbacks and state checks; extraction adds no cancellation protocol or shared busy flag |
+
+recordWebm retains duration/fps options, defaults, minimums, MIME selection,
+geometry-driven scene and encoder flush timing. This table describes existing
+paths; it does not add universal recovery from arbitrary browser API exceptions.
+
+`export-browser.test.mjs` exercises native menu input, unavailable formats,
+auto-open/themes, real semantic cards, clipboard call order/fallback, raster
+failures/retry, synchronous serialization failure, real WebM decode and recorder
+failure cleanup. It intercepts download and clipboard boundaries without changing
+production serialization. `export-cleanup-browser.test.mjs` supplies five-mode
+canonical SVG and real raster/theme coverage. Existing share-card and WebM smoke
+checks retain their broader artifact contracts. Set ARCHIFY_CHROME for browser
+checks; ARCHIFY_EXPORT_RUNTIME_EVIDENCE optionally saves runtime observations,
+menu screenshots and a real recording. CI runs the browser suite without relying
+on optional evidence capture. Compare the same final tests on a fixed baseline
+and candidate; encoding bytes/timing are not a deterministic oracle for video.
 
 ## Focus / Semantic Explorer contract
 
