@@ -6,6 +6,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
+import { spawnDesktopChrome, desktopPointerCheck } from './helpers/desktop-pointer.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
@@ -61,9 +62,10 @@ test('Guided Views preserves chapters, Story playback and handoff contracts', {
       '<polyline data-edge-from="api" data-edge-to="lb" data-edge-key="d" points="510,110 370,110"/>' +
       ['users','cdn','lb','api','db','cache'].map((id,i)=>'<g tabindex="0" data-node-id="'+id+'" data-node-label="'+id+'" data-node-kind="backend"><rect x="'+(50+i*140)+'" y="80" width="80" height="40"/><text x="'+(50+i*140)+'" y="100">'+id+'</text></g>').join('');
   `);
-  const browser = new ChromeVisualBrowser(chrome);
+  const browser = new ChromeVisualBrowser(chrome, { spawnImpl: spawnDesktopChrome });
   t.after(() => browser.close());
   const session = await browser.sessionPromise;
+  const checkPointer = await desktopPointerCheck(browser, session);
   await browser.cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
   const send = (method, params = {}) => browser.cdp.send(method, params, session);
   await send('Emulation.setFocusEmulationEnabled', { enabled: true });
@@ -88,8 +90,7 @@ test('Guided Views preserves chapters, Story playback and handoff contracts', {
     const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
     await send('Page.navigate', { url: pathToFileURL(files[mode]).href + `?theme=${theme}` + suffix });
     await loaded;
-    // Navigation can restore a headless host's absent pointer. Establish CDP mouse input here.
-    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await checkPointer();
     await run('document.fonts.ready'); await run('Archify.viewerChromeLayout.whenStable()');
   }
   async function point(selector) {

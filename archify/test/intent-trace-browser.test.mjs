@@ -6,6 +6,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
+import { spawnDesktopChrome, desktopPointerCheck } from './helpers/desktop-pointer.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
@@ -38,9 +39,10 @@ test('Intent Trace preserves input handoffs, transient geometry and cleanup', {
   fs.writeFileSync(traceInput, JSON.stringify(trace)); files.trace = path.join(scratch, 'trace.html');
   execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), traceInput, files.trace]);
 
-  const browser = new ChromeVisualBrowser(chrome);
+  const browser = new ChromeVisualBrowser(chrome, { spawnImpl: spawnDesktopChrome });
   t.after(() => browser.close());
   const session = await browser.sessionPromise;
+  const checkPointer = await desktopPointerCheck(browser, session);
   await browser.cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
   const send = (method, params = {}) => browser.cdp.send(method, params, session);
   await send('Emulation.setFocusEmulationEnabled', { enabled: true });
@@ -85,8 +87,7 @@ test('Intent Trace preserves input handoffs, transient geometry and cleanup', {
     const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
     await send('Page.navigate', { url: pathToFileURL(files[mode]).href + `?theme=${theme}` });
     await loaded;
-    // Navigation can restore a headless host's absent pointer. Establish CDP mouse input here.
-    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await checkPointer();
     await run('document.fonts.ready'); await run('Archify.viewerChromeLayout.whenStable()');
   }
   async function point(selector) {

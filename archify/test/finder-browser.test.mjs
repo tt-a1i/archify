@@ -6,6 +6,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
+import { createViewerClick } from './helpers/viewer-click.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
@@ -56,15 +57,16 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
     return result.result?.value;
   }
+  const click = await createViewerClick({ send, run, timeout: 10000 });
   await send('Page.addScriptToEvaluateOnNewDocument', { source: `
     window.finderErrors = [];
     addEventListener('error', e => finderErrors.push(e.message));
     addEventListener('unhandledrejection', e => finderErrors.push(String(e.reason)));
-    window.finderWait = predicate => new Promise((resolve, reject) => {
+    window.finderWait = (predicate, description = 'Finder observation') => new Promise((resolve, reject) => {
       const start = performance.now();
       function sample() {
         if (predicate()) return resolve();
-        if (performance.now()-start > 10000) return reject(new Error('Finder observation timed out'));
+        if (performance.now()-start > 10000) return reject(new Error(description + ' timed out; open=' + Archify.finder.isOpen() + ', active=' + document.activeElement.id));
         requestAnimationFrame(sample);
       }
       requestAnimationFrame(sample);
@@ -86,16 +88,9 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode });
     await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode });
   }
-  async function click(selector) {
-    const point = await run(`(() => {
-      const el=document.querySelector(${JSON.stringify(selector)}); el.scrollIntoView({block:'nearest'});
-      const r=el.getBoundingClientRect(); return {x:r.x+r.width/2,y:r.y+r.height/2};
-    })()`);
-    await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', clickCount: 1 });
-    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', clickCount: 1 });
-  }
   async function opened() {
-    await run(`finderWait(() => document.activeElement.id === 'node-finder-input')`);
+    await run(`finderWait(() => Archify.finder.isOpen(), 'Finder panel opening')`);
+    await run(`finderWait(() => document.activeElement.id === 'node-finder-input', 'Finder input focus')`);
   }
   async function search(text) {
     await run(`document.getElementById('node-finder-input').select()`);

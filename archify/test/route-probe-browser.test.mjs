@@ -6,6 +6,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
+import { createViewerClick } from './helpers/viewer-click.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
@@ -48,6 +49,7 @@ test('Route Probe preserves directed paths, Journey and export contracts', {
     assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
     return result.result?.value;
   }
+  const click = await createViewerClick({ send, run, timeout: 12000 });
   await send('Page.addScriptToEvaluateOnNewDocument', { source: `
     window.routeErrors=[];window.routeEnds=[];addEventListener('animationend',e=>{if(e.target.matches('.route-journey-flow'))routeEnds.push({name:e.animationName,trusted:e.isTrusted});},true);addEventListener('error',e=>routeErrors.push(e.message));
     addEventListener('unhandledrejection',e=>routeErrors.push(String(e.reason)));
@@ -64,14 +66,6 @@ test('Route Probe preserves directed paths, Journey and export contracts', {
     const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
     await send('Page.navigate', { url: pathToFileURL(files[mode]).href + `?theme=${theme}` + suffix });
     await loaded; await run('document.fonts.ready'); await run('Archify.viewerChromeLayout.whenStable()');
-  }
-  async function point(selector) {
-    return run(`(()=>{const r=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);
-  }
-  async function click(selector) {
-    const p = await point(selector);
-    await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...p, button: 'left', clickCount: 1 });
-    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...p, button: 'left', clickCount: 1 });
   }
   async function key(key, code, windowsVirtualKeyCode) {
     await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode, text: key === 'Enter' ? '\r' : key === ' ' ? ' ' : undefined });
@@ -200,6 +194,7 @@ test('Route Probe preserves directed paths, Journey and export contracts', {
     await key('Escape', 'Escape', 27); assert.equal((await snapshot('escape-overview')).result.journey, -1);
     await key('Escape', 'Escape', 27); assert.equal((await snapshot('escape-cleared')).active, null);
     await route('api', 'db'); await click('#route-journey-play');
+    assert.equal(await run('Archify.routeProbe.isJourneyPlaying()'), true, 'native Play click starts the journey');
     await run(`routeWait(()=>!Archify.routeProbe.isJourneyPlaying())`);
     s = await snapshot('natural-completion'); assert.equal(s.result.journey, 1); assert.equal(s.hash, '#route=api~db');
     assert.match(await run(`document.getElementById('route-journey-play').getAttribute('aria-label')`), /Replay/i);

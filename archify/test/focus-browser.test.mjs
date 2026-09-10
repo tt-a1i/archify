@@ -6,6 +6,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
+import { spawnDesktopChrome, desktopPointerCheck } from './helpers/desktop-pointer.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
@@ -44,9 +45,10 @@ test('Focus preserves semantic selection, relationships, reachability and shared
   }
   variant('graph', graphSetup);
   variant('no-geometry', graphSetup + `document.querySelector('[data-edge-key="f"] path').remove();`);
-  const browser = new ChromeVisualBrowser(chrome);
+  const browser = new ChromeVisualBrowser(chrome, { spawnImpl: spawnDesktopChrome });
   t.after(() => browser.close());
   const session = await browser.sessionPromise;
+  const checkPointer = await desktopPointerCheck(browser, session);
   const send = (method, params = {}) => browser.cdp.send(method, params, session);
   await browser.cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
   await send('Emulation.setFocusEmulationEnabled', { enabled: true });
@@ -68,8 +70,7 @@ test('Focus preserves semantic selection, relationships, reachability and shared
     await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:reduced?'reduce':'no-preference'}]});
     const loaded=browser.cdp.waitFor('Page.loadEventFired',session);
     await send('Page.navigate',{url:pathToFileURL(files[mode]).href+'?theme='+theme+'&keep=yes&run='+(++navigationId)+hash});await loaded;
-    // Navigation can restore a headless host's absent pointer. Establish CDP mouse input here.
-    await send('Emulation.setTouchEmulationEnabled',{enabled:false});
+    await checkPointer();
     await run('document.fonts.ready');await stable();
   }
   async function stable() {
