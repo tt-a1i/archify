@@ -32,11 +32,6 @@ npx skills add tt-a1i/archify -g
 
 ## ❤️ 赞助伙伴
 
-<table>
-  <tr><td align="center" width="240"><a href="https://apinebula.ai/ref/wywnaATT"><img src="docs/assets/sponsors/apinebula-archify.jpg" alt="APINEBULA" width="200" /></a><br/><strong><a href="https://apinebula.ai/ref/wywnaATT">APINEBULA</a></strong></td><td>感谢 APINEBULA 赞助 Archify。APINEBULA 通过统一接口提供 Claude、GPT、Gemini 等主流模型。通过 <a href="https://apinebula.ai/ref/wywnaATT">Archify 专属链接</a>注册并填写优惠码 <strong><code>Archify</code></strong>，即可享受<strong>9 折优惠</strong>。</td></tr>
-  <tr><td align="center" width="240"><a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven" width="200" /></a><br/><strong><a href="https://github.com/EverMind-AI">EverMind</a> · <a href="https://github.com/EverMind-AI/Raven">Raven</a></strong></td><td>感谢 EverMind 赞助 Archify。EverMind 专注 Agent 记忆基础设施，旗下 <a href="https://github.com/EverMind-AI/Raven"><strong>Raven</strong></a> 已支持 Archify Skill，让 Raven 工作流可以直接生成经过验证的交互式系统地图。</td></tr>
-</table>
-
 > 想赞助 Archify？[欢迎通过邮件联系我们。](mailto:2801884530@qq.com)
 
 ## 看看 Archify 能做什么
