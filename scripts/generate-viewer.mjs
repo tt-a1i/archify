@@ -15,6 +15,7 @@ const fragments = [
   ['/* ARCHIFY:NODE_FINDER */', 'node-finder.js'],
   ['/* ARCHIFY:INTENT_TRACE */', 'intent-trace.js'],
   ['/* ARCHIFY:SEMANTIC_LENS */', 'semantic-lens.js'],
+  ['/* ARCHIFY:ROUTE_PROBE */', 'route-probe.js'],
   ['/* ARCHIFY:EXPORT_CLEANUP */', 'export-cleanup.js'],
 ];
 

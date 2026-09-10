@@ -5,7 +5,8 @@ for navigation clearance, `viewer-camera.js` for camera interactions and
 transactions, `semantic-radar.js` for the overview map, `motion-governor.js` for
 motion mode and ownership, `node-finder.js` for node search and endpoint picking,
 `intent-trace.js` for hover/focus previews, `semantic-lens.js` for type selection
-and legend previews, `export-cleanup.js` for SVG export cleanup, and
+and legend previews, `route-probe.js` for directed paths and Route Journey,
+`export-cleanup.js` for SVG export cleanup, and
 `template.source.html` for the rest of the Viewer.
 `archify/assets/template.html` is the committed
 generated artifact, consumed unchanged by all five renderers and the installed
@@ -14,12 +15,109 @@ Skill. These maintainer sources live outside the packaged `archify/` directory.
 From `archify/`, run `npm run generate:viewer` after editing any source.
 `npm run check:viewer` verifies freshness without writing; `npm test` includes
 that check. Assembly inserts each fragment verbatim at its fixed marker.
-Reader, Chrome Layout, Camera, Radar, Motion Governor, Finder, Intent Trace and Semantic Lens
+Reader, Chrome Layout, Camera, Radar, Motion Governor, Finder, Intent Trace, Semantic Lens and Route Probe
 extractions preserve delivered HTML bytes. Export cleanup adds a
 private function and a call, changing script bytes but preserving cleanup order
 and SVG output. All fragments retain classic-script scope and initialization order.
 Generated output is not a second editing
 surface; release identity changes also belong in `template.source.html`.
+
+## Route Probe contract
+
+The complete IIFE initializes once after Finder and before Semantic Lens, in the
+existing classic-script scope. It registers listeners then synchronously restores
+the initial hash. Later hashchange restoration runs in rAF. Required inputs are
+the document root, diagram container/direct SVG, Route/Journey controls, shared
+`viewerText`, `viewerCount` and `hasDrawableGeometry`. The latter stays shared
+with Focus and Export; Lens remains a runtime lookup because it initializes later.
+
+The nineteen methods remain `begin`, `choose`, `clear`, `toggle`, `escape`,
+`copyLink`, `playJourney`, `pauseJourney`, `showOverview`, `selectJourneyIndex`,
+`syncMotion`, `isJourneyPlaying`, `finderContext`, `finderOpening`, `finderClosed`,
+`openFinder`, `exportSnapshot`, `active` and `result`. There is no mount/unmount API.
+
+- Route owns mode, endpoint IDs, path node arrays and exact edge DOM references,
+  Journey index/playing/complete, timer/generation/elapsed time, Motion token,
+  overlays and its panel/listener state. Mode is idle/source/target/result;
+  panel error is presentation state and can coexist with target mode. `active`
+  returns mode or null. `result` returns copied nodes and scalar state only in
+  result mode; it does not certify an exportable snapshot.
+- Nodes and edges are read dynamically. The node map keeps the last element per
+  ID; it does not use Lens's kind filter or first-ID rule. Outgoing relationships
+  require existing endpoints and ignore self-loops. BFS follows directed DOM edge
+  order, keeping the first reached path and exact edge references. There is no
+  grouping by edge key, weighted search, new sort order or persistent graph index.
+- Source selection marks reachable targets, including the existing no-outgoing
+  outcome. In target mode, same-node/unreachable choices return false and render
+  error while retaining target mode. Unknown IDs and choices outside picker mode
+  retain their existing early returns. Finder's allowed list does not constrain
+  every public choose call. Results retain full path/hops and begin in overview.
+- `begin` rejects embed, clears Lens preview/active selection, captures an explicit
+  source or single Focus node, clears old Route, then clears Intent/Guided/Focus
+  and closes Finder/Radar in the existing order. Optional checks and options stay
+  unchanged. Multi-Focus and invalid sources are not normalized into new behavior.
+- `clear` returns undefined, closes only the applicable route Finder context,
+  invalidates Journey work and removes Route state, overlays and docking, then
+  updates controls/Export. Camera resets only when previously active and without
+  `preserveView:true`; `updateUrl:false` retains URL. Only `restoreFocus:true`
+  requests trigger focus. Repeated clear can still update controls and URL.
+- Pause retains path and position; overview retains path but clears Journey
+  position; clear removes the path. Escape returns paused, overview, then cleared
+  across those states. Focus requests retain their original targets even if a
+  browser refuses focus on a disabled control. Finder owns its search panel;
+  Route supplies allowed IDs/badges, finder-open state and close/docking callbacks.
+- Journey marks past/current/future nodes and the exact incoming edge. Position
+  zero has no incoming pulse. Manual stepping stops playback and resets completion;
+  arrows clamp at endpoints. Native chip focus pauses, while Enter/Space chooses
+  the position. Camera reveal keeps the existing neighbor slice and parameters.
+- Playback requires result, multiple nodes, non-embed, visible document and a
+  capable, unpaused Motion Governor. Dwell is 1100ms per position. Pause normally
+  retains elapsed time; resume uses the remainder, new positions use a fresh dwell.
+  Date.now, generation invalidation, timer order and synchronous handoff resets
+  stay intact. Final dwell completes without looping; replay restarts at zero.
+  Returning to visible/Live does not automatically restart playback.
+- Journey pulses actively claim/release a Motion token, alongside Governor's
+  attribute-derived ownership. A released token does not imply an empty global
+  owner. Owner callbacks, animationend and the 860ms fallback retain their order
+  and isConnected guards. Clear invalidates playback but does not introduce a
+  universal cancellation mechanism for every delayed callback.
+- Overlay clones preserve path/line/polyline geometry, transform, removal lists,
+  pathLength=1 and insertion position. Overview can insert an empty overlay when
+  selected edges have no cloneable shapes; Journey rejects that empty pulse.
+  No common overlay factory or geometry recomputation is introduced.
+- `exportSnapshot` is stricter than interaction: it requires a consistent result,
+  unique extant path nodes, attached edges, nonempty distinct keys and consistent
+  from/to/edge-id across each key's fragments. Exactly one fragment must be
+  drawable according to the shared geometry check, and it must be the selected
+  edge. Returned data contain no DOM references. Export consumes the snapshot;
+  it owns Share Card rendering, rejection receipts and clone cleanup.
+- URL updates replace the hash with encoded source~target and preserve query.
+  Journey progress is never serialized. Missing/empty route clears active state;
+  malformed pairs/unknown endpoints return early. Valid but same/unreachable
+  endpoints retain begin/choose error state and the original hash. Existing
+  encoding, asynchronous hashchange order and embed guards are unchanged.
+- Copy returns a Promise, preferring clipboard and falling back to temporary
+  textarea/execCommand. Non-result resolves false. Text/ARIA feedback resets after
+  1600ms even when subsequent cleanup has occurred; no debounce/cancellation is
+  added. SVG capture listeners intercept picker click/Enter/Space with
+  stopImmediatePropagation. With data-just-panned they let events through; later
+  Focus handlers can still consume a key and clear Route. Global R/Slash/Escape
+  and other modules' callers stay outside this source.
+- Docking compares top/bottom overlap with route nodes or the start node, nav
+  weight 4 and an out-of-bounds penalty; ties choose top. Hidden panels remove
+  dock, zero-size panels return without replacing it. Scroll measures directly;
+  requests retain rAF plus 120/560ms rechecks, without coalescing or cancellation.
+  This is not Lens's left/right or 720px eligibility algorithm.
+- Route produces node/edge data-route-* attributes, step styles and panel/control
+  DOM/ARIA. Existing CSS owns themes, flow, Still/reduced motion, print/embed and
+  responsive rendering. Focus/Lens clear Route; Camera/Motion/Guide can pause it.
+  These dependencies remain explicit runtime collaboration after the source split.
+
+`route-probe-browser.test.mjs` complements static Route/Journey/Share Card tests
+with actual input, playback, handoffs, snapshots, themes and SVG export. Graph,
+clock, hidden-page, geometry and clipboard fixtures isolate specific boundaries;
+they do not certify hardware input, OS clipboard permission or all-screen collision
+freedom. Serialization is distinguished from later download/global-click effects.
 
 ## Semantic Lens contract
 
