@@ -1339,6 +1339,50 @@ test('architecture: container border run is blocking in standard and showcase', 
   }
 });
 
+test('architecture: an inferred side follows the dominant axis for a hub above an offset spoke', () => {
+  // Regression for issue #376. The hub sits above the spoke with a horizontal
+  // offset (dx = -164, dy = +200). The router draws a vertical dogleg out of
+  // the hub's bottom into the spoke's top, so the INFERRED sides must be
+  // bottom/top. Inferring left/right from the bare sign of dx made the
+  // Clean Flow Gate reject the very route the router had just drawn.
+  const doc = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: {
+      title: 'Hub above an offset spoke',
+      output: 'hub-spoke.html',
+      quality_profile: 'standard',
+      viewBox: [640, 360],
+    },
+    components: [
+      { id: 'hub', type: 'cloud', label: 'Hub', pos: [200, 40], size: [176, 52] },
+      { id: 'spoke', type: 'cloud', label: 'Spoke', pos: [40, 240], size: [168, 52] },
+    ],
+    connections: [{ id: 'hub-spoke', from: 'hub', to: 'spoke' }],
+  };
+
+  const { code, stderr, outPath } = render('architecture', doc);
+  assert.equal(code, 0, `inferred vertical route must render cleanly: ${stderr}`);
+  assert.doesNotMatch(stderr, /clean-flow\/endpoint-side-direction/);
+
+  // The route leaves the hub's bottom edge and enters the spoke's top edge,
+  // so every composition point stays inside that column band.
+  const html = fs.readFileSync(outPath, 'utf8');
+  const points = html
+    .match(/data-edge-id="hub-spoke" data-composition-points="([^"]+)"/)?.[1];
+  assert.ok(points, 'expected rendered composition points for hub-spoke');
+  const route = points.split(';').map((point) => point.split(',').map(Number));
+  const hubCx = 200 + 176 / 2; // 288
+  assert.equal(route[0][0], hubCx, 'route must leave the hub centre column');
+  assert.equal(route.at(-1)[0], 40 + 168 / 2, 'route must enter the spoke centre column');
+  assert.equal(route[0][1], 40 + 52, 'route must leave the hub bottom edge');
+  assert.equal(route.at(-1)[1], 240, 'route must enter the spoke top edge');
+
+  // The CLI validation surface agrees with the renderer.
+  const cli = validateCli('architecture', doc, 'standard');
+  assert.equal(cli.code, 0, `validate must accept the inferred vertical route: ${JSON.stringify(cli.result)}`);
+});
+
 test('dataflow: stage border run is blocking and the inter-stage gutter passes', () => {
   const bad = load('dataflow');
   bad.flows.find((flow) => flow.id === 'web-clickstream').via = [[184, 157], [184, 271]];

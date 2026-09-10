@@ -1271,18 +1271,23 @@ export function automaticPortSpread(relations, boxes, { gutter = 16, maxSpacing 
   return spread;
 }
 
+// A centre delta on the horizontal axis does not by itself mean the route
+// leaves sideways: a hub above an offset spoke has both a horizontal and a
+// larger vertical delta, and the router draws the vertical dogleg. Compare the
+// deltas so the inferred side matches the axis the route actually uses. Equal
+// deltas, and a zero horizontal delta, keep the previous vertical result.
 export function defaultFromSide(from, to) {
-  if (to.cx < from.cx) return 'left';
-  if (to.cx > from.cx) return 'right';
-  if (to.cy > from.cy) return 'bottom';
-  return 'top';
+  const dx = to.cx - from.cx;
+  const dy = to.cy - from.cy;
+  if (dx !== 0 && Math.abs(dx) >= Math.abs(dy)) return dx < 0 ? 'left' : 'right';
+  return dy > 0 ? 'bottom' : 'top';
 }
 
 export function defaultToSide(from, to) {
-  if (to.cx < from.cx) return 'right';
-  if (to.cx > from.cx) return 'left';
-  if (to.cy > from.cy) return 'top';
-  return 'bottom';
+  const dx = to.cx - from.cx;
+  const dy = to.cy - from.cy;
+  if (dx !== 0 && Math.abs(dx) >= Math.abs(dy)) return dx < 0 ? 'right' : 'left';
+  return dy > 0 ? 'top' : 'bottom';
 }
 
 export function chosenSide(side, fallback) {
