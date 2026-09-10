@@ -565,7 +565,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         color-mix(in srgb, var(--toolbar-menu-bg) 92%, transparent);
       color: var(--toolbar-text);
       box-shadow: 0 14px 42px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.045);
-      backdrop-filter: blur(16px);
+      backdrop-filter: none;
       pointer-events: none;
       animation: archify-share-cue-enter 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
     }
@@ -1029,6 +1029,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       display: block;
       transform-origin: 0 0;
       transition: transform 0.18s ease;
+      will-change: transform;
+      contain: layout style;
     }
 
     .diagram-container.is-camera-moving svg {
@@ -1054,7 +1056,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       border-radius: 0.58rem;
       background: color-mix(in srgb, var(--toolbar-bg) 82%, transparent);
       box-shadow: 0 5px 14px rgba(0, 0, 0, 0.07);
-      backdrop-filter: blur(10px);
+      backdrop-filter: none;
       scrollbar-width: none;
     }
     .diagram-nav::-webkit-scrollbar { display: none; }
@@ -1192,7 +1194,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       background: var(--toolbar-menu-bg);
       color: var(--toolbar-text);
       box-shadow: 0 16px 42px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(16px);
+      backdrop-filter: none;
       font-size: 0.625rem;
     }
     .overview-map[hidden] { display: none; }
@@ -1351,7 +1353,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       stroke-opacity: 0.86;
       vector-effect: non-scaling-stroke;
       cursor: pointer;
-      transition: fill-opacity 140ms ease, stroke-width 140ms ease, filter 140ms ease;
+      transition: fill-opacity 140ms ease, stroke-width 140ms ease;
     }
     .overview-map-node[data-kind="frontend"],
     .overview-map-node[data-kind="start"] { fill: var(--frontend-stroke); stroke: var(--frontend-stroke); }
@@ -1378,7 +1380,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       stroke-width: 2;
       vector-effect: non-scaling-stroke;
       pointer-events: none;
-      filter: drop-shadow(0 0 3px color-mix(in srgb, var(--frontend-stroke) 54%, transparent));
     }
     .overview-map-hint {
       display: flex;
@@ -1439,7 +1440,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var(--toolbar-menu-bg);
       color: var(--toolbar-text);
       box-shadow: 0 18px 52px rgba(0, 0, 0, 0.36);
-      backdrop-filter: blur(18px);
+      backdrop-filter: none;
       animation: archify-lens-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
     }
     .semantic-lens[hidden] { display: none; }
@@ -1615,7 +1616,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var(--toolbar-menu-bg);
       color: var(--toolbar-text);
       box-shadow: 0 18px 48px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(16px);
+      backdrop-filter: none;
       font-size: 0.625rem;
     }
     .route-probe[hidden] { display: none; }
@@ -1783,7 +1784,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       background: var(--toolbar-menu-bg);
       color: var(--toolbar-text);
       box-shadow: 0 18px 48px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(16px);
+      backdrop-filter: none;
       font-size: 0.6875rem;
     }
     .focus-chip[hidden] { display: none; }
@@ -2141,7 +2142,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var(--toolbar-menu-bg);
       color: var(--toolbar-text);
       box-shadow: 0 22px 64px rgba(0, 0, 0, 0.4);
-      backdrop-filter: blur(18px);
+      backdrop-filter: none;
       animation: archify-guide-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
     }
     .diagram-guide[hidden] { display: none; }
@@ -2332,7 +2333,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       background: var(--toolbar-menu-bg);
       color: var(--toolbar-text);
       box-shadow: 0 6px 8px rgba(0, 0, 0, 0.22);
-      backdrop-filter: blur(16px);
+      backdrop-filter: none;
     }
     .node-finder[hidden] { display: none; }
     .node-finder[data-context="route-source"] {
@@ -2515,7 +2516,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       background: var(--toolbar-bg);
       background: linear-gradient(120deg, var(--toolbar-bg), color-mix(in srgb, var(--toolbar-bg) 82%, var(--frontend-fill)));
       box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16);
-      backdrop-filter: blur(12px);
+      backdrop-filter: none;
     }
     .guided-views[hidden] { display: none; }
 
@@ -3200,7 +3201,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       font-weight: 500;
       cursor: pointer;
       white-space: nowrap;
-      backdrop-filter: blur(10px);
+      backdrop-filter: none;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
       transition: background 0.15s, border-color 0.15s, color 0.15s;
       display: inline-flex;
@@ -4195,9 +4196,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     /* Stable semantic exploration hooks emitted by every renderer. */
     svg [data-node-id] {
       cursor: pointer;
-      transition: opacity 0.18s ease, filter 0.18s ease;
+      transition: opacity 0.18s ease;
     }
-    svg [data-edge-from] { transition: opacity 0.18s ease, filter 0.18s ease; }
+    svg [data-edge-from] { transition: opacity 0.18s ease; }
     svg [data-node-id]:hover,
     svg [data-node-id]:focus-visible {
       filter: drop-shadow(0 0 7px var(--frontend-stroke));
@@ -4211,7 +4212,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .source-evidence-beacon {
       pointer-events: none;
       opacity: 0.76;
-      transition: opacity 160ms ease, filter 160ms ease;
+      transition: opacity 160ms ease;
     }
     .source-evidence-beacon rect {
       fill: color-mix(in srgb, var(--mask) 92%, var(--backend-stroke));
@@ -4246,7 +4247,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       stroke-width: 1.4;
       pointer-events: all;
       vector-effect: non-scaling-stroke;
-      transition: stroke 150ms ease, stroke-width 150ms ease, filter 150ms ease;
+      transition: stroke 150ms ease, stroke-width 150ms ease;
     }
     svg [data-legend-count-badge] { pointer-events: none; }
     svg [data-legend-count-badge] rect {
@@ -4711,7 +4712,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     svg[data-story-beat] [data-story-step] {
       opacity: 0.22;
       filter: saturate(0.42);
-      transition: opacity 180ms ease, filter 180ms ease;
+      transition: opacity 180ms ease;
     }
     svg[data-story-beat] [data-story-step][data-story-beat-state="past"] {
       opacity: 0.72;
