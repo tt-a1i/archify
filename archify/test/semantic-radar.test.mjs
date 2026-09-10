@@ -676,4 +676,60 @@ test('closing a pending Radar request prevents retry and reflow from reopening i
   }
 });
 
+test('Radar reflects camera viewport, status and Focus/Story activity through normal callers', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  render('architecture', CASES.architecture);
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const sessionId = await loadArtifact(browser, path.join(tmp, 'architecture.html'));
+    await browser.cdp.send('Emulation.setEmulatedMedia', { features: [
+      { name: 'prefers-reduced-motion', value: 'reduce' },
+    ] }, sessionId);
+    async function observe(action) {
+      return evaluate(browser, sessionId, `(async () => {
+        ${action}
+        let previous = '', equal = 0;
+        for (let frame = 0; frame < 240; frame += 1) {
+          await new Promise(resolve => requestAnimationFrame(resolve));
+          const viewport = document.querySelector('.overview-map-viewport');
+          const actual = ['x','y','width','height'].map(name => Number(viewport.getAttribute(name)));
+          const logical = Archify.view.logicalViewport();
+          const expected = [logical.x,logical.y,logical.width,logical.height];
+          const active = Array.from(document.querySelectorAll('[data-radar-active]'), node => node.getAttribute('data-radar-node-id')).sort();
+          const status = document.getElementById('overview-map-status').textContent;
+          const state = { actual, expected, active, status, count: Archify.radar.count(), scale: logical.scale,
+            beat: Archify.guidedViews.beat()?.nodeId || null };
+          const value = JSON.stringify(state);
+          equal = value === previous ? equal + 1 : 0; previous = value;
+          if (equal >= 8) return state;
+        }
+        throw new Error('Radar observations did not settle');
+      })()`, true);
+    }
+    const initial = await observe(`window.scrollTo(0, document.querySelector('.diagram-container').offsetTop); Archify.radar.open();`);
+    assert.deepEqual(initial.actual, initial.expected);
+    assert.equal(initial.status, initial.count + ' nodes · full map');
+    const zoomed = await observe(`document.querySelector('[data-view="in"]').click();`);
+    assert.deepEqual(zoomed.actual, zoomed.expected);
+    assert.notDeepEqual(zoomed.actual, initial.actual);
+    assert.equal(zoomed.status, zoomed.count + ' nodes · ' + Math.round(zoomed.scale * 100) + '% viewport');
+    assert.notEqual(zoomed.status, initial.status);
+    assert.deepEqual((await observe(`Archify.focus.set('lb', { toggle:false });`)).active, ['lb']);
+    assert.deepEqual((await observe(`Archify.focus.set('db', { toggle:false });`)).active, ['db']);
+    assert.deepEqual((await observe(`Archify.focus.clear();`)).active, []);
+    await observe(`Archify.guidedViews.activate('request-path');`);
+    const first = await observe(`document.querySelector('[data-story-index="0"]').click(); Archify.focus.clear({ updateUrl:false });`);
+    assert.ok(first.beat);
+    assert.deepEqual(first.active, [first.beat]);
+    const second = await observe(`document.querySelector('[data-story-index="1"]').click(); Archify.focus.clear({ updateUrl:false });`);
+    assert.ok(second.beat);
+    assert.notEqual(second.beat, first.beat);
+    assert.deepEqual(second.active, [second.beat]);
+    assert.deepEqual((await observe(`Archify.guidedViews.showAll();`)).active, []);
+  } finally {
+    await browser.close();
+  }
+});
+
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
