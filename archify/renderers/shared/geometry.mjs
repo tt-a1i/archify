@@ -1291,6 +1291,23 @@ export function defaultToSide(from, to) {
   return dy > 0 ? 'top' : 'bottom';
 }
 
+// Non-architecture renderers retain their established horizontal-first
+// endpoint contract. Architecture opts into dominant-axis inference above so
+// a vertical hub-and-spoke route can use perpendicular automatic ports.
+export function legacyDefaultFromSide(from, to) {
+  if (to.cx < from.cx) return 'left';
+  if (to.cx > from.cx) return 'right';
+  if (to.cy > from.cy) return 'bottom';
+  return 'top';
+}
+
+export function legacyDefaultToSide(from, to) {
+  if (to.cx < from.cx) return 'right';
+  if (to.cx > from.cx) return 'left';
+  if (to.cy > from.cy) return 'top';
+  return 'bottom';
+}
+
 export function chosenSide(side, fallback) {
   return side && side !== 'auto' ? side : fallback;
 }
