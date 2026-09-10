@@ -12,6 +12,7 @@ const fragments = [
   ['/* ARCHIFY:CAMERA */', 'viewer-camera.js'],
   ['/* ARCHIFY:RADAR */', 'semantic-radar.js'],
   ['/* ARCHIFY:MOTION_GOVERNOR */', 'motion-governor.js'],
+  ['/* ARCHIFY:NODE_FINDER */', 'node-finder.js'],
   ['/* ARCHIFY:EXPORT_CLEANUP */', 'export-cleanup.js'],
 ];
 

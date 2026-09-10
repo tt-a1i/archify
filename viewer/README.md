@@ -3,7 +3,8 @@
 Edit `reader-layout.js` for Adaptive Reader Layout, `viewer-chrome-layout.js`
 for navigation clearance, `viewer-camera.js` for camera interactions and
 transactions, `semantic-radar.js` for the overview map, `motion-governor.js` for
-motion mode and ownership, `export-cleanup.js` for SVG export cleanup, and
+motion mode and ownership, `node-finder.js` for node search and endpoint picking,
+`export-cleanup.js` for SVG export cleanup, and
 `template.source.html` for the rest of the Viewer.
 `archify/assets/template.html` is the committed
 generated artifact, consumed unchanged by all five renderers and the installed
@@ -12,11 +13,72 @@ Skill. These maintainer sources live outside the packaged `archify/` directory.
 From `archify/`, run `npm run generate:viewer` after editing any source.
 `npm run check:viewer` verifies freshness without writing; `npm test` includes
 that check. Assembly inserts each fragment verbatim at its fixed marker.
-Reader, Chrome Layout, Camera, Radar and Motion Governor extractions preserve delivered HTML bytes. Export cleanup adds a
+Reader, Chrome Layout, Camera, Radar, Motion Governor and Finder extractions preserve delivered HTML bytes. Export cleanup adds a
 private function and a call, changing script bytes but preserving cleanup order
 and SVG output. All fragments retain classic-script scope and initialization order.
 Generated output is not a second editing
 surface; release identity changes also belong in `template.source.html`.
+
+## Node Finder contract
+
+The complete IIFE initializes once after Presentation and before Route Probe.
+It uses the existing classic-script scope and renders the initial list at that
+position. Its interface is `open`, `close`, `toggle`, `select`, `isOpen`,
+`context`, and the numeric `count` property. There is no mount/unmount API.
+
+- Finder owns its initial semantic-node index, visible result list, context,
+  panel rendering and page-lifetime listeners. `count` is the initial index
+  size, not the current result count. Changing the SVG later does not reindex.
+- Initialization requires the diagram SVG, Finder controls, Source Evidence
+  and the shared `viewerText`, `viewerCount`, and `viewerKindLabel` functions.
+  Source Evidence supplies search metadata; Finder does not verify repositories.
+  Route Probe and Semantic Lens initialize later, so their references remain
+  runtime `Archify.*` lookups with the existing availability checks.
+- Search preserves authored DOM order and the existing ID, label, type, text,
+  metadata, brand and source-reference matching. Queries are trimmed and
+  lowercased for substring matching. Connections are counted by distinct
+  directed from/to pairs, not edge keys or distinct neighbors.
+- Context comes from explicit `options.context`, otherwise the current Route
+  Probe picker, otherwise focus defaults. Requested fields shallowly override
+  defaults. `allowedIds: null` leaves all items available; `[]` leaves none.
+  This filters results only: public `select(id)` still searches the whole index.
+- Opening rejects embed before other work, clears Lens preview, closes Export
+  and Lens as currently implemented, resolves context, updates controls and
+  clears the query, then schedules input focus with rAF. Reopening repeats this
+  work. It does not establish a global exclusive-panel coordinator.
+- Closing hides the panel, clears the input and updates `aria-expanded`, but
+  retains context and rendered results until the next open/render. Ordinary
+  close returns focus to the trigger unless `restoreFocus:false`; route close
+  delegates focus and docking to Route Probe. Repeated close and pending input
+  focus retain their current ordering; there is no rAF cancellation mechanism.
+- Ordinary selection runs Guided Views `showAll({clearFocus:false,
+  updateUrl:false})`, Camera `reset({automatic:true})`, Focus
+  `set(id,{toggle:false})`, then Camera `reveal([id],{includeNeighbors:true,
+  reason:'finder'})`, preserving optional checks and order. It closes without
+  restoring trigger focus and focuses the node with the existing preventScroll
+  fallback. An unknown ID returns false before these actions.
+- Route-source/target selection delegates to Route Probe `choose`. Missing or
+  rejected choices return false without the success path. A resulting target
+  state requests Camera reveal with `reason:'route-pick'`; then Finder closes
+  and focuses the node. This branch does not directly call ordinary Focus or
+  Guided View selection; global event handlers retain their own effects.
+- Finder writes panel `hidden`/`data-context`, trigger `aria-expanded`, title,
+  input placeholder, list ARIA, result children, empty-state visibility and
+  status text. Route Probe owns its `data-finder-open` attribute through
+  `finderOpening`/`finderClosed`. Existing HTML/CSS remain in the template.
+- Input ArrowDown enters results and Enter selects the first visible result;
+  result arrows wrap and Home/End move to the endpoints. Escape prevents default
+  and stops propagation before closing. Outside clicks close without restoring
+  focus, except the existing `[data-node-finder-trigger]` exemption. Global `/`
+  handling, Guide and Route callers remain outside Finder. The dialog stays
+  non-modal; no focus trap or keyboard adapter is introduced.
+
+`finder.test.mjs` retains generated-output checks; `finder-browser.test.mjs`
+exercises five-mode initialization, trusted keyboard/mouse input, real Route
+source/target collaboration, retained context, panel cleanup, themes, constrained
+layout, reduced motion and SVG export. Its metadata fixture isolates search
+inputs; it does not claim repository verification or brand-rendering coverage.
+The source split narrows maintenance scope while preserving runtime dependencies.
 
 ## Reader contract
 
