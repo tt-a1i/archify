@@ -49,14 +49,19 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     return result.result?.value;
   }
   let startup;
+  let navigationId = 0;
   async function media(reduced) {
     await send('Emulation.setEmulatedMedia', { media: '', features: [
       { name: 'prefers-reduced-motion', value: reduced ? 'reduce' : 'no-preference' },
     ] });
   }
   async function load(mode = 'architecture', { theme = 'dark', reduced = false, fixture = '', preserveStorage = false, query = '' } = {}) {
+    const expectedNavigation = ++navigationId;
     if (startup) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: startup });
     ({ identifier: startup } = await send('Page.addScriptToEvaluateOnNewDocument', { source: `
+      window.motionNavigation = ${expectedNavigation};
+      try { window.motionStartupPreference = localStorage.getItem('archify-motion'); }
+      catch (error) { window.motionStartupPreference = String(error); }
       window.motionErrors = []; window.motionEnds = []; window.motionAmbient = [];
       addEventListener('error', e => motionErrors.push(e.message));
       addEventListener('unhandledrejection', e => motionErrors.push(String(e.reason)));
@@ -83,9 +88,11 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
     await media(reduced);
     const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
-    await send('Page.navigate', { url: pathToFileURL(files[mode]).href + `?theme=${theme}${query}` });
+    const navigation = await send('Page.navigate', { url: pathToFileURL(files[mode]).href + `?theme=${theme}&testNavigation=${expectedNavigation}${query}` });
+    assert.ok(navigation.loaderId, 'Motion fixture must load a new document.');
     await loaded;
     await run('document.fonts.ready');
+    assert.equal(await run('window.motionNavigation'), expectedNavigation, 'Motion fixture document identity');
   }
   async function snapshot(label) {
     const value = await run(`(() => {
@@ -138,8 +145,11 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     await load();
     assert.equal(await run('Archify.motionGovernor.pause()'), true);
     assert.equal(await run(`localStorage.getItem('archify-motion')`), 'still');
-    await load('architecture', { preserveStorage: true });
-    assert.equal((await snapshot('stored-still')).mode, 'still');
+    for (let reload = 0; reload < 5; reload++) {
+      await load('architecture', { preserveStorage: true });
+      const stored = await run(`({initial:motionStartupPreference,current:localStorage.getItem('archify-motion'),navigation:motionNavigation,url:location.href})`);
+      assert.equal((await snapshot('stored-still-' + reload)).mode, 'still', JSON.stringify(stored));
+    }
     assert.equal(await run(`Archify.motionGovernor.setMode('live', {persist:false})`), 'live');
     assert.equal(await run(`localStorage.getItem('archify-motion')`), 'still');
     assert.equal(await run('Archify.motionGovernor.resume()'), false);
