@@ -1275,7 +1275,8 @@ export function automaticPortSpread(relations, boxes, { gutter = 16, maxSpacing 
 // leaves sideways: a hub above an offset spoke has both a horizontal and a
 // larger vertical delta, and the router draws the vertical dogleg. Compare the
 // deltas so the inferred side matches the axis the route actually uses. Equal
-// deltas, and a zero horizontal delta, keep the previous vertical result.
+// deltas select horizontal sides; dx === 0 preserves the previous vertical
+// result, while a vertical-dominant nonzero dx selects vertical sides.
 export function defaultFromSide(from, to) {
   const dx = to.cx - from.cx;
   const dy = to.cy - from.cy;

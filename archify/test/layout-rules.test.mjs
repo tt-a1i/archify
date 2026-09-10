@@ -73,6 +73,31 @@ function validateCli(mode, doc, quality = 'showcase') {
   }
 }
 
+function deliverCli(mode, doc, quality = 'showcase') {
+  const input = path.join(tmp, `${mode}-deliver-${Math.abs(hash(JSON.stringify(doc)))}.json`);
+  const outPath = path.join(tmp, `${mode}-deliver-${Math.abs(hash(JSON.stringify(doc)))}.html`);
+  fs.writeFileSync(input, JSON.stringify(doc));
+  try {
+    const stdout = execFileSync('node', [
+      path.join(skillRoot, 'bin', 'archify.mjs'),
+      'deliver',
+      mode,
+      input,
+      outPath,
+      '--quality',
+      quality,
+      '--json',
+    ], { encoding: 'utf8' });
+    return { code: 0, result: JSON.parse(stdout), outPath };
+  } catch (err) {
+    return {
+      code: err.status ?? 1,
+      result: JSON.parse(String(err.stdout || '{}')),
+      outPath,
+    };
+  }
+}
+
 function hash(s) {
   let h = 0;
   for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) | 0;
@@ -1381,6 +1406,13 @@ test('architecture: an inferred side follows the dominant axis for a hub above a
   // The CLI validation surface agrees with the renderer.
   const cli = validateCli('architecture', doc, 'standard');
   assert.equal(cli.code, 0, `validate must accept the inferred vertical route: ${JSON.stringify(cli.result)}`);
+
+  // The public delivery path must accept the same inferred route and verify
+  // the committed artifact, without authored side, route, or via fields.
+  const delivery = deliverCli('architecture', doc, 'standard');
+  assert.equal(delivery.code, 0, `deliver must accept the inferred vertical route: ${JSON.stringify(delivery.result)}`);
+  assert.equal(delivery.result.ok, true);
+  assert.equal(fs.existsSync(delivery.outPath), true);
 });
 
 test('dataflow: stage border run is blocking and the inter-stage gutter passes', () => {
