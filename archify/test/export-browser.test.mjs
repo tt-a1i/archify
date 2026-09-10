@@ -55,6 +55,20 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
     if(capture)HTMLCanvasElement.prototype.captureStream=function(...args){const stream=capture.apply(this,args);exportTracks.push(...stream.getTracks());return stream;};
     const cancel=window.cancelAnimationFrame;
     window.cancelAnimationFrame=id=>{exportCancelled.push(id);return cancel(id);};
+    // Activation can survive asynchronous work. Observe the actual handler
+    // stack so even a microtask cannot masquerade as synchronous construction.
+    window.copyInClickHandler=false;
+    const listen=EventTarget.prototype.addEventListener;
+    EventTarget.prototype.addEventListener=function(type,listener,options){
+      if(this.id==='export-menu'&&type==='click'&&typeof listener==='function'){
+        const handler=listener;
+        listener=function(event){
+          copyInClickHandler=true;
+          try{return handler.call(this,event);}finally{copyInClickHandler=false;}
+        };
+      }
+      return listen.call(this,type,listener,options);
+    };
     window.exportWait=predicate=>new Promise((resolve,reject)=>{const start=performance.now();function poll(){if(predicate())return resolve();if(performance.now()-start>12000)return reject(new Error('Export observation timed out'));setTimeout(poll,20);}poll();});
     const fault=new URL(location.href).searchParams.get('fault');
     if(fault==='unsupported'){window.MediaRecorder=undefined;window.ClipboardItem=undefined;HTMLCanvasElement.prototype.toDataURL=()=> 'data:image/png;base64,';}
@@ -179,13 +193,14 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
     for (const action of ['copy','copy-share-card']) for (const mode of ['promise','fallback','reject']) {
       await load();
       await run(`window.copyCalls=[];window.copyDone=false;window.copyBlob=null;
-        window.ClipboardItem=class {constructor(data){const value=data['image/png'];copyCalls.push({promise:value instanceof Promise,gesture:navigator.userActivation.isActive});if(${JSON.stringify(mode)}==='fallback'&&value instanceof Promise)throw new Error('promise unsupported');this.value=value;}};
+        window.ClipboardItem=class {constructor(data){const value=data['image/png'];copyCalls.push({promise:value instanceof Promise,gesture:navigator.userActivation.isActive,inClickHandler:copyInClickHandler});if(${JSON.stringify(mode)}==='fallback'&&value instanceof Promise)throw new Error('promise unsupported');this.value=value;}};
         Object.defineProperty(navigator,'clipboard',{configurable:true,value:{write(items){copyCalls.push({write:true});if(${JSON.stringify(mode)}==='reject'){copyDone=true;return Promise.reject(new Error('clipboard denied'));}return Promise.resolve(items[0].value).then(blob=>{copyBlob=blob;copyDone=true;});}}});
         document.querySelector('[data-action="${action}"]').disabled=false;Archify.exportMenu.open();`);
       await click(`[data-action="${action}"]`);
       await run(`exportWait(()=>copyDone&&(${JSON.stringify(mode)}==='reject'?exportAlerts.length>0:${JSON.stringify(action)}==='copy-share-card'?document.documentElement.hasAttribute('data-last-export-format'):document.querySelector('.archify-toast').textContent.length>0))`);
       const calls = await run('copyCalls');
-      assert.deepEqual(calls[0], { promise: true, gesture: true });
+      assert.deepEqual(calls[0], { promise: true, gesture: true, inClickHandler: true });
+      if (mode === 'fallback') assert.equal(calls[1].inClickHandler, false, 'Blob fallback remains asynchronous');
       assert.deepEqual(calls.map(c=>c.write?'write':c.promise?'promise':'blob'), mode === 'fallback' ? ['promise','blob','write'] : ['promise','write']);
       const state = await record(action + '-' + mode);
       assert.equal(state.active, 'btn-export');
