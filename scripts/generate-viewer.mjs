@@ -10,6 +10,7 @@ const fragments = [
   ['/* ARCHIFY:READER_LAYOUT */', 'reader-layout.js'],
   ['/* ARCHIFY:CHROME_LAYOUT */', 'viewer-chrome-layout.js'],
   ['/* ARCHIFY:CAMERA */', 'viewer-camera.js'],
+  ['/* ARCHIFY:RADAR */', 'semantic-radar.js'],
   ['/* ARCHIFY:EXPORT_CLEANUP */', 'export-cleanup.js'],
 ];
 

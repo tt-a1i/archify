@@ -2,7 +2,7 @@
 
 Edit `reader-layout.js` for Adaptive Reader Layout, `viewer-chrome-layout.js`
 for navigation clearance, `viewer-camera.js` for camera interactions and
-transactions, `export-cleanup.js` for SVG export cleanup, and
+transactions, `semantic-radar.js` for the overview map, `export-cleanup.js` for SVG export cleanup, and
 `template.source.html` for the rest of the Viewer.
 `archify/assets/template.html` is the committed
 generated artifact, consumed unchanged by all five renderers and the installed
@@ -11,7 +11,7 @@ Skill. These maintainer sources live outside the packaged `archify/` directory.
 From `archify/`, run `npm run generate:viewer` after editing any source.
 `npm run check:viewer` verifies freshness without writing; `npm test` includes
 that check. Assembly inserts each fragment verbatim at its fixed marker.
-Reader, Chrome Layout and Camera extractions preserve delivered HTML bytes. Export cleanup adds a
+Reader, Chrome Layout, Camera and Radar extractions preserve delivered HTML bytes. Export cleanup adds a
 private function and a call, changing script bytes but preserving cleanup order
 and SVG output. All fragments retain classic-script scope and initialization order.
 Generated output is not a second editing
@@ -150,6 +150,66 @@ layout stability are different observations. `finished` is not a page-wide
 stability promise. CSS transitions and the clip sampler remain coordinated with
 the existing layout feedback. Extraction localizes camera maintenance without
 removing these runtime dependencies.
+
+## Semantic Radar contract
+
+`semantic-radar.js` initializes `Archify.radar` once after Camera and before
+Presentation. It captures the diagram container and direct-child SVG, initial
+viewBox, map panel/surface/controls, navigation and optional Passport. It creates
+one runtime map SVG outside the canonical diagram and schedules the initial
+node build. Reopening rebuilds node rectangles without appending another map SVG.
+The shared `viewerText` helper and the existing HTML/CSS stay in the shell.
+
+The interface remains `open`, `close`, `toggle`, `sync`, `focus`, `isOpen`, and
+`count`. `isOpen()` reports requested intent, not panel visibility: unavailable
+space can leave intent true while the panel is hidden and aria-expanded is false.
+`open()` returns true even in that state; `close(options)` returns false and
+optionally restores focus to the trigger. `toggle()` switches intent without
+requesting surface focus. `sync()` immediately retries a requested hidden panel;
+otherwise it coalesces work into one animation frame. It is not a stability Promise.
+
+`focus(id)` returns whether the main node was found and actions were issued, not
+whether navigation finished. It preserves Guided Views expansion, Focus selection,
+Camera reveal, delayed page scrolling and main-node focus. `count()` reflects the
+last build; it may be zero before the initial frame or with invalid geometry.
+Failed getBBox calls and non-positive boxes are skipped. Required DOM and input
+assumptions are unchanged.
+
+| State / dependency | Ownership and coordination |
+| --- | --- |
+| Open intent, panel hidden, trigger ARIA/labels/title and space feedback | Radar owns them. A hidden requested panel can recover on retry or reflow. Close clears intent and retries. |
+| Manual position and last placement; dock/side/compact/placement attributes; `--archify-radar-left/right/top` | Radar owns placement. Close clears current docking styles but retains position memory. Reopening or resizing can constrain it to current geometry. |
+| Panel drag and viewport drag | Titlebar input moves the panel; surface input calls Camera. Pointer matching, capture/release and cancellation retain their separate rules. `is-panning` is shared with Camera. |
+| Passport `data-radar-yielded` and saved `aria-hidden` | During compact expansion Radar can yield Passport space. Restoration reinstates the exact original attribute value, or removes it if originally absent. |
+| Map nodes, viewport rectangle, activity markers and status | Derived from main-node bounds, Camera logicalViewport, Focus and Story state. Authored SVG geometry, viewBox and semantic IDs are not rewritten. |
+| Sync frame, space retry and resize/scroll/ResizeObserver subscriptions | Page lifetime; no destroy method. Hidden-panel-only observer notifications are ignored to avoid a retry loop. |
+
+Placement retains normal, compact and unavailable fallbacks. Navigation, Passport
+and legend are hard blockers; active nodes are soft blockers. Manual position
+priority, candidate scoring, clamping, gap and rounding remain private Radar
+implementation. Cancelling titlebar drag restores the previous position intent
+and recomputes placement in the current layout; it need not restore identical
+pixels after geometry changes. Capture-phase Escape cancels titlebar dragging
+before the global close shortcut. Surface pointercancel ends its drag without
+restoring the previous camera state.
+
+Compact expansion may hide Passport temporarily. Failed expansion, returning to
+compact, unavailable space and closing restore it through their existing paths.
+Space retry permits four 60ms attempts per round; success and external reflow
+can reset the count. Close clears that timer and both drag records, hides the
+panel and removes the shared panning class. It does not cancel the already queued
+sync frame (which checks hidden), the untracked delayed node-scroll callback, or
+universally remove every drag attribute. In particular, `data-dragging` is removed
+by the surface drag-end handler, not by the close/reset-docking path.
+
+Camera and Focus notify Radar to sync. Radar consumes Camera logicalViewport and
+calls centerAt/reveal; opening clears Semantic Lens preview and closes that panel
+as before. Route, Semantic Lens, Guide and global keyboard handlers keep their
+existing mutual-exclusion and focus rules. Reader's wide-diagram classification
+and Chrome's navigation reserve affect measured placement without transferring
+ownership. Embed/print and narrow-screen presentation retain their existing CSS
+and caller rules, rather than a new universal Radar eligibility gate. Export
+continues cloning only the canonical diagram, excluding the runtime map SVG.
 
 ## Export cleanup contract
 
