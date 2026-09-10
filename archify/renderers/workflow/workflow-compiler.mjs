@@ -103,6 +103,34 @@ function createLegacyLayout() {
   };
 }
 
+function hasAbsoluteWorkflowPins(workflow) {
+  return asArray(workflow.edges).some((edge) => (
+    Array.isArray(edge.via)
+    || Array.isArray(edge.labelAt)
+    || edge.channelX !== undefined
+    || edge.channelY !== undefined
+  ));
+}
+
+function hasVerticalStack(workflow) {
+  const offsetsByLaneAndColumn = new Map();
+  for (const node of asArray(workflow.nodes)) {
+    if (!Number.isInteger(node.col)) continue;
+    const key = `${node.lane}\u0000${node.col}`;
+    const offsets = offsetsByLaneAndColumn.get(key) || new Set();
+    offsets.add(Number(node.yOffset) || 0);
+    if (offsets.size > 1) return true;
+    offsetsByLaneAndColumn.set(key, offsets);
+  }
+  return false;
+}
+
+function usesIndependentLaneMeasurement(workflow) {
+  return hasVerticalStack(workflow)
+    && !workflow.meta?.viewBox
+    && !hasAbsoluteWorkflowPins(workflow);
+}
+
 function authoredNodeWidth(node) {
   return Number.isFinite(node?.width) ? node.width : 92;
 }
@@ -472,27 +500,45 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
       widthContributors.add(`lane ${widestLaneLabel.lane.id || widestLaneLabel.lane.label} label width`);
     }
   }
-  let maxVerticalExtent = 0;
-  const verticalExtentContributors = new Set();
-  for (const node of nodes) {
-    const yOffset = Number(node.yOffset) || 0;
-    const extent = authoredNodeHeight(node) / 2 + Math.abs(yOffset);
-    const contributor = `node ${node.id} height ${authoredNodeHeight(node)}px${yOffset ? ` with yOffset ${yOffset}px` : ''}`;
-    if (extent > maxVerticalExtent + 0.0001) {
-      maxVerticalExtent = extent;
-      verticalExtentContributors.clear();
-      verticalExtentContributors.add(contributor);
-    } else if (Math.abs(extent - maxVerticalExtent) <= 0.0001) {
-      verticalExtentContributors.add(contributor);
+  const verticalExtent = (laneId) => {
+    let maximum = 0;
+    const contributors = new Set();
+    for (const node of nodes) {
+      if (laneId !== undefined && node.lane !== laneId) continue;
+      const yOffset = Number(node.yOffset) || 0;
+      const extent = authoredNodeHeight(node) / 2 + Math.abs(yOffset);
+      const contributor = `node ${node.id} height ${authoredNodeHeight(node)}px${yOffset ? ` with yOffset ${yOffset}px` : ''}`;
+      if (extent > maximum + 0.0001) {
+        maximum = extent;
+        contributors.clear();
+        contributors.add(contributor);
+      } else if (Math.abs(extent - maximum) <= 0.0001) {
+        contributors.add(contributor);
+      }
     }
+    return { maximum, contributors };
+  };
+  const sharedVerticalExtent = verticalExtent();
+  const laneH = 30 + Math.max(74, Math.ceil(sharedVerticalExtent.maximum * 2 + 8));
+  const independentLaneMeasurement = usesIndependentLaneMeasurement(workflow);
+  const laneBaseHeights = asArray(workflow.lanes).map((lane) => {
+    if (!independentLaneMeasurement) return laneH;
+    const ownVerticalExtent = verticalExtent(lane.id);
+    const height = 30 + Math.max(74, Math.ceil(ownVerticalExtent.maximum * 2 + 8));
+    if (height > 104) {
+      for (const contributor of ownVerticalExtent.contributors) heightContributors.add(contributor);
+    }
+    return height;
+  });
+  if (!independentLaneMeasurement && laneH > 104) {
+    for (const contributor of sharedVerticalExtent.contributors) heightContributors.add(contributor);
   }
-  const baseContentH = Math.max(74, Math.ceil(maxVerticalExtent * 2 + 8));
-  const laneH = 30 + baseContentH;
   const groupsByLane = new Map();
   for (const group of asArray(workflow.groups)) {
     groupsByLane.set(group.lane, [...(groupsByLane.get(group.lane) || []), group]);
   }
-  const groupLaneReserves = asArray(workflow.lanes).map((lane) => {
+  const groupLaneReserves = asArray(workflow.lanes).map((lane, laneIndex) => {
+    const baseContentH = laneBaseHeights[laneIndex] - 30;
     let header = 0;
     let footer = 0;
     for (const group of groupsByLane.get(lane.id) || []) {
@@ -523,7 +569,9 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
   });
   const groupHeaderHeights = groupLaneReserves.map(({ header }) => header);
   const groupFooterHeights = groupLaneReserves.map(({ footer }) => footer);
-  const laneHeights = groupLaneReserves.map(({ header, footer }) => laneH + header + footer);
+  const laneHeights = groupLaneReserves.map(({ header, footer }, index) => (
+    laneBaseHeights[index] + header + footer
+  ));
   const laneGap = Math.max(20, Math.ceil(layoutFeedback.laneGapMin || 0));
   for (const [index, reserve] of groupHeaderHeights.entries()) {
     if (!reserve) continue;
@@ -534,9 +582,6 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     if (!reserve) continue;
     const lane = asArray(workflow.lanes)[index];
     heightContributors.add(`lane ${lane.id || lane.label} group frame containment ${reserve}px`);
-  }
-  if (laneH > 104) {
-    for (const contributor of verticalExtentContributors) heightContributors.add(contributor);
   }
   if (laneGap > 20) {
     for (const contributor of asArray(layoutFeedback.laneGapContributors)) {
@@ -4097,12 +4142,7 @@ function finalizeReadableViewBox() {
   ];
   const outsideOrigin = bounds.left < 0 || bounds.top < 0;
   if (outsideOrigin) {
-    const hasAbsolutePins = workflow.edges.some((edge) => (
-      Array.isArray(edge.via)
-      || Array.isArray(edge.labelAt)
-      || edge.channelX !== undefined
-      || edge.channelY !== undefined
-    ));
+    const hasAbsolutePins = hasAbsoluteWorkflowPins(workflow);
     const message = `Workflow geometry extends above or left of the viewBox origin (${Math.round(bounds.left)}, ${Math.round(bounds.top)}).`;
     throwDiagnosticError(message, [{
       code: hasAbsolutePins ? 'workflow/explicit-pin-conflict' : 'workflow/solver-budget-exhausted',
@@ -4246,7 +4286,13 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(workflow.meta, 'workflow diagram')}>
+  const readerFit = workflow.schema_version === 2
+    && !workflow.meta?.viewBox
+    && hasVerticalStack(workflow)
+    && asArray(layout.laneHeights).some((height) => height > 104)
+    ? ' data-reader-fit="intrinsic-height"'
+    : '';
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit} ${svgRootAttrs(workflow.meta, 'workflow diagram')}>
 ${svgAccessibleText(workflow.meta, 'workflow')}
 ${renderDefinitions()}
 

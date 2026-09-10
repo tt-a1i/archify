@@ -727,10 +727,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       color: var(--frontend-stroke);
     }
 
-    /* The reader owns only the outer scale. Wide diagrams keep one authored
-       SVG/viewBox while the runtime chooses a desktop width from the actual
-       vertical budget. This avoids device-specific files and breakpoint
-       jumps between a laptop and a tall monitor. */
+    /* The reader owns only the outer scale. Wide diagrams and measured tall
+       workflows keep one authored SVG/viewBox while the runtime
+       chooses a desktop width from the actual vertical budget. This avoids
+       device-specific files and breakpoint jumps between a laptop and a tall
+       monitor. */
     .container {
       width: 100%;
       max-width: var(--archify-reader-width, 1440px);
@@ -11025,10 +11026,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     /* ============================================================
        Adaptive Reader Shell — one diagram across laptop and monitor.
        The canonical SVG and viewBox never change. On ordinary desktop pages,
-       wide diagrams receive only enough outer width to use the available
-       height without pushing summary cards below the viewport. Mobile,
-       embed, presentation, print, and non-wide diagrams retain their own
-       established layout contracts.
+       wide diagrams and measured intrinsic tall workflows receive
+       only enough outer width to use the available height without pushing
+       summary cards below the viewport. Mobile, embed, presentation, print,
+       and unmarked non-wide diagrams retain their established contracts.
        ============================================================ */
     Archify.waitForStableLayout = function (options) {
       options = options || {};
@@ -11081,6 +11082,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var cards = shell && shell.querySelector('.cards');
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
+      var measuredHeightFit = svg && svg.getAttribute('data-reader-fit') === 'intrinsic-height';
       var frame = 0;
       var settleFrame = 0;
       var lastWidth = 0;
@@ -11088,6 +11090,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var MIN_DESKTOP_WIDTH = 1024;
       var MIN_READER_WIDTH = 960;
       var MAX_READER_WIDTH = 1920;
+      var MIN_PROJECTED_NODE_TEXT_PX = 6;
       var SAFE_BOTTOM_GAP = 12;
 
       if (diagram && ratio >= WIDE_RATIO) {
@@ -11107,9 +11110,24 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var style = window.getComputedStyle(element);
         return element.getBoundingClientRect().height + number(style.marginTop) + number(style.marginBottom);
       }
+      function minimumReadableScale() {
+        var sourceMinimum = null;
+        Array.from(svg.querySelectorAll(
+          'text[data-node-label], text[data-boundary-label], text[data-detail="context"]'
+        )).forEach(function (text) {
+          if (text.getAttribute('data-detail') === 'context' && !text.closest('[data-node-id]')) return;
+          var sourceFontPx = parseFloat(text.getAttribute('font-size') || '');
+          if (Number.isFinite(sourceFontPx)) {
+            sourceMinimum = sourceMinimum == null ? sourceFontPx : Math.min(sourceMinimum, sourceFontPx);
+          }
+        });
+        return sourceMinimum != null
+          ? Math.min(1, MIN_PROJECTED_NODE_TEXT_PX / sourceMinimum)
+          : 1;
+      }
       function eligible() {
         return Boolean(
-          shell && diagram && svg && ratio >= WIDE_RATIO &&
+          shell && diagram && svg && (ratio >= WIDE_RATIO || measuredHeightFit) &&
           window.innerWidth >= MIN_DESKTOP_WIDTH &&
           html.getAttribute('data-embed') !== 'true' &&
           html.getAttribute('data-present') !== 'true' &&
@@ -11169,7 +11187,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         var chrome = chromeMetrics();
         var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
-        var minWidth = Math.min(MIN_READER_WIDTH, viewportCap);
+        var readableWidth = viewBox && viewBox.width > 0
+          ? viewBox.width * minimumReadableScale() + chrome.diagramX
+          : MIN_READER_WIDTH;
+        var minWidth = Math.min(
+          measuredHeightFit && ratio < WIDE_RATIO ? readableWidth : MIN_READER_WIDTH,
+          viewportCap
+        );
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
           outerHeight(header) + outerHeight(guided) + outerHeight(cards);
