@@ -6,6 +6,23 @@ on:
   pull_request:
 
 jobs:
+  native-storage-diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: browser-actions/setup-chrome@v2
+        id: chrome
+        with:
+          chrome-version: stable
+          install-dependencies: true
+      - run: node archify/test/native-storage-diagnostic.mjs
+        env:
+          ARCHIFY_CHROME: ${{ steps.chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
+
   test:
     runs-on: ubuntu-latest
     strategy:
