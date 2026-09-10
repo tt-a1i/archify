@@ -22,6 +22,10 @@ jobs:
         env:
           ARCHIFY_CHROME: ${{ steps.chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - run: node --test archify/test/motion-governor-browser.test.mjs
+        env:
+          ARCHIFY_CHROME: ${{ steps.chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
 
   test:
     runs-on: ubuntu-latest

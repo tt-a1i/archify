@@ -59,6 +59,7 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     const expectedNavigation = ++navigationId;
     if (startup) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: startup });
     ({ identifier: startup } = await send('Page.addScriptToEvaluateOnNewDocument', { source: `
+      window.motionStartupRuns = (window.motionStartupRuns || []).concat(${expectedNavigation});
       window.motionNavigation = ${expectedNavigation};
       try { window.motionStartupPreference = localStorage.getItem('archify-motion'); }
       catch (error) { window.motionStartupPreference = String(error); }
@@ -147,7 +148,7 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     assert.equal(await run(`localStorage.getItem('archify-motion')`), 'still');
     for (let reload = 0; reload < 5; reload++) {
       await load('architecture', { preserveStorage: true });
-      const stored = await run(`({initial:motionStartupPreference,current:localStorage.getItem('archify-motion'),navigation:motionNavigation,url:location.href})`);
+      const stored = await run(`({scripts:motionStartupRuns,initial:motionStartupPreference,current:localStorage.getItem('archify-motion'),navigation:motionNavigation,url:location.href})`);
       assert.equal((await snapshot('stored-still-' + reload)).mode, 'still', JSON.stringify(stored));
     }
     assert.equal(await run(`Archify.motionGovernor.setMode('live', {persist:false})`), 'live');
