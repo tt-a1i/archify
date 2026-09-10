@@ -530,6 +530,37 @@ test('defaultFromSide / defaultToSide are mirror pairs', () => {
   assert.equal(defaultToSide(a, below), 'top');
 });
 
+test('defaultFromSide / defaultToSide follow the dominant axis, not any horizontal delta', () => {
+  // A hub above an offset spoke: the centres differ horizontally, but the
+  // vertical delta dominates, so the router draws the vertical dogleg and the
+  // inferred sides must be bottom/top (issue #376). Every mirror pair is
+  // asserted together so a regression cannot silently flip one endpoint.
+  const hub = { cx: 288, cy: 66 };
+  const spoke = { cx: 124, cy: 266 }; // dx = -164, dy = +200
+  assert.equal(defaultFromSide(hub, spoke), 'bottom');
+  assert.equal(defaultToSide(hub, spoke), 'top');
+
+  const spokeToHub = { from: spoke, to: hub };
+  assert.equal(defaultFromSide(spokeToHub.from, spokeToHub.to), 'top');
+  assert.equal(defaultToSide(spokeToHub.from, spokeToHub.to), 'bottom');
+
+  // Equal deltas keep the horizontal side (previous behaviour preserved).
+  const diagonal = { cx: 100, cy: 100 };
+  assert.equal(defaultFromSide({ cx: 0, cy: 0 }, diagonal), 'right');
+  assert.equal(defaultToSide({ cx: 0, cy: 0 }, diagonal), 'left');
+
+  // A pure vertical delta must still resolve vertically, never to a side.
+  assert.equal(defaultFromSide({ cx: 50, cy: 0 }, { cx: 50, cy: 100 }), 'bottom');
+  assert.equal(defaultToSide({ cx: 50, cy: 0 }, { cx: 50, cy: 100 }), 'top');
+  assert.equal(defaultFromSide({ cx: 50, cy: 0 }, { cx: 50, cy: -100 }), 'top');
+  assert.equal(defaultToSide({ cx: 50, cy: 0 }, { cx: 50, cy: -100 }), 'bottom');
+
+  // Coincident centres stay on the vertical fallback (top/bottom), matching
+  // the pre-existing dx === 0 / dy === 0 behaviour.
+  assert.equal(defaultFromSide({ cx: 7, cy: 7 }, { cx: 7, cy: 7 }), 'top');
+  assert.equal(defaultToSide({ cx: 7, cy: 7 }, { cx: 7, cy: 7 }), 'bottom');
+});
+
 test('chosenSide treats explicit "auto" as "use the geometric fallback"', () => {
   assert.equal(chosenSide('left', 'right'), 'left');
   assert.equal(chosenSide('auto', 'right'), 'right');

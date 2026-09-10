@@ -73,6 +73,31 @@ function validateCli(mode, doc, quality = 'showcase') {
   }
 }
 
+function deliverCli(mode, doc, quality = 'showcase') {
+  const input = path.join(tmp, `${mode}-deliver-${Math.abs(hash(JSON.stringify(doc)))}.json`);
+  const outPath = path.join(tmp, `${mode}-deliver-${Math.abs(hash(JSON.stringify(doc)))}.html`);
+  fs.writeFileSync(input, JSON.stringify(doc));
+  try {
+    const stdout = execFileSync('node', [
+      path.join(skillRoot, 'bin', 'archify.mjs'),
+      'deliver',
+      mode,
+      input,
+      outPath,
+      '--quality',
+      quality,
+      '--json',
+    ], { encoding: 'utf8' });
+    return { code: 0, result: JSON.parse(stdout), outPath };
+  } catch (err) {
+    return {
+      code: err.status ?? 1,
+      result: JSON.parse(String(err.stdout || '{}')),
+      outPath,
+    };
+  }
+}
+
 function hash(s) {
   let h = 0;
   for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) | 0;
@@ -1337,6 +1362,57 @@ test('architecture: container border run is blocking in standard and showcase', 
     assert.match(stderr, /\[composition\/container-border-run\] architecture connections\[1\] id "jwt-verification"/);
     assert.match(stderr, /security-group "sg-api :443\/:8000" top border/);
   }
+});
+
+test('architecture: an inferred side follows the dominant axis for a hub above an offset spoke', () => {
+  // Regression for issue #376. The hub sits above the spoke with a horizontal
+  // offset (dx = -164, dy = +200). The router draws a vertical dogleg out of
+  // the hub's bottom into the spoke's top, so the INFERRED sides must be
+  // bottom/top. Inferring left/right from the bare sign of dx made the
+  // Clean Flow Gate reject the very route the router had just drawn.
+  const doc = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: {
+      title: 'Hub above an offset spoke',
+      output: 'hub-spoke.html',
+      quality_profile: 'standard',
+      viewBox: [640, 360],
+    },
+    components: [
+      { id: 'hub', type: 'cloud', label: 'Hub', pos: [200, 40], size: [176, 52] },
+      { id: 'spoke', type: 'cloud', label: 'Spoke', pos: [40, 240], size: [168, 52] },
+    ],
+    connections: [{ id: 'hub-spoke', from: 'hub', to: 'spoke' }],
+  };
+
+  const { code, stderr, outPath } = render('architecture', doc);
+  assert.equal(code, 0, `inferred vertical route must render cleanly: ${stderr}`);
+  assert.doesNotMatch(stderr, /clean-flow\/endpoint-side-direction/);
+
+  // The route leaves the hub's bottom edge and enters the spoke's top edge,
+  // so every composition point stays inside that column band.
+  const html = fs.readFileSync(outPath, 'utf8');
+  const points = html
+    .match(/data-edge-id="hub-spoke" data-composition-points="([^"]+)"/)?.[1];
+  assert.ok(points, 'expected rendered composition points for hub-spoke');
+  const route = points.split(';').map((point) => point.split(',').map(Number));
+  const hubCx = 200 + 176 / 2; // 288
+  assert.equal(route[0][0], hubCx, 'route must leave the hub centre column');
+  assert.equal(route.at(-1)[0], 40 + 168 / 2, 'route must enter the spoke centre column');
+  assert.equal(route[0][1], 40 + 52, 'route must leave the hub bottom edge');
+  assert.equal(route.at(-1)[1], 240, 'route must enter the spoke top edge');
+
+  // The CLI validation surface agrees with the renderer.
+  const cli = validateCli('architecture', doc, 'standard');
+  assert.equal(cli.code, 0, `validate must accept the inferred vertical route: ${JSON.stringify(cli.result)}`);
+
+  // The public delivery path must accept the same inferred route and verify
+  // the committed artifact, without authored side, route, or via fields.
+  const delivery = deliverCli('architecture', doc, 'standard');
+  assert.equal(delivery.code, 0, `deliver must accept the inferred vertical route: ${JSON.stringify(delivery.result)}`);
+  assert.equal(delivery.result.ok, true);
+  assert.equal(fs.existsSync(delivery.outPath), true);
 });
 
 test('dataflow: stage border run is blocking and the inter-stage gutter passes', () => {

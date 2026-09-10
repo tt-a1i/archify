@@ -1271,14 +1271,37 @@ export function automaticPortSpread(relations, boxes, { gutter = 16, maxSpacing 
   return spread;
 }
 
+// A centre delta on the horizontal axis does not by itself mean the route
+// leaves sideways: a hub above an offset spoke has both a horizontal and a
+// larger vertical delta, and the router draws the vertical dogleg. Compare the
+// deltas so the inferred side matches the axis the route actually uses. Equal
+// deltas select horizontal sides; dx === 0 preserves the previous vertical
+// result, while a vertical-dominant nonzero dx selects vertical sides.
 export function defaultFromSide(from, to) {
+  const dx = to.cx - from.cx;
+  const dy = to.cy - from.cy;
+  if (dx !== 0 && Math.abs(dx) >= Math.abs(dy)) return dx < 0 ? 'left' : 'right';
+  return dy > 0 ? 'bottom' : 'top';
+}
+
+export function defaultToSide(from, to) {
+  const dx = to.cx - from.cx;
+  const dy = to.cy - from.cy;
+  if (dx !== 0 && Math.abs(dx) >= Math.abs(dy)) return dx < 0 ? 'right' : 'left';
+  return dy > 0 ? 'top' : 'bottom';
+}
+
+// Non-architecture renderers retain their established horizontal-first
+// endpoint contract. Architecture opts into dominant-axis inference above so
+// a vertical hub-and-spoke route can use perpendicular automatic ports.
+export function legacyDefaultFromSide(from, to) {
   if (to.cx < from.cx) return 'left';
   if (to.cx > from.cx) return 'right';
   if (to.cy > from.cy) return 'bottom';
   return 'top';
 }
 
-export function defaultToSide(from, to) {
+export function legacyDefaultToSide(from, to) {
   if (to.cx < from.cx) return 'right';
   if (to.cx > from.cx) return 'left';
   if (to.cy > from.cy) return 'top';
