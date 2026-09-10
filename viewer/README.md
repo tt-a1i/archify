@@ -7,6 +7,7 @@ motion mode and ownership, `node-finder.js` for node search and endpoint picking
 `intent-trace.js` for hover/focus previews, `semantic-lens.js` for type selection
 and legend previews, `route-probe.js` for directed paths and Route Journey,
 `guided-views.js` for authored chapters and Story playback,
+`focus.js` for semantic selection, relationships, reachability and shared flow tokens,
 `export-cleanup.js` for SVG export cleanup, and
 `template.source.html` for the rest of the Viewer.
 `archify/assets/template.html` is the committed
@@ -16,12 +17,119 @@ Skill. These maintainer sources live outside the packaged `archify/` directory.
 From `archify/`, run `npm run generate:viewer` after editing any source.
 `npm run check:viewer` verifies freshness without writing; `npm test` includes
 that check. Assembly inserts each fragment verbatim at its fixed marker.
-Reader, Chrome Layout, Camera, Radar, Motion Governor, Finder, Intent Trace, Semantic Lens, Route Probe and Guided Views
+Reader, Chrome Layout, Camera, Radar, Motion Governor, Finder, Intent Trace, Semantic Lens, Route Probe, Guided Views and Focus
 extractions preserve delivered HTML bytes. Export cleanup adds a
 private function and a call, changing script bytes but preserving cleanup order
 and SVG output. All fragments retain classic-script scope and initialization order.
 Generated output is not a second editing
 surface; release identity changes also belong in `template.source.html`.
+
+## Focus / Semantic Explorer contract
+
+The complete IIFE initializes once after Source Evidence and installBeacons(),
+before Intent Trace and Guided Views. Reader/Chrome Layout, Camera, Finder, Route
+and Lens keep their later positions. Required diagram SVG, Passport controls and
+relationship list remain required DOM. Shared viewerText/viewerCount/viewerKindLabel
+and hasDrawableGeometry stay in the template's classic-script scope.
+
+The interface is thirteen Focus methods: set, setMany, clear, copyLink, reach,
+clearReach, reachabilitySnapshot, inspectRelationship, inspectRelationshipById,
+reposition, relationship, reachability and active. The same closure also installs
+Archify.flowTokens.create/kind/path before Story can consume them. This shared
+provider is part of Focus ownership, not a second initialization step.
+
+- set writes neighborhood mode into its supplied options object and delegates to
+  setMany. setMany clears Lens preview/selection and, unless preserveRoute is true,
+  Route before filtering IDs. An empty/unknown selection can therefore return false
+  after those side effects. Valid IDs are deduplicated in supplied order. Repeating
+  the same ordered selection toggles through ordinary clear unless toggle is false.
+- A single neighborhood matches incident edges and neighboring nodes. Multi-node
+  or explicit selection mode matches only edges whose endpoints are both selected.
+  Focus counts duplicate edge keys once while marking every matching fragment.
+  hideChip, label, mode, updateUrl, urlKey and urlValue keep their existing defaults.
+- clear removes Reach, Intent, relationship preview/pin and Focus markers;
+  it hides Passport and resets its existing fields.
+  It resets Camera unless preserveView, updates the URL unless updateUrl is false,
+  and restores a previously single selected node only when restoreFocus is true.
+  clearReach and clearRelationshipPreview have narrower effects. Repeated clear
+  does not gain a no-op return or stronger cancellation guarantee.
+- active returns null, a single ID or a copied array. relationship returns a fresh
+  record or null; reachability returns copied node/edge arrays. Snapshot results
+  are constructed from current authored nodes, edges and validated Reach state.
+- Passport uses existing label/kind/detail/context/tag/brand/source metadata. The
+  Source Evidence provider owns repository/node lookup and beacon installation;
+  Focus owns displaying or hiding evidence and building the existing safe links.
+  Relationship rows are grouped out/in/loop, retaining authored order within each
+  group and deduplicating keys. Up/Down/Home/End clamp within the resulting rows.
+- Relationship intent priority is pin, then focus, then hover. Clearing one intent
+  may restore another. Pointer transitions within the same row/hit target do not
+  reset intent; touch and non-fine-pointer hover retain their filters. Direct hover
+  waits 90ms (0 with reduced motion), rechecking pointer, pin and owner state when
+  the timer fires. Clearing preview cancels that timer; it does not always unpin.
+- Direct hit targets are created once from drawable path/line/polyline fragments.
+  Same-key compatible fragments share one record; conflicting identity or duplicate
+  authored relationship IDs make records ineligible. Hit geometry is cloned, with
+  original path/points and existing transform handling retained. Focus does not
+  repair malformed geometry or derive connectivity from labels.
+- Direct pointer exploration is blocked by embed, Guide, panning, ordinary active
+  Focus, Story, Route picking/result, Lens and chapter preview under the original
+  predicates. Pointer and keyboard paths retain their different guards. Direct
+  target arrows wrap, Home/End choose endpoints, Enter/Space inspect or toggle, and
+  pinned Escape clears with updateUrl:false. Global Escape/shortcuts stay outside.
+- Pinning first clears the curated view with the existing options, focuses the
+  relation source, previews the matching Passport row and marks its hit target.
+  Camera reveal remains a call-time lookup with the original one-rAF retry if
+  Camera is not initialized yet. No polling service or dependency capture is added.
+- Reach traverses authored direction breadth-first, deduplicates edge keys and
+  preserves the original traversal/edge order for cycles, parallel edges and loops.
+  It requires one selected origin and at least one other reachable node; repeated
+  direction toggles unless toggle:false. It clears curated view/relationship state,
+  updates Export controls and optionally URL/Camera according to existing options.
+- reachabilitySnapshot fails closed when selection, Reach mode/attributes, depths,
+  live node multiplicity or edge identity disagree. Each edge key requires exactly
+  one drawable fragment, though compatible shapeless fragments are allowed. Extra
+  marked nodes/edges, multiple drawable fragments and inconsistent endpoints/IDs
+  yield null. It does not sanitize or silently rederive an invalid live snapshot.
+- flowTokens consumes existing shape geometry, edge classes and node kinds. Kind
+  priority remains security, event, data, state, call. create produces a detached
+  token with the existing path, duration/class options and null behavior. Story's
+  carrier lifecycle and Motion ownership remain in their existing modules.
+- Relationship pulse removes any previous pulse, clones existing shape geometry
+  and installs at most one flow token, retaining overlay placement and animation
+  end/cancel removal. Embed, hidden, paused Motion and reduced motion prevent new
+  pulses. Visibility/reduced-motion callbacks remove pulse without universally
+  clearing static selection, preview or pin. Motion observes shared attributes;
+  Focus does not gain a new owner token or controller.
+- Hash restoration prioritizes relation, then focus/reach; a view hash avoids the
+  ordinary no-focus clear branch. Invalid relation and embed relation restore use
+  existing clear behavior. Focus does not become the parser for Route/Lens/Story.
+  No new handling of arbitrary malformed IDs or selector escaping is introduced.
+- copyLink requires exactly one selected node, prefers an authored pinned relation
+  URL, otherwise copies focus plus optional reach. It preserves the non-hash URL,
+  clipboard/fallback results and 1600ms feedback. Older feedback callbacks still
+  render the then-current copy action; no generation or cancellation policy is
+  added. Fallback textarea cleanup and promise return values are unchanged.
+
+| State or surface | Owner and dependencies |
+| --- | --- |
+| Selected IDs, hover/focus/pin/preview references, reachability, hit targets, direct timer, lens rAF | Focus closure; page lifetime, no destroy interface |
+| data-focus-active/match/selected, node aria-pressed, Passport content/hidden/expanded/top | Focus writes/clears; Camera reveals/resets and Radar syncs through call-time lookups |
+| data-reach-active/match/origin/depth and Passport Reach controls | Focus; Export consumes syncReachShare and reachabilitySnapshot |
+| data-relationship-preview/direct/pin-active, preview source/target and row/hit ARIA | Focus; Lens/Route/Story/Intent/Guide state controls existing eligibility rules |
+| Relationship hit/pulse overlays and flowTokens construction | Focus creates; canonical export removes transient clones through Export Cleanup |
+| Source Evidence payload/repository links, camera transactions, other feature state | Their existing modules; Focus remains a caller, with original options and order |
+| SVG/document capture, node/row/hit keyboard and pointer subscriptions, passive scroll, resize, visibility, media listeners | Original execution positions and capture/passive/once semantics retained |
+
+Export triggers may move focus or cause normal input-state handoff before the clone
+is made. Verify live state and clone state separately; do not assert that every
+export leaves every focus-backed preview unchanged. Author geometry, stable IDs,
+viewBox and static SVG output remain unchanged by this source extraction.
+
+Browser checks exercise actual node/relationship inputs, pointer delay, pin priority,
+Passport grouping, cyclic Reach and strict rejection, cold/hash URLs, copy feedback,
+real pulse end/cancel, media preference transitions, actual SVG export, three widths
+and dark/light screenshots. Explicit DOM/clipboard/visibility/pointerType fixtures
+cover controlled edge cases and are not claims about OS permissions or devices.
 
 ## Guided Views / Story contract
 

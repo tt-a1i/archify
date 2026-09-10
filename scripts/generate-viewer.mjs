@@ -13,6 +13,7 @@ const fragments = [
   ['/* ARCHIFY:RADAR */', 'semantic-radar.js'],
   ['/* ARCHIFY:MOTION_GOVERNOR */', 'motion-governor.js'],
   ['/* ARCHIFY:NODE_FINDER */', 'node-finder.js'],
+  ['/* ARCHIFY:FOCUS */', 'focus.js'],
   ['/* ARCHIFY:INTENT_TRACE */', 'intent-trace.js'],
   ['/* ARCHIFY:SEMANTIC_LENS */', 'semantic-lens.js'],
   ['/* ARCHIFY:ROUTE_PROBE */', 'route-probe.js'],
