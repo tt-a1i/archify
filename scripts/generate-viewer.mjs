@@ -6,22 +6,28 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'archify/assets/template.html');
-const marker = '/* ARCHIFY:READER_LAYOUT */';
+const fragments = [
+  ['/* ARCHIFY:READER_LAYOUT */', 'reader-layout.js'],
+  ['/* ARCHIFY:EXPORT_CLEANUP */', 'export-cleanup.js'],
+];
 
 try {
   const args = process.argv.slice(2);
   if (args.length > 1 || (args.length === 1 && args[0] !== '--check')) {
     throw new Error('Usage: node scripts/generate-viewer.mjs [--check]');
   }
-  const shell = fs.readFileSync(path.join(root, 'viewer/template.source.html'), 'utf8');
-  const reader = fs.readFileSync(path.join(root, 'viewer/reader-layout.js'), 'utf8');
-  const parts = shell.split(marker);
-  if (parts.length !== 2) throw new Error('Viewer source must contain exactly one Reader Layout marker.');
-  if (!reader.trim() || reader.includes(marker)) throw new Error('Reader Layout source is empty or contains an unresolved marker.');
-
-  // Preserve classic-script scope, execution position and literal source bytes,
-  // including characters with String.replace semantics.
-  const generated = parts[0] + reader + parts[1];
+  let generated = fs.readFileSync(path.join(root, 'viewer/template.source.html'), 'utf8');
+  for (const [marker, filename] of fragments) {
+    const source = fs.readFileSync(path.join(root, 'viewer', filename), 'utf8');
+    const parts = generated.split(marker);
+    if (parts.length !== 2) throw new Error(`Viewer source must contain exactly one ${filename} marker.`);
+    if (!source.trim() || fragments.some(([slot]) => source.includes(slot))) {
+      throw new Error(`${filename} source is empty or contains an unresolved marker.`);
+    }
+    // Preserve classic-script scope, execution position and literal source bytes,
+    // including characters with String.replace semantics.
+    generated = parts[0] + source + parts[1];
+  }
   if (args[0] === '--check') {
     if (!fs.existsSync(output) || fs.readFileSync(output, 'utf8') !== generated) {
       throw new Error('Viewer template is stale — run npm run generate:viewer from archify/.');

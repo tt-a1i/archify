@@ -39,6 +39,7 @@ test('repository language metadata separates generated artifacts from implementa
   for (const sourcePath of [
     'viewer/template.source.html',
     'viewer/reader-layout.js',
+    'viewer/export-cleanup.js',
     'scripts/generate-viewer.mjs',
     'scripts/gallery-template.html',
     'scripts/guide-template.html',

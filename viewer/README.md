@@ -1,15 +1,18 @@
 # Viewer source
 
-Edit `reader-layout.js` for Adaptive Reader Layout and `template.source.html`
-for the rest of the Viewer. `archify/assets/template.html` is the committed
+Edit `reader-layout.js` for Adaptive Reader Layout, `export-cleanup.js` for
+SVG export cleanup, and `template.source.html` for the rest of the Viewer.
+`archify/assets/template.html` is the committed
 generated artifact, consumed unchanged by all five renderers and the installed
 Skill. These maintainer sources live outside the packaged `archify/` directory.
 
-From `archify/`, run `npm run generate:viewer` after editing either source.
+From `archify/`, run `npm run generate:viewer` after editing any source.
 `npm run check:viewer` verifies freshness without writing; `npm test` includes
-that check. Assembly inserts the Reader source verbatim at one fixed marker.
-The first extraction preserves delivered HTML bytes, CSS order, classic script
-scope and initialization order. Generated output is not a second editing
+that check. Assembly inserts each fragment verbatim at its fixed marker.
+Reader's extraction preserved delivered HTML bytes. Export cleanup adds a
+private function and a call, changing script bytes but preserving cleanup order
+and SVG output. Both retain classic-script scope and initialization order.
+Generated output is not a second editing
 surface; release identity changes also belong in `template.source.html`.
 
 ## Reader contract
@@ -40,6 +43,43 @@ surface; release identity changes also belong in `template.source.html`.
   consecutive stable dimensions; its default 240-frame sampling limit starts
   after font readiness. It is not a wall-clock timeout for stalled fonts or
   background pages. Keep this helper shared with Viewer Chrome Layout.
+
+## Export cleanup contract
+
+`cleanExportClone(clone)` lives inside the Export closure. Its sole caller is
+`serializeSvg`: clone the live SVG, clean it, apply an explicitly requested
+Route/Reach snapshot, then add dimensions, theme/font styles and serialize.
+It mutates only the supplied SVG clone and returns the existing
+`canonicalStateClean` boolean. It neither reads live selection nor calls a
+Viewer capability or changes the live DOM. No new `Archify` interface is exposed.
+
+| State owner | Clone treatment |
+| --- | --- |
+| Camera | Remove runtime transform, clipping and view scale. Preserve authored geometry and viewBox. |
+| Focus, relationship preview, reachability, Intent Trace | Remove selection/preview markers and runtime overlays; reset node `aria-pressed` using the existing rule. |
+| Guided Views and Story | Remove chapter/handoff/preview/beat markers, overlays and story step styles. |
+| Route Probe | Remove picking, result and journey markers/overlays and route step styles. |
+| Semantic Lens and legend preview | Remove filtering/preview decorations and runtime legend accessibility attributes. |
+| Source Evidence | Remove beacons/counts; restore recorded original labels. Missing or empty original labels remove `aria-label`, as before. |
+| Previous Route/Reach share decoration | Remove before applying the current export's explicit snapshot. |
+
+Original content, node/edge identity, geometry and authored animation metadata
+remain. Animation handling for share variants and recordings stays in Export.
+Cleanup preserves the existing operation order, including overlay removal before
+descendant cleanup. Missing optional decorations are harmless; repeated cleanup
+is idempotent. The function assumes an SVG clone supplied by Export, not null or
+the live SVG. Restore records are runtime metadata, not a general undo history.
+
+The boolean checks the existing known transient-state contract; it cannot detect
+arbitrary future decorations. Keep the cleanup and its check together. Adding a
+new runtime decoration still requires checking this contract: extraction isolates
+that knowledge from serialization, but does not eliminate producer/cleanup
+coordination. Do not broaden rules or rejection behavior during a pure extraction.
+
+Route/Reach validation, finite-dimension checks, receipts, errors, menu behavior,
+rasterization, clipboard and recording remain owned by Export. Its existing
+callers use the same paths and return fields. Tests exercise final browser exports;
+isolated clone tests supplement them for restoration and idempotence.
 
 For required browser, output and package evidence, follow
 [Contributing](../CONTRIBUTING.md#local-setup-and-verification).
