@@ -208,6 +208,7 @@ if (svgMatches.length === 1) {
       ...(desktopReadabilityIssue ? [{
         severity: desktopReadabilityIsError ? 'error' : 'warning',
         code: 'composition/desktop-readability',
+        ...(desktopReadabilityIssue.nodeId ? { nodeId: desktopReadabilityIssue.nodeId } : {}),
         viewportWidth: DESKTOP_READABILITY_VIEWPORT.width,
         viewportHeight: DESKTOP_READABILITY_VIEWPORT.height,
         availableDiagramWidth: DESKTOP_READER_DIAGRAM_WIDTH,
@@ -625,7 +626,18 @@ function collectDesktopReadability(svgAttrs, fragment) {
   if (!Number.isFinite(viewBoxWidth) || viewBoxWidth <= 0) return null;
   const scale = Math.min(1, DESKTOP_READER_DIAGRAM_WIDTH / viewBoxWidth);
   let worst = null;
-  for (const match of fragment.matchAll(/<text\b([^>]*)>([\s\S]*?)<\/text>/gi)) {
+  const nodeOwners = [];
+  // Walk groups alongside text so nested decoration retains the owning node,
+  // without leaking that identity into a following boundary or loose label.
+  for (const match of fragment.matchAll(/<text\b([^>]*)>([\s\S]*?)<\/text>|<g\b[^>]*>|<\/g\s*>/gi)) {
+    if (match[1] === undefined) {
+      if (/^<\/g/i.test(match[0])) nodeOwners.pop();
+      else if (!/\/\s*>$/.test(match[0])) {
+        const attrs = parseAttrs(match[0]);
+        nodeOwners.push(attrs['data-node-id'] || nodeOwners.at(-1));
+      }
+      continue;
+    }
     const primary = /\bdata-node-label(?:\s*=|\s|$)/i.test(match[1]);
     const boundary = /\bdata-boundary-label(?:\s*=|\s|$)/i.test(match[1]);
     const context = /\bdata-detail\s*=\s*"context"/i.test(match[1]);
@@ -636,6 +648,7 @@ function collectDesktopReadability(svgAttrs, fragment) {
     const projected = projectedNodeTextPx(fontSize, viewBoxWidth);
     if (projected >= MIN_PROJECTED_NODE_TEXT_PX) continue;
     const candidate = {
+      ...(nodeOwners.at(-1) ? { nodeId: nodeOwners.at(-1) } : {}),
       viewBoxWidth,
       scale,
       text: stripTags(match[2]).trim(),
