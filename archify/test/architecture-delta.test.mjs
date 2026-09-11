@@ -68,6 +68,24 @@ test('architecture compare classifies authored facts separately from geometry an
   assert.deepEqual(boundaryReceipt.changes.boundaries.find((change) => change.label === 'Fraud edge').classifications, ['scope']);
 });
 
+test('optional boundary endpoint identity changes remain visible as scope changes', () => {
+  for (const [beforeId, afterId] of [[undefined, 'production'], ['production', 'deployment'], ['production', undefined]]) {
+    const base = read(baseFixture);
+    const head = read(baseFixture);
+    if (beforeId) base.boundaries[0].id = beforeId;
+    if (afterId) head.boundaries[0].id = afterId;
+
+    const receipt = compareArchitecture(base, head);
+    assert.deepEqual(receipt.changes.components, []);
+    assert.deepEqual(receipt.changes.connections, []);
+    assert.equal(receipt.changes.boundaries.length, 1);
+    const change = receipt.changes.boundaries[0];
+    assert.equal(change.status, 'changed');
+    assert.deepEqual(change.classifications, ['scope']);
+    assert.deepEqual(change.changedFields, ['/id']);
+  }
+});
+
 test('legend-only changes are presentation changes and never topology changes', () => {
   const base = read(baseFixture);
   const head = read(baseFixture);
@@ -193,6 +211,35 @@ test('mixed semantic and geometry relationship changes retain both exact routes'
   assert.deepEqual(publishOrder.classifications, ['geometry', 'semantic']);
   const html = fs.readFileSync(output, 'utf8');
   assert.match(html, /data-change-key="relationship:publish-order"[^>]+data-change-target-signature="g:changed:geometry,semantic\|g:moved-from:geometry,semantic\|path:changed:geometry,semantic\|path:moved-from:geometry,semantic\|text:changed:\|text:moved-from:"/);
+  assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
+});
+
+test('boundary endpoint groups retain boundary delta state without component annotations', () => {
+  const documentAt = (id) => ({
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Boundary endpoint identity', viewBox: [600, 400] },
+    components: [{ id: 'node', type: 'backend', label: 'Node', pos: [250, 200] }],
+    connections: [],
+    boundaries: [{ id, kind: 'region', label: 'Deployment', wraps: ['node'] }],
+  });
+  const basePath = path.join(tmp, 'boundary-id.base.json');
+  const headPath = path.join(tmp, 'boundary-id.head.json');
+  const output = path.join(tmp, 'boundary-id.delta.html');
+  fs.writeFileSync(basePath, JSON.stringify(documentAt('before-scope')));
+  fs.writeFileSync(headPath, JSON.stringify(documentAt('after-scope')));
+
+  const result = run(['compare', 'architecture', basePath, headPath, output, '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  const html = fs.readFileSync(output, 'utf8');
+  const delta = html.match(/<section class="canvas" data-view="delta">([\s\S]*?)<\/section>/)?.[1] || '';
+  const endpoint = delta.match(/<g\s+[^>]*data-node-id="after-scope"[^>]*>/)?.[0];
+  assert.ok(endpoint, 'expected the authored boundary endpoint');
+  assert.doesNotMatch(endpoint, /data-delta-state=/);
+  assert.match(delta, /<rect data-graph-role="structural-frame"[^>]*data-delta-state="changed"[^>]*data-delta-classifications="scope"/);
+  assert.deepEqual(receipt.changes.components, []);
+  assert.deepEqual(receipt.changes.boundaries[0].changedFields, ['/id']);
   assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
 });
 
