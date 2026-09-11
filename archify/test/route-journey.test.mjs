@@ -112,12 +112,14 @@ test('motion, camera, layered Escape, mobile, print, and embed boundaries stay e
 });
 
 test('standalone export strips every journey attribute and transient pulse', () => {
-  assert.match(template, /clone\.removeAttribute\('data-route-journey'\)/);
-  assert.match(template, /clone\.querySelectorAll\('\[data-route-journey-overlay\]'\)/);
-  assert.match(template, /el\.removeAttribute\('data-route-journey-state'\)/);
-  assert.match(template, /el\.removeAttribute\('data-route-journey-current'\)/);
-  assert.match(template, /!clone\.hasAttribute\('data-route-journey'\)/);
-  assert.match(template, /canonicalStateClean[\s\S]*?\[data-route-journey-overlay\][\s\S]*?\[data-route-journey-current\]/);
+  const cleanup = template.match(/function cleanExportClone\(clone\) \{[\s\S]*?\n      \}/)?.[0] || '';
+  assert.match(template, /var canonicalStateClean = cleanExportClone\(clone\);/);
+  assert.match(cleanup, /clone\.removeAttribute\('data-route-journey'\)/);
+  assert.match(cleanup, /clone\.querySelectorAll\('\[data-route-journey-overlay\]'\)/);
+  assert.match(cleanup, /el\.removeAttribute\('data-route-journey-state'\)/);
+  assert.match(cleanup, /el\.removeAttribute\('data-route-journey-current'\)/);
+  assert.match(cleanup, /!clone\.hasAttribute\('data-route-journey'\)/);
+  assert.match(cleanup, /return !clone[\s\S]*?\[data-route-journey-overlay\][\s\S]*?\[data-route-journey-current\]/);
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
