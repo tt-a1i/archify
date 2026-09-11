@@ -40,9 +40,25 @@ function fail(message, code = 2) {
   process.exit(code);
 }
 
+function rejectCliArgument(message, details = {}) {
+  const error = new Error(message);
+  error.archifyArgument = {
+    code: details.code || 'cli/invalid-arguments',
+    subject: details.subject || {},
+    evidence: details.evidence || {},
+    supportedFixes: details.supportedFixes || ['correct the command arguments and retry'],
+  };
+  throw error;
+}
+
 function rendererPath(type) {
   if (!TYPES.has(type)) {
-    fail(`Unknown diagram type "${type}". Expected one of: ${[...TYPES].join(', ')}`);
+    rejectCliArgument(`Unknown diagram type "${type}". Expected one of: ${[...TYPES].join(', ')}`, {
+      code: 'cli/unknown-diagram-type',
+      subject: { type },
+      evidence: { supportedTypes: [...TYPES] },
+      supportedFixes: [`use one of: ${[...TYPES].join(', ')}`],
+    });
   }
   return path.join(skillRoot, 'renderers', type, `render-${type}.mjs`);
 }
@@ -63,19 +79,32 @@ function extractQualityArgs(args) {
     const arg = args[index];
     if (arg === '--quality') {
       quality = args[index + 1];
-      if (!quality || quality.startsWith('--')) fail('--quality requires standard or showcase.');
+      if (!quality || quality.startsWith('--')) rejectCliArgument('--quality requires standard or showcase.', {
+        code: 'cli/missing-option-value',
+        subject: { option: '--quality' },
+        supportedFixes: ['provide --quality standard or --quality showcase'],
+      });
       index += 1;
       continue;
     }
     if (arg.startsWith('--quality=')) {
       quality = arg.slice('--quality='.length);
-      if (!quality) fail('--quality requires standard or showcase.');
+      if (!quality) rejectCliArgument('--quality requires standard or showcase.', {
+        code: 'cli/missing-option-value',
+        subject: { option: '--quality' },
+        supportedFixes: ['provide --quality standard or --quality showcase'],
+      });
       continue;
     }
     rest.push(arg);
   }
   if (quality !== undefined && !['standard', 'showcase'].includes(quality)) {
-    fail(`Unknown quality profile "${quality}". Expected standard or showcase.`);
+    rejectCliArgument(`Unknown quality profile "${quality}". Expected standard or showcase.`, {
+      code: 'cli/invalid-option-value',
+      subject: { option: '--quality' },
+      evidence: { value: quality, supportedValues: ['standard', 'showcase'] },
+      supportedFixes: ['use --quality standard or --quality showcase'],
+    });
   }
   return { rest, quality };
 }
@@ -87,13 +116,21 @@ function extractRepoRootArgs(args) {
     const arg = args[index];
     if (arg === '--repo-root') {
       repoRoot = args[index + 1];
-      if (!repoRoot || repoRoot.startsWith('--')) fail('--repo-root requires a repository path.');
+      if (!repoRoot || repoRoot.startsWith('--')) rejectCliArgument('--repo-root requires a repository path.', {
+        code: 'cli/missing-option-value',
+        subject: { option: '--repo-root' },
+        supportedFixes: ['provide one repository path after --repo-root'],
+      });
       index += 1;
       continue;
     }
     if (arg.startsWith('--repo-root=')) {
       repoRoot = arg.slice('--repo-root='.length);
-      if (!repoRoot) fail('--repo-root requires a repository path.');
+      if (!repoRoot) rejectCliArgument('--repo-root requires a repository path.', {
+        code: 'cli/missing-option-value',
+        subject: { option: '--repo-root' },
+        supportedFixes: ['provide one repository path after --repo-root'],
+      });
       continue;
     }
     rest.push(arg);
@@ -241,7 +278,11 @@ function formatDiagnostics(error, diagnostics = []) {
 
 function assertEvidenceType(type, repoRoot) {
   if (repoRoot && type !== 'architecture') {
-    fail('--repo-root is currently supported for architecture diagrams only.');
+    rejectCliArgument('--repo-root is currently supported for architecture diagrams only.', {
+      code: 'cli/unsupported-option',
+      subject: { option: '--repo-root', type },
+      supportedFixes: ['remove --repo-root or use an architecture diagram'],
+    });
   }
 }
 
@@ -444,12 +485,14 @@ async function commandCompare(args) {
 
   const basePath = path.resolve(baseInput);
   const headPath = path.resolve(headInput);
+  const receiptTarget = options.receipt || compareReceiptPath(path.resolve(requestedOutput || 'architecture-delta.html'));
   let outputPath;
   try {
     ({ outputPath } = resolveOutputPath({
       requestedOutput,
       defaultOutput: 'architecture-delta.html',
       inputPaths: [basePath, headPath],
+      otherOutputPaths: [path.resolve(receiptTarget)],
     }));
   } catch (error) {
     const outputDiagnostic = error.archifyDiagnostics?.[0];
@@ -471,6 +514,7 @@ async function commandCompare(args) {
     ({ outputPath: receiptPath } = resolveOutputPath({
       requestedOutput: options.receipt || compareReceiptPath(outputPath),
       defaultOutput: compareReceiptPath(outputPath),
+      requiredExtension: '.json',
       inputPaths: [basePath, headPath],
       otherOutputPaths: [outputPath],
     }));
@@ -640,10 +684,12 @@ async function commandCompare(args) {
         requestedOutput,
         defaultOutput: 'architecture-delta.html',
         inputPaths: [basePath, headPath],
+        otherOutputPaths: [receiptPath],
       }).outputPath;
       resolveOutputPath({
         requestedOutput: options.receipt || compareReceiptPath(currentOutput),
         defaultOutput: compareReceiptPath(currentOutput),
+        requiredExtension: '.json',
         inputPaths: [basePath, headPath],
         otherOutputPaths: [currentOutput],
       });
@@ -696,8 +742,15 @@ async function commandCompare(args) {
 function commandRender(args) {
   const qualityArgs = extractQualityArgs(args);
   const repoArgs = extractRepoRootArgs(qualityArgs.rest);
+  // render takes no options of its own once --quality and --repo-root are
+  // stripped, so anything left starting with -- is a typo. Without this a
+  // mistyped flag was taken as the output path: `render architecture spec.json
+  // --json out.html` wrote a file literally named `--json` and never wrote
+  // out.html, exiting 0. Every sibling subcommand already guards this.
+  const unknown = repoArgs.rest.filter((arg) => arg.startsWith('--'));
+  if (unknown.length) fail(`Unknown render option "${unknown[0]}".`);
   const [type, input, output] = repoArgs.rest;
-  if (!type || !input) fail(usage());
+  if (!type || !input || repoArgs.rest.length > 3) fail(usage());
   assertEvidenceType(type, repoArgs.repoRoot);
   const result = runNode([rendererPath(type), input, ...(output ? [output] : [])], {
     env: rendererEnv(qualityArgs.quality, repoArgs.repoRoot),
@@ -731,6 +784,24 @@ function reportValidateFailure(options) {
   reportArtifactFailure({ ...options, command: 'validate' });
 }
 
+function reportArtifactArgumentFailure(command, error) {
+  const details = error.archifyArgument || {};
+  reportArtifactFailure({
+    command,
+    json: true,
+    stage: 'arguments',
+    error: error.message,
+    diagnostics: [diagnostic({
+      code: details.code || 'cli/invalid-arguments',
+      message: error.message,
+      subject: { command, ...(details.subject || {}) },
+      evidence: details.evidence || {},
+      supportedFixes: details.supportedFixes || ['correct the command arguments and retry'],
+    })],
+    status: 2,
+  });
+}
+
 function sourceEvidenceFromArtifact(artifact) {
   const html = artifact.toString('utf8');
   const match = html.match(/<script id="archify-source-evidence-data" type="application\/json">([\s\S]*?)<\/script>/);
@@ -748,20 +819,26 @@ function engineeringProfileFromArtifact(artifact) {
 }
 
 async function commandDeliver(args) {
-  const { resolveOutputPath } = await import('../renderers/shared/output-path.mjs');
   const qualityArgs = extractQualityArgs(args);
   const repoArgs = extractRepoRootArgs(qualityArgs.rest);
   const json = repoArgs.rest.includes('--json');
   const open = repoArgs.rest.includes('--open');
   const knownOptions = new Set(['--json', '--open']);
   const unknown = repoArgs.rest.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
-  if (unknown.length) fail(`Unknown deliver option "${unknown[0]}".`);
+  if (unknown.length) rejectCliArgument(`Unknown deliver option "${unknown[0]}".`, {
+    code: 'cli/unknown-option',
+    subject: { option: unknown[0] },
+    supportedFixes: ['remove the unknown option and retry'],
+  });
   const positional = repoArgs.rest.filter((arg) => !knownOptions.has(arg));
   const [type, input, requestedOutput] = positional;
-  if (!type || !input || positional.length > 3) fail(usage());
+  if (!type || !input || positional.length > 3) rejectCliArgument(usage(), {
+    code: 'cli/usage',
+    supportedFixes: ['use: archify deliver <type> <input.json> [output.html] [options]'],
+  });
   assertEvidenceType(type, repoArgs.repoRoot);
-
   const renderer = rendererPath(type);
+  const { resolveOutputPath } = await import('../renderers/shared/output-path.mjs');
   const inputPath = path.resolve(input);
   let specification;
   let diagram;
@@ -1025,6 +1102,7 @@ async function commandDeliver(args) {
           repository: sourceEvidence.repository.url,
           revision: sourceEvidence.repository.revision,
           references: sourceEvidence.referenceCount,
+          ...(sourceEvidence.repository.linkMode ? { linkMode: sourceEvidence.repository.linkMode } : {}),
         },
       } : {}),
     };
@@ -1815,20 +1893,34 @@ function commandValidate(args) {
   const repoRoot = repoArgs.repoRoot;
   const knownOptions = new Set(['--json', '--layout-json']);
   const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
-  if (unknown.length) fail(`Unknown validate option "${unknown[0]}".`);
+  if (unknown.length) rejectCliArgument(`Unknown validate option "${unknown[0]}".`, {
+    code: 'cli/unknown-option',
+    subject: { option: unknown[0] },
+    supportedFixes: ['remove the unknown option and retry'],
+  });
   const json = args.includes('--json');
   const layoutJson = args.includes('--layout-json');
   const rest = args.filter((arg) => !knownOptions.has(arg));
   const [type, input] = rest;
-  if (!type || !input || rest.length !== 2) fail(usage());
+  if (!type || !input || rest.length !== 2) rejectCliArgument(usage(), {
+    code: 'cli/usage',
+    supportedFixes: ['use: archify validate <type> <input.json> [options]'],
+  });
   assertEvidenceType(type, repoRoot);
   const renderer = rendererPath(type);
 
+  if (layoutJson && !['architecture', 'workflow'].includes(type)) {
+    rejectCliArgument('--layout-json is currently supported for architecture and workflow diagrams only.', {
+      code: 'cli/unsupported-option',
+      subject: { option: '--layout-json', type },
+      supportedFixes: ['remove --layout-json or use an architecture or workflow diagram'],
+    });
+  }
+
   if (layoutJson) {
-    if (!['architecture', 'workflow'].includes(type)) {
-      fail('--layout-json is currently supported for architecture and workflow diagrams only.');
-    }
-    const result = runNode([renderer, input, '/dev/null', '--layout-json'], {
+    // Layout mode emits JSON without writing HTML; keep its unused target typed.
+    const layoutOutput = path.join(os.tmpdir(), `archify-layout-${process.pid}-${type}.html`);
+    const result = runNode([renderer, input, layoutOutput, '--layout-json'], {
       stdio: 'pipe',
       env: rendererEnv(quality, repoRoot, true),
     });
@@ -1933,58 +2025,67 @@ function commandValidate(args) {
 
 const [command, ...args] = process.argv.slice(2);
 
-switch (command) {
-  case undefined:
-  case '-h':
-  case '--help':
-  case 'help':
-    console.log(usage());
-    break;
-  case 'render':
-    commandRender(args);
-    break;
-  case 'compare':
-    await commandCompare(args);
-    break;
-  case 'deliver':
-    await commandDeliver(args);
-    break;
-  case 'preview':
-    await commandPreview(args);
-    break;
-  case 'validate':
-    commandValidate(args);
-    break;
-  case 'migrate':
-    await commandMigrate(args);
-    break;
-  case 'inspect':
-    if (args[0] !== 'architecture') {
-      fail('inspect is currently supported for architecture diagrams only.');
-    }
-    commandValidate([...args, '--layout-json']);
-    break;
-  case 'check':
-    commandCheck(args);
-    break;
-  case 'visual-check':
-    await commandVisualCheck(args);
-    break;
-  case 'guide':
-    await commandGuide(args);
-    break;
-  case 'brands':
-    await commandBrands(args);
-    break;
-  case 'examples':
-    commandExamples();
-    break;
-  case 'doctor':
-    await commandDoctor();
-    break;
-  case 'demo':
-    commandDemo(args);
-    break;
-  default:
-    fail(`Unknown command "${command}".\n\n${usage()}`);
+try {
+  switch (command) {
+    case undefined:
+    case '-h':
+    case '--help':
+    case 'help':
+      console.log(usage());
+      break;
+    case 'render':
+      commandRender(args);
+      break;
+    case 'compare':
+      await commandCompare(args);
+      break;
+    case 'deliver':
+      await commandDeliver(args);
+      break;
+    case 'preview':
+      await commandPreview(args);
+      break;
+    case 'validate':
+      commandValidate(args);
+      break;
+    case 'migrate':
+      await commandMigrate(args);
+      break;
+    case 'inspect':
+      if (args[0] !== 'architecture') {
+        fail('inspect is currently supported for architecture diagrams only.');
+      }
+      commandValidate([...args, '--layout-json']);
+      break;
+    case 'check':
+      commandCheck(args);
+      break;
+    case 'visual-check':
+      await commandVisualCheck(args);
+      break;
+    case 'guide':
+      await commandGuide(args);
+      break;
+    case 'brands':
+      await commandBrands(args);
+      break;
+    case 'examples':
+      commandExamples();
+      break;
+    case 'doctor':
+      await commandDoctor();
+      break;
+    case 'demo':
+      commandDemo(args);
+      break;
+    default:
+      fail(`Unknown command "${command}".\n\n${usage()}`);
+  }
+} catch (error) {
+  if (!error.archifyArgument) throw error;
+  if (['validate', 'deliver'].includes(command) && args.includes('--json')) {
+    reportArtifactArgumentFailure(command, error);
+  } else {
+    fail(error.message);
+  }
 }
