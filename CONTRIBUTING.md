@@ -75,6 +75,10 @@ A browser test skipped because Chrome was unavailable is **skipped**, not passed
 
 ## Packages and generated artifacts
 
+Viewer maintenance starts in [`viewer/`](viewer/README.md). Edit its source
+files, then run `npm run generate:viewer` from `archify/`; the delivered template
+is generated and its freshness is checked by `npm test`.
+
 Published artifacts must be reproducible from tracked content. Use a tracked-only, symlink-safe staging path or explicit allowlist, with negative coverage for untracked files and external symlinks. Test the extracted package outside the repository on the affected advertised hosts.
 
 Review source and focused tests before regenerating artifacts. Regenerate only outputs whose authoritative inputs changed, from the final combined source:

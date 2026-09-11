@@ -45,8 +45,14 @@ jobs:
         working-directory: archify
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-      - name: Verify packaged examples and the adaptive reader in a real browser
-        run: node --test test/desktop-reader-browser.test.mjs
+      - name: Verify packaged examples and Reader Layout boundaries in a real browser
+        run: node --test test/desktop-reader-browser.test.mjs test/reader-layout-browser.test.mjs
+        working-directory: archify
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - name: Verify SVG export cleanup and live state isolation
+        run: node --test test/export-cleanup-browser.test.mjs
         working-directory: archify
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
@@ -72,8 +78,8 @@ jobs:
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
-      - name: Verify Viewer chrome stays clear of SVG legends
-        run: node --test test/viewer-chrome-layout.test.mjs
+      - name: Verify Viewer chrome, camera, motion and input interactions
+        run: node --test --test-concurrency=2 test/viewer-chrome-layout.test.mjs test/viewer-camera-browser.test.mjs test/motion-governor-browser.test.mjs test/finder-browser.test.mjs test/intent-trace-browser.test.mjs test/semantic-lens-browser.test.mjs test/route-probe-browser.test.mjs test/guided-views-browser.test.mjs test/focus-browser.test.mjs test/export-browser.test.mjs
         working-directory: archify
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
