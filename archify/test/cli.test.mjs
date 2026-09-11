@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { extractSvgs, parseXml } from './helpers/xml.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -578,6 +578,73 @@ test('cli: a later successful delivery replaces stale provenance with an artifac
   const checked = run(['check', out, '--json']);
   assert.equal(checked.status, 1);
   assert.equal(JSON.parse(checked.stdout).provenance, 'mismatch');
+});
+
+test('cli: delivery pair rollback restores the previous HTML and provenance', () => {
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  const out = path.join(tmp, 'delivery-pair-rollback.html');
+  const provenancePath = out.replace(/\.html$/, '.delivery.json');
+  const priorArtifact = '<!doctype html><title>trusted prior artifact</title>\n';
+  const priorProvenance = '{"schemaVersion":1,"status":"current","sentinel":"trusted"}\n';
+  fs.writeFileSync(out, priorArtifact);
+  fs.writeFileSync(provenancePath, priorProvenance);
+
+  const wrapper = path.join(tmp, 'fail-provenance-commit.mjs');
+  fs.writeFileSync(wrapper, `
+import fs from 'node:fs';
+const renameSync = fs.renameSync;
+fs.renameSync = (source, target) => {
+  if (String(source).endsWith('delivery-provenance.json')) {
+    const error = new Error('injected provenance rename failure');
+    error.code = 'EACCES';
+    throw error;
+  }
+  return renameSync(source, target);
+};
+process.argv = [process.execPath, ${JSON.stringify(cli)}, 'deliver', 'workflow', ${JSON.stringify(input)}, ${JSON.stringify(out)}, '--json'];
+await import(${JSON.stringify(pathToFileURL(cli).href)});
+`);
+  const result = spawnSync(process.execPath, [wrapper], { cwd: skillRoot, encoding: 'utf8' });
+
+  assert.equal(result.status, 1);
+  assert.equal(JSON.parse(result.stdout).stage, 'commit');
+  assert.match(result.stdout, /previous files were restored/);
+  assert.equal(fs.readFileSync(out, 'utf8'), priorArtifact);
+  assert.equal(fs.readFileSync(provenancePath, 'utf8'), priorProvenance);
+});
+
+test('cli: provenance writes cannot follow the former predictable temporary symlink', t => {
+  const input = path.join(tmp, 'invalid-provenance-symlink.workflow.json');
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/agent-tool-call.workflow.json'), 'utf8'));
+  source.nodes[0].unexpected = true;
+  fs.writeFileSync(input, JSON.stringify(source));
+  const out = path.join(tmp, 'provenance-symlink.html');
+  const sentinel = path.join(tmp, 'provenance-symlink-sentinel.txt');
+  const sentinelContents = 'must not be overwritten';
+  fs.writeFileSync(out, '<!doctype html><title>trusted</title>\n');
+  fs.writeFileSync(sentinel, sentinelContents);
+
+  const wrapper = path.join(tmp, 'provenance-symlink-wrapper.mjs');
+  fs.writeFileSync(wrapper, `
+import fs from 'node:fs';
+const sidecar = ${JSON.stringify(out.replace(/\.html$/, '.delivery.json'))};
+try {
+  fs.symlinkSync(${JSON.stringify(sentinel)}, sidecar + '.tmp-' + process.pid, 'file');
+} catch (error) {
+  if (['EPERM', 'EACCES', 'ENOTSUP'].includes(error.code)) process.exit(77);
+  throw error;
+}
+process.argv = [process.execPath, ${JSON.stringify(cli)}, 'deliver', 'workflow', ${JSON.stringify(input)}, ${JSON.stringify(out)}, '--json'];
+await import(${JSON.stringify(pathToFileURL(cli).href)});
+`);
+  const result = spawnSync(process.execPath, [wrapper], { cwd: skillRoot, encoding: 'utf8' });
+  if (result.status === 77) {
+    t.skip('symlink creation requires permission');
+    return;
+  }
+  assert.equal(result.status, 1);
+  assert.equal(fs.readFileSync(sentinel, 'utf8'), sentinelContents);
+  assert.equal(JSON.parse(fs.readFileSync(out.replace(/\.html$/, '.delivery.json'), 'utf8')).status, 'failed');
 });
 
 test('cli: deliver reports unreadable input as json without touching the target', () => {
