@@ -219,12 +219,24 @@ function validateThirdPartyNoticeInputs(repoRoot, packageEntries) {
   }
 }
 
-export function stageCleanSkill({ repoRoot = scriptRoot, destination }) {
+export function stageCleanSkill({ repoRoot = scriptRoot, destination, modeManifest = null }) {
   const resolvedRoot = fs.realpathSync(path.resolve(repoRoot));
   if (!destination) throw new Error('clean Skill staging requires a destination');
   const resolvedDestination = path.resolve(destination);
   if (fs.existsSync(resolvedDestination)) {
     throw new Error(`clean Skill staging destination already exists: ${resolvedDestination}`);
+  }
+  // The manifest records each staged file's Git index mode for the archive
+  // writer. Filesystem permission bits are not portable (Windows cannot store
+  // an executable bit), so the archive must not re-derive modes from stat.
+  const resolvedModeManifest = modeManifest === null ? null : path.resolve(modeManifest);
+  if (resolvedModeManifest !== null) {
+    const relativeToDestination = path.relative(resolvedDestination, resolvedModeManifest);
+    const insideDestination = relativeToDestination === ''
+      || (!relativeToDestination.startsWith('..') && !path.isAbsolute(relativeToDestination));
+    if (insideDestination) {
+      throw new Error(`mode manifest must be written outside the staged Skill tree: ${resolvedModeManifest}`);
+    }
   }
 
   const entries = trackedEntries(resolvedRoot);
@@ -247,6 +259,12 @@ export function stageCleanSkill({ repoRoot = scriptRoot, destination }) {
     .map((entry) => snapshotSourceEntry(entry));
   validateThirdPartyNoticeInputs(resolvedRoot, packageEntries);
 
+  const modes = Object.fromEntries(
+    packageEntries
+      .map((entry) => [entry.relative.slice('archify/'.length), entry.mode])
+      .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0)),
+  );
+
   fs.mkdirSync(resolvedDestination, { recursive: true, mode: 0o755 });
   let fileCount = 0;
   try {
@@ -260,12 +278,16 @@ export function stageCleanSkill({ repoRoot = scriptRoot, destination }) {
       fileCount += 1;
     }
     cleanPackageManifest(resolvedDestination);
+    if (resolvedModeManifest !== null) {
+      fs.writeFileSync(resolvedModeManifest, `${JSON.stringify(modes, null, 2)}\n`);
+    }
   } catch (error) {
     fs.rmSync(resolvedDestination, { recursive: true, force: true });
+    if (resolvedModeManifest !== null) fs.rmSync(resolvedModeManifest, { force: true });
     throw error;
   }
 
-  return { destination: resolvedDestination, fileCount };
+  return { destination: resolvedDestination, fileCount, modes };
 }
 
 function isMainModule() {
@@ -280,11 +302,15 @@ function isMainModule() {
 
 if (isMainModule()) {
   try {
+    const modeManifest = argument('--mode-manifest');
     const result = stageCleanSkill({
       repoRoot: argument('--root', scriptRoot),
       destination: argument('--dest'),
+      modeManifest,
     });
-    process.stdout.write(`${JSON.stringify(result)}\n`);
+    const summary = { destination: result.destination, fileCount: result.fileCount };
+    if (modeManifest) summary.modeManifest = path.resolve(modeManifest);
+    process.stdout.write(`${JSON.stringify(summary)}\n`);
   } catch (error) {
     process.stderr.write(`${error.message}\n`);
     process.exitCode = 1;

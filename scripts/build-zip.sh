@@ -32,8 +32,12 @@ stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
 node "$repo_root/scripts/stage-clean-skill.mjs" \
   --root "$repo_root" \
-  --dest "$stage/archify" >/dev/null
+  --dest "$stage/archify" \
+  --mode-manifest "$stage/modes.json" >/dev/null
 
-node "$repo_root/scripts/write-deterministic-zip.mjs" "$stage/archify" "$out"
+# Entry modes come from the recorded Git index modes, not from stat(), so the
+# archive bytes do not depend on the building platform's permission support.
+node "$repo_root/scripts/write-deterministic-zip.mjs" "$stage/archify" "$out" \
+  --mode-manifest "$stage/modes.json"
 
 echo "built $out"
