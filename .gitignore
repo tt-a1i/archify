@@ -4,3 +4,5 @@ node_modules/
 .claude/
 .lore/
 /.impeccable/
+__pycache__/
+*.py[cod]
