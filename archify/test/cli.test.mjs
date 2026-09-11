@@ -249,6 +249,31 @@ test('cli: visual-check returns a skipped receipt with exit 2 when Chrome is una
   assert.equal(fs.existsSync(out.replace(/\.html$/, '.visual-check.json')), true);
 });
 
+test('cli: visual-check --out-dir writes the receipt into that directory, not beside the artifact', () => {
+  const out = path.join(tmp, 'visual-check-outdir.html');
+  fs.writeFileSync(out, '<!doctype html><html><body>delivered</body></html>');
+  const missingChrome = path.join(tmp, 'missing-chrome-outdir');
+  const outDir = path.join(tmp, 'visual-check-outdir-evidence');
+  const result = run(['visual-check', out, '--json', '--out-dir', outDir], {
+    env: { ...process.env, ARCHIFY_CHROME: missingChrome },
+  });
+
+  assert.equal(result.status, 2, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.status, 'skipped');
+  assert.equal(fs.existsSync(path.join(outDir, 'visual-check-outdir.visual-check.json')), true);
+  assert.equal(fs.existsSync(out.replace(/\.html$/, '.visual-check.json')), false, 'no receipt should land beside the artifact when --out-dir is set');
+});
+
+test('cli: visual-check rejects --out-dir with no value', () => {
+  const out = path.join(tmp, 'visual-check-outdir-missing-value.html');
+  fs.writeFileSync(out, '<!doctype html><html><body>delivered</body></html>');
+  const result = run(['visual-check', out, '--out-dir']);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /--out-dir requires a directory path/);
+});
+
 test('cli: visual-check describes human output as automated browser evidence, not visual approval', () => {
   const out = path.join(tmp, 'visual-check-browser-evidence.html');
   fs.writeFileSync(out, '<!doctype html><html><body>delivered</body></html>');
