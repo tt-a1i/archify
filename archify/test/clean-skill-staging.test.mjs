@@ -175,6 +175,60 @@ test('clean staging refuses to write the mode manifest inside the staged tree', 
   }
 });
 
+test('clean staging refuses an existing mode manifest path and leaves it untouched', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  const manifest = path.join(root, 'existing-modes.json');
+  try {
+    git(root, ['add', 'archify']);
+    fs.writeFileSync(manifest, 'not ours\n');
+    assert.throws(
+      () => stageCleanSkill({ repoRoot: root, destination, modeManifest: manifest }),
+      /mode manifest path already exists/,
+    );
+    assert.equal(fs.readFileSync(manifest, 'utf8'), 'not ours\n', 'an existing file at the manifest path must be preserved');
+    assert.equal(fs.existsSync(destination), false, 'a refused manifest path must not leave a staged tree behind');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging rejects a mode manifest that aliases the staged tree through a symlinked ancestor', (t) => {
+  const root = repositoryFixture();
+  const physical = path.join(root, 'physical');
+  const alias = path.join(root, 'alias');
+  try {
+    git(root, ['add', 'archify']);
+    fs.mkdirSync(physical);
+    try {
+      fs.symlinkSync(physical, alias, process.platform === 'win32' ? 'junction' : 'dir');
+    } catch (error) {
+      if (['EPERM', 'EACCES', 'ENOTSUP'].includes(error?.code)) {
+        t.skip(`symlinks unavailable: ${error.code}`);
+        return;
+      }
+      throw error;
+    }
+    const cases = [
+      { destination: path.join(alias, 'staged'), modeManifest: path.join(physical, 'staged', 'modes.json') },
+      { destination: path.join(physical, 'staged'), modeManifest: path.join(alias, 'staged', 'modes.json') },
+    ];
+    for (const { destination, modeManifest } of cases) {
+      assert.throws(
+        () => stageCleanSkill({ repoRoot: root, destination, modeManifest }),
+        /mode manifest must be written outside the staged Skill tree/,
+      );
+      assert.equal(
+        fs.existsSync(path.join(physical, 'staged')),
+        false,
+        'a rejected manifest location must not leave a staged tree behind',
+      );
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('clean staging rejects a symlink in a tracked file ancestor before copying bytes', (t) => {
   const root = repositoryFixture();
   const destination = path.join(root, 'staged-skill');

@@ -587,20 +587,29 @@ test('archive build accepts Windows-style absolute output paths', {
   const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-windows-path-'));
   const backslashArchive = path.win32.join(outputRoot, 'backslash.zip');
   const slashArchive = path.win32.join(outputRoot, 'slash.zip').replace(/\\/g, '/');
+  // The \\.\ device-namespace form is a \\-prefixed absolute path like a UNC
+  // share: MSYS passes it to bash unchanged from a native parent and Node
+  // resolves it natively. A real network share cannot be assumed in the suite,
+  // and the \\?\ extended-length prefix is stripped by MSYS's command-line
+  // parsing when bash is started from a native process.
+  const deviceArchive = `\\\\.\\${path.win32.join(outputRoot, 'device.zip')}`;
 
   try {
-    for (const archive of [backslashArchive, slashArchive]) {
+    for (const archive of [backslashArchive, slashArchive, deviceArchive]) {
       const build = spawnBuildZip(archive);
       assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
       assert.ok(fs.existsSync(archive), `archive must be written to the requested path: ${archive}`);
     }
-    assert.ok(
-      fs.readFileSync(backslashArchive).equals(fs.readFileSync(slashArchive)),
-      'both Windows path forms must produce identical archive bytes',
-    );
+    const reference = fs.readFileSync(backslashArchive);
+    for (const archive of [slashArchive, deviceArchive]) {
+      assert.ok(
+        reference.equals(fs.readFileSync(archive)),
+        `every Windows path form must produce identical archive bytes: ${archive}`,
+      );
+    }
     assert.deepEqual(
       fs.readdirSync(outputRoot).sort(),
-      ['backslash.zip', 'slash.zip'],
+      ['backslash.zip', 'device.zip', 'slash.zip'],
       'successful archive publication must not leave temporary files behind',
     );
   } finally {

@@ -181,6 +181,23 @@ function snapshotSourceEntry(entry) {
   }
 }
 
+function canonicalizeExistingPrefix(target) {
+  // realpathSync rejects paths that do not exist yet, so resolve the deepest
+  // existing ancestor through symlinks and re-append the missing tail.
+  const pending = [];
+  let current = path.resolve(target);
+  for (;;) {
+    try {
+      return path.join(fs.realpathSync(current), ...pending);
+    } catch {
+      const parent = path.dirname(current);
+      if (parent === current) return path.join(current, ...pending);
+      pending.unshift(path.basename(current));
+      current = parent;
+    }
+  }
+}
+
 function cleanPackageManifest(destination) {
   const packagePath = path.join(destination, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
@@ -231,11 +248,29 @@ export function stageCleanSkill({ repoRoot = scriptRoot, destination, modeManife
   // an executable bit), so the archive must not re-derive modes from stat.
   const resolvedModeManifest = modeManifest === null ? null : path.resolve(modeManifest);
   if (resolvedModeManifest !== null) {
-    const relativeToDestination = path.relative(resolvedDestination, resolvedModeManifest);
-    const insideDestination = relativeToDestination === ''
-      || (!relativeToDestination.startsWith('..') && !path.isAbsolute(relativeToDestination));
-    if (insideDestination) {
+    // Compare physical locations: a symlinked ancestor on either side must not
+    // let the manifest land inside the staged tree, where the writer would see
+    // an unrecorded file and refuse the archive.
+    const canonicalDestination = canonicalizeExistingPrefix(resolvedDestination);
+    const canonicalManifest = canonicalizeExistingPrefix(resolvedModeManifest);
+    const relativeToDestination = path.relative(canonicalDestination, canonicalManifest);
+    const outsideDestination = relativeToDestination === '..'
+      || relativeToDestination.startsWith(`..${path.sep}`)
+      || path.isAbsolute(relativeToDestination);
+    if (!outsideDestination) {
       throw new Error(`mode manifest must be written outside the staged Skill tree: ${resolvedModeManifest}`);
+    }
+    // The manifest belongs to this invocation only: never overwrite, and never
+    // later remove, a file that already existed at that path.
+    let manifestExists = true;
+    try {
+      fs.lstatSync(resolvedModeManifest);
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      manifestExists = false;
+    }
+    if (manifestExists) {
+      throw new Error(`mode manifest path already exists: ${resolvedModeManifest}`);
     }
   }
 
@@ -267,6 +302,7 @@ export function stageCleanSkill({ repoRoot = scriptRoot, destination, modeManife
 
   fs.mkdirSync(resolvedDestination, { recursive: true, mode: 0o755 });
   let fileCount = 0;
+  let manifestWritten = false;
   try {
     for (const entry of packageEntries) {
       const relativeInsideSkill = entry.relative.slice('archify/'.length);
@@ -279,11 +315,12 @@ export function stageCleanSkill({ repoRoot = scriptRoot, destination, modeManife
     }
     cleanPackageManifest(resolvedDestination);
     if (resolvedModeManifest !== null) {
-      fs.writeFileSync(resolvedModeManifest, `${JSON.stringify(modes, null, 2)}\n`);
+      fs.writeFileSync(resolvedModeManifest, `${JSON.stringify(modes, null, 2)}\n`, { flag: 'wx' });
+      manifestWritten = true;
     }
   } catch (error) {
     fs.rmSync(resolvedDestination, { recursive: true, force: true });
-    if (resolvedModeManifest !== null) fs.rmSync(resolvedModeManifest, { force: true });
+    if (manifestWritten) fs.rmSync(resolvedModeManifest, { force: true });
     throw error;
   }
 

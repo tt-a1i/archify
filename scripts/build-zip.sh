@@ -5,10 +5,11 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 out="${1:-$repo_root/archify.zip}"
-# Git Bash callers may pass Windows-style absolute paths (C:\... or C:/...).
-# Node resolves those natively, so only genuinely relative paths get the cwd
-# prefix; prefixing a drive path would send MSYS a malformed mixed path.
-windows_absolute='^[A-Za-z]:[/\\]'
+# Git Bash callers may pass Windows-style absolute paths: drive paths (C:\...
+# or C:/...) and \\-prefixed forms such as UNC shares or the \\?\ extended-length
+# prefix. Node resolves those natively, so only genuinely relative paths get the
+# cwd prefix; prefixing a Windows path would send MSYS a malformed mixed path.
+windows_absolute='^([A-Za-z]:[/\\]|\\\\)'
 if [[ "$out" != /* && ! "$out" =~ $windows_absolute ]]; then
   out="$(pwd)/$out"
 fi
