@@ -577,6 +577,37 @@ canonicalZipTest('archive build is byte-for-byte reproducible across caller time
   }
 });
 
+test('archive build accepts Windows-style absolute output paths', {
+  skip: process.platform !== 'win32'
+    ? 'Windows drive paths only reach build-zip.sh on win32'
+    : currentNodeMajor === canonicalZipNodeMajor
+      ? false
+      : `canonical ZIP builds require Node ${canonicalZipNodeMajor}`,
+}, () => {
+  const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-windows-path-'));
+  const backslashArchive = path.win32.join(outputRoot, 'backslash.zip');
+  const slashArchive = path.win32.join(outputRoot, 'slash.zip').replace(/\\/g, '/');
+
+  try {
+    for (const archive of [backslashArchive, slashArchive]) {
+      const build = spawnBuildZip(archive);
+      assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
+      assert.ok(fs.existsSync(archive), `archive must be written to the requested path: ${archive}`);
+    }
+    assert.ok(
+      fs.readFileSync(backslashArchive).equals(fs.readFileSync(slashArchive)),
+      'both Windows path forms must produce identical archive bytes',
+    );
+    assert.deepEqual(
+      fs.readdirSync(outputRoot).sort(),
+      ['backslash.zip', 'slash.zip'],
+      'successful archive publication must not leave temporary files behind',
+    );
+  } finally {
+    fs.rmSync(outputRoot, { recursive: true, force: true });
+  }
+});
+
 test('CI tests the declared Node floor plus every maintained current lane', () => {
   const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'archify', 'package.json'), 'utf8'));
   assert.equal(packageJson.engines?.node, '>=18');
