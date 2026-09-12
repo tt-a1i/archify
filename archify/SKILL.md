@@ -16,7 +16,7 @@ Create a self-contained, interactive HTML diagram from a small typed JSON specif
 
 Use this bounded path for ordinary generation. Do not read the optional Viewer Runtime reference unless the user asks about those features.
 
-1. Choose `architecture`, `workflow`, `sequence`, `dataflow`, or `lifecycle` from the question.
+1. Choose `architecture`, `workflow`, `sequence`, `dataflow`, `lifecycle`, or `erd` from the question.
 2. Read one matching schema in `schemas/`, `schemas/common.schema.json`, and one matching JSON example in `examples/`. Read only those files. Fresh authorship means new stable IDs, domain wording, and layout; use the example for field shape, not facts. New workflow sources use `schema_version: 2` and its readable layout contract; keep `schema_version: 1` only when preserving an existing workflow's fixed geometry. When real product identity matters, query `node bin/archify.mjs brands "<name>" --json`; read `references/brand-marks.md` only for an unknown brand with a user-provided URL.
 3. Artifact first: the next tool action must write the candidate. Write the candidate before inspecting renderer internals. Do not plan exact coordinates in prose. Start with one clear main path, short side branches, sparse labels, and at most 12 primary nodes. Set `meta.quality_profile` to `"showcase"` unless the user explicitly requests a dense `standard` map. Start with automatic routes and labels. Do not add `via`, `channelX`, `channelY`, or `labelAt` before a diagnostic calls for one; apply at most one diagnosed geometry control per repair.
 4. Validate after every candidate edit and immediately before handoff:
@@ -52,7 +52,7 @@ contract is in [`renderers/workflow/README.md`](renderers/workflow/README.md#lay
 
 Lifecycle note: phase columns `0..4` occupy the main rail; event/terminal column `N` in `0..2` aligns exactly beneath main column `N + 2`. A recoverable state uses `type: "failure"` plus a real transition back to the active state.
 
-Entity-relationship note: a relationship reads `from` -> `to`, and the omitted cardinality defaults to `many` -> `one` with both ends mandatory, which is the ordinary foreign-key shape; set `fromOptional`/`toOptional` for zero-or-more and `identifying: false` for a dashed non-identifying line. Entity boxes are opaque: a route that would pass through an unrelated entity is routed around it, and a route that cannot clear it is an error rather than a drawn crossing. Keep entity columns to the keys and the few attributes the reader needs, and put the full table in cards.
+Entity-relationship note: a relationship reads `from` -> `to`, and the omitted cardinality defaults to `many` -> `one` with both ends mandatory, which is the ordinary foreign-key shape. `fromCardinality`/`toCardinality` set an end's maximum (`one` or `many`); `fromOptional`/`toOptional` only lowers that end's minimum from one to zero, so an optional `one` end reads zero-or-one and an optional `many` end reads zero-or-many. Set `identifying: false` for a dashed non-identifying line. Entity boxes are opaque: a route that would pass through an unrelated entity is routed around it, and a route that cannot clear it is an error rather than a drawn crossing. Keep entity attributes to the keys and the few the reader needs, and put the full table in cards.
 
 ## Type router
 

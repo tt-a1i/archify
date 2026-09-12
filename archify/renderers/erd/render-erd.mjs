@@ -389,7 +389,10 @@ function validateEr() {
       }
       seenColumns.add(attribute.name);
       const { name: nameUnits, type: typeUnits } = rowTextWidths(attribute);
-      const available = entity.width - layout.padX * 2 - layout.keyWidth;
+      // entity.width is optional; validateEr sees the authored object, so the
+      // overflow check must use the resolved width or an omitted width turns the
+      // available space into NaN and silently skips the diagnostic.
+      const available = entityWidth(entity) - layout.padX * 2 - layout.keyWidth;
       const needed = nameUnits * layout.rowFont + (typeUnits ? typeUnits * layout.typeFont + 8 : 0);
       if (needed > available) {
         problems.push(

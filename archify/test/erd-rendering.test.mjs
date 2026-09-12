@@ -131,22 +131,33 @@ test('an entity between two aligned anchors is routed around, never through', ()
   assert.equal(checkStatus, 0, 'the detour must still satisfy every artifact check');
 });
 
-test('an unroutable relationship fails with a clean-flow diagnostic instead of drawing a crossing', () => {
-  // Two entities share one cell, so nothing can clear the box that sits on the
-  // only corridor; the renderer must refuse rather than emit a through-box line.
+test('an author-forced through-box route fails with the clean-flow diagnostic', () => {
+  // Automatic routing detours around a blocking entity (the previous test), so
+  // the deterministic way to reach the fail-closed gate is an authored `via`
+  // straight through an unrelated entity. The boxes themselves must not
+  // overlap, or the test would exercise the overlap validator instead.
   const diagram = cloneWithoutViews(example);
   diagram.entities = [
-    { id: 'left', label: 'left', row: 0, col: 0, width: 200, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
-    { id: 'right', label: 'right', row: 0, col: 1, width: 200, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
-    { id: 'wall', label: 'wall', pos: [252, 80], width: 200, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
+    { id: 'left', label: 'left', pos: [40, 80], width: 200, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
+    { id: 'wall', label: 'wall', pos: [280, 60], width: 200, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
+    { id: 'right', label: 'right', pos: [520, 80], width: 200, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
   ];
   diagram.relationships = [
-    { id: 'left_right', from: 'right', to: 'left', fromCardinality: 'many', toCardinality: 'one' },
+    {
+      id: 'left_right',
+      from: 'right',
+      to: 'left',
+      fromCardinality: 'many',
+      toCardinality: 'one',
+      via: [[380, 104]],
+    },
   ];
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-er-wall-'));
   const { status, stdout, stderr } = render(diagram, directory);
-  assert.notEqual(status, 0, 'an impossible route must fail');
-  assert.match(`${stdout}${stderr}`, /clean-flow\/edge-through-node|unrelated to this relationship|overlaps entity/);
+  assert.notEqual(status, 0, 'a through-box route must fail');
+  const output = `${stdout}${stderr}`;
+  assert.match(output, /clean-flow\/edge-through-node/);
+  assert.doesNotMatch(output, /overlaps entity/, 'the fixture must reach the routing gate, not the overlap validator');
   assert.equal(fs.existsSync(path.join(directory, 'candidate.html')), false, 'no artifact may be written');
 });
 
@@ -175,6 +186,23 @@ test('schema and reference mistakes fail with an addressed diagnostic', () => {
   result = render(tooNarrow, fs.mkdtempSync(path.join(os.tmpdir(), 'archify-er-bad-')));
   assert.notEqual(result.status, 0);
   assert.match(`${result.stdout}${result.stderr}`, /of text but only|too short|is too short/);
+
+  // A default width is a width: when `width` is omitted the resolved entity
+  // width must still feed the overflow check, instead of turning the available
+  // space into NaN and silently skipping the diagnostic.
+  const defaultWidthOverflow = {
+    schema_version: 1,
+    diagram_type: 'erd',
+    meta: { title: 'Default width overflow', locale: 'en' },
+    entities: [
+      { id: 'a', label: 'a', pos: [40, 80], attributes: [{ name: 'extremely_long_attribute_name_here', type: 'varchar(255)' }] },
+      { id: 'b', label: 'b', pos: [400, 80], attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
+    ],
+    relationships: [],
+  };
+  result = render(defaultWidthOverflow, fs.mkdtempSync(path.join(os.tmpdir(), 'archify-er-bad-')));
+  assert.notEqual(result.status, 0);
+  assert.match(`${result.stdout}${result.stderr}`, /attribute 0 "extremely_long_attribute_name_here" needs \d+px of text but only \d+px/);
 });
 
 test('cardinality defaults to many-to-one and is drawn at both ends', () => {

@@ -1,16 +1,16 @@
 # Entity-Relationship Renderer
 
-Render `diagram_type: "er"` JSON files into the standard Archify HTML template.
+Render `diagram_type: "erd"` JSON files into the standard Archify HTML template.
 
 ```bash
-node archify/renderers/er/render-erd.mjs input.er.json output.html
+node archify/renderers/erd/render-erd.mjs input.erd.json output.html
 ```
 
-The renderer validates input against `archify/schemas/er.schema.json` with the
+The renderer validates input against `archify/schemas/erd.schema.json` with the
 bundled standalone validator. No dependency installation is required.
 
 If `output.html` is omitted, the renderer uses `meta.output` from the JSON file
-or falls back to `er.html` in the current working directory.
+or falls back to `erd.html` in the current working directory.
 
 After rendering, run the artifact checker:
 
@@ -20,12 +20,12 @@ node archify/scripts/check-render-output.mjs output.html
 
 ## Input
 
-ER JSON files must set:
+ERD JSON files must set:
 
 ```json
 {
   "schema_version": 1,
-  "diagram_type": "er",
+  "diagram_type": "erd",
   "meta": { "title": "Order management schema" },
   "entities": [],
   "relationships": [],

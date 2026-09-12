@@ -5594,12 +5594,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <div class="card">
         <div class="card-header">
           <div class="card-dot emerald"></div>
-          <h3>Columns kept out of the boxes</h3>
+          <h3>Attributes kept out of the boxes</h3>
         </div>
         <ul>
-          <li>&bull; order.total_amount is numeric(12,2); product.price is numeric(10,2).</li>
-          <li>&bull; payment.paid_at and customer.created_at are timestamptz.</li>
-          <li>&bull; order_item.quantity and inventory.quantity are both int.</li>
+          <li>&bull; order.total_amount is numeric(12,2) and stays off the diagram.</li>
+          <li>&bull; payment.paid_at is timestamptz; an unpaid order simply has no row yet.</li>
+          <li>&bull; order_item.quantity is int and is the only line attribute kept off the boxes.</li>
         </ul>
       </div>
 

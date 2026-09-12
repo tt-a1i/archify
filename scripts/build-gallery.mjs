@@ -160,7 +160,7 @@ const CASES = [
     titleEn: 'Order Management Schema',
     titleZh: '订单管理表结构',
     descriptionEn: 'Six tables with their key attributes, crow-foot cardinality at both ends, an optional non-identifying payment link, and the columns kept out of the boxes in cards.',
-    descriptionZh: '六张表及其关键属性，两端用鸦爪标注基数，一条可选的标识性支付连线，以及放进卡片的其余字段。',
+    descriptionZh: '六张表及其关键属性，两端用鸦爪标注基数，一条可选的非标识性支付连线，以及放进卡片的其余字段。',
   },
   {
     id: 'web-app',

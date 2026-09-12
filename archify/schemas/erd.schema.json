@@ -163,11 +163,13 @@
           },
           "row": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 12
           },
           "col": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 12
           },
           "pos": {
             "$ref": "common.schema.json#/$defs/point"
