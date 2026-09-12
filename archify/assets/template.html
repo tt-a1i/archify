@@ -5060,6 +5060,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         </div>
         <div class="export-menu-section" role="group" aria-label="{{i18n:viewer.export.raster}}">
           <span class="export-menu-heading" aria-hidden="true">{{i18n:viewer.export.image}}</span>
+          <button data-format="page" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>{{i18n:viewer.export.page}}</strong><small class="hint">{{i18n:viewer.export.pageHint}}</small></span></button>
           <button data-format="png" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>PNG</strong><small class="hint">{{i18n:viewer.export.lossless}}</small></span></button>
           <button data-format="jpeg" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>JPEG</strong><small class="hint">{{i18n:viewer.export.compact}}</small></span></button>
           <button data-format="webp" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>WebP</strong><small class="hint">{{i18n:viewer.export.modern}}</small></span></button>
@@ -6552,6 +6553,159 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return renderShareCard({ reachSnapshot: snapshot });
       }
 
+      // Full-content export: title header + full-width diagram + closing
+      // cards, without the toolbar or any other interactive chrome. Layout
+      // mirrors the reading view (header, diagram, cards) on one tall canvas
+      // so the artifact reads like the delivered page, not the fixed 1200x630
+      // share card.
+      function renderPageExport() {
+        var svg = document.querySelector('.diagram-container svg');
+        if (!svg) return Promise.reject(exportError('viewer.export.error.viewerState'));
+        var vb = svg.viewBox.baseVal;
+        var sourceScale = Math.min(4, pickSafeScale(vb.width, vb.height));
+        var data = serializeSvg(sourceScale);
+        if (!data.canonicalStateClean) return Promise.reject(exportError('viewer.export.error.viewerState'));
+        var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
+        var svgUrl = URL.createObjectURL(svgBlob);
+
+        return new Promise(function (resolve, reject) {
+          var img = new Image();
+          img.onload = function () {
+            try {
+              var computed = getComputedStyle(document.documentElement);
+              var bg = computed.getPropertyValue('--bg').trim() || currentBg();
+              var panel = computed.getPropertyValue('--panel').trim() || bg;
+              var text = computed.getPropertyValue('--text').trim() || '#ffffff';
+              var muted = computed.getPropertyValue('--text-muted').trim() || '#94a3b8';
+              var border = computed.getPropertyValue('--panel-border').trim() || '#334155';
+              var accent = computed.getPropertyValue('--frontend-stroke').trim() || '#22d3ee';
+
+              var titleNode = document.querySelector('.header h1');
+              var subtitleNode = document.querySelector('.header .subtitle');
+              var title = titleNode ? titleNode.textContent : document.title;
+              var subtitle = subtitleNode ? subtitleNode.textContent : '';
+
+              var cardNodes = Array.prototype.slice.call(document.querySelectorAll('.cards .card'));
+              var cards = cardNodes.map(function (node) {
+                var dot = node.querySelector('.card-dot');
+                var dotClass = dot ? dot.className.replace('card-dot', '').trim() : '';
+                var dotColorVar = {
+                  cyan: '--frontend-stroke', emerald: '--backend-stroke', violet: '--database-stroke',
+                  amber: '--cloud-stroke', rose: '--security-stroke', orange: '--messagebus-stroke',
+                  slate: '--external-stroke'
+                }[dotClass] || '--frontend-stroke';
+                return {
+                  title: node.querySelector('h3') ? node.querySelector('h3').textContent : '',
+                  items: Array.prototype.map.call(node.querySelectorAll('li'), function (li) { return li.textContent; }),
+                  accent: computed.getPropertyValue(dotColorVar).trim() || accent
+                };
+              });
+
+              // Logical layout space is 1600 wide; render at EXPORT_PAGE_SCALE
+              // (2x) so the download is a crisp 3200px-wide image. All draw
+              // coordinates stay in logical pixels via ctx.setTransform.
+              var PAGE_WIDTH = 1600;
+              var EXPORT_PAGE_SCALE = 2;
+              var pad = 48;
+              var titleBlock = 96;
+              var diagramWidth = PAGE_WIDTH - pad * 2;
+              var diagramHeight = Math.round(diagramWidth * (data.height / data.width));
+              var cardHeaderHeight = 40;
+              var cardLineHeight = 26;
+              var cardPad = 24;
+              var cardGap = 20;
+              var cardsHeight = cards.length ? (Math.max.apply(null, cards.map(function (c) {
+                return cardHeaderHeight + c.items.length * cardLineHeight + cardPad * 2;
+              })) + 8) : 0;
+              var canvasHeight = pad + titleBlock + diagramHeight + 24
+                + (cards.length ? cardsHeight + pad : 0);
+
+              var canvas = document.createElement('canvas');
+              canvas.width = PAGE_WIDTH * EXPORT_PAGE_SCALE;
+              canvas.height = canvasHeight * EXPORT_PAGE_SCALE;
+              if (canvas.width * canvas.height > MAX_CANVAS_PIXELS * 4) {
+                EXPORT_PAGE_SCALE = 1;
+                canvas.width = PAGE_WIDTH * EXPORT_PAGE_SCALE;
+                canvas.height = canvasHeight * EXPORT_PAGE_SCALE;
+              }
+              var ctx = canvas2dOrThrow(canvas, viewerText('viewer.export.page'));
+              ctx.setTransform(EXPORT_PAGE_SCALE, 0, 0, EXPORT_PAGE_SCALE, 0, 0);
+
+              ctx.fillStyle = bg;
+              ctx.fillRect(0, 0, PAGE_WIDTH, canvasHeight);
+
+              // Title block
+              var y = pad;
+              ctx.fillStyle = accent;
+              ctx.fillRect(pad, y, 42, 4);
+              y += 34;
+              ctx.textBaseline = 'alphabetic';
+              ctx.textAlign = 'left';
+              ctx.fillStyle = text;
+              ctx.font = "700 30px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+              ctx.fillText(fitCanvasText(ctx, title, PAGE_WIDTH - pad * 2, 30, 16, '700'), pad, y);
+              if (subtitle) {
+                y += 30;
+                ctx.fillStyle = muted;
+                ctx.font = "500 15px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+                ctx.fillText(fitCanvasText(ctx, subtitle, PAGE_WIDTH - pad * 2, 15, 11, '500'), pad, y);
+              }
+
+              // Diagram panel
+              var panelY = pad + titleBlock;
+              ctx.fillStyle = panel;
+              ctx.strokeStyle = border;
+              ctx.lineWidth = 1;
+              ctx.fillRect(pad - 1, panelY - 1, diagramWidth + 2, diagramHeight + 2);
+              ctx.drawImage(img, pad, panelY, diagramWidth, diagramHeight);
+
+              // Cards row
+              if (cards.length) {
+                var cardsY = panelY + diagramHeight + 24;
+                var gap = cardGap;
+                var cardWidth = Math.floor((diagramWidth - gap * (cards.length - 1)) / cards.length);
+                cards.forEach(function (card, index) {
+                  var x = pad + index * (cardWidth + gap);
+                  ctx.fillStyle = panel;
+                  ctx.strokeStyle = border;
+                  ctx.fillRect(x, cardsY, cardWidth, cardsHeight - 8);
+                  ctx.strokeRect(x + 0.5, cardsY + 0.5, cardWidth - 1, cardsHeight - 9);
+                  var cy = cardsY + cardPad;
+                  ctx.fillStyle = card.accent;
+                  ctx.beginPath();
+                  ctx.arc(x + cardPad + 5, cy + 5, 5, 0, Math.PI * 2);
+                  ctx.fill();
+                  ctx.fillStyle = text;
+                  ctx.font = "700 16px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+                  ctx.fillText(fitCanvasText(ctx, card.title, cardWidth - cardPad * 2 - 20, 16, 12, '700'), x + cardPad + 16, cy + 12);
+                  cy += cardHeaderHeight;
+                  ctx.font = "500 14px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+                  ctx.fillStyle = muted;
+                  card.items.forEach(function (item) {
+                    ctx.fillText(fitCanvasText(ctx, item, cardWidth - cardPad * 2, 14, 10, '500'), x + cardPad, cy);
+                    cy += cardLineHeight;
+                  });
+                });
+              }
+
+              canvas.toBlob(function (blob) {
+                if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: viewerText('viewer.export.page') }));
+                else resolve(blob);
+              }, 'image/png');
+            } catch (error) {
+              reject(error);
+            } finally {
+              URL.revokeObjectURL(svgUrl);
+            }
+          };
+          img.onerror = function (e) {
+            URL.revokeObjectURL(svgUrl);
+            reject(e);
+          };
+          img.src = svgUrl;
+        });
+      }
+
       function motionMimeType() {
         if (typeof MediaRecorder === 'undefined') return '';
         var candidates = [
@@ -6850,7 +7004,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       // WebP encoding (older Safari), so detect explicitly.
       function supports(format) {
         if (format === 'share-card') return true;
-        if (format === 'svg' || format === 'png') return true;
+        if (format === 'svg' || format === 'png' || format === 'page') return true;
         if (format === 'webm') return canRecordMotion();
         var mime = format === 'jpeg' ? 'image/jpeg' : 'image/webp';
         try {
@@ -6965,6 +7119,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
               download(blob, base + '-share-card.png');
               toast(viewerText('viewer.export.downloadedShare'));
+            })
+          : format === 'page'
+          ? renderPageExport().then(function (blob) {
+              recordExportReceipt('page', blob, true, { width: 1600 });
+              download(blob, base + '-page.png');
+              toast(viewerText('viewer.export.downloadedPage'));
             })
           : format === 'svg'
           ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
