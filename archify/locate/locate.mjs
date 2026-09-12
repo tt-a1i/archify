@@ -264,9 +264,9 @@ function importFacts(before, after, ownership) {
 
 function findMapDelta(changes, mapPath, base, head) {
   if (!mapPath || !base || !head) return undefined;
-  const hit = (changes || []).some((change) => change.path === mapPath || change.oldPath === mapPath);
+  const hit = (changes || []).find((change) => change.path === mapPath || change.oldPath === mapPath);
   if (!hit) return undefined;
-  return { path: mapPath, baseBlob: `${base}:${mapPath}`, headBlob: `${head}:${mapPath}` };
+  return { path: mapPath, baseBlob: `${base}:${hit.oldPath || mapPath}`, headBlob: `${head}:${hit.path}` };
 }
 
 function finishReceipt({

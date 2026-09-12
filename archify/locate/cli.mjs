@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateBundle } from '../bundle/diagram-bundle.mjs';
 import { validateSchema } from '../renderers/shared/validator.mjs';
 import { parseRepositoryRemote } from '../renderers/shared/repository-location.mjs';
 import { LocateError, locateDiagnostic, locateFail } from './error.mjs';
@@ -229,15 +230,18 @@ function prepareOutDir(out) {
   return dir;
 }
 
-function commitLocatePair({ htmlCandidate, receiptCandidate, outputHtml, outputReceipt, stagingDirectory, bundleArtifact }) {
+function commitLocatePair({ htmlCandidate, receiptCandidate, outputHtml, outputReceipt, stagingDirectory, bundleArtifacts = [] }) {
   const targets = [
     { label: 'HTML artifact', target: outputHtml, candidate: htmlCandidate, backup: path.join(stagingDirectory, '.previous-html') },
     { label: 'receipt', target: outputReceipt, candidate: receiptCandidate, backup: path.join(stagingDirectory, '.previous-receipt') },
   ];
-  if (bundleArtifact) targets.push({ ...bundleArtifact, label: 'bundle projection', backup: path.join(stagingDirectory, '.previous-bundle') });
+  bundleArtifacts.forEach((artifact, index) => targets.push({ ...artifact, label: 'bundle file', backup: path.join(stagingDirectory, `.previous-bundle-${index}`) }));
+  if (new Set(targets.map(item => path.resolve(item.target))).size !== targets.length) {
+    locateFail('locate/out-directory', 'Bundle files collide with Locate output names.');
+  }
   for (const item of targets) {
-    if (!fs.existsSync(item.target)) continue;
-    const existing = fs.lstatSync(item.target);
+    const existing = fs.lstatSync(item.target, { throwIfNoEntry: false });
+    if (!existing) continue;
     if (!existing.isFile()) {
       locateFail('locate/out-directory', `Existing ${item.label} target is not a regular file.`, {
         evidence: { target: item.target },
@@ -293,46 +297,28 @@ function reportLocateFailure({ json, error, status = 1, diagnostics }) {
   process.exitCode = status;
 }
 
-function childSpecPath(bundleDir, diagram) {
-  const candidates = [];
-  if (diagram?.id) {
-    for (const suffix of ['.json', '.architecture.json', '.workflow.json', '.sequence.json', '.dataflow.json', '.lifecycle.json']) {
-      candidates.push(path.join(bundleDir, `${diagram.id}${suffix}`));
-    }
-  }
-  const file = diagram.file || diagram.spec;
-  if (file) {
-    const jsonName = file.endsWith('.html') ? file.replace(/\.html$/i, '.json') : file;
-    candidates.push(path.join(bundleDir, jsonName));
-  }
-  return candidates.find((candidate) => fs.existsSync(candidate)) || null;
-}
-
-function entryHtmlPath(bundleDir, manifest) {
-  const diagram = (manifest.diagrams || []).find((item) => item.id === manifest.entry);
-  if (diagram?.file) return path.join(bundleDir, diagram.file);
-  const raw = manifest.entry || '';
-  return path.join(bundleDir, raw.endsWith('.html') ? raw : `${raw}.html`);
-}
-
 function writeBundleProjection({
   bundleDir, receipt, changes, headTree, base, head, mapPath, outDir, parentOwnership,
 }) {
   const manifestPath = path.join(bundleDir, 'manifest.json');
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-  validateSchema('bundle', manifest);
+  validateBundle(bundleDir);
+  const entry = manifest.diagrams.find(diagram => diagram.id === manifest.entry);
+  const entrySpecPath = path.join(bundleDir, entry.file.replace(/\.html$/, '.json'));
+  if (!fs.readFileSync(entrySpecPath).equals(fs.readFileSync(mapPath))) {
+    locateFail('locate/bundle-invalid', '--map does not match the manifest-bound entry specification.');
+  }
   const childReceipts = {};
   for (const link of manifest.drilldowns || []) {
     const diagram = (manifest.diagrams || []).find((item) => item.id === link.child);
     if (!diagram) locateFail('locate/bundle-incomplete', `Missing child diagram ${link.child}.`);
-    const childMapPath = childSpecPath(bundleDir, diagram);
-    if (!childMapPath) locateFail('locate/bundle-incomplete', `Missing child spec ${link.child}.`);
+    const childMapPath = path.join(bundleDir, diagram.file.replace(/\.html$/, '.json'));
     const childOwnPath = defaultOwnershipPath(childMapPath);
     if (!fs.existsSync(childOwnPath)) locateFail('locate/bundle-incomplete', `Missing child ownership ${link.child}.`);
     const childMap = loadMap(childMapPath);
     const loaded = loadOwnership({ ownershipPath: childOwnPath, mapPath: childMapPath, map: childMap });
     if (!loaded.ownership.parent || loaded.ownership.parent.component !== link.component
-      || path.resolve(path.dirname(childOwnPath), loaded.ownership.parent.map) !== path.resolve(mapPath)
+      || path.resolve(path.dirname(childOwnPath), loaded.ownership.parent.map) !== path.resolve(entrySpecPath)
       || link.parent !== manifest.entry) {
       locateFail('locate/bundle-incomplete', `Child parent binding does not match the entry link ${link.child}.`);
     }
@@ -350,20 +336,32 @@ function writeBundleProjection({
     });
   }
   const projection = buildLocateProjection({ base, head, entryReceipt: receipt, childReceipts });
-  const sourceHtmlPath = entryHtmlPath(bundleDir, manifest);
+  const sourceHtmlPath = path.join(bundleDir, entry.file);
   const entryHtml = fs.readFileSync(sourceHtmlPath, 'utf8');
   const projected = embedProjection(entryHtml, projection);
   const mapBase = path.basename(mapPath || sourceHtmlPath).replace(/\.json$/i, '').replace(/\.html$/i, '');
   const fileName = `${mapBase}.locate.html`;
-  const copied = [];
-  let outPath = null;
-  if (outDir) {
-    outPath = path.join(outDir, fileName);
-    fs.mkdirSync(outDir, { recursive: true });
-    fs.writeFileSync(outPath, projected);
-    copied.push(outPath);
+  const files = new Map([['manifest.json', manifestPath]]);
+  if (manifest.ownership) files.set(manifest.ownership.file, path.join(bundleDir, manifest.ownership.file));
+  for (const diagram of manifest.diagrams) {
+    const spec = path.join(bundleDir, diagram.file.replace(/\.html$/, '.json'));
+    files.set(diagram.file, path.join(bundleDir, diagram.file));
+    files.set(path.basename(spec), spec);
+    const ownership = defaultOwnershipPath(spec);
+    if (fs.existsSync(ownership)) files.set(path.basename(ownership), ownership);
   }
-  return { projection, outPath, copied };
+  if (files.has(fileName)) locateFail('locate/out-directory', 'Projected entry name collides with a bundle file.');
+  const candidates = [];
+  fs.mkdirSync(outDir, { recursive: true });
+  for (const [name, source] of files) {
+    const candidate = path.join(outDir, name);
+    fs.copyFileSync(source, candidate);
+    candidates.push(candidate);
+  }
+  const outPath = path.join(outDir, fileName);
+  fs.writeFileSync(outPath, projected);
+  candidates.push(outPath);
+  return { projection, outPath, copied: candidates };
 }
 
 export function measureMapBehind(root, mapRevision, head) {
@@ -403,33 +401,40 @@ function attachCompare({ type, root, base, head, mapPath, outDir, stagingDirecto
   if (type !== 'architecture') {
     return { status: 'unsupported-type' };
   }
-  const compareDir = path.join(outDir, 'compare');
-  fs.mkdirSync(compareDir, { recursive: true });
-  const htmlAbs = path.join(compareDir, 'map-delta.html');
-  const receiptAbs = path.join(compareDir, 'map-delta.receipt.json');
-  const baseMap = path.join(stagingDirectory, 'map.base.json');
-  const headMap = path.join(stagingDirectory, 'map.head.json');
-  fs.writeFileSync(baseMap, gitShow(root, base, mapPath));
-  fs.writeFileSync(headMap, gitShow(root, head, mapPath));
-  const result = spawnSync(process.execPath, [
-    cliPath,
-    'compare',
-    type,
-    baseMap,
-    headMap,
-    htmlAbs,
-    '--receipt',
-    receiptAbs,
-    '--json',
-  ], {
-    encoding: 'utf8',
-    cwd: path.resolve(path.dirname(cliPath), '..'),
-    maxBuffer: 16 * 1024 * 1024,
-  });
-  const compared = result.status === 0 && fs.existsSync(receiptAbs) && fs.existsSync(htmlAbs);
-  return compared
-    ? { status: 'compared', receiptPath: 'compare/map-delta.receipt.json', htmlPath: 'compare/map-delta.html', exitCode: 0 }
-    : { status: 'compare-failed', exitCode: result.status ?? 1 };
+  try {
+    const compareDir = path.join(outDir, 'compare');
+    fs.mkdirSync(compareDir, { recursive: true });
+    const htmlAbs = path.join(compareDir, 'map-delta.html');
+    const receiptAbs = path.join(compareDir, 'map-delta.receipt.json');
+    const baseMap = path.join(stagingDirectory, 'map.base.json');
+    const headMap = path.join(stagingDirectory, 'map.head.json');
+    const basePath = changes.find(change => change.path === mapPath)?.oldPath || mapPath;
+    fs.writeFileSync(baseMap, gitShow(root, base, basePath));
+    fs.writeFileSync(headMap, gitShow(root, head, mapPath));
+    const result = spawnSync(process.execPath, [
+      cliPath,
+      'compare',
+      type,
+      baseMap,
+      headMap,
+      htmlAbs,
+      '--receipt',
+      receiptAbs,
+      '--json',
+    ], {
+      encoding: 'utf8',
+      cwd: path.resolve(path.dirname(cliPath), '..'),
+      maxBuffer: 16 * 1024 * 1024,
+    });
+    const compared = result.status === 0 && fs.existsSync(receiptAbs) && fs.existsSync(htmlAbs);
+    return compared
+      ? { status: 'compared', receiptPath: 'compare/map-delta.receipt.json', htmlPath: 'compare/map-delta.html', exitCode: 0 }
+      : { status: 'compare-failed', exitCode: result.status ?? 1 };
+  } catch {
+    // Comparison is supplemental: a missing baseline or unwritable compare
+    // output must not discard the independently computed Locate receipt.
+    return { status: 'compare-failed', exitCode: 1 };
+  }
 }
 
 function receiptOnlyHtml(receipt) {
@@ -560,15 +565,15 @@ export async function commandLocate(args, ctx) {
     const receiptCandidate = path.join(stagingDirectory, 'locate.receipt.json');
     fs.writeFileSync(htmlCandidate, html);
     fs.writeFileSync(receiptCandidate, `${JSON.stringify(receipt, null, 2)}\n`);
-    let bundleArtifact;
+    let bundleArtifacts = [];
     if (options.bundle) {
       try {
         const bundled = writeBundleProjection({
           bundleDir: path.resolve(options.bundle), receipt, changes, headTree,
-          base, head, mapPath: mapAbs, outDir: stagingDirectory,
+          base, head, mapPath: mapAbs, outDir: path.join(stagingDirectory, 'bundle'),
           parentOwnership: loaded.ownership,
         });
-        bundleArtifact = { candidate: bundled.outPath, target: path.join(outDir, path.basename(bundled.outPath)) };
+        bundleArtifacts = bundled.copied.map(candidate => ({ candidate, target: path.join(outDir, path.basename(candidate)) }));
       } catch (error) {
         if (error instanceof LocateError) throw error;
         locateFail('locate/bundle-invalid', `Could not prepare bundle projection: ${error.message}`, {
@@ -577,7 +582,7 @@ export async function commandLocate(args, ctx) {
       }
     }
     commitLocatePair({ htmlCandidate, receiptCandidate, outputHtml: htmlPath,
-      outputReceipt: receiptPath, stagingDirectory, bundleArtifact });
+      outputReceipt: receiptPath, stagingDirectory, bundleArtifacts });
 
     if (options.lint && receipt.summary.files.ambiguous) {
       const diagnostics = ambiguousDiagnostics(receipt);

@@ -1329,7 +1329,7 @@ test('cli: incomplete bundle fails before replacing existing locate outputs', ()
   const result = run(['locate', `${base}..${head}`, '--repo-root', root,
     '--map', path.join(root, 'map.architecture.json'), '--out', out, '--bundle', root, '--json']);
   assert.equal(result.status, 1, result.stdout + result.stderr);
-  assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'locate/bundle-incomplete');
+  assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'locate/bundle-invalid');
   assert.equal(fs.readFileSync(path.join(out, 'locate.html'), 'utf8'), 'previous HTML');
   assert.equal(fs.readFileSync(path.join(out, 'locate.receipt.json'), 'utf8'), 'previous receipt');
 });
@@ -1377,14 +1377,15 @@ fs.renameSync = function (source, target) {
 test('cli: bundle output commits with the receipt and refuses non-file destinations', () => {
   const { root, base, head } = locateCliRepo();
   const out = path.join(root, 'out');
-  fs.writeFileSync(path.join(root, 'entry.html'), '<html><body>entry</body></html>');
-  fs.writeFileSync(path.join(root, 'manifest.json'), JSON.stringify({
-    schema_version: 1, bundle_type: 'drilldown', entry: 'entry',
-    diagrams: [{ id: 'entry', file: 'entry.html', title: 'Entry', level: 0,
-      diagram_type: 'architecture', spec_sha256: 'a'.repeat(64), artifact_sha256: 'b'.repeat(64) }],
-  }));
+  const bundle = path.join(root, 'bundle');
+  fs.mkdirSync(bundle);
+  fs.copyFileSync(path.join(root, 'map.architecture.json'), path.join(bundle, 'entry.json'));
+  const rendered = run(['render', 'architecture', path.join(bundle, 'entry.json'), path.join(bundle, 'entry.html')]);
+  assert.equal(rendered.status, 0, rendered.stderr);
+  const built = run(['bundle', bundle, '--json']);
+  assert.equal(built.status, 0, built.stdout + built.stderr);
   const args = ['locate', `${base}..${head}`, '--repo-root', root,
-    '--map', path.join(root, 'map.architecture.json'), '--out', out, '--bundle', root, '--json'];
+    '--map', path.join(root, 'map.architecture.json'), '--out', out, '--bundle', bundle, '--json'];
   const first = run(args);
   assert.equal(first.status, 0, first.stdout + first.stderr);
   const projected = path.join(out, 'map.architecture.locate.html');
@@ -1396,4 +1397,44 @@ test('cli: bundle output commits with the receipt and refuses non-file destinati
   assert.equal(second.status, 1);
   assert.equal(JSON.parse(second.stdout).diagnostics[0].code, 'locate/out-directory');
   assert.equal(fs.readFileSync(path.join(out, 'locate.html'), 'utf8'), 'keep this HTML');
+});
+
+
+test('cli: Locate accepts a changed filename containing Infinity', () => {
+  const { root, base } = locateCliRepo();
+  fs.writeFileSync(path.join(root, 'bin/Infinity.ts'), 'export const value = 1;');
+  execFileSync('git', ['-C', root, 'add', '.']);
+  execFileSync('git', ['-C', root, 'commit', '-m', 'valid filename']);
+  const out = path.join(root, 'out');
+  const result = run(['locate', `${base}..HEAD`, '--repo-root', root,
+    '--map', path.join(root, 'map.architecture.json'), '--out', out, '--json']);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.ok(JSON.parse(result.stdout).files.some(file => file.path === 'bin/Infinity.ts'));
+});
+
+
+test('cli: a renamed map compares its old baseline path and retains the Locate receipt', () => {
+  const { root, base } = locateCliRepo();
+  execFileSync('git', ['-C', root, 'mv', 'map.architecture.json', 'renamed.architecture.json']);
+  const ownership = JSON.parse(fs.readFileSync(path.join(root, 'map.architecture.ownership.json')));
+  ownership.map = 'renamed.architecture.json';
+  fs.writeFileSync(path.join(root, 'renamed.architecture.ownership.json'), JSON.stringify(ownership));
+  execFileSync('git', ['-C', root, 'add', '.']);
+  execFileSync('git', ['-C', root, 'commit', '-m', 'rename map']);
+  const out = path.join(root, 'out');
+  const args = ['locate', `${base}..HEAD`, '--repo-root', root,
+    '--map', path.join(root, 'renamed.architecture.json'), '--out', out, '--json'];
+  const first = run(args);
+  assert.equal(first.status, 0, first.stdout + first.stderr);
+  const receipt = JSON.parse(first.stdout);
+  assert.equal(receipt.mapDelta.baseBlob, `${base}:map.architecture.json`);
+  assert.equal(receipt.mapDelta.status, 'compared');
+  assert.ok(receipt.review.blocking.includes('map_changed'));
+  fs.rmSync(path.join(out, 'compare'), { recursive: true });
+  fs.writeFileSync(path.join(out, 'compare'), 'reserved by user');
+  const second = run(args);
+  assert.equal(second.status, 0, second.stdout + second.stderr);
+  assert.equal(JSON.parse(second.stdout).mapDelta.status, 'compare-failed');
+  assert.equal(fs.readFileSync(path.join(out, 'compare'), 'utf8'), 'reserved by user');
+  assert.equal(JSON.parse(fs.readFileSync(path.join(out, 'locate.receipt.json'))).mapDelta.status, 'compare-failed');
 });

@@ -136,3 +136,18 @@ test('generated accessible labels are checked as chrome', () => {
   assert.throws(() => validateLocateHtml(html.replace('aria-label="Annotated architecture"', 'aria-label="LOW RISK"'), receipt),
     error => error.evidence?.match === 'LOW RISK');
 });
+
+
+test('Locate accepts non-finite words as user text but rejects non-finite geometry', () => {
+  const input = { ...receipt, files: receipt.files.map(file => ({ ...file, path: 'src/Infinity.ts' })) };
+  const artifact = mapHtml.replace('data-node-id="cli"', 'data-node-id="cli" data-label="NaN"')
+    .replace('</svg>', '<text>Infinity and NaN</text></svg>');
+  const html = renderLocateHtmlFromArtifact({ receipt: input, mapHtml: artifact });
+  assert.equal(validateLocateHtml(html, input).ok, true);
+  for (const value of ['NaN', 'Infinity', '-Infinity', 'undefined']) {
+    assert.throws(() => validateLocateHtml(html.replace('x="10"', `x="${value}"`), input),
+      error => error.code === 'locate/artifact-invalid' && error.message.includes('non-finite'));
+  }
+  const workflow = `<html><body>Locate receipt only.<script id="archify-locate-receipt" type="application/json">${JSON.stringify(input)}</script></body></html>`;
+  assert.equal(validateLocateHtml(workflow, input, { diagramType: 'workflow' }).ok, true);
+});

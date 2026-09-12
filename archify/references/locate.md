@@ -39,7 +39,8 @@ archify locate --lint [<rev>] --map <map.json> --out <dir> [--ownership <file>] 
 - `--repo-root` defaults to the Git top-level containing the map, and must itself be a top-level.
 - `--facts` takes two raw-facts JSON files and contributes import-edge observations only.
 - `--bundle <dir>` additionally writes `<map-stem>.locate.html`, a copy of the bundle entry with
-  the change projection embedded.
+  the change projection embedded, plus the original manifest, entry/child HTML, paired JSON
+  specifications and ownership sidecars. The whole output directory is transferable.
 - `--lint` cannot be combined with a range.
 
 ## Inputs
@@ -194,7 +195,10 @@ is a minimal receipt carrier.
 
 `--bundle <dir>` additionally embeds
 `<script id="archify-locate-projection" type="application/json">` into a copy of the bundle's
-entry HTML. See `drilldown-bundles.md` for how the viewer consumes it.
+entry HTML. The original bundle files are copied alongside it without changing their bytes or
+digests, so children still open after the output directory moves and the source directory is
+removed. All bundle inputs must pass `bundle --check`, and `--map` must match the manifest-bound
+entry specification. See `drilldown-bundles.md` for how the viewer consumes it.
 
 ## Exit codes
 
@@ -307,9 +311,16 @@ new top-level `analyzers/` directory that the map does not yet claim, so the hon
 ### Bundle projection failure
 
 With `--bundle`, the projection is prepared before replacing the main HTML/receipt pair.
-A missing child specification, ownership sidecar or matching parent binding fails as
-`locate/bundle-incomplete`; invalid manifest or projection preparation errors produce
-`locate/bundle-invalid`. No successful main pair is published for an incomplete projection.
-All three output files are preflighted and committed together with rollback on write failure.
+Invalid manifest, missing or stale bundle artifacts/specifications, an entry/map mismatch, or
+projection preparation errors produce `locate/bundle-invalid`. A missing child ownership
+sidecar or mismatched parent binding produces `locate/bundle-incomplete`. No successful main
+pair is published for an incomplete projection. Every output file is preflighted for duplicate
+targets and non-regular destinations, then committed together with rollback on write failure.
 If the filesystem also prevents rollback, the diagnostic identifies the retained staging
 backups for recovery. Projection JSON escapes HTML-significant characters before embedding.
+
+Locate's finite-output check examines numeric SVG attributes. Filenames, receipt strings and
+authored labels containing `NaN` or `Infinity` remain valid input text. When a map is renamed,
+`mapDelta.baseBlob` and the supplemental comparison use the previous filename at the base
+commit. A comparison preparation failure records `compare-failed` and preserves Locate's own
+receipt and exit result.

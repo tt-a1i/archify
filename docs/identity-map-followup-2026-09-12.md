@@ -72,3 +72,25 @@ The recovered source fixes were committed as `1b3a916` in an isolated delivery c
 Browser follow-up reproduced Locate projection badges leaking into SVG export (two transient elements/attributes). The shared export cleanup now removes projection state and the count badge from the clone. A real Chrome regression asserts that the live SVG remains untouched and the entire exported SVG matches its pristine counterpart. The regression failed before the fix and passed afterward.
 
 Bundled/development examples, Checkout compare, Gallery, pinned MCO artifacts, README animation and the Node 22 archive have been regenerated. Intermediate test runs overlap this follow-up fix and are diagnostic evidence only; final acceptance requires an immutable candidate run. No push or merge is claimed by this entry.
+
+## Independent acceptance review follow-up
+
+A review of `365fec9` reproduced three additional defects: Locate copied only the projected
+entry into a separate destination, filenames containing `Infinity` failed the geometry guard,
+and renamed maps attempted to read the new filename at the base revision. The follow-up
+uses canonical bundle validation, manifest-bound child specifications and complete bundle
+file delivery; rejects mismatched entry maps and target collisions; preserves all previous
+files if installation fails; scopes finite checks to SVG numeric attributes; and resolves
+rename baselines using the old path while keeping comparison failures supplemental.
+
+Regressions also cover an ID-named decoy beside the manifest-bound child spec and an explicit
+non-default ownership file. Real Chrome acceptance moves the destination directory, deletes
+the original source, waits for the child's actual projection and verifies the touched node.
+The existing Viewer stale card still handles delivered artifacts that subsequently diverge.
+
+On the previous immutable `365fec9`, all four hosted Node matrix jobs, ZIP freshness and
+three platform package smoke jobs passed. Hosted browser CI failed Motion Governor stored
+preference; the same test passed standalone on both main and candidate with local Chrome152,
+while hosted CI uses153. Exact-version diagnosis remains open. The local immutable full run
+also hit two update-notifier timing tests; one was reproduced on unchanged main in isolation.
+Those failures are retained as evidence, not renamed into a green full-suite result.

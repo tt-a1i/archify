@@ -204,6 +204,24 @@ export function renderLocateHtmlFromArtifact({ receipt, mapHtml, mapDeltaHref })
   });
 }
 
+// Receipt strings, labels and file paths are not geometry. Inspect only SVG
+// attributes whose values represent coordinates, lengths or transforms.
+function hasNonFiniteSvgGeometry(html) {
+  const numeric = new Set(['x', 'y', 'x1', 'x2', 'y1', 'y2', 'cx', 'cy', 'r', 'rx', 'ry',
+    'width', 'height', 'dx', 'dy', 'd', 'points', 'viewbox', 'transform', 'font-size',
+    'stroke-width', 'stroke-dasharray', 'stroke-dashoffset', 'opacity', 'fill-opacity',
+    'stroke-opacity', 'pathlength', 'markerwidth', 'markerheight', 'refx', 'refy']);
+  const markup = html.replace(/<!--[\s\S]*?-->/g, '').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
+  for (const svg of markup.matchAll(/<svg\b[\s\S]*?<\/svg>/gi)) {
+    for (const tag of svg[0].matchAll(/<[a-z][^>]*>/gi)) {
+      for (const attr of tag[0].matchAll(/([^\s=<>]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) {
+        if (numeric.has(attr[1].toLowerCase()) && /\b(?:NaN|Infinity|undefined)\b/.test(attr[2] ?? attr[3])) return true;
+      }
+    }
+  }
+  return false;
+}
+
 export function validateLocateHtml(html, receipt, options = {}) {
   const failures = [];
   const checks = [];
@@ -229,7 +247,7 @@ export function validateLocateHtml(html, receipt, options = {}) {
   }
   const forbiddenHit = chromeTextForForbidCheck(html).match(FORBIDDEN);
   check('forbidden-claims', !forbiddenHit, 'contains a forbidden risk or mergeability claim');
-  check('finite-output', !/\b(?:NaN|Infinity)\b/.test(html), 'contains non-finite output');
+  check('finite-output', !hasNonFiniteSvgGeometry(html), 'contains non-finite output');
   check('complete-receipt', !(receipt && receipt.completeness !== 'complete'), 'receipt is not complete');
   const checkCount = checks.length;
   const checksPassed = checks.filter((item) => item.ok).length;
