@@ -422,7 +422,7 @@ test('real Chrome preserves language through entry, navigation, selection, refre
     assert.equal(await evaluate(browser, sessionId, 'document.querySelector(".nav-logo-path").textContent'), '/ 验证作品集');
     assert.deepEqual(await evaluate(browser, sessionId, `Array.from(document.querySelectorAll('[data-filter]')).map(function (button) {
       return button.textContent;
-    })`), ['全部配方 / 11', '架构图', '工作流', '时序图', '数据流', '生命周期']);
+    })`), ['全部配方 / 12', '架构图', '工作流', '时序图', '数据流', '生命周期', '实体关系图']);
 
     await evaluate(browser, sessionId, 'document.querySelector(\'[data-filter="architecture"]\').click()');
     state = await evaluate(browser, sessionId, `({
@@ -452,7 +452,7 @@ test('real Chrome preserves language through entry, navigation, selection, refre
     assert.equal(await evaluate(browser, sessionId, 'document.querySelector(".nav-logo-path").textContent'), '/ proof lab');
     assert.deepEqual(await evaluate(browser, sessionId, `Array.from(document.querySelectorAll('[data-filter]')).map(function (button) {
       return button.textContent;
-    })`), ['All / 11', 'Architecture', 'Workflow', 'Sequence', 'Data flow', 'Lifecycle']);
+    })`), ['All / 12', 'Architecture', 'Workflow', 'Sequence', 'Data flow', 'Lifecycle', 'Entity-relationship']);
 
     loaded = browser.cdp.waitFor('Page.loadEventFired', sessionId);
     await browser.cdp.send('Page.reload', {}, sessionId);
