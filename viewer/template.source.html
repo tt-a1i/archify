@@ -1828,6 +1828,57 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
     .relationship-lens-actions #btn-focus-copy { color: var(--frontend-stroke); }
     .relationship-lens-actions #btn-focus-relations { display: none; }
+    .relationship-lens-actions #btn-focus-explain { color: var(--frontend-stroke); }
+    /* Authored explanation face. It overlays the passport's own footprint so
+       the placement beside the focused node is untouched; the passport may
+       grow downward to fit, bounded by the diagram container. */
+    .focus-chip[data-explaining="true"] > :not(.semantic-passport-explanation) { visibility: hidden; }
+    .semantic-passport-explanation {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      gap: 0.35rem;
+      padding: 0.7rem 0.75rem;
+      overflow: auto;
+      scrollbar-width: thin;
+      color: var(--text);
+    }
+    .focus-chip[data-explaining="true"] .semantic-passport-explanation {
+      display: flex;
+      animation: passport-explanation-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .semantic-passport-explanation-eyebrow {
+      display: block;
+      color: var(--frontend-stroke);
+      font-size: 0.5rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .semantic-passport-explanation-title { display: block; font-size: 0.8rem; line-height: 1.35; }
+    .semantic-passport-explanation-body { display: grid; gap: 0.35rem; }
+    .semantic-passport-explanation-body p { margin: 0; color: var(--text-muted); font-size: 0.6875rem; line-height: 1.5; }
+    .semantic-passport-explanation-back {
+      align-self: flex-start;
+      margin-top: auto;
+      padding: 0.15rem 0;
+      border: 0;
+      background: none;
+      color: var(--frontend-stroke);
+      font: inherit;
+      font-size: 0.625rem;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .semantic-passport-explanation-back:hover { color: var(--text); }
+    .semantic-passport-explanation-back:focus-visible { outline: 2px solid var(--frontend-stroke); outline-offset: 2px; }
+    @keyframes passport-explanation-in {
+      from { transform: rotateY(-90deg); opacity: 0; }
+      to { transform: rotateY(0); opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .focus-chip[data-explaining="true"] .semantic-passport-explanation { animation: none; }
+    }
     .relationship-lens-eyebrow {
       display: block;
       margin-bottom: 0.18rem;
@@ -5088,6 +5139,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
     <!-- ARCHIFY:GUIDED_VIEWS_DATA -->
     <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->
+    <!-- ARCHIFY:EXPLANATIONS_DATA -->
     <!-- ARCHIFY:I18N_DATA -->
     <div class="guided-views no-print" id="guided-views" hidden aria-label="{{i18n:viewer.guided.region}}">
       <button id="guided-view-prev" type="button" aria-label="{{i18n:viewer.guided.previous}}" title="{{i18n:viewer.guided.previous.title}}">&#8592;</button>
@@ -5389,10 +5441,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <div class="relationship-lens-actions">
             <button id="btn-focus-clear" type="button" aria-label="{{i18n:viewer.passport.close}}" title="{{i18n:viewer.common.close}}">&#215;</button>
             <button id="btn-focus-copy" type="button" aria-label="{{i18n:viewer.passport.copy.focus}}">{{i18n:viewer.passport.copy}}</button>
+            <button id="btn-focus-explain" type="button" hidden aria-label="{{i18n:viewer.passport.explain.show}}">{{i18n:viewer.passport.explain}}</button>
             <button id="btn-focus-relations" type="button" aria-label="{{i18n:viewer.passport.relations.show}}" aria-expanded="false" aria-controls="relationship-lens-list">{{i18n:viewer.passport.relations}}</button>
           </div>
         </div>
         <div class="relationship-lens-list" id="relationship-lens-list" aria-label="{{i18n:viewer.passport.relations.list}}"></div>
+        <div class="semantic-passport-explanation" id="focus-explanation" hidden>
+          <span class="semantic-passport-explanation-eyebrow">{{i18n:viewer.passport.explanation}}</span>
+          <strong class="semantic-passport-explanation-title" id="focus-explanation-title"></strong>
+          <div class="semantic-passport-explanation-body" id="focus-explanation-body"></div>
+          <button class="semantic-passport-explanation-back" id="focus-explanation-back" type="button">{{i18n:viewer.passport.explanation.backLink}}</button>
+        </div>
       </div>
       <div class="route-probe no-print" id="route-probe" hidden role="region" aria-labelledby="route-probe-title" data-state="idle">
         <div class="route-probe-head">
@@ -5747,6 +5806,26 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
 /* ARCHIFY:MOTION_GOVERNOR */
 
+    /* Authored node explanations are passport-only prose. They are read from
+       one JSON block outside the SVG, so canonical exports stay free of them,
+       and an artifact without explanations carries no block at all. */
+    Archify.explanations = (function () {
+      var element = document.getElementById('archify-explanations-data');
+      var payload = null;
+      if (element) {
+        try {
+          var parsed = JSON.parse(element.textContent || 'null');
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) payload = parsed;
+        } catch (_) {}
+      }
+      return {
+        node: function (id) {
+          var value = payload && Object.prototype.hasOwnProperty.call(payload, id) ? payload[id] : null;
+          return typeof value === 'string' && value.trim() ? value : null;
+        },
+        count: function () { return payload ? Object.keys(payload).length : 0; }
+      };
+    })();
     /* Verified repository evidence is emitted only after the renderer checks
        the authored GitHub revision, source blobs, and optional line ranges
        against the explicit --repo-root. It remains outside the SVG so every
@@ -6224,6 +6303,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       } else if (e.key === 'Escape' && Archify.intentTrace.active()) {
         e.preventDefault();
         Archify.intentTrace.clear();
+      } else if (e.key === 'Escape' && Archify.focus.explaining()) {
+        e.preventDefault();
+        Archify.focus.explain();
       } else if (e.key === 'Escape' && Archify.focus.active()) {
         e.preventDefault();
         Archify.focus.clear({ restoreFocus: true });

@@ -104,7 +104,7 @@ test('Focus preserves semantic selection, relationships, reachability and shared
   }
 
   await t.test('five modes expose the same Focus and flowTokens surfaces at cold start',async()=>{
-    const expected=['set','setMany','clear','copyLink','reach','clearReach','reachabilitySnapshot','inspectRelationship','inspectRelationshipById','reposition','relationship','reachability','active'].sort();
+    const expected=['set','setMany','clear','copyLink','explain','explaining','reach','clearReach','reachabilitySnapshot','inspectRelationship','inspectRelationshipById','reposition','relationship','reachability','active'].sort();
     for(const mode of Object.keys(cases)) {
       await load(mode);assert.deepEqual(await run('Object.keys(Archify.focus).sort()'),expected);assert.deepEqual(await run('Object.keys(Archify.flowTokens).sort()'),['create','kind','path']);
       const cold=await snapshot(mode+'-cold');assert.equal(cold.active,null);

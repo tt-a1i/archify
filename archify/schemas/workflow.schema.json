@@ -69,18 +69,34 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "mode": { "$ref": "common.schema.json#/$defs/legendMode" },
+            "mode": {
+              "$ref": "common.schema.json#/$defs/legendMode"
+            },
             "entries": {
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "frontend": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "backend": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "database": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "cloud": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "security": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "messagebus": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "external": { "$ref": "common.schema.json#/$defs/legendEntry" }
+                "frontend": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "backend": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "database": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "cloud": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "security": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "messagebus": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "external": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                }
               }
             }
           }
@@ -292,6 +308,11 @@
           },
           "brand": {
             "$ref": "common.schema.json#/$defs/brandMark"
+          },
+          "explanation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1200
           },
           "width": {
             "type": "number",

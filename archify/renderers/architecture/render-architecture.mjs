@@ -1075,4 +1075,5 @@ writeDiagram({
   svg: renderSvg(),
   cards: arch.cards,
   sourceEvidence,
+  diagram: arch,
 });

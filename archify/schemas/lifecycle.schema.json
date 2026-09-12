@@ -55,19 +55,37 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "mode": { "$ref": "common.schema.json#/$defs/legendMode" },
+            "mode": {
+              "$ref": "common.schema.json#/$defs/legendMode"
+            },
             "entries": {
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "start": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "active": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "waiting": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "decision": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "success": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "failure": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "neutral": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "external": { "$ref": "common.schema.json#/$defs/legendEntry" }
+                "start": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "active": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "waiting": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "decision": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "success": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "failure": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "neutral": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "external": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                }
               }
             }
           }
@@ -153,6 +171,11 @@
           },
           "brand": {
             "$ref": "common.schema.json#/$defs/brandMark"
+          },
+          "explanation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1200
           },
           "step": {
             "type": "string"

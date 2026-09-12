@@ -31,5 +31,6 @@ if (layoutJson) {
     meta: workflow.meta,
     svg: compiled.svg,
     cards: workflow.cards,
+    diagram: workflow,
   });
 }

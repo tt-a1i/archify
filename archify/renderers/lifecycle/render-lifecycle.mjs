@@ -558,4 +558,5 @@ writeDiagram({
   meta: lifecycle.meta,
   svg: renderSvg(),
   cards: lifecycle.cards,
+  diagram: lifecycle,
 });
