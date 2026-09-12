@@ -65,8 +65,9 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     ({ identifier: startup } = await send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {
       if (window !== window.top || location.href !== ${JSON.stringify(url)}) return;
       window.motionNavigation = ${expectedNavigation};
-      try { window.motionStartupPreference = localStorage.getItem('archify-motion'); }
-      catch (error) { window.motionStartupPreference = String(error); }
+      // Do not probe localStorage before document initialization: a Linux Chrome
+      // control reproduces storage loss from that probe even in script-free HTML.
+      // Assert the real stored value and Governor mode after each load instead.
       window.motionErrors = []; window.motionEnds = []; window.motionAmbient = [];
       addEventListener('error', e => motionErrors.push(e.message));
       addEventListener('unhandledrejection', e => motionErrors.push(String(e.reason)));
@@ -157,8 +158,7 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     assert.equal(await run(`localStorage.getItem('archify-motion')`), 'still');
     for (let reload = 0; reload < 5; reload++) {
       await load('architecture', { preserveStorage: true, reload: true });
-      const stored = await run(`({initial:motionStartupPreference,current:localStorage.getItem('archify-motion'),navigation:motionNavigation,url:location.href})`);
-      assert.equal(stored.initial, 'still', JSON.stringify(stored));
+      const stored = await run(`({current:localStorage.getItem('archify-motion'),navigation:motionNavigation,url:location.href})`);
       assert.equal(stored.current, 'still', JSON.stringify(stored));
       assert.equal((await snapshot('stored-still-' + reload)).mode, 'still', JSON.stringify(stored));
     }
@@ -208,10 +208,9 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
       let previousUrl = await run('location.href');
       for (let navigation = 0; navigation < 5; navigation++) {
         await load(navigation % 2 ? 'workflow' : 'architecture', { origin, preserveStorage: true });
-        const stored = await run(`({ initial:motionStartupPreference,current:localStorage.getItem('archify-motion'),url:location.href,origin:location.origin })`);
+        const stored = await run(`({ current:localStorage.getItem('archify-motion'),url:location.href,origin:location.origin })`);
         assert.equal(stored.origin, origin);
         assert.notEqual(stored.url, previousUrl);
-        assert.equal(stored.initial, 'still', JSON.stringify(stored));
         assert.equal(stored.current, 'still', JSON.stringify(stored));
         assert.equal((await snapshot('http-stored-still-' + navigation)).mode, 'still');
         previousUrl = stored.url;
