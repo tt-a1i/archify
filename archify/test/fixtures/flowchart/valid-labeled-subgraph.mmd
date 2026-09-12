@@ -1,0 +1,7 @@
+flowchart LR
+  Web[Web App] --> API(API Server)
+  API -->|reads| DB[(PostgreSQL)]
+  API --> Cache[(Redis Cache)]
+  subgraph Edge
+    Web
+  end

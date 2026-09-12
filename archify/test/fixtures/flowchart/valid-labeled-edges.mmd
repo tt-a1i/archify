@@ -1,0 +1,5 @@
+flowchart TD
+  A[Client] -->|HTTPS request| B[Load Balancer]
+  B --> C[API Server]
+  C -->|SQL query| D[(PostgreSQL)]
+  C -.->|cache miss| E[(Redis)]

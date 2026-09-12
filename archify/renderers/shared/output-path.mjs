@@ -338,3 +338,68 @@ export function resolveOutputPath({
     source,
   };
 }
+
+/**
+ * Commit the import result through a non-following atomic candidate/rename.
+ *
+ * The aliasing preflight runs before parsing; the output path can change while
+ * the input parses (e.g. an output symlink re-pointed at the input). The
+ * candidate is created with O_CREAT|O_EXCL in the output's directory — never
+ * at the output path itself — and rename(2) replaces a symlink instead of
+ * following it, so no swap between the preflight and the commit can make this
+ * write reach the Mermaid source through a symlink. The alias recheck at the
+ * commit point reports the same `input/output-alias` condition as the
+ * preflight instead of silently replacing a symlink that now resolves to the
+ * input.
+ *
+ * @param {string} inputPath
+ * @param {string} outputPath
+ * @param {string} data
+ * @returns {{ ok: true } | { ok: false, reason: 'input/output-alias' }}
+ * @throws {OutputPathError} when an output path on a symbolic-link cycle
+ *   cannot be proven non-aliasing (`output/symlink-cycle`; the caller maps
+ *   `archifyDiagnostics` into its receipt).
+ * @throws {Error} when the output cannot be written (propagated to the CLI's
+ *   `output/write` receipt handling); the candidate file is removed first —
+ *   including when opening, writing, or fsync-ing it fails.
+ */
+export function commitImportOutput(inputPath, outputPath, data) {
+  // Same shared aliasing contract as resolveOutputPath: identical paths,
+  // symlinks resolving to the input, hard links sharing the input's inode,
+  // and future-path aliases. A symbolic-link cycle is not provably
+  // non-aliasing, so pathsAlias throws instead of returning false.
+  if (pathsAlias(inputPath, outputPath)) {
+    return { ok: false, reason: 'input/output-alias' };
+  }
+  const resolved = path.resolve(outputPath);
+  const candidate = path.join(
+    path.dirname(resolved),
+    `.archify-import-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.tmp`,
+  );
+  let fd;
+  try {
+    fd = fs.openSync(candidate, 'wx');
+    try {
+      fs.writeFileSync(fd, data);
+      fs.fsyncSync(fd);
+    } finally {
+      // Best-effort close: the data is already durable via fsync, and a close
+      // failure must not mask the original write/fsync error below.
+      try { fs.closeSync(fd); } catch { /* best effort */ }
+    }
+  } catch (error) {
+    // The candidate exists only if openSync succeeded; the forced removal is
+    // a no-op otherwise. Without this a failed open-past-creation, write, or
+    // fsync would leak one candidate file per run (the rename path below
+    // cleans up only itself).
+    try { fs.rmSync(candidate, { force: true }); } catch { /* best effort */ }
+    throw error;
+  }
+  try {
+    fs.renameSync(candidate, resolved);
+  } catch (error) {
+    try { fs.rmSync(candidate, { force: true }); } catch { /* best effort */ }
+    throw error;
+  }
+  return { ok: true };
+}
