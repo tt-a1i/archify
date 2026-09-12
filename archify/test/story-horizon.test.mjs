@@ -83,7 +83,9 @@ test('Still, accessibility, teardown, and export preserve the product boundary',
   assert.ok((template.match(/svg\.removeAttribute\('data-story-next'\)/g) || []).length >= 3);
   assert.ok((template.match(/panel\.removeAttribute\('data-story-next'\)/g) || []).length >= 2);
   assert.match(template, /clone\.removeAttribute\('data-story-next'\)/);
-  assert.match(template, /canonicalStateClean[\s\S]*!clone\.hasAttribute\('data-story-next'\)/);
+  const cleanup = template.match(/function cleanExportClone\(clone\) \{[\s\S]*?\n      \}/)?.[0] || '';
+  assert.match(cleanup, /return !clone[\s\S]*!clone\.hasAttribute\('data-story-next'\)/);
+  assert.match(template, /var canonicalStateClean = cleanExportClone\(clone\);/);
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

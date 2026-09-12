@@ -318,6 +318,21 @@ test('Semantic Radar avoids an expanded mobile Passport without hiding a collisi
     assert.equal(closed.radarHidden, true, JSON.stringify(closed, null, 2));
     assert.equal(closed.passportYielded, null, JSON.stringify(closed, null, 2));
     assert.equal(closed.passportVisible, true, JSON.stringify(closed, null, 2));
+
+    for (const original of [null, 'false', 'true']) {
+      const restored = await evaluate(browser, sessionId, `(function () {
+        var passport = document.getElementById('focus-chip');
+        var original = ${JSON.stringify(original)};
+        if (original === null) passport.removeAttribute('aria-hidden');
+        else passport.setAttribute('aria-hidden', original);
+        Archify.radar.open();
+        document.getElementById('overview-map-expand').click();
+        var during = { yielded: passport.getAttribute('data-radar-yielded'), aria: passport.getAttribute('aria-hidden') };
+        Archify.radar.close();
+        return { during: during, yielded: passport.getAttribute('data-radar-yielded'), aria: passport.getAttribute('aria-hidden') };
+      })()`);
+      assert.deepEqual(restored, { during: { yielded: 'true', aria: 'true' }, yielded: null, aria: original });
+    }
   } finally {
     await browser.close();
   }
@@ -347,6 +362,7 @@ test('Semantic Radar reports a consistent unavailable state and recovers when sp
           var trigger = document.getElementById('btn-overview-map');
           var feedback = document.getElementById('overview-map-feedback');
           resolve({
+            requested: Archify.radar.isOpen(),
             panelHidden: panel.hidden,
             expanded: trigger.getAttribute('aria-expanded'),
             limited: trigger.getAttribute('data-radar-space-limited'),
@@ -356,6 +372,7 @@ test('Semantic Radar reports a consistent unavailable state and recovers when sp
         }, 260);
       });
     })()`, true);
+    assert.equal(unavailable.requested, true);
     assert.equal(unavailable.panelHidden, true, JSON.stringify(unavailable, null, 2));
     assert.equal(unavailable.expanded, 'false', JSON.stringify(unavailable, null, 2));
     assert.equal(unavailable.limited, 'true', JSON.stringify(unavailable, null, 2));
@@ -374,12 +391,14 @@ test('Semantic Radar reports a consistent unavailable state and recovers when sp
         var trigger = document.getElementById('btn-overview-map');
         var feedback = document.getElementById('overview-map-feedback');
         resolve({
+          requested: Archify.radar.isOpen(),
           panelHidden: panel.hidden,
           expanded: trigger.getAttribute('aria-expanded'),
           feedbackHidden: feedback.hidden
         });
       }, 260);
     })`, true);
+    assert.equal(recovered.requested, true);
     assert.equal(recovered.panelHidden, false, JSON.stringify(recovered, null, 2));
     assert.equal(recovered.expanded, 'true', JSON.stringify(recovered, null, 2));
     assert.equal(recovered.feedbackHidden, true, JSON.stringify(recovered, null, 2));
@@ -516,13 +535,55 @@ test('Semantic Radar titlebar drag persists while surface drag still pans the di
     await dragMouse(browser, sessionId, titleStart, titleTarget);
 
     const manuallyPlaced = await evaluate(browser, sessionId, `(function () {
-      Archify.radar.sync();
       var radar = document.getElementById('overview-map').getBoundingClientRect();
       return { left: radar.left, top: radar.top, state: Archify.view.state() };
     })()`);
     assert.ok(Math.abs(manuallyPlaced.left - geometry.target.left) <= 2, JSON.stringify({ geometry, manuallyPlaced }, null, 2));
     assert.ok(Math.abs(manuallyPlaced.top - geometry.target.top) <= 2, JSON.stringify({ geometry, manuallyPlaced }, null, 2));
     assert.deepEqual(manuallyPlaced.state, geometry.state);
+
+    // Capture the transient drag and cancellation in the same page operation.
+    for (const cancel of ['pointercancel', 'Escape']) {
+      const cancelled = await evaluate(browser, sessionId, `(function () {
+        var panel = document.getElementById('overview-map');
+        var head = panel.querySelector('.overview-map-head');
+        var rect = panel.getBoundingClientRect();
+        var start = { left: rect.left, top: rect.top };
+        var h = head.getBoundingClientRect();
+        function pointer(type, offset) {
+          head.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 71,
+            button: 0, clientX: h.left + 48 + offset, clientY: h.top + h.height / 2 }));
+        }
+        pointer('pointerdown', 0);
+        pointer('pointermove', 80);
+        var moved = panel.getBoundingClientRect().left !== start.left;
+        var dragging = panel.getAttribute('data-panel-dragging');
+        if (${JSON.stringify(cancel)} === 'Escape') document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+        else pointer('pointercancel', 80);
+        var end = panel.getBoundingClientRect();
+        return { start: start, end: { left: end.left, top: end.top }, moved: moved, dragging: dragging,
+          afterDragging: panel.getAttribute('data-panel-dragging'), open: Archify.radar.isOpen(), state: Archify.view.state() };
+      })()`);
+      assert.equal(cancelled.moved, true, cancel);
+      assert.equal(cancelled.dragging, 'true', cancel);
+      assert.equal(cancelled.afterDragging, null, cancel);
+      assert.equal(cancelled.open, true, cancel);
+      assert.deepEqual(cancelled.end, cancelled.start, cancel);
+      assert.deepEqual(cancelled.state, manuallyPlaced.state, cancel);
+    }
+    const reopened = await evaluate(browser, sessionId, `(function () {
+      Archify.radar.close();
+      Archify.radar.open();
+      Archify.radar.open();
+      var rect = document.getElementById('overview-map').getBoundingClientRect();
+      return { left: rect.left, top: rect.top, roots: document.querySelectorAll('#overview-map-surface > svg').length,
+        count: Archify.radar.count(), nodes: document.querySelectorAll('[data-radar-node-id]').length };
+    })()`);
+    assert.equal(reopened.left, manuallyPlaced.left);
+    assert.equal(reopened.top, manuallyPlaced.top);
+    assert.equal(reopened.roots, 1);
+    assert.ok(reopened.count > 0);
+    assert.equal(reopened.count, reopened.nodes);
 
     const surfaceState = await evaluate(browser, sessionId, `(function () {
       var radar = document.getElementById('overview-map').getBoundingClientRect();
@@ -567,6 +628,105 @@ test('Semantic Radar titlebar drag persists while surface drag still pans the di
     assert.ok(afterResize.radar.left >= Math.max(0, afterResize.container.left), JSON.stringify(afterResize, null, 2));
     assert.ok(afterResize.radar.right <= Math.min(afterResize.viewport.width, afterResize.container.right), JSON.stringify(afterResize, null, 2));
     assert.equal(overlaps(afterResize.radar, afterResize.controls, 10), false, JSON.stringify(afterResize, null, 2));
+  } finally {
+    await browser.close();
+  }
+});
+
+test('closing a pending Radar request prevents retry and reflow from reopening it', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  render('architecture', CASES.architecture);
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const sessionId = await loadArtifact(browser, path.join(tmp, 'architecture.html'), { width: 390, height: 300 });
+    const transition = await evaluate(browser, sessionId, `(function () {
+      var container = document.querySelector('.diagram-container');
+      window.scrollTo(0, container.offsetTop);
+      Archify.focus.set('lb', { toggle: false });
+      document.getElementById('btn-focus-relations').click();
+      var opened = Archify.radar.open();
+      var panel = document.getElementById('overview-map');
+      var waiting = { result: opened, requested: Archify.radar.isOpen(), hidden: panel.hidden };
+      var closed = Archify.radar.close({ restoreFocus: true });
+      return { waiting: waiting, closed: closed, requested: Archify.radar.isOpen(),
+        focused: document.activeElement.id, feedbackHidden: document.getElementById('overview-map-feedback').hidden };
+    })()`);
+    assert.deepEqual(transition, { waiting: { result: true, requested: true, hidden: true },
+      closed: false, requested: false, focused: 'btn-overview-map', feedbackHidden: true });
+    await browser.cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 390, height: 600, deviceScaleFactor: 1, mobile: false,
+    }, sessionId);
+    // Observe the whole original retry window, not just a single settled frame.
+    const after = await evaluate(browser, sessionId, `new Promise(function (resolve) {
+      var reopened = false;
+      var start = performance.now();
+      function sample() {
+        var panel = document.getElementById('overview-map');
+        reopened = reopened || Archify.radar.isOpen() || !panel.hidden;
+        if (performance.now() - start < 500) return requestAnimationFrame(sample);
+        resolve({ reopened: reopened, expanded: document.getElementById('btn-overview-map').getAttribute('aria-expanded'),
+          feedbackHidden: document.getElementById('overview-map-feedback').hidden });
+      }
+      requestAnimationFrame(sample);
+    })`, true);
+    assert.deepEqual(after, { reopened: false, expanded: 'false', feedbackHidden: true });
+  } finally {
+    await browser.close();
+  }
+});
+
+test('Radar reflects camera viewport, status and Focus/Story activity through normal callers', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  render('architecture', CASES.architecture);
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const sessionId = await loadArtifact(browser, path.join(tmp, 'architecture.html'));
+    await browser.cdp.send('Emulation.setEmulatedMedia', { features: [
+      { name: 'prefers-reduced-motion', value: 'reduce' },
+    ] }, sessionId);
+    async function observe(action) {
+      return evaluate(browser, sessionId, `(async () => {
+        ${action}
+        let previous = '', equal = 0;
+        for (let frame = 0; frame < 240; frame += 1) {
+          await new Promise(resolve => requestAnimationFrame(resolve));
+          const viewport = document.querySelector('.overview-map-viewport');
+          const actual = ['x','y','width','height'].map(name => Number(viewport.getAttribute(name)));
+          const logical = Archify.view.logicalViewport();
+          const expected = [logical.x,logical.y,logical.width,logical.height];
+          const active = Array.from(document.querySelectorAll('[data-radar-active]'), node => node.getAttribute('data-radar-node-id')).sort();
+          const status = document.getElementById('overview-map-status').textContent;
+          const state = { actual, expected, active, status, count: Archify.radar.count(), scale: logical.scale,
+            beat: Archify.guidedViews.beat()?.nodeId || null };
+          const value = JSON.stringify(state);
+          equal = value === previous ? equal + 1 : 0; previous = value;
+          if (equal >= 8) return state;
+        }
+        throw new Error('Radar observations did not settle');
+      })()`, true);
+    }
+    const initial = await observe(`window.scrollTo(0, document.querySelector('.diagram-container').offsetTop); Archify.radar.open();`);
+    assert.deepEqual(initial.actual, initial.expected);
+    assert.equal(initial.status, initial.count + ' nodes · full map');
+    const zoomed = await observe(`document.querySelector('[data-view="in"]').click();`);
+    assert.deepEqual(zoomed.actual, zoomed.expected);
+    assert.notDeepEqual(zoomed.actual, initial.actual);
+    assert.equal(zoomed.status, zoomed.count + ' nodes · ' + Math.round(zoomed.scale * 100) + '% viewport');
+    assert.notEqual(zoomed.status, initial.status);
+    assert.deepEqual((await observe(`Archify.focus.set('lb', { toggle:false });`)).active, ['lb']);
+    assert.deepEqual((await observe(`Archify.focus.set('db', { toggle:false });`)).active, ['db']);
+    assert.deepEqual((await observe(`Archify.focus.clear();`)).active, []);
+    await observe(`Archify.guidedViews.activate('request-path');`);
+    const first = await observe(`document.querySelector('[data-story-index="0"]').click(); Archify.focus.clear({ updateUrl:false });`);
+    assert.ok(first.beat);
+    assert.deepEqual(first.active, [first.beat]);
+    const second = await observe(`document.querySelector('[data-story-index="1"]').click(); Archify.focus.clear({ updateUrl:false });`);
+    assert.ok(second.beat);
+    assert.notEqual(second.beat, first.beat);
+    assert.deepEqual(second.active, [second.beat]);
+    assert.deepEqual((await observe(`Archify.guidedViews.showAll();`)).active, []);
   } finally {
     await browser.close();
   }

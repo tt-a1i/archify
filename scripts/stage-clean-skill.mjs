@@ -181,6 +181,23 @@ function snapshotSourceEntry(entry) {
   }
 }
 
+function canonicalizeExistingPrefix(target) {
+  // realpathSync rejects paths that do not exist yet, so resolve the deepest
+  // existing ancestor through symlinks and re-append the missing tail.
+  const pending = [];
+  let current = path.resolve(target);
+  for (;;) {
+    try {
+      return path.join(fs.realpathSync(current), ...pending);
+    } catch {
+      const parent = path.dirname(current);
+      if (parent === current) return path.join(current, ...pending);
+      pending.unshift(path.basename(current));
+      current = parent;
+    }
+  }
+}
+
 function cleanPackageManifest(destination) {
   const packagePath = path.join(destination, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
@@ -219,12 +236,42 @@ function validateThirdPartyNoticeInputs(repoRoot, packageEntries) {
   }
 }
 
-export function stageCleanSkill({ repoRoot = scriptRoot, destination }) {
+export function stageCleanSkill({ repoRoot = scriptRoot, destination, modeManifest = null }) {
   const resolvedRoot = fs.realpathSync(path.resolve(repoRoot));
   if (!destination) throw new Error('clean Skill staging requires a destination');
   const resolvedDestination = path.resolve(destination);
   if (fs.existsSync(resolvedDestination)) {
     throw new Error(`clean Skill staging destination already exists: ${resolvedDestination}`);
+  }
+  // The manifest records each staged file's Git index mode for the archive
+  // writer. Filesystem permission bits are not portable (Windows cannot store
+  // an executable bit), so the archive must not re-derive modes from stat.
+  const resolvedModeManifest = modeManifest === null ? null : path.resolve(modeManifest);
+  if (resolvedModeManifest !== null) {
+    // Compare physical locations: a symlinked ancestor on either side must not
+    // let the manifest land inside the staged tree, where the writer would see
+    // an unrecorded file and refuse the archive.
+    const canonicalDestination = canonicalizeExistingPrefix(resolvedDestination);
+    const canonicalManifest = canonicalizeExistingPrefix(resolvedModeManifest);
+    const relativeToDestination = path.relative(canonicalDestination, canonicalManifest);
+    const outsideDestination = relativeToDestination === '..'
+      || relativeToDestination.startsWith(`..${path.sep}`)
+      || path.isAbsolute(relativeToDestination);
+    if (!outsideDestination) {
+      throw new Error(`mode manifest must be written outside the staged Skill tree: ${resolvedModeManifest}`);
+    }
+    // The manifest belongs to this invocation only: never overwrite, and never
+    // later remove, a file that already existed at that path.
+    let manifestExists = true;
+    try {
+      fs.lstatSync(resolvedModeManifest);
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      manifestExists = false;
+    }
+    if (manifestExists) {
+      throw new Error(`mode manifest path already exists: ${resolvedModeManifest}`);
+    }
   }
 
   const entries = trackedEntries(resolvedRoot);
@@ -247,8 +294,15 @@ export function stageCleanSkill({ repoRoot = scriptRoot, destination }) {
     .map((entry) => snapshotSourceEntry(entry));
   validateThirdPartyNoticeInputs(resolvedRoot, packageEntries);
 
+  const modes = Object.fromEntries(
+    packageEntries
+      .map((entry) => [entry.relative.slice('archify/'.length), entry.mode])
+      .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0)),
+  );
+
   fs.mkdirSync(resolvedDestination, { recursive: true, mode: 0o755 });
   let fileCount = 0;
+  let manifestWritten = false;
   try {
     for (const entry of packageEntries) {
       const relativeInsideSkill = entry.relative.slice('archify/'.length);
@@ -260,12 +314,17 @@ export function stageCleanSkill({ repoRoot = scriptRoot, destination }) {
       fileCount += 1;
     }
     cleanPackageManifest(resolvedDestination);
+    if (resolvedModeManifest !== null) {
+      fs.writeFileSync(resolvedModeManifest, `${JSON.stringify(modes, null, 2)}\n`, { flag: 'wx' });
+      manifestWritten = true;
+    }
   } catch (error) {
     fs.rmSync(resolvedDestination, { recursive: true, force: true });
+    if (manifestWritten) fs.rmSync(resolvedModeManifest, { force: true });
     throw error;
   }
 
-  return { destination: resolvedDestination, fileCount };
+  return { destination: resolvedDestination, fileCount, modes };
 }
 
 function isMainModule() {
@@ -280,11 +339,15 @@ function isMainModule() {
 
 if (isMainModule()) {
   try {
+    const modeManifest = argument('--mode-manifest');
     const result = stageCleanSkill({
       repoRoot: argument('--root', scriptRoot),
       destination: argument('--dest'),
+      modeManifest,
     });
-    process.stdout.write(`${JSON.stringify(result)}\n`);
+    const summary = { destination: result.destination, fileCount: result.fileCount };
+    if (modeManifest) summary.modeManifest = path.resolve(modeManifest);
+    process.stdout.write(`${JSON.stringify(summary)}\n`);
   } catch (error) {
     process.stderr.write(`${error.message}\n`);
     process.exitCode = 1;
