@@ -354,6 +354,7 @@ const MESSAGE_PAIRS = {
   'viewer.passport.explain.show': ['Show the explanation for this node', '显示此节点的解释'],
   'viewer.passport.explanation': ['Explanation', '解释'],
   'viewer.passport.explanation.back': ['{label} explanation. Activate to return to the passport', '{label} 的解释。激活以返回语义护照'],
+  'viewer.passport.explanation.backLink': ['Back to passport', '返回语义护照'],
   'viewer.passport.relations': ['Relations', '关系'],
   'viewer.passport.relations.show': ['Show connected relationships', '显示关联关系'],
   'viewer.passport.relations.hide': ['Hide connected relationships', '隐藏关联关系'],

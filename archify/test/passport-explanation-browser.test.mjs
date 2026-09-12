@@ -65,12 +65,12 @@ test('Semantic Passport flips to an authored explanation and back without moving
   assert.equal(flipped.title, 'Users');
   assert.equal(flipped.left, front.left, 'the passport does not move when it flips');
   assert.equal(flipped.top, front.top, 'the passport does not move when it flips');
-  assert.equal(flipped.focused, 'focus-explanation', 'the explanation face takes focus');
+  assert.equal(flipped.focused, 'focus-explanation-back', 'the back link takes focus');
 
   const exported = await run(`(() => { const clone = Archify.exportMenu && Archify.exportMenu.snapshot ? null : null; const svg = document.querySelector('.diagram-container > svg').outerHTML; return { svg }; })()`);
   assert.doesNotMatch(exported.svg, /Anyone with the app installed/, 'prose stays outside the canonical SVG');
 
-  await run(`document.getElementById('focus-explanation').click()`);
+  await run(`document.getElementById('focus-explanation-back').click()`);
   const back = await state();
   assert.equal(back.explaining, false);
   assert.equal(back.attr, null);
@@ -79,9 +79,9 @@ test('Semantic Passport flips to an authored explanation and back without moving
   assert.equal(back.focused, 'btn-focus-explain', 'focus returns to the Explain action');
 
   await run(`document.getElementById('btn-focus-explain').click()`);
-  await run(`document.getElementById('focus-explanation').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))`);
+  await run(`document.getElementById('focus-explanation-back').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))`);
   const escaped = await state();
-  assert.equal(escaped.explaining, false, 'Escape on the face closes only the explanation');
+  assert.equal(escaped.explaining, false, 'Escape on the back link closes the explanation');
   assert.equal(escaped.chipHidden, false, 'the passport stays open after Escape on the face');
 
   assert.equal(await run(`Archify.focus.set('cdn')`), true);

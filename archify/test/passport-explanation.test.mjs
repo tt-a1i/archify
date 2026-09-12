@@ -80,7 +80,7 @@ test('explanations ride in one JSON block outside the SVG and never enter the ca
     assert.deepEqual(payload, { [id]: PROSE }, mode);
     assert.doesNotMatch(svg(html), /Zebra-quartz/, `${mode}: prose leaked into the SVG`);
     assert.match(html, /<button id="btn-focus-explain" type="button" hidden aria-label="Show the explanation for this node">Explain<\/button>/, mode);
-    assert.match(html, /<div class="semantic-passport-explanation" id="focus-explanation" hidden tabindex="-1" role="button">/, mode);
+    assert.match(html, /<div class="semantic-passport-explanation" id="focus-explanation" hidden>/, mode);
     assert.match(html, /Archify\.explanations = \(function \(\) \{/, mode);
     assert.match(html, /explain: toggleExplanation,/, mode);
   }

@@ -30,6 +30,7 @@
       var explanationFace = document.getElementById('focus-explanation');
       var explanationTitle = document.getElementById('focus-explanation-title');
       var explanationBody = document.getElementById('focus-explanation-body');
+      var explanationBack = document.getElementById('focus-explanation-back');
       var relationsBtn = document.getElementById('btn-focus-relations');
       var clearBtn = document.getElementById('btn-focus-clear');
       var activeIds = [];
@@ -406,7 +407,6 @@
           p.textContent = trimmed;
           explanationBody.appendChild(p);
         });
-        explanationFace.setAttribute('aria-label', viewerText('viewer.passport.explanation.back', { label: title }));
         explanationFace.hidden = false;
         chip.setAttribute('data-explaining', 'true');
         // Grow downward to fit the prose, but never past the diagram container.
@@ -414,7 +414,7 @@
         var needed = explanationFace.scrollHeight + 2;
         var room = container.getBoundingClientRect().bottom - chipBox.top - 12;
         if (needed > chipBox.height) chip.style.minHeight = Math.min(needed, Math.max(chipBox.height, room)) + 'px';
-        try { explanationFace.focus({ preventScroll: true }); } catch (_) { try { explanationFace.focus(); } catch (_) {} }
+        if (explanationBack) { try { explanationBack.focus({ preventScroll: true }); } catch (_) { try { explanationBack.focus(); } catch (_) {} } }
         requestLensPlacement();
         return true;
       }
@@ -1349,14 +1349,8 @@
       clearBtn.addEventListener('click', function () { clear({ restoreFocus: true }); });
       copyBtn.addEventListener('click', copyFocusLink);
       if (explainBtn) explainBtn.addEventListener('click', function (event) { event.stopPropagation(); toggleExplanation(); });
-      if (explanationFace) {
-        explanationFace.addEventListener('click', function (event) { event.stopPropagation(); closeExplanation(); });
-        explanationFace.addEventListener('keydown', function (event) {
-          if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Escape') return;
-          event.preventDefault();
-          event.stopPropagation();
-          closeExplanation();
-        });
+      if (explanationBack) {
+        explanationBack.addEventListener('click', function (event) { event.stopPropagation(); closeExplanation(); });
       }
       upstreamBtn.addEventListener('click', function () { applyReachability('upstream'); });
       downstreamBtn.addEventListener('click', function () { applyReachability('downstream'); });
