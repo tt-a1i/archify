@@ -7,7 +7,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
 ### Added
-- **Authored node explanations in the Semantic Passport.** Semantic nodes can now carry a short plain-text explanation (up to 1200 chars). Clicking a node with one shows an "Explain" action in the passport. Tap it to flip to the explanation, tap again (or Enter/Space/Esc) to flip back. The text lives in a JSON block outside the SVG, so diagrams without explanations render exactly as before. Nothing else changed. no new dependencies, runtime, or storage.
+- **Authored node explanations in the Semantic Passport.** Semantic nodes can now carry a short plain-text explanation (up to 1200 chars). Clicking a node with one shows an "Explain" action in the passport. Tap it to flip to the explanation, tap Enter/Space/Esc to flip back. The text lives in a JSON block outside the SVG, so diagrams without explanations render exactly as before. Nothing else changed. no new dependencies, runtime, or storage.
 
 ### Fixed
 - **DSH plugin refresh.** Adapter 0.2.0 pins the current Archify development snapshot, includes the newer runtime and CLI fixes, and targets DSH 0.1.2-rc.1. Release metadata replaces the frozen 0.1.0 packaging source; the tarball uses the canonical clean-Skill stager and documents independent plugin upgrades.
