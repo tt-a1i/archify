@@ -342,6 +342,7 @@ const trunkAssignments = new Map();
         role,
         entity: entities.get(role === 'in' ? head.to : head.from),
         side: role === 'in' ? sides.toSide : sides.fromSide,
+        styleKey: markerStyleOf(head),
         members: members.map((entry) => entry.relationship),
       };
       for (const entry of members) {
@@ -380,10 +381,19 @@ const trunkAssignments = new Map();
     for (const offset of TRUNK_OFFSETS) {
       const candidate = base + outward * offset;
       if (!clearsSpan(candidate)) continue;
-      const near = chosenLines.find((line) => line.axis === group.axis && Math.abs(line.coordinate - candidate) < TRUNK_SNAP);
+      const near = chosenLines.find((line) => line.axis === group.axis
+        && line.styleKey === group.styleKey
+        && Math.abs(line.coordinate - candidate) < TRUNK_SNAP);
       // A snapped coordinate serves another group's span; it must clear this
       // one too, otherwise the next offset is tried.
       if (near && !clearsSpan(near.coordinate)) continue;
+      // A differently styled trunk never shares a coordinate: the bus would
+      // have to render in one group's dash language, so the next offset is
+      // tried until the two lines are a lane apart.
+      const clashing = chosenLines.some((line) => line.axis === group.axis
+        && line.styleKey !== group.styleKey
+        && Math.abs(line.coordinate - candidate) < TRUNK_SNAP);
+      if (clashing) continue;
       group.coordinate = near ? near.coordinate : candidate;
       break;
     }
@@ -391,7 +401,7 @@ const trunkAssignments = new Map();
       for (const relationship of group.members) trunkAssignments.delete(relationship);
       continue;
     }
-    chosenLines.push({ axis: group.axis, coordinate: group.coordinate });
+    chosenLines.push({ axis: group.axis, coordinate: group.coordinate, styleKey: group.styleKey });
   }
 }
 
@@ -492,16 +502,19 @@ function bundledTrunkPaths() {
     const runs = relationshipTrunkRuns(relationship);
     if (!runs.length) continue;
     const { axis, coordinate } = trunkAssignments.get(relationship).group;
-    const key = `${axis}:${coordinate}`;
+    const styleKey = markerStyleOf(relationship);
+    // Style is part of the cluster key so differently styled groups can never
+    // share one trunk path even if their coordinates ever coincide.
+    const key = `${axis}:${coordinate}:${styleKey}`;
     const list = clusters.get(key) || [];
     for (const run of runs) {
-      list.push({ low: run.low, high: run.high, styleKey: markerStyleOf(relationship) });
+      list.push({ low: run.low, high: run.high, styleKey });
     }
     clusters.set(key, list);
   }
   const paths = [];
   for (const [key, runs] of clusters) {
-    const [axis, coordinate] = key.split(':').map(Number);
+    const [axis, coordinate] = key.split(':').slice(0, 2).map(Number);
     runs.sort((left, right) => left.low - right.low);
     const merged = [];
     for (const run of runs) {

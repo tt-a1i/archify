@@ -209,7 +209,9 @@ test('relationships sharing one target side bundle into a trunk with short branc
 
   // Every branch keeps its cardinality markers and its full logical route, but
   // the rendered d skips the stretch the trunk path now carries.
-  for (const route of relationshipRoutes(html)) {
+  const routes = relationshipRoutes(html);
+  assert.equal(routes.length, 2, 'both branches should render as relationship paths');
+  for (const route of routes) {
     assert.match(route.raw, /marker-start="url\(#er-many-start\)"/);
     assert.match(route.raw, /marker-end="url\(#er-one-end\)"/);
     assert.match(route.raw, /d="M [^"]+ M /, 'the branch path leaves the trunk stretch to the trunk path');
@@ -226,6 +228,63 @@ test('relationships sharing one target side bundle into a trunk with short branc
   const mixedResult = render(mixed, mixedDirectory);
   assert.equal(mixedResult.status, 0);
   assert.doesNotMatch(fs.readFileSync(mixedResult.output, 'utf8'), /data-er-trunk/);
+});
+
+test('differently styled fan-in groups never share one trunk coordinate', () => {
+  // Two same-style pairs would naturally snap onto one bus line; a dashed
+  // trunk must not render in the solid group's dash language, so the dashed
+  // group takes the next offset a lane apart instead.
+  const diagram = {
+    schema_version: 1,
+    diagram_type: 'erd',
+    meta: { title: 'Styled trunk lanes', locale: 'en' },
+    layout: { mode: 'grid', origin: [40, 80], gapX: 56, gapY: 72, entityW: 200 },
+    entities: [
+      {
+        id: 'hub_a', label: 'hub_a', row: 0, col: 0, width: 200,
+        attributes: [
+          { name: 'id', type: 'bigint', key: 'pk' },
+          { name: 'a', type: 'bigint' },
+          { name: 'b', type: 'bigint' },
+          { name: 'c', type: 'bigint' },
+        ],
+      },
+      {
+        id: 'hub_b', label: 'hub_b', row: 1, col: 0, width: 200,
+        attributes: [
+          { name: 'id', type: 'bigint', key: 'pk' },
+          { name: 'a', type: 'bigint' },
+          { name: 'b', type: 'bigint' },
+          { name: 'c', type: 'bigint' },
+        ],
+      },
+      { id: 'east_a1', label: 'east_a1', row: 0, col: 1, width: 200, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
+      { id: 'east_a2', label: 'east_a2', row: 1, col: 1, width: 200, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
+      { id: 'east_b1', label: 'east_b1', row: 2, col: 1, width: 200, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
+      { id: 'east_b2', label: 'east_b2', row: 3, col: 1, width: 200, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
+    ],
+    relationships: [
+      { id: 'a1_hub', from: 'east_a1', to: 'hub_a', fromCardinality: 'many', toCardinality: 'one' },
+      { id: 'a2_hub', from: 'east_a2', to: 'hub_a', fromCardinality: 'many', toCardinality: 'one' },
+      { id: 'b1_hub', from: 'east_b1', to: 'hub_b', fromCardinality: 'many', toCardinality: 'one', identifying: false },
+      { id: 'b2_hub', from: 'east_b2', to: 'hub_b', fromCardinality: 'many', toCardinality: 'one', identifying: false },
+    ],
+  };
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-er-trunk-styles-'));
+  const { status, output } = render(diagram, directory);
+  assert.equal(status, 0, 'two styled trunk lanes should render');
+  const html = fs.readFileSync(output, 'utf8');
+
+  const trunks = [...html.matchAll(/<path data-er-trunk=""[^>]*>/g)].map((match) => attrs(match[0]));
+  assert.equal(trunks.length, 2, 'each style renders its own trunk');
+  const solid = trunks.find((trunk) => trunk['data-composition-points'] === '256,104;256,272');
+  const dashed = trunks.find((trunk) => trunk['data-composition-points'] === '268,289;268,560');
+  assert.ok(solid, 'the solid group keeps the first offset');
+  assert.ok(dashed, 'the dashed group moves a lane apart instead of sharing the line');
+  assert.equal(solid.class, 'a-default');
+  assert.equal(dashed.class, 'a-dashed');
+  const { status: checkStatus, receipt } = artifactReceipt(output);
+  assert.equal(checkStatus, 0, JSON.stringify(receipt.checks.filter((check) => !check.ok), null, 2));
 });
 
 test('schema and reference mistakes fail with an addressed diagnostic', () => {
