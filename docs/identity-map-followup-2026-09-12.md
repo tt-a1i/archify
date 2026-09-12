@@ -1,6 +1,6 @@
 # Identity map: recovery acceptance queue
 
-This is a local follow-up to draft PR #367, not a new product specification or a merge approval. The remote head was verified as c881670 on 2026-09-12. Research reports describe that historical version; do not treat their numbers as current-main results.
+This is a local follow-up to draft PR #367, not a new product specification or a merge approval. The recovered research baseline is c881670. Research reports describe that historical version; current delivery state is tracked in the dated entries below and the disposition record.
 
 ## Scope and order
 
@@ -94,3 +94,18 @@ preference; the same test passed standalone on both main and candidate with loca
 while hosted CI uses153. Exact-version diagnosis remains open. The local immutable full run
 also hit two update-notifier timing tests; one was reproduced on unchanged main in isolation.
 Those failures are retained as evidence, not renamed into a green full-suite result.
+
+
+## Delivery and remaining acceptance
+
+The recovered fixes and offline counterexample replay were first pushed to #367 through `78df1ec`. Independent main fixes are now actual draft PRs #396 (`bfb7603`, renderer diagnostics) and #397 (`4f8e594`, explicit straight routing); both have passing hosted CI. Existing #373 now contains the main integration and canonical ZIP at `e59c633`, pushed to the contributor's original branch with their commits preserved. Its 26 checker regressions and the recovered public sequence validation pass; hosted CI run `34679027097` is tracked separately.
+
+A recovered real cross-origin/OOPIF probe showed that the ordinary embedded Viewer rejects bundle control messages and permits native Tab to leave the iframe. Further real-browser checks reproduced a nested-child Backspace defect: the child had no local active drilldown, so it neither consumed the key nor forwarded it to the parent. Commit `66576ed` makes Backspace follow the same temporary-state/parent-return ladder as Escape inside a nested child; ordinary viewers and text inputs retain their behavior. The five listener tests and six targeted real-browser cases passed after the change.
+
+Regeneration also exposed two README capture faults with Chrome 153: tab creation passed window-only dimensions, and cleanup could remove the browser profile before Chrome exited, masking the original error. The builder now applies viewport dimensions through its existing emulation call and waits for browser exit. The 54-frame animation and all affected HTML/ZIP artifacts have been regenerated.
+
+The hosted Motion Governor preference test failed again on `78df1ec` while other CI gates passed. It reads no stored key at the earliest document startup, before Viewer initialization. The browser test is identical to main; investigation now distinguishes `file:` URL/query storage behavior from an actual reload of the same URL. Neither a local pass nor the unrelated keyboard fix resolves this gate by itself. Final source and CI acceptance remain open.
+
+The full local `npm test` run on product commit `66576ed65fc894fb523f52a4692a68ef9b4f12c7` completed with **1,474 total, 1,422 passed, zero failed and 52 skipped**. The recorded hashes of tracked product/test/build sources were unchanged between start and finish. Browser environment variables were not enabled for that run; actual-browser evidence is recorded independently, not inferred from its skips.
+
+Commit `506d87e` adds six real public-CLI cases (Unicode, control characters preserving old output, symlink and gitlink changes, divergent trees), including a separate-process byte-identical repeat of delivered HTML and receipt. It also adds the six-case real-browser boundary file and registers the bundle/portable-output/export checks for hosted CI. Both new files passed their final dedicated runs and independent review. The same commit adds the first-look and E3 packages linked from the disposition record; independent offline executions agree with their recorded results and preserve the E3 anchor-selection difference.

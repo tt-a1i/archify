@@ -43,6 +43,33 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
   const session = await browser.sessionPromise;
   await browser.cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
   const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  const storageEvents = [];
+  const storageNavigations = [];
+  let storageBuffer = '';
+  // Retain browser-side storage events across document destruction. The failed
+  // Linux run can then distinguish an actual removal from a new storage area.
+  function storageTrace(chunk) {
+    storageBuffer += chunk;
+    let boundary;
+    while ((boundary = storageBuffer.indexOf('\0')) >= 0) {
+      const raw = storageBuffer.slice(0, boundary);
+      storageBuffer = storageBuffer.slice(boundary + 1);
+      if (!raw) continue;
+      const event = JSON.parse(raw);
+      if (event.method === 'Runtime.bindingCalled' && event.params.name === 'motionStorageWrite') {
+        storageEvents.push({ kind: 'storage-write-call', ...JSON.parse(event.params.payload) });
+      } else if (event.method?.startsWith('DOMStorage.')
+        && (event.params.key === 'archify-motion' || event.method === 'DOMStorage.domStorageItemsCleared')) {
+        storageEvents.push({ method: event.method, ...event.params });
+      }
+      if (storageEvents.length > 80) storageEvents.shift();
+    }
+  }
+  browser.cdp.readPipe.on('data', storageTrace);
+  t.after(() => browser.cdp.readPipe.off('data', storageTrace));
+  await send('DOMStorage.enable');
+  await send('Runtime.addBinding', { name: 'motionStorageWrite' });
+  const browserVersion = await browser.cdp.send('Browser.getVersion');
   async function run(expression) {
     const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
     assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
@@ -61,6 +88,16 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     ({ identifier: startup } = await send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {
       if (new URL(location.href).searchParams.get('testNavigation') !== '${expectedNavigation}') return;
       window.motionNavigation = ${expectedNavigation};
+      for (const method of ['setItem', 'removeItem', 'clear']) {
+        const original = Storage.prototype[method];
+        Storage.prototype[method] = function (...args) {
+          if (args[0] === 'archify-motion' || method === 'clear') {
+            motionStorageWrite(JSON.stringify({ navigation:${expectedNavigation}, method, args,
+              url:location.href, stack:new Error().stack }));
+          }
+          return original.apply(this, args);
+        };
+      }
       try { window.motionStartupPreference = localStorage.getItem('archify-motion'); }
       catch (error) { window.motionStartupPreference = String(error); }
       window.motionErrors = []; window.motionEnds = []; window.motionAmbient = [];
@@ -149,7 +186,18 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     for (let reload = 0; reload < 5; reload++) {
       await load('architecture', { preserveStorage: true });
       const stored = await run(`({initial:motionStartupPreference,current:localStorage.getItem('archify-motion'),navigation:motionNavigation,url:location.href})`);
-      assert.equal((await snapshot('stored-still-' + reload)).mode, 'still', JSON.stringify(stored));
+      let storage;
+      try {
+        const { frameTree } = await send('Page.getFrameTree');
+        const { storageKey } = await send('Storage.getStorageKeyForFrame', { frameId: frameTree.frame.id });
+        const { entries } = await send('DOMStorage.getDOMStorageItems', { storageId: { storageKey, isLocalStorage: true } });
+        storage = { frameId: frameTree.frame.id, loaderId: frameTree.frame.loaderId, storageKey,
+          entries: entries.filter(([key]) => key === 'archify-motion') };
+      } catch (error) { storage = { diagnosticError: String(error) }; }
+      storageNavigations.push({ ...stored, ...storage });
+      assert.equal((await snapshot('stored-still-' + reload)).mode, 'still', JSON.stringify({
+        stored, browser: browserVersion.product, navigations: storageNavigations, events: storageEvents,
+      }));
     }
     assert.equal(await run(`Archify.motionGovernor.setMode('live', {persist:false})`), 'live');
     assert.equal(await run(`localStorage.getItem('archify-motion')`), 'still');
