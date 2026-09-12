@@ -1,0 +1,337 @@
+[
+  {
+    "component": "cli",
+    "path": "archify/bin/archify.mjs",
+    "line": 10
+  },
+  {
+    "component": "cli",
+    "path": "archify/bin/archify.mjs",
+    "line": 484
+  },
+  {
+    "component": "cli",
+    "path": "archify/bin/archify.mjs",
+    "line": 966
+  },
+  {
+    "component": "cli",
+    "path": "archify/bin/preview.mjs",
+    "line": 10
+  },
+  {
+    "component": "cli",
+    "path": "archify/bin/preview.mjs",
+    "line": 209
+  },
+  {
+    "component": "cli",
+    "path": "archify/bin/preview.mjs",
+    "line": 344
+  },
+  {
+    "component": "renderers-shared",
+    "path": "archify/renderers/shared/validator.mjs",
+    "line": 6
+  },
+  {
+    "component": "renderers-shared",
+    "path": "archify/renderers/shared/validator.mjs",
+    "line": 22
+  },
+  {
+    "component": "renderers-shared",
+    "path": "archify/renderers/shared/validator.mjs",
+    "line": 39
+  },
+  {
+    "component": "renderers-shared",
+    "path": "archify/renderers/shared/geometry.mjs",
+    "line": 10
+  },
+  {
+    "component": "renderers-shared",
+    "path": "archify/renderers/shared/geometry.mjs",
+    "line": 463
+  },
+  {
+    "component": "renderers-shared",
+    "path": "archify/renderers/shared/geometry.mjs",
+    "line": 788
+  },
+  {
+    "component": "renderers-shared",
+    "path": "archify/renderers/shared/cli.mjs",
+    "line": 12
+  },
+  {
+    "component": "renderers-shared",
+    "path": "archify/renderers/shared/cli.mjs",
+    "line": 75
+  },
+  {
+    "component": "renderers-shared",
+    "path": "archify/renderers/shared/cli.mjs",
+    "line": 137
+  },
+  {
+    "component": "renderer-architecture",
+    "path": "archify/renderers/architecture/render-architecture.mjs",
+    "line": 36
+  },
+  {
+    "component": "renderer-architecture",
+    "path": "archify/renderers/architecture/render-architecture.mjs",
+    "line": 173
+  },
+  {
+    "component": "renderer-architecture",
+    "path": "archify/renderers/architecture/render-architecture.mjs",
+    "line": 375
+  },
+  {
+    "component": "renderer-architecture",
+    "path": "archify/renderers/architecture/grid.mjs",
+    "line": 3
+  },
+  {
+    "component": "renderer-architecture",
+    "path": "archify/renderers/architecture/grid.mjs",
+    "line": 19
+  },
+  {
+    "component": "renderer-architecture",
+    "path": "archify/renderers/architecture/grid.mjs",
+    "line": 33
+  },
+  {
+    "component": "renderer-workflow",
+    "path": "archify/renderers/workflow/render-workflow.mjs",
+    "line": 32
+  },
+  {
+    "component": "renderer-workflow",
+    "path": "archify/renderers/workflow/render-workflow.mjs",
+    "line": 211
+  },
+  {
+    "component": "renderer-workflow",
+    "path": "archify/renderers/workflow/render-workflow.mjs",
+    "line": 458
+  },
+  {
+    "component": "renderer-sequence",
+    "path": "archify/renderers/sequence/render-sequence.mjs",
+    "line": 8
+  },
+  {
+    "component": "renderer-sequence",
+    "path": "archify/renderers/sequence/render-sequence.mjs",
+    "line": 191
+  },
+  {
+    "component": "renderer-sequence",
+    "path": "archify/renderers/sequence/render-sequence.mjs",
+    "line": 275
+  },
+  {
+    "component": "renderer-dataflow",
+    "path": "archify/renderers/dataflow/render-dataflow.mjs",
+    "line": 32
+  },
+  {
+    "component": "renderer-dataflow",
+    "path": "archify/renderers/dataflow/render-dataflow.mjs",
+    "line": 148
+  },
+  {
+    "component": "renderer-dataflow",
+    "path": "archify/renderers/dataflow/render-dataflow.mjs",
+    "line": 298
+  },
+  {
+    "component": "renderer-lifecycle",
+    "path": "archify/renderers/lifecycle/render-lifecycle.mjs",
+    "line": 30
+  },
+  {
+    "component": "renderer-lifecycle",
+    "path": "archify/renderers/lifecycle/render-lifecycle.mjs",
+    "line": 249
+  },
+  {
+    "component": "renderer-lifecycle",
+    "path": "archify/renderers/lifecycle/render-lifecycle.mjs",
+    "line": 351
+  },
+  {
+    "component": "delta",
+    "path": "archify/delta/architecture-delta.mjs",
+    "line": 1
+  },
+  {
+    "component": "delta",
+    "path": "archify/delta/architecture-delta.mjs",
+    "line": 406
+  },
+  {
+    "component": "delta",
+    "path": "archify/delta/architecture-delta.mjs",
+    "line": 699
+  },
+  {
+    "component": "schemas",
+    "path": "archify/schemas/architecture.schema.json",
+    "line": 4
+  },
+  {
+    "component": "schemas",
+    "path": "archify/schemas/architecture.schema.json",
+    "line": 5
+  },
+  {
+    "component": "schemas",
+    "path": "archify/schemas/architecture.schema.json",
+    "line": 6
+  },
+  {
+    "component": "schemas",
+    "path": "archify/schemas/common.schema.json",
+    "line": 4
+  },
+  {
+    "component": "viewer",
+    "path": "archify/assets/template.html",
+    "line": 8
+  },
+  {
+    "component": "viewer",
+    "path": "archify/assets/template.html",
+    "line": 8006
+  },
+  {
+    "component": "viewer",
+    "path": "archify/assets/template.html",
+    "line": 10460
+  },
+  {
+    "component": "build-scripts",
+    "path": "archify/scripts/render-examples.mjs",
+    "line": 8
+  },
+  {
+    "component": "build-scripts",
+    "path": "archify/scripts/render-examples.mjs",
+    "line": 9
+  },
+  {
+    "component": "build-scripts",
+    "path": "archify/scripts/render-examples.mjs",
+    "line": 10
+  },
+  {
+    "component": "build-scripts",
+    "path": "scripts/build-gallery.mjs",
+    "line": 9
+  },
+  {
+    "component": "build-scripts",
+    "path": "scripts/build-gallery.mjs",
+    "line": 185
+  },
+  {
+    "component": "build-scripts",
+    "path": "scripts/build-gallery.mjs",
+    "line": 245
+  },
+  {
+    "component": "tests",
+    "path": "archify/test/cli.test.mjs",
+    "line": 10
+  },
+  {
+    "component": "tests",
+    "path": "archify/test/cli.test.mjs",
+    "line": 287
+  },
+  {
+    "component": "tests",
+    "path": "archify/test/cli.test.mjs",
+    "line": 468
+  },
+  {
+    "component": "tests",
+    "path": "archify/test/architecture-delta.test.mjs",
+    "line": 16
+  },
+  {
+    "component": "tests",
+    "path": "archify/test/architecture-delta.test.mjs",
+    "line": 152
+  },
+  {
+    "component": "tests",
+    "path": "archify/test/architecture-delta.test.mjs",
+    "line": 296
+  },
+  {
+    "component": "references",
+    "path": "archify/SKILL.md",
+    "line": 11
+  },
+  {
+    "component": "references",
+    "path": "archify/SKILL.md",
+    "line": 181
+  },
+  {
+    "component": "references",
+    "path": "archify/SKILL.md",
+    "line": 355
+  },
+  {
+    "component": "references",
+    "path": "archify/recipes/scenarios.mjs",
+    "line": 1
+  },
+  {
+    "component": "references",
+    "path": "archify/recipes/scenarios.mjs",
+    "line": 268
+  },
+  {
+    "component": "references",
+    "path": "archify/recipes/scenarios.mjs",
+    "line": 304
+  },
+  {
+    "component": "examples",
+    "path": "archify/examples/web-app.architecture.json",
+    "line": 2
+  },
+  {
+    "component": "examples",
+    "path": "archify/examples/web-app.architecture.json",
+    "line": 4
+  },
+  {
+    "component": "examples",
+    "path": "archify/examples/web-app.architecture.json",
+    "line": 27
+  },
+  {
+    "component": "docs-site",
+    "path": "docs/article-archify.md",
+    "line": 1
+  },
+  {
+    "component": "docs-site",
+    "path": "docs/article-archify.md",
+    "line": 63
+  },
+  {
+    "component": "docs-site",
+    "path": "docs/article-archify.md",
+    "line": 133
+  }
+]

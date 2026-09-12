@@ -1,0 +1,834 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Partial rescore of original model answers; no new model trial or historical prompt replay.",
+  "runtime": {
+    "python": "3.14.6"
+  },
+  "inputs": {
+    "fixtures/agents.json": "35adb3a7fd88e71bc09ad327c9aa869659d812c9d8097bdb1096f95cc9778fd9",
+    "fixtures/answers.json": "e97667cc81050821106963abcd0dac4d8e62461548bec371b128758ee8d910d4",
+    "fixtures/ground-truth.json": "7668106a37e3c1ce7bac14132727ca36cfbfb64848c7e50091faa4b9b626bc51",
+    "fixtures/provenance.json": "e96cd71f06eafc1fc777605ecaa30456690bf688471b58d3f09e5fbe7cc63081",
+    "sources/ground-truth-v1.txt": "223d4be1e4c7fd100c73d4910b9d0bbe893114bd0d63bdb0395b891c4fcb41b2",
+    "sources/historical-report-metrics.md": "caa1898f7c560336fb4da622a90a1f9a2039f9a4ce5878759bda16846a2387da",
+    "sources/scoring-v1.txt": "34d19d781c329282471f40ff69c93ce8b0efb7b1e6178fc14826d64dca205092",
+    "sources/scoring-v2.txt": "971d874ab6039ab92b6d8867a5ad10891ccb3e80ab16354827525c4fc6024e20",
+    "reference_v1.py": "26949f8582a096ab29f2a66581c51d1655f0a8185cfae63f371dfed057ca6a34",
+    "reference_v2.py": "2a97706d69d652fe2168ca44ae1f37122c113c949fedab51bd6c227bf1dec6ac",
+    "run.py": "3c5ea2c6c2a1e438ea1fcf828315fd47217bc099829cd97f52f6298f643951a8"
+  },
+  "verification": {
+    "recoveredAnswers": 30,
+    "writeFinalEqual": 30,
+    "groundTruthRecords": 15,
+    "metricCrossChecks": 180,
+    "referenceVersions": [
+      "v1",
+      "v2"
+    ],
+    "groundTruthCallsExecuted": 0,
+    "originalScriptsExecuted": 0
+  },
+  "aggregates": {
+    "main10": {
+      "n": 10,
+      "prs": [
+        354,
+        108,
+        85,
+        181,
+        96,
+        54,
+        146,
+        256,
+        265,
+        42
+      ],
+      "p_at_3": {
+        "A": 0.7666666666666667,
+        "B": 0.7,
+        "delta": -0.06666666666666667,
+        "exactA": "23/30",
+        "exactB": "7/10",
+        "legacyRoundedA": 0.7667,
+        "legacyRoundedB": 0.7,
+        "B_better": 1,
+        "A_better": 3,
+        "tie": 6
+      },
+      "recall_at_3": {
+        "A": 0.7666666666666667,
+        "B": 0.7,
+        "delta": -0.06666666666666667,
+        "exactA": "23/30",
+        "exactB": "7/10",
+        "legacyRoundedA": 0.7667,
+        "legacyRoundedB": 0.7,
+        "B_better": 1,
+        "A_better": 3,
+        "tie": 6
+      },
+      "hit1": {
+        "A": 0.9,
+        "B": 0.9,
+        "delta": 0.0,
+        "exactA": "9/10",
+        "exactB": "9/10",
+        "legacyRoundedA": 0.9,
+        "legacyRoundedB": 0.9,
+        "B_better": 0,
+        "A_better": 0,
+        "tie": 10
+      },
+      "B_worse_p_at_3_prs": [
+        85,
+        146,
+        256
+      ]
+    },
+    "controls5": {
+      "n": 5,
+      "prs": [
+        346,
+        348,
+        138,
+        216,
+        109
+      ],
+      "p_at_3": {
+        "A": 0.6,
+        "B": 0.5333333333333333,
+        "delta": -0.06666666666666667,
+        "exactA": "3/5",
+        "exactB": "8/15",
+        "legacyRoundedA": 0.6,
+        "legacyRoundedB": 0.5333,
+        "B_better": 0,
+        "A_better": 1,
+        "tie": 4
+      },
+      "recall_at_3": {
+        "A": 1.0,
+        "B": 0.9,
+        "delta": -0.1,
+        "exactA": "1",
+        "exactB": "9/10",
+        "legacyRoundedA": 1.0,
+        "legacyRoundedB": 0.9,
+        "B_better": 0,
+        "A_better": 1,
+        "tie": 4
+      },
+      "hit1": {
+        "A": 1.0,
+        "B": 1.0,
+        "delta": 0.0,
+        "exactA": "1",
+        "exactB": "1",
+        "legacyRoundedA": 1.0,
+        "legacyRoundedB": 1.0,
+        "B_better": 0,
+        "A_better": 0,
+        "tie": 5
+      },
+      "B_worse_p_at_3_prs": [
+        348
+      ]
+    },
+    "all15": {
+      "n": 15,
+      "prs": [
+        354,
+        108,
+        85,
+        181,
+        96,
+        54,
+        146,
+        256,
+        265,
+        42,
+        346,
+        348,
+        138,
+        216,
+        109
+      ],
+      "p_at_3": {
+        "A": 0.7111111111111111,
+        "B": 0.6444444444444445,
+        "delta": -0.06666666666666667,
+        "exactA": "32/45",
+        "exactB": "29/45",
+        "legacyRoundedA": 0.7111,
+        "legacyRoundedB": 0.6445,
+        "B_better": 1,
+        "A_better": 4,
+        "tie": 10
+      },
+      "recall_at_3": {
+        "A": 0.8444444444444444,
+        "B": 0.7666666666666667,
+        "delta": -0.07777777777777778,
+        "exactA": "38/45",
+        "exactB": "23/30",
+        "legacyRoundedA": 0.8445,
+        "legacyRoundedB": 0.7667,
+        "B_better": 1,
+        "A_better": 4,
+        "tie": 10
+      },
+      "hit1": {
+        "A": 0.9333333333333333,
+        "B": 0.9333333333333333,
+        "delta": 0.0,
+        "exactA": "14/15",
+        "exactB": "14/15",
+        "legacyRoundedA": 0.9333,
+        "legacyRoundedB": 0.9333,
+        "B_better": 0,
+        "A_better": 0,
+        "tie": 15
+      },
+      "B_worse_p_at_3_prs": [
+        85,
+        146,
+        256,
+        348
+      ]
+    }
+  },
+  "perPr": [
+    {
+      "pr": 354,
+      "cohort": "main10",
+      "gtFirstThree": [
+        "archify/renderers/shared/repository-location.mjs",
+        "archify/renderers/shared/repository-evidence.mjs",
+        "archify/schemas/architecture.schema.json"
+      ],
+      "answers": {
+        "A": [
+          "archify/renderers/shared/repository-location.mjs",
+          "archify/renderers/shared/repository-evidence.mjs",
+          "archify/schemas/architecture.schema.json"
+        ],
+        "B": [
+          "archify/renderers/shared/repository-location.mjs",
+          "archify/renderers/shared/repository-evidence.mjs",
+          "archify/schemas/architecture.schema.json"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 1.0,
+          "recall_at_3": 1.0,
+          "hit1": 1.0
+        },
+        "B": {
+          "p_at_3": 1.0,
+          "recall_at_3": 1.0,
+          "hit1": 1.0
+        }
+      }
+    },
+    {
+      "pr": 108,
+      "cohort": "main10",
+      "gtFirstThree": [
+        "archify/renderers/shared/i18n.mjs",
+        "archify/schemas/common.schema.json",
+        "archify/assets/template.html"
+      ],
+      "answers": {
+        "A": [
+          "archify/renderers/shared/i18n.mjs",
+          "archify/assets/template.html",
+          "archify/renderers/shared/utils.mjs"
+        ],
+        "B": [
+          "archify/renderers/shared/i18n.mjs",
+          "archify/assets/template.html",
+          "archify/test/i18n.test.mjs"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 0.6666666666666666,
+          "hit1": 1.0
+        },
+        "B": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 0.6666666666666666,
+          "hit1": 1.0
+        }
+      }
+    },
+    {
+      "pr": 85,
+      "cohort": "main10",
+      "gtFirstThree": [
+        "archify/renderers/shared/brand-marks.mjs",
+        "archify/schemas/common.schema.json",
+        "archify/bin/archify.mjs"
+      ],
+      "answers": {
+        "A": [
+          "archify/renderers/shared/brand-marks.mjs",
+          "archify/bin/archify.mjs",
+          "archify/schemas/common.schema.json"
+        ],
+        "B": [
+          "archify/renderers/shared/brand-marks.mjs",
+          "archify/bin/archify.mjs",
+          "archify/test/brand-marks.test.mjs"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 1.0,
+          "recall_at_3": 1.0,
+          "hit1": 1.0
+        },
+        "B": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 0.6666666666666666,
+          "hit1": 1.0
+        }
+      }
+    },
+    {
+      "pr": 181,
+      "cohort": "main10",
+      "gtFirstThree": [
+        "archify/scripts/check-update.mjs",
+        "archify/scripts/update-contract.mjs",
+        "scripts/stage-clean-skill.mjs"
+      ],
+      "answers": {
+        "A": [
+          "archify/scripts/check-update.mjs",
+          "archify/scripts/update-contract.mjs",
+          "archify/bin/archify.mjs"
+        ],
+        "B": [
+          "archify/scripts/check-update.mjs",
+          "archify/bin/archify.mjs",
+          "archify/scripts/update-contract.mjs"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 0.6666666666666666,
+          "hit1": 1.0
+        },
+        "B": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 0.6666666666666666,
+          "hit1": 1.0
+        }
+      }
+    },
+    {
+      "pr": 96,
+      "cohort": "main10",
+      "gtFirstThree": [
+        "archify/renderers/shared/geometry.mjs",
+        "archify/renderers/architecture/render-architecture.mjs",
+        "archify/bin/visual-check.mjs"
+      ],
+      "answers": {
+        "A": [
+          "archify/renderers/architecture/render-architecture.mjs",
+          "archify/renderers/shared/geometry.mjs",
+          "archify/renderers/shared/desktop-readability.mjs"
+        ],
+        "B": [
+          "archify/renderers/shared/geometry.mjs",
+          "archify/renderers/architecture/render-architecture.mjs",
+          "archify/renderers/shared/desktop-readability.mjs"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 0.6666666666666666,
+          "hit1": 1.0
+        },
+        "B": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 0.6666666666666666,
+          "hit1": 1.0
+        }
+      }
+    },
+    {
+      "pr": 54,
+      "cohort": "main10",
+      "gtFirstThree": [
+        "archify/renderers/shared/legend.mjs",
+        "archify/schemas/common.schema.json",
+        "archify/renderers/architecture/render-architecture.mjs"
+      ],
+      "answers": {
+        "A": [
+          "archify/renderers/shared/legend.mjs",
+          "archify/test/legend-contract.test.mjs",
+          "archify/renderers/architecture/render-architecture.mjs"
+        ],
+        "B": [
+          "archify/renderers/shared/legend.mjs",
+          "archify/schemas/common.schema.json",
+          "archify/renderers/architecture/render-architecture.mjs"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 0.6666666666666666,
+          "hit1": 1.0
+        },
+        "B": {
+          "p_at_3": 1.0,
+          "recall_at_3": 1.0,
+          "hit1": 1.0
+        }
+      }
+    },
+    {
+      "pr": 146,
+      "cohort": "main10",
+      "gtFirstThree": [
+        "archify/renderers/workflow/workflow-compiler.mjs",
+        "archify/migrations/workflow-v2.mjs",
+        "archify/renderers/workflow/render-workflow.mjs"
+      ],
+      "answers": {
+        "A": [
+          "archify/renderers/workflow/workflow-compiler.mjs",
+          "archify/renderers/workflow/render-workflow.mjs",
+          "archify/migrations/workflow-v2.mjs"
+        ],
+        "B": [
+          "archify/renderers/workflow/workflow-compiler.mjs",
+          "archify/renderers/workflow/render-workflow.mjs",
+          "archify/renderers/shared/geometry.mjs"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 1.0,
+          "recall_at_3": 1.0,
+          "hit1": 1.0
+        },
+        "B": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 0.6666666666666666,
+          "hit1": 1.0
+        }
+      }
+    },
+    {
+      "pr": 256,
+      "cohort": "main10",
+      "gtFirstThree": [
+        "archify/assets/template.html",
+        "archify/test/offline-font-browser.test.mjs",
+        "archify/assets/JetBrainsMono-OFL.txt"
+      ],
+      "answers": {
+        "A": [
+          "archify/assets/template.html",
+          "archify/test/offline-font-browser.test.mjs",
+          "archify/test/helpers/offline-fonts.mjs"
+        ],
+        "B": [
+          "archify/assets/template.html",
+          "archify/test/offline-self-containment.test.mjs",
+          "archify/test/helpers/offline-fonts.mjs"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 0.6666666666666666,
+          "hit1": 1.0
+        },
+        "B": {
+          "p_at_3": 0.3333333333333333,
+          "recall_at_3": 0.3333333333333333,
+          "hit1": 1.0
+        }
+      }
+    },
+    {
+      "pr": 265,
+      "cohort": "main10",
+      "gtFirstThree": [
+        "LICENSE",
+        "scripts/package-smoke.mjs",
+        "archify/test/release-package-gates.test.mjs"
+      ],
+      "answers": {
+        "A": [
+          "scripts/stage-clean-skill.mjs",
+          "archify/test/release-package-gates.test.mjs",
+          "scripts/package-smoke.mjs"
+        ],
+        "B": [
+          "scripts/stage-clean-skill.mjs",
+          "archify/test/release-package-gates.test.mjs",
+          "scripts/package-smoke.mjs"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 0.6666666666666666,
+          "hit1": 0.0
+        },
+        "B": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 0.6666666666666666,
+          "hit1": 0.0
+        }
+      }
+    },
+    {
+      "pr": 42,
+      "cohort": "main10",
+      "gtFirstThree": [
+        "archify/renderers/shared/geometry.mjs",
+        "archify/scripts/check-render-output.mjs",
+        "archify/renderers/dataflow/render-dataflow.mjs"
+      ],
+      "answers": {
+        "A": [
+          "archify/renderers/shared/geometry.mjs",
+          "archify/renderers/dataflow/render-dataflow.mjs",
+          "archify/test/layout-rules.test.mjs"
+        ],
+        "B": [
+          "archify/renderers/shared/geometry.mjs",
+          "archify/renderers/dataflow/render-dataflow.mjs",
+          "archify/test/layout-rules.test.mjs"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 0.6666666666666666,
+          "hit1": 1.0
+        },
+        "B": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 0.6666666666666666,
+          "hit1": 1.0
+        }
+      }
+    },
+    {
+      "pr": 346,
+      "cohort": "controls5",
+      "gtFirstThree": [
+        "REVIEWING.md",
+        "CONTRIBUTING.md",
+        ".coderabbit.yaml"
+      ],
+      "answers": {
+        "A": [
+          "CONTRIBUTING.md",
+          "REVIEWING.md",
+          ".coderabbit.yaml"
+        ],
+        "B": [
+          "CONTRIBUTING.md",
+          "REVIEWING.md",
+          ".coderabbit.yaml"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 1.0,
+          "recall_at_3": 1.0,
+          "hit1": 1.0
+        },
+        "B": {
+          "p_at_3": 1.0,
+          "recall_at_3": 1.0,
+          "hit1": 1.0
+        }
+      }
+    },
+    {
+      "pr": 348,
+      "cohort": "controls5",
+      "gtFirstThree": [
+        ".coderabbit.yaml",
+        "CONTRIBUTING.md"
+      ],
+      "answers": {
+        "A": [
+          ".coderabbit.yaml",
+          "CONTRIBUTING.md"
+        ],
+        "B": [
+          ".coderabbit.yaml"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 1.0,
+          "hit1": 1.0
+        },
+        "B": {
+          "p_at_3": 0.3333333333333333,
+          "recall_at_3": 0.5,
+          "hit1": 1.0
+        }
+      }
+    },
+    {
+      "pr": 138,
+      "cohort": "controls5",
+      "gtFirstThree": [
+        "README.md",
+        "README_ZH.md"
+      ],
+      "answers": {
+        "A": [
+          "README.md",
+          "README_EN.md",
+          "README_ZH.md"
+        ],
+        "B": [
+          "README.md",
+          "README_EN.md",
+          "README_ZH.md"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 1.0,
+          "hit1": 1.0
+        },
+        "B": {
+          "p_at_3": 0.6666666666666666,
+          "recall_at_3": 1.0,
+          "hit1": 1.0
+        }
+      }
+    },
+    {
+      "pr": 216,
+      "cohort": "controls5",
+      "gtFirstThree": [
+        "docs/skill-updates/archify/stable.json"
+      ],
+      "answers": {
+        "A": [
+          "docs/skill-updates/archify/stable.json"
+        ],
+        "B": [
+          "docs/skill-updates/archify/stable.json"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 0.3333333333333333,
+          "recall_at_3": 1.0,
+          "hit1": 1.0
+        },
+        "B": {
+          "p_at_3": 0.3333333333333333,
+          "recall_at_3": 1.0,
+          "hit1": 1.0
+        }
+      }
+    },
+    {
+      "pr": 109,
+      "cohort": "controls5",
+      "gtFirstThree": [
+        ".github/CODEOWNERS"
+      ],
+      "answers": {
+        "A": [
+          ".github/CODEOWNERS"
+        ],
+        "B": [
+          ".github/CODEOWNERS"
+        ]
+      },
+      "scores": {
+        "A": {
+          "p_at_3": 0.3333333333333333,
+          "recall_at_3": 1.0,
+          "hit1": 1.0
+        },
+        "B": {
+          "p_at_3": 0.3333333333333333,
+          "recall_at_3": 1.0,
+          "hit1": 1.0
+        }
+      }
+    }
+  ],
+  "historicalComparison": [
+    {
+      "cohort": "main10",
+      "metric": "p_at_3",
+      "reported": [
+        0.767,
+        0.7
+      ],
+      "recomputed": [
+        0.7666666666666667,
+        0.7
+      ],
+      "decimalsInReport": 3,
+      "matchesAtReportedPrecision": [
+        true,
+        true
+      ]
+    },
+    {
+      "cohort": "main10",
+      "metric": "recall_at_3",
+      "reported": [
+        0.767,
+        0.7
+      ],
+      "recomputed": [
+        0.7666666666666667,
+        0.7
+      ],
+      "decimalsInReport": 3,
+      "matchesAtReportedPrecision": [
+        true,
+        true
+      ]
+    },
+    {
+      "cohort": "main10",
+      "metric": "hit1",
+      "reported": [
+        0.9,
+        0.9
+      ],
+      "recomputed": [
+        0.9,
+        0.9
+      ],
+      "decimalsInReport": 2,
+      "matchesAtReportedPrecision": [
+        true,
+        true
+      ]
+    },
+    {
+      "cohort": "controls5",
+      "metric": "p_at_3",
+      "reported": [
+        0.6,
+        0.533
+      ],
+      "recomputed": [
+        0.6,
+        0.5333333333333333
+      ],
+      "decimalsInReport": 3,
+      "matchesAtReportedPrecision": [
+        true,
+        true
+      ]
+    },
+    {
+      "cohort": "controls5",
+      "metric": "recall_at_3",
+      "reported": [
+        1.0,
+        0.9
+      ],
+      "recomputed": [
+        1.0,
+        0.9
+      ],
+      "decimalsInReport": 2,
+      "matchesAtReportedPrecision": [
+        true,
+        true
+      ]
+    },
+    {
+      "cohort": "controls5",
+      "metric": "hit1",
+      "reported": [
+        1.0,
+        1.0
+      ],
+      "recomputed": [
+        1.0,
+        1.0
+      ],
+      "decimalsInReport": 2,
+      "matchesAtReportedPrecision": [
+        true,
+        true
+      ]
+    },
+    {
+      "cohort": "all15",
+      "metric": "p_at_3",
+      "reported": [
+        0.711,
+        0.644
+      ],
+      "recomputed": [
+        0.7111111111111111,
+        0.6444444444444445
+      ],
+      "decimalsInReport": 3,
+      "matchesAtReportedPrecision": [
+        true,
+        true
+      ]
+    },
+    {
+      "cohort": "all15",
+      "metric": "hit1",
+      "reported": [
+        0.933,
+        0.933
+      ],
+      "recomputed": [
+        0.9333333333333333,
+        0.9333333333333333
+      ],
+      "decimalsInReport": 3,
+      "matchesAtReportedPrecision": [
+        true,
+        true
+      ]
+    }
+  ],
+  "notRecomputed": [
+    "noise-avoidance",
+    "wrong-start",
+    "seam heuristics",
+    "full original prompts/receipt context",
+    "timing or reviewer benefit"
+  ],
+  "limitations": [
+    "One model (cursor-grok-4.6-xhigh-fast), one trial per cell, 10 main PRs plus 5 controls.",
+    "Experimenter-authored, non-blind ground truth; selected historical PRs and a future map.",
+    "This recovers recorded answer content, not proof that the original prompt isolation protocol was obeyed.",
+    "Full B prompt bodies and 10 receipt-derived noise lists were not reconstructed.",
+    "Hit@1 means first predicted path belongs to the GT set, not that it equals GT's first path.",
+    "P@3 always divides by 3; perfect one-file controls therefore score 1/3. Recall@3 removes that denominator effect."
+  ]
+}

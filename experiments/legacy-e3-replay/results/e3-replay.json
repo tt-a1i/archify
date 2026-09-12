@@ -1,0 +1,3191 @@
+{
+  "base": "b744b0b43e0507be7709a2b0ead843466f137545",
+  "head": "10722002bb8777ecb639d93c49586fae4adf3ae4",
+  "firstParentCommits": 100,
+  "allCommitsInRange": 139,
+  "baseAudit": {
+    "excluded": 105,
+    "covered": 230,
+    "uncovered": [],
+    "ambiguous": []
+  },
+  "trace": [
+    {
+      "sha": "eb847fa65afd8f0913dd9d8915d0895771545c89",
+      "short": "eb847fa",
+      "subject": "feat: add direct visual style picker",
+      "isMerge": false,
+      "changedFiles": 40,
+      "before": {
+        "excluded": 32,
+        "covered": 8,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "docs-site",
+        "references",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 32,
+        "covered": 8,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "d6a429e865ca013979172c7fc431c44a42622b3f",
+      "short": "d6a429e",
+      "subject": "feat: redesign landing page with bento specimen layout",
+      "isMerge": false,
+      "changedFiles": 1,
+      "before": {
+        "excluded": 1,
+        "covered": 0,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 0,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "733fb165d75c092c8d50b110e96656d84f0649de",
+      "short": "733fb16",
+      "subject": "feat: establish evidence-backed growth loops",
+      "isMerge": false,
+      "changedFiles": 58,
+      "before": {
+        "excluded": 29,
+        "covered": 16,
+        "uncovered": 13,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks",
+        "build-scripts",
+        "docs-site",
+        "references",
+        "renderers-shared",
+        "tests"
+      ],
+      "uncoveredBefore": [
+        "benchmarks/ordinary-model-floor/README.md",
+        "benchmarks/ordinary-model-floor/benchmark.mjs",
+        "benchmarks/ordinary-model-floor/cases/agent-run.lifecycle.case.json",
+        "benchmarks/ordinary-model-floor/cases/agent-tool-call.workflow.case.json",
+        "benchmarks/ordinary-model-floor/cases/cache-miss.sequence.case.json",
+        "benchmarks/ordinary-model-floor/cases/product-analytics.dataflow.case.json",
+        "benchmarks/ordinary-model-floor/cases/web-runtime.architecture.case.json",
+        "benchmarks/ordinary-model-floor/manifest.json",
+        "benchmarks/ordinary-model-floor/prompts/agent-run.lifecycle.md",
+        "benchmarks/ordinary-model-floor/prompts/agent-tool-call.workflow.md",
+        "benchmarks/ordinary-model-floor/prompts/cache-miss.sequence.md",
+        "benchmarks/ordinary-model-floor/prompts/product-analytics.dataflow.md",
+        "benchmarks/ordinary-model-floor/prompts/web-runtime.architecture.md"
+      ],
+      "ambiguousBefore": [],
+      "requiresMapEdit": true,
+      "editsApplied": [
+        {
+          "action": "addComponent",
+          "component": "benchmarks",
+          "glob": "benchmarks/**",
+          "why": "new top-level benchmarks/ordinary-model-floor harness + cases + prompts + results"
+        }
+      ],
+      "after": {
+        "excluded": 29,
+        "covered": 29,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "fcedfa50cd9a81847e3b1ba0a342fec7ba58947d",
+      "short": "fcedfa5",
+      "subject": "test: lock benchmark attempt-one contract",
+      "isMerge": false,
+      "changedFiles": 8,
+      "before": {
+        "excluded": 0,
+        "covered": 8,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 8,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "13c65f392f4aa671a1bdc40d40bdb3df7d6e266c",
+      "short": "13c65f3",
+      "subject": "fix: keep model benchmark tool access fair",
+      "isMerge": false,
+      "changedFiles": 7,
+      "before": {
+        "excluded": 0,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "bd16237e6bbeccc656314aa3af45c66fd3d43fa0",
+      "short": "bd16237",
+      "subject": "feat: count benchmark operational failures",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 0,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "18e4caa188805313507116c9d0e63c081e8c2374",
+      "short": "18e4caa",
+      "subject": "fix: assign benchmark validation to harness",
+      "isMerge": false,
+      "changedFiles": 7,
+      "before": {
+        "excluded": 0,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "40a0787824236ded8f151318fcc72e41b6544dab",
+      "short": "40a0787",
+      "subject": "test: isolate benchmark from harness internals",
+      "isMerge": false,
+      "changedFiles": 2,
+      "before": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "b47a8228c98add2749f746fd4643c50dc09fa2a0",
+      "short": "b47a822",
+      "subject": "test: measure agent-repaired diagram quality",
+      "isMerge": false,
+      "changedFiles": 9,
+      "before": {
+        "excluded": 0,
+        "covered": 9,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 9,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "181a432b981553bbf1082c194e2a01fd13ee6b7c",
+      "short": "181a432",
+      "subject": "fix: shorten ordinary-model authoring path",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "479147d5527468c45b817cd4e0fa42ec4817fedb",
+      "short": "479147d",
+      "subject": "fix: make ordinary-model generation artifact-first",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "d521a41e8a372e3c7269d51963b5a259244f63a5",
+      "short": "d521a41",
+      "subject": "fix: keep sequence labels above timeline geometry",
+      "isMerge": false,
+      "changedFiles": 11,
+      "before": {
+        "excluded": 9,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "renderer-sequence",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 9,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "907ca48ea275ee2f0d30a14c21da480f6b54b983",
+      "short": "907ca48",
+      "subject": "fix: fit workflow text within nodes",
+      "isMerge": false,
+      "changedFiles": 12,
+      "before": {
+        "excluded": 10,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "renderer-workflow",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 10,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "769fb3ed6f40ab1090bd31a3ec216c05d7cb4896",
+      "short": "769fb3e",
+      "subject": "feat: connect proof gallery to first-start loop",
+      "isMerge": false,
+      "changedFiles": 10,
+      "before": {
+        "excluded": 1,
+        "covered": 9,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "docs-site",
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 9,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "0cccd0eadf77a00385349782760c78b33b0cfd72",
+      "short": "0cccd0e",
+      "subject": "fix: calibrate ordinary-model semantic equivalence",
+      "isMerge": false,
+      "changedFiles": 7,
+      "before": {
+        "excluded": 0,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "a6b8261f3adcd1b78e8e715dea29a6c69c113a8c",
+      "short": "a6b8261",
+      "subject": "fix: keep sequence stage labels clear",
+      "isMerge": false,
+      "changedFiles": 5,
+      "before": {
+        "excluded": 1,
+        "covered": 4,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks",
+        "renderer-sequence",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 4,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "3f68bd26046974f492cbbfe2d07174fa279e3fc4",
+      "short": "3f68bd2",
+      "subject": "fix: harden ordinary-model visual quality gates",
+      "isMerge": false,
+      "changedFiles": 10,
+      "before": {
+        "excluded": 1,
+        "covered": 9,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks",
+        "build-scripts",
+        "renderer-dataflow",
+        "renderer-workflow",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 9,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "66414c7d2366d16a70c9e7282836e416b7917d51",
+      "short": "66414c7",
+      "subject": "test: accept equivalent approval vocabulary",
+      "isMerge": false,
+      "changedFiles": 2,
+      "before": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "2dce766ab19ff5871020828eb85d770745f1069d",
+      "short": "2dce766",
+      "subject": "fix: raise ordinary-model first-pass floor",
+      "isMerge": false,
+      "changedFiles": 9,
+      "before": {
+        "excluded": 1,
+        "covered": 8,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks",
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 8,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "fc1ddf8acf1ac3b2286735a5c7142841fcf265bd",
+      "short": "fc1ddf8",
+      "subject": "fix: harden ordinary-model artifact quality",
+      "isMerge": false,
+      "changedFiles": 21,
+      "before": {
+        "excluded": 7,
+        "covered": 14,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks",
+        "build-scripts",
+        "examples",
+        "references",
+        "renderer-architecture",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 7,
+        "covered": 14,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "247caaabbdfae4405f59900c8503139913a07832",
+      "short": "247caaa",
+      "subject": "test: bound suite concurrency for stability",
+      "isMerge": false,
+      "changedFiles": 2,
+      "before": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "7eef4db36a97d04da74a9cb1d1bc3f735058c074",
+      "short": "7eef4db",
+      "subject": "fix: let quality-first lifecycle runs converge",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "b1394760176a57d068773b03fb24be319cf7521d",
+      "short": "b139476",
+      "subject": "test: record quality-first model matrix",
+      "isMerge": false,
+      "changedFiles": 8,
+      "before": {
+        "excluded": 0,
+        "covered": 8,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks",
+        "build-scripts",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 8,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "55fe514b61b5227aee9f53dfa7ab39e1e9b4c74e",
+      "short": "55fe514",
+      "subject": "fix: lock showcase quality acceptance",
+      "isMerge": false,
+      "changedFiles": 5,
+      "before": {
+        "excluded": 1,
+        "covered": 4,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "benchmarks",
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 4,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "3b5035f94760b28296408114b9780afa12ad128d",
+      "short": "3b5035f",
+      "subject": "fix: harden diagram authoring and delivery",
+      "isMerge": false,
+      "changedFiles": 49,
+      "before": {
+        "excluded": 28,
+        "covered": 18,
+        "uncovered": 3,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "cli",
+        "references",
+        "renderer-architecture",
+        "renderers-shared",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [
+        "archify/references/authoring-contract.md",
+        "archify/references/delivery-contract.md",
+        "archify/references/viewer-runtime.md"
+      ],
+      "ambiguousBefore": [],
+      "requiresMapEdit": true,
+      "editsApplied": [
+        {
+          "action": "addGlob",
+          "component": "references",
+          "glob": "archify/references/**",
+          "why": "SKILL.md split into archify/references/*.md contracts"
+        }
+      ],
+      "after": {
+        "excluded": 28,
+        "covered": 21,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "e295d318871ffad8c068fd1d7dc7d0b45a5c8788",
+      "short": "e295d31",
+      "subject": "docs: add Raven installation (#49)",
+      "isMerge": false,
+      "changedFiles": 4,
+      "before": {
+        "excluded": 0,
+        "covered": 4,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 4,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "7b49d0b715fd4ba48116bcdecd1ba3789a279613",
+      "short": "7b49d0b",
+      "subject": "docs: add EverMind sponsor section (#51)",
+      "isMerge": false,
+      "changedFiles": 6,
+      "before": {
+        "excluded": 2,
+        "covered": 4,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 2,
+        "covered": 4,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "a097c2d63eceeff9603a911a9075f0694d381f83",
+      "short": "a097c2d",
+      "subject": "fix: harden output and release stability (#53)",
+      "isMerge": false,
+      "changedFiles": 62,
+      "before": {
+        "excluded": 36,
+        "covered": 26,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "cli",
+        "examples",
+        "references",
+        "renderers-shared",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 36,
+        "covered": 26,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "cc5576451a1935563eac0295923ecda8eaaa034e",
+      "short": "cc55764",
+      "subject": "feat: add truthful configurable legends (#54)",
+      "isMerge": false,
+      "changedFiles": 70,
+      "before": {
+        "excluded": 28,
+        "covered": 42,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "delta",
+        "docs-site",
+        "references",
+        "renderer-architecture",
+        "renderer-dataflow",
+        "renderer-lifecycle",
+        "renderer-sequence",
+        "renderer-workflow",
+        "renderers-shared",
+        "schemas",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 28,
+        "covered": 42,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "2c1f8ac2ca28a26d0b68043ec80c9554e20ff0e3",
+      "short": "2c1f8ac",
+      "subject": "release: v2.13.0 (#55)",
+      "isMerge": false,
+      "changedFiles": 47,
+      "before": {
+        "excluded": 36,
+        "covered": 11,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "references",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 36,
+        "covered": 11,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "19213e107f47733132e8958dd78f3a7fb8c6e225",
+      "short": "19213e1",
+      "subject": "docs: remove attribution section",
+      "isMerge": false,
+      "changedFiles": 2,
+      "before": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "references"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "24c649e3caeee457da55920fda060b2c4f60911a",
+      "short": "24c649e",
+      "subject": "fix: restore release identity checks (#62)",
+      "isMerge": false,
+      "changedFiles": 1,
+      "before": {
+        "excluded": 0,
+        "covered": 1,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "references"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 1,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "ed9e91f6f9caae036b6ec95f7e00d09b8af961a4",
+      "short": "ed9e91f",
+      "subject": "fix: measure sublabel and tag in every renderer (#56)",
+      "isMerge": false,
+      "changedFiles": 11,
+      "before": {
+        "excluded": 4,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "renderer-architecture",
+        "renderer-dataflow",
+        "renderer-lifecycle",
+        "renderer-sequence",
+        "renderer-workflow",
+        "renderers-shared",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 4,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "5875dc81b5c77c7004d7c1d297dda470fce97f50",
+      "short": "5875dc8",
+      "subject": "docs: add APINEBULA sponsorship (#63)",
+      "isMerge": false,
+      "changedFiles": 4,
+      "before": {
+        "excluded": 1,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "references"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "a3bf80c25a824f5d5c46dfdbfdb96cc52dd4742a",
+      "short": "a3bf80c",
+      "subject": "Release v2.14.0 (#65)",
+      "isMerge": true,
+      "changedFiles": 108,
+      "before": {
+        "excluded": 49,
+        "covered": 59,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "cli",
+        "docs-site",
+        "examples",
+        "references",
+        "renderer-architecture",
+        "renderer-dataflow",
+        "renderer-lifecycle",
+        "renderer-sequence",
+        "renderer-workflow",
+        "renderers-shared",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 49,
+        "covered": 59,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "45f0611dfc0dc824e9a13a12efcac207a8a2bdce",
+      "short": "45f0611",
+      "subject": "feat(sequence): add opt-in column_fit for viewBox-relative lanes (#64)",
+      "isMerge": false,
+      "changedFiles": 8,
+      "before": {
+        "excluded": 1,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "references",
+        "renderer-sequence",
+        "renderers-shared",
+        "schemas",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "5a4d8539810fb43791360dbb3a1fde4a620c36a5",
+      "short": "5a4d853",
+      "subject": "feat: add opt-in DeepSeek Harness bundle (#69)",
+      "isMerge": false,
+      "changedFiles": 20,
+      "before": {
+        "excluded": 0,
+        "covered": 4,
+        "uncovered": 16,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "integrations-deepseek-harness",
+        "references"
+      ],
+      "uncoveredBefore": [
+        "integrations/deepseek-harness/.gitignore",
+        "integrations/deepseek-harness/README.md",
+        "integrations/deepseek-harness/cordis.patch.yml",
+        "integrations/deepseek-harness/lib/index.js",
+        "integrations/deepseek-harness/package.json",
+        "integrations/deepseek-harness/scripts/distribution-acceptance.mjs",
+        "integrations/deepseek-harness/scripts/pack.mjs",
+        "integrations/deepseek-harness/scripts/resolve-cli.mjs",
+        "integrations/deepseek-harness/test/adapter-security.test.mjs",
+        "integrations/deepseek-harness/test/docs-contract.test.mjs",
+        "integrations/deepseek-harness/test/package-contract.test.mjs",
+        "integrations/deepseek-harness/test/probe-skills.mjs",
+        "integrations/deepseek-harness/test/probe-skills.test.mjs",
+        "integrations/deepseek-harness/test/resolve-cli.test.mjs",
+        "integrations/deepseek-harness/test/tarball-contract.test.mjs",
+        "integrations/deepseek-harness/test/zero-regression.test.mjs"
+      ],
+      "ambiguousBefore": [],
+      "requiresMapEdit": true,
+      "editsApplied": [
+        {
+          "action": "addComponent",
+          "component": "integrations-deepseek-harness",
+          "glob": "integrations/deepseek-harness/**",
+          "why": "new opt-in distribution adapter with its own tests/scripts"
+        }
+      ],
+      "after": {
+        "excluded": 0,
+        "covered": 20,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "fc6e8aca1829a02af0f0efdc193a87c3754d373c",
+      "short": "fc6e8ac",
+      "subject": "fix: make DSH packaging portable on Windows (#70)",
+      "isMerge": false,
+      "changedFiles": 6,
+      "before": {
+        "excluded": 0,
+        "covered": 6,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "integrations-deepseek-harness"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 6,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "7769cf5b2b9500ea7edfae6acbe3ea16c9bf93ef",
+      "short": "7769cf5",
+      "subject": "docs: surface DeepSeek Harness quick start (#71)",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 0,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "references"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "cffdd42eed0ebf013aa070378d94facdd3d56b10",
+      "short": "cffdd42",
+      "subject": "fix(cli): reject quality flags without values (#73)",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "cli",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "3e0f4d8382c500c286fe5d5d29ec28597ed58c7c",
+      "short": "3e0f4d8",
+      "subject": "fix(renderers): stop treating non-finite rects as overlapping (#80)",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "renderers-shared",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "a0bc05945489152ace820e87d7cb2554d46d9569",
+      "short": "a0bc059",
+      "subject": "feat: add authored brand marks and safe URL icon capture (#85)",
+      "isMerge": false,
+      "changedFiles": 64,
+      "before": {
+        "excluded": 31,
+        "covered": 31,
+        "uncovered": 2,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "brand-marks",
+        "build-scripts",
+        "cli",
+        "examples",
+        "references",
+        "renderer-architecture",
+        "renderer-dataflow",
+        "renderer-lifecycle",
+        "renderer-sequence",
+        "renderer-workflow",
+        "renderers-shared",
+        "schemas",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [
+        "archify/brand-marks/README.md",
+        "archify/brand-marks/catalog.json"
+      ],
+      "ambiguousBefore": [],
+      "requiresMapEdit": true,
+      "editsApplied": [
+        {
+          "action": "addComponent",
+          "component": "brand-marks",
+          "glob": "archify/brand-marks/**",
+          "why": "authored brand mark catalog shipped inside the skill"
+        }
+      ],
+      "after": {
+        "excluded": 31,
+        "covered": 33,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "e1ac748f19cf805e44bf74fb93c796662152e273",
+      "short": "e1ac748",
+      "subject": "Release v2.15.0 (#86)",
+      "isMerge": false,
+      "changedFiles": 50,
+      "before": {
+        "excluded": 36,
+        "covered": 14,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "examples",
+        "integrations-deepseek-harness",
+        "references",
+        "renderers-shared",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 36,
+        "covered": 14,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "82e63c9ec3cc169b87d2829faae061f3dac8dba1",
+      "short": "82e63c9",
+      "subject": "fix(viewer): preserve authored direction in Intent Trace (#90)",
+      "isMerge": false,
+      "changedFiles": 36,
+      "before": {
+        "excluded": 33,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "examples",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 33,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "146b6d4e16ef52df33461b6dc3f33c49cf8d68d9",
+      "short": "146b6d4",
+      "subject": "fix(text-fit): count BMP emoji-presentation symbols as two units (#91)",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "renderers-shared",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "9244ede3af6f6b8842ba5ecfc77539331b81b8f6",
+      "short": "9244ede",
+      "subject": "Add RAG pipeline architecture example (#67)",
+      "isMerge": false,
+      "changedFiles": 2,
+      "before": {
+        "excluded": 1,
+        "covered": 1,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "examples"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 1,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "a28f37251bb597b6cbe9c75a87eab61569594754",
+      "short": "a28f372",
+      "subject": "docs: make the authoring cookbook Agent-first (#78)",
+      "isMerge": false,
+      "changedFiles": 5,
+      "before": {
+        "excluded": 0,
+        "covered": 5,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "docs-site",
+        "references"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 5,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "98648ce928d2bda5516ec85b699e0b1ae8530885",
+      "short": "98648ce",
+      "subject": "fix(renderers): keep automatic routes clear and boundary composition readable (#96)",
+      "isMerge": false,
+      "changedFiles": 62,
+      "before": {
+        "excluded": 32,
+        "covered": 30,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "cli",
+        "delta",
+        "docs-site",
+        "examples",
+        "renderer-architecture",
+        "renderer-dataflow",
+        "renderer-lifecycle",
+        "renderer-sequence",
+        "renderer-workflow",
+        "renderers-shared",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 32,
+        "covered": 30,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "c784542eecb18555524dc081d26b53cae760496f",
+      "short": "c784542",
+      "subject": "fix(viewer): keep navigation dock clear of legends (#101)",
+      "isMerge": false,
+      "changedFiles": 33,
+      "before": {
+        "excluded": 26,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "cli",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 26,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "4293061d81bbdeb4b1061851713ab67d22968461",
+      "short": "4293061",
+      "subject": "Fix Semantic Radar collision handling and dragging (#100)",
+      "isMerge": false,
+      "changedFiles": 32,
+      "before": {
+        "excluded": 27,
+        "covered": 5,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 27,
+        "covered": 5,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "95e8a3a9d50136bc34e1093edbca7d4a52e974aa",
+      "short": "95e8a3a",
+      "subject": "docs: strengthen the contribution contract (#97)",
+      "isMerge": false,
+      "changedFiles": 6,
+      "before": {
+        "excluded": 0,
+        "covered": 6,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 6,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "71ce31158b72870a5cbca891c1f6b9d9aca18ab1",
+      "short": "71ce311",
+      "subject": "docs: present sponsors in a compact table",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 0,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "references"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "96d2d5d5aebe87703ab44a594944aecf45a45d56",
+      "short": "96d2d5d",
+      "subject": "feat(site): restyle inner pages to the editorial drafted-sheet identity (#104)",
+      "isMerge": false,
+      "changedFiles": 14,
+      "before": {
+        "excluded": 9,
+        "covered": 5,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 9,
+        "covered": 5,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "af45e517fb9441e769593c1bf0a6395de1acb7ca",
+      "short": "af45e51",
+      "subject": "chore(security): require owner review for automation (#109)",
+      "isMerge": false,
+      "changedFiles": 1,
+      "before": {
+        "excluded": 0,
+        "covered": 1,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 1,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "4be6da578b99fb3a5afaa2eea2fedcc956c1381e",
+      "short": "4be6da5",
+      "subject": "feat(i18n): localize Viewer UI from meta.locale (#108)",
+      "isMerge": false,
+      "changedFiles": 92,
+      "before": {
+        "excluded": 34,
+        "covered": 58,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "references",
+        "renderer-architecture",
+        "renderer-dataflow",
+        "renderer-lifecycle",
+        "renderer-sequence",
+        "renderer-workflow",
+        "renderers-shared",
+        "schemas",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 34,
+        "covered": 58,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "8323a15adbfc395b4d66729b2ed27db6bd1884b7",
+      "short": "8323a15",
+      "subject": "fix(svg): emit XML-safe marker attributes (#114)",
+      "isMerge": false,
+      "changedFiles": 48,
+      "before": {
+        "excluded": 34,
+        "covered": 14,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "examples",
+        "renderer-architecture",
+        "renderer-dataflow",
+        "renderer-lifecycle",
+        "renderer-sequence",
+        "renderer-workflow",
+        "renderers-shared",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 34,
+        "covered": 14,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "8b542d60e5eb2c552a3bb5bc1651d076be312aec",
+      "short": "8b542d6",
+      "subject": "Merge pull request #120 from sunsunsun-java/codex/fix-generated-artifact-reproducibility",
+      "isMerge": true,
+      "changedFiles": 8,
+      "before": {
+        "excluded": 2,
+        "covered": 6,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "examples",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 2,
+        "covered": 6,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "12f58bb185a73bd5dcd95026131e67d52d3a7634",
+      "short": "12f58bb",
+      "subject": "Merge pull request #121 from sunsunsun-java/codex/fix-mco-artifact-proof",
+      "isMerge": true,
+      "changedFiles": 4,
+      "before": {
+        "excluded": 1,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "experiments",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "585be4c3c9755b7e5ec0ac38f481a6c1a46d4d29",
+      "short": "585be4c",
+      "subject": "Merge pull request #129 from tt-a1i/codex/pr119-bounded-dsh-retry",
+      "isMerge": true,
+      "changedFiles": 12,
+      "before": {
+        "excluded": 1,
+        "covered": 11,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "integrations-deepseek-harness",
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 11,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "48cb9333bce7392010cdc858d10be7f304a28052",
+      "short": "48cb933",
+      "subject": "docs: add LINUX DO community link (#133)",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 0,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "references"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "cb7583ab9da25b4225b0836448df25c64fb2ddbd",
+      "short": "cb7583a",
+      "subject": "docs: remove LINUX DO links (#135)",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 0,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "references"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "aab9f85659ada148a9232a5129726e395edb4370",
+      "short": "aab9f85",
+      "subject": "docs: restore LINUX DO footer link (#138)",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 0,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "references"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "9a5060566c832832fb843e457e58c8ee6bac82fd",
+      "short": "9a50605",
+      "subject": "fix(repo): correct GitHub language classification (#139)",
+      "isMerge": false,
+      "changedFiles": 5,
+      "before": {
+        "excluded": 0,
+        "covered": 4,
+        "uncovered": 1,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [
+        ".gitattributes"
+      ],
+      "ambiguousBefore": [],
+      "requiresMapEdit": true,
+      "editsApplied": [
+        {
+          "action": "addGlob",
+          "component": "build-scripts",
+          "glob": ".gitattributes",
+          "why": "repo-level packaging/linguist config"
+        }
+      ],
+      "after": {
+        "excluded": 0,
+        "covered": 5,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "7fe139ebe2e532941eb4c315057294348e88a2c0",
+      "short": "7fe139e",
+      "subject": "fix(viewer): keep navigation dock clear of diagram stage (#113)",
+      "isMerge": false,
+      "changedFiles": 41,
+      "before": {
+        "excluded": 34,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "cli",
+        "examples",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 34,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "316a18456ecd7e0b58e05ebca4a7bde12b463684",
+      "short": "316a184",
+      "subject": "docs: add self-hosted Star History chart (#153)",
+      "isMerge": false,
+      "changedFiles": 6,
+      "before": {
+        "excluded": 0,
+        "covered": 6,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 6,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "49a7821d194a70c531219f48fd0d6a08ba9ba9d7",
+      "short": "49a7821",
+      "subject": "fix(ci): create Star History output directory (#155)",
+      "isMerge": false,
+      "changedFiles": 2,
+      "before": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "12106be58b34f94b108ab30f6ac0eb37c16a8f71",
+      "short": "12106be",
+      "subject": "docs: use official-style Star History chart (#156)",
+      "isMerge": false,
+      "changedFiles": 6,
+      "before": {
+        "excluded": 0,
+        "covered": 6,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 6,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "0853a805003514776bef3593ecca091409828902",
+      "short": "0853a80",
+      "subject": "fix(site): preserve language across navigation (#159)",
+      "isMerge": false,
+      "changedFiles": 18,
+      "before": {
+        "excluded": 6,
+        "covered": 12,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 6,
+        "covered": 12,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "b36d79fdbc3aec3728744341485a7e79f03c0071",
+      "short": "b36d79f",
+      "subject": "feat(skill): add notification-only update awareness (#181)",
+      "isMerge": false,
+      "changedFiles": 62,
+      "before": {
+        "excluded": 8,
+        "covered": 53,
+        "uncovered": 1,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "cli",
+        "delta",
+        "docs-site",
+        "examples",
+        "integrations-deepseek-harness",
+        "references",
+        "renderer-architecture",
+        "renderer-dataflow",
+        "renderer-lifecycle",
+        "renderer-sequence",
+        "renderer-workflow",
+        "renderers-shared",
+        "schemas",
+        "tests"
+      ],
+      "uncoveredBefore": [
+        "archify/skill-release.json"
+      ],
+      "ambiguousBefore": [],
+      "requiresMapEdit": true,
+      "editsApplied": [
+        {
+          "action": "addGlob",
+          "component": "build-scripts",
+          "glob": "archify/skill-release.json",
+          "why": "release/update metadata consumed by packaging"
+        }
+      ],
+      "after": {
+        "excluded": 8,
+        "covered": 54,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "8b2aed2a6f0c623ac92a96108990d9e58348335f",
+      "short": "8b2aed2",
+      "subject": "feat(workflow): add constraint-driven compiler (#146)",
+      "isMerge": false,
+      "changedFiles": 61,
+      "before": {
+        "excluded": 9,
+        "covered": 43,
+        "uncovered": 9,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "cli",
+        "docs-site",
+        "examples",
+        "migrations",
+        "references",
+        "renderer-architecture",
+        "renderer-dataflow",
+        "renderer-lifecycle",
+        "renderer-sequence",
+        "renderer-workflow",
+        "renderers-shared",
+        "schemas",
+        "tests"
+      ],
+      "uncoveredBefore": [
+        "archify/migrations/workflow-v2.mjs",
+        "generated/maka-regenerated.workflow.html",
+        "generated/maka-regenerated.workflow.json",
+        "generated/maka-regenerated.workflow.visual-check.1440x900.dark.png",
+        "generated/maka-regenerated.workflow.visual-check.1440x900.light.png",
+        "generated/maka-regenerated.workflow.visual-check.2048x1320.dark.png",
+        "generated/maka-regenerated.workflow.visual-check.2048x1320.light.png",
+        "generated/maka-regenerated.workflow.visual-check.html",
+        "generated/maka-regenerated.workflow.visual-check.json"
+      ],
+      "ambiguousBefore": [],
+      "requiresMapEdit": true,
+      "editsApplied": [
+        {
+          "action": "addComponent",
+          "component": "migrations",
+          "glob": "archify/migrations/**",
+          "why": "new schema/format migration layer (workflow-v2)"
+        },
+        {
+          "action": "exclude",
+          "glob": "generated/**",
+          "why": "generated/ holds renderer output + visual-check screenshots"
+        }
+      ],
+      "after": {
+        "excluded": 17,
+        "covered": 44,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "2309a66a5ef4ee3324e5e247ebd6eaa31e7fe40e",
+      "short": "2309a66",
+      "subject": "chore: remove unused Impeccable project metadata (#160)",
+      "isMerge": false,
+      "changedFiles": 2,
+      "before": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "98a9132030d59ea778fd742cdf4b6e57ba3387fc",
+      "short": "98a9132",
+      "subject": "feat(onboarding): make chat-first diagram creation obvious (#162)",
+      "isMerge": false,
+      "changedFiles": 10,
+      "before": {
+        "excluded": 2,
+        "covered": 8,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 2,
+        "covered": 8,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "499b75ddc518151b8c577329987270d76c09a687",
+      "short": "499b75d",
+      "subject": "fix(dataflow): drop degenerate points so vertical edges keep a real final segment (#169) (#203)",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "renderer-dataflow",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "4ac500a498267f18bda42b3c82b51edb8f9c1baf",
+      "short": "4ac500a",
+      "subject": "chore(security): add vulnerability reporting policy (#164)",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 0,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "references"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "f58298be408d62385407ca26bc5a7b612f68be2b",
+      "short": "f58298b",
+      "subject": "Merge pull request #209 from seekskyworld/chore/update-fast-uri-security",
+      "isMerge": true,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 2,
+        "covered": 1,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 2,
+        "covered": 1,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "94e2b0e3ce6699aacb988764a36abe4aa4cee53f",
+      "short": "94e2b0e",
+      "subject": "Merge pull request #213 from tt-a1i/codex/release-v2.16.0",
+      "isMerge": true,
+      "changedFiles": 54,
+      "before": {
+        "excluded": 38,
+        "covered": 16,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "examples",
+        "references",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 38,
+        "covered": 16,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "c826e6c3a7abad19c0f3cd1ca57207d54b1ad8de",
+      "short": "c826e6c",
+      "subject": "Merge pull request #215 from tt-a1i/codex/fix-release-tag-fetch",
+      "isMerge": true,
+      "changedFiles": 2,
+      "before": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "39a21139a4661203888049d44e3b8c0da13fa576",
+      "short": "39a2113",
+      "subject": "Merge pull request #216 from tt-a1i/codex/publish-v2.16.0-manifest",
+      "isMerge": true,
+      "changedFiles": 1,
+      "before": {
+        "excluded": 0,
+        "covered": 1,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "docs-site"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 1,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "5de7275fe87a66a19d52a4d9b0b3a4f2a5a90115",
+      "short": "5de7275",
+      "subject": "Merge pull request #219 from sunsunsun-java/codex/218-localized-nav-subdirectory",
+      "isMerge": true,
+      "changedFiles": 11,
+      "before": {
+        "excluded": 3,
+        "covered": 8,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 3,
+        "covered": 8,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "2bfb47132c057195d8dddb3e25ae966dd7c7a72e",
+      "short": "2bfb471",
+      "subject": "Clarify visual-check as automated browser evidence (#233)",
+      "isMerge": false,
+      "changedFiles": 12,
+      "before": {
+        "excluded": 1,
+        "covered": 11,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "cli",
+        "docs-site",
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 11,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "09cc2a04af0c91d3b65eecb834ca136b21fa7cb1",
+      "short": "09cc2a0",
+      "subject": "chore(ci): migrate GitHub Actions off deprecated Node 20 runtime (fixes #217) (#224)",
+      "isMerge": false,
+      "changedFiles": 6,
+      "before": {
+        "excluded": 0,
+        "covered": 6,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 6,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "0456fb3944404ebf54010a2eecaf656b2b09846a",
+      "short": "0456fb3",
+      "subject": "fix(packaging): normalize line endings (fixes #144) (#202)",
+      "isMerge": false,
+      "changedFiles": 2,
+      "before": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "3411a18a4e2a887e5da77e7c18f1aad176a2d22d",
+      "short": "3411a18",
+      "subject": "test(zip): invoke build-zip.sh via bash on Windows (#132)",
+      "isMerge": false,
+      "changedFiles": 1,
+      "before": {
+        "excluded": 0,
+        "covered": 1,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 1,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "199360cc6687a7857b54dd188d4922b09e466a4b",
+      "short": "199360c",
+      "subject": "fix(docs): add DeepSeek Harness to installation table (#231)",
+      "isMerge": false,
+      "changedFiles": 5,
+      "before": {
+        "excluded": 0,
+        "covered": 5,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "integrations-deepseek-harness",
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 5,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "7a16d30322f5bd09c832386faa95d8c9a933f0c0",
+      "short": "7a16d30",
+      "subject": "fix: preserve license provenance in distributions (#265)",
+      "isMerge": false,
+      "changedFiles": 77,
+      "before": {
+        "excluded": 52,
+        "covered": 25,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "docs-site",
+        "examples",
+        "experiments",
+        "references",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 52,
+        "covered": 25,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "06dd052602dd9a369e4d034e24faef0917b5a60c",
+      "short": "06dd052",
+      "subject": "fix: ship third-party mark notices (#267)",
+      "isMerge": false,
+      "changedFiles": 55,
+      "before": {
+        "excluded": 38,
+        "covered": 16,
+        "uncovered": 1,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "examples",
+        "references",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [
+        "archify/THIRD_PARTY_NOTICES.md"
+      ],
+      "ambiguousBefore": [],
+      "requiresMapEdit": true,
+      "editsApplied": [
+        {
+          "action": "addGlob",
+          "component": "references",
+          "glob": "archify/THIRD_PARTY_NOTICES.md",
+          "why": "shipped notice file inside the skill payload"
+        }
+      ],
+      "after": {
+        "excluded": 38,
+        "covered": 17,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "0b636d9f2f410ce7c617dbfd8818b775d42e9d4d",
+      "short": "0b636d9",
+      "subject": "fix(preview): fall back to polling after watcher errors (#275)",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "cli",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "60080fbbe53198732cf18d1602bbb9804d32a23d",
+      "short": "60080fb",
+      "subject": "docs: clarify visual evidence requirements (#300)",
+      "isMerge": false,
+      "changedFiles": 4,
+      "before": {
+        "excluded": 0,
+        "covered": 4,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 4,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "5769acefcc2ebd696a4f9ed3ac9cb6cca1d75c70",
+      "short": "5769ace",
+      "subject": "fix(cli): reject unknown options and extra positionals in render (#303)",
+      "isMerge": false,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "cli",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "d8e4daf2610d512821365f41b139d874b29efe81",
+      "short": "d8e4daf",
+      "subject": "Merge pull request #299 from hasak21/fix/sequence-segment-label-containment",
+      "isMerge": true,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "renderer-sequence",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "ed7f4d4b48d4424d36edfed8043de3de8dea6b45",
+      "short": "ed7f4d4",
+      "subject": "fix(cli): prevent non-HTML output overwrites without restricting directories (#322)",
+      "isMerge": false,
+      "changedFiles": 8,
+      "before": {
+        "excluded": 1,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "cli",
+        "references",
+        "renderers-shared",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "c6519401f7b91b9d43011657880893b0a8955548",
+      "short": "c651940",
+      "subject": "Merge pull request #321 from jackie-cqz/fix/311-flush-artifact-receipts",
+      "isMerge": true,
+      "changedFiles": 4,
+      "before": {
+        "excluded": 1,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "920543baa1c6137803c5b45a69d8977152773d35",
+      "short": "920543b",
+      "subject": "Merge pull request #331 from QiuLsG/codex/fix-json-argument-receipts",
+      "isMerge": true,
+      "changedFiles": 4,
+      "before": {
+        "excluded": 1,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "cli",
+        "references",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 3,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "2ead014aa8ec91f104cd052f1a6ca82de5e26c31",
+      "short": "2ead014",
+      "subject": "fix(dsh): prepare reproducible 0.2.0 adapter with current Skill snapshot (#345)",
+      "isMerge": false,
+      "changedFiles": 14,
+      "before": {
+        "excluded": 0,
+        "covered": 14,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "integrations-deepseek-harness",
+        "references"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 14,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "06bd6fea5752bc06b8170a1f09085c798df5aa13",
+      "short": "06bd6fe",
+      "subject": "chore: configure advisory CodeRabbit contribution reviews (#348)",
+      "isMerge": false,
+      "changedFiles": 2,
+      "before": {
+        "excluded": 0,
+        "covered": 1,
+        "uncovered": 1,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "references"
+      ],
+      "uncoveredBefore": [
+        ".coderabbit.yaml"
+      ],
+      "ambiguousBefore": [],
+      "requiresMapEdit": true,
+      "editsApplied": [
+        {
+          "action": "addGlob",
+          "component": "build-scripts",
+          "glob": ".coderabbit.yaml",
+          "why": "repo-level bot review config"
+        }
+      ],
+      "after": {
+        "excluded": 0,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "79a799d0700c16765d15079855f8a32aa21fff9d",
+      "short": "79a799d",
+      "subject": "Merge pull request #333 from scs0209/fix/repo-evidence-credentialed-origin",
+      "isMerge": true,
+      "changedFiles": 3,
+      "before": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "renderers-shared",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 1,
+        "covered": 2,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "daced37a66ab21f1f8bb096daedd2c5337204020",
+      "short": "daced37",
+      "subject": "docs: align contribution and bot review with change impact (#346)",
+      "isMerge": false,
+      "changedFiles": 4,
+      "before": {
+        "excluded": 0,
+        "covered": 4,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "references"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 0,
+        "covered": 4,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "7ce87eff8e43e91069d43ed642f8845130e090c8",
+      "short": "7ce87ef",
+      "subject": "fix: keep packaged examples within desktop reader (#325)",
+      "isMerge": false,
+      "changedFiles": 24,
+      "before": {
+        "excluded": 17,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "examples",
+        "tests"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 17,
+        "covered": 7,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "b86b60789e18829885dd23c844e36549f0b40303",
+      "short": "b86b607",
+      "subject": "feat(evidence): support Gitee and local-only repositories (#354)",
+      "isMerge": false,
+      "changedFiles": 40,
+      "before": {
+        "excluded": 28,
+        "covered": 12,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "cli",
+        "delta",
+        "examples",
+        "references",
+        "renderers-shared",
+        "schemas",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 28,
+        "covered": 12,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    },
+    {
+      "sha": "10722002bb8777ecb639d93c49586fae4adf3ae4",
+      "short": "1072200",
+      "subject": "fix(viewer): embed the viewer font so delivered pages stay self-contained (#256)",
+      "isMerge": false,
+      "changedFiles": 50,
+      "before": {
+        "excluded": 35,
+        "covered": 15,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "componentsTouched": [
+        "build-scripts",
+        "examples",
+        "references",
+        "tests",
+        "viewer"
+      ],
+      "uncoveredBefore": [],
+      "ambiguousBefore": [],
+      "requiresMapEdit": false,
+      "editsApplied": [],
+      "after": {
+        "excluded": 35,
+        "covered": 15,
+        "uncovered": 0,
+        "ambiguous": 0
+      },
+      "uncoveredAfter": [],
+      "ambiguousAfter": []
+    }
+  ]
+}
