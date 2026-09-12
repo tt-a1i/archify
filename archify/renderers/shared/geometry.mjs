@@ -1300,6 +1300,16 @@ export function routePointsValue(points) {
     .join(';');
 }
 
+// Only a direct, explicitly authored diagonal needs an artifact-check exception.
+// Nonempty via takes precedence; empty via adds no intermediate geometry.
+export function authoredStraightRouteAttrs(relation, points) {
+  if (relation.route !== 'straight' || relation.via?.length || points.length !== 2) return '';
+  const [start, end] = points;
+  return Math.abs(start[0] - end[0]) > 0.01 && Math.abs(start[1] - end[1]) > 0.01
+    ? ' data-composition-route="straight"'
+    : '';
+}
+
 export function roundedPath(points, radius) {
   if (points.length < 3 || radius <= 0) {
     return polylinePath(points);
