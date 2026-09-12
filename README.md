@@ -266,6 +266,27 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 | **Project Knowledge** | Upload `archify.zip` to the project | Prompt-driven architecture fallback |
 | **DeepSeek Harness** | Opt-in: `dsh plugin --profile web add @tt-a1i/archify-dsh@0.1.0`. Invoke: `Use the archify skill to map this repository's runtime architecture.` Remove: `dsh plugin --profile web remove @tt-a1i/archify-dsh`. | Community integration for developer-preview `@deepseek-ai/dsh@0.1.0-rc.6`; Node `^22.19.0 \|\| >=24.0.0`; not an official DeepSeek product. No telemetry. Shell files need exact workspace paths, not Web Produced Files. [Details](integrations/deepseek-harness/README.md). |
 
+## Advanced Usage
+
+### Smart generation (optimised for cost)
+
+The `smart` command runs an automated three-stage pipeline that minimises token usage:
+
+1. Discovery (Low reasoning: cheap model)
+2. Dependency extraction (Medium reasoning: cheap model)
+3. Architectural synthesis (High reasoning: reasoning-capable model)
+4. Automatic validation and rendering
+
+```bash
+# Auto-detect agent (Codex or Claude Code)
+archify smart
+
+# Force Codex with custom models
+archify smart --agent codex --model-low gpt-5.4-mini --model-high gpt-5.6-terra
+
+# Force Claude Code
+archify smart --agent claude --model-low haiku --model-high sonnet
+
 ## Reference and scope
 
 - [Schema reference](archify/schemas/README.md) · [Skill](archify/SKILL.md) · [Examples](archify/examples/) · [Agent cookbook](docs/authoring-cookbook.md)
