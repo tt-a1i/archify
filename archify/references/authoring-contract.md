@@ -7,6 +7,7 @@ Read this reference only after the Fast authoring path calls for more detail. Th
 Read both the mode schema and `schemas/common.schema.json`. The mode schemas use `$ref`, so the common file is where shared enums live.
 
 - `componentType`: `frontend`, `backend`, `database`, `cloud`, `security`, `messagebus`, `external`
+- Entity-relationship documents use `entities` and `relationships`; `key` accepts `pk`, `fk`, or `uk`, and `fromCardinality`/`toCardinality` accept `one` or `many`.
 - `variant`: `default`, `emphasis`, `security`, `dashed`
 - Relationship IDs use the shared identifier pattern and must be unique in their collection.
 
@@ -168,6 +169,17 @@ Participants are ordered by conversation role. Messages own their vertical order
 ### Dataflow
 
 Stages express transformation or custody. Rows separate parallel streams. Label only data contracts, classifications, or cross-boundary movement that is not obvious.
+
+### ERD
+
+Columns read left to right and rows read top to bottom, so a relationship between
+neighbouring columns is one straight corridor. Keep related entities in the same
+row or the same column, and never place an unrelated entity between two aligned
+anchors; the router will detour around it, but a clear corridor is shorter and
+reads better. Put one key per attribute (`key`) and the real references in
+`references`, show only the attributes a reader needs, and move the rest into cards.
+A many-to-many pair is a real fact about the model, so state it, but name the join
+table in a card when one exists.
 
 ### Lifecycle
 
