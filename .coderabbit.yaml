@@ -51,7 +51,8 @@ reviews:
         unrelated rebuilds or infer correctness from generated file volume.
         Use the PR base-to-head diff; a clean checkout does not mean an empty PR.
         On revision, review new changes and unresolved findings, expanding only
-        when intervening changes invalidate earlier evidence. Label feedback as
+        when intervening base, scope, or code changes invalidate the agreed scope
+        or earlier evidence. Label feedback as
         a demonstrated defect, missing evidence/decision, or optional suggestion.
         Give each request an affected contract, smallest remedy, and responsible
         role (author or maintainer). Before repeating a request, read the latest
