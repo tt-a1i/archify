@@ -6,6 +6,20 @@ on:
   pull_request:
 
 jobs:
+  analyzers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: analyzers/package-lock.json
+      - run: npm ci
+        working-directory: analyzers
+      - run: npm test
+        working-directory: analyzers
+
   test:
     runs-on: ubuntu-latest
     strategy:

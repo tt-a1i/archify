@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "raw-facts.schema.json",
+  "title": "Archify Analyzers raw facts",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "repository", "files", "imports", "symbols", "calls", "unresolved"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "revision", "language", "adapter"],
+      "properties": {
+        "root": { "type": "string", "minLength": 1, "description": "Analyzed directory, relative to the Git repository root (\".\" when equal)." },
+        "revision": { "type": ["string", "null"], "pattern": "^[a-f0-9]{40}$" },
+        "language": { "enum": ["ts"] },
+        "adapter": { "type": "string" }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "loc", "role"],
+        "properties": {
+          "path": { "$ref": "#/$defs/repoPath" },
+          "loc": { "type": "integer", "minimum": 0 },
+          "role": { "enum": ["source", "test", "generated"] }
+        }
+      }
+    },
+    "imports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "specifier", "kind", "line", "resolved"],
+        "properties": {
+          "from": { "$ref": "#/$defs/repoPath" },
+          "to": { "$ref": "#/$defs/repoPath", "description": "Present only when resolved inside the analyzed tree." },
+          "specifier": { "type": "string", "minLength": 1 },
+          "kind": { "enum": ["static", "dynamic", "require", "export"] },
+          "line": { "type": "integer", "minimum": 1 },
+          "resolved": { "type": "boolean" },
+          "names": { "type": "array", "items": { "type": "string" } }
+        },
+        "if": { "properties": { "resolved": { "const": true } } },
+        "then": { "required": ["to"] },
+        "else": { "not": { "required": ["to"] } }
+      }
+    },
+    "symbols": { "type": "array", "description": "Reserved for M2 (Symbol Graph).", "items": { "type": "object" } },
+    "calls": { "type": "array", "description": "Reserved for M2 (Call Graph).", "items": { "type": "object" } },
+    "unresolved": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["external", "outside", "unknown"],
+      "properties": {
+        "external": { "type": "integer", "minimum": 0, "description": "Bare or node: specifiers." },
+        "outside": { "type": "integer", "minimum": 0, "description": "Resolved to a file outside the analyzed root." },
+        "unknown": { "type": "integer", "minimum": 0, "description": "Path-like specifier that could not be resolved." }
+      }
+    }
+  },
+  "$defs": {
+    "repoPath": { "type": "string", "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\\\u0000-\\u001f]+$" }
+  }
+}
