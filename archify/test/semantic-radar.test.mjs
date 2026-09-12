@@ -201,7 +201,7 @@ test('Semantic Radar keeps redundant accessible navigation and clean exports', (
   const html = render('architecture', CASES.architecture);
   assert.match(html, /Semantic radar \(M\)/);
   assert.match(html, /e\.key === 'm' \|\| e\.key === 'M'/);
-  assert.match(html, /e\.key === 'Escape' && Archify\.radar\.isOpen\(\)/);
+  assert.match(html, /isEscape && Archify\.radar\.isOpen\(\)/);
   assert.match(html, /event\.key === 'ArrowLeft'[\s\S]+event\.key === 'ArrowRight'[\s\S]+event\.key === 'ArrowUp'[\s\S]+event\.key === 'ArrowDown'/);
   assert.match(html, /node && \(event\.key === 'Enter' \|\| event\.key === ' '\)/);
   assert.match(html, /\.overview-map-viewport \{[\s\S]*?pointer-events: none;/);

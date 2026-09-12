@@ -1189,6 +1189,26 @@ test('cli: locate treats an absent pinned map revision as advisory', async () =>
   assert.ok(!receipt.review.advisory.includes('map_behind'));
 });
 
+test('cli: locate --lint accepts a safe/ path segment', () => {
+  const { root } = locateCliRepo();
+  const out = path.join(root, 'out');
+  fs.mkdirSync(path.join(root, 'tpl/safe'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'tpl/safe/safe.go'), 'package safe\n');
+  execFileSync('git', ['-C', root, 'add', 'tpl/safe/safe.go']);
+  execFileSync('git', ['-C', root, 'commit', '-m', 'safe']);
+  const result = run([
+    'locate', '--lint', 'HEAD',
+    '--map', path.join(root, 'map.architecture.json'),
+    '--repo-root', root,
+    '--out', out,
+    '--json',
+  ]);
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  const receipt = JSON.parse(fs.readFileSync(path.join(out, 'locate.receipt.json'), 'utf8'));
+  assert.equal(receipt.files.some((file) => file.path === 'tpl/safe/safe.go'), true);
+  assert.equal(receipt.summary.files.ambiguous, 0);
+});
+
 test('cli: locate --lint ambiguous exits 1', () => {
   const { root } = locateCliRepo();
   const out = path.join(root, 'out');
@@ -1216,6 +1236,15 @@ test('cli: locate invalid range exits 2', () => {
   const result = run(['locate', 'not-a-range', '--map', 'map.architecture.json']);
   assert.equal(result.status, 2, result.stderr + result.stdout);
   assert.match(result.stderr, /locate\/range-invalid/);
+});
+
+test('cli: locate three-dot range is range-invalid, not a dotted revision', () => {
+  const result = run(['locate', 'abc...def', '--map', 'map.architecture.json', '--json']);
+  assert.equal(result.status, 2, result.stderr + result.stdout);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.diagnostics[0].code, 'locate/range-invalid');
+  assert.match(payload.error, /two-dot/);
+  assert.doesNotMatch(payload.error, /"\.def"/);
 });
 
 test('cli: locate unknown revision is range-invalid exit 2', () => {
@@ -1265,4 +1294,106 @@ test('cli: locate failing run does not leak staging', () => {
   assert.equal(cwdEntries.includes('locate.receipt.json'), false);
   const outEntries = fs.existsSync(out) ? fs.readdirSync(out) : [];
   assert.equal(outEntries.some((name) => name.startsWith('.archify-locate-')), false);
+});
+
+
+test('cli: locate accepts a map first added in the requested range', () => {
+  const { root, head } = locateCliRepo();
+  const tree = execFileSync('git', ['-C', root, 'mktree'], { input: '', encoding: 'utf8' }).trim();
+  const base = execFileSync('git', ['-C', root, 'commit-tree', tree, '-m', 'empty baseline'], { encoding: 'utf8' }).trim();
+  const out = path.join(root, 'added-out');
+  const result = run(['locate', `${base}..${head}`, '--repo-root', root,
+    '--map', path.join(root, 'map.architecture.json'), '--out', out, '--json']);
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.mapDelta.status, 'added');
+  assert.ok(receipt.review.blocking.includes('map_changed'));
+  assert.equal(fs.existsSync(path.join(out, 'compare')), false);
+  assert.ok(fs.existsSync(path.join(out, 'locate.receipt.json')));
+});
+
+
+test('cli: incomplete bundle fails before replacing existing locate outputs', () => {
+  const { root, base, head } = locateCliRepo();
+  const out = path.join(root, 'out');
+  fs.mkdirSync(out);
+  fs.writeFileSync(path.join(out, 'locate.html'), 'previous HTML');
+  fs.writeFileSync(path.join(out, 'locate.receipt.json'), 'previous receipt');
+  const manifest = {
+    schema_version: 1, bundle_type: 'drilldown', entry: 'parent',
+    diagrams: ['parent', 'child'].map((id, level) => ({ id, file: `${id}.html`, title: id,
+      diagram_type: 'architecture', level, spec_sha256: 'a'.repeat(64), artifact_sha256: 'b'.repeat(64) })),
+    drilldowns: [{ parent: 'parent', component: 'cli', child: 'child' }],
+  };
+  fs.writeFileSync(path.join(root, 'manifest.json'), JSON.stringify(manifest));
+  const result = run(['locate', `${base}..${head}`, '--repo-root', root,
+    '--map', path.join(root, 'map.architecture.json'), '--out', out, '--bundle', root, '--json']);
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'locate/bundle-incomplete');
+  assert.equal(fs.readFileSync(path.join(out, 'locate.html'), 'utf8'), 'previous HTML');
+  assert.equal(fs.readFileSync(path.join(out, 'locate.receipt.json'), 'utf8'), 'previous receipt');
+});
+
+test('cli: malformed bundle returns diagnostics without publishing outputs', () => {
+  const { root, base, head } = locateCliRepo();
+  const out = path.join(root, 'out');
+  fs.writeFileSync(path.join(root, 'manifest.json'), '{broken');
+  const result = run(['locate', `${base}..${head}`, '--repo-root', root,
+    '--map', path.join(root, 'map.architecture.json'), '--out', out, '--bundle', root, '--json']);
+  assert.equal(result.status, 1);
+  assert.equal(result.stderr, '');
+  assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'locate/bundle-invalid');
+  assert.deepEqual(fs.readdirSync(out), []);
+});
+
+
+test('cli: a failed output rename restores the previous locate pair', () => {
+  const { root, base, head } = locateCliRepo();
+  const out = path.join(root, 'out');
+  fs.mkdirSync(out);
+  fs.writeFileSync(path.join(out, 'locate.html'), 'old html');
+  fs.writeFileSync(path.join(out, 'locate.receipt.json'), 'old receipt');
+  const preload = path.join(root, 'rename-failure.mjs');
+  fs.writeFileSync(preload, `import fs from 'node:fs';
+const rename = fs.renameSync;
+let failed = false;
+fs.renameSync = function (source, target) {
+  if (!failed && String(source).endsWith('/locate.receipt.json') && String(target) === ${JSON.stringify(path.join(out, 'locate.receipt.json'))}) {
+    failed = true;
+    throw new Error('injected receipt rename failure');
+  }
+  return rename.apply(this, arguments);
+};`);
+  const result = run(['locate', `${base}..${head}`, '--repo-root', root,
+    '--map', path.join(root, 'map.architecture.json'), '--out', out, '--json'],
+  { env: { ...process.env, NODE_OPTIONS: `--import=${preload}` } });
+  assert.equal(result.status, 1);
+  assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'locate/internal');
+  assert.equal(fs.readFileSync(path.join(out, 'locate.html'), 'utf8'), 'old html');
+  assert.equal(fs.readFileSync(path.join(out, 'locate.receipt.json'), 'utf8'), 'old receipt');
+});
+
+
+test('cli: bundle output commits with the receipt and refuses non-file destinations', () => {
+  const { root, base, head } = locateCliRepo();
+  const out = path.join(root, 'out');
+  fs.writeFileSync(path.join(root, 'entry.html'), '<html><body>entry</body></html>');
+  fs.writeFileSync(path.join(root, 'manifest.json'), JSON.stringify({
+    schema_version: 1, bundle_type: 'drilldown', entry: 'entry',
+    diagrams: [{ id: 'entry', file: 'entry.html', title: 'Entry', level: 0,
+      diagram_type: 'architecture', spec_sha256: 'a'.repeat(64), artifact_sha256: 'b'.repeat(64) }],
+  }));
+  const args = ['locate', `${base}..${head}`, '--repo-root', root,
+    '--map', path.join(root, 'map.architecture.json'), '--out', out, '--bundle', root, '--json'];
+  const first = run(args);
+  assert.equal(first.status, 0, first.stdout + first.stderr);
+  const projected = path.join(out, 'map.architecture.locate.html');
+  assert.match(fs.readFileSync(projected, 'utf8'), /archify-locate-projection/);
+  fs.unlinkSync(projected);
+  fs.mkdirSync(projected);
+  fs.writeFileSync(path.join(out, 'locate.html'), 'keep this HTML');
+  const second = run(args);
+  assert.equal(second.status, 1);
+  assert.equal(JSON.parse(second.stdout).diagnostics[0].code, 'locate/out-directory');
+  assert.equal(fs.readFileSync(path.join(out, 'locate.html'), 'utf8'), 'keep this HTML');
 });

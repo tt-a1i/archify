@@ -89,7 +89,7 @@ test('Intent Trace separates hover, keyboard, touch, and committed focus', () =>
   assert.match(html, /svg\.hasAttribute\('data-relationship-preview-active'\)/);
   assert.match(html, /Archify\.focus\.active\(\)/);
   assert.match(html, /Archify\.intentTrace\.clear\(\{ announce: false \}\)/);
-  assert.match(html, /e\.key === 'Escape' && Archify\.intentTrace\.active\(\)/);
+  assert.match(html, /isEscape && Archify\.intentTrace\.active\(\)/);
 });
 
 test('Intent Trace normalizes motion, respects reduced motion, and exports cleanly', () => {

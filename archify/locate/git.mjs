@@ -137,11 +137,13 @@ export function diffNameStatus(root, base, head) {
 export function listTree(root, rev) {
   const stdout = gitValue(
     root,
-    ['ls-tree', '-r', '--name-only', rev],
+    ['ls-tree', '-r', '--name-only', '-z', rev],
     'locate/git-command',
     `git ls-tree failed for ${rev}.`,
   );
-  return stdout.split('\n').filter(Boolean);
+  const fields = stdout.split('\0');
+  if (fields.length && fields[fields.length - 1] === '') fields.pop();
+  return fields.filter(Boolean);
 }
 
 export function revListCount(root, from, to) {

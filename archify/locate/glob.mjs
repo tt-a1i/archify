@@ -125,12 +125,24 @@ function segSubsumes(parentSeg, childSeg) {
   return false;
 }
 
+function segmentCanBeEmpty(segment) {
+  return segment === '*' || segment === '';
+}
+
 function subsumesSegments(parent, child) {
   if (parent.length === 0) return child.length === 0;
-  if (parent[0] === '**' && parent.length === 1) return child.length > 0;
+  // Trailing ** is one or more non-empty segments. `*` / empty can match
+  // zero-length segments (`""`, `a/`), so treating them as a subset is unsound.
+  if (parent[0] === '**' && parent.length === 1) {
+    return child.length > 0 && !child.some(segmentCanBeEmpty);
+  }
   if (parent[0] === '**') {
     if (subsumesSegments(parent.slice(1), child)) return true;
-    if (child.length > 0 && child[0] !== '**') return subsumesSegments(parent, child.slice(1));
+    // A recursive prefix consumes only non-empty segments. Do not prove
+    // containment by consuming a child segment that may be empty.
+    if (child.length > 0 && child[0] !== '**' && !segmentCanBeEmpty(child[0])) {
+      return subsumesSegments(parent, child.slice(1));
+    }
     return false;
   }
   if (child.length === 0) return false;

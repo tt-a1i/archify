@@ -208,3 +208,12 @@ test('parent excluded is inherited in the child projection and files_touched_ins
   });
   assert.equal(projection.components['renderers-shared'].files_touched_inside, 0);
 });
+
+
+test('projection JSON cannot close its embedding script element', () => {
+  const value = { components: { '</script><script>bad()</script>&': { state: 'untouched' } } };
+  const html = embedProjection('<html><body></body></html>', value);
+  assert.equal((html.match(/<script/g) || []).length, 1);
+  const embedded = html.match(/type="application\/json">([\s\S]*?)<\/script>/)[1];
+  assert.deepEqual(JSON.parse(embedded), value);
+});

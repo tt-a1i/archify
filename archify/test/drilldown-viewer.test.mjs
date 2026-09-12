@@ -28,6 +28,12 @@ test('viewer handshake, child file, and breadcrumb helpers reject unsafe values'
     assert.equal(drilldown.resolveChildFile({
       diagrams: [{ id: 'payments', file: '../payments.html' }],
     }, 'payments'), null);
+    assert.match(html, /showStale\(!child \? 'missing-child' : 'missing-row'/);
+    assert.equal(drilldown.crumbCurrentText('Typed Renderers', 'Typed Renderers'), 'Typed Renderers');
+    assert.equal(drilldown.crumbCurrentText('Shared Renderer Runtime', 'Render Pipeline'), 'Shared Renderer Runtime · Render Pipeline');
+    assert.match(html, /html\[data-bundle-nested="true"\] \.toolbar/);
+    assert.match(html, /html\[data-bundle-nested="true"\] \.diagram-nav/);
+    assert.match(html, /data-locate-inside-count/);
 
     const expected = { id: 'payments', specSha256: SHA };
     const ok = drilldown.validateHandshake({

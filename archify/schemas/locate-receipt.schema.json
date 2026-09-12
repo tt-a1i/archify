@@ -358,12 +358,12 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["path", "baseBlob", "headBlob"],
-      "description": "Present when the map JSON itself changed inside the range. Locate invokes `archify compare` as an attached artifact under `--out/compare/` when the map type is supported; the locate exit code is independent of that compare.",
+      "description": "Present when the map JSON itself changed inside the range. Locate invokes `archify compare` as an attached artifact under `--out/compare/` when the map type is supported; the locate exit code is independent of that compare. A map added in the range has status added and does not run compare; baseBlob is then a lookup reference to an absent baseline.",
       "properties": {
         "path": { "$ref": "#/$defs/repoPath" },
         "baseBlob": { "type": "string", "pattern": "^[a-f0-9]{40}:.+$" },
         "headBlob": { "type": "string", "pattern": "^[a-f0-9]{40}:.+$" },
-        "status": { "enum": ["compared", "compare-failed", "unsupported-type"] },
+        "status": { "enum": ["compared", "compare-failed", "unsupported-type", "added"] },
         "receiptPath": { "$ref": "#/$defs/repoPath" },
         "htmlPath": { "$ref": "#/$defs/repoPath" },
         "exitCode": { "type": "integer", "minimum": 0 }

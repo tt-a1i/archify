@@ -37,6 +37,15 @@ test('locate projection applies stale distinctly and hides a zero-count chip', (
     assert.equal(applied[0].id, 'payments');
     assert.equal(applied[0].state, 'stale');
     assert.equal(attrs['data-locate-state'], 'stale');
+    const counted = {
+      getAttribute(name) { return name === 'data-node-id' ? 'payments' : attrs[name]; },
+      setAttribute(name, value) { attrs[name] = value; },
+      removeAttribute(name) { delete attrs[name]; },
+    };
+    drilldown.applyProjection({ payments: 'touched' }, [counted], { payments: 6 });
+    assert.equal(attrs['data-locate-inside'], '6');
+    drilldown.applyProjection({ payments: 'touched' }, [counted], { payments: 0 });
+    assert.equal(attrs['data-locate-inside'], undefined);
   } finally {
     disposeBundleFixture(dir);
   }

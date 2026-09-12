@@ -56,11 +56,22 @@ function countFileStates(files) {
   return counts;
 }
 
+function assertReceiptPath(filePath) {
+  if (!validRepoPath(filePath)) {
+    locateFail('locate/path-invalid', `Path ${JSON.stringify(filePath)} is not a receipt-safe repository path.`, {
+      evidence: { path: filePath },
+      supportedFixes: ['rename the path so it has no control characters or backslashes'],
+    });
+  }
+}
+
 export function classifyChanges(changes, ownership) {
   const files = [];
   const moveFacts = [];
   for (const change of changes) {
     if (change.changeType === 'R' || change.changeType === 'C') {
+      assertReceiptPath(change.oldPath);
+      assertReceiptPath(change.path);
       const baseClass = classifyPath(change.oldPath, ownership);
       const headClass = classifyPath(change.path, ownership);
       files.push({
@@ -90,6 +101,7 @@ export function classifyChanges(changes, ownership) {
       }
       continue;
     }
+    assertReceiptPath(change.path);
     files.push({
       path: change.path,
       changeType: change.changeType,
@@ -340,11 +352,14 @@ export function locateRange({
 }
 
 export function lintTree({ tree, ownership }) {
-  const files = sortedBy(tree.map((filePath) => ({
-    path: filePath,
-    changeType: 'tracked',
-    ...fileFields(classifyPath(filePath, ownership)),
-  })), (file) => file.path);
+  const files = sortedBy(tree.map((filePath) => {
+    assertReceiptPath(filePath);
+    return {
+      path: filePath,
+      changeType: 'tracked',
+      ...fileFields(classifyPath(filePath, ownership)),
+    };
+  }), (file) => file.path);
   const summary = countFileStates(files);
   return { files, summary };
 }
@@ -408,7 +423,7 @@ export function buildLocateProjection({ base, head, entryReceipt, childReceipts 
 }
 
 export function embedProjection(entryHtml, projection) {
-  const script = `<script id="archify-locate-projection" type="application/json">${JSON.stringify(projection)}</script>`;
+  const script = `<script id="archify-locate-projection" type="application/json">${JSON.stringify(projection).replaceAll('<', '\\u003c').replaceAll('>', '\\u003e').replaceAll('&', '\\u0026')}</script>`;
   const opened = entryHtml.match(/<body[^>]*>/i);
   if (opened) {
     const index = entryHtml.indexOf(opened[0]) + opened[0].length;

@@ -21,6 +21,29 @@ async function evaluate(browser, expression) {
   return result.result?.value;
 }
 
+function walkFrames(node, acc = []) {
+  acc.push(node.frame);
+  for (const child of node.childFrames || []) walkFrames(child, acc);
+  return acc;
+}
+
+async function evaluateChildFrame(browser, urlPattern, expression) {
+  const sessionId = await browser.sessionPromise;
+  const tree = await browser.cdp.send('Page.getFrameTree', {}, sessionId);
+  const frame = walkFrames(tree.frameTree).find((item) => urlPattern.test(item.url));
+  if (!frame) return null;
+  const world = await browser.cdp.send('Page.createIsolatedWorld', {
+    frameId: frame.id,
+    grantUniveralAccess: true,
+  }, sessionId);
+  const result = await browser.cdp.send('Runtime.evaluate', {
+    expression,
+    contextId: world.executionContextId,
+    returnByValue: true,
+  }, sessionId);
+  return result.result?.value ?? null;
+}
+
 async function assertGeometryRestore(browser, artifactPath, { width, height }) {
   await browser.inspect({
     artifactPath,
@@ -57,14 +80,44 @@ async function assertGeometryRestore(browser, artifactPath, { width, height }) {
     await new Promise((resolve) => setTimeout(resolve, 1300));
     const currents = [...document.querySelectorAll('[aria-current="page"]')].map((node) => node.textContent);
     const frame = document.getElementById('archify-drilldown-frame');
+    const payments = document.querySelector('[data-node-id="payments"]');
+    let inside = '';
+    let badge = '';
+    if (window.Archify && Archify.drilldown && payments) {
+      Archify.drilldown.applyProjection({ payments: 'touched' }, [payments], { payments: 3 });
+      inside = payments.getAttribute('data-locate-inside') || '';
+      const mark = payments.querySelector('[data-locate-inside-count]');
+      badge = mark ? mark.textContent : '';
+      Archify.drilldown.applyProjection({ payments: 'touched' }, [payments], { payments: 0 });
+    }
     return {
       ok: true,
       currents,
       childMinHeight: frame ? frame.style.minHeight : '',
+      state: document.documentElement.getAttribute('data-drilldown-state'),
+      childSrc: frame ? frame.getAttribute('src') : '',
+      inside,
+      badge,
     };
   })()`);
   assert.equal(during.ok, true, `${width}x${height}: descend failed`);
+  assert.equal(during.state, 'level1', `${width}x${height}: handshake`);
   assert.equal(during.currents.length, 1, `${width}x${height}: breadcrumb current`);
+  assert.doesNotMatch(during.currents[0], /^(.+) · \1$/, `${width}x${height}: breadcrumb must not repeat an equal label`);
+  // file:// iframes hide contentDocument; inspect the child frame over CDP.
+  const childChrome = await evaluateChildFrame(browser, /payments\.html/, `({
+    nested: document.documentElement.getAttribute('data-bundle-nested'),
+    toolbarDisplay: document.querySelector('.toolbar')
+      ? getComputedStyle(document.querySelector('.toolbar')).display : '',
+    navDisplay: document.querySelector('.diagram-nav')
+      ? getComputedStyle(document.querySelector('.diagram-nav')).display : '',
+  })`);
+  assert.ok(childChrome, `${width}x${height}: child frame ${during.childSrc}`);
+  assert.equal(childChrome.nested, 'true', `${width}x${height}: child handshake marks nested`);
+  assert.equal(childChrome.toolbarDisplay, 'none', `${width}x${height}: nested toolbar hidden`);
+  assert.equal(childChrome.navDisplay, 'none', `${width}x${height}: nested PATH/MAP/LENS hidden`);
+  assert.equal(during.inside, '3', `${width}x${height}: parent-box count`);
+  assert.equal(during.badge, '3', `${width}x${height}: parent-box badge`);
   assert.equal(during.childMinHeight, '80vh', `${width}x${height}: child height must differ from parent canvas`);
   await evaluate(browser, `(async () => {
     Archify.drilldown.back();

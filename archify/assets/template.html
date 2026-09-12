@@ -4456,8 +4456,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     html[data-embed="true"] #btn-drilldown-descend { display: none !important; }
     html[data-bundle-nested="true"] #btn-present,
     html[data-bundle-nested="true"] .guided-views,
+    html[data-bundle-nested="true"] .toolbar,
+    html[data-bundle-nested="true"] .diagram-nav,
     html[data-drilldown-level="1"] #btn-present,
     html[data-drilldown-level="1"] .guided-views { display: none !important; }
+    svg [data-node-id][data-locate-inside] [data-locate-inside-count] {
+      font-size: 8px;
+      font-weight: 600;
+    }
     @media (prefers-reduced-motion: reduce) {
       html[data-drilldown-state] .archify-drilldown-host { transition: none; }
     }
@@ -14996,7 +15002,35 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         return { ok: true };
       }
-      function applyProjection(states, nodes) {
+      function paintInsideBadge(node, count) {
+        if (!node || typeof node.setAttribute !== 'function') return;
+        if (count > 0) node.setAttribute('data-locate-inside', String(count));
+        else if (typeof node.removeAttribute === 'function') node.removeAttribute('data-locate-inside');
+        if (typeof node.querySelector !== 'function') return;
+        var existing = node.querySelector('[data-locate-inside-count]');
+        if (!(count > 0)) {
+          if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+          return;
+        }
+        var text = existing;
+        if (!text && typeof document !== 'undefined' && document.createElementNS) {
+          var rects = node.querySelectorAll ? node.querySelectorAll('rect') : [];
+          var box = rects.length ? rects[rects.length - 1] : null;
+          text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('data-locate-inside-count', '');
+          text.setAttribute('class', 't-muted');
+          text.setAttribute('font-size', '8');
+          text.setAttribute('font-weight', '600');
+          text.setAttribute('text-anchor', 'end');
+          if (box) {
+            text.setAttribute('x', String(Number(box.getAttribute('x')) + Number(box.getAttribute('width')) - 6));
+            text.setAttribute('y', String(Number(box.getAttribute('y')) + 11));
+          }
+          node.appendChild(text);
+        }
+        if (text) text.textContent = String(count);
+      }
+      function applyProjection(states, nodes, insides) {
         var applied = [];
         if (!nodes) return applied;
         for (var i = 0; i < nodes.length; i += 1) {
@@ -15009,6 +15043,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           } else if (node && typeof node.removeAttribute === 'function') {
             node.removeAttribute('data-locate-state');
           }
+          if (insides) paintInsideBadge(node, Number(insides[id] || 0));
         }
         return applied;
       }
@@ -15089,7 +15124,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         buildStaleCardModel: buildStaleCardModel,
         fillStaleCard: fillStaleCard,
         isSafeChildFile: isSafeChildFile,
-        locateChipModel: locateChipModel
+        locateChipModel: locateChipModel,
+        crumbCurrentText: crumbCurrentText,
+        paintInsideBadge: paintInsideBadge
       };
       if (typeof document === 'undefined' || !document.querySelector) return api;
 
@@ -15182,7 +15219,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function applyLocate(root, states) {
         if (!root || !states) return;
         root.setAttribute('data-locate-active', 'true');
-        applyProjection(states, root.querySelectorAll('[data-node-id]'));
+        var insides = {};
+        var projection = readLocate();
+        if (projection && projection.components) {
+          Object.keys(projection.components).forEach(function (id) {
+            insides[id] = Number(projection.components[id].files_touched_inside || 0);
+          });
+        }
+        applyProjection(states, root.querySelectorAll('[data-node-id]'), insides);
       }
       function locateCount(componentId) {
         var projection = readLocate();
@@ -15229,6 +15273,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clone.style.width = String(Math.round(96 * width / height)) + 'px';
         silhouette.appendChild(clone);
       }
+      function crumbCurrentText(componentLabel, childTitle) {
+        var label = componentLabel || '';
+        var title = childTitle || 'child';
+        if (label && title && label === title) return title;
+        return label ? label + ' · ' + title : title;
+      }
       function renderCrumb(entryTitle, componentLabel, childTitle) {
         if (!crumb) return;
         crumb.textContent = '';
@@ -15243,7 +15293,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         sep.textContent = ' › ';
         crumb.appendChild(sep);
         var currentRung = document.createElement('span');
-        currentRung.textContent = (componentLabel || '') + ' · ' + (childTitle || 'child');
+        currentRung.textContent = crumbCurrentText(componentLabel, childTitle);
         currentRung.setAttribute('aria-current', 'page');
         crumb.appendChild(currentRung);
       }
@@ -15298,7 +15348,23 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (!childId || !readManifest()) return false;
         var row = drillFor(componentId);
         var child = diagramById(childId);
-        if (!child || !row) return false;
+        if (!child || !row) {
+          current = {
+            componentId: componentId,
+            componentLabel: node.getAttribute('data-node-label') || componentId,
+            childId: childId,
+            childTitle: (child && child.title) || childId,
+            entryTitle: (readManifest() && diagramById(readManifest().entry) && diagramById(readManifest().entry).title) || document.title,
+            specSha: (child && child.spec_sha256) || '',
+            file: (child && child.file) || ''
+          };
+          if (host) host.hidden = false;
+          showStale(!child ? 'missing-child' : 'missing-row', {
+            id: current.childId,
+            spec: current.specSha
+          }, {});
+          return true;
+        }
         clearTransient();
         savedScroll = captureScroll();
         var entryTitle = (readManifest() && diagramById(readManifest().entry) && diagramById(readManifest().entry).title) || document.title;
@@ -15441,6 +15507,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         fillStaleCard: fillStaleCard,
         isSafeChildFile: isSafeChildFile,
         locateChipModel: locateChipModel,
+        crumbCurrentText: crumbCurrentText,
+        paintInsideBadge: paintInsideBadge,
         active: active,
         descend: descend,
         back: back,
@@ -15461,7 +15529,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
          / -> open node finder or the active route endpoint picker
          + / - -> zoom, 0 -> reset view
          Escape -> clear temporary trace/focus/view first, then exit presentation
-         Backspace -> Escape alias when the reader is not in a field
+         Backspace -> Escape alias only while a drilldown is active
        Ignored when focus is inside an input/textarea/contenteditable.
        ============================================================ */
     document.addEventListener('keydown', function (e) {
@@ -15469,7 +15537,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       if (e.defaultPrevented) return;
       var t = e.target;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-      var isEscape = e.key === 'Escape' || e.key === 'Backspace';
+      var isEscape = e.key === 'Escape' || (e.key === 'Backspace'
+        && Archify.drilldown && Archify.drilldown.active());
       if (Archify.preset && Archify.preset.isOpen() && !isEscape && e.key !== 's' && e.key !== 'S') {
         Archify.preset.close(false);
       }
@@ -15511,34 +15580,34 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       } else if (e.key === '0') {
         e.preventDefault();
         Archify.view.reset();
-      } else if (e.key === 'Escape' && Archify.preset.isOpen() || e.key === 'Backspace' && Archify.preset.isOpen()) {
+      } else if (isEscape && Archify.preset.isOpen()) {
         e.preventDefault();
         Archify.preset.close(true);
-      } else if (e.key === 'Escape' && Archify.semanticLens.isOpen() || e.key === 'Backspace' && Archify.semanticLens.isOpen()) {
+      } else if (isEscape && Archify.semanticLens.isOpen()) {
         e.preventDefault();
         Archify.semanticLens.close({ restoreFocus: true });
-      } else if (e.key === 'Escape' && Archify.semanticLens.active() || e.key === 'Backspace' && Archify.semanticLens.active()) {
+      } else if (isEscape && Archify.semanticLens.active()) {
         e.preventDefault();
         Archify.semanticLens.clear({ preserveView: true });
-      } else if (e.key === 'Escape' && Archify.guide.isOpen() || e.key === 'Backspace' && Archify.guide.isOpen()) {
+      } else if (isEscape && Archify.guide.isOpen()) {
         e.preventDefault();
         Archify.guide.close({ restoreFocus: true });
-      } else if (e.key === 'Escape' && Archify.radar.isOpen() || e.key === 'Backspace' && Archify.radar.isOpen()) {
+      } else if (isEscape && Archify.radar.isOpen()) {
         e.preventDefault();
         Archify.radar.close({ restoreFocus: true });
-      } else if (e.key === 'Escape' && Archify.routeProbe.active() || e.key === 'Backspace' && Archify.routeProbe.active()) {
+      } else if (isEscape && Archify.routeProbe.active()) {
         e.preventDefault();
         Archify.routeProbe.escape({ restoreFocus: true });
-      } else if (e.key === 'Escape' && Archify.intentTrace.active() || e.key === 'Backspace' && Archify.intentTrace.active()) {
+      } else if (isEscape && Archify.intentTrace.active()) {
         e.preventDefault();
         Archify.intentTrace.clear();
-      } else if (e.key === 'Escape' && Archify.focus.active() || e.key === 'Backspace' && Archify.focus.active()) {
+      } else if (isEscape && Archify.focus.active()) {
         e.preventDefault();
         Archify.focus.clear({ restoreFocus: true });
-      } else if (e.key === 'Escape' && Archify.drilldown && Archify.drilldown.active() || e.key === 'Backspace' && Archify.drilldown && Archify.drilldown.active()) {
+      } else if (isEscape && Archify.drilldown && Archify.drilldown.active()) {
         e.preventDefault();
         Archify.drilldown.back();
-      } else if (e.key === 'Escape' && Archify.presentation.active() || e.key === 'Backspace' && Archify.presentation.active()) {
+      } else if (isEscape && Archify.presentation.active()) {
         e.preventDefault();
         Archify.presentation.exit();
       } else if (e.key === 'Escape' && document.documentElement.getAttribute('data-bundle-nested') === 'true') {

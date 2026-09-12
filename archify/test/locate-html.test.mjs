@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { LocateError } from '../locate/error.mjs';
-import { renderLocateHtmlFromArtifact, validateLocateHtml } from '../locate/locate-html.mjs';
+import { headerMapPath, renderLocateHtmlFromArtifact, validateLocateHtml } from '../locate/locate-html.mjs';
 
 const receipt = {
   schemaVersion: 1,
@@ -46,6 +46,9 @@ test('locate HTML embeds one receipt and annotates node state', () => {
   assert.match(html, /id="archify-locate-receipt"/);
   assert.match(html, /https:\/\/github.com\/tt-a1i\/archify\/blob\/b{40}\/bin\/cli.mjs/);
   assert.doesNotMatch(html, /\bSAFE\b|\bNO IMPACT\b/);
+  assert.match(html, /URLSearchParams\(window\.location\.search\)\.get\('theme'\)/);
+  assert.match(html, />map\.architecture\.json<\/span> · /);
+  assert.doesNotMatch(html, /\.\.\/\.\.\//);
 });
 
 test('validateLocateHtml requires receipt-only marker for non-architecture maps', () => {
@@ -70,8 +73,66 @@ test('validateLocateHtml rejects a second receipt and forbidden claims', () => {
   assert.throws(() => validateLocateHtml(duplicate, receipt), (error) => (
     error instanceof LocateError && error.code === 'locate/artifact-invalid'
   ));
-  const unsafe = html.replace('Review', 'SAFE NO IMPACT');
+  const unsafe = html.replace('Review', 'LOW RISK');
   assert.throws(() => validateLocateHtml(unsafe, receipt), (error) => (
-    error instanceof LocateError && /forbidden/.test(error.message)
+    error instanceof LocateError
+    && /forbidden/.test(error.message)
+    && error.evidence.match === 'LOW RISK'
+    && error.supportedFixes.length > 0
   ));
+});
+
+test('validateLocateHtml ignores SAFE inside receipt paths and map labels', () => {
+  const hugo = {
+    ...receipt,
+    files: [
+      { path: 'tpl/safe/safe.go', changeType: 'tracked', state: 'uncovered' },
+    ],
+    components: [
+      { id: 'templates', label: 'Safe helpers', state: 'untouched', touchedCount: 0, touchedFiles: [] },
+    ],
+    summary: {
+      files: { touched: 0, uncovered: 1, ambiguous: 0, excluded: 0, total: 1 },
+      components: { touched: 0, untouched: 1, stale: 0, total: 1 },
+    },
+  };
+  const html = renderLocateHtmlFromArtifact({ receipt: hugo, mapHtml });
+  assert.deepEqual(validateLocateHtml(html, hugo), { ok: true, checksPassed: 6, checkCount: 6 });
+});
+
+test('headerMapPath keeps repo-relative paths and drops escaped tmp prefixes', () => {
+  assert.equal(headerMapPath('docs/cases/archify-self/archify-self.json'), 'docs/cases/archify-self/archify-self.json');
+  assert.equal(headerMapPath('../../../../private/tmp/archify-demo/bundle/archify-self.json'), 'archify-self.json');
+  const ugly = {
+    ...receipt,
+    map: { ...receipt.map, path: '../../../../private/tmp/archify-demo/bundle/archify-self.json' },
+  };
+  const html = renderLocateHtmlFromArtifact({ receipt: ugly, mapHtml });
+  const header = html.match(/<header>[\s\S]*?<\/header>/)?.[0] || '';
+  assert.match(header, />archify-self\.json<\/span> · /);
+  assert.doesNotMatch(header, /private\/tmp|\.\.\//);
+});
+
+
+test('user text cannot trigger or conceal a generated chrome claim', () => {
+  const input = {
+    ...receipt,
+    map: { ...receipt.map, path: '../../safe.json' },
+    components: receipt.components.map(component => ({ ...component, label: 'LOW RISK' })),
+  };
+  const artifact = mapHtml.replace('</svg>', '<text>SAFE system</text></svg>');
+  const html = renderLocateHtmlFromArtifact({ receipt: input, mapHtml: artifact, mapDeltaHref: 'safe/compare.html' });
+  assert.equal(validateLocateHtml(html, input).ok, true);
+  assert.match(html, /LOW RISK/);
+  const changedChrome = html.replace('<h2>Review</h2>', '<h2>LOW RISK</h2>');
+  assert.throws(() => validateLocateHtml(changedChrome, input), error => (
+    error.code === 'locate/artifact-invalid' && error.evidence.match === 'LOW RISK'
+  ));
+});
+
+
+test('generated accessible labels are checked as chrome', () => {
+  const html = renderLocateHtmlFromArtifact({ receipt, mapHtml });
+  assert.throws(() => validateLocateHtml(html.replace('aria-label="Annotated architecture"', 'aria-label="LOW RISK"'), receipt),
+    error => error.evidence?.match === 'LOW RISK');
 });

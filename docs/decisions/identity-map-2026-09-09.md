@@ -11,7 +11,7 @@ and the divergence is recorded in
 `path:line` in the current tree.
 
 Raw experiment data stays beside this file: `e1-fix-classification.json`, `e3-replay.json`,
-`e3-map-at-base.json`, `e3-map-at-head.json`, `e3-sources-decay.json`.
+`e3-map-at-base.json`, `e3-map-at-head.json`, `e3-sources-decay.json`, `e3-deep-summary.json`.
 
 ---
 
@@ -631,6 +631,23 @@ components are `tests` (76), `references` (53), `build-scripts` (48). In 23% of 
 excluded paths outnumber the covered ones, which is why `excluded` is a prerequisite rather than
 an option.
 
+**E3 at depth.** Replaying the same *current* ten-component sidecar against the full first-parent
+history of `origin/main` is a different measurement. That history is 191 first-parent commits
+(190 steps after the root); the counts live in
+[`e3-deep-summary.json`](e3-deep-summary.json). Under the narrow rule — a new uncovered
+`archify/` source file that today's map does not claim — the edit rate is 2/190 = 1%. Under a
+broad rule — that, or any new path in another top-level tree — it is 21/190 = 11%, and 15% on
+the recent 100 commits versus 6.7% on the older 90. The original 9/100 = 9% was measured against
+a broader, evolving map during a busy window. The two numbers answer different maintenance
+policies: "keep this product-core map honest" versus "claim the whole repository as it grows".
+They are not a continue/stop disagreement.
+
+**Caveat: historical SHAs.** Running today's map against old commits reports `stale` for
+components whose `sources` files did not yet exist. On a sweep of 93 merged PRs classified
+against this sidecar, 18 of those `stale` hits were `delta` only — `archify/delta/` was added
+later. Do not use that `stale` bit as a gate on old commits; it is a future-map artifact, not
+evidence that the historical change broke the map.
+
 ### 8.2 E3 — `sources` anchor decay
 
 Same range, 67 `path`+`line` anchors across 23 files, simulated because the case map's
@@ -677,6 +694,21 @@ One pattern in the structural 8 is worth keeping: 4 of them (`ed9e91f`, `0853a80
 its siblings, and the fix extracts a shared module. If a structural-insight direction is ever
 pursued, that is the only empirically supported opening, and it needs a capability-alignment
 view rather than an ordinary architecture diagram.
+
+### 8.4 External repos
+
+A first-pass map on three foreign trees — Hono, FastAPI, and Hugo — took 12 / 10 / 14 minutes
+and needed 0 glob edits to reach zero ambiguity. Raw last-40 uncovered rates were 7% / 99% /
+66%; after stripping docs, tests, CI, and manifests ("product-only") they were 0% / 0% / 11%.
+Hugo needed 5 product map edits in 40 commits because the 12-component cap cannot name a
+30-package Go tree. Directory-layered cards (Hono `src/middleware/**`) hold without iteration;
+flat packages and many-package trees leak, and default-branch history that is mostly
+translations or release notes makes raw `uncovered` a noise meter rather than a map-quality
+meter.
+
+The useful generalization is as a product-path classifier. It does not generalize as
+"uncovered means the map is wrong" unless noise classes are separated from product holes.
+That separation is recorded as an open question; it is not implemented here.
 
 ---
 
@@ -868,3 +900,8 @@ remain.
 10. **`docs/cases/archify-self/` is checked in.** Regenerating it requires `archify bundle` and
     two `locate` runs (`docs/cases/archify-self/README.md`); whether these belong under a CI
     freshness check is undecided.
+11. **Noise class as a first-class ownership state.** External maps drown in docs, tests, CI,
+    and lockfiles; raw `uncovered` then stops meaning "product path the map missed". A
+    maintainer decision is needed on whether `excluded` presets, a `kind:` on globs, or a
+    third file state (`ignored` / `nonproduct`) should keep those paths out of
+    `files_uncovered`. Not implemented in this batch.

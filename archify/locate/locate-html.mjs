@@ -8,6 +8,64 @@ function esc(value) {
 const safeJson = (value) => JSON.stringify(value, null, 2).replaceAll('<', '\\u003c').replaceAll('>', '\\u003e').replaceAll('&', '\\u0026');
 
 const FORBIDDEN = /\b(?:SAFE|LOW RISK|MERGEABLE|NO IMPACT|VERIFIED PR)\b/i;
+const REPO_PATH_OK = /^(?!\/)(?!.*(?:^|\/)\.\.?(?:\/|$))[^\\\u0000-\u001f]+$/;
+
+const THEME_BOOTSTRAP = `<script>
+(function () {
+  try {
+    var theme = null;
+    try {
+      var param = new URLSearchParams(window.location.search).get('theme');
+      if (param === 'light' || param === 'dark') theme = param;
+    } catch (_) {}
+    if (theme !== 'light' && theme !== 'dark') {
+      theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  } catch (_) {}
+})();
+</script>`;
+
+export function headerMapPath(mapPath) {
+  const value = String(mapPath || '');
+  if (REPO_PATH_OK.test(value)) return value;
+  const parts = value.split(/[\\/]+/).filter((part) => part && part !== '.' && part !== '..');
+  return parts.pop() || 'map.json';
+}
+
+// Mark escaped input at its insertion site; never remove matching words globally.
+function inputText(value) {
+  return `<span data-locate-input="">${esc(value)}</span>`;
+}
+
+function chromeTextForForbidCheck(html) {
+  return String(html)
+    .replace(/<(script|style|svg)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
+    // inputText emits only escaped text, so these spans cannot contain tags.
+    .replace(/<span data-locate-input="">[^<]*<\/span>/g, '')
+    .replace(/<[^>]*>/g, tag => ` ${[...tag.matchAll(/\s(?:aria-label|title|alt)=["']([^"']*)["']/g)]
+      .map(match => match[1]).join(' ')} `)
+    .replace(/\s+/g, ' ');
+}
+
+function lastRectBox(group) {
+  const rects = [...group.matchAll(/<rect\b[^>]*>/g)];
+  const last = rects.length ? rects[rects.length - 1][0] : '';
+  const attr = (name) => {
+    const match = last.match(new RegExp(`\\b${name}="([^"]+)"`));
+    return match ? Number(match[1]) : NaN;
+  };
+  return { x: attr('x'), y: attr('y'), width: attr('width'), height: attr('height') };
+}
+
+function withInsideBadge(group, count) {
+  if (!(count > 0)) return group;
+  const box = lastRectBox(group);
+  const x = Number.isFinite(box.x) && Number.isFinite(box.width) ? box.x + box.width - 6 : 0;
+  const y = Number.isFinite(box.y) ? box.y + 11 : 11;
+  const badge = `<text data-locate-inside-count="" class="t-muted" font-size="8" text-anchor="end" x="${x}" y="${y}">${count}</text>`;
+  return group.replace(/<\/g>\s*$/, `${badge}</g>`);
+}
 
 function shortSha(sha) {
   return sha ? String(sha).slice(0, 7) : '—';
@@ -30,10 +88,17 @@ function addLocateState(tag, state) {
 }
 
 export function annotateLocateSvg(svg, receipt) {
-  const byId = new Map(receipt.components.map((component) => [component.id, component.state]));
+  const byId = new Map(receipt.components.map((component) => [component.id, component]));
   let result = transformNodeGroups(svg, (group, id) => {
-    const state = byId.get(id) || 'untouched';
-    return group.replace(/^<g[^>]*>/, (tag) => addLocateState(tag, state));
+    const component = byId.get(id);
+    const state = component?.state || 'untouched';
+    const inside = Number(component?.inside?.touched || 0);
+    const annotated = group.replace(/^<g[^>]*>/, (tag) => {
+      let next = addLocateState(tag, state);
+      if (inside > 0) next = next.replace(/>$/, ` data-locate-inside="${inside}">`);
+      return next;
+    });
+    return withInsideBadge(annotated, inside);
   });
   result = result.replace(/<svg\b/, '<svg data-locate-active="true" data-focus-active="true"');
   return result;
@@ -42,8 +107,8 @@ export function annotateLocateSvg(svg, receipt) {
 function fileLink(receipt, filePath) {
   const href = blobHref(receipt, filePath);
   return href
-    ? `<a href="${esc(href)}">${esc(filePath)}</a>`
-    : `<span>${esc(filePath)}</span>`;
+    ? `<a href="${esc(href)}">${inputText(filePath)}</a>`
+    : inputText(filePath);
 }
 
 function listBlock(title, items, render) {
@@ -59,7 +124,7 @@ export function renderLocateHtml({ receipt, svg, artifactCss = '', mapDeltaHref 
     ? shortSha(receipt.repository.revision)
     : `${shortSha(receipt.repository.base)}..${shortSha(receipt.repository.head)}`;
   const componentBlocks = receipt.components.map((component) => `<article class="component" data-locate-state="${esc(component.state)}">
-      <h3>${esc(component.label)} <code>${esc(component.id)}</code> <span class="state">${esc(component.state)}</span></h3>
+      <h3>${inputText(component.label)} <code>${inputText(component.id)}</code> <span class="state">${esc(component.state)}</span></h3>
       ${component.inside ? `<p class="inside">${component.inside.touched} files touched inside</p>` : ''}
       ${component.touchedFiles.length
         ? `<ul>${component.touchedFiles.map((filePath) => `<li>${fileLink(receipt, filePath)}</li>`).join('')}</ul>`
@@ -73,10 +138,12 @@ export function renderLocateHtml({ receipt, svg, artifactCss = '', mapDeltaHref 
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Locate ${esc(range)}</title>
+${THEME_BOOTSTRAP}
 <style>
 :root { color-scheme: light dark; --ink:#1b1f24; --muted:#5c6570; --line:#d5dbe3; --bg:#f6f7f9; --panel:#fff; --touch:#8a4b08; --stale:#7a1f2b; }
+html[data-theme="dark"] { --ink:#e8edf2; --muted:#9aa3ad; --line:#2a333d; --bg:#0e141a; --panel:#151c23; --touch:#e2a15a; --stale:#e38790; }
 @media (prefers-color-scheme: dark) {
-  :root { --ink:#e8edf2; --muted:#9aa3ad; --line:#2a333d; --bg:#0e141a; --panel:#151c23; --touch:#e2a15a; --stale:#e38790; }
+  html:not([data-theme="light"]) { --ink:#e8edf2; --muted:#9aa3ad; --line:#2a333d; --bg:#0e141a; --panel:#151c23; --touch:#e2a15a; --stale:#e38790; }
 }
 html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 ui-sans-serif,system-ui,sans-serif}
 header{padding:18px 22px 10px;border-bottom:1px solid var(--line)}
@@ -102,21 +169,21 @@ ${artifactCss}
 </head><body>
 <header>
   <h1>Locate ${esc(range)}</h1>
-  <p>${esc(receipt.map.path)} · ${receipt.summary.files.touched} touched / ${receipt.summary.files.uncovered} uncovered / ${receipt.summary.files.ambiguous} ambiguous / ${receipt.summary.files.excluded} excluded</p>
+  <p>${inputText(headerMapPath(receipt.map.path))} · ${receipt.summary.files.touched} touched / ${receipt.summary.files.uncovered} uncovered / ${receipt.summary.files.ambiguous} ambiguous / ${receipt.summary.files.excluded} excluded</p>
 </header>
 <main>
   <section class="canvas" aria-label="Annotated architecture">${annotated}</section>
   <aside class="side">
     ${componentBlocks}
-    ${listBlock('Uncovered', uncovered, (file) => esc(file.path))}
-    ${listBlock('Ambiguous', ambiguous, (file) => `${esc(file.path)} (${(file.candidates || []).map(esc).join(', ')})`)}
-    ${listBlock('Excluded', excluded, (file) => esc(file.path))}
+    ${listBlock('Uncovered', uncovered, (file) => inputText(file.path))}
+    ${listBlock('Ambiguous', ambiguous, (file) => `${inputText(file.path)} (${(file.candidates || []).map(inputText).join(', ')})`)}
+    ${listBlock('Excluded', excluded, (file) => inputText(file.path))}
     <section class="review">
       <h2>Review</h2>
       <p>required: ${receipt.review.required ? 'yes' : 'no'}</p>
       <p>blocking: ${receipt.review.blocking.length ? receipt.review.blocking.map(esc).join(', ') : 'none'}</p>
       <p>advisory: ${receipt.review.advisory.length ? receipt.review.advisory.map(esc).join(', ') : 'none'}</p>
-      ${mapDeltaHref ? `<p>Map changed. Compare: <a href="${esc(mapDeltaHref)}">${esc(mapDeltaHref)}</a></p>` : ''}
+      ${mapDeltaHref ? `<p>Map changed. Compare: <a href="${esc(mapDeltaHref)}">${inputText(mapDeltaHref)}</a></p>` : ''}
     </section>
     <footer>
       ${receipt.limitations.map((line) => `<p>${esc(line)}</p>`).join('')}
@@ -160,14 +227,23 @@ export function validateLocateHtml(html, receipt, options = {}) {
   } else {
     check('receipt-only', html.includes('Locate receipt only.'), 'receipt-only HTML is missing its marker');
   }
-  check('forbidden-claims', !FORBIDDEN.test(html), 'contains a forbidden risk or mergeability claim');
+  const forbiddenHit = chromeTextForForbidCheck(html).match(FORBIDDEN);
+  check('forbidden-claims', !forbiddenHit, 'contains a forbidden risk or mergeability claim');
   check('finite-output', !/\b(?:NaN|Infinity)\b/.test(html), 'contains non-finite output');
   check('complete-receipt', !(receipt && receipt.completeness !== 'complete'), 'receipt is not complete');
   const checkCount = checks.length;
   const checksPassed = checks.filter((item) => item.ok).length;
   if (failures.length) {
     throw new LocateError('locate/artifact-invalid', `Locate HTML failed validation: ${failures.join('; ')}.`, {
-      evidence: { failures, checksPassed, checkCount },
+      evidence: {
+        failures,
+        checksPassed,
+        checkCount,
+        ...(forbiddenHit ? { match: forbiddenHit[0] } : {}),
+      },
+      supportedFixes: forbiddenHit
+        ? ['remove the risk or mergeability claim from locate HTML chrome; file paths and receipt JSON are not scanned']
+        : [],
     });
   }
   return { ok: true, checksPassed, checkCount };

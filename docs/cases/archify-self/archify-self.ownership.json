@@ -3,13 +3,25 @@
   "kind": "ownership",
   "map": "archify-self.json",
   "excluded": [
-    "archify.zip",
+    "**/README*.md",
     "**/package-lock.json",
+    ".coderabbit.yaml",
+    ".github/**",
+    "CHANGELOG.md",
+    "ROADMAP.md",
+    "archify.zip",
+    "archify/examples/**",
     "archify/renderers/shared/generated-*.mjs",
-    "archify/examples/*.html",
+    "benchmarks/**",
+    "docs/assets/**",
+    "docs/cases/**",
+    "docs/gallery.html",
+    "docs/gallery/**",
     "examples/*.html",
     "examples/*.receipt.json",
-    "docs/gallery/artifacts/**"
+    "experiments/**",
+    "integrations/**",
+    "scripts/**"
   ],
   "components": [
     { "id": "cli", "globs": ["archify/bin/**"] },

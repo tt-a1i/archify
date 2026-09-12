@@ -95,7 +95,7 @@ test('Route Probe keeps pointer, keyboard, motion, embed, and export boundaries 
   assert.match(html, /svg\.addEventListener\('keydown', interceptSelection, true\)/);
   assert.match(html, /event\.key !== 'Enter' && event\.key !== ' '/);
   assert.match(html, /e\.key === 'r' \|\| e\.key === 'R'/);
-  assert.match(html, /e\.key === 'Escape' && Archify\.routeProbe\.active\(\)/);
+  assert.match(html, /isEscape && Archify\.routeProbe\.active\(\)/);
   assert.match(html, /html\[data-embed="true"\] \.route-probe/);
   assert.match(html, /html\.getAttribute\('data-embed'\) === 'true'/);
   assert.match(html, /\.route-probe\[data-route-dock="top"\]/);

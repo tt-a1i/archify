@@ -312,3 +312,20 @@ test('lint receipt uses tracked changeType and revision', () => {
   assert.equal(receipt.files[0].changeType, 'tracked');
   validateSchema('locate-receipt', receipt);
 });
+
+test('newline path fails closed as locate/path-invalid instead of an invalid receipt', () => {
+  assert.throws(
+    () => locateRange({
+      base: 'a'.repeat(40),
+      head: 'b'.repeat(40),
+      map: mapDoc(),
+      ownership: ownershipDoc(),
+      changes: [{ changeType: 'M', path: 'src/new\nline.mjs' }],
+      headTree: ['src/new\nline.mjs'],
+      mapPath: 'map.architecture.json',
+      ownershipPath: 'map.architecture.ownership.json',
+      ownershipSha256: 'a'.repeat(64),
+    }),
+    (error) => error instanceof LocateError && error.code === 'locate/path-invalid',
+  );
+});

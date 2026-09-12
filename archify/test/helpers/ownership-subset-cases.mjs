@@ -1,5 +1,14 @@
 export const OWNERSHIP_SUBSET_CASES = [
   {
+    name: 'empty brace segment cannot escape recursive parent prefix',
+    parentGlobs: ['src/**/b'],
+    parentExcluded: [],
+    childGlobs: ['src/{a,}/b'],
+    childExcluded: [],
+    ok: false,
+    glob: 'src/{a,}/b',
+  },
+  {
     name: 'child glob inside',
     parentGlobs: ['src/payments/**'],
     parentExcluded: ['dist/**'],

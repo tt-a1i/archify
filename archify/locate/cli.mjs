@@ -105,6 +105,12 @@ export function parseLocateArgs(args, { usage, fail }) {
   }
   if (positionals.length !== 1) fail(usage(), 2);
   const range = positionals[0];
+  if (range.includes('...')) {
+    locateFail('locate/range-invalid', 'locate range must be a two-dot <base>..<head>; three-dot ranges are not supported.', {
+      evidence: { range, stderr: '' },
+      supportedFixes: ['pass the merge base explicitly as <base>..<head> instead of A...B'],
+    });
+  }
   const parts = range.split('..');
   if (parts.length !== 2 || !parts[0] || !parts[1]) {
     locateFail('locate/range-invalid', 'locate range must be <base>..<head>.', {
@@ -120,7 +126,14 @@ export function parseLocateArgs(args, { usage, fail }) {
 function toRepoPath(absPath, repoRoot) {
   const resolved = fs.realpathSync(path.resolve(absPath));
   const root = fs.realpathSync(path.resolve(repoRoot));
-  return path.relative(root, resolved).split(path.sep).join('/');
+  const rel = path.relative(root, resolved).split(path.sep).join('/');
+  if (!rel || rel.startsWith('/') || rel.split('/').some((part) => part === '.' || part === '..')) {
+    locateFail('locate/map-unreadable', `Path ${rel || absPath} is not inside the repository root.`, {
+      evidence: { path: absPath, repoRoot },
+      supportedFixes: ['pass --map as a path inside --repo-root'],
+    });
+  }
+  return rel;
 }
 
 function loadMap(mapPath) {
@@ -216,11 +229,12 @@ function prepareOutDir(out) {
   return dir;
 }
 
-function commitLocatePair({ htmlCandidate, receiptCandidate, outputHtml, outputReceipt, stagingDirectory }) {
+function commitLocatePair({ htmlCandidate, receiptCandidate, outputHtml, outputReceipt, stagingDirectory, bundleArtifact }) {
   const targets = [
     { label: 'HTML artifact', target: outputHtml, candidate: htmlCandidate, backup: path.join(stagingDirectory, '.previous-html') },
     { label: 'receipt', target: outputReceipt, candidate: receiptCandidate, backup: path.join(stagingDirectory, '.previous-receipt') },
   ];
+  if (bundleArtifact) targets.push({ ...bundleArtifact, label: 'bundle projection', backup: path.join(stagingDirectory, '.previous-bundle') });
   for (const item of targets) {
     if (!fs.existsSync(item.target)) continue;
     const existing = fs.lstatSync(item.target);
@@ -230,10 +244,30 @@ function commitLocatePair({ htmlCandidate, receiptCandidate, outputHtml, outputR
       });
     }
   }
-  for (const item of targets) {
-    if (fs.existsSync(item.target)) fs.renameSync(item.target, item.backup);
+  const backedUp = [];
+  const installed = [];
+  try {
+    for (const item of targets) {
+      if (fs.existsSync(item.target)) {
+        fs.renameSync(item.target, item.backup);
+        backedUp.push(item);
+      }
+    }
+    for (const item of targets) {
+      fs.renameSync(item.candidate, item.target);
+      installed.push(item);
+    }
+  } catch (error) {
+    try {
+      for (const item of installed.reverse()) fs.unlinkSync(item.target);
+      for (const item of backedUp.reverse()) fs.renameSync(item.backup, item.target);
+    } catch (rollbackError) {
+      // Keep recoverable originals if the filesystem also refuses rollback.
+      error.preserveStaging = true;
+      error.message += `; rollback failed: ${rollbackError.message}; backups: ${stagingDirectory}`;
+    }
+    throw error;
   }
-  for (const item of targets) fs.renameSync(item.candidate, item.target);
 }
 
 function reportLocateFailure({ json, error, status = 1, diagnostics }) {
@@ -286,17 +320,22 @@ function writeBundleProjection({
 }) {
   const manifestPath = path.join(bundleDir, 'manifest.json');
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  validateSchema('bundle', manifest);
   const childReceipts = {};
   for (const link of manifest.drilldowns || []) {
     const diagram = (manifest.diagrams || []).find((item) => item.id === link.child);
-    if (!diagram) continue;
+    if (!diagram) locateFail('locate/bundle-incomplete', `Missing child diagram ${link.child}.`);
     const childMapPath = childSpecPath(bundleDir, diagram);
-    if (!childMapPath) continue;
+    if (!childMapPath) locateFail('locate/bundle-incomplete', `Missing child spec ${link.child}.`);
     const childOwnPath = defaultOwnershipPath(childMapPath);
-    if (!fs.existsSync(childOwnPath)) continue;
+    if (!fs.existsSync(childOwnPath)) locateFail('locate/bundle-incomplete', `Missing child ownership ${link.child}.`);
     const childMap = loadMap(childMapPath);
     const loaded = loadOwnership({ ownershipPath: childOwnPath, mapPath: childMapPath, map: childMap });
-    if (!loaded.ownership.parent) continue;
+    if (!loaded.ownership.parent || loaded.ownership.parent.component !== link.component
+      || path.resolve(path.dirname(childOwnPath), loaded.ownership.parent.map) !== path.resolve(mapPath)
+      || link.parent !== manifest.entry) {
+      locateFail('locate/bundle-incomplete', `Child parent binding does not match the entry link ${link.child}.`);
+    }
     childReceipts[link.child] = locateRange({
       base,
       head,
@@ -357,7 +396,10 @@ function resolveRangeCommit(root, rev) {
   }
 }
 
-function attachCompare({ type, root, base, head, mapPath, outDir, stagingDirectory }) {
+function attachCompare({ type, root, base, head, mapPath, outDir, stagingDirectory, changes }) {
+  if (changes.some(change => change.path === mapPath && change.changeType === 'A')) {
+    return { status: 'added' };
+  }
   if (type !== 'architecture') {
     return { status: 'unsupported-type' };
   }
@@ -481,6 +523,7 @@ export async function commandLocate(args, ctx) {
     if (receipt.mapDelta && !options.lint) {
       const attached = attachCompare({
         type: map.diagram_type,
+        changes,
         root,
         base,
         head,
@@ -490,6 +533,15 @@ export async function commandLocate(args, ctx) {
       });
       receipt = { ...receipt, mapDelta: { ...receipt.mapDelta, ...attached } };
       if (attached.status === 'compared') mapDeltaHref = attached.htmlPath;
+    }
+
+    try {
+      validateSchema('locate-receipt', receipt);
+    } catch (error) {
+      locateFail('locate/receipt-invalid', error.message, {
+        evidence: { reason: error.message },
+        supportedFixes: ['repair the locator so the receipt matches locate-receipt.schema.json'],
+      });
     }
 
     let html = receiptOnlyHtml(receipt);
@@ -508,27 +560,24 @@ export async function commandLocate(args, ctx) {
     const receiptCandidate = path.join(stagingDirectory, 'locate.receipt.json');
     fs.writeFileSync(htmlCandidate, html);
     fs.writeFileSync(receiptCandidate, `${JSON.stringify(receipt, null, 2)}\n`);
-    commitLocatePair({
-      htmlCandidate,
-      receiptCandidate,
-      outputHtml: htmlPath,
-      outputReceipt: receiptPath,
-      stagingDirectory,
-    });
-
+    let bundleArtifact;
     if (options.bundle) {
-      writeBundleProjection({
-        bundleDir: path.resolve(options.bundle),
-        receipt,
-        changes,
-        headTree,
-        base: receipt.repository.base,
-        head: receipt.repository.head,
-        mapPath,
-        outDir,
-        parentOwnership: loaded.ownership,
-      });
+      try {
+        const bundled = writeBundleProjection({
+          bundleDir: path.resolve(options.bundle), receipt, changes, headTree,
+          base, head, mapPath: mapAbs, outDir: stagingDirectory,
+          parentOwnership: loaded.ownership,
+        });
+        bundleArtifact = { candidate: bundled.outPath, target: path.join(outDir, path.basename(bundled.outPath)) };
+      } catch (error) {
+        if (error instanceof LocateError) throw error;
+        locateFail('locate/bundle-invalid', `Could not prepare bundle projection: ${error.message}`, {
+          supportedFixes: ['repair the bundle manifest, child specifications and ownership sidecars before retrying'],
+        });
+      }
     }
+    commitLocatePair({ htmlCandidate, receiptCandidate, outputHtml: htmlPath,
+      outputReceipt: receiptPath, stagingDirectory, bundleArtifact });
 
     if (options.lint && receipt.summary.files.ambiguous) {
       const diagnostics = ambiguousDiagnostics(receipt);
@@ -558,7 +607,8 @@ export async function commandLocate(args, ctx) {
         status: error.code === 'locate/range-invalid' ? 2 : 1,
       });
     } else {
-      throw error;
+      if (error.preserveStaging) stagingDirectory = null;
+      reportLocateFailure({ json: options?.json || jsonFlag, error });
     }
   } finally {
     if (stagingDirectory) {

@@ -67,8 +67,32 @@ test('§6: ten conservative subsumes cases', () => {
     ['a/**/b', 'a/x/y/b', true],
     ['*', 'foo', true],
     ['foo', 'f*', false],
+    ['**', '*', false],
+    ['**', '*/*', false],
+    ['**', '{,}', false],
+    ['**', '{a,}', false],
+    ['a/**', 'a/*', false],
+    ['*/**', '*/*', false],
+    ['**/**', '*', false],
   ];
   for (const [parent, child, expected] of cases) {
     assert.equal(subsumes(parent, child), expected, `${parent} ⊇ ${child}`);
+  }
+});
+
+// Bounded deterministic counterexample search for the subset implication.
+test('subsumes never admits a sampled path outside the parent', () => {
+  const segments = ['', 'a', 'b', '*', '?', '**', '{a,}'];
+  const patterns = [...segments.filter(Boolean), ...segments.flatMap(a => segments.map(b => `${a}/${b}`))];
+  const parts = ['', 'a', 'b', 'ab'];
+  const paths = [...parts, ...parts.flatMap(a => parts.map(b => `${a}/${b}`)),
+    ...parts.flatMap(a => parts.flatMap(b => parts.map(c => `${a}/${b}/${c}`)))];
+  const compiled = new Map(patterns.map(p => [p, compileGlob(p)]));
+  for (const parent of patterns) for (const child of patterns) {
+    if (!subsumes(parent, child)) continue;
+    for (const path of paths) {
+      assert.ok(!compiled.get(child)(path) || compiled.get(parent)(path),
+        JSON.stringify({ parent, child, path }));
+    }
   }
 });

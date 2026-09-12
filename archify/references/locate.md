@@ -29,7 +29,8 @@ archify locate --lint [<rev>] --map <map.json> --out <dir> [--ownership <file>] 
 ```
 
 - `<base>..<head>` is a two-dot range, i.e. the direct diff between two commits. For a pull
-  request, pass the merge base as `<base>`. Both endpoints must exist locally.
+  request, pass the merge base as `<base>`. Both endpoints must exist locally. A three-dot
+  `A...B` is rejected as `locate/range-invalid`; it is not parsed as `A` + `.B`.
 - `--map` accepts any of the five diagram types. Only architecture maps produce an annotated
   canvas; the other four produce a receipt-only HTML shell.
 - `--out <dir>` is required. It receives `locate.receipt.json` and `locate.html`, both committed
@@ -118,9 +119,13 @@ imprecise here. `componentId: null` in a fact is an explicit unknown, never a gu
 are recorded as observed and are never reconciled against the map's authored `connections`,
 because most authored relationships are not import edges.
 
-The rendered HTML enforces the same boundary: it refuses to emit output containing `SAFE`,
+The rendered HTML enforces the same boundary: it refuses to emit *chrome* containing `SAFE`,
 `LOW RISK`, `MERGEABLE`, `NO IMPACT`, or `VERIFIED PR`, and it uses amber and red rather than a
-success colour.
+success colour. Escaped input text is marked at its insertion site and excluded from the
+visible-chrome check, together with embedded JSON, scripts, styles and the authored SVG.
+A path such as `tpl/safe/` or a component label cannot trigger a claim or mask identical words
+in a generated heading. A match names the substring in `evidence.match` and carries a
+`supportedFixes` entry.
 
 ## Outputs
 
@@ -168,13 +173,15 @@ When the map JSON is itself one of the changed paths, `mapDelta` carries `path` 
 
 | `status` | Meaning |
 |---|---|
+| `added` | the map was added in this range; no baseline map exists, so comparison is not run |
 | `compared` | comparison succeeded; `receiptPath`, `htmlPath`, and `exitCode: 0` are set |
 | `compare-failed` | the child process failed; `exitCode` records its status |
 | `unsupported-type` | the map is not an architecture diagram; nothing is run |
 
 The comparison never changes locate's own result: the receipt is still written, `ok` stays
 `true`, and locate still exits 0. Only `review.blocking` reflects the situation, by including
-`map_changed`. `--lint` never attaches a comparison.
+`map_changed`. For `added`, `baseBlob` is a lookup reference, not a claim that a baseline blob exists.
+`--lint` never attaches a comparison.
 
 ### HTML
 
@@ -216,9 +223,12 @@ path string; `locate/out-directory` for the output directory;
 
 1. Write one entry per map component. Start from directory-level globs — one component per
    directory is the shape that holds up best.
-2. Put generated output, packaged artifacts, and lockfiles in `excluded`. On a repository that
-   checks in rendered artifacts this is not optional: without it the projection drowns in
-   generated files.
+2. Put generated output, packaged artifacts, lockfiles, and other non-product prefixes in
+   `excluded`. On a repository that checks in rendered artifacts this is not optional: without
+   it the projection drowns in generated files. The self-map excludes gallery and case HTML,
+   README/changelog/roadmap prose, `.github/**`, `archify/examples/**`, `experiments/**`,
+   `benchmarks/**`, `integrations/**`, root `scripts/**`, and `archify.zip`. Do not chase
+   `uncovered` to zero by adding components for those trees.
 3. Run `archify locate --lint HEAD --map <map.json> --out /tmp/lint --json`.
 4. Fix every `ambiguous` path. The glob language has no negation, so the repair is usually to
    replace a broad glob with a brace enumeration. For example, when
@@ -283,7 +293,7 @@ node archify/bin/archify.mjs locate --lint HEAD \
 Only `locate.receipt.json` is kept under each PR folder; the HTML and any `compare/` directory
 are deleted after regeneration.
 
-The first range covers 50 paths: 7 touched, 14 uncovered, 29 excluded, 0 ambiguous; 2 of 10
+The first range covers 50 paths: 7 touched, 2 uncovered, 41 excluded, 0 ambiguous; 2 of 10
 components touched, 0 stale. `review.required` is `false` with advisories `files_uncovered` and
 `map_behind` — the map pins revision `1072200`, eight commits behind that range's head. Both
 drilldown parents report `inside: { touched: 0, uncovered: 0, ambiguous: 0, excluded: 0 }`
@@ -292,3 +302,14 @@ nothing touched and 24 uncovered, which is a real and useful answer: 22 of those
 new top-level `analyzers/` directory that the map does not yet claim, so the honest report is
 "this change lands outside the map", not a touched component. Its drilldown parents are also
 `inside` all zeros.
+
+
+### Bundle projection failure
+
+With `--bundle`, the projection is prepared before replacing the main HTML/receipt pair.
+A missing child specification, ownership sidecar or matching parent binding fails as
+`locate/bundle-incomplete`; invalid manifest or projection preparation errors produce
+`locate/bundle-invalid`. No successful main pair is published for an incomplete projection.
+All three output files are preflighted and committed together with rollback on write failure.
+If the filesystem also prevents rollback, the diagnostic identifies the retained staging
+backups for recovery. Projection JSON escapes HTML-significant characters before embedding.
