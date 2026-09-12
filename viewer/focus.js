@@ -26,6 +26,10 @@
       var downstreamCount = document.getElementById('focus-reach-downstream-count');
       var relationshipList = document.getElementById('relationship-lens-list');
       var copyBtn = document.getElementById('btn-focus-copy');
+      var explainBtn = document.getElementById('btn-focus-explain');
+      var explanationFace = document.getElementById('focus-explanation');
+      var explanationTitle = document.getElementById('focus-explanation-title');
+      var explanationBody = document.getElementById('focus-explanation-body');
       var relationsBtn = document.getElementById('btn-focus-relations');
       var clearBtn = document.getElementById('btn-focus-clear');
       var activeIds = [];
@@ -373,7 +377,53 @@
         });
         evidence.hidden = false;
       }
+      function explanationFor(id) {
+        return Archify.explanations && typeof Archify.explanations.node === 'function' ? Archify.explanations.node(id) : null;
+      }
+      function closeExplanation(options) {
+        options = options || {};
+        if (!explanationFace) return false;
+        var wasOpen = chip.getAttribute('data-explaining') === 'true';
+        chip.removeAttribute('data-explaining');
+        chip.style.minHeight = '';
+        explanationFace.hidden = true;
+        if (wasOpen && options.restoreFocus !== false && explainBtn && !explainBtn.hidden) {
+          try { explainBtn.focus({ preventScroll: true }); } catch (_) { try { explainBtn.focus(); } catch (_) {} }
+        }
+        return wasOpen;
+      }
+      function openExplanation() {
+        if (!explanationFace || chip.hidden || activeIds.length !== 1) return false;
+        var text = explanationFor(activeIds[0]);
+        if (!text) return false;
+        var title = label.textContent;
+        explanationTitle.textContent = title;
+        while (explanationBody.firstChild) explanationBody.removeChild(explanationBody.firstChild);
+        text.split(/\n\s*\n/).forEach(function (paragraph) {
+          var trimmed = paragraph.trim();
+          if (!trimmed) return;
+          var p = document.createElement('p');
+          p.textContent = trimmed;
+          explanationBody.appendChild(p);
+        });
+        explanationFace.setAttribute('aria-label', viewerText('viewer.passport.explanation.back', { label: title }));
+        explanationFace.hidden = false;
+        chip.setAttribute('data-explaining', 'true');
+        // Grow downward to fit the prose, but never past the diagram container.
+        var chipBox = chip.getBoundingClientRect();
+        var needed = explanationFace.scrollHeight + 2;
+        var room = container.getBoundingClientRect().bottom - chipBox.top - 12;
+        if (needed > chipBox.height) chip.style.minHeight = Math.min(needed, Math.max(chipBox.height, room)) + 'px';
+        try { explanationFace.focus({ preventScroll: true }); } catch (_) { try { explanationFace.focus(); } catch (_) {} }
+        requestLensPlacement();
+        return true;
+      }
+      function toggleExplanation() {
+        return chip.getAttribute('data-explaining') === 'true' ? !closeExplanation() : openExplanation();
+      }
       function renderPassport(id, node) {
+        closeExplanation({ restoreFocus: false });
+        if (explainBtn) explainBtn.hidden = !explanationFor(id);
         setPassportValue(detail, node.getAttribute('data-node-sublabel'));
         setPassportValue(kind, viewerKindLabel(node.getAttribute('data-node-kind') || 'node'));
         setPassportValue(context, node.getAttribute('data-node-context'));
@@ -1121,6 +1171,8 @@
           node.setAttribute('aria-pressed', 'false');
         });
         edges().forEach(function (edge) { edge.removeAttribute('data-focus-match'); });
+        closeExplanation({ restoreFocus: false });
+        if (explainBtn) explainBtn.hidden = true;
         chip.hidden = true;
         label.textContent = '';
         detail.textContent = '';
@@ -1296,6 +1348,16 @@
       });
       clearBtn.addEventListener('click', function () { clear({ restoreFocus: true }); });
       copyBtn.addEventListener('click', copyFocusLink);
+      if (explainBtn) explainBtn.addEventListener('click', function (event) { event.stopPropagation(); toggleExplanation(); });
+      if (explanationFace) {
+        explanationFace.addEventListener('click', function (event) { event.stopPropagation(); closeExplanation(); });
+        explanationFace.addEventListener('keydown', function (event) {
+          if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Escape') return;
+          event.preventDefault();
+          event.stopPropagation();
+          closeExplanation();
+        });
+      }
       upstreamBtn.addEventListener('click', function () { applyReachability('upstream'); });
       downstreamBtn.addEventListener('click', function () { applyReachability('downstream'); });
       relationsBtn.addEventListener('click', function () {
@@ -1417,6 +1479,8 @@
         setMany: setMany,
         clear: clear,
         copyLink: copyFocusLink,
+        explain: toggleExplanation,
+        explaining: function () { return chip.getAttribute('data-explaining') === 'true'; },
         reach: applyReachability,
         clearReach: clearReachability,
         reachabilitySnapshot: reachabilitySnapshot,

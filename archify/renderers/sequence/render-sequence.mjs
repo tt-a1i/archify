@@ -461,4 +461,5 @@ writeDiagram({
   meta: sequence.meta,
   svg: renderSvg(),
   cards: sequence.cards,
+  diagram: sequence,
 });

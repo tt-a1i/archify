@@ -480,4 +480,5 @@ writeDiagram({
   meta: dataflow.meta,
   svg: renderSvg(),
   cards: dataflow.cards,
+  diagram: dataflow,
 });

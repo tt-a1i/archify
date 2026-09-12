@@ -50,7 +50,7 @@ export async function loadDiagramWithBrandMarks(options) {
 const START_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
 
 // Common CLI tail: fill the template and write the standalone HTML file.
-export function writeDiagram({ outPath, template, diagramType, meta, svg, cards, sourceEvidence = null }) {
+export function writeDiagram({ outPath, template, diagramType, meta, svg, cards, sourceEvidence = null, diagram = null }) {
   if (!START_TYPES.has(diagramType)) throw new Error(`writeDiagram: unknown diagram type ${JSON.stringify(diagramType)}`);
   const outputGuard = outputPathGuards.get(outPath);
   if (outputGuard) resolveOutputPath(outputGuard);
@@ -64,6 +64,7 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
     visualPreset: meta.visual_preset || 'classic',
     guidedViews: meta.views || [],
     sourceEvidence,
+    explanations: diagram ? collectExplanations(diagramType, diagram) : null,
   }));
   outputPathGuards.delete(outPath);
   console.log(outPath);
@@ -76,6 +77,20 @@ const SEMANTIC_COLLECTIONS = {
   dataflow: 'nodes',
   lifecycle: 'states',
 };
+
+// Authored `explanation` prose is passport-only reader context. It never
+// enters the SVG, so it is collected here by stable node id and handed to the
+// template as one JSON block; documents without explanations emit nothing.
+export function collectExplanations(diagramType, diagram) {
+  const collection = SEMANTIC_COLLECTIONS[diagramType];
+  const nodes = collection && Array.isArray(diagram?.[collection]) ? diagram[collection] : [];
+  const explanations = {};
+  nodes.forEach((node) => {
+    if (typeof node?.explanation !== 'string' || node.explanation.trim() === '') return;
+    explanations[node.id] = node.explanation.trim();
+  });
+  return Object.keys(explanations).length ? explanations : null;
+}
 
 const RELATIONSHIP_COLLECTIONS = {
   architecture: 'connections',

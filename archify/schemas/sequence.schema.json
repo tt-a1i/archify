@@ -49,7 +49,10 @@
         },
         "column_fit": {
           "description": "Horizontal participant layout. Omit this field or use fixed for the stable 86px boxes and 108px gap. Use spread when a wide viewBox would leave unused horizontal space or meaningful participant labels do not fit the fixed boxes; spread derives wider boxes and gaps from the viewBox without changing participant order or message semantics.",
-          "enum": ["fixed", "spread"]
+          "enum": [
+            "fixed",
+            "spread"
+          ]
         },
         "views": {
           "$ref": "common.schema.json#/$defs/guidedViews"
@@ -58,16 +61,28 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "mode": { "$ref": "common.schema.json#/$defs/legendMode" },
+            "mode": {
+              "$ref": "common.schema.json#/$defs/legendMode"
+            },
             "entries": {
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "default": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "emphasis": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "security": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "dashed": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "return": { "$ref": "common.schema.json#/$defs/legendEntry" }
+                "default": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "emphasis": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "security": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "dashed": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "return": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                }
               }
             }
           }
@@ -117,6 +132,11 @@
           },
           "brand": {
             "$ref": "common.schema.json#/$defs/brandMark"
+          },
+          "explanation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1200
           }
         }
       }
