@@ -577,6 +577,155 @@ canonicalZipTest('archive build is byte-for-byte reproducible across caller time
   }
 });
 
+test('archive build accepts Windows-style absolute output paths', {
+  skip: process.platform !== 'win32'
+    ? 'Windows drive paths only reach build-zip.sh on win32'
+    : currentNodeMajor === canonicalZipNodeMajor
+      ? false
+      : `canonical ZIP builds require Node ${canonicalZipNodeMajor}`,
+}, () => {
+  const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-windows-path-'));
+  const backslashArchive = path.win32.join(outputRoot, 'backslash.zip');
+  const slashArchive = path.win32.join(outputRoot, 'slash.zip').replace(/\\/g, '/');
+  // The \\.\ device-namespace form is a \\-prefixed absolute path like a UNC
+  // share: MSYS passes it to bash unchanged from a native parent and Node
+  // resolves it natively. A real network share cannot be assumed in the suite,
+  // and the \\?\ extended-length prefix is stripped by MSYS's command-line
+  // parsing when bash is started from a native process.
+  const deviceArchive = `\\\\.\\${path.win32.join(outputRoot, 'device.zip')}`;
+
+  try {
+    for (const archive of [backslashArchive, slashArchive, deviceArchive]) {
+      const build = spawnBuildZip(archive);
+      assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
+      assert.ok(fs.existsSync(archive), `archive must be written to the requested path: ${archive}`);
+    }
+    const reference = fs.readFileSync(backslashArchive);
+    for (const archive of [slashArchive, deviceArchive]) {
+      assert.ok(
+        reference.equals(fs.readFileSync(archive)),
+        `every Windows path form must produce identical archive bytes: ${archive}`,
+      );
+    }
+    assert.deepEqual(
+      fs.readdirSync(outputRoot).sort(),
+      ['backslash.zip', 'device.zip', 'slash.zip'],
+      'successful archive publication must not leave temporary files behind',
+    );
+  } finally {
+    fs.rmSync(outputRoot, { recursive: true, force: true });
+  }
+});
+
+function centralDirectoryModes(archive) {
+  const buffer = fs.readFileSync(archive);
+  const end = buffer.length - 22;
+  assert.equal(buffer.readUInt32LE(end), 0x06054b50, 'archive must end with an end-of-central-directory record');
+  const entryCount = buffer.readUInt16LE(end + 10);
+  let offset = buffer.readUInt32LE(end + 16);
+  const modes = {};
+  for (let index = 0; index < entryCount; index += 1) {
+    assert.equal(buffer.readUInt32LE(offset), 0x02014b50, 'central directory entry signature');
+    const nameLength = buffer.readUInt16LE(offset + 28);
+    const extraLength = buffer.readUInt16LE(offset + 30);
+    const commentLength = buffer.readUInt16LE(offset + 32);
+    const name = buffer.toString('utf8', offset + 46, offset + 46 + nameLength);
+    modes[name] = (buffer.readUInt32LE(offset + 38) >>> 16) & 0o7777;
+    offset += 46 + nameLength + extraLength + commentLength;
+  }
+  return modes;
+}
+
+function writeArchive(stagedRoot, archive, modeManifest) {
+  const args = [path.join(repoRoot, 'scripts', 'write-deterministic-zip.mjs'), stagedRoot, archive];
+  if (modeManifest !== null) args.push('--mode-manifest', modeManifest);
+  return spawnSync(process.execPath, args, { encoding: 'utf8' });
+}
+
+function stagedFixture(files) {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-zip-modes-'));
+  const staged = path.join(fixture, 'archify');
+  for (const [relative, { content, mode }] of Object.entries(files)) {
+    const target = path.join(staged, ...relative.split('/'));
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, content);
+    fs.chmodSync(target, mode);
+  }
+  return { fixture, staged };
+}
+
+test('archive writer records Git index modes from the manifest, not filesystem bits', () => {
+  const { fixture, staged } = stagedFixture({
+    'bin/tool.mjs': { content: '#!/usr/bin/env node\n', mode: 0o644 },
+    'docs/notes.txt': { content: 'notes\n', mode: 0o755 },
+  });
+  try {
+    const manifest = path.join(fixture, 'modes.json');
+    fs.writeFileSync(manifest, JSON.stringify({ 'bin/tool.mjs': '100755', 'docs/notes.txt': '100644' }));
+
+    const first = path.join(fixture, 'first.zip');
+    const build = writeArchive(staged, first, manifest);
+    assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
+    assert.deepEqual(centralDirectoryModes(first), {
+      'archify/bin/tool.mjs': 0o755,
+      'archify/docs/notes.txt': 0o644,
+    });
+
+    // Flip the on-disk bits; the recorded modes must still decide the bytes.
+    fs.chmodSync(path.join(staged, 'bin', 'tool.mjs'), 0o755);
+    fs.chmodSync(path.join(staged, 'docs', 'notes.txt'), 0o644);
+    const second = path.join(fixture, 'second.zip');
+    const rebuild = writeArchive(staged, second, manifest);
+    assert.equal(rebuild.status, 0, `${rebuild.stdout}\n${rebuild.stderr}`);
+    assert.ok(
+      fs.readFileSync(first).equals(fs.readFileSync(second)),
+      'archive bytes must not depend on filesystem permission bits',
+    );
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('archive writer fails closed when the mode manifest and the staged tree disagree', () => {
+  const { fixture, staged } = stagedFixture({
+    'bin/tool.mjs': { content: '#!/usr/bin/env node\n', mode: 0o755 },
+    'docs/notes.txt': { content: 'notes\n', mode: 0o644 },
+  });
+  try {
+    const archive = path.join(fixture, 'out.zip');
+    const cases = [
+      [null, /--mode-manifest/, 2],
+      [{ 'bin/tool.mjs': '100755' }, /no recorded Git mode: docs\/notes\.txt/, 1],
+      [{ 'bin/tool.mjs': '100755', 'docs/notes.txt': '100644', 'extra.txt': '100644' }, /not staged: extra\.txt/, 1],
+      [{ 'bin/tool.mjs': '100777', 'docs/notes.txt': '100644' }, /unsupported Git mode "100777"/, 1],
+    ];
+    for (const [manifestContent, expected, status] of cases) {
+      let manifest = null;
+      if (manifestContent !== null) {
+        manifest = path.join(fixture, 'modes.json');
+        fs.writeFileSync(manifest, JSON.stringify(manifestContent));
+      }
+      const build = writeArchive(staged, archive, manifest);
+      assert.equal(build.status, status, `${build.stdout}\n${build.stderr}`);
+      assert.match(build.stderr, expected);
+      assert.equal(fs.existsSync(archive), false, 'a rejected build must not publish an archive');
+      assert.deepEqual(
+        fs.readdirSync(fixture).filter((name) => name.endsWith('.tmp')),
+        [],
+        'a rejected build must not leave temporary files behind',
+      );
+    }
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('archive build hands the recorded Git index modes from the stager to the writer', () => {
+  const buildSource = fs.readFileSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), 'utf8');
+  assert.match(buildSource, /stage-clean-skill\.mjs[\s\S]*?--mode-manifest "\$stage\/modes\.json"/);
+  assert.match(buildSource, /write-deterministic-zip\.mjs"[^\n]*\n\s*--mode-manifest "\$stage\/modes\.json"/);
+});
+
 test('CI tests the declared Node floor plus every maintained current lane', () => {
   const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'archify', 'package.json'), 'utf8'));
   assert.equal(packageJson.engines?.node, '>=18');

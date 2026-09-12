@@ -130,6 +130,13 @@ instead of pushing an empty commit to retrigger the bot:
 | Several rapid revisions are in progress | `@coderabbitai pause`, then `@coderabbitai resume` when ready |
 
 Check the updated summary for results; a command acknowledgment is not completion.
+Treat its evidence assessment as a snapshot at the stated revision. After updating
+only the description or after CI completes, use the pre-merge command above to
+refresh stale results; editing the description is not proof that checks reran.
+Before repeating a bot request, read the latest evidence and identify the remaining
+gap. Reuse unaffected local results with their original revision and a reuse
+rationale; rerun checks whose evidence the new changes invalidate. Required remote
+checks must still pass on the final head.
 If fork CI needs approval, a maintainer must inspect the proposed workflow/code
 and handle the GitHub approval. Authors should link the waiting run and continue
 checks available to them; they are not expected to grant themselves CI access.
