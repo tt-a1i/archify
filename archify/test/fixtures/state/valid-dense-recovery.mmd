@@ -1,0 +1,15 @@
+stateDiagram-v2
+    [*] --> Accepted
+    Accepted --> Building
+    Building --> Testing
+    Testing --> Staging
+    Staging --> Released
+    Released --> [*]
+    Accepted --> Triage
+    Triage --> Building
+    Testing --> Quarantine
+    Quarantine --> Staging
+    Triage --> Rejected
+    Rejected --> [*]
+    Quarantine --> Withdrawn
+    Withdrawn --> [*]

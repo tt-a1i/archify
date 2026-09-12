@@ -14,6 +14,7 @@ const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'life
 
 function usage() {
   return `Usage:
+  archify import <format> <input.mmd> [output.json] [--json] [--title text] [--outcome state=success|failure]
   archify render <type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path (architecture only)]
   archify compare architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]
   archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path (architecture only)]
@@ -32,6 +33,9 @@ function usage() {
 
 Types:
   architecture, workflow, sequence, dataflow, lifecycle
+
+Import formats:
+  state (Mermaid stateDiagram / stateDiagram-v2 -> lifecycle)
 `;
 }
 
@@ -2023,6 +2027,123 @@ function commandValidate(args) {
   if (exitCode !== 0) process.exitCode = exitCode;
 }
 
+// Source importers are registered here so every format keeps one entry point,
+// one receipt shape, and one place to extend.
+const IMPORT_FORMATS = new Map([
+  ['state', {
+    module: 'importers/state.mjs',
+    entry: 'importStateDiagram',
+    source: 'mermaid-state',
+    aliases: ['statediagram', 'statediagramv2'],
+    usage: 'archify import state <input.mmd> [output.json] [--json] [--title text] [--outcome state=success|failure]',
+  }],
+]);
+
+function importFormat(name) {
+  const normalized = String(name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  for (const [format, definition] of IMPORT_FORMATS) {
+    if (normalized === format || definition.aliases?.includes(normalized)) return { format, definition };
+  }
+  return null;
+}
+
+function importReceipt(definition, payload) {
+  return {
+    schemaVersion: 1,
+    command: 'import',
+    source: definition.source,
+    ...payload,
+  };
+}
+
+function reportImportFailure(receipt, json) {
+  if (json) console.log(JSON.stringify(receipt, null, 2));
+  else console.error(formatDiagnostics(receipt.error, receipt.diagnostics));
+  process.exit(1);
+}
+
+async function commandImport(args) {
+  const [name, ...rest] = args;
+  const formats = [...IMPORT_FORMATS.keys()].join(', ');
+  if (!name) fail(`Usage: archify import <format> <input.mmd> [output.json] [--json]\n\nFormats:\n  ${formats}`);
+  const resolved = importFormat(name);
+  if (!resolved) fail(`Unsupported import format "${name}". Supported: ${formats}`);
+  const { definition } = resolved;
+
+  let json = false;
+  let title;
+  const outcomes = new Map();
+  const positional = [];
+  for (let index = 0; index < rest.length; index += 1) {
+    const arg = rest[index];
+    if (arg === '--json') { json = true; continue; }
+    if (arg === '--title') {
+      title = rest[index + 1];
+      if (!title || title.startsWith('--')) fail('--title requires a diagram title.');
+      index += 1;
+      continue;
+    }
+    if (arg === '--outcome') {
+      const value = rest[index + 1];
+      if (!value || value.startsWith('--')) fail('--outcome requires state=success|failure.');
+      const [state, kind] = value.split('=');
+      if (!state || !['success', 'failure'].includes(kind)) fail(`--outcome expects state=success|failure, received "${value}".`);
+      outcomes.set(state, kind);
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--')) fail(`Unknown import option "${arg}".`);
+    positional.push(arg);
+  }
+  const [input, output] = positional;
+  if (!input) fail(`Usage: ${definition.usage}`);
+  if (positional.length > 2) fail(`Unexpected argument "${positional[2]}".`);
+
+  let source;
+  try {
+    source = fs.readFileSync(input, 'utf8');
+  } catch (error) {
+    reportImportFailure(importReceipt(definition, {
+      ok: false,
+      input: path.resolve(input),
+      error: 'Import source could not be read.',
+      diagnostics: [diagnostic({
+        code: 'input/read',
+        message: `Import source could not be read: ${error.message}`,
+        subject: { input: path.resolve(input) },
+        evidence: { ...(error?.code ? { systemCode: error.code } : {}), reason: error.message },
+        supportedFixes: ['provide one readable Mermaid source file'],
+      })],
+    }), json);
+  }
+
+  const importer = await import(pathToFileURL(path.join(skillRoot, definition.module)).href);
+  const result = importer[definition.entry](source, { title, outcomes });
+
+  if (!result.ok) {
+    reportImportFailure(importReceipt(definition, {
+      ok: false,
+      input: path.resolve(input),
+      error: result.diagnostics[0].message,
+      diagnostics: result.diagnostics,
+    }), json);
+  }
+
+  const ir = `${JSON.stringify(result.ir, null, 2)}\n`;
+  if (output) fs.writeFileSync(output, ir);
+  else if (!json) process.stdout.write(ir);
+
+  if (json) {
+    console.log(JSON.stringify(importReceipt(definition, {
+      ...result.receipt,
+      input: path.resolve(input),
+      ...(output ? { output: path.resolve(output) } : {}),
+    }), null, 2));
+  } else if (output) {
+    console.error(`ok import ${resolved.format} ${path.resolve(input)} -> ${path.resolve(output)} (${result.receipt.states} states, ${result.receipt.transitions} transitions)`);
+  }
+}
+
 const [command, ...args] = process.argv.slice(2);
 
 try {
@@ -2032,6 +2153,9 @@ try {
     case '--help':
     case 'help':
       console.log(usage());
+      break;
+    case 'import':
+      await commandImport(args);
       break;
     case 'render':
       commandRender(args);

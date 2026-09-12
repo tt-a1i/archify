@@ -1,0 +1,21 @@
+---
+title: Agent Run Lifecycle
+---
+stateDiagram-v2
+    %% Supported subset: pseudo-states, guards, aliases, choice, notes.
+    [*] --> Queued
+    Queued --> Planning: request accepted
+    state "Executing tools" as Executing
+    Planning --> Executing
+    Executing --> Reviewing
+    state Reviewing <<choice>>
+    Reviewing --> Completed: gate passed
+    Reviewing --> Failed: gate rejected
+    Failed --> Executing: retry budget
+    Executing --> Blocked: missing input
+    Blocked --> Cancelled: operator stopped
+    Completed --> [*]
+    Cancelled --> [*]
+    note right of Blocked
+        waits for user input
+    end note

@@ -1,0 +1,8 @@
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Working
+    Working --> Reviewing
+    Reviewing --> Idle: rework
+    Reviewing --> Working: retry
+    Working --> Idle: yield
+    Reviewing --> [*]
