@@ -1,0 +1,5 @@
+{
+  "$comment": "Users who may run /label, /unlabel, /dup, /needs-repro via issue comments. Collaborators with write access are always allowed. Owned by CODEOWNERS.",
+  "users": ["tt-a1i", "YunyueLi", "sunsunsun-java"],
+  "settableLabels": ["bug", "documentation", "enhancement", "question", "duplicate", "needs-repro", "not-now", "invalid", "good first issue", "help wanted"]
+}

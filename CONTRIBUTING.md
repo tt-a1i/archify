@@ -10,6 +10,10 @@ Archify is Agent-first: people describe systems, and the Skill, typed JSON, rend
 - Narrow fixes and small documentation or test corrections can proceed with a concrete reproduction or rationale; a separate planning issue is unnecessary.
 - Security vulnerabilities: follow [SECURITY.md](SECURITY.md).
 
+The current not-now list and the evidence that would reopen each item are in [.github/CURRENT_FOCUS.md](.github/CURRENT_FOCUS.md); check it before proposing a deferred feature.
+
+**Primary implementation.** Each issue has at most one maintainer-designated primary PR, marked with the label `primary-implementation`; designation is by maintainer decision, not first-come. Other PRs for the same issue are welcome as a reproduction, tests, or a clearly labeled stage of the primary. Primary status lapses when the author has not responded to a review for 7 days; a maintainer may then designate another PR. Before opening an implementation PR, check whether the issue already has an open PR and, if so, contribute there or open a clearly scoped complementary PR.
+
 Do not include secrets, access tokens, credentials, private repository content, personal data, or customer data in fixtures, logs, screenshots, artifacts, or package tests.
 
 ## Prepare a reviewable change
@@ -97,11 +101,15 @@ List regenerated files and explain why unchanged outputs remain fresh. Resolve g
 
 Treat published versions as immutable. Ordinary feature PRs do not change versions, tags, or distribution identities unless release work is explicitly in scope.
 
+Generated-artifact handling is phased. Phase 1 is active: CI rebuilds the Gallery and ZIP for every PR and reports differences, and the contract in this section still applies until Phase 2 in [docs/maintenance-roadmap.md](docs/maintenance-roadmap.md). Golden examples are separate from that phasing: each changed golden example (`archify/examples/*.html`, `examples/*.html`) must be explained by the behavior change that produced it, and unexplained golden churn is a review blocker.
+
 ## Final integration and follow-up
 
 Refresh `main` and the PR head before final integration; account for relevant base changes and resolve conflicts. Rerun local checks whose evidence was invalidated. Unchanged evidence may be linked with its original revision and reuse rationale; do not relabel it as a new-head run. Verify that required remote CI actually ran on the final head and obey branch protection; zero checks is not green.
 
 On revision, summarize what changed since the reviewed head and which findings it addresses. This lets reviewers focus on the new diff and outstanding decisions.
+
+When a collaborator submits a Changes Requested review, the label `awaiting-author` is set automatically and removed on the next push. Only PRs carrying that label age: after 14 days without a push or reply the PR is labeled `stale` with a reminder; after 7 more days it is closed with instructions to resume. Reopening is welcome; push a commit or comment. Waiting on maintainer review is never stale.
 
 Showcase submissions should include the prompt, agent/client, model, Archify version, redacted JSON, artifact, receipts, and truthful visual-review status. Maintainers may request a smaller safe reproduction. Preserve attribution; showcase acceptance is not a controlled model-quality benchmark.
 
@@ -138,6 +146,10 @@ Maintainers should assess the first
 5–10 reviewed PRs for useful findings, false positives, review time, and repeated
 evidence requests before expanding the pilot. Pause automatic reviews by setting
 `reviews.auto_review.enabled: false`; this does not change CI or branch protection.
+
+Alongside CodeRabbit, [`.github/workflows/pr-triage-card.yml`](.github/workflows/pr-triage-card.yml) posts one advisory "Triage card" comment per PR: linked issues and whether they carry `accepted`, overlapping open PRs for the same issues, changed paths grouped by class, and which PR template sections are filled or empty. It is an evidence index, not an acceptance decision. "Template section empty" means the section has no content beyond the template text; fill it or write `Not applicable` with a reason. "Overlapping PRs" lists other open PRs linking the same issue so you can coordinate under the primary-implementation rule; it does not say which PR is primary.
+
+Users listed in [`.github/triage-allowlist.json`](.github/triage-allowlist.json) may run comment commands on issues and PRs: `/label <name>`, `/unlabel <name>`, `/dup #N`, and `/needs-repro`. Closing issues and PRs stays with collaborators. Changes to the allowlist are PRs reviewed under CODEOWNERS.
 
 ## License
 

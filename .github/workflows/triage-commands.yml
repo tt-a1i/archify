@@ -1,0 +1,35 @@
+name: Triage commands
+
+# Comment-command proxy for triage. The repository lives on a personal
+# account, so GitHub's Triage role cannot be granted. Users listed in
+# .github/triage-allowlist.json, and collaborators with write access, may run
+# /label, /unlabel, /dup #N and /needs-repro in issue or PR comments; the
+# labels they can set are bounded by that file. Every run replies in the
+# thread so the change is auditable. There is no close command: closing stays
+# with collaborators. The checkout below is the base repository default ref,
+# only to load .github/scripts/; PR-supplied code never runs here.
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  apply:
+    name: Apply comment command
+    # The command must be on the first line; ordinary comments skip the job.
+    if: startsWith(github.event.comment.body, '/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Parse, authorise, and apply the command
+        run: node .github/scripts/triage-commands.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

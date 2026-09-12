@@ -4,6 +4,8 @@
 
 Current-main trigger or rationale, intended outcome, approach, and linked issue/agreed scope:
 
+Linked issue and scope status (accepted / narrow fix / recorded decision):
+
 ## Stability impact
 
 - Impact class and changed behavior/shared callers: <!-- CONTRIBUTING.md#choose-evidence-by-impact -->
@@ -28,3 +30,5 @@ Report automated or browser evidence separately from perceptual review.
 ## Generated artifacts
 
 Regenerated files or linked build evidence; if none, explain why outputs remain fresh.
+
+- Changed golden examples and the behavior change behind each:

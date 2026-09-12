@@ -1,0 +1,95 @@
+name: Generated artifacts report
+
+# Phase 1 of docs/maintenance-roadmap.md. Rebuilds the generated site and the
+# package from the pull request source, reports whether the committed outputs
+# match, and uploads the rebuild as workflow artifacts. Informational only:
+# nothing in this workflow fails the pull request. The zip-freshness job in
+# ci.yml keeps the blocking ZIP contract. Runs PR code, so it needs no secrets
+# and only read permission.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    name: Rebuild and compare
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      # Builders and what they need:
+      # - build-gallery.mjs <output-root>: renders archify/examples through
+      #   archify/renderers and writes <root>/gallery/** and <root>/gallery.html.
+      # - build-guide.mjs <output-file> and build-start.mjs <output-file>: template
+      #   fills from archify/recipes.
+      # All three read only scripts/ and archify/ and import nothing from
+      # node_modules, so no npm install, Chrome, fonts, or network is needed and
+      # building into a copy of docs/ leaves the checkout untouched.
+      # - build-readme-showcase.mjs is skipped: it screenshots the gallery in Chrome
+      #   and encodes a GIF with ffmpeg, which is not byte-reproducible, so a
+      #   comparison would always report a difference.
+      # A failing builder is recorded in skipped.tsv instead of failing the job.
+      - name: Rebuild the generated site into a scratch copy of docs/
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          rebuilt="$RUNNER_TEMP/docs-rebuilt"
+          skipped="$RUNNER_TEMP/skipped.tsv"
+          rm -rf "$rebuilt"
+          cp -R docs "$rebuilt"
+          printf 'build-readme-showcase.mjs\tnot compared: Chrome screenshots encoded to GIF are not byte-reproducible\n' > "$skipped"
+          run_builder() {
+            local name="$1"
+            shift
+            local status=0
+            "$@" || status=$?
+            if [[ "$status" -ne 0 ]]; then
+              printf '%s\tfailed with exit %s; see the rebuild step log\n' "$name" "$status" >> "$skipped"
+            fi
+          }
+          run_builder build-gallery.mjs node scripts/build-gallery.mjs "$rebuilt"
+          run_builder build-guide.mjs node scripts/build-guide.mjs "$rebuilt/guide.html"
+          run_builder build-start.mjs node scripts/build-start.mjs "$rebuilt/start.html"
+
+      - name: Rebuild archify.zip and compare bytes
+        id: zip
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          scripts/build-zip.sh "$RUNNER_TEMP/rebuilt.zip"
+          if cmp -s "$RUNNER_TEMP/rebuilt.zip" archify.zip; then
+            echo 'status=identical' >> "$GITHUB_OUTPUT"
+          else
+            echo 'status=differs' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Write the report to the job summary
+        env:
+          ZIP_STATUS: ${{ steps.zip.outputs.status || 'unavailable' }}
+        run: |
+          set -euo pipefail
+          node .github/scripts/generated-artifacts-report.mjs \
+            --committed docs \
+            --rebuilt "$RUNNER_TEMP/docs-rebuilt" \
+            --owned gallery,gallery.html,guide.html,start.html \
+            --zip "$ZIP_STATUS" \
+            --skipped "$RUNNER_TEMP/skipped.tsv"
+
+      - name: Upload the rebuilt site and package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-artifacts-rebuild
+          path: |
+            ${{ runner.temp }}/docs-rebuilt
+            ${{ runner.temp }}/rebuilt.zip
+          if-no-files-found: ignore
+          retention-days: 7
