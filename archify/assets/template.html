@@ -1038,6 +1038,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .diagram-container.is-pannable { cursor: grab; }
     .diagram-container.is-panning { cursor: grabbing; user-select: none; }
     .diagram-container.is-panning svg { transition: none; }
+    .diagram-container.is-wheel-zooming svg { transition: none; }
 
     .diagram-nav {
       position: absolute;
@@ -11458,6 +11459,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var inBtn = container.querySelector('[data-view="in"]');
       var state = { scale: 1, x: 0, y: 0, mode: 'overview' };
       var drag = null;
+      var wheelZoomAccum = 0;
+      var wheelZoomTimer = 0;
       var cameraTimer = null;
       var cameraFrame = null;
       var cameraGeneration = 0;
@@ -11691,14 +11694,104 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var previous = state.scale;
         next = Math.max(1, Math.min(3, Math.round(next * 4) / 4));
         if (next === previous) return;
+        var clientX = Number(options.clientX);
+        var clientY = Number(options.clientY);
+        var anchorX = Number(options.anchorX);
+        var anchorY = Number(options.anchorY);
+        if (!(Number.isFinite(anchorX) && Number.isFinite(anchorY)) &&
+            Number.isFinite(clientX) && Number.isFinite(clientY)) {
+          var rect = svg.getBoundingClientRect();
+          if (rect && rect.width > 0 && rect.height > 0) {
+            anchorX = clientX - rect.left + state.x;
+            anchorY = clientY - rect.top + state.y;
+          }
+        }
         var centerX = (svg.clientWidth || 1) / 2;
         var centerY = (svg.clientHeight || 1) / 2;
+        if (Number.isFinite(anchorX) && Number.isFinite(anchorY)) {
+          centerX = anchorX;
+          centerY = anchorY;
+        }
         var contentX = (centerX - state.x) / previous;
         var contentY = (centerY - state.y) / previous;
         state.scale = next;
         state.x = centerX - contentX * next;
         state.y = centerY - contentY * next;
         apply();
+      }
+      function scrollableWheelTarget(node, event) {
+        var current = node;
+        var deltaX = Number(event.deltaX) || 0;
+        var deltaY = Number(event.deltaY) || 0;
+        var horizontal = event.shiftKey || Math.abs(deltaX) > Math.abs(deltaY);
+        while (current) {
+          var overflowX = '';
+          var overflowY = '';
+          try {
+            var style = getComputedStyle(current);
+            overflowX = style.overflowX || '';
+            overflowY = style.overflowY || '';
+          } catch (_) {}
+          if (horizontal) {
+            if (current.scrollWidth > current.clientWidth + 1 &&
+                (overflowX === 'auto' || overflowX === 'scroll' || overflowX === 'overlay')) return true;
+          } else if (current.scrollHeight > current.clientHeight + 1 &&
+                     (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay')) {
+            return true;
+          }
+          if (current === container) break;
+          current = current.parentNode;
+        }
+        return false;
+      }
+      function zoomByWheel(event) {
+        if (document.documentElement.getAttribute('data-embed') === 'true') return;
+        if (event.defaultPrevented) return;
+        if (event.ctrlKey || event.metaKey) return;
+        var target = event.target;
+        if (!target || !container.contains(target)) return;
+        var deltaX = event.deltaMode === 1 ? (Number(event.deltaX) || 0) * 16 :
+          event.deltaMode === 2 ? (Number(event.deltaX) || 0) * (svg.clientWidth || 1) : (Number(event.deltaX) || 0);
+        var delta = event.deltaMode === 1 ? event.deltaY * 16 :
+          event.deltaMode === 2 ? event.deltaY * (svg.clientHeight || 1) : event.deltaY;
+        if (!delta || !Number.isFinite(delta)) return;
+        if (scrollableWheelTarget(target, event)) return;
+        var uiTarget = null;
+        if (target && target.closest) {
+          uiTarget = target.closest('[data-legend], .diagram-nav, .focus-chip, .node-finder, .diagram-guide, .overview-map, .route-probe, .semantic-lens');
+        }
+        var horizontal = event.shiftKey || Math.abs(deltaX) > Math.abs(delta);
+        if (uiTarget) {
+          event.preventDefault();
+          return;
+        }
+        if (horizontal) {
+          event.preventDefault();
+          return;
+        }
+        event.preventDefault();
+        var zoomingIn = delta < 0;
+        var zoomingOut = delta > 0;
+        if (!zoomingIn && !zoomingOut) return;
+        if (!zoomingIn && state.scale <= 1) return;
+        if (zoomingIn && state.scale >= 3) return;
+        container.classList.add('is-wheel-zooming');
+        if (wheelZoomTimer) clearTimeout(wheelZoomTimer);
+        wheelZoomTimer = setTimeout(function () {
+          wheelZoomTimer = 0;
+          container.classList.remove('is-wheel-zooming');
+        }, 120);
+        var step = 60;
+        wheelZoomAccum += delta;
+        while (wheelZoomAccum <= -step || wheelZoomAccum >= step) {
+          var direction = wheelZoomAccum < 0 ? 1 : -1;
+          wheelZoomAccum += direction * step;
+          zoom(state.scale + direction * 0.25, {
+            clientX: event.clientX,
+            clientY: event.clientY,
+            manual: true
+          });
+        }
       }
       function reset(options) {
         options = options || {};
@@ -11950,6 +12043,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       container.addEventListener('pointerup', onPointerEnd);
       container.addEventListener('pointercancel', onPointerEnd);
       container.addEventListener('scroll', onScroll, { passive: true });
+      container.addEventListener('wheel', zoomByWheel, { passive: false });
       window.addEventListener('resize', function () {
         if (resizeFrame) cancelAnimationFrame(resizeFrame);
         resizeFrame = requestAnimationFrame(function () {
@@ -11966,6 +12060,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       return {
         zoomIn: function () { zoom(state.scale + 0.25); },
         zoomOut: function () { zoom(state.scale - 0.25); },
+        zoomByWheel: zoomByWheel,
         reset: reset,
         reveal: reveal,
         centerAt: centerAt,
