@@ -1,0 +1,29 @@
+name: Temporary Linux motion storage diagnostic
+on:
+  push:
+    branches: [codex/motion-storage-diagnostic]
+permissions:
+  contents: read
+jobs:
+  storage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: browser-actions/setup-chrome@v2
+        id: chrome
+        with:
+          chrome-version: '153.0.8010.36'
+          install-dependencies: true
+      - run: node scripts/motion-storage-diagnostic.mjs
+        env:
+          ARCHIFY_CHROME: ${{ steps.chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: motion-storage-observations
+          path: motion-storage-observations.json
