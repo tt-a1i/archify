@@ -8,7 +8,7 @@ const start = template.lastIndexOf("document.addEventListener('keydown', functio
 assert.ok(start >= 0);
 const source = template.slice(start, template.indexOf('</script>', start));
 
-function dispatch(key, descended, field = false, focused = true) {
+function dispatch(key, descended, field = false, focused = true, nested = false) {
   let handler;
   const calls = [];
   const inactive = { isOpen: () => false, active: () => false };
@@ -19,9 +19,11 @@ function dispatch(key, descended, field = false, focused = true) {
     drilldown: { active: () => descended, back: () => calls.push('back') },
     presentation: inactive,
   };
-  vm.runInNewContext(source, { Archify, document: {
+  const window = { parent: { postMessage: (message) => calls.push(message.type) } };
+  if (!nested) window.parent = window;
+  vm.runInNewContext(source, { Archify, window, document: {
     addEventListener: (_, callback) => { handler = callback; },
-    documentElement: { getAttribute: () => null },
+    documentElement: { getAttribute: (name) => name === 'data-bundle-nested' && nested ? 'true' : null },
   } });
   handler({ key, target: { tagName: field ? 'INPUT' : 'DIV' },
     preventDefault: () => calls.push('prevent-default') });
@@ -40,4 +42,16 @@ test('descended Backspace retains Escape priority and ignores text inputs', () =
 
 test('descended Backspace returns to the parent when no temporary focus remains', () => {
   assert.deepEqual(dispatch('Backspace', true, false, false), ['prevent-default', 'back']);
+});
+
+test('nested child Backspace clears its own focus before asking the parent to ascend', () => {
+  assert.deepEqual(dispatch('Backspace', false, false, true, true), ['prevent-default', 'clear-focus']);
+  assert.deepEqual(dispatch('Backspace', false, false, true, true), dispatch('Escape', false, false, true, true));
+});
+
+test('nested child forwards either return key after its Escape ladder is exhausted', () => {
+  for (const key of ['Escape', 'Backspace']) {
+    assert.deepEqual(dispatch(key, false, false, false, true), ['prevent-default', 'archify:drilldown-escape']);
+    assert.deepEqual(dispatch(key, false, true, false, true), []);
+  }
 });

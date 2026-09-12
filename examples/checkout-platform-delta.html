@@ -20512,7 +20512,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
          / -&gt; open node finder or the active route endpoint picker
          + / - -&gt; zoom, 0 -&gt; reset view
          Escape -&gt; clear temporary trace/focus/view first, then exit presentation
-         Backspace -&gt; Escape alias only while a drilldown is active
+         Backspace -&gt; Escape alias while descended or inside a nested child
        Ignored when focus is inside an input/textarea/contenteditable.
        ============================================================ */
     document.addEventListener(&#39;keydown&#39;, function (e) {
@@ -20520,8 +20520,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       if (e.defaultPrevented) return;
       var t = e.target;
       if (t &amp;&amp; (t.tagName === &#39;INPUT&#39; || t.tagName === &#39;TEXTAREA&#39; || t.isContentEditable)) return;
+      var isNestedChild = document.documentElement.getAttribute(&#39;data-bundle-nested&#39;) === &#39;true&#39;;
       var isEscape = e.key === &#39;Escape&#39; || (e.key === &#39;Backspace&#39;
-        &amp;&amp; Archify.drilldown &amp;&amp; Archify.drilldown.active());
+        &amp;&amp; ((Archify.drilldown &amp;&amp; Archify.drilldown.active()) || isNestedChild));
       if (Archify.preset &amp;&amp; Archify.preset.isOpen() &amp;&amp; !isEscape &amp;&amp; e.key !== &#39;s&#39; &amp;&amp; e.key !== &#39;S&#39;) {
         Archify.preset.close(false);
       }
@@ -20593,7 +20594,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       } else if (isEscape &amp;&amp; Archify.presentation.active()) {
         e.preventDefault();
         Archify.presentation.exit();
-      } else if (e.key === &#39;Escape&#39; &amp;&amp; document.documentElement.getAttribute(&#39;data-bundle-nested&#39;) === &#39;true&#39;) {
+      } else if (isEscape &amp;&amp; isNestedChild) {
         e.preventDefault();
         if (window.parent &amp;&amp; window.parent !== window) {
           window.parent.postMessage({ type: &#39;archify:drilldown-escape&#39; }, &#39;*&#39;);
@@ -36455,7 +36456,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
          / -&gt; open node finder or the active route endpoint picker
          + / - -&gt; zoom, 0 -&gt; reset view
          Escape -&gt; clear temporary trace/focus/view first, then exit presentation
-         Backspace -&gt; Escape alias only while a drilldown is active
+         Backspace -&gt; Escape alias while descended or inside a nested child
        Ignored when focus is inside an input/textarea/contenteditable.
        ============================================================ */
     document.addEventListener(&#39;keydown&#39;, function (e) {
@@ -36463,8 +36464,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       if (e.defaultPrevented) return;
       var t = e.target;
       if (t &amp;&amp; (t.tagName === &#39;INPUT&#39; || t.tagName === &#39;TEXTAREA&#39; || t.isContentEditable)) return;
+      var isNestedChild = document.documentElement.getAttribute(&#39;data-bundle-nested&#39;) === &#39;true&#39;;
       var isEscape = e.key === &#39;Escape&#39; || (e.key === &#39;Backspace&#39;
-        &amp;&amp; Archify.drilldown &amp;&amp; Archify.drilldown.active());
+        &amp;&amp; ((Archify.drilldown &amp;&amp; Archify.drilldown.active()) || isNestedChild));
       if (Archify.preset &amp;&amp; Archify.preset.isOpen() &amp;&amp; !isEscape &amp;&amp; e.key !== &#39;s&#39; &amp;&amp; e.key !== &#39;S&#39;) {
         Archify.preset.close(false);
       }
@@ -36536,7 +36538,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       } else if (isEscape &amp;&amp; Archify.presentation.active()) {
         e.preventDefault();
         Archify.presentation.exit();
-      } else if (e.key === &#39;Escape&#39; &amp;&amp; document.documentElement.getAttribute(&#39;data-bundle-nested&#39;) === &#39;true&#39;) {
+      } else if (isEscape &amp;&amp; isNestedChild) {
         e.preventDefault();
         if (window.parent &amp;&amp; window.parent !== window) {
           window.parent.postMessage({ type: &#39;archify:drilldown-escape&#39; }, &#39;*&#39;);

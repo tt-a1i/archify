@@ -15557,7 +15557,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
          / -> open node finder or the active route endpoint picker
          + / - -> zoom, 0 -> reset view
          Escape -> clear temporary trace/focus/view first, then exit presentation
-         Backspace -> Escape alias only while a drilldown is active
+         Backspace -> Escape alias while descended or inside a nested child
        Ignored when focus is inside an input/textarea/contenteditable.
        ============================================================ */
     document.addEventListener('keydown', function (e) {
@@ -15565,8 +15565,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       if (e.defaultPrevented) return;
       var t = e.target;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      var isNestedChild = document.documentElement.getAttribute('data-bundle-nested') === 'true';
       var isEscape = e.key === 'Escape' || (e.key === 'Backspace'
-        && Archify.drilldown && Archify.drilldown.active());
+        && ((Archify.drilldown && Archify.drilldown.active()) || isNestedChild));
       if (Archify.preset && Archify.preset.isOpen() && !isEscape && e.key !== 's' && e.key !== 'S') {
         Archify.preset.close(false);
       }
@@ -15638,7 +15639,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       } else if (isEscape && Archify.presentation.active()) {
         e.preventDefault();
         Archify.presentation.exit();
-      } else if (e.key === 'Escape' && document.documentElement.getAttribute('data-bundle-nested') === 'true') {
+      } else if (isEscape && isNestedChild) {
         e.preventDefault();
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'archify:drilldown-escape' }, '*');
