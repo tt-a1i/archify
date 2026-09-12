@@ -103,6 +103,16 @@ test('the example renders with every artifact check passing', () => {
   assert.equal(receipt.composition.summary.warnings, 0);
 });
 
+test('ERD fields are visible at the default read level', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-er-fields-'));
+  const { status, output } = render(example, directory);
+  assert.equal(status, 0, 'renderer should exit cleanly');
+  const html = fs.readFileSync(output, 'utf8');
+  assert.match(html, /<div class="diagram-container" data-detail-level="read"/);
+  assert.match(html, /<g data-detail="context" data-er-row="0">/);
+  assert.doesNotMatch(html, /<g data-detail="fine" data-er-row=/);
+});
+
 test('an entity between two aligned anchors is routed around, never through', () => {
   const diagram = {
     schema_version: 1,
@@ -159,6 +169,63 @@ test('an author-forced through-box route fails with the clean-flow diagnostic', 
   assert.match(output, /clean-flow\/edge-through-node/);
   assert.doesNotMatch(output, /overlaps entity/, 'the fixture must reach the routing gate, not the overlap validator');
   assert.equal(fs.existsSync(path.join(directory, 'candidate.html')), false, 'no artifact may be written');
+});
+
+test('relationships sharing one target side bundle into a trunk with short branches', () => {
+  const diagram = {
+    schema_version: 1,
+    diagram_type: 'erd',
+    meta: { title: 'Bundled fan-in', locale: 'en' },
+    layout: { mode: 'grid', origin: [40, 80], gapX: 56, gapY: 72, entityW: 200 },
+    entities: [
+      {
+        id: 'hub', label: 'hub', row: 0, col: 0, width: 200,
+        attributes: [
+          { name: 'id', type: 'bigint', key: 'pk' },
+          { name: 'a', type: 'bigint' },
+          { name: 'b', type: 'bigint' },
+          { name: 'c', type: 'bigint' },
+        ],
+      },
+      { id: 'east_a', label: 'east_a', row: 0, col: 1, width: 200, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
+      { id: 'east_b', label: 'east_b', row: 1, col: 1, width: 200, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
+    ],
+    relationships: [
+      { id: 'a_hub', from: 'east_a', to: 'hub', fromCardinality: 'many', toCardinality: 'one' },
+      { id: 'b_hub', from: 'east_b', to: 'hub', fromCardinality: 'many', toCardinality: 'one' },
+    ],
+  };
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-er-trunk-'));
+  const { status, output } = render(diagram, directory);
+  assert.equal(status, 0, 'a bundled fan-in should render');
+  const html = fs.readFileSync(output, 'utf8');
+
+  // The trunk sits one offset right of the hub's right edge and carries both
+  // branches; the port-band gap between their branch points is bridged so the
+  // bus reads as one line.
+  const trunks = [...html.matchAll(/<path data-er-trunk=""[^>]*>/g)].map((match) => attrs(match[0]));
+  assert.equal(trunks.length, 1);
+  assert.equal(trunks[0]['data-composition-points'], '256,104;256,272');
+
+  // Every branch keeps its cardinality markers and its full logical route, but
+  // the rendered d skips the stretch the trunk path now carries.
+  for (const route of relationshipRoutes(html)) {
+    assert.match(route.raw, /marker-start="url\(#er-many-start\)"/);
+    assert.match(route.raw, /marker-end="url\(#er-one-end\)"/);
+    assert.match(route.raw, /d="M [^"]+ M /, 'the branch path leaves the trunk stretch to the trunk path');
+    assert.ok(route.points.some(([x]) => x === 256), 'logical points still traverse the trunk');
+  }
+  const { status: checkStatus, receipt } = artifactReceipt(output);
+  assert.equal(checkStatus, 0, JSON.stringify(receipt.checks.filter((check) => !check.ok), null, 2));
+
+  // Bundling needs one dash language: mixing a dashed relationship into the
+  // group dissolves it instead of drawing a trunk with a borrowed style.
+  const mixed = clone(diagram);
+  mixed.relationships[1].identifying = false;
+  const mixedDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-er-trunk-mixed-'));
+  const mixedResult = render(mixed, mixedDirectory);
+  assert.equal(mixedResult.status, 0);
+  assert.doesNotMatch(fs.readFileSync(mixedResult.output, 'utf8'), /data-er-trunk/);
 });
 
 test('schema and reference mistakes fail with an addressed diagnostic', () => {

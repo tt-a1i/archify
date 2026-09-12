@@ -172,14 +172,32 @@ Stages express transformation or custody. Rows separate parallel streams. Label 
 
 ### ERD
 
-Columns read left to right and rows read top to bottom, so a relationship between
-neighbouring columns is one straight corridor. Keep related entities in the same
-row or the same column, and never place an unrelated entity between two aligned
-anchors; the router will detour around it, but a clear corridor is shorter and
-reads better. Put one key per attribute (`key`) and the real references in
-`references`, show only the attributes a reader needs, and move the rest into cards.
-A many-to-many pair is a real fact about the model, so state it, but name the join
-table in a card when one exists.
+Treat a schema ERD as a table catalogue as well as a relationship map. If the
+schema has more than 8 tables or 50 fields, it is a dense full-schema map: start
+with `meta.quality_profile: "standard"` so complete field visibility is not
+traded away for repeated showcase route repairs. Include every physical column in
+`attributes`, keep the source SQL type, and preserve the
+field's Chinese comment in the type string as `SQL_TYPE｜中文备注` because the
+schema has no separate comment property. The default viewer shows these rows at
+the `read` level; do not rely on hover/focus or cards to reveal physical fields.
+Cards may explain constraints, inferred relationships, or domain rules, but never
+replace a field list.
+
+Before placing boxes, classify tables into functional domains using verified table
+names, comments, module paths, and foreign-key meaning. Put the domain name in
+`tag` and assign a contiguous rectangle or compact staircase of grid cells to the
+domain. All tables with the same tag stay together; do not interleave unrelated
+tables between members. Order parent/core tables toward the shared boundary and
+place their direct children beside or beneath them. Columns read left to right and
+rows read top to bottom, so a relationship between neighbouring columns is one
+straight corridor. Never place an unrelated entity between two aligned anchors;
+the router can detour around it, but the clear corridor is shorter and reads
+better. Use `row`/`col` for this normal grouped layout, and only use explicit
+`pos`/`via` after a diagnostic identifies a concrete geometry problem.
+
+Put one key per attribute (`key`) and the real references in `references`. A
+many-to-many pair is a real fact about the model, so state it and identify the join
+table when one exists.
 
 ### Lifecycle
 

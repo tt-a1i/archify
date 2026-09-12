@@ -5169,9 +5169,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <!-- Relationship paths (before entities for correct z-order) -->
         <path data-edge-from="order" data-edge-to="customer" data-edge-label="placed by" data-edge-key="0" data-edge-id="order_customer" data-composition-points="316,120;260,120" d="M 316 120 L 260 120" class="a-default" stroke-width="1.5" marker-start="url(#er-many-start)" marker-end="url(#er-one-end)"/>
         <path data-edge-from="payment" data-edge-to="order" data-edge-key="1" data-edge-id="payment_order" data-composition-points="592,113;536,113" d="M 592 113 L 536 113" class="a-dashed" stroke-width="1.5" marker-start="url(#er-many-optional-start)" marker-end="url(#er-one-end)"/>
-        <path data-edge-from="order_item" data-edge-to="order" data-edge-key="2" data-edge-id="order_item_order" data-composition-points="592,249;564,249;564,127;536,127" d="M 592 249 L 572 249 Q 564 249 564 241 L 564 135 Q 564 127 556 127 L 536 127" class="a-default" stroke-width="1.5" marker-start="url(#er-many-start)" marker-end="url(#er-one-end)"/>
-        <path data-edge-from="order_item" data-edge-to="product" data-edge-key="3" data-edge-id="order_item_product" data-composition-points="592,263;536,263" d="M 592 263 L 536 263" class="a-default" stroke-width="1.5" marker-start="url(#er-many-start)" marker-end="url(#er-one-end)"/>
+        <path data-edge-from="order_item" data-edge-to="order" data-edge-key="2" data-edge-id="order_item_order" data-composition-points="592,249;576,249;576,127;536,127" d="M 592 249 L 576 249 M 576 127 L 536 127" class="a-default" stroke-width="1.5" marker-start="url(#er-many-start)" marker-end="url(#er-one-end)"/>
+        <path data-edge-from="order_item" data-edge-to="product" data-edge-key="3" data-edge-id="order_item_product" data-composition-points="592,263;576,263;576,263;536,263" d="M 592 263 L 576 263 L 576 263 L 536 263" class="a-default" stroke-width="1.5" marker-start="url(#er-many-start)" marker-end="url(#er-one-end)"/>
         <path data-edge-from="inventory" data-edge-to="product" data-edge-key="4" data-edge-id="inventory_product" data-composition-points="260,256;316,256" d="M 260 256 L 316 256" class="a-default" stroke-width="1.5" marker-start="url(#er-many-start)" marker-end="url(#er-one-end)"/>
+
+        <!-- Bundled relationship trunks -->
+        <path data-er-trunk="" data-composition-points="576,127;576,249" d="M 576 127 L 576 249" class="a-default" stroke-width="1.5"/>
 
         <!-- Entities -->
         <g id="node-customer" data-node-id="customer" data-node-label="customer" tabindex="0" role="button" aria-label="Focus customer, accounts, Entity" aria-pressed="false" data-node-kind="database" data-node-sublabel="accounts" data-node-context="Entity">
@@ -5185,19 +5188,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <text data-node-label="" x="150" y="98" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">customer</text>
           <text data-detail="context" x="250" y="96" class="t-muted" font-size="8" text-anchor="end">accounts</text>
           <line x1="40" y1="106" x2="260" y2="106" class="c-grid" stroke-width="1"/>
-          <g data-detail="fine" data-er-row="0">
+          <g data-detail="context" data-er-row="0">
             <line x1="40" y1="106" x2="260" y2="106" class="c-grid" stroke-width="0.5"/>
             <text x="50" y="117" class="t-database" font-size="7" font-weight="600">PK</text>
             <text x="76" y="117" class="t-primary" font-size="9">id</text>
             <text x="250" y="117" class="t-muted" font-size="8" text-anchor="end">bigint</text>
           </g>
-          <g data-detail="fine" data-er-row="1">
+          <g data-detail="context" data-er-row="1">
             <line x1="40" y1="122" x2="260" y2="122" class="c-grid" stroke-width="0.5"/>
             <text x="50" y="133" class="t-muted" font-size="7" font-weight="600">UK</text>
             <text x="76" y="133" class="t-primary" font-size="9">email</text>
             <text x="250" y="133" class="t-muted" font-size="8" text-anchor="end">varchar(255)</text>
           </g>
-          <g data-detail="fine" data-er-row="2">
+          <g data-detail="context" data-er-row="2">
             <line x1="40" y1="138" x2="260" y2="138" class="c-grid" stroke-width="0.5"/>
             
             <text x="76" y="149" class="t-primary" font-size="9">created_at</text>
@@ -5216,19 +5219,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <text data-node-label="" x="426" y="98" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">order</text>
           <text data-detail="context" x="526" y="96" class="t-muted" font-size="8" text-anchor="end">checkout</text>
           <line x1="316" y1="106" x2="536" y2="106" class="c-grid" stroke-width="1"/>
-          <g data-detail="fine" data-er-row="0">
+          <g data-detail="context" data-er-row="0">
             <line x1="316" y1="106" x2="536" y2="106" class="c-grid" stroke-width="0.5"/>
             <text x="326" y="117" class="t-database" font-size="7" font-weight="600">PK</text>
             <text x="352" y="117" class="t-primary" font-size="9">id</text>
             <text x="526" y="117" class="t-muted" font-size="8" text-anchor="end">bigint</text>
           </g>
-          <g data-detail="fine" data-er-row="1">
+          <g data-detail="context" data-er-row="1">
             <line x1="316" y1="122" x2="536" y2="122" class="c-grid" stroke-width="0.5"/>
             <text x="326" y="133" class="t-messagebus" font-size="7" font-weight="600">FK</text>
             <text x="352" y="133" class="t-primary" font-size="9">customer_id</text>
             <text x="526" y="133" class="t-muted" font-size="8" text-anchor="end">bigint</text>
           </g>
-          <g data-detail="fine" data-er-row="2">
+          <g data-detail="context" data-er-row="2">
             <line x1="316" y1="138" x2="536" y2="138" class="c-grid" stroke-width="0.5"/>
             
             <text x="352" y="149" class="t-primary" font-size="9">status</text>
@@ -5246,19 +5249,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </g>
           <text data-node-label="" x="702" y="98" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">payment</text>
           <line x1="592" y1="106" x2="812" y2="106" class="c-grid" stroke-width="1"/>
-          <g data-detail="fine" data-er-row="0">
+          <g data-detail="context" data-er-row="0">
             <line x1="592" y1="106" x2="812" y2="106" class="c-grid" stroke-width="0.5"/>
             <text x="602" y="117" class="t-database" font-size="7" font-weight="600">PK</text>
             <text x="628" y="117" class="t-primary" font-size="9">id</text>
             <text x="802" y="117" class="t-muted" font-size="8" text-anchor="end">bigint</text>
           </g>
-          <g data-detail="fine" data-er-row="1">
+          <g data-detail="context" data-er-row="1">
             <line x1="592" y1="122" x2="812" y2="122" class="c-grid" stroke-width="0.5"/>
             <text x="602" y="133" class="t-messagebus" font-size="7" font-weight="600">FK</text>
             <text x="628" y="133" class="t-primary" font-size="9">order_id</text>
             <text x="802" y="133" class="t-muted" font-size="8" text-anchor="end">bigint</text>
           </g>
-          <g data-detail="fine" data-er-row="2">
+          <g data-detail="context" data-er-row="2">
             <line x1="592" y1="138" x2="812" y2="138" class="c-grid" stroke-width="0.5"/>
             
             <text x="628" y="149" class="t-primary" font-size="9">method</text>
@@ -5277,19 +5280,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <text data-node-label="" x="150" y="234" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">inventory</text>
           <text data-detail="context" x="250" y="232" class="t-muted" font-size="8" text-anchor="end">stock</text>
           <line x1="40" y1="242" x2="260" y2="242" class="c-grid" stroke-width="1"/>
-          <g data-detail="fine" data-er-row="0">
+          <g data-detail="context" data-er-row="0">
             <line x1="40" y1="242" x2="260" y2="242" class="c-grid" stroke-width="0.5"/>
             <text x="50" y="253" class="t-database" font-size="7" font-weight="600">PK</text>
             <text x="76" y="253" class="t-primary" font-size="9">id</text>
             <text x="250" y="253" class="t-muted" font-size="8" text-anchor="end">bigint</text>
           </g>
-          <g data-detail="fine" data-er-row="1">
+          <g data-detail="context" data-er-row="1">
             <line x1="40" y1="258" x2="260" y2="258" class="c-grid" stroke-width="0.5"/>
             <text x="50" y="269" class="t-messagebus" font-size="7" font-weight="600">FK</text>
             <text x="76" y="269" class="t-primary" font-size="9">product_id</text>
             <text x="250" y="269" class="t-muted" font-size="8" text-anchor="end">bigint</text>
           </g>
-          <g data-detail="fine" data-er-row="2">
+          <g data-detail="context" data-er-row="2">
             <line x1="40" y1="274" x2="260" y2="274" class="c-grid" stroke-width="0.5"/>
             
             <text x="76" y="285" class="t-primary" font-size="9">quantity</text>
@@ -5308,19 +5311,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <text data-node-label="" x="426" y="234" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">product</text>
           <text data-detail="context" x="526" y="232" class="t-muted" font-size="8" text-anchor="end">catalog</text>
           <line x1="316" y1="242" x2="536" y2="242" class="c-grid" stroke-width="1"/>
-          <g data-detail="fine" data-er-row="0">
+          <g data-detail="context" data-er-row="0">
             <line x1="316" y1="242" x2="536" y2="242" class="c-grid" stroke-width="0.5"/>
             <text x="326" y="253" class="t-database" font-size="7" font-weight="600">PK</text>
             <text x="352" y="253" class="t-primary" font-size="9">id</text>
             <text x="526" y="253" class="t-muted" font-size="8" text-anchor="end">bigint</text>
           </g>
-          <g data-detail="fine" data-er-row="1">
+          <g data-detail="context" data-er-row="1">
             <line x1="316" y1="258" x2="536" y2="258" class="c-grid" stroke-width="0.5"/>
             <text x="326" y="269" class="t-muted" font-size="7" font-weight="600">UK</text>
             <text x="352" y="269" class="t-primary" font-size="9">sku</text>
             <text x="526" y="269" class="t-muted" font-size="8" text-anchor="end">varchar(64)</text>
           </g>
-          <g data-detail="fine" data-er-row="2">
+          <g data-detail="context" data-er-row="2">
             <line x1="316" y1="274" x2="536" y2="274" class="c-grid" stroke-width="0.5"/>
             
             <text x="352" y="285" class="t-primary" font-size="9">price</text>
@@ -5339,19 +5342,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <text data-node-label="" x="702" y="234" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">order_item</text>
           <text data-detail="context" x="802" y="232" class="t-muted" font-size="8" text-anchor="end">line items</text>
           <line x1="592" y1="242" x2="812" y2="242" class="c-grid" stroke-width="1"/>
-          <g data-detail="fine" data-er-row="0">
+          <g data-detail="context" data-er-row="0">
             <line x1="592" y1="242" x2="812" y2="242" class="c-grid" stroke-width="0.5"/>
             <text x="602" y="253" class="t-database" font-size="7" font-weight="600">PK</text>
             <text x="628" y="253" class="t-primary" font-size="9">id</text>
             <text x="802" y="253" class="t-muted" font-size="8" text-anchor="end">bigint</text>
           </g>
-          <g data-detail="fine" data-er-row="1">
+          <g data-detail="context" data-er-row="1">
             <line x1="592" y1="258" x2="812" y2="258" class="c-grid" stroke-width="0.5"/>
             <text x="602" y="269" class="t-messagebus" font-size="7" font-weight="600">FK</text>
             <text x="628" y="269" class="t-primary" font-size="9">order_id</text>
             <text x="802" y="269" class="t-muted" font-size="8" text-anchor="end">bigint</text>
           </g>
-          <g data-detail="fine" data-er-row="2">
+          <g data-detail="context" data-er-row="2">
             <line x1="592" y1="274" x2="812" y2="274" class="c-grid" stroke-width="0.5"/>
             <text x="602" y="285" class="t-messagebus" font-size="7" font-weight="600">FK</text>
             <text x="628" y="285" class="t-primary" font-size="9">product_id</text>

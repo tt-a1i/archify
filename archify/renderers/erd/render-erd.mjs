@@ -41,7 +41,9 @@ import {
   componentText,
   labelPoint,
   rectsOverlap,
+  roundedPath,
   routePointsValue,
+  segmentIntersectsRect,
   suggestComponentSeparation,
   suggestLabelObstacleFix,
   variantAccent,
@@ -229,10 +231,10 @@ const bandKey = (entity) => (
     : `p${Math.round(entity.x || 0)},${Math.round(entity.y || 0)}`
 );
 
-const { pathFor, connectionSides, connectionEndpointSide } = createOrthogonalRouter({
+const { ports, pathFor, connectionSides, connectionEndpointSide } = createOrthogonalRouter({
   relations: relationships,
   components: entities,
-  preferredCandidates: laneCandidates,
+  preferredCandidates: (context) => [...trunkCandidates(context), ...laneCandidates(context)],
   extraCandidates: (context) => [...detourCandidates(context), ...outsideCandidates(context)],
   // An entity sitting between two aligned anchors must be routed around, not
   // drawn through: the direct line is only taken when it is genuinely clear.
@@ -274,6 +276,274 @@ const laneOffsets = new Map();
       laneOffsets.set(relationship, index - (list.length - 1) / 2);
     }
   }
+}
+
+// ---- Bundled fan-in / fan-out trunks ------------------------------------------
+// Relationships that share one entity side read better as a single trunk with
+// short branches than as a sheaf of parallel lines (bus-style fan-in). A trunk
+// group shares the resolved side, the marker style, and automatic routing;
+// anything authored (route/via/labelAt) keeps its own line. The trunk is only
+// a preferred candidate: a route that would break the endpoint contract or
+// clip an entity falls back to the ordinary families and stays unbundled.
+const TRUNK_OFFSETS = [16, 22, 12, 28];
+const TRUNK_SNAP = LANE_STEP;
+const TRUNK_BRIDGE = 16;
+const TRUNK_CAP = 10;
+const TRUNK_LEG = 12;
+
+const isHorizontalSide = (side) => (side === 'left' || side === 'right');
+
+function relationshipAutoRouted(relationship) {
+  return renderableRelationship(relationship)
+    && !relationship.via
+    && (!relationship.route || relationship.route === 'auto')
+    && relationship.channelX === undefined
+    && relationship.channelY === undefined
+    && !relationship.labelAt;
+}
+
+function sideAnchor(entity, side) {
+  if (side === 'left') return [entity.x, entity.cy];
+  if (side === 'right') return [entity.x + entity.width, entity.cy];
+  if (side === 'top') return [entity.cx, entity.y];
+  return [entity.cx, entity.y + entity.height];
+}
+
+const trunkGroups = [];
+const trunkAssignments = new Map();
+{
+  const fanIn = new Map();
+  const fanOut = new Map();
+  const resolvedSides = new Map();
+  const push = (map, key, entry) => {
+    const list = map.get(key) || [];
+    list.push(entry);
+    map.set(key, list);
+  };
+  for (const [index, relationship] of relationships.entries()) {
+    if (!relationshipAutoRouted(relationship)) continue;
+    const { fromSide, toSide } = connectionSides(relationship);
+    resolvedSides.set(relationship, { fromSide, toSide });
+    const styleKey = markerStyleOf(relationship);
+    push(fanIn, `${relationship.to}\u0000${toSide}\u0000${styleKey}`, { index, relationship });
+    push(fanOut, `${relationship.from}\u0000${fromSide}\u0000${styleKey}`, { index, relationship });
+  }
+  const taken = new Set();
+  const buildGroups = (map, role) => {
+    const grouped = [...map.values()]
+      .filter((list) => list.length >= 2)
+      .sort((left, right) => left[0].index - right[0].index);
+    for (const list of grouped) {
+      const members = list.filter((entry) => !taken.has(entry.relationship));
+      if (members.length < 2) continue;
+      const head = members[0].relationship;
+      const sides = resolvedSides.get(head);
+      const group = {
+        role,
+        entity: entities.get(role === 'in' ? head.to : head.from),
+        side: role === 'in' ? sides.toSide : sides.fromSide,
+        members: members.map((entry) => entry.relationship),
+      };
+      for (const entry of members) {
+        taken.add(entry.relationship);
+        trunkAssignments.set(entry.relationship, { group });
+      }
+      trunkGroups.push(group);
+    }
+  };
+  buildGroups(fanIn, 'in');
+  buildGroups(fanOut, 'out');
+
+  // One trunk coordinate per group, just outside the shared side. A coordinate
+  // close to an already chosen trunk snaps onto it, so fan-in and fan-out
+  // groups sharing one channel read as a single bus with drops on both sides.
+  const chosenLines = [];
+  for (const group of trunkGroups) {
+    group.axis = isHorizontalSide(group.side) ? 0 : 1;
+    const portAxis = group.axis === 0 ? 1 : 0;
+    const coordinates = group.members.map((relationship) => {
+      const port = ports.get(relationship)?.[group.role === 'in' ? 'to' : 'from'];
+      return (port || sideAnchor(group.entity, group.side))[portAxis];
+    });
+    const low = Math.min(...coordinates) - TRUNK_CAP;
+    const high = Math.max(...coordinates) + TRUNK_CAP;
+    const clearsSpan = (coordinate) => {
+      const segment = group.axis === 0
+        ? { start: [coordinate, low], end: [coordinate, high] }
+        : { start: [low, coordinate], end: [high, coordinate] };
+      return [...entities.values()].every((entity) => !segmentIntersectsRect(segment, entity));
+    };
+    const base = isHorizontalSide(group.side)
+      ? (group.side === 'left' ? group.entity.x : group.entity.x + group.entity.width)
+      : (group.side === 'top' ? group.entity.y : group.entity.y + group.entity.height);
+    const outward = group.side === 'left' || group.side === 'top' ? -1 : 1;
+    for (const offset of TRUNK_OFFSETS) {
+      const candidate = base + outward * offset;
+      if (!clearsSpan(candidate)) continue;
+      const near = chosenLines.find((line) => line.axis === group.axis && Math.abs(line.coordinate - candidate) < TRUNK_SNAP);
+      // A snapped coordinate serves another group's span; it must clear this
+      // one too, otherwise the next offset is tried.
+      if (near && !clearsSpan(near.coordinate)) continue;
+      group.coordinate = near ? near.coordinate : candidate;
+      break;
+    }
+    if (group.coordinate === undefined) {
+      for (const relationship of group.members) trunkAssignments.delete(relationship);
+      continue;
+    }
+    chosenLines.push({ axis: group.axis, coordinate: group.coordinate });
+  }
+}
+
+function trunkCandidates(context) {
+  const candidate = trunkCandidateShape(context);
+  return candidate ? [candidate] : [];
+}
+
+function trunkCandidateShape({ conn, start, end, fromSide, toSide }) {
+  const assignment = trunkAssignments.get(conn);
+  if (!assignment) return null;
+  const { axis, coordinate } = assignment.group;
+  const sideOffset = (side) => (side === 'right' || side === 'bottom' ? 1 : -1);
+  if (axis === 0) {
+    const startHorizontal = isHorizontalSide(fromSide);
+    const endHorizontal = isHorizontalSide(toSide);
+    if (startHorizontal && endHorizontal) return [[coordinate, start[1]], [coordinate, end[1]]];
+    if (startHorizontal) {
+      const approachY = end[1] + sideOffset(toSide) * TRUNK_LEG;
+      return [[coordinate, start[1]], [coordinate, approachY], [end[0], approachY]];
+    }
+    if (endHorizontal) {
+      const exitY = start[1] + sideOffset(fromSide) * TRUNK_LEG;
+      return [[start[0], exitY], [coordinate, exitY], [coordinate, end[1]]];
+    }
+    return null;
+  }
+  const startHorizontal = isHorizontalSide(fromSide);
+  const endHorizontal = isHorizontalSide(toSide);
+  if (!startHorizontal && !endHorizontal) return [[start[0], coordinate], [end[0], coordinate]];
+  if (!startHorizontal) {
+    const approachX = end[0] + sideOffset(toSide) * TRUNK_LEG;
+    return [[start[0], coordinate], [approachX, coordinate], [approachX, end[1]]];
+  }
+  if (!endHorizontal) {
+    const exitX = start[0] + sideOffset(fromSide) * TRUNK_LEG;
+    return [[exitX, start[1]], [exitX, coordinate], [end[0], coordinate]];
+  }
+  return null;
+}
+
+// The rendered `d` skips each trunk stretch — one shared trunk path carries it
+// — while the logical points keep it, so every gate, label, and legend check
+// still reasons about the full route.
+const trunkRunCache = new Map();
+function relationshipTrunkRuns(relationship) {
+  const assignment = trunkAssignments.get(relationship);
+  if (!assignment) return [];
+  if (trunkRunCache.has(relationship)) return trunkRunCache.get(relationship);
+  const { axis, coordinate } = assignment.group;
+  const points = pathFor(relationship).points;
+  const runs = [];
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const [a, b] = [points[index], points[index + 1]];
+    if (Math.abs(a[axis] - coordinate) > 0.5 || Math.abs(b[axis] - coordinate) > 0.5) continue;
+    const low = Math.min(a[1 - axis], b[1 - axis]);
+    const high = Math.max(a[1 - axis], b[1 - axis]);
+    if (high - low < 1) continue;
+    const last = runs[runs.length - 1];
+    if (last && last.endIndex === index) {
+      last.endIndex = index + 1;
+      last.high = high;
+    } else {
+      runs.push({ startIndex: index, endIndex: index + 1, low, high });
+    }
+  }
+  trunkRunCache.set(relationship, runs);
+  return runs;
+}
+
+function bundledRelationshipD(routed, runs) {
+  if (!runs.length) return routed.d;
+  const inRun = new Set();
+  for (const run of runs) {
+    for (let index = run.startIndex; index < run.endIndex; index += 1) inRun.add(index);
+  }
+  const pieces = [];
+  let current = [routed.points[0]];
+  for (let index = 0; index < routed.points.length - 1; index += 1) {
+    if (inRun.has(index)) {
+      pieces.push(current);
+      current = null;
+      continue;
+    }
+    if (current === null) current = [routed.points[index]];
+    current.push(routed.points[index + 1]);
+  }
+  if (current) pieces.push(current);
+  return pieces
+    .filter((piece) => piece.length >= 2)
+    .map((piece) => roundedPath(piece, 8))
+    .join(' ');
+}
+
+function bundledTrunkPaths() {
+  const clusters = new Map();
+  for (const relationship of relationships) {
+    const runs = relationshipTrunkRuns(relationship);
+    if (!runs.length) continue;
+    const { axis, coordinate } = trunkAssignments.get(relationship).group;
+    const key = `${axis}:${coordinate}`;
+    const list = clusters.get(key) || [];
+    for (const run of runs) {
+      list.push({ low: run.low, high: run.high, styleKey: markerStyleOf(relationship) });
+    }
+    clusters.set(key, list);
+  }
+  const paths = [];
+  for (const [key, runs] of clusters) {
+    const [axis, coordinate] = key.split(':').map(Number);
+    runs.sort((left, right) => left.low - right.low);
+    const merged = [];
+    for (const run of runs) {
+      const last = merged[merged.length - 1];
+      if (last && run.low <= last.high + 0.5) last.high = Math.max(last.high, run.high);
+      else merged.push({ ...run });
+    }
+    // Branches that interleave leave short uncovered stretches on an otherwise
+    // continuous bus. Bridge them when the bridged line stays clear of every
+    // entity; anything wider stays separate so no phantom corridor is drawn.
+    const segments = [];
+    for (const segment of merged) {
+      const last = segments[segments.length - 1];
+      const gap = last ? segment.low - last.high : Infinity;
+      if (last && gap > 0.5 && gap <= TRUNK_BRIDGE) {
+        const probe = axis === 0
+          ? { start: [coordinate, last.high], end: [coordinate, segment.low] }
+          : { start: [last.high, coordinate], end: [segment.low, coordinate] };
+        if (![...entities.values()].some((entity) => segmentIntersectsRect(probe, entity))) {
+          last.high = segment.high;
+          continue;
+        }
+      }
+      segments.push({ ...segment });
+    }
+    for (const segment of segments) {
+      const [cls] = arrowClassMap[segment.styleKey] || arrowClassMap.default;
+      const points = axis === 0
+        ? [[coordinate, segment.low], [coordinate, segment.high]]
+        : [[segment.low, coordinate], [segment.high, coordinate]];
+      paths.push(`        <path data-er-trunk="" data-composition-points="${routePointsValue(points)}" d="${roundedPath(points, 8)}" class="${cls}" stroke-width="1.5"/>`);
+    }
+  }
+  return paths.join('\n');
+}
+
+// Bundled labels default to the source-side stub so they never sit on the
+// shared trunk, where they would read as annotating every branch at once.
+function erLabelPoint(relationship) {
+  const points = pathFor(relationship).points;
+  if (!trunkAssignments.get(relationship)) return labelPoint(relationship, points);
+  return labelPoint({ ...relationship, labelSegment: relationship.labelSegment ?? 0 }, points);
 }
 
 function channelFallback({ conn, start, end, fromSide, toSide }) {
@@ -497,7 +767,7 @@ function validateEr() {
   const labelRects = [];
   for (const [index, relationship] of relationships.entries()) {
     if (!relationship.label || !renderableRelationship(relationship)) continue;
-    const [lx, ly] = labelPoint(relationship, pathFor(relationship).points);
+    const [lx, ly] = erLabelPoint(relationship);
     const width = Math.max(30, textUnits(relationship.label) * 4.8 + 10);
     labelRects.push({
       relation: relationship,
@@ -570,7 +840,7 @@ function renderEntityColumnRows(entity) {
     const type = attribute.type
       ? `<text x="${entity.x + entity.width - layout.padX}" y="${baseline}" class="t-muted" font-size="${layout.typeFont}" text-anchor="end">${esc(attribute.type)}</text>`
       : '';
-    return `          <g data-detail="fine" data-er-row="${index}">
+    return `          <g data-detail="context" data-er-row="${index}">
             <line x1="${entity.x}" y1="${rowTop}" x2="${entity.x + entity.width}" y2="${rowTop}" class="c-grid" stroke-width="0.5"/>
             ${keyGlyph}
             <text x="${nameX}" y="${baseline}" class="t-primary" font-size="${nameFontSize}">${esc(attribute.name)}</text>
@@ -611,13 +881,14 @@ ${rows}
 function renderRelationshipPath(relationship, index) {
   const [cls] = arrowClassMap[markerStyleOf(relationship)] || arrowClassMap.default;
   const routed = pathFor(relationship);
+  const d = bundledRelationshipD(routed, relationshipTrunkRuns(relationship));
   const strokeWidth = Number.isFinite(relationship.width) ? relationship.width : 1.5;
-  return `        <path ${focusEdgeAttrs(relationship.from, relationship.to, relationship.label, index, relationship.id)} data-composition-points="${routePointsValue(routed.points)}" d="${routed.d}" class="${cls}"${animateAttr(er.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-start="url(#${cardinalityMarkerId(relationship, 'from')})" marker-end="url(#${cardinalityMarkerId(relationship, 'to')})"/>`;
+  return `        <path ${focusEdgeAttrs(relationship.from, relationship.to, relationship.label, index, relationship.id)} data-composition-points="${routePointsValue(routed.points)}" d="${d}" class="${cls}"${animateAttr(er.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-start="url(#${cardinalityMarkerId(relationship, 'from')})" marker-end="url(#${cardinalityMarkerId(relationship, 'to')})"/>`;
 }
 
 function renderRelationshipLabel(relationship, index) {
   if (!relationship.label) return '';
-  const [lx, ly] = labelPoint(relationship, pathFor(relationship).points);
+  const [lx, ly] = erLabelPoint(relationship);
   const width = Math.max(30, textUnits(relationship.label) * 4.8 + 10);
   return `        <g data-detail="context" ${focusEdgeAttrs(relationship.from, relationship.to, relationship.label, index, relationship.id)}>
           <rect x="${lx - width / 2}" y="${ly - 10}" width="${width}" height="14" rx="3" class="c-mask"/>
@@ -644,7 +915,7 @@ function renderLegend() {
     pointsFor: (relationship) => (renderableRelationship(relationship) ? pathFor(relationship).points : []),
     labelRectFor: (relationship) => {
       if (!relationship.label || !renderableRelationship(relationship)) return null;
-      const [x, y] = labelPoint(relationship, pathFor(relationship).points);
+      const [x, y] = erLabelPoint(relationship);
       const width = Math.max(30, textUnits(relationship.label) * 4.8 + 10);
       return { x: x - width / 2, y: y - 10, width, height: 14 };
     },
@@ -676,6 +947,9 @@ ${renderDefinitions(renderCardinalityDefs())}
 
         <!-- Relationship paths (before entities for correct z-order) -->
 ${relationships.map((relationship, index) => (renderableRelationship(relationship) ? renderRelationshipPath(relationship, index) : '')).filter(Boolean).join('\n')}
+
+        <!-- Bundled relationship trunks -->
+${bundledTrunkPaths()}
 
         <!-- Entities -->
 ${[...entities.values()].map(renderEntity).join('\n\n')}

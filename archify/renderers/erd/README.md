@@ -59,6 +59,14 @@ gate. Two differences are specific to this renderer:
 
 - Relationships that would share one corridor get a deterministic lane offset,
   so parallel foreign keys never sit on the identical channel line.
+- Relationships that share one entity side (a fan-in of foreign keys, or a
+  fan-out parent) and one marker style bundle onto a single trunk just outside
+  that side: one bus line with a short branch per relationship, instead of a
+  sheaf of parallel lanes. The trunk is only a preferred route — a branch that
+  would break the endpoint contract or clip an entity falls back to the
+  ordinary families and stays unbundled, and anything authored (`route`,
+  `via`, `labelAt`) keeps its own line. Logical routes still traverse the
+  trunk, so every gate, label, and the layout report see the full geometry.
 - Entity boxes are opaque obstacles. When a third entity sits between two
   aligned anchors, the renderer emits a U-shaped detour around it, and a route
   that still cannot clear an unrelated entity fails with
@@ -71,7 +79,18 @@ text cannot fit inside the declared entity width.
 
 ## Reading a schema
 
-Show the keys and the few attributes a reader needs; put the full table in
-`cards`. A wide entity is a taller wall for the router to get around, and the
-projected text minimum still applies at 1440x900, so a box that fights the
-layout is usually a sign to cut attributes rather than to widen the box.
+An ERD is also a table catalogue. For a schema with more than 8 tables or 50
+fields, start with `meta.quality_profile: "standard"` so complete field
+visibility remains the priority; promote to `showcase` only after the grouped
+layout is genuinely readable. Include every physical column in
+`entities[].attributes`, keep its SQL type, and preserve the source comment in the
+type string as `SQL_TYPE｜中文备注` when the schema has no separate comment field.
+The renderer shows ERD attribute rows at the default `read` level, so fields do
+not depend on hover or focus. Use cards only for supplementary constraints,
+inferred relationships, and domain rules; never use them to hide the full table.
+
+Group tables by functional domain before assigning grid cells. Give members of one
+domain the same concise `tag` and keep them in a contiguous, non-interleaved block.
+A wide entity is a taller wall for the router to get around, and the projected text
+minimum still applies at 1440x900, so prefer a compact grouped grid and a smaller
+number of columns before shrinking or hiding fields.
