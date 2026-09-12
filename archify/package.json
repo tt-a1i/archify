@@ -3,7 +3,7 @@
   "version": "2.17.0-dev.1",
   "private": true,
   "type": "module",
-  "description": "JSON-IR diagram renderers (architecture / workflow / sequence / dataflow / lifecycle).",
+  "description": "JSON-IR diagram renderers (architecture / workflow / sequence / dataflow / lifecycle / cognition).",
   "license": "MIT",
   "bin": {
     "archify": "./bin/archify.mjs"
