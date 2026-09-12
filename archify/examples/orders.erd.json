@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "title": "Order management schema",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "identity",
+        "label": "Reference rows",
+        "focus": [
+          "customer",
+          "product"
+        ],
+        "note": "The rows everything else points at, with their unique keys."
+      },
+      {
+        "id": "checkout",
+        "label": "Checkout core",
+        "focus": [
+          "order",
+          "order_item",
+          "customer"
+        ],
+        "note": "order_item carries two foreign keys: the order and the product."
+      },
+      {
+        "id": "followups",
+        "label": "Payment and stock",
+        "focus": [
+          "payment",
+          "order",
+          "inventory",
+          "product"
+        ],
+        "note": "One optional dashed link and one mandatory stock link."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [
+      40,
+      80
+    ],
+    "gapX": 56,
+    "gapY": 56,
+    "entityW": 220
+  },
+  "entities": [
+    {
+      "id": "customer",
+      "label": "customer",
+      "sublabel": "accounts",
+      "row": 0,
+      "col": 0,
+      "width": 220,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "email",
+          "type": "varchar(255)",
+          "key": "uk"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "order",
+      "label": "order",
+      "sublabel": "checkout",
+      "row": 0,
+      "col": 1,
+      "width": 220,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "customer_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "customer.id"
+        },
+        {
+          "name": "status",
+          "type": "varchar(32)"
+        }
+      ]
+    },
+    {
+      "id": "payment",
+      "label": "payment",
+      "row": 0,
+      "col": 2,
+      "width": 220,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "order_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "order.id"
+        },
+        {
+          "name": "method",
+          "type": "varchar(32)"
+        }
+      ]
+    },
+    {
+      "id": "inventory",
+      "label": "inventory",
+      "sublabel": "stock",
+      "row": 1,
+      "col": 0,
+      "width": 220,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "product.id"
+        },
+        {
+          "name": "quantity",
+          "type": "int"
+        }
+      ]
+    },
+    {
+      "id": "product",
+      "label": "product",
+      "sublabel": "catalog",
+      "row": 1,
+      "col": 1,
+      "width": 220,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "sku",
+          "type": "varchar(64)",
+          "key": "uk"
+        },
+        {
+          "name": "price",
+          "type": "numeric(10,2)"
+        }
+      ]
+    },
+    {
+      "id": "order_item",
+      "label": "order_item",
+      "sublabel": "line items",
+      "row": 1,
+      "col": 2,
+      "width": 220,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "order_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "order.id"
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "product.id"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "order_customer",
+      "from": "order",
+      "to": "customer",
+      "label": "placed by",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "payment_order",
+      "from": "payment",
+      "to": "order",
+      "fromCardinality": "many",
+      "fromOptional": true,
+      "toCardinality": "one",
+      "identifying": false
+    },
+    {
+      "id": "order_item_order",
+      "from": "order_item",
+      "to": "order",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "order_item_product",
+      "from": "order_item",
+      "to": "product",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "inventory_product",
+      "from": "inventory",
+      "to": "product",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Keys",
+      "items": [
+        "Every child carries the parent id as a bigint foreign key.",
+        "order_item holds two foreign keys: order_id and product_id.",
+        "email and sku are unique, so they carry a secondary key marker."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Attributes kept out of the boxes",
+      "items": [
+        "order.total_amount is numeric(12,2) and stays off the diagram.",
+        "payment.paid_at is timestamptz; an unpaid order simply has no row yet.",
+        "order_item.quantity is int and is the only line attribute kept off the boxes."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Optionality",
+      "items": [
+        "An order may exist before any payment attempt, so the payment side is zero or many.",
+        "The payment relationship is non-identifying: it is drawn dashed.",
+        "customer, product, and order_item links are all mandatory."
+      ]
+    }
+  ]
+}

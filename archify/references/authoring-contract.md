@@ -7,6 +7,7 @@ Read this reference only after the Fast authoring path calls for more detail. Th
 Read both the mode schema and `schemas/common.schema.json`. The mode schemas use `$ref`, so the common file is where shared enums live.
 
 - `componentType`: `frontend`, `backend`, `database`, `cloud`, `security`, `messagebus`, `external`
+- Entity-relationship documents use `entities` and `relationships`; `key` accepts `pk`, `fk`, or `uk`, and `fromCardinality`/`toCardinality` accept `one` or `many`.
 - `variant`: `default`, `emphasis`, `security`, `dashed`
 - Relationship IDs use the shared identifier pattern and must be unique in their collection.
 
@@ -168,6 +169,35 @@ Participants are ordered by conversation role. Messages own their vertical order
 ### Dataflow
 
 Stages express transformation or custody. Rows separate parallel streams. Label only data contracts, classifications, or cross-boundary movement that is not obvious.
+
+### ERD
+
+Treat a schema ERD as a table catalogue as well as a relationship map. If the
+schema has more than 8 tables or 50 fields, it is a dense full-schema map: start
+with `meta.quality_profile: "standard"` so complete field visibility is not
+traded away for repeated showcase route repairs. Include every physical column in
+`attributes`, keep the source SQL type, and preserve the
+field's Chinese comment in the type string as `SQL_TYPE｜中文备注` because the
+schema has no separate comment property. The default viewer shows these rows at
+the `read` level; do not rely on hover/focus or cards to reveal physical fields.
+Cards may explain constraints, inferred relationships, or domain rules, but never
+replace a field list.
+
+Before placing boxes, classify tables into functional domains using verified table
+names, comments, module paths, and foreign-key meaning. Put the domain name in
+`tag` and assign a contiguous rectangle or compact staircase of grid cells to the
+domain. All tables with the same tag stay together; do not interleave unrelated
+tables between members. Order parent/core tables toward the shared boundary and
+place their direct children beside or beneath them. Columns read left to right and
+rows read top to bottom, so a relationship between neighbouring columns is one
+straight corridor. Never place an unrelated entity between two aligned anchors;
+the router can detour around it, but the clear corridor is shorter and reads
+better. Use `row`/`col` for this normal grouped layout, and only use explicit
+`pos`/`via` after a diagnostic identifies a concrete geometry problem.
+
+Put one key per attribute (`key`) and the real references in `references`. A
+many-to-many pair is a real fact about the model, so state it and identify the join
+table when one exists.
 
 ### Lifecycle
 

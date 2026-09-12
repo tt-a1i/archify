@@ -79,6 +79,7 @@ const GOLDEN = [
   ['dataflow', 'product-analytics.dataflow.json', 'dataflow-product-analytics.html'],
   ['lifecycle', 'agent-run.lifecycle.json', 'lifecycle-agent-run.html'],
   ['architecture', 'web-app.architecture.json', 'web-app-rendered.html'],
+  ['erd', 'orders.erd.json', 'erd-orders-rendered.html'],
 ];
 
 for (const [mode, input, golden] of GOLDEN) {
@@ -139,6 +140,12 @@ expectFailure('zero component height rejected by schema', 'architecture',
   (d) => { d.components[0].size = [120, 0]; }, '/components/0/size/1');
 expectFailure('negative component width rejected by schema', 'architecture',
   (d) => { d.components[0].size = [-1, 60]; }, '/components/0/size/0');
+expectFailure('unknown attribute key rejected by schema', 'erd',
+  (d) => { d.entities[0].attributes[0].key = 'super'; }, '/entities/0/attributes/0/key');
+expectFailure('entity without a label rejected by schema', 'erd',
+  (d) => { delete d.entities[0].label; }, '/entities/0');
+expectFailure('unknown relationship cardinality rejected by schema', 'erd',
+  (d) => { d.relationships[0].toCardinality = 'several'; }, '/relationships/0/toCardinality');
 
 // ---------------------------------------------------------------------------
 console.log('template freshness (architecture example must carry the current template)');

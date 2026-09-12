@@ -12,11 +12,12 @@ against one of the schemas in this folder before any layout work happens.
 | `dataflow.schema.json` | `diagram_type: "dataflow"` | `stages`, `nodes`, `flows` |
 | `lifecycle.schema.json` | `diagram_type: "lifecycle"` | `lanes`, `states`, `transitions` |
 | `architecture.schema.json` | `diagram_type: "architecture"` | `components`, `boundaries`, `connections` |
+| `erd.schema.json` | `diagram_type: "erd"` | `entities`, `relationships` |
 | `common.schema.json` | shared `$defs` only (no top-level document) | — |
 
 Every diagram schema requires `schema_version`, `diagram_type`, `meta` (with
-`title`), and its structural arrays — except `segments`, `activations`, and
-`cards`, which are optional — and sets `additionalProperties: false` at every
+`title`), and its structural arrays — except `segments`, `activations`, ERD
+`relationships`, and `cards`, which are optional — and sets `additionalProperties: false` at every
 level, so unknown fields are rejected rather than silently ignored.
 
 Every `meta` object also accepts `animation: "trace"` for opt-in SVG/CSS motion
@@ -82,6 +83,7 @@ Supported keys are renderer-owned:
 | Sequence | `emphasis`, `return`, `security`, `dashed`, `default` |
 | Dataflow | `emphasis`, `security`, `dashed`, `database`, `default` |
 | Lifecycle | `start`, `active`, `waiting`, `decision`, `success`, `failure`, `neutral`, `external` |
+| ERD | `pk`, `fk`, `uk`, `one`, `many`, `optional` |
 
 Labels are presentation only: they do not rename the stable kind, change
 nodes/relationships, or create Semantic Lens edge facts. Sequence message and
