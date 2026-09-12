@@ -467,3 +467,63 @@ test('render output check: finite_svg reports the attribute carrying a non-finit
     'text y="Infinity"',
   ]);
 });
+
+test('render output check: finite_svg parses quoted angle brackets and HTML attribute quoting', () => {
+  const { code, result } = checkHtml('finite-attr-syntax', `
+    <rect aria-label="greater > lesser" x="NaN" y="40" width="200" height="74"/>
+    <circle cx='Infinity' cy='40' r='6'/>
+    <line x1=undefined y1=10 x2=20 y2=10/>
+  `);
+  assert.notEqual(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'rect x="NaN"',
+    'circle cx="Infinity"',
+    'line x1="undefined"',
+  ]);
+});
+
+test('render output check: finite_svg covers extended SVG numeric attributes', () => {
+  const { code, result } = checkHtml('finite-extended-attrs', `
+    <path d="M 0 0 L 10 0" pathLength="NaN"/>
+    <radialGradient fr="-Infinity"/>
+    <feGaussianBlur stdDeviation="undefined"/>
+  `);
+  assert.notEqual(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'path pathLength="NaN"',
+    'radialGradient fr="-Infinity"',
+    'feGaussianBlur stdDeviation="undefined"',
+  ]);
+});
+
+test('render output check: finite_svg covers element-specific filter numeric attributes', () => {
+  const { code, result } = checkHtml('finite-element-specific-filter-attrs', `
+    <filter id="lighting">
+      <feDiffuseLighting><fePointLight x="10" y="10" z="NaN"/></feDiffuseLighting>
+      <feSpecularLighting><feSpotLight x="10" y="10" z="-Infinity"/></feSpecularLighting>
+      <feColorMatrix type="saturate" values="undefined"/>
+    </filter>
+  `);
+  assert.notEqual(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'fePointLight z="NaN"',
+    'feSpotLight z="-Infinity"',
+    'feColorMatrix values="undefined"',
+  ]);
+});
+
+test('render output check: finite_svg keeps context-sensitive values attributes scoped', () => {
+  const { code, result } = checkHtml('finite-context-sensitive-values', `
+    <animate attributeName="data-node-tag" values="NaN;Infinity" dur="1s"/>
+  `);
+  assert.equal(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, true);
+  assert.deepEqual(check.details, []);
+});

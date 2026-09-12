@@ -60,12 +60,26 @@ let composition = {
 };
 
 const NON_FINITE_TOKEN = /\b(?:NaN|undefined|Infinity)\b/;
+const SVG_START_TAG = /<([A-Za-z][\w:-]*)(?=[\s/>])(?:[^>"']|"[^"]*"|'[^']*')*>/g;
+const HTML_ATTRIBUTE = /([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/g;
 const NUMERIC_ATTRS = new Set([
   'x', 'y', 'x1', 'y1', 'x2', 'y2', 'dx', 'dy', 'cx', 'cy', 'r', 'rx', 'ry', 'fx', 'fy',
-  'width', 'height', 'd', 'points', 'transform', 'viewBox', 'offset', 'opacity',
-  'fill-opacity', 'stroke-opacity', 'font-size', 'stroke-width', 'stroke-dasharray',
-  'stroke-dashoffset', 'stroke-miterlimit', 'textLength', 'startOffset', 'rotate',
-  'markerWidth', 'markerHeight', 'refX', 'refY', 'patternTransform', 'gradientTransform',
+  'fr', 'width', 'height', 'd', 'points', 'pathlength', 'transform', 'viewbox', 'offset',
+  'opacity', 'fill-opacity', 'flood-opacity', 'stop-opacity', 'stroke-opacity', 'font-size',
+  'font-size-adjust', 'font-weight', 'letter-spacing', 'word-spacing', 'kerning', 'stroke-width',
+  'stroke-dasharray', 'stroke-dashoffset', 'stroke-miterlimit', 'textlength', 'startoffset',
+  'rotate', 'markerwidth', 'markerheight', 'refx', 'refy', 'orient', 'patterntransform',
+  'gradienttransform', 'filterres', 'stddeviation', 'basefrequency', 'numoctaves', 'seed',
+  'surfacescale', 'diffuseconstant', 'specularconstant', 'specularexponent',
+  'limitingconeangle', 'azimuth', 'elevation', 'pointsatx', 'pointsaty', 'pointsatz',
+  'kernelmatrix', 'order', 'divisor', 'bias', 'targetx', 'targety', 'kernelunitlength',
+  'scale', 'radius', 'k1', 'k2', 'k3', 'k4', 'tablevalues', 'slope', 'intercept',
+  'amplitude', 'exponent',
+]);
+const ELEMENT_NUMERIC_ATTRS = new Map([
+  ['fecolormatrix', new Set(['values'])],
+  ['fepointlight', new Set(['z'])],
+  ['fespotlight', new Set(['z'])],
 ]);
 
 function addCheck(name, ok, details = []) {
@@ -828,20 +842,30 @@ function padBox(box, padding) {
 // mention "NaN" or "Infinity" without any coordinate being non-finite.
 function collectNonFiniteAttrs(svg) {
   const details = [];
-  for (const match of svg.matchAll(/<([A-Za-z][\w:-]*)\b[^>]*>/g)) {
-    const attrs = parseAttrs(match[0]);
-    for (const [name, value] of Object.entries(attrs)) {
-      if (!NUMERIC_ATTRS.has(name) || !NON_FINITE_TOKEN.test(value)) continue;
+  for (const match of svg.matchAll(SVG_START_TAG)) {
+    for (const [name, value] of attrEntries(match[0])) {
+      if (!isNumericAttr(match[1], name) || !NON_FINITE_TOKEN.test(value)) continue;
       details.push(`${match[1]} ${name}="${value}"`);
     }
   }
   return details;
 }
 
+function isNumericAttr(elementName, attrName) {
+  const normalizedAttr = attrName.toLowerCase();
+  return NUMERIC_ATTRS.has(normalizedAttr)
+    || ELEMENT_NUMERIC_ATTRS.get(elementName.toLowerCase())?.has(normalizedAttr);
+}
+
+function attrEntries(tag) {
+  return [...tag.matchAll(HTML_ATTRIBUTE)].map((match) => [
+    match[1],
+    match[2] ?? match[3] ?? match[4],
+  ]);
+}
+
 function parseAttrs(tag) {
-  const attrs = {};
-  for (const match of tag.matchAll(/([\w:-]+)\s*=\s*"([^"]*)"/g)) attrs[match[1]] = match[2];
-  return attrs;
+  return Object.fromEntries(attrEntries(tag));
 }
 
 function numberAttr(attrs, name) {
