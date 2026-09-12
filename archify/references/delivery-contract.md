@@ -2,6 +2,15 @@
 
 ## Validate and deliver
 
+`render` and direct renderer entry points print classified authoring failures
+to stderr as readable diagnostics and exit 1. Input read/JSON parse failures
+use `input/read` or `input/json-parse`; output filesystem failures use
+`output/write` and identify the output path. Schema and layout failures keep
+their existing rule codes. Use the advertised `validate --json` or
+`deliver --json` interface for a machine receipt; `render` has no `--json` flag.
+Unexpected implementation failures retain debugging information in human
+mode and remain `internal/unclassified` in machine receipts.
+
 Use `validate` after every candidate edit. CLI HTML output paths must end in `.html`, including after symbolic-link resolution.
 Compare receipt paths must end in `.json`. Explicit CLI paths may be absolute or
 outside the current working directory; authored `meta.output` remains confined
