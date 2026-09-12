@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Archify</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f8fafc;
+        --ink: #172438;
+        --line: #cbd5e1;
+      }
+      html[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #101827;
+        --ink: #e2e8f0;
+        --line: #475569;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      iframe[hidden] {
+        display: none;
+      }
+      nav {
+        position: fixed;
+        bottom: 12px;
+        left: 12px;
+        z-index: 2;
+        display: flex;
+        gap: 8px;
+        padding: 6px;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        max-width: calc(100% - 24px);
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+        color: var(--ink);
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 8px 12px;
+      }
+      button:focus-visible {
+        outline: 3px solid #0891b2;
+        outline-offset: 2px;
+      }
+      button[hidden] {
+        display: none;
+      }
+      dialog {
+        color: var(--ink);
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        max-width: calc(100% - 32px);
+      }
+      dialog::backdrop {
+        background: #0007;
+      }
+      h2 {
+        font-size: 18px;
+      }
+      #choices {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      #status {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        background: var(--bg);
+        padding: 8px;
+      }
+      #status:empty {
+        display: none;
+      }
+      @media print {
+        nav,
+        dialog,
+        #status {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="diagrams"></main>
+    <nav aria-label="Diagram navigation">
+      <button id="back" hidden></button><button id="theme"></button>
+    </nav>
+    <p id="status" role="status"></p>
+    <dialog id="details">
+      <h2 id="detail-title"></h2>
+      <div id="choices"></div>
+      <button id="close"></button>
+    </dialog>
+    <script id="atlas-data" type="application/json">
+      __ARCHIFY_ATLAS_DATA__
+    </script>
+    <script>
+      (() => {
+        "use strict";
+        const data = JSON.parse(
+            document.getElementById("atlas-data").textContent,
+          ),
+          frames = new Map();
+        const zh = data.locale === "zh-CN",
+          back = document.getElementById("back"),
+          themeButton = document.getElementById("theme"),
+          dialog = document.getElementById("details"),
+          status = document.getElementById("status");
+        document.documentElement.lang = zh ? "zh-CN" : "en";
+        document.title = data.title;
+        document
+          .querySelector("nav")
+          .setAttribute("aria-label", zh ? "图表导航" : "Diagram navigation");
+        back.textContent = zh ? "返回总览" : "Back to overview";
+        document.getElementById("close").textContent = zh ? "关闭" : "Close";
+        let current = data.overview,
+          opener = null;
+        let theme = matchMedia("(prefers-color-scheme: light)").matches
+          ? "light"
+          : "dark";
+        try {
+          const saved = localStorage.getItem("archify-theme");
+          if (["light", "dark"].includes(saved)) theme = saved;
+        } catch {}
+        function syncTheme(value) {
+          theme = value;
+          document.documentElement.dataset.theme = value;
+          themeButton.textContent =
+            value === "dark" ? (zh ? "浅色" : "Light") : zh ? "深色" : "Dark";
+          try {
+            localStorage.setItem("archify-theme", value);
+          } catch {}
+          for (const frame of frames.values()) {
+            const win = frame.contentWindow,
+              d = frame.contentDocument;
+            if (
+              win?.Archify?.theme &&
+              d.documentElement.dataset.theme !== value
+            )
+              win.Archify.theme.toggle();
+          }
+        }
+        // Chrome file:// srcdoc does not reliably paint CSS data-URI masks.
+        // Adapt viewer chrome only; the diagram SVG and canonical exports stay intact.
+        function paintIcons(frame) {
+          const d = frame.contentDocument;
+          for (const icon of d.querySelectorAll('span')) {
+            if (icon.dataset.atlasIcon) {
+              icon.style.removeProperty('mask-image');
+              icon.style.removeProperty('-webkit-mask-image');
+              icon.style.removeProperty('background');
+            }
+            const mask = frame.contentWindow.getComputedStyle(icon).maskImage;
+            const match = /^url\("data:image\/svg\+xml,([^"\n]+)"\)$/.exec(mask);
+            if (!match) continue;
+            const svg = new DOMParser().parseFromString(decodeURIComponent(match[1]), 'image/svg+xml').documentElement;
+            if (svg.localName !== 'svg') continue;
+            for (const element of [svg, ...svg.querySelectorAll('*')]) {
+              for (const attribute of ['fill', 'stroke']) {
+                if (element.getAttribute(attribute) === 'black') element.setAttribute(attribute, 'currentColor');
+              }
+            }
+            svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%');
+            icon.dataset.atlasIcon = 'true';
+            icon.style.maskImage = 'none'; icon.style.webkitMaskImage = 'none';
+            icon.style.background = 'transparent';
+            icon.replaceChildren(d.importNode(svg, true));
+          }
+        }
+        function show(id) {
+          if (!data.diagrams.some((item) => item.id === id)) id = data.overview;
+          current = id;
+          for (const [key, frame] of frames) frame.hidden = key !== id;
+          if (!frames.has(id)) {
+            const item = data.diagrams.find((item) => item.id === id),
+              frame = document.createElement("iframe");
+            frame.title = item.title;
+            frame.dataset.diagramId = id;
+            frames.set(id, frame);
+            frame.addEventListener("load", () => {
+              const d = frame.contentDocument;
+              if (!frame.contentWindow.Archify?.theme) {
+                status.textContent = zh
+                  ? "图表加载失败"
+                  : "Diagram could not be loaded";
+                return;
+              }
+              syncTheme(theme);
+              paintIcons(frame);
+              const icons = new MutationObserver(() => paintIcons(frame));
+              for (const element of [d.documentElement, d.body]) icons.observe(element, {attributes:true, attributeFilter:['data-theme','data-preset','class']});
+              new MutationObserver(() => {
+                const value = d.documentElement.dataset.theme;
+                if (value !== theme && ["light", "dark"].includes(value))
+                  syncTheme(value);
+              }).observe(d.documentElement, {
+                attributes: true,
+                attributeFilter: ["data-theme"],
+              });
+              if (id === data.overview)
+                for (const link of data.links) {
+                  const node = [...d.querySelectorAll("[data-node-id]")].find(
+                    (node) => node.dataset.nodeId === link.node,
+                  );
+                  if (!node) continue;
+                  const hint = zh ? "查看细节" : "Open details";
+                  node.setAttribute(
+                    "aria-label",
+                    (node.getAttribute("aria-label") || link.node) +
+                      " — " +
+                      hint,
+                  );
+                  node.setAttribute(
+                    "aria-haspopup",
+                    link.details.length > 1 ? "dialog" : "true",
+                  );
+                  function activate(event) {
+                    if (
+                      event.type === "keydown" &&
+                      !["Enter", " "].includes(event.key)
+                    )
+                      return;
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    opener = node;
+                    if (link.details.length === 1) {
+                      location.hash = link.details[0];
+                      return;
+                    }
+                    document.getElementById("detail-title").textContent =
+                      node.dataset.nodeLabel || link.node;
+                    const choices = document.getElementById("choices");
+                    choices.replaceChildren();
+                    for (const target of link.details) {
+                      const button = document.createElement("button");
+                      button.textContent = data.diagrams.find(
+                        (item) => item.id === target,
+                      ).title;
+                      button.addEventListener("click", () => {
+                        dialog.close();
+                        location.hash = target;
+                      });
+                      choices.append(button);
+                    }
+                    dialog.showModal();
+                  }
+                  node.addEventListener("click", activate, true);
+                  node.addEventListener("keydown", activate, true);
+                }
+              frame.dataset.ready = "true";
+              if (current === id) status.textContent = "";
+            });
+            frame.srcdoc = item.html;
+            document.getElementById("diagrams").append(frame);
+          }
+          back.hidden = id === data.overview;
+          status.textContent = frames.get(id).dataset.ready
+            ? ""
+            : zh
+              ? "正在载入…"
+              : "Loading…";
+          if (id === data.overview && opener)
+            requestAnimationFrame(() => opener.focus());
+        }
+        back.addEventListener("click", () => {
+          location.hash = data.overview;
+        });
+        themeButton.addEventListener("click", () =>
+          syncTheme(theme === "dark" ? "light" : "dark"),
+        );
+        document
+          .getElementById("close")
+          .addEventListener("click", () => dialog.close());
+        dialog.addEventListener("close", () => opener?.focus());
+        window.addEventListener("hashchange", () =>
+          show(location.hash.slice(1)),
+        );
+        syncTheme(theme);
+        show(location.hash.slice(1) || data.overview);
+      })();
+    </script>
+  </body>
+</html>

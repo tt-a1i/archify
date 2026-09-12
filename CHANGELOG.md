@@ -4,6 +4,11 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
+### Improved reading
+
+- Showcase sequence message names use larger primary type and matching label plates; real browser readability checks now include message labels.
+- Optional `atlas` packages checked overview/detail HTML with explicit node links, keyboard navigation, preserved overview position, synchronized themes and artifact fingerprints. Browser and perceptual acceptance remain separate.
+
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
 ### Fixed

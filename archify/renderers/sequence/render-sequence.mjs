@@ -38,6 +38,10 @@ const colGap = columnFit === 'spread' && participantCount > 1
   ? Math.max(108, (viewBox[0] - 40 - sideMargin - participantW) / (participantCount - 1))
   : 108;
 
+// Showcase is the fast-authoring default; standard retains legacy label geometry.
+const readableMessages = sequence.meta?.quality_profile === 'showcase';
+const messageFontSize = readableMessages ? 11 : 9;
+const messageUnitWidth = readableMessages ? 6.6 : 5.2;
 const layout = {
   topY: 72,
   participantW,
@@ -47,7 +51,7 @@ const layout = {
   legendY: viewBox[1] - 54,
   leftX: columnFit === 'spread' ? sideMargin + participantW / 2 : sideMargin,
   colGap,
-  labelH: 16
+  labelH: readableMessages ? 18 : 16
 };
 
 const participantBoxWidthNote = columnFit === 'spread'
@@ -90,7 +94,7 @@ function messageGeometry(message) {
 function messageLabelBox(message, relationIndex = null) {
   const geometry = messageGeometry(message);
   if (!geometry) return null;
-  const width = Math.max(34, textUnits(message.label) * 5.2 + 12);
+  const width = Math.max(34, textUnits(message.label) * messageUnitWidth + 12);
   return {
     relation: message,
     relationIndex,
@@ -361,7 +365,7 @@ function messageLabel(message, x1, x2) {
   const box = messageLabelBox(message);
   const center = box ? box.x + box.width / 2 : (x1 + x2) / 2;
   const y = message.y - 10;
-  const labelW = box?.width || Math.max(34, textUnits(message.label) * 5.2 + 12);
+  const labelW = box?.width || Math.max(34, textUnits(message.label) * messageUnitWidth + 12);
   const accent = message.variant === 'security'
     ? 't-security'
     : message.variant === 'dashed'
@@ -371,7 +375,7 @@ function messageLabel(message, x1, x2) {
         : 't-backend';
   return `        <g data-detail="context">
           <rect x="${center - labelW / 2}" y="${y - 10}" width="${labelW}" height="${layout.labelH}" rx="3" class="c-mask"/>
-          <text x="${center}" y="${y}" class="${accent}" font-size="9" text-anchor="middle">${esc(message.label)}</text>
+          <text x="${center}" y="${y}" class="${accent}" font-size="${messageFontSize}" text-anchor="middle">${esc(message.label)}</text>
         </g>`;
 }
 

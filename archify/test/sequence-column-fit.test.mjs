@@ -135,3 +135,26 @@ test('the fast authoring path explains when to opt into spread', () => {
   assert.match(rendererReadme, /Use `"spread"` when a wide/);
   assert.match(rendererReadme, /try `meta\.column_fit: "spread"` before shortening/);
 });
+
+test('message names use readable primary type with a plate wide enough for the same text', () => {
+  const doc = wideSequence('spread');
+  doc.meta.quality_profile = 'showcase';
+  const html = render(doc);
+  const match = html.match(/<rect x="[^"]+" y="[^"]+" width="([^"]+)" height="[^"]+" rx="3" class="c-mask"\/>\s*<text[^>]*font-size="([^"]+)"[^>]*>authorize<\/text>/);
+  assert.ok(match, 'message and its plate are present');
+  assert.ok(Number(match[2]) >= 11, 'primary message text should be at least 11 source px');
+  assert.ok(Number(match[1]) >= 9 * 6.4 + 12, 'plate must fit the larger monospace text');
+});
+
+
+test('standard retains acceptance for parallel schema-v1 labels with legacy spacing', () => {
+  const doc = {
+    schema_version: 1, diagram_type: 'sequence', meta: { title: 'Parallel requests' },
+    participants: ['a', 'b', 'c', 'd'].map(id => ({ id, type: 'backend', label: id })),
+    messages: [
+      { from: 'a', to: 'b', y: 200, label: '123456789012345678901234567890123' },
+      { from: 'c', to: 'd', y: 200, label: '123456789012345678901234567890123' },
+    ],
+  };
+  assert.equal(renderOutcome(doc).code, 0);
+});
