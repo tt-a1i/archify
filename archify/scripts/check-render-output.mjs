@@ -81,7 +81,7 @@ if (svgMatches.length === 1) {
   addCheck(
     'orthogonal_arrows',
     diagonal.length === 0,
-    diagonal.map(({ arrow, segmentIndex }) => `${arrow.kind} ${arrow.index} segment ${segmentIndex + 1}: ${arrow.raw}`),
+    diagonal.map(({ arrow, segmentIndex }) => `${arrow.kind} ${arrow.index} segment ${segmentIndex + 1}: expected an orthogonal segment or an explicitly authored direct straight route; ${arrow.raw}`),
   );
   const relationshipCrossings = collectRelationshipCrossings(arrows);
   const compositionFrames = collectCompositionFrames(beforeLegend);
@@ -295,6 +295,12 @@ function collectArrows(fragment) {
       kind: tag[1].toLowerCase(),
       index: index += 1,
       raw,
+      // Trust route intent only for a semantic edge with one visible direct
+      // segment. A stale marker on bent/curved geometry cannot waive the gate.
+      authoredStraight: attrs['data-composition-route'] === 'straight'
+        && Boolean(attrs['data-edge-from'] && attrs['data-edge-to'])
+        && segments.length === 1 && borderSegments.length === 1
+        && (tag[1].toLowerCase() === 'line' || /^\s*M\s+[-+\d.eE]+\s+[-+\d.eE]+\s+L\s+[-+\d.eE]+\s+[-+\d.eE]+\s*$/.test(attrs.d || '')),
       segments,
       borderSegments,
       routePoints: parseRoutePoints(attrs['data-composition-points']) || (
@@ -556,6 +562,7 @@ function straightPathSegments(d) {
 }
 
 function diagonalStraightSegments(arrow) {
+  if (arrow.authoredStraight) return [];
   return arrow.borderSegments.flatMap(({ start, end }, segmentIndex) => (
     Math.abs(start[0] - end[0]) > 0.01 && Math.abs(start[1] - end[1]) > 0.01
       ? [{ segmentIndex, start, end }]

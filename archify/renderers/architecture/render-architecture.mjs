@@ -34,6 +34,7 @@ import {
   normalizeRoutePoints,
   polylinePath,
   routePointsValue,
+  authoredStraightRouteAttrs,
   roundedPath,
   labelPoint,
   componentFill,
@@ -965,7 +966,7 @@ function renderConnectionPath(conn, index) {
   const [cls, marker] = arrowClassMap[conn.variant || 'default'] || arrowClassMap.default;
   const routed = pathFor(conn);
   const strokeWidth = conn.width || (conn.variant === 'emphasis' ? 1.8 : 1.5);
-  return `        <path ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)} data-composition-points="${routePointsValue(routed.points)}" d="${routed.d}" class="${cls}"${animateAttr(arch.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  return `        <path ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)} data-composition-points="${routePointsValue(routed.points)}"${authoredStraightRouteAttrs(conn, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(arch.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
 }
 
 function renderConnectionLabel(conn, index) {

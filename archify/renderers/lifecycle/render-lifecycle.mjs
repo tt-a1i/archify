@@ -27,6 +27,7 @@ import {
   chosenSide,
   roundedPath,
   routePointsValue,
+  authoredStraightRouteAttrs,
   labelPoint,
   arrowClassMap,
   variantAccent
@@ -465,7 +466,7 @@ function renderTransitionPath(transition, index) {
   const [cls, marker] = arrowClassMap[transition.variant || 'default'] || arrowClassMap.default;
   const routed = pathFor(transition);
   const strokeWidth = transition.width || (transition.variant === 'emphasis' ? 2 : 1.1);
-  return `        <path ${focusEdgeAttrs(transition.from, transition.to, transition.label, index, transition.id)} data-composition-points="${routePointsValue(routed.points)}" d="${routed.d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  return `        <path ${focusEdgeAttrs(transition.from, transition.to, transition.label, index, transition.id)} data-composition-points="${routePointsValue(routed.points)}"${authoredStraightRouteAttrs(transition, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
 }
 
 function renderTransitionLabel(transition, index) {

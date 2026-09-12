@@ -27,6 +27,7 @@ import {
   chosenSide,
   polylinePath,
   routePointsValue,
+  authoredStraightRouteAttrs,
   labelPoint,
   componentFill,
   componentText,
@@ -399,7 +400,7 @@ function renderFlowPath(flow, index) {
   const [cls, marker] = arrowClassMap[flow.variant || 'default'] || arrowClassMap.default;
   const routed = pathFor(flow);
   const strokeWidth = flow.width || (flow.variant === 'emphasis' ? 1.8 : 1.4);
-  return `        <path ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)} data-composition-points="${routePointsValue(routed.points)}" d="${routed.d}" class="${cls}"${animateAttr(dataflow.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  return `        <path ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)} data-composition-points="${routePointsValue(routed.points)}"${authoredStraightRouteAttrs(flow, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(dataflow.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
 }
 
 function renderFlowLabel(flow, index) {
