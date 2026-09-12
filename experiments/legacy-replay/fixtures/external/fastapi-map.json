@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "FastAPI",
+    "quality_profile": "standard",
+    "repository": {
+      "url": "https://github.com/fastapi/fastapi",
+      "revision": "50113da16fec53b66b80d75e80a89296de4fa5a5",
+      "provider": "github",
+      "link_mode": "web"
+    }
+  },
+  "components": [
+    {
+      "id": "application",
+      "type": "backend",
+      "label": "FastAPI App",
+      "sublabel": "app + routing",
+      "pos": [40, 80],
+      "size": [200, 64],
+      "sources": [
+        { "path": "fastapi/applications.py", "label": "FastAPI class" },
+        { "path": "fastapi/routing.py", "label": "APIRouter" }
+      ]
+    },
+    {
+      "id": "params",
+      "type": "backend",
+      "label": "Parameters",
+      "sublabel": "Query, Path, Body…",
+      "pos": [280, 80],
+      "size": [200, 64],
+      "sources": [
+        { "path": "fastapi/params.py", "label": "param models" },
+        { "path": "fastapi/param_functions.py", "label": "Query/Path/Body" }
+      ]
+    },
+    {
+      "id": "dependencies",
+      "type": "backend",
+      "label": "Dependency Injection",
+      "pos": [520, 80],
+      "size": [220, 64],
+      "sources": [
+        { "path": "fastapi/dependencies/models.py", "label": "Dep models" },
+        { "path": "fastapi/dependencies/utils.py", "label": "solve deps" }
+      ]
+    },
+    {
+      "id": "security",
+      "type": "security",
+      "label": "Security Schemes",
+      "sublabel": "OAuth2, API key, HTTP",
+      "pos": [780, 80],
+      "size": [220, 64],
+      "sources": [
+        { "path": "fastapi/security/oauth2.py", "label": "OAuth2" },
+        { "path": "fastapi/security/http.py", "label": "HTTP auth" }
+      ]
+    },
+    {
+      "id": "openapi",
+      "type": "backend",
+      "label": "OpenAPI",
+      "pos": [40, 240],
+      "size": [200, 64],
+      "sources": [
+        { "path": "fastapi/openapi/utils.py", "label": "get_openapi" },
+        { "path": "fastapi/openapi/docs.py", "label": "Swagger/ReDoc" }
+      ]
+    },
+    {
+      "id": "middleware",
+      "type": "backend",
+      "label": "Middleware",
+      "pos": [280, 240],
+      "size": [200, 64],
+      "sources": [
+        { "path": "fastapi/middleware/cors.py", "label": "CORS" }
+      ]
+    },
+    {
+      "id": "http-surface",
+      "type": "backend",
+      "label": "HTTP Surface",
+      "sublabel": "req/res, exceptions, SSE",
+      "pos": [520, 240],
+      "size": [220, 64],
+      "sources": [
+        { "path": "fastapi/responses.py", "label": "responses" },
+        { "path": "fastapi/exceptions.py", "label": "exceptions" }
+      ]
+    },
+    {
+      "id": "compat",
+      "type": "backend",
+      "label": "Pydantic Compat",
+      "pos": [780, 240],
+      "size": [220, 64],
+      "sources": [
+        { "path": "fastapi/_compat/__init__.py", "label": "compat" }
+      ]
+    },
+    {
+      "id": "cli",
+      "type": "frontend",
+      "label": "CLI",
+      "pos": [40, 400],
+      "size": [200, 64],
+      "sources": [
+        { "path": "fastapi/cli.py", "label": "fastapi CLI" },
+        { "path": "fastapi/__main__.py", "label": "python -m" }
+      ]
+    },
+    {
+      "id": "starlette",
+      "type": "external",
+      "label": "Starlette",
+      "pos": [280, 400],
+      "size": [200, 64]
+    },
+    {
+      "id": "pydantic",
+      "type": "external",
+      "label": "Pydantic",
+      "pos": [520, 400],
+      "size": [220, 64]
+    }
+  ],
+  "connections": [
+    { "id": "app-params", "from": "application", "to": "params" },
+    { "id": "params-deps", "from": "params", "to": "dependencies" },
+    { "id": "deps-security", "from": "dependencies", "to": "security" },
+    { "id": "app-openapi", "from": "application", "to": "openapi", "fromSide": "bottom", "toSide": "top" },
+    { "id": "params-mw", "from": "params", "to": "middleware", "fromSide": "bottom", "toSide": "top" },
+    { "id": "deps-http", "from": "dependencies", "to": "http-surface", "fromSide": "bottom", "toSide": "top" },
+    { "id": "security-compat", "from": "security", "to": "compat", "fromSide": "bottom", "toSide": "top" },
+    { "id": "openapi-mw", "from": "openapi", "to": "middleware" },
+    { "id": "mw-http", "from": "middleware", "to": "http-surface" },
+    { "id": "http-compat", "from": "http-surface", "to": "compat" },
+    { "id": "openapi-cli", "from": "openapi", "to": "cli", "fromSide": "bottom", "toSide": "top" },
+    { "id": "mw-starlette", "from": "middleware", "to": "starlette", "fromSide": "bottom", "toSide": "top" },
+    { "id": "http-pydantic", "from": "http-surface", "to": "pydantic", "fromSide": "bottom", "toSide": "top" },
+    { "id": "cli-starlette", "from": "cli", "to": "starlette" },
+    { "id": "starlette-pydantic", "from": "starlette", "to": "pydantic" }
+  ]
+}

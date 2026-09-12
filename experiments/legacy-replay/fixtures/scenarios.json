@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "pins": {
+    "delivery": "365fec9cde7237829fc7986a5fbadc50334c9b72",
+    "presets": "9306382111aa2cc5a1b376559a7a6bd75b7c2e74"
+  },
+  "glob": [
+    {
+      "parent": "src/**/b",
+      "child": "src/{a,}/b",
+      "witness": "src//b",
+      "delivery": false,
+      "presets": true
+    },
+    {
+      "parent": "**/b",
+      "child": "{a,}/b",
+      "witness": "/b",
+      "delivery": false,
+      "presets": true
+    },
+    {
+      "parent": "src/**",
+      "child": "src/*",
+      "witness": "src/",
+      "delivery": false,
+      "presets": true
+    },
+    {
+      "parent": "src/**",
+      "child": "src/api/**",
+      "witness": null,
+      "delivery": true,
+      "presets": true
+    }
+  ],
+  "presets": [
+    {
+      "path": "pkg/build/compiler.go",
+      "preset": "generated",
+      "presetState": "excluded",
+      "role": "Illustrative Go product code in a package named build"
+    },
+    {
+      "path": "archify/brand-marks/input.png",
+      "preset": "generated",
+      "presetState": "excluded",
+      "role": "Illustrative authored brand input asset"
+    },
+    {
+      "path": "tests/fixtures/product.js",
+      "preset": "tests",
+      "presetState": "excluded",
+      "role": "Illustrative product fixture in a testing library"
+    },
+    {
+      "path": "archify/references/authoring-contract.md",
+      "preset": "docs",
+      "presetState": "excluded",
+      "role": "Illustrative shipped authoring contract"
+    },
+    {
+      "path": "requirements.txt",
+      "preset": "lockfiles",
+      "presetState": "excluded",
+      "role": "Illustrative authored dependency specification"
+    },
+    {
+      "path": "config.yaml",
+      "preset": "ci",
+      "presetState": "excluded",
+      "role": "Illustrative runtime configuration"
+    },
+    {
+      "path": "archify/migrations/workflow-v2.mjs",
+      "preset": "generated",
+      "presetState": "uncovered",
+      "role": "Exact migration path highlighted in historical review experiment"
+    },
+    {
+      "path": "archify/migrations/workflow-v2.mjs",
+      "preset": "docs",
+      "presetState": "uncovered",
+      "role": "Exact migration path is not hidden by this preset"
+    }
+  ],
+  "external": {
+    "hono": [
+      {
+        "path": "src/hono.ts",
+        "expected": {
+          "state": "touched",
+          "componentId": "core"
+        }
+      },
+      {
+        "path": "src/middleware/example/index.ts",
+        "expected": {
+          "state": "touched",
+          "componentId": "middleware"
+        }
+      },
+      {
+        "path": "src/brand-marks/input.png",
+        "expected": {
+          "state": "uncovered"
+        }
+      },
+      {
+        "path": "bun.lock",
+        "expected": {
+          "state": "excluded"
+        }
+      }
+    ],
+    "fastapi": [
+      {
+        "path": "fastapi/applications.py",
+        "expected": {
+          "state": "touched",
+          "componentId": "application"
+        }
+      },
+      {
+        "path": "fastapi/dependencies/utils.py",
+        "expected": {
+          "state": "touched",
+          "componentId": "dependencies"
+        }
+      },
+      {
+        "path": "docs/authoring-contract.md",
+        "expected": {
+          "state": "uncovered"
+        }
+      },
+      {
+        "path": "uv.lock",
+        "expected": {
+          "state": "excluded"
+        }
+      }
+    ],
+    "hugo": [
+      {
+        "path": "hugolib/build.go",
+        "expected": {
+          "state": "touched",
+          "componentId": "hugolib"
+        }
+      },
+      {
+        "path": "resources/brand-marks/input.png",
+        "expected": {
+          "state": "touched",
+          "componentId": "assets"
+        }
+      },
+      {
+        "path": "pkg/build/compiler.go",
+        "expected": {
+          "state": "uncovered"
+        }
+      },
+      {
+        "path": "go.sum",
+        "expected": {
+          "state": "excluded"
+        }
+      }
+    ]
+  },
+  "sourceReceipt": {
+    "map": {
+      "schema_version": 1,
+      "diagram_type": "architecture",
+      "meta": {
+        "title": "Citation is not ownership"
+      },
+      "components": [
+        {
+          "id": "core",
+          "type": "backend",
+          "label": "Core",
+          "sources": [
+            {
+              "path": "archify/migrations/workflow-v2.mjs"
+            }
+          ]
+        }
+      ],
+      "connections": []
+    },
+    "ownership": {
+      "schema_version": 1,
+      "kind": "ownership",
+      "map": "map.json",
+      "components": [
+        {
+          "id": "core",
+          "globs": [
+            "src/**"
+          ]
+        }
+      ]
+    },
+    "changes": [
+      {
+        "changeType": "M",
+        "path": "archify/migrations/workflow-v2.mjs"
+      }
+    ],
+    "headTree": [
+      "archify/migrations/workflow-v2.mjs",
+      "src/main.mjs"
+    ]
+  },
+  "cliMap": {
+    "schema_version": 1,
+    "diagram_type": "architecture",
+    "meta": {
+      "title": "Fixed Locate replay"
+    },
+    "components": [
+      {
+        "id": "cli",
+        "type": "frontend",
+        "label": "CLI",
+        "pos": [
+          40,
+          80
+        ],
+        "size": [
+          120,
+          60
+        ]
+      },
+      {
+        "id": "core",
+        "type": "backend",
+        "label": "Core",
+        "pos": [
+          240,
+          80
+        ],
+        "size": [
+          120,
+          60
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "id": "cli-core",
+        "from": "cli",
+        "to": "core"
+      }
+    ]
+  },
+  "cliOwnership": {
+    "schema_version": 1,
+    "kind": "ownership",
+    "map": "map.architecture.json",
+    "components": [
+      {
+        "id": "cli",
+        "globs": [
+          "bin/**"
+        ]
+      },
+      {
+        "id": "core",
+        "globs": [
+          "src/**"
+        ]
+      }
+    ]
+  }
+}

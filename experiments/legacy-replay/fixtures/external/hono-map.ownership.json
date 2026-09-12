@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "kind": "ownership",
+  "map": "hono-map.json",
+  "excluded": [
+    "bun.lock",
+    "**/package-lock.json"
+  ],
+  "components": [
+    {
+      "id": "core",
+      "globs": [
+        "src/{hono.ts,hono-base.ts,hono.test.ts,context.ts,context.test.ts,compose.ts,compose.test.ts,request.ts,request.test.ts,index.ts,types.ts,types.test.ts,http-exception.ts,http-exception.test.ts}",
+        "src/request/**"
+      ]
+    },
+    {
+      "id": "router",
+      "globs": ["src/router.ts", "src/router/**"]
+    },
+    {
+      "id": "middleware",
+      "globs": ["src/middleware/**"]
+    },
+    {
+      "id": "adapters",
+      "globs": ["src/adapter/**"]
+    },
+    {
+      "id": "jsx",
+      "globs": ["src/jsx/**"]
+    },
+    {
+      "id": "client",
+      "globs": ["src/client/**"]
+    },
+    {
+      "id": "helpers",
+      "globs": ["src/helper/**"]
+    },
+    {
+      "id": "validator",
+      "globs": ["src/validator/**"]
+    },
+    {
+      "id": "utils",
+      "globs": ["src/utils/**"]
+    },
+    {
+      "id": "presets",
+      "globs": ["src/preset/**"]
+    }
+  ]
+}

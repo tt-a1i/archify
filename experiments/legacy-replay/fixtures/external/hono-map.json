@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Hono",
+    "quality_profile": "standard",
+    "repository": {
+      "url": "https://github.com/honojs/hono",
+      "revision": "e7b38ee42bfa41f20194ad20fb949b625346be62",
+      "provider": "github",
+      "link_mode": "web"
+    }
+  },
+  "components": [
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Hono Core",
+      "sublabel": "app, context, request",
+      "pos": [40, 80],
+      "size": [200, 64],
+      "sources": [
+        { "path": "src/hono.ts", "label": "Hono class" },
+        { "path": "src/hono-base.ts", "label": "HonoBase" },
+        { "path": "src/context.ts", "label": "Context" }
+      ]
+    },
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "Routers",
+      "sublabel": "RegExp / trie / smart",
+      "pos": [280, 80],
+      "size": [200, 64],
+      "sources": [
+        { "path": "src/router.ts", "label": "Router interface" },
+        { "path": "src/router/reg-exp-router/index.ts", "label": "RegExpRouter" }
+      ]
+    },
+    {
+      "id": "middleware",
+      "type": "backend",
+      "label": "Built-in Middleware",
+      "pos": [520, 80],
+      "size": [220, 64],
+      "sources": [
+        { "path": "src/middleware/cors/index.ts", "label": "CORS" },
+        { "path": "src/middleware/jwt/index.ts", "label": "JWT" }
+      ]
+    },
+    {
+      "id": "adapters",
+      "type": "cloud",
+      "label": "Runtime Adapters",
+      "sublabel": "Workers, Lambda, Bun…",
+      "pos": [780, 80],
+      "size": [220, 64],
+      "sources": [
+        { "path": "src/adapter/cloudflare-workers/index.ts", "label": "Workers" },
+        { "path": "src/adapter/aws-lambda/index.ts", "label": "Lambda" }
+      ]
+    },
+    {
+      "id": "jsx",
+      "type": "frontend",
+      "label": "JSX Runtime",
+      "pos": [40, 240],
+      "size": [200, 64],
+      "sources": [
+        { "path": "src/jsx/index.ts", "label": "jsx entry" }
+      ]
+    },
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "Typed Client",
+      "pos": [280, 240],
+      "size": [200, 64],
+      "sources": [
+        { "path": "src/client/index.ts", "label": "hc client" }
+      ]
+    },
+    {
+      "id": "helpers",
+      "type": "backend",
+      "label": "Helpers",
+      "sublabel": "cookie, html, ssg…",
+      "pos": [520, 240],
+      "size": [220, 64],
+      "sources": [
+        { "path": "src/helper/factory/index.ts", "label": "factory" },
+        { "path": "src/helper/cookie/index.ts", "label": "cookie" }
+      ]
+    },
+    {
+      "id": "validator",
+      "type": "security",
+      "label": "Validator",
+      "pos": [780, 240],
+      "size": [220, 64],
+      "sources": [
+        { "path": "src/validator/index.ts", "label": "validator" }
+      ]
+    },
+    {
+      "id": "utils",
+      "type": "backend",
+      "label": "Utils",
+      "pos": [40, 400],
+      "size": [200, 64],
+      "sources": [
+        { "path": "src/utils/jwt/jwt.ts", "label": "jwt util" }
+      ]
+    },
+    {
+      "id": "presets",
+      "type": "backend",
+      "label": "Presets",
+      "sublabel": "tiny / quick",
+      "pos": [280, 400],
+      "size": [200, 64],
+      "sources": [
+        { "path": "src/preset/tiny.ts", "label": "tiny" }
+      ]
+    }
+  ],
+  "connections": [
+    { "id": "core-router", "from": "core", "to": "router" },
+    { "id": "router-middleware", "from": "router", "to": "middleware" },
+    { "id": "middleware-adapters", "from": "middleware", "to": "adapters" },
+    { "id": "core-jsx", "from": "core", "to": "jsx", "fromSide": "bottom", "toSide": "top" },
+    { "id": "router-client", "from": "router", "to": "client", "fromSide": "bottom", "toSide": "top" },
+    { "id": "middleware-helpers", "from": "middleware", "to": "helpers", "fromSide": "bottom", "toSide": "top" },
+    { "id": "adapters-validator", "from": "adapters", "to": "validator", "fromSide": "bottom", "toSide": "top" },
+    { "id": "jsx-client", "from": "jsx", "to": "client" },
+    { "id": "client-helpers", "from": "client", "to": "helpers" },
+    { "id": "helpers-validator", "from": "helpers", "to": "validator" },
+    { "id": "jsx-utils", "from": "jsx", "to": "utils", "fromSide": "bottom", "toSide": "top" },
+    { "id": "client-presets", "from": "client", "to": "presets", "fromSide": "bottom", "toSide": "top" },
+    { "id": "utils-presets", "from": "utils", "to": "presets" }
+  ]
+}
