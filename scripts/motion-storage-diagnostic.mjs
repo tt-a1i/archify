@@ -16,9 +16,12 @@ input.meta.animation = 'trace';
 const inputFile = path.join(scratch, 'viewer.json');
 fs.writeFileSync(inputFile, JSON.stringify(input));
 execFileSync(process.execPath, ['archify/renderers/architecture/render-architecture.mjs', inputFile, viewer]);
+const padded = path.join(scratch, 'padded.html');
+fs.writeFileSync(padded, '<!doctype html><html><head><title>Padded control</title></head><body>' + 'x'.repeat(fs.statSync(viewer).size) + '</body></html>');
 const results = [];
 try {
-  for (const product of [false, true]) for (const earlyRead of [false, true]) for (const prelude of [0, 6]) {
+  for (const documentKind of ['padded', 'viewer']) for (const earlyRead of [false, true]) for (const prelude of [0, 6]) {
+    const product = documentKind === 'viewer';
     const browser = new ChromeVisualBrowser(findChrome());
     try {
       const session = await browser.sessionPromise;
@@ -28,7 +31,7 @@ try {
         if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
         return result.result.value;
       };
-      const result = { product, earlyRead, prelude, browser: await browser.cdp.send('Browser.getVersion'), reads: [], events: [] };
+      const result = { documentKind, product, earlyRead, prelude, browser: await browser.cdp.send('Browser.getVersion'), reads: [], events: [] };
       let buffer = '';
       const trace = chunk => {
         buffer += chunk;
@@ -44,7 +47,7 @@ try {
       await send('DOMStorage.enable');
       let startup;
       let generation = 0;
-      const url = pathToFileURL(product ? viewer : plain).href;
+      const url = pathToFileURL(product ? viewer : padded).href;
       async function load({ reload = false, clear = false, query = '' } = {}) {
         const expected = ++generation;
         if (startup) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: startup });
