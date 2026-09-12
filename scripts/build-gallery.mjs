@@ -150,6 +150,19 @@ const CASES = [
     descriptionZh: '部署对象经过构建、验证、审批、晋级、健康暂停、回滚和明确终态。',
   },
   {
+    id: 'orders',
+    type: 'erd',
+    input: 'orders.erd.json',
+    output: 'orders.erd.html',
+    focus: 'order',
+    view: 'checkout',
+    accent: '#f472b6',
+    titleEn: 'Order Management Schema',
+    titleZh: '订单管理表结构',
+    descriptionEn: 'Six tables with their key attributes, crow-foot cardinality at both ends, an optional non-identifying payment link, and the columns kept out of the boxes in cards.',
+    descriptionZh: '六张表及其关键属性，两端用鸦爪标注基数，一条可选的标识性支付连线，以及放进卡片的其余字段。',
+  },
+  {
     id: 'web-app',
     type: 'architecture',
     input: 'web-app.architecture.json',
@@ -170,6 +183,7 @@ const SHAPES = {
   sequence: ['participants', 'messages'],
   dataflow: ['nodes', 'flows'],
   lifecycle: ['states', 'transitions'],
+  erd: ['entities', 'relationships'],
 };
 
 // Print-depth type hues shared with the site palette (guide page uses the same map).
@@ -179,6 +193,7 @@ const TYPE_ACCENTS = {
   sequence: '#6d28d9',
   dataflow: '#b45309',
   lifecycle: '#be123c',
+  erd: '#0f766e',
 };
 
 function digest(buffer) {

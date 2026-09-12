@@ -4,6 +4,7 @@ export const DIAGRAM_TYPES = Object.freeze([
   'sequence',
   'dataflow',
   'lifecycle',
+  'erd',
 ]);
 
 export const DIAGRAM_TYPE_LABELS = Object.freeze({
@@ -13,6 +14,7 @@ export const DIAGRAM_TYPE_LABELS = Object.freeze({
     sequence: 'Sequence',
     dataflow: 'Data flow',
     lifecycle: 'Lifecycle',
+    erd: 'Entity-relationship',
   }),
   zh: Object.freeze({
     architecture: '架构图',
@@ -20,6 +22,7 @@ export const DIAGRAM_TYPE_LABELS = Object.freeze({
     sequence: '时序图',
     dataflow: '数据流',
     lifecycle: '生命周期',
+    erd: '实体关系图',
   }),
 });
 

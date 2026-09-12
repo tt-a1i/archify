@@ -250,6 +250,27 @@ const RAW_RECIPES = [
       prompt: '用 Archify 生命周期模式建模部署对象。展示排队、构建、验证、等待审批、晋级、回滚以及所有终态，并标注允许每次状态转换的事件和守卫条件。',
     },
   },
+  {
+    id: 'database-schema', type: 'erd', proof: 'orders',
+    presentation: { preset: 'classic', motion: 'static', views: 'optional' },
+    signals: [['entity relationship', 14], ['er diagram', 15], ['database schema', 13], ['table schema', 12], ['foreign key', 11], ['primary key', 9], ['cardinality', 9], ['实体关系图', 15], ['ER 图', 15], ['表结构', 13], ['数据库设计', 12], ['外键', 11], ['主键', 9], ['实体关系', 12]],
+    en: {
+      title: 'Database schema', question: 'Which tables exist, what keys do they carry, and how do they relate?',
+      summary: 'An entity-relationship map of tables, their key columns, and the cardinality between them.',
+      useWhen: 'Schema reviews, data-model onboarding, migration planning, or explaining a foreign-key graph.',
+      avoidWhen: 'The question is row-level movement between systems (data flow) or access order at runtime (sequence).',
+      include: ['tables with their key columns', 'primary, foreign, and unique key markers', 'cardinality and optionality at both ends', 'the complete column list in cards'],
+      prompt: 'Use Archify ERD mode to model this schema. Show each table with the columns a reader needs, mark primary, foreign, and unique keys, and draw every foreign-key relationship with its cardinality and optionality. Keep related tables in the same row or column, and put the complete column list in cards instead of widening the boxes.',
+    },
+    zh: {
+      title: '数据库表结构', question: '有哪些表、各自带什么键、彼此如何关联？',
+      summary: '用实体关系图展示表、关键列以及表之间的基数关系。',
+      useWhen: '适合表结构评审、数据模型上手、迁移规划和解释外键关系图。',
+      avoidWhen: '如果重点是系统之间的行级数据流动或运行期访问顺序，请用数据流图或时序图。',
+      include: ['表及其关键列', '主键、外键、唯一键标记', '两端的基数与可选性', '完整字段表放进卡片'],
+      prompt: '用 Archify ERD 模式建模这份表结构。每张表只画读者需要的列，标注主键、外键和唯一键，并为每条外键关系画出基数和可选性。把相关表放在同一行或同一列，完整字段列表放进卡片而不是加宽表格框。',
+    },
+  },
 ];
 
 export const SCENARIO_RECIPES = Object.freeze(RAW_RECIPES.map((recipe) => Object.freeze({
