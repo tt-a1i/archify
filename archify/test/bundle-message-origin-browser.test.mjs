@@ -71,6 +71,12 @@ test('a cross-origin embedding host cannot turn an ordinary diagram into a bundl
     await send('Page.enable', {}, childSession);
     await send('Page.addScriptToEvaluateOnNewDocument', { source: `
       window.fixtureErrors = [];
+      window.fixtureMessageListeners = 0;
+      const add = window.addEventListener;
+      window.addEventListener = function (type, ...args) {
+        if (type === 'message') fixtureMessageListeners++;
+        return add.call(this, type, ...args);
+      };
       addEventListener('error', event => fixtureErrors.push(event.message));
       addEventListener('unhandledrejection', event => fixtureErrors.push(String(event.reason)));
     ` }, childSession);
@@ -84,6 +90,7 @@ test('a cross-origin embedding host cannot turn an ordinary diagram into a bundl
     assert.equal(identity.origin, artifactOrigin);
     assert.equal(identity.isTop, false);
     assert.equal(identity.role, null);
+    assert.equal(await evaluate('fixtureMessageListeners', childSession), 0, 'An ordinary Viewer must not register bundle message listeners.');
     assert.equal(new URL(identity.referrer).origin, hostOrigin);
     assert.equal(await evaluate(`(() => { try { document.getElementById('artifact').contentWindow.document; return false; } catch (error) { return error.name === 'SecurityError'; } })()`), true);
 
@@ -275,6 +282,8 @@ test('bundle messages, repeated navigation and changed child files preserve thei
     }
     const childState = () => run(`(()=>{const child=document.getElementById('archify-drilldown-frame').contentWindow;
       return {nested:child.document.documentElement.getAttribute('data-bundle-nested'),localActive:child.Archify.drilldown.active(),
+        hasManifest:!!child.document.getElementById('archify-bundle-manifest'),
+        hasProjectionPayload:!!child.document.getElementById('archify-locate-projection'),
         projection:[...child.document.querySelectorAll('[data-locate-state]')].map(node=>[node.getAttribute('data-node-id'),node.getAttribute('data-locate-state')]),
         errors:child.fixtureErrors,polluted:child.Object.prototype.polluted===true,
         injected:!!child.document.querySelector('img[src="x"],svg[onload]')};})()`);
@@ -283,6 +292,7 @@ test('bundle messages, repeated navigation and changed child files preserve thei
       await open(); assertLive(await descend());
       const before = await childState();
       assert.equal(before.nested, 'true'); assert.equal(before.localActive, false);
+      assert.equal(before.hasManifest, false); assert.equal(before.hasProjectionPayload, false);
       const sha = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'))).diagrams.find(row => row.id === 'payments').spec_sha256;
       await messagesToEntry([{type:'archify:bundle-ack',id:'payments',specSha256:sha},{type:'archify:drilldown-escape'}], 'self');
       assertLive(await state());

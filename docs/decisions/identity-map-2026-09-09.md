@@ -1,14 +1,19 @@
 # Identity map: ownership sidecar, `archify locate`, drilldown bundles
 
-Date: 2026-09-09. Branch: `feature/identity-map`. Baseline: `1072200` (= `origin/main`).
+Date: 2026-09-09. Branch: `feature/identity-map`. Baseline at the time: `1072200` (then `origin/main`).
 
 This record consolidates three working drafts — on the ownership sidecar and `locate`, on
 identity-based drilldown, and on the pre-registered experiments — into one decision document and
 reconciles them against the implementation that now exists on the branch. The drafts have been
 removed; this file replaces them. Where a draft and the code disagreed, the code is authoritative
 and the divergence is recorded in
-[Divergences from the drafts](#11-divergences-from-the-drafts). Every decision below cites a
-`path:line` in the current tree.
+[Divergences from the drafts](#11-divergences-from-the-drafts). The numeric citations below are historical notebook references, not current API documentation.
+For maintained contracts, use [Locate](../../archify/references/locate.md) and
+[drilldown bundles](../../archify/references/drilldown-bundles.md). The six named cold-read
+navigation errors were rechecked against public commit `dc2153b` and replaced below with
+fixed-revision symbol links. Other old line references have not all been semantically re-audited.
+The [recovery disposition](../identity-map-legacy-disposition-2026-09-12.md) supersedes the old
+experiment, implementation-status and future-work claims where they differ.
 
 Raw experiment data stays beside this file: `e1-fix-classification.json`, `e3-replay.json`,
 `e3-map-at-base.json`, `e3-map-at-head.json`, `e3-sources-decay.json`, `e3-deep-summary.json`.
@@ -28,7 +33,7 @@ relationships, authored evidence pointers. This work adds two things on top of t
 2. **Nested reading.** `archify bundle <dir>` turns a directory of delivered diagrams into a
    two-level bundle so a reader can descend from one component into a child diagram and come
    back to the same pixels (`archify/bundle/diagram-bundle.mjs:302`,
-   `archify/assets/template.html:14947`).
+   [modular Viewer `Archify.drilldown` / `back()`](https://github.com/tt-a1i/archify/blob/dc2153b41a214c3984b78f874330ddc6f59ddd89/viewer/template.source.html#L6722)).
 
 The purpose is orientation: helping a reader — human or agent — understand where a change lands
 and what the inside of a component looks like. It is not a review verdict. The receipt carries
@@ -124,7 +129,7 @@ forces the two to stay byte-equal.
 - `spec_sha256` — sha256 of the sibling JSON bytes. It is the **runtime** check: the renderer
   writes it onto the SVG root as `data-bundle-spec-sha256`
   (`archify/renderers/shared/cli.mjs:175-176`), and the child reports it back over `postMessage`
-  during the handshake (`archify/assets/template.html:15352-15356`).
+  during the handshake ([child `onMessage()` acknowledgement](https://github.com/tt-a1i/archify/blob/dc2153b41a214c3984b78f874330ddc6f59ddd89/viewer/template.source.html#L6744)).
 - `artifact_sha256` — sha256 of the HTML bytes, computed on disk. It is the **offline** check; a
   self-contained HTML file cannot contain its own digest, and under `file://` the parent cannot
   read child bytes.
@@ -227,7 +232,7 @@ the top-level diagnostic code (`archify/bin/archify.mjs:2058-2065`).
 the entry HTML (`archify/locate/cli.mjs:283-327`, `archify/locate/locate.mjs:387-397`). The
 projection is `{ schemaVersion, base, head, components: { <id>: { state, files_touched_inside } },
 children: { <childId>: { nodes: { <id>: 'touched'|'untouched' } } } }`
-(`archify/locate/locate.mjs:368-385`).
+([`buildLocateProjection()`](https://github.com/tt-a1i/archify/blob/dc2153b41a214c3984b78f874330ddc6f59ddd89/archify/locate/locate.mjs#L406)).
 
 At level 0 the entry applies component states to its own SVG on load
 (`archify/assets/template.html:15393-15400`). On a successful handshake the parent posts
@@ -538,7 +543,7 @@ All are fail-closed and follow the repository's `code` / `severity` / `message` 
 | `locate/facts-invalid` | a `--facts` file is unreadable, or an `imports[]` record is malformed (`archify/locate/cli.mjs:166`, `archify/locate/locate.mjs:190`, `:198`) | 1 |
 | `locate/out-directory` | `--out` cannot be created or read, is not a directory, or an existing target is not a regular file (`archify/locate/cli.mjs:198`, `:206`, `:211`, `:227`) | 1 |
 | `locate/artifact-invalid` | the rendered locate HTML fails its own checks — missing or duplicated embedded receipt, missing annotation, a risk or merge claim, non-finite output, or an incomplete receipt (`archify/locate/locate-html.mjs:158`) | 1 |
-| `locate/ambiguous-ownership` | `--lint` found at least one ambiguous path; one diagnostic per path (`archify/locate/cli.mjs:388`) | 1 |
+| `locate/ambiguous-ownership` | `--lint` found at least one ambiguous path; one diagnostic per path ([`ambiguousDiagnostics()`](https://github.com/tt-a1i/archify/blob/dc2153b41a214c3984b78f874330ddc6f59ddd89/archify/locate/cli.mjs#L444)) | 1 |
 | `locate/internal` | an un-classified failure reaches the reporter (`archify/locate/error.mjs:20`) | 1 |
 
 Usage errors — missing `--map`, missing `--out`, an unknown option, a flag without its value,
@@ -556,7 +561,7 @@ with `bundle/dir-missing`, `bundle/id-invalid`, `bundle/spec-missing`, `bundle/s
 `bundle/render-failed`, `bundle/drilldown-duplicate`, or `bundle/embed-missing`
 (`archify/bundle/diagram-bundle.mjs:173`–`:308`, `:59`).
 
-Every `bundle` failure exits **2** (`archify/bin/archify.mjs:2086`), including validation
+Every `bundle` failure exits **2** ([`commandBundle()` failure exit](https://github.com/tt-a1i/archify/blob/dc2153b41a214c3984b78f874330ddc6f59ddd89/archify/bin/archify.mjs#L2092)), including validation
 failures; there is no exit-1 tier.
 
 ---
@@ -781,7 +786,8 @@ HTML to add the mark, which weakens the delivery guarantee that rendering produc
 
 ### 10.2 Delta `navigation` field group
 
-`canonicalArchitecture` spreads all component fields (`archify/delta/architecture-delta.mjs:57`),
+`canonicalArchitecture` preserves component fields through
+[`normalizeComponent()`](https://github.com/tt-a1i/archify/blob/dc2153b41a214c3984b78f874330ddc6f59ddd89/archify/delta/architecture-delta.mjs#L55),
 so `drilldown` already enters `semanticSha256`. Without a classification it would produce the
 worst outcome: a changed hash with status `same`. The implementation therefore classifies it
 explicitly:

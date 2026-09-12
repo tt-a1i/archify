@@ -153,19 +153,43 @@ function loadMap(mapPath) {
   } catch (error) {
     locateFail('locate/map-invalid', `Could not parse map: ${error.message}`, {
       evidence: { path: mapPath, reason: error.message },
+      supportedFixes: ['repair JSON syntax in the --map file'],
     });
   }
   const type = data?.diagram_type;
-  if (!['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'].includes(type)) {
-    locateFail('locate/map-invalid', 'Map is not a supported Archify diagram JSON.', {
+  const supportedTypes = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'];
+  if (!supportedTypes.includes(type)) {
+    const message = type === undefined
+      ? 'Map is missing required field diagram_type.'
+      : typeof type !== 'string' || !type.trim()
+        ? 'Map diagram_type is invalid; it must be a non-empty string.'
+        : `Map diagram_type ${JSON.stringify(type)} is not a supported Archify diagram type.`;
+    locateFail('locate/map-invalid', message, {
+      subject: { path: '/diagram_type' },
       evidence: { path: mapPath, diagramType: type },
+      supportedFixes: [`set diagram_type to one of ${supportedTypes.join(', ')} matching the authored diagram`],
     });
   }
   try {
     validateSchema(type, data);
   } catch (error) {
-    locateFail('locate/map-invalid', error.message, {
-      evidence: { path: mapPath, reason: error.message },
+    const diagnostics = error.archifyDiagnostics || [];
+    const versionDiagnostic = diagnostics.find((diagnostic) => (
+      diagnostic.subject.path === '/schema_version'
+      || (diagnostic.subject.path === '/' && diagnostic.evidence.missingProperty === 'schema_version')
+    ));
+    const message = versionDiagnostic
+      ? `Map schema_version is ${data.schema_version === undefined ? 'missing' : 'invalid'} for ${type}.\n${error.message}`
+      : error.message;
+    locateFail('locate/map-invalid', message, {
+      subject: versionDiagnostic ? { path: '/schema_version' } : {},
+      evidence: { path: mapPath, reason: error.message, ...(versionDiagnostic?.evidence || {}) },
+      supportedFixes: [
+        ...new Set(diagnostics.flatMap((diagnostic) => diagnostic.supportedFixes)),
+        ...(versionDiagnostic?.evidence.allowedValue !== undefined
+          ? [`set schema_version to ${JSON.stringify(versionDiagnostic.evidence.allowedValue)} for ${type}`] : []),
+        `repair the --map file to match ${type}.schema.json${versionDiagnostic ? ' with its supported schema_version' : ''}`,
+      ],
     });
   }
   return data;

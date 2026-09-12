@@ -63,8 +63,13 @@ The sidecar is a separate file; no diagram schema field changes. Minimal shape:
 `map` is relative to the sidecar's own directory, so the pair moves as a unit. Every component id
 in the map must appear exactly once in `components[]`; an empty `globs` array is a valid, explicit
 statement that a component owns no repository path, which is the normal case for `external`
-components. `child_map` marks a drilldown parent and requires the child sidecar to declare the
-matching `parent` back-link.
+components. `child_map` marks a drilldown parent. When its child sidecar exists, that sidecar must
+declare the matching `parent` back-link. Ordinary Locate can classify the parent without an
+available child sidecar: it retains `childMap` and omits `inside`. A child's explicit `parent`
+pointer, however, must resolve to an existing parent map and sidecar; otherwise loading fails
+with `locate/ownership-parent-missing`. Bundle projection is stricter: `--bundle` requires the
+manifest-bound child specifications and sidecars, reporting `locate/bundle-incomplete` when
+required inputs are missing instead of silently omitting a child.
 
 ### Glob language
 
@@ -110,8 +115,14 @@ so only they can be stale.
 
 ## What a touched state does and does not mean
 
-`touched` means: at least one path changed in this range, and exactly one component's globs
-matched it. That is the whole claim.
+In range mode, `touched` means a changed path matched exactly one component's globs after
+exclusions. A touched component has at least one such path, unless `stale` takes precedence.
+
+With `--lint`, the input is every tracked path at the selected revision, not a change range.
+A file is `touched` when exactly one component claims it after exclusions, even if the file did
+not change. Component `touchedFiles` and `touchedCount` therefore describe ownership across that
+revision's tracked tree. The receipt identifies this mode with `mode: "lint"`,
+`repository.revision`, and `files[].changeType: "tracked"`.
 
 It does not mean the component's behavior changed, that the change is correct, that anything
 downstream is affected, or that a reviewer can stop reading. `uncovered` means no glob matched —

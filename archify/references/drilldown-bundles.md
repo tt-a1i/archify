@@ -138,7 +138,9 @@ is that `artifact_sha256` pins the entry's pre-injection bytes.
 
 ## Validation
 
-`archify bundle --check` runs ten checks and reports all failures at once:
+`archify bundle --check` first checks the manifest. If it is missing, cannot be parsed, or fails
+the schema, validation stops there. With a valid manifest it runs the remaining checks and
+collects their failures. The ten checks are:
 
 1. `manifest.json` exists, parses, and passes the schema.
 2. the entry exists in `diagrams[]` at `level: 0`, every other diagram is `level: 1`, and
@@ -171,6 +173,12 @@ Failure codes are `bundle/entry-level`, `bundle/child-level`, `bundle/max-depth`
 `bundle/entry-ambiguous`, `bundle/entry-missing`, `bundle/type-unknown`, `bundle/render-failed`,
 or `bundle/embed-missing`.
 
+Manifest validation can fail with `bundle/manifest-missing`, `bundle/manifest-parse`, or
+`bundle/schema: <path> <message>`. These are entries in
+`diagnostics[0].evidence.failures[]`; the diagnostic's top-level `code` is `bundle/invalid`.
+For these early failures, the evidence reports `checksPassed: 0` and `checkCount: 1`, because
+the remaining checks did not run.
+
 ## Exit codes
 
 | Code | Meaning |
@@ -187,6 +195,26 @@ mismatch, the top-level code is promoted to `bundle/child-stale`.
 **Descending.** Single click keeps its existing one-hop focus meaning. Descending happens through
 the named `Descend` control in the Semantic Passport, or by activating the drilldown mark on the
 node. Keyboard activation works because the node is already a focusable button.
+
+For scripts and headless readers, `Archify.drilldown.descend(componentId)` starts a descent from
+an entry-diagram node. Pass the node's semantic ID (`data-node-id`), not the child diagram ID.
+The Viewer resolves the child through the node's annotation and the bundle manifest.
+
+The call returns a boolean synchronously. `false` means no descent started: the Viewer is
+nested, the node has no drilldown child, or no readable embedded manifest is available. `true`
+means the request was handled; it may start loading a child or immediately show a stale card
+for an invalid bundle reference. It does not confirm that the iframe loaded or its handshake
+succeeded. The frame remains hidden until the expected diagram ID and spec digest pass the
+handshake. Neither `active()` nor `data-drilldown-state="level1"` is a readiness signal.
+Use `Archify.drilldown.back()` to return to the parent.
+
+Bundle click/load listeners are registered only for an entry with an embedded manifest, after
+the document has parsed. A nested child still receives handshake messages without its own
+manifest or Locate payload. Ordinary Viewers do not register bundle message listeners.
+Offline `file:` documents have opaque origins, so their `postMessage` transport uses `"*"`;
+receivers validate the actual source window, bundle role and message shape, and the parent
+verifies the child's ID and spec digest. The wildcard is not permission for an unrelated
+embedding page to turn an ordinary Viewer into a bundle child.
 
 **Level 1.** A breadcrumb reads `<entry title> › <component label> · <child title>`; its first
 rung is a button that ascends, and only the current rung carries `aria-current="page"`. Below it,

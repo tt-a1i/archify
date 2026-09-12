@@ -15590,14 +15590,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         });
         applyLocate(svg, states);
       }
-      if (svg) svg.addEventListener('click', onMarkClick, true);
-      window.addEventListener('message', onMessage);
-      if (frame) {
-        frame.addEventListener('load', function () {
-          if (!current || !frame.src) return;
-          postHello();
-        });
+      function registerBundleListeners() {
+        var hasManifest = !!readManifest();
+        if (svg && hasManifest) svg.addEventListener('click', onMarkClick, true);
+        // Children receive their handshake without embedding their own manifest.
+        if (hasManifest || nestedChild()) window.addEventListener('message', onMessage);
+        if (frame && hasManifest) {
+          frame.addEventListener('load', function () {
+            if (!current || !frame.src) return;
+            postHello();
+          });
+        }
       }
+      // Bundle injection may place the manifest after this runtime script.
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', registerBundleListeners, { once: true });
+      else registerBundleListeners();
 
       return {
         validateHandshake: validateHandshake,

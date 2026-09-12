@@ -149,7 +149,7 @@ test('exact identity fails closed instead of guessing relationships or unrelated
   );
 });
 
-test('evidence-only component changes keep an enabled exact review contract', () => {
+test('evidence-only component changes retain their exact review identity', () => {
   const base = read(baseFixture);
   const head = read(baseFixture);
   base.components[0].sources = [{ path: 'src/entry.js', line: 1, label: 'baseline' }];
@@ -158,8 +158,13 @@ test('evidence-only component changes keep an enabled exact review contract', ()
   assert.equal(receipt.changes.components.length, 1);
   assert.equal(receipt.changes.components[0].status, 'evidence-changed');
   assert.deepEqual(receipt.changes.components[0].classifications, ['evidence']);
-  const runtime = fs.readFileSync(path.join(skillRoot, 'delta/architecture-delta.mjs'), 'utf8');
-  assert.match(runtime, /statuses: \['added', 'changed', 'evidence-changed', 'removed', 'moved', 'navigation-changed'\]/);
+  assert.equal(receipt.summary.components.evidenceChanged, 1);
+  assert.equal(receipt.summary.components.changed, 0);
+  const rows = architectureDeltaChangeRows(receipt);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].key, `component:${base.components[0].id}`);
+  assert.equal(rows[0].status, 'evidence-changed');
+  assert.deepEqual(rows[0].changedFields, ['/sources']);
 });
 
 test('drilldown-only component changes are navigation-changed and do not inflate changed or moved', () => {

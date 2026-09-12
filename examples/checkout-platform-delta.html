@@ -20473,14 +20473,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         });
         applyLocate(svg, states);
       }
-      if (svg) svg.addEventListener(&#39;click&#39;, onMarkClick, true);
-      window.addEventListener(&#39;message&#39;, onMessage);
-      if (frame) {
-        frame.addEventListener(&#39;load&#39;, function () {
-          if (!current || !frame.src) return;
-          postHello();
-        });
+      function registerBundleListeners() {
+        var hasManifest = !!readManifest();
+        if (svg &amp;&amp; hasManifest) svg.addEventListener(&#39;click&#39;, onMarkClick, true);
+        // Children receive their handshake without embedding their own manifest.
+        if (hasManifest || nestedChild()) window.addEventListener(&#39;message&#39;, onMessage);
+        if (frame &amp;&amp; hasManifest) {
+          frame.addEventListener(&#39;load&#39;, function () {
+            if (!current || !frame.src) return;
+            postHello();
+          });
+        }
       }
+      // Bundle injection may place the manifest after this runtime script.
+      if (document.readyState === &#39;loading&#39;) document.addEventListener(&#39;DOMContentLoaded&#39;, registerBundleListeners, { once: true });
+      else registerBundleListeners();
 
       return {
         validateHandshake: validateHandshake,
@@ -36417,14 +36424,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         });
         applyLocate(svg, states);
       }
-      if (svg) svg.addEventListener(&#39;click&#39;, onMarkClick, true);
-      window.addEventListener(&#39;message&#39;, onMessage);
-      if (frame) {
-        frame.addEventListener(&#39;load&#39;, function () {
-          if (!current || !frame.src) return;
-          postHello();
-        });
+      function registerBundleListeners() {
+        var hasManifest = !!readManifest();
+        if (svg &amp;&amp; hasManifest) svg.addEventListener(&#39;click&#39;, onMarkClick, true);
+        // Children receive their handshake without embedding their own manifest.
+        if (hasManifest || nestedChild()) window.addEventListener(&#39;message&#39;, onMessage);
+        if (frame &amp;&amp; hasManifest) {
+          frame.addEventListener(&#39;load&#39;, function () {
+            if (!current || !frame.src) return;
+            postHello();
+          });
+        }
       }
+      // Bundle injection may place the manifest after this runtime script.
+      if (document.readyState === &#39;loading&#39;) document.addEventListener(&#39;DOMContentLoaded&#39;, registerBundleListeners, { once: true });
+      else registerBundleListeners();
 
       return {
         validateHandshake: validateHandshake,
