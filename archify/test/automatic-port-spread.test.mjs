@@ -176,8 +176,8 @@ test('architecture: incoming and outgoing relationships keep distinct bottom por
   );
 });
 
-test('architecture: a near-aligned relationship keeps the outside bridge when both endpoints are spread', () => {
-  const html = render('architecture', {
+test('architecture: an unobstructed doubly spread facing relationship keeps one straight axis', () => {
+  const doc = {
     schema_version: 1,
     diagram_type: 'architecture',
     meta: { title: 'Two-sided port competition' },
@@ -192,11 +192,59 @@ test('architecture: a near-aligned relationship keeps the outside bridge when bo
       { id: 'source-peer-target', from: 'source-peer', to: 'target', fromSide: 'top', toSide: 'bottom' },
       { id: 'source-target-peer', from: 'source', to: 'target-peer', fromSide: 'top', toSide: 'bottom' },
     ],
-  });
+  };
+  const forward = render('architecture', doc);
+  const reversed = render('architecture', { ...doc, connections: [...doc.connections].reverse() });
 
-  const points = connectionPoints(html, 'source-target');
-  assert.ok(points.length > 2);
-  assert.notEqual(points[0][0], points.at(-1)[0]);
+  const points = connectionPoints(forward, 'source-target');
+  assert.deepEqual(points, [[380, 320], [380, 160]]);
+
+  // Competing ports stay distinct from the straightened shared axis.
+  assert.notEqual(connectionPoints(forward, 'source-peer-target').at(-1)[0], points[0][0]);
+  assert.notEqual(connectionPoints(forward, 'source-target-peer')[0][0], points[0][0]);
+
+  for (const connection of doc.connections) {
+    assert.deepEqual(
+      connectionPoints(forward, connection.id),
+      connectionPoints(reversed, connection.id),
+      `${connection.id} moved after input reordering`,
+    );
+  }
+});
+
+test('architecture: an unobstructed doubly spread horizontal relationship keeps one straight axis', () => {
+  const doc = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Two-sided horizontal port competition' },
+    components: [
+      { id: 'source', type: 'backend', label: 'Source', pos: [80, 300], size: [160, 60] },
+      { id: 'source-peer', type: 'backend', label: 'Source peer', pos: [80, 100], size: [160, 60] },
+      { id: 'target', type: 'database', label: 'Target', pos: [500, 300], size: [160, 60] },
+      { id: 'target-peer', type: 'database', label: 'Target peer', pos: [500, 500], size: [160, 60] },
+    ],
+    connections: [
+      { id: 'source-target', from: 'source', to: 'target', fromSide: 'right', toSide: 'left' },
+      { id: 'source-peer-target', from: 'source-peer', to: 'target', fromSide: 'right', toSide: 'left' },
+      { id: 'source-target-peer', from: 'source', to: 'target-peer', fromSide: 'right', toSide: 'left' },
+    ],
+  };
+  const forward = render('architecture', doc);
+  const reversed = render('architecture', { ...doc, connections: [...doc.connections].reverse() });
+
+  const points = connectionPoints(forward, 'source-target');
+  assert.deepEqual(points, [[240, 330], [500, 330]]);
+
+  assert.notEqual(connectionPoints(forward, 'source-peer-target').at(-1)[1], points[0][1]);
+  assert.notEqual(connectionPoints(forward, 'source-target-peer')[0][1], points[0][1]);
+
+  for (const connection of doc.connections) {
+    assert.deepEqual(
+      connectionPoints(forward, connection.id),
+      connectionPoints(reversed, connection.id),
+      `${connection.id} moved after input reordering`,
+    );
+  }
 });
 
 test('architecture: a singly spread near-aligned relationship keeps the bridge when its direct axis is blocked', () => {
