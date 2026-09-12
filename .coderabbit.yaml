@@ -10,10 +10,14 @@ reviews:
   request_changes_workflow: false
   high_level_summary: true
   high_level_summary_in_walkthrough: true
+  changed_files_summary: false
   high_level_summary_instructions: >-
-    Summarize the user problem, changed behavior, and compatibility impact.
-    Distinguish author-reported validation from observed checks at the current
-    head. Do not claim browser or perceptual acceptance from static tests.
+    In at most 100 words, summarize the user problem, changed behavior, and
+    compatibility impact without a file-by-file inventory. State the reviewed
+    base/head and distinguish author-reported validation, reused evidence at its
+    original revision, and observed CI at its checked revision. Treat the summary
+    as a snapshot, not a live CI status. Do not claim browser or perceptual
+    acceptance from static tests.
   poem: false
   in_progress_fortune: false
   sequence_diagrams: false
@@ -47,11 +51,13 @@ reviews:
         unrelated rebuilds or infer correctness from generated file volume.
         Use the PR base-to-head diff; a clean checkout does not mean an empty PR.
         On revision, review new changes and unresolved findings, expanding only
-        when intervening changes invalidate earlier evidence. Label feedback as
+        when intervening base, scope, or code changes invalidate the agreed scope
+        or earlier evidence. Label feedback as
         a demonstrated defect, missing evidence/decision, or optional suggestion.
         Give each request an affected contract, smallest remedy, and responsible
-        role (author or maintainer); consolidate requests already answered in the
-        PR body, CI, or discussion and retain the evidence's original revision.
+        role (author or maintainer). Before repeating a request, read the latest
+        PR body, CI, and discussion; cite the remaining gap rather than repeating
+        an answered checklist. Retain reused evidence's original revision.
     - path: "archify/**"
       instructions: >-
         Trace callers of changed shared code across diagram types and public
@@ -90,10 +96,13 @@ reviews:
           require a PR to close every item of a tracking issue. Accept
           equivalent prose and explained Not applicable entries, not just exact
           headings or checked boxes. Warn once with the specific missing facts;
-          do not classify missing evidence as a confirmed runtime defect.
+          read the latest description and maintainer decisions before repeating
+          a warning. Do not classify missing evidence as a confirmed runtime defect.
       - name: Validation evidence
         mode: warning
         instructions: >-
+          Read the latest PR description, discussion, and CI before evaluating;
+          do not use an earlier bot summary as the source of current evidence.
           Apply the change-specific evidence requirements in CONTRIBUTING.md
           and the PR template. Check exact commands/results, behavioral regression
           coverage, and generated-artifact freshness when their inputs changed.
@@ -107,12 +116,21 @@ reviews:
           an excluded binary diff alone is not evidence of unrelated changes.
           Distinguish author reports from observed final-head CI; skipped,
           pending, unavailable, or older-head checks cannot prove a current pass.
+          For revisions, identify which changed behavior invalidates earlier
+          local evidence before requesting reruns. Reuse unaffected evidence
+          with its original revision and reuse rationale; a new head alone does
+          not require repeating every local check. Required final-head remote
+          checks still apply. If current evidence cannot be read, report that
+          access limitation rather than claiming the author did not supply it.
           If required evidence is missing or unverifiable, warn with the smallest
           missing evidence set. Do not require screenshots for non-visual changes
           or infer a browser pass from a unit test. Accept explicit maintainer
           exceptions and scope-appropriate explanations for omitted checks.
           When fork CI awaits approval, identify maintainer action after inspecting
           the workflow changes; do not ask the author to obtain unavailable rights.
+          State the evaluated head and evidence revisions in the result. Consolidate
+          remaining gaps with their affected contract, smallest check, and owner;
+          do not repeat satisfied requirements or unrelated rerun instructions.
           A bot pass or exception never waives required CI or branch protection.
 knowledge_base:
   code_guidelines:

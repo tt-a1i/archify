@@ -64,3 +64,11 @@ Source files changed in this follow-up: locate/locate-html.mjs, locate/cli.mjs, 
 
 
 Final runtime result for this source snapshot: **1,190 tests; 1,150 passed, 3 failed, 37 skipped**. The three failures are checked-in Checkout compare, Gallery and MCO artifact reproducibility. This is the complete runtime runner, separately invoked after npm test stopped at the 11 stale-example golden checks. It is not a green npm test or a browser/ZIP acceptance result. No source changed during this runtime run; hashes and the unchanged index were verified.
+
+## Main integration — September 12
+
+The recovered source fixes were committed as `1b3a916` in an isolated delivery checkout. Main at `6db72a9` was integrated while preserving the modular Viewer sources and the current sponsor tables. Identity-map additions now live in the Viewer shell and five existing fragments; the generated template is validated by `generate-viewer.mjs --check`. The hand-authored web-app example retains every original SVG byte.
+
+Browser follow-up reproduced Locate projection badges leaking into SVG export (two transient elements/attributes). The shared export cleanup now removes projection state and the count badge from the clone. A real Chrome regression asserts that the live SVG remains untouched and the entire exported SVG matches its pristine counterpart. The regression failed before the fix and passed afterward.
+
+Bundled/development examples, Checkout compare, Gallery, pinned MCO artifacts, README animation and the Node 22 archive have been regenerated. Intermediate test runs overlap this follow-up fix and are diagnostic evidence only; final acceptance requires an immutable candidate run. No push or merge is claimed by this entry.

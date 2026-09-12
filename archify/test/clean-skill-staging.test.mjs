@@ -113,6 +113,122 @@ test('clean staging preserves index modes and strips repository-only package met
   }
 });
 
+test('clean staging records Git index modes in a manifest outside the staged tree', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  const manifest = path.join(root, 'staged-modes.json');
+  try {
+    write(root, 'archify/bin/executable.mjs', '#!/usr/bin/env node\n');
+    write(root, 'archify/renderers/shared/plain.mjs', 'export {};\n');
+    git(root, ['add', 'archify']);
+    // Set the index modes explicitly so the expectation does not depend on
+    // whether this checkout can represent executable bits (core.fileMode).
+    git(root, ['update-index', '--chmod=+x', 'archify/bin/executable.mjs']);
+    git(root, ['update-index', '--chmod=-x', 'archify/renderers/shared/plain.mjs']);
+
+    const result = stageCleanSkill({ repoRoot: root, destination, modeManifest: manifest });
+
+    const recorded = JSON.parse(fs.readFileSync(manifest, 'utf8'));
+    assert.equal(recorded['bin/executable.mjs'], '100755');
+    assert.equal(recorded['renderers/shared/plain.mjs'], '100644');
+    assert.deepEqual(result.modes, recorded);
+    assert.deepEqual(Object.keys(recorded), [...Object.keys(recorded)].sort(), 'manifest keys are sorted');
+
+    const stagedFiles = [];
+    const walk = (directory, prefix) => {
+      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
+        if (entry.isDirectory()) walk(path.join(directory, entry.name), relative);
+        else stagedFiles.push(relative);
+      }
+    };
+    walk(destination, '');
+    assert.deepEqual(
+      Object.keys(recorded).sort(),
+      stagedFiles.sort(),
+      'the manifest must list every staged file and nothing else',
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging refuses to write the mode manifest inside the staged tree', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  try {
+    git(root, ['add', 'archify']);
+    const rejected = [
+      destination,
+      path.join(destination, 'modes.json'),
+      path.join(destination, 'nested', 'modes.json'),
+    ];
+    for (const manifest of rejected) {
+      assert.throws(
+        () => stageCleanSkill({ repoRoot: root, destination, modeManifest: manifest }),
+        /mode manifest must be written outside the staged Skill tree/,
+      );
+      assert.equal(fs.existsSync(destination), false, 'a rejected manifest location must not leave a staged tree behind');
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging refuses an existing mode manifest path and leaves it untouched', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  const manifest = path.join(root, 'existing-modes.json');
+  try {
+    git(root, ['add', 'archify']);
+    fs.writeFileSync(manifest, 'not ours\n');
+    assert.throws(
+      () => stageCleanSkill({ repoRoot: root, destination, modeManifest: manifest }),
+      /mode manifest path already exists/,
+    );
+    assert.equal(fs.readFileSync(manifest, 'utf8'), 'not ours\n', 'an existing file at the manifest path must be preserved');
+    assert.equal(fs.existsSync(destination), false, 'a refused manifest path must not leave a staged tree behind');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging rejects a mode manifest that aliases the staged tree through a symlinked ancestor', (t) => {
+  const root = repositoryFixture();
+  const physical = path.join(root, 'physical');
+  const alias = path.join(root, 'alias');
+  try {
+    git(root, ['add', 'archify']);
+    fs.mkdirSync(physical);
+    try {
+      fs.symlinkSync(physical, alias, process.platform === 'win32' ? 'junction' : 'dir');
+    } catch (error) {
+      if (['EPERM', 'EACCES', 'ENOTSUP'].includes(error?.code)) {
+        t.skip(`symlinks unavailable: ${error.code}`);
+        return;
+      }
+      throw error;
+    }
+    const cases = [
+      { destination: path.join(alias, 'staged'), modeManifest: path.join(physical, 'staged', 'modes.json') },
+      { destination: path.join(physical, 'staged'), modeManifest: path.join(alias, 'staged', 'modes.json') },
+    ];
+    for (const { destination, modeManifest } of cases) {
+      assert.throws(
+        () => stageCleanSkill({ repoRoot: root, destination, modeManifest }),
+        /mode manifest must be written outside the staged Skill tree/,
+      );
+      assert.equal(
+        fs.existsSync(path.join(physical, 'staged')),
+        false,
+        'a rejected manifest location must not leave a staged tree behind',
+      );
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('clean staging rejects a symlink in a tracked file ancestor before copying bytes', (t) => {
   const root = repositoryFixture();
   const destination = path.join(root, 'staged-skill');
