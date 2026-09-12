@@ -1,0 +1,13 @@
+%% Checkout interaction exported from an existing Mermaid trace.
+sequenceDiagram
+    autonumber
+    actor shopper as Shopper
+    participant web as Storefront
+    participant api as Orders API
+    participant queue as Job Queue
+    shopper->>web: open checkout
+    web->>+api: POST /orders
+    Note right of api: idempotency key required
+    api-)queue: enqueue fulfilment
+    api-->>-web: 202 accepted
+    web-->>shopper: show confirmation

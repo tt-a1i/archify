@@ -44,6 +44,13 @@ The schema lives at:
 archify/schemas/sequence.schema.json
 ```
 
+## Importing Mermaid
+
+`archify import sequence input.mmd output.sequence.json` converts a documented
+subset of Mermaid `sequenceDiagram` sources into the JSON this renderer reads.
+The supported subset, the Mermaid-arrow to `variant` mapping, and the rejected
+constructs live in `archify/references/mermaid-sequence-import.md`.
+
 ## Legend
 
 The default visual legend derives kinds from `messages[].variant` (omitting

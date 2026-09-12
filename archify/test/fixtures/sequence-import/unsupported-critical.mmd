@@ -1,0 +1,8 @@
+sequenceDiagram
+    participant a as A
+    participant b as B
+    critical acquire lock
+        a->>b: lock
+    option timeout
+        a->>b: retry
+    end

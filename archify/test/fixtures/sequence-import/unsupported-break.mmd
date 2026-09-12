@@ -1,0 +1,6 @@
+sequenceDiagram
+    participant a as A
+    participant b as B
+    break when the payment fails
+        a->>b: abort
+    end
