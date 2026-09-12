@@ -457,10 +457,14 @@ test('cli: preview runs from an installed skill without node_modules and exits c
   const installedCli = path.join(installedRoot, 'bin/archify.mjs');
   const input = path.join(installedRoot, 'examples/web-app.architecture.json');
   const output = path.join(tmp, 'installed-preview.html');
-  const child = spawn(process.execPath, [installedCli, 'preview', 'architecture', input, output, '--quality', 'showcase', '--no-open'], {
+  // Windows child.kill() terminates immediately, bypassing the signal handler.
+  const signalRelay = process.platform === 'win32'
+    ? ['--import', 'data:text/javascript,process.once("message", () => { process.disconnect(); process.emit("SIGTERM"); });']
+    : [];
+  const child = spawn(process.execPath, [...signalRelay, installedCli, 'preview', 'architecture', input, output, '--quality', 'showcase', '--no-open'], {
     cwd: installedRoot,
     encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['ignore', 'pipe', 'pipe', ...(process.platform === 'win32' ? ['ipc'] : [])],
   });
   let stdout = '';
   let stderr = '';
@@ -487,7 +491,8 @@ test('cli: preview runs from an installed skill without node_modules and exits c
   assert.equal(state.revision, 1);
   assert.equal(fs.existsSync(output), true);
 
-  child.kill('SIGTERM');
+  if (process.platform === 'win32') child.send('stop');
+  else child.kill('SIGTERM');
   const exit = await new Promise((resolve) => child.once('close', (code, signal) => resolve({ code, signal })));
   assert.deepEqual(exit, { code: 0, signal: null });
   assert.match(stdout, /stopping preview/);
