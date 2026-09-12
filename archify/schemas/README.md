@@ -12,6 +12,9 @@ against one of the schemas in this folder before any layout work happens.
 | `dataflow.schema.json` | `diagram_type: "dataflow"` | `stages`, `nodes`, `flows` |
 | `lifecycle.schema.json` | `diagram_type: "lifecycle"` | `lanes`, `states`, `transitions` |
 | `architecture.schema.json` | `diagram_type: "architecture"` | `components`, `boundaries`, `connections` |
+| `bundle.schema.json` | `bundle_type: "drilldown"` manifest | `diagrams`, `drilldowns`, optional `ownership` |
+| `ownership.schema.json` | component ownership sidecar | `components`, optional `excluded`, `parent` |
+| `locate-receipt.schema.json` | `archify locate` receipt | `files`, `components`, `facts`, `review` |
 | `common.schema.json` | shared `$defs` only (no top-level document) | — |
 
 Every diagram schema requires `schema_version`, `diagram_type`, `meta` (with
@@ -146,6 +149,20 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
   override shapes used by each renderer-owned key map
 - `guidedViews` — the bounded, read-only reader paths accepted by `meta.views`
 - `cards` — the summary-card blocks rendered below the SVG
+- `diagramTypeName` — one of the five renderer types: `architecture`,
+  `workflow`, `sequence`, `dataflow`, `lifecycle`
+
+## Diagram bundles
+
+`bundle.schema.json` is the machine-readable contract for an identity-based
+drilldown bundle: one directory, one `manifest.json`, an entry diagram plus at
+most twelve same-directory children. Targets are diagram ids, never paths.
+`diagrams[].file` is the only place a filename appears. `spec_sha256` hashes
+the sibling JSON bytes; `artifact_sha256` hashes the HTML bytes (entry hashes
+exclude the runtime `archify-bundle-manifest` script). `max_depth` is `2`.
+An architecture component may declare optional `drilldown` (a child diagram
+id); the manifest `drilldowns[]` table is the id→file resolution used by
+`archify bundle` and the viewer.
 
 Lifecycle state `type` is mode-specific (`start`/`active`/`waiting`/...) and
 stays in `lifecycle.schema.json`.

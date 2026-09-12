@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "kind": "ownership",
+  "map": "fastapi-map.json",
+  "excluded": [
+    "uv.lock",
+    "**/package-lock.json"
+  ],
+  "components": [
+    {
+      "id": "application",
+      "globs": ["fastapi/{applications.py,__init__.py,routing.py}"]
+    },
+    {
+      "id": "params",
+      "globs": ["fastapi/{params.py,param_functions.py,datastructures.py,types.py}"]
+    },
+    {
+      "id": "dependencies",
+      "globs": ["fastapi/dependencies/**"]
+    },
+    {
+      "id": "security",
+      "globs": ["fastapi/security/**"]
+    },
+    {
+      "id": "openapi",
+      "globs": ["fastapi/openapi/**"]
+    },
+    {
+      "id": "middleware",
+      "globs": ["fastapi/middleware/**"]
+    },
+    {
+      "id": "http-surface",
+      "globs": [
+        "fastapi/{requests.py,responses.py,exceptions.py,exception_handlers.py,background.py,sse.py,websockets.py,staticfiles.py,templating.py,testclient.py,encoders.py,concurrency.py,logger.py,utils.py}"
+      ]
+    },
+    {
+      "id": "compat",
+      "globs": ["fastapi/_compat/**"]
+    },
+    {
+      "id": "cli",
+      "globs": ["fastapi/{cli.py,__main__.py}"]
+    },
+    {
+      "id": "starlette",
+      "globs": []
+    },
+    {
+      "id": "pydantic",
+      "globs": []
+    }
+  ]
+}

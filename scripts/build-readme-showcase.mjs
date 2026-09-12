@@ -256,7 +256,7 @@ async function captureFrames(chromePath, tempRoot) {
     const targets = await cdp.send('Target.getTargets');
     let target = targets.targetInfos?.find(item => item.type === 'page');
     if (!target) {
-      const created = await cdp.send('Target.createTarget', { url: 'about:blank', width, height });
+      const created = await cdp.send('Target.createTarget', { url: 'about:blank' });
       target = { targetId: created.targetId };
     }
     const attached = await cdp.send('Target.attachToTarget', { targetId: target.targetId, flatten: true });
@@ -295,7 +295,11 @@ async function captureFrames(chromePath, tempRoot) {
     throw error;
   } finally {
     cdp.failAll(new Error('capture finished'));
-    chrome.kill('SIGTERM');
+    if (chrome.pid && chrome.exitCode === null && chrome.signalCode === null) {
+      const exited = new Promise(resolve => chrome.once('exit', resolve));
+      chrome.kill('SIGTERM');
+      await exited;
+    }
   }
 }
 

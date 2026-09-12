@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Hugo",
+    "quality_profile": "standard",
+    "repository": {
+      "url": "https://github.com/gohugoio/hugo",
+      "revision": "ae07063fcc9a59c95838e83e7fdf12e326ebee7d",
+      "provider": "github",
+      "link_mode": "web"
+    }
+  },
+  "components": [
+    {
+      "id": "cli",
+      "type": "frontend",
+      "label": "Hugo CLI",
+      "pos": [40, 80],
+      "size": [180, 64],
+      "sources": [
+        { "path": "main.go", "label": "main" },
+        { "path": "commands/commands.go", "label": "commands" }
+      ]
+    },
+    {
+      "id": "hugolib",
+      "type": "backend",
+      "label": "Site Builder",
+      "sublabel": "hugolib",
+      "pos": [260, 80],
+      "size": [200, 64],
+      "sources": [
+        { "path": "hugolib/hugo_sites.go", "label": "HugoSites" },
+        { "path": "hugolib/page.go", "label": "Page" }
+      ]
+    },
+    {
+      "id": "content",
+      "type": "backend",
+      "label": "Content Source",
+      "sublabel": "source + parser",
+      "pos": [500, 80],
+      "size": [200, 64],
+      "sources": [
+        { "path": "source/fileInfo.go", "label": "fileInfo" },
+        { "path": "parser/frontmatter.go", "label": "frontmatter" }
+      ]
+    },
+    {
+      "id": "templates",
+      "type": "frontend",
+      "label": "Templates",
+      "pos": [740, 80],
+      "size": [200, 64],
+      "sources": [
+        { "path": "tpl/template.go", "label": "template" }
+      ]
+    },
+    {
+      "id": "assets",
+      "type": "backend",
+      "label": "Resources / Assets",
+      "pos": [40, 240],
+      "size": [180, 64],
+      "sources": [
+        { "path": "resources/resource.go", "label": "resource" },
+        { "path": "resources/image.go", "label": "image" }
+      ]
+    },
+    {
+      "id": "markup",
+      "type": "backend",
+      "label": "Markup",
+      "sublabel": "Goldmark etc.",
+      "pos": [260, 240],
+      "size": [200, 64],
+      "sources": [
+        { "path": "markup/markup.go", "label": "markup" }
+      ]
+    },
+    {
+      "id": "config",
+      "type": "backend",
+      "label": "Config",
+      "pos": [500, 240],
+      "size": [200, 64],
+      "sources": [
+        { "path": "config/configLoader.go", "label": "configLoader" }
+      ]
+    },
+    {
+      "id": "modules",
+      "type": "cloud",
+      "label": "Hugo Modules",
+      "pos": [740, 240],
+      "size": [200, 64],
+      "sources": [
+        { "path": "modules/client.go", "label": "module client" }
+      ]
+    },
+    {
+      "id": "filesystem",
+      "type": "database",
+      "label": "hugofs",
+      "pos": [40, 400],
+      "size": [180, 64],
+      "sources": [
+        { "path": "hugofs/fs.go", "label": "fs" }
+      ]
+    },
+    {
+      "id": "output",
+      "type": "backend",
+      "label": "Output + Publish",
+      "pos": [260, 400],
+      "size": [200, 64],
+      "sources": [
+        { "path": "output/outputFormat.go", "label": "outputFormat" },
+        { "path": "publisher/publisher.go", "label": "publisher" }
+      ]
+    },
+    {
+      "id": "shared",
+      "type": "backend",
+      "label": "Shared Libs",
+      "sublabel": "common, helpers, deps",
+      "pos": [500, 400],
+      "size": [200, 64],
+      "sources": [
+        { "path": "deps/deps.go", "label": "deps" },
+        { "path": "helpers/general.go", "label": "helpers" }
+      ]
+    },
+    {
+      "id": "deploy",
+      "type": "cloud",
+      "label": "Deploy",
+      "pos": [740, 400],
+      "size": [200, 64],
+      "sources": [
+        { "path": "deploy/deploy.go", "label": "deploy" }
+      ]
+    }
+  ],
+  "connections": [
+    { "id": "cli-hugolib", "from": "cli", "to": "hugolib" },
+    { "id": "hugolib-content", "from": "hugolib", "to": "content" },
+    { "id": "content-tpl", "from": "content", "to": "templates" },
+    { "id": "cli-assets", "from": "cli", "to": "assets", "fromSide": "bottom", "toSide": "top" },
+    { "id": "hugolib-markup", "from": "hugolib", "to": "markup", "fromSide": "bottom", "toSide": "top" },
+    { "id": "content-config", "from": "content", "to": "config", "fromSide": "bottom", "toSide": "top" },
+    { "id": "tpl-modules", "from": "templates", "to": "modules", "fromSide": "bottom", "toSide": "top" },
+    { "id": "assets-markup", "from": "assets", "to": "markup" },
+    { "id": "markup-config", "from": "markup", "to": "config" },
+    { "id": "config-modules", "from": "config", "to": "modules" },
+    { "id": "assets-fs", "from": "assets", "to": "filesystem", "fromSide": "bottom", "toSide": "top" },
+    { "id": "markup-output", "from": "markup", "to": "output", "fromSide": "bottom", "toSide": "top" },
+    { "id": "config-shared", "from": "config", "to": "shared", "fromSide": "bottom", "toSide": "top" },
+    { "id": "modules-deploy", "from": "modules", "to": "deploy", "fromSide": "bottom", "toSide": "top" },
+    { "id": "fs-output", "from": "filesystem", "to": "output" },
+    { "id": "output-shared", "from": "output", "to": "shared" },
+    { "id": "shared-deploy", "from": "shared", "to": "deploy" }
+  ]
+}

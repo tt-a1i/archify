@@ -1,4 +1,11 @@
 import { parseRepositoryRemote } from '../renderers/shared/repository-location.mjs';
+import {
+  addState,
+  extractArchitectureSvg as readArchitectureSvg,
+  extractArtifactCss as readArtifactCss,
+  nodeGroupRanges,
+  transformNodeGroups,
+} from './svg-annotate.mjs';
 
 const COMPARATOR_VERSION = 1;
 const CANONICAL_VERSION = 1;
@@ -12,10 +19,10 @@ export class ArchitectureDeltaError extends Error {
   }
 }
 
-const codepointOrder = (left, right) => (left < right ? -1 : left > right ? 1 : 0);
+export const codepointOrder = (left, right) => (left < right ? -1 : left > right ? 1 : 0);
 const sorted = (values) => [...values].sort((left, right) => codepointOrder(String(left), String(right)));
 
-function canonical(value) {
+export function canonical(value) {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
   if (value && typeof value === 'object') {
     return `{${Object.keys(value).sort(codepointOrder).map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
@@ -29,7 +36,7 @@ function sortedObjects(values) {
   return [...values].sort((left, right) => codepointOrder(canonical(left), canonical(right)));
 }
 
-function sortedBy(values, keyFor) {
+export function sortedBy(values, keyFor) {
   return [...values].sort((left, right) => codepointOrder(String(keyFor(left)), String(keyFor(right))));
 }
 
@@ -158,6 +165,7 @@ const COMPONENT_FIELDS = {
   semantic: ['type', 'label', 'sublabel', 'tag'],
   evidence: ['sources'],
   geometry: ['row', 'col', 'pos', 'size'],
+  navigation: ['drilldown'],
 };
 const CONNECTION_FIELDS = {
   topology: ['from', 'to'],
@@ -170,6 +178,7 @@ function statusFor(classifications, kind) {
   if (classifications.some((value) => ['topology', 'semantic', 'scope'].includes(value))) return 'changed';
   if (classifications.includes('evidence')) return 'evidence-changed';
   if (classifications.includes('geometry')) return kind === 'connection' ? 'rerouted' : kind === 'component' ? 'moved' : 'geometry-changed';
+  if (classifications.includes('navigation')) return 'navigation-changed';
   return 'same';
 }
 
@@ -304,7 +313,7 @@ export function compareArchitecture(base, head, evidence = {}) {
       ...(headRepository?.revision ? { revision: headRepository.revision } : {}),
     },
     summary: {
-      components: summaryFor(components, ['added', 'changed', 'evidenceChanged', 'removed', 'moved']),
+      components: summaryFor(components, ['added', 'changed', 'evidenceChanged', 'removed', 'moved', 'navigationChanged']),
       connections: summaryFor(connections, ['added', 'changed', 'removed', 'rerouted']),
       boundaries: summaryFor(boundaries, ['added', 'changed', 'removed', 'geometryChanged']),
       presentationChanged: presentationChanged(base, head),
@@ -331,15 +340,11 @@ function esc(value) {
 const safeJson = (value) => JSON.stringify(value, null, 2).replaceAll('<', '\\u003c').replaceAll('>', '\\u003e').replaceAll('&', '\\u0026');
 
 export function extractArchitectureSvg(html) {
-  const match = html.match(/<svg viewBox="0 0 [^"]+" role="img"[\s\S]*?<\/svg>/);
-  if (!match) fail('delta/svg-missing', 'A validated Architecture artifact did not contain its primary SVG.');
-  return match[0];
+  return readArchitectureSvg(html, fail);
 }
 
 export function extractArtifactCss(html) {
-  const match = html.match(/<style>([\s\S]*?)<\/style>/);
-  if (!match) fail('delta/css-missing', 'A validated Architecture artifact did not contain its stylesheet.');
-  return match[1];
+  return readArtifactCss(html, fail);
 }
 
 function changeMap(changes) {
@@ -350,20 +355,9 @@ function boundaryChangeMap(changes) {
   return new Map(changes.map((change) => [`${change.kind}:${esc(change.label)}`, change]));
 }
 
-function addState(tag, change, side, forcedState) {
-  const append = (attributes) => tag.endsWith('/>')
-    ? tag.replace(/\/>$/, `${attributes}/>`)
-    : tag.replace(/>$/, `${attributes}>`);
-  if (!change && !forcedState) return append(' data-delta-state="same"');
-  let state = forcedState || change.status;
-  if (change?.status === 'added' && side === 'base') state = 'same';
-  if (change?.status === 'removed' && side === 'head') state = 'same';
-  const classes = change?.classifications?.join(',') || '';
-  return append(` data-delta-state="${esc(state)}"${classes ? ` data-delta-classifications="${esc(classes)}"` : ''}`);
-}
 
 function markerFor(state) {
-  return ({ added: '+', removed: '−', changed: '~', moved: '↔', 'moved-from': '↔', rerouted: '↔', 'geometry-changed': '↔', 'evidence-changed': 'E' })[state] || '';
+  return ({ added: '+', removed: '−', changed: '~', moved: '↔', 'moved-from': '↔', rerouted: '↔', 'geometry-changed': '↔', 'evidence-changed': 'E', 'navigation-changed': '↳' })[state] || '';
 }
 
 function addNodeMarker(group, state) {
@@ -390,39 +384,6 @@ function staticize(svg) {
   return svg.replaceAll('tabindex="0" role="button"', 'role="group"').replaceAll(' aria-pressed="false"', '').replaceAll('aria-label="Focus ', 'aria-label="');
 }
 
-function nodeGroupRanges(svg) {
-  const ranges = [];
-  const opener = /<g\s+[^>]*\bdata-node-id="([^"]+)"[^>]*>/g;
-  let open;
-  while ((open = opener.exec(svg))) {
-    const tags = /<\/?g\b[^>]*>/g;
-    tags.lastIndex = open.index;
-    let depth = 0;
-    let tag;
-    while ((tag = tags.exec(svg))) {
-      depth += tag[0].startsWith('</') ? -1 : 1;
-      if (depth === 0) {
-        ranges.push({ id: open[1], start: open.index, end: tags.lastIndex });
-        opener.lastIndex = tags.lastIndex;
-        break;
-      }
-    }
-  }
-  return ranges;
-}
-
-function transformNodeGroups(svg, transform) {
-  const ranges = nodeGroupRanges(svg);
-  let cursor = 0;
-  const parts = [];
-  for (const range of ranges) {
-    parts.push(svg.slice(cursor, range.start));
-    parts.push(transform(svg.slice(range.start, range.end), range.id));
-    cursor = range.end;
-  }
-  parts.push(svg.slice(cursor));
-  return parts.join('');
-}
 
 const BOUNDARY_FRAME_RE = /<rect data-graph-role="structural-frame"[^>]*data-composition-frame-kind="([^"]+)"[^>]*data-composition-frame-label="([^"]+)"[^>]*\/>/g;
 const BOUNDARY_LABEL_RE = /<g data-graph-role="structural-frame-label"[^>]*data-composition-frame-kind="([^"]+)"[^>]*data-composition-frame-label="([^"]+)"[^>]*>[\s\S]*?<\/g>/g;
@@ -716,9 +677,9 @@ export function renderArchitectureDeltaHtml({ receipt, baseSvg, deltaSvg, headSv
 ${artifactCss}
 :root{color-scheme:dark;--d-add:#34d399;--d-remove:#fb7185;--d-change:#fbbf24;--d-move:#7dd3fc;--d-focus:#7dd3fc;--d-ink:#e6edf5;--d-muted:#8aa0b5;--d-line:#25384a}
 *{box-sizing:border-box}body{margin:0;overflow-x:hidden;background:#071019;color:var(--d-ink);font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}.proof-page{width:min(1600px,calc(100vw - 64px));margin:auto;padding:30px 0 42px}.proof-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-bottom:20px;border-bottom:1px solid var(--d-line)}.eyebrow{margin:0 0 8px;color:#7dd3fc;font:700 11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em}.proof-head h1{margin:0;font-size:clamp(32px,4vw,56px);line-height:.96;letter-spacing:-.04em}.subtitle{margin:12px 0 0;color:var(--d-muted);font-size:14px}.metrics{display:flex;gap:9px}.metric{min-width:86px;padding:11px 13px;border:1px solid var(--d-line);border-radius:8px;background:#0b1722}.metric strong{display:block;font:700 23px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.metric span{display:block;margin-top:6px;color:var(--d-muted);font:700 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em}.add strong{color:var(--d-add)}.remove strong{color:var(--d-remove)}.change strong{color:var(--d-change)}
-.proof-tools{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:16px 0 10px}.view-switch{display:inline-flex;padding:3px;border:1px solid var(--d-line);border-radius:8px;background:#0a141e}.view-switch button,.utility,.review-step{border:0;border-radius:6px;background:transparent;color:var(--d-muted);padding:8px 14px;font:700 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;cursor:pointer}.view-switch button[aria-selected="true"]{background:#173047;color:#fff}.utility{border:1px solid var(--d-line)}.view-switch button:focus-visible,.utility:focus-visible,.review-step:focus-visible,.change-row:focus-visible{outline:2px solid var(--d-focus);outline-offset:2px}.utility:disabled,.review-step:disabled{cursor:not-allowed;opacity:.45}.legend{display:flex;gap:16px;color:var(--d-muted);font:650 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.legend span{display:inline-flex;align-items:center;gap:6px}.legend i{width:22px;border-top:3px solid currentColor}.legend .add{color:var(--d-add)}.legend .remove{color:var(--d-remove)}.legend .remove i{border-top-style:dashed}.legend .change{color:var(--d-change)}.legend .change i{border-top-style:dotted}.legend .move{color:var(--d-move)}.legend .move i{border-top-style:double}
+.proof-tools{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:16px 0 10px}.view-switch{display:inline-flex;padding:3px;border:1px solid var(--d-line);border-radius:8px;background:#0a141e}.view-switch button,.utility,.review-step{border:0;border-radius:6px;background:transparent;color:var(--d-muted);padding:8px 14px;font:700 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;cursor:pointer}.view-switch button[aria-selected="true"]{background:#173047;color:#fff}.utility{border:1px solid var(--d-line)}.view-switch button:focus-visible,.utility:focus-visible,.review-step:focus-visible,.change-row:focus-visible{outline:2px solid var(--d-focus);outline-offset:2px}.utility:disabled,.review-step:disabled{cursor:not-allowed;opacity:.45}.legend{display:flex;gap:16px;color:var(--d-muted);font:650 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.legend span{display:inline-flex;align-items:center;gap:6px}.legend i{width:22px;border-top:3px solid currentColor}.legend .add{color:var(--d-add)}.legend .remove{color:var(--d-remove)}.legend .remove i{border-top-style:dashed}.legend .change{color:var(--d-change)}.legend .change i{border-top-style:dotted}.legend .move{color:var(--d-move)}.legend .move i{border-top-style:double}.legend .nav{color:#a78bfa}.legend .nav i{border-top-style:dashed}
 .review-strip{display:grid;grid-template-columns:auto auto auto auto minmax(0,1fr);align-items:center;gap:5px;margin:0 0 10px;padding:7px 8px;border-block:1px solid var(--d-line);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.review-step{min-height:34px;border:1px solid var(--d-line);padding-inline:11px}.review-step[aria-pressed="true"]{border-color:var(--d-focus);color:var(--d-ink)}.review-status{min-width:0;padding-left:9px;color:var(--d-muted);font-size:10px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.review-status strong{color:var(--d-ink);font-weight:750}.review-status[data-state="unavailable"]{color:var(--d-remove)}
-.canvas{overflow:hidden;border:1px solid var(--d-line);border-radius:10px;background:#09141e;padding:12px;min-height:520px}.canvas svg{display:block;width:100%;height:auto;max-height:72vh}.canvas[hidden]{display:none}.snapshot-frame{display:block;width:100%;height:min(76vh,920px);min-height:620px;border:0;border-radius:6px;background:#071019}.canvas[data-view="base"],.canvas[data-view="head"]{padding:0}.canvas[data-view="delta"] [data-delta-state="same"]{opacity:.38}.canvas[data-delta-review-active]{--review-same-opacity:.14;--review-change-opacity:.28}.canvas[data-delta-review-active] [data-delta-state="same"]{opacity:var(--review-same-opacity)!important}.canvas[data-delta-review-active] [data-delta-state]:not([data-delta-state="same"]):not([data-delta-review-current]){opacity:var(--review-change-opacity)!important}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:opacity .16s ease-out}g[data-node-id][data-delta-state="added"]>rect:last-of-type{stroke:var(--d-add)!important;stroke-width:3!important}g[data-node-id][data-delta-state="removed"]>rect:last-of-type{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5}g[data-node-id][data-delta-state="changed"]>rect:last-of-type{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3}g[data-node-id][data-delta-state="moved"]>rect:last-of-type,g[data-node-id][data-delta-state="moved-from"]>rect:last-of-type{stroke:var(--d-move)!important;stroke-width:3!important;stroke-dasharray:8 3 2 3}g[data-node-id][data-delta-state="moved-from"],path[data-delta-state="moved-from"]{opacity:.42}path[data-delta-state="added"]{stroke:var(--d-add)!important;stroke-width:3!important}path[data-delta-state="removed"]{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5!important}path[data-delta-state="changed"]{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3!important}path[data-delta-state="rerouted"],path[data-delta-state="moved-from"]{stroke:var(--d-move)!important;stroke-width:2.5!important;stroke-dasharray:8 3 2 3!important}.delta-node-marker circle{fill:#071019;stroke:currentColor;stroke-width:1.5}.delta-node-marker text,.delta-edge-marker,.delta-boundary-marker{fill:currentColor;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace}[data-delta-state="added"] .delta-node-marker,.delta-edge-marker[data-delta-state="added"],.delta-boundary-marker[data-delta-state="added"]{color:var(--d-add)}[data-delta-state="removed"] .delta-node-marker,.delta-edge-marker[data-delta-state="removed"],.delta-boundary-marker[data-delta-state="removed"]{color:var(--d-remove)}[data-delta-state="changed"] .delta-node-marker,.delta-edge-marker[data-delta-state="changed"],.delta-boundary-marker[data-delta-state="changed"]{color:var(--d-change)}[data-delta-state="moved"] .delta-node-marker,[data-delta-state="moved-from"] .delta-node-marker,.delta-edge-marker[data-delta-state="moved-from"],.delta-edge-marker[data-delta-state="rerouted"],.delta-boundary-marker[data-delta-state="geometry-changed"]{color:var(--d-move)}.delta-edge-marker,.delta-boundary-marker{paint-order:stroke;stroke:#071019;stroke-width:3px}
+.canvas{overflow:hidden;border:1px solid var(--d-line);border-radius:10px;background:#09141e;padding:12px;min-height:520px}.canvas svg{display:block;width:100%;height:auto;max-height:72vh}.canvas[hidden]{display:none}.snapshot-frame{display:block;width:100%;height:min(76vh,920px);min-height:620px;border:0;border-radius:6px;background:#071019}.canvas[data-view="base"],.canvas[data-view="head"]{padding:0}.canvas[data-view="delta"] [data-delta-state="same"]{opacity:.38}.canvas[data-delta-review-active]{--review-same-opacity:.14;--review-change-opacity:.28}.canvas[data-delta-review-active] [data-delta-state="same"]{opacity:var(--review-same-opacity)!important}.canvas[data-delta-review-active] [data-delta-state]:not([data-delta-state="same"]):not([data-delta-review-current]){opacity:var(--review-change-opacity)!important}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:opacity .16s ease-out}g[data-node-id][data-delta-state="added"]>rect:last-of-type{stroke:var(--d-add)!important;stroke-width:3!important}g[data-node-id][data-delta-state="removed"]>rect:last-of-type{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5}g[data-node-id][data-delta-state="changed"]>rect:last-of-type{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3}g[data-node-id][data-delta-state="moved"]>rect:last-of-type,g[data-node-id][data-delta-state="moved-from"]>rect:last-of-type{stroke:var(--d-move)!important;stroke-width:3!important;stroke-dasharray:8 3 2 3}g[data-node-id][data-delta-state="navigation-changed"]>rect:last-of-type{stroke:#a78bfa!important;stroke-width:2.5!important;stroke-dasharray:4 3}g[data-node-id][data-delta-state="moved-from"],path[data-delta-state="moved-from"]{opacity:.42}path[data-delta-state="added"]{stroke:var(--d-add)!important;stroke-width:3!important}path[data-delta-state="removed"]{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5!important}path[data-delta-state="changed"]{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3!important}path[data-delta-state="rerouted"],path[data-delta-state="moved-from"]{stroke:var(--d-move)!important;stroke-width:2.5!important;stroke-dasharray:8 3 2 3!important}.delta-node-marker circle{fill:#071019;stroke:currentColor;stroke-width:1.5}.delta-node-marker text,.delta-edge-marker,.delta-boundary-marker{fill:currentColor;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace}[data-delta-state="added"] .delta-node-marker,.delta-edge-marker[data-delta-state="added"],.delta-boundary-marker[data-delta-state="added"]{color:var(--d-add)}[data-delta-state="removed"] .delta-node-marker,.delta-edge-marker[data-delta-state="removed"],.delta-boundary-marker[data-delta-state="removed"]{color:var(--d-remove)}[data-delta-state="changed"] .delta-node-marker,.delta-edge-marker[data-delta-state="changed"],.delta-boundary-marker[data-delta-state="changed"]{color:var(--d-change)}[data-delta-state="moved"] .delta-node-marker,[data-delta-state="moved-from"] .delta-node-marker,.delta-edge-marker[data-delta-state="moved-from"],.delta-edge-marker[data-delta-state="rerouted"],.delta-boundary-marker[data-delta-state="geometry-changed"]{color:var(--d-move)}[data-delta-state="navigation-changed"] .delta-node-marker{color:#a78bfa}.delta-edge-marker,.delta-boundary-marker{paint-order:stroke;stroke:#071019;stroke-width:3px}
 rect[data-graph-role="structural-frame"][data-delta-state="added"]{stroke:var(--d-add)!important;stroke-width:2.5!important}rect[data-graph-role="structural-frame"][data-delta-state="removed"]{stroke:var(--d-remove)!important;stroke-width:2.5!important;stroke-dasharray:7 5!important}rect[data-graph-role="structural-frame"][data-delta-state="changed"]{stroke:var(--d-change)!important;stroke-width:2.5!important;stroke-dasharray:2 3!important}rect[data-graph-role="structural-frame"][data-delta-state="moved-from"]{stroke:var(--d-move)!important;stroke-width:2!important;stroke-dasharray:8 3 2 3!important;opacity:.42}text[data-delta-boundary-state="added"]{fill:var(--d-add)!important}text[data-delta-boundary-state="removed"]{fill:var(--d-remove)!important}text[data-delta-boundary-state="changed"]{fill:var(--d-change)!important}text[data-delta-boundary-state="moved-from"]{fill:var(--d-move)!important;opacity:.55}
 details{margin-top:12px;border:1px solid var(--d-line);border-radius:9px;background:#0a141e}summary{padding:13px 15px;cursor:pointer;font-weight:700}.changes{list-style:none;margin:0;padding:0 8px 8px}.changes li{border-top:1px solid rgba(138,160,181,.16)}.change-row{display:grid;grid-template-columns:30px 90px minmax(140px,1fr) minmax(100px,.7fr) minmax(120px,.8fr) minmax(140px,1.2fr);gap:10px;width:100%;margin:0;padding:9px 7px;border:0;border-radius:5px;background:transparent;color:inherit;font:inherit;font-size:11px;text-align:left;align-items:baseline;cursor:pointer}.change-row:hover{background:rgba(125,211,252,.06)}.change-row[aria-current="step"]{background:rgba(125,211,252,.1);box-shadow:inset 0 0 0 1px var(--d-focus)}.change-row:disabled{cursor:default}.token{font:800 13px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.changes code,.change-row>span:last-child{color:var(--d-muted)}.proof-foot{display:flex;justify-content:space-between;gap:24px;margin-top:14px;color:var(--d-muted);font:650 10px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}
 html[data-theme="dark"] body{background:#071019!important;background-image:none!important}html[data-theme="light"]{color-scheme:light;--d-ink:#10283c;--d-muted:#587187;--d-line:#c8d6e2;--d-focus:#006b8f}html[data-theme="light"] body{background:#eef3f7!important;background-image:none!important;color:var(--d-ink)}html[data-theme="light"] .metric,html[data-theme="light"] .view-switch,html[data-theme="light"] details{background:#fff}html[data-theme="light"] .canvas{background:#f8fbfd}html[data-theme="light"] .view-switch button[aria-selected="true"]{background:#dbeaf5;color:#10283c}html[data-theme="light"] .delta-node-marker circle{fill:#fff}html[data-preset="blueprint"] body{background-image:none!important}
@@ -726,7 +687,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.canvas[data-delta-review-active] [data-delta-review-current]{transition:none!important}}@media print{body{min-width:0;background:#fff;color:#111}.proof-page{width:100%;padding:0}.proof-tools,.review-strip,details{display:none!important}.canvas{display:none!important}.canvas[data-view="delta"]{display:block!important;border:0}.canvas[data-view="delta"] [data-delta-state="same"]{opacity:1!important;transition:none!important}.canvas[data-delta-review-active]{--review-same-opacity:1;--review-change-opacity:1}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:none!important}.proof-foot{color:#444}}
 </style></head>
 <body><main class="proof-page"><header class="proof-head"><div><p class="eyebrow">ARCHITECTURE DELTA · ${proof}</p><h1>See what changed<br>before you merge.</h1><p class="subtitle">${esc(receipt.base.title)} → ${esc(receipt.head.title)}</p></div><div class="metrics"><div class="metric add"><strong>${total(receipt.summary, 'added')}</strong><span>ADDED</span></div><div class="metric remove"><strong>${total(receipt.summary, 'removed')}</strong><span>REMOVED</span></div><div class="metric change"><strong>${changed}</strong><span>CHANGED</span></div></div></header>
-<div class="proof-tools"><div class="view-switch" role="tablist" aria-label="Architecture snapshot"><button role="tab" data-target="base" aria-selected="false">Before</button><button role="tab" data-target="delta" aria-selected="true">Delta</button><button role="tab" data-target="head" aria-selected="false">After</button></div><div class="legend"><span class="add"><i></i>+ ADD</span><span class="remove"><i></i>− DEL</span><span class="change"><i></i>~ MOD</span><span class="move"><i></i>↔ MOVE</span></div><div><button class="utility" id="export-svg" type="button">Export SVG</button> <button class="utility" id="share-card" type="button">Share Card</button> <button class="utility" id="preset" type="button">Preset</button> <button class="utility" id="theme" type="button">Theme</button></div></div>
+<div class="proof-tools"><div class="view-switch" role="tablist" aria-label="Architecture snapshot"><button role="tab" data-target="base" aria-selected="false">Before</button><button role="tab" data-target="delta" aria-selected="true">Delta</button><button role="tab" data-target="head" aria-selected="false">After</button></div><div class="legend"><span class="add"><i></i>+ ADD</span><span class="remove"><i></i>− DEL</span><span class="change"><i></i>~ MOD</span><span class="move"><i></i>↔ MOVE</span><span class="nav"><i></i>↳ NAV</span></div><div><button class="utility" id="export-svg" type="button">Export SVG</button> <button class="utility" id="share-card" type="button">Share Card</button> <button class="utility" id="preset" type="button">Preset</button> <button class="utility" id="theme" type="button">Theme</button></div></div>
 <nav class="review-strip" aria-label="Authored change review"><button class="review-step" id="review-overview" type="button" disabled>Overview</button><button class="review-step" id="review-previous" type="button" aria-label="Previous authored change" disabled>←</button><button class="review-step" id="review-play" type="button" aria-pressed="false"${rows.length ? '' : ' disabled'}>Review</button><button class="review-step" id="review-next" type="button" aria-label="Next authored change" disabled>→</button><div class="review-status" id="review-status" role="status" aria-live="polite">Overview · ${rows.length} authored changes</div></nav>
 <section class="canvas" data-view="base" hidden>${baseView}</section><section class="canvas" data-view="delta">${deltaSvg}</section><section class="canvas" data-view="head" hidden>${headView}</section>
 <details${rows.length <= 10 ? ' open' : ''}><summary>Exact authored changes · ${rows.length}</summary><ul class="changes">${rowHtml}</ul></details>
@@ -786,7 +747,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 
   function receiptRows(receipt) {
     const definitions = [
-      { collection: 'components', kind: 'component', id: 'id', statuses: ['added', 'changed', 'evidence-changed', 'removed', 'moved'] },
+      { collection: 'components', kind: 'component', id: 'id', statuses: ['added', 'changed', 'evidence-changed', 'removed', 'moved', 'navigation-changed'] },
       { collection: 'connections', kind: 'relationship', id: 'id', statuses: ['added', 'changed', 'removed', 'rerouted'] },
       { collection: 'boundaries', kind: 'boundary', id: 'key', statuses: ['added', 'changed', 'removed', 'geometry-changed'] },
     ];
@@ -947,6 +908,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
       '[data-delta-state="removed"]{--delta:#fb7185}' +
       '[data-delta-state="changed"]{--delta:#fbbf24}' +
       '[data-delta-state="moved"],[data-delta-state="moved-from"],[data-delta-state="rerouted"],[data-delta-state="geometry-changed"]{--delta:#7dd3fc}' +
+      '[data-delta-state="navigation-changed"]{--delta:#a78bfa}' +
       'g[data-node-id][data-delta-state]:not([data-delta-state="same"])>rect:last-of-type{stroke:var(--delta)!important;stroke-width:3!important}' +
       'path[data-delta-state]:not([data-delta-state="same"]){stroke:var(--delta)!important;stroke-width:3!important}' +
       'rect[data-graph-role="structural-frame"][data-delta-state]:not([data-delta-state="same"]){stroke:var(--delta)!important;stroke-width:2.5!important}' +

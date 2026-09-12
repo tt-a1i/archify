@@ -1,0 +1,444 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "locate",
+  "locatorVersion": 1,
+  "mode": "range",
+  "completeness": "complete",
+  "repository": {
+    "root": ".",
+    "base": "b86b60789e18829885dd23c844e36549f0b40303",
+    "head": "e9ea3a1330733ea6049429ca9e3b731d7f59d8c4",
+    "url": "https://github.com/tt-a1i/archify",
+    "linkMode": "web"
+  },
+  "map": {
+    "path": "docs/cases/archify-self/archify-self.json",
+    "diagramType": "architecture",
+    "semanticSha256": "d50024ba4b408c833080e74e7223299d84c6182c6fb6eed32b6fe93ca51ad9a7",
+    "revision": "10722002bb8777ecb639d93c49586fae4adf3ae4",
+    "mapBehindBy": 8
+  },
+  "ownership": {
+    "path": "docs/cases/archify-self/archify-self.ownership.json",
+    "sha256": "f4d57bce1a2d75991d092d1f810c8c88b9d4a9e252f4ba55311a0e6aa1d48bbd"
+  },
+  "review": {
+    "required": false,
+    "blocking": [],
+    "advisory": [
+      "files_uncovered",
+      "map_behind"
+    ]
+  },
+  "summary": {
+    "files": {
+      "touched": 7,
+      "uncovered": 14,
+      "ambiguous": 0,
+      "excluded": 29,
+      "total": 50
+    },
+    "components": {
+      "touched": 2,
+      "untouched": 8,
+      "stale": 0,
+      "total": 10
+    }
+  },
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": "archify.zip",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "archify.zip"
+    },
+    {
+      "path": "archify/THIRD_PARTY_NOTICES.md",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": "archify/assets/JetBrainsMono-OFL.txt",
+      "changeType": "A",
+      "state": "touched",
+      "componentId": "viewer",
+      "matchedGlob": "archify/assets/**"
+    },
+    {
+      "path": "archify/assets/template.html",
+      "changeType": "M",
+      "state": "touched",
+      "componentId": "viewer",
+      "matchedGlob": "archify/assets/**"
+    },
+    {
+      "path": "archify/examples/dataflow-product-analytics.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "archify/examples/*.html"
+    },
+    {
+      "path": "archify/examples/lifecycle-agent-run.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "archify/examples/*.html"
+    },
+    {
+      "path": "archify/examples/sequence-cache-miss-request.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "archify/examples/*.html"
+    },
+    {
+      "path": "archify/examples/web-app-rendered.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "archify/examples/*.html"
+    },
+    {
+      "path": "archify/examples/workflow-agent-tool-call-rendered.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "archify/examples/*.html"
+    },
+    {
+      "path": "archify/test/brand-marks.test.mjs",
+      "changeType": "M",
+      "state": "touched",
+      "componentId": "test",
+      "matchedGlob": "archify/test/**"
+    },
+    {
+      "path": "archify/test/clean-skill-staging.test.mjs",
+      "changeType": "M",
+      "state": "touched",
+      "componentId": "test",
+      "matchedGlob": "archify/test/**"
+    },
+    {
+      "path": "archify/test/helpers/offline-fonts.mjs",
+      "changeType": "A",
+      "state": "touched",
+      "componentId": "test",
+      "matchedGlob": "archify/test/**"
+    },
+    {
+      "path": "archify/test/offline-font-browser.test.mjs",
+      "changeType": "A",
+      "state": "touched",
+      "componentId": "test",
+      "matchedGlob": "archify/test/**"
+    },
+    {
+      "path": "archify/test/offline-self-containment.test.mjs",
+      "changeType": "A",
+      "state": "touched",
+      "componentId": "test",
+      "matchedGlob": "archify/test/**"
+    },
+    {
+      "path": "docs/assets/archify-live-proof.gif",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": "docs/assets/archify-live-proof.json",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": "docs/assets/mco-runtime-reach-share-card.png",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": "docs/assets/mco-runtime-share-card.png",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": "docs/cases/mco-runtime.architecture.html",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": "docs/gallery.html",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": "docs/gallery/artifacts/agent-run.lifecycle.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "docs/gallery/artifacts/**"
+    },
+    {
+      "path": "docs/gallery/artifacts/agent-tool-call.workflow.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "docs/gallery/artifacts/**"
+    },
+    {
+      "path": "docs/gallery/artifacts/async-job-roundtrip.sequence.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "docs/gallery/artifacts/**"
+    },
+    {
+      "path": "docs/gallery/artifacts/cache-miss.sequence.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "docs/gallery/artifacts/**"
+    },
+    {
+      "path": "docs/gallery/artifacts/deployment-release.lifecycle.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "docs/gallery/artifacts/**"
+    },
+    {
+      "path": "docs/gallery/artifacts/event-stream.dataflow.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "docs/gallery/artifacts/**"
+    },
+    {
+      "path": "docs/gallery/artifacts/incident-response.workflow.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "docs/gallery/artifacts/**"
+    },
+    {
+      "path": "docs/gallery/artifacts/product-analytics.dataflow.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "docs/gallery/artifacts/**"
+    },
+    {
+      "path": "docs/gallery/artifacts/production-deployment.architecture.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "docs/gallery/artifacts/**"
+    },
+    {
+      "path": "docs/gallery/artifacts/release-delivery.workflow.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "docs/gallery/artifacts/**"
+    },
+    {
+      "path": "docs/gallery/artifacts/web-app.architecture.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "docs/gallery/artifacts/**"
+    },
+    {
+      "path": "docs/gallery/manifest.json",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": "examples/archify-repo-grid.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "examples/*.html"
+    },
+    {
+      "path": "examples/archify-repo.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "examples/*.html"
+    },
+    {
+      "path": "examples/checkout-platform-delta.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "examples/*.html"
+    },
+    {
+      "path": "examples/checkout-platform-delta.receipt.json",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "examples/*.receipt.json"
+    },
+    {
+      "path": "examples/dataflow-product-analytics.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "examples/*.html"
+    },
+    {
+      "path": "examples/lifecycle-agent-run.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "examples/*.html"
+    },
+    {
+      "path": "examples/maka-architecture.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "examples/*.html"
+    },
+    {
+      "path": "examples/rag-pipeline.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "examples/*.html"
+    },
+    {
+      "path": "examples/sequence-cache-miss-request.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "examples/*.html"
+    },
+    {
+      "path": "examples/web-app-rendered.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "examples/*.html"
+    },
+    {
+      "path": "examples/web-app.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "examples/*.html"
+    },
+    {
+      "path": "examples/workflow-agent-tool-call-rendered.html",
+      "changeType": "M",
+      "state": "excluded",
+      "matchedGlob": "examples/*.html"
+    },
+    {
+      "path": "scripts/package-smoke.mjs",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": "scripts/stage-clean-skill.mjs",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": "scripts/third-party-notices-contract.mjs",
+      "changeType": "M",
+      "state": "uncovered"
+    }
+  ],
+  "components": [
+    {
+      "id": "bundle",
+      "label": "Bundle",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": []
+    },
+    {
+      "id": "cli",
+      "label": "Archify CLI",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": []
+    },
+    {
+      "id": "delta",
+      "label": "Architecture Delta",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": []
+    },
+    {
+      "id": "locate",
+      "label": "Locate",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": []
+    },
+    {
+      "id": "renderers",
+      "label": "Typed Renderers",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": [],
+      "childMap": "archify-renderers.json",
+      "inside": {
+        "touched": 0,
+        "uncovered": 0,
+        "ambiguous": 0,
+        "excluded": 0
+      }
+    },
+    {
+      "id": "renderers-shared",
+      "label": "Shared Renderer Runtime",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": [],
+      "childMap": "render-pipeline.json",
+      "inside": {
+        "touched": 0,
+        "uncovered": 0,
+        "ambiguous": 0,
+        "excluded": 0
+      }
+    },
+    {
+      "id": "schemas",
+      "label": "JSON IR Schemas",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": []
+    },
+    {
+      "id": "skill-scripts",
+      "label": "Skill Scripts",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": []
+    },
+    {
+      "id": "test",
+      "label": "Contract Tests",
+      "state": "touched",
+      "touchedCount": 5,
+      "touchedFiles": [
+        "archify/test/brand-marks.test.mjs",
+        "archify/test/clean-skill-staging.test.mjs",
+        "archify/test/helpers/offline-fonts.mjs",
+        "archify/test/offline-font-browser.test.mjs",
+        "archify/test/offline-self-containment.test.mjs"
+      ]
+    },
+    {
+      "id": "viewer",
+      "label": "Viewer Template",
+      "state": "touched",
+      "touchedCount": 2,
+      "touchedFiles": [
+        "archify/assets/JetBrainsMono-OFL.txt",
+        "archify/assets/template.html"
+      ]
+    }
+  ],
+  "facts": [],
+  "limitations": [
+    "Path ownership only; no runtime impact, causality, risk, or mergeability is inferred.",
+    "Import facts are reported as-is and never reconciled against authored connections."
+  ]
+}

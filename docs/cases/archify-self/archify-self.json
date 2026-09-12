@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Archify",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/tt-a1i/archify",
+      "revision": "10722002bb8777ecb639d93c49586fae4adf3ae4",
+      "provider": "github",
+      "link_mode": "web"
+    },
+    "viewBox": [1480, 720]
+  },
+  "components": [
+    {
+      "id": "cli",
+      "type": "frontend",
+      "label": "Archify CLI",
+      "pos": [40, 70],
+      "size": [180, 64],
+      "sources": [
+        { "path": "archify/bin/archify.mjs", "label": "CLI entry" }
+      ]
+    },
+    {
+      "id": "schemas",
+      "type": "security",
+      "label": "JSON IR Schemas",
+      "pos": [280, 70],
+      "size": [200, 64],
+      "sources": [
+        { "path": "archify/schemas/architecture.schema.json", "label": "Architecture schema" },
+        { "path": "archify/scripts/generate-validators.mjs", "label": "Validator codegen" }
+      ]
+    },
+    {
+      "id": "renderers-shared",
+      "type": "backend",
+      "label": "Shared Renderer Runtime",
+      "pos": [540, 70],
+      "size": [230, 64],
+      "drilldown": "render-pipeline",
+      "sources": [
+        { "path": "archify/renderers/shared/validator.mjs", "label": "Schema validate" },
+        { "path": "archify/renderers/shared/cli.mjs", "label": "Renderer CLI" },
+        { "path": "archify/renderers/shared/geometry.mjs", "label": "Geometry" }
+      ]
+    },
+    {
+      "id": "viewer",
+      "type": "frontend",
+      "label": "Viewer Template",
+      "pos": [1100, 70],
+      "size": [190, 64],
+      "sources": [
+        { "path": "archify/assets/template.html", "label": "HTML shell" }
+      ]
+    },
+    {
+      "id": "renderers",
+      "type": "backend",
+      "label": "Typed Renderers",
+      "pos": [540, 300],
+      "size": [230, 64],
+      "drilldown": "archify-renderers",
+      "sources": [
+        { "path": "archify/renderers/architecture/render-architecture.mjs", "label": "Architecture" },
+        { "path": "archify/renderers/workflow/render-workflow.mjs", "label": "Workflow" }
+      ]
+    },
+    {
+      "id": "delta",
+      "type": "backend",
+      "label": "Architecture Delta",
+      "pos": [40, 300],
+      "size": [180, 64],
+      "sources": [
+        { "path": "archify/delta/architecture-delta.mjs", "label": "Compare" }
+      ]
+    },
+    {
+      "id": "locate",
+      "type": "backend",
+      "label": "Locate",
+      "pos": [280, 300],
+      "size": [180, 64]
+    },
+    {
+      "id": "bundle",
+      "type": "backend",
+      "label": "Bundle",
+      "pos": [1100, 300],
+      "size": [190, 64]
+    },
+    {
+      "id": "skill-scripts",
+      "type": "backend",
+      "label": "Skill Scripts",
+      "pos": [40, 530],
+      "size": [200, 64],
+      "sources": [
+        { "path": "archify/scripts/check-render-output.mjs", "label": "Artifact checks" },
+        { "path": "archify/scripts/render-examples.mjs", "label": "Example render" }
+      ]
+    },
+    {
+      "id": "test",
+      "type": "backend",
+      "label": "Contract Tests",
+      "pos": [1100, 530],
+      "size": [190, 64],
+      "sources": [
+        { "path": "archify/test/cli.test.mjs", "label": "CLI contract" }
+      ]
+    }
+  ],
+  "connections": [
+    { "id": "cli-schemas", "from": "cli", "to": "schemas" },
+    { "id": "schemas-shared", "from": "schemas", "to": "renderers-shared" },
+    { "id": "shared-viewer", "from": "renderers-shared", "to": "viewer" },
+    { "id": "shared-renderers", "from": "renderers-shared", "to": "renderers", "fromSide": "bottom", "toSide": "top" },
+    { "id": "cli-delta", "from": "cli", "to": "delta", "fromSide": "bottom", "toSide": "top" },
+    { "id": "delta-locate", "from": "delta", "to": "locate" },
+    { "id": "viewer-bundle", "from": "viewer", "to": "bundle", "fromSide": "bottom", "toSide": "top" },
+    { "id": "delta-skill", "from": "delta", "to": "skill-scripts", "fromSide": "bottom", "toSide": "top" },
+    { "id": "bundle-test", "from": "bundle", "to": "test", "fromSide": "bottom", "toSide": "top" }
+  ]
+}

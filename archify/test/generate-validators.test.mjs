@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { workflow as validateWorkflow } from '../renderers/shared/generated-validators.mjs';
+import { bundle as validateBundle, workflow as validateWorkflow } from '../renderers/shared/generated-validators.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -19,6 +19,24 @@ function workflowDocument(schemaVersion) {
     edges: [],
   };
 }
+
+test('generated bundle validator is exported beside the five diagram validators', () => {
+  assert.equal(typeof validateBundle, 'function');
+  assert.equal(validateBundle({
+    schema_version: 1,
+    bundle_type: 'drilldown',
+    entry: 'checkout',
+    diagrams: [{
+      id: 'checkout',
+      file: 'checkout.html',
+      diagram_type: 'architecture',
+      title: 'Checkout',
+      level: 0,
+      spec_sha256: 'a'.repeat(64),
+      artifact_sha256: 'b'.repeat(64),
+    }],
+  }), true, JSON.stringify(validateBundle.errors));
+});
 
 test('generated workflow validator accepts schema versions 1 and 2 only', () => {
   assert.equal(validateWorkflow(workflowDocument(1)), true, JSON.stringify(validateWorkflow.errors));

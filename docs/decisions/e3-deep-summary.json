@@ -1,0 +1,269 @@
+{
+  "methodology": {
+    "map": "feature/identity-map HEAD self-map + sidecar (fixed, not evolving)",
+    "range": "full first-parent origin/main (GitHub), shorter than 400",
+    "requiresMapEdit": "uncovered + added/renamed-to source file under archify/ excluding docs/tests/generated; renames absorbed by an existing glob classify touched and do not count"
+  },
+  "firstParentCommits": 191,
+  "steps": 190,
+  "requiresMapEdit": 2,
+  "proportion": 0.0105,
+  "crashes": [],
+  "bucketsFromHead": [
+    {
+      "label": "HEAD~99..HEAD (100 commits, most recent)",
+      "fromShort": "eb847fa",
+      "toShort": "1072200",
+      "commits": 100,
+      "requiresMapEdit": 1,
+      "proportion": 0.01,
+      "editShas": [
+        {
+          "sha": "8b2aed2a6f0c623ac92a96108990d9e58348335f",
+          "subject": "feat(workflow): add constraint-driven compiler (#146)",
+          "files": [
+            {
+              "path": "archify/migrations/workflow-v2.mjs",
+              "changeType": "A",
+              "side": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "HEAD~189..HEAD~100 (90 commits)",
+      "fromShort": "957ddd4",
+      "toShort": "b744b0b",
+      "commits": 90,
+      "requiresMapEdit": 1,
+      "proportion": 0.0111,
+      "editShas": [
+        {
+          "sha": "e8a12d54943126daffa4c3db6205932743dded44",
+          "subject": "feat: evolve Archify visual storytelling with stability gates (#25)",
+          "files": [
+            {
+              "path": "archify/recipes/scenarios.mjs",
+              "changeType": "A",
+              "side": null
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "bucketsFromRoot": [
+    {
+      "label": "first-parent [1..100] from root",
+      "commits": 100,
+      "requiresMapEdit": 1,
+      "proportion": 0.01
+    },
+    {
+      "label": "first-parent [101..190] from root",
+      "commits": 90,
+      "requiresMapEdit": 1,
+      "proportion": 0.0111
+    }
+  ],
+  "editCommits": [
+    {
+      "index": 56,
+      "sha": "e8a12d54943126daffa4c3db6205932743dded44",
+      "short": "e8a12d5",
+      "parent": "ed0efcc763d358b78df845182b5ed24a9d165a1c",
+      "subject": "feat: evolve Archify visual storytelling with stability gates (#25)",
+      "isMerge": false,
+      "range": "ed0efcc763d358b78df845182b5ed24a9d165a1c..e8a12d54943126daffa4c3db6205932743dded44",
+      "exitCode": 0,
+      "elapsedMs": 8014,
+      "error": null,
+      "filesTotal": 201,
+      "touched": 73,
+      "uncovered": 104,
+      "ambiguous": 0,
+      "excluded": 24,
+      "uncoveredPaths": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml",
+        "CHANGELOG.md",
+        "README.md",
+        "README_EN.md",
+        "README_ZH.md",
+        "ROADMAP.md",
+        "archify/SKILL.md",
+        "archify/examples/agent-run.lifecycle.json",
+        "archify/examples/agent-tool-call.workflow.json",
+        "archify/examples/async-job-roundtrip.sequence.json",
+        "archify/examples/cache-miss-request.sequence.json",
+        "archify/examples/deployment-release.lifecycle.json",
+        "archify/examples/event-stream.dataflow.json",
+        "archify/examples/incident-response.workflow.json",
+        "archify/examples/product-analytics.dataflow.json",
+        "archify/examples/production-deployment.architecture.json",
+        "archify/examples/release-delivery.workflow.json",
+        "archify/examples/web-app.architecture.json",
+        "archify/package.json",
+        "archify/recipes/scenarios.mjs",
+        "docs/article-archify.md",
+        "docs/article-cover.jpg",
+        "docs/article-experiment.jpg",
+        "docs/article-killed.jpg",
+        "docs/article-layout-compare.jpg",
+        "docs/article-pipeline.jpg",
+        "docs/assets/archify-live-proof.gif",
+        "docs/assets/archify-live-proof.json",
+        "docs/gallery.html",
+        "docs/gallery/manifest.json",
+        "docs/gallery/sources/agent-run.lifecycle.json",
+        "docs/gallery/sources/agent-tool-call.workflow.json",
+        "docs/gallery/sources/async-job-roundtrip.sequence.json",
+        "docs/gallery/sources/cache-miss-request.sequence.json",
+        "docs/gallery/sources/deployment-release.lifecycle.json",
+        "docs/gallery/sources/event-stream.dataflow.json",
+        "docs/gallery/sources/incident-response.workflow.json",
+        "docs/gallery/sources/product-analytics.dataflow.json",
+        "docs/gallery/sources/production-deployment.architecture.json",
+        "docs/gallery/sources/release-delivery.workflow.json",
+        "docs/gallery/sources/web-app.architecture.json",
+        "docs/guide.html",
+        "docs/index.html",
+        "docs/research-fireworks-tech-graph.md",
+        "docs/research-visual-evolution-round-10.md",
+        "docs/research-visual-evolution-round-11.md",
+        "docs/research-visual-evolution-round-12.md",
+        "docs/research-visual-evolution-round-13.md",
+        "docs/research-visual-evolution-round-14.md",
+        "docs/research-visual-evolution-round-15.md",
+        "docs/research-visual-evolution-round-16.md",
+        "docs/research-visual-evolution-round-17.md",
+        "docs/research-visual-evolution-round-18.md",
+        "docs/research-visual-evolution-round-19.md",
+        "docs/research-visual-evolution-round-2.md",
+        "docs/research-visual-evolution-round-20.md",
+        "docs/research-visual-evolution-round-21.md",
+        "docs/research-visual-evolution-round-22.md",
+        "docs/research-visual-evolution-round-23.md",
+        "docs/research-visual-evolution-round-24.md",
+        "docs/research-visual-evolution-round-25.md",
+        "docs/research-visual-evolution-round-26.md",
+        "docs/research-visual-evolution-round-27.md",
+        "docs/research-visual-evolution-round-28.md",
+        "docs/research-visual-evolution-round-29.md",
+        "docs/research-visual-evolution-round-3.md",
+        "docs/research-visual-evolution-round-30.md",
+        "docs/research-visual-evolution-round-31.md",
+        "docs/research-visual-evolution-round-32.md",
+        "docs/research-visual-evolution-round-33.md",
+        "docs/research-visual-evolution-round-34.md",
+        "docs/research-visual-evolution-round-35.md",
+        "docs/research-visual-evolution-round-36.md",
+        "docs/research-visual-evolution-round-37.md",
+        "docs/research-visual-evolution-round-38.md",
+        "docs/research-visual-evolution-round-39.md",
+        "docs/research-visual-evolution-round-4.md",
+        "docs/research-visual-evolution-round-40.md",
+        "docs/research-visual-evolution-round-41.md",
+        "docs/research-visual-evolution-round-42.md",
+        "docs/research-visual-evolution-round-43.md",
+        "docs/research-visual-evolution-round-44.md",
+        "docs/research-visual-evolution-round-45.md",
+        "docs/research-visual-evolution-round-46.md",
+        "docs/research-visual-evolution-round-47.md",
+        "docs/research-visual-evolution-round-48.md",
+        "docs/research-visual-evolution-round-49.md",
+        "docs/research-visual-evolution-round-5.md",
+        "docs/research-visual-evolution-round-6.md",
+        "docs/research-visual-evolution-round-7.md",
+        "docs/research-visual-evolution-round-8.md",
+        "docs/research-visual-evolution-round-9.md",
+        "experiments/mco-showcase/mco-runtime.architecture.json",
+        "experiments/mco-showcase/mco-runtime.html",
+        "experiments/visual-evolution/DECISION-MAP.md",
+        "experiments/visual-evolution/prototype.html",
+        "experiments/visual-evolution/prototype.mjs",
+        "experiments/visual-evolution/readme-motion-preview.html",
+        "scripts/build-gallery.mjs",
+        "scripts/build-guide.mjs",
+        "scripts/build-readme-showcase.mjs",
+        "scripts/gallery-template.html",
+        "scripts/guide-template.html"
+      ],
+      "newArchifySourceUncovered": [
+        {
+          "path": "archify/recipes/scenarios.mjs",
+          "changeType": "A",
+          "side": null
+        }
+      ],
+      "requiresMapEdit": true,
+      "touchedComponentIds": [
+        "cli",
+        "delta",
+        "renderers",
+        "renderers-shared",
+        "schemas",
+        "skill-scripts",
+        "test",
+        "viewer"
+      ]
+    },
+    {
+      "index": 160,
+      "sha": "8b2aed2a6f0c623ac92a96108990d9e58348335f",
+      "short": "8b2aed2",
+      "parent": "b36d79fdbc3aec3728744341485a7e79f03c0071",
+      "subject": "feat(workflow): add constraint-driven compiler (#146)",
+      "isMerge": false,
+      "range": "b36d79fdbc3aec3728744341485a7e79f03c0071..8b2aed2a6f0c623ac92a96108990d9e58348335f",
+      "exitCode": 0,
+      "elapsedMs": 2827,
+      "error": null,
+      "filesTotal": 61,
+      "touched": 34,
+      "uncovered": 22,
+      "ambiguous": 0,
+      "excluded": 5,
+      "uncoveredPaths": [
+        "CHANGELOG.md",
+        "archify/SKILL.md",
+        "archify/examples/agent-tool-call.workflow.json",
+        "archify/migrations/workflow-v2.mjs",
+        "archify/references/authoring-contract.md",
+        "archify/references/delivery-contract.md",
+        "docs/article-archify.md",
+        "docs/assets/archify-live-proof.gif",
+        "docs/assets/archify-live-proof.json",
+        "docs/gallery.html",
+        "docs/gallery/manifest.json",
+        "docs/gallery/sources/agent-tool-call.workflow.json",
+        "generated/maka-regenerated.workflow.html",
+        "generated/maka-regenerated.workflow.json",
+        "generated/maka-regenerated.workflow.visual-check.1440x900.dark.png",
+        "generated/maka-regenerated.workflow.visual-check.1440x900.light.png",
+        "generated/maka-regenerated.workflow.visual-check.2048x1320.dark.png",
+        "generated/maka-regenerated.workflow.visual-check.2048x1320.light.png",
+        "generated/maka-regenerated.workflow.visual-check.html",
+        "generated/maka-regenerated.workflow.visual-check.json",
+        "scripts/build-gallery.mjs",
+        "scripts/package-smoke.mjs"
+      ],
+      "newArchifySourceUncovered": [
+        {
+          "path": "archify/migrations/workflow-v2.mjs",
+          "changeType": "A",
+          "side": null
+        }
+      ],
+      "requiresMapEdit": true,
+      "touchedComponentIds": [
+        "cli",
+        "renderers",
+        "renderers-shared",
+        "schemas",
+        "test"
+      ]
+    }
+  ]
+}

@@ -62,8 +62,8 @@ test('presentation keyboard behavior exits in layers and remains accessible', ()
   assert.match(html, /e\.defaultPrevented\) return/);
   assert.match(html, /e\.key === 'f' \|\| e\.key === 'F'/);
   assert.match(html, /Archify\.presentation\.toggle\(\)/);
-  assert.match(html, /e\.key === 'Escape' && Archify\.focus\.active\(\)/);
-  assert.match(html, /e\.key === 'Escape' && Archify\.presentation\.active\(\)/);
+  assert.match(html, /isEscape && Archify\.focus\.active\(\)/);
+  assert.match(html, /isEscape && Archify\.presentation\.active\(\)/);
   assert.match(html, /btn\.setAttribute\('aria-pressed', next \? 'true' : 'false'\)/);
   assert.match(html, /Exit presentation stage \(F or Escape\)/);
 });

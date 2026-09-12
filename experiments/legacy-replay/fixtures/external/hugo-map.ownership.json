@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "kind": "ownership",
+  "map": "hugo-map.json",
+  "excluded": [
+    "go.sum"
+  ],
+  "components": [
+    {
+      "id": "cli",
+      "globs": ["main.go", "main_*.go", "commands/**"]
+    },
+    {
+      "id": "hugolib",
+      "globs": ["hugolib/**"]
+    },
+    {
+      "id": "content",
+      "globs": ["source/**", "parser/**"]
+    },
+    {
+      "id": "templates",
+      "globs": ["tpl/**"]
+    },
+    {
+      "id": "assets",
+      "globs": ["resources/**"]
+    },
+    {
+      "id": "markup",
+      "globs": ["markup/**"]
+    },
+    {
+      "id": "config",
+      "globs": ["config/**"]
+    },
+    {
+      "id": "modules",
+      "globs": ["modules/**"]
+    },
+    {
+      "id": "filesystem",
+      "globs": ["hugofs/**"]
+    },
+    {
+      "id": "output",
+      "globs": ["output/**", "publisher/**"]
+    },
+    {
+      "id": "shared",
+      "globs": ["common/**", "helpers/**", "deps/**"]
+    },
+    {
+      "id": "deploy",
+      "globs": ["deploy/**"]
+    }
+  ]
+}

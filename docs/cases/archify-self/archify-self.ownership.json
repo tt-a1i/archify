@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "kind": "ownership",
+  "map": "archify-self.json",
+  "excluded": [
+    "**/README*.md",
+    "**/package-lock.json",
+    ".coderabbit.yaml",
+    ".github/**",
+    "CHANGELOG.md",
+    "ROADMAP.md",
+    "archify.zip",
+    "archify/examples/**",
+    "archify/renderers/shared/generated-*.mjs",
+    "benchmarks/**",
+    "docs/assets/**",
+    "docs/cases/**",
+    "docs/gallery.html",
+    "docs/gallery/**",
+    "examples/*.html",
+    "examples/*.receipt.json",
+    "experiments/**",
+    "integrations/**",
+    "scripts/**"
+  ],
+  "components": [
+    { "id": "cli", "globs": ["archify/bin/**"] },
+    {
+      "id": "renderers-shared",
+      "globs": ["archify/renderers/shared/**"],
+      "child_map": "render-pipeline.json"
+    },
+    {
+      "id": "renderers",
+      "globs": [
+        "archify/renderers/architecture/**",
+        "archify/renderers/workflow/**",
+        "archify/renderers/sequence/**",
+        "archify/renderers/dataflow/**",
+        "archify/renderers/lifecycle/**"
+      ],
+      "child_map": "archify-renderers.json"
+    },
+    { "id": "delta", "globs": ["archify/delta/**"] },
+    { "id": "locate", "globs": ["archify/locate/**"] },
+    { "id": "bundle", "globs": ["archify/bundle/**"] },
+    { "id": "schemas", "globs": ["archify/schemas/**", "archify/scripts/generate-validators.mjs"] },
+    { "id": "viewer", "globs": ["archify/assets/**"] },
+    {
+      "id": "skill-scripts",
+      "globs": ["archify/scripts/{check-render-output,check-update,generate-brand-marks,render-examples,update-contract}.mjs"]
+    },
+    { "id": "test", "globs": ["archify/test/**"] }
+  ]
+}

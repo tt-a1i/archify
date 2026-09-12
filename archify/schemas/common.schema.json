@@ -110,6 +110,9 @@
           }
         }
       }
+    },
+    "diagramTypeName": {
+      "enum": ["architecture", "workflow", "sequence", "dataflow", "lifecycle"]
     }
   }
 }

@@ -1,0 +1,462 @@
+[
+  {
+    "pr": 354,
+    "cohort": "cross-module",
+    "title": "feat(evidence): support Gitee and local-only repositories",
+    "firstThree": [
+      "archify/renderers/shared/repository-location.mjs",
+      "archify/renderers/shared/repository-evidence.mjs",
+      "archify/schemas/architecture.schema.json"
+    ],
+    "seam": {
+      "crosses": true,
+      "label": "renderers-shared (repository location/evidence) ↔ schemas (provider/link_mode) ↔ viewer template",
+      "ids": [
+        "renderers-shared",
+        "schemas",
+        "viewer"
+      ],
+      "keywords": [
+        "repository-location",
+        "repository-evidence",
+        "link_mode",
+        "gitee",
+        "provider",
+        "schema"
+      ]
+    },
+    "noise": null,
+    "noiseStatus": "unavailable: depends on original receipt file list",
+    "noiseExpression": "noise_from(354)",
+    "rationale": "New location parser + rewritten evidence checker are the behavior; schema adds provider/link_mode. Gallery/examples/zip are regenerated ride-alongs. CLI is a 1-line import; delta is a small consumer.",
+    "sourceLines": [
+      47,
+      64
+    ]
+  },
+  {
+    "pr": 108,
+    "cohort": "cross-module",
+    "title": "feat(i18n): localize Viewer UI from meta.locale",
+    "firstThree": [
+      "archify/renderers/shared/i18n.mjs",
+      "archify/schemas/common.schema.json",
+      "archify/assets/template.html"
+    ],
+    "seam": {
+      "crosses": true,
+      "label": "schemas (meta.locale) ↔ renderers-shared/i18n ↔ viewer template; typed renderers are thin consumers",
+      "ids": [
+        "schemas",
+        "renderers-shared",
+        "viewer"
+      ],
+      "keywords": [
+        "i18n",
+        "meta.locale",
+        "locale",
+        "template",
+        "viewer"
+      ]
+    },
+    "noise": null,
+    "noiseStatus": "unavailable: depends on original receipt file list",
+    "noiseExpression": "noise_from(108, extra=[\"archify/package-lock.json\"])",
+    "rationale": "The contract is meta.locale + the new i18n catalog; template.html is where Viewer chrome is actually swapped. Individual typed-renderer diffs are small wiring. Gallery/examples dominate the file list.",
+    "sourceLines": [
+      66,
+      83
+    ]
+  },
+  {
+    "pr": 85,
+    "cohort": "cross-module",
+    "title": "feat: add authored brand marks and safe URL icon capture",
+    "firstThree": [
+      "archify/renderers/shared/brand-marks.mjs",
+      "archify/schemas/common.schema.json",
+      "archify/bin/archify.mjs"
+    ],
+    "seam": {
+      "crosses": true,
+      "label": "schemas (brand) ↔ renderers-shared/brand-marks ↔ cli (brands/capture); uncovered island archify/brand-marks/",
+      "ids": [
+        "schemas",
+        "renderers-shared",
+        "cli"
+      ],
+      "keywords": [
+        "brand-marks",
+        "brand",
+        "capture",
+        "schema",
+        "brands"
+      ]
+    },
+    "noise": null,
+    "noiseStatus": "unavailable: depends on original receipt file list",
+    "noiseExpression": "noise_from(85, extra=[\"archify/renderers/shared/generated-brand-marks.mjs\"])",
+    "rationale": "Hand-written capture/lookup in brand-marks.mjs plus the schema field and CLI commands. generated-brand-marks.mjs is a 2003-line generated dump and must not be the first open. brand-marks/catalog.json is data, not the algorithm.",
+    "sourceLines": [
+      85,
+      102
+    ]
+  },
+  {
+    "pr": 181,
+    "cohort": "cross-module",
+    "title": "feat(skill): add notification-only update awareness",
+    "firstThree": [
+      "archify/scripts/check-update.mjs",
+      "archify/scripts/update-contract.mjs",
+      "scripts/stage-clean-skill.mjs"
+    ],
+    "seam": {
+      "crosses": true,
+      "label": "skill-scripts (notifier/contract) ↔ packaging/release staging; secondary ride-along schemas↔renderers cleanup",
+      "ids": [
+        "skill-scripts",
+        "cli"
+      ],
+      "secondaryIds": [
+        "schemas",
+        "renderers"
+      ],
+      "keywords": [
+        "check-update",
+        "update-contract",
+        "notifier",
+        "stage-clean-skill",
+        "skill"
+      ]
+    },
+    "noise": null,
+    "noiseStatus": "unavailable: depends on original receipt file list",
+    "noiseExpression": "noise_from(181, extra=[\n        \"docs/skill-embedded-optional-update-notifier-design.md\",\n        \"docs/research/skill-plugin-update-reminder-market-design.md\",\n        \"docs/article-archify.md\",\n        \"examples/workflow-agent-tool-call.html\",\n        \"examples/sequence-cache-miss.html\",\n        \"examples/checkout-platform-delta.html\",\n        \"examples/checkout-platform-delta.receipt.json\",\n    ])",
+    "rationale": "The feature is the fail-silent notifier (check-update + update-contract) and the clean-skill staging gate that ships it. Schema/renderer line-churn is a documented ride-along simplification, not the first look. Design docs and example HTML are not the implementation.",
+    "sourceLines": [
+      104,
+      130
+    ]
+  },
+  {
+    "pr": 96,
+    "cohort": "cross-module",
+    "title": "fix(renderers): keep automatic routes clear and boundary composition readable",
+    "firstThree": [
+      "archify/renderers/shared/geometry.mjs",
+      "archify/renderers/architecture/render-architecture.mjs",
+      "archify/bin/visual-check.mjs"
+    ],
+    "seam": {
+      "crosses": true,
+      "label": "renderers-shared/geometry (port-spread / endpoint-side API) ↔ typed renderers (esp. architecture) ↔ cli/visual-check (desktop-readability)",
+      "ids": [
+        "renderers-shared",
+        "renderers",
+        "cli"
+      ],
+      "keywords": [
+        "geometry",
+        "automaticPortSpread",
+        "desktop-readability",
+        "architecture",
+        "visual-check"
+      ]
+    },
+    "noise": null,
+    "noiseStatus": "unavailable: depends on original receipt file list",
+    "noiseExpression": "noise_from(96)",
+    "rationale": "Shared geometry API change is the cut; architecture renderer holds the unique boundary-title/mask work; visual-check exposes desktop-readability at the public CLI seam. Opening one typed renderer alone misses the leak into delivery/checkers.",
+    "sourceLines": [
+      132,
+      149
+    ]
+  },
+  {
+    "pr": 54,
+    "cohort": "cross-module",
+    "title": "feat: add truthful configurable legends",
+    "firstThree": [
+      "archify/renderers/shared/legend.mjs",
+      "archify/schemas/common.schema.json",
+      "archify/renderers/architecture/render-architecture.mjs"
+    ],
+    "seam": {
+      "crosses": true,
+      "label": "renderers-shared/legend ↔ schemas (meta.legend) ↔ all five typed renderers",
+      "ids": [
+        "renderers-shared",
+        "schemas",
+        "renderers"
+      ],
+      "keywords": [
+        "legend",
+        "meta.legend",
+        "schema"
+      ]
+    },
+    "noise": null,
+    "noiseStatus": "unavailable: depends on original receipt file list",
+    "noiseExpression": "noise_from(54, extra=[\n        \"docs/issue-52-visual-evidence/README.md\",\n        \"docs/issue-52-visual-evidence/browser-results.json\",\n        \"docs/issue-52-visual-evidence/contact-sheet.png\",\n        \"docs/issue-52-visual-evidence/after-dataflow-dark.png\",\n        \"docs/issue-52-visual-evidence/after-dataflow-light.png\",\n        \"docs/issue-52-visual-evidence/after-lifecycle-dark.png\",\n        \"docs/issue-52-visual-evidence/after-lifecycle-light.png\",\n        \"docs/issue-52-visual-evidence/before-dataflow-dark.png\",\n        \"docs/issue-52-visual-evidence/before-dataflow-light.png\",\n        \"docs/issue-52-visual-evidence/before-lifecycle-dark.png\",\n        \"docs/issue-52-visual-evidence/before-lifecycle-light.png\",\n        \"docs/issue-52-visual-evidence/dataflow-repro.json\",\n        \"docs/issue-52-visual-evidence/lifecycle-repro.json\",\n    ])",
+    "rationale": "Shared legend module + schema contract is the first question; one typed renderer shows consumption. Visual-evidence PNGs and gallery HTML are proofs, not the design.",
+    "sourceLines": [
+      151,
+      182
+    ]
+  },
+  {
+    "pr": 146,
+    "cohort": "cross-module",
+    "title": "feat(workflow): add constraint-driven compiler",
+    "firstThree": [
+      "archify/renderers/workflow/workflow-compiler.mjs",
+      "archify/migrations/workflow-v2.mjs",
+      "archify/renderers/workflow/render-workflow.mjs"
+    ],
+    "seam": {
+      "crosses": true,
+      "label": "workflow compiler (renderers) ↔ uncovered migrations/workflow-v2.mjs ↔ workflow schema; geometry/diagnostics shared helpers",
+      "ids": [
+        "renderers",
+        "schemas",
+        "renderers-shared"
+      ],
+      "uncoveredIsland": "archify/migrations/workflow-v2.mjs",
+      "keywords": [
+        "workflow-compiler",
+        "workflow-v2",
+        "migration",
+        "compiler",
+        "schema"
+      ]
+    },
+    "noise": null,
+    "noiseStatus": "unavailable: depends on original receipt file list",
+    "noiseExpression": "noise_from(146, extra=[\n        \"generated/maka-regenerated.workflow.html\",\n        \"generated/maka-regenerated.workflow.json\",\n        \"generated/maka-regenerated.workflow.visual-check.json\",\n        \"generated/maka-regenerated.workflow.visual-check.html\",\n    ])",
+    "rationale": "The 4400-line compiler is the feature; the uncovered migration module is the v1 compatibility seam; render-workflow.mjs shrinks because it now delegates. Maka generated HTML is proof output, not the compiler.",
+    "sourceLines": [
+      184,
+      207
+    ]
+  },
+  {
+    "pr": 256,
+    "cohort": "cross-module",
+    "title": "fix(viewer): embed the viewer font so delivered pages stay self-contained",
+    "firstThree": [
+      "archify/assets/template.html",
+      "archify/test/offline-font-browser.test.mjs",
+      "archify/assets/JetBrainsMono-OFL.txt"
+    ],
+    "seam": {
+      "crosses": false,
+      "label": null,
+      "ids": [
+        "viewer"
+      ],
+      "keywords": [
+        "template",
+        "font",
+        "embed",
+        "offline"
+      ],
+      "note": "Viewer-only plus tests. Locate's value is noise-filter, not a module seam."
+    },
+    "noise": null,
+    "noiseStatus": "unavailable: depends on original receipt file list",
+    "noiseExpression": "noise_from(256)",
+    "rationale": "The behavior is in template.html (replace Google Fonts link with embedded WOFF2). Tests and OFL notice complete the review. 29 excluded + 14 uncovered files are regenerated examples/gallery/docs.",
+    "sourceLines": [
+      209,
+      227
+    ]
+  },
+  {
+    "pr": 265,
+    "cohort": "cross-module",
+    "title": "fix: preserve license provenance in distributions",
+    "firstThree": [
+      "LICENSE",
+      "scripts/package-smoke.mjs",
+      "archify/test/release-package-gates.test.mjs"
+    ],
+    "seam": {
+      "crosses": false,
+      "label": "packaging/license gate (unmapped scripts + LICENSE), not viewer",
+      "ids": [],
+      "keywords": [
+        "LICENSE",
+        "package-smoke",
+        "provenance",
+        "Cocoon"
+      ],
+      "note": "Locate lights viewer because template.html generator meta bumped 2.16.0→2.17.0-dev.0. That is not the change. Real work is LICENSE restore + smoke/staging gates. Experiments deletions are a second cleanup."
+    },
+    "noise": null,
+    "noiseStatus": "unavailable: depends on original receipt file list",
+    "noiseExpression": "noise_from(265, extra=[\n        \"archify/assets/template.html\",\n        \"docs/gallery.html\",\n        \"docs/guide.html\",\n        \"docs/index.html\",\n        \"docs/start.html\",\n        \"CHANGELOG.md\",\n        \"README.md\",\n        \"README_EN.md\",\n        \"README_ZH.md\",\n        \"ROADMAP.md\",\n        \"docs/article-archify.md\",\n    ]) + sorted([\n        p for p in receipts[265]\n        if p.startswith(\"experiments/\")\n    ])",
+    "rationale": "Must read the restored LICENSE line and the fail-closed package-smoke / release-package-gates tests. template.html is a one-line version stamp. Gallery, examples, and the mermaid-experiment deletions are ride-alongs/cleanup.",
+    "sourceLines": [
+      229,
+      262
+    ]
+  },
+  {
+    "pr": 42,
+    "cohort": "cross-module",
+    "title": "feat: enforce relationship label clearance",
+    "firstThree": [
+      "archify/renderers/shared/geometry.mjs",
+      "archify/scripts/check-render-output.mjs",
+      "archify/renderers/dataflow/render-dataflow.mjs"
+    ],
+    "seam": {
+      "crosses": true,
+      "label": "renderers-shared/geometry (Clean Label Gate) ↔ all five typed renderers ↔ skill-scripts output checker",
+      "ids": [
+        "renderers-shared",
+        "renderers",
+        "skill-scripts"
+      ],
+      "keywords": [
+        "geometry",
+        "label clearance",
+        "check-render-output",
+        "Clean Label"
+      ]
+    },
+    "noise": null,
+    "noiseStatus": "unavailable: depends on original receipt file list",
+    "noiseExpression": "noise_from(42)",
+    "rationale": "Shared geometry.mjs is the new gate; the HTML checker is the second enforcement site; dataflow renderer is the largest typed consumer (event-stream debt). Five similar renderer diffs are the same call.",
+    "sourceLines": [
+      264,
+      281
+    ]
+  },
+  {
+    "pr": 346,
+    "cohort": "control",
+    "title": "docs: align contribution and bot review with change impact",
+    "firstThree": [
+      "REVIEWING.md",
+      "CONTRIBUTING.md",
+      ".coderabbit.yaml"
+    ],
+    "seam": {
+      "crosses": false,
+      "label": null,
+      "ids": [],
+      "keywords": [
+        "CONTRIBUTING",
+        "REVIEWING",
+        "coderabbit"
+      ]
+    },
+    "noise": [],
+    "rationale": "Four process/policy files, all uncovered. New REVIEWING.md plus rewritten CONTRIBUTING.md and the bot config that now cites REVIEWING.md. File list already names the work.",
+    "noiseStatus": "literal recovered; not scored in this partial replay",
+    "sourceLines": [
+      283,
+      295
+    ]
+  },
+  {
+    "pr": 348,
+    "cohort": "control",
+    "title": "chore: add advisory CodeRabbit contribution reviews",
+    "firstThree": [
+      ".coderabbit.yaml",
+      "CONTRIBUTING.md"
+    ],
+    "seam": {
+      "crosses": false,
+      "label": null,
+      "ids": [],
+      "keywords": [
+        "coderabbit",
+        "CONTRIBUTING"
+      ]
+    },
+    "noise": [],
+    "rationale": "New advisory bot config plus a short CONTRIBUTING note. Two uncovered files; no product seam.",
+    "noiseStatus": "literal recovered; not scored in this partial replay",
+    "sourceLines": [
+      297,
+      308
+    ]
+  },
+  {
+    "pr": 138,
+    "cohort": "control",
+    "title": "docs: restore LINUX DO footer link",
+    "firstThree": [
+      "README.md",
+      "README_ZH.md"
+    ],
+    "seam": {
+      "crosses": false,
+      "label": null,
+      "ids": [],
+      "keywords": [
+        "README",
+        "LINUX DO"
+      ]
+    },
+    "noise": [],
+    "rationale": "One-line footer restore on three READMEs. README.md and README_EN.md are byte-identical; ZH is the localized twin. Colouring does not change the first look.",
+    "noiseStatus": "literal recovered; not scored in this partial replay",
+    "sourceLines": [
+      310,
+      321
+    ]
+  },
+  {
+    "pr": 216,
+    "cohort": "control",
+    "title": "chore(release): publish v2.16.0 update manifest",
+    "firstThree": [
+      "docs/skill-updates/archify/stable.json"
+    ],
+    "seam": {
+      "crosses": false,
+      "label": null,
+      "ids": [],
+      "keywords": [
+        "stable.json",
+        "manifest"
+      ]
+    },
+    "noise": [],
+    "rationale": "Single uncovered JSON: version/sha/notes bump after the GitHub Release exists. The path is the answer.",
+    "noiseStatus": "literal recovered; not scored in this partial replay",
+    "sourceLines": [
+      323,
+      333
+    ]
+  },
+  {
+    "pr": 109,
+    "cohort": "control",
+    "title": "chore(security): require owner review for automation",
+    "firstThree": [
+      ".github/CODEOWNERS"
+    ],
+    "seam": {
+      "crosses": false,
+      "label": null,
+      "ids": [],
+      "keywords": [
+        "CODEOWNERS"
+      ]
+    },
+    "noise": [],
+    "rationale": "Single new CODEOWNERS file. No product module involved.",
+    "noiseStatus": "literal recovered; not scored in this partial replay",
+    "sourceLines": [
+      335,
+      345
+    ]
+  }
+]

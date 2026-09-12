@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Ledger Posting Flow",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "main", "label": "Ledger" }
+  ],
+  "nodes": [
+    { "id": "event", "lane": "main", "col": 0, "type": "messagebus", "label": "Order Event" },
+    { "id": "post", "lane": "main", "col": 1, "type": "backend", "label": "Post Entry" },
+    { "id": "balance", "lane": "main", "col": 2, "type": "database", "label": "Balances" },
+    { "id": "ack", "lane": "main", "col": 3, "type": "backend", "label": "Ack" }
+  ],
+  "edges": [
+    { "id": "event-post", "from": "event", "to": "post" },
+    { "id": "post-balance", "from": "post", "to": "balance", "label": "write" },
+    { "id": "balance-ack", "from": "balance", "to": "ack" }
+  ]
+}

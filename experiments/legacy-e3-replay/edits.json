@@ -1,0 +1,30 @@
+{
+  "733fb165d75c092c8d50b110e96656d84f0649de": [
+    { "action": "addComponent", "component": "benchmarks", "glob": "benchmarks/**", "why": "new top-level benchmarks/ordinary-model-floor harness + cases + prompts + results" }
+  ],
+  "3b5035f94760b28296408114b9780afa12ad128d": [
+    { "action": "addGlob", "component": "references", "glob": "archify/references/**", "why": "SKILL.md split into archify/references/*.md contracts" }
+  ],
+  "5a4d8539810fb43791360dbb3a1fde4a620c36a5": [
+    { "action": "addComponent", "component": "integrations-deepseek-harness", "glob": "integrations/deepseek-harness/**", "why": "new opt-in distribution adapter with its own tests/scripts" }
+  ],
+  "a0bc05945489152ace820e87d7cb2554d46d9569": [
+    { "action": "addComponent", "component": "brand-marks", "glob": "archify/brand-marks/**", "why": "authored brand mark catalog shipped inside the skill" }
+  ],
+  "9a5060566c832832fb843e457e58c8ee6bac82fd": [
+    { "action": "addGlob", "component": "build-scripts", "glob": ".gitattributes", "why": "repo-level packaging/linguist config" }
+  ],
+  "b36d79fdbc3aec3728744341485a7e79f03c0071": [
+    { "action": "addGlob", "component": "build-scripts", "glob": "archify/skill-release.json", "why": "release/update metadata consumed by packaging" }
+  ],
+  "8b2aed2a6f0c623ac92a96108990d9e58348335f": [
+    { "action": "addComponent", "component": "migrations", "glob": "archify/migrations/**", "why": "new schema/format migration layer (workflow-v2)" },
+    { "action": "exclude", "glob": "generated/**", "why": "generated/ holds renderer output + visual-check screenshots" }
+  ],
+  "06dd052602dd9a369e4d034e24faef0917b5a60c": [
+    { "action": "addGlob", "component": "references", "glob": "archify/THIRD_PARTY_NOTICES.md", "why": "shipped notice file inside the skill payload" }
+  ],
+  "06bd6fea5752bc06b8170a1f09085c798df5aa13": [
+    { "action": "addGlob", "component": "build-scripts", "glob": ".coderabbit.yaml", "why": "repo-level bot review config" }
+  ]
+}

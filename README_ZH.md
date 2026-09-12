@@ -12,6 +12,7 @@ Archify 是一套基于 Node.js 的渲染与校验系统，并以 Agent Skill �
 
 - **打开就是成品** —— 五种技术图、四套视觉预设、深浅主题、内置品牌徽标，以及显式启用的有限动态
 - **合并前先看清架构变化** —— 把两份已校验快照对比为 Before / Delta / After，准确区分新增、删除、语义变化、移动和重路由
+- **定位变更并展开组件细节** —— [locate](archify/references/locate.md) 按作者声明的 ownership sidecar 分类 Git 路径；[下钻图包](archify/references/drilldown-bundles.md) 将总览连接到同目录的子图
 - **每次探索都有依据** —— 搜索节点、按需打开版本校验过的源码、追踪作者定义的上下游可达范围与精确路径、对比角色、播放故事，但不编造拓扑
 - **一个文件即可放心交付** —— Typed JSON IR 和确定性校验生成独立 HTML，并支持 PNG、SVG、WebM 与 1200×630 分享卡片
 

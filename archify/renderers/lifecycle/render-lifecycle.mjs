@@ -40,7 +40,7 @@ const stateTextFit = {
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const { diagram: lifecycle, template, outPath } = await loadDiagramWithBrandMarks({
+const { diagram: lifecycle, template, outPath, bundle } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
   diagramType: 'lifecycle',
   defaultExample: 'agent-run.lifecycle.json'
@@ -523,7 +523,7 @@ function renderLifecycleRail() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(lifecycle.meta)}>
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(lifecycle.meta, { bundle })}>
 ${svgAccessibleText(lifecycle.meta, 'lifecycle')}
 ${renderDefinitions()}
 

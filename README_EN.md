@@ -16,6 +16,7 @@ Archify is a Node.js rendering and validation system for Cursor, Claude Code, Co
 
 - **Open it and present** — five diagram types, four presets, dark/light themes, built-in brand marks, and finite motion
 - **Review architecture changes before merge** — compare two validated snapshots as Before / Delta / After, with exact added, removed, changed, moved, and rerouted facts
+- **Locate changes and open component details** — [locate](archify/references/locate.md) classifies Git paths against an authored ownership sidecar; [drilldown bundles](archify/references/drilldown-bundles.md) connect an overview to same-directory child diagrams
 - **Every interaction stays grounded** — search nodes, optionally open revision-verified source, trace upstream/downstream authored reach and exact routes, compare roles, and play guided stories without inventing topology
 - **One file, ready to trust and share** — typed JSON IR and deterministic checks produce self-contained HTML plus PNG, SVG, WebM, and 1200×630 share cards
 

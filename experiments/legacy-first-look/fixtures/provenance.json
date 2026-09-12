@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "sourceSession": "3c4879a4-a02b-4382-8667-0f1f670c421c",
+  "agentsArchivePath": "recovered/3c4879a4-a02b-4382-8667-0f1f670c421c/archify-burn/firstlook/scores/agents.json",
+  "agentsOriginalSha256": "35adb3a7fd88e71bc09ad327c9aa869659d812c9d8097bdb1096f95cc9778fd9",
+  "sources": [
+    {
+      "id": "ground-truth-v1",
+      "archivePath": "shell-sources/3c4879a4-a02b-4382-8667-0f1f670c421c-13.txt",
+      "sha256": "223d4be1e4c7fd100c73d4910b9d0bbe893114bd0d63bdb0395b891c4fcb41b2",
+      "bundledFile": "sources/ground-truth-v1.txt",
+      "sourceSession": "3c4879a4-a02b-4382-8667-0f1f670c421c"
+    },
+    {
+      "id": "scoring-v1",
+      "archivePath": "shell-sources/3c4879a4-a02b-4382-8667-0f1f670c421c-21.txt",
+      "sha256": "34d19d781c329282471f40ff69c93ce8b0efb7b1e6178fc14826d64dca205092",
+      "bundledFile": "sources/scoring-v1.txt",
+      "sourceSession": "3c4879a4-a02b-4382-8667-0f1f670c421c"
+    },
+    {
+      "id": "scoring-v2",
+      "archivePath": "shell-sources/3c4879a4-a02b-4382-8667-0f1f670c421c-22.txt",
+      "sha256": "971d874ab6039ab92b6d8867a5ad10891ccb3e80ab16354827525c4fc6024e20",
+      "bundledFile": "sources/scoring-v2.txt",
+      "sourceSession": "3c4879a4-a02b-4382-8667-0f1f670c421c"
+    },
+    {
+      "id": "historical-report",
+      "archivePath": "recovered/3c4879a4-a02b-4382-8667-0f1f670c421c/archify-burn/firstlook/REPORT.md",
+      "sha256": "5e1af77064379e5783bd6ae08ac0363eca6549fcce28dcf3e8af9d3f9602f40b",
+      "bundledFile": "sources/historical-report-metrics.md",
+      "bundledSha256": "caa1898f7c560336fb4da622a90a1f9a2039f9a4ce5878759bda16846a2387da",
+      "sourceLines": [
+        104,
+        131
+      ]
+    }
+  ],
+  "recoveryMethod": "Read transcript Write input and final JSON; parse GTS assignments with ast.literal_eval. No archived code executed.",
+  "groundTruthVersion": "ground-truth-v1: recovered shell input 13",
+  "scoringVersion": "scoring-v2: recovered shell input 22; v1 retained for comparison",
+  "missing": [
+    "Complete original receipt-derived noise ground truth",
+    "Complete original A/B prompt bodies, including original B locate receipts"
+  ]
+}

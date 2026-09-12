@@ -382,6 +382,9 @@
         semanticId.textContent = id;
         semanticId.hidden = false;
         renderSourceEvidence(id);
+        if (Archify.drilldown && typeof Archify.drilldown.syncPassport === 'function') {
+          Archify.drilldown.syncPassport(id, node);
+        }
       }
       function relationshipsFor(id, byId) {
         var seen = {};

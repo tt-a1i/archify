@@ -1,0 +1,61 @@
+[
+  {
+    "file": "fixtures/external/hono-map.json",
+    "sha256": "092384ead3cae73e85ba1bc39e60b37202fcfca692f367edc1c52992d109036c",
+    "sourceSession": "ff6c6ce4-b5ca-446c-9529-d21c0a912a34",
+    "sourceLines": [
+      10,
+      12,
+      16
+    ],
+    "kind": "Recovered authored map/sidecar; no historical replay outputs recovered here"
+  },
+  {
+    "file": "fixtures/external/hono-map.ownership.json",
+    "sha256": "1458a2965468ddd102318d26902b23c9e2ba13cba7a2268ac2cdca847c26178e",
+    "sourceSession": "ff6c6ce4-b5ca-446c-9529-d21c0a912a34",
+    "sourceLines": [
+      10
+    ],
+    "kind": "Recovered authored map/sidecar; no historical replay outputs recovered here"
+  },
+  {
+    "file": "fixtures/external/fastapi-map.json",
+    "sha256": "1634786d9116ef37deeff03dbbb3d67e914d605adf132fca124c45b2599712fe",
+    "sourceSession": "ff6c6ce4-b5ca-446c-9529-d21c0a912a34",
+    "sourceLines": [
+      12,
+      16
+    ],
+    "kind": "Recovered authored map/sidecar; no historical replay outputs recovered here"
+  },
+  {
+    "file": "fixtures/external/fastapi-map.ownership.json",
+    "sha256": "ca90cacb33e7659ca2a70e9277dfc476c5a07075ef626b32d43ce54bb43ab1c0",
+    "sourceSession": "ff6c6ce4-b5ca-446c-9529-d21c0a912a34",
+    "sourceLines": [
+      12
+    ],
+    "kind": "Recovered authored map/sidecar; no historical replay outputs recovered here"
+  },
+  {
+    "file": "fixtures/external/hugo-map.json",
+    "sha256": "326e11e924f1a401427aa06d12723d6bbcb895215c366bdab0dc1363148241b5",
+    "sourceSession": "ff6c6ce4-b5ca-446c-9529-d21c0a912a34",
+    "sourceLines": [
+      12,
+      14,
+      16
+    ],
+    "kind": "Recovered authored map/sidecar; no historical replay outputs recovered here"
+  },
+  {
+    "file": "fixtures/external/hugo-map.ownership.json",
+    "sha256": "74ac9a943fd93d0a82723533caeb4e225411ef8e45772d5aaca07bb35454d19b",
+    "sourceSession": "ff6c6ce4-b5ca-446c-9529-d21c0a912a34",
+    "sourceLines": [
+      12
+    ],
+    "kind": "Recovered authored map/sidecar; no historical replay outputs recovered here"
+  }
+]

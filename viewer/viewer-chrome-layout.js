@@ -23,6 +23,9 @@
       var lastReceipt = null;
       var SAFE_GAP = 10;
 
+      function descended() {
+        return Boolean(html.getAttribute('data-drilldown-level'));
+      }
       function visible(element) {
         if (!element || element.hidden) return false;
         var style = window.getComputedStyle(element);
@@ -143,6 +146,7 @@
       }
       function measure() {
         frame = 0;
+        if (descended()) return lastReceipt;
         if (probingBaseline) return null;
         if (!eligible()) return clear({ preserveBaseline: !cameraAtBaseline() });
 
@@ -248,7 +252,7 @@
         return probePromise;
       }
       function schedule() {
-        if (frame) return;
+        if (descended() || frame) return;
         frame = requestAnimationFrame(measure);
       }
       function stableSnapshot() {

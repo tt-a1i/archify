@@ -1,0 +1,1460 @@
+{
+  "summary": {
+    "anchors": 61,
+    "anchorFiles": 21,
+    "firstParentCommits": 100,
+    "commitsInvalidatingAtLeastOneAnchor": 17,
+    "pctCommitsInvalidating": 17,
+    "commitsTouchingAnyAnchorFile": 49,
+    "pctCommitsTouchingAnchorFile": 49,
+    "anchorsValidAtHead": 20,
+    "pctAnchorsValidAtHead": 32.8,
+    "anchorsInvalidatedByComponent": {
+      "cli": 5,
+      "renderers-shared": 5,
+      "renderer-architecture": 3,
+      "renderer-workflow": 3,
+      "renderer-sequence": 3,
+      "renderer-dataflow": 3,
+      "renderer-lifecycle": 3,
+      "delta": 3,
+      "viewer": 2,
+      "build-scripts": 3,
+      "references": 5,
+      "examples": 1,
+      "docs-site": 2
+    },
+    "anchorsTotalByComponent": {
+      "cli": 6,
+      "renderers-shared": 9,
+      "renderer-architecture": 6,
+      "renderer-workflow": 3,
+      "renderer-sequence": 3,
+      "renderer-dataflow": 3,
+      "renderer-lifecycle": 3,
+      "delta": 3,
+      "schemas": 4,
+      "viewer": 3,
+      "build-scripts": 6,
+      "references": 6,
+      "examples": 3,
+      "docs-site": 3
+    }
+  },
+  "anchors": [
+    {
+      "component": "cli",
+      "path": "archify/bin/archify.mjs",
+      "line": 10,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 13
+    },
+    {
+      "component": "cli",
+      "path": "archify/bin/archify.mjs",
+      "line": 484,
+      "validAtHead": false,
+      "firstInvalidatedAt": "a097c2d",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 13
+    },
+    {
+      "component": "cli",
+      "path": "archify/bin/archify.mjs",
+      "line": 966,
+      "validAtHead": false,
+      "firstInvalidatedAt": "3b5035f",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 13
+    },
+    {
+      "component": "cli",
+      "path": "archify/bin/preview.mjs",
+      "line": 10,
+      "validAtHead": false,
+      "firstInvalidatedAt": "a097c2d",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 2
+    },
+    {
+      "component": "cli",
+      "path": "archify/bin/preview.mjs",
+      "line": 209,
+      "validAtHead": false,
+      "firstInvalidatedAt": "a097c2d",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 2
+    },
+    {
+      "component": "cli",
+      "path": "archify/bin/preview.mjs",
+      "line": 344,
+      "validAtHead": false,
+      "firstInvalidatedAt": "a097c2d",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 2
+    },
+    {
+      "component": "renderers-shared",
+      "path": "archify/renderers/shared/validator.mjs",
+      "line": 6,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 0
+    },
+    {
+      "component": "renderers-shared",
+      "path": "archify/renderers/shared/validator.mjs",
+      "line": 22,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 0
+    },
+    {
+      "component": "renderers-shared",
+      "path": "archify/renderers/shared/validator.mjs",
+      "line": 39,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 0
+    },
+    {
+      "component": "renderers-shared",
+      "path": "archify/renderers/shared/geometry.mjs",
+      "line": 10,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 4
+    },
+    {
+      "component": "renderers-shared",
+      "path": "archify/renderers/shared/geometry.mjs",
+      "line": 463,
+      "validAtHead": false,
+      "firstInvalidatedAt": "3b5035f",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 4
+    },
+    {
+      "component": "renderers-shared",
+      "path": "archify/renderers/shared/geometry.mjs",
+      "line": 788,
+      "validAtHead": false,
+      "firstInvalidatedAt": "3b5035f",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 4
+    },
+    {
+      "component": "renderers-shared",
+      "path": "archify/renderers/shared/cli.mjs",
+      "line": 12,
+      "validAtHead": false,
+      "firstInvalidatedAt": "a097c2d",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 6
+    },
+    {
+      "component": "renderers-shared",
+      "path": "archify/renderers/shared/cli.mjs",
+      "line": 75,
+      "validAtHead": false,
+      "firstInvalidatedAt": "a097c2d",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 6
+    },
+    {
+      "component": "renderers-shared",
+      "path": "archify/renderers/shared/cli.mjs",
+      "line": 137,
+      "validAtHead": false,
+      "firstInvalidatedAt": "a097c2d",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 6
+    },
+    {
+      "component": "renderer-architecture",
+      "path": "archify/renderers/architecture/render-architecture.mjs",
+      "line": 36,
+      "validAtHead": false,
+      "firstInvalidatedAt": "3b5035f",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 11
+    },
+    {
+      "component": "renderer-architecture",
+      "path": "archify/renderers/architecture/render-architecture.mjs",
+      "line": 173,
+      "validAtHead": false,
+      "firstInvalidatedAt": "3b5035f",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 11
+    },
+    {
+      "component": "renderer-architecture",
+      "path": "archify/renderers/architecture/render-architecture.mjs",
+      "line": 375,
+      "validAtHead": false,
+      "firstInvalidatedAt": "fc1ddf8",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 11
+    },
+    {
+      "component": "renderer-architecture",
+      "path": "archify/renderers/architecture/grid.mjs",
+      "line": 3,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 0
+    },
+    {
+      "component": "renderer-architecture",
+      "path": "archify/renderers/architecture/grid.mjs",
+      "line": 19,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 0
+    },
+    {
+      "component": "renderer-architecture",
+      "path": "archify/renderers/architecture/grid.mjs",
+      "line": 33,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 0
+    },
+    {
+      "component": "renderer-workflow",
+      "path": "archify/renderers/workflow/render-workflow.mjs",
+      "line": 32,
+      "validAtHead": false,
+      "firstInvalidatedAt": "cc55764",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 11
+    },
+    {
+      "component": "renderer-workflow",
+      "path": "archify/renderers/workflow/render-workflow.mjs",
+      "line": 211,
+      "validAtHead": false,
+      "firstInvalidatedAt": "907ca48",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 11
+    },
+    {
+      "component": "renderer-workflow",
+      "path": "archify/renderers/workflow/render-workflow.mjs",
+      "line": 458,
+      "validAtHead": false,
+      "firstInvalidatedAt": "907ca48",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 11
+    },
+    {
+      "component": "renderer-sequence",
+      "path": "archify/renderers/sequence/render-sequence.mjs",
+      "line": 8,
+      "validAtHead": false,
+      "firstInvalidatedAt": "cc55764",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 13
+    },
+    {
+      "component": "renderer-sequence",
+      "path": "archify/renderers/sequence/render-sequence.mjs",
+      "line": 191,
+      "validAtHead": false,
+      "firstInvalidatedAt": "a6b8261",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 13
+    },
+    {
+      "component": "renderer-sequence",
+      "path": "archify/renderers/sequence/render-sequence.mjs",
+      "line": 275,
+      "validAtHead": false,
+      "firstInvalidatedAt": "d521a41",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 13
+    },
+    {
+      "component": "renderer-dataflow",
+      "path": "archify/renderers/dataflow/render-dataflow.mjs",
+      "line": 32,
+      "validAtHead": false,
+      "firstInvalidatedAt": "cc55764",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 11
+    },
+    {
+      "component": "renderer-dataflow",
+      "path": "archify/renderers/dataflow/render-dataflow.mjs",
+      "line": 148,
+      "validAtHead": false,
+      "firstInvalidatedAt": "cc55764",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 11
+    },
+    {
+      "component": "renderer-dataflow",
+      "path": "archify/renderers/dataflow/render-dataflow.mjs",
+      "line": 298,
+      "validAtHead": false,
+      "firstInvalidatedAt": "3f68bd2",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 11
+    },
+    {
+      "component": "renderer-lifecycle",
+      "path": "archify/renderers/lifecycle/render-lifecycle.mjs",
+      "line": 30,
+      "validAtHead": false,
+      "firstInvalidatedAt": "cc55764",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 9
+    },
+    {
+      "component": "renderer-lifecycle",
+      "path": "archify/renderers/lifecycle/render-lifecycle.mjs",
+      "line": 249,
+      "validAtHead": false,
+      "firstInvalidatedAt": "cc55764",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 9
+    },
+    {
+      "component": "renderer-lifecycle",
+      "path": "archify/renderers/lifecycle/render-lifecycle.mjs",
+      "line": 351,
+      "validAtHead": false,
+      "firstInvalidatedAt": "cc55764",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 9
+    },
+    {
+      "component": "delta",
+      "path": "archify/delta/architecture-delta.mjs",
+      "line": 1,
+      "validAtHead": false,
+      "firstInvalidatedAt": "b86b607",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 4
+    },
+    {
+      "component": "delta",
+      "path": "archify/delta/architecture-delta.mjs",
+      "line": 406,
+      "validAtHead": false,
+      "firstInvalidatedAt": "cc55764",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 4
+    },
+    {
+      "component": "delta",
+      "path": "archify/delta/architecture-delta.mjs",
+      "line": 699,
+      "validAtHead": false,
+      "firstInvalidatedAt": "cc55764",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 4
+    },
+    {
+      "component": "schemas",
+      "path": "archify/schemas/architecture.schema.json",
+      "line": 4,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 5
+    },
+    {
+      "component": "schemas",
+      "path": "archify/schemas/architecture.schema.json",
+      "line": 5,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 5
+    },
+    {
+      "component": "schemas",
+      "path": "archify/schemas/architecture.schema.json",
+      "line": 6,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 5
+    },
+    {
+      "component": "schemas",
+      "path": "archify/schemas/common.schema.json",
+      "line": 4,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 4
+    },
+    {
+      "component": "viewer",
+      "path": "archify/assets/template.html",
+      "line": 8,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 19
+    },
+    {
+      "component": "viewer",
+      "path": "archify/assets/template.html",
+      "line": 8006,
+      "validAtHead": false,
+      "firstInvalidatedAt": "eb847fa",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 19
+    },
+    {
+      "component": "viewer",
+      "path": "archify/assets/template.html",
+      "line": 10460,
+      "validAtHead": false,
+      "firstInvalidatedAt": "eb847fa",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 19
+    },
+    {
+      "component": "build-scripts",
+      "path": "archify/scripts/render-examples.mjs",
+      "line": 8,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 0
+    },
+    {
+      "component": "build-scripts",
+      "path": "archify/scripts/render-examples.mjs",
+      "line": 9,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 0
+    },
+    {
+      "component": "build-scripts",
+      "path": "archify/scripts/render-examples.mjs",
+      "line": 10,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 0
+    },
+    {
+      "component": "build-scripts",
+      "path": "scripts/build-gallery.mjs",
+      "line": 9,
+      "validAtHead": false,
+      "firstInvalidatedAt": "0853a80",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 5
+    },
+    {
+      "component": "build-scripts",
+      "path": "scripts/build-gallery.mjs",
+      "line": 185,
+      "validAtHead": false,
+      "firstInvalidatedAt": "96d2d5d",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 5
+    },
+    {
+      "component": "build-scripts",
+      "path": "scripts/build-gallery.mjs",
+      "line": 245,
+      "validAtHead": false,
+      "firstInvalidatedAt": "769fb3e",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 5
+    },
+    {
+      "component": "references",
+      "path": "archify/SKILL.md",
+      "line": 11,
+      "validAtHead": false,
+      "firstInvalidatedAt": "3b5035f",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 19
+    },
+    {
+      "component": "references",
+      "path": "archify/SKILL.md",
+      "line": 181,
+      "validAtHead": false,
+      "firstInvalidatedAt": "181a432",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 19
+    },
+    {
+      "component": "references",
+      "path": "archify/SKILL.md",
+      "line": 355,
+      "validAtHead": false,
+      "firstInvalidatedAt": "181a432",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 19
+    },
+    {
+      "component": "references",
+      "path": "archify/recipes/scenarios.mjs",
+      "line": 1,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 2
+    },
+    {
+      "component": "references",
+      "path": "archify/recipes/scenarios.mjs",
+      "line": 268,
+      "validAtHead": false,
+      "firstInvalidatedAt": "98a9132",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 2
+    },
+    {
+      "component": "references",
+      "path": "archify/recipes/scenarios.mjs",
+      "line": 304,
+      "validAtHead": false,
+      "firstInvalidatedAt": "98a9132",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 2
+    },
+    {
+      "component": "examples",
+      "path": "archify/examples/web-app.architecture.json",
+      "line": 2,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 1
+    },
+    {
+      "component": "examples",
+      "path": "archify/examples/web-app.architecture.json",
+      "line": 4,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 1
+    },
+    {
+      "component": "examples",
+      "path": "archify/examples/web-app.architecture.json",
+      "line": 27,
+      "validAtHead": false,
+      "firstInvalidatedAt": "a3bf80c",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 1
+    },
+    {
+      "component": "docs-site",
+      "path": "docs/article-archify.md",
+      "line": 1,
+      "validAtHead": true,
+      "firstInvalidatedAt": null,
+      "reason": null,
+      "fileChangedInNCommits": 3
+    },
+    {
+      "component": "docs-site",
+      "path": "docs/article-archify.md",
+      "line": 63,
+      "validAtHead": false,
+      "firstInvalidatedAt": "b36d79f",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 3
+    },
+    {
+      "component": "docs-site",
+      "path": "docs/article-archify.md",
+      "line": 133,
+      "validAtHead": false,
+      "firstInvalidatedAt": "b36d79f",
+      "reason": "pinned line content changed",
+      "fileChangedInNCommits": 3
+    }
+  ],
+  "perCommit": [
+    {
+      "sha": "eb847fa",
+      "anchorFilesTouched": 6,
+      "invalidated": 2,
+      "events": [
+        {
+          "path": "archify/assets/template.html",
+          "line": 8006,
+          "component": "viewer",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/assets/template.html",
+          "line": 10460,
+          "component": "viewer",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "d6a429e",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "733fb16",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "fcedfa5",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "13c65f3",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "bd16237",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "18e4caa",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "40a0787",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "b47a822",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "181a432",
+      "anchorFilesTouched": 3,
+      "invalidated": 2,
+      "events": [
+        {
+          "path": "archify/SKILL.md",
+          "line": 181,
+          "component": "references",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/SKILL.md",
+          "line": 355,
+          "component": "references",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "479147d",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "d521a41",
+      "anchorFilesTouched": 3,
+      "invalidated": 1,
+      "events": [
+        {
+          "path": "archify/renderers/sequence/render-sequence.mjs",
+          "line": 275,
+          "component": "renderer-sequence",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "907ca48",
+      "anchorFilesTouched": 3,
+      "invalidated": 2,
+      "events": [
+        {
+          "path": "archify/renderers/workflow/render-workflow.mjs",
+          "line": 211,
+          "component": "renderer-workflow",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/renderers/workflow/render-workflow.mjs",
+          "line": 458,
+          "component": "renderer-workflow",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "769fb3e",
+      "anchorFilesTouched": 3,
+      "invalidated": 1,
+      "events": [
+        {
+          "path": "scripts/build-gallery.mjs",
+          "line": 245,
+          "component": "build-scripts",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "0cccd0e",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "a6b8261",
+      "anchorFilesTouched": 3,
+      "invalidated": 1,
+      "events": [
+        {
+          "path": "archify/renderers/sequence/render-sequence.mjs",
+          "line": 191,
+          "component": "renderer-sequence",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "3f68bd2",
+      "anchorFilesTouched": 6,
+      "invalidated": 1,
+      "events": [
+        {
+          "path": "archify/renderers/dataflow/render-dataflow.mjs",
+          "line": 298,
+          "component": "renderer-dataflow",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "66414c7",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "2dce766",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "fc1ddf8",
+      "anchorFilesTouched": 6,
+      "invalidated": 1,
+      "events": [
+        {
+          "path": "archify/renderers/architecture/render-architecture.mjs",
+          "line": 375,
+          "component": "renderer-architecture",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "247caaa",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "7eef4db",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "b139476",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "55fe514",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "3b5035f",
+      "anchorFilesTouched": 15,
+      "invalidated": 6,
+      "events": [
+        {
+          "path": "archify/bin/archify.mjs",
+          "line": 966,
+          "component": "cli",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/renderers/shared/geometry.mjs",
+          "line": 463,
+          "component": "renderers-shared",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/renderers/shared/geometry.mjs",
+          "line": 788,
+          "component": "renderers-shared",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/renderers/architecture/render-architecture.mjs",
+          "line": 36,
+          "component": "renderer-architecture",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/renderers/architecture/render-architecture.mjs",
+          "line": 173,
+          "component": "renderer-architecture",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/SKILL.md",
+          "line": 11,
+          "component": "references",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "e295d31",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "7b49d0b",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "a097c2d",
+      "anchorFilesTouched": 15,
+      "invalidated": 7,
+      "events": [
+        {
+          "path": "archify/bin/archify.mjs",
+          "line": 484,
+          "component": "cli",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/bin/preview.mjs",
+          "line": 10,
+          "component": "cli",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/bin/preview.mjs",
+          "line": 209,
+          "component": "cli",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/bin/preview.mjs",
+          "line": 344,
+          "component": "cli",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/renderers/shared/cli.mjs",
+          "line": 12,
+          "component": "renderers-shared",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/renderers/shared/cli.mjs",
+          "line": 75,
+          "component": "renderers-shared",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/renderers/shared/cli.mjs",
+          "line": 137,
+          "component": "renderers-shared",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "cc55764",
+      "anchorFilesTouched": 28,
+      "invalidated": 9,
+      "events": [
+        {
+          "path": "archify/renderers/workflow/render-workflow.mjs",
+          "line": 32,
+          "component": "renderer-workflow",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/renderers/sequence/render-sequence.mjs",
+          "line": 8,
+          "component": "renderer-sequence",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/renderers/dataflow/render-dataflow.mjs",
+          "line": 32,
+          "component": "renderer-dataflow",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/renderers/dataflow/render-dataflow.mjs",
+          "line": 148,
+          "component": "renderer-dataflow",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/renderers/lifecycle/render-lifecycle.mjs",
+          "line": 30,
+          "component": "renderer-lifecycle",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/renderers/lifecycle/render-lifecycle.mjs",
+          "line": 249,
+          "component": "renderer-lifecycle",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/renderers/lifecycle/render-lifecycle.mjs",
+          "line": 351,
+          "component": "renderer-lifecycle",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/delta/architecture-delta.mjs",
+          "line": 406,
+          "component": "delta",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/delta/architecture-delta.mjs",
+          "line": 699,
+          "component": "delta",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "2c1f8ac",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "19213e1",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "24c649e",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "ed9e91f",
+      "anchorFilesTouched": 15,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "5875dc8",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "a3bf80c",
+      "anchorFilesTouched": 30,
+      "invalidated": 1,
+      "events": [
+        {
+          "path": "archify/examples/web-app.architecture.json",
+          "line": 27,
+          "component": "examples",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "45f0611",
+      "anchorFilesTouched": 6,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "5a4d853",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "fc6e8ac",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "7769cf5",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "cffdd42",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "3e0f4d8",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "a0bc059",
+      "anchorFilesTouched": 31,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "e1ac748",
+      "anchorFilesTouched": 6,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "82e63c9",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "146b6d4",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "9244ede",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "a28f372",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "98648ce",
+      "anchorFilesTouched": 27,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "c784542",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "4293061",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "95e8a3a",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "71ce311",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "96d2d5d",
+      "anchorFilesTouched": 3,
+      "invalidated": 1,
+      "events": [
+        {
+          "path": "scripts/build-gallery.mjs",
+          "line": 185,
+          "component": "build-scripts",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "af45e51",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "4be6da5",
+      "anchorFilesTouched": 28,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "8323a15",
+      "anchorFilesTouched": 15,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "8b542d6",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "12f58bb",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "585be4c",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "48cb933",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "cb7583a",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "aab9f85",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "9a50605",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "7fe139e",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "316a184",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "49a7821",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "12106be",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "0853a80",
+      "anchorFilesTouched": 3,
+      "invalidated": 1,
+      "events": [
+        {
+          "path": "scripts/build-gallery.mjs",
+          "line": 9,
+          "component": "build-scripts",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "b36d79f",
+      "anchorFilesTouched": 37,
+      "invalidated": 2,
+      "events": [
+        {
+          "path": "docs/article-archify.md",
+          "line": 63,
+          "component": "docs-site",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "docs/article-archify.md",
+          "line": 133,
+          "component": "docs-site",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "8b2aed2",
+      "anchorFilesTouched": 30,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "2309a66",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "98a9132",
+      "anchorFilesTouched": 3,
+      "invalidated": 2,
+      "events": [
+        {
+          "path": "archify/recipes/scenarios.mjs",
+          "line": 268,
+          "component": "references",
+          "reason": "pinned line content changed"
+        },
+        {
+          "path": "archify/recipes/scenarios.mjs",
+          "line": 304,
+          "component": "references",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "499b75d",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "4ac500a",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "f58298b",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "94e2b0e",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "c826e6c",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "39a2113",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "5de7275",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "2bfb471",
+      "anchorFilesTouched": 6,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "09cc2a0",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "0456fb3",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "3411a18",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "199360c",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "7a16d30",
+      "anchorFilesTouched": 9,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "06dd052",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "0b636d9",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "60080fb",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "5769ace",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "d8e4daf",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "ed7f4d4",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "c651940",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "920543b",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "2ead014",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "06bd6fe",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "79a799d",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "daced37",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "7ce87ef",
+      "anchorFilesTouched": 0,
+      "invalidated": 0,
+      "events": []
+    },
+    {
+      "sha": "b86b607",
+      "anchorFilesTouched": 12,
+      "invalidated": 1,
+      "events": [
+        {
+          "path": "archify/delta/architecture-delta.mjs",
+          "line": 1,
+          "component": "delta",
+          "reason": "pinned line content changed"
+        }
+      ]
+    },
+    {
+      "sha": "1072200",
+      "anchorFilesTouched": 3,
+      "invalidated": 0,
+      "events": []
+    }
+  ]
+}

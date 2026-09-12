@@ -35,6 +35,9 @@
         var style = window.getComputedStyle(element);
         return element.getBoundingClientRect().height + number(style.marginTop) + number(style.marginBottom);
       }
+      function descended() {
+        return Boolean(html.getAttribute('data-drilldown-level'));
+      }
       function eligible() {
         return Boolean(
           shell && diagram && svg && ratio >= WIDE_RATIO &&
@@ -74,7 +77,7 @@
         if (settleFrame) cancelAnimationFrame(settleFrame);
         settleFrame = requestAnimationFrame(function () {
           settleFrame = 0;
-          if (!eligible() || !lastWidth) return;
+          if (descended() || !eligible() || !lastWidth) return;
           var overflow = Math.max(
             document.documentElement.scrollHeight,
             document.body.scrollHeight
@@ -91,6 +94,9 @@
       }
       function measure() {
         frame = 0;
+        if (descended()) {
+          return lastWidth ? { ratio: ratio, width: lastWidth } : null;
+        }
         if (!eligible()) {
           clear();
           return null;
@@ -114,7 +120,7 @@
         };
       }
       function schedule() {
-        if (frame) return;
+        if (descended() || frame) return;
         frame = requestAnimationFrame(measure);
       }
       function stableSnapshot() {

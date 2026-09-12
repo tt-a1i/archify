@@ -384,6 +384,11 @@ test('runtime labels stay localized after composition', () => {
   assert.equal(translateMessage('zh-CN', 'viewer.kind.decision'), '决策');
   assert.equal(translateMessage('zh-CN', 'viewer.passport.relationship.connectsFrom'), '连接自');
   assert.equal(translateMessage('zh-CN', 'viewer.nav.level.auto'), '自动');
+  assert.equal(translateMessage('zh-CN', 'viewer.drilldown.stale.title'), '子图过期');
+  assert.equal(translateMessage('zh-CN', 'viewer.drilldown.expectedId'), '预期 id：');
+  assert.equal(translateMessage('zh-CN', 'viewer.drilldown.actualId'), '实际 id：');
+  assert.equal(translateMessage('zh-CN', 'viewer.drilldown.reason'), '原因：');
+  assert.equal(translateMessage('zh-CN', 'viewer.locate.filesInside', { count: 3 }), '内部命中 3 个文件');
 
   const zhHops = translateCount('zh-CN', 'viewer.route.hop', 2);
   assert.equal(

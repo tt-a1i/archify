@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import http from 'node:http';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
@@ -55,14 +56,18 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
       { name: 'prefers-reduced-motion', value: reduced ? 'reduce' : 'no-preference' },
     ] });
   }
-  async function load(mode = 'architecture', { theme = 'dark', reduced = false, fixture = '', preserveStorage = false, query = '' } = {}) {
+  async function load(mode = 'architecture', { theme = 'dark', reduced = false, fixture = '', preserveStorage = false, query = '', reload = false, origin = '' } = {}) {
     const expectedNavigation = ++navigationId;
+    const url = reload ? await run('location.href')
+      : (origin ? `${origin}/${mode}.html` : pathToFileURL(files[mode]).href) + `?theme=${theme}&testNavigation=${expectedNavigation}${query}`;
+    const previousLoader = reload ? (await send('Page.getFrameTree')).frameTree.frame.loaderId : null;
     if (startup) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: startup });
     ({ identifier: startup } = await send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {
-      if (new URL(location.href).searchParams.get('testNavigation') !== '${expectedNavigation}') return;
+      if (window !== window.top || location.href !== ${JSON.stringify(url)}) return;
       window.motionNavigation = ${expectedNavigation};
-      try { window.motionStartupPreference = localStorage.getItem('archify-motion'); }
-      catch (error) { window.motionStartupPreference = String(error); }
+      // Do not probe localStorage before document initialization: a Linux Chrome
+      // control reproduces storage loss from that probe even in script-free HTML.
+      // Assert the real stored value and Governor mode after each load instead.
       window.motionErrors = []; window.motionEnds = []; window.motionAmbient = [];
       addEventListener('error', e => motionErrors.push(e.message));
       addEventListener('unhandledrejection', e => motionErrors.push(String(e.reason)));
@@ -89,9 +94,14 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
     await media(reduced);
     const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
-    const navigation = await send('Page.navigate', { url: pathToFileURL(files[mode]).href + `?theme=${theme}&testNavigation=${expectedNavigation}${query}` });
-    assert.ok(navigation.loaderId, 'Motion fixture must load a new document.');
+    if (reload) await send('Page.reload');
+    else {
+      const navigation = await send('Page.navigate', { url });
+      assert.ok(navigation.loaderId, 'Motion fixture must load a new document.');
+    }
     await loaded;
+    if (reload) assert.notEqual((await send('Page.getFrameTree')).frameTree.frame.loaderId, previousLoader);
+    assert.equal(await run("performance.getEntriesByType('navigation')[0].type"), reload ? 'reload' : 'navigate');
     await run('document.fonts.ready');
     assert.equal(await run('window.motionNavigation'), expectedNavigation, 'Motion fixture document identity');
   }
@@ -147,8 +157,9 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     assert.equal(await run('Archify.motionGovernor.pause()'), true);
     assert.equal(await run(`localStorage.getItem('archify-motion')`), 'still');
     for (let reload = 0; reload < 5; reload++) {
-      await load('architecture', { preserveStorage: true });
-      const stored = await run(`({initial:motionStartupPreference,current:localStorage.getItem('archify-motion'),navigation:motionNavigation,url:location.href})`);
+      await load('architecture', { preserveStorage: true, reload: true });
+      const stored = await run(`({current:localStorage.getItem('archify-motion'),navigation:motionNavigation,url:location.href})`);
+      assert.equal(stored.current, 'still', JSON.stringify(stored));
       assert.equal((await snapshot('stored-still-' + reload)).mode, 'still', JSON.stringify(stored));
     }
     assert.equal(await run(`Archify.motionGovernor.setMode('live', {persist:false})`), 'live');
@@ -172,6 +183,41 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     assert.equal(await run('Archify.motionGovernor.pause()'), true);
     assert.equal(await run('Archify.motionGovernor.resume()'), false);
     await snapshot('storage-unavailable');
+  });
+
+  await t.test('stored intent survives five same-origin HTTP navigations', async () => {
+    // A file: URL has browser-defined storage behavior; changing its query is not
+    // a reload. The preceding case uses Page.reload on an unchanged file URL.
+    // This independent case checks cross-URL persistence on a defined origin.
+    const server = http.createServer((request, response) => {
+      const name = new URL(request.url, 'http://localhost').pathname.slice(1);
+      const file = Object.values(files).find(candidate => path.basename(candidate) === name);
+      if (!file) { response.writeHead(404); response.end(); return; }
+      response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      response.end(fs.readFileSync(file));
+    });
+    await new Promise((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(0, '127.0.0.1', resolve);
+    });
+    try {
+      const origin = `http://127.0.0.1:${server.address().port}`;
+      await load('architecture', { origin });
+      assert.equal(await run('Archify.motionGovernor.pause()'), true);
+      assert.equal(await run("localStorage.getItem('archify-motion')"), 'still');
+      let previousUrl = await run('location.href');
+      for (let navigation = 0; navigation < 5; navigation++) {
+        await load(navigation % 2 ? 'workflow' : 'architecture', { origin, preserveStorage: true });
+        const stored = await run(`({ current:localStorage.getItem('archify-motion'),url:location.href,origin:location.origin })`);
+        assert.equal(stored.origin, origin);
+        assert.notEqual(stored.url, previousUrl);
+        assert.equal(stored.current, 'still', JSON.stringify(stored));
+        assert.equal((await snapshot('http-stored-still-' + navigation)).mode, 'still');
+        previousUrl = stored.url;
+      }
+    } finally {
+      await new Promise(resolve => server.close(resolve));
+    }
   });
 
   await t.test('claims preempt cleanup, normal release does not, and SVG owners fall back automatically', async () => {

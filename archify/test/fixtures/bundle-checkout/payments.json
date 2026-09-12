@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Payment Rail Internals",
+    "quality_profile": "showcase",
+    "viewBox": [720, 400]
+  },
+  "components": [
+    { "id": "api", "type": "backend", "label": "Payments API", "sublabel": "authorize", "pos": [40, 150], "size": [130, 60] },
+    { "id": "risk", "type": "security", "label": "Risk Engine", "sublabel": "rules", "pos": [250, 150], "size": [130, 60] },
+    { "id": "ledger", "type": "database", "label": "Ledger", "sublabel": "postings", "pos": [460, 150], "size": [130, 60] },
+    { "id": "psp", "type": "external", "label": "Card Network", "sublabel": "PSP", "pos": [250, 280], "size": [130, 60] }
+  ],
+  "connections": [
+    { "id": "api-risk", "from": "api", "to": "risk", "label": "score" },
+    { "id": "risk-ledger", "from": "risk", "to": "ledger", "label": "post" },
+    { "id": "risk-psp", "from": "risk", "to": "psp", "label": "capture", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 24 }
+  ]
+}

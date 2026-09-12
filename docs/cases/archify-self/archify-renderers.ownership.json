@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "kind": "ownership",
+  "map": "archify-renderers.json",
+  "parent": { "map": "archify-self.json", "component": "renderers" },
+  "components": [
+    { "id": "renderers-shared", "globs": [] },
+    { "id": "renderer-architecture", "globs": ["archify/renderers/architecture/**"] },
+    { "id": "renderer-workflow", "globs": ["archify/renderers/workflow/**"] },
+    { "id": "renderer-sequence", "globs": ["archify/renderers/sequence/**"] },
+    { "id": "renderer-dataflow", "globs": ["archify/renderers/dataflow/**"] },
+    { "id": "renderer-lifecycle", "globs": ["archify/renderers/lifecycle/**"] }
+  ]
+}

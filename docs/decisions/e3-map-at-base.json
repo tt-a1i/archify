@@ -1,0 +1,80 @@
+{
+  "base": "b744b0b43e0507be7709a2b0ead843466f137545",
+  "note": "Hand-written ownership map for the archify repo AT BASE (HEAD~100). Components are defined ONLY by path globs; no line numbers. Glob syntax: ** (zero or more segments), * (within one segment), ?, {a,b}. `excluded` wins over component ownership. Every tracked file at BASE must be excluded, owned by exactly one component, or reported as uncovered.",
+  "components": {
+    "cli": {
+      "globs": ["archify/bin/**"]
+    },
+    "renderers-shared": {
+      "globs": ["archify/renderers/shared/**"]
+    },
+    "renderer-architecture": {
+      "globs": ["archify/renderers/architecture/**"]
+    },
+    "renderer-workflow": {
+      "globs": ["archify/renderers/workflow/**"]
+    },
+    "renderer-sequence": {
+      "globs": ["archify/renderers/sequence/**"]
+    },
+    "renderer-dataflow": {
+      "globs": ["archify/renderers/dataflow/**"]
+    },
+    "renderer-lifecycle": {
+      "globs": ["archify/renderers/lifecycle/**"]
+    },
+    "delta": {
+      "globs": ["archify/delta/**"]
+    },
+    "schemas": {
+      "globs": ["archify/schemas/**"]
+    },
+    "viewer": {
+      "globs": ["archify/assets/**"]
+    },
+    "build-scripts": {
+      "globs": [
+        "scripts/**",
+        "archify/scripts/**",
+        ".github/**",
+        "archify/package.json",
+        ".gitignore",
+        ".impeccable/**"
+      ]
+    },
+    "tests": {
+      "globs": ["archify/test/**"]
+    },
+    "docs-site": {
+      "globs": ["docs/**"]
+    },
+    "examples": {
+      "globs": ["archify/examples/**", "examples/**"]
+    },
+    "references": {
+      "globs": [
+        "archify/SKILL.md",
+        "archify/recipes/**",
+        "archify/LICENSE",
+        "LICENSE",
+        "*.md"
+      ]
+    },
+    "experiments": {
+      "globs": ["experiments/**"]
+    }
+  },
+  "excluded": [
+    "docs/gallery/**",
+    "docs/assets/**",
+    "docs/*.html",
+    "docs/cases/*.html",
+    "docs/.nojekyll",
+    "archify.zip",
+    "archify/package-lock.json",
+    "archify/examples/*.html",
+    "examples/*.html",
+    "experiments/**/*.png",
+    "experiments/**/*.html"
+  ]
+}

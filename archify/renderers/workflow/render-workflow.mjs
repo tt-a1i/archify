@@ -5,7 +5,7 @@ import { throwDiagnosticError } from '../shared/diagnostics.mjs';
 import { compileWorkflow } from './workflow-compiler.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const { diagram: workflow, template, outPath } = await loadDiagramWithBrandMarks({
+const { diagram: workflow, template, outPath, bundle } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
   diagramType: 'workflow',
   defaultExample: 'agent-tool-call.workflow.json'
@@ -14,6 +14,7 @@ const { diagram: workflow, template, outPath } = await loadDiagramWithBrandMarks
 const compiled = compileWorkflow({
   workflow,
   qualityProfile: process.env.ARCHIFY_QUALITY_PROFILE || workflow.meta?.quality_profile,
+  bundle,
 });
 
 const layoutJson = process.argv.includes('--layout-json');

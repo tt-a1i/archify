@@ -29,6 +29,10 @@ function usage() {
   archify examples
   archify doctor
   archify demo [output-directory]
+  archify bundle <dir> [--json]
+  archify bundle <dir> --check [--json]
+  archify locate <base>..<head> --map <arch.json> --out <dir> [--ownership <file>] [--repo-root <dir>] [--facts <before.json> <after.json>] [--bundle <dir>] [--json]
+  archify locate --lint [<rev>] --map <arch.json> --out <dir> [--ownership <file>] [--repo-root <dir>] [--json]
 
 Types:
   architecture, workflow, sequence, dataflow, lifecycle
@@ -2023,6 +2027,72 @@ function commandValidate(args) {
   if (exitCode !== 0) process.exitCode = exitCode;
 }
 
+async function commandBundle(args) {
+  const json = args.includes('--json');
+  const check = args.includes('--check');
+  const known = new Set(['--json', '--check']);
+  const unknown = args.filter((arg) => arg.startsWith('--') && !known.has(arg));
+  if (unknown.length) fail(`Unknown bundle option "${unknown[0]}".`);
+  const positional = args.filter((arg) => !known.has(arg));
+  if (positional.length !== 1) fail(usage());
+  const dir = path.resolve(positional[0]);
+  const { BundleError, buildBundleManifest, validateBundle } = await import('../bundle/diagram-bundle.mjs');
+  try {
+    if (!check) buildBundleManifest(dir);
+    const result = validateBundle(dir);
+    const receipt = {
+      schemaVersion: 1,
+      ok: true,
+      command: 'bundle',
+      action: check ? 'check' : 'write',
+      dir,
+      checksPassed: result.checksPassed,
+      checkCount: result.checkCount,
+      diagnostics: [],
+    };
+    if (json) console.log(JSON.stringify(receipt, null, 2));
+    else console.log(`bundle ${check ? 'ok' : 'wrote'} ${dir} (${result.checksPassed}/${result.checkCount} checks)`);
+  } catch (error) {
+    if (!(error instanceof BundleError)) throw error;
+    const failures = error.details?.failures || [];
+    const stale = failures.find((item) => String(item).includes('bundle/child-stale'));
+    const diagnostics = [diagnostic({
+      code: stale ? 'bundle/child-stale' : error.code,
+      message: error.message,
+      subject: error.details?.subject || { dir },
+      evidence: {
+        failures,
+        ...(error.details?.checkCount != null ? {
+          checksPassed: error.details.checksPassed,
+          checkCount: error.details.checkCount,
+        } : {}),
+      },
+      supportedFixes: error.details?.supportedFixes || ['run archify bundle <dir> to refresh the manifest'],
+    })];
+    if (stale && diagnostics[0].code !== 'bundle/child-stale') {
+      diagnostics.push(diagnostic({
+        code: 'bundle/child-stale',
+        message: stale,
+        subject: { dir },
+        evidence: { failures },
+        supportedFixes: ['run archify bundle <dir> to refresh the manifest'],
+      }));
+    }
+    const receipt = {
+      schemaVersion: 1,
+      ok: false,
+      command: 'bundle',
+      action: check ? 'check' : 'write',
+      dir,
+      error: error.message,
+      diagnostics,
+    };
+    if (json) console.log(JSON.stringify(receipt, null, 2));
+    else console.error(formatDiagnostics(error.message, diagnostics));
+    process.exitCode = 2;
+  }
+}
+
 const [command, ...args] = process.argv.slice(2);
 
 try {
@@ -2078,6 +2148,18 @@ try {
     case 'demo':
       commandDemo(args);
       break;
+    case 'bundle':
+      await commandBundle(args);
+      break;
+    case 'locate': {
+      const { commandLocate } = await import('../locate/cli.mjs');
+      await commandLocate(args, {
+        usage,
+        fail,
+        renderValidatedArchitecture,
+      });
+      break;
+    }
     default:
       fail(`Unknown command "${command}".\n\n${usage()}`);
   }

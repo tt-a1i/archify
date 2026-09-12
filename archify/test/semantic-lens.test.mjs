@@ -70,8 +70,8 @@ test('Semantic Lens is shareable and yields cleanly to stronger reader intent', 
   assert.match(html, /Archify\.guidedViews\.showAll\(\{ clearFocus: false, updateUrl: false \}\)/);
   assert.match(html, /if \(action === 'lens'\) return Archify\.semanticLens\.open\(\)/);
   assert.match(html, /e\.key === 'l' \|\| e\.key === 'L'/);
-  assert.match(html, /e\.key === 'Escape' && Archify\.semanticLens\.isOpen\(\)/);
-  assert.match(html, /e\.key === 'Escape' && Archify\.semanticLens\.active\(\)/);
+  assert.match(html, /isEscape && Archify\.semanticLens\.isOpen\(\)/);
+  assert.match(html, /isEscape && Archify\.semanticLens\.active\(\)/);
 });
 
 test('Semantic Lens preserves Reading Depth, mobile containment, print, embed, and export boundaries', () => {

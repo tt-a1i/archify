@@ -84,6 +84,12 @@ jobs:
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - name: Verify bundle navigation, message boundaries, portable Locate output and export
+        run: node --test --test-concurrency=2 test/drilldown-browser.test.mjs test/bundle-message-origin-browser.test.mjs test/locate-bundle-delivery.test.mjs test/locate-export-browser.test.mjs
+        working-directory: archify
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
 
   zip-freshness:
     runs-on: ubuntu-latest

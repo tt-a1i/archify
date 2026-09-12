@@ -757,6 +757,7 @@ function compileWorkflowInternal({
   qualityProfile,
   discoverFixes = true,
   layoutFeedback = {},
+  bundle,
 } = {}) {
   if (!inputWorkflow || typeof inputWorkflow !== 'object' || Array.isArray(inputWorkflow)) {
     const diagnostics = [{
@@ -4246,7 +4247,7 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(workflow.meta, 'workflow diagram')}>
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(workflow.meta, { bundle })}>
 ${svgAccessibleText(workflow.meta, 'workflow')}
 ${renderDefinitions()}
 
@@ -4339,7 +4340,7 @@ function feedbackFailure(request) {
   return compilerFailure('readable-v2', diagnostics, message);
 }
 
-function compileWorkflowWithFeedback({ workflow, qualityProfile, discoverFixes = true } = {}) {
+function compileWorkflowWithFeedback({ workflow, qualityProfile, discoverFixes = true, bundle } = {}) {
   let layoutFeedback = {};
   for (let attempt = 0; attempt <= MAX_READABLE_LAYOUT_FEEDBACK_ROUNDS; attempt += 1) {
     try {
@@ -4348,6 +4349,7 @@ function compileWorkflowWithFeedback({ workflow, qualityProfile, discoverFixes =
         qualityProfile,
         discoverFixes,
         layoutFeedback,
+        bundle,
       });
     } catch (error) {
       if (!(error instanceof WorkflowLayoutFeedback)) throw error;
@@ -4395,6 +4397,6 @@ function compileWorkflowWithFeedback({ workflow, qualityProfile, discoverFixes =
   throw new Error('unreachable readable-v2 layout feedback state');
 }
 
-export function compileWorkflow({ workflow, qualityProfile } = {}) {
-  return compileWorkflowWithFeedback({ workflow, qualityProfile });
+export function compileWorkflow({ workflow, qualityProfile, bundle } = {}) {
+  return compileWorkflowWithFeedback({ workflow, qualityProfile, bundle });
 }

@@ -1,0 +1,225 @@
+python3 - <<'PY'
+import json, re
+from pathlib import Path
+from statistics import mean
+
+ROOT = Path("/tmp/archify-burn/firstlook")
+CROSS = {354,108,85,181,96,54,146,256,265,42}
+CONTROLS = {346,348,138,216,109}
+PRS = [354,108,85,181,96,54,146,256,265,42,346,348,138,216,109]
+
+def load(p):
+    return json.loads(Path(p).read_text())
+
+def norm_path(p):
+    return (p or "").strip().lstrip("./")
+
+def as_list(x):
+    if x is None: return []
+    if isinstance(x, str): return [x]
+    return list(x)
+
+def p_at_3(pred, gold):
+    g = {norm_path(p) for p in gold}
+    pred = [norm_path(p) for p in pred][:3]
+    hit = sum(1 for p in pred if p in g)
+    return hit / 3.0
+
+def recall_at_3(pred, gold):
+    g = {norm_path(p) for p in gold}
+    pred = {norm_path(p) for p in pred[:3]}
+    if not g: return 1.0
+    return len(pred & g) / len(g)
+
+def hit1(pred, gold):
+    if not pred: return False
+    return norm_path(pred[0]) in {norm_path(p) for p in gold}
+
+def noise_avoided(ignore, noise):
+    if not noise:
+        return 1.0, 0, 0
+    ign = [norm_path(x) for x in ignore]
+    n = 0
+    for f in noise:
+        f = norm_path(f)
+        ok = False
+        for i in ign:
+            if not i: continue
+            if f == i or f.startswith(i.rstrip("/") + "/") or i.startswith(f.rstrip("/") + "/"):
+                ok = True
+                break
+        if ok: n += 1
+    return n / len(noise), n, len(noise)
+
+def wrong_start(pred, noise):
+    if not pred: return False
+    return norm_path(pred[0]) in {norm_path(p) for p in noise}
+
+SEAM_SIDES = {
+    354: (["location", "evidence", "shared"], ["schema", "viewer", "delta", "link_mode", "gitee", "provider"]),
+    108: (["i18n", "shared"], ["locale", "schema", "viewer", "template", "renderer"]),
+    85: (["brand"], ["schema", "cli", "renderer", "capture", "command"]),
+    181: (["check-update", "update-contract", "skill-script", "notifier", "skill"], ["cli", "packag", "stag", "schema", "renderer"]),
+    96: (["geometry", "shared"], ["renderer", "architecture", "visual-check", "cli", "desktop"]),
+    54: (["legend"], ["schema", "renderer"]),
+    146: (["compiler"], ["migration", "schema", "geometry", "renderer", "v2"]),
+    42: (["geometry", "label"], ["renderer", "checker", "check-render", "typed"]),
+}
+
+def tokens(s):
+    if not s: return ""
+    return str(s).lower()
+
+def seam_score(pr, gt, ans):
+    raw = ans.get("seam")
+    text = tokens(raw)
+    crosses = bool(gt["seam"].get("crosses"))
+    is_null = raw is None or (isinstance(raw, str) and raw.strip().lower() in {"", "null", "none", "n/a", "no"})
+
+    if pr == 265:
+        if is_null:
+            return "yes", "null (no mapped product seam)"
+        if any(k in text for k in ["license", "staging", "package", "provenance", "distribution"]):
+            return "yes", "named packaging/license gate"
+        if "viewer" in text or "template" in text:
+            return "no", "followed viewer (map trap)"
+        return "partial", text[:80]
+
+    if pr == 256:
+        if is_null:
+            return "yes", "null (viewer-only)"
+        if any(k in text for k in ["renderer", "schema", "cli", "delta", "geometry"]):
+            return "no", "invented product seam"
+        if "viewer" in text or "template" in text or "font" in text or "html" in text:
+            return "partial", "viewer-adjacent, not a module crossing"
+        return "partial", text[:80]
+
+    if not crosses:
+        if is_null:
+            return "yes", "null as expected"
+        product = ["renderer", "schema", "viewer", "cli", "delta", "geometry", "i18n", "legend"]
+        if any(k in text for k in product):
+            return "no", "invented product seam"
+        return "partial", "named a docs/process boundary"
+
+    if is_null:
+        return "no", "missed a real seam"
+    a, b = SEAM_SIDES[pr]
+    hit_a = any(k in text for k in a)
+    hit_b = any(k in text for k in b)
+    if hit_a and hit_b:
+        return "yes", "both sides"
+    if hit_a or hit_b:
+        return "partial", "one side"
+    return "no", "unrelated: " + text[:80]
+
+rows = []
+for n in PRS:
+    gt = load(ROOT/"ground-truth"/f"pr-{n}.json")
+    a = load(ROOT/"condition-a"/f"pr-{n}.json")
+    b = load(ROOT/"condition-b"/f"pr-{n}.json")
+    rec = {"pr": n, "cohort": "cross-module" if n in CROSS else "control", "title": gt["title"],
+           "gt": gt, "a": a, "b": b, "scores": {}}
+    for cond, ans in (("A", a), ("B", b)):
+        na, nh, nn = noise_avoided(as_list(ans.get("ignore")), gt["noise"])
+        sm, note = seam_score(n, gt, ans)
+        rec["scores"][cond] = {
+            "p_at_3": round(p_at_3(as_list(ans.get("firstThree")), gt["firstThree"]), 4),
+            "recall_at_3": round(recall_at_3(as_list(ans.get("firstThree")), gt["firstThree"]), 4),
+            "hit1": hit1(as_list(ans.get("firstThree")), gt["firstThree"]),
+            "first": norm_path((as_list(ans.get("firstThree")) or [""])[0]),
+            "seam": sm,
+            "seam_note": note,
+            "noise_avoidance": round(na, 4),
+            "noise_hits": nh,
+            "noise_n": nn,
+            "wrong_start": wrong_start(as_list(ans.get("firstThree")), gt["noise"]),
+            "confidence": ans.get("confidence"),
+        }
+    sa, sb = rec["scores"]["A"], rec["scores"]["B"]
+    rec["delta"] = {
+        "p_at_3": round(sb["p_at_3"] - sa["p_at_3"], 4),
+        "recall_at_3": round(sb["recall_at_3"] - sa["recall_at_3"], 4),
+        "hit1": (1 if sb["hit1"] else 0) - (1 if sa["hit1"] else 0),
+        "noise_avoidance": round(sb["noise_avoidance"] - sa["noise_avoidance"], 4),
+        "wrong_start": (1 if sb["wrong_start"] else 0) - (1 if sa["wrong_start"] else 0),
+    }
+    SEAM_RANK = {"yes": 2, "partial": 1, "no": 0}
+    rec["delta"]["seam"] = SEAM_RANK[sb["seam"]] - SEAM_RANK[sa["seam"]]
+    rows.append(rec)
+    (ROOT/"scores"/f"pr-{n}.json").write_text(json.dumps({
+        "pr": n, "cohort": rec["cohort"], "title": rec["title"],
+        "A": rec["scores"]["A"], "B": rec["scores"]["B"], "delta": rec["delta"],
+        "A_answer": {k: a.get(k) for k in ("firstThree","seam","ignore","confidence","rationale")},
+        "B_answer": {k: b.get(k) for k in ("firstThree","seam","ignore","confidence","rationale")},
+        "gt_firstThree": gt["firstThree"],
+        "gt_seam": gt["seam"],
+    }, indent=2)+"\n")
+
+def agg(subset):
+    items = [r for r in rows if r["pr"] in subset]
+    def avg(path):
+        vals = []
+        for r in items:
+            a, b = r["scores"]["A"], r["scores"]["B"]
+            if path == "p_at_3":
+                vals.append((a["p_at_3"], b["p_at_3"]))
+            elif path == "recall_at_3":
+                vals.append((a["recall_at_3"], b["recall_at_3"]))
+            elif path == "hit1":
+                vals.append((1 if a["hit1"] else 0, 1 if b["hit1"] else 0))
+            elif path == "noise_avoidance":
+                vals.append((a["noise_avoidance"], b["noise_avoidance"]))
+            elif path == "wrong_start":
+                vals.append((1 if a["wrong_start"] else 0, 1 if b["wrong_start"] else 0))
+            elif path == "seam_yes":
+                vals.append((1 if a["seam"]=="yes" else 0, 1 if b["seam"]=="yes" else 0))
+            elif path == "seam_yes_or_partial":
+                vals.append((1 if a["seam"] in ("yes","partial") else 0, 1 if b["seam"] in ("yes","partial") else 0))
+        return {
+            "A": round(mean(v[0] for v in vals), 4),
+            "B": round(mean(v[1] for v in vals), 4),
+            "delta": round(mean(v[1]-v[0] for v in vals), 4),
+            "n": len(vals),
+            "B_better": sum(1 for v in vals if v[1] > v[0]),
+            "A_better": sum(1 for v in vals if v[0] > v[1]),
+            "tie": sum(1 for v in vals if v[0] == v[1]),
+        }
+    return {
+        "n": len(items),
+        "p_at_3": avg("p_at_3"),
+        "recall_at_3": avg("recall_at_3"),
+        "hit1": avg("hit1"),
+        "seam_yes": avg("seam_yes"),
+        "seam_yes_or_partial": avg("seam_yes_or_partial"),
+        "noise_avoidance": avg("noise_avoidance"),
+        "wrong_start": avg("wrong_start"),
+        "B_worse_p_at_3_prs": [r["pr"] for r in items if r["delta"]["p_at_3"] < 0],
+        "B_worse_hit1_prs": [r["pr"] for r in items if r["delta"]["hit1"] < 0],
+        "B_worse_seam_prs": [r["pr"] for r in items if r["delta"]["seam"] < 0],
+        "B_worse_noise_prs": [r["pr"] for r in items if r["delta"]["noise_avoidance"] < 0],
+    }
+
+aggregates = {
+    "all15": agg(set(PRS)),
+    "cross10": agg(CROSS),
+    "controls5": agg(CONTROLS),
+}
+(ROOT/"scores"/"aggregates.json").write_text(json.dumps(aggregates, indent=2)+"\n")
+(ROOT/"scores"/"rows.json").write_text(json.dumps([
+    {"pr": r["pr"], "cohort": r["cohort"], "title": r["title"],
+     "A": r["scores"]["A"], "B": r["scores"]["B"], "delta": r["delta"]}
+    for r in rows
+], indent=2)+"\n")
+
+print(json.dumps(aggregates, indent=2))
+print("\n--- per PR ---")
+for r in rows:
+    a,b = r["scores"]["A"], r["scores"]["B"]
+    print(f"#{r['pr']:<3} {r['cohort']:<13} P@3 A={a['p_at_3']:.2f} B={b['p_at_3']:.2f} d={r['delta']['p_at_3']:+.2f}  hit1 A={int(a['hit1'])} B={int(b['hit1'])}  seam A={a['seam']:<7} B={b['seam']:<7}  noise A={a['noise_avoidance']:.2f} B={b['noise_avoidance']:.2f}  wrong A={int(a['wrong_start'])} B={int(b['wrong_start'])}")
+    print(f"     A1={a['first']}")
+    print(f"     B1={b['first']}")
+    print(f"     GT={r['gt']['firstThree']}")
+    print(f"     A seam={r['a'].get('seam')!r} ({a['seam_note']})")
+    print(f"     B seam={r['b'].get('seam')!r} ({b['seam_note']})")
+PY

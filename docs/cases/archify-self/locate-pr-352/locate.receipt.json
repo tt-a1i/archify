@@ -1,0 +1,268 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "locate",
+  "locatorVersion": 1,
+  "mode": "range",
+  "completeness": "complete",
+  "repository": {
+    "root": ".",
+    "base": "10722002bb8777ecb639d93c49586fae4adf3ae4",
+    "head": "3b875f79bb3432ad8210b8abc36ade9802466bfa",
+    "url": "https://github.com/tt-a1i/archify",
+    "linkMode": "web"
+  },
+  "map": {
+    "path": "docs/cases/archify-self/archify-self.json",
+    "diagramType": "architecture",
+    "semanticSha256": "d50024ba4b408c833080e74e7223299d84c6182c6fb6eed32b6fe93ca51ad9a7",
+    "revision": "10722002bb8777ecb639d93c49586fae4adf3ae4",
+    "mapBehindBy": 6
+  },
+  "ownership": {
+    "path": "docs/cases/archify-self/archify-self.ownership.json",
+    "sha256": "f4d57bce1a2d75991d092d1f810c8c88b9d4a9e252f4ba55311a0e6aa1d48bbd"
+  },
+  "review": {
+    "required": false,
+    "blocking": [],
+    "advisory": [
+      "files_uncovered",
+      "map_behind"
+    ]
+  },
+  "summary": {
+    "files": {
+      "touched": 0,
+      "uncovered": 24,
+      "ambiguous": 0,
+      "excluded": 1,
+      "total": 25
+    },
+    "components": {
+      "touched": 0,
+      "untouched": 10,
+      "stale": 0,
+      "total": 10
+    }
+  },
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": ".gitignore",
+      "changeType": "M",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/ARCHITECTURE.md",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/bin/analyze.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/config/defaults.json",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/extract/index.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/extract/shared/diagnostics.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/extract/shared/files.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/extract/shared/git.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/extract/shared/glob.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/extract/shared/schema.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/extract/ts/index.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/package-lock.json",
+      "changeType": "A",
+      "state": "excluded",
+      "matchedGlob": "**/package-lock.json"
+    },
+    {
+      "path": "analyzers/package.json",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/schemas/raw-facts.schema.json",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/test/extract-fixture.test.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/test/extract-regressions.test.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/test/extract-self.test.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/test/fixtures/ts-basic/expected.json",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/test/fixtures/ts-basic/src/generated-table.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/test/fixtures/ts-basic/src/index.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/test/fixtures/ts-basic/src/lib/helper.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/test/fixtures/ts-basic/src/lib/lazy.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/test/fixtures/ts-basic/test/index.test.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    },
+    {
+      "path": "analyzers/test/helpers.mjs",
+      "changeType": "A",
+      "state": "uncovered"
+    }
+  ],
+  "components": [
+    {
+      "id": "bundle",
+      "label": "Bundle",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": []
+    },
+    {
+      "id": "cli",
+      "label": "Archify CLI",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": []
+    },
+    {
+      "id": "delta",
+      "label": "Architecture Delta",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": []
+    },
+    {
+      "id": "locate",
+      "label": "Locate",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": []
+    },
+    {
+      "id": "renderers",
+      "label": "Typed Renderers",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": [],
+      "childMap": "archify-renderers.json",
+      "inside": {
+        "touched": 0,
+        "uncovered": 0,
+        "ambiguous": 0,
+        "excluded": 0
+      }
+    },
+    {
+      "id": "renderers-shared",
+      "label": "Shared Renderer Runtime",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": [],
+      "childMap": "render-pipeline.json",
+      "inside": {
+        "touched": 0,
+        "uncovered": 0,
+        "ambiguous": 0,
+        "excluded": 0
+      }
+    },
+    {
+      "id": "schemas",
+      "label": "JSON IR Schemas",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": []
+    },
+    {
+      "id": "skill-scripts",
+      "label": "Skill Scripts",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": []
+    },
+    {
+      "id": "test",
+      "label": "Contract Tests",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": []
+    },
+    {
+      "id": "viewer",
+      "label": "Viewer Template",
+      "state": "untouched",
+      "touchedCount": 0,
+      "touchedFiles": []
+    }
+  ],
+  "facts": [],
+  "limitations": [
+    "Path ownership only; no runtime impact, causality, risk, or mergeability is inferred.",
+    "Import facts are reported as-is and never reconciled against authored connections."
+  ]
+}

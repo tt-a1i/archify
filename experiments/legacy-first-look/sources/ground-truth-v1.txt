@@ -1,0 +1,358 @@
+python3 - <<'PY'
+import json
+from pathlib import Path
+
+ROOT = Path("/tmp/archify-burn/firstlook")
+SWEEP = Path("/tmp/archify-burn/sweep")
+receipts = {}
+for n in [354,108,85,181,96,54,146,256,265,42,346,348,138,216,109]:
+    r = json.loads((SWEEP/f"receipts/pr-{n}/locate.receipt.json").read_text())
+    receipts[n] = [f["path"] for f in r["files"]]
+
+def noise_from(n, extra=None, exclude=None):
+    extra = extra or []
+    exclude = set(exclude or [])
+    prefixes = (
+        "docs/gallery", "docs/assets/", "docs/gallery.html",
+        "archify.zip", "archify/examples/", "examples/",
+        "generated/", "archify/package-lock.json",
+        "archify/renderers/shared/generated-",
+        "docs/cases/",
+    )
+    exact = {
+        "docs/gallery.html", "archify.zip",
+        "archify/package-lock.json",
+        "docs/assets/archify-live-proof.gif",
+        "docs/assets/archify-live-proof.json",
+    }
+    out = []
+    for p in receipts[n]:
+        if p in exclude:
+            continue
+        if p in extra or p in exact or p.startswith(prefixes) or any(p.startswith(pref) for pref in prefixes):
+            out.append(p)
+            continue
+        if p.endswith((".html",".png",".gif",".webp",".webm",".jpg")) and (
+            p.startswith("docs/") or p.startswith("examples/") or p.startswith("experiments/")
+        ):
+            out.append(p)
+    # extras not already in list
+    for p in extra:
+        if p not in out and p not in exclude:
+            out.append(p)
+    return sorted(set(out))
+
+GTS = {}
+
+GTS[354] = {
+    "pr": 354,
+    "cohort": "cross-module",
+    "title": "feat(evidence): support Gitee and local-only repositories",
+    "firstThree": [
+        "archify/renderers/shared/repository-location.mjs",
+        "archify/renderers/shared/repository-evidence.mjs",
+        "archify/schemas/architecture.schema.json",
+    ],
+    "seam": {
+        "crosses": True,
+        "label": "renderers-shared (repository location/evidence) ↔ schemas (provider/link_mode) ↔ viewer template",
+        "ids": ["renderers-shared", "schemas", "viewer"],
+        "keywords": ["repository-location", "repository-evidence", "link_mode", "gitee", "provider", "schema"],
+    },
+    "noise": noise_from(354),
+    "rationale": "New location parser + rewritten evidence checker are the behavior; schema adds provider/link_mode. Gallery/examples/zip are regenerated ride-alongs. CLI is a 1-line import; delta is a small consumer.",
+}
+
+GTS[108] = {
+    "pr": 108,
+    "cohort": "cross-module",
+    "title": "feat(i18n): localize Viewer UI from meta.locale",
+    "firstThree": [
+        "archify/renderers/shared/i18n.mjs",
+        "archify/schemas/common.schema.json",
+        "archify/assets/template.html",
+    ],
+    "seam": {
+        "crosses": True,
+        "label": "schemas (meta.locale) ↔ renderers-shared/i18n ↔ viewer template; typed renderers are thin consumers",
+        "ids": ["schemas", "renderers-shared", "viewer"],
+        "keywords": ["i18n", "meta.locale", "locale", "template", "viewer"],
+    },
+    "noise": noise_from(108, extra=["archify/package-lock.json"]),
+    "rationale": "The contract is meta.locale + the new i18n catalog; template.html is where Viewer chrome is actually swapped. Individual typed-renderer diffs are small wiring. Gallery/examples dominate the file list.",
+}
+
+GTS[85] = {
+    "pr": 85,
+    "cohort": "cross-module",
+    "title": "feat: add authored brand marks and safe URL icon capture",
+    "firstThree": [
+        "archify/renderers/shared/brand-marks.mjs",
+        "archify/schemas/common.schema.json",
+        "archify/bin/archify.mjs",
+    ],
+    "seam": {
+        "crosses": True,
+        "label": "schemas (brand) ↔ renderers-shared/brand-marks ↔ cli (brands/capture); uncovered island archify/brand-marks/",
+        "ids": ["schemas", "renderers-shared", "cli"],
+        "keywords": ["brand-marks", "brand", "capture", "schema", "brands"],
+    },
+    "noise": noise_from(85, extra=["archify/renderers/shared/generated-brand-marks.mjs"]),
+    "rationale": "Hand-written capture/lookup in brand-marks.mjs plus the schema field and CLI commands. generated-brand-marks.mjs is a 2003-line generated dump and must not be the first open. brand-marks/catalog.json is data, not the algorithm.",
+}
+
+GTS[181] = {
+    "pr": 181,
+    "cohort": "cross-module",
+    "title": "feat(skill): add notification-only update awareness",
+    "firstThree": [
+        "archify/scripts/check-update.mjs",
+        "archify/scripts/update-contract.mjs",
+        "scripts/stage-clean-skill.mjs",
+    ],
+    "seam": {
+        "crosses": True,
+        "label": "skill-scripts (notifier/contract) ↔ packaging/release staging; secondary ride-along schemas↔renderers cleanup",
+        "ids": ["skill-scripts", "cli"],
+        "secondaryIds": ["schemas", "renderers"],
+        "keywords": ["check-update", "update-contract", "notifier", "stage-clean-skill", "skill"],
+    },
+    "noise": noise_from(181, extra=[
+        "docs/skill-embedded-optional-update-notifier-design.md",
+        "docs/research/skill-plugin-update-reminder-market-design.md",
+        "docs/article-archify.md",
+        "examples/workflow-agent-tool-call.html",
+        "examples/sequence-cache-miss.html",
+        "examples/checkout-platform-delta.html",
+        "examples/checkout-platform-delta.receipt.json",
+    ]),
+    "rationale": "The feature is the fail-silent notifier (check-update + update-contract) and the clean-skill staging gate that ships it. Schema/renderer line-churn is a documented ride-along simplification, not the first look. Design docs and example HTML are not the implementation.",
+}
+
+GTS[96] = {
+    "pr": 96,
+    "cohort": "cross-module",
+    "title": "fix(renderers): keep automatic routes clear and boundary composition readable",
+    "firstThree": [
+        "archify/renderers/shared/geometry.mjs",
+        "archify/renderers/architecture/render-architecture.mjs",
+        "archify/bin/visual-check.mjs",
+    ],
+    "seam": {
+        "crosses": True,
+        "label": "renderers-shared/geometry (port-spread / endpoint-side API) ↔ typed renderers (esp. architecture) ↔ cli/visual-check (desktop-readability)",
+        "ids": ["renderers-shared", "renderers", "cli"],
+        "keywords": ["geometry", "automaticPortSpread", "desktop-readability", "architecture", "visual-check"],
+    },
+    "noise": noise_from(96),
+    "rationale": "Shared geometry API change is the cut; architecture renderer holds the unique boundary-title/mask work; visual-check exposes desktop-readability at the public CLI seam. Opening one typed renderer alone misses the leak into delivery/checkers.",
+}
+
+GTS[54] = {
+    "pr": 54,
+    "cohort": "cross-module",
+    "title": "feat: add truthful configurable legends",
+    "firstThree": [
+        "archify/renderers/shared/legend.mjs",
+        "archify/schemas/common.schema.json",
+        "archify/renderers/architecture/render-architecture.mjs",
+    ],
+    "seam": {
+        "crosses": True,
+        "label": "renderers-shared/legend ↔ schemas (meta.legend) ↔ all five typed renderers",
+        "ids": ["renderers-shared", "schemas", "renderers"],
+        "keywords": ["legend", "meta.legend", "schema"],
+    },
+    "noise": noise_from(54, extra=[
+        "docs/issue-52-visual-evidence/README.md",
+        "docs/issue-52-visual-evidence/browser-results.json",
+        "docs/issue-52-visual-evidence/contact-sheet.png",
+        "docs/issue-52-visual-evidence/after-dataflow-dark.png",
+        "docs/issue-52-visual-evidence/after-dataflow-light.png",
+        "docs/issue-52-visual-evidence/after-lifecycle-dark.png",
+        "docs/issue-52-visual-evidence/after-lifecycle-light.png",
+        "docs/issue-52-visual-evidence/before-dataflow-dark.png",
+        "docs/issue-52-visual-evidence/before-dataflow-light.png",
+        "docs/issue-52-visual-evidence/before-lifecycle-dark.png",
+        "docs/issue-52-visual-evidence/before-lifecycle-light.png",
+        "docs/issue-52-visual-evidence/dataflow-repro.json",
+        "docs/issue-52-visual-evidence/lifecycle-repro.json",
+    ]),
+    "rationale": "Shared legend module + schema contract is the first question; one typed renderer shows consumption. Visual-evidence PNGs and gallery HTML are proofs, not the design.",
+}
+
+GTS[146] = {
+    "pr": 146,
+    "cohort": "cross-module",
+    "title": "feat(workflow): add constraint-driven compiler",
+    "firstThree": [
+        "archify/renderers/workflow/workflow-compiler.mjs",
+        "archify/migrations/workflow-v2.mjs",
+        "archify/renderers/workflow/render-workflow.mjs",
+    ],
+    "seam": {
+        "crosses": True,
+        "label": "workflow compiler (renderers) ↔ uncovered migrations/workflow-v2.mjs ↔ workflow schema; geometry/diagnostics shared helpers",
+        "ids": ["renderers", "schemas", "renderers-shared"],
+        "uncoveredIsland": "archify/migrations/workflow-v2.mjs",
+        "keywords": ["workflow-compiler", "workflow-v2", "migration", "compiler", "schema"],
+    },
+    "noise": noise_from(146, extra=[
+        "generated/maka-regenerated.workflow.html",
+        "generated/maka-regenerated.workflow.json",
+        "generated/maka-regenerated.workflow.visual-check.json",
+        "generated/maka-regenerated.workflow.visual-check.html",
+    ]),
+    "rationale": "The 4400-line compiler is the feature; the uncovered migration module is the v1 compatibility seam; render-workflow.mjs shrinks because it now delegates. Maka generated HTML is proof output, not the compiler.",
+}
+
+GTS[256] = {
+    "pr": 256,
+    "cohort": "cross-module",
+    "title": "fix(viewer): embed the viewer font so delivered pages stay self-contained",
+    "firstThree": [
+        "archify/assets/template.html",
+        "archify/test/offline-font-browser.test.mjs",
+        "archify/assets/JetBrainsMono-OFL.txt",
+    ],
+    "seam": {
+        "crosses": False,
+        "label": None,
+        "ids": ["viewer"],
+        "keywords": ["template", "font", "embed", "offline"],
+        "note": "Viewer-only plus tests. Locate's value is noise-filter, not a module seam.",
+    },
+    "noise": noise_from(256),
+    "rationale": "The behavior is in template.html (replace Google Fonts link with embedded WOFF2). Tests and OFL notice complete the review. 29 excluded + 14 uncovered files are regenerated examples/gallery/docs.",
+}
+
+GTS[265] = {
+    "pr": 265,
+    "cohort": "cross-module",
+    "title": "fix: preserve license provenance in distributions",
+    "firstThree": [
+        "LICENSE",
+        "scripts/package-smoke.mjs",
+        "archify/test/release-package-gates.test.mjs",
+    ],
+    "seam": {
+        "crosses": False,
+        "label": "packaging/license gate (unmapped scripts + LICENSE), not viewer",
+        "ids": [],
+        "keywords": ["LICENSE", "package-smoke", "provenance", "Cocoon"],
+        "note": "Locate lights viewer because template.html generator meta bumped 2.16.0→2.17.0-dev.0. That is not the change. Real work is LICENSE restore + smoke/staging gates. Experiments deletions are a second cleanup.",
+    },
+    "noise": noise_from(265, extra=[
+        "archify/assets/template.html",
+        "docs/gallery.html",
+        "docs/guide.html",
+        "docs/index.html",
+        "docs/start.html",
+        "CHANGELOG.md",
+        "README.md",
+        "README_EN.md",
+        "README_ZH.md",
+        "ROADMAP.md",
+        "docs/article-archify.md",
+    ]) + sorted([
+        p for p in receipts[265]
+        if p.startswith("experiments/")
+    ]),
+    "rationale": "Must read the restored LICENSE line and the fail-closed package-smoke / release-package-gates tests. template.html is a one-line version stamp. Gallery, examples, and the mermaid-experiment deletions are ride-alongs/cleanup.",
+}
+
+GTS[42] = {
+    "pr": 42,
+    "cohort": "cross-module",
+    "title": "feat: enforce relationship label clearance",
+    "firstThree": [
+        "archify/renderers/shared/geometry.mjs",
+        "archify/scripts/check-render-output.mjs",
+        "archify/renderers/dataflow/render-dataflow.mjs",
+    ],
+    "seam": {
+        "crosses": True,
+        "label": "renderers-shared/geometry (Clean Label Gate) ↔ all five typed renderers ↔ skill-scripts output checker",
+        "ids": ["renderers-shared", "renderers", "skill-scripts"],
+        "keywords": ["geometry", "label clearance", "check-render-output", "Clean Label"],
+    },
+    "noise": noise_from(42),
+    "rationale": "Shared geometry.mjs is the new gate; the HTML checker is the second enforcement site; dataflow renderer is the largest typed consumer (event-stream debt). Five similar renderer diffs are the same call.",
+}
+
+GTS[346] = {
+    "pr": 346,
+    "cohort": "control",
+    "title": "docs: align contribution and bot review with change impact",
+    "firstThree": [
+        "REVIEWING.md",
+        "CONTRIBUTING.md",
+        ".coderabbit.yaml",
+    ],
+    "seam": {"crosses": False, "label": None, "ids": [], "keywords": ["CONTRIBUTING", "REVIEWING", "coderabbit"]},
+    "noise": [],
+    "rationale": "Four process/policy files, all uncovered. New REVIEWING.md plus rewritten CONTRIBUTING.md and the bot config that now cites REVIEWING.md. File list already names the work.",
+}
+
+GTS[348] = {
+    "pr": 348,
+    "cohort": "control",
+    "title": "chore: add advisory CodeRabbit contribution reviews",
+    "firstThree": [
+        ".coderabbit.yaml",
+        "CONTRIBUTING.md",
+    ],
+    "seam": {"crosses": False, "label": None, "ids": [], "keywords": ["coderabbit", "CONTRIBUTING"]},
+    "noise": [],
+    "rationale": "New advisory bot config plus a short CONTRIBUTING note. Two uncovered files; no product seam.",
+}
+
+GTS[138] = {
+    "pr": 138,
+    "cohort": "control",
+    "title": "docs: restore LINUX DO footer link",
+    "firstThree": [
+        "README.md",
+        "README_ZH.md",
+    ],
+    "seam": {"crosses": False, "label": None, "ids": [], "keywords": ["README", "LINUX DO"]},
+    "noise": [],
+    "rationale": "One-line footer restore on three READMEs. README.md and README_EN.md are byte-identical; ZH is the localized twin. Colouring does not change the first look.",
+}
+
+GTS[216] = {
+    "pr": 216,
+    "cohort": "control",
+    "title": "chore(release): publish v2.16.0 update manifest",
+    "firstThree": [
+        "docs/skill-updates/archify/stable.json",
+    ],
+    "seam": {"crosses": False, "label": None, "ids": [], "keywords": ["stable.json", "manifest"]},
+    "noise": [],
+    "rationale": "Single uncovered JSON: version/sha/notes bump after the GitHub Release exists. The path is the answer.",
+}
+
+GTS[109] = {
+    "pr": 109,
+    "cohort": "control",
+    "title": "chore(security): require owner review for automation",
+    "firstThree": [
+        ".github/CODEOWNERS",
+    ],
+    "seam": {"crosses": False, "label": None, "ids": [], "keywords": ["CODEOWNERS"]},
+    "noise": [],
+    "rationale": "Single new CODEOWNERS file. No product module involved.",
+}
+
+# dedupe noise
+for n, gt in GTS.items():
+    gt["noise"] = sorted(set(gt["noise"]))
+    gt["notes"] = {
+        "judge": "experimenter after reading gh pr view + full/source/key diffs; not blind",
+        "map": "today's 10-component identity-map sidecar",
+    }
+    (ROOT/"ground-truth"/f"pr-{n}.json").write_text(json.dumps(gt, indent=2)+"\n")
+    print(f"GT #{n} firstThree={gt['firstThree']} seam={gt['seam'].get('crosses')} noise={len(gt['noise'])}")
+
+print("wrote", len(GTS), "ground-truth files")
+PY

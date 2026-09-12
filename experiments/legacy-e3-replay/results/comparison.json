@@ -1,0 +1,140 @@
+{
+  "replay": {
+    "jsonEqual": true,
+    "byteEqual": true
+  },
+  "headMap": {
+    "byteEqual": false,
+    "ownershipRulesEqual": true,
+    "excludedFromRuleComparison": [
+      "schema",
+      "note",
+      "revision",
+      "glob_syntax",
+      "component labels",
+      "edits_during_replay",
+      "component/glob ordering"
+    ],
+    "explanation": "The recovered replay emits only base/components/excluded. The published map adds manual metadata and reorders equivalent glob sets."
+  },
+  "anchorsRecoveredScript": {
+    "jsonEqual": false,
+    "coordinatesEqual": false,
+    "summaryDifferences": {
+      "anchors": {
+        "actual": 61,
+        "expected": 67
+      },
+      "anchorFiles": {
+        "actual": 21,
+        "expected": 23
+      },
+      "commitsInvalidatingAtLeastOneAnchor": {
+        "actual": 17,
+        "expected": 18
+      },
+      "pctCommitsInvalidating": {
+        "actual": 17,
+        "expected": 18
+      },
+      "commitsTouchingAnyAnchorFile": {
+        "actual": 49,
+        "expected": 50
+      },
+      "pctCommitsTouchingAnchorFile": {
+        "actual": 49,
+        "expected": 50
+      },
+      "anchorsValidAtHead": {
+        "actual": 20,
+        "expected": 21
+      },
+      "pctAnchorsValidAtHead": {
+        "actual": 32.8,
+        "expected": 31.3
+      },
+      "anchorsInvalidatedByComponent": {
+        "actual": {
+          "cli": 5,
+          "renderers-shared": 5,
+          "renderer-architecture": 3,
+          "renderer-workflow": 3,
+          "renderer-sequence": 3,
+          "renderer-dataflow": 3,
+          "renderer-lifecycle": 3,
+          "delta": 3,
+          "viewer": 2,
+          "build-scripts": 3,
+          "references": 5,
+          "examples": 1,
+          "docs-site": 2
+        },
+        "expected": {
+          "cli": 5,
+          "renderers-shared": 5,
+          "renderer-architecture": 3,
+          "renderer-workflow": 3,
+          "renderer-sequence": 3,
+          "renderer-dataflow": 3,
+          "renderer-lifecycle": 3,
+          "delta": 3,
+          "viewer": 2,
+          "build-scripts": 3,
+          "tests": 5,
+          "references": 5,
+          "examples": 1,
+          "docs-site": 2
+        }
+      },
+      "anchorsTotalByComponent": {
+        "actual": {
+          "cli": 6,
+          "renderers-shared": 9,
+          "renderer-architecture": 6,
+          "renderer-workflow": 3,
+          "renderer-sequence": 3,
+          "renderer-dataflow": 3,
+          "renderer-lifecycle": 3,
+          "delta": 3,
+          "schemas": 4,
+          "viewer": 3,
+          "build-scripts": 6,
+          "references": 6,
+          "examples": 3,
+          "docs-site": 3
+        },
+        "expected": {
+          "cli": 6,
+          "renderers-shared": 9,
+          "renderer-architecture": 6,
+          "renderer-workflow": 3,
+          "renderer-sequence": 3,
+          "renderer-dataflow": 3,
+          "renderer-lifecycle": 3,
+          "delta": 3,
+          "schemas": 4,
+          "viewer": 3,
+          "build-scripts": 6,
+          "tests": 6,
+          "references": 6,
+          "examples": 3,
+          "docs-site": 3
+        }
+      }
+    },
+    "explanation": "Recovered FILES.tests selects architecture-render.test.mjs, absent at BASE. The published report selects cli.test.mjs and architecture-delta.test.mjs instead. The recovered FILES table is preserved."
+  },
+  "anchorsPublishedSelection": {
+    "jsonEqual": true,
+    "byteEqual": true,
+    "summaryDifferences": {},
+    "selectionSource": "c8816705f8db437901f6a861908ccfceb851d2ad:docs/decisions/e3-sources-decay.json#anchors(component,path,line)",
+    "explanation": "This reconstructs the report cohort, not the different recovered script selection; pinned line text and all observations are newly read from Git."
+  },
+  "stats": {
+    "traceSource": "This run: e3-replay.json",
+    "originalTraceSource": "The old stats.mjs read the already-published docs/decisions/e3-replay.json, even when replay output changed.",
+    "originalStdoutAvailable": false,
+    "explanation": "Original formulas are preserved and consume this run. There is no recovered standalone stats stdout for a byte comparison."
+  }
+}

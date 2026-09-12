@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "kind": "ownership",
+  "map": "render-pipeline.json",
+  "parent": { "map": "archify-self.json", "component": "renderers-shared" },
+  "excluded": ["archify/renderers/shared/generated-*.mjs"],
+  "components": [
+    { "id": "parse-input", "globs": ["archify/renderers/shared/cli.mjs"] },
+    { "id": "schema-validate", "globs": ["archify/renderers/shared/validator.mjs"] },
+    { "id": "layout-geometry", "globs": ["archify/renderers/shared/geometry.mjs"] },
+    { "id": "compose-svg", "globs": ["archify/renderers/shared/text-fit.mjs", "archify/renderers/shared/legend.mjs"] },
+    { "id": "inject-template", "globs": ["archify/renderers/shared/utils.mjs", "archify/renderers/shared/i18n.mjs"] },
+    { "id": "check-output", "globs": [] },
+    { "id": "write-artifact", "globs": ["archify/renderers/shared/output-path.mjs", "archify/renderers/shared/diagnostics.mjs", "archify/renderers/shared/layout-report.mjs"] }
+  ]
+}

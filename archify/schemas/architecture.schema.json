@@ -124,7 +124,8 @@
             "items": false,
             "minItems": 2,
             "maxItems": 2
-          }
+          },
+          "drilldown": { "$ref": "common.schema.json#/$defs/id" }
         }
       }
     },

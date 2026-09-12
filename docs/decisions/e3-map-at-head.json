@@ -1,0 +1,133 @@
+{
+  "schema": "archify.ownership/1",
+  "note": "Result of the E3 replay: the BASE map (HEAD~100) plus the 10 minimal edits made across 100 first-parent commits. Verified against `git ls-tree -r --name-only HEAD`: 483 tracked files, 105 excluded, 378 owned, 0 uncovered, 0 ambiguous. Directly usable as the shipped `ownership` sidecar for Archify's own system map. `excluded` wins over component ownership; every remaining path must match exactly one component.",
+  "base": "b744b0b43e0507be7709a2b0ead843466f137545",
+  "revision": "10722002bb8777ecb639d93c49586fae4adf3ae4",
+  "glob_syntax": "** = zero or more path segments; * = within one segment (does not cross /); ? = one character; {a,b} = alternation",
+  "components": {
+    "cli": {
+      "label": "CLI",
+      "globs": ["archify/bin/**"]
+    },
+    "renderers-shared": {
+      "label": "Renderer core",
+      "globs": ["archify/renderers/shared/**"]
+    },
+    "renderer-architecture": {
+      "label": "Architecture renderer",
+      "globs": ["archify/renderers/architecture/**"]
+    },
+    "renderer-workflow": {
+      "label": "Workflow renderer",
+      "globs": ["archify/renderers/workflow/**"]
+    },
+    "renderer-sequence": {
+      "label": "Sequence renderer",
+      "globs": ["archify/renderers/sequence/**"]
+    },
+    "renderer-dataflow": {
+      "label": "Dataflow renderer",
+      "globs": ["archify/renderers/dataflow/**"]
+    },
+    "renderer-lifecycle": {
+      "label": "Lifecycle renderer",
+      "globs": ["archify/renderers/lifecycle/**"]
+    },
+    "delta": {
+      "label": "Architecture delta",
+      "globs": ["archify/delta/**"]
+    },
+    "migrations": {
+      "label": "Format migrations",
+      "globs": ["archify/migrations/**"]
+    },
+    "schemas": {
+      "label": "Schemas",
+      "globs": ["archify/schemas/**"]
+    },
+    "viewer": {
+      "label": "Viewer runtime",
+      "globs": ["archify/assets/**"]
+    },
+    "brand-marks": {
+      "label": "Brand marks",
+      "globs": ["archify/brand-marks/**"]
+    },
+    "build-scripts": {
+      "label": "Build, packaging & CI",
+      "globs": [
+        "scripts/**",
+        "archify/scripts/**",
+        ".github/**",
+        "archify/package.json",
+        "archify/skill-release.json",
+        ".gitignore",
+        ".gitattributes",
+        ".coderabbit.yaml",
+        ".impeccable/**"
+      ]
+    },
+    "tests": {
+      "label": "Test suite",
+      "globs": ["archify/test/**"]
+    },
+    "benchmarks": {
+      "label": "Model benchmarks",
+      "globs": ["benchmarks/**"]
+    },
+    "integrations-deepseek-harness": {
+      "label": "DeepSeek Harness adapter",
+      "globs": ["integrations/deepseek-harness/**"]
+    },
+    "examples": {
+      "label": "Examples",
+      "globs": ["archify/examples/**", "examples/**"]
+    },
+    "docs-site": {
+      "label": "Docs & site",
+      "globs": ["docs/**"]
+    },
+    "references": {
+      "label": "Skill contracts & references",
+      "globs": [
+        "archify/SKILL.md",
+        "archify/references/**",
+        "archify/recipes/**",
+        "archify/THIRD_PARTY_NOTICES.md",
+        "archify/LICENSE",
+        "LICENSE",
+        "*.md"
+      ]
+    },
+    "experiments": {
+      "label": "Research experiments",
+      "globs": ["experiments/**"]
+    }
+  },
+  "excluded": [
+    "docs/gallery/**",
+    "docs/assets/**",
+    "docs/*.html",
+    "docs/cases/*.html",
+    "docs/.nojekyll",
+    "archify.zip",
+    "archify/package-lock.json",
+    "archify/examples/*.html",
+    "examples/*.html",
+    "experiments/**/*.png",
+    "experiments/**/*.html",
+    "generated/**"
+  ],
+  "edits_during_replay": [
+    { "commit": "733fb16", "action": "addComponent", "id": "benchmarks", "glob": "benchmarks/**" },
+    { "commit": "3b5035f", "action": "addGlob", "id": "references", "glob": "archify/references/**" },
+    { "commit": "5a4d853", "action": "addComponent", "id": "integrations-deepseek-harness", "glob": "integrations/deepseek-harness/**" },
+    { "commit": "a0bc059", "action": "addComponent", "id": "brand-marks", "glob": "archify/brand-marks/**" },
+    { "commit": "9a50605", "action": "addGlob", "id": "build-scripts", "glob": ".gitattributes" },
+    { "commit": "b36d79f", "action": "addGlob", "id": "build-scripts", "glob": "archify/skill-release.json" },
+    { "commit": "8b2aed2", "action": "addComponent", "id": "migrations", "glob": "archify/migrations/**" },
+    { "commit": "8b2aed2", "action": "exclude", "glob": "generated/**" },
+    { "commit": "06dd052", "action": "addGlob", "id": "references", "glob": "archify/THIRD_PARTY_NOTICES.md" },
+    { "commit": "06bd6fe", "action": "addGlob", "id": "build-scripts", "glob": ".coderabbit.yaml" }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Render Pipeline",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "compile", "label": "Compile" },
+    { "id": "deliver", "label": "Deliver" }
+  ],
+  "nodes": [
+    { "id": "parse-input", "lane": "compile", "col": 0, "type": "frontend", "label": "Parse Input", "width": 140 },
+    { "id": "schema-validate", "lane": "compile", "col": 1, "type": "security", "label": "Validate Schema", "width": 140 },
+    { "id": "layout-geometry", "lane": "compile", "col": 2, "type": "backend", "label": "Layout Geometry", "width": 150 },
+    { "id": "compose-svg", "lane": "compile", "col": 3, "type": "backend", "label": "Compose SVG", "width": 140 },
+    { "id": "inject-template", "lane": "deliver", "col": 3, "type": "frontend", "label": "Inject Template", "width": 150 },
+    { "id": "check-output", "lane": "deliver", "col": 4, "type": "security", "label": "Check Output", "width": 140 },
+    { "id": "write-artifact", "lane": "deliver", "col": 5, "type": "backend", "label": "Write Receipt", "width": 140 }
+  ],
+  "edges": [
+    { "id": "parse-validate", "from": "parse-input", "to": "schema-validate" },
+    { "id": "validate-geometry", "from": "schema-validate", "to": "layout-geometry" },
+    { "id": "geometry-compose", "from": "layout-geometry", "to": "compose-svg" },
+    { "id": "compose-inject", "from": "compose-svg", "to": "inject-template", "fromSide": "bottom", "toSide": "top" },
+    { "id": "inject-check", "from": "inject-template", "to": "check-output" },
+    { "id": "check-write", "from": "check-output", "to": "write-artifact" }
+  ]
+}

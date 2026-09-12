@@ -4353,6 +4353,127 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
     }
 
+    .archify-drilldown-mark {
+      color: var(--frontend-stroke);
+      pointer-events: auto;
+    }
+    .archify-drilldown-mark rect,
+    .archify-drilldown-mark path {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1;
+    }
+    svg[data-locate-active] [data-node-id] { opacity: 0.13; }
+    svg[data-locate-active] [data-node-id][data-locate-state="touched"] { opacity: 1; }
+    svg[data-locate-active] [data-node-id][data-locate-state="stale"] { opacity: 1; }
+    svg[data-locate-active] [data-node-id][data-locate-state="touched"] > rect:last-of-type {
+      stroke: var(--frontend-stroke);
+    }
+    svg[data-locate-active] [data-node-id][data-locate-state="stale"] > rect:last-of-type {
+      stroke: #7a1f2b;
+    }
+    [data-theme="dark"] svg[data-locate-active] [data-node-id][data-locate-state="stale"] > rect:last-of-type,
+    svg[data-theme="dark"][data-locate-active] [data-node-id][data-locate-state="stale"] > rect:last-of-type {
+      stroke: #e38790;
+    }
+    .archify-locate-chip {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 0.4rem;
+      padding: 0.18rem 0.42rem;
+      border: 1px solid var(--toolbar-border);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--text);
+      font-size: 0.625rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .archify-locate-chip[hidden] { display: none; }
+    .archify-drilldown-host {
+      display: none;
+      flex-direction: column;
+      gap: 0.55rem;
+      min-height: 0;
+    }
+    html[data-drilldown-level="1"] .archify-drilldown-host {
+      display: flex;
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      overflow: auto;
+      background: var(--panel);
+    }
+    html[data-drilldown-level="1"] .diagram-container > svg[data-bundle-role="entry"] {
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .archify-drilldown-crumb {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+    }
+    .archify-drilldown-crumb button {
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+    }
+    .archify-drilldown-crumb button:focus-visible {
+      outline: 2px solid var(--frontend-stroke);
+      outline-offset: 2px;
+    }
+    .archify-drilldown-silhouette {
+      height: 96px;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .archify-drilldown-silhouette svg {
+      display: block;
+      height: 96px;
+      width: auto;
+    }
+    .archify-drilldown-frame {
+      display: block;
+      width: 100%;
+      min-height: 28rem;
+      border: 1px solid var(--toolbar-border);
+      background: transparent;
+    }
+    .archify-drilldown-stale {
+      padding: 1rem 1.1rem;
+      border: 1px solid var(--toolbar-border);
+      color: var(--text);
+    }
+    .archify-drilldown-stale[hidden] { display: none; }
+    .archify-drilldown-stale code { font: inherit; }
+    html[data-embed="true"] .archify-drilldown-host,
+    html[data-embed="true"] .archify-locate-chip,
+    html[data-embed="true"] #btn-drilldown-descend { display: none !important; }
+    html[data-bundle-nested="true"] #btn-present,
+    html[data-bundle-nested="true"] .guided-views,
+    html[data-bundle-nested="true"] .toolbar,
+    html[data-bundle-nested="true"] .diagram-nav,
+    html[data-drilldown-level="1"] #btn-present,
+    html[data-drilldown-level="1"] .guided-views { display: none !important; }
+    svg [data-node-id][data-locate-inside] [data-locate-inside-count] {
+      font-size: 8px;
+      font-weight: 600;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html[data-drilldown-state] .archify-drilldown-host { transition: none; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      html[data-drilldown-state="descending"] .archify-drilldown-host,
+      html[data-drilldown-state="ascending"] .archify-drilldown-host {
+        transition: opacity 170ms ease;
+      }
+    }
+
     /* Authored Reachability is a bounded graph query over the relationships
        already present in the artifact. Upstream walks incoming edges;
        downstream walks outgoing edges. It never claims runtime causality and
@@ -5279,6 +5400,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text x="742" y="186" class="t-muted" font-size="8">Security Group</text>
       </svg>
       <!-- ARCHIFY:SVG_SLOT_END -->
+      <div class="archify-drilldown-host no-print" id="archify-drilldown-host" hidden>
+        <nav class="archify-drilldown-crumb" id="archify-drilldown-crumb" aria-label="{{i18n:viewer.drilldown.back}}"></nav>
+        <div class="archify-drilldown-silhouette" id="archify-drilldown-silhouette" aria-hidden="true"></div>
+        <iframe class="archify-drilldown-frame" id="archify-drilldown-frame" title="{{i18n:viewer.drilldown.descend}}" hidden></iframe>
+        <div class="archify-drilldown-stale" id="archify-drilldown-stale" hidden role="status"></div>
+      </div>
       <p class="intent-trace-status no-print" id="intent-trace-status" role="status" aria-live="polite" aria-atomic="true"></p>
       <div class="share-chapter-cue no-print" id="share-chapter-cue" hidden role="status" aria-live="polite">
         <div class="share-chapter-index">
@@ -5334,7 +5461,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </button>
         </div>
         <div class="diagram-guide-shortcuts" aria-label="{{i18n:viewer.guide.shortcuts}}">
-          <span><kbd>E</kbd> {{i18n:viewer.guide.shortcut.export}}</span><span><kbd>T</kbd> {{i18n:viewer.guide.shortcut.theme}}</span><span><kbd>S</kbd> {{i18n:viewer.guide.shortcut.style}}</span><span><kbd>0</kbd> {{i18n:viewer.guide.shortcut.reset}}</span><span><kbd>+</kbd> {{i18n:viewer.guide.shortcut.zoomIn}}</span><span><kbd>-</kbd> {{i18n:viewer.guide.shortcut.zoomOut}}</span><span><kbd>Esc</kbd> {{i18n:viewer.guide.shortcut.close}}</span>
+          <span><kbd>E</kbd> {{i18n:viewer.guide.shortcut.export}}</span><span><kbd>T</kbd> {{i18n:viewer.guide.shortcut.theme}}</span><span><kbd>S</kbd> {{i18n:viewer.guide.shortcut.style}}</span><span><kbd>0</kbd> {{i18n:viewer.guide.shortcut.reset}}</span><span><kbd>+</kbd> {{i18n:viewer.guide.shortcut.zoomIn}}</span><span><kbd>-</kbd> {{i18n:viewer.guide.shortcut.zoomOut}}</span><span><kbd>Esc</kbd> {{i18n:viewer.guide.shortcut.close}}</span><span><kbd>⌫</kbd> {{i18n:viewer.guide.shortcut.back}}</span>
         </div>
         <p class="diagram-guide-feedback" id="diagram-guide-feedback" aria-live="polite"></p>
       </div>
@@ -5385,6 +5512,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               </div>
               <small class="semantic-passport-reach-status" id="focus-reach-status" hidden aria-live="polite"></small>
             </div>
+            <button id="btn-drilldown-descend" type="button" hidden>{{i18n:viewer.drilldown.descend}}</button>
+            <span class="archify-locate-chip" id="archify-locate-chip" hidden></span>
           </div>
           <div class="relationship-lens-actions">
             <button id="btn-focus-clear" type="button" aria-label="{{i18n:viewer.passport.close}}" title="{{i18n:viewer.common.close}}">&#215;</button>
@@ -5915,6 +6044,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           return next;
         }
         if (next) {
+          if (html.getAttribute('data-bundle-nested') === 'true' || html.getAttribute('data-drilldown-level') === '1') return active();
           if (Archify.semanticLens && typeof Archify.semanticLens.clearPreview === 'function') Archify.semanticLens.clearPreview();
           previousScrollY = window.scrollY || 0;
           html.setAttribute('data-present', 'true');
@@ -6145,6 +6275,563 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     })();
 
     /* ============================================================
+       Identity drilldown — descend in place. Parent SVG stays in the
+       DOM, hidden and untransformed. Child loads via same-directory iframe.
+       ============================================================ */
+    Archify.drilldown = (function () {
+      var CHILD_FILE = /^[A-Za-z0-9][A-Za-z0-9._-]*\.html$/;
+      var DIAGRAM_ID = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
+      var SHA256 = /^[a-f0-9]{64}$/;
+      var LOCATE_STATES = { touched: true, untouched: true, stale: true };
+
+      function isSafeChildFile(name) {
+        return typeof name === 'string' && CHILD_FILE.test(name);
+      }
+      function resolveChildFile(manifest, childId) {
+        if (!manifest || !Array.isArray(manifest.diagrams) || typeof childId !== 'string') return null;
+        for (var i = 0; i < manifest.diagrams.length; i += 1) {
+          if (manifest.diagrams[i].id === childId) {
+            var file = manifest.diagrams[i].file;
+            return isSafeChildFile(file) ? file : null;
+          }
+        }
+        return null;
+      }
+      function validateHandshake(msg, expected) {
+        if (!msg || typeof msg !== 'object') return { ok: false, reason: 'shape' };
+        if (typeof msg.type !== 'string') return { ok: false, reason: 'type' };
+        if (typeof msg.id !== 'string' || !DIAGRAM_ID.test(msg.id)) return { ok: false, reason: 'id' };
+        if (typeof msg.specSha256 !== 'string' || !SHA256.test(msg.specSha256)) return { ok: false, reason: 'sha256' };
+        if (!expected || typeof expected.id !== 'string' || typeof expected.specSha256 !== 'string') {
+          return { ok: false, reason: 'expected' };
+        }
+        if (msg.id !== expected.id || msg.specSha256 !== expected.specSha256) {
+          return { ok: false, reason: 'mismatch' };
+        }
+        return { ok: true };
+      }
+      function paintInsideBadge(node, count) {
+        if (!node || typeof node.setAttribute !== 'function') return;
+        if (count > 0) node.setAttribute('data-locate-inside', String(count));
+        else if (typeof node.removeAttribute === 'function') node.removeAttribute('data-locate-inside');
+        if (typeof node.querySelector !== 'function') return;
+        var existing = node.querySelector('[data-locate-inside-count]');
+        if (!(count > 0)) {
+          if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+          return;
+        }
+        var text = existing;
+        if (!text && typeof document !== 'undefined' && document.createElementNS) {
+          var rects = node.querySelectorAll ? node.querySelectorAll('rect') : [];
+          var box = rects.length ? rects[rects.length - 1] : null;
+          text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('data-locate-inside-count', '');
+          text.setAttribute('class', 't-muted');
+          text.setAttribute('font-size', '8');
+          text.setAttribute('font-weight', '600');
+          text.setAttribute('text-anchor', 'end');
+          if (box) {
+            text.setAttribute('x', String(Number(box.getAttribute('x')) + Number(box.getAttribute('width')) - 6));
+            text.setAttribute('y', String(Number(box.getAttribute('y')) + 11));
+          }
+          node.appendChild(text);
+        }
+        if (text) text.textContent = String(count);
+      }
+      function applyProjection(states, nodes, insides) {
+        var applied = [];
+        if (!nodes) return applied;
+        for (var i = 0; i < nodes.length; i += 1) {
+          var node = nodes[i];
+          var id = node && (typeof node.getAttribute === 'function' ? node.getAttribute('data-node-id') : node.id);
+          var state = states && states[id];
+          if (LOCATE_STATES[state]) {
+            if (typeof node.setAttribute === 'function') node.setAttribute('data-locate-state', state);
+            applied.push({ id: id, state: state });
+          } else if (node && typeof node.removeAttribute === 'function') {
+            node.removeAttribute('data-locate-state');
+          }
+          if (insides) paintInsideBadge(node, Number(insides[id] || 0));
+        }
+        return applied;
+      }
+      function text(key, values) {
+        return typeof viewerText === 'function' ? viewerText(key, values) : key;
+      }
+      function locateChipModel(row) {
+        var count = row ? Number(row.files_touched_inside || 0) : 0;
+        if (!Number.isFinite(count) || count <= 0) return { visible: false, count: 0, text: '' };
+        return {
+          visible: true,
+          count: count,
+          text: text('viewer.locate.filesInside', { count: count })
+        };
+      }
+      function buildStaleCardModel(expected, actual, reason) {
+        return {
+          title: text('viewer.drilldown.stale.title'),
+          expectedId: String(expected && expected.id || ''),
+          actualId: String(actual && actual.id || ''),
+          expectedSha: String(expected && expected.spec || '').slice(0, 12),
+          actualSha: String(actual && actual.spec || '').slice(0, 12),
+          reason: String(reason || 'mismatch'),
+          repair: text('viewer.drilldown.repair'),
+          expectedIdLabel: text('viewer.drilldown.expectedId'),
+          actualIdLabel: text('viewer.drilldown.actualId'),
+          expectedShaLabel: text('viewer.drilldown.expectedSha'),
+          actualShaLabel: text('viewer.drilldown.actualSha'),
+          reasonLabel: text('viewer.drilldown.reason')
+        };
+      }
+      function fillStaleCard(el, model, doc) {
+        if (!el || !doc) return model;
+        el.textContent = '';
+        var strong = doc.createElement('strong');
+        strong.textContent = model.title;
+        el.appendChild(strong);
+        var idLine = doc.createElement('p');
+        idLine.appendChild(doc.createTextNode(model.expectedIdLabel + ' '));
+        var expectedId = doc.createElement('code');
+        expectedId.textContent = model.expectedId;
+        idLine.appendChild(expectedId);
+        idLine.appendChild(doc.createTextNode(' · ' + model.actualIdLabel + ' '));
+        var actualId = doc.createElement('code');
+        actualId.textContent = model.actualId;
+        idLine.appendChild(actualId);
+        el.appendChild(idLine);
+        var shaLine = doc.createElement('p');
+        shaLine.appendChild(doc.createTextNode(model.expectedShaLabel + ' '));
+        var expectedSha = doc.createElement('code');
+        expectedSha.textContent = model.expectedSha;
+        shaLine.appendChild(expectedSha);
+        shaLine.appendChild(doc.createTextNode(' · ' + model.actualShaLabel + ' '));
+        var actualSha = doc.createElement('code');
+        actualSha.textContent = model.actualSha;
+        shaLine.appendChild(actualSha);
+        el.appendChild(shaLine);
+        if (model.reason && model.reason !== 'mismatch') {
+          var reasonLine = doc.createElement('p');
+          reasonLine.appendChild(doc.createTextNode(model.reasonLabel + ' '));
+          var reasonCode = doc.createElement('code');
+          reasonCode.textContent = model.reason;
+          reasonLine.appendChild(reasonCode);
+          el.appendChild(reasonLine);
+        }
+        var repairLine = doc.createElement('p');
+        var repair = doc.createElement('code');
+        repair.textContent = model.repair;
+        repairLine.appendChild(repair);
+        el.appendChild(repairLine);
+        return model;
+      }
+
+      var api = {
+        validateHandshake: validateHandshake,
+        resolveChildFile: resolveChildFile,
+        applyProjection: applyProjection,
+        buildStaleCardModel: buildStaleCardModel,
+        fillStaleCard: fillStaleCard,
+        isSafeChildFile: isSafeChildFile,
+        locateChipModel: locateChipModel,
+        crumbCurrentText: crumbCurrentText,
+        paintInsideBadge: paintInsideBadge
+      };
+      if (typeof document === 'undefined' || !document.querySelector) return api;
+
+      var html = document.documentElement;
+      var svg = document.querySelector('.diagram-container svg');
+      var host = document.getElementById('archify-drilldown-host');
+      var crumb = document.getElementById('archify-drilldown-crumb');
+      var silhouette = document.getElementById('archify-drilldown-silhouette');
+      var frame = document.getElementById('archify-drilldown-frame');
+      var stale = document.getElementById('archify-drilldown-stale');
+      var descendBtn = document.getElementById('btn-drilldown-descend');
+      var locateChip = document.getElementById('archify-locate-chip');
+      var reduced = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+      var manifest = null;
+      var locate = null;
+      var level = 0;
+      var current = null;
+      var handshakeTimer = 0;
+      var savedScroll = null;
+
+      function parseScript(id) {
+        var node = document.getElementById(id);
+        if (!node) return null;
+        try { return JSON.parse(node.textContent); } catch (_) { return null; }
+      }
+      function bundleRole() { return svg ? svg.getAttribute('data-bundle-role') || '' : ''; }
+      function nestedChild() { return window.parent !== window && bundleRole() === 'child'; }
+      function active() { return level > 0; }
+      function readManifest() {
+        if (manifest) return manifest;
+        manifest = parseScript('archify-bundle-manifest');
+        return manifest;
+      }
+      function readLocate() {
+        if (locate !== null) return locate;
+        locate = parseScript('archify-locate-projection');
+        return locate;
+      }
+      function diagramById(id) {
+        var diagrams = (readManifest() && readManifest().diagrams) || [];
+        for (var i = 0; i < diagrams.length; i += 1) if (diagrams[i].id === id) return diagrams[i];
+        return null;
+      }
+      function drillFor(componentId) {
+        var rows = (readManifest() && readManifest().drilldowns) || [];
+        for (var i = 0; i < rows.length; i += 1) {
+          if (rows[i].component === componentId) return rows[i];
+        }
+        return null;
+      }
+      function childIdFor(node) {
+        return node ? node.getAttribute('data-drilldown-child') || '' : '';
+      }
+      function canvasNode() {
+        return document.querySelector('.diagram-container');
+      }
+      function captureScroll() {
+        var canvas = canvasNode();
+        return {
+          windowX: window.scrollX || 0,
+          windowY: window.scrollY || 0,
+          canvasX: canvas ? canvas.scrollLeft : 0,
+          canvasY: canvas ? canvas.scrollTop : 0
+        };
+      }
+      function restoreScroll(saved) {
+        if (!saved) return;
+        if (typeof window.scrollTo === 'function') window.scrollTo(saved.windowX, saved.windowY);
+        var canvas = canvasNode();
+        if (canvas) {
+          canvas.scrollLeft = saved.canvasX;
+          canvas.scrollTop = saved.canvasY;
+        }
+      }
+      function clearTransient() {
+        if (Archify.focus && Archify.focus.active && Archify.focus.active()) Archify.focus.clear({ restoreFocus: false });
+        if (Archify.semanticLens && Archify.semanticLens.active && Archify.semanticLens.active()) Archify.semanticLens.clear({ preserveView: true });
+        if (Archify.routeProbe && Archify.routeProbe.active && Archify.routeProbe.active()) Archify.routeProbe.escape({ restoreFocus: false });
+        if (Archify.intentTrace && Archify.intentTrace.active && Archify.intentTrace.active()) Archify.intentTrace.clear();
+        if (Archify.presentation && Archify.presentation.active && Archify.presentation.active()) Archify.presentation.exit();
+        if (Archify.guidedViews && typeof Archify.guidedViews.showAll === 'function') Archify.guidedViews.showAll();
+      }
+      function setState(nextLevel, phase) {
+        level = nextLevel;
+        if (nextLevel) html.setAttribute('data-drilldown-level', String(nextLevel));
+        else html.removeAttribute('data-drilldown-level');
+        if (phase) html.setAttribute('data-drilldown-state', phase);
+        else html.removeAttribute('data-drilldown-state');
+      }
+      function applyLocate(root, states) {
+        if (!root || !states) return;
+        root.setAttribute('data-locate-active', 'true');
+        var insides = {};
+        var projection = readLocate();
+        if (projection && projection.components) {
+          Object.keys(projection.components).forEach(function (id) {
+            insides[id] = Number(projection.components[id].files_touched_inside || 0);
+          });
+        }
+        applyProjection(states, root.querySelectorAll('[data-node-id]'), insides);
+      }
+      function locateCount(componentId) {
+        var projection = readLocate();
+        var row = projection && projection.components && projection.components[componentId];
+        return locateChipModel(row).count;
+      }
+      function syncPassport(id, node) {
+        var child = childIdFor(node);
+        var allow = child && !nestedChild() && level === 0 && !html.getAttribute('data-bundle-nested');
+        if (descendBtn) {
+          descendBtn.hidden = !allow;
+          descendBtn.onclick = allow ? function () { descend(id); } : null;
+        }
+        if (locateChip) {
+          var projection = readLocate();
+          var chip = locateChipModel(projection && projection.components && projection.components[id]);
+          locateChip.hidden = !chip.visible;
+          locateChip.textContent = chip.text;
+        }
+      }
+      function buildSilhouette(componentId) {
+        if (!svg || !silhouette) return;
+        silhouette.innerHTML = '';
+        var clone = svg.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.setAttribute('aria-hidden', 'true');
+        clone.removeAttribute('tabindex');
+        Array.prototype.forEach.call(clone.querySelectorAll('text, title, desc, .archify-drilldown-mark, [data-semantic-sigil], [data-brand-mark], [data-source-evidence-beacon], image'), function (el) {
+          el.remove();
+        });
+        var target = clone.querySelector('[data-node-id="' + componentId + '"]');
+        if (target) {
+          var rects = target.querySelectorAll('rect');
+          if (rects.length) {
+            var box = rects[rects.length - 1];
+            box.setAttribute('stroke', '#22D3EE');
+            box.setAttribute('stroke-width', '2.5');
+          }
+        }
+        var parts = String(clone.getAttribute('viewBox') || '0 0 100 100').split(/[\s,]+/);
+        var width = Number(parts[2]) || 100;
+        var height = Number(parts[3]) || 100;
+        clone.style.height = '96px';
+        clone.style.width = String(Math.round(96 * width / height)) + 'px';
+        silhouette.appendChild(clone);
+      }
+      function crumbCurrentText(componentLabel, childTitle) {
+        var label = componentLabel || '';
+        var title = childTitle || 'child';
+        if (label && title && label === title) return title;
+        return label ? label + ' · ' + title : title;
+      }
+      function renderCrumb(entryTitle, componentLabel, childTitle) {
+        if (!crumb) return;
+        crumb.textContent = '';
+        if (!level) return;
+        var parent = document.createElement('button');
+        parent.type = 'button';
+        parent.textContent = entryTitle || 'parent';
+        parent.addEventListener('click', function () { back(); });
+        crumb.appendChild(parent);
+        var sep = document.createElement('span');
+        sep.setAttribute('aria-hidden', 'true');
+        sep.textContent = ' › ';
+        crumb.appendChild(sep);
+        var currentRung = document.createElement('span');
+        currentRung.textContent = crumbCurrentText(componentLabel, childTitle);
+        currentRung.setAttribute('aria-current', 'page');
+        crumb.appendChild(currentRung);
+      }
+      function showStale(reason, expected, actual) {
+        if (frame) {
+          frame.hidden = true;
+          frame.removeAttribute('src');
+        }
+        setState(1, 'stale');
+        renderCrumb(
+          current && current.entryTitle,
+          current && current.componentLabel,
+          current && current.childTitle
+        );
+        if (!stale) return;
+        stale.hidden = false;
+        fillStaleCard(stale, buildStaleCardModel(expected, actual, reason), document);
+      }
+      function postHello() {
+        if (!frame || !frame.contentWindow || !current) return;
+        frame.contentWindow.postMessage({
+          type: 'archify:bundle-hello',
+          expectedId: current.childId,
+          expectedSpecSha256: current.specSha
+        }, '*');
+      }
+      function finishHandshake(actual, reason) {
+        if (!current) return;
+        var check = validateHandshake({
+          type: 'archify:bundle-ack',
+          id: actual && actual.id,
+          specSha256: actual && actual.spec
+        }, { id: current.childId, specSha256: current.specSha });
+        if (!check.ok) {
+          showStale(reason || check.reason, { id: current.childId, spec: current.specSha }, actual || {});
+          return;
+        }
+        if (stale) stale.hidden = true;
+        if (frame) frame.hidden = false;
+        var projection = readLocate();
+        var nodes = projection && projection.children && projection.children[current.childId] && projection.children[current.childId].nodes;
+        if (nodes && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'archify:locate-projection', nodes: nodes }, '*');
+        }
+        setState(1, 'level1');
+        renderCrumb(current.entryTitle, current.componentLabel, current.childTitle);
+      }
+      function descend(componentId) {
+        if (nestedChild() || html.getAttribute('data-bundle-nested') === 'true') return false;
+        var node = svg && svg.querySelector('[data-node-id="' + componentId + '"]');
+        var childId = childIdFor(node);
+        if (!childId || !readManifest()) return false;
+        var row = drillFor(componentId);
+        var child = diagramById(childId);
+        if (!child || !row) {
+          current = {
+            componentId: componentId,
+            componentLabel: node.getAttribute('data-node-label') || componentId,
+            childId: childId,
+            childTitle: (child && child.title) || childId,
+            entryTitle: (readManifest() && diagramById(readManifest().entry) && diagramById(readManifest().entry).title) || document.title,
+            specSha: (child && child.spec_sha256) || '',
+            file: (child && child.file) || ''
+          };
+          if (host) host.hidden = false;
+          showStale(!child ? 'missing-child' : 'missing-row', {
+            id: current.childId,
+            spec: current.specSha
+          }, {});
+          return true;
+        }
+        clearTransient();
+        savedScroll = captureScroll();
+        var entryTitle = (readManifest() && diagramById(readManifest().entry) && diagramById(readManifest().entry).title) || document.title;
+        current = {
+          componentId: componentId,
+          componentLabel: node.getAttribute('data-node-label') || componentId,
+          childId: childId,
+          childTitle: child.title || childId,
+          entryTitle: entryTitle,
+          specSha: child.spec_sha256,
+          file: child.file
+        };
+        buildSilhouette(componentId);
+        setState(1, 'descending');
+        if (host) host.hidden = false;
+        if (stale) { stale.hidden = true; stale.textContent = ''; }
+        renderCrumb(current.entryTitle, current.componentLabel, current.childTitle);
+        var file = resolveChildFile(readManifest(), childId);
+        if (!file) {
+          showStale(isSafeChildFile(child.file) ? 'missing-file' : 'unsafe-file', {
+            id: current.childId,
+            spec: current.specSha
+          }, {});
+          return true;
+        }
+        if (frame) {
+          frame.hidden = true;
+          frame.src = './' + file;
+        }
+        window.clearTimeout(handshakeTimer);
+        handshakeTimer = window.setTimeout(function () {
+          finishHandshake(null, 'timeout');
+        }, 1200);
+        if (reduced && reduced.matches) {
+          setState(1, 'level1');
+          renderCrumb(current.entryTitle, current.componentLabel, current.childTitle);
+        } else {
+          window.setTimeout(function () {
+            if (html.getAttribute('data-drilldown-state') === 'descending') {
+              setState(1, 'level1');
+              renderCrumb(current.entryTitle, current.componentLabel, current.childTitle);
+            }
+          }, 170);
+        }
+        return true;
+      }
+      function back() {
+        if (!active()) return false;
+        window.clearTimeout(handshakeTimer);
+        setState(1, 'ascending');
+        if (frame) {
+          frame.hidden = true;
+          frame.removeAttribute('src');
+        }
+        if (stale) { stale.hidden = true; stale.textContent = ''; }
+        if (silhouette) silhouette.innerHTML = '';
+        if (crumb) crumb.textContent = '';
+        function reveal() {
+          if (host) host.hidden = true;
+          current = null;
+          setState(0, '');
+          restoreScroll(savedScroll);
+          savedScroll = null;
+        }
+        if (reduced && reduced.matches) reveal();
+        else window.setTimeout(reveal, 170);
+        return true;
+      }
+      function onMessage(event) {
+        var data = event.data;
+        if (!data || typeof data !== 'object' || typeof data.type !== 'string') return;
+        if (nestedChild()) {
+          if (event.source !== window.parent) return;
+          if (data.type === 'archify:bundle-hello') {
+            if (typeof data.expectedId !== 'string' || !DIAGRAM_ID.test(data.expectedId)) return;
+            if (typeof data.expectedSpecSha256 !== 'string' || !SHA256.test(data.expectedSpecSha256)) return;
+            event.source.postMessage({
+              type: 'archify:bundle-ack',
+              id: svg ? svg.getAttribute('data-bundle-id') : '',
+              specSha256: svg ? svg.getAttribute('data-bundle-spec-sha256') : ''
+            }, '*');
+            html.setAttribute('data-bundle-nested', 'true');
+            if (Archify.motionGovernor && Archify.motionGovernor.setMode) Archify.motionGovernor.setMode('still');
+            return;
+          }
+          if (data.type === 'archify:locate-projection') {
+            if (!data.nodes || typeof data.nodes !== 'object' || Array.isArray(data.nodes)) return;
+            applyLocate(svg, data.nodes);
+          }
+          return;
+        }
+        if (!frame || event.source !== frame.contentWindow) return;
+        if (data.type === 'archify:bundle-ack' && current) {
+          if (typeof data.id !== 'string' || !DIAGRAM_ID.test(data.id)) return;
+          if (typeof data.specSha256 !== 'string' || !SHA256.test(data.specSha256)) return;
+          window.clearTimeout(handshakeTimer);
+          finishHandshake({ id: data.id, spec: data.specSha256 });
+          return;
+        }
+        if (data.type === 'archify:drilldown-escape') {
+          back();
+        }
+      }
+      function onMarkClick(event) {
+        var mark = event.target.closest ? event.target.closest('.archify-drilldown-mark') : null;
+        if (!mark || nestedChild() || level > 0) return;
+        var node = event.target.closest('[data-node-id]');
+        if (!node) return;
+        event.preventDefault();
+        event.stopPropagation();
+        descend(node.getAttribute('data-node-id'));
+      }
+
+      if (nestedChild()) {
+        html.setAttribute('data-bundle-nested', 'true');
+        if (Archify.motionGovernor && Archify.motionGovernor.setMode) Archify.motionGovernor.setMode('still');
+      }
+      var projection = readLocate();
+      if (projection && projection.components && svg) {
+        var states = {};
+        Object.keys(projection.components).forEach(function (id) {
+          states[id] = projection.components[id].state;
+        });
+        applyLocate(svg, states);
+      }
+      function registerBundleListeners() {
+        var hasManifest = !!readManifest();
+        if (svg && hasManifest) svg.addEventListener('click', onMarkClick, true);
+        // Children receive their handshake without embedding their own manifest.
+        if (hasManifest || nestedChild()) window.addEventListener('message', onMessage);
+        if (frame && hasManifest) {
+          frame.addEventListener('load', function () {
+            if (!current || !frame.src) return;
+            postHello();
+          });
+        }
+      }
+      // Bundle injection may place the manifest after this runtime script.
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', registerBundleListeners, { once: true });
+      else registerBundleListeners();
+
+      return {
+        validateHandshake: validateHandshake,
+        resolveChildFile: resolveChildFile,
+        applyProjection: applyProjection,
+        buildStaleCardModel: buildStaleCardModel,
+        fillStaleCard: fillStaleCard,
+        isSafeChildFile: isSafeChildFile,
+        locateChipModel: locateChipModel,
+        crumbCurrentText: crumbCurrentText,
+        paintInsideBadge: paintInsideBadge,
+        active: active,
+        descend: descend,
+        back: back,
+        syncPassport: syncPassport
+      };
+    })();
+
+    /* ============================================================
        Global keyboard shortcuts
        ? -> open Diagram Guide
        T -> toggle theme
@@ -6157,6 +6844,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
          / -> open node finder or the active route endpoint picker
          + / - -> zoom, 0 -> reset view
          Escape -> clear temporary trace/focus/view first, then exit presentation
+         Backspace -> Escape alias while descended or inside a nested child
        Ignored when focus is inside an input/textarea/contenteditable.
        ============================================================ */
     document.addEventListener('keydown', function (e) {
@@ -6164,7 +6852,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       if (e.defaultPrevented) return;
       var t = e.target;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-      if (Archify.preset && Archify.preset.isOpen() && e.key !== 'Escape' && e.key !== 's' && e.key !== 'S') {
+      var isNestedChild = document.documentElement.getAttribute('data-bundle-nested') === 'true';
+      var isEscape = e.key === 'Escape' || (e.key === 'Backspace'
+        && ((Archify.drilldown && Archify.drilldown.active()) || isNestedChild));
+      if (Archify.preset && Archify.preset.isOpen() && !isEscape && e.key !== 's' && e.key !== 'S') {
         Archify.preset.close(false);
       }
       if (e.key === '?') {
@@ -6184,6 +6875,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (!Archify.exportMenu.isOpen()) Archify.exportMenu.open();
       } else if (e.key === 'f' || e.key === 'F') {
         e.preventDefault();
+        if (document.documentElement.getAttribute('data-bundle-nested') === 'true'
+          || document.documentElement.getAttribute('data-drilldown-level') === '1') return;
         Archify.presentation.toggle();
       } else if (e.key === 'm' || e.key === 'M') {
         e.preventDefault();
@@ -6203,33 +6896,41 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       } else if (e.key === '0') {
         e.preventDefault();
         Archify.view.reset();
-      } else if (e.key === 'Escape' && Archify.preset.isOpen()) {
+      } else if (isEscape && Archify.preset.isOpen()) {
         e.preventDefault();
         Archify.preset.close(true);
-      } else if (e.key === 'Escape' && Archify.semanticLens.isOpen()) {
+      } else if (isEscape && Archify.semanticLens.isOpen()) {
         e.preventDefault();
         Archify.semanticLens.close({ restoreFocus: true });
-      } else if (e.key === 'Escape' && Archify.semanticLens.active()) {
+      } else if (isEscape && Archify.semanticLens.active()) {
         e.preventDefault();
         Archify.semanticLens.clear({ preserveView: true });
-      } else if (e.key === 'Escape' && Archify.guide.isOpen()) {
+      } else if (isEscape && Archify.guide.isOpen()) {
         e.preventDefault();
         Archify.guide.close({ restoreFocus: true });
-      } else if (e.key === 'Escape' && Archify.radar.isOpen()) {
+      } else if (isEscape && Archify.radar.isOpen()) {
         e.preventDefault();
         Archify.radar.close({ restoreFocus: true });
-      } else if (e.key === 'Escape' && Archify.routeProbe.active()) {
+      } else if (isEscape && Archify.routeProbe.active()) {
         e.preventDefault();
         Archify.routeProbe.escape({ restoreFocus: true });
-      } else if (e.key === 'Escape' && Archify.intentTrace.active()) {
+      } else if (isEscape && Archify.intentTrace.active()) {
         e.preventDefault();
         Archify.intentTrace.clear();
-      } else if (e.key === 'Escape' && Archify.focus.active()) {
+      } else if (isEscape && Archify.focus.active()) {
         e.preventDefault();
         Archify.focus.clear({ restoreFocus: true });
-      } else if (e.key === 'Escape' && Archify.presentation.active()) {
+      } else if (isEscape && Archify.drilldown && Archify.drilldown.active()) {
+        e.preventDefault();
+        Archify.drilldown.back();
+      } else if (isEscape && Archify.presentation.active()) {
         e.preventDefault();
         Archify.presentation.exit();
+      } else if (isEscape && isNestedChild) {
+        e.preventDefault();
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'archify:drilldown-escape' }, '*');
+        }
       }
     });
   </script>

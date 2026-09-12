@@ -1,0 +1,430 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/locate-receipt.schema.json",
+  "title": "Archify Locate Receipt",
+  "description": "Deterministic output of `archify locate`. Pure computation over Git output plus one validated diagram JSON and one validated ownership sidecar. No timestamps, no absolute paths, no inferred impact.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "ok",
+    "command",
+    "locatorVersion",
+    "mode",
+    "completeness",
+    "repository",
+    "map",
+    "ownership",
+    "review",
+    "summary",
+    "files",
+    "components",
+    "facts",
+    "limitations"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "ok": { "const": true },
+    "command": { "const": "locate" },
+    "locatorVersion": { "type": "integer", "minimum": 1 },
+    "mode": { "enum": ["range", "lint"] },
+    "completeness": { "const": "complete" },
+
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root"],
+      "properties": {
+        "root": {
+          "const": ".",
+          "description": "All receipt paths are relative to the Git top-level; the literal marks that no absolute path is carried."
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Normalized remote from the map's meta.repository.url, when present. Lets a consumer build blob links without Git access."
+        },
+        "linkMode": { "enum": ["web", "local-only"] },
+        "base": { "$ref": "#/$defs/sha" },
+        "head": { "$ref": "#/$defs/sha" },
+        "revision": { "$ref": "#/$defs/sha" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "base": { "$ref": "#/$defs/sha" } }, "required": ["base"] },
+          "then": {
+            "required": ["base", "head"],
+            "properties": {
+              "base": { "$ref": "#/$defs/sha" },
+              "head": { "$ref": "#/$defs/sha" }
+            },
+            "not": {
+              "required": ["revision"],
+              "properties": { "revision": { "$ref": "#/$defs/sha" } }
+            }
+          }
+        }
+      ]
+    },
+
+    "map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "diagramType", "semanticSha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/repoPath" },
+        "diagramType": { "enum": ["architecture", "workflow", "sequence", "dataflow", "lifecycle"] },
+        "semanticSha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "sha256 of the canonical diagram JSON (canonicalArchitectureJson for architecture maps)."
+        },
+        "revision": {
+          "$ref": "#/$defs/sha",
+          "description": "meta.repository.revision, when the map declares one."
+        },
+        "mapBehindBy": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "git rev-list --count <map.revision>..<head>. Absent when the map declares no revision, or when that revision is not available locally (then review.advisory includes map_revision_unavailable)."
+        }
+      },
+      "dependentRequired": { "mapBehindBy": ["revision"] }
+    },
+
+    "ownership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/repoPath" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "parent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["map", "component"],
+          "properties": {
+            "map": { "$ref": "#/$defs/repoPath" },
+            "component": { "$ref": "common.schema.json#/$defs/id" }
+          }
+        }
+      }
+    },
+
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "blocking", "advisory"],
+      "description": "Explicit needs-review contract. A consumer never has to derive it from counts.",
+      "properties": {
+        "required": { "type": "boolean" },
+        "blocking": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["files_ambiguous", "components_stale", "map_changed"] }
+        },
+        "advisory": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["files_uncovered", "map_behind", "map_revision_unavailable", "import_edges_unmapped"] }
+        }
+      }
+    },
+
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["files", "components"],
+      "properties": {
+        "files": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["touched", "uncovered", "ambiguous", "excluded", "total"],
+          "properties": {
+            "touched": { "$ref": "#/$defs/count" },
+            "uncovered": { "$ref": "#/$defs/count" },
+            "ambiguous": { "$ref": "#/$defs/count" },
+            "excluded": { "$ref": "#/$defs/count" },
+            "total": { "$ref": "#/$defs/count" }
+          }
+        },
+        "components": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["touched", "untouched", "stale", "total"],
+          "properties": {
+            "touched": { "$ref": "#/$defs/count" },
+            "untouched": { "$ref": "#/$defs/count" },
+            "stale": { "$ref": "#/$defs/count" },
+            "total": { "$ref": "#/$defs/count" }
+          }
+        }
+      }
+    },
+
+    "files": {
+      "type": "array",
+      "description": "One entry per classified path, sorted by path. A rename contributes two entries: its base path and its head path.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "changeType", "state"],
+        "properties": {
+          "path": { "$ref": "#/$defs/repoPath" },
+          "changeType": {
+            "enum": ["A", "M", "D", "R", "C", "T", "tracked"],
+            "description": "Git --name-status letter, or `tracked` in lint mode."
+          },
+          "state": { "enum": ["touched", "uncovered", "ambiguous", "excluded"] },
+          "side": { "enum": ["base", "head"] },
+          "componentId": { "$ref": "common.schema.json#/$defs/id" },
+          "candidates": {
+            "type": "array",
+            "minItems": 2,
+            "uniqueItems": true,
+            "items": { "$ref": "common.schema.json#/$defs/id" }
+          },
+          "matchedGlob": {
+            "$ref": "#/$defs/glob",
+            "description": "The owning glob for a touched file, or the excluding glob for an excluded file. Makes every attribution auditable without rerunning the matcher."
+          },
+          "renamedFrom": { "$ref": "#/$defs/repoPath" },
+          "renamedTo": { "$ref": "#/$defs/repoPath" }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "state": { "const": "touched" } }, "required": ["state"] },
+            "then": {
+              "required": ["componentId", "matchedGlob"],
+              "properties": {
+                "componentId": { "$ref": "common.schema.json#/$defs/id" },
+                "matchedGlob": { "$ref": "#/$defs/glob" }
+              },
+              "not": {
+                "required": ["candidates"],
+                "properties": { "candidates": { "type": "array" } }
+              }
+            }
+          },
+          {
+            "if": { "properties": { "state": { "const": "ambiguous" } }, "required": ["state"] },
+            "then": {
+              "required": ["candidates"],
+              "properties": {
+                "candidates": {
+                  "type": "array",
+                  "minItems": 2,
+                  "uniqueItems": true,
+                  "items": { "$ref": "common.schema.json#/$defs/id" }
+                }
+              },
+              "not": {
+                "required": ["componentId"],
+                "properties": { "componentId": { "$ref": "common.schema.json#/$defs/id" } }
+              }
+            }
+          },
+          {
+            "if": { "properties": { "state": { "const": "uncovered" } }, "required": ["state"] },
+            "then": {
+              "not": {
+                "anyOf": [
+                  { "required": ["componentId"], "properties": { "componentId": { "$ref": "common.schema.json#/$defs/id" } } },
+                  { "required": ["candidates"], "properties": { "candidates": { "type": "array" } } },
+                  { "required": ["matchedGlob"], "properties": { "matchedGlob": { "$ref": "#/$defs/glob" } } }
+                ]
+              }
+            }
+          },
+          {
+            "if": { "properties": { "state": { "const": "excluded" } }, "required": ["state"] },
+            "then": {
+              "required": ["matchedGlob"],
+              "properties": { "matchedGlob": { "$ref": "#/$defs/glob" } },
+              "not": {
+                "anyOf": [
+                  { "required": ["componentId"], "properties": { "componentId": { "$ref": "common.schema.json#/$defs/id" } } },
+                  { "required": ["candidates"], "properties": { "candidates": { "type": "array" } } }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+
+    "components": {
+      "type": "array",
+      "description": "One entry per component id in the map, sorted by id. Every id is present, including untouched ones, so a consumer can render a complete table.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "state", "touchedCount", "touchedFiles"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Copied from the map so a renderer needs no second file."
+          },
+          "state": { "enum": ["touched", "untouched", "stale"] },
+          "touchedCount": { "$ref": "#/$defs/count" },
+          "touchedFiles": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "$ref": "#/$defs/repoPath" }
+          },
+          "staleSources": {
+            "type": "array",
+            "minItems": 1,
+            "description": "components[].sources entries whose path is not a blob at the range end revision.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path"],
+              "properties": {
+                "path": { "$ref": "#/$defs/repoPath" },
+                "renamedTo": {
+                  "$ref": "#/$defs/repoPath",
+                  "description": "Set when the missing path is the old side of an R record in this range."
+                }
+              }
+            }
+          },
+          "childMap": { "$ref": "#/$defs/repoPath" },
+          "inside": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["touched", "uncovered", "ambiguous", "excluded"],
+            "description": "Child-diagram classifier counts for range paths inside the parent component: only paths that match the parent component's globs (after parent excluded inheritance) are classified. touched + uncovered + ambiguous + excluded equals that inside-parent path count.",
+            "properties": {
+              "touched": { "$ref": "#/$defs/count" },
+              "uncovered": { "$ref": "#/$defs/count" },
+              "ambiguous": { "$ref": "#/$defs/count" },
+              "excluded": { "$ref": "#/$defs/count" }
+            }
+          }
+        },
+        "dependentRequired": { "inside": ["childMap"] },
+        "allOf": [
+          {
+            "if": { "properties": { "state": { "const": "stale" } }, "required": ["state"] },
+            "then": {
+              "required": ["staleSources"],
+              "properties": { "staleSources": { "type": "array", "minItems": 1 } }
+            }
+          },
+          {
+            "if": { "properties": { "state": { "const": "untouched" } }, "required": ["state"] },
+            "then": { "properties": { "touchedCount": { "const": 0 }, "touchedFiles": { "type": "array", "maxItems": 0 } } }
+          }
+        ]
+      }
+    },
+
+    "facts": {
+      "type": "array",
+      "description": "Observations that carry no state. Sorted by canonical JSON of each entry. Never reconciled against connections.",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "base", "head"],
+            "properties": {
+              "kind": { "const": "moved_between_components" },
+              "base": { "$ref": "#/$defs/attributedPath" },
+              "head": { "$ref": "#/$defs/attributedPath" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "change", "from", "to", "specifier", "importKind"],
+            "description": "Import edge present on exactly one side of the optional --facts pair. Edge identity is from+to+specifier+importKind; line numbers are excluded because they are not stable across a range.",
+            "properties": {
+              "kind": { "const": "import_edge_change" },
+              "change": { "enum": ["added", "removed"] },
+              "from": { "$ref": "#/$defs/factsAttributedPath" },
+              "to": { "$ref": "#/$defs/factsAttributedPath" },
+              "specifier": { "type": "string", "minLength": 1 },
+              "importKind": { "enum": ["static", "dynamic", "require", "export"] }
+            }
+          }
+        ]
+      }
+    },
+
+    "mapDelta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "baseBlob", "headBlob"],
+      "description": "Present when the map JSON itself changed inside the range. Locate invokes `archify compare` as an attached artifact under `--out/compare/` when the map type is supported; the locate exit code is independent of that compare. A map added in the range has status added and does not run compare; baseBlob is then a lookup reference to an absent baseline.",
+      "properties": {
+        "path": { "$ref": "#/$defs/repoPath" },
+        "baseBlob": { "type": "string", "pattern": "^[a-f0-9]{40}:.+$" },
+        "headBlob": { "type": "string", "pattern": "^[a-f0-9]{40}:.+$" },
+        "status": { "enum": ["compared", "compare-failed", "unsupported-type", "added"] },
+        "receiptPath": { "$ref": "#/$defs/repoPath" },
+        "htmlPath": { "$ref": "#/$defs/repoPath" },
+        "exitCode": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "count": { "type": "integer", "minimum": 0 },
+    "repoPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))[^\\\\\\u0000-\\u001f]+$"
+    },
+    "glob": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?:\\*\\*|(?:[A-Za-z0-9._\\-?{},@+]|\\*(?!\\*))+)(?:/(?:\\*\\*|(?:[A-Za-z0-9._\\-?{},@+]|\\*(?!\\*))+))*$"
+    },
+    "attributedPath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "componentId"],
+      "properties": {
+        "path": { "$ref": "#/$defs/repoPath" },
+        "componentId": {
+          "oneOf": [
+            { "$ref": "common.schema.json#/$defs/id" },
+            { "type": "null", "description": "Explicit unknown: the path is uncovered, ambiguous, or excluded. Never guessed." }
+          ]
+        }
+      }
+    },
+    "factsAttributedPath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "componentId"],
+      "description": "Import-fact endpoint. path is the raw observed string and is not required to be a repo-relative path; when it fails the repo-path check, componentId is null.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "componentId": {
+          "oneOf": [
+            { "$ref": "common.schema.json#/$defs/id" },
+            { "type": "null", "description": "Explicit unknown: the path is uncovered, ambiguous, excluded, or not a repo path. Never guessed." }
+          ]
+        }
+      }
+    }
+  }
+}

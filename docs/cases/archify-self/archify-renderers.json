@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Typed Renderers",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/tt-a1i/archify",
+      "revision": "10722002bb8777ecb639d93c49586fae4adf3ae4",
+      "provider": "github",
+      "link_mode": "web"
+    },
+    "viewBox": [1280, 400]
+  },
+  "components": [
+    {
+      "id": "renderers-shared",
+      "type": "external",
+      "label": "Shared Runtime",
+      "pos": [40, 150],
+      "size": [160, 64]
+    },
+    {
+      "id": "renderer-architecture",
+      "type": "backend",
+      "label": "Architecture",
+      "pos": [260, 150],
+      "size": [160, 64],
+      "sources": [
+        { "path": "archify/renderers/architecture/render-architecture.mjs", "label": "Render" }
+      ]
+    },
+    {
+      "id": "renderer-workflow",
+      "type": "backend",
+      "label": "Workflow",
+      "pos": [460, 150],
+      "size": [150, 64],
+      "sources": [
+        { "path": "archify/renderers/workflow/render-workflow.mjs", "label": "Render" }
+      ]
+    },
+    {
+      "id": "renderer-sequence",
+      "type": "backend",
+      "label": "Sequence",
+      "pos": [650, 150],
+      "size": [150, 64],
+      "sources": [
+        { "path": "archify/renderers/sequence/render-sequence.mjs", "label": "Render" }
+      ]
+    },
+    {
+      "id": "renderer-dataflow",
+      "type": "backend",
+      "label": "Dataflow",
+      "pos": [840, 150],
+      "size": [150, 64],
+      "sources": [
+        { "path": "archify/renderers/dataflow/render-dataflow.mjs", "label": "Render" }
+      ]
+    },
+    {
+      "id": "renderer-lifecycle",
+      "type": "backend",
+      "label": "Lifecycle",
+      "pos": [1030, 150],
+      "size": [150, 64],
+      "sources": [
+        { "path": "archify/renderers/lifecycle/render-lifecycle.mjs", "label": "Render" }
+      ]
+    }
+  ],
+  "connections": [
+    { "id": "shared-architecture", "from": "renderers-shared", "to": "renderer-architecture" },
+    { "id": "architecture-workflow", "from": "renderer-architecture", "to": "renderer-workflow" },
+    { "id": "workflow-sequence", "from": "renderer-workflow", "to": "renderer-sequence" },
+    { "id": "sequence-dataflow", "from": "renderer-sequence", "to": "renderer-dataflow" },
+    { "id": "dataflow-lifecycle", "from": "renderer-dataflow", "to": "renderer-lifecycle" }
+  ]
+}

@@ -1,0 +1,1037 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Pinned behavior characterization; known counterexamples are not product acceptance passes.",
+  "runtime": {
+    "node": "v26.8.1",
+    "git": "git version 2.50.1 (Apple Git-155)"
+  },
+  "inputs": {
+    "fixtures/external/fastapi-map.json": "1634786d9116ef37deeff03dbbb3d67e914d605adf132fca124c45b2599712fe",
+    "fixtures/external/fastapi-map.ownership.json": "ca90cacb33e7659ca2a70e9277dfc476c5a07075ef626b32d43ce54bb43ab1c0",
+    "fixtures/external/hono-map.json": "092384ead3cae73e85ba1bc39e60b37202fcfca692f367edc1c52992d109036c",
+    "fixtures/external/hono-map.ownership.json": "1458a2965468ddd102318d26902b23c9e2ba13cba7a2268ac2cdca847c26178e",
+    "fixtures/external/hugo-map.json": "326e11e924f1a401427aa06d12723d6bbcb895215c366bdab0dc1363148241b5",
+    "fixtures/external/hugo-map.ownership.json": "74ac9a943fd93d0a82723533caeb4e225411ef8e45772d5aaca07bb35454d19b",
+    "fixtures/provenance.json": "86d21f8cffa086a3683afb804489a88c6033e1e0fe72a88451331a98c623fce9",
+    "fixtures/scenarios.json": "923111b838742574b6d1178c43e493c674f45d2fed50b4ca4f867bf9cd93a38a",
+    "run.mjs": "3f0bb7bf3ed8c38e8b5c6ad0f6003c8a9070cbd3e9fd442a29a3100682c0cc56"
+  },
+  "revisions": {
+    "delivery": {
+      "commit": "365fec9cde7237829fc7986a5fbadc50334c9b72",
+      "packagedTree": "4330db39c561826fe545459a3f6f803baebdbacc",
+      "packagedSourceManifestSha256": "10986b6e9b985a63b7de0b422b19169607fe6f68a6185cf7db4142b043e33e7f",
+      "keySourceSha256": {
+        "archify/locate/glob.mjs": "b1dc2a063c0705cdd41d841c63e3ab4ac5d19300a7e1c1f4e2625388ab42421b",
+        "archify/locate/ownership.mjs": "b75e56dbdf5e93043330e56d8e72adbbb414a01fee875f94e7d9a656848633a6",
+        "archify/locate/locate.mjs": "b1ddaf90c4a94a453d2db63e84a6fe665cb426e6fde028d7b1dd9c4cd610f2d7",
+        "archify/locate/cli.mjs": "2e92bbcdba874355a32441dd1d96849015339c18b7e37c259e40b65c884b6b6e",
+        "archify/locate/locate-html.mjs": "09d188413c0b6f07223977897df2d745d2cce750b67165fd30ec450dcb31df41",
+        "archify/bin/archify.mjs": "3b448953261faf2162abd5018dfc8d397817fb9c1d19ca71cb8c89b5eea4df95"
+      },
+      "presetExpansionSha256": null,
+      "presetExpansion": null,
+      "observations": [
+        {
+          "id": "glob:src/**/b=>src/{a,}/b",
+          "actual": false,
+          "expected": false,
+          "matchesSnapshot": true
+        },
+        {
+          "id": "subset:src/**/b=>src/{a,}/b",
+          "actual": [
+            "locate/ownership-not-subset"
+          ],
+          "expected": [
+            "locate/ownership-not-subset"
+          ],
+          "matchesSnapshot": true
+        },
+        {
+          "id": "glob:**/b=>{a,}/b",
+          "actual": false,
+          "expected": false,
+          "matchesSnapshot": true
+        },
+        {
+          "id": "subset:**/b=>{a,}/b",
+          "actual": [
+            "locate/ownership-not-subset"
+          ],
+          "expected": [
+            "locate/ownership-not-subset"
+          ],
+          "matchesSnapshot": true
+        },
+        {
+          "id": "glob:src/**=>src/*",
+          "actual": false,
+          "expected": false,
+          "matchesSnapshot": true
+        },
+        {
+          "id": "subset:src/**=>src/*",
+          "actual": [
+            "locate/ownership-not-subset"
+          ],
+          "expected": [
+            "locate/ownership-not-subset"
+          ],
+          "matchesSnapshot": true
+        },
+        {
+          "id": "glob:src/**=>src/api/**",
+          "actual": true,
+          "expected": true,
+          "matchesSnapshot": true
+        },
+        {
+          "id": "subset:src/**=>src/api/**",
+          "actual": [],
+          "expected": [],
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:pkg/build/compiler.go:generated",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:archify/brand-marks/input.png:generated",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:tests/fixtures/product.js:tests",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:archify/references/authoring-contract.md:docs",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:requirements.txt:lockfiles",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:config.yaml:ci",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:archify/migrations/workflow-v2.mjs:generated",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:archify/migrations/workflow-v2.mjs:docs",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hono:src/hono.ts",
+          "actual": {
+            "state": "touched",
+            "componentId": "core"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "core"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hono:src/middleware/example/index.ts",
+          "actual": {
+            "state": "touched",
+            "componentId": "middleware"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "middleware"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hono:src/brand-marks/input.png",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hono:bun.lock",
+          "actual": {
+            "state": "excluded"
+          },
+          "expected": {
+            "state": "excluded"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-fastapi:fastapi/applications.py",
+          "actual": {
+            "state": "touched",
+            "componentId": "application"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "application"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-fastapi:fastapi/dependencies/utils.py",
+          "actual": {
+            "state": "touched",
+            "componentId": "dependencies"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "dependencies"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-fastapi:docs/authoring-contract.md",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-fastapi:uv.lock",
+          "actual": {
+            "state": "excluded"
+          },
+          "expected": {
+            "state": "excluded"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hugo:hugolib/build.go",
+          "actual": {
+            "state": "touched",
+            "componentId": "hugolib"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "hugolib"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hugo:resources/brand-marks/input.png",
+          "actual": {
+            "state": "touched",
+            "componentId": "assets"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "assets"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hugo:pkg/build/compiler.go",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hugo:go.sum",
+          "actual": {
+            "state": "excluded"
+          },
+          "expected": {
+            "state": "excluded"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "citation-is-not-ownership",
+          "actual": {
+            "files": [
+              {
+                "path": "archify/migrations/workflow-v2.mjs",
+                "state": "uncovered"
+              }
+            ],
+            "components": [
+              {
+                "id": "core",
+                "state": "untouched"
+              }
+            ],
+            "review": {
+              "required": false,
+              "blocking": [],
+              "advisory": [
+                "files_uncovered"
+              ]
+            }
+          },
+          "expected": {
+            "files": [
+              {
+                "path": "archify/migrations/workflow-v2.mjs",
+                "state": "uncovered"
+              }
+            ],
+            "components": [
+              {
+                "id": "core",
+                "state": "untouched"
+              }
+            ],
+            "review": {
+              "required": false,
+              "blocking": [],
+              "advisory": [
+                "files_uncovered"
+              ]
+            }
+          },
+          "matchesSnapshot": true
+        }
+      ],
+      "cli": {
+        "git": {
+          "empty": "7881b84161ae11ea8d713eb98552cc8a3ef8c8b4",
+          "added": "7a393c904a2a597e414c3f343a54a268e247b40a",
+          "changed": "a618511b43f3b02e3afa6de0d0b3bc47d0a888b4"
+        },
+        "addedMap": {
+          "exit": 0,
+          "ok": true,
+          "mapDeltaStatus": "added",
+          "diagnosticCodes": [],
+          "blocking": [
+            "map_changed"
+          ],
+          "files": [
+            "locate.html",
+            "locate.receipt.json"
+          ]
+        },
+        "lint": {
+          "exit": 0,
+          "ok": true,
+          "mapDeltaStatus": null,
+          "diagnosticCodes": [],
+          "blocking": [],
+          "files": [
+            "locate.html",
+            "locate.receipt.json"
+          ]
+        },
+        "ordinaryRange": {
+          "exit": 0,
+          "ok": true,
+          "mapDeltaStatus": null,
+          "diagnosticCodes": [],
+          "blocking": [],
+          "files": [
+            "locate.html",
+            "locate.receipt.json"
+          ]
+        },
+        "standaloneRangeContainsSvg": true
+      }
+    },
+    "presets": {
+      "commit": "9306382111aa2cc5a1b376559a7a6bd75b7c2e74",
+      "packagedTree": "4aa538b21a77c9ff30c1cc1df8c90ff4db53ec61",
+      "packagedSourceManifestSha256": "a1ccc5744b05c25f4fcf542a509a6a278bfd6436b4e952137071fd4122de90b0",
+      "keySourceSha256": {
+        "archify/locate/glob.mjs": "1c5765dbfdbd1ebcee2999205475ada6a4080bfa633744c15ca980448ce1d25f",
+        "archify/locate/ownership.mjs": "70d0ecf5b370a1e5580cc52eb8e7a5b1b387950f7fb9faed4f832ff32a4dd4f9",
+        "archify/locate/locate.mjs": "45b43e488d034bee6d8f77334683a17cf2775ab01fa0bc695abc101f65c1db25",
+        "archify/locate/cli.mjs": "555b01924df601400760b398310be35202f3409b683fc5fdc9a46859571a4d0d",
+        "archify/locate/locate-html.mjs": "9fbdbee94f0b646d2fdc1cb3a493cdc975ff980e411716e7d3bf92a14156749d",
+        "archify/bin/archify.mjs": "3b448953261faf2162abd5018dfc8d397817fb9c1d19ca71cb8c89b5eea4df95"
+      },
+      "presetExpansionSha256": "55504eb097b45e265e8c0e9e4048d8c14ec8a41eae97764ea1b2d22f7bd83320",
+      "presetExpansion": {
+        "docs": [
+          "**/*.md",
+          "docs/**",
+          "**/LICENSE*",
+          "**/NOTICE*"
+        ],
+        "tests": [
+          "**/test/**",
+          "**/tests/**",
+          "**/__tests__/**",
+          "**/*.test.*",
+          "**/*.spec.*",
+          "**/*_test.go",
+          "**/test_*.py",
+          "**/testdata/**",
+          "**/fixtures/**"
+        ],
+        "ci": [
+          ".github/**",
+          ".gitlab-ci.yml",
+          ".circleci/**",
+          "**/Dockerfile*",
+          "*.yml",
+          "*.yaml"
+        ],
+        "lockfiles": [
+          "**/package-lock.json",
+          "**/pnpm-lock.yaml",
+          "**/yarn.lock",
+          "**/go.sum",
+          "**/Cargo.lock",
+          "**/poetry.lock",
+          "**/uv.lock",
+          "**/requirements*.txt"
+        ],
+        "generated": [
+          "**/*.min.js",
+          "**/*.map",
+          "**/dist/**",
+          "**/build/**",
+          "**/__generated__/**",
+          "**/*.snap",
+          "**/*.png",
+          "**/*.gif",
+          "**/*.webp",
+          "**/*.zip"
+        ]
+      },
+      "observations": [
+        {
+          "id": "glob:src/**/b=>src/{a,}/b",
+          "actual": true,
+          "expected": true,
+          "matchesSnapshot": true
+        },
+        {
+          "id": "subset:src/**/b=>src/{a,}/b",
+          "actual": [],
+          "expected": [],
+          "matchesSnapshot": true
+        },
+        {
+          "id": "glob:**/b=>{a,}/b",
+          "actual": true,
+          "expected": true,
+          "matchesSnapshot": true
+        },
+        {
+          "id": "subset:**/b=>{a,}/b",
+          "actual": [],
+          "expected": [],
+          "matchesSnapshot": true
+        },
+        {
+          "id": "glob:src/**=>src/*",
+          "actual": true,
+          "expected": true,
+          "matchesSnapshot": true
+        },
+        {
+          "id": "subset:src/**=>src/*",
+          "actual": [],
+          "expected": [],
+          "matchesSnapshot": true
+        },
+        {
+          "id": "glob:src/**=>src/api/**",
+          "actual": true,
+          "expected": true,
+          "matchesSnapshot": true
+        },
+        {
+          "id": "subset:src/**=>src/api/**",
+          "actual": [],
+          "expected": [],
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:pkg/build/compiler.go:generated",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "preset:pkg/build/compiler.go:generated",
+          "actual": {
+            "state": "excluded",
+            "matchedGlob": "preset:generated"
+          },
+          "expected": {
+            "state": "excluded",
+            "matchedGlob": "preset:generated"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "owner-precedence:pkg/build/compiler.go:generated",
+          "actual": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:archify/brand-marks/input.png:generated",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "preset:archify/brand-marks/input.png:generated",
+          "actual": {
+            "state": "excluded",
+            "matchedGlob": "preset:generated"
+          },
+          "expected": {
+            "state": "excluded",
+            "matchedGlob": "preset:generated"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "owner-precedence:archify/brand-marks/input.png:generated",
+          "actual": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:tests/fixtures/product.js:tests",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "preset:tests/fixtures/product.js:tests",
+          "actual": {
+            "state": "excluded",
+            "matchedGlob": "preset:tests"
+          },
+          "expected": {
+            "state": "excluded",
+            "matchedGlob": "preset:tests"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "owner-precedence:tests/fixtures/product.js:tests",
+          "actual": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:archify/references/authoring-contract.md:docs",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "preset:archify/references/authoring-contract.md:docs",
+          "actual": {
+            "state": "excluded",
+            "matchedGlob": "preset:docs"
+          },
+          "expected": {
+            "state": "excluded",
+            "matchedGlob": "preset:docs"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "owner-precedence:archify/references/authoring-contract.md:docs",
+          "actual": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:requirements.txt:lockfiles",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "preset:requirements.txt:lockfiles",
+          "actual": {
+            "state": "excluded",
+            "matchedGlob": "preset:lockfiles"
+          },
+          "expected": {
+            "state": "excluded",
+            "matchedGlob": "preset:lockfiles"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "owner-precedence:requirements.txt:lockfiles",
+          "actual": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:config.yaml:ci",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "preset:config.yaml:ci",
+          "actual": {
+            "state": "excluded",
+            "matchedGlob": "preset:ci"
+          },
+          "expected": {
+            "state": "excluded",
+            "matchedGlob": "preset:ci"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "owner-precedence:config.yaml:ci",
+          "actual": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:archify/migrations/workflow-v2.mjs:generated",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "preset:archify/migrations/workflow-v2.mjs:generated",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "owner-precedence:archify/migrations/workflow-v2.mjs:generated",
+          "actual": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "unowned:archify/migrations/workflow-v2.mjs:docs",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "preset:archify/migrations/workflow-v2.mjs:docs",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "owner-precedence:archify/migrations/workflow-v2.mjs:docs",
+          "actual": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "all",
+            "matchedGlob": "**"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hono:src/hono.ts",
+          "actual": {
+            "state": "touched",
+            "componentId": "core"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "core"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hono:src/middleware/example/index.ts",
+          "actual": {
+            "state": "touched",
+            "componentId": "middleware"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "middleware"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hono:src/brand-marks/input.png",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hono:bun.lock",
+          "actual": {
+            "state": "excluded"
+          },
+          "expected": {
+            "state": "excluded"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-fastapi:fastapi/applications.py",
+          "actual": {
+            "state": "touched",
+            "componentId": "application"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "application"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-fastapi:fastapi/dependencies/utils.py",
+          "actual": {
+            "state": "touched",
+            "componentId": "dependencies"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "dependencies"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-fastapi:docs/authoring-contract.md",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-fastapi:uv.lock",
+          "actual": {
+            "state": "excluded"
+          },
+          "expected": {
+            "state": "excluded"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hugo:hugolib/build.go",
+          "actual": {
+            "state": "touched",
+            "componentId": "hugolib"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "hugolib"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hugo:resources/brand-marks/input.png",
+          "actual": {
+            "state": "touched",
+            "componentId": "assets"
+          },
+          "expected": {
+            "state": "touched",
+            "componentId": "assets"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hugo:pkg/build/compiler.go",
+          "actual": {
+            "state": "uncovered"
+          },
+          "expected": {
+            "state": "uncovered"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "recovered-hugo:go.sum",
+          "actual": {
+            "state": "excluded"
+          },
+          "expected": {
+            "state": "excluded"
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "citation-is-not-ownership",
+          "actual": {
+            "files": [
+              {
+                "path": "archify/migrations/workflow-v2.mjs",
+                "state": "uncovered"
+              }
+            ],
+            "components": [
+              {
+                "id": "core",
+                "state": "untouched"
+              }
+            ],
+            "review": {
+              "required": false,
+              "blocking": [],
+              "advisory": [
+                "files_uncovered"
+              ]
+            }
+          },
+          "expected": {
+            "files": [
+              {
+                "path": "archify/migrations/workflow-v2.mjs",
+                "state": "uncovered"
+              }
+            ],
+            "components": [
+              {
+                "id": "core",
+                "state": "untouched"
+              }
+            ],
+            "review": {
+              "required": false,
+              "blocking": [],
+              "advisory": [
+                "files_uncovered"
+              ]
+            }
+          },
+          "matchesSnapshot": true
+        },
+        {
+          "id": "fewer-child-presets:direct-versus-projected",
+          "actual": {
+            "direct": {
+              "state": "uncovered"
+            },
+            "projected": {
+              "state": "excluded",
+              "matchedGlob": "preset:tests"
+            }
+          },
+          "expected": {
+            "direct": {
+              "state": "uncovered"
+            },
+            "projected": {
+              "state": "excluded",
+              "matchedGlob": "preset:tests"
+            }
+          },
+          "matchesSnapshot": true
+        }
+      ],
+      "cli": {
+        "git": {
+          "empty": "7881b84161ae11ea8d713eb98552cc8a3ef8c8b4",
+          "added": "7a393c904a2a597e414c3f343a54a268e247b40a",
+          "changed": "a618511b43f3b02e3afa6de0d0b3bc47d0a888b4"
+        },
+        "addedMap": {
+          "exit": 1,
+          "ok": false,
+          "mapDeltaStatus": null,
+          "diagnosticCodes": [
+            "locate/git-command"
+          ],
+          "blocking": [],
+          "files": [
+            "compare"
+          ]
+        },
+        "lint": {
+          "exit": 0,
+          "ok": true,
+          "mapDeltaStatus": null,
+          "diagnosticCodes": [],
+          "blocking": [],
+          "files": [
+            "locate.receipt.json"
+          ]
+        },
+        "ordinaryRange": {
+          "exit": 0,
+          "ok": true,
+          "mapDeltaStatus": null,
+          "diagnosticCodes": [],
+          "blocking": [],
+          "files": [
+            "locate.html",
+            "locate.receipt.json"
+          ]
+        },
+        "standaloneRangeContainsSvg": false
+      }
+    }
+  }
+}

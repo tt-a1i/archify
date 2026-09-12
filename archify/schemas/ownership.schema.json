@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/ownership.schema.json",
+  "title": "Archify Component Ownership Sidecar",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "map", "components"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "ownership" },
+    "map": {
+      "$ref": "#/$defs/mapRef",
+      "description": "Diagram JSON this sidecar owns, as a POSIX path relative to the directory holding this file."
+    },
+    "parent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["map", "component"],
+      "description": "Drilldown link. Declares this diagram as the child of one component in another map; every glob below must be a syntactic subset of that component's globs.",
+      "properties": {
+        "map": { "$ref": "#/$defs/mapRef" },
+        "component": { "$ref": "common.schema.json#/$defs/id" }
+      }
+    },
+    "excluded": {
+      "type": "array",
+      "maxItems": 200,
+      "description": "Repository paths that no component owns (generated output, lockfiles, packaged artifacts). Applied before component matching.",
+      "items": { "$ref": "#/$defs/glob" }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "description": "One entry per component id in the referenced map. An empty globs list declares a component that owns no repository path.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "globs"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "globs": {
+            "type": "array",
+            "maxItems": 200,
+            "items": { "$ref": "#/$defs/glob" }
+          },
+          "child_map": {
+            "$ref": "#/$defs/mapRef",
+            "description": "Child diagram that expands this component. Its sidecar must declare a matching parent link."
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "mapRef": {
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 240,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))[A-Za-z0-9._\\-/]+\\.json$"
+    },
+    "glob": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "description": "POSIX path glob relative to the Git top-level. Segments are separated by '/'; a segment is either '**' (zero or more segments) or a pattern segment using '*' (no '/'), '?' (one character, no '/'), and '{a,b}' literal alternatives.",
+      "pattern": "^(?:\\*\\*|(?:[A-Za-z0-9._\\-?{},@+]|\\*(?!\\*))+)(?:/(?:\\*\\*|(?:[A-Za-z0-9._\\-?{},@+]|\\*(?!\\*))+))*$",
+      "not": { "pattern": "(?:^|/)\\.\\.?(?:/|$)" }
+    }
+  }
+}

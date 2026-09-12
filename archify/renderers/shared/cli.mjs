@@ -35,7 +35,7 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
   };
   const { outputPath: outPath } = resolveOutputPath(outputRequest);
   outputPathGuards.set(outPath, outputRequest);
-  return { diagram, template, outPath, sourceEvidence };
+  return { diagram, template, outPath, sourceEvidence, bundle: readBundleRenderOptions(argv) };
 }
 
 // Brand URL capture is the only asynchronous authoring step. Typed renderers
@@ -69,7 +69,7 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
   console.log(outPath);
 }
 
-const SEMANTIC_COLLECTIONS = {
+export const SEMANTIC_COLLECTIONS = {
   architecture: 'components',
   workflow: 'nodes',
   sequence: 'participants',
@@ -146,7 +146,25 @@ export function validateGuidedViews(diagramType, diagram) {
 }
 
 // Accessible name for the generated diagram SVG.
-export function svgRootAttrs(meta) {
+export function readBundleRenderOptions(argv) {
+  const options = {};
+  const args = Array.isArray(argv) ? argv : [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--bundle-id') options.id = args[++index];
+    else if (arg === '--bundle-role') options.role = args[++index];
+    else if (arg === '--bundle-spec-sha256') options.specSha256 = args[++index];
+  }
+  if (!options.id || !options.role || !options.specSha256) return null;
+  if (options.role !== 'entry' && options.role !== 'child') return null;
+  return options;
+}
+
+export function svgRootAttrs(meta, options = {}) {
+  if (options !== undefined && options !== null && (typeof options !== 'object' || Array.isArray(options))) {
+    throw new TypeError('svgRootAttrs(meta, options) options must be an object with an optional bundle key');
+  }
+  const bundle = options.bundle || null;
   const animation = meta.animation === 'trace' ? ' data-animation="trace"' : '';
   const preset = ` data-preset="${esc(meta.visual_preset || 'classic')}"`;
   const engineeringProfile = meta.engineering_profile
@@ -155,7 +173,10 @@ export function svgRootAttrs(meta) {
   const requestedProfile = process.env.ARCHIFY_QUALITY_PROFILE || meta.quality_profile;
   const qualityProfile = requestedProfile === 'showcase' ? 'showcase' : 'standard';
   const advisory = requestedProfile ? '' : ' data-quality-gates="advisory"';
-  return `role="img" lang="${esc(resolveLocale(meta.locale))}" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset}${engineeringProfile} data-quality-profile="${esc(qualityProfile)}"${advisory}`;
+  const bundleAttrs = bundle?.id && bundle.role && bundle.specSha256
+    ? ` data-bundle-id="${esc(bundle.id)}" data-bundle-role="${esc(bundle.role)}" data-bundle-spec-sha256="${esc(bundle.specSha256)}"`
+    : '';
+  return `role="img" lang="${esc(resolveLocale(meta.locale))}" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset}${engineeringProfile} data-quality-profile="${esc(qualityProfile)}"${advisory}${bundleAttrs}`;
 }
 
 // Keep the accessible name inside the SVG so it survives standalone SVG
@@ -188,6 +209,7 @@ export function focusNodeAttrs(id, label, metadata = {}, locale) {
     ['data-node-brand-id', metadata.brandId],
     ['data-node-brand-status', metadata.brandStatus],
     ['data-node-brand-source', metadata.brandSource],
+    ['data-drilldown-child', metadata.drilldown],
   ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
     .map(([name, value]) => ` ${name}="${esc(String(value))}"`)
     .join('');
@@ -206,6 +228,14 @@ export function focusNodeTitle(label, metadata = {}) {
   const parts = [label, metadata.sublabel, metadata.context, metadata.tag, metadata.brand]
     .filter((value) => value !== undefined && value !== null && String(value).trim() !== '');
   return `<title>${esc(parts.join(' · '))}</title>`;
+}
+
+// Nested-square mark at the node bottom-right. One stroke, currentColor, no
+// tab stop: the node already owns role=button. Survives canonical SVG export.
+export function renderDrilldownMark(box) {
+  const x = Number(box.x) + Number(box.width) - 11;
+  const y = Number(box.y) + Number(box.height) - 10;
+  return `<g class="archify-drilldown-mark" aria-hidden="true"><rect x="${x}" y="${y}" width="7" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1"/><path d="M${x + 2} ${y + 3}h3" fill="none" stroke="currentColor" stroke-width="1"/></g>`;
 }
 
 export function focusEdgeAttrs(from, to, label, key, id) {
