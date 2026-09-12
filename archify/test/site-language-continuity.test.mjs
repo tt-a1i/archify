@@ -472,7 +472,7 @@ test('real Chrome preserves language through entry, navigation, selection, refre
     assert.equal(await evaluate(browser, sessionId, 'document.querySelector(".nav-logo-path").textContent'), '/ 场景指南');
     assert.deepEqual(await evaluate(browser, sessionId, `Array.from(document.querySelectorAll('#filters [data-filter]')).map(function (button) {
       return button.textContent;
-    })`), ['全部配方', '架构图', '工作流', '时序图', '数据流', '生命周期']);
+    })`), ['全部配方', '架构图', '工作流', '时序图', '数据流', '生命周期', '实体关系图']);
 
     await evaluate(browser, sessionId, 'document.querySelector(\'#filters [data-filter="sequence"]\').click()');
     state = await evaluate(browser, sessionId, `({
@@ -491,7 +491,7 @@ test('real Chrome preserves language through entry, navigation, selection, refre
       selected: true,
       visibleCount: 2,
       onlySequence: true,
-      labels: ['全部配方', '架构图', '工作流', '时序图', '数据流', '生命周期'],
+      labels: ['全部配方', '架构图', '工作流', '时序图', '数据流', '生命周期', '实体关系图'],
     });
 
     await clickAndNavigate(browser, sessionId, '.site-nav a[href="start.html"]');
