@@ -78,7 +78,8 @@ test('cli: help lists commands and diagram types', () => {
   assert.match(result.stdout, /archify preview <type>/);
   assert.match(result.stdout, /archify visual-check <output\.html>/);
   assert.match(result.stdout, /--open/);
-  assert.match(result.stdout, /--repo-root path \(architecture only\)/);
+  assert.match(result.stdout, /archify validate <type> <input\.json> .*\[--repo-root path\]/);
+  assert.doesNotMatch(result.stdout, /architecture only/);
   assert.match(result.stdout, /archify guide \[scenario or question\]/);
   assert.match(result.stdout, /archify doctor/);
   assert.match(result.stdout, /archify demo \[output-directory\]/);
@@ -797,12 +798,6 @@ test('cli: validate and deliver keep argument failures machine-readable with --j
       command: 'validate',
       code: 'cli/unknown-diagram-type',
       subject: { type: 'unknown' },
-    },
-    {
-      args: ['validate', 'workflow', workflow, '--repo-root', '.', '--json'],
-      command: 'validate',
-      code: 'cli/unsupported-option',
-      subject: { option: '--repo-root', type: 'workflow' },
     },
     {
       args: ['validate', 'architecture', workflow, '--repo-root=', '--json'],

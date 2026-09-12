@@ -15,7 +15,7 @@ const participantTextFit = {
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const { diagram: sequence, template, outPath } = await loadDiagramWithBrandMarks({
+const { diagram: sequence, template, outPath, sourceEvidence } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
   diagramType: 'sequence',
   defaultExample: 'cache-miss-request.sequence.json'
@@ -461,4 +461,5 @@ writeDiagram({
   meta: sequence.meta,
   svg: renderSvg(),
   cards: sequence.cards,
+  sourceEvidence,
 });
