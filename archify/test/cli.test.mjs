@@ -158,11 +158,11 @@ test('cli: examples renders from an installed skill', () => {
 test('cli: argument-free commands reject trailing arguments', () => {
   for (const command of ['examples', 'doctor']) {
     const extra = run([command, 'ignored-extra']);
-    assert.notEqual(extra.status, 0, command);
+    assert.equal(extra.status, 2, command);
     assert.match(extra.stderr, /Usage:/, command);
 
     const unknown = run([command, '--bogus']);
-    assert.notEqual(unknown.status, 0, command);
+    assert.equal(unknown.status, 2, command);
     assert.match(unknown.stderr, new RegExp(`Unknown ${command} option "--bogus"`), command);
   }
 });
@@ -241,7 +241,7 @@ test('cli: demo rejects a mistyped option without creating an output directory',
 
   const result = run(['demo', '--typo'], { cwd: workingDirectory });
 
-  assert.notEqual(result.status, 0);
+  assert.equal(result.status, 2);
   assert.match(result.stderr, /Unknown demo option "--typo"/);
   assert.deepEqual(fs.readdirSync(workingDirectory), []);
 });
@@ -651,11 +651,11 @@ test('cli: check rejects unknown options and extra positionals', () => {
   assert.equal(run(['render', 'workflow', input, out]).status, 0);
 
   const unknown = run(['check', '--json', out]);
-  assert.notEqual(unknown.status, 0);
+  assert.equal(unknown.status, 2);
   assert.match(unknown.stderr, /Unknown check option "--json"/);
 
   const extra = run(['check', out, 'ignored-extra']);
-  assert.notEqual(extra.status, 0);
+  assert.equal(extra.status, 2);
   assert.match(extra.stderr, /Usage:/);
 });
 
