@@ -433,3 +433,143 @@ test('render output check: endpoint stubs from 8px pass while cramped interior t
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
+
+test('render output check: finite_svg ignores comments and CDATA but still checks real elements', () => {
+  const { result } = checkHtml('finite-non-elements', `
+    <!-- <rect x="NaN"/> -->
+    <![CDATA[<path d="Infinity"/>]]>
+    <rect x="12" y="20" width="50" height="40"/>
+    <circle cx="NaN" cy="20" r="5"/>
+  `);
+  const check = result.checks.find(item => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, ['circle cx="NaN"']);
+});
+
+test('render output check: finite_svg decodes numeric references once and reports raw evidence', () => {
+  const { result } = checkHtml('finite-encoded-values', `
+    <rect x="&#78;aN" y="&#x49;&#110;&#102;&#105;&#110;&#105;&#116;&#121;"/>
+    <circle cx="&#x4eaN" cy="&amp;#78;aN" r="10"/>
+    <path d="M 0 0 L &#x4e;aN 12"/>
+    <text x="10" y="10" data-note="&#78;aN">&#78;aN</text>
+  `);
+  const check = result.checks.find(item => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'rect x="&#78;aN"',
+    'rect y="&#x49;&#110;&#102;&#105;&#110;&#105;&#116;&#121;"',
+    'path d="M 0 0 L &#x4e;aN 12"',
+  ]);
+});
+
+test('render output check: finite_svg separates foreignObject HTML from SVG geometry', () => {
+  const { result } = checkHtml('finite-foreign-object', `
+    <foreignObject x="NaN" y="0" width="100" height="100">
+      <div xmlns="http://www.w3.org/1999/xhtml" x="NaN" width="Infinity">
+        <input width="NaN"><br><div y="Infinity">HTML content</div>
+      </div>
+    </foreignObject>
+    <rect x="Infinity"/>
+  `);
+  const check = result.checks.find(item => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, ['foreignObject x="NaN"', 'rect x="Infinity"']);
+  const nested = checkHtml('finite-foreign-nested-svg', `
+    <foreignObject><div x="NaN"><svg><rect x="NaN"/></svg></div></foreignObject>
+  `).result.checks.find(item => item.name === 'finite_svg');
+  assert.deepEqual(nested.details, ['rect x="NaN"']);
+});
+
+test('render output check: finite_svg ignores prose that mentions NaN or Infinity', () => {
+  const { result } = checkHtml('finite-prose', `
+    <g data-node-id="solver" data-node-tag="returns a NaN leaf" aria-label="Focus Solver">
+      <title>Solver · returns a NaN leaf · Infinity guard</title>
+      <rect x="40" y="40" width="200" height="74" rx="6" class="c-mask"/>
+      <text x="140" y="70" class="t-primary" font-size="11" text-anchor="middle">Solver</text>
+      <text data-detail="fine" x="140" y="106" class="t-backend" font-size="7">returns a NaN leaf</text>
+    </g>
+    <!-- Legend -->
+    <text x="40" y="140" class="t-primary" font-size="10">Legend</text>
+  `);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, true);
+  assert.deepEqual(check.details, []);
+});
+
+test('render output check: finite_svg reports the attribute carrying a non-finite value', () => {
+  const { code, result } = checkHtml('finite-attr', `
+    <rect x="NaN" y="40" width="200" height="74" rx="6" class="c-mask"/>
+    <path d="M 20 20 L undefined 20" class="a-default" stroke-width="1.4"/>
+    <text x="140" y="Infinity" class="t-primary" font-size="11">Solver</text>
+    <!-- Legend -->
+    <text x="40" y="140" class="t-primary" font-size="10">Legend</text>
+  `);
+  assert.notEqual(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'rect x="NaN"',
+    'path d="M 20 20 L undefined 20"',
+    'text y="Infinity"',
+  ]);
+});
+
+test('render output check: finite_svg parses quoted angle brackets and HTML attribute quoting', () => {
+  const { code, result } = checkHtml('finite-attr-syntax', `
+    <rect aria-label="greater > lesser" x="NaN" y="40" width="200" height="74"/>
+    <circle cx='Infinity' cy='40' r='6'/>
+    <line x1=undefined y1=10 x2=20 y2=10/>
+  `);
+  assert.notEqual(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'rect x="NaN"',
+    'circle cx="Infinity"',
+    'line x1="undefined"',
+  ]);
+});
+
+test('render output check: finite_svg covers extended SVG numeric attributes', () => {
+  const { code, result } = checkHtml('finite-extended-attrs', `
+    <path d="M 0 0 L 10 0" pathLength="NaN"/>
+    <radialGradient fr="-Infinity"/>
+    <feGaussianBlur stdDeviation="undefined"/>
+  `);
+  assert.notEqual(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'path pathLength="NaN"',
+    'radialGradient fr="-Infinity"',
+    'feGaussianBlur stdDeviation="undefined"',
+  ]);
+});
+
+test('render output check: finite_svg covers element-specific filter numeric attributes', () => {
+  const { code, result } = checkHtml('finite-element-specific-filter-attrs', `
+    <filter id="lighting">
+      <feDiffuseLighting><fePointLight x="10" y="10" z="NaN"/></feDiffuseLighting>
+      <feSpecularLighting><feSpotLight x="10" y="10" z="-Infinity"/></feSpecularLighting>
+      <feColorMatrix type="saturate" values="undefined"/>
+    </filter>
+  `);
+  assert.notEqual(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'fePointLight z="NaN"',
+    'feSpotLight z="-Infinity"',
+    'feColorMatrix values="undefined"',
+  ]);
+});
+
+test('render output check: finite_svg keeps context-sensitive values attributes scoped', () => {
+  const { code, result } = checkHtml('finite-context-sensitive-values', `
+    <animate attributeName="data-node-tag" values="NaN;Infinity" dur="1s"/>
+  `);
+  assert.equal(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, true);
+  assert.deepEqual(check.details, []);
+});
