@@ -249,6 +249,13 @@ function verify(args) {
       reason: 'passed visual review requires a non-empty reviewer identity',
     };
   }
+  if (visualReview.status === 'passed' && !Array.isArray(run.visual_review?.defects)) {
+    visualReview = {
+      ...visualReview,
+      status: 'invalid',
+      reason: 'passed visual review requires an explicit defects array',
+    };
+  }
   const firstPassUsable = run.attempt === 1
     && semantic.ok
     && validation.ok
