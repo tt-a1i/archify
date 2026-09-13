@@ -434,6 +434,52 @@ test('render output check: endpoint stubs from 8px pass while cramped interior t
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
 
+test('render output check: finite_svg ignores comments and CDATA but still checks real elements', () => {
+  const { result } = checkHtml('finite-non-elements', `
+    <!-- <rect x="NaN"/> -->
+    <![CDATA[<path d="Infinity"/>]]>
+    <rect x="12" y="20" width="50" height="40"/>
+    <circle cx="NaN" cy="20" r="5"/>
+  `);
+  const check = result.checks.find(item => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, ['circle cx="NaN"']);
+});
+
+test('render output check: finite_svg decodes numeric references once and reports raw evidence', () => {
+  const { result } = checkHtml('finite-encoded-values', `
+    <rect x="&#78;aN" y="&#x49;&#110;&#102;&#105;&#110;&#105;&#116;&#121;"/>
+    <circle cx="&#x4eaN" cy="&amp;#78;aN" r="10"/>
+    <path d="M 0 0 L &#x4e;aN 12"/>
+    <text x="10" y="10" data-note="&#78;aN">&#78;aN</text>
+  `);
+  const check = result.checks.find(item => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'rect x="&#78;aN"',
+    'rect y="&#x49;&#110;&#102;&#105;&#110;&#105;&#116;&#121;"',
+    'path d="M 0 0 L &#x4e;aN 12"',
+  ]);
+});
+
+test('render output check: finite_svg separates foreignObject HTML from SVG geometry', () => {
+  const { result } = checkHtml('finite-foreign-object', `
+    <foreignObject x="NaN" y="0" width="100" height="100">
+      <div xmlns="http://www.w3.org/1999/xhtml" x="NaN" width="Infinity">
+        <input width="NaN"><br><div y="Infinity">HTML content</div>
+      </div>
+    </foreignObject>
+    <rect x="Infinity"/>
+  `);
+  const check = result.checks.find(item => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, ['foreignObject x="NaN"', 'rect x="Infinity"']);
+  const nested = checkHtml('finite-foreign-nested-svg', `
+    <foreignObject><div x="NaN"><svg><rect x="NaN"/></svg></div></foreignObject>
+  `).result.checks.find(item => item.name === 'finite_svg');
+  assert.deepEqual(nested.details, ['rect x="NaN"']);
+});
+
 test('render output check: finite_svg ignores prose that mentions NaN or Infinity', () => {
   const { result } = checkHtml('finite-prose', `
     <g data-node-id="solver" data-node-tag="returns a NaN leaf" aria-label="Focus Solver">

@@ -60,7 +60,10 @@ let composition = {
 };
 
 const NON_FINITE_TOKEN = /\b(?:NaN|undefined|Infinity)\b/;
-const SVG_START_TAG = /<([A-Za-z][\w:-]*)(?=[\s/>])(?:[^>"']|"[^"]*"|'[^']*')*>/g;
+// Consume comments/CDATA as whole tokens, including any tag-like prose.
+const SVG_TAG_TOKEN = /<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<(\/?)([A-Za-z][\w:-]*)(?=[\s/>])(?:[^>"']|"[^"]*"|'[^']*')*>/g;
+const HTML_VOID_ELEMENTS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+const SVG_HTML_INTEGRATION_POINTS = new Set(['foreignobject', 'desc', 'title']);
 const HTML_ATTRIBUTE = /([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/g;
 const NUMERIC_ATTRS = new Set([
   'x', 'y', 'x1', 'y1', 'x2', 'y2', 'dx', 'dy', 'cx', 'cy', 'r', 'rx', 'ry', 'fx', 'fy',
@@ -842,13 +845,41 @@ function padBox(box, padding) {
 // mention "NaN" or "Infinity" without any coordinate being non-finite.
 function collectNonFiniteAttrs(svg) {
   const details = [];
-  for (const match of svg.matchAll(SVG_START_TAG)) {
-    for (const [name, value] of attrEntries(match[0])) {
-      if (!isNumericAttr(match[1], name) || !NON_FINITE_TOKEN.test(value)) continue;
-      details.push(`${match[1]} ${name}="${value}"`);
+  const stack = [];
+  for (const match of svg.matchAll(SVG_TAG_TOKEN)) {
+    if (!match[2]) continue;
+    const element = match[2].toLowerCase();
+    if (match[1]) {
+      const index = stack.map(entry => entry.element).lastIndexOf(element);
+      if (index >= 0) stack.length = index;
+      continue;
+    }
+    const parent = stack[stack.length - 1];
+    const inSvg = element === 'svg' || !parent
+      || (parent.inSvg && !SVG_HTML_INTEGRATION_POINTS.has(parent.element));
+    if (inSvg) {
+      for (const [name, value] of attrEntries(match[0])) {
+        if (!isNumericAttr(element, name) || !NON_FINITE_TOKEN.test(decodeNumericReferences(value))) continue;
+        details.push(`${match[2]} ${name}="${value}"`);
+      }
+    }
+    // HTML void elements do not open a context; SVG self-closing tags do not
+    // either. A nested <svg> inside foreignObject restores SVG checking.
+    if (!(inSvg ? /\/\s*>$/.test(match[0]) : HTML_VOID_ELEMENTS.has(element))) {
+      stack.push({ element, inSvg });
     }
   }
   return details;
+}
+
+function decodeNumericReferences(value) {
+  // Numeric references can encode every letter of NaN/Infinity/undefined.
+  // Decode once, locally: other checks and diagnostic evidence keep raw values.
+  return value.replace(/&#(?:x([0-9a-f]+)|([0-9]+));?/gi, (_, hex, decimal) => {
+    const point = Number.parseInt(hex || decimal, hex ? 16 : 10);
+    return point > 0 && point <= 0x10ffff && !(point >= 0xd800 && point <= 0xdfff)
+      ? String.fromCodePoint(point) : '\uFFFD';
+  });
 }
 
 function isNumericAttr(elementName, attrName) {
