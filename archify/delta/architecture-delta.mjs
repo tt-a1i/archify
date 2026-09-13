@@ -1,3 +1,5 @@
+import { parseRepositoryRemote } from '../renderers/shared/repository-location.mjs';
+
 const COMPARATOR_VERSION = 1;
 const CANONICAL_VERSION = 1;
 
@@ -33,9 +35,13 @@ function sortedBy(values, keyFor) {
 
 function normalizeRepository(repository) {
   if (!repository) return undefined;
+  const location = parseRepositoryRemote(repository.url, { authored: true });
+  const url = location?.url || String(repository.url || '');
   return {
-    url: String(repository.url || '').trim().replace(/\.git\/?$/i, '').replace(/\/$/, '').toLowerCase(),
+    url: location?.provider === 'github' ? url.toLowerCase() : url,
     revision: String(repository.revision || '').toLowerCase(),
+    ...(repository.provider !== undefined ? { provider: repository.provider } : {}),
+    ...(repository.link_mode !== undefined ? { link_mode: repository.link_mode } : {}),
   };
 }
 
@@ -242,7 +248,8 @@ export function compareArchitecture(base, head, evidence = {}) {
 
   const baseRepository = normalizeRepository(base.meta?.repository);
   const headRepository = normalizeRepository(head.meta?.repository);
-  if (baseRepository && headRepository && baseRepository.url !== headRepository.url) {
+  const identity = (repository) => parseRepositoryRemote(repository.url, { authored: true })?.identity || repository.url;
+  if (baseRepository && headRepository && identity(baseRepository) !== identity(headRepository)) {
     fail('delta/repository-mismatch', 'The snapshots name different repositories.', {
       baseRepository: baseRepository.url,
       headRepository: headRepository.url,

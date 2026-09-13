@@ -5,14 +5,64 @@ import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { constants as zlibConstants, deflateRawSync } from 'node:zlib';
 
-const [rootArg, outputArg] = process.argv.slice(2);
-if (!rootArg || !outputArg) {
-  console.error('Usage: node scripts/write-deterministic-zip.mjs <directory> <output.zip>');
+function usage() {
+  console.error('Usage: node scripts/write-deterministic-zip.mjs <directory> <output.zip> --mode-manifest <modes.json>');
   process.exit(2);
 }
 
+const positionals = [];
+let modeManifestArg = null;
+const argv = process.argv.slice(2);
+for (let index = 0; index < argv.length; index += 1) {
+  if (argv[index] === '--mode-manifest') {
+    modeManifestArg = argv[index + 1] ?? null;
+    index += 1;
+  } else if (argv[index].startsWith('--')) {
+    usage();
+  } else {
+    positionals.push(argv[index]);
+  }
+}
+const [rootArg, outputArg] = positionals;
+if (!rootArg || !outputArg || positionals.length !== 2 || !modeManifestArg) usage();
+
 const root = path.resolve(rootArg);
 const output = path.resolve(outputArg);
+
+// Entry modes come from the Git index, recorded by scripts/stage-clean-skill.mjs.
+// Filesystem permission bits are not portable across platforms (Windows cannot
+// store an executable bit), so deriving them from stat() would change the
+// archive bytes depending on where it was built.
+function loadModeManifest(manifestPath) {
+  let parsed;
+  try {
+    parsed = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  } catch (error) {
+    throw new Error(`unreadable mode manifest ${manifestPath}: ${error.message}`);
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error(`mode manifest must be a JSON object: ${manifestPath}`);
+  }
+  const modes = new Map();
+  for (const [relative, gitMode] of Object.entries(parsed)) {
+    if (gitMode !== '100644' && gitMode !== '100755') {
+      throw new Error(`unsupported Git mode ${JSON.stringify(gitMode)} for ${relative} in mode manifest`);
+    }
+    modes.set(relative, gitMode === '100755' ? 0o755 : 0o644);
+  }
+  return modes;
+}
+
+const recordedModes = loadModeManifest(path.resolve(modeManifestArg));
+const unusedModes = new Set(recordedModes.keys());
+
+function recordedMode(relative) {
+  if (!recordedModes.has(relative)) {
+    throw new Error(`staged file has no recorded Git mode: ${relative}`);
+  }
+  unusedModes.delete(relative);
+  return recordedModes.get(relative);
+}
 const UTF8_FLAG = 0x0800;
 const DEFLATE_METHOD = 8;
 const DOS_TIME = 0;
@@ -108,7 +158,7 @@ for (const file of files) {
   requireZip32(compressed.length < ZIP32_MAX_VALUE, `compressed file reaches the ZIP64 size sentinel: ${file.relative}`);
   requireZip32(offset < ZIP32_MAX_VALUE, `local header offset reaches the ZIP64 sentinel: ${file.relative}`);
   const checksum = crc32(content);
-  const mode = fs.statSync(file.absolute).mode & 0o111 ? 0o755 : 0o644;
+  const mode = recordedMode(file.relative);
   const local = localHeader({
     name,
     crc: checksum,
@@ -128,6 +178,9 @@ for (const file of files) {
     name,
   );
   offset += local.length + name.length + compressed.length;
+}
+if (unusedModes.size > 0) {
+  throw new Error(`mode manifest lists files that were not staged: ${[...unusedModes].sort().join(', ')}`);
 }
 
 const centralOffset = offset;

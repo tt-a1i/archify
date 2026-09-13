@@ -267,6 +267,40 @@ test('repository mismatch fails and verified matching revisions remain evidence-
   assert.equal(receipt.summary.provenanceChanged, true);
 });
 
+test('portable compare retains link settings and uses the same repository identity rules', () => {
+  const base = read(baseFixture);
+  const head = read(headFixture);
+  base.meta.repository = { url: 'https://git.internal/Team/Services/repo.git', revision: 'a'.repeat(40), link_mode: 'local-only' };
+  head.meta.repository = { url: 'https://git.internal:443/Team/Services/repo.git', revision: 'b'.repeat(40), link_mode: 'local-only' };
+  const canonical = JSON.parse(canonicalArchitectureJson(base));
+  assert.equal(canonical.meta.repository.link_mode, 'local-only');
+  assert.equal(canonical.meta.repository.url, 'https://git.internal/Team/Services/repo.git');
+  assert.equal(compareArchitecture(base, head, { baseVerified: true, headVerified: true }).proofLevel, 'revision-pinned');
+  head.meta.repository.url = 'https://git.internal/team/Services/repo.git';
+  assert.throws(() => compareArchitecture(base, head), (error) => error.code === 'delta/repository-mismatch');
+  base.meta.repository = { url: 'https://gitee.com/Team/repo', revision: 'a'.repeat(40), provider: 'gitee' };
+  assert.equal(JSON.parse(canonicalArchitectureJson(base)).meta.repository.provider, 'gitee');
+});
+
+test('portable compare preserves literal SCP paths and rejects different Git locations', () => {
+  const base = read(baseFixture);
+  const head = read(headFixture);
+  for (const [url, other] of [
+    ['git@git.internal:Team/repo', 'ssh://git@git.internal/Team/repo'],
+    ['git@git.internal:Team/repo%41', 'git@git.internal:Team/repoA'],
+    ['git@git.internal:Team/repo.git.git', 'git@git.internal:Team/repo.git'],
+  ]) {
+    base.meta.repository = { url, revision: 'a'.repeat(40), link_mode: 'local-only' };
+    head.meta.repository = { url: other, revision: 'b'.repeat(40), link_mode: 'local-only' };
+    const canonical = canonicalArchitectureJson(base);
+    assert.equal(JSON.parse(canonical).meta.repository.url, url);
+    assert.equal(canonicalArchitectureJson(JSON.parse(canonical)), canonical);
+    assert.throws(() => compareArchitecture(base, head), (error) => error.code === 'delta/repository-mismatch');
+    head.meta.repository.url = url;
+    assert.equal(compareArchitecture(base, head, { baseVerified: true, headVerified: true }).proofLevel, 'revision-pinned');
+  }
+});
+
 test('compare CLI writes a deterministic three-state artifact and complete sidecar receipt', () => {
   const first = path.join(tmp, 'first.html');
   const second = path.join(tmp, 'second.html');

@@ -186,6 +186,58 @@ configuration before authoring. Record only evidence you actually verified.
 dataflow, and lifecycle reject it. Never infer runtime causality from file
 proximity or naming alone.
 
+Declare `meta.repository.url` and one full 40-character `revision`, then attach
+`components[].sources` with repository-relative `path`, optional `line`,
+`end_line`, and `label`. Verification reads blobs at that commit, independently
+of working-tree edits. A matching local origin, available commit, bounded path,
+blob, and valid line range are required in every link mode. Verification is
+local and makes no remote requests; it establishes neither public availability
+nor the current reader's access rights.
+
+`link_mode` defaults to `web`. GitHub and Gitee HTTPS repository URLs generate
+revision-pinned links; their public hosts select the provider automatically.
+Optional `provider: "github"` or `"gitee"` must agree with the host. Existing
+GitHub declarations and default delivery receipt fields remain compatible.
+
+```json
+{
+  "url": "https://gitee.com/team/service",
+  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "provider": "gitee"
+}
+```
+
+For an internal or unsupported forge, select `link_mode: "local-only"`. The
+Viewer retains SRC markers, searchable file paths, line ranges, and revision
+labels without repository or source hyperlinks. The evidence receipt adds
+`linkMode: "local-only"`. `url` remains required as the expected origin identity;
+local-only disables links, not identity verification. A repository without an
+origin is not supported.
+
+```json
+{
+  "url": "http://git.internal:3000/Platform/Services/service",
+  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "link_mode": "local-only"
+}
+```
+
+Local-only accepts HTTP(S), `git@host:path`, and `ssh://git@host[:port]/path`
+addresses, including nested namespaces. Declare a credential-free address;
+HTTP(S) credentials on the checkout's origin are ignored for identity and
+redacted from diagnostics. Hostnames compare case-insensitively; repository
+paths retain case except for the existing GitHub behavior. A trailing slash
+normalizes away. Only GitHub and Gitee normalize a terminal `.git` and match
+standard HTTPS/443 with Git SSH/22. For other hosts, use the actual clone address:
+transport, port, `.git` suffix, and remote-relative versus absolute paths must
+match. For example, `git@host:Team/repo` differs from
+`ssh://git@host/Team/repo`; `git@host:/Team/repo` matches the latter. SCP-style
+paths preserve literal percent escapes, while URI paths decode them. SSH host
+aliases and forge-specific browse/clone prefixes are not guessed.
+GitLab/Gitea/Forgejo/Bitbucket web links are not implemented in this version;
+use local-only until a tested link provider is available. Unknown web providers
+fail with a diagnostic rather than emitting a guessed link.
+
 ## Hand-placed fallback
 
 Use only when no renderer can run. Start from `assets/template.html`, keep semantic CSS classes, preserve the inline SVG/accessibility structure, and run the delivery visual checklist. Never introduce inline literal colors that break dark/light parity.
