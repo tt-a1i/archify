@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
 
 const skillRoot = fileURLToPath(new URL('../', import.meta.url));
 const cli = path.join(skillRoot, 'bin/archify.mjs');
@@ -126,4 +127,59 @@ test('unexpected renderer exceptions keep native debugging information and are n
   const machine = run(['--input-type=module', '-e', script], cwd, true);
   assert.equal(machine.status, 1);
   assert.equal(JSON.parse(machine.stderr).diagnostics[0].code, 'internal/unclassified');
+});
+
+test('a recorded layout diagnostic cannot hide a later unclassified exception', t => {
+  const cwd = workspace(t);
+  const helper = new URL('../renderers/shared/diagnostics.mjs', import.meta.url).href;
+  const setup = `import { installRendererDiagnosticBoundary, recordDiagnostic, throwDiagnosticError } from ${JSON.stringify(helper)};
+    installRendererDiagnosticBoundary();
+    recordDiagnostic({ code: 'layout/constraint', message: 'earlier layout problem' });`;
+  for (const failure of [
+    `throw new TypeError('later implementation defect');`,
+    `throwDiagnosticError('later implementation defect', []);`,
+  ]) {
+    const result = run(['--input-type=module', '-e', setup + failure], cwd, true);
+    assert.equal(result.status, 1);
+    const receipt = JSON.parse(result.stderr);
+    assert.deepEqual(receipt.diagnostics.map(d => d.code), ['internal/unclassified']);
+    assert.equal(receipt.diagnostics[0].message, 'later implementation defect');
+  }
+  const classified = run(['--input-type=module', '-e', setup + `throwDiagnosticError('layout rejected', [{ code: 'layout/constraint', message: 'final layout problem' }]);`], cwd, true);
+  assert.equal(classified.status, 1);
+  assert.deepEqual(JSON.parse(classified.stderr).diagnostics.map(d => d.message), ['earlier layout problem', 'final layout problem']);
+});
+
+test('invalid output arguments keep their implementation error instead of a filesystem repair', t => {
+  const cwd = workspace(t);
+  const helper = new URL('../renderers/shared/cli.mjs', import.meta.url).href;
+  const templatePath = path.join(skillRoot, 'assets/template.html');
+  const script = `import fs from 'node:fs'; import { writeDiagram } from ${JSON.stringify(helper)};
+    writeDiagram({ outPath: undefined, template: fs.readFileSync(${JSON.stringify(templatePath)}, 'utf8'), diagramType: 'architecture', meta: { title: 'Test' }, svg: '', cards: [] });`;
+  const human = run(['--input-type=module', '-e', script], cwd);
+  assert.equal(human.status, 1);
+  assert.match(human.stderr, /TypeError \[ERR_INVALID_ARG_TYPE\]/);
+  assert.match(human.stderr, /\n\s+at\s/);
+  assert.doesNotMatch(human.stderr, /output\/write|choose a writable/);
+  const machine = run(['--input-type=module', '-e', script], cwd, true);
+  assert.equal(machine.status, 1);
+  assert.equal(JSON.parse(machine.stderr).diagnostics[0].code, 'internal/unclassified');
+});
+
+test('renderer and standalone CLI format the same diagnostics consistently', () => {
+  // Evaluate only the pure formatter: importing the CLI would run its command
+  // dispatch, and sharing its renderer import would break incomplete-install doctor.
+  const formatters = [cli, path.join(skillRoot, 'renderers/shared/diagnostics.mjs')].map(file => {
+    const source = fs.readFileSync(file, 'utf8');
+    const start = source.indexOf('function formatDiagnostics(');
+    assert.notEqual(start, -1);
+    const end = source.indexOf('\n}', start) + 2;
+    return vm.runInNewContext(`(${source.slice(start, end)})`);
+  });
+  for (const diagnostics of [[], [
+    { code: 'layout/constraint', message: '标签过宽', supportedFixes: ['widen size', 'shorten label'] },
+    { code: 'internal/unclassified', message: 'No repair available' },
+  ]]) {
+    assert.equal(formatters[0]('Render failed', diagnostics), formatters[1]('Render failed', diagnostics));
+  }
 });

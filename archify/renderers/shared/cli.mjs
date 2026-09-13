@@ -23,7 +23,7 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
   try {
     input = fs.readFileSync(inputPath, 'utf8');
   } catch (error) {
-    if (typeof error?.code !== 'string') throw error;
+    if (!isFilesystemError(error)) throw error;
     const message = `Input could not be read: ${error.message}`;
     throwDiagnosticError(message, [{
       code: 'input/read', message,
@@ -79,8 +79,14 @@ export async function loadDiagramWithBrandMarks(options) {
 
 const START_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
 
+function isFilesystemError(error) {
+  return typeof error?.code === 'string'
+    && typeof error?.syscall === 'string'
+    && typeof error?.errno === 'number';
+}
+
 function throwOutputError(error, output) {
-  if (error?.archifyDiagnostics || typeof error?.code !== 'string') throw error;
+  if (error?.archifyDiagnostics || !isFilesystemError(error)) throw error;
   const message = `Output could not be written: ${error.message}`;
   throwDiagnosticError(message, [{
     code: 'output/write', message,

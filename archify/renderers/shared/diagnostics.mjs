@@ -81,7 +81,10 @@ function rendererFailure(error) {
   const attached = Array.isArray(error?.archifyDiagnostics)
     ? error.archifyDiagnostics.map(normalizedDiagnostic)
     : [];
-  const diagnostics = recorded.length ? recorded : (attached.length ? attached : [fallbackDiagnostic(error)]);
+  // Earlier diagnostics do not classify a later, unrelated implementation error.
+  const diagnostics = attached.length
+    ? (recorded.length ? recorded : attached)
+    : [fallbackDiagnostic(error)];
   return {
     schemaVersion: 1,
     ok: false,
