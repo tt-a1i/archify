@@ -87,17 +87,30 @@ test('clean staging rejects byte-identical but incomplete repository and package
   }
 });
 
-test('clean staging preserves index modes and strips repository-only package metadata', () => {
+test('clean staging preserves index modes and strips repository-only package metadata', (t) => {
   const root = repositoryFixture();
   const destination = path.join(root, 'staged-skill');
   try {
-    write(root, 'archify/bin/executable.mjs', '#!/usr/bin/env node\n', 0o755);
-    write(root, 'archify/runtime/test/required.dat', 'runtime fixture\n');
+    write(root, 'archify/bin/executable.mjs', '#!/usr/bin/env node\n', 0o644);
+    write(root, 'archify/runtime/test/required.dat', 'runtime fixture\n', 0o755);
     git(root, ['add', 'archify']);
+    // Index modes must win over working-tree permissions, including on Windows.
+    git(root, ['update-index', '--chmod=+x', 'archify/bin/executable.mjs']);
+    git(root, ['update-index', '--chmod=-x', 'archify/runtime/test/required.dat']);
+    const chmod = t.mock.method(fs, 'chmodSync');
 
     stageCleanSkill({ repoRoot: root, destination });
 
-    assert.equal(fs.statSync(path.join(destination, 'bin', 'executable.mjs')).mode & 0o777, 0o755);
+    const executable = path.join(destination, 'bin', 'executable.mjs');
+    const runtimeFixture = path.join(destination, 'runtime', 'test', 'required.dat');
+    const appliedModes = new Map(chmod.mock.calls.map(({ arguments: args }) => args));
+    assert.equal(appliedModes.get(executable), 0o755);
+    assert.equal(appliedModes.get(runtimeFixture), 0o644);
+    // Windows chmod cannot expose Unix executable bits through stat.
+    if (process.platform !== 'win32') {
+      assert.equal(fs.statSync(executable).mode & 0o777, 0o755);
+      assert.equal(fs.statSync(runtimeFixture).mode & 0o777, 0o644);
+    }
     assert.equal(fs.existsSync(path.join(destination, 'test')), false);
     assert.equal(
       fs.readFileSync(path.join(destination, 'runtime', 'test', 'required.dat'), 'utf8'),
