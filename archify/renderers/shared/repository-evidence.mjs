@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { throwDiagnosticError } from './diagnostics.mjs';
 import { parseRepositoryRemote, redactRepositoryRemote, repositorySourceHref } from './repository-location.mjs';
+import { pathsAlias } from './output-path.mjs';
 
 const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
 const CONTROL_CHARACTER_RE = /[\u0000-\u001f\u007f]/;
@@ -130,7 +131,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
     });
   }
   const gitRoot = gitValue(realRoot, ['rev-parse', '--show-toplevel'], `Evidence root "${realRoot}" is not a Git repository.`);
-  if (fs.realpathSync(gitRoot) !== realRoot) {
+  if (!pathsAlias(fs.realpathSync(gitRoot), realRoot)) {
     evidenceFailure('repository-evidence/root-not-top-level', `Evidence root must be the Git top-level directory: ${gitRoot}`, {
       subject: { repoRoot: realRoot },
       evidence: { gitTopLevel: gitRoot },

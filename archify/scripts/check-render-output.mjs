@@ -63,6 +63,44 @@ function addCheck(name, ok, details = []) {
   checks.push({ name, ok, details });
 }
 
+// `finite_svg` previously regex-scanned the entire serialized SVG for the
+// substrings `NaN`, `undefined`, `Infinity`, `-Infinity`. That matched
+// ordinary text inside `<text>` bodies — e.g. a component tag containing
+// the prose "returns a NaN leaf" was reported as a non-finite coordinate.
+// The right check is to tokenize the numeric attributes that actually
+// carry coordinates and confirm each one is a finite Number. We
+// additionally populate `details` with the offending attribute so the
+// diagnostic is actionable instead of always empty.
+const NUMERIC_ATTRIBUTES = [
+  'x', 'y', 'x1', 'y1', 'x2', 'y2',
+  'cx', 'cy', 'r', 'rx', 'ry',
+  'width', 'height', 'viewBox', 'points',
+];
+const NON_FINITE_TOKEN = /^(?:NaN|undefined|Infinity|-Infinity)$/i;
+
+function collectNonFiniteAttributes(svg) {
+  const hits = [];
+  const attrRe = new RegExp(`\\b(${NUMERIC_ATTRIBUTES.join('|')})\\s*=\\s*"([^"]*)"`, 'g');
+  let match;
+  while ((match = attrRe.exec(svg))) {
+    const attr = match[1];
+    const value = match[2].trim();
+    if (!value) continue;
+    // Skip CSS color hex tokens that may appear in `points="..."` style
+    // values by requiring the token to parse as a Number or to be one of
+    // the explicit non-finite names. Anything that is neither a number
+    // nor a recognized non-finite literal (e.g. `red`, `rgb(...)`, a hex
+    // code) is ignored so unrelated attribute values don't trip the check.
+    for (const token of value.split(/[\s,]+/).filter(Boolean)) {
+      const parsed = Number.parseFloat(token);
+      if (Number.isFinite(parsed)) continue;
+      if (!NON_FINITE_TOKEN.test(token)) continue;
+      hits.push(`<svg> ${attr}="${value}" token=${token}`);
+    }
+  }
+  return hits;
+}
+
 const svgMatches = [...html.matchAll(/<svg\b[\s\S]*?<\/svg>/gi)];
 addCheck('single_svg', svgMatches.length === 1, [`found ${svgMatches.length} <svg> block(s)`]);
 
@@ -72,7 +110,8 @@ if (svgMatches.length === 1) {
   const svgAttrs = parseAttrs(svgRoot);
   const qualityProfile = svgAttrs['data-quality-profile'] || 'standard';
   const qualityGatesEnforced = svgAttrs['data-quality-gates'] !== 'advisory';
-  addCheck('finite_svg', !/\b(?:NaN|undefined|Infinity|-Infinity)\b/.test(svg));
+  const nonFiniteAttributes = collectNonFiniteAttributes(svg);
+  addCheck('finite_svg', nonFiniteAttributes.length === 0, nonFiniteAttributes);
   const legendStart = svg.indexOf('<!-- Legend -->');
   const beforeLegend = legendStart >= 0 ? svg.slice(0, legendStart) : svg;
   const desktopReadabilityIssue = collectDesktopReadability(svgAttrs, beforeLegend);

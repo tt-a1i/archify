@@ -7,6 +7,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { startPreview } from '../bin/preview.mjs';
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
+import { pathsAlias } from '../renderers/shared/output-path.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, '..');
@@ -601,5 +602,49 @@ test('live preview forwards repo-root and publishes only verified evidence', { t
     assert.equal(evidencePayload(html).repository.revision, data.revision);
   } finally {
     await preview.stop();
+  }
+});
+
+// Regression coverage for issue #274: a lowercase Windows drive letter in
+// --repo-root produced a 'root-not-level' failure because the strict
+// string equality between realRoot and fs.realpathSync(gitRoot) did not
+// normalize case. The fix routes the comparison through pathsAlias, which
+// probes the filesystem's case sensitivity at runtime and lowercases on
+// case-insensitive mounts without branching on platform.
+//
+// The earlier `===` equality would have rejected the lowercased variant
+// on macOS APFS / Windows NTFS, even though they are the same inode.
+// pathsAlias accepts a possibly-different string and runs the same
+// probe + comparison it uses everywhere else. The test below pins the
+// new contract: pathsAlias on the same directory (or two realpathSync
+// results that point at the same inode) must return true; on a
+// case-sensitive FS where the uppercased form is a different
+// non-existent path, it must return false instead of pretending the
+// two paths alias.
+test('pathsAlias distinguishes real aliasing from case-mismatched non-existence (#274)', () => {
+  const real = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-case-'));
+  try {
+    // Two realpathSync results of the same path always alias — that is
+    // the contract the fix relies on at runtime.
+    const realpathOfReal = fs.realpathSync(real);
+    assert.equal(pathsAlias(realpathOfReal, real), true);
+    assert.equal(pathsAlias(real, realpathOfReal), true);
+
+    // The uppercased form may or may not exist depending on the host FS.
+    // On case-insensitive mounts (macOS APFS, NTFS) realpathSync returns
+    // the same inode; on case-sensitive mounts (Linux ext4) it raises and
+    // we never get a string to compare against — both outcomes must be
+    // safe (no false aliasing).
+    const upper = real.toUpperCase();
+    let upperReal;
+    let aliasesUpper = true;
+    try { upperReal = fs.realpathSync(upper); } catch { upperReal = upper; aliasesUpper = false; }
+    if (aliasesUpper) {
+      assert.equal(pathsAlias(upperReal, real), true, `upperReal=${upperReal} real=${real}`);
+    } else {
+      assert.equal(pathsAlias(upperReal, real), false, `upperReal=${upperReal} real=${real}`);
+    }
+  } finally {
+    fs.rmSync(real, { recursive: true, force: true });
   }
 });

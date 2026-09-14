@@ -530,6 +530,38 @@ test('defaultFromSide / defaultToSide are mirror pairs', () => {
   assert.equal(defaultToSide(a, below), 'top');
 });
 
+// Regression coverage for issue #376: a hub-and-spoke arrangement with
+// the hub above an offset spoke (so the spoke is below-left, not directly
+// below) used to pick a horizontal layout because the historical
+// heuristic chose left/right whenever the x-coordinates differed, even
+// when the vertical axis was clearly dominant. The fix weights the
+// axes and prefers the vertical side whenever |dy| > 1.5 * |dx|.
+test('defaultFromSide / defaultToSide prefer the vertical axis when it dominates (#376)', () => {
+  const hub = { cx: 200, cy: 40 }; // top
+  // Spoke directly below: |dx|=0, |dy|=200. Vertical wins.
+  const directlyBelow = { cx: 200, cy: 240 };
+  assert.equal(defaultFromSide(hub, directlyBelow), 'bottom');
+  assert.equal(defaultToSide(hub, directlyBelow), 'top');
+  // Spoke below-left with a clear vertical lead (|dy|=160 vs |dx|=60).
+  const belowLeft = { cx: 140, cy: 200 };
+  assert.equal(defaultFromSide(hub, belowLeft), 'bottom');
+  assert.equal(defaultToSide(hub, belowLeft), 'top');
+  // Spoke above-right with a clear vertical lead.
+  const aboveRight = { cx: 260, cy: -120 };
+  assert.equal(defaultFromSide(hub, aboveRight), 'top');
+  assert.equal(defaultToSide(hub, aboveRight), 'bottom');
+  // Near-horizontal stays horizontal so existing layouts don't shift
+  // when the user merely nudges a component by a few pixels.
+  const nearlySide = { cx: 200, cy: 100 }; // |dx|=0, |dy|=60
+  assert.equal(defaultFromSide(hub, nearlySide), 'bottom');
+  assert.equal(defaultToSide(hub, nearlySide), 'top');
+  // Diagonal with comparable axes keeps the historical behaviour:
+  // horizontal wins, so a future maintainer sees a deliberate choice.
+  const diagonal = { cx: 320, cy: 80 }; // |dx|=120, |dy|=40
+  assert.equal(defaultFromSide(hub, diagonal), 'right');
+  assert.equal(defaultToSide(hub, diagonal), 'left');
+});
+
 test('chosenSide treats explicit "auto" as "use the geometric fallback"', () => {
   assert.equal(chosenSide('left', 'right'), 'left');
   assert.equal(chosenSide('auto', 'right'), 'right');

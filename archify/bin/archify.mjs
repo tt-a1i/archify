@@ -584,8 +584,17 @@ async function commandCompare(args) {
   try {
     let baseResult;
     let headResult;
+    // Snapshot the already-validated buffers to deterministic staging
+    // files before handing them to the renderer subprocess. The compare
+    // command validates once at the top, computes hashes from those
+    // buffers, and then runs the renderer for each side — without this
+    // snapshot the renderer would re-read the user-supplied input path,
+    // and any mutation between validation and render would surface as a
+    // diagnostic that names bytes the receipt hash and delta never saw.
+    fs.writeFileSync(canonicalBaseInput, baseBuffer);
+    fs.writeFileSync(canonicalHeadInput, headBuffer);
     try {
-      renderValidatedArchitecture(basePath, rawBaseCandidate, qualityArgs.quality, repoArgs.repoRoot);
+      renderValidatedArchitecture(canonicalBaseInput, rawBaseCandidate, qualityArgs.quality, repoArgs.repoRoot);
     } catch (error) {
       const diagnosticEntry = error.diagnostics?.[0];
       reportCompareFailure({
@@ -599,7 +608,7 @@ async function commandCompare(args) {
       return;
     }
     try {
-      renderValidatedArchitecture(headPath, rawHeadCandidate, qualityArgs.quality, repoArgs.repoRoot);
+      renderValidatedArchitecture(canonicalHeadInput, rawHeadCandidate, qualityArgs.quality, repoArgs.repoRoot);
     } catch (error) {
       const diagnosticEntry = error.diagnostics?.[0];
       reportCompareFailure({
@@ -613,9 +622,23 @@ async function commandCompare(args) {
       return;
     }
 
-    // Validation must see the exact authored inputs. Only after both sides
-    // pass do we canonicalize their collection order for deterministic SVG
-    // geometry and stable artifact bytes.
+    // Validation has already passed against the on-disk buffer. Only
+    // canonicalize their collection order for deterministic SVG geometry
+    // and stable artifact bytes, then render the canonicalized copies.
+    let base;
+    let head;
+    try {
+      base = JSON.parse(baseBuffer.toString('utf8'));
+    } catch (error) {
+      reportCompareFailure({ json: options.json, stage: 'input', error: `Could not parse base snapshot: ${error.message}`, code: 'delta/base-input', details: { side: 'base', reason: error.message } });
+      return;
+    }
+    try {
+      head = JSON.parse(headBuffer.toString('utf8'));
+    } catch (error) {
+      reportCompareFailure({ json: options.json, stage: 'input', error: `Could not parse head snapshot: ${error.message}`, code: 'delta/head-input', details: { side: 'head', reason: error.message } });
+      return;
+    }
     fs.writeFileSync(canonicalBaseInput, JSON.stringify(canonicalArchitecture(base)));
     fs.writeFileSync(canonicalHeadInput, JSON.stringify(canonicalArchitecture(head)));
     baseResult = renderValidatedArchitecture(canonicalBaseInput, baseCandidate, qualityArgs.quality, repoArgs.repoRoot);

@@ -432,4 +432,45 @@ test('render output check: endpoint stubs from 8px pass while cramped interior t
   assert.match(rhythm.details[0], /\[composition\/short-interior-segment\] showcase relationship id "tight"/);
 });
 
+// Regression coverage for issue #372: `finite_svg` previously regex-scanned
+// the entire serialized SVG for the substrings `NaN`, `undefined`,
+// `Infinity`, `-Infinity`. A component tag whose prose happened to
+// contain those literals — e.g. "returns a NaN leaf" — was reported as a
+// non-finite coordinate. The fix tokenizes the numeric attributes that
+// actually carry coordinates and reports only genuine non-finite
+// values, populating `details` with the offending attribute.
+test('render output check: finite_svg ignores NaN/Infinity substrings in <text> bodies (#372)', () => {
+  const { code, result } = checkHtml('text-with-nan-literal', `
+    <g data-node-id="text-with-nan-literal">
+      <rect x="80" y="60" width="160" height="60" rx="6"/>
+      <text x="160" y="92" class="t-primary">returns a NaN leaf</text>
+    </g>
+    <g data-node-id="text-with-infinity-literal">
+      <rect x="320" y="60" width="160" height="60" rx="6"/>
+      <text x="400" y="92" class="t-primary">Infinity</text>
+    </g>
+  `);
+  assert.equal(code, 0, 'check should pass; details: ' + JSON.stringify(result));
+  const finite = result.checks.find((item) => item.name === 'finite_svg');
+  assert.ok(finite, 'finite_svg check missing');
+  assert.equal(finite.ok, true);
+  assert.deepEqual(finite.details, []);
+});
+
+test('render output check: finite_svg still flags a real non-finite coordinate with detail (#372)', () => {
+  const { code, result } = checkHtml('genuine-nan-coord', `
+    <g data-node-id="genuine-nan-coord">
+      <rect x="NaN" y="60" width="160" height="60" rx="6"/>
+      <text x="160" y="92" class="t-primary">Geniune</text>
+    </g>
+  `);
+  assert.notEqual(code, 0, 'check should fail for genuine non-finite coord');
+  const finite = result.checks.find((item) => item.name === 'finite_svg');
+  assert.ok(finite, 'finite_svg check missing');
+  assert.equal(finite.ok, false);
+  assert.ok(Array.isArray(finite.details) && finite.details.length > 0,
+    `expected non-empty details, got ${JSON.stringify(finite.details)}`);
+  assert.match(finite.details[0], /<svg> x="NaN"/);
+});
+
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

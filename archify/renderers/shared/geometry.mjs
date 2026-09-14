@@ -1272,17 +1272,32 @@ export function automaticPortSpread(relations, boxes, { gutter = 16, maxSpacing 
 }
 
 export function defaultFromSide(from, to) {
-  if (to.cx < from.cx) return 'left';
-  if (to.cx > from.cx) return 'right';
-  if (to.cy > from.cy) return 'bottom';
-  return 'top';
+  // When the two centres share an x-coordinate, prefer the vertical axis
+  // (a stacked layout). Otherwise bias toward whichever axis is dominant
+  // so a hub-and-spoke arrangement with a vertical-leaning offset renders
+  // the connector downward instead of side-on. The 1.5 ratio keeps
+  // near-horizontal layouts honest while letting a clear vertical lead
+  // win.
+  const dx = to.cx - from.cx;
+  const dy = to.cy - from.cy;
+  if (dx === 0) return dy > 0 ? 'bottom' : 'top';
+  if (dy === 0) return dx > 0 ? 'right' : 'left';
+  if (Math.abs(dy) > Math.abs(dx) * 1.5) return dy > 0 ? 'bottom' : 'top';
+  if (Math.abs(dx) > Math.abs(dy) * 1.5) return dx > 0 ? 'right' : 'left';
+  // Truly diagonal: keep the historical behaviour (horizontal wins)
+  // so existing diagrams do not shift when the user merely nudges one
+  // component by a few pixels.
+  return dx > 0 ? 'right' : 'left';
 }
 
 export function defaultToSide(from, to) {
-  if (to.cx < from.cx) return 'right';
-  if (to.cx > from.cx) return 'left';
-  if (to.cy > from.cy) return 'top';
-  return 'bottom';
+  const dx = to.cx - from.cx;
+  const dy = to.cy - from.cy;
+  if (dx === 0) return dy > 0 ? 'top' : 'bottom';
+  if (dy === 0) return dx > 0 ? 'left' : 'right';
+  if (Math.abs(dy) > Math.abs(dx) * 1.5) return dy > 0 ? 'top' : 'bottom';
+  if (Math.abs(dx) > Math.abs(dy) * 1.5) return dx > 0 ? 'left' : 'right';
+  return dx > 0 ? 'left' : 'right';
 }
 
 export function chosenSide(side, fallback) {

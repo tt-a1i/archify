@@ -116,8 +116,29 @@ export function installRendererDiagnosticBoundary() {
   globalThis[boundaryKey] = true;
   process.on('uncaughtException', (error) => {
     const payload = `${JSON.stringify(rendererFailure(error))}\n`;
+    // `fs.writeSync` to a pipe-backed stderr returns the number of bytes
+    // accepted into the pipe buffer, not the number of bytes the caller
+    // asked to write. On macOS and Linux the kernel pipe buffer is exactly
+    // 64 KiB; once the buffer fills, `writeSync` reports a short write and
+    // the rest of the JSON object is silently dropped, leaving the parent
+    // CLI unable to parse the diagnostics — they all get reported as
+    // `internal/unclassified` instead of carrying the real schema rule and
+    // supported fixes the Agent repair loop needs.
+    //
+    // Make a single best-effort write of the full payload (the common case
+    // for diagnostics under the 64 KiB pipe ceiling) and, if that returns
+    // a short count, loop the remaining bytes. Tolerate a broken stderr by
+    // swallowing the write error so the renderer exit status still
+    // reflects the original failure.
+    const stderrFd = process.stderr.fd;
+    const buffer = Buffer.from(payload, 'utf8');
     try {
-      fs.writeSync(process.stderr.fd, payload);
+      let written = fs.writeSync(stderrFd, buffer, 0, buffer.length);
+      while (written < buffer.length) {
+        const chunk = fs.writeSync(stderrFd, buffer, written, buffer.length - written);
+        if (chunk <= 0) break;
+        written += chunk;
+      }
     } catch {
       // The renderer is already failing. Avoid replacing its real error with a
       // secondary stream failure; the parent CLI still has the exit status.
