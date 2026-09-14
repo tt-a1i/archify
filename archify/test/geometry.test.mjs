@@ -637,13 +637,37 @@ test('textUnits measures a variation-selector sequence from the selector', () =>
   // renders as a square and is two units, not one.
   assert.equal(textUnits('✈️'), 2); // airplane
   assert.equal(textUnits('❤️'), 2); // red heart
-  // VS15 asks for text presentation, which renders narrow.
-  assert.equal(textUnits('⭐︎'), 1);
-  assert.equal(textUnits('✈︎'), 1);
+  // VS15 asks for text presentation. That picks the monochrome glyph without
+  // changing the base's East Asian Width, so the sequence is worth its base.
+  assert.equal(textUnits('✈︎'), 1); // airplane: U+2708 is Neutral
+  assert.equal(textUnits('⭐︎'), 2); // star: U+2B50 is Wide
   // The selector never adds width of its own, alone or in a run.
   assert.equal(textUnits('️'), 0);
   assert.equal(textUnits('✅️ Done'), 7);
   assert.equal(textUnits('⭐️⭐️'), 4);
+});
+
+test('textUnits keeps a Wide base wide when VS15 asks for text presentation', () => {
+  // Regression: VS15 was read as "renders narrow" and applied to the sequence
+  // rather than to the base, so every Wide base it followed was measured at
+  // half its advance. A zero-advance selector must never shrink the glyph in
+  // front of it -- that under-measures the label and spills it out of its node
+  // while the layout receipt still reads clean.
+  for (const base of ['⭐', '❗', '⛔', '⚓', '⚡', '✅', '⭕', '㊙', '〽', '中']) {
+    assert.equal(textUnits(base + '︎'), textUnits(base), `VS15 changed the width of ${JSON.stringify(base)}`);
+    assert.equal(textUnits(base + '︎'), 2);
+  }
+  // Neutral bases are unaffected: they were already worth one unit.
+  for (const base of ['✈', '™', '☀', '☎']) {
+    assert.equal(textUnits(base + '︎'), 1);
+  }
+  // VS16 still forces the square emoji advance, whatever the base is worth.
+  assert.equal(textUnits('✈️'), 2);
+  assert.equal(textUnits('⭐️'), 2);
+  // A run of Wide bases carrying VS15 measures the same as the run without it.
+  const run = '⭐❗⛔⚓⚡';
+  assert.equal(textUnits(Array.from(run).map((c) => c + '︎').join('')), textUnits(run));
+  assert.equal(textUnits(run), 10);
 });
 
 test('semantic sigils cover every component and lifecycle kind without literal color', () => {
