@@ -6,6 +6,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
+### Added
+- **Hermes Agent community opt-in.** `integrations/hermes-agent` is a Skill-only directory plugin: it registers the existing Node Archify `SKILL.md` for Hermes. The documented install is `hermes skills install skills-sh/tt-a1i/archify/archify -y` (published GitHub Skill). A checkout symlink remains the local-dev path. Hermes still runs `node bin/archify.mjs`. This is not an official Nous product and is not an agent-switcher target.
+
 ### Fixed
 - **DSH plugin refresh.** Adapter 0.2.0 pins the current Archify development snapshot, includes the newer runtime and CLI fixes, and targets DSH 0.1.2-rc.1. Release metadata replaces the frozen 0.1.0 packaging source; the tarball uses the canonical clean-Skill stager and documents independent plugin upgrades.
 - **Machine-readable CLI argument failures (#330).** `validate --json` and `deliver --json` now keep invalid or missing option values, unknown options and diagram types, unsupported option combinations, and usage errors inside one versioned failure receipt on stdout. These failures use the `arguments` stage, stable diagnostic codes, and exit status 2, while human-mode stderr behavior remains unchanged.

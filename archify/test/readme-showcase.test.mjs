@@ -156,6 +156,27 @@ test('README installation tables contain a complete DeepSeek Harness row', () =>
   }
 });
 
+test('README installation tables include Hermes Agent before DeepSeek Harness', () => {
+  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+    const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
+    const hermes = readme.split('\n').find((line) => line.startsWith('| **Hermes Agent** |'));
+    const dsh = readme.split('\n').find((line) => line.startsWith('| **DeepSeek Harness** |'));
+    assert.ok(hermes, `${filename}: Hermes Agent must be an installation table row`);
+    assert.ok(dsh, `${filename}: DeepSeek Harness must remain an installation table row`);
+    assert.equal(
+      (hermes.match(/(?<!\\)\|/g) || []).length,
+      4,
+      `${filename}: Hermes Agent must have exactly three table cells`,
+    );
+    assert.ok(hermes.includes('Node `>=18`'), `${filename}: Hermes Agent must name Node >=18`);
+    assert.ok(
+      hermes.includes('hermes skills install skills-sh/tt-a1i/archify/archify -y'),
+      `${filename}: Hermes Agent must document the skills.sh install identifier`,
+    );
+    assert.ok(readme.indexOf(hermes) < readme.indexOf(dsh), `${filename}: Hermes Agent must precede DeepSeek Harness`);
+  }
+});
+
 test('README demos use checked-in captures and live deep links below the existing hero', () => {
   const demos = [
     {
@@ -227,7 +248,7 @@ test('README stays scannable without deleting the visual proof set', () => {
   const wordCount = english.trim().split(/\s+/).length;
   const intro = english.slice(0, english.indexOf('![License]'));
   const introBullets = intro.match(/^- \*\*/gm) || [];
-  assert.ok(wordCount <= 2085, `README.md is too verbose again (${wordCount} words)`);
+  assert.ok(wordCount <= 2110, `README.md is too verbose again (${wordCount} words)`);
   assert.ok(introBullets.length <= 8, `README.md has too many top-level capability bullets (${introBullets.length})`);
 
   const chinese = fs.readFileSync(path.join(repoRoot, 'README_ZH.md'), 'utf8');
