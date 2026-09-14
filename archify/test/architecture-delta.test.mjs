@@ -106,6 +106,49 @@ test('canonical architecture ignores formatting, entity order, and set-like orde
   assert.equal(canonicalArchitectureJson(reordered), canonicalArchitectureJson(original));
 });
 
+test('compare reports brand-only changes in the receipt and exact review target', () => {
+  const base = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Cache' },
+    components: [{ id: 'cache', type: 'database', label: 'Cache', pos: [100, 100], size: [160, 80] }],
+  };
+  const basePath = path.join(tmp, 'brand-base.json');
+  const headPath = path.join(tmp, 'brand-head.json');
+  const output = path.join(tmp, 'brand-delta.html');
+  for (const [before, after] of [[undefined, 'redis'], ['redis', 'postgresql'], ['redis', undefined]]) {
+    const head = structuredClone(base);
+    base.components[0].brand = before;
+    head.components[0].brand = after;
+    fs.writeFileSync(basePath, JSON.stringify(base));
+    fs.writeFileSync(headPath, JSON.stringify(head));
+
+    const result = run(['compare', 'architecture', basePath, headPath, output, '--json']);
+    assert.equal(result.status, 0, result.stderr);
+    const receipt = JSON.parse(result.stdout);
+    assert.equal(receipt.summary.components.changed, 1);
+    assert.deepEqual(receipt.changes.components[0].classifications, ['semantic']);
+    assert.deepEqual(receipt.changes.components[0].changedFields, ['/brand']);
+    const html = fs.readFileSync(output, 'utf8');
+    assert.match(html, /data-change-key="component:cache"/);
+    assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
+  }
+});
+
+test('compare reports locale-only changes as presentation changes', () => {
+  const head = read(baseFixture);
+  head.meta.locale = 'zh-CN';
+  const headPath = path.join(tmp, 'locale-head.json');
+  const output = path.join(tmp, 'locale-delta.html');
+  fs.writeFileSync(headPath, JSON.stringify(head));
+
+  const result = run(['compare', 'architecture', baseFixture, headPath, output, '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.summary.presentationChanged, true);
+  assert.deepEqual(receipt.changes, { components: [], connections: [], boundaries: [] });
+});
+
 test('change navigator order is exact-ID based, complete, unique, and stable', () => {
   const receipt = compareArchitecture(read(baseFixture), read(headFixture));
   const rows = architectureDeltaChangeRows(receipt);
