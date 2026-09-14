@@ -21,6 +21,27 @@ function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
 }
 
+// Resolve the directory we will watch to its real on-disk path. On Windows,
+// `path.resolve` keeps 8.3 short names intact, but libuv rejects them with
+// EINVAL when opening the directory handle. `realpathSync.native` follows
+// junctions and expands short names to their NT form, which is what
+// `fs.watch` (backed by `ReadDirectoryChangesW`) requires. The native
+// variant is identical to `realpathSync` on POSIX, so this is safe on every
+// platform the CLI ships to. If the directory is missing or unreadable we
+// fall back to `path.resolve` so the polling timer (set up below) still
+// detects changes — surfacing a thrown error here would prevent the preview
+// from running at all on a read-only checkout.
+export function resolveWatchTarget(targetPath) {
+  try {
+    return fs.realpathSync.native(targetPath);
+  } catch (error) {
+    if (error && (error.code === 'ENOENT' || error.code === 'EACCES' || error.code === 'EPERM')) {
+      return path.resolve(targetPath);
+    }
+    throw error;
+  }
+}
+
 function sourceDigest(inputPath) {
   try {
     const bytes = fs.readFileSync(inputPath);
@@ -587,9 +608,14 @@ export async function startPreview(options) {
   }
 
   if (options.watch !== false) {
+    const watchedDirectory = resolveWatchTarget(path.dirname(inputPath));
+    const inputBasename = path.basename(inputPath);
     try {
-      watcher = fs.watch(path.dirname(inputPath), (event, filename) => {
-        if (!filename || filename.toString() === path.basename(inputPath)) observeSource();
+      watcher = fs.watch(watchedDirectory, (event, filename) => {
+        // On Windows the watcher hands us just the basename; on POSIX it can be
+        // null. Accept either empty signals or a basename match so editors that
+        // swap a file atomically (write to temp + rename) still trigger us.
+        if (!filename || filename.toString() === inputBasename) observeSource();
       });
       watcher.on('error', () => {
         const failedWatcher = watcher;

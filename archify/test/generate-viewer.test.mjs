@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const marker = '/* ARCHIFY:READER_LAYOUT */';
+const tokensMarker = '/* ARCHIFY:TOKENS */';
 const exportMarker = '/* ARCHIFY:EXPORT */';
 const cleanupMarker = '/* ARCHIFY:EXPORT_CLEANUP */';
 const chromeMarker = '/* ARCHIFY:CHROME_LAYOUT */';
@@ -69,7 +70,8 @@ test('the committed Viewer rebuilds deterministically outside the repository wor
 
 test('editing any authoritative source requires explicit regeneration', (t) => {
   const f = fixture(t);
-  for (const input of [f.shell, f.export, f.reader, f.cleanup, f.chrome, f.camera, f.radar, f.motion, f.finder, f.intent, f.lens, f.route, f.guided, f.focus]) {
+  const tokens = path.join(path.dirname(f.shell), 'tokens.css');
+  for (const input of [f.shell, tokens, f.export, f.reader, f.cleanup, f.chrome, f.camera, f.radar, f.motion, f.finder, f.intent, f.lens, f.route, f.guided, f.focus]) {
     const previous = fs.readFileSync(f.output);
     fs.appendFileSync(input, '\n/* source change */\n');
     const stale = f.run('--check');
@@ -118,7 +120,9 @@ for (const [fragment, slot] of Object.entries(fragments)) {
 test('assembly preserves literal replacement tokens, Unicode and source line endings', (t) => {
   const f = fixture(t);
   const reader = '// $& $\' $` $$ 中文 \u{1f5fa}\r\n(function () {})();\r\n';
-  fs.writeFileSync(f.shell, `<script>\r\n${focusMarker}${guidedMarker}${routeMarker}${lensMarker}${intentMarker}${finderMarker}${motionMarker}${radarMarker}${cameraMarker}${chromeMarker}${exportMarker}${marker}</script>\n`);
+  const tokens = '/* === TOKENS === */\r\n:root { --x: 1; }\r\n';
+  fs.writeFileSync(f.shell, `<style>${tokensMarker}</style><script>\r\n${focusMarker}${guidedMarker}${routeMarker}${lensMarker}${intentMarker}${finderMarker}${motionMarker}${radarMarker}${cameraMarker}${chromeMarker}${exportMarker}${marker}</script>\n`);
+  fs.writeFileSync(path.join(path.dirname(f.shell), 'tokens.css'), tokens);
   fs.writeFileSync(f.export, reader + cleanupMarker);
   fs.writeFileSync(f.cleanup, reader);
   fs.writeFileSync(f.chrome, reader);
@@ -133,7 +137,17 @@ test('assembly preserves literal replacement tokens, Unicode and source line end
   fs.writeFileSync(f.focus, reader);
   fs.writeFileSync(f.reader, reader);
   assert.equal(f.run().status, 0);
-  assert.equal(fs.readFileSync(f.output, 'utf8'), `<script>\r\n${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}</script>\n`);
+  // The tokens.css file is inlined inside the <style> block. The marker sits
+  // at column 0 inside the shell so every line of the CSS gets a 4-space
+  // reindent, including the first. The <script> block then contains the JS
+  // fragments unchanged. Both the leading `\n` after the marker and the
+  // marker line itself are stripped from `parts[1]` so the reindented CSS
+  // ends flush with the closing </style> tag.
+  const indentedTokens = tokens.split('\n').map((line) => line.length === 0 ? line : '    ' + line).join('\n');
+  assert.equal(
+    fs.readFileSync(f.output, 'utf8'),
+    `<style>${indentedTokens}</style><script>\r\n${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}</script>\n`,
+  );
   assert.equal(f.run('--check').status, 0);
 });
 
