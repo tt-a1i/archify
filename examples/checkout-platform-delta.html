@@ -10624,6 +10624,190 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return getComputedStyle(document.body).backgroundColor || &#39;#ffffff&#39;;
       }
 
+      function cleanExportClone(clone) {
+        // View transforms and neighborhood focus are HTML exploration state,
+        // never part of a downloaded full-diagram artifact.
+        clone.style.removeProperty(&#39;transform&#39;);
+        clone.style.removeProperty(&#39;clip-path&#39;);
+        clone.removeAttribute(&#39;data-view-scale&#39;);
+        clone.removeAttribute(&#39;data-focus-active&#39;);
+        clone.removeAttribute(&#39;data-reach-active&#39;);
+        clone.removeAttribute(&#39;data-lens-active&#39;);
+        clone.removeAttribute(&#39;data-lens-flow-count&#39;);
+        clone.removeAttribute(&#39;data-lens-flow-density&#39;);
+        clone.removeAttribute(&#39;data-legend-preview-active&#39;);
+        clone.removeAttribute(&#39;data-relationship-preview-active&#39;);
+        clone.removeAttribute(&#39;data-relationship-direct-active&#39;);
+        clone.removeAttribute(&#39;data-relationship-pin-active&#39;);
+        clone.removeAttribute(&#39;data-intent-trace-active&#39;);
+        clone.removeAttribute(&#39;data-route-picking&#39;);
+        clone.removeAttribute(&#39;data-route-active&#39;);
+        clone.removeAttribute(&#39;data-route-journey&#39;);
+        clone.removeAttribute(&#39;data-share-route&#39;);
+        clone.removeAttribute(&#39;data-share-reach&#39;);
+        clone.removeAttribute(&#39;data-story-active&#39;);
+        clone.removeAttribute(&#39;data-story-playing&#39;);
+        clone.removeAttribute(&#39;data-story-beat&#39;);
+        clone.removeAttribute(&#39;data-story-next&#39;);
+        clone.removeAttribute(&#39;data-story-follow&#39;);
+        clone.removeAttribute(&#39;data-chapter-handoff&#39;);
+        clone.removeAttribute(&#39;data-chapter-anchor&#39;);
+        clone.removeAttribute(&#39;data-chapter-preview&#39;);
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-chapter-handoff-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-chapter-role]&#39;), function (el) {
+          el.removeAttribute(&#39;data-chapter-role&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-chapter-preview-role]&#39;), function (el) {
+          el.removeAttribute(&#39;data-chapter-preview-role&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-story-overlay], [data-story-carrier-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-intent-trace-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-route-probe-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-route-journey-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-semantic-lens-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-bridge-runtime]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-kind]&#39;), function (el) {
+          el.removeAttribute(&#39;data-legend-kind&#39;);
+          el.removeAttribute(&#39;data-legend-label&#39;);
+          el.removeAttribute(&#39;data-legend-count&#39;);
+          el.removeAttribute(&#39;data-legend-zero&#39;);
+          el.removeAttribute(&#39;data-legend-selected&#39;);
+          el.removeAttribute(&#39;role&#39;);
+          el.removeAttribute(&#39;tabindex&#39;);
+          el.removeAttribute(&#39;aria-label&#39;);
+          el.removeAttribute(&#39;aria-pressed&#39;);
+          el.removeAttribute(&#39;aria-haspopup&#39;);
+          el.removeAttribute(&#39;aria-controls&#39;);
+          el.removeAttribute(&#39;aria-expanded&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-bridge]&#39;), function (el) {
+          el.removeAttribute(&#39;data-legend-bridge&#39;);
+          el.removeAttribute(&#39;role&#39;);
+          el.removeAttribute(&#39;aria-label&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-relationship-pulse-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-relationship-hit-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-source-evidence-beacon]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-source-evidence-count]&#39;), function (el) {
+          var originalLabel = el.getAttribute(&#39;data-source-evidence-original-label&#39;);
+          if (originalLabel == null || originalLabel === &#39;&#39;) el.removeAttribute(&#39;aria-label&#39;);
+          else el.setAttribute(&#39;aria-label&#39;, originalLabel);
+          el.removeAttribute(&#39;data-source-evidence-count&#39;);
+          el.removeAttribute(&#39;data-source-evidence-original-label&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-story-step], [data-story-beat-state], [data-story-beat-step]&#39;), function (el) {
+          el.removeAttribute(&#39;data-story-step&#39;);
+          el.removeAttribute(&#39;data-story-beat-state&#39;);
+          el.removeAttribute(&#39;data-story-beat-step&#39;);
+          el.style.removeProperty(&#39;--story-step&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-focus-match], [data-focus-selected]&#39;), function (el) {
+          el.removeAttribute(&#39;data-focus-match&#39;);
+          el.removeAttribute(&#39;data-focus-selected&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-reach-match], [data-reach-origin], [data-reach-depth]&#39;), function (el) {
+          el.removeAttribute(&#39;data-reach-match&#39;);
+          el.removeAttribute(&#39;data-reach-origin&#39;);
+          el.removeAttribute(&#39;data-reach-depth&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-lens-match], [data-lens-selected], [data-lens-peer]&#39;), function (el) {
+          el.removeAttribute(&#39;data-lens-match&#39;);
+          el.removeAttribute(&#39;data-lens-selected&#39;);
+          el.removeAttribute(&#39;data-lens-peer&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer]&#39;), function (el) {
+          el.removeAttribute(&#39;data-legend-preview-match&#39;);
+          el.removeAttribute(&#39;data-legend-preview-selected&#39;);
+          el.removeAttribute(&#39;data-legend-preview-peer&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target]&#39;), function (el) {
+          el.removeAttribute(&#39;data-relationship-preview&#39;);
+          el.removeAttribute(&#39;data-relationship-preview-node&#39;);
+          el.removeAttribute(&#39;data-relationship-preview-source&#39;);
+          el.removeAttribute(&#39;data-relationship-preview-target&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-intent-trace-match], [data-intent-trace-selected]&#39;), function (el) {
+          el.removeAttribute(&#39;data-intent-trace-match&#39;);
+          el.removeAttribute(&#39;data-intent-trace-selected&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current]&#39;), function (el) {
+          el.removeAttribute(&#39;data-route-match&#39;);
+          el.removeAttribute(&#39;data-route-start&#39;);
+          el.removeAttribute(&#39;data-route-end&#39;);
+          el.removeAttribute(&#39;data-route-step&#39;);
+          el.removeAttribute(&#39;data-route-candidate&#39;);
+          el.removeAttribute(&#39;data-route-journey-state&#39;);
+          el.removeAttribute(&#39;data-route-journey-current&#39;);
+          el.style.removeProperty(&#39;--route-step&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle]&#39;), function (el) {
+          el.removeAttribute(&#39;data-share-route-match&#39;);
+          el.removeAttribute(&#39;data-share-route-step&#39;);
+          el.removeAttribute(&#39;data-share-route-start&#39;);
+          el.removeAttribute(&#39;data-share-route-end&#39;);
+          el.removeAttribute(&#39;data-share-route-middle&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth]&#39;), function (el) {
+          el.removeAttribute(&#39;data-share-reach-match&#39;);
+          el.removeAttribute(&#39;data-share-reach-origin&#39;);
+          el.removeAttribute(&#39;data-share-reach-depth&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-detail], [data-detail-anchor]&#39;), function (el) {
+          el.removeAttribute(&#39;data-detail&#39;);
+          el.removeAttribute(&#39;data-detail-anchor&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-node-id][aria-pressed]&#39;), function (el) {
+          el.setAttribute(&#39;aria-pressed&#39;, &#39;false&#39;);
+        });
+        return !clone.hasAttribute(&#39;data-view-scale&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-focus-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-reach-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-lens-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-lens-flow-count&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-lens-flow-density&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-legend-preview-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-relationship-preview-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-relationship-direct-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-intent-trace-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-route-picking&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-route-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-route-journey&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-share-route&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-share-reach&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-story-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-story-playing&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-story-beat&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-story-next&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-story-follow&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-chapter-handoff&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-chapter-anchor&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-chapter-preview&#39;) &amp;&amp;
+          !clone.style.getPropertyValue(&#39;transform&#39;) &amp;&amp;
+          !clone.style.getPropertyValue(&#39;clip-path&#39;) &amp;&amp;
+          clone.querySelectorAll(&#39;[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]&#39;).length === 0;
+      }
+
+
       /**
        * Serialize the main SVG into a standalone document.
        *
@@ -10809,186 +10993,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var svg = document.querySelector(&#39;.diagram-container svg&#39;);
         var clone = svg.cloneNode(true);
 
-        // View transforms and neighborhood focus are HTML exploration state,
-        // never part of a downloaded full-diagram artifact.
-        clone.style.removeProperty(&#39;transform&#39;);
-        clone.style.removeProperty(&#39;clip-path&#39;);
-        clone.removeAttribute(&#39;data-view-scale&#39;);
-        clone.removeAttribute(&#39;data-focus-active&#39;);
-        clone.removeAttribute(&#39;data-reach-active&#39;);
-        clone.removeAttribute(&#39;data-lens-active&#39;);
-        clone.removeAttribute(&#39;data-lens-flow-count&#39;);
-        clone.removeAttribute(&#39;data-lens-flow-density&#39;);
-        clone.removeAttribute(&#39;data-legend-preview-active&#39;);
-        clone.removeAttribute(&#39;data-relationship-preview-active&#39;);
-        clone.removeAttribute(&#39;data-relationship-direct-active&#39;);
-        clone.removeAttribute(&#39;data-relationship-pin-active&#39;);
-        clone.removeAttribute(&#39;data-intent-trace-active&#39;);
-        clone.removeAttribute(&#39;data-route-picking&#39;);
-        clone.removeAttribute(&#39;data-route-active&#39;);
-        clone.removeAttribute(&#39;data-route-journey&#39;);
-        clone.removeAttribute(&#39;data-share-route&#39;);
-        clone.removeAttribute(&#39;data-share-reach&#39;);
-        clone.removeAttribute(&#39;data-story-active&#39;);
-        clone.removeAttribute(&#39;data-story-playing&#39;);
-        clone.removeAttribute(&#39;data-story-beat&#39;);
-        clone.removeAttribute(&#39;data-story-next&#39;);
-        clone.removeAttribute(&#39;data-story-follow&#39;);
-        clone.removeAttribute(&#39;data-chapter-handoff&#39;);
-        clone.removeAttribute(&#39;data-chapter-anchor&#39;);
-        clone.removeAttribute(&#39;data-chapter-preview&#39;);
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-chapter-handoff-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-chapter-role]&#39;), function (el) {
-          el.removeAttribute(&#39;data-chapter-role&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-chapter-preview-role]&#39;), function (el) {
-          el.removeAttribute(&#39;data-chapter-preview-role&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-story-overlay], [data-story-carrier-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-intent-trace-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-route-probe-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-route-journey-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-semantic-lens-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-bridge-runtime]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-kind]&#39;), function (el) {
-          el.removeAttribute(&#39;data-legend-kind&#39;);
-          el.removeAttribute(&#39;data-legend-label&#39;);
-          el.removeAttribute(&#39;data-legend-count&#39;);
-          el.removeAttribute(&#39;data-legend-zero&#39;);
-          el.removeAttribute(&#39;data-legend-selected&#39;);
-          el.removeAttribute(&#39;role&#39;);
-          el.removeAttribute(&#39;tabindex&#39;);
-          el.removeAttribute(&#39;aria-label&#39;);
-          el.removeAttribute(&#39;aria-pressed&#39;);
-          el.removeAttribute(&#39;aria-haspopup&#39;);
-          el.removeAttribute(&#39;aria-controls&#39;);
-          el.removeAttribute(&#39;aria-expanded&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-bridge]&#39;), function (el) {
-          el.removeAttribute(&#39;data-legend-bridge&#39;);
-          el.removeAttribute(&#39;role&#39;);
-          el.removeAttribute(&#39;aria-label&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-relationship-pulse-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-relationship-hit-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-source-evidence-beacon]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-source-evidence-count]&#39;), function (el) {
-          var originalLabel = el.getAttribute(&#39;data-source-evidence-original-label&#39;);
-          if (originalLabel == null || originalLabel === &#39;&#39;) el.removeAttribute(&#39;aria-label&#39;);
-          else el.setAttribute(&#39;aria-label&#39;, originalLabel);
-          el.removeAttribute(&#39;data-source-evidence-count&#39;);
-          el.removeAttribute(&#39;data-source-evidence-original-label&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-story-step], [data-story-beat-state], [data-story-beat-step]&#39;), function (el) {
-          el.removeAttribute(&#39;data-story-step&#39;);
-          el.removeAttribute(&#39;data-story-beat-state&#39;);
-          el.removeAttribute(&#39;data-story-beat-step&#39;);
-          el.style.removeProperty(&#39;--story-step&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-focus-match], [data-focus-selected]&#39;), function (el) {
-          el.removeAttribute(&#39;data-focus-match&#39;);
-          el.removeAttribute(&#39;data-focus-selected&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-reach-match], [data-reach-origin], [data-reach-depth]&#39;), function (el) {
-          el.removeAttribute(&#39;data-reach-match&#39;);
-          el.removeAttribute(&#39;data-reach-origin&#39;);
-          el.removeAttribute(&#39;data-reach-depth&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-lens-match], [data-lens-selected], [data-lens-peer]&#39;), function (el) {
-          el.removeAttribute(&#39;data-lens-match&#39;);
-          el.removeAttribute(&#39;data-lens-selected&#39;);
-          el.removeAttribute(&#39;data-lens-peer&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer]&#39;), function (el) {
-          el.removeAttribute(&#39;data-legend-preview-match&#39;);
-          el.removeAttribute(&#39;data-legend-preview-selected&#39;);
-          el.removeAttribute(&#39;data-legend-preview-peer&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target]&#39;), function (el) {
-          el.removeAttribute(&#39;data-relationship-preview&#39;);
-          el.removeAttribute(&#39;data-relationship-preview-node&#39;);
-          el.removeAttribute(&#39;data-relationship-preview-source&#39;);
-          el.removeAttribute(&#39;data-relationship-preview-target&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-intent-trace-match], [data-intent-trace-selected]&#39;), function (el) {
-          el.removeAttribute(&#39;data-intent-trace-match&#39;);
-          el.removeAttribute(&#39;data-intent-trace-selected&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current]&#39;), function (el) {
-          el.removeAttribute(&#39;data-route-match&#39;);
-          el.removeAttribute(&#39;data-route-start&#39;);
-          el.removeAttribute(&#39;data-route-end&#39;);
-          el.removeAttribute(&#39;data-route-step&#39;);
-          el.removeAttribute(&#39;data-route-candidate&#39;);
-          el.removeAttribute(&#39;data-route-journey-state&#39;);
-          el.removeAttribute(&#39;data-route-journey-current&#39;);
-          el.style.removeProperty(&#39;--route-step&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle]&#39;), function (el) {
-          el.removeAttribute(&#39;data-share-route-match&#39;);
-          el.removeAttribute(&#39;data-share-route-step&#39;);
-          el.removeAttribute(&#39;data-share-route-start&#39;);
-          el.removeAttribute(&#39;data-share-route-end&#39;);
-          el.removeAttribute(&#39;data-share-route-middle&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth]&#39;), function (el) {
-          el.removeAttribute(&#39;data-share-reach-match&#39;);
-          el.removeAttribute(&#39;data-share-reach-origin&#39;);
-          el.removeAttribute(&#39;data-share-reach-depth&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-detail], [data-detail-anchor]&#39;), function (el) {
-          el.removeAttribute(&#39;data-detail&#39;);
-          el.removeAttribute(&#39;data-detail-anchor&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-node-id][aria-pressed]&#39;), function (el) {
-          el.setAttribute(&#39;aria-pressed&#39;, &#39;false&#39;);
-        });
-        var canonicalStateClean = !clone.hasAttribute(&#39;data-view-scale&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-focus-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-reach-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-lens-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-lens-flow-count&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-lens-flow-density&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-legend-preview-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-relationship-preview-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-relationship-direct-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-intent-trace-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-route-picking&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-route-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-route-journey&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-share-route&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-share-reach&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-story-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-story-playing&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-story-beat&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-story-next&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-story-follow&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-chapter-handoff&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-chapter-anchor&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-chapter-preview&#39;) &amp;&amp;
-          !clone.style.getPropertyValue(&#39;transform&#39;) &amp;&amp;
-          !clone.style.getPropertyValue(&#39;clip-path&#39;) &amp;&amp;
-          clone.querySelectorAll(&#39;[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]&#39;).length === 0;
+        var canonicalStateClean = cleanExportClone(clone);
 
         var vb = svg.viewBox.baseVal;
         var finiteSvgDimensions = Number.isFinite(vb.x) &amp;&amp; Number.isFinite(vb.y) &amp;&amp;
@@ -14928,7 +14933,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       function centerStoryStop(stop) {
         if (!stop || !trail) return false;
-        var target = Math.max(0, stop.offsetLeft - (trail.clientWidth - stop.offsetWidth) / 2);
+        var bounds = stop.getBoundingClientRect();
+        var viewportLeft = trail.getBoundingClientRect().left + trail.clientLeft;
+        var target = Math.max(0, trail.scrollLeft + bounds.left - viewportLeft - (trail.clientWidth - bounds.width) / 2);
         trail.scrollLeft = target;
         return true;
       }
@@ -15677,6 +15684,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           renderPlayback();
         });
         storyMotionObserver.observe(document.documentElement, { attributes: true, attributeFilter: [&#39;data-motion&#39;] });
+      }
+      if (typeof ResizeObserver === &#39;function&#39;) {
+        var chapterViewportWidth = chapterList.clientWidth;
+        var trailViewportWidth = trail.clientWidth;
+        var storyScrollObserver = new ResizeObserver(function () {
+          var chapterWidth = chapterList.clientWidth;
+          var trailWidth = trail.clientWidth;
+          if (chapterWidth !== chapterViewportWidth &amp;&amp; activeIndex &gt;= 0) centerChapterButton(chapterButtons[activeIndex]);
+          if (trailWidth !== trailViewportWidth &amp;&amp; storyBeatIndex &gt;= 0) {
+            centerStoryStop(trail.querySelectorAll(&#39;[data-story-node]&#39;)[storyBeatIndex]);
+          }
+          chapterViewportWidth = chapterWidth;
+          trailViewportWidth = trailWidth;
+        });
+        storyScrollObserver.observe(chapterList);
+        storyScrollObserver.observe(trail);
       }
       window.addEventListener(&#39;beforeprint&#39;, function () {
         clearChapterPreview({ clearIntents: true });
@@ -25828,6 +25851,190 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return getComputedStyle(document.body).backgroundColor || &#39;#ffffff&#39;;
       }
 
+      function cleanExportClone(clone) {
+        // View transforms and neighborhood focus are HTML exploration state,
+        // never part of a downloaded full-diagram artifact.
+        clone.style.removeProperty(&#39;transform&#39;);
+        clone.style.removeProperty(&#39;clip-path&#39;);
+        clone.removeAttribute(&#39;data-view-scale&#39;);
+        clone.removeAttribute(&#39;data-focus-active&#39;);
+        clone.removeAttribute(&#39;data-reach-active&#39;);
+        clone.removeAttribute(&#39;data-lens-active&#39;);
+        clone.removeAttribute(&#39;data-lens-flow-count&#39;);
+        clone.removeAttribute(&#39;data-lens-flow-density&#39;);
+        clone.removeAttribute(&#39;data-legend-preview-active&#39;);
+        clone.removeAttribute(&#39;data-relationship-preview-active&#39;);
+        clone.removeAttribute(&#39;data-relationship-direct-active&#39;);
+        clone.removeAttribute(&#39;data-relationship-pin-active&#39;);
+        clone.removeAttribute(&#39;data-intent-trace-active&#39;);
+        clone.removeAttribute(&#39;data-route-picking&#39;);
+        clone.removeAttribute(&#39;data-route-active&#39;);
+        clone.removeAttribute(&#39;data-route-journey&#39;);
+        clone.removeAttribute(&#39;data-share-route&#39;);
+        clone.removeAttribute(&#39;data-share-reach&#39;);
+        clone.removeAttribute(&#39;data-story-active&#39;);
+        clone.removeAttribute(&#39;data-story-playing&#39;);
+        clone.removeAttribute(&#39;data-story-beat&#39;);
+        clone.removeAttribute(&#39;data-story-next&#39;);
+        clone.removeAttribute(&#39;data-story-follow&#39;);
+        clone.removeAttribute(&#39;data-chapter-handoff&#39;);
+        clone.removeAttribute(&#39;data-chapter-anchor&#39;);
+        clone.removeAttribute(&#39;data-chapter-preview&#39;);
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-chapter-handoff-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-chapter-role]&#39;), function (el) {
+          el.removeAttribute(&#39;data-chapter-role&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-chapter-preview-role]&#39;), function (el) {
+          el.removeAttribute(&#39;data-chapter-preview-role&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-story-overlay], [data-story-carrier-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-intent-trace-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-route-probe-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-route-journey-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-semantic-lens-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-bridge-runtime]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-kind]&#39;), function (el) {
+          el.removeAttribute(&#39;data-legend-kind&#39;);
+          el.removeAttribute(&#39;data-legend-label&#39;);
+          el.removeAttribute(&#39;data-legend-count&#39;);
+          el.removeAttribute(&#39;data-legend-zero&#39;);
+          el.removeAttribute(&#39;data-legend-selected&#39;);
+          el.removeAttribute(&#39;role&#39;);
+          el.removeAttribute(&#39;tabindex&#39;);
+          el.removeAttribute(&#39;aria-label&#39;);
+          el.removeAttribute(&#39;aria-pressed&#39;);
+          el.removeAttribute(&#39;aria-haspopup&#39;);
+          el.removeAttribute(&#39;aria-controls&#39;);
+          el.removeAttribute(&#39;aria-expanded&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-bridge]&#39;), function (el) {
+          el.removeAttribute(&#39;data-legend-bridge&#39;);
+          el.removeAttribute(&#39;role&#39;);
+          el.removeAttribute(&#39;aria-label&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-relationship-pulse-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-relationship-hit-overlay]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-source-evidence-beacon]&#39;), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-source-evidence-count]&#39;), function (el) {
+          var originalLabel = el.getAttribute(&#39;data-source-evidence-original-label&#39;);
+          if (originalLabel == null || originalLabel === &#39;&#39;) el.removeAttribute(&#39;aria-label&#39;);
+          else el.setAttribute(&#39;aria-label&#39;, originalLabel);
+          el.removeAttribute(&#39;data-source-evidence-count&#39;);
+          el.removeAttribute(&#39;data-source-evidence-original-label&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-story-step], [data-story-beat-state], [data-story-beat-step]&#39;), function (el) {
+          el.removeAttribute(&#39;data-story-step&#39;);
+          el.removeAttribute(&#39;data-story-beat-state&#39;);
+          el.removeAttribute(&#39;data-story-beat-step&#39;);
+          el.style.removeProperty(&#39;--story-step&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-focus-match], [data-focus-selected]&#39;), function (el) {
+          el.removeAttribute(&#39;data-focus-match&#39;);
+          el.removeAttribute(&#39;data-focus-selected&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-reach-match], [data-reach-origin], [data-reach-depth]&#39;), function (el) {
+          el.removeAttribute(&#39;data-reach-match&#39;);
+          el.removeAttribute(&#39;data-reach-origin&#39;);
+          el.removeAttribute(&#39;data-reach-depth&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-lens-match], [data-lens-selected], [data-lens-peer]&#39;), function (el) {
+          el.removeAttribute(&#39;data-lens-match&#39;);
+          el.removeAttribute(&#39;data-lens-selected&#39;);
+          el.removeAttribute(&#39;data-lens-peer&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer]&#39;), function (el) {
+          el.removeAttribute(&#39;data-legend-preview-match&#39;);
+          el.removeAttribute(&#39;data-legend-preview-selected&#39;);
+          el.removeAttribute(&#39;data-legend-preview-peer&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target]&#39;), function (el) {
+          el.removeAttribute(&#39;data-relationship-preview&#39;);
+          el.removeAttribute(&#39;data-relationship-preview-node&#39;);
+          el.removeAttribute(&#39;data-relationship-preview-source&#39;);
+          el.removeAttribute(&#39;data-relationship-preview-target&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-intent-trace-match], [data-intent-trace-selected]&#39;), function (el) {
+          el.removeAttribute(&#39;data-intent-trace-match&#39;);
+          el.removeAttribute(&#39;data-intent-trace-selected&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current]&#39;), function (el) {
+          el.removeAttribute(&#39;data-route-match&#39;);
+          el.removeAttribute(&#39;data-route-start&#39;);
+          el.removeAttribute(&#39;data-route-end&#39;);
+          el.removeAttribute(&#39;data-route-step&#39;);
+          el.removeAttribute(&#39;data-route-candidate&#39;);
+          el.removeAttribute(&#39;data-route-journey-state&#39;);
+          el.removeAttribute(&#39;data-route-journey-current&#39;);
+          el.style.removeProperty(&#39;--route-step&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle]&#39;), function (el) {
+          el.removeAttribute(&#39;data-share-route-match&#39;);
+          el.removeAttribute(&#39;data-share-route-step&#39;);
+          el.removeAttribute(&#39;data-share-route-start&#39;);
+          el.removeAttribute(&#39;data-share-route-end&#39;);
+          el.removeAttribute(&#39;data-share-route-middle&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth]&#39;), function (el) {
+          el.removeAttribute(&#39;data-share-reach-match&#39;);
+          el.removeAttribute(&#39;data-share-reach-origin&#39;);
+          el.removeAttribute(&#39;data-share-reach-depth&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-detail], [data-detail-anchor]&#39;), function (el) {
+          el.removeAttribute(&#39;data-detail&#39;);
+          el.removeAttribute(&#39;data-detail-anchor&#39;);
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-node-id][aria-pressed]&#39;), function (el) {
+          el.setAttribute(&#39;aria-pressed&#39;, &#39;false&#39;);
+        });
+        return !clone.hasAttribute(&#39;data-view-scale&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-focus-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-reach-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-lens-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-lens-flow-count&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-lens-flow-density&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-legend-preview-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-relationship-preview-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-relationship-direct-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-intent-trace-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-route-picking&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-route-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-route-journey&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-share-route&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-share-reach&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-story-active&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-story-playing&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-story-beat&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-story-next&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-story-follow&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-chapter-handoff&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-chapter-anchor&#39;) &amp;&amp;
+          !clone.hasAttribute(&#39;data-chapter-preview&#39;) &amp;&amp;
+          !clone.style.getPropertyValue(&#39;transform&#39;) &amp;&amp;
+          !clone.style.getPropertyValue(&#39;clip-path&#39;) &amp;&amp;
+          clone.querySelectorAll(&#39;[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]&#39;).length === 0;
+      }
+
+
       /**
        * Serialize the main SVG into a standalone document.
        *
@@ -26013,186 +26220,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var svg = document.querySelector(&#39;.diagram-container svg&#39;);
         var clone = svg.cloneNode(true);
 
-        // View transforms and neighborhood focus are HTML exploration state,
-        // never part of a downloaded full-diagram artifact.
-        clone.style.removeProperty(&#39;transform&#39;);
-        clone.style.removeProperty(&#39;clip-path&#39;);
-        clone.removeAttribute(&#39;data-view-scale&#39;);
-        clone.removeAttribute(&#39;data-focus-active&#39;);
-        clone.removeAttribute(&#39;data-reach-active&#39;);
-        clone.removeAttribute(&#39;data-lens-active&#39;);
-        clone.removeAttribute(&#39;data-lens-flow-count&#39;);
-        clone.removeAttribute(&#39;data-lens-flow-density&#39;);
-        clone.removeAttribute(&#39;data-legend-preview-active&#39;);
-        clone.removeAttribute(&#39;data-relationship-preview-active&#39;);
-        clone.removeAttribute(&#39;data-relationship-direct-active&#39;);
-        clone.removeAttribute(&#39;data-relationship-pin-active&#39;);
-        clone.removeAttribute(&#39;data-intent-trace-active&#39;);
-        clone.removeAttribute(&#39;data-route-picking&#39;);
-        clone.removeAttribute(&#39;data-route-active&#39;);
-        clone.removeAttribute(&#39;data-route-journey&#39;);
-        clone.removeAttribute(&#39;data-share-route&#39;);
-        clone.removeAttribute(&#39;data-share-reach&#39;);
-        clone.removeAttribute(&#39;data-story-active&#39;);
-        clone.removeAttribute(&#39;data-story-playing&#39;);
-        clone.removeAttribute(&#39;data-story-beat&#39;);
-        clone.removeAttribute(&#39;data-story-next&#39;);
-        clone.removeAttribute(&#39;data-story-follow&#39;);
-        clone.removeAttribute(&#39;data-chapter-handoff&#39;);
-        clone.removeAttribute(&#39;data-chapter-anchor&#39;);
-        clone.removeAttribute(&#39;data-chapter-preview&#39;);
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-chapter-handoff-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-chapter-role]&#39;), function (el) {
-          el.removeAttribute(&#39;data-chapter-role&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-chapter-preview-role]&#39;), function (el) {
-          el.removeAttribute(&#39;data-chapter-preview-role&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-story-overlay], [data-story-carrier-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-intent-trace-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-route-probe-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-route-journey-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-semantic-lens-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-bridge-runtime]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-kind]&#39;), function (el) {
-          el.removeAttribute(&#39;data-legend-kind&#39;);
-          el.removeAttribute(&#39;data-legend-label&#39;);
-          el.removeAttribute(&#39;data-legend-count&#39;);
-          el.removeAttribute(&#39;data-legend-zero&#39;);
-          el.removeAttribute(&#39;data-legend-selected&#39;);
-          el.removeAttribute(&#39;role&#39;);
-          el.removeAttribute(&#39;tabindex&#39;);
-          el.removeAttribute(&#39;aria-label&#39;);
-          el.removeAttribute(&#39;aria-pressed&#39;);
-          el.removeAttribute(&#39;aria-haspopup&#39;);
-          el.removeAttribute(&#39;aria-controls&#39;);
-          el.removeAttribute(&#39;aria-expanded&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-bridge]&#39;), function (el) {
-          el.removeAttribute(&#39;data-legend-bridge&#39;);
-          el.removeAttribute(&#39;role&#39;);
-          el.removeAttribute(&#39;aria-label&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-relationship-pulse-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-relationship-hit-overlay]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-source-evidence-beacon]&#39;), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-source-evidence-count]&#39;), function (el) {
-          var originalLabel = el.getAttribute(&#39;data-source-evidence-original-label&#39;);
-          if (originalLabel == null || originalLabel === &#39;&#39;) el.removeAttribute(&#39;aria-label&#39;);
-          else el.setAttribute(&#39;aria-label&#39;, originalLabel);
-          el.removeAttribute(&#39;data-source-evidence-count&#39;);
-          el.removeAttribute(&#39;data-source-evidence-original-label&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-story-step], [data-story-beat-state], [data-story-beat-step]&#39;), function (el) {
-          el.removeAttribute(&#39;data-story-step&#39;);
-          el.removeAttribute(&#39;data-story-beat-state&#39;);
-          el.removeAttribute(&#39;data-story-beat-step&#39;);
-          el.style.removeProperty(&#39;--story-step&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-focus-match], [data-focus-selected]&#39;), function (el) {
-          el.removeAttribute(&#39;data-focus-match&#39;);
-          el.removeAttribute(&#39;data-focus-selected&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-reach-match], [data-reach-origin], [data-reach-depth]&#39;), function (el) {
-          el.removeAttribute(&#39;data-reach-match&#39;);
-          el.removeAttribute(&#39;data-reach-origin&#39;);
-          el.removeAttribute(&#39;data-reach-depth&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-lens-match], [data-lens-selected], [data-lens-peer]&#39;), function (el) {
-          el.removeAttribute(&#39;data-lens-match&#39;);
-          el.removeAttribute(&#39;data-lens-selected&#39;);
-          el.removeAttribute(&#39;data-lens-peer&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer]&#39;), function (el) {
-          el.removeAttribute(&#39;data-legend-preview-match&#39;);
-          el.removeAttribute(&#39;data-legend-preview-selected&#39;);
-          el.removeAttribute(&#39;data-legend-preview-peer&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target]&#39;), function (el) {
-          el.removeAttribute(&#39;data-relationship-preview&#39;);
-          el.removeAttribute(&#39;data-relationship-preview-node&#39;);
-          el.removeAttribute(&#39;data-relationship-preview-source&#39;);
-          el.removeAttribute(&#39;data-relationship-preview-target&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-intent-trace-match], [data-intent-trace-selected]&#39;), function (el) {
-          el.removeAttribute(&#39;data-intent-trace-match&#39;);
-          el.removeAttribute(&#39;data-intent-trace-selected&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current]&#39;), function (el) {
-          el.removeAttribute(&#39;data-route-match&#39;);
-          el.removeAttribute(&#39;data-route-start&#39;);
-          el.removeAttribute(&#39;data-route-end&#39;);
-          el.removeAttribute(&#39;data-route-step&#39;);
-          el.removeAttribute(&#39;data-route-candidate&#39;);
-          el.removeAttribute(&#39;data-route-journey-state&#39;);
-          el.removeAttribute(&#39;data-route-journey-current&#39;);
-          el.style.removeProperty(&#39;--route-step&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle]&#39;), function (el) {
-          el.removeAttribute(&#39;data-share-route-match&#39;);
-          el.removeAttribute(&#39;data-share-route-step&#39;);
-          el.removeAttribute(&#39;data-share-route-start&#39;);
-          el.removeAttribute(&#39;data-share-route-end&#39;);
-          el.removeAttribute(&#39;data-share-route-middle&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth]&#39;), function (el) {
-          el.removeAttribute(&#39;data-share-reach-match&#39;);
-          el.removeAttribute(&#39;data-share-reach-origin&#39;);
-          el.removeAttribute(&#39;data-share-reach-depth&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-detail], [data-detail-anchor]&#39;), function (el) {
-          el.removeAttribute(&#39;data-detail&#39;);
-          el.removeAttribute(&#39;data-detail-anchor&#39;);
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-node-id][aria-pressed]&#39;), function (el) {
-          el.setAttribute(&#39;aria-pressed&#39;, &#39;false&#39;);
-        });
-        var canonicalStateClean = !clone.hasAttribute(&#39;data-view-scale&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-focus-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-reach-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-lens-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-lens-flow-count&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-lens-flow-density&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-legend-preview-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-relationship-preview-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-relationship-direct-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-intent-trace-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-route-picking&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-route-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-route-journey&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-share-route&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-share-reach&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-story-active&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-story-playing&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-story-beat&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-story-next&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-story-follow&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-chapter-handoff&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-chapter-anchor&#39;) &amp;&amp;
-          !clone.hasAttribute(&#39;data-chapter-preview&#39;) &amp;&amp;
-          !clone.style.getPropertyValue(&#39;transform&#39;) &amp;&amp;
-          !clone.style.getPropertyValue(&#39;clip-path&#39;) &amp;&amp;
-          clone.querySelectorAll(&#39;[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]&#39;).length === 0;
+        var canonicalStateClean = cleanExportClone(clone);
 
         var vb = svg.viewBox.baseVal;
         var finiteSvgDimensions = Number.isFinite(vb.x) &amp;&amp; Number.isFinite(vb.y) &amp;&amp;
@@ -30132,7 +30160,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       function centerStoryStop(stop) {
         if (!stop || !trail) return false;
-        var target = Math.max(0, stop.offsetLeft - (trail.clientWidth - stop.offsetWidth) / 2);
+        var bounds = stop.getBoundingClientRect();
+        var viewportLeft = trail.getBoundingClientRect().left + trail.clientLeft;
+        var target = Math.max(0, trail.scrollLeft + bounds.left - viewportLeft - (trail.clientWidth - bounds.width) / 2);
         trail.scrollLeft = target;
         return true;
       }
@@ -30881,6 +30911,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           renderPlayback();
         });
         storyMotionObserver.observe(document.documentElement, { attributes: true, attributeFilter: [&#39;data-motion&#39;] });
+      }
+      if (typeof ResizeObserver === &#39;function&#39;) {
+        var chapterViewportWidth = chapterList.clientWidth;
+        var trailViewportWidth = trail.clientWidth;
+        var storyScrollObserver = new ResizeObserver(function () {
+          var chapterWidth = chapterList.clientWidth;
+          var trailWidth = trail.clientWidth;
+          if (chapterWidth !== chapterViewportWidth &amp;&amp; activeIndex &gt;= 0) centerChapterButton(chapterButtons[activeIndex]);
+          if (trailWidth !== trailViewportWidth &amp;&amp; storyBeatIndex &gt;= 0) {
+            centerStoryStop(trail.querySelectorAll(&#39;[data-story-node]&#39;)[storyBeatIndex]);
+          }
+          chapterViewportWidth = chapterWidth;
+          trailViewportWidth = trailWidth;
+        });
+        storyScrollObserver.observe(chapterList);
+        storyScrollObserver.observe(trail);
       }
       window.addEventListener(&#39;beforeprint&#39;, function () {
         clearChapterPreview({ clearIntents: true });
