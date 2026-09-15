@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Archify Contributor Field Note</title>
+  <style>
+    @font-face {
+      font-family: "Barlow Condensed";
+      src: url("./assets/fonts/BarlowCondensed-SemiBold.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 600;
+      font-display: block;
+    }
+
+    @font-face {
+      font-family: "Manrope";
+      src: url("./assets/fonts/Manrope-Variable.ttf") format("truetype");
+      font-weight: 200 800;
+      font-style: normal;
+      font-display: block;
+    }
+
+    :root {
+      --paper: #f1eee7;
+      --ink: #101922;
+      --muted: #5f686e;
+      --hairline: rgba(16, 25, 34, 0.22);
+      --cyan: #009fc1;
+      --gold: #b98232;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 1000px;
+      height: 1500px;
+      margin: 0;
+      overflow: hidden;
+      background: var(--paper);
+    }
+
+    body {
+      color: var(--ink);
+      font-family: "Manrope", "Noto Sans CJK SC", "PingFang SC", sans-serif;
+      font-variant-numeric: tabular-nums lining-nums;
+    }
+
+    ::selection {
+      color: var(--paper);
+      background: var(--cyan);
+    }
+
+    .card {
+      position: relative;
+      width: 1000px;
+      height: 1500px;
+      isolation: isolate;
+      overflow: hidden;
+      background: var(--paper);
+    }
+
+    .art {
+      position: absolute;
+      z-index: -2;
+      left: 0;
+      top: 36px;
+      width: 1000px;
+      height: auto;
+      display: block;
+      mix-blend-mode: multiply;
+      mask-image: linear-gradient(to bottom, transparent, #000 80px, #000 calc(100% - 240px), transparent);
+    }
+
+    .paper-wash {
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, rgba(241, 238, 231, 0.96) 0, rgba(241, 238, 231, 0.36) 25%, transparent 39%),
+        linear-gradient(0deg, rgba(241, 238, 231, 0.98) 0, rgba(241, 238, 231, 0.60) 21%, transparent 36%);
+    }
+
+    .rail {
+      position: absolute;
+      top: 54px;
+      bottom: 48px;
+      left: 52px;
+      width: 1px;
+      background: var(--hairline);
+    }
+
+    .rail::before,
+    .rail::after {
+      content: "";
+      position: absolute;
+      left: -4px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--ink);
+    }
+
+    .rail::before { top: 0; }
+    .rail::after { bottom: 0; }
+
+    header {
+      position: absolute;
+      top: 54px;
+      left: 82px;
+      right: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 58px;
+      border-bottom: 1px solid var(--hairline);
+    }
+
+    .brand {
+      display: flex; align-items: center; gap: 14px;
+      font-size: 22px; font-weight: 750; letter-spacing: 0.10em; text-transform: uppercase;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      color: var(--cyan);
+    }
+
+    .series {
+      display: grid; gap: 5px; text-align: right; color: var(--muted);
+      font-size: 12px; font-weight: 500; letter-spacing: 0.04em;
+    }
+
+    .identity {
+      position: absolute;
+      top: 151px;
+      left: 82px;
+      right: 62px;
+    }
+
+    .handle {
+      margin: 0; white-space: nowrap; font-size: 50px; font-weight: 650;
+      line-height: 1.3; letter-spacing: -0.035em;
+    }
+
+    .role {
+      margin-top: 16px; color: var(--muted);
+      font-size: 18px; font-weight: 450; line-height: 1.4; letter-spacing: 0;
+    }
+
+
+    .moment {
+      position: absolute; left: 82px; top: 1018px; width: 640px;
+    }
+
+    .moment h1 {
+      max-width: 640px; margin: 0; font-family: "Barlow Condensed", sans-serif;
+      font-size: 82px; font-weight: 600; line-height: 0.98; letter-spacing: -0.015em;
+    }
+
+    .moment p {
+      margin: 26px 0 0; color: var(--muted); font-size: 18px;
+      font-weight: 450; line-height: 1.6;
+    }
+
+    .locator {
+      position: absolute;
+      right: 63px;
+      top: 1034px;
+      width: 146px;
+      height: 146px;
+      display: grid;
+      place-items: center;
+    }
+
+    .locator::before,
+    .locator::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(185, 130, 50, 0.55);
+    }
+
+    .locator::before { inset: 24px; }
+    .locator::after { inset: 42px; }
+
+    .locator span {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 7px 18px rgba(94, 56, 12, 0.24);
+    }
+
+    .locator i,
+    .locator b {
+      position: absolute;
+      display: block;
+      background: rgba(185, 130, 50, 0.5);
+    }
+
+    .locator i { width: 112px; height: 1px; }
+    .locator b { width: 1px; height: 112px; }
+
+    footer {
+      position: absolute; left: 82px; right: 62px; bottom: 64px;
+      display: grid; grid-template-columns: 160px minmax(0, 1fr) 174px;
+      border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline);
+    }
+
+    .datum {
+      height: 136px; padding: 18px 20px 18px 0;
+    }
+
+    .datum + .datum {
+      padding-left: 26px; border-left: 1px solid var(--hairline);
+    }
+
+    .datum-label {
+      display: block; margin-bottom: 10px; color: var(--muted);
+      font-size: 12px; font-weight: 500; letter-spacing: 0.025em;
+    }
+
+    .datum:nth-child(2) .datum-value {
+      height: 82px; font-size: 18px; font-weight: 550; overflow-wrap: anywhere;
+    }
+    .merge-date { display: block; margin-top: 10px; color: var(--muted); font-size: 12px; font-weight: 450; }
+    .datum-value {
+      display: block; font-size: 18px; font-weight: 650;
+      line-height: 1.35; letter-spacing: -0.02em;
+    }
+
+    .verified {
+      display: block; color: var(--ink); font-size: 16px;
+    }
+
+
+    .record {
+      position: absolute; left: 82px; right: 62px; bottom: 28px;
+      display: flex; justify-content: space-between; color: var(--muted);
+      font-size: 11px; font-weight: 450; letter-spacing: 0.02em;
+    }
+  </style>
+</head>
+<body>
+  <!--
+    THESIS: One precise correction becomes the keepsake; refuse the metric-heavy achievement poster.
+    OWN-WORLD: Mineral paper, ink geometry, verified cyan, and one warm calibration point.
+    STORY: Recognize the contributor, see where the map changed, then verify the merged record.
+    FIRST VIEWPORT: Identity above a full-width tactile map; the contribution statement and proof sit below it.
+    FORM: User-pinned Pro field-map direction, narrow artifact extension, seed pro-field-map-v1.
+    Data comes from a merged pull request. Merged status is not a separate verification claim.
+  -->
+  <main class="card" aria-label="Archify contributor field note for {{AUTHOR}}">
+    <img class="art" src="./assets/map.png" alt="Folded engineering map with a verified cyan route and a gold correction point">
+    <div class="paper-wash" aria-hidden="true"></div>
+    <div class="rail" aria-hidden="true"></div>
+
+    <header>
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+          <path d="M24 3.8 42 14.1v19.8L24 44.2 6 33.9V14.1L24 3.8Z" fill="none" stroke="currentColor" stroke-width="2.6"/>
+          <path d="m6.8 14.6 17.2 10 17.2-10M24 24.6v18.3" fill="none" stroke="currentColor" stroke-width="2.6"/>
+          <path d="m14.2 29.3 9.8 5.6 9.8-5.6" fill="none" stroke="currentColor" stroke-width="2.6"/>
+        </svg>
+        <span>Archify</span>
+      </div>
+      <div class="series"><span>Contributor field note</span><span>PR {{NUMBER}}</span></div>
+    </header>
+
+    <section class="identity" aria-label="Contributor identity">
+      <p class="handle" data-fit-min="30" data-wrap="true">@{{AUTHOR}}</p>
+      <div class="role">System cartographer</div>
+    </section>
+
+    <section class="moment" aria-label="Contribution message">
+      <h1>The map<br>changed here.</h1>
+      <p>You made the system easier to see.<br>This revision is now part of Archify.</p>
+    </section>
+
+    <div class="locator" aria-hidden="true">
+      <i></i><b></b><span></span>
+    </div>
+
+    <footer aria-label="Merged contribution record">
+      <div class="datum">
+        <span class="datum-label">Contribution</span>
+        <span class="datum-value">PR #{{NUMBER}}</span>
+      </div>
+      <div class="datum">
+        <span class="datum-label">Change</span>
+        <span class="datum-value" data-fit-min="14" data-ellipsis="true" title="{{TITLE}}">{{TITLE}}</span>
+      </div>
+      <div class="datum">
+        <span class="datum-label">Status</span>
+        <span class="datum-value verified">Merged<span class="merge-date">{{DATE}} UTC</span></span>
+      </div>
+    </footer>
+
+    <div class="record"><span>github.com/{{REPOSITORY}}</span><span>{{SHORT_SHA}}</span></div>
+  </main>
+</body>
+</html>
