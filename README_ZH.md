@@ -146,7 +146,7 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 它不会被静默开启，只校验作者写入的事实，不代表线上基础设施已经核验。可查看
 [通过校验的部署证明](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership)。
 
-做设计或 PR 评审时，Architecture Delta 生成已校验的 Before / Delta / After 和机器回执。精确选择任一作者变更，或播放一次有限 Review；全程只读，不推断影响、风险或合并安全。
+做设计或 PR 评审时，Architecture Delta 生成已校验的 Before / Delta / After 和机器回执。仓库 revision、provider 和链接模式的变化会作为独立来源事实显示，不会把图实体错误标记为已变化。精确选择任一已创作的图变更，或播放一次有限 Review；全程只读，不推断影响、风险或合并安全。
 
 `node archify/bin/archify.mjs compare architecture base.json head.json architecture-delta.html --json`
 

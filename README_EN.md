@@ -150,7 +150,7 @@ Continue with focused requests such as `add Redis`, `move auth to the left`, or 
 
 Architecture's optional `deployment-ownership` profile fails closed when authored owners, region placement, private database scope, or named crossings are missing; it is never implicit and does not inspect live infrastructure. See the [checked deployment proof](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership).
 
-For design or PR review, Architecture Delta compares validated Before / Delta / After snapshots with a machine receipt. Select an authored change or play one finite, viewer-only Review; it infers no impact, risk, or merge safety.
+For design or PR review, Architecture Delta compares validated Before / Delta / After snapshots with a machine receipt. Repository revision, provider, and link-mode changes appear as separate provenance facts without marking graph entities as changed. Select an authored graph change or play one finite, viewer-only Review; it infers no impact, risk, or merge safety.
 
 `node archify/bin/archify.mjs compare architecture base.json head.json architecture-delta.html --json`
 

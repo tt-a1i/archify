@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -11,6 +11,7 @@ import {
   architectureDeltaChangeRows,
   canonicalArchitectureJson,
   compareArchitecture,
+  renderArchitectureDeltaHtml,
   validateArchitectureDeltaHtml,
 } from '../delta/architecture-delta.mjs';
 
@@ -25,6 +26,70 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-delta-'));
 
 const read = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
 const run = (args) => spawnSync(process.execPath, [cli, ...args], { cwd: skillRoot, encoding: 'utf8' });
+
+function git(repo, ...args) {
+  return execFileSync('git', ['-C', repo, ...args], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      GIT_AUTHOR_DATE: '2026-01-01T00:00:00Z',
+      GIT_COMMITTER_DATE: '2026-01-01T00:00:00Z',
+    },
+  }).trim();
+}
+
+function provenanceFixture() {
+  const root = fs.mkdtempSync(path.join(tmp, 'provenance-repo-'));
+  const sourceDirectory = path.join(root, 'src');
+  fs.mkdirSync(sourceDirectory);
+  git(root, 'init');
+  git(root, 'config', 'user.name', 'Archify Tests');
+  git(root, 'config', 'user.email', 'archify@example.test');
+  git(root, 'remote', 'add', 'origin', 'git@github.com:example/provenance-repo.git');
+  fs.writeFileSync(path.join(sourceDirectory, 'service.js'), 'export const version = 1;\n');
+  git(root, 'add', 'src/service.js');
+  git(root, 'commit', '-m', 'base');
+  const baseRevision = git(root, 'rev-parse', 'HEAD');
+  fs.writeFileSync(path.join(sourceDirectory, 'service.js'), 'export const version = 2;\n');
+  git(root, 'add', 'src/service.js');
+  git(root, 'commit', '-m', 'head');
+  const headRevision = git(root, 'rev-parse', 'HEAD');
+  const diagram = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Provenance-only delta' },
+    components: [{
+      id: 'service',
+      type: 'backend',
+      label: 'Service',
+      pos: [100, 100],
+      size: [160, 80],
+      sources: [{ path: 'src/service.js', line: 1 }],
+    }],
+    boundaries: [],
+    connections: [],
+    cards: [],
+  };
+  const base = structuredClone(diagram);
+  base.meta.repository = { url: 'https://github.com/example/provenance-repo', revision: baseRevision };
+  const head = structuredClone(diagram);
+  head.meta.repository = { url: 'https://github.com/example/provenance-repo', revision: headRevision };
+  const basePath = path.join(root, 'base.architecture.json');
+  const headPath = path.join(root, 'head.architecture.json');
+  fs.writeFileSync(basePath, JSON.stringify(base));
+  fs.writeFileSync(headPath, JSON.stringify(head));
+  return { root, basePath, headPath, baseRevision, headRevision };
+}
+
+const renderDelta = (receipt) => renderArchitectureDeltaHtml({
+  receipt,
+  baseSvg: '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+  deltaSvg: '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+  headSvg: '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+  baseHtml: '<!doctype html><title>Before</title>',
+  headHtml: '<!doctype html><title>After</title>',
+  artifactCss: '',
+});
 
 test('architecture compare classifies authored facts separately from geometry and presentation', () => {
   const receipt = compareArchitecture(read(baseFixture), read(headFixture));
@@ -311,6 +376,124 @@ test('repository mismatch fails and verified matching revisions remain evidence-
   assert.equal(receipt.summary.provenanceChanged, true);
 });
 
+test('provenance-only changes stay separate from graph changes and remain visible', () => {
+  const base = read(baseFixture);
+  const head = read(baseFixture);
+  base.meta.repository = {
+    url: 'https://github.com/example/one',
+    revision: 'a'.repeat(40),
+    link_mode: 'web',
+  };
+  head.meta.repository = {
+    url: 'https://github.com/example/one',
+    revision: 'b'.repeat(40),
+    provider: 'github',
+    link_mode: 'local-only',
+  };
+
+  const receipt = compareArchitecture(base, head, { baseVerified: true, headVerified: true });
+  assert.equal(receipt.summary.provenanceChanged, true);
+  assert.deepEqual(receipt.provenance, {
+    changedFields: ['/link_mode', '/provider', '/revision'],
+    base: { revision: 'a'.repeat(40), linkMode: 'web' },
+    head: { revision: 'b'.repeat(40), provider: 'github', linkMode: 'local-only' },
+  });
+  assert.deepEqual(receipt.changes, { components: [], connections: [], boundaries: [] });
+  assert.deepEqual(architectureDeltaChangeRows(receipt), []);
+
+  const html = renderDelta(receipt);
+  assert.match(html, /data-provenance-changed="true"/);
+  assert.match(html, /Repository provenance changed/);
+  assert.match(html, /\/revision: aaaaaaaa → bbbbbbbb/);
+  assert.match(html, /\/provider: automatic → github/);
+  assert.match(html, /\/link_mode: web → local-only/);
+  assert.match(html, /\/link_mode, \/provider, \/revision/);
+  assert.match(html, /No component, relationship, or boundary changes; repository provenance changed\./);
+  assert.doesNotMatch(html, /No authored architecture changes\./);
+  assert.match(html, /Overview · 0 authored graph changes · provenance changed/);
+  assert.match(html, /No graph changes · ' \+ provenanceSummary/);
+  assert.match(html, /const proofWidth = ctx\.measureText\(proofLine\)\.width/);
+  assert.match(html, /fitCanvasLine\(secondary, secondaryWidth\)/);
+  assert.doesNotMatch(html, /data-change-key="provenance/);
+  assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
+
+  const missingNotice = html.replace(/<aside class="provenance-change"[\s\S]*?<\/aside>/, '');
+  assert.throws(
+    () => validateArchitectureDeltaHtml(missingNotice, receipt),
+    (error) => error instanceof ArchitectureDeltaError
+      && error.code === 'delta/artifact-invalid'
+      && error.details.failures.includes('provenance change notice does not match the receipt'),
+  );
+  const tamperedNotice = html.replace('/link_mode: web → local-only', '/link_mode: web → web');
+  assert.throws(
+    () => validateArchitectureDeltaHtml(tamperedNotice, receipt),
+    (error) => error instanceof ArchitectureDeltaError
+      && error.code === 'delta/artifact-invalid'
+      && error.details.failures.includes('provenance change notice does not match the receipt'),
+  );
+});
+
+test('repository location representation changes stay redacted in provenance output', () => {
+  const base = read(baseFixture);
+  const head = read(baseFixture);
+  base.meta.repository = {
+    url: 'https://github.com/example/one',
+    revision: 'a'.repeat(40),
+  };
+  head.meta.repository = {
+    url: 'git@github.com:example/one.git',
+    revision: 'a'.repeat(40),
+  };
+  const receipt = compareArchitecture(base, head, { baseVerified: true, headVerified: true });
+  assert.equal(receipt.summary.provenanceChanged, true);
+  assert.deepEqual(receipt.provenance.changedFields, ['/url']);
+  assert.equal(JSON.stringify(receipt.provenance).includes('github.com'), false);
+
+  const html = renderDelta(receipt);
+  assert.match(html, /\/url: repository location changed/);
+  assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
+});
+
+test('public compare keeps a revision-only provenance change out of graph identities', () => {
+  const data = provenanceFixture();
+  const output = path.join(data.root, 'delta.html');
+  const result = run([
+    'compare', 'architecture', data.basePath, data.headPath, output,
+    '--repo-root', data.root, '--json',
+  ]);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.summary.provenanceChanged, true);
+  assert.deepEqual(receipt.provenance.changedFields, ['/revision']);
+  assert.deepEqual(receipt.changes, { components: [], connections: [], boundaries: [] });
+  const html = fs.readFileSync(output, 'utf8');
+  assert.match(html, new RegExp(`${data.baseRevision.slice(0, 8)} → ${data.headRevision.slice(0, 8)}`));
+  assert.match(html, /id="review-play"[^>]* disabled/);
+  const deltaSvg = html.match(/<section class="canvas" data-view="delta">([\s\S]*?)<\/section>/)?.[1] || '';
+  assert.doesNotMatch(deltaSvg, /data-delta-state="(?:added|removed|changed|moved|moved-from|rerouted|geometry-changed|evidence-changed)"/);
+  assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
+});
+
+test('unchanged provenance preserves the ordinary empty graph state', () => {
+  const base = read(baseFixture);
+  base.meta.repository = {
+    url: 'https://github.com/example/one',
+    revision: 'a'.repeat(40),
+    provider: 'github',
+    link_mode: 'web',
+  };
+  const receipt = compareArchitecture(base, structuredClone(base), { baseVerified: true, headVerified: true });
+  assert.equal(receipt.summary.provenanceChanged, false);
+  assert.equal(receipt.provenance, undefined);
+
+  const html = renderDelta(receipt);
+  assert.doesNotMatch(html, /data-provenance-changed="true"/);
+  assert.doesNotMatch(html, /provenance unchanged/);
+  assert.match(html, /No authored architecture changes\./);
+  assert.match(html, /Overview · 0 authored changes/);
+  assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
+});
+
 test('portable compare retains link settings and uses the same repository identity rules', () => {
   const base = read(baseFixture);
   const head = read(headFixture);
@@ -380,6 +563,7 @@ test('compare CLI writes a deterministic three-state artifact and complete sidec
   assert.match(firstHtml, /data-delta-boundary-state="added".*fill:#34d399!important/);
   assert.match(firstHtml, /delta-boundary-marker\[data-delta-state\]\{color:var\(--delta\)\}/);
   assert.match(firstHtml, /No authored architecture changes ·.*movementSummary/);
+  assert.doesNotMatch(firstHtml, /provenance unchanged/);
   assert.match(firstHtml, /font-family:"JetBrains Mono",ui-monospace/);
   assert.doesNotMatch(firstHtml, /font-family:Inter|body\{min-width:1080px/);
   assert.match(firstHtml, /@media\(max-width:760px\)/);

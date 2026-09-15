@@ -95,6 +95,8 @@ node bin/archify.mjs compare architecture base.json head.json \
   architecture-delta.html --quality showcase --json
 ```
 
+仓库 revision、provider、链接模式或地址表达方式的变化会与组件、关系和边界变化分开报告。仅来源发生变化时，Delta 页面不会把任何图实体标为已变化，来源摘要也不会暴露仓库 URL。
+
 `compare` 首次读取两份输入后，会使用捕获的原始字节进行校验、计算回执哈希并生成差异；之后原文件的变化不会影响本次比较。非法原始字段仍会在规范化之前被拒绝。
 
 ## 6. 检查最终文件
