@@ -264,7 +264,7 @@
       }
       function outgoingByNode() {
         var byId = nodesById();
-        var outgoing = {};
+        var outgoing = Object.create(null);
         edges().forEach(function (edge) {
           var from = edge.getAttribute('data-edge-from');
           var to = edge.getAttribute('data-edge-to');
@@ -276,7 +276,7 @@
       }
       function reachableFrom(source) {
         var outgoing = outgoingByNode();
-        var reached = {};
+        var reached = Object.create(null);
         var queue = [source];
         reached[source] = true;
         for (var cursor = 0; cursor < queue.length; cursor += 1) {
@@ -291,7 +291,7 @@
       }
       function hopDistancesFrom(source) {
         var outgoing = outgoingByNode();
-        var distances = {};
+        var distances = Object.create(null);
         var queue = [source];
         distances[source] = 0;
         for (var cursor = 0; cursor < queue.length; cursor += 1) {
@@ -307,7 +307,7 @@
       function shortestDirectedPath(source, target) {
         if (source === target) return null;
         var outgoing = outgoingByNode();
-        var previous = {};
+        var previous = Object.create(null);
         var queue = [source];
         previous[source] = null;
         for (var cursor = 0; cursor < queue.length && !Object.prototype.hasOwnProperty.call(previous, target); cursor += 1) {
@@ -837,7 +837,7 @@
           var sourceIds = nodes().map(function (node) { return node.getAttribute('data-node-id'); }).filter(function (id) {
             return outgoing[id] && outgoing[id].length;
           });
-          var sourceBadges = {};
+          var sourceBadges = Object.create(null);
           sourceIds.forEach(function (id) { sourceBadges[id] = viewerText('viewer.route.finder.source.badge'); });
           return {
             kind: 'route-source',
@@ -853,7 +853,7 @@
         if (mode === 'target' && startId && byId[startId]) {
           var distances = hopDistancesFrom(startId);
           var targetIds = Object.keys(distances).filter(function (id) { return id !== startId && byId[id]; });
-          var targetBadges = {};
+          var targetBadges = Object.create(null);
           targetIds.forEach(function (id) {
             targetBadges[id] = viewerCount('viewer.route.hop', distances[id]);
           });

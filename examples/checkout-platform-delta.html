@@ -12790,8 +12790,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function relationshipHitRecords() {
         var recordsByKey = {};
-        var recordsById = {};
-        var byId = {};
+        var recordsById = Object.create(null);
+        var byId = Object.create(null);
         nodes().forEach(function (node) { byId[node.getAttribute(&#39;data-node-id&#39;)] = node; });
         var records = [];
         edges().forEach(function (edge) {
@@ -13541,7 +13541,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           Archify.routeProbe.clear({ updateUrl: false, restoreFocus: false });
         }
         var nodeList = nodes();
-        var byId = {};
+        var byId = Object.create(null);
         nodeList.forEach(function (node) { byId[node.getAttribute(&#39;data-node-id&#39;)] = node; });
         var normalized = [];
         (ids || []).forEach(function (id) {
@@ -13555,8 +13555,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
         clear({ updateUrl: false, preserveView: true });
         activeIds = normalized;
-        var selected = {};
-        var related = {};
+        var selected = Object.create(null);
+        var related = Object.create(null);
         var seenEdges = {};
         var matchedEdges = 0;
         normalized.forEach(function (id) { selected[id] = true; related[id] = true; });
@@ -13907,7 +13907,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clear({ announce: false });
         var nodeList = nodes();
         var edgeList = edges();
-        var byId = {};
+        var byId = Object.create(null);
         nodeList.forEach(function (node) { byId[node.getAttribute(&#39;data-node-id&#39;)] = node; });
         var selected = byId[id];
         if (!selected) return false;
@@ -13916,7 +13916,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         overlay.setAttribute(&#39;class&#39;, &#39;intent-trace-overlay&#39;);
         overlay.setAttribute(&#39;data-intent-trace-overlay&#39;, &#39;&#39;);
         overlay.setAttribute(&#39;aria-hidden&#39;, &#39;true&#39;);
-        var related = {};
+        var related = Object.create(null);
         var seen = {};
         var counts = { out: 0, in: 0, loop: 0 };
         related[id] = true;
@@ -14087,12 +14087,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       try { views = JSON.parse(data.textContent || &#39;[]&#39;); } catch (_) { views = []; }
       if (!views.length) return { count: 0, active: function () { return null; } };
-      var canonicalNodeIds = {};
+      var canonicalNodeIds = Object.create(null);
       Array.prototype.forEach.call(svg.querySelectorAll(&#39;[data-node-id]&#39;), function (node) {
         canonicalNodeIds[node.getAttribute(&#39;data-node-id&#39;)] = true;
       });
       views.forEach(function (view) {
-        var seen = {};
+        var seen = Object.create(null);
         view.focus = (view.focus || []).filter(function (id) {
           if (!canonicalNodeIds[id] || seen[id]) return false;
           seen[id] = true;
@@ -14121,8 +14121,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function chapterDelta(previous, destination) {
         var previousFocus = previous ? previous.focus : [];
         var destinationFocus = destination ? destination.focus : [];
-        var previousIds = {};
-        var destinationIds = {};
+        var previousIds = Object.create(null);
+        var destinationIds = Object.create(null);
         previousFocus.forEach(function (id) { previousIds[id] = true; });
         destinationFocus.forEach(function (id) { destinationIds[id] = true; });
         return {
@@ -14134,7 +14134,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       function chapterAnchor(previous, destination, outgoingBeatIndex, delta) {
         if (!previous || !destination) return &#39;&#39;;
-        var stayIds = {};
+        var stayIds = Object.create(null);
         delta.stay.forEach(function (id) { stayIds[id] = true; });
         var activeBeat = outgoingBeatIndex &gt;= 0 ? previous.focus[outgoingBeatIndex] : &#39;&#39;;
         if (activeBeat &amp;&amp; stayIds[activeBeat]) return activeBeat;
@@ -14152,7 +14152,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function classifyHandoff(delta, anchor) {
-        var roles = {};
+        var roles = Object.create(null);
         delta.stay.forEach(function (id) { roles[id] = &#39;stay&#39;; });
         delta.enter.forEach(function (id) { roles[id] = &#39;enter&#39;; });
         delta.leave.forEach(function (id) { roles[id] = &#39;leave&#39;; });
@@ -14469,7 +14469,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (activePreviewIndex === index &amp;&amp; svg.getAttribute(&#39;data-chapter-preview&#39;) === views[index].id) return true;
         clearChapterPreviewPresentation();
         var delta = chapterDelta(activeIndex &gt;= 0 ? views[activeIndex] : null, views[index]);
-        var roles = {};
+        var roles = Object.create(null);
         delta.stay.forEach(function (id) { roles[id] = &#39;stay&#39;; });
         delta.enter.forEach(function (id) { roles[id] = &#39;enter&#39;; });
         delta.leave.forEach(function (id) { roles[id] = &#39;leave&#39;; });
@@ -15123,7 +15123,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
         var nodeList = Array.prototype.slice.call(svg.querySelectorAll(&#39;[data-node-id]&#39;));
         var edgeList = Array.prototype.slice.call(svg.querySelectorAll(&#39;[data-edge-from][data-edge-to]&#39;));
-        var byId = {};
+        var byId = Object.create(null);
         nodeList.forEach(function (node) { byId[node.getAttribute(&#39;data-node-id&#39;)] = node; });
         storySteps = view.focus.map(function (_, index) { return storyStep(view, index, edgeList, byId); });
         var labels = [];
@@ -16574,8 +16574,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return true;
       }
       function semanticIds(ids, includeNeighbors) {
-        var seeds = {};
-        var wanted = {};
+        var seeds = Object.create(null);
+        var wanted = Object.create(null);
         (ids || []).forEach(function (id) { seeds[id] = true; wanted[id] = true; });
         if (includeNeighbors) {
           Array.prototype.forEach.call(svg.querySelectorAll(&#39;[data-edge-from][data-edge-to]&#39;), function (edge) {
@@ -18043,7 +18043,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function outgoingByNode() {
         var byId = nodesById();
-        var outgoing = {};
+        var outgoing = Object.create(null);
         edges().forEach(function (edge) {
           var from = edge.getAttribute(&#39;data-edge-from&#39;);
           var to = edge.getAttribute(&#39;data-edge-to&#39;);
@@ -18055,7 +18055,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function reachableFrom(source) {
         var outgoing = outgoingByNode();
-        var reached = {};
+        var reached = Object.create(null);
         var queue = [source];
         reached[source] = true;
         for (var cursor = 0; cursor &lt; queue.length; cursor += 1) {
@@ -18070,7 +18070,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function hopDistancesFrom(source) {
         var outgoing = outgoingByNode();
-        var distances = {};
+        var distances = Object.create(null);
         var queue = [source];
         distances[source] = 0;
         for (var cursor = 0; cursor &lt; queue.length; cursor += 1) {
@@ -18086,7 +18086,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function shortestDirectedPath(source, target) {
         if (source === target) return null;
         var outgoing = outgoingByNode();
-        var previous = {};
+        var previous = Object.create(null);
         var queue = [source];
         previous[source] = null;
         for (var cursor = 0; cursor &lt; queue.length &amp;&amp; !Object.prototype.hasOwnProperty.call(previous, target); cursor += 1) {
@@ -18616,7 +18616,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           var sourceIds = nodes().map(function (node) { return node.getAttribute(&#39;data-node-id&#39;); }).filter(function (id) {
             return outgoing[id] &amp;&amp; outgoing[id].length;
           });
-          var sourceBadges = {};
+          var sourceBadges = Object.create(null);
           sourceIds.forEach(function (id) { sourceBadges[id] = viewerText(&#39;viewer.route.finder.source.badge&#39;); });
           return {
             kind: &#39;route-source&#39;,
@@ -18632,7 +18632,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (mode === &#39;target&#39; &amp;&amp; startId &amp;&amp; byId[startId]) {
           var distances = hopDistancesFrom(startId);
           var targetIds = Object.keys(distances).filter(function (id) { return id !== startId &amp;&amp; byId[id]; });
-          var targetBadges = {};
+          var targetBadges = Object.create(null);
           targetIds.forEach(function (id) {
             targetBadges[id] = viewerCount(&#39;viewer.route.hop&#39;, distances[id]);
           });
@@ -18841,7 +18841,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var MAX_LENS_FLOW_EDGES = 24;
 
       function nodesById() {
-        var byId = {};
+        var byId = Object.create(null);
         Array.prototype.forEach.call(svg.querySelectorAll(&#39;[data-node-id][data-node-kind]&#39;), function (node) {
           var id = node.getAttribute(&#39;data-node-id&#39;);
           if (id &amp;&amp; !byId[id]) byId[id] = node;
@@ -19008,7 +19008,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           return (byId[id].getAttribute(&#39;data-node-kind&#39;) || &#39;neutral&#39;) === kind;
         });
         if (!matches.length) return false;
-        var chosen = {};
+        var chosen = Object.create(null);
         matches.forEach(function (id) {
           chosen[id] = true;
           byId[id].setAttribute(&#39;data-legend-preview-match&#39;, &#39;&#39;);
@@ -19184,7 +19184,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         options = options || {};
         cleanSvgState();
         var byId = nodesById();
-        var nodeKind = {};
+        var nodeKind = Object.create(null);
         Object.keys(byId).forEach(function (id) { nodeKind[id] = byId[id].getAttribute(&#39;data-node-kind&#39;) || &#39;neutral&#39;; });
         if (!selectedKinds.length) {
           status.textContent = viewerText(&#39;viewer.lens.choose&#39;);
@@ -28017,8 +28017,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function relationshipHitRecords() {
         var recordsByKey = {};
-        var recordsById = {};
-        var byId = {};
+        var recordsById = Object.create(null);
+        var byId = Object.create(null);
         nodes().forEach(function (node) { byId[node.getAttribute(&#39;data-node-id&#39;)] = node; });
         var records = [];
         edges().forEach(function (edge) {
@@ -28768,7 +28768,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           Archify.routeProbe.clear({ updateUrl: false, restoreFocus: false });
         }
         var nodeList = nodes();
-        var byId = {};
+        var byId = Object.create(null);
         nodeList.forEach(function (node) { byId[node.getAttribute(&#39;data-node-id&#39;)] = node; });
         var normalized = [];
         (ids || []).forEach(function (id) {
@@ -28782,8 +28782,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
         clear({ updateUrl: false, preserveView: true });
         activeIds = normalized;
-        var selected = {};
-        var related = {};
+        var selected = Object.create(null);
+        var related = Object.create(null);
         var seenEdges = {};
         var matchedEdges = 0;
         normalized.forEach(function (id) { selected[id] = true; related[id] = true; });
@@ -29134,7 +29134,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clear({ announce: false });
         var nodeList = nodes();
         var edgeList = edges();
-        var byId = {};
+        var byId = Object.create(null);
         nodeList.forEach(function (node) { byId[node.getAttribute(&#39;data-node-id&#39;)] = node; });
         var selected = byId[id];
         if (!selected) return false;
@@ -29143,7 +29143,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         overlay.setAttribute(&#39;class&#39;, &#39;intent-trace-overlay&#39;);
         overlay.setAttribute(&#39;data-intent-trace-overlay&#39;, &#39;&#39;);
         overlay.setAttribute(&#39;aria-hidden&#39;, &#39;true&#39;);
-        var related = {};
+        var related = Object.create(null);
         var seen = {};
         var counts = { out: 0, in: 0, loop: 0 };
         related[id] = true;
@@ -29314,12 +29314,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       try { views = JSON.parse(data.textContent || &#39;[]&#39;); } catch (_) { views = []; }
       if (!views.length) return { count: 0, active: function () { return null; } };
-      var canonicalNodeIds = {};
+      var canonicalNodeIds = Object.create(null);
       Array.prototype.forEach.call(svg.querySelectorAll(&#39;[data-node-id]&#39;), function (node) {
         canonicalNodeIds[node.getAttribute(&#39;data-node-id&#39;)] = true;
       });
       views.forEach(function (view) {
-        var seen = {};
+        var seen = Object.create(null);
         view.focus = (view.focus || []).filter(function (id) {
           if (!canonicalNodeIds[id] || seen[id]) return false;
           seen[id] = true;
@@ -29348,8 +29348,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function chapterDelta(previous, destination) {
         var previousFocus = previous ? previous.focus : [];
         var destinationFocus = destination ? destination.focus : [];
-        var previousIds = {};
-        var destinationIds = {};
+        var previousIds = Object.create(null);
+        var destinationIds = Object.create(null);
         previousFocus.forEach(function (id) { previousIds[id] = true; });
         destinationFocus.forEach(function (id) { destinationIds[id] = true; });
         return {
@@ -29361,7 +29361,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       function chapterAnchor(previous, destination, outgoingBeatIndex, delta) {
         if (!previous || !destination) return &#39;&#39;;
-        var stayIds = {};
+        var stayIds = Object.create(null);
         delta.stay.forEach(function (id) { stayIds[id] = true; });
         var activeBeat = outgoingBeatIndex &gt;= 0 ? previous.focus[outgoingBeatIndex] : &#39;&#39;;
         if (activeBeat &amp;&amp; stayIds[activeBeat]) return activeBeat;
@@ -29379,7 +29379,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function classifyHandoff(delta, anchor) {
-        var roles = {};
+        var roles = Object.create(null);
         delta.stay.forEach(function (id) { roles[id] = &#39;stay&#39;; });
         delta.enter.forEach(function (id) { roles[id] = &#39;enter&#39;; });
         delta.leave.forEach(function (id) { roles[id] = &#39;leave&#39;; });
@@ -29696,7 +29696,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (activePreviewIndex === index &amp;&amp; svg.getAttribute(&#39;data-chapter-preview&#39;) === views[index].id) return true;
         clearChapterPreviewPresentation();
         var delta = chapterDelta(activeIndex &gt;= 0 ? views[activeIndex] : null, views[index]);
-        var roles = {};
+        var roles = Object.create(null);
         delta.stay.forEach(function (id) { roles[id] = &#39;stay&#39;; });
         delta.enter.forEach(function (id) { roles[id] = &#39;enter&#39;; });
         delta.leave.forEach(function (id) { roles[id] = &#39;leave&#39;; });
@@ -30350,7 +30350,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
         var nodeList = Array.prototype.slice.call(svg.querySelectorAll(&#39;[data-node-id]&#39;));
         var edgeList = Array.prototype.slice.call(svg.querySelectorAll(&#39;[data-edge-from][data-edge-to]&#39;));
-        var byId = {};
+        var byId = Object.create(null);
         nodeList.forEach(function (node) { byId[node.getAttribute(&#39;data-node-id&#39;)] = node; });
         storySteps = view.focus.map(function (_, index) { return storyStep(view, index, edgeList, byId); });
         var labels = [];
@@ -31801,8 +31801,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return true;
       }
       function semanticIds(ids, includeNeighbors) {
-        var seeds = {};
-        var wanted = {};
+        var seeds = Object.create(null);
+        var wanted = Object.create(null);
         (ids || []).forEach(function (id) { seeds[id] = true; wanted[id] = true; });
         if (includeNeighbors) {
           Array.prototype.forEach.call(svg.querySelectorAll(&#39;[data-edge-from][data-edge-to]&#39;), function (edge) {
@@ -33270,7 +33270,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function outgoingByNode() {
         var byId = nodesById();
-        var outgoing = {};
+        var outgoing = Object.create(null);
         edges().forEach(function (edge) {
           var from = edge.getAttribute(&#39;data-edge-from&#39;);
           var to = edge.getAttribute(&#39;data-edge-to&#39;);
@@ -33282,7 +33282,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function reachableFrom(source) {
         var outgoing = outgoingByNode();
-        var reached = {};
+        var reached = Object.create(null);
         var queue = [source];
         reached[source] = true;
         for (var cursor = 0; cursor &lt; queue.length; cursor += 1) {
@@ -33297,7 +33297,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function hopDistancesFrom(source) {
         var outgoing = outgoingByNode();
-        var distances = {};
+        var distances = Object.create(null);
         var queue = [source];
         distances[source] = 0;
         for (var cursor = 0; cursor &lt; queue.length; cursor += 1) {
@@ -33313,7 +33313,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function shortestDirectedPath(source, target) {
         if (source === target) return null;
         var outgoing = outgoingByNode();
-        var previous = {};
+        var previous = Object.create(null);
         var queue = [source];
         previous[source] = null;
         for (var cursor = 0; cursor &lt; queue.length &amp;&amp; !Object.prototype.hasOwnProperty.call(previous, target); cursor += 1) {
@@ -33843,7 +33843,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           var sourceIds = nodes().map(function (node) { return node.getAttribute(&#39;data-node-id&#39;); }).filter(function (id) {
             return outgoing[id] &amp;&amp; outgoing[id].length;
           });
-          var sourceBadges = {};
+          var sourceBadges = Object.create(null);
           sourceIds.forEach(function (id) { sourceBadges[id] = viewerText(&#39;viewer.route.finder.source.badge&#39;); });
           return {
             kind: &#39;route-source&#39;,
@@ -33859,7 +33859,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (mode === &#39;target&#39; &amp;&amp; startId &amp;&amp; byId[startId]) {
           var distances = hopDistancesFrom(startId);
           var targetIds = Object.keys(distances).filter(function (id) { return id !== startId &amp;&amp; byId[id]; });
-          var targetBadges = {};
+          var targetBadges = Object.create(null);
           targetIds.forEach(function (id) {
             targetBadges[id] = viewerCount(&#39;viewer.route.hop&#39;, distances[id]);
           });
@@ -34068,7 +34068,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var MAX_LENS_FLOW_EDGES = 24;
 
       function nodesById() {
-        var byId = {};
+        var byId = Object.create(null);
         Array.prototype.forEach.call(svg.querySelectorAll(&#39;[data-node-id][data-node-kind]&#39;), function (node) {
           var id = node.getAttribute(&#39;data-node-id&#39;);
           if (id &amp;&amp; !byId[id]) byId[id] = node;
@@ -34235,7 +34235,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           return (byId[id].getAttribute(&#39;data-node-kind&#39;) || &#39;neutral&#39;) === kind;
         });
         if (!matches.length) return false;
-        var chosen = {};
+        var chosen = Object.create(null);
         matches.forEach(function (id) {
           chosen[id] = true;
           byId[id].setAttribute(&#39;data-legend-preview-match&#39;, &#39;&#39;);
@@ -34411,7 +34411,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         options = options || {};
         cleanSvgState();
         var byId = nodesById();
-        var nodeKind = {};
+        var nodeKind = Object.create(null);
         Object.keys(byId).forEach(function (id) { nodeKind[id] = byId[id].getAttribute(&#39;data-node-kind&#39;) || &#39;neutral&#39;; });
         if (!selectedKinds.length) {
           status.textContent = viewerText(&#39;viewer.lens.choose&#39;);

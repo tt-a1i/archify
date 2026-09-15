@@ -422,8 +422,8 @@
       }
       function relationshipHitRecords() {
         var recordsByKey = {};
-        var recordsById = {};
-        var byId = {};
+        var recordsById = Object.create(null);
+        var byId = Object.create(null);
         nodes().forEach(function (node) { byId[node.getAttribute('data-node-id')] = node; });
         var records = [];
         edges().forEach(function (edge) {
@@ -1173,7 +1173,7 @@
           Archify.routeProbe.clear({ updateUrl: false, restoreFocus: false });
         }
         var nodeList = nodes();
-        var byId = {};
+        var byId = Object.create(null);
         nodeList.forEach(function (node) { byId[node.getAttribute('data-node-id')] = node; });
         var normalized = [];
         (ids || []).forEach(function (id) {
@@ -1187,8 +1187,8 @@
 
         clear({ updateUrl: false, preserveView: true });
         activeIds = normalized;
-        var selected = {};
-        var related = {};
+        var selected = Object.create(null);
+        var related = Object.create(null);
         var seenEdges = {};
         var matchedEdges = 0;
         normalized.forEach(function (id) { selected[id] = true; related[id] = true; });
