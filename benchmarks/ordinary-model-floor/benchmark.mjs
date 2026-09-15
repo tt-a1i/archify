@@ -157,6 +157,15 @@ function evaluateSemantic(benchmarkCase, candidate) {
         });
       }
     }
+    if (Array.isArray(required.labels)
+        && !required.labels.some((label) => technicalLabelMatches(actual.label, label))) {
+      mismatchedNodes.push({
+        id: identity,
+        field: 'label',
+        expected: required.labels,
+        actual: actual.label ?? null,
+      });
+    }
     if (Array.isArray(required.types) && !required.types.includes(actual.type)) {
       mismatchedNodes.push({
         id: identity,

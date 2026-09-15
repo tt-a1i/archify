@@ -159,6 +159,38 @@ test('benchmark rejects a renderer-valid candidate that changes required technic
   assert.equal(receipt.firstPassUsable, false);
 });
 
+test('benchmark checks accepted node labels even when an authored identity matches', () => {
+  for (const identityField of ['key', 'id']) {
+    const caseData = JSON.parse(fs.readFileSync(path.join(repoRoot, 'benchmarks/ordinary-model-floor/cases/web-runtime.architecture.case.json'), 'utf8'));
+    const requirement = caseData.requirements.nodes.find((node) => node.key === 'cache');
+    delete requirement.key;
+    requirement[identityField] = 'cache';
+    const caseFile = writeJson(`node-label-${identityField}.case.json`, caseData);
+    for (const label of ['Redis Cache', 'MySQL']) {
+      const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+      source.components.find((node) => node.id === 'cache').label = label;
+      const candidate = writeJson(`node-label-${identityField}.architecture.json`, source);
+      const runFile = writeJson(`node-label-${identityField}.run.json`, {
+        schema_version: 1, case_id: caseData.id,
+        agent: 'fixture-agent', model: 'fixture-model', attempt: 1,
+        visual_review: { status: 'passed', reviewer: 'fixture-reviewer', defects: [] },
+      });
+      const result = run(['verify', '--case', caseFile, '--candidate', candidate, '--run', runFile]);
+      const accepted = label === 'Redis Cache';
+      assert.equal(result.status, accepted ? 0 : 1, result.stderr || result.stdout);
+      const receipt = JSON.parse(result.stdout);
+      assert.equal(receipt.gates.validation.ok, true);
+      assert.equal(receipt.gates.semantic.ok, accepted);
+      assert.deepEqual(receipt.gates.semantic.missingNodeIds, []);
+      assert.deepEqual(receipt.gates.semantic.missingRelationships, []);
+      assert.deepEqual(receipt.gates.semantic.mismatchedNodes, accepted ? [] : [
+        { id: 'cache', field: 'label', expected: requirement.labels, actual: 'MySQL' },
+      ]);
+      assert.equal(receipt.firstPassUsable, accepted);
+    }
+  }
+});
+
 test('benchmark never accepts a visual pass without an identified reviewer', () => {
   const caseFile = writeJson('unreviewed.case.json', {
     schema_version: 1,
