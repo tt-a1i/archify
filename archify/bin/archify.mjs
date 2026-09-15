@@ -237,12 +237,12 @@ function checkerDiagnostics(checker) {
   const diagnostics = [];
   for (const issue of checker?.composition?.issues || []) {
     if (issue.severity !== 'error') continue;
-    const { severity, code, relationship, ...evidence } = issue;
+    const { severity, code, relationship, nodeId, ...evidence } = issue;
     diagnostics.push(diagnostic({
       code,
       severity,
       message: `Final artifact failed ${code}.`,
-      subject: relationship ? { relationship } : { check: 'composition' },
+      subject: relationship ? { relationship } : { check: 'composition', ...(nodeId ? { nodeId } : {}) },
       evidence,
       supportedFixes: COMPOSITION_FIXES[code] || [],
     }));
