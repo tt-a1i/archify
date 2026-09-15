@@ -104,12 +104,34 @@ in the generated viewer.
 ## Executable geometry rules
 
 - Node anchors start at side midpoints. `left`/`right` change the horizontal endpoint; `top`/`bottom` change the vertical endpoint. For an automatic Architecture relationship, unobstructed facing ports whose axis offset is under 16px may share one horizontal or vertical axis when both endpoints retain the 16px corner gutter. If exactly one endpoint belongs to a spread group, only its unshared counterpart moves; relationships spread at both endpoints keep their distinct ports and outside bridge.
-- A side is a direction contract. The first and final route segment must be perpendicular and outward/inward in the named direction.
+- A side is a direction contract. The first and final route segment must be perpendicular and outward/inward in the named direction. Concretely, for an explicit `via`: `via[0]` must share its x with the departure point when `fromSide` is `top`/`bottom` (vertical first segment) and share its y when `fromSide` is `left`/`right` (horizontal first segment); the same holds inverted for the arrival point and the last `via` entry. Departure and arrival points sit at side midpoints — they are not freely choosable positions on the edge.
 - Automatic Port Spread is a default renderer behavior for architecture, workflow, data-flow, and lifecycle diagrams. Shared automatic endpoints spread deterministically and symmetrically with a 16px corner gutter. It does not apply to sequence messages, single relationships, or explicit `via`, `channelX`, `channelY`, `labelAt`, or non-`auto` routes.
 - Showcase route rhythm: every nonzero segment must be at least 8px; every interior segment must be at least 16px. When spread ports are nearly parallel, the router uses a 24px endpoint stub and a 16px outside bridge instead of manufacturing a tiny dogleg.
 - Shared endpoint corridors are allowed only when they remain semantically unambiguous. Unrelated collinear overlap of 8px or more fails showcase.
 - Container borders are intentional pass-through geometry, but a long edge running along a structural border is not.
 - An edge crossing an unrelated opaque node is always a hard failure, independent of quality profile.
+
+### Viewport height budget
+
+`validate` proves SVG-internal geometry only; it does not estimate page overflow.
+The standalone viewer page stacks viewer chrome (~51px), the diagram panel, and
+the cards section. At a 1440-wide viewport the reader layout renders the SVG at
+roughly 930px wide, not 1440:
+
+```text
+page height ≈ viewer chrome (~51px) + 930 × viewBoxH / viewBoxW + cards height + margins
+cards height ≈ tallest card (items × ~24px + padding); three-column grid at ≥960px
+```
+
+Practical budget for a first-screen pass at 1440×900: author a viewBox with
+width/height ratio ≥ 2.0 and keep cards to ≤4 short items each (≤2 lines per
+item). When `visual-check` reports overflow, repair in this order: 1) tighten
+card copy while preserving every information point, 2) widen the x span by
+stretching node columns — more effective than compressing y, 3) compact
+vertical rhythm. Do not chase a "good aspect ratio" without this budget: an
+official example at ratio 1.84 (1080×588) can pass while a 1.89 candidate
+overflows, because the absolute rendered height, not the ratio, is the
+determinant.
 
 ### Spacing and labels
 
