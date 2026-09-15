@@ -19,7 +19,8 @@ function evidenceFailure(code, message, { subject = {}, evidence = {}, supported
 }
 
 function runGit(repoRoot, args) {
-  const result = spawnSync('git', ['-C', repoRoot, ...args], {
+  // 固定 SHA 的来源必须读取原始对象，不能使用本地 replacement refs 的替换内容。
+  const result = spawnSync('git', ['--no-replace-objects', '-C', repoRoot, ...args], {
     encoding: 'utf8',
     maxBuffer: 16 * 1024 * 1024,
   });
