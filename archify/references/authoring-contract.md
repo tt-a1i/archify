@@ -133,7 +133,11 @@ its endpoints fully imply it, explain why the wording is redundant; this is a
 semantic authoring choice, not a spacing repair. In workflow v2, let the compiler
 allocate its measured mask before applying a diagnosed `labelAt`,
 `labelDx`/`labelDy`, or `labelSegment`. Apply one diagnosed geometry control at
-a time.
+a time — EXCEPT when multiple edges share a spatial channel (e.g. two vertical
+segments bounding a label corridor): plan all coupled controls (`via`,
+`labelAt`, `channelY`) as a batch using `--layout-json` evidence, then apply
+and validate together. Blind single-step iteration in a shared channel causes
+cascading fixes.
 
 ### Repair order
 
