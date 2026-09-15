@@ -9,14 +9,15 @@ import { resolveOutputPath } from './output-path.mjs';
 import { prepareDiagramBrandMarks } from './brand-marks.mjs';
 import { resolveLocale, translateMessage } from './i18n.mjs';
 
-installRendererDiagnosticBoundary();
-
 const outputPathGuards = new Map();
 
 // Common CLI head: node render-<type>.mjs [input.json] [output.html]
 // Keep this synchronous because callers also use it to establish the guarded
 // output path before testing a last-moment filesystem alias change.
 export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = process.argv }) {
+  // Compilers also import this module for SVG helpers. Only CLI execution
+  // should install a process-level handler, before reading or validating input.
+  installRendererDiagnosticBoundary();
   const skillRoot = path.resolve(rendererDir, '../..');
   const inputPath = path.resolve(argv[2] || path.join(skillRoot, 'examples', defaultExample));
   const diagram = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
