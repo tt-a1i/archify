@@ -431,6 +431,17 @@ test('checked-in Checkout compare artifact is reproducible from its authoritativ
   assert.deepEqual(read(receipt), read(checkedReceipt));
 });
 
+test('compare artifact exports standalone SVG with a UTF-8 XML declaration', () => {
+  const output = path.join(tmp, 'utf8-export.html');
+  const result = run(['compare', 'architecture', baseFixture, headFixture, output, '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  const html = fs.readFileSync(output, 'utf8');
+  assert.ok(
+    html.includes(`'<?xml version="1.0" encoding="UTF-8"?>\\n' + new XMLSerializer().serializeToString(clone)`),
+    'the exported standalone SVG must declare its UTF-8 encoding',
+  );
+});
+
 test('artifact validation fails closed on missing, duplicate, or self-blessed review identity', () => {
   const output = path.join(tmp, 'review-identity.html');
   const result = run(['compare', 'architecture', baseFixture, headFixture, output, '--json']);

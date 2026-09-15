@@ -11139,8 +11139,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
+        // The XML declaration pins UTF-8: without it, consumers that guess an
+        // encoding instead of defaulting to UTF-8 mangle non-ASCII text.
         return {
-          svgString: new XMLSerializer().serializeToString(clone),
+          svgString: &#39;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;\n&#39; +
+            new XMLSerializer().serializeToString(clone),
           width: vb.width * scale,
           height: vb.height * scale,
           canonicalStateClean: canonicalStateClean,
@@ -26366,8 +26369,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
+        // The XML declaration pins UTF-8: without it, consumers that guess an
+        // encoding instead of defaulting to UTF-8 mangle non-ASCII text.
         return {
-          svgString: new XMLSerializer().serializeToString(clone),
+          svgString: &#39;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;\n&#39; +
+            new XMLSerializer().serializeToString(clone),
           width: vb.width * scale,
           height: vb.height * scale,
           canonicalStateClean: canonicalStateClean,
@@ -35448,7 +35454,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       'text[data-delta-boundary-state="added"]{fill:#34d399!important}text[data-delta-boundary-state="removed"]{fill:#fb7185!important}text[data-delta-boundary-state="changed"]{fill:#fbbf24!important}text[data-delta-boundary-state="moved-from"]{fill:#7dd3fc!important;opacity:.55}' +
       '.delta-node-marker circle{fill:#071019;stroke:currentColor;stroke-width:1.5}.delta-node-marker text,.delta-edge-marker,.delta-boundary-marker{fill:currentColor;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace}';
     clone.insertBefore(style, clone.firstChild);
-    return new XMLSerializer().serializeToString(clone);
+    // The XML declaration pins UTF-8: without it, consumers that guess an
+    // encoding instead of defaulting to UTF-8 mangle non-ASCII text.
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(clone);
   }
 
   function artifactName(suffix) {
