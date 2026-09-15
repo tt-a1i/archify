@@ -95,6 +95,8 @@ node bin/archify.mjs compare architecture base.json head.json \
   architecture-delta.html --quality showcase --json
 ```
 
+`compare` 首次读取两份输入后，会使用捕获的原始字节进行校验、计算回执哈希并生成差异；之后原文件的变化不会影响本次比较。非法原始字段仍会在规范化之前被拒绝。
+
 ## 6. 检查最终文件
 
 确定性校验不会在真实浏览器中运行 Viewer。如果环境有 Chrome 或 Chromium，请对刚刚交付的 HTML 收集自动化浏览器证据：

@@ -200,6 +200,34 @@ test('benchmark never accepts a visual pass without an identified reviewer', () 
   assert.equal(receipt.firstPassUsable, false);
 });
 
+test('benchmark never upgrades missing or malformed visual defects to a clean pass', () => {
+  const caseFile = path.join(repoRoot, 'benchmarks/ordinary-model-floor/cases/web-runtime.architecture.case.json');
+  const candidate = path.join(skillRoot, 'examples/web-app.architecture.json');
+  for (const [index, defects] of [undefined, null, 'clipping', { clipping: true }, false, 0, [], ['clipping']].entries()) {
+    const runFile = writeJson(`visual-defects-${index}.run.json`, {
+      schema_version: 1,
+      case_id: 'web-runtime-architecture',
+      agent: 'fixture-agent',
+      model: 'fixture-model',
+      attempt: 1,
+      visual_review: { status: 'passed', reviewer: 'fixture-reviewer', defects },
+    });
+    const result = run(['verify', '--case', caseFile, '--candidate', candidate, '--run', runFile]);
+    const clean = Array.isArray(defects) && defects.length === 0;
+    assert.equal(result.status, clean ? 0 : 1, result.stderr || result.stdout);
+    const receipt = JSON.parse(result.stdout);
+    assert.equal(receipt.gates.semantic.ok, true);
+    assert.equal(receipt.gates.validation.ok, true);
+    assert.equal(receipt.firstPassUsable, clean);
+    assert.equal(receipt.gates.visualReview.status, Array.isArray(defects) ? 'passed' : 'invalid');
+    if (Array.isArray(defects)) {
+      assert.deepEqual(receipt.gates.visualReview.defects, defects);
+    } else {
+      assert.equal(receipt.gates.visualReview.reason, 'passed visual review requires an explicit defects array');
+    }
+  }
+});
+
 test('benchmark applies the same semantic and delivery seam to workflow, sequence, data-flow, and lifecycle candidates', () => {
   const cases = [
     {

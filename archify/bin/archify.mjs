@@ -576,6 +576,8 @@ async function commandCompare(args) {
   const headCandidate = path.join(stagingDirectory, 'head.html');
   const rawBaseCandidate = path.join(stagingDirectory, 'base.raw.html');
   const rawHeadCandidate = path.join(stagingDirectory, 'head.raw.html');
+  const rawBaseInput = path.join(stagingDirectory, 'base.snapshot.json');
+  const rawHeadInput = path.join(stagingDirectory, 'head.snapshot.json');
   const canonicalBaseInput = path.join(stagingDirectory, 'base.architecture.json');
   const canonicalHeadInput = path.join(stagingDirectory, 'head.architecture.json');
   const htmlCandidate = path.join(stagingDirectory, path.basename(outputPath));
@@ -584,8 +586,31 @@ async function commandCompare(args) {
   try {
     let baseResult;
     let headResult;
+    for (const { side, snapshotPath, buffer } of [
+      { side: 'base', snapshotPath: rawBaseInput, buffer: baseBuffer },
+      { side: 'head', snapshotPath: rawHeadInput, buffer: headBuffer },
+    ]) {
+      try {
+        fs.writeFileSync(snapshotPath, buffer, { flag: 'wx' });
+      } catch (error) {
+        const message = `Could not freeze ${side} compare snapshot: ${error.message}`;
+        reportCompareFailure({
+          json: options.json,
+          stage: 'prepare',
+          error: message,
+          code: 'delta/freeze-snapshot',
+          details: {
+            side,
+            ...(error?.code ? { systemCode: error.code } : {}),
+            reason: error.message,
+            supportedFixes: ['choose a writable compare output directory on the target filesystem'],
+          },
+        });
+        return;
+      }
+    }
     try {
-      renderValidatedArchitecture(basePath, rawBaseCandidate, qualityArgs.quality, repoArgs.repoRoot);
+      renderValidatedArchitecture(rawBaseInput, rawBaseCandidate, qualityArgs.quality, repoArgs.repoRoot);
     } catch (error) {
       const diagnosticEntry = error.diagnostics?.[0];
       reportCompareFailure({
@@ -599,7 +624,7 @@ async function commandCompare(args) {
       return;
     }
     try {
-      renderValidatedArchitecture(headPath, rawHeadCandidate, qualityArgs.quality, repoArgs.repoRoot);
+      renderValidatedArchitecture(rawHeadInput, rawHeadCandidate, qualityArgs.quality, repoArgs.repoRoot);
     } catch (error) {
       const diagnosticEntry = error.diagnostics?.[0];
       reportCompareFailure({
