@@ -6,6 +6,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
+### Added
+- **GitHub Copilot agent-switcher target.** The Start page agent switcher, README EN/ZH quick start, and landing copy add `github-copilot` alongside `cursor`, `codex`, `claude-code`, and `opencode`. It installs the same checked Skill and zero-dependency renderers via `npx skills add tt-a1i/archify --skill archify --agent github-copilot ...`; no vendor-specific fork, renderer, or schema behavior was added.
+
 ### Fixed
 - **Compare 输入快照一致性 (#400)。** 原始输入校验使用首次读取的字节快照，使其与回执哈希和差异计算保持一致；读取后原文件发生变化不会影响本次比较，非法原始字段仍会被拒绝。
 - **DSH plugin refresh.** Adapter 0.2.0 pins the current Archify development snapshot, includes the newer runtime and CLI fixes, and targets DSH 0.1.2-rc.1. Release metadata replaces the frozen 0.1.0 packaging source; the tarball uses the canonical clean-Skill stager and documents independent plugin upgrades.
