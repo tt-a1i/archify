@@ -155,7 +155,7 @@ function fieldChanges(before, after, groups) {
 }
 
 const COMPONENT_FIELDS = {
-  semantic: ['type', 'label', 'sublabel', 'tag'],
+  semantic: ['type', 'label', 'sublabel', 'tag', 'brand'],
   evidence: ['sources'],
   geometry: ['row', 'col', 'pos', 'size'],
 };
@@ -202,6 +202,7 @@ function summaryFor(changes, shape) {
 function presentationChanged(base, head) {
   const basePresentation = {
     title: base.meta?.title,
+    locale: base.meta?.locale,
     subtitle: base.meta?.subtitle,
     animation: base.meta?.animation,
     visual_preset: base.meta?.visual_preset,
@@ -215,6 +216,7 @@ function presentationChanged(base, head) {
   };
   const headPresentation = {
     title: head.meta?.title,
+    locale: head.meta?.locale,
     subtitle: head.meta?.subtitle,
     animation: head.meta?.animation,
     visual_preset: head.meta?.visual_preset,

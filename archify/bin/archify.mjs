@@ -576,6 +576,8 @@ async function commandCompare(args) {
   const headCandidate = path.join(stagingDirectory, 'head.html');
   const rawBaseCandidate = path.join(stagingDirectory, 'base.raw.html');
   const rawHeadCandidate = path.join(stagingDirectory, 'head.raw.html');
+  const rawBaseInput = path.join(stagingDirectory, 'base.snapshot.json');
+  const rawHeadInput = path.join(stagingDirectory, 'head.snapshot.json');
   const canonicalBaseInput = path.join(stagingDirectory, 'base.architecture.json');
   const canonicalHeadInput = path.join(stagingDirectory, 'head.architecture.json');
   const htmlCandidate = path.join(stagingDirectory, path.basename(outputPath));
@@ -584,8 +586,31 @@ async function commandCompare(args) {
   try {
     let baseResult;
     let headResult;
+    for (const { side, snapshotPath, buffer } of [
+      { side: 'base', snapshotPath: rawBaseInput, buffer: baseBuffer },
+      { side: 'head', snapshotPath: rawHeadInput, buffer: headBuffer },
+    ]) {
+      try {
+        fs.writeFileSync(snapshotPath, buffer, { flag: 'wx' });
+      } catch (error) {
+        const message = `Could not freeze ${side} compare snapshot: ${error.message}`;
+        reportCompareFailure({
+          json: options.json,
+          stage: 'prepare',
+          error: message,
+          code: 'delta/freeze-snapshot',
+          details: {
+            side,
+            ...(error?.code ? { systemCode: error.code } : {}),
+            reason: error.message,
+            supportedFixes: ['choose a writable compare output directory on the target filesystem'],
+          },
+        });
+        return;
+      }
+    }
     try {
-      renderValidatedArchitecture(basePath, rawBaseCandidate, qualityArgs.quality, repoArgs.repoRoot);
+      renderValidatedArchitecture(rawBaseInput, rawBaseCandidate, qualityArgs.quality, repoArgs.repoRoot);
     } catch (error) {
       const diagnosticEntry = error.diagnostics?.[0];
       reportCompareFailure({
@@ -599,7 +624,7 @@ async function commandCompare(args) {
       return;
     }
     try {
-      renderValidatedArchitecture(headPath, rawHeadCandidate, qualityArgs.quality, repoArgs.repoRoot);
+      renderValidatedArchitecture(rawHeadInput, rawHeadCandidate, qualityArgs.quality, repoArgs.repoRoot);
     } catch (error) {
       const diagnosticEntry = error.diagnostics?.[0];
       reportCompareFailure({
@@ -1225,8 +1250,10 @@ async function commandPreview(args) {
 }
 
 function commandCheck(args) {
+  const unknown = args.find((arg) => arg.startsWith('--'));
+  if (unknown) fail(`Unknown check option "${unknown}".`);
   const [html] = args;
-  if (!html) fail(usage());
+  if (!html || args.length !== 1) fail(usage());
   const result = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), html]);
   if (result.status !== 0) exitFrom(result);
 }
@@ -1283,12 +1310,18 @@ async function commandVisualCheck(args) {
   process.exitCode = result.exitCode;
 }
 
-function commandExamples() {
+function commandExamples(args) {
+  const unknown = args.find((arg) => arg.startsWith('--'));
+  if (unknown) fail(`Unknown examples option "${unknown}".`);
+  if (args.length) fail(usage());
   const result = runNode([path.join(skillRoot, 'scripts/render-examples.mjs')], { cwd: skillRoot });
   if (result.status !== 0) exitFrom(result);
 }
 
-async function commandDoctor() {
+async function commandDoctor(args) {
+  const unknown = args.find((arg) => arg.startsWith('--'));
+  if (unknown) fail(`Unknown doctor option "${unknown}".`);
+  if (args.length) fail(usage());
   const checks = [];
   const nodeMajor = Number.parseInt(process.versions.node.split('.')[0], 10);
   checks.push({
@@ -1536,6 +1569,8 @@ async function commandBrands(args) {
 }
 
 function commandDemo(args) {
+  const unknown = args.find((arg) => arg.startsWith('--'));
+  if (unknown) fail(`Unknown demo option "${unknown}".`);
   if (args.length > 1) fail(usage());
 
   const outputDirectory = path.resolve(args[0] || process.cwd());
@@ -2070,10 +2105,10 @@ try {
       await commandBrands(args);
       break;
     case 'examples':
-      commandExamples();
+      commandExamples(args);
       break;
     case 'doctor':
-      await commandDoctor();
+      await commandDoctor(args);
       break;
     case 'demo':
       commandDemo(args);

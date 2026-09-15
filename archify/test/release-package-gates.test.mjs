@@ -414,10 +414,7 @@ canonicalZipTest('built archives contain the embedded notifier runtime', () => {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-notifier-package-gate-'));
   try {
     const archive = path.join(fixture, 'archify.zip');
-    const build = spawnSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), [archive], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    });
+    const build = spawnBuildZip(archive);
     assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
 
     const listing = spawnSync('unzip', ['-Z1', archive], { encoding: 'utf8' });

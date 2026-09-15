@@ -50,6 +50,7 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
   }
   let startup;
   let navigationId = 0;
+  let fixtureUrl;
   async function media(reduced) {
     await send('Emulation.setEmulatedMedia', { media: '', features: [
       { name: 'prefers-reduced-motion', value: reduced ? 'reduce' : 'no-preference' },
@@ -57,9 +58,12 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
   }
   async function load(mode = 'architecture', { theme = 'dark', reduced = false, fixture = '', preserveStorage = false, query = '' } = {}) {
     const expectedNavigation = ++navigationId;
+    if (!preserveStorage) {
+      fixtureUrl = pathToFileURL(files[mode]).href + `?theme=${theme}&testNavigation=${expectedNavigation}${query}`;
+    }
     if (startup) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: startup });
     ({ identifier: startup } = await send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {
-      if (new URL(location.href).searchParams.get('testNavigation') !== '${expectedNavigation}') return;
+      if (location.href !== ${JSON.stringify(fixtureUrl)}) return;
       window.motionNavigation = ${expectedNavigation};
       try { window.motionStartupPreference = localStorage.getItem('archify-motion'); }
       catch (error) { window.motionStartupPreference = String(error); }
@@ -89,8 +93,13 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
     await media(reduced);
     const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
-    const navigation = await send('Page.navigate', { url: pathToFileURL(files[mode]).href + `?theme=${theme}&testNavigation=${expectedNavigation}${query}` });
-    assert.ok(navigation.loaderId, 'Motion fixture must load a new document.');
+    if (preserveStorage) {
+      // Reload the same file URL: changing its query can change file-backed storage.
+      await send('Page.reload');
+    } else {
+      const navigation = await send('Page.navigate', { url: fixtureUrl });
+      assert.ok(navigation.loaderId, 'Motion fixture must load a new document.');
+    }
     await loaded;
     await run('document.fonts.ready');
     assert.equal(await run('window.motionNavigation'), expectedNavigation, 'Motion fixture document identity');
@@ -146,9 +155,12 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     await load();
     assert.equal(await run('Archify.motionGovernor.pause()'), true);
     assert.equal(await run(`localStorage.getItem('archify-motion')`), 'still');
+    const storedUrl = await run('location.href');
     for (let reload = 0; reload < 5; reload++) {
       await load('architecture', { preserveStorage: true });
       const stored = await run(`({initial:motionStartupPreference,current:localStorage.getItem('archify-motion'),navigation:motionNavigation,url:location.href})`);
+      assert.equal(stored.url, storedUrl, 'Preference persistence must reload the same file URL.');
+      assert.equal(stored.initial, 'still', 'Preference must survive before application startup.');
       assert.equal((await snapshot('stored-still-' + reload)).mode, 'still', JSON.stringify(stored));
     }
     assert.equal(await run(`Archify.motionGovernor.setMode('live', {persist:false})`), 'live');
