@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { collectAmbiguousCorridors, collectBorderRuns, collectLabelRouteClearance, collectRouteRhythmIssues, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 import {
@@ -19,8 +20,11 @@ if (!input || input === '-h' || input === '--help') {
 
 const htmlPath = path.resolve(input);
 let html;
+let artifact;
 try {
-  html = fs.readFileSync(htmlPath, 'utf8');
+  const bytes = fs.readFileSync(htmlPath);
+  html = bytes.toString('utf8');
+  artifact = { sha256: createHash('sha256').update(bytes).digest('hex'), bytes: bytes.byteLength };
 } catch (err) {
   console.error(JSON.stringify({
     ok: false,
@@ -299,7 +303,7 @@ if (svgMatches.length === 1) {
 }
 
 const ok = checks.every((check) => check.ok) && composition.status !== 'fail';
-console.log(JSON.stringify({ ok, file: htmlPath, checks, composition }, null, 2));
+console.log(JSON.stringify({ ok, file: htmlPath, artifact, checks, composition }, null, 2));
 // Let pending stdout writes drain: large receipts are asynchronous when piped.
 process.exitCode = ok ? 0 : 1;
 

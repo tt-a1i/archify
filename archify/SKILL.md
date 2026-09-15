@@ -32,7 +32,7 @@ Use this bounded path for ordinary generation. Do not read the optional Viewer R
    node bin/archify.mjs deliver <type> <candidate.json> <output.html> --quality showcase --json
    ```
 
-   A non-zero exit can never be described as success. A failed delivery preserves any previous output, so do not run `visual-check` on that path: it would inspect the stale last-good artifact, not the failed candidate. If validation fails, change only the diagnosed `subject`, verify `evidence`, choose from `supportedFixes`, and rerun. Continue focused correction while the objective error count reaches a new minimum. If two consecutive rounds do not improve that best count, stop and report the unresolved diagnostics truthfully.
+   A non-zero exit can never be described as success. Continue to the strict delivery gate below only after `deliver` exits zero. If validation fails, change only the diagnosed `subject`, verify `evidence`, choose from `supportedFixes`, and rerun. Continue focused correction while the objective error count reaches a new minimum. If two consecutive rounds do not improve that best count, stop and report the unresolved diagnostics truthfully.
 
 ## Update awareness
 
@@ -95,12 +95,21 @@ Read `references/authoring-contract.md` only when you need field enums, spacing 
 
 ## Delivery
 
-Use `validate` during repair and `deliver` once for final acceptance. Delivery freezes the exact specification bytes into a private same-directory snapshot, renders and checks that snapshot, atomically commits the HTML, and reports SHA-256 plus byte counts for both specification and artifact. This is deterministic artifact evidence; it does not exercise the Viewer in a browser.
+Use `validate` during repair and `deliver` once for final acceptance. This is deterministic artifact evidence; it does not exercise the Viewer in a browser. After `deliver` exits zero, require current delivery evidence before handoff:
+
+```bash
+node bin/archify.mjs check <output.html> --require-provenance
+```
+
+Read `references/delivery-contract.md` whenever `deliver`, strict `check`, or
+`visual-check` fails; provenance is not current; recovery metadata remains; or
+the same output path needs another delivery. That file is the canonical source
+for provenance, serialization, recovery, receipt, and browser-evidence rules.
 
 After delivery, collect bounded desktop evidence without modifying or rerendering the trusted HTML:
 
 ```bash
-node bin/archify.mjs visual-check <output.html> --json
+node bin/archify.mjs visual-check <output.html> --json --require-provenance
 ```
 
 `visual-check` collects automated browser evidence from the exact delivered HTML without modifying or rerendering it. Its machine-readable measurements and screenshots do not approve perceptual polish. Follow `references/delivery-contract.md` for the canonical receipt fields, coverage, sidecars, exit behavior, and supplementary manual-record requirements.

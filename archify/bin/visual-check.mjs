@@ -660,7 +660,7 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
   return diagnostics;
 }
 
-function baseReceipt({ artifactPath, artifact, outputs, chrome }) {
+function baseReceipt({ artifactPath, artifact, outputs, chrome, deliveryProvenance }) {
   return {
     schemaVersion: 1,
     ok: false,
@@ -668,6 +668,10 @@ function baseReceipt({ artifactPath, artifact, outputs, chrome }) {
     evidenceKind: 'automated-browser',
     status: 'fail',
     visualReview: 'pending',
+    ...(deliveryProvenance ? {
+      provenance: deliveryProvenance.status,
+      ...(deliveryProvenance.receiptId ? { deliveryReceiptId: deliveryProvenance.receiptId } : {}),
+    } : {}),
     artifact: {
       path: artifactPath,
       sha256: sha256(artifact),
@@ -691,16 +695,58 @@ function persistReceipt(outputs, receipt) {
   writeAtomic(outputs.receipt, `${JSON.stringify(receipt, null, 2)}\n`);
 }
 
+export function persistVisualCheckFailure(artifactPath, failure) {
+  const outputs = sidecarPaths(artifactPath);
+  const receipt = {
+    ...failure,
+    ok: false, status: 'fail',
+    containment: { status: 'fail', viewports: [] },
+    captures: { status: 'fail', screenshots: [], contactSheet: null },
+    sidecars: { receipt: path.basename(outputs.receipt), contactSheet: path.basename(outputs.contactSheet) },
+  };
+  const errors = [];
+  for (const file of [outputs.receipt, outputs.contactSheet, ...outputs.screenshots.map((entry) => entry.path)]) {
+    try { fs.rmSync(file, { force: true }); } catch (error) { errors.push({ file, reason: error.message }); }
+  }
+  const reportErrors = () => {
+    receipt.diagnostics = [...(failure.diagnostics || []), failureDiagnostic({
+      code: 'viewer/evidence-write', message: 'Previous visual evidence could not be fully invalidated or replaced.',
+      subject: { artifact: path.resolve(artifactPath) }, evidence: { errors },
+      supportedFixes: ['restore write access to the evidence files and rerun visual-check'],
+    })];
+  };
+  if (errors.length) reportErrors();
+  try {
+    persistReceipt(outputs, receipt);
+  } catch (error) {
+    errors.push({ file: outputs.receipt, reason: error.message });
+    reportErrors();
+  }
+  return receipt;
+}
+
 export async function runVisualCheck({
   artifactPath,
   chromePath,
   resolveChrome = findChrome,
   browserFactory = async (resolvedChrome) => new ChromeVisualBrowser(resolvedChrome),
+  deliveryProvenance,
+  verifyArtifact,
 } = {}) {
   if (!artifactPath) throw new Error('visual-check requires one delivered HTML artifact.');
   const artifact = path.resolve(artifactPath);
   if (!/\.html?$/i.test(artifact)) throw new Error('visual-check requires an .html artifact.');
   const artifactBytes = fs.readFileSync(artifact);
+  try {
+    verifyArtifact?.(artifactBytes);
+  } catch (error) {
+    return { exitCode: EXIT.fail, receipt: persistVisualCheckFailure(artifact, {
+      schemaVersion: 1, command: 'visual-check', evidenceKind: 'automated-browser', visualReview: 'pending',
+      artifact: { path: artifact, sha256: sha256(artifactBytes), bytes: artifactBytes.byteLength },
+      provenance: error.deliveryProvenance?.status, error: error.message,
+      diagnostics: error.archifyDiagnostics || [],
+    }) };
+  }
   const outputs = sidecarPaths(artifact);
   cleanupCaptureSidecars(outputs);
   safeUnlink(outputs.receipt);
@@ -713,6 +759,7 @@ export async function runVisualCheck({
     chrome: resolvedChrome
       ? { status: 'available', executable: resolvedChrome }
       : { status: 'unavailable', executable: null },
+    deliveryProvenance,
   });
 
   if (!resolvedChrome) {
@@ -767,6 +814,7 @@ export async function runVisualCheck({
     }
 
     const afterBytes = fs.readFileSync(artifact);
+    verifyArtifact?.(afterBytes);
     if (sha256(afterBytes) !== receipt.artifact.sha256 || afterBytes.byteLength !== receipt.artifact.bytes) {
       throw new Error('The delivered artifact changed while visual-check was running.');
     }
@@ -814,7 +862,8 @@ export async function runVisualCheck({
     receipt.captures.status = 'fail';
     receipt.captures.screenshots = [];
     receipt.captures.contactSheet = null;
-    receipt.diagnostics = [failureDiagnostic({
+    if (error.deliveryProvenance) receipt.provenance = error.deliveryProvenance.status;
+    receipt.diagnostics = error.archifyDiagnostics || [failureDiagnostic({
       code: 'viewer/visual-check-runtime',
       message: 'visual-check could not complete its Chrome inspection.',
       subject: { artifact },

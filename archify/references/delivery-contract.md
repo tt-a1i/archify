@@ -2,6 +2,51 @@
 
 ## Validate and deliver
 
+Each output has two independent delivery metadata paths:
+
+- `<output-stem>.delivery.json` records the latest completed attempt.
+- `<output-stem>.delivery-pending.json` is the recovery journal for an attempt
+  in progress.
+
+`deliver` creates the journal before rendering and keeps it through the
+recoverable HTML/sidecar pair commit. It removes the journal only after that
+commit completes. A validation or render failure, a locked destination, or a
+process interruption may therefore leave a journal. The journal is a safety
+barrier: `check` and `visual-check` fail closed when any directory entry exists
+at that path, including an unreadable file, symlink, or dangling symlink. Run
+deliveries targeting the same output path serially; one attempt must finish or
+be recovered before another begins.
+
+A successful sidecar has `schemaVersion: 1`, `status: "current"`,
+`command: "deliver"`, a unique `receiptId`, the diagram `type`, an absolute
+`input` path, an absolute `output` path matching the inspected
+artifact, and specification/artifact SHA-256 and byte counts. Checkers treat a
+missing, malformed, unsupported, or inconsistent field as invalid. They also
+reject a sidecar symlink, including a dangling one. A checker binds provenance
+to the artifact bytes it actually checks and verifies that binding again before
+reporting success; a concurrent byte change fails.
+
+If an attempt fails after an older HTML exists, Archify writes a new
+`status: "failed"` sidecar and leaves the journal until recovery is complete.
+An unreadable old HTML does not prevent that marker; its artifact hash and byte
+count may be absent. If the sidecar is locked or otherwise unwritable, Archify
+keeps the prior sidecar rather than deleting evidence, and the journal prevents
+checkers from trusting it. If every metadata path is unavailable, the failure
+receipt reports `provenance: "unrecorded"`; no tool can preserve that fact
+across processes. Restore metadata-path access and complete a successful
+`deliver` before trusting the output.
+
+Artifacts with neither sidecar nor journal remain supported for backward
+compatibility and for the lower-level `render` command. Their checker receipts
+report `provenance: "unknown"`; use `--require-provenance` to turn that state
+into a non-zero failure when the workflow requires a successfully delivered
+artifact:
+
+```bash
+node bin/archify.mjs check <output.html> --require-provenance
+node bin/archify.mjs visual-check <output.html> --json --require-provenance
+```
+
 Use `validate` after every candidate edit. CLI HTML output paths must end in `.html`, including after symbolic-link resolution.
 Compare receipt paths must end in `.json`. Explicit CLI paths may be absolute or
 outside the current working directory; authored `meta.output` remains confined
@@ -10,19 +55,27 @@ to that directory. A type mismatch fails before writing with
 accidental file-type overwrites; they do not sandbox explicit CLI directories
 or prevent replacement of an existing artifact of the expected type.
 
-Use final atomic delivery only after the candidate is frozen:
+Use final verified delivery only after the candidate is frozen:
 
 ```bash
 node bin/archify.mjs deliver <type> <candidate.json> <output.html> --quality showcase --json
 ```
 
-Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. The JSON receipt includes SHA-256 and byte counts for both `specification` and `artifact`. Renderer, checker, receipt, or commit failure exits non-zero, removes private state, preserves the previous trusted artifact, and never invokes an opener.
+Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. The JSON receipt includes SHA-256 and byte counts for both `specification` and `artifact`.
 
-Run `visual-check` only after `deliver` exits zero for the current candidate. If
-delivery fails and the output path already exists, that path still names the
-previous trusted artifact; running `visual-check` then would measure and capture
-stale output, not the rejected candidate. Report the delivery diagnostics and
-repair the source before collecting new visual evidence.
+The pair commit is recoverable, not a claim that two filesystem paths change
+atomically or are durable across power loss. A caught commit exception rolls
+back when possible. A process interruption can leave the journal, backups, or
+private staging behind; checkers then fail closed. Rerun `deliver` serially on
+the same output to recover and establish a new current receipt, following any
+diagnostic that identifies abandoned private staging requiring cleanup. A
+failed attempt exits non-zero, never invokes an opener, and never authorizes
+visual evidence collection.
+
+Run strict `check` after `deliver` exits zero. Run `visual-check` only after that
+strict check exits zero. A failed marker or recovery journal makes both commands
+fail before accepting the preserved HTML; report the diagnostics and complete a
+successful recovery delivery before collecting new visual evidence.
 
 The delivery interface exposes three separate claims:
 
@@ -38,7 +91,7 @@ After delivery, inspect the exact trusted HTML without rerendering or modifying
 it:
 
 ```bash
-node bin/archify.mjs visual-check <output.html> --json
+node bin/archify.mjs visual-check <output.html> --json --require-provenance
 ```
 
 The zero-dependency command uses Chrome/Chromium through the DevTools pipe. It
@@ -64,9 +117,20 @@ environmental failure through the supported command in a browser-capable
 execution context when practical. Keep the packaged transport unchanged unless
 the failure reproduces through that seam in a capable environment.
 
+A provenance failure exits before browser inspection. That early exit removes
+stale screenshots and the contact sheet, then persists a failed visual-check
+receipt bound to the attempted artifact. If any stale-evidence cleanup or
+failure-receipt write cannot complete, the diagnostic names that incomplete
+cleanup; do not present remaining sidecars as current evidence.
+
 ## Optional opening
 
-Add `--open` only when the user wants an immediate local preview. It runs after that atomic commit, uses one argument-array OS opener with a five-second bound, and records `open.status`. Keep it off for CI, unattended agents, and non-interactive environments. Failure or unsupported opening does not invalidate delivery; its status proves only whether the local opener invocation succeeded.
+Add `--open` only when the user wants an immediate local preview. It runs after
+the verified pair commit has completed and its recovery journal has been
+removed, uses one argument-array OS opener with a five-second bound, and records
+`open.status`. Keep it off for CI, unattended agents, and non-interactive
+environments. Failure or unsupported opening does not invalidate delivery; its
+status proves only whether the local opener invocation succeeded.
 
 ## Last-Good Live Preview
 
