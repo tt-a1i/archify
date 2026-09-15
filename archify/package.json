@@ -7,6 +7,7 @@
   "license": "MIT",
   "bin": {
     "archify": "./bin/archify.mjs"
+    "archify-smart": "bin/archify-smart.js"
   },
   "engines": {
     "node": ">=18"
@@ -32,6 +33,7 @@
     "parse5": "7.3.0",
     "saxes": "6.0.0",
     "simple-icons": "16.28.0"
+    "which": "^4.0.0"
   },
   "overrides": {
     "fast-uri": "3.1.5"
