@@ -1,0 +1,48 @@
+name: Stale awaiting-author PRs
+
+# The stale clock runs only on PRs labelled `awaiting-author`. That label is
+# set by pr-triage-card.yml when a collaborator submits a Changes Requested
+# review on the current head, and removed when the author pushes again.
+# 14 days without a new commit or reply adds `stale` and a reminder; 7 more
+# days closes the PR with instructions to resume. Waiting on maintainer
+# review is never stale, and issues are never touched by this workflow.
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  stale:
+    name: Mark and close PRs waiting on their author
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-issue-stale: -1
+          days-before-issue-close: -1
+          days-before-pr-stale: 14
+          days-before-pr-close: 7
+          only-pr-labels: awaiting-author
+          stale-pr-label: stale
+          remove-stale-when-updated: true
+          exempt-draft-pr: false
+          operations-per-run: 100
+          stale-pr-message: >
+            A maintainer requested changes on this PR 14 days ago and there has
+            been no new commit or reply since. Pushing a commit or replying here
+            stops the clock and removes the `stale` label. If it is still waiting
+            in 7 days it will be closed; reopening later is welcome. Current
+            maintainer priorities are listed in
+            ${{ github.server_url }}/${{ github.repository }}/blob/main/.github/CURRENT_FOCUS.md
+          close-pr-message: >
+            Closed because this PR waited on its author for 21 days after
+            Changes Requested. To resume, push to the branch and reopen this PR,
+            or open a fresh PR against current main and link back here. If the
+            PR was the primary implementation for its issue, that status may be
+            reassigned per
+            ${{ github.server_url }}/${{ github.repository }}/blob/main/CONTRIBUTING.md

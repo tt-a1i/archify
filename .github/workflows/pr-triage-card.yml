@@ -1,0 +1,34 @@
+name: PR triage card
+
+# Advisory evidence index for reviewers. Reads PR metadata only, posts one
+# upserted comment, and keeps the review-state labels in sync. It never runs
+# PR-supplied code: the checkout below is the base repository default ref.
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened, ready_for_review, converted_to_draft]
+  pull_request_review:
+    types: [submitted]
+
+concurrency:
+  group: pr-triage-card-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  card:
+    name: Refresh triage card
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Sync review-state labels and upsert the card
+        run: node .github/scripts/pr-triage-card.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

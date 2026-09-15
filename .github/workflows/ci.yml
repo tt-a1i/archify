@@ -185,6 +185,19 @@ jobs:
       - name: Validate packaged skill without installing dependencies
         run: node scripts/package-smoke.mjs
 
+  governance-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Syntax-check and test every .github/scripts module
+        run: |
+          set -euo pipefail
+          for script in .github/scripts/*.mjs; do node --check "$script"; done
+          node --test .github/scripts/*.test.mjs
+
   deploy-pages:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [test, webm-artifact, zip-freshness, published-update-manifest, package-smoke]

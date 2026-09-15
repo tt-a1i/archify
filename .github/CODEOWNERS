@@ -2,4 +2,9 @@
 /.github/CODEOWNERS @tt-a1i
 /.github/workflows/** @tt-a1i
 /.github/actions/** @tt-a1i
+/.github/scripts/** @tt-a1i
+/.github/triage-allowlist.json @tt-a1i
+/.github/CURRENT_FOCUS.md @tt-a1i
+/CONTRIBUTING.md @tt-a1i
+/REVIEWING.md @tt-a1i
 /SECURITY.md @tt-a1i

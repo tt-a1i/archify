@@ -14,6 +14,8 @@ If scope remains undecided, report the specific decision needed and keep feedbac
 
 Check the author's [impact classification](CONTRIBUTING.md#choose-evidence-by-impact) against the changed paths and callers. Shared helpers, templates, and authoring instructions may affect more modes than the title suggests.
 
+Use the PR's Triage card comment as the index of linked scope, overlapping PRs, and changed-path classes before detailed review. It is an index, not a disposition; verify anything you rely on.
+
 Name the affected modes/contracts and the smallest evidence set that covers them. Include relevant historical failures and authored constraints. Explain any expansion beyond that set. Repository-only policy changes need consistency and process checks, not layout screenshots.
 
 Use focused evidence during design and repair. Reserve broad integration checks and final artifact rebuilds for the settled change. Required remote CI and branch protection remain in force.
@@ -37,6 +39,8 @@ Lead with the problem, value, and approach. Then report scope, evidence, and a c
 - **Required evidence or scope decision:** the unresolved claim, why it matters to acceptance, and the smallest check or decision that would settle it. An unverified risk is not a reproduced defect.
 - **Suggestion:** a worthwhile improvement outside the acceptance conditions; personal preference alone does not block.
 - **Ready:** the agreed behavior is delivered, relevant evidence is sufficient, and no acceptance blocker remains.
+
+When a collaborator requests changes, the `awaiting-author` label and the stale clock follow automatically. State clearly which items block, so the author can address them and clear the label with one push.
 
 Consolidate scope and compatibility concerns in the first substantive review where possible. Explain any later blocker with newly found evidence, an overlooked acceptance requirement, or a new diff. Record unrelated issues separately instead of growing the PR's scope.
 
