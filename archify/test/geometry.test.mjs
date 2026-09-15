@@ -13,6 +13,7 @@ import {
   segmentRectClearance,
   segmentRectIntersectionLength,
   collectLabelRouteClearance,
+  minimumLabelRouteClearance,
   cleanEndpointSideProblems,
   cleanFlowProblems,
   cleanCrossingProblems,
@@ -149,6 +150,15 @@ test('collectLabelRouteClearance exempts only the owning relationship at an exac
   assert.equal(hits.length, 1);
   assert.equal(hits[0].clearance, 2);
   assert.equal(hits[0].otherRelation, sharedSource);
+});
+
+test('minimumLabelRouteClearance handles receipt sets above the argument limit', () => {
+  const measurements = Array.from(
+    { length: 200_000 },
+    (_, index) => ({ clearance: index === 199_999 ? 1.24 : 9.87 }),
+  );
+  assert.equal(minimumLabelRouteClearance(measurements), 1.2);
+  assert.equal(minimumLabelRouteClearance([]), null);
 });
 
 test('endpoint-side direction distinguishes perpendicular entry from a tangent border run', () => {

@@ -167,6 +167,15 @@ export function collectLabelRouteClearance({ labels, routedRelations, threshold 
   return hits;
 }
 
+export function minimumLabelRouteClearance(measurements) {
+  if (!asArray(measurements).length) return null;
+  const minimum = measurements.reduce(
+    (value, hit) => Math.min(value, hit.clearance),
+    Infinity,
+  );
+  return Math.round(minimum * 10) / 10;
+}
+
 function relationshipIdentity(relation, relationIndex) {
   if (relation?.key !== undefined) return `key:${relation.key}`;
   if (relation?.id) return `id:${relation.from || ''}\u0000${relation.to || ''}\u0000${relation.id}`;
