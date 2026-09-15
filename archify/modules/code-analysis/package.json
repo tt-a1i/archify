@@ -1,0 +1,31 @@
+{
+  "name": "@archify/code-analysis",
+  "version": "0.1.0-dev.1",
+  "private": true,
+  "type": "module",
+  "description": "Archify's integrated code analysis: deliver the diagram, click Code Analysis, see the analysis layer on it.",
+  "license": "MIT",
+  "bin": {
+    "code-analysis": "./bin/serve.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "typescript": "^5.6.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tt-a1i/archify.git"
+  },
+  "keywords": [
+    "static-analysis",
+    "architecture",
+    "dependency-graph",
+    "archify"
+  ]
+}

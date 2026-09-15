@@ -12,6 +12,7 @@
     "node": ">=18"
   },
   "scripts": {
+    "start": "node bin/archify.mjs start",
     "generate:viewer": "node ../scripts/generate-viewer.mjs",
     "check:viewer": "node ../scripts/generate-viewer.mjs --check",
     "generate:brand-marks": "node scripts/generate-brand-marks.mjs",
@@ -24,6 +25,10 @@
     "build:start": "node ../scripts/build-start.mjs ../docs/start.html",
     "build:readme-showcase": "node ../scripts/build-readme-showcase.mjs",
     "test:webm": "node test/webm-artifact.smoke.mjs && node --test test/site-language-integration.mjs",
+    "render:examples": "node scripts/render-examples.mjs ../examples",
+    "postinstall": "npm ci --prefix modules/code-analysis --no-audit --no-fund",
+    "code-analysis": "node bin/archify.mjs code-analysis serve",
+    "test:code-analysis": "npm test --prefix modules/code-analysis",
     "test": "npm run check:viewer && npm run check:brand-marks && npm run check:validators && npm run check:release-identity && node test/golden.mjs && node ../scripts/run-tests.mjs",
     "render:examples": "node scripts/render-examples.mjs ../examples"
   },

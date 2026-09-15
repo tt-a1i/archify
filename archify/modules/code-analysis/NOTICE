@@ -1,0 +1,12 @@
+Archify Code Analysis
+
+Code Analysis is an integrated module maintained in the Archify repository.
+
+Portions of this module were first developed as the `analyzers/` subsystem
+proposed in https://github.com/tt-a1i/archify/pull/352 and include fixes
+contributed by tt-a1i (Archify's author):
+
+  - fix(analyzers): preserve import facts and cover extraction regressions
+  - fix(analyzers): constrain createRequire to the source module base
+
+See LICENSE for the copyright and permission notice.

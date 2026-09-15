@@ -1,0 +1,259 @@
+{
+  "files": [
+    {
+      "path": "app/__init__.py",
+      "loc": 2,
+      "role": "source"
+    },
+    {
+      "path": "app/core.py",
+      "loc": 7,
+      "role": "source"
+    },
+    {
+      "path": "app/util/__init__.py",
+      "loc": 0,
+      "role": "source"
+    },
+    {
+      "path": "app/util/text.py",
+      "loc": 11,
+      "role": "source"
+    },
+    {
+      "path": "broken.py",
+      "loc": 2,
+      "role": "source"
+    },
+    {
+      "path": "ns/mod.py",
+      "loc": 1,
+      "role": "source"
+    },
+    {
+      "path": "sibling.py",
+      "loc": 5,
+      "role": "source"
+    },
+    {
+      "path": "tests/test_core.py",
+      "loc": 5,
+      "role": "test"
+    }
+  ],
+  "imports": [
+    {
+      "from": "app/__init__.py",
+      "specifier": ".core",
+      "kind": "static",
+      "line": 1,
+      "resolved": true,
+      "names": [
+        "*"
+      ],
+      "to": "app/core.py"
+    },
+    {
+      "from": "app/__init__.py",
+      "specifier": ".core",
+      "kind": "static",
+      "line": 2,
+      "resolved": true,
+      "names": [
+        "run"
+      ],
+      "to": "app/core.py"
+    },
+    {
+      "from": "app/core.py",
+      "specifier": "os",
+      "kind": "static",
+      "line": 1,
+      "resolved": false,
+      "names": [
+        "*"
+      ]
+    },
+    {
+      "from": "app/core.py",
+      "specifier": "app.util.text",
+      "kind": "static",
+      "line": 2,
+      "resolved": true,
+      "names": [
+        "*"
+      ],
+      "implicit": true,
+      "to": "app/util/__init__.py"
+    },
+    {
+      "from": "app/core.py",
+      "specifier": "app.util.text",
+      "kind": "static",
+      "line": 2,
+      "resolved": true,
+      "names": [
+        "clean"
+      ],
+      "to": "app/util/text.py"
+    },
+    {
+      "from": "app/core.py",
+      "specifier": "..sibling",
+      "kind": "static",
+      "line": 3,
+      "resolved": true,
+      "names": [
+        "x"
+      ],
+      "to": "sibling.py"
+    },
+    {
+      "from": "app/util/text.py",
+      "specifier": "requests",
+      "kind": "static",
+      "line": 1,
+      "resolved": false,
+      "names": [
+        "*"
+      ]
+    },
+    {
+      "from": "app/util/text.py",
+      "specifier": "importlib",
+      "kind": "static",
+      "line": 2,
+      "resolved": false,
+      "names": [
+        "*"
+      ]
+    },
+    {
+      "from": "app/util/text.py",
+      "specifier": ".",
+      "kind": "static",
+      "line": 3,
+      "resolved": true,
+      "names": [
+        "missing"
+      ],
+      "to": "app/util/__init__.py"
+    },
+    {
+      "from": "app/util/text.py",
+      "specifier": ".nothere",
+      "kind": "static",
+      "line": 4,
+      "resolved": false,
+      "names": [
+        "z"
+      ]
+    },
+    {
+      "from": "app/util/text.py",
+      "specifier": "app.core",
+      "kind": "static",
+      "line": 8,
+      "resolved": true,
+      "names": [
+        "*"
+      ],
+      "lazy": true,
+      "to": "app/core.py"
+    },
+    {
+      "from": "app/util/text.py",
+      "specifier": "app.core",
+      "kind": "dynamic",
+      "line": 9,
+      "resolved": true,
+      "to": "app/core.py",
+      "lazy": true
+    },
+    {
+      "from": "app/util/text.py",
+      "specifier": "<computed>",
+      "kind": "dynamic",
+      "line": 10,
+      "resolved": false,
+      "lazy": true
+    },
+    {
+      "from": "sibling.py",
+      "specifier": "app",
+      "kind": "static",
+      "line": 1,
+      "resolved": true,
+      "names": [
+        "*"
+      ],
+      "to": "app/__init__.py"
+    },
+    {
+      "from": "sibling.py",
+      "specifier": "...nowhere",
+      "kind": "static",
+      "line": 2,
+      "resolved": false,
+      "names": [
+        "y"
+      ]
+    },
+    {
+      "from": "sibling.py",
+      "specifier": "ns.mod",
+      "kind": "static",
+      "line": 3,
+      "resolved": true,
+      "names": [
+        "*"
+      ],
+      "to": "ns/mod.py"
+    },
+    {
+      "from": "sibling.py",
+      "specifier": "ns.nope",
+      "kind": "static",
+      "line": 3,
+      "resolved": false,
+      "names": [
+        "*"
+      ]
+    },
+    {
+      "from": "tests/test_core.py",
+      "specifier": "app.core",
+      "kind": "static",
+      "line": 1,
+      "resolved": true,
+      "names": [
+        "*"
+      ],
+      "implicit": true,
+      "to": "app/__init__.py"
+    },
+    {
+      "from": "tests/test_core.py",
+      "specifier": "app.core",
+      "kind": "static",
+      "line": 1,
+      "resolved": true,
+      "names": [
+        "run"
+      ],
+      "to": "app/core.py"
+    }
+  ],
+  "unresolved": {
+    "external": 3,
+    "outside": 1,
+    "unknown": 2,
+    "opaque": 1
+  },
+  "parse_errors": [
+    {
+      "path": "broken.py",
+      "message": "invalid syntax (line 1)"
+    }
+  ]
+}

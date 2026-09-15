@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "findings.schema.json",
+  "title": "Bauify findings",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "repository", "rules", "summary", "diagnostics"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "repository": { "type": "object" },
+    "rules": { "type": "array", "items": { "type": "string" } },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["errors", "warnings", "info", "suppressed"],
+      "properties": {
+        "errors": { "type": "integer", "minimum": 0 },
+        "warnings": { "type": "integer", "minimum": 0 },
+        "info": { "type": "integer", "minimum": 0 },
+        "suppressed": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "code", "dimension", "severity", "confidence", "message", "subject", "evidence", "supportedFixes"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Z]{2,4}-[0-9]{4}$" },
+          "code": { "type": "string", "pattern": "^[a-z-]+/[a-z-]+$" },
+          "dimension": { "enum": ["coupling", "complexity", "redundancy", "error-handling", "impact", "ai-smell"] },
+          "severity": { "enum": ["error", "warning", "info"] },
+          "confidence": { "enum": [1, 0.7, 0.5] },
+          "message": { "type": "string", "minLength": 1 },
+          "subject": { "type": "object" },
+          "evidence": { "type": "object", "required": ["threshold"] },
+          "supportedFixes": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

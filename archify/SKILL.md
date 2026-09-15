@@ -115,6 +115,21 @@ node bin/archify.mjs preview <type> <input>.json <output>.html --quality showcas
 
 Never start preview by default. Read `references/delivery-contract.md` when using preview, repository evidence, export receipts, visual review, or post-commit opening.
 
+## Code Analysis (architecture diagrams that must reflect real code)
+
+When the user asks whether the code behind an architecture diagram is well structured — coupling, circular dependencies, hub modules — use the Code Analysis module instead of reasoning about imports by hand. It follows the same order as delivery: the authored diagram is delivered first, and the analysis runs only when the reader clicks **Code Analysis** on that page.
+
+1. Author and validate the `architecture` candidate as above. Give every component that stands for code 1–3 `sources` (real entry files of that module) and pin `meta.repository` to the repository origin and current commit; the analysis maps components to code through `sources`, so no separate mapping is needed.
+2. Start the served view (it runs `deliver` itself; the first run installs the module's two dependencies):
+
+   ```bash
+   node bin/archify.mjs code-analysis serve <repo-root> --ir <candidate.json> --out <dir> [--language ts|py]
+   ```
+
+3. Tell the user to open the printed loopback URL and click **Code Analysis**. Nothing is analyzed before the click; afterwards the same button shows or hides the analysis layer. Findings are facts with file:line evidence, not verdicts: a cycle closed by function-scope imports is `info`, a module-scope cycle is `warning`, and `error` is reserved for a proven load-time failure. Report them as such.
+
+`--map <file>` (`{"componentId": ["moduleId", …]}`) is only needed when a component has no `sources`. Read `modules/code-analysis/README.md` for options and outputs.
+
 ## Optional viewer capabilities
 
 Generated HTML already contains theme switching, pan/zoom, search, focus, relationship tracing, semantic views, presentation, and truthful exports. These are reader capabilities, not extra authoring work. `meta.animation: "trace"` is opt-in; `meta.views` is optional and should contain at most five curated chapters.
