@@ -56,10 +56,12 @@ function screenshotKey(width, height, theme) {
   return `${width}x${height}:${theme}`;
 }
 
-export function sidecarPaths(artifactPath) {
+export function sidecarPaths(artifactPath, { outDir } = {}) {
   const artifact = path.resolve(artifactPath);
-  const stem = artifact.replace(/\.html?$/i, '');
-  const base = `${stem}.visual-check`;
+  const stem = path.basename(artifact).replace(/\.html?$/i, '');
+  const directory = outDir ? path.resolve(outDir) : path.dirname(artifact);
+  if (outDir) fs.mkdirSync(directory, { recursive: true });
+  const base = path.join(directory, `${stem}.visual-check`);
   const screenshots = CAPTURE_VIEWPORTS.flatMap(({ width, height }) => THEMES.map((theme) => ({
     width,
     height,
@@ -693,6 +695,7 @@ function persistReceipt(outputs, receipt) {
 
 export async function runVisualCheck({
   artifactPath,
+  outDir,
   chromePath,
   resolveChrome = findChrome,
   browserFactory = async (resolvedChrome) => new ChromeVisualBrowser(resolvedChrome),
@@ -701,7 +704,7 @@ export async function runVisualCheck({
   const artifact = path.resolve(artifactPath);
   if (!/\.html?$/i.test(artifact)) throw new Error('visual-check requires an .html artifact.');
   const artifactBytes = fs.readFileSync(artifact);
-  const outputs = sidecarPaths(artifact);
+  const outputs = sidecarPaths(artifact, { outDir });
   cleanupCaptureSidecars(outputs);
   safeUnlink(outputs.receipt);
 
