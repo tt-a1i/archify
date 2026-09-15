@@ -241,6 +241,28 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
     assert.equal(sync,true);assert.deepEqual((await record('svg-sync-throw')).receipt,{});
   });
 
+  await t.test('SVG download declares UTF-8 and preserves CJK text', async () => {
+    const originalInput = fs.readFileSync(input, 'utf8');
+    try {
+      const cjkSource = JSON.parse(originalInput);
+      cjkSource.components[0].label = '用户入口';
+      fs.writeFileSync(input, JSON.stringify(cjkSource));
+      execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, file]);
+      await load();
+      await run(`Archify.exportMenu.run('svg')`);
+      await run('exportWait(()=>exportDownloads.length===1)');
+      const download = await run(`exportDownloads[0].blob.text().then(text=>({name:exportDownloads[0].name,type:exportDownloads[0].blob.type,text}))`);
+      assert.ok(download.name.endsWith('.svg'));
+      assert.equal(download.type, 'image/svg+xml;charset=utf-8');
+      assert.ok(download.text.startsWith('<?xml version="1.0" encoding="UTF-8"?>'), 'standalone SVG must declare its UTF-8 encoding');
+      assert.ok(download.text.includes('用户入口'), 'CJK label must survive serialization');
+      await record('svg-utf8');
+    } finally {
+      fs.writeFileSync(input, originalInput);
+      execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, file]);
+    }
+  });
+
   await t.test('recording succeeds with real encoding and releases tracks and the background URL', async () => {
     await load();assert.equal(await run('Archify.motion.canRecord()'),true);
     const result = await run(`(async()=>{const blob=await Archify.motion.recordWebm({duration:500,fps:10});window.recordedBlob=blob;const url=URL.createObjectURL(blob),video=document.createElement('video');video.muted=true;video.src=url;await new Promise((resolve,reject)=>{video.onloadeddata=resolve;video.onerror=()=>reject(new Error('WebM decode failed'));});const dimensions=[video.videoWidth,video.videoHeight];await video.play();await new Promise(resolve=>video.requestVideoFrameCallback(resolve));video.pause();video.removeAttribute('src');video.load();URL.revokeObjectURL(url);return {type:blob.type,nonempty:blob.size>0,dimensions,cancelled:exportCancelled.length>0};})()`);
