@@ -4540,7 +4540,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       stroke-dashoffset: 0;
       vector-effect: non-scaling-stroke;
       opacity: 0.94;
-      animation: archify-intent-trace-flow 1.15s linear 1 both;
+      animation: archify-intent-trace-flow 1.15s linear infinite;
     }
     /* Direction names describe each edge relative to the focused node only.
        The cloned geometry already runs from the authored source to target, so
@@ -4871,9 +4871,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       to { stroke-dashoffset: 0; }
     }
     @keyframes archify-intent-trace-flow {
-      0% { opacity: 0.28; stroke-dashoffset: 0; }
-      12%, 78% { opacity: 0.94; }
-      100% { opacity: 0; stroke-dashoffset: -1; }
+      0% { opacity: 0.94; stroke-dashoffset: 0; }
+      100% { opacity: 0.94; stroke-dashoffset: -1; }
     }
     @keyframes archify-route-probe-flow {
       0% { stroke-dashoffset: 0; opacity: 0.96; }
