@@ -23,9 +23,10 @@ Use final atomic delivery only after the candidate is frozen:
 
 ```bash
 node bin/archify.mjs deliver <type> <candidate.json> <output.html> --quality showcase --json
+node bin/archify.mjs deliver <type> <candidate.json> <output.svg> --format svg --theme auto|light|dark --quality showcase --json
 ```
 
-Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. The JSON receipt includes SHA-256 and byte counts for both `specification` and `artifact`. Renderer, checker, receipt, or commit failure exits non-zero, removes private state, preserves the previous trusted artifact, and never invokes an opener.
+Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. HTML remains the default. The HTML receipt shape is unchanged. SVG requires an explicit `.svg` path; `auto` produces the same dual-theme document as Viewer export, while `light` and `dark` are fixed. SVG retains the complete nine-check HTML validation path, uses the shared standalone finaliser, and adds seven standalone-document checks. Its JSON receipt adds `format`, `theme`, and `svgValidation`. Both formats include SHA-256 and byte counts for `specification` and `artifact`. Renderer, checker, receipt, or commit failure exits non-zero, removes private state, preserves the previous trusted artifact, and never invokes an opener.
 
 Run `visual-check` only after `deliver` exits zero for the current candidate. If
 delivery fails and the output path already exists, that path still names the
@@ -97,6 +98,8 @@ environmental failure through the supported command in a browser-capable
 execution context when practical. Keep the packaged transport unchanged unless
 the failure reproduces through that seam in a capable environment.
 
+`visual-check` accepts HTML only. For standalone SVG, inspect the delivered file itself in the requested fixed theme, or in both resolved themes for `auto`. Development and release tests compare the shared Viewer and CLI finaliser at the decoded-pixel level; a normal delivery receipt does not claim that browser comparison.
+
 ## Optional opening
 
 Add `--open` only when the user wants an immediate local preview. It runs after that atomic commit, uses one argument-array OS opener with a five-second bound, and records `open.status`. Keep it off for CI, unattended agents, and non-interactive environments. Failure or unsupported opening does not invalidate delivery; its status proves only whether the local opener invocation succeeded.
@@ -117,7 +120,7 @@ Never start it by default. Do not use it for CI, unattended agents, remote shari
 
 ## Perceptual delivery gate
 
-Automated validation and browser evidence cannot prove visual polish. After deterministic delivery, inspect the actual HTML in a capable browser or render the evidence screenshots with an image reader. Check both themes when changed, the default READ view, line crossings/corridors, label masks, node/card fit, focus/search/passport closure, and export cleanliness.
+Automated validation and browser evidence cannot prove visual polish. After deterministic delivery, inspect the delivered artifact in a capable browser or render its evidence screenshots with an image reader. For standalone SVG, inspect the requested fixed theme or both resolved themes for `auto`, checking line crossings/corridors, label masks, node fit, and export cleanliness. For HTML, also check the default READ view, cards, and focus/search/passport closure, in both themes when changed.
 
 For the default standalone desktop viewer, measure 1440×900, 1600×1000, and 1920×1080. When the artifact is intended for a large desktop display, also measure 2048×1320. A first-screen pass requires `document.documentElement.scrollWidth <= window.innerWidth` and `scrollHeight <= window.innerHeight` at every checked size. At the largest checked viewport, inspect the rendered composition for a conspicuous empty lower band: the main panel and necessary conclusion cards should use the available height as a balanced whole, not collapse into a shallow strip. If a desktop viewport overflows, repair the authored composition by removing only genuinely redundant content or compacting spacing before shrinking nodes, labels, or the main panel. Do not hide overflow, clip content, introduce an internal diagram scroller, or reduce node/label typography to make the measurement pass. Narrow/mobile containment may retain vertical page scrolling.
 
@@ -135,7 +138,7 @@ If visual review changes the candidate, validation and delivery must run again b
 
 ## Handoff receipt
 
-Return:
+For HTML, return:
 
 ```text
 diagram_type: architecture|workflow|sequence|dataflow|lifecycle
@@ -149,6 +152,23 @@ correction_rounds: 0|1|2
 ```
 
 Derive `browser_evidence` only from the latest artifact-bound `visual-check` receipt. Record any manual browser work separately with its artifact binding, viewport/theme scope, and observations; never use it or `visual_review` to overwrite the automated status.
+
+For standalone SVG, return:
+
+```text
+diagram_type: architecture|workflow|sequence|dataflow|lifecycle
+output: /absolute/path/to/file.svg
+format: svg
+theme: auto|light|dark
+specification_sha256: <receipt value>
+artifact_sha256: <receipt value>
+validation: <summary of receipt.validation>
+svgValidation: <summary of receipt.svgValidation>
+visual_review: passed|skipped (image reader unavailable)|failed
+correction_rounds: 0|1|2
+```
+
+Copy `format` and `theme` from the delivery receipt and report the actual validation results. Do not run `visual-check` for SVG or include `browser_evidence`: that command accepts HTML only, so no automated browser receipt exists for this delivery. Record any direct SVG inspection separately with the artifact hash and inspected themes; it can support `visual_review` but is not an automated validation claim.
 
 Opening, preview status, Share Cards, and other viewer exports are not validation claims.
 

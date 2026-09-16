@@ -166,6 +166,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
   </style>
   <style>
+    /* ARCHIFY:SVG_EXPORT_THEME_START */
     /* ==========================================================
        THEME VARIABLES — switch by toggling [data-theme] on <html>
        ========================================================== */
@@ -473,6 +474,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --toolbar-hover: #fffdf8;
       --toolbar-menu-bg: #fbf8f1;
     }
+    /* ARCHIFY:SVG_EXPORT_THEME_END */
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -1023,6 +1025,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       transition: none !important;
     }
 
+    /* ARCHIFY:SVG_EXPORT_STYLE_START */
     svg {
       width: 100%;
       min-width: min(900px, 100%);
@@ -1030,6 +1033,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       transform-origin: 0 0;
       transition: transform 0.18s ease;
     }
+    /* ARCHIFY:SVG_EXPORT_STYLE_END */
 
     .diagram-container.is-camera-moving svg {
       transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
@@ -4089,6 +4093,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     /* ==========================================================
        SVG SEMANTIC CLASSES — use these instead of inline fill/stroke
        ========================================================== */
+    /* ARCHIFY:SVG_EXPORT_STYLE_START */
     .c-grid       { stroke: var(--grid); fill: none; }
     .c-mask       { fill: var(--mask); stroke: none; }
 
@@ -4950,6 +4955,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.48; transform: scale(0.78); }
     }
+    /* ARCHIFY:SVG_EXPORT_STYLE_END */
     @media (prefers-reduced-motion: reduce) {
       html[data-preset="signal-flow"] .diagram-container::before {
         animation: none !important;
@@ -6260,6 +6266,48 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             edgeMatches.reduce(function (count, match) { return count + match.elements.length; }, 0);
       }
 
+      var buildStandaloneSvg = (function buildStandaloneSvg(svgMarkup, options = {}) {
+  function xmlText(value) {
+    return String(value).replace(/[&<]/g, function (character) {
+      return character === '&' ? '&amp;' : '&lt;';
+    });
+  }
+  function xmlAttribute(value) {
+    return String(value).replace(/[&"<>]/g, function (character) {
+      return { '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[character];
+    });
+  }
+
+  var rootEnd = svgMarkup.indexOf('>');
+  var closeStart = svgMarkup.lastIndexOf('</svg>');
+  if (rootEnd < 0 || closeStart <= rootEnd || !/^\s*<svg\b/.test(svgMarkup.slice(0, rootEnd + 1))) {
+    throw new Error('SVG export received malformed root markup.');
+  }
+
+  if (!options.fontCss) throw new Error('SVG export requires the embedded Viewer fonts.');
+  var styleText = options.fontCss + "\n" +
+    "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
+    String(options.hostStyle || '') + "\n";
+  var background;
+  if (options.theme === 'auto') {
+    styleText += ":root, svg { " + options.darkVars + " }\n" +
+      "@media (prefers-color-scheme: light) { :root, svg { " + options.lightVars + " } }\n" +
+      "svg[data-theme=\"light\"] { " + options.lightVars + " }\n" +
+      "svg[data-theme=\"dark\"] { " + options.darkVars + " }\n" +
+      "rect.c-bg-rect { fill: var(--bg); }\n";
+    background = '<rect width="100%" height="100%" class="c-bg-rect"/>';
+  } else {
+    styleText += ":root, svg { " + options.vars + " }\n";
+    background = '<rect width="100%" height="100%" fill="' +
+      xmlAttribute(options.background || '#ffffff') + '"/>';
+  }
+  styleText += String(options.extraStyle || '');
+
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' + svgMarkup.slice(0, rootEnd + 1) +
+    '<style>' + xmlText(styleText) + '</style>' + background +
+    svgMarkup.slice(rootEnd + 1);
+});
+
       function serializeSvg(scale, opts) {
         // scale: integer multiplier for intrinsic SVG pixel dimensions used by
         // the raster path. Defaults to 1 (natural size) for SVG download.
@@ -6346,65 +6394,33 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // standalone SVGs and the SVG images used by every raster export.
         var fontCss = document.getElementById('archify-fonts').textContent;
 
-        var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-        var bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        bgRect.setAttribute('width', '100%');
-        bgRect.setAttribute('height', '100%');
-
+        var exportOptions = { fontCss: fontCss, hostStyle: hostStyle, extraStyle: '' };
         if (autoTheme) {
-          // Dual-theme SVG. Dark is the default (so hosts without
-          // prefers-color-scheme still render), light swaps in via media
-          // query, and svg[data-theme="..."] still lets downstream
-          // consumers force a specific theme.
-          var darkVars = resolveVars('dark');
-          var lightVars = resolveVars('light');
-
-          style.textContent =
-            fontCss + "\n" +
-            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
-            hostStyle + "\n" +
-            ":root, svg { " + darkVars + " }\n" +
-            "@media (prefers-color-scheme: light) { :root, svg { " + lightVars + " } }\n" +
-            "svg[data-theme=\"light\"] { " + lightVars + " }\n" +
-            "svg[data-theme=\"dark\"] { " + darkVars + " }\n" +
-            "rect.c-bg-rect { fill: var(--bg); }\n";
-
-          // Don't lock the serialized SVG to the viewer's current theme.
+          exportOptions.theme = 'auto';
+          exportOptions.darkVars = resolveVars('dark');
+          exportOptions.lightVars = resolveVars('light');
           clone.removeAttribute('data-theme');
-          // Background follows the CSS variable, not a fixed color, so it
-          // swaps with the media query.
-          bgRect.setAttribute('class', 'c-bg-rect');
         } else {
-          // Raster path: lock to the viewer's current theme.
+          // Raster/card/recording exports retain the currently computed theme.
           var theme = document.documentElement.getAttribute('data-theme') || 'dark';
           var themeHost = document.querySelector('[data-theme="' + theme + '"]') || document.documentElement;
           var computed = getComputedStyle(themeHost);
-          var vars = varNames.map(function (n) {
+          exportOptions.theme = theme;
+          exportOptions.vars = varNames.map(function (n) {
             return n + ': ' + computed.getPropertyValue(n).trim() + ';';
           }).join(' ');
-
-          // IMPORTANT: inject the resolved variables AFTER hostStyle,
-          // otherwise hostStyle's ":root, [data-theme=\"dark\"] { ... }" rule
-          // overrides our chosen theme via later-in-cascade equal-specificity.
-          // Keep this order.
-          style.textContent =
-            fontCss + "\n" +
-            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
-            hostStyle + "\n" +
-            ":root, svg { " + vars + " }\n";
-
-          bgRect.setAttribute('fill', computed.getPropertyValue('--bg').trim() || '#ffffff');
+          exportOptions.background = computed.getPropertyValue('--bg').trim() || '#ffffff';
         }
 
         if (opts.routeSnapshot) {
-          style.textContent += "\nsvg[data-share-route] [data-node-id], svg[data-share-route] [data-edge-from] { opacity: 0.18; }\n" +
+          exportOptions.extraStyle += "\nsvg[data-share-route] [data-node-id], svg[data-share-route] [data-edge-from] { opacity: 0.18; }\n" +
             "svg[data-share-route] [data-share-route-match] { opacity: 1; }\n" +
             "svg[data-share-route] [data-share-route-start] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 3; stroke-dasharray: 5 3; }\n" +
             "svg[data-share-route] [data-share-route-middle] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 2.2; }\n" +
             "svg[data-share-route] [data-share-route-end] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 3.4; stroke-dasharray: 1 0; }\n";
         }
         if (opts.reachSnapshot) {
-          style.textContent += "\nsvg[data-share-reach] [data-node-id], svg[data-share-reach] [data-edge-from] { opacity: 0.14; }\n" +
+          exportOptions.extraStyle += "\nsvg[data-share-reach] [data-node-id], svg[data-share-reach] [data-edge-from] { opacity: 0.14; }\n" +
             "svg[data-share-reach] [data-share-reach-match] { opacity: 1; }\n" +
             "svg[data-share-reach] [data-edge-from][data-share-reach-match] { stroke-width: 1.55; }\n" +
             "svg[data-share-reach=\"upstream\"] [data-share-reach-origin] > :is(rect, circle, polygon):not(.c-mask) { stroke: var(--database-stroke); stroke-width: 3.4; stroke-dasharray: 5 3; }\n" +
@@ -6412,14 +6428,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             "svg[data-preset=\"blueprint\"][data-share-reach] [data-share-reach-origin], svg[data-preset=\"blueprint\"][data-share-reach] [data-edge-from][data-share-reach-match] { filter: none; }\n";
         }
 
-        clone.insertBefore(style, clone.firstChild);
-        clone.insertBefore(bgRect, style.nextSibling);
-
-        // The XML declaration pins UTF-8: without it, consumers that guess an
-        // encoding instead of defaulting to UTF-8 mangle non-ASCII text.
         return {
-          svgString: '<?xml version="1.0" encoding="UTF-8"?>\n' +
-            new XMLSerializer().serializeToString(clone),
+          svgString: buildStandaloneSvg(new XMLSerializer().serializeToString(clone), exportOptions),
           width: vb.width * scale,
           height: vb.height * scale,
           canonicalStateClean: canonicalStateClean,
@@ -7308,6 +7318,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
       } catch (_) {}
     })();
+
 
     /* ============================================================
        Motion Governor — one reader switch and one motion budget. Ambient

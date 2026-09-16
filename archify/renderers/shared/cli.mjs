@@ -8,6 +8,7 @@ import { validateEngineeringProfile } from './engineering-profiles.mjs';
 import { resolveOutputPath } from './output-path.mjs';
 import { prepareDiagramBrandMarks } from './brand-marks.mjs';
 import { resolveLocale, translateMessage } from './i18n.mjs';
+import { renderStandaloneSvg } from './svg-export.mjs';
 
 const outputPathGuards = new Map();
 
@@ -56,6 +57,7 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
     requestedOutput: argv[3],
     authoredOutput: diagram.meta?.output,
     defaultOutput: `${diagramType}.html`,
+    requiredExtension: process.env.ARCHIFY_OUTPUT_FORMAT === 'svg' ? '.svg' : '.html',
     inputPaths: [inputPath],
     cwd: process.cwd(),
   };
@@ -101,20 +103,31 @@ function throwOutputError(error, output) {
 export function writeDiagram({ outPath, template, diagramType, meta, svg, cards, sourceEvidence = null }) {
   if (!START_TYPES.has(diagramType)) throw new Error(`writeDiagram: unknown diagram type ${JSON.stringify(diagramType)}`);
   const outputGuard = outputPathGuards.get(outPath);
-  const html = applyTemplate(template, {
-    title: meta.title,
-    subtitle: meta.subtitle,
-    svg,
-    cards: renderCards(cards),
-    locale: meta.locale,
-    visualPreset: meta.visual_preset || 'classic',
-    guidedViews: meta.views || [],
-    sourceEvidence,
-  });
+  const outputFormat = process.env.ARCHIFY_OUTPUT_FORMAT || 'html';
+  if (!['html', 'svg'].includes(outputFormat)) {
+    throw new Error(`writeDiagram: unknown output format ${JSON.stringify(outputFormat)}`);
+  }
+  const artifact = outputFormat === 'svg'
+    ? renderStandaloneSvg({
+        svg,
+        template,
+        preset: meta.visual_preset || 'classic',
+        theme: process.env.ARCHIFY_SVG_THEME || 'auto',
+      })
+    : applyTemplate(template, {
+        title: meta.title,
+        subtitle: meta.subtitle,
+        svg,
+        cards: renderCards(cards),
+        locale: meta.locale,
+        visualPreset: meta.visual_preset || 'classic',
+        guidedViews: meta.views || [],
+        sourceEvidence,
+      });
   try {
     if (outputGuard) resolveOutputPath(outputGuard);
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
-    fs.writeFileSync(outPath, html);
+    fs.writeFileSync(outPath, artifact);
   } catch (error) {
     throwOutputError(error, outPath);
   }

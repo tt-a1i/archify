@@ -151,7 +151,7 @@ test('all typed renderers inherit one viewer-only Semantic Radar', () => {
     assert.match(html, /document\.createElementNS\(namespace, 'svg'\)/, mode);
     assert.match(html, /mapSvg\.setAttribute\('aria-label', viewerText\('viewer\.radar\.nodes'\)\)/, mode);
     assert.match(html, /diagram\.querySelectorAll\('\[data-node-id\]'\)/, mode);
-    assert.equal((html.match(/<svg\b/g) || []).length, 1, `${mode} keeps one static canonical SVG`);
+    assert.equal((html.match(/<svg(?=[\s>])/g) || []).length, 1, `${mode} keeps one static canonical SVG`);
     assert.doesNotMatch(canonicalSvg(html), /overview-map|Semantic radar|data-radar-node-id/, mode);
   }
 });

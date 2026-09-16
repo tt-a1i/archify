@@ -27,6 +27,12 @@ surface; release identity changes also belong in `template.source.html`.
 
 ## Export contract
 
+Standalone SVG finalisation is shared with browser-free JSON delivery through
+`archify/renderers/shared/svg-export.mjs`. `applyTemplate` embeds that same
+function at the marker in `export.js`. Theme/style markers belong in
+`template.source.html`; both paths retain its embedded font bytes, attribution
+and UTF-8 XML declaration. Viewer cleanup and Route/Reach snapshots stay here.
+
 `export.js` contains the complete Export heading and IIFE. It initializes once
 at its original position after Theme/Preset and before Motion Governor and
 Source Evidence. `export-cleanup.js` stays private to that closure. Assembly has

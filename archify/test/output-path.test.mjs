@@ -260,7 +260,8 @@ test('deliver rejects a future-path alias of its JSON input with a structured di
   assert.deepEqual(fs.readFileSync(input), source);
 });
 
-test('deliver rechecks aliases immediately before committing a verified candidate', { timeout: 10000 }, async () => {
+for (const format of ['html', 'svg']) {
+test(`deliver rechecks aliases immediately before committing a verified ${format} candidate`, { timeout: 10000 }, async () => {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-deliver-race-'));
   const installedRoot = path.join(cwd, 'skill');
   const installedBin = path.join(installedRoot, 'bin');
@@ -301,15 +302,15 @@ console.log(JSON.stringify({
   fs.mkdirSync(inputDirectory);
   fs.mkdirSync(initialOutputDirectory);
   fs.symlinkSync(initialOutputDirectory, linkedDirectory, 'dir');
-  const input = path.join(inputDirectory, 'diagram.html');
-  const output = path.join(linkedDirectory, 'diagram.html');
+  const input = path.join(inputDirectory, `diagram.${format}`);
+  const output = path.join(linkedDirectory, `diagram.${format}`);
   const source = Buffer.from('{"meta":{"title":"race input"}}');
   fs.writeFileSync(input, source);
   const marker = path.join(cwd, 'renderer-started');
 
   const child = spawn(process.execPath, [
     path.join(installedBin, 'archify.mjs'),
-    'deliver', 'workflow', input, output, '--json',
+    'deliver', 'workflow', input, output, '--format', format, '--json',
   ], {
     cwd,
     encoding: 'utf8',
@@ -342,6 +343,7 @@ console.log(JSON.stringify({
   assert.equal(receipt.diagnostics[0].code, 'output/input-alias');
   assert.deepEqual(fs.readFileSync(input), source);
 });
+}
 
 test('compare rejects an artifact path that aliases either architecture input', () => {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-compare-'));

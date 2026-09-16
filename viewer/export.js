@@ -223,6 +223,8 @@
             edgeMatches.reduce(function (count, match) { return count + match.elements.length; }, 0);
       }
 
+      var buildStandaloneSvg = /* ARCHIFY:SVG_EXPORT_FINALIZER */;
+
       function serializeSvg(scale, opts) {
         // scale: integer multiplier for intrinsic SVG pixel dimensions used by
         // the raster path. Defaults to 1 (natural size) for SVG download.
@@ -309,65 +311,33 @@
         // standalone SVGs and the SVG images used by every raster export.
         var fontCss = document.getElementById('archify-fonts').textContent;
 
-        var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-        var bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        bgRect.setAttribute('width', '100%');
-        bgRect.setAttribute('height', '100%');
-
+        var exportOptions = { fontCss: fontCss, hostStyle: hostStyle, extraStyle: '' };
         if (autoTheme) {
-          // Dual-theme SVG. Dark is the default (so hosts without
-          // prefers-color-scheme still render), light swaps in via media
-          // query, and svg[data-theme="..."] still lets downstream
-          // consumers force a specific theme.
-          var darkVars = resolveVars('dark');
-          var lightVars = resolveVars('light');
-
-          style.textContent =
-            fontCss + "\n" +
-            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
-            hostStyle + "\n" +
-            ":root, svg { " + darkVars + " }\n" +
-            "@media (prefers-color-scheme: light) { :root, svg { " + lightVars + " } }\n" +
-            "svg[data-theme=\"light\"] { " + lightVars + " }\n" +
-            "svg[data-theme=\"dark\"] { " + darkVars + " }\n" +
-            "rect.c-bg-rect { fill: var(--bg); }\n";
-
-          // Don't lock the serialized SVG to the viewer's current theme.
+          exportOptions.theme = 'auto';
+          exportOptions.darkVars = resolveVars('dark');
+          exportOptions.lightVars = resolveVars('light');
           clone.removeAttribute('data-theme');
-          // Background follows the CSS variable, not a fixed color, so it
-          // swaps with the media query.
-          bgRect.setAttribute('class', 'c-bg-rect');
         } else {
-          // Raster path: lock to the viewer's current theme.
+          // Raster/card/recording exports retain the currently computed theme.
           var theme = document.documentElement.getAttribute('data-theme') || 'dark';
           var themeHost = document.querySelector('[data-theme="' + theme + '"]') || document.documentElement;
           var computed = getComputedStyle(themeHost);
-          var vars = varNames.map(function (n) {
+          exportOptions.theme = theme;
+          exportOptions.vars = varNames.map(function (n) {
             return n + ': ' + computed.getPropertyValue(n).trim() + ';';
           }).join(' ');
-
-          // IMPORTANT: inject the resolved variables AFTER hostStyle,
-          // otherwise hostStyle's ":root, [data-theme=\"dark\"] { ... }" rule
-          // overrides our chosen theme via later-in-cascade equal-specificity.
-          // Keep this order.
-          style.textContent =
-            fontCss + "\n" +
-            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
-            hostStyle + "\n" +
-            ":root, svg { " + vars + " }\n";
-
-          bgRect.setAttribute('fill', computed.getPropertyValue('--bg').trim() || '#ffffff');
+          exportOptions.background = computed.getPropertyValue('--bg').trim() || '#ffffff';
         }
 
         if (opts.routeSnapshot) {
-          style.textContent += "\nsvg[data-share-route] [data-node-id], svg[data-share-route] [data-edge-from] { opacity: 0.18; }\n" +
+          exportOptions.extraStyle += "\nsvg[data-share-route] [data-node-id], svg[data-share-route] [data-edge-from] { opacity: 0.18; }\n" +
             "svg[data-share-route] [data-share-route-match] { opacity: 1; }\n" +
             "svg[data-share-route] [data-share-route-start] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 3; stroke-dasharray: 5 3; }\n" +
             "svg[data-share-route] [data-share-route-middle] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 2.2; }\n" +
             "svg[data-share-route] [data-share-route-end] > :is(rect, circle, polygon):not(.c-mask) { stroke-width: 3.4; stroke-dasharray: 1 0; }\n";
         }
         if (opts.reachSnapshot) {
-          style.textContent += "\nsvg[data-share-reach] [data-node-id], svg[data-share-reach] [data-edge-from] { opacity: 0.14; }\n" +
+          exportOptions.extraStyle += "\nsvg[data-share-reach] [data-node-id], svg[data-share-reach] [data-edge-from] { opacity: 0.14; }\n" +
             "svg[data-share-reach] [data-share-reach-match] { opacity: 1; }\n" +
             "svg[data-share-reach] [data-edge-from][data-share-reach-match] { stroke-width: 1.55; }\n" +
             "svg[data-share-reach=\"upstream\"] [data-share-reach-origin] > :is(rect, circle, polygon):not(.c-mask) { stroke: var(--database-stroke); stroke-width: 3.4; stroke-dasharray: 5 3; }\n" +
@@ -375,14 +345,8 @@
             "svg[data-preset=\"blueprint\"][data-share-reach] [data-share-reach-origin], svg[data-preset=\"blueprint\"][data-share-reach] [data-edge-from][data-share-reach-match] { filter: none; }\n";
         }
 
-        clone.insertBefore(style, clone.firstChild);
-        clone.insertBefore(bgRect, style.nextSibling);
-
-        // The XML declaration pins UTF-8: without it, consumers that guess an
-        // encoding instead of defaulting to UTF-8 mangle non-ASCII text.
         return {
-          svgString: '<?xml version="1.0" encoding="UTF-8"?>\n' +
-            new XMLSerializer().serializeToString(clone),
+          svgString: buildStandaloneSvg(new XMLSerializer().serializeToString(clone), exportOptions),
           width: vb.width * scale,
           height: vb.height * scale,
           canonicalStateClean: canonicalStateClean,

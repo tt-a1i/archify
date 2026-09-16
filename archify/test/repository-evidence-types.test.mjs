@@ -101,6 +101,15 @@ for (const shape of TYPES) {
 
     const svg = html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
     assert.doesNotMatch(svg, /src\/router\.js|github\.com\/example\/evidence-repo|source-evidence/);
+
+    const svgOutput = path.join(data.root, `verified.${type}.svg`);
+    const delivered = run(['deliver', type, data.input, svgOutput, '--format', 'svg', '--repo-root', data.root, '--json']);
+    assert.equal(delivered.status, 0, delivered.stderr || delivered.stdout);
+    const svgReceipt = JSON.parse(delivered.stdout);
+    assert.deepEqual(svgReceipt.evidence, JSON.parse(result.stdout).evidence);
+    assert.deepEqual(svgReceipt.svgValidation, { checksPassed: 16, checkCount: 16 });
+    const standalone = fs.readFileSync(svgOutput, 'utf8').replace(/<style\b[^>]*>[\s\S]*?<\/style>/i, '');
+    assert.doesNotMatch(standalone, /src\/router\.js|github\.com\/example\/evidence-repo|source-evidence/);
   });
 
   test(`${type} repository evidence applies every architecture verification`, () => {

@@ -15,6 +15,7 @@ const testFiles = [
   'lifecycle-rail-browser.test.mjs',
   'export-cleanup-browser.test.mjs',
   'offline-font-browser.test.mjs',
+  'svg-delivery.test.mjs',
   'i18n.test.mjs',
   'semantic-radar.test.mjs',
   'viewer-chrome-layout.test.mjs',
