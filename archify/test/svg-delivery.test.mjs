@@ -57,6 +57,11 @@ const parityCases = [
     diagram.components.find((component) => component.id === 'db').label = 'Ā Ѡ Ж Ω ắ';
     diagram.connections.find((connection) => connection.id === 'users-to-cdn').label = '请求';
   }),
+  architectureVariant('architecture-es', (diagram) => {
+    diagram.meta.title = 'Arquitectura española';
+    diagram.meta.locale = 'es';
+    diagram.components.find((component) => component.id === 'users').label = 'Usuarios';
+  }),
 ];
 
 function run(args, env = {}) {
