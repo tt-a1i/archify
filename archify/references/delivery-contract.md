@@ -32,6 +32,24 @@ The delivery interface exposes three separate claims:
 
 Passing one claim never implies either of the others. Never claim that the deterministic receipt includes visual review. It does not include browser evidence either.
 
+## Recovering a failed comparison
+
+`compare` commits an HTML artifact and its JSON receipt as a pair. If that commit
+fails, it attempts to restore the previous files. A complete rollback removes
+the temporary directory as usual.
+
+If a previous file cannot be restored, compare exits non-zero with
+`delta/commit-rollback-failed` and retains the recovery directory. In the JSON
+failure receipt, `diagnostics[].evidence.recoveryDirectory` identifies that
+directory and `recoveryFiles` lists `{ backup, target }` paths for the files whose
+restoration failed. Human-readable diagnostics also print the recovery paths.
+
+Resolve the filesystem error, inspect the current targets, and restore each
+listed backup to its corresponding target before retrying. Keep the recovery
+directory until both previous files have been recovered and verified; it can
+also contain rejected candidate files, which must not be mistaken for backups.
+Successful comparisons and failures before commit retain their normal cleanup.
+
 ## Automated browser evidence
 
 After delivery, inspect the exact trusted HTML without rerendering or modifying

@@ -392,6 +392,7 @@ function commitComparePair({ htmlCandidate, receiptCandidate, outputPath, receip
     }
   } catch (cause) {
     const rollbackErrors = [];
+    const recoveryFiles = [];
     for (const item of [...committed].reverse()) {
       try {
         fs.rmSync(item.target, { force: true });
@@ -405,17 +406,27 @@ function commitComparePair({ htmlCandidate, receiptCandidate, outputPath, receip
         fs.renameSync(item.backup, item.target);
       } catch (error) {
         rollbackErrors.push(`${item.label}: restore failed (${error.message})`);
+        // Track failed restoration rather than probing existence: a permission
+        // error must not make cleanup discard a potentially recoverable backup.
+        recoveryFiles.push({ backup: item.backup, target: item.target });
       }
     }
     throw compareCommitError(
-      rollbackErrors.length
+      (rollbackErrors.length
         ? 'Architecture Delta pair commit failed and its previous files could not be fully restored.'
-        : 'Architecture Delta pair commit failed; the previous files were restored.',
+        : 'Architecture Delta pair commit failed; the previous files were restored.')
+        + (recoveryFiles.length ? ` Recovery directory retained at ${stagingDirectory}.` : ''),
       rollbackErrors.length ? 'delta/commit-rollback-failed' : 'delta/commit-failed',
       {
         reason: cause.message,
         ...(rollbackErrors.length ? { rollbackErrors } : {}),
-        supportedFixes: ['check that both output paths are writable regular files, then retry'],
+        ...(recoveryFiles.length ? { recoveryDirectory: stagingDirectory, recoveryFiles } : {}),
+        supportedFixes: recoveryFiles.length
+          ? [
+            ...recoveryFiles.map(({ backup, target }) => `resolve the filesystem error, inspect the current target, then restore ${JSON.stringify(backup)} to ${JSON.stringify(target)} before retrying`),
+            'remove the recovery directory only after the previous files have been recovered and verified',
+          ]
+          : ['check that both output paths are writable regular files, then retry'],
       },
     );
   }
@@ -582,6 +593,7 @@ async function commandCompare(args) {
   const canonicalHeadInput = path.join(stagingDirectory, 'head.architecture.json');
   const htmlCandidate = path.join(stagingDirectory, path.basename(outputPath));
   const receiptCandidate = path.join(stagingDirectory, path.basename(receiptPath));
+  let preserveRecoveryDirectory = false;
 
   try {
     let baseResult;
@@ -745,6 +757,7 @@ async function commandCompare(args) {
     if (error instanceof ArchitectureDeltaError) {
       reportCompareFailure({ json: options.json, stage: 'artifact', error: error.message, code: error.code, details: error.details });
     } else if (error.compareStage === 'commit') {
+      preserveRecoveryDirectory = Boolean(error.compareDetails?.recoveryFiles?.length);
       reportCompareFailure({
         json: options.json,
         stage: error.compareStage,
@@ -757,7 +770,7 @@ async function commandCompare(args) {
     }
   } finally {
     try {
-      fs.rmSync(stagingDirectory, { recursive: true, force: true });
+      if (!preserveRecoveryDirectory) fs.rmSync(stagingDirectory, { recursive: true, force: true });
     } catch (error) {
       console.error(`Warning: could not remove compare staging directory: ${error.message}`);
     }
