@@ -1,3 +1,5 @@
+import { parseRepositoryRemote } from '../renderers/shared/repository-location.mjs';
+
 const COMPARATOR_VERSION = 1;
 const CANONICAL_VERSION = 1;
 
@@ -33,9 +35,13 @@ function sortedBy(values, keyFor) {
 
 function normalizeRepository(repository) {
   if (!repository) return undefined;
+  const location = parseRepositoryRemote(repository.url, { authored: true });
+  const url = location?.url || String(repository.url || '');
   return {
-    url: String(repository.url || '').trim().replace(/\.git\/?$/i, '').replace(/\/$/, '').toLowerCase(),
+    url: location?.provider === 'github' ? url.toLowerCase() : url,
     revision: String(repository.revision || '').toLowerCase(),
+    ...(repository.provider !== undefined ? { provider: repository.provider } : {}),
+    ...(repository.link_mode !== undefined ? { link_mode: repository.link_mode } : {}),
   };
 }
 
@@ -149,7 +155,7 @@ function fieldChanges(before, after, groups) {
 }
 
 const COMPONENT_FIELDS = {
-  semantic: ['type', 'label', 'sublabel', 'tag'],
+  semantic: ['type', 'label', 'sublabel', 'tag', 'brand'],
   evidence: ['sources'],
   geometry: ['row', 'col', 'pos', 'size'],
 };
@@ -196,6 +202,7 @@ function summaryFor(changes, shape) {
 function presentationChanged(base, head) {
   const basePresentation = {
     title: base.meta?.title,
+    locale: base.meta?.locale,
     subtitle: base.meta?.subtitle,
     animation: base.meta?.animation,
     visual_preset: base.meta?.visual_preset,
@@ -209,6 +216,7 @@ function presentationChanged(base, head) {
   };
   const headPresentation = {
     title: head.meta?.title,
+    locale: head.meta?.locale,
     subtitle: head.meta?.subtitle,
     animation: head.meta?.animation,
     visual_preset: head.meta?.visual_preset,
@@ -242,7 +250,8 @@ export function compareArchitecture(base, head, evidence = {}) {
 
   const baseRepository = normalizeRepository(base.meta?.repository);
   const headRepository = normalizeRepository(head.meta?.repository);
-  if (baseRepository && headRepository && baseRepository.url !== headRepository.url) {
+  const identity = (repository) => parseRepositoryRemote(repository.url, { authored: true })?.identity || repository.url;
+  if (baseRepository && headRepository && identity(baseRepository) !== identity(headRepository)) {
     fail('delta/repository-mismatch', 'The snapshots name different repositories.', {
       baseRepository: baseRepository.url,
       headRepository: headRepository.url,
@@ -546,6 +555,9 @@ function boundarySymbolMarkup(markup, state) {
 export function buildDeltaSvg(baseSvg, headSvg, receipt) {
   const [baseW, baseH] = viewBoxSize(baseSvg);
   const [headW, headH] = viewBoxSize(headSvg);
+  // Baseline paths and their definitions must travel together in a namespace
+  // distinct from the current snapshot before the final Delta prefix is added.
+  const baseRelationshipsSvg = prefixSvgIds(baseSvg, 'base');
   const nodes = changeMap(receipt.changes.components);
   const edges = changeMap(receipt.changes.connections);
   const boundaries = boundaryChangeMap(receipt.changes.boundaries);
@@ -562,11 +574,11 @@ export function buildDeltaSvg(baseSvg, headSvg, receipt) {
   }
   for (const change of edges.values()) {
     if (change.status === 'removed' || change.classifications.includes('topology')) {
-      const phantom = forceElementState(elementById(baseSvg, 'edge', change.id), 'removed', change.classifications);
+      const phantom = forceElementState(elementById(baseRelationshipsSvg, 'edge', change.id), 'removed', change.classifications);
       baseEdgePhantoms.push(phantom);
       edgeMarkers.push(edgeSymbolMarkup(phantom, 'removed'));
     } else if (change.classifications.includes('geometry')) {
-      const phantom = forceElementState(elementById(baseSvg, 'edge', change.id), 'moved-from', change.classifications);
+      const phantom = forceElementState(elementById(baseRelationshipsSvg, 'edge', change.id), 'moved-from', change.classifications);
       baseEdgePhantoms.push(phantom);
       edgeMarkers.push(edgeSymbolMarkup(phantom, 'moved-from'));
     }
@@ -589,6 +601,10 @@ export function buildDeltaSvg(baseSvg, headSvg, receipt) {
   }
 
   let delta = annotateArchitectureSideSvg(headSvg, receipt, 'head');
+  if (baseEdgePhantoms.length) {
+    const baseDefinitions = baseRelationshipsSvg.match(/<defs>([\s\S]*?)<\/defs>/)?.[1] || '';
+    delta = delta.replace('</defs>', `${baseDefinitions}</defs>`);
+  }
   delta = delta.replace(/^<svg[^>]+>/, (tag) => tag.replace(/viewBox="[^"]+"/, `viewBox="0 0 ${Math.max(baseW, headW) + 24} ${Math.max(baseH, headH) + 24}"`));
   delta = delta.replace('        <!-- Boundaries (behind everything) -->', `        <!-- Baseline boundary frame phantoms -->\n${baseBoundaryFramePhantoms.filter(Boolean).join('\n')}\n\n        <!-- Boundaries (behind everything) -->`);
   delta = delta.replace('        <!-- Connection paths (before components for correct z-order) -->', `        <!-- Baseline relationship phantoms -->\n${baseEdgePhantoms.join('\n')}\n\n        <!-- Connection paths (before components for correct z-order) -->`);
@@ -950,7 +966,9 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
       'text[data-delta-boundary-state="added"]{fill:#34d399!important}text[data-delta-boundary-state="removed"]{fill:#fb7185!important}text[data-delta-boundary-state="changed"]{fill:#fbbf24!important}text[data-delta-boundary-state="moved-from"]{fill:#7dd3fc!important;opacity:.55}' +
       '.delta-node-marker circle{fill:#071019;stroke:currentColor;stroke-width:1.5}.delta-node-marker text,.delta-edge-marker,.delta-boundary-marker{fill:currentColor;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace}';
     clone.insertBefore(style, clone.firstChild);
-    return new XMLSerializer().serializeToString(clone);
+    // The XML declaration pins UTF-8: without it, consumers that guess an
+    // encoding instead of defaulting to UTF-8 mangle non-ASCII text.
+    return '<?xml version="1.0" encoding="UTF-8"?>\\n' + new XMLSerializer().serializeToString(clone);
   }
 
   function artifactName(suffix) {

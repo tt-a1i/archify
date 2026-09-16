@@ -1,0 +1,136 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# Advisory pilot: retain human review and existing CI/branch protection.
+language: en-US
+tone_instructions: >-
+  Be concise and constructive. Prioritize concrete defects and material evidence gaps.
+  Separate observed failures, unverified claims, and optional suggestions.
+  Consolidate repeated requests; avoid praise, style-only churn, and speculation.
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_in_walkthrough: true
+  changed_files_summary: false
+  high_level_summary_instructions: >-
+    In at most 100 words, summarize the user problem, changed behavior, and
+    compatibility impact without a file-by-file inventory. State the reviewed
+    base/head and distinguish author-reported validation, reused evidence at its
+    original revision, and observed CI at its checked revision. Treat the summary
+    as a snapshot, not a live CI status. Do not claim browser or perceptual
+    acceptance from static tests.
+  poem: false
+  in_progress_fortune: false
+  sequence_diagrams: false
+  assess_linked_issues: false
+  suggested_labels: false
+  suggested_reviewers: false
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 0
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+    autofix:
+      enabled: false
+  slop_detection:
+    enabled: false
+  path_instructions:
+    - path: "**"
+      instructions: >-
+        Use .agents/skills/archify-review/SKILL.md for value, cost, and impact
+        judgments, and consult its linked repository guidance as needed. Apply
+        the base branch's rules when evaluating proposed policy changes.
+        Review the base-to-head source diff before generated output. For each
+        actionable finding, identify the trigger or material evidence gap, its
+        consequence, and the smallest useful correction. Distinguish defects,
+        unresolved claims, and optional suggestions. Accept equivalent prose
+        and reachable documentation references; request another link or template
+        entry only when it resolves a concrete ambiguity or missing requirement.
+        On revision, read the latest PR body, discussion, and relevant CI. Focus
+        on new changes and unresolved findings, reusing unaffected evidence with
+        its original revision. Reuse maintainer scope decisions and consolidate
+        requests already answered rather than repeating them inline.
+    - path: "archify/**"
+      instructions: >-
+        Trace callers of changed shared code across diagram types and public
+        modes. Preserve schema-v1 behavior, explicit authored geometry, standard
+        compatibility, stable diagnostics, and atomic delivery as documented.
+        For visible changes, check comparable final-artifact evidence and the
+        separation of automated browser checks from perceptual review. For Viewer
+        extraction, inspect initialization, shared state, cleanup, exports, and
+        standalone HTML delivery. Do not propose a broad rewrite for a local fix.
+    - path: "integrations/**"
+      instructions: >-
+        Check the package and release contracts in CONTRIBUTING.md. Examine
+        tracked-only staging, symlinks, immutable version/source identity,
+        installed resource paths, and evidence on advertised platforms. Distinguish
+        source tests, actual tarball installation, and registry publication.
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    title:
+      mode: "off"
+    description:
+      mode: "off"
+    issue_assessment:
+      mode: "off" # Contribution scope below owns scope/issue assessment.
+    custom_checks:
+      - name: Contribution scope
+        mode: warning
+        instructions: >-
+          Read CONTRIBUTING.md, REVIEWING.md, and .github/PULL_REQUEST_TEMPLATE.md. Pass when
+          the PR explains the user problem, one focused behavior or delivery
+          slice, compatibility/migration impact, and failure/rollback behavior
+          where applicable, and the implementation fits that scope. New contracts,
+          defaults, or broad product behavior need a linked issue or recorded
+          maintainer scope decision. Narrow fixes may use a concrete reproduction;
+          small documentation or test corrections may use a rationale. Do not
+          require a PR to close every item of a tracking issue. Accept
+          equivalent prose and omission of inapplicable template sections, not just
+          exact headings or checked boxes. Warn once with the specific missing facts;
+          read the latest description and maintainer decisions before repeating
+          a warning. Do not classify missing evidence as a confirmed runtime defect.
+      - name: Validation evidence
+        mode: warning
+        instructions: >-
+          Assess evidence coverage and claim accuracy using the latest PR body,
+          discussion, source diff, and relevant check results. Use CONTRIBUTING.md
+          to identify the affected behavior and proportionate evidence. Pass when
+          the available evidence covers the affected behavior and supports the
+          material claims; warn for concrete coverage gaps or unsupported success
+          claims. State the evaluated head
+          and evidence revisions, distinguishing author reports, observed results,
+          and reused evidence. Reuse unaffected results with a rationale; request
+          reruns only where changes invalidate them. Accept equivalent prose,
+          inapplicable sections being omitted, and linked evidence.
+          Assess relevant regressions and generated-output freshness when inputs
+          changed. For visible behavior, distinguish comparable artifact evidence,
+          automated/browser checks, and perceptual review under the delivery contract.
+          This check does not certify merge readiness: GitHub required checks and
+          branch protection enforce final-head CI. Pending CI alone is not a
+          coverage gap when other evidence is sufficient. If a pending or unavailable
+          run is the only evidence for a material claim, identify that specific
+          unresolved claim; never treat pending, skipped, or failed checks as passes.
+          Report remaining gaps once with their consequence, smallest check, and
+          owner. Fork-workflow approval belongs to maintainers. If repository or
+          evidence access prevents assessment, return Inconclusive and describe
+          the access limitation rather than claiming the author omitted evidence.
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - .agents/skills/archify-review/SKILL.md
+      - CONTRIBUTING.md
+      - REVIEWING.md
+      - .github/PULL_REQUEST_TEMPLATE.md
+      - archify/references/delivery-contract.md
+  learnings:
+    scope: local
+  issues:
+    scope: local
+  pull_requests:
+    scope: local

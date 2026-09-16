@@ -392,6 +392,7 @@ function commitComparePair({ htmlCandidate, receiptCandidate, outputPath, receip
     }
   } catch (cause) {
     const rollbackErrors = [];
+    const recoveryFiles = [];
     for (const item of [...committed].reverse()) {
       try {
         fs.rmSync(item.target, { force: true });
@@ -405,17 +406,27 @@ function commitComparePair({ htmlCandidate, receiptCandidate, outputPath, receip
         fs.renameSync(item.backup, item.target);
       } catch (error) {
         rollbackErrors.push(`${item.label}: restore failed (${error.message})`);
+        // Track failed restoration rather than probing existence: a permission
+        // error must not make cleanup discard a potentially recoverable backup.
+        recoveryFiles.push({ backup: item.backup, target: item.target });
       }
     }
     throw compareCommitError(
-      rollbackErrors.length
+      (rollbackErrors.length
         ? 'Architecture Delta pair commit failed and its previous files could not be fully restored.'
-        : 'Architecture Delta pair commit failed; the previous files were restored.',
+        : 'Architecture Delta pair commit failed; the previous files were restored.')
+        + (recoveryFiles.length ? ` Recovery directory retained at ${stagingDirectory}.` : ''),
       rollbackErrors.length ? 'delta/commit-rollback-failed' : 'delta/commit-failed',
       {
         reason: cause.message,
         ...(rollbackErrors.length ? { rollbackErrors } : {}),
-        supportedFixes: ['check that both output paths are writable regular files, then retry'],
+        ...(recoveryFiles.length ? { recoveryDirectory: stagingDirectory, recoveryFiles } : {}),
+        supportedFixes: recoveryFiles.length
+          ? [
+            ...recoveryFiles.map(({ backup, target }) => `resolve the filesystem error, inspect the current target, then restore ${JSON.stringify(backup)} to ${JSON.stringify(target)} before retrying`),
+            'remove the recovery directory only after the previous files have been recovered and verified',
+          ]
+          : ['check that both output paths are writable regular files, then retry'],
       },
     );
   }
@@ -576,16 +587,42 @@ async function commandCompare(args) {
   const headCandidate = path.join(stagingDirectory, 'head.html');
   const rawBaseCandidate = path.join(stagingDirectory, 'base.raw.html');
   const rawHeadCandidate = path.join(stagingDirectory, 'head.raw.html');
+  const rawBaseInput = path.join(stagingDirectory, 'base.snapshot.json');
+  const rawHeadInput = path.join(stagingDirectory, 'head.snapshot.json');
   const canonicalBaseInput = path.join(stagingDirectory, 'base.architecture.json');
   const canonicalHeadInput = path.join(stagingDirectory, 'head.architecture.json');
   const htmlCandidate = path.join(stagingDirectory, path.basename(outputPath));
   const receiptCandidate = path.join(stagingDirectory, path.basename(receiptPath));
+  let preserveRecoveryDirectory = false;
 
   try {
     let baseResult;
     let headResult;
+    for (const { side, snapshotPath, buffer } of [
+      { side: 'base', snapshotPath: rawBaseInput, buffer: baseBuffer },
+      { side: 'head', snapshotPath: rawHeadInput, buffer: headBuffer },
+    ]) {
+      try {
+        fs.writeFileSync(snapshotPath, buffer, { flag: 'wx' });
+      } catch (error) {
+        const message = `Could not freeze ${side} compare snapshot: ${error.message}`;
+        reportCompareFailure({
+          json: options.json,
+          stage: 'prepare',
+          error: message,
+          code: 'delta/freeze-snapshot',
+          details: {
+            side,
+            ...(error?.code ? { systemCode: error.code } : {}),
+            reason: error.message,
+            supportedFixes: ['choose a writable compare output directory on the target filesystem'],
+          },
+        });
+        return;
+      }
+    }
     try {
-      renderValidatedArchitecture(basePath, rawBaseCandidate, qualityArgs.quality, repoArgs.repoRoot);
+      renderValidatedArchitecture(rawBaseInput, rawBaseCandidate, qualityArgs.quality, repoArgs.repoRoot);
     } catch (error) {
       const diagnosticEntry = error.diagnostics?.[0];
       reportCompareFailure({
@@ -599,7 +636,7 @@ async function commandCompare(args) {
       return;
     }
     try {
-      renderValidatedArchitecture(headPath, rawHeadCandidate, qualityArgs.quality, repoArgs.repoRoot);
+      renderValidatedArchitecture(rawHeadInput, rawHeadCandidate, qualityArgs.quality, repoArgs.repoRoot);
     } catch (error) {
       const diagnosticEntry = error.diagnostics?.[0];
       reportCompareFailure({
@@ -720,6 +757,7 @@ async function commandCompare(args) {
     if (error instanceof ArchitectureDeltaError) {
       reportCompareFailure({ json: options.json, stage: 'artifact', error: error.message, code: error.code, details: error.details });
     } else if (error.compareStage === 'commit') {
+      preserveRecoveryDirectory = Boolean(error.compareDetails?.recoveryFiles?.length);
       reportCompareFailure({
         json: options.json,
         stage: error.compareStage,
@@ -732,7 +770,7 @@ async function commandCompare(args) {
     }
   } finally {
     try {
-      fs.rmSync(stagingDirectory, { recursive: true, force: true });
+      if (!preserveRecoveryDirectory) fs.rmSync(stagingDirectory, { recursive: true, force: true });
     } catch (error) {
       console.error(`Warning: could not remove compare staging directory: ${error.message}`);
     }
@@ -1102,6 +1140,7 @@ async function commandDeliver(args) {
           repository: sourceEvidence.repository.url,
           revision: sourceEvidence.repository.revision,
           references: sourceEvidence.referenceCount,
+          ...(sourceEvidence.repository.linkMode ? { linkMode: sourceEvidence.repository.linkMode } : {}),
         },
       } : {}),
     };
@@ -1224,8 +1263,10 @@ async function commandPreview(args) {
 }
 
 function commandCheck(args) {
+  const unknown = args.find((arg) => arg.startsWith('--'));
+  if (unknown) fail(`Unknown check option "${unknown}".`);
   const [html] = args;
-  if (!html) fail(usage());
+  if (!html || args.length !== 1) fail(usage());
   const result = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), html]);
   if (result.status !== 0) exitFrom(result);
 }
@@ -1282,12 +1323,18 @@ async function commandVisualCheck(args) {
   process.exitCode = result.exitCode;
 }
 
-function commandExamples() {
+function commandExamples(args) {
+  const unknown = args.find((arg) => arg.startsWith('--'));
+  if (unknown) fail(`Unknown examples option "${unknown}".`);
+  if (args.length) fail(usage());
   const result = runNode([path.join(skillRoot, 'scripts/render-examples.mjs')], { cwd: skillRoot });
   if (result.status !== 0) exitFrom(result);
 }
 
-async function commandDoctor() {
+async function commandDoctor(args) {
+  const unknown = args.find((arg) => arg.startsWith('--'));
+  if (unknown) fail(`Unknown doctor option "${unknown}".`);
+  if (args.length) fail(usage());
   const checks = [];
   const nodeMajor = Number.parseInt(process.versions.node.split('.')[0], 10);
   checks.push({
@@ -1535,6 +1582,8 @@ async function commandBrands(args) {
 }
 
 function commandDemo(args) {
+  const unknown = args.find((arg) => arg.startsWith('--'));
+  if (unknown) fail(`Unknown demo option "${unknown}".`);
   if (args.length > 1) fail(usage());
 
   const outputDirectory = path.resolve(args[0] || process.cwd());
@@ -2069,10 +2118,10 @@ try {
       await commandBrands(args);
       break;
     case 'examples':
-      commandExamples();
+      commandExamples(args);
       break;
     case 'doctor':
-      await commandDoctor();
+      await commandDoctor(args);
       break;
     case 'demo':
       commandDemo(args);

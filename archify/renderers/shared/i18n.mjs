@@ -340,6 +340,7 @@ const MESSAGE_PAIRS = {
   'viewer.passport.metadata': ['Node metadata', '节点元数据'],
   'viewer.passport.evidence': ['Verified source evidence', '已验证的源代码证据'],
   'viewer.passport.verified': ['Verified source', '已验证来源'],
+  'viewer.passport.verificationScope': ['Verified against local Git at the pinned revision. Remote access has not been checked.', '已按固定修订版本验证本地 Git 证据，未检查远程访问权限。'],
   'viewer.passport.reach': ['Authored reach', '编写可达范围'],
   'viewer.passport.reach.trace': ['Trace authored reachability', '追踪编写的可达性'],
   'viewer.passport.upstream': ['Upstream', '上游'],

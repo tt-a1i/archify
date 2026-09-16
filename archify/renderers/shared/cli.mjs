@@ -146,13 +146,13 @@ export function validateGuidedViews(diagramType, diagram) {
 }
 
 // Accessible name for the generated diagram SVG.
-export function svgRootAttrs(meta) {
+export function svgRootAttrs(meta, explicitQualityProfile) {
   const animation = meta.animation === 'trace' ? ' data-animation="trace"' : '';
   const preset = ` data-preset="${esc(meta.visual_preset || 'classic')}"`;
   const engineeringProfile = meta.engineering_profile
     ? ` data-engineering-profile="${esc(meta.engineering_profile)}"`
     : '';
-  const requestedProfile = process.env.ARCHIFY_QUALITY_PROFILE || meta.quality_profile;
+  const requestedProfile = explicitQualityProfile || process.env.ARCHIFY_QUALITY_PROFILE || meta.quality_profile;
   const qualityProfile = requestedProfile === 'showcase' ? 'showcase' : 'standard';
   const advisory = requestedProfile ? '' : ' data-quality-gates="advisory"';
   return `role="img" lang="${esc(resolveLocale(meta.locale))}" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset}${engineeringProfile} data-quality-profile="${esc(qualityProfile)}"${advisory}`;

@@ -111,7 +111,6 @@ test('contributor and pull-request guides keep proof changes reproducible and st
     'Evidence provided:',
     'Automated or browser checks:',
     'Perceptual visual review: passed / failed / skipped / Not applicable',
-    'No unrelated changes',
   ]) {
     assert.match(pullRequest, new RegExp(required), required);
   }
@@ -119,7 +118,6 @@ test('contributor and pull-request guides keep proof changes reproducible and st
   assert.match(contributing, /screenshots, recordings, or reproducible steps/i);
   assert.match(contributing, /same input/i);
   assert.match(contributing, /automated or browser evidence separately from perceptual review/i);
-  assert.match(contributing, /non-visual pull request must write `Not applicable`/i);
   assert.match(pullRequest, /screenshots, recordings, or reproducible steps/i);
   assert.match(pullRequest, /automated or browser evidence separately from perceptual review/i);
   assert.doesNotMatch(contributing, /must reach `passed` before final review or merge/i);

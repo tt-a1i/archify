@@ -12,6 +12,28 @@ import { DESKTOP_READABILITY_VIEWPORT, MIN_PROJECTED_NODE_TEXT_PX } from '../ren
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 const chromePath = process.env.ARCHIFY_CHROME ? findChrome() : null;
+const packagedHtmlExamples = fs.readdirSync(path.join(skillRoot, 'examples'))
+  .filter((name) => name.endsWith('.html') && !name.endsWith('.visual-check.html'))
+  .sort();
+
+test('all packaged HTML examples pass the real visual-check desktop gate', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-packaged-examples-'));
+  try {
+    assert.ok(packagedHtmlExamples.length > 0, 'expected at least one packaged HTML example');
+    for (const name of packagedHtmlExamples) {
+      const artifact = path.join(tmp, name);
+      fs.copyFileSync(path.join(skillRoot, 'examples', name), artifact);
+      const result = await runVisualCheck({ artifactPath: artifact, chromePath });
+      assert.equal(result.exitCode, 0, `${name}: ${JSON.stringify(result.receipt, null, 2)}`);
+      assert.equal(result.receipt.containment.status, 'pass', name);
+      assert.equal(result.receipt.containment.viewports.every((viewport) => viewport.ok), true, name);
+    }
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
 
 test('production showcase is readable in the real 1440 by 900 adaptive reader', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',

@@ -4246,7 +4246,7 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(workflow.meta, 'workflow diagram')}>
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(workflow.meta, resolvedQualityProfile)}>
 ${svgAccessibleText(workflow.meta, 'workflow')}
 ${renderDefinitions()}
 

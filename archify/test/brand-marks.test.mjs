@@ -30,7 +30,7 @@ test('third-party notices cover every recorded individual mark license', () => {
   const notices = fs.readFileSync(path.join(skillRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
   const licensedMarks = BRAND_MARKS.filter((mark) => mark.provenance?.license);
 
-  assert.equal(THIRD_PARTY_NOTICE_DISCLOSURE_COUNT, 34, 'notice contract changed without review');
+  assert.equal(THIRD_PARTY_NOTICE_DISCLOSURE_COUNT, 39, 'notice contract changed without review');
   assert.deepEqual(validateThirdPartyNotices(notices), { ok: true, missing: [] });
   assert.equal(licensedMarks.length, 8, 'pinned Simple Icons license inventory changed');
   for (const mark of licensedMarks) {
@@ -205,11 +205,12 @@ test('a branded node fails before its semantic sigil, label, and brand badge can
 
 test('every renderer enforces the same collision-free brand top rail', () => {
   for (const type of ['architecture', 'sequence', 'dataflow', 'lifecycle']) {
-    const input = writeFixture(type, `narrow-brand-rail-${type}`, 'openai', (_diagram, node) => {
+    const input = writeFixture(type, `narrow-brand-rail-${type}`, 'openai', (diagram, node) => {
       node.label = type === 'sequence' ? 'ABCDEFGHI' : 'A';
       delete node.sublabel;
       delete node.tag;
       if (type === 'architecture') node.size = [32, 60];
+      if (type === 'sequence') diagram.meta.column_fit = 'fixed';
       if (type === 'dataflow' || type === 'lifecycle') node.width = 48;
     });
     const { result, html } = renderSync(type, input, `narrow-brand-rail-${type}`);
