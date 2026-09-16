@@ -232,8 +232,13 @@ test('standalone SVG checks reject network, script, and embedded SVG resources',
   const closing = delivered.artifact.lastIndexOf('</svg>');
   for (const [name, injection] of [
     ['network-attribute', '<image href="https://example.invalid/mark.png"/>'],
+    ['network-href-single', "<image href='https://example.invalid/mark.png'/>"],
+    ['network-src-double', '<image src="https://example.invalid/mark.png"/>'],
+    ['network-src-single', "<image src = 'https://example.invalid/mark.png'/>"],
+    ['network-xlink-single', "<image xmlns:xlink='http://www.w3.org/1999/xlink' xlink:href='https://example.invalid/mark.png'/>"],
     ['network-css', '<style>.x{background:url(https://example.invalid/mark.png)}</style>'],
     ['embedded-svg', '<image href="data:image/svg+xml;base64,PHN2Zy8+"/>'],
+    ['embedded-svg-single', "<image href='data:image/svg+xml;base64,PHN2Zy8+'/>"],
     ['script', '<script>throw new Error()</script>'],
   ]) {
     const output = path.join(tmp, `${name}.svg`);
@@ -242,6 +247,22 @@ test('standalone SVG checks reject network, script, and embedded SVG resources',
     assert.equal(result.status, 1, name);
     const receipt = JSON.parse(result.stdout);
     assert.equal(receipt.checks.find((check) => check.name === 'standalone_resources').ok, false, name);
+  }
+});
+
+test('standalone SVG checks accept local resources with either attribute quote', () => {
+  const delivered = deliverSvg(typeCases[0], 'auto', '-local-resources');
+  for (const attribute of ['href', 'src', 'xlink:href']) {
+    for (const quote of ['"', "'"]) {
+      for (const value of ['#local-resource', 'data:image/png;base64,iVBORw0KGgo=']) {
+        const injection = `<image xmlns:xlink="http://www.w3.org/1999/xlink" ${attribute} = ${quote}${value}${quote}/>`;
+        const output = path.join(tmp, 'local-resource.svg');
+        fs.writeFileSync(output, delivered.artifact.replace(/<\/svg>\s*$/, `${injection}</svg>\n`));
+        const result = run(['check', output]);
+        assert.equal(result.status, 0, result.stderr || result.stdout);
+        assert.equal(JSON.parse(result.stdout).checks.find((check) => check.name === 'standalone_resources').ok, true);
+      }
+    }
   }
 });
 

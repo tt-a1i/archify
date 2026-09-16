@@ -335,8 +335,8 @@ if (svgMatches.length === 1) {
     const theme = svgAttrs['data-theme'];
     const localResource = (value) => value.startsWith('#')
       || /^data:image\/(?:png|jpeg|webp|x-icon|vnd\.microsoft\.icon);base64,[a-z0-9+/=]+$/i.test(value);
-    const externalAttributes = [...svg.matchAll(/\b(?:href|src)="([^"]*)"/gi)]
-      .map((match) => match[1])
+    const externalAttributes = [...svg.matchAll(/\b(?:href|src)\s*=\s*(["'])([\s\S]*?)\1/gi)]
+      .map((match) => match[2])
       .filter((value) => value && !localResource(value));
     const externalCss = [...svg.matchAll(/\burl\(\s*(['"]?)([^)'"\s]+)\1\s*\)/gi)]
       .map((match) => match[2])

@@ -57,6 +57,21 @@ test('delivery documents SVG as an additive format on the existing verified path
   assert.match(delivery, /`visual-check` accepts HTML only/i);
 });
 
+test('handoff examples distinguish HTML browser evidence from SVG receipt fields', () => {
+  const handoff = delivery.split('## Handoff receipt')[1].split('\n## ')[0];
+  const examples = [...handoff.matchAll(/```text\n([\s\S]*?)```/g)].map((match) => match[1]);
+  const html = examples.find((example) => /output: .*\.html/.test(example));
+  const svg = examples.find((example) => /output: .*\.svg/.test(example));
+  assert.ok(html, 'HTML handoff example is required');
+  assert.ok(svg, 'SVG handoff example is required');
+  assert.match(html, /browser_evidence: passed\|failed\|skipped/);
+  for (const field of ['format: svg', 'theme: auto|light|dark', 'specification_sha256:', 'artifact_sha256:', 'validation:', 'svgValidation:', 'visual_review:', 'correction_rounds:']) {
+    assert.ok(svg.includes(field), `SVG handoff requires ${field}`);
+  }
+  assert.doesNotMatch(svg, /browser_evidence/);
+  assert.match(handoff, /Do not run `visual-check` for SVG/i);
+});
+
 test('skill keeps optional opening behind the verified commit and outside automation', () => {
   assert.match(delivery, /Add `--open` only when the user wants an immediate local preview/);
   assert.match(delivery, /runs after that atomic commit/);

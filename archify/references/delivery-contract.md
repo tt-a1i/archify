@@ -120,7 +120,7 @@ Never start it by default. Do not use it for CI, unattended agents, remote shari
 
 ## Perceptual delivery gate
 
-Automated validation and browser evidence cannot prove visual polish. After deterministic delivery, inspect the actual HTML in a capable browser or render the evidence screenshots with an image reader. Check both themes when changed, the default READ view, line crossings/corridors, label masks, node/card fit, focus/search/passport closure, and export cleanliness.
+Automated validation and browser evidence cannot prove visual polish. After deterministic delivery, inspect the delivered artifact in a capable browser or render its evidence screenshots with an image reader. For standalone SVG, inspect the requested fixed theme or both resolved themes for `auto`, checking line crossings/corridors, label masks, node fit, and export cleanliness. For HTML, also check the default READ view, cards, and focus/search/passport closure, in both themes when changed.
 
 For the default standalone desktop viewer, measure 1440×900, 1600×1000, and 1920×1080. When the artifact is intended for a large desktop display, also measure 2048×1320. A first-screen pass requires `document.documentElement.scrollWidth <= window.innerWidth` and `scrollHeight <= window.innerHeight` at every checked size. At the largest checked viewport, inspect the rendered composition for a conspicuous empty lower band: the main panel and necessary conclusion cards should use the available height as a balanced whole, not collapse into a shallow strip. If a desktop viewport overflows, repair the authored composition by removing only genuinely redundant content or compacting spacing before shrinking nodes, labels, or the main panel. Do not hide overflow, clip content, introduce an internal diagram scroller, or reduce node/label typography to make the measurement pass. Narrow/mobile containment may retain vertical page scrolling.
 
@@ -138,7 +138,7 @@ If visual review changes the candidate, validation and delivery must run again b
 
 ## Handoff receipt
 
-Return:
+For HTML, return:
 
 ```text
 diagram_type: architecture|workflow|sequence|dataflow|lifecycle
@@ -152,6 +152,23 @@ correction_rounds: 0|1|2
 ```
 
 Derive `browser_evidence` only from the latest artifact-bound `visual-check` receipt. Record any manual browser work separately with its artifact binding, viewport/theme scope, and observations; never use it or `visual_review` to overwrite the automated status.
+
+For standalone SVG, return:
+
+```text
+diagram_type: architecture|workflow|sequence|dataflow|lifecycle
+output: /absolute/path/to/file.svg
+format: svg
+theme: auto|light|dark
+specification_sha256: <receipt value>
+artifact_sha256: <receipt value>
+validation: <summary of receipt.validation>
+svgValidation: <summary of receipt.svgValidation>
+visual_review: passed|skipped (image reader unavailable)|failed
+correction_rounds: 0|1|2
+```
+
+Copy `format` and `theme` from the delivery receipt and report the actual validation results. Do not run `visual-check` for SVG or include `browser_evidence`: that command accepts HTML only, so no automated browser receipt exists for this delivery. Record any direct SVG inspection separately with the artifact hash and inspected themes; it can support `visual_review` but is not an automated validation claim.
 
 Opening, preview status, Share Cards, and other viewer exports are not validation claims.
 
