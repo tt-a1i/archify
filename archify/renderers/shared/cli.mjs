@@ -3,14 +3,12 @@ import path from 'node:path';
 import { applyTemplate, renderCards, esc } from './utils.mjs';
 import { validateSchema } from './validator.mjs';
 import { verifyRepositoryEvidence } from './repository-evidence.mjs';
-import { installRendererDiagnosticBoundary, throwDiagnosticProblems } from './diagnostics.mjs';
+import { installRendererDiagnosticBoundary, throwDiagnosticError, throwDiagnosticProblems } from './diagnostics.mjs';
 import { validateEngineeringProfile } from './engineering-profiles.mjs';
 import { resolveOutputPath } from './output-path.mjs';
 import { prepareDiagramBrandMarks } from './brand-marks.mjs';
 import { resolveLocale, translateMessage } from './i18n.mjs';
 import { renderStandaloneSvg } from './svg-export.mjs';
-
-installRendererDiagnosticBoundary();
 
 const outputPathGuards = new Map();
 
@@ -18,9 +16,37 @@ const outputPathGuards = new Map();
 // Keep this synchronous because callers also use it to establish the guarded
 // output path before testing a last-moment filesystem alias change.
 export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = process.argv }) {
+  // Compilers also import this module for SVG helpers. Only CLI execution
+  // should install a process-level handler, before reading or validating input.
+  installRendererDiagnosticBoundary();
   const skillRoot = path.resolve(rendererDir, '../..');
   const inputPath = path.resolve(argv[2] || path.join(skillRoot, 'examples', defaultExample));
-  const diagram = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+  let input;
+  try {
+    input = fs.readFileSync(inputPath, 'utf8');
+  } catch (error) {
+    if (!isFilesystemError(error)) throw error;
+    const message = `Input could not be read: ${error.message}`;
+    throwDiagnosticError(message, [{
+      code: 'input/read', message,
+      subject: { input: inputPath },
+      evidence: { systemCode: error.code, reason: error.message },
+      supportedFixes: ['provide one readable JSON input file'],
+    }]);
+  }
+  let diagram;
+  try {
+    diagram = JSON.parse(input);
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error;
+    const message = `Input JSON could not be parsed: ${error.message}`;
+    throwDiagnosticError(message, [{
+      code: 'input/json-parse', message,
+      subject: { input: inputPath },
+      evidence: { reason: error.message },
+      supportedFixes: ['repair the JSON syntax and run validation again'],
+    }]);
+  }
   validateSchema(diagramType, diagram);
   validateGuidedViews(diagramType, diagram);
   validateRelationshipIds(diagramType, diagram);
@@ -31,10 +57,16 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
     requestedOutput: argv[3],
     authoredOutput: diagram.meta?.output,
     defaultOutput: `${diagramType}.html`,
+    requiredExtension: process.env.ARCHIFY_OUTPUT_FORMAT === 'svg' ? '.svg' : '.html',
     inputPaths: [inputPath],
     cwd: process.cwd(),
   };
-  const { outputPath: outPath } = resolveOutputPath(outputRequest);
+  let outPath;
+  try {
+    ({ outputPath: outPath } = resolveOutputPath(outputRequest));
+  } catch (error) {
+    throwOutputError(error, path.resolve(outputRequest.requestedOutput || outputRequest.authoredOutput || outputRequest.defaultOutput));
+  }
   outputPathGuards.set(outPath, outputRequest);
   return { diagram, template, outPath, sourceEvidence };
 }
@@ -50,16 +82,31 @@ export async function loadDiagramWithBrandMarks(options) {
 
 const START_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
 
+function isFilesystemError(error) {
+  return typeof error?.code === 'string'
+    && typeof error?.syscall === 'string'
+    && typeof error?.errno === 'number';
+}
+
+function throwOutputError(error, output) {
+  if (error?.archifyDiagnostics || !isFilesystemError(error)) throw error;
+  const message = `Output could not be written: ${error.message}`;
+  throwDiagnosticError(message, [{
+    code: 'output/write', message,
+    subject: { output },
+    evidence: { systemCode: error.code, reason: error.message },
+    supportedFixes: ['choose a writable HTML file path and ensure its parent directories can be created'],
+  }]);
+}
+
 // Common CLI tail: fill the template and write the standalone HTML file.
 export function writeDiagram({ outPath, template, diagramType, meta, svg, cards, sourceEvidence = null }) {
   if (!START_TYPES.has(diagramType)) throw new Error(`writeDiagram: unknown diagram type ${JSON.stringify(diagramType)}`);
   const outputGuard = outputPathGuards.get(outPath);
-  if (outputGuard) resolveOutputPath(outputGuard);
   const outputFormat = process.env.ARCHIFY_OUTPUT_FORMAT || 'html';
   if (!['html', 'svg'].includes(outputFormat)) {
     throw new Error(`writeDiagram: unknown output format ${JSON.stringify(outputFormat)}`);
   }
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
   const artifact = outputFormat === 'svg'
     ? renderStandaloneSvg({
         svg,
@@ -77,7 +124,13 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
         guidedViews: meta.views || [],
         sourceEvidence,
       });
-  fs.writeFileSync(outPath, artifact);
+  try {
+    if (outputGuard) resolveOutputPath(outputGuard);
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    fs.writeFileSync(outPath, artifact);
+  } catch (error) {
+    throwOutputError(error, outPath);
+  }
   outputPathGuards.delete(outPath);
   console.log(outPath);
 }
@@ -159,13 +212,13 @@ export function validateGuidedViews(diagramType, diagram) {
 }
 
 // Accessible name for the generated diagram SVG.
-export function svgRootAttrs(meta) {
+export function svgRootAttrs(meta, explicitQualityProfile) {
   const animation = meta.animation === 'trace' ? ' data-animation="trace"' : '';
   const preset = ` data-preset="${esc(meta.visual_preset || 'classic')}"`;
   const engineeringProfile = meta.engineering_profile
     ? ` data-engineering-profile="${esc(meta.engineering_profile)}"`
     : '';
-  const requestedProfile = process.env.ARCHIFY_QUALITY_PROFILE || meta.quality_profile;
+  const requestedProfile = explicitQualityProfile || process.env.ARCHIFY_QUALITY_PROFILE || meta.quality_profile;
   const qualityProfile = requestedProfile === 'showcase' ? 'showcase' : 'standard';
   const advisory = requestedProfile ? '' : ' data-quality-gates="advisory"';
   return `role="img" lang="${esc(resolveLocale(meta.locale))}" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset}${engineeringProfile} data-quality-profile="${esc(qualityProfile)}"${advisory}`;

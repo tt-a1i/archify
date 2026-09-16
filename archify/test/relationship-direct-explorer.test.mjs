@@ -77,6 +77,21 @@ test('fine-pointer and keyboard intent preview the exact edge before activation'
   assert.match(template, /\.relationship-hit-target:focus-visible \.relationship-focus-rail/);
 });
 
+test('lifecycle relationship preview hides the non-semantic primary rail', () => {
+  const { result, html } = render('lifecycle', CASES.lifecycle);
+  const svg = canonicalSvg(html);
+  const rail = svg.match(/<path\b[^>]*data-lifecycle-rail[^>]*>/)?.[0] || '';
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.ok(rail, 'lifecycle: expected the primary decorative rail to be identifiable');
+  assert.doesNotMatch(rail, /data-edge-from|data-edge-to/, 'the rail must remain non-semantic');
+  assert.match(
+    html,
+    /svg\[data-relationship-preview-active\] \[data-lifecycle-rail\]\s*\{\s*opacity:\s*0;/,
+    'hovering or focusing an authored relationship must not expose the decorative rail',
+  );
+});
+
 test('activation opens the existing source passport and pins its exact relationship row', () => {
   assert.match(template, /function inspectRelationship\(key, options\)/);
   assert.match(template, /if \(directPreviewTimer\) window\.clearTimeout\(directPreviewTimer\)/);

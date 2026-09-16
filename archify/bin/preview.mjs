@@ -591,6 +591,11 @@ export async function startPreview(options) {
       watcher = fs.watch(path.dirname(inputPath), (event, filename) => {
         if (!filename || filename.toString() === path.basename(inputPath)) observeSource();
       });
+      watcher.on('error', () => {
+        const failedWatcher = watcher;
+        watcher = undefined;
+        failedWatcher?.close();
+      });
     } catch (error) {
       await stop();
       throw new Error(`Could not watch the input directory: ${error.message}`);

@@ -1820,6 +1820,7 @@ test('an explicit standard profile overrides an ambient showcase profile', () =>
       true,
       `the explicit standard profile must win:\n${JSON.stringify(result.diagnostics, null, 2)}`,
     );
+    assert.match(result.svg, /data-quality-profile="standard"/);
   } finally {
     if (previousProfile === undefined) delete process.env.ARCHIFY_QUALITY_PROFILE;
     else process.env.ARCHIFY_QUALITY_PROFILE = previousProfile;

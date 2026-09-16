@@ -36,7 +36,7 @@ function render(doc) {
 }
 
 function participantBoxes(html) {
-  return [...html.matchAll(/<rect x="([\d.]+)" y="72" width="([\d.]+)" height="54"/g)]
+  return [...html.matchAll(/<rect x="([\d.]+)" y="72" width="([\d.]+)" height="60"/g)]
     .map(([, x, width]) => ({ x: Number(x), width: Number(width) }))
     .filter((box, index, all) => all.findIndex((other) => other.x === box.x) === index)
     .sort((left, right) => left.x - right.x);

@@ -16,7 +16,13 @@ function git(args) {
 
 test('the repository still has exactly one checked-in Archify SKILL.md and no generated DSH payload', () => {
   const skillFiles = git(['ls-files', '*SKILL.md']).split('\n').filter(Boolean);
-  assert.deepEqual(skillFiles, ['archify/SKILL.md']);
+  // Repository maintenance skills are independent of the distributed product.
+  const productSkills = skillFiles.filter((file) => {
+    const content = fs.readFileSync(path.join(repoRoot, file), 'utf8');
+    const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1] || '';
+    return /^name:\s*(?:archify|'archify'|"archify")\s*$/m.test(frontmatter);
+  });
+  assert.deepEqual(productSkills, ['archify/SKILL.md']);
   assert.equal(fs.existsSync(path.join(repoRoot, 'integrations/deepseek-harness/skills')), false);
   const trackedSkills = git(['ls-files', 'integrations/deepseek-harness/skills']);
   assert.equal(trackedSkills, '');

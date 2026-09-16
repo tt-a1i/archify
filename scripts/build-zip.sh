@@ -5,7 +5,12 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 out="${1:-$repo_root/archify.zip}"
-if [[ "$out" != /* ]]; then
+# Git Bash callers may pass Windows-style absolute paths: drive paths (C:\...
+# or C:/...) and \\-prefixed forms such as UNC shares or the \\?\ extended-length
+# prefix. Node resolves those natively, so only genuinely relative paths get the
+# cwd prefix; prefixing a Windows path would send MSYS a malformed mixed path.
+windows_absolute='^([A-Za-z]:[/\\]|\\\\)'
+if [[ "$out" != /* && ! "$out" =~ $windows_absolute ]]; then
   out="$(pwd)/$out"
 fi
 
@@ -28,8 +33,12 @@ stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
 node "$repo_root/scripts/stage-clean-skill.mjs" \
   --root "$repo_root" \
-  --dest "$stage/archify" >/dev/null
+  --dest "$stage/archify" \
+  --mode-manifest "$stage/modes.json" >/dev/null
 
-node "$repo_root/scripts/write-deterministic-zip.mjs" "$stage/archify" "$out"
+# Entry modes come from the recorded Git index modes, not from stat(), so the
+# archive bytes do not depend on the building platform's permission support.
+node "$repo_root/scripts/write-deterministic-zip.mjs" "$stage/archify" "$out" \
+  --mode-manifest "$stage/modes.json"
 
 echo "built $out"

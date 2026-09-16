@@ -73,6 +73,20 @@ test('Intent Trace keeps incoming and outgoing motion on authored source-to-targ
   }
 });
 
+test('Intent Trace hides the non-semantic lifecycle rail while related nodes are previewed', () => {
+  const html = render('lifecycle', CASES.lifecycle);
+  const svg = canonicalSvg(html);
+  const rail = svg.match(/<path\b[^>]*data-lifecycle-rail[^>]*>/)?.[0] || '';
+
+  assert.ok(rail, 'lifecycle: expected the primary decorative rail to be identifiable');
+  assert.doesNotMatch(rail, /data-edge-from|data-edge-to/, 'the rail must not become a semantic relationship');
+  assert.match(
+    html,
+    /svg\[data-intent-trace-active\] \[data-lifecycle-rail\]\s*\{\s*opacity:\s*0;/,
+    'Intent Trace must not reveal a decorative rail through dimmed state nodes',
+  );
+});
+
 test('Intent Trace separates hover, keyboard, touch, and committed focus', () => {
   const html = render('sequence', CASES.sequence);
   assert.match(html, /window\.matchMedia\('\(hover: hover\) and \(pointer: fine\)'\)/);

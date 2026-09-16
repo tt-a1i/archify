@@ -210,6 +210,51 @@ test('visual-check records four containment viewports and four endpoint theme ca
   }
 });
 
+test('sidecarPaths places outputs in outDir instead of beside the artifact', () => {
+  const input = artifact('outdir-source.html');
+  const separateDir = path.join(tmp, 'evidence-nested', 'deeper');
+  assert.equal(fs.existsSync(separateDir), false, 'precondition: outDir must not exist yet');
+
+  const outputs = sidecarPaths(input, { outDir: separateDir });
+
+  assert.equal(fs.existsSync(separateDir), false, 'calculating paths must not create directories');
+  assert.equal(path.dirname(outputs.receipt), separateDir);
+  assert.equal(path.dirname(outputs.contactSheet), separateDir);
+  assert.equal(outputs.screenshots.every((entry) => path.dirname(entry.path) === separateDir), true);
+  assert.equal(path.basename(outputs.receipt), 'outdir-source.visual-check.json');
+
+  // Omitting outDir keeps the existing beside-the-artifact behavior unchanged.
+  const defaultOutputs = sidecarPaths(input);
+  assert.equal(path.dirname(defaultOutputs.receipt), path.dirname(input));
+});
+
+test('visual-check writes all sidecars into --out-dir end-to-end, none beside the artifact', async () => {
+  const input = artifact('outdir-e2e.html');
+  const outDir = path.join(tmp, 'outdir-e2e-evidence');
+  const browser = fakeBrowser();
+  const result = await runVisualCheck({
+    artifactPath: input,
+    outDir,
+    chromePath: '/fake/chrome',
+    browserFactory: async () => browser,
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.equal(result.receipt.status, 'pass');
+
+  const outputs = sidecarPaths(input, { outDir });
+  assert.equal(result.receipt.sidecars.directory, outDir);
+  assert.equal(fs.existsSync(path.join(result.receipt.sidecars.directory, result.receipt.sidecars.receipt)), true);
+  assert.equal(fs.existsSync(path.join(result.receipt.sidecars.directory, result.receipt.captures.contactSheet)), true);
+  assert.equal(fs.existsSync(outputs.receipt), true);
+  assert.equal(fs.existsSync(outputs.contactSheet), true);
+  assert.equal(outputs.screenshots.every((entry) => fs.existsSync(entry.path)), true);
+
+  const besideArtifact = sidecarPaths(input);
+  assert.equal(fs.existsSync(besideArtifact.receipt), false, 'no sidecar should land beside the artifact when outDir is set');
+  assert.equal(fs.existsSync(besideArtifact.contactSheet), false);
+});
+
 test('visual-check returns 1 and preserves evidence when any viewport overflows', async () => {
   const input = artifact('overflow.html');
   const result = await runVisualCheck({
@@ -398,3 +443,26 @@ test('visual-check returns 2 with a truthful skipped receipt when Chrome is unav
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
+
+test('vertical workflow overflow reports measured frames and conditional reflow guidance without changing the artifact', async () => {
+  const file = artifact('workflow-overflow.html');
+  const before = sha256(file);
+  const browser = fakeBrowser();
+  const inspect = browser.inspect.bind(browser);
+  const lanes = [{ frameId: 'lane-0', heightPx: 720, nodeCount: 12, nodeIds: ['wait', 'cancel'], nodeSpanPx: 480, spaceAboveNodesPx: 180, spaceBelowNodesPx: 60 }];
+  browser.inspect = async (args) => ({ ...(await inspect(args)), scrollHeight: args.height + 599, workflowLanes: lanes });
+  const result = await runVisualCheck({ artifactPath: file, chromePath: '/fake/chrome', browserFactory: async () => browser });
+  assert.equal(result.exitCode, 1);
+  const diagnostic = result.receipt.diagnostics.find(({ code }) => code === 'viewer/viewport-overflow');
+  assert.deepEqual(diagnostic.evidence.workflowLanes, lanes);
+  assert.match(diagnostic.evidence.measurement, /not guaranteed removable/);
+  assert.match(diagnostic.supportedFixes.join('\n'), /--layout-json/);
+  assert.match(diagnostic.supportedFixes.join('\n'), /ownership and explicit geometry permit/);
+  assert.match(diagnostic.supportedFixes.join('\n'), /not a verified coordinate fix/);
+  assert.equal(sha256(file), before);
+  browser.inspect = async (args) => ({ ...(await inspect(args)), scrollWidth: args.width + 1, workflowLanes: lanes });
+  const horizontal = await runVisualCheck({ artifactPath: file, chromePath: '/fake/chrome', browserFactory: async () => browser });
+  const horizontalOverflow = horizontal.receipt.diagnostics.find(({ code }) => code === 'viewer/viewport-overflow');
+  assert.equal(horizontalOverflow.evidence.workflowLanes, undefined);
+  assert.equal(horizontalOverflow.supportedFixes.length, 1);
+});

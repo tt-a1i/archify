@@ -840,12 +840,22 @@ try {
       document.querySelector('.change-row').click();
       var svgB = Archify.deltaExport.canonicalSvg();
       var parsed = new DOMParser().parseFromString(svgB, 'image/svg+xml');
+      var baselineMarkers = Array.from(parsed.querySelectorAll('path[data-edge-id][data-delta-state="removed"], path[data-edge-id][data-delta-state="moved-from"]')).map(function (edge) {
+        var markerId = (edge.getAttribute('marker-end') || '').match(/^url\(#([^)]+)\)$/)?.[1];
+        var marker = markerId ? parsed.getElementById(markerId) : null;
+        return {
+          edge: edge.getAttribute('data-edge-id'),
+          resolved: marker?.localName === 'marker',
+          tone: marker?.querySelector('polygon')?.getAttribute('class') || null
+        };
+      }).sort(function (a, b) { return a.edge.localeCompare(b.edge); });
       var exportStyle = parsed.querySelector('style')?.textContent || '';
       var blob = await Archify.deltaExport.shareCard();
       var bytes = new Uint8Array(await blob.arrayBuffer());
       return {
         explorers: explorers,
         stable: svgA === svgB,
+        baselineMarkers: baselineMarkers,
         reviewResidue: parsed.querySelectorAll('[data-delta-review-current]').length,
         boundaryStyle: exportStyle.includes('text[data-delta-boundary-state="added"]{fill:#34d399!important}'),
         markerStyle: exportStyle.includes('.delta-edge-marker[data-delta-state],.delta-boundary-marker[data-delta-state]{color:var(--delta)}'),
@@ -858,6 +868,11 @@ try {
     })()`, true), 15_000, 'Architecture Delta export');
     assert.deepEqual(exportProof.explorers, [true, true]);
     assert.equal(exportProof.stable, true);
+    assert.deepEqual(exportProof.baselineMarkers, [
+      { edge: 'authorize-payment', resolved: true, tone: 'm-security' },
+      { edge: 'publish-order', resolved: true, tone: 'm-dashed' },
+      { edge: 'session-read', resolved: true, tone: 'm-default' },
+    ]);
     assert.equal(exportProof.reviewResidue, 0);
     assert.equal(exportProof.boundaryStyle, true);
     assert.equal(exportProof.markerStyle, true);

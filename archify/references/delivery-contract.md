@@ -2,7 +2,24 @@
 
 ## Validate and deliver
 
-Use `validate` after every candidate edit. Use final atomic delivery only after the candidate is frozen:
+`render` and direct renderer entry points print classified authoring failures
+to stderr as readable diagnostics and exit 1. Input read/JSON parse failures
+use `input/read` or `input/json-parse`; output filesystem failures use
+`output/write` and identify the output path. Schema and layout failures keep
+their existing rule codes. Use the advertised `validate --json` or
+`deliver --json` interface for a machine receipt; `render` has no `--json` flag.
+Unexpected implementation failures retain debugging information in human
+mode and remain `internal/unclassified` in machine receipts.
+
+Use `validate` after every candidate edit. CLI HTML output paths must end in `.html`, including after symbolic-link resolution.
+Compare receipt paths must end in `.json`. Explicit CLI paths may be absolute or
+outside the current working directory; authored `meta.output` remains confined
+to that directory. A type mismatch fails before writing with
+`output/cli-extension` or `output/cli-resolved-extension`. These checks prevent
+accidental file-type overwrites; they do not sandbox explicit CLI directories
+or prevent replacement of an existing artifact of the expected type.
+
+Use final atomic delivery only after the candidate is frozen:
 
 ```bash
 node bin/archify.mjs deliver <type> <candidate.json> <output.html> --quality showcase --json
@@ -25,6 +42,24 @@ The delivery interface exposes three separate claims:
 
 Passing one claim never implies either of the others. Never claim that the deterministic receipt includes visual review. It does not include browser evidence either.
 
+## Recovering a failed comparison
+
+`compare` commits an HTML artifact and its JSON receipt as a pair. If that commit
+fails, it attempts to restore the previous files. A complete rollback removes
+the temporary directory as usual.
+
+If a previous file cannot be restored, compare exits non-zero with
+`delta/commit-rollback-failed` and retains the recovery directory. In the JSON
+failure receipt, `diagnostics[].evidence.recoveryDirectory` identifies that
+directory and `recoveryFiles` lists `{ backup, target }` paths for the files whose
+restoration failed. Human-readable diagnostics also print the recovery paths.
+
+Resolve the filesystem error, inspect the current targets, and restore each
+listed backup to its corresponding target before retrying. Keep the recovery
+directory until both previous files have been recovered and verified; it can
+also contain rejected candidate files, which must not be mistaken for backups.
+Successful comparisons and failures before commit retain their normal cleanup.
+
 ## Automated browser evidence
 
 After delivery, inspect the exact trusted HTML without rerendering or modifying
@@ -38,7 +73,13 @@ The zero-dependency command uses Chrome/Chromium through the DevTools pipe. It
 measures light-theme containment at 1440×900, 1600×1000, 1920×1080, and
 2048×1320, then captures light/dark screenshots at 1440×900 and 2048×1320. It
 writes four PNG sidecars, one relative-path HTML contact sheet, and one JSON
-receipt beside the artifact. The receipt binds the source artifact SHA-256 and
+receipt beside the artifact by default — pass `--out-dir <dir>` to write all of
+them into a separate directory instead (created if missing) when a project
+keeps its testing/evidence artifacts apart from the delivered `.json`/`.html`
+result pair. When that directory differs from the artifact directory, the
+receipt records its absolute path as `sidecars.directory`; sidecar filenames
+resolve there, otherwise beside `artifact.path`. The contact sheet keeps its
+image links relative for portability. The receipt binds the source artifact SHA-256 and
 byte count, identifies `evidenceKind: "automated-browser"`, records READ plus
 Still runtime state, and always reports `visualReview: "pending"`; automated
 browser evidence cannot claim perceptual review.

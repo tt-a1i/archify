@@ -86,11 +86,13 @@ body:
     validations:
       required: true
 
-  - type: textarea
-    id: screenshot
+  - type: upload
+    id: visual_evidence
     attributes:
-      label: Optional final-artifact screenshot
-      description: Drag in a screenshot when the problem is visual. Mark the defect if it is subtle.
+      label: Supporting visual evidence
+      description: When it helps reviewers evaluate a visual problem, upload screenshots or recordings and mark subtle defects. Reproducible steps above may be enough when media would not add useful context.
+    validations:
+      required: false
 
   - type: textarea
     id: environment

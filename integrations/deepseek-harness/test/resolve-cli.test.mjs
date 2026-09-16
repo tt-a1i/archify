@@ -41,6 +41,23 @@ test('Windows tar uses the system bsdtar instead of a Git for Windows PATH shado
   assert.deepEqual(invocation, { command: systemTar, args: ['-tf', 'archive.tgz'] });
 });
 
+test('Windows pnpm action-setup and npm-global shims launch JS without shell parsing', () => {
+  const execPath = 'C:\\node\\node.exe';
+  const args = ['add', 'C:\\workspace with spaces\\plugin.tgz'];
+  for (const [root, cliPath] of [
+    ['C:\\setup-pnpm\\node_modules\\.bin', 'C:\\setup-pnpm\\node_modules\\pnpm\\bin\\pnpm.cjs'],
+    ['C:\\npm-global', 'C:\\npm-global\\node_modules\\pnpm\\bin\\pnpm.cjs'],
+  ]) {
+    assert.deepEqual(resolveCliInvocation('pnpm', args, {
+      platform: 'win32', execPath, env: { Path: root },
+      existsSync: (candidate) => candidate === cliPath,
+    }), { command: execPath, args: [cliPath, ...args] });
+  }
+  assert.deepEqual(resolveCliInvocation('pnpm', args, {
+    platform: 'win32', execPath, env: {}, existsSync: () => false,
+  }), { command: 'pnpm.exe', args });
+});
+
 test('resolved npm invocation can actually be spawned', () => {
   const invocation = resolveCliInvocation('npm', ['--version']);
   const result = spawnSync(invocation.command, invocation.args, { encoding: 'utf8' });

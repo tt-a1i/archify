@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
 import { stageCleanSkill } from '../../scripts/stage-clean-skill.mjs';
+import { assertFontCss, inspectDocuments } from './helpers/offline-fonts.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -53,7 +54,7 @@ const parityCases = [
     diagram.meta.title = '全球架构 🌏';
     diagram.meta.locale = 'zh-CN';
     diagram.components.find((component) => component.id === 'users').label = '用户 👩‍💻';
-    diagram.components.find((component) => component.id === 'db').label = '数据库';
+    diagram.components.find((component) => component.id === 'db').label = 'Ā Ѡ Ж Ω ắ';
     diagram.connections.find((connection) => connection.id === 'users-to-cdn').label = '请求';
   }),
 ];
@@ -97,6 +98,8 @@ test('SVG delivery covers every diagram type, theme, preset, brand mark, and Uni
 
     for (const theme of ['auto', 'light', 'dark']) {
       const delivered = deliverSvg(item, theme);
+      assert.match(delivered.artifact, /^<\?xml version="1.0" encoding="UTF-8"\?>\n<svg\b/);
+      assertFontCss(inspectDocuments(delivered.artifact)[0].styles.join('\n'), `${item.id}/${theme}`);
       const root = svgParts(delivered.artifact).root;
       const body = diagramBody(delivered.artifact);
       if (canonicalBody === null) canonicalBody = body;
@@ -147,7 +150,7 @@ test('SVG delivery rejects malformed options and unsafe paths without touching t
     fs.writeFileSync(existing, 'trusted\n');
     const result = run(['deliver', 'architecture', input, existing, ...args, '--json']);
     assert.equal(result.status, 2, args.join(' '));
-    assert.equal(JSON.parse(result.stdout).stage, 'options', args.join(' '));
+    assert.equal(JSON.parse(result.stdout).stage, 'arguments', args.join(' '));
     assert.equal(fs.readFileSync(existing, 'utf8'), 'trusted\n', args.join(' '));
   }
 
@@ -156,8 +159,8 @@ test('SVG delivery rejects malformed options and unsafe paths without touching t
   assert.equal(JSON.parse(missingPath.stdout).diagnostics[0].code, 'delivery/svg-output-path');
 
   const wrongExtension = run(['deliver', 'architecture', input, path.join(tmp, 'wrong.html'), '--format=svg', '--json']);
-  assert.equal(wrongExtension.status, 2);
-  assert.equal(JSON.parse(wrongExtension.stdout).diagnostics[0].code, 'delivery/svg-output-path');
+  assert.equal(wrongExtension.status, 1);
+  assert.equal(JSON.parse(wrongExtension.stdout).diagnostics[0].code, 'output/cli-extension');
 
   const malformedInput = path.join(tmp, 'malformed.json');
   fs.writeFileSync(malformedInput, '{');
@@ -194,6 +197,29 @@ test('ambient internal SVG variables cannot change default HTML delivery', () =>
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.match(fs.readFileSync(output, 'utf8'), /^<!DOCTYPE html>/);
   assert.equal(Object.hasOwn(JSON.parse(result.stdout), 'format'), false);
+  const explicit = path.join(tmp, 'explicit-delivery.html');
+  const explicitResult = run(['deliver', 'architecture', typeCases[0].input, explicit, '--format', 'html', '--quality', 'showcase', '--json']);
+  assert.equal(explicitResult.status, 0, explicitResult.stderr || explicitResult.stdout);
+  assert.equal(fs.readFileSync(explicit, 'utf8'), fs.readFileSync(output, 'utf8'));
+});
+
+test('SVG delivery validates requested and resolved extensions while preserving symlink targets', () => {
+  for (const extension of ['html', 'svg']) {
+    const target = path.join(tmp, `link-target.${extension}`);
+    const link = path.join(tmp, `link-to-${extension}.svg`);
+    fs.writeFileSync(target, 'trusted\n');
+    fs.symlinkSync(target, link, 'file');
+    const result = run(['deliver', 'architecture', typeCases[0].input, link, '--format', 'svg', '--json']);
+    assert.equal(result.status, extension === 'svg' ? 0 : 1, result.stderr || result.stdout);
+    assert.equal(fs.readFileSync(target, 'utf8'), 'trusted\n');
+    if (extension === 'html') {
+      assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'output/cli-resolved-extension');
+      assert.ok(fs.lstatSync(link).isSymbolicLink());
+    } else {
+      assert.ok(!fs.lstatSync(link).isSymbolicLink(), 'atomic replacement replaces the link, not its target');
+      assert.match(fs.readFileSync(link, 'utf8'), /^<\?xml/);
+    }
+  }
 });
 
 test('standalone SVG checks reject network, script, and embedded SVG resources', () => {
@@ -220,9 +246,22 @@ test('direct SVG and Viewer export have identical structure and decoded pixels a
 }, async () => {
   const browser = new ChromeVisualBrowser(chromePath);
   try {
+    const session = await browser.sessionPromise;
+    await browser.cdp.send('Network.enable', {}, session);
+    await browser.cdp.send('Network.setCacheDisabled', { cacheDisabled: true }, session);
+    await browser.cdp.send('Network.setBlockedURLs', { urls: ['http://*', 'https://*'] }, session);
+    await browser.cdp.send('DOM.enable', {}, session);
+    await browser.cdp.send('CSS.enable', {}, session);
+    await browser.cdp.send('CSS.setLocalFontsEnabled', { enabled: false }, session);
     for (const item of parityCases) {
       const htmlOutput = path.join(tmp, `${item.id}-browser-parity.html`);
-      const htmlResult = run(['deliver', item.type, item.input, htmlOutput, '--quality', 'showcase', '--json']);
+      // Optional immutable base checkout proves compatibility independently of
+      // the candidate's shared Viewer/CLI finaliser.
+      const viewerCli = process.env.ARCHIFY_SVG_BASELINE_ROOT
+        ? path.join(process.env.ARCHIFY_SVG_BASELINE_ROOT, 'archify/bin/archify.mjs') : cli;
+      const htmlResult = spawnSync(process.execPath, [viewerCli, 'deliver', item.type, item.input, htmlOutput, '--quality', 'showcase', '--json'], {
+        encoding: 'utf8', env: { ...process.env, ARCHIFY_UPDATE_CHECK_DISABLED: '1' },
+      });
       assert.equal(htmlResult.status, 0, `${item.id}: ${htmlResult.stderr || htmlResult.stdout}`);
       const direct = Object.fromEntries(['auto', 'light', 'dark'].map((theme) => {
         const delivered = deliverSvg(item, theme, '-browser');
@@ -231,119 +270,127 @@ test('direct SVG and Viewer export have identical structure and decoded pixels a
 
       await browser.inspect({ artifactPath: htmlOutput, width: 1440, height: 900, theme: 'dark' });
       const sessionId = await browser.sessionPromise;
-      const response = await browser.cdp.send('Runtime.evaluate', {
-        expression: `(async function () {
-        var captured = null;
-        var originalCreateObjectURL = URL.createObjectURL.bind(URL);
-        var originalClick = HTMLAnchorElement.prototype.click;
-        URL.createObjectURL = function (blob) {
-          if (blob && blob.type && blob.type.indexOf('image/svg+xml') === 0) captured = blob;
-          return originalCreateObjectURL(blob);
-        };
-        HTMLAnchorElement.prototype.click = function () {};
-        try {
-          await Archify.exportMenu.run('svg');
-        } finally {
-          URL.createObjectURL = originalCreateObjectURL;
-          HTMLAnchorElement.prototype.click = originalClick;
-        }
-        if (!captured) throw new Error('Viewer SVG export was not captured.');
-        var viewerText = await captured.text();
-        var direct = ${JSON.stringify(direct)};
-        var parser = new DOMParser();
-        var serializer = new XMLSerializer();
-
-        function signature(text) {
-          var root = parser.parseFromString(text, 'image/svg+xml').documentElement;
-          var clone = root.cloneNode(true);
-          var style = clone.querySelector(':scope > style');
-          if (style) style.remove();
-          var background = clone.querySelector(':scope > rect.c-bg-rect, :scope > rect[width="100%"][height="100%"]');
-          if (background) background.remove();
-          ['xmlns', 'width', 'height', 'data-theme'].forEach(function (name) { clone.removeAttribute(name); });
-          function elementValue(element) {
-            var attributes = Array.from(element.attributes).map(function (attribute) {
-              return [attribute.name, attribute.value];
-            }).sort(function (left, right) { return left[0].localeCompare(right[0]); });
-            return [
-              element.localName,
-              attributes,
-              element.localName === 'text' || element.localName === 'title' || element.localName === 'desc'
-                ? element.textContent : '',
-              Array.from(element.children).map(elementValue)
-            ];
-          }
-          return JSON.stringify(elementValue(clone));
-        }
-
-        function forceTheme(text, theme) {
-          var root = parser.parseFromString(text, 'image/svg+xml').documentElement;
-          if (theme) root.setAttribute('data-theme', theme);
-          else root.removeAttribute('data-theme');
-          return serializer.serializeToString(root);
-        }
-
-        function pixels(text) {
-          return new Promise(function (resolve, reject) {
-            var root = parser.parseFromString(text, 'image/svg+xml').documentElement;
-            var width = Number(root.getAttribute('width'));
-            var height = Number(root.getAttribute('height'));
-            var url = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml;charset=utf-8' }));
-            var image = new Image();
-            image.onload = function () {
-              try {
-                var canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                var context = canvas.getContext('2d');
-                context.drawImage(image, 0, 0);
-                resolve(context.getImageData(0, 0, width, height).data);
-              } catch (error) {
-                reject(error);
-              } finally {
-                URL.revokeObjectURL(url);
-              }
-            };
-            image.onerror = reject;
-            image.src = url;
-          });
-        }
-
-        var result = { structure: {}, pixelMismatches: {} };
-        var directSignature = signature(direct.auto);
-        var viewerSignature = signature(viewerText);
-        result.structure.auto = directSignature === viewerSignature;
-        if (!result.structure.auto) {
-          var difference = 0;
-          while (difference < directSignature.length && difference < viewerSignature.length &&
-            directSignature[difference] === viewerSignature[difference]) difference += 1;
-          result.structureDifference = {
-            index: difference,
-            direct: directSignature.slice(Math.max(0, difference - 100), difference + 200),
-            viewer: viewerSignature.slice(Math.max(0, difference - 100), difference + 200)
+      for (const colourScheme of ['dark', 'light']) {
+        await browser.cdp.send('Emulation.setEmulatedMedia', {
+          features: [{ name: 'prefers-color-scheme', value: colourScheme }],
+        }, sessionId);
+        const response = await browser.cdp.send('Runtime.evaluate', {
+          expression: `(async function () {
+          var captured = null;
+          var originalCreateObjectURL = URL.createObjectURL.bind(URL);
+          var originalClick = HTMLAnchorElement.prototype.click;
+          URL.createObjectURL = function (blob) {
+            if (blob && blob.type && blob.type.indexOf('image/svg+xml') === 0) captured = blob;
+            return originalCreateObjectURL(blob);
           };
-        }
-        for (var theme of ['auto', 'light', 'dark']) {
-          var viewerPixels = await pixels(forceTheme(viewerText, theme === 'auto' ? null : theme));
-          var directPixels = await pixels(direct[theme]);
-          var mismatches = 0;
-          for (var index = 0; index < viewerPixels.length; index++) {
-            if (viewerPixels[index] !== directPixels[index]) mismatches += 1;
+          HTMLAnchorElement.prototype.click = function () {};
+          try {
+            await Archify.exportMenu.run('svg');
+          } finally {
+            URL.createObjectURL = originalCreateObjectURL;
+            HTMLAnchorElement.prototype.click = originalClick;
           }
-          result.pixelMismatches[theme] = mismatches;
+          if (!captured) throw new Error('Viewer SVG export was not captured.');
+          var viewerText = await captured.text();
+          var direct = ${JSON.stringify(direct)};
+          var parser = new DOMParser();
+          var serializer = new XMLSerializer();
+
+          function signature(text) {
+            var root = parser.parseFromString(text, 'image/svg+xml').documentElement;
+            if (root.localName !== 'svg' || root.querySelector('parsererror')) throw new Error('Invalid XML SVG');
+            var clone = root.cloneNode(true);
+            if (clone.getAttribute('style') === '') clone.removeAttribute('style');
+            var style = clone.querySelector(':scope > style');
+            if (style) style.remove();
+            var background = clone.querySelector(':scope > rect.c-bg-rect, :scope > rect[width="100%"][height="100%"]');
+            if (background) background.remove();
+            ['xmlns', 'width', 'height', 'data-theme'].forEach(function (name) { clone.removeAttribute(name); });
+            function elementValue(element) {
+              var attributes = Array.from(element.attributes).map(function (attribute) {
+                return [attribute.name, attribute.value];
+              }).sort(function (left, right) { return left[0].localeCompare(right[0]); });
+              return [
+                element.localName,
+                attributes,
+                element.localName === 'text' || element.localName === 'title' || element.localName === 'desc'
+                  ? element.textContent : '',
+                Array.from(element.children).map(elementValue)
+              ];
+            }
+            return JSON.stringify(elementValue(clone));
+          }
+
+          function forceTheme(text, theme) {
+            var root = parser.parseFromString(text, 'image/svg+xml').documentElement;
+            if (theme) root.setAttribute('data-theme', theme);
+            else root.removeAttribute('data-theme');
+            return serializer.serializeToString(root);
+          }
+
+          function pixels(text) {
+            return new Promise(function (resolve, reject) {
+              var root = parser.parseFromString(text, 'image/svg+xml').documentElement;
+              var width = Number(root.getAttribute('width'));
+              var height = Number(root.getAttribute('height'));
+              var url = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml;charset=utf-8' }));
+              var image = new Image();
+              image.onload = function () {
+                try {
+                  var canvas = document.createElement('canvas');
+                  canvas.width = width;
+                  canvas.height = height;
+                  var context = canvas.getContext('2d');
+                  context.drawImage(image, 0, 0);
+                  resolve(context.getImageData(0, 0, width, height).data);
+                } catch (error) {
+                  reject(error);
+                } finally {
+                  URL.revokeObjectURL(url);
+                }
+              };
+              image.onerror = reject;
+              image.src = url;
+            });
+          }
+
+          var result = { structure: {}, pixelMismatches: {} };
+          var directSignature = signature(direct.auto);
+          var viewerSignature = signature(viewerText);
+          result.structure.auto = directSignature === viewerSignature;
+          if (!result.structure.auto) {
+            var difference = 0;
+            while (difference < directSignature.length && difference < viewerSignature.length &&
+              directSignature[difference] === viewerSignature[difference]) difference += 1;
+            result.structureDifference = {
+              index: difference,
+              direct: directSignature.slice(Math.max(0, difference - 100), difference + 200),
+              viewer: viewerSignature.slice(Math.max(0, difference - 100), difference + 200)
+            };
+          }
+          for (var theme of ['auto', 'light', 'dark']) {
+            var viewerPixels = await pixels(forceTheme(viewerText, theme === 'auto' ? null : theme));
+            var directPixels = await pixels(direct[theme]);
+            if (viewerPixels.length !== directPixels.length) throw new Error('Raster dimensions differ: ' + theme);
+            var mismatches = 0;
+            for (var index = 0; index < viewerPixels.length; index++) {
+              if (viewerPixels[index] !== directPixels[index]) mismatches += 1;
+            }
+            result.pixelMismatches[theme] = mismatches;
+          }
+          return result;
+        })()`,
+          awaitPromise: true,
+          returnByValue: true,
+        }, sessionId);
+        if (response.exceptionDetails) {
+          throw new Error(response.exceptionDetails.exception?.description || response.exceptionDetails.text);
         }
-        return result;
-      })()`,
-        awaitPromise: true,
-        returnByValue: true,
-      }, sessionId);
-      if (response.exceptionDetails) {
-        throw new Error(response.exceptionDetails.exception?.description || response.exceptionDetails.text);
+        assert.deepEqual(response.result.value, {
+          structure: { auto: true },
+          pixelMismatches: { auto: 0, light: 0, dark: 0 },
+        }, `${item.id}/${colourScheme}`);
       }
-      assert.deepEqual(response.result.value, {
-        structure: { auto: true },
-        pixelMismatches: { auto: 0, light: 0, dark: 0 },
-      }, item.id);
     }
   } finally {
     await browser.close();
@@ -389,7 +436,7 @@ test('clean packaged Skill delivers SVG without node_modules and preserves trust
   fs.writeFileSync(checker, `
 import fs from 'node:fs';
 const source = fs.readFileSync(process.argv[2], 'utf8');
-const svg = source.trimStart().startsWith('<svg');
+const svg = source.startsWith('<?xml');
 console.log(JSON.stringify({
   ok: !svg,
   checks: [{ name: svg ? 'forced_svg_failure' : 'html_fixture', ok: !svg, details: [] }],

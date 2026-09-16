@@ -93,11 +93,8 @@ export function buildStandaloneSvg(svgMarkup, options = {}) {
     throw new Error('SVG export received malformed root markup.');
   }
 
-  var fontFallback = [400, 500, 600, 700].map(function (weight) {
-    return "@font-face { font-family: 'JetBrains Mono'; font-weight: " + weight +
-      "; src: local('JetBrains Mono'), local('JetBrainsMono-Regular'); }";
-  }).join('\n');
-  var styleText = fontFallback + "\n" +
+  if (!options.fontCss) throw new Error('SVG export requires the embedded Viewer fonts.');
+  var styleText = options.fontCss + "\n" +
     "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
     String(options.hostStyle || '') + "\n";
   var background;
@@ -115,7 +112,7 @@ export function buildStandaloneSvg(svgMarkup, options = {}) {
   }
   styleText += String(options.extraStyle || '');
 
-  return svgMarkup.slice(0, rootEnd + 1) +
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' + svgMarkup.slice(0, rootEnd + 1) +
     '<style>' + xmlText(styleText) + '</style>' + background +
     svgMarkup.slice(rootEnd + 1);
 }
@@ -129,6 +126,7 @@ export function renderStandaloneSvg({ svg, template, preset = 'classic', theme =
   if (!THEMES.has(theme)) throw new Error(`Unknown SVG theme ${JSON.stringify(theme)}.`);
 
   const themeCss = markedSections(template, 'SVG_EXPORT_THEME').join('\n');
+  const fontCss = template.match(/<style id="archify-fonts">([\s\S]*?)<\/style>/)?.[1];
   const hostStyle = [themeCss, ...markedSections(template, 'SVG_EXPORT_STYLE')].join('\n');
   const dark = resolvedThemeVariables(themeCss, preset, 'dark');
   const light = resolvedThemeVariables(themeCss, preset, 'light');
@@ -167,6 +165,7 @@ export function renderStandaloneSvg({ svg, template, preset = 'classic', theme =
   markup = rootAttribute(markup, 'data-theme', theme === 'auto' ? null : theme);
 
   return `${buildStandaloneSvg(markup, {
+    fontCss,
     hostStyle,
     theme,
     darkVars: serializeVariables(dark),
