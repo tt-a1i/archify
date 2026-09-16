@@ -44,7 +44,7 @@ const nodeTextFit = {
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const { diagram: dataflow, template, outPath } = await loadDiagramWithBrandMarks({
+const { diagram: dataflow, template, outPath, sourceEvidence } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
   diagramType: 'dataflow',
   defaultExample: 'product-analytics.dataflow.json'
@@ -489,4 +489,5 @@ writeDiagram({
   meta: dataflow.meta,
   svg: renderSvg(),
   cards: dataflow.cards,
+  sourceEvidence,
 });

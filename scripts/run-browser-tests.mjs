@@ -9,6 +9,7 @@ const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 // Shared by PR CI and tag releases. WebM decoding stays in test:webm.
 const testFiles = [
   'desktop-reader-browser.test.mjs',
+  'atlas-browser.test.mjs',
   'reader-layout-browser.test.mjs',
   'sequence-header-clearance.test.mjs',
   'lifecycle-rail-browser.test.mjs',
@@ -30,6 +31,7 @@ const testFiles = [
   'export-browser.test.mjs',
   'viewer-identifiers-browser.test.mjs',
   'repository-evidence.test.mjs',
+  'repository-evidence-types-browser.test.mjs',
 ];
 
 const chrome = findChrome();

@@ -256,7 +256,7 @@ Settings:
 
 Stable links can restore `#focus=<id>`, `#focus=<id>&reach=upstream|downstream`, `#relation=<id>`, `#route=<source>~<target>`, `#lens=<kind>~<kind>`, and `#view=<view-id>`. Reader-driven motion is finite, respects `prefers-reduced-motion`, and never enters canonical exports.
 
-The complete generation and viewer contract lives in [`archify/SKILL.md`](archify/SKILL.md).
+Generation and Viewer contracts: [`archify/SKILL.md`](archify/SKILL.md).
 
 ## Installation options
 
@@ -276,6 +276,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Schema reference](archify/schemas/README.md) · [Skill](archify/SKILL.md) · [Examples](archify/examples/) · [Agent cookbook](docs/authoring-cookbook.md)
 - [Changelog](CHANGELOG.md)
 - [Roadmap](ROADMAP.md)
+- [Layered reading](archify/references/layered-reading.md)
 - [Generated Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
 Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.

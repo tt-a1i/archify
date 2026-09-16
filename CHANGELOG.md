@@ -4,11 +4,17 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
+### Improved reading
+
+- Showcase sequence message names use larger primary type and matching label plates; real browser readability checks now include message labels.
+- Optional `atlas` packages checked overview/detail HTML with explicit node links, keyboard navigation, preserved overview position, synchronized themes and artifact fingerprints. Browser and perceptual acceptance remain separate.
+
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
 ### Added
 - **Hermes Agent community opt-in.** `integrations/hermes-agent` is a Skill-only directory plugin: it registers the existing Node Archify `SKILL.md` for Hermes. The documented install is `hermes skills install skills-sh/tt-a1i/archify/archify -y` (published GitHub Skill). A checkout symlink remains the local-dev path. Hermes still runs `node bin/archify.mjs`. This is not an official Nous product and is not an agent-switcher target.
 - **GitHub Copilot agent-switcher target.** The Start page agent switcher, README EN/ZH quick start, and landing copy add `github-copilot` alongside `cursor`, `codex`, `claude-code`, and `opencode`. It installs the same checked Skill and zero-dependency renderers via `npx skills add tt-a1i/archify --skill archify --agent github-copilot ...`; no vendor-specific fork, renderer, or schema behavior was added.
+- **Repository evidence for every diagram type (#59).** `meta.repository` and node `sources` are now accepted by Workflow, Sequence, Data Flow, and Lifecycle as well as Architecture, and `--repo-root` reaches `render`, `validate`, `deliver`, and `preview` for all five. Each mode authors sources on its own node collection (`components`, `nodes`, `participants`, `states`) while verification is unchanged: Git top level, origin match, commit, blob, path containment, and line bounds all still have to hold, GitHub, Gitee, and `link_mode: "local-only"` repositories behave identically in every mode, and the verified payload stays keyed by node id. Architecture output is unchanged and the `repository-evidence/type-unsupported` diagnostic is removed as unreachable.
 
 - **First-class standalone SVG delivery.** `archify deliver` now accepts `--format svg` with dual-theme `auto` or fixed `light` / `dark` output, while retaining the frozen input, nine HTML checks, safe-path and alias guards, atomic replacement, and structured receipt of the existing delivery path. Viewer export and CLI delivery share one zero-dependency SVG finaliser; all five diagram types, four presets, motion-authored sources, built-in and captured brand marks, Unicode, repository evidence, installed-Skill packaging, failure preservation, standalone resource safety, and exact decoded-pixel parity are covered without adding a speculative format framework.
 

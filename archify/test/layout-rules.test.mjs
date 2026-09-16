@@ -1256,7 +1256,7 @@ test('sequence: showcase rejects a message label that leaves the canvas', () => 
   const { code, stderr } = render('sequence', d);
   assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
   assert.match(stderr, /\[composition\/label-canvas-containment\] showcase sequence label ".*" on messages\[0\]/);
-  assert.match(stderr, /extends past the left edge by 39px .*viewBox 1080x560/);
+  assert.match(stderr, /extends past the left edge by 99\.2px .*viewBox 1080x560/);
   assert.match(stderr, /shorten the label, reorder participants, or enlarge meta\.viewBox/);
 });
 
