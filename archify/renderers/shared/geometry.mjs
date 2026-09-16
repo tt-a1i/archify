@@ -271,9 +271,13 @@ export function cleanEndpointSideProblems({
   fromSideFor,
   toSideFor,
   shouldCheckRelation = () => true,
+  obstacles = [],
+  clearance = 2,
   routeHint = 'align the first/final via segment with fromSide/toSide, change the side, or remove explicit routing so auto can choose a perpendicular approach',
 }) {
   const problems = [];
+  const obstacleList = [...obstacles];
+  const obstacleById = new Map(obstacleList.map((obstacle) => [obstacle?.id, obstacle]));
   for (const [relationIndex, relation] of asArray(relations).entries()) {
     if (!relation || !endpointIds?.has(relation.from) || !endpointIds?.has(relation.to)) continue;
     if (!shouldCheckRelation(relation, relationIndex)) continue;
@@ -300,6 +304,17 @@ export function cleanEndpointSideProblems({
         ? { ...endpointSideIssue(points, 'target', toSide), sideOrigin: authoredToSide ? 'authored' : 'inferred' }
         : null,
     ].filter((issue) => issue?.endpoint);
+    if (!checks.length) continue;
+    let suggestedVia = null;
+    if (fromSide && toSide) {
+      const sourceRect = obstacleById.get(relation.from);
+      const targetRect = obstacleById.get(relation.to);
+      if (sourceRect && targetRect) {
+        suggestedVia = suggestClearingVia({
+          sourceRect, targetRect, fromSide, toSide, obstacles: obstacleList, clearance,
+        });
+      }
+    }
     for (const issue of checks) {
       const relationId = relation.id ? ` id "${relation.id}"` : '';
       const authoredField = issue.endpoint === 'source' ? 'fromSide' : 'toSide';
@@ -307,7 +322,10 @@ export function cleanEndpointSideProblems({
       const segmentRole = issue.endpoint === 'source' ? 'first' : 'final';
       const from = issue.start.map((value) => Math.round(value * 10) / 10).join(', ');
       const to = issue.end.map((value) => Math.round(value * 10) / 10).join(', ');
-      const message = `[clean-flow/endpoint-side-direction] ${diagramType} ${relationCollection}[${relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" ${segmentRole} segment ${issue.segmentIndex} [${from}] -> [${to}] does not honor ${sideField} "${issue.side}" — it must run ${issue.expectedAxis} ${issue.expectedDirection}; ${routeHint}.`;
+      const fixHint = suggestedVia
+        ? `set "via": ${JSON.stringify(suggestedVia)} (verified clear of every obstacle at this clearance)`
+        : routeHint;
+      const message = `[clean-flow/endpoint-side-direction] ${diagramType} ${relationCollection}[${relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" ${segmentRole} segment ${issue.segmentIndex} [${from}] -> [${to}] does not honor ${sideField} "${issue.side}" — it must run ${issue.expectedAxis} ${issue.expectedDirection}; ${fixHint}.`;
       recordDiagnostic({
         code: 'clean-flow/endpoint-side-direction',
         severity: 'error',
@@ -323,8 +341,9 @@ export function cleanEndpointSideProblems({
           to: issue.end,
           expectedAxis: issue.expectedAxis,
           expectedDirection: issue.expectedDirection,
+          ...(suggestedVia ? { suggestedVia } : {}),
         },
-        supportedFixes: [routeHint],
+        supportedFixes: [fixHint],
       });
       problems.push(message);
     }
@@ -354,6 +373,7 @@ export function cleanFlowProblems({
   const problems = [];
   const obstacleList = [...obstacles];
   const obstacleIds = new Set(obstacleList.map((obstacle) => obstacle?.id));
+  const obstacleById = new Map(obstacleList.map((obstacle) => [obstacle?.id, obstacle]));
   for (const [relationIndex, relation] of asArray(relations).entries()) {
     if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') continue;
     if (!obstacleIds.has(relation.from) || !obstacleIds.has(relation.to)) continue;
@@ -362,6 +382,8 @@ export function cleanFlowProblems({
     if (!points.every((point) => Array.isArray(point) && point.length === 2 && isFinitePoint(...point))) continue;
 
     const endpointIds = new Set([relation.from, relation.to]);
+    let suggestedViaComputed = false;
+    let suggestedVia = null;
     for (const obstacle of obstacleList) {
       if (!obstacle || endpointIds.has(obstacle.id)) continue;
       if (!isFinitePoint(obstacle.x, obstacle.y, obstacle.width, obstacle.height)) continue;
@@ -376,7 +398,22 @@ export function cleanFlowProblems({
       const from = points[hitSegment].map(Math.round).join(', ');
       const to = points[hitSegment + 1].map(Math.round).join(', ');
       const relationId = relation.id ? ` id "${relation.id}"` : '';
-      const message = `[clean-flow/edge-through-node] ${diagramType} ${relationCollection}[${relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" crosses ${obstacleKind} "${obstacle.id}" (unrelated to this relationship) on segment ${hitSegment} [${from}] -> [${to}] (${clearance}px clearance) — ${routeHint}.`;
+      if (!suggestedViaComputed) {
+        suggestedViaComputed = true;
+        const sourceRect = obstacleById.get(relation.from);
+        const targetRect = obstacleById.get(relation.to);
+        if (sourceRect && targetRect) {
+          const fromSide = chosenSide(relation.fromSide, defaultFromSide(sourceRect, targetRect));
+          const toSide = chosenSide(relation.toSide, defaultToSide(sourceRect, targetRect));
+          suggestedVia = suggestClearingVia({
+            sourceRect, targetRect, fromSide, toSide, obstacles: obstacleList, clearance,
+          });
+        }
+      }
+      const fixHint = suggestedVia
+        ? `set "via": ${JSON.stringify(suggestedVia)} (verified clear of every obstacle at this clearance)`
+        : routeHint;
+      const message = `[clean-flow/edge-through-node] ${diagramType} ${relationCollection}[${relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" crosses ${obstacleKind} "${obstacle.id}" (unrelated to this relationship) on segment ${hitSegment} [${from}] -> [${to}] (${clearance}px clearance) — ${fixHint}.`;
       recordDiagnostic({
         code: 'clean-flow/edge-through-node',
         severity: 'error',
@@ -389,8 +426,9 @@ export function cleanFlowProblems({
           from: points[hitSegment],
           to: points[hitSegment + 1],
           clearancePx: clearance,
+          ...(suggestedVia ? { suggestedVia } : {}),
         },
-        supportedFixes: [routeHint],
+        supportedFixes: [fixHint],
       });
       problems.push(message);
     }
@@ -1389,6 +1427,86 @@ export function formatRect(r) {
 function formatDelta(n) {
   const v = Math.round(n);
   return v >= 0 ? `+${v}` : String(v);
+}
+
+// Given two endpoint rects and the sides a relationship must leave/enter,
+// look for a concrete 2-point elbow that clears every named obstacle. This
+// mirrors the manual recipe documented for cross-lane/reverse-flow edges
+// (source-center on the leaving axis, target-center on the entering axis,
+// one shared midpoint strictly between the two anchors) but only ever
+// returns a candidate whose three segments have been checked against every
+// obstacle rect and against the endpoint-side direction contract -- never a
+// guess. Returns null (no suggestion, not a wrong one) when fromSide/toSide
+// aren't both vertical (top/bottom) or both horizontal (left/right), when
+// there's no room for a distinct midpoint band, or when no sampled midpoint
+// clears every obstacle.
+export function suggestClearingVia({
+  sourceRect,
+  targetRect,
+  fromSide,
+  toSide,
+  obstacles = [],
+  clearance = 2,
+  samples = 9,
+}) {
+  if (!sourceRect || !targetRect) return null;
+  const verticalSides = new Set(['top', 'bottom']);
+  const horizontalSides = new Set(['left', 'right']);
+  const axis = verticalSides.has(fromSide) && verticalSides.has(toSide) ? 'vertical'
+    : horizontalSides.has(fromSide) && horizontalSides.has(toSide) ? 'horizontal'
+    : null;
+  if (!axis) return null;
+
+  const withCenter = (rect) => ({
+    ...rect,
+    cx: rect.cx ?? rect.x + rect.width / 2,
+    cy: rect.cy ?? rect.y + rect.height / 2,
+  });
+  const source = withCenter(sourceRect);
+  const target = withCenter(targetRect);
+  const start = anchor(source, fromSide);
+  const end = anchor(target, toSide);
+
+  const relevantObstacles = obstacles.filter((candidate) => candidate
+    && candidate.id !== sourceRect.id
+    && candidate.id !== targetRect.id
+    && isFinitePoint(candidate.x, candidate.y, candidate.width, candidate.height));
+
+  function segmentsClear(points) {
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const segment = { start: points[index], end: points[index + 1] };
+      for (const obstacle of relevantObstacles) {
+        if (segmentIntersectsRect(segment, obstacle, clearance)) return false;
+      }
+    }
+    return true;
+  }
+
+  const axisIndex = axis === 'vertical' ? 1 : 0;
+  const crossIndex = axis === 'vertical' ? 0 : 1;
+  const lo = Math.min(start[axisIndex], end[axisIndex]);
+  const hi = Math.max(start[axisIndex], end[axisIndex]);
+  if (hi - lo < 4) return null;
+  // viaA and viaB are built from start[crossIndex] and end[crossIndex] --
+  // when the source and target anchors already share that coordinate (same
+  // row for a horizontal elbow, same column for a vertical one), the two via
+  // points collapse onto each other. That is not a usable 2-point elbow (a
+  // zero-length middle segment), and it is not this shape's problem to fix:
+  // a same-row/same-column pair either already has a clear direct line or
+  // needs a genuinely different repair. Decline rather than emit a
+  // degenerate suggestion.
+  if (Math.abs(start[crossIndex] - end[crossIndex]) < 1) return null;
+
+  for (let index = 1; index <= samples; index += 1) {
+    const mid = lo + ((hi - lo) * index) / (samples + 1);
+    const viaA = axis === 'vertical' ? [start[crossIndex], mid] : [mid, start[crossIndex]];
+    const viaB = axis === 'vertical' ? [end[crossIndex], mid] : [mid, end[crossIndex]];
+    const points = [start, viaA, viaB, end];
+    if (routeHonorsEndpointSides(points, fromSide, toSide) && segmentsClear(points)) {
+      return [viaA, viaB];
+    }
+  }
+  return null;
 }
 
 /** Actionable hint when an edge label rect hits a node/component box (#7). */

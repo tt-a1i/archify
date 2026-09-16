@@ -235,6 +235,7 @@ function validateLifecycle() {
     fromSideFor: (transition) => transitionSides(transition).fromSide,
     toSideFor: (transition) => transitionSides(transition).toSide,
     shouldCheckRelation: (transition) => !Array.isArray(transition.via),
+    obstacles: states.values(),
     routeHint: 'keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross state borders perpendicularly',
   }));
   problems.push(...cleanFlowProblems({
