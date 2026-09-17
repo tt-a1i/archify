@@ -212,6 +212,7 @@ export async function startPreview(options) {
   let stopKillTimer;
   let child;
   let stopping = false;
+  let forceStopping = false;
   let stopped = false;
   let serverClosing = false;
   let serverClosed = false;
@@ -223,6 +224,7 @@ export async function startPreview(options) {
   let pendingBuild = false;
   let artifactBuffer = null;
   const clients = new Set();
+  const sockets = new Set();
   const state = {
     schemaVersion: 1,
     status: 'checking',
@@ -314,6 +316,14 @@ export async function startPreview(options) {
     res.end('Not found');
   });
 
+  server.on('connection', (socket) => {
+    sockets.add(socket);
+    socket.once('close', () => sockets.delete(socket));
+    // A connection event already queued when force-stop begins must not keep
+    // server.close() waiting after the current sockets have been destroyed.
+    if (forceStopping) socket.destroy();
+  });
+
   try {
     await new Promise((resolve, reject) => {
       server.once('error', reject);
@@ -382,12 +392,16 @@ export async function startPreview(options) {
   }
 
   async function stop({ force = false } = {}) {
+    if (force) forceStopping = true;
     if (!stopping) {
       stopping = true;
       clearTimeout(debounceTimer);
       clearInterval(pollTimer);
       watcher?.close();
       closeServer();
+    }
+    if (forceStopping) {
+      for (const socket of sockets) socket.destroy();
     }
     if (child && force) {
       clearTimeout(stopGraceTimer);
