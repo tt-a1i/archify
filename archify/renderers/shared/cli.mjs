@@ -21,8 +21,7 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
   const inputPath = path.resolve(argv[2] || path.join(skillRoot, 'examples', defaultExample));
   const diagram = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
   validateSchema(diagramType, diagram);
-  validateGuidedViews(diagramType, diagram);
-  validateRelationshipIds(diagramType, diagram);
+  validateCrossCollectionContracts(diagramType, diagram);
   validateEngineeringProfile(diagramType, diagram);
   const sourceEvidence = verifyRepositoryEvidence(diagramType, diagram, process.env.ARCHIFY_REPO_ROOT);
   const template = fs.readFileSync(path.join(skillRoot, 'assets/template.html'), 'utf8');
@@ -143,6 +142,15 @@ export function validateGuidedViews(diagramType, diagram) {
       subject: { diagramType, collection: 'meta.views' },
     });
   }
+}
+
+// Facts that span more than one collection cannot be expressed in the JSON
+// Schema, so every consumer of a typed document applies them through this one
+// filesystem-independent entry point. The workflow compiler shares it: a
+// document the renderer rejects must never compile successfully (see #429).
+export function validateCrossCollectionContracts(diagramType, diagram) {
+  validateGuidedViews(diagramType, diagram);
+  validateRelationshipIds(diagramType, diagram);
 }
 
 // Accessible name for the generated diagram SVG.
