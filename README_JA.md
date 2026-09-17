@@ -12,7 +12,7 @@
 
 **コードベースやシステムの説明を、洗練されたインタラクティブなシステムマップへ — チャット上で直接。**
 
-Archify は Cursor、Claude Code、Codex CLI、OpenCode 向けの Node.js 製レンダリング・検証システムです。エージェントが型付き JSON IR を生成し、Archify がそれを決定論的に HTML/SVG へコンパイルします。
+Archify は Cursor、Claude Code、Codex CLI、OpenCode、GitHub Copilot 向けの Node.js 製レンダリング・検証システムです。エージェントが型付き JSON IR を生成し、Archify がそれを決定論的に HTML/SVG へコンパイルします。
 
 - **開いてすぐプレゼン** — 5 種類の図、4 つのプリセット、ダーク/ライトテーマ、組み込みブランドマーク、有限のモーション
 - **マージ前にアーキテクチャ変更をレビュー** — 検証済みの 2 つのスナップショットを Before / Delta / After として比較し、追加・削除・変更・移動・経路変更を正確に提示
@@ -21,11 +21,11 @@ Archify は Cursor、Claude Code、Codex CLI、OpenCode 向けの Node.js 製レ
 
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
 ![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
-![Development Version](https://img.shields.io/badge/version-2.16.0--dev.0-0891b2?style=flat-square)
+![Development Version](https://img.shields.io/badge/version-2.17.0--dev.1-0891b2?style=flat-square)
 
-**現在の開発版:** `v2.16.0-dev.0`。[変更履歴](CHANGELOG.md#unreleased)を参照してください。
+**現在の開発版:** `v2.17.0-dev.1`。[変更履歴](CHANGELOG.md#unreleased)を参照してください。
 
-**[プロジェクトページ](https://tt-a1i.github.io/archify/)** · **[シナリオガイド](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
+**[プロジェクト](https://tt-a1i.github.io/archify/)** · **[ガイド](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)** · **[X](https://x.com/t20000622yy)**
 
 ```bash
 npx skills add tt-a1i/archify -g
@@ -33,13 +33,16 @@ npx skills add tt-a1i/archify -g
 
 Cursor をお使いですか？ [エージェント対応クイックスタート](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)でグローバル／プロジェクト向けの正確なコマンドを確認できます。
 
-インストール後、エージェントにこう伝えてください: `Use archify to map this repository's runtime architecture.`
+**リポジトリは不要です:** 任意のエージェントのチャットでシステムを説明するだけで使えます。
 
 ## ❤️ スポンサー
 
 <table>
-  <tr><td align="center" width="240"><a href="https://apinebula.ai/ref/wywnaATT"><img src="docs/assets/sponsors/apinebula-archify.jpg" alt="APINEBULA" width="200" /></a><br/><strong><a href="https://apinebula.ai/ref/wywnaATT">APINEBULA</a></strong></td><td>APINEBULA は Claude、GPT、Gemini などを 1 つの API で提供し、Archify をスポンサーしています。<a href="https://apinebula.ai/ref/wywnaATT">Archify 経由で登録</a>し、<strong><code>Archify</code></strong> を使うと <strong>10% オフ</strong>になります。</td></tr>
-  <tr><td align="center" width="240"><a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven" width="200" /></a><br/><strong><a href="https://github.com/EverMind-AI">EverMind</a> · <a href="https://github.com/EverMind-AI/Raven">Raven</a></strong></td><td>EverMind は Archify をスポンサーし、エージェント向けのメモリ基盤を開発しています。同社の <a href="https://github.com/EverMind-AI/Raven"><strong>Raven</strong></a> ハーネスは、検証済みでインタラクティブなシステムマップのために Archify を Skill としてサポートしています。</td></tr>
+<tr>
+  <td align="center" width="240"><a href="https://supercode.sh/?utm_source=archify"><img src="https://cdn.supercode.sh/sponsors/supercode-logo.png" alt="Supercode" width="200"/></a><br/><strong><a href="https://supercode.sh/?utm_source=archify">supercode.sh</a></strong></td>
+  <td><a href="https://supercode.sh/?utm_source=archify">Supercode</a> は Archify をスポンサーし、トークン最適化・厳選された Skills・仕様駆動開発によって Codex と Cursor を強化しています。Archify は <a href="https://supercode.sh/en/skills/tt-a1i/archify/archify">Supercode Editor’s Choice</a> スキルに選出されています。<br/><br/><a href="https://supercode.sh/en/skills/tt-a1i/archify/archify"><img src="https://supercode.sh/badges/editors-choice.svg" alt="Supercode Editor’s Choice — Archify" width="240" height="55"/></a></td>
+</tr>
+<tr><td align="center" width="240"><a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven" width="200" /></a><br/><strong><a href="https://github.com/EverMind-AI">EverMind</a> · <a href="https://github.com/EverMind-AI/Raven">Raven</a></strong></td><td>EverMind は Archify をスポンサーし、エージェント向けのメモリ基盤を開発しています。同社の <a href="https://github.com/EverMind-AI/Raven"><strong>Raven</strong></a> ハーネスは、検証済みでインタラクティブなシステムマップのために Archify を Skill としてサポートしています。</td></tr>
 </table>
 
 > Archify のスポンサーをご検討ですか？ [メールでお問い合わせください。](mailto:2801884530@qq.com)
@@ -113,23 +116,22 @@ npx skills use tt-a1i/archify@archify --agent codex
 
 [DSH コミュニティ版（任意）](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@0.1.0`
 
-[エージェント切り替え](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)は `cursor`、`codex`、`claude-code`、`opencode` に対応しています。Raven に手動 ZIP でインストールする場合は、[`archify.zip`](archify.zip) を `~/.raven/workspace/skills` に展開してください。`~/.raven/workspace/skills/archify` が作成されます。Raven は切り替え対象には含まれません。
+[エージェント切り替え](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture)は `cursor`、`codex`、`claude-code`、`opencode`、`github-copilot` に対応しています。Raven に手動 ZIP でインストールする場合は、[`archify.zip`](archify.zip) を `~/.raven/workspace/skills` に展開してください。`~/.raven/workspace/skills/archify` が作成されます。Raven は切り替え対象には含まれません。
 
 Archify は固定の安定版マニフェストを GET して任意の更新リマインダーを表示することがありますが、更新をダウンロードしたりインストールしたりすることはありません。チェックに成功すると次回まで約 72 時間（±20%）待機し、失敗した場合はアクティブに使用していれば 6 時間後、その後は 24 時間後に再試行します。サーバーが受け取るのは通常の HTTP メタデータ（IP と時刻）だけで、バージョン、Agent、プロジェクトデータ、プロンプト、アカウント／デバイス ID、ETag は送信されません。更新するかどうか、いつ更新するかは常にあなたが決めます。`ARCHIFY_UPDATE_CHECK_DISABLED=1` を設定すると、ネットワーク通信とリマインダー状態の書き込みを無効化できます。
 
-### 2. 範囲を絞ったビューを 1 つ依頼する
+### 2. 説明から始める — リポジトリは不要
+
+```text
+Use Archify to draw: Browser -> API -> Redis cache -> PostgreSQL fallback.
+```
+
+ソースを根拠にしたい場合は、リポジトリを開いてこう依頼します:
 
 ```text
 Analyze this repository, then use archify to create a high-level runtime architecture diagram.
 Show 8–12 core components, one primary path, external dependencies, and trust boundaries.
 Put supporting detail in cards instead of adding more edges.
-```
-
-特定のフローに絞る場合:
-
-```text
-Use archify to draw this login flow: Browser -> Web App -> API -> JWT validation ->
-Redis session lookup -> PostgreSQL fallback. Keep the cache-miss path secondary.
 ```
 
 ### 3. チャットで調整する
@@ -138,17 +140,17 @@ Redis session lookup -> PostgreSQL fallback. Keep the cache-miss path secondary.
 
 ## 適切な図を選ぶ
 
-| 種類 | 適した用途 | プロンプトに含める内容 |
+| 種類 | コピーして使えるプロンプト | 検証済みサンプル |
 |---|---|---|
-| **Architecture** | コンポーネント、サービス、ストレージ、境界 | スコープ、中心となるコンポーネント、主経路 |
-| **Workflow** | CI/CD、承認、ツール呼び出し、ランブック | 参加者、順序、分岐、例外 |
-| **Sequence** | API 呼び出し、キャッシュフォールバック、認証、非同期トレース | 呼び出し元、呼び出し先、戻り、タイミング |
-| **Data Flow** | パイプライン、リネージ、PII、コンシューマー | ソース、変換、ストア、境界 |
-| **Lifecycle** | 状態、リトライ、待機、終端結果 | 状態、イベント、リトライおよびキャンセル経路 |
+| **Architecture** | `Archify でランタイムのコンポーネント、境界、主経路を整理して。` | [本番デプロイ構成](https://tt-a1i.github.io/archify/gallery/artifacts/production-deployment.architecture.html) |
+| **Workflow** | `Archify で参加者、分岐、承認、リトライを整理して。` | [エージェントのツール呼び出しワークフロー](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html) |
+| **Sequence** | `Archify でこの API リクエスト、レスポンス、失敗経路を整理して。` | [非同期ジョブの往復](https://tt-a1i.github.io/archify/gallery/artifacts/async-job-roundtrip.sequence.html) |
+| **Data Flow** | `Archify でソース、変換、ストア、境界を整理して。` | [イベントストリームのデータフロー](https://tt-a1i.github.io/archify/gallery/artifacts/event-stream.dataflow.html) |
+| **Lifecycle** | `Archify で状態、イベント、リトライ、終端結果を整理して。` | [エージェント実行のライフサイクル](https://tt-a1i.github.io/archify/gallery/artifacts/agent-run.lifecycle.html) |
 
-Architecture の任意プロファイル `deployment-ownership` は、記述されたオーナー、リージョン配置、データベースのプライベートスコープ、名前付きの境界越えが欠けている場合に fail-closed で失敗します。暗黙的に有効化されることはなく、ライブのインフラを検査することもありません。[検証済みのデプロイ実証](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership)を参照してください。
+Architecture の任意プロファイル `deployment-ownership` は、記述されたオーナー、リージョン配置、データベースのプライベートスコープ、名前付きの境界越えが欠けている場合は fail-closed で停止します。暗黙的に有効化されることはなく、ライブのインフラを検査することもありません。[検証済みのデプロイ実証](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership)を参照してください。
 
-設計レビューや PR レビューでは、Architecture Delta が検証済みの Before / Delta / After スナップショットを機械可読なレシート付きで比較します。記述された変更を選ぶか、有限でビューア専用の Review を 1 つ再生してください。影響度・リスク・マージ安全性を推測することはありません。
+Architecture Delta は、検証済みの Before / Delta / After スナップショットを機械可読なレシート付きで比較します。来歴（プロヴェナンス）はグラフの変更とは切り離して扱われます。記述された変更を選ぶか、有限でビューア専用の Review を再生してください。いずれも影響度・リスク・マージ安全性を推測することはありません。
 
 `node archify/bin/archify.mjs compare architecture base.json head.json architecture-delta.html --json`
 
@@ -251,7 +253,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 
 安定したリンクで `#focus=<id>`、`#focus=<id>&reach=upstream|downstream`、`#relation=<id>`、`#route=<source>~<target>`、`#lens=<kind>~<kind>`、`#view=<view-id>` を復元できます。読み手が起動するモーションは有限で、`prefers-reduced-motion` を尊重し、正規のエクスポートには含まれません。
 
-生成とビューアの完全な仕様は [`archify/SKILL.md`](archify/SKILL.md) にあります。
+生成とビューアの仕様: [`archify/SKILL.md`](archify/SKILL.md)。
 
 ## インストール方法
 
@@ -263,13 +265,15 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | **opencode** | `~/.config/opencode/skills/`、`.opencode/skills/`、または `.agents/skills/` | レンダラー + 検証ワークフローのフル機能 |
 | **Claude.ai** | Settings → Capabilities → Skills から `archify.zip` をアップロード | サンドボックスでの Node.js 利用可否に依存 |
 | **Project Knowledge** | プロジェクトに `archify.zip` をアップロード | プロンプト駆動のアーキテクチャフォールバック |
-**DeepSeek Harness:** DeepSeek 公式製品ではなくコミュニティ統合です。開発者プレビュー版 `@deepseek-ai/dsh@0.1.0-rc.6`、Node `^22.19.0 || >=24.0.0`。インストール: `dsh plugin --profile web add @tt-a1i/archify-dsh@0.1.0`、呼び出し: `Use the archify skill to map this repository's runtime architecture.`、削除: `dsh plugin --profile web remove @tt-a1i/archify-dsh`。テレメトリはありません。シェルファイルには Web Produced Files ではなく、正確なワークスペースパスが必要です。[詳細](integrations/deepseek-harness/README.md)。
+| **Hermes Agent** | 明示的に有効化: `hermes skills install skills-sh/tt-a1i/archify/archify -y` | コミュニティ版の Skill のみ。Node `>=18`。Nous 公式製品ではありません。テレメトリはありません。切り替え対象外。[詳細](integrations/hermes-agent/README.md)。 |
+| **DeepSeek Harness** | 明示的に有効化: `dsh plugin --profile web add @tt-a1i/archify-dsh@0.1.0`。呼び出し: `Use the archify skill to map this repository's runtime architecture.` 削除: `dsh plugin --profile web remove @tt-a1i/archify-dsh` | 開発者プレビュー版 `@deepseek-ai/dsh@0.1.0-rc.6` 向けのコミュニティ統合。Node `^22.19.0 \|\| >=24.0.0`。DeepSeek 公式製品ではなく、テレメトリもありません。シェルファイルには Web Produced Files ではなく、正確なワークスペースパスが必要です。[詳細](integrations/deepseek-harness/README.md)。 |
 
 ## リファレンスとスコープ
 
 - [スキーマリファレンス](archify/schemas/README.md) · [Skill](archify/SKILL.md) · [サンプル](archify/examples/) · [エージェント向けクックブック](docs/authoring-cookbook.md)
 - [変更履歴](CHANGELOG.md)
 - [ロードマップ](ROADMAP.md)
+- [階層的な読み方](archify/references/layered-reading.md)
 - [生成された Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
 Mermaid の自動パース、汎用オートレイアウト、ホスティング型の共有、WYSIWYG 編集は、現時点では意図的にスコープ外としています。
@@ -280,7 +284,7 @@ Mermaid の自動パース、汎用オートレイアウト、ホスティング
 
 ## コントリビュート
 
-Issue、プルリクエスト、実際の図の投稿を歓迎します。まずは[コントリビューションガイド](CONTRIBUTING.md)をご覧ください。不具合は再現可能なバグ報告フォームから、検証済みの図は[コミュニティショーケースフォーム](https://github.com/tt-a1i/archify/issues/new?template=showcase.yml)から投稿できます。&nbsp;·&nbsp;[LINUX&nbsp;DO](https://linux.do)
+Issue、プルリクエスト、実際の図の投稿を歓迎します。まずは[コントリビューションガイド](CONTRIBUTING.md)をご覧ください。不具合は再現可能なバグ報告フォームから、検証済みの図は[コミュニティショーケースフォーム](https://github.com/tt-a1i/archify/issues/new?template=showcase.yml)から投稿できます。セキュリティ上の脆弱性については [SECURITY.md](SECURITY.md) を参照してください。&nbsp;·&nbsp;[LINUX&nbsp;DO](https://linux.do)
 
 ## Star History
 

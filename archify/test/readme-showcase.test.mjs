@@ -22,6 +22,7 @@ const readmeLanguages = [
     preview: '## Preview',
     quickStart: '## Quick start',
     contributing: '## Contributing',
+    noRepository: /No repository is required/,
   },
   {
     file: 'README_EN.md',
@@ -31,6 +32,7 @@ const readmeLanguages = [
     preview: '## Preview',
     quickStart: '## Quick start',
     contributing: '## Contributing',
+    noRepository: /No repository is required/,
   },
   {
     file: 'README_ZH.md',
@@ -40,6 +42,7 @@ const readmeLanguages = [
     preview: '## 预览',
     quickStart: '## 快速开始',
     contributing: '## 参与贡献',
+    noRepository: /不需要绑定代码库/,
   },
   {
     file: 'README_JA.md',
@@ -49,6 +52,7 @@ const readmeLanguages = [
     preview: '## プレビュー',
     quickStart: '## クイックスタート',
     contributing: '## コントリビュート',
+    noRepository: /リポジトリは不要です/,
   },
 ];
 
@@ -199,7 +203,7 @@ test('all README languages keep the product hero and retain the verified animate
 });
 
 test('README installation tables contain a complete DeepSeek Harness row', () => {
-  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const { file: filename } of readmeLanguages) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     const row = readme.split('\n').find((line) => line.startsWith('| **DeepSeek Harness** |'));
     assert.ok(row, `${filename}: DeepSeek Harness must be an installation table row`);
@@ -220,7 +224,7 @@ test('README installation tables contain a complete DeepSeek Harness row', () =>
 });
 
 test('README installation tables include Hermes Agent before DeepSeek Harness', () => {
-  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const { file: filename } of readmeLanguages) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     const hermes = readme.split('\n').find((line) => line.startsWith('| **Hermes Agent** |'));
     const dsh = readme.split('\n').find((line) => line.startsWith('| **DeepSeek Harness** |'));
@@ -299,13 +303,13 @@ test('README stays scannable without deleting the visual proof set', () => {
     'archify-lifecycle.png',
   ];
 
-  for (const { file: filename } of readmeLanguages) {
+  for (const { file: filename, noRepository } of readmeLanguages) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     assert.ok(readme.split('\n').length <= 295, `${filename}: README grew beyond the scannable line budget`);
     const supercode = readme.indexOf('https://supercode.sh/?utm_source=archify');
     const evermind = readme.indexOf('docs/assets/sponsors/evermind-archify-raven.png');
     assert.ok(supercode >= 0 && evermind > supercode, `${filename}: EverMind must follow Supercode`);
-    assert.match(readme, filename === 'README_ZH.md' ? /不需要绑定代码库/ : /No repository is required/);
+    assert.match(readme, noRepository, `${filename}: the no-repository entry point is missing`);
     for (const asset of commonAssets) {
       assert.ok(readme.includes(`docs/assets/${asset}`), `${filename}: visual proof ${asset} was removed`);
     }
