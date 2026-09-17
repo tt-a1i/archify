@@ -1173,13 +1173,15 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 
 function fillDeltaSrcdoc(html, slots) {
   const fills = [];
+  const bodyStart = html.lastIndexOf('<body>');
+  const from = bodyStart === -1 ? 0 : bodyStart;
   for (const [view, token, nested] of slots) {
     if (!nested) continue;
-    const open = html.match(new RegExp(`<section class="canvas" data-view="${view}"[^>]*>`));
-    if (!open || open.index == null) continue;
-    const regionStart = open.index + open[0].length;
+    const open = html.indexOf(`<section class="canvas" data-view="${view}"`, from);
+    if (open === -1) continue;
+    const regionStart = html.indexOf('>', open) + 1;
     const regionEnd = html.indexOf('</section>', regionStart);
-    if (regionEnd === -1) continue;
+    if (regionStart <= 0 || regionEnd === -1) continue;
     const localIndex = html.slice(regionStart, regionEnd).indexOf(token);
     if (localIndex === -1) continue;
     fills.push({ index: regionStart + localIndex, token, nested: esc(nested) });

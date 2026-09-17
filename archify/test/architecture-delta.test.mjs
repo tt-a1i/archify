@@ -196,15 +196,16 @@ test('srcdoc slots are filled inside their canvas even when artifact CSS repeats
     headSvg: '<svg viewBox="0 0 1 1"></svg>',
     baseHtml,
     headHtml,
-    artifactCss: `/* ${baseSlot} ${headSlot} */`,
+    artifactCss: `/* ${baseSlot} ${headSlot} <section class="canvas" data-view="base" hidden></section><section class="canvas" data-view="head" hidden></section> */`,
   });
   const style = html.match(/<style>([\s\S]*?)<\/style>/)?.[1] || '';
   assert.match(style, /\/\*[\s\S]*srcdoc=""[\s\S]*\*\//);
   assert.equal(style.includes('css-base'), false);
   assert.equal(style.includes('css-head'), false);
-  const frames = [...html.matchAll(/<section class="canvas" data-view="(base|head)"[^>]*>([\s\S]*?)<\/section>/g)]
-    .map(([, view, body]) => [view, body]);
-  const srcdoc = (body) => body.match(/srcdoc="([^"]*)"/)?.[1]
+  const body = html.slice(html.lastIndexOf('<body>'));
+  const frames = [...body.matchAll(/<section class="canvas" data-view="(base|head)"[^>]*>([\s\S]*?)<\/section>/g)]
+    .map(([, view, section]) => [view, section]);
+  const srcdoc = (section) => section.match(/srcdoc="([^"]*)"/)?.[1]
     ?.replaceAll('&quot;', '"')
     .replaceAll('&#39;', "'")
     .replaceAll('&lt;', '<')
