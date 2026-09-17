@@ -7,6 +7,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
 ### Fixed
+- **Escaped brand icon URLs (#454).** Favicon discovery decodes basic named and numeric HTML character references once before URL resolution, preserving percent escapes and the existing network and digest checks.
 - **Architecture Delta baseline arrowheads (#433).** Removed and rerouted baseline relationships retain their marker definitions in the composed Delta SVG, preserving their authored direction alongside current relationships.
 - **Compare rollback recovery (#438).** If restoring a previous output fails, compare preserves its recovery directory and reports backup-to-target paths instead of deleting the remaining backups during cleanup.
 - **固定提交的来源校验 (#420)。** 校验忽略本地 Git replacement refs，始终读取指定提交的原始对象，避免替换后的文件或行范围造成误接受或误拒绝；保留原有来源链接、诊断与用户 Git 配置。

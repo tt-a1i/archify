@@ -274,13 +274,36 @@ function attribute(tag, name) {
   return match ? (match[1] ?? match[2] ?? match[3] ?? '') : '';
 }
 
+// HTML numeric references in the C1 range use the legacy Windows-1252 mapping.
+// https://html.spec.whatwg.org/multipage/parsing.html#numeric-character-reference-end-state
+const HTML_C1_REFERENCES = [
+  0x20ac, 0x81, 0x201a, 0x192, 0x201e, 0x2026, 0x2020, 0x2021,
+  0x2c6, 0x2030, 0x160, 0x2039, 0x152, 0x8d, 0x17d, 0x8f,
+  0x90, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
+  0x2dc, 0x2122, 0x161, 0x203a, 0x153, 0x9d, 0x17e, 0x178,
+];
+const BASIC_HTML_REFERENCES = { amp: '&', quot: '"', apos: "'", lt: '<', gt: '>' };
+
+function decodeIconHref(value) {
+  // Decode only after extracting the attribute, in one pass. Leave percent
+  // escapes to URL parsing and do not reinterpret decoded quotes as markup.
+  return value.replace(/&#(?:[xX]([0-9a-fA-F]+)|([0-9]+));?|&(amp|AMP|quot|QUOT|lt|LT|gt|GT)(?:;|(?![A-Za-z0-9=]))|&(apos);/g,
+    (_match, hex, decimal, named, apostrophe) => {
+      if (named || apostrophe) return BASIC_HTML_REFERENCES[(named || apostrophe).toLowerCase()];
+      let point = Number.parseInt(hex || decimal, hex ? 16 : 10);
+      if (point === 0 || point > 0x10ffff || (point >= 0xd800 && point <= 0xdfff)) return '\uFFFD';
+      if (point >= 0x80 && point <= 0x9f) point = HTML_C1_REFERENCES[point - 0x80];
+      return String.fromCodePoint(point);
+    });
+}
+
 function iconCandidates(html, pageUrl) {
   const candidates = [];
   for (const match of html.matchAll(/<link\b[^>]*>/gi)) {
     const tag = match[0];
     const rel = attribute(tag, 'rel').toLocaleLowerCase('en-US').split(/\s+/);
     if (!rel.some((value) => value === 'icon' || value === 'apple-touch-icon' || value === 'mask-icon')) continue;
-    const href = attribute(tag, 'href');
+    const href = decodeIconHref(attribute(tag, 'href'));
     if (!href) continue;
     try {
       const url = new URL(href, pageUrl);

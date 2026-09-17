@@ -48,6 +48,12 @@ does; `brand` explains whose product it is.
    URL or silently assign a visually similar company.
 
 Known-brand URLs resolve to the bundled vector instead of using the network.
+For discovered icon `href` attributes, capture decodes the basic named references
+`amp`, `quot`, `apos`, `lt`, `gt` (and their defined uppercase aliases), plus
+decimal and hexadecimal numeric references, once before URL resolution. Thus
+`/icon.png?v=1&amp;size=32` requests `/icon.png?v=1&size=32`. URL percent escapes
+remain intact; nested escapes are not decoded recursively. This bounded decoder
+does not add a general HTML parser or support every named HTML entity.
 Unknown URL capture accepts only bounded raster image formats, blocks
 credentials, nonstandard public ports, and private or link-local destinations,
 uses bounded concurrency and one total deadline, and returns the captured
