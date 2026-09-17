@@ -18,7 +18,7 @@ Use this bounded path for ordinary generation. Do not read the optional Viewer R
 
 1. Choose `architecture`, `workflow`, `sequence`, `dataflow`, or `lifecycle` from the question.
 2. Read one matching schema in `schemas/`, `schemas/common.schema.json`, and one matching JSON example in `examples/`. Read only those files. Fresh authorship means new stable IDs, domain wording, and layout; use the example for field shape, not facts. New workflow sources use `schema_version: 2` and its readable layout contract; keep `schema_version: 1` only when preserving an existing workflow's fixed geometry. When real product identity matters, query `node bin/archify.mjs brands "<name>" --json`; read `references/brand-marks.md` only for an unknown brand with a user-provided URL.
-3. Artifact first: the next tool action must write the candidate. Write the candidate before inspecting renderer internals. Do not plan exact coordinates in prose. Start with one clear main path, short side branches, sparse labels, and at most 12 primary nodes. Set `meta.quality_profile` to `"showcase"` unless the user explicitly requests a dense `standard` map. Start with automatic routes and labels. Do not add `via`, `channelX`, `channelY`, or `labelAt` before a diagnostic calls for one; apply at most one diagnosed geometry control per repair.
+3. Artifact first: the next tool action must write the candidate. Write the candidate before inspecting renderer internals. Do not plan exact coordinates in prose. Start with one clear main path, short side branches, and sparse labels. Use roughly 12 primary nodes as an initial readability budget. Preserve every node and relationship required by the user's question; for larger diagrams, group related content where the selected schema supports it. Set `meta.quality_profile` to `"showcase"` unless the user explicitly requests a dense `standard` map. Start with automatic routes and labels. Do not add `via`, `channelX`, `channelY`, or `labelAt` before a diagnostic calls for one; repair one diagnosed geometry problem at a time. Before manual routing, read the relevant routing rules in `references/authoring-contract.md` and inspect layout evidence: use `validate <type> <candidate.json> --layout-json` for architecture/workflow; for other types, use validation diagnostics and the rendered SVG geometry. Check whether unnecessary agent-added controls disable automatic port spread; preserve user-required route intent. If several edges share a constrained channel, plan the smallest coupled change from measured geometry and validate it together.
 4. Validate after every candidate edit and immediately before handoff:
 
    ```bash
@@ -32,7 +32,7 @@ Use this bounded path for ordinary generation. Do not read the optional Viewer R
    node bin/archify.mjs deliver <type> <candidate.json> <output.html> --quality showcase --json
    ```
 
-   A non-zero exit can never be described as success. A failed delivery preserves any previous output, so do not run `visual-check` on that path: it would inspect the stale last-good artifact, not the failed candidate. If validation fails, change only the diagnosed `subject`, verify `evidence`, choose from `supportedFixes`, and rerun. Continue focused correction while the objective error count reaches a new minimum. If two consecutive rounds do not improve that best count, stop and report the unresolved diagnostics truthfully.
+   A non-zero exit can never be described as success. Continue to the strict delivery gate below only after `deliver` exits zero. If validation fails, change only the diagnosed `subject`, verify `evidence`, choose from `supportedFixes`, and rerun. Continue focused correction while the objective error count reaches a new minimum. If two consecutive rounds do not improve that best count, stop and report the unresolved diagnostics truthfully.
 
 ## Update awareness
 
@@ -46,9 +46,13 @@ The notice is information, not permission. Keep the installed version unchanged;
 Do not read `renderers/shared/geometry.mjs`, renderer source, validator source, tests, or benchmarks before the first candidate. Inspect implementation only for an unsupported internal diagnostic or after two focused repairs fail.
 
 Workflow note: use schema v2 for new workflows; preserve schema v1 when an
-existing source needs fixed legacy geometry. Keep semantic edge labels and act
-on the compiler diagnostic. The canonical layout, pin, migration, and receipt
-contract is in [`renderers/workflow/README.md`](renderers/workflow/README.md#layout-contracts).
+existing source needs fixed legacy geometry. For sequential stages stacked in
+one container, use one v2 lane and one group, omit `meta.viewBox`, and place the
+nodes around the lane content center with symmetric `yOffset` values such as
+`-90 / 0 / 90`; readable-v2 measures that lane independently when no absolute
+route pins are present. Keep semantic edge labels and act on the compiler
+diagnostic. The canonical layout, pin, migration, and receipt contract is in
+[`renderers/workflow/README.md`](renderers/workflow/README.md#layout-contracts).
 
 Lifecycle note: phase columns `0..4` occupy the main rail; event/terminal column `N` in `0..2` aligns exactly beneath main column `N + 2`. A recoverable state uses `type: "failure"` plus a real transition back to the active state.
 
@@ -79,7 +83,7 @@ Read Mermaid for topology and meaning, then author fresh Archify JSON; do not me
 - Omit `meta.subtitle` by default. Never invent a subtitle that restates the title, nodes, or cards; include one short supporting line only when the user explicitly asks for it.
 - Treat the standalone desktop viewer as a first-screen artifact by default, not a shallow strip. Generate one responsive artifact for laptops and external displays—never device-specific HTML or alternate topology. The viewer may adapt only the outer reading width from the live viewport height; it must preserve the authored SVG/viewBox, proportions, semantic geometry, and normal document flow. On a wide or tall desktop, use enough authored vertical rhythm that the diagram panel and its necessary conclusion cards occupy the screen as a balanced whole; runtime scaling cannot repair an over-compressed Y layout or an undersized explicit `meta.viewBox`. Before handoff, open the real HTML at 1440×900, 1600×1000, and 1920×1080; additionally check 2048×1320 whenever the composition is intended for a large desktop display. Require `document.documentElement.scrollWidth <= window.innerWidth` and `scrollHeight <= window.innerHeight` at every checked size, while visually checking that the diagram remains comfortably readable and vertically balanced at the largest checked viewport. Repair overflow by removing only genuinely redundant content or compacting spacing before shrinking nodes, labels, or the main panel. If the largest viewport still has a conspicuous empty lower band at the viewer's width cap, redistribute authored Y positions and increase the viewBox height proportionally; do not add filler copy or decorative cards. Never counterfeit a pass with `overflow: hidden`, clipped content, an internal diagram scroller, stretched SVG height, or smaller typography. Narrow/mobile layouts may scroll vertically when containment requires it.
 - Omit `meta.legend` for the truthful `auto` default. When needed, use only `mode: auto|all|hidden` and renderer-supported `entries.<kind>.label|visible`; labels never change semantics.
-- Choose one primary authored language from an explicit user choice; otherwise follow the request or conversation's dominant language. `meta.locale` controls only renderer-owned Viewer UI: use `"en"` or `"zh-CN"` for the corresponding supported primary language. For every other language, omit `meta.locale` and explicitly disclose that the fixed Viewer UI and `<html lang>` fall back to English. The renderer never translates authored content. See `references/authoring-contract.md` for details.
+- Choose one primary authored language from an explicit user choice; otherwise follow the request or conversation's dominant language. `meta.locale` controls only renderer-owned Viewer UI: use `"en"`, `"zh-CN"`, or `"es"` for the corresponding supported primary language. For every other language, omit `meta.locale` and explicitly disclose that the fixed Viewer UI and `<html lang>` fall back to English. The renderer never translates authored content. See `references/authoring-contract.md` for details.
 - Preserve exact product names, code identifiers, commands, protocols, API paths, and environment names. They may remain English inside localized copy, but never justify leaving the surrounding explanatory prose in another language.
 - Brand identity is optional and explicit. Put a canonical built-in ID in `brand` when the node names that real product. If no preset matches and the user supplied the official HTTP(S) URL, first run `node bin/archify.mjs brands capture "<url>" --json`, then author the returned digest-pinned `brand` object. Render and validate never perform an unpinned capture. Otherwise omit `brand`. Never infer a brand from a vague role such as "database", and never let a badge replace the semantic `type`, label, or relationship facts.
 - For sequence diagrams, omit `meta.column_fit` for the stable `fixed` layout. Set it to `"spread"` when a wide viewBox would otherwise leave unused horizontal space or when meaningful participant labels do not fit the fixed boxes; do not shorten semantic labels before trying `spread`.
@@ -95,13 +99,24 @@ Read `references/authoring-contract.md` only when you need field enums, spacing 
 
 ## Delivery
 
-Use `validate` during repair and `deliver` once for final acceptance. Delivery freezes the exact specification bytes into a private same-directory snapshot, renders and checks that snapshot, atomically commits the HTML, and reports SHA-256 plus byte counts for both specification and artifact. This is deterministic artifact evidence; it does not exercise the Viewer in a browser.
-
-After delivery, collect bounded desktop evidence without modifying or rerendering the trusted HTML:
+Use `validate` during repair and `deliver` once for final acceptance. This is deterministic artifact evidence; it does not exercise the Viewer in a browser. After `deliver` exits zero, require current delivery evidence before handoff:
 
 ```bash
-node bin/archify.mjs visual-check <output.html> --json
+node bin/archify.mjs check <output.html> --require-provenance
 ```
+
+Read `references/delivery-contract.md` whenever `deliver`, strict `check`, or
+`visual-check` fails; provenance is not current; recovery metadata remains; or
+the same output path needs another delivery. That file is the canonical source
+for provenance, serialization, recovery, receipt, and browser-evidence rules.
+
+After the strict `check` above exits zero, collect bounded desktop evidence without modifying or rerendering the trusted HTML:
+
+```bash
+node bin/archify.mjs visual-check <output.html> --json --require-provenance
+```
+
+For workflow viewport overflow, read [Workflow viewport repair](references/authoring-contract.md#workflow-viewport-repair) before the next layout edit.
 
 `visual-check` collects automated browser evidence from the exact delivered HTML without modifying or rerendering it. Its machine-readable measurements and screenshots do not approve perceptual polish. Follow `references/delivery-contract.md` for the canonical receipt fields, coverage, sidecars, exit behavior, and supplementary manual-record requirements.
 
@@ -119,7 +134,7 @@ Add `--open` only when the user wants an immediate local preview. For an active 
 node bin/archify.mjs preview <type> <input>.json <output>.html --quality showcase
 ```
 
-Never start preview by default. Read `references/delivery-contract.md` when using preview, repository evidence, export receipts, visual review, or post-commit opening.
+Never start preview by default. Read `references/delivery-contract.md` when using preview, repository evidence, export receipts, visual review, or post-delivery opening.
 
 ## Optional viewer capabilities
 

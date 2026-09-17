@@ -47,7 +47,7 @@ Choose one primary authored language. An explicit user choice wins; otherwise
 use the language of the request, or the conversation's dominant language when
 the request itself is language-neutral. Separately choose the Viewer locale.
 For supported languages, always write the matching `meta.locale`: `"en"` for
-English or `"zh-CN"` for Simplified Chinese. The renderer consumes the authored
+English, `"zh-CN"` for Simplified Chinese, or `"es"` for Spanish. The renderer consumes the authored
 locale without inferring language from diagram strings. Documents that omit it
 remain valid and default to English.
 
@@ -60,7 +60,7 @@ guided views, legend label overrides, and cards. A bilingual diagram still
 chooses one primary locale for the Viewer; follow an explicit primary-language
 request, then prompt order or conversation dominance.
 
-For a requested language outside `en` and `zh-CN`, do not write an unsupported
+For a requested language outside `en`, `zh-CN`, and `es`, do not write an unsupported
 locale. Keep every reader-facing authored string in the requested language,
 omit `meta.locale` so the renderer safely uses English, and explicitly tell the
 user that fixed Viewer UI and `<html lang>` remain English and the artifact is
@@ -105,6 +105,7 @@ in the generated viewer.
 
 - Node anchors start at side midpoints. `left`/`right` change the horizontal endpoint; `top`/`bottom` change the vertical endpoint. For an automatic Architecture relationship, unobstructed facing ports whose axis offset is under 16px may share one horizontal or vertical axis when both endpoints retain the 16px corner gutter. If exactly one endpoint belongs to a spread group, only its unshared counterpart moves; relationships spread at both endpoints keep their distinct ports and outside bridge.
 - A side is a direction contract. The first and final route segment must be perpendicular and outward/inward in the named direction.
+- In architecture, data-flow, and lifecycle diagrams, explicit `route: "straight"` requests one direct segment, which may be diagonal when endpoint sides are not pinned. The artifact checker preserves this intent; explicit sides, opaque-node clearance, and other quality gates still apply. `via` takes precedence and retains existing rules, including data-flow's requirement for orthogonal via segments.
 - Automatic Port Spread is a default renderer behavior for architecture, workflow, data-flow, and lifecycle diagrams. Shared automatic endpoints spread deterministically and symmetrically with a 16px corner gutter. It does not apply to sequence messages, single relationships, or explicit `via`, `channelX`, `channelY`, `labelAt`, or non-`auto` routes.
 - Showcase route rhythm: every nonzero segment must be at least 8px; every interior segment must be at least 16px. When spread ports are nearly parallel, the router uses a 24px endpoint stub and a 16px outside bridge instead of manufacturing a tiny dogleg.
 - Shared endpoint corridors are allowed only when they remain semantically unambiguous. Unrelated collinear overlap of 8px or more fails showcase.
@@ -133,7 +134,13 @@ its endpoints fully imply it, explain why the wording is redundant; this is a
 semantic authoring choice, not a spacing repair. In workflow v2, let the compiler
 allocate its measured mask before applying a diagnosed `labelAt`,
 `labelDx`/`labelDy`, or `labelSegment`. Apply one diagnosed geometry control at
-a time.
+a time unless several edges share a constrained channel. In that case, plan the smallest coupled change from measured geometry and
+validate it together. Architecture/workflow provide layout evidence through
+`validate <type> <candidate.json> --layout-json`; for other types, use validation
+diagnostics and the rendered SVG geometry.
+Before adding manual routes, check whether unnecessary agent-added controls
+disable automatic port spread; preserve user-required route intent. Use the
+measured clearance rules above rather than guessing coordinates.
 
 ### Repair order
 
@@ -142,6 +149,7 @@ a time.
 3. Fix edge-through-node and endpoint-direction errors.
 4. Fix crossings, ambiguous corridors, border runs, and route rhythm.
 5. Fix label-to-node, label-to-label, then label-to-route clearance.
+6. Fix labels that leave the canvas: move the label with `labelAt`/`labelDx`/`labelDy`/`labelSegment`, or widen `meta.viewBox`. Suggested `labelDx`/`labelDy` values replace the authored field; they are not added to it.
 
 Run `validate` after every edit. Consume `diagnostics[]` by stable `code`, exact `subject`, measured `evidence`, and `supportedFixes`. If the diagnostic gives `labelAt`, use that point instead of estimating another offset.
 
@@ -161,6 +169,27 @@ legacy geometry compatibility. Keep the happy path monotonic, preserve semantic
 edge labels, and route retries and exception returns outside the main lane
 corridor.
 
+#### Workflow viewport repair
+
+When `viewer/viewport-overflow` includes `workflowLanes`, inspect the tallest
+rendered frames and their node span before changing the source. Measurements
+are CSS pixels; space above/below nodes includes lane titles and routing, so it
+is not a removable-space budget. Frame IDs identify rendered lane indices.
+
+Run `validate workflow <source.json> --layout-json` and match those frames to
+source lanes and nodes. Check whether many steps share the last logical column
+and use large `yOffset` values. Readable-v2 currently reserves symmetric space
+around offsets and shares the base content height between lanes, so increasing
+one offset can enlarge otherwise sparse lanes.
+
+Where the source's ownership and explicit geometry permit, redistribute steps
+across logical columns and meaningful lanes, keeping the main path monotonic.
+Preserve every required node, relationship, label and semantic check. If ownership
+or absolute pins prevent reflow, report that constraint instead of merging lanes
+or moving pins automatically. Validate the changed JSON, deliver a fresh HTML,
+then rerun browser checks and inspect the first screen; a static pass alone does
+not settle viewport fit. These are repair directions, not guaranteed coordinates.
+
 ### Sequence
 
 Participants are ordered by conversation role. Messages own their vertical order. Use return/async/security variants for meaning, not decoration; sequence does not use Automatic Port Spread.
@@ -178,13 +207,72 @@ A card or guided view saying “retry” is not topology.
 
 ## Repository evidence
 
-When an architecture diagram must reflect real code, inspect repository
-entrypoints, runtime boundaries, storage, transports, and deployment
-configuration before authoring. Record only evidence you actually verified.
-`--repo-root <path>` is architecture-only and is accepted by architecture
-`render`, `validate`, `deliver`, `preview`, and `compare`; workflow, sequence,
-dataflow, and lifecycle reject it. Never infer runtime causality from file
-proximity or naming alone.
+When the diagram must reflect real code, inspect repository entrypoints,
+runtime boundaries, storage, transports, and deployment configuration before
+authoring. Record only evidence you actually verified. `--repo-root <path>` is
+accepted by `render`, `validate`, `deliver`, and `preview` for every diagram
+type, by architecture `compare`, and by workflow `migrate`; every mode verifies `meta.repository` and
+node `sources` the same way. Migrating a source-backed workflow requires the same
+`--repo-root` so its candidate is verified before replacing the destination.
+Never infer runtime causality from file proximity
+or naming alone.
+
+Declare `meta.repository.url` and one full 40-character `revision`, then attach
+`sources` to the mode's node collection (Architecture `components[]`, Workflow
+and Data Flow `nodes[]`, Sequence `participants[]`, Lifecycle `states[]`) with
+repository-relative `path`, optional `line`, `end_line`, and `label`.
+Verification reads blobs at that commit, independently of working-tree edits.
+Verification ignores local Git replacement refs, including those selected by
+`GIT_REPLACE_REF_BASE`, and always reads the original objects at the pinned SHA.
+It does not change repository configuration or delete replacement refs.
+A matching local origin, available commit, bounded path,
+blob, and valid line range are required in every link mode. Verification is
+local and makes no remote requests; it establishes neither public availability
+nor the current reader's access rights.
+
+`link_mode` defaults to `web`. GitHub and Gitee HTTPS repository URLs generate
+revision-pinned links; their public hosts select the provider automatically.
+Optional `provider: "github"` or `"gitee"` must agree with the host. Existing
+GitHub declarations and default delivery receipt fields remain compatible.
+
+```json
+{
+  "url": "https://gitee.com/team/service",
+  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "provider": "gitee"
+}
+```
+
+For an internal or unsupported forge, select `link_mode: "local-only"`. The
+Viewer retains SRC markers, searchable file paths, line ranges, and revision
+labels without repository or source hyperlinks. The evidence receipt adds
+`linkMode: "local-only"`. `url` remains required as the expected origin identity;
+local-only disables links, not identity verification. A repository without an
+origin is not supported.
+
+```json
+{
+  "url": "http://git.internal:3000/Platform/Services/service",
+  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "link_mode": "local-only"
+}
+```
+
+Local-only accepts HTTP(S), `git@host:path`, and `ssh://git@host[:port]/path`
+addresses, including nested namespaces. Declare a credential-free address;
+HTTP(S) credentials on the checkout's origin are ignored for identity and
+redacted from diagnostics. Hostnames compare case-insensitively; repository
+paths retain case except for the existing GitHub behavior. A trailing slash
+normalizes away. Only GitHub and Gitee normalize a terminal `.git` and match
+standard HTTPS/443 with Git SSH/22. For other hosts, use the actual clone address:
+transport, port, `.git` suffix, and remote-relative versus absolute paths must
+match. For example, `git@host:Team/repo` differs from
+`ssh://git@host/Team/repo`; `git@host:/Team/repo` matches the latter. SCP-style
+paths preserve literal percent escapes, while URI paths decode them. SSH host
+aliases and forge-specific browse/clone prefixes are not guessed.
+GitLab/Gitea/Forgejo/Bitbucket web links are not implemented in this version;
+use local-only until a tested link provider is available. Unknown web providers
+fail with a diagnostic rather than emitting a guessed link.
 
 ## Hand-placed fallback
 

@@ -87,17 +87,30 @@ test('clean staging rejects byte-identical but incomplete repository and package
   }
 });
 
-test('clean staging preserves index modes and strips repository-only package metadata', () => {
+test('clean staging preserves index modes and strips repository-only package metadata', (t) => {
   const root = repositoryFixture();
   const destination = path.join(root, 'staged-skill');
   try {
-    write(root, 'archify/bin/executable.mjs', '#!/usr/bin/env node\n', 0o755);
-    write(root, 'archify/runtime/test/required.dat', 'runtime fixture\n');
+    write(root, 'archify/bin/executable.mjs', '#!/usr/bin/env node\n', 0o644);
+    write(root, 'archify/runtime/test/required.dat', 'runtime fixture\n', 0o755);
     git(root, ['add', 'archify']);
+    // Index modes must win over working-tree permissions, including on Windows.
+    git(root, ['update-index', '--chmod=+x', 'archify/bin/executable.mjs']);
+    git(root, ['update-index', '--chmod=-x', 'archify/runtime/test/required.dat']);
+    const chmod = t.mock.method(fs, 'chmodSync');
 
     stageCleanSkill({ repoRoot: root, destination });
 
-    assert.equal(fs.statSync(path.join(destination, 'bin', 'executable.mjs')).mode & 0o777, 0o755);
+    const executable = path.join(destination, 'bin', 'executable.mjs');
+    const runtimeFixture = path.join(destination, 'runtime', 'test', 'required.dat');
+    const appliedModes = new Map(chmod.mock.calls.map(({ arguments: args }) => args));
+    assert.equal(appliedModes.get(executable), 0o755);
+    assert.equal(appliedModes.get(runtimeFixture), 0o644);
+    // Windows chmod cannot expose Unix executable bits through stat.
+    if (process.platform !== 'win32') {
+      assert.equal(fs.statSync(executable).mode & 0o777, 0o755);
+      assert.equal(fs.statSync(runtimeFixture).mode & 0o777, 0o644);
+    }
     assert.equal(fs.existsSync(path.join(destination, 'test')), false);
     assert.equal(
       fs.readFileSync(path.join(destination, 'runtime', 'test', 'required.dat'), 'utf8'),
@@ -108,6 +121,122 @@ test('clean staging preserves index modes and strips repository-only package met
     const packageJson = JSON.parse(fs.readFileSync(path.join(destination, 'package.json'), 'utf8'));
     assert.equal(Object.hasOwn(packageJson, 'scripts'), false);
     assert.equal(Object.hasOwn(packageJson, 'devDependencies'), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging records Git index modes in a manifest outside the staged tree', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  const manifest = path.join(root, 'staged-modes.json');
+  try {
+    write(root, 'archify/bin/executable.mjs', '#!/usr/bin/env node\n');
+    write(root, 'archify/renderers/shared/plain.mjs', 'export {};\n');
+    git(root, ['add', 'archify']);
+    // Set the index modes explicitly so the expectation does not depend on
+    // whether this checkout can represent executable bits (core.fileMode).
+    git(root, ['update-index', '--chmod=+x', 'archify/bin/executable.mjs']);
+    git(root, ['update-index', '--chmod=-x', 'archify/renderers/shared/plain.mjs']);
+
+    const result = stageCleanSkill({ repoRoot: root, destination, modeManifest: manifest });
+
+    const recorded = JSON.parse(fs.readFileSync(manifest, 'utf8'));
+    assert.equal(recorded['bin/executable.mjs'], '100755');
+    assert.equal(recorded['renderers/shared/plain.mjs'], '100644');
+    assert.deepEqual(result.modes, recorded);
+    assert.deepEqual(Object.keys(recorded), [...Object.keys(recorded)].sort(), 'manifest keys are sorted');
+
+    const stagedFiles = [];
+    const walk = (directory, prefix) => {
+      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
+        if (entry.isDirectory()) walk(path.join(directory, entry.name), relative);
+        else stagedFiles.push(relative);
+      }
+    };
+    walk(destination, '');
+    assert.deepEqual(
+      Object.keys(recorded).sort(),
+      stagedFiles.sort(),
+      'the manifest must list every staged file and nothing else',
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging refuses to write the mode manifest inside the staged tree', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  try {
+    git(root, ['add', 'archify']);
+    const rejected = [
+      destination,
+      path.join(destination, 'modes.json'),
+      path.join(destination, 'nested', 'modes.json'),
+    ];
+    for (const manifest of rejected) {
+      assert.throws(
+        () => stageCleanSkill({ repoRoot: root, destination, modeManifest: manifest }),
+        /mode manifest must be written outside the staged Skill tree/,
+      );
+      assert.equal(fs.existsSync(destination), false, 'a rejected manifest location must not leave a staged tree behind');
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging refuses an existing mode manifest path and leaves it untouched', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  const manifest = path.join(root, 'existing-modes.json');
+  try {
+    git(root, ['add', 'archify']);
+    fs.writeFileSync(manifest, 'not ours\n');
+    assert.throws(
+      () => stageCleanSkill({ repoRoot: root, destination, modeManifest: manifest }),
+      /mode manifest path already exists/,
+    );
+    assert.equal(fs.readFileSync(manifest, 'utf8'), 'not ours\n', 'an existing file at the manifest path must be preserved');
+    assert.equal(fs.existsSync(destination), false, 'a refused manifest path must not leave a staged tree behind');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging rejects a mode manifest that aliases the staged tree through a symlinked ancestor', (t) => {
+  const root = repositoryFixture();
+  const physical = path.join(root, 'physical');
+  const alias = path.join(root, 'alias');
+  try {
+    git(root, ['add', 'archify']);
+    fs.mkdirSync(physical);
+    try {
+      fs.symlinkSync(physical, alias, process.platform === 'win32' ? 'junction' : 'dir');
+    } catch (error) {
+      if (['EPERM', 'EACCES', 'ENOTSUP'].includes(error?.code)) {
+        t.skip(`symlinks unavailable: ${error.code}`);
+        return;
+      }
+      throw error;
+    }
+    const cases = [
+      { destination: path.join(alias, 'staged'), modeManifest: path.join(physical, 'staged', 'modes.json') },
+      { destination: path.join(physical, 'staged'), modeManifest: path.join(alias, 'staged', 'modes.json') },
+    ];
+    for (const { destination, modeManifest } of cases) {
+      assert.throws(
+        () => stageCleanSkill({ repoRoot: root, destination, modeManifest }),
+        /mode manifest must be written outside the staged Skill tree/,
+      );
+      assert.equal(
+        fs.existsSync(path.join(physical, 'staged')),
+        false,
+        'a rejected manifest location must not leave a staged tree behind',
+      );
+    }
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -289,3 +418,36 @@ test('clean staging reports the Git spawn error when Git cannot start', () => {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+// Historical DSH snapshots predate embedded fonts and must remain packageable.
+for (const fontPath of [null, 'archify/assets/template.html', 'archify/examples/standalone.html']) {
+  const embedded = fontPath !== null;
+  test(`clean staging applies font disclosures to snapshot contents (fontPath=${fontPath})`, () => {
+    const root = repositoryFixture();
+    const destination = path.join(root, 'staged-skill');
+    try {
+      const legacy = canonicalNotices.replace(/## JetBrains Mono[\s\S]*?(?=\n## |$)/, '');
+      write(root, 'THIRD_PARTY_NOTICES.md', legacy);
+      write(root, 'archify/THIRD_PARTY_NOTICES.md', legacy);
+      write(root, 'archify/assets/template.html', '<html>legacy viewer</html>');
+      if (embedded) write(root, fontPath, '@font-face { src: url(data:font/woff2;base64,fixture); }');
+      write(root, 'archify/assets/JetBrainsMono-OFL.txt', 'fixture license');
+      git(root, ['add', '.']);
+      if (embedded) {
+        assert.throws(() => stageCleanSkill({ repoRoot: root, destination }), /missing required disclosure: JetBrains Mono/);
+        assert.equal(fs.existsSync(destination), false);
+        write(root, 'THIRD_PARTY_NOTICES.md', canonicalNotices);
+        write(root, 'archify/THIRD_PARTY_NOTICES.md', canonicalNotices);
+        stageCleanSkill({ repoRoot: root, destination });
+        assert.equal(fs.readFileSync(path.join(destination, 'assets/JetBrainsMono-OFL.txt'), 'utf8'), 'fixture license');
+        fs.rmSync(destination, { recursive: true });
+        fs.unlinkSync(path.join(root, 'archify/assets/JetBrainsMono-OFL.txt'));
+        git(root, ['add', '.']);
+        assert.throws(() => stageCleanSkill({ repoRoot: root, destination }), /requires assets\/JetBrainsMono-OFL.txt/);
+      } else {
+        stageCleanSkill({ repoRoot: root, destination });
+        assert.equal(fs.readFileSync(path.join(destination, 'THIRD_PARTY_NOTICES.md'), 'utf8'), legacy);
+      }
+    } finally { fs.rmSync(root, { recursive: true, force: true }); }
+  });
+}

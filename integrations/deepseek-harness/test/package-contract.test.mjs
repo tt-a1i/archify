@@ -26,10 +26,10 @@ test('adapter source lives only under integrations/deepseek-harness with no root
   assert.equal(fs.existsSync(path.join(repoRoot, 'integrations/deepseek-harness/package.json')), true);
 });
 
-test('publishable manifest is @tt-a1i/archify-dsh@0.1.0 with a DSH bundle patch and no install surface', () => {
+test('publishable manifest is @tt-a1i/archify-dsh@0.2.0 with a DSH bundle patch and no install surface', () => {
   const pkg = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   assert.equal(pkg.name, '@tt-a1i/archify-dsh');
-  assert.equal(pkg.version, '0.1.0');
+  assert.equal(pkg.version, '0.2.0');
   assert.equal(pkg.license, 'MIT');
   assert.equal(pkg.type, 'module');
   assert.equal(pkg.main, './lib/index.js');

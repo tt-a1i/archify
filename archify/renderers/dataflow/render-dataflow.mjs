@@ -18,20 +18,22 @@ import {
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   cleanLabelRouteClearanceProblems,
+  cleanLabelCanvasContainmentProblems,
   suggestLabelObstacleFix,
   suggestLabelPairFix,
   anchor,
   automaticPortSpread,
-  defaultFromSide,
-  defaultToSide,
+  legacyDefaultFromSide as defaultFromSide,
+  legacyDefaultToSide as defaultToSide,
   chosenSide,
   polylinePath,
   routePointsValue,
+  authoredStraightRouteAttrs,
   labelPoint,
   componentFill,
   componentText,
   arrowClassMap,
-  variantAccent
+  edgeLabelAccent
 } from '../shared/geometry.mjs';
 
 const nodeTextFit = {
@@ -42,7 +44,7 @@ const nodeTextFit = {
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const { diagram: dataflow, template, outPath } = await loadDiagramWithBrandMarks({
+const { diagram: dataflow, template, outPath, sourceEvidence } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
   diagramType: 'dataflow',
   defaultExample: 'product-analytics.dataflow.json'
@@ -259,7 +261,7 @@ function validateDataflow() {
   for (const rect of labelRects) {
     for (const node of nodes.values()) {
       if (rectsOverlap(rect, node, -2)) {
-        problems.push(`Label "${rect.label}" overlaps node "${node.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, node, 'node')}`);
+        problems.push(`Label "${rect.label}" overlaps node "${node.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, node, 'node', viewBox, nodes.values())}`);
       }
     }
   }
@@ -279,6 +281,13 @@ function validateDataflow() {
     relationCollection: 'flows',
     profile: dataflow.meta?.quality_profile,
     routeHint: 'adjust labelAt, labelDx, labelDy, or labelSegment; otherwise adjust the other flow route/via/channelX/channelY'
+  }));
+  problems.push(...cleanLabelCanvasContainmentProblems({
+    labels: labelRects,
+    viewBox,
+    diagramType: 'dataflow',
+    relationCollection: 'flows',
+    profile: dataflow.meta?.quality_profile,
   }));
 
   const lastStageX = stageX(asArray(dataflow.stages).length - 1);
@@ -399,7 +408,7 @@ function renderFlowPath(flow, index) {
   const [cls, marker] = arrowClassMap[flow.variant || 'default'] || arrowClassMap.default;
   const routed = pathFor(flow);
   const strokeWidth = flow.width || (flow.variant === 'emphasis' ? 1.8 : 1.4);
-  return `        <path ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)} data-composition-points="${routePointsValue(routed.points)}" d="${routed.d}" class="${cls}"${animateAttr(dataflow.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  return `        <path ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)} data-composition-points="${routePointsValue(routed.points)}"${authoredStraightRouteAttrs(flow, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(dataflow.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
 }
 
 function renderFlowLabel(flow, index) {
@@ -411,7 +420,7 @@ function renderFlowLabel(flow, index) {
     : '';
   return `        <g data-detail="context" ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)}>
           <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${variantAccent(flow.variant)}" font-size="8" text-anchor="middle">${esc(flow.label)}</text>${classification}
+          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(flow.variant)}" font-size="8" text-anchor="middle">${esc(flow.label)}</text>${classification}
         </g>`;
 }
 
@@ -480,4 +489,5 @@ writeDiagram({
   meta: dataflow.meta,
   svg: renderSvg(),
   cards: dataflow.cards,
+  sourceEvidence,
 });

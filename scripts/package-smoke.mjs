@@ -87,8 +87,12 @@ try {
   }
   const packageNotices = fs.readFileSync(packageNoticesPath, 'utf8');
   const repositoryNotices = fs.readFileSync(path.join(noticeComparisonRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
-  assertThirdPartyNotices(repositoryNotices, 'repository THIRD_PARTY_NOTICES.md');
-  assertThirdPartyNotices(packageNotices, 'packaged THIRD_PARTY_NOTICES.md');
+  const embeddedFonts = /data:font\/woff2/.test(fs.readFileSync(path.join(skillRoot, 'assets/template.html'), 'utf8'));
+  if (embeddedFonts && !fs.existsSync(path.join(skillRoot, 'assets/JetBrainsMono-OFL.txt'))) {
+    throw new Error('embedded viewer font requires assets/JetBrainsMono-OFL.txt');
+  }
+  assertThirdPartyNotices(repositoryNotices, 'repository THIRD_PARTY_NOTICES.md', { embeddedFonts });
+  assertThirdPartyNotices(packageNotices, 'packaged THIRD_PARTY_NOTICES.md', { embeddedFonts });
   if (packageNotices !== repositoryNotices) {
     throw new Error('packaged THIRD_PARTY_NOTICES.md must byte-match the repository notice');
   }

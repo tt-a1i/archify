@@ -269,6 +269,42 @@ async function readLimited(response, maximum) {
   return Buffer.concat(chunks, total);
 }
 
+// Read only the bounded head, independent of network chunk boundaries. Scan
+// bytes once so many tiny chunks cannot cause repeated concatenation/rescanning.
+async function readHtmlHead(response, maximum) {
+  const chunks = response.body && typeof response.body[Symbol.asyncIterator] === 'function'
+    ? response.body : [await readLimited(response, maximum)];
+  const buffer = Buffer.alloc(maximum);
+  const closing = Buffer.from('</head');
+  let total = 0;
+  let matched = 0;
+  for await (const value of chunks) {
+    const chunk = Buffer.from(value);
+    const length = Math.min(chunk.length, maximum - total);
+    chunk.copy(buffer, total, 0, length);
+    for (let offset = 0; offset < length; offset++) {
+      const byte = chunk[offset];
+      if (matched === closing.length) {
+        if (byte === 0x3e) {
+          response.body?.destroy?.();
+          return buffer.toString('utf8', 0, total + offset + 1);
+        }
+        if (byte === 9 || byte === 10 || byte === 12 || byte === 13 || byte === 32) continue;
+        matched = byte === 0x3c ? 1 : 0;
+      } else {
+        const lower = byte >= 65 && byte <= 90 ? byte + 32 : byte;
+        matched = lower === closing[matched] ? matched + 1 : (byte === 0x3c ? 1 : 0);
+      }
+    }
+    total += length;
+    if (chunk.length > length) {
+      response.body?.destroy?.();
+      throw new Error('brand asset is too large');
+    }
+  }
+  return buffer.toString('utf8', 0, total);
+}
+
 function attribute(tag, name) {
   const match = tag.match(new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
   return match ? (match[1] ?? match[2] ?? match[3] ?? '') : '';
@@ -378,7 +414,7 @@ async function captureRemoteBrand(value, deadline = Date.now() + captureTimeoutM
       page.response.body?.destroy?.();
       return fallback('linked page is not HTML');
     }
-    const html = (await readLimited(page.response, MAX_HTML_BYTES)).toString('utf8');
+    const html = await readHtmlHead(page.response, MAX_HTML_BYTES);
     const iconErrors = [];
     for (const candidate of iconCandidates(html, page.finalUrl)) {
       try {

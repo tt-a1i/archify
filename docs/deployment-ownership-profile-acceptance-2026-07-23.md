@@ -4,7 +4,7 @@ Date: 2026-07-23 (Asia/Shanghai)
 
 Branch: `codex/deployment-ownership-profile`
 
-Research: `docs/research-next-stability-delight-slice-2026-07-23.md`
+Research: `journal/research-next-stability-delight-slice-2026-07-23.md`
 
 ## Outcome
 

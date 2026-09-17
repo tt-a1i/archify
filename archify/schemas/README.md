@@ -21,7 +21,7 @@ level, so unknown fields are rejected rather than silently ignored.
 
 Every `meta` object also accepts `animation: "trace"` for opt-in SVG/CSS motion
 in generated HTML. Omit it, or set `"none"`, for the default static output.
-It also accepts `locale: "en" | "zh-CN"`. The field selects the fixed Viewer
+It also accepts `locale: "en" | "zh-CN" | "es"`. The field selects the fixed Viewer
 UI, renderer-owned default legend and accessibility copy, document-title
 suffix, and `<html lang>` value; it does not translate authored strings.
 Omitting it preserves legacy behavior and resolves to English. Unsupported
@@ -138,7 +138,7 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
 - `point` — an `[x, y]` pair of numbers (used by `via` and `labelAt`)
 - `componentType` — `frontend`, `backend`, `database`, `cloud`, `security`,
   `messagebus`, `external`
-- `locale` — the bounded renderer locale, `en` or `zh-CN`
+- `locale` — the bounded renderer locale, `en`, `zh-CN`, or `es`
 - `brandMark` — one optional built-in brand ID or explicit HTTP(S) site URL
 - `variant` — `default`, `emphasis`, `security`, `dashed` (sequence messages
   extend this list locally with `return`)
@@ -163,10 +163,14 @@ express cleanly here: duplicate view IDs, duplicate focus IDs, focus IDs that do
 not exist in the diagram's semantic collection, and duplicate authored
 relationship IDs within the mode's relationship collection.
 
-Architecture additionally supports opt-in, revision-pinned repository evidence.
-`meta.repository` names a public GitHub URL and full commit SHA; a component may
-carry one to three `sources` with repo-relative POSIX paths, optional line
-ranges, and optional labels. Shape is schema-checked, then the renderer requires
+All five modes support opt-in, revision-pinned repository evidence.
+`meta.repository` names the repository URL and full commit SHA, with optional
+`provider` (`github` or `gitee`) and `link_mode` (`web` or `local-only`; see the
+authoring contract); a node may carry one to three `sources` with repo-relative POSIX paths, optional line
+ranges, and optional labels. Sources are authored on the mode's own node
+collection — Architecture `components`, Workflow and Data Flow `nodes`,
+Sequence `participants`, Lifecycle `states` — and the verified payload is keyed
+by node id. Shape is schema-checked, then the renderer requires
 `--repo-root`: the local Git origin must match, and Git must prove the commit,
 blobs, and requested lines. Verified evidence is embedded outside the canonical
 SVG for the Semantic Passport and Node Finder; ordinary documents and visual
