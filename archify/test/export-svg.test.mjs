@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
+import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { defaultSvgOutput, runExportSvg } from '../bin/export-svg.mjs';
-import { findChrome } from '../bin/visual-check.mjs';
+import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
 import { SaxesParser } from 'saxes';
 
 import { assertFontCss, inspectDocuments } from './helpers/offline-fonts.mjs';
@@ -105,6 +106,7 @@ test('export svg writes the standalone document and reports both digests', async
   assert.equal(result.receipt.artifact.sha256, sha(file));
   assert.equal(result.receipt.output.sha256, sha(output));
   assert.match(fs.readFileSync(output, 'utf8'), /^<svg xmlns=/);
+  assert.equal(browser.calls[0].blockNetwork, true, 'the artifact is opened with HTTP(S) requests blocked');
   assert.equal(browser.calls.at(-1).kind, 'close');
   assert.deepEqual(stagingLeftBehind(tmp), []);
 });
@@ -381,6 +383,45 @@ test('a real export keeps non-ASCII text and the embedded offline fonts', browse
     assert.deepEqual(document.resources, [], 'a standalone SVG must not reach for the network');
     assertFontCss(document.styles.join('\n'), 'exported SVG');
   } finally {
+    fs.rmSync(workspace, { recursive: true, force: true });
+  }
+});
+
+test('a real export does not let the artifact reach an HTTP endpoint', browserOptions, async () => {
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-export-svg-network-'));
+  const hits = [];
+  const server = http.createServer((request, response) => {
+    hits.push(request.url);
+    response.statusCode = 204;
+    response.end();
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const html = path.join(workspace, 'web-app.html');
+    render(path.join(skillRoot, 'examples', 'web-app.architecture.json'), html);
+    // A delivered artifact never references the network; plant the reference
+    // a crafted file would carry. The page's load event waits for the image,
+    // so by the time load() returns the request has either arrived or been
+    // refused.
+    const probe = `http://127.0.0.1:${server.address().port}/probe`;
+    fs.writeFileSync(html, fs.readFileSync(html, 'utf8').replace('</body>', `<img src="${probe}" alt=""></body>`));
+
+    // Control: an unguarded load reaches the listener, so a silent listener
+    // below means the export blocked the request, not that nothing asked.
+    const unguarded = new ChromeVisualBrowser(chromePath);
+    try {
+      await unguarded.load({ artifactPath: html });
+    } finally {
+      await unguarded.close();
+    }
+    assert.deepEqual(hits, ['/probe'], 'control: an unguarded page load must reach the listener');
+    hits.length = 0;
+
+    const result = await runExportSvg({ artifactPath: html, chromePath });
+    assert.equal(result.exitCode, 0, JSON.stringify(result.receipt, null, 2));
+    assert.deepEqual(hits, [], 'export must not let the artifact reach the network');
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
     fs.rmSync(workspace, { recursive: true, force: true });
   }
 });

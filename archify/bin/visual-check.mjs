@@ -341,10 +341,18 @@ export class ChromeVisualBrowser {
   // Load a delivered artifact and return the attached session. Kept separate
   // from inspect() so other read-only commands can reuse the same launched
   // Chrome and pipe transport without repeating the navigation contract.
-  async load({ artifactPath, theme }) {
+  async load({ artifactPath, theme, blockNetwork = false }) {
     const sessionId = await this.sessionPromise;
     const url = new URL(pathToFileURL(artifactPath).href);
     if (theme) url.searchParams.set('theme', theme);
+    // A delivered artifact is self-contained, so a caller that only needs to
+    // read it back can refuse every HTTP(S) subresource before navigating:
+    // a crafted file must not turn the export into a request to some
+    // reachable endpoint. Opt-in so inspect() keeps its current behavior.
+    if (blockNetwork) {
+      await this.cdp.send('Network.enable', {}, sessionId);
+      await this.cdp.send('Network.setBlockedURLs', { urls: ['http://*', 'https://*'] }, sessionId);
+    }
     const loaded = this.cdp.waitFor('Page.loadEventFired', sessionId);
     try {
       const navigation = await this.cdp.send('Page.navigate', { url: url.href }, sessionId);

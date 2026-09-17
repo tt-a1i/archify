@@ -64,6 +64,12 @@ function commitSvg({ outputPath, svg, revalidate }) {
     fs.writeFileSync(candidate, svg, { flag: 'wx' });
     revalidate();
     if (!fs.lstatSync(candidate).isFile()) throw new Error('The staged SVG is not a regular file.');
+    // The rename resolves the target's parent path again at commit time. A
+    // concurrent process that replaces an ancestor directory of the target
+    // between the check above and this call is outside what this guard
+    // covers: Node has no descriptor-relative rename, and the CLI accepts
+    // unrestricted output paths, so that case can fail or land under the
+    // replacement rather than being prevented here.
     fs.renameSync(candidate, outputPath);
   } finally {
     try {
@@ -144,7 +150,9 @@ export async function runExportSvg({
   let browser;
   try {
     browser = await browserFactory(resolvedChrome);
-    await browser.load({ artifactPath: artifact, ...(theme === 'auto' ? {} : { theme }) });
+    // The artifact is only read back; nothing it references over HTTP(S) is
+    // fetched while it is open.
+    await browser.load({ artifactPath: artifact, blockNetwork: true, ...(theme === 'auto' ? {} : { theme }) });
     const serialized = await browser.evaluate(serializerExpression(theme === 'auto'));
     if (!serialized || typeof serialized.svgString !== 'string' || !serialized.svgString) {
       throw new Error('This artifact does not expose the viewer SVG serializer. Re-render it with a current Archify.');
