@@ -183,6 +183,37 @@ test('nested srcdoc restore ignores colliding tokens and keeps trailing spaces',
   assert.equal(frames[0][1].includes('head-only'), false);
 });
 
+test('srcdoc slots are filled inside their canvas even when artifact CSS repeats the markup', () => {
+  const receipt = compareArchitecture(read(baseFixture), read(headFixture));
+  const baseSlot = '<iframe class="snapshot-frame" title="Before architecture explorer" srcdoc=""></iframe>';
+  const headSlot = '<iframe class="snapshot-frame" title="After architecture explorer" srcdoc=""></iframe>';
+  const baseHtml = '<!doctype html><title>css-base</title>';
+  const headHtml = '<!doctype html><title>css-head</title>';
+  const html = renderArchitectureDeltaHtml({
+    receipt,
+    baseSvg: '<svg viewBox="0 0 1 1"></svg>',
+    deltaSvg: '<svg viewBox="0 0 1 1" role="img"></svg>',
+    headSvg: '<svg viewBox="0 0 1 1"></svg>',
+    baseHtml,
+    headHtml,
+    artifactCss: `/* ${baseSlot} ${headSlot} */`,
+  });
+  const style = html.match(/<style>([\s\S]*?)<\/style>/)?.[1] || '';
+  assert.match(style, /\/\*[\s\S]*srcdoc=""[\s\S]*\*\//);
+  assert.equal(style.includes('css-base'), false);
+  assert.equal(style.includes('css-head'), false);
+  const frames = [...html.matchAll(/<section class="canvas" data-view="(base|head)"[^>]*>([\s\S]*?)<\/section>/g)]
+    .map(([, view, body]) => [view, body]);
+  const srcdoc = (body) => body.match(/srcdoc="([^"]*)"/)?.[1]
+    ?.replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&amp;', '&');
+  assert.equal(srcdoc(frames.find(([view]) => view === 'base')[1]), baseHtml);
+  assert.equal(srcdoc(frames.find(([view]) => view === 'head')[1]), headHtml);
+});
+
 test('change navigator order is exact-ID based, complete, unique, and stable', () => {
   const receipt = compareArchitecture(read(baseFixture), read(headFixture));
   const rows = architectureDeltaChangeRows(receipt);

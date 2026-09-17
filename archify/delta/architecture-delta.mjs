@@ -1166,18 +1166,23 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
   }
 })();</script></body></html>`;
   return fillDeltaSrcdoc(html.replace(/[ \t]+$/gm, ''), [
-    [BASE_VIEW_SLOT, baseHtml],
-    [HEAD_VIEW_SLOT, headHtml],
+    ['base', BASE_VIEW_SLOT, baseHtml],
+    ['head', HEAD_VIEW_SLOT, headHtml],
   ]);
 }
 
 function fillDeltaSrcdoc(html, slots) {
   const fills = [];
-  for (const [token, nested] of slots) {
+  for (const [view, token, nested] of slots) {
     if (!nested) continue;
-    const index = html.indexOf(token);
-    if (index === -1) continue;
-    fills.push({ index, token, nested: esc(nested) });
+    const open = html.match(new RegExp(`<section class="canvas" data-view="${view}"[^>]*>`));
+    if (!open || open.index == null) continue;
+    const regionStart = open.index + open[0].length;
+    const regionEnd = html.indexOf('</section>', regionStart);
+    if (regionEnd === -1) continue;
+    const localIndex = html.slice(regionStart, regionEnd).indexOf(token);
+    if (localIndex === -1) continue;
+    fills.push({ index: regionStart + localIndex, token, nested: esc(nested) });
   }
   fills.sort((left, right) => right.index - left.index);
   let result = html;
