@@ -17,6 +17,7 @@ export function componentBox(c) {
 
 export function boundaryBox(b) {
   return {
+    ...(b.id ? { id: b.id } : {}),
     kind: b.kind,
     label: b.label,
     x: Math.round(b.x),

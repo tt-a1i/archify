@@ -16,12 +16,13 @@ import {
 } from '../shared/geometry.mjs';
 
 /**
- * Router bound to one set of measured component boxes.
+ * Router bound to measured endpoint boxes and component obstacles.
  *
- * @param {Map<string, {x,y,width,height,cx,cy}>} components measured boxes by id
+ * @param {Map<string, {x,y,width,height,cx,cy}>} endpoints measured boxes by id
  * @param {Array<object>} connections the connection list to spread ports across
+ * @param {Map<string, {x,y,width,height}>} components opaque component obstacles
  */
-export function createRouter(components, connections) {
+export function createRouter(endpoints, connections, components = endpoints) {
   // ---- Connection routing ------------------------------------------------------
   function routeClearsComponents(conn, points, clearance = 2) {
     const endpointIds = new Set([conn.from, conn.to]);
@@ -292,10 +293,10 @@ export function createRouter(components, connections) {
   }
 
   const pathCache = new Map();
-  const automaticPorts = automaticPortSpread(connections, components);
+  const automaticPorts = automaticPortSpread(connections, endpoints);
   function connectionSides(conn) {
-    const from = components.get(conn.from);
-    const to = components.get(conn.to);
+    const from = endpoints.get(conn.from);
+    const to = endpoints.get(conn.to);
     return {
       fromSide: chosenSide(conn.fromSide, defaultFromSide(from, to)),
       toSide: chosenSide(conn.toSide, defaultToSide(from, to)),
@@ -310,8 +311,8 @@ export function createRouter(components, connections) {
 
   function pathFor(conn) {
     if (pathCache.has(conn)) return pathCache.get(conn);
-    const from = components.get(conn.from);
-    const to = components.get(conn.to);
+    const from = endpoints.get(conn.from);
+    const to = endpoints.get(conn.to);
     const ports = automaticPorts.get(conn);
     const { fromSide, toSide } = connectionSides(conn);
     const baseStart = ports?.from || anchor(from, fromSide);
