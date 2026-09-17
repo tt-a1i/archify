@@ -657,6 +657,7 @@ function invalidProvenance(artifactPath, sidecar, reason) {
 
 function usage() {
   return `Usage:
+  archify import flowchart <input.mmd> [output.json] [--json]
   archify render <type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path]
   archify compare architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]
   archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path]
@@ -3258,6 +3259,266 @@ function commandValidate(args) {
   if (exitCode !== 0) process.exitCode = exitCode;
 }
 
+function emitImportFailure(json, receipt, exitCode = 1) {
+  if (json) {
+    console.log(JSON.stringify(receipt, null, 2));
+  } else {
+    console.error(formatDiagnostics(receipt.error, receipt.diagnostics));
+  }
+  process.exit(exitCode);
+}
+
+async function commandImport(args) {
+  // The output-commit safety runtime is loaded like the rest of the
+  // output-path runtime so an installed skill missing it reports a structured
+  // doctor/diagnostic failure instead of crashing the CLI at startup.
+  const { commitImportOutput, resolveOutputPath } = await import('../renderers/shared/output-path.mjs');
+
+  // Detect --json from the raw argument list before any positional validation,
+  // so missing/unsupported formats, unknown options, and missing inputs are
+  // reported through the schema-v1 receipt contract when JSON output is asked.
+  const json = args.includes('--json');
+  const positional = [];
+  for (const arg of args) {
+    if (arg === '--json') continue;
+    if (arg.startsWith('--')) {
+      emitImportFailure(json, {
+        schemaVersion: 1,
+        command: 'import',
+        source: 'mermaid-flowchart',
+        ok: false,
+        error: `Unknown import option "${arg}".`,
+        diagnostics: [diagnostic({
+          code: 'import/unknown-option',
+          message: `Unknown import option "${arg}".`,
+          subject: { option: arg },
+          evidence: { source: { argument: arg } },
+          supportedFixes: ['use "--json" if you want machine-readable output, otherwise remove the unknown option'],
+        })],
+      });
+    }
+    positional.push(arg);
+  }
+
+  const [format, inputPath, outputPath, ...extra] = positional;
+
+  if (extra.length > 0) {
+    emitImportFailure(json, {
+      schemaVersion: 1,
+      command: 'import',
+      source: 'mermaid-flowchart',
+      ok: false,
+      error: `Unexpected argument "${extra[0]}".`,
+      diagnostics: [diagnostic({
+        code: 'import/extra-argument',
+        message: `Unexpected argument "${extra[0]}".`,
+        subject: { argument: extra[0] },
+        evidence: { source: { argument: extra[0] } },
+        supportedFixes: ['use "archify import flowchart <input.mmd> [output.json] [--json]"'],
+      })],
+    });
+  }
+
+  if (!format) {
+    emitImportFailure(json, {
+      schemaVersion: 1,
+      command: 'import',
+      source: 'mermaid-flowchart',
+      ok: false,
+      error: 'Missing import format.',
+      diagnostics: [diagnostic({
+        code: 'import/missing-format',
+        message: 'Missing import format.',
+        subject: {},
+        evidence: { usage: 'archify import flowchart <input.mmd> [output.json] [--json]' },
+        supportedFixes: ['use "flowchart" as the import format'],
+      })],
+    });
+  }
+
+  if (format !== 'flowchart') {
+    emitImportFailure(json, {
+      schemaVersion: 1,
+      command: 'import',
+      source: 'mermaid-flowchart',
+      ok: false,
+      error: `Unsupported import format "${format}".`,
+      diagnostics: [diagnostic({
+        code: 'import/unsupported-format',
+        message: `Unsupported import format "${format}".`,
+        subject: { format },
+        evidence: { source: { format } },
+        supportedFixes: ['use "flowchart" as the import format'],
+      })],
+    });
+  }
+
+  if (!inputPath) {
+    emitImportFailure(json, {
+      schemaVersion: 1,
+      command: 'import',
+      source: 'mermaid-flowchart',
+      ok: false,
+      error: 'Missing input file.',
+      diagnostics: [diagnostic({
+        code: 'import/missing-input',
+        message: 'Missing input file.',
+        subject: {},
+        evidence: { usage: 'archify import flowchart <input.mmd> [output.json] [--json]' },
+        supportedFixes: ['provide a readable .mmd input file'],
+      })],
+    });
+  }
+
+  let source;
+  try {
+    source = fs.readFileSync(inputPath, 'utf8');
+  } catch (error) {
+    const receipt = {
+      schemaVersion: 1,
+      command: 'import',
+      source: 'mermaid-flowchart',
+      ok: false,
+      error: 'Input could not be read.',
+      diagnostics: [diagnostic({
+        code: 'input/read',
+        message: `Input could not be read: ${error.message}`,
+        subject: { input: inputPath },
+        evidence: { reason: error.message },
+        supportedFixes: ['provide one readable .mmd input file'],
+      })],
+    };
+    if (json) console.log(JSON.stringify(receipt, null, 2));
+    else console.error(formatDiagnostics(receipt.error, receipt.diagnostics));
+    process.exit(1);
+  }
+
+  if (outputPath) {
+    // Resolve the output through the same shared contract as deliver/compare:
+    // input-alias detection (including future-path aliases and hard links),
+    // symbolic-link cycle refusal, and the documented [output.json] extension
+    // contract — before any parsing or writing happens.
+    try {
+      resolveOutputPath({
+        requestedOutput: outputPath,
+        requiredExtension: '.json',
+        inputPaths: [inputPath],
+        inputDescription: 'the Mermaid source',
+      });
+    } catch (error) {
+      const diagnostics = error.archifyDiagnostics ?? [diagnostic({
+        code: 'output/path-resolution',
+        message: error.message,
+        subject: { output: outputPath },
+        evidence: { reason: error.message },
+        supportedFixes: ['choose a safe output path and retry'],
+      })];
+      const receipt = {
+        schemaVersion: 1,
+        command: 'import',
+        source: 'mermaid-flowchart',
+        ok: false,
+        error: error.message,
+        diagnostics,
+      };
+      if (json) console.log(JSON.stringify(receipt, null, 2));
+      else console.error(formatDiagnostics(receipt.error, receipt.diagnostics));
+      process.exit(1);
+    }
+  }
+
+  const { importFlowchart } = await import(pathToFileURL(path.join(skillRoot, 'importers', 'flowchart.mjs')).href);
+  const result = importFlowchart(source);
+
+  if (!result.ok) {
+    const receipt = {
+      schemaVersion: 1,
+      command: 'import',
+      source: 'mermaid-flowchart',
+      ok: false,
+      error: result.diagnostics[0].message,
+      diagnostics: result.diagnostics,
+    };
+    if (json) console.log(JSON.stringify(receipt, null, 2));
+    else console.error(formatDiagnostics(receipt.error, receipt.diagnostics));
+    process.exit(1);
+  }
+
+  const irJson = JSON.stringify(result.ir, null, 2);
+  if (outputPath) {
+    try {
+      const commit = commitImportOutput(inputPath, outputPath, irJson + '\n');
+      if (!commit.ok) {
+        // The output began aliasing the input after the preflight (for example
+        // a symlink swapped while the input parsed). Refuse instead of
+        // replacing the Mermaid source with the import result.
+        const receipt = {
+          schemaVersion: 1,
+          command: 'import',
+          source: 'mermaid-flowchart',
+          ok: false,
+          error: 'Output path aliases the input file.',
+          diagnostics: [diagnostic({
+            code: 'input/output-alias',
+            message: `Output path "${outputPath}" resolves to the input file; writing it would replace the Mermaid source with the import result.`,
+            subject: { input: inputPath, output: outputPath },
+            evidence: { input: path.resolve(inputPath), output: path.resolve(outputPath) },
+            supportedFixes: ['choose a different output path so the Mermaid source is preserved'],
+          })],
+        };
+        if (json) console.log(JSON.stringify(receipt, null, 2));
+        else console.error(formatDiagnostics(receipt.error, receipt.diagnostics));
+        process.exit(1);
+      }
+    } catch (error) {
+      if (error.archifyDiagnostics) {
+        // A commit-time path recheck hit a condition the shared contract
+        // diagnoses (for example a symbolic-link cycle swapped in after the
+        // preflight). Report that diagnostic instead of a generic write
+        // failure so the receipt names the actual contract violation.
+        const receipt = {
+          schemaVersion: 1,
+          command: 'import',
+          source: 'mermaid-flowchart',
+          ok: false,
+          error: error.message,
+          diagnostics: error.archifyDiagnostics,
+        };
+        if (json) console.log(JSON.stringify(receipt, null, 2));
+        else console.error(formatDiagnostics(receipt.error, receipt.diagnostics));
+        process.exit(1);
+      }
+      const receipt = {
+        schemaVersion: 1,
+        command: 'import',
+        source: 'mermaid-flowchart',
+        ok: false,
+        error: `Output could not be written: ${error.message}`,
+        diagnostics: [diagnostic({
+          code: 'output/write',
+          message: `Output could not be written: ${error.message}`,
+          subject: { output: outputPath },
+          evidence: {
+            ...(error.code ? { systemCode: error.code } : {}),
+            reason: error.message,
+          },
+          supportedFixes: ['choose a writable output file path (the output must not be a directory)'],
+        })],
+      };
+      if (json) console.log(JSON.stringify(receipt, null, 2));
+      else console.error(formatDiagnostics(receipt.error, receipt.diagnostics));
+      process.exit(1);
+    }
+    if (!json) console.error(`Imported ${result.ir.components.length} components, ${result.ir.connections.length} connections → ${outputPath}`);
+  } else if (!json) {
+    console.log(irJson);
+  }
+
+  if (json) {
+    console.log(JSON.stringify(result.receipt, null, 2));
+  }
+}
+
 const [command, ...args] = process.argv.slice(2);
 
 try {
@@ -3267,6 +3528,9 @@ try {
     case '--help':
     case 'help':
       console.log(usage());
+      break;
+    case 'import':
+      await commandImport(args);
       break;
     case 'render':
       commandRender(args);

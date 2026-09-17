@@ -1,0 +1,4 @@
+flowchart TD
+  A[API Server] --> B[(PostgreSQL)]
+  A --> C[(Redis Cache)]
+  B --> D[Analytics Worker]
