@@ -126,27 +126,23 @@ Archify may GET the fixed stable manifest solely to show an optional reminder; i
 Use Archify to draw: Browser -> API -> Redis cache -> PostgreSQL fallback.
 ```
 
-For source evidence, open a repository and ask:
-
-```text
-Analyze this repository, then use archify to create a high-level runtime architecture diagram.
-Show 8–12 core components, one primary path, external dependencies, and trust boundaries.
-Put supporting detail in cards instead of adding more edges.
-```
+For source evidence, open a repository and copy a prompt below.
 
 ### 3. Refine in chat
 
 Continue with focused requests such as `add Redis`, `move auth to the left`, or `highlight the rollback path`. Archify keeps the typed source available for targeted iteration.
 
-## Choose the right diagram
+## Start from your job
 
-| Type | Best for | Include in your prompt |
-|---|---|---|
-| **Architecture** | Components, services, storage, boundaries | Scope, core components, primary path |
-| **Workflow** | CI/CD, approvals, tool calls, runbooks | Participants, order, branches, exceptions |
-| **Sequence** | API calls, cache fallback, auth, async traces | Callers, callees, returns, timing |
-| **Data Flow** | Pipelines, lineage, PII, consumers | Sources, transforms, stores, boundaries |
-| **Lifecycle** | States, retries, waits, terminal outcomes | States, events, retry and cancellation paths |
+Choose a scenario, copy the prompt, then open a checked example.
+
+| Job | Outcome | Mode | Prompt | Example |
+|---|---|---|---|---|
+| Repository or system map | Components, path, boundaries | Architecture | `Use Archify to map 8–12 components, one path, and boundaries.` | [web-app](https://tt-a1i.github.io/archify/gallery/artifacts/web-app.architecture.html) |
+| Agent or ops workflow | Lanes, happy path, exceptions | Workflow | `Use Archify workflow mode for lanes, approvals, and exceptions.` | [agent tool-call](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html) |
+| API or request sequence | Callers, returns, fallback | Sequence | `Use Archify sequence mode for callers, cache miss, and returns.` | [cache-miss](https://tt-a1i.github.io/archify/gallery/artifacts/cache-miss.sequence.html) |
+| Data pipeline or lineage | Sources, transforms, consumers | Data Flow | `Use Archify dataflow mode for sources, transforms, and consumers.` | [product analytics](https://tt-a1i.github.io/archify/gallery/artifacts/product-analytics.dataflow.html) |
+| State or retry lifecycle | States, waits, terminals | Lifecycle | `Use Archify lifecycle mode for states, retries, and terminal outcomes.` | [agent run](https://tt-a1i.github.io/archify/gallery/artifacts/agent-run.lifecycle.html) |
 
 Architecture's optional `deployment-ownership` profile fails closed when authored owners, region placement, private database scope, or named crossings are missing; it is never implicit and does not inspect live infrastructure. See the [checked deployment proof](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership).
 
