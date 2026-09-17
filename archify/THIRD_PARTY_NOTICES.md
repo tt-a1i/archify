@@ -61,6 +61,17 @@ and is distributed under the SIL Open Font License 1.1. The complete license
 text is preserved in `assets/JetBrainsMono-OFL.txt` in the packaged Skill and
 in the font CSS carried by standalone HTML and SVG exports.
 
+## Pretendard Variable
+
+Delivered Archify viewer artifacts also embed Pretendard Variable, a single
+variable-font file bundled next to JetBrains Mono in the font stack so Hangul
+(and other glyphs JetBrains Mono lacks) in authored content renders without a
+network request or a locally installed copy. Pretendard is maintained at
+[github.com/orioncactus/pretendard](https://github.com/orioncactus/pretendard)
+and is distributed under the SIL Open Font License 1.1. The complete license
+text is preserved in `assets/Pretendard-OFL.txt` in the packaged Skill and in
+the font CSS carried by standalone HTML exports.
+
 ## No additional rights granted
 
 Brand names, logos, and trademarks remain the property of their respective
