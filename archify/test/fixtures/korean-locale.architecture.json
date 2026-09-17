@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "한국어 웹앱",
+    "subtitle": "로케일 검증용 고정 입력",
+    "locale": "ko",
+    "output": "korean-locale-rendered.html",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "request-path", "label": "기본 요청 경로", "focus": ["users", "cdn", "lb", "api", "db"], "note": "가장자리에서 저장소까지 고객 요청을 따라갑니다." },
+      { "id": "identity-and-cache", "label": "인증과 캐시", "focus": ["auth", "api", "cache"], "note": "인증과 읽기 캐시를 요청 경로 옆에 분리합니다." },
+      { "id": "async-work", "label": "정적·비동기 작업", "focus": ["cdn", "s3", "api", "queue", "worker"], "note": "부가 경로 두 개를 본 요청과 겹치지 않게 보여 줍니다." }
+    ]
+  },
+  "components": [
+    { "id": "users", "type": "external", "label": "사용자", "sublabel": "브라우저 / 모바일", "pos": [40, 300], "size": [120, 60] },
+    { "id": "auth", "type": "security", "label": "인증 공급자", "sublabel": "OAuth 2.0", "pos": [40, 110], "size": [120, 64], "tag": "JWT + PKCE" },
+    { "id": "cdn", "type": "cloud", "label": "CloudFront", "sublabel": "CDN", "pos": [250, 300], "size": [130, 60] },
+    { "id": "lb", "type": "cloud", "label": "로드 밸런서", "sublabel": "HTTPS :443", "pos": [460, 300], "size": [130, 60] },
+    { "id": "api", "type": "backend", "label": "API 서버", "sublabel": "FastAPI :8000", "pos": [670, 300], "size": [130, 60] },
+    { "id": "cache", "type": "database", "label": "Redis", "sublabel": "cache :6379", "pos": [670, 150], "size": [130, 60] },
+    { "id": "db", "type": "database", "label": "PostgreSQL", "sublabel": "primary :5432", "pos": [880, 300], "size": [130, 60] },
+    { "id": "s3", "type": "cloud", "label": "S3", "sublabel": "정적 자산", "pos": [250, 440], "size": [130, 60], "tag": "OAI protected" },
+    { "id": "queue", "type": "messagebus", "label": "SQS", "sublabel": "작업 큐", "pos": [670, 440], "size": [130, 60] },
+    { "id": "worker", "type": "backend", "label": "워커", "sublabel": "비동기 작업", "pos": [880, 440], "size": [130, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "AWS 리전: us-west-2", "wraps": ["cdn", "lb", "api", "cache", "db", "s3", "queue", "worker"] },
+    { "kind": "security-group", "label": "sg-api :443/:8000", "wraps": ["lb", "api"] }
+  ],
+  "connections": [
+    { "id": "users-to-cdn", "from": "users", "to": "cdn", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "jwt-verification", "from": "auth", "to": "api", "label": "JWT 검증", "variant": "security", "fromSide": "right", "toSide": "top", "via": [[620, 142], [620, 246], [735, 246]] },
+    { "id": "cdn-to-lb", "from": "cdn", "to": "lb" },
+    { "id": "static-assets", "from": "cdn", "to": "s3", "label": "정적", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 58 },
+    { "id": "lb-to-api", "from": "lb", "to": "api" },
+    { "id": "cache-read-through", "from": "api", "to": "cache", "label": "read-through", "fromSide": "top", "toSide": "bottom", "labelDy": -68 },
+    { "id": "api-sql", "from": "api", "to": "db", "label": "SQL" },
+    { "id": "enqueue-job", "from": "api", "to": "queue", "label": "enqueue", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 58 },
+    { "id": "queue-to-worker", "from": "queue", "to": "worker" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "가장자리", "items": ["CloudFront CDN이 트래픽을 받습니다", "S3가 OAI로 정적 자산을 제공합니다"] },
+    { "dot": "emerald", "title": "애플리케이션", "items": ["HTTPS 로드 밸런서 뒤의 FastAPI", "Redis 읽기 캐시", "SQS에서 워커가 비동기 작업을 처리"] },
+    { "dot": "rose", "title": "보안", "items": ["OAuth 2.0 with JWT + PKCE", "API와 LB를 보안 그룹으로 격리"] }
+  ]
+}
