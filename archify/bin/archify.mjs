@@ -663,6 +663,7 @@ function usage() {
   archify preview <type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]
   archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path]
   archify migrate workflow <old.json> <new.json> --to-schema 2 [--json] [--repo-root path]
+  archify atlas <manifest.json> <output.html> [--json]
   archify inspect <type> <input.json>
   archify check <output.html> [--require-provenance]
   archify visual-check <output.html> [--json] [--require-provenance] [--out-dir <dir>]
@@ -3294,6 +3295,9 @@ try {
       break;
     case 'check':
       commandCheck(args);
+      break;
+    case 'atlas':
+      (await import('./atlas.mjs')).commandAtlas(args);
       break;
     case 'visual-check':
       await commandVisualCheck(args);

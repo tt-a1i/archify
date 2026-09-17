@@ -1,7 +1,5 @@
 # Reading evidence
 
-> Historical proposal/evidence: Atlas is deferred and is not included in the current Skill or CLI. Atlas paths and commands below describe the earlier implementation; they are not current usage instructions. Sequence readability improvements remain enabled.
-
 Comparison base: `10722002bb8777ecb639d93c49586fae4adf3ae4`.
 
 The fixed input is `archify/examples/cache-miss-request.sequence.json`.

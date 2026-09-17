@@ -1,7 +1,5 @@
 # Readability and layered reading
 
-> Historical proposal/evidence: Atlas is deferred and is not included in the current Skill or CLI. Atlas paths and commands below describe the earlier implementation; they are not current usage instructions. Sequence readability improvements remain enabled.
-
 Agreed scope: improve default reading quality and let readers move from an overview to explicitly authored detail diagrams. The requesting contributor approved implementation and PR creation. Upstream maintainer acceptance remains pending; submit as Draft for scope review.
 
 ## Acceptance
