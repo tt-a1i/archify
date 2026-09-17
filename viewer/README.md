@@ -728,12 +728,23 @@ zoom/reset controls and the initial viewBox. The existing `apply()`,
 Views already exist; checks for later modules and deferred callers remain needed.
 The shared `viewerText` helper stays in classic-script scope.
 
-The interface remains `zoomIn`, `zoomOut`, `reset`, `reveal`, `centerAt`,
-`logicalViewport`, `sync`, and `state`. `state()` returns a copy of scale/x/y/mode;
-the modes are overview, manual and semantic. Zoom and Reset return undefined;
-`centerAt` returns a boolean, `logicalViewport` can return null, and `sync`
-delegates to `reveal` or returns false. Manual Reset interrupts callers, whereas
-`reset({ automatic: true })` stops camera motion without the manual takeover path.
+The interface remains `zoomIn`, `zoomOut`, `zoomByWheel`, `reset`, `reveal`,
+`centerAt`, `logicalViewport`, `sync`, and `state`. `state()` returns a copy of
+scale/x/y/mode; the modes are overview, manual and semantic. Zoom and Reset return
+undefined; `centerAt` returns a boolean, `logicalViewport` can return null, and
+`sync` delegates to `reveal` or returns false. Manual Reset interrupts callers,
+whereas `reset({ automatic: true })` stops camera motion without the manual
+takeover path.
+
+`zoomByWheel(event)` is the non-passive wheel listener installed on the diagram
+container. A plain vertical wheel zooms toward the pointer while the camera can
+still move in that direction, in 60-unit accumulated deltas rounded to the existing
+0.25 steps; the accumulator smooths step size and does not decide ownership. Every
+gesture the camera does not consume — embed pages, `Ctrl`/`Cmd` or horizontal
+input, excluded overlay controls, scrollable ancestors, and the 1x/3x bounds —
+returns without calling `preventDefault()`, so ordinary page scrolling survives.
+Axis classification uses the normalized deltas once, and that single result decides
+both the scrollable-ancestor check and zoom eligibility.
 
 `reveal` returns a transaction or false, with branch-specific side effects.
 Desktop empty/unknown targets can return before changing the camera. At widths
