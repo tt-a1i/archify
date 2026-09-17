@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -56,7 +57,9 @@ function authoredExample(type, locale) {
     authoredIndex += 1;
     const value = locale === 'zh-CN'
       ? `文案${String(authoredIndex).padStart(2, '0')}`
-      : `Copy${String(authoredIndex).padStart(2, '0')}`;
+      : locale === 'ko'
+        ? `문구${String(authoredIndex).padStart(2, '0')}`
+        : `Copy${String(authoredIndex).padStart(2, '0')}`;
     authored.push(value);
     return value;
   };
@@ -134,7 +137,7 @@ async function loadArtifact(browser, artifactPath) {
 }
 
 test('zh-CN localizes renderer-owned output across all five modes without translating authored content', () => {
-  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN']);
+  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'ko']);
   for (const type of Object.keys(EXAMPLES)) {
     const document = example(type);
     const authoredTitle = document.meta.title;
@@ -156,11 +159,36 @@ test('zh-CN localizes renderer-owned output across all five modes without transl
   }
 });
 
-test('explicit en and zh-CN preserve complete authored field inventories across all five modes', () => {
+test('ko localizes renderer-owned output across all five modes without translating authored content', () => {
+  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'ko']);
+  for (const type of Object.keys(EXAMPLES)) {
+    const document = example(type);
+    const authoredTitle = document.meta.title;
+    document.meta.locale = 'ko';
+    delete document.meta.subtitle;
+
+    const result = run(type, document);
+    assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
+    assert.match(result.html, /^<!DOCTYPE html>\n<html lang="ko"/);
+    assert.match(result.html, /<svg\b[^>]*\blang="ko"/);
+    assert.ok(result.html.includes(`<title>${authoredTitle} 다이어그램</title>`), `${type}: authored title changed`);
+    assert.ok(result.html.includes(`<h1>${authoredTitle}</h1>`), `${type}: authored heading changed`);
+    assert.match(result.html, /<text\b[^>]*>범례<\/text>/);
+    assert.match(result.html, /aria-label="[^"]*포커스/);
+    assert.match(result.html, new RegExp(`<desc id="archify-diagram-description">Archify로 생성한`));
+    assert.match(result.html, /"locale":"ko"/);
+    assert.match(result.html, />다이어그램 내보내기</);
+    assert.doesNotMatch(result.html, /\{\{i18n:/);
+  }
+});
+
+test('explicit en, zh-CN, and ko preserve complete authored field inventories across all five modes', () => {
   for (const type of Object.keys(EXAMPLES)) {
     const english = authoredExample(type, 'en');
     const chinese = authoredExample(type, 'zh-CN');
+    const korean = authoredExample(type, 'ko');
     assert.equal(english.authored.length, chinese.authored.length, `${type}: authored shapes differ`);
+    assert.equal(english.authored.length, korean.authored.length, `${type}: Korean authored shapes differ`);
     assert.ok(english.authored.length >= 10, `${type}: authored inventory is unexpectedly small`);
     if (type === 'dataflow') {
       assert.ok(
@@ -175,7 +203,7 @@ test('explicit en and zh-CN preserve complete authored field inventories across 
       );
     }
 
-    for (const candidate of [english, chinese]) {
+    for (const candidate of [english, chinese, korean]) {
       const locale = candidate.document.meta.locale;
       const result = run(type, candidate.document);
       assert.equal(result.status, 0, `${type}/${locale}: ${result.stderr || result.stdout}`);
@@ -188,6 +216,9 @@ test('explicit en and zh-CN preserve complete authored field inventories across 
       if (locale === 'zh-CN') {
         assert.ok(result.html.includes(`<title>${candidate.document.meta.title}</title>`), type);
         assert.match(result.html, />导出图表</);
+      } else if (locale === 'ko') {
+        assert.ok(result.html.includes(`<title>${candidate.document.meta.title} 다이어그램</title>`), type);
+        assert.match(result.html, />다이어그램 내보내기</);
       } else {
         assert.ok(result.html.includes(`<title>${candidate.document.meta.title} Diagram</title>`), type);
         assert.match(result.html, />Export diagram</);
@@ -214,6 +245,78 @@ test('omitted locale preserves non-English authored content and the English View
     assert.match(result.html, /"locale":"en"/);
     assert.match(result.html, />Export diagram</);
   }
+});
+
+function deliverKoreanFixture() {
+  const fixture = path.join(skillRoot, 'test/fixtures/korean-locale.architecture.json');
+  const source = JSON.parse(fs.readFileSync(fixture, 'utf8'));
+  assert.equal(source.meta.locale, 'ko');
+  assert.match(source.meta.title, /[가-힣]/);
+
+  const validate = spawnSync(process.execPath, [cli, 'validate', 'architecture', fixture, '--json'], {
+    cwd: skillRoot,
+    encoding: 'utf8',
+  });
+  assert.equal(validate.status, 0, validate.stderr || validate.stdout);
+  const validation = JSON.parse(validate.stdout);
+  assert.equal(validation.ok, true);
+  assert.equal(validation.command, 'validate');
+
+  const artifact = path.join(tmp, 'korean-locale-fixture.html');
+  const deliver = spawnSync(
+    process.execPath,
+    [cli, 'deliver', 'architecture', fixture, artifact, '--quality', 'showcase', '--json'],
+    { cwd: skillRoot, encoding: 'utf8' },
+  );
+  assert.equal(deliver.status, 0, deliver.stderr || deliver.stdout);
+  const delivery = JSON.parse(deliver.stdout);
+  assert.equal(delivery.ok, true);
+  assert.equal(delivery.command, 'deliver');
+  assert.equal(delivery.type, 'architecture');
+  assert.match(delivery.artifact.sha256, /^[a-f0-9]{64}$/);
+  assert.equal(delivery.artifact.bytes, fs.statSync(artifact).size);
+  assert.equal(delivery.artifact.sha256, createHash('sha256').update(fs.readFileSync(artifact)).digest('hex'));
+  return { fixture, artifact, delivery };
+}
+
+test('checked-in Korean fixture validates and delivers a ko architecture artifact', () => {
+  const { artifact, delivery } = deliverKoreanFixture();
+  const html = fs.readFileSync(artifact, 'utf8');
+  assert.match(html, /^<!DOCTYPE html>\n<html lang="ko"/);
+  assert.match(html, /<svg\b[^>]*\blang="ko"/);
+  assert.ok(html.includes('<title>한국어 웹앱 다이어그램</title>'));
+  assert.ok(html.includes('<h1>한국어 웹앱</h1>'));
+  assert.ok(html.includes('사용자'));
+  assert.ok(html.includes('API 서버'));
+  assert.match(html, />다이어그램 내보내기</);
+  assert.match(html, /<text\b[^>]*>범례<\/text>/);
+  assert.match(delivery.artifact.sha256, /^[a-f0-9]{64}$/);
+});
+
+test('visual-check binds the delivered Korean fixture to viewport and theme receipts', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to collect artifact-bound visual-check evidence for the Korean fixture.',
+}, () => {
+  const { artifact, delivery } = deliverKoreanFixture();
+  const visual = spawnSync(process.execPath, [cli, 'visual-check', artifact, '--json'], {
+    cwd: skillRoot,
+    encoding: 'utf8',
+    env: { ...process.env, ARCHIFY_CHROME: chromePath },
+  });
+  assert.ok([0, 1].includes(visual.status), visual.stderr || visual.stdout);
+  const receipt = JSON.parse(visual.stdout);
+  assert.equal(receipt.command, 'visual-check');
+  assert.equal(receipt.visualReview, 'pending');
+  assert.equal(receipt.chrome.status, 'available');
+  assert.equal(receipt.readability.status, 'pass');
+  assert.equal(receipt.viewerChrome.status, 'pass');
+  assert.equal(receipt.captures.status, 'pass');
+  assert.equal(receipt.artifact.sha256, delivery.artifact.sha256);
+  assert.equal(receipt.artifact.bytes, delivery.artifact.bytes);
+  assert.equal(
+    receipt.containment.viewports.every((viewport) => viewport.overflowX === false),
+    true,
+    'Korean fixture introduced horizontal overflow',
+  );
 });
 
 test('unsupported locale values fail schema validation in every mode', () => {
@@ -352,6 +455,128 @@ test('real Chrome keeps zh-CN Finder, Route, Export, and accessibility UI locali
   }
 });
 
+test('real Chrome keeps ko Finder, Route, Export, and accessibility UI localized in all five modes', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
+}, async () => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    for (const type of Object.keys(EXAMPLES)) {
+      const document = example(type);
+      document.meta.locale = 'ko';
+      document.meta.title = `브라우저 로케일-${type}`;
+      const result = run(type, document);
+      assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
+
+      const sessionId = await loadArtifact(browser, result.output);
+      const state = await evaluate(browser, sessionId, `(function () {
+        var finderButton = document.getElementById('btn-node-finder');
+        var routeButton = document.getElementById('btn-route-probe');
+        var exportButton = document.getElementById('btn-export');
+        finderButton.click();
+        var finder = {
+          hidden: document.getElementById('node-finder').hidden,
+          title: document.getElementById('node-finder-title').textContent.trim(),
+          searchLabel: document.getElementById('node-finder-input').getAttribute('aria-label')
+        };
+        document.getElementById('node-finder-close').click();
+        routeButton.click();
+        var route = {
+          hidden: document.getElementById('route-probe').hidden,
+          title: document.getElementById('route-probe-title').textContent.trim(),
+          label: routeButton.getAttribute('aria-label')
+        };
+        routeButton.click();
+        exportButton.click();
+        var exportMenu = document.getElementById('export-menu');
+        function pseudoContent(selector) {
+          var content = getComputedStyle(document.querySelector(selector), '::after').content || '';
+          return content.replace(/^["']|["']$/g, '');
+        }
+        var presetBadges = {};
+        ['signal-flow', 'blueprint', 'editorial'].forEach(function (preset) {
+          document.documentElement.setAttribute('data-preset', preset);
+          presetBadges[preset] = {
+            header: pseudoContent('.header-row'),
+            plate: pseudoContent('.diagram-container')
+          };
+        });
+        return {
+          htmlLang: document.documentElement.lang,
+          svgLang: document.querySelector('.diagram-container svg').getAttribute('lang'),
+          toolbarLabel: document.querySelector('.diagram-nav').getAttribute('aria-label'),
+          finder: finder,
+          route: route,
+          exportMenuOpen: exportMenu.classList.contains('open'),
+          exportLabel: exportButton.getAttribute('aria-label'),
+          exportMenuLabel: exportMenu.getAttribute('aria-label'),
+          exportMenuText: exportMenu.textContent,
+          presetBadges: presetBadges
+        };
+      })()`);
+
+      assert.equal(state.htmlLang, 'ko', type);
+      assert.equal(state.svgLang, 'ko', type);
+      assert.equal(state.toolbarLabel, '다이어그램 보기 제어', type);
+      assert.deepEqual(state.finder, {
+        hidden: false,
+        title: '노드 찾기',
+        searchLabel: '다이어그램 노드 검색',
+      }, type);
+      assert.deepEqual(state.route, {
+        hidden: false,
+        title: '시작 노드 선택',
+        label: '추적된 경로 지우기',
+      }, type);
+      assert.equal(state.exportMenuOpen, true, type);
+      assert.equal(state.exportLabel, '다이어그램 내보내기', type);
+      assert.equal(state.exportMenuLabel, '내보내기', type);
+      assert.match(state.exportMenuText, /공유 카드/, type);
+      assert.deepEqual(state.presetBadges, {
+        'signal-flow': { header: '시그널 플로우', plate: 'none' },
+        blueprint: { header: '블루프린트 / 개정 01', plate: '' },
+        editorial: { header: '에디토리얼 / 현장 노트', plate: 'ARCHIFY / 도판 04' },
+      }, type);
+
+      const shareCardFailure = await evaluate(browser, sessionId, `(async function () {
+        var originalGetContext = HTMLCanvasElement.prototype.getContext;
+        HTMLCanvasElement.prototype.getContext = function () { return null; };
+        try {
+          await Archify.exportMenu.shareCard();
+          return { rejected: false, message: '' };
+        } catch (error) {
+          return { rejected: true, message: String(error && error.message || error) };
+        } finally {
+          HTMLCanvasElement.prototype.getContext = originalGetContext;
+        }
+      })()`, true);
+      assert.deepEqual(shareCardFailure, {
+        rejected: true,
+        message: '공유 카드에 2D 캔버스 컨텍스트를 만들 수 없습니다',
+      }, type);
+
+      const visual = spawnSync(process.execPath, [cli, 'visual-check', result.output, '--json'], {
+        cwd: skillRoot,
+        encoding: 'utf8',
+        env: { ...process.env, ARCHIFY_CHROME: chromePath },
+      });
+      assert.ok([0, 1].includes(visual.status), `${type}: ${visual.stderr || visual.stdout}`);
+      const receipt = JSON.parse(visual.stdout);
+      assert.equal(receipt.visualReview, 'pending', type);
+      assert.equal(receipt.chrome.status, 'available', type);
+      assert.equal(receipt.readability.status, 'pass', type);
+      assert.equal(receipt.viewerChrome.status, 'pass', type);
+      assert.equal(receipt.captures.status, 'pass', type);
+      assert.equal(
+        receipt.containment.viewports.every((viewport) => viewport.overflowX === false),
+        true,
+        `${type}: localized Viewer introduced horizontal overflow`,
+      );
+    }
+  } finally {
+    await browser.close();
+  }
+});
+
 test('every Viewer message reference resolves through the shared catalog', () => {
   const template = fs.readFileSync(templatePath, 'utf8');
   const keys = new Set(catalogKeys());
@@ -397,6 +622,15 @@ test('runtime labels stay localized after composition', () => {
     '2 nodes · 1 directed hop · shortest authored route',
   );
 
+  assert.equal(translateMessage('ko', 'viewer.kind.backend'), '백엔드');
+  assert.equal(translateMessage('ko', 'viewer.kind.decision'), '판단');
+  assert.equal(translateMessage('ko', 'viewer.passport.relationship.connectsFrom'), '연결 출처');
+  assert.equal(translateMessage('ko', 'viewer.nav.level.auto'), '자동');
+  const koHops = translateCount('ko', 'viewer.route.hop', 2);
+  assert.equal(
+    translateMessage('ko', 'viewer.finder.result.routeTarget', { label: '도착', links: koHops }),
+    '도착을(를) 경로 도착점으로 선택, 홉 2개',
+  );
 });
 
 test('Share Card and export failures use catalog messages instead of fixed English', () => {
@@ -407,6 +641,14 @@ test('Share Card and export failures use catalog messages instead of fixed Engli
   assert.equal(
     translateMessage('zh-CN', 'viewer.export.error.toBlobNull', { label: '分享卡片' }),
     '分享卡片的 canvas.toBlob 未返回数据',
+  );
+  assert.equal(
+    translateCount('ko', 'viewer.export.card.routeSummary', 2, { source: '출발', target: '도착' }),
+    '경로: 출발 → 도착 · 방향성 홉 2개',
+  );
+  assert.equal(
+    translateMessage('ko', 'viewer.export.error.toBlobNull', { label: '공유 카드' }),
+    '공유 카드의 canvas.toBlob이 데이터를 반환하지 않았습니다',
   );
 
   const template = fs.readFileSync(templatePath, 'utf8');

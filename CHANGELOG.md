@@ -6,7 +6,11 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
+### Added
+- **Korean Viewer locale (`ko`) (#458).** All five renderers accept the optional `meta.locale` value `ko` alongside `en` and `zh-CN`, localizing renderer-owned Viewer UI, accessibility copy, default legends, document titles, and language metadata without translating authored content. Hangul in the monospace Viewer stack uses bundled D2Coding after JetBrains Mono; the editorial preset’s serif headings use Pretendard SemiBold ahead of the existing CJK serif fallback. Omitted locale remains backward-compatible English. Unsupported locale values still fail schema validation.
+
 ### Fixed
+- **Compare nested `srcdoc` trim.** Architecture-delta HTML no longer strips trailing whitespace inside the two nested viewer documents embedded in `<iframe srcdoc>`. Nested explorers are spliced into empty `srcdoc` slots after that trim, looking up each slot only inside its Before/After canvas so CSS or authored copy cannot steal the match. The previous whole-document trim could corrupt verbatim nested payloads (exposed here by Pretendard’s OFL text).
 - **Architecture Delta baseline arrowheads (#433).** Removed and rerouted baseline relationships retain their marker definitions in the composed Delta SVG, preserving their authored direction alongside current relationships.
 - **Compare rollback recovery (#438).** If restoring a previous output fails, compare preserves its recovery directory and reports backup-to-target paths instead of deleting the remaining backups during cleanup.
 - **固定提交的来源校验 (#420)。** 校验忽略本地 Git replacement refs，始终读取指定提交的原始对象，避免替换后的文件或行范围造成误接受或误拒绝；保留原有来源链接、诊断与用户 Git 配置。
