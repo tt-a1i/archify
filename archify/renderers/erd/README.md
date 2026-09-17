@@ -35,14 +35,17 @@ ERD JSON files must set:
 
 An entity carries the table name in `label`, its attributes in `attributes`, and a
 `row`/`col` cell in the banded grid. The box height follows the declared attribute
-count, so the layout never needs hand-measured sizes. A attribute's `key` accepts
-`pk`, `fk`, or `uk`, and `references` names the target as `"entity.attribute"`.
+count, so the layout never needs hand-measured sizes. An attribute's `key` accepts
+`pk`, `fk`, or `uk`; an `fk` must also name its target as `"entity.attribute"` in
+`references`, and that target is checked against the declared entities and
+attributes.
 
 A relationship reads `from` -> `to` and is drawn with crow's foot notation at
-both ends. `fromCardinality`/`toCardinality` accept `one` or `many`, and
-`fromOptional`/`toOptional` add the optional circle. Omitted cardinality means
-`many` -> `one`: the ordinary foreign-key shape where many child rows point at
-one parent row. `identifying: false` draws the non-identifying dashed line.
+both ends. Both ends declare their own maximum: `fromCardinality`/`toCardinality`
+take `one` or `many` and are required, because a maximum the author never stated
+is a fact the diagram would be inventing; `fromOptional`/`toOptional` add the
+optional circle and lower that end's minimum from one to zero.
+`identifying: false` draws the non-identifying dashed line.
 
 ## Layout and routing
 

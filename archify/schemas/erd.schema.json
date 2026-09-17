@@ -203,7 +203,26 @@
                 },
                 "references": {
                   "type": "string",
-                  "minLength": 3
+                  "minLength": 3,
+                  "pattern": "^[^.]+\\.[^.]+$"
+                }
+              },
+              "if": {
+                "properties": {
+                  "key": {
+                    "const": "fk"
+                  }
+                },
+                "required": [
+                  "key"
+                ]
+              },
+              "then": {
+                "required": [
+                  "references"
+                ],
+                "properties": {
+                  "references": {}
                 }
               }
             }
@@ -218,7 +237,9 @@
         "additionalProperties": false,
         "required": [
           "from",
-          "to"
+          "to",
+          "fromCardinality",
+          "toCardinality"
         ],
         "properties": {
           "id": {

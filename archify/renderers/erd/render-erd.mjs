@@ -123,9 +123,10 @@ for (const [index, entity] of asArray(er.entities).entries()) {
 }
 
 // ---- Cardinality -------------------------------------------------------------
-// A relationship reads `from` -> `to`. Defaults describe the common foreign-key
-// shape: many rows on the `from` side point at one row on the `to` side, and
-// both ends are mandatory until the author says otherwise.
+// A relationship reads `from` -> `to` and both ends declare their own maximum.
+// The schema requires each one, so an unstated maximum fails validation before
+// rendering instead of reading as a fact the author never asserted; this
+// fallback only keeps an already-invalid diagram from crashing the renderer.
 function cardinalityOf(relationship, endpoint) {
   const value = endpoint === 'from' ? relationship.fromCardinality : relationship.toCardinality;
   if (value === 'one' || value === 'many') return value;

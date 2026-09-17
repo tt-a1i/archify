@@ -331,27 +331,55 @@ test('schema and reference mistakes fail with an addressed diagnostic', () => {
   assert.match(`${result.stdout}${result.stderr}`, /attribute 0 "extremely_long_attribute_name_here" needs \d+px of text but only \d+px/);
 });
 
-test('cardinality defaults to many-to-one and is drawn at both ends', () => {
+test('declared cardinality is drawn at both ends', () => {
   const diagram = {
     schema_version: 1,
     diagram_type: 'erd',
-    meta: { title: 'Defaults', locale: 'en' },
+    meta: { title: 'Cardinality', locale: 'en' },
     layout: { mode: 'grid', origin: [40, 80], gapX: 56, gapY: 72, entityW: 200 },
     entities: [
       { id: 'parent', label: 'parent', row: 0, col: 0, width: 200, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
       { id: 'child', label: 'child', row: 0, col: 1, width: 200, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
     ],
-    relationships: [{ id: 'child_parent', from: 'child', to: 'parent' }],
+    relationships: [{ id: 'child_parent', from: 'child', to: 'parent', fromCardinality: 'many', toCardinality: 'one' }],
   };
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-er-defaults-'));
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-er-cardinality-'));
   const { status, output } = render(diagram, directory);
   assert.equal(status, 0);
   const html = fs.readFileSync(output, 'utf8');
   const [route] = relationshipRoutes(html);
-  assert.match(route.raw, /marker-start="url\(#er-many-start\)"/, 'the from end defaults to many');
-  assert.match(route.raw, /marker-end="url\(#er-one-end\)"/, 'the to end defaults to one');
+  assert.match(route.raw, /marker-start="url\(#er-many-start\)"/, 'the from end carries its declared many');
+  assert.match(route.raw, /marker-end="url\(#er-one-end\)"/, 'the to end carries its declared one');
   assert.match(html, /id="er-many-start"/);
   assert.match(html, /id="er-one-end"/);
+});
+
+// A maximum the author never stated is a fact the diagram would be inventing,
+// so dropping it fails closed instead of reading as the ordinary foreign-key
+// many-to-one shape.
+test('a relationship that drops its declared cardinality is rejected', () => {
+  const diagram = cloneWithoutViews(example);
+  for (const relationship of diagram.relationships) {
+    delete relationship.fromCardinality;
+    delete relationship.toCardinality;
+  }
+  const result = render(diagram, fs.mkdtempSync(path.join(os.tmpdir(), 'archify-er-unstated-cardinality-')));
+  assert.notEqual(result.status, 0);
+  assert.match(`${result.stdout}${result.stderr}`, /must have required property 'fromCardinality'/);
+});
+
+// An `fk` marker claims a real foreign key. Without a named target the claim
+// cannot be checked at all, so it fails closed instead of passing as a column.
+test('an fk attribute that drops its references target is rejected', () => {
+  const diagram = cloneWithoutViews(example);
+  for (const entity of diagram.entities) {
+    for (const attribute of entity.attributes) {
+      if (attribute.key === 'fk') delete attribute.references;
+    }
+  }
+  const result = render(diagram, fs.mkdtempSync(path.join(os.tmpdir(), 'archify-er-unresolved-fk-')));
+  assert.notEqual(result.status, 0);
+  assert.match(`${result.stdout}${result.stderr}`, /must have required property 'references'/);
 });
 
 test('optionality adds the zero marker and identifying false draws the dashed variant', () => {

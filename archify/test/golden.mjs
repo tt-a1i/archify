@@ -146,6 +146,18 @@ expectFailure('entity without a label rejected by schema', 'erd',
   (d) => { delete d.entities[0].label; }, '/entities/0');
 expectFailure('unknown relationship cardinality rejected by schema', 'erd',
   (d) => { d.relationships[0].toCardinality = 'several'; }, '/relationships/0/toCardinality');
+expectFailure('unstated relationship cardinality rejected by schema', 'erd',
+  (d) => { delete d.relationships[0].fromCardinality; }, '/relationships/0');
+expectFailure('fk attribute without a target rejected by schema', 'erd',
+  (d) => {
+    const fk = d.entities.flatMap((entity) => entity.attributes).find((attribute) => attribute.key === 'fk');
+    delete fk.references;
+  }, "must have required property 'references'");
+expectFailure('references outside entity.attribute rejected by schema', 'erd',
+  (d) => {
+    const fk = d.entities.flatMap((entity) => entity.attributes).find((attribute) => attribute.key === 'fk');
+    fk.references = 'product';
+  }, 'pattern');
 
 // ---------------------------------------------------------------------------
 console.log('template freshness (architecture example must carry the current template)');
