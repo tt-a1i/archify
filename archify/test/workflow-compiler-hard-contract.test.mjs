@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { compileWorkflow } from '../renderers/workflow/workflow-compiler.mjs';
+import { validateCrossCollectionContracts } from '../renderers/shared/cli.mjs';
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -1946,6 +1947,64 @@ test('compileWorkflow enforces the canonical workflow schema at its public bound
     assert.equal(result.svg, undefined);
     assert.ok(
       result.diagnostics.some(({ code }) => code === expectedCode),
+      JSON.stringify(result.diagnostics, null, 2),
+    );
+    assert.ok(result.diagnostics.every(({ code }) => code !== 'internal/unclassified'));
+    assert.ok(result.diagnostics.every(({ supportedFixes }) => (
+      Array.isArray(supportedFixes) && supportedFixes.length === 0
+    )));
+    assert.deepEqual(result.receipt.diagnostics, result.diagnostics);
+  }
+});
+
+function validationParityWorkflow() {
+  return workflow({
+    lanes: [{ id: 'main', label: 'Main' }],
+    nodes: ['a', 'b', 'c'].map((id, index) => ({
+      id, lane: 'main', col: index * 2, type: 'backend', label: id,
+    })),
+    edges: [
+      { id: 'first', from: 'a', to: 'b' },
+      { id: 'second', from: 'b', to: 'c' },
+    ],
+  });
+}
+
+// The renderer-side contract this parity is measured against: loadDiagram()
+// rejects a document by running the same shared pass before it renders.
+function crossCollectionDiagnosticCode(document) {
+  try {
+    validateCrossCollectionContracts('workflow', document);
+  } catch (error) {
+    return error.archifyDiagnostics?.[0]?.code;
+  }
+  return undefined;
+}
+
+test('compileWorkflow applies the shared cross-collection contracts the renderer enforces', () => {
+  for (const { expectedCode, mutate } of [
+    {
+      expectedCode: 'relationship/duplicate-id',
+      mutate: (document) => { document.edges[1].id = document.edges[0].id; },
+    },
+    {
+      expectedCode: 'guided-view/invalid',
+      mutate: (document) => {
+        document.meta.views = [{ id: 'view', label: 'View', focus: ['missing'] }];
+      },
+    },
+  ]) {
+    const document = validationParityWorkflow();
+    mutate(document);
+    assert.equal(crossCollectionDiagnosticCode(document), expectedCode);
+
+    const result = compileWorkflow({ workflow: document, qualityProfile: 'standard' });
+    assert.equal(result.ok, false);
+    assert.equal(result.svg, undefined);
+    assert.equal(result.receipt.contract, 'readable-v2');
+    assert.deepEqual(
+      result.diagnostics.map(({ code }) => code),
+      [expectedCode],
       JSON.stringify(result.diagnostics, null, 2),
     );
     assert.ok(result.diagnostics.every(({ code }) => code !== 'internal/unclassified'));
