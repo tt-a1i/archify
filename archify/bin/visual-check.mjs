@@ -346,9 +346,18 @@ export class ChromeVisualBrowser {
     const url = new URL(pathToFileURL(artifactPath).href);
     if (theme) url.searchParams.set('theme', theme);
     const loaded = this.cdp.waitFor('Page.loadEventFired', sessionId);
-    const navigation = await this.cdp.send('Page.navigate', { url: url.href }, sessionId);
-    if (navigation.errorText) throw new Error(`Chrome navigation failed: ${navigation.errorText}`);
-    await loaded;
+    try {
+      const navigation = await this.cdp.send('Page.navigate', { url: url.href }, sessionId);
+      if (navigation.errorText) throw new Error(`Chrome navigation failed: ${navigation.errorText}`);
+      await loaded;
+    } catch (error) {
+      // A navigation that fails before the load event leaves the waiter
+      // registered, and close() then rejects it through failAll() with nobody
+      // listening. Settle it here so the failure the caller receives is the
+      // only one raised.
+      loaded.catch(() => {});
+      throw error;
+    }
     return sessionId;
   }
 

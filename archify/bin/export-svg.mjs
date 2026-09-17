@@ -12,20 +12,6 @@ function sha256(buffer) {
   return createHash('sha256').update(buffer).digest('hex');
 }
 
-function writeAtomic(file, contents) {
-  const temporary = `${file}.tmp-${process.pid}`;
-  try {
-    fs.writeFileSync(temporary, contents, { flag: 'w' });
-    fs.renameSync(temporary, file);
-  } finally {
-    try {
-      fs.rmSync(temporary, { force: true });
-    } catch {
-      // A stale temporary must never block a completed export.
-    }
-  }
-}
-
 // Default beside the artifact, on the artifact's own stem, so an export always
 // has an obvious home next to the HTML it came from.
 export function defaultSvgOutput(artifactPath) {
@@ -45,6 +31,47 @@ function serializerExpression(autoTheme) {
       canonicalStateClean: document_.canonicalStateClean === true
     };
   })()`;
+}
+
+// The renderer output guard: the target must not alias the artifact through
+// any symbolic-link or future-path route, and must be a .svg on both the
+// authored and the resolved path. It describes the filesystem only at the
+// moment it runs, so it is repeated wherever the destination could have
+// changed underneath an asynchronous step.
+function guardedOutputPath({ output, artifact, cwd }) {
+  return resolveOutputPath({
+    requestedOutput: output,
+    defaultOutput: defaultSvgOutput(artifact),
+    inputPaths: [artifact],
+    inputDescription: 'the delivered artifact',
+    cwd,
+    requiredExtension: '.svg',
+  }).outputPath;
+}
+
+// Commit the SVG through a staging directory this invocation created
+// exclusively beside the target. Nothing is opened at a predictable path:
+// mkdtemp names the directory, 'wx' refuses a path that already exists (a
+// planted symbolic link included), and the rename is a same-filesystem
+// commit. Cleanup removes that staging directory only; a stray
+// "<output>.tmp-*" belongs to someone else and is left alone.
+function commitSvg({ outputPath, svg, revalidate }) {
+  const directory = path.dirname(outputPath);
+  fs.mkdirSync(directory, { recursive: true });
+  const staging = fs.mkdtempSync(path.join(directory, '.archify-export-'));
+  const candidate = path.join(staging, path.basename(outputPath));
+  try {
+    fs.writeFileSync(candidate, svg, { flag: 'wx' });
+    revalidate();
+    if (!fs.lstatSync(candidate).isFile()) throw new Error('The staged SVG is not a regular file.');
+    fs.renameSync(candidate, outputPath);
+  } finally {
+    try {
+      fs.rmSync(staging, { recursive: true, force: true });
+    } catch {
+      // A stale staging directory must never turn a committed export into a failure.
+    }
+  }
 }
 
 function baseReceipt({ artifactPath, artifact, outputPath, theme, chrome }) {
@@ -84,14 +111,7 @@ export async function runExportSvg({
 
   // Reuse the renderer output guard so an export inherits the same
   // symbolic-link, alias, and extension protection a render already has.
-  const { outputPath } = resolveOutputPath({
-    requestedOutput: output,
-    defaultOutput: defaultSvgOutput(artifact),
-    inputPaths: [artifact],
-    inputDescription: 'the delivered artifact',
-    cwd,
-    requiredExtension: '.svg',
-  });
+  const outputPath = guardedOutputPath({ output, artifact, cwd });
 
   const resolvedChrome = chromePath || resolveChrome();
   const receipt = baseReceipt({
@@ -110,6 +130,17 @@ export async function runExportSvg({
     return { exitCode: EXIT.skipped, receipt };
   }
 
+  // Both sides of the export are checked again after the browser has run and
+  // immediately before the staged file is committed: the input must still be
+  // the bytes the receipt describes, and the destination must still be safe.
+  const revalidate = () => {
+    const afterBytes = fs.readFileSync(artifact);
+    if (sha256(afterBytes) !== receipt.artifact.sha256 || afterBytes.byteLength !== receipt.artifact.bytes) {
+      throw new Error('The delivered artifact changed while export svg was running.');
+    }
+    guardedOutputPath({ output, artifact, cwd });
+  };
+
   let browser;
   try {
     browser = await browserFactory(resolvedChrome);
@@ -119,14 +150,8 @@ export async function runExportSvg({
       throw new Error('This artifact does not expose the viewer SVG serializer. Re-render it with a current Archify.');
     }
 
-    const afterBytes = fs.readFileSync(artifact);
-    if (sha256(afterBytes) !== receipt.artifact.sha256 || afterBytes.byteLength !== receipt.artifact.bytes) {
-      throw new Error('The delivered artifact changed while export svg was running.');
-    }
-
-    const svg = `${serialized.svgString}\n`;
-    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-    writeAtomic(outputPath, svg);
+    revalidate();
+    commitSvg({ outputPath, svg: `${serialized.svgString}\n`, revalidate });
     const written = fs.readFileSync(outputPath);
     receipt.output.bytes = written.byteLength;
     receipt.output.sha256 = sha256(written);

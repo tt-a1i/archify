@@ -27,6 +27,7 @@ const testFiles = [
   'focus-browser.test.mjs',
   'semantic-passport-move-browser.test.mjs',
   'export-browser.test.mjs',
+  'export-svg.test.mjs',
   'viewer-identifiers-browser.test.mjs',
   'repository-evidence.test.mjs',
   'repository-evidence-types-browser.test.mjs',

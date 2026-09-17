@@ -91,6 +91,53 @@ function fakeChromeChild() {
   return child;
 }
 
+// Answer the DevTools pipe the way a page target would, so ChromeVisualBrowser
+// can attach and navigate without Chrome. Responses are keyed by method; any
+// other request gets an empty result.
+function answerCdp(child, responses) {
+  let buffer = '';
+  child.stdio[3].on('data', (chunk) => {
+    buffer += chunk;
+    let end;
+    while ((end = buffer.indexOf('\0')) >= 0) {
+      const message = JSON.parse(buffer.slice(0, end));
+      buffer = buffer.slice(end + 1);
+      const result = responses[message.method] ?? {};
+      child.stdio[4].write(`${JSON.stringify({ id: message.id, result })}\0`);
+    }
+  });
+}
+
+test('ChromeVisualBrowser.load settles its load waiter when navigation fails', async () => {
+  const child = fakeChromeChild();
+  answerCdp(child, {
+    'Target.getTargets': { targetInfos: [{ type: 'page', targetId: 'page-1' }] },
+    'Target.attachToTarget': { sessionId: 'session-1' },
+    'Page.navigate': { errorText: 'net::ERR_FILE_NOT_FOUND' },
+  });
+  const browser = new ChromeVisualBrowser('/fake/chrome', {
+    env: {},
+    getuid: () => 1001,
+    spawnImpl: () => child,
+  });
+  const unhandled = [];
+  const record = (reason) => unhandled.push(String(reason));
+  process.on('unhandledRejection', record);
+  try {
+    await assert.rejects(
+      browser.load({ artifactPath: artifact('navigation-failure.html') }),
+      /Chrome navigation failed: net::ERR_FILE_NOT_FOUND/,
+    );
+    // close() rejects every waiter still registered; the load waiter is one
+    // of them, and nothing else is listening to it.
+    await browser.close();
+    for (let turn = 0; turn < 3; turn += 1) await new Promise((resolve) => setImmediate(resolve));
+  } finally {
+    process.off('unhandledRejection', record);
+  }
+  assert.deepEqual(unhandled, []);
+});
+
 test('visual-check disables the Chrome sandbox only for root or an explicit environment opt-in', () => {
   const profileRoot = path.join(tmp, 'chrome-profile');
   const ordinary = chromeVisualBrowserArgs(profileRoot, { env: {}, getuid: () => 1001 });
