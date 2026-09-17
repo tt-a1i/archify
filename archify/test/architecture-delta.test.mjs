@@ -11,6 +11,7 @@ import {
   architectureDeltaChangeRows,
   canonicalArchitectureJson,
   compareArchitecture,
+  renderArchitectureDeltaHtml,
   validateArchitectureDeltaHtml,
 } from '../delta/architecture-delta.mjs';
 
@@ -148,6 +149,38 @@ test('compare reports locale-only changes as presentation changes', () => {
   const receipt = JSON.parse(result.stdout);
   assert.equal(receipt.summary.presentationChanged, true);
   assert.deepEqual(receipt.changes, { components: [], connections: [], boundaries: [] });
+});
+
+test('nested srcdoc restore ignores colliding tokens and keeps trailing spaces', () => {
+  const receipt = compareArchitecture(read(baseFixture), read(headFixture));
+  const poison = '\0ARCHIFY_DELTA_HEAD_VIEW\0';
+  const baseHtml = `<!doctype html><title>base</title><!-- ${poison} --><p>keep  \n</p>`;
+  const headHtml = '<!doctype html><title>head-only</title>';
+  const html = renderArchitectureDeltaHtml({
+    receipt,
+    baseSvg: '<svg viewBox="0 0 1 1"></svg>',
+    deltaSvg: '<svg viewBox="0 0 1 1" role="img"></svg>',
+    headSvg: '<svg viewBox="0 0 1 1"></svg>',
+    baseHtml,
+    headHtml,
+    artifactCss: '',
+  });
+  const frames = [...html.matchAll(/title="([^"]+)" srcdoc="([^"]*)"/g)]
+    .map(([, title, value]) => [title, value
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&amp;', '&')]);
+  assert.deepEqual(frames.map(([title]) => title), [
+    'Before architecture explorer',
+    'After architecture explorer',
+  ]);
+  assert.equal(frames[0][1], baseHtml);
+  assert.equal(frames[1][1], headHtml);
+  assert.match(frames[0][1], /keep {2}\n/);
+  assert.equal(frames[0][1].includes(poison), true);
+  assert.equal(frames[0][1].includes('head-only'), false);
 });
 
 test('change navigator order is exact-ID based, complete, unique, and stable', () => {
