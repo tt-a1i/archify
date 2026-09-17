@@ -564,11 +564,11 @@ test('evidence fails closed without a root, on wrong origin, missing blobs, or i
   assert.equal(fs.readFileSync(output, 'utf8'), 'trusted previous artifact');
 });
 
-test('--repo-root stays bounded to architecture and schema limits evidence shape', () => {
+test('--repo-root reaches every typed renderer and schema limits evidence shape', () => {
   const data = fixture();
-  let result = run(['render', 'workflow', path.join(skillRoot, 'examples', 'agent-tool-call.workflow.json'), '--repo-root', data.root]);
-  assert.equal(result.status, 2);
-  assert.match(result.stderr, /architecture diagrams only/);
+  const workflowOutput = path.join(data.root, 'workflow.html');
+  let result = run(['render', 'workflow', path.join(skillRoot, 'examples', 'agent-tool-call.workflow.json'), workflowOutput, '--repo-root', data.root]);
+  assert.equal(result.status, 0, result.stderr);
 
   data.diagram.components[0].sources = [
     { path: 'src/router.js' },

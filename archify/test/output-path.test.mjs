@@ -339,7 +339,8 @@ console.log(JSON.stringify({
   assert.equal(status, 1, stderr);
   const receipt = JSON.parse(stdout);
   assert.equal(receipt.stage, 'commit');
-  assert.equal(receipt.diagnostics[0].code, 'output/input-alias');
+  assert.equal(receipt.diagnostics[0].code, 'delivery/ownership-lost');
+  assert.equal(receipt.diagnostics[1].code, 'output/input-alias');
   assert.deepEqual(fs.readFileSync(input), source);
 });
 

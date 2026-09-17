@@ -14,13 +14,13 @@ Do not include secrets, access tokens, credentials, private repository content, 
 
 ## Prepare a reviewable change
 
-Start from the latest `main`. Check whether its existing controls already solve the reported case. Record the comparison base and candidate head.
+Start from the latest `dev` and target `dev` for fixes and features. Check whether its existing controls already solve the reported case. Record the comparison base and candidate head.
 
 Use Draft for unresolved scope or early implementation feedback. At this stage, provide the smallest reproduction and relevant checks. Prepare broad integration evidence and generated artifacts once the approach is settled.
 
 Before requesting final review, explain:
 
-- The current-main trigger, intended outcome, and why the approach is worth maintaining.
+- The current-base trigger, intended outcome, and why the benefit justifies the implementation and ongoing maintenance cost.
 - The changed behavior and shared callers, existing behavior that must remain stable, and any intended compatibility changes.
 - The applicable checks, actual results, and reproducible evidence links.
 
@@ -30,19 +30,19 @@ Use [the PR template](.github/PULL_REQUEST_TEMPLATE.md); link existing receipts 
 
 | Impact | Typical change | Evidence to prepare |
 | --- | --- | --- |
-| Text or review policy | Explanatory prose, links, contributor/reviewer procedure | Content, links, affected documentation checks; exercise changed procedure branches. No local renderer suite for repository-only prose. |
+| Text or review policy | Explanatory prose, links, contributor/reviewer procedure | Check content, links, and consistency with affected templates or automation. No local renderer suite for repository-only prose. |
 | Local behavior | One CLI path, focused test correction | Reproduction or rationale, affected tests, and relevant failure/compatibility cases. |
 | Shared behavior | Geometry, text measurement, shared Viewer, evidence or delivery helpers | Trace callers; identify affected modes and contracts; compare fixed representative inputs on base and candidate, including relevant historical failures. |
 | Contract change | Schema, defaults, validation acceptance, Skill or authoring instructions | Agreed scope and explicit allowed/preserved behavior, plus local/shared evidence appropriate to the implementation. |
 
 Skill instructions, authored examples, build inputs, and generated-site sources are behavioral inputs even when they look like documentation. Policy changes need process review; runtime evidence depends on whether they affect runtime inputs.
 
-During iteration, run the narrowest relevant checks. Before final review, run `npm test` from `archify/` for changes to runtime, schemas, packaged Skill/authoring behavior, generated content, or shared test infrastructure. Repository-only documentation and focused test-only changes may use targeted checks with an explanation. These local choices do not waive remote CI or branch-protection requirements.
+Start with focused checks for the affected behavior. Use the full `npm test` suite from `archify/` when shared behavior, broad changes, or findings require wider coverage. Final review needs sufficient evidence for the impact above; relevant CI results can supply that coverage without repeating the same run locally. Identify the revision and coverage of reused results, and explain material gaps. Required remote CI and branch protection still apply.
 
 ## Product and compatibility contracts
 
 - Existing schema-v1 typed JSON remains valid unless a reviewed change explicitly introduces a breaking rule and migration path.
-- Explicit authored geometry such as `via`, named routes, channels, sides, and label placement remains authoritative unless the contract says otherwise. Preserve authored topology and intent.
+- Preserve authored topology and intent; explicit geometry remains authoritative unless the contract says otherwise. Consult the [authoring contract](archify/references/authoring-contract.md) and relevant renderer documentation for details.
 - `standard` preserves broad compatibility. A new `showcase` failure must identify a real, repairable defect and avoid rejecting necessary routing.
 - Agent-facing failures belong in `diagnostics[]`: use a stable `code`, precise `subject`, concrete `evidence`, and executable `supportedFixes`. Preserve non-zero CLI exits and machine-readable receipts for failed stages.
 - A validation rule expressing taste should begin with evidence or a warning. Before making it a hard error, check legitimate obstacles, shared ports, explicit routes, nested boundaries, and existing examples.
@@ -62,7 +62,7 @@ Test through public behavior such as `render`, `validate`, `deliver`, `visual-ch
 
 For geometry and layout changes, use the smallest redacted JSON reproduction, relevant checked-in examples, and frozen compatibility fixtures. Compare base and candidate with the same input and browser conditions. Identify intended changes and investigate unexpected ones; updating golden files alone does not establish visual or compatibility acceptance.
 
-A visual PR must provide enough evidence to evaluate whether the intended user value was achieved, using screenshots, recordings, or reproducible steps. Keep viewport, theme, preset, diagram mode, zoom, and page state comparable. Report automated or browser evidence separately from perceptual review. A non-visual pull request must write `Not applicable` in its Visual evidence section and explain why.
+A visual PR must provide enough evidence to evaluate whether the intended user value was achieved, using screenshots, recordings, or reproducible steps. Keep viewport, theme, preset, diagram mode, zoom, and page state comparable. Report automated or browser evidence separately from perceptual review. Non-visual changes may omit the Visual evidence section.
 
 Static SVG/XML checks cannot establish browser layout, font settling, or interaction behavior. When the adaptive reader or Viewer layout changes, run the real browser test with Chrome available:
 
@@ -72,6 +72,19 @@ ARCHIFY_CHROME="/path/to/chrome" node --test test/desktop-reader-browser.test.mj
 ```
 
 A browser test skipped because Chrome was unavailable is **skipped**, not passed. Follow [the delivery contract](archify/references/delivery-contract.md) for visual evidence, receipts, and failure stages. Successful validation, atomic delivery, browser checks, and perceptual review establish different claims.
+
+PR CI and tag releases run the same browser regression gate:
+
+```sh
+cd archify
+ARCHIFY_CHROME="/path/to/chrome" npm run test:browser
+```
+
+This command requires a usable Chrome/Chromium and fails when none is available.
+Its maintained file list is in `scripts/run-browser-tests.mjs`; add new browser
+suites there so both workflows keep the same coverage. Ordinary `npm test`
+retains optional browser skips. Real WebM decoding and site-language integration
+remain in the separate `npm run test:webm` gate used by both workflows.
 
 ## Packages and generated artifacts
 
@@ -93,51 +106,25 @@ scripts/build-zip.sh /tmp/archify-contrib.zip
 
 Canonical ZIP bytes require Node 22; the builder rejects other majors to avoid different zlib representations. Skill runtime, schema, renderer, and published Skill-instruction changes require checking ZIP freshness. Bundled example or Viewer changes normally require a Gallery rebuild.
 
-List regenerated files and explain why unchanged outputs remain fresh. Resolve generated conflicts by rebuilding from combined source. Keep unrelated generated output out of the diff.
+List regenerated files and explain freshness when an affected output is left unchanged. Changes that do not affect generated outputs may omit that PR section. Resolve generated conflicts by rebuilding from combined source. Keep unrelated generated output out of the diff.
 
 Treat published versions as immutable. Ordinary feature PRs do not change versions, tags, or distribution identities unless release work is explicitly in scope.
 
 ## Final integration and follow-up
 
-Refresh `main` and the PR head before final integration; account for relevant base changes and resolve conflicts. Rerun local checks whose evidence was invalidated. Unchanged evidence may be linked with its original revision and reuse rationale; do not relabel it as a new-head run. Verify that required remote CI actually ran on the final head and obey branch protection; zero checks is not green.
+`dev` is the integration and trial-use branch; `main` is the stable branch. Integrate reviewed changes into `dev` first. Promote a tested batch from `dev` to `main` through a separate PR after maintainers have used it on real diagram tasks and confirmed stability. Record the tested revision, usage evidence, and unresolved issues in that PR; passing CI alone does not establish trial-use acceptance. Keep Pages deployment on `main` and formal releases on version tags.
+
+Refresh the target base branch and the PR head before final integration; account for relevant base changes and resolve conflicts. Rerun local checks whose evidence was invalidated. Unchanged evidence may be linked with its original revision and reuse rationale; do not relabel it as a new-head run. Verify that required remote CI actually ran on the final head and obey branch protection; zero checks is not green.
 
 On revision, summarize what changed since the reviewed head and which findings it addresses. This lets reviewers focus on the new diff and outstanding decisions.
 
 Showcase submissions should include the prompt, agent/client, model, Archify version, redacted JSON, artifact, receipts, and truthful visual-review status. Maintainers may request a smaller safe reproduction. Preserve attribution; showcase acceptance is not a controlled model-quality benchmark.
 
-## Automated review pilot
+## Automated review
 
-The CodeRabbit GitHub App is enabled for this repository. The root
-[configuration](.coderabbit.yaml) requests automatic reviews of ready PRs and
-subsequent pushes. It uses this guide, REVIEWING.md, and the PR template for advisory scope and
-validation-evidence checks. Drafts are excluded. Missing evidence is a request
-for clarification, not proof of a code defect; explain a false positive in the PR.
+CodeRabbit provides advisory feedback under the repository [configuration](.coderabbit.yaml). Answer with relevant evidence or explain why a finding does not apply. Missing evidence is an unresolved claim, not proof of a code defect. Maintainers settle disputed scope; required CI and the maintainer's merge decision remain separate.
 
-CodeRabbit does not replace required CI, browser/perceptual acceptance, or a
-maintainer's merge decision. Two warning checks cover contribution scope and
-validation evidence; overlapping built-in issue assessment is disabled. Authors
-can answer with evidence or explain why a request does not apply; maintainers
-settle disputed scope and acceptance requirements.
-
-Use these [review commands](https://docs.coderabbit.ai/reference/review-commands)
-instead of pushing an empty commit to retrigger the bot:
-
-| Situation | PR comment |
-| --- | --- |
-| Review new commits when automatic review did not run | `@coderabbitai review` |
-| Updated only the PR description, evidence links, or completed CI | `@coderabbitai run pre-merge checks` |
-| A fresh review of the entire PR is needed | `@coderabbitai full review` |
-| Several rapid revisions are in progress | `@coderabbitai pause`, then `@coderabbitai resume` when ready |
-
-Check the updated summary for results; a command acknowledgment is not completion.
-If fork CI needs approval, a maintainer must inspect the proposed workflow/code
-and handle the GitHub approval. Authors should link the waiting run and continue
-checks available to them; they are not expected to grant themselves CI access.
-
-Maintainers should assess the first
-5–10 reviewed PRs for useful findings, false positives, review time, and repeated
-evidence requests before expanding the pilot. Pause automatic reviews by setting
-`reviews.auto_review.enabled: false`; this does not change CI or branch protection.
+For retriggering or pausing reviews, use the official [review commands](https://docs.coderabbit.ai/reference/review-commands) and check the updated results. Bot assessments are snapshots at the stated revision; refresh stale checks after description or CI updates and read the latest evidence before repeating a request. Fork-CI approval requires a maintainer to inspect the proposed workflow/code changes; authors can link the waiting run.
 
 ## License
 

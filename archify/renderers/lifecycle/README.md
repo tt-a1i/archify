@@ -89,8 +89,9 @@ corners; tune them with `cornerRadius` (default 10, `0` for sharp bends).
 - Use lower lanes only for interruptions, recovery, and terminal exits.
 - Keep transition labels out of the main SVG unless the label is essential;
   prefer node labels, tags, legend entries, and summary cards.
-- Avoid diagonal and crossing lines. Terminal exits should drop vertically from
-  their source event whenever possible.
+- Prefer axis-aligned lines and avoid crossings. Terminal exits should drop
+  vertically from their source event whenever possible. Explicit `straight`
+  routes remain supported; see the [authored routing contract](../../references/authoring-contract.md#executable-geometry-rules).
 - Use `success` for completion, `failure` for failure/terminal exits,
   `waiting` for pauses, and `decision` for quality gates.
 

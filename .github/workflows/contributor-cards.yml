@@ -1,0 +1,104 @@
+name: Contributor cards
+
+on:
+  pull_request:
+    paths:
+      - 'tools/contributor-cards/**'
+      - '.github/workflows/contributor-cards.yml'
+  push:
+    branches: [main, dev]
+    paths:
+      - 'tools/contributor-cards/**'
+      - '.github/workflows/contributor-cards.yml'
+  pull_request_target:
+    types: [closed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Merged pull request number'
+        required: true
+        type: string
+      publish:
+        description: 'Publish the card and post or update its thank-you reply'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 22
+      - uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2
+        id: chrome
+        with:
+          chrome-version: stable
+          install-dependencies: true
+      - name: Install Chinese fallback font
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y fonts-noto-cjk
+      - name: Verify records, publication retries and real card layout
+        env:
+          ARCHIFY_CHROME: ${{ steps.chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
+        run: node --test tools/contributor-cards/test/*.test.mjs
+
+  card:
+    if: >-
+      github.repository == 'tt-a1i/archify' &&
+      (github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request_target' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.user.type == 'User'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: contributor-card-${{ github.event.pull_request.number || inputs.pr }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # Privileged runs use only the default branch, never PR head/merge refs.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 22
+      - uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2
+        id: chrome
+        with:
+          chrome-version: stable
+          install-dependencies: true
+      - name: Install Chinese fallback font
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y fonts-noto-cjk
+      - name: Render card and optionally publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CARD_PR: ${{ github.event.pull_request.number || inputs.pr }}
+          CARD_PUBLISH: ${{ github.event_name == 'pull_request_target' || inputs.publish }}
+          ARCHIFY_CHROME: ${{ steps.chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
+        shell: bash
+        run: |
+          args=(--out "$RUNNER_TEMP/contributor-card")
+          if [[ "$CARD_PUBLISH" == 'true' ]]; then args+=(--publish); fi
+          node tools/contributor-cards/cli.mjs "${args[@]}"
+      - name: Keep downloadable card and rendering evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: contributor-card-${{ github.event.pull_request.number || inputs.pr }}
+          path: ${{ runner.temp }}/contributor-card/
+          retention-days: 7
+          if-no-files-found: error

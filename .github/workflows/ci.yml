@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
 
 jobs:
@@ -12,8 +12,8 @@ jobs:
       matrix:
         node-version: [18, 20, 22, 24]
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -25,16 +25,20 @@ jobs:
         run: npm test
         working-directory: archify
 
+      - name: Verify community Hermes adapter
+        if: matrix.node-version == 22
+        run: node --test integrations/hermes-agent/test/plugin-contract.test.mjs
+
   webm-artifact:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
       - name: Provision a known Chrome runtime
         id: setup-chrome
-        uses: browser-actions/setup-chrome@v2
+        uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
         with:
           chrome-version: stable
           install-dependencies: true
@@ -45,41 +49,11 @@ jobs:
         working-directory: archify
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-      - name: Verify packaged examples and Reader Layout boundaries in a real browser
-        run: node --test test/desktop-reader-browser.test.mjs test/reader-layout-browser.test.mjs
-        working-directory: archify
-        env:
-          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-          ARCHIFY_CHROME_NO_SANDBOX: '1'
-      - name: Verify SVG export cleanup and live state isolation
-        run: node --test test/export-cleanup-browser.test.mjs
-        working-directory: archify
-        env:
-          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-          ARCHIFY_CHROME_NO_SANDBOX: '1'
-      - name: Install offline font test parser
+      - name: Install browser test dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
         working-directory: archify
-      - name: Verify offline fonts and independent SVG/raster exports
-        run: node --test test/offline-font-browser.test.mjs
-        working-directory: archify
-        env:
-          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-          ARCHIFY_CHROME_NO_SANDBOX: '1'
-      - name: Verify all five diagram modes localize Viewer interactions
-        run: node --test test/i18n.test.mjs
-        working-directory: archify
-        env:
-          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-          ARCHIFY_CHROME_NO_SANDBOX: '1'
-      - name: Verify Semantic Radar collision and drag behavior
-        run: node --test test/semantic-radar.test.mjs
-        working-directory: archify
-        env:
-          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-          ARCHIFY_CHROME_NO_SANDBOX: '1'
-      - name: Verify Viewer chrome, camera, motion and input interactions
-        run: node --test --test-concurrency=2 test/viewer-chrome-layout.test.mjs test/viewer-camera-browser.test.mjs test/motion-governor-browser.test.mjs test/finder-browser.test.mjs test/intent-trace-browser.test.mjs test/semantic-lens-browser.test.mjs test/route-probe-browser.test.mjs test/guided-views-browser.test.mjs test/focus-browser.test.mjs test/export-browser.test.mjs
+      - name: Run shared browser regression gate
+        run: npm run test:browser
         working-directory: archify
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
@@ -88,8 +62,8 @@ jobs:
   zip-freshness:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
       - name: Rebuild archify.zip and compare exact bytes
@@ -103,8 +77,8 @@ jobs:
   published-update-manifest:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
       - name: Public notifier manifest must reference an existing stable Release
@@ -163,8 +137,8 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
       - name: Extract packaged skill
@@ -184,10 +158,48 @@ jobs:
           Expand-Archive -Path archify.zip -DestinationPath $packageRoot
       - name: Validate packaged skill without installing dependencies
         run: node scripts/package-smoke.mjs
+      - name: Install delivery-lock test dependencies
+        if: runner.os != 'Linux'
+        run: npm ci --ignore-scripts
+        working-directory: archify
+      - name: Verify delivery-lock ownership with real subprocesses
+        if: runner.os != 'Linux'
+        run: >-
+          node --test
+          --test-name-pattern="cli: portable delivery lock:"
+          test/cli.test.mjs
+        working-directory: archify
+      - name: Verify macOS opener stays behind delivery-lock release
+        if: runner.os == 'macOS'
+        run: >-
+          node --test
+          --test-name-pattern="cli: lock release failure does not invoke the requested opener"
+          test/cli.test.mjs
+        working-directory: archify
+
+  windows-test-portability:
+    name: Windows test portability
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+      - name: Install test dependencies
+        run: npm ci --ignore-scripts
+        working-directory: archify
+      - name: Verify Windows-sensitive regression fixtures
+        run: >-
+          node --test
+          --test-name-pattern="Git checkout preserves|clean staging preserves index modes|workflow migration cleanup failure|preview runs from an installed skill"
+          archify/test/checkout-line-endings.test.mjs
+          archify/test/clean-skill-staging.test.mjs
+          archify/test/workflow-migration.test.mjs
+          archify/test/cli.test.mjs
 
   deploy-pages:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [test, webm-artifact, zip-freshness, published-update-manifest, package-smoke]
+    needs: [test, webm-artifact, zip-freshness, published-update-manifest, package-smoke, windows-test-portability]
     runs-on: ubuntu-latest
     concurrency:
       group: github-pages
@@ -200,7 +212,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - name: Reject an obsolete deployment run
         id: deployment-head
         env:
@@ -215,13 +227,13 @@ jobs:
           fi
       - name: Configure GitHub Pages
         if: steps.deployment-head.outputs.current == 'true'
-        uses: actions/configure-pages@v6
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - name: Upload checked documentation
         if: steps.deployment-head.outputs.current == 'true'
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: docs
       - name: Deploy checked documentation
         if: steps.deployment-head.outputs.current == 'true'
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

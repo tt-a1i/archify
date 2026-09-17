@@ -28,6 +28,7 @@
       var copyBtn = document.getElementById('btn-focus-copy');
       var relationsBtn = document.getElementById('btn-focus-relations');
       var clearBtn = document.getElementById('btn-focus-clear');
+      var moveBtn = document.getElementById('btn-focus-move');
       var activeIds = [];
       var hoveredRelationship = null;
       var focusedRelationship = null;
@@ -37,6 +38,8 @@
       var relationshipHitOverlay = null;
       var relationshipHitTargets = [];
       var directPreviewTimer = null;
+      var lensDrag = null;
+      var manualLensPosition = null;
       var reachabilityMode = null;
       var activeReachability = null;
       var svgNamespace = 'http://www.w3.org/2000/svg';
@@ -231,7 +234,7 @@
         if (options.reveal !== false && Archify.view && typeof Archify.view.reveal === 'function') {
           Archify.view.reveal(result.nodeIds, { includeNeighbors: false, reason: 'reachability' });
         }
-        requestLensPlacement();
+        placeRelationshipLens();
         return true;
       }
       function reachabilitySnapshot() {
@@ -422,8 +425,8 @@
       }
       function relationshipHitRecords() {
         var recordsByKey = {};
-        var recordsById = {};
-        var byId = {};
+        var recordsById = Object.create(null);
+        var byId = Object.create(null);
         nodes().forEach(function (node) { byId[node.getAttribute('data-node-id')] = node; });
         var records = [];
         edges().forEach(function (edge) {
@@ -711,7 +714,7 @@
           target.removeAttribute('data-preview-active');
         });
         renderRelationshipCopyAction();
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function previewRelationship(button, options) {
         options = options || {};
@@ -738,7 +741,7 @@
         if (!chip.hidden && options.direct !== true) chip.setAttribute('data-relationship-previewing', 'true');
         activeRelationshipPreview = button;
         renderRelationshipPulse(key);
-        requestLensPlacement();
+        placeRelationshipLens();
       }
       function syncRelationshipPreview() {
         var next = pinnedRelationship || focusedRelationship || hoveredRelationship;
@@ -1017,9 +1020,147 @@
           relationshipList.appendChild(section);
         });
       }
+      function lensPlacementBounds() {
+        var containerRect = container.getBoundingClientRect();
+        if (containerRect.width <= 0 || containerRect.height <= 0 || chip.offsetWidth <= 0 || chip.offsetHeight <= 0) return null;
+        var padding = window.innerWidth <= 720 ? 8 : 16;
+        var visibleLeft = Math.max(padding, -containerRect.left + padding);
+        var visibleRight = Math.min(
+          container.clientWidth - padding,
+          window.innerWidth - containerRect.left - padding
+        );
+        var visibleTop = Math.max(padding, -containerRect.top + padding);
+        var visibleBottom = Math.min(
+          container.clientHeight - padding,
+          window.innerHeight - containerRect.top - padding
+        );
+        var minLeft = visibleLeft;
+        var minTop = Math.min(visibleTop, Math.max(padding, visibleBottom - chip.offsetHeight));
+        return {
+          containerRect: containerRect,
+          minLeft: minLeft,
+          maxLeft: Math.max(minLeft, visibleRight - chip.offsetWidth),
+          minTop: minTop,
+          maxTop: Math.max(minTop, visibleBottom - chip.offsetHeight)
+        };
+      }
+      function manualLensPlacementAvailable() {
+        return window.innerWidth > 720 && (!finePointerQuery || finePointerQuery.matches);
+      }
+      function clampLensPosition(position, bounds) {
+        if (!position || !bounds) return null;
+        return {
+          left: Math.max(bounds.minLeft, Math.min(bounds.maxLeft, position.left)),
+          top: Math.max(bounds.minTop, Math.min(bounds.maxTop, position.top))
+        };
+      }
+      function currentLensPosition() {
+        var bounds = lensPlacementBounds();
+        if (!bounds) return null;
+        var rect = chip.getBoundingClientRect();
+        return clampLensPosition({
+          left: rect.left - bounds.containerRect.left,
+          top: rect.top - bounds.containerRect.top
+        }, bounds);
+      }
+      function applyManualLensPosition(position) {
+        if (!manualLensPlacementAvailable()) return false;
+        var bounds = lensPlacementBounds();
+        var clamped = clampLensPosition(position, bounds);
+        if (!clamped) return false;
+        manualLensPosition = clamped;
+        chip.setAttribute('data-manual-placement', 'true');
+        chip.style.left = Math.round(clamped.left) + 'px';
+        chip.style.top = Math.round(clamped.top) + 'px';
+        if (Archify.radar && typeof Archify.radar.sync === 'function') Archify.radar.sync();
+        return true;
+      }
+      function resetLensPlacement(options) {
+        options = options || {};
+        manualLensPosition = null;
+        chip.removeAttribute('data-manual-placement');
+        chip.style.removeProperty('left');
+        chip.style.removeProperty('top');
+        if (options.reposition !== false && !chip.hidden) requestLensPlacement();
+      }
+      function beginLensDrag(event) {
+        if (!manualLensPlacementAvailable() || event.button !== 0 || lensDrag) return;
+        var start = currentLensPosition();
+        if (!start) return;
+        event.preventDefault();
+        event.stopPropagation();
+        lensDrag = {
+          pointerId: event.pointerId,
+          originX: event.clientX,
+          originY: event.clientY,
+          start: start,
+          previousManual: manualLensPosition ? { left: manualLensPosition.left, top: manualLensPosition.top } : null,
+          moved: false
+        };
+        chip.setAttribute('data-panel-dragging', 'true');
+        try { moveBtn.setPointerCapture(event.pointerId); } catch (_) {}
+      }
+      function moveLensDrag(event) {
+        if (!lensDrag || lensDrag.pointerId !== event.pointerId) return;
+        var dx = event.clientX - lensDrag.originX;
+        var dy = event.clientY - lensDrag.originY;
+        if (!lensDrag.moved && Math.hypot(dx, dy) <= 3) return;
+        lensDrag.moved = true;
+        event.preventDefault();
+        event.stopPropagation();
+        applyManualLensPosition({ left: lensDrag.start.left + dx, top: lensDrag.start.top + dy });
+      }
+      function finishLensDrag(event, cancel) {
+        if (!lensDrag || lensDrag.pointerId !== event.pointerId) return;
+        event.preventDefault();
+        event.stopPropagation();
+        var activeDrag = lensDrag;
+        lensDrag = null;
+        chip.removeAttribute('data-panel-dragging');
+        try { moveBtn.releasePointerCapture(event.pointerId); } catch (_) {}
+        if (!cancel) return;
+        manualLensPosition = activeDrag.previousManual
+          ? { left: activeDrag.previousManual.left, top: activeDrag.previousManual.top }
+          : null;
+        if (manualLensPosition && manualLensPlacementAvailable()) {
+          applyManualLensPosition(manualLensPosition);
+        } else {
+          chip.removeAttribute('data-manual-placement');
+          chip.style.removeProperty('left');
+          chip.style.removeProperty('top');
+          if (!chip.hidden) requestLensPlacement();
+        }
+      }
+      function moveLensWithKeyboard(event) {
+        if (event.key === 'Home') {
+          event.preventDefault();
+          resetLensPlacement();
+          return;
+        }
+        if (event.metaKey || event.ctrlKey || event.altKey || !manualLensPlacementAvailable()) return;
+        var directions = {
+          ArrowLeft: [-1, 0],
+          ArrowRight: [1, 0],
+          ArrowUp: [0, -1],
+          ArrowDown: [0, 1]
+        };
+        var direction = directions[event.key];
+        if (!direction) return;
+        event.preventDefault();
+        var current = manualLensPosition || currentLensPosition();
+        if (!current) return;
+        var distance = event.shiftKey ? 4 : 16;
+        applyManualLensPosition({
+          left: current.left + direction[0] * distance,
+          top: current.top + direction[1] * distance
+        });
+      }
       var lensFrame = 0;
       function placeRelationshipLens() {
-        lensFrame = 0;
+        if (lensFrame) {
+          cancelAnimationFrame(lensFrame);
+          lensFrame = 0;
+        }
         if (chip.hidden || activeIds.length !== 1) return;
         var node = svg.querySelector('[data-node-id="' + activeIds[0] + '"]');
         if (!node) return;
@@ -1031,8 +1172,15 @@
         var visibleBottom = Math.min(containerRect.height - padding, window.innerHeight - containerRect.top - padding);
         var maxTop = Math.max(padding, visibleBottom - chip.offsetHeight);
         var minTop = Math.min(visibleTop, maxTop);
-        var nodeCenter = nodeRect.top - containerRect.top + nodeRect.height / 2;
         var mobile = window.innerWidth <= 720;
+        if (!manualLensPlacementAvailable()) {
+          chip.removeAttribute('data-manual-placement');
+          chip.style.removeProperty('left');
+        } else if (manualLensPosition) {
+          applyManualLensPosition(manualLensPosition);
+          return;
+        }
+        var nodeCenter = nodeRect.top - containerRect.top + nodeRect.height / 2;
         var previewingOnMobile = mobile && chip.getAttribute('data-relationship-previewing') === 'true';
         var compactOnMobile = mobile && chip.getAttribute('data-relations-expanded') !== 'true';
         var preferred;
@@ -1103,6 +1251,12 @@
       }
       function clear(options) {
         options = options || {};
+        if (lensDrag) {
+          var dragPointerId = lensDrag.pointerId;
+          lensDrag = null;
+          chip.removeAttribute('data-panel-dragging');
+          try { moveBtn.releasePointerCapture(dragPointerId); } catch (_) {}
+        }
         var restoreNode = options.restoreFocus === true && activeIds.length === 1
           ? svg.querySelector('[data-node-id="' + activeIds[0] + '"]')
           : null;
@@ -1150,7 +1304,7 @@
         relationsBtn.setAttribute('aria-label', viewerText('viewer.passport.relations.show'));
         relationsBtn.setAttribute('aria-expanded', 'false');
         chip.removeAttribute('data-relations-expanded');
-        chip.style.removeProperty('top');
+        if (options.preserveLensPlacement !== true) resetLensPlacement({ reposition: false });
         if (options.preserveView !== true && Archify.view && typeof Archify.view.reset === 'function') {
           Archify.view.reset({ automatic: true });
         }
@@ -1173,7 +1327,7 @@
           Archify.routeProbe.clear({ updateUrl: false, restoreFocus: false });
         }
         var nodeList = nodes();
-        var byId = {};
+        var byId = Object.create(null);
         nodeList.forEach(function (node) { byId[node.getAttribute('data-node-id')] = node; });
         var normalized = [];
         (ids || []).forEach(function (id) {
@@ -1185,10 +1339,11 @@
           return true;
         }
 
-        clear({ updateUrl: false, preserveView: true });
+        var preserveLensPlacement = activeIds.length === 1 && normalized.length === 1 && !chip.hidden;
+        clear({ updateUrl: false, preserveView: true, preserveLensPlacement: preserveLensPlacement });
         activeIds = normalized;
-        var selected = {};
-        var related = {};
+        var selected = Object.create(null);
+        var related = Object.create(null);
         var seenEdges = {};
         var matchedEdges = 0;
         normalized.forEach(function (id) { selected[id] = true; related[id] = true; });
@@ -1220,7 +1375,7 @@
         chip.hidden = options.hideChip === true || normalized.length !== 1 || selectionMode;
         if (!chip.hidden) {
           renderRelationshipLens(normalized[0], byId);
-          requestLensPlacement();
+          placeRelationshipLens();
         }
         if (options.updateUrl !== false) {
           var key = options.urlKey || 'focus';
@@ -1294,6 +1449,17 @@
           Archify.view.reveal([id], { includeNeighbors: true, reason: 'focus' });
         }
       });
+      moveBtn.addEventListener('pointerdown', beginLensDrag);
+      moveBtn.addEventListener('pointermove', moveLensDrag);
+      moveBtn.addEventListener('pointerup', function (event) { finishLensDrag(event, false); });
+      moveBtn.addEventListener('pointercancel', function (event) { finishLensDrag(event, true); });
+      moveBtn.addEventListener('lostpointercapture', function (event) { finishLensDrag(event, true); });
+      moveBtn.addEventListener('dblclick', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        resetLensPlacement();
+      });
+      moveBtn.addEventListener('keydown', moveLensWithKeyboard);
       clearBtn.addEventListener('click', function () { clear({ restoreFocus: true }); });
       copyBtn.addEventListener('click', copyFocusLink);
       upstreamBtn.addEventListener('click', function () { applyReachability('upstream'); });
@@ -1306,7 +1472,7 @@
         relationsBtn.setAttribute('aria-label', viewerText(expanded
           ? 'viewer.passport.relations.show'
           : 'viewer.passport.relations.hide'));
-        requestLensPlacement();
+        placeRelationshipLens();
       });
       relationshipList.addEventListener('click', function (event) {
         var button = event.target.closest('[data-relationship-target]');
@@ -1422,7 +1588,7 @@
         reachabilitySnapshot: reachabilitySnapshot,
         inspectRelationship: inspectRelationship,
         inspectRelationshipById: inspectRelationshipById,
-        reposition: requestLensPlacement,
+        reposition: placeRelationshipLens,
         relationship: function () {
           var record = pinnedRelationshipRecord();
           return record ? { id: record.id || null, key: record.key, from: record.from, to: record.to, label: record.label } : null;

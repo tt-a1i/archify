@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { minimumReadableSourceTextPx } from '../renderers/shared/desktop-readability.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const cli = path.join(skillRoot, 'bin/archify.mjs');
@@ -65,8 +66,8 @@ function frameRect(svg, label) {
   return { x, y, width, height };
 }
 
-function connectionPoints(svg) {
-  const match = svg.match(/data-edge-id="between"[^>]*data-composition-points="([^"]+)"/);
+function connectionPoints(svg, id = 'between') {
+  const match = svg.match(new RegExp(`data-edge-id="${id}"[^>]*data-composition-points="([^"]+)"`));
   assert.ok(match, 'missing boundary connection');
   return match[1].split(';').map((point) => point.split(',').map(Number));
 }
@@ -220,3 +221,102 @@ for (const [name, mutate] of [
     assert.ok(diagnostic.supportedFixes.length > 0);
   });
 }
+
+test('architecture: boundary routing and title sizing share the label-expanded canvas', () => {
+  const doc = diagram({
+    route: 'straight', fromSide: 'right', toSide: 'left',
+    label: 'replicate the transaction journal with retries and ownership checks',
+    labelDx: 1000, labelDy: 150,
+  });
+  doc.meta.quality_profile = 'showcase';
+  doc.boundaries[0].label = 'Disaster recovery ownership boundary';
+  doc.boundaries.forEach((boundary) => { boundary.pad = 8; });
+  const svg = render(doc);
+  const width = Number(svg.match(/viewBox="0 0 ([\d.]+) [\d.]+"/)[1]);
+  const mask = svg.match(/<g data-detail="context"[^>]*>\s*<rect x="([\d.-]+)"[^>]*width="([\d.]+)"/);
+  assert.ok(mask, 'expected the boundary connection label mask');
+  const labelRight = Number(mask[1]) + Number(mask[2]);
+  const componentRight = Math.max(...doc.components.map(({ pos, size }) => pos[0] + size[0]));
+  assert.ok(labelRight > componentRight, 'the connection label must enlarge the component-derived canvas');
+  assert.ok(labelRight <= width, `label right edge ${labelRight} exceeds the ${width}px canvas`);
+  const minimumFontSize = minimumReadableSourceTextPx(width);
+  const fonts = [...svg.matchAll(/data-boundary-label=""[^>]*font-size="([\d.]+)"/g)]
+    .map(([, fontSize]) => Number(fontSize));
+  assert.equal(fonts.length, 2);
+  assert.ok(fonts.every((fontSize) => fontSize + 1e-6 >= minimumFontSize),
+    `boundary title fonts ${fonts} are below the ${minimumFontSize}px floor`);
+  const source = frameRect(svg, doc.boundaries[0].label);
+  const target = frameRect(svg, doc.boundaries[1].label);
+  const points = connectionPoints(svg);
+  assert.ok(source.width > doc.components[0].size[0] + doc.boundaries[0].pad * 2,
+    'the long title must expand its frame beyond the padded component');
+  assert.deepEqual(points[0], [source.x + source.width, source.y + source.height / 2]);
+  assert.deepEqual(points.at(-1), [target.x, target.y + target.height / 2]);
+  const layout = inspect(doc);
+  assert.deepEqual(layout.connections[0].points, points.map((point) => point.map(Math.round)));
+  assert.deepEqual(layout.labels[0].labelAt, [
+    Math.round((points[0][0] + points.at(-1)[0]) / 2 + doc.connections[0].labelDx),
+    Math.round(points[0][1] - 10 + doc.connections[0].labelDy),
+  ]);
+
+  doc.meta.viewBox = [1000, 500];
+  const pinned = run(doc, 'validate');
+  assert.notEqual(pinned.status, 0);
+  const diagnostic = JSON.parse(pinned.stdout).diagnostics
+    .find(({ code }) => code === 'composition/label-canvas-containment');
+  assert.ok(diagnostic, pinned.stdout);
+  assert.ok(diagnostic.supportedFixes.length > 0);
+});
+
+test('architecture: boundary endpoints infer vertical sides from the dominant axis', () => {
+  const doc = diagram();
+  doc.components[0].pos = [320, 140];
+  doc.components[1].pos = [140, 540];
+  const svg = render(doc);
+  const source = frameRect(svg, 'Left scope');
+  const target = frameRect(svg, 'Right scope');
+  const points = connectionPoints(svg);
+  assert.deepEqual(points[0], [source.x + source.width / 2, source.y + source.height]);
+  assert.deepEqual(points.at(-1), [target.x + target.width / 2, target.y]);
+  assert.equal(points[1][0], points[0][0], 'the route must leave the boundary vertically');
+  assert.equal(points.at(-2)[0], points.at(-1)[0], 'the route must enter the boundary vertically');
+  assert.deepEqual(inspect(doc).connections[0].points, points.map((point) => point.map(Math.round)));
+});
+
+test('architecture: boundary fan-out keeps distinct stable ports on the inferred side', () => {
+  const doc = diagram();
+  doc.components[0].pos = [320, 140];
+  doc.components[1].pos = [140, 540];
+  doc.components.push({ id: 'third', type: 'backend', label: 'Third', pos: [500, 540], size: [120, 60] });
+  doc.boundaries.push({ id: 'third-scope', kind: 'region', label: 'Third scope', wraps: ['third'], pad: 24 });
+  doc.connections.push({ id: 'branch', from: 'left-scope', to: 'third-scope' });
+  const svg = render(doc);
+  const source = frameRect(svg, 'Left scope');
+  const starts = doc.connections.map(({ id }) => connectionPoints(svg, id)[0]);
+  assert.notEqual(starts[0][0], starts[1][0], 'shared boundary ports must remain distinct');
+  for (const [x, y] of starts) {
+    assert.equal(y, source.y + source.height, 'both routes must leave the inferred bottom side');
+    assert.ok(x >= source.x + 16 && x <= source.x + source.width - 16, 'ports must clear the corners');
+  }
+  doc.connections.reverse();
+  const reversed = render(doc);
+  for (const { id } of doc.connections) {
+    assert.deepEqual(connectionPoints(reversed, id), connectionPoints(svg, id));
+  }
+});
+
+test('architecture: naming an unrelated boundary does not make its frame a routing obstacle', () => {
+  const doc = diagram();
+  doc.components[0].pos = [120, 94];
+  doc.components[1].pos = [620, 300];
+  doc.components.push({ id: 'neighbor', type: 'backend', label: 'X', pos: [430, 400], size: [40, 60] });
+  doc.boundaries.push({ kind: 'region', label: 'Unrelated scope', wraps: ['neighbor'], pad: 100 });
+  const anonymous = render(doc);
+  doc.boundaries[2].id = 'unrelated-scope';
+  const named = render(doc);
+  const frame = frameRect(named, 'Unrelated scope');
+  assert.ok(connectionPoints(named).some(([x, y]) => (
+    x > frame.x && x < frame.x + frame.width && y > frame.y && y < frame.y + frame.height
+  )), 'the route must exercise the unrelated frame interior');
+  assert.deepEqual(connectionPoints(named), connectionPoints(anonymous));
+});

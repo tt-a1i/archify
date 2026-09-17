@@ -68,26 +68,6 @@ export function throwDiagnosticProblems(prefix, problems, { code = 'layout/const
 
 function fallbackDiagnostic(error) {
   const input = process.argv[2] ? path.resolve(process.argv[2]) : undefined;
-  if (error instanceof SyntaxError) {
-    return normalizedDiagnostic({
-      code: 'input/json-parse',
-      severity: 'error',
-      message: `Input JSON could not be parsed: ${error.message}`,
-      subject: { input },
-      evidence: { reason: error.message },
-      supportedFixes: ['repair the JSON syntax and run validation again'],
-    });
-  }
-  if (error?.code === 'ENOENT' || error?.code === 'EACCES' || error?.code === 'EISDIR') {
-    return normalizedDiagnostic({
-      code: 'input/read',
-      severity: 'error',
-      message: `Input could not be read: ${error.message}`,
-      subject: { input },
-      evidence: { systemCode: error.code, reason: error.message },
-      supportedFixes: ['provide one readable JSON input file'],
-    });
-  }
   return normalizedDiagnostic({
     code: 'internal/unclassified',
     severity: 'error',
@@ -101,7 +81,10 @@ function rendererFailure(error) {
   const attached = Array.isArray(error?.archifyDiagnostics)
     ? error.archifyDiagnostics.map(normalizedDiagnostic)
     : [];
-  const diagnostics = recorded.length ? recorded : (attached.length ? attached : [fallbackDiagnostic(error)]);
+  // Earlier diagnostics do not classify a later, unrelated implementation error.
+  const diagnostics = attached.length
+    ? (recorded.length ? recorded : attached)
+    : [fallbackDiagnostic(error)];
   return {
     schemaVersion: 1,
     ok: false,
@@ -111,13 +94,75 @@ function rendererFailure(error) {
   };
 }
 
+// Match the public CLI's text format without making its standalone doctor
+// bootstrap depend on this renderer runtime being present.
+function formatDiagnostics(error, diagnostics = []) {
+  if (!diagnostics.length) return error;
+  return [
+    error,
+    ...diagnostics.map((entry) => {
+      const fix = entry.supportedFixes?.length ? ` Fix: ${entry.supportedFixes.join('; ')}.` : '';
+      return `[${entry.code}] ${entry.message}${fix}`;
+    }),
+  ].join('\n');
+}
+
+const readerSignal = new Int32Array(new SharedArrayBuffer(4));
+
+function waitForReader() {
+  // Sleep instead of spinning on EAGAIN. A retry budget looks like a safeguard
+  // and behaves like a truncation gate: a spinning loop burns thousands of
+  // attempts in a few milliseconds, so a reader that is merely slow to start
+  // exhausts it and loses the tail of the receipt. Waiting costs nothing while
+  // the reader catches up, and a reader that goes away raises EPIPE, which the
+  // caller already treats as a real write failure.
+  Atomics.wait(readerSignal, 0, 0, 1);
+}
+
 export function installRendererDiagnosticBoundary() {
-  if (!DIAGNOSTIC_MODE || globalThis[boundaryKey]) return;
+  if (globalThis[boundaryKey]) return;
   globalThis[boundaryKey] = true;
+  if (!DIAGNOSTIC_MODE) {
+    process.once('uncaughtException', (error) => {
+      // Only errors classified at their operation boundary are author-facing.
+      // Preserve Node's debugging information for unexpected implementation errors.
+      if (!error?.archifyDiagnostics?.length) {
+        // The once-listener is already removed. Rethrow outside the exception
+        // handler so Node retains its normal stack and exit code (not code 7).
+        process.nextTick(() => { throw error; });
+        return;
+      }
+      const payload = `${formatDiagnostics(error.message, error.archifyDiagnostics)}\n`;
+      process.stderr.once('error', () => process.exit(1));
+      process.stderr.write(payload, () => process.exit(1));
+    });
+    return;
+  }
   process.on('uncaughtException', (error) => {
     const payload = `${JSON.stringify(rendererFailure(error))}\n`;
     try {
-      fs.writeSync(process.stderr.fd, payload);
+      // stderr may be a pipe. fs.writeSync performs a PARTIAL write once the
+      // payload exceeds the OS pipe buffer (8KB on macOS) and returns the byte
+      // count actually written. Ignoring that return value silently truncated
+      // large diagnostic payloads mid-JSON, so the parent CLI's JSON.parse
+      // failed and the fail-closed boundary reported internal/unclassified
+      // instead of the diagnostics we had already computed. Loop until drained.
+      // A full pipe also makes writeSync throw EAGAIN; wait for the reader
+      // rather than treat it as a stream failure, otherwise the tail is
+      // dropped just the same.
+      const buffer = Buffer.from(payload, 'utf8');
+      let written = 0;
+      while (written < buffer.length) {
+        try {
+          written += fs.writeSync(process.stderr.fd, buffer, written, buffer.length - written);
+        } catch (writeError) {
+          if (writeError?.code === 'EAGAIN') {
+            waitForReader();
+            continue;
+          }
+          throw writeError;
+        }
+      }
     } catch {
       // The renderer is already failing. Avoid replacing its real error with a
       // secondary stream failure; the parent CLI still has the exit status.

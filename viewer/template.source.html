@@ -727,7 +727,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       color: var(--frontend-stroke);
     }
 
-    /* The reader owns only the outer scale. Wide diagrams keep one authored
+    /* The reader owns only the outer scale. Wide diagrams and measured tall workflows keep one authored
        SVG/viewBox while the runtime chooses a desktop width from the actual
        vertical budget. This avoids device-specific files and breakpoint
        jumps between a laptop and a tall monitor. */
@@ -1795,13 +1795,39 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       font-size: 0.625rem;
     }
     .relationship-lens-head {
+      position: relative;
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: start;
       gap: 0.75rem;
-      padding: 0.7rem 0.75rem 0.65rem;
+      padding: 0.9rem 0.75rem 0.65rem;
       border-bottom: 1px solid var(--toolbar-border);
       background: linear-gradient(120deg, color-mix(in srgb, var(--frontend-fill) 34%, transparent), transparent 72%);
+    }
+    .relationship-lens-drag-handle {
+      position: absolute;
+      top: 0.12rem;
+      left: 50%;
+      width: 2.5rem;
+      height: 0.78rem;
+      padding: 0 !important;
+      transform: translateX(-50%);
+      color: var(--text-faint) !important;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+    .relationship-lens-drag-handle::before {
+      content: "";
+      display: block;
+      width: 1.25rem;
+      margin: auto;
+      border-top: 2px dotted currentColor;
+      opacity: 0.72;
+    }
+    .focus-chip[data-panel-dragging="true"] .relationship-lens-drag-handle { cursor: grabbing; }
+    @media (hover: none), (pointer: coarse) {
+      .relationship-lens-drag-handle { display: none; }
     }
     .relationship-lens-copy { min-width: 0; }
     .relationship-lens-actions {
@@ -3809,6 +3835,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         width: calc(100% - 1rem);
         max-width: none;
       }
+      .relationship-lens-head { padding-top: 0.7rem; }
+      .relationship-lens-drag-handle { display: none; }
       .relationship-lens-list { max-height: min(12rem, 38vh); }
       .relationship-lens-actions #btn-focus-relations { display: block; color: var(--database-stroke); }
       .focus-chip:not([data-relations-expanded="true"]) .relationship-lens-head { border-bottom-color: transparent; }
@@ -4084,6 +4112,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
+    /* Relationship labels share the exact color token used by their path. */
+    .t-edge-default  { fill: var(--arrow); }
+    .t-edge-emphasis { fill: var(--arrow-emphasis); }
+    .t-edge-security { fill: var(--security-stroke); }
+    .t-edge-dashed   { fill: var(--database-stroke); }
+
     /* Semantic Sigils are small authored role stamps, not icons from a brand
        pack and not viewer controls. Prefix selectors with svg so the canonical
        export's SVG-only stylesheet collector keeps them automatically. */
@@ -4348,6 +4382,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     html[data-embed="true"] .semantic-lens-overlay { display: none; }
     svg[data-focus-active] [data-node-id],
     svg[data-focus-active] [data-edge-from] { opacity: 0.13; }
+    svg[data-focus-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-focus-active] [data-focus-match] { opacity: 1; }
     svg[data-focus-active] [data-focus-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
@@ -4430,6 +4465,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        neighborhood focus. It changes emphasis only; exported geometry and the
        relationship's original solid/dashed visual language stay untouched. */
     svg[data-relationship-preview-active] [data-focus-match] { opacity: 0.18; }
+    svg[data-relationship-preview-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-relationship-preview-active] [data-relationship-preview],
     svg[data-relationship-preview-active] [data-relationship-preview-node] { opacity: 1; }
     svg[data-relationship-preview-active] [data-relationship-preview] {
@@ -4527,6 +4563,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        cloned edge geometry; the authored edge remains untouched underneath. */
     svg[data-intent-trace-active] [data-node-id],
     svg[data-intent-trace-active] [data-edge-from] { opacity: 0.2; }
+    svg[data-intent-trace-active] [data-lifecycle-rail] { opacity: 0; }
     svg[data-intent-trace-active] [data-intent-trace-match] { opacity: 1; }
     svg[data-intent-trace-active] [data-intent-trace-selected] {
       filter: drop-shadow(0 0 10px var(--frontend-stroke));
@@ -5354,6 +5391,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       </div>
       <div class="focus-chip relationship-lens no-print" id="focus-chip" hidden role="region" aria-labelledby="relationship-lens-title">
         <div class="relationship-lens-head">
+          <button class="relationship-lens-drag-handle" id="btn-focus-move" type="button" data-focus-drag-handle aria-label="{{i18n:viewer.passport.move}}" title="{{i18n:viewer.passport.move}}"></button>
           <div class="relationship-lens-copy">
             <span class="relationship-lens-eyebrow">{{i18n:viewer.passport.eyebrow}}</span>
             <strong class="relationship-lens-title" id="relationship-lens-title"><span id="focus-label"></span></strong>
@@ -5827,9 +5865,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     /* ============================================================
        Adaptive Reader Shell — one diagram across laptop and monitor.
        The canonical SVG and viewBox never change. On ordinary desktop pages,
-       wide diagrams receive only enough outer width to use the available
+       wide diagrams and measured intrinsic tall workflows receive enough outer width to use the available
        height without pushing summary cards below the viewport. Mobile,
-       embed, presentation, print, and non-wide diagrams retain their own
+       embed, presentation, print, and unmarked non-wide diagrams retain their own
        established layout contracts.
        ============================================================ */
     Archify.waitForStableLayout = function (options) {

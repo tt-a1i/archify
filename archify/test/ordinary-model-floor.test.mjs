@@ -159,6 +159,38 @@ test('benchmark rejects a renderer-valid candidate that changes required technic
   assert.equal(receipt.firstPassUsable, false);
 });
 
+test('benchmark checks accepted node labels even when an authored identity matches', () => {
+  for (const identityField of ['key', 'id']) {
+    const caseData = JSON.parse(fs.readFileSync(path.join(repoRoot, 'benchmarks/ordinary-model-floor/cases/web-runtime.architecture.case.json'), 'utf8'));
+    const requirement = caseData.requirements.nodes.find((node) => node.key === 'cache');
+    delete requirement.key;
+    requirement[identityField] = 'cache';
+    const caseFile = writeJson(`node-label-${identityField}.case.json`, caseData);
+    for (const label of ['Redis Cache', 'MySQL']) {
+      const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+      source.components.find((node) => node.id === 'cache').label = label;
+      const candidate = writeJson(`node-label-${identityField}.architecture.json`, source);
+      const runFile = writeJson(`node-label-${identityField}.run.json`, {
+        schema_version: 1, case_id: caseData.id,
+        agent: 'fixture-agent', model: 'fixture-model', attempt: 1,
+        visual_review: { status: 'passed', reviewer: 'fixture-reviewer', defects: [] },
+      });
+      const result = run(['verify', '--case', caseFile, '--candidate', candidate, '--run', runFile]);
+      const accepted = label === 'Redis Cache';
+      assert.equal(result.status, accepted ? 0 : 1, result.stderr || result.stdout);
+      const receipt = JSON.parse(result.stdout);
+      assert.equal(receipt.gates.validation.ok, true);
+      assert.equal(receipt.gates.semantic.ok, accepted);
+      assert.deepEqual(receipt.gates.semantic.missingNodeIds, []);
+      assert.deepEqual(receipt.gates.semantic.missingRelationships, []);
+      assert.deepEqual(receipt.gates.semantic.mismatchedNodes, accepted ? [] : [
+        { id: 'cache', field: 'label', expected: requirement.labels, actual: 'MySQL' },
+      ]);
+      assert.equal(receipt.firstPassUsable, accepted);
+    }
+  }
+});
+
 test('benchmark never accepts a visual pass without an identified reviewer', () => {
   const caseFile = writeJson('unreviewed.case.json', {
     schema_version: 1,
@@ -198,6 +230,34 @@ test('benchmark never accepts a visual pass without an identified reviewer', () 
     reason: 'passed visual review requires a non-empty reviewer identity',
   });
   assert.equal(receipt.firstPassUsable, false);
+});
+
+test('benchmark never upgrades missing or malformed visual defects to a clean pass', () => {
+  const caseFile = path.join(repoRoot, 'benchmarks/ordinary-model-floor/cases/web-runtime.architecture.case.json');
+  const candidate = path.join(skillRoot, 'examples/web-app.architecture.json');
+  for (const [index, defects] of [undefined, null, 'clipping', { clipping: true }, false, 0, [], ['clipping']].entries()) {
+    const runFile = writeJson(`visual-defects-${index}.run.json`, {
+      schema_version: 1,
+      case_id: 'web-runtime-architecture',
+      agent: 'fixture-agent',
+      model: 'fixture-model',
+      attempt: 1,
+      visual_review: { status: 'passed', reviewer: 'fixture-reviewer', defects },
+    });
+    const result = run(['verify', '--case', caseFile, '--candidate', candidate, '--run', runFile]);
+    const clean = Array.isArray(defects) && defects.length === 0;
+    assert.equal(result.status, clean ? 0 : 1, result.stderr || result.stdout);
+    const receipt = JSON.parse(result.stdout);
+    assert.equal(receipt.gates.semantic.ok, true);
+    assert.equal(receipt.gates.validation.ok, true);
+    assert.equal(receipt.firstPassUsable, clean);
+    assert.equal(receipt.gates.visualReview.status, Array.isArray(defects) ? 'passed' : 'invalid');
+    if (Array.isArray(defects)) {
+      assert.deepEqual(receipt.gates.visualReview.defects, defects);
+    } else {
+      assert.equal(receipt.gates.visualReview.reason, 'passed visual review requires an explicit defects array');
+    }
+  }
 });
 
 test('benchmark applies the same semantic and delivery seam to workflow, sequence, data-flow, and lifecycle candidates', () => {
@@ -839,10 +899,12 @@ test('packaged skill puts a bounded ordinary-model path before progressive featu
   const authoring = fs.readFileSync(path.join(skillRoot, 'references', 'authoring-contract.md'), 'utf8');
   const viewer = fs.readFileSync(path.join(skillRoot, 'references', 'viewer-runtime.md'), 'utf8');
   const fastPath = skill.indexOf('## Fast authoring path');
-  const progressiveReferences = skill.indexOf('references/authoring-contract.md');
+  // A diagnosed repair may link to a reference inside the fast path. Bound
+  // the contract by its next section, not by the first inline link.
+  const fastPathEnd = skill.indexOf('## Type router', fastPath);
 
   assert.ok(fastPath > 0, 'fast authoring path must exist');
-  assert.ok(fastPath < progressiveReferences, 'fast authoring path must precede progressive references');
+  assert.ok(fastPathEnd > fastPath, 'fast authoring path must precede the type router');
   assert.ok(skill.trimEnd().split('\n').length <= 160, 'ordinary authors must not ingest the viewer catalogue');
   for (const required of [
     'one matching schema',
@@ -870,7 +932,7 @@ test('packaged skill puts a bounded ordinary-model path before progressive featu
     'supportedFixes',
   ]) {
     assert.match(
-      skill.slice(fastPath, progressiveReferences),
+      skill.slice(fastPath, fastPathEnd),
       new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
     );
   }

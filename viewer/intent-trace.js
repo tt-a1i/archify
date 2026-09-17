@@ -97,7 +97,7 @@
         clear({ announce: false });
         var nodeList = nodes();
         var edgeList = edges();
-        var byId = {};
+        var byId = Object.create(null);
         nodeList.forEach(function (node) { byId[node.getAttribute('data-node-id')] = node; });
         var selected = byId[id];
         if (!selected) return false;
@@ -106,7 +106,7 @@
         overlay.setAttribute('class', 'intent-trace-overlay');
         overlay.setAttribute('data-intent-trace-overlay', '');
         overlay.setAttribute('aria-hidden', 'true');
-        var related = {};
+        var related = Object.create(null);
         var seen = {};
         var counts = { out: 0, in: 0, loop: 0 };
         related[id] = true;

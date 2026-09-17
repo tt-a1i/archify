@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { findChrome, runVisualCheck } from '../bin/visual-check.mjs';
+import { ChromeVisualBrowser, findChrome, runVisualCheck } from '../bin/visual-check.mjs';
 import { DESKTOP_READABILITY_VIEWPORT, MIN_PROJECTED_NODE_TEXT_PX } from '../renderers/shared/desktop-readability.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -34,6 +34,49 @@ test('all packaged HTML examples pass the real visual-check desktop gate', {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+const issue250TallGroup = {
+  schema_version: 2,
+  diagram_type: 'workflow',
+  meta: { title: 'Issue 250 stacked stages' },
+  lanes: [{ id: 'cage', label: 'One cage' }],
+  groups: [{
+    id: 'group', label: 'Cage', lane: 'cage', fromCol: 1, toCol: 3, variant: 'security',
+  }],
+  mainPath: ['stageA', 'stageB', 'stageC'],
+  nodes: [
+    { id: 'stageA', lane: 'cage', col: 2, type: 'security', label: 'stageA', yOffset: -90 },
+    { id: 'stageB', lane: 'cage', col: 2, type: 'security', label: 'stageB', yOffset: 0 },
+    { id: 'stageC', lane: 'cage', col: 2, type: 'security', label: 'stageC', yOffset: 90 },
+  ],
+  edges: [
+    {
+      id: 'stage-a-b', from: 'stageA', to: 'stageB', role: 'main', fromSide: 'bottom', toSide: 'top',
+    },
+    {
+      id: 'stage-b-c', from: 'stageB', to: 'stageC', role: 'main', fromSide: 'bottom', toSide: 'top',
+    },
+  ],
+};
+
+const issue250FiveStageGroup = {
+  ...issue250TallGroup,
+  meta: { title: 'Issue 250 five stacked stages' },
+  mainPath: ['stageA', 'stageB', 'stageC', 'stageD', 'stageE'],
+  nodes: [
+    { id: 'stageA', lane: 'cage', col: 2, type: 'security', label: 'stageA', yOffset: -300 },
+    { id: 'stageB', lane: 'cage', col: 2, type: 'security', label: 'stageB', yOffset: -150 },
+    { id: 'stageC', lane: 'cage', col: 2, type: 'security', label: 'stageC', yOffset: 0 },
+    { id: 'stageD', lane: 'cage', col: 2, type: 'security', label: 'stageD', yOffset: 150 },
+    { id: 'stageE', lane: 'cage', col: 2, type: 'security', label: 'stageE', yOffset: 300 },
+  ],
+  edges: [
+    { id: 'stage-a-b', from: 'stageA', to: 'stageB', role: 'main', fromSide: 'bottom', toSide: 'top' },
+    { id: 'stage-b-c', from: 'stageB', to: 'stageC', role: 'main', fromSide: 'bottom', toSide: 'top' },
+    { id: 'stage-c-d', from: 'stageC', to: 'stageD', role: 'main', fromSide: 'bottom', toSide: 'top' },
+    { id: 'stage-d-e', from: 'stageD', to: 'stageE', role: 'main', fromSide: 'bottom', toSide: 'top' },
+  ],
+};
 
 test('production showcase is readable in the real 1440 by 900 adaptive reader', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
@@ -74,6 +117,144 @@ test('production showcase is readable in the real 1440 by 900 adaptive reader', 
         assert.equal(observation.scrollHeight, DESKTOP_READABILITY_VIEWPORT.height);
       }
     }
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('offline intrinsic workflows fit while authored overflow still identifies lane frames', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const fixtureRoot = path.join(skillRoot, 'test/fixtures/workflow-viewport');
+  const failed = JSON.parse(fs.readFileSync(path.join(fixtureRoot, 'order-overflow.workflow.json'), 'utf8'));
+  const repaired = JSON.parse(fs.readFileSync(path.join(fixtureRoot, 'order-reflow.workflow.json'), 'utf8'));
+  const meaning = ({ lane, col, yOffset, ...node }) => node;
+  assert.deepEqual(failed.nodes.map(meaning), repaired.nodes.map(meaning));
+  for (const key of ['edges', 'semanticChecks', 'mainPath', 'cards', 'phases', 'meta']) {
+    assert.deepEqual(repaired[key], failed[key], key);
+  }
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-workflow-viewport-'));
+  try {
+    for (const name of ['order-overflow', 'order-reflow', 'order-pinned-overflow']) {
+      let input = path.join(fixtureRoot, `${name}.workflow.json`);
+      if (name === 'order-pinned-overflow') {
+        input = path.join(tmp, `${name}.workflow.json`);
+        // Freeze the historical canvas: fitting must respect an authored viewBox.
+        const pinned = structuredClone(failed);
+        pinned.meta.viewBox = [860, 786];
+        fs.writeFileSync(input, JSON.stringify(pinned));
+      }
+      const artifact = path.join(tmp, `${name}.html`);
+      execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'deliver', 'workflow',
+        input, artifact, '--quality', 'showcase', '--json'], { cwd: skillRoot });
+      const result = await runVisualCheck({
+        artifactPath: artifact, chromePath,
+        browserFactory: async (executable) => {
+          const browser = new ChromeVisualBrowser(executable);
+          try {
+            const session = await browser.sessionPromise;
+            await browser.cdp.send('Network.enable', {}, session);
+            await browser.cdp.send('Network.setBlockedURLs', { urls: ['http://*', 'https://*'] }, session);
+            return browser;
+          } catch (error) {
+            await browser.close();
+            throw error;
+          }
+        },
+      });
+      if (name === 'order-pinned-overflow') {
+        assert.equal(result.exitCode, 1);
+        const diagnostic = result.receipt.diagnostics.find(({ code }) => code === 'viewer/viewport-overflow');
+        assert.ok(diagnostic, JSON.stringify(result.receipt));
+        assert.equal(diagnostic.evidence.workflowLanes[0].frameId, 'lane-0');
+        assert.equal(diagnostic.evidence.workflowLanes[0].nodeCount, 12);
+        assert.ok(diagnostic.evidence.workflowLanes[0].spaceAboveNodesPx > 100);
+      } else {
+        assert.equal(result.exitCode, 0, JSON.stringify(result.receipt));
+        assert.equal(result.receipt.containment.status, 'pass');
+      }
+    }
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('issue #250 tall intrinsic workflow fits every required desktop viewport', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-issue-250-reader-'));
+  const input = path.join(tmp, 'issue-250.workflow.json');
+  const artifact = path.join(tmp, 'issue-250.html');
+  try {
+    fs.writeFileSync(input, `${JSON.stringify(issue250TallGroup, null, 2)}\n`);
+    execFileSync(process.execPath, [
+      path.join(skillRoot, 'bin', 'archify.mjs'),
+      'render',
+      'workflow',
+      input,
+      artifact,
+      '--quality',
+      'showcase',
+    ], { cwd: skillRoot, encoding: 'utf8' });
+
+    const result = await runVisualCheck({ artifactPath: artifact, chromePath });
+    assert.equal(result.exitCode, 0, JSON.stringify(result.receipt, null, 2));
+    assert.equal(result.receipt.containment.status, 'pass');
+    assert.equal(result.receipt.readability.status, 'pass');
+    assert.equal(result.receipt.viewerChrome.status, 'pass');
+    assert.equal(result.receipt.containment.viewports.length, 4);
+    for (const viewport of result.receipt.containment.viewports) {
+      assert.equal(viewport.overflowX, false, JSON.stringify(viewport, null, 2));
+      assert.equal(viewport.overflowY, false, JSON.stringify(viewport, null, 2));
+      assert.equal(viewport.scrollHeight, viewport.height, JSON.stringify(viewport, null, 2));
+      assert.ok(viewport.minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX);
+    }
+    assert.deepEqual(
+      result.receipt.captures.screenshots.map(({ width, height, theme, resolvedTheme }) => ({
+        width, height, theme, resolvedTheme,
+      })),
+      [
+        { width: 1440, height: 900, theme: 'light', resolvedTheme: 'light' },
+        { width: 1440, height: 900, theme: 'dark', resolvedTheme: 'dark' },
+        { width: 2048, height: 1320, theme: 'light', resolvedTheme: 'light' },
+        { width: 2048, height: 1320, theme: 'dark', resolvedTheme: 'dark' },
+      ],
+    );
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('issue #250 five-stage stack fits below source scale without crossing the readability floor', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-issue-250-five-stage-'));
+  const input = path.join(tmp, 'issue-250-five-stage.workflow.json');
+  const artifact = path.join(tmp, 'issue-250-five-stage.html');
+  try {
+    fs.writeFileSync(input, `${JSON.stringify(issue250FiveStageGroup, null, 2)}\n`);
+    execFileSync(process.execPath, [
+      path.join(skillRoot, 'bin', 'archify.mjs'),
+      'render',
+      'workflow',
+      input,
+      artifact,
+      '--quality',
+      'showcase',
+    ], { cwd: skillRoot, encoding: 'utf8' });
+
+    const result = await runVisualCheck({ artifactPath: artifact, chromePath });
+    assert.equal(result.exitCode, 0, JSON.stringify(result.receipt, null, 2));
+    for (const viewport of result.receipt.containment.viewports) {
+      assert.equal(viewport.overflowY, false, JSON.stringify(viewport, null, 2));
+      assert.equal(viewport.scrollHeight, viewport.height, JSON.stringify(viewport, null, 2));
+      assert.ok(viewport.minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX);
+    }
+    const desktop = result.receipt.containment.viewports.find(({ width, height }) => (
+      width === DESKTOP_READABILITY_VIEWPORT.width && height === DESKTOP_READABILITY_VIEWPORT.height
+    ));
+    assert.ok(desktop);
+    assert.ok(desktop.diagramWidth < desktop.viewBoxWidth, JSON.stringify(desktop, null, 2));
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }

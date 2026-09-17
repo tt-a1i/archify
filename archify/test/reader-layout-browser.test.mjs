@@ -8,7 +8,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const chromePath = process.env.ARCHIFY_CHROME ? findChrome() : null;
+const chromeConfigured = Object.prototype.hasOwnProperty.call(process.env, 'ARCHIFY_CHROME');
+const chromePath = chromeConfigured ? findChrome() : null;
+if (chromeConfigured && !chromePath) {
+  throw new Error(`ARCHIFY_CHROME does not resolve to an executable browser: ${process.env.ARCHIFY_CHROME}`);
+}
 const cases = {
   architecture: 'web-app.architecture.json',
   workflow: 'agent-tool-call.workflow.json',

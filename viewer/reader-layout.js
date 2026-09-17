@@ -9,6 +9,7 @@
       var cards = shell && shell.querySelector('.cards');
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
+      var measuredHeightFit = svg && svg.getAttribute('data-reader-fit') === 'intrinsic-height';
       var frame = 0;
       var settleFrame = 0;
       var lastWidth = 0;
@@ -16,6 +17,7 @@
       var MIN_DESKTOP_WIDTH = 1024;
       var MIN_READER_WIDTH = 960;
       var MAX_READER_WIDTH = 1920;
+      var MIN_PROJECTED_NODE_TEXT_PX = 6;
       var SAFE_BOTTOM_GAP = 12;
 
       if (diagram && ratio >= WIDE_RATIO) {
@@ -35,9 +37,24 @@
         var style = window.getComputedStyle(element);
         return element.getBoundingClientRect().height + number(style.marginTop) + number(style.marginBottom);
       }
+      function minimumReadableScale() {
+        var sourceMinimum = null;
+        Array.from(svg.querySelectorAll(
+          'text[data-node-label], text[data-boundary-label], text[data-detail="context"]'
+        )).forEach(function (text) {
+          if (text.getAttribute('data-detail') === 'context' && !text.closest('[data-node-id]')) return;
+          var sourceFontPx = parseFloat(text.getAttribute('font-size') || '');
+          if (Number.isFinite(sourceFontPx)) {
+            sourceMinimum = sourceMinimum == null ? sourceFontPx : Math.min(sourceMinimum, sourceFontPx);
+          }
+        });
+        return sourceMinimum != null
+          ? Math.min(1, MIN_PROJECTED_NODE_TEXT_PX / sourceMinimum)
+          : 1;
+      }
       function eligible() {
         return Boolean(
-          shell && diagram && svg && ratio >= WIDE_RATIO &&
+          shell && diagram && svg && (ratio >= WIDE_RATIO || measuredHeightFit) &&
           window.innerWidth >= MIN_DESKTOP_WIDTH &&
           html.getAttribute('data-embed') !== 'true' &&
           html.getAttribute('data-present') !== 'true' &&
@@ -97,7 +114,13 @@
         }
         var chrome = chromeMetrics();
         var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
-        var minWidth = Math.min(MIN_READER_WIDTH, viewportCap);
+        var readableWidth = viewBox && viewBox.width > 0
+          ? viewBox.width * minimumReadableScale() + chrome.diagramX
+          : MIN_READER_WIDTH;
+        var minWidth = Math.min(
+          measuredHeightFit && ratio < WIDE_RATIO ? readableWidth : MIN_READER_WIDTH,
+          viewportCap
+        );
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
           outerHeight(header) + outerHeight(guided) + outerHeight(cards);

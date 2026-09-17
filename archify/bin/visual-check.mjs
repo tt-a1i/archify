@@ -56,10 +56,11 @@ function screenshotKey(width, height, theme) {
   return `${width}x${height}:${theme}`;
 }
 
-export function sidecarPaths(artifactPath) {
+export function sidecarPaths(artifactPath, { outDir } = {}) {
   const artifact = path.resolve(artifactPath);
-  const stem = artifact.replace(/\.html?$/i, '');
-  const base = `${stem}.visual-check`;
+  const stem = path.basename(artifact).replace(/\.html?$/i, '');
+  const directory = outDir ? path.resolve(outDir) : path.dirname(artifact);
+  const base = path.join(directory, `${stem}.visual-check`);
   const screenshots = CAPTURE_VIEWPORTS.flatMap(({ width, height }) => THEMES.map((theme) => ({
     width,
     height,
@@ -397,8 +398,8 @@ export class ChromeVisualBrowser {
       var scale = viewBoxWidth > 0 ? Math.min(1, diagramWidth / viewBoxWidth) : 0;
       var minimum = null;
       if (svg && scale > 0) {
-        Array.from(svg.querySelectorAll('text[data-node-label], text[data-boundary-label], text[data-detail="context"]')).forEach(function (text) {
-          var detail = text.hasAttribute('data-node-label')
+        Array.from(svg.querySelectorAll('text[data-node-label], text[data-boundary-label], text[data-detail="context"], [data-edge-id] g[data-detail="context"] > text')).forEach(function (text) {
+          var detail = text.closest('[data-edge-id]') ? 'message' : text.hasAttribute('data-node-label')
             ? 'primary'
             : text.hasAttribute('data-boundary-label') ? 'boundary' : 'context';
           if (detail === 'context' && !text.closest('[data-node-id]')) return;
@@ -432,6 +433,29 @@ export class ChromeVisualBrowser {
         && typeof Archify.viewerChromeLayout.receipt === 'function'
         ? Archify.viewerChromeLayout.receipt()
         : null;
+      // Read rendered boxes only; source ownership, offsets and hard pins are unknown.
+      var workflowLanes = svg ? Array.from(svg.querySelectorAll('rect[data-composition-frame-kind="lane"]')).map(function (lane) {
+        var rect = lane.getBoundingClientRect();
+        var members = Array.from(svg.querySelectorAll('g[data-node-id]')).map(function (node) {
+          var box = node.querySelector('rect');
+          if (!box) return null;
+          var bounds = box.getBoundingClientRect();
+          if (bounds.top < rect.top - 1 || bounds.bottom > rect.bottom + 1
+            || bounds.left < rect.left - 1 || bounds.right > rect.right + 1) return null;
+          return { id: node.getAttribute('data-node-id'), top: bounds.top, bottom: bounds.bottom };
+        }).filter(Boolean);
+        var top = members.length ? members.reduce(function (minimum, node) { return Math.min(minimum, node.top); }, Infinity) : null;
+        var bottom = members.length ? members.reduce(function (maximum, node) { return Math.max(maximum, node.bottom); }, -Infinity) : null;
+        return {
+          frameId: lane.getAttribute('data-composition-frame-id'),
+          heightPx: Math.round(rect.height),
+          nodeCount: members.length,
+          nodeIds: members.slice(0, 12).map(function (node) { return node.id; }),
+          nodeSpanPx: top === null ? null : Math.round(bottom - top),
+          spaceAboveNodesPx: top === null ? null : Math.round(top - rect.top),
+          spaceBelowNodesPx: bottom === null ? null : Math.round(rect.bottom - bottom)
+        };
+      }).sort(function (a, b) { return b.heightPx - a.heightPx; }).slice(0, 6) : [];
       return {
         innerWidth: window.innerWidth,
         innerHeight: window.innerHeight,
@@ -441,6 +465,7 @@ export class ChromeVisualBrowser {
         readerWidth: reader ? reader.getBoundingClientRect().width : 0,
         diagramWidth: diagramWidth,
         viewBoxWidth: viewBoxWidth,
+        workflowLanes: workflowLanes,
         minimumProjectedNodeTextPx: minimum ? minimum.projectedFontPx : null,
         minimumProjectedNodeText: minimum ? minimum.text : null,
         minimumProjectedNodeTextDetail: minimum ? minimum.detail : null,
@@ -534,6 +559,7 @@ function observation({ width, height, theme, metrics }) {
     readerWidth: Number(metrics.readerWidth) || null,
     diagramWidth: Number(metrics.diagramWidth) || null,
     viewBoxWidth: Number(metrics.viewBoxWidth) || null,
+    ...(metrics.workflowLanes?.length ? { workflowLanes: metrics.workflowLanes } : {}),
     minimumProjectedNodeTextPx,
     minimumProjectedNodeText: metrics.minimumProjectedNodeText || null,
     minimumProjectedNodeTextDetail: metrics.minimumProjectedNodeTextDetail || null,
@@ -604,9 +630,17 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
           scrollHeight: entry.scrollHeight,
           overflowX: entry.overflowX,
           overflowY: entry.overflowY,
+          ...(entry.overflowY && entry.workflowLanes?.length ? {
+            workflowLanes: entry.workflowLanes,
+            measurement: 'CSS pixels; rendered node boxes geometrically contained in each lane frame; spaces include headers and routing, not guaranteed removable space',
+          } : {}),
         },
         supportedFixes: [
-          `contain the rendered layout within ${entry.width}x${entry.height}, then rerun visual-check`,
+          ...(entry.overflowY && entry.workflowLanes?.length ? [
+            'run validate workflow <source.json> --layout-json and compare the tallest rendered lane frames with source lanes, col and yOffset; frame IDs are rendered indices, not source lane IDs',
+            'where ownership and explicit geometry permit, distribute stacked steps across logical columns and meaningful lanes before increasing yOffset; preserve nodes, branches, labels and hard pins',
+            'read references/authoring-contract.md#workflow-viewport-repair, then validate and deliver the changed source before rerunning visual-check on the new artifact; this is inspection guidance, not a verified coordinate fix',
+          ] : [`contain the rendered layout within ${entry.width}x${entry.height}, then rerun visual-check`]),
         ],
       }));
     }
@@ -660,7 +694,7 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
   return diagnostics;
 }
 
-function baseReceipt({ artifactPath, artifact, outputs, chrome }) {
+function baseReceipt({ artifactPath, artifact, outputs, chrome, deliveryProvenance }) {
   return {
     schemaVersion: 1,
     ok: false,
@@ -668,6 +702,10 @@ function baseReceipt({ artifactPath, artifact, outputs, chrome }) {
     evidenceKind: 'automated-browser',
     status: 'fail',
     visualReview: 'pending',
+    ...(deliveryProvenance ? {
+      provenance: deliveryProvenance.status,
+      ...(deliveryProvenance.receiptId ? { deliveryReceiptId: deliveryProvenance.receiptId } : {}),
+    } : {}),
     artifact: {
       path: artifactPath,
       sha256: sha256(artifact),
@@ -681,6 +719,8 @@ function baseReceipt({ artifactPath, artifact, outputs, chrome }) {
     viewerChrome: { status: 'fail', viewports: [] },
     captures: { status: 'fail', screenshots: [], contactSheet: null },
     sidecars: {
+      ...(path.dirname(outputs.receipt) !== path.dirname(artifactPath)
+        ? { directory: path.dirname(outputs.receipt) } : {}),
       receipt: path.basename(outputs.receipt),
       contactSheet: path.basename(outputs.contactSheet),
     },
@@ -691,17 +731,69 @@ function persistReceipt(outputs, receipt) {
   writeAtomic(outputs.receipt, `${JSON.stringify(receipt, null, 2)}\n`);
 }
 
+export function persistVisualCheckFailure(artifactPath, failure, { outDir } = {}) {
+  const outputs = sidecarPaths(artifactPath, { outDir });
+  const receipt = {
+    ...failure,
+    ok: false, status: 'fail',
+    containment: { status: 'fail', viewports: [] },
+    captures: { status: 'fail', screenshots: [], contactSheet: null },
+    sidecars: {
+      ...(path.dirname(outputs.receipt) !== path.dirname(path.resolve(artifactPath))
+        ? { directory: path.dirname(outputs.receipt) } : {}),
+      receipt: path.basename(outputs.receipt),
+      contactSheet: path.basename(outputs.contactSheet),
+    },
+  };
+  const errors = [];
+  try { fs.mkdirSync(path.dirname(outputs.receipt), { recursive: true }); } catch (error) {
+    errors.push({ file: path.dirname(outputs.receipt), reason: error.message });
+  }
+  for (const file of [outputs.receipt, outputs.contactSheet, ...outputs.screenshots.map((entry) => entry.path)]) {
+    try { fs.rmSync(file, { force: true }); } catch (error) { errors.push({ file, reason: error.message }); }
+  }
+  const reportErrors = () => {
+    receipt.diagnostics = [...(failure.diagnostics || []), failureDiagnostic({
+      code: 'viewer/evidence-write', message: 'Previous visual evidence could not be fully invalidated or replaced.',
+      subject: { artifact: path.resolve(artifactPath) }, evidence: { errors },
+      supportedFixes: ['restore write access to the evidence files and rerun visual-check'],
+    })];
+  };
+  if (errors.length) reportErrors();
+  try {
+    persistReceipt(outputs, receipt);
+  } catch (error) {
+    errors.push({ file: outputs.receipt, reason: error.message });
+    reportErrors();
+  }
+  return receipt;
+}
+
 export async function runVisualCheck({
   artifactPath,
+  outDir,
   chromePath,
   resolveChrome = findChrome,
   browserFactory = async (resolvedChrome) => new ChromeVisualBrowser(resolvedChrome),
+  deliveryProvenance,
+  verifyArtifact,
 } = {}) {
   if (!artifactPath) throw new Error('visual-check requires one delivered HTML artifact.');
   const artifact = path.resolve(artifactPath);
   if (!/\.html?$/i.test(artifact)) throw new Error('visual-check requires an .html artifact.');
   const artifactBytes = fs.readFileSync(artifact);
-  const outputs = sidecarPaths(artifact);
+  const outputs = sidecarPaths(artifact, { outDir });
+  fs.mkdirSync(path.dirname(outputs.receipt), { recursive: true });
+  try {
+    verifyArtifact?.(artifactBytes);
+  } catch (error) {
+    return { exitCode: EXIT.fail, receipt: persistVisualCheckFailure(artifact, {
+      schemaVersion: 1, command: 'visual-check', evidenceKind: 'automated-browser', visualReview: 'pending',
+      artifact: { path: artifact, sha256: sha256(artifactBytes), bytes: artifactBytes.byteLength },
+      provenance: error.deliveryProvenance?.status, error: error.message,
+      diagnostics: error.archifyDiagnostics || [],
+    }, { outDir }) };
+  }
   cleanupCaptureSidecars(outputs);
   safeUnlink(outputs.receipt);
 
@@ -713,6 +805,7 @@ export async function runVisualCheck({
     chrome: resolvedChrome
       ? { status: 'available', executable: resolvedChrome }
       : { status: 'unavailable', executable: null },
+    deliveryProvenance,
   });
 
   if (!resolvedChrome) {
@@ -767,6 +860,7 @@ export async function runVisualCheck({
     }
 
     const afterBytes = fs.readFileSync(artifact);
+    verifyArtifact?.(afterBytes);
     if (sha256(afterBytes) !== receipt.artifact.sha256 || afterBytes.byteLength !== receipt.artifact.bytes) {
       throw new Error('The delivered artifact changed while visual-check was running.');
     }
@@ -804,7 +898,6 @@ export async function runVisualCheck({
     persistReceipt(outputs, receipt);
     return { exitCode: receipt.ok ? EXIT.pass : EXIT.fail, receipt };
   } catch (error) {
-    cleanupCaptureSidecars(outputs);
     receipt.status = 'fail';
     receipt.ok = false;
     receipt.error = error.message;
@@ -814,15 +907,15 @@ export async function runVisualCheck({
     receipt.captures.status = 'fail';
     receipt.captures.screenshots = [];
     receipt.captures.contactSheet = null;
-    receipt.diagnostics = [failureDiagnostic({
+    if (error.deliveryProvenance) receipt.provenance = error.deliveryProvenance.status;
+    receipt.diagnostics = error.archifyDiagnostics || [failureDiagnostic({
       code: 'viewer/visual-check-runtime',
       message: 'visual-check could not complete its Chrome inspection.',
       subject: { artifact },
       evidence: { reason: error.message },
       supportedFixes: ['resolve the reported Chrome inspection error, then rerun visual-check'],
     })];
-    persistReceipt(outputs, receipt);
-    return { exitCode: EXIT.fail, receipt };
+    return { exitCode: EXIT.fail, receipt: persistVisualCheckFailure(artifact, receipt, { outDir }) };
   } finally {
     if (browser?.close) await browser.close();
   }
