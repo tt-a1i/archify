@@ -3,34 +3,52 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import { parse } from 'parse5';
 
-const FONT_LICENSE = fs.readFileSync(new URL('../../assets/JetBrainsMono-OFL.txt', import.meta.url), 'utf8').trim();
+const FONT_LICENSES = {
+  'JetBrains Mono': fs.readFileSync(new URL('../../assets/JetBrainsMono-OFL.txt', import.meta.url), 'utf8').trim(),
+  D2Coding: fs.readFileSync(new URL('../../assets/D2Coding-OFL.txt', import.meta.url), 'utf8').trim(),
+  Pretendard: fs.readFileSync(new URL('../../assets/Pretendard-OFL.txt', import.meta.url), 'utf8').trim(),
+};
 
-// Pinned Google Fonts v24 bytes and coverage, independent of CSS formatting.
+// Pinned bytes and coverage, independent of CSS formatting: [family, weight, sha256, unicode-range].
+// JetBrains Mono: Google Fonts service revision v24 variable subsets.
+// D2Coding / Pretendard: pyftsubset builds carrying the same glyph set (Hangul, Latin,
+// common punctuation) as the JetBrains Mono blocks — see viewer/template.source.html.
 const EXPECTED_FACES = [
-  ['9343de2ca5d9549f792e7962375af8efb0f320c7643bfd36c884b5a30e5c396f', 'U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F'],
-  ['4995a9a43ac659ec32fcd8b463755cd6a07b31a6e6b3894a6a153b661cf490e2', 'U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116'],
-  ['49c3da6c9a2b279b0f1f860f5cfb1f5dc38d88a5c7be9c9b1837bbc4e3db6111', 'U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF'],
-  ['d44eb1936043a56038eb02dd70b243f379bef65783f94ec12f277550720411f1', 'U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB'],
-  ['9c38cb2d0d2d93c1ee6e21fa78db76f13ea7e15e15cc64214c7ca89b6aaa35c4', 'U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF'],
-  ['2c32b9b3ee358c119e210f6f5195f9bd34894d78a785ff2e95d60e718e400af4', 'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD'],
-].sort(([a], [b]) => a.localeCompare(b));
+  ['JetBrains Mono', '400 800', '9343de2ca5d9549f792e7962375af8efb0f320c7643bfd36c884b5a30e5c396f', 'U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F'],
+  ['JetBrains Mono', '400 800', '4995a9a43ac659ec32fcd8b463755cd6a07b31a6e6b3894a6a153b661cf490e2', 'U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116'],
+  ['JetBrains Mono', '400 800', '49c3da6c9a2b279b0f1f860f5cfb1f5dc38d88a5c7be9c9b1837bbc4e3db6111', 'U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF'],
+  ['JetBrains Mono', '400 800', 'd44eb1936043a56038eb02dd70b243f379bef65783f94ec12f277550720411f1', 'U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB'],
+  ['JetBrains Mono', '400 800', '9c38cb2d0d2d93c1ee6e21fa78db76f13ea7e15e15cc64214c7ca89b6aaa35c4', 'U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF'],
+  ['JetBrains Mono', '400 800', '2c32b9b3ee358c119e210f6f5195f9bd34894d78a785ff2e95d60e718e400af4', 'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD'],
+  ['D2Coding', '400', 'abe7254ca1a843dcd4b12661d9d04cbb2e0922dd3d08bcde22bb9081be052c3e', undefined],
+  ['D2Coding', '700', '2ef144a235ae33ed1878af919d5ac6b7170c75a186312997dd5f12df3cef5420', undefined],
+  ['Pretendard', '600', '4247dc5e260b92640c2cbd0e75091154647b71e1d5884116655e2903468c54cc', undefined],
+].sort(([, , a], [, , b]) => a.localeCompare(b));
 
 export function assertFontCss(css, subject) {
-  assert.ok(css.includes(FONT_LICENSE), `${subject}: missing standalone font license`);
   const clean = css.replace(/\/\*[\s\S]*?\*\//g, '');
   const faces = [...clean.matchAll(/@font-face\s*\{([^}]+)\}/gi)].map(([, block]) => {
     const descriptor = (name) => block.match(new RegExp(`\\b${name}\\s*:\\s*([^;]+)`, 'i'))?.[1].trim();
-    assert.equal(descriptor('font-family')?.replace(/["']/g, ''), 'JetBrains Mono', subject);
+    const family = descriptor('font-family')?.replace(/["']/g, '');
+    assert.ok(Object.hasOwn(FONT_LICENSES, family ?? ''), `${subject}: unrecognized font-family "${family}"`);
     assert.equal(descriptor('font-style'), 'normal', subject);
-    assert.equal(descriptor('font-weight')?.replace(/\s+/g, ' '), '400 800', subject);
     assert.doesNotMatch(block, /\blocal\s*\(/i, `${subject}: installed fonts must not override embedded bytes`);
     const encoded = block.match(/\bsrc\s*:\s*url\(\s*["']?data:font\/woff2;base64,([A-Za-z0-9+/=]+)["']?\s*\)/i)?.[1];
     assert.ok(encoded, `${subject}: missing embedded WOFF2 source`);
     const bytes = Buffer.from(encoded, 'base64');
     assert.equal(bytes.toString('latin1', 0, 4), 'wOF2', subject);
-    return [createHash('sha256').update(bytes).digest('hex'), descriptor('unicode-range')?.replace(/\s+/g, '').toUpperCase()];
-  }).sort(([a], [b]) => a.localeCompare(b));
+    return [
+      family,
+      descriptor('font-weight')?.replace(/\s+/g, ' '),
+      createHash('sha256').update(bytes).digest('hex'),
+      descriptor('unicode-range')?.replace(/\s+/g, '').toUpperCase(),
+    ];
+  }).sort(([, , a], [, , b]) => a.localeCompare(b));
   assert.deepEqual(faces, EXPECTED_FACES, `${subject}: font bytes or character coverage changed`);
+  const familiesPresent = new Set(faces.map(([family]) => family));
+  for (const family of familiesPresent) {
+    assert.ok(css.includes(FONT_LICENSES[family]), `${subject}: missing standalone ${family} font license`);
+  }
 }
 
 // Parse HTML instead of scanning script/comment strings. parse5 also decodes

@@ -61,12 +61,18 @@ function render(mode, doc) {
   return { code, stderr, html };
 }
 
+// Embedded font bytes (base64) can coincidentally contain the substrings
+// "NaN" or "undefined>" — strip them before scanning for real rendering bugs.
+function withoutFontData(html) {
+  return html.replace(/data:font\/[a-z0-9]+;base64,[A-Za-z0-9+/=]+/gi, '');
+}
+
 function assertFriendlyFailure(mode, doc, label) {
   const { code, stderr, html } = render(mode, doc);
   assert.notEqual(code, 0, `${label}: expected non-zero exit`);
   assert.doesNotMatch(stderr, /TypeError|RangeError|is not a function|Cannot read/,
     `${label}: crashed instead of reporting friendly error:\n${stderr}`);
-  assert.doesNotMatch(html, /NaN|undefined/, `${label}: wrote NaN/undefined into HTML`);
+  assert.doesNotMatch(withoutFontData(html), /NaN|undefined/, `${label}: wrote NaN/undefined into HTML`);
 }
 
 // ---- type-wrong-but-JSON-legal documents per mode ----
@@ -131,7 +137,7 @@ test('property: shuffling node/state order still renders (order-independence)', 
       }
       const { code, html } = render(mode, doc);
       assert.equal(code, 0, `${mode} seed ${seed}: valid shuffle should render (exit 0)`);
-      assert.doesNotMatch(html, /NaN|undefined>/, `${mode} seed ${seed}: NaN in output`);
+      assert.doesNotMatch(withoutFontData(html), /NaN|undefined>/, `${mode} seed ${seed}: NaN in output`);
     }
   }
 });

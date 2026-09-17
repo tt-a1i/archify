@@ -712,11 +712,18 @@ export function renderArchitectureDeltaHtml({ receipt, baseSvg, deltaSvg, headSv
     const targetSignature = expectedReviewTargetSignature(row);
     return `<li data-change-status="${esc(row.status)}"><button class="change-row" type="button" data-change-index="${index}" data-change-key="${esc(row.key)}" data-change-kind="${esc(row.kindKey)}" data-change-id="${esc(row.id)}" data-change-label="${esc(label)}" data-change-status="${esc(row.status)}" data-change-classifications="${esc(row.classifications.join(', '))}" data-change-target-signature="${esc(targetSignature)}"><span class="token">${esc(markerFor(row.status) || '~')}</span><span>${esc(row.kind)}</span><strong>${esc(label)}</strong><code>${esc(row.id)}</code><span>${esc(row.classifications.join(', '))}</span><span>${esc(row.changedFields.join(', ') || 'identity')}</span></button></li>`;
   }).join('\n') : '<li class="empty">No authored architecture changes.</li>';
+  // The trailing-whitespace cleanup below runs against the whole document, but
+  // srcdoc carries a complete nested HTML document verbatim (including embedded
+  // font CSS/licenses, which can legitimately end a line in a space). Protect
+  // the escaped nested documents behind placeholders and restore them after
+  // the cleanup so it only touches this delta shell's own markup.
+  const BASE_VIEW_PLACEHOLDER = ' ARCHIFY_DELTA_BASE_VIEW ';
+  const HEAD_VIEW_PLACEHOLDER = ' ARCHIFY_DELTA_HEAD_VIEW ';
   const baseView = baseHtml
-    ? `<iframe class="snapshot-frame" title="Before architecture explorer" srcdoc="${esc(baseHtml)}"></iframe>`
+    ? `<iframe class="snapshot-frame" title="Before architecture explorer" srcdoc="${BASE_VIEW_PLACEHOLDER}"></iframe>`
     : baseSvg;
   const headView = headHtml
-    ? `<iframe class="snapshot-frame" title="After architecture explorer" srcdoc="${esc(headHtml)}"></iframe>`
+    ? `<iframe class="snapshot-frame" title="After architecture explorer" srcdoc="${HEAD_VIEW_PLACEHOLDER}"></iframe>`
     : headSvg;
   const html = `<!doctype html>
 <html lang="en" data-theme="dark" data-preset="${esc(receipt.view.visualPreset)}">
@@ -1163,7 +1170,9 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     updateControls();
   }
 })();</script></body></html>`;
-  return html.replace(/[ \t]+$/gm, '');
+  return html.replace(/[ \t]+$/gm, '')
+    .replace(BASE_VIEW_PLACEHOLDER, () => esc(baseHtml))
+    .replace(HEAD_VIEW_PLACEHOLDER, () => esc(headHtml));
 }
 
 export function validateArchitectureDeltaHtml(html, receipt) {
