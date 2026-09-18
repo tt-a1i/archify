@@ -178,24 +178,29 @@ jobs:
         working-directory: archify
 
   windows-test-portability:
-    name: Windows test portability
+    name: Windows test portability (Node ${{ matrix.node-version }})
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
-          node-version: 22
+          node-version: ${{ matrix.node-version }}
       - name: Install test dependencies
         run: npm ci --ignore-scripts
         working-directory: archify
       - name: Verify Windows-sensitive regression fixtures
         run: >-
           node --test
-          --test-name-pattern="Git checkout preserves|clean staging preserves index modes|workflow migration cleanup failure|preview runs from an installed skill"
+          --test-name-pattern="Git checkout preserves|clean staging preserves index modes|workflow migration cleanup failure|preview runs from an installed skill|canonical watch target|Windows 8.3 short path"
           archify/test/checkout-line-endings.test.mjs
           archify/test/clean-skill-staging.test.mjs
           archify/test/workflow-migration.test.mjs
           archify/test/cli.test.mjs
+          archify/test/preview.test.mjs
 
   deploy-pages:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -16,6 +17,34 @@ const skillRoot = path.resolve(here, '..');
 
 function sha256(file) {
   return createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+}
+
+function windowsShortPath(targetPath) {
+  if (process.platform !== 'win32') return null;
+  const result = spawnSync(
+    process.env.ComSpec || 'cmd.exe',
+    ['/d', '/s', '/c', '"for %I in ("%ARCHIFY_SHORT_PATH_TARGET%") do @echo %~sI"'],
+    {
+      encoding: 'utf8',
+      env: { ...process.env, ARCHIFY_SHORT_PATH_TARGET: targetPath },
+      windowsHide: true,
+      // cmd.exe does not understand the CRT-style backslash escaping that
+      // Node otherwise applies to argv containing quotes.
+      windowsVerbatimArguments: true,
+    },
+  );
+  if (result.error) throw new Error(`Could not query a Windows 8.3 path: ${result.error.message}`);
+  if (result.status !== 0) {
+    const detail = result.stderr.trim() || 'no stderr';
+    throw new Error(`Could not query a Windows 8.3 path (exit ${result.status}): ${detail}`);
+  }
+  const shortPath = result.stdout.trim();
+  if (!shortPath) throw new Error('Windows returned an empty 8.3 path');
+  if (path.resolve(shortPath).toLowerCase() === path.resolve(targetPath).toLowerCase()) return null;
+  if (fs.realpathSync.native(shortPath).toLowerCase() !== fs.realpathSync.native(targetPath).toLowerCase()) {
+    throw new Error('Windows returned an 8.3 path for a different directory');
+  }
+  return shortPath;
 }
 
 async function stateAt(url) {
@@ -527,4 +556,132 @@ test('preview: polling continues after an asynchronous watcher error', { timeout
   }
   assert.equal(closeCount, 1, 'shutdown must not close the failed watcher again');
   await assert.rejects(fetch(preview.url));
+});
+
+test('preview: canonical watch target observes edits through a directory alias', { timeout: 30000 }, async (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-preview-watch-alias-'));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const realDirectory = path.join(tmp, 'real input directory');
+  const aliasDirectory = path.join(tmp, 'input-alias');
+  fs.mkdirSync(realDirectory);
+  fs.symlinkSync(realDirectory, aliasDirectory, process.platform === 'win32' ? 'junction' : 'dir');
+  const realInput = path.join(realDirectory, 'diagram.architecture.json');
+  const aliasedInput = path.join(aliasDirectory, 'diagram.architecture.json');
+  const output = path.join(tmp, 'diagram.html');
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+  source.meta.title = 'Watched through alias';
+  fs.writeFileSync(realInput, JSON.stringify(source));
+
+  const watch = fs.watch.bind(fs);
+  let watchedDirectory;
+  t.mock.method(fs, 'watch', (target, ...args) => {
+    watchedDirectory = target;
+    return watch(target, ...args);
+  });
+
+  const preview = await startPreview({
+    type: 'architecture',
+    input: aliasedInput,
+    output,
+    open: false,
+    debounceMs: 20,
+    pollMs: 60_000,
+  });
+  try {
+    assert.equal(watchedDirectory, fs.realpathSync.native(realDirectory));
+    await waitForState(preview.url, (state) => state.status === 'verified' && state.revision === 1, 'aliased input did not verify');
+    source.meta.title = 'Watcher observed canonical target';
+    fs.writeFileSync(realInput, JSON.stringify(source));
+    await waitForState(preview.url, (state) => state.status === 'verified' && state.revision === 2, 'watcher did not observe the edited canonical target');
+    const artifact = await (await fetch(new URL('/artifact.html', preview.url))).text();
+    assert.match(artifact, /Watcher observed canonical target/);
+  } finally {
+    await preview.stop();
+  }
+  await assert.rejects(fetch(preview.url));
+});
+
+test('preview: Windows 8.3 short path observes edits through the canonical watcher', { timeout: 30000 }, async (t) => {
+  if (process.platform !== 'win32') {
+    t.skip('Windows-only 8.3 path regression');
+    return;
+  }
+
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-preview-eight-dot-three-'));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const realDirectory = path.join(tmp, 'directory name requiring short alias');
+  fs.mkdirSync(realDirectory);
+  const shortDirectory = windowsShortPath(realDirectory);
+  if (!shortDirectory) {
+    t.skip('the Windows volume does not expose a distinct 8.3 short path');
+    return;
+  }
+
+  const realInput = path.join(realDirectory, 'diagram.architecture.json');
+  const shortInput = path.join(shortDirectory, 'diagram.architecture.json');
+  const output = path.join(tmp, 'diagram.html');
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+  source.meta.title = 'Watched through 8.3 path';
+  fs.writeFileSync(realInput, JSON.stringify(source));
+
+  const watch = fs.watch.bind(fs);
+  let watchedDirectory;
+  t.mock.method(fs, 'watch', (target, ...args) => {
+    watchedDirectory = target;
+    return watch(target, ...args);
+  });
+
+  const preview = await startPreview({
+    type: 'architecture',
+    input: shortInput,
+    output,
+    open: false,
+    debounceMs: 20,
+    pollMs: 60_000,
+  });
+  try {
+    assert.equal(watchedDirectory, fs.realpathSync.native(realDirectory));
+    await waitForState(preview.url, (state) => state.status === 'verified' && state.revision === 1, '8.3 input did not verify');
+    source.meta.title = 'Watcher observed 8.3 target';
+    fs.writeFileSync(realInput, JSON.stringify(source));
+    await waitForState(preview.url, (state) => state.status === 'verified' && state.revision === 2, 'watcher did not observe the edited 8.3 target');
+    const artifact = await (await fetch(new URL('/artifact.html', preview.url))).text();
+    assert.match(artifact, /Watcher observed 8\.3 target/);
+  } finally {
+    await preview.stop();
+  }
+  await assert.rejects(fetch(preview.url));
+});
+
+test('preview: native watch-target resolution failure closes startup resources', async (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-preview-watch-cleanup-'));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const input = path.join(tmp, 'diagram.architecture.json');
+  const output = path.join(tmp, 'diagram.html');
+  fs.copyFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), input);
+
+  const createServer = http.createServer.bind(http);
+  const realpathNative = fs.realpathSync.native.bind(fs.realpathSync);
+  let server;
+  t.mock.method(http, 'createServer', (...args) => {
+    server = createServer(...args);
+    return server;
+  });
+  t.mock.method(fs.realpathSync, 'native', (...args) => {
+    if (server?.listening) {
+      throw Object.assign(new Error('not a directory'), { code: 'ENOTDIR' });
+    }
+    return realpathNative(...args);
+  });
+
+  await assert.rejects(
+    startPreview({ type: 'architecture', input, output, open: false }),
+    /Could not watch the input directory: not a directory/,
+  );
+  assert.equal(server?.listening, false, 'failed startup left the preview server listening');
+  assert.deepEqual(
+    fs.readdirSync(tmp).filter((name) => name.startsWith('.archify-preview-')),
+    [],
+    'failed startup left its staging directory behind',
+  );
 });

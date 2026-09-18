@@ -588,8 +588,16 @@ export async function startPreview(options) {
 
   if (options.watch !== false) {
     try {
-      watcher = fs.watch(path.dirname(inputPath), (event, filename) => {
-        if (!filename || filename.toString() === path.basename(inputPath)) observeSource();
+      // `path.resolve` keeps Windows 8.3 names intact. Canonicalize short names
+      // and junctions before libuv opens the directory so its callback path has
+      // the same prefix as the watched path.
+      const watchedDirectory = fs.realpathSync.native(path.dirname(inputPath));
+      const inputBasename = path.basename(inputPath);
+      watcher = fs.watch(watchedDirectory, (event, filename) => {
+        // On Windows the watcher hands us just the basename; on POSIX it can be
+        // null. Accept either empty signals or a basename match so editors that
+        // swap a file atomically (write to temp + rename) still trigger us.
+        if (!filename || filename.toString() === inputBasename) observeSource();
       });
       watcher.on('error', () => {
         const failedWatcher = watcher;
