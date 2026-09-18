@@ -53,7 +53,8 @@
             "classic",
             "signal-flow",
             "blueprint",
-            "editorial"
+            "editorial",
+            "salesforce"
           ]
         },
         "quality_profile": {
