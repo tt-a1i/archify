@@ -19,6 +19,7 @@ import {
   validateReleaseNotesUrl,
   validateStableUpdateManifest,
 } from './update-contract.mjs';
+import { sameEntry } from '../renderers/shared/path-semantics.mjs';
 
 const OPERATION_STATE_FILE = 'state.json';
 const OPERATION_OWNER_FILE = 'owner.json';
@@ -249,7 +250,28 @@ async function readJsonFile(target, maxBytes, expectedMetadata = null) {
 function isWithinDirectory(directory, target) {
   const relative = path.relative(directory, target);
   return relative === ''
+    // path-contract-allow: lexical-capability -- No-follow snapshots bind this mutation boundary.
     || (!path.isAbsolute(relative) && relative !== '..' && !relative.startsWith(`..${path.sep}`));
+}
+
+async function physicalDirectorySuffix(directory, target) {
+  const absoluteTarget = path.resolve(target);
+  const parsed = path.parse(absoluteTarget);
+  const segments = absoluteTarget.slice(parsed.root.length).split(path.sep).filter(Boolean);
+  let prefix = parsed.root;
+  for (let index = 0; index < segments.length; index += 1) {
+    prefix = path.join(prefix, segments[index]);
+    const relation = sameEntry(directory, prefix);
+    if (relation.status === 'match') {
+      const metadata = await fs.lstat(prefix, { bigint: true });
+      if (metadata.isSymbolicLink()) {
+        throw new Error(`trusted cache prefix is a symbolic link or junction: ${prefix}`);
+      }
+      return segments.slice(index + 1);
+    }
+    if (relation.status === 'unknown' && relation.reason.code === 'entry-missing') break;
+  }
+  return null;
 }
 
 async function canonicalizeTrustedDirectoryPrefix(target) {
@@ -258,10 +280,11 @@ async function canonicalizeTrustedDirectoryPrefix(target) {
     path.resolve(directory)
   )))].sort((left, right) => right.length - left.length);
   for (const trustedDirectory of trustedDirectories) {
-    if (!isWithinDirectory(trustedDirectory, absoluteTarget)) continue;
+    const suffix = await physicalDirectorySuffix(trustedDirectory, absoluteTarget);
+    if (suffix === null) continue;
     try {
       const canonicalDirectory = await fs.realpath(trustedDirectory);
-      return path.resolve(canonicalDirectory, path.relative(trustedDirectory, absoluteTarget));
+      return path.resolve(canonicalDirectory, ...suffix);
     } catch {
       // Fall back to validating the absolute path from its filesystem root.
     }
@@ -331,7 +354,11 @@ function cacheTokenFor(cacheDirectory) {
 
 function resolveCacheTarget(token, target) {
   const resolved = path.resolve(target);
-  if (resolved === token.directory || !isWithinDirectory(token.directory, resolved)) {
+  const relative = path.relative(token.directory, resolved);
+  // This is a lexical capability check, not a physical-containment query. The
+  // async lstat snapshots below bind the prepared directory and every mutation
+  // parent across awaits; following a link here would weaken that no-link rule.
+  if (relative === '' || !isWithinDirectory(token.directory, resolved)) {
     throw invalidateCacheToken(token, 'cache mutation escaped its prepared directory');
   }
   return resolved;
@@ -1643,20 +1670,19 @@ async function runCli() {
   return silent('invalid-arguments');
 }
 
-async function isMainModule() {
-  if (!process.argv[1]) return false;
+export function isMainModule({
+  argvPath = process.argv[1],
+  modulePath = fileURLToPath(import.meta.url),
+} = {}) {
+  if (!argvPath) return false;
   try {
-    const [entryPath, modulePath] = await Promise.all([
-      fs.realpath(path.resolve(process.argv[1])),
-      fs.realpath(fileURLToPath(import.meta.url)),
-    ]);
-    return entryPath === modulePath;
+    return sameEntry(argvPath, modulePath).status === 'match';
   } catch {
-    return path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+    return false;
   }
 }
 
-if (await isMainModule()) {
+if (isMainModule()) {
   let result;
   try {
     result = await runCli();

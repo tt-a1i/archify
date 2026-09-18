@@ -38,7 +38,7 @@ test('all packaged HTML examples pass the real visual-check desktop gate', {
 const issue250TallGroup = {
   schema_version: 2,
   diagram_type: 'workflow',
-  meta: { title: 'Issue 250 stacked stages' },
+  meta: { title: 'Issue 250 stacked stages', output: 'issue-250.html' },
   lanes: [{ id: 'cage', label: 'One cage' }],
   groups: [{
     id: 'group', label: 'Cage', lane: 'cage', fromCol: 1, toCol: 3, variant: 'security',
@@ -61,7 +61,7 @@ const issue250TallGroup = {
 
 const issue250FiveStageGroup = {
   ...issue250TallGroup,
-  meta: { title: 'Issue 250 five stacked stages' },
+  meta: { title: 'Issue 250 five stacked stages', output: 'issue-250-five-stage.html' },
   mainPath: ['stageA', 'stageB', 'stageC', 'stageD', 'stageE'],
   nodes: [
     { id: 'stageA', lane: 'cage', col: 2, type: 'security', label: 'stageA', yOffset: -300 },
@@ -130,9 +130,11 @@ test('offline intrinsic workflows fit while authored overflow still identifies l
   const repaired = JSON.parse(fs.readFileSync(path.join(fixtureRoot, 'order-reflow.workflow.json'), 'utf8'));
   const meaning = ({ lane, col, yOffset, ...node }) => node;
   assert.deepEqual(failed.nodes.map(meaning), repaired.nodes.map(meaning));
-  for (const key of ['edges', 'semanticChecks', 'mainPath', 'cards', 'phases', 'meta']) {
+  for (const key of ['edges', 'semanticChecks', 'mainPath', 'cards', 'phases']) {
     assert.deepEqual(repaired[key], failed[key], key);
   }
+  // Each fixture publishes to its own file; all authored metadata stays the same.
+  assert.deepEqual({ ...repaired.meta, output: failed.meta.output }, failed.meta);
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-workflow-viewport-'));
   try {
     for (const name of ['order-overflow', 'order-reflow', 'order-pinned-overflow']) {

@@ -14,7 +14,11 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-vertical-edge-'));
 const REPRO = {
   schema_version: 1,
   diagram_type: 'dataflow',
-  meta: { title: 'Vertical edge arrowhead repro', quality_profile: 'showcase' },
+  meta: {
+    title: 'Vertical edge arrowhead repro',
+    output: 'vertical-edge-arrowhead.html',
+    quality_profile: 'showcase',
+  },
   stages: [{ label: 'Parse' }, { label: 'Store' }],
   nodes: [
     { id: 'extract', type: 'backend', label: 'Extract', stage: 0, row: 0 },

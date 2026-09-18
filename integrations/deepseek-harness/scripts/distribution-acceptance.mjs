@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { containedBy, sameEntry } from '../../../archify/renderers/shared/path-semantics.mjs';
 import { spawnCli, spawnCliSync } from './resolve-cli.mjs';
 import { runWithTransientNetworkRetry } from './transient-retry.mjs';
 import { adapterCommit, manifest, release, releaseSnapshot } from './release-source.mjs';
@@ -178,14 +179,18 @@ requireStatus('tarball-inspect', run('tar', ['-xzf', path.basename(tarball), '-C
 const packedPkg = JSON.parse(fs.readFileSync(path.join(inspectRoot, 'package', 'package.json'), 'utf8'));
 const packedFiles = listRelativeFiles(path.join(inspectRoot, 'package'));
 const forbidden = packedFiles.filter((file) => (
+  // path-contract-allow: portable-logical-path -- npm tar entries use normalized slash-separated names.
   file.startsWith('test/')
-  || file.includes('node_modules/')
-  || file.includes('package-lock.json')
-  || file.includes('.hive')
-  || file.includes('.workbuddy')
-  || file.includes('probe-skills')
-  || file.includes('generate-brand-marks.mjs')
-  || file.includes('generate-validators.mjs')
+  || [
+    'node_modules/',
+    'package-lock.json',
+    '.hive',
+    '.workbuddy',
+    'probe-skills',
+    'generate-brand-marks.mjs',
+    'generate-validators.mjs',
+  // path-contract-allow: portable-logical-path -- Each fragment is matched inside an npm tar entry name.
+  ].some((fragment) => file.includes(fragment))
 ));
 if (packedPkg.name !== PACKAGE_NAME || packedPkg.version !== PACKAGE_VERSION || forbidden.length > 0) {
   fail('tarball-inspect', 'packed identity or exclusions failed', { forbidden, packedPkg });
@@ -354,15 +359,19 @@ try {
 } catch (error) {
   fail('resource-base', `cannot realpath installed Skill root: ${error.message}`, { resourcePath, installedPackage });
 }
-const resourceRelative = path.relative(packageReal, resourceReal);
-const resourceInsidePackage = resourceRelative
-  && !resourceRelative.startsWith(`..${path.sep}`)
-  && resourceRelative !== '..'
-  && !path.isAbsolute(resourceRelative);
-if (!resourceInsidePackage || !resourceReal.includes(`${path.sep}skills${path.sep}archify`)) {
+const resourceContainment = containedBy(packageReal, resourceReal);
+const expectedResourceRoots = [
+  path.join(packageReal, 'skills'),
+  path.join(packageReal, 'skills', 'archify'),
+];
+const expectedResource = expectedResourceRoots.some((candidate) => (
+  fs.existsSync(candidate) && sameEntry(candidate, resourceReal).status === 'match'
+));
+if (resourceContainment.status !== 'match' || !expectedResource) {
   fail('resource-base', 'Skill resource base is not inside the installed tarball package', {
     resourcePath: resourceReal,
     installedPackage: packageReal,
+    relation: resourceContainment,
   });
 }
 pass('resource-base', { resourcePath: resourceReal });

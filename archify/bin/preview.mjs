@@ -7,6 +7,16 @@ import { fileURLToPath } from 'node:url';
 
 import { openLoopbackUrl } from './open-artifact.mjs';
 import { resolveOutputPath } from '../renderers/shared/output-path.mjs';
+import { sameLocation } from '../renderers/shared/path-semantics.mjs';
+import {
+  captureAtomicOutput,
+  captureRegularFileBinding,
+  publishRegularFileBinding,
+  releaseRegularFileBinding,
+  removeEmptyDirectoryWithRetry,
+  removeOwnedRegularFile,
+  verifyAtomicOutput,
+} from '../renderers/shared/atomic-output.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const cliPath = path.join(here, 'archify.mjs');
@@ -16,6 +26,7 @@ const defaultPollMs = 800;
 const defaultStopGraceMs = 3000;
 const defaultStopKillMs = 750;
 const diagramTypes = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
+let previewCommitSequence = 0;
 
 function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
@@ -33,7 +44,7 @@ function sourceDigest(inputPath) {
 function initialAuthoredOutput(inputPath) {
   try {
     const source = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
-    if (typeof source?.meta?.output === 'string' && source.meta.output) {
+    if (typeof source?.meta?.output === 'string') {
       return source.meta.output;
     }
   } catch {
@@ -178,6 +189,161 @@ function parseReceipt(stdout) {
   }
 }
 
+function atomicOutputFailure(result) {
+  const code = result?.reason?.code || 'unclassified';
+  let diagnosticCode = 'output/target-indeterminate';
+  let message;
+  if (code === 'target-hardlinked' || code === 'candidate-hardlinked') {
+    diagnosticCode = 'output/target-hardlinked';
+    message = code === 'candidate-hardlinked'
+      ? 'Preview commit candidate has multiple hard-link names and cannot be published safely.'
+      : 'Preview output has multiple hard-link names; atomic publication cannot update every name.';
+  } else if (code === 'target-not-regular-file' || code === 'candidate-not-regular-file') {
+    diagnosticCode = 'output/target-not-regular-file';
+    message = code === 'candidate-not-regular-file'
+      ? 'Preview commit candidate is no longer a regular file.'
+      : 'Preview output already exists and is not a regular file.';
+  } else if (result?.status === 'different') {
+    diagnosticCode = 'output/target-changed';
+    message = `Preview output changed while the verified candidate was being prepared (${code}).`;
+  } else {
+    message = `Preview output stability could not be determined safely (${code}).`;
+  }
+  return {
+    code: diagnosticCode,
+    message,
+    evidence: { relation: result?.reason || { code } },
+  };
+}
+
+function atomicOutputError(result) {
+  const failure = atomicOutputFailure(result);
+  return Object.assign(new Error(failure.message), { previewFailure: failure });
+}
+
+function stagePreviewCommit(commitPath, artifact, mode) {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    previewCommitSequence += 1;
+    const candidatePath = path.join(
+      path.dirname(commitPath),
+      `.archify-preview-commit-${process.pid}-${Date.now().toString(36)}-${previewCommitSequence}.tmp`,
+    );
+    let descriptor;
+    let identity;
+    try {
+      const noFollow = process.platform === 'win32' ? 0 : (fs.constants.O_NOFOLLOW || 0);
+      descriptor = fs.openSync(
+        candidatePath,
+        fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | noFollow,
+        mode ?? 0o666,
+      );
+      let metadata;
+      try {
+        metadata = fs.fstatSync(descriptor, { bigint: true });
+      } catch (error) {
+        try {
+          const retry = fs.fstatSync(descriptor, { bigint: true });
+          if (retry.isFile() && retry.ino !== 0n) {
+            identity = { device: retry.dev, inode: retry.ino };
+          }
+        } catch {}
+        throw error;
+      }
+      if (!metadata.isFile() || metadata.ino === 0n) {
+        throw new Error('Preview commit candidate identity could not be verified safely.');
+      }
+      identity = { device: metadata.dev, inode: metadata.ino };
+      fs.writeFileSync(descriptor, artifact);
+      if (mode !== null) fs.fchmodSync(descriptor, mode);
+      fs.closeSync(descriptor);
+      descriptor = undefined;
+      return { candidatePath, identity };
+    } catch (error) {
+      if (descriptor !== undefined) {
+        try { fs.closeSync(descriptor); } catch {}
+      }
+      if (error.code === 'EEXIST') continue;
+      if (identity) removeOwnedRegularFile(candidatePath, identity);
+      throw error;
+    }
+  }
+  throw Object.assign(new Error('Could not reserve a preview commit candidate beside the output.'), {
+    code: 'EEXIST',
+    errno: -17,
+    syscall: 'open',
+  });
+}
+
+function captureOwnedDirectory(directoryPath) {
+  const metadata = fs.lstatSync(directoryPath, { bigint: true });
+  if (!metadata.isDirectory() || metadata.ino === 0n) {
+    throw new Error('Preview staging directory identity could not be verified safely.');
+  }
+  return { device: metadata.dev, inode: metadata.ino };
+}
+
+function cleanupOwnedDirectory(directoryPath, identity) {
+  let current;
+  try {
+    current = fs.lstatSync(directoryPath, { bigint: true });
+  } catch (error) {
+    if (error?.code === 'ENOENT' || error?.code === 'ENOTDIR') return;
+    throw error;
+  }
+  // Preserve a replacement rather than recursively deleting a directory that
+  // this preview instance did not create.
+  if (!current.isDirectory()
+    || current.ino === 0n
+    || current.dev !== identity.device
+    || current.ino !== identity.inode) return;
+  try {
+    removeEmptyDirectoryWithRetry(directoryPath);
+  } catch (error) {
+    // An entry whose identity was never bound to this preview may be an
+    // external claimant. Preserve the private directory as recovery material
+    // instead of recursively deleting unknown contents.
+    if (error?.code !== 'ENOTEMPTY' && error?.code !== 'EEXIST') throw error;
+  }
+}
+
+function captureOwnedDeliverySidecars(candidatePath, snapshotPath, receipt) {
+  const suffixes = ['.delivery.json', '.delivery-pending.json'];
+  const capturedSidecars = [];
+  for (const suffix of suffixes) {
+    const sidecarPath = candidatePath.replace(/\.html$/iu, suffix);
+    const captured = captureRegularFileBinding(sidecarPath, {
+      subject: 'preview-delivery-sidecar',
+      expectedLinks: 1,
+      includeContent: true,
+    });
+    if (captured.status !== 'captured') continue;
+    try {
+      const sidecar = JSON.parse(captured.content.buffer.toString('utf8'));
+      const commonMatches = sidecar?.schemaVersion === 1
+        && sidecar.command === 'deliver'
+        && sameLocation(sidecar.output, candidatePath).status === 'match'
+        && (!receipt?.receiptId || sidecar.receiptId === receipt.receiptId);
+      const currentMatches = suffix === '.delivery.json'
+        && commonMatches
+        && sidecar.status === 'current'
+        && receipt?.artifact?.sha256
+        && sidecar.artifact?.sha256 === receipt.artifact.sha256;
+      const pendingMatches = suffix === '.delivery-pending.json'
+        && commonMatches
+        && sidecar.status === 'pending'
+        && sameLocation(sidecar.input, snapshotPath).status === 'match';
+      if (currentMatches || pendingMatches) {
+        capturedSidecars.push({ path: sidecarPath, identity: captured.identity });
+      }
+    } catch {
+      // Preserve malformed or claimant-controlled sidecars for recovery.
+    } finally {
+      releaseRegularFileBinding(captured.binding);
+    }
+  }
+  return capturedSidecars;
+}
+
 export async function startPreview(options) {
   const type = options.type;
   if (!diagramTypes.has(type)) throw new Error(`Unknown diagram type "${type}".`);
@@ -202,7 +368,20 @@ export async function startPreview(options) {
   const shouldOpen = options.open !== false;
 
   fs.mkdirSync(outputDirectory, { recursive: true });
-  const stagingDirectory = fs.mkdtempSync(path.join(outputDirectory, '.archify-preview-'));
+  // Keep cleanup bound to the physical directory selected at startup. A
+  // symlink or junction in the requested output parent may be redirected while
+  // preview is running and must not redirect recursive cleanup to a claimant.
+  const physicalOutputDirectory = fs.realpathSync.native(outputDirectory);
+  const stagingDirectory = fs.mkdtempSync(path.toNamespacedPath(
+    path.join(physicalOutputDirectory, '.archify-preview-'),
+  ));
+  let stagingIdentity;
+  try {
+    stagingIdentity = captureOwnedDirectory(stagingDirectory);
+  } catch (error) {
+    try { fs.rmdirSync(stagingDirectory); } catch {}
+    throw error;
+  }
 
   let port = 0;
   let watcher;
@@ -325,7 +504,7 @@ export async function startPreview(options) {
     });
   } catch (error) {
     try { server.close(); } catch {}
-    fs.rmSync(stagingDirectory, { recursive: true, force: true });
+    cleanupOwnedDirectory(stagingDirectory, stagingIdentity);
     throw error;
   }
 
@@ -339,7 +518,7 @@ export async function startPreview(options) {
     clearTimeout(stopGraceTimer);
     clearTimeout(stopKillTimer);
     try {
-      fs.rmSync(stagingDirectory, { recursive: true, force: true });
+      cleanupOwnedDirectory(stagingDirectory, stagingIdentity);
     } finally {
       resolveClosed();
     }
@@ -422,6 +601,8 @@ export async function startPreview(options) {
     state.status = 'needs-fix';
     state.failure = {
       stage: receipt?.stage || 'render',
+      ...(receipt?.code ? { code: receipt.code } : {}),
+      ...(receipt?.evidence ? { evidence: receipt.evidence } : {}),
       message: redactDiagnostic(
         diagnostic,
         [
@@ -439,25 +620,69 @@ export async function startPreview(options) {
     broadcast();
   }
 
-  function commitCandidate(candidatePath, receipt, generationHash) {
+  function commitCandidate(candidatePath, receipt, generationHash, outputCapture) {
     let candidate;
+    let sourceCandidateBinding;
+    let sourceCandidateIdentity;
+    let commitCandidatePath;
+    let commitCandidateIdentity;
+    let commitCandidateBinding;
     try {
-      candidate = fs.readFileSync(candidatePath);
-      const digest = sha256(candidate);
-      if (digest !== receipt?.artifact?.sha256) {
-        throw new Error('Verified candidate bytes do not match the delivery receipt.');
-      }
+      const sourceCapture = captureRegularFileBinding(candidatePath, {
+        subject: 'candidate',
+        expectedSha256: receipt?.artifact?.sha256,
+        expectedBytes: receipt?.artifact?.bytes,
+        includeContent: true,
+      });
+      if (sourceCapture.status !== 'captured') throw atomicOutputError(sourceCapture);
+      sourceCandidateBinding = sourceCapture.binding;
+      sourceCandidateIdentity = sourceCapture.identity;
+      candidate = sourceCapture.content.buffer;
+      const digest = sourceCapture.content.sha256;
+      const releasedSource = releaseRegularFileBinding(sourceCandidateBinding);
+      sourceCandidateBinding = undefined;
+      if (releasedSource.status !== 'released') throw atomicOutputError(releasedSource);
       resolveOutputPath(outputRequest);
       const sameArtifact = state.lastVerified?.sha256 === digest;
-      let outputMatches = false;
-      if (sameArtifact) {
-        try { outputMatches = sha256(fs.readFileSync(outputPath)) === digest; } catch {}
-      }
       const currentSource = sourceDigest(inputPath);
       if (currentSource.hash !== generationHash) {
-        return { committed: false, supersededBy: currentSource };
+        return {
+          committed: false,
+          supersededBy: currentSource,
+          candidateIdentity: sourceCandidateIdentity,
+        };
       }
-      if (!sameArtifact || !outputMatches) fs.renameSync(candidatePath, outputPath);
+      const beforeStage = verifyAtomicOutput(outputCapture.snapshot);
+      if (beforeStage.status !== 'match') throw atomicOutputError(beforeStage);
+      ({
+        candidatePath: commitCandidatePath,
+        identity: commitCandidateIdentity,
+      } = stagePreviewCommit(outputCapture.commitPath, candidate, outputCapture.mode));
+      const candidateCapture = captureRegularFileBinding(commitCandidatePath, {
+        subject: 'candidate',
+        expectedSha256: digest,
+        expectedBytes: candidate.byteLength,
+        expectedIdentity: commitCandidateIdentity,
+        ...(outputCapture.mode === null ? {} : { expectedMode: outputCapture.mode }),
+      });
+      if (candidateCapture.status !== 'captured') throw atomicOutputError(candidateCapture);
+      commitCandidateBinding = candidateCapture.binding;
+      const beforeCommit = verifyAtomicOutput(outputCapture.snapshot);
+      if (beforeCommit.status !== 'match') throw atomicOutputError(beforeCommit);
+      const publication = publishRegularFileBinding(
+        commitCandidateBinding,
+        commitCandidatePath,
+        outputCapture.snapshot,
+        { subject: 'candidate' },
+      );
+      if (!['committed', 'committed-with-warning'].includes(publication.status)) {
+        throw atomicOutputError(publication);
+      }
+      const releasedCandidate = releaseRegularFileBinding(commitCandidateBinding);
+      commitCandidateBinding = undefined;
+      if (releasedCandidate.status !== 'released') throw atomicOutputError(releasedCandidate);
+      commitCandidatePath = undefined;
+      commitCandidateIdentity = undefined;
       artifactBuffer = candidate;
       lastGoodSourceHash = generationHash;
       state.status = 'verified';
@@ -474,10 +699,20 @@ export async function startPreview(options) {
       }
       state.failure = null;
       broadcast();
-      return { committed: true, supersededBy: null };
+      return { committed: true, supersededBy: null, candidateIdentity: sourceCandidateIdentity };
     } catch (error) {
-      publishFailure({ stage: 'commit', error: `Could not publish the verified preview: ${error.message}` }, '', '', candidatePath);
-      return { committed: false, supersededBy: null };
+      publishFailure({
+        stage: 'commit',
+        error: `Could not publish the verified preview: ${error.message}`,
+        ...(error.previewFailure || {}),
+      }, '', '', candidatePath);
+      return { committed: false, supersededBy: null, candidateIdentity: sourceCandidateIdentity };
+    } finally {
+      if (sourceCandidateBinding) releaseRegularFileBinding(sourceCandidateBinding);
+      if (commitCandidateBinding) releaseRegularFileBinding(commitCandidateBinding);
+      if (commitCandidatePath && commitCandidateIdentity) {
+        removeOwnedRegularFile(commitCandidatePath, commitCandidateIdentity);
+      }
     }
   }
 
@@ -492,9 +727,38 @@ export async function startPreview(options) {
 
     const candidatePath = path.join(stagingDirectory, `generation-${state.generation}.html`);
     const snapshotPath = path.join(stagingDirectory, `generation-${state.generation}.json`);
+    let snapshotIdentity;
+    const outputCapture = captureAtomicOutput(outputPath);
+    if (outputCapture.status !== 'captured') {
+      const failure = atomicOutputFailure(outputCapture);
+      publishFailure(
+        { stage: 'prepare', error: failure.message, ...failure },
+        '',
+        '',
+        candidatePath,
+        snapshotPath,
+      );
+      return;
+    }
+    const beforeBuild = verifyAtomicOutput(outputCapture.snapshot);
+    if (beforeBuild.status !== 'match') {
+      const failure = atomicOutputFailure(beforeBuild);
+      publishFailure(
+        { stage: 'prepare', error: failure.message, ...failure },
+        '',
+        '',
+        candidatePath,
+        snapshotPath,
+      );
+      return;
+    }
     if (digest.bytes !== null) {
       try {
         fs.writeFileSync(snapshotPath, digest.bytes, { flag: 'wx', mode: 0o600 });
+        const metadata = fs.lstatSync(snapshotPath, { bigint: true });
+        if (metadata.isFile() && metadata.ino !== 0n) {
+          snapshotIdentity = { device: metadata.dev, inode: metadata.ino };
+        }
       } catch (error) {
         publishFailure(
           { stage: 'prepare', error: `Could not snapshot the observed input: ${error.message}` },
@@ -528,18 +792,44 @@ export async function startPreview(options) {
       const generationHash = activeHash;
       const stale = generationEpoch !== sourceEpoch;
       let supersededBy = null;
+      let candidateIdentity;
+      const deliverySidecars = captureOwnedDeliverySidecars(
+        candidatePath,
+        snapshotPath,
+        receipt,
+      );
       child = null;
       clearTimeout(stopGraceTimer);
       clearTimeout(stopKillTimer);
       stopGraceTimer = undefined;
       stopKillTimer = undefined;
       if (!stopping && !stale && code === 0 && receipt?.ok) {
-        ({ supersededBy } = commitCandidate(candidatePath, receipt, generationHash));
+        ({ supersededBy, candidateIdentity } = commitCandidate(
+          candidatePath,
+          receipt,
+          generationHash,
+          outputCapture,
+        ));
+      } else if (code === 0 && receipt?.ok) {
+        const abandonedCandidate = captureRegularFileBinding(candidatePath, {
+          subject: 'abandoned-preview-candidate',
+          expectedSha256: receipt.artifact?.sha256,
+          expectedBytes: receipt.artifact?.bytes,
+        });
+        if (abandonedCandidate.status === 'captured') {
+          candidateIdentity = abandonedCandidate.identity;
+          releaseRegularFileBinding(abandonedCandidate.binding);
+        }
       } else if (!stopping && !stale) {
         publishFailure(receipt, stdout, stderr, candidatePath, snapshotPath);
       }
-      try { fs.rmSync(candidatePath, { force: true }); } catch {}
-      try { fs.rmSync(snapshotPath, { force: true }); } catch {}
+      if (candidateIdentity) removeOwnedRegularFile(candidatePath, candidateIdentity);
+      if (snapshotIdentity) removeOwnedRegularFile(snapshotPath, snapshotIdentity, { subject: 'snapshot' });
+      for (const deliverySidecar of deliverySidecars) {
+        removeOwnedRegularFile(deliverySidecar.path, deliverySidecar.identity, {
+          subject: 'preview-delivery-sidecar',
+        });
+      }
 
       if (stopping) {
         finishStop();
@@ -592,12 +882,16 @@ export async function startPreview(options) {
       // and junctions before libuv opens the directory so its callback path has
       // the same prefix as the watched path.
       const watchedDirectory = fs.realpathSync.native(path.dirname(inputPath));
-      const inputBasename = path.basename(inputPath);
       watcher = fs.watch(watchedDirectory, (event, filename) => {
         // On Windows the watcher hands us just the basename; on POSIX it can be
-        // null. Accept either empty signals or a basename match so editors that
-        // swap a file atomically (write to temp + rename) still trigger us.
-        if (!filename || filename.toString() === inputBasename) observeSource();
+        // null. Resolve named events against the directory libuv actually opened
+        // so file-level case, 8.3, and hard-link aliases still identify the input.
+        if (
+          !filename
+          || sameLocation(path.join(watchedDirectory, filename.toString()), inputPath).status === 'match'
+        ) {
+          observeSource();
+        }
       });
       watcher.on('error', () => {
         const failedWatcher = watcher;

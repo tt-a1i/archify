@@ -3,6 +3,7 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "Sanitized custom widths",
+    "output": "issue-126-custom-widths.html",
     "legend": { "mode": "hidden" }
   },
   "lanes": [

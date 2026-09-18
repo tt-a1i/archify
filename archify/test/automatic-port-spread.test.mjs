@@ -13,7 +13,9 @@ function render(mode, doc) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-port-spread-'));
   const input = path.join(tmp, 'input.json');
   const output = path.join(tmp, 'output.html');
-  fs.writeFileSync(input, JSON.stringify(doc));
+  const renderDoc = structuredClone(doc);
+  renderDoc.meta = { ...renderDoc.meta, output: `${mode}-automatic-port-spread.html` };
+  fs.writeFileSync(input, JSON.stringify(renderDoc));
   try {
     execFileSync('node', [
       path.join(skillRoot, `renderers/${mode}/render-${mode}.mjs`),

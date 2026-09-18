@@ -9,6 +9,7 @@ function document(semanticChecks) {
     diagram_type: 'workflow',
     meta: {
       title: 'Workflow semantic contract fixture',
+      output: 'workflow-semantic-contract.html',
       legend: { mode: 'hidden' },
     },
     lanes: [

@@ -3,6 +3,7 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "Sanitized explicit viewBox",
+    "output": "issue-126-explicit-viewbox.html",
     "viewBox": [1600, 520],
     "legend": { "mode": "hidden" }
   },

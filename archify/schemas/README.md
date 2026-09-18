@@ -15,7 +15,7 @@ against one of the schemas in this folder before any layout work happens.
 | `common.schema.json` | shared `$defs` only (no top-level document) | — |
 
 Every diagram schema requires `schema_version`, `diagram_type`, `meta` (with
-`title`), and its structural arrays — except `segments`, `activations`, and
+`title` and a durable portable `output`), and its structural arrays — except `segments`, `activations`, and
 `cards`, which are optional — and sets `additionalProperties: false` at every
 level, so unknown fields are rejected rather than silently ignored.
 
@@ -124,7 +124,11 @@ workflow behavior and including a satisfied contract does not change SVG or
 layout-receipt bytes.
 
 A file that validates today must keep validating and rendering within its
-declared version throughout the 2.x release line. Additive viewer,
+declared version throughout the 2.x release line. The explicitly reviewed
+portable-output hardening is the one exception: older v1 documents that omit
+`meta.output` must add a portable POSIX-relative `.html` path (for example,
+`reports/diagram.html`); an explicit CLI output argument does not replace this
+durable authored value. Additive viewer,
 accessibility, and presentation improvements may enhance generated HTML, but
 they must not reinterpret authored IR or turn a previously valid profile-less
 v1 file into a new hard layout failure. Breaking IR changes require a new
@@ -139,6 +143,9 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
 - `componentType` — `frontend`, `backend`, `database`, `cloud`, `security`,
   `messagebus`, `external`
 - `locale` — the bounded renderer locale, `en`, `zh-CN`, or `es`
+- `portableOutputPath` — the portable POSIX-relative `.html` path used by
+  `meta.output`; see the two output-path boundaries in the
+  [delivery contract](../references/delivery-contract.md#output-path-contracts)
 - `brandMark` — one optional built-in brand ID or explicit HTTP(S) site URL
 - `variant` — `default`, `emphasis`, `security`, `dashed` (sequence messages
   extend this list locally with `return`)
@@ -149,6 +156,11 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
 
 Lifecycle state `type` is mode-specific (`start`/`active`/`waiting`/...) and
 stays in `lifecycle.schema.json`.
+
+The JSON Schema definition is the portable contract's structurally expressible
+preflight. The shipped generated validator wrapper and CLI additionally enforce
+byte-based component limits and the complete runtime path contract; consumers
+that need the same cross-platform acceptance boundary should use that wrapper.
 
 ## Runtime validation
 

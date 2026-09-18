@@ -3,6 +3,7 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "Legacy narrow workflow",
+    "output": "v1-workflow-700x400.html",
     "viewBox": [700, 400]
   },
   "lanes": [

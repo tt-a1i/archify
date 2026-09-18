@@ -107,7 +107,9 @@ function run(type, doc, command = 'render') {
   const id = sequence++;
   const input = path.join(tmp, `${id}-${type}.json`);
   const output = path.join(tmp, `${id}-${type}.html`);
-  fs.writeFileSync(input, JSON.stringify(doc));
+  const source = clone(doc);
+  source.meta.output ??= `${type}.html`;
+  fs.writeFileSync(input, JSON.stringify(source));
   const args = command === 'render'
     ? [cli, 'render', type, input, output]
     : [cli, 'validate', type, input, '--json'];

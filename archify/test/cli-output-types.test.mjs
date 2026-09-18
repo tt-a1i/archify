@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { startPreview } from '../bin/preview.mjs';
@@ -198,4 +198,117 @@ test('compare rejects a JSON receipt symlink to a non-JSON target', t => {
   assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'output/cli-resolved-extension');
   assert.equal(fs.readFileSync(target, 'utf8'), marker);
   assert.equal(fs.existsSync(output), false);
+});
+
+test('compare accepts artifact and receipt parents that are aliases of the same directory', t => {
+  const cwd = workspace(t);
+  const outputDirectory = path.join(cwd, 'physical-output');
+  const directoryAlias = path.join(cwd, 'output-alias');
+  fs.mkdirSync(outputDirectory);
+  try {
+    fs.symlinkSync(outputDirectory, directoryAlias, process.platform === 'win32' ? 'junction' : 'dir');
+  } catch (error) {
+    if (['EPERM', 'EACCES', 'ENOTSUP'].includes(error.code)) {
+      t.skip('directory aliases require permission');
+      return;
+    }
+    throw error;
+  }
+
+  const output = path.join(outputDirectory, 'delta.html');
+  const receipt = path.join(directoryAlias, 'delta.receipt.json');
+  const result = run([
+    'compare', 'architecture', base, head, output,
+    '--receipt', receipt, '--json',
+  ], cwd);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.equal(JSON.parse(result.stdout).ok, true);
+  assert.equal(fs.existsSync(output), true);
+  assert.equal(JSON.parse(fs.readFileSync(receipt, 'utf8')).ok, true);
+});
+
+test('compare fails closed when artifact and receipt parent identity is indeterminate', t => {
+  const cwd = workspace(t);
+  const outputDirectory = path.join(cwd, 'output');
+  fs.mkdirSync(outputDirectory);
+  const output = path.join(outputDirectory, 'delta.html');
+  const receipt = path.join(outputDirectory, 'delta.receipt.json');
+  const wrapper = path.join(cwd, 'compare-parent-identity-wrapper.mjs');
+  fs.writeFileSync(wrapper, `
+import fs from 'node:fs';
+import path from 'node:path';
+const originalReadFileSync = fs.readFileSync;
+const originalRealpathSyncNative = fs.realpathSync.native;
+const blockedDirectory = originalRealpathSyncNative(${JSON.stringify(outputDirectory)});
+let inputsRead = false;
+fs.readFileSync = (file, ...args) => {
+  const contents = originalReadFileSync(file, ...args);
+  if (path.resolve(String(file)) === ${JSON.stringify(path.resolve(head))}) inputsRead = true;
+  return contents;
+};
+fs.realpathSync.native = (file, ...args) => {
+  if (inputsRead && path.resolve(String(file)) === path.resolve(blockedDirectory)) {
+    throw Object.assign(new Error('injected parent identity failure'), { code: 'EACCES' });
+  }
+  return originalRealpathSyncNative(file, ...args);
+};
+process.argv = [process.execPath, ${JSON.stringify(cli)}, 'compare', 'architecture', ${JSON.stringify(base)}, ${JSON.stringify(head)}, ${JSON.stringify(output)}, '--receipt', ${JSON.stringify(receipt)}, '--json'];
+await import(${JSON.stringify(pathToFileURL(cli).href)});
+`);
+
+  const result = spawnSync(process.execPath, [wrapper], { cwd, encoding: 'utf8' });
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  const failure = JSON.parse(result.stdout);
+  assert.equal(failure.diagnostics[0].code, 'delta/receipt-directory-identity-indeterminate');
+  assert.equal(failure.diagnostics[0].evidence.pathIdentity.systemCode, 'EACCES');
+  assert.equal(fs.existsSync(output), false);
+  assert.equal(fs.existsSync(receipt), false);
+});
+
+test('delivery provenance accepts an artifact reached through a directory alias', t => {
+  const cwd = workspace(t);
+  const outputDirectory = path.join(cwd, 'physical-output');
+  const directoryAlias = path.join(cwd, 'output-alias');
+  fs.mkdirSync(outputDirectory);
+  try {
+    fs.symlinkSync(outputDirectory, directoryAlias, process.platform === 'win32' ? 'junction' : 'dir');
+  } catch (error) {
+    if (['EPERM', 'EACCES', 'ENOTSUP'].includes(error.code)) {
+      t.skip('directory aliases require permission');
+      return;
+    }
+    throw error;
+  }
+
+  const output = path.join(outputDirectory, 'delivered.html');
+  const alias = path.join(directoryAlias, 'delivered.html');
+  const delivered = run(['deliver', 'workflow', workflow, output, '--json'], cwd);
+  assert.equal(delivered.status, 0, delivered.stderr || delivered.stdout);
+
+  const checked = run(['check', alias, '--require-provenance'], cwd);
+  assert.equal(checked.status, 0, checked.stderr || checked.stdout);
+  assert.equal(JSON.parse(checked.stdout).provenance, 'current');
+});
+
+test('delivery provenance fails closed when recorded output identity is indeterminate', t => {
+  const cwd = workspace(t);
+  const output = path.join(cwd, 'delivered.html');
+  const delivered = run(['deliver', 'workflow', workflow, output, '--json'], cwd);
+  assert.equal(delivered.status, 0, delivered.stderr || delivered.stdout);
+  const artifactBefore = fs.readFileSync(output);
+  const provenancePath = output.replace(/\.html$/i, '.delivery.json');
+  const provenance = JSON.parse(fs.readFileSync(provenancePath, 'utf8'));
+  provenance.output = path.join(cwd, 'missing-recorded-output.html');
+  fs.writeFileSync(provenancePath, `${JSON.stringify(provenance, null, 2)}\n`);
+
+  const checked = run(['check', output, '--require-provenance'], cwd);
+  assert.equal(checked.status, 1, checked.stderr || checked.stdout);
+  const failure = JSON.parse(checked.stdout);
+  assert.equal(failure.diagnostics[0].code, 'delivery/provenance-output-indeterminate');
+  assert.equal(failure.diagnostics[0].subject.recordedOutput, provenance.output);
+  assert.equal(failure.diagnostics[0].evidence.pathIdentity.code, 'entry-missing');
+  assert.deepEqual(failure.diagnostics[0].evidence.pathIdentity.missing, ['left']);
+  assert.deepEqual(fs.readFileSync(output), artifactBefore);
+  assert.equal(JSON.parse(fs.readFileSync(provenancePath, 'utf8')).output, provenance.output);
 });

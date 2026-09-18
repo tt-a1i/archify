@@ -25,13 +25,40 @@ function git(cwd, args, options = {}) {
 function fixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-dsh-pack-fixture-'));
   const checkout = path.join(root, 'repo');
-  const head = git(repoRoot, ['rev-parse', 'HEAD']);
+  const sourceHead = git(repoRoot, ['rev-parse', 'HEAD']);
   const clone = spawnSync('git', ['clone', '--shared', '--no-checkout', '--', repoRoot, checkout], {
     cwd: repoRoot,
     encoding: 'utf8',
   });
   assert.equal(clone.status, 0, clone.stderr || clone.stdout);
-  git(checkout, ['checkout', '--detach', head]);
+  git(checkout, ['checkout', '--detach', sourceHead]);
+
+  // Exercise the working contract even before it is committed. In CI these
+  // copies are byte-identical to HEAD and no fixture commit is needed.
+  const contractFiles = [
+    'scripts/stage-clean-skill.mjs',
+    'archify/renderers/shared/atomic-output.mjs',
+    'archify/renderers/shared/output-path.mjs',
+    'archify/renderers/shared/path-semantics.mjs',
+    'archify/renderers/shared/portable-path.mjs',
+    'archify/renderers/shared/sidecar-path.mjs',
+    'integrations/deepseek-harness/scripts/release-source.mjs',
+  ];
+  for (const relative of contractFiles) {
+    const target = path.join(checkout, ...relative.split('/'));
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.copyFileSync(path.join(repoRoot, ...relative.split('/')), target);
+  }
+  git(checkout, ['add', '--', ...contractFiles]);
+  const diff = spawnSync('git', ['diff', '--cached', '--quiet'], { cwd: checkout, encoding: 'utf8' });
+  assert.equal(diff.error, undefined, diff.error?.message);
+  assert.ok([0, 1].includes(diff.status), diff.stderr || diff.stdout);
+  if (diff.status === 1) {
+    git(checkout, ['config', 'user.email', 'archify-tests@example.invalid']);
+    git(checkout, ['config', 'user.name', 'Archify tests']);
+    git(checkout, ['commit', '--no-gpg-sign', '-m', 'test: apply working portable path contract']);
+  }
+  const head = git(checkout, ['rev-parse', 'HEAD']);
   return { root, checkout, head };
 }
 
@@ -54,6 +81,7 @@ function pack(checkout, root) {
   const result = spawnSync(process.execPath, [script, '--out', out, '--json'], {
     cwd: checkout,
     encoding: 'utf8',
+    env: { ...process.env, npm_config_cache: path.join(root, 'npm-cache') },
   });
   return { out, result };
 }
@@ -75,6 +103,42 @@ function commitFixture(checkout, message, { stage = true } = {}) {
   if (stage) git(checkout, ['add', '-A', '--', 'integrations/deepseek-harness']);
   git(checkout, ['commit', '--no-gpg-sign', '-m', message]);
 }
+
+function addIndexedAdapterBlob(checkout, relative, content) {
+  const repositoryRelative = `integrations/deepseek-harness/${relative}`;
+  const blob = git(checkout, ['hash-object', '-w', '--stdin'], { input: content });
+  git(checkout, ['update-index', '--add', '--cacheinfo', `100644,${blob},${repositoryRelative}`]);
+  return repositoryRelative;
+}
+
+test('DSH workflow runs when the shared portable-path contract changes', () => {
+  const workflow = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'dsh.yml'), 'utf8');
+  assert.equal(
+    workflow.match(/archify\/renderers\/shared\/atomic-output\.mjs/g)?.length,
+    2,
+    'pull requests and branch pushes must both watch the atomic output runtime',
+  );
+  assert.equal(
+    workflow.match(/archify\/renderers\/shared\/portable-path\.mjs/g)?.length,
+    2,
+    'pull requests and branch pushes must both watch the shared validator',
+  );
+  assert.equal(
+    workflow.match(/archify\/renderers\/shared\/path-semantics\.mjs/g)?.length,
+    2,
+    'pull requests and branch pushes must both watch the staging identity runtime',
+  );
+  assert.equal(
+    workflow.match(/archify\/renderers\/shared\/output-path\.mjs/g)?.length,
+    2,
+    'pull requests and branch pushes must both watch the native output runtime',
+  );
+  assert.equal(
+    workflow.match(/archify\/renderers\/shared\/sidecar-path\.mjs/g)?.length,
+    2,
+    'pull requests and branch pushes must both watch the bounded sidecar runtime',
+  );
+});
 
 test('pack stages adapter inputs from the fixture HEAD despite dirty and untracked files', () => {
   const { root, checkout, head } = fixture();
@@ -199,7 +263,7 @@ test('pack rejects a committed reserved device-name path and leaves no target ta
 
     const { out, result } = pack(checkout, root);
     assert.notEqual(result.status, 0);
-    assert.match(`${result.stderr}\n${result.stdout}`, /unsupported path|NUL\.js/i);
+    assert.match(`${result.stderr}\n${result.stdout}`, /reserved Windows device name/i);
     assert.equal(fs.existsSync(out), false);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -218,7 +282,55 @@ test('pack rejects committed adapter paths that collide by case and leaves no ta
 
     const { out, result } = pack(checkout, root);
     assert.notEqual(result.status, 0);
-    assert.match(`${result.stderr}\n${result.stdout}`, /collide across supported filesystems|INDEX\.js|index\.js/i);
+    assert.match(`${result.stderr}\n${result.stdout}`, /collide under portable filesystem semantics/i);
+    assert.equal(fs.existsSync(out), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('pack rejects committed adapter directory prefixes that collide by case', () => {
+  const { root, checkout } = fixture();
+  try {
+    git(checkout, ['config', 'core.ignorecase', 'false']);
+    const collisionPaths = [
+      addIndexedAdapterBlob(checkout, 'lib/Docs/one.js', 'upper directory fixture\n'),
+      addIndexedAdapterBlob(checkout, 'lib/docs/two.js', 'lower directory fixture\n'),
+    ];
+    commitFixture(checkout, 'test: commit directory-prefix case collision', { stage: false });
+    for (const relative of collisionPaths) {
+      assert.match(git(checkout, ['ls-tree', 'HEAD', '--', relative]), /^100644 blob /);
+    }
+
+    const { out, result } = pack(checkout, root);
+    assert.notEqual(result.status, 0);
+    assert.match(`${result.stderr}\n${result.stdout}`, /collide under portable filesystem semantics/i);
+    assert.equal(fs.existsSync(out), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('pack rejects committed adapter paths that collide by normalization and case', () => {
+  const { root, checkout } = fixture();
+  try {
+    for (const [key, value] of [
+      ['core.ignorecase', 'false'],
+      ['core.precomposeunicode', 'false'],
+      ['core.protectHFS', 'false'],
+    ]) git(checkout, ['config', key, value]);
+    const paths = [
+      addIndexedAdapterBlob(checkout, 'lib/Résumé.js', 'composed collision fixture\n'),
+      addIndexedAdapterBlob(checkout, 'lib/re\u0301sume\u0301.js', 'decomposed collision fixture\n'),
+    ];
+    commitFixture(checkout, 'test: commit normalization-and-case collision', { stage: false });
+    for (const relative of paths) {
+      assert.match(git(checkout, ['ls-tree', 'HEAD', '--', relative]), /^100644 blob /);
+    }
+
+    const { out, result } = pack(checkout, root);
+    assert.notEqual(result.status, 0);
+    assert.match(`${result.stderr}\n${result.stdout}`, /collide under portable filesystem semantics/i);
     assert.equal(fs.existsSync(out), false);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });

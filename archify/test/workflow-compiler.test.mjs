@@ -198,12 +198,14 @@ function adjacentWorkflow({
   nodeLabels = ['A', 'B'],
   viewBox,
   frames = false,
+  output,
 } = {}) {
   const workflow = {
     schema_version: 2,
     diagram_type: 'workflow',
     meta: {
       title: `Adjacent ranks ${fromCol} to ${toCol}`,
+      output: output ?? 'adjacent-workflow.html',
       legend: { mode: 'hidden' },
       ...(viewBox ? { viewBox } : {}),
     },
@@ -239,6 +241,7 @@ function stackedGroupWorkflow({
     diagram_type: 'workflow',
     meta: {
       title: 'Stacked cage',
+      output: 'stacked-cage.html',
       legend: { mode: 'hidden' },
       ...(schemaVersion === 1 ? { viewBox: [720, 640] } : {}),
     },
@@ -351,7 +354,9 @@ test('fixed-v1 keeps valid phase and group spans independent of label measuremen
   const workflow = {
     schema_version: 1,
     diagram_type: 'workflow',
-    meta: { title: 'Fixed v1 frame geometry', legend: { mode: 'hidden' } },
+    meta: {
+      title: 'Fixed v1 frame geometry', output: 'fixed-v1-frame.html', legend: { mode: 'hidden' },
+    },
     lanes: [{ id: 'main', label: 'Main' }],
     phases: [{ id: 'phase', label: 'P'.repeat(17), fromCol: 0, toCol: 0 }],
     groups: [{
@@ -531,7 +536,9 @@ test('fixed-v1 reports one causal column-capacity diagnostic for issue #126', ()
   const workflow = {
     schema_version: 1,
     diagram_type: 'workflow',
-    meta: { title: 'Issue 126 causal diagnostic', legend: { mode: 'hidden' } },
+    meta: {
+      title: 'Issue 126 causal diagnostic', output: 'issue-126-causal.html', legend: { mode: 'hidden' },
+    },
     lanes: [{ id: 'main', label: 'Main' }],
     nodes: [
       { id: 'a', lane: 'main', col: 1, type: 'backend', label: 'A' },
@@ -579,6 +586,7 @@ test('fixed-v1 verifies the real coordinate migration before advertising it', ()
     diagram_type: 'workflow',
     meta: {
       title: 'Pinned issue 126 migration',
+      output: 'pinned-issue-126.html',
       viewBox: [720, 400],
       legend: { mode: 'hidden' },
     },
@@ -665,7 +673,9 @@ test('readable-v2 treats the phase header mask as a routing obstacle', () => {
   const document = {
     schema_version: 2,
     diagram_type: 'workflow',
-    meta: { title: 'Phase route obstacle', legend: { mode: 'hidden' } },
+    meta: {
+      title: 'Phase route obstacle', output: 'phase-route-obstacle.html', legend: { mode: 'hidden' },
+    },
     lanes: [{ id: 'top', label: 'Top' }, { id: 'bottom', label: 'Bottom' }],
     nodes: [
       { id: 'a', lane: 'top', col: 0, type: 'backend', label: 'A' },
@@ -704,7 +714,9 @@ test('readable-v2 never routes through a single-rank group label', () => {
   const document = {
     schema_version: 2,
     diagram_type: 'workflow',
-    meta: { title: 'Group label route obstacle', legend: { mode: 'hidden' } },
+    meta: {
+      title: 'Group label route obstacle', output: 'group-label-obstacle.html', legend: { mode: 'hidden' },
+    },
     lanes: [{ id: 'top', label: 'Top' }, { id: 'bottom', label: 'Bottom' }],
     groups: [{ id: 'g', label: groupLabel, lane: 'top', fromCol: 2, toCol: 2 }],
     nodes: [
@@ -769,7 +781,9 @@ test('readable-v2 shifts top-side routes beyond lane header text deterministical
   const makeDocument = (topLaneLabel) => ({
     schema_version: 2,
     diagram_type: 'workflow',
-    meta: { title: 'Lane header route obstacle', legend: { mode: 'hidden' } },
+    meta: {
+      title: 'Lane header route obstacle', output: 'lane-header-obstacle.html', legend: { mode: 'hidden' },
+    },
     lanes: [
       { id: 'top', label: topLaneLabel },
       { id: 'bottom', label: 'Bottom' },
@@ -845,7 +859,7 @@ test('capacity-only viewBox failures preserve the intrinsic routes, labels, and 
   const document = {
     schema_version: 2,
     diagram_type: 'workflow',
-    meta: { title: 'capacity', legend: { mode: 'hidden' } },
+    meta: { title: 'capacity', output: 'capacity.html', legend: { mode: 'hidden' } },
     lanes: [{ id: 'top', label: 'Top' }, { id: 'bottom', label: 'Bottom' }],
     nodes: [
       { id: 'n0', lane: 'top', col: 0, type: 'backend', label: 'N0' },
@@ -933,6 +947,7 @@ test('explicit viewBox height capacity names the authored tall node without nami
       diagram_type: 'workflow',
       meta: {
         title: 'Tall node height capacity',
+        output: 'tall-node-capacity.html',
         legend: { mode: 'hidden' },
         viewBox: [1200, 280],
       },
@@ -1051,7 +1066,9 @@ test('readable-v2 contains a long single-rank group label in its frame and intri
   const workflow = {
     schema_version: 2,
     diagram_type: 'workflow',
-    meta: { title: 'Single-rank group capacity', legend: { mode: 'hidden' } },
+    meta: {
+      title: 'Single-rank group capacity', output: 'single-rank-group.html', legend: { mode: 'hidden' },
+    },
     lanes: [{ id: 'main', label: 'Main' }],
     groups: [{
       id: 'long-group',
@@ -1085,7 +1102,9 @@ test('readable-v2 group frames contain custom-width member rectangles on every s
   const workflow = {
     schema_version: 2,
     diagram_type: 'workflow',
-    meta: { title: 'Wide group member', legend: { mode: 'hidden' } },
+    meta: {
+      title: 'Wide group member', output: 'wide-group-member.html', legend: { mode: 'hidden' },
+    },
     lanes: [{ id: 'main', label: 'Main' }],
     groups: [{ id: 'group', label: 'G', lane: 'main', fromCol: 2, toCol: 2 }],
     nodes: [{
@@ -1112,7 +1131,7 @@ test('readable-v2 group frames contain tagged and tall members away from the lab
     const workflow = {
       schema_version: 2,
       diagram_type: 'workflow',
-      meta: { title: description, legend: { mode: 'hidden' } },
+      meta: { title: description, output: 'group-member.html', legend: { mode: 'hidden' } },
       lanes: [{ id: 'main', label: 'Main' }],
       groups: [{ id: 'group', label: 'G', lane: 'main', fromCol: 0, toCol: 1 }],
       nodes: [{
@@ -1141,7 +1160,9 @@ test('readable-v2 keeps a first-rank group label mask clear of its lane header m
   const workflow = {
     schema_version: 2,
     diagram_type: 'workflow',
-    meta: { title: 'First-rank group labels', legend: { mode: 'hidden' } },
+    meta: {
+      title: 'First-rank group labels', output: 'first-rank-labels.html', legend: { mode: 'hidden' },
+    },
     lanes: [{ id: 'main', label: 'Main' }],
     groups: [{ id: 'group', label: 'G', lane: 'main', fromCol: 0, toCol: 0 }],
     nodes: [{ id: 'member', lane: 'main', col: 0, type: 'backend', label: 'Member' }],
@@ -1288,7 +1309,9 @@ test('readable-v2 SVG and receipt bytes are deterministic across repeated and re
   const workflow = {
     schema_version: 2,
     diagram_type: 'workflow',
-    meta: { title: 'Deterministic workflow', legend: { mode: 'hidden' } },
+    meta: {
+      title: 'Deterministic workflow', output: 'deterministic-workflow.html', legend: { mode: 'hidden' },
+    },
     lanes: [{ id: 'main', label: 'Main' }],
     nodes: [
       { id: 'a', lane: 'main', col: 0, type: 'frontend', label: 'A' },
@@ -1322,6 +1345,7 @@ test('CLI validate workflow --layout-json prints the stable compiler receipt', (
     fromCol: 3,
     label: 'liga',
     viewBox: [1080, 420],
+    output: 'layout-json.html',
   })));
 
   const result = spawnSync(process.execPath, [
@@ -1348,7 +1372,11 @@ test('CLI validate workflow --layout-json returns only the causal compiler failu
   fs.writeFileSync(input, JSON.stringify({
     schema_version: 1,
     diagram_type: 'workflow',
-    meta: { title: 'Issue 126 failure receipt', legend: { mode: 'hidden' } },
+    meta: {
+      title: 'Issue 126 failure receipt',
+      output: 'layout-json-failure.html',
+      legend: { mode: 'hidden' },
+    },
     lanes: [{ id: 'main', label: 'Main' }],
     nodes: [
       { id: 'a', lane: 'main', col: 1, type: 'backend', label: 'A' },

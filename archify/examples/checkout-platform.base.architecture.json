@@ -3,6 +3,7 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Checkout Platform — Baseline",
+    "output": "checkout-platform.base.html",
     "visual_preset": "signal-flow"
   },
   "components": [

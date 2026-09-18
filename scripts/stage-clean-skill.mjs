@@ -1,10 +1,18 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  captureRegularFileBinding,
+  quarantineRemoveRegularFileBinding,
+  releaseRegularFileBinding,
+} from '../archify/renderers/shared/atomic-output.mjs';
+import { containedBy, sameEntry } from '../archify/renderers/shared/path-semantics.mjs';
+import { validatePortablePathSet } from '../archify/renderers/shared/portable-path.mjs';
 import { assertThirdPartyNotices } from './third-party-notices-contract.mjs';
 
 const scriptRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -15,6 +23,13 @@ const REQUIRED_INPUTS = new Set([
   'archify/scripts/check-update.mjs',
   'archify/scripts/update-contract.mjs',
   'archify/skill-release.json',
+]);
+const RUNTIME_DEPENDENCIES = Object.freeze([
+  'archify/renderers/shared/atomic-output.mjs',
+  'archify/renderers/shared/output-path.mjs',
+  'archify/renderers/shared/path-semantics.mjs',
+  'archify/renderers/shared/portable-path.mjs',
+  'archify/renderers/shared/sidecar-path.mjs',
 ]);
 const EXCLUDED_FILES = new Set([
   'archify/package-lock.json',
@@ -59,6 +74,7 @@ function trackedEntries(repoRoot) {
     const separator = record.indexOf('\t');
     const metadata = separator === -1 ? [] : record.slice(0, separator).split(' ');
     const relative = separator === -1 ? '' : record.slice(separator + 1);
+    // path-contract-allow: git-path -- git ls-files emits repository-relative POSIX paths.
     if (metadata.length !== 3 || !relative.startsWith('archify/')) {
       throw new Error(`invalid tracked package record: ${JSON.stringify(record)}`);
     }
@@ -181,29 +197,246 @@ function snapshotSourceEntry(entry) {
   }
 }
 
-function canonicalizeExistingPrefix(target) {
-  // realpathSync rejects paths that do not exist yet, so resolve the deepest
-  // existing ancestor through symlinks and re-append the missing tail.
-  const pending = [];
-  let current = path.resolve(target);
-  for (;;) {
-    try {
-      return path.join(fs.realpathSync(current), ...pending);
-    } catch {
-      const parent = path.dirname(current);
-      if (parent === current) return path.join(current, ...pending);
-      pending.unshift(path.basename(current));
-      current = parent;
-    }
+function cleanPackageManifestEntry(packageEntries) {
+  const packageEntry = packageEntries.find((entry) => entry.relative === 'archify/package.json');
+  if (!packageEntry) throw new Error('required package input is missing: archify/package.json');
+  const packageJson = JSON.parse(packageEntry.content.toString('utf8'));
+  delete packageJson.scripts;
+  delete packageJson.devDependencies;
+  packageEntry.content = Buffer.from(`${JSON.stringify(packageJson, null, 2)}\n`);
+}
+
+function stagingError(message, cause = undefined) {
+  return cause === undefined ? new Error(message) : new Error(message, { cause });
+}
+
+function verifiedDirectoryMetadata(directory) {
+  const metadata = fs.lstatSync(directory, { bigint: true });
+  if (!metadata.isDirectory() || metadata.isSymbolicLink() || metadata.ino === 0n) {
+    throw stagingError(`clean Skill staging directory identity is unavailable: ${directory}`);
+  }
+  return metadata;
+}
+
+function assertOwnedDirectory(owned) {
+  let current;
+  try {
+    current = fs.lstatSync(owned.absolute, { bigint: true });
+  } catch (error) {
+    throw stagingError(`clean Skill staging directory changed: ${owned.absolute}`, error);
+  }
+  if (!current.isDirectory()
+    || current.isSymbolicLink()
+    || current.ino === 0n
+    || !sameFileIdentity(owned.metadata, current)) {
+    throw stagingError(`clean Skill staging directory changed: ${owned.absolute}`);
   }
 }
 
-function cleanPackageManifest(destination) {
-  const packagePath = path.join(destination, 'package.json');
-  const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
-  delete packageJson.scripts;
-  delete packageJson.devDependencies;
-  fs.writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
+function createOwnedDirectory(absolute, parent, ownership, { destinationRoot = false } = {}) {
+  if (parent) assertOwnedDirectory(parent);
+  try {
+    fs.mkdirSync(absolute, { mode: 0o755 });
+  } catch (error) {
+    if (error?.code === 'EEXIST') {
+      const message = destinationRoot
+        ? `clean Skill staging destination already exists: ${absolute}`
+        : `clean Skill staging entry already exists: ${absolute}`;
+      throw stagingError(message, error);
+    }
+    throw error;
+  }
+
+  // Without a handle-backed identity, cleanup cannot prove that the path is
+  // still ours. Leave the entry in place instead of risking a claimant.
+  const metadata = verifiedDirectoryMetadata(absolute);
+  const owned = { absolute, metadata };
+  ownership.directories.push(owned);
+  ownership.directoryByPath.set(absolute, owned);
+  if (parent) assertOwnedDirectory(parent);
+  return owned;
+}
+
+function ensureOwnedParentDirectories(destination, relative, ownership) {
+  const components = relative.split('/');
+  let current = destination;
+  let parent = ownership.directoryByPath.get(destination);
+  const ancestors = [parent];
+  assertOwnedDirectory(parent);
+  for (const component of components.slice(0, -1)) {
+    current = path.join(current, component);
+    let owned = ownership.directoryByPath.get(current);
+    if (!owned) owned = createOwnedDirectory(current, parent, ownership);
+    else assertOwnedDirectory(owned);
+    parent = owned;
+    ancestors.push(owned);
+  }
+  return ancestors;
+}
+
+function captureNewFileIdentity(descriptor, absolute, ownership, ancestors) {
+  let metadata;
+  try {
+    metadata = fs.fstatSync(descriptor, { bigint: true });
+  } catch (error) {
+    // A transient first fstat failure must not turn our just-created file into
+    // an unowned cleanup target. Retry only to bind cleanup, then rethrow the
+    // original failure.
+    try {
+      const retry = fs.fstatSync(descriptor, { bigint: true });
+      if (retry.isFile() && retry.ino !== 0n) {
+        ownership.files.push({ absolute, metadata: retry, ancestors });
+      }
+    } catch {}
+    throw error;
+  }
+  if (!metadata.isFile() || metadata.ino === 0n) {
+    throw stagingError(`clean Skill staging file identity is unavailable: ${absolute}`);
+  }
+  const owned = { absolute, metadata, ancestors };
+  ownership.files.push(owned);
+  return owned;
+}
+
+function writeOwnedFile(absolute, content, mode, ownership, ancestors = []) {
+  for (const ancestor of ancestors) assertOwnedDirectory(ancestor);
+  const noFollow = process.platform === 'win32' ? 0 : (fs.constants.O_NOFOLLOW ?? 0);
+  let descriptor;
+  let owned;
+  try {
+    descriptor = fs.openSync(
+      absolute,
+      fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | noFollow,
+      mode,
+    );
+    owned = captureNewFileIdentity(descriptor, absolute, ownership, ancestors);
+    // Opening a leaf with O_NOFOLLOW does not prevent a directory ancestor
+    // from being redirected between the preflight and open calls. Recheck the
+    // complete owned chain while the new file is still empty; descriptor-bound
+    // cleanup can then retire that inode without ever writing package bytes
+    // through a claimant-controlled ancestor.
+    for (const ancestor of ancestors) assertOwnedDirectory(ancestor);
+    fs.writeFileSync(descriptor, content);
+    fs.fchmodSync(descriptor, mode);
+    const after = fs.fstatSync(descriptor, { bigint: true });
+    const current = fs.lstatSync(absolute, { bigint: true });
+    if (!after.isFile()
+      || !current.isFile()
+      || after.ino === 0n
+      || current.ino === 0n
+      || !sameFileIdentity(owned.metadata, after)
+      || !sameFileIdentity(after, current)) {
+      throw stagingError(`clean Skill staging file changed while being written: ${absolute}`);
+    }
+    for (const ancestor of ancestors) assertOwnedDirectory(ancestor);
+  } finally {
+    if (descriptor !== undefined) fs.closeSync(descriptor);
+  }
+}
+
+function ownedDirectoryStillNamed(owned) {
+  try {
+    const current = fs.lstatSync(owned.absolute, { bigint: true });
+    return current.isDirectory()
+      && !current.isSymbolicLink()
+      && current.ino !== 0n
+      && sameFileIdentity(owned.metadata, current);
+  } catch {
+    return false;
+  }
+}
+
+function retireOwnedStagingFile(owned) {
+  const captured = captureRegularFileBinding(owned.absolute, {
+    subject: 'clean-staging-file',
+    expectedIdentity: {
+      device: owned.metadata.dev,
+      inode: owned.metadata.ino,
+    },
+    expectedLinks: 1,
+  });
+  if (captured.status !== 'captured') return false;
+  try {
+    const removed = quarantineRemoveRegularFileBinding(
+      captured.binding,
+      owned.absolute,
+      { subject: 'clean-staging-file', expectedLinks: 1 },
+    );
+    return removed.status === 'removed' || removed.status === 'absent';
+  } finally {
+    releaseRegularFileBinding(captured.binding);
+  }
+}
+
+function createDirectoryRetirementQuarantine(parent) {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const directory = path.join(
+      parent,
+      `.archify-stage-remove-${randomBytes(16).toString('hex')}`,
+    );
+    try {
+      fs.mkdirSync(directory, { mode: 0o700 });
+      return directory;
+    } catch (error) {
+      if (error?.code !== 'EEXIST') return null;
+    }
+  }
+  return null;
+}
+
+function retireOwnedStagingDirectory(owned) {
+  if (!ownedDirectoryStillNamed(owned)) return false;
+  try {
+    // Keep a known non-empty directory at its public recovery location. Any
+    // remaining child was not retired as one of this invocation's owned files
+    // and may therefore belong to a claimant.
+    if (fs.readdirSync(owned.absolute).length !== 0) return false;
+  } catch {
+    return false;
+  }
+  const quarantine = createDirectoryRetirementQuarantine(path.dirname(owned.absolute));
+  if (!quarantine) return false;
+  const movedPath = path.join(quarantine, path.basename(owned.absolute));
+  try {
+    fs.renameSync(owned.absolute, movedPath);
+  } catch {
+    try { fs.rmdirSync(quarantine); } catch {}
+    return false;
+  }
+
+  let moved;
+  try {
+    moved = fs.lstatSync(movedPath, { bigint: true });
+  } catch {
+    return false;
+  }
+  if (!moved.isDirectory()
+    || moved.isSymbolicLink()
+    || moved.ino === 0n
+    || !sameFileIdentity(owned.metadata, moved)) {
+    // A successor won the move boundary. It is retained under the private
+    // quarantine name because directories have no portable no-clobber
+    // hard-link primitive with which to restore that exact entry safely.
+    return false;
+  }
+  try {
+    // Never recurse: unexpected children keep the owned directory as recovery
+    // material, and a non-empty successor swapped here cannot be deleted.
+    fs.rmdirSync(movedPath);
+    fs.rmdirSync(quarantine);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function cleanupOwnedStaging(ownership) {
+  for (const owned of [...ownership.files].reverse()) {
+    try { retireOwnedStagingFile(owned); } catch {}
+  }
+  for (const owned of [...ownership.directories].reverse()) {
+    try { retireOwnedStagingDirectory(owned); } catch {}
+  }
 }
 
 function validateThirdPartyNoticeInputs(repoRoot, packageEntries) {
@@ -236,30 +469,31 @@ function validateThirdPartyNoticeInputs(repoRoot, packageEntries) {
   }
 }
 
+function validateRuntimeDependencies(packageEntries) {
+  const packaged = new Set(packageEntries.map((entry) => entry.relative));
+  for (const relative of RUNTIME_DEPENDENCIES) {
+    const basename = path.basename(relative);
+    const imported = packageEntries.some((entry) => (
+      // path-contract-allow: portable-logical-path -- Both values are tracked package entry names.
+      entry.relative !== relative
+      && /[.]m?js$/u.test(entry.relative)
+      && entry.content.includes(basename)
+    ));
+    if (imported && !packaged.has(relative)) {
+      throw new Error(`required package input is not tracked by Git: ${relative}`);
+    }
+  }
+}
+
 export function stageCleanSkill({ repoRoot = scriptRoot, destination, modeManifest = null }) {
   const resolvedRoot = fs.realpathSync(path.resolve(repoRoot));
   if (!destination) throw new Error('clean Skill staging requires a destination');
   const resolvedDestination = path.resolve(destination);
-  if (fs.existsSync(resolvedDestination)) {
-    throw new Error(`clean Skill staging destination already exists: ${resolvedDestination}`);
-  }
   // The manifest records each staged file's Git index mode for the archive
   // writer. Filesystem permission bits are not portable (Windows cannot store
   // an executable bit), so the archive must not re-derive modes from stat.
   const resolvedModeManifest = modeManifest === null ? null : path.resolve(modeManifest);
   if (resolvedModeManifest !== null) {
-    // Compare physical locations: a symlinked ancestor on either side must not
-    // let the manifest land inside the staged tree, where the writer would see
-    // an unrecorded file and refuse the archive.
-    const canonicalDestination = canonicalizeExistingPrefix(resolvedDestination);
-    const canonicalManifest = canonicalizeExistingPrefix(resolvedModeManifest);
-    const relativeToDestination = path.relative(canonicalDestination, canonicalManifest);
-    const outsideDestination = relativeToDestination === '..'
-      || relativeToDestination.startsWith(`..${path.sep}`)
-      || path.isAbsolute(relativeToDestination);
-    if (!outsideDestination) {
-      throw new Error(`mode manifest must be written outside the staged Skill tree: ${resolvedModeManifest}`);
-    }
     // The manifest belongs to this invocation only: never overwrite, and never
     // later remove, a file that already existed at that path.
     let manifestExists = true;
@@ -271,6 +505,16 @@ export function stageCleanSkill({ repoRoot = scriptRoot, destination, modeManife
     }
     if (manifestExists) {
       throw new Error(`mode manifest path already exists: ${resolvedModeManifest}`);
+    }
+    // Compare physical locations: a symlinked ancestor on either side must not
+    // let the manifest land inside the staged tree, where the writer would see
+    // an unrecorded file and refuse the archive.
+    const manifestContainment = containedBy(resolvedDestination, resolvedModeManifest);
+    if (manifestContainment.status === 'match') {
+      throw new Error(`mode manifest must be written outside the staged Skill tree: ${resolvedModeManifest}`);
+    }
+    if (manifestContainment.status === 'unknown') {
+      throw new Error(`mode manifest location could not be verified safely (${manifestContainment.reason.code}): ${resolvedModeManifest}`);
     }
   }
 
@@ -288,11 +532,20 @@ export function stageCleanSkill({ repoRoot = scriptRoot, destination, modeManife
   }
   requireTrackedFile(resolvedRoot, 'THIRD_PARTY_NOTICES.md');
 
-  const packageEntries = entries
-    .filter((entry) => !excluded(entry.relative))
+  const includedEntries = entries.filter((entry) => !excluded(entry.relative));
+  validatePortablePathSet(
+    includedEntries.map((entry) => entry.relative.slice('archify/'.length)),
+    { profile: 'archive' },
+  );
+
+  const packageEntries = includedEntries
     .map((entry) => preflightSourceEntry(resolvedRoot, entry))
     .map((entry) => snapshotSourceEntry(entry));
+  // Current packages must contain every imported runtime, while historical
+  // snapshots that predate a runtime remain reproducible by the DSH adapter.
+  validateRuntimeDependencies(packageEntries);
   validateThirdPartyNoticeInputs(resolvedRoot, packageEntries);
+  cleanPackageManifestEntry(packageEntries);
 
   const modes = Object.fromEntries(
     packageEntries
@@ -300,40 +553,65 @@ export function stageCleanSkill({ repoRoot = scriptRoot, destination, modeManife
       .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0)),
   );
 
-  fs.mkdirSync(resolvedDestination, { recursive: true, mode: 0o755 });
+  const ownership = {
+    directories: [],
+    directoryByPath: new Map(),
+    files: [],
+  };
   let fileCount = 0;
-  let manifestWritten = false;
   try {
+    const destinationParentPath = path.dirname(resolvedDestination);
+    fs.mkdirSync(destinationParentPath, { recursive: true, mode: 0o755 });
+    const destinationParent = {
+      absolute: destinationParentPath,
+      metadata: verifiedDirectoryMetadata(destinationParentPath),
+    };
+    createOwnedDirectory(resolvedDestination, destinationParent, ownership, {
+      destinationRoot: true,
+    });
     for (const entry of packageEntries) {
       const relativeInsideSkill = entry.relative.slice('archify/'.length);
       const target = path.join(resolvedDestination, ...relativeInsideSkill.split('/'));
-      fs.mkdirSync(path.dirname(target), { recursive: true });
-      fs.writeFileSync(target, entry.content);
-      if (entry.mode === '100755') fs.chmodSync(target, 0o755);
-      else fs.chmodSync(target, 0o644);
+      const ancestors = ensureOwnedParentDirectories(
+        resolvedDestination,
+        relativeInsideSkill,
+        ownership,
+      );
+      writeOwnedFile(
+        target,
+        entry.content,
+        entry.mode === '100755' ? 0o755 : 0o644,
+        ownership,
+        ancestors,
+      );
       fileCount += 1;
     }
-    cleanPackageManifest(resolvedDestination);
     if (resolvedModeManifest !== null) {
-      fs.writeFileSync(resolvedModeManifest, `${JSON.stringify(modes, null, 2)}\n`, { flag: 'wx' });
-      manifestWritten = true;
+      writeOwnedFile(
+        resolvedModeManifest,
+        `${JSON.stringify(modes, null, 2)}\n`,
+        0o644,
+        ownership,
+      );
     }
+    assertOwnedDirectory(ownership.directoryByPath.get(resolvedDestination));
   } catch (error) {
-    fs.rmSync(resolvedDestination, { recursive: true, force: true });
-    if (manifestWritten) fs.rmSync(resolvedModeManifest, { force: true });
+    cleanupOwnedStaging(ownership);
     throw error;
   }
 
   return { destination: resolvedDestination, fileCount, modes };
 }
 
-function isMainModule() {
-  if (!process.argv[1]) return false;
+export function isMainModule({
+  argvPath = process.argv[1],
+  modulePath = fileURLToPath(import.meta.url),
+} = {}) {
+  if (!argvPath) return false;
   try {
-    return fs.realpathSync(path.resolve(process.argv[1]))
-      === fs.realpathSync(fileURLToPath(import.meta.url));
+    return sameEntry(argvPath, modulePath).status === 'match';
   } catch {
-    return path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+    return false;
   }
 }
 

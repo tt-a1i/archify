@@ -7,7 +7,13 @@ function workflow(version, locale = 'en') {
   return {
     schema_version: version,
     diagram_type: 'workflow',
-    meta: { title: `Workflow ${version}`, locale, quality_profile: 'standard', legend: { mode: 'hidden' } },
+    meta: {
+      title: `Workflow ${version}`,
+      output: `workflow-${version}.html`,
+      locale,
+      quality_profile: 'standard',
+      legend: { mode: 'hidden' },
+    },
     lanes: [{ id: 'main', label: 'Main' }],
     nodes: [
       { id: 'a', lane: 'main', col: 0, type: 'frontend', label: 'Input' },

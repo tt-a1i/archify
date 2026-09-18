@@ -9,15 +9,15 @@
   "proofLevel": "authored",
   "base": {
     "title": "Checkout Platform — Baseline",
-    "rawSha256": "c112195e7285e3e4aedaeab3e1f85f5891d30fccc2c260aebe4e1da12c80cf84",
+    "rawSha256": "81d55a2e86fc39f6473b32dfba986a12d3b7a705a95821844865b1dc831c9fe7",
     "semanticSha256": "5d2f362ed389af82b117a01d36201e27cb83503093b14c50f7cd8dada55f243a",
-    "bytes": 2234
+    "bytes": 2279
   },
   "head": {
     "title": "Checkout Platform — Fraud Gate",
-    "rawSha256": "e3aaf47f77afeadafc81c6ce853dc1df68cc1e6932dec972cf478f4008fdda99",
+    "rawSha256": "eb4ae056035dd3316414a5d7f6599525107b5d1af7bedbd905460ade77daf5c6",
     "semanticSha256": "0b378c8f24d23ec63feecacd7ff84a4944534f4306fc2b7e3266dff9ba258852",
-    "bytes": 2368
+    "bytes": 2413
   },
   "summary": {
     "components": {

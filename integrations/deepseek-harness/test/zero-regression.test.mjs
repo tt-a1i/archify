@@ -29,15 +29,24 @@ test('the repository still has exactly one checked-in Archify SKILL.md and no ge
 });
 
 test('Archify core does not import, detect, or branch on DeepSeek Harness', () => {
+  // Tests may verify the adapter without making any shipped Archify file
+  // depend on it. Keep the full product tree in scope, including SKILL.md,
+  // schemas, references, examples, and assets.
+  const protectedPaths = [
+    'archify',
+    ':(exclude)archify/test/**',
+    'scripts/build-zip.sh',
+    'scripts/package-smoke.mjs',
+  ];
+  const protectedFiles = git(['ls-files', '--', ...protectedPaths]).split('\n').filter(Boolean);
+  assert.ok(protectedFiles.includes('archify/SKILL.md'), 'zero-coupling scan must include the shipped Skill');
   const grep = spawnSync('git', [
     'grep',
     '-n',
     '-E',
     'deepseek-harness|@deepseek-ai/dsh|DSH_HOME|DSH_AGENTS_HOME|archify-dsh',
     '--',
-    'archify',
-    'scripts/build-zip.sh',
-    'scripts/package-smoke.mjs',
+    ...protectedPaths,
   ], { cwd: repoRoot, encoding: 'utf8' });
   assert.equal(grep.status, 1, grep.stderr || grep.stdout);
   assert.equal(grep.stdout.trim(), '');

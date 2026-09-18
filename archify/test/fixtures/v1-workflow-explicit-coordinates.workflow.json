@@ -3,6 +3,7 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "Pinned coordinate migration",
+    "output": "pinned-coordinate-migration.html",
     "viewBox": [720, 700],
     "legend": { "mode": "hidden" }
   },

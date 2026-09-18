@@ -17,6 +17,10 @@ const height = 540;
 const fps = 10;
 const framesPerScene = 18;
 
+function portableRelative(from, to) {
+  return path.relative(from, to).split(path.sep).join('/');
+}
+
 const scenes = [
   {
     id: 'signal-flow',
@@ -329,7 +333,7 @@ async function main() {
     const receipt = {
       schemaVersion: 1,
       generator: 'scripts/build-readme-showcase.mjs',
-      output: path.relative(repoRoot, outputPath),
+      output: portableRelative(repoRoot, outputPath),
       width,
       height,
       fps,

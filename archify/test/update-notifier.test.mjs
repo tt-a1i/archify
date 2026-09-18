@@ -11,6 +11,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   acknowledgeUpdate,
   checkForUpdate,
+  isMainModule,
 } from '../scripts/check-update.mjs';
 import { DEFAULT_MANIFEST_URL, compareSemver, parseSemver } from '../scripts/update-contract.mjs';
 
@@ -159,6 +160,43 @@ function fixture(version = '2.15.0') {
   const cacheDirectory = path.join(root, 'cache');
   writeJson(releasePath, localRelease(version));
   return { root, releasePath, cacheDirectory };
+}
+
+function caseVariant(target) {
+  const name = path.basename(target);
+  const index = name.search(/[A-Za-z]/);
+  if (index === -1) throw new Error(`path has no ASCII case variant: ${target}`);
+  const character = name[index];
+  const replacement = character === character.toLowerCase()
+    ? character.toUpperCase()
+    : character.toLowerCase();
+  return path.join(path.dirname(target), `${name.slice(0, index)}${replacement}${name.slice(index + 1)}`);
+}
+
+function windowsShortPath(target) {
+  const result = spawnSync(
+    process.env.ComSpec || 'cmd.exe',
+    ['/d', '/s', '/c', '"for %I in ("%ARCHIFY_SHORT_PATH_TARGET%") do @echo %~sI"'],
+    {
+      encoding: 'utf8',
+      env: { ...process.env, ARCHIFY_SHORT_PATH_TARGET: target },
+      windowsHide: true,
+      windowsVerbatimArguments: true,
+    },
+  );
+  if (result.error) throw new Error(`Could not query a Windows 8.3 path: ${result.error.message}`);
+  if (result.status !== 0) {
+    const detail = result.stderr.trim() || 'no stderr';
+    throw new Error(`Could not query a Windows 8.3 path (exit ${result.status}): ${detail}`);
+  }
+  const shortPath = result.stdout.trim();
+  if (!shortPath) throw new Error('Windows returned an empty 8.3 path');
+  if (path.resolve(shortPath).toLowerCase() === path.resolve(target).toLowerCase()) return null;
+  if (fs.realpathSync.native(shortPath).toLowerCase()
+    !== fs.realpathSync.native(target).toLowerCase()) {
+    throw new Error('Windows returned an 8.3 path for a different directory');
+  }
+  return shortPath;
 }
 
 function stateDirectory(testFixture, version = '2.15.0') {
@@ -1607,6 +1645,103 @@ test('prepared claim cleanup never recursively deletes through a replaced cache 
   assert.equal(discardedClaims[0].endsWith(`-${discardedOwner.token}`), true);
 });
 
+test('a cache path case alias is accepted on case-aliasing filesystems', async (t) => {
+  const testFixture = fixture();
+  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
+  const aliasedRoot = caseVariant(testFixture.root);
+  if (!fs.existsSync(aliasedRoot)) {
+    t.skip('the fixture filesystem does not alias path casing');
+    return;
+  }
+  const cacheDirectory = path.join(aliasedRoot, 'cache');
+
+  const result = await checkForUpdate(options(
+    testFixture,
+    async () => response(remoteRelease()),
+    { cacheDirectory },
+  ));
+
+  assert.equal(result.status, 'update_available');
+  assert.ok(fs.readdirSync(stateDirectory({ ...testFixture, cacheDirectory })).some(
+    (entry) => entry.startsWith('committed-'),
+  ));
+});
+
+test('updater accepts a Windows 8.3 short path for its cache', async (t) => {
+  if (process.platform !== 'win32') {
+    t.skip('Windows-only 8.3 cache path regression');
+    return;
+  }
+  const testFixture = fixture();
+  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
+  const realDirectory = path.join(testFixture.root, 'cache directory requiring short alias');
+  fs.mkdirSync(realDirectory);
+  const shortDirectory = windowsShortPath(realDirectory);
+  if (!shortDirectory) {
+    t.skip('the Windows volume does not expose a distinct 8.3 short path');
+    return;
+  }
+  const cacheDirectory = path.join(shortDirectory, 'cache');
+
+  const result = await checkForUpdate(options(
+    testFixture,
+    async () => response(remoteRelease()),
+    { cacheDirectory },
+  ));
+
+  assert.equal(result.status, 'update_available');
+  const physicalCache = path.join(realDirectory, 'cache');
+  assert.ok(fs.readdirSync(stateDirectory({ ...testFixture, cacheDirectory: physicalCache })).some(
+    (entry) => entry.startsWith('committed-'),
+  ));
+});
+
+test('updater rejects a case-only alias of its prepared cache root', async (t) => {
+  if (process.platform !== 'win32') {
+    t.skip('Windows-only cache root alias regression');
+    return;
+  }
+  const testFixture = fixture();
+  const originalJoin = path.join;
+  const originalMkdir = fsPromises.mkdir;
+  let injected = false;
+  let rootAlias = null;
+  let rootMutationAttempts = 0;
+  t.after(() => {
+    path.join = originalJoin;
+    fsPromises.mkdir = originalMkdir;
+    fs.rmSync(testFixture.root, { recursive: true, force: true });
+  });
+  path.join = (...parts) => {
+    if (!injected
+      && parts.length === 2
+      && /^reserved-\d{20}$/.test(String(parts[1]))) {
+      injected = true;
+      rootAlias = caseVariant(parts[0]);
+      assert.equal(fs.existsSync(rootAlias), true);
+      return rootAlias;
+    }
+    return originalJoin(...parts);
+  };
+  fsPromises.mkdir = async (target, ...args) => {
+    if (rootAlias !== null && path.resolve(target) === path.resolve(rootAlias)) {
+      rootMutationAttempts += 1;
+    }
+    return originalMkdir(target, ...args);
+  };
+  let requests = 0;
+
+  const result = await checkForUpdate(options(testFixture, async () => {
+    requests += 1;
+    return response(remoteRelease());
+  }));
+
+  assert.equal(injected, true);
+  assert.deepEqual(result, { status: 'silent', reason: 'cache-unavailable' });
+  assert.equal(rootMutationAttempts, 0);
+  assert.equal(requests, 0);
+});
+
 test('a symlink cache root cannot write into its target', async (t) => {
   const testFixture = fixture();
   t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
@@ -1632,6 +1767,43 @@ test('a symlink cache root cannot write into its target', async (t) => {
     requests += 1;
     return response(remoteRelease());
   }));
+
+  assert.deepEqual(result, { status: 'silent', reason: 'cache-unavailable' });
+  assert.equal(requests, 0);
+  assert.deepEqual(fs.readdirSync(protectedTarget), ['settings.json']);
+});
+
+test('a cache path equal to a trusted directory through a symlink is still rejected', async (t) => {
+  const testFixture = fixture();
+  const originalTmpdir = os.tmpdir;
+  const protectedTarget = path.join(testFixture.root, 'trusted-target');
+  const authoredAlias = path.join(testFixture.root, 'trusted-alias');
+  fs.mkdirSync(protectedTarget);
+  fs.writeFileSync(path.join(protectedTarget, 'settings.json'), '{"protected":true}\n');
+  try {
+    fs.symlinkSync(
+      protectedTarget,
+      authoredAlias,
+      process.platform === 'win32' ? 'junction' : 'dir',
+    );
+  } catch (error) {
+    if (['EPERM', 'EACCES', 'ENOTSUP'].includes(error?.code)) {
+      t.skip(`directory symlinks are unavailable: ${error.code}`);
+      return;
+    }
+    throw error;
+  }
+  os.tmpdir = () => protectedTarget;
+  t.after(() => {
+    os.tmpdir = originalTmpdir;
+    fs.rmSync(testFixture.root, { recursive: true, force: true });
+  });
+  let requests = 0;
+
+  const result = await checkForUpdate(options(testFixture, async () => {
+    requests += 1;
+    return response(remoteRelease());
+  }, { cacheDirectory: authoredAlias }));
 
   assert.deepEqual(result, { status: 'silent', reason: 'cache-unavailable' });
   assert.equal(requests, 0);
@@ -1858,7 +2030,7 @@ test('a cache ancestor replacement restored after reservation creation fails clo
   assert.deepEqual(fs.readdirSync(path.join(replacementVersion, reservations[0])), []);
 });
 
-test('a trusted cache prefix switched after validation cannot redirect later writes', async (t) => {
+test('an authored symlink is rejected even when it is also reported as a trusted prefix', async (t) => {
   const testFixture = fixture();
   const originalHomedir = os.homedir;
   const originalLstat = fsPromises.lstat;
@@ -1916,12 +2088,10 @@ test('a trusted cache prefix switched after validation cannot redirect later wri
     cacheDirectory,
   }));
 
-  assert.equal(switched, true);
-  assert.equal(result.status, 'update_available');
+  assert.equal(switched, false);
+  assert.deepEqual(result, { status: 'silent', reason: 'cache-unavailable' });
   assert.deepEqual(fs.readdirSync(protectedTarget), ['settings.json']);
-  assert.ok(fs.readdirSync(canonicalVersionDirectory).some(
-    (entry) => entry.startsWith('committed-'),
-  ));
+  assert.equal(fs.existsSync(canonicalVersionDirectory), false);
 });
 
 test('concurrent checks use one writer and leave a valid cache', async (t) => {
@@ -3296,6 +3466,11 @@ test('CLI entry detection survives a realpath or symlink alias', (t) => {
   });
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(JSON.parse(result.stdout), { status: 'silent', reason: 'disabled' });
+  assert.equal(isMainModule({ argvPath: aliasPath, modulePath: checkerPath }), true);
+  assert.equal(isMainModule({
+    argvPath: path.join(aliasRoot, 'missing-entry.mjs'),
+    modulePath: checkerPath,
+  }), false);
 });
 
 test('notifier source has no process execution or remote-origin override surface', () => {

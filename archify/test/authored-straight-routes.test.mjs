@@ -55,7 +55,9 @@ function orthogonalCheck(result) {
 }
 function inputFor(name, document) {
   const input = path.join(tmp, `${name}.json`);
-  fs.writeFileSync(input, JSON.stringify(document));
+  const cliDocument = structuredClone(document);
+  cliDocument.meta = { ...cliDocument.meta, output: `${name}.html` };
+  fs.writeFileSync(input, JSON.stringify(cliDocument));
   return input;
 }
 function assertPassed(result) {

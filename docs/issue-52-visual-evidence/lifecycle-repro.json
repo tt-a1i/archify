@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "diagram_type": "lifecycle",
-  "meta": { "title": "No Waiting or Failure", "viewBox": [720, 566] },
+  "meta": { "title": "No Waiting or Failure", "output": "docs/issue-52-visual-evidence/lifecycle-repro.html", "viewBox": [720, 566] },
   "lanes": [{ "id": "main", "label": "Lifecycle" }],
   "states": [
     { "id": "started", "type": "start", "label": "Started", "lane": "main", "col": 0 },

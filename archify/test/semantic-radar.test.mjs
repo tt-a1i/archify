@@ -423,7 +423,7 @@ test('Semantic Radar automatically avoids a tall Semantic Passport', {
   fs.writeFileSync(input, JSON.stringify({
     schema_version: 1,
     diagram_type: 'architecture',
-    meta: { title: 'Tall Passport Radar Regression', output: artifact },
+    meta: { title: 'Tall Passport Radar Regression', output: 'tall-passport.html' },
     components: [
       ...peers,
       { id: 'hub', type: 'security', label: 'Relationship Hub', sublabel: 'Many authored links', pos: [900, 500], size: [150, 70] },

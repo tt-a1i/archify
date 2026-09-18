@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { throwDiagnosticError } from './diagnostics.mjs';
+import { sameEntry } from './path-semantics.mjs';
 import { parseRepositoryRemote, redactRepositoryRemote, repositorySourceHref } from './repository-location.mjs';
 
 const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
@@ -42,6 +43,7 @@ function gitValue(repoRoot, args, failure) {
 
 function verifiedSourcePath(value, where) {
   const sourcePath = String(value || '');
+  // path-contract-allow: git-path -- Git tree entries use repository-relative POSIX syntax.
   if (!sourcePath || sourcePath.startsWith('/') || sourcePath.includes('\\') || CONTROL_CHARACTER_RE.test(sourcePath)) {
     evidenceFailure('repository-evidence/path-invalid', `${where} must be a repo-relative POSIX path.`, {
       subject: { path: where },
@@ -146,7 +148,15 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
     });
   }
   const gitRoot = gitValue(realRoot, ['rev-parse', '--show-toplevel'], `Evidence root "${realRoot}" is not a Git repository.`);
-  if (fs.realpathSync(gitRoot) !== realRoot) {
+  const rootIdentity = sameEntry(realRoot, gitRoot);
+  if (rootIdentity.status === 'unknown') {
+    evidenceFailure('repository-evidence/root-identity-indeterminate', 'Could not determine whether the evidence root is the Git top-level directory.', {
+      subject: { repoRoot: realRoot },
+      evidence: { gitTopLevel: gitRoot, relation: rootIdentity.reason },
+      supportedFixes: ['pass the readable Git top-level directory using its canonical filesystem path'],
+    });
+  }
+  if (rootIdentity.status === 'different') {
     evidenceFailure('repository-evidence/root-not-top-level', `Evidence root must be the Git top-level directory: ${gitRoot}`, {
       subject: { repoRoot: realRoot },
       evidence: { gitTopLevel: gitRoot },

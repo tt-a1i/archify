@@ -192,15 +192,18 @@ jobs:
       - name: Install test dependencies
         run: npm ci --ignore-scripts
         working-directory: archify
-      - name: Verify Windows-sensitive regression fixtures
-        run: >-
-          node --test
-          --test-name-pattern="Git checkout preserves|clean staging preserves index modes|workflow migration cleanup failure|preview runs from an installed skill|canonical watch target|Windows 8.3 short path"
-          archify/test/checkout-line-endings.test.mjs
-          archify/test/clean-skill-staging.test.mjs
-          archify/test/workflow-migration.test.mjs
-          archify/test/cli.test.mjs
-          archify/test/preview.test.mjs
+      - name: Provision controlled Windows path fixtures
+        shell: pwsh
+        run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}'
+      - name: Verify maintained Windows path contracts
+        run: node scripts/run-windows-path-tests.mjs
+        env:
+          ARCHIFY_REQUIRE_WINDOWS_8DOT3: '1'
+          ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: '1'
+      - name: Clean up controlled Windows path fixtures
+        if: ${{ always() }}
+        shell: pwsh
+        run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}' -Cleanup
 
   deploy-pages:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

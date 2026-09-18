@@ -8,7 +8,36 @@ permissions:
   contents: write
 
 jobs:
+  windows-test-portability:
+    name: Windows path contracts (Node ${{ matrix.node-version }})
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install test dependencies
+        run: npm ci --ignore-scripts
+        working-directory: archify
+      - name: Provision controlled Windows path fixtures
+        shell: pwsh
+        run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}'
+      - name: Verify maintained Windows path contracts
+        run: node scripts/run-windows-path-tests.mjs
+        env:
+          ARCHIFY_REQUIRE_WINDOWS_8DOT3: '1'
+          ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: '1'
+      - name: Clean up controlled Windows path fixtures
+        if: ${{ always() }}
+        shell: pwsh
+        run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}' -Cleanup
+
   release:
+    needs: windows-test-portability
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0

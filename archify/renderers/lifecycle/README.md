@@ -10,8 +10,8 @@ node archify/renderers/lifecycle/render-lifecycle.mjs input.lifecycle.json outpu
 The renderer validates input against `archify/schemas/lifecycle.schema.json`
 with the bundled standalone validator. No dependency installation is required.
 
-If `output.html` is omitted, the renderer uses `meta.output` from the JSON file
-or falls back to `lifecycle.html` in the current working directory.
+If `output.html` is omitted, the renderer uses the required `meta.output` value
+from the JSON file.
 
 ## Input
 
@@ -23,6 +23,7 @@ Lifecycle JSON files must set:
   "diagram_type": "lifecycle",
   "meta": {
     "title": "Agent Run Lifecycle",
+    "output": "agent-run-lifecycle.html",
     "viewBox": [980, 660]
   },
   "lanes": [],

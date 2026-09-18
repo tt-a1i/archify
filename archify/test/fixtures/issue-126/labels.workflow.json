@@ -3,6 +3,7 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "Sanitized semantic labels",
+    "output": "issue-126-labels.html",
     "legend": { "mode": "hidden" }
   },
   "lanes": [

@@ -20,6 +20,7 @@ function run(args) {
 
 function writeFixture(name, source) {
   const file = path.join(tmp, name);
+  if (source?.meta && source.meta.output === undefined) source.meta.output = 'fixture.html';
   fs.writeFileSync(file, JSON.stringify(source, null, 2));
   return file;
 }

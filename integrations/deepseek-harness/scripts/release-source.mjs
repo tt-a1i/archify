@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validatePortablePathSet } from '../../../archify/renderers/shared/portable-path.mjs';
 import { spawnCliSync } from './resolve-cli.mjs';
 
 export const integrationRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -23,9 +24,11 @@ const adapterEntries = new TextDecoder('utf-8', { fatal: true })
     const separator = record.indexOf('\t');
     const [mode, type, objectId] = record.slice(0, separator).split(' ');
     return { mode, type, objectId, relative: record.slice(separator + 1).slice(adapterPrefix.length) };
+  // path-contract-allow: git-path -- ls-tree entries are repository-relative POSIX names.
   }).filter(({ relative }) => requiredAdapterFiles.includes(relative) || relative.startsWith('lib/'));
 
 for (const relative of requiredAdapterFiles) {
+  // path-contract-allow: git-path -- Both operands are exact ls-tree entry names.
   if (!adapterEntries.some((entry) => entry.relative === relative)) {
     throw new Error(`required committed DSH adapter input is missing: ${relative}`);
   }
@@ -33,21 +36,8 @@ for (const relative of requiredAdapterFiles) {
 
 // Capture Git blobs, not working-tree paths: local edits and symlink swaps cannot
 // change the package identified by adapterCommit.
-const portablePaths = new Map();
+validatePortablePathSet(adapterEntries.map((entry) => entry.relative), { profile: 'archive' });
 const adapterFiles = new Map(adapterEntries.map((entry) => {
-  const segments = entry.relative.split('/');
-  for (const [index, segment] of segments.entries()) {
-    if (!segment || /[\\:\x00-\x1f<>"|?*]/.test(segment) || /[. ]$/.test(segment)
-      || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(segment)) {
-      throw new Error(`DSH adapter input has an unsupported path: ${entry.relative}`);
-    }
-    const prefix = segments.slice(0, index + 1).join('/');
-    const key = prefix.normalize('NFC').toLowerCase();
-    if (portablePaths.has(key) && portablePaths.get(key) !== prefix) {
-      throw new Error(`DSH adapter paths collide across supported filesystems: ${portablePaths.get(key)} and ${prefix}`);
-    }
-    portablePaths.set(key, prefix);
-  }
   if (entry.mode === '120000') {
     throw new Error(`refusing to package committed DSH adapter symlink: ${entry.relative}`);
   }

@@ -87,7 +87,11 @@ function denseArchitecture() {
   return {
     schema_version: 1,
     diagram_type: 'architecture',
-    meta: { title: 'Large receipt regression', quality_profile: 'standard' },
+    meta: {
+      title: 'Large receipt regression',
+      output: 'large-receipt-regression.html',
+      quality_profile: 'standard',
+    },
     components,
     connections,
   };

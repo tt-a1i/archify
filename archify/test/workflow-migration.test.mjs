@@ -75,6 +75,7 @@ function explicitPinConflictWorkflow() {
     diagram_type: 'workflow',
     meta: {
       title: 'Unmappable explicit label pin',
+      output: 'unmappable-explicit-label-pin.html',
       viewBox: [900, 420],
       legend: { mode: 'hidden' },
     },
@@ -99,6 +100,7 @@ function heightConstrainedWorkflow() {
     diagram_type: 'workflow',
     meta: {
       title: 'Legacy height capacity',
+      output: 'legacy-height-capacity.html',
       viewBox: [720, 240],
       legend: { mode: 'hidden' },
     },
@@ -120,6 +122,7 @@ function profileDivergenceWorkflow() {
     diagram_type: 'workflow',
     meta: {
       title: 'profile divergence',
+      output: 'profile-divergence.html',
       quality_profile: 'showcase',
       legend: { mode: 'hidden' },
     },
@@ -423,6 +426,7 @@ test('workflow migration reports the measured legacy requirement separately from
     diagram_type: 'workflow',
     meta: {
       title: 'Spacious legacy capacity',
+      output: 'spacious-legacy-capacity.html',
       viewBox: [1600, 900],
       legend: { mode: 'hidden' },
     },
@@ -463,6 +467,35 @@ test('workflow migration cleanup failure warns without reversing a successful co
   assert.match(result.stderr, /simulated migration cleanup failure/);
 });
 
+test('workflow migration cleanup preserves an unexpected claimant in its private staging directory', () => {
+  const source = copyFixture('cleanup-claimant-source.workflow.json');
+  const destination = path.join(tmp, 'cleanup-claimant-destination.workflow.json');
+  const importModule = path.join(tmp, 'claim-migration-staging-cleanup.mjs');
+  fs.writeFileSync(importModule, `
+import fs from 'node:fs';
+import path from 'node:path';
+const rmdirSync = fs.rmdirSync.bind(fs);
+let claimed = false;
+fs.rmdirSync = (directory, ...args) => {
+  if (!claimed && path.basename(String(directory)).startsWith('.archify-migration-')) {
+    claimed = true;
+    fs.writeFileSync(path.join(directory, 'unknown-claimant.txt'), 'preserve migration claimant');
+  }
+  return rmdirSync(directory, ...args);
+};
+`);
+
+  const result = runMigration(source, destination, { importModule });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.match(result.stderr, /Warning: could not remove workflow migration staging directory/);
+  const claimant = fs.readdirSync(tmp, { recursive: true })
+    .map((entry) => path.join(tmp, entry))
+    .find((entry) => path.basename(entry) === 'unknown-claimant.txt');
+  assert.ok(claimant);
+  assert.equal(fs.readFileSync(claimant, 'utf8'), 'preserve migration claimant');
+});
+
 test('workflow migration is idempotent when its v2 destination is migrated again', () => {
   const source = copyFixture('idempotent-source.workflow.json');
   const firstDestination = path.join(tmp, 'idempotent-first.workflow.json');
@@ -494,7 +527,12 @@ test('fallback planning preserves straight-edge rank constraints when mapping ab
   const document = {
     schema_version: 1,
     diagram_type: 'workflow',
-    meta: { title: 'Fallback rank mapping', viewBox: [720, 520], legend: { mode: 'hidden' } },
+    meta: {
+      title: 'Fallback rank mapping',
+      output: 'fallback-rank-mapping.html',
+      viewBox: [720, 520],
+      legend: { mode: 'hidden' },
+    },
     lanes: [
       { id: 'pin', label: 'Pinned label' },
       { id: 'straight', label: 'Straight constraint' },
@@ -595,6 +633,154 @@ test('workflow migration reports a cyclic-symlink destination as structured JSON
   assert.equal(failure.ok, false);
   assert.equal(failure.diagnostics[0].code, 'output/symlink-cycle');
   assert.equal(failure.diagnostics[0].subject.output, path.resolve(destination));
+});
+
+test('workflow migration rejects a dangling destination symlink without touching it', () => {
+  const source = copyFixture('dangling-destination-source.workflow.json');
+  const destination = path.join(tmp, 'dangling-destination.workflow.json');
+  const missingTarget = path.join(tmp, 'missing-migration-target.workflow.json');
+  fs.symlinkSync(missingTarget, destination, 'file');
+  const linkBefore = fs.readlinkSync(destination);
+
+  const result = runMigration(source, destination);
+
+  assert.notEqual(result.status, 0, result.stderr || result.stdout);
+  assert.equal(fs.lstatSync(destination).isSymbolicLink(), true);
+  assert.equal(fs.readlinkSync(destination), linkBefore);
+  assert.equal(fs.existsSync(missingTarget), false);
+  assert.equal(parseJsonOutput(result).diagnostics[0].code, 'migration/destination-type');
+});
+
+test('workflow migration preserves a destination claimant created before final verification', () => {
+  const source = copyFixture('destination-race-source.workflow.json');
+  const destination = path.join(tmp, 'destination-race.workflow.json');
+  const claimant = '{"claimant":"migration destination"}\n';
+  const importModule = path.join(tmp, 'claim-migration-destination.mjs');
+  fs.writeFileSync(importModule, `
+import fs from 'node:fs';
+const readFileSync = fs.readFileSync;
+let sourceReads = 0;
+fs.readFileSync = (file, ...args) => {
+  const bytes = readFileSync(file, ...args);
+  if (String(file) === ${JSON.stringify(source)}) {
+    sourceReads += 1;
+    if (sourceReads === 2) {
+      fs.writeFileSync(${JSON.stringify(destination)}, ${JSON.stringify(claimant)}, { flag: 'wx' });
+    }
+  }
+  return bytes;
+};
+`);
+
+  const result = runMigration(source, destination, { importModule });
+
+  assert.notEqual(result.status, 0, result.stderr || result.stdout);
+  assert.equal(fs.readFileSync(destination, 'utf8'), claimant);
+  assert.equal(parseJsonOutput(result).diagnostics[0].code, 'migration/destination-changed');
+});
+
+test('workflow migration preserves candidate and destination claimants introduced in the publish window', () => {
+  const source = copyFixture('candidate-publish-race-source.workflow.json');
+  const destination = path.join(tmp, 'candidate-publish-race.workflow.json');
+  const detachedCandidate = path.join(tmp, 'owned-candidate-before-publish.workflow.json');
+  const claimant = '{"claimant":"candidate publish window"}\n';
+  const importModule = path.join(tmp, 'claim-migration-candidate-during-publish.mjs');
+  fs.writeFileSync(importModule, `
+import fs from 'node:fs';
+import path from 'node:path';
+const linkSync = fs.linkSync.bind(fs);
+let claimed = false;
+fs.linkSync = (sourcePath, targetPath, ...args) => {
+  if (!claimed
+      && path.basename(String(sourcePath)) === 'candidate.workflow.json'
+      && path.basename(String(targetPath)) === ${JSON.stringify(path.basename(destination))}) {
+    claimed = true;
+    fs.renameSync(sourcePath, ${JSON.stringify(detachedCandidate)});
+    fs.writeFileSync(sourcePath, ${JSON.stringify(claimant)}, { flag: 'wx' });
+  }
+  return linkSync(sourcePath, targetPath, ...args);
+};
+`);
+
+  const result = runMigration(source, destination, { importModule });
+
+  assert.notEqual(result.status, 0, result.stderr || result.stdout);
+  assert.equal(parseJsonOutput(result).diagnostics[0].code, 'migration/destination-changed');
+  assert.equal(fs.readFileSync(destination, 'utf8'), claimant);
+  const staging = fs.readdirSync(tmp)
+    .find((entry) => entry.startsWith('.archify-migration-')
+      && fs.existsSync(path.join(tmp, entry, 'candidate.workflow.json')));
+  assert.ok(staging, 'the candidate claimant must remain named in private staging');
+  assert.equal(fs.readFileSync(path.join(tmp, staging, 'candidate.workflow.json'), 'utf8'), claimant);
+  assert.equal(JSON.parse(fs.readFileSync(detachedCandidate, 'utf8')).schema_version, 2);
+});
+
+test('workflow migration verifies the final published binding and preserves a last-window target claimant', () => {
+  const source = copyFixture('final-publish-race-source.workflow.json');
+  const destination = path.join(tmp, 'final-publish-race.workflow.json');
+  const detachedPublished = path.join(tmp, 'detached-final-published.workflow.json');
+  const claimant = '{"claimant":"final published window"}\n';
+  const importModule = path.join(tmp, 'claim-final-migration-publication.mjs');
+  fs.writeFileSync(importModule, `
+import fs from 'node:fs';
+import path from 'node:path';
+const unlinkSync = fs.unlinkSync.bind(fs);
+let claimed = false;
+fs.unlinkSync = (file, ...args) => {
+  const result = unlinkSync(file, ...args);
+  if (!claimed
+      && path.basename(String(file)) === 'candidate.workflow.json'
+      && path.basename(path.dirname(String(file))).startsWith('.archify-remove-')) {
+    claimed = true;
+    fs.renameSync(${JSON.stringify(destination)}, ${JSON.stringify(detachedPublished)});
+    fs.writeFileSync(${JSON.stringify(destination)}, ${JSON.stringify(claimant)}, { flag: 'wx' });
+  }
+  return result;
+};
+`);
+
+  const result = runMigration(source, destination, { importModule });
+
+  assert.notEqual(result.status, 0, result.stderr || result.stdout);
+  assert.equal(parseJsonOutput(result).diagnostics[0].code, 'migration/destination-changed');
+  assert.equal(fs.readFileSync(destination, 'utf8'), claimant);
+  assert.equal(JSON.parse(fs.readFileSync(detachedPublished, 'utf8')).schema_version, 2);
+});
+
+test('workflow migration preserves an existing destination replaced during candidate mode finalization', () => {
+  const source = copyFixture('destination-chmod-race-source.workflow.json');
+  const destination = path.join(tmp, 'destination-chmod-race.workflow.json');
+  const detached = path.join(tmp, 'detached-destination-chmod-race.workflow.json');
+  const previous = '{"previous":"migration destination"}\n';
+  const claimant = '{"claimant":"migration destination during chmod"}\n';
+  fs.writeFileSync(destination, previous);
+  const importModule = path.join(tmp, 'claim-migration-destination-during-chmod.mjs');
+  fs.writeFileSync(importModule, `
+import fs from 'node:fs';
+import path from 'node:path';
+const chmodSync = fs.chmodSync.bind(fs);
+const renameSync = fs.renameSync.bind(fs);
+const writeFileSync = fs.writeFileSync.bind(fs);
+let claimed = false;
+fs.chmodSync = (file, ...args) => {
+  const result = chmodSync(file, ...args);
+  if (!claimed
+    && path.basename(String(file)) === 'candidate.workflow.json'
+    && path.basename(path.dirname(String(file))).startsWith('.archify-migration-')) {
+    claimed = true;
+    renameSync(${JSON.stringify(destination)}, ${JSON.stringify(detached)});
+    writeFileSync(${JSON.stringify(destination)}, ${JSON.stringify(claimant)}, { flag: 'wx' });
+  }
+  return result;
+};
+`);
+
+  const result = runMigration(source, destination, { importModule });
+
+  assert.notEqual(result.status, 0, result.stderr || result.stdout);
+  assert.equal(fs.readFileSync(destination, 'utf8'), claimant);
+  assert.equal(fs.readFileSync(detached, 'utf8'), previous);
+  assert.equal(parseJsonOutput(result).diagnostics[0].code, 'migration/destination-changed');
 });
 
 test('failed workflow migration emits diagnostics and never writes its destination', () => {

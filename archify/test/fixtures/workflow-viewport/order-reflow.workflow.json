@@ -3,6 +3,7 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "订单处理工作流",
+    "output": "order-reflow.html",
     "locale": "zh-CN",
     "quality_profile": "showcase"
   },

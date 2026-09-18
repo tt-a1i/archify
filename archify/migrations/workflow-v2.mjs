@@ -46,6 +46,7 @@ function legacyLayoutProbe(workflow, qualityProfile) {
     diagram_type: 'workflow',
     meta: {
       title: workflow.meta.title,
+      output: workflow.meta.output,
       ...(workflow.meta.locale ? { locale: workflow.meta.locale } : {}),
       legend: { mode: 'hidden' },
     },

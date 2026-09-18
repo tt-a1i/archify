@@ -10,8 +10,8 @@ node archify/renderers/sequence/render-sequence.mjs input.sequence.json output.h
 The renderer validates input against `archify/schemas/sequence.schema.json`
 with the bundled standalone validator. No dependency installation is required.
 
-If `output.html` is omitted, the renderer uses `meta.output` from the JSON file
-or falls back to `sequence.html` in the current working directory.
+If `output.html` is omitted, the renderer uses the required `meta.output` value
+from the JSON file.
 
 ## Input
 
@@ -23,6 +23,7 @@ Sequence JSON files must set:
   "diagram_type": "sequence",
   "meta": {
     "title": "Cache Miss Request Sequence",
+    "output": "cache-miss-request.html",
     "viewBox": [920, 760]
   },
   "participants": [],

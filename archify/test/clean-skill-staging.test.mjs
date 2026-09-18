@@ -6,7 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { stageCleanSkill } from '../../scripts/stage-clean-skill.mjs';
+import { isMainModule, stageCleanSkill } from '../../scripts/stage-clean-skill.mjs';
 
 const stagerPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../scripts/stage-clean-skill.mjs');
 const canonicalNotices = fs.readFileSync(
@@ -42,11 +42,34 @@ function repositoryFixture() {
   write(root, 'archify/scripts/check-update.mjs', 'export {};\n');
   write(root, 'archify/scripts/update-contract.mjs', 'export {};\n');
   write(root, 'archify/renderers/shared/generated-validators.mjs', 'export {};\n');
+  write(root, 'archify/renderers/shared/path-semantics.mjs', 'export {};\n');
+  write(root, 'archify/renderers/shared/portable-path.mjs', 'export {};\n');
   write(root, 'archify/test/repository-only.test.mjs', 'throw new Error();\n');
   git(root, ['init']);
   git(root, ['add', 'THIRD_PARTY_NOTICES.md']);
   return root;
 }
+
+test('clean staging entry detection accepts a physical alias and fails closed when identity is unknown', (t) => {
+  const aliasRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-stage-entry-alias-'));
+  t.after(() => fs.rmSync(aliasRoot, { recursive: true, force: true }));
+  const aliasPath = path.join(aliasRoot, 'stage-clean-alias.mjs');
+  try {
+    fs.linkSync(stagerPath, aliasPath);
+  } catch (error) {
+    if (['EPERM', 'EACCES', 'ENOTSUP', 'EXDEV'].includes(error?.code)) {
+      t.skip(`hard-link aliases unavailable: ${error.code}`);
+      return;
+    }
+    throw error;
+  }
+
+  assert.equal(isMainModule({ argvPath: aliasPath, modulePath: stagerPath }), true);
+  assert.equal(isMainModule({
+    argvPath: path.join(aliasRoot, 'missing-entry.mjs'),
+    modulePath: stagerPath,
+  }), false);
+});
 
 test('clean staging rejects a packaged notice that diverges from the repository notice', () => {
   const root = repositoryFixture();
@@ -61,6 +84,27 @@ test('clean staging rejects a packaged notice that diverges from the repository 
     assert.throws(
       () => stageCleanSkill({ repoRoot: root, destination }),
       /must byte-match the repository notice/,
+    );
+    assert.equal(fs.existsSync(destination), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging requires shared path runtimes only when packaged code imports them', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  try {
+    fs.writeFileSync(
+      path.join(root, 'archify', 'renderers', 'shared', 'generated-validators.mjs'),
+      "const runtime = import /* keep release dependencies complete */ (`./portable-path.mjs`);\nexport { runtime };\n",
+    );
+    git(root, ['add', '.']);
+    git(root, ['rm', '--cached', '-f', 'archify/renderers/shared/portable-path.mjs']);
+
+    assert.throws(
+      () => stageCleanSkill({ repoRoot: root, destination }),
+      /required package input is not tracked by Git: archify\/renderers\/shared\/portable-path[.]mjs/,
     );
     assert.equal(fs.existsSync(destination), false);
   } finally {
@@ -87,7 +131,7 @@ test('clean staging rejects byte-identical but incomplete repository and package
   }
 });
 
-test('clean staging preserves index modes and strips repository-only package metadata', (t) => {
+test('clean staging preserves index modes and strips repository-only package metadata', () => {
   const root = repositoryFixture();
   const destination = path.join(root, 'staged-skill');
   try {
@@ -97,15 +141,12 @@ test('clean staging preserves index modes and strips repository-only package met
     // Index modes must win over working-tree permissions, including on Windows.
     git(root, ['update-index', '--chmod=+x', 'archify/bin/executable.mjs']);
     git(root, ['update-index', '--chmod=-x', 'archify/runtime/test/required.dat']);
-    const chmod = t.mock.method(fs, 'chmodSync');
-
-    stageCleanSkill({ repoRoot: root, destination });
+    const result = stageCleanSkill({ repoRoot: root, destination });
 
     const executable = path.join(destination, 'bin', 'executable.mjs');
     const runtimeFixture = path.join(destination, 'runtime', 'test', 'required.dat');
-    const appliedModes = new Map(chmod.mock.calls.map(({ arguments: args }) => args));
-    assert.equal(appliedModes.get(executable), 0o755);
-    assert.equal(appliedModes.get(runtimeFixture), 0o644);
+    assert.equal(result.modes['bin/executable.mjs'], '100755');
+    assert.equal(result.modes['runtime/test/required.dat'], '100644');
     // Windows chmod cannot expose Unix executable bits through stat.
     if (process.platform !== 'win32') {
       assert.equal(fs.statSync(executable).mode & 0o777, 0o755);
@@ -202,6 +243,240 @@ test('clean staging refuses an existing mode manifest path and leaves it untouch
     assert.equal(fs.readFileSync(manifest, 'utf8'), 'not ours\n', 'an existing file at the manifest path must be preserved');
     assert.equal(fs.existsSync(destination), false, 'a refused manifest path must not leave a staged tree behind');
   } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging never adopts a claimant that wins destination-root creation', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  const claimant = path.join(destination, 'claimant.txt');
+  const originalMkdirSync = fs.mkdirSync;
+  let injected = false;
+  try {
+    git(root, ['add', 'archify']);
+    fs.mkdirSync = function injectDestinationClaimant(target, ...args) {
+      if (!injected && path.resolve(target) === path.resolve(destination)) {
+        injected = true;
+        originalMkdirSync.call(fs, target, { mode: 0o755 });
+        fs.writeFileSync(claimant, 'claimant root\n');
+      }
+      return originalMkdirSync.call(fs, target, ...args);
+    };
+
+    assert.throws(
+      () => stageCleanSkill({ repoRoot: root, destination }),
+      /clean Skill staging destination already exists/,
+    );
+    assert.equal(injected, true, 'the deterministic destination-root race must run');
+    assert.equal(
+      fs.readFileSync(claimant, 'utf8'),
+      'claimant root\n',
+      'a destination claimant must not be adopted or removed',
+    );
+  } finally {
+    fs.mkdirSync = originalMkdirSync;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging never overwrites or recursively removes a claimant file', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  const claimant = path.join(destination, 'LICENSE');
+  const originalOpenSync = fs.openSync;
+  let injected = false;
+  try {
+    git(root, ['add', 'archify']);
+    fs.openSync = function injectFileClaimant(target, ...args) {
+      if (!injected && path.resolve(String(target)) === path.resolve(claimant)) {
+        injected = true;
+        fs.writeFileSync(claimant, 'claimant file\n', { flag: 'wx' });
+      }
+      return originalOpenSync.call(fs, target, ...args);
+    };
+
+    assert.throws(
+      () => stageCleanSkill({ repoRoot: root, destination }),
+      /EEXIST|staging entry already exists/,
+    );
+    assert.equal(injected, true, 'the deterministic destination-file race must run');
+    assert.equal(
+      fs.readFileSync(claimant, 'utf8'),
+      'claimant file\n',
+      'a file claimant must survive cleanup byte-for-byte',
+    );
+  } finally {
+    fs.openSync = originalOpenSync;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging preserves a file claimant swapped at the retirement syscall boundary', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  const ownedFile = path.join(destination, 'LICENSE');
+  const displacedOwnedFile = path.join(root, 'displaced-owned-license');
+  const laterFile = path.join(destination, 'THIRD_PARTY_NOTICES.md');
+  const originalOpenSync = fs.openSync;
+  const originalRenameSync = fs.renameSync;
+  let injected = false;
+  try {
+    git(root, ['add', 'archify']);
+    fs.openSync = function failAfterFirstStagedFile(target, ...args) {
+      if (path.resolve(String(target)) === path.resolve(laterFile)) {
+        throw Object.assign(new Error('injected staging failure'), { code: 'EIO' });
+      }
+      return originalOpenSync.call(fs, target, ...args);
+    };
+    fs.renameSync = function swapClaimantAtRetirement(source, target, ...args) {
+      if (!injected
+        && path.resolve(String(source)) === path.resolve(ownedFile)
+        && path.basename(path.dirname(String(target))).startsWith('.archify-remove-')) {
+        injected = true;
+        originalRenameSync.call(fs, ownedFile, displacedOwnedFile);
+        fs.writeFileSync(ownedFile, 'claimant file\n', { flag: 'wx' });
+      }
+      return originalRenameSync.call(fs, source, target, ...args);
+    };
+
+    assert.throws(
+      () => stageCleanSkill({ repoRoot: root, destination }),
+      /injected staging failure/,
+    );
+    assert.equal(injected, true, 'cleanup must reach the deterministic retirement race');
+    assert.equal(fs.readFileSync(ownedFile, 'utf8'), 'claimant file\n');
+    assert.equal(fs.readFileSync(displacedOwnedFile, 'utf8'), 'MIT License\n');
+  } finally {
+    fs.openSync = originalOpenSync;
+    fs.renameSync = originalRenameSync;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging preserves a directory claimant swapped at the retirement syscall boundary', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  const modeManifest = path.join(root, 'modes.json');
+  const ownedDirectory = path.join(destination, 'renderers', 'shared');
+  const displacedOwnedDirectory = path.join(root, 'displaced-owned-shared');
+  const originalOpenSync = fs.openSync;
+  const originalRenameSync = fs.renameSync;
+  let injected = false;
+  const matchingFiles = (directory, name) => {
+    const matches = [];
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const absolute = path.join(directory, entry.name);
+      if (entry.isSymbolicLink()) continue;
+      if (entry.isDirectory()) matches.push(...matchingFiles(absolute, name));
+      else if (entry.isFile() && entry.name === name) matches.push(absolute);
+    }
+    return matches;
+  };
+  try {
+    git(root, ['add', 'archify']);
+    fs.openSync = function failModeManifest(target, ...args) {
+      if (path.resolve(String(target)) === path.resolve(modeManifest)) {
+        throw Object.assign(new Error('injected manifest failure'), { code: 'EIO' });
+      }
+      return originalOpenSync.call(fs, target, ...args);
+    };
+    fs.renameSync = function swapDirectoryClaimantAtRetirement(source, target, ...args) {
+      if (!injected
+        && path.resolve(String(source)) === path.resolve(ownedDirectory)
+        && path.basename(path.dirname(String(target))).startsWith('.archify-stage-remove-')) {
+        injected = true;
+        originalRenameSync.call(fs, ownedDirectory, displacedOwnedDirectory);
+        fs.mkdirSync(ownedDirectory);
+        fs.writeFileSync(path.join(ownedDirectory, 'claimant.txt'), 'claimant directory\n');
+      }
+      return originalRenameSync.call(fs, source, target, ...args);
+    };
+
+    assert.throws(
+      () => stageCleanSkill({ repoRoot: root, destination, modeManifest }),
+      /injected manifest failure/,
+    );
+    assert.equal(injected, true, 'cleanup must reach the deterministic directory-retirement race');
+    const claimants = matchingFiles(root, 'claimant.txt');
+    assert.equal(claimants.length, 1, 'the directory claimant must remain available for recovery');
+    assert.equal(fs.readFileSync(claimants[0], 'utf8'), 'claimant directory\n');
+    assert.equal(
+      fs.existsSync(displacedOwnedDirectory),
+      true,
+      'the displaced owned directory must not be mistaken for the claimant',
+    );
+  } finally {
+    fs.openSync = originalOpenSync;
+    fs.renameSync = originalRenameSync;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging detects a destination-ancestor swap before writing through the opened descriptor', (t) => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  const detachedDestination = path.join(root, 'detached-owned-stage');
+  const external = path.join(root, 'external-destination');
+  const sentinel = path.join(external, 'sentinel.txt');
+  const redirectedFile = path.join(external, 'LICENSE');
+  const targetFile = path.join(destination, 'LICENSE');
+  const originalOpenSync = fs.openSync;
+  const originalWriteFileSync = fs.writeFileSync;
+  const originalRenameSync = fs.renameSync;
+  let swapped = false;
+  let redirectedIdentity;
+  let wroteRedirectedFile = false;
+  try {
+    git(root, ['add', 'archify']);
+    fs.mkdirSync(external);
+    fs.writeFileSync(sentinel, 'external sentinel\n');
+    const probe = path.join(root, 'destination-symlink-probe');
+    try {
+      fs.symlinkSync(external, probe, process.platform === 'win32' ? 'junction' : 'dir');
+      fs.rmSync(probe, { force: true });
+    } catch (error) {
+      if (['EPERM', 'EACCES', 'ENOTSUP'].includes(error?.code)) {
+        t.skip(`symlinks unavailable: ${error.code}`);
+        return;
+      }
+      throw error;
+    }
+
+    fs.openSync = function redirectAtOpen(target, ...args) {
+      if (!swapped && path.resolve(String(target)) === path.resolve(targetFile)) {
+        swapped = true;
+        originalRenameSync.call(fs, destination, detachedDestination);
+        fs.symlinkSync(external, destination, process.platform === 'win32' ? 'junction' : 'dir');
+        const descriptor = originalOpenSync.call(fs, target, ...args);
+        redirectedIdentity = fs.fstatSync(descriptor, { bigint: true });
+        return descriptor;
+      }
+      return originalOpenSync.call(fs, target, ...args);
+    };
+    fs.writeFileSync = function observeRedirectedWrite(target, ...args) {
+      if (swapped && typeof target === 'number' && redirectedIdentity) {
+        const current = fs.fstatSync(target, { bigint: true });
+        if (current.dev === redirectedIdentity.dev && current.ino === redirectedIdentity.ino) {
+          wroteRedirectedFile = true;
+        }
+      }
+      return originalWriteFileSync.call(fs, target, ...args);
+    };
+
+    assert.throws(
+      () => stageCleanSkill({ repoRoot: root, destination }),
+      /clean Skill staging directory changed/,
+    );
+    assert.equal(swapped, true, 'the deterministic destination-ancestor race must run');
+    assert.equal(wroteRedirectedFile, false, 'no package bytes may be written through a redirected ancestor');
+    assert.equal(fs.existsSync(redirectedFile), false, 'the exclusively created empty file must be retired safely');
+    assert.equal(fs.readFileSync(sentinel, 'utf8'), 'external sentinel\n');
+    assert.equal(fs.lstatSync(destination).isSymbolicLink(), true, 'the ancestor claimant must be preserved');
+  } finally {
+    fs.openSync = originalOpenSync;
+    fs.writeFileSync = originalWriteFileSync;
+    fs.renameSync = originalRenameSync;
     fs.rmSync(root, { recursive: true, force: true });
   }
 });

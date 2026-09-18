@@ -36,6 +36,7 @@ export function parseRepositoryRemote(value, { authored = false } = {}) {
   const endpoint = provider && ((protocol === 'https:' && port === '443') || (protocol === 'ssh:' && port === '22'))
     ? 'standard' : `${protocol}${port}`;
   const pathKind = provider ? 'repository' : scp && !scpAbsolute ? 'relative' : 'absolute';
+  // path-contract-allow: url-path -- GitHub repository names are case-insensitive URL identities.
   const identityPath = provider === 'github' ? repositoryPath.toLowerCase() : repositoryPath;
   const encodedPath = segments.map(encodeURIComponent).join('/');
   const canonicalUrl = scp ? `git@${hostname}:${scpAbsolute ? '/' : ''}${repositoryPath}`

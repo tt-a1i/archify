@@ -11,13 +11,38 @@ their existing rule codes. Use the advertised `validate --json` or
 Unexpected implementation failures retain debugging information in human
 mode and remain `internal/unclassified` in machine receipts.
 
-Each output has three independent delivery metadata paths:
+Each delivered output has two artifact-specific metadata paths. When an output
+stem is too long for those derived filenames, Archify shortens it and appends a
+stable hash:
 
 - `<output-stem>.delivery.json` records the latest completed attempt.
 - `<output-stem>.delivery-pending.json` is the recovery journal for an attempt
   in progress.
-- `<output-stem>.delivery-lock.json` serializes attempts targeting the same
-  output.
+
+For a literal artifact stem that already matches Archify's reserved bounded-name
+marker, a pre-namespace raw provenance sidecar remains a read fallback when the
+encoded sidecar is absent. A pre-namespace raw pending journal is an independent
+fail-closed barrier: it blocks checks and redelivery even when an encoded pending
+journal also exists, and neither journal is silently replaced.
+
+One directory-wide `.archify-delivery-lock.json` serializes every delivery that
+resolves into the same physical output directory. This deliberately prevents
+case, Unicode-normalization, Windows short-name, and symbolic-link aliases from
+creating independent owners for one filesystem location. The tradeoff is that
+deliveries to different artifact names in one directory also run serially;
+provenance and pending journals remain artifact-specific.
+
+For migration safety, Archify also detects and preserves a legacy
+`<output-stem>.delivery-lock.json` beside the requested artifact. An existing
+legacy entry is a fail-closed recovery barrier. While a new delivery owns the
+directory mutex, it also holds temporary legacy-format fences for the requested
+spelling and an existing artifact's physical target spelling. It acquires the
+directory lock first, then all required compatibility fences before writing a
+journal or artifact, and removes the directory lock before those fences during
+release. This blocks an older Archify binary using
+either known spelling from entering the delivery. A legacy fence whose raw
+HEAD-era filename exceeds the host component limit is omitted because the old
+binary could not create that lock or deliver that artifact on the host either.
 
 `deliver` acquires the lock by exclusive `open(..., "wx")` before creating or
 replacing the recovery journal. A successful exclusive create yields an
@@ -27,7 +52,7 @@ lock release each verify the current capability inside the operation that
 would mutate shared state. A rejected contender does not create a journal or
 write failed provenance.
 
-An existing lock is handled without automatic recovery:
+An existing directory or legacy lock is handled without automatic recovery:
 
 | Observed lock state | Required `deliver` result |
 | --- | --- |
@@ -40,17 +65,52 @@ An existing lock is handled without automatic recovery:
 
 A `delivery/lock-stale` diagnostic identifies the absolute output and lock
 paths plus the original PID and receipt ID. Recovery is deliberately explicit
-and serial: stop all delivery attempts for that output, confirm that no active
-delivery owns it and that the reported stale entry has not been replaced,
-remove only the reported lock, then rerun `deliver`. Do not remove the artifact,
-current provenance, or pending journal as part of stale-lock recovery.
+and serial: stop all delivery attempts for that physical output directory,
+confirm that no active delivery owns it and that the reported stale entry has
+not been replaced, remove only the reported lock, then rerun `deliver`. Do not
+remove an artifact, current provenance, or pending journal as part of
+stale-lock recovery.
 
 The lock protocol targets Node.js 18 or later on a local filesystem with
 cooperating Archify processes. PID, receipt, and file-identity comparisons are
-defensive checks, not an atomic compare-and-swap. This contract does not claim
-distributed-lock correctness on NFS, SMB, or other network filesystems, and it
-cannot prevent an external process that ignores the protocol from replacing
-shared paths.
+defensive checks, not an atomic compare-and-swap. Compatibility fences cover
+the requested spelling and an existing physical-target spelling; they cannot
+enumerate arbitrary hard-link names or previously unknown filesystem aliases,
+so mixed-version delivery through such aliases remains out of scope. This
+contract does not claim distributed-lock correctness on NFS, SMB, or other
+network filesystems, and it cannot prevent an external process that ignores
+the protocol from replacing shared paths.
+
+Every no-clobber HTML publisher (`render`, `deliver`, `compare`, and `preview`)
+captures the requested directory entry, canonical write slot, physical parent,
+and existing target type, device/inode identity, and mode before staging, then
+revalidates that snapshot immediately before replacement. An existing write
+target must be a regular file with exactly one hard-link name. A target with
+multiple hard-link names fails closed with `output/target-hardlinked`: replacing
+the requested name cannot update unknown sibling names as one publication.
+Hard links remain supported for read identity and input/alias collision checks;
+they are unsupported only as write targets. A symbolic link to a single-link regular
+file remains supported: publication preserves the symbolic-link entry and
+applies the same protocol to its resolved target. Directory, FIFO, socket,
+device, changing mode, new claimant, and indeterminate identity cases fail
+before replacement.
+
+Publication is no-clobber and recoverable, not crash-atomic replacement of an
+existing target. To avoid overwriting a claimant that appears after the last
+identity check, Archify first retains the bound old file in a private recovery
+backup, removes the public name through identity-bound quarantine, and then
+creates the new public name with an exclusive hard link. A caught failure rolls
+back when the public slot and recovery binding still permit it. A process
+interruption between those namespace operations can instead leave the public
+path absent while the verified previous bytes remain in an adjacent private
+recovery backup. Single-artifact publication uses
+`.archify-remove-*/previous`; paired flows retain the backup in their private
+transaction staging directory. Preserve and inspect that backup before serial
+recovery; for `deliver`, the pending journal and lock keep strict checkers
+fail-closed. The portable Node.js filesystem API has no pathname
+compare-and-swap that both replaces an existing name atomically and refuses to
+overwrite a late claimant: `rename` would close the visibility gap only by
+overwriting that claimant.
 
 After ownership is established, `deliver` creates the journal before rendering
 and keeps it through the recoverable HTML/sidecar pair commit. It removes the
@@ -58,8 +118,9 @@ journal only after that commit completes. A validation, render, or pair-commit
 failure, or a process interruption, may therefore leave a journal. The journal
 is a safety barrier: `check` and `visual-check` fail closed when any directory
 entry exists at the journal or lock path, including an unreadable file,
-symlink, or dangling symlink. Run deliveries targeting the same output path
-serially; one attempt must finish or be recovered before another begins.
+symlink, or dangling symlink. Run deliveries targeting the same physical output
+directory serially; one attempt must finish or be recovered before another
+begins.
 
 A successful sidecar has `schemaVersion: 1`, `status: "current"`,
 `command: "deliver"`, a unique `receiptId`, the diagram `type`, an absolute
@@ -68,7 +129,10 @@ artifact, and specification/artifact SHA-256 and byte counts. Checkers treat a
 missing, malformed, unsupported, or inconsistent field as invalid. They also
 reject a sidecar symlink, including a dangling one. A checker binds provenance
 to the artifact bytes it actually checks and verifies that binding again before
-reporting success; a concurrent byte change fails.
+reporting success; a concurrent byte change fails. The provenance directory
+entry itself must be a single-link regular file: `deliver` and strict check fail
+closed with `delivery/provenance-hardlink-unsupported` when it has another hard
+link, without scanning for or guessing the sibling name.
 
 If a currently verified owner fails after an older HTML exists, Archify writes
 a new `status: "failed"` sidecar and leaves the journal until recovery is
@@ -95,10 +159,46 @@ node bin/archify.mjs check <output.html> --require-provenance
 node bin/archify.mjs visual-check <output.html> --json --require-provenance
 ```
 
-Use `validate` after every candidate edit. CLI HTML output paths must end in `.html`, including after symbolic-link resolution.
-Compare receipt paths must end in `.json`. Explicit CLI paths may be absolute or
-outside the current working directory; authored `meta.output` remains confined
-to that directory. A type mismatch fails before writing with
+## Output path contracts
+
+Archify intentionally separates durable authored paths from command-line paths:
+
+- Required authored `meta.output` is a portable POSIX-relative path such as
+  `reports/diagram.html`. It uses `/`, ends in a non-empty `.html` basename,
+  and cannot contain an absolute or drive-relative prefix, URI, backslash,
+  empty or dot segment, control character, unpaired UTF-16 surrogate, Windows
+  alternate-data-stream separator or invalid filename character, trailing dot
+  or space, DOS device name, or a component over either the 255-byte UTF-8 or
+  255-code-unit UTF-16 limit. It resolves from the current working directory
+  and must remain physically inside that directory, with an `.html` target,
+  after symbolic links are followed. The durable output/archive profile also
+  conservatively rejects a Windows 8.3 short-name shape such as `PROGRA~1`;
+  descriptive repo/Git POSIX paths use a separate profile and are exempt.
+- Explicit CLI output arguments use the active host's native syntax. They may
+  be relative or absolute, use native separators, and resolve outside the
+  current working directory. On Windows, ordinary drive-absolute, UNC, and
+  relative paths (including ordinary `.` and `..` navigation) are supported.
+  A system-resolved 8.3 spelling of an existing file or directory is accepted
+  when Archify can prove its physical identity; this native alias support does
+  not relax the durable output/archive profile's 8.3-shaped-name rejection.
+  Extended-length paths are limited to raw backslash-only `\\?\C:\...` and
+  `\\?\UNC\server\share\...` forms without dot segments; device namespaces,
+  malformed roots, drive-relative paths such as `C:file.html`, current-drive
+  roots such as `\file.html`, alternate data streams, reserved device names,
+  invalid or trailing filename characters, and overlong components fail
+  closed. POSIX CLI paths retain POSIX filename rules rather than inheriting
+  Windows spelling restrictions. Every host rejects NUL, unpaired surrogates,
+  and components that exceed its supported bound.
+
+These contracts are not interchangeable: an explicit CLI output does not hide
+an invalid durable `meta.output` (including a missing value), and `validate` and `migrate` check
+the authored output even when they do not publish to that path. To migrate an
+older v1 document that omitted it, add a portable POSIX-relative `.html` path
+to `meta.output`; no schema-version change is otherwise required.
+
+Use `validate` after every candidate edit. CLI HTML output paths must end in
+`.html`, including after symbolic-link resolution. Compare receipt paths must
+end in `.json`. A type mismatch fails before writing with
 `output/cli-extension` or `output/cli-resolved-extension`. These checks prevent
 accidental file-type overwrites; they do not sandbox explicit CLI directories
 or prevent replacement of an existing artifact of the expected type.
@@ -131,8 +231,8 @@ capability still identifies that exact entry. A replacement is preserved.
 Filesystem and cleanup errors are reported separately from an active concurrent
 delivery. An active, stale, unrecognized, or otherwise preserved lock
 independently prevents checkers from accepting the prior artifact. Fix the
-reported filesystem error before retrying, and use another output path if the
-lock path contains unrelated data.
+reported filesystem error before retrying, and use another physical output
+directory if the lock path contains unrelated data.
 
 Lock release is part of delivery completion. If the artifact/provenance pair
 has committed and the journal has finalized but the matching lock cannot be
@@ -204,19 +304,51 @@ browser evidence cannot claim perceptual review.
 - `failed` maps from exit 1 and receipt `status: "fail"` when the inspection finds a defect, the command fails, or a runtime/capture error leaves the evidence incomplete.
 - `skipped` maps only from exit 2 and receipt `status: "skipped"` when Chrome/Chromium is unavailable and the inspection does not run.
 
-Runtime or capture failures leave incomplete evidence and must not be normalized to `skipped`. Failed or skipped capture runs remove stale
-image/contact-sheet sidecars rather than presenting prior evidence as current.
-They do not invalidate an already successful deterministic delivery, and they
-do not turn a perceptual visual review into passed or failed. Retry an
-environmental failure through the supported command in a browser-capable
-execution context when practical. Keep the packaged transport unchanged unless
-the failure reproduces through that seam in a capable environment.
+Runtime or capture failures leave incomplete evidence and must not be normalized to `skipped`.
+The receipt, contact sheet, and four PNGs form one owned evidence set. Before
+capture, `visual-check` freezes every requested directory entry, its
+canonical write slot and physical parent, and the target's absent/file state,
+type, device/inode identity, and mode. Hard-linked evidence targets are not safe
+write targets. All candidate files are created exclusively inside one random,
+private staging directory beneath the physical evidence directory; the receipt
+is published last. Each staged candidate must have exactly one hard-link name
+before publication. The no-clobber publish link temporarily gives the staged
+and final names a link count of two; unlinking the verified staged name must
+leave the final entry with a link count of one. An unexpected external hard
+link fails closed and its alias is never removed.
 
-A provenance failure exits before browser inspection. That early exit removes
-stale screenshots and the contact sheet, then persists a failed visual-check
-receipt bound to the attempted artifact. If any stale-evidence cleanup or
-failure-receipt write cannot complete, the diagnostic names that incomplete
-cleanup; do not present remaining sidecars as current evidence.
+Chrome inspects one identity- and content-checked copy of the captured artifact
+in a private local temporary directory, so browser file loading does not depend
+on UNC or long-path support. The six publication candidates remain on the
+evidence volume. Both temporary directories are cleaned without recursively
+deleting unknown contents; retained entries include their recovery locations.
+
+Immediately before committing anything, `visual-check` re-resolves and verifies
+the complete six-path set. An absent-path claimant, existing-path replacement,
+symbolic-link or dangling-link retarget, parent-topology change, hard link, or
+indeterminate identity fails closed with `viewer/evidence-path-conflict`. The
+claimant and every other final evidence path remain untouched. Cleanup removes
+only this run's staged or published entries after rechecking their captured
+identities; a changed or unknown entry is preserved.
+
+An existing visual evidence set is replaceable only when a regular
+`visual-check` receipt proves ownership of the same artifact and evidence
+directory, and its exact sidecar manifest matches every existing contact-sheet
+or PNG byte count and SHA-256 digest. A missing, malformed, unknown, mismatched,
+or incomplete ownership record never authorizes deletion. Failed and skipped
+runs retire prior screenshots/contact sheets only as part of the same verified
+transaction when that ownership proof succeeds; otherwise they preserve all
+unknown evidence and report `viewer/evidence-path-conflict`.
+
+This rule also applies when Chrome is unavailable or provenance fails before
+browser inspection: neither path may blindly delete stale-looking evidence. A
+verified owned set may be recoverably retired before publishing a skipped or
+failed receipt; unowned evidence remains intact. These outcomes do not invalidate an already
+successful deterministic delivery and do not turn a perceptual visual review
+into passed or failed. Retry an environmental failure through the supported
+command in a browser-capable execution context when practical. Keep the
+packaged transport unchanged unless the failure reproduces through that seam in
+a capable environment.
 
 ## Optional opening
 

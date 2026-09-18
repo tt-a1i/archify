@@ -105,7 +105,13 @@ test('checkout compare resolves all three baseline arrowheads and keeps snapshot
 });
 
 function variantFixture(operation) {
-  const base = { schema_version: 1, diagram_type: 'architecture', meta: { title: 'Marker variants' }, components: [], connections: [] };
+  const base = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Marker variants', output: 'marker-variants-base.html' },
+    components: [],
+    connections: [],
+  };
   for (const [index, variant] of variants.entries()) {
     const y = 100 + index * 260;
     for (const [column, suffix] of ['a', 'b', 'c'].entries()) {
@@ -114,6 +120,7 @@ function variantFixture(operation) {
     base.connections.push({ id: variant, from: `${variant}-a`, to: `${variant}-b`, variant });
   }
   const head = structuredClone(base);
+  head.meta.output = 'marker-variants-head.html';
   if (operation === 'removed') head.connections = [];
   else head.connections.forEach((edge, index) => {
     const y = 200 + index * 260;

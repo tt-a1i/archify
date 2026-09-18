@@ -10,8 +10,8 @@ node archify/renderers/workflow/render-workflow.mjs input.workflow.json output.h
 The renderer validates input against `archify/schemas/workflow.schema.json`
 with the bundled standalone validator. No dependency installation is required.
 
-If `output.html` is omitted, the renderer uses `meta.output` from the JSON file
-or falls back to `workflow.html` in the current working directory.
+If `output.html` is omitted, the renderer uses the required `meta.output` value
+from the JSON file.
 
 After rendering, run the artifact checker:
 
@@ -32,7 +32,8 @@ Workflow JSON files must set:
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "Agent Tool Call Workflow"
+    "title": "Agent Tool Call Workflow",
+    "output": "agent-tool-call.html"
   },
   "lanes": [],
   "phases": [],
@@ -153,7 +154,7 @@ their offsets around zero:
 {
   "schema_version": 2,
   "diagram_type": "workflow",
-  "meta": { "title": "stack" },
+  "meta": { "title": "stack", "output": "stack.html" },
   "lanes": [{ "id": "cage", "label": "one cage" }],
   "groups": [{ "id": "g", "label": "cage", "lane": "cage", "fromCol": 1, "toCol": 3 }],
   "nodes": [

@@ -17,7 +17,7 @@ test('sequence headers reserve an icon/brand rail without shrinking or changing 
   const chrome=findChrome();
   assert.ok(chrome,'The configured browser regression requires Chrome.');
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-sequence-header-'));
-  const spec={schema_version:1,diagram_type:'sequence',meta:{title:'Sequence header clearance regression',quality_profile:'standard',column_fit:'spread',viewBox:[1700,600]},participants:[
+  const spec={schema_version:1,diagram_type:'sequence',meta:{title:'Sequence header clearance regression',output:'output.html',quality_profile:'standard',column_fit:'spread',viewBox:[1700,600]},participants:[
     {id:'transfer',type:'backend',label:'Cloud File Transfer (CFTS)',sublabel:'Transfer participant'},
     {id:'without-context',type:'external',label:'Cloud File Transfer (CFTS)'},
     {id:'branded',type:'database',label:'Redis',sublabel:'Cache participant',brand:'redis'},

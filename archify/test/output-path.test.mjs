@@ -170,7 +170,7 @@ test('render rejects an absolute meta.output when no CLI output is provided', ()
   assert.equal(fs.existsSync(output), false);
 });
 
-test('render rejects a relative meta.output that escapes the working directory', () => {
+test('render rejects a parent segment in portable meta.output before filesystem containment', () => {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-meta-parent-'));
   const cwd = path.join(parent, 'work');
   fs.mkdirSync(cwd);
@@ -183,7 +183,8 @@ test('render rejects a relative meta.output that escapes the working directory',
   const result = run(['render', 'workflow', input], cwd);
 
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /meta\.output must stay inside the current working directory/i);
+  assert.match(result.stderr, /output\/meta-path-syntax/);
+  assert.match(result.stderr, /portable POSIX-relative path/i);
   assert.equal(fs.existsSync(output), false);
 });
 
@@ -276,6 +277,22 @@ test('deliver rechecks aliases immediately before committing a verified candidat
     path.join(skillRoot, 'renderers/shared/output-path.mjs'),
     path.join(installedShared, 'output-path.mjs'),
   );
+  fs.copyFileSync(
+    path.join(skillRoot, 'renderers/shared/path-semantics.mjs'),
+    path.join(installedShared, 'path-semantics.mjs'),
+  );
+  fs.copyFileSync(
+    path.join(skillRoot, 'renderers/shared/portable-path.mjs'),
+    path.join(installedShared, 'portable-path.mjs'),
+  );
+  fs.copyFileSync(
+    path.join(skillRoot, 'renderers/shared/atomic-output.mjs'),
+    path.join(installedShared, 'atomic-output.mjs'),
+  );
+  fs.copyFileSync(
+    path.join(skillRoot, 'renderers/shared/sidecar-path.mjs'),
+    path.join(installedShared, 'sidecar-path.mjs'),
+  );
   fs.writeFileSync(path.join(installedRenderer, 'render-workflow.mjs'), `
 import fs from 'node:fs';
 const [, output] = process.argv.slice(2);
@@ -303,7 +320,7 @@ console.log(JSON.stringify({
   fs.symlinkSync(initialOutputDirectory, linkedDirectory, 'dir');
   const input = path.join(inputDirectory, 'diagram.html');
   const output = path.join(linkedDirectory, 'diagram.html');
-  const source = Buffer.from('{"meta":{"title":"race input"}}');
+  const source = Buffer.from('{"meta":{"title":"race input","output":"diagram.html"}}');
   fs.writeFileSync(input, source);
   const marker = path.join(cwd, 'renderer-started');
 
@@ -328,9 +345,7 @@ console.log(JSON.stringify({
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
   assert.equal(fs.existsSync(marker), true, `renderer did not start; stderr=${stderr}`);
-  const candidatePath = fs.readFileSync(marker, 'utf8');
-  const candidateRelative = path.relative(linkedDirectory, candidatePath);
-  fs.mkdirSync(path.dirname(path.join(inputDirectory, candidateRelative)), { recursive: true });
+  // Staging stays in the physical output directory when this alias is retargeted.
   fs.unlinkSync(linkedDirectory);
   fs.symlinkSync(inputDirectory, linkedDirectory, 'dir');
 
@@ -401,6 +416,503 @@ test('compare rejects a dangling receipt symlink to the future artifact path', (
   assert.equal(receipt.diagnostics[0].code, 'output/target-alias');
   assert.equal(fs.lstatSync(receiptPath).isSymbolicLink(), true);
   assert.equal(fs.existsSync(output), false);
+});
+
+test('compare preserves dangling output symlinks and commits to their physical targets', () => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-compare-links-'));
+  const output = path.join(cwd, 'delta.html');
+  const receiptPath = path.join(cwd, 'delta.receipt.json');
+  const outputTarget = path.join(cwd, 'rendered.html');
+  const receiptTarget = path.join(cwd, 'rendered.receipt.json');
+  fs.symlinkSync(path.basename(outputTarget), output, 'file');
+  fs.symlinkSync(path.basename(receiptTarget), receiptPath, 'file');
+
+  const result = run([
+    'compare', 'architecture', baseFixture, headFixture, output,
+    '--receipt', receiptPath, '--json',
+  ], cwd);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(fs.lstatSync(output).isSymbolicLink(), true);
+  assert.equal(fs.lstatSync(receiptPath).isSymbolicLink(), true);
+  assert.equal(fs.readlinkSync(output), path.basename(outputTarget));
+  assert.equal(fs.readlinkSync(receiptPath), path.basename(receiptTarget));
+  assert.match(fs.readFileSync(outputTarget, 'utf8'), /<!doctype html>/i);
+  assert.deepEqual(JSON.parse(fs.readFileSync(receiptTarget, 'utf8')), receipt);
+});
+
+for (const slot of ['artifact', 'receipt']) {
+  for (const initialState of ['absent', 'existing']) {
+    test(`compare does not overwrite an ${initialState} ${slot} slot changed after staging`, () => {
+      const cwd = fs.mkdtempSync(path.join(os.tmpdir(), `archify-output-compare-${slot}-${initialState}-`));
+      const output = path.join(cwd, 'delta.html');
+      const receiptPath = path.join(cwd, 'delta.receipt.json');
+      const changedPath = slot === 'artifact' ? output : receiptPath;
+      const stablePath = slot === 'artifact' ? receiptPath : output;
+      const changedBytes = slot === 'artifact'
+        ? '<!doctype html><title>concurrent artifact owner</title>\n'
+        : '{"owner":"concurrent receipt owner"}\n';
+      const stableBytes = slot === 'artifact'
+        ? '{"owner":"trusted receipt owner"}\n'
+        : '<!doctype html><title>trusted artifact owner</title>\n';
+      const detachedPath = path.join(cwd, `detached-${path.basename(changedPath)}`);
+      fs.writeFileSync(stablePath, stableBytes);
+      if (initialState === 'existing') fs.writeFileSync(changedPath, 'original target bytes\n');
+
+      const preload = path.join(cwd, 'change-compare-slot.cjs');
+      const replaceExisting = initialState === 'existing'
+        ? `fs.renameSync(changedPath, ${JSON.stringify(detachedPath)});`
+        : '';
+      fs.writeFileSync(preload, `
+        const fs = require('node:fs');
+        const path = require('node:path');
+        const originalWrite = fs.writeFileSync;
+        const changedPath = ${JSON.stringify(changedPath)};
+        let changed = false;
+        fs.writeFileSync = function(file, ...args) {
+          const result = originalWrite.call(this, file, ...args);
+          if (!changed
+            && path.basename(String(file)) === ${JSON.stringify(path.basename(receiptPath))}
+            && path.basename(path.dirname(String(file))).startsWith('.archify-compare-')) {
+            changed = true;
+            ${replaceExisting}
+            originalWrite.call(fs, changedPath, ${JSON.stringify(changedBytes)});
+          }
+          return result;
+        };
+      `);
+
+      const result = spawnSync(process.execPath, [
+        '--require', preload, cli, 'compare', 'architecture',
+        baseFixture, headFixture, output, '--receipt', receiptPath, '--json',
+      ], { cwd, encoding: 'utf8', timeout: 30000 });
+
+      assert.ifError(result.error);
+      assert.equal(result.status, 1, result.stdout + result.stderr);
+      const failure = JSON.parse(result.stdout);
+      assert.equal(failure.stage, 'commit');
+      assert.equal(failure.diagnostics[0].code, 'output/target-changed');
+      assert.equal(fs.readFileSync(changedPath, 'utf8'), changedBytes);
+      assert.equal(fs.readFileSync(stablePath, 'utf8'), stableBytes);
+      assert.equal(fs.readdirSync(cwd).some((name) => name.startsWith('.archify-compare-')), false);
+    });
+  }
+}
+
+for (const slot of ['artifact', 'receipt']) {
+  test(`compare preserves a concurrent ${slot} replacement made after final verification`, () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), `archify-output-compare-backup-race-${slot}-`));
+    const output = path.join(cwd, 'delta.html');
+    const receiptPath = path.join(cwd, 'delta.receipt.json');
+    const changedPath = slot === 'artifact' ? output : receiptPath;
+    const physicalChangedPath = path.join(fs.realpathSync.native(cwd), path.basename(changedPath));
+    const stablePath = slot === 'artifact' ? receiptPath : output;
+    const changedBytes = slot === 'artifact'
+      ? '<!doctype html><title>replacement artifact owner</title>\n'
+      : '{"owner":"replacement receipt owner"}\n';
+    const stableBytes = slot === 'artifact'
+      ? '{"owner":"trusted receipt owner"}\n'
+      : '<!doctype html><title>trusted artifact owner</title>\n';
+    const detachedPath = path.join(cwd, `detached-${path.basename(changedPath)}`);
+    fs.writeFileSync(changedPath, 'original target bytes\n');
+    fs.writeFileSync(stablePath, stableBytes);
+
+    const preload = path.join(cwd, 'replace-before-backup.cjs');
+    fs.writeFileSync(preload, `
+      const fs = require('node:fs');
+      const path = require('node:path');
+      const originalRename = fs.renameSync.bind(fs);
+      const originalWrite = fs.writeFileSync.bind(fs);
+      const changedPath = ${JSON.stringify(physicalChangedPath)};
+      let changed = false;
+      fs.renameSync = function(source, target, ...args) {
+        if (!changed
+          && String(source) === changedPath
+          && path.basename(path.dirname(String(target))).startsWith('.archify-remove-')) {
+          changed = true;
+          originalRename(changedPath, ${JSON.stringify(detachedPath)});
+          originalWrite(changedPath, ${JSON.stringify(changedBytes)});
+        }
+        return originalRename(source, target, ...args);
+      };
+    `);
+
+    const result = spawnSync(process.execPath, [
+      '--require', preload, cli, 'compare', 'architecture',
+      baseFixture, headFixture, output, '--receipt', receiptPath, '--json',
+    ], { cwd, encoding: 'utf8', timeout: 30000 });
+
+    assert.ifError(result.error);
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    const failure = JSON.parse(result.stdout);
+    assert.equal(failure.stage, 'commit');
+    assert.equal(failure.diagnostics[0].code, 'delta/commit-rollback-failed');
+    const recovery = failure.diagnostics[0].evidence;
+    const retained = recovery.recoveryFiles.find(({ target }) => target === physicalChangedPath);
+    assert.ok(retained, JSON.stringify(recovery.recoveryFiles));
+    assert.equal(fs.readFileSync(retained.backup, 'utf8'), 'original target bytes\n');
+    assert.equal(fs.readFileSync(changedPath, 'utf8'), changedBytes);
+    assert.equal(fs.readFileSync(stablePath, 'utf8'), stableBytes);
+    assert.equal(path.dirname(retained.backup), recovery.recoveryDirectory);
+  });
+}
+
+for (const slot of ['artifact', 'receipt']) {
+  test(`compare preserves an absent ${slot} slot claimant made during publish`, () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), `archify-output-compare-publish-race-${slot}-`));
+    const output = path.join(cwd, 'delta.html');
+    const receiptPath = path.join(cwd, 'delta.receipt.json');
+    const changedPath = slot === 'artifact' ? output : receiptPath;
+    const physicalChangedPath = path.join(fs.realpathSync.native(cwd), path.basename(changedPath));
+    const stablePath = slot === 'artifact' ? receiptPath : output;
+    const changedBytes = slot === 'artifact'
+      ? '<!doctype html><title>claimant artifact owner</title>\n'
+      : '{"owner":"claimant receipt owner"}\n';
+    const stableBytes = slot === 'artifact'
+      ? '{"owner":"trusted receipt owner"}\n'
+      : '<!doctype html><title>trusted artifact owner</title>\n';
+    fs.writeFileSync(stablePath, stableBytes);
+
+    const preload = path.join(cwd, 'claim-before-publish.cjs');
+    fs.writeFileSync(preload, `
+      const fs = require('node:fs');
+      const path = require('node:path');
+      const originalLink = fs.linkSync.bind(fs);
+      const originalWrite = fs.writeFileSync.bind(fs);
+      const changedPath = ${JSON.stringify(physicalChangedPath)};
+      let changed = false;
+      fs.linkSync = function(source, target, ...args) {
+        if (!changed
+          && String(target) === changedPath
+          && path.basename(path.dirname(String(source))).startsWith('.archify-compare-')) {
+          changed = true;
+          originalWrite(changedPath, ${JSON.stringify(changedBytes)});
+        }
+        return originalLink(source, target, ...args);
+      };
+    `);
+
+    const result = spawnSync(process.execPath, [
+      '--require', preload, cli, 'compare', 'architecture',
+      baseFixture, headFixture, output, '--receipt', receiptPath, '--json',
+    ], { cwd, encoding: 'utf8', timeout: 30000 });
+
+    assert.ifError(result.error);
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    const failure = JSON.parse(result.stdout);
+    assert.equal(failure.stage, 'commit');
+    assert.equal(failure.diagnostics[0].code, 'output/target-changed');
+    assert.equal(
+      failure.diagnostics[0].evidence.atomicOutput.code,
+      'target-claimed-during-publish',
+    );
+    assert.equal(fs.readFileSync(changedPath, 'utf8'), changedBytes);
+    assert.equal(fs.readFileSync(stablePath, 'utf8'), stableBytes);
+    assert.equal(fs.readdirSync(cwd).some((name) => name.startsWith('.archify-compare-')), false);
+  });
+}
+
+for (const slot of ['artifact', 'receipt']) {
+  test(`compare rejects and preserves a same-inode ${slot} candidate byte mutation before publish`, () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), `archify-output-compare-candidate-bytes-${slot}-`));
+    const output = path.join(cwd, 'delta.html');
+    const receiptPath = path.join(cwd, 'delta.receipt.json');
+    const physicalOutput = path.join(fs.realpathSync.native(cwd), path.basename(output));
+    const outputBytes = '<!doctype html><title>trusted artifact owner</title>\n';
+    const receiptBytes = '{"owner":"trusted receipt owner"}\n';
+    const candidateName = slot === 'artifact' ? path.basename(output) : path.basename(receiptPath);
+    fs.writeFileSync(output, outputBytes);
+    fs.writeFileSync(receiptPath, receiptBytes);
+
+    const preload = path.join(cwd, 'mutate-compare-candidate-bytes.cjs');
+    fs.writeFileSync(preload, `
+      const fs = require('node:fs');
+      const path = require('node:path');
+      const originalLink = fs.linkSync.bind(fs);
+      const originalAppend = fs.appendFileSync.bind(fs);
+      const physicalOutput = ${JSON.stringify(physicalOutput)};
+      const candidateName = ${JSON.stringify(candidateName)};
+      let mutated = false;
+      fs.linkSync = function(source, target, ...args) {
+        const result = originalLink(source, target, ...args);
+        if (!mutated
+          && String(source) === physicalOutput
+          && path.basename(String(target)) === '.previous-output'
+          && path.basename(path.dirname(String(target))).startsWith('.archify-compare-')) {
+          mutated = true;
+          originalAppend(path.join(path.dirname(String(target)), candidateName), '\\nexternally mutated candidate bytes\\n');
+        }
+        return result;
+      };
+    `);
+
+    const result = spawnSync(process.execPath, [
+      '--require', preload, cli, 'compare', 'architecture',
+      baseFixture, headFixture, output, '--receipt', receiptPath, '--json',
+    ], { cwd, encoding: 'utf8', timeout: 30000 });
+
+    assert.ifError(result.error);
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    const failure = JSON.parse(result.stdout);
+    assert.equal(failure.stage, 'commit');
+    assert.equal(failure.diagnostics[0].code, 'output/target-changed');
+    assert.equal(
+      failure.diagnostics[0].evidence.atomicOutput.code,
+      'compare-candidate-content-changed',
+    );
+    assert.equal(fs.readFileSync(output, 'utf8'), outputBytes);
+    assert.equal(fs.readFileSync(receiptPath, 'utf8'), receiptBytes);
+    const recoveryDirectories = fs.readdirSync(cwd)
+      .filter((name) => name.startsWith('.archify-compare-'));
+    assert.equal(recoveryDirectories.length, 1);
+    const preservedCandidate = path.join(cwd, recoveryDirectories[0], candidateName);
+    assert.match(fs.readFileSync(preservedCandidate, 'utf8'), /externally mutated candidate bytes/);
+  });
+}
+
+test('compare preserves a same-inode edit to the first published member when the second publish fails', () => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-compare-published-edit-'));
+  const output = path.join(cwd, 'delta.html');
+  const receiptPath = path.join(cwd, 'delta.receipt.json');
+  const physicalDirectory = fs.realpathSync.native(cwd);
+  const physicalOutput = path.join(physicalDirectory, path.basename(output));
+  const physicalReceipt = path.join(physicalDirectory, path.basename(receiptPath));
+  const outputBytes = '<!doctype html><title>trusted artifact owner</title>\n';
+  const receiptBytes = '{"owner":"trusted receipt owner"}\n';
+  const claimantSuffix = '\nexternally edited published artifact\n';
+  fs.writeFileSync(output, outputBytes);
+  fs.writeFileSync(receiptPath, receiptBytes);
+
+  const preload = path.join(cwd, 'edit-first-published-member.cjs');
+  fs.writeFileSync(preload, `
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const originalLink = fs.linkSync.bind(fs);
+    const originalAppend = fs.appendFileSync.bind(fs);
+    const physicalOutput = ${JSON.stringify(physicalOutput)};
+    const physicalReceipt = ${JSON.stringify(physicalReceipt)};
+    let artifactPublished = false;
+    fs.linkSync = function(source, target, ...args) {
+      const inCompareStaging = path.basename(path.dirname(String(source))).startsWith('.archify-compare-');
+      if (inCompareStaging && String(target) === physicalOutput) {
+        const result = originalLink(source, target, ...args);
+        artifactPublished = true;
+        return result;
+      }
+      if (artifactPublished
+        && inCompareStaging
+        && path.basename(String(source)) === ${JSON.stringify(path.basename(receiptPath))}
+        && String(target) === physicalReceipt) {
+        originalAppend(physicalOutput, ${JSON.stringify(claimantSuffix)});
+        const error = new Error('injected second member publish failure');
+        error.code = 'EACCES';
+        throw error;
+      }
+      return originalLink(source, target, ...args);
+    };
+  `);
+
+  const result = spawnSync(process.execPath, [
+    '--require', preload, cli, 'compare', 'architecture',
+    baseFixture, headFixture, output, '--receipt', receiptPath, '--json',
+  ], { cwd, encoding: 'utf8', timeout: 30000 });
+
+  assert.ifError(result.error);
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  const failure = JSON.parse(result.stdout);
+  const recovery = failure.diagnostics[0].evidence;
+  assert.equal(failure.stage, 'commit');
+  assert.equal(failure.diagnostics[0].code, 'delta/commit-rollback-failed');
+  assert.match(recovery.reason, /injected second member publish failure/);
+  assert.ok(recovery.rollbackErrors.some((entry) => /HTML artifact/u.test(entry)));
+  assert.equal(typeof recovery.recoveryDirectory, 'string');
+  const artifactRecovery = recovery.recoveryFiles.find(({ target }) => target === physicalOutput);
+  assert.ok(artifactRecovery, JSON.stringify(recovery.recoveryFiles));
+  assert.equal(artifactRecovery.backup, path.join(recovery.recoveryDirectory, '.previous-output'));
+  assert.equal(fs.readFileSync(artifactRecovery.backup, 'utf8'), outputBytes);
+  assert.equal(fs.readFileSync(output, 'utf8').endsWith(claimantSuffix), true);
+  assert.equal(fs.readFileSync(receiptPath, 'utf8'), receiptBytes);
+  assert.equal(fs.existsSync(path.join(recovery.recoveryDirectory, '.previous-receipt')), false);
+});
+
+for (const slot of ['artifact', 'receipt']) {
+  test(`compare rejects and preserves a same-inode ${slot} candidate mode mutation before publish`, { skip: process.platform === 'win32' }, () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), `archify-output-compare-candidate-mode-${slot}-`));
+    const output = path.join(cwd, 'delta.html');
+    const receiptPath = path.join(cwd, 'delta.receipt.json');
+    const physicalOutput = path.join(fs.realpathSync.native(cwd), path.basename(output));
+    const outputBytes = '<!doctype html><title>trusted artifact owner</title>\n';
+    const receiptBytes = '{"owner":"trusted receipt owner"}\n';
+    const candidateName = slot === 'artifact' ? path.basename(output) : path.basename(receiptPath);
+    fs.writeFileSync(output, outputBytes);
+    fs.writeFileSync(receiptPath, receiptBytes);
+    fs.chmodSync(output, 0o640);
+    fs.chmodSync(receiptPath, 0o640);
+
+    const preload = path.join(cwd, 'mutate-compare-candidate-mode.cjs');
+    fs.writeFileSync(preload, `
+      const fs = require('node:fs');
+      const path = require('node:path');
+      const originalLink = fs.linkSync.bind(fs);
+      const originalChmod = fs.chmodSync.bind(fs);
+      const physicalOutput = ${JSON.stringify(physicalOutput)};
+      const candidateName = ${JSON.stringify(candidateName)};
+      let mutated = false;
+      fs.linkSync = function(source, target, ...args) {
+        const result = originalLink(source, target, ...args);
+        if (!mutated
+          && String(source) === physicalOutput
+          && path.basename(String(target)) === '.previous-output'
+          && path.basename(path.dirname(String(target))).startsWith('.archify-compare-')) {
+          mutated = true;
+          originalChmod(path.join(path.dirname(String(target)), candidateName), 0o600);
+        }
+        return result;
+      };
+    `);
+
+    const result = spawnSync(process.execPath, [
+      '--require', preload, cli, 'compare', 'architecture',
+      baseFixture, headFixture, output, '--receipt', receiptPath, '--json',
+    ], { cwd, encoding: 'utf8', timeout: 30000 });
+
+    assert.ifError(result.error);
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    const failure = JSON.parse(result.stdout);
+    assert.equal(failure.stage, 'commit');
+    assert.equal(failure.diagnostics[0].code, 'output/target-changed');
+    assert.equal(
+      failure.diagnostics[0].evidence.atomicOutput.code,
+      'compare-candidate-mode-changed',
+    );
+    assert.equal(fs.readFileSync(output, 'utf8'), outputBytes);
+    assert.equal(fs.readFileSync(receiptPath, 'utf8'), receiptBytes);
+    assert.equal(fs.statSync(output).mode & 0o777, 0o640);
+    assert.equal(fs.statSync(receiptPath).mode & 0o777, 0o640);
+    const recoveryDirectories = fs.readdirSync(cwd)
+      .filter((name) => name.startsWith('.archify-compare-'));
+    assert.equal(recoveryDirectories.length, 1);
+    const preservedCandidate = path.join(cwd, recoveryDirectories[0], candidateName);
+    assert.equal(fs.statSync(preservedCandidate).mode & 0o777, 0o600);
+  });
+}
+
+for (const slot of ['artifact', 'receipt']) {
+  test(`compare rolls back both targets when the staged ${slot} link cannot be released`, () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), `archify-output-compare-unlink-${slot}-`));
+    const output = path.join(cwd, 'delta.html');
+    const receiptPath = path.join(cwd, 'delta.receipt.json');
+    const outputBytes = '<!doctype html><title>trusted artifact owner</title>\n';
+    const receiptBytes = '{"owner":"trusted receipt owner"}\n';
+    fs.writeFileSync(output, outputBytes);
+    fs.writeFileSync(receiptPath, receiptBytes);
+
+    const preload = path.join(cwd, 'reject-candidate-unlink.cjs');
+    const candidateName = slot === 'artifact' ? path.basename(output) : path.basename(receiptPath);
+    fs.writeFileSync(preload, `
+      const fs = require('node:fs');
+      const path = require('node:path');
+      const originalUnlink = fs.unlinkSync.bind(fs);
+      let rejected = false;
+      fs.unlinkSync = function(file, ...args) {
+        if (!rejected
+          && path.basename(String(file)) === ${JSON.stringify(candidateName)}
+          && path.basename(path.dirname(String(file))).startsWith('.archify-remove-')
+          && path.basename(path.dirname(path.dirname(String(file)))).startsWith('.archify-compare-')) {
+          rejected = true;
+          const error = new Error('injected candidate unlink failure');
+          error.code = 'EACCES';
+          throw error;
+        }
+        return originalUnlink(file, ...args);
+      };
+    `);
+
+    const result = spawnSync(process.execPath, [
+      '--require', preload, cli, 'compare', 'architecture',
+      baseFixture, headFixture, output, '--receipt', receiptPath, '--json',
+    ], { cwd, encoding: 'utf8', timeout: 30000 });
+
+    assert.ifError(result.error);
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    const failure = JSON.parse(result.stdout);
+    assert.equal(failure.stage, 'commit');
+    assert.equal(failure.diagnostics[0].code, 'output/target-indeterminate');
+    assert.match(
+      failure.diagnostics[0].evidence.reason,
+      /target identity could not be verified safely/,
+    );
+    assert.equal(fs.readFileSync(output, 'utf8'), outputBytes);
+    assert.equal(fs.readFileSync(receiptPath, 'utf8'), receiptBytes);
+    const [recoveryDirectory] = fs.readdirSync(cwd)
+      .filter((name) => name.startsWith('.archify-compare-'));
+    assert.ok(recoveryDirectory);
+    const recoveryRoot = path.join(cwd, recoveryDirectory);
+    const [quarantineDirectory] = fs.readdirSync(recoveryRoot)
+      .filter((name) => name.startsWith('.archify-remove-'));
+    assert.ok(quarantineDirectory);
+    assert.equal(
+      fs.statSync(path.join(recoveryRoot, quarantineDirectory, candidateName)).isFile(),
+      true,
+    );
+  });
+}
+
+test('compare preserves the modes of both existing pair targets', { skip: process.platform === 'win32' }, () => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-compare-modes-'));
+  const output = path.join(cwd, 'delta.html');
+  const receiptPath = path.join(cwd, 'delta.receipt.json');
+  fs.writeFileSync(output, 'trusted artifact bytes\n');
+  fs.writeFileSync(receiptPath, 'trusted receipt bytes\n');
+  fs.chmodSync(output, 0o640);
+  fs.chmodSync(receiptPath, 0o600);
+
+  const result = run([
+    'compare', 'architecture', baseFixture, headFixture, output,
+    '--receipt', receiptPath, '--json',
+  ], cwd);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.equal(fs.statSync(output).mode & 0o777, 0o640);
+  assert.equal(fs.statSync(receiptPath).mode & 0o777, 0o600);
+  assert.equal(fs.statSync(output).nlink, 1);
+  assert.equal(fs.statSync(receiptPath).nlink, 1);
+});
+
+test('compare rejects a hard-linked pair target before staging either output', (t) => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-compare-hardlink-'));
+  const output = path.join(cwd, 'delta.html');
+  const receiptPath = path.join(cwd, 'delta.receipt.json');
+  const receiptAlias = path.join(cwd, 'receipt-owner.json');
+  const outputBytes = '<!doctype html><title>trusted artifact owner</title>\n';
+  const receiptBytes = '{"owner":"trusted receipt owner"}\n';
+  fs.writeFileSync(output, outputBytes);
+  fs.writeFileSync(receiptPath, receiptBytes);
+  try {
+    fs.linkSync(receiptPath, receiptAlias);
+  } catch (error) {
+    if (error?.code === 'EPERM' || error?.code === 'EACCES' || error?.code === 'ENOTSUP') {
+      t.skip(`hard links unavailable: ${error.code}`);
+      return;
+    }
+    throw error;
+  }
+
+  const result = run([
+    'compare', 'architecture', baseFixture, headFixture, output,
+    '--receipt', receiptPath, '--json',
+  ], cwd);
+
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  const failure = JSON.parse(result.stdout);
+  assert.equal(failure.stage, 'prepare');
+  assert.equal(failure.diagnostics[0].code, 'output/target-hardlinked');
+  assert.equal(failure.diagnostics[0].evidence.atomicOutput.code, 'target-hardlinked');
+  assert.equal(fs.readFileSync(output, 'utf8'), outputBytes);
+  assert.equal(fs.readFileSync(receiptPath, 'utf8'), receiptBytes);
+  assert.equal(fs.readFileSync(receiptAlias, 'utf8'), receiptBytes);
+  assert.equal(fs.readdirSync(cwd).some((name) => name.startsWith('.archify-compare-')), false);
 });
 
 test('preview applies the meta.output relative-path boundary before starting a server', async () => {
@@ -479,6 +991,22 @@ test('compare rechecks every target immediately before committing the artifact p
     path.join(skillRoot, 'renderers/shared/output-path.mjs'),
     path.join(installedShared, 'output-path.mjs'),
   );
+  fs.copyFileSync(
+    path.join(skillRoot, 'renderers/shared/path-semantics.mjs'),
+    path.join(installedShared, 'path-semantics.mjs'),
+  );
+  fs.copyFileSync(
+    path.join(skillRoot, 'renderers/shared/portable-path.mjs'),
+    path.join(installedShared, 'portable-path.mjs'),
+  );
+  fs.copyFileSync(
+    path.join(skillRoot, 'renderers/shared/atomic-output.mjs'),
+    path.join(installedShared, 'atomic-output.mjs'),
+  );
+  fs.copyFileSync(
+    path.join(skillRoot, 'renderers/shared/sidecar-path.mjs'),
+    path.join(installedShared, 'sidecar-path.mjs'),
+  );
   fs.writeFileSync(path.join(installedRenderer, 'render-architecture.mjs'), `
 import fs from 'node:fs';
 import path from 'node:path';
@@ -531,9 +1059,9 @@ export const validateArchitectureDeltaHtml = () => ({ checksPassed: 1, checkCoun
   const base = path.join(inputDirectory, 'diagram.html');
   const head = path.join(cwd, 'head.json');
   const output = path.join(linkedDirectory, 'diagram.html');
-  const source = Buffer.from('{"side":"base"}');
+  const source = Buffer.from('{"meta":{"output":"base.html"},"side":"base"}');
   fs.writeFileSync(base, source);
-  fs.writeFileSync(head, '{"side":"head"}');
+  fs.writeFileSync(head, '{"meta":{"output":"head.html"},"side":"head"}');
   const marker = path.join(cwd, 'renderer-started');
 
   const child = spawn(process.execPath, [
@@ -557,9 +1085,7 @@ export const validateArchitectureDeltaHtml = () => ({ checksPassed: 1, checkCoun
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
   assert.equal(fs.existsSync(marker), true, `renderer did not start; stderr=${stderr}`);
-  const candidatePath = fs.readFileSync(marker, 'utf8');
-  const candidateRelative = path.relative(linkedDirectory, candidatePath);
-  fs.mkdirSync(path.dirname(path.join(inputDirectory, candidateRelative)), { recursive: true });
+  // Staging stays in the physical output directory when this alias is retargeted.
   fs.unlinkSync(linkedDirectory);
   fs.symlinkSync(inputDirectory, linkedDirectory, 'dir');
 
@@ -586,3 +1112,25 @@ test('doctor reports a missing output-path safety runtime in an installed skill'
   assert.equal(result.status, 1);
   assert.match(result.stdout, /\[missing\] Output path safety runtime/);
 });
+
+for (const [relative, label] of [
+  ['renderers/shared/path-semantics.mjs', 'Physical path semantics runtime'],
+  ['renderers/shared/portable-path.mjs', 'Portable path contract runtime'],
+  ['renderers/shared/sidecar-path.mjs', 'Sidecar path naming runtime'],
+]) {
+  test(`doctor reports a missing ${path.basename(relative)} runtime without crashing`, () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-doctor-dependency-'));
+    const installedRoot = path.join(cwd, 'skill');
+    copyInstalledSkill(installedRoot);
+    fs.rmSync(path.join(installedRoot, relative));
+
+    const result = spawnSync(process.execPath, [path.join(installedRoot, 'bin/archify.mjs'), 'doctor'], {
+      cwd: installedRoot,
+      encoding: 'utf8',
+    });
+
+    assert.equal(result.status, 1);
+    assert.match(result.stdout, new RegExp(`\\[missing\\] ${label}`));
+    assert.doesNotMatch(result.stderr, /ERR_MODULE_NOT_FOUND/);
+  });
+}

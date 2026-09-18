@@ -13,6 +13,7 @@ function workflow({ lanes, nodes, edges }) {
     diagram_type: 'workflow',
     meta: {
       title: 'Workflow compiler hard-contract fixture',
+      output: 'workflow-hard-contract.html',
       legend: { mode: 'hidden' },
     },
     lanes,
@@ -2064,7 +2065,9 @@ test('fixed-v1 publishes only repairs that survive complete replanning', () => {
   const document = {
     schema_version: 1,
     diagram_type: 'workflow',
-    meta: { title: 'Verified fixes', legend: { mode: 'hidden' } },
+    meta: {
+      title: 'Verified fixes', output: 'verified-fixes.html', legend: { mode: 'hidden' },
+    },
     lanes: [{ id: 'main', label: 'Main' }],
     groups: [{ id: 'target-only', label: 'Target', lane: 'main', fromCol: 2, toCol: 2 }],
     nodes: [
@@ -2088,7 +2091,9 @@ test('fixed-v1 verifies the exact serialized values in every rounded-width repai
   const document = {
     schema_version: 1,
     diagram_type: 'workflow',
-    meta: { title: 'Rounded verified widths', legend: { mode: 'hidden' } },
+    meta: {
+      title: 'Rounded verified widths', output: 'rounded-verified-widths.html', legend: { mode: 'hidden' },
+    },
     lanes: [{ id: 'main', label: 'M' }],
     nodes: [
       { id: 'a', lane: 'main', col: 1, type: 'backend', label: 'A', width: 52.006 },

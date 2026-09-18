@@ -91,6 +91,7 @@ function inspectGif(buffer) {
 test('README motion proof is compact, looping, and backed by current gallery artifacts', () => {
   const builder = fs.readFileSync(path.join(repoRoot, 'scripts', 'build-readme-showcase.mjs'), 'utf8');
   assert.match(builder, /\?embed=1&play=1&theme=dark#view=/);
+  assert.match(builder, /path\.relative\(from, to\)\.split\(path\.sep\)\.join\('\/'\)/);
   const buffer = fs.readFileSync(assetPath);
   const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
   const inspected = inspectGif(buffer);

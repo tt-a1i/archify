@@ -7,6 +7,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { startPreview } from '../bin/preview.mjs';
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
+import { verifyRepositoryEvidence } from '../renderers/shared/repository-evidence.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, '..');
@@ -55,6 +56,58 @@ function evidencePayload(html) {
   assert.ok(match, 'verified evidence payload missing');
   return JSON.parse(match[1]);
 }
+
+test('repository root accepts a different spelling of the same physical Git top-level', (t) => {
+  const data = fixture();
+  const alias = `${data.root}-alias`;
+  fs.symlinkSync(data.root, alias, process.platform === 'win32' ? 'junction' : 'dir');
+  t.after(() => fs.rmSync(alias, { recursive: true, force: true }));
+
+  // Windows APIs and Git can report the same directory with different case or
+  // long/short spellings. Preserve the authored alias for the first lookup so
+  // this test exercises physical identity instead of string equality.
+  const realpathSync = fs.realpathSync;
+  let preservedAlias = false;
+  t.mock.method(fs, 'realpathSync', (target, ...args) => {
+    if (!preservedAlias && path.resolve(String(target)) === path.resolve(alias)) {
+      preservedAlias = true;
+      return alias;
+    }
+    return Reflect.apply(realpathSync, fs, [target, ...args]);
+  });
+
+  const evidence = verifyRepositoryEvidence('architecture', data.diagram, alias);
+  assert.equal(preservedAlias, true);
+  assert.equal(evidence.verified, true);
+  assert.equal(evidence.repository.revision, data.revision);
+});
+
+test('repository root rejects a different physical directory inside the repository', () => {
+  const data = fixture();
+  assert.throws(
+    () => verifyRepositoryEvidence('architecture', data.diagram, path.join(data.root, 'src')),
+    (error) => error?.archifyDiagnostics?.some(({ code }) => code === 'repository-evidence/root-not-top-level'),
+  );
+});
+
+test('repository root fails closed when physical identity is indeterminate', (t) => {
+  const data = fixture();
+  const inaccessible = Object.assign(new Error('synthetic identity failure'), { code: 'EACCES' });
+  t.mock.method(fs, 'statSync', () => { throw inaccessible; });
+
+  assert.throws(
+    () => verifyRepositoryEvidence('architecture', data.diagram, data.root),
+    (error) => {
+      const diagnostic = error?.archifyDiagnostics?.find(
+        ({ code }) => code === 'repository-evidence/root-identity-indeterminate',
+      );
+      assert.ok(diagnostic);
+      assert.equal(diagnostic.evidence.relation.code, 'root-resolution-failed');
+      assert.equal(diagnostic.evidence.relation.systemCode, 'EACCES');
+      return true;
+    },
+  );
+});
 
 test('Gitee evidence generates provider-specific revision and line links', () => {
   const data = fixture();

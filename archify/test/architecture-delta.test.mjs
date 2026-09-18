@@ -4,7 +4,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import {
   ArchitectureDeltaError,
@@ -57,7 +57,7 @@ function provenanceFixture() {
   const diagram = {
     schema_version: 1,
     diagram_type: 'architecture',
-    meta: { title: 'Provenance-only delta' },
+    meta: { title: 'Provenance-only delta', output: 'provenance-only-delta.html' },
     components: [{
       id: 'service',
       type: 'backend',
@@ -176,7 +176,7 @@ test('compare reports brand-only changes in the receipt and exact review target'
   const base = {
     schema_version: 1,
     diagram_type: 'architecture',
-    meta: { title: 'Cache' },
+    meta: { title: 'Cache', output: 'cache.html' },
     components: [{ id: 'cache', type: 'database', label: 'Cache', pos: [100, 100], size: [160, 80] }],
   };
   const basePath = path.join(tmp, 'brand-base.json');
@@ -309,7 +309,12 @@ test('baseline boundary title masks stay below current components and carry delt
   const documentAt = (pos, pad) => ({
     schema_version: 1,
     diagram_type: 'architecture',
-    meta: { title: 'Boundary mask z-order', quality_profile: 'standard', viewBox: [600, 400] },
+    meta: {
+      title: 'Boundary mask z-order',
+      output: 'boundary-mask-z-order.html',
+      quality_profile: 'standard',
+      viewBox: [600, 400],
+    },
     components: [{ id: 'node', type: 'backend', label: 'Current node', pos, size: [120, 60] }],
     connections: [],
     boundaries: [{ kind: 'region', label: 'Boundary label', wraps: ['node'], pad }],
@@ -551,6 +556,13 @@ test('compare CLI writes a deterministic three-state artifact and complete sidec
   assert.equal(result.status, 0, result.stderr);
   const repeat = run(['compare', 'architecture', baseFixture, headFixture, second, '--json']);
   assert.equal(repeat.status, 0, repeat.stderr);
+  const replacement = run(['compare', 'architecture', baseFixture, headFixture, first, '--json']);
+  assert.equal(replacement.status, 0, replacement.stderr);
+  assert.equal(
+    fs.readdirSync(tmp).some((entry) => entry.startsWith('.archify-compare-')),
+    false,
+    'successful replacement must remove only its identity-bound staging entries',
+  );
 
   const firstHtml = fs.readFileSync(first, 'utf8');
   const secondHtml = fs.readFileSync(second, 'utf8');
@@ -609,6 +621,122 @@ test('compare CLI writes a deterministic three-state artifact and complete sidec
   assert.equal(receipt.completeness, 'complete');
   assert.equal(JSON.stringify(receipt).includes(tmp), false);
   assert.deepEqual(validateArchitectureDeltaHtml(firstHtml, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
+});
+
+test('compare cleanup preserves an unexpected claimant in private staging', () => {
+  const caseRoot = fs.mkdtempSync(path.join(tmp, 'compare-staging-claimant-'));
+  const output = path.join(caseRoot, 'delta.html');
+  const wrapper = path.join(caseRoot, 'claim-compare-staging.mjs');
+  fs.writeFileSync(wrapper, `
+import fs from 'node:fs';
+import path from 'node:path';
+const rmdirSync = fs.rmdirSync.bind(fs);
+let claimed = false;
+fs.rmdirSync = (directory, ...args) => {
+  if (!claimed && path.basename(String(directory)).startsWith('.archify-compare-')) {
+    claimed = true;
+    fs.writeFileSync(path.join(directory, 'unknown-claimant.txt'), 'preserve compare claimant');
+  }
+  return rmdirSync(directory, ...args);
+};
+process.argv = [process.execPath, ${JSON.stringify(cli)}, 'compare', 'architecture', ${JSON.stringify(baseFixture)}, ${JSON.stringify(headFixture)}, ${JSON.stringify(output)}, '--json'];
+await import(${JSON.stringify(pathToFileURL(cli).href)});
+`);
+
+  const compared = spawnSync(process.execPath, [wrapper], { cwd: skillRoot, encoding: 'utf8' });
+
+  assert.equal(compared.status, 0, compared.stderr || compared.stdout);
+  assert.match(compared.stderr, /Warning: could not remove compare staging directory/);
+  const claimant = fs.readdirSync(caseRoot, { recursive: true })
+    .map((entry) => path.join(caseRoot, entry))
+    .find((entry) => path.basename(entry) === 'unknown-claimant.txt');
+  assert.ok(claimant);
+  assert.equal(fs.readFileSync(claimant, 'utf8'), 'preserve compare claimant');
+});
+
+test('compare default receipts preserve distinct HTML extension spellings only when the filesystem does', () => {
+  const caseRoot = fs.mkdtempSync(path.join(tmp, 'compare-receipt-extension-case-'));
+  const lower = path.join(caseRoot, 'delta.html');
+  const upper = path.join(caseRoot, 'delta.HTML');
+  const lowerResult = run(['compare', 'architecture', baseFixture, headFixture, lower, '--json']);
+  assert.equal(lowerResult.status, 0, lowerResult.stderr);
+  const aliases = fs.existsSync(upper);
+  const upperResult = run(['compare', 'architecture', baseFixture, headFixture, upper, '--json']);
+  assert.equal(upperResult.status, 0, upperResult.stderr);
+
+  const receipts = fs.readdirSync(caseRoot).filter((name) => name.endsWith('.receipt.json'));
+  if (aliases) {
+    assert.deepEqual(receipts, ['delta.receipt.json']);
+  } else {
+    assert.equal(receipts.length, 2);
+    assert.ok(receipts.includes('delta.receipt.json'));
+    assert.match(
+      receipts.find((name) => name !== 'delta.receipt.json'),
+      /^delta\.HTML\.~archify-[0-9a-f]{64}\.receipt\.json$/u,
+    );
+  }
+});
+
+test('compare prepares a missing nested parent before deriving its default receipt', () => {
+  const caseRoot = fs.mkdtempSync(path.join(tmp, 'compare-receipt-nested-parent-'));
+  const output = path.join(caseRoot, 'nested', 'delta.html');
+  const result = run(['compare', 'architecture', baseFixture, headFixture, output, '--json']);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.equal(fs.existsSync(output), true);
+  assert.equal(fs.existsSync(path.join(path.dirname(output), 'delta.receipt.json')), true);
+});
+
+test('compare validates an explicit receipt directory before preparing a missing output parent', () => {
+  const caseRoot = fs.mkdtempSync(path.join(tmp, 'compare-explicit-receipt-parent-'));
+  const outputDirectory = path.join(caseRoot, 'artifact');
+  const receiptDirectory = path.join(caseRoot, 'receipt');
+  const output = path.join(outputDirectory, 'delta.html');
+  const receiptPath = path.join(receiptDirectory, 'delta.json');
+  const result = run([
+    'compare', 'architecture', baseFixture, headFixture, output,
+    '--receipt', receiptPath, '--json',
+  ]);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'delta/receipt-directory');
+  assert.equal(fs.existsSync(outputDirectory), false);
+  assert.equal(fs.existsSync(receiptDirectory), false);
+});
+
+test('compare rejects an indeterminate default receipt namespace before creating outputs', () => {
+  const caseRoot = fs.mkdtempSync(path.join(tmp, 'compare-receipt-unknown-'));
+  const outputDirectory = path.join(caseRoot, 'nested');
+  const output = path.join(outputDirectory, `${'A'.repeat(225)}.html`);
+  const wrapper = path.join(caseRoot, 'deny-sidecar-probe.mjs');
+  fs.writeFileSync(wrapper, `
+import fs from 'node:fs';
+import path from 'node:path';
+import { syncBuiltinESMExports } from 'node:module';
+const openSync = fs.openSync;
+fs.openSync = (file, ...args) => {
+  if (path.basename(String(file)).startsWith('.archify-path-semantics-')) {
+    const error = new Error('synthetic sidecar probe denial');
+    error.code = 'EACCES';
+    throw error;
+  }
+  return openSync(file, ...args);
+};
+syncBuiltinESMExports();
+process.argv = [process.execPath, ${JSON.stringify(cli)}, 'compare', 'architecture', ${JSON.stringify(baseFixture)}, ${JSON.stringify(headFixture)}, ${JSON.stringify(output)}, '--json'];
+await import(${JSON.stringify(pathToFileURL(cli).href)});
+`);
+
+  const rejected = spawnSync(process.execPath, [wrapper], { cwd: caseRoot, encoding: 'utf8' });
+  assert.notEqual(rejected.status, 0, rejected.stderr || rejected.stdout);
+  const receipt = JSON.parse(rejected.stdout);
+  assert.equal(receipt.diagnostics[0].code, 'delta/receipt-namespace-indeterminate');
+  assert.equal(
+    receipt.diagnostics[0].evidence.pathIdentity.code,
+    'sidecar-case-semantics-indeterminate',
+  );
+  assert.equal(fs.existsSync(output), false);
+  assert.deepEqual(fs.readdirSync(outputDirectory), []);
 });
 
 test('checked-in Checkout compare artifact is reproducible from its authoritative inputs', () => {
@@ -785,7 +913,7 @@ test('compare validates raw snapshots before canonicalization can discard invali
   assert.equal(receipt.diagnostics[0].evidence.additionalProperty, 'unknown_top_level_fact');
 });
 
-test('compare commit preflights both targets before replacing a trusted pair', () => {
+test('compare rejects either unsupported target before staging a trusted pair', () => {
   const caseRoot = fs.mkdtempSync(path.join(tmp, 'pair-target-'));
   const output = path.join(caseRoot, 'review.html');
   const receiptPath = path.join(caseRoot, 'review.receipt.json');
@@ -801,9 +929,10 @@ test('compare commit preflights both targets before replacing a trusted pair', (
   assert.equal(fs.readFileSync(output, 'utf8'), 'trusted html');
   assert.equal(fs.statSync(receiptPath).isDirectory(), true);
   const failure = JSON.parse(result.stdout);
-  assert.equal(failure.stage, 'commit');
-  assert.equal(failure.diagnostics[0].code, 'delta/commit-target');
-  assert.equal(failure.diagnostics[0].evidence.targetType, 'directory');
+  assert.equal(failure.stage, 'prepare');
+  assert.equal(failure.diagnostics[0].code, 'output/target-not-regular-file');
+  assert.equal(failure.diagnostics[0].evidence.atomicOutput.code, 'target-not-regular-file');
+  assert.equal(failure.diagnostics[0].evidence.atomicOutput.entryType, 'directory');
 });
 
 for (const side of ['base', 'head']) {

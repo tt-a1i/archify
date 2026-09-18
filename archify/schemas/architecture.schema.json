@@ -11,12 +11,12 @@
     "meta": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["title"],
+      "required": ["title", "output"],
       "properties": {
         "title": { "type": "string", "minLength": 1 },
         "locale": { "$ref": "common.schema.json#/$defs/locale" },
         "subtitle": { "type": "string" },
-        "output": { "type": "string" },
+        "output": { "$ref": "common.schema.json#/$defs/portableOutputPath" },
         "animation": { "$ref": "common.schema.json#/$defs/animation" },
         "visual_preset": { "$ref": "common.schema.json#/$defs/visualPreset" },
         "quality_profile": { "$ref": "common.schema.json#/$defs/qualityProfile" },

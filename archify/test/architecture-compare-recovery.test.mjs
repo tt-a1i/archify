@@ -18,13 +18,17 @@ const cases = [
   { name: 'HTML restore failure retains its old backup', failures: ['commit-receipt', 'restore-html'], retained: ['html'] },
   { name: 'receipt restore failure retains its old backup', failures: ['commit-receipt', 'restore-receipt'], retained: ['receipt'] },
   { name: 'both restore failures retain both old backups', failures: ['commit-receipt', 'restore-receipt', 'restore-html'], retained: ['html', 'receipt'] },
-  { name: 'second backup failure restores the first target', failures: ['backup-receipt'] },
+  {
+    name: 'second backup failure restores the first target',
+    failures: ['backup-receipt'],
+    diagnostic: 'output/target-indeterminate',
+  },
   { name: 'second backup and HTML restore failures retain only HTML', failures: ['backup-receipt', 'restore-html'], retained: ['html'] },
   { name: 'transient removal failure leaves no backup after successful restoration', failures: ['commit-receipt', 'remove-html'] },
 ];
 
 function fixture(t) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-compare-recovery-'));
+  const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'archify-compare-recovery-')));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const targets = { html: path.join(root, 'review.html'), receipt: path.join(root, 'review.receipt.json') };
   const run = (preload, newHead = head, json = true) => spawnSync(process.execPath, [
@@ -68,7 +72,7 @@ function inject(data, failures) {
     const wanted = new Set(${JSON.stringify(failures)});
     const fired = new Set();
     const rename = fs.renameSync;
-    const remove = fs.rmSync;
+    const link = fs.linkSync;
     const inside = value => typeof value === 'string' && value.startsWith(root + path.sep);
     const staging = value => inside(value) && path.basename(path.dirname(value)).startsWith('.archify-compare-');
     function failOnce(action) {
@@ -81,19 +85,149 @@ function inject(data, failures) {
     }
     fs.renameSync = function(source, target) {
       if (inside(source) && inside(target)) {
-        if (source === targets.receipt && staging(target)) failOnce('backup-receipt');
-        if (staging(source) && target === targets.receipt && path.basename(source) === path.basename(target)) failOnce('commit-receipt');
-        if (staging(source) && path.basename(source) === '.previous-output' && target === targets.html) failOnce('restore-html');
-        if (staging(source) && path.basename(source) === '.previous-receipt' && target === targets.receipt) failOnce('restore-receipt');
+        if (source === targets.receipt
+          && path.basename(path.dirname(target)).startsWith('.archify-remove-')
+          && wanted.has('swap-backup-receipt')
+          && !fired.has('swap-backup-receipt')) {
+          fired.add('swap-backup-receipt');
+          fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify('swap-backup-receipt') + '\\n');
+          const displaced = path.join(root, '.displaced-receipt');
+          rename.call(this, source, displaced);
+          fs.unlinkSync(displaced);
+          fs.writeFileSync(source, 'third-party receipt claimant', { flag: 'wx' });
+        }
+        if (source === targets.html
+          && path.basename(path.dirname(target)).startsWith('.archify-remove-')
+          && fired.has('commit-receipt')) failOnce('remove-html');
       }
       return rename.apply(this, arguments);
     };
-    fs.rmSync = function(target) {
-      if (target === targets.html && fired.has('commit-receipt')) failOnce('remove-html');
-      return remove.apply(this, arguments);
+    fs.linkSync = function(source, target) {
+      if (source === targets.receipt && staging(target)
+        && path.basename(target) === '.previous-receipt') failOnce('backup-receipt');
+      if (staging(source) && target === targets.receipt
+        && path.basename(source) === path.basename(target)) failOnce('commit-receipt');
+      if (staging(source) && path.basename(source) === '.previous-output' && target === targets.html) {
+        if (wanted.has('claim-html') && !fired.has('claim-html')) {
+          fired.add('claim-html');
+          fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify('claim-html') + '\\n');
+          fs.writeFileSync(target, 'third-party claimant', { flag: 'wx' });
+        }
+        failOnce('restore-html');
+      }
+      if (staging(source) && path.basename(source) === '.previous-receipt' && target === targets.receipt) failOnce('restore-receipt');
+      return link.apply(this, arguments);
     };
   `);
   return { preload, log };
+}
+
+test('compare recovery: a claimant created at the restore boundary is preserved', { timeout: 70000 }, (t) => {
+  const data = fixture(t);
+  const { preload, log } = inject(data, ['commit-receipt', 'claim-html']);
+  const result = data.run(preload);
+  assert.ifError(result.error);
+  assert.notEqual(result.status, 0);
+  assert.deepEqual(
+    fs.readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse).sort(),
+    ['claim-html', 'commit-receipt'].sort(),
+  );
+  assert.equal(fs.readFileSync(data.targets.html, 'utf8'), 'third-party claimant');
+  assert.deepEqual(fs.readFileSync(data.targets.receipt), data.old.receipt);
+
+  const response = JSON.parse(result.stdout);
+  assert.equal(response.diagnostics[0].code, 'delta/commit-rollback-failed');
+  const recovery = response.diagnostics[0].evidence.recoveryFiles.find(
+    ({ target }) => target === data.targets.html,
+  );
+  assert.ok(recovery, 'old HTML must remain available as recovery material');
+  assert.deepEqual(fs.readFileSync(recovery.backup), data.old.html);
+});
+
+test('compare recovery: a claimant swapped at the final backup move is restored and the old receipt remains recoverable', { timeout: 70000 }, (t) => {
+  const data = fixture(t);
+  const { preload, log } = inject(data, ['swap-backup-receipt']);
+  const result = data.run(preload);
+  assert.ifError(result.error);
+  assert.notEqual(result.status, 0);
+  assert.deepEqual(
+    fs.readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse),
+    ['swap-backup-receipt'],
+  );
+  assert.deepEqual(fs.readFileSync(data.targets.html), data.old.html);
+  assert.equal(fs.readFileSync(data.targets.receipt, 'utf8'), 'third-party receipt claimant');
+
+  const response = JSON.parse(result.stdout);
+  assert.equal(response.diagnostics[0].code, 'delta/commit-rollback-failed');
+  const recovery = response.diagnostics[0].evidence.recoveryFiles.find(
+    ({ target }) => target === data.targets.receipt,
+  );
+  assert.ok(recovery, 'the old receipt must remain available as recovery material');
+  assert.deepEqual(fs.readFileSync(recovery.backup), data.old.receipt);
+});
+
+for (const candidateRole of ['html', 'receipt']) {
+  test(`compare recovery: preserves a claimant that replaces the staged ${candidateRole} at retirement`, { timeout: 70000 }, (t) => {
+    const data = fixture(t);
+    const candidateName = path.basename(data.targets[candidateRole]);
+    const claimant = `${candidateRole} retirement claimant\n`;
+    const claimantIdentityFile = path.join(data.root, `${candidateRole}-retirement-identity.json`);
+    const displacedCandidate = path.join(data.root, `${candidateRole}-retirement-displaced`);
+    const preload = path.join(data.root, `replace-${candidateRole}-candidate-at-retirement.cjs`);
+    fs.writeFileSync(preload, `
+const fs = require('node:fs');
+const path = require('node:path');
+const unlinkSync = fs.unlinkSync;
+const renameSync = fs.renameSync;
+const writeFileSync = fs.writeFileSync;
+let replaced = false;
+const isCandidate = (file) => (
+  path.basename(String(file)) === ${JSON.stringify(candidateName)}
+  && path.basename(path.dirname(String(file))).startsWith('.archify-compare-')
+);
+const replaceCandidate = (file) => {
+  replaced = true;
+  renameSync(file, ${JSON.stringify(displacedCandidate)});
+  writeFileSync(file, ${JSON.stringify(claimant)}, { flag: 'wx' });
+  const stat = fs.lstatSync(file, { bigint: true });
+  writeFileSync(${JSON.stringify(claimantIdentityFile)}, JSON.stringify({
+    dev: String(stat.dev),
+    ino: String(stat.ino),
+  }));
+};
+fs.unlinkSync = (file, ...args) => {
+  if (!replaced && isCandidate(file)) replaceCandidate(file);
+  return unlinkSync(file, ...args);
+};
+fs.renameSync = (source, target, ...args) => {
+  if (!replaced
+      && isCandidate(source)
+      && path.basename(path.dirname(String(target))).startsWith('.archify-remove-')) {
+    replaceCandidate(source);
+  }
+  return renameSync(source, target, ...args);
+};
+`);
+
+    const result = data.run(preload);
+    assert.ifError(result.error);
+    assert.notEqual(result.status, 0, result.stderr || result.stdout);
+    const staging = fs.readdirSync(data.root).filter((name) => (
+      name.startsWith('.archify-compare-')
+      && fs.lstatSync(path.join(data.root, name)).isDirectory()
+    ));
+    assert.equal(staging.length, 1, result.stderr || result.stdout);
+    const candidate = path.join(data.root, staging[0], candidateName);
+    assert.equal(fs.readFileSync(candidate, 'utf8'), claimant);
+    const claimantIdentity = fs.lstatSync(candidate, { bigint: true });
+    assert.deepEqual(
+      { dev: String(claimantIdentity.dev), ino: String(claimantIdentity.ino) },
+      JSON.parse(fs.readFileSync(claimantIdentityFile, 'utf8')),
+    );
+    assert.equal(fs.existsSync(displacedCandidate), true);
+    assert.deepEqual(fs.readFileSync(data.targets.html), data.old.html);
+    assert.deepEqual(fs.readFileSync(data.targets.receipt), data.old.receipt);
+  });
 }
 
 for (const scenario of cases) {
@@ -122,7 +256,10 @@ for (const scenario of cases) {
     const retained = scenario.retained || [];
     const incompleteRollback = retained.length > 0 || scenario.failures.includes('remove-html');
     const diagnostic = response.diagnostics[0];
-    assert.equal(diagnostic.code, incompleteRollback ? 'delta/commit-rollback-failed' : 'delta/commit-failed');
+    assert.equal(
+      diagnostic.code,
+      scenario.diagnostic || (incompleteRollback ? 'delta/commit-rollback-failed' : 'delta/commit-failed'),
+    );
     const evidence = diagnostic.evidence;
     for (const key of ['html', 'receipt'].filter((key) => !retained.includes(key))) {
       const restored = fs.readFileSync(data.targets[key]);

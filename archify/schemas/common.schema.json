@@ -19,6 +19,30 @@
     "qualityProfile": {
       "enum": ["standard", "showcase"]
     },
+    "portableOutputPath": {
+      "description": "A portable POSIX-relative HTML output path. It must be safe to interpret identically on every supported host filesystem.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/]+(?:/[^/]+)*$",
+      "allOf": [
+        { "pattern": "(?:^|/)[^/]+[.][Hh][Tt][Mm][Ll]$" },
+        { "not": { "pattern": "[\\\\<>:\"|?*\\u0000-\\u001F\\u007F-\\u009F]" } },
+        { "not": { "pattern": "[\\uD800-\\uDFFF]" } },
+        { "not": { "pattern": "(^|/)[.]{1,2}(/|$)" } },
+        { "not": { "pattern": "[. ](/|$)" } },
+        { "not": { "pattern": "(^|/)[^/]{256}" } },
+        {
+          "not": {
+            "pattern": "(^|/)(?:[Cc][Oo][Nn]|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Nn][Ii][Nn][$]|[Cc][Oo][Nn][Oo][Uu][Tt][$]|[Cc][Oo][Mm][1-9¹²³]|[Ll][Pp][Tt][1-9¹²³])(?:[.]|/|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(^|/)[^/]*~[1-9][0-9]*(?:[.]|/|$)"
+          }
+        }
+      ]
+    },
     "side": {
       "enum": ["left", "right", "top", "bottom"]
     },

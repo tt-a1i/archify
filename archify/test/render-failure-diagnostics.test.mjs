@@ -57,21 +57,25 @@ for (const [type, example] of Object.entries(examples)) {
     // Directory targets fail on both POSIX and Windows without relying on
     // permission bits (which a privileged test process may bypass).
     fs.mkdirSync(output);
-    assertHumanFailure(run([cli, 'render', type, input, output], cwd), 'output/write');
+    assertHumanFailure(run([cli, 'render', type, input, output], cwd), 'output/target-not-regular-file');
     const renderer = path.join(skillRoot, 'renderers', type, `render-${type}.mjs`);
     const machine = run([renderer, input, output], cwd, true);
     assert.equal(machine.status, 1);
     assert.equal(machine.stdout, '');
     const failure = JSON.parse(machine.stderr);
-    assert.equal(failure.diagnostics[0].code, 'output/write');
+    assert.equal(failure.diagnostics[0].code, 'output/target-not-regular-file');
     assert.deepEqual(failure.diagnostics[0].subject, { output });
-    assert.ok(failure.diagnostics[0].evidence.systemCode);
+    assert.equal(failure.diagnostics[0].evidence.relation.code, 'target-not-regular-file');
+    assert.equal(failure.diagnostics[0].evidence.relation.entryType, 'directory');
     assert.ok(failure.diagnostics[0].supportedFixes.length);
     assert.deepEqual(fs.readdirSync(output), []);
 
     const blockedParent = path.join(cwd, 'parent');
     fs.writeFileSync(blockedParent, 'preserved');
-    assertHumanFailure(run([renderer, input, path.join(blockedParent, 'diagram.html')], cwd), 'output/write');
+    assertHumanFailure(
+      run([renderer, input, path.join(blockedParent, 'diagram.html')], cwd),
+      'output/path-resolution-indeterminate',
+    );
     assert.equal(fs.readFileSync(blockedParent, 'utf8'), 'preserved');
   });
 
@@ -99,7 +103,12 @@ test('render layout rejection exposes the existing diagnostic and preserves an e
   fs.writeFileSync(input, JSON.stringify({
     schema_version: 1,
     diagram_type: 'architecture',
-    meta: { title: 'Wide label', quality_profile: 'standard', viewBox: [975, 395] },
+    meta: {
+      title: 'Wide label',
+      output: 'wide-label.html',
+      quality_profile: 'standard',
+      viewBox: [975, 395],
+    },
     components: [{ id: 'node', type: 'security', label: '字'.repeat(40), pos: [40, 40], size: [88, 71] }],
   }));
   fs.writeFileSync(output, 'trusted artifact');
