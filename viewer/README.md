@@ -44,9 +44,11 @@ loader or a second runtime initialization step.
 
 ### Interface and dependencies
 
-The interface includes all ten `Archify.exportMenu` methods: open, close, isOpen,
+The interface includes all eleven `Archify.exportMenu` methods: open, close, isOpen,
 run, shareCard, downloadRouteShareCard, downloadReachShareCard, syncRouteShare,
-syncReachShare and copyShareCard. The same closure installs
+syncReachShare, copyShareCard and svgDocument. `svgDocument({ autoTheme })` returns
+the standalone document `serializeSvg` builds for Download SVG as a value, for
+headless callers such as `archify export svg`. The same closure installs
 `Archify.motion.canRecord` and `recordWebm`; this recording capability is distinct
 from Motion Governor. Return values and synchronous/asynchronous failure modes
 are part of the interface, not normalized by the extraction.

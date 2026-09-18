@@ -12083,6 +12083,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         close: close,
         isOpen: isOpen,
         run: runExport,
+        // Same serialization &quot;Download SVG&quot; uses, returned as a value instead
+        // of a browser download so a headless caller can obtain the standalone
+        // document. Default matches the menu item (dual-theme); autoTheme:false
+        // locks the SVG to the viewer&#39;s current theme.
+        svgDocument: function (options) {
+          options = options || {};
+          return serializeSvg(1, { autoTheme: options.autoTheme !== false });
+        },
         shareCard: rasterizeShareCard,
         downloadRouteShareCard: runRouteShareCard,
         downloadReachShareCard: runReachShareCard,
@@ -27556,6 +27564,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         close: close,
         isOpen: isOpen,
         run: runExport,
+        // Same serialization &quot;Download SVG&quot; uses, returned as a value instead
+        // of a browser download so a headless caller can obtain the standalone
+        // document. Default matches the menu item (dual-theme); autoTheme:false
+        // locks the SVG to the viewer&#39;s current theme.
+        svgDocument: function (options) {
+          options = options || {};
+          return serializeSvg(1, { autoTheme: options.autoTheme !== false });
+        },
         shareCard: rasterizeShareCard,
         downloadRouteShareCard: runRouteShareCard,
         downloadReachShareCard: runReachShareCard,
