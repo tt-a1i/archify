@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { componentBox, boundaryBox, connectionPath } from '../shared/layout-report.mjs';
-import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { throwDiagnosticProblems, recordDiagnostic } from '../shared/diagnostics.mjs';
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
@@ -33,6 +33,8 @@ import {
   componentText,
   arrowClassMap,
   edgeLabelAccent,
+  normalizeRoutePoints,
+  qualityProfileForGate,
 } from '../shared/geometry.mjs';
 
 const componentTextFit = {
@@ -630,6 +632,17 @@ function validateArchitecture() {
     profile: arch.meta?.quality_profile,
   }));
 
+  // Detect coincident routes (Issue #248). This is warning-first: a shared
+  // bidirectional line can be intentional when its labels make direction clear.
+  detectCoincidentRoutes({
+    relations: arch.connections,
+    endpointIds: new Set(components.keys()),
+    pathFor,
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: arch.meta?.quality_profile,
+  });
+
   if (problems.length) {
     throwDiagnosticProblems('Architecture layout validation failed', problems, {
       subject: { diagramType: 'architecture' },
@@ -662,6 +675,82 @@ function buildLayoutReport() {
       }),
     labels,
   };
+}
+
+// ---- Coincident route detection (Issue #248) --------------------------------
+// Keys on the measured route, not on authoring fields: two relationships whose
+// normalized polylines coincide are indistinguishable to a reader no matter how
+// they were authored, while explicit geometry that separates them passes even
+// when both edges carry labelAt.
+function detectCoincidentRoutes({ relations, endpointIds, pathFor, diagramType, relationCollection, profile }) {
+  if (qualityProfileForGate(profile) !== 'showcase') return [];
+
+  const problems = [];
+  const routes = new Map(); // key: normalized route string, value: { conn, index, points }
+
+  for (const [index, conn] of asArray(relations).entries()) {
+    if (!conn || typeof conn.from !== 'string' || typeof conn.to !== 'string') continue;
+    if (!endpointIds.has(conn.from) || !endpointIds.has(conn.to)) continue;
+
+    const points = normalizeRoutePoints(pathFor(conn)?.points);
+    if (points.length < 2) continue;
+
+    const pointsStr = points.map((p) => `${p[0]},${p[1]}`).join(';');
+    const reverseStr = [...points].reverse().map((p) => `${p[0]},${p[1]}`).join(';');
+    const normalized = pointsStr < reverseStr ? pointsStr : reverseStr;
+
+    if (routes.has(normalized)) {
+      const existing = routes.get(normalized);
+      if (existing.index === index) continue;
+
+      // Authored endpoints, not the rendered polyline, decide the direction:
+      // normalizing the geometry would otherwise report the same pair as
+      // anti-parallel or same-direction depending on authoring order.
+      const sameAuthoredDirection = conn.from === existing.conn.from && conn.to === existing.conn.to;
+      const direction = sameAuthoredDirection ? 'same direction' : 'opposite directions';
+
+      const connId = conn.id ? ` id "${conn.id}"` : '';
+      const existingId = existing.conn.id ? ` id "${existing.conn.id}"` : '';
+
+      const message = `[composition/coincident-routes] showcase ${diagramType} ${relationCollection}[${index}]${connId} "${conn.from}" -> "${conn.to}" has identical geometry to ${relationCollection}[${existing.index}]${existingId} "${existing.conn.from}" -> "${existing.conn.to}" (${direction}) — the shared geometry may be ambiguous; confirm that labels clearly identify each direction, or separate the routes with explicit via points, channelX/channelY offset, or fromSide/toSide.`;
+
+      recordDiagnostic({
+        code: 'composition/coincident-routes',
+        severity: 'warning',
+        message,
+        subject: {
+          diagramType,
+          collection: relationCollection,
+          index,
+          from: conn.from,
+          to: conn.to,
+          id: conn.id,
+        },
+        evidence: {
+          coincidentWith: {
+            index: existing.index,
+            from: existing.conn.from,
+            to: existing.conn.to,
+            id: existing.conn.id,
+          },
+          sharedPoints: normalized,
+          antiParallel: !sameAuthoredDirection,
+        },
+        supportedFixes: [
+          'add explicit via points to separate routes',
+          'use channelX or channelY offset to separate routes',
+          'adjust fromSide/toSide to create distinct paths',
+        ],
+      });
+
+      // The final artifact checker includes this warning in the public receipt;
+      // renderer validation must remain successful for intentional shared lines.
+    } else {
+      routes.set(normalized, { conn, index, points });
+    }
+  }
+
+  return problems;
 }
 
 // ---- Rendering ---------------------------------------------------------------

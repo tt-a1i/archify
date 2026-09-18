@@ -1132,7 +1132,7 @@ export function cleanLabelCanvasContainmentProblems({
   });
 }
 
-function qualityProfileForGate(profile, profileIsAuthoritative) {
+export function qualityProfileForGate(profile, profileIsAuthoritative) {
   return profileIsAuthoritative
     ? profile
     : process.env.ARCHIFY_QUALITY_PROFILE || profile;

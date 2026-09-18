@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { collectAmbiguousCorridors, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, minimumLabelRouteClearance, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
+import { collectAmbiguousCorridors, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, minimumLabelRouteClearance, normalizeRoutePoints, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 import {
   DESKTOP_READABILITY_VIEWPORT,
   DESKTOP_READER_DIAGRAM_WIDTH,
@@ -130,6 +130,34 @@ if (svgMatches.length === 1) {
   const routedRelationships = arrows
     .filter((arrow) => arrow.from && arrow.to && arrow.routePoints.length)
     .map((arrow) => ({ relation: arrow, relationIndex: arrow.index, points: arrow.routePoints }));
+  const coincidentRoutes = [];
+  if (qualityProfile === 'showcase') {
+    const routes = new Map();
+    for (const entry of routedRelationships) {
+      const points = normalizeRoutePoints(entry.points);
+      if (points.length < 2) continue;
+      const forward = points.map((point) => `${point[0]},${point[1]}`).join(';');
+      const reverse = [...points].reverse().map((point) => `${point[0]},${point[1]}`).join(';');
+      const key = forward < reverse ? forward : reverse;
+      const existing = routes.get(key);
+      if (!existing) {
+        routes.set(key, entry);
+        continue;
+      }
+      const relation = entry.relation;
+      const other = existing.relation;
+      const sameDirection = relation.from === other.from && relation.to === other.to;
+      coincidentRoutes.push({
+        severity: 'warning',
+        code: 'composition/coincident-routes',
+        relationship: relationshipRecord(relation),
+        otherRelationship: relationshipRecord(other),
+        antiParallel: !sameDirection,
+        sharedPoints: key,
+        detail: `[composition/coincident-routes] showcase connections ${relation.index} and ${other.index} have identical geometry (${sameDirection ? 'same direction' : 'opposite directions'}). Confirm that the labels make each direction unambiguous, or separate the routes with explicit via points, channelX/channelY, or endpoint sides.`,
+      });
+    }
+  }
   const routeMetrics = routeBudgetMetrics({ routedRelations: routedRelationships });
   const routeRhythmIssues = collectRouteRhythmIssues({ routedRelations: routedRelationships });
   const ambiguousCorridors = collectAmbiguousCorridors({ routedRelations: routedRelationships });
@@ -165,7 +193,8 @@ if (svgMatches.length === 1) {
     + (labelContainmentIsError ? labelCanvasOverflow.length : 0)
     + (rhythmIsError ? routeRhythmIssues.length : 0)
     + (desktopReadabilityIsError && desktopReadabilityIssue ? 1 : 0);
-  const compositionWarnings = (qualityGatesEnforced ? 0 : containerBorderRuns.length)
+  const compositionWarnings = coincidentRoutes.length
+    + (qualityGatesEnforced ? 0 : containerBorderRuns.length)
     + (crossingIsError ? 0 : relationshipCrossings.length)
     + (corridorIsError ? 0 : ambiguousCorridors.length)
     + (labelClearanceIsError ? 0 : labelRouteClearance.length)
@@ -193,6 +222,7 @@ if (svgMatches.length === 1) {
     },
     suggestedLimits: { bendsPerRelationship: 2, stretch: 1.35, segmentPx: 16, microSegmentPx: 8 },
     issues: [
+      ...coincidentRoutes,
       ...containerBorderRuns.map((hit) => ({
         severity: qualityGatesEnforced ? 'error' : 'warning',
         code: 'composition/container-border-run',
