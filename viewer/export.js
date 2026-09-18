@@ -305,9 +305,15 @@
           }
         }
 
-        // Keep the same font bytes, character coverage, and attribution in
-        // standalone SVGs and the SVG images used by every raster export.
+        // Keep the embedded font bytes for the default presets. Soft Cloud
+        // intentionally follows the host system sans-serif font.
         var fontCss = document.getElementById('archify-fonts').textContent;
+        function activeFontFamily() {
+          return document.documentElement.getAttribute('data-preset') === 'salesforce'
+            ? 'system-ui, sans-serif'
+            : "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace";
+        }
+        var svgFontCss = 'svg { font-family: ' + activeFontFamily() + '; }\n';
 
         var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
         var bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -324,7 +330,7 @@
 
           style.textContent =
             fontCss + "\n" +
-            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
+            svgFontCss +
             hostStyle + "\n" +
             ":root, svg { " + darkVars + " }\n" +
             "@media (prefers-color-scheme: light) { :root, svg { " + lightVars + " } }\n" +
@@ -352,7 +358,7 @@
           // Keep this order.
           style.textContent =
             fontCss + "\n" +
-            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
+            svgFontCss +
             hostStyle + "\n" +
             ":root, svg { " + vars + " }\n";
 
@@ -466,7 +472,7 @@
       function fitCanvasText(ctx, text, maxWidth, startSize, minSize, weight) {
         var value = String(text || '').trim();
         var size = startSize;
-        var family = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+        var family = activeFontFamily();
         while (size > minSize) {
           ctx.font = (weight || '600') + ' ' + size + 'px ' + family;
           if (ctx.measureText(value).width <= maxWidth) return value;
@@ -573,7 +579,7 @@
               var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 280, 13, 11, '500');
               ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 87);
 
-              ctx.font = "600 12px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+              ctx.font = '600 12px ' + activeFontFamily();
               ctx.textAlign = 'right';
               ctx.fillStyle = accent;
               ctx.fillText(cardLabel, SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 50);

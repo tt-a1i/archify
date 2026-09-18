@@ -29,7 +29,8 @@ locale values fail schema validation instead of being guessed or silently
 rewritten.
 `visual_preset` accepts `classic` (the stable default), `signal-flow` (luminous
 motion-forward presentation), `blueprint` (high-contrast engineering review),
-or `editorial` (warm publication-style design review and documentation).
+`editorial` (warm publication-style design review and documentation), or
+`salesforce` (Salesforce-inspired Soft Cloud documentation).
 Presets change only viewer styling; they do not alter semantic IDs or geometry.
 Sequence `meta` additionally accepts `column_fit`. The default `fixed` keeps
 the historical 108px column gap and 86px participant boxes, so an authored

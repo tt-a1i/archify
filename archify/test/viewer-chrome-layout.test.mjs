@@ -707,7 +707,7 @@ test('localized multiline Legends remain clear across required viewports, themes
   const viewports = [[1440, 900], [1600, 1000], [1920, 1080], [2048, 1320]];
   const cases = viewports.flatMap(([width, height]) => (
     ['light', 'dark'].flatMap((theme) => (
-      ['classic', 'signal-flow', 'blueprint', 'editorial'].map((preset) => ({
+      ['classic', 'signal-flow', 'blueprint', 'editorial', 'salesforce'].map((preset) => ({
         width,
         height,
         theme,
