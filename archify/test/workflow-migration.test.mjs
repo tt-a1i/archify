@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   createHorizontalRankMapper,
   migrateWorkflowDocument,
@@ -33,7 +33,9 @@ function sha256(value) {
 
 function runMigration(source, destination, { importModule, env } = {}) {
   return spawnSync(process.execPath, [
-    ...(importModule ? ['--import', importModule] : []),
+    // Node's --import requires a URL specifier; bare Windows paths fail
+    // with ERR_UNSUPPORTED_ESM_URL_SCHEME.
+    ...(importModule ? ['--import', pathToFileURL(importModule).href] : []),
     cli,
     'migrate',
     'workflow',
