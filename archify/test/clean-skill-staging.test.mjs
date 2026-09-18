@@ -97,7 +97,11 @@ test('clean staging preserves index modes and strips repository-only package met
 
     stageCleanSkill({ repoRoot: root, destination });
 
-    assert.equal(fs.statSync(path.join(destination, 'bin', 'executable.mjs')).mode & 0o777, 0o755);
+    // NTFS cannot represent the Unix executable bit; the index-mode manifest
+    // test covers mode preservation where on-disk modes do not exist.
+    if (process.platform !== 'win32') {
+      assert.equal(fs.statSync(path.join(destination, 'bin', 'executable.mjs')).mode & 0o777, 0o755);
+    }
     assert.equal(fs.existsSync(path.join(destination, 'test')), false);
     assert.equal(
       fs.readFileSync(path.join(destination, 'runtime', 'test', 'required.dat'), 'utf8'),

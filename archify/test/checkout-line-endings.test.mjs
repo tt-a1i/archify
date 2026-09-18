@@ -8,6 +8,10 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 
+// Git for Windows cannot open Node's `\\.\nul` device path; `NUL` is the
+// Windows null device it does accept.
+const gitDevNull = process.platform === 'win32' ? 'NUL' : os.devNull;
+
 for (const autocrlf of ['true', 'input', 'false']) {
   test(`Git checkout preserves committed text and binary bytes with core.autocrlf=${autocrlf}`, () => {
     const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-checkout-eol-'));
@@ -17,11 +21,11 @@ for (const autocrlf of ['true', 'input', 'false']) {
     const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
     Object.assign(env, {
       GIT_CONFIG_NOSYSTEM: '1',
-      GIT_CONFIG_GLOBAL: os.devNull,
+      GIT_CONFIG_GLOBAL: gitDevNull,
       GIT_ATTR_NOSYSTEM: '1',
     });
     const runGit = (cwd, args) => {
-      const result = spawnSync('git', ['-c', `core.attributesFile=${os.devNull}`, ...args], {
+      const result = spawnSync('git', ['-c', `core.attributesFile=${gitDevNull}`, ...args], {
         cwd, env, timeout: 30_000,
       });
       assert.equal(result.status, 0, `git ${args.join(' ')}: ${result.error || result.stderr}`);
