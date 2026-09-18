@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AI Agent Automation with n8n",
+    "output": "ai-agent-n8n.html",
+    "locale": "en",
+    "quality_profile": "standard",
+    "visual_preset": "editorial",
+    "animation": "trace",
+    "viewBox": [1480, 900],
+    "views": [
+      {
+        "id": "request-journey",
+        "label": "Request journey",
+        "focus": ["user", "trigger", "n8n_workflow", "ai_agent", "llm", "tools", "web_search", "gmail", "database", "other_apis"],
+        "note": "Trace a request from the user through n8n, the agent, tools, and external services."
+      },
+      {
+        "id": "agent-context",
+        "label": "Agent context",
+        "focus": ["ai_agent", "llm", "system_prompt", "memory", "tools"],
+        "note": "Inspect the agent's model, instructions, memory, and tool boundary."
+      },
+      {
+        "id": "automation-boundaries",
+        "label": "Automation boundaries",
+        "focus": ["trigger", "n8n_workflow", "ai_agent", "web_search", "gmail", "database", "other_apis"],
+        "note": "See how n8n automation, agent reasoning, and external services are separated."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": { "label": "User interface" },
+        "backend": { "label": "Automation / agent runtime" },
+        "database": { "label": "State and memory" },
+        "cloud": { "label": "Hosted AI service" },
+        "messagebus": { "label": "Trigger and orchestration" },
+        "external": { "label": "External service" }
+      }
+    }
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "User", "sublabel": "Request / response", "pos": [40, 350], "size": [130, 64], "tag": "ENTRY" },
+    { "id": "trigger", "type": "messagebus", "label": "Trigger", "sublabel": "Webhook / schedule", "pos": [220, 350], "size": [140, 64], "tag": "EVENT" },
+    { "id": "n8n_workflow", "type": "backend", "label": "n8n Workflow", "sublabel": "Orchestrate + route", "pos": [410, 350], "size": [160, 64], "tag": "AUTOMATION" },
+    { "id": "ai_agent", "type": "backend", "label": "AI Agent", "sublabel": "Reason + decide", "pos": [630, 350], "size": [150, 64], "tag": "DECISION" },
+    { "id": "llm", "type": "cloud", "label": "LLM", "sublabel": "Generate / classify", "pos": [850, 190], "size": [140, 64], "tag": "MODEL" },
+    { "id": "system_prompt", "type": "backend", "label": "System Prompt", "sublabel": "Policy + persona", "pos": [850, 310], "size": [140, 64], "tag": "CONTEXT" },
+    { "id": "memory", "type": "database", "label": "Memory", "sublabel": "Conversation state", "pos": [850, 430], "size": [140, 64], "tag": "STATE" },
+    { "id": "tools", "type": "backend", "label": "Tools", "sublabel": "Capabilities", "pos": [850, 550], "size": [140, 64], "tag": "ACTIONS" },
+    { "id": "web_search", "type": "external", "label": "Web Search", "sublabel": "Retrieve live facts", "pos": [1100, 280], "size": [150, 64], "tag": "RETRIEVE" },
+    { "id": "gmail", "type": "external", "label": "Gmail", "sublabel": "Send / read mail", "pos": [1100, 400], "size": [150, 64], "tag": "COMMUNICATE" },
+    { "id": "database", "type": "database", "label": "Database", "sublabel": "Read / write records", "pos": [1100, 520], "size": [150, 64], "tag": "PERSIST" },
+    { "id": "other_apis", "type": "external", "label": "Other APIs", "sublabel": "Business actions", "pos": [1100, 640], "size": [150, 64], "tag": "EXTEND" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "n8n Automation", "wraps": ["trigger", "n8n_workflow"], "pad": 30 },
+    { "kind": "region", "label": "AI Agent", "wraps": ["ai_agent", "llm", "system_prompt", "memory", "tools"], "pad": 30 },
+    { "kind": "security-group", "label": "External Services", "wraps": ["web_search", "gmail", "database", "other_apis"], "pad": 30 }
+  ],
+  "connections": [
+    { "id": "user-to-trigger", "from": "user", "to": "trigger", "label": "request", "variant": "emphasis", "labelAt": [195, 450] },
+    { "id": "trigger-to-workflow", "from": "trigger", "to": "n8n_workflow", "label": "event", "labelDy": -22 },
+    { "id": "workflow-to-agent", "from": "n8n_workflow", "to": "ai_agent", "label": "invoke agent", "variant": "emphasis", "labelAt": [600, 428] },
+    { "id": "agent-to-llm", "from": "ai_agent", "to": "llm", "label": "prompt", "fromSide": "top", "toSide": "bottom", "labelAt": [770, 280] },
+    { "id": "llm-to-agent", "from": "llm", "to": "ai_agent", "label": "completion", "variant": "dashed", "fromSide": "left", "toSide": "top", "via": [[820, 222], [705, 222], [705, 350]] },
+    { "id": "system-prompt-to-agent", "from": "system_prompt", "to": "ai_agent", "label": "instructions", "variant": "security" },
+    { "id": "agent-to-memory", "from": "ai_agent", "to": "memory", "label": "write state" },
+    { "id": "memory-to-agent", "from": "memory", "to": "ai_agent", "label": "read context", "variant": "dashed" },
+    { "id": "agent-to-tools", "from": "ai_agent", "to": "tools", "label": "select tool" },
+    { "id": "tools-to-web-search", "from": "tools", "to": "web_search", "label": "search", "variant": "emphasis" },
+    { "id": "tools-to-gmail", "from": "tools", "to": "gmail", "label": "email" },
+    { "id": "tools-to-database", "from": "tools", "to": "database", "label": "query" },
+    { "id": "tools-to-other-apis", "from": "tools", "to": "other_apis", "label": "call API" },
+    { "id": "web-search-to-agent", "from": "web_search", "to": "ai_agent", "variant": "dashed" },
+    { "id": "gmail-to-agent", "from": "gmail", "to": "ai_agent", "variant": "dashed" },
+    { "id": "database-to-agent", "from": "database", "to": "ai_agent", "variant": "dashed" },
+    { "id": "other-apis-to-agent", "from": "other_apis", "to": "ai_agent", "variant": "dashed" },
+    { "id": "agent-to-workflow", "from": "ai_agent", "to": "n8n_workflow", "label": "response", "variant": "dashed", "fromSide": "bottom", "toSide": "bottom", "via": [[705, 760], [490, 760]] },
+    { "id": "workflow-to-user", "from": "n8n_workflow", "to": "user", "label": "deliver", "variant": "emphasis", "fromSide": "bottom", "toSide": "bottom", "via": [[490, 820], [105, 820]] }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Automation spine", "items": ["Trigger starts the workflow", "n8n routes the request to the agent", "The final response returns through the same spine"] },
+    { "dot": "violet", "title": "Agent context", "items": ["LLM generates or classifies", "System Prompt supplies policy and persona", "Memory keeps conversation state"] },
+    { "dot": "amber", "title": "Tool boundary", "items": ["Tools expose bounded capabilities", "Every external service has an explicit request and result flow", "New APIs can be added without changing the agent core"] }
+  ]
+}
