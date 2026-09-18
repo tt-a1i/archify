@@ -14,7 +14,7 @@
       "enum": ["trace", "none"]
     },
     "visualPreset": {
-      "enum": ["classic", "signal-flow", "blueprint", "editorial"]
+      "enum": ["classic", "signal-flow", "blueprint", "editorial", "blossom"]
     },
     "qualityProfile": {
       "enum": ["standard", "showcase"]

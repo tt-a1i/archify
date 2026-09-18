@@ -474,6 +474,83 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --toolbar-menu-bg: #fbf8f1;
     }
 
+    /* ==========================================================
+       BLOSSOM — a warm, personal preset for portfolio pieces,
+       creative project write-ups, and product stories. The diagram
+       keeps the same semantic palette and exact geometry, but trades
+       software chrome for rose-tinted neutrals, generous corner
+       radii, and a soft ambient glow.
+       ========================================================== */
+    [data-preset="blossom"][data-theme="dark"] {
+      --bg: #1a1116;
+      --grid: #3a2530;
+      --panel: rgba(42, 27, 35, 0.84);
+      --panel-border: #573747;
+      --lane-fill: rgba(50, 31, 41, 0.4);
+      --lane-stroke: #63414f;
+      --text: #fdf4f8;
+      --text-muted: #c9a9b7;
+      --text-dim: #8a6878;
+      --text-faint: #a88697;
+      --mask: #20151b;
+      --frontend-fill: rgba(34, 211, 238, 0.13);
+      --frontend-stroke: #6fdcef;
+      --backend-fill: rgba(52, 211, 153, 0.13);
+      --backend-stroke: #6fe0b4;
+      --database-fill: rgba(167, 139, 250, 0.14);
+      --database-stroke: #c0b0fb;
+      --cloud-fill: rgba(251, 191, 36, 0.13);
+      --cloud-stroke: #f7cd72;
+      --security-fill: rgba(244, 63, 94, 0.14);
+      --security-stroke: #fb8ba0;
+      --messagebus-fill: rgba(251, 146, 60, 0.13);
+      --messagebus-stroke: #f9a878;
+      --external-fill: rgba(148, 163, 184, 0.16);
+      --external-stroke: #c2cdda;
+      --arrow: #b08d9e;
+      --arrow-emphasis: #f0a3c0;
+      --toolbar-bg: rgba(42, 27, 35, 0.92);
+      --toolbar-border: #573747;
+      --toolbar-text: #f7e8ef;
+      --toolbar-hover: rgba(66, 43, 56, 0.95);
+      --toolbar-menu-bg: #20151b;
+    }
+
+    [data-preset="blossom"][data-theme="light"] {
+      --bg: #fdf5f9;
+      --grid: #f1dbe5;
+      --panel: rgba(255, 252, 254, 0.95);
+      --panel-border: #e6c4d4;
+      --lane-fill: rgba(253, 242, 248, 0.5);
+      --lane-stroke: #e0bccd;
+      --text: #3d2431;
+      --text-muted: #7b5a6b;
+      --text-dim: #b096a2;
+      --text-faint: #96798a;
+      --mask: #fffbfd;
+      --frontend-fill: rgba(8, 145, 178, 0.09);
+      --frontend-stroke: #0e7490;
+      --backend-fill: rgba(5, 150, 105, 0.09);
+      --backend-stroke: #047857;
+      --database-fill: rgba(124, 58, 237, 0.09);
+      --database-stroke: #6d28d9;
+      --cloud-fill: rgba(217, 119, 6, 0.1);
+      --cloud-stroke: #b45309;
+      --security-fill: rgba(225, 29, 72, 0.09);
+      --security-stroke: #be123c;
+      --messagebus-fill: rgba(234, 88, 12, 0.09);
+      --messagebus-stroke: #c2410c;
+      --external-fill: rgba(100, 116, 139, 0.09);
+      --external-stroke: #475569;
+      --arrow: #a98b98;
+      --arrow-emphasis: #c2417a;
+      --toolbar-bg: rgba(255, 252, 254, 0.94);
+      --toolbar-border: #e6c4d4;
+      --toolbar-text: #5c3b4b;
+      --toolbar-hover: #ffffff;
+      --toolbar-menu-bg: #fffbfd;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
@@ -509,6 +586,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         linear-gradient(90deg, transparent 0, transparent 5.4rem, color-mix(in srgb, var(--security-stroke) 18%, transparent) 5.4rem, color-mix(in srgb, var(--security-stroke) 18%, transparent) calc(5.4rem + 1px), transparent calc(5.4rem + 1px)),
         repeating-linear-gradient(0deg, transparent 0, transparent 31px, color-mix(in srgb, var(--grid) 36%, transparent) 31px, color-mix(in srgb, var(--grid) 36%, transparent) 32px);
       background-attachment: fixed;
+    }
+    html[data-preset="blossom"] body {
+      background-image:
+        radial-gradient(circle at 14% -10%, rgba(244, 114, 182, 0.16), transparent 34rem),
+        radial-gradient(circle at 90% 6%, rgba(251, 191, 36, 0.1), transparent 28rem),
+        radial-gradient(circle at 48% 112%, rgba(167, 139, 250, 0.12), transparent 36rem);
+      background-attachment: fixed;
+    }
+    html[data-preset="blossom"][data-theme="light"] body {
+      background-image:
+        radial-gradient(circle at 14% -10%, rgba(244, 114, 182, 0.14), transparent 34rem),
+        radial-gradient(circle at 90% 6%, rgba(251, 191, 36, 0.12), transparent 28rem),
+        radial-gradient(circle at 48% 112%, rgba(167, 139, 250, 0.1), transparent 36rem);
     }
 
     /* Gallery/embed mode keeps the generated artifact as the source of truth
@@ -849,6 +939,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       letter-spacing: 0.08em;
       white-space: nowrap;
     }
+    html[data-preset="blossom"] .header-row::after {
+      content: attr(data-preset-badge-blossom);
+      margin-left: auto;
+      padding: 0.3rem 0.7rem;
+      border: 1px solid color-mix(in srgb, var(--arrow-emphasis) 44%, transparent);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--arrow-emphasis) 10%, transparent);
+      color: var(--arrow-emphasis);
+      font-size: 0.5625rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      white-space: nowrap;
+    }
 
     .diagram-container {
       --archify-nav-reserve: 0px;
@@ -925,6 +1028,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       pointer-events: none;
     }
     html[data-embed="true"][data-preset="editorial"] .diagram-container::after { display: none; }
+    html[data-preset="blossom"] .diagram-container {
+      border-color: var(--panel-border);
+      border-radius: 1.75rem;
+      background:
+        radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--arrow-emphasis) 9%, transparent), transparent 22rem),
+        var(--panel);
+      box-shadow:
+        inset 0 1px 0 color-mix(in srgb, #ffffff 8%, transparent),
+        0 24px 64px color-mix(in srgb, var(--arrow-emphasis) 16%, transparent);
+    }
+    html[data-preset="blossom"] .guided-views {
+      border-radius: 1.5rem;
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--arrow-emphasis) 10%, transparent), transparent 26%),
+        var(--toolbar-bg);
+    }
     html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-motion="running"] .diagram-container::before {
       content: "";
       position: absolute;
@@ -3051,6 +3170,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       content: "";
     }
     html[data-preset="editorial"] .card-dot { border-radius: 0; transform: rotate(45deg) scale(0.78); }
+    html[data-preset="blossom"] .card {
+      position: relative;
+      border-radius: 1.35rem;
+      background: var(--panel);
+      box-shadow: 0 12px 32px color-mix(in srgb, var(--arrow-emphasis) 12%, transparent);
+    }
+    html[data-preset="blossom"] .card-dot { border-radius: 50%; transform: scale(0.86); }
 
     .card-header {
       display: flex;
@@ -3304,6 +3430,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       box-shadow: 0 0 0 2px color-mix(in srgb, var(--arrow-emphasis) 14%, transparent);
       transform: rotate(45deg) scale(0.72);
     }
+    #btn-preset[data-preset-option="blossom"] .preset-control-mark {
+      border-color: color-mix(in srgb, var(--arrow-emphasis) 62%, transparent);
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f9a8d4, #f0a3c0);
+      box-shadow: 0 0 9px color-mix(in srgb, var(--arrow-emphasis) 52%, transparent);
+    }
     .toolbar .preset-menu {
       position: absolute;
       top: calc(100% + 0.375rem);
@@ -3442,6 +3574,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       height: 0.38rem;
       background: #c9502d;
       transform: rotate(45deg);
+    }
+    .preset-option-swatch.blossom {
+      border-color: #e6c4d4;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fdf5f9 8%, #f9a8d4 92%);
+    }
+    .preset-option-swatch.blossom::before {
+      top: 50%;
+      right: 0.3rem;
+      left: 0.3rem;
+      height: 1px;
+      background: #c2417a;
+      opacity: 0.6;
     }
     .preset-option-copy { min-width: 0; }
     .preset-option-copy strong,
@@ -5020,6 +5165,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <span class="preset-option-copy"><strong>{{i18n:viewer.preset.editorial}}</strong><small>{{i18n:viewer.preset.editorial.hint}}</small></span>
           <span class="preset-option-check" aria-hidden="true"></span>
         </button>
+        <button class="preset-option" data-preset-value="blossom" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">
+          <span class="preset-option-swatch blossom" aria-hidden="true"></span>
+          <span class="preset-option-copy"><strong>{{i18n:viewer.preset.blossom}}</strong><small>{{i18n:viewer.preset.blossom.hint}}</small></span>
+          <span class="preset-option-check" aria-hidden="true"></span>
+        </button>
       </div>
     </div>
     <button id="btn-motion" type="button" hidden
@@ -5079,7 +5229,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <div class="header-row"
            data-preset-badge-signal-flow="{{i18n:viewer.preset.badge.signalFlow}}"
            data-preset-badge-blueprint="{{i18n:viewer.preset.badge.blueprint}}"
-           data-preset-badge-editorial="{{i18n:viewer.preset.badge.editorial}}">
+           data-preset-badge-editorial="{{i18n:viewer.preset.badge.editorial}}"
+           data-preset-badge-blossom="{{i18n:viewer.preset.badge.blossom}}">
         <div class="pulse-dot"></div>
         <h1>[PROJECT NAME] Architecture</h1>
       </div>
@@ -5563,18 +5714,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
 
     /* ============================================================
-       Visual style try-on — one topology, four bundled presets.
+       Visual style try-on — one topology, five bundled presets.
        The reader's choice is intentionally session-only: it updates the
        live page and canonical SVG together, but never rewrites the source,
        URL, or a later diagram's authored default.
        ============================================================ */
     Archify.preset = (function () {
-      var PRESETS = ['classic', 'signal-flow', 'blueprint', 'editorial'];
+      var PRESETS = ['classic', 'signal-flow', 'blueprint', 'editorial', 'blossom'];
       var LABELS = {
         classic: viewerText('viewer.preset.classic.short'),
         'signal-flow': viewerText('viewer.preset.flow.short'),
         blueprint: viewerText('viewer.preset.blueprint'),
-        editorial: viewerText('viewer.preset.editorial')
+        editorial: viewerText('viewer.preset.editorial'),
+        blossom: viewerText('viewer.preset.blossom')
       };
       var html = document.documentElement;
       var svg = document.querySelector('.diagram-container svg');
