@@ -154,11 +154,6 @@ export function createRouter(components, connections) {
     const fromSpread = Boolean(ports?.from);
     const toSpread = Boolean(ports?.to);
     if (fromSpread && toSpread) return { start, end };
-    const hasExplicitSides = (
-      (conn.fromSide && conn.fromSide !== 'auto')
-      || (conn.toSide && conn.toSide !== 'auto')
-    );
-    if (!fromSpread && !toSpread && hasExplicitSides) return { start, end };
 
     const alignmentDelta = horizontallyFacing
       ? Math.abs(start[1] - end[1])
