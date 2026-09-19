@@ -249,8 +249,8 @@ test('Intent Trace preserves input handoffs, transient geometry and cleanup', {
   await t.test('real CSS completion, Motion ownership, reduced motion and themes preserve previews', async () => {
     await load('trace'); await run(`intentWait(()=>document.documentElement.getAttribute('data-ambient-motion')==='settled')`);
     await move('api'); await run(`intentWait(()=>Archify.motionGovernor.owner()==='intent')`);
-    await run(`intentWait(()=>intentEnds.some(e=>e.trusted&&e.name==='archify-intent-trace-flow'))`);
-    assert.equal((await snapshot('animation-complete')).active, 'api');
+    await run(`intentWait(()=>{const flows=document.querySelectorAll('.intent-trace-flow');if(!flows.length)return false;const anims=[...flows].flatMap(n=>n.getAnimations());return anims.length>0&&anims.every(a=>a.playState==='running'&&!Number.isFinite(a.effect.getTiming().iterations));})`);
+    assert.equal((await snapshot('animation-running')).active, 'api');
     const direction = await run(`getComputedStyle(document.querySelector('.intent-trace-flow[data-direction="in"]')).animationDirection`);
     assert.equal(direction, 'normal');
     await move(); await run(`intentWait(()=>Archify.motionGovernor.owner()==='')`);

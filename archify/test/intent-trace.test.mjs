@@ -113,7 +113,7 @@ test('Intent Trace normalizes motion, respects reduced motion, and exports clean
   assert.match(html, /\.intent-trace-flow\[data-direction="in"\]/);
   assert.match(html, /\.intent-trace-flow\[data-direction="loop"\]/);
   assert.match(html, /@keyframes archify-intent-trace-flow/);
-  assert.match(html, /animation: archify-intent-trace-flow 1\.15s linear 1 both/);
+  assert.match(html, /animation: archify-intent-trace-flow 1\.15s linear infinite/);
   assert.match(html, /@media \(prefers-reduced-motion: reduce\)[\s\S]+\.intent-trace-flow \{[\s\S]+animation: none !important/);
   assert.match(html, /clone\.removeAttribute\('data-intent-trace-active'\)/);
   assert.match(html, /clone\.querySelectorAll\('\[data-intent-trace-overlay\]'\)/);
