@@ -212,11 +212,12 @@ function stageRenderedHtml(outputPath, html, mode) {
   throw error;
 }
 
-// Common CLI tail: fill the template and write the standalone HTML file.
-export function writeDiagram({ outPath, template, diagramType, meta, svg, cards, sourceEvidence = null }) {
-  if (!START_TYPES.has(diagramType)) throw new Error(`writeDiagram: unknown diagram type ${JSON.stringify(diagramType)}`);
-  const outputGuard = outputPathGuards.get(outPath);
-  const html = applyTemplate(template, {
+// Fills the standalone HTML template. Shared by the CLI's writeDiagram and
+// by in-memory render APIs that return html to their caller instead of
+// writing it to disk.
+export function renderDiagramHtml({ diagramType, meta, svg, cards, sourceEvidence = null, template }) {
+  if (!START_TYPES.has(diagramType)) throw new Error(`renderDiagramHtml: unknown diagram type ${JSON.stringify(diagramType)}`);
+  return applyTemplate(template, {
     title: meta.title,
     subtitle: meta.subtitle,
     svg,
@@ -226,6 +227,12 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
     guidedViews: meta.views || [],
     sourceEvidence,
   });
+}
+
+// Common CLI tail: fill the template and write the standalone HTML file.
+export function writeDiagram({ outPath, template, diagramType, meta, svg, cards, sourceEvidence = null }) {
+  const outputGuard = outputPathGuards.get(outPath);
+  const html = renderDiagramHtml({ diagramType, meta, svg, cards, sourceEvidence, template });
   let candidatePath;
   let candidateIdentity;
   let candidateBinding;
