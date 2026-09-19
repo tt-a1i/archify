@@ -449,7 +449,7 @@ function renderState(state) {
     kind: state.type,
     sublabel: state.sublabel,
     tag: state.tag,
-    context: laneLabels.get(state.lane) || i18nText(lifecycle.meta.locale, 'node.context.lifecycle'),
+    context: laneLabels.get(state.lane) || i18nText(lifecycle.meta.locale, 'node.context.lifecycle', {}, lifecycle.meta.labels),
     ...brandMetadataFor(state),
   };
   return `        <g ${focusNodeAttrs(state.id, state.label, passport, lifecycle.meta.locale)}>
@@ -493,7 +493,7 @@ const LEGEND_CATALOG = [
   'failure',
   'neutral',
   'external',
-].map((kind) => ({ kind, label: i18nText(lifecycle.meta.locale, `legend.lifecycle.${kind}`) }));
+].map((kind) => ({ kind, label: i18nText(lifecycle.meta.locale, `legend.lifecycle.${kind}`, {}, lifecycle.meta.labels) }));
 
 function renderLegend() {
   const presentKinds = new Set([...states.values()].map((state) => state.type));

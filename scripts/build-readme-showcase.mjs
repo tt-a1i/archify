@@ -329,7 +329,9 @@ async function main() {
     const receipt = {
       schemaVersion: 1,
       generator: 'scripts/build-readme-showcase.mjs',
-      output: path.relative(repoRoot, outputPath),
+      // The receipt is compared against a checked-in POSIX path, so it must
+      // read the same on every platform the builder can run on.
+      output: path.relative(repoRoot, outputPath).split(path.sep).join('/'),
       width,
       height,
       fps,

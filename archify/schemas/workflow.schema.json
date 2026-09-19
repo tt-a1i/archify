@@ -36,6 +36,206 @@
         "locale": {
           "$ref": "common.schema.json#/$defs/locale"
         },
+        "types": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label", "color"],
+            "properties": {
+              "id": { "$ref": "common.schema.json#/$defs/id" },
+              "label": { "type": "string", "minLength": 1, "maxLength": 32 },
+              "color": { "enum": ["cyan", "green", "violet", "amber", "rose", "orange", "slate"] }
+            }
+          }
+        },
+        "edgeStates": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "color"],
+            "properties": {
+              "id": { "$ref": "common.schema.json#/$defs/id" },
+              "color": { "enum": ["cyan", "green", "violet", "amber", "rose", "orange", "slate"] },
+              "label": { "type": "string", "minLength": 1, "maxLength": 24 },
+              "dash": { "type": "boolean" }
+            }
+          }
+        },
+        "reader": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "store": { "type": "boolean" },
+            "slots": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "kind"],
+                "properties": {
+                  "id": { "$ref": "common.schema.json#/$defs/id" },
+                  "kind": { "enum": ["flag", "point", "text", "time", "minutes"] },
+                  "label": { "type": "string", "minLength": 1, "maxLength": 24 },
+                  "cue": { "type": "string", "minLength": 1, "maxLength": 4 },
+                  "maxLength": { "type": "integer", "minimum": 1, "maximum": 2000 }
+                }
+              }
+            },
+            "view": {
+              "type": "object",
+              "additionalProperties": false,
+              "minProperties": 1,
+              "properties": {
+                "dim": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 4,
+                  "items": { "$ref": "#/$defs/readerViewTarget" }
+                },
+                "stow": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 4,
+                  "items": { "$ref": "#/$defs/readerViewTarget" }
+                },
+                "solo": { "type": "boolean" }
+              }
+            },
+            "clock": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["rule", "anchor", "at"],
+              "properties": {
+                "rule": { "$ref": "common.schema.json#/$defs/id" },
+                "anchor": { "$ref": "common.schema.json#/$defs/id" },
+                "at": { "$ref": "common.schema.json#/$defs/id" },
+                "dwell": { "$ref": "common.schema.json#/$defs/id" }
+              }
+            },
+            "suppress": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "items": { "enum": ["chapter_delta"] }
+            }
+          }
+        },
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "kind"],
+            "properties": {
+              "id": { "$ref": "common.schema.json#/$defs/id" },
+              "kind": { "enum": ["accumulate", "window", "sum", "require", "compare"] },
+              "left": { "type": "string", "minLength": 1, "maxLength": 40 },
+              "right": { "type": "string", "minLength": 1, "maxLength": 40 },
+              "op": { "enum": ["eq", "lte", "gte"] },
+              "field": { "type": "string", "minLength": 1, "maxLength": 40 },
+              "min": { "type": "number" },
+              "max": { "type": "number" },
+              "on": { "enum": ["node", "edge", "lane"] },
+              "missing": { "enum": ["skip", "error"] },
+              "expect": { "type": "number" },
+              "tolerance": { "type": "number", "minimum": 0 },
+              "scope": { "enum": ["node", "edge", "all", "chain"] },
+              "seeds": {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["start", "base"],
+                  "properties": {
+                    "start": { "$ref": "common.schema.json#/$defs/id" },
+                    "base": {
+                      "oneOf": [
+                        { "type": "number" },
+                        { "type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+                      ]
+                    }
+                  }
+                }
+              },
+              "add": {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "node": { "type": "string", "minLength": 1, "maxLength": 40 },
+                  "edge": { "type": "string", "minLength": 1, "maxLength": 40 }
+                }
+              },
+              "render": {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "edge": { "type": "string", "minLength": 1, "maxLength": 40 },
+                  "lane": { "type": "string", "minLength": 1, "maxLength": 40 },
+                  "caption": { "type": "string", "minLength": 1, "maxLength": 40 }
+                }
+              },
+              "wrap": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["at"],
+                "properties": {
+                  "at": { "type": "number", "minimum": 1 },
+                  "label": { "type": "string", "maxLength": 12 }
+                }
+              },
+              "limit": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["max"],
+                "properties": { "max": { "type": "number" } }
+              }
+            }
+          }
+        },
+        "labels": { "$ref": "common.schema.json#/$defs/labels" },
+        "bands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "label",
+              "from",
+              "to"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "common.schema.json#/$defs/id"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "from": {
+                "type": "string",
+                "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+              },
+              "to": {
+                "type": "string",
+                "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+              }
+            }
+          }
+        },
         "subtitle": {
           "type": "string"
         },
@@ -137,9 +337,7 @@
         "additionalProperties": false,
         "required": [
           "id",
-          "label",
-          "fromCol",
-          "toCol"
+          "label"
         ],
         "properties": {
           "id": {
@@ -158,6 +356,14 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 5
+          },
+          "from": {
+            "type": "string",
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+          },
+          "to": {
+            "type": "string",
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
           },
           "variant": {
             "enum": [
@@ -178,9 +384,7 @@
         "required": [
           "id",
           "label",
-          "lane",
-          "fromCol",
-          "toCol"
+          "lane"
         ],
         "properties": {
           "id": {
@@ -202,6 +406,14 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 5
+          },
+          "from": {
+            "type": "string",
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+          },
+          "to": {
+            "type": "string",
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
           },
           "variant": {
             "enum": [
@@ -261,7 +473,6 @@
         "required": [
           "id",
           "lane",
-          "col",
           "type",
           "label"
         ],
@@ -278,7 +489,10 @@
             "maximum": 5
           },
           "type": {
-            "$ref": "common.schema.json#/$defs/componentType"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40,
+            "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
           },
           "label": {
             "type": "string",
@@ -303,6 +517,31 @@
           },
           "yOffset": {
             "type": "number"
+          },
+        "facts": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 32,
+          "propertyNames": { "type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$", "maxLength": 40 },
+          "additionalProperties": { "type": "number", "minimum": -1000000000000, "maximum": 1000000000000 }
+        },
+          "links": { "$ref": "common.schema.json#/$defs/links" },
+          "media": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["href"],
+            "properties": {
+              "href": {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 4000000,
+                "anyOf": [
+                  { "pattern": "^https?://" },
+                  { "pattern": "^data:image/" }
+                ]
+              },
+              "alt": { "type": "string", "maxLength": 80 }
+            }
           }
         }
       }
@@ -332,6 +571,7 @@
           "variant": {
             "$ref": "common.schema.json#/$defs/variant"
           },
+          "state": { "$ref": "common.schema.json#/$defs/id" },
           "role": {
             "enum": [
               "main",
@@ -391,7 +631,15 @@
           "width": {
             "type": "number",
             "minimum": 0.5
-          }
+          },
+        "facts": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 32,
+          "propertyNames": { "type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$", "maxLength": 40 },
+          "additionalProperties": { "type": "number", "minimum": -1000000000000, "maximum": 1000000000000 }
+        },
+          "links": { "$ref": "common.schema.json#/$defs/links" }
         }
       }
     },
@@ -400,6 +648,20 @@
     }
   },
   "$defs": {
+    "readerViewTarget": {
+      "oneOf": [
+        { "$ref": "common.schema.json#/$defs/id" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["slot"],
+          "properties": {
+            "slot": { "$ref": "common.schema.json#/$defs/id" },
+            "reach": { "enum": ["self", "before"] }
+          }
+        }
+      ]
+    },
     "semanticRelation": {
       "type": "object",
       "additionalProperties": false,

@@ -1934,7 +1934,9 @@ test('compileWorkflow returns typed failures for non-document public inputs with
 test('compileWorkflow enforces the canonical workflow schema at its public boundary', () => {
   for (const { expectedCode, mutate, qualityProfile } of [
     { expectedCode: 'schema/additionalProperties', mutate: (document) => { document.unsupported = true; } },
-    { expectedCode: 'schema/enum', mutate: (document) => { document.nodes[0].type = 'bogus'; } },
+    // A node type is a declared-vocabulary reference, not a built-in enum: the
+    // schema checks its shape, the vocabulary check reports an unknown name.
+    { expectedCode: 'schema/pattern', mutate: (document) => { document.nodes[0].type = '1bogus'; } },
     { expectedCode: 'schema/minimum', mutate: (document) => { document.nodes[0].width = 31; } },
     { expectedCode: 'schema/required', mutate: (document) => { delete document.nodes[0].label; } },
     { expectedCode: 'schema/enum', mutate: () => {}, qualityProfile: 'impossible' },

@@ -40,6 +40,8 @@ test('main skill stays a bounded authoring router with progressive references', 
   assert.ok(lines.length <= 160, `SKILL.md is ${lines.length} lines; keep the entrypoint at 160 or fewer`);
   for (const reference of [
     'references/authoring-contract.md',
+    'references/positions-contract.md',
+    'references/creation-guide.md',
     'references/viewer-runtime.md',
     'references/delivery-contract.md',
   ]) {

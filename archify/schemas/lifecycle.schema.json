@@ -33,6 +33,7 @@
         "locale": {
           "$ref": "common.schema.json#/$defs/locale"
         },
+        "labels": { "$ref": "common.schema.json#/$defs/labels" },
         "subtitle": {
           "type": "string"
         },

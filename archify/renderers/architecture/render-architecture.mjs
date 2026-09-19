@@ -87,7 +87,7 @@ const LEGEND_CATALOG = [
   'security',
   'messagebus',
   'external',
-].map((kind) => ({ kind, label: i18nText(arch.meta.locale, `legend.architecture.${kind}`) }));
+].map((kind) => ({ kind, label: i18nText(arch.meta.locale, `legend.architecture.${kind}`, {}, arch.meta.labels) }));
 
 // ---- Measure components from free coordinates --------------------------------
 function measureComponent(c) {
@@ -326,7 +326,7 @@ function componentContext(component) {
     .filter((boundary) => asArray(boundary.wraps).includes(component.id))
     .sort((a, b) => (b.width * b.height) - (a.width * a.height))
     .map((boundary) => boundary.label);
-  return scopes.length ? scopes.join(' › ') : i18nText(arch.meta.locale, 'node.context.architecture');
+  return scopes.length ? scopes.join(' › ') : i18nText(arch.meta.locale, 'node.context.architecture', {}, arch.meta.labels);
 }
 
 // ---- Auto viewBox: fit all geometry + the measured resolved legend ----------

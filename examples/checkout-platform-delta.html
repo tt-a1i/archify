@@ -14058,6 +14058,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var shareCueRoute = document.getElementById(&#39;share-chapter-route&#39;);
       var shareCueProgress = document.getElementById(&#39;share-chapter-progress-bar&#39;);
       var svg = document.querySelector(&#39;.diagram-container svg&#39;);
+      // A suppressed effect is one the document declared it does not want. The
+      // id belongs to the chrome that owns it; the viewer only asks whether the
+      // document listed it, so a new effect never edits a compiler-side list.
+      var suppressedEffects = String(svg &amp;&amp; svg.getAttribute(&#39;data-suppressed&#39;) ? svg.getAttribute(&#39;data-suppressed&#39;) : &#39;&#39;).split(/\s+/);
+      function effectSuppressed(id) {
+        return suppressedEffects.indexOf(id) !== -1;
+      }
       var views = [];
       var activeIndex = -1;
       var playing = false;
@@ -14349,19 +14356,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           var stops = document.createElement(&#39;em&#39;);
           stops.className = &#39;guided-view-chapter-count&#39;;
           stops.textContent = viewerCount(&#39;viewer.guided.chapter.stop&#39;, view.focus.length);
-          var delta = document.createElement(&#39;span&#39;);
-          delta.className = &#39;guided-view-chapter-delta&#39;;
-          delta.hidden = true;
-          delta.setAttribute(&#39;aria-hidden&#39;, &#39;true&#39;);
-          [&#39;stay&#39;, &#39;enter&#39;, &#39;leave&#39;].forEach(function (kind) {
-            var value = document.createElement(&#39;span&#39;);
-            value.setAttribute(&#39;data-delta-kind&#39;, kind);
-            delta.appendChild(value);
-          });
+          var delta = null;
+          if (!effectSuppressed(&#39;chapter_delta&#39;)) {
+            delta = document.createElement(&#39;span&#39;);
+            delta.className = &#39;guided-view-chapter-delta&#39;;
+            delta.hidden = true;
+            delta.setAttribute(&#39;aria-hidden&#39;, &#39;true&#39;);
+            [&#39;stay&#39;, &#39;enter&#39;, &#39;leave&#39;].forEach(function (kind) {
+              var value = document.createElement(&#39;span&#39;);
+              value.setAttribute(&#39;data-delta-kind&#39;, kind);
+              delta.appendChild(value);
+            });
+          }
           button.appendChild(position);
           button.appendChild(title);
           button.appendChild(stops);
-          button.appendChild(delta);
+          if (delta) button.appendChild(delta);
           item.appendChild(button);
           chapterList.appendChild(item);
           chapterButtons.push(button);
@@ -14379,7 +14389,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           button.setAttribute(&#39;tabindex&#39;, current || (activeIndex &lt; 0 &amp;&amp; index === 0) ? &#39;0&#39; : &#39;-1&#39;);
           if (current) {
             stops.hidden = false;
-            deltaLabel.hidden = true;
+            if (deltaLabel) deltaLabel.hidden = true;
             button.removeAttribute(&#39;data-chapter-delta&#39;);
             button.setAttribute(&#39;aria-label&#39;, viewerText(&#39;viewer.guided.chapter.current&#39;, {
               index: index + 1,
@@ -14391,6 +14401,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               label: views[index].label,
               count: views[index].focus.length
             });
+          } else if (effectSuppressed(&#39;chapter_delta&#39;)) {
+            // The document asked for no chapter delta: the button keeps the copy
+            // it was built with, and nothing derived from the delta reaches the
+            // DOM, aria or a tooltip. A suppressed effect owns all of its output.
+            stops.hidden = false;
+            button.removeAttribute(&#39;data-chapter-delta&#39;);
+            button.setAttribute(&#39;aria-label&#39;, viewerText(&#39;viewer.guided.chapter.open&#39;, {
+              index: index + 1,
+              total: views.length,
+              label: views[index].label,
+              count: views[index].focus.length
+            }));
+            button.title = views[index].label + &#39; \u2014 &#39; + (views[index].note || viewerText(&#39;viewer.guided.chapter.selectedNodes&#39;, {
+              count: views[index].focus.length
+            }));
           } else {
             var delta = chapterDelta(activeIndex &gt;= 0 ? views[activeIndex] : null, views[index]);
             var compact = &#39;=&#39; + delta.stay.length + &#39; +&#39; + delta.enter.length + &#39; \u2212&#39; + delta.leave.length;
@@ -14400,10 +14425,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               leave: delta.leave.length
             });
             stops.hidden = true;
-            deltaLabel.hidden = false;
-            deltaLabel.querySelector(&#39;[data-delta-kind=&quot;stay&quot;]&#39;).textContent = &#39;=&#39; + delta.stay.length;
-            deltaLabel.querySelector(&#39;[data-delta-kind=&quot;enter&quot;]&#39;).textContent = &#39;+&#39; + delta.enter.length;
-            deltaLabel.querySelector(&#39;[data-delta-kind=&quot;leave&quot;]&#39;).textContent = &#39;\u2212&#39; + delta.leave.length;
+            if (deltaLabel) {
+              deltaLabel.hidden = false;
+              deltaLabel.querySelector(&#39;[data-delta-kind=&quot;stay&quot;]&#39;).textContent = &#39;=&#39; + delta.stay.length;
+              deltaLabel.querySelector(&#39;[data-delta-kind=&quot;enter&quot;]&#39;).textContent = &#39;+&#39; + delta.enter.length;
+              deltaLabel.querySelector(&#39;[data-delta-kind=&quot;leave&quot;]&#39;).textContent = &#39;\u2212&#39; + delta.leave.length;
+            }
             button.setAttribute(&#39;data-chapter-delta&#39;, compact);
             button.setAttribute(&#39;aria-label&#39;, viewerText(&#39;viewer.guided.chapter.delta.aria&#39;, {
               index: index + 1,
@@ -29304,6 +29331,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var shareCueRoute = document.getElementById(&#39;share-chapter-route&#39;);
       var shareCueProgress = document.getElementById(&#39;share-chapter-progress-bar&#39;);
       var svg = document.querySelector(&#39;.diagram-container svg&#39;);
+      // A suppressed effect is one the document declared it does not want. The
+      // id belongs to the chrome that owns it; the viewer only asks whether the
+      // document listed it, so a new effect never edits a compiler-side list.
+      var suppressedEffects = String(svg &amp;&amp; svg.getAttribute(&#39;data-suppressed&#39;) ? svg.getAttribute(&#39;data-suppressed&#39;) : &#39;&#39;).split(/\s+/);
+      function effectSuppressed(id) {
+        return suppressedEffects.indexOf(id) !== -1;
+      }
       var views = [];
       var activeIndex = -1;
       var playing = false;
@@ -29595,19 +29629,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           var stops = document.createElement(&#39;em&#39;);
           stops.className = &#39;guided-view-chapter-count&#39;;
           stops.textContent = viewerCount(&#39;viewer.guided.chapter.stop&#39;, view.focus.length);
-          var delta = document.createElement(&#39;span&#39;);
-          delta.className = &#39;guided-view-chapter-delta&#39;;
-          delta.hidden = true;
-          delta.setAttribute(&#39;aria-hidden&#39;, &#39;true&#39;);
-          [&#39;stay&#39;, &#39;enter&#39;, &#39;leave&#39;].forEach(function (kind) {
-            var value = document.createElement(&#39;span&#39;);
-            value.setAttribute(&#39;data-delta-kind&#39;, kind);
-            delta.appendChild(value);
-          });
+          var delta = null;
+          if (!effectSuppressed(&#39;chapter_delta&#39;)) {
+            delta = document.createElement(&#39;span&#39;);
+            delta.className = &#39;guided-view-chapter-delta&#39;;
+            delta.hidden = true;
+            delta.setAttribute(&#39;aria-hidden&#39;, &#39;true&#39;);
+            [&#39;stay&#39;, &#39;enter&#39;, &#39;leave&#39;].forEach(function (kind) {
+              var value = document.createElement(&#39;span&#39;);
+              value.setAttribute(&#39;data-delta-kind&#39;, kind);
+              delta.appendChild(value);
+            });
+          }
           button.appendChild(position);
           button.appendChild(title);
           button.appendChild(stops);
-          button.appendChild(delta);
+          if (delta) button.appendChild(delta);
           item.appendChild(button);
           chapterList.appendChild(item);
           chapterButtons.push(button);
@@ -29625,7 +29662,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           button.setAttribute(&#39;tabindex&#39;, current || (activeIndex &lt; 0 &amp;&amp; index === 0) ? &#39;0&#39; : &#39;-1&#39;);
           if (current) {
             stops.hidden = false;
-            deltaLabel.hidden = true;
+            if (deltaLabel) deltaLabel.hidden = true;
             button.removeAttribute(&#39;data-chapter-delta&#39;);
             button.setAttribute(&#39;aria-label&#39;, viewerText(&#39;viewer.guided.chapter.current&#39;, {
               index: index + 1,
@@ -29637,6 +29674,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               label: views[index].label,
               count: views[index].focus.length
             });
+          } else if (effectSuppressed(&#39;chapter_delta&#39;)) {
+            // The document asked for no chapter delta: the button keeps the copy
+            // it was built with, and nothing derived from the delta reaches the
+            // DOM, aria or a tooltip. A suppressed effect owns all of its output.
+            stops.hidden = false;
+            button.removeAttribute(&#39;data-chapter-delta&#39;);
+            button.setAttribute(&#39;aria-label&#39;, viewerText(&#39;viewer.guided.chapter.open&#39;, {
+              index: index + 1,
+              total: views.length,
+              label: views[index].label,
+              count: views[index].focus.length
+            }));
+            button.title = views[index].label + &#39; \u2014 &#39; + (views[index].note || viewerText(&#39;viewer.guided.chapter.selectedNodes&#39;, {
+              count: views[index].focus.length
+            }));
           } else {
             var delta = chapterDelta(activeIndex &gt;= 0 ? views[activeIndex] : null, views[index]);
             var compact = &#39;=&#39; + delta.stay.length + &#39; +&#39; + delta.enter.length + &#39; \u2212&#39; + delta.leave.length;
@@ -29646,10 +29698,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               leave: delta.leave.length
             });
             stops.hidden = true;
-            deltaLabel.hidden = false;
-            deltaLabel.querySelector(&#39;[data-delta-kind=&quot;stay&quot;]&#39;).textContent = &#39;=&#39; + delta.stay.length;
-            deltaLabel.querySelector(&#39;[data-delta-kind=&quot;enter&quot;]&#39;).textContent = &#39;+&#39; + delta.enter.length;
-            deltaLabel.querySelector(&#39;[data-delta-kind=&quot;leave&quot;]&#39;).textContent = &#39;\u2212&#39; + delta.leave.length;
+            if (deltaLabel) {
+              deltaLabel.hidden = false;
+              deltaLabel.querySelector(&#39;[data-delta-kind=&quot;stay&quot;]&#39;).textContent = &#39;=&#39; + delta.stay.length;
+              deltaLabel.querySelector(&#39;[data-delta-kind=&quot;enter&quot;]&#39;).textContent = &#39;+&#39; + delta.enter.length;
+              deltaLabel.querySelector(&#39;[data-delta-kind=&quot;leave&quot;]&#39;).textContent = &#39;\u2212&#39; + delta.leave.length;
+            }
             button.setAttribute(&#39;data-chapter-delta&#39;, compact);
             button.setAttribute(&#39;aria-label&#39;, viewerText(&#39;viewer.guided.chapter.delta.aria&#39;, {
               index: index + 1,

@@ -382,7 +382,7 @@ function renderNode(node) {
   const stage = asArray(dataflow.stages)[node.stage];
   const context = stage
     ? `${String(node.stage + 1).padStart(2, '0')} / ${stage.label}`
-    : i18nText(dataflow.meta.locale, 'node.context.dataflow');
+    : i18nText(dataflow.meta.locale, 'node.context.dataflow', {}, dataflow.meta.labels);
   const brand = renderBrandMark(node, { x: node.x + node.width - 22, y: node.y + 6 });
   const labelFontSize = fittedNodeFontSize(node.label, brandLabelFitWidth(node, node.width), 10, 8);
   const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context, ...brandMetadataFor(node) };
@@ -423,7 +423,7 @@ const LEGEND_CATALOG = [
   { kind: 'default', className: 'a-default', marker: 'arrowhead', swatchWidth: 34, swatchGap: 9, interactive: false },
 ].map((entry) => ({
   ...entry,
-  label: i18nText(dataflow.meta.locale, `legend.dataflow.${entry.kind}`),
+  label: i18nText(dataflow.meta.locale, `legend.dataflow.${entry.kind}`, {}, dataflow.meta.labels),
 }));
 
 function renderLegend() {

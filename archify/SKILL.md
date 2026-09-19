@@ -93,6 +93,10 @@ Read Mermaid for topology and meaning, then author fresh Archify JSON; do not me
 
 Read `references/authoring-contract.md` only when you need field enums, spacing math, geometry repair rules, repository evidence, or mode-specific placement.
 
+Read `references/positions-contract.md` only when the diagram must say something the drawing does not: facts, rules, words, kinds, links, photos, line states, clock bands, clock axes, frames, or a reader who writes.
+
+Read `references/creation-guide.md` only when deciding whether to declare one of those positions, or when a domain asks the core for a field that does not exist yet.
+
 ## Delivery
 
 Use `validate` during repair and `deliver` once for final acceptance. Delivery freezes the exact specification bytes into a private same-directory snapshot, renders and checks that snapshot, atomically commits the HTML, and reports SHA-256 plus byte counts for both specification and artifact. This is deterministic artifact evidence; it does not exercise the Viewer in a browser.
