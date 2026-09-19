@@ -15,14 +15,13 @@ const OPENERS = {
   win32: {
     command: 'powershell.exe',
     method: 'powershell',
-    // Keep the command constant and pass the target through PowerShell's
-    // argument array. Paths are never interpolated into executable source.
-    args: (target) => [
+    // Keep the command constant and pass the target through a child-only
+    // environment variable. Paths are never interpolated into executable source.
+    args: () => [
       '-NoProfile',
       '-NonInteractive',
       '-Command',
-      'Start-Process -FilePath $args[0]',
-      target,
+      'Start-Process -FilePath $env:ARCHIFY_OPEN_TARGET',
     ],
   },
 };
@@ -42,13 +41,20 @@ function launchTarget(target, options = {}) {
   const spawn = options.spawn || spawnSync;
   let result;
   try {
-    result = spawn(opener.command, opener.args(target), {
+    const spawnOptions = {
       encoding: 'utf8',
       shell: false,
       stdio: 'ignore',
       timeout: options.timeoutMs || 5000,
       windowsHide: true,
-    });
+    };
+    if (platform === 'win32') {
+      spawnOptions.env = {
+        ...process.env,
+        ARCHIFY_OPEN_TARGET: target,
+      };
+    }
+    result = spawn(opener.command, opener.args(target), spawnOptions);
   } catch {
     result = { error: new Error('opener threw') };
   }

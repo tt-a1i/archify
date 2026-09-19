@@ -27,8 +27,7 @@ test('open artifact: uses argument arrays without shell interpolation on every s
         '-NoProfile',
         '-NonInteractive',
         '-Command',
-        'Start-Process -FilePath $args[0]',
-        target,
+        'Start-Process -FilePath $env:ARCHIFY_OPEN_TARGET',
       ],
       method: 'powershell',
     },
@@ -54,7 +53,26 @@ test('open artifact: uses argument arrays without shell interpolation on every s
     assert.deepEqual(invocation.args, expected.args);
     assert.equal(invocation.options.shell, false);
     assert.equal(invocation.options.timeout, 5000);
+    if (expected.platform === 'win32') {
+      assert.equal(invocation.options.env.ARCHIFY_OPEN_TARGET, target);
+    } else {
+      assert.equal(invocation.options.env, undefined);
+    }
   }
+});
+
+test('open artifact: Windows PowerShell launches a real target', { skip: process.platform !== 'win32' }, () => {
+  // Use a bundled console executable so this exercises PowerShell without a browser.
+  const systemRoot = process.env.SystemRoot ?? process.env.WINDIR ?? 'C:\\Windows';
+  const target = path.join(systemRoot, 'System32', 'where.exe');
+  const result = openArtifact(target);
+
+  assert.deepEqual(result, {
+    requested: true,
+    status: 'opened',
+    target: path.resolve(target),
+    method: 'powershell',
+  });
 });
 
 test('open artifact: distinguishes missing support from opener execution failure', () => {
@@ -104,6 +122,28 @@ test('open artifact: live preview opens only an exact loopback HTTP root', () =>
   });
   assert.deepEqual(invocation.args, [url]);
   assert.equal(invocation.options.shell, false);
+
+  let windowsInvocation;
+  const windowsResult = openLoopbackUrl(url, {
+    platform: 'win32',
+    spawn(command, args, options) {
+      windowsInvocation = { command, args, options };
+      return { status: 0 };
+    },
+  });
+  assert.deepEqual(windowsResult, {
+    requested: true,
+    status: 'opened',
+    target: url,
+    method: 'powershell',
+  });
+  assert.deepEqual(windowsInvocation.args, [
+    '-NoProfile',
+    '-NonInteractive',
+    '-Command',
+    'Start-Process -FilePath $env:ARCHIFY_OPEN_TARGET',
+  ]);
+  assert.equal(windowsInvocation.options.env.ARCHIFY_OPEN_TARGET, url);
 
   for (const rejected of [
     'https://127.0.0.1:43127/',
