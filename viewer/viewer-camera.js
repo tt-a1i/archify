@@ -15,6 +15,9 @@
       var clipFrame = 0;
       var resizeFrame = 0;
       var autoScrollUntil = 0;
+      var automaticEntryLease = true;
+      var automaticEntryAttempted = false;
+      var readabilityContract = archifyReadabilityContract || {};
 
       var viewBox = svg.viewBox && svg.viewBox.baseVal;
 
@@ -26,6 +29,9 @@
       }
       function reducedMotion() {
         return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      }
+      function releaseAutomaticEntry() {
+        automaticEntryLease = false;
       }
       function contentMetrics() {
         if (!viewBox || viewBox.width <= 0 || viewBox.height <= 0) return null;
@@ -69,6 +75,15 @@
         if (state.scale >= 1.75) return 'full';
         if (state.scale >= 1) return 'read';
         return 'map';
+      }
+      function maximumCameraScale() {
+        if (document.documentElement.getAttribute('data-world-profile') !== 'large') return 3;
+        var metrics = contentMetrics();
+        if (!metrics || !Number.isFinite(metrics.scale) || metrics.scale <= 0) return 3;
+        return Math.max(1, Math.min(
+          readabilityContract.maximumFitMultiplier || 32,
+          (readabilityContract.maximumWorldToCssScale || 4) / metrics.scale
+        ));
       }
       function renderControls() {
         var semantic = state.mode === 'semantic' && state.scale > 1.01;
@@ -137,7 +152,7 @@
         syncViewportClip();
         renderControls();
         outBtn.disabled = state.scale <= 1;
-        inBtn.disabled = state.scale >= 3;
+        inBtn.disabled = state.scale >= maximumCameraScale() - 0.001;
         container.classList.toggle('is-pannable', state.scale > 1);
         svg.setAttribute('data-view-scale', String(state.scale));
         if (Archify.radar && typeof Archify.radar.sync === 'function') Archify.radar.sync();
@@ -219,6 +234,7 @@
         container.removeAttribute('data-camera-transaction');
       }
       function interruptCamera(reason) {
+        releaseAutomaticEntry();
         if (Archify.guidedViews && Archify.guidedViews.cancelHandoff) {
           Archify.guidedViews.cancelHandoff(reason || 'manual');
         }
@@ -239,7 +255,7 @@
         options = options || {};
         if (options.manual !== false) interruptCamera();
         var previous = state.scale;
-        next = Math.max(1, Math.min(3, Math.round(next * 4) / 4));
+        next = Math.max(1, Math.min(maximumCameraScale(), Math.round(next * 4) / 4));
         if (next === previous) return;
         var centerX = (svg.clientWidth || 1) / 2;
         var centerY = (svg.clientHeight || 1) / 2;
@@ -277,9 +293,10 @@
           catch (_) { container.scrollLeft = mobileTarget; }
           return true;
         }
-        var minimumScale = Math.max(1, Math.min(3, Number(options.minimumScale) || 1));
+        var maximumScale = maximumCameraScale();
+        var minimumScale = Math.max(1, Math.min(maximumScale, Number(options.minimumScale) || 1));
         var requestedScale = Number(options.scale);
-        state.scale = Math.max(minimumScale, Math.min(3, Number.isFinite(requestedScale) ? requestedScale : state.scale));
+        state.scale = Math.max(minimumScale, Math.min(maximumScale, Number.isFinite(requestedScale) ? requestedScale : state.scale));
         var contentX = metrics.offsetX + (logicalX - viewBox.x) * metrics.scale;
         var contentY = metrics.offsetY + (logicalY - viewBox.y) * metrics.scale;
         state.x = metrics.width / 2 - contentX * state.scale;
@@ -311,6 +328,28 @@
           })
           .filter(Boolean);
       }
+      function minimumTargetSourceFont(ids) {
+        var wanted = semanticIds(ids, false);
+        var selectors = Array.isArray(readabilityContract.labelSelectors)
+          ? readabilityContract.labelSelectors.join(',')
+          : 'text[data-node-label],text[data-boundary-label],[data-node-id] text[data-detail="context"]';
+        var minimum = null;
+        function include(text) {
+          var owner = text.closest('[data-node-id]');
+          if (owner && Object.keys(wanted).length && !wanted[owner.getAttribute('data-node-id')]) return;
+          var size = parseFloat(getComputedStyle(text).fontSize || text.getAttribute('font-size'));
+          if (Number.isFinite(size) && size > 0 && (minimum === null || size < minimum)) minimum = size;
+        }
+        Array.prototype.forEach.call(svg.querySelectorAll(selectors), include);
+        // Third-party/legacy standalone SVGs may have semantic node groups but
+        // predate Archify's label annotations. Keep navigation functional by
+        // measuring target-owned text only; profile classification still uses
+        // the authoritative annotated selector set.
+        if (minimum === null) {
+          Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id] text'), include);
+        }
+        return minimum === null ? 0 : minimum;
+      }
       function frameDesktop(ids, options) {
         options = options || {};
         var boxes = boxesFor(ids, options.includeNeighbors === true);
@@ -330,17 +369,16 @@
           width: Math.max(1, (maxX - minX) * contentScale),
           height: Math.max(1, (maxY - minY) * contentScale)
         };
-        var padding = options.padding || 48;
-        var left = padding;
-        var right = svgWidth - padding;
-        var top = padding;
-        var bottom = svgHeight - Math.max(padding, 72);
+        var left = 0;
+        var right = svgWidth;
+        var top = 0;
+        var bottom = svgHeight;
         var containerRect = container.getBoundingClientRect();
         var visibleTop = Math.max(0, -containerRect.top);
         var visibleBottom = Math.min(svgHeight, window.innerHeight - containerRect.top);
         if (visibleBottom - visibleTop >= 240) {
-          top = Math.max(top, visibleTop + padding);
-          bottom = Math.min(bottom, visibleBottom - Math.max(padding, 72));
+          top = Math.max(top, visibleTop);
+          bottom = Math.min(bottom, visibleBottom);
         }
         var chip = document.getElementById('focus-chip');
         if (chip && !chip.hidden) {
@@ -355,12 +393,43 @@
           else bottom = Math.min(bottom, receiptTop - 24);
         }
         if (right <= left || bottom <= top) return false;
-        var maxScale = options.maxScale || (options.includeNeighbors ? 1.9 : 2.15);
-        var targetScale = Math.min((right - left) / bounds.width, (bottom - top) / bounds.height) * 0.9;
+        var sourceFont = minimumTargetSourceFont(ids);
+        var derived = typeof archifyDeriveLargeWorldReadability === 'function'
+          ? archifyDeriveLargeWorldReadability({
+              safeStageWidth: right - left,
+              safeStageHeight: bottom - top,
+              canonicalWorldWidth: viewBox.width,
+              canonicalWorldHeight: viewBox.height,
+              minimumTargetSourceFontWorldUnits: sourceFont,
+              targetBoundsWidth: Math.max(1, maxX - minX),
+              targetBoundsHeight: Math.max(1, maxY - minY)
+            })
+          : null;
+        if (!derived || contentScale <= 0) return false;
+        var targetFitScale = derived.targetFitScale / contentScale;
+        var requiredScale = derived.requiredReadableScale / contentScale;
+        var dynamicMaximum = maximumCameraScale();
+        var legacyMaximum = Number(options.maxScale) || (options.includeNeighbors ? 1.9 : 2.15);
+        var maxScale = document.documentElement.getAttribute('data-world-profile') === 'large'
+          ? Math.min(dynamicMaximum, Math.max(legacyMaximum, requiredScale))
+          : Math.min(dynamicMaximum, legacyMaximum);
+        var targetScale = targetFitScale;
         targetScale = Math.max(1, Math.min(maxScale, targetScale));
+        // Compare the multiplier in the same unit as the authoritative
+        // requirement. Re-multiplying the quotient can turn an exact 6px
+        // boundary into 5.999999999999999 through floating-point drift.
+        var readable = sourceFont > 0 && targetScale >= requiredScale;
+        if (!readable) {
+          container.setAttribute('data-camera-diagnostic', options.automaticEntry
+            ? 'viewer/entry-text-unreadable'
+            : 'viewer/navigation-text-unreadable');
+          if (options.requireReadable === true) return false;
+        } else {
+          container.removeAttribute('data-camera-diagnostic');
+        }
         if (targetScale < 1.08) targetScale = 1;
         var target = {
-          scale: Math.round(targetScale * 100) / 100,
+          scale: targetScale,
           x: 0,
           y: 0,
           mode: 'semantic'
@@ -456,6 +525,63 @@
         if (Array.isArray(active) && active.length) return reveal(active, { reason: 'selection-sync' });
         return false;
       }
+      function hasSemanticHashIntent() {
+        var guided = Archify.guidedViews && typeof Archify.guidedViews.active === 'function'
+          ? Archify.guidedViews.active() : null;
+        var active = Archify.focus && typeof Archify.focus.active === 'function'
+          ? Archify.focus.active() : null;
+        return Boolean(guided || (typeof active === 'string' && active) || (Array.isArray(active) && active.length));
+      }
+      function syncExplicitHashIntent() {
+        if (!location.hash || location.hash.length <= 1) return false;
+        if (!hasSemanticHashIntent()) {
+          reset({ automatic: true });
+          container.setAttribute('data-camera-diagnostic', 'viewer/semantic-id-invalid');
+          return false;
+        }
+        var result = syncSemantic();
+        if (result) container.removeAttribute('data-camera-diagnostic');
+        return result;
+      }
+      function initialGuidedFocus() {
+        var data = document.getElementById('archify-guided-views-data');
+        if (!data) return [];
+        try {
+          var views = JSON.parse(data.textContent || '[]');
+          return views.length && Array.isArray(views[0].focus) ? views[0].focus.slice() : [];
+        } catch (_) { return []; }
+      }
+      function automaticEntry() {
+        if (automaticEntryAttempted || !automaticEntryLease) return false;
+        automaticEntryAttempted = true;
+        if (location.hash && location.hash.length > 1) {
+          releaseAutomaticEntry();
+          return syncExplicitHashIntent();
+        }
+        var receipt = Archify.readerLayout && Archify.readerLayout.receipt ? Archify.readerLayout.receipt() : null;
+        if (!receipt || receipt.worldProfile !== 'large') return false;
+        var candidates = [];
+        var guided = initialGuidedFocus();
+        if (guided.length) candidates.push(guided);
+        var start = svg.querySelector('[data-node-id][data-node-kind="start"]');
+        if (start) candidates.push([start.getAttribute('data-node-id')]);
+        var first = svg.querySelector('[data-node-id]');
+        if (first) candidates.push([first.getAttribute('data-node-id')]);
+        for (var index = 0; index < candidates.length; index++) {
+          var framed = frameDesktop(candidates[index], {
+            automaticEntry: true,
+            requireReadable: true,
+            instant: true,
+            reason: 'large-world-entry'
+          });
+          if (framed) {
+            container.setAttribute('data-automatic-entry', candidates[index].join(' '));
+            return framed;
+          }
+        }
+        container.setAttribute('data-camera-diagnostic', 'viewer/entry-text-unreadable');
+        return false;
+      }
       function pinControls() {
         container.style.setProperty('--archify-scroll-x', container.scrollLeft + 'px');
       }
@@ -508,19 +634,28 @@
           else apply();
         });
       });
-      window.addEventListener('hashchange', function () { requestAnimationFrame(syncSemantic); });
+      window.addEventListener('hashchange', function () {
+        releaseAutomaticEntry();
+        requestAnimationFrame(syncExplicitHashIntent);
+      });
       apply();
       pinControls();
-      requestAnimationFrame(syncSemantic);
+      var fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready.catch(function () {}) : Promise.resolve();
+      fontsReady.then(function () {
+        var stable = Archify.readerLayout && Archify.readerLayout.whenStable
+          ? Archify.readerLayout.whenStable().catch(function () {})
+          : Promise.resolve();
+        return stable.then(function () { requestAnimationFrame(automaticEntry); });
+      });
 
       return {
-        zoomIn: function () { zoom(state.scale + 0.25); },
-        zoomOut: function () { zoom(state.scale - 0.25); },
+        zoomIn: function () { releaseAutomaticEntry(); zoom(state.scale + 0.25); },
+        zoomOut: function () { releaseAutomaticEntry(); zoom(state.scale - 0.25); },
         reset: reset,
-        reveal: reveal,
+        reveal: function (ids, options) { releaseAutomaticEntry(); return reveal(ids, options); },
         centerAt: centerAt,
         logicalViewport: logicalViewport,
-        sync: syncSemantic,
+        sync: function () { releaseAutomaticEntry(); return syncSemantic(); },
         state: function () { return { scale: state.scale, x: state.x, y: state.y, mode: state.mode }; }
       };
     })();

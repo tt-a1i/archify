@@ -691,6 +691,20 @@ html[data-preset="editorial"] .header-row::after {
   padding-bottom: calc(1.5rem + var(--archify-nav-reserve));
   overflow: hidden;
   position: relative;
+  box-sizing: border-box;
+}
+
+html[data-world-profile="large"]:not([data-embed="true"]):not([data-present="true"]) .diagram-container {
+  height: var(--archify-stage-height);
+}
+html[data-world-profile="large"]:not([data-embed="true"]):not([data-present="true"]) .container,
+html[data-world-measuring="true"]:not([data-embed="true"]):not([data-present="true"]) .container {
+  max-width: 1440px;
+}
+html[data-world-profile="large"]:not([data-embed="true"]):not([data-present="true"]) .diagram-container > svg {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
 html[data-preset="signal-flow"] .diagram-container {

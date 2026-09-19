@@ -959,7 +959,6 @@
         panel.setAttribute('data-story-follow-node', step.nodeId);
         var receipt = Archify.view.reveal(ids, {
           reason: options.manual === true ? 'story-beat' : 'story-follow',
-          padding: 64,
           maxScale: 1.65,
           duration: STORY_FOLLOW_DURATION_MS,
           instant: options.instant === true || reducedMotion() || document.documentElement.getAttribute('data-motion') !== 'live'

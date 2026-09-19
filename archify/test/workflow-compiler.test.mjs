@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { compileWorkflow } from '../renderers/workflow/workflow-compiler.mjs';
+import { largeAdaptiveWorkflow } from './fixtures/large-adaptive-workflow.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -106,6 +107,13 @@ function assertRectInsideRect(rect, container, message) {
     rect.y + rect.height <= container.y + container.height,
     `${message}: bottom edge ${rect.y + rect.height} is outside ${container.y + container.height}`,
   );
+}
+
+function assertBoundsInsideBounds(inner, outer, message) {
+  assert.ok(inner.left >= outer.left, `${message}: ${inner.left} is left of ${outer.left}`);
+  assert.ok(inner.top >= outer.top, `${message}: ${inner.top} is above ${outer.top}`);
+  assert.ok(inner.right <= outer.right, `${message}: ${inner.right} is right of ${outer.right}`);
+  assert.ok(inner.bottom <= outer.bottom, `${message}: ${inner.bottom} is below ${outer.bottom}`);
 }
 
 function groupFrameRect(svg, index = 0) {
@@ -648,6 +656,76 @@ test('readable-v2 satisfies the complete adjacent-rank acceptance matrix', () =>
     }
   }
   assert.equal(cases, 160);
+});
+
+test('readable-v2 receipt separates finite scene bounds from the canonical frame', () => {
+  const implicit = compileSuccessfully(adjacentWorkflow({
+    fromCol: 0,
+    toCol: 5,
+    label: '带有确定性绘制边界的调用关系',
+    frames: true,
+  }), 'showcase');
+  const { bounds, layoutDigest, operationBudget } = implicit.receipt;
+
+  assert.deepEqual(bounds.canonicalFrame, [0, 0, ...implicit.receipt.viewBox]);
+  assert.match(layoutDigest, /^[a-f0-9]{64}$/);
+  for (const name of ['layout', 'geometry', 'paint']) {
+    const value = bounds[name];
+    assert.ok(['left', 'top', 'right', 'bottom', 'width', 'height'].every((key) => Number.isFinite(value[key])));
+    assert.equal(value.width, value.right - value.left);
+    assert.equal(value.height, value.bottom - value.top);
+  }
+  assertBoundsInsideBounds(bounds.layout, bounds.geometry, 'layout must be contained by geometry');
+  assertBoundsInsideBounds(bounds.geometry, bounds.paint, 'geometry must be contained by paint');
+  assert.ok(bounds.paint.left >= bounds.canonicalFrame[0]);
+  assert.ok(bounds.paint.top >= bounds.canonicalFrame[1]);
+  assert.ok(bounds.paint.right <= bounds.canonicalFrame[0] + bounds.canonicalFrame[2]);
+  assert.ok(bounds.paint.bottom <= bounds.canonicalFrame[1] + bounds.canonicalFrame[3]);
+  assert.deepEqual(operationBudget, {
+    status: 'within-budget',
+    layoutPasses: 1,
+    layoutPassLimit: 3,
+    feedbackRounds: 0,
+    feedbackRoundLimit: 3,
+  });
+
+  const explicitDocument = adjacentWorkflow({
+    fromCol: 0,
+    toCol: 5,
+    label: '带有确定性绘制边界的调用关系',
+    frames: true,
+    viewBox: [1600, 900],
+  });
+  const explicit = compileSuccessfully(explicitDocument, 'showcase');
+  assert.deepEqual(explicit.receipt.bounds.canonicalFrame, [0, 0, 1600, 900]);
+  assert.deepEqual(explicit.receipt.bounds.paint, bounds.paint);
+  assert.notEqual(explicit.receipt.layoutDigest, layoutDigest, 'fixed capacity is part of the layout contract');
+});
+
+test('readable-v2 compiles the 30-node 50-edge adaptive workflow inside one finite canonical world', () => {
+  const workflow = largeAdaptiveWorkflow();
+  const first = compileSuccessfully(workflow, 'showcase');
+  const second = compileSuccessfully(clone(workflow), 'showcase');
+
+  assert.equal(workflow.meta.viewBox, undefined, 'fixture must exercise implicit canonical sizing');
+  assert.equal(workflow.nodes.length, 30);
+  assert.equal(workflow.edges.length, 50);
+  assert.equal(first.receipt.nodes.length, workflow.nodes.length);
+  assert.equal(first.receipt.edges.length, workflow.edges.length);
+  assert.deepEqual(
+    first.receipt.edges.map(({ id }) => id).sort(),
+    workflow.edges.map(({ id }) => id).sort(),
+    'every authored relation must survive compilation',
+  );
+  assertBoundsInsideBounds(first.receipt.bounds.layout, first.receipt.bounds.geometry, 'layout bounds');
+  assertBoundsInsideBounds(first.receipt.bounds.geometry, first.receipt.bounds.paint, 'geometry bounds');
+  assert.ok(first.receipt.bounds.paint.right <= first.receipt.viewBox[0]);
+  assert.ok(first.receipt.bounds.paint.bottom <= first.receipt.viewBox[1]);
+  assert.ok(first.receipt.operationBudget.layoutPasses <= first.receipt.operationBudget.layoutPassLimit);
+  assert.ok(first.receipt.operationBudget.feedbackRounds <= first.receipt.operationBudget.feedbackRoundLimit);
+  assert.equal(first.receipt.operationBudget.status, 'within-budget');
+  assert.equal(first.svg, second.svg, 'canonical large-workflow SVG must be byte deterministic');
+  assert.deepEqual(first.receipt, second.receipt, 'canonical large-workflow receipt must be deterministic');
 });
 
 test('readable-v2 phase and group frames derive from solved ranks without moving the core geometry', () => {

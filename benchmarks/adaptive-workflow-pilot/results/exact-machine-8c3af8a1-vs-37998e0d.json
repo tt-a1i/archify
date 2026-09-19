@@ -1,0 +1,2575 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "adaptive-workflow-pilot",
+  "evidenceClass": "machine-only",
+  "evidenceEligibleForEndToEndClaim": false,
+  "limitation": "This harness freezes and measures the deterministic machine pipeline. It does not observe model authoring, repair behavior, human review, or concurrent-agent wall time.",
+  "environment": {
+    "node": "v22.23.1",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpuCount": 16,
+    "manifestSha256": "3af2a60a53cd2d15f2366e63b53651386b3bae257d43e89b843db705e7b92a73"
+  },
+  "configurations": [
+    {
+      "id": "A",
+      "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+      "skillRoot": "/tmp/archify-base-snapshot.asXSs7/archify",
+      "snapshot": {
+        "declaredRevision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "detectedRevision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "revisionMatches": true,
+        "dirty": false,
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975",
+        "files": [
+          "renderers/workflow/workflow-compiler.mjs",
+          "renderers/workflow/render-workflow.mjs",
+          "bin/archify.mjs",
+          "scripts/check-render-output.mjs",
+          "package.json"
+        ]
+      }
+    },
+    {
+      "id": "B",
+      "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+      "skillRoot": "/tmp/archify-candidate-snapshot.PjDBeM/archify",
+      "snapshot": {
+        "declaredRevision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "detectedRevision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "revisionMatches": true,
+        "dirty": false,
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2",
+        "files": [
+          "renderers/workflow/workflow-compiler.mjs",
+          "renderers/workflow/render-workflow.mjs",
+          "bin/archify.mjs",
+          "scripts/check-render-output.mjs",
+          "package.json"
+        ]
+      }
+    }
+  ],
+  "schedule": {
+    "pairCount": 3,
+    "order": "AB/BA alternating",
+    "sourceCount": 6
+  },
+  "receipts": [
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "agent-tool-call",
+      "source": {
+        "path": "archify/examples/agent-tool-call.workflow.json",
+        "sha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
+        "materializedInputSha256": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+        "frameMode": "implicit",
+        "nodes": 12,
+        "edges": 11,
+        "views": 3
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 1,
+      "order": "AB",
+      "sequence": 1,
+      "qualityProfile": "showcase",
+      "inputHash": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "candidateHashBefore": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "candidateHashAfter": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 65.332,
+        "validationRepair": 196.66,
+        "artifactReady": 65.332,
+        "reviewReady": 262.134,
+        "handoffReady": 262.134,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "8a1209d46e1672373253b13fcb037fa71f52eec7cc91965379f40fad80d9cb6e",
+        "artifact": "917b308d7b07100f96321d27d1ad0b47b12251ac7a59d517f7a280ef717ca029",
+        "qualityReceipt": "70d814f41ff7ef89da26ccf554140eec337ee5dfc584cf5883a087add98dd882"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          1096,
+          684
+        ],
+        "requiredViewBox": [
+          1096,
+          684
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "agent-tool-call",
+      "source": {
+        "path": "archify/examples/agent-tool-call.workflow.json",
+        "sha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
+        "materializedInputSha256": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+        "frameMode": "implicit",
+        "nodes": 12,
+        "edges": 11,
+        "views": 3
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 1,
+      "order": "AB",
+      "sequence": 2,
+      "qualityProfile": "showcase",
+      "inputHash": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "candidateHashBefore": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "candidateHashAfter": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 61.544,
+        "validationRepair": 191.554,
+        "artifactReady": 61.544,
+        "reviewReady": 253.2,
+        "handoffReady": 253.2,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "c4538e4ddaf70c43499334271b7ad697ec53a7e91560f1e15a3e77c179c005f7",
+        "artifact": "917b308d7b07100f96321d27d1ad0b47b12251ac7a59d517f7a280ef717ca029",
+        "qualityReceipt": "d90b7e61c28a7bf40c7efa31630c1143c5f16e40a9e646492d345a7ccf8b8015"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "e7d4773084aa50cb380056c506584088957c7a19d3875d09fca59bcd0592a628",
+        "viewBox": [
+          1096,
+          684
+        ],
+        "requiredViewBox": [
+          1096,
+          684
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 2,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "custom-widths",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/custom-widths.workflow.json",
+        "sha256": "7701a2f6271b9d02d9477d5fb02d52e70738ff14be824956cf77ff466c1c1013",
+        "materializedInputSha256": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+        "frameMode": "implicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 1,
+      "order": "AB",
+      "sequence": 3,
+      "qualityProfile": "showcase",
+      "inputHash": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "candidateHashBefore": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "candidateHashAfter": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 2.334,
+        "validationRepair": 129.346,
+        "artifactReady": 2.334,
+        "reviewReady": 131.769,
+        "handoffReady": 131.769,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "e570aa17d323379a4322b040d00a6d7639c2f8f2d7248695e44bcf822ecf7523",
+        "artifact": "1def5352b10359d650649a08c64f412026b455485c22333bda17bb4bd5968dbd",
+        "qualityReceipt": "2284aa4bd528fb88588210dc78f01200c4cf056b91729bd4d5eb7832fda03b94"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          812,
+          280
+        ],
+        "requiredViewBox": [
+          812,
+          280
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "custom-widths",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/custom-widths.workflow.json",
+        "sha256": "7701a2f6271b9d02d9477d5fb02d52e70738ff14be824956cf77ff466c1c1013",
+        "materializedInputSha256": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+        "frameMode": "implicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 1,
+      "order": "AB",
+      "sequence": 4,
+      "qualityProfile": "showcase",
+      "inputHash": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "candidateHashBefore": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "candidateHashAfter": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 2.747,
+        "validationRepair": 130.326,
+        "artifactReady": 2.747,
+        "reviewReady": 133.173,
+        "handoffReady": 133.173,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "d291522191e92981b58a927a42cdbfaf11276b753e06d2240a29e719e401ff1e",
+        "artifact": "1def5352b10359d650649a08c64f412026b455485c22333bda17bb4bd5968dbd",
+        "qualityReceipt": "15d0b8533c8acab02905b16ce208edca93b2cde83202c388a71934edebc03490"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "6447eb8d020b26672ec4704150865d7e0e3ff65338706a260ef4b3236e58fc67",
+        "viewBox": [
+          812,
+          280
+        ],
+        "requiredViewBox": [
+          812,
+          280
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 1,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "label-clearance",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/labels.workflow.json",
+        "sha256": "496ea86f39914458688f0c3b4277c03c3dedc8eedf1ba35a11e8c99a4a323d08",
+        "materializedInputSha256": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+        "frameMode": "implicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 1,
+      "order": "AB",
+      "sequence": 5,
+      "qualityProfile": "showcase",
+      "inputHash": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "candidateHashBefore": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "candidateHashAfter": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 2.078,
+        "validationRepair": 134.736,
+        "artifactReady": 2.078,
+        "reviewReady": 136.916,
+        "handoffReady": 136.916,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "9a15d5633955ff58cf3b8c20a94e38500d038bed97c832dd2203e7992d280e21",
+        "artifact": "7dfdb1b4d77bcd29a73295d9db0bc52370b0eb2b6db49b56e60b71fb48c135c1",
+        "qualityReceipt": "7bb6b93c75a0dd908e75b7df2b7a5c2f9a18c613f945200f10f6f1ee3bc3841f"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          821,
+          280
+        ],
+        "requiredViewBox": [
+          821,
+          280
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "label-clearance",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/labels.workflow.json",
+        "sha256": "496ea86f39914458688f0c3b4277c03c3dedc8eedf1ba35a11e8c99a4a323d08",
+        "materializedInputSha256": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+        "frameMode": "implicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 1,
+      "order": "AB",
+      "sequence": 6,
+      "qualityProfile": "showcase",
+      "inputHash": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "candidateHashBefore": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "candidateHashAfter": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 1.662,
+        "validationRepair": 135.262,
+        "artifactReady": 1.662,
+        "reviewReady": 137.014,
+        "handoffReady": 137.014,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "025532b0f6fc75acab977f3d1e69730b9857c423bae354f20e4ddb756d6fe893",
+        "artifact": "7dfdb1b4d77bcd29a73295d9db0bc52370b0eb2b6db49b56e60b71fb48c135c1",
+        "qualityReceipt": "9abf3ac9e14e205461f1a313d9fc05cdc605f0960310146660497f648e2f8d4a"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "26321af2c3d2f6a090258ff6fec2855cb9386e3307941d2127c2391d705a1279",
+        "viewBox": [
+          821,
+          280
+        ],
+        "requiredViewBox": [
+          821,
+          280
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 2,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "explicit-route-capacity",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/explicit-route.workflow.json",
+        "sha256": "985ba9146664598785cc3a5008e847259ac66caf4c2c5570e32477f384f31b21",
+        "materializedInputSha256": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+        "frameMode": "explicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 1,
+      "order": "AB",
+      "sequence": 7,
+      "qualityProfile": "showcase",
+      "inputHash": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "candidateHashBefore": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "candidateHashAfter": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 0.534,
+        "validationRepair": 128.384,
+        "artifactReady": 0.534,
+        "reviewReady": 129.02,
+        "handoffReady": 129.02,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "9afc66977b31f1c2a728ec34a8b93d10fccb4f17d317c2ce5cebe81a524afc6f",
+        "artifact": "847ce7dac6fd92251586cd137619d564fe5b2693478942fba170aa2171ada161",
+        "qualityReceipt": "d649f60880c106ca4a7c97dd22c099670d52c3f7d464c67e08616944cf96d350"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          900,
+          420
+        ],
+        "requiredViewBox": [
+          768,
+          404
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "explicit-route-capacity",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/explicit-route.workflow.json",
+        "sha256": "985ba9146664598785cc3a5008e847259ac66caf4c2c5570e32477f384f31b21",
+        "materializedInputSha256": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+        "frameMode": "explicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 1,
+      "order": "AB",
+      "sequence": 8,
+      "qualityProfile": "showcase",
+      "inputHash": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "candidateHashBefore": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "candidateHashAfter": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 0.586,
+        "validationRepair": 127.431,
+        "artifactReady": 0.586,
+        "reviewReady": 128.116,
+        "handoffReady": 128.116,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "73ad01254140811885a57873f086146c134cd86787eb70c0547013db5c610abb",
+        "artifact": "847ce7dac6fd92251586cd137619d564fe5b2693478942fba170aa2171ada161",
+        "qualityReceipt": "0daa8c7af3e6878016d349f0b39982de3afefe8ba10426024b2ef4888978f6da"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "2c95209d673e21d2234e28d45b982e1d155881a6b564776d669f183fba6fad90",
+        "viewBox": [
+          900,
+          420
+        ],
+        "requiredViewBox": [
+          768,
+          404
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 1,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "explicit-frame-capacity",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/explicit-viewbox.workflow.json",
+        "sha256": "520071d14b748aa184589bac22fc548e501c78fb9cf2c8bdceba4bf715620c3f",
+        "materializedInputSha256": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+        "frameMode": "explicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 1,
+      "order": "AB",
+      "sequence": 9,
+      "qualityProfile": "showcase",
+      "inputHash": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "candidateHashBefore": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "candidateHashAfter": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 1.868,
+        "validationRepair": 133.019,
+        "artifactReady": 1.868,
+        "reviewReady": 134.981,
+        "handoffReady": 134.981,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "3e19f12e5458cca4c98b908f1dd570112686e4942e9fa358b355b6736ee32990",
+        "artifact": "a0e3c8efbdaf7b9aa6e471083a5b8806e56aa9fd3bfde956b0fa06b2ba55f747",
+        "qualityReceipt": "38fc626cd2702a0ae8cdda3d3723c33fe83870b7735c54fcbdcc2c5b4da7f906"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          1600,
+          520
+        ],
+        "requiredViewBox": [
+          768,
+          280
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "explicit-frame-capacity",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/explicit-viewbox.workflow.json",
+        "sha256": "520071d14b748aa184589bac22fc548e501c78fb9cf2c8bdceba4bf715620c3f",
+        "materializedInputSha256": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+        "frameMode": "explicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 1,
+      "order": "AB",
+      "sequence": 10,
+      "qualityProfile": "showcase",
+      "inputHash": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "candidateHashBefore": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "candidateHashAfter": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 1.563,
+        "validationRepair": 132.534,
+        "artifactReady": 1.563,
+        "reviewReady": 134.196,
+        "handoffReady": 134.196,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "bb512f3bbaacfc5c5829a7f1387ec9092f1aee1708ff4872ab2b2a511380a8e0",
+        "artifact": "a0e3c8efbdaf7b9aa6e471083a5b8806e56aa9fd3bfde956b0fa06b2ba55f747",
+        "qualityReceipt": "5496cd2e7b12f7d0ba91ac6e763c6e0027d0c5e1efe8357e7a4cb1c3a0518290"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "5cab6bfd8ea098b48dc4ccea7c809e349fd299dafd9b918d95ac8cba6ef57cd1",
+        "viewBox": [
+          1600,
+          520
+        ],
+        "requiredViewBox": [
+          768,
+          280
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 2,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "large-adaptive-world",
+      "source": {
+        "path": "archify/test/fixtures/large-adaptive-workflow.mjs",
+        "sha256": "4961cbf2bf2b53b2735d224c267ecb18b64489eec09bb639b41ac859d1cc1188",
+        "materializedInputSha256": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+        "frameMode": "implicit",
+        "nodes": 30,
+        "edges": 50,
+        "views": 5
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 1,
+      "order": "AB",
+      "sequence": 11,
+      "qualityProfile": "showcase",
+      "inputHash": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "candidateHashBefore": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "candidateHashAfter": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 120.521,
+        "validationRepair": 313.617,
+        "artifactReady": 120.521,
+        "reviewReady": 434.256,
+        "handoffReady": 434.256,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "a17ef6bbb62b404e2092b6d3aa8fb48edab47355f4e48b91ded386baf386dd93",
+        "artifact": "489684c81a08b360ea030a3564888a8a5bceb8fb90630b2923fe0f3fdf2eb6ab",
+        "qualityReceipt": "293f58b04cd5955e275d2ec3db8b94409fcd2b29887837f31d3da80c292d2b8d"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          1220,
+          786
+        ],
+        "requiredViewBox": [
+          1220,
+          786
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "large-adaptive-world",
+      "source": {
+        "path": "archify/test/fixtures/large-adaptive-workflow.mjs",
+        "sha256": "4961cbf2bf2b53b2735d224c267ecb18b64489eec09bb639b41ac859d1cc1188",
+        "materializedInputSha256": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+        "frameMode": "implicit",
+        "nodes": 30,
+        "edges": 50,
+        "views": 5
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 1,
+      "order": "AB",
+      "sequence": 12,
+      "qualityProfile": "showcase",
+      "inputHash": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "candidateHashBefore": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "candidateHashAfter": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 119.431,
+        "validationRepair": 311.287,
+        "artifactReady": 119.431,
+        "reviewReady": 430.832,
+        "handoffReady": 430.832,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "e81a1bfd85b8cc2d955fd2464855610ce32c39e7bdcc63144c7fbfb663e2a3f5",
+        "artifact": "489684c81a08b360ea030a3564888a8a5bceb8fb90630b2923fe0f3fdf2eb6ab",
+        "qualityReceipt": "13953ba74357a2e9c2fd3d60f7bc793bddb890a4dea463229b9d30bbb4ddcec0"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "e297f93975c565b6699c958ce3c26b0550bcf0da3998fbf15775726b25db08f6",
+        "viewBox": [
+          1220,
+          786
+        ],
+        "requiredViewBox": [
+          1220,
+          786
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 1,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "agent-tool-call",
+      "source": {
+        "path": "archify/examples/agent-tool-call.workflow.json",
+        "sha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
+        "materializedInputSha256": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+        "frameMode": "implicit",
+        "nodes": 12,
+        "edges": 11,
+        "views": 3
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 2,
+      "order": "BA",
+      "sequence": 13,
+      "qualityProfile": "showcase",
+      "inputHash": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "candidateHashBefore": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "candidateHashAfter": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 34.694,
+        "validationRepair": 193.552,
+        "artifactReady": 34.694,
+        "reviewReady": 228.354,
+        "handoffReady": 228.354,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "c4538e4ddaf70c43499334271b7ad697ec53a7e91560f1e15a3e77c179c005f7",
+        "artifact": "917b308d7b07100f96321d27d1ad0b47b12251ac7a59d517f7a280ef717ca029",
+        "qualityReceipt": "1db1e44c1c1a2ea644abcc9aec5726748b538a60eeb4c35c7daeac6a26166091"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "e7d4773084aa50cb380056c506584088957c7a19d3875d09fca59bcd0592a628",
+        "viewBox": [
+          1096,
+          684
+        ],
+        "requiredViewBox": [
+          1096,
+          684
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 2,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "agent-tool-call",
+      "source": {
+        "path": "archify/examples/agent-tool-call.workflow.json",
+        "sha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
+        "materializedInputSha256": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+        "frameMode": "implicit",
+        "nodes": 12,
+        "edges": 11,
+        "views": 3
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 2,
+      "order": "BA",
+      "sequence": 14,
+      "qualityProfile": "showcase",
+      "inputHash": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "candidateHashBefore": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "candidateHashAfter": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 34.931,
+        "validationRepair": 195.55,
+        "artifactReady": 34.931,
+        "reviewReady": 230.579,
+        "handoffReady": 230.579,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "8a1209d46e1672373253b13fcb037fa71f52eec7cc91965379f40fad80d9cb6e",
+        "artifact": "917b308d7b07100f96321d27d1ad0b47b12251ac7a59d517f7a280ef717ca029",
+        "qualityReceipt": "63c0c68c84bad6d7acc348911d3e5cfee951e1364d53658dee3cae44672bcc2e"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          1096,
+          684
+        ],
+        "requiredViewBox": [
+          1096,
+          684
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "custom-widths",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/custom-widths.workflow.json",
+        "sha256": "7701a2f6271b9d02d9477d5fb02d52e70738ff14be824956cf77ff466c1c1013",
+        "materializedInputSha256": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+        "frameMode": "implicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 2,
+      "order": "BA",
+      "sequence": 15,
+      "qualityProfile": "showcase",
+      "inputHash": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "candidateHashBefore": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "candidateHashAfter": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 0.8,
+        "validationRepair": 131.34,
+        "artifactReady": 0.8,
+        "reviewReady": 132.237,
+        "handoffReady": 132.237,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "d291522191e92981b58a927a42cdbfaf11276b753e06d2240a29e719e401ff1e",
+        "artifact": "1def5352b10359d650649a08c64f412026b455485c22333bda17bb4bd5968dbd",
+        "qualityReceipt": "959dc21f611cef53324ac5a6631fefc561999bf50ebcbe0d50e609be4a3b9f97"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "6447eb8d020b26672ec4704150865d7e0e3ff65338706a260ef4b3236e58fc67",
+        "viewBox": [
+          812,
+          280
+        ],
+        "requiredViewBox": [
+          812,
+          280
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 1,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "custom-widths",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/custom-widths.workflow.json",
+        "sha256": "7701a2f6271b9d02d9477d5fb02d52e70738ff14be824956cf77ff466c1c1013",
+        "materializedInputSha256": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+        "frameMode": "implicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 2,
+      "order": "BA",
+      "sequence": 16,
+      "qualityProfile": "showcase",
+      "inputHash": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "candidateHashBefore": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "candidateHashAfter": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 0.758,
+        "validationRepair": 133.538,
+        "artifactReady": 0.758,
+        "reviewReady": 134.392,
+        "handoffReady": 134.392,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "e570aa17d323379a4322b040d00a6d7639c2f8f2d7248695e44bcf822ecf7523",
+        "artifact": "1def5352b10359d650649a08c64f412026b455485c22333bda17bb4bd5968dbd",
+        "qualityReceipt": "771794ad1c240b99c89546b7c62eb6c1f4d1ba07021fc10fa27eb79781a98972"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          812,
+          280
+        ],
+        "requiredViewBox": [
+          812,
+          280
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "label-clearance",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/labels.workflow.json",
+        "sha256": "496ea86f39914458688f0c3b4277c03c3dedc8eedf1ba35a11e8c99a4a323d08",
+        "materializedInputSha256": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+        "frameMode": "implicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 2,
+      "order": "BA",
+      "sequence": 17,
+      "qualityProfile": "showcase",
+      "inputHash": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "candidateHashBefore": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "candidateHashAfter": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 1.437,
+        "validationRepair": 132.135,
+        "artifactReady": 1.437,
+        "reviewReady": 133.668,
+        "handoffReady": 133.668,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "025532b0f6fc75acab977f3d1e69730b9857c423bae354f20e4ddb756d6fe893",
+        "artifact": "7dfdb1b4d77bcd29a73295d9db0bc52370b0eb2b6db49b56e60b71fb48c135c1",
+        "qualityReceipt": "204e017c059735584bae7780e570db8ff7e1f2f540e753c054a161ebc84c66fb"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "26321af2c3d2f6a090258ff6fec2855cb9386e3307941d2127c2391d705a1279",
+        "viewBox": [
+          821,
+          280
+        ],
+        "requiredViewBox": [
+          821,
+          280
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 2,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "label-clearance",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/labels.workflow.json",
+        "sha256": "496ea86f39914458688f0c3b4277c03c3dedc8eedf1ba35a11e8c99a4a323d08",
+        "materializedInputSha256": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+        "frameMode": "implicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 2,
+      "order": "BA",
+      "sequence": 18,
+      "qualityProfile": "showcase",
+      "inputHash": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "candidateHashBefore": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "candidateHashAfter": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 1.537,
+        "validationRepair": 133.059,
+        "artifactReady": 1.537,
+        "reviewReady": 134.688,
+        "handoffReady": 134.688,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "9a15d5633955ff58cf3b8c20a94e38500d038bed97c832dd2203e7992d280e21",
+        "artifact": "7dfdb1b4d77bcd29a73295d9db0bc52370b0eb2b6db49b56e60b71fb48c135c1",
+        "qualityReceipt": "f8342f291c832372c4f0c18f5c745e7e01dde13a026e71f37951e2852ccddd3a"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          821,
+          280
+        ],
+        "requiredViewBox": [
+          821,
+          280
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "explicit-route-capacity",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/explicit-route.workflow.json",
+        "sha256": "985ba9146664598785cc3a5008e847259ac66caf4c2c5570e32477f384f31b21",
+        "materializedInputSha256": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+        "frameMode": "explicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 2,
+      "order": "BA",
+      "sequence": 19,
+      "qualityProfile": "showcase",
+      "inputHash": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "candidateHashBefore": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "candidateHashAfter": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 0.434,
+        "validationRepair": 130.38,
+        "artifactReady": 0.434,
+        "reviewReady": 130.909,
+        "handoffReady": 130.909,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "73ad01254140811885a57873f086146c134cd86787eb70c0547013db5c610abb",
+        "artifact": "847ce7dac6fd92251586cd137619d564fe5b2693478942fba170aa2171ada161",
+        "qualityReceipt": "a12d9ea845c16b0578eca9b62586bf3e4b49f442c8ad86f819f39855420d2bf8"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "2c95209d673e21d2234e28d45b982e1d155881a6b564776d669f183fba6fad90",
+        "viewBox": [
+          900,
+          420
+        ],
+        "requiredViewBox": [
+          768,
+          404
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 1,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "explicit-route-capacity",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/explicit-route.workflow.json",
+        "sha256": "985ba9146664598785cc3a5008e847259ac66caf4c2c5570e32477f384f31b21",
+        "materializedInputSha256": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+        "frameMode": "explicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 2,
+      "order": "BA",
+      "sequence": 20,
+      "qualityProfile": "showcase",
+      "inputHash": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "candidateHashBefore": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "candidateHashAfter": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 0.377,
+        "validationRepair": 126.344,
+        "artifactReady": 0.377,
+        "reviewReady": 126.808,
+        "handoffReady": 126.808,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "9afc66977b31f1c2a728ec34a8b93d10fccb4f17d317c2ce5cebe81a524afc6f",
+        "artifact": "847ce7dac6fd92251586cd137619d564fe5b2693478942fba170aa2171ada161",
+        "qualityReceipt": "3d21cf400b48673db5fd225300d111c342829b74051826ab416a76b1dbf0480d"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          900,
+          420
+        ],
+        "requiredViewBox": [
+          768,
+          404
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "explicit-frame-capacity",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/explicit-viewbox.workflow.json",
+        "sha256": "520071d14b748aa184589bac22fc548e501c78fb9cf2c8bdceba4bf715620c3f",
+        "materializedInputSha256": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+        "frameMode": "explicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 2,
+      "order": "BA",
+      "sequence": 21,
+      "qualityProfile": "showcase",
+      "inputHash": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "candidateHashBefore": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "candidateHashAfter": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 1.291,
+        "validationRepair": 136.784,
+        "artifactReady": 1.291,
+        "reviewReady": 138.167,
+        "handoffReady": 138.167,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "bb512f3bbaacfc5c5829a7f1387ec9092f1aee1708ff4872ab2b2a511380a8e0",
+        "artifact": "a0e3c8efbdaf7b9aa6e471083a5b8806e56aa9fd3bfde956b0fa06b2ba55f747",
+        "qualityReceipt": "05c45273f76b34efc06adf6a9ac840b57a6bb5dbc3ce6af76e6a59c98de56a7d"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "5cab6bfd8ea098b48dc4ccea7c809e349fd299dafd9b918d95ac8cba6ef57cd1",
+        "viewBox": [
+          1600,
+          520
+        ],
+        "requiredViewBox": [
+          768,
+          280
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 2,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "explicit-frame-capacity",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/explicit-viewbox.workflow.json",
+        "sha256": "520071d14b748aa184589bac22fc548e501c78fb9cf2c8bdceba4bf715620c3f",
+        "materializedInputSha256": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+        "frameMode": "explicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 2,
+      "order": "BA",
+      "sequence": 22,
+      "qualityProfile": "showcase",
+      "inputHash": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "candidateHashBefore": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "candidateHashAfter": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 1.378,
+        "validationRepair": 133.844,
+        "artifactReady": 1.378,
+        "reviewReady": 135.313,
+        "handoffReady": 135.313,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "3e19f12e5458cca4c98b908f1dd570112686e4942e9fa358b355b6736ee32990",
+        "artifact": "a0e3c8efbdaf7b9aa6e471083a5b8806e56aa9fd3bfde956b0fa06b2ba55f747",
+        "qualityReceipt": "d5cc4d1b89686c0081b8f8e8504b0501e50d2cdbf98ab62ad116b6539d1de783"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          1600,
+          520
+        ],
+        "requiredViewBox": [
+          768,
+          280
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "large-adaptive-world",
+      "source": {
+        "path": "archify/test/fixtures/large-adaptive-workflow.mjs",
+        "sha256": "4961cbf2bf2b53b2735d224c267ecb18b64489eec09bb639b41ac859d1cc1188",
+        "materializedInputSha256": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+        "frameMode": "implicit",
+        "nodes": 30,
+        "edges": 50,
+        "views": 5
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 2,
+      "order": "BA",
+      "sequence": 23,
+      "qualityProfile": "showcase",
+      "inputHash": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "candidateHashBefore": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "candidateHashAfter": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 115.978,
+        "validationRepair": 311.006,
+        "artifactReady": 115.978,
+        "reviewReady": 427.084,
+        "handoffReady": 427.084,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "e81a1bfd85b8cc2d955fd2464855610ce32c39e7bdcc63144c7fbfb663e2a3f5",
+        "artifact": "489684c81a08b360ea030a3564888a8a5bceb8fb90630b2923fe0f3fdf2eb6ab",
+        "qualityReceipt": "ea38cd42ff9ec9061bc6bcbe2108ccb639273d13c8372e08c88c6f3a790b733b"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "e297f93975c565b6699c958ce3c26b0550bcf0da3998fbf15775726b25db08f6",
+        "viewBox": [
+          1220,
+          786
+        ],
+        "requiredViewBox": [
+          1220,
+          786
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 1,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "large-adaptive-world",
+      "source": {
+        "path": "archify/test/fixtures/large-adaptive-workflow.mjs",
+        "sha256": "4961cbf2bf2b53b2735d224c267ecb18b64489eec09bb639b41ac859d1cc1188",
+        "materializedInputSha256": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+        "frameMode": "implicit",
+        "nodes": 30,
+        "edges": 50,
+        "views": 5
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 2,
+      "order": "BA",
+      "sequence": 24,
+      "qualityProfile": "showcase",
+      "inputHash": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "candidateHashBefore": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "candidateHashAfter": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 117.223,
+        "validationRepair": 309.608,
+        "artifactReady": 117.223,
+        "reviewReady": 426.965,
+        "handoffReady": 426.965,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "a17ef6bbb62b404e2092b6d3aa8fb48edab47355f4e48b91ded386baf386dd93",
+        "artifact": "489684c81a08b360ea030a3564888a8a5bceb8fb90630b2923fe0f3fdf2eb6ab",
+        "qualityReceipt": "50388e382a8becf3924bc8ea57e5e12e5d3aa501b05d646f5b85f88eae694b5b"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          1220,
+          786
+        ],
+        "requiredViewBox": [
+          1220,
+          786
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "agent-tool-call",
+      "source": {
+        "path": "archify/examples/agent-tool-call.workflow.json",
+        "sha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
+        "materializedInputSha256": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+        "frameMode": "implicit",
+        "nodes": 12,
+        "edges": 11,
+        "views": 3
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 3,
+      "order": "AB",
+      "sequence": 25,
+      "qualityProfile": "showcase",
+      "inputHash": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "candidateHashBefore": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "candidateHashAfter": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 21.677,
+        "validationRepair": 190.574,
+        "artifactReady": 21.677,
+        "reviewReady": 212.348,
+        "handoffReady": 212.348,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "8a1209d46e1672373253b13fcb037fa71f52eec7cc91965379f40fad80d9cb6e",
+        "artifact": "917b308d7b07100f96321d27d1ad0b47b12251ac7a59d517f7a280ef717ca029",
+        "qualityReceipt": "7644506a6ca0fc8ef2f4924752a38c33db56cee161801ecaaee5e67745830b75"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          1096,
+          684
+        ],
+        "requiredViewBox": [
+          1096,
+          684
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "agent-tool-call",
+      "source": {
+        "path": "archify/examples/agent-tool-call.workflow.json",
+        "sha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
+        "materializedInputSha256": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+        "frameMode": "implicit",
+        "nodes": 12,
+        "edges": 11,
+        "views": 3
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 3,
+      "order": "AB",
+      "sequence": 26,
+      "qualityProfile": "showcase",
+      "inputHash": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "candidateHashBefore": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "candidateHashAfter": "df2012d4fd67b84abec29fdd0700277e5c500701865460a2dcd8604732379505",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 22.573,
+        "validationRepair": 192.998,
+        "artifactReady": 22.573,
+        "reviewReady": 215.67,
+        "handoffReady": 215.67,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "c4538e4ddaf70c43499334271b7ad697ec53a7e91560f1e15a3e77c179c005f7",
+        "artifact": "917b308d7b07100f96321d27d1ad0b47b12251ac7a59d517f7a280ef717ca029",
+        "qualityReceipt": "ec20204297943533b1041756c6ef4b82eade4a5a0bc9e4c4dc9df5c772f9bd89"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "e7d4773084aa50cb380056c506584088957c7a19d3875d09fca59bcd0592a628",
+        "viewBox": [
+          1096,
+          684
+        ],
+        "requiredViewBox": [
+          1096,
+          684
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 2,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "custom-widths",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/custom-widths.workflow.json",
+        "sha256": "7701a2f6271b9d02d9477d5fb02d52e70738ff14be824956cf77ff466c1c1013",
+        "materializedInputSha256": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+        "frameMode": "implicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 3,
+      "order": "AB",
+      "sequence": 27,
+      "qualityProfile": "showcase",
+      "inputHash": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "candidateHashBefore": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "candidateHashAfter": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 0.924,
+        "validationRepair": 131.176,
+        "artifactReady": 0.924,
+        "reviewReady": 132.188,
+        "handoffReady": 132.188,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "e570aa17d323379a4322b040d00a6d7639c2f8f2d7248695e44bcf822ecf7523",
+        "artifact": "1def5352b10359d650649a08c64f412026b455485c22333bda17bb4bd5968dbd",
+        "qualityReceipt": "88b16f99301e79c1f1b982fb207ed0bb153e4436faf7ec9e31699bb6e2793d85"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          812,
+          280
+        ],
+        "requiredViewBox": [
+          812,
+          280
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "custom-widths",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/custom-widths.workflow.json",
+        "sha256": "7701a2f6271b9d02d9477d5fb02d52e70738ff14be824956cf77ff466c1c1013",
+        "materializedInputSha256": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+        "frameMode": "implicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 3,
+      "order": "AB",
+      "sequence": 28,
+      "qualityProfile": "showcase",
+      "inputHash": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "candidateHashBefore": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "candidateHashAfter": "2db380fcc530ffc2e611c34266f0ff888c7c7a3f72675b144387f3638b19c7ed",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 0.862,
+        "validationRepair": 129.716,
+        "artifactReady": 0.862,
+        "reviewReady": 130.67,
+        "handoffReady": 130.67,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "d291522191e92981b58a927a42cdbfaf11276b753e06d2240a29e719e401ff1e",
+        "artifact": "1def5352b10359d650649a08c64f412026b455485c22333bda17bb4bd5968dbd",
+        "qualityReceipt": "5ded92f98dae2bf3a54778a4687340e21e6c0278d1f0f35637b662384b2f5e7f"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "6447eb8d020b26672ec4704150865d7e0e3ff65338706a260ef4b3236e58fc67",
+        "viewBox": [
+          812,
+          280
+        ],
+        "requiredViewBox": [
+          812,
+          280
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 1,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "label-clearance",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/labels.workflow.json",
+        "sha256": "496ea86f39914458688f0c3b4277c03c3dedc8eedf1ba35a11e8c99a4a323d08",
+        "materializedInputSha256": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+        "frameMode": "implicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 3,
+      "order": "AB",
+      "sequence": 29,
+      "qualityProfile": "showcase",
+      "inputHash": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "candidateHashBefore": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "candidateHashAfter": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 1.003,
+        "validationRepair": 136.155,
+        "artifactReady": 1.003,
+        "reviewReady": 137.264,
+        "handoffReady": 137.264,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "9a15d5633955ff58cf3b8c20a94e38500d038bed97c832dd2203e7992d280e21",
+        "artifact": "7dfdb1b4d77bcd29a73295d9db0bc52370b0eb2b6db49b56e60b71fb48c135c1",
+        "qualityReceipt": "8b0dd9b78726b89328f19f8271572091cab88cbbbae41762b220b89ab390865c"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          821,
+          280
+        ],
+        "requiredViewBox": [
+          821,
+          280
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "label-clearance",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/labels.workflow.json",
+        "sha256": "496ea86f39914458688f0c3b4277c03c3dedc8eedf1ba35a11e8c99a4a323d08",
+        "materializedInputSha256": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+        "frameMode": "implicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 3,
+      "order": "AB",
+      "sequence": 30,
+      "qualityProfile": "showcase",
+      "inputHash": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "candidateHashBefore": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "candidateHashAfter": "cca7d7f10833c55884688ec88ec25aeec67086c5b20ffad975b97b787f3002ad",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 1.011,
+        "validationRepair": 131.887,
+        "artifactReady": 1.011,
+        "reviewReady": 133.006,
+        "handoffReady": 133.006,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "025532b0f6fc75acab977f3d1e69730b9857c423bae354f20e4ddb756d6fe893",
+        "artifact": "7dfdb1b4d77bcd29a73295d9db0bc52370b0eb2b6db49b56e60b71fb48c135c1",
+        "qualityReceipt": "6a49025ddd77a10c6b8a8dd6f0c47a1a701e3cf46ef7c7bf2315ccd96fbbd66c"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "26321af2c3d2f6a090258ff6fec2855cb9386e3307941d2127c2391d705a1279",
+        "viewBox": [
+          821,
+          280
+        ],
+        "requiredViewBox": [
+          821,
+          280
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 2,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "explicit-route-capacity",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/explicit-route.workflow.json",
+        "sha256": "985ba9146664598785cc3a5008e847259ac66caf4c2c5570e32477f384f31b21",
+        "materializedInputSha256": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+        "frameMode": "explicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 3,
+      "order": "AB",
+      "sequence": 31,
+      "qualityProfile": "showcase",
+      "inputHash": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "candidateHashBefore": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "candidateHashAfter": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 0.297,
+        "validationRepair": 128.31,
+        "artifactReady": 0.297,
+        "reviewReady": 128.71,
+        "handoffReady": 128.71,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "9afc66977b31f1c2a728ec34a8b93d10fccb4f17d317c2ce5cebe81a524afc6f",
+        "artifact": "847ce7dac6fd92251586cd137619d564fe5b2693478942fba170aa2171ada161",
+        "qualityReceipt": "b7d17935e8c547cbe07cc60639917e1f72b0a8b17653b74a44405ce6fdf90891"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          900,
+          420
+        ],
+        "requiredViewBox": [
+          768,
+          404
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "explicit-route-capacity",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/explicit-route.workflow.json",
+        "sha256": "985ba9146664598785cc3a5008e847259ac66caf4c2c5570e32477f384f31b21",
+        "materializedInputSha256": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+        "frameMode": "explicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 3,
+      "order": "AB",
+      "sequence": 32,
+      "qualityProfile": "showcase",
+      "inputHash": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "candidateHashBefore": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "candidateHashAfter": "7fbee1443753307d1bd6a8a9810413cccde87721478dd416f500e09bb190f19c",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 0.334,
+        "validationRepair": 127.568,
+        "artifactReady": 0.334,
+        "reviewReady": 127.999,
+        "handoffReady": 127.999,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "73ad01254140811885a57873f086146c134cd86787eb70c0547013db5c610abb",
+        "artifact": "847ce7dac6fd92251586cd137619d564fe5b2693478942fba170aa2171ada161",
+        "qualityReceipt": "477f6a09f8dc67c248c097c430644934565d6f9538761f158bf894b0b0973fb1"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "2c95209d673e21d2234e28d45b982e1d155881a6b564776d669f183fba6fad90",
+        "viewBox": [
+          900,
+          420
+        ],
+        "requiredViewBox": [
+          768,
+          404
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 1,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "explicit-frame-capacity",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/explicit-viewbox.workflow.json",
+        "sha256": "520071d14b748aa184589bac22fc548e501c78fb9cf2c8bdceba4bf715620c3f",
+        "materializedInputSha256": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+        "frameMode": "explicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 3,
+      "order": "AB",
+      "sequence": 33,
+      "qualityProfile": "showcase",
+      "inputHash": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "candidateHashBefore": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "candidateHashAfter": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 1.036,
+        "validationRepair": 134.08,
+        "artifactReady": 1.036,
+        "reviewReady": 135.224,
+        "handoffReady": 135.224,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "3e19f12e5458cca4c98b908f1dd570112686e4942e9fa358b355b6736ee32990",
+        "artifact": "a0e3c8efbdaf7b9aa6e471083a5b8806e56aa9fd3bfde956b0fa06b2ba55f747",
+        "qualityReceipt": "3cc5a013ceec63b0ddfacd514f59adf3242b8e17c10aa412cb3301ec67fa792f"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          1600,
+          520
+        ],
+        "requiredViewBox": [
+          768,
+          280
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "explicit-frame-capacity",
+      "source": {
+        "path": "archify/test/fixtures/issue-126/explicit-viewbox.workflow.json",
+        "sha256": "520071d14b748aa184589bac22fc548e501c78fb9cf2c8bdceba4bf715620c3f",
+        "materializedInputSha256": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+        "frameMode": "explicit",
+        "nodes": 2,
+        "edges": 1,
+        "views": 0
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 3,
+      "order": "AB",
+      "sequence": 34,
+      "qualityProfile": "showcase",
+      "inputHash": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "candidateHashBefore": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "candidateHashAfter": "0f34e486521124770b7d1dab93fd8dafa8a82ce5e1047e3a795fefbe61a1d953",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 1.007,
+        "validationRepair": 132.871,
+        "artifactReady": 1.007,
+        "reviewReady": 133.971,
+        "handoffReady": 133.971,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "bb512f3bbaacfc5c5829a7f1387ec9092f1aee1708ff4872ab2b2a511380a8e0",
+        "artifact": "a0e3c8efbdaf7b9aa6e471083a5b8806e56aa9fd3bfde956b0fa06b2ba55f747",
+        "qualityReceipt": "e1c85e4a1efa1e0ca6c0737ca3b3d6e5c6f0463215e3542bb9a2adf5cc1b64e7"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "5cab6bfd8ea098b48dc4ccea7c809e349fd299dafd9b918d95ac8cba6ef57cd1",
+        "viewBox": [
+          1600,
+          520
+        ],
+        "requiredViewBox": [
+          768,
+          280
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 2,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "large-adaptive-world",
+      "source": {
+        "path": "archify/test/fixtures/large-adaptive-workflow.mjs",
+        "sha256": "4961cbf2bf2b53b2735d224c267ecb18b64489eec09bb639b41ac859d1cc1188",
+        "materializedInputSha256": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+        "frameMode": "implicit",
+        "nodes": 30,
+        "edges": 50,
+        "views": 5
+      },
+      "configuration": {
+        "id": "A",
+        "revision": "8c3af8a11318d3e0f46bb123149c4863d358f830",
+        "codeHash": "74441ed6d2da0aee903fa3163c190abeae6ba2534f4b2137c89819334ca6a975"
+      },
+      "pair": 3,
+      "order": "AB",
+      "sequence": 35,
+      "qualityProfile": "showcase",
+      "inputHash": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "candidateHashBefore": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "candidateHashAfter": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 105.664,
+        "validationRepair": 310.473,
+        "artifactReady": 105.664,
+        "reviewReady": 416.248,
+        "handoffReady": 416.248,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "a17ef6bbb62b404e2092b6d3aa8fb48edab47355f4e48b91ded386baf386dd93",
+        "artifact": "489684c81a08b360ea030a3564888a8a5bceb8fb90630b2923fe0f3fdf2eb6ab",
+        "qualityReceipt": "85158a8a55afc01b7fd3147fd2a06843442a80dc66180470e1d273fd27387b19"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": null,
+        "viewBox": [
+          1220,
+          786
+        ],
+        "requiredViewBox": [
+          1220,
+          786
+        ],
+        "operationBudget": null
+      },
+      "error": null
+    },
+    {
+      "schemaVersion": 1,
+      "evidenceClass": "machine-only",
+      "sourceId": "large-adaptive-world",
+      "source": {
+        "path": "archify/test/fixtures/large-adaptive-workflow.mjs",
+        "sha256": "4961cbf2bf2b53b2735d224c267ecb18b64489eec09bb639b41ac859d1cc1188",
+        "materializedInputSha256": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+        "frameMode": "implicit",
+        "nodes": 30,
+        "edges": 50,
+        "views": 5
+      },
+      "configuration": {
+        "id": "B",
+        "revision": "37998e0dc058297ed75908879eb04828f1fd95df",
+        "codeHash": "4a8f51fa42518762ef0a8c2819debfd4299cd62c6df722e8101338c4e00af8c2"
+      },
+      "pair": 3,
+      "order": "AB",
+      "sequence": 36,
+      "qualityProfile": "showcase",
+      "inputHash": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "candidateHashBefore": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "candidateHashAfter": "49663e650a31f47f9584421e1f4557561e79508afd128039050dfb7769df902d",
+      "mutationOutcome": "unchanged",
+      "durationMs": {
+        "compile": 107.268,
+        "validationRepair": 310.238,
+        "artifactReady": 107.268,
+        "reviewReady": 417.608,
+        "handoffReady": 417.608,
+        "barrierWait": 0,
+        "reporting": 0
+      },
+      "validation": {
+        "ok": true,
+        "compileOk": true,
+        "cliOk": true,
+        "validateAttempts": 1,
+        "failedAttempts": 0,
+        "candidateMutations": 0,
+        "diagnosticCodes": [],
+        "diagnosticFamilies": [],
+        "boundedStop": false
+      },
+      "hashes": {
+        "layoutReceipt": "e81a1bfd85b8cc2d955fd2464855610ce32c39e7bdcc63144c7fbfb663e2a3f5",
+        "artifact": "489684c81a08b360ea030a3564888a8a5bceb8fb90630b2923fe0f3fdf2eb6ab",
+        "qualityReceipt": "39b90329266135e5051cb81c9d77ffc69859b6c91dc33f243cf41da9b29e79a2"
+      },
+      "layout": {
+        "contract": "readable-v2",
+        "digest": "e297f93975c565b6699c958ce3c26b0550bcf0da3998fbf15775726b25db08f6",
+        "viewBox": [
+          1220,
+          786
+        ],
+        "requiredViewBox": [
+          1220,
+          786
+        ],
+        "operationBudget": {
+          "status": "within-budget",
+          "layoutPasses": 1,
+          "layoutPassLimit": 3,
+          "feedbackRounds": 0,
+          "feedbackRoundLimit": 3
+        }
+      },
+      "error": null
+    }
+  ],
+  "summary": {
+    "pairCount": 18,
+    "validationRepair": {
+      "pairedMedianDeltaRatio": -0.006,
+      "baselineMedianMs": 133.962,
+      "candidateMedianMs": 132.703
+    },
+    "handoffReady": {
+      "pairedMedianDeltaRatio": -0.006,
+      "baselineMedianMs": 135.269,
+      "candidateMedianMs": 134.084,
+      "baselineP95Ms": 434.256,
+      "candidateP95Ms": 430.832,
+      "p95DeltaRatio": -0.008
+    },
+    "viewportRepair": {
+      "baselineCount": 0,
+      "candidateCount": 0,
+      "reductionRatio": null
+    },
+    "firstCandidatePassRate": {
+      "A": 1,
+      "B": 1
+    },
+    "boundedStops": {
+      "A": 0,
+      "B": 0
+    }
+  },
+  "resultSha256": "e6cf70e47581574b101240604ad817b64a03a3452f40dfc43d1fd99eeffec771"
+}

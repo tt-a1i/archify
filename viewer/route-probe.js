@@ -537,7 +537,6 @@
             includeNeighbors: false,
             reason: 'route-journey',
             maxScale: 1.65,
-            padding: 64,
             duration: 360,
             instant: !journeyMotionAllowed()
           });

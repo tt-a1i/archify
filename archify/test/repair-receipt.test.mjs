@@ -147,7 +147,7 @@ test('repair receipt: repository evidence failures retain a stable rule and exac
   assert.deepEqual(repair.supportedFixes, ['pass --repo-root with the matching local Git checkout']);
 });
 
-test('repair receipt: public validate reports borderline desktop readability with a supported fix', () => {
+test('repair receipt: public validate hands borderline desktop readability to browser evidence', () => {
   const input = writeFixture('borderline-readability.architecture.json', {
     schema_version: 1,
     diagram_type: 'architecture',
@@ -168,20 +168,23 @@ test('repair receipt: public validate reports borderline desktop readability wit
   });
   const result = run(['validate', 'architecture', input, '--quality', 'showcase', '--json']);
 
-  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.equal(result.stderr, '');
-  const repair = receipt(result).diagnostics.find(
+  const validation = receipt(result);
+  const warning = validation.composition.issues.find(
     (entry) => entry.code === 'composition/desktop-readability',
   );
-  assert.ok(repair);
-  assert.deepEqual(repair.subject, { check: 'composition', nodeId: 'tool-runtime' });
-  assert.ok(repair.evidence.projectedFontPx < repair.evidence.minimumProjectedFontPx);
-  assert.ok(repair.supportedFixes.some((fix) => fix.includes('reduce the viewBox width')));
+  assert.equal(validation.ok, true);
+  assert.equal(validation.composition.readability.status, 'potential-large/pending-browser');
+  assert.equal(validation.composition.readability.browserEvidenceRequired, true);
+  assert.equal(warning.severity, 'warning');
+  assert.equal(warning.nodeId, 'tool-runtime');
+  assert.ok(warning.projectedFontPx < warning.minimumProjectedFontPx);
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
 
-test('repair receipt: readability identifies the failing node despite repeated copy', () => {
+test('repair receipt: readability handoff identifies the candidate node despite repeated copy', () => {
   for (const command of ['validate', 'deliver']) {
     for (const failingIndex of [0, 1]) {
       const ids = ['billing-worker', 'email-worker'];
@@ -197,15 +200,23 @@ test('repair receipt: readability identifies the failing node despite repeated c
       const output = path.join(tmp, `readability-${command}-${failingIndex}.html`);
       const result = run([command, 'architecture', input,
         ...(command === 'deliver' ? [output] : []), '--quality', 'showcase', '--json']);
-      assert.equal(result.status, 1);
-      const failure = receipt(result);
-      assert.equal(failure.stage, 'check');
-      const diagnostics = failure.diagnostics.filter(d => d.code === 'composition/desktop-readability');
-      assert.equal(diagnostics.length, 1);
-      assert.deepEqual(diagnostics[0].subject, { check: 'composition', nodeId: ids[failingIndex] });
-      assert.equal(diagnostics[0].evidence.text, 'Processes queued jobs');
-      assert.equal(diagnostics[0].evidence.projectedFontPx, 5.6575);
-      assert.equal(fs.existsSync(output), false);
+      assert.equal(result.status, 0, result.stderr || result.stdout);
+      const success = receipt(result);
+      assert.equal(success.ok, true);
+      if (command === 'validate') {
+        const warnings = success.composition.issues.filter(d => d.code === 'composition/desktop-readability');
+        assert.equal(warnings.length, 1);
+        assert.equal(warnings[0].nodeId, ids[failingIndex]);
+        assert.equal(warnings[0].text, 'Processes queued jobs');
+        assert.equal(warnings[0].projectedFontPx, 5.6575);
+        assert.equal(success.composition.readability.status, 'potential-large/pending-browser');
+        assert.equal(success.composition.readability.browserEvidenceRequired, true);
+      } else {
+        assert.equal(success.validation.compositionStatus, 'pass');
+        assert.equal(success.validation.errors, 0);
+        assert.equal(success.validation.warnings, 1);
+      }
+      assert.equal(fs.existsSync(output), command === 'deliver');
     }
   }
 });

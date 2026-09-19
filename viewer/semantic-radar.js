@@ -291,6 +291,9 @@
         if (passportPreviousAriaHidden === null) passport.removeAttribute('aria-hidden');
         else passport.setAttribute('aria-hidden', passportPreviousAriaHidden);
         passportPreviousAriaHidden = null;
+        // Camera/layout callbacks may have positioned the yielded (zero-height)
+        // panel. Restore its real bounds before Radar measures this blocker.
+        if (Archify.focus && typeof Archify.focus.reposition === 'function') Archify.focus.reposition();
       }
       function reflectVisible() {
         panel.hidden = false;

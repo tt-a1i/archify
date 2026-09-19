@@ -1,0 +1,182 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Pi 编码代理请求工作流",
+    "locale": "zh-CN",
+    "animation": "none",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "startup",
+        "label": "启动与会话",
+        "focus": ["input", "session_select", "runtime_load", "prompt_preflight"],
+        "note": "从 CLI、stdin 或交互输入进入，先确定模式与会话，再按会话 cwd 装载运行时。"
+      },
+      {
+        "id": "agent_loop",
+        "label": "模型与工具闭环",
+        "focus": ["prompt_preflight", "context_build", "provider_stream", "assistant_final", "tool_execute"],
+        "note": "每轮重新构造上下文；工具结果回灌后再次请求模型。"
+      },
+      {
+        "id": "durable_state",
+        "label": "持久状态",
+        "focus": ["assistant_final", "tool_execute", "session_log", "settlement"],
+        "note": "流式 partial 只更新运行态；message_end 的最终消息才进入会话记录。"
+      },
+      {
+        "id": "completion",
+        "label": "稳定完成",
+        "focus": ["assistant_final", "settlement", "output"],
+        "note": "agent_end 后仍检查重试、压缩和排队消息；全部清空才进入 agent_settled。"
+      }
+    ],
+    "output": "pi-current.workflow.html"
+  },
+  "lanes": [
+    { "id": "interface", "label": "输入与输出" },
+    { "id": "session", "label": "会话与资源" },
+    { "id": "agent", "label": "Agent 循环" },
+    { "id": "execution", "label": "Provider 与工具" }
+  ],
+  "phases": [
+    { "id": "bootstrap", "label": "启动", "fromCol": 0, "toCol": 1 },
+    { "id": "run", "label": "推理与执行", "fromCol": 2, "toCol": 4, "variant": "emphasis" }
+  ],
+  "mainPath": [
+    "input",
+    "session_select",
+    "runtime_load",
+    "prompt_preflight",
+    "context_build",
+    "provider_stream",
+    "assistant_final",
+    "settlement",
+    "output"
+  ],
+  "semanticChecks": {
+    "allowedRoots": ["input"],
+    "allowedTerminals": ["output", "session_log"],
+    "requiredEdges": [
+      { "from": "tool_execute", "to": "context_build" },
+      { "from": "settlement", "to": "context_build" },
+      { "from": "settlement", "to": "output" }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "lane": "interface",
+      "col": 0,
+      "type": "external",
+      "label": "用户与进程输入",
+      "sublabel": "CLI · stdin · TUI · RPC",
+      "width": 148
+    },
+    {
+      "id": "session_select",
+      "lane": "session",
+      "col": 0,
+      "type": "backend",
+      "label": "选择模式与会话",
+      "sublabel": "新建 · 恢复 · 继续 · fork",
+      "width": 152
+    },
+    {
+      "id": "runtime_load",
+      "lane": "session",
+      "col": 1,
+      "type": "backend",
+      "label": "按会话 cwd 装载",
+      "sublabel": "设置 · 资源 · 扩展 · 模型 · 工具",
+      "width": 168
+    },
+    {
+      "id": "prompt_preflight",
+      "lane": "agent",
+      "col": 1,
+      "type": "frontend",
+      "label": "Prompt 预处理",
+      "sublabel": "命令 · input hook · skill/template",
+      "width": 172
+    },
+    {
+      "id": "context_build",
+      "lane": "agent",
+      "col": 2,
+      "type": "database",
+      "label": "构造本轮上下文",
+      "sublabel": "system · messages · active tools",
+      "width": 164
+    },
+    {
+      "id": "provider_stream",
+      "lane": "execution",
+      "col": 3,
+      "type": "cloud",
+      "label": "Provider 流式响应",
+      "sublabel": "text · thinking · toolcall",
+      "width": 164
+    },
+    {
+      "id": "assistant_final",
+      "lane": "agent",
+      "col": 4,
+      "type": "backend",
+      "label": "Assistant final",
+      "sublabel": "错误 · 结束 · tool calls",
+      "width": 156
+    },
+    {
+      "id": "tool_execute",
+      "lane": "execution",
+      "col": 4,
+      "type": "messagebus",
+      "label": "校验并执行工具",
+      "sublabel": "hooks · 并行/串行 · ToolResult",
+      "width": 168
+    },
+    {
+      "id": "session_log",
+      "lane": "session",
+      "col": 4,
+      "type": "database",
+      "label": "SessionManager",
+      "sublabel": "仅 final 消息 · JSONL",
+      "width": 172
+    },
+    {
+      "id": "settlement",
+      "lane": "session",
+      "col": 5,
+      "type": "security",
+      "label": "稳定判定",
+      "sublabel": "retry · compaction · queued input",
+      "width": 166
+    },
+    {
+      "id": "output",
+      "lane": "interface",
+      "col": 5,
+      "type": "frontend",
+      "label": "agent_settled / 输出",
+      "sublabel": "TUI · text · JSON · RPC",
+      "width": 168
+    }
+  ],
+  "edges": [
+    { "id": "input_session", "from": "input", "to": "session_select", "role": "main" },
+    { "id": "session_runtime", "from": "session_select", "to": "runtime_load", "role": "main" },
+    { "id": "runtime_prompt", "from": "runtime_load", "to": "prompt_preflight", "role": "main" },
+    { "id": "prompt_context", "from": "prompt_preflight", "to": "context_build", "role": "main" },
+    { "id": "context_provider", "from": "context_build", "to": "provider_stream", "role": "main" },
+    { "id": "provider_assistant", "from": "provider_stream", "to": "assistant_final", "role": "main" },
+    { "id": "assistant_tool", "from": "assistant_final", "to": "tool_execute", "label": "有 tool call", "role": "branch" },
+    { "id": "tool_context", "from": "tool_execute", "to": "context_build", "label": "ToolResult 回灌", "variant": "emphasis", "role": "return" },
+    { "id": "assistant_log", "from": "assistant_final", "to": "session_log", "label": "最终消息入会话", "variant": "dashed", "role": "async" },
+    { "id": "assistant_settle", "from": "assistant_final", "to": "settlement", "label": "无工具 / agent_end", "role": "main" },
+    { "id": "settle_continue", "from": "settlement", "to": "context_build", "label": "重试 · 压缩 · 队列继续", "variant": "dashed", "role": "return" },
+    { "id": "settle_output", "from": "settlement", "to": "output", "label": "agent_settled", "variant": "emphasis", "role": "main" }
+  ]
+}

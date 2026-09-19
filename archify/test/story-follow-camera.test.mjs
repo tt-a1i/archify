@@ -51,7 +51,7 @@ test('Story Follow frames the exact previous, current, and next authored stops t
   assert.match(template, /var ids = storyFrameIds\(step\)/);
   assert.match(template, /Archify\.view\.reveal\(ids, \{/);
   assert.match(template, /reason: options\.manual === true \? 'story-beat' : 'story-follow'/);
-  assert.match(template, /padding: 64/);
+  assert.doesNotMatch(template, /padding:\s*64/);
   assert.match(template, /maxScale: 1\.65/);
   assert.match(template, /duration: STORY_FOLLOW_DURATION_MS/);
   assert.match(template, /storyFollowGeneration/);

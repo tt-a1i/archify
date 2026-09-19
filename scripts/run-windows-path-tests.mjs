@@ -532,6 +532,7 @@ async function runControlledWindowsPathE2E() {
 }
 
 const fullSuites = [
+  'test/chrome-pipe-transport.test.mjs',
   'test/release-package-gates.test.mjs',
   'test/copy-site-assets.test.mjs',
   'test/path-boundary-contract.test.mjs',

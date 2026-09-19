@@ -1,11 +1,10 @@
     /* ============================================================
        Export — Share Card / PNG / JPEG / WebP / SVG / WebM and clipboard
 
-       Raster exports are always rendered at 4x source resolution for
-       maximum sharpness. The trick: we set the serialized SVG's
-       `width`/`height` to viewBox * 4 so the browser rasterizes the
-       vectors at that resolution natively. drawImage then draws at
-       the image's natural size (no upscaling = no blur).
+       Raster exports request 4x source resolution, then preflight the full
+       canonical frame against a bounded pixel budget before allocating a
+       canvas. The largest safe integer scale is used; SVG remains the
+       lossless fallback when even 1x cannot fit.
 
        JPEG/WebP paint the current theme's background explicitly since
        those formats have no alpha channel.
@@ -407,13 +406,56 @@
       // desktop Safari are far higher but start failing on memory-constrained
       // devices. We pick the largest integer scale in {4,3,2,1} whose target
       // pixel count fits under this cap.
-      var MAX_CANVAS_PIXELS = 16 * 1024 * 1024;
+      var MAX_CANVAS_PIXELS = 16000000;
+      var exportPreflights = new WeakMap();
 
-      function pickSafeScale(vbW, vbH) {
-        for (var s = RASTER_SCALE; s >= 1; s--) {
-          if (vbW * s * vbH * s <= MAX_CANVAS_PIXELS) return s;
+      function rasterBudgetError(receipt) {
+        var error = exportError('viewer.export.error.rasterBudget', {
+          format: receipt.format.toUpperCase(),
+          width: receipt.actualWidth,
+          height: receipt.actualHeight,
+          limit: receipt.limit
+        });
+        error.code = 'export/raster-budget-exceeded';
+        error.receipt = receipt;
+        return error;
+      }
+
+      function rasterPreflight(format, vbW, vbH, requestedScale) {
+        var candidates = [];
+        for (var s = Math.max(1, Math.floor(requestedScale)); s >= 1; s--) {
+          var width = Math.ceil(vbW * s);
+          var height = Math.ceil(vbH * s);
+          var pixels = width * height;
+          candidates.push({ scale: s, width: width, height: height, pixels: pixels });
+          if (pixels <= MAX_CANVAS_PIXELS) {
+            return {
+              ok: true, format: format, requestedScale: requestedScale, actualScale: s,
+              requestedWidth: Math.ceil(vbW * requestedScale), requestedHeight: Math.ceil(vbH * requestedScale),
+              actualWidth: width, actualHeight: height, candidates: candidates,
+              limit: MAX_CANVAS_PIXELS, fallback: 'svg'
+            };
+          }
         }
-        return 1;
+        return {
+          ok: false, format: format, requestedScale: requestedScale, actualScale: null,
+          requestedWidth: Math.ceil(vbW * requestedScale), requestedHeight: Math.ceil(vbH * requestedScale),
+          actualWidth: Math.ceil(vbW), actualHeight: Math.ceil(vbH), candidates: candidates,
+          limit: MAX_CANVAS_PIXELS, fallback: 'svg'
+        };
+      }
+
+      function webmPreflight(vbW, vbH, scale) {
+        var width = Math.max(2, Math.round(vbW * scale / 2) * 2);
+        var height = Math.max(2, Math.round(vbH * scale / 2) * 2);
+        return {
+          ok: width * height <= MAX_CANVAS_PIXELS,
+          format: 'webm', requestedScale: scale, actualScale: scale,
+          requestedWidth: width, requestedHeight: height,
+          actualWidth: width, actualHeight: height,
+          candidates: [{ scale: scale, width: width, height: height, pixels: width * height }],
+          limit: MAX_CANVAS_PIXELS, fallback: 'svg'
+        };
       }
 
       function rasterize(format) {
@@ -423,7 +465,9 @@
         // size — no upsampling blur.
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
-        var scale = pickSafeScale(vb.width, vb.height);
+        var preflight = rasterPreflight(format, vb.width, vb.height, RASTER_SCALE);
+        if (!preflight.ok) return Promise.reject(rasterBudgetError(preflight));
+        var scale = preflight.actualScale;
         var data = serializeSvg(scale);
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
@@ -448,7 +492,10 @@
               var quality = format === 'png' ? undefined : 0.95;
               canvas.toBlob(function (blob) {
                 if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: format }));
-                else resolve(blob);
+                else {
+                  exportPreflights.set(blob, preflight);
+                  resolve(blob);
+                }
               }, mime, quality);
             } catch (error) {
               URL.revokeObjectURL(svgUrl);
@@ -498,7 +545,9 @@
         if (routeSnapshot && reachSnapshot) return Promise.reject(exportError('viewer.export.error.variantsCombined'));
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
-        var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
+        var sourcePreflight = rasterPreflight('share-card', vb.width, vb.height, 2);
+        if (!sourcePreflight.ok) return Promise.reject(rasterBudgetError(sourcePreflight));
+        var sourceScale = sourcePreflight.actualScale;
         var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot });
         if (!data.canonicalStateClean) return Promise.reject(exportError('viewer.export.error.viewerState'));
         if (routeSnapshot && !data.routeStateClean) return Promise.reject(exportError('viewer.export.error.routeState'));
@@ -665,6 +714,8 @@
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var scale = Math.min(1, 1280 / vb.width);
+        var preflight = webmPreflight(vb.width, vb.height, scale);
+        if (!preflight.ok) return Promise.reject(rasterBudgetError(preflight));
         var data = serializeSvg(scale);
         var sourceUrl = URL.createObjectURL(new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' }));
 
@@ -821,8 +872,8 @@
           var backgroundImage = new Image();
           backgroundImage.onload = function () {
             var canvas = document.createElement('canvas');
-            canvas.width = Math.max(2, Math.round(data.width / 2) * 2);
-            canvas.height = Math.max(2, Math.round(data.height / 2) * 2);
+            canvas.width = preflight.actualWidth;
+            canvas.height = preflight.actualHeight;
             var ctx = canvas.getContext('2d');
             var stream = canvas.captureStream(fps);
             var mime = motionMimeType();
@@ -862,7 +913,10 @@
               cleanup();
               var blob = new Blob(chunks, { type: recorder.mimeType || mime });
               if (!blob.size) reject(exportError('viewer.export.error.emptyWebm'));
-              else resolve(blob);
+              else {
+                exportPreflights.set(blob, preflight);
+                resolve(blob);
+              }
             };
             drawMotionFrame(ctx, backgroundImage, motionScene, 0);
             recorder.start(250);
@@ -1061,6 +1115,7 @@
             })
         ).catch(function (err) {
           console.error(err);
+          recordPreflightReceipt(err && err.receipt ? err.receipt : null);
           var technicalMessage = err && err.message ? err.message : format;
           var message = exportMessage(err);
           document.documentElement.setAttribute('data-last-export-error-format', format);
@@ -1154,6 +1209,27 @@
           document.documentElement.removeAttribute('data-last-export-width');
           document.documentElement.removeAttribute('data-last-export-height');
         }
+        recordPreflightReceipt(exportPreflights.get(blob) || null);
+      }
+
+      function recordPreflightReceipt(preflight) {
+        var names = [
+          'requested-width', 'requested-height', 'actual-width', 'actual-height',
+          'requested-scale', 'actual-scale', 'candidate-pixels', 'pixel-limit', 'fallback'
+        ];
+        if (!preflight) {
+          names.forEach(function (name) { document.documentElement.removeAttribute('data-last-export-' + name); });
+          return;
+        }
+        document.documentElement.setAttribute('data-last-export-requested-width', String(preflight.requestedWidth));
+        document.documentElement.setAttribute('data-last-export-requested-height', String(preflight.requestedHeight));
+        document.documentElement.setAttribute('data-last-export-actual-width', String(preflight.actualWidth));
+        document.documentElement.setAttribute('data-last-export-actual-height', String(preflight.actualHeight));
+        document.documentElement.setAttribute('data-last-export-requested-scale', String(preflight.requestedScale));
+        document.documentElement.setAttribute('data-last-export-actual-scale', preflight.actualScale == null ? 'none' : String(preflight.actualScale));
+        document.documentElement.setAttribute('data-last-export-candidate-pixels', JSON.stringify(preflight.candidates || []));
+        document.documentElement.setAttribute('data-last-export-pixel-limit', String(preflight.limit));
+        document.documentElement.setAttribute('data-last-export-fallback', String(preflight.fallback || 'svg'));
       }
 
       function clearExportReceipt() {
@@ -1167,6 +1243,7 @@
         document.documentElement.removeAttribute('data-last-export-reach-state-clean');
         document.documentElement.removeAttribute('data-last-export-error-format');
         document.documentElement.removeAttribute('data-last-export-error');
+        recordPreflightReceipt(null);
       }
 
       function writePngToClipboard(blobPromise) {

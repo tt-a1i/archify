@@ -44,7 +44,7 @@ test('skill keeps deterministic delivery, automated browser evidence, and percep
     assert.match(source, /visual-check[\s\S]*automated browser evidence/i, name);
     assert.match(source, /human|perceptual visual review/i, name);
   }
-  assert.match(delivery, /manual browser record[\s\S]*all four exact viewport measurements, both endpoint themes, and an artifact-bound record/i);
+  assert.match(delivery, /manual browser record[\s\S]*all four exact viewport measurements in both themes,[\s\S]*camera reachability and canonical export checks,[\s\S]*artifact-bound record/i);
 });
 
 test('strict provenance check must succeed before visual-check', () => {

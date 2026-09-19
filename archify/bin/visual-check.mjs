@@ -43,6 +43,7 @@ const CAPTURE_VIEWPORTS = Object.freeze([
 ]);
 const THEMES = Object.freeze(['light', 'dark']);
 const EXIT = Object.freeze({ pass: 0, fail: 1, skipped: 2 });
+const SCREEN_MEASUREMENT_EPSILON_PX = 0.0001;
 export const CHROME_NO_SANDBOX_ENV = 'ARCHIFY_CHROME_NO_SANDBOX';
 const VISUAL_SIDECAR_SUFFIXES = Object.freeze([
   '.visual-check.json',
@@ -674,7 +675,7 @@ function beginVisualEvidenceWrite(artifactPath, artifactBytes, outputs) {
       ...previousReceipt.evidence,
     });
 
-    if (previous?.schemaVersion !== 1 || previous?.command !== 'visual-check') {
+    if (![1, 2, 3].includes(previous?.schemaVersion) || previous?.command !== 'visual-check') {
       return evidencePathConflict(artifactPath, outputs, outputs.receipt, {
         code: 'ownership-receipt-schema-mismatch',
       });
@@ -1419,7 +1420,9 @@ class PipeCdp {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        reject(this.failure('command timeout', new Error(`${method}: timed out after ${timeoutMs}ms`)));
+        const error = this.failure('command timeout', new Error(`${method}: timed out after ${timeoutMs}ms`));
+        error.code = 'CHROME_CDP_TIMEOUT';
+        reject(error);
       }, timeoutMs);
       this.pending.set(id, { method, resolve, reject, timer });
       try {
@@ -1512,6 +1515,13 @@ export class ChromeVisualBrowser {
     getuid = typeof process.getuid === 'function' ? () => process.getuid() : null,
     spawnImpl = spawn,
   } = {}) {
+    this.closed = false;
+    const options = { env, getuid, spawnImpl };
+    this.launch(chromePath, options);
+    this.sessionPromise = this.attachWithRetry(chromePath, options);
+  }
+
+  launch(chromePath, { env, getuid, spawnImpl }) {
     this.profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-visual-check-profile-'));
     this.stderr = '';
     const args = chromeVisualBrowserArgs(this.profileRoot, { env, getuid });
@@ -1535,7 +1545,28 @@ export class ChromeVisualBrowser {
         ].filter(Boolean).join('\n');
       },
     });
-    this.sessionPromise = this.attach();
+  }
+
+  async attachWithRetry(chromePath, options) {
+    try {
+      return await this.attach();
+    } catch (firstError) {
+      // A running Chrome can accept the first pipe write but never answer it.
+      // Replace only that silent startup, once, before any page is inspected.
+      // Protocol errors, partial responses and later command failures stay fatal.
+      const silentStartup = firstError.code === 'CHROME_CDP_TIMEOUT'
+        && this.cdp.receivedBytes === 0 && this.cdp.completedWrites === 1
+        && this.child.exitCode === null && this.child.signalCode === null;
+      if (this.closed || !silentStartup) throw firstError;
+      await this.stopProcess();
+      if (this.closed) throw firstError;
+      this.launch(chromePath, options);
+      try {
+        return await this.attach();
+      } catch (retryError) {
+        throw new Error(`Chrome startup failed after one retry.\nFirst attempt:\n${firstError.message}\nRetry:\n${retryError.message}`, { cause: retryError });
+      }
+    }
   }
 
   async attach() {
@@ -1613,9 +1644,19 @@ export class ChromeVisualBrowser {
       var legend = svg && svg.querySelector('[data-legend]');
       var navigationDock = diagram && diagram.querySelector('.diagram-nav');
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
-      var diagramWidth = svg ? svg.getBoundingClientRect().width : 0;
+      var diagramWidth = svg ? svg.clientWidth : 0;
       var viewBoxWidth = viewBox ? viewBox.width : 0;
-      var scale = viewBoxWidth > 0 ? Math.min(1, diagramWidth / viewBoxWidth) : 0;
+      var readerReceipt = window.Archify && Archify.readerLayout
+        && typeof Archify.readerLayout.receipt === 'function'
+        ? Archify.readerLayout.receipt()
+        : null;
+      var cameraState = window.Archify && Archify.view && typeof Archify.view.state === 'function'
+        ? Archify.view.state()
+        : null;
+      var scale = readerReceipt && Number.isFinite(readerReceipt.worldScaleFit)
+        ? readerReceipt.worldScaleFit
+        : (viewBoxWidth > 0 ? Math.min(1, diagramWidth / viewBoxWidth) : 0);
+      var cameraScale = cameraState && Number.isFinite(cameraState.scale) ? cameraState.scale : 1;
       var minimum = null;
       if (svg && scale > 0) {
         Array.from(svg.querySelectorAll('text[data-node-label], text[data-boundary-label], text[data-detail="context"], [data-edge-id] g[data-detail="context"] > text')).forEach(function (text) {
@@ -1625,12 +1666,18 @@ export class ChromeVisualBrowser {
           if (detail === 'context' && !text.closest('[data-node-id]')) return;
           var sourceFontPx = parseFloat(text.getAttribute('font-size') || '');
           if (!Number.isFinite(sourceFontPx)) return;
-          var projectedFontPx = sourceFontPx * scale;
+          var overviewProjectedFontPx = sourceFontPx * scale;
+          var screenMatrix = typeof text.getScreenCTM === 'function' ? text.getScreenCTM() : null;
+          var screenScale = screenMatrix ? Math.hypot(screenMatrix.a, screenMatrix.b) : 0;
+          var projectedFontPx = screenScale > 0
+            ? sourceFontPx * screenScale
+            : overviewProjectedFontPx * cameraScale;
           if (!minimum || projectedFontPx < minimum.projectedFontPx) {
             minimum = {
               text: (text.textContent || '').trim(),
               detail: detail,
               sourceFontPx: sourceFontPx,
+              overviewProjectedFontPx: overviewProjectedFontPx,
               projectedFontPx: projectedFontPx
             };
           }
@@ -1649,6 +1696,7 @@ export class ChromeVisualBrowser {
         : (stage ? stage.getBoundingClientRect() : null);
       var navigationDockRect = navigationDock ? navigationDock.getBoundingClientRect() : null;
       var stageDockIntersectionArea = intersectionArea(stageRect, navigationDockRect);
+      var fixedStageRect = diagram ? diagram.getBoundingClientRect() : null;
       var viewerChromeReceipt = window.Archify && Archify.viewerChromeLayout
         && typeof Archify.viewerChromeLayout.receipt === 'function'
         ? Archify.viewerChromeLayout.receipt()
@@ -1686,6 +1734,14 @@ export class ChromeVisualBrowser {
         diagramWidth: diagramWidth,
         viewBoxWidth: viewBoxWidth,
         workflowLanes: workflowLanes,
+        worldProfile: document.documentElement.getAttribute('data-world-profile') || 'small',
+        cameraScale: cameraScale,
+        stageWidth: fixedStageRect ? fixedStageRect.width : null,
+        stageHeight: fixedStageRect ? fixedStageRect.height : null,
+        expectedStageHeight: readerReceipt && Number.isFinite(readerReceipt.stageHeight)
+          ? readerReceipt.stageHeight
+          : null,
+        overviewProjectedNodeTextPx: minimum ? minimum.overviewProjectedFontPx : null,
         minimumProjectedNodeTextPx: minimum ? minimum.projectedFontPx : null,
         minimumProjectedNodeText: minimum ? minimum.text : null,
         minimumProjectedNodeTextDetail: minimum ? minimum.detail : null,
@@ -1719,25 +1775,449 @@ export class ChromeVisualBrowser {
     return metrics;
   }
 
+  async auditCanonicalWorld() {
+    const sessionId = await this.sessionPromise;
+    return evaluate(this.cdp, sessionId, `(async function () {
+      var container = document.querySelector('.diagram-container');
+      var svg = container && container.querySelector(':scope > svg');
+      if (!container || !svg || !window.Archify || !Archify.view) {
+        throw new Error('Canonical world audit requires the shared Archify viewer camera.');
+      }
+      function unique(values) {
+        return Array.from(new Set(values)).sort();
+      }
+      function firstDifference(left, right) {
+        if (left === right) return null;
+        var length = Math.min(left.length, right.length);
+        for (var index = 0; index < length; index += 1) {
+          if (left[index] !== right[index]) return index;
+        }
+        return length;
+      }
+      function finite(value) { return Number.isFinite(Number(value)); }
+      function canonicalFrame(root) {
+        var viewBox = root.viewBox && root.viewBox.baseVal;
+        return viewBox && [viewBox.x, viewBox.y, viewBox.width, viewBox.height].every(finite) &&
+          viewBox.width > 0 && viewBox.height > 0
+          ? { x: viewBox.x, y: viewBox.y, width: viewBox.width, height: viewBox.height }
+          : null;
+      }
+      function rootBox(element) {
+        var box;
+        var expandedByBrowser = false;
+        try {
+          box = element.getBBox({ fill: true, stroke: true, markers: true, clipped: false });
+          expandedByBrowser = true;
+        } catch (_) { try { box = element.getBBox(); } catch (_) { return null; } }
+        if (!box || ![box.x, box.y, box.width, box.height].every(finite)) return null;
+        var points = [
+          [box.x, box.y], [box.x + box.width, box.y],
+          [box.x + box.width, box.y + box.height], [box.x, box.y + box.height]
+        ];
+        try {
+          var matrix = element.getCTM();
+          var rootMatrix = svg.getCTM();
+          if (matrix && rootMatrix) {
+            var inverse = rootMatrix.inverse();
+            points = points.map(function (point) {
+              var svgPoint = svg.createSVGPoint();
+              svgPoint.x = point[0];
+              svgPoint.y = point[1];
+              var transformed = svgPoint.matrixTransform(matrix).matrixTransform(inverse);
+              return [transformed.x, transformed.y];
+            });
+          }
+        } catch (_) {}
+        var xs = points.map(function (point) { return point[0]; });
+        var ys = points.map(function (point) { return point[1]; });
+        var stroke = parseFloat(getComputedStyle(element).strokeWidth || element.getAttribute('stroke-width') || '0');
+        var expansion = !expandedByBrowser && Number.isFinite(stroke) ? stroke / 2 : 0;
+        return {
+          x: Math.min.apply(Math, xs) - expansion,
+          y: Math.min.apply(Math, ys) - expansion,
+          width: Math.max.apply(Math, xs) - Math.min.apply(Math, xs) + expansion * 2,
+          height: Math.max.apply(Math, ys) - Math.min.apply(Math, ys) + expansion * 2
+        };
+      }
+      function boxInsideFrame(box, frame) {
+        return Boolean(box && frame && [box.x, box.y, box.width, box.height].every(finite) &&
+          box.x >= frame.x - 0.5 && box.y >= frame.y - 0.5 &&
+          box.x + box.width <= frame.x + frame.width + 0.5 &&
+          box.y + box.height <= frame.y + frame.height + 0.5);
+      }
+      function nodeInventory(root, diagnostics) {
+        var records = new Map();
+        Array.from(root.querySelectorAll('[data-node-id], [data-node-kind]')).forEach(function (element) {
+          var id = (element.getAttribute('data-node-id') || '').trim();
+          if (!id) {
+            diagnostics.push({ code: 'viewer/semantic-id-invalid', subject: 'node', evidence: { reason: 'missing-node-id' } });
+            return;
+          }
+          if (records.has(id)) {
+            diagnostics.push({ code: 'viewer/semantic-id-invalid', subject: id, evidence: { reason: 'duplicate-node-id' } });
+            return;
+          }
+          records.set(id, { id: id, element: element, box: rootBox(element) });
+        });
+        return Array.from(records.values()).sort(function (left, right) { return left.id.localeCompare(right.id); });
+      }
+      function edgeInventory(root, nodes, diagnostics) {
+        var nodeSet = new Set(nodes.map(function (node) { return node.id; }));
+        var grouped = new Map();
+        Array.from(root.querySelectorAll('[data-edge-from], [data-edge-to], [data-edge-key]')).forEach(function (element) {
+          var key = (element.getAttribute('data-edge-key') || '').trim();
+          var from = (element.getAttribute('data-edge-from') || '').trim();
+          var to = (element.getAttribute('data-edge-to') || '').trim();
+          if (!key) {
+            diagnostics.push({ code: 'viewer/semantic-id-invalid', subject: from + '->' + to, evidence: { reason: 'missing-edge-key' } });
+            return;
+          }
+          if (!grouped.has(key)) grouped.set(key, []);
+          grouped.get(key).push({ element: element, from: from, to: to });
+        });
+        return Array.from(grouped.entries()).map(function (entry) {
+          var key = entry[0];
+          var fragments = entry[1];
+          var endpoints = unique(fragments.map(function (fragment) { return fragment.from + '\u0000' + fragment.to; }));
+          var from = fragments[0].from;
+          var to = fragments[0].to;
+          if (endpoints.length !== 1 || !from || !to || !nodeSet.has(from) || !nodeSet.has(to)) {
+            diagnostics.push({
+              code: 'viewer/semantic-endpoint-invalid', subject: key,
+              evidence: { endpoints: endpoints, from: from, to: to, knownFrom: nodeSet.has(from), knownTo: nodeSet.has(to) }
+            });
+          }
+          var drawableElements = [];
+          fragments.forEach(function (fragment) {
+            var element = fragment.element;
+            if (element.matches('path, line, polyline, polygon')) drawableElements.push(element);
+            Array.from(element.querySelectorAll('[data-composition-edge-from][data-composition-edge-to]')).forEach(function (candidate) {
+              if (candidate.matches('path, line, polyline, polygon')) drawableElements.push(candidate);
+            });
+          });
+          var drawable = Array.from(new Set(drawableElements));
+          if (drawable.length !== 1) {
+            diagnostics.push({
+              code: 'viewer/audit-inventory-mismatch', subject: key,
+              evidence: { reason: 'edge-drawable-count', expected: 1, actual: drawable.length }
+            });
+          }
+          var labelElements = [];
+          fragments.forEach(function (fragment) {
+            var element = fragment.element;
+            if (!(element.getAttribute('data-edge-label') || '').trim()) return;
+            if (element.hasAttribute('data-detail')) {
+              labelElements.push(element);
+            } else {
+              Array.from(element.querySelectorAll('[data-detail]')).filter(function (candidate) {
+                var owner = candidate.parentElement && candidate.parentElement.closest('[data-detail]');
+                return !owner || !element.contains(owner);
+              }).forEach(function (candidate) {
+                labelElements.push(candidate);
+              });
+            }
+          });
+          var labels = Array.from(new Set(labelElements));
+          var authoredLabel = fragments.some(function (fragment) {
+            return (fragment.element.getAttribute('data-edge-label') || '').trim();
+          });
+          if (authoredLabel && labels.length !== 1) {
+            diagnostics.push({
+              code: 'viewer/audit-inventory-mismatch', subject: key,
+              evidence: { reason: 'edge-label-count', expected: 1, actual: labels.length }
+            });
+          }
+          return {
+            key: key, id: fragments[0].element.getAttribute('data-edge-id') || '',
+            from: from, to: to,
+            path: drawable[0] || null,
+            label: labels[0] || null,
+            pathBox: drawable[0] ? rootBox(drawable[0]) : null,
+            labelBox: labels[0] ? rootBox(labels[0]) : null
+          };
+        }).sort(function (left, right) { return left.key.localeCompare(right.key); });
+      }
+      function nodeIds(root) {
+        return unique(Array.from(root.querySelectorAll('[data-node-id]')).map(function (element) {
+          return element.getAttribute('data-node-id');
+        }).filter(Boolean));
+      }
+      function edgeRecords(root) {
+        var records = new Map();
+        Array.from(root.querySelectorAll('[data-edge-key][data-edge-from][data-edge-to]')).forEach(function (element) {
+          var key = element.getAttribute('data-edge-key') || '';
+          if (!records.has(key)) records.set(key, {
+            id: element.getAttribute('data-edge-id') || '', key: key,
+            from: element.getAttribute('data-edge-from') || '', to: element.getAttribute('data-edge-to') || ''
+          });
+        });
+        return Array.from(records.values()).sort(function (left, right) { return left.key.localeCompare(right.key); });
+      }
+      function geometrySignature(root) {
+        return JSON.stringify(Array.from(root.querySelectorAll('[data-node-id], [data-edge-from][data-edge-to]')).map(function (element) {
+          return ['data-node-id', 'data-edge-id', 'data-edge-from', 'data-edge-to', 'd', 'points', 'x', 'y', 'width', 'height', 'transform']
+            .map(function (name) { return element.getAttribute(name); });
+        }));
+      }
+      function pointVisible(point) {
+        var viewport = Archify.view.logicalViewport();
+        return Boolean(viewport && point && finite(point.x) && finite(point.y) &&
+          point.x >= viewport.x - 0.5 && point.x <= viewport.x + viewport.width + 0.5 &&
+          point.y >= viewport.y - 0.5 && point.y <= viewport.y + viewport.height + 0.5);
+      }
+      function boxVisible(box) {
+        var viewport = Archify.view.logicalViewport();
+        return Boolean(viewport && box && box.x >= viewport.x - 0.5 && box.y >= viewport.y - 0.5 &&
+          box.x + box.width <= viewport.x + viewport.width + 0.5 &&
+          box.y + box.height <= viewport.y + viewport.height + 0.5);
+      }
+      function pathRepresentative(element) {
+        if (!element) return null;
+        try {
+          var length = element.getTotalLength();
+          var point = element.getPointAtLength(length / 2);
+          var matrix = element.getCTM();
+          var rootMatrix = svg.getCTM();
+          if (matrix && rootMatrix) point = point.matrixTransform(matrix).matrixTransform(rootMatrix.inverse());
+          return { x: point.x, y: point.y };
+        } catch (_) { return null; }
+      }
+      function stableSample(records, key, limit) {
+        if (records.length <= limit) return records.slice();
+        function score(value) {
+          var hash = 2166136261;
+          for (var index = 0; index < value.length; index += 1) {
+            hash ^= value.charCodeAt(index);
+            hash = Math.imul(hash, 16777619);
+          }
+          return hash >>> 0;
+        }
+        return records.slice().sort(function (left, right) {
+          return score('archify-large-world-v1\u0000' + key(left)) - score('archify-large-world-v1\u0000' + key(right));
+        }).slice(0, limit).sort(function (left, right) { return key(left).localeCompare(key(right)); });
+      }
+      async function reveal(ids) {
+        var receipt = Archify.view.reveal(ids, { instant: true, reason: 'visual-check' });
+        if (!receipt || !receipt.finished) return false;
+        var outcome = await receipt.finished;
+        return outcome && ['complete', 'hidden', 'reduced-motion'].indexOf(outcome.state) !== -1;
+      }
+      async function exportedSvg() {
+        if (!Archify.exportMenu || typeof Archify.exportMenu.run !== 'function') return null;
+        var blob = null;
+        var createObjectURL = URL.createObjectURL;
+        var revokeObjectURL = URL.revokeObjectURL;
+        var click = HTMLAnchorElement.prototype.click;
+        URL.createObjectURL = function (value) {
+          if (value && value.type && value.type.indexOf('image/svg+xml') === 0) blob = value;
+          return 'blob:null/archify-visual-check';
+        };
+        URL.revokeObjectURL = function () {};
+        HTMLAnchorElement.prototype.click = function () {};
+        try {
+          await Archify.exportMenu.run('svg');
+          return blob ? await blob.text() : null;
+        } finally {
+          URL.createObjectURL = createObjectURL;
+          URL.revokeObjectURL = revokeObjectURL;
+          HTMLAnchorElement.prototype.click = click;
+        }
+      }
+
+      Archify.view.reset({ automatic: true });
+      var initialState = JSON.stringify(Archify.view.state());
+      var initialViewBox = svg.getAttribute('viewBox');
+      var initialGeometry = geometrySignature(svg);
+      var diagnostics = [];
+      var frame = canonicalFrame(svg);
+      if (!frame) diagnostics.push({ code: 'viewer/canonical-bounds-invalid', subject: 'svg', evidence: { viewBox: svg.getAttribute('viewBox') } });
+      var sourceNodes = nodeInventory(svg, diagnostics);
+      var sourceNodeIds = sourceNodes.map(function (node) { return node.id; });
+      var sourceEdges = edgeInventory(svg, sourceNodes, diagnostics);
+      sourceNodes.forEach(function (node) {
+        if (!boxInsideFrame(node.box, frame)) diagnostics.push({
+          code: 'viewer/canonical-bounds-invalid', subject: node.id,
+          evidence: { kind: 'node', box: node.box, canonicalFrame: frame }
+        });
+      });
+      sourceEdges.forEach(function (edge) {
+        if (!boxInsideFrame(edge.pathBox, frame) || (edge.label && !boxInsideFrame(edge.labelBox, frame))) diagnostics.push({
+          code: 'viewer/canonical-bounds-invalid', subject: edge.key,
+          evidence: { kind: 'edge', pathBox: edge.pathBox, labelBox: edge.labelBox, canonicalFrame: frame }
+        });
+      });
+      Array.from(svg.querySelectorAll('[data-legend], .brand-mark')).forEach(function (element, index) {
+        var box = rootBox(element);
+        if (!boxInsideFrame(box, frame)) diagnostics.push({
+          code: 'viewer/canonical-bounds-invalid', subject: element.hasAttribute('data-legend') ? 'legend' : 'brand-' + index,
+          evidence: { kind: element.hasAttribute('data-legend') ? 'legend' : 'brand', box: box, canonicalFrame: frame }
+        });
+      });
+      var beforeExport = await exportedSvg();
+      var exhaustive = sourceNodes.length <= 50 && sourceEdges.length <= 50;
+      var nodeSamples = exhaustive ? sourceNodes : stableSample(sourceNodes, function (node) { return node.id; }, 12);
+      var edgeSamples = exhaustive ? sourceEdges : stableSample(sourceEdges, function (edge) { return edge.key; }, 12);
+      var missingNodeIds = [];
+      for (var nodeIndex = 0; nodeIndex < nodeSamples.length; nodeIndex += 1) {
+        var node = nodeSamples[nodeIndex];
+        if (!await reveal([node.id]) || !boxVisible(node.box)) missingNodeIds.push(node.id);
+      }
+      var missingEdgeIds = [];
+      for (var edgeIndex = 0; edgeIndex < edgeSamples.length; edgeIndex += 1) {
+        var edge = edgeSamples[edgeIndex];
+        var pathPoint = pathRepresentative(edge.path);
+        var labelPoint = edge.labelBox ? {
+          x: edge.labelBox.x + edge.labelBox.width / 2,
+          y: edge.labelBox.y + edge.labelBox.height / 2
+        } : null;
+        var target = labelPoint && pathPoint
+          ? { x: (labelPoint.x + pathPoint.x) / 2, y: (labelPoint.y + pathPoint.y) / 2 }
+          : pathPoint;
+        var navigated = target && Archify.view.centerAt(target.x, target.y, { scale: 2, minimumScale: 1, instant: true });
+        if (!navigated || !pointVisible(pathPoint) || (labelPoint && !pointVisible(labelPoint))) missingEdgeIds.push(edge.key);
+      }
+      var guidedViewIds = unique(Array.from(document.querySelectorAll('[data-guided-view-id]')).map(function (button) {
+        return button.getAttribute('data-guided-view-id');
+      }).filter(Boolean));
+      var missingGuidedViewIds = [];
+      for (var guidedIndex = 0; guidedIndex < guidedViewIds.length; guidedIndex += 1) {
+        var guidedId = guidedViewIds[guidedIndex];
+        var activated = Archify.guidedViews && Archify.guidedViews.activate(guidedId, { updateUrl: false });
+        if (Archify.guidedViews && Archify.guidedViews.handoff && Archify.guidedViews.handoff() &&
+            typeof Archify.guidedViews.settleHandoff === 'function') {
+          Archify.guidedViews.settleHandoff('visual-check');
+        }
+        var guidedCamera = Archify.view.sync();
+        if (guidedCamera && guidedCamera.finished) await guidedCamera.finished;
+        await new Promise(function (resolve) { requestAnimationFrame(function () { requestAnimationFrame(resolve); }); });
+        var guidedFocus = Archify.guidedViews && Archify.guidedViews.focus ? Archify.guidedViews.focus() : [];
+        var guidedRecords = guidedFocus.map(function (id) {
+          return sourceNodes.find(function (node) { return node.id === id; });
+        }).filter(Boolean);
+        var guidedCenter = guidedRecords.length === guidedFocus.length && guidedRecords.length ? {
+          x: (Math.min.apply(Math, guidedRecords.map(function (node) { return node.box.x; })) +
+            Math.max.apply(Math, guidedRecords.map(function (node) { return node.box.x + node.box.width; }))) / 2,
+          y: (Math.min.apply(Math, guidedRecords.map(function (node) { return node.box.y; })) +
+            Math.max.apply(Math, guidedRecords.map(function (node) { return node.box.y + node.box.height; }))) / 2
+        } : null;
+        var guidedVisible = guidedCenter && pointVisible(guidedCenter);
+        if (!activated || !guidedVisible) missingGuidedViewIds.push(guidedId);
+      }
+      if (Archify.guidedViews && Archify.guidedViews.showAll) Archify.guidedViews.showAll({ updateUrl: false });
+      var worldPoints = frame ? [
+        { id: 'top-left', x: frame.x, y: frame.y },
+        { id: 'top-right', x: frame.x + frame.width, y: frame.y },
+        { id: 'bottom-right', x: frame.x + frame.width, y: frame.y + frame.height },
+        { id: 'bottom-left', x: frame.x, y: frame.y + frame.height },
+        { id: 'center', x: frame.x + frame.width / 2, y: frame.y + frame.height / 2 }
+      ] : [];
+      var missingWorldPoints = worldPoints.filter(function (point) {
+        return !Archify.view.centerAt(point.x, point.y, { scale: 2, minimumScale: 1, instant: true }) || !pointVisible(point);
+      }).map(function (point) { return point.id; });
+      if (missingNodeIds.length || missingEdgeIds.length || missingGuidedViewIds.length || missingWorldPoints.length) {
+        diagnostics.push({
+          code: 'viewer/camera-target-unreachable', subject: 'navigation-sample',
+          evidence: {
+            missingNodeIds: missingNodeIds, missingEdgeIds: missingEdgeIds,
+            missingGuidedViewIds: missingGuidedViewIds, missingWorldPoints: missingWorldPoints
+          }
+        });
+      }
+      Archify.view.reset({ automatic: true });
+      var afterExport = await exportedSvg();
+      var exportedRoot = afterExport
+        ? new DOMParser().parseFromString(afterExport, 'image/svg+xml').documentElement
+        : null;
+      var exportedNodeIds = exportedRoot ? nodeIds(exportedRoot) : [];
+      var exportedEdges = exportedRoot ? edgeRecords(exportedRoot) : [];
+      var stateRestored = JSON.stringify(Archify.view.state()) === initialState;
+      var viewBoxUnchanged = svg.getAttribute('viewBox') === initialViewBox;
+      var geometryUnchanged = geometrySignature(svg) === initialGeometry;
+      var worldOk = diagnostics.length === 0 && missingNodeIds.length === 0 && missingEdgeIds.length === 0 &&
+        missingGuidedViewIds.length === 0 && missingWorldPoints.length === 0 &&
+        stateRestored && viewBoxUnchanged && geometryUnchanged;
+      var exportOk = Boolean(exportedRoot) && beforeExport === afterExport &&
+        JSON.stringify(exportedNodeIds) === JSON.stringify(sourceNodeIds) &&
+        JSON.stringify(exportedEdges.map(function (edge) { return edge.key; })) ===
+          JSON.stringify(sourceEdges.map(function (edge) { return edge.key; })) &&
+        exportedRoot.getAttribute('viewBox') === initialViewBox &&
+        !exportedRoot.hasAttribute('data-view-scale') &&
+        !exportedRoot.style.transform && !exportedRoot.style.clipPath;
+      var exportDifference = beforeExport && afterExport ? firstDifference(beforeExport, afterExport) : null;
+      return {
+        worldReachability: {
+          status: worldOk ? 'pass' : 'fail',
+          auditMode: exhaustive ? 'exhaustive-navigation' : 'static-proof-with-deterministic-navigation-sample',
+          sampleSeed: 'archify-large-world-v1',
+          nodeCount: sourceNodeIds.length,
+          staticallyProvedNodeCount: sourceNodes.filter(function (node) { return boxInsideFrame(node.box, frame); }).length,
+          navigatedNodeCount: nodeSamples.length,
+          reachedNodeCount: nodeSamples.length - missingNodeIds.length,
+          edgeCount: sourceEdges.length,
+          staticallyProvedEdgeCount: sourceEdges.filter(function (edge) {
+            return boxInsideFrame(edge.pathBox, frame) && (!edge.label || boxInsideFrame(edge.labelBox, frame));
+          }).length,
+          navigatedEdgeCount: edgeSamples.length,
+          reachedEdgeCount: edgeSamples.length - missingEdgeIds.length,
+          guidedViewCount: guidedViewIds.length,
+          reachedGuidedViewCount: guidedViewIds.length - missingGuidedViewIds.length,
+          worldPointCount: worldPoints.length,
+          reachedWorldPointCount: worldPoints.length - missingWorldPoints.length,
+          missingNodeIds: missingNodeIds,
+          missingEdgeIds: missingEdgeIds,
+          missingGuidedViewIds: missingGuidedViewIds,
+          missingWorldPoints: missingWorldPoints,
+          cameraStateRestored: stateRestored,
+          canonicalViewBoxUnchanged: viewBoxUnchanged,
+          canonicalGeometryUnchanged: geometryUnchanged
+        },
+        diagnostics: diagnostics,
+        exportCompleteness: {
+          status: exportOk ? 'pass' : 'fail',
+          format: 'svg',
+          sourceNodeCount: sourceNodeIds.length,
+          exportedNodeCount: exportedNodeIds.length,
+          sourceEdgeCount: sourceEdges.length,
+          exportedEdgeCount: exportedEdges.length,
+          canonicalViewBoxUnchanged: Boolean(exportedRoot) && exportedRoot.getAttribute('viewBox') === initialViewBox,
+          canonicalBytesStableAfterCamera: beforeExport === afterExport,
+          canonicalBytesBefore: beforeExport ? beforeExport.length : null,
+          canonicalBytesAfter: afterExport ? afterExport.length : null,
+          canonicalFirstDifference: exportDifference,
+          cameraStateClean: Boolean(exportedRoot) && !exportedRoot.hasAttribute('data-view-scale') &&
+            !exportedRoot.style.transform && !exportedRoot.style.clipPath
+        }
+      };
+    })()`, true);
+  }
+
   async close() {
+    this.closed = true;
+    await this.stopProcess();
+  }
+
+  async stopProcess() {
     this.cdp.failAll(new Error('visual-check finished'));
     if (this.child.exitCode === null && this.child.signalCode === null) {
-      this.child.kill('SIGTERM');
-      await new Promise((resolve) => {
-        const timer = setTimeout(() => {
-          if (this.child.exitCode === null && this.child.signalCode === null) this.child.kill('SIGKILL');
-          resolve();
+      await new Promise((resolve, reject) => {
+        let timer = setTimeout(() => {
+          this.child.kill('SIGKILL');
+          timer = setTimeout(() => reject(new Error('Chrome did not exit after SIGKILL.')), 1500);
         }, 1500);
         this.child.once('exit', () => {
           clearTimeout(timer);
           resolve();
         });
+        this.child.kill('SIGTERM');
       });
     }
+    // Descendants (notably recording workers) can retain inherited handles
+    // after the browser exits. Retire our endpoints before replacing Chrome.
+    for (const stream of this.child.stdio) stream?.destroy();
     try {
-      fs.rmSync(this.profileRoot, { recursive: true, force: true });
+      fs.rmSync(this.profileRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     } catch {
-      // Chrome may briefly retain profile files on Windows; evidence is done.
+      // Persistent profile cleanup failure must not mask the inspection error.
     }
   }
 }
@@ -1749,11 +2229,19 @@ function observation({ width, height, theme, metrics }) {
   const scrollHeight = Number(metrics.scrollHeight);
   const overflowX = scrollWidth > innerWidth;
   const overflowY = scrollHeight > innerHeight;
-  const minimumProjectedNodeTextPx = metrics.minimumProjectedNodeTextPx == null
+  const screenMeasuredProjectedNodeTextPx = metrics.minimumProjectedNodeTextPx == null
     ? null
     : Number(metrics.minimumProjectedNodeTextPx);
+  const minimumProjectedNodeTextPx = screenMeasuredProjectedNodeTextPx != null
+    && Math.abs(screenMeasuredProjectedNodeTextPx - MIN_PROJECTED_NODE_TEXT_PX) <= SCREEN_MEASUREMENT_EPSILON_PX
+    ? MIN_PROJECTED_NODE_TEXT_PX
+    : screenMeasuredProjectedNodeTextPx;
+  const overviewProjectedNodeTextPx = metrics.overviewProjectedNodeTextPx == null
+    ? minimumProjectedNodeTextPx
+    : Number(metrics.overviewProjectedNodeTextPx);
+  const worldProfile = metrics.worldProfile === 'large' ? 'large' : 'small';
   const readabilityOk = minimumProjectedNodeTextPx == null
-    || minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX;
+    || minimumProjectedNodeTextPx + SCREEN_MEASUREMENT_EPSILON_PX >= MIN_PROJECTED_NODE_TEXT_PX;
   const legendDockIntersectionArea = Number(metrics.legendDockIntersectionArea) || 0;
   const dockStageIntersectionArea = Number(metrics.dockStageIntersectionArea) || 0;
   const dockStageGap = metrics.dockStageGap == null ? null : Number(metrics.dockStageGap);
@@ -1782,7 +2270,16 @@ function observation({ width, height, theme, metrics }) {
     diagramWidth: Number(metrics.diagramWidth) || null,
     viewBoxWidth: Number(metrics.viewBoxWidth) || null,
     ...(metrics.workflowLanes?.length ? { workflowLanes: metrics.workflowLanes } : {}),
+    worldProfile,
+    cameraScale: Number(metrics.cameraScale) || 1,
+    stageWidth: metrics.stageWidth == null ? null : Number(metrics.stageWidth),
+    stageHeight: metrics.stageHeight == null ? null : Number(metrics.stageHeight),
+    expectedStageHeight: metrics.expectedStageHeight == null ? null : Number(metrics.expectedStageHeight),
+    overviewProjectedNodeTextPx,
+    overviewReadabilityOk: overviewProjectedNodeTextPx == null
+      || overviewProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX,
     minimumProjectedNodeTextPx,
+    screenMeasuredProjectedNodeTextPx,
     minimumProjectedNodeText: metrics.minimumProjectedNodeText || null,
     minimumProjectedNodeTextDetail: metrics.minimumProjectedNodeTextDetail || null,
     minimumRequiredNodeTextPx: MIN_PROJECTED_NODE_TEXT_PX,
@@ -1932,12 +2429,17 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
   for (const entry of readabilityObservations) {
     if (entry.readabilityOk) continue;
     diagnostics.push(failureDiagnostic({
-      code: 'viewer/projected-text-readability',
-      message: `Projected ${entry.minimumProjectedNodeTextDetail || 'node'} text is below the readability floor at ${entry.width}x${entry.height}.`,
+      code: entry.worldProfile === 'large'
+        ? 'viewer/entry-text-unreadable'
+        : 'viewer/projected-text-readability',
+      message: `${entry.worldProfile === 'large' ? 'Entry' : 'Projected'} ${entry.minimumProjectedNodeTextDetail || 'node'} text is below the readability floor at ${entry.width}x${entry.height}.`,
       subject: viewportSubject(artifact, entry),
       evidence: {
         text: entry.minimumProjectedNodeText,
         detail: entry.minimumProjectedNodeTextDetail,
+        worldProfile: entry.worldProfile,
+        overviewProjectedNodeTextPx: entry.overviewProjectedNodeTextPx,
+        cameraScale: entry.cameraScale,
         minimumProjectedNodeTextPx: entry.minimumProjectedNodeTextPx,
         minimumRequiredNodeTextPx: entry.minimumRequiredNodeTextPx,
       },
@@ -1951,7 +2453,7 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
 
 function baseReceipt({ artifactPath, artifact, sidecars, chrome, deliveryProvenance }) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
     ok: false,
     command: 'visual-check',
     evidenceKind: 'automated-browser',
@@ -1972,6 +2474,8 @@ function baseReceipt({ artifactPath, artifact, sidecars, chrome, deliveryProvena
     containment: { status: 'fail', viewports: [] },
     readability: { status: 'fail', minimumProjectedNodeTextPx: MIN_PROJECTED_NODE_TEXT_PX, viewports: [] },
     viewerChrome: { status: 'fail', viewports: [] },
+    worldReachability: { status: 'fail' },
+    exportCompleteness: { status: 'fail' },
     captures: { status: 'fail', screenshots: [], contactSheet: null },
     sidecars: { ...sidecars, files: [] },
   };
@@ -2205,6 +2709,8 @@ export async function runVisualCheck({
     receipt.containment.status = 'skipped';
     receipt.readability.status = 'skipped';
     receipt.viewerChrome.status = 'skipped';
+    receipt.worldReachability.status = 'skipped';
+    receipt.exportCompleteness.status = 'skipped';
     receipt.captures.status = 'skipped';
     receipt.error = 'Chrome or Chromium is unavailable. Set ARCHIFY_CHROME to its executable path.';
     receipt.diagnostics = [failureDiagnostic({
@@ -2230,6 +2736,7 @@ export async function runVisualCheck({
   try {
     browser = await browserFactory(resolvedChrome);
     const observations = new Map();
+    let canonicalAudit = null;
     const screenshotsByKey = new Map(outputs.screenshots.map((entry, index) => [
       screenshotKey(entry.width, entry.height, entry.theme),
       { ...entry, stagedPath: ownership.stagedOutputs.screenshots[index].path },
@@ -2259,24 +2766,34 @@ export async function runVisualCheck({
         }
       }
       observations.set(key, observation({ ...viewport, theme: 'light', metrics }));
+      if (!canonicalAudit) {
+        if (typeof browser.auditCanonicalWorld !== 'function') {
+          throw new Error('The visual browser does not implement canonical world auditing.');
+        }
+        canonicalAudit = await browser.auditCanonicalWorld();
+      }
     }
-    for (const viewport of CAPTURE_VIEWPORTS) {
+    for (const viewport of VISUAL_CHECK_VIEWPORTS) {
       const key = screenshotKey(viewport.width, viewport.height, 'dark');
       const screenshot = screenshotsByKey.get(key);
       const metrics = await browser.inspect({
         artifactPath: inspectionArtifact,
         ...viewport,
         theme: 'dark',
-        screenshotPath: screenshot.stagedPath,
-        writeScreenshot: (bytes) => writeStagedEvidence(ownership, screenshot.path, bytes),
+        ...(screenshot ? {
+          screenshotPath: screenshot.stagedPath,
+          writeScreenshot: (bytes) => writeStagedEvidence(ownership, screenshot.path, bytes),
+        } : {}),
       });
       verifyInspectionArtifact();
-      if (!ownership.stagedEntries.has(screenshot.path)) {
-        registerStagedEvidence(ownership, screenshot.path);
-      } else {
-        const staged = ownership.stagedEntries.get(screenshot.path);
-        if (!currentEvidenceMatches(staged.path, staged.identity, staged.evidence)) {
-          throw new Error('The staged visual-check screenshot changed after capture.');
+      if (screenshot) {
+        if (!ownership.stagedEntries.has(screenshot.path)) {
+          registerStagedEvidence(ownership, screenshot.path);
+        } else {
+          const staged = ownership.stagedEntries.get(screenshot.path);
+          if (!currentEvidenceMatches(staged.path, staged.identity, staged.evidence)) {
+            throw new Error('The staged visual-check screenshot changed after capture.');
+          }
         }
       }
       observations.set(key, observation({ ...viewport, theme: 'dark', metrics }));
@@ -2292,11 +2809,13 @@ export async function runVisualCheck({
       throw regularFileCaptureError('The delivered artifact changed while visual-check was running', artifactVerification);
     }
 
-    receipt.containment.viewports = VISUAL_CHECK_VIEWPORTS.map(({ width, height }) => (
-      observations.get(screenshotKey(width, height, 'light'))
-    ));
+    receipt.containment.viewports = THEMES.flatMap((theme) => VISUAL_CHECK_VIEWPORTS.map(({ width, height }) => (
+      observations.get(screenshotKey(width, height, theme))
+    )));
     receipt.readability.viewports = receipt.containment.viewports.map((entry) => ({ ...entry }));
     receipt.viewerChrome.viewports = receipt.containment.viewports.map((entry) => ({ ...entry }));
+    receipt.worldReachability = canonicalAudit.worldReachability;
+    receipt.exportCompleteness = canonicalAudit.exportCompleteness;
     receipt.captures.screenshots = outputs.screenshots.map((entry) => ({
       ...observations.get(screenshotKey(entry.width, entry.height, entry.theme)),
       file: path.basename(entry.path),
@@ -2305,18 +2824,58 @@ export async function runVisualCheck({
     const containmentPass = allObservations.every((entry) => entry.ok);
     const readabilityPass = receipt.readability.viewports.every((entry) => entry.readabilityOk);
     const viewerChromePass = allObservations.every((entry) => entry.viewerChromeOk);
+    const worldReachabilityPass = receipt.worldReachability.status === 'pass';
+    const exportCompletenessPass = receipt.exportCompleteness.status === 'pass';
     receipt.diagnostics = observationDiagnostics({
       artifact,
       allObservations,
       readabilityObservations: receipt.readability.viewports,
     });
+    for (const diagnostic of canonicalAudit.diagnostics || []) {
+      receipt.diagnostics.push(failureDiagnostic({
+        code: diagnostic.code || 'viewer/world-audit-incomplete',
+        message: diagnostic.code === 'viewer/semantic-id-invalid'
+          ? 'The canonical semantic inventory contains a missing or duplicate identifier.'
+          : diagnostic.code === 'viewer/semantic-endpoint-invalid'
+            ? 'A canonical relationship references an invalid or inconsistent endpoint.'
+            : diagnostic.code === 'viewer/audit-inventory-mismatch'
+              ? 'The canonical DOM and world-audit inventory do not agree.'
+              : diagnostic.code === 'viewer/canonical-bounds-invalid'
+                ? 'Canonical drawable paint extends outside the finite world or has invalid bounds.'
+                : 'A required canonical world navigation target could not be reached.',
+        subject: { artifact, auditSubject: diagnostic.subject },
+        evidence: diagnostic.evidence || {},
+        supportedFixes: [
+          'repair the canonical semantic inventory, drawable bounds, or camera target, then rerun visual-check',
+        ],
+      }));
+    }
     receipt.containment.status = containmentPass ? 'pass' : 'fail';
     receipt.readability.status = readabilityPass ? 'pass' : 'fail';
     receipt.viewerChrome.status = viewerChromePass ? 'pass' : 'fail';
     receipt.captures.status = 'pass';
     receipt.captures.contactSheet = path.basename(outputs.contactSheet);
-    receipt.status = containmentPass && readabilityPass && viewerChromePass ? 'pass' : 'fail';
-    receipt.ok = containmentPass && readabilityPass && viewerChromePass;
+    if (!worldReachabilityPass) {
+      receipt.diagnostics.push(failureDiagnostic({
+        code: 'viewer/world-audit-incomplete',
+        message: 'The canonical-world audit did not prove every required semantic, paint, and navigation invariant.',
+        subject: { artifact },
+        evidence: receipt.worldReachability,
+        supportedFixes: ['repair camera focus coverage or canonical bounds, then rerun visual-check'],
+      }));
+    }
+    if (!exportCompletenessPass) {
+      receipt.diagnostics.push(failureDiagnostic({
+        code: 'viewer/export-incomplete',
+        message: 'The full canonical SVG export changed or omitted semantic entities after camera navigation.',
+        subject: { artifact },
+        evidence: receipt.exportCompleteness,
+        supportedFixes: ['restore camera-independent full-frame export, then rerun visual-check'],
+      }));
+    }
+    receipt.status = containmentPass && readabilityPass && viewerChromePass
+      && worldReachabilityPass && exportCompletenessPass ? 'pass' : 'fail';
+    receipt.ok = receipt.status === 'pass';
     writeStagedEvidence(ownership, outputs.contactSheet, contactSheetHtml({
       artifactPath: artifact,
       receipt,
@@ -2347,6 +2906,8 @@ export async function runVisualCheck({
     receipt.containment.status = 'fail';
     receipt.readability.status = 'fail';
     receipt.viewerChrome.status = 'fail';
+    receipt.worldReachability.status = 'fail';
+    receipt.exportCompleteness.status = 'fail';
     receipt.captures.status = 'fail';
     receipt.captures.screenshots = [];
     receipt.captures.contactSheet = null;

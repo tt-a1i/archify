@@ -859,6 +859,20 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       padding-bottom: calc(1.5rem + var(--archify-nav-reserve));
       overflow: hidden;
       position: relative;
+      box-sizing: border-box;
+    }
+
+    html[data-world-profile="large"]:not([data-embed="true"]):not([data-present="true"]) .diagram-container {
+      height: var(--archify-stage-height);
+    }
+    html[data-world-profile="large"]:not([data-embed="true"]):not([data-present="true"]) .container,
+    html[data-world-measuring="true"]:not([data-embed="true"]):not([data-present="true"]) .container {
+      max-width: 1440px;
+    }
+    html[data-world-profile="large"]:not([data-embed="true"]):not([data-present="true"]) .diagram-container > svg {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
     }
 
     html[data-preset="signal-flow"] .diagram-container {
@@ -5124,7 +5138,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
     <script id="archify-guided-views-data" type="application/json">[{"id":"request-path","label":"Primary request path","focus":["users","cdn","lb","api","db"],"note":"Follow the primary customer request from the edge to durable state."},{"id":"identity-and-cache","label":"Identity and cache","focus":["auth","api","cache"],"note":"Isolate authentication and the read-through cache beside the request path."},{"id":"async-work","label":"Static and async work","focus":["cdn","s3","api","queue","worker"],"note":"See the two secondary paths without adding noise to the main request."}]</script>
 
-    <script id="archify-i18n-data" type="application/json">{"locale":"en","messages":{"viewer.kind.frontend":"Frontend","viewer.kind.backend":"Backend","viewer.kind.database":"Database","viewer.kind.cloud":"Cloud","viewer.kind.security":"Security","viewer.kind.messagebus":"Message bus","viewer.kind.external":"External","viewer.kind.neutral":"Neutral","viewer.kind.node":"Node","viewer.kind.start":"Start","viewer.kind.active":"Active","viewer.kind.waiting":"Waiting","viewer.kind.decision":"Decision","viewer.kind.success":"Success","viewer.kind.failure":"Failure","viewer.toolbar.actions":"Diagram actions","viewer.theme.toggle.title":"Toggle theme (T)","viewer.theme.toggle":"Toggle color theme","viewer.theme.dark":"Dark","viewer.theme.light":"Light","viewer.preset.choose.title":"Choose visual style (S cycles)","viewer.preset.choose":"Choose visual style","viewer.preset.style":"Style","viewer.preset.menu":"Visual style","viewer.preset.identity":"Visual identity","viewer.preset.cycles":"S cycles","viewer.preset.classic":"Classic","viewer.preset.classic.short":"Classic","viewer.preset.classic.hint":"Stable technical default","viewer.preset.flow":"Signal Flow","viewer.preset.flow.short":"Flow","viewer.preset.flow.hint":"Motion-forward presentation","viewer.preset.blueprint":"Blueprint","viewer.preset.blueprint.hint":"Engineering review","viewer.preset.editorial":"Editorial","viewer.preset.editorial.hint":"Publication and launch notes","viewer.preset.badge.signalFlow":"SIGNAL FLOW","viewer.preset.badge.blueprint":"BLUEPRINT / REV 01","viewer.preset.badge.editorial":"EDITORIAL / FIELD NOTE","viewer.preset.badge.editorialPlate":"ARCHIFY / PLATE 04","viewer.preset.current":"Visual style: {style}. Choose visual style","viewer.motion.live":"Live","viewer.motion.still":"Still","viewer.motion.pause":"Pause motion","viewer.motion.resume":"Resume motion","viewer.motion.reduced":"Motion paused by reduced-motion preference","viewer.motion.hidden":"Motion paused while this page is hidden","viewer.motion.yielding":"Pause motion; currently yielding to {owner}","viewer.motion.yielding.title":"Live preview enabled · yielding to {owner}","viewer.owner.story":"the guided story","viewer.owner.chapter":"the active chapter","viewer.owner.chapterPreview":"the chapter delta preview","viewer.owner.handoff":"the chapter handoff","viewer.owner.route":"Route Probe","viewer.owner.lens":"Semantic Lens","viewer.owner.relationship":"Relationship Preview","viewer.owner.intent":"Intent Trace","viewer.owner.focus":"semantic focus","viewer.owner.legend":"legend preview","viewer.owner.reader":"reader interaction","viewer.present.enter":"Enter presentation stage","viewer.present.enter.title":"Presentation stage (F)","viewer.present.exit":"Exit presentation stage","viewer.present.exit.title":"Exit presentation stage (F or Escape)","viewer.present.present":"Present","viewer.present.exit.label":"Exit","viewer.export.button":"Export","viewer.export.button.title":"Export diagram (E)","viewer.export.diagram":"Export diagram","viewer.export.menu":"Export","viewer.export.subtitle":"Portable, clean outputs","viewer.export.share":"Share","viewer.export.shareCard":"Share Card","viewer.export.routeShareCard":"Route Share Card","viewer.export.reachShareCard":"Reach Share Card","viewer.export.copyShareCard":"Copy Share Card","viewer.export.copyDiagram":"Copy diagram","viewer.export.clipboardPng":"PNG to clipboard","viewer.export.raster":"Raster images","viewer.export.image":"Image","viewer.export.lossless":"Lossless image","viewer.export.compact":"Compact image","viewer.export.modern":"Modern image","viewer.export.vectorMotion":"Vector and motion","viewer.export.vectorMotion.heading":"Vector \u0026 motion","viewer.export.editable":"Editable vector","viewer.export.motion6s":"6s motion","viewer.export.unsupported":"Not supported by this browser","viewer.export.clipboardUnsupported":"Clipboard image write not supported by this browser","viewer.export.clipboardUnsupported.period":"Clipboard image write not supported by this browser.","viewer.export.clipboardUnsupported.short":"Clipboard image write not supported in this browser.","viewer.export.motionUnavailable":"Motion capture unavailable in this browser","viewer.export.webmUnavailable":"WebM unavailable in this browser","viewer.export.failed":"Export failed: {message}","viewer.export.unknownVariant":"Unknown Share Card variant: {variant}","viewer.export.routeRequired":"Trace a route before exporting a Route Share Card","viewer.export.reachRequired":"Trace authored reach before exporting a Reach Share Card","viewer.export.unknown":"unknown","viewer.export.routeFailed":"Route Share Card export failed: {message}","viewer.export.reachFailed":"Reach Share Card export failed: {message}","viewer.export.copyFailed":"Copy failed: {message}","viewer.export.copiedPng":"Copied PNG to clipboard","viewer.export.copiedShare":"Copied Share Card","viewer.export.downloadedShare":"Downloaded Share Card","viewer.export.downloadedRoute":"Downloaded Route Share Card","viewer.export.downloadedReach":"Downloaded Reach Share Card","viewer.export.downloadedWebm":"Downloaded WebM","viewer.export.recording":"Recording 6 seconds of motion…","viewer.export.card.routeSummary.one":"Route: {source} → {target} · {count} directed hop","viewer.export.card.routeSummary.other":"Route: {source} → {target} · {count} directed hops","viewer.export.card.reachSummary":"Authored {direction} from {origin} · {nodes} · {links} · max {hops}","viewer.export.card.node.one":"{count} node","viewer.export.card.node.other":"{count} nodes","viewer.export.card.link.one":"{count} link","viewer.export.card.link.other":"{count} links","viewer.export.card.hop.one":"{count} hop","viewer.export.card.hop.other":"{count} hops","viewer.export.card.routeBadge":"ARCHIFY · ROUTE · {hops}","viewer.export.card.reachBadge":"ARCHIFY · {direction} REACH","viewer.export.card.defaultBadge":"ARCHIFY · {preset} · {theme}","viewer.export.direction.upstream":"Upstream","viewer.export.direction.downstream":"Downstream","viewer.export.error.canvasUnavailable":"Canvas unavailable for {label}","viewer.export.error.contextUnavailable":"2D canvas context unavailable for {label}","viewer.export.error.toBlobUnavailable":"canvas.toBlob unavailable for {label}","viewer.export.error.toBlobNull":"canvas.toBlob returned no data for {label}","viewer.export.error.variantsCombined":"Share Card variants cannot be combined","viewer.export.error.viewerState":"Share Card export could not remove temporary viewer state","viewer.export.error.routeState":"Route Card export could not preserve the resolved route safely","viewer.export.error.reachState":"Reach Card export could not preserve authored reach safely","viewer.export.error.webmRequirements":"WebM motion export requires a trace animation and browser MediaRecorder support","viewer.export.error.mediaRecorder":"MediaRecorder failed","viewer.export.error.emptyWebm":"MediaRecorder produced an empty WebM","viewer.export.error.webmBackground":"SVG background could not be loaded for WebM export","viewer.guided.region":"Guided diagram views","viewer.guided.previous":"Previous guided view","viewer.guided.previous.title":"Previous guided view ([)","viewer.guided.next":"Next guided view","viewer.guided.next.title":"Next guided view (])","viewer.guided.views":"Guided views","viewer.guided.explore":"Explore this system","viewer.guided.intro":"Step through curated paths without changing the source diagram.","viewer.guided.trail":"Story trail","viewer.guided.beat":"Beat","viewer.guided.nextBeat":"Next","viewer.guided.play":"Play guided story","viewer.guided.play.title":"Play guided story (P)","viewer.guided.pause":"Pause guided story","viewer.guided.pause.title":"Pause guided story (P)","viewer.guided.replay":"Replay guided story","viewer.guided.replay.title":"Replay guided story (P)","viewer.guided.playStory":"Play story","viewer.guided.pauseStory":"Pause","viewer.guided.replayStory":"Replay story","viewer.guided.motionUnavailable":"Story playback unavailable while motion is Still","viewer.guided.enableMotion":"Switch motion to Live to play the guided story","viewer.guided.selectBeatLink":"Select a Story Beat to copy its exact link","viewer.guided.copyMoment":"Copy moment","viewer.guided.momentCopied":"Moment link copied","viewer.guided.momentCopyFailed":"Could not copy story moment link","viewer.guided.copied":"Copied","viewer.guided.copyFailed":"Copy failed","viewer.guided.showAll":"Show all","viewer.guided.showAll.aria":"Show entire diagram","viewer.guided.chapters":"Story chapters","viewer.guided.storyTrail":"Story trail for {label}: {count} beats","viewer.guided.chapter.open":"Open chapter {index} of {total}: {label}, {count} stops","viewer.guided.chapter.current":"Current chapter {index} of {total}: {label}, {count} stops","viewer.guided.chapter.selectedNodes":"{count} selected nodes","viewer.guided.chapter.stops":"{count} stops","viewer.guided.chapter.stop.one":"{count} stop","viewer.guided.chapter.stop.other":"{count} stops","viewer.guided.chapter.current.title":"{label} — current chapter, {count} stops","viewer.guided.chapter.delta.expanded":"{stay} stay, {enter} enter, {leave} leave","viewer.guided.chapter.delta.aria":"Open chapter {index} of {total}: {label}. Chapter focus delta: {delta}","viewer.guided.chapter.delta.title":"{label} — {delta} chapter focus","viewer.guided.handoff":"{from} → {to} · via {label}","viewer.guided.share.chapter":"Chapter {index} / {total}","viewer.guided.share.initial":"Chapter 01 / 01","viewer.guided.share.default":"Guided chapter","viewer.guided.state.ready":"Ready","viewer.guided.state.playing":"Playing","viewer.guided.state.settled":"Settled","viewer.guided.state.paused":"Paused","viewer.guided.state.pinned":"Pinned","viewer.guided.state.still":"Still","viewer.guided.share.step":"Step {index} / {total} · {label}","viewer.guided.share.staticMoment":"{step} · Static moment","viewer.guided.share.complete":"{count} steps complete · {note}","viewer.guided.share.settled":"Path settled for reading.","viewer.guided.share.staticPath":"{count} steps · Static path","viewer.guided.share.ready":"{count} steps · Ready","viewer.guided.share.aria":"{state} chapter {index} of {total}: {label}. {beat}. {route}","viewer.guided.beat.start":"Beat {index} / {total} · {label} · starting point","viewer.guided.beat.forward":"Beat {index} / {total} · {from} → {to}","viewer.guided.beat.reverse":"Beat {index} / {total} · {from} → {to} · reverse authored link","viewer.guided.beat.multiple":"Beat {index} / {total} · {from} ⇄ {to} · {count} authored links","viewer.guided.beat.group":"Beat {index} / {total} · {from} · {to} · grouped · no direct link","viewer.guided.beat.aria.prefix":"Story beat {index} of {total}: {label}. ","viewer.guided.beat.aria.start":"Starting point.","viewer.guided.beat.aria.forward":"From {from} through one authored forward relationship.","viewer.guided.beat.aria.reverse":"From {from}; the authored relationship points from {to} to {from}.","viewer.guided.beat.aria.multiple":"From {from} through {count} authored relationships; shown without arbitrary motion.","viewer.guided.beat.aria.group":"Grouped from {from} with no direct authored relationship.","viewer.guided.caption.start":"Starting point","viewer.guided.caption.grouped":"Grouped transition · no direct authored link","viewer.guided.caption.more":" +{count} more","viewer.guided.caption.reverse":"Reverse authored relationship","viewer.guided.caption.relationships":"{count} authored relationships","viewer.guided.caption.relationship":"Authored relationship","viewer.guided.caption.direction":"authored direction: {from} → {to}","viewer.guided.caption.starting":"Authored starting point","viewer.guided.beatLink":"Copy link to current story moment: Beat {index} of {total}: {label}","viewer.guided.noStory":"This diagram has no authored guided story.","viewer.guide.eyebrow":"Diagram guide","viewer.guide.close":"Close diagram guide","viewer.guide.inspecting":"Inspecting compiled semantics","viewer.guide.actions":"Diagram exploration actions","viewer.guide.find":"Find any node","viewer.guide.find.hint":"Search labels, responsibilities, kinds, and stable IDs.","viewer.guide.route":"Trace a route","viewer.guide.route.aria":"Trace a directed route","viewer.guide.route.hint":"Ask how two semantic nodes connect in authored direction.","viewer.guide.map":"See the whole system","viewer.guide.map.hint":"Open Semantic Radar with a live viewport and stable nodes.","viewer.guide.lens":"Compare semantic kinds","viewer.guide.lens.hint":"Count roles, reveal their traffic, and compare direct authored links.","viewer.guide.story":"Play the guided story","viewer.guide.story.hint":"Walk the authored chapters and real relationships.","viewer.guide.present":"Enter Presentation Stage","viewer.guide.present.hint":"Give the live diagram the viewport without changing export.","viewer.guide.shortcuts":"Additional keyboard shortcuts","viewer.guide.shortcut.export":"Export","viewer.guide.shortcut.theme":"Theme","viewer.guide.shortcut.style":"Style","viewer.guide.shortcut.reset":"Reset","viewer.guide.shortcut.zoomIn":"Zoom in","viewer.guide.shortcut.zoomOut":"Zoom out","viewer.guide.shortcut.close":"Close","viewer.guide.facts":"{nodes} · {relationships} · {views}","viewer.guide.fact.node.one":"{count} semantic node","viewer.guide.fact.node.other":"{count} semantic nodes","viewer.guide.fact.relationship.one":"{count} relationship","viewer.guide.fact.relationship.other":"{count} relationships","viewer.guide.fact.view.one":"{count} guided view","viewer.guide.fact.view.other":"{count} guided views","viewer.guide.story.available.one":"Walk {count} authored chapter and its real relationships.","viewer.guide.story.available.other":"Walk {count} authored chapters and their real relationships.","viewer.guide.story.unavailable":"No authored guided story in this diagram.","viewer.guide.open":"Open diagram guide","viewer.guide.noStory":"This diagram has no authored guided story.","viewer.finder.title":"Find a node","viewer.finder.close":"Close node finder","viewer.finder.placeholder":"Search labels or IDs","viewer.finder.search":"Search diagram nodes","viewer.finder.results":"Diagram nodes","viewer.finder.empty":"No matching nodes","viewer.finder.result.focus":"Focus {label}","viewer.finder.result.routeStart":"Choose {label} as route start","viewer.finder.result.routeTarget":"Choose {label} as route destination, {links}","viewer.finder.status.empty":"No matching nodes","viewer.finder.status.count.one":"{count} matching node","viewer.finder.status.count.other":"{count} matching nodes","viewer.finder.noun.nodes":"nodes","viewer.finder.link.one":"{count} link","viewer.finder.link.other":"{count} links","viewer.finder.result.focus.one":"Focus {label}, {count} related connection","viewer.finder.result.focus.other":"Focus {label}, {count} related connections","viewer.finder.status.filtered":"{visible} of {available} {noun}","viewer.finder.status.all":"{available} {noun}","viewer.passport.eyebrow":"Semantic passport","viewer.passport.metadata":"Node metadata","viewer.passport.evidence":"Verified source evidence","viewer.passport.verified":"Verified source","viewer.passport.verificationScope":"Verified against local Git at the pinned revision. Remote access has not been checked.","viewer.passport.reach":"Authored reach","viewer.passport.reach.trace":"Trace authored reachability","viewer.passport.upstream":"Upstream","viewer.passport.downstream":"Downstream","viewer.passport.upstream.trace":"Trace upstream authored reachability","viewer.passport.downstream.trace":"Trace downstream authored reachability","viewer.passport.close":"Close semantic passport","viewer.passport.move":"Move semantic passport. Drag, use arrow keys, or press Home to reset.","viewer.passport.copy":"Copy link","viewer.passport.copy.focus":"Copy link to focused node","viewer.passport.relations":"Relations","viewer.passport.relations.show":"Show connected relationships","viewer.passport.relations.hide":"Hide connected relationships","viewer.passport.relations.list":"Connected relationships","viewer.passport.copyRelation":"Copy relation","viewer.passport.copyNode":"Copy node","viewer.passport.copyPinned":"Copy link to pinned relationship","viewer.passport.copySource":"Copy link to source node","viewer.passport.copy.focused.success":"Focused node link copied","viewer.passport.copy.pinned.success":"Pinned relationship link copied","viewer.passport.copy.focused.failed":"Could not copy focused node link","viewer.passport.copy.pinned.failed":"Could not copy pinned relationship link","viewer.passport.relationship.none":"No connected relationships","viewer.passport.relationship.count.one":"{count} relation","viewer.passport.relationship.count.other":"{count} relations","viewer.passport.relationship.show.one":"Show {count} connected relationship","viewer.passport.relationship.show.other":"Show {count} connected relationships","viewer.passport.relationship.summary":"{out} outgoing · {in} incoming{loops}","viewer.passport.relationship.loops":" · {count} loop","viewer.passport.relationship.explorer":"Direct relationship explorer","viewer.passport.relationship.help":"Use arrow keys to explore relationships. Press Enter or Space to pin details; Escape clears.","viewer.passport.relationship.loopsBack":"loops back","viewer.passport.relationship.connectsTo":"connects to","viewer.passport.relationship.connectsFrom":"connects from","viewer.passport.relationship.pinned":"Pinned relationship · {from} → {to} · {label}","viewer.passport.relationship.inspect":"Inspect relationship {index} of {total}: {from} to {to}, {label}. Press Enter for details.","viewer.passport.relationship.group.out":"Outgoing","viewer.passport.relationship.group.in":"Incoming","viewer.passport.relationship.group.loop":"Self loops","viewer.passport.relationship.row":"{group}: {relationship}, {neighbor}","viewer.passport.relationship.direction.out":"OUT →","viewer.passport.relationship.direction.in":"← IN","viewer.passport.relationship.direction.loop":"LOOP","viewer.passport.sourceCount.one":"{count} verified source reference","viewer.passport.sourceCount.other":"{count} verified source references","viewer.passport.sourceMarker":"SRC","viewer.passport.beacon.one":"{count} verified source; focus this node to inspect","viewer.passport.beacon.other":"{count} verified sources; focus this node to inspect","viewer.passport.repository.open":"Open verified repository revision {revision}","viewer.passport.source.open":"Open verified source {path} at revision {revision}","viewer.passport.source.openLink":"Open ↗","viewer.passport.reach.upstream.one":"Trace {count} upstream authored node","viewer.passport.reach.upstream.other":"Trace {count} upstream authored nodes","viewer.passport.reach.downstream.one":"Trace {count} downstream authored node","viewer.passport.reach.downstream.other":"Trace {count} downstream authored nodes","viewer.passport.reach.noUpstream":"No upstream authored nodes","viewer.passport.reach.noDownstream":"No downstream authored nodes","viewer.passport.reach.status":"{direction} · {nodes} nodes · {links} links · max {hops} hops","viewer.route.eyebrow":"Route probe","viewer.route.start":"Choose a start node","viewer.route.start.find":"Find start","viewer.route.start.find.aria":"Find a route start","viewer.route.copy":"Copy link","viewer.route.copy.aria":"Copy link to traced route","viewer.route.clear":"Clear","viewer.route.clear.aria":"Clear route probe","viewer.route.traced":"Traced route","viewer.route.pickTwo":"Pick two semantic nodes on the diagram","viewer.route.pickOne":"Pick a semantic node on the diagram","viewer.route.controls":"Route journey controls","viewer.route.previous":"Previous route position","viewer.route.play":"Play route journey","viewer.route.pause":"Pause route journey","viewer.route.replay":"Replay route journey","viewer.route.next":"Next route position","viewer.route.journey":"Journey","viewer.route.pause.label":"Pause","viewer.route.replay.label":"Replay","viewer.route.overview":"Overview","viewer.route.overview.aria":"Show complete route overview","viewer.route.instructions":"Choose the source, then the destination. Direction matters.","viewer.route.destination":"Choose a destination from {label}","viewer.route.destination.find":"Find target","viewer.route.destination.find.aria":"Find a reachable route destination","viewer.route.differentDestination":"Choose a different destination","viewer.route.distinct":"A route needs two distinct semantic nodes.","viewer.route.unreachable":"No directed route to {label}","viewer.route.unreachable.detail":"{target} is not reachable from {source}. Pick a highlighted destination.","viewer.route.start.instructions":"Select the source. The next step will reveal only directed destinations.","viewer.route.copy.success":"Traced route link copied","viewer.route.copy.failed":"Could not copy traced route link","viewer.route.position":"Route position {index} of {total}: {label}","viewer.route.step":"Step {index} of {total} · {phase} · {label}","viewer.route.motionRequired":"Automatic journey requires Live motion","viewer.route.trigger.clear":"Clear traced route","viewer.route.overview.status":"{nodes} · {hops} · shortest authored route","viewer.route.overview.node.one":"{count} node","viewer.route.overview.node.other":"{count} nodes","viewer.route.overview.hop.one":"{count} directed hop","viewer.route.overview.hop.other":"{count} directed hops","viewer.route.phase.playing":"Playing","viewer.route.phase.complete":"Complete","viewer.route.phase.inspecting":"Inspecting","viewer.route.destination.count.one":"{count} directed destination available. Pick a highlighted node.","viewer.route.destination.count.other":"{count} directed destinations available. Pick a highlighted node.","viewer.route.noOutgoing":"No outgoing route starts here. Clear and choose another source.","viewer.route.result.title":"{source} to {target}","viewer.route.finder.source.title":"Choose route start","viewer.route.finder.source.placeholder":"Search route sources","viewer.route.finder.source.empty":"No matching route sources","viewer.route.finder.source.results":"Nodes that can start a route","viewer.route.finder.source.noun":"route sources","viewer.route.finder.source.badge":"start","viewer.route.finder.target.title":"Destination from {label}","viewer.route.finder.target.placeholder":"Search reachable destinations","viewer.route.finder.target.empty":"No matching reachable destinations","viewer.route.finder.target.results":"Reachable route destinations","viewer.route.finder.target.noun":"reachable destinations","viewer.route.hop.one":"{count} hop","viewer.route.hop.other":"{count} hops","viewer.lens.eyebrow":"Semantic lens","viewer.lens.title":"Compare system roles","viewer.lens.close":"Close semantic lens","viewer.lens.instruction":"Choose up to two semantic kinds. One reveals its real traffic; two compare only direct authored relationships.","viewer.lens.kinds":"Semantic kinds","viewer.lens.choose":"Choose a kind to inspect its nodes and touching relationships.","viewer.lens.copy":"Copy link to semantic lens","viewer.lens.clear":"Clear semantic lens","viewer.lens.open":"Open semantic lens","viewer.lens.openActive":"Open active semantic lens","viewer.lens.legend":"Semantic legend","viewer.lens.legend.inspect.one":"Inspect {label}, {count} node","viewer.lens.legend.inspect.other":"Inspect {label}, {count} nodes","viewer.lens.kind.count.one":"{label}, {count} node","viewer.lens.kind.count.other":"{label}, {count} nodes","viewer.lens.compare.one":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationship","viewer.lens.compare.other":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationships","viewer.lens.single":"{nodes} · {relationships} · connected peers remain visible","viewer.lens.node.one":"{count} {label} node","viewer.lens.node.other":"{count} {label} nodes","viewer.lens.relationship.one":"{count} touching relationship","viewer.lens.relationship.other":"{count} touching relationships","viewer.radar.title":"Semantic radar","viewer.radar.building":"Building overview","viewer.radar.openFull":"Open full semantic radar","viewer.radar.open":"Open radar","viewer.radar.close":"Close semantic radar","viewer.radar.surface":"Diagram overview. Click a node to focus it, or use arrow keys to pan.","viewer.radar.click":"Click node","viewer.radar.drag":"Drag to pan","viewer.radar.space":"Semantic radar needs more MAP space.","viewer.radar.nodes":"Semantic diagram radar nodes","viewer.radar.focus":"Focus {label} from Semantic Radar","viewer.radar.status":"{count} nodes · {viewport}","viewer.radar.fullMap":"{count} nodes · full map","viewer.radar.compacted":"Radar compacted to avoid covering the Semantic Passport or MAP controls.","viewer.radar.cancelWaiting":"Cancel semantic radar waiting for more MAP space","viewer.radar.needsSpace":"Semantic radar needs more visible MAP space","viewer.radar.viewport.full":"full map","viewer.radar.viewport.width":"{percent}% width","viewer.radar.viewport.scale":"{percent}% viewport","viewer.nav.controls":"Diagram view controls","viewer.nav.route":"Trace a directed route","viewer.nav.route.title":"Trace route (R)","viewer.nav.route.short":"PATH","viewer.nav.radar":"Open semantic radar","viewer.nav.radar.title":"Semantic radar (M)","viewer.nav.radar.short":"MAP","viewer.nav.lens":"Open semantic lens","viewer.nav.lens.title":"Semantic lens (L)","viewer.nav.lens.short":"LENS","viewer.nav.find":"Find a node","viewer.nav.find.title":"Find a node (/)","viewer.nav.guide":"Open diagram guide","viewer.nav.guide.title":"Diagram guide (?)","viewer.nav.zoomOut":"Zoom out","viewer.nav.zoomOut.title":"Zoom out (-)","viewer.nav.reset":"Reset diagram view","viewer.nav.reset.title":"Reset view (0)","viewer.nav.read":"READ","viewer.nav.zoomIn":"Zoom in","viewer.nav.zoomIn.title":"Zoom in (+)","viewer.nav.camera":"{hint}. Reset diagram view","viewer.nav.camera.title":"{semantic}{hint} · reset view (0)","viewer.nav.camera.semantic":"Semantic camera active · ","viewer.nav.level.map":"MAP","viewer.nav.level.read":"READ","viewer.nav.level.full":"FULL","viewer.nav.level.auto":"AUTO","viewer.nav.detail.map":"Zoom in to reveal relationship labels and node context","viewer.nav.detail.read":"Zoom in again to reveal tags and annotations","viewer.nav.detail.full":"Full diagram detail","viewer.intent.summary":"{label}. {out} outgoing, {in} incoming{loops}. {total} connections. Press Enter for details.","viewer.intent.loops":", {count} self loop","viewer.common.copied":"Copied","viewer.common.copyFailed":"Copy failed","viewer.common.copyLink":"Copy link","viewer.common.clear":"Clear","viewer.common.close":"Close"}}</script>
+    <script id="archify-i18n-data" type="application/json">{"locale":"en","messages":{"viewer.kind.frontend":"Frontend","viewer.kind.backend":"Backend","viewer.kind.database":"Database","viewer.kind.cloud":"Cloud","viewer.kind.security":"Security","viewer.kind.messagebus":"Message bus","viewer.kind.external":"External","viewer.kind.neutral":"Neutral","viewer.kind.node":"Node","viewer.kind.start":"Start","viewer.kind.active":"Active","viewer.kind.waiting":"Waiting","viewer.kind.decision":"Decision","viewer.kind.success":"Success","viewer.kind.failure":"Failure","viewer.toolbar.actions":"Diagram actions","viewer.theme.toggle.title":"Toggle theme (T)","viewer.theme.toggle":"Toggle color theme","viewer.theme.dark":"Dark","viewer.theme.light":"Light","viewer.preset.choose.title":"Choose visual style (S cycles)","viewer.preset.choose":"Choose visual style","viewer.preset.style":"Style","viewer.preset.menu":"Visual style","viewer.preset.identity":"Visual identity","viewer.preset.cycles":"S cycles","viewer.preset.classic":"Classic","viewer.preset.classic.short":"Classic","viewer.preset.classic.hint":"Stable technical default","viewer.preset.flow":"Signal Flow","viewer.preset.flow.short":"Flow","viewer.preset.flow.hint":"Motion-forward presentation","viewer.preset.blueprint":"Blueprint","viewer.preset.blueprint.hint":"Engineering review","viewer.preset.editorial":"Editorial","viewer.preset.editorial.hint":"Publication and launch notes","viewer.preset.badge.signalFlow":"SIGNAL FLOW","viewer.preset.badge.blueprint":"BLUEPRINT / REV 01","viewer.preset.badge.editorial":"EDITORIAL / FIELD NOTE","viewer.preset.badge.editorialPlate":"ARCHIFY / PLATE 04","viewer.preset.current":"Visual style: {style}. Choose visual style","viewer.motion.live":"Live","viewer.motion.still":"Still","viewer.motion.pause":"Pause motion","viewer.motion.resume":"Resume motion","viewer.motion.reduced":"Motion paused by reduced-motion preference","viewer.motion.hidden":"Motion paused while this page is hidden","viewer.motion.yielding":"Pause motion; currently yielding to {owner}","viewer.motion.yielding.title":"Live preview enabled · yielding to {owner}","viewer.owner.story":"the guided story","viewer.owner.chapter":"the active chapter","viewer.owner.chapterPreview":"the chapter delta preview","viewer.owner.handoff":"the chapter handoff","viewer.owner.route":"Route Probe","viewer.owner.lens":"Semantic Lens","viewer.owner.relationship":"Relationship Preview","viewer.owner.intent":"Intent Trace","viewer.owner.focus":"semantic focus","viewer.owner.legend":"legend preview","viewer.owner.reader":"reader interaction","viewer.present.enter":"Enter presentation stage","viewer.present.enter.title":"Presentation stage (F)","viewer.present.exit":"Exit presentation stage","viewer.present.exit.title":"Exit presentation stage (F or Escape)","viewer.present.present":"Present","viewer.present.exit.label":"Exit","viewer.export.button":"Export","viewer.export.button.title":"Export diagram (E)","viewer.export.diagram":"Export diagram","viewer.export.menu":"Export","viewer.export.subtitle":"Portable, clean outputs","viewer.export.share":"Share","viewer.export.shareCard":"Share Card","viewer.export.routeShareCard":"Route Share Card","viewer.export.reachShareCard":"Reach Share Card","viewer.export.copyShareCard":"Copy Share Card","viewer.export.copyDiagram":"Copy diagram","viewer.export.clipboardPng":"PNG to clipboard","viewer.export.raster":"Raster images","viewer.export.image":"Image","viewer.export.lossless":"Lossless image","viewer.export.compact":"Compact image","viewer.export.modern":"Modern image","viewer.export.vectorMotion":"Vector and motion","viewer.export.vectorMotion.heading":"Vector \u0026 motion","viewer.export.editable":"Editable vector","viewer.export.motion6s":"6s motion","viewer.export.unsupported":"Not supported by this browser","viewer.export.clipboardUnsupported":"Clipboard image write not supported by this browser","viewer.export.clipboardUnsupported.period":"Clipboard image write not supported by this browser.","viewer.export.clipboardUnsupported.short":"Clipboard image write not supported in this browser.","viewer.export.motionUnavailable":"Motion capture unavailable in this browser","viewer.export.webmUnavailable":"WebM unavailable in this browser","viewer.export.failed":"Export failed: {message}","viewer.export.unknownVariant":"Unknown Share Card variant: {variant}","viewer.export.routeRequired":"Trace a route before exporting a Route Share Card","viewer.export.reachRequired":"Trace authored reach before exporting a Reach Share Card","viewer.export.unknown":"unknown","viewer.export.routeFailed":"Route Share Card export failed: {message}","viewer.export.reachFailed":"Reach Share Card export failed: {message}","viewer.export.copyFailed":"Copy failed: {message}","viewer.export.copiedPng":"Copied PNG to clipboard","viewer.export.copiedShare":"Copied Share Card","viewer.export.downloadedShare":"Downloaded Share Card","viewer.export.downloadedRoute":"Downloaded Route Share Card","viewer.export.downloadedReach":"Downloaded Reach Share Card","viewer.export.downloadedWebm":"Downloaded WebM","viewer.export.recording":"Recording 6 seconds of motion…","viewer.export.card.routeSummary.one":"Route: {source} → {target} · {count} directed hop","viewer.export.card.routeSummary.other":"Route: {source} → {target} · {count} directed hops","viewer.export.card.reachSummary":"Authored {direction} from {origin} · {nodes} · {links} · max {hops}","viewer.export.card.node.one":"{count} node","viewer.export.card.node.other":"{count} nodes","viewer.export.card.link.one":"{count} link","viewer.export.card.link.other":"{count} links","viewer.export.card.hop.one":"{count} hop","viewer.export.card.hop.other":"{count} hops","viewer.export.card.routeBadge":"ARCHIFY · ROUTE · {hops}","viewer.export.card.reachBadge":"ARCHIFY · {direction} REACH","viewer.export.card.defaultBadge":"ARCHIFY · {preset} · {theme}","viewer.export.direction.upstream":"Upstream","viewer.export.direction.downstream":"Downstream","viewer.export.error.canvasUnavailable":"Canvas unavailable for {label}","viewer.export.error.contextUnavailable":"2D canvas context unavailable for {label}","viewer.export.error.toBlobUnavailable":"canvas.toBlob unavailable for {label}","viewer.export.error.toBlobNull":"canvas.toBlob returned no data for {label}","viewer.export.error.variantsCombined":"Share Card variants cannot be combined","viewer.export.error.viewerState":"Share Card export could not remove temporary viewer state","viewer.export.error.routeState":"Route Card export could not preserve the resolved route safely","viewer.export.error.reachState":"Reach Card export could not preserve authored reach safely","viewer.export.error.webmRequirements":"WebM motion export requires a trace animation and browser MediaRecorder support","viewer.export.error.mediaRecorder":"MediaRecorder failed","viewer.export.error.emptyWebm":"MediaRecorder produced an empty WebM","viewer.export.error.webmBackground":"SVG background could not be loaded for WebM export","viewer.export.error.rasterBudget":"{format} export needs {width}×{height} pixels, above the {limit} pixel safety budget. Export SVG instead.","viewer.guided.region":"Guided diagram views","viewer.guided.previous":"Previous guided view","viewer.guided.previous.title":"Previous guided view ([)","viewer.guided.next":"Next guided view","viewer.guided.next.title":"Next guided view (])","viewer.guided.views":"Guided views","viewer.guided.explore":"Explore this system","viewer.guided.intro":"Step through curated paths without changing the source diagram.","viewer.guided.trail":"Story trail","viewer.guided.beat":"Beat","viewer.guided.nextBeat":"Next","viewer.guided.play":"Play guided story","viewer.guided.play.title":"Play guided story (P)","viewer.guided.pause":"Pause guided story","viewer.guided.pause.title":"Pause guided story (P)","viewer.guided.replay":"Replay guided story","viewer.guided.replay.title":"Replay guided story (P)","viewer.guided.playStory":"Play story","viewer.guided.pauseStory":"Pause","viewer.guided.replayStory":"Replay story","viewer.guided.motionUnavailable":"Story playback unavailable while motion is Still","viewer.guided.enableMotion":"Switch motion to Live to play the guided story","viewer.guided.selectBeatLink":"Select a Story Beat to copy its exact link","viewer.guided.copyMoment":"Copy moment","viewer.guided.momentCopied":"Moment link copied","viewer.guided.momentCopyFailed":"Could not copy story moment link","viewer.guided.copied":"Copied","viewer.guided.copyFailed":"Copy failed","viewer.guided.showAll":"Show all","viewer.guided.showAll.aria":"Show entire diagram","viewer.guided.chapters":"Story chapters","viewer.guided.storyTrail":"Story trail for {label}: {count} beats","viewer.guided.chapter.open":"Open chapter {index} of {total}: {label}, {count} stops","viewer.guided.chapter.current":"Current chapter {index} of {total}: {label}, {count} stops","viewer.guided.chapter.selectedNodes":"{count} selected nodes","viewer.guided.chapter.stops":"{count} stops","viewer.guided.chapter.stop.one":"{count} stop","viewer.guided.chapter.stop.other":"{count} stops","viewer.guided.chapter.current.title":"{label} — current chapter, {count} stops","viewer.guided.chapter.delta.expanded":"{stay} stay, {enter} enter, {leave} leave","viewer.guided.chapter.delta.aria":"Open chapter {index} of {total}: {label}. Chapter focus delta: {delta}","viewer.guided.chapter.delta.title":"{label} — {delta} chapter focus","viewer.guided.handoff":"{from} → {to} · via {label}","viewer.guided.share.chapter":"Chapter {index} / {total}","viewer.guided.share.initial":"Chapter 01 / 01","viewer.guided.share.default":"Guided chapter","viewer.guided.state.ready":"Ready","viewer.guided.state.playing":"Playing","viewer.guided.state.settled":"Settled","viewer.guided.state.paused":"Paused","viewer.guided.state.pinned":"Pinned","viewer.guided.state.still":"Still","viewer.guided.share.step":"Step {index} / {total} · {label}","viewer.guided.share.staticMoment":"{step} · Static moment","viewer.guided.share.complete":"{count} steps complete · {note}","viewer.guided.share.settled":"Path settled for reading.","viewer.guided.share.staticPath":"{count} steps · Static path","viewer.guided.share.ready":"{count} steps · Ready","viewer.guided.share.aria":"{state} chapter {index} of {total}: {label}. {beat}. {route}","viewer.guided.beat.start":"Beat {index} / {total} · {label} · starting point","viewer.guided.beat.forward":"Beat {index} / {total} · {from} → {to}","viewer.guided.beat.reverse":"Beat {index} / {total} · {from} → {to} · reverse authored link","viewer.guided.beat.multiple":"Beat {index} / {total} · {from} ⇄ {to} · {count} authored links","viewer.guided.beat.group":"Beat {index} / {total} · {from} · {to} · grouped · no direct link","viewer.guided.beat.aria.prefix":"Story beat {index} of {total}: {label}. ","viewer.guided.beat.aria.start":"Starting point.","viewer.guided.beat.aria.forward":"From {from} through one authored forward relationship.","viewer.guided.beat.aria.reverse":"From {from}; the authored relationship points from {to} to {from}.","viewer.guided.beat.aria.multiple":"From {from} through {count} authored relationships; shown without arbitrary motion.","viewer.guided.beat.aria.group":"Grouped from {from} with no direct authored relationship.","viewer.guided.caption.start":"Starting point","viewer.guided.caption.grouped":"Grouped transition · no direct authored link","viewer.guided.caption.more":" +{count} more","viewer.guided.caption.reverse":"Reverse authored relationship","viewer.guided.caption.relationships":"{count} authored relationships","viewer.guided.caption.relationship":"Authored relationship","viewer.guided.caption.direction":"authored direction: {from} → {to}","viewer.guided.caption.starting":"Authored starting point","viewer.guided.beatLink":"Copy link to current story moment: Beat {index} of {total}: {label}","viewer.guided.noStory":"This diagram has no authored guided story.","viewer.guide.eyebrow":"Diagram guide","viewer.guide.close":"Close diagram guide","viewer.guide.inspecting":"Inspecting compiled semantics","viewer.guide.actions":"Diagram exploration actions","viewer.guide.find":"Find any node","viewer.guide.find.hint":"Search labels, responsibilities, kinds, and stable IDs.","viewer.guide.route":"Trace a route","viewer.guide.route.aria":"Trace a directed route","viewer.guide.route.hint":"Ask how two semantic nodes connect in authored direction.","viewer.guide.map":"See the whole system","viewer.guide.map.hint":"Open Semantic Radar with a live viewport and stable nodes.","viewer.guide.lens":"Compare semantic kinds","viewer.guide.lens.hint":"Count roles, reveal their traffic, and compare direct authored links.","viewer.guide.story":"Play the guided story","viewer.guide.story.hint":"Walk the authored chapters and real relationships.","viewer.guide.present":"Enter Presentation Stage","viewer.guide.present.hint":"Give the live diagram the viewport without changing export.","viewer.guide.shortcuts":"Additional keyboard shortcuts","viewer.guide.shortcut.export":"Export","viewer.guide.shortcut.theme":"Theme","viewer.guide.shortcut.style":"Style","viewer.guide.shortcut.reset":"Reset","viewer.guide.shortcut.zoomIn":"Zoom in","viewer.guide.shortcut.zoomOut":"Zoom out","viewer.guide.shortcut.close":"Close","viewer.guide.facts":"{nodes} · {relationships} · {views}","viewer.guide.fact.node.one":"{count} semantic node","viewer.guide.fact.node.other":"{count} semantic nodes","viewer.guide.fact.relationship.one":"{count} relationship","viewer.guide.fact.relationship.other":"{count} relationships","viewer.guide.fact.view.one":"{count} guided view","viewer.guide.fact.view.other":"{count} guided views","viewer.guide.story.available.one":"Walk {count} authored chapter and its real relationships.","viewer.guide.story.available.other":"Walk {count} authored chapters and their real relationships.","viewer.guide.story.unavailable":"No authored guided story in this diagram.","viewer.guide.open":"Open diagram guide","viewer.guide.noStory":"This diagram has no authored guided story.","viewer.finder.title":"Find a node","viewer.finder.close":"Close node finder","viewer.finder.placeholder":"Search labels or IDs","viewer.finder.search":"Search diagram nodes","viewer.finder.results":"Diagram nodes","viewer.finder.empty":"No matching nodes","viewer.finder.result.focus":"Focus {label}","viewer.finder.result.routeStart":"Choose {label} as route start","viewer.finder.result.routeTarget":"Choose {label} as route destination, {links}","viewer.finder.status.empty":"No matching nodes","viewer.finder.status.count.one":"{count} matching node","viewer.finder.status.count.other":"{count} matching nodes","viewer.finder.noun.nodes":"nodes","viewer.finder.link.one":"{count} link","viewer.finder.link.other":"{count} links","viewer.finder.result.focus.one":"Focus {label}, {count} related connection","viewer.finder.result.focus.other":"Focus {label}, {count} related connections","viewer.finder.status.filtered":"{visible} of {available} {noun}","viewer.finder.status.all":"{available} {noun}","viewer.passport.eyebrow":"Semantic passport","viewer.passport.metadata":"Node metadata","viewer.passport.evidence":"Verified source evidence","viewer.passport.verified":"Verified source","viewer.passport.verificationScope":"Verified against local Git at the pinned revision. Remote access has not been checked.","viewer.passport.reach":"Authored reach","viewer.passport.reach.trace":"Trace authored reachability","viewer.passport.upstream":"Upstream","viewer.passport.downstream":"Downstream","viewer.passport.upstream.trace":"Trace upstream authored reachability","viewer.passport.downstream.trace":"Trace downstream authored reachability","viewer.passport.close":"Close semantic passport","viewer.passport.move":"Move semantic passport. Drag, use arrow keys, or press Home to reset.","viewer.passport.copy":"Copy link","viewer.passport.copy.focus":"Copy link to focused node","viewer.passport.relations":"Relations","viewer.passport.relations.show":"Show connected relationships","viewer.passport.relations.hide":"Hide connected relationships","viewer.passport.relations.list":"Connected relationships","viewer.passport.copyRelation":"Copy relation","viewer.passport.copyNode":"Copy node","viewer.passport.copyPinned":"Copy link to pinned relationship","viewer.passport.copySource":"Copy link to source node","viewer.passport.copy.focused.success":"Focused node link copied","viewer.passport.copy.pinned.success":"Pinned relationship link copied","viewer.passport.copy.focused.failed":"Could not copy focused node link","viewer.passport.copy.pinned.failed":"Could not copy pinned relationship link","viewer.passport.relationship.none":"No connected relationships","viewer.passport.relationship.count.one":"{count} relation","viewer.passport.relationship.count.other":"{count} relations","viewer.passport.relationship.show.one":"Show {count} connected relationship","viewer.passport.relationship.show.other":"Show {count} connected relationships","viewer.passport.relationship.summary":"{out} outgoing · {in} incoming{loops}","viewer.passport.relationship.loops":" · {count} loop","viewer.passport.relationship.explorer":"Direct relationship explorer","viewer.passport.relationship.help":"Use arrow keys to explore relationships. Press Enter or Space to pin details; Escape clears.","viewer.passport.relationship.loopsBack":"loops back","viewer.passport.relationship.connectsTo":"connects to","viewer.passport.relationship.connectsFrom":"connects from","viewer.passport.relationship.pinned":"Pinned relationship · {from} → {to} · {label}","viewer.passport.relationship.inspect":"Inspect relationship {index} of {total}: {from} to {to}, {label}. Press Enter for details.","viewer.passport.relationship.group.out":"Outgoing","viewer.passport.relationship.group.in":"Incoming","viewer.passport.relationship.group.loop":"Self loops","viewer.passport.relationship.row":"{group}: {relationship}, {neighbor}","viewer.passport.relationship.direction.out":"OUT →","viewer.passport.relationship.direction.in":"← IN","viewer.passport.relationship.direction.loop":"LOOP","viewer.passport.sourceCount.one":"{count} verified source reference","viewer.passport.sourceCount.other":"{count} verified source references","viewer.passport.sourceMarker":"SRC","viewer.passport.beacon.one":"{count} verified source; focus this node to inspect","viewer.passport.beacon.other":"{count} verified sources; focus this node to inspect","viewer.passport.repository.open":"Open verified repository revision {revision}","viewer.passport.source.open":"Open verified source {path} at revision {revision}","viewer.passport.source.openLink":"Open ↗","viewer.passport.reach.upstream.one":"Trace {count} upstream authored node","viewer.passport.reach.upstream.other":"Trace {count} upstream authored nodes","viewer.passport.reach.downstream.one":"Trace {count} downstream authored node","viewer.passport.reach.downstream.other":"Trace {count} downstream authored nodes","viewer.passport.reach.noUpstream":"No upstream authored nodes","viewer.passport.reach.noDownstream":"No downstream authored nodes","viewer.passport.reach.status":"{direction} · {nodes} nodes · {links} links · max {hops} hops","viewer.route.eyebrow":"Route probe","viewer.route.start":"Choose a start node","viewer.route.start.find":"Find start","viewer.route.start.find.aria":"Find a route start","viewer.route.copy":"Copy link","viewer.route.copy.aria":"Copy link to traced route","viewer.route.clear":"Clear","viewer.route.clear.aria":"Clear route probe","viewer.route.traced":"Traced route","viewer.route.pickTwo":"Pick two semantic nodes on the diagram","viewer.route.pickOne":"Pick a semantic node on the diagram","viewer.route.controls":"Route journey controls","viewer.route.previous":"Previous route position","viewer.route.play":"Play route journey","viewer.route.pause":"Pause route journey","viewer.route.replay":"Replay route journey","viewer.route.next":"Next route position","viewer.route.journey":"Journey","viewer.route.pause.label":"Pause","viewer.route.replay.label":"Replay","viewer.route.overview":"Overview","viewer.route.overview.aria":"Show complete route overview","viewer.route.instructions":"Choose the source, then the destination. Direction matters.","viewer.route.destination":"Choose a destination from {label}","viewer.route.destination.find":"Find target","viewer.route.destination.find.aria":"Find a reachable route destination","viewer.route.differentDestination":"Choose a different destination","viewer.route.distinct":"A route needs two distinct semantic nodes.","viewer.route.unreachable":"No directed route to {label}","viewer.route.unreachable.detail":"{target} is not reachable from {source}. Pick a highlighted destination.","viewer.route.start.instructions":"Select the source. The next step will reveal only directed destinations.","viewer.route.copy.success":"Traced route link copied","viewer.route.copy.failed":"Could not copy traced route link","viewer.route.position":"Route position {index} of {total}: {label}","viewer.route.step":"Step {index} of {total} · {phase} · {label}","viewer.route.motionRequired":"Automatic journey requires Live motion","viewer.route.trigger.clear":"Clear traced route","viewer.route.overview.status":"{nodes} · {hops} · shortest authored route","viewer.route.overview.node.one":"{count} node","viewer.route.overview.node.other":"{count} nodes","viewer.route.overview.hop.one":"{count} directed hop","viewer.route.overview.hop.other":"{count} directed hops","viewer.route.phase.playing":"Playing","viewer.route.phase.complete":"Complete","viewer.route.phase.inspecting":"Inspecting","viewer.route.destination.count.one":"{count} directed destination available. Pick a highlighted node.","viewer.route.destination.count.other":"{count} directed destinations available. Pick a highlighted node.","viewer.route.noOutgoing":"No outgoing route starts here. Clear and choose another source.","viewer.route.result.title":"{source} to {target}","viewer.route.finder.source.title":"Choose route start","viewer.route.finder.source.placeholder":"Search route sources","viewer.route.finder.source.empty":"No matching route sources","viewer.route.finder.source.results":"Nodes that can start a route","viewer.route.finder.source.noun":"route sources","viewer.route.finder.source.badge":"start","viewer.route.finder.target.title":"Destination from {label}","viewer.route.finder.target.placeholder":"Search reachable destinations","viewer.route.finder.target.empty":"No matching reachable destinations","viewer.route.finder.target.results":"Reachable route destinations","viewer.route.finder.target.noun":"reachable destinations","viewer.route.hop.one":"{count} hop","viewer.route.hop.other":"{count} hops","viewer.lens.eyebrow":"Semantic lens","viewer.lens.title":"Compare system roles","viewer.lens.close":"Close semantic lens","viewer.lens.instruction":"Choose up to two semantic kinds. One reveals its real traffic; two compare only direct authored relationships.","viewer.lens.kinds":"Semantic kinds","viewer.lens.choose":"Choose a kind to inspect its nodes and touching relationships.","viewer.lens.copy":"Copy link to semantic lens","viewer.lens.clear":"Clear semantic lens","viewer.lens.open":"Open semantic lens","viewer.lens.openActive":"Open active semantic lens","viewer.lens.legend":"Semantic legend","viewer.lens.legend.inspect.one":"Inspect {label}, {count} node","viewer.lens.legend.inspect.other":"Inspect {label}, {count} nodes","viewer.lens.kind.count.one":"{label}, {count} node","viewer.lens.kind.count.other":"{label}, {count} nodes","viewer.lens.compare.one":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationship","viewer.lens.compare.other":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationships","viewer.lens.single":"{nodes} · {relationships} · connected peers remain visible","viewer.lens.node.one":"{count} {label} node","viewer.lens.node.other":"{count} {label} nodes","viewer.lens.relationship.one":"{count} touching relationship","viewer.lens.relationship.other":"{count} touching relationships","viewer.radar.title":"Semantic radar","viewer.radar.building":"Building overview","viewer.radar.openFull":"Open full semantic radar","viewer.radar.open":"Open radar","viewer.radar.close":"Close semantic radar","viewer.radar.surface":"Diagram overview. Click a node to focus it, or use arrow keys to pan.","viewer.radar.click":"Click node","viewer.radar.drag":"Drag to pan","viewer.radar.space":"Semantic radar needs more MAP space.","viewer.radar.nodes":"Semantic diagram radar nodes","viewer.radar.focus":"Focus {label} from Semantic Radar","viewer.radar.status":"{count} nodes · {viewport}","viewer.radar.fullMap":"{count} nodes · full map","viewer.radar.compacted":"Radar compacted to avoid covering the Semantic Passport or MAP controls.","viewer.radar.cancelWaiting":"Cancel semantic radar waiting for more MAP space","viewer.radar.needsSpace":"Semantic radar needs more visible MAP space","viewer.radar.viewport.full":"full map","viewer.radar.viewport.width":"{percent}% width","viewer.radar.viewport.scale":"{percent}% viewport","viewer.nav.controls":"Diagram view controls","viewer.nav.route":"Trace a directed route","viewer.nav.route.title":"Trace route (R)","viewer.nav.route.short":"PATH","viewer.nav.radar":"Open semantic radar","viewer.nav.radar.title":"Semantic radar (M)","viewer.nav.radar.short":"MAP","viewer.nav.lens":"Open semantic lens","viewer.nav.lens.title":"Semantic lens (L)","viewer.nav.lens.short":"LENS","viewer.nav.find":"Find a node","viewer.nav.find.title":"Find a node (/)","viewer.nav.guide":"Open diagram guide","viewer.nav.guide.title":"Diagram guide (?)","viewer.nav.zoomOut":"Zoom out","viewer.nav.zoomOut.title":"Zoom out (-)","viewer.nav.reset":"Reset diagram view","viewer.nav.reset.title":"Reset view (0)","viewer.nav.read":"READ","viewer.nav.zoomIn":"Zoom in","viewer.nav.zoomIn.title":"Zoom in (+)","viewer.nav.camera":"{hint}. Reset diagram view","viewer.nav.camera.title":"{semantic}{hint} · reset view (0)","viewer.nav.camera.semantic":"Semantic camera active · ","viewer.nav.level.map":"MAP","viewer.nav.level.read":"READ","viewer.nav.level.full":"FULL","viewer.nav.level.auto":"AUTO","viewer.nav.detail.map":"Zoom in to reveal relationship labels and node context","viewer.nav.detail.read":"Zoom in again to reveal tags and annotations","viewer.nav.detail.full":"Full diagram detail","viewer.intent.summary":"{label}. {out} outgoing, {in} incoming{loops}. {total} connections. Press Enter for details.","viewer.intent.loops":", {count} self loop","viewer.common.copied":"Copied","viewer.common.copyFailed":"Copy failed","viewer.common.copyLink":"Copy link","viewer.common.clear":"Clear","viewer.common.close":"Close"}}</script>
     <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
       <button id="guided-view-prev" type="button" aria-label="Previous guided view" title="Previous guided view ([)">&#8592;</button>
       <div class="guided-view-copy">
@@ -5622,6 +5636,57 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
   <script>
     var Archify = {};
+    var archifyReadabilityContract = Object.freeze({"version":1,"minimumProjectedTextPx":6,"targetPaddingCssPx":24,"maximumFitMultiplier":32,"maximumWorldToCssScale":4,"minimumDesktopViewportWidthExclusive":720,"minimumAvailableStageHeight":360,"maximumStageHeight":900,"stageBottomGapCssPx":24,"labelSelectors":["text[data-node-label]","text[data-boundary-label]","[data-node-id] text[data-detail=\"context\"]"]});
+var archifyDeriveLargeWorldReadability = (function deriveLargeWorldReadabilityWithContract(contract, {
+  safeStageWidth,
+  safeStageHeight,
+  canonicalWorldWidth,
+  canonicalWorldHeight,
+  minimumTargetSourceFontWorldUnits,
+  targetBoundsWidth,
+  targetBoundsHeight,
+} = {}) {
+  const values = [
+    safeStageWidth,
+    safeStageHeight,
+    canonicalWorldWidth,
+    canonicalWorldHeight,
+    minimumTargetSourceFontWorldUnits,
+    targetBoundsWidth,
+    targetBoundsHeight,
+  ];
+  if (!values.every(Number.isFinite) || values.some((value) => value <= 0)) return null;
+
+  if (!contract || typeof contract !== 'object') return null;
+  const worldScaleFit = Math.min(
+    safeStageWidth / canonicalWorldWidth,
+    safeStageHeight / canonicalWorldHeight,
+  );
+  const projectedTextPx = minimumTargetSourceFontWorldUnits * worldScaleFit;
+  const requiredReadableScale = contract.minimumProjectedTextPx / minimumTargetSourceFontWorldUnits;
+  const paddedWidth = safeStageWidth - contract.targetPaddingCssPx * 2;
+  const paddedHeight = safeStageHeight - contract.targetPaddingCssPx * 2;
+  const targetFitScale = paddedWidth > 0 && paddedHeight > 0
+    ? Math.min(paddedWidth / targetBoundsWidth, paddedHeight / targetBoundsHeight)
+    : 0;
+  const maximumWorldToCssScale = Math.max(
+    worldScaleFit,
+    Math.min(worldScaleFit * contract.maximumFitMultiplier, contract.maximumWorldToCssScale),
+  );
+  const targetWorldToCssScale = Math.max(worldScaleFit, requiredReadableScale);
+
+  return {
+    worldProfile: projectedTextPx < contract.minimumProjectedTextPx ? 'large' : 'small',
+    worldScaleFit,
+    projectedTextPx,
+    requiredReadableScale,
+    targetFitScale,
+    maximumWorldToCssScale,
+    targetWorldToCssScale,
+    cameraMultiplier: targetWorldToCssScale / worldScaleFit,
+    targetReadableAndContained: targetWorldToCssScale <= Math.min(targetFitScale, maximumWorldToCssScale),
+  };
+}).bind(null, archifyReadabilityContract);
     var archifyI18nData = (function () {
       var node = document.getElementById('archify-i18n-data');
       try { return JSON.parse(node ? node.textContent : '{}'); }
@@ -5859,11 +5924,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     /* ============================================================
        Export — Share Card / PNG / JPEG / WebP / SVG / WebM and clipboard
 
-       Raster exports are always rendered at 4x source resolution for
-       maximum sharpness. The trick: we set the serialized SVG's
-       `width`/`height` to viewBox * 4 so the browser rasterizes the
-       vectors at that resolution natively. drawImage then draws at
-       the image's natural size (no upscaling = no blur).
+       Raster exports request 4x source resolution, then preflight the full
+       canonical frame against a bounded pixel budget before allocating a
+       canvas. The largest safe integer scale is used; SVG remains the
+       lossless fallback when even 1x cannot fit.
 
        JPEG/WebP paint the current theme's background explicitly since
        those formats have no alpha channel.
@@ -5999,6 +6063,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           el.removeAttribute('data-story-beat-state');
           el.removeAttribute('data-story-beat-step');
           el.style.removeProperty('--story-step');
+          if (!el.style.cssText) el.removeAttribute('style');
         });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-focus-match], [data-focus-selected]'), function (el) {
           el.removeAttribute('data-focus-match');
@@ -6038,6 +6103,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           el.removeAttribute('data-route-journey-state');
           el.removeAttribute('data-route-journey-current');
           el.style.removeProperty('--route-step');
+          if (!el.style.cssText) el.removeAttribute('style');
         });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle]'), function (el) {
           el.removeAttribute('data-share-route-match');
@@ -6058,6 +6124,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         Array.prototype.forEach.call(clone.querySelectorAll('[data-node-id][aria-pressed]'), function (el) {
           el.setAttribute('aria-pressed', 'false');
         });
+        // Interaction modules may remove their data attributes before export
+        // while leaving an empty inline style shell behind. Empty style
+        // attributes carry no authored geometry or appearance and would make
+        // the canonical bytes depend on navigation history.
+        Array.prototype.forEach.call(clone.querySelectorAll('[style]'), function (el) {
+          if (!el.style.cssText) el.removeAttribute('style');
+        });
+        if (!clone.style.cssText) clone.removeAttribute('style');
         return !clone.hasAttribute('data-view-scale') &&
           !clone.hasAttribute('data-focus-active') &&
           !clone.hasAttribute('data-reach-active') &&
@@ -6447,13 +6521,56 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       // desktop Safari are far higher but start failing on memory-constrained
       // devices. We pick the largest integer scale in {4,3,2,1} whose target
       // pixel count fits under this cap.
-      var MAX_CANVAS_PIXELS = 16 * 1024 * 1024;
+      var MAX_CANVAS_PIXELS = 16000000;
+      var exportPreflights = new WeakMap();
 
-      function pickSafeScale(vbW, vbH) {
-        for (var s = RASTER_SCALE; s >= 1; s--) {
-          if (vbW * s * vbH * s <= MAX_CANVAS_PIXELS) return s;
+      function rasterBudgetError(receipt) {
+        var error = exportError('viewer.export.error.rasterBudget', {
+          format: receipt.format.toUpperCase(),
+          width: receipt.actualWidth,
+          height: receipt.actualHeight,
+          limit: receipt.limit
+        });
+        error.code = 'export/raster-budget-exceeded';
+        error.receipt = receipt;
+        return error;
+      }
+
+      function rasterPreflight(format, vbW, vbH, requestedScale) {
+        var candidates = [];
+        for (var s = Math.max(1, Math.floor(requestedScale)); s >= 1; s--) {
+          var width = Math.ceil(vbW * s);
+          var height = Math.ceil(vbH * s);
+          var pixels = width * height;
+          candidates.push({ scale: s, width: width, height: height, pixels: pixels });
+          if (pixels <= MAX_CANVAS_PIXELS) {
+            return {
+              ok: true, format: format, requestedScale: requestedScale, actualScale: s,
+              requestedWidth: Math.ceil(vbW * requestedScale), requestedHeight: Math.ceil(vbH * requestedScale),
+              actualWidth: width, actualHeight: height, candidates: candidates,
+              limit: MAX_CANVAS_PIXELS, fallback: 'svg'
+            };
+          }
         }
-        return 1;
+        return {
+          ok: false, format: format, requestedScale: requestedScale, actualScale: null,
+          requestedWidth: Math.ceil(vbW * requestedScale), requestedHeight: Math.ceil(vbH * requestedScale),
+          actualWidth: Math.ceil(vbW), actualHeight: Math.ceil(vbH), candidates: candidates,
+          limit: MAX_CANVAS_PIXELS, fallback: 'svg'
+        };
+      }
+
+      function webmPreflight(vbW, vbH, scale) {
+        var width = Math.max(2, Math.round(vbW * scale / 2) * 2);
+        var height = Math.max(2, Math.round(vbH * scale / 2) * 2);
+        return {
+          ok: width * height <= MAX_CANVAS_PIXELS,
+          format: 'webm', requestedScale: scale, actualScale: scale,
+          requestedWidth: width, requestedHeight: height,
+          actualWidth: width, actualHeight: height,
+          candidates: [{ scale: scale, width: width, height: height, pixels: width * height }],
+          limit: MAX_CANVAS_PIXELS, fallback: 'svg'
+        };
       }
 
       function rasterize(format) {
@@ -6463,7 +6580,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // size — no upsampling blur.
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
-        var scale = pickSafeScale(vb.width, vb.height);
+        var preflight = rasterPreflight(format, vb.width, vb.height, RASTER_SCALE);
+        if (!preflight.ok) return Promise.reject(rasterBudgetError(preflight));
+        var scale = preflight.actualScale;
         var data = serializeSvg(scale);
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
@@ -6488,7 +6607,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               var quality = format === 'png' ? undefined : 0.95;
               canvas.toBlob(function (blob) {
                 if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: format }));
-                else resolve(blob);
+                else {
+                  exportPreflights.set(blob, preflight);
+                  resolve(blob);
+                }
               }, mime, quality);
             } catch (error) {
               URL.revokeObjectURL(svgUrl);
@@ -6538,7 +6660,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (routeSnapshot && reachSnapshot) return Promise.reject(exportError('viewer.export.error.variantsCombined'));
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
-        var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
+        var sourcePreflight = rasterPreflight('share-card', vb.width, vb.height, 2);
+        if (!sourcePreflight.ok) return Promise.reject(rasterBudgetError(sourcePreflight));
+        var sourceScale = sourcePreflight.actualScale;
         var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot });
         if (!data.canonicalStateClean) return Promise.reject(exportError('viewer.export.error.viewerState'));
         if (routeSnapshot && !data.routeStateClean) return Promise.reject(exportError('viewer.export.error.routeState'));
@@ -6705,6 +6829,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var scale = Math.min(1, 1280 / vb.width);
+        var preflight = webmPreflight(vb.width, vb.height, scale);
+        if (!preflight.ok) return Promise.reject(rasterBudgetError(preflight));
         var data = serializeSvg(scale);
         var sourceUrl = URL.createObjectURL(new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' }));
 
@@ -6861,8 +6987,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           var backgroundImage = new Image();
           backgroundImage.onload = function () {
             var canvas = document.createElement('canvas');
-            canvas.width = Math.max(2, Math.round(data.width / 2) * 2);
-            canvas.height = Math.max(2, Math.round(data.height / 2) * 2);
+            canvas.width = preflight.actualWidth;
+            canvas.height = preflight.actualHeight;
             var ctx = canvas.getContext('2d');
             var stream = canvas.captureStream(fps);
             var mime = motionMimeType();
@@ -6902,7 +7028,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               cleanup();
               var blob = new Blob(chunks, { type: recorder.mimeType || mime });
               if (!blob.size) reject(exportError('viewer.export.error.emptyWebm'));
-              else resolve(blob);
+              else {
+                exportPreflights.set(blob, preflight);
+                resolve(blob);
+              }
             };
             drawMotionFrame(ctx, backgroundImage, motionScene, 0);
             recorder.start(250);
@@ -7101,6 +7230,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             })
         ).catch(function (err) {
           console.error(err);
+          recordPreflightReceipt(err && err.receipt ? err.receipt : null);
           var technicalMessage = err && err.message ? err.message : format;
           var message = exportMessage(err);
           document.documentElement.setAttribute('data-last-export-error-format', format);
@@ -7194,6 +7324,27 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           document.documentElement.removeAttribute('data-last-export-width');
           document.documentElement.removeAttribute('data-last-export-height');
         }
+        recordPreflightReceipt(exportPreflights.get(blob) || null);
+      }
+
+      function recordPreflightReceipt(preflight) {
+        var names = [
+          'requested-width', 'requested-height', 'actual-width', 'actual-height',
+          'requested-scale', 'actual-scale', 'candidate-pixels', 'pixel-limit', 'fallback'
+        ];
+        if (!preflight) {
+          names.forEach(function (name) { document.documentElement.removeAttribute('data-last-export-' + name); });
+          return;
+        }
+        document.documentElement.setAttribute('data-last-export-requested-width', String(preflight.requestedWidth));
+        document.documentElement.setAttribute('data-last-export-requested-height', String(preflight.requestedHeight));
+        document.documentElement.setAttribute('data-last-export-actual-width', String(preflight.actualWidth));
+        document.documentElement.setAttribute('data-last-export-actual-height', String(preflight.actualHeight));
+        document.documentElement.setAttribute('data-last-export-requested-scale', String(preflight.requestedScale));
+        document.documentElement.setAttribute('data-last-export-actual-scale', preflight.actualScale == null ? 'none' : String(preflight.actualScale));
+        document.documentElement.setAttribute('data-last-export-candidate-pixels', JSON.stringify(preflight.candidates || []));
+        document.documentElement.setAttribute('data-last-export-pixel-limit', String(preflight.limit));
+        document.documentElement.setAttribute('data-last-export-fallback', String(preflight.fallback || 'svg'));
       }
 
       function clearExportReceipt() {
@@ -7207,6 +7358,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         document.documentElement.removeAttribute('data-last-export-reach-state-clean');
         document.documentElement.removeAttribute('data-last-export-error-format');
         document.documentElement.removeAttribute('data-last-export-error');
+        recordPreflightReceipt(null);
       }
 
       function writePngToClipboard(blobPromise) {
@@ -7311,6 +7463,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
       } catch (_) {}
     })();
+
 
     /* ============================================================
        Motion Governor — one reader switch and one motion budget. Ambient
@@ -10431,7 +10584,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         panel.setAttribute('data-story-follow-node', step.nodeId);
         var receipt = Archify.view.reveal(ids, {
           reason: options.manual === true ? 'story-beat' : 'story-follow',
-          padding: 64,
           maxScale: 1.65,
           duration: STORY_FOLLOW_DURATION_MS,
           instant: options.instant === true || reducedMotion() || document.documentElement.getAttribute('data-motion') !== 'live'
@@ -11201,6 +11353,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       };
     })();
 
+
     /* ============================================================
        Adaptive Reader Shell — one diagram across laptop and monitor.
        The canonical SVG and viewBox never change. On ordinary desktop pages,
@@ -11264,12 +11417,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var frame = 0;
       var settleFrame = 0;
       var lastWidth = 0;
+      var lastWorldReceipt = null;
       var WIDE_RATIO = 1.55;
       var MIN_DESKTOP_WIDTH = 1024;
       var MIN_READER_WIDTH = 960;
       var MAX_READER_WIDTH = 1920;
       var MIN_PROJECTED_NODE_TEXT_PX = 6;
       var SAFE_BOTTOM_GAP = 12;
+      var worldContract = archifyReadabilityContract || {};
 
       if (diagram && ratio >= WIDE_RATIO) {
         diagram.setAttribute('data-wide-diagram', 'true');
@@ -11305,18 +11460,31 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function eligible() {
         return Boolean(
-          shell && diagram && svg && (ratio >= WIDE_RATIO || measuredHeightFit) &&
-          window.innerWidth >= MIN_DESKTOP_WIDTH &&
+          ordinaryStandalone() && (ratio >= WIDE_RATIO || measuredHeightFit) &&
+          window.innerWidth >= MIN_DESKTOP_WIDTH
+        );
+      }
+      function ordinaryStandalone() {
+        return Boolean(
+          shell && diagram && svg &&
+          window.innerWidth > (worldContract.minimumDesktopViewportWidthExclusive || 720) &&
           html.getAttribute('data-embed') !== 'true' &&
           html.getAttribute('data-present') !== 'true' &&
           (!window.matchMedia || !window.matchMedia('print').matches)
         );
       }
-      function clear() {
+      function clearReader() {
         html.style.removeProperty('--archify-reader-width');
         html.removeAttribute('data-reader-layout');
         html.removeAttribute('data-reader-overflow');
         lastWidth = 0;
+      }
+      function clearWorldProfile() {
+        html.style.removeProperty('--archify-stage-height');
+        html.removeAttribute('data-world-measuring');
+        html.removeAttribute('data-world-profile');
+        diagram.removeAttribute('data-world-profile');
+        lastWorldReceipt = null;
       }
       function chromeMetrics() {
         var bodyStyle = window.getComputedStyle(body);
@@ -11337,6 +11505,96 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         html.style.setProperty('--archify-reader-width', rounded + 'px');
         html.setAttribute('data-reader-layout', 'adaptive');
         return true;
+      }
+      function minimumSourceFont() {
+        var selectors = Array.isArray(worldContract.labelSelectors) ? worldContract.labelSelectors : [];
+        var elements = selectors.length ? svg.querySelectorAll(selectors.join(',')) : [];
+        var minimum = null;
+        Array.prototype.forEach.call(elements, function (element) {
+          var value = number(window.getComputedStyle(element).fontSize || element.getAttribute('font-size'));
+          if (value > 0 && (minimum === null || value < minimum)) minimum = value;
+        });
+        return minimum === null ? 0 : minimum;
+      }
+      function measureWorldProfile() {
+        if (!ordinaryStandalone() || !viewBox || viewBox.width <= 0 || viewBox.height <= 0) {
+          clearWorldProfile();
+          return null;
+        }
+        var scrollState = ['guided-view-trail'].map(function (id) {
+          var element = document.getElementById(id);
+          return element ? { element: element, left: element.scrollLeft } : null;
+        }).filter(Boolean);
+        function finishProspectiveMeasurement() {
+          html.removeAttribute('data-world-measuring');
+          scrollState.forEach(function (state) { state.element.scrollLeft = state.left; });
+        }
+        html.setAttribute('data-world-measuring', 'true');
+        var bodyStyle = window.getComputedStyle(body);
+        var shellStyle = window.getComputedStyle(shell);
+        var diagramStyle = window.getComputedStyle(diagram);
+        var stageTop = diagram.getBoundingClientRect().top;
+        var belowStageRequiredHeight = outerHeight(cards) + number(shellStyle.paddingBottom) + number(bodyStyle.paddingBottom);
+        var availableStageHeight = Math.floor(
+          window.innerHeight - stageTop - belowStageRequiredHeight -
+          (worldContract.stageBottomGapCssPx || 24)
+        );
+        var minimumStageHeight = worldContract.minimumAvailableStageHeight || 360;
+        if (!Number.isFinite(availableStageHeight) || availableStageHeight < minimumStageHeight) {
+          finishProspectiveMeasurement();
+          clearWorldProfile();
+          return null;
+        }
+        var stageHeight = Math.min(worldContract.maximumStageHeight || 900, availableStageHeight);
+        var horizontalChrome = number(diagramStyle.paddingLeft) + number(diagramStyle.paddingRight) +
+          number(diagramStyle.borderLeftWidth) + number(diagramStyle.borderRightWidth);
+        var verticalChrome = number(diagramStyle.paddingTop) + number(diagramStyle.paddingBottom) +
+          number(diagramStyle.borderTopWidth) + number(diagramStyle.borderBottomWidth);
+        var prospectiveStageWidth = Math.min(
+          1440,
+          window.innerWidth - number(bodyStyle.paddingLeft) - number(bodyStyle.paddingRight)
+        );
+        var safeStageWidth = Math.max(1, prospectiveStageWidth - horizontalChrome);
+        var safeStageHeight = Math.max(1, stageHeight - verticalChrome);
+        var sourceFont = minimumSourceFont();
+        var derived = typeof archifyDeriveLargeWorldReadability === 'function'
+          ? archifyDeriveLargeWorldReadability({
+              safeStageWidth: safeStageWidth,
+              safeStageHeight: safeStageHeight,
+              canonicalWorldWidth: viewBox.width,
+              canonicalWorldHeight: viewBox.height,
+              minimumTargetSourceFontWorldUnits: sourceFont,
+              targetBoundsWidth: 1,
+              targetBoundsHeight: 1
+            })
+          : null;
+        finishProspectiveMeasurement();
+        if (!derived) {
+          clearWorldProfile();
+          return null;
+        }
+        var profile = derived.worldProfile;
+        if (profile === 'large') html.style.setProperty('--archify-stage-height', stageHeight + 'px');
+        else html.style.removeProperty('--archify-stage-height');
+        html.setAttribute('data-world-profile', profile);
+        diagram.setAttribute('data-world-profile', profile);
+        lastWorldReceipt = {
+          worldProfile: profile,
+          stageTop: stageTop,
+          belowStageRequiredHeight: belowStageRequiredHeight,
+          availableStageHeight: availableStageHeight,
+          stageHeight: stageHeight,
+          safeStageWidth: safeStageWidth,
+          safeStageHeight: safeStageHeight,
+          canonicalWorldWidth: viewBox.width,
+          canonicalWorldHeight: viewBox.height,
+          minimumSourceFontWorldUnits: sourceFont,
+          worldScaleFit: derived.worldScaleFit,
+          projectedTextPx: derived.projectedTextPx,
+          minimumProjectedTextPx: worldContract.minimumProjectedTextPx || 6,
+          obscurers: ['diagram-padding', 'navigation-dock']
+        };
+        return lastWorldReceipt;
       }
       function settleOverflow(minWidth) {
         if (settleFrame) cancelAnimationFrame(settleFrame);
@@ -11360,31 +11618,33 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function measure() {
         frame = 0;
         if (!eligible()) {
-          clear();
-          return null;
+          clearReader();
+        } else {
+          var chrome = chromeMetrics();
+          var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
+          var readableWidth = viewBox && viewBox.width > 0
+            ? viewBox.width * minimumReadableScale() + chrome.diagramX
+            : MIN_READER_WIDTH;
+          var minWidth = Math.min(
+            measuredHeightFit && ratio < WIDE_RATIO ? readableWidth : MIN_READER_WIDTH,
+            viewportCap
+          );
+          var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
+          var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
+            outerHeight(header) + outerHeight(guided) + outerHeight(cards);
+          var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
+          var desiredWidth = availableSvgHeight * ratio + chrome.diagramX;
+          var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth));
+          applyWidth(width);
+          settleOverflow(minWidth);
         }
-        var chrome = chromeMetrics();
-        var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
-        var readableWidth = viewBox && viewBox.width > 0
-          ? viewBox.width * minimumReadableScale() + chrome.diagramX
-          : MIN_READER_WIDTH;
-        var minWidth = Math.min(
-          measuredHeightFit && ratio < WIDE_RATIO ? readableWidth : MIN_READER_WIDTH,
-          viewportCap
-        );
-        var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
-        var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
-          outerHeight(header) + outerHeight(guided) + outerHeight(cards);
-        var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
-        var desiredWidth = availableSvgHeight * ratio + chrome.diagramX;
-        var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth));
-        applyWidth(width);
-        settleOverflow(minWidth);
+        var world = measureWorldProfile();
         return {
           ratio: ratio,
-          width: Math.round(width),
-          availableSvgHeight: Math.round(availableSvgHeight),
-          fixedHeight: Math.round(fixedHeight)
+          width: lastWidth,
+          worldProfile: world ? world.worldProfile : null,
+          stageHeight: world ? world.stageHeight : 0,
+          projectedTextPx: world ? world.projectedTextPx : null
         };
       }
       function schedule() {
@@ -11398,6 +11658,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           lastWidth,
           html.getAttribute('data-reader-layout') || '',
           html.getAttribute('data-reader-overflow') || '',
+          html.getAttribute('data-world-profile') || '',
+          html.style.getPropertyValue('--archify-stage-height'),
           Math.ceil(document.documentElement.scrollWidth),
           Math.ceil(document.documentElement.scrollHeight),
           Math.ceil(document.body.scrollWidth),
@@ -11437,7 +11699,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         schedule: schedule,
         whenStable: whenStable,
         active: function () { return html.getAttribute('data-reader-layout') === 'adaptive'; },
-        receipt: function () { return { ratio: ratio, width: lastWidth }; }
+        receipt: function () {
+          var receipt = { ratio: ratio, width: lastWidth };
+          if (lastWorldReceipt) Object.keys(lastWorldReceipt).forEach(function (key) { receipt[key] = lastWorldReceipt[key]; });
+          return receipt;
+        }
       };
     })();
 
@@ -11770,6 +12036,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var clipFrame = 0;
       var resizeFrame = 0;
       var autoScrollUntil = 0;
+      var automaticEntryLease = true;
+      var automaticEntryAttempted = false;
+      var readabilityContract = archifyReadabilityContract || {};
 
       var viewBox = svg.viewBox && svg.viewBox.baseVal;
 
@@ -11781,6 +12050,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function reducedMotion() {
         return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      }
+      function releaseAutomaticEntry() {
+        automaticEntryLease = false;
       }
       function contentMetrics() {
         if (!viewBox || viewBox.width <= 0 || viewBox.height <= 0) return null;
@@ -11824,6 +12096,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (state.scale >= 1.75) return 'full';
         if (state.scale >= 1) return 'read';
         return 'map';
+      }
+      function maximumCameraScale() {
+        if (document.documentElement.getAttribute('data-world-profile') !== 'large') return 3;
+        var metrics = contentMetrics();
+        if (!metrics || !Number.isFinite(metrics.scale) || metrics.scale <= 0) return 3;
+        return Math.max(1, Math.min(
+          readabilityContract.maximumFitMultiplier || 32,
+          (readabilityContract.maximumWorldToCssScale || 4) / metrics.scale
+        ));
       }
       function renderControls() {
         var semantic = state.mode === 'semantic' && state.scale > 1.01;
@@ -11892,7 +12173,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         syncViewportClip();
         renderControls();
         outBtn.disabled = state.scale <= 1;
-        inBtn.disabled = state.scale >= 3;
+        inBtn.disabled = state.scale >= maximumCameraScale() - 0.001;
         container.classList.toggle('is-pannable', state.scale > 1);
         svg.setAttribute('data-view-scale', String(state.scale));
         if (Archify.radar && typeof Archify.radar.sync === 'function') Archify.radar.sync();
@@ -11974,6 +12255,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         container.removeAttribute('data-camera-transaction');
       }
       function interruptCamera(reason) {
+        releaseAutomaticEntry();
         if (Archify.guidedViews && Archify.guidedViews.cancelHandoff) {
           Archify.guidedViews.cancelHandoff(reason || 'manual');
         }
@@ -11994,7 +12276,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         options = options || {};
         if (options.manual !== false) interruptCamera();
         var previous = state.scale;
-        next = Math.max(1, Math.min(3, Math.round(next * 4) / 4));
+        next = Math.max(1, Math.min(maximumCameraScale(), Math.round(next * 4) / 4));
         if (next === previous) return;
         var centerX = (svg.clientWidth || 1) / 2;
         var centerY = (svg.clientHeight || 1) / 2;
@@ -12032,9 +12314,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           catch (_) { container.scrollLeft = mobileTarget; }
           return true;
         }
-        var minimumScale = Math.max(1, Math.min(3, Number(options.minimumScale) || 1));
+        var maximumScale = maximumCameraScale();
+        var minimumScale = Math.max(1, Math.min(maximumScale, Number(options.minimumScale) || 1));
         var requestedScale = Number(options.scale);
-        state.scale = Math.max(minimumScale, Math.min(3, Number.isFinite(requestedScale) ? requestedScale : state.scale));
+        state.scale = Math.max(minimumScale, Math.min(maximumScale, Number.isFinite(requestedScale) ? requestedScale : state.scale));
         var contentX = metrics.offsetX + (logicalX - viewBox.x) * metrics.scale;
         var contentY = metrics.offsetY + (logicalY - viewBox.y) * metrics.scale;
         state.x = metrics.width / 2 - contentX * state.scale;
@@ -12066,6 +12349,28 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           })
           .filter(Boolean);
       }
+      function minimumTargetSourceFont(ids) {
+        var wanted = semanticIds(ids, false);
+        var selectors = Array.isArray(readabilityContract.labelSelectors)
+          ? readabilityContract.labelSelectors.join(',')
+          : 'text[data-node-label],text[data-boundary-label],[data-node-id] text[data-detail="context"]';
+        var minimum = null;
+        function include(text) {
+          var owner = text.closest('[data-node-id]');
+          if (owner && Object.keys(wanted).length && !wanted[owner.getAttribute('data-node-id')]) return;
+          var size = parseFloat(getComputedStyle(text).fontSize || text.getAttribute('font-size'));
+          if (Number.isFinite(size) && size > 0 && (minimum === null || size < minimum)) minimum = size;
+        }
+        Array.prototype.forEach.call(svg.querySelectorAll(selectors), include);
+        // Third-party/legacy standalone SVGs may have semantic node groups but
+        // predate Archify's label annotations. Keep navigation functional by
+        // measuring target-owned text only; profile classification still uses
+        // the authoritative annotated selector set.
+        if (minimum === null) {
+          Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id] text'), include);
+        }
+        return minimum === null ? 0 : minimum;
+      }
       function frameDesktop(ids, options) {
         options = options || {};
         var boxes = boxesFor(ids, options.includeNeighbors === true);
@@ -12085,17 +12390,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           width: Math.max(1, (maxX - minX) * contentScale),
           height: Math.max(1, (maxY - minY) * contentScale)
         };
-        var padding = options.padding || 48;
-        var left = padding;
-        var right = svgWidth - padding;
-        var top = padding;
-        var bottom = svgHeight - Math.max(padding, 72);
+        var left = 0;
+        var right = svgWidth;
+        var top = 0;
+        var bottom = svgHeight;
         var containerRect = container.getBoundingClientRect();
         var visibleTop = Math.max(0, -containerRect.top);
         var visibleBottom = Math.min(svgHeight, window.innerHeight - containerRect.top);
         if (visibleBottom - visibleTop >= 240) {
-          top = Math.max(top, visibleTop + padding);
-          bottom = Math.min(bottom, visibleBottom - Math.max(padding, 72));
+          top = Math.max(top, visibleTop);
+          bottom = Math.min(bottom, visibleBottom);
         }
         var chip = document.getElementById('focus-chip');
         if (chip && !chip.hidden) {
@@ -12110,12 +12414,43 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           else bottom = Math.min(bottom, receiptTop - 24);
         }
         if (right <= left || bottom <= top) return false;
-        var maxScale = options.maxScale || (options.includeNeighbors ? 1.9 : 2.15);
-        var targetScale = Math.min((right - left) / bounds.width, (bottom - top) / bounds.height) * 0.9;
+        var sourceFont = minimumTargetSourceFont(ids);
+        var derived = typeof archifyDeriveLargeWorldReadability === 'function'
+          ? archifyDeriveLargeWorldReadability({
+              safeStageWidth: right - left,
+              safeStageHeight: bottom - top,
+              canonicalWorldWidth: viewBox.width,
+              canonicalWorldHeight: viewBox.height,
+              minimumTargetSourceFontWorldUnits: sourceFont,
+              targetBoundsWidth: Math.max(1, maxX - minX),
+              targetBoundsHeight: Math.max(1, maxY - minY)
+            })
+          : null;
+        if (!derived || contentScale <= 0) return false;
+        var targetFitScale = derived.targetFitScale / contentScale;
+        var requiredScale = derived.requiredReadableScale / contentScale;
+        var dynamicMaximum = maximumCameraScale();
+        var legacyMaximum = Number(options.maxScale) || (options.includeNeighbors ? 1.9 : 2.15);
+        var maxScale = document.documentElement.getAttribute('data-world-profile') === 'large'
+          ? Math.min(dynamicMaximum, Math.max(legacyMaximum, requiredScale))
+          : Math.min(dynamicMaximum, legacyMaximum);
+        var targetScale = targetFitScale;
         targetScale = Math.max(1, Math.min(maxScale, targetScale));
+        // Compare the multiplier in the same unit as the authoritative
+        // requirement. Re-multiplying the quotient can turn an exact 6px
+        // boundary into 5.999999999999999 through floating-point drift.
+        var readable = sourceFont > 0 && targetScale >= requiredScale;
+        if (!readable) {
+          container.setAttribute('data-camera-diagnostic', options.automaticEntry
+            ? 'viewer/entry-text-unreadable'
+            : 'viewer/navigation-text-unreadable');
+          if (options.requireReadable === true) return false;
+        } else {
+          container.removeAttribute('data-camera-diagnostic');
+        }
         if (targetScale < 1.08) targetScale = 1;
         var target = {
-          scale: Math.round(targetScale * 100) / 100,
+          scale: targetScale,
           x: 0,
           y: 0,
           mode: 'semantic'
@@ -12211,6 +12546,63 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (Array.isArray(active) && active.length) return reveal(active, { reason: 'selection-sync' });
         return false;
       }
+      function hasSemanticHashIntent() {
+        var guided = Archify.guidedViews && typeof Archify.guidedViews.active === 'function'
+          ? Archify.guidedViews.active() : null;
+        var active = Archify.focus && typeof Archify.focus.active === 'function'
+          ? Archify.focus.active() : null;
+        return Boolean(guided || (typeof active === 'string' && active) || (Array.isArray(active) && active.length));
+      }
+      function syncExplicitHashIntent() {
+        if (!location.hash || location.hash.length <= 1) return false;
+        if (!hasSemanticHashIntent()) {
+          reset({ automatic: true });
+          container.setAttribute('data-camera-diagnostic', 'viewer/semantic-id-invalid');
+          return false;
+        }
+        var result = syncSemantic();
+        if (result) container.removeAttribute('data-camera-diagnostic');
+        return result;
+      }
+      function initialGuidedFocus() {
+        var data = document.getElementById('archify-guided-views-data');
+        if (!data) return [];
+        try {
+          var views = JSON.parse(data.textContent || '[]');
+          return views.length && Array.isArray(views[0].focus) ? views[0].focus.slice() : [];
+        } catch (_) { return []; }
+      }
+      function automaticEntry() {
+        if (automaticEntryAttempted || !automaticEntryLease) return false;
+        automaticEntryAttempted = true;
+        if (location.hash && location.hash.length > 1) {
+          releaseAutomaticEntry();
+          return syncExplicitHashIntent();
+        }
+        var receipt = Archify.readerLayout && Archify.readerLayout.receipt ? Archify.readerLayout.receipt() : null;
+        if (!receipt || receipt.worldProfile !== 'large') return false;
+        var candidates = [];
+        var guided = initialGuidedFocus();
+        if (guided.length) candidates.push(guided);
+        var start = svg.querySelector('[data-node-id][data-node-kind="start"]');
+        if (start) candidates.push([start.getAttribute('data-node-id')]);
+        var first = svg.querySelector('[data-node-id]');
+        if (first) candidates.push([first.getAttribute('data-node-id')]);
+        for (var index = 0; index < candidates.length; index++) {
+          var framed = frameDesktop(candidates[index], {
+            automaticEntry: true,
+            requireReadable: true,
+            instant: true,
+            reason: 'large-world-entry'
+          });
+          if (framed) {
+            container.setAttribute('data-automatic-entry', candidates[index].join(' '));
+            return framed;
+          }
+        }
+        container.setAttribute('data-camera-diagnostic', 'viewer/entry-text-unreadable');
+        return false;
+      }
       function pinControls() {
         container.style.setProperty('--archify-scroll-x', container.scrollLeft + 'px');
       }
@@ -12263,19 +12655,28 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           else apply();
         });
       });
-      window.addEventListener('hashchange', function () { requestAnimationFrame(syncSemantic); });
+      window.addEventListener('hashchange', function () {
+        releaseAutomaticEntry();
+        requestAnimationFrame(syncExplicitHashIntent);
+      });
       apply();
       pinControls();
-      requestAnimationFrame(syncSemantic);
+      var fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready.catch(function () {}) : Promise.resolve();
+      fontsReady.then(function () {
+        var stable = Archify.readerLayout && Archify.readerLayout.whenStable
+          ? Archify.readerLayout.whenStable().catch(function () {})
+          : Promise.resolve();
+        return stable.then(function () { requestAnimationFrame(automaticEntry); });
+      });
 
       return {
-        zoomIn: function () { zoom(state.scale + 0.25); },
-        zoomOut: function () { zoom(state.scale - 0.25); },
+        zoomIn: function () { releaseAutomaticEntry(); zoom(state.scale + 0.25); },
+        zoomOut: function () { releaseAutomaticEntry(); zoom(state.scale - 0.25); },
         reset: reset,
-        reveal: reveal,
+        reveal: function (ids, options) { releaseAutomaticEntry(); return reveal(ids, options); },
         centerAt: centerAt,
         logicalViewport: logicalViewport,
-        sync: syncSemantic,
+        sync: function () { releaseAutomaticEntry(); return syncSemantic(); },
         state: function () { return { scale: state.scale, x: state.x, y: state.y, mode: state.mode }; }
       };
     })();
@@ -12573,6 +12974,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (passportPreviousAriaHidden === null) passport.removeAttribute('aria-hidden');
         else passport.setAttribute('aria-hidden', passportPreviousAriaHidden);
         passportPreviousAriaHidden = null;
+        // Camera/layout callbacks may have positioned the yielded (zero-height)
+        // panel. Restore its real bounds before Radar measures this blocker.
+        if (Archify.focus && typeof Archify.focus.reposition === 'function') Archify.focus.reposition();
       }
       function reflectVisible() {
         panel.hidden = false;
@@ -12907,6 +13311,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         count: function () { return nodes.length; }
       };
     })();
+
 
     /* ============================================================
        Presentation Stage — a shareable, viewport-filling live view.
@@ -13787,7 +14192,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             includeNeighbors: false,
             reason: 'route-journey',
             maxScale: 1.65,
-            padding: 64,
             duration: 360,
             instant: !journeyMotionAllowed()
           });
@@ -14282,6 +14686,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
       };
     })();
+
 
     /* ============================================================
        Semantic Lens — a counted, viewer-only legend over data-node-kind.

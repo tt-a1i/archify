@@ -196,6 +196,7 @@ const MESSAGE_PAIRS = {
   'viewer.export.error.mediaRecorder': ['MediaRecorder failed', 'MediaRecorder 录制失败', 'MediaRecorder falló'],
   'viewer.export.error.emptyWebm': ['MediaRecorder produced an empty WebM', 'MediaRecorder 生成了空的 WebM', 'MediaRecorder produjo un WebM vacío'],
   'viewer.export.error.webmBackground': ['SVG background could not be loaded for WebM export', '无法为 WebM 导出加载 SVG 背景', 'No se pudo cargar el fondo SVG para la exportación WebM'],
+  'viewer.export.error.rasterBudget': ['{format} export needs {width}×{height} pixels, above the {limit} pixel safety budget. Export SVG instead.', '{format} 导出需要 {width}×{height} 像素，超过 {limit} 像素安全预算。请改用 SVG 导出。', 'La exportación {format} necesita {width}×{height} píxeles, por encima del límite de seguridad de {limit} píxeles. Exporta SVG en su lugar.'],
 
   'viewer.guided.region': ['Guided diagram views', '图表引导视图', 'Vistas guiadas del diagrama'],
   'viewer.guided.previous': ['Previous guided view', '上一个引导视图', 'Vista guiada anterior'],

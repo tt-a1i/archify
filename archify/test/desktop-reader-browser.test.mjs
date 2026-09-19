@@ -204,7 +204,15 @@ test('issue #250 tall intrinsic workflow fits every required desktop viewport', 
     assert.equal(result.receipt.containment.status, 'pass');
     assert.equal(result.receipt.readability.status, 'pass');
     assert.equal(result.receipt.viewerChrome.status, 'pass');
-    assert.equal(result.receipt.containment.viewports.length, 4);
+    assert.deepEqual(
+      result.receipt.containment.viewports.map(({ width, height, theme }) => `${width}x${height}:${theme}`).sort(),
+      [
+        '1440x900:dark', '1440x900:light',
+        '1600x1000:dark', '1600x1000:light',
+        '1920x1080:dark', '1920x1080:light',
+        '2048x1320:dark', '2048x1320:light',
+      ],
+    );
     for (const viewport of result.receipt.containment.viewports) {
       assert.equal(viewport.overflowX, false, JSON.stringify(viewport, null, 2));
       assert.equal(viewport.overflowY, false, JSON.stringify(viewport, null, 2));

@@ -1,0 +1,1361 @@
+{
+  "contract": "readable-v2",
+  "viewBox": [
+    1220,
+    786
+  ],
+  "requiredViewBox": [
+    1220,
+    786
+  ],
+  "bounds": {
+    "layout": {
+      "left": 40,
+      "top": 27,
+      "right": 1204,
+      "bottom": 662,
+      "width": 1164,
+      "height": 635
+    },
+    "geometry": {
+      "left": 20,
+      "top": 27,
+      "right": 1204,
+      "bottom": 678,
+      "width": 1184,
+      "height": 651
+    },
+    "paint": {
+      "left": 18,
+      "top": 26,
+      "right": 1205,
+      "bottom": 710,
+      "width": 1187,
+      "height": 684
+    },
+    "canonicalFrame": [
+      0,
+      0,
+      1220,
+      786
+    ],
+    "contributors": [
+      "edge bounded-recovery-loop",
+      "phase understand",
+      "lane intake",
+      "legend frontend",
+      "node data-0 width 168px",
+      "node data-1 width 168px",
+      "node data-2 width 168px",
+      "node data-3 width 168px",
+      "node data-4 width 168px",
+      "node data-5 width 168px",
+      "node intake-0 width 168px",
+      "node intake-1 width 168px",
+      "node intake-2 width 168px",
+      "node intake-3 width 168px",
+      "node intake-4 width 168px",
+      "node intake-5 width 168px",
+      "node observe-0 width 168px",
+      "node observe-1 width 168px",
+      "node observe-2 width 168px",
+      "node observe-3 width 168px",
+      "node observe-4 width 168px",
+      "node observe-5 width 168px",
+      "node policy-0 width 168px",
+      "node policy-1 width 168px",
+      "node policy-2 width 168px",
+      "node policy-3 width 168px",
+      "node policy-4 width 168px",
+      "node policy-5 width 168px",
+      "node runtime-0 width 168px",
+      "node runtime-1 width 168px",
+      "node runtime-2 width 168px",
+      "node runtime-3 width 168px",
+      "node runtime-4 width 168px",
+      "node runtime-5 width 168px",
+      "rank 0→1 direct clearance",
+      "rank 0→1 node width clearance",
+      "rank 1→2 direct clearance",
+      "rank 1→2 node width clearance",
+      "rank 2→3 direct clearance",
+      "rank 2→3 node width clearance",
+      "rank 3→4 direct clearance",
+      "rank 3→4 node width clearance",
+      "rank 4→5 direct clearance",
+      "rank 4→5 node width clearance",
+      "node data-2 height 68px",
+      "node intake-2 height 68px",
+      "node observe-2 height 68px",
+      "node policy-2 height 68px",
+      "node runtime-2 height 68px"
+    ]
+  },
+  "operationBudget": {
+    "status": "within-budget",
+    "layoutPasses": 1,
+    "layoutPassLimit": 3,
+    "feedbackRounds": 0,
+    "feedbackRoundLimit": 3
+  },
+  "columns": [
+    132,
+    328,
+    524,
+    720,
+    916,
+    1112
+  ],
+  "nodes": [
+    {
+      "id": "intake-0",
+      "lane": "intake",
+      "col": 0,
+      "x": 48,
+      "y": 94,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "intake-1",
+      "lane": "intake",
+      "col": 1,
+      "x": 244,
+      "y": 94,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "intake-2",
+      "lane": "intake",
+      "col": 2,
+      "x": 440,
+      "y": 86,
+      "width": 168,
+      "height": 68
+    },
+    {
+      "id": "intake-3",
+      "lane": "intake",
+      "col": 3,
+      "x": 636,
+      "y": 94,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "intake-4",
+      "lane": "intake",
+      "col": 4,
+      "x": 832,
+      "y": 94,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "intake-5",
+      "lane": "intake",
+      "col": 5,
+      "x": 1028,
+      "y": 94,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "policy-0",
+      "lane": "policy",
+      "col": 0,
+      "x": 48,
+      "y": 220,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "policy-1",
+      "lane": "policy",
+      "col": 1,
+      "x": 244,
+      "y": 220,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "policy-2",
+      "lane": "policy",
+      "col": 2,
+      "x": 440,
+      "y": 212,
+      "width": 168,
+      "height": 68
+    },
+    {
+      "id": "policy-3",
+      "lane": "policy",
+      "col": 3,
+      "x": 636,
+      "y": 220,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "policy-4",
+      "lane": "policy",
+      "col": 4,
+      "x": 832,
+      "y": 220,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "policy-5",
+      "lane": "policy",
+      "col": 5,
+      "x": 1028,
+      "y": 220,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "runtime-0",
+      "lane": "runtime",
+      "col": 0,
+      "x": 48,
+      "y": 346,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "runtime-1",
+      "lane": "runtime",
+      "col": 1,
+      "x": 244,
+      "y": 346,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "runtime-2",
+      "lane": "runtime",
+      "col": 2,
+      "x": 440,
+      "y": 338,
+      "width": 168,
+      "height": 68
+    },
+    {
+      "id": "runtime-3",
+      "lane": "runtime",
+      "col": 3,
+      "x": 636,
+      "y": 346,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "runtime-4",
+      "lane": "runtime",
+      "col": 4,
+      "x": 832,
+      "y": 346,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "runtime-5",
+      "lane": "runtime",
+      "col": 5,
+      "x": 1028,
+      "y": 346,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "data-0",
+      "lane": "data",
+      "col": 0,
+      "x": 48,
+      "y": 472,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "data-1",
+      "lane": "data",
+      "col": 1,
+      "x": 244,
+      "y": 472,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "data-2",
+      "lane": "data",
+      "col": 2,
+      "x": 440,
+      "y": 464,
+      "width": 168,
+      "height": 68
+    },
+    {
+      "id": "data-3",
+      "lane": "data",
+      "col": 3,
+      "x": 636,
+      "y": 472,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "data-4",
+      "lane": "data",
+      "col": 4,
+      "x": 832,
+      "y": 472,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "data-5",
+      "lane": "data",
+      "col": 5,
+      "x": 1028,
+      "y": 472,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "observe-0",
+      "lane": "observe",
+      "col": 0,
+      "x": 48,
+      "y": 598,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "observe-1",
+      "lane": "observe",
+      "col": 1,
+      "x": 244,
+      "y": 598,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "observe-2",
+      "lane": "observe",
+      "col": 2,
+      "x": 440,
+      "y": 590,
+      "width": 168,
+      "height": 68
+    },
+    {
+      "id": "observe-3",
+      "lane": "observe",
+      "col": 3,
+      "x": 636,
+      "y": 598,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "observe-4",
+      "lane": "observe",
+      "col": 4,
+      "x": 832,
+      "y": 598,
+      "width": 168,
+      "height": 52
+    },
+    {
+      "id": "observe-5",
+      "lane": "observe",
+      "col": 5,
+      "x": 1028,
+      "y": 598,
+      "width": 168,
+      "height": 52
+    }
+  ],
+  "edges": [
+    {
+      "id": "bounded-recovery-loop",
+      "from": "observe-0",
+      "to": "intake-0",
+      "points": [
+        [
+          48,
+          624
+        ],
+        [
+          20,
+          624
+        ],
+        [
+          20,
+          120
+        ],
+        [
+          48,
+          120
+        ]
+      ]
+    },
+    {
+      "id": "data-step-0",
+      "from": "data-0",
+      "to": "data-1",
+      "points": [
+        [
+          216,
+          498
+        ],
+        [
+          244,
+          498
+        ]
+      ]
+    },
+    {
+      "id": "data-step-1",
+      "from": "data-1",
+      "to": "data-2",
+      "points": [
+        [
+          335,
+          524
+        ],
+        [
+          335,
+          552
+        ],
+        [
+          517,
+          552
+        ],
+        [
+          517,
+          532
+        ]
+      ]
+    },
+    {
+      "id": "data-step-2",
+      "from": "data-2",
+      "to": "data-3",
+      "points": [
+        [
+          608,
+          498
+        ],
+        [
+          636,
+          498
+        ]
+      ]
+    },
+    {
+      "id": "data-step-3",
+      "from": "data-3",
+      "to": "data-4",
+      "points": [
+        [
+          804,
+          498
+        ],
+        [
+          832,
+          498
+        ]
+      ]
+    },
+    {
+      "id": "data-step-4",
+      "from": "data-4",
+      "to": "data-5",
+      "points": [
+        [
+          1000,
+          498
+        ],
+        [
+          1028,
+          498
+        ]
+      ]
+    },
+    {
+      "id": "handoff-data-0",
+      "from": "data-0",
+      "to": "observe-0",
+      "points": [
+        [
+          48,
+          498
+        ],
+        [
+          32,
+          498
+        ],
+        [
+          32,
+          624
+        ],
+        [
+          48,
+          624
+        ]
+      ]
+    },
+    {
+      "id": "handoff-data-1",
+      "from": "data-1",
+      "to": "observe-1",
+      "points": [
+        [
+          244,
+          498
+        ],
+        [
+          228,
+          498
+        ],
+        [
+          228,
+          624
+        ],
+        [
+          244,
+          624
+        ]
+      ]
+    },
+    {
+      "id": "handoff-data-2",
+      "from": "data-2",
+      "to": "observe-2",
+      "points": [
+        [
+          608,
+          498
+        ],
+        [
+          624,
+          498
+        ],
+        [
+          624,
+          624
+        ],
+        [
+          608,
+          624
+        ]
+      ]
+    },
+    {
+      "id": "handoff-data-3",
+      "from": "data-3",
+      "to": "observe-3",
+      "points": [
+        [
+          720,
+          524
+        ],
+        [
+          720,
+          598
+        ]
+      ]
+    },
+    {
+      "id": "handoff-data-4",
+      "from": "data-4",
+      "to": "observe-4",
+      "points": [
+        [
+          916,
+          524
+        ],
+        [
+          916,
+          598
+        ]
+      ]
+    },
+    {
+      "id": "handoff-data-5",
+      "from": "data-5",
+      "to": "observe-5",
+      "points": [
+        [
+          1112,
+          524
+        ],
+        [
+          1112,
+          598
+        ]
+      ]
+    },
+    {
+      "id": "handoff-intake-0",
+      "from": "intake-0",
+      "to": "policy-0",
+      "points": [
+        [
+          48,
+          120
+        ],
+        [
+          32,
+          120
+        ],
+        [
+          32,
+          246
+        ],
+        [
+          48,
+          246
+        ]
+      ]
+    },
+    {
+      "id": "handoff-intake-1",
+      "from": "intake-1",
+      "to": "policy-1",
+      "points": [
+        [
+          412,
+          120
+        ],
+        [
+          428,
+          120
+        ],
+        [
+          428,
+          246
+        ],
+        [
+          412,
+          246
+        ]
+      ]
+    },
+    {
+      "id": "handoff-intake-2",
+      "from": "intake-2",
+      "to": "policy-2",
+      "points": [
+        [
+          608,
+          120
+        ],
+        [
+          624,
+          120
+        ],
+        [
+          624,
+          246
+        ],
+        [
+          608,
+          246
+        ]
+      ]
+    },
+    {
+      "id": "handoff-intake-3",
+      "from": "intake-3",
+      "to": "policy-3",
+      "points": [
+        [
+          720,
+          146
+        ],
+        [
+          720,
+          220
+        ]
+      ]
+    },
+    {
+      "id": "handoff-intake-4",
+      "from": "intake-4",
+      "to": "policy-4",
+      "points": [
+        [
+          916,
+          146
+        ],
+        [
+          916,
+          220
+        ]
+      ]
+    },
+    {
+      "id": "handoff-intake-5",
+      "from": "intake-5",
+      "to": "policy-5",
+      "points": [
+        [
+          1112,
+          146
+        ],
+        [
+          1112,
+          220
+        ]
+      ]
+    },
+    {
+      "id": "handoff-policy-0",
+      "from": "policy-0",
+      "to": "runtime-0",
+      "points": [
+        [
+          48,
+          246
+        ],
+        [
+          32,
+          246
+        ],
+        [
+          32,
+          372
+        ],
+        [
+          48,
+          372
+        ]
+      ]
+    },
+    {
+      "id": "handoff-policy-1",
+      "from": "policy-1",
+      "to": "runtime-1",
+      "points": [
+        [
+          412,
+          246
+        ],
+        [
+          428,
+          246
+        ],
+        [
+          428,
+          372
+        ],
+        [
+          412,
+          372
+        ]
+      ]
+    },
+    {
+      "id": "handoff-policy-2",
+      "from": "policy-2",
+      "to": "runtime-2",
+      "points": [
+        [
+          608,
+          246
+        ],
+        [
+          624,
+          246
+        ],
+        [
+          624,
+          372
+        ],
+        [
+          608,
+          372
+        ]
+      ]
+    },
+    {
+      "id": "handoff-policy-3",
+      "from": "policy-3",
+      "to": "runtime-3",
+      "points": [
+        [
+          720,
+          272
+        ],
+        [
+          720,
+          346
+        ]
+      ]
+    },
+    {
+      "id": "handoff-policy-4",
+      "from": "policy-4",
+      "to": "runtime-4",
+      "points": [
+        [
+          916,
+          272
+        ],
+        [
+          916,
+          346
+        ]
+      ]
+    },
+    {
+      "id": "handoff-policy-5",
+      "from": "policy-5",
+      "to": "runtime-5",
+      "points": [
+        [
+          1112,
+          272
+        ],
+        [
+          1112,
+          346
+        ]
+      ]
+    },
+    {
+      "id": "handoff-runtime-0",
+      "from": "runtime-0",
+      "to": "data-0",
+      "points": [
+        [
+          48,
+          372
+        ],
+        [
+          32,
+          372
+        ],
+        [
+          32,
+          498
+        ],
+        [
+          48,
+          498
+        ]
+      ]
+    },
+    {
+      "id": "handoff-runtime-1",
+      "from": "runtime-1",
+      "to": "data-1",
+      "points": [
+        [
+          412,
+          372
+        ],
+        [
+          428,
+          372
+        ],
+        [
+          428,
+          498
+        ],
+        [
+          412,
+          498
+        ]
+      ]
+    },
+    {
+      "id": "handoff-runtime-2",
+      "from": "runtime-2",
+      "to": "data-2",
+      "points": [
+        [
+          608,
+          372
+        ],
+        [
+          624,
+          372
+        ],
+        [
+          624,
+          498
+        ],
+        [
+          608,
+          498
+        ]
+      ]
+    },
+    {
+      "id": "handoff-runtime-3",
+      "from": "runtime-3",
+      "to": "data-3",
+      "points": [
+        [
+          720,
+          398
+        ],
+        [
+          720,
+          472
+        ]
+      ]
+    },
+    {
+      "id": "handoff-runtime-4",
+      "from": "runtime-4",
+      "to": "data-4",
+      "points": [
+        [
+          916,
+          398
+        ],
+        [
+          916,
+          472
+        ]
+      ]
+    },
+    {
+      "id": "handoff-runtime-5",
+      "from": "runtime-5",
+      "to": "data-5",
+      "points": [
+        [
+          1112,
+          398
+        ],
+        [
+          1112,
+          472
+        ]
+      ]
+    },
+    {
+      "id": "intake-step-0",
+      "from": "intake-0",
+      "to": "intake-1",
+      "points": [
+        [
+          132,
+          146
+        ],
+        [
+          132,
+          162
+        ],
+        [
+          328,
+          162
+        ],
+        [
+          328,
+          146
+        ]
+      ]
+    },
+    {
+      "id": "intake-step-1",
+      "from": "intake-1",
+      "to": "intake-2",
+      "points": [
+        [
+          328,
+          94
+        ],
+        [
+          328,
+          78
+        ],
+        [
+          426,
+          78
+        ],
+        [
+          426,
+          170
+        ],
+        [
+          524,
+          170
+        ],
+        [
+          524,
+          154
+        ]
+      ]
+    },
+    {
+      "id": "intake-step-2",
+      "from": "intake-2",
+      "to": "intake-3",
+      "points": [
+        [
+          608,
+          120
+        ],
+        [
+          636,
+          120
+        ]
+      ]
+    },
+    {
+      "id": "intake-step-3",
+      "from": "intake-3",
+      "to": "intake-4",
+      "points": [
+        [
+          804,
+          120
+        ],
+        [
+          832,
+          120
+        ]
+      ]
+    },
+    {
+      "id": "intake-step-4",
+      "from": "intake-4",
+      "to": "intake-5",
+      "points": [
+        [
+          1000,
+          120
+        ],
+        [
+          1028,
+          120
+        ]
+      ]
+    },
+    {
+      "id": "observe-step-0",
+      "from": "observe-0",
+      "to": "observe-1",
+      "points": [
+        [
+          132,
+          650
+        ],
+        [
+          132,
+          666
+        ],
+        [
+          328,
+          666
+        ],
+        [
+          328,
+          650
+        ]
+      ]
+    },
+    {
+      "id": "observe-step-1",
+      "from": "observe-1",
+      "to": "observe-2",
+      "points": [
+        [
+          328,
+          650
+        ],
+        [
+          328,
+          678
+        ],
+        [
+          524,
+          678
+        ],
+        [
+          524,
+          658
+        ]
+      ]
+    },
+    {
+      "id": "observe-step-2",
+      "from": "observe-2",
+      "to": "observe-3",
+      "points": [
+        [
+          608,
+          624
+        ],
+        [
+          636,
+          624
+        ]
+      ]
+    },
+    {
+      "id": "observe-step-3",
+      "from": "observe-3",
+      "to": "observe-4",
+      "points": [
+        [
+          804,
+          624
+        ],
+        [
+          832,
+          624
+        ]
+      ]
+    },
+    {
+      "id": "observe-step-4",
+      "from": "observe-4",
+      "to": "observe-5",
+      "points": [
+        [
+          1000,
+          624
+        ],
+        [
+          1028,
+          624
+        ]
+      ]
+    },
+    {
+      "id": "policy-step-0",
+      "from": "policy-0",
+      "to": "policy-1",
+      "points": [
+        [
+          216,
+          246
+        ],
+        [
+          244,
+          246
+        ]
+      ]
+    },
+    {
+      "id": "policy-step-1",
+      "from": "policy-1",
+      "to": "policy-2",
+      "points": [
+        [
+          412,
+          246
+        ],
+        [
+          428,
+          246
+        ],
+        [
+          428,
+          300
+        ],
+        [
+          624,
+          300
+        ],
+        [
+          624,
+          246
+        ],
+        [
+          608,
+          246
+        ]
+      ]
+    },
+    {
+      "id": "policy-step-2",
+      "from": "policy-2",
+      "to": "policy-3",
+      "points": [
+        [
+          608,
+          246
+        ],
+        [
+          636,
+          246
+        ]
+      ]
+    },
+    {
+      "id": "policy-step-3",
+      "from": "policy-3",
+      "to": "policy-4",
+      "points": [
+        [
+          804,
+          246
+        ],
+        [
+          832,
+          246
+        ]
+      ]
+    },
+    {
+      "id": "policy-step-4",
+      "from": "policy-4",
+      "to": "policy-5",
+      "points": [
+        [
+          1000,
+          246
+        ],
+        [
+          1028,
+          246
+        ]
+      ]
+    },
+    {
+      "id": "runtime-step-0",
+      "from": "runtime-0",
+      "to": "runtime-1",
+      "points": [
+        [
+          216,
+          372
+        ],
+        [
+          244,
+          372
+        ]
+      ]
+    },
+    {
+      "id": "runtime-step-1",
+      "from": "runtime-1",
+      "to": "runtime-2",
+      "points": [
+        [
+          412,
+          372
+        ],
+        [
+          428,
+          372
+        ],
+        [
+          428,
+          426
+        ],
+        [
+          624,
+          426
+        ],
+        [
+          624,
+          372
+        ],
+        [
+          608,
+          372
+        ]
+      ]
+    },
+    {
+      "id": "runtime-step-2",
+      "from": "runtime-2",
+      "to": "runtime-3",
+      "points": [
+        [
+          608,
+          372
+        ],
+        [
+          636,
+          372
+        ]
+      ]
+    },
+    {
+      "id": "runtime-step-3",
+      "from": "runtime-3",
+      "to": "runtime-4",
+      "points": [
+        [
+          804,
+          372
+        ],
+        [
+          832,
+          372
+        ]
+      ]
+    },
+    {
+      "id": "runtime-step-4",
+      "from": "runtime-4",
+      "to": "runtime-5",
+      "points": [
+        [
+          1000,
+          372
+        ],
+        [
+          1028,
+          372
+        ]
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "edge": "data-step-1",
+      "label": "保留完整语义与来源证据后继续处理",
+      "x": 426,
+      "y": 542,
+      "width": 163.6,
+      "height": 14
+    },
+    {
+      "edge": "intake-step-1",
+      "label": "保留完整语义与来源证据后继续处理",
+      "x": 377,
+      "y": 68,
+      "width": 163.6,
+      "height": 14
+    },
+    {
+      "edge": "observe-step-1",
+      "label": "保留完整语义与来源证据后继续处理",
+      "x": 426,
+      "y": 668,
+      "width": 163.6,
+      "height": 14
+    },
+    {
+      "edge": "policy-step-1",
+      "label": "保留完整语义与来源证据后继续处理",
+      "x": 526,
+      "y": 290,
+      "width": 163.6,
+      "height": 14
+    },
+    {
+      "edge": "runtime-step-1",
+      "label": "保留完整语义与来源证据后继续处理",
+      "x": 526,
+      "y": 416,
+      "width": 163.6,
+      "height": 14
+    }
+  ],
+  "diagnostics": [],
+  "layoutDigest": "e297f93975c565b6699c958ce3c26b0550bcf0da3998fbf15775726b25db08f6"
+}

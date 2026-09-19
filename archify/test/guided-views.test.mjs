@@ -92,7 +92,7 @@ for (const [mode, config] of Object.entries(CASES)) {
     assert.match(guided.html, /startShareCueProgress\(progress, remainingChapter\)/);
     assert.match(guided.html, /data-wide-diagram/);
     assert.match(guided.html, /min-width: 720px/);
-    assert.match(guided.html, /reveal: reveal/);
+    assert.match(guided.html, /reveal: function \(ids, options\) \{ releaseAutomaticEntry\(\); return reveal\(ids, options\); \}/);
     assert.match(guided.html, /container\.addEventListener\('scroll', onScroll, \{ passive: true \}\)/);
     assert.match(guided.html, /--archify-scroll-x/);
     assert.match(guided.html, /focus: function \(\) \{ return activeIndex < 0 \? \[\] : views\[activeIndex\]\.focus\.slice\(\); \}/);

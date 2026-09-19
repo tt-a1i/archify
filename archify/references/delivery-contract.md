@@ -122,15 +122,20 @@ symlink, or dangling symlink. Run deliveries targeting the same physical output
 directory serially; one attempt must finish or be recovered before another
 begins.
 
-A successful sidecar has `schemaVersion: 1`, `status: "current"`,
+A successful delivery sidecar has `schemaVersion: 1`, `status: "current"`,
 `command: "deliver"`, a unique `receiptId`, the diagram `type`, an absolute
-`input` path, an absolute `output` path matching the inspected
-artifact, and specification/artifact SHA-256 and byte counts. Checkers treat a
-missing, malformed, unsupported, or inconsistent field as invalid. They also
-reject a sidecar symlink, including a dangling one. A checker binds provenance
-to the artifact bytes it actually checks and verifies that binding again before
-reporting success; a concurrent byte change fails. The provenance directory
-entry itself must be a single-link regular file: `deliver` and strict check fail
+`input` path, an absolute `output` path matching the inspected artifact, and
+specification/artifact SHA-256 and byte counts. Checkers treat a missing,
+malformed, unsupported, or inconsistent field as invalid. They also reject a
+sidecar symlink, including a dangling one. A checker binds provenance to the
+artifact bytes it actually checks and verifies that binding again before
+reporting success; a concurrent byte change fails.
+
+The independently generated automated-browser visual-check receipt uses
+`schemaVersion: 3`; visual-check may replace evidence owned by compatible
+historical v1/v2 receipts after validating artifact and sidecar identity.
+The provenance directory entry itself must be a single-link regular file:
+`deliver` and strict check fail
 closed with `delivery/provenance-hardlink-unsupported` when it has another hard
 link, without scanning for or guessing the sibling name.
 
@@ -284,19 +289,24 @@ node bin/archify.mjs visual-check <output.html> --json --require-provenance
 ```
 
 The zero-dependency command uses Chrome/Chromium through the DevTools pipe. It
-measures light-theme containment at 1440×900, 1600×1000, 1920×1080, and
-2048×1320, then captures light/dark screenshots at 1440×900 and 2048×1320. It
-writes four PNG sidecars, one relative-path HTML contact sheet, and one JSON
-receipt beside the artifact by default — pass `--out-dir <dir>` to write all of
-them into a separate directory instead (created if missing) when a project
-keeps its testing/evidence artifacts apart from the delivered `.json`/`.html`
-result pair. When that directory differs from the artifact directory, the
-receipt records its absolute path as `sidecars.directory`; sidecar filenames
-resolve there, otherwise beside `artifact.path`. The contact sheet keeps its
-image links relative for portability. The receipt binds the source artifact SHA-256 and
-byte count, identifies `evidenceKind: "automated-browser"`, records READ plus
-Still runtime state, and always reports `visualReview: "pending"`; automated
-browser evidence cannot claim perceptual review.
+measures light and dark containment, projected text readability, and viewer
+chrome clearance at 1440×900, 1600×1000, 1920×1080, and 2048×1320. It also
+checks every semantic node and authored relationship through the shared camera,
+then verifies that a full canonical SVG export retains its viewBox and semantic
+entities and stays byte-stable after camera navigation. Light/dark screenshots
+are captured at 1440×900 and 2048×1320. The command writes four PNG sidecars,
+one relative-path HTML contact sheet, and one JSON receipt beside the artifact
+by default — pass `--out-dir <dir>` to write all of them into a separate
+directory instead (created if missing) when a project keeps testing/evidence
+artifacts apart from the delivered `.json`/`.html` result pair. When that
+directory differs from the artifact directory, the receipt records its absolute
+path as `sidecars.directory`; sidecar filenames resolve there, otherwise beside
+`artifact.path`. The contact sheet keeps its image links relative for
+portability. The receipt binds the source artifact SHA-256 and byte count, identifies
+`evidenceKind: "automated-browser"`, records READ plus Still runtime state, and
+reports containment, readability, viewer chrome, world reachability, and export
+completeness independently. It always reports `visualReview: "pending"`;
+automated browser evidence cannot claim perceptual review.
 
 `browser_evidence` in the handoff records only the outcome of this automated command:
 
@@ -379,7 +389,14 @@ Automated validation and browser evidence cannot prove visual polish. After dete
 
 For the default standalone desktop viewer, measure 1440×900, 1600×1000, and 1920×1080. When the artifact is intended for a large desktop display, also measure 2048×1320. A first-screen pass requires `document.documentElement.scrollWidth <= window.innerWidth` and `scrollHeight <= window.innerHeight` at every checked size. At the largest checked viewport, inspect the rendered composition for a conspicuous empty lower band: the main panel and necessary conclusion cards should use the available height as a balanced whole, not collapse into a shallow strip. If a desktop viewport overflows, repair the authored composition by removing only genuinely redundant content or compacting spacing before shrinking nodes, labels, or the main panel. Do not hide overflow, clip content, introduce an internal diagram scroller, or reduce node/label typography to make the measurement pass. Narrow/mobile containment may retain vertical page scrolling.
 
-A manual browser record is supplementary to the automated status. Reproducing the same coverage requires all four exact viewport measurements, both endpoint themes, and an artifact-bound record of the inspected SHA-256 and byte count. It never changes `browser_evidence`: when Chrome/Chromium is unavailable, that status remains `skipped` even when the manual browser record is complete and `visual_review: passed`; an automated `failed` result likewise remains `failed`. An unconstrained browser glance can support perceptual review only.
+A manual browser record is supplementary to the automated status. Reproducing
+the same coverage requires all four exact viewport measurements in both themes,
+camera reachability and canonical export checks, and an artifact-bound record
+of the inspected SHA-256 and byte count. It never changes `browser_evidence`:
+when Chrome/Chromium is unavailable, that status remains `skipped` even when
+the manual browser record is complete and `visual_review: passed`; an automated
+`failed` result likewise remains `failed`. An unconstrained browser glance can
+support perceptual review only.
 
 Report exactly one truthful status:
 
@@ -409,3 +426,41 @@ correction_rounds: 0|1|2
 Derive `browser_evidence` only from the latest artifact-bound `visual-check` receipt. Record any manual browser work separately with its artifact binding, viewport/theme scope, and observations; never use it or `visual_review` to overwrite the automated status.
 
 Opening, preview status, Share Cards, and other viewer exports are not validation claims.
+
+## Large-world reader profile
+
+The standalone desktop viewer keeps the canonical SVG finite and unchanged. It
+derives a presentation-only `small` or `large` profile after fonts and Reader
+chrome settle. The authoritative constants and selectors live in
+`renderers/shared/desktop-readability.mjs`; the Viewer generator serializes that
+exact contract into the classic browser script. A second handwritten browser
+copy is not allowed.
+
+Fit-all uses `min(safeWidth/worldWidth, safeHeight/worldHeight)`. The measured
+labels are `text[data-node-label]`, `text[data-boundary-label]`, and node context
+text. Unrounded projected text below 6 CSS px selects `large`; exactly 6 px is
+`small`. Large mode is limited to ordinary standalone viewports wider than 720
+px with at least 360 px of available stage height. Its stage height is
+`min(900, floor(innerHeight - stageTop - belowStageRequiredHeight - 24))` and is
+independent of canonical world dimensions.
+
+Large mode deterministically frames the first readable candidate in this order:
+the first guided view, a start-kind node, then the first canonical node. A valid
+hash/deep link wins. Reset and `0` always return to scale 1 Fit-all. Any external
+camera call or trusted manual camera input releases the automatic-entry lease;
+late font, resize, or animation-frame work must not retake the camera.
+
+The maximum camera multiplier is finite and derived from the Fit-all world scale:
+`max(1, min(32, 4 / worldScaleFit))`. Target framing preserves complete bounds
+with 24 CSS px padding per side and raises the multiplier as needed for 6 px
+text. If complete containment and readability cannot both be met, completeness
+wins and browser evidence records `viewer/entry-text-unreadable` or
+`viewer/navigation-text-unreadable`. Camera transforms remain session-only and
+must never enter canonical SVG export.
+
+Raster and WebM export preflight the complete canonical output before creating a
+canvas. PNG/JPEG/WebP try integer scales from 4 down to 1 against an exact
+16,000,000-pixel limit. WebM retains `min(1, 1280 / viewBox.width)` and checks its
+actual even dimensions. If 1x (or the WebM size) is still over budget, no canvas
+is allocated; the error code is `export/raster-budget-exceeded` and SVG is the
+only suggested fallback.

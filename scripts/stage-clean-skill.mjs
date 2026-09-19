@@ -99,6 +99,9 @@ function requireTrackedFile(repoRoot, relative) {
 function excluded(relative) {
   if (EXCLUDED_FILES.has(relative)) return true;
   const insideSkill = relative.slice('archify/'.length);
+  // Repository-local demo/evidence generated for the Pi workflow review is
+  // intentionally tracked, but it is not part of the installable Skill.
+  if (insideSkill.startsWith('pi-current.')) return true;
   if (insideSkill === 'test' || insideSkill.startsWith('test/')) return true;
   return insideSkill.split('/').some((segment) => (
     EXCLUDED_SEGMENTS.has(segment) || segment.startsWith('.validator-check-')

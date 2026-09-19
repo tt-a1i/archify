@@ -128,9 +128,7 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
     for (const [name, action] of Object.entries(actions)) {
       await load(files.architecture);
       const text = await exported(`active-${name}`, action);
-      // Existing style.removeProperty calls can leave empty style attributes.
-      // Apart from that inert serialization detail, compare the entire SVG.
-      assert.equal(text.replace(/ style=""/g, ''), pristine.replace(/ style=""/g, ''), name);
+      assert.equal(text, pristine, name);
     }
   });
 

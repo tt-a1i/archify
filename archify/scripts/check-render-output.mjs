@@ -107,7 +107,8 @@ if (svgMatches.length === 1) {
   addCheck('finite_svg', nonFiniteAttrs.length === 0, nonFiniteAttrs);
   const legendStart = svg.indexOf('<!-- Legend -->');
   const beforeLegend = legendStart >= 0 ? svg.slice(0, legendStart) : svg;
-  const desktopReadabilityIssue = collectDesktopReadability(svgAttrs, beforeLegend);
+  const desktopReadability = collectDesktopReadability(svgAttrs, beforeLegend);
+  const desktopReadabilityIssue = desktopReadability?.browserEvidenceRequired ? desktopReadability : null;
   const arrows = collectArrows(beforeLegend);
   const diagonal = arrows.flatMap((arrow) => diagonalStraightSegments(arrow).map((segment) => ({ arrow, ...segment })));
   addCheck(
@@ -157,7 +158,10 @@ if (svgMatches.length === 1) {
   const rhythmIsError = qualityProfile === 'showcase';
   const labelClearanceIsError = qualityProfile === 'showcase';
   const labelContainmentIsError = qualityProfile === 'showcase';
-  const desktopReadabilityIsError = qualityProfile === 'showcase';
+  // A width-only static check cannot know the final fixed-stage height or
+  // overlay occlusion. Potential large worlds continue to artifact generation
+  // and require an artifact-bound real-Chrome receipt before handoff.
+  const desktopReadabilityIsError = false;
   const compositionErrors = (qualityGatesEnforced ? containerBorderRuns.length : 0)
     + (crossingIsError ? relationshipCrossings.length : 0)
     + (corridorIsError ? ambiguousCorridors.length : 0)
@@ -188,10 +192,14 @@ if (svgMatches.length === 1) {
       labelCanvasOverflowIssues: labelCanvasOverflow.length,
       minLabelRouteClearance: minimumLabelRouteClearance(labelRouteMeasurements),
       desktopReadabilityIssues: desktopReadabilityIssue ? 1 : 0,
-      minProjectedNodeTextPx: desktopReadabilityIssue?.projectedFontPx ?? null,
+      minProjectedNodeTextPx: desktopReadability?.projectedFontPx ?? null,
       ...roundedRouteMetrics(routeMetrics),
     },
     suggestedLimits: { bendsPerRelationship: 2, stretch: 1.35, segmentPx: 16, microSegmentPx: 8 },
+    readability: desktopReadability || {
+      status: 'not-applicable',
+      browserEvidenceRequired: false,
+    },
     issues: [
       ...containerBorderRuns.map((hit) => ({
         severity: qualityGatesEnforced ? 'error' : 'warning',
@@ -261,7 +269,7 @@ if (svgMatches.length === 1) {
         to: hit.end.map((value) => Math.round(value * 10) / 10),
       })),
       ...(desktopReadabilityIssue ? [{
-        severity: desktopReadabilityIsError ? 'error' : 'warning',
+        severity: 'warning',
         code: 'composition/desktop-readability',
         ...(desktopReadabilityIssue.nodeId ? { nodeId: desktopReadabilityIssue.nodeId } : {}),
         viewportWidth: DESKTOP_READABILITY_VIEWPORT.width,
@@ -720,7 +728,6 @@ function collectDesktopReadability(svgAttrs, fragment) {
     const fontSize = Number.parseFloat(attrs['font-size'] || '');
     if (!Number.isFinite(fontSize)) continue;
     const projected = projectedNodeTextPx(fontSize, viewBoxWidth);
-    if (projected >= MIN_PROJECTED_NODE_TEXT_PX) continue;
     const candidate = {
       ...(nodeOwners.at(-1) ? { nodeId: nodeOwners.at(-1) } : {}),
       viewBoxWidth,
@@ -734,7 +741,13 @@ function collectDesktopReadability(svgAttrs, fragment) {
     };
     if (!worst || candidate.projectedFontPx < worst.projectedFontPx) worst = candidate;
   }
-  return worst;
+  if (!worst) return null;
+  const browserEvidenceRequired = worst.projectedFontPx < MIN_PROJECTED_NODE_TEXT_PX;
+  return {
+    ...worst,
+    status: browserEvidenceRequired ? 'potential-large/pending-browser' : 'small-static-pass',
+    browserEvidenceRequired,
+  };
 }
 
 function estimatedTextWidth(text, fontSize) {

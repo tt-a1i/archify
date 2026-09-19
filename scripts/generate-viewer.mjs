@@ -3,6 +3,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  LARGE_WORLD_READABILITY_CONTRACT,
+  deriveLargeWorldReadabilityWithContract,
+} from '../archify/renderers/shared/desktop-readability.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'archify/assets/template.html');
@@ -11,6 +15,7 @@ const output = path.join(root, 'archify/assets/template.html');
 // the inlined block sits inside the surrounding `<style>` / `<script>` tags at
 // the same depth the marker occupies. JS fragments need no indent because their
 // markers are already at column 0; the standalone CSS file needs four spaces.
+const readabilityMarker = '/* ARCHIFY:READABILITY_CONTRACT */';
 const fragments = [
   ['/* ARCHIFY:VIEWER_CSS */', 'viewer.css', 4],
   ['/* ARCHIFY:EXPORT */', 'export.js'],
@@ -45,6 +50,12 @@ try {
     throw new Error('Usage: node scripts/generate-viewer.mjs [--check]');
   }
   let generated = fs.readFileSync(path.join(root, 'viewer/template.source.html'), 'utf8');
+  const readabilityParts = generated.split(readabilityMarker);
+  if (readabilityParts.length !== 2) throw new Error('Viewer source must contain exactly one readability contract marker.');
+  generated = readabilityParts[0] +
+    `var archifyReadabilityContract = Object.freeze(${JSON.stringify(LARGE_WORLD_READABILITY_CONTRACT)});\n` +
+    `var archifyDeriveLargeWorldReadability = (${deriveLargeWorldReadabilityWithContract.toString()}).bind(null, archifyReadabilityContract);` +
+    readabilityParts[1];
   for (const [marker, file, indent = 0] of fragments) {
     const source = fs.readFileSync(path.join(root, 'viewer', file), 'utf8');
     const parts = generated.split(marker);

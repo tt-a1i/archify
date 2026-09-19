@@ -94,6 +94,7 @@
           el.removeAttribute('data-story-beat-state');
           el.removeAttribute('data-story-beat-step');
           el.style.removeProperty('--story-step');
+          if (!el.style.cssText) el.removeAttribute('style');
         });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-focus-match], [data-focus-selected]'), function (el) {
           el.removeAttribute('data-focus-match');
@@ -133,6 +134,7 @@
           el.removeAttribute('data-route-journey-state');
           el.removeAttribute('data-route-journey-current');
           el.style.removeProperty('--route-step');
+          if (!el.style.cssText) el.removeAttribute('style');
         });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle]'), function (el) {
           el.removeAttribute('data-share-route-match');
@@ -153,6 +155,14 @@
         Array.prototype.forEach.call(clone.querySelectorAll('[data-node-id][aria-pressed]'), function (el) {
           el.setAttribute('aria-pressed', 'false');
         });
+        // Interaction modules may remove their data attributes before export
+        // while leaving an empty inline style shell behind. Empty style
+        // attributes carry no authored geometry or appearance and would make
+        // the canonical bytes depend on navigation history.
+        Array.prototype.forEach.call(clone.querySelectorAll('[style]'), function (el) {
+          if (!el.style.cssText) el.removeAttribute('style');
+        });
+        if (!clone.style.cssText) clone.removeAttribute('style');
         return !clone.hasAttribute('data-view-scale') &&
           !clone.hasAttribute('data-focus-active') &&
           !clone.hasAttribute('data-reach-active') &&

@@ -13,12 +13,14 @@
       var frame = 0;
       var settleFrame = 0;
       var lastWidth = 0;
+      var lastWorldReceipt = null;
       var WIDE_RATIO = 1.55;
       var MIN_DESKTOP_WIDTH = 1024;
       var MIN_READER_WIDTH = 960;
       var MAX_READER_WIDTH = 1920;
       var MIN_PROJECTED_NODE_TEXT_PX = 6;
       var SAFE_BOTTOM_GAP = 12;
+      var worldContract = archifyReadabilityContract || {};
 
       if (diagram && ratio >= WIDE_RATIO) {
         diagram.setAttribute('data-wide-diagram', 'true');
@@ -54,18 +56,31 @@
       }
       function eligible() {
         return Boolean(
-          shell && diagram && svg && (ratio >= WIDE_RATIO || measuredHeightFit) &&
-          window.innerWidth >= MIN_DESKTOP_WIDTH &&
+          ordinaryStandalone() && (ratio >= WIDE_RATIO || measuredHeightFit) &&
+          window.innerWidth >= MIN_DESKTOP_WIDTH
+        );
+      }
+      function ordinaryStandalone() {
+        return Boolean(
+          shell && diagram && svg &&
+          window.innerWidth > (worldContract.minimumDesktopViewportWidthExclusive || 720) &&
           html.getAttribute('data-embed') !== 'true' &&
           html.getAttribute('data-present') !== 'true' &&
           (!window.matchMedia || !window.matchMedia('print').matches)
         );
       }
-      function clear() {
+      function clearReader() {
         html.style.removeProperty('--archify-reader-width');
         html.removeAttribute('data-reader-layout');
         html.removeAttribute('data-reader-overflow');
         lastWidth = 0;
+      }
+      function clearWorldProfile() {
+        html.style.removeProperty('--archify-stage-height');
+        html.removeAttribute('data-world-measuring');
+        html.removeAttribute('data-world-profile');
+        diagram.removeAttribute('data-world-profile');
+        lastWorldReceipt = null;
       }
       function chromeMetrics() {
         var bodyStyle = window.getComputedStyle(body);
@@ -86,6 +101,96 @@
         html.style.setProperty('--archify-reader-width', rounded + 'px');
         html.setAttribute('data-reader-layout', 'adaptive');
         return true;
+      }
+      function minimumSourceFont() {
+        var selectors = Array.isArray(worldContract.labelSelectors) ? worldContract.labelSelectors : [];
+        var elements = selectors.length ? svg.querySelectorAll(selectors.join(',')) : [];
+        var minimum = null;
+        Array.prototype.forEach.call(elements, function (element) {
+          var value = number(window.getComputedStyle(element).fontSize || element.getAttribute('font-size'));
+          if (value > 0 && (minimum === null || value < minimum)) minimum = value;
+        });
+        return minimum === null ? 0 : minimum;
+      }
+      function measureWorldProfile() {
+        if (!ordinaryStandalone() || !viewBox || viewBox.width <= 0 || viewBox.height <= 0) {
+          clearWorldProfile();
+          return null;
+        }
+        var scrollState = ['guided-view-trail'].map(function (id) {
+          var element = document.getElementById(id);
+          return element ? { element: element, left: element.scrollLeft } : null;
+        }).filter(Boolean);
+        function finishProspectiveMeasurement() {
+          html.removeAttribute('data-world-measuring');
+          scrollState.forEach(function (state) { state.element.scrollLeft = state.left; });
+        }
+        html.setAttribute('data-world-measuring', 'true');
+        var bodyStyle = window.getComputedStyle(body);
+        var shellStyle = window.getComputedStyle(shell);
+        var diagramStyle = window.getComputedStyle(diagram);
+        var stageTop = diagram.getBoundingClientRect().top;
+        var belowStageRequiredHeight = outerHeight(cards) + number(shellStyle.paddingBottom) + number(bodyStyle.paddingBottom);
+        var availableStageHeight = Math.floor(
+          window.innerHeight - stageTop - belowStageRequiredHeight -
+          (worldContract.stageBottomGapCssPx || 24)
+        );
+        var minimumStageHeight = worldContract.minimumAvailableStageHeight || 360;
+        if (!Number.isFinite(availableStageHeight) || availableStageHeight < minimumStageHeight) {
+          finishProspectiveMeasurement();
+          clearWorldProfile();
+          return null;
+        }
+        var stageHeight = Math.min(worldContract.maximumStageHeight || 900, availableStageHeight);
+        var horizontalChrome = number(diagramStyle.paddingLeft) + number(diagramStyle.paddingRight) +
+          number(diagramStyle.borderLeftWidth) + number(diagramStyle.borderRightWidth);
+        var verticalChrome = number(diagramStyle.paddingTop) + number(diagramStyle.paddingBottom) +
+          number(diagramStyle.borderTopWidth) + number(diagramStyle.borderBottomWidth);
+        var prospectiveStageWidth = Math.min(
+          1440,
+          window.innerWidth - number(bodyStyle.paddingLeft) - number(bodyStyle.paddingRight)
+        );
+        var safeStageWidth = Math.max(1, prospectiveStageWidth - horizontalChrome);
+        var safeStageHeight = Math.max(1, stageHeight - verticalChrome);
+        var sourceFont = minimumSourceFont();
+        var derived = typeof archifyDeriveLargeWorldReadability === 'function'
+          ? archifyDeriveLargeWorldReadability({
+              safeStageWidth: safeStageWidth,
+              safeStageHeight: safeStageHeight,
+              canonicalWorldWidth: viewBox.width,
+              canonicalWorldHeight: viewBox.height,
+              minimumTargetSourceFontWorldUnits: sourceFont,
+              targetBoundsWidth: 1,
+              targetBoundsHeight: 1
+            })
+          : null;
+        finishProspectiveMeasurement();
+        if (!derived) {
+          clearWorldProfile();
+          return null;
+        }
+        var profile = derived.worldProfile;
+        if (profile === 'large') html.style.setProperty('--archify-stage-height', stageHeight + 'px');
+        else html.style.removeProperty('--archify-stage-height');
+        html.setAttribute('data-world-profile', profile);
+        diagram.setAttribute('data-world-profile', profile);
+        lastWorldReceipt = {
+          worldProfile: profile,
+          stageTop: stageTop,
+          belowStageRequiredHeight: belowStageRequiredHeight,
+          availableStageHeight: availableStageHeight,
+          stageHeight: stageHeight,
+          safeStageWidth: safeStageWidth,
+          safeStageHeight: safeStageHeight,
+          canonicalWorldWidth: viewBox.width,
+          canonicalWorldHeight: viewBox.height,
+          minimumSourceFontWorldUnits: sourceFont,
+          worldScaleFit: derived.worldScaleFit,
+          projectedTextPx: derived.projectedTextPx,
+          minimumProjectedTextPx: worldContract.minimumProjectedTextPx || 6,
+          obscurers: ['diagram-padding', 'navigation-dock']
+        };
+        return lastWorldReceipt;
       }
       function settleOverflow(minWidth) {
         if (settleFrame) cancelAnimationFrame(settleFrame);
@@ -109,31 +214,33 @@
       function measure() {
         frame = 0;
         if (!eligible()) {
-          clear();
-          return null;
+          clearReader();
+        } else {
+          var chrome = chromeMetrics();
+          var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
+          var readableWidth = viewBox && viewBox.width > 0
+            ? viewBox.width * minimumReadableScale() + chrome.diagramX
+            : MIN_READER_WIDTH;
+          var minWidth = Math.min(
+            measuredHeightFit && ratio < WIDE_RATIO ? readableWidth : MIN_READER_WIDTH,
+            viewportCap
+          );
+          var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
+          var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
+            outerHeight(header) + outerHeight(guided) + outerHeight(cards);
+          var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
+          var desiredWidth = availableSvgHeight * ratio + chrome.diagramX;
+          var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth));
+          applyWidth(width);
+          settleOverflow(minWidth);
         }
-        var chrome = chromeMetrics();
-        var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
-        var readableWidth = viewBox && viewBox.width > 0
-          ? viewBox.width * minimumReadableScale() + chrome.diagramX
-          : MIN_READER_WIDTH;
-        var minWidth = Math.min(
-          measuredHeightFit && ratio < WIDE_RATIO ? readableWidth : MIN_READER_WIDTH,
-          viewportCap
-        );
-        var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
-        var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
-          outerHeight(header) + outerHeight(guided) + outerHeight(cards);
-        var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
-        var desiredWidth = availableSvgHeight * ratio + chrome.diagramX;
-        var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth));
-        applyWidth(width);
-        settleOverflow(minWidth);
+        var world = measureWorldProfile();
         return {
           ratio: ratio,
-          width: Math.round(width),
-          availableSvgHeight: Math.round(availableSvgHeight),
-          fixedHeight: Math.round(fixedHeight)
+          width: lastWidth,
+          worldProfile: world ? world.worldProfile : null,
+          stageHeight: world ? world.stageHeight : 0,
+          projectedTextPx: world ? world.projectedTextPx : null
         };
       }
       function schedule() {
@@ -147,6 +254,8 @@
           lastWidth,
           html.getAttribute('data-reader-layout') || '',
           html.getAttribute('data-reader-overflow') || '',
+          html.getAttribute('data-world-profile') || '',
+          html.style.getPropertyValue('--archify-stage-height'),
           Math.ceil(document.documentElement.scrollWidth),
           Math.ceil(document.documentElement.scrollHeight),
           Math.ceil(document.body.scrollWidth),
@@ -186,6 +295,10 @@
         schedule: schedule,
         whenStable: whenStable,
         active: function () { return html.getAttribute('data-reader-layout') === 'adaptive'; },
-        receipt: function () { return { ratio: ratio, width: lastWidth }; }
+        receipt: function () {
+          var receipt = { ratio: ratio, width: lastWidth };
+          if (lastWorldReceipt) Object.keys(lastWorldReceipt).forEach(function (key) { receipt[key] = lastWorldReceipt[key]; });
+          return receipt;
+        }
       };
     })();

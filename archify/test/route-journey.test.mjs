@@ -92,7 +92,8 @@ test('playback is explicit, finite, resumable, and never leaks position into the
 test('motion, camera, layered Escape, mobile, print, and embed boundaries stay explicit', () => {
   assert.match(template, /Archify\.motionGovernor\.capable === true[\s\S]*?!Archify\.motionGovernor\.isPaused\(\)/);
   assert.match(template, /Archify\.motionGovernor\.claim\('route'/);
-  assert.match(template, /reason: 'route-journey',[\s\S]*?maxScale: 1\.65,[\s\S]*?padding: 64,[\s\S]*?duration: 360/);
+  assert.match(template, /reason: 'route-journey',[\s\S]*?maxScale: 1\.65,[\s\S]*?duration: 360/);
+  assert.doesNotMatch(template, /padding:\s*64/);
   assert.match(template, /Archify\.routeProbe\.pauseJourney\(\{ preserveElapsed: true, reason: reason \|\| 'manual' \}\)/);
   assert.match(template, /event\.target\.closest\('\.diagram-nav, \.focus-chip, \.node-finder, \.diagram-guide, \.overview-map, \.route-probe, \.semantic-lens'\)/);
   assert.match(template, /reason: 'guide'/);

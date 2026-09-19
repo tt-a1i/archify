@@ -5,6 +5,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import {
+  LARGE_WORLD_READABILITY_CONTRACT,
+  deriveLargeWorldReadabilityWithContract,
+} from '../renderers/shared/desktop-readability.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const marker = '/* ARCHIFY:READER_LAYOUT */';
@@ -21,6 +25,7 @@ const lensMarker = '/* ARCHIFY:SEMANTIC_LENS */';
 const routeMarker = '/* ARCHIFY:ROUTE_PROBE */';
 const focusMarker = '/* ARCHIFY:FOCUS */';
 const guidedMarker = '/* ARCHIFY:GUIDED_VIEWS */';
+const readabilityMarker = '/* ARCHIFY:READABILITY_CONTRACT */';
 const fragments = { viewerCss: viewerCssMarker, export: exportMarker, reader: marker, cleanup: cleanupMarker, chrome: chromeMarker, camera: cameraMarker, radar: radarMarker, motion: motionMarker, finder: finderMarker, intent: intentMarker, lens: lensMarker, route: routeMarker, guided: guidedMarker, focus: focusMarker };
 
 function fixture(t) {
@@ -28,8 +33,10 @@ function fixture(t) {
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, 'scripts'));
   fs.mkdirSync(path.join(root, 'archify/assets'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'archify/renderers/shared'), { recursive: true });
   fs.cpSync(path.join(repoRoot, 'viewer'), path.join(root, 'viewer'), { recursive: true });
   fs.copyFileSync(path.join(repoRoot, 'scripts/generate-viewer.mjs'), path.join(root, 'scripts/generate-viewer.mjs'));
+  fs.copyFileSync(path.join(repoRoot, 'archify/renderers/shared/desktop-readability.mjs'), path.join(root, 'archify/renderers/shared/desktop-readability.mjs'));
   const output = path.join(root, 'archify/assets/template.html');
   fs.copyFileSync(path.join(repoRoot, 'archify/assets/template.html'), output);
   return {
@@ -49,6 +56,7 @@ function fixture(t) {
     route: path.join(root, 'viewer/route-probe.js'),
     guided: path.join(root, 'viewer/guided-views.js'),
     focus: path.join(root, 'viewer/focus.js'),
+    readability: path.join(root, 'archify/renderers/shared/desktop-readability.mjs'),
     run: (...args) => spawnSync(process.execPath, [path.join(root, 'scripts/generate-viewer.mjs'), ...args], {
       cwd: os.tmpdir(), encoding: 'utf8',
     }),
@@ -82,6 +90,16 @@ test('editing any authoritative source requires explicit regeneration', (t) => {
     assert.equal(f.run('--check').status, 0);
     assert.notDeepEqual(fs.readFileSync(f.output), previous);
   }
+});
+
+test('editing the authoritative readability contract requires regeneration', (t) => {
+  const f = fixture(t);
+  const previous = fs.readFileSync(f.output);
+  fs.writeFileSync(f.readability, fs.readFileSync(f.readability, 'utf8').replace('maximumFitMultiplier: 32', 'maximumFitMultiplier: 31'));
+  assert.equal(f.run('--check').status, 1);
+  assert.deepEqual(fs.readFileSync(f.output), previous);
+  assert.equal(f.run().status, 0);
+  assert.notDeepEqual(fs.readFileSync(f.output), previous);
 });
 
 test('a missing generated template is stale and can be regenerated', (t) => {
@@ -134,7 +152,7 @@ test('assembly preserves literal replacement tokens, Unicode and source line end
   const f = fixture(t);
   const reader = '// $& $\' $` $$ 中文 \u{1f5fa}\r\n(function () {})();\r\n';
   const css = '/* === TOKENS === */\r\n:root { --x: 1; }\r\n';
-  fs.writeFileSync(f.shell, `<style>${viewerCssMarker}</style><script>\r\n${focusMarker}${guidedMarker}${routeMarker}${lensMarker}${intentMarker}${finderMarker}${motionMarker}${radarMarker}${cameraMarker}${chromeMarker}${exportMarker}${marker}</script>\n`);
+  fs.writeFileSync(f.shell, `<style>${viewerCssMarker}</style><script>\r\n${readabilityMarker}${focusMarker}${guidedMarker}${routeMarker}${lensMarker}${intentMarker}${finderMarker}${motionMarker}${radarMarker}${cameraMarker}${chromeMarker}${exportMarker}${marker}</script>\n`);
   fs.writeFileSync(f.viewerCss, css);
   fs.writeFileSync(f.export, reader + cleanupMarker);
   fs.writeFileSync(f.cleanup, reader);
@@ -157,11 +175,18 @@ test('assembly preserves literal replacement tokens, Unicode and source line end
   // marker line itself are stripped from `parts[1]` so the reindented CSS
   // ends flush with the closing </style> tag.
   const indentedCss = css.split('\n').map((line) => line.length === 0 ? line : '    ' + line).join('\n');
+  const injected = `var archifyReadabilityContract = Object.freeze(${JSON.stringify(LARGE_WORLD_READABILITY_CONTRACT)});\nvar archifyDeriveLargeWorldReadability = (${deriveLargeWorldReadabilityWithContract.toString()}).bind(null, archifyReadabilityContract);`;
   assert.equal(
     fs.readFileSync(f.output, 'utf8'),
-    `<style>${indentedCss}</style><script>\r\n${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}</script>\n`,
+    `<style>${indentedCss}</style><script>\r\n${injected}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}</script>\n`,
   );
   assert.equal(f.run('--check').status, 0);
+});
+
+test('browser readability contract is generated field-for-field from the authoritative module', () => {
+  const template = fs.readFileSync(path.join(repoRoot, 'archify/assets/template.html'), 'utf8');
+  assert.match(template, new RegExp(`var archifyReadabilityContract = Object\\.freeze\\(${JSON.stringify(LARGE_WORLD_READABILITY_CONTRACT).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\);`));
+  assert.ok(template.includes(`var archifyDeriveLargeWorldReadability = (${deriveLargeWorldReadabilityWithContract.toString()}).bind(null, archifyReadabilityContract);`));
 });
 
 test('an invalid invocation cannot silently regenerate the template', (t) => {

@@ -1,0 +1,2223 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Large-world Workflow 100",
+    "subtitle": "100 nodes · deterministic archify-hybrid-large-world-v1",
+    "output": "workflow-100.workflow.html",
+    "locale": "zh-CN",
+    "quality_profile": "standard",
+    "visual_preset": "blueprint",
+    "animation": "none",
+    "views": [
+      {
+        "id": "readable-entry",
+        "label": "可读入口",
+        "focus": [
+          "w-0"
+        ],
+        "note": "单节点入口必须达到 6px。"
+      },
+      {
+        "id": "oversized-world",
+        "label": "完整大世界",
+        "focus": [
+          "w-0",
+          "w-1",
+          "w-2",
+          "w-3",
+          "w-4",
+          "w-5",
+          "w-6",
+          "w-7",
+          "w-8",
+          "w-9",
+          "w-10",
+          "w-11",
+          "w-12",
+          "w-13",
+          "w-14",
+          "w-15",
+          "w-16",
+          "w-17",
+          "w-18",
+          "w-19",
+          "w-20",
+          "w-21",
+          "w-22",
+          "w-23",
+          "w-24",
+          "w-25",
+          "w-26",
+          "w-27",
+          "w-28",
+          "w-29",
+          "w-30",
+          "w-31",
+          "w-32",
+          "w-33",
+          "w-34",
+          "w-35",
+          "w-36",
+          "w-37",
+          "w-38",
+          "w-39",
+          "w-40",
+          "w-41",
+          "w-42",
+          "w-43",
+          "w-44",
+          "w-45",
+          "w-46",
+          "w-47",
+          "w-48",
+          "w-49",
+          "w-50",
+          "w-51",
+          "w-52",
+          "w-53",
+          "w-54",
+          "w-55",
+          "w-56",
+          "w-57",
+          "w-58",
+          "w-59",
+          "w-60",
+          "w-61",
+          "w-62",
+          "w-63",
+          "w-64",
+          "w-65",
+          "w-66",
+          "w-67",
+          "w-68",
+          "w-69",
+          "w-70",
+          "w-71",
+          "w-72",
+          "w-73",
+          "w-74",
+          "w-75",
+          "w-76",
+          "w-77",
+          "w-78",
+          "w-79",
+          "w-80",
+          "w-81",
+          "w-82",
+          "w-83",
+          "w-84",
+          "w-85",
+          "w-86",
+          "w-87",
+          "w-88",
+          "w-89",
+          "w-90",
+          "w-91",
+          "w-92",
+          "w-93",
+          "w-94",
+          "w-95",
+          "w-96",
+          "w-97",
+          "w-98",
+          "w-99"
+        ],
+        "note": "完整性优先的超大目标。"
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "lane-0",
+      "label": "业务泳道 01 · 稳定职责边界"
+    },
+    {
+      "id": "lane-1",
+      "label": "业务泳道 02 · 稳定职责边界"
+    },
+    {
+      "id": "lane-2",
+      "label": "业务泳道 03 · 稳定职责边界"
+    },
+    {
+      "id": "lane-3",
+      "label": "业务泳道 04 · 稳定职责边界"
+    },
+    {
+      "id": "lane-4",
+      "label": "业务泳道 05 · 稳定职责边界"
+    },
+    {
+      "id": "lane-5",
+      "label": "业务泳道 06 · 稳定职责边界"
+    },
+    {
+      "id": "lane-6",
+      "label": "业务泳道 07 · 稳定职责边界",
+      "variant": "exception"
+    },
+    {
+      "id": "lane-7",
+      "label": "业务泳道 08 · 稳定职责边界"
+    },
+    {
+      "id": "lane-8",
+      "label": "业务泳道 09 · 稳定职责边界"
+    },
+    {
+      "id": "lane-9",
+      "label": "业务泳道 10 · 稳定职责边界"
+    },
+    {
+      "id": "lane-10",
+      "label": "业务泳道 11 · 稳定职责边界"
+    },
+    {
+      "id": "lane-11",
+      "label": "业务泳道 12 · 稳定职责边界"
+    },
+    {
+      "id": "lane-12",
+      "label": "业务泳道 13 · 稳定职责边界"
+    },
+    {
+      "id": "lane-13",
+      "label": "业务泳道 14 · 稳定职责边界",
+      "variant": "exception"
+    },
+    {
+      "id": "lane-14",
+      "label": "业务泳道 15 · 稳定职责边界"
+    },
+    {
+      "id": "lane-15",
+      "label": "业务泳道 16 · 稳定职责边界"
+    },
+    {
+      "id": "lane-16",
+      "label": "业务泳道 17 · 稳定职责边界"
+    }
+  ],
+  "phases": [
+    {
+      "id": "understand",
+      "label": "理解与约束",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "decide",
+      "label": "判定与执行",
+      "fromCol": 2,
+      "toCol": 3
+    },
+    {
+      "id": "deliver",
+      "label": "交付与确认",
+      "fromCol": 4,
+      "toCol": 5
+    }
+  ],
+  "mainPath": [
+    "w-0",
+    "w-1",
+    "w-2",
+    "w-3",
+    "w-4",
+    "w-5"
+  ],
+  "nodes": [
+    {
+      "id": "w-0",
+      "lane": "lane-0",
+      "col": 0,
+      "type": "frontend",
+      "label": "节点0负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 1 · phase 1",
+      "width": 300,
+      "tag": "START"
+    },
+    {
+      "id": "w-1",
+      "lane": "lane-0",
+      "col": 1,
+      "type": "frontend",
+      "label": "处理节点 1",
+      "sublabel": "lane 1 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-2",
+      "lane": "lane-0",
+      "col": 2,
+      "type": "frontend",
+      "label": "处理节点 2",
+      "sublabel": "lane 1 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-3",
+      "lane": "lane-0",
+      "col": 3,
+      "type": "frontend",
+      "label": "处理节点 3",
+      "sublabel": "lane 1 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-4",
+      "lane": "lane-0",
+      "col": 4,
+      "type": "frontend",
+      "label": "处理节点 4",
+      "sublabel": "lane 1 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-5",
+      "lane": "lane-0",
+      "col": 5,
+      "type": "frontend",
+      "label": "节点5负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 1 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-6",
+      "lane": "lane-1",
+      "col": 0,
+      "type": "security",
+      "label": "处理节点 6",
+      "sublabel": "lane 2 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-7",
+      "lane": "lane-1",
+      "col": 1,
+      "type": "security",
+      "label": "处理节点 7",
+      "sublabel": "lane 2 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-8",
+      "lane": "lane-1",
+      "col": 2,
+      "type": "security",
+      "label": "处理节点 8",
+      "sublabel": "lane 2 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-9",
+      "lane": "lane-1",
+      "col": 3,
+      "type": "security",
+      "label": "处理节点 9",
+      "sublabel": "lane 2 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-10",
+      "lane": "lane-1",
+      "col": 4,
+      "type": "security",
+      "label": "节点10负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 2 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-11",
+      "lane": "lane-1",
+      "col": 5,
+      "type": "security",
+      "label": "处理节点 11",
+      "sublabel": "lane 2 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-12",
+      "lane": "lane-2",
+      "col": 0,
+      "type": "backend",
+      "label": "处理节点 12",
+      "sublabel": "lane 3 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-13",
+      "lane": "lane-2",
+      "col": 1,
+      "type": "backend",
+      "label": "处理节点 13",
+      "sublabel": "lane 3 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-14",
+      "lane": "lane-2",
+      "col": 2,
+      "type": "backend",
+      "label": "处理节点 14",
+      "sublabel": "lane 3 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-15",
+      "lane": "lane-2",
+      "col": 3,
+      "type": "backend",
+      "label": "节点15负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 3 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-16",
+      "lane": "lane-2",
+      "col": 4,
+      "type": "backend",
+      "label": "处理节点 16",
+      "sublabel": "lane 3 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-17",
+      "lane": "lane-2",
+      "col": 5,
+      "type": "backend",
+      "label": "处理节点 17",
+      "sublabel": "lane 3 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-18",
+      "lane": "lane-3",
+      "col": 0,
+      "type": "database",
+      "label": "处理节点 18",
+      "sublabel": "lane 4 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-19",
+      "lane": "lane-3",
+      "col": 1,
+      "type": "database",
+      "label": "处理节点 19",
+      "sublabel": "lane 4 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-20",
+      "lane": "lane-3",
+      "col": 2,
+      "type": "database",
+      "label": "节点20负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 4 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-21",
+      "lane": "lane-3",
+      "col": 3,
+      "type": "database",
+      "label": "处理节点 21",
+      "sublabel": "lane 4 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-22",
+      "lane": "lane-3",
+      "col": 4,
+      "type": "database",
+      "label": "处理节点 22",
+      "sublabel": "lane 4 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-23",
+      "lane": "lane-3",
+      "col": 5,
+      "type": "database",
+      "label": "处理节点 23",
+      "sublabel": "lane 4 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-24",
+      "lane": "lane-4",
+      "col": 0,
+      "type": "cloud",
+      "label": "处理节点 24",
+      "sublabel": "lane 5 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-25",
+      "lane": "lane-4",
+      "col": 1,
+      "type": "cloud",
+      "label": "节点25负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 5 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-26",
+      "lane": "lane-4",
+      "col": 2,
+      "type": "cloud",
+      "label": "处理节点 26",
+      "sublabel": "lane 5 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-27",
+      "lane": "lane-4",
+      "col": 3,
+      "type": "cloud",
+      "label": "处理节点 27",
+      "sublabel": "lane 5 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-28",
+      "lane": "lane-4",
+      "col": 4,
+      "type": "cloud",
+      "label": "处理节点 28",
+      "sublabel": "lane 5 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-29",
+      "lane": "lane-4",
+      "col": 5,
+      "type": "cloud",
+      "label": "处理节点 29",
+      "sublabel": "lane 5 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-30",
+      "lane": "lane-5",
+      "col": 0,
+      "type": "messagebus",
+      "label": "节点30负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 6 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-31",
+      "lane": "lane-5",
+      "col": 1,
+      "type": "messagebus",
+      "label": "处理节点 31",
+      "sublabel": "lane 6 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-32",
+      "lane": "lane-5",
+      "col": 2,
+      "type": "messagebus",
+      "label": "处理节点 32",
+      "sublabel": "lane 6 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-33",
+      "lane": "lane-5",
+      "col": 3,
+      "type": "messagebus",
+      "label": "处理节点 33",
+      "sublabel": "lane 6 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-34",
+      "lane": "lane-5",
+      "col": 4,
+      "type": "messagebus",
+      "label": "处理节点 34",
+      "sublabel": "lane 6 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-35",
+      "lane": "lane-5",
+      "col": 5,
+      "type": "messagebus",
+      "label": "节点35负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 6 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-36",
+      "lane": "lane-6",
+      "col": 0,
+      "type": "frontend",
+      "label": "处理节点 36",
+      "sublabel": "lane 7 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-37",
+      "lane": "lane-6",
+      "col": 1,
+      "type": "frontend",
+      "label": "处理节点 37",
+      "sublabel": "lane 7 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-38",
+      "lane": "lane-6",
+      "col": 2,
+      "type": "frontend",
+      "label": "处理节点 38",
+      "sublabel": "lane 7 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-39",
+      "lane": "lane-6",
+      "col": 3,
+      "type": "frontend",
+      "label": "处理节点 39",
+      "sublabel": "lane 7 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-40",
+      "lane": "lane-6",
+      "col": 4,
+      "type": "frontend",
+      "label": "节点40负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 7 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-41",
+      "lane": "lane-6",
+      "col": 5,
+      "type": "frontend",
+      "label": "处理节点 41",
+      "sublabel": "lane 7 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-42",
+      "lane": "lane-7",
+      "col": 0,
+      "type": "security",
+      "label": "处理节点 42",
+      "sublabel": "lane 8 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-43",
+      "lane": "lane-7",
+      "col": 1,
+      "type": "security",
+      "label": "处理节点 43",
+      "sublabel": "lane 8 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-44",
+      "lane": "lane-7",
+      "col": 2,
+      "type": "security",
+      "label": "处理节点 44",
+      "sublabel": "lane 8 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-45",
+      "lane": "lane-7",
+      "col": 3,
+      "type": "security",
+      "label": "节点45负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 8 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-46",
+      "lane": "lane-7",
+      "col": 4,
+      "type": "security",
+      "label": "处理节点 46",
+      "sublabel": "lane 8 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-47",
+      "lane": "lane-7",
+      "col": 5,
+      "type": "security",
+      "label": "处理节点 47",
+      "sublabel": "lane 8 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-48",
+      "lane": "lane-8",
+      "col": 0,
+      "type": "backend",
+      "label": "处理节点 48",
+      "sublabel": "lane 9 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-49",
+      "lane": "lane-8",
+      "col": 1,
+      "type": "backend",
+      "label": "处理节点 49",
+      "sublabel": "lane 9 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-50",
+      "lane": "lane-8",
+      "col": 2,
+      "type": "backend",
+      "label": "节点50负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 9 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-51",
+      "lane": "lane-8",
+      "col": 3,
+      "type": "backend",
+      "label": "处理节点 51",
+      "sublabel": "lane 9 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-52",
+      "lane": "lane-8",
+      "col": 4,
+      "type": "backend",
+      "label": "处理节点 52",
+      "sublabel": "lane 9 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-53",
+      "lane": "lane-8",
+      "col": 5,
+      "type": "backend",
+      "label": "处理节点 53",
+      "sublabel": "lane 9 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-54",
+      "lane": "lane-9",
+      "col": 0,
+      "type": "database",
+      "label": "处理节点 54",
+      "sublabel": "lane 10 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-55",
+      "lane": "lane-9",
+      "col": 1,
+      "type": "database",
+      "label": "节点55负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 10 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-56",
+      "lane": "lane-9",
+      "col": 2,
+      "type": "database",
+      "label": "处理节点 56",
+      "sublabel": "lane 10 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-57",
+      "lane": "lane-9",
+      "col": 3,
+      "type": "database",
+      "label": "处理节点 57",
+      "sublabel": "lane 10 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-58",
+      "lane": "lane-9",
+      "col": 4,
+      "type": "database",
+      "label": "处理节点 58",
+      "sublabel": "lane 10 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-59",
+      "lane": "lane-9",
+      "col": 5,
+      "type": "database",
+      "label": "处理节点 59",
+      "sublabel": "lane 10 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-60",
+      "lane": "lane-10",
+      "col": 0,
+      "type": "cloud",
+      "label": "节点60负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 11 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-61",
+      "lane": "lane-10",
+      "col": 1,
+      "type": "cloud",
+      "label": "处理节点 61",
+      "sublabel": "lane 11 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-62",
+      "lane": "lane-10",
+      "col": 2,
+      "type": "cloud",
+      "label": "处理节点 62",
+      "sublabel": "lane 11 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-63",
+      "lane": "lane-10",
+      "col": 3,
+      "type": "cloud",
+      "label": "处理节点 63",
+      "sublabel": "lane 11 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-64",
+      "lane": "lane-10",
+      "col": 4,
+      "type": "cloud",
+      "label": "处理节点 64",
+      "sublabel": "lane 11 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-65",
+      "lane": "lane-10",
+      "col": 5,
+      "type": "cloud",
+      "label": "节点65负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 11 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-66",
+      "lane": "lane-11",
+      "col": 0,
+      "type": "messagebus",
+      "label": "处理节点 66",
+      "sublabel": "lane 12 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-67",
+      "lane": "lane-11",
+      "col": 1,
+      "type": "messagebus",
+      "label": "处理节点 67",
+      "sublabel": "lane 12 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-68",
+      "lane": "lane-11",
+      "col": 2,
+      "type": "messagebus",
+      "label": "处理节点 68",
+      "sublabel": "lane 12 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-69",
+      "lane": "lane-11",
+      "col": 3,
+      "type": "messagebus",
+      "label": "处理节点 69",
+      "sublabel": "lane 12 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-70",
+      "lane": "lane-11",
+      "col": 4,
+      "type": "messagebus",
+      "label": "节点70负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 12 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-71",
+      "lane": "lane-11",
+      "col": 5,
+      "type": "messagebus",
+      "label": "处理节点 71",
+      "sublabel": "lane 12 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-72",
+      "lane": "lane-12",
+      "col": 0,
+      "type": "frontend",
+      "label": "处理节点 72",
+      "sublabel": "lane 13 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-73",
+      "lane": "lane-12",
+      "col": 1,
+      "type": "frontend",
+      "label": "处理节点 73",
+      "sublabel": "lane 13 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-74",
+      "lane": "lane-12",
+      "col": 2,
+      "type": "frontend",
+      "label": "处理节点 74",
+      "sublabel": "lane 13 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-75",
+      "lane": "lane-12",
+      "col": 3,
+      "type": "frontend",
+      "label": "节点75负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 13 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-76",
+      "lane": "lane-12",
+      "col": 4,
+      "type": "frontend",
+      "label": "处理节点 76",
+      "sublabel": "lane 13 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-77",
+      "lane": "lane-12",
+      "col": 5,
+      "type": "frontend",
+      "label": "处理节点 77",
+      "sublabel": "lane 13 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-78",
+      "lane": "lane-13",
+      "col": 0,
+      "type": "security",
+      "label": "处理节点 78",
+      "sublabel": "lane 14 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-79",
+      "lane": "lane-13",
+      "col": 1,
+      "type": "security",
+      "label": "处理节点 79",
+      "sublabel": "lane 14 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-80",
+      "lane": "lane-13",
+      "col": 2,
+      "type": "security",
+      "label": "节点80负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 14 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-81",
+      "lane": "lane-13",
+      "col": 3,
+      "type": "security",
+      "label": "处理节点 81",
+      "sublabel": "lane 14 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-82",
+      "lane": "lane-13",
+      "col": 4,
+      "type": "security",
+      "label": "处理节点 82",
+      "sublabel": "lane 14 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-83",
+      "lane": "lane-13",
+      "col": 5,
+      "type": "security",
+      "label": "处理节点 83",
+      "sublabel": "lane 14 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-84",
+      "lane": "lane-14",
+      "col": 0,
+      "type": "backend",
+      "label": "处理节点 84",
+      "sublabel": "lane 15 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-85",
+      "lane": "lane-14",
+      "col": 1,
+      "type": "backend",
+      "label": "节点85负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 15 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-86",
+      "lane": "lane-14",
+      "col": 2,
+      "type": "backend",
+      "label": "处理节点 86",
+      "sublabel": "lane 15 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-87",
+      "lane": "lane-14",
+      "col": 3,
+      "type": "backend",
+      "label": "处理节点 87",
+      "sublabel": "lane 15 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-88",
+      "lane": "lane-14",
+      "col": 4,
+      "type": "backend",
+      "label": "处理节点 88",
+      "sublabel": "lane 15 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-89",
+      "lane": "lane-14",
+      "col": 5,
+      "type": "backend",
+      "label": "处理节点 89",
+      "sublabel": "lane 15 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-90",
+      "lane": "lane-15",
+      "col": 0,
+      "type": "database",
+      "label": "节点90负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 16 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-91",
+      "lane": "lane-15",
+      "col": 1,
+      "type": "database",
+      "label": "处理节点 91",
+      "sublabel": "lane 16 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-92",
+      "lane": "lane-15",
+      "col": 2,
+      "type": "database",
+      "label": "处理节点 92",
+      "sublabel": "lane 16 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-93",
+      "lane": "lane-15",
+      "col": 3,
+      "type": "database",
+      "label": "处理节点 93",
+      "sublabel": "lane 16 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-94",
+      "lane": "lane-15",
+      "col": 4,
+      "type": "database",
+      "label": "处理节点 94",
+      "sublabel": "lane 16 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-95",
+      "lane": "lane-15",
+      "col": 5,
+      "type": "database",
+      "label": "节点95负责跨模块一致性校验与完整证据交付",
+      "sublabel": "lane 16 · phase 3",
+      "width": 300
+    },
+    {
+      "id": "w-96",
+      "lane": "lane-16",
+      "col": 0,
+      "type": "cloud",
+      "label": "处理节点 96",
+      "sublabel": "lane 17 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-97",
+      "lane": "lane-16",
+      "col": 1,
+      "type": "cloud",
+      "label": "处理节点 97",
+      "sublabel": "lane 17 · phase 1",
+      "width": 300
+    },
+    {
+      "id": "w-98",
+      "lane": "lane-16",
+      "col": 2,
+      "type": "cloud",
+      "label": "处理节点 98",
+      "sublabel": "lane 17 · phase 2",
+      "width": 300
+    },
+    {
+      "id": "w-99",
+      "lane": "lane-16",
+      "col": 3,
+      "type": "cloud",
+      "label": "处理节点 99",
+      "sublabel": "lane 17 · phase 2",
+      "width": 300
+    }
+  ],
+  "edges": [
+    {
+      "id": "w-h-0",
+      "from": "w-0",
+      "to": "w-1",
+      "role": "main"
+    },
+    {
+      "id": "w-v-0",
+      "from": "w-0",
+      "to": "w-6",
+      "role": "async"
+    },
+    {
+      "id": "w-h-1",
+      "from": "w-1",
+      "to": "w-2",
+      "role": "main"
+    },
+    {
+      "id": "w-v-1",
+      "from": "w-1",
+      "to": "w-7",
+      "role": "async"
+    },
+    {
+      "id": "w-h-2",
+      "from": "w-2",
+      "to": "w-3",
+      "role": "main"
+    },
+    {
+      "id": "w-v-2",
+      "from": "w-2",
+      "to": "w-8",
+      "role": "async"
+    },
+    {
+      "id": "w-h-3",
+      "from": "w-3",
+      "to": "w-4",
+      "role": "main"
+    },
+    {
+      "id": "w-v-3",
+      "from": "w-3",
+      "to": "w-9",
+      "role": "async"
+    },
+    {
+      "id": "w-h-4",
+      "from": "w-4",
+      "to": "w-5",
+      "role": "main"
+    },
+    {
+      "id": "w-v-4",
+      "from": "w-4",
+      "to": "w-10",
+      "role": "async"
+    },
+    {
+      "id": "w-v-5",
+      "from": "w-5",
+      "to": "w-11",
+      "role": "async"
+    },
+    {
+      "id": "w-h-6",
+      "from": "w-6",
+      "to": "w-7",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-6",
+      "from": "w-6",
+      "to": "w-12",
+      "role": "async"
+    },
+    {
+      "id": "w-h-7",
+      "from": "w-7",
+      "to": "w-8",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-7",
+      "from": "w-7",
+      "to": "w-13",
+      "role": "async"
+    },
+    {
+      "id": "w-h-8",
+      "from": "w-8",
+      "to": "w-9",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-8",
+      "from": "w-8",
+      "to": "w-14",
+      "role": "async"
+    },
+    {
+      "id": "w-h-9",
+      "from": "w-9",
+      "to": "w-10",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-9",
+      "from": "w-9",
+      "to": "w-15",
+      "role": "async"
+    },
+    {
+      "id": "w-h-10",
+      "from": "w-10",
+      "to": "w-11",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-10",
+      "from": "w-10",
+      "to": "w-16",
+      "role": "async"
+    },
+    {
+      "id": "w-v-11",
+      "from": "w-11",
+      "to": "w-17",
+      "role": "async"
+    },
+    {
+      "id": "w-h-12",
+      "from": "w-12",
+      "to": "w-13",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-12",
+      "from": "w-12",
+      "to": "w-18",
+      "role": "async"
+    },
+    {
+      "id": "w-h-13",
+      "from": "w-13",
+      "to": "w-14",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-13",
+      "from": "w-13",
+      "to": "w-19",
+      "role": "async"
+    },
+    {
+      "id": "w-h-14",
+      "from": "w-14",
+      "to": "w-15",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-14",
+      "from": "w-14",
+      "to": "w-20",
+      "role": "async"
+    },
+    {
+      "id": "w-h-15",
+      "from": "w-15",
+      "to": "w-16",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-15",
+      "from": "w-15",
+      "to": "w-21",
+      "role": "async"
+    },
+    {
+      "id": "w-h-16",
+      "from": "w-16",
+      "to": "w-17",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-16",
+      "from": "w-16",
+      "to": "w-22",
+      "role": "async"
+    },
+    {
+      "id": "w-v-17",
+      "from": "w-17",
+      "to": "w-23",
+      "role": "async"
+    },
+    {
+      "id": "w-h-18",
+      "from": "w-18",
+      "to": "w-19",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-18",
+      "from": "w-18",
+      "to": "w-24",
+      "role": "async"
+    },
+    {
+      "id": "w-h-19",
+      "from": "w-19",
+      "to": "w-20",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-19",
+      "from": "w-19",
+      "to": "w-25",
+      "role": "async"
+    },
+    {
+      "id": "w-h-20",
+      "from": "w-20",
+      "to": "w-21",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-20",
+      "from": "w-20",
+      "to": "w-26",
+      "role": "async"
+    },
+    {
+      "id": "w-h-21",
+      "from": "w-21",
+      "to": "w-22",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-21",
+      "from": "w-21",
+      "to": "w-27",
+      "role": "async"
+    },
+    {
+      "id": "w-h-22",
+      "from": "w-22",
+      "to": "w-23",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-22",
+      "from": "w-22",
+      "to": "w-28",
+      "role": "async"
+    },
+    {
+      "id": "w-v-23",
+      "from": "w-23",
+      "to": "w-29",
+      "role": "async"
+    },
+    {
+      "id": "w-h-24",
+      "from": "w-24",
+      "to": "w-25",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-24",
+      "from": "w-24",
+      "to": "w-30",
+      "role": "async"
+    },
+    {
+      "id": "w-h-25",
+      "from": "w-25",
+      "to": "w-26",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-25",
+      "from": "w-25",
+      "to": "w-31",
+      "role": "async"
+    },
+    {
+      "id": "w-h-26",
+      "from": "w-26",
+      "to": "w-27",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-26",
+      "from": "w-26",
+      "to": "w-32",
+      "role": "async"
+    },
+    {
+      "id": "w-h-27",
+      "from": "w-27",
+      "to": "w-28",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-27",
+      "from": "w-27",
+      "to": "w-33",
+      "role": "async"
+    },
+    {
+      "id": "w-h-28",
+      "from": "w-28",
+      "to": "w-29",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-28",
+      "from": "w-28",
+      "to": "w-34",
+      "role": "async"
+    },
+    {
+      "id": "w-v-29",
+      "from": "w-29",
+      "to": "w-35",
+      "role": "async"
+    },
+    {
+      "id": "w-h-30",
+      "from": "w-30",
+      "to": "w-31",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-30",
+      "from": "w-30",
+      "to": "w-36",
+      "role": "async"
+    },
+    {
+      "id": "w-h-31",
+      "from": "w-31",
+      "to": "w-32",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-31",
+      "from": "w-31",
+      "to": "w-37",
+      "role": "async"
+    },
+    {
+      "id": "w-h-32",
+      "from": "w-32",
+      "to": "w-33",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-32",
+      "from": "w-32",
+      "to": "w-38",
+      "role": "async"
+    },
+    {
+      "id": "w-h-33",
+      "from": "w-33",
+      "to": "w-34",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-33",
+      "from": "w-33",
+      "to": "w-39",
+      "role": "async"
+    },
+    {
+      "id": "w-h-34",
+      "from": "w-34",
+      "to": "w-35",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-34",
+      "from": "w-34",
+      "to": "w-40",
+      "role": "async"
+    },
+    {
+      "id": "w-v-35",
+      "from": "w-35",
+      "to": "w-41",
+      "role": "async"
+    },
+    {
+      "id": "w-h-36",
+      "from": "w-36",
+      "to": "w-37",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-36",
+      "from": "w-36",
+      "to": "w-42",
+      "role": "async"
+    },
+    {
+      "id": "w-h-37",
+      "from": "w-37",
+      "to": "w-38",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-37",
+      "from": "w-37",
+      "to": "w-43",
+      "role": "async"
+    },
+    {
+      "id": "w-h-38",
+      "from": "w-38",
+      "to": "w-39",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-38",
+      "from": "w-38",
+      "to": "w-44",
+      "role": "async"
+    },
+    {
+      "id": "w-h-39",
+      "from": "w-39",
+      "to": "w-40",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-39",
+      "from": "w-39",
+      "to": "w-45",
+      "role": "async"
+    },
+    {
+      "id": "w-h-40",
+      "from": "w-40",
+      "to": "w-41",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-40",
+      "from": "w-40",
+      "to": "w-46",
+      "role": "async"
+    },
+    {
+      "id": "w-v-41",
+      "from": "w-41",
+      "to": "w-47",
+      "role": "async"
+    },
+    {
+      "id": "w-h-42",
+      "from": "w-42",
+      "to": "w-43",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-42",
+      "from": "w-42",
+      "to": "w-48",
+      "role": "async"
+    },
+    {
+      "id": "w-h-43",
+      "from": "w-43",
+      "to": "w-44",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-43",
+      "from": "w-43",
+      "to": "w-49",
+      "role": "async"
+    },
+    {
+      "id": "w-h-44",
+      "from": "w-44",
+      "to": "w-45",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-44",
+      "from": "w-44",
+      "to": "w-50",
+      "role": "async"
+    },
+    {
+      "id": "w-h-45",
+      "from": "w-45",
+      "to": "w-46",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-45",
+      "from": "w-45",
+      "to": "w-51",
+      "role": "async"
+    },
+    {
+      "id": "w-h-46",
+      "from": "w-46",
+      "to": "w-47",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-46",
+      "from": "w-46",
+      "to": "w-52",
+      "role": "async"
+    },
+    {
+      "id": "w-v-47",
+      "from": "w-47",
+      "to": "w-53",
+      "role": "async"
+    },
+    {
+      "id": "w-h-48",
+      "from": "w-48",
+      "to": "w-49",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-48",
+      "from": "w-48",
+      "to": "w-54",
+      "role": "async"
+    },
+    {
+      "id": "w-h-49",
+      "from": "w-49",
+      "to": "w-50",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-49",
+      "from": "w-49",
+      "to": "w-55",
+      "role": "async"
+    },
+    {
+      "id": "w-h-50",
+      "from": "w-50",
+      "to": "w-51",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-50",
+      "from": "w-50",
+      "to": "w-56",
+      "role": "async"
+    },
+    {
+      "id": "w-h-51",
+      "from": "w-51",
+      "to": "w-52",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-51",
+      "from": "w-51",
+      "to": "w-57",
+      "role": "async"
+    },
+    {
+      "id": "w-h-52",
+      "from": "w-52",
+      "to": "w-53",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-52",
+      "from": "w-52",
+      "to": "w-58",
+      "role": "async"
+    },
+    {
+      "id": "w-v-53",
+      "from": "w-53",
+      "to": "w-59",
+      "role": "async"
+    },
+    {
+      "id": "w-h-54",
+      "from": "w-54",
+      "to": "w-55",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-54",
+      "from": "w-54",
+      "to": "w-60",
+      "role": "async"
+    },
+    {
+      "id": "w-h-55",
+      "from": "w-55",
+      "to": "w-56",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-55",
+      "from": "w-55",
+      "to": "w-61",
+      "role": "async"
+    },
+    {
+      "id": "w-h-56",
+      "from": "w-56",
+      "to": "w-57",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-56",
+      "from": "w-56",
+      "to": "w-62",
+      "role": "async"
+    },
+    {
+      "id": "w-h-57",
+      "from": "w-57",
+      "to": "w-58",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-57",
+      "from": "w-57",
+      "to": "w-63",
+      "role": "async"
+    },
+    {
+      "id": "w-h-58",
+      "from": "w-58",
+      "to": "w-59",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-58",
+      "from": "w-58",
+      "to": "w-64",
+      "role": "async"
+    },
+    {
+      "id": "w-v-59",
+      "from": "w-59",
+      "to": "w-65",
+      "role": "async"
+    },
+    {
+      "id": "w-h-60",
+      "from": "w-60",
+      "to": "w-61",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-60",
+      "from": "w-60",
+      "to": "w-66",
+      "role": "async"
+    },
+    {
+      "id": "w-h-61",
+      "from": "w-61",
+      "to": "w-62",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-61",
+      "from": "w-61",
+      "to": "w-67",
+      "role": "async"
+    },
+    {
+      "id": "w-h-62",
+      "from": "w-62",
+      "to": "w-63",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-62",
+      "from": "w-62",
+      "to": "w-68",
+      "role": "async"
+    },
+    {
+      "id": "w-h-63",
+      "from": "w-63",
+      "to": "w-64",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-63",
+      "from": "w-63",
+      "to": "w-69",
+      "role": "async"
+    },
+    {
+      "id": "w-h-64",
+      "from": "w-64",
+      "to": "w-65",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-64",
+      "from": "w-64",
+      "to": "w-70",
+      "role": "async"
+    },
+    {
+      "id": "w-v-65",
+      "from": "w-65",
+      "to": "w-71",
+      "role": "async"
+    },
+    {
+      "id": "w-h-66",
+      "from": "w-66",
+      "to": "w-67",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-66",
+      "from": "w-66",
+      "to": "w-72",
+      "role": "async"
+    },
+    {
+      "id": "w-h-67",
+      "from": "w-67",
+      "to": "w-68",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-67",
+      "from": "w-67",
+      "to": "w-73",
+      "role": "async"
+    },
+    {
+      "id": "w-h-68",
+      "from": "w-68",
+      "to": "w-69",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-68",
+      "from": "w-68",
+      "to": "w-74",
+      "role": "async"
+    },
+    {
+      "id": "w-h-69",
+      "from": "w-69",
+      "to": "w-70",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-69",
+      "from": "w-69",
+      "to": "w-75",
+      "role": "async"
+    },
+    {
+      "id": "w-h-70",
+      "from": "w-70",
+      "to": "w-71",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-70",
+      "from": "w-70",
+      "to": "w-76",
+      "role": "async"
+    },
+    {
+      "id": "w-v-71",
+      "from": "w-71",
+      "to": "w-77",
+      "role": "async"
+    },
+    {
+      "id": "w-h-72",
+      "from": "w-72",
+      "to": "w-73",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-72",
+      "from": "w-72",
+      "to": "w-78",
+      "role": "async"
+    },
+    {
+      "id": "w-h-73",
+      "from": "w-73",
+      "to": "w-74",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-73",
+      "from": "w-73",
+      "to": "w-79",
+      "role": "async"
+    },
+    {
+      "id": "w-h-74",
+      "from": "w-74",
+      "to": "w-75",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-74",
+      "from": "w-74",
+      "to": "w-80",
+      "role": "async"
+    },
+    {
+      "id": "w-h-75",
+      "from": "w-75",
+      "to": "w-76",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-75",
+      "from": "w-75",
+      "to": "w-81",
+      "role": "async"
+    },
+    {
+      "id": "w-h-76",
+      "from": "w-76",
+      "to": "w-77",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-76",
+      "from": "w-76",
+      "to": "w-82",
+      "role": "async"
+    },
+    {
+      "id": "w-v-77",
+      "from": "w-77",
+      "to": "w-83",
+      "role": "async"
+    },
+    {
+      "id": "w-h-78",
+      "from": "w-78",
+      "to": "w-79",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-78",
+      "from": "w-78",
+      "to": "w-84",
+      "role": "async"
+    },
+    {
+      "id": "w-h-79",
+      "from": "w-79",
+      "to": "w-80",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-79",
+      "from": "w-79",
+      "to": "w-85",
+      "role": "async"
+    },
+    {
+      "id": "w-h-80",
+      "from": "w-80",
+      "to": "w-81",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-80",
+      "from": "w-80",
+      "to": "w-86",
+      "role": "async"
+    },
+    {
+      "id": "w-h-81",
+      "from": "w-81",
+      "to": "w-82",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-81",
+      "from": "w-81",
+      "to": "w-87",
+      "role": "async"
+    },
+    {
+      "id": "w-h-82",
+      "from": "w-82",
+      "to": "w-83",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-82",
+      "from": "w-82",
+      "to": "w-88",
+      "role": "async"
+    },
+    {
+      "id": "w-v-83",
+      "from": "w-83",
+      "to": "w-89",
+      "role": "async"
+    },
+    {
+      "id": "w-h-84",
+      "from": "w-84",
+      "to": "w-85",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-84",
+      "from": "w-84",
+      "to": "w-90",
+      "role": "async"
+    },
+    {
+      "id": "w-h-85",
+      "from": "w-85",
+      "to": "w-86",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-85",
+      "from": "w-85",
+      "to": "w-91",
+      "role": "async"
+    },
+    {
+      "id": "w-h-86",
+      "from": "w-86",
+      "to": "w-87",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-86",
+      "from": "w-86",
+      "to": "w-92",
+      "role": "async"
+    },
+    {
+      "id": "w-h-87",
+      "from": "w-87",
+      "to": "w-88",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-87",
+      "from": "w-87",
+      "to": "w-93",
+      "role": "async"
+    },
+    {
+      "id": "w-h-88",
+      "from": "w-88",
+      "to": "w-89",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-88",
+      "from": "w-88",
+      "to": "w-94",
+      "role": "async"
+    },
+    {
+      "id": "w-v-89",
+      "from": "w-89",
+      "to": "w-95",
+      "role": "async"
+    },
+    {
+      "id": "w-h-90",
+      "from": "w-90",
+      "to": "w-91",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-90",
+      "from": "w-90",
+      "to": "w-96",
+      "role": "async"
+    },
+    {
+      "id": "w-h-91",
+      "from": "w-91",
+      "to": "w-92",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-91",
+      "from": "w-91",
+      "to": "w-97",
+      "role": "async"
+    },
+    {
+      "id": "w-h-92",
+      "from": "w-92",
+      "to": "w-93",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-92",
+      "from": "w-92",
+      "to": "w-98",
+      "role": "async"
+    },
+    {
+      "id": "w-h-93",
+      "from": "w-93",
+      "to": "w-94",
+      "role": "branch"
+    },
+    {
+      "id": "w-v-93",
+      "from": "w-93",
+      "to": "w-99",
+      "role": "async"
+    },
+    {
+      "id": "w-h-94",
+      "from": "w-94",
+      "to": "w-95",
+      "role": "branch"
+    },
+    {
+      "id": "w-h-96",
+      "from": "w-96",
+      "to": "w-97",
+      "role": "branch"
+    },
+    {
+      "id": "w-h-97",
+      "from": "w-97",
+      "to": "w-98",
+      "role": "branch"
+    },
+    {
+      "id": "w-h-98",
+      "from": "w-98",
+      "to": "w-99",
+      "role": "branch"
+    },
+    {
+      "id": "w-feedback",
+      "from": "w-96",
+      "to": "w-0",
+      "role": "error",
+      "variant": "security",
+      "route": "return-left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Reader",
+      "items": [
+        "固定阅读窗口",
+        "完整 canonical world"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Evidence",
+      "items": [
+        "动态可读缩放",
+        "Reset 返回 Fit-all"
+      ]
+    }
+  ]
+}

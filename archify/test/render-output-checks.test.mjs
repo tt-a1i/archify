@@ -41,7 +41,7 @@ function checkHtml(name, svgBody, profile = 'standard', viewBox = '0 0 240 160')
   }
 }
 
-test('render output check: showcase rejects node copy that becomes illegible at 1440px', () => {
+test('render output check: potential large world defers final readability to browser evidence', () => {
   const { code, result } = checkHtml('showcase-desktop-readability', `
     <g data-node-id="tool-runtime">
       <rect x="1398" y="266" width="194" height="70" rx="6" class="c-mask"/>
@@ -50,11 +50,13 @@ test('render output check: showcase rejects node copy that becomes illegible at 
     </g>
   `, 'showcase', '0 0 1994 804');
 
-  assert.notEqual(code, 0);
+  assert.equal(code, 0);
+  assert.equal(result.composition.readability.status, 'potential-large/pending-browser');
+  assert.equal(result.composition.readability.browserEvidenceRequired, true);
   const issue = result.composition.issues.find(
     (item) => item.code === 'composition/desktop-readability',
   );
-  assert.equal(issue?.severity, 'error');
+  assert.equal(issue?.severity, 'warning');
   assert.equal(issue?.viewportWidth, 1440);
   assert.ok(issue?.projectedFontPx < issue?.minimumProjectedFontPx);
 });
@@ -71,11 +73,12 @@ test('render output check: compares exact projected size before rounding diagnos
     </g>
   `, 'showcase', `0 0 ${viewBoxWidth} 804`);
 
-  assert.notEqual(code, 0);
+  assert.equal(code, 0);
+  assert.equal(result.composition.readability.status, 'potential-large/pending-browser');
   const issue = result.composition.issues.find(
     (item) => item.code === 'composition/desktop-readability',
   );
-  assert.equal(issue?.severity, 'error');
+  assert.equal(issue?.severity, 'warning');
   assert.ok(issue?.projectedFontPx < issue?.minimumProjectedFontPx);
 });
 
@@ -87,7 +90,7 @@ test('render output check: includes primary node labels in desktop readability',
     </g>
   `, 'showcase', '0 0 1300 700');
 
-  assert.notEqual(code, 0);
+  assert.equal(code, 0);
   const issue = result.composition.issues.find(
     (item) => item.code === 'composition/desktop-readability',
   );
@@ -105,13 +108,23 @@ test('render output check: includes semantic boundary labels in desktop readabil
     </g>
   `, 'showcase', '0 0 1376 728');
 
-  assert.notEqual(code, 0);
+  assert.equal(code, 0);
   const issue = result.composition.issues.find(
     (item) => item.code === 'composition/desktop-readability',
   );
   assert.equal(issue?.text, 'Disaster recovery boundary');
   assert.equal(issue?.detail, 'boundary');
   assert.ok(issue?.projectedFontPx < issue?.minimumProjectedFontPx);
+});
+
+test('render output check records a small static readability pass without requiring Chrome', () => {
+  const { code, result } = checkHtml('small-static-readable', `
+    <g data-node-id="readable"><text data-node-label x="100" y="100" font-size="12">Readable</text></g>
+  `, 'showcase', '0 0 900 500');
+  assert.equal(code, 0);
+  assert.equal(result.composition.readability.status, 'small-static-pass');
+  assert.equal(result.composition.readability.browserEvidenceRequired, false);
+  assert.equal(result.composition.issues.some((item) => item.code === 'composition/desktop-readability'), false);
 });
 
 test('render output check: accepts orthogonal arrows away from legend', () => {

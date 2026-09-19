@@ -88,8 +88,25 @@ node archify/bin/archify.mjs validate workflow input.workflow.json --layout-json
 ```
 
 The receipt reports the selected contract, measured `viewBox` and
-`requiredViewBox`, solved columns, nodes, edges, labels, and causal diagnostics.
-It deliberately omits solver iterations and candidate scores.
+`requiredViewBox`, solved columns, nodes, edges, labels, causal diagnostics,
+and a deterministic `layoutDigest`. Readable v2 also reports a bounded
+`operationBudget` outcome without exposing candidate scores or the internal
+search order.
+
+`bounds` keeps five coordinate concepts separate:
+
+- `layout` is the union of solved lanes, nodes, phases, and groups;
+- `geometry` adds final relationship paths;
+- `paint` adds stroke allowance, label masks, group labels, and the legend;
+- `canonicalFrame` is `[x, y, width, height]` for the complete exported world;
+- the browser viewport is session-only viewer state and never appears in the
+  compiler receipt.
+
+For implicit readable-v2 input, `canonicalFrame` is derived from `paint` plus
+deterministic contract padding. For explicit input it remains exactly the
+authored fixed-capacity frame. Pan, zoom, focus, search, and guided views use
+the shared `Archify.view` camera and cannot alter any of these values or the
+full canonical export.
 
 ## Legend
 

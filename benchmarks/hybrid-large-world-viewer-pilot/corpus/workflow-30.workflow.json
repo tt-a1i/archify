@@ -1,0 +1,717 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "大型自适应工作流验收图",
+    "subtitle": "30 个节点、50 条关系、长中文标签、跨泳道交接与有界恢复回路",
+    "output": "large-adaptive.workflow.html",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "visual_preset": "signal-flow",
+    "animation": "none",
+    "views": [
+      {
+        "id": "intake-chapter",
+        "label": "请求接入与身份核验",
+        "focus": [
+          "intake-0",
+          "intake-1",
+          "intake-2",
+          "intake-3",
+          "intake-4",
+          "intake-5"
+        ],
+        "note": "聚焦请求接入与身份核验，可随时返回完整总览。"
+      },
+      {
+        "id": "policy-chapter",
+        "label": "策略评估与风险判定",
+        "focus": [
+          "policy-0",
+          "policy-1",
+          "policy-2",
+          "policy-3",
+          "policy-4",
+          "policy-5"
+        ],
+        "note": "聚焦策略评估与风险判定，可随时返回完整总览。"
+      },
+      {
+        "id": "runtime-chapter",
+        "label": "运行时编排与工具执行",
+        "focus": [
+          "runtime-0",
+          "runtime-1",
+          "runtime-2",
+          "runtime-3",
+          "runtime-4",
+          "runtime-5"
+        ],
+        "note": "聚焦运行时编排与工具执行，可随时返回完整总览。"
+      },
+      {
+        "id": "data-chapter",
+        "label": "数据持久化与审计留痕",
+        "focus": [
+          "data-0",
+          "data-1",
+          "data-2",
+          "data-3",
+          "data-4",
+          "data-5"
+        ],
+        "note": "聚焦数据持久化与审计留痕，可随时返回完整总览。"
+      },
+      {
+        "id": "observe-chapter",
+        "label": "可观测性与人工处置",
+        "focus": [
+          "observe-0",
+          "observe-1",
+          "observe-2",
+          "observe-3",
+          "observe-4",
+          "observe-5"
+        ],
+        "note": "聚焦可观测性与人工处置，可随时返回完整总览。"
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "intake",
+      "label": "请求接入与身份核验"
+    },
+    {
+      "id": "policy",
+      "label": "策略评估与风险判定"
+    },
+    {
+      "id": "runtime",
+      "label": "运行时编排与工具执行"
+    },
+    {
+      "id": "data",
+      "label": "数据持久化与审计留痕"
+    },
+    {
+      "id": "observe",
+      "label": "可观测性与人工处置",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "understand",
+      "label": "理解与约束",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "decide",
+      "label": "判定与执行",
+      "fromCol": 2,
+      "toCol": 3
+    },
+    {
+      "id": "deliver",
+      "label": "交付与确认",
+      "fromCol": 4,
+      "toCol": 5
+    }
+  ],
+  "mainPath": [
+    "intake-0",
+    "intake-1",
+    "intake-2",
+    "intake-3",
+    "intake-4",
+    "intake-5"
+  ],
+  "nodes": [
+    {
+      "id": "intake-0",
+      "lane": "intake",
+      "col": 0,
+      "type": "frontend",
+      "label": "接收并规范化外部请求",
+      "sublabel": "请求接入与身份核验 · 第 1 阶段",
+      "width": 168
+    },
+    {
+      "id": "intake-1",
+      "lane": "intake",
+      "col": 1,
+      "type": "frontend",
+      "label": "补全项目上下文与约束",
+      "sublabel": "请求接入与身份核验 · 第 2 阶段",
+      "width": 168
+    },
+    {
+      "id": "intake-2",
+      "lane": "intake",
+      "col": 2,
+      "type": "frontend",
+      "label": "执行确定性策略判定",
+      "sublabel": "请求接入与身份核验 · 第 3 阶段",
+      "width": 168,
+      "tag": "CHECKPOINT"
+    },
+    {
+      "id": "intake-3",
+      "lane": "intake",
+      "col": 3,
+      "type": "frontend",
+      "label": "编排受限工具调用计划",
+      "sublabel": "请求接入与身份核验 · 第 4 阶段",
+      "width": 168
+    },
+    {
+      "id": "intake-4",
+      "lane": "intake",
+      "col": 4,
+      "type": "frontend",
+      "label": "提交结果与审计证据",
+      "sublabel": "请求接入与身份核验 · 第 5 阶段",
+      "width": 168
+    },
+    {
+      "id": "intake-5",
+      "lane": "intake",
+      "col": 5,
+      "type": "frontend",
+      "label": "确认交付状态并关闭",
+      "sublabel": "请求接入与身份核验 · 第 6 阶段",
+      "width": 168
+    },
+    {
+      "id": "policy-0",
+      "lane": "policy",
+      "col": 0,
+      "type": "security",
+      "label": "接收并规范化外部请求",
+      "sublabel": "策略评估与风险判定 · 第 1 阶段",
+      "width": 168
+    },
+    {
+      "id": "policy-1",
+      "lane": "policy",
+      "col": 1,
+      "type": "security",
+      "label": "补全项目上下文与约束",
+      "sublabel": "策略评估与风险判定 · 第 2 阶段",
+      "width": 168
+    },
+    {
+      "id": "policy-2",
+      "lane": "policy",
+      "col": 2,
+      "type": "security",
+      "label": "执行确定性策略判定",
+      "sublabel": "策略评估与风险判定 · 第 3 阶段",
+      "width": 168,
+      "tag": "POLICY"
+    },
+    {
+      "id": "policy-3",
+      "lane": "policy",
+      "col": 3,
+      "type": "security",
+      "label": "编排受限工具调用计划",
+      "sublabel": "策略评估与风险判定 · 第 4 阶段",
+      "width": 168
+    },
+    {
+      "id": "policy-4",
+      "lane": "policy",
+      "col": 4,
+      "type": "security",
+      "label": "提交结果与审计证据",
+      "sublabel": "策略评估与风险判定 · 第 5 阶段",
+      "width": 168
+    },
+    {
+      "id": "policy-5",
+      "lane": "policy",
+      "col": 5,
+      "type": "security",
+      "label": "确认交付状态并关闭",
+      "sublabel": "策略评估与风险判定 · 第 6 阶段",
+      "width": 168
+    },
+    {
+      "id": "runtime-0",
+      "lane": "runtime",
+      "col": 0,
+      "type": "backend",
+      "label": "接收并规范化外部请求",
+      "sublabel": "运行时编排与工具执行 · 第 1 阶段",
+      "width": 168
+    },
+    {
+      "id": "runtime-1",
+      "lane": "runtime",
+      "col": 1,
+      "type": "backend",
+      "label": "补全项目上下文与约束",
+      "sublabel": "运行时编排与工具执行 · 第 2 阶段",
+      "width": 168
+    },
+    {
+      "id": "runtime-2",
+      "lane": "runtime",
+      "col": 2,
+      "type": "backend",
+      "label": "执行确定性策略判定",
+      "sublabel": "运行时编排与工具执行 · 第 3 阶段",
+      "width": 168,
+      "tag": "CHECKPOINT"
+    },
+    {
+      "id": "runtime-3",
+      "lane": "runtime",
+      "col": 3,
+      "type": "backend",
+      "label": "编排受限工具调用计划",
+      "sublabel": "运行时编排与工具执行 · 第 4 阶段",
+      "width": 168
+    },
+    {
+      "id": "runtime-4",
+      "lane": "runtime",
+      "col": 4,
+      "type": "backend",
+      "label": "提交结果与审计证据",
+      "sublabel": "运行时编排与工具执行 · 第 5 阶段",
+      "width": 168
+    },
+    {
+      "id": "runtime-5",
+      "lane": "runtime",
+      "col": 5,
+      "type": "backend",
+      "label": "确认交付状态并关闭",
+      "sublabel": "运行时编排与工具执行 · 第 6 阶段",
+      "width": 168
+    },
+    {
+      "id": "data-0",
+      "lane": "data",
+      "col": 0,
+      "type": "database",
+      "label": "接收并规范化外部请求",
+      "sublabel": "数据持久化与审计留痕 · 第 1 阶段",
+      "width": 168
+    },
+    {
+      "id": "data-1",
+      "lane": "data",
+      "col": 1,
+      "type": "database",
+      "label": "补全项目上下文与约束",
+      "sublabel": "数据持久化与审计留痕 · 第 2 阶段",
+      "width": 168
+    },
+    {
+      "id": "data-2",
+      "lane": "data",
+      "col": 2,
+      "type": "database",
+      "label": "执行确定性策略判定",
+      "sublabel": "数据持久化与审计留痕 · 第 3 阶段",
+      "width": 168,
+      "tag": "POLICY"
+    },
+    {
+      "id": "data-3",
+      "lane": "data",
+      "col": 3,
+      "type": "database",
+      "label": "编排受限工具调用计划",
+      "sublabel": "数据持久化与审计留痕 · 第 4 阶段",
+      "width": 168
+    },
+    {
+      "id": "data-4",
+      "lane": "data",
+      "col": 4,
+      "type": "database",
+      "label": "提交结果与审计证据",
+      "sublabel": "数据持久化与审计留痕 · 第 5 阶段",
+      "width": 168
+    },
+    {
+      "id": "data-5",
+      "lane": "data",
+      "col": 5,
+      "type": "database",
+      "label": "确认交付状态并关闭",
+      "sublabel": "数据持久化与审计留痕 · 第 6 阶段",
+      "width": 168
+    },
+    {
+      "id": "observe-0",
+      "lane": "observe",
+      "col": 0,
+      "type": "cloud",
+      "label": "接收并规范化外部请求",
+      "sublabel": "可观测性与人工处置 · 第 1 阶段",
+      "width": 168
+    },
+    {
+      "id": "observe-1",
+      "lane": "observe",
+      "col": 1,
+      "type": "cloud",
+      "label": "补全项目上下文与约束",
+      "sublabel": "可观测性与人工处置 · 第 2 阶段",
+      "width": 168
+    },
+    {
+      "id": "observe-2",
+      "lane": "observe",
+      "col": 2,
+      "type": "cloud",
+      "label": "执行确定性策略判定",
+      "sublabel": "可观测性与人工处置 · 第 3 阶段",
+      "width": 168,
+      "tag": "CHECKPOINT"
+    },
+    {
+      "id": "observe-3",
+      "lane": "observe",
+      "col": 3,
+      "type": "cloud",
+      "label": "编排受限工具调用计划",
+      "sublabel": "可观测性与人工处置 · 第 4 阶段",
+      "width": 168
+    },
+    {
+      "id": "observe-4",
+      "lane": "observe",
+      "col": 4,
+      "type": "cloud",
+      "label": "提交结果与审计证据",
+      "sublabel": "可观测性与人工处置 · 第 5 阶段",
+      "width": 168
+    },
+    {
+      "id": "observe-5",
+      "lane": "observe",
+      "col": 5,
+      "type": "cloud",
+      "label": "确认交付状态并关闭",
+      "sublabel": "可观测性与人工处置 · 第 6 阶段",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "id": "intake-step-0",
+      "from": "intake-0",
+      "to": "intake-1",
+      "role": "main"
+    },
+    {
+      "id": "intake-step-1",
+      "from": "intake-1",
+      "to": "intake-2",
+      "role": "main",
+      "label": "保留完整语义与来源证据后继续处理"
+    },
+    {
+      "id": "intake-step-2",
+      "from": "intake-2",
+      "to": "intake-3",
+      "role": "main"
+    },
+    {
+      "id": "intake-step-3",
+      "from": "intake-3",
+      "to": "intake-4",
+      "role": "main"
+    },
+    {
+      "id": "intake-step-4",
+      "from": "intake-4",
+      "to": "intake-5",
+      "role": "main"
+    },
+    {
+      "id": "policy-step-0",
+      "from": "policy-0",
+      "to": "policy-1",
+      "role": "branch"
+    },
+    {
+      "id": "policy-step-1",
+      "from": "policy-1",
+      "to": "policy-2",
+      "role": "branch",
+      "label": "保留完整语义与来源证据后继续处理"
+    },
+    {
+      "id": "policy-step-2",
+      "from": "policy-2",
+      "to": "policy-3",
+      "role": "branch"
+    },
+    {
+      "id": "policy-step-3",
+      "from": "policy-3",
+      "to": "policy-4",
+      "role": "branch"
+    },
+    {
+      "id": "policy-step-4",
+      "from": "policy-4",
+      "to": "policy-5",
+      "role": "branch"
+    },
+    {
+      "id": "runtime-step-0",
+      "from": "runtime-0",
+      "to": "runtime-1",
+      "role": "branch"
+    },
+    {
+      "id": "runtime-step-1",
+      "from": "runtime-1",
+      "to": "runtime-2",
+      "role": "branch",
+      "label": "保留完整语义与来源证据后继续处理"
+    },
+    {
+      "id": "runtime-step-2",
+      "from": "runtime-2",
+      "to": "runtime-3",
+      "role": "branch"
+    },
+    {
+      "id": "runtime-step-3",
+      "from": "runtime-3",
+      "to": "runtime-4",
+      "role": "branch"
+    },
+    {
+      "id": "runtime-step-4",
+      "from": "runtime-4",
+      "to": "runtime-5",
+      "role": "branch"
+    },
+    {
+      "id": "data-step-0",
+      "from": "data-0",
+      "to": "data-1",
+      "role": "branch"
+    },
+    {
+      "id": "data-step-1",
+      "from": "data-1",
+      "to": "data-2",
+      "role": "branch",
+      "label": "保留完整语义与来源证据后继续处理"
+    },
+    {
+      "id": "data-step-2",
+      "from": "data-2",
+      "to": "data-3",
+      "role": "branch"
+    },
+    {
+      "id": "data-step-3",
+      "from": "data-3",
+      "to": "data-4",
+      "role": "branch"
+    },
+    {
+      "id": "data-step-4",
+      "from": "data-4",
+      "to": "data-5",
+      "role": "branch"
+    },
+    {
+      "id": "observe-step-0",
+      "from": "observe-0",
+      "to": "observe-1",
+      "role": "branch"
+    },
+    {
+      "id": "observe-step-1",
+      "from": "observe-1",
+      "to": "observe-2",
+      "role": "branch",
+      "label": "保留完整语义与来源证据后继续处理"
+    },
+    {
+      "id": "observe-step-2",
+      "from": "observe-2",
+      "to": "observe-3",
+      "role": "branch"
+    },
+    {
+      "id": "observe-step-3",
+      "from": "observe-3",
+      "to": "observe-4",
+      "role": "branch"
+    },
+    {
+      "id": "observe-step-4",
+      "from": "observe-4",
+      "to": "observe-5",
+      "role": "branch"
+    },
+    {
+      "id": "handoff-intake-0",
+      "from": "intake-0",
+      "to": "policy-0",
+      "role": "async"
+    },
+    {
+      "id": "handoff-policy-0",
+      "from": "policy-0",
+      "to": "runtime-0",
+      "role": "async"
+    },
+    {
+      "id": "handoff-runtime-0",
+      "from": "runtime-0",
+      "to": "data-0",
+      "role": "async"
+    },
+    {
+      "id": "handoff-data-0",
+      "from": "data-0",
+      "to": "observe-0",
+      "role": "async"
+    },
+    {
+      "id": "handoff-intake-1",
+      "from": "intake-1",
+      "to": "policy-1",
+      "role": "async"
+    },
+    {
+      "id": "handoff-policy-1",
+      "from": "policy-1",
+      "to": "runtime-1",
+      "role": "async"
+    },
+    {
+      "id": "handoff-runtime-1",
+      "from": "runtime-1",
+      "to": "data-1",
+      "role": "async"
+    },
+    {
+      "id": "handoff-data-1",
+      "from": "data-1",
+      "to": "observe-1",
+      "role": "async"
+    },
+    {
+      "id": "handoff-intake-2",
+      "from": "intake-2",
+      "to": "policy-2",
+      "role": "async"
+    },
+    {
+      "id": "handoff-policy-2",
+      "from": "policy-2",
+      "to": "runtime-2",
+      "role": "async"
+    },
+    {
+      "id": "handoff-runtime-2",
+      "from": "runtime-2",
+      "to": "data-2",
+      "role": "async"
+    },
+    {
+      "id": "handoff-data-2",
+      "from": "data-2",
+      "to": "observe-2",
+      "role": "async"
+    },
+    {
+      "id": "handoff-intake-3",
+      "from": "intake-3",
+      "to": "policy-3",
+      "role": "async"
+    },
+    {
+      "id": "handoff-policy-3",
+      "from": "policy-3",
+      "to": "runtime-3",
+      "role": "async"
+    },
+    {
+      "id": "handoff-runtime-3",
+      "from": "runtime-3",
+      "to": "data-3",
+      "role": "async"
+    },
+    {
+      "id": "handoff-data-3",
+      "from": "data-3",
+      "to": "observe-3",
+      "role": "async"
+    },
+    {
+      "id": "handoff-intake-4",
+      "from": "intake-4",
+      "to": "policy-4",
+      "role": "async"
+    },
+    {
+      "id": "handoff-policy-4",
+      "from": "policy-4",
+      "to": "runtime-4",
+      "role": "async"
+    },
+    {
+      "id": "handoff-runtime-4",
+      "from": "runtime-4",
+      "to": "data-4",
+      "role": "async"
+    },
+    {
+      "id": "handoff-data-4",
+      "from": "data-4",
+      "to": "observe-4",
+      "role": "async"
+    },
+    {
+      "id": "handoff-intake-5",
+      "from": "intake-5",
+      "to": "policy-5",
+      "role": "async"
+    },
+    {
+      "id": "handoff-policy-5",
+      "from": "policy-5",
+      "to": "runtime-5",
+      "role": "async"
+    },
+    {
+      "id": "handoff-runtime-5",
+      "from": "runtime-5",
+      "to": "data-5",
+      "role": "async"
+    },
+    {
+      "id": "handoff-data-5",
+      "from": "data-5",
+      "to": "observe-5",
+      "role": "async"
+    },
+    {
+      "id": "bounded-recovery-loop",
+      "from": "observe-0",
+      "to": "intake-0",
+      "role": "error",
+      "variant": "security",
+      "route": "return-left"
+    }
+  ]
+}

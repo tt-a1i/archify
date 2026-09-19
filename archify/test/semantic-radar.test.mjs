@@ -80,25 +80,34 @@ async function loadArtifact(browser, artifactPath, { width = 1440, height = 900 
 async function radarRects(browser, sessionId, setup) {
   return evaluate(browser, sessionId, `(function () {
     ${setup}
-    return new Promise(function (resolve) {
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-          var radar = document.getElementById('overview-map').getBoundingClientRect();
-          var controls = document.querySelector('.diagram-nav').getBoundingClientRect();
-          var passport = document.getElementById('focus-chip');
-          var passportRect = passport && !passport.hidden ? passport.getBoundingClientRect() : null;
-          resolve({
-            radar: { left: radar.left, top: radar.top, right: radar.right, bottom: radar.bottom },
-            controls: { left: controls.left, top: controls.top, right: controls.right, bottom: controls.bottom },
-            passport: passportRect ? {
-              left: passportRect.left,
-              top: passportRect.top,
-              right: passportRect.right,
-              bottom: passportRect.bottom
-            } : null
-          });
-        });
-      });
+    // Camera and reader reflow can move the legend after two frames, even
+    // with trace motion disabled. Measure the final placement, not a midpoint.
+    return Archify.waitForStableLayout({
+      pending: function () {
+        return document.querySelector('.diagram-container').hasAttribute('data-camera-transaction');
+      },
+      snapshot: function () {
+        return JSON.stringify(['.diagram-container', '#overview-map', '.diagram-nav', '#focus-chip', '[data-legend]'].map(function (selector) {
+          var rect = document.querySelector(selector).getBoundingClientRect();
+          return [rect.left, rect.top, rect.width, rect.height];
+        }));
+      },
+      timeoutMessage: 'Radar placement and its blockers did not settle.'
+    }).then(function () {
+      var radar = document.getElementById('overview-map').getBoundingClientRect();
+      var controls = document.querySelector('.diagram-nav').getBoundingClientRect();
+      var passport = document.getElementById('focus-chip');
+      var passportRect = passport && !passport.hidden ? passport.getBoundingClientRect() : null;
+      return {
+        radar: { left: radar.left, top: radar.top, right: radar.right, bottom: radar.bottom },
+        controls: { left: controls.left, top: controls.top, right: controls.right, bottom: controls.bottom },
+        passport: passportRect ? {
+          left: passportRect.left,
+          top: passportRect.top,
+          right: passportRect.right,
+          bottom: passportRect.bottom
+        } : null
+      };
     });
   })()`, true);
 }
@@ -307,17 +316,24 @@ test('Semantic Radar avoids an expanded mobile Passport without hiding a collisi
     assert.ok(expanded.height > state.radar.bottom - state.radar.top, JSON.stringify({ state, expanded }, null, 2));
 
     const closed = await evaluate(browser, sessionId, `(function () {
+      // A camera completion can reposition Passport while Radar has yielded
+      // it with display:none. Closing must restore measured, nonzero bounds.
+      Archify.focus.reposition();
       document.getElementById('overview-map-close').click();
       var passport = document.getElementById('focus-chip');
+      var rect = passport.getBoundingClientRect();
       return {
         radarHidden: document.getElementById('overview-map').hidden,
         passportYielded: passport.getAttribute('data-radar-yielded'),
-        passportVisible: getComputedStyle(passport).display !== 'none'
+        passportVisible: getComputedStyle(passport).display !== 'none',
+        passport: { top: rect.top, bottom: rect.bottom }
       };
     })()`);
     assert.equal(closed.radarHidden, true, JSON.stringify(closed, null, 2));
     assert.equal(closed.passportYielded, null, JSON.stringify(closed, null, 2));
     assert.equal(closed.passportVisible, true, JSON.stringify(closed, null, 2));
+    assert.ok(closed.passport.top >= state.container.top && closed.passport.bottom <= state.container.bottom,
+      JSON.stringify({ state, closed }, null, 2));
 
     for (const original of [null, 'false', 'true']) {
       const restored = await evaluate(browser, sessionId, `(function () {

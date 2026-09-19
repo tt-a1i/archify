@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "adaptive-workflow-pilot",
+  "evidenceClass": "machine-only",
+  "qualityProfile": "showcase",
+  "pairCount": 3,
+  "sources": [
+    {
+      "id": "agent-tool-call",
+      "path": "archify/examples/agent-tool-call.workflow.json",
+      "frameMode": "implicit"
+    },
+    {
+      "id": "custom-widths",
+      "path": "archify/test/fixtures/issue-126/custom-widths.workflow.json",
+      "frameMode": "implicit"
+    },
+    {
+      "id": "label-clearance",
+      "path": "archify/test/fixtures/issue-126/labels.workflow.json",
+      "frameMode": "implicit"
+    },
+    {
+      "id": "explicit-route-capacity",
+      "path": "archify/test/fixtures/issue-126/explicit-route.workflow.json",
+      "frameMode": "explicit"
+    },
+    {
+      "id": "explicit-frame-capacity",
+      "path": "archify/test/fixtures/issue-126/explicit-viewbox.workflow.json",
+      "frameMode": "explicit"
+    },
+    {
+      "id": "large-adaptive-world",
+      "loader": "large-adaptive-workflow",
+      "source": "archify/test/fixtures/large-adaptive-workflow.mjs",
+      "frameMode": "implicit",
+      "minimumNodes": 30,
+      "minimumEdges": 40
+    }
+  ]
+}

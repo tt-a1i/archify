@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import {
@@ -80,6 +81,11 @@ const GROUP_LABEL_BASELINE_OFFSET = -2;
 const GROUP_LABEL_MASK_ASCENT = 10;
 const GROUP_LABEL_MASK_H = 14;
 const GROUP_NODE_INSET = 4;
+// paintBounds already expands route geometry by 2px for stroke/marker paint.
+// Fourteen further pixels preserve the existing 16px geometry clearance and
+// the fixed explicit-viewBox compatibility contract.
+const CANONICAL_PAINT_RIGHT_PADDING = 14;
+const CANONICAL_PAINT_BOTTOM_PADDING = 18;
 
 class WorkflowLayoutFeedback extends Error {
   constructor(request) {
@@ -336,7 +342,9 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
   let activeConstraints = [...constraints];
   let colXs;
   let colProvenance;
+  let layoutPasses = 0;
   for (let iteration = 0; iteration < maxLayoutIterations; iteration += 1) {
+    layoutPasses += 1;
     colXs = Array.from({ length: columnCount }, (_, col) => columnStart + col * baselinePitch);
     colProvenance = Array.from({ length: columnCount }, () => new Set());
     const orderedConstraints = activeConstraints
@@ -610,6 +618,8 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     channelLabelEdgeKeys,
     widthContributors: [...widthContributors].sort(stableCompare),
     heightContributors: [...heightContributors].sort(stableCompare),
+    layoutPasses,
+    layoutPassLimit: maxLayoutIterations,
   };
 }
 
@@ -908,6 +918,7 @@ const autoHeight = layout.laneY
   + legendExtraHeight;
 let viewBox = workflow.meta?.viewBox || [minimumCanvasWidth, autoHeight];
 let requiredViewBox = [...viewBox];
+let finalBounds = null;
 
 const laneIndex = new Map(asArray(workflow.lanes).map((lane, index) => [lane.id, index]));
 const laneLabels = new Map(asArray(workflow.lanes).map((lane) => [lane.id, lane.label]));
@@ -4054,58 +4065,75 @@ function labelRectFor(edge, relationIndex) {
   };
 }
 
-function measuredContentBounds() {
-  let left = layout.laneX;
-  let top = 27;
-  let right = layout.laneX + layout.laneW;
-  let bottom = legendY() + 18;
+function measuredSceneBounds() {
+  const createAccumulator = () => ({ left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity });
+  const layoutBounds = createAccumulator();
+  const geometryBounds = createAccumulator();
+  const paintBounds = createAccumulator();
   const owners = {
     left: 'workflow lanes',
     top: asArray(workflow.phases).length ? 'phase header band' : 'workflow top padding',
     right: 'workflow lanes',
     bottom: workflowLegendEntries.length ? 'legend' : 'workflow lanes and bottom padding',
   };
-  const includePoint = ([x, y], contributor) => {
-    if (x < left) {
-      left = x;
+  const includePoint = (bounds, [x, y], contributor, padding = 0) => {
+    if (x - padding < bounds.left) {
+      bounds.left = x - padding;
       owners.left = contributor;
     }
-    if (y < top) {
-      top = y;
+    if (y - padding < bounds.top) {
+      bounds.top = y - padding;
       owners.top = contributor;
     }
-    if (x > right) {
-      right = x;
+    if (x + padding > bounds.right) {
+      bounds.right = x + padding;
       owners.right = contributor;
     }
-    if (y > bottom) {
-      bottom = y;
+    if (y + padding > bounds.bottom) {
+      bounds.bottom = y + padding;
       owners.bottom = contributor;
     }
   };
-  const includeRect = (rect, contributor) => {
-    includePoint([rect.x, rect.y], contributor);
-    includePoint([rect.x + rect.width, rect.y + rect.height], contributor);
+  const includeRect = (bounds, rect, contributor, padding = 0) => {
+    includePoint(bounds, [rect.x, rect.y], contributor, padding);
+    includePoint(bounds, [rect.x + rect.width, rect.y + rect.height], contributor, padding);
+  };
+  const includeStructuralRect = (rect, contributor, strokePadding = 1) => {
+    includeRect(layoutBounds, rect, contributor);
+    includeRect(geometryBounds, rect, contributor);
+    includeRect(paintBounds, rect, contributor, strokePadding);
   };
 
-  for (const node of nodes.values()) includeRect(node, `node ${node.id}`);
+  for (const lane of workflow.lanes) {
+    includeStructuralRect({
+      x: layout.laneX,
+      y: laneTop(lane.id),
+      width: layout.laneW,
+      height: laneHeight(lane.id),
+    }, `lane ${lane.id}`);
+  }
+
+  for (const node of nodes.values()) includeStructuralRect(node, `node ${node.id}`);
   for (const [index, edge] of workflow.edges.entries()) {
     if (!nodes.has(edge.from) || !nodes.has(edge.to)) continue;
-    for (const point of pathFor(edge).points) includePoint(point, `edge ${edge.id || index}`);
+    for (const point of pathFor(edge).points) {
+      includePoint(geometryBounds, point, `edge ${edge.id || index}`);
+      includePoint(paintBounds, point, `edge ${edge.id || index}`, 2);
+    }
     const label = labelRectFor(edge, index);
-    if (label) includeRect(label, `edge ${edge.id || index} label mask`);
+    if (label) includeRect(paintBounds, label, `edge ${edge.id || index} label mask`);
   }
   for (const phase of asArray(workflow.phases)) {
     if (!Number.isInteger(phase.fromCol) || !Number.isInteger(phase.toCol)
       || phase.fromCol < 0 || phase.toCol >= layout.colXs.length || phase.fromCol > phase.toCol) continue;
     const span = phaseSpan(phase);
-    includeRect({ x: span.x, y: 27, width: span.width, height: 16 }, `phase ${phase.id}`);
+    includeStructuralRect({ x: span.x, y: 27, width: span.width, height: 16 }, `phase ${phase.id}`);
   }
   for (const group of asArray(workflow.groups)) {
     if (!laneIndex.has(group.lane) || !Number.isInteger(group.fromCol) || !Number.isInteger(group.toCol)
       || group.fromCol < 0 || group.toCol >= layout.colXs.length || group.fromCol > group.toCol) continue;
     const span = groupSpan(group);
-    includeRect({
+    includeStructuralRect({
       x: span.x,
       y: laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET,
       width: span.width,
@@ -4117,7 +4145,7 @@ function measuredContentBounds() {
     if (workflow.schema_version === 2) {
       const frameY = laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET;
       const labelBaseline = frameY + GROUP_LABEL_BASELINE_OFFSET;
-      includeRect({
+      includeRect(paintBounds, {
         x: span.x + 10,
         y: labelBaseline - GROUP_LABEL_MASK_ASCENT,
         width: textUnits(group.label) * 5.6,
@@ -4126,13 +4154,19 @@ function measuredContentBounds() {
     }
   }
   if (workflowLegendEntries.length) {
-    for (const rect of workflowLegendRects()) includeRect(rect, `legend ${rect.kind}`);
+    for (const rect of workflowLegendRects()) includeRect(paintBounds, rect, `legend ${rect.kind}`);
   }
+  const finish = (bounds) => {
+    const left = Number.isFinite(bounds.left) ? bounds.left : 0;
+    const top = Number.isFinite(bounds.top) ? bounds.top : 0;
+    const right = Number.isFinite(bounds.right) ? bounds.right : left;
+    const bottom = Number.isFinite(bounds.bottom) ? bounds.bottom : top;
+    return { left, top, right, bottom, width: right - left, height: bottom - top };
+  };
   return {
-    left,
-    top,
-    right,
-    bottom,
+    layoutBounds: finish(layoutBounds),
+    geometryBounds: finish(geometryBounds),
+    paintBounds: finish(paintBounds),
     contributors: [...new Set([
       ...Object.values(owners),
       ...asArray(layout.widthContributors),
@@ -4142,14 +4176,15 @@ function measuredContentBounds() {
 }
 
 function finalizeReadableViewBox() {
+  finalBounds = measuredSceneBounds();
   if (workflow.schema_version !== 2) {
     requiredViewBox = [...viewBox];
     return;
   }
-  const bounds = measuredContentBounds();
+  const bounds = finalBounds.paintBounds;
   requiredViewBox = [
-    Math.max(minimumCanvasWidth, Math.ceil(bounds.right + 16)),
-    Math.max(autoHeight, Math.ceil(bounds.bottom + 18)),
+    Math.max(minimumCanvasWidth, Math.ceil(bounds.right + CANONICAL_PAINT_RIGHT_PADDING)),
+    Math.max(autoHeight, Math.ceil(bounds.bottom + CANONICAL_PAINT_BOTTOM_PADDING)),
   ];
   const outsideOrigin = bounds.left < 0 || bounds.top < 0;
   if (outsideOrigin) {
@@ -4164,7 +4199,7 @@ function finalizeReadableViewBox() {
         actualViewBox: [...viewBox],
         requiredViewBox: [...requiredViewBox],
         contentBounds: [bounds.left, bounds.top, bounds.right, bounds.bottom],
-        contributors: bounds.contributors,
+        contributors: finalBounds.contributors,
       },
       supportedFixes: [],
     }]);
@@ -4197,7 +4232,7 @@ function finalizeReadableViewBox() {
       actualViewBox: [...viewBox],
       requiredViewBox: [...requiredViewBox],
       contentBounds: [bounds.left, bounds.top, bounds.right, bounds.bottom],
-      contributors: bounds.contributors,
+      contributors: finalBounds.contributors,
     },
     supportedFixes,
   }]);
@@ -4344,6 +4379,20 @@ ${renderLegend()}
       contract: layout.contract,
       viewBox: [...viewBox],
       requiredViewBox: [...requiredViewBox],
+      bounds: {
+        layout: finalBounds.layoutBounds,
+        geometry: finalBounds.geometryBounds,
+        paint: finalBounds.paintBounds,
+        canonicalFrame: [0, 0, ...viewBox],
+        contributors: finalBounds.contributors,
+      },
+      ...(workflow.schema_version === 2 ? {
+        operationBudget: {
+          status: 'within-budget',
+          layoutPasses: layout.layoutPasses,
+          layoutPassLimit: layout.layoutPassLimit,
+        },
+      } : {}),
       columns: [...layout.colXs],
       nodes: [...nodes.values()].map((node) => ({
         id: node.id,
@@ -4367,6 +4416,16 @@ ${renderLegend()}
       }),
       diagnostics: [],
     };
+    receipt.layoutDigest = createHash('sha256').update(stableValueKey({
+      contract: receipt.contract,
+      viewBox: receipt.viewBox,
+      requiredViewBox: receipt.requiredViewBox,
+      bounds: receipt.bounds,
+      columns: receipt.columns,
+      nodes: receipt.nodes,
+      edges: receipt.edges,
+      labels: receipt.labels,
+    })).digest('hex');
     return { ok: true, svg, receipt };
   } catch (error) {
     if (!Array.isArray(error?.archifyDiagnostics)) throw error;
@@ -4393,19 +4452,34 @@ function feedbackFailure(request) {
     },
     supportedFixes: [],
   }];
-  return compilerFailure('readable-v2', diagnostics, message);
+  const failure = compilerFailure('readable-v2', diagnostics, message);
+  failure.receipt.operationBudget = {
+    status: 'exhausted',
+    feedbackRounds: MAX_READABLE_LAYOUT_FEEDBACK_ROUNDS,
+    feedbackRoundLimit: MAX_READABLE_LAYOUT_FEEDBACK_ROUNDS,
+  };
+  return failure;
 }
 
 function compileWorkflowWithFeedback({ workflow, qualityProfile, discoverFixes = true } = {}) {
   let layoutFeedback = {};
   for (let attempt = 0; attempt <= MAX_READABLE_LAYOUT_FEEDBACK_ROUNDS; attempt += 1) {
     try {
-      return compileWorkflowInternal({
+      const compiled = compileWorkflowInternal({
         workflow,
         qualityProfile,
         discoverFixes,
         layoutFeedback,
       });
+      if (compiled.receipt && workflow?.schema_version === 2) {
+        compiled.receipt.operationBudget = {
+          ...(compiled.receipt.operationBudget || {}),
+          status: compiled.ok ? 'within-budget' : 'failed',
+          feedbackRounds: attempt,
+          feedbackRoundLimit: MAX_READABLE_LAYOUT_FEEDBACK_ROUNDS,
+        };
+      }
+      return compiled;
     } catch (error) {
       if (!(error instanceof WorkflowLayoutFeedback)) throw error;
       const request = error.request;

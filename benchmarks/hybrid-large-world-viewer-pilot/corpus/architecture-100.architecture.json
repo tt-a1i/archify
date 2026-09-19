@@ -1,0 +1,2671 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Large-world Architecture 100",
+    "subtitle": "100 nodes · deterministic archify-hybrid-large-world-v1",
+    "output": "architecture-100.architecture.html",
+    "quality_profile": "standard",
+    "visual_preset": "blueprint",
+    "animation": "none",
+    "viewBox": [
+      4260,
+      2370
+    ],
+    "views": [
+      {
+        "id": "readable-entry",
+        "label": "Readable entry",
+        "focus": [
+          "a-0"
+        ],
+        "note": "One complete readable node."
+      },
+      {
+        "id": "oversized-world",
+        "label": "Whole system",
+        "focus": [
+          "a-0",
+          "a-1",
+          "a-2",
+          "a-3",
+          "a-4",
+          "a-5",
+          "a-6",
+          "a-7",
+          "a-8",
+          "a-9",
+          "a-10",
+          "a-11",
+          "a-12",
+          "a-13",
+          "a-14",
+          "a-15",
+          "a-16",
+          "a-17",
+          "a-18",
+          "a-19",
+          "a-20",
+          "a-21",
+          "a-22",
+          "a-23",
+          "a-24",
+          "a-25",
+          "a-26",
+          "a-27",
+          "a-28",
+          "a-29",
+          "a-30",
+          "a-31",
+          "a-32",
+          "a-33",
+          "a-34",
+          "a-35",
+          "a-36",
+          "a-37",
+          "a-38",
+          "a-39",
+          "a-40",
+          "a-41",
+          "a-42",
+          "a-43",
+          "a-44",
+          "a-45",
+          "a-46",
+          "a-47",
+          "a-48",
+          "a-49",
+          "a-50",
+          "a-51",
+          "a-52",
+          "a-53",
+          "a-54",
+          "a-55",
+          "a-56",
+          "a-57",
+          "a-58",
+          "a-59",
+          "a-60",
+          "a-61",
+          "a-62",
+          "a-63",
+          "a-64",
+          "a-65",
+          "a-66",
+          "a-67",
+          "a-68",
+          "a-69",
+          "a-70",
+          "a-71",
+          "a-72",
+          "a-73",
+          "a-74",
+          "a-75",
+          "a-76",
+          "a-77",
+          "a-78",
+          "a-79",
+          "a-80",
+          "a-81",
+          "a-82",
+          "a-83",
+          "a-84",
+          "a-85",
+          "a-86",
+          "a-87",
+          "a-88",
+          "a-89",
+          "a-90",
+          "a-91",
+          "a-92",
+          "a-93",
+          "a-94",
+          "a-95",
+          "a-96",
+          "a-97",
+          "a-98",
+          "a-99"
+        ],
+        "note": "Completeness-first oversized target."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "a-0",
+      "type": "external",
+      "label": "模块0承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 1",
+      "pos": [
+        500,
+        500
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-1",
+      "type": "frontend",
+      "label": "Module 1",
+      "sublabel": "region 1",
+      "pos": [
+        840,
+        500
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-2",
+      "type": "cloud",
+      "label": "Module 2",
+      "sublabel": "region 1",
+      "pos": [
+        1180,
+        500
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-3",
+      "type": "backend",
+      "label": "Module 3",
+      "sublabel": "region 1",
+      "pos": [
+        1520,
+        500
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-4",
+      "type": "database",
+      "label": "Module 4",
+      "sublabel": "region 1",
+      "pos": [
+        1860,
+        500
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-5",
+      "type": "security",
+      "label": "模块5承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 1",
+      "pos": [
+        2200,
+        500
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-6",
+      "type": "messagebus",
+      "label": "Module 6",
+      "sublabel": "region 1",
+      "pos": [
+        2540,
+        500
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-7",
+      "type": "external",
+      "label": "Module 7",
+      "sublabel": "region 1",
+      "pos": [
+        2880,
+        500
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-8",
+      "type": "frontend",
+      "label": "Module 8",
+      "sublabel": "region 1",
+      "pos": [
+        3220,
+        500
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-9",
+      "type": "cloud",
+      "label": "Module 9",
+      "sublabel": "region 1",
+      "pos": [
+        3560,
+        500
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-10",
+      "type": "backend",
+      "label": "模块10承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 1",
+      "pos": [
+        500,
+        630
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-11",
+      "type": "database",
+      "label": "Module 11",
+      "sublabel": "region 1",
+      "pos": [
+        840,
+        630
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-12",
+      "type": "security",
+      "label": "Module 12",
+      "sublabel": "region 1",
+      "pos": [
+        1180,
+        630
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-13",
+      "type": "messagebus",
+      "label": "Module 13",
+      "sublabel": "region 1",
+      "pos": [
+        1520,
+        630
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-14",
+      "type": "external",
+      "label": "Module 14",
+      "sublabel": "region 1",
+      "pos": [
+        1860,
+        630
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-15",
+      "type": "frontend",
+      "label": "模块15承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 1",
+      "pos": [
+        2200,
+        630
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-16",
+      "type": "cloud",
+      "label": "Module 16",
+      "sublabel": "region 1",
+      "pos": [
+        2540,
+        630
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-17",
+      "type": "backend",
+      "label": "Module 17",
+      "sublabel": "region 1",
+      "pos": [
+        2880,
+        630
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-18",
+      "type": "database",
+      "label": "Module 18",
+      "sublabel": "region 1",
+      "pos": [
+        3220,
+        630
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-19",
+      "type": "security",
+      "label": "Module 19",
+      "sublabel": "region 1",
+      "pos": [
+        3560,
+        630
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-20",
+      "type": "messagebus",
+      "label": "模块20承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 1",
+      "pos": [
+        500,
+        760
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-21",
+      "type": "external",
+      "label": "Module 21",
+      "sublabel": "region 1",
+      "pos": [
+        840,
+        760
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-22",
+      "type": "frontend",
+      "label": "Module 22",
+      "sublabel": "region 1",
+      "pos": [
+        1180,
+        760
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-23",
+      "type": "cloud",
+      "label": "Module 23",
+      "sublabel": "region 1",
+      "pos": [
+        1520,
+        760
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-24",
+      "type": "backend",
+      "label": "Module 24",
+      "sublabel": "region 1",
+      "pos": [
+        1860,
+        760
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-25",
+      "type": "database",
+      "label": "模块25承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 1",
+      "pos": [
+        2200,
+        760
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-26",
+      "type": "security",
+      "label": "Module 26",
+      "sublabel": "region 1",
+      "pos": [
+        2540,
+        760
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-27",
+      "type": "messagebus",
+      "label": "Module 27",
+      "sublabel": "region 1",
+      "pos": [
+        2880,
+        760
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-28",
+      "type": "external",
+      "label": "Module 28",
+      "sublabel": "region 1",
+      "pos": [
+        3220,
+        760
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-29",
+      "type": "frontend",
+      "label": "Module 29",
+      "sublabel": "region 1",
+      "pos": [
+        3560,
+        760
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-30",
+      "type": "cloud",
+      "label": "模块30承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 2",
+      "pos": [
+        500,
+        890
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-31",
+      "type": "backend",
+      "label": "Module 31",
+      "sublabel": "region 2",
+      "pos": [
+        840,
+        890
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-32",
+      "type": "database",
+      "label": "Module 32",
+      "sublabel": "region 2",
+      "pos": [
+        1180,
+        890
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-33",
+      "type": "security",
+      "label": "Module 33",
+      "sublabel": "region 2",
+      "pos": [
+        1520,
+        890
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-34",
+      "type": "messagebus",
+      "label": "Module 34",
+      "sublabel": "region 2",
+      "pos": [
+        1860,
+        890
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-35",
+      "type": "external",
+      "label": "模块35承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 2",
+      "pos": [
+        2200,
+        890
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-36",
+      "type": "frontend",
+      "label": "Module 36",
+      "sublabel": "region 2",
+      "pos": [
+        2540,
+        890
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-37",
+      "type": "cloud",
+      "label": "Module 37",
+      "sublabel": "region 2",
+      "pos": [
+        2880,
+        890
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-38",
+      "type": "backend",
+      "label": "Module 38",
+      "sublabel": "region 2",
+      "pos": [
+        3220,
+        890
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-39",
+      "type": "database",
+      "label": "Module 39",
+      "sublabel": "region 2",
+      "pos": [
+        3560,
+        890
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-40",
+      "type": "security",
+      "label": "模块40承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 2",
+      "pos": [
+        500,
+        1020
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-41",
+      "type": "messagebus",
+      "label": "Module 41",
+      "sublabel": "region 2",
+      "pos": [
+        840,
+        1020
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-42",
+      "type": "external",
+      "label": "Module 42",
+      "sublabel": "region 2",
+      "pos": [
+        1180,
+        1020
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-43",
+      "type": "frontend",
+      "label": "Module 43",
+      "sublabel": "region 2",
+      "pos": [
+        1520,
+        1020
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-44",
+      "type": "cloud",
+      "label": "Module 44",
+      "sublabel": "region 2",
+      "pos": [
+        1860,
+        1020
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-45",
+      "type": "backend",
+      "label": "模块45承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 2",
+      "pos": [
+        2200,
+        1020
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-46",
+      "type": "database",
+      "label": "Module 46",
+      "sublabel": "region 2",
+      "pos": [
+        2540,
+        1020
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-47",
+      "type": "security",
+      "label": "Module 47",
+      "sublabel": "region 2",
+      "pos": [
+        2880,
+        1020
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-48",
+      "type": "messagebus",
+      "label": "Module 48",
+      "sublabel": "region 2",
+      "pos": [
+        3220,
+        1020
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-49",
+      "type": "external",
+      "label": "Module 49",
+      "sublabel": "region 2",
+      "pos": [
+        3560,
+        1020
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-50",
+      "type": "frontend",
+      "label": "模块50承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 3",
+      "pos": [
+        500,
+        1150
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-51",
+      "type": "cloud",
+      "label": "Module 51",
+      "sublabel": "region 3",
+      "pos": [
+        840,
+        1150
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-52",
+      "type": "backend",
+      "label": "Module 52",
+      "sublabel": "region 3",
+      "pos": [
+        1180,
+        1150
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-53",
+      "type": "database",
+      "label": "Module 53",
+      "sublabel": "region 3",
+      "pos": [
+        1520,
+        1150
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-54",
+      "type": "security",
+      "label": "Module 54",
+      "sublabel": "region 3",
+      "pos": [
+        1860,
+        1150
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-55",
+      "type": "messagebus",
+      "label": "模块55承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 3",
+      "pos": [
+        2200,
+        1150
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-56",
+      "type": "external",
+      "label": "Module 56",
+      "sublabel": "region 3",
+      "pos": [
+        2540,
+        1150
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-57",
+      "type": "frontend",
+      "label": "Module 57",
+      "sublabel": "region 3",
+      "pos": [
+        2880,
+        1150
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-58",
+      "type": "cloud",
+      "label": "Module 58",
+      "sublabel": "region 3",
+      "pos": [
+        3220,
+        1150
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-59",
+      "type": "backend",
+      "label": "Module 59",
+      "sublabel": "region 3",
+      "pos": [
+        3560,
+        1150
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-60",
+      "type": "database",
+      "label": "模块60承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 3",
+      "pos": [
+        500,
+        1280
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-61",
+      "type": "security",
+      "label": "Module 61",
+      "sublabel": "region 3",
+      "pos": [
+        840,
+        1280
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-62",
+      "type": "messagebus",
+      "label": "Module 62",
+      "sublabel": "region 3",
+      "pos": [
+        1180,
+        1280
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-63",
+      "type": "external",
+      "label": "Module 63",
+      "sublabel": "region 3",
+      "pos": [
+        1520,
+        1280
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-64",
+      "type": "frontend",
+      "label": "Module 64",
+      "sublabel": "region 3",
+      "pos": [
+        1860,
+        1280
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-65",
+      "type": "cloud",
+      "label": "模块65承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 3",
+      "pos": [
+        2200,
+        1280
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-66",
+      "type": "backend",
+      "label": "Module 66",
+      "sublabel": "region 3",
+      "pos": [
+        2540,
+        1280
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-67",
+      "type": "database",
+      "label": "Module 67",
+      "sublabel": "region 3",
+      "pos": [
+        2880,
+        1280
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-68",
+      "type": "security",
+      "label": "Module 68",
+      "sublabel": "region 3",
+      "pos": [
+        3220,
+        1280
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-69",
+      "type": "messagebus",
+      "label": "Module 69",
+      "sublabel": "region 3",
+      "pos": [
+        3560,
+        1280
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-70",
+      "type": "external",
+      "label": "模块70承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 3",
+      "pos": [
+        500,
+        1410
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-71",
+      "type": "frontend",
+      "label": "Module 71",
+      "sublabel": "region 3",
+      "pos": [
+        840,
+        1410
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-72",
+      "type": "cloud",
+      "label": "Module 72",
+      "sublabel": "region 3",
+      "pos": [
+        1180,
+        1410
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-73",
+      "type": "backend",
+      "label": "Module 73",
+      "sublabel": "region 3",
+      "pos": [
+        1520,
+        1410
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-74",
+      "type": "database",
+      "label": "Module 74",
+      "sublabel": "region 3",
+      "pos": [
+        1860,
+        1410
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-75",
+      "type": "security",
+      "label": "模块75承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 3",
+      "pos": [
+        2200,
+        1410
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-76",
+      "type": "messagebus",
+      "label": "Module 76",
+      "sublabel": "region 3",
+      "pos": [
+        2540,
+        1410
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-77",
+      "type": "external",
+      "label": "Module 77",
+      "sublabel": "region 3",
+      "pos": [
+        2880,
+        1410
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-78",
+      "type": "frontend",
+      "label": "Module 78",
+      "sublabel": "region 3",
+      "pos": [
+        3220,
+        1410
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-79",
+      "type": "cloud",
+      "label": "Module 79",
+      "sublabel": "region 3",
+      "pos": [
+        3560,
+        1410
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-80",
+      "type": "backend",
+      "label": "模块80承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 4",
+      "pos": [
+        500,
+        1540
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-81",
+      "type": "database",
+      "label": "Module 81",
+      "sublabel": "region 4",
+      "pos": [
+        840,
+        1540
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-82",
+      "type": "security",
+      "label": "Module 82",
+      "sublabel": "region 4",
+      "pos": [
+        1180,
+        1540
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-83",
+      "type": "messagebus",
+      "label": "Module 83",
+      "sublabel": "region 4",
+      "pos": [
+        1520,
+        1540
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-84",
+      "type": "external",
+      "label": "Module 84",
+      "sublabel": "region 4",
+      "pos": [
+        1860,
+        1540
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-85",
+      "type": "frontend",
+      "label": "模块85承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 4",
+      "pos": [
+        2200,
+        1540
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-86",
+      "type": "cloud",
+      "label": "Module 86",
+      "sublabel": "region 4",
+      "pos": [
+        2540,
+        1540
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-87",
+      "type": "backend",
+      "label": "Module 87",
+      "sublabel": "region 4",
+      "pos": [
+        2880,
+        1540
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-88",
+      "type": "database",
+      "label": "Module 88",
+      "sublabel": "region 4",
+      "pos": [
+        3220,
+        1540
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-89",
+      "type": "security",
+      "label": "Module 89",
+      "sublabel": "region 4",
+      "pos": [
+        3560,
+        1540
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-90",
+      "type": "messagebus",
+      "label": "模块90承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 4",
+      "pos": [
+        500,
+        1670
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-91",
+      "type": "external",
+      "label": "Module 91",
+      "sublabel": "region 4",
+      "pos": [
+        840,
+        1670
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-92",
+      "type": "frontend",
+      "label": "Module 92",
+      "sublabel": "region 4",
+      "pos": [
+        1180,
+        1670
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-93",
+      "type": "cloud",
+      "label": "Module 93",
+      "sublabel": "region 4",
+      "pos": [
+        1520,
+        1670
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-94",
+      "type": "backend",
+      "label": "Module 94",
+      "sublabel": "region 4",
+      "pos": [
+        1860,
+        1670
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-95",
+      "type": "database",
+      "label": "模块95承担跨边界服务编排与审计追踪职责",
+      "sublabel": "region 4",
+      "pos": [
+        2200,
+        1670
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-96",
+      "type": "security",
+      "label": "Module 96",
+      "sublabel": "region 4",
+      "pos": [
+        2540,
+        1670
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-97",
+      "type": "messagebus",
+      "label": "Module 97",
+      "sublabel": "region 4",
+      "pos": [
+        2880,
+        1670
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-98",
+      "type": "external",
+      "label": "Module 98",
+      "sublabel": "region 4",
+      "pos": [
+        3220,
+        1670
+      ],
+      "size": [
+        292,
+        64
+      ]
+    },
+    {
+      "id": "a-99",
+      "type": "frontend",
+      "label": "Module 99",
+      "sublabel": "region 4",
+      "pos": [
+        3560,
+        1670
+      ],
+      "size": [
+        292,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Region 1 · deterministic boundary",
+      "wraps": [
+        "a-0",
+        "a-1",
+        "a-2",
+        "a-3",
+        "a-4",
+        "a-5",
+        "a-6",
+        "a-7",
+        "a-8",
+        "a-9",
+        "a-10",
+        "a-11",
+        "a-12",
+        "a-13",
+        "a-14",
+        "a-15",
+        "a-16",
+        "a-17",
+        "a-18",
+        "a-19",
+        "a-20",
+        "a-21",
+        "a-22",
+        "a-23",
+        "a-24",
+        "a-25",
+        "a-26",
+        "a-27",
+        "a-28",
+        "a-29"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Region 2 · deterministic boundary",
+      "wraps": [
+        "a-30",
+        "a-31",
+        "a-32",
+        "a-33",
+        "a-34",
+        "a-35",
+        "a-36",
+        "a-37",
+        "a-38",
+        "a-39",
+        "a-40",
+        "a-41",
+        "a-42",
+        "a-43",
+        "a-44",
+        "a-45",
+        "a-46",
+        "a-47",
+        "a-48",
+        "a-49"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Region 3 · deterministic boundary",
+      "wraps": [
+        "a-50",
+        "a-51",
+        "a-52",
+        "a-53",
+        "a-54",
+        "a-55",
+        "a-56",
+        "a-57",
+        "a-58",
+        "a-59",
+        "a-60",
+        "a-61",
+        "a-62",
+        "a-63",
+        "a-64",
+        "a-65",
+        "a-66",
+        "a-67",
+        "a-68",
+        "a-69",
+        "a-70",
+        "a-71",
+        "a-72",
+        "a-73",
+        "a-74",
+        "a-75",
+        "a-76",
+        "a-77",
+        "a-78",
+        "a-79"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Region 4 · deterministic boundary",
+      "wraps": [
+        "a-80",
+        "a-81",
+        "a-82",
+        "a-83",
+        "a-84",
+        "a-85",
+        "a-86",
+        "a-87",
+        "a-88",
+        "a-89",
+        "a-90",
+        "a-91",
+        "a-92",
+        "a-93",
+        "a-94",
+        "a-95",
+        "a-96",
+        "a-97",
+        "a-98",
+        "a-99"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-h-0",
+      "from": "a-0",
+      "to": "a-1"
+    },
+    {
+      "id": "a-v-0",
+      "from": "a-0",
+      "to": "a-10",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-1",
+      "from": "a-1",
+      "to": "a-2"
+    },
+    {
+      "id": "a-v-1",
+      "from": "a-1",
+      "to": "a-11",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-2",
+      "from": "a-2",
+      "to": "a-3"
+    },
+    {
+      "id": "a-v-2",
+      "from": "a-2",
+      "to": "a-12",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-3",
+      "from": "a-3",
+      "to": "a-4"
+    },
+    {
+      "id": "a-v-3",
+      "from": "a-3",
+      "to": "a-13",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-4",
+      "from": "a-4",
+      "to": "a-5"
+    },
+    {
+      "id": "a-v-4",
+      "from": "a-4",
+      "to": "a-14",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-5",
+      "from": "a-5",
+      "to": "a-6"
+    },
+    {
+      "id": "a-v-5",
+      "from": "a-5",
+      "to": "a-15",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-6",
+      "from": "a-6",
+      "to": "a-7"
+    },
+    {
+      "id": "a-v-6",
+      "from": "a-6",
+      "to": "a-16",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-7",
+      "from": "a-7",
+      "to": "a-8"
+    },
+    {
+      "id": "a-v-7",
+      "from": "a-7",
+      "to": "a-17",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-8",
+      "from": "a-8",
+      "to": "a-9"
+    },
+    {
+      "id": "a-v-8",
+      "from": "a-8",
+      "to": "a-18",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-v-9",
+      "from": "a-9",
+      "to": "a-19",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-10",
+      "from": "a-10",
+      "to": "a-11"
+    },
+    {
+      "id": "a-v-10",
+      "from": "a-10",
+      "to": "a-20",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-11",
+      "from": "a-11",
+      "to": "a-12"
+    },
+    {
+      "id": "a-v-11",
+      "from": "a-11",
+      "to": "a-21",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-12",
+      "from": "a-12",
+      "to": "a-13"
+    },
+    {
+      "id": "a-v-12",
+      "from": "a-12",
+      "to": "a-22",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-13",
+      "from": "a-13",
+      "to": "a-14"
+    },
+    {
+      "id": "a-v-13",
+      "from": "a-13",
+      "to": "a-23",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-14",
+      "from": "a-14",
+      "to": "a-15"
+    },
+    {
+      "id": "a-v-14",
+      "from": "a-14",
+      "to": "a-24",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-15",
+      "from": "a-15",
+      "to": "a-16"
+    },
+    {
+      "id": "a-v-15",
+      "from": "a-15",
+      "to": "a-25",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-16",
+      "from": "a-16",
+      "to": "a-17"
+    },
+    {
+      "id": "a-v-16",
+      "from": "a-16",
+      "to": "a-26",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-17",
+      "from": "a-17",
+      "to": "a-18"
+    },
+    {
+      "id": "a-v-17",
+      "from": "a-17",
+      "to": "a-27",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-18",
+      "from": "a-18",
+      "to": "a-19"
+    },
+    {
+      "id": "a-v-18",
+      "from": "a-18",
+      "to": "a-28",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-v-19",
+      "from": "a-19",
+      "to": "a-29",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-20",
+      "from": "a-20",
+      "to": "a-21"
+    },
+    {
+      "id": "a-v-20",
+      "from": "a-20",
+      "to": "a-30",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-21",
+      "from": "a-21",
+      "to": "a-22"
+    },
+    {
+      "id": "a-v-21",
+      "from": "a-21",
+      "to": "a-31",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-22",
+      "from": "a-22",
+      "to": "a-23"
+    },
+    {
+      "id": "a-v-22",
+      "from": "a-22",
+      "to": "a-32",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-23",
+      "from": "a-23",
+      "to": "a-24"
+    },
+    {
+      "id": "a-v-23",
+      "from": "a-23",
+      "to": "a-33",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-24",
+      "from": "a-24",
+      "to": "a-25"
+    },
+    {
+      "id": "a-v-24",
+      "from": "a-24",
+      "to": "a-34",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-25",
+      "from": "a-25",
+      "to": "a-26"
+    },
+    {
+      "id": "a-v-25",
+      "from": "a-25",
+      "to": "a-35",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-26",
+      "from": "a-26",
+      "to": "a-27"
+    },
+    {
+      "id": "a-v-26",
+      "from": "a-26",
+      "to": "a-36",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-27",
+      "from": "a-27",
+      "to": "a-28"
+    },
+    {
+      "id": "a-v-27",
+      "from": "a-27",
+      "to": "a-37",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-28",
+      "from": "a-28",
+      "to": "a-29"
+    },
+    {
+      "id": "a-v-28",
+      "from": "a-28",
+      "to": "a-38",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-v-29",
+      "from": "a-29",
+      "to": "a-39",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-30",
+      "from": "a-30",
+      "to": "a-31"
+    },
+    {
+      "id": "a-v-30",
+      "from": "a-30",
+      "to": "a-40",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-31",
+      "from": "a-31",
+      "to": "a-32"
+    },
+    {
+      "id": "a-v-31",
+      "from": "a-31",
+      "to": "a-41",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-32",
+      "from": "a-32",
+      "to": "a-33"
+    },
+    {
+      "id": "a-v-32",
+      "from": "a-32",
+      "to": "a-42",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-33",
+      "from": "a-33",
+      "to": "a-34"
+    },
+    {
+      "id": "a-v-33",
+      "from": "a-33",
+      "to": "a-43",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-34",
+      "from": "a-34",
+      "to": "a-35"
+    },
+    {
+      "id": "a-v-34",
+      "from": "a-34",
+      "to": "a-44",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-35",
+      "from": "a-35",
+      "to": "a-36"
+    },
+    {
+      "id": "a-v-35",
+      "from": "a-35",
+      "to": "a-45",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-36",
+      "from": "a-36",
+      "to": "a-37"
+    },
+    {
+      "id": "a-v-36",
+      "from": "a-36",
+      "to": "a-46",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-37",
+      "from": "a-37",
+      "to": "a-38"
+    },
+    {
+      "id": "a-v-37",
+      "from": "a-37",
+      "to": "a-47",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-38",
+      "from": "a-38",
+      "to": "a-39"
+    },
+    {
+      "id": "a-v-38",
+      "from": "a-38",
+      "to": "a-48",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-v-39",
+      "from": "a-39",
+      "to": "a-49",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-40",
+      "from": "a-40",
+      "to": "a-41"
+    },
+    {
+      "id": "a-v-40",
+      "from": "a-40",
+      "to": "a-50",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-41",
+      "from": "a-41",
+      "to": "a-42"
+    },
+    {
+      "id": "a-v-41",
+      "from": "a-41",
+      "to": "a-51",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-42",
+      "from": "a-42",
+      "to": "a-43"
+    },
+    {
+      "id": "a-v-42",
+      "from": "a-42",
+      "to": "a-52",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-43",
+      "from": "a-43",
+      "to": "a-44"
+    },
+    {
+      "id": "a-v-43",
+      "from": "a-43",
+      "to": "a-53",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-44",
+      "from": "a-44",
+      "to": "a-45"
+    },
+    {
+      "id": "a-v-44",
+      "from": "a-44",
+      "to": "a-54",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-45",
+      "from": "a-45",
+      "to": "a-46"
+    },
+    {
+      "id": "a-v-45",
+      "from": "a-45",
+      "to": "a-55",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-46",
+      "from": "a-46",
+      "to": "a-47"
+    },
+    {
+      "id": "a-v-46",
+      "from": "a-46",
+      "to": "a-56",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-47",
+      "from": "a-47",
+      "to": "a-48"
+    },
+    {
+      "id": "a-v-47",
+      "from": "a-47",
+      "to": "a-57",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-48",
+      "from": "a-48",
+      "to": "a-49"
+    },
+    {
+      "id": "a-v-48",
+      "from": "a-48",
+      "to": "a-58",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-v-49",
+      "from": "a-49",
+      "to": "a-59",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-50",
+      "from": "a-50",
+      "to": "a-51"
+    },
+    {
+      "id": "a-v-50",
+      "from": "a-50",
+      "to": "a-60",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-51",
+      "from": "a-51",
+      "to": "a-52"
+    },
+    {
+      "id": "a-v-51",
+      "from": "a-51",
+      "to": "a-61",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-52",
+      "from": "a-52",
+      "to": "a-53"
+    },
+    {
+      "id": "a-v-52",
+      "from": "a-52",
+      "to": "a-62",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-53",
+      "from": "a-53",
+      "to": "a-54"
+    },
+    {
+      "id": "a-v-53",
+      "from": "a-53",
+      "to": "a-63",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-54",
+      "from": "a-54",
+      "to": "a-55"
+    },
+    {
+      "id": "a-v-54",
+      "from": "a-54",
+      "to": "a-64",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-55",
+      "from": "a-55",
+      "to": "a-56"
+    },
+    {
+      "id": "a-v-55",
+      "from": "a-55",
+      "to": "a-65",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-56",
+      "from": "a-56",
+      "to": "a-57"
+    },
+    {
+      "id": "a-v-56",
+      "from": "a-56",
+      "to": "a-66",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-57",
+      "from": "a-57",
+      "to": "a-58"
+    },
+    {
+      "id": "a-v-57",
+      "from": "a-57",
+      "to": "a-67",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-58",
+      "from": "a-58",
+      "to": "a-59"
+    },
+    {
+      "id": "a-v-58",
+      "from": "a-58",
+      "to": "a-68",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-v-59",
+      "from": "a-59",
+      "to": "a-69",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-60",
+      "from": "a-60",
+      "to": "a-61"
+    },
+    {
+      "id": "a-v-60",
+      "from": "a-60",
+      "to": "a-70",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-61",
+      "from": "a-61",
+      "to": "a-62"
+    },
+    {
+      "id": "a-v-61",
+      "from": "a-61",
+      "to": "a-71",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-62",
+      "from": "a-62",
+      "to": "a-63"
+    },
+    {
+      "id": "a-v-62",
+      "from": "a-62",
+      "to": "a-72",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-63",
+      "from": "a-63",
+      "to": "a-64"
+    },
+    {
+      "id": "a-v-63",
+      "from": "a-63",
+      "to": "a-73",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-64",
+      "from": "a-64",
+      "to": "a-65"
+    },
+    {
+      "id": "a-v-64",
+      "from": "a-64",
+      "to": "a-74",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-65",
+      "from": "a-65",
+      "to": "a-66"
+    },
+    {
+      "id": "a-v-65",
+      "from": "a-65",
+      "to": "a-75",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-66",
+      "from": "a-66",
+      "to": "a-67"
+    },
+    {
+      "id": "a-v-66",
+      "from": "a-66",
+      "to": "a-76",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-67",
+      "from": "a-67",
+      "to": "a-68"
+    },
+    {
+      "id": "a-v-67",
+      "from": "a-67",
+      "to": "a-77",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-68",
+      "from": "a-68",
+      "to": "a-69"
+    },
+    {
+      "id": "a-v-68",
+      "from": "a-68",
+      "to": "a-78",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-v-69",
+      "from": "a-69",
+      "to": "a-79",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-70",
+      "from": "a-70",
+      "to": "a-71"
+    },
+    {
+      "id": "a-v-70",
+      "from": "a-70",
+      "to": "a-80",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-71",
+      "from": "a-71",
+      "to": "a-72"
+    },
+    {
+      "id": "a-v-71",
+      "from": "a-71",
+      "to": "a-81",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-72",
+      "from": "a-72",
+      "to": "a-73"
+    },
+    {
+      "id": "a-v-72",
+      "from": "a-72",
+      "to": "a-82",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-73",
+      "from": "a-73",
+      "to": "a-74"
+    },
+    {
+      "id": "a-v-73",
+      "from": "a-73",
+      "to": "a-83",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-74",
+      "from": "a-74",
+      "to": "a-75"
+    },
+    {
+      "id": "a-v-74",
+      "from": "a-74",
+      "to": "a-84",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-75",
+      "from": "a-75",
+      "to": "a-76"
+    },
+    {
+      "id": "a-v-75",
+      "from": "a-75",
+      "to": "a-85",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-76",
+      "from": "a-76",
+      "to": "a-77"
+    },
+    {
+      "id": "a-v-76",
+      "from": "a-76",
+      "to": "a-86",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-77",
+      "from": "a-77",
+      "to": "a-78"
+    },
+    {
+      "id": "a-v-77",
+      "from": "a-77",
+      "to": "a-87",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-78",
+      "from": "a-78",
+      "to": "a-79"
+    },
+    {
+      "id": "a-v-78",
+      "from": "a-78",
+      "to": "a-88",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-v-79",
+      "from": "a-79",
+      "to": "a-89",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-80",
+      "from": "a-80",
+      "to": "a-81"
+    },
+    {
+      "id": "a-v-80",
+      "from": "a-80",
+      "to": "a-90",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-81",
+      "from": "a-81",
+      "to": "a-82"
+    },
+    {
+      "id": "a-v-81",
+      "from": "a-81",
+      "to": "a-91",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-82",
+      "from": "a-82",
+      "to": "a-83"
+    },
+    {
+      "id": "a-v-82",
+      "from": "a-82",
+      "to": "a-92",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-83",
+      "from": "a-83",
+      "to": "a-84"
+    },
+    {
+      "id": "a-v-83",
+      "from": "a-83",
+      "to": "a-93",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-84",
+      "from": "a-84",
+      "to": "a-85"
+    },
+    {
+      "id": "a-v-84",
+      "from": "a-84",
+      "to": "a-94",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-85",
+      "from": "a-85",
+      "to": "a-86"
+    },
+    {
+      "id": "a-v-85",
+      "from": "a-85",
+      "to": "a-95",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-86",
+      "from": "a-86",
+      "to": "a-87"
+    },
+    {
+      "id": "a-v-86",
+      "from": "a-86",
+      "to": "a-96",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-87",
+      "from": "a-87",
+      "to": "a-88"
+    },
+    {
+      "id": "a-v-87",
+      "from": "a-87",
+      "to": "a-97",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-88",
+      "from": "a-88",
+      "to": "a-89"
+    },
+    {
+      "id": "a-v-88",
+      "from": "a-88",
+      "to": "a-98",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-v-89",
+      "from": "a-89",
+      "to": "a-99",
+      "variant": "dashed"
+    },
+    {
+      "id": "a-h-90",
+      "from": "a-90",
+      "to": "a-91"
+    },
+    {
+      "id": "a-h-91",
+      "from": "a-91",
+      "to": "a-92"
+    },
+    {
+      "id": "a-h-92",
+      "from": "a-92",
+      "to": "a-93"
+    },
+    {
+      "id": "a-h-93",
+      "from": "a-93",
+      "to": "a-94"
+    },
+    {
+      "id": "a-h-94",
+      "from": "a-94",
+      "to": "a-95"
+    },
+    {
+      "id": "a-h-95",
+      "from": "a-95",
+      "to": "a-96"
+    },
+    {
+      "id": "a-h-96",
+      "from": "a-96",
+      "to": "a-97"
+    },
+    {
+      "id": "a-h-97",
+      "from": "a-97",
+      "to": "a-98"
+    },
+    {
+      "id": "a-h-98",
+      "from": "a-98",
+      "to": "a-99"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Reader",
+      "items": [
+        "Fixed reading viewport",
+        "Finite canonical world"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Evidence",
+      "items": [
+        "Readable local entry",
+        "Reset returns Fit-all"
+      ]
+    }
+  ]
+}

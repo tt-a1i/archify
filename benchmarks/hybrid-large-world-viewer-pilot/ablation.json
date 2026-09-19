@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "branch": "labs/adaptive-workflow-canvas-pilot",
+  "coreMutations": [
+    {
+      "candidate": "dynamic finite zoom",
+      "mutation": "temporarily restored the legacy 3x maximum",
+      "test": "ARCHIFY_CHROME=... node --test test/large-world-viewer-browser.test.mjs",
+      "result": "failed as expected",
+      "evidence": "architecture large100 dynamic scale assertion was false",
+      "finalState": "restored"
+    },
+    {
+      "candidate": "deterministic automatic entry",
+      "mutation": "temporarily returned before automatic-entry selection",
+      "test": "ARCHIFY_CHROME=... node --test test/large-world-viewer-browser.test.mjs",
+      "result": "failed as expected",
+      "evidence": "architecture large100 remained at scale 1 and failed the dynamic-entry assertion",
+      "finalState": "restored"
+    },
+    {
+      "candidate": "fixed desktop stage",
+      "mutation": "temporarily removed fixed height and large-profile width override",
+      "test": "ARCHIFY_CHROME=... node --test test/large-world-viewer-browser.test.mjs",
+      "result": "failed as expected",
+      "evidence": "actual clientHeight differed from the derived stageHeight by more than 2px",
+      "finalState": "restored"
+    },
+    {
+      "candidate": "raster and WebM pixel-budget preflight",
+      "mutation": "temporarily forced oversized preflights to report ok",
+      "test": "ARCHIFY_CHROME=... node --test test/export-browser.test.mjs",
+      "result": "failed as expected",
+      "evidence": "oversized raster/WebM subtest timed out in Runtime.evaluate instead of rejecting before allocation",
+      "finalState": "restored"
+    }
+  ],
+  "ordinaryCandidates": [
+    {
+      "candidate": "public Archify.readabilityContract surface",
+      "result": "permanently removed",
+      "replacement": "generator-injected private archifyReadabilityContract variable",
+      "validation": "generate-viewer identity tests and real Chrome contracts pass"
+    },
+    {
+      "candidate": "rounded camera target scale",
+      "result": "permanently removed",
+      "replacement": "retain the finite computed scale without display rounding",
+      "validation": "artifact-bound entry readability meets the 6px contract"
+    },
+    {
+      "candidate": "fixed-stage wrapper",
+      "result": "not introduced",
+      "replacement": "existing direct child SVG and diagram container",
+      "validation": "100/300 stage width and height differ by at most 1px"
+    },
+    {
+      "candidate": "redundant eligibility branch",
+      "result": "permanently removed",
+      "replacement": "single finite eligibility predicate",
+      "validation": "static and real Chrome suites pass"
+    },
+    {
+      "candidate": "chapter rail scroll preservation during prospective world measurement",
+      "result": "permanently removed",
+      "replacement": "preserve only the Story Trail scroll state implicated by the regression",
+      "validation": "Guided Views real Chrome suite passes 11/11 after removal; removing all scroll preservation had failed the selected-item visibility contract"
+    }
+  ]
+}

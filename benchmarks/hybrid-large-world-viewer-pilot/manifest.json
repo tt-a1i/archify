@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "seed": "archify-hybrid-large-world-v1",
+  "generator": "generate-corpus.mjs",
+  "entries": [
+    {
+      "id": "workflow-30",
+      "type": "workflow",
+      "size": 30,
+      "filename": "corpus/workflow-30.workflow.json",
+      "sourceSha256": "ca3c1d63c4e0306918ec0c10e011672caaec05695d40cdb7901f4b02d0ab12f6",
+      "nodes": 30,
+      "edges": 50,
+      "edgeDensity": 1.6666666666666667,
+      "longLabelNodes": 0,
+      "regions": 5,
+      "validEntry": "intake-0",
+      "oversizedGuidedTarget": "all-nodes",
+      "cards": 0
+    },
+    {
+      "id": "workflow-100",
+      "type": "workflow",
+      "size": 100,
+      "filename": "corpus/workflow-100.workflow.json",
+      "sourceSha256": "1d00796d56d698abe218bffef3a78a7954711cbe1ddfb9e77c03ba0a18823aba",
+      "nodes": 100,
+      "edges": 178,
+      "edgeDensity": 1.78,
+      "longLabelNodes": 20,
+      "regions": 17,
+      "validEntry": "w-0",
+      "oversizedGuidedTarget": "oversized-world",
+      "cards": 2
+    },
+    {
+      "id": "workflow-300",
+      "type": "workflow",
+      "size": 300,
+      "filename": "corpus/workflow-300.workflow.json",
+      "sourceSha256": "748a1d524109d608c8a9e358a4b76450de8fa64e5f0133ce59e123cb43310042",
+      "nodes": 300,
+      "edges": 545,
+      "edgeDensity": 1.8166666666666667,
+      "longLabelNodes": 60,
+      "regions": 50,
+      "validEntry": "w-0",
+      "oversizedGuidedTarget": "oversized-world",
+      "cards": 2
+    },
+    {
+      "id": "architecture-30",
+      "type": "architecture",
+      "size": 30,
+      "filename": "corpus/architecture-30.architecture.json",
+      "sourceSha256": "161344d1b3547b1119eaf992e9fc7b215a93c2c9ae1bb5fe4c971889c7fc4c4d",
+      "nodes": 30,
+      "edges": 49,
+      "edgeDensity": 1.6333333333333333,
+      "longLabelNodes": 6,
+      "regions": 4,
+      "validEntry": "a-0",
+      "oversizedGuidedTarget": "oversized-world",
+      "cards": 2
+    },
+    {
+      "id": "architecture-100",
+      "type": "architecture",
+      "size": 100,
+      "filename": "corpus/architecture-100.architecture.json",
+      "sourceSha256": "0434bb36583a5a3f6fcd252ff00f48bbeb6ee71da2bfce841453c413f5c9ecfb",
+      "nodes": 100,
+      "edges": 180,
+      "edgeDensity": 1.8,
+      "longLabelNodes": 20,
+      "regions": 4,
+      "validEntry": "a-0",
+      "oversizedGuidedTarget": "oversized-world",
+      "cards": 2
+    },
+    {
+      "id": "architecture-300",
+      "type": "architecture",
+      "size": 300,
+      "filename": "corpus/architecture-300.architecture.json",
+      "sourceSha256": "9b1bf42ac0e798dc16929094249ac7c723198b86e5beb88d60c24fbd04e8515c",
+      "nodes": 300,
+      "edges": 560,
+      "edgeDensity": 1.8666666666666667,
+      "longLabelNodes": 60,
+      "regions": 4,
+      "validEntry": "a-0",
+      "oversizedGuidedTarget": "oversized-world",
+      "cards": 2
+    }
+  ],
+  "stress": [
+    {
+      "id": "workflow-1000",
+      "prerequisite": "workflow-300 mandatory correctness and runtime gates",
+      "status": "not-run: prerequisite-incomplete",
+      "generator": {
+        "type": "workflow",
+        "size": 1000
+      }
+    },
+    {
+      "id": "architecture-1000",
+      "prerequisite": "architecture-300 mandatory correctness and runtime gates",
+      "status": "not-run: prerequisite-incomplete",
+      "generator": {
+        "type": "architecture",
+        "size": 1000
+      }
+    }
+  ]
+}

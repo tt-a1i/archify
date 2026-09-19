@@ -137,6 +137,8 @@ test('clean staging preserves index modes and strips repository-only package met
   try {
     write(root, 'archify/bin/executable.mjs', '#!/usr/bin/env node\n', 0o644);
     write(root, 'archify/runtime/test/required.dat', 'runtime fixture\n', 0o755);
+    write(root, 'archify/pi-current.workflow.html', 'repository-only demo\n');
+    write(root, 'archify/pi-current.workflow.visual-check.json', '{}\n');
     git(root, ['add', 'archify']);
     // Index modes must win over working-tree permissions, including on Windows.
     git(root, ['update-index', '--chmod=+x', 'archify/bin/executable.mjs']);
@@ -153,6 +155,8 @@ test('clean staging preserves index modes and strips repository-only package met
       assert.equal(fs.statSync(runtimeFixture).mode & 0o777, 0o644);
     }
     assert.equal(fs.existsSync(path.join(destination, 'test')), false);
+    assert.equal(fs.existsSync(path.join(destination, 'pi-current.workflow.html')), false);
+    assert.equal(fs.existsSync(path.join(destination, 'pi-current.workflow.visual-check.json')), false);
     assert.equal(
       fs.readFileSync(path.join(destination, 'runtime', 'test', 'required.dat'), 'utf8'),
       'runtime fixture\n',
