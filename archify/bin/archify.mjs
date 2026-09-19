@@ -2175,6 +2175,8 @@ function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
 
 function usage() {
   return `Usage:
+  archify start <repo-root> --ir <architecture.json> [--out <dir>] [--language ts|py] [--map file] [--config file] [--quality standard|showcase]
+  archify code-analysis serve <repo-root> --ir <architecture.json> --out <dir> [--language ts|py] [--map file] [--config file] [--quality standard|showcase]
   archify render <type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path]
   archify compare architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]
   archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path]
@@ -6600,6 +6602,30 @@ try {
     case 'help':
       console.log(usage());
       break;
+    case 'start': {
+      if (!args.length || args[0] === '--help' || args[0] === '-h') {
+        console.log('Usage: archify start <repo-root> --ir <architecture.json> [--out <dir>] [--language ts|py] [--map file] [--config file] [--quality standard|showcase]');
+        break;
+      }
+      const { startAnalysisView } = await import('../modules/code-analysis/bin/serve.mjs');
+      const launchArgs = [...args];
+      if (!launchArgs.includes('--out')) launchArgs.push('--out', fs.mkdtempSync(path.join(os.tmpdir(), 'archify-' + createHash('sha256').update(path.resolve(args[0])).digest('hex').slice(0, 16) + '-')));
+      const { url, delivered } = await startAnalysisView(launchArgs);
+      console.log(`Archify: ${url}\nDiagram: ${delivered}\nOpen the URL, then click "Code Analysis" to analyze. Press Ctrl+C to stop.`);
+      break;
+    }
+    case 'code-analysis': {
+      // One path only: deliver the authored diagram, serve it, analyze on click.
+      if (args[0] !== 'serve') {
+        console.error(`archify code-analysis has one command: serve.\n${usage()}`);
+        process.exitCode = 1;
+        break;
+      }
+      const result = runNode([path.join(skillRoot, 'modules', 'code-analysis', 'bin', 'serve.mjs'), ...args.slice(1)]);
+      if (result.error) throw result.error;
+      process.exitCode = result.status ?? 1;
+      break;
+    }
     case 'render':
       commandRender(args);
       break;

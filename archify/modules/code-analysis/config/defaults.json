@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "include": [
+    "**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+    "**/*.py"
+  ],
+  "exclude": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/coverage/**",
+    "**/*.d.ts",
+    "**/venv/**",
+    "**/venv-*/**",
+    "**/.venv/**",
+    "**/site-packages/**",
+    "**/__pycache__/**",
+    "**/.pytest_cache/**",
+    "**/.git/**",
+    "**/_archive/**"
+  ],
+  "roles": {
+    "test": [
+      "**/test/**",
+      "**/tests/**",
+      "**/__tests__/**",
+      "**/*.test.*",
+      "**/*.spec.*",
+      "**/test_*.py",
+      "**/*_test.py",
+      "**/conftest.py"
+    ],
+    "generated": [
+      "**/generated-*",
+      "**/*.generated.*"
+    ]
+  }
+}

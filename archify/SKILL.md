@@ -130,6 +130,12 @@ node bin/archify.mjs preview <type> <input>.json <output>.html --quality showcas
 
 Never start preview by default. Read `references/delivery-contract.md` when using preview, repository evidence, export receipts, visual review, or post-delivery opening.
 
+## Code Analysis (architecture diagrams that must reflect real code)
+
+For coupling, circular dependencies, and hub modules, use Code Analysis on a validated architecture candidate: `node bin/archify.mjs code-analysis serve <repo-root> --ir <candidate.json> --out <dir> [--language ts|py]`. It delivers first, installs its dependencies on first use, and analyzes only after the reader opens the printed URL and clicks **Code Analysis**.
+
+Analysis describes the working tree, not a committed snapshot. Keep authored commit evidence separate; never pin uncommitted content to HEAD. Use verified `sources` or an explicit `--map` to associate components with modules. Source panels retain the extracted text. If the architecture JSON changes, regenerate the diagram before analysis. Findings describe static evidence, not proven runtime failures. Read `modules/code-analysis/docs/USAGE.md` for the workflow and `modules/code-analysis/README.md` for options.
+
 ## Optional viewer capabilities
 
 Generated HTML already contains theme switching, pan/zoom, search, focus, relationship tracing, semantic views, presentation, and truthful exports. These are reader capabilities, not extra authoring work. `meta.animation: "trace"` is opt-in; `meta.views` is optional and should contain at most five curated chapters.
