@@ -1110,6 +1110,12 @@ async function commandDeliver(args) {
       return;
     }
     const engineeringProfile = engineeringProfileFromArtifact(artifact);
+    // What the document asked to leave out travels with the delivery, read back
+    // from the artifact so the receipt describes the file that was written.
+    const suppressedDeclaration = /<svg[^>]*\sdata-suppressed="([^"]*)"/.exec(artifact);
+    const suppressed = suppressedDeclaration && suppressedDeclaration[1].trim()
+      ? suppressedDeclaration[1].trim().split(/\s+/)
+      : [];
     const receipt = {
       schemaVersion: 1,
       ok: true,
@@ -1134,6 +1140,7 @@ async function commandDeliver(args) {
         errors: result.composition.summary.errors,
         warnings: result.composition.summary.warnings,
       },
+      ...(suppressed.length ? { suppressed } : {}),
       ...(sourceEvidence ? {
         evidence: {
           verified: true,
@@ -1388,6 +1395,8 @@ async function commandDoctor(args) {
 
   const authoringReferences = [
     path.join(skillRoot, 'references', 'authoring-contract.md'),
+    path.join(skillRoot, 'references', 'positions-contract.md'),
+    path.join(skillRoot, 'references', 'creation-guide.md'),
     path.join(skillRoot, 'references', 'viewer-runtime.md'),
     path.join(skillRoot, 'references', 'delivery-contract.md'),
   ];

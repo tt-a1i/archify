@@ -9350,6 +9350,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var shareCueRoute = document.getElementById('share-chapter-route');
       var shareCueProgress = document.getElementById('share-chapter-progress-bar');
       var svg = document.querySelector('.diagram-container svg');
+      // A suppressed effect is one the document declared it does not want. The
+      // id belongs to the chrome that owns it; the viewer only asks whether the
+      // document listed it, so a new effect never edits a compiler-side list.
+      var suppressedEffects = String(svg && svg.getAttribute('data-suppressed') ? svg.getAttribute('data-suppressed') : '').split(/\s+/);
+      function effectSuppressed(id) {
+        return suppressedEffects.indexOf(id) !== -1;
+      }
       var views = [];
       var activeIndex = -1;
       var playing = false;
@@ -9641,19 +9648,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           var stops = document.createElement('em');
           stops.className = 'guided-view-chapter-count';
           stops.textContent = viewerCount('viewer.guided.chapter.stop', view.focus.length);
-          var delta = document.createElement('span');
-          delta.className = 'guided-view-chapter-delta';
-          delta.hidden = true;
-          delta.setAttribute('aria-hidden', 'true');
-          ['stay', 'enter', 'leave'].forEach(function (kind) {
-            var value = document.createElement('span');
-            value.setAttribute('data-delta-kind', kind);
-            delta.appendChild(value);
-          });
+          var delta = null;
+          if (!effectSuppressed('chapter_delta')) {
+            delta = document.createElement('span');
+            delta.className = 'guided-view-chapter-delta';
+            delta.hidden = true;
+            delta.setAttribute('aria-hidden', 'true');
+            ['stay', 'enter', 'leave'].forEach(function (kind) {
+              var value = document.createElement('span');
+              value.setAttribute('data-delta-kind', kind);
+              delta.appendChild(value);
+            });
+          }
           button.appendChild(position);
           button.appendChild(title);
           button.appendChild(stops);
-          button.appendChild(delta);
+          if (delta) button.appendChild(delta);
           item.appendChild(button);
           chapterList.appendChild(item);
           chapterButtons.push(button);
@@ -9671,7 +9681,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           button.setAttribute('tabindex', current || (activeIndex < 0 && index === 0) ? '0' : '-1');
           if (current) {
             stops.hidden = false;
-            deltaLabel.hidden = true;
+            if (deltaLabel) deltaLabel.hidden = true;
             button.removeAttribute('data-chapter-delta');
             button.setAttribute('aria-label', viewerText('viewer.guided.chapter.current', {
               index: index + 1,
@@ -9683,6 +9693,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               label: views[index].label,
               count: views[index].focus.length
             });
+          } else if (effectSuppressed('chapter_delta')) {
+            // The document asked for no chapter delta: the button keeps the copy
+            // it was built with, and nothing derived from the delta reaches the
+            // DOM, aria or a tooltip. A suppressed effect owns all of its output.
+            stops.hidden = false;
+            button.removeAttribute('data-chapter-delta');
+            button.setAttribute('aria-label', viewerText('viewer.guided.chapter.open', {
+              index: index + 1,
+              total: views.length,
+              label: views[index].label,
+              count: views[index].focus.length
+            }));
+            button.title = views[index].label + ' \u2014 ' + (views[index].note || viewerText('viewer.guided.chapter.selectedNodes', {
+              count: views[index].focus.length
+            }));
           } else {
             var delta = chapterDelta(activeIndex >= 0 ? views[activeIndex] : null, views[index]);
             var compact = '=' + delta.stay.length + ' +' + delta.enter.length + ' \u2212' + delta.leave.length;
@@ -9692,10 +9717,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               leave: delta.leave.length
             });
             stops.hidden = true;
-            deltaLabel.hidden = false;
-            deltaLabel.querySelector('[data-delta-kind="stay"]').textContent = '=' + delta.stay.length;
-            deltaLabel.querySelector('[data-delta-kind="enter"]').textContent = '+' + delta.enter.length;
-            deltaLabel.querySelector('[data-delta-kind="leave"]').textContent = '\u2212' + delta.leave.length;
+            if (deltaLabel) {
+              deltaLabel.hidden = false;
+              deltaLabel.querySelector('[data-delta-kind="stay"]').textContent = '=' + delta.stay.length;
+              deltaLabel.querySelector('[data-delta-kind="enter"]').textContent = '+' + delta.enter.length;
+              deltaLabel.querySelector('[data-delta-kind="leave"]').textContent = '\u2212' + delta.leave.length;
+            }
             button.setAttribute('data-chapter-delta', compact);
             button.setAttribute('aria-label', viewerText('viewer.guided.chapter.delta.aria', {
               index: index + 1,

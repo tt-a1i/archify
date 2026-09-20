@@ -124,6 +124,8 @@ expectFailure('extra property rejected', 'workflow',
   (d) => { d.nodes[0].colour = 'red'; }, 'additional properties');
 expectFailure('column beyond layout maximum', 'workflow',
   (d) => { d.nodes[0].col = 7; }, '<= 5');
+expectFailure('phase column beyond layout maximum', 'workflow',
+  (d) => { d.phases = [{ id: 'p', label: 'P', fromCol: 0, toCol: 6 }]; }, '<= 5');
 expectFailure('missing schema_version', 'sequence',
   (d) => { delete d.schema_version; }, 'schema_version');
 expectFailure('cross-lane state overlap', 'lifecycle',

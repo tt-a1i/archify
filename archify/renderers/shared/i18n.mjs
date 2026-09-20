@@ -41,6 +41,11 @@ const MESSAGE_PAIRS = {
   'legend.workflow.database': ['Context / trace', '上下文 / 追踪'],
   'legend.workflow.cloud': ['Cloud service', '云服务'],
   'legend.workflow.external': ['External system', '外部系统'],
+  // The cost caption under a leg label and the tooltip that spells it out. A
+  // document may restate both through meta.labels, like any other renderer copy.
+  'workflow.leg.cost': ['{value} min', '{value} 分'],
+  'workflow.leg.spoken': ['{label} · {value} min', '{label} · 这段 {value} 分'],
+  'workflow.clock.pastMidnight': ['next day ', '次日 '],
   'legend.sequence.emphasis': ['request', '请求'],
   'legend.sequence.return': ['return', '返回'],
   'legend.sequence.security': ['security', '安全'],
@@ -568,8 +573,15 @@ export function formatMessage(template, values = {}) {
   ));
 }
 
-export function translateMessage(locale, key, values = {}) {
+// A domain pack may restate renderer-owned copy through `meta.labels`.
+// Overrides stay a lookup layer: the built-in catalog keeps its defaults, so
+// documents that author no labels render byte-for-byte as before.
+export function translateMessage(locale, key, values = {}, overrides = null) {
   const resolved = resolveLocale(locale);
+  const override = overrides && typeof overrides[key] === 'string' && overrides[key].trim() !== ''
+    ? overrides[key]
+    : null;
+  if (override !== null) return formatMessage(override, values);
   if (!Object.hasOwn(CATALOGS[resolved], key)) {
     throw new Error(`Missing Archify i18n message ${JSON.stringify(key)} for ${resolved}`);
   }
@@ -581,13 +593,18 @@ export function translateCount(locale, key, count, values = {}) {
   return translateMessage(locale, `${key}.${suffix}`, { ...values, count });
 }
 
-export function viewerCatalog(locale) {
+export function viewerCatalog(locale, overrides = null) {
   const resolved = resolveLocale(locale);
-  return Object.fromEntries(Object.entries(CATALOGS[resolved]).filter(([key]) => key.startsWith('viewer.')));
+  const catalog = Object.fromEntries(Object.entries(CATALOGS[resolved]).filter(([key]) => key.startsWith('viewer.')));
+  if (!overrides) return catalog;
+  for (const [key, value] of Object.entries(overrides)) {
+    if (key.startsWith('viewer.') && typeof value === 'string' && value.trim() !== '') catalog[key] = value;
+  }
+  return catalog;
 }
 
-export function localizeTemplate(template, locale) {
-  return template.replace(/\{\{i18n:([a-zA-Z0-9_.-]+)\}\}/g, (_match, key) => escapeHtml(translateMessage(locale, key)));
+export function localizeTemplate(template, locale, overrides = null) {
+  return template.replace(/\{\{i18n:([a-zA-Z0-9_.-]+)\}\}/g, (_match, key) => escapeHtml(translateMessage(locale, key, {}, overrides)));
 }
 
 export function catalogKeys() {

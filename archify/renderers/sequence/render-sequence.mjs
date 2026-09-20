@@ -320,7 +320,7 @@ function renderParticipant(participant) {
   const passport = {
     kind: participant.type,
     sublabel: participant.sublabel,
-    context: i18nText(sequence.meta.locale, 'node.context.sequence'),
+    context: i18nText(sequence.meta.locale, 'node.context.sequence', {}, sequence.meta.labels),
     ...brandMetadataFor(participant),
   };
   return `        <g ${focusNodeAttrs(participant.id, participant.label, passport, sequence.meta.locale)}>
@@ -400,7 +400,7 @@ const LEGEND_CATALOG = [
   interactive: false,
   swatchWidth: 34,
   swatchGap: 9,
-  label: i18nText(sequence.meta.locale, `legend.sequence.${entry.kind}`),
+  label: i18nText(sequence.meta.locale, `legend.sequence.${entry.kind}`, {}, sequence.meta.labels),
 }));
 
 function renderLegend() {
