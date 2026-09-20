@@ -474,6 +474,80 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --toolbar-menu-bg: #fbf8f1;
     }
 
+    /* ==========================================================
+       SOFT CLOUD — a Salesforce-inspired document surface with a
+       contrast-aware vibrant palette and restrained blue-gray UI.
+       ========================================================== */
+    [data-preset="salesforce"][data-theme="dark"] {
+      --bg: #032d60;
+      --grid: #164e80;
+      --panel: #ffffff;
+      --panel-border: #b0cbe8;
+      --lane-fill: rgba(224, 242, 255, 0.92);
+      --lane-stroke: #91b9dc;
+      --text: #032d60;
+      --text-muted: #3e6a95;
+      --text-dim: #5f8fb7;
+      --text-faint: #4b769f;
+      --mask: #ffffff;
+      --frontend-fill: #e3f3ff;
+      --frontend-stroke: #0176d3;
+      --backend-fill: #eaf5ee;
+      --backend-stroke: #2e844a;
+      --database-fill: #f2edfd;
+      --database-stroke: #7024c4;
+      --cloud-fill: #fff1e2;
+      --cloud-stroke: #b85c00;
+      --security-fill: #fcebea;
+      --security-stroke: #ba0517;
+      --messagebus-fill: #e6f5f3;
+      --messagebus-stroke: #0b827c;
+      --external-fill: #f3f3f3;
+      --external-stroke: #5c5c5c;
+      --arrow: #5f8fb7;
+      --arrow-emphasis: #0176d3;
+      --toolbar-bg: rgba(255, 255, 255, 0.96);
+      --toolbar-border: #b0cbe8;
+      --toolbar-text: #032d60;
+      --toolbar-hover: #eef7ff;
+      --toolbar-menu-bg: #ffffff;
+    }
+
+    [data-preset="salesforce"][data-theme="light"] {
+      --bg: #f3f8fc;
+      --grid: #d7e8f7;
+      --panel: #ffffff;
+      --panel-border: #d8e6f3;
+      --lane-fill: #f7fbff;
+      --lane-stroke: #b9d5ed;
+      --text: #181818;
+      --text-muted: #3e3e3c;
+      --text-dim: #706e6b;
+      --text-faint: #5c5c5c;
+      --mask: #ffffff;
+      --frontend-fill: #e3f3ff;
+      --frontend-stroke: #0176d3;
+      --backend-fill: #eaf5ee;
+      --backend-stroke: #2e844a;
+      --database-fill: #f2edfd;
+      --database-stroke: #7024c4;
+      --cloud-fill: #fff1e2;
+      --cloud-stroke: #b85c00;
+      --security-fill: #fcebea;
+      --security-stroke: #ba0517;
+      --messagebus-fill: #e6f5f3;
+      --messagebus-stroke: #0b827c;
+      --external-fill: #f3f3f3;
+      --external-stroke: #5c5c5c;
+      --arrow: #706e6b;
+      --arrow-emphasis: #0176d3;
+      --toolbar-bg: rgba(255, 255, 255, 0.98);
+      --toolbar-border: #d8e6f3;
+      --toolbar-text: #032d60;
+      --toolbar-hover: #eef7ff;
+      --toolbar-menu-bg: #ffffff;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
@@ -483,6 +557,84 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       padding: 2rem;
       color: var(--text);
       transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    html[data-preset="salesforce"] body {
+      font-family: system-ui, sans-serif;
+      background-image: linear-gradient(180deg, #f8fcff 0%, var(--bg) 24rem);
+      background-attachment: fixed;
+    }
+    html[data-preset="salesforce"] .pulse-dot {
+      width: 10px;
+      height: 10px;
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--frontend-stroke) 14%, transparent);
+    }
+    html[data-preset="salesforce"] .header-row::after {
+      content: attr(data-preset-badge-salesforce);
+      margin-left: auto;
+      padding: 0.3rem 0.62rem;
+      border-radius: 999px;
+      color: var(--frontend-stroke);
+      background: var(--frontend-fill);
+      font-size: 0.625rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    html[data-preset="salesforce"] .diagram-container {
+      border-radius: 0.875rem;
+      box-shadow: 0 8px 24px rgba(3, 45, 96, 0.1);
+    }
+    html[data-preset="salesforce"] .card {
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 14px rgba(3, 45, 96, 0.08);
+    }
+    html[data-preset="salesforce"] .toolbar button,
+    html[data-preset="salesforce"] .preset-menu,
+    html[data-preset="salesforce"] .export-menu,
+    html[data-preset="salesforce"] .overview-map,
+    html[data-preset="salesforce"] .semantic-lens,
+    html[data-preset="salesforce"] .route-probe,
+    html[data-preset="salesforce"] .focus-chip,
+    html[data-preset="salesforce"] .diagram-guide,
+    html[data-preset="salesforce"] .node-finder,
+    html[data-preset="salesforce"] .guided-views,
+    html[data-preset="salesforce"] .share-chapter-cue {
+      border-radius: 0.75rem;
+    }
+    .preset-option-swatch.salesforce {
+      border-color: #b0cbe8;
+      border-radius: 0.42rem;
+      background: #f3f8fc;
+    }
+    .preset-option-swatch.salesforce::before {
+      top: 0.35rem;
+      right: 0.28rem;
+      bottom: 0.35rem;
+      left: 0.28rem;
+      border: 1px solid #0176d3;
+      border-radius: 0.24rem;
+      background: #e3f3ff;
+    }
+    .preset-option-swatch.salesforce::after {
+      right: 0.36rem;
+      bottom: 0.28rem;
+      width: 0.35rem;
+      height: 0.35rem;
+      border: 1px solid #ffffff;
+      border-radius: 50%;
+      background: #2e844a;
+      box-shadow: 0 1px 2px rgba(3, 45, 96, 0.2);
+    }
+    svg[data-preset="salesforce"] .c-grid { opacity: 0.28; }
+    svg[data-preset="salesforce"] .c-region {
+      fill: color-mix(in srgb, var(--frontend-fill) 72%, transparent);
+      stroke-dasharray: 6 4;
+    }
+    svg[data-preset="salesforce"] [data-node-id]:hover,
+    svg[data-preset="salesforce"] [data-node-id]:focus-visible,
+    svg[data-preset="salesforce"][data-focus-active] [data-focus-selected] {
+      filter: drop-shadow(0 3px 5px rgba(3, 45, 96, 0.2));
     }
 
     html[data-preset="signal-flow"] body {
@@ -5020,6 +5172,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <span class="preset-option-copy"><strong>{{i18n:viewer.preset.editorial}}</strong><small>{{i18n:viewer.preset.editorial.hint}}</small></span>
           <span class="preset-option-check" aria-hidden="true"></span>
         </button>
+        <button class="preset-option" data-preset-value="salesforce" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">
+          <span class="preset-option-swatch salesforce" aria-hidden="true"></span>
+          <span class="preset-option-copy"><strong>{{i18n:viewer.preset.salesforce}}</strong><small>{{i18n:viewer.preset.salesforce.hint}}</small></span>
+          <span class="preset-option-check" aria-hidden="true"></span>
+        </button>
       </div>
     </div>
     <button id="btn-motion" type="button" hidden
@@ -5079,7 +5236,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <div class="header-row"
            data-preset-badge-signal-flow="{{i18n:viewer.preset.badge.signalFlow}}"
            data-preset-badge-blueprint="{{i18n:viewer.preset.badge.blueprint}}"
-           data-preset-badge-editorial="{{i18n:viewer.preset.badge.editorial}}">
+           data-preset-badge-editorial="{{i18n:viewer.preset.badge.editorial}}"
+           data-preset-badge-salesforce="{{i18n:viewer.preset.badge.salesforce}}">
         <div class="pulse-dot"></div>
         <h1>[PROJECT NAME] Architecture</h1>
       </div>
@@ -5563,18 +5721,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
 
     /* ============================================================
-       Visual style try-on — one topology, four bundled presets.
+       Visual style try-on — one topology, five bundled presets.
        The reader's choice is intentionally session-only: it updates the
        live page and canonical SVG together, but never rewrites the source,
        URL, or a later diagram's authored default.
        ============================================================ */
     Archify.preset = (function () {
-      var PRESETS = ['classic', 'signal-flow', 'blueprint', 'editorial'];
+      var PRESETS = ['classic', 'signal-flow', 'blueprint', 'editorial', 'salesforce'];
       var LABELS = {
         classic: viewerText('viewer.preset.classic.short'),
         'signal-flow': viewerText('viewer.preset.flow.short'),
         blueprint: viewerText('viewer.preset.blueprint'),
-        editorial: viewerText('viewer.preset.editorial')
+        editorial: viewerText('viewer.preset.editorial'),
+        salesforce: viewerText('viewer.preset.salesforce')
       };
       var html = document.documentElement;
       var svg = document.querySelector('.diagram-container svg');
@@ -6232,9 +6391,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           }
         }
 
-        // Keep the same font bytes, character coverage, and attribution in
-        // standalone SVGs and the SVG images used by every raster export.
+        // Keep the embedded font bytes for the default presets. Soft Cloud
+        // intentionally follows the host system sans-serif font.
         var fontCss = document.getElementById('archify-fonts').textContent;
+        function activeFontFamily() {
+          return document.documentElement.getAttribute('data-preset') === 'salesforce'
+            ? 'system-ui, sans-serif'
+            : "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace";
+        }
+        var svgFontCss = 'svg { font-family: ' + activeFontFamily() + '; }\n';
 
         var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
         var bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -6251,7 +6416,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
           style.textContent =
             fontCss + "\n" +
-            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
+            svgFontCss +
             hostStyle + "\n" +
             ":root, svg { " + darkVars + " }\n" +
             "@media (prefers-color-scheme: light) { :root, svg { " + lightVars + " } }\n" +
@@ -6279,7 +6444,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           // Keep this order.
           style.textContent =
             fontCss + "\n" +
-            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
+            svgFontCss +
             hostStyle + "\n" +
             ":root, svg { " + vars + " }\n";
 
@@ -6393,7 +6558,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function fitCanvasText(ctx, text, maxWidth, startSize, minSize, weight) {
         var value = String(text || '').trim();
         var size = startSize;
-        var family = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+        var family = activeFontFamily();
         while (size > minSize) {
           ctx.font = (weight || '600') + ' ' + size + 'px ' + family;
           if (ctx.measureText(value).width <= maxWidth) return value;
@@ -6500,7 +6665,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 280, 13, 11, '500');
               ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 87);
 
-              ctx.font = "600 12px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+              ctx.font = '600 12px ' + activeFontFamily();
               ctx.textAlign = 'right';
               ctx.fillStyle = accent;
               ctx.fillText(cardLabel, SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 50);
