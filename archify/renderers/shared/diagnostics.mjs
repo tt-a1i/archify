@@ -53,17 +53,36 @@ export function throwDiagnosticError(message, diagnostics) {
   throw error;
 }
 
+// A problem is either a message, or a plain data object carrying the repair
+// contract for a failure the shared layout code cannot describe on its own.
+// Everything else — including an Error, whose `message` is not a repair
+// contract — keeps the previous treatment of one stringified finding, so an
+// existing caller can never be downgraded to a nameless diagnostic by this
+// branch. The generic `layout/constraint` severity, subject and empty fix list
+// stay the default for message-only problems.
+function classifiedProblem(problem, { code, subject }) {
+  const structured = problem !== null && typeof problem === 'object' && !Array.isArray(problem)
+    && !(problem instanceof Error)
+    && typeof problem.message === 'string' && problem.message.trim() !== '';
+  if (!structured) {
+    return { code, message: String(problem), subject, evidence: {}, supportedFixes: [] };
+  }
+  return {
+    code: String(problem.code || code),
+    message: problem.message,
+    subject: { ...subject, ...plainObject(problem.subject) },
+    evidence: plainObject(problem.evidence),
+    supportedFixes: problem.supportedFixes || [],
+  };
+}
+
 export function throwDiagnosticProblems(prefix, problems, { code = 'layout/constraint', subject = {} } = {}) {
-  const messages = (problems || []).map((problem) => String(problem));
-  const diagnostics = messages.map((message) => normalizedDiagnostic({
-      code,
+  const classified = (problems || []).map((problem) => classifiedProblem(problem, { code, subject }));
+  const diagnostics = classified.map((problem) => normalizedDiagnostic({
+      ...problem,
       severity: 'error',
-      message,
-      subject,
-      evidence: {},
-      supportedFixes: [],
     }));
-  throwDiagnosticError(`${prefix}:\n- ${messages.join('\n- ')}`, diagnostics);
+  throwDiagnosticError(`${prefix}:\n- ${classified.map((problem) => problem.message).join('\n- ')}`, diagnostics);
 }
 
 function fallbackDiagnostic(error) {

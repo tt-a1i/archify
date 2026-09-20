@@ -105,3 +105,29 @@ test('the renderer boundary keeps delivering receipts that fit in one write', t 
   assert.equal(receipt.diagnostics.length, SMALL_DIAGNOSTIC_COUNT);
   assert.equal(receipt.diagnostics[0].code, 'layout/constraint');
 });
+
+test('a problem that carries no repair contract keeps its stringified finding', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-diagnostic-problems-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const script = path.join(dir, 'problems.mjs');
+  fs.writeFileSync(script, [
+    `import { installRendererDiagnosticBoundary, throwDiagnosticProblems } from ${JSON.stringify(diagnostics)};`,
+    '',
+    'installRendererDiagnosticBoundary();',
+    '',
+    "throwDiagnosticProblems('P', [undefined, null, 0, false, ['a', 'b'], new Error('boom'), { message: '' }]);",
+    '',
+  ].join('\n'));
+
+  const result = runCrashingRenderer(script);
+  assert.equal(result.status, 1, result.stderr);
+  const receipt = JSON.parse(result.stderr);
+  // Only a plain object carrying a non-empty message is treated as a repair
+  // contract; every other entry must stay one stringified finding rather than
+  // becoming a nameless diagnostic that drops its evidence. Identical
+  // fallback strings collapse afterwards, because the boundary de-duplicates
+  // recorded diagnostics by message.
+  assert.deepEqual(receipt.diagnostics.map(entry => entry.message),
+    ['undefined', 'null', '0', 'false', 'a,b', 'Error: boom', '[object Object]']);
+  assert.deepEqual([...new Set(receipt.diagnostics.map(entry => entry.code))], ['layout/constraint']);
+});

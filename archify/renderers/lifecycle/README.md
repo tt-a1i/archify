@@ -70,7 +70,7 @@ and 4 respectively.
 | Constant | Value |
 |----------|-------|
 | viewBox | default `[980, 660]`; schema minimum `[420, 566]` |
-| State area | x within `[32, width − 32]`; state bottom at or above `height − 122` |
+| State area | x within `[32, width − 32]`; y within `[64, height − 122 − state height]` |
 | State spacing | ≥10px between any two states — checked across lanes, because all event lanes share one band; separate same-band states with `col` or `yOffset` |
 | Transition length | ≥32px between endpoints |
 | Legend row | final baseline y = height − 36; extra measured rows wrap upward |
