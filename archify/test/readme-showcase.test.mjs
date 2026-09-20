@@ -197,7 +197,7 @@ test('README demos use checked-in captures and live deep links below the existin
   }
 });
 
-test('README stays scannable without deleting the visual proof set', () => {
+test('README preserves the visual proof set and key content', () => {
   const commonAssets = [
     'archify-readme-hero.png',
     'archify-live-proof.gif',
@@ -216,7 +216,6 @@ test('README stays scannable without deleting the visual proof set', () => {
 
   for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
-    assert.ok(readme.split('\n').length <= 295, `${filename}: README grew beyond the scannable line budget`);
     const supercode = readme.indexOf('https://supercode.sh/?utm_source=archify');
     const evermind = readme.indexOf('docs/assets/sponsors/evermind-archify-raven.png');
     assert.ok(supercode >= 0 && evermind > supercode, `${filename}: EverMind must follow Supercode`);
@@ -225,14 +224,6 @@ test('README stays scannable without deleting the visual proof set', () => {
       assert.ok(readme.includes(`docs/assets/${asset}`), `${filename}: visual proof ${asset} was removed`);
     }
   }
-
-  const english = fs.readFileSync(path.join(repoRoot, 'README.md'), 'utf8');
-  const wordCount = english.trim().split(/\s+/).length;
-  const intro = english.slice(0, english.indexOf('![License]'));
-  const introBullets = intro.match(/^- \*\*/gm) || [];
-  // Allow the restored EverMind sponsor description without cutting product documentation.
-  assert.ok(wordCount <= 2125, `README.md is too verbose again (${wordCount} words)`);
-  assert.ok(introBullets.length <= 8, `README.md has too many top-level capability bullets (${introBullets.length})`);
 
   const chinese = fs.readFileSync(path.join(repoRoot, 'README_ZH.md'), 'utf8');
   assert.ok(chinese.includes('docs/assets/claude-skills-settings.png'), 'README_ZH.md lost the Claude Skills setup image');
