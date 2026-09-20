@@ -1,6 +1,4 @@
-<p align="center">
-  <strong>English</strong> · <a href="./README_ZH.md">简体中文</a>
-</p>
+<p align="center"><strong>English</strong> · <a href="./README_ZH.md">简体中文</a></p>
 
 <p align="center">
   <a href="https://trendshift.io/repositories/31352?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-31352" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/31352" alt="Archify on Trendshift" width="250" height="55"/></a>
@@ -276,22 +274,7 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 
 Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
 
-## Community
-
-👋 **Welcome to the Archify Community!**
-
-Connect with other users and developers, share ideas, request features, report bugs, discuss development, and help make Archify better together.
-
-- <img src="docs/assets/community/discord.svg" alt="" width="18" /> [Discord](https://discord.gg/6xWMjgCeUq)
-- <img src="docs/assets/community/wechat.svg" alt="" width="18" /> WeChat: scan the QR code below. WeChat group codes expire periodically; if this one has expired, ask for the current code through Discord or QQ.
-- <img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ group: `1121948602`
-
-<table>
-<tr>
-  <td align="center"><strong><img src="docs/assets/community/wechat.svg" alt="" width="18" /> WeChat</strong><br/><img src="docs/assets/community/wechat-qr.png" alt="Archify Official WeChat group QR code" width="300" height="300" /></td>
-  <td align="center"><strong><img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ</strong><br/><img src="docs/assets/community/qq-qr.png" alt="Archify Official QQ group QR code" width="300" height="300" /></td>
-</tr>
-</table>
+<h2 id="community">Community</h2><p>👋 <strong>Welcome to the Archify Community!</strong><br/>Ideas, feature requests, bug reports.</p><p><img src="docs/assets/community/discord.svg"/> <a href="https://discord.gg/6xWMjgCeUq">Discord</a> · <img src="docs/assets/community/wechat.svg"/> WeChat · <img src="docs/assets/community/qq.svg"/> QQ <code>1121948602</code></p><table align="center"><tr><td><strong>WeChat</strong><br/><img src="docs/assets/community/wechat-qr.png" alt="WeChat-QR" width="300"/></td><td><strong>QQ</strong><br/><img src="docs/assets/community/qq-qr.png" alt="QQ-QR" width="300"/></td></tr></table>
 
 ## License
 
