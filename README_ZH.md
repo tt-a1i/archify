@@ -21,7 +21,7 @@ Archify 是一套基于 Node.js 的渲染与校验系统，并以 Agent Skill �
 
 **当前开发版本：** `v2.17.0-dev.1`。详见[版本历史](CHANGELOG.md#unreleased)。
 
-**[在线项目页](https://tt-a1i.github.io/archify/)** · **[场景选图指南](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
+**[在线项目页](https://tt-a1i.github.io/archify/)** · **[场景选图指南](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)** · **[Discord](https://discord.gg/6xWMjgCeUq)**
 
 ```bash
 npx skills add tt-a1i/archify -g
@@ -278,6 +278,21 @@ Claude.ai 中的上传入口：
 - [自动生成的 Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
 自动 Mermaid Parser、通用自动布局、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。
+
+## 社区交流
+
+欢迎加入 Archify 社区，讨论架构可视化、分享作品或获取帮助：
+
+- [加入 Discord](https://discord.gg/6xWMjgCeUq)
+- 微信群：扫描下方二维码。微信群二维码会定期失效；如二维码已过期，请通过 Discord 或 QQ 联系管理员获取最新二维码。
+- QQ 群：`1121948602`
+
+<table>
+<tr>
+  <td align="center"><strong>微信群</strong><br/><img src="docs/assets/community/wechat-group.jpg" alt="Archify Official 微信群二维码" width="300" /></td>
+  <td align="center"><strong>QQ 群</strong><br/><img src="docs/assets/community/qq-group.jpg" alt="Archify Official QQ 群二维码" width="300" /></td>
+</tr>
+</table>
 
 ## License
 

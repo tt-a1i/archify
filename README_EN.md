@@ -25,7 +25,7 @@ Archify is a Node.js rendering and validation system for Cursor, Claude Code, Co
 
 **Current development version:** `v2.17.0-dev.1`. See [Changelog](CHANGELOG.md#unreleased).
 
-**[Project page](https://tt-a1i.github.io/archify/)** · **[Scenario guide](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
+**[Project page](https://tt-a1i.github.io/archify/)** · **[Scenario guide](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)** · **[Discord](https://discord.gg/6xWMjgCeUq)**
 
 ```bash
 npx skills add tt-a1i/archify -g
@@ -275,6 +275,21 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Generated Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
 Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
+
+## Community
+
+Join the Archify community to discuss architecture visualization, share diagrams, and get help:
+
+- [Discord](https://discord.gg/6xWMjgCeUq)
+- WeChat: scan the QR code below. WeChat group codes expire periodically; if this one has expired, ask for the current code through Discord or QQ.
+- QQ group: `1121948602`
+
+<table>
+<tr>
+  <td align="center"><strong>WeChat</strong><br/><img src="docs/assets/community/wechat-group.jpg" alt="Archify Official WeChat group QR code" width="300" /></td>
+  <td align="center"><strong>QQ</strong><br/><img src="docs/assets/community/qq-group.jpg" alt="Archify Official QQ group QR code" width="300" /></td>
+</tr>
+</table>
 
 ## License
 
