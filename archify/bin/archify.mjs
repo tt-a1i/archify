@@ -669,6 +669,7 @@ function usage() {
   archify browser-check <output.html> [--json] [--require-provenance] [--out-dir <dir>]
   archify visual-check <output.html> [--json] [--require-provenance] [--out-dir <dir>]
   archify guide [scenario or question] [--json] [--lang en|zh]
+  archify inspect-repo <repository-root> [--batch-size 1..100] [--batch number] [--snapshot file] [--json]
   archify brands [name, alias, domain, or category] [--json]
   archify brands capture <url> [--json]
   archify examples
@@ -2868,6 +2869,108 @@ async function commandDoctor(args) {
   process.exitCode = 1;
 }
 
+function pruneExpiredInspectSnapshots() {
+  const tempRoot = os.tmpdir();
+  const cutoff = Date.now() - (24 * 60 * 60 * 1000);
+  let entries;
+  try { entries = fs.readdirSync(tempRoot, { withFileTypes: true }); } catch { return; }
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !entry.name.startsWith('archify-inspect-repo-')) continue;
+    const directory = path.join(tempRoot, entry.name);
+    try {
+      if (fs.statSync(directory).mtimeMs < cutoff) fs.rmSync(directory, { recursive: true, force: true });
+    } catch { /* A live or protected session is left alone. */ }
+  }
+}
+
+async function commandInspectRepo(args) {
+  let root;
+  let batchSize = 20;
+  let batch = 1;
+  let snapshotFile;
+  let json = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--batch-size' || arg === '--batch' || arg === '--snapshot') {
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith('--')) {
+        rejectCliArgument(`${arg} requires a value.`, {
+          subject: { option: arg }, supportedFixes: [`provide a value after ${arg}`],
+        });
+      }
+      if (arg === '--batch-size') batchSize = Number(value);
+      else if (arg === '--batch') batch = Number(value);
+      else snapshotFile = path.resolve(value);
+      index += 1;
+    } else if (arg === '--json') {
+      json = true;
+    } else if (arg.startsWith('--')) {
+      rejectCliArgument(`Unknown inspect-repo option "${arg}".`, {
+        subject: { option: arg },
+        supportedFixes: ['use --batch-size, --batch, --snapshot, or --json'],
+      });
+    } else if (root === undefined) {
+      root = arg;
+    } else {
+      rejectCliArgument('inspect-repo accepts exactly one repository root.', {
+        evidence: { extraArgument: arg },
+        supportedFixes: ['pass one repository root'],
+      });
+    }
+  }
+  if (!root) {
+    rejectCliArgument('Usage: archify inspect-repo <repository-root> [--batch-size 1..100] [--batch number] [--snapshot file] [--json]');
+  }
+  const repositoryIndexPath = path.join(skillRoot, 'modules', 'repository-index', 'index.mjs');
+  let repositoryIndex;
+  try {
+    repositoryIndex = await import(pathToFileURL(repositoryIndexPath).href);
+  } catch (error) {
+    rejectCliArgument(`Could not load the repository index: ${error.message}`, {
+      code: 'repository-index/unavailable',
+      supportedFixes: ['restore modules/repository-index/index.mjs and retry'],
+    });
+  }
+  let result;
+  let createdSnapshotDirectory;
+  const inspectionStarted = process.hrtime.bigint();
+  try {
+    let snapshot;
+    let snapshotReused = false;
+    if (snapshotFile) {
+      snapshot = JSON.parse(fs.readFileSync(snapshotFile, 'utf8'));
+      if (path.resolve(snapshot.root || '') !== path.resolve(root)) throw new Error('Repository snapshot root does not match the requested repository.');
+      snapshotReused = true;
+    } else {
+      snapshot = repositoryIndex.createRepositorySnapshot(root);
+      if (snapshot.repositoryState.reusable) {
+        pruneExpiredInspectSnapshots();
+        createdSnapshotDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-inspect-repo-'));
+        snapshotFile = path.join(createdSnapshotDirectory, 'snapshot.json');
+        fs.writeFileSync(snapshotFile, `${JSON.stringify(snapshot)}\n`, { mode: 0o600 });
+      }
+    }
+    result = repositoryIndex.buildRepositoryIndex(root, {
+      batchSize, batch, snapshot, snapshotPath: snapshotFile, snapshotReused,
+    });
+    if (snapshot.repositoryState.reusable) repositoryIndex.assertRepositorySnapshotCurrent(snapshot);
+    result.summary.durationMs = Number((process.hrtime.bigint() - inspectionStarted) / 1000000n);
+    result.session = {
+      reusable: Boolean(snapshotFile),
+      reused: snapshotReused,
+      ...(snapshotFile ? { snapshot: snapshotFile } : {}),
+    };
+  } catch (error) {
+    if (createdSnapshotDirectory) fs.rmSync(createdSnapshotDirectory, { recursive: true, force: true });
+    rejectCliArgument(`Could not inspect the repository: ${error.message}`, {
+      code: 'repository-index/failed',
+      subject: { root: path.resolve(root) },
+      supportedFixes: ['use a readable repository directory and valid inspect-repo options'],
+    });
+  }
+  console.log(json ? JSON.stringify(result, null, 2) : repositoryIndex.formatRepositoryIndex(result));
+}
+
 async function commandGuide(args) {
   let lang;
   let json = false;
@@ -3536,6 +3639,9 @@ try {
       break;
     case 'guide':
       await commandGuide(args);
+      break;
+    case 'inspect-repo':
+      await commandInspectRepo(args);
       break;
     case 'brands':
       await commandBrands(args);
