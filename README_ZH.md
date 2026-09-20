@@ -283,14 +283,14 @@ Claude.ai 中的上传入口：
 
 欢迎加入 Archify 社区，讨论架构可视化、分享作品或获取帮助：
 
-- [加入 Discord](https://discord.gg/6xWMjgCeUq)
-- 微信群：扫描下方二维码。微信群二维码会定期失效；如二维码已过期，请通过 Discord 或 QQ 联系管理员获取最新二维码。
-- QQ 群：`1121948602`
+- <img src="docs/assets/community/discord.svg" alt="" width="18" /> [加入 Discord](https://discord.gg/6xWMjgCeUq)
+- <img src="docs/assets/community/wechat.svg" alt="" width="18" /> 微信群：扫描下方二维码。微信群二维码会定期失效；如二维码已过期，请通过 Discord 或 QQ 联系管理员获取最新二维码。
+- <img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ 群：`1121948602`
 
 <table>
 <tr>
-  <td align="center"><strong>微信群</strong><br/><img src="docs/assets/community/wechat-group.jpg" alt="Archify Official 微信群二维码" width="300" /></td>
-  <td align="center"><strong>QQ 群</strong><br/><img src="docs/assets/community/qq-group.jpg" alt="Archify Official QQ 群二维码" width="300" /></td>
+  <td align="center"><strong><img src="docs/assets/community/wechat.svg" alt="" width="18" /> 微信群</strong><br/><img src="docs/assets/community/wechat-group.jpg" alt="Archify Official 微信群二维码" height="480" /></td>
+  <td align="center"><strong><img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ 群</strong><br/><img src="docs/assets/community/qq-group.jpg" alt="Archify Official QQ 群二维码" height="480" /></td>
 </tr>
 </table>
 

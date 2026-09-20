@@ -280,14 +280,14 @@ Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSI
 
 Join the Archify community to discuss architecture visualization, share diagrams, and get help:
 
-- [Discord](https://discord.gg/6xWMjgCeUq)
-- WeChat: scan the QR code below. WeChat group codes expire periodically; if this one has expired, ask for the current code through Discord or QQ.
-- QQ group: `1121948602`
+- <img src="docs/assets/community/discord.svg" alt="" width="18" /> [Discord](https://discord.gg/6xWMjgCeUq)
+- <img src="docs/assets/community/wechat.svg" alt="" width="18" /> WeChat: scan the QR code below. WeChat group codes expire periodically; if this one has expired, ask for the current code through Discord or QQ.
+- <img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ group: `1121948602`
 
 <table>
 <tr>
-  <td align="center"><strong>WeChat</strong><br/><img src="docs/assets/community/wechat-group.jpg" alt="Archify Official WeChat group QR code" width="300" /></td>
-  <td align="center"><strong>QQ</strong><br/><img src="docs/assets/community/qq-group.jpg" alt="Archify Official QQ group QR code" width="300" /></td>
+  <td align="center"><strong><img src="docs/assets/community/wechat.svg" alt="" width="18" /> WeChat</strong><br/><img src="docs/assets/community/wechat-group.jpg" alt="Archify Official WeChat group QR code" height="480" /></td>
+  <td align="center"><strong><img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ</strong><br/><img src="docs/assets/community/qq-group.jpg" alt="Archify Official QQ group QR code" height="480" /></td>
 </tr>
 </table>
 
