@@ -281,7 +281,9 @@ Claude.ai 中的上传入口：
 
 ## 社区交流
 
-欢迎加入 Archify 社区，讨论架构可视化、分享作品或获取帮助：
+👋 **欢迎加入 Archify 社区！**
+
+与其他用户和开发者交流、分享想法、提出功能建议、报告问题、讨论开发，并一起让 Archify 变得更好。
 
 - <img src="docs/assets/community/discord.svg" alt="" width="18" /> [加入 Discord](https://discord.gg/6xWMjgCeUq)
 - <img src="docs/assets/community/wechat.svg" alt="" width="18" /> 微信群：扫描下方二维码。微信群二维码会定期失效；如二维码已过期，请通过 Discord 或 QQ 联系管理员获取最新二维码。

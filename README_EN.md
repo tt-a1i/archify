@@ -278,7 +278,9 @@ Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSI
 
 ## Community
 
-Join the Archify community to discuss architecture visualization, share diagrams, and get help:
+👋 **Welcome to the Archify Community!**
+
+Connect with other users and developers, share ideas, request features, report bugs, discuss development, and help make Archify better together.
 
 - <img src="docs/assets/community/discord.svg" alt="" width="18" /> [Discord](https://discord.gg/6xWMjgCeUq)
 - <img src="docs/assets/community/wechat.svg" alt="" width="18" /> WeChat: scan the QR code below. WeChat group codes expire periodically; if this one has expired, ask for the current code through Discord or QQ.
