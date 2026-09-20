@@ -58,6 +58,9 @@ HTML reads stop at an explicit head ending outside comments, raw-text elements
 and quoted attributes, including when those tokens span network chunks. The
 256 KiB head limit and capture deadline still apply; a larger body after the
 head is not read for icon discovery.
+Icon candidates come from complete `link` tags outside comments, raw text and
+template contents. Attribute values and lookalike names such as `data-href`
+cannot supply icon declarations; quoted `>` characters stay within their tags.
 Unknown URL capture accepts only bounded raster image formats, blocks
 credentials, nonstandard public ports, and private or link-local destinations,
 uses bounded concurrency and one total deadline, and returns the captured

@@ -271,18 +271,20 @@ async function readLimited(response, maximum) {
 
 // Read only the bounded head, independent of network chunk boundaries. Scan
 // bytes once so many tiny chunks cannot cause repeated concatenation/rescanning.
-// This is a boundary scanner, not a DOM parser: comments, quoted attributes and
-// raw-text elements must not turn a literal </head> into an early stop.
-async function readHtmlHead(response, maximum) {
+// Collect link tags in the same pass: markup in comments, raw text, attributes
+// or templates must not become an icon candidate or an early head ending.
+async function readHtmlHeadLinks(response, maximum) {
   const chunks = response.body && typeof response.body[Symbol.asyncIterator] === 'function'
     ? response.body : [await readLimited(response, maximum)];
   const buffer = Buffer.alloc(maximum);
+  const links = [];
   let total = 0;
   let tagStart = -1;
   let quote = 0;
   let comment = false;
   let rawClosing = '';
   let matched = 0;
+  let templateDepth = 0;
   for await (const value of chunks) {
     const chunk = Buffer.from(value);
     const length = Math.min(chunk.length, maximum - total);
@@ -328,10 +330,13 @@ async function readHtmlHead(response, maximum) {
       }
       if (byte === 0x3e) {
         const tag = buffer.toString('utf8', tagStart, position + 1);
-        if (/^<\/head[\t\n\f\r ]*>$/i.test(tag)) {
+        if (!templateDepth && /^<\/head[\t\n\f\r ]*>$/i.test(tag)) {
           response.body?.destroy?.();
-          return buffer.toString('utf8', 0, position + 1);
+          return links;
         }
+        if (/^<template(?=[\t\n\f\r />])/i.test(tag)) templateDepth += 1;
+        else if (/^<\/template(?=[\t\n\f\r />])/i.test(tag)) templateDepth = Math.max(0, templateDepth - 1);
+        else if (!templateDepth && /^<link(?=[\t\n\f\r />])/i.test(tag)) links.push(tag);
         const raw = /^<(script|style|title|textarea|xmp|iframe|noembed|noframes)(?=[\t\n\f\r />])/i.exec(tag);
         if (raw) rawClosing = `</${raw[1].toLowerCase()}`;
         tagStart = -1;
@@ -343,12 +348,17 @@ async function readHtmlHead(response, maximum) {
       throw new Error('brand asset is too large');
     }
   }
-  return buffer.toString('utf8', 0, total);
+  return links;
 }
 
-function attribute(tag, name) {
-  const match = tag.match(new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
-  return match ? (match[1] ?? match[2] ?? match[3] ?? '') : '';
+function linkAttribute(tag, name) {
+  // Consume entire attributes so data-href and quoted examples cannot supply
+  // a real href. As in HTML, the first occurrence wins, even when valueless.
+  const attributes = tag.slice(5, -1).matchAll(/([^\t\n\f\r />=]+)(?:[\t\n\f\r ]*=[\t\n\f\r ]*(?:"([^"]*)"|'([^']*)'|([^\t\n\f\r >]+)))?/g);
+  for (const match of attributes) {
+    if (match[1].toLowerCase() === name) return match[2] ?? match[3] ?? match[4] ?? '';
+  }
+  return '';
 }
 
 // HTML numeric references in the C1 range use the legacy Windows-1252 mapping.
@@ -374,19 +384,18 @@ function decodeIconHref(value) {
     });
 }
 
-function iconCandidates(html, pageUrl) {
+function iconCandidates(links, pageUrl) {
   const candidates = [];
-  for (const match of html.matchAll(/<link\b[^>]*>/gi)) {
-    const tag = match[0];
-    const rel = attribute(tag, 'rel').toLocaleLowerCase('en-US').split(/\s+/);
+  for (const tag of links) {
+    const rel = linkAttribute(tag, 'rel').toLocaleLowerCase('en-US').split(/\s+/);
     if (!rel.some((value) => value === 'icon' || value === 'apple-touch-icon' || value === 'mask-icon')) continue;
-    const href = decodeIconHref(attribute(tag, 'href'));
+    const href = decodeIconHref(linkAttribute(tag, 'href'));
     if (!href) continue;
     try {
       const url = new URL(href, pageUrl);
       if (!['https:', 'http:'].includes(url.protocol)) continue;
-      const type = attribute(tag, 'type').toLocaleLowerCase('en-US');
-      const sizes = attribute(tag, 'sizes');
+      const type = linkAttribute(tag, 'type').toLocaleLowerCase('en-US');
+      const sizes = linkAttribute(tag, 'sizes');
       const area = [...sizes.matchAll(/(\d+)x(\d+)/gi)]
         .reduce((best, size) => Math.max(best, Number(size[1]) * Number(size[2])), 0);
       const score = (type.includes('svg') || /\.svg(?:$|[?#])/i.test(url.href) ? 1000000 : 0)
@@ -478,9 +487,9 @@ async function captureRemoteBrand(value, deadline = Date.now() + captureTimeoutM
       page.response.body?.destroy?.();
       return fallback('linked page is not HTML');
     }
-    const html = await readHtmlHead(page.response, MAX_HTML_BYTES);
+    const links = await readHtmlHeadLinks(page.response, MAX_HTML_BYTES);
     const iconErrors = [];
-    for (const candidate of iconCandidates(html, page.finalUrl)) {
+    for (const candidate of iconCandidates(links, page.finalUrl)) {
       try {
         const fetched = await checkedFetch(candidate.url, 'image/*', deadline);
         const image = await imageData(fetched.response);
