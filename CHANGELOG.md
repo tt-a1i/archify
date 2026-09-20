@@ -6,6 +6,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
+### Changed
+- **Scenario-first README chooser (#95).** English and Chinese READMEs now pick a diagram from the job (repository/system map, agent or ops workflow, API/request sequence, data pipeline/lineage, state/retry lifecycle), with a one-line outcome, matching mode, copyable prompt, and Proof Lab example for each of the five modes.
+
 ### Fixed
 - **Architecture Delta baseline arrowheads (#433).** Removed and rerouted baseline relationships retain their marker definitions in the composed Delta SVG, preserving their authored direction alongside current relationships.
 - **Compare rollback recovery (#438).** If restoring a previous output fails, compare preserves its recovery directory and reports backup-to-target paths instead of deleting the remaining backups during cleanup.

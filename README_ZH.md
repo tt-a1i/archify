@@ -119,27 +119,23 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 用 Archify 画出：Browser -> API -> Redis 缓存 -> PostgreSQL 回源。
 ```
 
-需要源码证据时，打开仓库后改用：
-
-```text
-分析这个仓库，然后使用 archify 生成一张高层运行时架构图。
-只保留 8–12 个核心组件，突出一条主要路径，并标出外部依赖与信任边界。
-辅助信息放进说明卡片，不要继续增加连线。
-```
+需要源码证据时，打开仓库，然后复制下方对应的 Prompt。
 
 ### 3. 在对话中细调
 
 继续说：`增加 Redis`、`把鉴权移到左侧`、`突出回滚路径`。Archify 会保留 Typed Source，只修改相关部分。
 
-## 选择合适的图表
+## 从要做的事开始
 
-| 类型 | 最适合 | Prompt 中应包含 |
-|---|---|---|
-| **Architecture** | 组件、服务、存储和系统边界 | 范围、核心组件、主要路径 |
-| **Workflow** | CI/CD、审批、工具调用、Runbook | 参与者、顺序、分支、异常 |
-| **Sequence** | API 调用、缓存回源、鉴权、异步链路 | 调用方、被调用方、返回、时序 |
-| **Data Flow** | 数据管线、血缘、PII、下游消费者 | 来源、转换、存储、边界 |
-| **Lifecycle** | 状态、重试、等待、终态 | 状态、事件、重试与取消路径 |
+选一个场景，复制 Prompt，安装 Archify，然后打开已校验示例。
+
+| 要做的事 | 得到什么 | 模式 | 复制这条 Prompt | 示例 |
+|---|---|---|---|---|
+| 梳理仓库或系统架构 | 有边界的组件、一条主路径、信任边界 | Architecture | `用 Archify 画出 8–12 个核心组件、一条主路径和信任边界。` | [web-app](https://tt-a1i.github.io/archify/gallery/artifacts/web-app.architecture.html) |
+| 展示智能体或运维工作流 | 泳道、成功主路径、审批与异常 | Workflow | `用 Archify 工作流模式画出泳道、审批和异常路径。` | [agent tool-call](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html) |
+| 说明 API 或请求时序 | 调用方、返回、缓存未命中与回退 | Sequence | `用 Archify 时序模式画出调用方、缓存未命中和返回。` | [cache-miss](https://tt-a1i.github.io/archify/gallery/artifacts/cache-miss.sequence.html) |
+| 梳理数据管线或血缘 | 来源、转换、存储与消费者 | Data Flow | `用 Archify 数据流模式画出来源、转换和消费者。` | [product analytics](https://tt-a1i.github.io/archify/gallery/artifacts/product-analytics.dataflow.html) |
+| 建模状态或重试生命周期 | 状态、等待、重试与终态 | Lifecycle | `用 Archify 生命周期模式画出状态、重试和终态。` | [agent run](https://tt-a1i.github.io/archify/gallery/artifacts/agent-run.lifecycle.html) |
 
 做生产部署评审时，Architecture 可以按需启用 `deployment-ownership`
 工程画像：负责人、单一区域归属、数据库私有边界或边界穿越机制缺失时会直接阻断。
