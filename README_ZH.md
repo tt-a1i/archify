@@ -1,4 +1,6 @@
-<p align="center"><a href="./README.md">English</a> · <strong>简体中文</strong></p>
+<p align="center">
+  <a href="./README.md">English</a> · <strong>简体中文</strong>
+</p>
 
 ![Archify 主视觉](docs/assets/archify-readme-hero.png)
 
@@ -277,7 +279,22 @@ Claude.ai 中的上传入口：
 
 自动 Mermaid Parser、通用自动布局、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。
 
-<h2 id="community">社区交流</h2><p>👋 <strong>欢迎加入 Archify 社区！</strong><br/>交流想法、提出功能建议、报告问题。</p><p><img src="docs/assets/community/discord.svg"/> <a href="https://discord.gg/6xWMjgCeUq">Discord</a> · <img src="docs/assets/community/wechat.svg"/> 微信群 · <img src="docs/assets/community/qq.svg"/> QQ 群 <code>1121948602</code></p><table align="center"><tr><td><strong>微信群</strong><br/><img src="docs/assets/community/wechat-qr.png" alt="微信群二维码" width="300"/></td><td><strong>QQ 群</strong><br/><img src="docs/assets/community/qq-qr.png" alt="QQ 群二维码" width="300"/></td></tr></table>
+## 社区交流
+
+👋 **欢迎加入 Archify 社区！**
+
+与其他用户和开发者交流、分享想法、提出功能建议、报告问题、讨论开发，并一起让 Archify 变得更好。
+
+- <img src="docs/assets/community/discord.svg" alt="" width="18" /> [加入 Discord](https://discord.gg/6xWMjgCeUq)
+- <img src="docs/assets/community/wechat.svg" alt="" width="18" /> 微信群：扫描下方二维码。微信群二维码会定期失效；如二维码已过期，请通过 Discord 或 QQ 联系管理员获取最新二维码。
+- <img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ 群：`1121948602`
+
+<table>
+<tr>
+  <td align="center"><strong><img src="docs/assets/community/wechat.svg" alt="" width="18" /> 微信群</strong><br/><img src="docs/assets/community/wechat-qr.png" alt="Archify Official 微信群二维码" width="300" height="300" /></td>
+  <td align="center"><strong><img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ 群</strong><br/><img src="docs/assets/community/qq-qr.png" alt="Archify Official QQ 群二维码" width="300" height="300" /></td>
+</tr>
+</table>
 
 ## License
 
