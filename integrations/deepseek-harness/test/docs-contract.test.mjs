@@ -45,6 +45,9 @@ test('DSH documentation identifies the published release and pinned candidate sn
   assert.match(integration, /repository root is not a DSH package/);
   assert.match(integration, /current adapter Git HEAD blob/);
   assert.match(integration, /working-tree edits are not package inputs/);
+  assert.match(integration, /`!!js` expression that DSH evaluates during host activation/);
+  assert.match(integration, /locating its packaged `skills` directory/);
+  assert.match(integration, /rather than entirely declarative data/);
 });
 
 test('English and Chinese docs cover install, invoke, uninstall, community wording, and Produced Files', () => {
