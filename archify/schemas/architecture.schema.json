@@ -15,6 +15,7 @@
       "properties": {
         "title": { "type": "string", "minLength": 1 },
         "locale": { "$ref": "common.schema.json#/$defs/locale" },
+        "translations": { "$ref": "common.schema.json#/$defs/translations" },
         "subtitle": { "type": "string" },
         "output": { "type": "string" },
         "animation": { "$ref": "common.schema.json#/$defs/animation" },

@@ -14,6 +14,8 @@ import {
   catalogKeys,
   translateCount,
   translateMessage,
+  registerLocale,
+  validateTranslations,
 } from '../renderers/shared/i18n.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -23,6 +25,17 @@ const templatePath = path.join(skillRoot, 'assets/template.html');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-i18n-'));
 const chromePath = process.env.ARCHIFY_CHROME ? findChrome() : null;
 let sequence = 0;
+
+// examples/locales/ko.json is the worked example the maintainer asked for:
+// Korean supplied as data through meta.translations instead of a third
+// hard-coded locale in i18n.mjs. examples/locales/fr.partial.json is the
+// genericity proof — a second, previously unsupported language, deliberately
+// partial to also exercise the coverage/fallback contract. Registering 'ko'
+// here (once, at module scope) makes direct translateMessage('ko', …) calls
+// below resolve the same way the CLI resolves it per-document.
+const KO_TRANSLATIONS = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/locales/ko.json'), 'utf8'));
+const FR_PARTIAL_TRANSLATIONS = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/locales/fr.partial.json'), 'utf8'));
+registerLocale('ko', KO_TRANSLATIONS);
 
 const EXAMPLES = {
   architecture: 'web-app.architecture.json',
@@ -82,6 +95,7 @@ function authoredExample(type, locale) {
 
   rewrite(document);
   document.meta.locale = locale;
+  if (locale === 'ko') document.meta.translations = KO_TRANSLATIONS;
   if (!document.meta.subtitle) document.meta.subtitle = nextAuthoredText();
   return { document, authored };
 }
@@ -137,7 +151,7 @@ async function loadArtifact(browser, artifactPath) {
 }
 
 test('zh-CN localizes renderer-owned output across all five modes without translating authored content', () => {
-  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'ko']);
+  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN']);
   for (const type of Object.keys(EXAMPLES)) {
     const document = example(type);
     const authoredTitle = document.meta.title;
@@ -159,12 +173,12 @@ test('zh-CN localizes renderer-owned output across all five modes without transl
   }
 });
 
-test('ko localizes renderer-owned output across all five modes without translating authored content', () => {
-  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'ko']);
+test('ko localizes renderer-owned output across all five modes via meta.translations, without translating authored content', () => {
   for (const type of Object.keys(EXAMPLES)) {
     const document = example(type);
     const authoredTitle = document.meta.title;
     document.meta.locale = 'ko';
+    document.meta.translations = KO_TRANSLATIONS;
     delete document.meta.subtitle;
 
     const result = run(type, document);
@@ -319,18 +333,87 @@ test('visual-check binds the delivered Korean fixture to viewport and theme rece
   );
 });
 
-test('unsupported locale values fail schema validation in every mode', () => {
-  for (const locale of ['fr', 'zh-HK']) {
+test('malformed locale tags fail schema validation in every mode', () => {
+  for (const locale of ['123', 'x', 'en_US', 'a'.repeat(40)]) {
     for (const type of Object.keys(EXAMPLES)) {
       const document = example(type);
       document.meta.locale = locale;
       const result = run(type, document, 'validate');
-      assert.notEqual(result.status, 0, `${type}: unsupported locale ${locale} unexpectedly passed`);
+      assert.notEqual(result.status, 0, `${type}: malformed locale ${locale} unexpectedly passed`);
       const payload = JSON.parse(result.stdout);
       assert.equal(payload.ok, false);
       assert.ok(payload.diagnostics.some((entry) => entry.subject?.path === '/meta/locale'), `${type}: ${locale}`);
     }
   }
+});
+
+test('a well-formed but unregistered locale passes validation, falls back to English chrome, and discloses the fallback', () => {
+  for (const locale of ['fr', 'zh-HK']) {
+    for (const type of Object.keys(EXAMPLES)) {
+      const document = example(type);
+      document.meta.locale = locale;
+      const validated = run(type, document, 'validate');
+      assert.equal(validated.status, 0, `${type}/${locale}: ${validated.stderr || validated.stdout}`);
+      assert.equal(JSON.parse(validated.stdout).ok, true, `${type}/${locale}`);
+      assert.match(
+        validated.stderr,
+        new RegExp(`meta\\.locale "${locale}" has no built-in catalog and no meta\\.translations`),
+        `${type}/${locale}: fallback was not disclosed`,
+      );
+
+      const rendered = run(type, document);
+      assert.equal(rendered.status, 0, `${type}/${locale}: ${rendered.stderr || rendered.stdout}`);
+      assert.match(rendered.html, /^<!DOCTYPE html>\n<html lang="en"/, `${type}/${locale}: did not fall back to en`);
+      assert.match(rendered.html, />Export diagram</, `${type}/${locale}`);
+    }
+  }
+});
+
+test('a previously unsupported locale localizes renderer-owned output once meta.translations supplies it, with partial coverage falling back to English key by key', () => {
+  const report = validateTranslations(FR_PARTIAL_TRANSLATIONS);
+  assert.ok(report.coveredKeys > 0 && report.coveredKeys < report.totalKeys, 'fixture should demonstrate partial, not full or empty, coverage');
+  assert.deepEqual(report.placeholderMismatches, []);
+
+  for (const type of Object.keys(EXAMPLES)) {
+    const document = example(type);
+    document.meta.locale = 'fr';
+    document.meta.translations = FR_PARTIAL_TRANSLATIONS;
+    delete document.meta.subtitle;
+
+    const result = run(type, document);
+    assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
+    assert.match(result.html, /^<!DOCTYPE html>\n<html lang="fr"/, type);
+    assert.match(result.html, /<svg\b[^>]*\blang="fr"/, type);
+    assert.match(result.html, /<text\b[^>]*>Légende<\/text>/, `${type}: covered key did not localize`);
+    assert.match(result.html, />Exporter le diagramme</, `${type}: covered key did not localize`);
+    // 'viewer.guided.showAll' is outside the partial fr catalog and must fall
+    // back to the English base string, not throw or render blank.
+    assert.match(result.html, />Show all</, `${type}: uncovered key did not fall back to English`);
+    assert.match(
+      result.stderr,
+      new RegExp(`meta\\.translations for locale "fr" covers ${report.coveredKeys}/${report.totalKeys} renderer-owned messages`),
+      `${type}: coverage was not disclosed`,
+    );
+  }
+});
+
+test('translations with unknown keys or mismatched interpolation placeholders are reported and fall back to English per key', () => {
+  const document = example('architecture');
+  document.meta.locale = 'fr';
+  document.meta.translations = {
+    ...FR_PARTIAL_TRANSLATIONS,
+    'node.focus': '{wrongPlaceholder} au point',
+    'this.key.does.not.exist': 'orphan',
+  };
+  delete document.meta.subtitle;
+
+  const result = run('architecture', document);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  // node.focus falls back to English because {wrongPlaceholder} does not
+  // match the canonical {label} token — never a raw or broken template.
+  assert.match(result.html, /aria-label="Focus /);
+  assert.doesNotMatch(result.html, /wrongPlaceholder/);
+  assert.match(result.stderr, /meta\.translations for locale "fr" covers \d+\/519 renderer-owned messages/);
 });
 
 test('real Chrome keeps zh-CN Finder, Route, Export, and accessibility UI localized in all five modes', {
@@ -463,6 +546,7 @@ test('real Chrome keeps ko Finder, Route, Export, and accessibility UI localized
     for (const type of Object.keys(EXAMPLES)) {
       const document = example(type);
       document.meta.locale = 'ko';
+      document.meta.translations = KO_TRANSLATIONS;
       document.meta.title = `브라우저 로케일-${type}`;
       const result = run(type, document);
       assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
@@ -602,6 +686,18 @@ test('every supported catalog is complete and preserves interpolation variables'
       assert.deepEqual(variables(message), expected, `${locale}: ${key}`);
     }
   }
+});
+
+// ko is no longer a built-in catalog (SUPPORTED_LOCALES), so its full-coverage
+// guarantee now lives here as a data test on examples/locales/ko.json, the
+// worked example, instead of the module-load assertion i18n.mjs used to run
+// over a hard-coded third tuple slot.
+test('the checked-in Korean example catalog is complete and preserves interpolation variables for every canonical key', () => {
+  const report = validateTranslations(KO_TRANSLATIONS);
+  assert.equal(report.missingKeys.length, 0, `missing: ${report.missingKeys.join(', ')}`);
+  assert.equal(report.unknownKeys.length, 0, `unknown: ${report.unknownKeys.join(', ')}`);
+  assert.equal(report.placeholderMismatches.length, 0, JSON.stringify(report.placeholderMismatches));
+  assert.equal(report.coveredKeys, report.totalKeys);
 });
 
 test('runtime labels stay localized after composition', () => {

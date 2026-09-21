@@ -234,7 +234,7 @@ Settings:
 }
 ```
 
-`meta.locale=en|zh-CN|ko` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`—never authored content. Otherwise omit; preserve requested-language copy; disclose English fallback. Static omits `animation`; `classic` defaults.
+`meta.locale` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`—never authored content. `en`/`zh-CN` are built in; any other tag needs `meta.translations` (canonical message key → translated string; see `examples/locales/ko.json`), or the renderer falls back to English and discloses it. Static omits `animation`; `classic` defaults.
 
 ## Explore and share the output
 

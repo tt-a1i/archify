@@ -3,15 +3,61 @@ import path from 'node:path';
 import { applyTemplate, renderCards, esc } from './utils.mjs';
 import { validateSchema } from './validator.mjs';
 import { verifyRepositoryEvidence } from './repository-evidence.mjs';
-import { installRendererDiagnosticBoundary, throwDiagnosticProblems } from './diagnostics.mjs';
+import { installRendererDiagnosticBoundary, throwDiagnosticProblems, recordDiagnostic } from './diagnostics.mjs';
 import { validateEngineeringProfile } from './engineering-profiles.mjs';
 import { resolveOutputPath } from './output-path.mjs';
 import { prepareDiagramBrandMarks } from './brand-marks.mjs';
-import { resolveLocale, translateMessage } from './i18n.mjs';
+import { resolveLocale, translateMessage, registerLocale, SUPPORTED_LOCALES } from './i18n.mjs';
 
 installRendererDiagnosticBoundary();
 
 const outputPathGuards = new Map();
+
+// meta.locale is renderer-owned Viewer UI, not authored content: en and
+// zh-CN ship as built-in catalogs, so any locale tag works out of the box.
+// Any other tag needs meta.translations (validated against the English
+// message-key set, layered over English per-key so partial/invalid entries
+// never break rendering) or it falls back to the English Viewer chrome —
+// the same "omit locale, disclose the fallback" contract as before, just
+// resolved from data instead of a hard-coded enum. See i18n.mjs.
+function applyLocaleTranslations(diagramType, diagram) {
+  const locale = diagram.meta?.locale;
+  if (!locale) return;
+  const translations = diagram.meta?.translations;
+  if (translations && Object.keys(translations).length) {
+    const report = registerLocale(locale, translations);
+    if (report.missingKeys.length || report.unknownKeys.length || report.placeholderMismatches.length) {
+      recordDiagnostic({
+        code: 'i18n/translation-coverage',
+        severity: 'warning',
+        message: `meta.translations for locale ${JSON.stringify(locale)} covers ${report.coveredKeys}/${report.totalKeys} renderer-owned messages (${Math.round(report.coverage * 100)}%); uncovered keys fall back to English.`,
+        subject: { diagramType, path: '/meta/translations' },
+        evidence: {
+          missingKeys: report.missingKeys.slice(0, 10),
+          missingKeysTotal: report.missingKeys.length,
+          unknownKeys: report.unknownKeys.slice(0, 10),
+          unknownKeysTotal: report.unknownKeys.length,
+          placeholderMismatches: report.placeholderMismatches.slice(0, 10),
+          placeholderMismatchesTotal: report.placeholderMismatches.length,
+        },
+        supportedFixes: ['Add the missing keys to meta.translations.', 'Match each translation\'s {placeholders} to the English source string.'],
+      });
+      // Coverage is a fact about this render, not just a diagnostic-mode
+      // artifact: print it to stderr unconditionally so `render`/`deliver`/
+      // `validate` disclose the fallback even without ARCHIFY_DIAGNOSTIC_FORMAT.
+      console.warn(`archify: meta.translations for locale ${JSON.stringify(locale)} covers ${report.coveredKeys}/${report.totalKeys} renderer-owned messages (${Math.round(report.coverage * 100)}%); uncovered keys fall back to English.`);
+    }
+  } else if (!SUPPORTED_LOCALES.includes(locale)) {
+    recordDiagnostic({
+      code: 'i18n/locale-fallback',
+      severity: 'warning',
+      message: `meta.locale ${JSON.stringify(locale)} has no built-in catalog and no meta.translations; the Viewer chrome and <html lang> fall back to English.`,
+      subject: { diagramType, path: '/meta/locale' },
+      supportedFixes: ['Supply meta.translations for this locale.', `Use a built-in locale: ${SUPPORTED_LOCALES.join(', ')}.`],
+    });
+    console.warn(`archify: meta.locale ${JSON.stringify(locale)} has no built-in catalog and no meta.translations; the Viewer chrome and <html lang> fall back to English.`);
+  }
+}
 
 // Common CLI head: node render-<type>.mjs [input.json] [output.html]
 // Keep this synchronous because callers also use it to establish the guarded
@@ -21,6 +67,7 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
   const inputPath = path.resolve(argv[2] || path.join(skillRoot, 'examples', defaultExample));
   const diagram = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
   validateSchema(diagramType, diagram);
+  applyLocaleTranslations(diagramType, diagram);
   validateGuidedViews(diagramType, diagram);
   validateRelationshipIds(diagramType, diagram);
   validateEngineeringProfile(diagramType, diagram);

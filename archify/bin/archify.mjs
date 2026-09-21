@@ -1019,6 +1019,7 @@ async function commandDeliver(args) {
       });
       return;
     }
+    if (render.stderr) process.stderr.write(render.stderr);
 
     const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), candidatePath], {
       stdio: 'pipe',
@@ -2022,6 +2023,7 @@ function commandValidate(args) {
       });
       exitCode = render.status ?? 1;
     } else {
+      if (render.stderr) process.stderr.write(render.stderr);
       const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), out], { stdio: 'pipe' });
       if (check.status !== 0) {
         let checker;
