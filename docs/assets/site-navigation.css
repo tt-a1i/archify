@@ -35,6 +35,13 @@
   white-space: nowrap;
 }
 
+.brand-lockup {
+  display: block;
+  width: 117px;
+  height: 32px;
+  flex: none;
+}
+
 .site-nav .nav-logo-path {
   color: #929a9e;
   font-family: var(--font-mono);

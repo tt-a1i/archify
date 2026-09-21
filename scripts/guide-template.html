@@ -7,7 +7,7 @@
   <title>Archify Scenario Guide — Choose the Right Diagram</title>
   <meta name="description" content="Describe the technical question you need to answer. Archify recommends a bounded diagram recipe, evidence checklist, and copy-ready prompt.">
   <meta name="theme-color" content="#eff2f1">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><polygon points='14,2 26,8 26,20 14,26 2,20 2,8' fill='%23083344' stroke='%2322d3ee' stroke-width='1.5'/><circle cx='14' cy='15' r='2.5' fill='%2322d3ee'/></svg>">
+  <link rel="icon" type="image/svg+xml" href="assets/archify-mark.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -187,7 +187,7 @@
 
   <nav class="site-nav" aria-label="Primary navigation">
     <a class="nav-logo" href="./" aria-label="Archify home">
-      <span class="nav-logo-text">Archify</span>
+      <img class="nav-logo-text brand-lockup" src="assets/archify-lockup-light.svg" alt="Archify" width="117" height="32">
       <span class="nav-logo-path" data-en="/ guide" data-zh="/ 场景指南">/ guide</span>
     </a>
     <div class="nav-right">
@@ -266,7 +266,7 @@
 
       function t(key) { return copy[language][key]; }
       function local(recipe) { return Object.assign({}, recipe, recipe[language]); }
-      function normalize(value) { return String(value || '').normalize('NFKC').toLowerCase().replace(/[\\s_]+/g,' ').trim(); }
+      function normalize(value) { return String(value || '').normalize('NFKC').toLowerCase().replace(/[\s_]+/g,' ').trim(); }
       function rank(query) {
         var text = normalize(query);
         return recipes.map(function (recipe,index) {

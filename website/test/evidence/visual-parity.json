@@ -1,0 +1,167 @@
+{
+  "baselineCommit": "c2bc3aed7b3d4ddb5fd743526e2858618257ee54",
+  "date": "2026-09-21",
+  "method": "Same browser, fonts ready, full-page captures; CSS animations/transitions stopped, fade-up content revealed, iframe pixels hidden in both versions. Standalone iframe files separately verified byte-identical.",
+  "cases": [
+    {
+      "page": "index",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 6154,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "ce20ab039f7d390809e18469d4438d460f5591957335b3d912cc4849a1a806e6",
+      "afterSha256": "ce20ab039f7d390809e18469d4438d460f5591957335b3d912cc4849a1a806e6"
+    },
+    {
+      "page": "gallery",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 6044,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "f3cc0657460217a493de180c34924743b8217545a38b2becf2b453049236c000",
+      "afterSha256": "f3cc0657460217a493de180c34924743b8217545a38b2becf2b453049236c000"
+    },
+    {
+      "page": "guide",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 2161,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "28a13923e69f173b61d647e7df6091174373435e7b8f2d1cad6ebe4e56f067db",
+      "afterSha256": "28a13923e69f173b61d647e7df6091174373435e7b8f2d1cad6ebe4e56f067db"
+    },
+    {
+      "page": "start",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 1662,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "6c94a07af72240be0dfa99a11f8b195fd323e7fd529b239a43d271098b28f219",
+      "afterSha256": "6c94a07af72240be0dfa99a11f8b195fd323e7fd529b239a43d271098b28f219"
+    },
+    {
+      "page": "index",
+      "viewport": "desktop-zh",
+      "width": 1440,
+      "height": 5914,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "209c97e4bf38a502e838305d15234707c49781d61d001645a125277b855bcd54",
+      "afterSha256": "209c97e4bf38a502e838305d15234707c49781d61d001645a125277b855bcd54"
+    },
+    {
+      "page": "gallery",
+      "viewport": "desktop-zh",
+      "width": 1440,
+      "height": 5983,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "43abcf35065ec430bfd30485642270ebd0d9c7bebd54a9d0c3a85d0ba753bda6",
+      "afterSha256": "43abcf35065ec430bfd30485642270ebd0d9c7bebd54a9d0c3a85d0ba753bda6"
+    },
+    {
+      "page": "guide",
+      "viewport": "desktop-zh",
+      "width": 1440,
+      "height": 2132,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "aa662af81a1b345f938668d2262a20308d18a8b5b168fdaef8002fd8276cafcf",
+      "afterSha256": "aa662af81a1b345f938668d2262a20308d18a8b5b168fdaef8002fd8276cafcf"
+    },
+    {
+      "page": "start",
+      "viewport": "desktop-zh",
+      "width": 1440,
+      "height": 1585,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "9917ffda7cc2a5bb9584d308d2c970e1db2b07c7f30206fddf054a54d6e32350",
+      "afterSha256": "9917ffda7cc2a5bb9584d308d2c970e1db2b07c7f30206fddf054a54d6e32350"
+    },
+    {
+      "page": "index",
+      "viewport": "mobile-zh",
+      "width": 390,
+      "height": 9949,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "4b4a0654155732aa3185c1827313a2083c3841c4f05a3d7421c39fb88cdc2394",
+      "afterSha256": "4b4a0654155732aa3185c1827313a2083c3841c4f05a3d7421c39fb88cdc2394"
+    },
+    {
+      "page": "gallery",
+      "viewport": "mobile-zh",
+      "width": 390,
+      "height": 10182,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "6ab5ccae26f97a308e2e75e5df83f73dcac3bcf4c839dc863090915226ab9c57",
+      "afterSha256": "6ab5ccae26f97a308e2e75e5df83f73dcac3bcf4c839dc863090915226ab9c57"
+    },
+    {
+      "page": "guide",
+      "viewport": "mobile-zh",
+      "width": 390,
+      "height": 3885,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "cb3f05edd8448debfa3db9558414af289a2c1c22248bb7962a7d954788dbe3bd",
+      "afterSha256": "cb3f05edd8448debfa3db9558414af289a2c1c22248bb7962a7d954788dbe3bd"
+    },
+    {
+      "page": "start",
+      "viewport": "mobile-zh",
+      "width": 390,
+      "height": 2625,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "7fec8e5258dceaeca1fe7d77d14dabe6c9a4e628d6c47a6552bee0c1bfea0701",
+      "afterSha256": "7fec8e5258dceaeca1fe7d77d14dabe6c9a4e628d6c47a6552bee0c1bfea0701"
+    },
+    {
+      "page": "index",
+      "viewport": "mobile-en",
+      "width": 390,
+      "height": 10660,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "b2c622dab559e46143c7f1e591c800b88a5f77fbe518f4c344b35d18c459441e",
+      "afterSha256": "b2c622dab559e46143c7f1e591c800b88a5f77fbe518f4c344b35d18c459441e"
+    },
+    {
+      "page": "gallery",
+      "viewport": "mobile-en",
+      "width": 390,
+      "height": 10591,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "260fafa402f3fcb8ed9b90180d23974f3ff7214dd30040e3d7a390f61478dab5",
+      "afterSha256": "260fafa402f3fcb8ed9b90180d23974f3ff7214dd30040e3d7a390f61478dab5"
+    },
+    {
+      "page": "guide",
+      "viewport": "mobile-en",
+      "width": 390,
+      "height": 4089,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "a01ff9abde969d176bd045ec307392d3dba19b11b21eebf56965b12002d3acf3",
+      "afterSha256": "a01ff9abde969d176bd045ec307392d3dba19b11b21eebf56965b12002d3acf3"
+    },
+    {
+      "page": "start",
+      "viewport": "mobile-en",
+      "width": 390,
+      "height": 2954,
+      "dimensionsEqual": true,
+      "differentChannelBytes": 0,
+      "beforeSha256": "044841da6aaf63d235d29d0890bbddaa602fed678737ccf5a2a6a56de5d32a64",
+      "afterSha256": "044841da6aaf63d235d29d0890bbddaa602fed678737ccf5a2a6a56de5d32a64"
+    }
+  ]
+}

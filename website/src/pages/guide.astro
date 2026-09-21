@@ -1,0 +1,59 @@
+---
+import { version, versioned, jsonScript, guide } from '../data/site';
+import SiteLayout from '../layouts/SiteLayout.astro';
+import Navigation from '../components/Navigation.astro';
+import head from '../data/guide-head.html?raw';
+import css from '../styles/guide.css?raw';
+import pageScript from '../scripts/guide.js?raw';
+---
+<SiteLayout head={versioned(head)} css={css}>
+
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <Navigation page="guide" />
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <div class="lead-label" data-i18n="eyebrow">Question-first diagramming</div>
+        <h1 data-i18n-html="headline">Choose the question.<br>Get the <em>right diagram.</em></h1>
+        <p class="lede" data-i18n="lede">Describe what your audience needs to understand. Archify recommends one bounded visual recipe—plus the evidence it must contain, when not to use it, and a prompt you can copy.</p>
+      </div>
+      <div class="metrics" aria-label="Guide metrics">
+        <div class="metric"><strong>11</strong><span data-i18n-html="metricRecipes">real-world<br>recipes</span></div>
+        <div class="metric"><strong>5</strong><span data-i18n-html="metricModes">typed diagram<br>modes</span></div>
+        <div class="metric"><strong>0</strong><span data-i18n-html="metricRuntime">runtime<br>dependencies</span></div>
+      </div>
+    </section>
+
+    <section class="chooser" aria-labelledby="chooser-title">
+      <div class="chooser-head">
+        <div><h2 id="chooser-title" data-i18n="chooserTitle">What must the diagram explain?</h2><p data-i18n="chooserBody">Write a situation, not a diagram type. Specific system facts produce a stronger recommendation.</p></div>
+        <span class="kbd">⌘ / Ctrl + Enter</span>
+      </div>
+      <textarea id="scenario" data-i18n-placeholder="placeholder" placeholder="Example: Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing."></textarea>
+      <div class="sample-row" id="samples"></div>
+      <div class="actions">
+        <button class="primary" id="recommend" type="button" data-i18n="recommend">Recommend a recipe →</button>
+        <button class="secondary" id="clear" type="button" data-i18n="clear">Clear</button>
+      </div>
+      <div class="result" id="result" aria-live="polite"></div>
+    </section>
+
+    <section class="library" id="library">
+      <div class="section-head">
+        <div><div class="lead-label" data-i18n="libraryEyebrow">Recipe library</div><h2 data-i18n="libraryTitle">Eleven small, opinionated starting points.</h2></div>
+        <p data-i18n="libraryBody">Each recipe answers one technical question. That boundary keeps the result legible, reviewable, and honest about missing evidence.</p>
+      </div>
+      <div class="filters" id="filters" aria-label="Filter recipes"></div>
+      <div class="cards" id="cards"></div>
+    </section>
+  </main>
+
+  <footer><div class="shell"><span data-i18n="footerLeft">Generated from the same recipe source as the Archify CLI.</span><span>archify guide "your scenario"</span><span data-i18n="versionLabel">Scenario guide / development / v{version}</span></div></footer>
+
+  <script is:inline id="guide-data" type="application/json" set:html={jsonScript(guide)}></script>
+  <script is:inline src="assets/site-language.js"></script>
+  <script is:inline set:html={versioned(pageScript)}></script>
+
+</SiteLayout>

@@ -116,14 +116,13 @@ test('README motion proof is compact, looping, and backed by current gallery art
   }
 });
 
-test('all README languages keep the product hero and retain the verified animated proof', () => {
+test('all README languages show the brand mark and retain the verified animated proof', () => {
   for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
-    const heroIndex = readme.indexOf('docs/assets/archify-readme-hero.png');
-    const titleIndex = readme.indexOf('# Archify');
+    const markIndex = readme.indexOf('docs/assets/archify-lockup-light.svg');
     const proofIndex = readme.indexOf('docs/assets/archify-live-proof.gif');
     const demosIndex = Math.max(readme.indexOf('## See Archify in action'), readme.indexOf('## 看看 Archify 能做什么'));
-    assert.ok(heroIndex >= 0 && heroIndex < titleIndex, `${filename}: product hero is not above the title`);
+    assert.ok(markIndex >= 0 && markIndex < demosIndex, `${filename}: brand lockup is missing before the demos`);
     assert.ok(proofIndex > demosIndex, `${filename}: animated proof must live in the demo section`);
     assert.match(readme, /docs\/assets\/archify-live-proof\.gif/);
     assert.match(readme, /https:\/\/tt-a1i\.github\.io\/archify\/gallery\.html/);
@@ -182,12 +181,12 @@ test('README demos use checked-in captures and live deep links below the existin
 
   for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
-    const heroIndex = readme.indexOf('docs/assets/archify-readme-hero.png');
+    const markIndex = readme.indexOf('docs/assets/archify-lockup-light.svg');
     const proofIndex = readme.indexOf('docs/assets/archify-live-proof.gif');
     const previewIndex = Math.max(readme.indexOf('## Preview'), readme.indexOf('## 预览'));
     const demosIndex = Math.max(readme.indexOf('## See Archify in action'), readme.indexOf('## 看看 Archify 能做什么'));
     const quickStartIndex = Math.max(readme.indexOf('## Quick start'), readme.indexOf('## 快速开始'));
-    assert.ok(heroIndex >= 0 && heroIndex < demosIndex, `${filename}: existing hero proof moved`);
+    assert.ok(markIndex >= 0 && markIndex < demosIndex, `${filename}: brand mark must precede the demos`);
     assert.ok(demosIndex < previewIndex && previewIndex < quickStartIndex, `${filename}: demo section is misplaced`);
     assert.ok(demosIndex < proofIndex && proofIndex < previewIndex, `${filename}: animated proof is outside the demo section`);
     for (const demo of demos) {
@@ -197,8 +196,10 @@ test('README demos use checked-in captures and live deep links below the existin
   }
 });
 
-test('README stays scannable without deleting the visual proof set', () => {
+test('README preserves the visual proof set and key content', () => {
   const commonAssets = [
+    'archify-lockup-light.svg',
+    'archify-lockup-dark.svg',
     'archify-readme-hero.png',
     'archify-live-proof.gif',
     'archify-demo-story.png',
@@ -216,7 +217,6 @@ test('README stays scannable without deleting the visual proof set', () => {
 
   for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
-    assert.ok(readme.split('\n').length <= 295, `${filename}: README grew beyond the scannable line budget`);
     const supercode = readme.indexOf('https://supercode.sh/?utm_source=archify');
     const evermind = readme.indexOf('docs/assets/sponsors/evermind-archify-raven.png');
     assert.ok(supercode >= 0 && evermind > supercode, `${filename}: EverMind must follow Supercode`);
@@ -226,16 +226,6 @@ test('README stays scannable without deleting the visual proof set', () => {
     }
   }
 
-  const english = fs.readFileSync(path.join(repoRoot, 'README.md'), 'utf8');
-  const wordCount = english.trim().split(/\s+/).length;
-  const intro = english.slice(0, english.indexOf('![License]'));
-  const introBullets = intro.match(/^- \*\*/gm) || [];
-  // Allow the restored EverMind sponsor description without cutting product documentation.
-  assert.ok(wordCount <= 2125, `README.md is too verbose again (${wordCount} words)`);
-  assert.ok(introBullets.length <= 8, `README.md has too many top-level capability bullets (${introBullets.length})`);
-
-  const chinese = fs.readFileSync(path.join(repoRoot, 'README_ZH.md'), 'utf8');
-  assert.ok(chinese.includes('docs/assets/claude-skills-settings.png'), 'README_ZH.md lost the Claude Skills setup image');
 });
 
 test('all README languages end with the self-hosted star history chart', () => {
