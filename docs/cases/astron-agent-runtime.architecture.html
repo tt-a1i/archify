@@ -4577,7 +4577,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       stroke-dashoffset: 0;
       vector-effect: non-scaling-stroke;
       opacity: 0.94;
-      animation: archify-intent-trace-flow 1.15s linear 1 both;
+      animation: archify-intent-trace-flow 1.15s linear infinite;
     }
     /* Direction names describe each edge relative to the focused node only.
        The cloned geometry already runs from the authored source to target, so
@@ -4908,9 +4908,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       to { stroke-dashoffset: 0; }
     }
     @keyframes archify-intent-trace-flow {
-      0% { opacity: 0.28; stroke-dashoffset: 0; }
-      12%, 78% { opacity: 0.94; }
-      100% { opacity: 0; stroke-dashoffset: -1; }
+      0% { opacity: 0.94; stroke-dashoffset: 0; }
+      100% { opacity: 0.94; stroke-dashoffset: -1; }
     }
     @keyframes archify-route-probe-flow {
       0% { stroke-dashoffset: 0; opacity: 0.96; }
@@ -6320,6 +6319,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // canvas upscaling.
         clone.setAttribute('width', vb.width * scale);
         clone.setAttribute('height', vb.height * scale);
+        // Keep copied Viewer layout rules from overriding the export's size.
+        clone.style.width = vb.width * scale + 'px';
+        clone.style.height = vb.height * scale + 'px';
+        clone.style.minWidth = '0';
         clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
         // Only the SVG-relevant rules: semantic classes, markers, and the

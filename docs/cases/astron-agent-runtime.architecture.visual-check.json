@@ -5,10 +5,11 @@
   "evidenceKind": "automated-browser",
   "status": "pass",
   "visualReview": "pending",
+  "provenance": "unknown",
   "artifact": {
-    "path": "docs/cases/astron-agent-runtime.architecture.html",
-    "sha256": "c639680da07ba865c7cd7bba213177ab60c75f9745ef0b68885a65de0e86ef5b",
-    "bytes": 832082
+    "path": "/private/var/folders/pf/01ksglfx1lz0_5qng5jp86sw0000gn/T/opencode/archify-pr481/docs/cases/astron-agent-runtime.architecture.html",
+    "sha256": "5bafa2dbdde5b3fb312395aa4a9b23f34ee2f0c99eb43a4d13d970c5c8288d45",
+    "bytes": 832275
   },
   "state": {
     "detail": "read",
@@ -16,7 +17,7 @@
   },
   "chrome": {
     "status": "available",
-    "executable": "Google Chrome"
+    "executable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
   },
   "diagnostics": [],
   "containment": {
@@ -543,6 +544,33 @@
   },
   "sidecars": {
     "receipt": "astron-agent-runtime.architecture.visual-check.json",
-    "contactSheet": "astron-agent-runtime.architecture.visual-check.html"
+    "contactSheet": "astron-agent-runtime.architecture.visual-check.html",
+    "files": [
+      {
+        "sha256": "fdf90817fafd60182b6e16d84615d0be59598eadbf24d1bfe83ffe1b81d3082f",
+        "bytes": 2042,
+        "file": "astron-agent-runtime.architecture.visual-check.html"
+      },
+      {
+        "sha256": "3fa88ea13cfefe0dd24d57961b7a0658db285be77fe4f5e9cc549a7fe64f70bc",
+        "bytes": 163601,
+        "file": "astron-agent-runtime.architecture.visual-check.1440x900.light.png"
+      },
+      {
+        "sha256": "d734f5fd24eaf9cf373ab907529cba6bad4c6ebe1e756cec041532be676b0769",
+        "bytes": 158191,
+        "file": "astron-agent-runtime.architecture.visual-check.1440x900.dark.png"
+      },
+      {
+        "sha256": "541297b20afa707937491cdc509ca27a3efc1dffcc99a3104328a6480e0975fb",
+        "bytes": 216194,
+        "file": "astron-agent-runtime.architecture.visual-check.2048x1320.light.png"
+      },
+      {
+        "sha256": "0a60e15934f72e0f2857afab01e8480ad8f8ab7a1ed18439032a5c027874c333",
+        "bytes": 204324,
+        "file": "astron-agent-runtime.architecture.visual-check.2048x1320.dark.png"
+      }
+    ]
   }
 }
