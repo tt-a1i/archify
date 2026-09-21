@@ -81,6 +81,11 @@ author input, expands an explicit viewBox only for an unambiguous containment
 repair, and writes the destination only after v2 compilation and artifact
 checks pass. Ambiguous explicit pins fail without producing the destination.
 
+Migration preserves `semanticChecks` and validates those requirements against the
+complete authored topology. Temporary layout planning may omit routed edges,
+but authors do not need to remove or relax their contracts to use migration.
+The complete migrated document must still satisfy every authored requirement.
+
 Inspect the stable author-facing v2 plan with:
 
 ```bash
