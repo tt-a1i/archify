@@ -90,10 +90,14 @@ async function clickAndNavigate(browser, sessionId, selector) {
   await loaded;
 }
 
-function startStaticServer(root) {
+function startStaticServer(root, basePath = '') {
   const server = http.createServer((request, response) => {
     const requestUrl = new URL(request.url || '/', 'http://127.0.0.1');
-    const relative = decodeURIComponent(requestUrl.pathname).replace(/^\/+/, '') || 'index.html';
+    if (basePath && !requestUrl.pathname.startsWith(`${basePath}/`)) {
+      response.writeHead(404).end('Not found');
+      return;
+    }
+    const relative = decodeURIComponent(requestUrl.pathname.slice(basePath.length)).replace(/^\/+/, '') || 'index.html';
     const requestedPath = path.resolve(root, relative);
     if (!requestedPath.startsWith(`${path.resolve(root)}${path.sep}`)) {
       response.writeHead(403).end('Forbidden');
@@ -103,6 +107,8 @@ function startStaticServer(root) {
       const body = fs.readFileSync(requestedPath);
       const contentType = requestedPath.endsWith('.css') ? 'text/css'
         : requestedPath.endsWith('.js') ? 'text/javascript'
+          : requestedPath.endsWith('.svg') ? 'image/svg+xml'
+          : requestedPath.endsWith('.png') ? 'image/png'
           : requestedPath.endsWith('.json') ? 'application/json'
             : 'text/html';
       response.writeHead(200, { 'content-type': `${contentType}; charset=utf-8` });
@@ -377,11 +383,12 @@ test('real Chrome preserves language through entry, navigation, selection, refre
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real site regression.',
   timeout: 60000,
 }, async () => {
-  const docsRoot = path.join(repoRoot, 'docs');
-  const server = startStaticServer(docsRoot);
+  const docsRoot = process.env.ARCHIFY_SITE_ROOT ? path.resolve(process.env.ARCHIFY_SITE_ROOT) : path.join(repoRoot, 'docs');
+  const basePath = process.env.ARCHIFY_SITE_ROOT ? '/archify' : '';
+  const server = startStaticServer(docsRoot, basePath);
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const address = server.address();
-  const baseUrl = `http://127.0.0.1:${address.port}`;
+  const baseUrl = `http://127.0.0.1:${address.port}${basePath}`;
   const browser = new ChromeVisualBrowser(chromePath);
 
   try {

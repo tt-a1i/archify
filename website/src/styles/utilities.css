@@ -1,0 +1,4 @@
+/* Preserve the existing CSS: deliberately omit Tailwind Preflight. */
+@layer theme, utilities;
+@import "tailwindcss/theme.css" layer(theme) prefix(tw);
+@import "tailwindcss/utilities.css" layer(utilities) prefix(tw);

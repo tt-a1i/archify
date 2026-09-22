@@ -39,6 +39,12 @@ Skill instructions, authored examples, build inputs, and generated-site sources 
 
 Start with focused checks for the affected behavior. Use the full `npm test` suite from `archify/` when shared behavior, broad changes, or findings require wider coverage. Final review needs sufficient evidence for the impact above; relevant CI results can supply that coverage without repeating the same run locally. Identify the revision and coverage of reused results, and explain material gaps. Required remote CI and branch protection still apply.
 
+### Documentation-only CI
+
+Pull requests changing only `README.md`, `README_EN.md`, `README_ZH.md`, or PNG/SVG files directly under `docs/assets/community/` run the existing README checks once on Node 22. Required CI job names remain present, but their unrelated runtime, browser, and package steps do not run. A failed scope classification or README check fails those required jobs.
+
+Any other changed path (including tests, Skill instructions, templates, generated diagrams, dependencies, and workflow configuration) keeps full CI. Empty change sets also use full CI. Pushes to `main` always run the complete suite. New pushes cancel obsolete CI runs for the same PR; main runs are not cancelled.
+
 ## Product and compatibility contracts
 
 - Existing schema-v1 typed JSON remains valid unless a reviewed change explicitly introduces a breaking rule and migration path.

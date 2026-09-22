@@ -1,0 +1,469 @@
+---
+import { version, versioned } from '../data/site';
+import SiteLayout from '../layouts/SiteLayout.astro';
+import Navigation from '../components/Navigation.astro';
+import Brand from '../components/Brand';
+import head from '../data/index-head.html?raw';
+import css from '../styles/index.css?raw';
+import pageScript from '../scripts/index.js?raw';
+---
+<SiteLayout head={versioned(head)} css={css}>
+
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <!-- NAV -->
+  <Navigation page="index" />
+
+  <!-- HERO — bento: intro / live proof / specimen rail / stats -->
+  <section class="hero" data-proof-aperture="first-fold">
+    <div class="container">
+      <div class="hero-bento">
+        <div class="hero-intro">
+          <div class="hero-badge fade-up">
+            <div class="pulse-dot"></div>
+            <span data-i18n="hero-badge">Agent Skill &nbsp;·&nbsp; development &nbsp;·&nbsp; v{version}</span>
+          </div>
+          <h1 class="fade-up d1" data-i18n="hero-h1">From plain English<br>to architecture <em>you can trust.</em></h1>
+          <p class="hero-sub fade-up d2" data-i18n="hero-sub">Describe your system in chat. Archify generates a polished, explorable HTML diagram — with progressive MAP → READ → FULL detail, a semantic camera, path-aware stories, motion, and ultra-crisp export built in.</p>
+          <div class="hero-actions fade-up d3">
+            <a class="btn btn-primary" href="guide.html">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span data-i18n="hero-cta">Choose the right diagram</span>
+            </a>
+            <a class="btn btn-ghost" href="gallery.html">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="4" height="4" stroke="currentColor"/><rect x="8.5" y="1.5" width="4" height="4" stroke="currentColor"/><rect x="1.5" y="8.5" width="4" height="4" stroke="currentColor"/><rect x="8.5" y="8.5" width="4" height="4" stroke="currentColor"/></svg>
+              <span data-i18n="hero-gallery">Explore proof gallery</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- MAIN LIVE PROOF -->
+        <div class="proof-main fade-up d2" id="hero-proof-stage" data-proof-playback="first-fold-once">
+          <div class="proof-chrome">
+            <div class="proof-status">
+              <span class="proof-live" data-i18n="proof-live">Live proof</span>
+              <div class="proof-status-copy">
+                <strong data-i18n="proof-status">Generated, checked, interactive</strong>
+                <span data-i18n="proof-receipt">Real gallery artifact · 9/9 validation checks</span>
+              </div>
+            </div>
+            <a class="proof-open" id="proof-open" href="gallery/artifacts/agent-tool-call.workflow.html?present=1&amp;play=1#view=happy-path" target="_blank" rel="noopener">
+              <span data-i18n="proof-open">Open artifact</span><span aria-hidden="true">↗</span>
+            </a>
+          </div>
+          <div class="proof-viewport" id="hero-proof-panel" role="tabpanel" aria-labelledby="proof-tab-signal">
+            <iframe id="hero-proof-frame" data-proof="signal" src="gallery/artifacts/agent-tool-call.workflow.html?embed=1&amp;play=1&amp;theme=dark#view=happy-path" title="Agent Tool Call live Archify proof" loading="eager" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="proof-caption" aria-live="polite">
+            <div class="proof-caption-main">
+              <span id="proof-meta">Workflow · Signal Flow · 12 nodes · 11 edges</span>
+              <strong id="proof-title">Agent Tool Call — policy, execution, recovery, and evidence</strong>
+            </div>
+            <span class="proof-hint" data-i18n="proof-hint">Pin one exact Story Moment, copy its stable link, and let someone else open the same authored node.</span>
+          </div>
+        </div>
+
+        <!-- SPECIMEN RAIL (tablist) -->
+        <div class="proof-rail fade-up d3" id="proof-tabs" role="tablist" aria-label="Choose a live Archify proof">
+          <div class="rail-label" data-i18n="rail-label">Live specimens — select to load</div>
+          <button class="spec-card" id="proof-tab-signal" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="true" tabindex="0" data-proof="signal">
+            <div class="spec-top">
+              <span class="spec-idx">S·01</span>
+              <span class="spec-glyph" aria-hidden="true">
+                <svg width="34" height="26" viewBox="0 0 34 26" fill="none">
+                  <path d="M1 5h32M1 13h32M1 21h32" stroke-width="1" opacity=".35"/>
+                  <rect x="4" y="3" width="7" height="4" rx="1" stroke-width="1.25"/>
+                  <rect x="14" y="11" width="7" height="4" rx="1" stroke-width="1.25"/>
+                  <rect x="23" y="19" width="7" height="4" rx="1" stroke-width="1.25"/>
+                  <path d="M11 5h6v6M21 13h4v6" stroke-width="1.25"/>
+                </svg>
+              </span>
+            </div>
+            <span class="spec-name">Agent Tool Call</span>
+            <span class="spec-meta">Workflow · Signal Flow · 12 nodes · 11 edges</span>
+          </button>
+          <button class="spec-card" id="proof-tab-blueprint" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="false" tabindex="-1" data-proof="blueprint">
+            <div class="spec-top">
+              <span class="spec-idx">S·02</span>
+              <span class="spec-glyph" aria-hidden="true">
+                <svg width="34" height="26" viewBox="0 0 34 26" fill="none">
+                  <rect x="1" y="1" width="32" height="24" rx="2" stroke-width="1.25"/>
+                  <rect x="5" y="5" width="10" height="7" rx="1" stroke-width="1.25"/>
+                  <rect x="19" y="5" width="10" height="7" rx="1" stroke-width="1.25"/>
+                  <rect x="5" y="16" width="24" height="5" rx="1" stroke-width="1.25"/>
+                  <path d="M15 8.5h4M17 12v4" stroke-width="1.25"/>
+                </svg>
+              </span>
+            </div>
+            <span class="spec-name">Production Deployment</span>
+            <span class="spec-meta">Architecture · Blueprint · 12 nodes · 12 edges</span>
+          </button>
+          <button class="spec-card" id="proof-tab-classic" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="false" tabindex="-1" data-proof="classic">
+            <div class="spec-top">
+              <span class="spec-idx">S·03</span>
+              <span class="spec-glyph" aria-hidden="true">
+                <svg width="34" height="26" viewBox="0 0 34 26" fill="none">
+                  <circle cx="6" cy="3.5" r="2.5" stroke-width="1.25"/>
+                  <circle cx="17" cy="3.5" r="2.5" stroke-width="1.25"/>
+                  <circle cx="28" cy="3.5" r="2.5" stroke-width="1.25"/>
+                  <path d="M6 6v18M17 6v18M28 6v18" stroke-width="1" stroke-dasharray="2.5 2.5" opacity=".45"/>
+                  <path d="M6 11h9.5M13 9l2.5 2-2.5 2" stroke-width="1.25"/>
+                  <path d="M17 17h9.5M24 15l2.5 2-2.5 2" stroke-width="1.25"/>
+                </svg>
+              </span>
+            </div>
+            <span class="spec-name">Cache Miss</span>
+            <span class="spec-meta">Sequence · Classic · 7 participants · 12 messages</span>
+          </button>
+        </div>
+
+        <!-- STATS STRIP -->
+        <div class="hero-stats fade-up d4">
+          <div class="stat"><b>05</b><span data-i18n="stat-types">Diagram types</span></div>
+          <div class="stat"><b>04</b><span data-i18n="stat-presets">Visual presets</span></div>
+          <div class="stat"><b>02</b><span data-i18n="stat-themes">Coordinated themes</span></div>
+          <div class="stat"><b>4<sup>×</sup></b><span data-i18n="stat-export">Native export scale</span></div>
+          <div class="stat"><b>00</b><span data-i18n="stat-deps">Dependencies</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- DIAGRAM TYPES — asymmetric bento deck -->
+  <section id="types">
+    <div class="container">
+      <div class="types-header">
+        <div class="fade-up">
+          <div class="section-label" data-i18n="label-types">Diagram Types</div>
+          <h2 class="section-heading" data-i18n="types-h2">Five ways to see your system.</h2>
+          <p class="section-body" data-i18n="types-body">Architecture, workflows, sequences, data flows, or state machines — describe what you need and Archify picks the right visual language.</p>
+        </div>
+      </div>
+
+      <div class="types-bento">
+        <div class="type-card big fade-up" data-type="arch">
+          <div class="type-media">
+            <span class="type-tag">T·01</span>
+            <img src="assets/archify-architecture.png" alt="Architecture diagram">
+          </div>
+          <div class="type-body">
+            <h3 data-i18n="arch-h">Architecture</h3>
+            <p data-i18n="arch-p">System components, cloud resources, databases, caches, services, security groups, and the connections between them.</p>
+            <ul class="type-uses">
+              <li data-i18n="arch-li1">AWS / GCP / Azure infra</li>
+              <li data-i18n="arch-li2">Microservices topology</li>
+              <li data-i18n="arch-li3">Security boundaries</li>
+              <li data-i18n="arch-li4">Network layout</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="type-card sm fade-up d1" data-type="wf">
+          <div class="type-media">
+            <span class="type-tag">T·02</span>
+            <img src="assets/archify-workflow.png" alt="Workflow diagram">
+          </div>
+          <div class="type-body">
+            <h3 data-i18n="wf-h">Workflow</h3>
+            <p data-i18n="wf-p">Swim-lane processes with semantic nodes and anchored edges — approval gates, async branches, and observability paths, lane by lane.</p>
+          </div>
+        </div>
+
+        <div class="type-card sm fade-up d2" data-type="seq">
+          <div class="type-media">
+            <span class="type-tag">T·03</span>
+            <img src="assets/archify-sequence.png" alt="Sequence diagram">
+          </div>
+          <div class="type-body">
+            <h3 data-i18n="seq-h">Sequence</h3>
+            <p data-i18n="seq-p">API call chains, request lifecycles, cache fallback paths, auth checks, async traces — who calls whom, in what order, and what returns.</p>
+          </div>
+        </div>
+
+        <div class="type-card sm fade-up d1" data-type="flow">
+          <div class="type-media">
+            <span class="type-tag">T·04</span>
+            <img src="assets/archify-dataflow.png" alt="Data flow diagram">
+          </div>
+          <div class="type-body">
+            <h3 data-i18n="flow-h">Data Flow</h3>
+            <p data-i18n="flow-p">Data pipelines, ETL/ELT, analytics events, PII isolation, warehouse sync, lineage, and downstream consumers — with governance boundaries.</p>
+          </div>
+        </div>
+
+        <div class="type-card sm fade-up d2" data-type="life">
+          <div class="type-media">
+            <span class="type-tag">T·05</span>
+            <img src="assets/archify-lifecycle.png" alt="Lifecycle diagram">
+          </div>
+          <div class="type-body">
+            <h3 data-i18n="life-h">Lifecycle</h3>
+            <p data-i18n="life-p">State machines, object lifecycles, run/order/deployment status transitions — with wait states, retries, cancellation, and terminal outcomes.</p>
+          </div>
+        </div>
+
+        <a class="type-card more fade-up d3" href="gallery.html">
+          <div>
+            <div class="more-kicker" data-i18n="label-gallery">Index</div>
+            <div class="more-title" data-i18n="types-more">Browse the full proof gallery</div>
+            <div class="more-sub" data-i18n="types-more-sub">Live artifacts · every preset · every type</div>
+          </div>
+          <span class="more-arrow" aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- FEATURES — numbered text cards -->
+  <section id="features">
+    <div class="container">
+      <div class="fade-up" style="margin-bottom:2.75rem">
+        <div class="section-label" data-i18n="label-features">Features</div>
+        <h2 class="section-heading" data-i18n="features-h2">Production-ready output,<br>zero configuration.</h2>
+      </div>
+      <div class="features-bento">
+        <div class="feature-card f-lg fade-up">
+          <h3 data-i18n="f1-h">Four visual identities</h3>
+          <p data-i18n="f1-p">Classic, Signal Flow, Blueprint, and Editorial share one geometry contract. Every preset includes coordinated dark/light themes and exports cleanly.</p>
+          <span class="feature-tag" data-i18n="f1-tag">4 PRESETS · 2 THEMES</span>
+        </div>
+        <div class="feature-card f-lg fade-up d1">
+          <h3 data-i18n="f2-h">Ultra-crisp 4× export</h3>
+          <p data-i18n="f2-p">PNG, JPEG, WebP — all rasterized natively at up to 4× source resolution by the browser. No upsampling blur. Sharp on retina displays, slides, and print.</p>
+          <span class="feature-tag" data-i18n="f2-tag">PNG · JPEG · WEBP</span>
+        </div>
+        <div class="feature-card f-sm fade-up d2">
+          <h3 data-i18n="f3-h">Dual-theme SVG</h3>
+          <p data-i18n="f3-p">The SVG export ships with both variable sets plus a @media prefers-color-scheme rule. Drop one file into a GitHub README — it follows the reader's theme.</p>
+          <span class="feature-tag" data-i18n="f3-tag">VECTOR · SELF-THEMED</span>
+        </div>
+        <div class="feature-card f-sm fade-up d3">
+          <h3 data-i18n="f4-h">Copy to clipboard</h3>
+          <p data-i18n="f4-p">One button puts a PNG straight on your clipboard. Paste directly into Slack, Notion, GitHub, or Figma — no intermediate save step.</p>
+          <span class="feature-tag" data-i18n="f4-tag">INSTANT SHARE</span>
+        </div>
+        <div class="feature-card f-sm fade-up d4">
+          <h3 data-i18n="f5-h">Self-contained HTML</h3>
+          <p data-i18n="f5-p">One HTML file. Zero dependencies, no server, no runtime. Open it in any browser and it works. Share by attaching it to an email or PR comment.</p>
+          <span class="feature-tag" data-i18n="f5-tag">ZERO DEPS</span>
+        </div>
+        <div class="feature-card f-sm fade-up d2">
+          <h3 data-i18n="f6-h">Iterate by chat</h3>
+          <p data-i18n="f6-p">"Add Redis", "move auth to the left", "use emerald for the API" — refine in natural language. No diagram editor to learn.</p>
+          <span class="feature-tag" data-i18n="f6-tag">CONVERSATIONAL</span>
+        </div>
+        <div class="feature-card f-sm fade-up d3">
+          <h3 data-i18n="f7-h">Inspect and play real routes</h3>
+          <p data-i18n="f7-p">Route Journey keeps the complete authored path visible while you inspect any stop or play one finite, reader-controlled pass over each exact incoming relationship.</p>
+          <span class="feature-tag" data-i18n="f7-tag">INSPECT · PLAY · PAUSE</span>
+        </div>
+        <div class="feature-card f-sm fade-up d4">
+          <h3 data-i18n="f8-h">Anticipate and share the exact story moment</h3>
+          <p data-i18n="f8-p">Story Horizon distinguishes the exact next stop, while Semantic Story Carrier shows whether its one authored relationship is a call, data, event, security, or state transition. Pin any beat or share the same stable moment.</p>
+          <span class="feature-tag" data-i18n="f8-tag">FOLLOW · ANTICIPATE · SHARE</span>
+        </div>
+      </div>
+
+      <div class="fade-up d2">
+        <p class="export-label-row" data-i18n="export-label">Export formats</p>
+        <div class="export-grid">
+          <div class="export-item"><div class="fmt">PNG</div><div class="desc" data-i18n="exp-png">Transparent · 4× native</div></div>
+          <div class="export-item"><div class="fmt">JPEG</div><div class="desc" data-i18n="exp-jpg">Theme bg · 4× native</div></div>
+          <div class="export-item"><div class="fmt">WEBP</div><div class="desc" data-i18n="exp-webp">Small · 4× native</div></div>
+          <div class="export-item"><div class="fmt">SVG</div><div class="desc" data-i18n="exp-svg">Vector · dual-theme</div></div>
+          <div class="export-item"><div class="fmt">WEBM</div><div class="desc" data-i18n="exp-webm">Motion · browser-native</div></div>
+          <div class="export-item"><div class="fmt" data-i18n="exp-clip-fmt">Clipboard</div><div class="desc" data-i18n="exp-clip">Copy PNG · instant paste</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- COLOR PALETTE — one specimen strip -->
+  <section id="palette">
+    <div class="container">
+      <div class="fade-up" style="margin-bottom:2.75rem">
+        <div class="section-label" data-i18n="label-palette">Design System</div>
+        <h2 class="section-heading" data-i18n="palette-h2">A semantic color language for infrastructure.</h2>
+        <p class="section-body" style="margin-top:.5rem" data-i18n="palette-body">Seven component types. Each with coordinated dark and light variants that switch together via the theme toggle.</p>
+      </div>
+      <div class="palette-card fade-up">
+        <div class="palette-chip" style="--node:var(--cyan);--node-fill:var(--cyan-fill);--node-dark:#22d3ee">
+          <div class="chip-nodes">
+            <div class="mini-node"><b>Web App</b><span>React SPA</span></div>
+            <div class="mini-node dark"><b>Web App</b><span>React SPA</span></div>
+          </div>
+          <div class="chip-label" style="color:var(--cyan)" data-i18n="chip-frontend">Frontend</div>
+          <div class="chip-use" data-i18n="chip-frontend-use">Client apps, browsers, mobile, UI</div>
+        </div>
+        <div class="palette-chip" style="--node:var(--emerald);--node-fill:var(--emerald-fill);--node-dark:#34d399">
+          <div class="chip-nodes">
+            <div class="mini-node"><b>API Server</b><span>Fastify :8080</span></div>
+            <div class="mini-node dark"><b>API Server</b><span>Fastify :8080</span></div>
+          </div>
+          <div class="chip-label" style="color:var(--emerald)" data-i18n="chip-backend">Backend</div>
+          <div class="chip-use" data-i18n="chip-backend-use">Services, APIs, workers, daemons</div>
+        </div>
+        <div class="palette-chip" style="--node:var(--violet);--node-fill:var(--violet-fill);--node-dark:#a78bfa">
+          <div class="chip-nodes">
+            <div class="mini-node"><b>Postgres</b><span>primary :5432</span></div>
+            <div class="mini-node dark"><b>Postgres</b><span>primary :5432</span></div>
+          </div>
+          <div class="chip-label" style="color:var(--violet)" data-i18n="chip-database">Database</div>
+          <div class="chip-use" data-i18n="chip-database-use">DBs, caches, stores, AI/ML</div>
+        </div>
+        <div class="palette-chip" style="--node:var(--amber);--node-fill:var(--amber-fill);--node-dark:#fbbf24">
+          <div class="chip-nodes">
+            <div class="mini-node"><b>CloudFront</b><span>CDN</span></div>
+            <div class="mini-node dark"><b>CloudFront</b><span>CDN</span></div>
+          </div>
+          <div class="chip-label" style="color:var(--amber)" data-i18n="chip-cloud">Cloud</div>
+          <div class="chip-use" data-i18n="chip-cloud-use">Managed services, infra</div>
+        </div>
+        <div class="palette-chip" style="--node:var(--rose);--node-fill:var(--rose-fill);--node-dark:#fb7185">
+          <div class="chip-nodes">
+            <div class="mini-node"><b>Auth Provider</b><span>OAuth 2.0</span></div>
+            <div class="mini-node dark"><b>Auth Provider</b><span>OAuth 2.0</span></div>
+          </div>
+          <div class="chip-label" style="color:var(--rose)" data-i18n="chip-security">Security</div>
+          <div class="chip-use" data-i18n="chip-security-use">Auth, secrets, guards</div>
+        </div>
+        <div class="palette-chip" style="--node:var(--orange);--node-fill:var(--orange-fill);--node-dark:#fb923c">
+          <div class="chip-nodes">
+            <div class="mini-node"><b>Kafka</b><span>events topic</span></div>
+            <div class="mini-node dark"><b>Kafka</b><span>events topic</span></div>
+          </div>
+          <div class="chip-label" style="color:var(--orange)" data-i18n="chip-bus">Message Bus</div>
+          <div class="chip-use" data-i18n="chip-bus-use">Kafka, RabbitMQ, SNS</div>
+        </div>
+        <div class="palette-chip" style="--node:var(--slate);--node-fill:var(--slate-fill);--node-dark:#94a3b8">
+          <div class="chip-nodes">
+            <div class="mini-node"><b>Users</b><span>browser · mobile</span></div>
+            <div class="mini-node dark"><b>Users</b><span>browser · mobile</span></div>
+          </div>
+          <div class="chip-label" style="color:var(--slate)" data-i18n="chip-external">External</div>
+          <div class="chip-use" data-i18n="chip-external-use">Users, 3rd parties, generic</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- QUICK START -->
+  <section id="quickstart">
+    <div class="container">
+      <div class="fade-up" style="margin-bottom:2.75rem">
+        <div class="section-label" data-i18n="label-qs">Quick Start</div>
+        <h2 class="section-heading" data-i18n="qs-h2">Up and running<br>in three steps.</h2>
+        <p class="section-body" data-i18n="qs-body">One checked Skill for Cursor, Claude Code, Codex, and OpenCode. Their switcher generates exact commands; for Raven, extract archify.zip into ~/.raven/workspace/skills, which yields ~/.raven/workspace/skills/archify.</p>
+      </div>
+      <div class="quickstart-layout">
+        <div class="qs-card fade-up d1">
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-content">
+                <h4 data-i18n="step1-h">Install in one command</h4>
+                <p data-i18n="step1-p">Run <code>npx skills add tt-a1i/archify -g</code>, or open the <a href="start.html?agent=cursor&amp;type=architecture">agent-aware quick start</a> for an exact Cursor, Codex, Claude Code, or OpenCode command. Raven is not a switcher target; for a manual ZIP install, extract archify.zip into <code>~/.raven/workspace/skills</code>, which yields <code>~/.raven/workspace/skills/archify</code>.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-content">
+                <h4 data-i18n="step2-h">Describe your system</h4>
+                <p data-i18n="step2-p">Describe components, connections, and cloud services — or ask your agent to analyze the repository first.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-content">
+                <h4 data-i18n="step3-h">Ask your agent to draw it</h4>
+                <p data-i18n="step3-p">Tell your agent to use Archify. It generates a self-contained HTML file you can open in any browser and refine in chat.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="fade-up d2">
+          <div class="shortcut-box">
+            <p class="shortcut-title" data-i18n="kbd-label">Keyboard shortcuts</p>
+            <div class="shortcut-rows">
+              <div class="shortcut-row"><span data-i18n="kbd-guide">Diagram guide</span><kbd>?</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-theme">Toggle theme</span><kbd>T</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-find">Find node / route endpoint</span><kbd>/</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-route">Trace, inspect, and play a route</span><kbd>R</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-radar">Semantic radar</span><kbd>M</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-lens">Compare semantic kinds</span><kbd>L</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-present">Presentation stage</span><kbd>F</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-export">Open export menu</span><kbd>E</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-focus">Focus node</span><kbd>Enter</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-views">Guided views</span><kbd>[ ]</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-play">Play story</span><kbd>P</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-zoom">Reading depth / reset</span><kbd>+ − 0</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-nav">Navigate menu</span><kbd>↑ ↓</kbd></div>
+              <div class="shortcut-row"><span data-i18n="kbd-close">Close menu</span><kbd>Esc</kbd></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fade-up d2">
+          <div class="install-strip">
+            <div id="code-en">
+              <p class="install-cmt"># Install globally for Cursor</p>
+              <p class="install-cmd">npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes</p>
+              <p class="install-cmt"># Or try with Codex, without a permanent install</p>
+              <p class="install-cmd">npx skills use tt-a1i/archify@archify --agent codex</p>
+            </div>
+            <div id="code-zh" style="display:none">
+              <p class="install-cmt"># 全局安装到 Cursor</p>
+              <p class="install-cmd">npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes</p>
+              <p class="install-cmt"># 或者用临时副本启动 Codex</p>
+              <p class="install-cmd">npx skills use tt-a1i/archify@archify --agent codex</p>
+            </div>
+          </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLOSING CTA -->
+  <section id="cta">
+    <div class="container">
+      <div class="cta-card fade-up">
+        <h2 class="cta-h" data-i18n="cta-h">Describe it once.<br><em>Share the map.</em></h2>
+        <p class="cta-sub" data-i18n="cta-sub">One command installs the checked skill for Cursor, Claude Code, Codex, or OpenCode — and your next diagram is a chat message away.</p>
+        <div class="cta-actions">
+          <a class="cta-install" href="start.html" data-i18n="cta-install">Install the skill</a>
+          <a class="cta-gh" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">github.com/tt-a1i/archify ↗</a>
+        </div>
+        <p class="cta-cmd">$ <b>npx skills add tt-a1i/archify -g</b></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-left">
+        <a class="nav-logo" href="#">
+          <Brand />
+        </a>
+        <p class="footer-meta" data-i18n="footer-meta">development &nbsp;·&nbsp; v{version} &nbsp;·&nbsp; MIT License<br>Based on Cocoon-AI/architecture-diagram-generator</p>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/tt-a1i/archify/blob/main/CHANGELOG.md" target="_blank" rel="noopener" data-i18n="footer-changelog">Changelog</a>
+        <a href="https://github.com/tt-a1i/archify/blob/main/LICENSE" target="_blank" rel="noopener" data-i18n="footer-license">License</a>
+      </div>
+    </div>
+  </footer>
+
+  <script is:inline src="assets/site-language.js"></script>
+  <script is:inline set:html={versioned(pageScript)}></script>
+
+</SiteLayout>

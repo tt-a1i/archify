@@ -45,7 +45,7 @@ function workflowStep(workflow, name) {
 }
 
 function workflowJob(workflow, name) {
-  const marker = `  ${name}:`;
+  const marker = `\n  ${name}:\n`;
   const start = workflow.indexOf(marker);
   assert.notEqual(start, -1, `workflow is missing the "${name}" job`);
   const next = workflow.slice(start + marker.length).search(/\n  [a-z][a-z0-9-]*:\n/);
@@ -166,11 +166,11 @@ test('release docs disclose that mutable Release assets are verified only at dep
   assert.doesNotMatch(design, /即使 Release 资产后来可被替换，也不能脱离/);
 });
 
-test('GitHub Pages deploys docs only after every repository gate succeeds', () => {
+test('GitHub Pages deploys the verified website artifact only after every repository gate succeeds', () => {
   const workflow = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8');
   const job = workflowJob(workflow, 'deploy-pages');
   assert.match(job, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/);
-  assert.match(job, /needs: \[test, webm-artifact, zip-freshness, published-update-manifest, package-smoke\]/);
+  assert.match(job, /needs: \[test, webm-artifact, zip-freshness, published-update-manifest, package-smoke, website\]/);
   assert.match(job, /pages: write/);
   assert.match(job, /id-token: write/);
   assert.match(job, /repos\/\$\{GITHUB_REPOSITORY\}\/git\/ref\/heads\/main/);
@@ -180,7 +180,14 @@ test('GitHub Pages deploys docs only after every repository gate succeeds', () =
   assert.match(job, /actions\/configure-pages@v6/);
   // v5 delegates to upload-artifact v7 (Node 24); v4 still embeds Node 20.
   assert.match(job, /actions\/upload-pages-artifact@v5\s/);
-  assert.match(job, /path: docs/);
+  assert.match(job, /actions\/download-artifact@v4/);
+  assert.match(job, /name: website-dist/);
+  assert.match(job, /path: website\/dist/);
+  const website = workflowJob(workflow, 'website');
+  assert.match(website, /npm run check && npm run build && npm test/);
+  assert.match(website, /ARCHIFY_SITE_ROOT:.*website\/dist/);
+  assert.match(website, /actions\/upload-artifact@v4/);
+  assert.match(website, /name: website-dist/);
   assert.match(job, /actions\/deploy-pages@v5/);
 });
 
