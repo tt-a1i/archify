@@ -63,7 +63,7 @@ test('language behavior stays within the bounded locale contract', () => {
   assert.match(skill, /one primary authored language/);
   assert.match(skill, /explicit user choice; otherwise follow the request or conversation's dominant language/);
   assert.match(skill, /`meta\.locale` controls only renderer-owned Viewer UI/);
-  assert.match(skill, /`"en"` and `"zh-CN"` are built in/);
+  assert.match(skill, /`"en"`, `"zh-CN"`, and `"es"` are built in/);
   assert.match(skill, /`meta\.translations` supplying the renderer-owned message catalog as data/);
   assert.match(skill, /fixed Viewer UI and `<html lang>` fall back to English/);
   assert.match(skill, /renderer never translates authored content/i);

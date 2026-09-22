@@ -47,8 +47,8 @@ Choose one primary authored language. An explicit user choice wins; otherwise
 use the language of the request, or the conversation's dominant language when
 the request itself is language-neutral. Separately choose the Viewer locale.
 Always write the matching `meta.locale` as a well-formed language tag: `"en"`
-for English, `"zh-CN"` for Simplified Chinese, or any other tag for another
-language. The renderer consumes the authored locale without inferring language
+for English, `"zh-CN"` for Simplified Chinese, `"es"` for Spanish, or any
+other tag for another language. The renderer consumes the authored locale without inferring language
 from diagram strings. Documents that omit it remain valid and default to
 English.
 
@@ -61,7 +61,7 @@ guided views, legend label overrides, and cards. A bilingual diagram still
 chooses one primary locale for the Viewer; follow an explicit primary-language
 request, then prompt order or conversation dominance.
 
-`en` and `zh-CN` are built-in Viewer catalogs and need nothing further. For
+`en`, `zh-CN`, and `es` are built-in Viewer catalogs and need nothing further. For
 every other `meta.locale`, also set `meta.translations`: an object mapping the
 renderer's canonical message keys (`catalogKeys()` in
 `renderers/shared/i18n.mjs`; `examples/locales/ko.json` is a complete worked

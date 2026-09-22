@@ -24,8 +24,8 @@ in generated HTML. Omit it, or set `"none"`, for the default static output.
 It also accepts `locale`, any well-formed language tag (schema pattern
 `^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$`). The field selects the fixed Viewer UI,
 renderer-owned default legend and accessibility copy, document-title suffix,
-and `<html lang>` value; it does not translate authored strings. `en` and
-`zh-CN` are built-in catalogs; any other tag needs a matching `translations`
+and `<html lang>` value; it does not translate authored strings. `en`,
+`zh-CN`, and `es` are built-in catalogs; any other tag needs a matching `translations`
 object (see below) or the renderer falls back to English and discloses it.
 Omitting `locale` preserves legacy behavior and resolves to English.
 Malformed locale tags fail schema validation instead of being guessed or
@@ -150,7 +150,7 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
 - `point` — an `[x, y]` pair of numbers (used by `via` and `labelAt`)
 - `componentType` — `frontend`, `backend`, `database`, `cloud`, `security`,
   `messagebus`, `external`
-- `locale` — a well-formed renderer locale tag (`en` and `zh-CN` are built in;
+- `locale` — a well-formed renderer locale tag (`en`, `zh-CN`, and `es` are built in;
   any other tag needs a matching `translations` object)
 - `translations` — canonical message key → translated string, for a `locale`
   with no built-in catalog
