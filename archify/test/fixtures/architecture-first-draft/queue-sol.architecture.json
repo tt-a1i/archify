@@ -1,0 +1,294 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Queue Gateway Architecture",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "request-and-queue",
+        "label": "Request and queue",
+        "focus": [
+          "tenant",
+          "gateway",
+          "waiting",
+          "queue-controller",
+          "worker"
+        ],
+        "note": "Follow admission into the in-memory waiting list and dispatch under the active-worker limit."
+      },
+      {
+        "id": "configured-boundaries",
+        "label": "Configured boundaries",
+        "focus": [
+          "worker",
+          "auth",
+          "billing",
+          "result-store"
+        ],
+        "note": "Each attempt authorizes the tenant, invokes the configured billing provider, then saves the result."
+      },
+      {
+        "id": "failure-and-retry",
+        "label": "Retry and dead letter",
+        "focus": [
+          "worker",
+          "dead-letter"
+        ],
+        "note": "A caught failure retries once; the second failure moves the job to the dead-letter result."
+      }
+    ],
+    "output": "queue-sol.html"
+  },
+  "components": [
+    {
+      "id": "tenant",
+      "type": "external",
+      "label": "Tenant request",
+      "sublabel": "tenant + payload",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "Gateway",
+      "sublabel": "validate · enqueue · 202",
+      "pos": [
+        240,
+        320
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "waiting",
+      "type": "messagebus",
+      "label": "Waiting queue",
+      "sublabel": "in-memory FIFO array",
+      "pos": [
+        470,
+        320
+      ],
+      "size": [
+        165,
+        64
+      ]
+    },
+    {
+      "id": "queue-controller",
+      "type": "backend",
+      "label": "Queue controller",
+      "sublabel": "pump · active < 3",
+      "tag": "concurrency 3",
+      "pos": [
+        470,
+        110
+      ],
+      "size": [
+        165,
+        68
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Worker attempt loop",
+      "sublabel": "authorize · bill · save",
+      "tag": "maxAttempts 2",
+      "pos": [
+        710,
+        320
+      ],
+      "size": [
+        180,
+        68
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Tenant auth boundary",
+      "sublabel": "tenant-token-service",
+      "pos": [
+        710,
+        110
+      ],
+      "size": [
+        180,
+        68
+      ]
+    },
+    {
+      "id": "billing",
+      "type": "external",
+      "label": "Billing boundary",
+      "sublabel": "billing-provider",
+      "pos": [
+        950,
+        110
+      ],
+      "size": [
+        170,
+        68
+      ]
+    },
+    {
+      "id": "result-store",
+      "type": "database",
+      "label": "Result boundary",
+      "sublabel": "job-result-store",
+      "pos": [
+        1190,
+        110
+      ],
+      "size": [
+        175,
+        68
+      ]
+    },
+    {
+      "id": "dead-letter",
+      "type": "messagebus",
+      "label": "Dead-letter result",
+      "sublabel": "after marker: 3",
+      "pos": [
+        950,
+        530
+      ],
+      "size": [
+        175,
+        68
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Queue gateway process",
+      "wraps": [
+        "gateway",
+        "waiting",
+        "queue-controller",
+        "worker"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Configured integration identifiers",
+      "wraps": [
+        "auth",
+        "billing",
+        "result-store"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "submit",
+      "from": "tenant",
+      "to": "gateway",
+      "label": "submit tenant + payload",
+      "variant": "emphasis"
+    },
+    {
+      "id": "enqueue",
+      "from": "gateway",
+      "to": "waiting",
+      "label": "enqueue; return 202 queued",
+      "variant": "emphasis"
+    },
+    {
+      "id": "queue-ready",
+      "from": "waiting",
+      "to": "queue-controller",
+      "label": "shift next waiting job"
+    },
+    {
+      "id": "dispatch",
+      "from": "queue-controller",
+      "to": "worker",
+      "label": "dispatch while active < 3",
+      "variant": "emphasis"
+    },
+    {
+      "id": "authorize",
+      "from": "worker",
+      "to": "auth",
+      "label": "authorize tenant"
+    },
+    {
+      "id": "bill",
+      "from": "auth",
+      "to": "billing",
+      "label": "call provider with token",
+      "variant": "security"
+    },
+    {
+      "id": "save",
+      "from": "billing",
+      "to": "result-store",
+      "label": "save successful result",
+      "variant": "emphasis"
+    },
+    {
+      "id": "retry",
+      "from": "worker",
+      "to": "worker",
+      "label": "caught error → retry attempt 2",
+      "variant": "dashed"
+    },
+    {
+      "id": "dead-letter-path",
+      "from": "worker",
+      "to": "dead-letter",
+      "label": "second caught failure → dead letter",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Admission and waiting",
+      "items": [
+        "Missing tenant or payload returns 400",
+        "Accepted jobs enter an in-memory FIFO and return 202 queued"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Bounded dispatch",
+      "items": [
+        "pump() dispatches only while active < concurrency",
+        "finally decrements active and pumps the next waiting job"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Configured boundaries",
+      "items": [
+        "Every attempt authorizes before the billing provider call",
+        "Successful results are saved to the configured result-store identifier",
+        "The fixture implements these integrations as local functions; no network protocol is declared"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Failure semantics",
+      "items": [
+        "maxAttempts = 2 creates one retry after the first failure",
+        "The second failure moves to dead letter",
+        "deadLetterAfter = 3 is stored as an output marker; it does not create a third attempt"
+      ]
+    }
+  ]
+}

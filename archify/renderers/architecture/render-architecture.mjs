@@ -11,7 +11,7 @@ import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { createRouter } from './routing.mjs';
-import { placeAutomaticLabels } from './labels.mjs';
+import { placeAutomaticLabels, reservedLabelRect } from './labels.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
 import {
   asArray,
@@ -149,7 +149,10 @@ const architectureLegendEntries = resolveLegend(
 const resolvedLabelPoints = new Map();
 function connectionLabelBox(conn) {
   if (!conn.label) return null;
-  const [lx, ly] = resolvedLabelPoints.get(conn) || labelPoint(conn, pathFor(conn).points);
+  return connectionLabelBoxAt(conn, resolvedLabelPoints.get(conn) || labelPoint(conn, pathFor(conn).points));
+}
+
+function connectionLabelBoxAt(conn, [lx, ly]) {
   const width = Math.max(30, textUnits(conn.label) * 4.8 + 10);
   return { x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly };
 }
@@ -300,8 +303,23 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
 // part of the derived canvas, so the title convergence must measure the same
 // width the diagram actually renders into (a title sized for a narrower canvas
 // would fall below the desktop-readability floor once labels grow it). Routing
-// reads only components and connections, never boundaries or the viewBox.
-const { pathFor, connectionSides, connectionEndpointSide } = createRouter(components, arch.connections);
+// reads components, connections and the member-derived boundary frames (so an
+// automatic route never borrows a frame border as its corridor), never the
+// title-expanded frames or the viewBox.
+const rawBoundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
+const { pathFor, connectionSides, connectionEndpointSide } = createRouter(components, arch.connections, {
+  frames: rawBoundaries.map((boundary) => ({
+    ...boundary,
+    radius: boundary.kind === 'security-group' ? 8 : 12,
+  })),
+  labelRectFor: (conn, points, { routes, labels }) => (conn.label ? reservedLabelRect({
+    label: { relation: conn, label: conn.label, ...connectionLabelBoxAt(conn, labelPoint(conn, points)) },
+    points,
+    routes: routes.map((route, index) => ({ relationIndex: index, points: route })),
+    labels,
+    components: [...components.values()],
+  }) : null),
+});
 function hasAutomaticRouteGeometry(connection) {
   return !Array.isArray(connection?.via)
     && (!connection?.route || connection.route === 'auto')
@@ -320,7 +338,6 @@ const connectionGeometry = [
     .flatMap((conn) => pathFor(conn).points.map(([x, y]) => ({ x, y, width: 0, height: 0 }))),
 ];
 
-const rawBoundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
 function resolveBoundaryTitles() {
   if (!enforcesBoundaryTitleComposition || rawBoundaries.length === 0) {
     return {
@@ -612,7 +629,20 @@ function validateArchitecture() {
       }
       const [start, end] = [routed.points[0], routed.points[routed.points.length - 1]];
       const distance = Math.hypot(end[0] - start[0], end[1] - start[1]);
-      if (distance < 24) problems.push(`Connection "${conn.label || `${conn.from}->${conn.to}`}" is too short (${Math.round(distance)}px; minimum 24px) — place its components farther apart.`);
+      if (distance < 24 && conn.from === conn.to) {
+        // "Move the components apart" cannot be executed for a self-loop; the
+        // ports sit on one component and the sides decide how far apart.
+        const message = `Self-loop "${conn.id || conn.label || conn.from}" on component "${conn.from}" has its two ports only ${Math.round(distance)}px apart (minimum 24px) — remove fromSide/toSide so the renderer can choose the loop's sides, or set fromSide and toSide to different sides.`;
+        diagnostics.push({
+          code: 'layout/self-loop-ports', severity: 'error', message,
+          subject: { diagramType: 'architecture', collection: 'connections', index: asArray(arch.connections).indexOf(conn), ...(conn.id ? { id: conn.id } : {}), from: conn.from, to: conn.to },
+          evidence: { distancePx: Math.round(distance), minimumPx: 24, fromSide: connectionEndpointSide(conn, 'source'), toSide: connectionEndpointSide(conn, 'target'), points: routed.points },
+          supportedFixes: ['remove fromSide/toSide from the self-loop', 'set fromSide and toSide to different sides of the component'],
+        });
+        problems.push(message);
+      } else if (distance < 24) {
+        problems.push(`Connection "${conn.label || `${conn.from}->${conn.to}`}" is too short (${Math.round(distance)}px; minimum 24px) — place its components farther apart.`);
+      }
     }
   }
 

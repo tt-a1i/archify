@@ -30,7 +30,9 @@ test('render output check: finite_svg preserves slashes in unquoted HTML attribu
   }
 });
 
-function checkHtml(name, svgBody, profile = 'standard', viewBox = '0 0 240 160', head = '', svgAttributes = '') {
+// 240x154 keeps the default fixture at the 1.55 wide ratio, so the fixed-width
+// viewport-height rule stays out of tests that target other composition rules.
+function checkHtml(name, svgBody, profile = 'standard', viewBox = '0 0 240 154', head = '', svgAttributes = '') {
   const htmlPath = path.join(tmp, `${name}.html`);
   fs.writeFileSync(htmlPath, `<!doctype html><html><head>${head}</head><body><svg viewBox="${viewBox}" data-quality-profile="${profile}"${svgAttributes}>${svgBody}</svg></body></html>`);
   try {
@@ -57,6 +59,36 @@ test('render output check: showcase rejects node copy that becomes illegible at 
   assert.equal(issue?.severity, 'error');
   assert.equal(issue?.viewportWidth, 1440);
   assert.ok(issue?.projectedFontPx < issue?.minimumProjectedFontPx);
+});
+
+test('render output check: predicts the certain 1440x900 overflow of a fixed-width portrait canvas', () => {
+  const node = `
+    <g data-node-id="a">
+      <rect x="20" y="20" width="200" height="60" rx="6" class="c-mask"/>
+      <text data-node-label x="120" y="55" class="t-primary" font-size="12">Node</text>
+    </g>
+  `;
+  // 1080x780 dataflow: measured in Chrome at 972px SVG / 1159px page before cards.
+  const portrait = checkHtml('viewport-height-portrait', node, 'showcase', '0 0 1080 780', '', '');
+  const issue = portrait.result.composition.issues.find((item) => item.code === 'composition/viewport-height');
+  assert.equal(issue?.severity, 'warning', 'new rule surfaces as evidence first');
+  assert.equal(portrait.code, 0);
+  assert.equal(issue.svgHeightPx, 972);
+  assert.equal(issue.fixedChromePx, 126, 'no guided-views strip in this fixture');
+  assert.equal(issue.pageHeightPx, 1098);
+  assert.match(issue.detail, /meta\.viewBox height is at most 696 at this width/);
+  assert.match(issue.detail, /width is at least 1209 at this height/);
+  assert.equal(portrait.result.composition.summary.warnings, 1);
+
+  const withViews = checkHtml('viewport-height-views', node, 'showcase', '0 0 1080 780', '<div class="guided-views"></div>');
+  assert.equal(withViews.result.composition.issues.find((item) => item.code === 'composition/viewport-height')?.pageHeightPx, 1159);
+
+  const declaredFit = checkHtml('viewport-height-fit', node, 'showcase', '0 0 1080 780', '', ' data-reader-fit="intrinsic-height"');
+  assert.equal(declaredFit.result.composition.issues.some((item) => item.code === 'composition/viewport-height'), false, 'a Reader-declared fit can scroll readably');
+
+  const wide = checkHtml('viewport-height-wide', node, 'showcase', '0 0 1600 900');
+  assert.equal(wide.result.composition.issues.some((item) => item.code === 'composition/viewport-height'), false, 'a wide canvas is narrowed by the Reader instead');
+  assert.equal(wide.result.composition.metrics.viewportHeightIssues, 0);
 });
 
 test('render output check: compares exact projected size before rounding diagnostics', () => {
@@ -420,7 +452,7 @@ test('render output check: a relationship label cannot leave the canvas', () => 
     const issue = result.composition.issues.find((item) => item.code === 'composition/label-canvas-containment');
     assert.equal(issue.label, 'approved replay');
     assert.deepEqual(issue.labelRect, { x: 200, y: 48, width: 60, height: 14 });
-    assert.deepEqual(issue.viewBox, [240, 160]);
+    assert.deepEqual(issue.viewBox, [240, 154]);
     assert.deepEqual(issue.overflowPx, { right: 20 });
     assert.match(issue.detail, /extends past the right edge by 20px/);
     // The rule owns no named check: it fails the receipt through composition,

@@ -61,6 +61,6 @@ Examples demonstrate valid field shape. Before choosing a different boundary kin
 
 - Workflow: use schema v2 for new workflows and preserve schema v1 for an existing source with fixed legacy geometry. For sequential stages stacked in one container, use one v2 lane and one group, omit `meta.viewBox`, and place nodes around the lane content center with symmetric `yOffset` values such as `-90 / 0 / 90`. Keep semantic edge labels and act on compiler diagnostics. The canonical contract is in [`../renderers/workflow/README.md`](../renderers/workflow/README.md#layout-contracts).
 - Sequence: omit `meta.column_fit` for the stable `fixed` layout. Set it to `"spread"` when a wide viewBox leaves unused horizontal space or meaningful participant labels do not fit fixed boxes; do not shorten semantic labels before trying `spread`.
-- Lifecycle: phase columns `0..4` occupy the main rail. Event or terminal column `N` in `0..2` aligns beneath main column `N + 2`. A recoverable state uses `type: "failure"` plus a real transition back to the active state.
+- Lifecycle: phase columns `0..4` occupy the main rail. Event or terminal column `N` in `0..2` aligns beneath main column `N + 2`. Every lane other than `main` and `terminal` shares the one middle band, so two such states in the same column need distinct `yOffset` values. A recoverable state uses `type: "failure"` plus a real transition back to the active state.
 
 Read `authoring-contract.md` only when field enums, spacing math, geometry repair rules, repository evidence, or more mode-specific placement is needed.

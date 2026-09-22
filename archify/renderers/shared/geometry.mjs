@@ -1189,7 +1189,7 @@ function collinearForward(a, b, c) {
   return (b[0] - a[0]) * (c[0] - b[0]) + (b[1] - a[1]) * (c[1] - b[1]) >= -0.0001;
 }
 
-function frameBorderSegments(frame) {
+export function frameBorderSegments(frame) {
   if (!frame || typeof frame !== 'object') return [];
   if (frame.shape === 'line') {
     const start = frame.start || [frame.x1, frame.y1];

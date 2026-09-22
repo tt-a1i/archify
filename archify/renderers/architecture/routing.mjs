@@ -14,6 +14,9 @@ import {
   routeHonorsEndpointSides,
   normalizeRoutePoints,
   roundedPath,
+  collectBorderRuns,
+  collectRouteRhythmIssues,
+  frameBorderSegments,
 } from '../shared/geometry.mjs';
 import { shortestOrthogonalGridRoute } from '../shared/route-quality.mjs';
 
@@ -22,8 +25,63 @@ import { shortestOrthogonalGridRoute } from '../shared/route-quality.mjs';
  *
  * @param {Map<string, {x,y,width,height,cx,cy}>} components measured boxes by id
  * @param {Array<object>} connections the connection list to spread ports across
+ * @param {object} [options]
+ * @param {Array<{x,y,width,height,radius?}>} [options.frames] structural frames
+ *   (boundaries) whose borders an automatic route may cross but never follow
+ * @param {number} [options.interiorSegmentPx] showcase floor for interior segments
+ * @param {number} [options.microSegmentPx] floor for any segment
+ * @param {(conn: object, points: number[][], context: {routes: number[][][], labels: object[]}) => object|null} [options.labelRectFor]
+ *   default label rect of a routed relationship given the routes and label
+ *   rects resolved so far; later automatic routes keep clear of it so a dense
+ *   fan-out does not leave the label nowhere to go
  */
-export function createRouter(components, connections) {
+export function createRouter(components, connections, {
+  frames = [],
+  interiorSegmentPx = 16,
+  microSegmentPx = 8,
+  labelRectFor = null,
+} = {}) {
+  const frameBorders = frames.flatMap((frame) => frameBorderSegments(frame));
+  const LABEL_CLEARANCE = 4;
+  // Labels of already-routed relationships, reserved while planning the rest.
+  let reservedLabels = [];
+  let honourReservedLabels = true;
+
+  function routeClearsReservedLabels(conn, points) {
+    if (!honourReservedLabels) return true;
+    for (const entry of reservedLabels) {
+      if (entry.conn === conn) continue;
+      for (let index = 0; index < points.length - 1; index += 1) {
+        if (segmentIntersectsRect({ start: points[index], end: points[index + 1] }, entry.rect, LABEL_CLEARANCE)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  // The grid search adds its own 2px component clearance; pre-expand so a
+  // reserved label keeps the same 4px clearance the placement pass demands.
+  function reservedLabelObstacles(gridClearance) {
+    if (!honourReservedLabels) return [];
+    const grow = LABEL_CLEARANCE - gridClearance;
+    return reservedLabels.map(({ rect }) => ({
+      x: rect.x - grow,
+      y: rect.y - grow,
+      width: rect.width + grow * 2,
+      height: rect.height + grow * 2,
+    }));
+  }
+
+  // Automatic routes are held to the same composition floors the showcase
+  // gate enforces afterwards. Accepting a route here that the gate rejects
+  // only hands the author a hand-routing repair the planner could have made.
+  function routeMeetsCompositionFloors(points) {
+    if (collectRouteRhythmIssues({ routedRelations: [{ points }], interiorSegmentPx, microSegmentPx }).length) {
+      return false;
+    }
+    return !frames.length || collectBorderRuns({ routedRelations: [{ points }], frames }).length === 0;
+  }
   const planningMetrics = {
     routeCount: 0,
     explicitRouteCount: 0,
@@ -53,7 +111,7 @@ export function createRouter(components, connections) {
         }
       }
     }
-    return true;
+    return routeClearsReservedLabels(conn, points);
   }
 
   function routeClearsEndpointComponents(points, from, to) {
@@ -338,6 +396,7 @@ export function createRouter(components, connections) {
           if (routeHonorsEndpointSides(direct, fromSide, toSide)
               && routeClearsEndpointComponents(direct, from, to)
               && routeClearsComponents(conn, direct)
+              && routeMeetsCompositionFloors(direct)
               && !routeConflictsWithResolved(conn, direct, resolvedRoutes)) return [];
         }
 
@@ -345,6 +404,7 @@ export function createRouter(components, connections) {
           accept: (points) => (
             routeClearsEndpointComponents(points, from, to)
             && routeClearsComponents(conn, points)
+            && routeMeetsCompositionFloors(points)
             && !routeConflictsWithResolved(conn, points, resolvedRoutes)
           ),
         });
@@ -367,6 +427,7 @@ export function createRouter(components, connections) {
             const points = [start, ...candidate, end];
             if (routeHonorsEndpointSides(points, fromSide, toSide)
                 && routeClearsComponents(conn, points)
+                && routeMeetsCompositionFloors(points)
                 && !routeConflictsWithResolved(conn, points, resolvedRoutes)) return candidate;
           }
         }
@@ -383,6 +444,7 @@ export function createRouter(components, connections) {
             const points = [start, ...candidate, end];
             if (routeHonorsEndpointSides(points, fromSide, toSide)
                 && routeClearsComponents(conn, points)
+                && routeMeetsCompositionFloors(points)
                 && !routeConflictsWithResolved(conn, points, resolvedRoutes)) return candidate;
           }
         }
@@ -412,6 +474,7 @@ export function createRouter(components, connections) {
           const points = [start, ...candidate, end];
           if (routeClearsEndpointComponents(points, from, to)
               && routeClearsComponents(conn, points)
+              && routeMeetsCompositionFloors(points)
               && !routeConflictsWithResolved(conn, points, resolvedRoutes)) return candidate;
         }
 
@@ -440,7 +503,7 @@ export function createRouter(components, connections) {
           start,
           end,
           points: [start, end],
-          obstacles: [...components.values()],
+          obstacles: [...components.values(), ...reservedLabelObstacles(2)],
           fromSide,
           toSide,
           clearance: 2,
@@ -450,6 +513,9 @@ export function createRouter(components, connections) {
           avoidedSegments,
           minimumAvoidedOverlapPx: 8,
           routeSeparationPx: 8,
+          minimumSegmentPx: interiorSegmentPx,
+          borderSegments: frameBorders,
+          bendPenaltyPx: 48,
           metrics: gridMetrics,
         });
         planningMetrics.gridCandidateNodeCount += gridMetrics.candidateNodeCount || 0;
@@ -464,8 +530,9 @@ export function createRouter(components, connections) {
           ? !routeConflictsWithResolved(conn, searched.points, resolvedRoutes) : false;
         const clearsSharedCorridors = searched
           ? !routeOverlapsResolved(conn, searched.points, resolvedRoutes) : false;
+        const meetsFloors = searched ? routeMeetsCompositionFloors(searched.points) : false;
         const accepted = Boolean(
-          searched && clearsEndpoints && clearsComponents && clearsSharedCorridors,
+          searched && clearsEndpoints && clearsComponents && clearsSharedCorridors && meetsFloors,
         );
         planningMetrics.gridAttempts.push({
           relationship: conn.id || `${conn.from}->${conn.to}`,
@@ -479,6 +546,7 @@ export function createRouter(components, connections) {
               ...(!clearsEndpoints ? ['endpoint-components'] : []),
               ...(!clearsComponents ? ['components'] : []),
               ...(!clearsSharedCorridors ? ['shared-corridor'] : []),
+              ...(!meetsFloors ? ['composition-floors'] : []),
             ],
             candidatePoints: searched.points,
           } : {}),
@@ -612,6 +680,7 @@ export function createRouter(components, connections) {
       && routeHonorsEndpointSides(routed.points, geometry.fromSide, geometry.toSide)
       && routeClearsEndpointComponents(routed.points, geometry.from, geometry.to)
       && routeClearsComponents(conn, routed.points)
+      && routeMeetsCompositionFloors(routed.points)
       && !routeOverlapsResolved(conn, routed.points, resolvedRoutes);
   }
 
@@ -626,14 +695,38 @@ export function createRouter(components, connections) {
     }
 
     let firstFallback = null;
-    for (const sides of candidateSidePairs(conn)) {
-      const geometry = connectionGeometry(conn, sides);
-      const routed = routedForGeometry(conn, resolvedRoutes, geometry);
-      if (!firstFallback) firstFallback = { routed, sides };
-      if (routeIsClear(conn, routed, geometry, resolvedRoutes)) {
-        return cachePath(conn, routed, sides);
+    const clearRoute = () => {
+      for (const sides of candidateSidePairs(conn)) {
+        const geometry = connectionGeometry(conn, sides);
+        const routed = routedForGeometry(conn, resolvedRoutes, geometry);
+        if (!firstFallback) firstFallback = { routed, sides };
+        if (routeIsClear(conn, routed, geometry, resolvedRoutes)) return { routed, sides };
       }
+      return null;
+    };
+    const routeLength = ({ routed }) => routed.points.slice(1)
+      .reduce((total, point, index) => total + Math.abs(point[0] - routed.points[index][0]) + Math.abs(point[1] - routed.points[index][1]), 0);
+
+    // Reserved labels are a preference, not an obstacle. A route that has no
+    // corridor around them, or that would have to detour far around them,
+    // takes the plain route instead and the label placement pass moves the
+    // label; only a modest extra length is worth keeping a label in place.
+    honourReservedLabels = true;
+    let chosen = clearRoute();
+    if (reservedLabels.length) {
+      honourReservedLabels = false;
+      if (!chosen) chosen = clearRoute();
+      else {
+        const direct = Math.abs(chosen.routed.points.at(-1)[0] - chosen.routed.points[0][0])
+          + Math.abs(chosen.routed.points.at(-1)[1] - chosen.routed.points[0][1]);
+        if (routeLength(chosen) > direct * 1.25 + 64) {
+          const plain = clearRoute();
+          if (plain && routeLength(plain) * 1.25 + 64 < routeLength(chosen)) chosen = plain;
+        }
+      }
+      honourReservedLabels = true;
     }
+    if (chosen) return cachePath(conn, chosen.routed, chosen.sides);
     return cachePath(conn, firstFallback.routed, firstFallback.sides);
   }
 
@@ -657,9 +750,15 @@ export function createRouter(components, connections) {
         return leftDistance - rightDistance || left.index - right.index;
       });
     const resolvedRoutes = [];
+    reservedLabels = [];
     for (const { conn } of [...explicit, ...automatic]) {
       const routed = computePath(conn, resolvedRoutes);
       resolvedRoutes.push({ conn, points: routed.points });
+      const rect = labelRectFor?.(conn, routed.points, {
+        routes: resolvedRoutes.map((entry) => entry.points),
+        labels: reservedLabels.map((entry) => entry.rect),
+      });
+      if (rect) reservedLabels.push({ conn, rect });
     }
     planningMetrics.routeCount = resolvedRoutes.length;
     planningMetrics.explicitRouteCount = explicit.length;

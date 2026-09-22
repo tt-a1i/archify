@@ -970,6 +970,7 @@ function checkerDiagnostics(checker) {
 }
 
 function compositionFixes(issue) {
+  if (issue.code === 'composition/viewport-height') return [String(issue.detail || '').replace(/^\[[^\]]+\]\s*/, '')];
   if (issue.code !== 'composition/desktop-readability') return COMPOSITION_FIXES[issue.code] || [];
   const sourceFontPx = Number(issue.sourceFontPx);
   const actualBudgetPx = Number(issue.availableDiagramWidth);

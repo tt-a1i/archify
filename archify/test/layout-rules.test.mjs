@@ -1622,7 +1622,10 @@ test('architecture: auto route clears stacked blockers after doglegs and side-aw
   const encoded = html.match(/data-edge-id="api-queue" data-composition-points="([^"]+)"/)?.[1];
   assert.ok(encoded, 'expected rendered composition points for api-queue');
   const points = encoded.split(';').map((point) => point.split(',').map(Number));
-  assert.ok(points.length >= 6, `expected a multi-bend route, found ${encoded}`);
+  // The bend-penalised planner takes the 50px gap between the two blockers in
+  // two turns; the pure shortest path used to staircase around them.
+  assert.ok(points.length >= 4, `expected a routed detour, found ${encoded}`);
+  assert.ok(points.slice(1, -1).some(([x]) => x > 775 && x < 825), `route must pass between the blockers, found ${encoded}`);
   assert.equal(points[0][1], points[1][1], 'route must leave the inferred right port horizontally');
   assert.ok(points[1][0] > points[0][0], 'route must leave the inferred right port rightward');
   assert.equal(points.at(-2)[1], points.at(-1)[1], 'route must enter the inferred left port horizontally');

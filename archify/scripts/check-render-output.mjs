@@ -10,6 +10,8 @@ import {
   DECLARED_WIDE_READER_CONTRACT,
   declaredWideReadabilityBudget,
   MIN_PROJECTED_NODE_TEXT_PX,
+  describeFixedWidthOverflow,
+  predictedFixedWidthOverflow,
   projectedNodeTextPx,
 } from '../renderers/shared/desktop-readability.mjs';
 
@@ -114,6 +116,13 @@ if (svgMatches.length === 1) {
   const beforeLegend = legendStart >= 0 ? svg.slice(0, legendStart) : svg;
   const desktopReadability = collectDesktopReadability(svgAttrs, beforeLegend, readerContract);
   const desktopReadabilityIssue = desktopReadability.issue;
+  // The browser gate measures this later; the geometry is already certain here.
+  const viewportHeightIssue = predictedFixedWidthOverflow({
+    viewBoxWidth: viewBoxSize(svgAttrs)[0],
+    viewBoxHeight: viewBoxSize(svgAttrs)[1],
+    readerFit: svgAttrs['data-reader-fit'] || null,
+    hasGuidedViews: /class="guided-views/.test(html),
+  });
   const arrows = collectArrows(beforeLegend);
   const diagonal = arrows.flatMap((arrow) => diagonalStraightSegments(arrow).map((segment) => ({ arrow, ...segment })));
   addCheck(
@@ -170,20 +179,24 @@ if (svgMatches.length === 1) {
   const labelClearanceIsError = qualityProfile === 'showcase';
   const labelContainmentIsError = qualityProfile === 'showcase';
   const desktopReadabilityIsError = qualityProfile === 'showcase';
+  // Certain geometry, but new: surface it as evidence first (CONTRIBUTING.md#product-and-compatibility-contracts).
+  const viewportHeightIsError = false;
   const compositionErrors = (qualityGatesEnforced ? containerBorderRuns.length : 0)
     + (crossingIsError ? relationshipCrossings.length : 0)
     + (corridorIsError ? ambiguousCorridors.length : 0)
     + (labelClearanceIsError ? labelRouteClearance.length : 0)
     + (labelContainmentIsError ? labelCanvasOverflow.length : 0)
     + (rhythmIsError ? routeRhythmIssues.length : 0)
-    + (desktopReadabilityIsError && desktopReadabilityIssue ? 1 : 0);
+    + (desktopReadabilityIsError && desktopReadabilityIssue ? 1 : 0)
+    + (viewportHeightIsError && viewportHeightIssue ? 1 : 0);
   const compositionWarnings = (qualityGatesEnforced ? 0 : containerBorderRuns.length)
     + (crossingIsError ? 0 : relationshipCrossings.length)
     + (corridorIsError ? 0 : ambiguousCorridors.length)
     + (labelClearanceIsError ? 0 : labelRouteClearance.length)
     + (labelContainmentIsError ? 0 : labelCanvasOverflow.length)
     + (rhythmIsError ? 0 : routeRhythmIssues.length)
-    + (desktopReadabilityIsError || !desktopReadabilityIssue ? 0 : 1);
+    + (desktopReadabilityIsError || !desktopReadabilityIssue ? 0 : 1)
+    + (viewportHeightIsError || !viewportHeightIssue ? 0 : 1);
   composition = {
     schemaVersion: 1,
     profile: qualityProfile,
@@ -201,6 +214,7 @@ if (svgMatches.length === 1) {
       labelCanvasOverflowIssues: labelCanvasOverflow.length,
       minLabelRouteClearance: minimumLabelRouteClearance(labelRouteMeasurements),
       desktopReadabilityIssues: desktopReadabilityIssue ? 1 : 0,
+      viewportHeightIssues: viewportHeightIssue ? 1 : 0,
       minProjectedNodeTextPx: desktopReadability.evidence.minimumProjectedTextPx,
       ...roundedRouteMetrics(routeMetrics),
     },
@@ -294,6 +308,15 @@ if (svgMatches.length === 1) {
         sourceFontPx: desktopReadabilityIssue.sourceFontPx,
         projectedFontPx: desktopReadabilityIssue.projectedFontPx,
         minimumProjectedFontPx: MIN_PROJECTED_NODE_TEXT_PX,
+      }] : []),
+      ...(viewportHeightIssue ? [{
+        severity: viewportHeightIsError ? 'error' : 'warning',
+        code: 'composition/viewport-height',
+        readerFit: svgAttrs['data-reader-fit'] || null,
+        viewBoxWidth: viewBoxSize(svgAttrs)[0],
+        viewBoxHeight: viewBoxSize(svgAttrs)[1],
+        ...viewportHeightIssue,
+        detail: `[composition/viewport-height] ${describeFixedWidthOverflow({ ...viewportHeightIssue, viewBoxWidth: viewBoxSize(svgAttrs)[0], viewBoxHeight: viewBoxSize(svgAttrs)[1] })}`,
       }] : []),
     ],
   };

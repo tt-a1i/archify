@@ -2,7 +2,9 @@ import { normalizeRoutePoints, rectsOverlap, segmentRectClearance } from '../sha
 
 // A bounded fallback for an unpinned label whose usual position collides.
 // It never routes an edge, moves a node, expands the canvas, or rewrites input.
-export function placeAutomaticLabels({ labels, routes, components, titles, viewBox, placementBottom = viewBox[1] }) {
+export function placeAutomaticLabels({
+  labels, routes, components, titles, viewBox, placementBottom = viewBox[1], fallbackRing = true,
+}) {
   const placed = [...labels];
   const obstacles = [...components, ...titles];
   const segments = routes.flatMap(({ relationIndex, points }) => {
@@ -68,7 +70,7 @@ export function placeAutomaticLabels({ labels, routes, components, titles, viewB
         break;
       }
     }
-    if (placed[index] !== label) continue;
+    if (placed[index] !== label || !fallbackRing) continue;
 
     // Dense but valid topologies can leave every point directly beside the
     // relationship occupied by another route. Search a small deterministic
@@ -99,4 +101,23 @@ export function placeAutomaticLabels({ labels, routes, components, titles, viewB
     if (fallback) placed[index] = fallback;
   }
   return placed;
+}
+
+// The rect a single unpinned label would occupy given only its own route and
+// the nodes: what the planner reserves before the remaining routes are laid.
+// Only a placement beside the route itself is worth reserving; a label that
+// would already need the fallback ring is left to the final placement pass.
+export function reservedLabelRect({
+  label, points, routes = [], labels = [], components, viewBox = [Infinity, Infinity], placementBottom = Infinity,
+}) {
+  const [rect] = placeAutomaticLabels({
+    labels: [{ ...label, relationIndex: -1 }, ...labels.map(other => ({ ...other, relationIndex: -2 }))],
+    routes: [{ relationIndex: -1, points }, ...routes],
+    components,
+    titles: [],
+    viewBox,
+    placementBottom,
+    fallbackRing: false,
+  });
+  return components.some(component => rectsOverlap(rect, component, -2)) ? null : rect;
 }

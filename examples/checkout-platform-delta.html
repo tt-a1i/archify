@@ -16212,6 +16212,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var frame = 0;
       var settleFrame = 0;
       var lastWidth = 0;
+      // Widest reader the overflow settle has accepted for this viewport (0 =
+      // uncapped). Card copy rewraps as the reader narrows, so recomputing
+      // from fixed heights alone would widen again and oscillate; only a
+      // resize lifts the cap.
+      var settledCap = 0;
       var WIDE_RATIO = 1.55;
       var MIN_DESKTOP_WIDTH = 1024;
       var MIN_READER_WIDTH = 960;
@@ -16273,6 +16278,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         html.removeAttribute(&#39;data-reader-layout&#39;);
         html.removeAttribute(&#39;data-reader-overflow&#39;);
         lastWidth = 0;
+        settledCap = 0;
       }
       function chromeMetrics() {
         var bodyStyle = window.getComputedStyle(body);
@@ -16305,6 +16311,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ) - window.innerHeight;
           if (overflow &gt; 1 &amp;&amp; lastWidth &gt; Math.ceil(minWidth)) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4), minWidth);
+            settledCap = lastWidth;
             html.setAttribute(&#39;data-reader-overflow&#39;, &#39;reduced&#39;);
           } else if (overflow &gt; 1) {
             html.setAttribute(&#39;data-reader-overflow&#39;, &#39;authored&#39;);
@@ -16342,7 +16349,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           outerHeight(header) + outerHeight(guided) + outerHeight(cards);
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
         var desiredWidth = availableSvgHeight * ratio + chrome.diagramX;
-        var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth));
+        var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth, settledCap || desiredWidth));
         applyWidth(width, minWidth);
         settleOverflow(minWidth);
         return {
@@ -16384,7 +16391,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       archifyLayoutOwners.reader = { schedule: schedule, pending: layoutPending, snapshot: stableSnapshot };
 
-      window.addEventListener(&#39;resize&#39;, schedule, { passive: true });
+      window.addEventListener(&#39;resize&#39;, function () {
+        settledCap = 0;
+        schedule();
+      }, { passive: true });
       window.addEventListener(&#39;load&#39;, schedule, { once: true });
       if (document.fonts &amp;&amp; document.fonts.ready) document.fonts.ready.then(schedule).catch(function () {});
       if (typeof ResizeObserver === &#39;function&#39;) {
@@ -31852,6 +31862,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var frame = 0;
       var settleFrame = 0;
       var lastWidth = 0;
+      // Widest reader the overflow settle has accepted for this viewport (0 =
+      // uncapped). Card copy rewraps as the reader narrows, so recomputing
+      // from fixed heights alone would widen again and oscillate; only a
+      // resize lifts the cap.
+      var settledCap = 0;
       var WIDE_RATIO = 1.55;
       var MIN_DESKTOP_WIDTH = 1024;
       var MIN_READER_WIDTH = 960;
@@ -31913,6 +31928,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         html.removeAttribute(&#39;data-reader-layout&#39;);
         html.removeAttribute(&#39;data-reader-overflow&#39;);
         lastWidth = 0;
+        settledCap = 0;
       }
       function chromeMetrics() {
         var bodyStyle = window.getComputedStyle(body);
@@ -31945,6 +31961,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ) - window.innerHeight;
           if (overflow &gt; 1 &amp;&amp; lastWidth &gt; Math.ceil(minWidth)) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4), minWidth);
+            settledCap = lastWidth;
             html.setAttribute(&#39;data-reader-overflow&#39;, &#39;reduced&#39;);
           } else if (overflow &gt; 1) {
             html.setAttribute(&#39;data-reader-overflow&#39;, &#39;authored&#39;);
@@ -31982,7 +31999,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           outerHeight(header) + outerHeight(guided) + outerHeight(cards);
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
         var desiredWidth = availableSvgHeight * ratio + chrome.diagramX;
-        var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth));
+        var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth, settledCap || desiredWidth));
         applyWidth(width, minWidth);
         settleOverflow(minWidth);
         return {
@@ -32024,7 +32041,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       archifyLayoutOwners.reader = { schedule: schedule, pending: layoutPending, snapshot: stableSnapshot };
 
-      window.addEventListener(&#39;resize&#39;, schedule, { passive: true });
+      window.addEventListener(&#39;resize&#39;, function () {
+        settledCap = 0;
+        schedule();
+      }, { passive: true });
       window.addEventListener(&#39;load&#39;, schedule, { once: true });
       if (document.fonts &amp;&amp; document.fonts.ready) document.fonts.ready.then(schedule).catch(function () {});
       if (typeof ResizeObserver === &#39;function&#39;) {

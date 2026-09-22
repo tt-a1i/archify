@@ -1,0 +1,324 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "跨租户审计日志导出与脱敏编排服务（含异步导出、留存策略和人工复核边界）",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "request-execution",
+        "label": "请求到导出",
+        "focus": [
+          "caller",
+          "entry",
+          "scheduler",
+          "query",
+          "redactor",
+          "writer"
+        ],
+        "note": "沿入口、排队、分段查询、脱敏与对象写出的实际调用路径阅读。"
+      },
+      {
+        "id": "policy-boundary",
+        "label": "策略与边界",
+        "focus": [
+          "policy",
+          "scheduler",
+          "redactor",
+          "writer",
+          "review"
+        ],
+        "note": "区分代码执行的策略使用、配置声明的存储与留存，以及人工复核的可选接口。"
+      },
+      {
+        "id": "outputs-notice",
+        "label": "输出与通知",
+        "focus": [
+          "writer",
+          "notifier",
+          "topic",
+          "review"
+        ],
+        "note": "查看文件结果、完成事件和人工复核请求各自的职责与实现状态。"
+      }
+    ],
+    "output": "audit-luna.html"
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "调用方",
+      "sublabel": "tenantId + range",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        150,
+        66
+      ]
+    },
+    {
+      "id": "entry",
+      "type": "backend",
+      "label": "审计导出入口",
+      "sublabel": "requestAuditExport",
+      "pos": [
+        270,
+        330
+      ],
+      "size": [
+        170,
+        66
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "策略配置",
+      "sublabel": "policy · 配置声明",
+      "pos": [
+        275,
+        105
+      ],
+      "size": [
+        180,
+        70
+      ],
+      "tag": "180d / 10000 rows"
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "导出计划器",
+      "sublabel": "createExport().schedule",
+      "pos": [
+        510,
+        330
+      ],
+      "size": [
+        190,
+        66
+      ]
+    },
+    {
+      "id": "query",
+      "type": "database",
+      "label": "审计日志查询",
+      "sublabel": "queryAuditLog · 内存占位实现",
+      "pos": [
+        750,
+        210
+      ],
+      "size": [
+        205,
+        70
+      ],
+      "tag": "source rows"
+    },
+    {
+      "id": "redactor",
+      "type": "security",
+      "label": "脱敏处理",
+      "sublabel": "redact(row, redactFields)",
+      "pos": [
+        750,
+        390
+      ],
+      "size": [
+        205,
+        70
+      ],
+      "tag": "token / ipAddress"
+    },
+    {
+      "id": "writer",
+      "type": "cloud",
+      "label": "对象结果写出",
+      "sublabel": "writeObject · 路径返回",
+      "pos": [
+        1010,
+        390
+      ],
+      "size": [
+        190,
+        70
+      ],
+      "tag": "audit-export-bucket"
+    },
+    {
+      "id": "notifier",
+      "type": "backend",
+      "label": "完成通知器",
+      "sublabel": "notifyReady",
+      "pos": [
+        1260,
+        300
+      ],
+      "size": [
+        170,
+        66
+      ]
+    },
+    {
+      "id": "topic",
+      "type": "messagebus",
+      "label": "通知主题",
+      "sublabel": "audit-export-ready · 配置通道",
+      "pos": [
+        1480,
+        195
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "review",
+      "type": "messagebus",
+      "label": "人工复核队列",
+      "sublabel": "requestReview · 可调用声明",
+      "pos": [
+        1480,
+        400
+      ],
+      "size": [
+        200,
+        70
+      ],
+      "tag": "privacy-review"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "导出编排运行时（已实现调用链）",
+      "wraps": [
+        "entry",
+        "scheduler",
+        "query",
+        "redactor",
+        "writer",
+        "notifier"
+      ],
+      "pad": 26
+    },
+    {
+      "kind": "security-group",
+      "label": "配置驱动的数据边界",
+      "wraps": [
+        "policy",
+        "redactor",
+        "writer"
+      ],
+      "pad": 18
+    }
+  ],
+  "connections": [
+    {
+      "id": "request",
+      "from": "caller",
+      "to": "entry",
+      "label": "requestAuditExport(request)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "policy-entry",
+      "from": "policy",
+      "to": "entry",
+      "label": "导入 policy"
+    },
+    {
+      "id": "policy-schedule",
+      "from": "policy",
+      "to": "scheduler",
+      "label": "maxRowsPerPart"
+    },
+    {
+      "id": "schedule",
+      "from": "entry",
+      "to": "scheduler",
+      "label": "schedule(job) → queued"
+    },
+    {
+      "id": "plan-query",
+      "from": "scheduler",
+      "to": "query",
+      "label": "run → queryAuditLog"
+    },
+    {
+      "id": "query-redact",
+      "from": "query",
+      "to": "redactor",
+      "label": "rows"
+    },
+    {
+      "id": "redact-write",
+      "from": "redactor",
+      "to": "writer",
+      "label": "redacted rows → writeObject"
+    },
+    {
+      "id": "retention",
+      "from": "policy",
+      "to": "writer",
+      "label": "objectStore + retentionDays"
+    },
+    {
+      "id": "ready",
+      "from": "writer",
+      "to": "notifier",
+      "label": "files → notifyReady"
+    },
+    {
+      "id": "event",
+      "from": "notifier",
+      "to": "topic",
+      "label": "audit-export-ready",
+      "variant": "emphasis"
+    },
+    {
+      "id": "review-declared",
+      "from": "policy",
+      "to": "review",
+      "label": "reviewQueue 配置",
+      "variant": "dashed"
+    },
+    {
+      "id": "review-api",
+      "from": "notifier",
+      "to": "review",
+      "label": "requestReview(job, reason, queue)",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "实际执行链",
+      "items": [
+        "入口校验 tenantId 与 range 后返回 queued 计划",
+        "run 异步查询、逐行脱敏、写对象并通知完成"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "配置驱动边界",
+      "items": [
+        "脱敏字段、分段上限、对象存储名与 180 天留存来自 policy",
+        "queryAuditLog 与 writeObject 是受控 fixture 中的占位实现"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "人工复核状态",
+      "items": [
+        "requestReview 只构造 manual-review 对象并未在主链路调用",
+        "reviewQueue 是配置声明，不能据此推断已有消费者或人工处理流程"
+      ]
+    }
+  ]
+}

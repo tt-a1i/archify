@@ -501,7 +501,29 @@ export class ChromeVisualBrowser {
           spaceBelowNodesPx: bottom === null ? null : Math.round(rect.bottom - bottom)
         };
       }).sort(function (a, b) { return b.heightPx - a.heightPx; }).slice(0, 6) : [];
+      // Vertical page budget: every block that stacks above or below the SVG,
+      // so an overflow receipt can say which part must give up how many pixels.
+      function outerHeight(element) {
+        if (!element) return 0;
+        var style = window.getComputedStyle(element);
+        if (element.hidden || style.display === 'none') return 0;
+        return element.getBoundingClientRect().height
+          + (parseFloat(style.marginTop) || 0) + (parseFloat(style.marginBottom) || 0);
+      }
+      var bodyStyle = window.getComputedStyle(document.body);
+      var diagramStyle = diagram ? window.getComputedStyle(diagram) : null;
+      var svgHeight = svg ? svg.getBoundingClientRect().height : 0;
+      var pageComposition = {
+        bodyPaddingPx: Math.round((parseFloat(bodyStyle.paddingTop) || 0) + (parseFloat(bodyStyle.paddingBottom) || 0)),
+        headerPx: Math.round(outerHeight(reader && reader.querySelector('.header'))),
+        guidedViewsPx: Math.round(outerHeight(reader && reader.querySelector('.guided-views'))),
+        diagramChromePx: Math.round(outerHeight(diagram) - svgHeight),
+        svgPx: Math.round(svgHeight),
+        cardsPx: Math.round(outerHeight(reader && reader.querySelector('.cards'))),
+        viewBoxHeight: viewBox ? viewBox.height : 0
+      };
       return {
+        pageComposition: pageComposition,
         innerWidth: window.innerWidth,
         innerHeight: window.innerHeight,
         scrollWidth: Math.ceil(document.documentElement.scrollWidth),
@@ -680,6 +702,7 @@ function observation({ width, height, theme, metrics }) {
     ok: containmentOk,
     readerWidth: Number(metrics.readerWidth) || null,
     diagramWidth: Number(metrics.diagramWidth) || null,
+    ...(metrics.pageComposition ? { pageComposition: metrics.pageComposition } : {}),
     viewBoxWidth: Number(metrics.viewBoxWidth) || null,
     ...(metrics.workflowLanes?.length ? { workflowLanes: metrics.workflowLanes } : {}),
     minimumProjectedNodeTextPx,
@@ -740,6 +763,31 @@ function failureDiagnostic({ code, message, subject, evidence, supportedFixes, s
   return { code, severity, message, subject, evidence, supportedFixes };
 }
 
+// Turn a measured vertical overflow into the pixel budget an author can act on:
+// which stacked block holds the height, and what the SVG or cards must shrink to.
+export function verticalBudgetFixes(entry) {
+  const page = entry.pageComposition;
+  if (!entry.overflowY || !page) return [];
+  const excess = entry.scrollHeight - entry.innerHeight;
+  const fixes = [];
+  const stacked = `${page.bodyPaddingPx}px body padding + ${page.headerPx}px header + ${page.guidedViewsPx}px guided views + ${page.diagramChromePx}px diagram chrome + ${page.svgPx}px SVG + ${page.cardsPx}px cards = ${entry.scrollHeight}px against ${entry.innerHeight}px`;
+  if (page.svgPx > 0 && page.viewBoxHeight > 0) {
+    const targetSvg = page.svgPx - excess;
+    const targetViewBoxHeight = Math.floor(page.viewBoxHeight * targetSvg / page.svgPx);
+    if (entry.readerLayout === 'adaptive') {
+      fixes.push(targetSvg > 0
+        ? `the page is ${excess}px too tall (${stacked}); the Reader already narrowed the stage to its ${entry.diagramWidth}px minimum, so the SVG height only follows meta.viewBox: keep every node and relationship and reduce the viewBox height to at most ${targetViewBoxHeight} (from ${page.viewBoxHeight}) by tightening vertical gaps and empty rows`
+        : `the page is ${excess}px too tall (${stacked}) and the SVG alone exceeds the viewport at the minimum reader width; split the diagram into two`);
+    } else {
+      fixes.push(`the page is ${excess}px too tall (${stacked}); the SVG spans the full ${entry.diagramWidth}px reader width because its viewBox ratio is below 1.55 and it declares no intrinsic-height fit, so the Reader can neither narrow it nor accept readable vertical scroll: either remove meta.viewBox so the renderer sizes the canvas and declares the fit, or make the viewBox at least 1.55x wider than tall`);
+    }
+  }
+  if (page.cardsPx >= excess) {
+    fixes.push(`alternatively, conclusion cards occupy ${page.cardsPx}px below the diagram; shortening card copy or dropping a card row so cards take at most ${page.cardsPx - excess}px also fits`);
+  }
+  return fixes;
+}
+
 function observationDiagnostics({ artifact, allObservations, readabilityObservations, command }) {
   const diagnostics = [];
   for (const entry of allObservations) {
@@ -758,6 +806,7 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
       }));
     }
     if (!entry.ok) {
+      const budgetFixes = verticalBudgetFixes(entry);
       diagnostics.push(failureDiagnostic({
         code: 'viewer/viewport-overflow',
         message: `The rendered artifact overflows the ${entry.width}x${entry.height} ${entry.theme} viewport.`,
@@ -773,17 +822,22 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
           readerLayout: entry.readerLayout,
           readerOverflow: entry.readerOverflow,
           readerFit: entry.readerFit,
+          ...(entry.overflowY && entry.pageComposition ? {
+            pageComposition: entry.pageComposition,
+            pageCompositionMeasurement: 'CSS pixels at this viewport; body padding, header, guided-views strip, diagram chrome, SVG and cards stack vertically and sum to scrollHeight',
+          } : {}),
           ...(entry.overflowY && entry.workflowLanes?.length ? {
             workflowLanes: entry.workflowLanes,
             measurement: 'CSS pixels; rendered node boxes geometrically contained in each lane frame; spaces include headers and routing, not guaranteed removable space',
           } : {}),
         },
         supportedFixes: [
+          ...budgetFixes,
           ...(entry.overflowY && entry.workflowLanes?.length ? [
             'run validate workflow <source.json> --layout-json and compare the tallest rendered lane frames with source lanes, col and yOffset; frame IDs are rendered indices, not source lane IDs',
             'where ownership and explicit geometry permit, distribute stacked steps across logical columns and meaningful lanes before increasing yOffset; preserve nodes, branches, labels and hard pins',
             `read references/authoring-contract.md#workflow-viewport-repair, then validate and deliver the changed source before rerunning ${command} on the new artifact; this is inspection guidance, not a verified coordinate fix`,
-          ] : [`contain the rendered layout within ${entry.width}x${entry.height}, then rerun ${command}`]),
+          ] : budgetFixes.length ? [] : [`contain the rendered layout within ${entry.width}x${entry.height}, then rerun ${command}`]),
         ],
       }));
     }

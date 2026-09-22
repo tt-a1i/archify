@@ -250,6 +250,9 @@ export function shortestOrthogonalGridRoute({
   avoidedSegments = [],
   minimumAvoidedOverlapPx = 8,
   routeSeparationPx = 8,
+  minimumSegmentPx = 8,
+  borderSegments = [],
+  bendPenaltyPx = 0,
   metrics,
 }) {
   writeGridMetrics(metrics, {
@@ -278,6 +281,10 @@ export function shortestOrthogonalGridRoute({
     .filter((rect) => rect && isFinitePoint(rect.x, rect.y, rect.width, rect.height))
     .map((rect) => expandedRect(rect, clearance));
   const relevantAvoidedSegments = [...avoidedSegments]
+    .filter((segment) => segment?.start && segment?.end);
+  // Frame borders may be crossed perpendicularly but never borrowed as a
+  // corridor: the composition gate rejects any collinear run along them.
+  const relevantBorderSegments = [...borderSegments]
     .filter((segment) => segment?.start && segment?.end);
   writeGridMetrics(metrics, {
     obstacleCount: expanded.length,
@@ -311,8 +318,24 @@ export function shortestOrthogonalGridRoute({
       ys.add(segmentStart[1] + routeSeparationPx);
     }
   }
-  const orderedX = [...xs].sort((a, b) => a - b);
-  const orderedY = [...ys].sort((a, b) => a - b);
+  for (const segment of relevantBorderSegments) {
+    if (Math.abs(segment.start[0] - segment.end[0]) <= 0.0001) {
+      xs.add(segment.start[0] - routeSeparationPx);
+      xs.add(segment.start[0] + routeSeparationPx);
+    }
+    if (Math.abs(segment.start[1] - segment.end[1]) <= 0.0001) {
+      ys.add(segment.start[1] - routeSeparationPx);
+      ys.add(segment.start[1] + routeSeparationPx);
+    }
+  }
+  // Grid lines closer than a readable segment would let the search emit a
+  // micro jog between two obstacle edges; keep the endpoint stubs and coalesce
+  // the rest so every turn the route can take is at least one segment long.
+  const coalesce = (values, keep) => values.sort((a, b) => a - b).filter((value, index, sorted) => (
+    index === 0 || keep.has(value) || value - sorted[index - 1] >= minimumSegmentPx
+  ));
+  const orderedX = coalesce([...xs], new Set([startStub[0], endStub[0]]));
+  const orderedY = coalesce([...ys], new Set([startStub[1], endStub[1]]));
   const candidateNodeCount = orderedX.length * orderedY.length;
   writeGridMetrics(metrics, {
     coordinateCount: orderedX.length + orderedY.length,
@@ -340,7 +363,7 @@ export function shortestOrthogonalGridRoute({
 
   const adjacency = new Map([...nodes.keys()].map((key) => [key, []]));
   let graphEdgeCount = 0;
-  const connectLine = (line) => {
+  const connectLine = (line, axis) => {
     for (let index = 0; index < line.length - 1; index += 1) {
       const left = line[index];
       const right = line[index + 1];
@@ -351,53 +374,80 @@ export function shortestOrthogonalGridRoute({
         relevantAvoidedSegments,
         minimumAvoidedOverlapPx,
       )) continue;
+      if (relevantBorderSegments.some((segment) => (
+        collinearOverlap(left, right, segment.start, segment.end) > 0.0001
+      ))) continue;
       const distance = Math.abs(right[0] - left[0]) + Math.abs(right[1] - left[1]);
       const leftKey = pointKey(left);
       const rightKey = pointKey(right);
-      adjacency.get(leftKey).push([rightKey, distance]);
-      adjacency.get(rightKey).push([leftKey, distance]);
+      adjacency.get(leftKey).push([rightKey, distance, axis === 'h' ? 'R' : 'D']);
+      adjacency.get(rightKey).push([leftKey, distance, axis === 'h' ? 'L' : 'U']);
       graphEdgeCount += 1;
     }
   };
   for (const y of orderedY) {
-    connectLine(orderedX.map((x) => nodes.get(pointKey([x, y]))).filter(Boolean));
+    connectLine(orderedX.map((x) => nodes.get(pointKey([x, y]))).filter(Boolean), 'h');
   }
   for (const x of orderedX) {
-    connectLine(orderedY.map((y) => nodes.get(pointKey([x, y]))).filter(Boolean));
+    connectLine(orderedY.map((y) => nodes.get(pointKey([x, y]))).filter(Boolean), 'v');
   }
   writeGridMetrics(metrics, { graphEdgeCount });
 
+  // The search state carries the incoming direction so a turn can cost extra
+  // and a reversal is never taken: the pure shortest path hugs every obstacle
+  // corner with a staircase of short jogs, while a bend-penalised one takes
+  // the same corridor in a few long strokes. The first stub already leaves
+  // the endpoint along its side and the last one arrives along the end side.
+  const directionOf = ([dx, dy]) => (dx > 0 ? 'R' : dx < 0 ? 'L' : dy > 0 ? 'D' : 'U');
+  const opposite = { R: 'L', L: 'R', D: 'U', U: 'D' };
+  const stateKey = (key, direction) => `${key}|${direction}`;
+  const sourceAxis = directionOf(OUTWARD[fromSide]);
+  const targetAxis = opposite[directionOf(OUTWARD[toSide])];
   const source = pointKey(startStub);
   const target = pointKey(endStub);
-  const distances = new Map([[source, 0]]);
+  const sourceState = stateKey(source, sourceAxis);
+  const distances = new Map([[sourceState, 0]]);
   const previous = new Map();
   const queue = new MinHeap();
-  queue.push(source, 0);
+  queue.push(sourceState, 0);
   let visitedNodeCount = 0;
+  let targetState = null;
   while (queue.entries.length) {
     const next = queue.pop();
     const current = next.key;
     const currentDistance = next.distance;
     if (currentDistance !== distances.get(current)) continue;
     visitedNodeCount += 1;
-    if (current === target) break;
-    for (const [neighbor, weight] of adjacency.get(current) || []) {
-      const candidate = currentDistance + weight;
-      if (candidate >= (distances.get(neighbor) ?? Infinity)) continue;
-      distances.set(neighbor, candidate);
-      previous.set(neighbor, current);
-      queue.push(neighbor, candidate);
+    const [currentNode, currentAxis] = current.split('|');
+    if (currentNode === target) {
+      // Arriving on the wrong axis costs one final turn onto the end stub.
+      const arrival = currentDistance + (currentAxis === targetAxis ? 0 : bendPenaltyPx);
+      if (targetState == null || arrival < targetState.distance) {
+        targetState = { key: current, distance: arrival };
+      }
+      if (currentAxis === targetAxis || bendPenaltyPx === 0) break;
+      continue;
+    }
+    if (targetState && currentDistance >= targetState.distance) break;
+    for (const [neighbor, weight, axis] of adjacency.get(currentNode) || []) {
+      if (axis === opposite[currentAxis]) continue;
+      const candidate = currentDistance + weight + (axis === currentAxis ? 0 : bendPenaltyPx);
+      const neighborState = stateKey(neighbor, axis);
+      if (candidate >= (distances.get(neighborState) ?? Infinity)) continue;
+      distances.set(neighborState, candidate);
+      previous.set(neighborState, current);
+      queue.push(neighborState, candidate);
     }
   }
   writeGridMetrics(metrics, { visitedNodeCount });
-  if (!distances.has(target)) {
+  if (!targetState) {
     writeGridMetrics(metrics, { status: 'no-route' });
     return null;
   }
   const reversed = [];
-  for (let key = target; key; key = previous.get(key)) {
-    reversed.push(nodes.get(key));
-    if (key === source) break;
+  for (let key = targetState.key; key; key = previous.get(key)) {
+    reversed.push(nodes.get(key.split('|')[0]));
+    if (key === sourceState) break;
   }
   if (pointKey(reversed.at(-1)) !== source) {
     writeGridMetrics(metrics, { status: 'broken-predecessor-chain' });

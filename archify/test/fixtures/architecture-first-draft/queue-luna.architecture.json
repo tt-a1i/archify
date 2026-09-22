@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Queue Gateway Architecture",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "request-and-queue",
+        "label": "Request to queue",
+        "focus": [
+          "tenant",
+          "gateway",
+          "queue",
+          "worker"
+        ],
+        "note": "Follow a tenant request into the bounded waiting queue and worker runtime."
+      },
+      {
+        "id": "worker-integrations",
+        "label": "Worker integrations",
+        "focus": [
+          "worker",
+          "auth",
+          "billing",
+          "result"
+        ],
+        "note": "See the configured authentication, billing, and result boundaries used by each worker attempt."
+      },
+      {
+        "id": "failure-recovery",
+        "label": "Retry and dead letter",
+        "focus": [
+          "worker",
+          "dead-letter",
+          "queue"
+        ],
+        "note": "Trace retries through the attempt limit and the final dead-letter handoff."
+      }
+    ],
+    "output": "queue-luna.html"
+  },
+  "components": [
+    {
+      "id": "tenant",
+      "type": "external",
+      "label": "Tenant Request",
+      "sublabel": "tenant + payload",
+      "pos": [
+        60,
+        330
+      ],
+      "size": [
+        150,
+        70
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "Job Gateway",
+      "sublabel": "submitJob · 202 queued",
+      "pos": [
+        280,
+        330
+      ],
+      "size": [
+        180,
+        70
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "Waiting Queue",
+      "sublabel": "in-memory · FIFO shift",
+      "tag": "concurrency 3",
+      "pos": [
+        535,
+        330
+      ],
+      "size": [
+        190,
+        70
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Worker Runtime",
+      "sublabel": "runWorker · async attempts",
+      "pos": [
+        805,
+        330
+      ],
+      "size": [
+        190,
+        70
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Tenant Auth",
+      "sublabel": "tenant-token-service",
+      "pos": [
+        535,
+        115
+      ],
+      "size": [
+        190,
+        70
+      ]
+    },
+    {
+      "id": "billing",
+      "type": "cloud",
+      "label": "Billing Provider",
+      "sublabel": "billing-provider",
+      "pos": [
+        805,
+        115
+      ],
+      "size": [
+        190,
+        70
+      ]
+    },
+    {
+      "id": "result",
+      "type": "database",
+      "label": "Result Store",
+      "sublabel": "job-result-store",
+      "pos": [
+        1080,
+        330
+      ],
+      "size": [
+        190,
+        70
+      ]
+    },
+    {
+      "id": "dead-letter",
+      "type": "messagebus",
+      "label": "Dead-Letter Queue",
+      "sublabel": "after 3",
+      "pos": [
+        805,
+        545
+      ],
+      "size": [
+        190,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Gateway queue runtime",
+      "wraps": [
+        "gateway",
+        "queue",
+        "worker"
+      ],
+      "pad": 32
+    },
+    {
+      "kind": "security-group",
+      "label": "Configured service boundaries",
+      "wraps": [
+        "auth",
+        "billing",
+        "result"
+      ],
+      "pad": 28
+    }
+  ],
+  "connections": [
+    {
+      "id": "submit",
+      "from": "tenant",
+      "to": "gateway",
+      "label": "submitJob(request)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "enqueue",
+      "from": "gateway",
+      "to": "queue",
+      "label": "enqueue · 202 jobId",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dispatch",
+      "from": "queue",
+      "to": "worker",
+      "label": "dispatch when active < 3"
+    },
+    {
+      "id": "authorize",
+      "from": "worker",
+      "to": "auth",
+      "label": "authorizeTenant",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "token",
+      "from": "auth",
+      "to": "worker",
+      "label": "tenant token",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "bill",
+      "from": "worker",
+      "to": "billing",
+      "label": "callProvider(payload, token)",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "save",
+      "from": "worker",
+      "to": "result",
+      "label": "saveResult(job.id, result)"
+    },
+    {
+      "id": "retry",
+      "from": "worker",
+      "to": "worker",
+      "label": "retry until maxAttempts = 2",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "dead-letter",
+      "from": "worker",
+      "to": "dead-letter",
+      "label": "final failure → dead-letter",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "complete",
+      "from": "worker",
+      "to": "queue",
+      "label": "finally: active--, pump()",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Request path",
+      "items": [
+        "submitJob validates tenant and payload",
+        "Accepted jobs return status 202 with a jobId",
+        "Queue pump starts work while active < 3"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Worker contract",
+      "items": [
+        "Each attempt authorizes the tenant",
+        "Billing provider receives payload and token",
+        "Successful results are saved to job-result-store"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Failure path",
+      "items": [
+        "The worker retries through maxAttempts = 2",
+        "After the final failed attempt it returns a dead-letter record with after = 3",
+        "Completion decrements active and pumps the next waiting job"
+      ]
+    }
+  ]
+}

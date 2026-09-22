@@ -1,0 +1,329 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "跨租户审计日志导出与脱敏编排服务（含异步导出、留存策略和人工复核边界）",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "entry-and-plan",
+        "label": "入口与排队计划",
+        "focus": [
+          "caller",
+          "entry",
+          "plan",
+          "policy"
+        ],
+        "note": "入口仅校验 tenantId 与 range，并返回 queued 计划；未见运行闭包被调用。"
+      },
+      {
+        "id": "conditional-execution",
+        "label": "条件执行与数据边界",
+        "focus": [
+          "plan",
+          "execution",
+          "query-stub",
+          "redactor",
+          "writer-stub",
+          "result"
+        ],
+        "note": "下方流程由计划携带的 run 闭包指向；代码未展示谁调用它，查询与写入是本地桩。"
+      },
+      {
+        "id": "declared-integrations",
+        "label": "通知与人工复核边界",
+        "focus": [
+          "execution",
+          "notifier",
+          "review-declaration",
+          "policy"
+        ],
+        "note": "通知函数只组装返回对象；人工复核队列与函数均为声明，未接入正常路径。"
+      }
+    ],
+    "output": "audit-terra.html"
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "导出请求调用方",
+      "sublabel": "提供 tenantId 与 range",
+      "pos": [
+        35,
+        235
+      ],
+      "size": [
+        150,
+        72
+      ]
+    },
+    {
+      "id": "entry",
+      "type": "backend",
+      "label": "请求入口 requestAuditExport",
+      "sublabel": "缺 tenantId 或 range 返回 400",
+      "pos": [
+        250,
+        235
+      ],
+      "size": [
+        190,
+        72
+      ]
+    },
+    {
+      "id": "plan",
+      "type": "messagebus",
+      "label": "导出计划（内存对象）",
+      "sublabel": "queued、parts 与 run 闭包",
+      "pos": [
+        510,
+        235
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "策略配置 policy",
+      "sublabel": "180 天、字段、分片、名称",
+      "pos": [
+        505,
+        55
+      ],
+      "size": [
+        195,
+        72
+      ]
+    },
+    {
+      "id": "execution",
+      "type": "backend",
+      "label": "exportParts 执行函数",
+      "sublabel": "仅由 run 闭包引用，调用者未展示",
+      "pos": [
+        510,
+        440
+      ],
+      "size": [
+        205,
+        74
+      ]
+    },
+    {
+      "id": "query-stub",
+      "type": "database",
+      "label": "审计日志查询桩",
+      "sublabel": "按 tenantId 与 part 返回本地示例行",
+      "pos": [
+        790,
+        385
+      ],
+      "size": [
+        195,
+        72
+      ]
+    },
+    {
+      "id": "redactor",
+      "type": "security",
+      "label": "字段脱敏",
+      "sublabel": "过滤 policy.redactFields",
+      "pos": [
+        790,
+        530
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "writer-stub",
+      "type": "cloud",
+      "label": "结果对象写入桩",
+      "sublabel": "返回 bucket/tenantId/行数 路径字符串",
+      "pos": [
+        1040,
+        530
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "notifier",
+      "type": "external",
+      "label": "完成通知函数",
+      "sublabel": "组装 audit-export-ready 返回对象",
+      "pos": [
+        1035,
+        385
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "result",
+      "type": "external",
+      "label": "执行结果（若 run 被调用）",
+      "sublabel": "files 与 expiresAfterDays",
+      "pos": [
+        1040,
+        690
+      ],
+      "size": [
+        215,
+        72
+      ]
+    },
+    {
+      "id": "review-declaration",
+      "type": "external",
+      "label": "人工复核（仅声明）",
+      "sublabel": "privacy-review 与 requestReview 未接入",
+      "pos": [
+        255,
+        55
+      ],
+      "size": [
+        205,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "入口与计划模块边界",
+      "wraps": [
+        "entry",
+        "plan",
+        "policy"
+      ],
+      "pad": 24
+    },
+    {
+      "kind": "region",
+      "label": "条件执行中的租户数据处理",
+      "wraps": [
+        "execution",
+        "query-stub",
+        "redactor",
+        "writer-stub",
+        "notifier",
+        "result"
+      ],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "request",
+      "from": "caller",
+      "to": "entry",
+      "label": "导出请求：tenantId + range",
+      "variant": "emphasis"
+    },
+    {
+      "id": "schedule",
+      "from": "entry",
+      "to": "plan",
+      "label": "schedule({ tenantId, range })",
+      "variant": "emphasis"
+    },
+    {
+      "id": "policy-to-plan",
+      "from": "policy",
+      "to": "plan",
+      "label": "maxRowsPerPart 用于分片"
+    },
+    {
+      "id": "policy-to-execution",
+      "from": "policy",
+      "to": "execution",
+      "label": "脱敏、留存、对象与通知名称"
+    },
+    {
+      "id": "run-reference",
+      "from": "plan",
+      "to": "execution",
+      "label": "run 闭包引用（未见调用）",
+      "variant": "dashed"
+    },
+    {
+      "id": "query",
+      "from": "execution",
+      "to": "query-stub",
+      "label": "queryAuditLog(tenantId, part)"
+    },
+    {
+      "id": "redact",
+      "from": "query-stub",
+      "to": "redactor",
+      "label": "示例行 → 移除 token、ipAddress",
+      "variant": "security"
+    },
+    {
+      "id": "write",
+      "from": "redactor",
+      "to": "writer-stub",
+      "label": "writeObject（本地路径字符串）"
+    },
+    {
+      "id": "notify",
+      "from": "execution",
+      "to": "notifier",
+      "label": "notifyReady(job, files, topic)",
+      "variant": "dashed"
+    },
+    {
+      "id": "return",
+      "from": "execution",
+      "to": "result",
+      "label": "返回 files + expiresAfterDays"
+    },
+    {
+      "id": "review-declared",
+      "from": "policy",
+      "to": "review-declaration",
+      "label": "reviewQueue 配置；无运行时调用",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "实际入口行为",
+      "items": [
+        "入口只校验 tenantId 与 range，然后返回 queued 导出计划。",
+        "计划保存 run 闭包；当前源码未展示任何执行器、队列消费者或调用点。"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "条件执行时的数据边界",
+      "items": [
+        "执行函数把 tenantId 传给查询桩，并按配置移除 token 与 ipAddress。",
+        "对象写入桩只返回路径字符串；未观察到真实对象存储 I/O。",
+        "留存策略只作为 expiresAfterDays 返回，未观察到删除或生命周期执行。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "通知与复核的未实现边界",
+      "items": [
+        "notifyReady 只构造通知对象，未观察到主题发布。",
+        "privacy-review 与 requestReview 存在声明，但未从导出路径调用或入队。"
+      ]
+    }
+  ]
+}
