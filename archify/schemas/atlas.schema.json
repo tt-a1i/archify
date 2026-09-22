@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/atlas.schema.json",
+  "title": "Archify Architecture Atlas",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["atlas_version", "entry", "meta", "diagrams"],
+  "properties": {
+    "atlas_version": { "const": 1 },
+    "entry": { "$ref": "common.schema.json#/$defs/id" },
+    "meta": {
+      "type": "object", "additionalProperties": false, "required": ["title"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "locale": { "$ref": "common.schema.json#/$defs/locale" },
+        "visual_preset": { "$ref": "common.schema.json#/$defs/visualPreset" }
+      }
+    },
+    "diagrams": {
+      "type": "object", "minProperties": 1,
+      "propertyNames": { "$ref": "common.schema.json#/$defs/id" },
+      "additionalProperties": {
+        "type": "object", "additionalProperties": false, "required": ["source"],
+        "properties": { "source": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "details": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["from", "to"],
+        "properties": {
+          "from": { "$ref": "#/$defs/endpoint" },
+          "to": { "$ref": "common.schema.json#/$defs/id" }
+        }
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["occurrence", "target"],
+        "properties": {
+          "occurrence": { "$ref": "#/$defs/endpoint" },
+          "target": { "$ref": "#/$defs/endpoint" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "endpoint": {
+      "type": "object", "additionalProperties": false, "required": ["diagram", "node"],
+      "properties": {
+        "diagram": { "$ref": "common.schema.json#/$defs/id" },
+        "node": { "$ref": "common.schema.json#/$defs/id" }
+      }
+    }
+  }
+}

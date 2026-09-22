@@ -9,6 +9,7 @@ import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { sameEntry } from '../shared/path-semantics.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { createRouter } from './routing.mjs';
 import {
@@ -42,16 +43,7 @@ const componentTextFit = {
   tagMinimum: 6,
 };
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const layoutJsonMode = process.argv.includes('--layout-json');
-const cliArgs = process.argv.filter((arg) => arg !== '--layout-json');
-const { diagram: arch, template, outPath, sourceEvidence } = await loadDiagramWithBrandMarks({
-  rendererDir: __dirname,
-  diagramType: 'architecture',
-  defaultExample: 'web-app.architecture.json',
-  argv: cliArgs,
-});
-
+export function renderArchitecture(arch, { layoutJsonMode = false, atlasContext = null } = {}) {
 const grid = gridLayout(arch);
 
 const layout = {
@@ -565,6 +557,7 @@ function validateArchitecture() {
     diagramType: 'architecture',
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
+    profileIsAuthoritative: Boolean(atlasContext),
     routeHint: 'adjust route/via or fromSide/toSide so the connections use separate corridors'
   }));
   problems.push(...cleanAmbiguousCorridorProblems({
@@ -574,6 +567,7 @@ function validateArchitecture() {
     diagramType: 'architecture',
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
+    profileIsAuthoritative: Boolean(atlasContext),
     routeHint: 'adjust route/via or fromSide/toSide so unrelated connections do not visually merge'
   }));
   problems.push(...cleanBorderRunProblems({
@@ -584,6 +578,7 @@ function validateArchitecture() {
     diagramType: 'architecture',
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
+    profileIsAuthoritative: Boolean(atlasContext),
     routeHint: 'adjust route/via or fromSide/toSide so the connection crosses the boundary perpendicularly instead of following its border'
   }));
   problems.push(...cleanRouteRhythmProblems({
@@ -593,6 +588,7 @@ function validateArchitecture() {
     diagramType: 'architecture',
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
+    profileIsAuthoritative: Boolean(atlasContext),
     routeHint: 'move route/via points into a wider corridor or move the component so every turn has room to read'
   }));
 
@@ -621,6 +617,7 @@ function validateArchitecture() {
     diagramType: 'architecture',
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
+    profileIsAuthoritative: Boolean(atlasContext),
   }));
   // See collectLabelCanvasOverflow in shared/geometry.mjs. An auto canvas now
   // covers these rects, so this reports authored viewBoxes and the origin side,
@@ -705,20 +702,31 @@ function renderComponent(c) {
   const hasSub = c.sublabel != null && c.sublabel !== '';
   const labelY = hasSub ? c.y + c.height / 2 - 2 : c.y + c.height / 2 + 4;
   const sub = hasSub
-    ? `\n        <text data-detail="context" x="${cx}" y="${c.y + c.height / 2 + 14}" class="t-muted" font-size="${fittedNodeFontSize(c.sublabel, c.width, componentTextFit.sublabelPreferred, componentTextFit.sublabelMinimum)}" text-anchor="middle">${esc(c.sublabel)}</text>`
+    ? `\n        <text data-detail="context" x="${cx}" y="${c.y + c.height / 2 + 14}" class="t-muted" font-size="${fittedNodeFontSize(c.sublabel, c.width, atlasContext ? 12 : componentTextFit.sublabelPreferred, componentTextFit.sublabelMinimum)}" text-anchor="middle">${esc(c.sublabel)}</text>`
     : '';
   const tag = c.tag
-    ? `\n        <text data-detail="fine" x="${cx}" y="${c.y + c.height - 8}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="middle">${esc(c.tag)}</text>`
+    ? `\n        <text data-detail="fine" x="${cx}" y="${c.y + c.height - 8}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width, atlasContext ? 9 : componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="middle">${esc(c.tag)}</text>`
     : '';
   const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + 6 });
-  const labelFontSize = fittedNodeFontSize(c.label, brandLabelFitWidth(c, c.width), 11, 8);
+  const labelFontSize = fittedNodeFontSize(c.label, brandLabelFitWidth(c, c.width), atlasContext ? 16 : 11, 8);
   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), ...brandMetadataFor(c) };
-  return `        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}>
+  const reference = atlasContext?.references && Object.hasOwn(atlasContext.references, c.id) ? atlasContext.references[c.id] : null;
+  const detailDiagram = atlasContext?.details && Object.hasOwn(atlasContext.details, c.id) ? atlasContext.details[c.id] : null;
+  const atlasAttrs = reference
+    ? ` data-atlas-reference-diagram="${esc(reference.diagram)}" data-atlas-reference-node="${esc(reference.node)}"`
+    : detailDiagram ? ` data-atlas-detail-diagram="${esc(detailDiagram)}"` : '';
+  const contextMark = reference
+    ? `<g data-atlas-context-mark="" transform="translate(${c.x + 7} ${c.y + c.height - 17})"><title>${esc(arch.meta.locale === 'zh-CN' ? '外部上下文引用' : 'External context reference')}</title><rect width="12" height="12" rx="3" class="c-mask"/><path d="M3 8 L9 2 M4 2 H9 V7" fill="none" class="c-external" stroke-width="1.5"/></g>`
+    : detailDiagram
+      ? `<g data-atlas-detail-mark="" transform="translate(${c.x + 7} ${c.y + c.height - 17})"><title>${esc(arch.meta.locale === 'zh-CN' ? '包含内部架构，聚焦节点后进入' : 'Contains internal architecture; focus node to open')}</title><rect width="12" height="12" rx="3" class="c-mask"/><path d="M2 4 L6 2 L10 4 L6 6 Z M2 7 L6 9 L10 7 M2 9 L6 11 L10 9" fill="none" class="c-external" stroke-width="1.1"/></g>`
+      : '';
+  return `        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}${atlasAttrs}>
           ${focusNodeTitle(c.label, passport)}
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="c-mask"/>
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
           ${renderSemanticSigil(c.type, { icon: c.icon, x: c.x + 6, y: c.y + 6 })}${brand ? `\n          ${brand}` : ''}
           <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}
+          ${contextMark}
         </g>`;
 }
 
@@ -752,7 +760,7 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)}>
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta, { profileIsAuthoritative: Boolean(atlasContext) })}>
 ${svgAccessibleText(arch.meta, 'architecture')}
 ${renderDefinitions()}
 
@@ -780,16 +788,30 @@ ${renderLegend()}
 }
 
 validateArchitecture();
-if (layoutJsonMode) {
-  console.log(JSON.stringify(buildLayoutReport(), null, 2));
-  process.exit(0);
+return layoutJsonMode ? buildLayoutReport() : renderSvg();
 }
+
+if (process.argv[1]
+  && sameEntry(process.argv[1], fileURLToPath(import.meta.url)).status === 'match') {
+const layoutJsonMode = process.argv.includes('--layout-json');
+const { diagram: arch, template, outPath, sourceEvidence, internalStructure } = await loadDiagramWithBrandMarks({
+  rendererDir: path.dirname(fileURLToPath(import.meta.url)),
+  diagramType: 'architecture',
+  defaultExample: 'web-app.architecture.json',
+  argv: process.argv.filter((arg) => arg !== '--layout-json'),
+});
+const rendered = renderArchitecture(arch, { layoutJsonMode });
+if (layoutJsonMode) console.log(JSON.stringify(rendered, null, 2));
+else {
 writeDiagram({
   outPath,
   template,
   diagramType: 'architecture',
   meta: arch.meta,
-  svg: renderSvg(),
+  svg: rendered,
   cards: arch.cards,
   sourceEvidence,
+  internalStructure,
 });
+}
+}

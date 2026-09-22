@@ -42,6 +42,13 @@ function repositoryFixture() {
   write(root, 'archify/scripts/check-update.mjs', 'export {};\n');
   write(root, 'archify/scripts/update-contract.mjs', 'export {};\n');
   write(root, 'archify/renderers/shared/generated-validators.mjs', 'export {};\n');
+  write(root, 'archify/schemas/atlas.schema.json', '{}\n');
+  for (const name of ['atlas-manifest', 'atlas-delivery', 'atlas-bundle', 'atlas-envelope', 'atlas-shell', 'atlas-navigation']) {
+    write(root, `archify/renderers/shared/${name}.mjs`, 'export {};\n');
+  }
+  write(root, 'archify/assets/vendor/fflate-gunzip-0.8.2.min.js', 'globalThis.ArchifyGzipFallback=()=>{};\n');
+  write(root, 'archify/assets/vendor/fflate-MIT.txt', 'MIT License\n');
+  write(root, 'archify/references/architecture-atlas.md', '# Atlas\n');
   write(root, 'archify/renderers/shared/path-semantics.mjs', 'export {};\n');
   write(root, 'archify/renderers/shared/portable-path.mjs', 'export {};\n');
   write(root, 'archify/test/repository-only.test.mjs', 'throw new Error();\n');
@@ -109,6 +116,39 @@ test('clean staging requires shared path runtimes only when packaged code import
     assert.equal(fs.existsSync(destination), false);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('clean staging keeps pre-Atlas snapshots reproducible but rejects a partial Atlas slice', () => {
+  const atlasFiles = [
+    'archify/schemas/atlas.schema.json',
+    ...['atlas-manifest', 'atlas-delivery', 'atlas-bundle', 'atlas-envelope', 'atlas-shell', 'atlas-navigation']
+      .map((name) => `archify/renderers/shared/${name}.mjs`),
+    'archify/references/architecture-atlas.md',
+    'archify/assets/vendor/fflate-gunzip-0.8.2.min.js',
+    'archify/assets/vendor/fflate-MIT.txt',
+  ];
+
+  for (const partial of [false, true]) {
+    const root = repositoryFixture();
+    const destination = path.join(root, 'staged-skill');
+    try {
+      git(root, ['add', '.']);
+      const removed = partial ? atlasFiles.slice(1) : atlasFiles;
+      git(root, ['rm', '--cached', '-f', '--', ...removed]);
+      if (partial) {
+        assert.throws(
+          () => stageCleanSkill({ repoRoot: root, destination }),
+          /required package input is not tracked by Git: archify\/renderers\/shared\/atlas-manifest[.]mjs/,
+        );
+        assert.equal(fs.existsSync(destination), false);
+      } else {
+        stageCleanSkill({ repoRoot: root, destination });
+        assert.equal(fs.existsSync(path.join(destination, 'schemas', 'atlas.schema.json')), false);
+      }
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   }
 });
 

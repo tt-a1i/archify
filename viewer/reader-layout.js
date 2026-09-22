@@ -7,6 +7,16 @@
       var header = shell && shell.querySelector('.header');
       var guided = shell && shell.querySelector('.guided-views');
       var cards = shell && shell.querySelector('.cards');
+      var internalStructureData = document.getElementById('archify-internal-structure-data');
+      var atlasRail = document.querySelector('.atlas-rail');
+      var atlasDirectory = document.querySelector('.atlas-directory-section');
+      var atlasInspector = document.querySelector('.atlas-inspector');
+      var atlasCompactNav = document.querySelector('.atlas-compact-navigation');
+      var atlasInspectionSlot = document.querySelector('.atlas-inspection-slot');
+      var atlasParentContext = document.querySelector('.atlas-parent-context');
+      var atlasOverview = document.querySelector('.atlas-overview');
+      var cardsHome = cards && cards.parentNode;
+      var cardsNext = cards && cards.nextSibling;
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
       var measuredHeightFit = svg && svg.getAttribute('data-reader-fit') === 'intrinsic-height';
@@ -61,6 +71,9 @@
           (!window.matchMedia || !window.matchMedia('print').matches)
         );
       }
+      function structureActive() {
+        return html.getAttribute('data-reader-surface') === 'structure';
+      }
       function clear() {
         html.style.removeProperty('--archify-reader-width');
         html.removeAttribute('data-reader-layout');
@@ -87,17 +100,64 @@
         html.setAttribute('data-reader-layout', 'adaptive');
         return true;
       }
+      function moveCards(parent) {
+        if (!cards || !parent || cards.parentNode === parent) return;
+        var next = parent === cardsHome && cardsNext && cardsNext.parentNode === parent ? cardsNext : null;
+        parent.insertBefore(cards, next);
+      }
+      function atlasWorkspace() {
+        if (!atlasRail || !eligible()) return null;
+        var right = window.innerWidth - number(window.getComputedStyle(body).paddingRight);
+        var railWidth = 280;
+        var left = 16 + railWidth + 20;
+        if (right - left < MIN_READER_WIDTH) return null;
+        return { left: left, width: right - left, railWidth: railWidth };
+      }
+      // The same conclusion content belongs to the overview rail on desktop,
+      // and returns to its authored document position for compact/print views.
+      function positionAtlas(workspace) {
+        if (!atlasRail || !shell) return;
+        if (typeof workspace === 'undefined') workspace = atlasWorkspace();
+        var width = shell.getBoundingClientRect().width;
+        var docked = Boolean(workspace);
+        var mode = docked ? 'rail' : 'stacked';
+        if (html.getAttribute('data-atlas-layout') !== mode) html.setAttribute('data-atlas-layout', mode);
+        if (workspace) {
+          var inset = number(window.getComputedStyle(body).paddingLeft);
+          var left = workspace.left + (workspace.width - width) / 2;
+          html.style.setProperty('--atlas-rail-width', workspace.railWidth + 'px');
+          html.style.setProperty('--atlas-reader-offset', Math.max(0, left - inset) + 'px');
+        } else {
+          html.style.removeProperty('--atlas-rail-width');
+          html.style.removeProperty('--atlas-reader-offset');
+        }
+        var active = document.activeElement;
+        var directoryParent = docked ? atlasRail : atlasCompactNav;
+        var inspectorParent = docked ? atlasRail : atlasInspectionSlot;
+        if (atlasDirectory.parentNode !== directoryParent) directoryParent.appendChild(atlasDirectory);
+        if (atlasInspector.parentNode !== inspectorParent) inspectorParent.appendChild(atlasInspector);
+        if (atlasParentContext.parentNode !== directoryParent) directoryParent.appendChild(atlasParentContext);
+        moveCards(docked && atlasOverview ? atlasOverview : cardsHome);
+        if (active && active !== document.activeElement && active.isConnected) active.focus({ preventScroll: true });
+      }
       function settleOverflow(minWidth) {
         if (settleFrame) cancelAnimationFrame(settleFrame);
         settleFrame = requestAnimationFrame(function () {
           settleFrame = 0;
-          if (!eligible() || !lastWidth) return;
+          if (!eligible() || structureActive() || !lastWidth) return;
           var overflow = Math.max(
             document.documentElement.scrollHeight,
             document.body.scrollHeight
           ) - window.innerHeight;
+          if (atlasRail) {
+            // Intentional compact navigation/inspection flow must not cause
+            // selection or disclosure to shrink the canonical reading area.
+            overflow = shell.getBoundingClientRect().bottom + window.scrollY +
+              number(window.getComputedStyle(body).paddingBottom) - outerHeight(atlasCompactNav) - window.innerHeight;
+          }
           if (overflow > 1 && lastWidth > minWidth) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4));
+            positionAtlas();
             html.setAttribute('data-reader-overflow', 'reduced');
           } else if (overflow > 1) {
             html.setAttribute('data-reader-overflow', 'authored');
@@ -110,10 +170,12 @@
         frame = 0;
         if (!eligible()) {
           clear();
+          positionAtlas(false);
           return null;
         }
         var chrome = chromeMetrics();
-        var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
+        var workspace = atlasWorkspace();
+        var viewportCap = workspace ? workspace.width : Math.max(0, window.innerWidth - chrome.bodyX);
         var readableWidth = viewBox && viewBox.width > 0
           ? viewBox.width * minimumReadableScale() + chrome.diagramX
           : MIN_READER_WIDTH;
@@ -122,12 +184,47 @@
           viewportCap
         );
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
+        if (structureActive()) {
+          if (settleFrame) cancelAnimationFrame(settleFrame);
+          settleFrame = 0;
+          if (!lastWidth || lastWidth < minWidth || lastWidth > maxWidth) {
+            applyWidth(Math.max(minWidth, Math.min(maxWidth, lastWidth || maxWidth)));
+          }
+          positionAtlas(workspace);
+          html.removeAttribute('data-reader-overflow');
+          return {
+            ratio: ratio,
+            width: lastWidth,
+            availableSvgHeight: 0,
+            fixedHeight: 0,
+            surface: 'structure'
+          };
+        }
+        if (!atlasRail && internalStructureData) {
+          if (settleFrame) cancelAnimationFrame(settleFrame);
+          settleFrame = 0;
+          applyWidth(maxWidth);
+          html.removeAttribute('data-reader-overflow');
+          return {
+            ratio: ratio,
+            width: lastWidth,
+            availableSvgHeight: 0,
+            fixedHeight: 0,
+            surface: 'graph'
+          };
+        }
+        if (atlasRail) {
+          // Establish the workspace before measuring wrapping and vertical flow.
+          if (!lastWidth || lastWidth > maxWidth) applyWidth(maxWidth);
+          positionAtlas(workspace);
+        }
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
-          outerHeight(header) + outerHeight(guided) + outerHeight(cards);
+          outerHeight(header) + outerHeight(guided) + (workspace ? 0 : outerHeight(cards));
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
         var desiredWidth = availableSvgHeight * ratio + chrome.diagramX;
         var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth));
         applyWidth(width);
+        positionAtlas(workspace);
         settleOverflow(minWidth);
         return {
           ratio: ratio,
@@ -140,13 +237,25 @@
         if (frame) return;
         frame = requestAnimationFrame(measure);
       }
+      function scheduleCards() {
+        // Once a standalone wide graph has settled, inspector content may grow
+        // below it without changing the graph's camera or bounding box.
+        if (!atlasRail && lastWidth && eligible() && !structureActive()) return;
+        schedule();
+      }
       function stableSnapshot() {
         var shellRect = shell ? shell.getBoundingClientRect() : { width: 0, height: 0 };
         var diagramRect = diagram ? diagram.getBoundingClientRect() : { width: 0, height: 0 };
+        var structure = typeof document.getElementById === 'function'
+          ? document.getElementById('node-internal-structure') : null;
+        var structureRect = structure && !structure.hidden ? structure.getBoundingClientRect() : { width: 0, height: 0 };
         return [
           lastWidth,
+          html.getAttribute('data-reader-surface') || 'graph',
           html.getAttribute('data-reader-layout') || '',
           html.getAttribute('data-reader-overflow') || '',
+          html.getAttribute('data-atlas-layout') || '',
+          Math.round((shellRect.left || 0) * 100) / 100,
           Math.ceil(document.documentElement.scrollWidth),
           Math.ceil(document.documentElement.scrollHeight),
           Math.ceil(document.body.scrollWidth),
@@ -154,7 +263,9 @@
           Math.round(shellRect.width * 100) / 100,
           Math.round(shellRect.height * 100) / 100,
           Math.round(diagramRect.width * 100) / 100,
-          Math.round(diagramRect.height * 100) / 100
+          Math.round(diagramRect.height * 100) / 100,
+          Math.round(structureRect.width * 100) / 100,
+          Math.round(structureRect.height * 100) / 100
         ].join('|');
       }
       function whenStable() {
@@ -167,17 +278,24 @@
       }
 
       window.addEventListener('resize', schedule, { passive: true });
+      if (atlasOverview) {
+        window.addEventListener('beforeprint', function () { positionAtlas(false); });
+        window.addEventListener('afterprint', schedule);
+        var printQuery = window.matchMedia && window.matchMedia('print');
+        if (printQuery && printQuery.addEventListener) printQuery.addEventListener('change', schedule);
+      }
       window.addEventListener('load', schedule, { once: true });
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
-        [header, guided, cards].forEach(function (element) { if (element) resizeObserver.observe(element); });
+        [header, guided].forEach(function (element) { if (element) resizeObserver.observe(element); });
+        if (cards) new ResizeObserver(scheduleCards).observe(cards);
       }
       if (typeof MutationObserver === 'function') {
         var contentObserver = new MutationObserver(schedule);
         if (guided) contentObserver.observe(guided, { attributes: true, childList: true, subtree: true });
-        if (cards) contentObserver.observe(cards, { attributes: true, childList: true, subtree: true });
-        contentObserver.observe(html, { attributes: true, attributeFilter: ['data-embed', 'data-present'] });
+        if (cards) new MutationObserver(scheduleCards).observe(cards, { attributes: true, childList: true, subtree: true });
+        contentObserver.observe(html, { attributes: true, attributeFilter: ['data-embed', 'data-present', 'data-reader-surface'] });
       }
       schedule();
 

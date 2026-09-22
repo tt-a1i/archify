@@ -13,6 +13,7 @@ const output = path.join(root, 'archify/assets/template.html');
 // markers are already at column 0; the standalone CSS file needs four spaces.
 const fragments = [
   ['/* ARCHIFY:VIEWER_CSS */', 'viewer.css', 4],
+  ['/* ARCHIFY:ADDRESS */', 'viewer-address.js'],
   ['/* ARCHIFY:EXPORT */', 'export.js'],
   ['/* ARCHIFY:READER_LAYOUT */', 'reader-layout.js'],
   ['/* ARCHIFY:CHROME_LAYOUT */', 'viewer-chrome-layout.js'],

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import { parse } from 'parse5';
+import { readAtlasBundle } from '../../renderers/shared/atlas-bundle.mjs';
 
 const FONT_LICENSE = fs.readFileSync(new URL('../../assets/JetBrainsMono-OFL.txt', import.meta.url), 'utf8').trim();
 
@@ -46,7 +47,10 @@ export function inspectDocuments(html, subject = 'artifact') {
     const attrs = Object.fromEntries((node.attrs || []).map(({ name, value }) => [name, value]));
     const text = (node.childNodes || []).filter((child) => child.nodeName === '#text').map((child) => child.value).join('');
     if (node.tagName === 'style') { document.styles.push(text); cssResources(text); }
-    if (node.tagName === 'script') document.scripts.push(text);
+    if (node.tagName === 'script' && attrs.id === 'archify-atlas-data' && attrs.type === 'application/json') {
+      const reader = readAtlasBundle(JSON.parse(text));
+      for (const id of reader.bundle.diagramIds) document.children.push(...inspectDocuments(reader.memberHtml(id), `${subject}/atlas[${id}]`));
+    } else if (node.tagName === 'script' && attrs.type !== 'application/json') document.scripts.push(text);
     if (attrs.style) cssResources(attrs.style);
     for (const name of ['src', 'poster', 'data']) if (remote(attrs[name])) document.resources.push(attrs[name]);
     if (attrs.srcset) for (const match of attrs.srcset.matchAll(/(?:^|[\s,])((?:https?:)?\/\/[^\s,]+)/g)) document.resources.push(match[1]);

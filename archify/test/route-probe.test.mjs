@@ -69,7 +69,7 @@ test('Route Probe turns a two-node question into a readable route receipt and st
   assert.match(html, /clone\.setAttribute\('pathLength', '1'\)/);
   assert.match(html, /clone\.style\.setProperty\('--route-step', String\(step\)\)/);
   assert.match(html, /#route=' \+ encodeURIComponent\(startId\) \+ '~' \+ encodeURIComponent\(endId\)/);
-  assert.match(html, /new URLSearchParams\(location\.hash\.replace/);
+  assert.match(html, /new URLSearchParams\(ArchifyAddress\.location\.hash\.replace/);
   assert.match(html, /Archify\.view\.reveal\(result\.nodes, \{ includeNeighbors: false, reason: 'route' \}\)/);
   assert.match(html, /shortest authored route/);
 });

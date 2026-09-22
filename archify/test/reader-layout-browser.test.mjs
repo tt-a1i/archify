@@ -110,9 +110,10 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
     function variant(name, { ratio, beforeViewer = '' } = {}) {
       let html = fs.readFileSync(artifacts.architecture, 'utf8');
       if (ratio !== undefined) assert.match(html, /<svg\b[^>]*\bviewBox="[^"]+"/, 'Reader viewBox fixture anchor');
-      if (beforeViewer) assert.ok(html.includes('  <script>\n    var Archify = {};'), 'Reader setup fixture anchor');
+      const startup = '  <script>\n    ArchifyAddress.run(function () {\n    var Archify = {};';
+      if (beforeViewer) assert.ok(html.includes(startup), 'Reader setup fixture anchor');
       if (ratio !== undefined) html = html.replace(/(<svg\b[^>]*\bviewBox=")[^"]+(")/, (_, start, end) => `${start}0 0 ${ratio * 1000} 1000${end}`);
-      if (beforeViewer) html = html.replace('  <script>\n    var Archify = {};', () => `  <script>${beforeViewer}</script>\n  <script>\n    var Archify = {};`);
+      if (beforeViewer) html = html.replace(startup, () => `  <script>${beforeViewer}</script>\n${startup}`);
       const file = path.join(scratch, `${name}.html`);
       fs.writeFileSync(file, html);
       return file;

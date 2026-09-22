@@ -67,6 +67,13 @@ test('a freshly delivered artifact of every type reaches no external origin', ()
   }
 });
 
+test('each inert Atlas member must independently carry its font and reject external resources', () => {
+  const atlas = (second) => `<script id="archify-atlas-data" type="application/json">${JSON.stringify({bundle_version:1,entry:'a',meta:{},details:[],references:[],diagramIds:['a','b'],members:Object.fromEntries([['a',template],['b',second]].map(([id,html])=>[id,{title:id,nodes:[],relations:[],views:[],parentContext:[],html}]))}).replaceAll('<','\\u003c')}</script>`;
+  assert.equal(assertOfflineArtifact(atlas(template), 'atlas'), 2);
+  assert.throws(() => assertOfflineArtifact(atlas(template.replace(/@font-face\s*\{[^}]+\}/g, '')), 'atlas'), /atlas\[b\]/);
+  assert.throws(() => assertOfflineArtifact(atlas(template + '<img src="https://images.example/a.png">'), 'atlas'), /external subresource/);
+});
+
 test('every checked-in viewer artifact carries its font and reaches no external origin', () => {
   // Delivery-chain roots only; frozen experiments are not maintained viewers.
   const tracked = spawnSync('git', ['ls-files', '-z', '--', 'archify/examples', 'docs', 'examples'], { cwd: repoRoot, encoding: 'utf8' });

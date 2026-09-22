@@ -185,7 +185,7 @@
       }
       function replaceRouteHash(value) {
         try {
-          history.replaceState(null, '', location.pathname + location.search + (value ? '#route=' + value : ''));
+          ArchifyAddress.replaceState(null, '', ArchifyAddress.location.pathname + ArchifyAddress.location.search + (value ? '#route=' + value : ''));
         } catch (_) {}
       }
       function renderPlaceholder(copy) {
@@ -899,7 +899,7 @@
       }
       function copyLink() {
         if (mode !== 'result') return Promise.resolve(false);
-        var value = location.href.replace(/#.*$/, '') + '#route=' + encodeURIComponent(startId) + '~' + encodeURIComponent(endId);
+        var value = ArchifyAddress.share('#route=' + encodeURIComponent(startId) + '~' + encodeURIComponent(endId));
         var copy = navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
@@ -925,7 +925,7 @@
       }
       function syncFromHash() {
         try {
-          var params = new URLSearchParams(location.hash.replace(/^#/, ''));
+          var params = new URLSearchParams(ArchifyAddress.location.hash.replace(/^#/, ''));
           var route = params.get('route');
           if (!route) {
             if (mode !== 'idle') clear({ updateUrl: false, restoreFocus: false });

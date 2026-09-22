@@ -24,3 +24,9 @@ for (const [mode, input, output] of TARGETS) {
     path.join(outputRoot, output),
   ], { stdio: 'inherit' });
 }
+
+execFileSync(process.execPath, [
+  path.join(skillRoot, 'bin/archify.mjs'), 'deliver', 'atlas',
+  path.join(skillRoot, 'examples/atlas/project.atlas.json'),
+  path.join(outputRoot, 'architecture-atlas.html'), '--quality', 'showcase', '--json',
+], { stdio: ['ignore', 'ignore', 'inherit'] });

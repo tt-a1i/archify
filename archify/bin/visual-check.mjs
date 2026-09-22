@@ -1492,9 +1492,9 @@ export function chromeVisualBrowserArgs(profileRoot, {
   return args;
 }
 
-async function evaluate(cdp, sessionId, expression, awaitPromise = false) {
+async function evaluate(cdp, sessionId, expression, awaitPromise = false, atlasMember = false) {
   const response = await cdp.send('Runtime.evaluate', {
-    expression,
+    expression: atlasMember ? `document.querySelector('iframe').contentWindow.eval(${JSON.stringify(expression)})` : expression,
     awaitPromise,
     returnByValue: true,
   }, sessionId);
@@ -1554,7 +1554,7 @@ export class ChromeVisualBrowser {
     return attached.sessionId;
   }
 
-  async inspect({ artifactPath, width, height, theme, screenshotPath, writeScreenshot }) {
+  async inspect({ artifactPath, width, height, theme, screenshotPath, diagramId, writeScreenshot }) {
     const sessionId = await this.sessionPromise;
     await this.cdp.send('Emulation.setDeviceMetricsOverride', {
       width,
@@ -1565,6 +1565,10 @@ export class ChromeVisualBrowser {
 
     const url = pathToFileURL(artifactPath);
     url.searchParams.set('theme', theme);
+    if (diagramId) url.hash = new URLSearchParams({ diagram: diagramId }).toString();
+    // Different member hashes are same-document navigations; start a fresh
+    // document so the load event and all measurements belong to this member.
+    if (diagramId) await this.cdp.send('Page.navigate', { url: 'about:blank' }, sessionId);
     const loaded = this.cdp.waitFor('Page.loadEventFired', sessionId);
     // Navigation can fail before this waiter is awaited. Attach a rejection
     // handler immediately so a later load failure never escapes as an
@@ -1573,6 +1577,14 @@ export class ChromeVisualBrowser {
     const navigation = await this.cdp.send('Page.navigate', { url: url.href }, sessionId);
     if (navigation.errorText) throw new Error(`Chrome navigation failed: ${navigation.errorText}`);
     await loaded;
+    if (diagramId) await evaluate(this.cdp, sessionId, `new Promise((resolve, reject) => {
+      let attempts = 0;
+      const timer = setInterval(() => {
+        const child = document.querySelector('iframe')?.contentWindow;
+        if (child?.Archify && !child.ArchifyAddress.restoring) { clearInterval(timer); resolve(); }
+        else if (++attempts > 300) { clearInterval(timer); reject(new Error('Atlas member did not initialize')); }
+      }, 50);
+    })`, true);
     await evaluate(this.cdp, sessionId, `(function () {
       document.documentElement.setAttribute('data-motion', 'still');
       var panel = document.querySelector('.diagram-container');
@@ -1600,7 +1612,7 @@ export class ChromeVisualBrowser {
           requestAnimationFrame(function () { requestAnimationFrame(resolve); });
         });
       });
-    })()`, true);
+    })()`, true, Boolean(diagramId));
 
     const metrics = await evaluate(this.cdp, sessionId, `(function () {
       var reader = document.querySelector('.container');
@@ -1700,6 +1712,14 @@ export class ChromeVisualBrowser {
         viewerChromeReserve: viewerChromeReceipt ? viewerChromeReceipt.reserve : 0,
         viewerChromeActive: viewerChromeReceipt ? viewerChromeReceipt.active : false
       };
+    })()`, false, Boolean(diagramId));
+    if (diagramId) metrics.atlasShell = await evaluate(this.cdp, sessionId, `(() => {
+      const frame = document.querySelector('iframe').getBoundingClientRect();
+      const header = document.querySelector('header')?.getBoundingClientRect();
+      return { iframeCount: document.querySelectorAll('iframe').length,
+        overflowX: document.documentElement.scrollWidth > innerWidth,
+        overflowY: document.documentElement.scrollHeight > innerHeight,
+        frameWidth: frame.width, frameHeight: frame.height, headerOverlap: Boolean(header && header.bottom > frame.top + 0.5) };
     })()`);
     if (!metrics || !Number.isFinite(metrics.scrollWidth) || !Number.isFinite(metrics.scrollHeight)) {
       throw new Error('Chrome returned incomplete containment metrics.');
@@ -1755,6 +1775,9 @@ export class ChromeVisualBrowser {
         if (stream && !stream.destroyed) stream.destroy();
       }
     }
+    // A Chrome descendant can retain an inherited pipe after the main process
+    // exits. Release our endpoints explicitly so the CLI/test caller can exit.
+    for (const stream of this.child.stdio) stream?.destroy();
     try {
       fs.rmSync(this.profileRoot, { recursive: true, force: true });
     } catch {
@@ -1798,7 +1821,10 @@ function observation({ width, height, theme, metrics }) {
     scrollHeight,
     overflowX,
     overflowY,
-    ok: !overflowX && !overflowY,
+    ok: !overflowX && !overflowY && (!metrics.atlasShell || (metrics.atlasShell.iframeCount === 1
+      && !metrics.atlasShell.overflowX && !metrics.atlasShell.overflowY && !metrics.atlasShell.headerOverlap
+      && metrics.atlasShell.frameWidth > 0 && metrics.atlasShell.frameHeight > 0)),
+    ...(metrics.atlasShell ? { atlasShell: metrics.atlasShell } : {}),
     readerWidth: Number(metrics.readerWidth) || null,
     diagramWidth: Number(metrics.diagramWidth) || null,
     viewBoxWidth: Number(metrics.viewBoxWidth) || null,
@@ -1826,7 +1852,7 @@ function contactSheetHtml({ artifactPath, receipt, screenshots }) {
   const cards = screenshots.map((entry) => `
       <figure>
         <img src="${htmlEscape(entry.file)}" alt="${htmlEscape(`${entry.theme} ${entry.width} by ${entry.height}`)}">
-        <figcaption><strong>${htmlEscape(entry.theme.toUpperCase())}</strong> · ${entry.width}×${entry.height} · containment ${entry.ok ? 'pass' : 'fail'}</figcaption>
+        <figcaption>${entry.diagramId ? `${htmlEscape(entry.diagramId)} · ` : ''}<strong>${htmlEscape(entry.theme.toUpperCase())}</strong> · ${entry.width}×${entry.height} · containment ${entry.ok ? 'pass' : 'fail'}</figcaption>
       </figure>`).join('');
   return `<!doctype html>
 <html lang="en">
@@ -2157,6 +2183,38 @@ export async function runVisualCheck({
     chrome: { status: 'not-checked', executable: null },
     deliveryProvenance,
   });
+  let atlas = null;
+  const keyFor = (width, height, theme, diagramId) => `${diagramId || ''}:${screenshotKey(width, height, theme)}`;
+  try {
+    if (artifactBytes.includes('id="archify-atlas-data"')) {
+      atlas = (await import('../renderers/shared/atlas-delivery.mjs')).unpackAtlas(artifactBytes.toString('utf8'));
+      receipt.diagramIds = atlas.diagramIds;
+      outputs.screenshots = atlas.diagramIds.flatMap((diagramId) => outputs.screenshots.map((entry) => ({
+        ...entry,
+        diagramId,
+        path: entry.path.replace('.visual-check.', `.visual-check.${diagramId}.`),
+      })));
+    }
+  } catch (error) {
+    receipt.status = 'fail';
+    receipt.ok = false;
+    receipt.error = error.message;
+    receipt.diagnostics = error.archifyDiagnostics || [failureDiagnostic({
+      code: 'viewer/atlas-unpack',
+      message: 'visual-check could not unpack the delivered Atlas.',
+      subject: { artifact },
+      evidence: { reason: error.message },
+      supportedFixes: ['redeliver the Atlas and rerun visual-check'],
+    })];
+    return {
+      exitCode: EXIT.fail,
+      receipt: persistVisualCheckFailure(artifact, receipt, {
+        outDir,
+        compareSidecarParents,
+      }),
+    };
+  }
+  const diagramIds = atlas ? atlas.diagramIds : [undefined];
   if (!directory.ok) {
     receipt.error = directory.error;
     receipt.diagnostics = [directory.diagnostic];
@@ -2250,26 +2308,58 @@ export async function runVisualCheck({
   let browser;
   try {
     browser = await browserFactory(resolvedChrome);
+    if (browser.cdp) {
+      await browser.sessionPromise;
+      receipt.chrome.version = await browser.cdp.send('Browser.getVersion');
+    }
     const observations = new Map();
     const screenshotsByKey = new Map(outputs.screenshots.map((entry, index) => [
-      screenshotKey(entry.width, entry.height, entry.theme),
+      keyFor(entry.width, entry.height, entry.theme, entry.diagramId),
       { ...entry, stagedPath: ownership.stagedOutputs.screenshots[index].path },
     ]));
 
-    for (const viewport of VISUAL_CHECK_VIEWPORTS) {
-      const key = screenshotKey(viewport.width, viewport.height, 'light');
-      const screenshot = screenshotsByKey.get(key);
-      const metrics = await browser.inspect({
-        artifactPath: inspectionArtifact,
-        ...viewport,
-        theme: 'light',
-        ...(screenshot ? {
+    for (const diagramId of diagramIds) {
+      for (const viewport of VISUAL_CHECK_VIEWPORTS) {
+        const key = keyFor(viewport.width, viewport.height, 'light', diagramId);
+        const screenshot = screenshotsByKey.get(key);
+        const metrics = await browser.inspect({
+          artifactPath: inspectionArtifact,
+          ...viewport,
+          theme: 'light',
+          ...(diagramId ? { diagramId } : {}),
+          ...(screenshot ? {
+            screenshotPath: screenshot.stagedPath,
+            writeScreenshot: (bytes) => writeStagedEvidence(ownership, screenshot.path, bytes),
+          } : {}),
+        });
+        verifyInspectionArtifact();
+        if (screenshot) {
+          if (!ownership.stagedEntries.has(screenshot.path)) {
+            registerStagedEvidence(ownership, screenshot.path);
+          } else {
+            const staged = ownership.stagedEntries.get(screenshot.path);
+            if (!currentEvidenceMatches(staged.path, staged.identity, staged.evidence)) {
+              throw new Error('The staged visual-check screenshot changed after capture.');
+            }
+          }
+        }
+        observations.set(key, {
+          ...observation({ ...viewport, theme: 'light', metrics }),
+          ...(diagramId ? { diagramId } : {}),
+        });
+      }
+      for (const viewport of CAPTURE_VIEWPORTS) {
+        const key = keyFor(viewport.width, viewport.height, 'dark', diagramId);
+        const screenshot = screenshotsByKey.get(key);
+        const metrics = await browser.inspect({
+          artifactPath: inspectionArtifact,
+          ...viewport,
+          theme: 'dark',
+          ...(diagramId ? { diagramId } : {}),
           screenshotPath: screenshot.stagedPath,
           writeScreenshot: (bytes) => writeStagedEvidence(ownership, screenshot.path, bytes),
-        } : {}),
-      });
-      verifyInspectionArtifact();
-      if (screenshot) {
+        });
+        verifyInspectionArtifact();
         if (!ownership.stagedEntries.has(screenshot.path)) {
           registerStagedEvidence(ownership, screenshot.path);
         } else {
@@ -2278,29 +2368,11 @@ export async function runVisualCheck({
             throw new Error('The staged visual-check screenshot changed after capture.');
           }
         }
+        observations.set(key, {
+          ...observation({ ...viewport, theme: 'dark', metrics }),
+          ...(diagramId ? { diagramId } : {}),
+        });
       }
-      observations.set(key, observation({ ...viewport, theme: 'light', metrics }));
-    }
-    for (const viewport of CAPTURE_VIEWPORTS) {
-      const key = screenshotKey(viewport.width, viewport.height, 'dark');
-      const screenshot = screenshotsByKey.get(key);
-      const metrics = await browser.inspect({
-        artifactPath: inspectionArtifact,
-        ...viewport,
-        theme: 'dark',
-        screenshotPath: screenshot.stagedPath,
-        writeScreenshot: (bytes) => writeStagedEvidence(ownership, screenshot.path, bytes),
-      });
-      verifyInspectionArtifact();
-      if (!ownership.stagedEntries.has(screenshot.path)) {
-        registerStagedEvidence(ownership, screenshot.path);
-      } else {
-        const staged = ownership.stagedEntries.get(screenshot.path);
-        if (!currentEvidenceMatches(staged.path, staged.identity, staged.evidence)) {
-          throw new Error('The staged visual-check screenshot changed after capture.');
-        }
-      }
-      observations.set(key, observation({ ...viewport, theme: 'dark', metrics }));
     }
 
     let artifactVerification = verifyRegularFileBinding(capturedArtifact.binding);
@@ -2313,13 +2385,13 @@ export async function runVisualCheck({
       throw regularFileCaptureError('The delivered artifact changed while visual-check was running', artifactVerification);
     }
 
-    receipt.containment.viewports = VISUAL_CHECK_VIEWPORTS.map(({ width, height }) => (
-      observations.get(screenshotKey(width, height, 'light'))
-    ));
+    receipt.containment.viewports = diagramIds.flatMap((diagramId) => VISUAL_CHECK_VIEWPORTS.map(({ width, height }) => (
+      observations.get(keyFor(width, height, 'light', diagramId))
+    )));
     receipt.readability.viewports = receipt.containment.viewports.map((entry) => ({ ...entry }));
     receipt.viewerChrome.viewports = receipt.containment.viewports.map((entry) => ({ ...entry }));
     receipt.captures.screenshots = outputs.screenshots.map((entry) => ({
-      ...observations.get(screenshotKey(entry.width, entry.height, entry.theme)),
+      ...observations.get(keyFor(entry.width, entry.height, entry.theme, entry.diagramId)),
       file: path.basename(entry.path),
     }));
     const allObservations = [...observations.values()];

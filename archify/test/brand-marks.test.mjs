@@ -30,7 +30,7 @@ test('third-party notices cover every recorded individual mark license', () => {
   const notices = fs.readFileSync(path.join(skillRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
   const licensedMarks = BRAND_MARKS.filter((mark) => mark.provenance?.license);
 
-  assert.equal(THIRD_PARTY_NOTICE_DISCLOSURE_COUNT, 39, 'notice contract changed without review');
+  assert.equal(THIRD_PARTY_NOTICE_DISCLOSURE_COUNT, 43, 'notice contract changed without review');
   assert.deepEqual(validateThirdPartyNotices(notices), { ok: true, missing: [] });
   assert.equal(licensedMarks.length, 8, 'pinned Simple Icons license inventory changed');
   for (const mark of licensedMarks) {
@@ -43,6 +43,22 @@ test('third-party notices cover every recorded individual mark license', () => {
   assert.match(notices, /does not imply sponsorship, endorsement, partnership/);
   assert.match(notices, /commercial, promotional, or redistributive use/);
   assert.match(notices, /does not grant rights\s+that Archify does not hold/);
+});
+
+test('fflate disclosure follows whether the packaged runtime includes fflate', () => {
+  const notices = fs.readFileSync(path.join(skillRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
+  const preAtlasNotices = notices.replace(/\n## fflate[\s\S]*?(?=\n## No additional rights granted)/, '');
+
+  assert.deepEqual(validateThirdPartyNotices(preAtlasNotices, { fflate: false }), {
+    ok: true,
+    missing: [],
+  });
+  assert.deepEqual(validateThirdPartyNotices(preAtlasNotices).missing, [
+    'fflate section',
+    'fflate pinned version',
+    'fflate source',
+    'fflate license',
+  ]);
 });
 
 function writeFixture(type, name, brand, customize) {

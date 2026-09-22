@@ -63,7 +63,7 @@ for (const [mode, config] of Object.entries(CASES)) {
     assert.match(guided.html, /visibilitychange/);
     assert.match(guided.html, /play: startPlayback/);
     assert.match(guided.html, /playCurrent: startCurrentViewPlayback/);
-    assert.match(guided.html, /URLSearchParams\(location\.search\)\.get\('play'\) === '1'/);
+    assert.match(guided.html, /URLSearchParams\(ArchifyAddress\.location\.search\)\.get\('play'\) === '1'/);
     assert.match(guided.html, /data-autoplay/);
     assert.match(guided.html, /prefers-reduced-motion: reduce/);
     assert.match(guided.html, /pausePlayback\(\{ complete: true \}\)/);

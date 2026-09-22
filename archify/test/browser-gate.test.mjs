@@ -47,12 +47,15 @@ require('node:module').syncBuiltinESMExports();
 test('browser gate includes dedicated and mixed browser suites and enables them', (t) => {
   const result = interceptedRun(t, { status: 0, signal: null });
   assert.equal(result.status, 0, result.stderr);
-  const call = JSON.parse(result.stdout);
-  assert.equal(call.command, process.execPath);
-  assert.equal(fs.realpathSync(call.cwd), fs.realpathSync(skillRoot));
-  assert.equal(call.chrome, process.execPath);
-  assert.ok(call.args.includes('--test'));
-  const files = call.args.filter((arg) => !arg.startsWith('--'));
+  const calls = result.stdout.trim().split('\n').map((line) => JSON.parse(line));
+  assert.equal(calls.length, 2);
+  for (const call of calls) {
+    assert.equal(call.command, process.execPath);
+    assert.equal(fs.realpathSync(call.cwd), fs.realpathSync(skillRoot));
+    assert.equal(call.chrome, process.execPath);
+    assert.ok(call.args.includes('--test'));
+  }
+  const files = calls.flatMap((call) => call.args.filter((arg) => !arg.startsWith('--')));
   assert.equal(new Set(files).size, files.length);
   for (const file of files) assert.ok(fs.existsSync(path.join(skillRoot, file)), file);
   const required = [

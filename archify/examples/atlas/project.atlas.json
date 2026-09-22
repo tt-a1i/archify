@@ -1,0 +1,68 @@
+{
+  "atlas_version": 1,
+  "entry": "system",
+  "meta": {
+    "title": "订单平台 Architecture Atlas",
+    "locale": "zh-CN",
+    "visual_preset": "classic"
+  },
+  "diagrams": {
+    "system": {
+      "source": "system.architecture.json"
+    },
+    "payment": {
+      "source": "payment.architecture.json"
+    },
+    "worker": {
+      "source": "worker.architecture.json"
+    },
+    "orders": {
+      "source": "orders.architecture.json"
+    }
+  },
+  "details": [
+    {
+      "from": {
+        "diagram": "system",
+        "node": "controller"
+      },
+      "to": "payment"
+    },
+    {
+      "from": {
+        "diagram": "payment",
+        "node": "controller"
+      },
+      "to": "worker"
+    },
+    {
+      "from": {
+        "diagram": "system",
+        "node": "orders"
+      },
+      "to": "orders"
+    }
+  ],
+  "references": [
+    {
+      "occurrence": {
+        "diagram": "payment",
+        "node": "redis"
+      },
+      "target": {
+        "diagram": "system",
+        "node": "redis"
+      }
+    },
+    {
+      "occurrence": {
+        "diagram": "orders",
+        "node": "redis"
+      },
+      "target": {
+        "diagram": "system",
+        "node": "redis"
+      }
+    }
+  ]
+}

@@ -273,26 +273,20 @@ test('deliver rechecks aliases immediately before committing a verified candidat
   fs.mkdirSync(installedRenderer, { recursive: true });
   fs.mkdirSync(installedScripts, { recursive: true });
   fs.copyFileSync(cli, path.join(installedBin, 'archify.mjs'));
-  fs.copyFileSync(
-    path.join(skillRoot, 'renderers/shared/output-path.mjs'),
-    path.join(installedShared, 'output-path.mjs'),
-  );
-  fs.copyFileSync(
-    path.join(skillRoot, 'renderers/shared/path-semantics.mjs'),
-    path.join(installedShared, 'path-semantics.mjs'),
-  );
-  fs.copyFileSync(
-    path.join(skillRoot, 'renderers/shared/portable-path.mjs'),
-    path.join(installedShared, 'portable-path.mjs'),
-  );
-  fs.copyFileSync(
-    path.join(skillRoot, 'renderers/shared/atomic-output.mjs'),
-    path.join(installedShared, 'atomic-output.mjs'),
-  );
-  fs.copyFileSync(
-    path.join(skillRoot, 'renderers/shared/sidecar-path.mjs'),
-    path.join(installedShared, 'sidecar-path.mjs'),
-  );
+  for (const module of [
+    'output-path.mjs',
+    'utils.mjs',
+    'i18n.mjs',
+    'path-semantics.mjs',
+    'portable-path.mjs',
+    'atomic-output.mjs',
+    'sidecar-path.mjs',
+  ]) {
+    fs.copyFileSync(
+      path.join(skillRoot, 'renderers/shared', module),
+      path.join(installedShared, module),
+    );
+  }
   fs.writeFileSync(path.join(installedRenderer, 'render-workflow.mjs'), `
 import fs from 'node:fs';
 const [, output] = process.argv.slice(2);

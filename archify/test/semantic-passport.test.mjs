@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
@@ -12,6 +13,7 @@ import { translateMessage } from '../renderers/shared/i18n.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
+const focusSource = fs.readFileSync(path.resolve(skillRoot, '..', 'viewer', 'focus.js'), 'utf8');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-semantic-passport-'));
 const chromePath = process.env.ARCHIFY_CHROME ? findChrome() : null;
 
@@ -127,7 +129,7 @@ test('Relationship Lens renders one Semantic Passport and copyable stable focus 
   assert.match(html, /focus-chip:not\(\[data-relations-expanded="true"\]\) \.relationship-lens-list \{ display: none; \}/);
   assert.match(html, /clearBtn\.addEventListener\('click', function \(\) \{ clear\(\{ restoreFocus: true \}\); \}\)/);
   assert.match(html, /chip\.hidden \|\| !target \|\| typeof target\.closest !== 'function' \|\| chip\.contains\(target\)/);
-  assert.match(html, /target\.closest\('\[data-node-id\], \[data-relationship-hit-key\], \.overview-map'\)/);
+  assert.match(html, /target\.closest\('\[data-node-id\], \[data-relationship-hit-key\], \.overview-map, \.atlas-navigation, \.atlas-compact-navigation, \.atlas-directory, \.atlas-breadcrumb, \.atlas-parent-context, \.atlas-rail, \.atlas-inspector, \.atlas-directory-section'\)/);
   assert.match(html, /document\.addEventListener\('click',[\s\S]+?clear\(\);\s+\}, true\);/);
   assert.match(html, /Archify\.focus\.clear\(\{ restoreFocus: true \}\)/);
   assert.match(html, /renderRelationshipLens\(normalized\[0\],\s*byId\);\s*placeRelationshipLens\(\);/);
@@ -241,6 +243,71 @@ test('Node Finder searches and presents the same passport facts', () => {
   assert.match(html, /search: \(id \+ ' ' \+ label \+ ' ' \+ type \+ ' ' \+ sublabel \+ ' ' \+ context \+ ' ' \+ tag \+ ' ' \+ sourceSearch \+ ' ' \+ text\)\.toLowerCase\(\)/);
   assert.match(html, /\[viewerKindLabel\(item\.type\), item\.id, item\.sublabel, item\.tag\]\.filter\(Boolean\)\.join\(' \\u00b7 '\)/);
   assert.match(html, /meta\.title = \[viewerKindLabel\(item\.type\), item\.id, item\.context, item\.sublabel, item\.tag\]\.filter\(Boolean\)\.join\(' \\u00b7 '\)/);
+});
+
+test('internal structure projection is text-only and preserves native history semantics', () => {
+  assert.match(focusSource, /detail\.after\(quicklook\)/);
+  assert.match(focusSource, /textElement\('h2', 'node-structure-title'/);
+  assert.match(focusSource, /textElement\('ul', 'node-structure-tree'/);
+  assert.match(focusSource, /structureBody = textElement\('div', 'node-structure-body'/);
+  assert.doesNotMatch(focusSource, /\.innerHTML\s*=/);
+  assert.match(focusSource, /history\.pushState\(structureEntry, '', url\)/);
+  assert.match(focusSource, /renderStructure\(id, section, requestedItem\)[\s\S]+?return surfaceReady\.then\(function \(\) \{[\s\S]+?history\.pushState\(structureEntry, '', url\)/);
+  assert.match(focusSource, /pendingOpen = \{ revision: expectedRevision, trigger: trigger \}/);
+  assert.match(focusSource, /deactivateStructure\(\{ restoreFocus: false, restoreScroll: true \}\)[\s\S]+?userError\(id, error\)/);
+  assert.match(focusSource, /ArchifyAddress\.send\('navigate', \{ focus: id, inspect: 'structure', section: section, item: requestedItem/);
+  assert.match(focusSource, /ArchifyAddress\.send\('structure-return'\)/);
+  assert.match(focusSource, /renderError\(id, 'viewer\.internalStructure\.empty', 'empty'\);[\s\S]+?empty: true/);
+  assert.match(focusSource, /graphState\.forEach\(hideElement\)/);
+  assert.match(focusSource, /state\.element\.setAttribute\('aria-hidden', 'true'\)/);
+  assert.match(focusSource, /currentSurface === 'structure' && currentNodeId === id[\s\S]+?return Promise\.resolve\(true\)/);
+});
+
+test('standalone internal-structure entries carry exact-address reading snapshots', () => {
+  const start = focusSource.indexOf('      function standaloneHistoryState(');
+  const end = focusSource.indexOf('      function scheduleStandaloneReadingSave()', start);
+  assert.ok(start >= 0 && end > start, 'standalone history helpers remain independently testable');
+  const helpers = vm.runInNewContext(`(() => {\n${focusSource.slice(start, end)}\nreturn { standaloneHistoryState, storedStandaloneReading };\n})()`);
+  const reading = { surface: 'graph', nodeId: 'controller', scrollTop: 91, focus: { id: 'focus-internal-structure' } };
+  const state = helpers.standaloneHistoryState({ owner: 'kept' }, 'graph', 'https://example.test/map#focus=controller', 'controller', null, reading);
+  assert.equal(state.owner, 'kept');
+  assert.deepEqual(JSON.parse(JSON.stringify(state.archifyInternalStructure)), {
+    surface: 'graph', href: 'https://example.test/map#focus=controller', nodeId: 'controller', graphHref: null, reading,
+  });
+  assert.deepEqual(helpers.storedStandaloneReading(state, 'https://example.test/map#focus=controller'), reading);
+  assert.equal(helpers.storedStandaloneReading(state, 'https://example.test/map#focus=other'), null);
+});
+
+test('standalone internal-structure history commits after preparation and restores traversed entries', () => {
+  assert.match(focusSource,
+    /return surfaceReady\.then\(function \(\) \{[\s\S]+?history\.replaceState\(graphEntry[\s\S]+?history\.pushState\(structureEntry/);
+  assert.match(focusSource, /window\.addEventListener\('popstate', syncStandaloneHistoryWithoutUnhandledRejection\)/);
+  assert.match(focusSource,
+    /expectedRevision = \+\+standaloneSyncRevision[\s\S]+?expectedHref = location\.href[\s\S]+?storedStandaloneReading\(history\.state, expectedHref\)[\s\S]+?syncAddress\(\)[\s\S]+?expectedRevision !== standaloneSyncRevision \|\| location\.href !== expectedHref[\s\S]+?restore\(reading/);
+  assert.match(focusSource, /showSection[\s\S]+?replaceStandaloneReading\(url\)/);
+  assert.match(focusSource, /history\.back\(\)[\s\S]+?return true/);
+});
+
+test('structure tree exposes keyboard navigation and selection', () => {
+  assert.match(focusSource, /rootList\.setAttribute\('role', 'tree'\)/);
+  assert.match(focusSource, /button\.setAttribute\('role', 'treeitem'\)/);
+  assert.match(focusSource, /event\.key === 'ArrowDown'/);
+  assert.match(focusSource, /event\.key === 'ArrowUp'/);
+  assert.match(focusSource, /event\.key === 'ArrowLeft'/);
+  assert.match(focusSource, /event\.key === 'ArrowRight'/);
+  assert.match(focusSource, /event\.key === 'Enter' \|\| event\.key === ' '/);
+});
+
+test('internal structure controls keep a 44px hit target at every viewport', () => {
+  for (const selector of [
+    '\\.node-structure-entry',
+    '\\.node-structure-actions button',
+    '\\.node-structure-mode',
+    '\\.node-structure-treeitem',
+    '\\.node-structure-source',
+  ]) {
+    assert.match(focusSource, new RegExp(`${selector}\\{[^}]*min-height:44px`));
+  }
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

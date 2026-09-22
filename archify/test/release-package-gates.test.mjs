@@ -94,6 +94,54 @@ function assertPinnedAction(section, action, sha, version) {
   );
 }
 
+test('internal-structure browser acceptance fails closed for an explicit unusable Chrome', () => {
+  const browserTest = path.join(repoRoot, 'archify', 'test', 'internal-structure-browser.test.mjs');
+  const browserArgs = ['--test', '--test-reporter=tap', browserTest];
+  for (const value of ['', path.join(os.tmpdir(), 'archify-missing-chrome')]) {
+    const explicitEnvironment = { ...process.env, ARCHIFY_CHROME: value };
+    delete explicitEnvironment.NODE_TEST_CONTEXT;
+    const result = spawnSync(process.execPath, browserArgs, {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      env: explicitEnvironment,
+    });
+    assert.notEqual(result.status, 0, `explicit ARCHIFY_CHROME=${JSON.stringify(value)} must fail`);
+    assert.match(`${result.stdout}\n${result.stderr}`, /ARCHIFY_CHROME must name an executable browser/);
+    assert.doesNotMatch(result.stdout, /# SKIP/, 'an explicit Chrome gate must never become a passing skip');
+  }
+
+  const localEnvironment = { ...process.env };
+  delete localEnvironment.ARCHIFY_CHROME;
+  delete localEnvironment.NODE_TEST_CONTEXT;
+  const local = spawnSync(process.execPath, browserArgs, {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    env: localEnvironment,
+  });
+  assert.equal(local.status, 0, `${local.stdout}\n${local.stderr}`);
+  assert.match(local.stdout, /# SKIP/, 'an undeclared Chrome path retains the local opt-in skip');
+});
+
+test('CI and release retain a mandatory internal-structure Chrome gate', () => {
+  const ci = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8');
+  const release = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'release.yml'), 'utf8');
+  const runner = fs.readFileSync(path.join(repoRoot, 'scripts', 'run-browser-tests.mjs'), 'utf8');
+  const ciGate = workflowStep(ci, 'Run shared browser regression gate');
+  const releaseGate = workflowStep(release, 'Run shared browser regression gate');
+  const releaseBuild = workflowStep(release, 'Build skill archive');
+
+  for (const gate of [ciGate, releaseGate]) {
+    assert.match(gate, /run: npm run test:browser/);
+    assert.match(gate, /working-directory: archify/);
+    assert.match(gate, /ARCHIFY_CHROME: \$\{\{ steps\.setup-chrome\.outputs\.chrome-path \}\}/);
+    assert.match(gate, /ARCHIFY_CHROME_NO_SANDBOX: '1'/);
+    assert.doesNotMatch(gate, /continue-on-error:/);
+  }
+  assert.match(runner, /const serialTestFiles = \[[\s\S]*?'internal-structure-browser\.test\.mjs',[\s\S]*?'atlas-workbench-browser\.test\.mjs',[\s\S]*?\];/);
+  assert.match(runner, /const serial = run\(serialTestFiles, 1\);/);
+  assert.ok(release.indexOf(releaseGate) < release.indexOf(releaseBuild), 'release browser acceptance must pass before the archive is built');
+});
+
 test('release prevents manifest preannouncement and smokes the exact archive before upload', () => {
   const workflow = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'release.yml'), 'utf8');
   const tagFetch = workflowStep(workflow, 'Fetch exact tag object');
@@ -338,6 +386,28 @@ test('package smoke verifies the embedded notifier identity and local disable sw
   assert.match(source, /skill-release\.json/);
   assert.match(source, /ARCHIFY_UPDATE_CHECK_DISABLED: '1'/);
   assert.match(source, /reason !== 'disabled'/);
+});
+
+test('package smoke detects a packaged renderer that cannot carry internal structures', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-guide-gate-'));
+  try {
+    const staged = path.join(fixture, 'archify');
+    stageCleanSkill({ repoRoot, destination: staged });
+    const templatePath = path.join(staged, 'assets', 'template.html');
+    const template = fs.readFileSync(templatePath, 'utf8');
+    assert.match(template, /<!-- ARCHIFY:INTERNAL_STRUCTURE_DATA -->/);
+    fs.writeFileSync(templatePath, template.replace('<!-- ARCHIFY:INTERNAL_STRUCTURE_DATA -->', ''));
+
+    const result = spawnSync(
+      process.execPath,
+      [path.join(repoRoot, 'scripts', 'package-smoke.mjs'), staged],
+      { cwd: repoRoot, encoding: 'utf8' },
+    );
+    assert.notEqual(result.status, 0, 'missing packaged internal-structure slot must fail package smoke');
+    assert.match(`${result.stdout}\n${result.stderr}`, /internal structure/i);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
 });
 
 test('package smoke rejects a missing or modified distribution license', () => {

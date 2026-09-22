@@ -261,6 +261,8 @@ Declare `meta.repository.url` and one full 40-character `revision`, then attach
 `sources` to the mode's node collection (Architecture `components[]`, Workflow
 and Data Flow `nodes[]`, Sequence `participants[]`, Lifecycle `states[]`) with
 repository-relative `path`, optional `line`, `end_line`, and `label`.
+Architecture component sources may additionally carry the stable `id`, `role`,
+and `symbol` fields used by evidence-backed internal structure.
 Verification reads blobs at that commit, independently of working-tree edits.
 Verification ignores local Git replacement refs, including those selected by
 `GIT_REPLACE_REF_BASE`, and always reads the original objects at the pinned SHA.
@@ -313,6 +315,75 @@ aliases and forge-specific browse/clone prefixes are not guessed.
 GitLab/Gitea/Forgejo/Bitbucket web links are not implemented in this version;
 use local-only until a tested link provider is available. Unknown web providers
 fail with a diagnostic rather than emitting a guessed link.
+
+### Architecture node internal structure
+
+Architecture schema v1 optionally accepts `internal_structure` on a component.
+It describes code organization and state fields owned by that node; it is not a
+diagram, an Atlas member, or a replacement for the node's existing `sources`.
+Other diagram types reject the field. Omit it when the repository cannot support
+the facts.
+
+```json
+{
+  "id": "workflow-engine",
+  "type": "backend",
+  "label": "Dynamic Workflow",
+  "internal_structure": {
+    "sources": [
+      { "id": "engine", "role": "definition", "path": "src/engine.ts", "symbol": "WorkflowEngine" },
+      { "id": "read-status", "role": "callsite", "path": "src/engine.ts", "line": 84 }
+    ],
+    "items": [
+      { "id": "src", "domain": "code", "kind": "directory", "label": "src", "summary": "Workflow runtime sources." },
+      { "id": "engine-class", "domain": "code", "kind": "class", "label": "WorkflowEngine", "parent": "src", "signature": "class WorkflowEngine", "summary": "Runs workflows.", "source_refs": ["engine"] },
+      { "id": "execution", "domain": "state", "kind": "group", "label": "Execution", "summary": "Current workflow execution." },
+      { "id": "status", "domain": "state", "kind": "field", "label": "status", "parent": "execution", "value_type": "WorkflowStatus", "summary": "Current lifecycle state.", "source_refs": ["engine"] }
+    ],
+    "relations": [
+      { "id": "engine-reads-status", "from": "engine-class", "to": "status", "kind": "reads", "source_refs": ["read-status"] }
+    ]
+  }
+}
+```
+
+`sources` is a component-local evidence register. Each source requires a unique
+`id`, a repository role, and a path. Its optional line range and symbol use the
+same pinned repository checks as ordinary component sources. A structure requires
+`meta.repository.url`, a 40-character revision, and a matching `--repo-root`.
+
+`items` share one ID namespace and preserve author order. `domain` is `code` or
+`state`. Code kinds are `directory`, `file`, `class`, `interface`, `type`,
+`function`, and `method`; state kinds are `group` and `field`. A field requires
+`value_type`. Code symbols may carry `signature`. Labels are at most 80
+characters, summaries at most 240, and signatures/value types at most 200.
+
+`parent` forms a same-domain, single-parent tree. Every nonempty domain has a
+root and every item must be reachable without self-parenting, orphaning, cycles,
+or cross-domain parents. `directory` and `group` are source-optional containers;
+every other item has one to three local `source_refs`.
+
+Relations connect local items and use `imports`, `calls`, `uses`, `creates`,
+`reads`, or `writes`. Cross-domain code-to-state reads and writes are allowed.
+Every relation has one to three source references. Behavioral relations such as
+calls, reads, writes, and creates require evidence roles that can support the
+claim and still require independent semantic review.
+
+One node is limited to 64 sources, 64 items, 96 relations, tree depth 8, and
+64 KiB of HTML-safe compiled data. One Architecture member is limited to 256
+KiB and an Atlas total to 512 KiB. Payload lines are limited to 8192 bytes;
+limits fail with an exact JSON path and never truncate content.
+
+Repository verification proves a pinned location, range, and optional symbol.
+It does not prove the authored kind, summary, or runtime relationship. Review
+those statements independently. The Viewer labels this distinction as verified
+source location versus Agent-authored interpretation. Authored text remains
+plain text. `local-only` exposes no remote link or absolute repository root.
+
+The Viewer projects the same items into “Code structure” and “State fields”. It
+does not inspect source files or infer dependencies at runtime. See the
+[delivery contract](delivery-contract.md#internal-structure-delivery-evidence)
+for the compiled payload and receipt.
 
 ## Hand-placed fallback
 

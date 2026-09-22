@@ -35,6 +35,13 @@ const REQUIRED_DISCLOSURES = [
   ['clearance boundary', 'does not state that every packaged mark has\nbeen cleared for every commercial, promotional, or redistributive use'],
 ];
 
+const FFLATE_DISCLOSURES = [
+  ['fflate section', '## fflate'],
+  ['fflate pinned version', 'fflate 0.8.2'],
+  ['fflate source', 'https://github.com/101arrowz/fflate/tree/v0.8.2'],
+  ['fflate license', '`assets/vendor/fflate-MIT.txt`'],
+];
+
 const FONT_DISCLOSURES = [
   ['JetBrains Mono section', '## JetBrains Mono'],
   ['JetBrains Mono source', 'https://github.com/JetBrains/JetBrainsMono'],
@@ -43,11 +50,15 @@ const FONT_DISCLOSURES = [
   ['embedded-font treatment', 'embed the JetBrains Mono variable font\nsubsets served by Google Fonts'],
 ];
 
-export function validateThirdPartyNotices(content, { embeddedFonts = true } = {}) {
+export function validateThirdPartyNotices(content, { embeddedFonts = true, fflate = true } = {}) {
   if (typeof content !== 'string' || content.length === 0) {
     return { ok: false, missing: ['non-empty notice'] };
   }
-  const missing = [...REQUIRED_DISCLOSURES, ...(embeddedFonts ? FONT_DISCLOSURES : [])]
+  const missing = [
+    ...REQUIRED_DISCLOSURES,
+    ...(fflate ? FFLATE_DISCLOSURES : []),
+    ...(embeddedFonts ? FONT_DISCLOSURES : []),
+  ]
     .filter(([, fragment]) => !content.includes(fragment))
     .map(([label]) => label);
   return { ok: missing.length === 0, missing };
@@ -60,4 +71,5 @@ export function assertThirdPartyNotices(content, subject = 'THIRD_PARTY_NOTICES.
   }
 }
 
-export const THIRD_PARTY_NOTICE_DISCLOSURE_COUNT = REQUIRED_DISCLOSURES.length + FONT_DISCLOSURES.length;
+export const THIRD_PARTY_NOTICE_DISCLOSURE_COUNT = REQUIRED_DISCLOSURES.length
+  + FFLATE_DISCLOSURES.length + FONT_DISCLOSURES.length;

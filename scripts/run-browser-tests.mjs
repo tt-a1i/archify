@@ -31,6 +31,15 @@ const testFiles = [
   'repository-evidence.test.mjs',
   'repository-evidence-types-browser.test.mjs',
 ];
+const serialTestFiles = [
+  'atlas-browser.test.mjs',
+  'atlas-compact-browser.test.mjs',
+  'atlas-export-browser.test.mjs',
+  'atlas-lifecycle-browser.test.mjs',
+  'atlas-seamless-browser.test.mjs',
+  'internal-structure-browser.test.mjs',
+  'atlas-workbench-browser.test.mjs',
+];
 
 const chrome = findChrome();
 if (!chrome) {
@@ -38,15 +47,26 @@ if (!chrome) {
   process.exit(1);
 }
 
-const args = ['--test'];
 const [major, minor] = process.versions.node.split('.').map(Number);
-if (major > 18 || (major === 18 && minor >= 19)) args.push('--test-concurrency=2');
-args.push(...testFiles.map((file) => path.join('test', file)));
-const result = spawnSync(process.execPath, args, {
-  cwd: skillRoot,
-  env: { ...process.env, ARCHIFY_CHROME: chrome },
-  stdio: 'inherit',
-});
-if (result.error) throw result.error;
-if (result.signal) console.error(`browser test runner terminated by ${result.signal}`);
-process.exitCode = result.status ?? 1;
+const supportsConcurrency = major > 18 || (major === 18 && minor >= 19);
+
+function run(files, concurrency) {
+  const args = ['--test'];
+  if (supportsConcurrency) args.push(`--test-concurrency=${concurrency}`);
+  args.push(...files.map((file) => path.join('test', file)));
+  return spawnSync(process.execPath, args, {
+    cwd: skillRoot,
+    env: { ...process.env, ARCHIFY_CHROME: chrome },
+    stdio: 'inherit',
+  });
+}
+
+const parallel = run(testFiles, 2);
+if (parallel.error) throw parallel.error;
+if (parallel.signal) console.error(`browser test runner terminated by ${parallel.signal}`);
+if (parallel.status !== 0) process.exit(parallel.status ?? 1);
+
+const serial = run(serialTestFiles, 1);
+if (serial.error) throw serial.error;
+if (serial.signal) console.error(`browser test runner terminated by ${serial.signal}`);
+process.exitCode = serial.status ?? 1;

@@ -60,6 +60,9 @@
           if (readerPaused) localStorage.setItem(STORAGE_KEY, 'still');
           else localStorage.removeItem(STORAGE_KEY);
         } catch (_) {}
+        if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) {
+          ArchifyAddress.send('appearance', { motion: readerPaused ? 'still' : 'live' });
+        }
       }
       function reducedMotion() {
         return !!(motionQuery && motionQuery.matches);
@@ -68,7 +71,8 @@
         return Object.keys(suspensions).length > 0;
       }
       function effectivePaused() {
-        return readerPaused || reducedMotion() || hasSuspension();
+        var inactiveAtlas = typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context && !ArchifyAddress.active;
+        return readerPaused || reducedMotion() || hasSuspension() || Boolean(inactiveAtlas);
       }
       function ownerLabel(value) {
         if (value === 'story') return viewerText('viewer.owner.story');
@@ -213,6 +217,7 @@
           toggle: function () { return false; },
           setMode: function () { return 'still'; },
           mode: function () { return 'still'; },
+          readerMode: function () { return 'still'; },
           claim: function () { return 0; },
           release: function () { return false; },
           suspend: function () { return function () { return false; }; },
@@ -230,6 +235,10 @@
         else if (typeof motionQuery.addListener === 'function') motionQuery.addListener(render);
       }
       document.addEventListener('visibilitychange', syncVisibility);
+      if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) {
+        window.addEventListener('archify:atlas-activate', render);
+        window.addEventListener('archify:atlas-revoke', render);
+      }
       if (document.documentElement.getAttribute('data-embed') !== 'true' && typeof MutationObserver !== 'undefined' && typeof Node !== 'undefined' && svg instanceof Node) {
         var ownerObserver = new MutationObserver(function () { publishOwner(); });
         ownerObserver.observe(svg, {
@@ -255,6 +264,7 @@
           return effectivePaused() ? 'still' : 'live';
         },
         mode: function () { return effectivePaused() ? 'still' : 'live'; },
+        readerMode: function () { return readerPaused ? 'still' : 'live'; },
         claim: claim,
         release: release,
         suspend: suspend,

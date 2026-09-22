@@ -307,6 +307,9 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+.atlas-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.atlas-actions button { font: inherit; font-size: 0.75rem; padding: 0.3rem 0.55rem; border-radius: 0.4rem; border: 1px solid var(--toolbar-border); background: var(--toolbar-bg); color: var(--toolbar-text); cursor: pointer; }
+.atlas-actions button:focus-visible { outline: 2px solid var(--frontend-stroke); outline-offset: 2px; }
 
 body {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace;
@@ -2878,6 +2881,11 @@ html[data-preset="signal-flow"][data-theme="light"] .card {
   html[data-nav-stage-rail="true"] .cards { margin-top: 0.375rem; }
 }
 
+@media (min-width: 768px) and (max-height: 920px) {
+  html[data-atlas-member="true"] body { padding-block: 0.25rem; }
+  html[data-atlas-member="true"] .card { padding-block: 0.75rem; }
+}
+
 html[data-preset="blueprint"] .card {
   position: relative;
   border-color: var(--panel-border);
@@ -3895,7 +3903,27 @@ html[data-preset="editorial"] .share-chapter-cue {
   }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 440px) {
+  .toolbar {
+    width: 100%;
+    gap: 0.125rem;
+  }
+  .toolbar button,
+  .toolbar #btn-preset,
+  .toolbar #btn-motion {
+    min-width: 2.75rem;
+    padding-right: 0.58rem;
+    padding-left: 0.58rem;
+    justify-content: center;
+  }
+  .toolbar #btn-export {
+    padding-right: 0.42rem;
+    padding-left: 0.42rem;
+  }
+  #theme-label,
+  #preset-label,
+  #motion-label,
+  #present-label { display: none; }
   .export-menu-section { grid-template-columns: 1fr; }
   .export-menu-heading,
   .toolbar .export-menu button[data-format="share-card"],
@@ -3911,10 +3939,6 @@ html[data-preset="editorial"] .share-chapter-cue {
 }
 
 @media (max-width: 360px) {
-  .toolbar { gap: 0.25rem; }
-  .toolbar button { padding-right: 0.58rem; padding-left: 0.58rem; }
-  .toolbar #btn-motion { min-width: 4.4rem; padding-right: 0.58rem; padding-left: 0.58rem; }
-  #theme-label, #preset-label, #present-label { display: none; }
   .guided-view-handoff { max-width: 6.5rem; }
 }
 

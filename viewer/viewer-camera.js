@@ -40,7 +40,8 @@
           offsetY: (height - viewBox.height * scale) / 2
         };
       }
-      function logicalViewport() {
+      function logicalViewport(camera) {
+        camera = camera || state;
         var metrics = contentMetrics();
         if (!metrics) return null;
         var x;
@@ -53,16 +54,16 @@
           width = Math.min(viewBox.width, Math.max(1, container.clientWidth / metrics.scale));
           height = viewBox.height;
         } else {
-          x = viewBox.x + ((-state.x / state.scale) - metrics.offsetX) / metrics.scale;
-          y = viewBox.y + ((-state.y / state.scale) - metrics.offsetY) / metrics.scale;
-          width = Math.min(viewBox.width, metrics.width / state.scale / metrics.scale);
-          height = Math.min(viewBox.height, metrics.height / state.scale / metrics.scale);
+          x = viewBox.x + ((-camera.x / camera.scale) - metrics.offsetX) / metrics.scale;
+          y = viewBox.y + ((-camera.y / camera.scale) - metrics.offsetY) / metrics.scale;
+          width = Math.min(viewBox.width, metrics.width / camera.scale / metrics.scale);
+          height = Math.min(viewBox.height, metrics.height / camera.scale / metrics.scale);
         }
         width = Math.max(1, Math.min(viewBox.width, width));
         height = Math.max(1, Math.min(viewBox.height, height));
         x = Math.max(viewBox.x, Math.min(viewBox.x + viewBox.width - width, x));
         y = Math.max(viewBox.y, Math.min(viewBox.y + viewBox.height - height, y));
-        return { x: x, y: y, width: width, height: height, scale: state.scale };
+        return { x: x, y: y, width: width, height: height, scale: camera.scale };
       }
       function detailLevel() {
         if (state.mode === 'semantic') return 'full';
@@ -144,6 +145,7 @@
         if (Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.schedule === 'function') {
           Archify.viewerChromeLayout.schedule();
         }
+        if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) requestAnimationFrame(ArchifyAddress.settled);
       }
       function sampleRenderedState() {
         var transform = '';
@@ -343,7 +345,7 @@
           bottom = Math.min(bottom, visibleBottom - Math.max(padding, 72));
         }
         var chip = document.getElementById('focus-chip');
-        if (chip && !chip.hidden) {
+        if (chip && !chip.hidden && container.contains(chip)) {
           var lensEnd = chip.offsetLeft + chip.offsetWidth + 24 - (svg.offsetLeft || 0);
           left = Math.max(left, Math.min(svgWidth * 0.42, lensEnd));
         }
@@ -412,6 +414,7 @@
         return transaction;
       }
       function reveal(ids, options) {
+        if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.restoring) return false;
         options = options || {};
         if (window.innerWidth > 720) return frameDesktop(ids, options);
         stopCameraMotion('replaced', false);
@@ -447,19 +450,23 @@
         }
         return transaction;
       }
-      function syncSemantic() {
+      function syncSemantic(options) {
+        options = options || {};
+        if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.restoring) return false;
         var guided = Archify.guidedViews && typeof Archify.guidedViews.focus === 'function'
           ? Archify.guidedViews.focus() : [];
-        if (guided && guided.length) return reveal(guided, { reason: 'guided-sync' });
+        if (guided && guided.length) return reveal(guided, { reason: 'guided-sync', instant: options.instant });
+        if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context && !options.initial) return false;
         var active = Archify.focus && typeof Archify.focus.active === 'function' ? Archify.focus.active() : null;
-        if (typeof active === 'string') return reveal([active], { includeNeighbors: true, reason: 'focus-sync' });
-        if (Array.isArray(active) && active.length) return reveal(active, { reason: 'selection-sync' });
+        if (typeof active === 'string') return reveal([active], { includeNeighbors: true, reason: 'focus-sync', instant: options.instant });
+        if (Array.isArray(active) && active.length) return reveal(active, { reason: 'selection-sync', instant: options.instant });
         return false;
       }
       function pinControls() {
         container.style.setProperty('--archify-scroll-x', container.scrollLeft + 'px');
       }
       function onScroll() {
+        if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) requestAnimationFrame(ArchifyAddress.settled);
         pinControls();
         if (Archify.radar && typeof Archify.radar.sync === 'function') Archify.radar.sync();
         if (window.innerWidth <= 720 && container.hasAttribute('data-wide-diagram') && Date.now() > autoScrollUntil) {
@@ -518,9 +525,21 @@
         zoomOut: function () { zoom(state.scale - 0.25); },
         reset: reset,
         reveal: reveal,
+        hold: interruptCamera,
         centerAt: centerAt,
         logicalViewport: logicalViewport,
         sync: syncSemantic,
+        snapshot: function () {
+          var viewport = logicalViewport(sampleRenderedState());
+          return viewport ? { centerX: viewport.x + viewport.width / 2, centerY: viewport.y + viewport.height / 2,
+            scale: viewport.scale, scrollLeft: container.scrollLeft, scrollTop: container.scrollTop } : null;
+        },
+        restore: function (snapshot) {
+          if (!snapshot) return;
+          centerAt(snapshot.centerX, snapshot.centerY, { scale: snapshot.scale, instant: true });
+          container.scrollLeft = snapshot.scrollLeft || 0;
+          container.scrollTop = snapshot.scrollTop || 0;
+        },
         state: function () { return { scale: state.scale, x: state.x, y: state.y, mode: state.mode }; }
       };
     })();

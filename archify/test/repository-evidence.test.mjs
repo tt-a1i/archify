@@ -57,6 +57,250 @@ function evidencePayload(html) {
   return JSON.parse(match[1]);
 }
 
+function internalStructurePayload(html) {
+  const matches = [...html.matchAll(/<script id="archify-internal-structure-data" type="application\/json">([\s\S]*?)<\/script>/g)];
+  assert.equal(matches.length, 1, 'expected one internal structure payload');
+  const chunks = JSON.parse(matches[0][1]);
+  assert.ok(Array.isArray(chunks) && chunks.length > 0, 'internal structure payload must be chunked');
+  return JSON.parse(chunks.join(''));
+}
+
+test('repository-backed internal structure delivers one source-linked payload outside canonical SVG', () => {
+  const data = fixture();
+  data.diagram.components[0].sources = [{
+    id: 'route-entry',
+    role: 'export',
+    path: 'src/router.js',
+    line: 1,
+    end_line: 3,
+    symbol: 'route',
+  }];
+  data.diagram.components[0].internal_structure = {
+    sources: data.diagram.components[0].sources,
+    items: [
+      { id: 'src', domain: 'code', kind: 'directory', label: 'src', summary: 'Application sources.' },
+      { id: 'route-interface', domain: 'code', kind: 'function', label: 'route', parent: 'src', signature: 'route(input)', summary: 'Accepts one input and returns its kind.', source_refs: ['route-entry'] },
+    ],
+    relations: [],
+  };
+  delete data.diagram.components[0].sources;
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const output = path.join(data.root, 'internal-structure.html');
+
+  const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const html = fs.readFileSync(output, 'utf8');
+  const payload = internalStructurePayload(html);
+  assert.equal(payload.schemaVersion, 1);
+  assert.deepEqual(Object.keys(payload.nodes), ['users']);
+  assert.deepEqual(payload.nodes.users.items[1].sourceRefs, ['route-entry']);
+  assert.equal(payload.nodes.users.items[1].signature, 'route(input)');
+  assert.equal(evidencePayload(html).nodes.users[0].id, 'route-entry');
+  assert.equal(evidencePayload(html).nodes.users[0].symbolLocated, true);
+  const svg = html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
+  assert.doesNotMatch(svg, /Routes accepted input|route-interface|src\/router\.js/);
+});
+
+function attachRepositoryInternalStructure(data, source, {
+  summaryText = 'Routes accepted input by its kind.',
+  itemText = 'Accepts one input and returns its kind.',
+} = {}) {
+  delete data.diagram.components[0].sources;
+  data.diagram.components[0].internal_structure = {
+    sources: [source],
+    items: [
+      { id: 'src', domain: 'code', kind: 'directory', label: 'src', summary: summaryText },
+      { id: 'route-constraint', domain: 'code', kind: 'function', label: 'route', parent: 'src', summary: itemText, source_refs: [source.id] },
+    ],
+    relations: [],
+  };
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+}
+
+test('internal structure source symbols resolve in the selected range at the pinned revision', () => {
+  const data = fixture();
+  attachRepositoryInternalStructure(data, {
+    id: 'route-entry',
+    role: 'definition',
+    symbol: 'route',
+    path: 'src/router.js',
+    line: 1,
+    end_line: 1,
+  });
+  fs.writeFileSync(path.join(data.root, 'src', 'router.js'), 'export function renamed(input) {\n  return input.kind;\n}\n');
+  const output = path.join(data.root, 'pinned-symbol.html');
+
+  const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const source = evidencePayload(fs.readFileSync(output, 'utf8')).nodes.users[0];
+  assert.deepEqual({
+    id: source.id,
+    role: source.role,
+    symbol: source.symbol,
+    line: source.line,
+    endLine: source.endLine,
+    symbolLocated: source.symbolLocated,
+  }, {
+    id: 'route-entry',
+    role: 'definition',
+    symbol: 'route',
+    line: 1,
+    endLine: 1,
+    symbolLocated: true,
+  });
+});
+
+test('internal structure source symbols fail closed when missing from the pinned selected range', () => {
+  for (const { name, symbol, line, endLine, editWorkingTree } of [
+    { name: 'missing', symbol: 'missingRoute', line: 1, endLine: 3 },
+    {
+      name: 'worktree-only',
+      symbol: 'worktreeOnly',
+      editWorkingTree: "export function worktreeOnly(input) {\n  return input.kind;\n}\n",
+    },
+    { name: 'outside-range', symbol: 'route', line: 2, endLine: 2 },
+  ]) {
+    const data = fixture();
+    attachRepositoryInternalStructure(data, {
+      id: 'route-entry',
+      role: 'definition',
+      symbol,
+      path: 'src/router.js',
+      ...(line ? { line } : {}),
+      ...(endLine ? { end_line: endLine } : {}),
+    });
+    if (editWorkingTree) fs.writeFileSync(path.join(data.root, 'src', 'router.js'), editWorkingTree);
+    const output = path.join(data.root, `${name}.html`);
+    fs.writeFileSync(output, 'trusted previous artifact');
+
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 1, `${name} unexpectedly verified`);
+    const receipt = JSON.parse(result.stdout);
+    assert.ok(receipt.diagnostics.some(({ code }) => code === 'repository-evidence/symbol-missing'), result.stdout);
+    assert.equal(fs.readFileSync(output, 'utf8'), 'trusted previous artifact');
+  }
+});
+
+test('internal structure source symbols use Unicode token boundaries instead of substring matches', () => {
+  for (const { name, content, symbol } of [
+    { name: 'ascii-suffix-of-unicode-identifier', content: 'export const πroute = true;\n', symbol: 'route' },
+    { name: 'unicode-prefix-of-longer-identifier', content: 'export const 处理器扩展 = true;\n', symbol: '处理器' },
+  ]) {
+    const data = fixture();
+    fs.writeFileSync(path.join(data.root, 'src', 'router.js'), content);
+    git(data.root, 'add', 'src/router.js');
+    git(data.root, 'commit', '-m', name);
+    data.diagram.meta.repository.revision = git(data.root, 'rev-parse', 'HEAD');
+    attachRepositoryInternalStructure(data, {
+      id: 'route-entry',
+      role: 'definition',
+      symbol,
+      path: 'src/router.js',
+      line: 1,
+      end_line: 1,
+    });
+    const output = path.join(data.root, `${name}.html`);
+    fs.writeFileSync(output, 'trusted previous artifact');
+
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 1, `${name} unexpectedly verified`);
+    assert.ok(JSON.parse(result.stdout).diagnostics.some(({ code }) => code === 'repository-evidence/symbol-missing'));
+    assert.equal(fs.readFileSync(output, 'utf8'), 'trusted previous artifact');
+  }
+});
+
+test('internal structure source symbols accept an exact Unicode identifier token', () => {
+  const data = fixture();
+  fs.writeFileSync(path.join(data.root, 'src', 'router.js'), 'export const 处理器 = true;\n');
+  git(data.root, 'add', 'src/router.js');
+  git(data.root, 'commit', '-m', 'unicode symbol');
+  data.diagram.meta.repository.revision = git(data.root, 'rev-parse', 'HEAD');
+  attachRepositoryInternalStructure(data, {
+    id: 'route-entry',
+    role: 'definition',
+    symbol: '处理器',
+    path: 'src/router.js',
+    line: 1,
+    end_line: 1,
+  });
+  const output = path.join(data.root, 'unicode-symbol.html');
+
+  const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.equal(evidencePayload(fs.readFileSync(output, 'utf8')).nodes.users[0].symbolLocated, true);
+});
+
+test('local-only internal structure evidence keeps source identity without links or local roots', () => {
+  const data = fixture();
+  data.diagram.meta.repository = {
+    url: 'http://git.internal/Team/repo',
+    revision: data.revision,
+    link_mode: 'local-only',
+  };
+  git(data.root, 'remote', 'set-url', 'origin', data.diagram.meta.repository.url);
+  attachRepositoryInternalStructure(data, {
+    id: 'route-entry',
+    role: 'definition',
+    symbol: 'route',
+    path: 'src/router.js',
+    line: 1,
+    end_line: 1,
+  });
+  const output = path.join(data.root, 'local-guide.html');
+
+  const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const html = fs.readFileSync(output, 'utf8');
+  const evidence = evidencePayload(html);
+  const source = evidence.nodes.users[0];
+  assert.equal(evidence.repository.linkMode, 'local-only');
+  assert.equal(Object.hasOwn(evidence.repository, 'href'), false);
+  assert.equal(Object.hasOwn(source, 'href'), false);
+  assert.deepEqual({ id: source.id, role: source.role, symbol: source.symbol, symbolLocated: source.symbolLocated }, {
+    id: 'route-entry',
+    role: 'definition',
+    symbol: 'route',
+    symbolLocated: true,
+  });
+  assert.deepEqual(internalStructurePayload(html).nodes.users.items[1].sourceRefs, ['route-entry']);
+  assert.equal(html.includes(data.root), false, 'artifact must not disclose the local repository root');
+});
+
+test('internal structure and source evidence safely round-trip special text', () => {
+  const data = fixture();
+  const symbol = 'route("</script> & \u2028")';
+  const label = 'Source </script> & "quoted"';
+  const summaryText = 'Summary </script><img data-archify-injected> & "quoted" \u2028 雪';
+  const itemText = 'Never trust <svg onload=alert(1)> & keep \'quotes\' \u2028 intact.';
+  fs.writeFileSync(path.join(data.root, 'src', 'special.js'), `// ${symbol}\nexport const safe = true;\n`);
+  git(data.root, 'add', 'src/special.js');
+  git(data.root, 'commit', '-m', 'special source text');
+  data.diagram.meta.repository.revision = git(data.root, 'rev-parse', 'HEAD');
+  attachRepositoryInternalStructure(data, {
+    id: 'special-source',
+    role: 'documentation',
+    symbol,
+    path: 'src/special.js',
+    line: 1,
+    end_line: 1,
+    label,
+  }, { summaryText, itemText });
+  const output = path.join(data.root, 'special-text.html');
+
+  const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const html = fs.readFileSync(output, 'utf8');
+  const evidence = evidencePayload(html);
+  const structure = internalStructurePayload(html);
+  assert.equal(evidence.nodes.users[0].symbol, symbol);
+  assert.equal(evidence.nodes.users[0].label, label);
+  assert.equal(evidence.nodes.users[0].symbolLocated, true);
+  assert.equal(structure.nodes.users.items[0].summary, summaryText);
+  assert.equal(structure.nodes.users.items[1].summary, itemText);
+  assert.doesNotMatch(html, /<img data-archify-injected>/);
+  assert.doesNotMatch(html, /<svg onload=alert\(1\)>/);
+});
+
 test('repository root accepts a different spelling of the same physical Git top-level', (t) => {
   const data = fixture();
   const alias = `${data.root}-alias`;
@@ -257,6 +501,21 @@ test('local-only preserves root, origin, commit, blob, path and line checks', ()
   const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
   assert.equal(result.status, 1);
   assert.match(result.stdout, /must have an origin/);
+});
+
+test('repository root identity uses Git position and still rejects a real subdirectory', () => {
+  const data = fixture();
+  const output = path.join(data.root, 'root-boundary.html');
+  fs.writeFileSync(output, 'trusted previous artifact');
+
+  const result = run([
+    'deliver', 'architecture', data.input, output,
+    '--repo-root', path.join(data.root, 'src'), '--json',
+  ]);
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.ok(JSON.parse(result.stdout).diagnostics.some(({ code }) =>
+    code === 'repository-evidence/root-not-top-level'), result.stdout);
+  assert.equal(fs.readFileSync(output, 'utf8'), 'trusted previous artifact');
 });
 
 test('unsupported web providers and invalid authored addresses fail without exposing credentials', () => {

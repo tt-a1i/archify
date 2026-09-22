@@ -321,7 +321,7 @@
           var hash = selectedKinds.length
             ? '#lens=' + selectedKinds.map(encodeURIComponent).join('~')
             : '';
-          history.replaceState(null, '', location.pathname + location.search + hash);
+          ArchifyAddress.replaceState(null, '', ArchifyAddress.location.pathname + ArchifyAddress.location.search + hash);
         } catch (_) {}
       }
       function updateTrigger() {
@@ -535,7 +535,7 @@
       }
       function copyLink() {
         if (!selectedKinds.length) return Promise.resolve(false);
-        var value = location.href.replace(/#.*$/, '') + '#lens=' + selectedKinds.map(encodeURIComponent).join('~');
+        var value = ArchifyAddress.share('#lens=' + selectedKinds.map(encodeURIComponent).join('~'));
         var copy = navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
@@ -547,7 +547,7 @@
       }
       function syncFromHash() {
         try {
-          var params = new URLSearchParams(location.hash.replace(/^#/, ''));
+          var params = new URLSearchParams(ArchifyAddress.location.hash.replace(/^#/, ''));
           var value = params.get('lens');
           if (!value) {
             if (selectedKinds.length) clear({ updateUrl: false, preserveView: true });

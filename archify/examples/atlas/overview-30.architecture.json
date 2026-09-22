@@ -1,0 +1,559 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "30 节点架构图",
+    "output": "overview-30.html",
+    "locale": "zh-CN",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "服务 01",
+      "sublabel": "overview / 01",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "服务 02",
+      "sublabel": "overview / 02",
+      "pos": [
+        205,
+        40
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node3",
+      "type": "backend",
+      "label": "服务 03",
+      "sublabel": "overview / 03",
+      "pos": [
+        370,
+        40
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node4",
+      "type": "backend",
+      "label": "服务 04",
+      "sublabel": "overview / 04",
+      "pos": [
+        535,
+        40
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node5",
+      "type": "backend",
+      "label": "服务 05",
+      "sublabel": "overview / 05",
+      "pos": [
+        700,
+        40
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node6",
+      "type": "backend",
+      "label": "服务 06",
+      "sublabel": "overview / 06",
+      "pos": [
+        865,
+        40
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node7",
+      "type": "backend",
+      "label": "服务 07",
+      "sublabel": "overview / 07",
+      "pos": [
+        40,
+        140
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node8",
+      "type": "backend",
+      "label": "服务 08",
+      "sublabel": "overview / 08",
+      "pos": [
+        205,
+        140
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node9",
+      "type": "backend",
+      "label": "服务 09",
+      "sublabel": "overview / 09",
+      "pos": [
+        370,
+        140
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node10",
+      "type": "backend",
+      "label": "服务 10",
+      "sublabel": "overview / 10",
+      "pos": [
+        535,
+        140
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node11",
+      "type": "backend",
+      "label": "服务 11",
+      "sublabel": "overview / 11",
+      "pos": [
+        700,
+        140
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node12",
+      "type": "backend",
+      "label": "服务 12",
+      "sublabel": "overview / 12",
+      "pos": [
+        865,
+        140
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node13",
+      "type": "backend",
+      "label": "服务 13",
+      "sublabel": "overview / 13",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node14",
+      "type": "backend",
+      "label": "服务 14",
+      "sublabel": "overview / 14",
+      "pos": [
+        205,
+        240
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node15",
+      "type": "backend",
+      "label": "服务 15",
+      "sublabel": "overview / 15",
+      "pos": [
+        370,
+        240
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node16",
+      "type": "backend",
+      "label": "服务 16",
+      "sublabel": "overview / 16",
+      "pos": [
+        535,
+        240
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node17",
+      "type": "backend",
+      "label": "服务 17",
+      "sublabel": "overview / 17",
+      "pos": [
+        700,
+        240
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node18",
+      "type": "backend",
+      "label": "服务 18",
+      "sublabel": "overview / 18",
+      "pos": [
+        865,
+        240
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node19",
+      "type": "backend",
+      "label": "服务 19",
+      "sublabel": "overview / 19",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node20",
+      "type": "backend",
+      "label": "服务 20",
+      "sublabel": "overview / 20",
+      "pos": [
+        205,
+        340
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node21",
+      "type": "backend",
+      "label": "服务 21",
+      "sublabel": "overview / 21",
+      "pos": [
+        370,
+        340
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node22",
+      "type": "backend",
+      "label": "服务 22",
+      "sublabel": "overview / 22",
+      "pos": [
+        535,
+        340
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node23",
+      "type": "backend",
+      "label": "服务 23",
+      "sublabel": "overview / 23",
+      "pos": [
+        700,
+        340
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node24",
+      "type": "backend",
+      "label": "服务 24",
+      "sublabel": "overview / 24",
+      "pos": [
+        865,
+        340
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node25",
+      "type": "backend",
+      "label": "服务 25",
+      "sublabel": "overview / 25",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node26",
+      "type": "backend",
+      "label": "服务 26",
+      "sublabel": "overview / 26",
+      "pos": [
+        205,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node27",
+      "type": "backend",
+      "label": "服务 27",
+      "sublabel": "overview / 27",
+      "pos": [
+        370,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node28",
+      "type": "backend",
+      "label": "服务 28",
+      "sublabel": "overview / 28",
+      "pos": [
+        535,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node29",
+      "type": "backend",
+      "label": "服务 29",
+      "sublabel": "overview / 29",
+      "pos": [
+        700,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "node30",
+      "type": "backend",
+      "label": "服务 30",
+      "sublabel": "overview / 30",
+      "pos": [
+        865,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "relation1",
+      "from": "node1",
+      "to": "node2"
+    },
+    {
+      "id": "relation2",
+      "from": "node2",
+      "to": "node3"
+    },
+    {
+      "id": "relation3",
+      "from": "node3",
+      "to": "node4"
+    },
+    {
+      "id": "relation4",
+      "from": "node4",
+      "to": "node5"
+    },
+    {
+      "id": "relation5",
+      "from": "node5",
+      "to": "node6"
+    },
+    {
+      "id": "relation7",
+      "from": "node7",
+      "to": "node8"
+    },
+    {
+      "id": "relation8",
+      "from": "node8",
+      "to": "node9"
+    },
+    {
+      "id": "relation9",
+      "from": "node9",
+      "to": "node10"
+    },
+    {
+      "id": "relation10",
+      "from": "node10",
+      "to": "node11"
+    },
+    {
+      "id": "relation11",
+      "from": "node11",
+      "to": "node12"
+    },
+    {
+      "id": "relation13",
+      "from": "node13",
+      "to": "node14"
+    },
+    {
+      "id": "relation14",
+      "from": "node14",
+      "to": "node15"
+    },
+    {
+      "id": "relation15",
+      "from": "node15",
+      "to": "node16"
+    },
+    {
+      "id": "relation16",
+      "from": "node16",
+      "to": "node17"
+    },
+    {
+      "id": "relation17",
+      "from": "node17",
+      "to": "node18"
+    },
+    {
+      "id": "relation19",
+      "from": "node19",
+      "to": "node20"
+    },
+    {
+      "id": "relation20",
+      "from": "node20",
+      "to": "node21"
+    },
+    {
+      "id": "relation21",
+      "from": "node21",
+      "to": "node22"
+    },
+    {
+      "id": "relation22",
+      "from": "node22",
+      "to": "node23"
+    },
+    {
+      "id": "relation23",
+      "from": "node23",
+      "to": "node24"
+    },
+    {
+      "id": "relation25",
+      "from": "node25",
+      "to": "node26"
+    },
+    {
+      "id": "relation26",
+      "from": "node26",
+      "to": "node27"
+    },
+    {
+      "id": "relation27",
+      "from": "node27",
+      "to": "node28"
+    },
+    {
+      "id": "relation28",
+      "from": "node28",
+      "to": "node29"
+    },
+    {
+      "id": "relation29",
+      "from": "node29",
+      "to": "node30"
+    }
+  ]
+}

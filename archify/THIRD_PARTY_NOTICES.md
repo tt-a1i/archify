@@ -61,6 +61,15 @@ and is distributed under the SIL Open Font License 1.1. The complete license
 text is preserved in `assets/JetBrainsMono-OFL.txt` in the packaged Skill and
 in the font CSS carried by standalone HTML and SVG exports.
 
+## fflate
+
+Architecture Atlas artifacts embed the browser build of
+[fflate 0.8.2](https://github.com/101arrowz/fflate/tree/v0.8.2) as an offline
+gzip fallback when the browser does not provide native decompression. fflate is
+Copyright (c) 2023 Arjun Barrett and is distributed under the MIT License. The
+complete license text is preserved in `assets/vendor/fflate-MIT.txt` and in the
+fallback source embedded in generated Atlas HTML.
+
 ## No additional rights granted
 
 Brand names, logos, and trademarks remain the property of their respective

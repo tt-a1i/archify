@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -52,6 +53,71 @@ function runExpectFailure(args, options = {}) {
   });
   if (result.status === 0) throw new Error(`archify ${args.join(' ')} unexpectedly passed`);
   return result.stdout;
+}
+
+function runGit(repository, args) {
+  const result = spawnSync('git', ['-C', repository, ...args], {
+    encoding: 'utf8',
+  });
+  if (result.status !== 0) {
+    throw new Error([
+      `git ${args.join(' ')} failed with ${result.status}`,
+      result.stdout,
+      result.stderr,
+    ].filter(Boolean).join('\n'));
+  }
+  return result.stdout.trim();
+}
+
+function sha256(value) {
+  return createHash('sha256').update(value).digest('hex');
+}
+
+function internalStructurePayload(html) {
+  const matches = [...html.matchAll(
+    /<script id="archify-internal-structure-data" type="application\/json">([\s\S]*?)<\/script>/g,
+  )];
+  if (matches.length !== 1) {
+    throw new Error(`packaged Architecture must contain one internal structure payload, found ${matches.length}`);
+  }
+  const body = matches[0][1];
+  let chunks;
+  let data;
+  try {
+    chunks = JSON.parse(body);
+    if (!Array.isArray(chunks) || chunks.some((chunk) => typeof chunk !== 'string')) {
+      throw new Error('outer payload is not a string-chunk array');
+    }
+    data = JSON.parse(chunks.join(''));
+  } catch (error) {
+    throw new Error(`packaged internal structure payload is not decodable: ${error.message}`);
+  }
+  if (data?.schemaVersion !== 1 || !data.nodes || Array.isArray(data.nodes)
+    || typeof data.nodes !== 'object') {
+    throw new Error('packaged internal structure payload has an invalid envelope');
+  }
+  return { body, data };
+}
+
+function expectedInternalStructureReceipt(payload) {
+  const structures = Object.values(payload.data.nodes);
+  return {
+    schemaVersion: 1,
+    nodeCount: structures.length,
+    itemCount: structures.reduce((count, structure) => count + structure.items.length, 0),
+    relationCount: structures.reduce((count, structure) => count + structure.relations.length, 0),
+    sourceCount: structures.reduce((count, structure) => count + structure.sources.length, 0),
+    bytes: Buffer.byteLength(payload.body),
+    sha256: sha256(payload.body),
+  };
+}
+
+function requireInternalStructureReceipt(actual, expected, context) {
+  for (const field of ['schemaVersion', 'nodeCount', 'itemCount', 'relationCount', 'sourceCount', 'bytes', 'sha256']) {
+    if (actual?.[field] !== expected[field]) {
+      throw new Error(`${context} internal structure receipt has invalid ${field}`);
+    }
+  }
 }
 
 try {
@@ -291,6 +357,146 @@ try {
   const deployment = path.join(scratch, 'deployment.html');
   run(['render', 'architecture', path.join(skillRoot, 'examples', fixtures[0][1]), deployment]);
   run(['check', deployment]);
+
+  const structureRepository = path.join(scratch, 'structure-repository');
+  fs.mkdirSync(path.join(structureRepository, 'src'), { recursive: true });
+  fs.writeFileSync(path.join(structureRepository, 'src', 'handler.js'), [
+    'export function registerHandler(input) {',
+    '  return input;',
+    '}',
+    '',
+  ].join('\n'));
+  runGit(structureRepository, ['init', '--quiet']);
+  runGit(structureRepository, ['config', 'user.name', 'Archify Package Smoke']);
+  runGit(structureRepository, ['config', 'user.email', 'archify@example.test']);
+  runGit(structureRepository, ['config', 'commit.gpgSign', 'false']);
+  const structureRepositoryUrl = 'https://github.com/example/archify-package-structure.git';
+  runGit(structureRepository, ['remote', 'add', 'origin', structureRepositoryUrl]);
+  runGit(structureRepository, ['add', 'src/handler.js']);
+  runGit(structureRepository, ['commit', '--quiet', '-m', 'internal structure fixture']);
+  const structureRevision = runGit(structureRepository, ['rev-parse', 'HEAD']);
+  if (!/^[a-f0-9]{40}$/.test(structureRevision)) {
+    throw new Error('package internal structure fixture did not produce a fixed Git revision');
+  }
+
+  const structureSentinel = 'package-structure-only-sentinel';
+  const structureDiagram = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: {
+      title: 'Package Internal Structure',
+      output: 'package-internal-structure.html',
+      repository: {
+        url: structureRepositoryUrl,
+        revision: structureRevision,
+        link_mode: 'local-only',
+      },
+    },
+    components: [{
+      id: 'handler',
+      type: 'backend',
+      label: 'Request Handler',
+      pos: [120, 120],
+      size: [180, 72],
+      internal_structure: {
+        sources: [{
+          id: 'handler-definition',
+          role: 'definition',
+          path: 'src/handler.js',
+          line: 1,
+          end_line: 3,
+          symbol: 'registerHandler',
+        }],
+        items: [
+          { id: 'src', domain: 'code', kind: 'directory', label: 'src', summary: structureSentinel },
+          { id: 'handler-file', domain: 'code', kind: 'file', label: 'handler.js', parent: 'src', summary: 'Request handler implementation.', source_refs: ['handler-definition'] },
+          { id: 'register-handler', domain: 'code', kind: 'function', label: 'registerHandler', parent: 'handler-file', signature: 'registerHandler(input)', summary: 'Accepts one input and returns it.', source_refs: ['handler-definition'] },
+        ],
+        relations: [],
+      },
+    }],
+  };
+  const structureInput = path.join(structureRepository, 'structure.architecture.json');
+  fs.writeFileSync(structureInput, `${JSON.stringify(structureDiagram, null, 2)}\n`);
+  const structureFirstOutput = path.join(scratch, 'structure-first.html');
+  const structureSecondOutput = path.join(scratch, 'structure-second.html');
+  const structureFirstReceipt = JSON.parse(run([
+    'deliver', 'architecture', structureInput, structureFirstOutput,
+    '--repo-root', structureRepository, '--json',
+  ]));
+  const structureSecondReceipt = JSON.parse(run([
+    'deliver', 'architecture', structureInput, structureSecondOutput,
+    '--repo-root', structureRepository, '--json',
+  ]));
+  const structureFirstHtml = fs.readFileSync(structureFirstOutput, 'utf8');
+  const structureSecondHtml = fs.readFileSync(structureSecondOutput, 'utf8');
+  if (sha256(structureFirstHtml) !== sha256(structureSecondHtml)) {
+    throw new Error('packaged internal structure delivery is not byte-deterministic');
+  }
+  const structurePayload = internalStructurePayload(structureFirstHtml);
+  const structureNode = structurePayload.data.nodes.handler;
+  if (structureNode?.items?.[0]?.summary !== structureSentinel
+    || structureNode?.items?.[2]?.id !== 'register-handler') {
+    throw new Error('packaged internal structure payload did not preserve the authored node structure');
+  }
+  const structureReceipt = expectedInternalStructureReceipt(structurePayload);
+  requireInternalStructureReceipt(structureFirstReceipt.internalStructure, structureReceipt, 'first delivery');
+  requireInternalStructureReceipt(structureSecondReceipt.internalStructure, structureReceipt, 'second delivery');
+  if (structureFirstReceipt.evidence?.revision !== structureRevision
+    || structureFirstReceipt.evidence?.references !== 1) {
+    throw new Error('packaged internal structure delivery omitted its fixed source evidence receipt');
+  }
+  const canonicalSvg = structureFirstHtml.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
+  if (!canonicalSvg || canonicalSvg.includes(structureSentinel)
+    || canonicalSvg.includes('register-handler')) {
+    throw new Error('packaged internal structure content leaked into the canonical SVG');
+  }
+
+  const structureAtlasInput = path.join(structureRepository, 'structure.atlas.json');
+  fs.writeFileSync(structureAtlasInput, `${JSON.stringify({
+    atlas_version: 1,
+    entry: 'structure',
+    meta: { title: 'Package Internal Structure Atlas' },
+    diagrams: { structure: { source: 'structure.architecture.json' } },
+  }, null, 2)}\n`);
+  const structureAtlasFirstOutput = path.join(scratch, 'structure-atlas-first.html');
+  const structureAtlasSecondOutput = path.join(scratch, 'structure-atlas-second.html');
+  const structureAtlasFirstReceipt = JSON.parse(run([
+    'deliver', 'atlas', structureAtlasInput, structureAtlasFirstOutput,
+    '--repo-root', structureRepository, '--json',
+  ]));
+  run([
+    'deliver', 'atlas', structureAtlasInput, structureAtlasSecondOutput,
+    '--repo-root', structureRepository, '--json',
+  ]);
+  const structureAtlasFirstHtml = fs.readFileSync(structureAtlasFirstOutput, 'utf8');
+  const structureAtlasSecondHtml = fs.readFileSync(structureAtlasSecondOutput, 'utf8');
+  if (sha256(structureAtlasFirstHtml) !== sha256(structureAtlasSecondHtml)) {
+    throw new Error('packaged Atlas internal structure delivery is not byte-deterministic');
+  }
+  requireInternalStructureReceipt(
+    structureAtlasFirstReceipt.members?.structure?.internalStructure,
+    structureReceipt,
+    'first Atlas member',
+  );
+  const invalidStructureDiagram = JSON.parse(JSON.stringify(structureDiagram));
+  invalidStructureDiagram.components[0].internal_structure.sources[0].symbol = 'missingHandler';
+  const invalidStructureInput = path.join(structureRepository, 'invalid-structure.architecture.json');
+  const preservedStructureOutput = path.join(scratch, 'preserved-structure.html');
+  const preservedStructureContents = 'trusted previous package artifact\n';
+  fs.writeFileSync(invalidStructureInput, `${JSON.stringify(invalidStructureDiagram, null, 2)}\n`);
+  fs.writeFileSync(preservedStructureOutput, preservedStructureContents);
+  const structureFailure = JSON.parse(runExpectFailure([
+    'deliver', 'architecture', invalidStructureInput, preservedStructureOutput,
+    '--repo-root', structureRepository, '--json',
+  ]));
+  if (structureFailure.ok
+    || !structureFailure.diagnostics?.some((entry) => entry.code === 'repository-evidence/symbol-missing')) {
+    throw new Error('packaged internal structure delivery did not reject invalid pinned symbol evidence');
+  }
+  if (fs.readFileSync(preservedStructureOutput, 'utf8') !== preservedStructureContents) {
+    throw new Error('failed packaged internal structure delivery replaced the previous artifact');
+  }
 
   const compareReceipt = JSON.parse(run([
     'compare', 'architecture',

@@ -5,19 +5,259 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="archify 2.17.0-dev.1">
   <title>[PROJECT NAME] Architecture Diagram</title>
+  <link rel="icon" href="data:,">
+  <!-- ARCHIFY:ATLAS_CONTEXT -->
   <script>
+        // Standalone viewers use their document address. Atlas members operate on
+    // a logical address; only the parent may write browser history.
+    window.ArchifyAddress = (function () {
+      var data = document.getElementById('archify-atlas-context');
+      var context = data ? JSON.parse(data.textContent) : null;
+      var pending = [];
+      var session = null;
+      var logical = null;
+      var restoring = Boolean(context);
+      var revoked = false;
+      var activated = false;
+      var prepared = false;
+      var preparing = false;
+      var preparation = 0;
+      var reading = null;
+      var connected = false;
+      var paintWaiters = new Map();
+      var scrollFrame = null;
+      if (context) document.documentElement.setAttribute('data-atlas-member', 'true');
+      function active() { return !context || (!revoked && Boolean(session) && activated); }
+      function send(type, payload) {
+        if (!session || revoked || (type !== 'ready' && type !== 'error' && (!active() || restoring))) return;
+        parent.postMessage(Object.assign({ type: type, archifyAtlas: 1,
+          sessionId: session.sessionId, entryId: session.entryId, transaction: session.transaction
+        }, payload || {}), '*');
+      }
+      function run(callback) {
+        if (revoked) return;
+        if (!context || session) callback();
+        else pending.push(callback);
+      }
+      function replaceState(state, unused, url) {
+        if (!context) { history.replaceState(state, unused, url); return; }
+        if (!active() || restoring) return;
+        logical = new URL(url, logical.href);
+        logical.hash = qualify(logical.hash);
+        send('state', { href: logical.href });
+      }
+      function qualify(hash) {
+        var params = new URLSearchParams(hash.replace(/^#/, ''));
+        params.set('diagram', context.diagram);
+        return '#' + params.toString();
+      }
+      function share(hash) {
+        var url = new URL(context ? logical.href : location.href);
+        url.hash = context ? qualify(hash) : hash;
+        return url.href;
+      }
+      function snapshot() {
+        if (restoring || !context || !active() || !window.Archify) return null;
+        var result = { camera: window.Archify.view.snapshot(), scrollX: scrollX, scrollY: scrollY };
+        var structure = window.Archify.internalStructure;
+        if (structure && typeof structure.snapshot === 'function') {
+          var structureReading = structure.snapshot();
+          if (structureReading) result.structure = structureReading;
+        }
+        return result;
+      }
+      function requestedSurface() {
+        return logical && new URLSearchParams(logical.hash.replace(/^#/, '')).get('inspect') === 'structure' ? 'structure' : 'graph';
+      }
+      function surfaceReady() {
+        var structure = window.Archify && window.Archify.internalStructure;
+        return structure && typeof structure.surface === 'function' ? structure.surface() === requestedSurface() : requestedSurface() === 'graph';
+      }
+      function nextPaint() {
+        if (revoked) return Promise.resolve();
+        return new Promise(function (resolve) {
+          var id = requestAnimationFrame(function () { paintWaiters.delete(id); resolve(); });
+          paintWaiters.set(id, resolve);
+        });
+      }
+      function cancelPaints() {
+        paintWaiters.forEach(function (resolve, id) {
+          if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(id);
+          resolve();
+        });
+        paintWaiters.clear();
+      }
+      function stableLayout() {
+        return Promise.resolve(document.fonts && document.fonts.ready).then(function () {
+          return window.Archify.readerLayout.whenStable();
+        }).then(function () {
+          return window.Archify.viewerChromeLayout.whenStable();
+        }).then(function () {
+          return window.Archify.readerLayout.whenStable();
+        });
+      }
+      function prepare(options) {
+        if (!context || revoked || !session) return Promise.resolve(false);
+        options = options || {};
+        var version = ++preparation;
+        cancelPaints();
+        prepared = false;
+        restoring = true;
+        if (Object.prototype.hasOwnProperty.call(options, 'snapshot')) reading = options.snapshot;
+        if (options.href) {
+          logical = new URL(options.href, logical.href);
+          logical.hash = qualify(logical.hash);
+        }
+        function current() { return !revoked && Boolean(session) && preparation === version; }
+        var surfaceTask;
+        try {
+          var params = logical.searchParams;
+          var api = window.Archify;
+          if (api.theme && api.theme.apply && /^(light|dark)$/.test(params.get('theme'))) api.theme.apply(params.get('theme'));
+          if (api.preset && api.preset.apply && params.get('preset')) api.preset.apply(params.get('preset'));
+          if (api.presentation && api.presentation.active() !== (params.get('present') === '1')) {
+            if (params.get('present') === '1') api.presentation.enter();
+            else api.presentation.exit();
+          }
+          if (api.motionGovernor && /^(live|still)$/.test(options.motion)) api.motionGovernor.setMode(options.motion, { persist: false });
+          if (api.internalStructure && typeof api.internalStructure.syncAddress === 'function') {
+            surfaceTask = api.internalStructure.syncAddress({ history: false, focus: false });
+          } else if (requestedSurface() === 'structure') {
+            throw new Error(api.locale === 'zh-CN' ? '此查看器无法显示内部结构。' : 'This viewer cannot display internal structure.');
+          }
+        } catch (error) { return Promise.reject(error); }
+        return Promise.resolve(surfaceTask).then(function () {
+          if (!current()) return false;
+          return stableLayout();
+        }).then(function () {
+          if (!current()) return false;
+          return nextPaint().then(nextPaint);
+        }).then(function () {
+          if (!current()) return false;
+          if (reading && window.Archify.view.restore) window.Archify.view.restore(reading.camera);
+          if (reading) window.scrollTo(reading.scrollX || 0, reading.scrollY || 0);
+          var structure = window.Archify.internalStructure;
+          if (reading && reading.structure && structure && typeof structure.restore === 'function') {
+            return structure.restore(reading.structure, { focus: false });
+          }
+        }).then(function () {
+          if (!current()) return false;
+          // Legacy active initialization retains its established pause behavior.
+          // Staging is suspended by the Motion Governor without writing a reader preference.
+          if (activated) window.Archify.motionGovernor.pause();
+          restoring = false;
+          if (!reading && requestedSurface() === 'graph') window.Archify.view.sync({ initial: true, instant: true });
+          return stableLayout().then(nextPaint);
+        }).then(function () {
+          if (!current()) return false;
+          if (!surfaceReady()) throw new Error(window.Archify.locale === 'zh-CN' ? '请求的阅读内容尚未就绪。' : 'The requested reading surface is not ready.');
+          prepared = true;
+          return true;
+        });
+      }
+      function canActivate(options) {
+        if (!context || !session || revoked || activated || !prepared || restoring) return false;
+        try { return surfaceReady() && (!options || !options.href || new URL(options.href, logical.href).href === logical.href); }
+        catch (_) { return false; }
+      }
+      function activate(options) {
+        if (!canActivate(options)) return false;
+        activated = true;
+        preparing = false;
+        window.dispatchEvent(new Event('archify:atlas-activate'));
+        window.ArchifyAddress.settled();
+        return true;
+      }
+      function navigate(href) {
+        if (!context || !active() || restoring) return false;
+        var url = new URL(href, logical.href);
+        var diagram = new URLSearchParams(url.hash.replace(/^#/, '')).get('diagram');
+        if (url.origin !== logical.origin || url.pathname !== logical.pathname || (diagram && diagram !== context.diagram)) return false;
+        url.hash = qualify(url.hash);
+        if (url.href === logical.href) return true;
+        logical = url;
+        window.dispatchEvent(new Event('hashchange'));
+        send('state', { href: logical.href });
+        window.ArchifyAddress.settled();
+        return true;
+      }
+      function onScroll() {
+        if (!active() || scrollFrame !== null) return;
+        scrollFrame = requestAnimationFrame(function () {
+          scrollFrame = null;
+          window.ArchifyAddress.settled();
+        });
+      }
+      function onMessage(event) {
+        var message = event.data;
+        if (event.source !== parent || !message || message.archifyAtlas !== 1 || revoked || session) return;
+        if (message.type !== 'init' || !message.sessionId || !message.entryId || !message.transaction) return;
+        session = message;
+        activated = message.active !== false;
+        try {
+          logical = new URL(message.href);
+          logical.hash = qualify(logical.hash);
+          pending.splice(0).forEach(function (callback) { callback(); });
+          prepare({ snapshot: message.snapshot || null, motion: message.motion }).then(function (ready) {
+            if (!ready) return;
+            send('ready', { surface: requestedSurface() });
+            window.ArchifyAddress.settled();
+          }).catch(function (error) { send('error', { message: error.message }); });
+        } catch (error) { send('error', { message: error.message }); }
+      }
+      function connect() {
+        if (!context || revoked || connected) return;
+        connected = true;
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('message', onMessage);
+        parent.postMessage({ archifyAtlas: 1, type: 'bridge-ready', diagram: context.diagram }, '*');
+      }
+      function revoke() {
+        if (!context || revoked) return;
+        revoked = true; restoring = true; session = null; activated = false; prepared = false;
+        preparation++;
+        pending.length = 0;
+        cancelPaints();
+        if (scrollFrame !== null && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(scrollFrame);
+        scrollFrame = null;
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('message', onMessage);
+        window.dispatchEvent(new Event('archify:atlas-revoke'));
+      }
+      return {
+        get location() { return context ? (logical || new URL('about:blank')) : location; },
+        get context() { return context; },
+        get restoring() { return restoring; },
+        get active() { return active(); },
+        get exportAllowed() { return active() && !preparing; },
+        preference: function (name, value) {
+          if (!context || restoring || !active()) return;
+          logical.searchParams.set(name, value);
+          send('state', { href: logical.href });
+        },
+        run: run, connect: connect, revoke: revoke, prepare: prepare, canActivate: canActivate, activate: activate, navigate: navigate,
+        setPreparing: function (value) { preparing = Boolean(value); },
+        replaceState: replaceState, share: share, send: send, snapshot: snapshot,
+        settled: function () {
+          var reading = snapshot();
+          if (reading) send('snapshot', { snapshot: reading, href: logical.href });
+        }
+      };
+    })();
+
+    ArchifyAddress.run(function () {
     // Resolve the theme before first paint so light-preference users don't
     // see a dark flash. The toolbar script below re-applies with UI state.
     (function () {
       try {
         var theme = null;
         try {
-          var param = new URLSearchParams(window.location.search).get('theme');
+          var param = new URLSearchParams(ArchifyAddress.location.search).get('theme');
           if (param === 'light' || param === 'dark') theme = param;
-          if (new URLSearchParams(window.location.search).get('embed') === '1') {
+          if (new URLSearchParams(ArchifyAddress.location.search).get('embed') === '1') {
             document.documentElement.setAttribute('data-embed', 'true');
           }
-          if (new URLSearchParams(window.location.search).get('present') === '1') {
+          if (new URLSearchParams(ArchifyAddress.location.search).get('present') === '1') {
             document.documentElement.setAttribute('data-present', 'true');
           }
         } catch (_) {}
@@ -30,6 +270,7 @@
         document.documentElement.setAttribute('data-theme', theme);
       } catch (_) {}
     })();
+    });
   </script>
   <style id="archify-fonts">
 /*
@@ -475,6 +716,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    .atlas-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+    .atlas-actions button { font: inherit; font-size: 0.75rem; padding: 0.3rem 0.55rem; border-radius: 0.4rem; border: 1px solid var(--toolbar-border); background: var(--toolbar-bg); color: var(--toolbar-text); cursor: pointer; }
+    .atlas-actions button:focus-visible { outline: 2px solid var(--frontend-stroke); outline-offset: 2px; }
 
     body {
       font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace;
@@ -3046,6 +3290,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       html[data-nav-stage-rail="true"] .cards { margin-top: 0.375rem; }
     }
 
+    @media (min-width: 768px) and (max-height: 920px) {
+      html[data-atlas-member="true"] body { padding-block: 0.25rem; }
+      html[data-atlas-member="true"] .card { padding-block: 0.75rem; }
+    }
+
     html[data-preset="blueprint"] .card {
       position: relative;
       border-color: var(--panel-border);
@@ -4063,7 +4312,27 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
     }
 
-    @media (max-width: 420px) {
+    @media (max-width: 440px) {
+      .toolbar {
+        width: 100%;
+        gap: 0.125rem;
+      }
+      .toolbar button,
+      .toolbar #btn-preset,
+      .toolbar #btn-motion {
+        min-width: 2.75rem;
+        padding-right: 0.58rem;
+        padding-left: 0.58rem;
+        justify-content: center;
+      }
+      .toolbar #btn-export {
+        padding-right: 0.42rem;
+        padding-left: 0.42rem;
+      }
+      #theme-label,
+      #preset-label,
+      #motion-label,
+      #present-label { display: none; }
       .export-menu-section { grid-template-columns: 1fr; }
       .export-menu-heading,
       .toolbar .export-menu button[data-format="share-card"],
@@ -4079,10 +4348,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
 
     @media (max-width: 360px) {
-      .toolbar { gap: 0.25rem; }
-      .toolbar button { padding-right: 0.58rem; padding-left: 0.58rem; }
-      .toolbar #btn-motion { min-width: 4.4rem; padding-right: 0.58rem; padding-left: 0.58rem; }
-      #theme-label, #preset-label, #present-label { display: none; }
       .guided-view-handoff { max-width: 6.5rem; }
     }
 
@@ -5125,6 +5390,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
     <!-- ARCHIFY:GUIDED_VIEWS_DATA -->
     <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->
+    <!-- ARCHIFY:INTERNAL_STRUCTURE_DATA -->
     <!-- ARCHIFY:I18N_DATA -->
     <div class="guided-views no-print" id="guided-views" hidden aria-label="{{i18n:viewer.guided.region}}">
       <button id="guided-view-prev" type="button" aria-label="{{i18n:viewer.guided.previous}}" title="{{i18n:viewer.guided.previous.title}}">&#8592;</button>
@@ -5546,13 +5812,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   </div>
 
   <script>
+    ArchifyAddress.run(function () {
     var Archify = {};
+    window.Archify = Archify;
     var archifyI18nData = (function () {
       var node = document.getElementById('archify-i18n-data');
       try { return JSON.parse(node ? node.textContent : '{}'); }
       catch (_) { return { locale: 'en', messages: {} }; }
     })();
     Archify.locale = archifyI18nData.locale || 'en';
+    // Preserve the classic Viewer helpers for existing integrations while
+    // initialization can be delayed until an Atlas session is assigned.
+    window.archifyI18nData = archifyI18nData;
+    window.viewerText = viewerText;
+    window.viewerCount = viewerCount;
+    window.viewerKindLabel = viewerKindLabel;
+    window.hasDrawableGeometry = hasDrawableGeometry;
 
     function viewerText(key, values) {
       var messages = archifyI18nData.messages || {};
@@ -5637,6 +5912,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (html.getAttribute('data-embed') === 'true') return false;
         if (PRESETS.indexOf(preset) < 0) return false;
         html.setAttribute('data-preset', preset);
+        ArchifyAddress.preference('preset', preset);
         svg.setAttribute('data-preset', preset);
         btn.setAttribute('data-preset-option', preset);
         label.textContent = LABELS[preset];
@@ -5650,9 +5926,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function cycle() { return apply(nextAfter(current())); }
 
-      function isOpen() { return menu.classList.contains('open'); }
+      function isOpen() { return window.ArchifyToolbarHost ? window.ArchifyToolbarHost.isOpen('preset') : menu.classList.contains('open'); }
       function open(focusLast) {
         if (html.getAttribute('data-embed') === 'true') return false;
+        if (window.ArchifyToolbarHost) return window.ArchifyToolbarHost.open('preset', focusLast);
         if (Archify.exportMenu && Archify.exportMenu.isOpen()) Archify.exportMenu.close(false);
         menu.classList.add('open');
         btn.setAttribute('aria-expanded', 'true');
@@ -5665,11 +5942,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function close(focusTrigger) {
         menu.classList.remove('open');
         btn.setAttribute('aria-expanded', 'false');
-        if (focusTrigger) btn.focus();
+        if (window.ArchifyToolbarHost) window.ArchifyToolbarHost.close('preset', focusTrigger);
+        else if (focusTrigger) btn.focus();
         return false;
       }
 
-      apply(authored);
+      apply(ArchifyAddress.context ? (new URLSearchParams(ArchifyAddress.location.search).get('preset') || authored) : authored);
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
         if (isOpen()) close(false);
@@ -5737,7 +6015,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function urlOverride() {
         // URL param wins (useful for deterministic screenshots / share links)
         try {
-          var param = new URLSearchParams(window.location.search).get('theme');
+          var param = new URLSearchParams(ArchifyAddress.location.search).get('theme');
           if (param === 'light' || param === 'dark') return param;
         } catch (_) {}
         return null;
@@ -5753,6 +6031,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       function apply(theme) {
         html.setAttribute('data-theme', theme);
+        ArchifyAddress.preference('theme', theme);
         label.textContent = viewerText(theme === 'dark' ? 'viewer.theme.dark' : 'viewer.theme.light');
         btn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
       }
@@ -5778,7 +6057,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         else if (media.addListener) media.addListener(onChange);
       } catch (_) {}
 
-      return { toggle: toggle };
+      return { toggle: toggle, apply: apply };
     })();
 
     /* ============================================================
@@ -6361,6 +6640,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function download(blob, filename) {
+        if (typeof ArchifyAddress !== 'undefined' && !ArchifyAddress.active) return;
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
         a.href = url;
@@ -6789,6 +7069,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return new Promise(function (resolve, reject) {
           var backgroundImage = new Image();
           backgroundImage.onload = function () {
+            if (typeof ArchifyAddress !== 'undefined' && !ArchifyAddress.active) {
+              URL.revokeObjectURL(sourceUrl);
+              reject(new DOMException('Atlas visit ended', 'AbortError'));
+              return;
+            }
             var canvas = document.createElement('canvas');
             canvas.width = Math.max(2, Math.round(data.width / 2) * 2);
             canvas.height = Math.max(2, Math.round(data.height / 2) * 2);
@@ -6811,10 +7096,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             function cleanup() {
               if (stopped) return;
               stopped = true;
+              window.removeEventListener('archify:atlas-revoke', cancelRecording);
               cancelAnimationFrame(raf);
               URL.revokeObjectURL(sourceUrl);
               stream.getTracks().forEach(function (track) { track.stop(); });
             }
+            function cancelRecording() {
+              cleanup();
+              if (recorder.state !== 'inactive') recorder.stop();
+              reject(new DOMException('Atlas visit ended', 'AbortError'));
+            }
+            window.addEventListener('archify:atlas-revoke', cancelRecording, { once: true });
             function draw(now) {
               var elapsed = Math.max(0, ((Number(now) || performance.now()) - startedAt) / 1000);
               drawMotionFrame(ctx, backgroundImage, motionScene, elapsed);
@@ -6884,10 +7176,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       // ---- Clipboard support ----------------------------------------------
+      function clipboardWindow() {
+        var host = window.ArchifyToolbarHost;
+        return host && typeof host.clipboardWindow === 'function' ? host.clipboardWindow() : window;
+      }
+
       function canCopyImage() {
-        return typeof ClipboardItem !== 'undefined' &&
-               navigator.clipboard &&
-               typeof navigator.clipboard.write === 'function';
+        // Capability detection also runs during candidate initialization, before
+        // the host grants activity. Do not permanently disable a supported item.
+        var owner = clipboardWindow() || window;
+        return owner && typeof owner.ClipboardItem !== 'undefined' &&
+               owner.navigator.clipboard &&
+               typeof owner.navigator.clipboard.write === 'function';
       }
 
       // ---- Raster format detection ----------------------------------------
@@ -6937,6 +7237,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function open(focusLast) {
+        if (window.ArchifyToolbarHost) return window.ArchifyToolbarHost.open('export', focusLast);
         if (Archify.preset && Archify.preset.isOpen()) Archify.preset.close(false);
         if (Archify.semanticLens && typeof Archify.semanticLens.clearPreview === 'function') Archify.semanticLens.clearPreview();
         if (Archify.semanticLens && Archify.semanticLens.isOpen()) Archify.semanticLens.close({ restoreFocus: false });
@@ -6951,9 +7252,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function close(focusTrigger) {
         menu.classList.remove('open');
         btn.setAttribute('aria-expanded', 'false');
-        if (focusTrigger) btn.focus();
+        if (window.ArchifyToolbarHost) window.ArchifyToolbarHost.close('export', focusTrigger);
+        else if (focusTrigger) btn.focus();
       }
-      function isOpen() { return menu.classList.contains('open'); }
+      function isOpen() { return window.ArchifyToolbarHost ? window.ArchifyToolbarHost.isOpen('export') : menu.classList.contains('open'); }
 
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -7029,6 +7331,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               download(blob, base + '.' + format);
             })
         ).catch(function (err) {
+          if (typeof ArchifyAddress !== 'undefined' && !ArchifyAddress.active) return;
           console.error(err);
           var technicalMessage = err && err.message ? err.message : format;
           var message = exportMessage(err);
@@ -7139,14 +7442,23 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function writePngToClipboard(blobPromise) {
+        // Atlas menus retain focus in their persistent outer document. Use its
+        // clipboard realm without moving keyboard focus into the hidden toolbar.
+        var owner = clipboardWindow();
+        if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) {
+          blobPromise = blobPromise.then(function (blob) {
+            if (!ArchifyAddress.active) throw new DOMException('Atlas visit ended', 'AbortError');
+            return blob;
+          });
+        }
         // WebKit requires ClipboardItem to be constructed synchronously inside
         // the user gesture. Chromium accepts the same pending Promise<Blob>;
         // engines that reject promise values fall back to an awaited Blob.
         try {
-          return navigator.clipboard.write([new ClipboardItem({ 'image/png': blobPromise })]);
+          return owner.navigator.clipboard.write([new owner.ClipboardItem({ 'image/png': blobPromise })]);
         } catch (_) {
           return blobPromise.then(function (blob) {
-            return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            return owner.navigator.clipboard.write([new owner.ClipboardItem({ 'image/png': blob })]);
           });
         }
       }
@@ -7165,6 +7477,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             toast(viewerText('viewer.export.copiedShare'));
           });
         }).catch(function (err) {
+          if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) {
+            if (!ArchifyAddress.active) return;
+            return blobPromise.then(function (blob) {
+              download(blob, diagramFilename() + '-share-card.png');
+              toast(viewerText('viewer.export.clipboardDownloadFallback'));
+            }).catch(function (fallbackError) {
+              if (ArchifyAddress.active) alert(viewerText('viewer.export.copyFailed', { message: exportMessage(fallbackError) }));
+            });
+          }
           console.error(err);
           var technicalMessage = err && err.message ? err.message : 'share-card';
           var message = exportMessage(err);
@@ -7185,6 +7506,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return writePngToClipboard(blobPromise).then(function () {
           toast(viewerText('viewer.export.copiedPng'));
         }).catch(function (err) {
+          if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) {
+            if (!ArchifyAddress.active) return;
+            return blobPromise.then(function (blob) {
+              download(blob, diagramFilename() + '.png');
+              toast(viewerText('viewer.export.clipboardDownloadFallback'));
+            }).catch(function (fallbackError) {
+              if (ArchifyAddress.active) alert(viewerText('viewer.export.copyFailed', { message: exportMessage(fallbackError) }));
+            });
+          }
           console.error(err);
           alert(viewerText('viewer.export.copyFailed', {
             message: exportMessage(err)
@@ -7209,6 +7539,31 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (formatBtn && !formatBtn.disabled) { runExport(formatBtn.dataset.format); }
       });
 
+      if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) {
+        var pendingExports = 0;
+        var trackAtlasExport = function (operation) {
+          return function () {
+            if (!ArchifyAddress.active || ArchifyAddress.exportAllowed === false) return Promise.resolve();
+            pendingExports++;
+            document.documentElement.setAttribute('data-atlas-export-busy', 'true');
+            var result;
+            try { result = operation.apply(this, arguments); }
+            catch (error) { result = Promise.reject(error); }
+            return Promise.resolve(result).finally(function () {
+              pendingExports--;
+              if (!pendingExports) {
+                document.documentElement.removeAttribute('data-atlas-export-busy');
+                ArchifyAddress.send('export-idle');
+              }
+            });
+          };
+        };
+        runExport = trackAtlasExport(runExport);
+        runRouteShareCard = trackAtlasExport(runRouteShareCard);
+        runReachShareCard = trackAtlasExport(runReachShareCard);
+        runCopy = trackAtlasExport(runCopy);
+        runCopyShareCard = trackAtlasExport(runCopyShareCard);
+      }
       Archify.motion = { canRecord: canRecordMotion, recordWebm: recordWebm };
       Archify.exportMenu = {
         open: open,
@@ -7222,13 +7577,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         syncReachShare: syncReachShareItem,
         copyShareCard: runCopyShareCard
       };
+      if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) {
+        // Gate public entry points, while admitted exports retain access to
+        // their internal steps after a navigation request starts waiting.
+        Archify.motion.recordWebm = trackAtlasExport(recordWebm);
+        Archify.exportMenu.shareCard = trackAtlasExport(rasterizeShareCard);
+      }
 
       // Auto-open on page load for demo/screenshot purposes: ?openExport=1
       // Wait for fonts (so the menu doesn't flash before typography lands)
       // and paint before opening. Fallback timeout for browsers without the
       // Font Loading API.
       try {
-        if (new URLSearchParams(window.location.search).get('openExport') === '1') {
+        if (new URLSearchParams(ArchifyAddress.location.search).get('openExport') === '1') {
           var openWhenReady = function () {
             requestAnimationFrame(function () { requestAnimationFrame(open); });
           };
@@ -7240,6 +7601,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
       } catch (_) {}
     })();
+
 
     /* ============================================================
        Motion Governor — one reader switch and one motion budget. Ambient
@@ -7303,6 +7665,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           if (readerPaused) localStorage.setItem(STORAGE_KEY, 'still');
           else localStorage.removeItem(STORAGE_KEY);
         } catch (_) {}
+        if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) {
+          ArchifyAddress.send('appearance', { motion: readerPaused ? 'still' : 'live' });
+        }
       }
       function reducedMotion() {
         return !!(motionQuery && motionQuery.matches);
@@ -7311,7 +7676,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return Object.keys(suspensions).length > 0;
       }
       function effectivePaused() {
-        return readerPaused || reducedMotion() || hasSuspension();
+        var inactiveAtlas = typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context && !ArchifyAddress.active;
+        return readerPaused || reducedMotion() || hasSuspension() || Boolean(inactiveAtlas);
       }
       function ownerLabel(value) {
         if (value === 'story') return viewerText('viewer.owner.story');
@@ -7456,6 +7822,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           toggle: function () { return false; },
           setMode: function () { return 'still'; },
           mode: function () { return 'still'; },
+          readerMode: function () { return 'still'; },
           claim: function () { return 0; },
           release: function () { return false; },
           suspend: function () { return function () { return false; }; },
@@ -7473,6 +7840,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         else if (typeof motionQuery.addListener === 'function') motionQuery.addListener(render);
       }
       document.addEventListener('visibilitychange', syncVisibility);
+      if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) {
+        window.addEventListener('archify:atlas-activate', render);
+        window.addEventListener('archify:atlas-revoke', render);
+      }
       if (document.documentElement.getAttribute('data-embed') !== 'true' && typeof MutationObserver !== 'undefined' && typeof Node !== 'undefined' && svg instanceof Node) {
         var ownerObserver = new MutationObserver(function () { publishOwner(); });
         ownerObserver.observe(svg, {
@@ -7498,6 +7869,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           return effectivePaused() ? 'still' : 'live';
         },
         mode: function () { return effectivePaused() ? 'still' : 'live'; },
+        readerMode: function () { return readerPaused ? 'still' : 'live'; },
         claim: claim,
         release: release,
         suspend: suspend,
@@ -7505,6 +7877,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         owner: function () { return owner; }
       };
     })();
+
 
     /* Verified repository evidence is emitted only after the renderer checks
        the authored GitHub revision, source blobs, and optional line ranges
@@ -7582,6 +7955,1285 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        Renderer IDs become deep-linkable semantic hooks without turning the
        standalone artifact into a canvas editor.
        ============================================================ */
+    function fallbackCopy(value) {
+      var field = document.createElement('textarea');
+      field.value = value;
+      field.setAttribute('readonly', '');
+      field.style.position = 'fixed';
+      field.style.opacity = '0';
+      document.body.appendChild(field);
+      field.select();
+      var copied = false;
+      try { copied = document.execCommand('copy'); } catch (_) {}
+      field.remove();
+      return copied;
+    }
+
+    Archify.internalStructure = (function () {
+      var html = document.documentElement;
+      var payload = readPayload();
+      var diagram = document.querySelector('.diagram-container');
+      var guided = document.querySelector('.guided-views');
+      var cards = document.querySelector('.cards');
+      var chip = document.getElementById('focus-chip');
+      var detail = document.getElementById('focus-detail');
+      var quicklook = null;
+      var structureRoot = null;
+      var structureActions = null;
+      var structureBody = null;
+      var structureTitle = null;
+      var structureSummary = null;
+      var structureModes = null;
+      var structureTree = null;
+      var structureDetail = null;
+      var structureFeedback = null;
+      var structureCopy = null;
+      var structureRelations = null;
+      var structureSourcesAction = null;
+      var currentSurface = 'graph';
+      var currentNodeId = null;
+      var currentSection = null;
+      var currentItemId = null;
+      var domainStates = Object.create(null);
+      var graphState = null;
+      var graphScrollY = 0;
+      var surfaceRevision = 0;
+      var surfaceReady = Promise.resolve(true);
+      var pendingOpen = null;
+      var pendingGraphInformation = null;
+      var pendingGraphSource = null;
+      var standaloneSaveFrame = null;
+      var standaloneSyncRevision = 0;
+      var connected = false;
+      var sectionKinds = ['code', 'state'];
+
+      function stateForNode(id) {
+        if (!own(domainStates, id)) {
+          domainStates[id] = {
+            code: { item: null, expanded: Object.create(null) },
+            state: { item: null, expanded: Object.create(null) }
+          };
+        }
+        return domainStates[id];
+      }
+
+      function readPayload() {
+        var data = document.getElementById('archify-internal-structure-data');
+        if (!data) return null;
+        try {
+          var chunks = JSON.parse(data.textContent || 'null');
+          var parsed = Array.isArray(chunks) ? JSON.parse(chunks.join('')) : chunks;
+          if (!parsed || parsed.schemaVersion !== 1 || !parsed.nodes ||
+              typeof parsed.nodes !== 'object' || Array.isArray(parsed.nodes)) return null;
+          return parsed;
+        } catch (_) { return null; }
+      }
+
+      function own(object, key) {
+        return Boolean(object && Object.prototype.hasOwnProperty.call(object, key));
+      }
+
+      function node(id) {
+        if (typeof id !== 'string' || !payload || !own(payload.nodes, id)) return null;
+        var value = payload.nodes[id];
+        return value && typeof value === 'object' ? value : null;
+      }
+
+      function structureNodes() {
+        return payload ? Object.keys(payload.nodes) : [];
+      }
+
+      function textElement(name, className, parent, value) {
+        var element = document.createElement(name);
+        if (className) element.className = className;
+        if (value != null) element.textContent = String(value);
+        if (parent) parent.appendChild(element);
+        return element;
+      }
+
+      function labelFor(id) {
+        var match = null;
+        Array.prototype.some.call(document.querySelectorAll('[data-node-id]'), function (candidate) {
+          if (candidate.getAttribute('data-node-id') !== id) return false;
+          match = candidate;
+          return true;
+        });
+        if (!match) return id || viewerText('viewer.internalStructure.overview');
+        return match.getAttribute('data-node-label') ||
+          (match.getAttribute('aria-label') || id).replace(/^Focus\s+/, '');
+      }
+
+      function diagramHasNode(id) {
+        var found = false;
+        Array.prototype.some.call(document.querySelectorAll('[data-node-id]'), function (candidate) {
+          if (candidate.getAttribute('data-node-id') !== id) return false;
+          found = true;
+          return true;
+        });
+        return found;
+      }
+
+      function sectionLabel(kind) {
+        return viewerText('viewer.internalStructure.section.' + kind);
+      }
+
+      function sourceFor(id, reference) {
+        var sources = Archify.sourceEvidence && typeof Archify.sourceEvidence.node === 'function'
+          ? Archify.sourceEvidence.node(id) : [];
+        for (var index = 0; index < sources.length; index += 1) {
+          if (sources[index] && sources[index].id === reference) return sources[index];
+        }
+        return null;
+      }
+
+      function sourceLocation(source) {
+        if (!source) return '';
+        var range = source.line
+          ? ':L' + source.line + (source.endLine && source.endLine !== source.line ? '-L' + source.endLine : '')
+          : '';
+        var location = (source.path || source.label || '') + range;
+        return source.symbol ? location + ' · ' + source.symbol : location;
+      }
+
+      function activateSource(id, reference) {
+        if (currentSurface === 'structure') {
+          pendingGraphSource = { id: id, reference: reference };
+          showNodeInformation('sources');
+          return true;
+        }
+        var sourceTab = document.getElementById('atlas-tab-sources');
+        if (sourceTab && typeof sourceTab.click === 'function') sourceTab.click();
+        var target = null;
+        Array.prototype.some.call(document.querySelectorAll('[data-source-id]'), function (candidate) {
+          if (candidate.getAttribute('data-source-id') !== reference) return false;
+          target = candidate;
+          return true;
+        });
+        if (!target) return false;
+        if (!target.hasAttribute('tabindex') && target.tagName !== 'A') target.tabIndex = -1;
+        target.scrollIntoView({ block: 'nearest' });
+        try { target.focus({ preventScroll: true }); }
+        catch (_) { try { target.focus(); } catch (_) {} }
+        return true;
+      }
+
+      function appendSourceAction(parent, id, reference) {
+        var source = sourceFor(id, reference);
+        if (!source) return null;
+        var roleLabel = source.role
+          ? viewerText('viewer.internalStructure.sourceRole.' + source.role)
+          : viewerText('viewer.internalStructure.evidenceLink');
+        var label = roleLabel + ' · ' + sourceLocation(source);
+        var action;
+        if (source.href) {
+          action = textElement('a', 'node-structure-source', parent, label);
+          action.href = source.href;
+          action.target = '_blank';
+          action.rel = 'noopener noreferrer';
+          action.referrerPolicy = 'no-referrer';
+        } else {
+          action = textElement('button', 'node-structure-source', parent, label);
+          action.type = 'button';
+          action.addEventListener('click', function () { activateSource(id, reference); });
+        }
+        action.setAttribute('data-structure-source-ref', reference);
+        return action;
+      }
+
+      function installStyles() {
+        if (document.querySelector('style[data-internal-structure-style]')) return;
+        var style = document.createElement('style');
+        style.setAttribute('data-internal-structure-style', '');
+        style.textContent = [
+          '.node-structure-quicklook[hidden],.node-internal-structure[hidden],.node-structure-body[hidden],.node-structure-actions button[hidden]{display:none!important}',
+          '.node-structure-quicklook{display:grid;gap:.55rem;margin-top:.7rem;padding-top:.72rem;border-top:1px solid var(--toolbar-border);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
+          '.node-structure-quicklook h3{margin:0;color:var(--text-muted);font-size:.62rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase}',
+          '.node-structure-entry-list{display:grid;gap:.45rem}.node-structure-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.1rem .55rem;width:100%;min-height:44px;padding:.55rem .62rem;border:1px solid var(--toolbar-border);border-radius:.65rem;background:color-mix(in srgb,var(--panel) 78%,transparent);color:var(--text);font:inherit;text-align:left;cursor:pointer}',
+          '.node-structure-entry:hover{border-color:color-mix(in srgb,var(--frontend-stroke) 55%,var(--toolbar-border));background:color-mix(in srgb,var(--panel) 62%,var(--frontend-fill))}.node-structure-entry strong{font-size:.72rem;line-height:1.4}.node-structure-entry small{grid-column:1;color:var(--text-muted);font-size:.61rem;line-height:1.45}.node-structure-entry-count{grid-column:2;grid-row:1/3;align-self:center;color:var(--text-muted);font-size:.61rem}',
+          '.node-structure-actions button,.node-structure-source{border:0;background:none;color:color-mix(in srgb,var(--frontend-stroke) 80%,var(--text));font:inherit;cursor:pointer;text-align:left}.node-structure-source{user-select:text;-webkit-user-select:text}',
+          'html[data-reader-surface="structure"] .guided-views,html[data-reader-surface="structure"] .diagram-container,html[data-reader-surface="structure"] .cards{display:none!important}',
+          '.node-internal-structure{box-sizing:border-box;width:100%;max-width:var(--archify-reader-width,1440px);margin:0 auto;padding:1.35rem 0 3rem;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
+          'html[data-atlas-layout="rail"] .node-internal-structure{margin-left:var(--atlas-reader-offset);margin-right:0}',
+          '.node-structure-workspace{min-width:0}.node-structure-document{width:min(100%,76rem);min-width:0;margin:0 auto}',
+          '.node-structure-actions{display:flex;flex-wrap:wrap;gap:.5rem 1.45rem;align-items:center;margin-bottom:1.2rem}.node-structure-actions button{min-height:44px;padding:.35rem 0;font-size:.78rem;font-weight:650}',
+          '.node-structure-lead{max-width:52rem;padding-bottom:1.2rem}.node-structure-eyebrow{margin:0 0 .35rem;color:color-mix(in srgb,var(--frontend-stroke) 82%,var(--text));font-size:.67rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}',
+          '.node-structure-title{margin:0;color:var(--text);font-size:clamp(1.55rem,3vw,2.45rem);line-height:1.15;letter-spacing:-.025em;overflow-wrap:anywhere}.node-structure-summary{margin:.75rem 0 0;color:var(--text-muted);font-size:.92rem;line-height:1.65}.node-structure-status{margin:.65rem 0 0;color:var(--security-stroke);font-size:.76rem;line-height:1.55}',
+          '.node-structure-modes{display:inline-flex;gap:.2rem;margin:.1rem 0 1rem;padding:.22rem;border:1px solid var(--toolbar-border);border-radius:.72rem;background:color-mix(in srgb,var(--panel) 76%,transparent)}.node-structure-mode{min-height:44px;padding:.42rem .8rem;border:0;border-radius:.52rem;background:transparent;color:var(--text-muted);font:650 .76rem/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer}.node-structure-mode[aria-selected="true"]{background:var(--panel);color:var(--text);box-shadow:0 1px 4px color-mix(in srgb,var(--text) 12%,transparent)}',
+          '.node-structure-body{display:grid;grid-template-columns:minmax(15rem,21rem) minmax(0,1fr);min-height:28rem;border:1px solid var(--toolbar-border);border-radius:1rem;background:color-mix(in srgb,var(--panel) 82%,transparent);overflow:hidden}',
+          '.node-structure-tree-panel{min-width:0;padding:1rem;border-right:1px solid var(--toolbar-border);background:color-mix(in srgb,var(--panel) 88%,transparent)}.node-structure-tree-heading,.node-structure-detail-label{margin:0 0 .7rem;color:var(--text-muted);font-size:.62rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase}',
+          '.node-structure-tree,.node-structure-tree-group{display:grid;gap:.12rem;margin:0;padding:0;list-style:none}.node-structure-tree-group{padding-left:1rem;border-left:1px solid color-mix(in srgb,var(--toolbar-border) 76%,transparent)}.node-structure-treeitem{display:grid;grid-template-columns:1rem minmax(0,1fr);gap:.35rem;align-items:center;width:100%;min-height:44px;padding:.35rem .45rem;border:0;border-radius:.48rem;background:transparent;color:var(--text-muted);font:inherit;text-align:left;cursor:pointer}.node-structure-treeitem::before{content:"";width:.38rem;height:.38rem;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(-45deg);opacity:.55}.node-structure-treeitem[aria-expanded="true"]::before{transform:rotate(45deg)}.node-structure-treeitem:not([aria-expanded])::before{border:0;border-radius:50%;background:currentColor;transform:none;opacity:.42}.node-structure-treeitem[aria-selected="true"]{background:color-mix(in srgb,var(--frontend-fill) 64%,var(--panel));color:var(--text);font-weight:680}',
+          '.node-structure-detail{display:grid;align-content:start;gap:1rem;min-width:0;padding:clamp(1rem,3vw,2rem)}.node-structure-item-heading{display:flex;flex-wrap:wrap;gap:.45rem .7rem;align-items:center}.node-structure-item-heading h3{margin:0;color:var(--text);font-size:1.35rem;line-height:1.25}.node-structure-kind{padding:.18rem .42rem;border:1px solid var(--toolbar-border);border-radius:999px;color:var(--text-muted);font-size:.62rem}.node-structure-item-summary{margin:0;color:var(--text-muted);font-size:.88rem;line-height:1.7}.node-structure-code{display:block;max-width:100%;padding:.62rem .72rem;border:1px solid var(--toolbar-border);border-radius:.55rem;background:color-mix(in srgb,var(--panel) 70%,transparent);color:var(--text);font:.76rem/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}',
+          '.node-structure-section-block{display:grid;gap:.5rem;padding-top:.85rem;border-top:1px solid var(--toolbar-border)}.node-structure-section-block h4{margin:0;color:var(--text-muted);font-size:.66rem;font-weight:750;letter-spacing:.06em;text-transform:uppercase}.node-structure-relations{display:grid;gap:.42rem;margin:0;padding:0;list-style:none}.node-structure-relation{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.18rem .55rem;padding:.55rem .62rem;border:1px solid var(--toolbar-border);border-radius:.55rem}.node-structure-relation-kind{color:color-mix(in srgb,var(--frontend-stroke) 82%,var(--text));font-size:.66rem;font-weight:750}.node-structure-relation strong{font-size:.76rem}.node-structure-relation small{grid-column:2;color:var(--text-muted);font-size:.66rem}',
+          '.node-structure-sources{display:flex;flex-wrap:wrap;gap:.35rem .75rem}.node-structure-source{display:inline-flex;align-items:center;min-height:44px;padding:.1rem 0;font-size:.69rem;line-height:1.45;text-decoration:none;overflow-wrap:anywhere}',
+          '.node-structure-entry:focus-visible,.node-structure-actions button:focus-visible,.node-structure-source:focus-visible,.node-structure-mode:focus-visible,.node-structure-treeitem:focus-visible,.node-structure-title:focus-visible{outline:2px solid var(--frontend-stroke);outline-offset:2px}',
+          '@media(max-width:1023px){.node-internal-structure{padding-top:1rem}.node-structure-body{grid-template-columns:minmax(0,1fr)}.node-structure-tree-panel{border-right:0;border-bottom:1px solid var(--toolbar-border)}.node-structure-tree{max-height:none}.node-structure-detail{min-height:18rem}}',
+          '@media(max-width:720px){.node-internal-structure{padding:1rem 0 2rem}.node-structure-title{font-size:1.55rem}.node-structure-summary{font-size:.86rem}.node-structure-body{border-radius:.75rem}}',
+          '@media print{.node-internal-structure{display:none!important}html[data-reader-surface="structure"] .diagram-container{display:block!important}}'
+        ].join('');
+        document.head.appendChild(style);
+      }
+
+      function sectionItems(structure, section) {
+        return Array.isArray(structure && structure.items) ? structure.items.filter(function (item) {
+          return item && item.domain === section;
+        }) : [];
+      }
+
+      function validSections(structure) {
+        return sectionKinds.filter(function (section) { return sectionItems(structure, section).length; })
+          .map(function (section) { return { kind: section, items: sectionItems(structure, section) }; });
+      }
+
+      function sectionHint(kind) {
+        return viewerText('viewer.internalStructure.section.' + kind + 'Hint');
+      }
+
+      function ensureQuicklook() {
+        if (quicklook || !detail || !payload || !structureNodes().length) return quicklook;
+        installStyles();
+        quicklook = textElement('section', 'node-structure-quicklook', null);
+        quicklook.id = 'focus-internal-structure';
+        quicklook.hidden = true;
+        quicklook.setAttribute('aria-labelledby', 'focus-internal-structure-heading');
+        var heading = textElement('h3', '', quicklook, viewerText('viewer.internalStructure.overview'));
+        heading.id = 'focus-internal-structure-heading';
+        var entries = textElement('div', 'node-structure-entry-list', quicklook);
+        entries.id = 'focus-internal-structure-entries';
+        var feedback = textElement('p', 'node-structure-status', quicklook);
+        feedback.id = 'focus-structure-feedback';
+        feedback.setAttribute('role', 'status');
+        detail.after(quicklook);
+        return quicklook;
+      }
+
+      function clearQuicklook() {
+        if (!quicklook) return;
+        quicklook.hidden = true;
+        var entries = document.getElementById('focus-internal-structure-entries');
+        var feedback = document.getElementById('focus-structure-feedback');
+        if (entries) entries.textContent = '';
+        if (feedback) feedback.textContent = '';
+      }
+
+      function renderQuicklook(id) {
+        var structure = node(id);
+        var root = ensureQuicklook();
+        if (!root || !structure) { clearQuicklook(); return false; }
+        var entries = document.getElementById('focus-internal-structure-entries');
+        var feedback = document.getElementById('focus-structure-feedback');
+        entries.textContent = '';
+        validSections(structure).forEach(function (section) {
+          var action = textElement('button', 'node-structure-entry', entries);
+          action.type = 'button';
+          action.id = 'focus-internal-structure-' + section.kind;
+          action.setAttribute('data-structure-entry', section.kind);
+          textElement('strong', '', action, sectionLabel(section.kind));
+          textElement('small', '', action, sectionHint(section.kind));
+          textElement('span', 'node-structure-entry-count', action,
+            viewerText('viewer.internalStructure.itemCount', { count: section.items.length }));
+          action.addEventListener('click', function () { open(id, { section: section.kind }); });
+        });
+        feedback.textContent = '';
+        root.hidden = !entries.children.length;
+        return !root.hidden;
+      }
+
+      function ensureStructureRoot() {
+        if (structureRoot) return structureRoot;
+        installStyles();
+        var shell = document.querySelector('.container');
+        if (!shell) return null;
+        structureRoot = textElement('main', 'node-internal-structure no-print', null);
+        structureRoot.id = 'node-internal-structure';
+        structureRoot.hidden = true;
+        structureRoot.inert = true;
+        structureRoot.setAttribute('inert', '');
+        structureRoot.setAttribute('aria-hidden', 'true');
+        var workspace = textElement('div', 'node-structure-workspace', structureRoot);
+        var structureDocument = textElement('div', 'node-structure-document', workspace);
+        structureActions = textElement('div', 'node-structure-actions', structureDocument);
+        var back = textElement('button', '', structureActions, viewerText('viewer.internalStructure.backToDiagram'));
+        back.id = 'node-structure-back';
+        back.type = 'button';
+        back.addEventListener('click', function () { close({ restoreFocus: true }); });
+        structureCopy = textElement('button', '', structureActions, viewerText('viewer.internalStructure.copyLink'));
+        structureCopy.id = 'node-structure-copy';
+        structureCopy.type = 'button';
+        structureCopy.addEventListener('click', copyLink);
+        structureRelations = textElement('button', '', structureActions, viewerText('viewer.passport.relations'));
+        structureRelations.id = 'node-structure-relations';
+        structureRelations.type = 'button';
+        structureRelations.addEventListener('click', function () { showNodeInformation('relationships'); });
+        structureSourcesAction = textElement('button', '', structureActions, viewerText('viewer.internalStructure.evidenceLink'));
+        structureSourcesAction.id = 'node-structure-sources';
+        structureSourcesAction.type = 'button';
+        structureSourcesAction.addEventListener('click', function () { showNodeInformation('sources'); });
+        var lead = textElement('header', 'node-structure-lead', structureDocument);
+        textElement('p', 'node-structure-eyebrow', lead, viewerText('viewer.internalStructure.overview'));
+        structureTitle = textElement('h2', 'node-structure-title', lead);
+        structureTitle.id = 'node-structure-title';
+        structureTitle.tabIndex = -1;
+        structureSummary = textElement('p', 'node-structure-summary', lead, viewerText('viewer.internalStructure.summary'));
+        structureFeedback = textElement('p', 'node-structure-status', lead);
+        structureFeedback.id = 'node-structure-feedback';
+        structureFeedback.setAttribute('role', 'status');
+        structureModes = textElement('div', 'node-structure-modes', structureDocument);
+        structureModes.setAttribute('role', 'tablist');
+        structureModes.setAttribute('aria-label', viewerText('viewer.internalStructure.overview'));
+        structureBody = textElement('div', 'node-structure-body', structureDocument);
+        structureBody.id = 'node-structure-body';
+        structureBody.setAttribute('role', 'tabpanel');
+        var treePanel = textElement('nav', 'node-structure-tree-panel', structureBody);
+        treePanel.setAttribute('aria-label', viewerText('viewer.internalStructure.tree'));
+        textElement('p', 'node-structure-tree-heading', treePanel, viewerText('viewer.internalStructure.tree'));
+        structureTree = textElement('div', '', treePanel);
+        structureTree.id = 'node-structure-tree';
+        structureDetail = textElement('article', 'node-structure-detail', structureBody);
+        structureDetail.id = 'node-structure-detail';
+        structureRoot.setAttribute('aria-labelledby', structureTitle.id);
+        shell.after(structureRoot);
+        return structureRoot;
+      }
+
+      function appendSources(parent, id, references) {
+        if (!Array.isArray(references) || !references.length) return;
+        var sources = textElement('div', 'node-structure-sources', parent);
+        references.forEach(function (reference) { appendSourceAction(sources, id, reference); });
+        if (!sources.children.length) sources.remove();
+      }
+
+      function structureHash(id, section, item) {
+        var current = new URLSearchParams(ArchifyAddress.location.hash.replace(/^#/, ''));
+        var next = new URLSearchParams();
+        if (current.get('diagram')) next.set('diagram', current.get('diagram'));
+        next.set('focus', id);
+        next.set('inspect', 'structure');
+        if (section) next.set('section', section);
+        if (item) next.set('item', item);
+        return '#' + next.toString();
+      }
+
+      function graphHash(id) {
+        var current = new URLSearchParams(ArchifyAddress.location.hash.replace(/^#/, ''));
+        var next = new URLSearchParams();
+        if (current.get('diagram')) next.set('diagram', current.get('diagram'));
+        if (id) next.set('focus', id);
+        return '#' + next.toString();
+      }
+
+      function standaloneHistoryState(base, surface, href, nodeId, graphHref, reading) {
+        var state = base && typeof base === 'object' && !Array.isArray(base)
+          ? Object.assign({}, base) : {};
+        state.archifyInternalStructure = {
+          surface: surface,
+          href: href,
+          nodeId: nodeId,
+          graphHref: graphHref || null,
+          reading: reading
+        };
+        return state;
+      }
+
+      function storedStandaloneReading(state, href) {
+        var record = state && state.archifyInternalStructure;
+        if (!record || (record.surface !== 'graph' && record.surface !== 'structure') ||
+            record.href !== href || !record.reading || record.reading.surface !== record.surface) return null;
+        return record.reading;
+      }
+
+      function replaceStandaloneReading(url) {
+        if (ArchifyAddress.context || pendingOpen) return false;
+        var record = history.state && history.state.archifyInternalStructure;
+        if (!record || record.surface !== currentSurface ||
+            (currentSurface === 'structure' && record.nodeId !== currentNodeId)) return false;
+        var href;
+        try { href = new URL(url || location.href, location.href).href; }
+        catch (_) { return false; }
+        var reading = snapshot();
+        var next = standaloneHistoryState(history.state, currentSurface, href,
+          currentSurface === 'structure' ? currentNodeId : reading.nodeId,
+          record.graphHref, reading);
+        history.replaceState(next, '', url || location.href);
+        return true;
+      }
+
+      function scheduleStandaloneReadingSave() {
+        if (ArchifyAddress.context || standaloneSaveFrame !== null) return;
+        standaloneSaveFrame = requestAnimationFrame(function () {
+          standaloneSaveFrame = null;
+          var record = history.state && history.state.archifyInternalStructure;
+          if (!record || record.href !== location.href || record.surface !== currentSurface) return;
+          replaceStandaloneReading(location.href);
+        });
+      }
+
+      function itemById(structure, itemId) {
+        var items = Array.isArray(structure && structure.items) ? structure.items : [];
+        for (var index = 0; index < items.length; index += 1) {
+          if (items[index] && items[index].id === itemId) return items[index];
+        }
+        return null;
+      }
+
+      function relationLabel(kind) {
+        return viewerText('viewer.internalStructure.relation.' + kind);
+      }
+
+      function kindLabel(kind) {
+        return viewerText('viewer.internalStructure.kind.' + kind);
+      }
+
+      function updateModes() {
+        if (!structureModes) return;
+        Array.prototype.forEach.call(structureModes.querySelectorAll('[data-structure-section]'), function (button) {
+          var selected = button.getAttribute('data-structure-section') === currentSection;
+          button.setAttribute('aria-selected', selected ? 'true' : 'false');
+          button.tabIndex = selected ? 0 : -1;
+          button.setAttribute('aria-controls', 'node-structure-body');
+          if (selected) structureBody.setAttribute('aria-labelledby', button.id);
+        });
+      }
+
+      function renderDetail(structure, item) {
+        if (!structureDetail || !item) return false;
+        structureDetail.textContent = '';
+        textElement('p', 'node-structure-detail-label', structureDetail, viewerText('viewer.internalStructure.detail'));
+        var heading = textElement('div', 'node-structure-item-heading', structureDetail);
+        var title = textElement('h3', '', heading, item.label);
+        title.id = 'node-structure-item-title';
+        textElement('span', 'node-structure-kind', heading, kindLabel(item.kind));
+        var summaryBlock = textElement('section', 'node-structure-section-block', structureDetail);
+        textElement('h4', '', summaryBlock, viewerText('viewer.internalStructure.agentSummary'));
+        textElement('p', 'node-structure-item-summary', summaryBlock, item.summary);
+        if (item.signature || item.valueType) {
+          var contract = textElement('section', 'node-structure-section-block', structureDetail);
+          textElement('h4', '', contract, item.signature
+            ? viewerText('viewer.internalStructure.signature')
+            : viewerText('viewer.internalStructure.valueType'));
+          textElement('code', 'node-structure-code', contract, item.signature || item.valueType);
+        }
+        var related = (structure.relations || []).filter(function (relation) {
+          return relation && (relation.from === item.id || relation.to === item.id);
+        });
+        if (related.length) {
+          var relationBlock = textElement('section', 'node-structure-section-block', structureDetail);
+          textElement('h4', '', relationBlock, viewerText('viewer.internalStructure.relations'));
+          var relationList = textElement('ul', 'node-structure-relations', relationBlock);
+          related.forEach(function (relation) {
+            var outgoing = relation.from === item.id;
+            var peer = itemById(structure, outgoing ? relation.to : relation.from);
+            var row = textElement('li', 'node-structure-relation', relationList);
+            textElement('span', 'node-structure-relation-kind', row,
+              (outgoing ? '→ ' : '← ') + relationLabel(relation.kind));
+            textElement('strong', '', row, peer ? peer.label : (outgoing ? relation.to : relation.from));
+            if (relation.label) textElement('small', '', row, relation.label);
+            appendSources(row, currentNodeId, relation.sourceRefs);
+          });
+        }
+        if (Array.isArray(item.sourceRefs) && item.sourceRefs.length) {
+          var evidence = textElement('section', 'node-structure-section-block', structureDetail);
+          textElement('h4', '', evidence, viewerText('viewer.internalStructure.sourceVerified'));
+          appendSources(evidence, currentNodeId, item.sourceRefs);
+        }
+        structureDetail.setAttribute('aria-labelledby', title.id);
+        return true;
+      }
+
+      function visibleTreeItems() {
+        return structureTree ? Array.prototype.slice.call(structureTree.querySelectorAll('[role="treeitem"]')) : [];
+      }
+
+      function focusTreeNeighbor(button, offset) {
+        var visible = visibleTreeItems();
+        var index = visible.indexOf(button);
+        var target = visible[index + offset];
+        if (target) focusTreeItem(target);
+      }
+
+      function focusTreeItem(target) {
+        if (!target) return;
+        visibleTreeItems().forEach(function (button) { button.tabIndex = button === target ? 0 : -1; });
+        target.focus();
+      }
+
+      function selectItem(itemId, options) {
+        options = options || {};
+        var structure = node(currentNodeId);
+        var item = itemById(structure, itemId);
+        if (!item || item.domain !== currentSection) return false;
+        currentItemId = item.id;
+        stateForNode(currentNodeId)[currentSection].item = item.id;
+        Array.prototype.forEach.call(structureTree.querySelectorAll('[role="treeitem"]'), function (button) {
+          var selected = button.getAttribute('data-structure-item') === item.id;
+          button.setAttribute('aria-selected', selected ? 'true' : 'false');
+          button.tabIndex = selected ? 0 : -1;
+        });
+        renderDetail(structure, item);
+        if (options.updateUrl !== false && !pendingOpen) {
+          var url = ArchifyAddress.location.pathname + ArchifyAddress.location.search + structureHash(currentNodeId, currentSection, currentItemId);
+          if (ArchifyAddress.context) {
+            ArchifyAddress.replaceState(history.state, '', url);
+            ArchifyAddress.settled();
+          } else replaceStandaloneReading(url);
+        }
+        return true;
+      }
+
+      function renderTree(structure) {
+        structureTree.textContent = '';
+        var items = sectionItems(structure, currentSection);
+        var children = Object.create(null);
+        items.forEach(function (item) {
+          var parent = item.parent || '';
+          if (!children[parent]) children[parent] = [];
+          children[parent].push(item);
+        });
+        var state = stateForNode(currentNodeId)[currentSection];
+        (children[''] || []).forEach(function (root) {
+          if (!own(state.expanded, root.id)) state.expanded[root.id] = true;
+        });
+        var rootList = textElement('ul', 'node-structure-tree', structureTree);
+        rootList.setAttribute('role', 'tree');
+        rootList.setAttribute('aria-label', sectionLabel(currentSection));
+
+        function appendBranch(parent, item, level) {
+          var wrapper = textElement('li', '', parent);
+          wrapper.setAttribute('role', 'none');
+          var descendants = children[item.id] || [];
+          var button = textElement('button', 'node-structure-treeitem', wrapper, item.label);
+          button.type = 'button';
+          button.id = 'node-structure-treeitem-' + item.id;
+          button.setAttribute('role', 'treeitem');
+          button.setAttribute('aria-level', String(level));
+          button.setAttribute('data-structure-item', item.id);
+          button.setAttribute('aria-selected', item.id === currentItemId ? 'true' : 'false');
+          button.tabIndex = item.id === currentItemId ? 0 : -1;
+          if (descendants.length) button.setAttribute('aria-expanded', state.expanded[item.id] ? 'true' : 'false');
+          button.addEventListener('click', function () {
+            if (item.id === currentItemId && descendants.length) {
+              state.expanded[item.id] = !state.expanded[item.id];
+              renderTree(structure);
+              var restored = document.getElementById('node-structure-treeitem-' + item.id);
+              if (restored) focusTreeItem(restored);
+            }
+            selectItem(item.id);
+          });
+          button.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+              event.preventDefault();
+              focusTreeNeighbor(button, event.key === 'ArrowDown' ? 1 : -1);
+            } else if (event.key === 'ArrowRight' && descendants.length) {
+              event.preventDefault();
+              if (!state.expanded[item.id]) { state.expanded[item.id] = true; renderTree(structure); }
+              var child = document.getElementById('node-structure-treeitem-' + descendants[0].id);
+              if (child) focusTreeItem(child);
+            } else if (event.key === 'ArrowLeft') {
+              event.preventDefault();
+              if (descendants.length && state.expanded[item.id]) {
+                state.expanded[item.id] = false; renderTree(structure);
+                var same = document.getElementById('node-structure-treeitem-' + item.id);
+                if (same) focusTreeItem(same);
+              } else if (item.parent) {
+                var parentButton = document.getElementById('node-structure-treeitem-' + item.parent);
+                if (parentButton) focusTreeItem(parentButton);
+              }
+            } else if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              selectItem(item.id);
+            }
+          });
+          if (descendants.length && state.expanded[item.id]) {
+            var group = textElement('ul', 'node-structure-tree-group', wrapper);
+            group.setAttribute('role', 'group');
+            descendants.forEach(function (child) { appendBranch(group, child, level + 1); });
+          }
+        }
+        (children[''] || []).forEach(function (item) { appendBranch(rootList, item, 1); });
+      }
+
+      function renderModes(structure) {
+        var sections = validSections(structure);
+        structureModes.hidden = sections.length < 2;
+        var existing = Array.prototype.map.call(structureModes.querySelectorAll('[data-structure-section]'), function (button) {
+          return button.getAttribute('data-structure-section');
+        });
+        var expected = sections.map(function (section) { return section.kind; });
+        if (existing.join('|') !== expected.join('|')) {
+          structureModes.textContent = '';
+          sections.forEach(function (section) {
+            var button = textElement('button', 'node-structure-mode', structureModes, sectionLabel(section.kind));
+            button.id = 'node-structure-mode-' + section.kind;
+            button.type = 'button';
+            button.setAttribute('role', 'tab');
+            button.setAttribute('data-structure-section', section.kind);
+            button.addEventListener('click', function () { showSection(section.kind, { focusMode: true }); });
+            button.addEventListener('keydown', function (event) {
+              if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+              var buttons = Array.prototype.slice.call(structureModes.querySelectorAll('[data-structure-section]'));
+              var index = buttons.indexOf(button);
+              var next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1
+                : (index + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
+              event.preventDefault();
+              event.stopPropagation();
+              showSection(buttons[next].getAttribute('data-structure-section'), { focusMode: true });
+            });
+          });
+        }
+        updateModes();
+      }
+
+      function revealItemAncestors(structure, item, state) {
+        var cursor = item;
+        while (cursor && cursor.parent) {
+          state.expanded[cursor.parent] = true;
+          cursor = itemById(structure, cursor.parent);
+        }
+      }
+
+      function showSection(section, options) {
+        options = options || {};
+        var structure = node(currentNodeId);
+        var sections = validSections(structure);
+        if (!structureRoot || currentSurface !== 'structure' ||
+            !sections.some(function (candidate) { return candidate.kind === section; })) return false;
+        currentSection = section;
+        var items = sectionItems(structure, section);
+        var state = stateForNode(currentNodeId)[section];
+        var requested = options.item || state.item;
+        var selected = itemById(structure, requested);
+        if (!selected || selected.domain !== section) selected = items.filter(function (item) { return !item.parent; })[0] || items[0];
+        currentItemId = selected.id;
+        state.item = selected.id;
+        if (options.item) revealItemAncestors(structure, selected, state);
+        updateModes();
+        renderTree(structure);
+        renderDetail(structure, selected);
+        structureRoot.setAttribute('data-structure-section', section);
+        if (options.updateUrl !== false && !pendingOpen) {
+          var url = ArchifyAddress.location.pathname + ArchifyAddress.location.search + structureHash(currentNodeId, section, selected.id);
+          if (ArchifyAddress.context) {
+            ArchifyAddress.replaceState(history.state, '', url);
+            ArchifyAddress.settled();
+          } else replaceStandaloneReading(url);
+        }
+        if (options.focusMode) {
+          var mode = document.getElementById('node-structure-mode-' + section);
+          if (mode) mode.focus({ preventScroll: true });
+        }
+        return true;
+      }
+
+      function renderStructure(id, requestedSection, requestedItem) {
+        var root = ensureStructureRoot();
+        var structure = node(id);
+        if (!root || !structure) return false;
+        var sections = validSections(structure);
+        if (!sections.length) return false;
+        currentNodeId = id;
+        currentSection = sections.some(function (section) { return section.kind === requestedSection; })
+          ? requestedSection : sections[0].kind;
+        var items = sectionItems(structure, currentSection);
+        var state = stateForNode(id)[currentSection];
+        var selected = itemById(structure, requestedItem || state.item);
+        if (!selected || selected.domain !== currentSection) selected = items.filter(function (item) { return !item.parent; })[0] || items[0];
+        currentItemId = selected.id;
+        state.item = selected.id;
+        if (requestedItem) revealItemAncestors(structure, selected, state);
+        structureTitle.textContent = labelFor(id) + ' · ' + viewerText('viewer.internalStructure.overview');
+        structureSummary.textContent = viewerText('viewer.internalStructure.summary');
+        structureFeedback.textContent = '';
+        structureCopy.hidden = false;
+        structureRelations.hidden = false;
+        structureSourcesAction.hidden = false;
+        structureBody.hidden = false;
+        renderModes(structure);
+        renderTree(structure);
+        renderDetail(structure, selected);
+        root.setAttribute('data-node-id', id);
+        root.setAttribute('data-structure-state', 'ready');
+        root.setAttribute('data-structure-section', currentSection);
+        return true;
+      }
+
+      function showNodeInformation(kind) {
+        if (ArchifyAddress.context) {
+          ArchifyAddress.send('structure-return', { information: kind });
+          return;
+        }
+        pendingGraphInformation = kind;
+        close({ restoreFocus: false });
+        if (currentSurface === 'graph') applyGraphInformation();
+      }
+
+      function applyGraphInformation() {
+        var kind = pendingGraphInformation;
+        if (!kind || currentSurface !== 'graph') return false;
+        pendingGraphInformation = null;
+        var requestedSource = pendingGraphSource;
+        pendingGraphSource = null;
+        var tab = document.getElementById('atlas-tab-' + kind);
+        if (tab && typeof tab.click === 'function') {
+          tab.click();
+          var inspector = document.querySelector('.atlas-inspector');
+          if (inspector) inspector.scrollIntoView({ block: 'start' });
+          if (kind === 'sources' && requestedSource) activateSource(requestedSource.id, requestedSource.reference);
+          return true;
+        }
+        if (kind === 'relationships') {
+          var relations = document.getElementById('btn-focus-relations');
+          if (relations && relations.getAttribute('aria-expanded') !== 'true') relations.click();
+          if (chip) chip.scrollIntoView({ block: 'nearest' });
+        } else {
+          var evidence = document.getElementById('focus-evidence');
+          if (evidence && !evidence.hidden) evidence.scrollIntoView({ block: 'nearest' });
+          if (requestedSource) activateSource(requestedSource.id, requestedSource.reference);
+        }
+        return true;
+      }
+
+      function renderError(id, key, state) {
+        var root = ensureStructureRoot();
+        if (!root) return false;
+        structureTitle.textContent = labelFor(id);
+        structureSummary.textContent = viewerText(key || 'viewer.internalStructure.error');
+        structureFeedback.textContent = '';
+        structureCopy.hidden = true;
+        structureRelations.hidden = state !== 'empty';
+        structureSourcesAction.hidden = state !== 'empty';
+        structureBody.hidden = true;
+        structureModes.textContent = '';
+        structureDetail.textContent = '';
+        structureTree.textContent = '';
+        structureRoot.setAttribute('data-node-id', id || 'unknown');
+        structureRoot.setAttribute('data-structure-state', state || 'error');
+        structureRoot.removeAttribute('data-structure-section');
+        currentSection = null;
+        currentItemId = null;
+        return true;
+      }
+
+      function rememberElement(element) {
+        return element ? {
+          element: element,
+          hidden: element.hidden,
+          inert: element.hasAttribute('inert'),
+          ariaHidden: element.getAttribute('aria-hidden')
+        } : null;
+      }
+
+      function hideElement(state) {
+        if (!state) return;
+        state.element.hidden = true;
+        state.element.inert = true;
+        state.element.setAttribute('aria-hidden', 'true');
+      }
+
+      function restoreElement(state) {
+        if (!state) return;
+        state.element.hidden = state.hidden;
+        state.element.inert = state.inert;
+        if (state.ariaHidden == null) state.element.removeAttribute('aria-hidden');
+        else state.element.setAttribute('aria-hidden', state.ariaHidden);
+      }
+
+      function prepareStructurePrint() {
+        if (currentSurface !== 'structure') return;
+        (graphState || []).forEach(restoreElement);
+      }
+
+      function finishStructurePrint() {
+        if (currentSurface !== 'structure') return;
+        (graphState || []).forEach(hideElement);
+      }
+
+      function dispatchReady(nodeId, section) {
+        window.dispatchEvent(new CustomEvent('archify:structure-ready', {
+          detail: { nodeId: nodeId, section: section, surface: 'structure' }
+        }));
+      }
+
+      function settled(nodeId, section, emitReady, emitError) {
+        var revision = ++surfaceRevision;
+        return Promise.resolve().then(function () {
+          if (Archify.readerLayout && typeof Archify.readerLayout.schedule === 'function') Archify.readerLayout.schedule();
+          return Archify.readerLayout && typeof Archify.readerLayout.whenStable === 'function'
+            ? Archify.readerLayout.whenStable() : null;
+        }).then(function () {
+          if (revision !== surfaceRevision || currentSurface !== 'structure' || currentNodeId !== nodeId) return;
+          if (emitReady !== false) dispatchReady(nodeId, section);
+          if (ArchifyAddress.context) ArchifyAddress.settled();
+        }).catch(function (error) {
+          if (revision !== surfaceRevision || currentSurface !== 'structure' || currentNodeId !== nodeId) return;
+          if (emitError !== false) {
+            window.dispatchEvent(new CustomEvent('archify:structure-error', {
+              detail: { nodeId: nodeId, message: error && error.message ? error.message : String(error) }
+            }));
+          }
+          throw error;
+        });
+      }
+
+      function activateStructure(id, section, options) {
+        options = options || {};
+        if (!structureRoot) return false;
+        if (currentSurface === 'structure' && currentNodeId === id) {
+          if (section && (section !== currentSection || options.item !== currentItemId)) showSection(section, { updateUrl: false, item: options.item });
+          if (options.forceSettle) surfaceReady = settled(id, currentSection, options.emitReady, options.emitError);
+          return true;
+        }
+        if (currentSurface === 'structure') {
+          currentNodeId = id;
+          currentSection = section;
+          updateModes();
+          if (options.scroll !== false) window.scrollTo(0, 0);
+          if (options.focus !== false) structureTitle.focus({ preventScroll: true });
+          surfaceReady = settled(id, currentSection, options.emitReady, options.emitError);
+          return true;
+        }
+        graphScrollY = window.scrollY;
+        graphState = [rememberElement(guided), rememberElement(diagram), rememberElement(cards)];
+        graphState.forEach(hideElement);
+        currentSurface = 'structure';
+        currentNodeId = id;
+        html.setAttribute('data-reader-surface', 'structure');
+        structureRoot.hidden = false;
+        structureRoot.inert = false;
+        structureRoot.removeAttribute('inert');
+        structureRoot.removeAttribute('aria-hidden');
+        if (section) currentSection = section;
+        updateModes();
+        if (options.scroll !== false) window.scrollTo(0, 0);
+        if (options.focus !== false) structureTitle.focus({ preventScroll: true });
+        surfaceReady = settled(id, currentSection, options.emitReady, options.emitError);
+        return true;
+      }
+
+      function deactivateStructure(options) {
+        options = options || {};
+        if (currentSurface !== 'structure') return false;
+        surfaceRevision += 1;
+        pendingOpen = null;
+        structureRoot.hidden = true;
+        structureRoot.inert = true;
+        structureRoot.setAttribute('inert', '');
+        structureRoot.setAttribute('aria-hidden', 'true');
+        (graphState || []).forEach(restoreElement);
+        graphState = null;
+        currentSurface = 'graph';
+        currentNodeId = null;
+        currentSection = null;
+        currentItemId = null;
+        html.setAttribute('data-reader-surface', 'graph');
+        if (Archify.readerLayout && typeof Archify.readerLayout.schedule === 'function') Archify.readerLayout.schedule();
+        if (options.restoreScroll !== false) requestAnimationFrame(function () { window.scrollTo(0, graphScrollY); });
+        if (options.restoreFocus) {
+          var id = Archify.focus && Archify.focus.active();
+          var target = null;
+          Array.prototype.some.call(document.querySelectorAll('[data-node-id]'), function (candidate) {
+            if (candidate.getAttribute('data-node-id') !== id) return false;
+            target = candidate;
+            return true;
+          });
+          if (target) target.focus({ preventScroll: true });
+        }
+        return true;
+      }
+
+      function userError(id, error) {
+        var feedback = document.getElementById('focus-structure-feedback');
+        if (feedback) feedback.textContent = viewerText('viewer.internalStructure.error');
+        window.dispatchEvent(new CustomEvent('archify:structure-error', {
+          detail: { nodeId: id, message: error && error.message ? error.message : String(error) }
+        }));
+      }
+
+      function addressError(id, message) {
+        var error = new Error(message);
+        window.dispatchEvent(new CustomEvent('archify:structure-error', {
+          detail: { nodeId: id || null, message: message }
+        }));
+        return surfaceReady.then(function () { throw error; });
+      }
+
+      function open(id, options) {
+        options = options || {};
+        var structure = node(id);
+        if (!structure) return Promise.resolve(false);
+        var sections = validSections(structure);
+        if (!sections.length) return Promise.resolve(false);
+        var requested = options.section || (currentSurface === 'structure' && currentNodeId === id ? currentSection : null);
+        var section = sections.some(function (candidate) { return candidate.kind === requested; })
+          ? requested : sections[0].kind;
+        var requestedItem = options.item || (currentSurface === 'structure' && currentNodeId === id ? currentItemId : null);
+        if (currentSurface === 'structure' && currentNodeId === id) {
+          if (section !== currentSection || requestedItem !== currentItemId) showSection(section, { item: requestedItem });
+          if (pendingOpen) {
+            return surfaceReady.then(function () {
+              return currentSurface === 'structure' && currentNodeId === id;
+            }).catch(function () { return false; });
+          }
+          return Promise.resolve(true);
+        }
+        if (ArchifyAddress.context) {
+          ArchifyAddress.send('navigate', { focus: id, inspect: 'structure', section: section, item: requestedItem || undefined });
+          return Promise.resolve(true);
+        }
+        var trigger = pendingOpen ? pendingOpen.trigger : document.activeElement;
+        var originalState = history.state;
+        var graphHref = location.href;
+        var graphReading = snapshot();
+        var graphEntryCommitted = false;
+        try {
+          if (!renderStructure(id, section, requestedItem)) throw new Error('Internal structure could not be rendered.');
+          var url = location.pathname + location.search + structureHash(id, section, currentItemId);
+          if (!activateStructure(id, section, { emitReady: false, emitError: false })) {
+            throw new Error('Internal structure surface could not be activated.');
+          }
+          var expectedRevision = surfaceRevision;
+          pendingOpen = { revision: expectedRevision, trigger: trigger };
+          return surfaceReady.then(function () {
+            if (!pendingOpen || pendingOpen.revision !== expectedRevision ||
+                expectedRevision !== surfaceRevision || currentSurface !== 'structure' || currentNodeId !== id) return false;
+            url = location.pathname + location.search + structureHash(id, currentSection, currentItemId);
+            var structureHref = new URL(url, location.href).href;
+            var graphEntry = standaloneHistoryState(originalState, 'graph', graphHref, id, null, graphReading);
+            var structureEntry = standaloneHistoryState(originalState, 'structure', structureHref, id, graphHref, snapshot());
+            history.replaceState(graphEntry, '', graphHref);
+            graphEntryCommitted = true;
+            history.pushState(structureEntry, '', url);
+            pendingOpen = null;
+            dispatchReady(id, currentSection);
+            return true;
+          }).catch(function (error) {
+            if (expectedRevision !== surfaceRevision || currentSurface !== 'structure' || currentNodeId !== id) return false;
+            if (graphEntryCommitted) {
+              try { history.replaceState(originalState, '', graphHref); } catch (_) {}
+            }
+            deactivateStructure({ restoreFocus: false, restoreScroll: true });
+            if (trigger && trigger.isConnected && typeof trigger.focus === 'function') {
+              try { trigger.focus({ preventScroll: true }); } catch (_) { try { trigger.focus(); } catch (_) {} }
+            }
+            userError(id, error);
+            return false;
+          });
+        } catch (error) {
+          if (currentSurface === 'structure' && currentNodeId === id) {
+            deactivateStructure({ restoreFocus: false, restoreScroll: false });
+          }
+          userError(id, error);
+          return Promise.resolve(false);
+        }
+      }
+
+      function close(options) {
+        options = options || {};
+        if (currentSurface !== 'structure') return false;
+        var id = currentNodeId;
+        if (ArchifyAddress.context) {
+          ArchifyAddress.send('structure-return');
+          return true;
+        }
+        if (pendingOpen) {
+          var trigger = pendingOpen.trigger;
+          deactivateStructure({ restoreFocus: false });
+          if (options.restoreFocus !== false && trigger && trigger.isConnected && typeof trigger.focus === 'function') {
+            try { trigger.focus({ preventScroll: true }); } catch (_) { try { trigger.focus(); } catch (_) {} }
+          }
+          return true;
+        }
+        var provenance = history.state && history.state.archifyInternalStructure;
+        if (provenance && provenance.nodeId === id && provenance.graphHref) {
+          replaceStandaloneReading(location.href);
+          history.back();
+          return true;
+        }
+        var url = location.pathname + location.search + graphHash(id);
+        history.replaceState(history.state, '', url);
+        deactivateStructure({ restoreFocus: options.restoreFocus !== false });
+        return true;
+      }
+
+      function copyLink() {
+        if (!currentNodeId || !structureCopy) return Promise.resolve(false);
+        var value = ArchifyAddress.share(structureHash(currentNodeId, currentSection, currentItemId));
+        var copy = navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
+          ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
+          : Promise.resolve(fallbackCopy(value));
+        return copy.then(function (copied) {
+          structureCopy.textContent = viewerText(copied ? 'viewer.internalStructure.copySuccess' : 'viewer.internalStructure.copyFailed');
+          structureFeedback.textContent = copied ? '' : viewerText('viewer.internalStructure.copyFailed');
+          window.setTimeout(function () {
+            if (structureCopy) structureCopy.textContent = viewerText('viewer.internalStructure.copyLink');
+          }, 1600);
+          return copied;
+        });
+      }
+
+      function syncAddress() {
+        var params;
+        try { params = new URLSearchParams(ArchifyAddress.location.hash.replace(/^#/, '')); }
+        catch (error) { return Promise.reject(error); }
+        var inspect = params.get('inspect');
+        var id = params.get('focus');
+        var requestedSection = params.get('section');
+        var requestedItem = params.get('item');
+        if ((inspect && inspect !== 'structure') || (!inspect && (requestedSection || requestedItem)) ||
+            (requestedItem && !requestedSection)) {
+          renderError(id, 'viewer.internalStructure.error');
+          activateStructure(id || '', null, { focus: false, emitReady: false });
+          return addressError(id, 'Invalid internal structure address.');
+        }
+        if (inspect !== 'structure') {
+          if (currentSurface === 'structure') deactivateStructure({ restoreFocus: false });
+          return Promise.resolve({ surface: 'graph', nodeId: null, section: null });
+        }
+        if (!id) {
+          renderError('', 'viewer.internalStructure.error');
+          activateStructure('', null, { focus: false, emitReady: false });
+          return addressError('', 'Internal structure requires a focused node.');
+        }
+        if (!diagramHasNode(id)) {
+          renderError(id, 'viewer.internalStructure.error');
+          activateStructure(id, null, { focus: false, emitReady: false });
+          return addressError(id, 'Unknown internal structure node ' + id + '.');
+        }
+        var structure = node(id);
+        if (!structure) {
+          renderError(id, 'viewer.internalStructure.empty', 'empty');
+          activateStructure(id, null, { focus: false, emitReady: true });
+          return surfaceReady.then(function () {
+            return { surface: 'structure', nodeId: id, section: null, empty: true };
+          });
+        }
+        var sections = validSections(structure);
+        if (requestedSection && !sections.some(function (section) { return section.kind === requestedSection; })) {
+          renderError(id, 'viewer.internalStructure.error');
+          activateStructure(id, null, { focus: false, emitReady: false });
+          return addressError(id, 'Unknown internal structure section ' + requestedSection + '.');
+        }
+        var section = requestedSection || sections[0].kind;
+        var selected = requestedItem ? itemById(structure, requestedItem) : null;
+        if (requestedItem && (!selected || selected.domain !== section)) {
+          renderError(id, 'viewer.internalStructure.error');
+          activateStructure(id, null, { focus: false, emitReady: false });
+          return addressError(id, 'Unknown internal structure item ' + requestedItem + '.');
+        }
+        if (currentSurface === 'structure' && currentNodeId === id && structureRoot &&
+            structureRoot.getAttribute('data-structure-state') === 'ready') {
+          if (section !== currentSection || (requestedItem && requestedItem !== currentItemId)) showSection(section, { updateUrl: false, item: requestedItem });
+          return surfaceReady.then(function () {
+            return { surface: 'structure', nodeId: id, section: currentSection, item: currentItemId };
+          });
+        }
+        var replacingError = currentSurface === 'structure' && currentNodeId === id;
+        if (!renderStructure(id, section, requestedItem)) return Promise.reject(new Error('Internal structure could not be rendered.'));
+        activateStructure(id, section, { focus: false, forceSettle: replacingError, item: requestedItem });
+        return surfaceReady.then(function () {
+          return { surface: 'structure', nodeId: id, section: currentSection, item: currentItemId };
+        });
+      }
+
+      function focusStructure(descriptor) {
+        if (currentSurface !== 'structure' || !structureTitle) return false;
+        var target = descriptor && descriptor.id ? document.getElementById(descriptor.id) : null;
+        if (!target && descriptor && descriptor.section && structureRoot) {
+          Array.prototype.some.call(structureRoot.querySelectorAll('[data-structure-section]'), function (candidate) {
+            if (candidate.getAttribute('data-structure-section') !== descriptor.section) return false;
+            target = candidate;
+            return true;
+          });
+        }
+        if (!target || target.closest('[hidden]')) target = structureTitle;
+        try { target.focus({ preventScroll: true }); }
+        catch (_) { try { target.focus(); } catch (_) { return false; } }
+        return true;
+      }
+
+      function snapshot() {
+        var active = document.activeElement;
+        var focus = active && active.id ? { id: active.id } : null;
+        if (!focus && active && active.getAttribute && active.getAttribute('data-structure-section')) {
+          focus = { section: active.getAttribute('data-structure-section') };
+        }
+        var selected = Archify.focus && Archify.focus.active();
+        var domains = currentSurface === 'structure' ? stateForNode(currentNodeId) : null;
+        var result = {
+          surface: currentSurface,
+          nodeId: currentSurface === 'structure' ? currentNodeId : (typeof selected === 'string' ? selected : null),
+          section: currentSection,
+          item: currentItemId,
+          domains: currentSurface === 'structure' ? {
+            code: { item: domains.code.item, expanded: Object.assign({}, domains.code.expanded) },
+            state: { item: domains.state.item, expanded: Object.assign({}, domains.state.expanded) }
+          } : null,
+          scrollTop: window.scrollY,
+          focus: focus
+        };
+        if (!ArchifyAddress.context) {
+          result.scrollLeft = window.scrollX;
+          result.camera = Archify.view && typeof Archify.view.snapshot === 'function' ? Archify.view.snapshot() : null;
+          var selectedTab = document.querySelector('[data-atlas-tab][aria-selected="true"]');
+          result.tabId = selectedTab && selectedTab.id ? selectedTab.id : null;
+          result.panelScroll = {};
+          Array.prototype.forEach.call(document.querySelectorAll('.atlas-inspector-panel[id]'), function (panel) {
+            result.panelScroll[panel.id] = panel.scrollTop;
+          });
+        }
+        return result;
+      }
+
+      function restoreStandaloneReading(state, options) {
+        if (ArchifyAddress.context) return;
+        if (state.surface === 'graph' && typeof state.nodeId === 'string' && Archify.focus &&
+            Archify.focus.active() !== state.nodeId) {
+          Archify.focus.set(state.nodeId, { updateUrl: false, toggle: false });
+        }
+        if (state.tabId) {
+          var tab = document.getElementById(state.tabId);
+          if (tab && tab.getAttribute('aria-selected') !== 'true' && typeof tab.click === 'function') tab.click();
+        }
+        if (state.camera && Archify.view && typeof Archify.view.restore === 'function') Archify.view.restore(state.camera);
+        if (state.panelScroll) {
+          Object.keys(state.panelScroll).forEach(function (id) {
+            var panel = document.getElementById(id);
+            if (panel && Number.isFinite(state.panelScroll[id])) panel.scrollTop = state.panelScroll[id];
+          });
+        }
+        window.scrollTo(Number.isFinite(state.scrollLeft) ? state.scrollLeft : 0,
+          Number.isFinite(state.scrollTop) ? state.scrollTop : 0);
+        if (options.focus === false || !state.focus) return;
+        if (state.surface === 'structure') {
+          focusStructure(state.focus);
+          return;
+        }
+        if (!state.focus.id) return;
+        var target = document.getElementById(state.focus.id);
+        if (target && !target.closest('[hidden]')) {
+          try { target.focus({ preventScroll: true }); }
+          catch (_) { try { target.focus(); } catch (_) {} }
+        }
+      }
+
+      function restore(state, options) {
+        options = options || {};
+        if (!state || (state.surface !== 'structure' && state.surface !== 'graph')) return Promise.resolve(false);
+        if (state.surface === 'graph') {
+          if (currentSurface === 'structure') deactivateStructure({ restoreFocus: false, restoreScroll: false });
+          return new Promise(function (resolve) {
+            requestAnimationFrame(function () {
+              if (!ArchifyAddress.context) restoreStandaloneReading(state, options);
+              else {
+                if (Number.isFinite(state.scrollTop)) window.scrollTo(0, state.scrollTop);
+                if (options.focus !== false && state.focus && state.focus.id) {
+                  var graphTarget = document.getElementById(state.focus.id);
+                  if (graphTarget && !graphTarget.closest('[hidden]')) graphTarget.focus({ preventScroll: true });
+                }
+              }
+              resolve(true);
+            });
+          });
+        }
+        if (!node(state.nodeId)) return Promise.resolve(false);
+        if (state.domains) {
+          var restoredDomains = stateForNode(state.nodeId);
+          for (var domain of sectionKinds) {
+            var saved = state.domains[domain];
+            if (saved && typeof saved === 'object') {
+              restoredDomains[domain].item = typeof saved.item === 'string' ? saved.item : null;
+              restoredDomains[domain].expanded = saved.expanded && typeof saved.expanded === 'object'
+                ? Object.assign(Object.create(null), saved.expanded) : Object.create(null);
+            }
+          }
+        }
+        if (!renderStructure(state.nodeId, state.section, state.domains ? null : state.item)) return Promise.resolve(false);
+        activateStructure(state.nodeId, state.section, { focus: false, scroll: false, item: state.item });
+        requestAnimationFrame(function () {
+          if (!ArchifyAddress.context) {
+            restoreStandaloneReading(state, options);
+            return;
+          }
+          if (Number.isFinite(state.scrollTop)) window.scrollTo(0, state.scrollTop);
+          if (options.focus === false || !state.focus) return;
+          var target = state.focus.id ? document.getElementById(state.focus.id) : null;
+          if (!target && state.focus.section) {
+            Array.prototype.some.call(structureRoot.querySelectorAll('[data-structure-section]'), function (candidate) {
+              if (candidate.getAttribute('data-structure-section') !== state.focus.section) return false;
+              target = candidate;
+              return true;
+            });
+          }
+          if (target && !target.closest('[hidden]')) target.focus({ preventScroll: true });
+        });
+        return surfaceReady.then(function () { return true; });
+      }
+
+      function connect() {
+        if (connected) return;
+        connected = true;
+        if (payload && structureNodes().length) {
+          installStyles();
+          ensureQuicklook();
+          html.setAttribute('data-reader-surface', 'graph');
+        }
+        function syncWithoutUnhandledRejection() {
+          if (!ArchifyAddress.context) {
+            syncStandaloneHistoryWithoutUnhandledRejection();
+            return;
+          }
+          syncAddress().catch(function () {});
+        }
+        function syncStandaloneHistoryWithoutUnhandledRejection() {
+          if (standaloneSaveFrame !== null && typeof cancelAnimationFrame === 'function') {
+            cancelAnimationFrame(standaloneSaveFrame);
+            standaloneSaveFrame = null;
+          }
+          var expectedRevision = ++standaloneSyncRevision;
+          var expectedHref = location.href;
+          var reading = ArchifyAddress.context ? null : storedStandaloneReading(history.state, expectedHref);
+          syncAddress().then(function () {
+            if (expectedRevision !== standaloneSyncRevision || location.href !== expectedHref) return null;
+            return reading ? restore(reading, { focus: true }) : null;
+          }).then(function () {
+            if (expectedRevision === standaloneSyncRevision && location.href === expectedHref) applyGraphInformation();
+          }).catch(function () {});
+        }
+        window.addEventListener('hashchange', syncWithoutUnhandledRejection);
+        window.addEventListener('popstate', syncStandaloneHistoryWithoutUnhandledRejection);
+        window.addEventListener('beforeprint', prepareStructurePrint);
+        window.addEventListener('afterprint', finishStructurePrint);
+        if (!ArchifyAddress.context) {
+          window.addEventListener('scroll', scheduleStandaloneReadingSave, { passive: true });
+          document.addEventListener('scroll', scheduleStandaloneReadingSave, true);
+          document.addEventListener('focusin', scheduleStandaloneReadingSave, true);
+          document.addEventListener('pointerup', scheduleStandaloneReadingSave, true);
+          document.addEventListener('wheel', scheduleStandaloneReadingSave, { capture: true, passive: true });
+        }
+        document.addEventListener('keydown', function (event) {
+          if (event.key !== 'Escape' || currentSurface !== 'structure') return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          close({ restoreFocus: true });
+        });
+        syncStandaloneHistoryWithoutUnhandledRejection();
+      }
+
+      return {
+        available: function () { return Boolean(payload && structureNodes().length); },
+        node: node,
+        renderQuicklook: renderQuicklook,
+        clearQuicklook: clearQuicklook,
+        open: open,
+        close: close,
+        surface: function () { return currentSurface; },
+        section: function () { return currentSection; },
+        syncAddress: syncAddress,
+        snapshot: snapshot,
+        restore: restore,
+        focus: focusStructure,
+        connect: connect
+      };
+    })();
+
     Archify.focus = (function () {
       var html = document.documentElement;
       var container = document.querySelector('.diagram-container');
@@ -7624,6 +9276,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var svgNamespace = 'http://www.w3.org/2000/svg';
       var reducedMotionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
       var finePointerQuery = window.matchMedia ? window.matchMedia('(hover: hover) and (pointer: fine)') : null;
+
+      function atlasInspection() {
+        return Boolean(ArchifyAddress.context);
+      }
 
       function nodes() {
         return Array.prototype.slice.call(svg.querySelectorAll('[data-node-id]'));
@@ -7727,7 +9383,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         if (options.updateUrl === true && activeIds.length === 1) {
           try {
-            history.replaceState(null, '', location.pathname + location.search + '#focus=' + encodeURIComponent(activeIds[0]));
+            ArchifyAddress.replaceState(null, '', ArchifyAddress.location.pathname + ArchifyAddress.location.search + '#focus=' + encodeURIComponent(activeIds[0]));
           } catch (_) {}
         }
       }
@@ -7806,7 +9462,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         if (options.updateUrl !== false) {
           try {
-            history.replaceState(null, '', location.pathname + location.search + '#focus=' +
+            ArchifyAddress.replaceState(null, '', ArchifyAddress.location.pathname + ArchifyAddress.location.search + '#focus=' +
               encodeURIComponent(activeIds[0]) + '&reach=' + direction);
           } catch (_) {}
         }
@@ -7940,6 +9596,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             link.referrerPolicy = 'no-referrer';
             link.setAttribute('aria-label', viewerText('viewer.passport.source.open', { path: source.path, revision: repository.shortRevision }));
           }
+          if (source.id) link.setAttribute('data-source-id', source.id);
           var name = document.createElement('strong');
           name.textContent = source.label || source.path.split('/').pop() || source.path;
           var location = document.createElement('code');
@@ -7957,6 +9614,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function renderPassport(id, node) {
         setPassportValue(detail, node.getAttribute('data-node-sublabel'));
+        Archify.internalStructure.renderQuicklook(id);
         setPassportValue(kind, viewerKindLabel(node.getAttribute('data-node-kind') || 'node'));
         setPassportValue(context, node.getAttribute('data-node-context'));
         setPassportValue(tag, node.getAttribute('data-node-tag'));
@@ -8329,7 +9987,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function directRelationshipBlocked() {
         return html.getAttribute('data-embed') === 'true' ||
-          html.getAttribute('data-guide-open') === 'true' ||
+          html.getAttribute('data-structure-open') === 'true' ||
           container.classList.contains('is-panning') ||
           (activeIds.length > 0 && !pinnedRelationshipKey) ||
           svg.hasAttribute('data-story-active') ||
@@ -8397,7 +10055,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         });
         revealPinnedRelationship(record);
         if (options.updateUrl !== false && record.id) {
-          try { history.replaceState(null, '', location.pathname + location.search + '#relation=' + encodeURIComponent(record.id)); } catch (_) {}
+          try { ArchifyAddress.replaceState(null, '', ArchifyAddress.location.pathname + ArchifyAddress.location.search + '#relation=' + encodeURIComponent(record.id)); } catch (_) {}
         }
         return true;
       }
@@ -8740,7 +10398,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           cancelAnimationFrame(lensFrame);
           lensFrame = 0;
         }
-        if (chip.hidden || activeIds.length !== 1) return;
+        if (chip.hidden || activeIds.length !== 1 || !container.contains(chip)) return;
         var node = svg.querySelector('[data-node-id="' + activeIds[0] + '"]');
         if (!node) return;
         var containerRect = container.getBoundingClientRect();
@@ -8858,6 +10516,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         label.textContent = '';
         detail.textContent = '';
         detail.hidden = true;
+        Archify.internalStructure.clearQuicklook();
         kind.textContent = '';
         kind.hidden = true;
         context.textContent = '';
@@ -8884,11 +10543,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         relationsBtn.setAttribute('aria-expanded', 'false');
         chip.removeAttribute('data-relations-expanded');
         if (options.preserveLensPlacement !== true) resetLensPlacement({ reposition: false });
-        if (options.preserveView !== true && Archify.view && typeof Archify.view.reset === 'function') {
+        if (options.preserveView !== true && atlasInspection() && Archify.view) Archify.view.hold();
+        if (options.preserveView !== true && !atlasInspection() && Archify.view && typeof Archify.view.reset === 'function') {
           Archify.view.reset({ automatic: true });
         }
         if (options.updateUrl !== false) {
-          try { history.replaceState(null, '', location.pathname + location.search); } catch (_) {}
+          try { ArchifyAddress.replaceState(null, '', ArchifyAddress.location.pathname + ArchifyAddress.location.search); } catch (_) {}
+          Archify.internalStructure.syncAddress().catch(function () {});
         }
         if (restoreNode) {
           try { restoreNode.focus({ preventScroll: true }); }
@@ -8959,7 +10620,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (options.updateUrl !== false) {
           var key = options.urlKey || 'focus';
           var value = options.urlValue || normalized[0];
-          try { history.replaceState(null, '', location.pathname + location.search + '#' + key + '=' + encodeURIComponent(value)); } catch (_) {}
+          try { ArchifyAddress.replaceState(null, '', ArchifyAddress.location.pathname + ArchifyAddress.location.search + '#' + key + '=' + encodeURIComponent(value)); } catch (_) {}
+          Archify.internalStructure.syncAddress().catch(function () {});
         }
         return true;
       }
@@ -8970,25 +10632,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return setMany([id], options);
       }
 
-      function fallbackCopy(value) {
-        var field = document.createElement('textarea');
-        field.value = value;
-        field.setAttribute('readonly', '');
-        field.style.position = 'fixed';
-        field.style.opacity = '0';
-        document.body.appendChild(field);
-        field.select();
-        var copied = false;
-        try { copied = document.execCommand('copy'); } catch (_) {}
-        field.remove();
-        return copied;
-      }
-
       function copyFocusLink() {
         if (activeIds.length !== 1) return Promise.resolve(false);
         var record = pinnedRelationshipRecord();
         var relationId = record && record.id;
-        var value = location.href.replace(/#.*$/, '') + (relationId
+        var value = ArchifyAddress.share(relationId
           ? '#relation=' + encodeURIComponent(relationId)
           : '#focus=' + encodeURIComponent(activeIds[0]) + (reachabilityMode ? '&reach=' + reachabilityMode : ''));
         var copy = navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
@@ -9011,8 +10659,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var node = event.target.closest('[data-node-id]');
         if (node) {
           var id = node.getAttribute('data-node-id');
+          if (atlasInspection() && Archify.view) Archify.view.hold();
           set(id);
-          if (activeIds.indexOf(id) !== -1 && Archify.view && typeof Archify.view.reveal === 'function') {
+          if (!atlasInspection() && activeIds.indexOf(id) !== -1 && Archify.view && typeof Archify.view.reveal === 'function') {
             Archify.view.reveal([id], { includeNeighbors: true, reason: 'focus' });
           }
         }
@@ -9023,8 +10672,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (!node || (event.key !== 'Enter' && event.key !== ' ')) return;
         event.preventDefault();
         var id = node.getAttribute('data-node-id');
+        if (atlasInspection() && Archify.view) Archify.view.hold();
         set(id);
-        if (activeIds.indexOf(id) !== -1 && Archify.view && typeof Archify.view.reveal === 'function') {
+        if (!atlasInspection() && activeIds.indexOf(id) !== -1 && Archify.view && typeof Archify.view.reveal === 'function') {
           Archify.view.reveal([id], { includeNeighbors: true, reason: 'focus' });
         }
       });
@@ -9057,16 +10707,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var button = event.target.closest('[data-relationship-target]');
         if (!button) return;
         var id = button.getAttribute('data-relationship-target');
+        var relationshipKey = button.getAttribute('data-relationship-key');
+        if (atlasInspection() && Archify.view) Archify.view.hold();
         if (Archify.guidedViews && typeof Archify.guidedViews.showAll === 'function') {
-          Archify.guidedViews.showAll({ clearFocus: false, updateUrl: false });
+          Archify.guidedViews.showAll({ clearFocus: false, updateUrl: false, resetView: !atlasInspection() });
         }
         set(id, { toggle: false });
-        if (Archify.view && typeof Archify.view.reveal === 'function') {
+        if (!atlasInspection() && Archify.view && typeof Archify.view.reveal === 'function') {
           Archify.view.reveal([id], { includeNeighbors: true, reason: 'relationship' });
         }
-        var node = svg.querySelector('[data-node-id="' + id + '"]');
-        if (node) {
-          try { node.focus({ preventScroll: true }); } catch (_) { try { node.focus(); } catch (_) {} }
+        var nextFocus = atlasInspection()
+          ? Array.prototype.filter.call(relationshipList.querySelectorAll('[data-relationship-key]'), function (row) {
+            return row.getAttribute('data-relationship-key') === relationshipKey;
+          })[0] || relationsBtn
+          : svg.querySelector('[data-node-id="' + id + '"]');
+        if (nextFocus) {
+          try { nextFocus.focus({ preventScroll: true }); } catch (_) { try { nextFocus.focus(); } catch (_) {} }
         }
       });
       relationshipList.addEventListener('pointerover', function (event) {
@@ -9110,9 +10766,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       });
       document.addEventListener('click', function (event) {
         var target = event.target;
+        if (Archify.internalStructure.surface() === 'structure') return;
         if (chip.hidden || !target || typeof target.closest !== 'function' || chip.contains(target)) return;
         if (container.getAttribute('data-just-panned') === 'true') return;
-        if (target.closest('[data-node-id], [data-relationship-hit-key], .overview-map')) return;
+        if (target.closest('[data-node-id], [data-relationship-hit-key], .overview-map, .atlas-navigation, .atlas-compact-navigation, .atlas-directory, .atlas-breadcrumb, .atlas-parent-context, .atlas-rail, .atlas-inspector, .atlas-directory-section')) return;
         clear();
       }, true);
       window.addEventListener('scroll', requestLensPlacement, { passive: true });
@@ -9136,7 +10793,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       function syncFocusFromHash() {
         try {
-          var params = new URLSearchParams(location.hash.replace(/^#/, ''));
+          var params = new URLSearchParams(ArchifyAddress.location.hash.replace(/^#/, ''));
           var relation = params.get('relation');
           var initial = params.get('focus');
           var reach = params.get('reach');
@@ -9184,6 +10841,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         active: function () { return activeIds.length === 0 ? null : (activeIds.length === 1 ? activeIds[0] : activeIds.slice()); }
       };
     })();
+    Archify.internalStructure.connect();
+
 
     /* ============================================================
        Intent Trace — temporary one-hop topology before durable focus.
@@ -9898,7 +11557,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function sharePlaybackRequested() {
-        try { return new URLSearchParams(location.search).get('play') === '1'; }
+        if (ArchifyAddress.context && ArchifyAddress.restoring) return false;
+        try { return new URLSearchParams(ArchifyAddress.location.search).get('play') === '1'; }
         catch (_) { return false; }
       }
 
@@ -10149,9 +11809,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var view = activeIndex >= 0 ? views[activeIndex] : null;
         var step = storyBeatIndex >= 0 ? storySteps[storyBeatIndex] : null;
         if (!view || !step) return '';
-        var url = new URL(location.href);
+        var url = new URL(ArchifyAddress.location.href);
         url.searchParams.delete('play');
         url.hash = 'view=' + encodeURIComponent(view.id) + '&beat=' + encodeURIComponent(step.nodeId);
+        if (ArchifyAddress.context) url.hash += '&diagram=' + encodeURIComponent(ArchifyAddress.context.diagram);
         return url.href;
       }
 
@@ -10217,7 +11878,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var step = storyBeatIndex >= 0 ? storySteps[storyBeatIndex] : null;
         if (!view || !step) return false;
         try {
-          var params = new URLSearchParams(location.hash.replace(/^#/, ''));
+          var params = new URLSearchParams(ArchifyAddress.location.hash.replace(/^#/, ''));
           return params.get('view') === view.id && params.get('beat') === step.nodeId;
         } catch (_) { return false; }
       }
@@ -10810,6 +12471,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           hideChip: true
         });
         setStoryBeat(index, { manual: true, center: true, pulse: true, follow: true });
+        // Atlas visits restore committed reading state from their logical URL.
+        // Only explicit stop selection commits a beat; playback never does.
+        if (ArchifyAddress.context) updateUrl(view, storySteps[index].nodeId);
         resetProgress(index / storySteps.length);
         renderPlayback();
         return true;
@@ -10841,9 +12505,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return true;
       }
 
-      function updateUrl(view) {
+      function updateUrl(view, beat) {
         try {
-          history.replaceState(null, '', location.pathname + location.search + (view ? '#view=' + encodeURIComponent(view.id) : ''));
+          ArchifyAddress.replaceState(null, '', ArchifyAddress.location.pathname + ArchifyAddress.location.search +
+            (view ? '#view=' + encodeURIComponent(view.id) + (beat ? '&beat=' + encodeURIComponent(beat) : '') : ''));
         } catch (_) {}
       }
 
@@ -10998,7 +12663,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       function syncViewFromHash() {
         try {
-          var params = new URLSearchParams(location.hash.replace(/^#/, ''));
+          var params = new URLSearchParams(ArchifyAddress.location.hash.replace(/^#/, ''));
           var initial = params.get('view');
           var requestedBeat = params.get('beat');
           var restoreGeneration = ++momentRestoreGeneration;
@@ -11010,7 +12675,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             }
             if (requestedBeat) afterHandoff(function () {
               if (restoreGeneration !== momentRestoreGeneration) return;
-              var latest = new URLSearchParams(location.hash.replace(/^#/, ''));
+              var latest = new URLSearchParams(ArchifyAddress.location.hash.replace(/^#/, ''));
               if (latest.get('view') !== initial || latest.get('beat') !== requestedBeat) return;
               if (activeIndex < 0 || views[activeIndex].id !== initial) return;
               selectStoryBeatById(requestedBeat, { linked: true, follow: true, followInstant: true });
@@ -11130,6 +12795,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       };
     })();
 
+
     /* ============================================================
        Adaptive Reader Shell — one diagram across laptop and monitor.
        The canonical SVG and viewBox never change. On ordinary desktop pages,
@@ -11187,6 +12853,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var header = shell && shell.querySelector('.header');
       var guided = shell && shell.querySelector('.guided-views');
       var cards = shell && shell.querySelector('.cards');
+      var internalStructureData = document.getElementById('archify-internal-structure-data');
+      var atlasRail = document.querySelector('.atlas-rail');
+      var atlasDirectory = document.querySelector('.atlas-directory-section');
+      var atlasInspector = document.querySelector('.atlas-inspector');
+      var atlasCompactNav = document.querySelector('.atlas-compact-navigation');
+      var atlasInspectionSlot = document.querySelector('.atlas-inspection-slot');
+      var atlasParentContext = document.querySelector('.atlas-parent-context');
+      var atlasOverview = document.querySelector('.atlas-overview');
+      var cardsHome = cards && cards.parentNode;
+      var cardsNext = cards && cards.nextSibling;
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
       var measuredHeightFit = svg && svg.getAttribute('data-reader-fit') === 'intrinsic-height';
@@ -11241,6 +12917,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           (!window.matchMedia || !window.matchMedia('print').matches)
         );
       }
+      function structureActive() {
+        return html.getAttribute('data-reader-surface') === 'structure';
+      }
       function clear() {
         html.style.removeProperty('--archify-reader-width');
         html.removeAttribute('data-reader-layout');
@@ -11267,17 +12946,64 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         html.setAttribute('data-reader-layout', 'adaptive');
         return true;
       }
+      function moveCards(parent) {
+        if (!cards || !parent || cards.parentNode === parent) return;
+        var next = parent === cardsHome && cardsNext && cardsNext.parentNode === parent ? cardsNext : null;
+        parent.insertBefore(cards, next);
+      }
+      function atlasWorkspace() {
+        if (!atlasRail || !eligible()) return null;
+        var right = window.innerWidth - number(window.getComputedStyle(body).paddingRight);
+        var railWidth = 280;
+        var left = 16 + railWidth + 20;
+        if (right - left < MIN_READER_WIDTH) return null;
+        return { left: left, width: right - left, railWidth: railWidth };
+      }
+      // The same conclusion content belongs to the overview rail on desktop,
+      // and returns to its authored document position for compact/print views.
+      function positionAtlas(workspace) {
+        if (!atlasRail || !shell) return;
+        if (typeof workspace === 'undefined') workspace = atlasWorkspace();
+        var width = shell.getBoundingClientRect().width;
+        var docked = Boolean(workspace);
+        var mode = docked ? 'rail' : 'stacked';
+        if (html.getAttribute('data-atlas-layout') !== mode) html.setAttribute('data-atlas-layout', mode);
+        if (workspace) {
+          var inset = number(window.getComputedStyle(body).paddingLeft);
+          var left = workspace.left + (workspace.width - width) / 2;
+          html.style.setProperty('--atlas-rail-width', workspace.railWidth + 'px');
+          html.style.setProperty('--atlas-reader-offset', Math.max(0, left - inset) + 'px');
+        } else {
+          html.style.removeProperty('--atlas-rail-width');
+          html.style.removeProperty('--atlas-reader-offset');
+        }
+        var active = document.activeElement;
+        var directoryParent = docked ? atlasRail : atlasCompactNav;
+        var inspectorParent = docked ? atlasRail : atlasInspectionSlot;
+        if (atlasDirectory.parentNode !== directoryParent) directoryParent.appendChild(atlasDirectory);
+        if (atlasInspector.parentNode !== inspectorParent) inspectorParent.appendChild(atlasInspector);
+        if (atlasParentContext.parentNode !== directoryParent) directoryParent.appendChild(atlasParentContext);
+        moveCards(docked && atlasOverview ? atlasOverview : cardsHome);
+        if (active && active !== document.activeElement && active.isConnected) active.focus({ preventScroll: true });
+      }
       function settleOverflow(minWidth) {
         if (settleFrame) cancelAnimationFrame(settleFrame);
         settleFrame = requestAnimationFrame(function () {
           settleFrame = 0;
-          if (!eligible() || !lastWidth) return;
+          if (!eligible() || structureActive() || !lastWidth) return;
           var overflow = Math.max(
             document.documentElement.scrollHeight,
             document.body.scrollHeight
           ) - window.innerHeight;
+          if (atlasRail) {
+            // Intentional compact navigation/inspection flow must not cause
+            // selection or disclosure to shrink the canonical reading area.
+            overflow = shell.getBoundingClientRect().bottom + window.scrollY +
+              number(window.getComputedStyle(body).paddingBottom) - outerHeight(atlasCompactNav) - window.innerHeight;
+          }
           if (overflow > 1 && lastWidth > minWidth) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4));
+            positionAtlas();
             html.setAttribute('data-reader-overflow', 'reduced');
           } else if (overflow > 1) {
             html.setAttribute('data-reader-overflow', 'authored');
@@ -11290,10 +13016,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         frame = 0;
         if (!eligible()) {
           clear();
+          positionAtlas(false);
           return null;
         }
         var chrome = chromeMetrics();
-        var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
+        var workspace = atlasWorkspace();
+        var viewportCap = workspace ? workspace.width : Math.max(0, window.innerWidth - chrome.bodyX);
         var readableWidth = viewBox && viewBox.width > 0
           ? viewBox.width * minimumReadableScale() + chrome.diagramX
           : MIN_READER_WIDTH;
@@ -11302,12 +13030,47 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           viewportCap
         );
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
+        if (structureActive()) {
+          if (settleFrame) cancelAnimationFrame(settleFrame);
+          settleFrame = 0;
+          if (!lastWidth || lastWidth < minWidth || lastWidth > maxWidth) {
+            applyWidth(Math.max(minWidth, Math.min(maxWidth, lastWidth || maxWidth)));
+          }
+          positionAtlas(workspace);
+          html.removeAttribute('data-reader-overflow');
+          return {
+            ratio: ratio,
+            width: lastWidth,
+            availableSvgHeight: 0,
+            fixedHeight: 0,
+            surface: 'structure'
+          };
+        }
+        if (!atlasRail && internalStructureData) {
+          if (settleFrame) cancelAnimationFrame(settleFrame);
+          settleFrame = 0;
+          applyWidth(maxWidth);
+          html.removeAttribute('data-reader-overflow');
+          return {
+            ratio: ratio,
+            width: lastWidth,
+            availableSvgHeight: 0,
+            fixedHeight: 0,
+            surface: 'graph'
+          };
+        }
+        if (atlasRail) {
+          // Establish the workspace before measuring wrapping and vertical flow.
+          if (!lastWidth || lastWidth > maxWidth) applyWidth(maxWidth);
+          positionAtlas(workspace);
+        }
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
-          outerHeight(header) + outerHeight(guided) + outerHeight(cards);
+          outerHeight(header) + outerHeight(guided) + (workspace ? 0 : outerHeight(cards));
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
         var desiredWidth = availableSvgHeight * ratio + chrome.diagramX;
         var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth));
         applyWidth(width);
+        positionAtlas(workspace);
         settleOverflow(minWidth);
         return {
           ratio: ratio,
@@ -11320,13 +13083,25 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (frame) return;
         frame = requestAnimationFrame(measure);
       }
+      function scheduleCards() {
+        // Once a standalone wide graph has settled, inspector content may grow
+        // below it without changing the graph's camera or bounding box.
+        if (!atlasRail && lastWidth && eligible() && !structureActive()) return;
+        schedule();
+      }
       function stableSnapshot() {
         var shellRect = shell ? shell.getBoundingClientRect() : { width: 0, height: 0 };
         var diagramRect = diagram ? diagram.getBoundingClientRect() : { width: 0, height: 0 };
+        var structure = typeof document.getElementById === 'function'
+          ? document.getElementById('node-internal-structure') : null;
+        var structureRect = structure && !structure.hidden ? structure.getBoundingClientRect() : { width: 0, height: 0 };
         return [
           lastWidth,
+          html.getAttribute('data-reader-surface') || 'graph',
           html.getAttribute('data-reader-layout') || '',
           html.getAttribute('data-reader-overflow') || '',
+          html.getAttribute('data-atlas-layout') || '',
+          Math.round((shellRect.left || 0) * 100) / 100,
           Math.ceil(document.documentElement.scrollWidth),
           Math.ceil(document.documentElement.scrollHeight),
           Math.ceil(document.body.scrollWidth),
@@ -11334,7 +13109,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           Math.round(shellRect.width * 100) / 100,
           Math.round(shellRect.height * 100) / 100,
           Math.round(diagramRect.width * 100) / 100,
-          Math.round(diagramRect.height * 100) / 100
+          Math.round(diagramRect.height * 100) / 100,
+          Math.round(structureRect.width * 100) / 100,
+          Math.round(structureRect.height * 100) / 100
         ].join('|');
       }
       function whenStable() {
@@ -11347,17 +13124,24 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       window.addEventListener('resize', schedule, { passive: true });
+      if (atlasOverview) {
+        window.addEventListener('beforeprint', function () { positionAtlas(false); });
+        window.addEventListener('afterprint', schedule);
+        var printQuery = window.matchMedia && window.matchMedia('print');
+        if (printQuery && printQuery.addEventListener) printQuery.addEventListener('change', schedule);
+      }
       window.addEventListener('load', schedule, { once: true });
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
-        [header, guided, cards].forEach(function (element) { if (element) resizeObserver.observe(element); });
+        [header, guided].forEach(function (element) { if (element) resizeObserver.observe(element); });
+        if (cards) new ResizeObserver(scheduleCards).observe(cards);
       }
       if (typeof MutationObserver === 'function') {
         var contentObserver = new MutationObserver(schedule);
         if (guided) contentObserver.observe(guided, { attributes: true, childList: true, subtree: true });
-        if (cards) contentObserver.observe(cards, { attributes: true, childList: true, subtree: true });
-        contentObserver.observe(html, { attributes: true, attributeFilter: ['data-embed', 'data-present'] });
+        if (cards) new MutationObserver(scheduleCards).observe(cards, { attributes: true, childList: true, subtree: true });
+        contentObserver.observe(html, { attributes: true, attributeFilter: ['data-embed', 'data-present', 'data-reader-surface'] });
       }
       schedule();
 
@@ -11724,7 +13508,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           offsetY: (height - viewBox.height * scale) / 2
         };
       }
-      function logicalViewport() {
+      function logicalViewport(camera) {
+        camera = camera || state;
         var metrics = contentMetrics();
         if (!metrics) return null;
         var x;
@@ -11737,16 +13522,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           width = Math.min(viewBox.width, Math.max(1, container.clientWidth / metrics.scale));
           height = viewBox.height;
         } else {
-          x = viewBox.x + ((-state.x / state.scale) - metrics.offsetX) / metrics.scale;
-          y = viewBox.y + ((-state.y / state.scale) - metrics.offsetY) / metrics.scale;
-          width = Math.min(viewBox.width, metrics.width / state.scale / metrics.scale);
-          height = Math.min(viewBox.height, metrics.height / state.scale / metrics.scale);
+          x = viewBox.x + ((-camera.x / camera.scale) - metrics.offsetX) / metrics.scale;
+          y = viewBox.y + ((-camera.y / camera.scale) - metrics.offsetY) / metrics.scale;
+          width = Math.min(viewBox.width, metrics.width / camera.scale / metrics.scale);
+          height = Math.min(viewBox.height, metrics.height / camera.scale / metrics.scale);
         }
         width = Math.max(1, Math.min(viewBox.width, width));
         height = Math.max(1, Math.min(viewBox.height, height));
         x = Math.max(viewBox.x, Math.min(viewBox.x + viewBox.width - width, x));
         y = Math.max(viewBox.y, Math.min(viewBox.y + viewBox.height - height, y));
-        return { x: x, y: y, width: width, height: height, scale: state.scale };
+        return { x: x, y: y, width: width, height: height, scale: camera.scale };
       }
       function detailLevel() {
         if (state.mode === 'semantic') return 'full';
@@ -11828,6 +13613,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.schedule === 'function') {
           Archify.viewerChromeLayout.schedule();
         }
+        if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) requestAnimationFrame(ArchifyAddress.settled);
       }
       function sampleRenderedState() {
         var transform = '';
@@ -12027,7 +13813,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           bottom = Math.min(bottom, visibleBottom - Math.max(padding, 72));
         }
         var chip = document.getElementById('focus-chip');
-        if (chip && !chip.hidden) {
+        if (chip && !chip.hidden && container.contains(chip)) {
           var lensEnd = chip.offsetLeft + chip.offsetWidth + 24 - (svg.offsetLeft || 0);
           left = Math.max(left, Math.min(svgWidth * 0.42, lensEnd));
         }
@@ -12096,6 +13882,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return transaction;
       }
       function reveal(ids, options) {
+        if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.restoring) return false;
         options = options || {};
         if (window.innerWidth > 720) return frameDesktop(ids, options);
         stopCameraMotion('replaced', false);
@@ -12131,19 +13918,23 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         return transaction;
       }
-      function syncSemantic() {
+      function syncSemantic(options) {
+        options = options || {};
+        if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.restoring) return false;
         var guided = Archify.guidedViews && typeof Archify.guidedViews.focus === 'function'
           ? Archify.guidedViews.focus() : [];
-        if (guided && guided.length) return reveal(guided, { reason: 'guided-sync' });
+        if (guided && guided.length) return reveal(guided, { reason: 'guided-sync', instant: options.instant });
+        if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context && !options.initial) return false;
         var active = Archify.focus && typeof Archify.focus.active === 'function' ? Archify.focus.active() : null;
-        if (typeof active === 'string') return reveal([active], { includeNeighbors: true, reason: 'focus-sync' });
-        if (Array.isArray(active) && active.length) return reveal(active, { reason: 'selection-sync' });
+        if (typeof active === 'string') return reveal([active], { includeNeighbors: true, reason: 'focus-sync', instant: options.instant });
+        if (Array.isArray(active) && active.length) return reveal(active, { reason: 'selection-sync', instant: options.instant });
         return false;
       }
       function pinControls() {
         container.style.setProperty('--archify-scroll-x', container.scrollLeft + 'px');
       }
       function onScroll() {
+        if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) requestAnimationFrame(ArchifyAddress.settled);
         pinControls();
         if (Archify.radar && typeof Archify.radar.sync === 'function') Archify.radar.sync();
         if (window.innerWidth <= 720 && container.hasAttribute('data-wide-diagram') && Date.now() > autoScrollUntil) {
@@ -12202,9 +13993,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         zoomOut: function () { zoom(state.scale - 0.25); },
         reset: reset,
         reveal: reveal,
+        hold: interruptCamera,
         centerAt: centerAt,
         logicalViewport: logicalViewport,
         sync: syncSemantic,
+        snapshot: function () {
+          var viewport = logicalViewport(sampleRenderedState());
+          return viewport ? { centerX: viewport.x + viewport.width / 2, centerY: viewport.y + viewport.height / 2,
+            scale: viewport.scale, scrollLeft: container.scrollLeft, scrollTop: container.scrollTop } : null;
+        },
+        restore: function (snapshot) {
+          if (!snapshot) return;
+          centerAt(snapshot.centerX, snapshot.centerY, { scale: snapshot.scale, instant: true });
+          container.scrollLeft = snapshot.scrollLeft || 0;
+          container.scrollTop = snapshot.scrollTop || 0;
+        },
         state: function () { return { scale: state.scale, x: state.x, y: state.y, mode: state.mode }; }
       };
     })();
@@ -12853,10 +14656,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       function updateUrl(next) {
         try {
-          var url = new URL(window.location.href);
+          var url = new URL(ArchifyAddress.location.href);
           if (next) url.searchParams.set('present', '1');
           else url.searchParams.delete('present');
-          history.replaceState(null, '', url.pathname + url.search + url.hash);
+          ArchifyAddress.replaceState(null, '', url.pathname + url.search + url.hash);
         } catch (_) {}
       }
 
@@ -13364,7 +15167,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function replaceRouteHash(value) {
         try {
-          history.replaceState(null, '', location.pathname + location.search + (value ? '#route=' + value : ''));
+          ArchifyAddress.replaceState(null, '', ArchifyAddress.location.pathname + ArchifyAddress.location.search + (value ? '#route=' + value : ''));
         } catch (_) {}
       }
       function renderPlaceholder(copy) {
@@ -14078,7 +15881,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function copyLink() {
         if (mode !== 'result') return Promise.resolve(false);
-        var value = location.href.replace(/#.*$/, '') + '#route=' + encodeURIComponent(startId) + '~' + encodeURIComponent(endId);
+        var value = ArchifyAddress.share('#route=' + encodeURIComponent(startId) + '~' + encodeURIComponent(endId));
         var copy = navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
@@ -14104,7 +15907,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function syncFromHash() {
         try {
-          var params = new URLSearchParams(location.hash.replace(/^#/, ''));
+          var params = new URLSearchParams(ArchifyAddress.location.hash.replace(/^#/, ''));
           var route = params.get('route');
           if (!route) {
             if (mode !== 'idle') clear({ updateUrl: false, restoreFocus: false });
@@ -14211,6 +16014,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
       };
     })();
+
 
     /* ============================================================
        Semantic Lens — a counted, viewer-only legend over data-node-kind.
@@ -14535,7 +16339,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           var hash = selectedKinds.length
             ? '#lens=' + selectedKinds.map(encodeURIComponent).join('~')
             : '';
-          history.replaceState(null, '', location.pathname + location.search + hash);
+          ArchifyAddress.replaceState(null, '', ArchifyAddress.location.pathname + ArchifyAddress.location.search + hash);
         } catch (_) {}
       }
       function updateTrigger() {
@@ -14749,7 +16553,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function copyLink() {
         if (!selectedKinds.length) return Promise.resolve(false);
-        var value = location.href.replace(/#.*$/, '') + '#lens=' + selectedKinds.map(encodeURIComponent).join('~');
+        var value = ArchifyAddress.share('#lens=' + selectedKinds.map(encodeURIComponent).join('~'));
         var copy = navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
@@ -14761,7 +16565,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function syncFromHash() {
         try {
-          var params = new URLSearchParams(location.hash.replace(/^#/, ''));
+          var params = new URLSearchParams(ArchifyAddress.location.hash.replace(/^#/, ''));
           var value = params.get('lens');
           if (!value) {
             if (selectedKinds.length) clear({ updateUrl: false, preserveView: true });
@@ -14887,6 +16691,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         kinds: function () { return collectKinds().map(function (kind) { return { id: kind.id, count: kind.nodes.length }; }); }
       };
     })();
+
 
     /* ============================================================
        Diagram Guide — a factual command deck over existing interactions.
@@ -15163,6 +16968,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         Archify.presentation.exit();
       }
     });
+    });
+    ArchifyAddress.connect();
   </script>
 </body>
 </html>

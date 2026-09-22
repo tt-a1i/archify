@@ -2,6 +2,104 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/tt-a1i/archify/schemas/architecture.schema.json",
   "title": "Archify Architecture Diagram",
+  "$defs": {
+    "internalStructureSourceRefs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": { "$ref": "common.schema.json#/$defs/id" }
+    },
+    "internalStructureSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "path"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "role": { "enum": ["definition", "export", "registration", "callsite", "guard", "test", "schema", "documentation"] },
+        "symbol": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^\\S(?:[\\s\\S]*\\S)?$" },
+        "path": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "line": { "type": "integer", "minimum": 1 },
+        "end_line": { "type": "integer", "minimum": 1 },
+        "label": { "type": "string", "minLength": 1, "maxLength": 48 }
+      }
+    },
+    "internalStructureCodeItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "domain", "kind", "label", "summary"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "domain": { "const": "code" },
+        "kind": { "enum": ["directory", "file", "class", "interface", "type", "function", "method"] },
+        "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "parent": { "$ref": "common.schema.json#/$defs/id" },
+        "signature": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "source_refs": { "$ref": "#/$defs/internalStructureSourceRefs" }
+      }
+    },
+    "internalStructureStateGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "domain", "kind", "label", "summary"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "domain": { "const": "state" },
+        "kind": { "const": "group" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "parent": { "$ref": "common.schema.json#/$defs/id" },
+        "source_refs": { "$ref": "#/$defs/internalStructureSourceRefs" }
+      }
+    },
+    "internalStructureStateField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "domain", "kind", "label", "summary", "value_type", "source_refs"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "domain": { "const": "state" },
+        "kind": { "const": "field" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "parent": { "$ref": "common.schema.json#/$defs/id" },
+        "value_type": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "source_refs": { "$ref": "#/$defs/internalStructureSourceRefs" }
+      }
+    },
+    "internalStructureRelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "from", "to", "kind", "source_refs"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "from": { "$ref": "common.schema.json#/$defs/id" },
+        "to": { "$ref": "common.schema.json#/$defs/id" },
+        "kind": { "enum": ["imports", "calls", "uses", "creates", "reads", "writes"] },
+        "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "source_refs": { "$ref": "#/$defs/internalStructureSourceRefs" }
+      }
+    },
+    "internalStructure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sources", "items", "relations"],
+      "properties": {
+        "sources": { "type": "array", "minItems": 1, "maxItems": 64, "items": { "$ref": "#/$defs/internalStructureSource" } },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": { "oneOf": [
+            { "$ref": "#/$defs/internalStructureCodeItem" },
+            { "$ref": "#/$defs/internalStructureStateGroup" },
+            { "$ref": "#/$defs/internalStructureStateField" }
+          ] }
+        },
+        "relations": { "type": "array", "maxItems": 96, "items": { "$ref": "#/$defs/internalStructureRelation" } }
+      }
+    }
+  },
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "diagram_type", "meta", "components"],
@@ -84,7 +182,26 @@
           "tag": { "type": "string" },
           "icon": { "$ref": "common.schema.json#/$defs/nodeIcon" },
           "brand": { "$ref": "common.schema.json#/$defs/brandMark" },
-          "sources": { "$ref": "common.schema.json#/$defs/sourceReferences" },
+          "sources": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path"],
+              "properties": {
+                "id": { "$ref": "common.schema.json#/$defs/id" },
+                "role": { "enum": ["definition", "export", "registration", "callsite", "guard", "test", "schema", "documentation"] },
+                "symbol": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^\\S(?:[\\s\\S]*\\S)?$" },
+                "path": { "type": "string", "minLength": 1, "maxLength": 240 },
+                "line": { "type": "integer", "minimum": 1 },
+                "end_line": { "type": "integer", "minimum": 1 },
+                "label": { "type": "string", "minLength": 1, "maxLength": 48 }
+              }
+            }
+          },
+          "internal_structure": { "$ref": "#/$defs/internalStructure" },
           "row": { "type": "integer", "minimum": 0 },
           "col": { "type": "integer", "minimum": 0 },
           "pos": { "$ref": "common.schema.json#/$defs/point" },

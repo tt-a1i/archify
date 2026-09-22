@@ -171,9 +171,9 @@ test('Semantic Radar derives semantic node bounds and focuses stable IDs', () =>
 
 test('Semantic Radar tracks desktop camera and mobile contained scroll', () => {
   const html = render('sequence', CASES.sequence);
-  assert.match(html, /function logicalViewport\(\)/);
+  assert.match(html, /function logicalViewport\(camera\)/);
   assert.match(html, /x = viewBox\.x \+ container\.scrollLeft \/ metrics\.scale/);
-  assert.match(html, /x = viewBox\.x \+ \(\(-state\.x \/ state\.scale\) - metrics\.offsetX\) \/ metrics\.scale/);
+  assert.match(html, /x = viewBox\.x \+ \(\(-camera\.x \/ camera\.scale\) - metrics\.offsetX\) \/ metrics\.scale/);
   assert.match(html, /viewport\.setAttribute\('width', String\(visible\.width\)\)/);
   assert.match(html, /viewerText\('viewer\.radar\.viewport\.width'/);
   assert.match(html, /function centerAt\(logicalX, logicalY, options\)/);
@@ -192,7 +192,7 @@ test('Semantic Radar tracks desktop camera and mobile contained scroll', () => {
   assert.match(html, /manualPosition && positionIsValid\(manualPosition, context\)/);
   assert.match(html, /panelHead\.addEventListener\('pointerdown', beginPanelDrag\)/);
   assert.match(html, /surface\.addEventListener\('pointerdown',[\s\S]+viewportDrag = \{ pointerId: event\.pointerId \}/);
-  assert.match(html, /target\.closest\('\[data-node-id\], \[data-relationship-hit-key\], \.overview-map'\)/);
+  assert.match(html, /target\.closest\('\[data-node-id\], \[data-relationship-hit-key\], \.overview-map, \.atlas-navigation, \.atlas-compact-navigation, \.atlas-directory, \.atlas-breadcrumb, \.atlas-parent-context, \.atlas-rail, \.atlas-inspector, \.atlas-directory-section'\)/);
   assert.match(html, /--archify-radar-top/);
   assert.match(html, /\.overview-map\[data-docked="true"\]/);
 });

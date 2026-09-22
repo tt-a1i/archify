@@ -1,0 +1,25 @@
+{
+  "atlas_version": 1,
+  "entry": "overview",
+  "meta": {
+    "title": "30 / 20 节点阅读验收",
+    "locale": "zh-CN"
+  },
+  "diagrams": {
+    "overview": {
+      "source": "overview-30.architecture.json"
+    },
+    "detail": {
+      "source": "detail-20.architecture.json"
+    }
+  },
+  "details": [
+    {
+      "from": {
+        "diagram": "overview",
+        "node": "node1"
+      },
+      "to": "detail"
+    }
+  ]
+}

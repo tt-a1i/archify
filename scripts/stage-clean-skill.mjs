@@ -24,6 +24,18 @@ const REQUIRED_INPUTS = new Set([
   'archify/scripts/update-contract.mjs',
   'archify/skill-release.json',
 ]);
+const ATLAS_REQUIRED_INPUTS = new Set([
+  'archify/schemas/atlas.schema.json',
+  'archify/renderers/shared/atlas-manifest.mjs',
+  'archify/renderers/shared/atlas-delivery.mjs',
+  'archify/renderers/shared/atlas-bundle.mjs',
+  'archify/renderers/shared/atlas-envelope.mjs',
+  'archify/renderers/shared/atlas-shell.mjs',
+  'archify/renderers/shared/atlas-navigation.mjs',
+  'archify/references/architecture-atlas.md',
+  'archify/assets/vendor/fflate-gunzip-0.8.2.min.js',
+  'archify/assets/vendor/fflate-MIT.txt',
+]);
 const RUNTIME_DEPENDENCIES = Object.freeze([
   'archify/renderers/shared/atomic-output.mjs',
   'archify/renderers/shared/output-path.mjs',
@@ -458,12 +470,15 @@ function validateThirdPartyNoticeInputs(repoRoot, packageEntries) {
   }
 
   const embeddedFonts = packageEntries.some((entry) => entry.content.includes('data:font/woff2'));
+  const fflate = packageEntries.some((entry) => (
+    entry.relative === 'archify/assets/vendor/fflate-gunzip-0.8.2.min.js'
+  ));
   if (embeddedFonts && !packageEntries.some((entry) => entry.relative === 'archify/assets/JetBrainsMono-OFL.txt')) {
     throw new Error('embedded viewer font requires assets/JetBrainsMono-OFL.txt');
   }
   const packagedNotices = packagedEntry.content;
-  assertThirdPartyNotices(repositoryNotices.toString('utf8'), 'repository THIRD_PARTY_NOTICES.md', { embeddedFonts });
-  assertThirdPartyNotices(packagedNotices.toString('utf8'), 'archify/THIRD_PARTY_NOTICES.md', { embeddedFonts });
+  assertThirdPartyNotices(repositoryNotices.toString('utf8'), 'repository THIRD_PARTY_NOTICES.md', { embeddedFonts, fflate });
+  assertThirdPartyNotices(packagedNotices.toString('utf8'), 'archify/THIRD_PARTY_NOTICES.md', { embeddedFonts, fflate });
   if (!packagedNotices.equals(repositoryNotices)) {
     throw new Error('archify/THIRD_PARTY_NOTICES.md must byte-match the repository notice');
   }
@@ -528,6 +543,16 @@ export function stageCleanSkill({ repoRoot = scriptRoot, destination, modeManife
   for (const required of REQUIRED_INPUTS) {
     if (!tracked.has(required)) {
       throw new Error(`required package input is not tracked by Git: ${required}`);
+    }
+  }
+  // Atlas is a feature-complete package slice. Require every member once any
+  // Atlas file is present, while keeping immutable pre-Atlas release snapshots
+  // reproducible for adapters that intentionally pin those historical bytes.
+  if ([...ATLAS_REQUIRED_INPUTS].some((relative) => tracked.has(relative))) {
+    for (const required of ATLAS_REQUIRED_INPUTS) {
+      if (!tracked.has(required)) {
+        throw new Error(`required package input is not tracked by Git: ${required}`);
+      }
     }
   }
   requireTrackedFile(resolvedRoot, 'THIRD_PARTY_NOTICES.md');

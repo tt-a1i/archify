@@ -19,6 +19,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 const cli = path.join(skillRoot, 'bin/archify.mjs');
 const templatePath = path.join(skillRoot, 'assets/template.html');
+const focusSourcePath = path.resolve(skillRoot, '..', 'viewer', 'focus.js');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-i18n-'));
 const chromePath = process.env.ARCHIFY_CHROME ? findChrome() : null;
 let sequence = 0;
@@ -29,6 +30,53 @@ const EXAMPLES = {
   sequence: 'cache-miss-request.sequence.json',
   dataflow: 'product-analytics.dataflow.json',
   lifecycle: 'agent-run.lifecycle.json',
+};
+
+const INTERNAL_STRUCTURE_MESSAGES = {
+  'viewer.internalStructure.overview': ['Internal structure', '内部结构'],
+  'viewer.internalStructure.summary': ['Browse the important code and state owned by this node.', '浏览该节点负责的关键代码与状态字段。'],
+  'viewer.internalStructure.backToDiagram': ['Back to diagram', '返回图'],
+  'viewer.internalStructure.copyLink': ['Copy structure link', '复制结构链接'],
+  'viewer.internalStructure.copySuccess': ['Structure link copied', '已复制结构链接'],
+  'viewer.internalStructure.copyFailed': ['Could not copy structure link', '无法复制结构链接'],
+  'viewer.internalStructure.evidenceLink': ['View source evidence', '查看源码证据'],
+  'viewer.internalStructure.section.code': ['Code structure', '代码结构'],
+  'viewer.internalStructure.section.codeHint': ['Directories, files, and key symbols', '目录、文件与关键类/函数'],
+  'viewer.internalStructure.section.state': ['State fields', '状态字段'],
+  'viewer.internalStructure.section.stateHint': ['Field groups, types, readers, and writers', '字段分组、类型及读写节点'],
+  'viewer.internalStructure.itemCount': ['{count} items', '{count} 项'],
+  'viewer.internalStructure.tree': ['Structure tree', '结构树'],
+  'viewer.internalStructure.detail': ['Selected item', '选中项'],
+  'viewer.internalStructure.agentSummary': ['Agent summary', '由 Agent 归纳'],
+  'viewer.internalStructure.signature': ['Signature', '签名'],
+  'viewer.internalStructure.valueType': ['Field type', '字段类型'],
+  'viewer.internalStructure.relations': ['Direct relationships', '直接关系'],
+  'viewer.internalStructure.sourceVerified': ['Verified source locations', '源码位置已核验'],
+  'viewer.internalStructure.kind.directory': ['Directory', '目录'],
+  'viewer.internalStructure.kind.file': ['File', '文件'],
+  'viewer.internalStructure.kind.class': ['Class', '类'],
+  'viewer.internalStructure.kind.interface': ['Interface', '接口'],
+  'viewer.internalStructure.kind.type': ['Type', '类型'],
+  'viewer.internalStructure.kind.function': ['Function', '函数'],
+  'viewer.internalStructure.kind.method': ['Method', '方法'],
+  'viewer.internalStructure.kind.group': ['Field group', '字段分组'],
+  'viewer.internalStructure.kind.field': ['Field', '字段'],
+  'viewer.internalStructure.relation.imports': ['Imports', '导入'],
+  'viewer.internalStructure.relation.calls': ['Calls', '调用'],
+  'viewer.internalStructure.relation.uses': ['Uses', '使用'],
+  'viewer.internalStructure.relation.creates': ['Creates', '创建'],
+  'viewer.internalStructure.relation.reads': ['Reads', '读取'],
+  'viewer.internalStructure.relation.writes': ['Writes', '写入'],
+  'viewer.internalStructure.sourceRole.definition': ['Definition', '定义'],
+  'viewer.internalStructure.sourceRole.export': ['Export', '导出'],
+  'viewer.internalStructure.sourceRole.registration': ['Registration', '注册点'],
+  'viewer.internalStructure.sourceRole.callsite': ['Call site', '调用点'],
+  'viewer.internalStructure.sourceRole.guard': ['Guard', '守卫'],
+  'viewer.internalStructure.sourceRole.test': ['Test coverage', '测试覆盖'],
+  'viewer.internalStructure.sourceRole.schema': ['Schema', 'Schema'],
+  'viewer.internalStructure.sourceRole.documentation': ['Documentation', '文档'],
+  'viewer.internalStructure.empty': ['No internal structure is available for this node.', '此节点尚未提供内部结构。'],
+  'viewer.internalStructure.error': ['Could not open the internal structure.', '无法打开内部结构。'],
 };
 
 function example(type) {
@@ -442,6 +490,34 @@ test('every supported catalog is complete and preserves interpolation variables'
       assert.deepEqual(variables(message), expected, `${locale}: ${key}`);
     }
   }
+});
+
+test('internal structure controls, domains, evidence, and failure states have exact bilingual catalog copy', () => {
+  for (const [key, [english, chinese]] of Object.entries(INTERNAL_STRUCTURE_MESSAGES)) {
+    assert.equal(translateMessage('en', key), english, key);
+    assert.equal(translateMessage('zh-CN', key), chinese, key);
+    assert.equal(translateMessage(undefined, key), english, `${key}: omitted locale`);
+    assert.equal(translateMessage('fr', key), english, `${key}: unsupported runtime locale`);
+  }
+});
+
+test('internal structure Viewer copy stays catalog-owned instead of being hardcoded in its runtime module', () => {
+  const template = fs.readFileSync(focusSourcePath, 'utf8');
+  const distinctiveCopy = [
+    'Open internal structure',
+    'Back to diagram',
+    'Code structure',
+    'State fields',
+    'No internal structure is available for this node.',
+    'Could not open the internal structure.',
+    '内部结构',
+    '查看代码结构',
+    '返回图',
+    '状态字段',
+    '此节点尚未提供内部结构。',
+    '无法打开内部结构。',
+  ];
+  for (const copy of distinctiveCopy) assert.ok(!template.includes(copy), copy);
 });
 
 test('runtime labels stay localized after composition', () => {

@@ -927,8 +927,9 @@ test('Chrome Layout preserves scheduling, mode restoration and Reader handoffs',
   }
   function variant(name, source) {
     const original = fs.readFileSync(file, 'utf8');
-    const html = original.replace('  <script>\n    var Archify = {};',
-      () => `  <script>${source}</script>\n  <script>\n    var Archify = {};`);
+    const startup = '  <script>\n    ArchifyAddress.run(function () {\n    var Archify = {};';
+    const html = original.replace(startup,
+      () => `  <script>${source}</script>\n${startup}`);
     assert.notEqual(html, original);
     const output = path.join(tmp, `chrome-${name}.html`);
     fs.writeFileSync(output, html);

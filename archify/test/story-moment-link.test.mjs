@@ -43,7 +43,7 @@ test('all five renderers inherit one viewer-only Story Moment Link control', () 
   }
 });
 
-test('moment links use exact stable view and node ids without mutating manual selection URLs', () => {
+test('moment links preserve standalone URLs and commit explicit Atlas selections', () => {
   assert.match(template, /function storyMomentLink\(\)/);
   assert.match(template, /url\.searchParams\.delete\('play'\)/);
   assert.match(template, /url\.hash = 'view=' \+ encodeURIComponent\(view\.id\) \+ '&beat=' \+ encodeURIComponent\(step\.nodeId\)/);
@@ -53,7 +53,9 @@ test('moment links use exact stable view and node ids without mutating manual se
   assert.match(template, /var restoreGeneration = \+\+momentRestoreGeneration/);
   assert.match(template, /afterHandoff\(function \(\) \{[\s\S]*restoreGeneration !== momentRestoreGeneration[\s\S]*selectStoryBeatById\(requestedBeat, \{ linked: true, follow: true, followInstant: true \}\)/);
   const manualSelection = template.match(/function selectStoryBeat\(index\) \{([\s\S]*?)\n      function updateUrl/)?.[1] || '';
-  assert.doesNotMatch(manualSelection, /history\.|location\.|updateUrl\(/);
+  const atlasCommit = 'if (ArchifyAddress.context) updateUrl(view, storySteps[index].nodeId);';
+  assert.ok(manualSelection.includes(atlasCommit));
+  assert.doesNotMatch(manualSelection.replace(atlasCommit, ''), /history\.|location\.|updateUrl\(/);
 });
 
 test('invalid or cross-chapter beat ids fail closed while the public receipt stays read-only', () => {

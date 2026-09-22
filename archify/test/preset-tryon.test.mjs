@@ -97,7 +97,9 @@ test('style try-on is session-only and unavailable to passive embeds', () => {
   const html = render('workflow', 'signal-flow');
   const runtime = presetRuntime(html);
   assert.match(runtime, /html\.getAttribute\('data-embed'\) === 'true'/);
-  assert.doesNotMatch(runtime, /localStorage|sessionStorage|history\.|location\.|URLSearchParams/);
+  const atlasInitialization = "apply(ArchifyAddress.context ? (new URLSearchParams(ArchifyAddress.location.search).get('preset') || authored) : authored);";
+  assert.ok(runtime.includes(atlasInitialization), 'only Atlas may inherit the parent visit preset');
+  assert.doesNotMatch(runtime.replace(atlasInitialization, ''), /localStorage|sessionStorage|history\.|location\.|URLSearchParams/);
   assert.match(html, /html\[data-embed="true"\] \.toolbar/);
   assert.match(html, /@media print/);
 });

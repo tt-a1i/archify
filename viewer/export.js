@@ -396,6 +396,7 @@
       }
 
       function download(blob, filename) {
+        if (typeof ArchifyAddress !== 'undefined' && !ArchifyAddress.active) return;
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
         a.href = url;
@@ -824,6 +825,11 @@
         return new Promise(function (resolve, reject) {
           var backgroundImage = new Image();
           backgroundImage.onload = function () {
+            if (typeof ArchifyAddress !== 'undefined' && !ArchifyAddress.active) {
+              URL.revokeObjectURL(sourceUrl);
+              reject(new DOMException('Atlas visit ended', 'AbortError'));
+              return;
+            }
             var canvas = document.createElement('canvas');
             canvas.width = Math.max(2, Math.round(data.width / 2) * 2);
             canvas.height = Math.max(2, Math.round(data.height / 2) * 2);
@@ -846,10 +852,17 @@
             function cleanup() {
               if (stopped) return;
               stopped = true;
+              window.removeEventListener('archify:atlas-revoke', cancelRecording);
               cancelAnimationFrame(raf);
               URL.revokeObjectURL(sourceUrl);
               stream.getTracks().forEach(function (track) { track.stop(); });
             }
+            function cancelRecording() {
+              cleanup();
+              if (recorder.state !== 'inactive') recorder.stop();
+              reject(new DOMException('Atlas visit ended', 'AbortError'));
+            }
+            window.addEventListener('archify:atlas-revoke', cancelRecording, { once: true });
             function draw(now) {
               var elapsed = Math.max(0, ((Number(now) || performance.now()) - startedAt) / 1000);
               drawMotionFrame(ctx, backgroundImage, motionScene, elapsed);
@@ -919,10 +932,18 @@
       }
 
       // ---- Clipboard support ----------------------------------------------
+      function clipboardWindow() {
+        var host = window.ArchifyToolbarHost;
+        return host && typeof host.clipboardWindow === 'function' ? host.clipboardWindow() : window;
+      }
+
       function canCopyImage() {
-        return typeof ClipboardItem !== 'undefined' &&
-               navigator.clipboard &&
-               typeof navigator.clipboard.write === 'function';
+        // Capability detection also runs during candidate initialization, before
+        // the host grants activity. Do not permanently disable a supported item.
+        var owner = clipboardWindow() || window;
+        return owner && typeof owner.ClipboardItem !== 'undefined' &&
+               owner.navigator.clipboard &&
+               typeof owner.navigator.clipboard.write === 'function';
       }
 
       // ---- Raster format detection ----------------------------------------
@@ -972,6 +993,7 @@
       }
 
       function open(focusLast) {
+        if (window.ArchifyToolbarHost) return window.ArchifyToolbarHost.open('export', focusLast);
         if (Archify.preset && Archify.preset.isOpen()) Archify.preset.close(false);
         if (Archify.semanticLens && typeof Archify.semanticLens.clearPreview === 'function') Archify.semanticLens.clearPreview();
         if (Archify.semanticLens && Archify.semanticLens.isOpen()) Archify.semanticLens.close({ restoreFocus: false });
@@ -986,9 +1008,10 @@
       function close(focusTrigger) {
         menu.classList.remove('open');
         btn.setAttribute('aria-expanded', 'false');
-        if (focusTrigger) btn.focus();
+        if (window.ArchifyToolbarHost) window.ArchifyToolbarHost.close('export', focusTrigger);
+        else if (focusTrigger) btn.focus();
       }
-      function isOpen() { return menu.classList.contains('open'); }
+      function isOpen() { return window.ArchifyToolbarHost ? window.ArchifyToolbarHost.isOpen('export') : menu.classList.contains('open'); }
 
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -1064,6 +1087,7 @@
               download(blob, base + '.' + format);
             })
         ).catch(function (err) {
+          if (typeof ArchifyAddress !== 'undefined' && !ArchifyAddress.active) return;
           console.error(err);
           var technicalMessage = err && err.message ? err.message : format;
           var message = exportMessage(err);
@@ -1174,14 +1198,23 @@
       }
 
       function writePngToClipboard(blobPromise) {
+        // Atlas menus retain focus in their persistent outer document. Use its
+        // clipboard realm without moving keyboard focus into the hidden toolbar.
+        var owner = clipboardWindow();
+        if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) {
+          blobPromise = blobPromise.then(function (blob) {
+            if (!ArchifyAddress.active) throw new DOMException('Atlas visit ended', 'AbortError');
+            return blob;
+          });
+        }
         // WebKit requires ClipboardItem to be constructed synchronously inside
         // the user gesture. Chromium accepts the same pending Promise<Blob>;
         // engines that reject promise values fall back to an awaited Blob.
         try {
-          return navigator.clipboard.write([new ClipboardItem({ 'image/png': blobPromise })]);
+          return owner.navigator.clipboard.write([new owner.ClipboardItem({ 'image/png': blobPromise })]);
         } catch (_) {
           return blobPromise.then(function (blob) {
-            return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            return owner.navigator.clipboard.write([new owner.ClipboardItem({ 'image/png': blob })]);
           });
         }
       }
@@ -1200,6 +1233,15 @@
             toast(viewerText('viewer.export.copiedShare'));
           });
         }).catch(function (err) {
+          if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) {
+            if (!ArchifyAddress.active) return;
+            return blobPromise.then(function (blob) {
+              download(blob, diagramFilename() + '-share-card.png');
+              toast(viewerText('viewer.export.clipboardDownloadFallback'));
+            }).catch(function (fallbackError) {
+              if (ArchifyAddress.active) alert(viewerText('viewer.export.copyFailed', { message: exportMessage(fallbackError) }));
+            });
+          }
           console.error(err);
           var technicalMessage = err && err.message ? err.message : 'share-card';
           var message = exportMessage(err);
@@ -1220,6 +1262,15 @@
         return writePngToClipboard(blobPromise).then(function () {
           toast(viewerText('viewer.export.copiedPng'));
         }).catch(function (err) {
+          if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) {
+            if (!ArchifyAddress.active) return;
+            return blobPromise.then(function (blob) {
+              download(blob, diagramFilename() + '.png');
+              toast(viewerText('viewer.export.clipboardDownloadFallback'));
+            }).catch(function (fallbackError) {
+              if (ArchifyAddress.active) alert(viewerText('viewer.export.copyFailed', { message: exportMessage(fallbackError) }));
+            });
+          }
           console.error(err);
           alert(viewerText('viewer.export.copyFailed', {
             message: exportMessage(err)
@@ -1244,6 +1295,31 @@
         if (formatBtn && !formatBtn.disabled) { runExport(formatBtn.dataset.format); }
       });
 
+      if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) {
+        var pendingExports = 0;
+        var trackAtlasExport = function (operation) {
+          return function () {
+            if (!ArchifyAddress.active || ArchifyAddress.exportAllowed === false) return Promise.resolve();
+            pendingExports++;
+            document.documentElement.setAttribute('data-atlas-export-busy', 'true');
+            var result;
+            try { result = operation.apply(this, arguments); }
+            catch (error) { result = Promise.reject(error); }
+            return Promise.resolve(result).finally(function () {
+              pendingExports--;
+              if (!pendingExports) {
+                document.documentElement.removeAttribute('data-atlas-export-busy');
+                ArchifyAddress.send('export-idle');
+              }
+            });
+          };
+        };
+        runExport = trackAtlasExport(runExport);
+        runRouteShareCard = trackAtlasExport(runRouteShareCard);
+        runReachShareCard = trackAtlasExport(runReachShareCard);
+        runCopy = trackAtlasExport(runCopy);
+        runCopyShareCard = trackAtlasExport(runCopyShareCard);
+      }
       Archify.motion = { canRecord: canRecordMotion, recordWebm: recordWebm };
       Archify.exportMenu = {
         open: open,
@@ -1257,13 +1333,19 @@
         syncReachShare: syncReachShareItem,
         copyShareCard: runCopyShareCard
       };
+      if (typeof ArchifyAddress !== 'undefined' && ArchifyAddress.context) {
+        // Gate public entry points, while admitted exports retain access to
+        // their internal steps after a navigation request starts waiting.
+        Archify.motion.recordWebm = trackAtlasExport(recordWebm);
+        Archify.exportMenu.shareCard = trackAtlasExport(rasterizeShareCard);
+      }
 
       // Auto-open on page load for demo/screenshot purposes: ?openExport=1
       // Wait for fonts (so the menu doesn't flash before typography lands)
       // and paint before opening. Fallback timeout for browsers without the
       // Font Loading API.
       try {
-        if (new URLSearchParams(window.location.search).get('openExport') === '1') {
+        if (new URLSearchParams(ArchifyAddress.location.search).get('openExport') === '1') {
           var openWhenReady = function () {
             requestAnimationFrame(function () { requestAnimationFrame(open); });
           };

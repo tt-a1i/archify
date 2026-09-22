@@ -497,7 +497,8 @@
       }
 
       function sharePlaybackRequested() {
-        try { return new URLSearchParams(location.search).get('play') === '1'; }
+        if (ArchifyAddress.context && ArchifyAddress.restoring) return false;
+        try { return new URLSearchParams(ArchifyAddress.location.search).get('play') === '1'; }
         catch (_) { return false; }
       }
 
@@ -748,9 +749,10 @@
         var view = activeIndex >= 0 ? views[activeIndex] : null;
         var step = storyBeatIndex >= 0 ? storySteps[storyBeatIndex] : null;
         if (!view || !step) return '';
-        var url = new URL(location.href);
+        var url = new URL(ArchifyAddress.location.href);
         url.searchParams.delete('play');
         url.hash = 'view=' + encodeURIComponent(view.id) + '&beat=' + encodeURIComponent(step.nodeId);
+        if (ArchifyAddress.context) url.hash += '&diagram=' + encodeURIComponent(ArchifyAddress.context.diagram);
         return url.href;
       }
 
@@ -816,7 +818,7 @@
         var step = storyBeatIndex >= 0 ? storySteps[storyBeatIndex] : null;
         if (!view || !step) return false;
         try {
-          var params = new URLSearchParams(location.hash.replace(/^#/, ''));
+          var params = new URLSearchParams(ArchifyAddress.location.hash.replace(/^#/, ''));
           return params.get('view') === view.id && params.get('beat') === step.nodeId;
         } catch (_) { return false; }
       }
@@ -1409,6 +1411,9 @@
           hideChip: true
         });
         setStoryBeat(index, { manual: true, center: true, pulse: true, follow: true });
+        // Atlas visits restore committed reading state from their logical URL.
+        // Only explicit stop selection commits a beat; playback never does.
+        if (ArchifyAddress.context) updateUrl(view, storySteps[index].nodeId);
         resetProgress(index / storySteps.length);
         renderPlayback();
         return true;
@@ -1440,9 +1445,10 @@
         return true;
       }
 
-      function updateUrl(view) {
+      function updateUrl(view, beat) {
         try {
-          history.replaceState(null, '', location.pathname + location.search + (view ? '#view=' + encodeURIComponent(view.id) : ''));
+          ArchifyAddress.replaceState(null, '', ArchifyAddress.location.pathname + ArchifyAddress.location.search +
+            (view ? '#view=' + encodeURIComponent(view.id) + (beat ? '&beat=' + encodeURIComponent(beat) : '') : ''));
         } catch (_) {}
       }
 
@@ -1597,7 +1603,7 @@
 
       function syncViewFromHash() {
         try {
-          var params = new URLSearchParams(location.hash.replace(/^#/, ''));
+          var params = new URLSearchParams(ArchifyAddress.location.hash.replace(/^#/, ''));
           var initial = params.get('view');
           var requestedBeat = params.get('beat');
           var restoreGeneration = ++momentRestoreGeneration;
@@ -1609,7 +1615,7 @@
             }
             if (requestedBeat) afterHandoff(function () {
               if (restoreGeneration !== momentRestoreGeneration) return;
-              var latest = new URLSearchParams(location.hash.replace(/^#/, ''));
+              var latest = new URLSearchParams(ArchifyAddress.location.hash.replace(/^#/, ''));
               if (latest.get('view') !== initial || latest.get('beat') !== requestedBeat) return;
               if (activeIndex < 0 || views[activeIndex].id !== initial) return;
               selectStoryBeatById(requestedBeat, { linked: true, follow: true, followInstant: true });

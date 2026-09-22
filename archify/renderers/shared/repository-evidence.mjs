@@ -68,6 +68,31 @@ function sourceLineCount(content) {
   return lines.length - (/(?:\r\n|\n|\r)$/.test(content) ? 1 : 0);
 }
 
+const IDENTIFIER_CONTINUE_RE = /^[\p{ID_Continue}$\u200c\u200d]$/u;
+
+function identifierContinue(character) {
+  return Boolean(character) && IDENTIFIER_CONTINUE_RE.test(character);
+}
+
+function sourceContainsSymbol(content, symbol) {
+  const symbolCharacters = Array.from(symbol);
+  const first = symbolCharacters[0];
+  const last = symbolCharacters.at(-1);
+  let offset = 0;
+  while (offset <= content.length - symbol.length) {
+    const index = content.indexOf(symbol, offset);
+    if (index < 0) return false;
+    const before = Array.from(content.slice(Math.max(0, index - 2), index)).at(-1);
+    const afterIndex = index + symbol.length;
+    const after = Array.from(content.slice(afterIndex, afterIndex + 2))[0];
+    const leftBoundary = !identifierContinue(first) || !identifierContinue(before);
+    const rightBoundary = !identifierContinue(last) || !identifierContinue(after);
+    if (leftBoundary && rightBoundary) return true;
+    offset = index + Math.max(1, symbol.length);
+  }
+  return false;
+}
+
 // Every diagram type carries its nodes under a different property name, and
 // source evidence is authored on those nodes. One table keeps the verification
 // below identical for all five types instead of branching per type: the only
@@ -89,7 +114,9 @@ function evidenceNodes(diagramType, diagram) {
 export function hasRepositoryEvidence(diagramType, diagram) {
   const authored = evidenceNodes(diagramType, diagram);
   if (!authored) return false;
-  return Boolean(diagram?.meta?.repository) || authored.nodes.some((node) => Array.isArray(node?.sources) && node.sources.length);
+  return Boolean(diagram?.meta?.repository) || authored.nodes.some((node) =>
+    (Array.isArray(node?.sources) && node.sources.length) ||
+    (diagramType === 'architecture' && Array.isArray(node?.internal_structure?.sources) && node.internal_structure.sources.length));
 }
 
 export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
@@ -186,17 +213,29 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   const nodes = Object.create(null);
   let referenceCount = 0;
   for (const [nodeIndex, node] of authoredNodes.entries()) {
-    if (!Array.isArray(node.sources) || node.sources.length === 0) continue;
+    const authoredSources = [
+      ...(Array.isArray(node.sources) ? node.sources.map((authored, sourceIndex) => ({
+        authored,
+        at: `/${collection}/${nodeIndex}/sources/${sourceIndex}`,
+      })) : []),
+      ...(diagramType === 'architecture' && Array.isArray(node.internal_structure?.sources) ? node.internal_structure.sources.map((authored, sourceIndex) => ({
+        authored,
+        at: `/${collection}/${nodeIndex}/internal_structure/sources/${sourceIndex}`,
+      })) : []),
+    ];
+    if (!authoredSources.length) continue;
     // `componentId` shipped with the architecture-only path; keep it beside the
     // type-neutral `nodeId` so existing agent handling stays valid.
     const nodeSubject = collection === 'components'
       ? { diagramType, collection, nodeId: node.id, componentId: node.id }
       : { diagramType, collection, nodeId: node.id };
     const verified = [];
-    for (const [sourceIndex, authored] of node.sources.entries()) {
-      const at = `/${collection}/${nodeIndex}/sources/${sourceIndex}`;
+    for (const { authored, at } of authoredSources) {
       const where = `${at}/path`;
       const source = {
+        ...(authored.id ? { id: authored.id } : {}),
+        ...(authored.role ? { role: authored.role } : {}),
+        ...(authored.symbol ? { symbol: authored.symbol } : {}),
         path: verifiedSourcePath(authored.path, where),
         ...(authored.line ? { line: authored.line } : {}),
         ...(authored.end_line ? { endLine: authored.end_line } : {}),
@@ -224,7 +263,13 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
           supportedFixes: ['use a file path that exists at the pinned revision'],
         });
       }
-      if (source.line) {
+      if (source.symbol && (CONTROL_CHARACTER_RE.test(source.symbol) || source.symbol !== source.symbol.trim())) {
+        evidenceFailure('repository-evidence/symbol-invalid', `${at}/symbol must be printable and have no leading or trailing whitespace.`, {
+          subject: { path: `${at}/symbol`, ...nodeSubject },
+          supportedFixes: ['use one printable source symbol or remove the optional symbol'],
+        });
+      }
+      if (source.line || source.symbol) {
         const content = runGit(realRoot, ['show', object]);
         if (content.status !== 0) evidenceFailure('repository-evidence/file-unreadable', `${where} could not be read at revision ${revision}.`, {
           subject: { path: where, ...nodeSubject },
@@ -239,6 +284,20 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
             evidence: { sourcePath: source.path, requestedLine, lineCount, revision },
             supportedFixes: ['use a line range that exists at the pinned revision'],
           });
+        }
+        if (source.symbol) {
+          const lines = content.stdout.split(/\r\n|\n|\r/);
+          const selected = source.line
+            ? lines.slice(source.line - 1, source.endLine || source.line).join('\n')
+            : content.stdout;
+          if (!sourceContainsSymbol(selected, source.symbol)) {
+            evidenceFailure('repository-evidence/symbol-missing', `${at}/symbol was not found in the selected source range at revision ${revision}.`, {
+              subject: { path: `${at}/symbol`, ...nodeSubject },
+              evidence: { sourcePath: source.path, symbol: source.symbol, line: source.line || null, endLine: source.endLine || source.line || null, revision },
+              supportedFixes: ['correct the symbol or select a pinned source range that contains it'],
+            });
+          }
+          source.symbolLocated = true;
         }
       }
       verified.push({ ...source, ...(linkMode === 'web' ? { href: repositorySourceHref(location.provider, location.url, revision, source) } : {}) });

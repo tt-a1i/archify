@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "支付模块",
+    "output": "payment.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "主要处理路径",
+        "focus": [
+          "users",
+          "cdn",
+          "lb",
+          "controller",
+          "db"
+        ],
+        "note": "沿当前图的作者关系查看处理过程。"
+      },
+      {
+        "id": "identity-and-cache",
+        "label": "身份与状态",
+        "focus": [
+          "auth",
+          "controller",
+          "redis"
+        ],
+        "note": "查看当前模块依赖的身份与状态。"
+      },
+      {
+        "id": "async-work",
+        "label": "异步工作",
+        "focus": [
+          "cdn",
+          "s3",
+          "controller",
+          "orders",
+          "worker"
+        ],
+        "note": "查看对象存储和异步任务的关系。"
+      }
+    ],
+    "locale": "zh-CN",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "结算入口",
+      "sublabel": "提交付款",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "external",
+      "label": "回调入口",
+      "sublabel": "入站 webhook",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "cdn",
+      "type": "cloud",
+      "label": "支付网关",
+      "sublabel": "HTTPS",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "支付控制器",
+      "sublabel": "校验与路由",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "异步执行器",
+      "sublabel": "进入执行细节",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "共享上下文",
+      "pos": [
+        670,
+        150
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "db",
+      "type": "external",
+      "label": "支付渠道",
+      "sublabel": "出站 HTTP",
+      "pos": [
+        880,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "渠道配置",
+      "sublabel": "签名与限额",
+      "pos": [
+        250,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "orders",
+      "type": "messagebus",
+      "label": "收款事件",
+      "sublabel": "异步事件",
+      "pos": [
+        670,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "回执处理",
+      "sublabel": "更新支付状态",
+      "pos": [
+        880,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "服务区域",
+      "wraps": [
+        "cdn",
+        "lb",
+        "controller",
+        "redis",
+        "db",
+        "s3",
+        "orders",
+        "worker"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "应用边界",
+      "wraps": [
+        "lb",
+        "controller"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "users-to-cdn",
+      "from": "users",
+      "to": "cdn",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jwt-verification",
+      "from": "auth",
+      "to": "controller",
+      "label": "webhook",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          620,
+          142
+        ],
+        [
+          620,
+          246
+        ],
+        [
+          735,
+          246
+        ]
+      ]
+    },
+    {
+      "id": "cdn-to-lb",
+      "from": "cdn",
+      "to": "lb"
+    },
+    {
+      "id": "static-assets",
+      "from": "cdn",
+      "to": "s3",
+      "label": "static",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 58
+    },
+    {
+      "id": "lb-to-api",
+      "from": "lb",
+      "to": "controller"
+    },
+    {
+      "id": "cache-read-through",
+      "from": "controller",
+      "to": "redis",
+      "label": "read-through",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDy": -68
+    },
+    {
+      "id": "api-sql",
+      "from": "controller",
+      "to": "db",
+      "label": "HTTP"
+    },
+    {
+      "id": "enqueue-job",
+      "from": "controller",
+      "to": "orders",
+      "label": "enqueue",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 58
+    },
+    {
+      "id": "queue-to-worker",
+      "from": "orders",
+      "to": "worker"
+    }
+  ],
+  "cards": [
+    {
+      "title": "支付调用",
+      "dot": "cyan",
+      "items": [
+        "向支付渠道发送 HTTP 请求",
+        "回调入口独立接收 webhook"
+      ]
+    },
+    {
+      "title": "任务处理",
+      "dot": "emerald",
+      "items": [
+        "异步执行器处理付款任务",
+        "收款事件交给回执处理"
+      ]
+    },
+    {
+      "title": "共享缓存",
+      "dot": "violet",
+      "items": [
+        "Redis 引用总览定义",
+        "引用声明对象身份"
+      ]
+    }
+  ]
+}

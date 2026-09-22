@@ -37,6 +37,7 @@ function fixture() {
   // copies are byte-identical to HEAD and no fixture commit is needed.
   const contractFiles = [
     'scripts/stage-clean-skill.mjs',
+    'scripts/third-party-notices-contract.mjs',
     'archify/renderers/shared/atomic-output.mjs',
     'archify/renderers/shared/output-path.mjs',
     'archify/renderers/shared/path-semantics.mjs',

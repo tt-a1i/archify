@@ -5,19 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="archify 2.17.0-dev.1">
   <title>[PROJECT NAME] Architecture Diagram</title>
+  <link rel="icon" href="data:,">
+  <!-- ARCHIFY:ATLAS_CONTEXT -->
   <script>
+    /* ARCHIFY:ADDRESS */
+    ArchifyAddress.run(function () {
     // Resolve the theme before first paint so light-preference users don't
     // see a dark flash. The toolbar script below re-applies with UI state.
     (function () {
       try {
         var theme = null;
         try {
-          var param = new URLSearchParams(window.location.search).get('theme');
+          var param = new URLSearchParams(ArchifyAddress.location.search).get('theme');
           if (param === 'light' || param === 'dark') theme = param;
-          if (new URLSearchParams(window.location.search).get('embed') === '1') {
+          if (new URLSearchParams(ArchifyAddress.location.search).get('embed') === '1') {
             document.documentElement.setAttribute('data-embed', 'true');
           }
-          if (new URLSearchParams(window.location.search).get('present') === '1') {
+          if (new URLSearchParams(ArchifyAddress.location.search).get('present') === '1') {
             document.documentElement.setAttribute('data-present', 'true');
           }
         } catch (_) {}
@@ -30,6 +34,7 @@
         document.documentElement.setAttribute('data-theme', theme);
       } catch (_) {}
     })();
+    });
   </script>
   <style id="archify-fonts">
 /*
@@ -283,6 +288,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
     <!-- ARCHIFY:GUIDED_VIEWS_DATA -->
     <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->
+    <!-- ARCHIFY:INTERNAL_STRUCTURE_DATA -->
     <!-- ARCHIFY:I18N_DATA -->
     <div class="guided-views no-print" id="guided-views" hidden aria-label="{{i18n:viewer.guided.region}}">
       <button id="guided-view-prev" type="button" aria-label="{{i18n:viewer.guided.previous}}" title="{{i18n:viewer.guided.previous.title}}">&#8592;</button>
@@ -704,13 +710,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   </div>
 
   <script>
+    ArchifyAddress.run(function () {
     var Archify = {};
+    window.Archify = Archify;
     var archifyI18nData = (function () {
       var node = document.getElementById('archify-i18n-data');
       try { return JSON.parse(node ? node.textContent : '{}'); }
       catch (_) { return { locale: 'en', messages: {} }; }
     })();
     Archify.locale = archifyI18nData.locale || 'en';
+    // Preserve the classic Viewer helpers for existing integrations while
+    // initialization can be delayed until an Atlas session is assigned.
+    window.archifyI18nData = archifyI18nData;
+    window.viewerText = viewerText;
+    window.viewerCount = viewerCount;
+    window.viewerKindLabel = viewerKindLabel;
+    window.hasDrawableGeometry = hasDrawableGeometry;
 
     function viewerText(key, values) {
       var messages = archifyI18nData.messages || {};
@@ -795,6 +810,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (html.getAttribute('data-embed') === 'true') return false;
         if (PRESETS.indexOf(preset) < 0) return false;
         html.setAttribute('data-preset', preset);
+        ArchifyAddress.preference('preset', preset);
         svg.setAttribute('data-preset', preset);
         btn.setAttribute('data-preset-option', preset);
         label.textContent = LABELS[preset];
@@ -808,9 +824,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function cycle() { return apply(nextAfter(current())); }
 
-      function isOpen() { return menu.classList.contains('open'); }
+      function isOpen() { return window.ArchifyToolbarHost ? window.ArchifyToolbarHost.isOpen('preset') : menu.classList.contains('open'); }
       function open(focusLast) {
         if (html.getAttribute('data-embed') === 'true') return false;
+        if (window.ArchifyToolbarHost) return window.ArchifyToolbarHost.open('preset', focusLast);
         if (Archify.exportMenu && Archify.exportMenu.isOpen()) Archify.exportMenu.close(false);
         menu.classList.add('open');
         btn.setAttribute('aria-expanded', 'true');
@@ -823,11 +840,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function close(focusTrigger) {
         menu.classList.remove('open');
         btn.setAttribute('aria-expanded', 'false');
-        if (focusTrigger) btn.focus();
+        if (window.ArchifyToolbarHost) window.ArchifyToolbarHost.close('preset', focusTrigger);
+        else if (focusTrigger) btn.focus();
         return false;
       }
 
-      apply(authored);
+      apply(ArchifyAddress.context ? (new URLSearchParams(ArchifyAddress.location.search).get('preset') || authored) : authored);
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
         if (isOpen()) close(false);
@@ -895,7 +913,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function urlOverride() {
         // URL param wins (useful for deterministic screenshots / share links)
         try {
-          var param = new URLSearchParams(window.location.search).get('theme');
+          var param = new URLSearchParams(ArchifyAddress.location.search).get('theme');
           if (param === 'light' || param === 'dark') return param;
         } catch (_) {}
         return null;
@@ -911,6 +929,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       function apply(theme) {
         html.setAttribute('data-theme', theme);
+        ArchifyAddress.preference('theme', theme);
         label.textContent = viewerText(theme === 'dark' ? 'viewer.theme.dark' : 'viewer.theme.light');
         btn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
       }
@@ -936,7 +955,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         else if (media.addListener) media.addListener(onChange);
       } catch (_) {}
 
-      return { toggle: toggle };
+      return { toggle: toggle, apply: apply };
     })();
 
 /* ARCHIFY:EXPORT */
@@ -1089,10 +1108,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       function updateUrl(next) {
         try {
-          var url = new URL(window.location.href);
+          var url = new URL(ArchifyAddress.location.href);
           if (next) url.searchParams.set('present', '1');
           else url.searchParams.delete('present');
-          history.replaceState(null, '', url.pathname + url.search + url.hash);
+          ArchifyAddress.replaceState(null, '', url.pathname + url.search + url.hash);
         } catch (_) {}
       }
 
@@ -1428,6 +1447,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         Archify.presentation.exit();
       }
     });
+    });
+    ArchifyAddress.connect();
   </script>
 </body>
 </html>

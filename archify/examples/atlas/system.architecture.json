@@ -1,0 +1,320 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "订单平台总览",
+    "output": "system.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "主要处理路径",
+        "focus": [
+          "users",
+          "cdn",
+          "lb",
+          "controller",
+          "db"
+        ],
+        "note": "沿当前图的作者关系查看处理过程。"
+      },
+      {
+        "id": "identity-and-cache",
+        "label": "身份与状态",
+        "focus": [
+          "auth",
+          "controller",
+          "redis"
+        ],
+        "note": "查看当前模块依赖的身份与状态。"
+      },
+      {
+        "id": "async-work",
+        "label": "异步工作",
+        "focus": [
+          "cdn",
+          "s3",
+          "controller",
+          "orders",
+          "worker"
+        ],
+        "note": "查看对象存储和异步任务的关系。"
+      }
+    ],
+    "locale": "zh-CN",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "用户",
+      "sublabel": "Web / Mobile",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "身份服务",
+      "sublabel": "OAuth 2.0",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "cdn",
+      "type": "cloud",
+      "label": "流量入口",
+      "sublabel": "HTTPS",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "业务路由",
+      "sublabel": "服务编排",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "支付模块",
+      "sublabel": "支付与清算",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "共享缓存",
+      "pos": [
+        670,
+        150
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "订单库",
+      "sublabel": "持久化",
+      "pos": [
+        880,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "对象存储",
+      "sublabel": "归档",
+      "pos": [
+        250,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "orders",
+      "type": "backend",
+      "label": "订单模块",
+      "sublabel": "订单生命周期",
+      "pos": [
+        670,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "履约服务",
+      "sublabel": "配送与通知",
+      "pos": [
+        880,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "服务区域",
+      "wraps": [
+        "cdn",
+        "lb",
+        "controller",
+        "redis",
+        "db",
+        "s3",
+        "orders",
+        "worker"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "应用边界",
+      "wraps": [
+        "lb",
+        "controller"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "users-to-cdn",
+      "from": "users",
+      "to": "cdn",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "from": "auth",
+      "to": "controller",
+      "label": "身份校验",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          620,
+          142
+        ],
+        [
+          620,
+          246
+        ],
+        [
+          735,
+          246
+        ]
+      ]
+    },
+    {
+      "id": "cdn-to-lb",
+      "from": "cdn",
+      "to": "lb"
+    },
+    {
+      "id": "static-assets",
+      "from": "cdn",
+      "to": "s3",
+      "label": "static",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 58
+    },
+    {
+      "id": "lb-to-api",
+      "from": "lb",
+      "to": "controller"
+    },
+    {
+      "id": "cache-read-through",
+      "from": "controller",
+      "to": "redis",
+      "label": "read-through",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDy": -68
+    },
+    {
+      "id": "api-sql",
+      "from": "controller",
+      "to": "db",
+      "label": "SQL"
+    },
+    {
+      "id": "enqueue-job",
+      "from": "controller",
+      "to": "orders",
+      "label": "enqueue",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 58
+    },
+    {
+      "id": "queue-to-worker",
+      "from": "orders",
+      "to": "worker"
+    }
+  ],
+  "cards": [
+    {
+      "title": "业务入口",
+      "dot": "cyan",
+      "items": [
+        "用户发起业务请求",
+        "身份服务校验访问"
+      ]
+    },
+    {
+      "title": "业务模块",
+      "dot": "emerald",
+      "items": [
+        "支付、订单与履约分别处理职责",
+        "进入模块可查看内部结构"
+      ]
+    },
+    {
+      "title": "共享缓存",
+      "dot": "violet",
+      "items": [
+        "Redis 供支付和订单使用",
+        "对象定义位于总览"
+      ]
+    }
+  ]
+}

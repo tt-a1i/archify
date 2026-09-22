@@ -80,7 +80,7 @@ test('Copy Share Card reuses one canonical card blob and writes only PNG to the 
   const copyBlock = html.match(/function runCopyShareCard\(\) \{[\s\S]*?\n      \}/)?.[0] || '';
   assert.equal((copyBlock.match(/rasterizeShareCard\(\)/g) || []).length, 1);
   assert.match(copyBlock, /writePngToClipboard\(blobPromise\)/);
-  assert.match(html, /new ClipboardItem\(\{ 'image\/png': blobPromise \}\)/);
+  assert.match(html, /new owner\.ClipboardItem\(\{ 'image\/png': blobPromise \}\)/);
   assert.match(copyBlock, /recordExportReceipt\('share-card', blob, true, \{ width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT \}\)/);
   assert.match(copyBlock, /toast\(viewerText\('viewer\.export\.copiedShare'\)\)/);
   assert.match(html, /copyShareCard: runCopyShareCard/);

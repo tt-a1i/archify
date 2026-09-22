@@ -99,8 +99,8 @@ test('motion control is mobile-contained, embed-safe, and export-neutral', () =>
   const html = render('sequence', CASES.sequence);
   assert.match(html, /\.toolbar #btn-motion\[hidden\] \{ display: none !important; \}/);
   assert.match(html, /\.toolbar button \{[\s\S]*?min-height: 2\.75rem;/);
-  assert.match(html, /@media \(max-width: 360px\) \{[\s\S]*?\.toolbar #btn-motion \{ min-width: 4\.4rem;/);
-  assert.match(html, /#theme-label, #preset-label, #present-label \{ display: none; \}/);
+  assert.match(html, /@media \(max-width: 440px\) \{[\s\S]*?\.toolbar #btn-motion \{[\s\S]*?min-width: 2\.75rem;/);
+  assert.match(html, /#theme-label,[\s\S]*?#motion-label,[\s\S]*?#present-label \{ display: none; \}/);
   assert.match(html, /html\[data-embed="true"\] \.diagram-container::before/);
   assert.match(html, /html\[data-share-playback="true"\] \.diagram-container::before/);
   assert.match(html, /Still also parks bounded[\s\S]*?viewer signals without discarding their static meaning/);

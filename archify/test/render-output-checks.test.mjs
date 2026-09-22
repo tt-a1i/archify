@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { serializeChunkedScriptJson, serializeScriptJson } from '../renderers/shared/utils.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -40,6 +41,134 @@ function checkHtml(name, svgBody, profile = 'standard', viewBox = '0 0 240 160')
     return { code: err.status ?? 1, result: JSON.parse(String(err.stdout || '{}')) };
   }
 }
+
+function checkDocument(name, html) {
+  const htmlPath = path.join(tmp, `${name}.html`);
+  fs.writeFileSync(htmlPath, html);
+  try {
+    const stdout = execFileSync('node', [checker, htmlPath], { encoding: 'utf8' });
+    return { code: 0, result: JSON.parse(stdout) };
+  } catch (err) {
+    return { code: err.status ?? 1, result: JSON.parse(String(err.stdout || '{}')) };
+  }
+}
+
+function structureDocument({ structureScripts, evidence = true, nodeIds = ['users'] }) {
+  const sourceEvidence = {
+    schemaVersion: 1,
+    verified: true,
+    repository: { url: 'https://github.com/example/repo', revision: 'a'.repeat(40) },
+    referenceCount: nodeIds.length,
+    nodes: Object.fromEntries(nodeIds.map((nodeId) => [nodeId, [{ id: `entry-${nodeId}`, role: 'definition', path: `src/${nodeId}.js`, line: 1 }]])),
+  };
+  return `<!doctype html><html><body>
+    <svg viewBox="0 0 240 160" data-quality-profile="standard">${nodeIds.map((nodeId) => `<g data-node-id="${nodeId}"><rect x="20" y="20" width="100" height="50"/></g>`).join('')}</svg>
+    ${evidence ? `<script id="archify-source-evidence-data" type="application/json">${JSON.stringify(sourceEvidence)}</script>` : ''}
+    ${structureScripts}
+  </body></html>`;
+}
+
+function structureNode(nodeId = 'users', overrides = {}) {
+  return {
+    sources: [{ id: `entry-${nodeId}`, role: 'definition', path: `src/${nodeId}.js`, line: 1 }],
+    items: [
+      { id: 'src', domain: 'code', kind: 'directory', label: 'src', summary: 'Sources.' },
+      { id: 'route', domain: 'code', kind: 'function', label: 'route', parent: 'src', summary: 'Routes requests.', sourceRefs: [`entry-${nodeId}`] },
+    ],
+    relations: [],
+    ...overrides,
+  };
+}
+
+function encodedStructure(nodes = { users: structureNode() }) {
+  return serializeChunkedScriptJson({ schemaVersion: 1, nodes });
+}
+
+const structureScript = encoded => `<script id="archify-internal-structure-data" type="application/json">${encoded}</script>`;
+
+test('render output check: accepts one source-linked internal structure payload outside the SVG', () => {
+  const { code, result } = checkDocument('structure-valid', structureDocument({ structureScripts: structureScript(encodedStructure()) }));
+  assert.equal(code, 0);
+  assert.equal(result.checks.find((item) => item.name === 'internal_structure_payload')?.ok, true);
+  assert.equal(result.checks.find((item) => item.name === 'internal_structure_line_budget')?.ok, true);
+});
+
+test('render output check: rejects duplicate, orphaned, and unlinked internal structure payloads', () => {
+  const encoded = encodedStructure();
+  const duplicate = checkDocument('structure-duplicate', structureDocument({ structureScripts: structureScript(encoded) + structureScript(encoded) }));
+  assert.notEqual(duplicate.code, 0);
+  assert.equal(duplicate.result.checks.find((item) => item.name === 'internal_structure_payload')?.ok, false);
+
+  const orphaned = encodedStructure({ missing: structureNode('missing') });
+  assert.notEqual(checkDocument('structure-orphan', structureDocument({ structureScripts: structureScript(orphaned) })).code, 0);
+  assert.notEqual(checkDocument('structure-unlinked', structureDocument({ evidence: false, structureScripts: structureScript(encoded) })).code, 0);
+});
+
+test('render output check: rejects semantically corrupted internal structure bodies', () => {
+  const cases = [
+    node => { node.items.push({ ...node.items[1] }); },
+    node => { node.items[1].domain = 'state'; },
+    node => { node.items[1].parent = 'missing'; },
+    node => { node.relations.push({ id: 'dangling', from: 'route', to: 'missing', kind: 'calls', sourceRefs: ['entry-users'] }); },
+  ];
+  cases.forEach((mutate, index) => {
+    const node = structureNode();
+    mutate(node);
+    const checked = checkDocument(`structure-semantic-corruption-${index}`, structureDocument({
+      structureScripts: structureScript(encodedStructure({ users: node })),
+    }));
+    assert.notEqual(checked.code, 0, `corruption ${index} must fail closed`);
+    assert.equal(checked.result.checks.find((item) => item.name === 'internal_structure_payload')?.ok, false);
+  });
+});
+
+test('render output check: finds duplicate structure scripts with DOM-equivalent attribute syntax', () => {
+  const encoded = encodedStructure();
+  for (const startTag of [
+    `<script data-probe='>' TYPE='application/json' ID='archify-internal-structure-data'>`,
+    '<script type=application/json id="archify-internal-structure-d&#97;ta">',
+  ]) {
+    const duplicate = checkDocument('structure-duplicate-dom-syntax', structureDocument({
+      structureScripts: `${startTag}${encoded}</script>${structureScript(encoded)}`,
+    }));
+    assert.notEqual(duplicate.code, 0, startTag);
+  }
+  const canonical = structureScript(encoded);
+  for (const prefix of ['< not-a-tag\n', '<x bogus=a=">']) {
+    assert.notEqual(checkDocument('structure-duplicate-after-malformed-text', structureDocument({ structureScripts: `${prefix}${canonical}${canonical}` })).code, 0);
+  }
+  const commented = checkDocument('structure-commented-script', structureDocument({
+    structureScripts: `<!-- ${structureScript(encoded)} -->${structureScript(encoded)}`,
+  }));
+  assert.equal(commented.code, 0, JSON.stringify(commented.result));
+});
+
+test('render output check: rejects unsafe, empty, per-node oversized, and member-oversized structure payloads', () => {
+  let checked = checkDocument('structure-unsafe-encoding', structureDocument({
+    structureScripts: structureScript(JSON.stringify([JSON.stringify({ schemaVersion: 1, nodes: { users: structureNode('users', { marker: 'A & B' }) } })])),
+  }));
+  assert.notEqual(checked.code, 0);
+  checked = checkDocument('structure-empty', structureDocument({ structureScripts: structureScript(encodedStructure({})) }));
+  assert.notEqual(checked.code, 0);
+  checked = checkDocument('structure-node-oversized', structureDocument({
+    structureScripts: structureScript(encodedStructure({ users: structureNode('users', { marker: 'x'.repeat(66 * 1024) }) })),
+  }));
+  assert.notEqual(checked.code, 0);
+
+  const nodeIds = Array.from({ length: 5 }, (_, index) => `node-${index}`);
+  const nodes = Object.fromEntries(nodeIds.map(nodeId => [nodeId, structureNode(nodeId, { marker: 'x'.repeat(54 * 1024) })]));
+  const oversizedMember = encodedStructure(nodes);
+  assert.ok(Buffer.byteLength(oversizedMember) > 256 * 1024);
+  checked = checkDocument('structure-member-oversized', structureDocument({ nodeIds, structureScripts: structureScript(oversizedMember) }));
+  assert.notEqual(checked.code, 0);
+});
+
+test('render output check: rejects internal structure script lines over 8192 UTF-8 bytes', () => {
+  const oversized = JSON.stringify(['x'.repeat(8200)]);
+  const { code, result } = checkDocument('structure-long-line', structureDocument({ structureScripts: structureScript(oversized) }));
+  assert.notEqual(code, 0);
+  assert.equal(result.checks.find((item) => item.name === 'internal_structure_line_budget')?.ok, false);
+});
 
 test('render output check: showcase rejects node copy that becomes illegible at 1440px', () => {
   const { code, result } = checkHtml('showcase-desktop-readability', `

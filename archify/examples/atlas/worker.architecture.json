@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "执行器 </script> & 重试",
+    "output": "worker.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "主要处理路径",
+        "focus": [
+          "users",
+          "cdn",
+          "lb",
+          "controller",
+          "db"
+        ],
+        "note": "沿当前图的作者关系查看处理过程。"
+      },
+      {
+        "id": "identity-and-cache",
+        "label": "身份与状态",
+        "focus": [
+          "auth",
+          "controller",
+          "redis"
+        ],
+        "note": "查看当前模块依赖的身份与状态。"
+      },
+      {
+        "id": "async-work",
+        "label": "异步工作",
+        "focus": [
+          "cdn",
+          "s3",
+          "controller",
+          "orders",
+          "worker"
+        ],
+        "note": "查看对象存储和异步任务的关系。"
+      }
+    ],
+    "locale": "zh-CN",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "任务入口",
+      "sublabel": "队列消费",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "凭据校验",
+      "sublabel": "签名与权限",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "cdn",
+      "type": "cloud",
+      "label": "报文解析",
+      "sublabel": "解析任务",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "幂等检查",
+      "sublabel": "重复任务过滤",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "执行器",
+      "sublabel": "执行单个任务",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "租约状态",
+      "sublabel": "租约与锁",
+      "pos": [
+        670,
+        150
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "重试记录",
+      "sublabel": "重试次数",
+      "pos": [
+        880,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "原始报文",
+      "sublabel": "审计存档",
+      "pos": [
+        250,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "orders",
+      "type": "messagebus",
+      "label": "重试队列",
+      "sublabel": "延迟重试",
+      "pos": [
+        670,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "重试调度",
+      "sublabel": "调度下一次尝试",
+      "pos": [
+        880,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "服务区域",
+      "wraps": [
+        "cdn",
+        "lb",
+        "controller",
+        "redis",
+        "db",
+        "s3",
+        "orders",
+        "worker"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "应用边界",
+      "wraps": [
+        "lb",
+        "controller"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "users-to-cdn",
+      "from": "users",
+      "to": "cdn",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jwt-verification",
+      "from": "auth",
+      "to": "controller",
+      "label": "身份校验",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          620,
+          142
+        ],
+        [
+          620,
+          246
+        ],
+        [
+          735,
+          246
+        ]
+      ]
+    },
+    {
+      "id": "cdn-to-lb",
+      "from": "cdn",
+      "to": "lb"
+    },
+    {
+      "id": "static-assets",
+      "from": "cdn",
+      "to": "s3",
+      "label": "static",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 58
+    },
+    {
+      "id": "lb-to-api",
+      "from": "lb",
+      "to": "controller"
+    },
+    {
+      "id": "cache-read-through",
+      "from": "controller",
+      "to": "redis",
+      "label": "read-through",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDy": -68
+    },
+    {
+      "id": "api-sql",
+      "from": "controller",
+      "to": "db",
+      "label": "SQL"
+    },
+    {
+      "id": "enqueue-job",
+      "from": "controller",
+      "to": "orders",
+      "label": "enqueue",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 58
+    },
+    {
+      "id": "queue-to-worker",
+      "from": "orders",
+      "to": "worker"
+    }
+  ],
+  "cards": [
+    {
+      "title": "任务执行",
+      "dot": "cyan",
+      "items": [
+        "任务解析后经过幂等检查",
+        "凭据校验与执行分别处理"
+      ]
+    },
+    {
+      "title": "重试流程",
+      "dot": "emerald",
+      "items": [
+        "失败任务进入重试队列",
+        "调度器触发下一次尝试"
+      ]
+    },
+    {
+      "title": "本地状态",
+      "dot": "violet",
+      "items": [
+        "租约状态控制并发",
+        "重试记录保留尝试次数"
+      ]
+    }
+  ]
+}
