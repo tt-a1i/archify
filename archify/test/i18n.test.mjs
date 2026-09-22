@@ -359,6 +359,90 @@ test('visual-check binds the delivered Korean fixture to viewport and theme rece
   );
 });
 
+// examples/locales/ko.json proved the mechanism for renderer-owned Viewer
+// chrome; this fixture proves the other half of "complete" language support
+// that predates this PR (issue #458: "the renderer never translates
+// authored content") — an agent authoring titles, node labels, and cards
+// directly in the target language, with meta.locale/meta.translations
+// localizing only the fixed chrome around it. Japanese is a second,
+// independent worked example of that same end-to-end pattern.
+function deliverJapaneseFixture() {
+  const fixture = path.join(skillRoot, 'test/fixtures/japanese-locale.architecture.json');
+  const source = JSON.parse(fs.readFileSync(fixture, 'utf8'));
+  assert.equal(source.meta.locale, 'ja');
+  assert.match(source.meta.title, /[぀-ヿ一-鿿]/);
+
+  const validate = spawnSync(process.execPath, [cli, 'validate', 'architecture', fixture, '--json'], {
+    cwd: skillRoot,
+    encoding: 'utf8',
+  });
+  assert.equal(validate.status, 0, validate.stderr || validate.stdout);
+  const validation = JSON.parse(validate.stdout);
+  assert.equal(validation.ok, true);
+  assert.equal(validation.command, 'validate');
+
+  const artifact = path.join(tmp, 'japanese-locale-fixture.html');
+  const deliver = spawnSync(
+    process.execPath,
+    [cli, 'deliver', 'architecture', fixture, artifact, '--quality', 'showcase', '--json'],
+    { cwd: skillRoot, encoding: 'utf8' },
+  );
+  assert.equal(deliver.status, 0, deliver.stderr || deliver.stdout);
+  const delivery = JSON.parse(deliver.stdout);
+  assert.equal(delivery.ok, true);
+  assert.equal(delivery.command, 'deliver');
+  assert.equal(delivery.type, 'architecture');
+  assert.match(delivery.artifact.sha256, /^[a-f0-9]{64}$/);
+  assert.equal(delivery.artifact.bytes, fs.statSync(artifact).size);
+  assert.equal(delivery.artifact.sha256, createHash('sha256').update(fs.readFileSync(artifact)).digest('hex'));
+  return { fixture, artifact, delivery };
+}
+
+test('checked-in Japanese fixture validates and delivers a fully-authored ja architecture artifact', () => {
+  const { artifact, delivery } = deliverJapaneseFixture();
+  const html = fs.readFileSync(artifact, 'utf8');
+  assert.match(html, /^<!DOCTYPE html>\n<html lang="ja"/);
+  assert.match(html, /<svg\b[^>]*\blang="ja"/);
+  assert.ok(html.includes('<title>日本語ウェブアプリ ダイアグラム</title>'));
+  assert.ok(html.includes('<h1>日本語ウェブアプリ</h1>'));
+  // Authored content (node labels, cards) — never translated, only ever
+  // whatever language the fixture itself was written in.
+  assert.ok(html.includes('ユーザー'));
+  assert.ok(html.includes('APIサーバー'));
+  assert.ok(html.includes('エッジ'));
+  assert.ok(html.includes('CloudFront CDNがトラフィックを受信'));
+  // Renderer-owned chrome — localized via meta.translations.
+  assert.match(html, />ダイアグラムをエクスポート</);
+  assert.match(html, /<text\b[^>]*>凡例<\/text>/);
+  assert.match(delivery.artifact.sha256, /^[a-f0-9]{64}$/);
+});
+
+test('visual-check binds the delivered Japanese fixture to viewport and theme receipts', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to collect artifact-bound visual-check evidence for the Japanese fixture.',
+}, () => {
+  const { artifact, delivery } = deliverJapaneseFixture();
+  const visual = spawnSync(process.execPath, [cli, 'visual-check', artifact, '--json'], {
+    cwd: skillRoot,
+    encoding: 'utf8',
+    env: { ...process.env, ARCHIFY_CHROME: chromePath },
+  });
+  assert.ok([0, 1].includes(visual.status), visual.stderr || visual.stdout);
+  const receipt = JSON.parse(visual.stdout);
+  assert.equal(receipt.command, 'visual-check');
+  assert.equal(receipt.visualReview, 'pending');
+  assert.equal(receipt.chrome.status, 'available');
+  assert.equal(receipt.readability.status, 'pass');
+  assert.equal(receipt.viewerChrome.status, 'pass');
+  assert.equal(receipt.captures.status, 'pass');
+  assert.equal(receipt.artifact.sha256, delivery.artifact.sha256);
+  assert.equal(receipt.artifact.bytes, delivery.artifact.bytes);
+  assert.equal(
+    receipt.containment.viewports.every((viewport) => viewport.overflowX === false),
+    true,
+    'Japanese fixture introduced horizontal overflow',
+  );
+});
+
 test('malformed locale tags fail schema validation in every mode', () => {
   for (const locale of ['123', 'x', 'en_US', 'a'.repeat(40)]) {
     for (const type of Object.keys(EXAMPLES)) {
@@ -725,6 +809,60 @@ test('the checked-in Korean example catalog is complete and preserves interpolat
   assert.equal(report.placeholderMismatches.length, 0, JSON.stringify(report.placeholderMismatches));
   assert.equal(report.coveredKeys, report.totalKeys);
 });
+
+// Additional checked-in example catalogs demonstrating the same data
+// contract across a wider language set (representative real-diagram checks
+// requested in tt-a1i's review on #457): each is a complete, full-coverage
+// example a caller could supply via meta.translations, none of them built
+// into the renderer.
+for (const locale of ['fr', 'pt', 'ja', 'de', 'it', 'ru']) {
+  test(`the checked-in ${locale} example catalog is complete and preserves interpolation variables for every canonical key`, () => {
+    const translations = JSON.parse(fs.readFileSync(path.join(skillRoot, `examples/locales/${locale}.json`), 'utf8'));
+    const report = validateTranslations(translations);
+    assert.equal(report.missingKeys.length, 0, `missing: ${report.missingKeys.join(', ')}`);
+    assert.equal(report.unknownKeys.length, 0, `unknown: ${report.unknownKeys.join(', ')}`);
+    assert.equal(report.placeholderMismatches.length, 0, JSON.stringify(report.placeholderMismatches));
+    assert.equal(report.coveredKeys, report.totalKeys);
+  });
+
+  test(`${locale} localizes renderer-owned output via meta.translations without leaving any renderer-owned English badge or preset name behind`, () => {
+    const translations = JSON.parse(fs.readFileSync(path.join(skillRoot, `examples/locales/${locale}.json`), 'utf8'));
+    const document = example('architecture');
+    document.meta.locale = locale;
+    document.meta.translations = translations;
+    delete document.meta.subtitle;
+
+    const result = run('architecture', document);
+    assert.equal(result.status, 0, `${locale}: ${result.stderr || result.stdout}`);
+    assert.match(result.html, new RegExp(`^<!DOCTYPE html>\\n<html lang="${locale}"`));
+    assert.match(result.html, new RegExp(`"locale":"${locale}"`));
+    assert.doesNotMatch(result.html, /\{\{i18n:/);
+    assert.doesNotMatch(result.stderr, /has no built-in catalog/, `${locale}: unexpectedly fell back to English`);
+
+    // Check the actual embedded runtime catalog, not raw HTML/CSS source
+    // (which can contain incidental English substrings, e.g. template
+    // section comments, that are never shown to a reader). These
+    // ALL-CAPS badges/short labels must be translated, not silently left
+    // in English — see the fr/de/it/ja fix for the bug where several
+    // catalogs kept them as English badges by mistake.
+    const embedded = result.html.match(/<script id="archify-i18n-data" type="application\/json">([\s\S]*?)<\/script>/);
+    assert.ok(embedded, `${locale}: missing embedded i18n data script`);
+    const messages = JSON.parse(embedded[1]).messages;
+    const englishBadges = {
+      'viewer.preset.badge.signalFlow': 'SIGNAL FLOW',
+      'viewer.nav.radar.short': 'MAP',
+      'viewer.nav.level.map': 'MAP',
+      'viewer.nav.lens.short': 'LENS',
+      'viewer.nav.route.short': 'PATH',
+      'viewer.nav.read': 'READ',
+      'viewer.nav.level.read': 'READ',
+      'viewer.nav.level.full': 'FULL',
+    };
+    for (const [key, enValue] of Object.entries(englishBadges)) {
+      assert.notEqual(messages[key], enValue, `${locale}: ${key} left untranslated as "${enValue}"`);
+    }
+  });
+}
 
 test('runtime labels stay localized after composition', () => {
   assert.equal(translateMessage('zh-CN', 'viewer.kind.backend'), '后端');
