@@ -1,0 +1,209 @@
+{
+  "grading_contract": {
+    "required": "Every required meaning must be represented; labels/cards/views/edges/grouping may vary. No mandatory exact node count or names. Source citations do not substitute for omitted behavior.",
+    "optional": "Do not fail for optional details; if asserted they must agree with the pinned source.",
+    "scope": "No runtime execution required for static source description; dynamic external behavior must remain a boundary. No unsupported implementation claims.",
+    "first_final": "Review first and final independently; source-range checks and semantic entailment are separate.",
+    "visual": "Same 1440x900 initial viewport. Important roles/labels/relations must be readable; record below-fold content as overview limitation, not permanent clipping without evidence."
+  },
+  "rubrics": {
+    "ky-request-lifecycle": {
+      "required": [
+        "Public instance/method/default merging leads to Ky.create and per-request Ky construction; configured request/normalized options feed later work.",
+        "beforeRequest can replace Request or supply Response, allowing the fetch attempt to be bypassed; normal attempts reach the configured/native fetch boundary.",
+        "Retry logic decides eligibility and delay using retry limit and relevant method/error policy, then runs beforeRetry before another attempt; it is conditional, not every failure unconditionally retried.",
+        "beforeRetry can replace Request, provide Response, or stop work; returned responses and normal fetched responses pass through afterResponse handling, which can change the response or request a retry.",
+        "HTTP failure handling is conditional on throwHttpErrors and response circumstances; terminal errors flow through the implemented final error processing boundary while successful results return the response.",
+        "Per-attempt/remaining total timeout and user cancellation constrain work; native Fetch/Request/Response and user hook behavior are external boundaries, not invented server/database internals."
+      ],
+      "truth_if_asserted": [
+        "User abort is surfaced rather than reclassified as a retryable network error.",
+        "Forced afterResponse retry can bypass ordinary method/shouldRetry checks but still respects retry budget.",
+        "HTTP errors from hook-supplied responses do not enter the same automatic retry path as ordinary fetched HTTP errors.",
+        "beforeRequest hooks are before the retry loop; they are not rerun before every retry attempt.",
+        "beforeError does not indiscriminately transform every possible thrown value; use actual implementation boundaries."
+      ],
+      "optional": [
+        "init hooks and their cloned options",
+        "Response body convenience methods",
+        "Exact default retry counts/status lists",
+        "Request stream cleanup",
+        "Detailed Retry-After parsing"
+      ],
+      "sources": {
+        "source/index.ts": [
+          [
+            3,
+            35
+          ]
+        ],
+        "source/core/Ky.ts": [
+          [
+            177,
+            313
+          ],
+          [
+            386,
+            547
+          ],
+          [
+            567,
+            644
+          ],
+          [
+            664,
+            694
+          ],
+          [
+            1003,
+            1024
+          ],
+          [
+            1026,
+            1088
+          ],
+          [
+            1091,
+            1185
+          ],
+          [
+            1193,
+            1247
+          ]
+        ],
+        "source/utils/timeout.ts": [
+          [
+            1,
+            36
+          ]
+        ]
+      }
+    },
+    "query-core-fetch-lifecycle": {
+      "required": [
+        "QueryClient.fetchQuery applies defaults, uses QueryCache.build to get/create a Query by hash, and returns existing data when fresh or starts Query.fetch when stale.",
+        "QueryCache owns storage/reuse of Query instances; Query owns execution state and observers, rather than QueryClient directly running native network I/O.",
+        "An already active fetch can reuse the retryer promise; execution wraps a caller-supplied queryFn/context and exposes cancellation via AbortSignal without claiming the callback always honors it.",
+        "Retryer controls attempt execution, retry eligibility/delay and pause/continue conditions using focus/online/network mode; fetchQuery defaults retry to false if unspecified at this revision.",
+        "Success sets data/state and runs supported cache success/settled notifications; terminal error/cancellation branches are distinguished and ordinary failures update error state and rethrow.",
+        "Query state dispatch uses notifyManager.batch to notify observers and QueryCache subscribers; batching control is not a new worker/network service."
+      ],
+      "truth_if_asserted": [
+        "cancelRefetch requires the stated data/options conditions; all concurrent fetches are not automatically cancelled.",
+        "Cancellation may be silent or revert state according to options; AbortSignal does not guarantee cancellation of arbitrary user work.",
+        "The configured queryFn, custom behavior/persister and framework callbacks are external extension points, not hardcoded implementations.",
+        "notifyManager.batch invokes the callback synchronously; scheduled callback batching and scheduler behavior are distinct."
+      ],
+      "optional": [
+        "Exact retry default in generic retryer versus fetchQuery override",
+        "Cache hash algorithm details",
+        "Observer result derivation",
+        "Cache mounting and browser event listener setup",
+        "Garbage collection after settling"
+      ],
+      "sources": {
+        "packages/query-core/src/queryClient.ts": [
+          [
+            602,
+            632
+          ],
+          [
+            976,
+            1050
+          ]
+        ],
+        "packages/query-core/src/queryCache.ts": [
+          [
+            124,
+            190
+          ]
+        ],
+        "packages/query-core/src/query.ts": [
+          [
+            590,
+            820
+          ],
+          [
+            822,
+            916
+          ]
+        ],
+        "packages/query-core/src/retryer.ts": [
+          [
+            54,
+            64
+          ],
+          [
+            97,
+            248
+          ]
+        ],
+        "packages/query-core/src/notifyManager.ts": [
+          [
+            18,
+            93
+          ]
+        ]
+      }
+    },
+    "pqueue-task-lifecycle": {
+      "required": [
+        "add wraps the caller task in a promise-producing queued run and enqueues it in the configured/default priority queue; PQueue owns scheduling while the task implementation remains an external callable.",
+        "Waiting queue contents and active pending count are different state; admission needs unpaused state and both concurrency and interval allowance before dequeue/invocation.",
+        "A running task settles the returned promise on success/error, emits the supported terminal notification, and finally schedules capacity release/next admission.",
+        "pause prevents starting queued work and start resumes admission; it does not retroactively terminate active tasks.",
+        "A waiting aborted task is removed with the supported queue capability and rejects; a running task races abort and receives the signal, but its underlying work needs cooperation.",
+        "Execution timeout begins around the invoked operation, not while waiting, and can reject without proving the underlying external task stopped."
+      ],
+      "truth_if_asserted": [
+        "PriorityQueue chooses higher priorities first and keeps FIFO among equal priorities.",
+        "Custom queue removal on waiting abort is best-effort when remove is supported, not guaranteed for every arbitrary queueClass.",
+        "The interval timer can reopen admission; concurrency and interval limits are separate.",
+        "The library is an in-process Promise queue, not a distributed/durable broker."
+      ],
+      "optional": [
+        "Strict-mode algorithm details",
+        "Exact event order beyond primary settlement and next-admission relation",
+        "Task IDs and priority updates",
+        "Queue compaction internals",
+        "onIdle/onEmpty waiter APIs"
+      ],
+      "sources": {
+        "source/index.ts": [
+          [
+            190,
+            212
+          ],
+          [
+            280,
+            392
+          ],
+          [
+            441,
+            573
+          ],
+          [
+            590,
+            610
+          ]
+        ],
+        "source/priority-queue.ts": [
+          [
+            14,
+            51
+          ],
+          [
+            88,
+            110
+          ]
+        ],
+        "source/queue.ts": [
+          [
+            1,
+            11
+          ]
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "runs": [
+    {
+      "run": "p-retry-R1",
+      "author_seconds": 186.78700017929077,
+      "full_seconds": 195.04080319404602,
+      "first_structural_seconds": 164.8708176612854,
+      "snapshot_count": 1,
+      "machine_pass": true,
+      "sha256": "080c0dbce38902fe11dfbbdb17727cf3fe76af72fe7197b8ff156ae5431cdb84",
+      "integrity": {
+        "source_unchanged": true,
+        "package_unchanged": true
+      },
+      "surfaced_faults": [],
+      "reported_turn_usage": {
+        "input_tokens": 399034,
+        "cached_input_tokens": 333056,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4194,
+        "reasoning_output_tokens": 500,
+        "total_tokens": 403228
+      },
+      "quality_pass": true,
+      "protocol_eligible": true
+    },
+    {
+      "run": "p-retry-B1",
+      "author_seconds": 432.3710000514984,
+      "full_seconds": 445.82569003105164,
+      "first_structural_seconds": 196.15011954307556,
+      "snapshot_count": 4,
+      "machine_pass": false,
+      "sha256": "e5a7398c3eb6e2b1b6baf065136aca43323fe11687cc968ccc828fc10c3b169e",
+      "integrity": {
+        "source_unchanged": true,
+        "package_unchanged": true
+      },
+      "surfaced_faults": [],
+      "reported_turn_usage": {
+        "input_tokens": 775644,
+        "cached_input_tokens": 674560,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 6972,
+        "reasoning_output_tokens": 1109,
+        "total_tokens": 782616
+      },
+      "quality_pass": false,
+      "protocol_eligible": true
+    },
+    {
+      "run": "quick-lru-B1",
+      "author_seconds": 279.37900018692017,
+      "full_seconds": 286.84888911247253,
+      "first_structural_seconds": 173.8617467880249,
+      "snapshot_count": 4,
+      "machine_pass": true,
+      "sha256": "09d57c9195301b5a8c119d9530ef0db691d24da2c57eda39cac9400da634bc23",
+      "integrity": {
+        "source_unchanged": true,
+        "package_unchanged": true
+      },
+      "surfaced_faults": [],
+      "reported_turn_usage": {
+        "input_tokens": 866932,
+        "cached_input_tokens": 816640,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 6554,
+        "reasoning_output_tokens": 1490,
+        "total_tokens": 873486
+      },
+      "quality_pass": true,
+      "protocol_eligible": true
+    },
+    {
+      "run": "quick-lru-R1",
+      "author_seconds": 305.8729999065399,
+      "full_seconds": 317.4337868690491,
+      "first_structural_seconds": 171.47367143630981,
+      "snapshot_count": 4,
+      "machine_pass": false,
+      "sha256": "98e0345e3b6584bf0c5840b80174dddedd935c5e1c4a7121efa62dc43b48e1d1",
+      "integrity": {
+        "source_unchanged": true,
+        "package_unchanged": true
+      },
+      "surfaced_faults": [],
+      "reported_turn_usage": {
+        "input_tokens": 908659,
+        "cached_input_tokens": 862208,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 6835,
+        "reasoning_output_tokens": 1794,
+        "total_tokens": 915494
+      },
+      "quality_pass": false,
+      "protocol_eligible": true
+    },
+    {
+      "run": "lilconfig-R1",
+      "author_seconds": 443.6139998435974,
+      "full_seconds": 453.0299050807953,
+      "first_structural_seconds": 260.591370344162,
+      "snapshot_count": 4,
+      "machine_pass": false,
+      "sha256": "858c27e597de115b29c2e305cd3e0f9d06d6ad3b35b9ec46b67b933821647a80",
+      "integrity": {
+        "source_unchanged": true,
+        "package_unchanged": true
+      },
+      "surfaced_faults": [],
+      "reported_turn_usage": {
+        "input_tokens": 994565,
+        "cached_input_tokens": 936960,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 10437,
+        "reasoning_output_tokens": 2476,
+        "total_tokens": 1005002
+      },
+      "quality_pass": false,
+      "protocol_eligible": true
+    },
+    {
+      "run": "lilconfig-B1",
+      "author_seconds": 293.27499985694885,
+      "full_seconds": 303.7976770401001,
+      "first_structural_seconds": 192.73063707351685,
+      "snapshot_count": 4,
+      "machine_pass": false,
+      "sha256": "b09917c89d9b378a15993a3fb52a86ef48e704589d8e543137529709d30b4033",
+      "integrity": {
+        "source_unchanged": true,
+        "package_unchanged": true
+      },
+      "surfaced_faults": [],
+      "reported_turn_usage": {
+        "input_tokens": 805109,
+        "cached_input_tokens": 760320,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 7108,
+        "reasoning_output_tokens": 1127,
+        "total_tokens": 812217
+      },
+      "quality_pass": false,
+      "protocol_eligible": true
+    }
+  ],
+  "total_author_seconds": 1941.2990000247955,
+  "total_full_seconds": 2001.9767513275146,
+  "screening": "failed: QuickLRU R1 and lilconfig R1 did not finish machine gates; no confirmation",
+  "qualified_pairs": 0,
+  "quality_review": "complete: two blind reviewers agree; p-retry-R1 and quick-lru-B1 qualified, all others unqualified"
+}

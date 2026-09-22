@@ -1,0 +1,45 @@
+{
+  "artifact": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/example-transfer-20260921/readability-revision/diagram.architecture.json",
+  "baseline": "/private/tmp/archify-example-transfer-20260921/runs/quick-lru-P1/output/diagram.architecture.json",
+  "source": {
+    "path": "/private/tmp/archify-example-transfer-20260921/repos/quick-lru/index.js",
+    "revision": "a2190ebdf8e455b95a7138803d274ff5ed57ebcd"
+  },
+  "semantic_pass": true,
+  "perceptual_pass": true,
+  "combined_quality": true,
+  "findings": [
+    {
+      "kind": "semantic-pass",
+      "evidence": "Original clause 1 survives in new boundary 'QuickLRU 实例 · 全部状态仅在内存中', components quick-lru/current-map/old-map, and the write card; this matches index.js:1-23. No persistent or remote store is implied."
+    },
+    {
+      "kind": "semantic-pass",
+      "evidence": "Original clause 2 and all material old write/rotation edges survive in the first view note and '写入：先区分当前代是否已有键' card: current-key overwrite without #size increment; absent-from-current insert even if present in old; #size/maxSize whole-generation rotation; old generation eviction callback; fresh current Map; not one-item LRU. These are source-backed by index.js:68-77,120-132."
+    },
+    {
+      "kind": "semantic-pass",
+      "evidence": "Original clauses 3-4 and the old current-get/old-get/promote/inspect/expired relationships survive in the second view note and '读取：只有有效的旧代 get 会晋升' card: current lookup precedes old; only a live old get removes from old and inserts into current; has/peek inspect both maps without promotion; missing or expired results are undefined/false. This matches index.js:40-65,105-118,137-157."
+    },
+    {
+      "kind": "semantic-pass",
+      "evidence": "Original clause 5 and the old callback/delete/clear edges survive in the third view note and '删除：通知条件和计数各不相同' card: expiry compares with Date.now(), invokes optional onEviction before delete; delete affects both maps and decrements #size only when current deletion succeeds; clear empties both maps and resets #size; manual delete/clear do not call onEviction, while expiry/rotation can. This matches index.js:30-46,166-179."
+    },
+    {
+      "kind": "baseline-coverage-pass",
+      "evidence": "The new graph preserves each material role/boundary from the old artifact (caller, QuickLRU controller, current and old Maps, expiry helper, optional caller callback, volatile in-memory instance). Its six high-level canvas edges retain caller API, both-map access, expiry, expiry callback, and rotation callback; all removed branch-level edge detail is retained in cards or view notes rather than lost."
+    },
+    {
+      "kind": "perceptual-pass",
+      "evidence": "All four eligible captures were inspected. At 1440x900 in light and dark, component names, sublabels, six short edge labels, boundary label, and navigation are readable at ordinary viewing; the main graph has clear whitespace and traceable paths. The detailed cards continue below the initial 1440px frame, which is normal page-level scrolling rather than clipped canvas content. At 2048x1320 in light and dark, the complete cards and graph are simultaneously readable with no observed overlap, truncation, or contrast failure."
+    }
+  ],
+  "defects": [],
+  "images_viewed": [
+    "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/example-transfer-20260921/readability-revision/visual/diagram.visual-check.1440x900.dark.png",
+    "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/example-transfer-20260921/readability-revision/visual/diagram.visual-check.1440x900.light.png",
+    "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/example-transfer-20260921/readability-revision/visual/diagram.visual-check.2048x1320.dark.png",
+    "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/example-transfer-20260921/readability-revision/visual/diagram.visual-check.2048x1320.light.png"
+  ],
+  "summary": "Post-study manual redesign passes source semantics, retention of material relationships from the old graph, and perceptual review. It is recorded as a redesign review only, not as a timed-trial result."
+}

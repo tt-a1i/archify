@@ -1,0 +1,16 @@
+[
+  {
+    "repository": "ky",
+    "exit": 0,
+    "whole_process_seconds": 0.34554729191586375,
+    "output_sha256": "07c81858b80caa82fcce8697bd483f17ec762fe9adf4d92435da9d626bf13970",
+    "note": "configuration smoke before author freeze; not an E2E comparison or uncached-filesystem measurement"
+  },
+  {
+    "repository": "query",
+    "exit": 0,
+    "whole_process_seconds": 0.3498084577731788,
+    "output_sha256": "3fc6c3ba8010e86a0cac0a11c3b240f0e2f1005c7923a7b25257295bb29ec397",
+    "note": "configuration smoke before author freeze; not an E2E comparison or uncached-filesystem measurement"
+  }
+]

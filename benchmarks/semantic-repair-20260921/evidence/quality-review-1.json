@@ -1,0 +1,222 @@
+{
+  "reviewer": "independent semantic-and-visual review",
+  "policy_observed": "Reviewed pinned candidate JSON and pinned source roots only. Production geometry metadata was not used to decide semantic completeness. Missing common-viewport PNG is recorded as unavailable, not as a pass.",
+  "cases": [
+    {
+      "id": "ky-U",
+      "first_final_semantic_difference": false,
+      "route_rhythm_only_nomination": null,
+      "stages": {
+        "first": {
+          "semantic": "fail",
+          "required_meanings": [
+            {"id": "entry-defaults-request", "status": "pass", "candidate_locations": ["components[caller,merge,create,request]", "connections[caller->merge,merge->create,create->request]"], "source": ["source/index.ts:10-19", "source/core/Ky.ts:179-187", "source/core/Ky.ts:393-473"]},
+            {"id": "beforeRequest-bypass-and-fetch-boundary", "status": "pass", "candidate_locations": ["components[before-request,fetch]", "connections[before-request->attempt,before-request->after-response,attempt->fetch]"], "source": ["source/core/Ky.ts:200-207", "source/core/Ky.ts:1003-1024", "source/core/Ky.ts:1209-1218"]},
+            {"id": "conditional-retry-delay-beforeRetry", "status": "pass", "candidate_locations": ["components[retry-policy,before-retry]", "connections[attempt->retry-policy,retry-policy->before-retry,before-retry->attempt]"], "source": ["source/core/Ky.ts:567-641", "source/core/Ky.ts:1099-1184"]},
+            {"id": "beforeRetry-and-afterResponse-outcomes", "status": "pass", "candidate_locations": ["components[before-retry,after-response]", "connections[before-retry->after-response,before-retry->return,after-response->retry-policy,after-response->return]"], "source": ["source/core/Ky.ts:1026-1088", "source/core/Ky.ts:1139-1178"]},
+            {"id": "conditional-http-failure-and-final-error", "status": "fail", "candidate_locations": ["components[error]", "connections[retry-policy->error,after-response->error]"], "source": ["source/core/Ky.ts:239-266", "source/core/Ky.ts:664-693"], "reason": "The candidate shows only retry exhaustion/ineligibility and final beforeError processing. It never represents that non-OK responses become HTTP errors only when throwHttpErrors and response circumstances permit it, nor the associated ordinary fetched-response path."},
+            {"id": "timeout-cancellation-and-external-boundaries", "status": "pass", "candidate_locations": ["components[timeout,fetch]", "cards[Failure boundary]"], "source": ["source/core/Ky.ts:442-445", "source/core/Ky.ts:1209-1239", "source/utils/timeout.ts:10-35"]}
+          ],
+          "misleading_claims": [],
+          "visual": "unavailable",
+          "visual_observations": ["No common 1440x900 PNG was supplied."]
+        },
+        "final": {
+          "semantic": "fail",
+          "required_meanings": [
+            {"id": "entry-defaults-request", "status": "pass", "candidate_locations": ["components[caller,merge,create,request]", "connections[caller->merge,merge->create,create->request]"], "source": ["source/index.ts:10-19", "source/core/Ky.ts:179-187", "source/core/Ky.ts:393-473"]},
+            {"id": "beforeRequest-bypass-and-fetch-boundary", "status": "pass", "candidate_locations": ["components[before-request,fetch]", "connections[before-request->attempt,before-request->after-response,attempt->fetch]"], "source": ["source/core/Ky.ts:200-207", "source/core/Ky.ts:1003-1024", "source/core/Ky.ts:1209-1218"]},
+            {"id": "conditional-retry-delay-beforeRetry", "status": "pass", "candidate_locations": ["components[retry-policy,before-retry]", "connections[attempt->retry-policy,retry-policy->before-retry,before-retry->attempt]"], "source": ["source/core/Ky.ts:567-641", "source/core/Ky.ts:1099-1184"]},
+            {"id": "beforeRetry-and-afterResponse-outcomes", "status": "pass", "candidate_locations": ["components[before-retry,after-response]", "connections[before-retry->after-response,before-retry->return,after-response->retry-policy,after-response->return]"], "source": ["source/core/Ky.ts:1026-1088", "source/core/Ky.ts:1139-1178"]},
+            {"id": "conditional-http-failure-and-final-error", "status": "fail", "candidate_locations": ["components[error]", "connections[retry-policy->error,after-response->error]"], "source": ["source/core/Ky.ts:239-266", "source/core/Ky.ts:664-693"], "reason": "The required throwHttpErrors-conditioned HTTP-error branch is absent; citations to final beforeError processing do not express it."},
+            {"id": "timeout-cancellation-and-external-boundaries", "status": "pass", "candidate_locations": ["components[timeout,fetch]", "cards[Failure boundary]"], "source": ["source/core/Ky.ts:442-445", "source/core/Ky.ts:1209-1239", "source/utils/timeout.ts:10-35"]}
+          ],
+          "misleading_claims": [],
+          "visual": "unavailable",
+          "visual_observations": ["No common 1440x900 PNG was supplied."]
+        }
+      }
+    },
+    {
+      "id": "ky-V",
+      "first_final_semantic_difference": false,
+      "route_rhythm_only_nomination": null,
+      "stages": {
+        "first": {
+          "semantic": "fail",
+          "required_meanings": [
+            {"id": "entry-defaults-request", "status": "pass", "candidate_locations": ["components[caller,instance,ky,request]", "connections[caller->instance,instance->ky,ky->request]"], "source": ["source/index.ts:10-19", "source/core/Ky.ts:179-187", "source/core/Ky.ts:393-473"]},
+            {"id": "beforeRequest-bypass-and-fetch-boundary", "status": "pass", "candidate_locations": ["components[before-request,fetch]", "connections[before-request->fetch,before-request->response]"], "source": ["source/core/Ky.ts:200-207", "source/core/Ky.ts:1003-1024", "source/core/Ky.ts:1209-1218"]},
+            {"id": "conditional-retry-delay-beforeRetry", "status": "pass", "candidate_locations": ["components[retry-policy,before-retry]", "connections[fetch->retry-policy,retry-policy->before-retry,before-retry->fetch]"], "source": ["source/core/Ky.ts:567-641", "source/core/Ky.ts:1099-1184"]},
+            {"id": "beforeRetry-and-afterResponse-outcomes", "status": "pass", "candidate_locations": ["components[before-retry,after-response]", "connections[before-retry->fetch,before-retry->response,after-response->retry-policy]"], "source": ["source/core/Ky.ts:1026-1088", "source/core/Ky.ts:1139-1178"]},
+            {"id": "conditional-http-failure-and-final-error", "status": "fail", "candidate_locations": ["components[final-error]", "connections[after-response->response,after-response->retry-policy,retry-policy->final-error]"], "source": ["source/core/Ky.ts:239-266", "source/core/Ky.ts:664-693"], "reason": "No candidate element or edge states the throwHttpErrors-dependent conversion of a non-OK fetched response to HTTPError."},
+            {"id": "timeout-cancellation-and-external-boundaries", "status": "pass", "candidate_locations": ["components[request,fetch]", "cards[Request and fetch boundary]"], "source": ["source/core/Ky.ts:442-445", "source/core/Ky.ts:1209-1239", "source/utils/timeout.ts:10-35"]}
+          ],
+          "misleading_claims": [{"candidate_location": "connections[before-retry->final-error] label=stop: undefined result", "claim": "A beforeRetry stop reaches Final error.", "source": ["source/core/Ky.ts:1175-1178", "source/core/Ky.ts:209-213", "source/core/Ky.ts:296-301"], "reason": "stop returns undefined from the retry path and resolves the result; it is not passed to final error processing."}],
+          "visual": "unavailable",
+          "visual_observations": ["No common 1440x900 PNG was supplied."]
+        },
+        "final": {
+          "semantic": "fail",
+          "required_meanings": [
+            {"id": "entry-defaults-request", "status": "pass", "candidate_locations": ["components[caller,instance,ky,request]", "connections[caller->instance,instance->ky,ky->request]"], "source": ["source/index.ts:10-19", "source/core/Ky.ts:179-187", "source/core/Ky.ts:393-473"]},
+            {"id": "beforeRequest-bypass-and-fetch-boundary", "status": "pass", "candidate_locations": ["components[before-request,fetch]", "connections[before-request->fetch,before-request->response]"], "source": ["source/core/Ky.ts:200-207", "source/core/Ky.ts:1003-1024", "source/core/Ky.ts:1209-1218"]},
+            {"id": "conditional-retry-delay-beforeRetry", "status": "pass", "candidate_locations": ["components[retry-policy,before-retry]", "connections[fetch->retry-policy,retry-policy->before-retry,before-retry->fetch]"], "source": ["source/core/Ky.ts:567-641", "source/core/Ky.ts:1099-1184"]},
+            {"id": "beforeRetry-and-afterResponse-outcomes", "status": "pass", "candidate_locations": ["components[before-retry,after-response]", "connections[before-retry->fetch,before-retry->response,after-response->retry-policy]"], "source": ["source/core/Ky.ts:1026-1088", "source/core/Ky.ts:1139-1178"]},
+            {"id": "conditional-http-failure-and-final-error", "status": "fail", "candidate_locations": ["components[final-error]", "connections[after-response->response,after-response->retry-policy,retry-policy->final-error]"], "source": ["source/core/Ky.ts:239-266", "source/core/Ky.ts:664-693"], "reason": "No candidate element or edge states the throwHttpErrors-dependent conversion of a non-OK fetched response to HTTPError."},
+            {"id": "timeout-cancellation-and-external-boundaries", "status": "pass", "candidate_locations": ["components[request,fetch]", "cards[Request and fetch boundary]"], "source": ["source/core/Ky.ts:442-445", "source/core/Ky.ts:1209-1239", "source/utils/timeout.ts:10-35"]}
+          ],
+          "misleading_claims": [{"candidate_location": "connections[before-retry->final-error] label=stop: undefined result", "claim": "A beforeRetry stop reaches Final error.", "source": ["source/core/Ky.ts:1175-1178", "source/core/Ky.ts:209-213", "source/core/Ky.ts:296-301"], "reason": "stop resolves undefined instead of taking final error processing."}],
+          "visual": "pass",
+          "visual_observations": ["All primary roles, branch labels, and arrows are visible and readable at the supplied 1440x900 viewport.", "The supporting cards begin below the viewport; this limits overview access to their full prose but does not evidence clipping of the diagram."]
+        }
+      }
+    },
+    {
+      "id": "query-U",
+      "first_final_semantic_difference": false,
+      "route_rhythm_only_nomination": null,
+      "stages": {
+        "first": {
+          "semantic": "pass",
+          "required_meanings": [
+            {"id": "defaults-cache-build-fresh-or-fetch", "status": "pass", "candidate_locations": ["components[client,cache,query]", "connections[client->cache,cache->query,query->caller,client->query]"], "source": ["packages/query-core/src/queryClient.ts:617-630", "packages/query-core/src/queryCache.ts:160-177"]},
+            {"id": "cache-query-ownership", "status": "pass", "candidate_locations": ["components[cache,query]", "boundaries[QueryClient control plane]"], "source": ["packages/query-core/src/queryCache.ts:124-129", "packages/query-core/src/queryCache.ts:160-188", "packages/query-core/src/query.ts:590-610"]},
+            {"id": "inflight-reuse-external-queryFn-cancellation", "status": "pass", "candidate_locations": ["components[retryer,query_fn]", "connections[query->query,query->retryer,retryer->query_fn,query->query_fn]"], "source": ["packages/query-core/src/query.ts:594-609", "packages/query-core/src/query.ts:634-679", "packages/query-core/src/query.ts:726-753"]},
+            {"id": "retry-pause-resume-and-fetchQuery-retry-default", "status": "pass", "candidate_locations": ["components[client,retryer]", "cards[Decision point,In-flight and cancellation]"], "source": ["packages/query-core/src/queryClient.ts:617-622", "packages/query-core/src/retryer.ts:57-60", "packages/query-core/src/retryer.ts:97-248"]},
+            {"id": "success-error-cancellation-state-and-callbacks", "status": "pass", "candidate_locations": ["cards[Completion fan-out,In-flight and cancellation]", "connections[retryer->query,query->caller]"], "source": ["packages/query-core/src/query.ts:731-810"]},
+            {"id": "batched-observer-cache-notifications", "status": "pass", "candidate_locations": ["components[observers,cache_subscribers]", "connections[query->observers,query->cache_subscribers,observers->cache_subscribers]"], "source": ["packages/query-core/src/query.ts:893-903", "packages/query-core/src/notifyManager.ts:62-73"]}
+          ],
+          "misleading_claims": [],
+          "visual": "pass",
+          "visual_observations": ["At 1440x900 the caller, client, cache, Query, Retryer, external queryFn, observers, and cache subscribers are all visible; the named fresh, stale, reuse, cancel, success, and notification edges are legible.", "Supplementary cards are below the viewport; the primary diagram remains self-contained in the overview."]
+        },
+        "final": {
+          "semantic": "pass",
+          "required_meanings": [
+            {"id": "defaults-cache-build-fresh-or-fetch", "status": "pass", "candidate_locations": ["components[client,cache,query]", "connections[client->cache,cache->query,query->caller,client->query]"], "source": ["packages/query-core/src/queryClient.ts:617-630", "packages/query-core/src/queryCache.ts:160-177"]},
+            {"id": "cache-query-ownership", "status": "pass", "candidate_locations": ["components[cache,query]", "boundaries[QueryClient control plane]"], "source": ["packages/query-core/src/queryCache.ts:124-129", "packages/query-core/src/queryCache.ts:160-188", "packages/query-core/src/query.ts:590-610"]},
+            {"id": "inflight-reuse-external-queryFn-cancellation", "status": "pass", "candidate_locations": ["components[retryer,query_fn]", "connections[query->query,query->retryer,retryer->query_fn,query->query_fn]"], "source": ["packages/query-core/src/query.ts:594-609", "packages/query-core/src/query.ts:634-679", "packages/query-core/src/query.ts:726-753"]},
+            {"id": "retry-pause-resume-and-fetchQuery-retry-default", "status": "pass", "candidate_locations": ["components[client,retryer]", "cards[Decision point,In-flight and cancellation]"], "source": ["packages/query-core/src/queryClient.ts:617-622", "packages/query-core/src/retryer.ts:57-60", "packages/query-core/src/retryer.ts:97-248"]},
+            {"id": "success-error-cancellation-state-and-callbacks", "status": "pass", "candidate_locations": ["cards[Completion fan-out,In-flight and cancellation]", "connections[retryer->query,query->caller]"], "source": ["packages/query-core/src/query.ts:731-810"]},
+            {"id": "batched-observer-cache-notifications", "status": "pass", "candidate_locations": ["components[observers,cache_subscribers]", "connections[query->observers,query->cache_subscribers,observers->cache_subscribers]"], "source": ["packages/query-core/src/query.ts:893-903", "packages/query-core/src/notifyManager.ts:62-73"]}
+          ],
+          "misleading_claims": [],
+          "visual": "pass",
+          "visual_observations": ["The final supplied overview is pixel-identical to the first: all primary roles and labeled relations are readable at 1440x900.", "Supporting cards start below the viewport; this is an overview limitation only."]
+        }
+      }
+    },
+    {
+      "id": "query-V",
+      "first_final_semantic_difference": false,
+      "route_rhythm_only_nomination": null,
+      "stages": {
+        "first": {
+          "semantic": "fail",
+          "required_meanings": [
+            {"id": "defaults-cache-build-fresh-or-fetch", "status": "pass", "candidate_locations": ["components[client,cache,query]", "connections[client->cache,cache->query,query->caller,client->query]"], "source": ["packages/query-core/src/queryClient.ts:617-630", "packages/query-core/src/queryCache.ts:160-177"]},
+            {"id": "cache-query-ownership", "status": "pass", "candidate_locations": ["components[cache,query]", "boundaries[query-core ownership]"], "source": ["packages/query-core/src/queryCache.ts:124-129", "packages/query-core/src/queryCache.ts:160-188", "packages/query-core/src/query.ts:590-610"]},
+            {"id": "inflight-reuse-external-queryFn-cancellation", "status": "pass", "candidate_locations": ["components[retryer,query_fn]", "connections[query->retryer,retryer->query_fn,query_fn->retryer]"], "source": ["packages/query-core/src/query.ts:594-609", "packages/query-core/src/query.ts:634-679", "packages/query-core/src/query.ts:726-753"]},
+            {"id": "retry-pause-resume-and-fetchQuery-retry-default", "status": "pass", "candidate_locations": ["components[client,retryer]", "cards[Fresh versus fetching,Failure and cancellation]"], "source": ["packages/query-core/src/queryClient.ts:617-622", "packages/query-core/src/retryer.ts:57-60", "packages/query-core/src/retryer.ts:97-248"]},
+            {"id": "success-error-cancellation-state-and-callbacks", "status": "fail", "candidate_locations": ["components[query,retryer]", "cards[Failure and cancellation,State fan-out]", "connections[retryer->query]"], "source": ["packages/query-core/src/query.ts:731-810"], "reason": "It says success or error is dispatched but does not represent the terminal CancelledError branches (silent/revert) separately from ordinary error-state update and rethrow, nor cache success/error/settled callbacks."},
+            {"id": "batched-observer-cache-notifications", "status": "pass", "candidate_locations": ["components[observers,cache_subscribers]", "connections[query->observers,query->cache,cache->cache_subscribers]"], "source": ["packages/query-core/src/query.ts:893-903", "packages/query-core/src/notifyManager.ts:62-73"]}
+          ],
+          "misleading_claims": [],
+          "visual": "unavailable",
+          "visual_observations": ["No common 1440x900 PNG was supplied."]
+        },
+        "final": {
+          "semantic": "fail",
+          "required_meanings": [
+            {"id": "defaults-cache-build-fresh-or-fetch", "status": "pass", "candidate_locations": ["components[client,cache,query]", "connections[client->cache,cache->query,query->caller,client->query]"], "source": ["packages/query-core/src/queryClient.ts:617-630", "packages/query-core/src/queryCache.ts:160-177"]},
+            {"id": "cache-query-ownership", "status": "pass", "candidate_locations": ["components[cache,query]", "boundaries[query-core ownership]"], "source": ["packages/query-core/src/queryCache.ts:124-129", "packages/query-core/src/queryCache.ts:160-188", "packages/query-core/src/query.ts:590-610"]},
+            {"id": "inflight-reuse-external-queryFn-cancellation", "status": "pass", "candidate_locations": ["components[retryer,query_fn]", "connections[query->retryer,retryer->query_fn,query_fn->retryer]"], "source": ["packages/query-core/src/query.ts:594-609", "packages/query-core/src/query.ts:634-679", "packages/query-core/src/query.ts:726-753"]},
+            {"id": "retry-pause-resume-and-fetchQuery-retry-default", "status": "pass", "candidate_locations": ["components[client,retryer]", "cards[Fresh versus fetching,Failure and cancellation]"], "source": ["packages/query-core/src/queryClient.ts:617-622", "packages/query-core/src/retryer.ts:57-60", "packages/query-core/src/retryer.ts:97-248"]},
+            {"id": "success-error-cancellation-state-and-callbacks", "status": "fail", "candidate_locations": ["components[query,retryer]", "cards[Failure and cancellation,State fan-out]", "connections[retryer->query]"], "source": ["packages/query-core/src/query.ts:731-810"], "reason": "It omits terminal-cancellation versus ordinary-error behavior and the required cache success/error/settled notification path."},
+            {"id": "batched-observer-cache-notifications", "status": "pass", "candidate_locations": ["components[observers,cache_subscribers]", "connections[query->observers,query->cache,cache->cache_subscribers]"], "source": ["packages/query-core/src/query.ts:893-903", "packages/query-core/src/notifyManager.ts:62-73"]}
+          ],
+          "misleading_claims": [],
+          "visual": "pass",
+          "visual_observations": ["The primary lifecycle roles, fresh/stale relation, retryer, external callback boundary, and notification arrows are readable at 1440x900.", "The lower cards are only partially visible; their continuation below the fold is an overview limitation rather than clipping evidence."]
+        }
+      }
+    },
+    {
+      "id": "pqueue-U",
+      "first_final_semantic_difference": false,
+      "route_rhythm_only_nomination": null,
+      "stages": {
+        "first": {
+          "semantic": "fail",
+          "required_meanings": [
+            {"id": "add-enqueues-external-task", "status": "pass", "candidate_locations": ["components[caller,controller,waiting,running]", "connections[caller->controller,controller->waiting]"], "source": ["source/index.ts:438-454", "source/index.ts:459-532"]},
+            {"id": "waiting-vs-active-and-admission", "status": "pass", "candidate_locations": ["components[waiting,admission,running]", "cards[Queued and active work differ,Admission and recovery]"], "source": ["source/index.ts:186-201", "source/index.ts:280-328", "source/index.ts:459-471"]},
+            {"id": "settlement-terminal-notification-release", "status": "fail", "candidate_locations": ["connections[running->caller,running->controller,controller->admission]"], "source": ["source/index.ts:510-528"], "reason": "Promise settlement and capacity release/next admission are shown, but neither completed nor error terminal event emission is represented."},
+            {"id": "pause-start-does-not-stop-active", "status": "pass", "candidate_locations": ["connections[caller->admission] label=pause() blocks starts; start() resumes", "components[running]"], "source": ["source/index.ts:305-326", "source/index.ts:591-610"]},
+            {"id": "waiting-vs-running-abort", "status": "pass", "candidate_locations": ["cards[Queued and active work differ]", "connections[caller->waiting,caller->running]"], "source": ["source/index.ts:489-507", "source/index.ts:534-567"]},
+            {"id": "timeout-after-dequeue-external-work-not-proven-stopped", "status": "pass", "candidate_locations": ["cards[Execution timeout]", "connections[admission->running] label=timeout starts after dequeue"], "source": ["source/index.ts:71-86", "source/index.ts:489-507"]}
+          ],
+          "misleading_claims": [],
+          "visual": "unavailable",
+          "visual_observations": ["No common 1440x900 PNG was supplied."]
+        },
+        "final": {
+          "semantic": "fail",
+          "required_meanings": [
+            {"id": "add-enqueues-external-task", "status": "pass", "candidate_locations": ["components[caller,controller,waiting,running]", "connections[caller->controller,controller->waiting]"], "source": ["source/index.ts:438-454", "source/index.ts:459-532"]},
+            {"id": "waiting-vs-active-and-admission", "status": "pass", "candidate_locations": ["components[waiting,admission,running]", "cards[Queued and active work differ,Admission and recovery]"], "source": ["source/index.ts:186-201", "source/index.ts:280-328", "source/index.ts:459-471"]},
+            {"id": "settlement-terminal-notification-release", "status": "fail", "candidate_locations": ["connections[running->caller,running->controller,controller->admission]"], "source": ["source/index.ts:510-528"], "reason": "It omits emitted completed/error terminal notifications."},
+            {"id": "pause-start-does-not-stop-active", "status": "pass", "candidate_locations": ["connections[caller->admission] label=pause() blocks starts; start() resumes", "components[running]"], "source": ["source/index.ts:305-326", "source/index.ts:591-610"]},
+            {"id": "waiting-vs-running-abort", "status": "pass", "candidate_locations": ["cards[Queued and active work differ]", "connections[caller->waiting,caller->running]"], "source": ["source/index.ts:489-507", "source/index.ts:534-567"]},
+            {"id": "timeout-after-dequeue-external-work-not-proven-stopped", "status": "pass", "candidate_locations": ["cards[Execution timeout]", "connections[admission->running] label=timeout starts after dequeue"], "source": ["source/index.ts:71-86", "source/index.ts:489-507"]}
+          ],
+          "misleading_claims": [],
+          "visual": "pass",
+          "visual_observations": ["The caller, controller, waiting queue, admission gate, task execution, and all main labeled control edges are readable in the 1440x900 overview.", "The supporting cards run below the viewport; there is no evidence that the diagram itself is permanently clipped."]
+        }
+      }
+    },
+    {
+      "id": "pqueue-V",
+      "first_final_semantic_difference": false,
+      "route_rhythm_only_nomination": null,
+      "stages": {
+        "first": {
+          "semantic": "pass",
+          "required_meanings": [
+            {"id": "add-enqueues-external-task", "status": "pass", "candidate_locations": ["components[caller,controller,waiting,execution]", "connections[caller->controller,controller->waiting]"], "source": ["source/index.ts:438-454", "source/index.ts:459-532"]},
+            {"id": "waiting-vs-active-and-admission", "status": "pass", "candidate_locations": ["components[waiting,admission,execution]", "cards[Two work states,Admission and continuation]"], "source": ["source/index.ts:186-201", "source/index.ts:280-328", "source/index.ts:459-471"]},
+            {"id": "settlement-terminal-notification-release", "status": "pass", "candidate_locations": ["components[settlement] sublabel=resolve + completed, or reject + error", "connections[execution->settlement,settlement->controller]"], "source": ["source/index.ts:510-528"]},
+            {"id": "pause-start-does-not-stop-active", "status": "pass", "candidate_locations": ["components[paused]", "connections[paused->admission]", "views[abort-pause]"], "source": ["source/index.ts:305-326", "source/index.ts:591-610"]},
+            {"id": "waiting-vs-running-abort", "status": "pass", "candidate_locations": ["components[waiting-abort,running-abort]", "connections[waiting->waiting-abort,waiting-abort->caller,running-abort->execution]"], "source": ["source/index.ts:489-507", "source/index.ts:534-567"]},
+            {"id": "timeout-after-dequeue-external-work-not-proven-stopped", "status": "pass", "candidate_locations": ["components[running-abort,execution]", "cards[Abort and timeout boundary]"], "source": ["source/index.ts:71-86", "source/index.ts:489-507"]}
+          ],
+          "misleading_claims": [],
+          "visual": "pass",
+          "visual_observations": ["All principal roles, selected state distinctions, abort paths, and relation labels are readable at the common 1440x900 viewport.", "The supporting cards start below the viewport; this is only an overview limitation."]
+        },
+        "final": {
+          "semantic": "pass",
+          "required_meanings": [
+            {"id": "add-enqueues-external-task", "status": "pass", "candidate_locations": ["components[caller,controller,waiting,execution]", "connections[caller->controller,controller->waiting]"], "source": ["source/index.ts:438-454", "source/index.ts:459-532"]},
+            {"id": "waiting-vs-active-and-admission", "status": "pass", "candidate_locations": ["components[waiting,admission,execution]", "cards[Two work states,Admission and continuation]"], "source": ["source/index.ts:186-201", "source/index.ts:280-328", "source/index.ts:459-471"]},
+            {"id": "settlement-terminal-notification-release", "status": "pass", "candidate_locations": ["components[settlement] sublabel=resolve + completed, or reject + error", "connections[execution->settlement,settlement->controller]"], "source": ["source/index.ts:510-528"]},
+            {"id": "pause-start-does-not-stop-active", "status": "pass", "candidate_locations": ["components[paused]", "connections[paused->admission]", "views[abort-pause]"], "source": ["source/index.ts:305-326", "source/index.ts:591-610"]},
+            {"id": "waiting-vs-running-abort", "status": "pass", "candidate_locations": ["components[waiting-abort,running-abort]", "connections[waiting->waiting-abort,waiting-abort->caller,running-abort->execution]"], "source": ["source/index.ts:489-507", "source/index.ts:534-567"]},
+            {"id": "timeout-after-dequeue-external-work-not-proven-stopped", "status": "pass", "candidate_locations": ["components[running-abort,execution]", "cards[Abort and timeout boundary]"], "source": ["source/index.ts:71-86", "source/index.ts:489-507"]}
+          ],
+          "misleading_claims": [],
+          "visual": "pass",
+          "visual_observations": ["The final overview is pixel-identical to first and keeps all primary roles, state boundaries, and labels readable at 1440x900.", "Supporting cards continue below the viewport without evidence of permanent clipping."]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "semantic_passes": ["query-U:first", "query-U:final", "pqueue-V:first", "pqueue-V:final"],
+    "semantic_fails": ["ky-U:first", "ky-U:final", "ky-V:first", "ky-V:final", "query-V:first", "query-V:final", "pqueue-U:first", "pqueue-U:final"],
+    "first_final_semantic_changes": [],
+    "source_complete_with_only_route_rhythm_failure": {"present": false, "nominations": [], "reason": "The candidates with nonzero production metadata each have a semantic failure in this review. Passing candidates have production_validate_exit 0, so none is a route-rhythm-only repair nomination."}
+  }
+}

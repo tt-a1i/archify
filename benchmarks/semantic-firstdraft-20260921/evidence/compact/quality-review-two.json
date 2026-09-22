@@ -1,0 +1,275 @@
+{
+  "reviewer": "review-two",
+  "policy_applied": "Visible required clauses and authored claims only; source semantics, citation entailment, and visual evidence are reported independently from machine status.",
+  "reviews": [
+    {
+      "case": "case-01",
+      "stages": [
+        {
+          "stage": "first",
+          "criteria": [
+            {"number": 1, "status": "pass", "source_location": "index.js:1-23, 68-77", "reason": "QuickLRU owns two Maps, current count, maxSize and maxAge policy; diagram says in-memory only."},
+            {"number": 2, "status": "pass", "source_location": "index.js:68-77, 120-132", "reason": "Current-key replacement and absent-current insertion/count are distinct; threshold rotates whole maps."},
+            {"number": 3, "status": "pass", "source_location": "index.js:40-60, 105-118", "reason": "Current, old promotion, miss, expiry deletion and return paths are represented."},
+            {"number": 4, "status": "pass", "source_location": "index.js:40-66, 137-157", "reason": "has/peek inspect both maps without moveToRecent and apply expiry handling."},
+            {"number": 5, "status": "pass", "source_location": "index.js:30-46, 72-77, 166-179", "reason": "Expired and displaced-old entries notify; delete/clear mutate maps and count without callback."},
+            {"number": 6, "status": "pass", "source_location": "index.js:1-179", "reason": "Attached component ranges entail the visible roles and conclusion cards; no out-of-scope behavior is claimed."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "All displayed lifecycle claims are backed by attached exact index.js ranges."},
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No image captures were supplied; this is not a visual pass."},
+          "overall_quality": "fail",
+          "overall_reason": "Required visual readability is unavailable despite passing source semantics.",
+          "machine_status": {"production_validate_exit": 1, "diagnostic_codes": ["composition/label-route-clearance", "composition/micro-segment", "layout/constraint"]}
+        },
+        {
+          "stage": "final",
+          "criteria": [
+            {"number": 1, "status": "pass", "source_location": "index.js:1-23, 68-77", "reason": "Ownership and in-memory policy are correct."},
+            {"number": 2, "status": "pass", "source_location": "index.js:68-77, 120-132", "reason": "Set branches and whole-generation rotation are correct."},
+            {"number": 3, "status": "pass", "source_location": "index.js:40-60, 105-118", "reason": "Read, promotion, miss and expiry effects are correct."},
+            {"number": 4, "status": "pass", "source_location": "index.js:40-66, 137-157", "reason": "Inspection has no promotion and preserves expiry behavior."},
+            {"number": 5, "status": "pass", "source_location": "index.js:30-46, 72-77, 166-179", "reason": "Callback and manual-removal boundary is correct."},
+            {"number": 6, "status": "pass", "source_location": "index.js:1-179", "reason": "Visible claims are entailed by attached source ranges."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Exact source references cover all material authored claims."},
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No image captures were supplied; this is not a visual pass."},
+          "overall_quality": "fail",
+          "overall_reason": "Required visual readability is unavailable despite passing source semantics.",
+          "machine_status": {"production_validate_exit": 1, "diagnostic_codes": ["composition/micro-segment"], "author_complete_machine_pass": false}
+        }
+      ]
+    },
+    {
+      "case": "case-02",
+      "stages": [
+        {
+          "stage": "first",
+          "criteria": [
+            {"number": 1, "status": "pass", "source_location": "index.js:233-259", "reason": "pRetry owns attemptNumber, retriesConsumed, startTime and retry budget."},
+            {"number": 2, "status": "pass", "source_location": "index.js:240-250", "reason": "Operation invocation, success return and failure route are shown."},
+            {"number": 3, "status": "pass", "source_location": "index.js:109-197", "reason": "The ordered consume, failed-attempt, guards, retry decision and no-consume/no-delay path are correct."},
+            {"number": 4, "status": "pass", "source_location": "index.js:114-116, 126-137, 160-175", "reason": "All stated exhaustion, TypeError and declined-retry stops are correct."},
+            {"number": 5, "status": "pass", "source_location": "index.js:89-106, 114-116, 233-247", "reason": "AbortError unwrapping and signal checks/delay cancellation are distinguished; input only receives attempt number."},
+            {"number": 6, "status": "pass", "source_location": "index.js:66-106, 118-197", "reason": "Delay is capped by maxTimeout and remaining retry time; Infinity and no running-input deadline are correctly explained."},
+            {"number": 7, "status": "pass", "source_location": "index.js:66-197, 200-259", "reason": "Attached ranges entail roles, branches and conclusion cards."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Material retry and cancellation claims are entailed by the linked ranges."},
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No image captures were supplied; this is not a visual pass."},
+          "overall_quality": "fail",
+          "overall_reason": "Required visual readability is unavailable despite passing source semantics.",
+          "machine_status": {"production_validate_exit": 1, "diagnostic_codes": ["schema/maxLength"]}
+        },
+        {
+          "stage": "final",
+          "criteria": [
+            {"number": 1, "status": "pass", "source_location": "index.js:233-259", "reason": "Controller state ownership is accurate."},
+            {"number": 2, "status": "pass", "source_location": "index.js:240-250", "reason": "Invocation, success and failure paths are accurate."},
+            {"number": 3, "status": "pass", "source_location": "index.js:109-197", "reason": "Hook order, guards, consuming and non-consuming retry behavior are accurate."},
+            {"number": 4, "status": "pass", "source_location": "index.js:114-116, 126-137, 160-175", "reason": "All required stopping paths are accurately stated."},
+            {"number": 5, "status": "pass", "source_location": "index.js:89-106, 114-116, 233-247", "reason": "AbortError, AbortSignal delay cancellation and in-flight-operation limit are accurately distinguished."},
+            {"number": 6, "status": "pass", "source_location": "index.js:66-106, 118-197", "reason": "Bounded backoff and retry-time semantics are accurate."},
+            {"number": 7, "status": "pass", "source_location": "index.js:66-197, 200-259", "reason": "Exact component references support the visible material claims."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "All material authored claims are entailed by linked source ranges."},
+          "extra_contradictions": [],
+          "visual": {"status": "pass", "reason": "Reviewed contact sheet first and 1440x900 light capture: diagram labels, nodes and routes are readable at the supplied reader view; cards continue by normal vertical scroll."},
+          "overall_quality": "pass",
+          "overall_reason": "All required source semantics, evidence and supplied visual readability pass.",
+          "machine_status": {"production_validate_exit": 0, "diagnostic_codes": [], "author_complete_machine_pass": true}
+        }
+      ]
+    },
+    {
+      "case": "case-03",
+      "stages": [
+        {
+          "stage": "first",
+          "criteria": [
+            {"number": 1, "status": "pass", "source_location": "index.js:233-259", "reason": "pRetry owns counters, start time and loop."},
+            {"number": 2, "status": "pass", "source_location": "index.js:240-250", "reason": "Attempt call, value return and failed path are present."},
+            {"number": 3, "status": "pass", "source_location": "index.js:109-197", "reason": "Decision order, guard conditions and false-consume loop are correct."},
+            {"number": 4, "status": "pass", "source_location": "index.js:114-116, 160-175", "reason": "Required stop conditions are represented."},
+            {"number": 5, "status": "pass", "source_location": "index.js:49-62, 89-105, 233-247", "reason": "AbortError and signal cancellation scopes are accurately distinct."},
+            {"number": 6, "status": "pass", "source_location": "index.js:66-106, 118-197", "reason": "Bounded delay and non-deadline retry budget are explicitly stated."},
+            {"number": 7, "status": "pass", "source_location": "index.js:49-62, 66-197, 200-259", "reason": "Linked ranges entail visible roles and cards."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Attached references support material retry claims."},
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No image captures were supplied; this is not a visual pass."},
+          "overall_quality": "fail",
+          "overall_reason": "Required visual readability is unavailable despite passing source semantics.",
+          "machine_status": {"production_validate_exit": 1, "diagnostic_codes": ["composition/micro-segment", "composition/short-interior-segment", "layout/constraint"]}
+        },
+        {
+          "stage": "final",
+          "criteria": [
+            {"number": 1, "status": "pass", "source_location": "index.js:233-259", "reason": "Controller ownership is correct."},
+            {"number": 2, "status": "pass", "source_location": "index.js:240-250", "reason": "Attempt, success and failure paths are correct."},
+            {"number": 3, "status": "pass", "source_location": "index.js:109-197", "reason": "Decision order and consuming behavior are correct."},
+            {"number": 4, "status": "pass", "source_location": "index.js:114-116, 160-175", "reason": "Stopping claims are correct."},
+            {"number": 5, "status": "pass", "source_location": "index.js:49-62, 89-105, 233-247", "reason": "Cancellation boundaries are correct."},
+            {"number": 6, "status": "pass", "source_location": "index.js:66-106, 118-197", "reason": "Timer and budget claims are correct."},
+            {"number": 7, "status": "pass", "source_location": "index.js:49-62, 66-197, 200-259", "reason": "Visible claims have exact supporting ranges."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Material claims are source-entailed."},
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No image captures were supplied; this is not a visual pass."},
+          "overall_quality": "fail",
+          "overall_reason": "Required visual readability is unavailable despite passing source semantics.",
+          "machine_status": {"production_validate_exit": 1, "diagnostic_codes": ["composition/container-border-run", "composition/proper-crossing"], "author_complete_machine_pass": false}
+        }
+      ]
+    },
+    {
+      "case": "case-04",
+      "stages": [
+        {
+          "stage": "first",
+          "criteria": [
+            {"number": 1, "status": "pass", "source_location": "src/index.js:80-125, 156-171", "reason": "Caller, explorer, merged defaults/loaders, filesystem, loader and transform roles are distinct."},
+            {"number": 2, "status": "pass", "source_location": "src/index.js:172-245", "reason": "Search cache, configured places, parent walk, stopDir/root, found and normal miss are shown."},
+            {"number": 3, "status": "pass", "source_location": "src/index.js:192-231, 128-136", "reason": "Access skip, empty policy and packageProp/non-null matching are correctly represented."},
+            {"number": 4, "status": "pass", "source_location": "src/index.js:246-294", "reason": "Separate explicit load cache, resolve/read, loader choice and empty behavior are covered."},
+            {"number": 5, "status": "pass", "source_location": "src/index.js:234-245, 258-306", "reason": "Transform terminal forms, transformed cache values and separate cache-clearing methods are correctly explained."},
+            {"number": 6, "status": "pass", "source_location": "src/index.js:194-225, 234-245, 246-294", "reason": "Only access failures are caught; read/loader/parse/transform failures propagate."},
+            {"number": 7, "status": "pass", "source_location": "src/index.js:80-306", "reason": "Exact attached ranges entail authored roles, branches and cards."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "All material explorer claims are supported by visible source references."},
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No image captures were supplied; this is not a visual pass."},
+          "overall_quality": "fail",
+          "overall_reason": "Required visual readability is unavailable despite passing source semantics.",
+          "machine_status": {"production_validate_exit": 1, "diagnostic_codes": ["composition/micro-segment", "composition/short-interior-segment"]}
+        },
+        {
+          "stage": "final",
+          "criteria": [
+            {"number": 1, "status": "pass", "source_location": "src/index.js:80-125, 156-171", "reason": "Creation roles and option/default behavior are correct."},
+            {"number": 2, "status": "pass", "source_location": "src/index.js:172-245", "reason": "Search walk, cache and termination behavior are correct."},
+            {"number": 3, "status": "pass", "source_location": "src/index.js:192-231, 128-136", "reason": "Candidate decisions and package matching are correct."},
+            {"number": 4, "status": "pass", "source_location": "src/index.js:246-294", "reason": "Explicit load path and cache behavior are correctly distinct."},
+            {"number": 5, "status": "pass", "source_location": "src/index.js:234-245, 258-306", "reason": "Transform, cached values and separate cache-clearing controls are correct."},
+            {"number": 6, "status": "pass", "source_location": "src/index.js:194-225, 234-245, 246-294", "reason": "Error propagation remains distinct from skip/miss."},
+            {"number": 7, "status": "pass", "source_location": "src/index.js:80-306", "reason": "Attached source ranges entail all material claims."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Material authored claims are source-entailed."},
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No image captures were supplied; this is not a visual pass."},
+          "overall_quality": "fail",
+          "overall_reason": "Required visual readability is unavailable despite passing source semantics.",
+          "machine_status": {"production_validate_exit": 1, "diagnostic_codes": ["composition/proper-crossing"], "author_complete_machine_pass": false}
+        }
+      ]
+    },
+    {
+      "case": "case-05",
+      "stages": [
+        {
+          "stage": "first",
+          "criteria": [
+            {"number": 1, "status": "pass", "source_location": "index.js:1-23, 68-77", "reason": "QuickLRU owns two in-memory maps, count, maxSize and expiry policy."},
+            {"number": 2, "status": "pass", "source_location": "index.js:68-77, 120-132", "reason": "Set branches and whole-generation rotation are accurately distinguished."},
+            {"number": 3, "status": "pass", "source_location": "index.js:40-60, 105-118", "reason": "Current/old/miss behavior, promotion and expiry effects are correct."},
+            {"number": 4, "status": "pass", "source_location": "index.js:40-66, 137-157", "reason": "has/peek inspection has no promotion and retains expiry deletion."},
+            {"number": 5, "status": "pass", "source_location": "index.js:30-46, 72-77, 166-179", "reason": "Callback and explicit delete/clear behavior are correctly separated."},
+            {"number": 6, "status": "pass", "source_location": "index.js:1-179", "reason": "All material claims are covered by exact component references."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Visible source references entail the authored lifecycle claims."},
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No image captures were supplied; this is not a visual pass."},
+          "overall_quality": "fail",
+          "overall_reason": "Required visual readability is unavailable despite passing source semantics.",
+          "machine_status": {"production_validate_exit": 1, "diagnostic_codes": ["composition/desktop-readability"]}
+        },
+        {
+          "stage": "final",
+          "criteria": [
+            {"number": 1, "status": "pass", "source_location": "index.js:1-23, 68-77", "reason": "Ownership and in-memory policy are correct."},
+            {"number": 2, "status": "pass", "source_location": "index.js:68-77, 120-132", "reason": "Set and whole-generation rotation are correct."},
+            {"number": 3, "status": "pass", "source_location": "index.js:40-60, 105-118", "reason": "Read, promotion, miss and expiry behavior are correct."},
+            {"number": 4, "status": "pass", "source_location": "index.js:40-66, 137-157", "reason": "has/peek inspection and expiry behavior are correct."},
+            {"number": 5, "status": "pass", "source_location": "index.js:30-46, 72-77, 166-179", "reason": "Callback/manual-removal boundary is correct."},
+            {"number": 6, "status": "pass", "source_location": "index.js:1-179", "reason": "Material claims have exact supporting ranges."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "All material lifecycle claims are source-entailed."},
+          "extra_contradictions": [],
+          "visual": {"status": "pass", "reason": "Reviewed contact sheet first and 1440x900 light capture: nodes, labels and cards are readable at the supplied reader view with normal vertical scrolling."},
+          "overall_quality": "pass",
+          "overall_reason": "All required source semantics, evidence and supplied visual readability pass.",
+          "machine_status": {"production_validate_exit": 0, "diagnostic_codes": [], "author_complete_machine_pass": true}
+        }
+      ]
+    },
+    {
+      "case": "case-06",
+      "stages": [
+        {
+          "stage": "final",
+          "criteria": [
+            {"number": 1, "status": "pass", "source_location": "index.js:1-23, 68-77", "reason": "QuickLRU's in-memory ownership and policy are accurately shown."},
+            {"number": 2, "status": "pass", "source_location": "index.js:68-77, 120-132", "reason": "Set branches and full-map generation rotation are accurately shown."},
+            {"number": 3, "status": "pass", "source_location": "index.js:40-60, 105-118", "reason": "Current/old/missing get behavior, promotion and expiry effects are accurate."},
+            {"number": 4, "status": "pass", "source_location": "index.js:40-66, 137-157", "reason": "has/peek inspection without promotion and expiry behavior are accurate."},
+            {"number": 5, "status": "pass", "source_location": "index.js:30-46, 72-77, 166-179", "reason": "Expired/rotated callback behavior is distinct from manual deletion and clear."},
+            {"number": 6, "status": "pass", "source_location": "index.js:1-179", "reason": "Exact attached ranges support all material visible claims."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "All material lifecycle claims are source-entailed."},
+          "extra_contradictions": [],
+          "visual": {"status": "pass", "reason": "Reviewed contact sheet first and 1440x900 light capture: the denser lifecycle graph remains readable at the supplied reader view; cards continue by normal vertical scroll."},
+          "overall_quality": "pass",
+          "overall_reason": "All required source semantics, evidence and supplied visual readability pass.",
+          "machine_status": {"production_validate_exit": 0, "diagnostic_codes": [], "postrun_complete_machine_pass": true}
+        }
+      ]
+    },
+    {
+      "case": "case-07",
+      "stages": [
+        {
+          "stage": "first",
+          "criteria": [
+            {"number": 1, "status": "pass", "source_location": "src/index.js:80-125, 156-171", "reason": "Creation, default/override loaders, controller, filesystem, loader and transform roles are explicit."},
+            {"number": 2, "status": "pass", "source_location": "src/index.js:172-245", "reason": "Search places, directory cache, upward termination, found and normal miss are shown."},
+            {"number": 3, "status": "pass", "source_location": "src/index.js:192-231, 128-136", "reason": "Access skip, empty-search policy and non-null packageProp extraction are correct."},
+            {"number": 4, "status": "pass", "source_location": "src/index.js:246-294", "reason": "Explicit load's cache, path/read/loader selection and empty result are shown separately."},
+            {"number": 5, "status": "pass", "source_location": "src/index.js:234-245, 258-306", "reason": "Both terminal transformations, transformed caches and independent clearing are represented."},
+            {"number": 6, "status": "pass", "source_location": "src/index.js:194-225, 234-245, 246-294", "reason": "Errors propagate while access skips and normal misses are distinct."},
+            {"number": 7, "status": "pass", "source_location": "src/index.js:80-306", "reason": "Attached source ranges entail the visible branches and conclusion cards."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Material authored claims have exact source support."},
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No image captures were supplied; this is not a visual pass."},
+          "overall_quality": "fail",
+          "overall_reason": "Required visual readability is unavailable despite passing source semantics.",
+          "machine_status": {"production_validate_exit": 1, "diagnostic_codes": ["composition/label-route-clearance", "composition/micro-segment", "composition/short-interior-segment", "layout/constraint"]}
+        },
+        {
+          "stage": "final",
+          "criteria": [
+            {"number": 1, "status": "pass", "source_location": "src/index.js:80-125, 156-171", "reason": "Creation roles and merged options/default loader behavior are correct."},
+            {"number": 2, "status": "pass", "source_location": "src/index.js:172-245", "reason": "Search walk, cache, termination, found and miss behavior are correct."},
+            {"number": 3, "status": "pass", "source_location": "src/index.js:192-231, 128-136", "reason": "Candidate access, empty and package extraction decisions are correct."},
+            {"number": 4, "status": "pass", "source_location": "src/index.js:246-294", "reason": "The explicit-load path shows cache/read/loader selection, then loaders → transform as 'found or accepted empty result'; this covers the empty-file outcome without requiring a duplicate edge."},
+            {"number": 5, "status": "pass", "source_location": "src/index.js:234-245, 258-306", "reason": "load → loaders → transform, then transform → loadCache/result visibly explains transformed explicit-load returns and caching; the views/cards distinguish the two cache maps and their clearing."},
+            {"number": 6, "status": "pass", "source_location": "src/index.js:194-225, 234-245, 246-294", "reason": "Propagated errors remain distinct from access skips and normal misses."},
+            {"number": 7, "status": "pass", "source_location": "src/index.js:80-306", "reason": "Visible claims are source-entailed; the failures above are missing required explanatory paths, not false claims."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "No material authored claim contradicts its source; the semantic failures are omitted explicit-load explanations."},
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No image captures were supplied; this is not a visual pass."},
+          "clarification": {
+            "scope": "Rechecked only final.json edges loadTransform, loadedSearch, cacheLoad and return, plus its views/cards.",
+            "previous_assessment": "Criteria 4 and 5 were marked fail because the earlier read omitted the present loaders → transform edge.",
+            "correction": "Both criteria now pass: the shared loader-to-transform edge covers explicit load, including accepted empty results; no duplicated API-specific edge is required."
+          },
+          "overall_quality": "fail",
+          "overall_reason": "All source-semantic criteria pass; required visual readability is unavailable because no captures were supplied.",
+          "machine_status": {"production_validate_exit": 1, "diagnostic_codes": ["clean-flow/edge-through-node", "composition/proper-crossing", "composition/short-interior-segment"], "author_complete_machine_pass": false}
+        }
+      ]
+    }
+  ]
+}

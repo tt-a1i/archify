@@ -1,0 +1,75 @@
+{
+  "scope": "Read-only review of V2 route-preference code and semantic-firstdraft benchmark orchestration at base e484993f819ec16f3ee4c976ee14173901cdbc56. No blind quality-review files inspected.",
+  "candidate": {
+    "routing_sha256_expected": "cfd259b6b06b7f48e155e10c54e7912e6a8f7338afb79df7465a5c43bd576988",
+    "routing_sha256_observed": "cfd259b6b06b7f48e155e10c54e7912e6a8f7338afb79df7465a5c43bd576988",
+    "patch_sha256": "3a2c6a6a88df2883cd1c35911647ca5d5eb6239457bd53d7bf59fe8cc879d060"
+  },
+  "verified": [
+    {
+      "claim": "V2 applies the real frozen patch to a disposable base copy.",
+      "evidence": "route-preference/v2/route-preference.test.mjs copies archify/, runs git apply runtime.patch, imports that copy, and its direct run passed 3/3. Independent git apply --check exited 0."
+    },
+    {
+      "claim": "Authored geometry and explicit sides are preserved by the changed control flow.",
+      "evidence": "The hasAuthoredRouteGeometry branch remains before candidate enumeration; routeVia returns authored via/non-auto routes before grid logic. Direct base/V2 plan comparison for a bottom-side via route and a top-side constrained automatic route was byte-identical; selected sides remained bottom/bottom and top/top."
+    },
+    {
+      "claim": "After-first-clear probes do not consume grid-search budget.",
+      "evidence": "V2 passes allowGridSearch: !firstClear to routeVia; its false branch returns before the existing grid budget guard and all grid metric increments. Direct C1 planning measured base 3 and V2 3 grid searches, both zero exhaustion. The portable dense-suffix regression passed and asserts V2/base identical suffix route, 22 searches, zero exhaustion."
+    },
+    {
+      "claim": "Static replay is not presented as author latency.",
+      "evidence": "replay_routes.py line 3 and emitted limit label it as identical-byte post-run replay, not model repair or successful full-task latency. README separately says failed baselines have no successful latency."
+    },
+    {
+      "claim": "Failed or unsupported final artifacts are not fabricated as completed machine passes.",
+      "evidence": "evaluate.py only runs final visual capture when finalization succeeded, final JSON hash matches the finalize summary, and HTML exists; prepare_review.py marks author_complete_machine_pass only for author_finalized plus hash_bound. Missing snapshots are recorded unavailable by replay_routes.py."
+    }
+  ],
+  "material_finding": {
+    "severity": "required experimental-integrity repair before treating source-backed outcome comparisons as hash-bound",
+    "location": "benchmarks/semantic-firstdraft-20260921/run.py finish(), lines 209-217; evaluate.py lines 28-77",
+    "problem": "finish computes source_unchanged and package_unchanged but only writes them to integrity.json. It neither fails when either is false nor marks the run ineligible. evaluate.py does not read integrity.json before validating frozen snapshots or final output against the workspace repo. A worker that modified its copied repo/package can therefore produce post-run validation/evidence against changed source while the run continues through the normal evidence path.",
+    "why_it_matters": "freeze and begin establish source/package hashes, but this code does not enforce the required post-author binding. Recording a false integrity flag is useful audit evidence but is not an exclusion gate.",
+    "smallest_repair": "Make finish fail or record an explicit ineligible state when integrity is false, and make evaluate/any outcome aggregator refuse to qualify results unless integrity.json reports both source_unchanged and package_unchanged true."
+  },
+  "limitations": [
+    "This review did not assess timed-author results, semantic review, visual quality, or real latency; the code correctly labels static replay as separate, but that is not independent proof of any performance result.",
+    "No broad suite was rerun. Existing 93 geometry/authored-route, 16 detour/automatic-label, and combined 9 portable-regression results were treated as prior evidence; this review additionally ran the V2 portable tests and targeted router plans."
+  ],
+  "commands": [
+    {
+      "command": "node --test route-preference/v2/route-preference.test.mjs",
+      "exit": 0,
+      "result": "3 passed, 0 failed"
+    },
+    {
+      "command": "git apply --check route-preference/v2/runtime.patch",
+      "exit": 0
+    },
+    {
+      "command": "direct base/V2 C1 and explicit-side planner comparison",
+      "exit": 0,
+      "result": "C1 grid searches 3/3; explicit routes identical"
+    }
+  ],
+  "integrity_blocker_recheck": {
+    "status": "resolved",
+    "verified_chain": [
+      "run.py finish now writes outcome_eligible from frozen source/package checks and, for compact runs, helper/guide checks.",
+      "evaluate.py eligibility fails closed for absent or false required integrity fields, unsupported conditions, frozen model/effort mismatch, censored traces, and native duration outside the frozen cap.",
+      "When ineligible, evaluate.py emits protocol-ineligible snapshot status and skips every validator, finalize, and visual-capture command; eligible_delivery remains false even when a forged finalize summary and HTML are present.",
+      "prepare_review.py exposes final author_complete_machine_pass only from eligible_delivery and separately exposes protocol_eligible."
+    ],
+    "focused_validation": {
+      "command": "python3 -m unittest evaluate_test.py",
+      "exit": 0,
+      "result": "3 tests passed. The integrity-defect test covered modified and missing source/package/helper/guide flags with a forged successful finalize summary and HTML, and asserted command() was never called."
+    },
+    "remaining_problems": [
+      "None found in the repaired integrity gate within this bounded recheck.",
+      "The gate establishes protocol eligibility only; source entailment and perceptual acceptance remain separate review requirements, as documented."
+    ]
+  }
+}

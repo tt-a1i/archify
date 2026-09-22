@@ -1,0 +1,23 @@
+{
+  "start_epoch": 1789963836.2203321,
+  "observed_seconds": 223.55101920792367,
+  "max_poll_gap_seconds": 0.1472640000283718,
+  "expired": false,
+  "snapshots": [
+    {
+      "index": 1,
+      "elapsed_seconds": 165.31133125000633,
+      "sha256": "9029ee3c7ab86a47af3919ef537187c0605db0d3cff5c9f5078a919937593582",
+      "bytes": 8407,
+      "parseable": true,
+      "structurally_complete": true
+    }
+  ],
+  "first_complete_seconds": 165.31133125000633,
+  "completion": {
+    "epoch": 1789964059.69208,
+    "status": "completed",
+    "handle": "/root/source_lowdb_b"
+  },
+  "limits": "Observed from before dispatch; scheduling included. Structural completeness is not factual acceptance. Hidden model/HTTP timing unavailable."
+}

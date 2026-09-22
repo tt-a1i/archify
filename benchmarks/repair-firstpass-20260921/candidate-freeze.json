@@ -1,0 +1,13 @@
+{
+  "epoch": 1789990590.296913,
+  "revision": 2,
+  "base": "9730d49b0984a47cdc48ac809b6c754a3057b0a5",
+  "entrypoint": "preflight.mjs",
+  "files": {
+    "preflight.mjs": "37cf125ba93d3aef5d16a4707210253714ce6f8aa8527da885306a56df560c4c",
+    "preflight.test.mjs": "0f9db501414f35697ebcbe5c842acc3ce4c3bc93923af160651b1f3dfa1ec387"
+  },
+  "protocol_sha256": "a43e22023f4acbca500ac1e0eae22a4865ec72c96788e269995e3b7f240e980c",
+  "development_gate": "must pass fixed 2-of-3 before any holdout bytes are inspected",
+  "changes_after_holdout": "none allowed"
+}

@@ -1,0 +1,42 @@
+{
+  "scope": "Read-only review of frozen benchmarks/repair-firstpass-20260921/preflight.mjs and preflight.test.mjs at base 9730d49b0984a47cdc48ac809b6c754a3057b0a5. Prior/runtime inputs and development artifact bytes were not inspected.",
+  "frozen_helper_sha256": {
+    "expected": "37cf125ba93d3aef5d16a4707210253714ce6f8aa8527da885306a56df560c4c",
+    "observed": "37cf125ba93d3aef5d16a4707210253714ce6f8aa8527da885306a56df560c4c",
+    "matches": true
+  },
+  "blocking_findings": [],
+  "verified": [
+    {
+      "claim": "Input bytes and accepted output are protected.",
+      "evidence": "The CLI reads source bytes before work, rejects same canonical path plus existing symlink/hard-link aliases by device/inode, and writes --out only for accepted or unchanged results. It carries inputSha256 in reports; tests cover same path, symlink, hard-link, and source-byte preservation."
+    },
+    {
+      "claim": "Semantic content and authored connection geometry cannot silently change.",
+      "evidence": "semanticHash removes only declared component/layout/viewBox geometry. Every connection field remains in the projection. inputProblems declines any via/channel/label geometry, non-auto route, or non-auto endpoint side before searching. Every queued candidate must retain sourceSemanticHash."
+    },
+    {
+      "claim": "Acceptance is fail-closed and uses production showcase validation.",
+      "evidence": "Each candidate must pass layout validation and normal showcase validation. staticPass additionally requires receipt candidate SHA equality, zero composition errors/warnings, showcase profile, and every reported check ok. No output is emitted for a declined result."
+    },
+    {
+      "claim": "Attempt/time limits cannot accept a late candidate.",
+      "evidence": "The queue stops at 64 total attempts or 20,000 ms. makeAttempt records withinTimeBudget, and accepted/unchanged return paths recheck elapsed time. The exhausted-budget test asserts a declined report with no candidate."
+    },
+    {
+      "claim": "The search is stateful in the declared bounded sense.",
+      "evidence": "Initial deterministic seeds are based on the baseline. Further targeted/readability seeds are enqueued only from candidates whose complete diagnostic score is strictly better than bestScore; candidates are deduplicated and ordering is deterministic by parent score then sequence."
+    }
+  ],
+  "focused_validation": {
+    "command": "node --test --test-reporter=spec benchmarks/repair-firstpass-20260921/preflight.test.mjs",
+    "exit": 0,
+    "result": "9 passed, 0 failed",
+    "additional": "git diff --check on the helper/tests exited 0"
+  },
+  "limitations": [
+    "This is code-level evidence only. It does not establish completed-finalize, independent semantic/visual acceptance, or any author-repair/latency result.",
+    "The assigned development score is 1/3, below the frozen 2/3 gate. Consequently no holdout or author trial is qualified; this review does not promote the helper."
+  ],
+  "disposition": "No concrete preflight-code blocker found in the frozen V2 within the assigned scope."
+}

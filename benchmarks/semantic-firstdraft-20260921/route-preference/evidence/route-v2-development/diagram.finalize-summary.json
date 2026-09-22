@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "/private/tmp/archify-semantic-firstdraft-20260921/runs/quick-lru-B1/output/diagram.architecture.json",
+    "sha256": "1a80523461dc5aa3a993aa42782138c57f0d598a59e555fb88641a18e943ea34",
+    "bytes": 11327
+  },
+  "artifact": {
+    "path": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/route-v2-development/diagram.html",
+    "sha256": "d99db7420e8476f54d0109255e87d045e3d8c1b411131b1ec96cee6bcd3d8ae5",
+    "bytes": 862772
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/route-v2-development/diagram.finalize.json",
+    "summaryReceipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/route-v2-development/diagram.finalize-summary.json",
+    "browserCheckReceipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/route-v2-development/diagram.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 3653
+}

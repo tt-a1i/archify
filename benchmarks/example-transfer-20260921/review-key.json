@@ -1,0 +1,49 @@
+{
+  "created_before_timed_authors": 1789997976.0306702,
+  "purpose": "Source-backed review reminders for original visible clauses, not extra author requirements. Withheld from timed authors; identical criteria for B/P and first/final. Natural-language/card/view coverage counts; no literal wording, role counts or excluded-scope details required.",
+  "p-retry": [
+    {
+      "clause": 3,
+      "source": "index.js:124-158",
+      "check": "Distinguish pre-callback exhausted time: onFailedAttempt still runs with retryDelay 0, before rejection; consume/retry hooks skipped. Normal remaining-time path calls consume then onFailedAttempt."
+    },
+    {
+      "clause": 3,
+      "source": "index.js:160-197",
+      "check": "shouldRetry follows time/retries/non-network-TypeError guards; no-consume retry still requires time and retries left, skips wait and consumed increment."
+    },
+    {
+      "clause": 5,
+      "source": "index.js:84-106,114-116,233-247",
+      "check": "AbortError unwraps; AbortSignal checks/cancels timer but does not itself interrupt already-awaited input."
+    },
+    {
+      "clause": 6,
+      "source": "index.js:66-82,178-197",
+      "check": "Retry timer bounded by maxTimeout and remaining maxRetryTime; budget does not impose running-input timeout."
+    }
+  ],
+  "quick-lru": [
+    {
+      "clause": 2,
+      "source": "index.js:68-83,120-134",
+      "check": "set distinguishes present in CURRENT map from absent in CURRENT map, which can still be present in OLD. Threshold rotates whole generations, emitting prior old entries."
+    },
+    {
+      "clause": 3,
+      "source": "index.js:40-65,105-118",
+      "check": "Current and old lookup differ; live old get promotes by removing old and calling #set. Missing/expired does not return a live value."
+    },
+    {
+      "clause": 4,
+      "source": "index.js:137-157",
+      "check": "has and peek inspect either map without get-style promotion; preserve expiry effects."
+    },
+    {
+      "clause": 5,
+      "source": "index.js:30-46,166-179",
+      "check": "Configured onEviction for expiry/rotation, no callback invented for explicit delete/clear; both maps affected, current count decremented only if current deletion succeeded, clear resets count."
+    }
+  ],
+  "perceptual": "Inspect actual eligible 1440x900 and 2048x1320 light/dark images. Machine 6px threshold is not by itself perceptual acceptance; assess text and path readability without requiring a new numerical threshold. Normal page-level scrolling is allowed. Missing captures is unknown. Preserve disagreement and root adjudication."
+}

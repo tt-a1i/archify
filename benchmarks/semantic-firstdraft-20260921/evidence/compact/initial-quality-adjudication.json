@@ -1,0 +1,127 @@
+{
+  "rows": [
+    {
+      "case": "case-01",
+      "run": "quick-lru-B1",
+      "stages": [
+        {
+          "stage": "first",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "both_reviewers_quality_pass": false
+        },
+        {
+          "stage": "final",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "both_reviewers_quality_pass": false
+        }
+      ]
+    },
+    {
+      "case": "case-02",
+      "run": "p-retry-B1",
+      "stages": [
+        {
+          "stage": "first",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "both_reviewers_quality_pass": false
+        },
+        {
+          "stage": "final",
+          "semantic_both_pass": true,
+          "visual_both_pass": true,
+          "both_reviewers_quality_pass": true
+        }
+      ]
+    },
+    {
+      "case": "case-03",
+      "run": "p-retry-C1",
+      "stages": [
+        {
+          "stage": "first",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "both_reviewers_quality_pass": false
+        },
+        {
+          "stage": "final",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "both_reviewers_quality_pass": false
+        }
+      ]
+    },
+    {
+      "case": "case-04",
+      "run": "lilconfig-B1",
+      "stages": [
+        {
+          "stage": "first",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "both_reviewers_quality_pass": false
+        },
+        {
+          "stage": "final",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "both_reviewers_quality_pass": false
+        }
+      ]
+    },
+    {
+      "case": "case-05",
+      "run": "quick-lru-C1",
+      "stages": [
+        {
+          "stage": "first",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "both_reviewers_quality_pass": false
+        },
+        {
+          "stage": "final",
+          "semantic_both_pass": true,
+          "visual_both_pass": true,
+          "both_reviewers_quality_pass": true
+        }
+      ]
+    },
+    {
+      "case": "case-06",
+      "run": "route-holdout/quick-lru-B1-postrun",
+      "stages": [
+        {
+          "stage": "final",
+          "semantic_both_pass": true,
+          "visual_both_pass": true,
+          "both_reviewers_quality_pass": true
+        }
+      ]
+    },
+    {
+      "case": "case-07",
+      "run": "lilconfig-C1",
+      "stages": [
+        {
+          "stage": "first",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "both_reviewers_quality_pass": false
+        },
+        {
+          "stage": "final",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "both_reviewers_quality_pass": false
+        }
+      ]
+    }
+  ],
+  "adjudication": "Both reviews agree after reviewer-two corrected a mistaken absent-edge assertion. Original machine passes p-retry-B1 and quick-lru-C1 are fully qualified. Route-holdout is postrun reproduction only; all other final outputs fail machine and lack images. All first structural candidates fail machine. Compact screen fails; no qualified B/C pair and no confirmation.",
+  "review_history": "Reviewer-two preserves its original case-07 omission assessment and its exact-edge clarification in its receipt.",
+  "v2_development": "Same QuickLRU JSON passed full finalize; root viewed1440light; captures differ from v1, so v1 visual review is not silently reused for v2. Fresh runtime author cases will receive independent review."
+}

@@ -1,0 +1,78 @@
+{
+  "auditVersion": 1,
+  "scope": "tasks.json against the three pinned implementation files",
+  "revisionsVerified": {
+    "p-retry": "1472907affe8d6107aba5884abc36d6361b3042e",
+    "quick-lru": "a2190ebdf8e455b95a7138803d274ff5ed57ebcd",
+    "lilconfig": "6ae4bcdd4594b3909626dcd95b841a60ca165fd3"
+  },
+  "verdict": "corrections-needed-before-freeze",
+  "tasks": [
+    {
+      "id": "p-retry",
+      "verdict": "pass-with-clarification",
+      "groundedRequiredClauses": [
+        {
+          "clause": "retry-controller state, operation invocation/success/failure, callback order, budget/count stopping, AbortError, timer and retry loop",
+          "source": "index.js:84-107,109-197,233-260"
+        }
+      ],
+      "correction": {
+        "required": false,
+        "clarification": "Keep the existing 'limits of cancelling an already-running caller operation' wording. It is factually grounded only if authors make clear that pRetry awaits input(attemptNumber) without passing the signal or installing an abort listener for that promise; an abort is observed before/after the await and during retry waiting, so it does not itself interrupt an input already running.",
+        "source": "index.js:89-106,185-195,233-249"
+      }
+    },
+    {
+      "id": "quick-lru",
+      "verdict": "pass",
+      "groundedRequiredClauses": [
+        {
+          "clause": "two maps/current count/expiry policy and non-persistent ownership",
+          "source": "index.js:1-23"
+        },
+        {
+          "clause": "new-current insertion increments count; threshold rotates generations and emits evictions for the previous old generation, rather than removing one LRU item",
+          "source": "index.js:68-78,120-135"
+        },
+        {
+          "clause": "old-generation get promotes only non-expired entries; has/peek do not promote; expiry invokes callback then delete; explicit delete/clear have no callback invocation",
+          "source": "index.js:40-66,80-83,105-179"
+        }
+      ],
+      "hiddenExpectationRisk": "none found: the task expressly distinguishes rotation from single-item eviction and callbacks from delete/clear."
+    },
+    {
+      "id": "lilconfig",
+      "verdict": "correction-required",
+      "corrections": [
+        {
+          "replaceClauseFragment": "Show the meaningful search decisions for missing/unreadable candidates...",
+          "with": "Show the meaningful search decisions for candidates whose fs.access fails (skip and continue), and distinguish a later fs.promises.readFile failure from a normal search miss because it propagates. Also cover empty files and ignoreEmptySearchPlaces, and package.json/packageProp extraction; do not imply every discovered package.json is a matching configuration.",
+          "reason": "The current word 'unreadable' conflates caught access failures with uncaught read failures. The separate error clause currently names explicit-load read failures but omits search read failures.",
+          "source": "src/index.js:192-228; specifically access catch at 194-198 and uncaught read at 199"
+        },
+        {
+          "replaceClauseFragment": "Preserve error propagation for loader/parse/transform failures and explicit-load read failures...",
+          "with": "Preserve error propagation for loader/parse/transform failures and read failures in both search and explicit load; distinguish them from a normal search miss.",
+          "reason": "search invokes fsReadFileAsync outside the access try/catch, so its read errors reject search.",
+          "source": "src/index.js:194-205,234-244,246-294"
+        }
+      ],
+      "groundedRequiredClauses": [
+        {
+          "clause": "separate search/load caches hold transformed results only when cache is enabled; each clear method addresses its named cache",
+          "source": "src/index.js:150-169,183-190,234-244,246-307"
+        },
+        {
+          "clause": "search stops after checking stopDir/root; package.json only succeeds when packageProp is non-null; empty search files may be skipped",
+          "source": "src/index.js:203-231"
+        },
+        {
+          "clause": "explicit load validates/selects loader, reads separately, and returns a transformed empty result rather than a search-style skip",
+          "source": "src/index.js:246-294"
+        }
+      ]
+    }
+  ]
+}

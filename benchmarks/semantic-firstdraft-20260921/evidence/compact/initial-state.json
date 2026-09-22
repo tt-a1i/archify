@@ -1,0 +1,17 @@
+{
+  "start_epoch": 1789979886.4220102,
+  "base": "e484993f819ec16f3ee4c976ee14173901cdbc56",
+  "worktree": "/Users/tushaokun/.codex/worktrees/archify-semantic-firstdraft-20260921",
+  "scratch": "/private/tmp/archify-semantic-firstdraft-20260921",
+  "artifacts": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921",
+  "original": {
+    "status": "e42e67a2a94b12f7206cbfc87cc4e1fae45f7ff3f0a961f97c5430f1fc57e20f",
+    "diff": "9cae3fda2abc91e3638452d43ea77e0e540e186ea4aca2202146b42d770623a4"
+  },
+  "installed": {
+    "/Users/tushaokun/.agents_skills/archify": "523dcf9747a4294bf6e496655edeba270b3a43c86caa6f8e3e69d6118de3f7fe",
+    "/Users/tushaokun/.agents_skills/archify1": "671479a8a78bbc126866aefb6e8652ddbe86f22408f5db02c701d35bcc216535",
+    "/Users/tushaokun/.hermes/skills/archify1": "671479a8a78bbc126866aefb6e8652ddbe86f22408f5db02c701d35bcc216535"
+  },
+  "status": "preparation; not yet frozen for author runs"
+}

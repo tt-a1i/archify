@@ -1,0 +1,100 @@
+{
+  "cases": {
+    "polka": {
+      "X": {
+        "first": {
+          "status": "passed",
+          "defects": [],
+          "evidence": [
+            "Factory/export and HTTP attachment are covered by packages/polka/index.js:26-37,65-69,102.",
+            "URL parsing, path/query exposure, and route lookup are connected by packages/polka/index.js:71-89 and packages/url/index.js:1-21.",
+            "Global middleware, scoped prefix mutation, route handlers, and mounted applications are ordered and conditioned by packages/polka/index.js:45-62,75-85,91-98.",
+            "No-match and error terminals, including custom overrides and the default 404/error response path, are supported by packages/polka/index.js:20-24,35-37,86-95."
+          ]
+        },
+        "final": {
+          "status": "passed",
+          "defects": [],
+          "evidence": [
+            "Factory/export and HTTP attachment are covered by packages/polka/index.js:26-37,65-69,102.",
+            "URL parsing, path/query exposure, and route lookup are connected by packages/polka/index.js:71-89 and packages/url/index.js:1-21.",
+            "Global middleware, scoped prefix mutation, route handlers, and mounted applications are ordered and conditioned by packages/polka/index.js:45-62,75-85,91-98.",
+            "No-match and error terminals, including custom overrides and the default 404/error response path, are supported by packages/polka/index.js:20-24,35-37,86-95."
+          ]
+        }
+      },
+      "Y": {
+        "first": {
+          "status": "passed",
+          "defects": [],
+          "evidence": [
+            "The factory, Polka/router inheritance, and Node server request attachment are covered by packages/polka/index.js:2,26-37,65-69,102 and packages/polka/package.json:15-18.",
+            "The handler parses URL data, exposes req.path/search/query, and calls find with method and pathname in packages/polka/index.js:71-89; parser behavior is in packages/url/index.js:1-21.",
+            "The global/scoped/route/mount dispatch order and URL-prefix rewrites are supported by packages/polka/index.js:45-62,75-85,91-98.",
+            "Distinct configurable no-match and error terminals are supported by packages/polka/index.js:20-24,35-37,86-95."
+          ]
+        },
+        "final": {
+          "status": "passed",
+          "defects": [],
+          "evidence": [
+            "The factory, Polka/router inheritance, and Node server request attachment are covered by packages/polka/index.js:2,26-37,65-69,102 and packages/polka/package.json:15-18.",
+            "The handler parses URL data, exposes req.path/search/query, and calls find with method and pathname in packages/polka/index.js:71-89; parser behavior is in packages/url/index.js:1-21.",
+            "The global/scoped/route/mount dispatch order and URL-prefix rewrites are supported by packages/polka/index.js:45-62,75-85,91-98.",
+            "Distinct configurable no-match and error terminals are supported by packages/polka/index.js:20-24,35-37,86-95."
+          ]
+        }
+      }
+    },
+    "lowdb": {
+      "X": {
+        "first": {
+          "status": "passed",
+          "defects": [],
+          "evidence": [
+            "Adapter contracts, constructor-held adapter/default data, and Low/LowSync state are supported by src/core/Low.ts:1-24,41-49.",
+            "Read, write, and update delegation and their async/sync variants are supported by src/core/Low.ts:26-38,51-63.",
+            "JSONFile/DataFile/TextFile composition and JSON formatting are supported by src/adapters/node/JSONFile.ts:3-20 and src/adapters/node/DataFile.ts:6-71.",
+            "Node text persistence, missing-file null behavior, and sync temp-file rename are supported by src/adapters/node/TextFile.ts:1-35,38-66.",
+            "Memory and browser storage adapter alternatives are supported by src/adapters/Memory.ts:1-25 and src/adapters/browser/WebStorage.ts:1-24, with concrete browser specializations in LocalStorage.ts:1-7 and SessionStorage.ts:1-7."
+          ]
+        },
+        "final": {
+          "status": "passed",
+          "defects": [],
+          "evidence": [
+            "Adapter contracts, constructor-held adapter/default data, and Low/LowSync state are supported by src/core/Low.ts:1-24,41-49.",
+            "Read, write, and update delegation and their async/sync variants are supported by src/core/Low.ts:26-38,51-63.",
+            "JSONFile/DataFile/TextFile composition and JSON formatting are supported by src/adapters/node/JSONFile.ts:3-20 and src/adapters/node/DataFile.ts:6-71.",
+            "Node text persistence, missing-file null behavior, and sync temp-file rename are supported by src/adapters/node/TextFile.ts:1-35,38-66.",
+            "Memory and browser storage adapter alternatives are supported by src/adapters/Memory.ts:1-25 and src/adapters/browser/WebStorage.ts:1-24, with concrete browser specializations in LocalStorage.ts:1-7 and SessionStorage.ts:1-7."
+          ]
+        }
+      },
+      "Y": {
+        "first": {
+          "status": "failed",
+          "defects": [
+            "The relationship from text-file to json-file reverses the JSONFile -> DataFile -> TextFile composition used elsewhere in the fact graph and claims that composition without citing JSONFile.ts or DataFile.ts; its cited TextFile.ts lines support only the terminal file I/O details."
+          ],
+          "evidence": [
+            "The supported composition direction is JSONFile extends DataFile in src/adapters/node/JSONFile.ts:3-20, DataFile constructs TextFile and converts parse/stringify in src/adapters/node/DataFile.ts:20-37,54-71, and TextFile performs the file operations in src/adapters/node/TextFile.ts:18-35,48-66."
+          ]
+        },
+        "final": {
+          "status": "passed",
+          "defects": [],
+          "evidence": [
+            "Adapter contracts, core state, and async/sync read-write-update flow are supported by src/core/Low.ts:1-9,16-38,41-63.",
+            "JSONFile -> DataFile -> TextFile composition and two-space JSON formatting are supported by src/adapters/node/JSONFile.ts:3-20 and src/adapters/node/DataFile.ts:20-37,54-71.",
+            "The final TextFile -> Node filesystem/steno boundary is supported by src/adapters/node/TextFile.ts:1-5,18-35,48-66, while the external steno implementation remains explicitly unknown.",
+            "Memory and browser alternatives, including key-addressed WebStorage and LocalStorage/SessionStorage specializations, are supported by src/adapters/Memory.ts:1-25 and src/adapters/browser/WebStorage.ts:3-24, LocalStorage.ts:3-6, SessionStorage.ts:3-6."
+          ]
+        }
+      }
+    }
+  },
+  "limitations": [
+    "The inspected repositories do not include the implementations of external trouter or steno dependencies; their internals remain unknown beyond the calls shown in source."
+  ]
+}

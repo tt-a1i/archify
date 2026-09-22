@@ -1,0 +1,125 @@
+{
+  "reviewer": "independent semantic adjudication",
+  "scope": "Pinned candidates, frozen rubrics, and pinned primary source only; no geometry result was used to decide semantics.",
+  "cases": [
+    {
+      "id": "ky-U",
+      "first_final_semantic_difference": false,
+      "stages": {
+        "first": "fail",
+        "final": "fail"
+      },
+      "verified_disposition": "Fail under the fixed Ky rubric: the diagram says only 'fetch/HTTP failure' into retry and provides no condition tying non-OK response failure to throwHttpErrors (including its function form) and response circumstances. Its final-error path is otherwise a reasonable high-level depiction of processed thrown errors.",
+      "candidate_evidence": [
+        "connections[failure-decision]: Attempt controller -> Retry eligibility + delay, 'fetch/HTTP failure'",
+        "connections[fetch-result, force-retry, process-error] and cards[Failure boundary]"
+      ],
+      "primary_source": [
+        "ky/source/core/Ky.ts:209-267: hook stop returns undefined; afterResponse runs before the conditional non-OK HTTPError path; that path requires non-opaque response plus throwHttpErrors boolean/function approval.",
+        "ky/source/core/Ky.ts:296-301,664-693: thrown values enter final processing; non-Errors and beforeRetry-hook Errors have specific bypass behavior."
+      ],
+      "methodology_sensitivity": "Requiring the throwHttpErrors condition is stricter than a general lifecycle request that merely asks for final HTTP handling, but it is a frozen required meaning and cannot be relaxed."
+    },
+    {
+      "id": "ky-V",
+      "first_final_semantic_difference": false,
+      "stages": {
+        "first": "fail",
+        "final": "fail"
+      },
+      "verified_disposition": "Fail under the fixed Ky rubric for the same omitted throwHttpErrors-conditioned HTTP failure meaning, and for one affirmative wrong route: beforeRetry stop is drawn to Final error even though the card says it resolves without a response.",
+      "candidate_evidence": [
+        "connections[http-error]: afterResponse -> retry-policy, 'HTTPError or forced retry' (no throwHttpErrors condition)",
+        "connections[retry-stop]: beforeRetry -> final-error, 'stop: undefined result'",
+        "cards[Terminal behavior]: 'a stopped retry resolves without a Response'"
+      ],
+      "primary_source": [
+        "ky/source/core/Ky.ts:209-267: HTTPError/retry is conditional on non-opaque !ok and throwHttpErrors; response from a hook has a separate HTTP-error handling branch.",
+        "ky/source/core/Ky.ts:1175-1178: stop returns undefined; Ky.ts:205-213 returns that undefined result; Ky.ts:296-301 only processes thrown values."
+      ],
+      "corrected_wording": "Draw beforeRetry stop -> returned undefined / resolved ResponsePromise, not Final error. Label the non-OK branch 'when throwHttpErrors permits (and response is not opaque)' before HTTPError/retry.",
+      "methodology_sensitivity": "The conditional HTTP detail is frozen-rubric-required; the stop-to-error edge is a source contradiction independent of that sensitivity."
+    },
+    {
+      "id": "query-U",
+      "first_final_semantic_difference": false,
+      "stages": {
+        "first": "pass",
+        "final": "pass"
+      },
+      "verified_disposition": "Spot-check pass. The candidate represents the required success callbacks, ordinary terminal-error state/rethrow, cancellation distinctions, and batched cache/observer notification path. No material source contradiction found.",
+      "candidate_evidence": [
+        "connections[success,error,settled-return,observer-update,cache-update]",
+        "cards[In-flight and cancellation, Completion fan-out]"
+      ],
+      "primary_source": [
+        "query/packages/query-core/src/query.ts:594-609: active fetch is reused unless the data-present + fetchOptions.cancelRefetch condition cancels it.",
+        "query/packages/query-core/src/query.ts:731-810: revert/silent cancellation, success setData plus success/settled callbacks, ordinary error dispatch plus error/settled callbacks and rethrow.",
+        "query/packages/query-core/src/query.ts:893-903 and query/packages/query-core/src/queryClient.ts:617-630: batch notification and fetchQuery retry=false default/fresh decision."
+      ],
+      "adjudication_note": "The phrase 'unless a requested refetch cancels it' compresses the data-present and cancelRefetch conditions. It does not assert that every concurrent fetch cancels, so it is not a material contradiction; a more exact label would name those conditions."
+    },
+    {
+      "id": "query-V",
+      "first_final_semantic_difference": false,
+      "stages": {
+        "first": "fail",
+        "final": "fail"
+      },
+      "verified_disposition": "Fail under the fixed Query rubric. The cancellation card does represent the reverting-cancellation subset, so blanket 'cancellation omitted' wording would be wrong. But it omits the ordinary terminal error-state-and-rethrow path and omits the success/error/settled cache callbacks; generic dispatch and updated-event arrows do not entail those callbacks.",
+      "candidate_evidence": [
+        "cards[Failure and cancellation]: 'a reverting cancellation can restore the pre-fetch state'",
+        "cards[State fan-out]: 'Successful data or an error is dispatched into Query state'; connections[cache-update,subscriber-notify] only show an updated action event/subscriber notification."
+      ],
+      "primary_source": [
+        "query/packages/query-core/src/query.ts:768-777: setData, then cache onSuccess and onSettled on success.",
+        "query/packages/query-core/src/query.ts:778-810: silent/revert CancelledError branches differ from ordinary error dispatch, onError/onSettled, and rethrow.",
+        "query/packages/query-core/src/query.ts:893-903: updated-action cache notification is a distinct dispatch consequence."
+      ],
+      "corrected_wording": "Add success -> setData -> cache onSuccess/onSettled; ordinary terminal error -> error state -> cache onError/onSettled -> rethrow. Retain separate silent and revert cancellation outcomes.",
+      "methodology_sensitivity": "Named cache callbacks are a stricter demand than a broad 'notify cache/observers' description, but are expressly frozen required meanings."
+    },
+    {
+      "id": "pqueue-U",
+      "first_final_semantic_difference": false,
+      "stages": {
+        "first": "fail",
+        "final": "fail"
+      },
+      "verified_disposition": "Fail under the fixed PQueue rubric: settlement/release/next admission are shown, but the supported terminal completed/error emissions are absent.",
+      "candidate_evidence": [
+        "connections[settle,release,restart] and cards[Admission and recovery] show promise settlement and capacity release only."
+      ],
+      "primary_source": [
+        "pqueue/source/index.ts:510-528: success resolves then emits completed; error rejects then emits error; finally schedules next in a microtask."
+      ],
+      "corrected_wording": "At settlement show success: resolve + emit completed; error: reject + emit error; then microtask next admission.",
+      "methodology_sensitivity": "Terminal-event emission may be more detailed than an ordinary add-to-promise lifecycle request, but it is frozen-rubric-required."
+    },
+    {
+      "id": "pqueue-V",
+      "first_final_semantic_difference": false,
+      "stages": {
+        "first": "pass",
+        "final": "pass"
+      },
+      "verified_disposition": "Spot-check pass. Its settlement sublabel covers completed/error emission, and its external execution boundary plus 'signal race ... after dequeue' and rejection route distinguishes running abort from waiting removal without claiming that PQueue forcibly stops the underlying callable.",
+      "candidate_evidence": [
+        "components[settlement]: 'resolve + completed, or reject + error'",
+        "components[running-abort] and connections[running-control,running-rejection]; cards[Abort and timeout boundary]."
+      ],
+      "primary_source": [
+        "pqueue/source/index.ts:489-528: PQueue invokes the callable, wraps timeout/races abort against its promise, emits terminal events, then schedules next.",
+        "pqueue/source/index.ts:534-571: waiting abort removes/rejects before run; pqueue/source/index.ts:305-325 and 591-610 provide admission and pause/start behavior."
+      ],
+      "adjudication_note": "The diagram could state 'underlying task must cooperate' more explicitly, but the external-boundary and promise-race edges already convey the fixed distinction and make no forced-stop claim; this is not a material contradiction."
+    }
+  ],
+  "summary": {
+    "fixed_rubric_semantic_passes": ["query-U:first", "query-U:final", "pqueue-V:first", "pqueue-V:final"],
+    "fixed_rubric_semantic_fails": ["ky-U:first", "ky-U:final", "ky-V:first", "ky-V:final", "query-V:first", "query-V:final", "pqueue-U:first", "pqueue-U:final"],
+    "first_final_semantic_changes": [],
+    "geometry_failing_candidate_source_complete_under_fixed_rubric": false,
+    "reason": "Every candidate with nonzero production geometry metadata also has a fixed-rubric semantic failure; no geometry-failing source-complete repair case exists."
+  }
+}

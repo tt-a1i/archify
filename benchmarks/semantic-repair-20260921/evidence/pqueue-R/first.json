@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "PQueue task lifecycle: add() to settlement",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/sindresorhus/p-queue",
+      "revision": "180ab9e25cd10b6f548767d7176076b50d25e188",
+      "link_mode": "local-only"
+    },
+    "views": [
+      {
+        "id": "admission",
+        "label": "Admission path",
+        "focus": ["caller", "controller", "waiting", "admission", "running"],
+        "note": "Follow newly added work from the priority queue through pause, concurrency, and interval admission."
+      },
+      {
+        "id": "settlement",
+        "label": "Settlement and restart",
+        "focus": ["controller", "admission", "running", "caller"],
+        "note": "See task settlement release capacity and immediately ask the controller to start more waiting work."
+      },
+      {
+        "id": "cancellation",
+        "label": "Abort and timeout",
+        "focus": ["caller", "waiting", "running"],
+        "note": "Queued abort removes and rejects; running abort races the task, while timeout begins only after execution starts."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "Caller",
+      "sublabel": "adds a task and receives its promise",
+      "pos": [40, 360],
+      "size": [190, 76],
+      "sources": [{"path": "source/index.ts", "line": 438, "end_line": 454}]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "PQueue controller",
+      "sublabel": "enqueue, scheduling, and completion control",
+      "pos": [300, 360],
+      "size": [205, 76],
+      "sources": [{"path": "source/index.ts", "line": 203, "end_line": 212}, {"path": "source/index.ts", "line": 532, "end_line": 571}]
+    },
+    {
+      "id": "waiting",
+      "type": "messagebus",
+      "label": "Waiting priority queue",
+      "sublabel": "queued work; removable before run",
+      "pos": [570, 150],
+      "size": [215, 76],
+      "sources": [{"path": "source/priority-queue.ts", "line": 11, "end_line": 52}, {"path": "source/index.ts", "line": 532, "end_line": 565}]
+    },
+    {
+      "id": "admission",
+      "type": "backend",
+      "label": "Admission checks",
+      "sublabel": "not paused; concurrency and interval allow",
+      "pos": [570, 390],
+      "size": [215, 82],
+      "sources": [{"path": "source/index.ts", "line": 186, "end_line": 201}, {"path": "source/index.ts", "line": 280, "end_line": 328}, {"path": "source/index.ts", "line": 594, "end_line": 610}]
+    },
+    {
+      "id": "running",
+      "type": "external",
+      "label": "Caller task execution",
+      "sublabel": "active work with optional timeout or signal",
+      "pos": [870, 390],
+      "size": [225, 82],
+      "sources": [{"path": "source/index.ts", "line": 459, "end_line": 529}, {"path": "source/options.ts", "line": 1, "end_line": 33}]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "PQueue instance",
+      "wraps": ["controller", "waiting", "admission"]
+    }
+  ],
+  "connections": [
+    {"id": "add", "from": "caller", "to": "controller", "label": "add(function, options)"},
+    {"id": "enqueue", "from": "controller", "to": "waiting", "label": "enqueue runnable task"},
+    {"id": "select", "from": "waiting", "to": "admission", "label": "dequeue when eligible"},
+    {"id": "start", "from": "admission", "to": "running", "label": "start task; mark pending"},
+    {"id": "settle", "from": "running", "to": "caller", "label": "resolve or reject add() promise"},
+    {"id": "release", "from": "running", "to": "controller", "label": "settle: release pending capacity"},
+    {"id": "restart", "from": "controller", "to": "admission", "label": "try to start more queued work"},
+    {"id": "pause", "from": "caller", "to": "admission", "label": "pause() blocks starts; start() resumes"},
+    {"id": "waiting-abort", "from": "caller", "to": "waiting", "label": "abort while waiting: remove and reject", "variant": "dashed"},
+    {"id": "running-abort", "from": "caller", "to": "running", "label": "abort while running: task must handle signal", "variant": "dashed"},
+    {"id": "timeout", "from": "admission", "to": "running", "label": "timeout starts after dequeue; rejects on expiry", "variant": "dashed"}
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Queued and active work differ",
+      "items": [
+        "A queued abort removes the runnable task and rejects the add() promise",
+        "A running abort is raced into the promise; the task itself must observe the signal"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Admission and recovery",
+      "items": [
+        "Starts require the queue to be unpaused and both concurrency and interval capacity to allow another task",
+        "Every settlement schedules next() in a microtask, releasing capacity before starting more queued work"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Execution timeout",
+      "items": [
+        "Timeout wraps the operation only after it is dequeued and begins execution",
+        "Timeout rejects the add() promise; it does not describe cancellation of the underlying operation"
+      ]
+    }
+  ]
+}

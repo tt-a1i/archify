@@ -1,0 +1,76 @@
+{
+  "created_epoch": 1789988726.286623,
+  "base": "9730d49b0984a47cdc48ac809b6c754a3057b0a5",
+  "question": "Can bounded deterministic geometry preflight reduce model repair while preserving all authored semantics and original showcase quality?",
+  "development": {
+    "cohort": "compact",
+    "firsts": [
+      "p-retry-C1",
+      "quick-lru-B1",
+      "lilconfig-C1"
+    ],
+    "other_compact_trajectories": "Available for diagnosis; none is holdout"
+  },
+  "holdout": {
+    "cohort": "runtime",
+    "firsts": [
+      "p-retry-R1",
+      "p-retry-B1",
+      "quick-lru-B1",
+      "quick-lru-R1",
+      "lilconfig-R1",
+      "lilconfig-B1"
+    ],
+    "limit": "These repositories and previous results are known. Bytes are held out only from current prototype tuning, not unseen-task evaluation. Root and agents will not inspect holdout candidate bytes until prototype freeze.",
+    "primary_gate": {
+      "minimum_firsts_machine_pass": 4,
+      "require_lilconfig_pass": true,
+      "maximum_new_failures_on_baseline_passing_finals_and_examples": 0,
+      "all_successes_independent_semantic_visual_pass": true,
+      "per_input_candidate_seconds_cap": 20
+    }
+  },
+  "prototype": {
+    "maximum_revisions": 2,
+    "maximum_candidate_attempts": 64,
+    "seconds_cap": 20,
+    "mechanism": "one deterministic geometry proposal/preflight pipeline; implementation selected after audits, frozen before holdout",
+    "input_boundary": "complete Architecture JSON; require explicit reflow opt-in, output a separate candidate; reject authored route bends/channels/explicit-side constraints or unsupported geometry rather than silently changing them",
+    "preserve": "all source metadata/evidence, semantic strings, roles, component and edge identity/order, topology, cards, views, type/style, meaningful boundaries; only declared geometry fields may change",
+    "quality": "unchanged production schema and showcase validation; complete finalize and common-viewport perceptual review required for acceptance",
+    "failure": "return unsupported/declined with bounded attempts; never emit a candidate as accepted if original checks fail"
+  },
+  "development_gate": "At least2of3development firsts pass original static showcase without semantic projection changes, alldeclines recorded. Freeze candidate after at most2revisions; only then open holdout.",
+  "author_gate": "Only after offline holdout and independent review pass:3same-task freshTerra/medium B/P pairs, serial without auxiliary agents,600scap and3modelrepairs after firstfinalize; helperrun included inelapsed and internalattempts distinct from modelrepairs. Samevisible semantic clauses as previous3tasks. Record allfailures; nopair latency claimunlessbothcompletequality.",
+  "author_screen": {
+    "all3_candidates_quality_pass": true,
+    "minimum_qualified_pairs": 2,
+    "median_model_repair_reduction": 1,
+    "median_full_saving_fraction": 0.15,
+    "median_full_saving_seconds": 20,
+    "maximum_pair_slowdown_fraction": 0.1
+  },
+  "confirmation": "Only ifauthor_screen passes:1freshopposite-order pairpertask before promotion; initial3pairsnotestablishgeneralbenefit.",
+  "measurement": "Report first finalize machine success, completed quality, modelrepairrounds, deterministicsearchcount/time, firststructuralJSONtime, fullnativeauthor+setup/dispatchtime; independentresearch/reviewcost separate. No hidden reasoning/HTTPattribution.",
+  "preservation": "Originaldirtyworktree, livearchify/archify1/Hermes installs, remote state unchanged.",
+  "input_sha256": {
+    "compact/p-retry-C1/snapshot-001.json": "b86306919985437b9dfa1b16a4cf8b85300013ae720f0e8b71e96bfe1c52c86c",
+    "compact/p-retry-C1/diagram.architecture.json": "f25525c884f14563d8f57a6191d355aeecc9117c87653d64855be0e33d1eb9d7",
+    "compact/quick-lru-B1/snapshot-001.json": "9e817ccff0507aa811bcaeaa0d0c0e9684e5929e6b8be1ccadd729a204180a75",
+    "compact/quick-lru-B1/diagram.architecture.json": "1a80523461dc5aa3a993aa42782138c57f0d598a59e555fb88641a18e943ea34",
+    "compact/lilconfig-C1/snapshot-001.json": "281c3e50b041aada0846a61fbd093236e9a165594b43961b7a7e7db329fa0bbb",
+    "compact/lilconfig-C1/diagram.architecture.json": "fce26950989c450a239f7a2e2adf0ca34961b15d529bfd864d0d5bb6fd2b5943",
+    "runtime/p-retry-R1/snapshot-001.json": "080c0dbce38902fe11dfbbdb17727cf3fe76af72fe7197b8ff156ae5431cdb84",
+    "runtime/p-retry-R1/diagram.architecture.json": "080c0dbce38902fe11dfbbdb17727cf3fe76af72fe7197b8ff156ae5431cdb84",
+    "runtime/p-retry-B1/snapshot-001.json": "6832f91c3746ad85a4037dada6eef6faec3a9e55f9abf044d4dae838e0ff9bd0",
+    "runtime/p-retry-B1/diagram.architecture.json": "e5a7398c3eb6e2b1b6baf065136aca43323fe11687cc968ccc828fc10c3b169e",
+    "runtime/quick-lru-B1/snapshot-001.json": "b2582eb88005cdaa964dbcaebd157c0e2fdf90fb9d4e8a68cf796f1e0ca5545e",
+    "runtime/quick-lru-B1/diagram.architecture.json": "09d57c9195301b5a8c119d9530ef0db691d24da2c57eda39cac9400da634bc23",
+    "runtime/quick-lru-R1/snapshot-001.json": "5c6fe4a65c47a571b9e665946d5ca1894c992f135244a9d82ace25b20275bd08",
+    "runtime/quick-lru-R1/diagram.architecture.json": "98e0345e3b6584bf0c5840b80174dddedd935c5e1c4a7121efa62dc43b48e1d1",
+    "runtime/lilconfig-R1/snapshot-001.json": "8b3996ab0356786b2114d8d8a694eab3c7e8c5a012f44019d2ca8ec80def38ec",
+    "runtime/lilconfig-R1/diagram.architecture.json": "858c27e597de115b29c2e305cd3e0f9d06d6ad3b35b9ec46b67b933821647a80",
+    "runtime/lilconfig-B1/snapshot-001.json": "d8c56c74afcbd51b17641a59be343a167609979e9fa95213115d346538cccfde",
+    "runtime/lilconfig-B1/diagram.architecture.json": "b09917c89d9b378a15993a3fb52a86ef48e704589d8e543137529709d30b4033"
+  }
+}

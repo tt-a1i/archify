@@ -1,0 +1,365 @@
+{
+  "rows": [
+    {
+      "run": "p-retry-R1",
+      "stage": "final",
+      "available": true,
+      "sha256": "080c0dbce38902fe11dfbbdb17727cf3fe76af72fe7197b8ff156ae5431cdb84",
+      "base": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/short-interior-segment",
+          "composition/micro-segment"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/p-retry-R1/replay-final-base.json"
+      },
+      "candidate": {
+        "exit": 0,
+        "ok": true,
+        "codes": [],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/p-retry-R1/replay-final-candidate.json"
+      }
+    },
+    {
+      "run": "p-retry-R1",
+      "stage": "first",
+      "available": true,
+      "sha256": "080c0dbce38902fe11dfbbdb17727cf3fe76af72fe7197b8ff156ae5431cdb84",
+      "base": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/short-interior-segment",
+          "composition/micro-segment"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/p-retry-R1/replay-final-base.json"
+      },
+      "candidate": {
+        "exit": 0,
+        "ok": true,
+        "codes": [],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/p-retry-R1/replay-final-candidate.json"
+      }
+    },
+    {
+      "run": "p-retry-B1",
+      "stage": "final",
+      "available": true,
+      "sha256": "e5a7398c3eb6e2b1b6baf065136aca43323fe11687cc968ccc828fc10c3b169e",
+      "base": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/container-border-run"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/p-retry-B1/replay-final-base.json"
+      },
+      "candidate": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/container-border-run"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/p-retry-B1/replay-final-candidate.json"
+      }
+    },
+    {
+      "run": "p-retry-B1",
+      "stage": "first",
+      "available": true,
+      "sha256": "6832f91c3746ad85a4037dada6eef6faec3a9e55f9abf044d4dae838e0ff9bd0",
+      "base": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "schema/maxLength",
+          "schema/maxLength",
+          "schema/maxLength",
+          "schema/maxLength",
+          "schema/maxLength",
+          "schema/maxLength",
+          "schema/maxLength",
+          "schema/maxLength"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/p-retry-B1/replay-first-base.json"
+      },
+      "candidate": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "schema/maxLength",
+          "schema/maxLength",
+          "schema/maxLength",
+          "schema/maxLength",
+          "schema/maxLength",
+          "schema/maxLength",
+          "schema/maxLength",
+          "schema/maxLength"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/p-retry-B1/replay-first-candidate.json"
+      }
+    },
+    {
+      "run": "quick-lru-B1",
+      "stage": "final",
+      "available": true,
+      "sha256": "09d57c9195301b5a8c119d9530ef0db691d24da2c57eda39cac9400da634bc23",
+      "base": {
+        "exit": 0,
+        "ok": true,
+        "codes": [],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/quick-lru-B1/replay-final-base.json"
+      },
+      "candidate": {
+        "exit": 0,
+        "ok": true,
+        "codes": [],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/quick-lru-B1/replay-final-candidate.json"
+      }
+    },
+    {
+      "run": "quick-lru-B1",
+      "stage": "first",
+      "available": true,
+      "sha256": "b2582eb88005cdaa964dbcaebd157c0e2fdf90fb9d4e8a68cf796f1e0ca5545e",
+      "base": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "layout/constraint",
+          "layout/constraint",
+          "layout/constraint",
+          "layout/constraint"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/quick-lru-B1/replay-first-base.json"
+      },
+      "candidate": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "layout/constraint",
+          "layout/constraint",
+          "layout/constraint",
+          "layout/constraint"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/quick-lru-B1/replay-first-candidate.json"
+      }
+    },
+    {
+      "run": "quick-lru-R1",
+      "stage": "final",
+      "available": true,
+      "sha256": "98e0345e3b6584bf0c5840b80174dddedd935c5e1c4a7121efa62dc43b48e1d1",
+      "base": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/label-route-clearance",
+          "composition/label-route-clearance"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/quick-lru-R1/replay-final-base.json"
+      },
+      "candidate": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/label-route-clearance",
+          "composition/label-route-clearance"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/quick-lru-R1/replay-final-candidate.json"
+      }
+    },
+    {
+      "run": "quick-lru-R1",
+      "stage": "first",
+      "available": true,
+      "sha256": "5c6fe4a65c47a571b9e665946d5ca1894c992f135244a9d82ace25b20275bd08",
+      "base": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/micro-segment",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "layout/constraint",
+          "layout/constraint",
+          "layout/constraint",
+          "layout/constraint",
+          "layout/constraint"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/quick-lru-R1/replay-first-base.json"
+      },
+      "candidate": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "layout/constraint",
+          "layout/constraint",
+          "layout/constraint",
+          "layout/constraint"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/quick-lru-R1/replay-first-candidate.json"
+      }
+    },
+    {
+      "run": "lilconfig-R1",
+      "stage": "final",
+      "available": true,
+      "sha256": "858c27e597de115b29c2e305cd3e0f9d06d6ad3b35b9ec46b67b933821647a80",
+      "base": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/short-interior-segment",
+          "composition/micro-segment",
+          "composition/short-interior-segment",
+          "composition/short-interior-segment",
+          "composition/short-interior-segment",
+          "composition/short-interior-segment",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "layout/constraint",
+          "layout/constraint"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/lilconfig-R1/replay-final-base.json"
+      },
+      "candidate": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "layout/constraint",
+          "layout/constraint"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/lilconfig-R1/replay-final-candidate.json"
+      }
+    },
+    {
+      "run": "lilconfig-R1",
+      "stage": "first",
+      "available": true,
+      "sha256": "8b3996ab0356786b2114d8d8a694eab3c7e8c5a012f44019d2ca8ec80def38ec",
+      "base": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/short-interior-segment",
+          "composition/short-interior-segment",
+          "composition/label-route-clearance",
+          "layout/constraint"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/lilconfig-R1/replay-first-base.json"
+      },
+      "candidate": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/label-route-clearance",
+          "layout/constraint"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/lilconfig-R1/replay-first-candidate.json"
+      }
+    },
+    {
+      "run": "lilconfig-B1",
+      "stage": "final",
+      "available": true,
+      "sha256": "b09917c89d9b378a15993a3fb52a86ef48e704589d8e543137529709d30b4033",
+      "base": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "layout/constraint"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/lilconfig-B1/replay-final-base.json"
+      },
+      "candidate": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "composition/label-route-clearance",
+          "layout/constraint"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/lilconfig-B1/replay-final-candidate.json"
+      }
+    },
+    {
+      "run": "lilconfig-B1",
+      "stage": "first",
+      "available": true,
+      "sha256": "d8c56c74afcbd51b17641a59be343a167609979e9fa95213115d346538cccfde",
+      "base": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/micro-segment"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/lilconfig-B1/replay-first-base.json"
+      },
+      "candidate": {
+        "exit": 1,
+        "ok": false,
+        "codes": [
+          "composition/desktop-readability"
+        ],
+        "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/runtime-trials/lilconfig-B1/replay-first-candidate.json"
+      }
+    }
+  ],
+  "limit": "Post-run static replay of identical bytes. It does not simulate model repairs or establish a successful full-task latency."
+}

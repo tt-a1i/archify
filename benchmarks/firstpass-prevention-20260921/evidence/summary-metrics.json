@@ -1,0 +1,398 @@
+{
+  "rows": [
+    {
+      "run": "p-retry-B1",
+      "condition": "B1",
+      "native_seconds": 314.3970000743866,
+      "full_seconds": 323.1452579498291,
+      "setup_and_dispatch_seconds": 8.748257875442505,
+      "after_first_structural_seconds": 145.86202955245972,
+      "first_structural_seconds": 168.53497052192688,
+      "candidate_versions_observed": 4,
+      "candidate_content_changes_observed": 3,
+      "candidate_content_changes_before_first_finalize": 0,
+      "first_finalize_pass": false,
+      "finalize_receipts": [
+        {
+          "epoch": 1789993899.4555361,
+          "ok": false,
+          "sha256": "6b1b19b62c12a66d1f724d4094e841fc6044193beceb53a18e8b234d30fc2275",
+          "duration_ms": 587,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1789993945.329164,
+          "ok": false,
+          "sha256": "6fe3231eae4bbdcd16586278510043484ee19f7756360a6ac21e192f1c637811",
+          "duration_ms": 260,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1789993971.957411,
+          "ok": false,
+          "sha256": "09040386adf99bdcb1aaae81085f96fe03c362fb660e2e4b1b6dd374864b1b00",
+          "duration_ms": 244,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1789994017.247133,
+          "ok": false,
+          "sha256": "d00c20228c53e1fa2b8b8064d58d758108e213f7434721520ffe7a95396aff69",
+          "duration_ms": 350,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        }
+      ],
+      "nonterminal_finalize_updates": 4,
+      "observed_finalized_repairs_after_failure": 3,
+      "observer_expired": false,
+      "observer_max_gap_seconds": 0.12146299984306097,
+      "protocol_eligible": true,
+      "machine_delivery": false,
+      "first_quality": false,
+      "final_quality": false,
+      "qualified_delivery": false
+    },
+    {
+      "run": "p-retry-P1",
+      "condition": "P1",
+      "native_seconds": 295.6799998283386,
+      "full_seconds": 309.16492795944214,
+      "setup_and_dispatch_seconds": 13.484928131103516,
+      "after_first_structural_seconds": 99.39548897743225,
+      "first_structural_seconds": 196.28451085090637,
+      "candidate_versions_observed": 2,
+      "candidate_content_changes_observed": 1,
+      "candidate_content_changes_before_first_finalize": 1,
+      "first_finalize_pass": true,
+      "finalize_receipts": [
+        {
+          "epoch": 1789994381.15584,
+          "ok": true,
+          "sha256": "e19cc59fb687164f1d3eb41a07729fa8bac467f94a3f0548f593d0a63cc5a5c3",
+          "duration_ms": 3163,
+          "gates": {
+            "validate": "pass",
+            "deliver": "pass",
+            "check": "pass",
+            "browser-check": "pass"
+          }
+        }
+      ],
+      "nonterminal_finalize_updates": 3,
+      "observed_finalized_repairs_after_failure": 0,
+      "observer_expired": false,
+      "observer_max_gap_seconds": 0.11255087493918836,
+      "protocol_eligible": true,
+      "machine_delivery": true,
+      "first_quality": false,
+      "final_quality": false,
+      "qualified_delivery": false
+    },
+    {
+      "run": "quick-lru-P1",
+      "condition": "P1",
+      "native_seconds": 253.96199989318848,
+      "full_seconds": 266.02274990081787,
+      "setup_and_dispatch_seconds": 12.060750007629395,
+      "after_first_structural_seconds": 91.03767156600952,
+      "first_structural_seconds": 162.92432832717896,
+      "candidate_versions_observed": 3,
+      "candidate_content_changes_observed": 2,
+      "candidate_content_changes_before_first_finalize": 0,
+      "first_finalize_pass": false,
+      "finalize_receipts": [
+        {
+          "epoch": 1789994590.218827,
+          "ok": false,
+          "sha256": "ea74d0d37a3295657b5eb0ab5e2de0cc3d75e339a73f9fe4d2e7bc2ea26dd792",
+          "duration_ms": 815,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1789994646.647443,
+          "ok": false,
+          "sha256": "86e049e0c4a1ec310bb24ff50e2a0bbe420ad6feaae399c184f1d24b46663bd7",
+          "duration_ms": 314,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1789994667.904365,
+          "ok": true,
+          "sha256": "b4b1a32ffa22ab26bc6eb7c4dc75d17a291dc604123ec2b87c5d917a488a4d22",
+          "duration_ms": 2896,
+          "gates": {
+            "validate": "pass",
+            "deliver": "pass",
+            "check": "pass",
+            "browser-check": "pass"
+          }
+        }
+      ],
+      "nonterminal_finalize_updates": 5,
+      "observed_finalized_repairs_after_failure": 2,
+      "observer_expired": false,
+      "observer_max_gap_seconds": 0.13354700012132525,
+      "protocol_eligible": true,
+      "machine_delivery": true,
+      "first_quality": false,
+      "final_quality": false,
+      "qualified_delivery": false
+    },
+    {
+      "run": "quick-lru-B1",
+      "condition": "B1",
+      "native_seconds": 289.4610002040863,
+      "full_seconds": 297.9998140335083,
+      "setup_and_dispatch_seconds": 8.538813829421997,
+      "after_first_structural_seconds": 115.44089078903198,
+      "first_structural_seconds": 174.02010941505432,
+      "candidate_versions_observed": 4,
+      "candidate_content_changes_observed": 3,
+      "candidate_content_changes_before_first_finalize": 0,
+      "first_finalize_pass": false,
+      "finalize_receipts": [
+        {
+          "epoch": 1789994888.401619,
+          "ok": false,
+          "sha256": "6fe98bdc28d5978409bb4bf255f4918585791812eff7bc7a46bab30277b9d8ca",
+          "duration_ms": 523,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1789994919.848394,
+          "ok": false,
+          "sha256": "480859fc1a507d48112a3dd8205201e8db8500ccc3883275f1ed9ff203b9ac05",
+          "duration_ms": 275,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1789994954.417176,
+          "ok": false,
+          "sha256": "1e60227243faee21bcd7aca83b2d500a98dd250704fe9c5774f8050c19af09ab",
+          "duration_ms": 300,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1789994982.3780968,
+          "ok": false,
+          "sha256": "c0eba94325d5f8722749fffb15201e87f862db3abfefcbcc694c27b21bf7a8d2",
+          "duration_ms": 225,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        }
+      ],
+      "nonterminal_finalize_updates": 4,
+      "observed_finalized_repairs_after_failure": 3,
+      "observer_expired": false,
+      "observer_max_gap_seconds": 0.14665491599589586,
+      "protocol_eligible": true,
+      "machine_delivery": false,
+      "first_quality": false,
+      "final_quality": false,
+      "qualified_delivery": false
+    },
+    {
+      "run": "lilconfig-B1",
+      "condition": "B1",
+      "native_seconds": 343.5770001411438,
+      "full_seconds": 352.17458391189575,
+      "setup_and_dispatch_seconds": 8.597583770751953,
+      "after_first_structural_seconds": 123.78545093536377,
+      "first_structural_seconds": 219.79154920578003,
+      "candidate_versions_observed": 3,
+      "candidate_content_changes_observed": 2,
+      "candidate_content_changes_before_first_finalize": 0,
+      "first_finalize_pass": false,
+      "finalize_receipts": [
+        {
+          "epoch": 1789995278.664751,
+          "ok": false,
+          "sha256": "09d2f067ae644d4905b205ff5e27c2c5e5c0ea95847cfeba68ccc55f8b6f0e83",
+          "duration_ms": 760,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1789995318.045032,
+          "ok": false,
+          "sha256": "3cbb85e396f8a792caae5e6f075268f16617c1ee39c0e7c8e6242a405d89b99d",
+          "duration_ms": 292,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1789995385.918253,
+          "ok": false,
+          "sha256": "c4ab163f6c93b9b14fbdf5f25d829247f92000627dbe51485cac0c5789b4d119",
+          "duration_ms": 704,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        }
+      ],
+      "nonterminal_finalize_updates": 3,
+      "observed_finalized_repairs_after_failure": 2,
+      "observer_expired": false,
+      "observer_max_gap_seconds": 0.1370316669344902,
+      "protocol_eligible": true,
+      "machine_delivery": false,
+      "first_quality": false,
+      "final_quality": false,
+      "qualified_delivery": false
+    },
+    {
+      "run": "lilconfig-P1",
+      "condition": "P1",
+      "native_seconds": 370.5590000152588,
+      "full_seconds": 580.273463010788,
+      "setup_and_dispatch_seconds": 209.71446299552917,
+      "after_first_structural_seconds": 156.6888291835785,
+      "first_structural_seconds": 213.8701708316803,
+      "candidate_versions_observed": 4,
+      "candidate_content_changes_observed": 3,
+      "candidate_content_changes_before_first_finalize": 0,
+      "first_finalize_pass": false,
+      "finalize_receipts": [
+        {
+          "epoch": 1789995867.769393,
+          "ok": false,
+          "sha256": "8d8fc13764034d8ec9d6270263e6b9de4a54d9dd3605607a9a4d7cb9ab8d6d82",
+          "duration_ms": 710,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1789995914.0518122,
+          "ok": false,
+          "sha256": "189aa7db670b41c279a1fcdd343a943316e141f4a770029875daf94813dccd51",
+          "duration_ms": 304,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1789995950.0750248,
+          "ok": false,
+          "sha256": "60721c72af6572c37b072fad6e10a40444a6555599afecf27703d9f94030d117",
+          "duration_ms": 504,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1789996007.9417431,
+          "ok": false,
+          "sha256": "1246766663d580afe38308a169085d5272bcc577e86441b78b0633d7ee504800",
+          "duration_ms": 327,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        }
+      ],
+      "nonterminal_finalize_updates": 4,
+      "observed_finalized_repairs_after_failure": 3,
+      "observer_expired": false,
+      "observer_max_gap_seconds": 0.13306554197333753,
+      "protocol_eligible": true,
+      "machine_delivery": false,
+      "first_quality": false,
+      "final_quality": false,
+      "qualified_delivery": false
+    }
+  ],
+  "pairs": [
+    {
+      "task": "p-retry",
+      "both_quality_qualified": false
+    },
+    {
+      "task": "quick-lru",
+      "both_quality_qualified": false
+    },
+    {
+      "task": "lilconfig",
+      "both_quality_qualified": false
+    }
+  ],
+  "all_P_quality_pass": false,
+  "qualified_pairs": 0,
+  "median_seconds_saved": null,
+  "median_fraction_saved": null,
+  "median_observed_repair_reduction": null,
+  "screen_pass": false,
+  "promotion_qualified": false,
+  "limits": "Repair counts are observed finalized candidate revisions after a failed finalize, not unobserved model intentions. Content changes before first finalize are reported separately and must not be hidden by a zero finalized-repair count. A content change is not necessarily one model turn. Missing quality is unknown. A passing screen still requires the frozen confirmation pairs."
+}

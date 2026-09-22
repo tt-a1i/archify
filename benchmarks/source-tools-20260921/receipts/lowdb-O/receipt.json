@@ -1,0 +1,32 @@
+{
+  "start_epoch": 1789963517.538423,
+  "observed_seconds": 292.7092770000454,
+  "max_poll_gap_seconds": 0.1283259589690715,
+  "expired": false,
+  "snapshots": [
+    {
+      "index": 1,
+      "elapsed_seconds": 210.43782820901833,
+      "sha256": "d70aac1c5c061131a80087892da7da95de60205a4ff6294a3b7daee023f3004c",
+      "bytes": 9400,
+      "parseable": true,
+      "structurally_complete": true
+    },
+    {
+      "index": 2,
+      "elapsed_seconds": 241.76970587507822,
+      "sha256": "8c5698835c652886a39df08a3aa0d94017b72a04da7f1a0cd49a450acd0fe986",
+      "bytes": 9901,
+      "parseable": true,
+      "structurally_complete": true
+    }
+  ],
+  "first_complete_seconds": 210.43782820901833,
+  "completion": {
+    "epoch": 1789963810.168191,
+    "status": "completed",
+    "handle": "/root/source_lowdb_o",
+    "reported_mechanism": "tool path not found; not adopted"
+  },
+  "limits": "Observed from before dispatch; scheduling included. Structural completeness is not factual acceptance. Hidden model/HTTP timing unavailable."
+}

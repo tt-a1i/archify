@@ -1,0 +1,24 @@
+✔ vertical auto label clears the source without moving endpoints and is consistent in delivered SVG (737.83225ms)
+✔ frozen K2.8 draft clears its labels and renderer-owned automatic crossing (323.144833ms)
+✔ explicit labelDx preserves the authored collision and failure (117.8105ms)
+✔ explicit labelDy preserves the authored collision and failure (111.317417ms)
+✔ explicit labelSegment preserves the authored collision and failure (116.559666ms)
+✔ explicit labelAt preserves the authored collision and failure (114.440917ms)
+✔ standard preserves default placement and failure (103.97925ms)
+✔ clear horizontal label and explicit route points stay unchanged (103.564708ms)
+✔ bounded fallback finds a clear position without hiding or shrinking the label (100.336167ms)
+✔ showcase rejects an authored route whose empty-space detour is far longer than a legal orthogonal route (173.726458ms)
+✔ an unnecessary control corridor is diagnosed inside a large content envelope (125.815542ms)
+✔ the same relationship passes after the unnecessary authored detour is removed (118.534875ms)
+✔ standard keeps authored route freedom while showcase owns the compactness gate (100.023542ms)
+✔ an explicit route around an opaque obstacle is not reported as an excessive detour (129.183083ms)
+✔ a related shared outer corridor is treated as an intentional bus (102.614583ms)
+✔ a direct relationship crossing a region boundary is not a detour (102.399084ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1884.572625

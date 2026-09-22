@@ -1,0 +1,25 @@
+{
+  "status": "resolved",
+  "scope": "Narrow follow-up to the global-preservation finding in result-metrics-review.json.",
+  "evidence": {
+    "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/firstpass-prevention-20260921/preservation-final.json",
+    "receipt_epoch": 1789996654.2503638,
+    "final_author_completion": "2026-09-21T13:07:03.694Z (lilconfig-P1 native trace)",
+    "all_authors_completed": true,
+    "original_unchanged": true,
+    "live_installs_unchanged": true,
+    "production_package_unchanged": true,
+    "package_files": 266,
+    "frozen_intervention_inputs": {
+      "firstpass.mjs": true,
+      "prevention.md": true,
+      "tasks.json": true,
+      "protocol.json": true,
+      "run.py": true,
+      "watch.py": true,
+      "evaluate.py": true
+    }
+  },
+  "adjudication": "The final receipt is after the six author runs and closes the previously identified global-preservation evidence gap. It compares the original checkout status/diff, all three listed live trees, the 266-file production package, and all seven frozen intervention inputs. The prior report may state global preservation as evidenced by this final receipt.",
+  "limit": "The receipt correctly limits its remote claim: it records no remote-mutating action but does not independently fetch remote equality."
+}

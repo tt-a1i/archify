@@ -1,0 +1,142 @@
+{
+  "rows": [
+    {
+      "case": "case-01",
+      "run": "p-retry-B1",
+      "stages": [
+        {
+          "stage": "first",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "machine_pass": false,
+          "protocol_eligible": true,
+          "qualified": false
+        },
+        {
+          "stage": "final",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "machine_pass": false,
+          "protocol_eligible": true,
+          "qualified": false
+        }
+      ]
+    },
+    {
+      "case": "case-02",
+      "run": "lilconfig-R1",
+      "stages": [
+        {
+          "stage": "first",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "machine_pass": false,
+          "protocol_eligible": true,
+          "qualified": false
+        },
+        {
+          "stage": "final",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "machine_pass": false,
+          "protocol_eligible": true,
+          "qualified": false
+        }
+      ]
+    },
+    {
+      "case": "case-03",
+      "run": "p-retry-R1",
+      "stages": [
+        {
+          "stage": "first",
+          "semantic_both_pass": true,
+          "visual_both_pass": true,
+          "machine_pass": true,
+          "protocol_eligible": true,
+          "qualified": true
+        },
+        {
+          "stage": "final",
+          "semantic_both_pass": true,
+          "visual_both_pass": true,
+          "machine_pass": true,
+          "protocol_eligible": true,
+          "qualified": true
+        }
+      ]
+    },
+    {
+      "case": "case-04",
+      "run": "quick-lru-R1",
+      "stages": [
+        {
+          "stage": "first",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "machine_pass": false,
+          "protocol_eligible": true,
+          "qualified": false
+        },
+        {
+          "stage": "final",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "machine_pass": false,
+          "protocol_eligible": true,
+          "qualified": false
+        }
+      ]
+    },
+    {
+      "case": "case-05",
+      "run": "lilconfig-B1",
+      "stages": [
+        {
+          "stage": "first",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "machine_pass": false,
+          "protocol_eligible": true,
+          "qualified": false
+        },
+        {
+          "stage": "final",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "machine_pass": false,
+          "protocol_eligible": true,
+          "qualified": false
+        }
+      ]
+    },
+    {
+      "case": "case-06",
+      "run": "quick-lru-B1",
+      "stages": [
+        {
+          "stage": "first",
+          "semantic_both_pass": true,
+          "visual_both_pass": false,
+          "machine_pass": false,
+          "protocol_eligible": true,
+          "qualified": false
+        },
+        {
+          "stage": "final",
+          "semantic_both_pass": true,
+          "visual_both_pass": true,
+          "machine_pass": true,
+          "protocol_eligible": true,
+          "qualified": true
+        }
+      ]
+    }
+  ],
+  "adjudication": "Both blind reviews agree: all visible semantic clauses pass. Only p-retry-R1 and quick-lru-B1 pass final machine, semantic and visual gates. No fully qualified B/R pair exists. All other final outputs fail machine and have unavailable visual evidence. Screen failed; no confirmation or equal-quality latency saving is claimed.",
+  "reviewers": [
+    "fresh Luna/high",
+    "fresh Terra/high"
+  ],
+  "limits": "Task scopes are small JS repositories with English Architecture diagrams; p-retry and quick-lru previously supplied development examples."
+}

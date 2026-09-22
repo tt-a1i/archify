@@ -1,0 +1,147 @@
+import {writeFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+
+const output = resolve(process.cwd(), 'benchmarks/example-transfer-20260921/example/publisher.architecture.json');
+
+const diagram = {
+  schema_version: 1,
+  diagram_type: 'architecture',
+  meta: {
+    title: 'Document Publisher Controller',
+    locale: 'en',
+    quality_profile: 'showcase',
+    repository: {
+      url: 'https://fixtures.invalid/archify/document-publisher',
+      revision: 'f1182e57f67d321c61817a6249f82c2720113f88',
+      link_mode: 'local-only'
+    },
+    views: [
+      {
+        id: 'state-and-skip',
+        label: 'State and skips',
+        focus: ['caller', 'publisher', 'on-skip'],
+        note: 'close changes controller state; closed and denied both await onSkip before returning skipped.'
+      },
+      {
+        id: 'authorization',
+        label: 'Authorization branch',
+        focus: ['caller', 'publisher', 'authorize', 'on-skip'],
+        note: 'A falsy authorize result selects the denied skip branch.'
+      },
+      {
+        id: 'publish-success',
+        label: 'Published result',
+        focus: ['caller', 'publisher', 'convert', 'save'],
+        note: 'A successful publish converts, awaits save, increments published, then returns the document.'
+      }
+    ]
+  },
+  components: [
+    {
+      id: 'caller',
+      type: 'external',
+      label: 'Caller',
+      sublabel: 'supplies callbacks + calls API',
+      pos: [40, 300],
+      size: [190, 72],
+      sources: [{path: 'publisher.mjs', line: 2, end_line: 2, label: 'callback parameters'}]
+    },
+    {
+      id: 'publisher',
+      type: 'backend',
+      label: 'Publisher controller',
+      sublabel: 'owns closed + published',
+      pos: [350, 300],
+      size: [210, 82],
+      sources: [{path: 'publisher.mjs', line: 2, end_line: 21, label: 'closure and API'}]
+    },
+    {
+      id: 'authorize',
+      type: 'external',
+      label: 'authorize callback',
+      sublabel: 'returns truthy / falsy',
+      pos: [670, 90],
+      size: [200, 68],
+      sources: [{path: 'publisher.mjs', line: 11, end_line: 14, label: 'authorization branch'}]
+    },
+    {
+      id: 'on-skip',
+      type: 'external',
+      label: 'onSkip callback',
+      sublabel: 'closed or denied reason',
+      pos: [670, 260],
+      size: [200, 68],
+      sources: [{path: 'publisher.mjs', line: 7, end_line: 13, label: 'skip branches'}]
+    },
+    {
+      id: 'convert',
+      type: 'external',
+      label: 'convert callback',
+      sublabel: 'text to document',
+      pos: [670, 430],
+      size: [200, 68],
+      sources: [{path: 'publisher.mjs', line: 15, end_line: 15, label: 'conversion'}]
+    },
+    {
+      id: 'save',
+      type: 'external',
+      label: 'save callback',
+      sublabel: 'external effect unknown',
+      pos: [960, 430],
+      size: [200, 68],
+      sources: [{path: 'publisher.mjs', line: 16, end_line: 16, label: 'awaited save'}]
+    }
+  ],
+  boundaries: [
+    {
+      kind: 'region',
+      label: 'createPublisher closure',
+      wraps: ['publisher'],
+      pad: 28
+    }
+  ],
+  connections: [
+    {id: 'configure', from: 'caller', to: 'publisher', label: 'createPublisher({ callbacks })'},
+    {id: 'api', from: 'caller', to: 'publisher', label: 'publish(text), close(), status()'},
+    {id: 'result', from: 'publisher', to: 'caller', label: 'skipped or published document'},
+    {id: 'authorize-call', from: 'publisher', to: 'authorize', label: 'await authorize(text)'},
+    {id: 'authorization-result', from: 'authorize', to: 'publisher', label: 'truthy / falsy result'},
+    {id: 'closed-skip', from: 'publisher', to: 'on-skip', label: 'closed: await onSkip(\'closed\')'},
+    {id: 'denied-skip', from: 'publisher', to: 'on-skip', label: 'denied: await onSkip(\'denied\')'},
+    {id: 'convert-call', from: 'publisher', to: 'convert', label: 'await convert(text)'},
+    {id: 'document', from: 'convert', to: 'publisher', label: 'document'},
+    {id: 'save-call', from: 'publisher', to: 'save', label: 'await save(document)'},
+    {id: 'save-finish', from: 'save', to: 'publisher', label: 'fulfills before published += 1'}
+  ],
+  cards: [
+    {
+      dot: 'cyan',
+      title: 'Controller-owned state',
+      items: [
+        'createPublisher initializes closed=false and published=0.',
+        'close sets closed=true; status returns both values.',
+        'Only the success path increments published, after save fulfills.'
+      ]
+    },
+    {
+      dot: 'amber',
+      title: 'Branches and returned kinds',
+      items: [
+        'closed: onSkip(\'closed\') then {kind: \'skipped\'}.',
+        'authorize falsy: onSkip(\'denied\') then {kind: \'skipped\'}.',
+        'allowed: convert, save, increment, then {kind: \'published\', document}.'
+      ]
+    },
+    {
+      dot: 'rose',
+      title: 'Callback boundary',
+      items: [
+        'Every callback is supplied by the caller and awaited by the controller.',
+        'Any awaited callback rejection propagates; this module has no recovery.',
+        'save is only a callback: persistence, transport, durability, and its external effects are unknown.'
+      ]
+    }
+  ]
+};
+
+await writeFile(output, `${JSON.stringify(diagram, null, 2)}\n`);

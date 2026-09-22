@@ -1,0 +1,32 @@
+{
+  "decision_epoch": 1789977828.2667809,
+  "timed_repair_runs": 0,
+  "reserved_runs_unused": 2,
+  "reason": "No first/final candidate satisfies both independently verified source completeness under the frozen rubric and the single-automatic-route failure eligibility. Do not modify semantics or relax the rubric to create a case.",
+  "candidates": [
+    {
+      "run": "ky-N",
+      "stage": "first",
+      "snapshot": 1,
+      "sha256": "aa5a23eeab96a32b7e41285ca67fc40ab816d49b737dac6dfab7c8e28247729a",
+      "source_grade": "fail",
+      "route_target_count": 2
+    },
+    {
+      "run": "ky-N",
+      "stage": "final",
+      "snapshot": 4,
+      "sha256": "6c3691fd18837fa201953737f97cb3f6ea380c523dd7b58ad17b2d06682cd4e6",
+      "source_grade": "fail",
+      "route_target_count": 1
+    },
+    {
+      "run": "query-N",
+      "stage": "first",
+      "snapshot": 1,
+      "sha256": "2edc5deb1a98ec7bf32097f87d7ba0bb243ae3dc436155b1d17beb9e55b25f90",
+      "source_grade": "fail",
+      "route_target_count": 1
+    }
+  ]
+}

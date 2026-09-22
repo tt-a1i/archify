@@ -1,0 +1,23 @@
+{
+  "start_epoch": 1789973361.28955,
+  "base": "55beaa07e6eb46eb301bc40aade3747c25245660",
+  "caps": {
+    "wall_minutes": 120,
+    "timed_runs": 8,
+    "auxiliary_turns": 6,
+    "independent_quality_reviews": 2
+  },
+  "mechanisms": [
+    "TypeScript definition/reference navigation with exact evidence slices",
+    "diagnostic-guided local edge route repair"
+  ],
+  "no_whole_author_retries": true,
+  "author_model": "gpt-5.6-terra",
+  "author_effort": "medium",
+  "quality": "source completeness and entailment, unchanged semantic topology, same showcase finalize, 1440x900 readability; first/final separate",
+  "original_checkout_hashes": {
+    "status": "4fb72510ba971adf27b0b6151c6193a38919386636046aa5792026f8101228ee",
+    "diff": "9cae3fda2abc91e3638452d43ea77e0e540e186ea4aca2202146b42d770623a4"
+  },
+  "promotion": "local experimental only; no default Skill or product or remote changes"
+}

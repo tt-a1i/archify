@@ -1,0 +1,45 @@
+{
+  "base": "e484993f819ec16f3ee4c976ee14173901cdbc56",
+  "finalApplyablePatchSha256": "ff5d1ec4c4c67b368c747e021d56faa2120e097b091dcafabb24e0dcce43854c",
+  "runtimePatchSha256": "07ae7f71dcf8bc44b8c078acb652bd9aa6e8472517a6364e1531477f4c30f4ab",
+  "appliedRoutingSha256": "c6fe78c40a32f35306b30b42adfcc46ee8df22a762b247c3f3dfe3ca42ef0dc8",
+  "postHoldoutRuntimeChange": false,
+  "postHoldoutArtifactChange": "repaired omitted unified-diff context only; a fresh apply produces the frozen routing hash",
+  "inputs": [
+    {
+      "name": "p-retry-C1 frozen first candidate",
+      "path": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/p-retry-C1/snapshot-001.json",
+      "repoRoot": "/private/tmp/archify-semantic-firstdraft-20260921/repos/p-retry",
+      "repoRevision": "1472907affe8d6107aba5884abc36d6361b3042e",
+      "baseline": { "exitCode": 1, "diagnosticCodes": ["composition/short-interior-segment", "composition/micro-segment", "composition/micro-segment", "composition/short-interior-segment", "layout/constraint", "layout/constraint", "layout/constraint", "layout/constraint"] },
+      "patched": { "exitCode": 1, "diagnosticCodes": ["layout/constraint", "layout/constraint", "layout/constraint", "layout/constraint"] },
+      "routingMetrics": {
+        "baseline": { "gridSearchCount": 3, "gridVisitedNodeCount": 695, "gridBudgetExhaustedCount": 0 },
+        "patched": { "gridSearchCount": 10, "gridVisitedNodeCount": 2611, "gridBudgetExhaustedCount": 0 }
+      }
+    },
+    {
+      "name": "p-retry-B1 frozen first candidate",
+      "path": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/p-retry-B1/snapshot-001.json",
+      "repoRoot": "/private/tmp/archify-semantic-firstdraft-20260921/repos/p-retry",
+      "baseline": { "exitCode": 1, "diagnosticCodes": ["schema/maxLength"] },
+      "patched": { "exitCode": 1, "diagnosticCodes": ["schema/maxLength"] }
+    },
+    {
+      "name": "quick-lru-B1 held-out candidate",
+      "path": "/private/tmp/archify-semantic-firstdraft-20260921/runs/quick-lru-B1/output/diagram.architecture.json",
+      "repoRoot": "/private/tmp/archify-semantic-firstdraft-20260921/repos/quick-lru",
+      "repoRevision": "a2190ebdf8e455b95a7138803d274ff5ed57ebcd",
+      "baseline": { "exitCode": 1, "diagnosticCodes": ["composition/micro-segment"] },
+      "patched": { "exitCode": 0, "diagnosticCodes": [] },
+      "patchFrozenBeforeRead": true,
+      "runtimePatchEditedAfterHoldout": false
+    },
+    {
+      "name": "web-app known passing showcase example",
+      "baseline": { "exitCode": 0 },
+      "patched": { "exitCode": 0 }
+    }
+  ]
+  ,"disposition": "promising but insufficient: observed extra local grid work without budget exhaustion; no downstream regression reproducer found in this bounded probe"
+}

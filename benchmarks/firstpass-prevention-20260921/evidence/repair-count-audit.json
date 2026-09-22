@@ -1,0 +1,10 @@
+{
+  "lilconfig-B1": {
+    "author_report": "three focused repairs",
+    "observed_complete_candidates": 3,
+    "observed_terminal_finalizes": 3,
+    "public_trace_finalize_tool_calls": 3,
+    "observed_revisions_after_first_finalize": 2,
+    "interpretation": "Report two observed finalized revisions; author prose cannot establish a third. No extra retry was granted."
+  }
+}

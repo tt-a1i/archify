@@ -1,0 +1,101 @@
+{
+  "schema_version": "quality-review-v1",
+  "case": "case-01",
+  "reviewer": "luna",
+  "review_scope": "Independent source and perceptual review only; machine containment evidence is kept separate.",
+  "inputs": {
+    "task": "/private/tmp/archify-repair-firstpass-20260921/quality/case-01/task.json",
+    "specification": "/private/tmp/archify-repair-firstpass-20260921/quality/case-01/diagram.json",
+    "html": "/private/tmp/archify-repair-firstpass-20260921/quality/case-01/diagram.html",
+    "source_root": "/private/tmp/archify-semantic-firstdraft-20260921/repos/quick-lru",
+    "source_revision": "a2190ebdf8e455b95a7138803d274ff5ed57ebcd",
+    "source_revision_verified": true,
+    "captures_reviewed": [
+      "diagram.visual-check.1440x900.light.png",
+      "diagram.visual-check.1440x900.dark.png",
+      "diagram.visual-check.2048x1320.light.png",
+      "diagram.visual-check.2048x1320.dark.png",
+      "diagram.visual-check.contact.png"
+    ]
+  },
+  "required_clauses": [
+    {
+      "id": "required-1-controller-state-boundary",
+      "status": "pass",
+      "source_ranges": ["index.js:1-23", "index.js:2-7", "index.js:40-65", "index.js:68-77"],
+      "reason": "The controller, in-memory-only region, current and old Maps, current count, threshold rotation, and expiry path are visibly represented. The controller owns policy/state and no persistent or remote store is introduced."
+    },
+    {
+      "id": "required-2-set-rotation",
+      "status": "fail",
+      "source_ranges": ["index.js:68-83", "index.js:120-134"],
+      "reason": "Current-key replacement, absent-current insertion/count increment, maxSize rotation, whole-generation swap, and non-per-item rotation are shown. The required old-generation set case is not explicit: there is no visible annotation or route saying an absent current key may still remain in oldCache, so a reader can miss the duplicate-key/old-entry state."
+    },
+    {
+      "id": "required-3-get-promotion-expiry",
+      "status": "pass",
+      "source_ranges": ["index.js:40-65", "index.js:80-83", "index.js:105-118"],
+      "reason": "Current hit, old hit, missing/expired undefined, old-key deletion, reinsertion through #set, and expiry checking/removal are all routed and labeled."
+    },
+    {
+      "id": "required-4-has-peek-inspection",
+      "status": "pass",
+      "source_ranges": ["index.js:40-65", "index.js:137-157"],
+      "reason": "has/peek probe current then old, route through expiry handling, and are explicitly labeled as no-promotion paths."
+    },
+    {
+      "id": "required-5-eviction-vs-manual-removal",
+      "status": "pass",
+      "source_ranges": ["index.js:30-37", "index.js:40-46", "index.js:166-179"],
+      "reason": "Expired and rotated-out entries route to the optional onEviction callback, while delete/clear route directly to both Maps and count adjustment/reset with no authored manual-removal callback."
+    },
+    {
+      "id": "required-6-scope-and-citations",
+      "status": "pass",
+      "source_ranges": ["index.js:1-23", "index.js:30-179"],
+      "reason": "Iteration, resize, and exact public size arithmetic are omitted. The three useful views and three explanatory cards add no content-count target. Visible node source badges point to the pinned revision and their claims are entailed by the cited ranges; card claims are covered by the associated node/edge citations."
+    }
+  ],
+  "authored_claims": {
+    "citation_entailment": "pass",
+    "material_unsupported_or_contradictory_claims": [],
+    "notes": [
+      "The callback arrows are qualified by the onEviction node's optional caller-provided-function label and the cards' when-supplied wording.",
+      "The expiry then delete(key) ordering and current-count adjustment match #deleteIfExpired and delete().",
+      "The only material semantic omission is the unspoken possibility that set adds a current entry while the same key remains in oldCache."
+    ]
+  },
+  "visual_review": {
+    "overall": "pass_with_minor_readability_notes",
+    "common": [
+      "The QuickLRU instance boundary contains the internal state and lifecycle nodes; Caller and onEviction remain visibly external.",
+      "Arrowheads and labels distinguish the main routes, including old-hit promotion, expiry notification, rotation, and manual removal.",
+      "No node, label, edge, or boundary is clipped inside the diagram frame in the reviewed captures.",
+      "The 1440x900 captures place the explanatory cards below the fold; this is ordinary document-level vertical scrolling, not an internal clipped or miniature scroll region.",
+      "The route field is dense around get/inspect/expiry, and several edge labels are small and low-contrast at 1440x900, especially in light mode, but they remain discernible at the captured viewport and become comfortably legible at 2048x1320."
+    ],
+    "viewports": [
+      {
+        "viewport": "1440x900",
+        "themes": {
+          "light": "pass",
+          "dark": "pass"
+        },
+        "observations": "Main diagram, boundary, source badges, controls, and legend fit without clipping. Cards continue below the viewport as normal page content. Dense routing and faint small edge labels reduce scan speed but do not create an unreadable or misleading route."
+      },
+      {
+        "viewport": "2048x1320",
+        "themes": {
+          "light": "pass",
+          "dark": "pass"
+        },
+        "observations": "Diagram and all cards are visible; node text and route labels are materially easier to read. Light/dark contrast and external/internal boundaries remain coherent, with no clipping or obstructed text."
+      }
+    ]
+  },
+  "overall": {
+    "quality": "fail",
+    "reason": "Perceptual quality and the other required clauses pass, but required-2 fails because the set path does not explicitly communicate the still-old-generation case for a key absent from current."
+  },
+  "repair_needed": "Add a short set annotation or explicit route stating: when key is absent from current, it may still be present in old; #set adds/replaces current and leaves old until a later operation/rotation."
+}

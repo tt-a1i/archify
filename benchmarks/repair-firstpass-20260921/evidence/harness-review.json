@@ -1,0 +1,48 @@
+{
+  "scope": "Read-only review of offline.py, offline_test.py, and protocol.json at base 9730d49b0984a47cdc48ac809b6c754a3057b0a5. No author runs or candidate/preflight assessment performed.",
+  "blocking_findings": [
+    {
+      "id": "holdout-primary-gate-not-executed",
+      "location": {
+        "protocol": "holdout.primary_gate.maximum_new_failures_on_baseline_passing_finals_and_examples",
+        "harness": "offline.py:94-140"
+      },
+      "evidence": "The protocol requires zero new failures on baseline-passing finals and examples. offline.py only loads each selected run's snapshot-001.json, hashes that one input, and emits pass_count from candidate_pass rows. It neither reads protocol's diagram.architecture.json hashes nor enumerates/runs any examples, and never evaluates primary_gate.",
+      "impact": "A holdout summary can report its selected first-pass count while omitting a required no-regression gate. It cannot support the protocol's claim that offline holdout passed or authorize the author gate.",
+      "smallest_repair": "Add a separately recorded baseline/candidate comparison for the protocol-defined baseline-passing finals and representative examples, then derive an explicit holdout_gate_pass only when their new-failure count is zero and the other primary_gate clauses pass."
+    }
+  ],
+  "verified_fail_closed_controls": [
+    {
+      "claim": "Input overwrite and source/runtime mutation cannot become candidate_pass.",
+      "evidence": "offline.py copies the frozen input into per-run input.json, rehashes it after the helper, snapshots source/runtime trees, and includes all three booleans in passed. Candidate validation is skipped if any is false."
+    },
+    {
+      "claim": "Malformed candidate output cannot become candidate_pass.",
+      "evidence": "Output parsing/projection errors are caught; retained remains false, and passed requires retained plus successful showcase validation."
+    },
+    {
+      "claim": "A timed-out or over-cap helper cannot become candidate_pass, and static timing is not author latency.",
+      "evidence": "run() measures monotonic elapsed time; passed requires helper exit 0 and seconds <= 20 despite a 23-second subprocess timeout. The module and summary explicitly label the result static-only and separate fresh model-author cost."
+    },
+    {
+      "claim": "A holdout helper mismatch is rejected after freeze.",
+      "evidence": "The holdout path resolves the entrypoint and verifies all frozen candidate files plus protocol SHA before output creation."
+    }
+  ],
+  "focused_validation": {
+    "command": "python3 -m unittest offline_test.py && python3 -m py_compile offline.py",
+    "exit": 0,
+    "result": "2 semantic-boundary tests passed; syntax compilation passed."
+  },
+  "limitations": [
+    "offline_test.py covers the semantic projection only; it does not exercise the main harness mutation, malformed-output, timeout, or primary-gate paths.",
+    "This review did not inspect the still-changing preflight implementation or holdout bytes."
+  ],
+  "clarification_after_gate_split": {
+    "status": "resolved as a promotion/holdout-qualification claim; original finding remains applicable if a later workflow tries to treat this collector as the full compatibility gate.",
+    "verified": "offline.py now emits first_draft_static_gate_pass as the only positive result it can derive. whole_holdout_gate_pass, ready_for_author_trials, and promotion_qualified are hard-coded false, and required_separate_evidence explicitly lists compatibility, full finalize, independent semantic/common-viewport review, and fresh author/confirmation work.",
+    "current_study_state": "Per the assigned status, revision 1 development scored 0/3, so this collector has not opened holdout or reached compatibility/author stages.",
+    "remaining_requirement": "If a future candidate passes the initial first-draft screen, the separate no-new-failures check for baseline-passing finals and representative examples must still be executed and recorded before whole_holdout_gate_pass can truthfully change."
+  }
+}

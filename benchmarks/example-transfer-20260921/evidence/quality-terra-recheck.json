@@ -1,0 +1,58 @@
+{
+  "scope": "Recheck of p-retry visible clause 3 only: the exhausted-before-callback branch.",
+  "source": {
+    "path": "index.js",
+    "revision": "1472907affe8d6107aba5884abc36d6361b3042e",
+    "evidence": "index.js:124-139 computes remainingTimeBeforeCallbacks; when it is <= 0, it freezes context with retryDelay: 0 (lines 126-133), awaits onFailedAttempt (135), then throws (137). shouldConsumeRetry appears only at line 148 and shouldRetry only at line 174, both after that returnless branch."
+  },
+  "cases": [
+    {
+      "id": "case-04",
+      "original_source_pass": true,
+      "corrected_source_pass": false,
+      "decision": "corrected-fail",
+      "candidate_evidence": {
+        "json_paths": [
+          "connections.consume-decision: first: should this failure consume?",
+          "connections.failed-callback: then: onFailedAttempt(context)",
+          "connections.retry-decision: then: shouldRetry(context)",
+          "connections.stop-guards: time/retries exhausted, non-network TypeError, or shouldRetry false",
+          "cards[1].items[0]: For an ordinary failed attempt: shouldConsumeRetry runs first, then onFailedAttempt, then shouldRetry after retry-time, remaining-retry, and TypeError guards."
+        ],
+        "assessment": "The candidate depicts only the ordinary order and a generic terminal guard. It has no text, edge, card, or view stating that an already exhausted pre-callback budget still invokes onFailedAttempt with retryDelay 0 and skips both shouldConsumeRetry and shouldRetry."
+      }
+    },
+    {
+      "id": "case-05",
+      "original_source_pass": true,
+      "corrected_source_pass": false,
+      "decision": "corrected-fail",
+      "candidate_evidence": {
+        "json_paths": [
+          "connections.decide: if time remains: consume → onFailed → retry",
+          "connections.stop: time/retries exhausted or non-network TypeError",
+          "cards[1].items[0]: For ordinary errors: shouldConsumeRetry runs first, then onFailedAttempt, then shouldRetry after retry/time and TypeError gates.",
+          "cards[3].items[1]: Exhausted retries/time, non-network TypeError, or shouldRetry false rejects the failed attempt's error."
+        ],
+        "assessment": "'if time remains' and generic exhausted-time rejection do not convey the distinct early branch: onFailedAttempt still runs with retryDelay 0, while both consume and retry hooks are skipped. No candidate text supplies that behavior."
+      }
+    },
+    {
+      "id": "case-06",
+      "original_source_pass": true,
+      "corrected_source_pass": false,
+      "decision": "corrected-fail",
+      "candidate_evidence": {
+        "json_paths": [
+          "connections.consume-decision: first: should this failure consume?",
+          "connections.failed-callback: then: onFailedAttempt(context)",
+          "connections.retry-decision: then: shouldRetry(context)",
+          "connections.stop-guards: time/retries exhausted, non-network TypeError, or shouldRetry false",
+          "cards[1].items[0]: For an ordinary failed attempt: shouldConsumeRetry runs first, then onFailedAttempt, then shouldRetry after retry-time, remaining-retry, and TypeError guards."
+        ],
+        "assessment": "The candidate depicts only the ordinary order and a generic terminal guard. It has no text, edge, card, or view stating that an already exhausted pre-callback budget still invokes onFailedAttempt with retryDelay 0 and skips both shouldConsumeRetry and shouldRetry."
+      }
+    }
+  ],
+  "summary": "The original pass decisions for clause 3 were incorrect for cases 04, 05, and 06. All three omit the source-distinct exhausted-before-callback branch required by the existing clause/review key."
+}

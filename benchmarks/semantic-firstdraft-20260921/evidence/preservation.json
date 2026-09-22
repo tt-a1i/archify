@@ -1,0 +1,21 @@
+{
+  "epoch": 1789986653.1487749,
+  "hash_method": "SHA256 of sorted relative path bytes followed by exact file content bytes, matching initial public tool call",
+  "original_matches_initial": true,
+  "installed": {
+    "/Users/tushaokun/.agents_skills/archify": {
+      "sha256": "523dcf9747a4294bf6e496655edeba270b3a43c86caa6f8e3e69d6118de3f7fe",
+      "matches_initial": true
+    },
+    "/Users/tushaokun/.agents_skills/archify1": {
+      "sha256": "671479a8a78bbc126866aefb6e8652ddbe86f22408f5db02c701d35bcc216535",
+      "matches_initial": true
+    },
+    "/Users/tushaokun/.hermes/skills/archify1": {
+      "sha256": "671479a8a78bbc126866aefb6e8652ddbe86f22408f5db02c701d35bcc216535",
+      "matches_initial": true
+    }
+  },
+  "original_status_sha256": "e42e67a2a94b12f7206cbfc87cc4e1fae45f7ff3f0a961f97c5430f1fc57e20f",
+  "original_diff_sha256": "9cae3fda2abc91e3638452d43ea77e0e540e186ea4aca2202146b42d770623a4"
+}

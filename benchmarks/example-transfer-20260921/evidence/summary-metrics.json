@@ -1,0 +1,226 @@
+{
+  "rows": [
+    {
+      "run": "p-retry-B1",
+      "condition": "B1",
+      "native_seconds": null,
+      "worked_reference_access_calls": 0,
+      "worked_example_access_calls": 0,
+      "censored_observation_seconds": 654.1029999256134,
+      "full_seconds": null,
+      "setup_and_dispatch_seconds": null,
+      "after_first_structural_seconds": null,
+      "first_structural_seconds": null,
+      "candidate_versions_observed": 1,
+      "candidate_content_changes_observed": 0,
+      "candidate_content_changes_before_first_finalize": 0,
+      "first_finalize_pass": false,
+      "finalize_receipts": [
+        {
+          "epoch": 1789998837.8929431,
+          "ok": false,
+          "sha256": "bc1fe07328ae550a26482f38d45d514e1bbc21e5cf3e99f7ed32b92b417663e3",
+          "duration_ms": 573,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        }
+      ],
+      "nonterminal_finalize_updates": 1,
+      "observed_finalized_repairs_after_failure": 0,
+      "observer_expired": false,
+      "observer_max_gap_seconds": 0.11447316710837185,
+      "protocol_eligible": false,
+      "machine_delivery": false,
+      "first_quality": false,
+      "final_quality": false,
+      "qualified_delivery": false
+    },
+    {
+      "run": "p-retry-P1",
+      "condition": "P1",
+      "native_seconds": null,
+      "worked_reference_access_calls": 1,
+      "worked_example_access_calls": 0,
+      "censored_observation_seconds": 596.5269999504089,
+      "full_seconds": null,
+      "setup_and_dispatch_seconds": null,
+      "after_first_structural_seconds": null,
+      "first_structural_seconds": null,
+      "candidate_versions_observed": 2,
+      "candidate_content_changes_observed": 1,
+      "candidate_content_changes_before_first_finalize": 0,
+      "first_finalize_pass": false,
+      "finalize_receipts": [
+        {
+          "epoch": 1789999165.1759748,
+          "ok": false,
+          "sha256": "bd085f1394b96606ad147232d6745840567f0d39a5a3c3558ac8ce52c1a16543",
+          "duration_ms": 916,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        }
+      ],
+      "nonterminal_finalize_updates": 1,
+      "observed_finalized_repairs_after_failure": 0,
+      "observer_expired": false,
+      "observer_max_gap_seconds": 0.1332636249717325,
+      "protocol_eligible": false,
+      "machine_delivery": false,
+      "first_quality": false,
+      "final_quality": false,
+      "qualified_delivery": false
+    },
+    {
+      "run": "quick-lru-P1",
+      "condition": "P1",
+      "native_seconds": 355.345999956131,
+      "worked_reference_access_calls": 1,
+      "worked_example_access_calls": 1,
+      "censored_observation_seconds": null,
+      "full_seconds": 364.02732491493225,
+      "setup_and_dispatch_seconds": 8.68132495880127,
+      "after_first_structural_seconds": 173.0374093055725,
+      "first_structural_seconds": 182.30859065055847,
+      "candidate_versions_observed": 2,
+      "candidate_content_changes_observed": 1,
+      "candidate_content_changes_before_first_finalize": 0,
+      "first_finalize_pass": false,
+      "finalize_receipts": [
+        {
+          "epoch": 1789999912.9219031,
+          "ok": false,
+          "sha256": "3610bf6e0ac53d6adabd398a67389cd99f79ee6f27a83d418deeabb192967c55",
+          "duration_ms": 573,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1789999934.340659,
+          "ok": true,
+          "sha256": "ef9bd3a85bab73273bdbb9a05c184fa83ffb6e3531f2a5f5183c265a7e9fdbd2",
+          "duration_ms": 3070,
+          "gates": {
+            "validate": "pass",
+            "deliver": "pass",
+            "check": "pass",
+            "browser-check": "pass"
+          }
+        }
+      ],
+      "nonterminal_finalize_updates": 4,
+      "observed_finalized_repairs_after_failure": 1,
+      "observer_expired": false,
+      "observer_max_gap_seconds": 0.1264805409591645,
+      "protocol_eligible": true,
+      "machine_delivery": true,
+      "first_quality": false,
+      "final_quality": false,
+      "qualified_delivery": false
+    },
+    {
+      "run": "quick-lru-B1",
+      "condition": "B1",
+      "native_seconds": 506.3690001964569,
+      "worked_reference_access_calls": 0,
+      "worked_example_access_calls": 0,
+      "censored_observation_seconds": null,
+      "full_seconds": 518.4027042388916,
+      "setup_and_dispatch_seconds": 12.033704042434692,
+      "after_first_structural_seconds": 326.9763915538788,
+      "first_structural_seconds": 179.39260864257812,
+      "candidate_versions_observed": 4,
+      "candidate_content_changes_observed": 3,
+      "candidate_content_changes_before_first_finalize": 0,
+      "first_finalize_pass": false,
+      "finalize_receipts": [
+        {
+          "epoch": 1790000187.8008692,
+          "ok": false,
+          "sha256": "8ded39e9e53666977b1cb718e8fe0b2726e963c6e035184ad4e24443e94cbec0",
+          "duration_ms": 824,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1790000271.22403,
+          "ok": false,
+          "sha256": "70aa2b2334a831c6725165d0b4d7fc312dc5dd6153a95cb00dc96e1b9518cf5d",
+          "duration_ms": 303,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1790000332.374708,
+          "ok": false,
+          "sha256": "ac8d93496b1714a6865391d52dad7db805f8a057291599d4b250452e67697711",
+          "duration_ms": 246,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        },
+        {
+          "epoch": 1790000500.679585,
+          "ok": false,
+          "sha256": "54ef9ec1adc4fb19591f210d23a8c11cdda1ca3fc7a6cafed3aae840c4733503",
+          "duration_ms": 312,
+          "gates": {
+            "validate": "fail",
+            "deliver": "not-run",
+            "check": "not-run",
+            "browser-check": "not-run"
+          }
+        }
+      ],
+      "nonterminal_finalize_updates": 4,
+      "observed_finalized_repairs_after_failure": 3,
+      "observer_expired": false,
+      "observer_max_gap_seconds": 0.12826312496326864,
+      "protocol_eligible": true,
+      "machine_delivery": false,
+      "first_quality": false,
+      "final_quality": false,
+      "qualified_delivery": false
+    }
+  ],
+  "pairs": [
+    {
+      "task": "p-retry",
+      "both_quality_qualified": false
+    },
+    {
+      "task": "quick-lru",
+      "both_quality_qualified": false
+    }
+  ],
+  "all_P_quality_pass": false,
+  "qualified_pairs": 0,
+  "median_seconds_saved": null,
+  "median_fraction_saved": null,
+  "median_observed_content_revision_reduction": null,
+  "screen_pass": false,
+  "promotion_qualified": false,
+  "limits": "The screen counts all observed candidate content revisions; post-finalize revisions remain a separate diagnostic. Example exposure is inferred from coarse lexical tool access categories, not proof of comprehension. Content changes before first finalize are reported separately and must not be hidden by a zero finalized-repair count. A content change is not necessarily one model turn. Missing quality is unknown. A passing screen still requires the frozen confirmation pairs."
+}

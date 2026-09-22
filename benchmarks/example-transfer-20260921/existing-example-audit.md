@@ -1,0 +1,25 @@
+# Archify example audit
+
+Scope: worktree `/Users/tushaokun/.codex/worktrees/archify-repair-firstpass-20260921/archify`, pinned at `3725b4c54ff2e1867e363bc1b5f919ca8f3537fc`. This is a read-only audit of the prescribed skill, authoring references, and directed architecture examples. No package-specific repositories or prior experiment artifacts were inspected.
+
+## What is already prescribed
+
+The Type router sends “library/API or CLI data processing repos” to `examples/source-to-diagram/source-to-diagram.architecture.json` (`archify/SKILL.md:51-59`). The repository authoring reference requires freezing repository identity, tracing a connected source slice to actual inputs/outputs/side effects, keeping control ownership separate from I/O, and following branches, retries, fallbacks, and errors with exact source ranges (`archify/references/repository-authoring.md:8-41`). It explicitly says examples teach field shape rather than facts and that a library need not acquire filesystem nodes (`:53-63`).
+
+The defaults prescribe repository metadata and at least one real `sources` entry per key semantic component (`archify/references/authoring-defaults.md:5-18`), ownership and caller/transport separation (`:26-30`), curated views/cards only for real reader questions (`:26-28`), intrinsic-height default Architecture layout plus browser checks at four desktop viewports and a 6px projected-text floor (`:45-50`), and automatic routing on the first draft with route controls added only after measured evidence (`:52-58`).
+
+The teaching fixture makes the CLI own argument parsing and filesystem I/O while the normalizer stays pure and in memory. `README.md:3-7` states this explicitly. The candidate pins a local-only repository identity and showcase profile (`examples/source-to-diagram/source-to-diagram.architecture.json:5-12`), gives two focused views (`:13-36`), cites every component (`:38-164`), wraps only the process responsibilities (`:166-175`), and records the read/transform/write relationships (`:177-225`). Its ownership and filesystem cards are at `:227-245`. The fixture source confirms the claims: `src/cli.mjs:5-10` calls the parser, reads, transforms, and writes; `src/options.mjs:1-5` validates two arguments; `src/transform.mjs:1-5` is pure text processing.
+
+## Transfer assessment
+
+* **Source-backed conditional callbacks/errors: not demonstrated.** The source has one conditional error (`src/options.mjs:3` throws when either argument is absent), but the diagram contains only a `cli → options` “parse args” edge and no error/conditional branch. There is no callback in the fixture. The prose requires authors to follow these paths, but the example does not show their representation.
+
+* **Small library ownership: only partial.** The CLI/normalizer split demonstrates controller versus pure implementation ownership, and the cards explain it. It does not show an external caller invoking an exported library API, an optional callback owned by the caller/library, or a library error path. The README calls the fixture a small CLI project (`README.md:3-7`), so it should not be read as a reusable-library exemplar.
+
+* **Default-viewport readable layout: authored intent, no proof in the example.** The JSON uses `quality_profile: "showcase"` and omits `meta.viewBox` (`source-to-diagram.architecture.json:5-8`), with explicit positions/sizes (`:38-164`), matching the intrinsic-height defaults. There is no rendered HTML, finalize receipt, browser-check result, or screenshot for this fixture. Source inspection can confirm the intended inputs; it cannot establish readability at 1440×900 or the other required viewports. The defaults’ browser requirement is a process prescription, not evidence supplied by this example.
+
+* **Automatic routing: demonstrated at authoring level.** Every connection in the fixture omits `via`, `route`, `fromSide`, `toSide`, and label-position controls (`source-to-diagram.architecture.json:177-225`), matching the first-draft rule. The absence of controls is verifiable from JSON; route quality after rendering is not.
+
+## Minimal addition to improve transfer
+
+Add one generic, materializable `examples/library-api/` teaching fixture and one pointer immediately after `repository-authoring.md:61-63`. Keep the fixture package-agnostic: an external caller invokes an exported library function; the function conditionally invokes `hooks.onSuccess` after a successful operation and `hooks.onError` before rethrowing an error. Give each of those branches a source-backed relationship and keep the caller, library controller, callback hook, and error path as distinct responsibilities. Omit filesystem nodes unless the generic source actually uses them, omit all manual route controls, and omit a fixed `meta.viewBox`. Include a README sentence that this fixture teaches caller/library ownership and conditional/error evidence, while preserving the existing “shape, not facts” rule. This single pointer/example fills the current library/callback/error gap without repeating the general rules or encoding answers about `p-retry`, `quick-lru`, or `lilconfig`.

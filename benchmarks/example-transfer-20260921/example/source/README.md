@@ -1,0 +1,1 @@
+Synthetic Document Publisher fixture. The controller owns closed/published state. The caller supplies every callback. save is only a callback; this module does not specify a disk, database, transport or durability. Any awaited callback rejection propagates without recovery. Test scope is all code in publisher.mjs.

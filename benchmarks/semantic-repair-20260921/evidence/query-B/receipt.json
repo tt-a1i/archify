@@ -1,0 +1,23 @@
+{
+  "start_epoch": 1789975908.9175391,
+  "observed_seconds": 221.5577802080661,
+  "max_poll_gap_seconds": 0.13137108320370317,
+  "expired": false,
+  "snapshots": [
+    {
+      "index": 1,
+      "elapsed_seconds": 174.47032841690816,
+      "sha256": "5184a213fb773193d3c3463e625987c95fb10456de0f71e3e91034aabbc93f22",
+      "bytes": 7365,
+      "parseable": true,
+      "structurally_complete": true
+    }
+  ],
+  "first_complete_seconds": 174.47032841690816,
+  "completion": {
+    "task_status": "completed",
+    "epoch": 1789976130.4462001,
+    "delivery_status": "see artifact receipts, not implied by task completion"
+  },
+  "limits": "Observed from before dispatch; scheduling included. Structural completeness is not factual acceptance. Hidden model/HTTP timing unavailable."
+}

@@ -1,0 +1,14 @@
+{
+  "snapshot_epoch": 1789991395.014099,
+  "wall_seconds_through_snapshot": 2787.511216878891,
+  "new_model_author_runs": 0,
+  "research_and_review_cost": "Agent research, implementation, coordination and independent review are not diagram-author latency. Full session token count is cumulative across the long task and is not attributed to this study.",
+  "omitted_from_helper_timing": [
+    "research and implementation",
+    "manual development probes",
+    "snapshot/dispatch overhead",
+    "post-hoc finalize and image capture",
+    "independent quality review",
+    "archival and report completion"
+  ]
+}

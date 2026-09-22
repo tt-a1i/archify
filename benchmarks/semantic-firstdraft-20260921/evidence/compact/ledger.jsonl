@@ -1,0 +1,15 @@
+{"event": "frozen", "epoch": 1789980463.743482, "base": "e484993f819ec16f3ee4c976ee14173901cdbc56"}
+{"event": "prepared", "epoch": 1789980477.909738, "run": "p-retry-B1", "workspace": "/private/tmp/archify-semantic-firstdraft-20260921/runs/p-retry-B1"}
+{"event": "completed", "epoch": 1789980726.154243, "run": "p-retry-B1", "agent": "/root/compact_pretry_b1"}
+{"event": "prepared", "epoch": 1789980746.1021912, "run": "p-retry-C1", "workspace": "/private/tmp/archify-semantic-firstdraft-20260921/runs/p-retry-C1"}
+{"event": "completed", "epoch": 1789981162.31297, "run": "p-retry-C1", "agent": "/root/compact_pretry_c1"}
+{"event": "prepared", "epoch": 1789981181.847218, "run": "quick-lru-C1", "workspace": "/private/tmp/archify-semantic-firstdraft-20260921/runs/quick-lru-C1"}
+{"event": "completed", "epoch": 1789981397.245211, "run": "quick-lru-C1", "agent": "/root/compact_lru_c1"}
+{"event": "auxiliary_readiness_probe_started", "epoch": 1789981421.898913, "agent": "/root/route_preference_probe", "note": "Offline routing feasibility probe may overlap remaining initial authors; initial compact-kit screen already cannot pass all-candidate quality gate because p-retry-C1 failed delivery. No initial-screen performance promotion."}
+{"event": "prepared", "epoch": 1789981422.7935731, "run": "quick-lru-B1", "workspace": "/private/tmp/archify-semantic-firstdraft-20260921/runs/quick-lru-B1"}
+{"event": "completed", "epoch": 1789981794.095731, "run": "quick-lru-B1", "agent": "/root/compact_lru_b1"}
+{"event": "prepared", "epoch": 1789981826.07536, "run": "lilconfig-B1", "workspace": "/private/tmp/archify-semantic-firstdraft-20260921/runs/lilconfig-B1"}
+{"event": "completed", "epoch": 1789982453.105552, "run": "lilconfig-B1", "agent": "/root/compact_lil_b1"}
+{"event": "prepared", "epoch": 1789982455.1000378, "run": "lilconfig-C1", "workspace": "/private/tmp/archify-semantic-firstdraft-20260921/runs/lilconfig-C1"}
+{"event": "auxiliary_reviews_overlap_initial_lilconfig_candidate", "epoch": 1789982904.9123478, "note": "Review of completed cases and frozen runtime regression audit ran while final compact author remained active. Compact screening already disqualified by failed p-retry-C1; do not attribute late-run timing differences to mechanism."}
+{"event": "completed", "epoch": 1789982957.414389, "run": "lilconfig-C1", "agent": "/root/compact_lil_c1"}

@@ -1,0 +1,9 @@
+{
+  "case-01": "quick-lru-B1",
+  "case-02": "p-retry-B1",
+  "case-03": "p-retry-C1",
+  "case-04": "lilconfig-B1",
+  "case-05": "quick-lru-C1",
+  "case-06": "route-holdout/quick-lru-B1-postrun",
+  "case-07": "lilconfig-C1"
+}

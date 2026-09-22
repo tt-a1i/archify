@@ -1,0 +1,445 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "pRetry: attempts, failure decisions, and cancellation boundaries",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/sindresorhus/p-retry.git",
+      "revision": "1472907affe8d6107aba5884abc36d6361b3042e"
+    },
+    "views": [
+      {
+        "id": "normal-loop",
+        "label": "Who controls an ordinary retry?",
+        "focus": [
+          "caller",
+          "controller",
+          "operation",
+          "failure",
+          "timer"
+        ],
+        "note": "pRetry owns counters and the retry loop; the supplied input only performs one attempt."
+      },
+      {
+        "id": "failure-decisions",
+        "label": "What happens after an attempt fails?",
+        "focus": [
+          "failure",
+          "consume-hook",
+          "failed-hook",
+          "retry-hook"
+        ],
+        "note": "Hooks run consume → failed-attempt → retry, after time and retry-count guards."
+      },
+      {
+        "id": "stop-and-abort",
+        "label": "Where can retries stop?",
+        "focus": [
+          "abort-error",
+          "signal",
+          "failure",
+          "timer",
+          "outcome"
+        ],
+        "note": "AbortError and rejected decisions stop retrying; AbortSignal can reject a pending delay."
+      }
+    ],
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "Caller",
+      "sublabel": "Supplies input and retry options.",
+      "pos": [
+        50,
+        270
+      ],
+      "size": [
+        185,
+        74
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 200,
+          "end_line": 201
+        }
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "pRetry controller",
+      "sublabel": "Owns attemptNumber, retriesConsumed, startTime, and the loop.",
+      "pos": [
+        300,
+        270
+      ],
+      "size": [
+        245,
+        86
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 259
+        }
+      ]
+    },
+    {
+      "id": "operation",
+      "type": "external",
+      "label": "Caller-provided input",
+      "sublabel": "Runs one attempt; receives attemptNumber.",
+      "pos": [
+        625,
+        120
+      ],
+      "size": [
+        225,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 240,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "abort-error",
+      "type": "external",
+      "label": "AbortError",
+      "sublabel": "Operation can use it to stop retries and preserve originalError.",
+      "pos": [
+        935,
+        105
+      ],
+      "size": [
+        230,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 49,
+          "end_line": 62
+        }
+      ]
+    },
+    {
+      "id": "failure",
+      "type": "backend",
+      "label": "Failure controller",
+      "sublabel": "Normalizes errors; computes retries left, remaining retry time, and delay.",
+      "pos": [
+        620,
+        330
+      ],
+      "size": [
+        255,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 109,
+          "end_line": 168
+        }
+      ]
+    },
+    {
+      "id": "consume-hook",
+      "type": "external",
+      "label": "shouldConsumeRetry",
+      "sublabel": "First hook: decides whether this failure consumes retry budget.",
+      "pos": [
+        965,
+        275
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 140,
+          "end_line": 155
+        }
+      ]
+    },
+    {
+      "id": "failed-hook",
+      "type": "external",
+      "label": "onFailedAttempt",
+      "sublabel": "Second hook: observes the frozen failure context.",
+      "pos": [
+        965,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 150,
+          "end_line": 158
+        }
+      ]
+    },
+    {
+      "id": "retry-hook",
+      "type": "external",
+      "label": "shouldRetry",
+      "sublabel": "Third hook: false rejects; true permits the next attempt.",
+      "pos": [
+        1255,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 170,
+          "end_line": 186
+        }
+      ]
+    },
+    {
+      "id": "timer",
+      "type": "backend",
+      "label": "Backoff timer",
+      "sublabel": "Waits only when a retry is consumed; delay is capped by maxTimeout and remaining maxRetryTime.",
+      "pos": [
+        920,
+        585
+      ],
+      "size": [
+        285,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 66,
+          "end_line": 106
+        },
+        {
+          "path": "index.js",
+          "line": 184,
+          "end_line": 197
+        }
+      ]
+    },
+    {
+      "id": "signal",
+      "type": "external",
+      "label": "AbortSignal",
+      "sublabel": "Controller checks it around attempts; delay listens once and clears its timer.",
+      "pos": [
+        605,
+        600
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 89,
+          "end_line": 105
+        },
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 247
+        }
+      ]
+    },
+    {
+      "id": "outcome",
+      "type": "external",
+      "label": "Caller promise outcome",
+      "sublabel": "Successful value returns, or the last/original error rejects.",
+      "pos": [
+        300,
+        625
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 114,
+          "end_line": 116
+        },
+        {
+          "path": "index.js",
+          "line": 245,
+          "end_line": 249
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "p-retry retry controller",
+      "wraps": [
+        "controller",
+        "failure",
+        "timer"
+      ],
+      "pad": 34
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Controller ownership",
+      "items": [
+        "pRetry increments attemptNumber, tracks retriesConsumed, and starts maxRetryTime with performance.now().",
+        "maxRetryTime bounds retry decisions and waiting; it is not a deadline that interrupts a running input promise."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Failure ordering and stopping",
+      "items": [
+        "After a failed attempt with time remaining: shouldConsumeRetry → onFailedAttempt → guards → shouldRetry.",
+        "No retry follows exhausted retry time or count, a non-network TypeError, or shouldRetry returning false.",
+        "When consumption is false but retry is approved, pRetry loops without incrementing retriesConsumed or waiting."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Two cancellation mechanisms",
+      "items": [
+        "AbortError is unwrapped to originalError and skips all hooks; it is an operation-directed stop.",
+        "AbortSignal cancels a pending retry delay and is checked around input, but input receives only attemptNumber; cancelling its in-flight work is the caller operation’s job."
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "start",
+      "from": "caller",
+      "to": "controller",
+      "label": "call pRetry(input, options)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "invoke",
+      "from": "controller",
+      "to": "operation",
+      "label": "input(attemptNumber)"
+    },
+    {
+      "id": "success",
+      "from": "operation",
+      "to": "controller",
+      "label": "fulfilled value → return",
+      "variant": "emphasis"
+    },
+    {
+      "id": "failure-path",
+      "from": "operation",
+      "to": "failure",
+      "label": "rejected / thrown error"
+    },
+    {
+      "id": "abort-request",
+      "from": "operation",
+      "to": "abort-error",
+      "label": "may throw to stop retries",
+      "variant": "dashed"
+    },
+    {
+      "id": "unwrap",
+      "from": "abort-error",
+      "to": "failure",
+      "label": "unwrap originalError; skip hooks",
+      "variant": "dashed"
+    },
+    {
+      "id": "consume",
+      "from": "failure",
+      "to": "consume-hook",
+      "label": "1. shouldConsumeRetry(context)"
+    },
+    {
+      "id": "failed",
+      "from": "consume-hook",
+      "to": "failed-hook",
+      "label": "2. then onFailedAttempt(context)"
+    },
+    {
+      "id": "retry",
+      "from": "failed-hook",
+      "to": "retry-hook",
+      "label": "3. then shouldRetry(context)"
+    },
+    {
+      "id": "no-consume-loop",
+      "from": "retry-hook",
+      "to": "controller",
+      "label": "approved + no consume → loop; no wait",
+      "variant": "dashed"
+    },
+    {
+      "id": "wait",
+      "from": "retry-hook",
+      "to": "timer",
+      "label": "approved + consume → bounded delay"
+    },
+    {
+      "id": "resume",
+      "from": "timer",
+      "to": "controller",
+      "label": "timer resolves → increment consumed; loop",
+      "variant": "emphasis"
+    },
+    {
+      "id": "signal-check",
+      "from": "signal",
+      "to": "controller",
+      "label": "throwIfAborted before / after await input",
+      "variant": "security"
+    },
+    {
+      "id": "cancel-delay",
+      "from": "signal",
+      "to": "timer",
+      "label": "abort clears timeout and rejects delay",
+      "variant": "security"
+    },
+    {
+      "id": "return-value",
+      "from": "controller",
+      "to": "outcome",
+      "label": "return successful value",
+      "variant": "emphasis"
+    },
+    {
+      "id": "reject-error",
+      "from": "failure",
+      "to": "outcome",
+      "label": "reject: time/count exhausted, non-network TypeError, or shouldRetry false",
+      "variant": "dashed"
+    }
+  ]
+}

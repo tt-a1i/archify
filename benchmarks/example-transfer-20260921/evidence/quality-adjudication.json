@@ -1,0 +1,134 @@
+{
+  "criteria": "Frozen task clauses, source entailment, machine gates and ordinary default-viewport readability; unchanged. Missing captures remain unknown; all full-quality outcomes fail on known source/machine/visual failure.",
+  "cases": [
+    {
+      "case": "case-01",
+      "run": "quick-lru-B1",
+      "phases": [
+        "final"
+      ],
+      "sha256": "54ef9ec1adc4fb19591f210d23a8c11cdda1ca3fc7a6cafed3aae840c4733503",
+      "source_pass": true,
+      "visual_pass": null,
+      "findings": []
+    },
+    {
+      "case": "case-02",
+      "run": "quick-lru-B1",
+      "phases": [
+        "first"
+      ],
+      "sha256": "8ded39e9e53666977b1cb718e8fe0b2726e963c6e035184ad4e24443e94cbec0",
+      "source_pass": true,
+      "visual_pass": null,
+      "findings": []
+    },
+    {
+      "case": "case-03",
+      "run": "quick-lru-P1",
+      "phases": [
+        "final"
+      ],
+      "sha256": "ef9bd3a85bab73273bdbb9a05c184fa83ffb6e3531f2a5f5183c265a7e9fdbd2",
+      "source_pass": true,
+      "visual_pass": false,
+      "findings": [
+        "Root inspected all four full captures: essential API condition labels are too small at1440 and many parallel controller-to-map edges crowd the core story. User independently rejected the excessive lines. Terra visual fail accepted; Luna visual pass retained as disagreement."
+      ]
+    },
+    {
+      "case": "case-04",
+      "run": "p-retry-P1",
+      "phases": [
+        "final"
+      ],
+      "sha256": "f783cecc5551daa63c40b53e9465648f1e802e9bb675e6c585967b0decfb312f",
+      "source_pass": false,
+      "visual_pass": null,
+      "findings": [
+        "Missing distinct pre-callback exhausted-time path: onFailedAttempt with retryDelay 0, then rejection; consume/retry hooks bypassed. Source index.js124-139.",
+        "Budget not a running-input deadline is stated, but the separate limitation of AbortSignal on already-awaited input is not explained; scope clause5."
+      ]
+    },
+    {
+      "case": "case-05",
+      "run": "p-retry-B1",
+      "phases": [
+        "first",
+        "final"
+      ],
+      "sha256": "bc1fe07328ae550a26482f38d45d514e1bbc21e5cf3e99f7ed32b92b417663e3",
+      "source_pass": false,
+      "visual_pass": null,
+      "findings": [
+        "Missing distinct pre-callback exhausted-time path: onFailedAttempt with retryDelay 0, then rejection; consume/retry hooks bypassed. Source index.js124-139."
+      ]
+    },
+    {
+      "case": "case-06",
+      "run": "p-retry-P1",
+      "phases": [
+        "first"
+      ],
+      "sha256": "bd085f1394b96606ad147232d6745840567f0d39a5a3c3558ac8ce52c1a16543",
+      "source_pass": false,
+      "visual_pass": null,
+      "findings": [
+        "Missing distinct pre-callback exhausted-time path: onFailedAttempt with retryDelay 0, then rejection; consume/retry hooks bypassed. Source index.js124-139.",
+        "Budget not a running-input deadline is stated, but the separate limitation of AbortSignal on already-awaited input is not explained; scope clause5."
+      ]
+    },
+    {
+      "case": "case-07",
+      "run": "quick-lru-P1",
+      "phases": [
+        "first"
+      ],
+      "sha256": "3610bf6e0ac53d6adabd398a67389cd99f79ee6f27a83d418deeabb192967c55",
+      "source_pass": true,
+      "visual_pass": null,
+      "findings": []
+    }
+  ],
+  "runs": {
+    "quick-lru-B1": {
+      "final_source_pass": true,
+      "final_visual_pass": null,
+      "final_pass": false,
+      "first_source_pass": true,
+      "first_visual_pass": null,
+      "first_pass": false
+    },
+    "quick-lru-P1": {
+      "final_source_pass": true,
+      "final_visual_pass": false,
+      "final_pass": false,
+      "first_source_pass": true,
+      "first_visual_pass": null,
+      "first_pass": false
+    },
+    "p-retry-P1": {
+      "final_source_pass": false,
+      "final_visual_pass": null,
+      "final_pass": false,
+      "first_source_pass": false,
+      "first_visual_pass": null,
+      "first_pass": false
+    },
+    "p-retry-B1": {
+      "first_source_pass": false,
+      "first_visual_pass": null,
+      "first_pass": false,
+      "final_source_pass": false,
+      "final_visual_pass": null,
+      "final_pass": false
+    }
+  },
+  "review_disagreement": "Terra initial source passes for p-retry corrected after a targeted challenge on the existing frozen review key. Original and correction both preserved. Luna/Terra disagree on QuickLRU P visual; root and user reject readability.",
+  "root_images_viewed": [
+    "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/example-transfer-20260921/quick-lru-P1/visual/diagram.visual-check.1440x900.dark.png",
+    "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/example-transfer-20260921/quick-lru-P1/visual/diagram.visual-check.1440x900.light.png",
+    "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/example-transfer-20260921/quick-lru-P1/visual/diagram.visual-check.2048x1320.dark.png",
+    "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/example-transfer-20260921/quick-lru-P1/visual/diagram.visual-check.2048x1320.light.png"
+  ]
+}

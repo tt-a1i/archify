@@ -1,0 +1,39 @@
+{
+  "start_epoch": 1789976151.745559,
+  "observed_seconds": 251.2012659588363,
+  "max_poll_gap_seconds": 0.12804883299395442,
+  "expired": false,
+  "snapshots": [
+    {
+      "index": 1,
+      "elapsed_seconds": 144.1703160838224,
+      "sha256": "31573db4e411df048293643d1250e4976f0d60775c88669919988f86cdcb1deb",
+      "bytes": 5268,
+      "parseable": true,
+      "structurally_complete": true
+    },
+    {
+      "index": 2,
+      "elapsed_seconds": 191.75174141698517,
+      "sha256": "4f97f2c65f9610ed445164b9e320f468d6df37de8223cee1ad2fc3e7f4603949",
+      "bytes": 5291,
+      "parseable": true,
+      "structurally_complete": true
+    },
+    {
+      "index": 3,
+      "elapsed_seconds": 220.71560829202645,
+      "sha256": "2ff686b76162e7c2a1a939b97d88d52f6cb15cd4aa32a1491fc2a89a0d71b9dc",
+      "bytes": 5291,
+      "parseable": true,
+      "structurally_complete": true
+    }
+  ],
+  "first_complete_seconds": 144.1703160838224,
+  "completion": {
+    "task_status": "completed",
+    "epoch": 1789976402.899669,
+    "delivery_status": "see artifact receipts, not implied by task completion"
+  },
+  "limits": "Observed from before dispatch; scheduling included. Structural completeness is not factual acceptance. Hidden model/HTTP timing unavailable."
+}

@@ -1,0 +1,10 @@
+{
+  "same_dispatch_layout": true,
+  "command": "node --input-type=module import ./tools/firstpass.mjs",
+  "exit": 0,
+  "stdout": "[149,72]",
+  "helper_sha256": "be5185f88656aca57ff8166cc5fdae71c18f5e23cd7613beb75c35870be5664d",
+  "prototype_revision": 2,
+  "helper_tests": "6/6 pass",
+  "evaluation_protocol_tests": "3/3 pass"
+}

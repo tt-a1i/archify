@@ -1,0 +1,17 @@
+{
+  "snapshots": [
+    {
+      "snapshot": 1,
+      "sha256": "b416d727127e45380b697adb24649bd6bc3537e8120959320273ac4f131768c1",
+      "from_native_start_seconds": 150.4177222251892,
+      "validation_exit": 0,
+      "codes": []
+    }
+  ],
+  "note": "post-run checking of exact preserved bytes, separate from author timing and semantic/perceptual acceptance",
+  "visual_exit": 0,
+  "first_visual": {
+    "reused_final": true,
+    "candidate_sha256": "b416d727127e45380b697adb24649bd6bc3537e8120959320273ac4f131768c1"
+  }
+}

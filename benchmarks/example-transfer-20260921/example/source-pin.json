@@ -1,0 +1,9 @@
+{
+  "revision": "f1182e57f67d321c61817a6249f82c2720113f88",
+  "url": "https://fixtures.invalid/archify/document-publisher",
+  "link_mode": "local-only",
+  "files": {
+    "README.md": "b194f2a82ce111b582394f65f040c35ab1e7873fb6b37ed135f7987d45725daf",
+    "publisher.mjs": "14aac56bc66124b5691cd891c58b531806827ae8062c39ab8aa93a4199d7777e"
+  }
+}

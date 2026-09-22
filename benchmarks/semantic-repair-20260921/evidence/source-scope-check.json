@@ -1,0 +1,22 @@
+{
+  "counts": [
+    {
+      "repo": "ky",
+      "implementation_scope_files": 31,
+      "scope_lines": 4490
+    },
+    {
+      "repo": "query",
+      "implementation_scope_files": 23,
+      "scope_lines": 9233
+    },
+    {
+      "repo": "pqueue",
+      "implementation_scope_files": 5,
+      "scope_lines": 1307
+    }
+  ],
+  "rubric_locator_bounds": "pass",
+  "tasks_sha256": "6f9d7637982a714eaf7feefe1f86dd9e99022b74e0d3abc2d07f7240f0d9c5fe",
+  "rubrics_sha256": "92368054ded9b210004e1e6dd16d8a2b360ab41c730d1fefc6b13474af2c5576"
+}

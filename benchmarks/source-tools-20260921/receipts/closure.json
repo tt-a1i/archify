@@ -1,0 +1,22 @@
+{
+  "recorded_epoch": 1789966452.403517,
+  "base_commit": "104b92baf1aaed865b41a3d13ee645a82684e0e2",
+  "original_status_sha256": "4fb72510ba971adf27b0b6151c6193a38919386636046aa5792026f8101228ee",
+  "original_diff_sha256": "9cae3fda2abc91e3638452d43ea77e0e540e186ea4aca2202146b42d770623a4",
+  "original_checkout_unchanged_verified": true,
+  "counts": {
+    "timed_authors": 8,
+    "independent_reviews": 2,
+    "auxiliary_starts_or_turns": 5
+  },
+  "promotion": "none; local research only",
+  "current_prototype_sha256": "c80305cb940d9b43e5f66c45b8f012f899f80c5606843336b378e4c58804bcb1",
+  "frozen_author_prototype_sha256": "d7b929b257b6bb271b2574079a89ee438f6f8d312d7ede30a0193636c1697a05",
+  "focused_checks": {
+    "python_tests": 2,
+    "layout_fixture_suite": "passed",
+    "full_html_finalize_and_visual_capture_passed": 3,
+    "full_author_delivery_failed": 1
+  },
+  "note": "Current prototype adds input/receipt hardening and optional failed bounded-gap experiment after frozen authors; do not attribute author timing to current prototype."
+}

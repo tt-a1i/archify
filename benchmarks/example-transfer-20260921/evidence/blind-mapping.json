@@ -1,0 +1,59 @@
+[
+  {
+    "case": "case-01",
+    "run": "quick-lru-B1",
+    "phases": [
+      "final"
+    ],
+    "sha256": "54ef9ec1adc4fb19591f210d23a8c11cdda1ca3fc7a6cafed3aae840c4733503"
+  },
+  {
+    "case": "case-02",
+    "run": "quick-lru-B1",
+    "phases": [
+      "first"
+    ],
+    "sha256": "8ded39e9e53666977b1cb718e8fe0b2726e963c6e035184ad4e24443e94cbec0"
+  },
+  {
+    "case": "case-03",
+    "run": "quick-lru-P1",
+    "phases": [
+      "final"
+    ],
+    "sha256": "ef9bd3a85bab73273bdbb9a05c184fa83ffb6e3531f2a5f5183c265a7e9fdbd2"
+  },
+  {
+    "case": "case-04",
+    "run": "p-retry-P1",
+    "phases": [
+      "final"
+    ],
+    "sha256": "f783cecc5551daa63c40b53e9465648f1e802e9bb675e6c585967b0decfb312f"
+  },
+  {
+    "case": "case-05",
+    "run": "p-retry-B1",
+    "phases": [
+      "first",
+      "final"
+    ],
+    "sha256": "bc1fe07328ae550a26482f38d45d514e1bbc21e5cf3e99f7ed32b92b417663e3"
+  },
+  {
+    "case": "case-06",
+    "run": "p-retry-P1",
+    "phases": [
+      "first"
+    ],
+    "sha256": "bd085f1394b96606ad147232d6745840567f0d39a5a3c3558ac8ce52c1a16543"
+  },
+  {
+    "case": "case-07",
+    "run": "quick-lru-P1",
+    "phases": [
+      "first"
+    ],
+    "sha256": "3610bf6e0ac53d6adabd398a67389cd99f79ee6f27a83d418deeabb192967c55"
+  }
+]

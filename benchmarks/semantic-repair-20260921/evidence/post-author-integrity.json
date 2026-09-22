@@ -1,0 +1,52 @@
+{
+  "runs": [
+    {
+      "run": "ky-B",
+      "source_head": "0d59458a0a58e1c3d7c6db0ab17ed5c7cd671e47",
+      "source_clean": true,
+      "prompt_unchanged": true,
+      "helpers_unchanged": true
+    },
+    {
+      "run": "ky-N",
+      "source_head": "0d59458a0a58e1c3d7c6db0ab17ed5c7cd671e47",
+      "source_clean": true,
+      "prompt_unchanged": true,
+      "helpers_unchanged": true
+    },
+    {
+      "run": "query-N",
+      "source_head": "97cab92a7e56713773f599ea8a379b173cb4f8bd",
+      "source_clean": true,
+      "prompt_unchanged": true,
+      "helpers_unchanged": true
+    },
+    {
+      "run": "query-B",
+      "source_head": "97cab92a7e56713773f599ea8a379b173cb4f8bd",
+      "source_clean": true,
+      "prompt_unchanged": true,
+      "helpers_unchanged": true
+    },
+    {
+      "run": "pqueue-R",
+      "source_head": "180ab9e25cd10b6f548767d7176076b50d25e188",
+      "source_clean": true,
+      "prompt_unchanged": true,
+      "helpers_unchanged": true
+    },
+    {
+      "run": "pqueue-B",
+      "source_head": "180ab9e25cd10b6f548767d7176076b50d25e188",
+      "source_clean": true,
+      "prompt_unchanged": true,
+      "helpers_unchanged": true
+    }
+  ],
+  "original_checkout_hashes": {
+    "status": "4fb72510ba971adf27b0b6151c6193a38919386636046aa5792026f8101228ee",
+    "diff": "9cae3fda2abc91e3638452d43ea77e0e540e186ea4aca2202146b42d770623a4"
+  },
+  "matches_initial_original": true,
+  "package_unchanged": true
+}

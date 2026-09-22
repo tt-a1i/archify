@@ -1,0 +1,26 @@
+[
+  {
+    "run": "ky-B",
+    "package_tree_unchanged": true
+  },
+  {
+    "run": "ky-N",
+    "package_tree_unchanged": true
+  },
+  {
+    "run": "query-N",
+    "package_tree_unchanged": true
+  },
+  {
+    "run": "query-B",
+    "package_tree_unchanged": true
+  },
+  {
+    "run": "pqueue-R",
+    "package_tree_unchanged": true
+  },
+  {
+    "run": "pqueue-B",
+    "package_tree_unchanged": true
+  }
+]

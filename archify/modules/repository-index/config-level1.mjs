@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Level 1 reads only configuration files, bounded per file and in total, and
-// returns structured facts — never configuration text, values, or secrets.
+// Level 1 reads bounded configuration prefixes and returns selected identifiers.
+// Callers should treat those identifiers as potentially sensitive local data.
 export const DEFAULT_LIMITS = Object.freeze({
   maximumFiles: 250,
   maximumBytesPerFile: 512 * 1024,
@@ -10,9 +10,17 @@ export const DEFAULT_LIMITS = Object.freeze({
   maximumFactItems: 50,
 });
 const MAX_FACT_ITEMS = DEFAULT_LIMITS.maximumFactItems;
+let factLimitReached = false;
 
 function unique(values) {
-  return [...new Set(values.filter(Boolean))].slice(0, MAX_FACT_ITEMS);
+  const items = [...new Set(values.filter(Boolean))];
+  if (items.length > MAX_FACT_ITEMS) factLimitReached = true;
+  return items.slice(0, MAX_FACT_ITEMS);
+}
+
+function limited(values) {
+  if (values.length > MAX_FACT_ITEMS) factLimitReached = true;
+  return values.slice(0, MAX_FACT_ITEMS);
 }
 
 function matches(text, pattern, group = 1) {
@@ -28,7 +36,13 @@ function quotedValues(text) {
 }
 
 function safeReference(value) {
-  return value?.replace(/^(https?:\/\/)[^/@\s]+@/i, '$1').replace(/^(?:[^@\s]+@)?([^:\s]+):\/\//, '$1://') || value;
+  if (!value) return value;
+  // Terraform module sources may prefix a URL with git::, while URL userinfo
+  // and query parameters can both carry credentials. They are not needed to
+  // identify the source repository during diagram exploration.
+  return value
+    .replace(/([a-z][a-z0-9+.-]*:\/\/)[^/@\s]+@/gi, '$1')
+    .replace(/([a-z][a-z0-9+.-]*:\/\/[^\s?#]+)[?#][^\s]*/gi, '$1');
 }
 
 function commandPaths(command) {
@@ -83,15 +97,13 @@ function parsePackageJson(text) {
       name: typeof value.name === 'string' ? value.name : null,
       workspaces: unique(workspaces),
       scripts: unique(Object.keys(value.scripts || {})),
-      entryScriptFiles: Object.fromEntries(Object.entries(value.scripts || {})
+      entryScriptFiles: Object.fromEntries(limited(Object.entries(value.scripts || {})
         .filter(([name, command]) => /^(?:start|dev|serve|server|api|worker)$/i.test(name) && typeof command === 'string')
         .map(([name, command]) => [name, commandPaths(command)])
-        .filter(([, files]) => files.length)
-        .slice(0, MAX_FACT_ITEMS)),
+        .filter(([, files]) => files.length))),
       // `bin` and `main` are declared runtime entries, stronger evidence than a script.
-      binaries: Object.fromEntries(Object.entries(typeof value.bin === 'string' ? { [value.name || 'default']: value.bin } : (value.bin || {}))
-        .filter(([, target]) => typeof target === 'string')
-        .slice(0, MAX_FACT_ITEMS)),
+      binaries: Object.fromEntries(limited(Object.entries(typeof value.bin === 'string' ? { [value.name || 'default']: value.bin } : (value.bin || {}))
+        .filter(([, target]) => typeof target === 'string'))),
       main: typeof value.main === 'string' ? value.main : null,
       runtimeDependencies: unique([
         ...Object.keys(value.dependencies || {}),
@@ -165,7 +177,7 @@ function parseGradle(text) {
       ...matches(text, /\b(?:api|implementation|compileOnly|runtimeOnly)\s*(?:\(|\s)["']([^:"']+:[^:"']+)/g),
       ...matches(text, /\bproject\s*\(\s*["']([^"']+)["']/g),
     ]),
-    includedProjects: matches(text, /\binclude\s*(?:\(|\s)([^\r\n]+)/g).flatMap(quotedValues).slice(0, MAX_FACT_ITEMS),
+    includedProjects: limited(matches(text, /\binclude\s*(?:\(|\s)([^\r\n]+)/g).flatMap(quotedValues)),
   };
 }
 
@@ -223,18 +235,18 @@ function parseCompose(text) {
     if (indent === 4) {
       inDependsOn = /^depends_on:\s*$/.test(line.trim());
       current.image ||= safeReference(first(line, /^\s*image:\s*["']?([^\s"'#]+)/i));
-      current.build ||= first(line, /^\s*build:\s*["']?([^\r\n"'#]+)/i);
+      current.build ||= safeReference(first(line, /^\s*build:\s*["']?([^\r\n"'#]+)/i));
       const inline = first(line, /^\s*depends_on:\s*\[([^\]]+)\]/i);
-      if (inline) current.dependsOn.push(...quotedValues(inline));
+      if (inline) current.dependsOn.push(...inline.split(',').map((item) => item.trim().replace(/^["']|["']$/g, '')));
       continue;
     }
-    if (inDependsOn && indent >= 6) {
+    if (inDependsOn && indent === 6) {
       const dependency = line.trim().match(/^(?:-\s*)?([^:#\s][^:\s]*)(?::|$)/)?.[1];
       if (dependency) current.dependsOn.push(dependency);
     }
   }
   return {
-    services: services.slice(0, MAX_FACT_ITEMS).map((service) => ({
+    services: limited(services).map((service) => ({
       ...service,
       dependsOn: unique(service.dependsOn),
     })),
@@ -303,7 +315,7 @@ function parseRequirements(text) {
     const name = line.match(/^([A-Za-z0-9][A-Za-z0-9._-]*)/)?.[1];
     if (name) names.push(name.toLowerCase());
   }
-  return { dependencies: unique(names), includes: unique(includes) };
+  return { dependencies: unique(names), includes: unique(includes.map(safeReference)) };
 }
 
 function parsePipfile(text) {
@@ -534,12 +546,15 @@ export function buildConfigurationLevel1(root, records, options = {}) {
       candidateCounts.rejected += 1;
       continue;
     }
+    factLimitReached = false;
+    const facts = parseByKind(kind, content.text);
     parsed.push({
       path: entry.record.path,
       module: entry.record.modulePath,
       kind,
       truncated: content.truncated,
-      facts: parseByKind(kind, content.text),
+      factsTruncated: factLimitReached,
+      facts,
     });
   }
 
@@ -550,6 +565,7 @@ export function buildConfigurationLevel1(root, records, options = {}) {
   const allDirectories = new Set(all.map((entry) => entry.directory));
   const allKinds = new Set(all.map((entry) => entry.kind));
   const nextBatch = batch < totalBatches ? batch + 1 : null;
+  const boundarySummary = summarizeBoundaries(parsed);
   return {
     name: 'configuration-boundaries',
     sourceBodiesIncluded: false,
@@ -574,7 +590,8 @@ export function buildConfigurationLevel1(root, records, options = {}) {
       kinds: { covered: coveredKinds.size, total: allKinds.size },
       nextBatch,
     },
-    boundaries: summarizeBoundaries(parsed),
+    boundaries: boundarySummary.boundaries,
+    boundariesTruncated: boundarySummary.truncated,
     configurations: parsed,
   };
 }
@@ -590,7 +607,11 @@ export function summarizeBoundaries(parsed) {
   const deployment = [];
   const apis = [];
   const ci = [];
-  const push = (list, item) => { if (list.length < MAX_FACT_ITEMS) list.push(item); };
+  let truncated = false;
+  const push = (list, item) => {
+    if (list.length < MAX_FACT_ITEMS) list.push(item);
+    else truncated = true;
+  };
   for (const { path: file, kind, facts } of parsed) {
     switch (kind) {
       case 'package-json':
@@ -671,5 +692,5 @@ export function summarizeBoundaries(parsed) {
         break;
     }
   }
-  return { services, dependencies, entrypoints, deployment, apis, ci };
+  return { boundaries: { services, dependencies, entrypoints, deployment, apis, ci }, truncated };
 }

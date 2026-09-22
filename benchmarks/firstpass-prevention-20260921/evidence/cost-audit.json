@@ -1,0 +1,64 @@
+{
+  "rows": [
+    {
+      "run": "p-retry-B1",
+      "observed_finalizes": 4,
+      "sum_terminal_finalize_seconds": 1.441,
+      "max_terminal_finalize_seconds": 0.587,
+      "public_tool_call_elapsed_sum_seconds": 11.345999717712402,
+      "native_seconds": 314.3970000743866,
+      "pre_dispatch_seconds": 8.748257875442505
+    },
+    {
+      "run": "p-retry-P1",
+      "observed_finalizes": 1,
+      "sum_terminal_finalize_seconds": 3.163,
+      "max_terminal_finalize_seconds": 3.163,
+      "public_tool_call_elapsed_sum_seconds": 11.68999981880188,
+      "native_seconds": 295.6799998283386,
+      "pre_dispatch_seconds": 13.484928131103516
+    },
+    {
+      "run": "quick-lru-P1",
+      "observed_finalizes": 3,
+      "sum_terminal_finalize_seconds": 4.025,
+      "max_terminal_finalize_seconds": 2.896,
+      "public_tool_call_elapsed_sum_seconds": 14.074000358581543,
+      "native_seconds": 253.96199989318848,
+      "pre_dispatch_seconds": 12.060750007629395
+    },
+    {
+      "run": "quick-lru-B1",
+      "observed_finalizes": 4,
+      "sum_terminal_finalize_seconds": 1.323,
+      "max_terminal_finalize_seconds": 0.523,
+      "public_tool_call_elapsed_sum_seconds": 3.441999673843384,
+      "native_seconds": 289.4610002040863,
+      "pre_dispatch_seconds": 8.538813829421997
+    },
+    {
+      "run": "lilconfig-B1",
+      "observed_finalizes": 3,
+      "sum_terminal_finalize_seconds": 1.756,
+      "max_terminal_finalize_seconds": 0.76,
+      "public_tool_call_elapsed_sum_seconds": 9.980000019073486,
+      "native_seconds": 343.5770001411438,
+      "pre_dispatch_seconds": 8.597583770751953
+    },
+    {
+      "run": "lilconfig-P1",
+      "observed_finalizes": 4,
+      "sum_terminal_finalize_seconds": 1.845,
+      "max_terminal_finalize_seconds": 0.71,
+      "public_tool_call_elapsed_sum_seconds": 20.330000400543213,
+      "native_seconds": 370.5590000152588,
+      "pre_dispatch_seconds": 209.71446299552917
+    }
+  ],
+  "note": "Tool intervals are public wrapper times and may include nested commands. Remaining native wall time is unallocated; it is not measured hidden reasoning or pure semantic-understanding time. lilconfig-P1 includes 209.714s preparation-to-native-start gap; full latency is retained without subtracting orchestration/context-handoff delay.",
+  "study_start_epoch": 1789992574.657517,
+  "timed_authors_finished_epoch": 1789996158.826846,
+  "sum_native_seconds": 1867.6360001564026,
+  "evidence_freeze_epoch": 1789996907.351243,
+  "study_wall_to_evidence_freeze_seconds": 4332.693726062775
+}

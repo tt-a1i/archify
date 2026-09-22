@@ -1,0 +1,44 @@
+{
+  "epoch": 1789997164.00657,
+  "base": "3725b4c54ff2e1867e363bc1b5f919ca8f3537fc",
+  "question": "Does an explicitly linked, validated, source-backed small-library worked example improve first/final quality and reduce repairs versus the existing prescribed example?",
+  "conditions": {
+    "B": "Unchanged packaged Skill including existing prescribed examples",
+    "P": "Same package plus one additional worked example and concise reference linked at Architecture example selection; no preparation helper or renderer changes"
+  },
+  "scope": "p-retry and QuickLRU with unchanged previously visible tasks/pins. Both are known development cases, not unseen tasks; conclusions exploratory. lilconfig is not re-tested in this bounded round.",
+  "prototype": {
+    "max_revisions": 3,
+    "require_full_finalize": true,
+    "require_source_review": true,
+    "require_1440_2048_light_dark_visual_acceptance": true,
+    "example_domain": "synthetic document publishing controller with caller callbacks and conditional exits; contains no tested repository facts"
+  },
+  "authors": {
+    "model": "gpt-5.6-terra",
+    "effort": "medium",
+    "seconds": 600,
+    "repairs_after_first_finalize": 3,
+    "serial": true,
+    "initial_order": [
+      "p-retry-B1",
+      "p-retry-P1",
+      "quick-lru-P1",
+      "quick-lru-B1"
+    ],
+    "no_other_agents_during_timed_authors": true
+  },
+  "quality": "Original task clauses, exact source entailment including callback conditions, original showcase finalize and independent default-viewport visual judgement. Normal vertical scrolling allowed. No node/edge/card quotas. Preserve disagreements and all failures.",
+  "screen": {
+    "all_P_full_quality": true,
+    "minimum_both_quality_pairs": 2,
+    "median_full_saving_fraction": 0.15,
+    "median_full_saving_seconds": 20,
+    "median_all_observed_revision_reduction": 1,
+    "max_pair_slowdown_fraction": 0.1
+  },
+  "confirmation": "Only if screen passes, reverse order one fresh pair per same task. No default promotion from initial pairs.",
+  "observability": "Record first and final versions, all observed pre/post-finalize revisions and terminal receipts; native/public tools only. P reads of the added reference/example counted as exposure, not proof of comprehension. Full clock includes copying/dispatch and example reading. Capture/review separated.",
+  "integrity": "Package delta is exact linked-reference/example allowlist for P; original source/tasks/runtime and all B package bytes unchanged. No author edits outside own build/output. Inputs frozen before any timed author; no replacement failures.",
+  "preservation": "Original dirty checkout/live installs/remote unchanged. Local research commits only."
+}

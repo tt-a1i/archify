@@ -96,7 +96,7 @@ node bin/archify.mjs check <output.html> --require-provenance
 node bin/archify.mjs browser-check <output.html> --json --require-provenance
 ```
 
-Run `finalize` directly on a complete first candidate; its first gate validates that source before delivery. Use standalone `validate` after edits during a known repair loop. CLI HTML output paths must end in `.html`, including after symbolic-link resolution.
+Run `finalize` directly on a complete first candidate; its first gate validates that source before delivery. After a repair edit, rerun `finalize` with the same type, input/output paths, quality and repository-root arguments, omitting any earlier `--candidate-sha256` because the candidate changed. Its embedded validation checks the repaired candidate; use standalone `validate` only for focused diagnosis or an explicitly separate execution. CLI HTML output paths must end in `.html`, including after symbolic-link resolution.
 Compare receipt paths must end in `.json`. Explicit CLI paths may be absolute or
 outside the current working directory; authored `meta.output` remains confined
 to that directory. A type mismatch fails before writing with

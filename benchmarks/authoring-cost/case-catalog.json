@@ -1,0 +1,1407 @@
+{
+  "schema_version": 1,
+  "suite_id": "repository-backed-authoring-cost-v1",
+  "purpose": "Measure repository-backed architecture authoring on source-grounded tasks with separate development and holdout cohorts.",
+  "link_mode": "local-only",
+  "author_context_policy": "Only the prompt and the selected target repository are provided to an author. requirements and source_evidence are evaluator metadata and must not be injected into author context.",
+  "tasks": [
+    {
+      "id": "dev-queue-gateway-architecture",
+      "cohort": "development",
+      "selection_rationale": "Controlled fixture with an entry/config/runtime split, a waiting queue, a concurrency-capped worker pool, retry behavior, and a terminal dead-letter branch. It exercises a directed runtime graph without relying on package conventions.",
+      "target_repo": "/private/tmp/archify-authoring-targets-20260920/fixtures/queue-gateway-architecture",
+      "target_repo_sha": "3b6ddf42d0b78231c25a08ce5efbebe1be407c3f",
+      "repository_url": "https://fixtures.invalid/archify/queue-gateway-architecture",
+      "target_snapshot": "fixtures/queue-gateway-architecture/SNAPSHOT.md",
+      "prompt_path": "cases/dev-queue-gateway.prompt.md",
+      "prompt": "Create an architecture diagram from this repository's source. Show how a tenant request enters the gateway, waits in a queue, and is processed by workers. Make the configured authentication, billing, and result boundaries visible. Keep the concurrency limit and the dead-letter failure path legible, including the retry relationship.",
+      "diagram_type": "architecture",
+      "scope": {
+        "included_files": [
+          "src/entry.mjs",
+          "src/config.mjs",
+          "src/runtime/queue.mjs",
+          "src/runtime/worker.mjs"
+        ],
+        "source_boundary": "Describe the request-to-queue-to-worker runtime and the configured integration labels; omit implementation details of the tiny helper functions.",
+        "excluded": [
+          "package managers",
+          "deployment scripts",
+          "unrelated repository metadata"
+        ]
+      },
+      "requirements": {
+        "nodes": [
+          {
+            "key": "entry",
+            "labels": [
+              "Tenant Request",
+              "submitJob",
+              "Gateway"
+            ],
+            "role": "request entry"
+          },
+          {
+            "key": "config",
+            "labels": [
+              "Runtime Configuration",
+              "settings"
+            ],
+            "role": "policy/configuration"
+          },
+          {
+            "key": "queue",
+            "labels": [
+              "Waiting Job Queue",
+              "Queue",
+              "createQueue"
+            ],
+            "role": "queue"
+          },
+          {
+            "key": "worker",
+            "labels": [
+              "Worker",
+              "runWorker"
+            ],
+            "role": "runtime worker"
+          },
+          {
+            "key": "auth",
+            "labels": [
+              "Tenant Token Service",
+              "Authentication Provider"
+            ],
+            "role": "configured integration boundary"
+          },
+          {
+            "key": "provider",
+            "labels": [
+              "Billing Provider",
+              "External Provider"
+            ],
+            "role": "configured integration boundary"
+          },
+          {
+            "key": "result",
+            "labels": [
+              "Job Result Store",
+              "Result Store"
+            ],
+            "role": "configured result boundary (local stub)"
+          },
+          {
+            "key": "dead_letter",
+            "labels": [
+              "Dead-letter Queue",
+              "Dead Letter",
+              "Failure Queue"
+            ],
+            "role": "failure sink"
+          }
+        ],
+        "relationships": [
+          {
+            "from": "entry",
+            "to": "queue",
+            "labels": [
+              "enqueue",
+              "accepted job",
+              "202 queued"
+            ]
+          },
+          {
+            "from": "config",
+            "to": "worker",
+            "labels": [
+              "concurrency",
+              "worker limit",
+              "settings"
+            ]
+          },
+          {
+            "from": "queue",
+            "to": "worker",
+            "labels": [
+              "dispatch",
+              "run queued job"
+            ]
+          },
+          {
+            "from": "worker",
+            "to": "auth",
+            "labels": [
+              "authorize tenant",
+              "tenant token"
+            ]
+          },
+          {
+            "from": "worker",
+            "to": "provider",
+            "labels": [
+              "call provider",
+              "billing request"
+            ]
+          },
+          {
+            "from": "worker",
+            "to": "result",
+            "labels": [
+              "save result",
+              "successful result"
+            ]
+          },
+          {
+            "from": "worker",
+            "to": "dead_letter",
+            "labels": [
+              "retry exhausted",
+              "dead-letter",
+              "failure"
+            ]
+          }
+        ],
+        "semantic_constraints": [
+          "The concurrency setting bounds active workers; the waiting list itself is not described as bounded.",
+          "The auth, provider, and result names are configured integration boundaries represented by local helper stubs in this fixture.",
+          "A worker may retry provider work, but the dead-letter branch is terminal after the configured attempt limit.",
+          "Successful processing reaches the result store; it does not go through the dead-letter queue."
+        ]
+      },
+      "source_evidence": [
+        {
+          "path": "src/entry.mjs",
+          "line_ranges": [
+            [
+              1,
+              13
+            ]
+          ],
+          "anchors": [
+            "settings",
+            "createQueue",
+            "submitJob",
+            "queue.enqueue"
+          ]
+        },
+        {
+          "path": "src/config.mjs",
+          "line_ranges": [
+            [
+              1,
+              8
+            ]
+          ],
+          "anchors": [
+            "concurrency",
+            "maxAttempts",
+            "deadLetterAfter",
+            "authProvider",
+            "resultStore",
+            "provider"
+          ]
+        },
+        {
+          "path": "src/runtime/queue.mjs",
+          "line_ranges": [
+            [
+              1,
+              26
+            ]
+          ],
+          "anchors": [
+            "createQueue",
+            "active < settings.concurrency",
+            "runWorker"
+          ]
+        },
+        {
+          "path": "src/runtime/worker.mjs",
+          "line_ranges": [
+            [
+              1,
+              18
+            ]
+          ],
+          "anchors": [
+            "runWorker",
+            "authorizeTenant",
+            "callProvider",
+            "saveResult",
+            "moveToDeadLetter"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dev-audit-export-architecture",
+      "cohort": "development",
+      "selection_rationale": "Controlled fixture with a long Chinese component label and a policy-driven data path: audit query, field redaction, object storage, notification, and a separately represented review boundary.",
+      "target_repo": "/private/tmp/archify-authoring-targets-20260920/fixtures/审计导出服务",
+      "target_repo_sha": "d89f12734c6b633e7a70bebe14610a0a7f5d57a1",
+      "repository_url": "https://fixtures.invalid/archify/audit-export-service",
+      "target_snapshot": "fixtures/审计导出服务/SNAPSHOT.md",
+      "prompt_path": "cases/dev-audit-export.prompt.md",
+      "prompt": "请阅读这个仓库，为刚接手项目的同事画一张架构图，说明审计导出请求的入口、导出计划与执行过程，以及配置策略和数据边界。请覆盖脱敏、结果输出、完成通知和人工复核相关职责，区分源代码实际实现与仅有配置或声明的部分。图中请保留完整服务名称：跨租户审计日志导出与脱敏编排服务（含异步导出、留存策略和人工复核边界），放在适合阅读的位置。",
+      "diagram_type": "architecture",
+      "scope": {
+        "included_files": [
+          "src/entry.mjs",
+          "src/config.mjs",
+          "src/runtime/exporter.mjs",
+          "src/runtime/notifier.mjs"
+        ],
+        "source_boundary": "Show the scheduled export path and policy-controlled privacy/storage/notification boundaries.",
+        "excluded": [
+          "database implementation internals",
+          "package managers",
+          "deployment scripts"
+        ]
+      },
+      "requirements": {
+        "nodes": [
+          {
+            "key": "entry",
+            "labels": [
+              "Audit Export Request",
+              "requestAuditExport",
+              "多租户审计导出入口"
+            ],
+            "role": "request entry"
+          },
+          {
+            "key": "orchestrator",
+            "labels": [
+              "跨租户审计日志导出与脱敏编排服务（含异步导出、留存策略和人工复核边界）",
+              "跨租户审计日志导出与脱敏编排服务",
+              "审计导出与脱敏编排",
+              "Export Orchestrator",
+              "createExport"
+            ],
+            "role": "orchestrator"
+          },
+          {
+            "key": "config",
+            "labels": [
+              "Export Policy",
+              "policy",
+              "Retention and Redaction Policy"
+            ],
+            "role": "policy/configuration"
+          },
+          {
+            "key": "plan",
+            "labels": [
+              "Queued Export Descriptor",
+              "Export Plan",
+              "run closure",
+              "status queued"
+            ],
+            "role": "returned execution plan"
+          },
+          {
+            "key": "audit_log",
+            "labels": [
+              "Audit Log Store",
+              "Audit Log Query"
+            ],
+            "role": "source data"
+          },
+          {
+            "key": "redaction",
+            "labels": [
+              "Redaction",
+              "脱敏",
+              "redact"
+            ],
+            "role": "privacy transform"
+          },
+          {
+            "key": "object_store",
+            "labels": [
+              "Audit Export Bucket",
+              "Object Storage",
+              "objectStore"
+            ],
+            "role": "storage"
+          },
+          {
+            "key": "topic",
+            "labels": [
+              "Export Ready Topic",
+              "Notification Topic",
+              "audit-export-ready"
+            ],
+            "role": "notification"
+          }
+        ],
+        "optional_nodes": [
+          {
+            "key": "review",
+            "labels": [
+              "Privacy Review Queue",
+              "Manual Review",
+              "privacy-review"
+            ],
+            "role": "exported optional helper"
+          }
+        ],
+        "relationships": [
+          {
+            "from": "entry",
+            "to": "orchestrator",
+            "labels": [
+              "schedule export",
+              "request export"
+            ]
+          },
+          {
+            "from": "config",
+            "to": "orchestrator",
+            "labels": [
+              "retention",
+              "redaction policy",
+              "max rows"
+            ]
+          },
+          {
+            "from": "orchestrator",
+            "to": "plan",
+            "labels": [
+              "queued descriptor",
+              "return run closure"
+            ]
+          },
+          {
+            "from": "plan",
+            "to": "audit_log",
+            "labels": [
+              "invoke run",
+              "query audit log",
+              "read rows"
+            ]
+          },
+          {
+            "from": "audit_log",
+            "to": "redaction",
+            "labels": [
+              "audit rows"
+            ]
+          },
+          {
+            "from": "redaction",
+            "to": "object_store",
+            "labels": [
+              "redacted export",
+              "write object"
+            ]
+          },
+          {
+            "from": "plan",
+            "to": "topic",
+            "labels": [
+              "export ready",
+              "notify"
+            ]
+          }
+        ],
+        "semantic_constraints": [
+          "schedule returns a queued descriptor with a run closure; the source does not enqueue or start background execution itself.",
+          "splitRange returns one descriptor in this fixture, so the diagram must not claim implemented 10k row batching.",
+          "Token and IP address fields are removed when the returned run closure is invoked before writeObject is called.",
+          "retentionDays is returned as expiresAfterDays metadata; the source does not enforce expiry deletion.",
+          "requestReview is an exported helper and reviewQueue is configured, but the normal schedule/run path does not invoke manual review.",
+          "queryAuditLog, writeObject, and notifyReady are local async stubs; configured store/topic names are integration boundaries, not evidence of durable services."
+        ]
+      },
+      "source_evidence": [
+        {
+          "path": "src/entry.mjs",
+          "line_ranges": [
+            [
+              1,
+              9
+            ]
+          ],
+          "anchors": [
+            "policy",
+            "createExport",
+            "requestAuditExport"
+          ]
+        },
+        {
+          "path": "src/config.mjs",
+          "line_ranges": [
+            [
+              1,
+              8
+            ]
+          ],
+          "anchors": [
+            "retentionDays",
+            "redactFields",
+            "objectStore",
+            "reviewQueue",
+            "notificationTopic"
+          ]
+        },
+        {
+          "path": "src/runtime/exporter.mjs",
+          "line_ranges": [
+            [
+              1,
+              26
+            ]
+          ],
+          "anchors": [
+            "createExport",
+            "splitRange",
+            "queryAuditLog",
+            "redact",
+            "writeObject",
+            "notifyReady"
+          ]
+        },
+        {
+          "path": "src/runtime/notifier.mjs",
+          "line_ranges": [
+            [
+              1,
+              7
+            ]
+          ],
+          "anchors": [
+            "notifyReady",
+            "requestReview",
+            "manual-review"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dev-p-limit-architecture",
+      "cohort": "development",
+      "selection_rationale": "Small public OSS module with a compact but nontrivial control/data relationship: factory state, queue admission, asynchronous execution, completion-driven scheduling, map fan-out, and clear-queue behavior.",
+      "target_repo": "/private/tmp/archify-authoring-targets-20260920/p-limit",
+      "target_repo_sha": "a8a6fbec4e0e866d6d779b10889bb4f5567e70eb",
+      "repository_url": "https://github.com/sindresorhus/p-limit",
+      "target_snapshot": "fixtures/public-p-limit/SNAPSHOT.md",
+      "prompt_path": "cases/dev-p-limit.prompt.md",
+      "prompt": "Read this repository and create an architecture diagram of its concurrency limiting module. Show the public factory and its returned limiter, the queue that holds pending work, the active task runner, and the completion path that admits the next item. Include the configurable concurrency boundary and the separate map and clear-queue capabilities.",
+      "diagram_type": "architecture",
+      "scope": {
+        "included_files": [
+          "index.js",
+          "package.json"
+        ],
+        "source_boundary": "Trace the exported pLimit/limitFunction APIs and their internal queue, runner, completion, map, and clearQueue relationships.",
+        "excluded": [
+          "benchmark.js",
+          "tests",
+          "dependency implementation"
+        ]
+      },
+      "requirements": {
+        "nodes": [
+          {
+            "key": "caller",
+            "labels": [
+              "Consumer",
+              "Caller",
+              "User Function"
+            ],
+            "role": "external caller"
+          },
+          {
+            "key": "factory",
+            "labels": [
+              "pLimit Factory",
+              "pLimit",
+              "limitFunction"
+            ],
+            "role": "public API"
+          },
+          {
+            "key": "settings",
+            "labels": [
+              "Concurrency Option",
+              "Concurrency Boundary",
+              "validateConcurrency"
+            ],
+            "role": "configuration"
+          },
+          {
+            "key": "queue",
+            "labels": [
+              "Queue",
+              "Pending Queue",
+              "yocto-queue"
+            ],
+            "role": "pending work"
+          },
+          {
+            "key": "runner",
+            "labels": [
+              "run",
+              "Active Task Runner",
+              "activeCount"
+            ],
+            "role": "runtime"
+          },
+          {
+            "key": "completion",
+            "labels": [
+              "next",
+              "Completion",
+              "resumeNext"
+            ],
+            "role": "scheduler loop"
+          },
+          {
+            "key": "map",
+            "labels": [
+              "map",
+              "Promise.all",
+              "Map Capability"
+            ],
+            "role": "batch API"
+          },
+          {
+            "key": "clear",
+            "labels": [
+              "clearQueue",
+              "Clear Queue",
+              "Abort"
+            ],
+            "role": "cancellation API"
+          }
+        ],
+        "relationships": [
+          {
+            "from": "caller",
+            "to": "factory",
+            "labels": [
+              "create limiter",
+              "invoke API"
+            ]
+          },
+          {
+            "from": "settings",
+            "to": "factory",
+            "labels": [
+              "concurrency",
+              "validate"
+            ]
+          },
+          {
+            "from": "factory",
+            "to": "queue",
+            "labels": [
+              "enqueue",
+              "pending work"
+            ]
+          },
+          {
+            "from": "queue",
+            "to": "runner",
+            "labels": [
+              "dequeue",
+              "run queued function"
+            ]
+          },
+          {
+            "from": "runner",
+            "to": "completion",
+            "labels": [
+              "task settled",
+              "next"
+            ]
+          },
+          {
+            "from": "completion",
+            "to": "queue",
+            "labels": [
+              "resume next",
+              "admit pending"
+            ]
+          },
+          {
+            "from": "factory",
+            "to": "map",
+            "labels": [
+              "map iterable"
+            ]
+          },
+          {
+            "from": "factory",
+            "to": "clear",
+            "labels": [
+              "clear pending",
+              "reject pending"
+            ]
+          }
+        ],
+        "semantic_constraints": [
+          "The configured concurrency bounds active tasks; completion releases a slot before the next queued task starts.",
+          "map schedules through the same limiter and aggregates results.",
+          "clearQueue affects pending work and is distinct from normal completion."
+        ]
+      },
+      "source_evidence": [
+        {
+          "path": "index.js",
+          "line_ranges": [
+            [
+              1,
+              148
+            ]
+          ],
+          "anchors": [
+            "pLimit",
+            "validateConcurrency",
+            "resumeNext",
+            "run",
+            "enqueue",
+            "next",
+            "map",
+            "clearQueue",
+            "limitFunction"
+          ]
+        },
+        {
+          "path": "package.json",
+          "line_ranges": [
+            [
+              14,
+              17
+            ]
+          ],
+          "anchors": [
+            "exports"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "holdout-image-transform-architecture",
+      "cohort": "holdout",
+      "selection_rationale": "Different controlled fixture reserved for evaluation. It has a policy gate with a review side path plus a bounded retrying worker pipeline, so it tests transfer beyond the development queue and export patterns.",
+      "target_repo": "/private/tmp/archify-authoring-targets-20260920/fixtures/image-transform-pipeline",
+      "target_repo_sha": "5d195dd33d508653b7de2370391214b4758ba71d",
+      "repository_url": "https://fixtures.invalid/archify/image-transform-pipeline",
+      "target_snapshot": "/private/tmp/archify-authoring-targets-20260920/fixtures/image-transform-pipeline@5d195dd33d508653b7de2370391214b4758ba71d",
+      "prompt_path": "cases/holdout-image-pipeline.prompt.md",
+      "prompt": "Create an architecture diagram from this repository's source for the image transformation pipeline. Show the request entry point, format policy, queued work, worker reads from the configured original-image boundary, transformation, and writes to the configured derived-image boundary. Unsupported formats must go to the manual review queue, while any caught worker failure retries up to the configured attempt count and then becomes a failed job.",
+      "diagram_type": "architecture",
+      "scope": {
+        "included_files": [
+          "src/entry.mjs",
+          "src/config.mjs",
+          "src/runtime/pipeline.mjs",
+          "src/runtime/worker.mjs"
+        ],
+        "source_boundary": "Show the format decision and both the accepted worker path and unsupported/retry failure boundaries.",
+        "excluded": [
+          "image codec internals",
+          "package managers",
+          "deployment scripts"
+        ]
+      },
+      "requirements": {
+        "nodes": [
+          {
+            "key": "entry",
+            "labels": [
+              "Transform Request",
+              "requestTransform",
+              "Image API"
+            ],
+            "role": "request entry"
+          },
+          {
+            "key": "policy",
+            "labels": [
+              "Format Policy",
+              "allowedFormats",
+              "Image Policy"
+            ],
+            "role": "policy"
+          },
+          {
+            "key": "pending",
+            "labels": [
+              "Pending Transform Queue",
+              "Queued Work",
+              "pending"
+            ],
+            "role": "queue"
+          },
+          {
+            "key": "worker",
+            "labels": [
+              "Image Worker",
+              "processImage",
+              "Worker"
+            ],
+            "role": "runtime"
+          },
+          {
+            "key": "input",
+            "labels": [
+              "Original Image Store",
+              "Input Bucket",
+              "original-images"
+            ],
+            "role": "input storage"
+          },
+          {
+            "key": "transform",
+            "labels": [
+              "Image Transform",
+              "transform"
+            ],
+            "role": "processing"
+          },
+          {
+            "key": "output",
+            "labels": [
+              "Derived Image Store",
+              "Output Bucket",
+              "derived-images"
+            ],
+            "role": "output storage"
+          },
+          {
+            "key": "review",
+            "labels": [
+              "Image Review Queue",
+              "Manual Review",
+              "image-review"
+            ],
+            "role": "policy exception"
+          },
+          {
+            "key": "failed",
+            "labels": [
+              "Failed Job",
+              "Failure",
+              "Retry Exhausted"
+            ],
+            "role": "terminal failure"
+          }
+        ],
+        "relationships": [
+          {
+            "from": "entry",
+            "to": "policy",
+            "labels": [
+              "check format",
+              "accept request"
+            ]
+          },
+          {
+            "from": "policy",
+            "to": "pending",
+            "labels": [
+              "supported format",
+              "queue"
+            ]
+          },
+          {
+            "from": "policy",
+            "to": "review",
+            "labels": [
+              "unsupported format",
+              "manual review"
+            ]
+          },
+          {
+            "from": "pending",
+            "to": "worker",
+            "labels": [
+              "run queued job",
+              "dispatch"
+            ]
+          },
+          {
+            "from": "worker",
+            "to": "input",
+            "labels": [
+              "read object",
+              "source image"
+            ]
+          },
+          {
+            "from": "input",
+            "to": "transform",
+            "labels": [
+              "image bytes"
+            ]
+          },
+          {
+            "from": "transform",
+            "to": "output",
+            "labels": [
+              "write derived image",
+              "output"
+            ]
+          },
+          {
+            "from": "worker",
+            "to": "failed",
+            "labels": [
+              "retry exhausted",
+              "failed"
+            ]
+          }
+        ],
+        "semantic_constraints": [
+          "Unsupported formats bypass the worker and enter manual review.",
+          "Supported jobs read originals, transform them, and write derived outputs.",
+          "Any caught worker error enters the retry loop up to maxAttempts before the failed-job terminal state; the source does not classify errors as transient.",
+          "readObject, transform, and writeObject are local async stubs; input/output bucket names are configured logical boundaries."
+        ]
+      },
+      "source_evidence": [
+        {
+          "path": "src/entry.mjs",
+          "line_ranges": [
+            [
+              1,
+              9
+            ]
+          ],
+          "anchors": [
+            "options",
+            "createPipeline",
+            "requestTransform"
+          ]
+        },
+        {
+          "path": "src/config.mjs",
+          "line_ranges": [
+            [
+              1,
+              8
+            ]
+          ],
+          "anchors": [
+            "workerConcurrency",
+            "allowedFormats",
+            "maxAttempts",
+            "inputBucket",
+            "outputBucket",
+            "reviewQueue"
+          ]
+        },
+        {
+          "path": "src/runtime/pipeline.mjs",
+          "line_ranges": [
+            [
+              1,
+              14
+            ]
+          ],
+          "anchors": [
+            "createPipeline",
+            "allowedFormats.includes",
+            "manual-review",
+            "pending.push",
+            "processImage"
+          ]
+        },
+        {
+          "path": "src/runtime/worker.mjs",
+          "line_ranges": [
+            [
+              1,
+              15
+            ]
+          ],
+          "anchors": [
+            "processImage",
+            "maxAttempts",
+            "readObject",
+            "transform",
+            "writeObject",
+            "failed"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "holdout-kleur-architecture",
+      "cohort": "holdout",
+      "selection_rationale": "Small public OSS library with a different structure from the development tasks: environment-derived feature state, a fluent context builder, and a parallel named-export surface sharing formatter primitives.",
+      "target_repo": "/private/tmp/archify-authoring-targets-20260920/kleur",
+      "target_repo_sha": "fa3454483899ddab550d08c18c028e6db1aab0e5",
+      "repository_url": "https://github.com/lukeed/kleur",
+      "target_snapshot": "fixtures/public-kleur/SNAPSHOT.md",
+      "prompt_path": "cases/holdout-kleur.prompt.md",
+      "prompt": "Read this repository and create an architecture diagram of the terminal color formatting library. Show how process environment detection controls whether formatting is enabled, how the default fluent API builds a chain of styles, and how chained calls produce formatted text. Also show the separate named color export surface and its formatting behavior.",
+      "diagram_type": "architecture",
+      "scope": {
+        "included_files": [
+          "index.mjs",
+          "colors.mjs",
+          "package.json"
+        ],
+        "source_boundary": "Trace the environment gate, default object, chain context, style initialization, formatter, and named colors module.",
+        "excluded": [
+          "build output",
+          "tests",
+          "benchmarks",
+          "package installation"
+        ]
+      },
+      "requirements": {
+        "nodes": [
+          {
+            "key": "environment",
+            "labels": [
+              "Process Environment",
+              "FORCE_COLOR",
+              "NO_COLOR",
+              "TERM",
+              "isTTY"
+            ],
+            "role": "runtime input"
+          },
+          {
+            "key": "enabled",
+            "labels": [
+              "Color Enabled Flag",
+              "enabled"
+            ],
+            "role": "feature gate"
+          },
+          {
+            "key": "default_api",
+            "labels": [
+              "Default Color API",
+              "default $",
+              "index.mjs"
+            ],
+            "role": "public API"
+          },
+          {
+            "key": "chain",
+            "labels": [
+              "Fluent Chain",
+              "chain",
+              "keys"
+            ],
+            "role": "context builder"
+          },
+          {
+            "key": "style",
+            "labels": [
+              "Style Function",
+              "init",
+              "Style Methods"
+            ],
+            "role": "formatter primitive"
+          },
+          {
+            "key": "run",
+            "labels": [
+              "run",
+              "ANSI Formatter",
+              "open and close codes"
+            ],
+            "role": "formatting"
+          },
+          {
+            "key": "named_api",
+            "labels": [
+              "Named Color Exports",
+              "colors.mjs",
+              "red",
+              "bold"
+            ],
+            "role": "parallel API"
+          }
+        ],
+        "relationships": [
+          {
+            "from": "environment",
+            "to": "enabled",
+            "labels": [
+              "detect terminal",
+              "enable or disable"
+            ]
+          },
+          {
+            "from": "enabled",
+            "to": "default_api",
+            "labels": [
+              "feature gate"
+            ]
+          },
+          {
+            "from": "default_api",
+            "to": "chain",
+            "labels": [
+              "build chain",
+              "fluent context"
+            ]
+          },
+          {
+            "from": "chain",
+            "to": "style",
+            "labels": [
+              "bind style",
+              "style method"
+            ]
+          },
+          {
+            "from": "style",
+            "to": "run",
+            "labels": [
+              "format text",
+              "ANSI"
+            ]
+          },
+          {
+            "from": "enabled",
+            "to": "named_api",
+            "labels": [
+              "feature gate"
+            ]
+          },
+          {
+            "from": "named_api",
+            "to": "style",
+            "labels": [
+              "format text",
+              "ANSI formatter"
+            ]
+          }
+        ],
+        "semantic_constraints": [
+          "Environment flags determine whether both APIs emit ANSI sequences or return text unchanged.",
+          "The default API has a fluent chain context; the named export module is a separate surface.",
+          "Both API surfaces apply opening and closing ANSI codes, using separate formatter implementations in their respective modules."
+        ]
+      },
+      "source_evidence": [
+        {
+          "path": "index.mjs",
+          "line_ranges": [
+            [
+              1,
+              110
+            ]
+          ],
+          "anchors": [
+            "process.env",
+            "$.enabled",
+            "chain",
+            "init",
+            "run",
+            "export default $"
+          ]
+        },
+        {
+          "path": "colors.mjs",
+          "line_ranges": [
+            [
+              1,
+              53
+            ]
+          ],
+          "anchors": [
+            "process.env",
+            "$.enabled",
+            "init",
+            "export const red",
+            "export const bold"
+          ]
+        },
+        {
+          "path": "package.json",
+          "line_ranges": [
+            [
+              1,
+              43
+            ]
+          ],
+          "anchors": [
+            "module",
+            "exports"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "holdout-sirv-architecture",
+      "cohort": "holdout",
+      "selection_rationale": "Public multi-package OSS repository with a request-time architecture: CLI options feed a middleware factory, which chooses indexed or local lookup and then applies encoding, MIME, cache, fallback, and response behavior.",
+      "target_repo": "/private/tmp/archify-authoring-targets-20260920/sirv",
+      "target_repo_sha": "1135207e92c40354543cbd15c763c7a61d79d432",
+      "repository_url": "https://github.com/lukeed/sirv",
+      "target_snapshot": "fixtures/public-sirv/SNAPSHOT.md",
+      "prompt_path": "cases/holdout-sirv.prompt.md",
+      "prompt": "Create an architecture diagram from this repository's source for the sirv static file server. Show the CLI entry and option handling, the middleware factory, request path resolution, the production file index versus development filesystem lookup, MIME and cache header construction, and the response stream. Include optional compressed asset selection, SPA fallback, and the 404 path.",
+      "diagram_type": "architecture",
+      "scope": {
+        "included_files": [
+          "packages/sirv/index.mjs",
+          "packages/sirv-cli/index.js",
+          "packages/sirv-cli/bin.js",
+          "packages/sirv/package.json"
+        ],
+        "source_boundary": "Trace CLI options into the server/middleware, then the request lookup and response branches.",
+        "excluded": [
+          "benchmark programs",
+          "tests",
+          "third-party package internals",
+          "package installation"
+        ]
+      },
+      "requirements": {
+        "nodes": [
+          {
+            "key": "cli",
+            "labels": [
+              "sirv CLI",
+              "bin.js",
+              "Option Parser",
+              "sade"
+            ],
+            "role": "entry"
+          },
+          {
+            "key": "server",
+            "labels": [
+              "HTTP Server",
+              "CLI Bootstrap",
+              "packages/sirv-cli/index.js"
+            ],
+            "role": "runtime entry"
+          },
+          {
+            "key": "middleware",
+            "labels": [
+              "sirv Middleware",
+              "middleware factory",
+              "sirv(dir, opts)"
+            ],
+            "role": "request handler"
+          },
+          {
+            "key": "request",
+            "labels": [
+              "HTTP Request",
+              "pathname",
+              "accept-encoding"
+            ],
+            "role": "request"
+          },
+          {
+            "key": "index",
+            "labels": [
+              "Production File Index",
+              "FILES",
+              "totalist"
+            ],
+            "role": "lookup store"
+          },
+          {
+            "key": "local",
+            "labels": [
+              "Development Filesystem Lookup",
+              "viaLocal",
+              "dev mode"
+            ],
+            "role": "lookup store"
+          },
+          {
+            "key": "headers",
+            "labels": [
+              "MIME and Cache Headers",
+              "toHeaders",
+              "Content-Type"
+            ],
+            "role": "response metadata"
+          },
+          {
+            "key": "response",
+            "labels": [
+              "Response Stream",
+              "send",
+              "createReadStream"
+            ],
+            "role": "response"
+          },
+          {
+            "key": "fallback",
+            "labels": [
+              "SPA Fallback",
+              "single",
+              "index.html"
+            ],
+            "role": "fallback"
+          },
+          {
+            "key": "not_found",
+            "labels": [
+              "404",
+              "onNoMatch",
+              "is404"
+            ],
+            "role": "failure response"
+          }
+        ],
+        "relationships": [
+          {
+            "from": "cli",
+            "to": "server",
+            "labels": [
+              "parse options",
+              "boot"
+            ]
+          },
+          {
+            "from": "server",
+            "to": "middleware",
+            "labels": [
+              "create server",
+              "sirv factory"
+            ]
+          },
+          {
+            "from": "request",
+            "to": "middleware",
+            "labels": [
+              "handle request",
+              "pathname"
+            ]
+          },
+          {
+            "from": "middleware",
+            "to": "index",
+            "labels": [
+              "production lookup",
+              "viaCache"
+            ]
+          },
+          {
+            "from": "middleware",
+            "to": "local",
+            "labels": [
+              "development lookup",
+              "viaLocal"
+            ]
+          },
+          {
+            "from": "middleware",
+            "to": "headers",
+            "labels": [
+              "file metadata",
+              "toHeaders"
+            ]
+          },
+          {
+            "from": "headers",
+            "to": "response",
+            "labels": [
+              "send headers",
+              "response"
+            ]
+          },
+          {
+            "from": "middleware",
+            "to": "fallback",
+            "labels": [
+              "SPA fallback",
+              "single"
+            ]
+          },
+          {
+            "from": "middleware",
+            "to": "not_found",
+            "labels": [
+              "no match",
+              "404"
+            ]
+          }
+        ],
+        "semantic_constraints": [
+          "Production mode indexes files while dev mode resolves against the filesystem at request time.",
+          "Accept-Encoding may select Brotli or gzip variants before the original/extension candidates.",
+          "A missing asset uses the configured no-match path, while SPA mode may resolve a fallback for eligible paths.",
+          "The response path combines headers with a streamed file body."
+        ]
+      },
+      "source_evidence": [
+        {
+          "path": "packages/sirv-cli/bin.js",
+          "line_ranges": [
+            [
+              1,
+              44
+            ]
+          ],
+          "anchors": [
+            "sade",
+            "--dev",
+            "--etag",
+            "--gzip",
+            "--brotli",
+            "--single",
+            "--port"
+          ]
+        },
+        {
+          "path": "packages/sirv-cli/index.js",
+          "line_ranges": [
+            [
+              1,
+              99
+            ]
+          ],
+          "anchors": [
+            "module.exports",
+            "sirv(dir, opts)",
+            "createServer",
+            "server.listen"
+          ]
+        },
+        {
+          "path": "packages/sirv/index.mjs",
+          "line_ranges": [
+            [
+              1,
+              197
+            ]
+          ],
+          "anchors": [
+            "viaCache",
+            "viaLocal",
+            "toHeaders",
+            "send",
+            "toAssume",
+            "single",
+            "is404",
+            "accept-encoding"
+          ]
+        },
+        {
+          "path": "packages/sirv/package.json",
+          "line_ranges": [
+            [
+              1,
+              20
+            ]
+          ],
+          "anchors": [
+            "name",
+            "module",
+            "exports"
+          ]
+        }
+      ]
+    }
+  ]
+}

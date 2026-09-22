@@ -1,0 +1,35 @@
+{
+  "scope": "Read-only factual review of docs/research-repair-firstpass-result-20260921.md against the assigned summary metrics, quality adjudication, two independent reviews, V2 failure analysis, and frozen protocol. Holdout candidate bytes were not inspected.",
+  "blocking_findings": [],
+  "verified": [
+    {
+      "claim": "The primary result is limited to one static geometry success, not a delivery or performance result.",
+      "evidence": "summary-metrics.json records V2 static_successes_v2=1, fully_quality_accepted_successes_v2=0, development_gate_pass=false, holdout_cases_run=0, fresh_author_runs=0, null repair/end-to-end metrics, and promotion_qualified=false. The document states the same boundary."
+    },
+    {
+      "claim": "The table's timings and counts are correct at its stated precision.",
+      "evidence": "V1 rows are 3.500361s/22, 3.514113s/21, 4.362098s/22; V2 rows are 10.030820s/55, 4.281306s/22, 12.783887s/64. Their rounded table values and total sums 11.377s and 27.096s match summary-metrics.json. QuickLRU finalize is 3486ms, correctly stated as separate from helper time."
+    },
+    {
+      "claim": "The development stop rule and later-stage non-execution are represented accurately.",
+      "evidence": "protocol.json requires at least 2/3 development static passes before holdout. The recorded 1/3 therefore does not authorize holdout or author pairs; the document calls those unreached gates rather than missing evidence."
+    },
+    {
+      "claim": "The diagnosis of the two failed V2 cases matches recorded trajectories and remains conditional.",
+      "evidence": "v2-failure-analysis.json records p-retry's clean-layout attempt 26 followed by desktop-readability recovery attempt 27 and queue exhaustion at 55/9.987s; lilconfig reached 64 attempts at 12.737s with four remaining diagnostics. The document states the observations and explicitly says that relaxing the heuristic is not proven to pass."
+    },
+    {
+      "claim": "The QuickLRU quality conclusion is not hidden grading or an overclaim of semantic preservation.",
+      "evidence": "quality-adjudication.json records machine finalize pass but semantic/independent overall fail and promotion_qualified=false. Luna independently fails the required set/old-generation clause; Terra independently fails that clause plus expiry-policy, predicate/return, and expired has/peek detail, and reports 1440 dark-text legibility failure. The document distinguishes exact content preservation from completeness and does not invent a new literal-source requirement."
+    },
+    {
+      "claim": "The report avoids unsupported latency/generalization claims.",
+      "evidence": "It labels helper time as outer monotonic static-process time with internal validation, explicitly excludes research/finalize/capture/review, calls internal candidates distinct from model repairs, and states matched author-pair/end-to-end/generalization results are unknown. This matches the frozen protocol measurement boundaries and summary note."
+    }
+  ],
+  "limitations": [
+    "Exact V1 probe construction and the precise QuickLRU geometry delta/hash are referenced to the records package, which the assigned instruction says is being packaged and was not independently opened here.",
+    "Preservation/verification record links were intentionally not checked because they are still being packaged; this review does not certify their final paths or archive manifest."
+  ],
+  "disposition": "No factual, acceptance-boundary, or hidden-grading blocker found in the result document against the assigned evidence."
+}

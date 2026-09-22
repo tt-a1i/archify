@@ -1,0 +1,21 @@
+{
+  "timed_author_attempts": 12,
+  "total_author_seconds": 3954.313999891281,
+  "total_full_seconds": 4069.5568311214447,
+  "first_structural_total_seconds": 2206.9301269054413,
+  "after_first_structural_total_seconds": 1747.3838729858398,
+  "before_fraction": 0.558106950274085,
+  "after_fraction": 0.44189304972591503,
+  "machine_completed": 4,
+  "max_first_structural_seconds": 260.591370344162,
+  "min_first_structural_seconds": 141.9028491973877,
+  "limit": "Descriptive accounting across these12 attempts, including failures. Before-first includes exploration, semantic judgment and drafting; after-first includes repair, all remaining checks and final response. Neither is an isolated causal stage cost.",
+  "summed_public_author_usage": {
+    "input_tokens": 9955107,
+    "cached_input_tokens": 9330176,
+    "output_tokens": 91160,
+    "reasoning_output_tokens": 24270,
+    "total_tokens": 10046267
+  },
+  "usage_limit": "Author public turn counters only; cache is a subset of input, not an additional token charge. Research/review/root usage and actual currency cost are not measured here."
+}

@@ -1,0 +1,31 @@
+{"event": "started", "kind": "auxiliary", "handle": "semantic_tools_research", "model": "terra", "effort": "medium", "epoch": 1789962636.015432}
+{"event": "started", "kind": "auxiliary", "handle": "layout_advisor", "model": "terra", "effort": "high", "epoch": 1789962636.0154471}
+{"event": "started", "kind": "auxiliary", "handle": "native_harness_map", "model": "luna", "effort": "medium", "epoch": 1789962636.015452}
+{"event": "terminal", "kind": "auxiliary", "handle": "native_harness_map", "status": "completed", "epoch": 1789962915.5317829}
+{"event": "terminal", "kind": "auxiliary", "handle": "semantic_tools_research", "status": "completed", "epoch": 1789963052.4818618}
+{"event": "started", "kind": "author", "run_id": "polka-B", "handle": "/root/source_polka_b", "model": "gpt-5.6-terra", "effort": "medium", "epoch": 1789963079.5058088}
+{"event": "terminal", "kind": "author", "run_id": "polka-B", "status": "completed", "epoch": 1789963260.451653}
+{"event": "terminal", "kind": "auxiliary", "handle": "layout_advisor", "status": "completed", "epoch": 1789963260.451662}
+{"event": "started", "kind": "author", "run_id": "polka-O", "handle": "/root/source_polka_o", "model": "gpt-5.6-terra", "effort": "medium", "epoch": 1789963344.751599}
+{"event": "measurement_refinement", "scope": "all source runs uniformly", "reason": "Native child rollout contains task_started/task_complete and model+effort; derive exact task wall in addition to preserved external dispatch/completion span; do not include coordinator notification lag as agent work", "before": "polka-O result; remaining tasks unstarted", "epoch": 1789963344.751613}
+{"event": "terminal", "kind": "author", "run_id": "polka-O", "status": "completed", "epoch": 1789963517.3694541}
+{"event": "started", "kind": "author", "run_id": "lowdb-O", "handle": "/root/source_lowdb_o", "model": "gpt-5.6-terra", "effort": "medium", "epoch": 1789963550.85289}
+{"event": "terminal", "kind": "author", "run_id": "lowdb-O", "status": "completed", "mechanism": "not adopted - path problem", "epoch": 1789963810.1692522}
+{"event": "started", "kind": "author", "run_id": "lowdb-B", "handle": "/root/source_lowdb_b", "model": "gpt-5.6-terra", "effort": "medium", "epoch": 1789963881.903522}
+{"event": "terminal", "kind": "author", "run_id": "lowdb-B", "status": "completed", "epoch": 1789964059.692873}
+{"event": "started", "kind": "review", "handle": "review_source_pairs", "epoch": 1789964125.283942}
+{"event": "started", "kind": "auxiliary", "handle": "review_layout_prototype", "epoch": 1789964125.2839649}
+{"event": "started", "kind": "auxiliary", "handle": "review_layout_prototype", "turn": "targeted-fix", "epoch": 1789964326.626923}
+{"event": "terminal", "handle": "review_source_pairs", "kind": "review", "status": "completed", "recorded_epoch": 1789964649.986421}
+{"event": "terminal", "handle": "review_layout_prototype", "kind": "auxiliary", "status": "completed", "recorded_epoch": 1789964649.9864461}
+{"event": "started", "kind": "author", "run_id": "full-lowdb-I", "handle": "/root/full_lowdb_i", "recorded_epoch": 1789964681.390364}
+{"event": "terminal", "kind": "author", "run_id": "full-lowdb-I", "handle": "/root/full_lowdb_i", "recorded_epoch": 1789964978.566287}
+{"event": "started", "kind": "author", "run_id": "full-lowdb-B", "handle": "/root/full_lowdb_b", "recorded_epoch": 1789964998.9462452}
+{"event": "terminal", "kind": "author", "run_id": "full-lowdb-B", "handle": "/root/full_lowdb_b", "recorded_epoch": 1789965285.276948}
+{"event": "started", "kind": "author", "run_id": "full-polka-B", "handle": "/root/full_polka_b", "recorded_epoch": 1789965305.078621}
+{"event": "terminal", "kind": "author", "run_id": "full-polka-B", "handle": "/root/full_polka_b", "recorded_epoch": 1789965558.414994}
+{"event": "started", "kind": "author", "run_id": "full-polka-L", "handle": "/root/full_polka_l", "recorded_epoch": 1789965587.773568}
+{"event": "terminal", "kind": "author", "run_id": "full-polka-L", "handle": "/root/full_polka_l", "recorded_epoch": 1789965885.193012}
+{"event": "post-experiment-hardening", "epoch": 1789965918.031777, "scope": "layout advisor rejects non-array components/connections; frozen trial version preserved; no author rerun"}
+{"event": "started", "kind": "review", "handle": "review_full_pairs", "epoch": 1789965965.743585}
+{"event": "terminal", "kind": "review", "handle": "review_full_pairs", "status": "completed", "recorded_epoch": 1789966297.58935}

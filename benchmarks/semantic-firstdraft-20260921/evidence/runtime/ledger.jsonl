@@ -1,0 +1,13 @@
+{"event": "frozen", "epoch": 1789983605.2263198, "base": "e484993f819ec16f3ee4c976ee14173901cdbc56"}
+{"event": "prepared", "epoch": 1789983606.5505621, "run": "p-retry-R1", "workspace": "/private/tmp/archify-semantic-firstdraft-20260921/runtime-trials/runs/p-retry-R1"}
+{"event": "completed", "epoch": 1789983826.1706922, "run": "p-retry-R1", "agent": "/root/runtime_pretry_r1"}
+{"event": "prepared", "epoch": 1789983844.5714922, "run": "p-retry-B1", "workspace": "/private/tmp/archify-semantic-firstdraft-20260921/runtime-trials/runs/p-retry-B1"}
+{"event": "completed", "epoch": 1789984319.467984, "run": "p-retry-B1", "agent": "/root/runtime_pretry_b1"}
+{"event": "prepared", "epoch": 1789984321.624585, "run": "quick-lru-B1", "workspace": "/private/tmp/archify-semantic-firstdraft-20260921/runtime-trials/runs/quick-lru-B1"}
+{"event": "completed", "epoch": 1789984649.433708, "run": "quick-lru-B1", "agent": "/root/runtime_lru_b1"}
+{"event": "prepared", "epoch": 1789984656.122798, "run": "quick-lru-R1", "workspace": "/private/tmp/archify-semantic-firstdraft-20260921/runtime-trials/runs/quick-lru-R1"}
+{"event": "completed", "epoch": 1789985025.093031, "run": "quick-lru-R1", "agent": "/root/runtime_lru_r1"}
+{"event": "prepared", "epoch": 1789985027.766908, "run": "lilconfig-R1", "workspace": "/private/tmp/archify-semantic-firstdraft-20260921/runtime-trials/runs/lilconfig-R1"}
+{"event": "completed", "epoch": 1789985495.32883, "run": "lilconfig-R1", "agent": "/root/runtime_lil_r1"}
+{"event": "prepared", "epoch": 1789985498.156487, "run": "lilconfig-B1", "workspace": "/private/tmp/archify-semantic-firstdraft-20260921/runtime-trials/runs/lilconfig-B1"}
+{"event": "completed", "epoch": 1789985823.3748338, "run": "lilconfig-B1", "agent": "/root/runtime_lil_b1"}

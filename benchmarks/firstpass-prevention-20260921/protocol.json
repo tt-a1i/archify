@@ -1,0 +1,47 @@
+{
+  "created_epoch": 1789992575.5314271,
+  "base": "68c94f912590aed1a1c9c2e493e2927ece639afb",
+  "question": "Does requirement-to-visible-content mapping plus measured preferred-font row planning reduce incomplete first drafts and model repair, including added planning cost?",
+  "condition": "One combined experimental author helper/guide; cannot attribute effects uniquely to mapping, dimensions or rows. No task-specific answers. Baseline uses unchanged packaged Skill.",
+  "tasks_sha256": "e78b303cd574b861d0d0bb04f4937658726b877c3fc227af5e78a7c5957a3483",
+  "tasks": "Same three prior visible scopes/clauses/source heads. Known development repositories, not unseen-task evaluation. Fresh independent authors, no prior diagrams.",
+  "prototype": {
+    "maximum_revisions": 2,
+    "no_layout_search": true,
+    "automatic_routing_first": true,
+    "all_text_and_topology_author_owned": true,
+    "coverage_check": "Only validates complete clause indexes and anchors to existing visible strings, never semantic truth or source entailment.",
+    "mechanical_gate": "Focused malformed/alias/semantic-preservation tests and production-rendered independent synthetic multi-row/text-width fixture pass; no production validation modification."
+  },
+  "authors": {
+    "model": "gpt-5.6-terra",
+    "effort": "medium",
+    "fresh_context": true,
+    "serial": true,
+    "maximum_seconds": 600,
+    "maximum_repairs_after_first_finalize": 3,
+    "order": [
+      "p-retry-B1",
+      "p-retry-P1",
+      "quick-lru-P1",
+      "quick-lru-B1",
+      "lilconfig-B1",
+      "lilconfig-P1"
+    ],
+    "no_other_agents_during_timing": true,
+    "frozen_after_first_dispatch": true
+  },
+  "observability": "Watch every delivered JSON byte version; archive initial author plan + coverage. Public native start/end/tools only. Count model repair cycles after first failed finalize separately from local helper rejection. Include per-run copying/dispatch and helper time in full elapsed. Post-run evaluation/research/review separate.",
+  "quality": "Original source clauses, exact source revision, ordinary showcase finalize, source claim entailment and actual 1440x900/2048x1320 light/dark captures. Normal vertical page scrolling accepted. Both conditions equally reviewed blinded to timing/condition. First and final candidates separate.",
+  "success_screen": {
+    "all_candidate_finals_quality_pass": true,
+    "minimum_both_quality_pairs": 2,
+    "median_model_repair_reduction": 1,
+    "median_full_time_fraction_saved": 0.15,
+    "median_full_time_seconds_saved": 20,
+    "maximum_qualified_pair_slowdown_fraction": 0.1
+  },
+  "confirmation": "Only if complete screen passes: one reverse-order pair per original task with frozen mechanism. Initial screen alone does not justify promotion.",
+  "failure_policy": "All failures retained. No reinterpretation of faster failed outputs as successful delivery. No extra prompt changes, retries replacing authors, or new tasks after frozen screen begins. Infrastructure failures separately identified, not silently replaced.",
+  "preservation": "Keep production package, original dirty workspace, live Skills and remote state unchanged. Local research commits only."
+}

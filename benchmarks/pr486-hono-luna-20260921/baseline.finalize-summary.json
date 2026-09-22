@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/tushaokun/.codex/visualizations/2026/09/21/01a0c47a-bf49-7ba3-8b07-8b43671e574d/inspect-repo-luna-medium-trial/baseline/baseline.json",
+    "sha256": "3d95fd2649a19ad007b944f9302fdadbbe29509ab9c3c58d607aeb05bb4ccf30",
+    "bytes": 6462
+  },
+  "artifact": {
+    "path": "/Users/tushaokun/.codex/visualizations/2026/09/21/01a0c47a-bf49-7ba3-8b07-8b43671e574d/inspect-repo-luna-medium-trial/baseline/baseline.html",
+    "sha256": "f1e5138ebb0b30bf48ff9d0fdbe6517c2076e6d03975a103462ab559d56bee89",
+    "bytes": 844228
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/21/01a0c47a-bf49-7ba3-8b07-8b43671e574d/inspect-repo-luna-medium-trial/baseline/baseline.finalize.json",
+    "summaryReceipt": "/Users/tushaokun/.codex/visualizations/2026/09/21/01a0c47a-bf49-7ba3-8b07-8b43671e574d/inspect-repo-luna-medium-trial/baseline/baseline.finalize-summary.json",
+    "browserCheckReceipt": "/Users/tushaokun/.codex/visualizations/2026/09/21/01a0c47a-bf49-7ba3-8b07-8b43671e574d/inspect-repo-luna-medium-trial/baseline/baseline.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 3024
+}

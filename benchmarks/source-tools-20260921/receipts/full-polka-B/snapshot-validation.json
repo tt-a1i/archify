@@ -1,0 +1,30 @@
+{
+  "results": [
+    {
+      "snapshot": 1,
+      "sha256": "809e7fb094d6df250a045a45102aa7fe395e23b44578a3028392b4f0f8952425",
+      "from_native_start_seconds": 183.17867159843445,
+      "validation_exit": 1,
+      "codes": [
+        "composition/micro-segment"
+      ]
+    },
+    {
+      "snapshot": 2,
+      "sha256": "eb81f937dbf2882664a21013d3839137a5c4bae92963b50bcd5c950814a31169",
+      "from_native_start_seconds": 209.99458932876587,
+      "validation_exit": 1,
+      "codes": [
+        "composition/short-interior-segment"
+      ]
+    },
+    {
+      "snapshot": 3,
+      "sha256": "01121998928f8fbf4dc342bdfeba5e50dfbba8ee03202362619bac38d3656080",
+      "from_native_start_seconds": 230.82341051101685,
+      "validation_exit": 0,
+      "codes": []
+    }
+  ],
+  "note": "post-run validation of preserved exact bytes; not added to author latency, not itself semantic/perceptual acceptance"
+}

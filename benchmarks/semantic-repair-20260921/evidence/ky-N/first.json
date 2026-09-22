@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ky HTTP request lifecycle",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/sindresorhus/ky",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "0d59458a0a58e1c3d7c6db0ab17ed5c7cd671e47"
+    },
+    "views": [
+      {
+        "id": "success-path",
+        "label": "Successful request",
+        "focus": ["caller", "merge", "create", "request", "before-request", "attempt", "fetch", "after-response", "return"],
+        "note": "Follow the normal request from instance defaults to the returned Response."
+      },
+      {
+        "id": "hook-shortcuts",
+        "label": "Hook shortcuts",
+        "focus": ["create", "before-request", "after-response", "retry-policy", "return", "error"],
+        "note": "Hooks can replace the request or response, force a retry, stop retrying, or process an error."
+      },
+      {
+        "id": "retry-and-cancel",
+        "label": "Retry and cancellation",
+        "focus": ["attempt", "fetch", "timeout", "retry-policy", "before-retry", "error"],
+        "note": "Retry eligibility, delay, and managed abort signals govern each additional attempt."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "Caller",
+      "sublabel": "ky(input, options) or instance method",
+      "pos": [40, 300],
+      "size": [190, 70],
+      "sources": [{"path": "source/index.ts", "line": 12, "end_line": 17, "label": "instance entry points"}]
+    },
+    {
+      "id": "merge",
+      "type": "backend",
+      "label": "Default option merge",
+      "sublabel": "validateAndMerge defaults + call options",
+      "pos": [290, 300],
+      "size": [205, 70],
+      "sources": [{"path": "source/index.ts", "line": 12, "end_line": 21, "label": "call/create/extend merging"}, {"path": "source/utils/merge.ts", "line": 47, "end_line": 54, "label": "validated deep merge"}]
+    },
+    {
+      "id": "create",
+      "type": "backend",
+      "label": "Ky.create + init hooks",
+      "sublabel": "clone mutable options, then construct Ky",
+      "pos": [570, 300],
+      "size": [220, 76],
+      "sources": [{"path": "source/core/Ky.ts", "line": 179, "end_line": 190, "label": "init hook and Ky creation"}]
+    },
+    {
+      "id": "request",
+      "type": "backend",
+      "label": "Normalized Request",
+      "sublabel": "headers, URL, body, managed signal",
+      "pos": [860, 300],
+      "size": [205, 70],
+      "sources": [{"path": "source/core/Ky.ts", "line": 378, "end_line": 503, "label": "options and Request construction"}]
+    },
+    {
+      "id": "before-request",
+      "type": "backend",
+      "label": "beforeRequest hooks",
+      "sublabel": "may replace Request or return Response",
+      "pos": [1135, 300],
+      "size": [205, 70],
+      "sources": [{"path": "source/core/Ky.ts", "line": 1003, "end_line": 1024, "label": "beforeRequest outcomes"}]
+    },
+    {
+      "id": "attempt",
+      "type": "backend",
+      "label": "Attempt controller",
+      "sublabel": "fetch, classify failure, recur",
+      "pos": [1135, 510],
+      "size": [195, 70],
+      "sources": [{"path": "source/core/Ky.ts", "line": 1091, "end_line": 1097, "label": "attempt and failure route"}, {"path": "source/core/Ky.ts", "line": 1193, "end_line": 1239, "label": "fetch attempt"}]
+    },
+    {
+      "id": "fetch",
+      "type": "external",
+      "label": "Configured or native Fetch",
+      "sublabel": "options.fetch or globalThis.fetch",
+      "pos": [860, 510],
+      "size": [215, 70],
+      "sources": [{"path": "source/core/Ky.ts", "line": 386, "end_line": 388, "label": "fetch selection"}, {"path": "source/core/Ky.ts", "line": 1214, "end_line": 1222, "label": "fetch invocation"}]
+    },
+    {
+      "id": "timeout",
+      "type": "security",
+      "label": "Timeout + cancellation",
+      "sublabel": "managed AbortSignal and timeout race",
+      "pos": [570, 530],
+      "size": [215, 70],
+      "sources": [{"path": "source/core/Ky.ts", "line": 420, "end_line": 424, "label": "managed abort signal"}, {"path": "source/utils/timeout.ts", "line": 12, "end_line": 36, "label": "timer aborts fetch"}]
+    },
+    {
+      "id": "retry-policy",
+      "type": "backend",
+      "label": "Retry eligibility + delay",
+      "sublabel": "limit, method, error/status, shouldRetry",
+      "pos": [850, 720],
+      "size": [230, 76],
+      "sources": [{"path": "source/core/Ky.ts", "line": 567, "end_line": 662, "label": "retry decision and delay"}]
+    },
+    {
+      "id": "before-retry",
+      "type": "backend",
+      "label": "beforeRetry hooks",
+      "sublabel": "replace Request/Response or return stop",
+      "pos": [1135, 720],
+      "size": [205, 70],
+      "sources": [{"path": "source/core/Ky.ts", "line": 1099, "end_line": 1184, "label": "delay and hook outcomes"}]
+    },
+    {
+      "id": "after-response",
+      "type": "backend",
+      "label": "afterResponse hooks",
+      "sublabel": "may replace Response or force retry",
+      "pos": [570, 910],
+      "size": [210, 70],
+      "sources": [{"path": "source/core/Ky.ts", "line": 1026, "end_line": 1088, "label": "afterResponse outcomes"}]
+    },
+    {
+      "id": "return",
+      "type": "external",
+      "label": "Returned response",
+      "sublabel": "ResponsePromise resolves; hook stop can yield undefined",
+      "pos": [290, 910],
+      "size": [220, 70],
+      "sources": [{"path": "source/core/Ky.ts", "line": 211, "end_line": 273, "label": "response loop and return"}, {"path": "source/core/Ky.ts", "line": 299, "end_line": 355, "label": "ResponsePromise result"}]
+    },
+    {
+      "id": "error",
+      "type": "external",
+      "label": "Final error",
+      "sublabel": "beforeError hooks may replace Error, then throw",
+      "pos": [40, 720],
+      "size": [215, 70],
+      "sources": [{"path": "source/core/Ky.ts", "line": 664, "end_line": 693, "label": "processed error pipeline"}]
+    }
+  ],
+  "boundaries": [
+    {"kind": "region", "label": "Ky request pipeline", "wraps": ["merge", "create", "request", "before-request", "attempt", "timeout", "retry-policy", "before-retry", "after-response"], "pad": 28}
+  ],
+  "connections": [
+    {"id": "call-options", "from": "caller", "to": "merge", "label": "input + options"},
+    {"id": "merged-options", "from": "merge", "to": "create", "label": "merged defaults"},
+    {"id": "construct", "from": "create", "to": "request", "label": "construct Ky + Request"},
+    {"id": "before-request-run", "from": "request", "to": "before-request", "label": "normalized request"},
+    {"id": "send-attempt", "from": "before-request", "to": "attempt", "label": "continue"},
+    {"id": "fetch-call", "from": "attempt", "to": "fetch", "label": "Request + fetch options"},
+    {"id": "fetch-result", "from": "fetch", "to": "after-response", "label": "Response"},
+    {"id": "hook-response", "from": "before-request", "to": "after-response", "label": "returned Response bypasses fetch", "variant": "dashed"},
+    {"id": "timeout-wrap", "from": "timeout", "to": "attempt", "label": "effective timeout / abort", "variant": "dashed"},
+    {"id": "failure-decision", "from": "attempt", "to": "retry-policy", "label": "fetch/HTTP failure"},
+    {"id": "force-retry", "from": "after-response", "to": "retry-policy", "label": "ForceRetryError", "variant": "dashed"},
+    {"id": "eligibility", "from": "retry-policy", "to": "before-retry", "label": "eligible delay"},
+    {"id": "retry-request", "from": "before-retry", "to": "attempt", "label": "retry or replacement Request"},
+    {"id": "retry-response", "from": "before-retry", "to": "after-response", "label": "returned Response", "variant": "dashed"},
+    {"id": "retry-stop", "from": "before-retry", "to": "return", "label": "stop → undefined", "variant": "dashed"},
+    {"id": "success", "from": "after-response", "to": "return", "label": "decorate and resolve Response"},
+    {"id": "unretryable", "from": "retry-policy", "to": "error", "label": "limit/ineligible error"},
+    {"id": "hook-error", "from": "before-request", "to": "error", "label": "hook error", "variant": "dashed"},
+    {"id": "process-error", "from": "after-response", "to": "error", "label": "final error processing", "variant": "dashed"}
+  ],
+  "cards": [
+    {"dot": "cyan", "title": "Option ownership", "items": ["Instance and call defaults are merged before Ky.create.", "init hooks run before Ky constructs the normalized Request."]},
+    {"dot": "amber", "title": "Control points", "items": ["beforeRequest can return a Response and skip Fetch.", "afterResponse can replace a Response or force the retry path.", "beforeRetry can replace work, supply a Response, or stop it."]},
+    {"dot": "violet", "title": "Failure boundary", "items": ["Ky calls configured fetch or bound global fetch through an effective timeout.", "Retry only continues after eligibility, delay, and beforeRetry handling; final errors pass through beforeError hooks."]}
+  ]
+}

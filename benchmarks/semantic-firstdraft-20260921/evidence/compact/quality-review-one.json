@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "review_scope": "Independent source and image review of every visible case and stage in cases.json. Machine validation is reported separately.",
+  "cases": [
+    {
+      "id": "case-01",
+      "stages": [
+        {
+          "stage": "first",
+          "criteria": [
+            {"number": 1, "status": "pass", "source": "index.js:1-23", "reason": "QuickLRU owns two private Maps, #size, #maxSize, #maxAge and optional #onEviction; the boundary is explicitly in-memory."},
+            {"number": 2, "status": "pass", "source": "index.js:68-78,120-135", "reason": "The set paths distinguish current overwrite from absent-current insertion; insertion increments #size and threshold rotation swaps whole generations and emits the prior old cache."},
+            {"number": 3, "status": "pass", "source": "index.js:40-61,105-118", "reason": "The diagram shows current hit, old hit with promotion and missing/expired undefined, with expiry checked before returning and expired entries deleted."},
+            {"number": 4, "status": "pass", "source": "index.js:137-157", "reason": "has and peek inspect current then old without #moveToRecent; both use expiry handling and can remove expired entries."},
+            {"number": 5, "status": "pass", "source": "index.js:30-46,68-78,166-179", "reason": "Expiry and rotation connect to onEviction, while delete and clear mutate both Maps/count directly and the card states that manual removal does not invoke the callback."},
+            {"number": 6, "status": "pass", "source": "index.js:1-179", "reason": "The authored views/cards stay within the requested lifecycle and do not add iteration, resize or exact public size arithmetic claims."}
+          ],
+          "citation_entailment": "Component citations cover the controller, operations, maps and callback paths; card and edge claims are entailed by the cited implementation ranges.",
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No capture is listed for this stage; visual acceptance cannot be passed from a missing image."},
+          "overall_quality": "fail",
+          "overall_reason": "Semantic criteria pass, but visual evidence is unavailable.",
+          "machine_status": {"production_validate_exit": 1, "production_diagnostic_codes": ["composition/label-route-clearance", "composition/micro-segment", "layout/constraint"]}
+        },
+        {
+          "stage": "final",
+          "criteria": [
+            {"number": 1, "status": "pass", "source": "index.js:1-23", "reason": "QuickLRU owns two private Maps, #size, #maxSize, #maxAge and optional #onEviction; the boundary is explicitly in-memory."},
+            {"number": 2, "status": "pass", "source": "index.js:68-78,120-135", "reason": "The set paths distinguish current overwrite from absent-current insertion; insertion increments #size and threshold rotation swaps whole generations and emits the prior old cache."},
+            {"number": 3, "status": "pass", "source": "index.js:40-61,105-118", "reason": "The diagram shows current hit, old hit with promotion and missing/expired undefined, with expiry checked before returning and expired entries deleted."},
+            {"number": 4, "status": "pass", "source": "index.js:137-157", "reason": "has and peek inspect current then old without #moveToRecent; both use expiry handling and can remove expired entries."},
+            {"number": 5, "status": "pass", "source": "index.js:30-46,68-78,166-179", "reason": "Expiry and rotation connect to onEviction, while delete and clear mutate both Maps/count directly and the card states that manual removal does not invoke the callback."},
+            {"number": 6, "status": "pass", "source": "index.js:1-179", "reason": "The authored views/cards stay within the requested lifecycle and do not add iteration, resize or exact public size arithmetic claims."}
+          ],
+          "citation_entailment": "Component citations cover the controller, operations, maps and callback paths; card and edge claims are entailed by the cited implementation ranges.",
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No capture is listed for this stage; visual acceptance cannot be passed from a missing image."},
+          "overall_quality": "fail",
+          "overall_reason": "Semantic criteria pass, but visual evidence is unavailable.",
+          "machine_status": {"production_validate_exit": 1, "production_diagnostic_codes": ["composition/micro-segment"], "author_complete_machine_pass": false}
+        }
+      ]
+    },
+    {
+      "id": "case-02",
+      "stages": [
+        {
+          "stage": "first",
+          "criteria": [
+            {"number": 1, "status": "pass", "source": "index.js:233-259", "reason": "The controller node owns attemptNumber, retriesConsumed and startTime; the operation is a separate caller-provided input."},
+            {"number": 2, "status": "pass", "source": "index.js:239-259", "reason": "The loop invokes input(attemptNumber), returns its value, and routes thrown/rejected errors into the failure controller."},
+            {"number": 3, "status": "pass", "source": "index.js:118-197", "reason": "The hooks are ordered shouldConsumeRetry, onFailedAttempt, guards, shouldRetry; consume=false loops without delay/count consumption, while remaining time and retriesLeft guard continuation."},
+            {"number": 4, "status": "pass", "source": "index.js:126-181", "reason": "The rejection path names retry-time/count exhaustion, shouldRetry=false and non-network TypeError rejection."},
+            {"number": 5, "status": "pass", "source": "index.js:49-63,89-106,184-195,233-247", "reason": "AbortError unwraps originalError; AbortSignal is checked around input and cancels a pending delay, while input receives only attemptNumber."},
+            {"number": 6, "status": "pass", "source": "index.js:66-82,184-197,239-260", "reason": "The timer is bounded by maxTimeout and remaining maxRetryTime, with Infinity represented as no cap; the retry loop and no-deadline-on-running-input distinction are explicit."},
+            {"number": 7, "status": "pass", "source": "index.js:49-63,109-197,233-260", "reason": "Roles, branches and conclusion cards are source backed; excluded jitter formula, option wording and wrapper details are not asserted."}
+          ],
+          "citation_entailment": "All material labels and cards have matching implementation ranges for loop ownership, hook order, stop guards, AbortError, signal delay and timer bounds.",
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No capture is listed for this stage; visual acceptance cannot be passed from a missing image."},
+          "overall_quality": "fail",
+          "overall_reason": "Semantic criteria pass, but visual evidence is unavailable.",
+          "machine_status": {"production_validate_exit": 1, "production_diagnostic_codes": ["schema/maxLength"]}
+        },
+        {
+          "stage": "final",
+          "criteria": [
+            {"number": 1, "status": "pass", "source": "index.js:233-259", "reason": "The controller node owns attemptNumber, retriesConsumed and startTime; the operation is a separate caller-provided input."},
+            {"number": 2, "status": "pass", "source": "index.js:239-259", "reason": "The loop invokes input(attemptNumber), returns its value, and routes thrown/rejected errors into the failure controller."},
+            {"number": 3, "status": "pass", "source": "index.js:118-197", "reason": "The hooks are ordered shouldConsumeRetry, onFailedAttempt, guards, shouldRetry; consume=false loops without delay/count consumption, while remaining time and retriesLeft guard continuation."},
+            {"number": 4, "status": "pass", "source": "index.js:126-181", "reason": "The rejection path names retry-time/count exhaustion, shouldRetry=false and non-network TypeError rejection."},
+            {"number": 5, "status": "pass", "source": "index.js:49-63,89-106,184-195,233-247", "reason": "AbortError unwraps originalError; AbortSignal is checked around input and cancels a pending delay, while input receives only attemptNumber."},
+            {"number": 6, "status": "pass", "source": "index.js:66-82,184-197,239-260", "reason": "The timer is bounded by maxTimeout and remaining maxRetryTime, with Infinity represented as no cap; the retry loop and no-deadline-on-running-input distinction are explicit."},
+            {"number": 7, "status": "pass", "source": "index.js:49-63,109-197,233-260", "reason": "Roles, branches and conclusion cards are source backed; excluded jitter formula, option wording and wrapper details are not asserted."}
+          ],
+          "citation_entailment": "All material labels and cards have matching implementation ranges for loop ownership, hook order, stop guards, AbortError, signal delay and timer bounds.",
+          "extra_contradictions": [],
+          "visual": {"status": "pass", "reason": "Contact sheet was inspected first, then the 1440x900 light capture. The main flow, labels and cards remain readable with accepted vertical scrolling; no material occlusion prevents following retry, stop or cancellation paths."},
+          "overall_quality": "pass",
+          "overall_reason": "All required semantics, citation entailment and available final readability pass.",
+          "machine_status": {"production_validate_exit": 0, "production_diagnostic_codes": [], "author_complete_machine_pass": true}
+        }
+      ]
+    },
+    {
+      "id": "case-03",
+      "stages": [
+        {
+          "stage": "first",
+          "criteria": [
+            {"number": 1, "status": "pass", "source": "index.js:233-259", "reason": "pRetry is shown owning attemptNumber, retriesConsumed, startTime and the loop, separate from input."},
+            {"number": 2, "status": "pass", "source": "index.js:239-259", "reason": "The operation invocation, successful return and failed-attempt route are explicit."},
+            {"number": 3, "status": "pass", "source": "index.js:118-197", "reason": "The diagram preserves consume → failed-attempt → guard → retry ordering and shows non-consuming retry without wait/count increment plus time/count guards."},
+            {"number": 4, "status": "pass", "source": "index.js:126-181", "reason": "The stop branch names retry-time/count exhaustion, shouldRetry=false and non-network TypeError."},
+            {"number": 5, "status": "pass", "source": "index.js:49-63,89-106,184-195,233-247", "reason": "AbortError unwrapping is distinct from signal checks and delay cancellation; input receives only attemptNumber, so in-flight cancellation remains the operation's responsibility."},
+            {"number": 6, "status": "pass", "source": "index.js:66-82,184-197,239-260", "reason": "Backoff is capped by maxTimeout and remaining maxRetryTime, and the retry loop is shown without claiming an in-flight deadline."},
+            {"number": 7, "status": "pass", "source": "index.js:49-63,109-197,233-260", "reason": "Roles, branches and cards are entailed by the source; out-of-scope jitter, validation wording and wrapper details are absent."}
+          ],
+          "citation_entailment": "The cited ranges cover each authored role and conclusion; no material unsupported claim was found.",
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No capture is listed for this stage; visual acceptance cannot be passed from a missing image."},
+          "overall_quality": "fail",
+          "overall_reason": "Semantic criteria pass, but visual evidence is unavailable.",
+          "machine_status": {"production_validate_exit": 1, "production_diagnostic_codes": ["composition/micro-segment", "composition/short-interior-segment", "layout/constraint"]}
+        },
+        {
+          "stage": "final",
+          "criteria": [
+            {"number": 1, "status": "pass", "source": "index.js:233-259", "reason": "pRetry is shown owning attemptNumber, retriesConsumed, startTime and the loop, separate from input."},
+            {"number": 2, "status": "pass", "source": "index.js:239-259", "reason": "The operation invocation, successful return and failed-attempt route are explicit."},
+            {"number": 3, "status": "pass", "source": "index.js:118-197", "reason": "The diagram preserves consume → failed-attempt → guard → retry ordering and shows non-consuming retry without wait/count increment plus time/count guards."},
+            {"number": 4, "status": "pass", "source": "index.js:126-181", "reason": "The stop branch names retry-time/count exhaustion, shouldRetry=false and non-network TypeError."},
+            {"number": 5, "status": "pass", "source": "index.js:49-63,89-106,184-195,233-247", "reason": "AbortError unwrapping is distinct from signal checks and delay cancellation; input receives only attemptNumber, so in-flight cancellation remains the operation's responsibility."},
+            {"number": 6, "status": "pass", "source": "index.js:66-82,184-197,239-260", "reason": "Backoff is capped by maxTimeout and remaining maxRetryTime, and the retry loop is shown without claiming an in-flight deadline."},
+            {"number": 7, "status": "pass", "source": "index.js:49-63,109-197,233-260", "reason": "Roles, branches and cards are entailed by the source; out-of-scope jitter, validation wording and wrapper details are absent."}
+          ],
+          "citation_entailment": "The cited ranges cover each authored role and conclusion; no material unsupported claim was found.",
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No capture is listed for this stage; visual acceptance cannot be passed from a missing image."},
+          "overall_quality": "fail",
+          "overall_reason": "Semantic criteria pass, but visual evidence is unavailable.",
+          "machine_status": {"production_validate_exit": 1, "production_diagnostic_codes": ["composition/container-border-run", "composition/proper-crossing"], "author_complete_machine_pass": false}
+        }
+      ]
+    },
+    {
+      "id": "case-04",
+      "stages": [
+        {
+          "stage": "first",
+          "criteria": [
+            {"number": 1, "status": "pass", "source": "src/index.js:96-125,156-169", "reason": "Creation merges defaults and caller loaders, and separates caller, controller, filesystem, loader and transform roles."},
+            {"number": 2, "status": "pass", "source": "src/index.js:172-190,230-244", "reason": "Search starts at searchFrom, checks cache, walks parents through the stopDir/root boundary, and exposes found and null-miss transform paths."},
+            {"number": 3, "status": "pass", "source": "src/index.js:192-231", "reason": "Access failures skip candidates; empty-file/ignoreEmpty behavior and package.json packageProp extraction are shown without treating every package as a match."},
+            {"number": 4, "status": "pass", "source": "src/index.js:246-294", "reason": "load is a separate explicit path with absolute-path cache lookup, read, loader selection and empty-file handling."},
+            {"number": 5, "status": "pass", "source": "src/index.js:167-169,183-190,234-244,246-307", "reason": "Search and load retain transformed results in separate caches, and the separate clear methods are shown."},
+            {"number": 6, "status": "pass", "source": "src/index.js:194-205,216-225,234-244,252-294", "reason": "Read, loader/parse and transform failures propagate in both paths, while only access-check failures continue search and a normal miss transforms null."},
+            {"number": 7, "status": "pass", "source": "src/index.js:96-307", "reason": "The authored roles, branches and cards are source backed; synchronous and dynamic-import interoperability details are not asserted."}
+          ],
+          "citation_entailment": "The source ranges directly entail the search/load branches, caches, transforms, errors and clearing controls represented in the diagram.",
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No capture is listed for this stage; visual acceptance cannot be passed from a missing image."},
+          "overall_quality": "fail",
+          "overall_reason": "Semantic criteria pass, but visual evidence is unavailable.",
+          "machine_status": {"production_validate_exit": 1, "production_diagnostic_codes": ["composition/micro-segment", "composition/short-interior-segment"]}
+        },
+        {
+          "stage": "final",
+          "criteria": [
+            {"number": 1, "status": "pass", "source": "src/index.js:96-125,156-169", "reason": "Creation merges defaults and caller loaders, and separates caller, controller, filesystem, loader and transform roles."},
+            {"number": 2, "status": "pass", "source": "src/index.js:172-190,230-244", "reason": "Search starts at searchFrom, checks cache, walks parents through the stopDir/root boundary, and exposes found and null-miss transform paths."},
+            {"number": 3, "status": "pass", "source": "src/index.js:192-231", "reason": "Access failures skip candidates; empty-file/ignoreEmpty behavior and package.json packageProp extraction are shown without treating every package as a match."},
+            {"number": 4, "status": "pass", "source": "src/index.js:246-294", "reason": "load is a separate explicit path with absolute-path cache lookup, read, loader selection and empty-file handling."},
+            {"number": 5, "status": "pass", "source": "src/index.js:167-169,183-190,234-244,246-307", "reason": "Search and load retain transformed results in separate caches, and the separate clear methods are shown."},
+            {"number": 6, "status": "pass", "source": "src/index.js:194-205,216-225,234-244,252-294", "reason": "Read, loader/parse and transform failures propagate in both paths, while only access-check failures continue search and a normal miss transforms null."},
+            {"number": 7, "status": "pass", "source": "src/index.js:96-307", "reason": "The authored roles, branches and cards are source backed; synchronous and dynamic-import interoperability details are not asserted."}
+          ],
+          "citation_entailment": "The source ranges directly entail the search/load branches, caches, transforms, errors and clearing controls represented in the diagram.",
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No capture is listed for this stage; visual acceptance cannot be passed from a missing image."},
+          "overall_quality": "fail",
+          "overall_reason": "Semantic criteria pass, but visual evidence is unavailable.",
+          "machine_status": {"production_validate_exit": 1, "production_diagnostic_codes": ["composition/proper-crossing"], "author_complete_machine_pass": false}
+        }
+      ]
+    },
+    {
+      "id": "case-05",
+      "stages": [
+        {
+          "stage": "first",
+          "criteria": [
+            {"number": 1, "status": "pass", "source": "index.js:1-23", "reason": "The controller and map nodes identify two in-memory Maps, current count, maxSize, expiry policy and callback ownership."},
+            {"number": 2, "status": "pass", "source": "index.js:68-78,120-135", "reason": "Current overwrite and absent-current insertion are distinct; insertion increments #size and whole-generation rotation is distinguished from one-item eviction."},
+            {"number": 3, "status": "pass", "source": "index.js:40-61,105-118", "reason": "Current and old get paths, old promotion, missing undefined and expiry deletion are all represented."},
+            {"number": 4, "status": "pass", "source": "index.js:137-157", "reason": "has/peek inspect either map without promotion and use the same expiry deletion behavior."},
+            {"number": 5, "status": "pass", "source": "index.js:30-46,68-78,166-179", "reason": "The callback node is limited to expired/rotated-out entries; delete/clear effects on both maps/count and the absence of manual callbacks are explicit."},
+            {"number": 6, "status": "pass", "source": "index.js:1-179", "reason": "The four views and cards remain within the requested lifecycle scope and add no iteration, resize or exact size arithmetic claims."}
+          ],
+          "citation_entailment": "All material cards and edge labels are entailed by the cited QuickLRU ranges.",
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No capture is listed for this stage; visual acceptance cannot be passed from a missing image."},
+          "overall_quality": "fail",
+          "overall_reason": "Semantic criteria pass, but visual evidence is unavailable.",
+          "machine_status": {"production_validate_exit": 1, "production_diagnostic_codes": ["composition/desktop-readability"]}
+        },
+        {
+          "stage": "final",
+          "criteria": [
+            {"number": 1, "status": "pass", "source": "index.js:1-23", "reason": "The controller and map nodes identify two in-memory Maps, current count, maxSize, expiry policy and callback ownership."},
+            {"number": 2, "status": "pass", "source": "index.js:68-78,120-135", "reason": "Current overwrite and absent-current insertion are distinct; insertion increments #size and whole-generation rotation is distinguished from one-item eviction."},
+            {"number": 3, "status": "pass", "source": "index.js:40-61,105-118", "reason": "Current and old get paths, old promotion, missing undefined and expiry deletion are all represented."},
+            {"number": 4, "status": "pass", "source": "index.js:137-157", "reason": "has/peek inspect either map without promotion and use the same expiry deletion behavior."},
+            {"number": 5, "status": "pass", "source": "index.js:30-46,68-78,166-179", "reason": "The callback node is limited to expired/rotated-out entries; delete/clear effects on both maps/count and the absence of manual callbacks are explicit."},
+            {"number": 6, "status": "pass", "source": "index.js:1-179", "reason": "The four views and cards remain within the requested lifecycle scope and add no iteration, resize or exact size arithmetic claims."}
+          ],
+          "citation_entailment": "All material cards and edge labels are entailed by the cited QuickLRU ranges.",
+          "extra_contradictions": [],
+          "visual": {"status": "pass", "reason": "Contact sheet was inspected first, then the 1440x900 light capture. Nodes, labels and callback/rotation paths remain readable; lower cards continue by normal vertical scrolling and no material content is occluded."},
+          "overall_quality": "pass",
+          "overall_reason": "All required semantics, citation entailment and available final readability pass.",
+          "machine_status": {"production_validate_exit": 0, "production_diagnostic_codes": [], "author_complete_machine_pass": true}
+        }
+      ]
+    },
+    {
+      "id": "case-06",
+      "stages": [
+        {
+          "stage": "final",
+          "criteria": [
+            {"number": 1, "status": "pass", "source": "index.js:1-23", "reason": "QuickLRU is shown owning current/old in-memory Maps, current count, maxSize, expiry policy and callback."},
+            {"number": 2, "status": "pass", "source": "index.js:68-78,120-135", "reason": "Current overwrite and absent-current insertion are distinct, and threshold rotation swaps generations rather than evicting one least-recent item."},
+            {"number": 3, "status": "pass", "source": "index.js:40-61,105-118", "reason": "Current get, old get/promotion and missing/expired behavior are routed with the actual expiry deletion effect."},
+            {"number": 4, "status": "pass", "source": "index.js:137-157", "reason": "has and peek inspect both generations without get-style promotion and retain expiry behavior."},
+            {"number": 5, "status": "pass", "source": "index.js:30-46,68-78,166-179", "reason": "Expiry/rotation callback paths are separated from manual delete/clear, whose map and count effects are shown without callback claims."},
+            {"number": 6, "status": "pass", "source": "index.js:1-179", "reason": "The three views/cards remain within requested lifecycle scope and make no out-of-scope iteration, resize or exact-size assertions."}
+          ],
+          "citation_entailment": "The source citations entail the dense lifecycle graph and its material cards; no extra contradiction was found.",
+          "extra_contradictions": [],
+          "visual": {"status": "pass", "reason": "Contact sheet was inspected first, then the 1440x900 light capture. Despite dense routing, labels and nodes remain readable and the complete reader page continues through normal vertical scrolling."},
+          "overall_quality": "pass",
+          "overall_reason": "All required semantics, citation entailment and available final readability pass.",
+          "machine_status": {"production_validate_exit": 0, "production_diagnostic_codes": [], "postrun_complete_machine_pass": true}
+        }
+      ]
+    },
+    {
+      "id": "case-07",
+      "stages": [
+        {
+          "stage": "first",
+          "criteria": [
+            {"number": 1, "status": "pass", "source": "src/index.js:96-125,156-169", "reason": "Creation merges defaults and caller options/loaders and separates caller, explorer, filesystem, loader and transform roles."},
+            {"number": 2, "status": "pass", "source": "src/index.js:172-190,230-244", "reason": "Search cache lookup, per-directory searchPlaces, upward walk, stopDir/root termination, found result and null miss are shown."},
+            {"number": 3, "status": "pass", "source": "src/index.js:192-231", "reason": "Access failures skip candidates; empty and ignoreEmptySearchPlaces branches are shown; package.json only matches after non-null packageProp extraction."},
+            {"number": 4, "status": "pass", "source": "src/index.js:246-294", "reason": "Explicit load is separate, uses absolute-path cache, reads and selects a loader, and reaches the shared transform path including empty files."},
+            {"number": 5, "status": "pass", "source": "src/index.js:167-169,183-190,234-244,246-307", "reason": "Found/empty/null transformation, transformed cache values and separate cache clear controls are represented."},
+            {"number": 6, "status": "pass", "source": "src/index.js:194-205,216-225,234-244,252-294", "reason": "Read, loader/parse and transform failures reject while access-check skips and normal search misses remain distinct."},
+            {"number": 7, "status": "pass", "source": "src/index.js:96-307", "reason": "All authored roles and branches are source backed; synchronous and dynamic-import details stay outside scope."}
+          ],
+          "citation_entailment": "Citations cover creation, search, explicit load, caches, transforms, empty/miss branches and error propagation.",
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No capture is listed for this stage; visual acceptance cannot be passed from a missing image."},
+          "overall_quality": "fail",
+          "overall_reason": "Semantic criteria pass, but visual evidence is unavailable.",
+          "machine_status": {"production_validate_exit": 1, "production_diagnostic_codes": ["composition/label-route-clearance", "composition/micro-segment", "composition/short-interior-segment", "layout/constraint"]}
+        },
+        {
+          "stage": "final",
+          "criteria": [
+            {"number": 1, "status": "pass", "source": "src/index.js:96-125,156-169", "reason": "Creation merges defaults and caller options/loaders and separates caller, explorer, filesystem, loader and transform roles."},
+            {"number": 2, "status": "pass", "source": "src/index.js:172-190,230-244", "reason": "Search cache lookup, per-directory searchPlaces, upward walk, stopDir/root termination, found result and null miss are shown."},
+            {"number": 3, "status": "pass", "source": "src/index.js:192-231", "reason": "Access failures skip candidates; empty and ignoreEmptySearchPlaces branches are shown; package.json only matches after non-null packageProp extraction."},
+            {"number": 4, "status": "pass", "source": "src/index.js:246-294", "reason": "Explicit load is separate, uses absolute-path cache, reads and selects a loader, and reaches the shared loader-to-transform path including empty-result handling."},
+            {"number": 5, "status": "pass", "source": "src/index.js:167-169,183-190,234-244,246-307", "reason": "Found/empty/null transformation, transformed cache values and separate cache clear controls are represented."},
+            {"number": 6, "status": "pass", "source": "src/index.js:194-205,216-225,234-244,252-294", "reason": "Read, loader/parse and transform failures reject while access-check skips and normal search misses remain distinct."},
+            {"number": 7, "status": "pass", "source": "src/index.js:96-307", "reason": "All authored roles and branches are source backed; synchronous and dynamic-import details stay outside scope."}
+          ],
+          "citation_entailment": "Citations cover creation, search, explicit load, caches, transforms, empty/miss branches and error propagation.",
+          "extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No capture is listed for this stage; visual acceptance cannot be passed from a missing image."},
+          "overall_quality": "fail",
+          "overall_reason": "Semantic criteria pass, but visual evidence is unavailable.",
+          "machine_status": {"production_validate_exit": 1, "production_diagnostic_codes": ["clean-flow/edge-through-node", "composition/proper-crossing", "composition/short-interior-segment"], "author_complete_machine_pass": false}
+        }
+      ]
+    }
+  ]
+}

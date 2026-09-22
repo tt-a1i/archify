@@ -1,0 +1,21 @@
+{
+  "base": "104b92baf1aaed865b41a3d13ee645a82684e0e2",
+  "started_epoch": 1789962544,
+  "wall_cap_seconds": 7200,
+  "caps": {
+    "auxiliary": 6,
+    "authors": 8,
+    "reviews": 2
+  },
+  "models": "Luna/Terra medium/high only",
+  "measurement": "same-model same-effort within pairs; fresh session; tool construction inside author span; external one-time install separately reported; no runtime summaries replacing source",
+  "primary": "qualified first draft and full author wall",
+  "unknowns": [
+    "hidden reasoning",
+    "logical request count",
+    "server timing",
+    "network retries"
+  ],
+  "stop": "no whole-run retries; auth/quota/scope faults stop; transport faults pause new scheduling for classification; no stale cohort resumption",
+  "no_publish": true
+}

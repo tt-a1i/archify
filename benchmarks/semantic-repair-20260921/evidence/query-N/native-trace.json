@@ -1,0 +1,168 @@
+{
+  "identity": {
+    "model": "gpt-5.6-terra",
+    "effort": "medium"
+  },
+  "task_started_at": "2026-09-21T07:27:01.997Z",
+  "task_completed_at": "2026-09-21T07:31:13.420Z",
+  "native_task_seconds": 251.42300009727478,
+  "first_complete_from_native_start_seconds": 189.1496250629425,
+  "external_observer_seconds": 300.5492527920287,
+  "observer_max_gap_seconds": 0.13284954195842147,
+  "tool_calls": [
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:27:14.117Z",
+      "categories": [
+        "read-or-search"
+      ],
+      "completed_at": "2026-09-21T07:27:14.251Z",
+      "observed_tool_seconds": 0.13399982452392578
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:27:23.090Z",
+      "categories": [
+        "read-or-search"
+      ],
+      "completed_at": "2026-09-21T07:27:23.501Z",
+      "observed_tool_seconds": 0.41100001335144043
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:27:30.809Z",
+      "categories": [
+        "read-or-search"
+      ],
+      "completed_at": "2026-09-21T07:27:31.232Z",
+      "observed_tool_seconds": 0.4230000972747803
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:27:40.483Z",
+      "categories": [
+        "other-tool",
+        "semantic-navigation"
+      ],
+      "completed_at": "2026-09-21T07:27:41.188Z",
+      "observed_tool_seconds": 0.7049999237060547
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:27:48.994Z",
+      "categories": [
+        "read-or-search"
+      ],
+      "completed_at": "2026-09-21T07:27:49.849Z",
+      "observed_tool_seconds": 0.8550000190734863
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:27:59.889Z",
+      "categories": [
+        "read-or-search",
+        "repository-metadata"
+      ],
+      "completed_at": "2026-09-21T07:28:00.610Z",
+      "observed_tool_seconds": 0.7209999561309814
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:28:08.900Z",
+      "categories": [
+        "read-or-search"
+      ],
+      "completed_at": "2026-09-21T07:28:09.648Z",
+      "observed_tool_seconds": 0.747999906539917
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:28:17.670Z",
+      "categories": [
+        "read-or-search"
+      ],
+      "completed_at": "2026-09-21T07:28:17.834Z",
+      "observed_tool_seconds": 0.1640000343322754
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:28:40.121Z",
+      "categories": [
+        "read-or-search"
+      ],
+      "completed_at": "2026-09-21T07:28:42.678Z",
+      "observed_tool_seconds": 2.556999921798706
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:30:11.123Z",
+      "categories": [
+        "artifact-write"
+      ],
+      "completed_at": "2026-09-21T07:30:11.736Z",
+      "observed_tool_seconds": 0.6130001544952393
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:30:21.710Z",
+      "categories": [
+        "finalize"
+      ],
+      "completed_at": "2026-09-21T07:30:23.625Z",
+      "observed_tool_seconds": 1.9149999618530273
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:30:28.623Z",
+      "categories": [
+        "read-or-search"
+      ],
+      "completed_at": "2026-09-21T07:30:28.817Z",
+      "observed_tool_seconds": 0.1940000057220459
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:30:42.194Z",
+      "categories": [
+        "artifact-write"
+      ],
+      "completed_at": "2026-09-21T07:30:42.817Z",
+      "observed_tool_seconds": 0.622999906539917
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:30:49.559Z",
+      "categories": [
+        "finalize"
+      ],
+      "completed_at": "2026-09-21T07:30:52.524Z",
+      "observed_tool_seconds": 2.9649999141693115
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T07:31:02.955Z",
+      "categories": [
+        "read-or-search"
+      ],
+      "completed_at": "2026-09-21T07:31:03.242Z",
+      "observed_tool_seconds": 0.2870001792907715
+    }
+  ],
+  "outline_calls": 0,
+  "surfaced_faults": [],
+  "reported_turn_usage": {
+    "input_tokens": 1025887,
+    "cached_input_tokens": 967680,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 5455,
+    "reasoning_output_tokens": 1083,
+    "total_tokens": 1031342
+  },
+  "unknown": [
+    "internal requests",
+    "network retries",
+    "server timing",
+    "hidden reasoning time"
+  ],
+  "limits": "Tool categories are coarse lexical metadata. Tool output, arguments, prose and reasoning are not retained. No surfaced error does not prove no network retry."
+}

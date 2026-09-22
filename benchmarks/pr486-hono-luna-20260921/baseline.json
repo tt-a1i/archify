@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Hono request execution",
+    "subtitle": "Routing, middleware composition, and response finalization at 28e8572",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/honojs/hono.git",
+      "revision": "28e8572cd265b4da1160ce6cd51919bb70516e2c",
+      "link_mode": "local-only"
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": ["caller", "entry", "router", "context", "pipeline", "response"],
+        "note": "Trace one request from fetch through path extraction, matching, handler execution, and response finalization."
+      },
+      {
+        "id": "fallbacks",
+        "label": "Fallbacks",
+        "focus": ["router", "context", "pipeline", "not-found", "errors"],
+        "note": "The side paths show router selection, not-found handling, and error conversion without obscuring the normal lane."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "HTTP caller",
+      "sublabel": "Request + method",
+      "pos": [40, 330],
+      "size": [160, 70],
+      "sources": [{"path": "src/hono-base.ts", "line": 481, "end_line": 487}]
+    },
+    {
+      "id": "entry",
+      "type": "backend",
+      "label": "Hono fetch / dispatch",
+      "sublabel": "path + method control",
+      "pos": [270, 330],
+      "size": [190, 76],
+      "sources": [
+        {"path": "src/hono-base.ts", "line": 408, "end_line": 429},
+        {"path": "src/hono-base.ts", "line": 481, "end_line": 487}
+      ]
+    },
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "SmartRouter",
+      "sublabel": "RegExpRouter → TrieRouter",
+      "pos": [530, 330],
+      "size": [205, 76],
+      "sources": [
+        {"path": "src/hono.ts", "line": 26, "end_line": 32},
+        {"path": "src/router/smart-router/router.ts", "line": 21, "end_line": 60}
+      ]
+    },
+    {
+      "id": "route-table",
+      "type": "backend",
+      "label": "Route registrations",
+      "sublabel": "method + path + handler",
+      "pos": [530, 130],
+      "size": [205, 70],
+      "sources": [{"path": "src/hono-base.ts", "line": 388, "end_line": 399}]
+    },
+    {
+      "id": "context",
+      "type": "backend",
+      "label": "Request Context",
+      "sublabel": "Request, env, match result",
+      "pos": [805, 330],
+      "size": [190, 76],
+      "sources": [
+        {"path": "src/hono-base.ts", "line": 420, "end_line": 429},
+        {"path": "src/context.ts", "line": 352, "end_line": 369}
+      ]
+    },
+    {
+      "id": "pipeline",
+      "type": "backend",
+      "label": "Middleware + route handler",
+      "sublabel": "direct or composed chain",
+      "pos": [1060, 330],
+      "size": [220, 76],
+      "sources": [
+        {"path": "src/hono-base.ts", "line": 431, "end_line": 465},
+        {"path": "src/compose.ts", "line": 32, "end_line": 70}
+      ]
+    },
+    {
+      "id": "response",
+      "type": "external",
+      "label": "HTTP Response",
+      "sublabel": "finalized Context.res",
+      "pos": [1340, 330],
+      "size": [180, 70],
+      "sources": [
+        {"path": "src/hono-base.ts", "line": 452, "end_line": 464},
+        {"path": "src/context.ts", "line": 403, "end_line": 434}
+      ]
+    },
+    {
+      "id": "not-found",
+      "type": "backend",
+      "label": "Not-found handler",
+      "sublabel": "404 Not Found by default",
+      "pos": [1060, 540],
+      "size": [220, 70],
+      "sources": [{"path": "src/hono-base.ts", "line": 31, "end_line": 33}]
+    },
+    {
+      "id": "errors",
+      "type": "backend",
+      "label": "Error handler",
+      "sublabel": "HTTPException or 500",
+      "pos": [805, 580],
+      "size": [190, 70],
+      "sources": [
+        {"path": "src/hono-base.ts", "line": 35, "end_line": 42},
+        {"path": "src/hono-base.ts", "line": 401, "end_line": 406},
+        {"path": "src/http-exception.ts", "line": 46, "end_line": 76}
+      ]
+    },
+    {
+      "id": "head-adapter",
+      "type": "backend",
+      "label": "HEAD adapter",
+      "sublabel": "dispatch GET, strip body",
+      "pos": [270, 540],
+      "size": [190, 70],
+      "sources": [{"path": "src/hono-base.ts", "line": 414, "end_line": 418}]
+    }
+  ],
+  "boundaries": [
+    {"kind": "region", "label": "Hono runtime", "wraps": ["entry", "router", "route-table", "context", "pipeline", "response", "not-found", "errors", "head-adapter"]}
+  ],
+  "connections": [
+    {"id": "invoke", "from": "caller", "to": "entry", "label": "fetch(Request)"},
+    {"id": "head", "from": "entry", "to": "head-adapter", "label": "HEAD"},
+    {"id": "head-get", "from": "head-adapter", "to": "entry", "label": "dispatch as GET"},
+    {"id": "lookup", "from": "entry", "to": "router", "label": "getPath + match(method, path)"},
+    {"id": "register", "from": "route-table", "to": "router", "label": "add(method, path, handler)"},
+    {"id": "match", "from": "router", "to": "entry", "label": "matched handlers + params"},
+    {"id": "make-context", "from": "entry", "to": "context", "label": "construct Context"},
+    {"id": "run", "from": "context", "to": "pipeline", "label": "execute handler chain"},
+    {"id": "finalize", "from": "pipeline", "to": "response", "label": "Response / Context.res"},
+    {"id": "unmatched", "from": "pipeline", "to": "not-found", "label": "no response / end of chain"},
+    {"id": "not-found-response", "from": "not-found", "to": "response", "label": "404 response"},
+    {"id": "throw", "from": "pipeline", "to": "errors", "label": "throw Error"},
+    {"id": "error-response", "from": "errors", "to": "response", "label": "custom / 500 response"},
+    {"id": "fallback", "from": "router", "to": "router", "label": "UnsupportedPathError → TrieRouter"}
+  ],
+  "cards": [
+    {"dot": "cyan", "title": "Normal path", "items": ["fetch extracts the path and asks the router for an ordered handler list", "Context carries the match into direct or composed middleware execution", "A finalized Context.res becomes the returned Response"]},
+    {"dot": "amber", "title": "Important branches", "items": ["HEAD recursively dispatches as GET and returns the result with a null body", "SmartRouter falls back from RegExpRouter to TrieRouter only for UnsupportedPathError", "The default not-found and error handlers produce 404 and 500 responses; HTTPException can supply its status response"]}
+  ]
+}

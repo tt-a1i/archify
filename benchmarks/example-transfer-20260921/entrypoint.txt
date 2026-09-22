@@ -1,0 +1,1 @@
+For repository-backed libraries with caller callbacks or owned state, also read [the worked library example](references/library-worked-example.md) with its JSON before authoring. It shows how source conditions become visible paths and readable labels; transfer the reasoning to the inspected repository.

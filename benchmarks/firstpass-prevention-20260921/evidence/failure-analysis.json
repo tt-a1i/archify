@@ -1,0 +1,112 @@
+{
+  "runs": [
+    {
+      "run": "p-retry-B1",
+      "first_codes": [
+        "composition/label-route-clearance",
+        "composition/micro-segment",
+        "composition/short-interior-segment",
+        "layout/constraint"
+      ],
+      "final_codes": [
+        "composition/label-route-clearance"
+      ]
+    },
+    {
+      "run": "p-retry-P1",
+      "first_codes": [
+        "composition/desktop-readability"
+      ],
+      "final_codes": [],
+      "projection": {
+        "nodeOnlyWidthEstimate": 1529,
+        "conservativeProjectedSublabelPx": 5.474166121648136,
+        "columnWidths": [
+          284,
+          311,
+          322
+        ],
+        "clearColumnGaps": [
+          156,
+          312
+        ]
+      }
+    },
+    {
+      "run": "quick-lru-P1",
+      "first_codes": [
+        "composition/desktop-readability"
+      ],
+      "final_codes": [],
+      "projection": {
+        "nodeOnlyWidthEstimate": 3258,
+        "conservativeProjectedSublabelPx": 2.569060773480663,
+        "columnWidths": [
+          241,
+          343,
+          554,
+          592,
+          505
+        ],
+        "clearColumnGaps": [
+          214,
+          128,
+          409,
+          128
+        ]
+      }
+    },
+    {
+      "run": "quick-lru-B1",
+      "first_codes": [
+        "composition/label-route-clearance",
+        "composition/micro-segment",
+        "composition/short-interior-segment",
+        "layout/constraint"
+      ],
+      "final_codes": [
+        "composition/label-route-clearance"
+      ]
+    },
+    {
+      "run": "lilconfig-B1",
+      "first_codes": [
+        "composition/container-border-run",
+        "layout/constraint"
+      ],
+      "final_codes": [
+        "clean-flow/edge-through-node",
+        "composition/proper-crossing"
+      ]
+    },
+    {
+      "run": "lilconfig-P1",
+      "first_codes": [
+        "composition/micro-segment"
+      ],
+      "final_codes": [
+        "composition/label-route-clearance",
+        "composition/micro-segment",
+        "composition/short-interior-segment"
+      ],
+      "projection": {
+        "nodeOnlyWidthEstimate": 3464,
+        "conservativeProjectedSublabelPx": 2.416281755196305,
+        "columnWidths": [
+          381,
+          446,
+          527,
+          413,
+          462
+        ],
+        "clearColumnGaps": [
+          234,
+          279,
+          325,
+          253
+        ]
+      }
+    }
+  ],
+  "interpretation": "Dimension measurement is advisory only; node-only estimates exclude route and boundary extent. Actual final geometry is still separately validated. No candidate text/topology change was introduced in any P repair."
+}

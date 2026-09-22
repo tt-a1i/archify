@@ -1,0 +1,5 @@
+# Repository inspection benchmark
+
+Run `node benchmarks/pr486-inspect-repo-20260921/benchmark.mjs` from the repository root. The script creates and removes a fixed local Git repository with 40 packages and 2,040 tracked files. It invokes the public `inspect-repo` CLI and times process startup, scan, and JSON production. Five second-page samples alternate between reusing the first-page snapshot and rescanning without `--snapshot`; both return the same file page. The snapshot and fixture are removed after the run.
+
+The saved run is `result.json` (macOS arm64, Node 26.8.1). The first page returned 20 of 2,040 file records in 48,160 output bytes and took 587.7 ms. The second-page median was 84.7 ms with snapshot reuse and 159.7 ms without it. This demonstrates a local later-page scan saving for this fixture. It does not measure an Agent's source reading, total token use, diagram quality, or end-to-end delivery time. Stop paging when the relevant source slice is found; cumulative output can exceed one full listing if every page is read.

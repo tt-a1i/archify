@@ -1,0 +1,19 @@
+{
+  "run": "full-lowdb-B",
+  "phases": {
+    "first": {
+      "exit": 1,
+      "candidate_sha256": "528c0502439fb27b63a2b47fb82eab9ce2a562e9306fde500c13035e390146d6",
+      "seconds": 0.5609880000120029
+    },
+    "final": {
+      "exit": 0,
+      "candidate_sha256": "a0607bc9ca10b10099d0caf422942c1f6160a4fe2c1166fb94da99310488c2b2",
+      "seconds": 0.5498368340777233
+    }
+  },
+  "visual": {
+    "exit": 0,
+    "seconds": 2.9697430829983205
+  }
+}

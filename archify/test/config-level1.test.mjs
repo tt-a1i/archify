@@ -198,3 +198,49 @@ test('Level 1 reads named configuration before unnamed YAML, so candidates canno
   assert.equal(last.level1.coverage.complete, true);
   assert.equal(last.coverage.nextBatch, null);
 });
+
+test('Level 1 reports fact and boundary caps separately from file coverage', (t) => {
+  const root = workspace(t);
+  for (let index = 0; index < 60; index += 1) {
+    write(root, `packages/p${index}/package.json`, JSON.stringify({
+      name: `p${index}`,
+      dependencies: Object.fromEntries(Array.from({ length: 60 }, (_, item) => [`dep${item}`, '1'])),
+    }));
+  }
+  const result = buildRepositoryIndex(root, { batchSize: 100 });
+  assert.equal(result.level1.coverage.complete, true);
+  assert.equal(result.level1.configurations.length, 60);
+  assert.equal(result.level1.configurations[0].truncated, false);
+  assert.equal(result.level1.configurations[0].factsTruncated, true);
+  assert.equal(result.level1.boundaries.services.length, 50);
+  assert.equal(result.level1.boundariesTruncated, true);
+});
+
+test('Compose dependency forms do not invent condition edges or lose inline targets', (t) => {
+  const root = workspace(t);
+  write(root, 'docker-compose.yml', `services:
+  api:
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+  cache:
+    depends_on: [db, redis]
+  db:
+    image: postgres:16
+  redis:
+    image: redis:7
+`);
+  const edges = buildRepositoryIndex(root).level1.boundaries.dependencies;
+  assert.deepEqual(edges.map(({ from, to }) => [from, to]), [
+    ['api', 'db'], ['cache', 'db'], ['cache', 'redis'],
+  ]);
+});
+
+test('repository inspection removes credentials from prefixed Terraform URLs', (t) => {
+  const root = workspace(t);
+  write(root, 'infra/main.tf', 'module "app" {\n  source = "git::https://demo:FAKE_SECRET@example.invalid/repo.git?token=FAKE_QUERY"\n}\n');
+  const result = buildRepositoryIndex(root);
+  assert.deepEqual(result.level1.configurations[0].facts.moduleSources, ['git::https://example.invalid/repo.git']);
+  assert.doesNotMatch(JSON.stringify(result), /FAKE_SECRET|FAKE_QUERY/);
+});

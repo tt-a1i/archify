@@ -1,0 +1,11 @@
+{
+  "taskFileSha256": "e78b303cd574b861d0d0bb04f4937658726b877c3fc227af5e78a7c5957a3483",
+  "resolvedBeforeFreeze": [
+    "p-retry consumption means retry-count consumption; retry-time still applies",
+    "p-retry configured bounds may be infinite and do not preempt an active input",
+    "quick-lru new key means absent from current generation; removed nonexistent constructor-seed exclusion",
+    "lilconfig access-check failure skips candidate, subsequent file-read failure propagates in search and load"
+  ],
+  "new_hidden_criteria": false,
+  "qualityFloorUnchanged": true
+}

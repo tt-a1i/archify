@@ -1,0 +1,2514 @@
+{
+  "components": [
+    {
+      "id": "cluster-0-caller",
+      "type": "external",
+      "label": "Caller",
+      "sublabel": "Supplies input and retry options.",
+      "pos": [
+        50,
+        270
+      ],
+      "size": [
+        185,
+        74
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 200,
+          "end_line": 201
+        }
+      ]
+    },
+    {
+      "id": "cluster-0-controller",
+      "type": "backend",
+      "label": "pRetry controller",
+      "sublabel": "Owns attemptNumber, retriesConsumed, startTime, and the loop.",
+      "pos": [
+        300,
+        270
+      ],
+      "size": [
+        245,
+        86
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 259
+        }
+      ]
+    },
+    {
+      "id": "cluster-0-operation",
+      "type": "external",
+      "label": "Caller-provided input",
+      "sublabel": "Runs one attempt; receives attemptNumber.",
+      "pos": [
+        625,
+        120
+      ],
+      "size": [
+        225,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 240,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "cluster-0-abort-error",
+      "type": "external",
+      "label": "AbortError",
+      "sublabel": "Operation can use it to stop retries and preserve originalError.",
+      "pos": [
+        935,
+        105
+      ],
+      "size": [
+        230,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 49,
+          "end_line": 62
+        }
+      ]
+    },
+    {
+      "id": "cluster-0-failure",
+      "type": "backend",
+      "label": "Failure controller",
+      "sublabel": "Normalizes errors; computes retries left, remaining retry time, and delay.",
+      "pos": [
+        620,
+        330
+      ],
+      "size": [
+        255,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 109,
+          "end_line": 168
+        }
+      ]
+    },
+    {
+      "id": "cluster-0-consume-hook",
+      "type": "external",
+      "label": "shouldConsumeRetry",
+      "sublabel": "First hook: decides whether this failure consumes retry budget.",
+      "pos": [
+        965,
+        275
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 140,
+          "end_line": 155
+        }
+      ]
+    },
+    {
+      "id": "cluster-0-failed-hook",
+      "type": "external",
+      "label": "onFailedAttempt",
+      "sublabel": "Second hook: observes the frozen failure context.",
+      "pos": [
+        965,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 150,
+          "end_line": 158
+        }
+      ]
+    },
+    {
+      "id": "cluster-0-retry-hook",
+      "type": "external",
+      "label": "shouldRetry",
+      "sublabel": "Third hook: false rejects; true permits the next attempt.",
+      "pos": [
+        1255,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 170,
+          "end_line": 186
+        }
+      ]
+    },
+    {
+      "id": "cluster-0-timer",
+      "type": "backend",
+      "label": "Backoff timer",
+      "sublabel": "Waits only when a retry is consumed; delay is capped by maxTimeout and remaining maxRetryTime.",
+      "pos": [
+        920,
+        585
+      ],
+      "size": [
+        285,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 66,
+          "end_line": 106
+        },
+        {
+          "path": "index.js",
+          "line": 184,
+          "end_line": 197
+        }
+      ]
+    },
+    {
+      "id": "cluster-0-signal",
+      "type": "external",
+      "label": "AbortSignal",
+      "sublabel": "Controller checks it around attempts; delay listens once and clears its timer.",
+      "pos": [
+        605,
+        600
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 89,
+          "end_line": 105
+        },
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 247
+        }
+      ]
+    },
+    {
+      "id": "cluster-0-outcome",
+      "type": "external",
+      "label": "Caller promise outcome",
+      "sublabel": "Successful value returns, or the last/original error rejects.",
+      "pos": [
+        300,
+        625
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 114,
+          "end_line": 116
+        },
+        {
+          "path": "index.js",
+          "line": 245,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "cluster-1-caller",
+      "type": "external",
+      "label": "Caller",
+      "sublabel": "Supplies input and retry options.",
+      "pos": [
+        2050,
+        270
+      ],
+      "size": [
+        185,
+        74
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 200,
+          "end_line": 201
+        }
+      ]
+    },
+    {
+      "id": "cluster-1-controller",
+      "type": "backend",
+      "label": "pRetry controller",
+      "sublabel": "Owns attemptNumber, retriesConsumed, startTime, and the loop.",
+      "pos": [
+        2300,
+        270
+      ],
+      "size": [
+        245,
+        86
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 259
+        }
+      ]
+    },
+    {
+      "id": "cluster-1-operation",
+      "type": "external",
+      "label": "Caller-provided input",
+      "sublabel": "Runs one attempt; receives attemptNumber.",
+      "pos": [
+        2625,
+        120
+      ],
+      "size": [
+        225,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 240,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "cluster-1-abort-error",
+      "type": "external",
+      "label": "AbortError",
+      "sublabel": "Operation can use it to stop retries and preserve originalError.",
+      "pos": [
+        2935,
+        105
+      ],
+      "size": [
+        230,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 49,
+          "end_line": 62
+        }
+      ]
+    },
+    {
+      "id": "cluster-1-failure",
+      "type": "backend",
+      "label": "Failure controller",
+      "sublabel": "Normalizes errors; computes retries left, remaining retry time, and delay.",
+      "pos": [
+        2620,
+        330
+      ],
+      "size": [
+        255,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 109,
+          "end_line": 168
+        }
+      ]
+    },
+    {
+      "id": "cluster-1-consume-hook",
+      "type": "external",
+      "label": "shouldConsumeRetry",
+      "sublabel": "First hook: decides whether this failure consumes retry budget.",
+      "pos": [
+        2965,
+        275
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 140,
+          "end_line": 155
+        }
+      ]
+    },
+    {
+      "id": "cluster-1-failed-hook",
+      "type": "external",
+      "label": "onFailedAttempt",
+      "sublabel": "Second hook: observes the frozen failure context.",
+      "pos": [
+        2965,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 150,
+          "end_line": 158
+        }
+      ]
+    },
+    {
+      "id": "cluster-1-retry-hook",
+      "type": "external",
+      "label": "shouldRetry",
+      "sublabel": "Third hook: false rejects; true permits the next attempt.",
+      "pos": [
+        3255,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 170,
+          "end_line": 186
+        }
+      ]
+    },
+    {
+      "id": "cluster-1-timer",
+      "type": "backend",
+      "label": "Backoff timer",
+      "sublabel": "Waits only when a retry is consumed; delay is capped by maxTimeout and remaining maxRetryTime.",
+      "pos": [
+        2920,
+        585
+      ],
+      "size": [
+        285,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 66,
+          "end_line": 106
+        },
+        {
+          "path": "index.js",
+          "line": 184,
+          "end_line": 197
+        }
+      ]
+    },
+    {
+      "id": "cluster-1-signal",
+      "type": "external",
+      "label": "AbortSignal",
+      "sublabel": "Controller checks it around attempts; delay listens once and clears its timer.",
+      "pos": [
+        2605,
+        600
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 89,
+          "end_line": 105
+        },
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 247
+        }
+      ]
+    },
+    {
+      "id": "cluster-1-outcome",
+      "type": "external",
+      "label": "Caller promise outcome",
+      "sublabel": "Successful value returns, or the last/original error rejects.",
+      "pos": [
+        2300,
+        625
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 114,
+          "end_line": 116
+        },
+        {
+          "path": "index.js",
+          "line": 245,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "cluster-2-caller",
+      "type": "external",
+      "label": "Caller",
+      "sublabel": "Supplies input and retry options.",
+      "pos": [
+        4050,
+        270
+      ],
+      "size": [
+        185,
+        74
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 200,
+          "end_line": 201
+        }
+      ]
+    },
+    {
+      "id": "cluster-2-controller",
+      "type": "backend",
+      "label": "pRetry controller",
+      "sublabel": "Owns attemptNumber, retriesConsumed, startTime, and the loop.",
+      "pos": [
+        4300,
+        270
+      ],
+      "size": [
+        245,
+        86
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 259
+        }
+      ]
+    },
+    {
+      "id": "cluster-2-operation",
+      "type": "external",
+      "label": "Caller-provided input",
+      "sublabel": "Runs one attempt; receives attemptNumber.",
+      "pos": [
+        4625,
+        120
+      ],
+      "size": [
+        225,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 240,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "cluster-2-abort-error",
+      "type": "external",
+      "label": "AbortError",
+      "sublabel": "Operation can use it to stop retries and preserve originalError.",
+      "pos": [
+        4935,
+        105
+      ],
+      "size": [
+        230,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 49,
+          "end_line": 62
+        }
+      ]
+    },
+    {
+      "id": "cluster-2-failure",
+      "type": "backend",
+      "label": "Failure controller",
+      "sublabel": "Normalizes errors; computes retries left, remaining retry time, and delay.",
+      "pos": [
+        4620,
+        330
+      ],
+      "size": [
+        255,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 109,
+          "end_line": 168
+        }
+      ]
+    },
+    {
+      "id": "cluster-2-consume-hook",
+      "type": "external",
+      "label": "shouldConsumeRetry",
+      "sublabel": "First hook: decides whether this failure consumes retry budget.",
+      "pos": [
+        4965,
+        275
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 140,
+          "end_line": 155
+        }
+      ]
+    },
+    {
+      "id": "cluster-2-failed-hook",
+      "type": "external",
+      "label": "onFailedAttempt",
+      "sublabel": "Second hook: observes the frozen failure context.",
+      "pos": [
+        4965,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 150,
+          "end_line": 158
+        }
+      ]
+    },
+    {
+      "id": "cluster-2-retry-hook",
+      "type": "external",
+      "label": "shouldRetry",
+      "sublabel": "Third hook: false rejects; true permits the next attempt.",
+      "pos": [
+        5255,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 170,
+          "end_line": 186
+        }
+      ]
+    },
+    {
+      "id": "cluster-2-timer",
+      "type": "backend",
+      "label": "Backoff timer",
+      "sublabel": "Waits only when a retry is consumed; delay is capped by maxTimeout and remaining maxRetryTime.",
+      "pos": [
+        4920,
+        585
+      ],
+      "size": [
+        285,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 66,
+          "end_line": 106
+        },
+        {
+          "path": "index.js",
+          "line": 184,
+          "end_line": 197
+        }
+      ]
+    },
+    {
+      "id": "cluster-2-signal",
+      "type": "external",
+      "label": "AbortSignal",
+      "sublabel": "Controller checks it around attempts; delay listens once and clears its timer.",
+      "pos": [
+        4605,
+        600
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 89,
+          "end_line": 105
+        },
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 247
+        }
+      ]
+    },
+    {
+      "id": "cluster-2-outcome",
+      "type": "external",
+      "label": "Caller promise outcome",
+      "sublabel": "Successful value returns, or the last/original error rejects.",
+      "pos": [
+        4300,
+        625
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 114,
+          "end_line": 116
+        },
+        {
+          "path": "index.js",
+          "line": 245,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "cluster-3-caller",
+      "type": "external",
+      "label": "Caller",
+      "sublabel": "Supplies input and retry options.",
+      "pos": [
+        6050,
+        270
+      ],
+      "size": [
+        185,
+        74
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 200,
+          "end_line": 201
+        }
+      ]
+    },
+    {
+      "id": "cluster-3-controller",
+      "type": "backend",
+      "label": "pRetry controller",
+      "sublabel": "Owns attemptNumber, retriesConsumed, startTime, and the loop.",
+      "pos": [
+        6300,
+        270
+      ],
+      "size": [
+        245,
+        86
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 259
+        }
+      ]
+    },
+    {
+      "id": "cluster-3-operation",
+      "type": "external",
+      "label": "Caller-provided input",
+      "sublabel": "Runs one attempt; receives attemptNumber.",
+      "pos": [
+        6625,
+        120
+      ],
+      "size": [
+        225,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 240,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "cluster-3-abort-error",
+      "type": "external",
+      "label": "AbortError",
+      "sublabel": "Operation can use it to stop retries and preserve originalError.",
+      "pos": [
+        6935,
+        105
+      ],
+      "size": [
+        230,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 49,
+          "end_line": 62
+        }
+      ]
+    },
+    {
+      "id": "cluster-3-failure",
+      "type": "backend",
+      "label": "Failure controller",
+      "sublabel": "Normalizes errors; computes retries left, remaining retry time, and delay.",
+      "pos": [
+        6620,
+        330
+      ],
+      "size": [
+        255,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 109,
+          "end_line": 168
+        }
+      ]
+    },
+    {
+      "id": "cluster-3-consume-hook",
+      "type": "external",
+      "label": "shouldConsumeRetry",
+      "sublabel": "First hook: decides whether this failure consumes retry budget.",
+      "pos": [
+        6965,
+        275
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 140,
+          "end_line": 155
+        }
+      ]
+    },
+    {
+      "id": "cluster-3-failed-hook",
+      "type": "external",
+      "label": "onFailedAttempt",
+      "sublabel": "Second hook: observes the frozen failure context.",
+      "pos": [
+        6965,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 150,
+          "end_line": 158
+        }
+      ]
+    },
+    {
+      "id": "cluster-3-retry-hook",
+      "type": "external",
+      "label": "shouldRetry",
+      "sublabel": "Third hook: false rejects; true permits the next attempt.",
+      "pos": [
+        7255,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 170,
+          "end_line": 186
+        }
+      ]
+    },
+    {
+      "id": "cluster-3-timer",
+      "type": "backend",
+      "label": "Backoff timer",
+      "sublabel": "Waits only when a retry is consumed; delay is capped by maxTimeout and remaining maxRetryTime.",
+      "pos": [
+        6920,
+        585
+      ],
+      "size": [
+        285,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 66,
+          "end_line": 106
+        },
+        {
+          "path": "index.js",
+          "line": 184,
+          "end_line": 197
+        }
+      ]
+    },
+    {
+      "id": "cluster-3-signal",
+      "type": "external",
+      "label": "AbortSignal",
+      "sublabel": "Controller checks it around attempts; delay listens once and clears its timer.",
+      "pos": [
+        6605,
+        600
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 89,
+          "end_line": 105
+        },
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 247
+        }
+      ]
+    },
+    {
+      "id": "cluster-3-outcome",
+      "type": "external",
+      "label": "Caller promise outcome",
+      "sublabel": "Successful value returns, or the last/original error rejects.",
+      "pos": [
+        6300,
+        625
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 114,
+          "end_line": 116
+        },
+        {
+          "path": "index.js",
+          "line": 245,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "cluster-4-caller",
+      "type": "external",
+      "label": "Caller",
+      "sublabel": "Supplies input and retry options.",
+      "pos": [
+        8050,
+        270
+      ],
+      "size": [
+        185,
+        74
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 200,
+          "end_line": 201
+        }
+      ]
+    },
+    {
+      "id": "cluster-4-controller",
+      "type": "backend",
+      "label": "pRetry controller",
+      "sublabel": "Owns attemptNumber, retriesConsumed, startTime, and the loop.",
+      "pos": [
+        8300,
+        270
+      ],
+      "size": [
+        245,
+        86
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 259
+        }
+      ]
+    },
+    {
+      "id": "cluster-4-operation",
+      "type": "external",
+      "label": "Caller-provided input",
+      "sublabel": "Runs one attempt; receives attemptNumber.",
+      "pos": [
+        8625,
+        120
+      ],
+      "size": [
+        225,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 240,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "cluster-4-abort-error",
+      "type": "external",
+      "label": "AbortError",
+      "sublabel": "Operation can use it to stop retries and preserve originalError.",
+      "pos": [
+        8935,
+        105
+      ],
+      "size": [
+        230,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 49,
+          "end_line": 62
+        }
+      ]
+    },
+    {
+      "id": "cluster-4-failure",
+      "type": "backend",
+      "label": "Failure controller",
+      "sublabel": "Normalizes errors; computes retries left, remaining retry time, and delay.",
+      "pos": [
+        8620,
+        330
+      ],
+      "size": [
+        255,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 109,
+          "end_line": 168
+        }
+      ]
+    },
+    {
+      "id": "cluster-4-consume-hook",
+      "type": "external",
+      "label": "shouldConsumeRetry",
+      "sublabel": "First hook: decides whether this failure consumes retry budget.",
+      "pos": [
+        8965,
+        275
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 140,
+          "end_line": 155
+        }
+      ]
+    },
+    {
+      "id": "cluster-4-failed-hook",
+      "type": "external",
+      "label": "onFailedAttempt",
+      "sublabel": "Second hook: observes the frozen failure context.",
+      "pos": [
+        8965,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 150,
+          "end_line": 158
+        }
+      ]
+    },
+    {
+      "id": "cluster-4-retry-hook",
+      "type": "external",
+      "label": "shouldRetry",
+      "sublabel": "Third hook: false rejects; true permits the next attempt.",
+      "pos": [
+        9255,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 170,
+          "end_line": 186
+        }
+      ]
+    },
+    {
+      "id": "cluster-4-timer",
+      "type": "backend",
+      "label": "Backoff timer",
+      "sublabel": "Waits only when a retry is consumed; delay is capped by maxTimeout and remaining maxRetryTime.",
+      "pos": [
+        8920,
+        585
+      ],
+      "size": [
+        285,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 66,
+          "end_line": 106
+        },
+        {
+          "path": "index.js",
+          "line": 184,
+          "end_line": 197
+        }
+      ]
+    },
+    {
+      "id": "cluster-4-signal",
+      "type": "external",
+      "label": "AbortSignal",
+      "sublabel": "Controller checks it around attempts; delay listens once and clears its timer.",
+      "pos": [
+        8605,
+        600
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 89,
+          "end_line": 105
+        },
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 247
+        }
+      ]
+    },
+    {
+      "id": "cluster-4-outcome",
+      "type": "external",
+      "label": "Caller promise outcome",
+      "sublabel": "Successful value returns, or the last/original error rejects.",
+      "pos": [
+        8300,
+        625
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 114,
+          "end_line": 116
+        },
+        {
+          "path": "index.js",
+          "line": 245,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "cluster-5-caller",
+      "type": "external",
+      "label": "Caller",
+      "sublabel": "Supplies input and retry options.",
+      "pos": [
+        10050,
+        270
+      ],
+      "size": [
+        185,
+        74
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 200,
+          "end_line": 201
+        }
+      ]
+    },
+    {
+      "id": "cluster-5-controller",
+      "type": "backend",
+      "label": "pRetry controller",
+      "sublabel": "Owns attemptNumber, retriesConsumed, startTime, and the loop.",
+      "pos": [
+        10300,
+        270
+      ],
+      "size": [
+        245,
+        86
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 259
+        }
+      ]
+    },
+    {
+      "id": "cluster-5-operation",
+      "type": "external",
+      "label": "Caller-provided input",
+      "sublabel": "Runs one attempt; receives attemptNumber.",
+      "pos": [
+        10625,
+        120
+      ],
+      "size": [
+        225,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 240,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "cluster-5-abort-error",
+      "type": "external",
+      "label": "AbortError",
+      "sublabel": "Operation can use it to stop retries and preserve originalError.",
+      "pos": [
+        10935,
+        105
+      ],
+      "size": [
+        230,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 49,
+          "end_line": 62
+        }
+      ]
+    },
+    {
+      "id": "cluster-5-failure",
+      "type": "backend",
+      "label": "Failure controller",
+      "sublabel": "Normalizes errors; computes retries left, remaining retry time, and delay.",
+      "pos": [
+        10620,
+        330
+      ],
+      "size": [
+        255,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 109,
+          "end_line": 168
+        }
+      ]
+    },
+    {
+      "id": "cluster-5-consume-hook",
+      "type": "external",
+      "label": "shouldConsumeRetry",
+      "sublabel": "First hook: decides whether this failure consumes retry budget.",
+      "pos": [
+        10965,
+        275
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 140,
+          "end_line": 155
+        }
+      ]
+    },
+    {
+      "id": "cluster-5-failed-hook",
+      "type": "external",
+      "label": "onFailedAttempt",
+      "sublabel": "Second hook: observes the frozen failure context.",
+      "pos": [
+        10965,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 150,
+          "end_line": 158
+        }
+      ]
+    },
+    {
+      "id": "cluster-5-retry-hook",
+      "type": "external",
+      "label": "shouldRetry",
+      "sublabel": "Third hook: false rejects; true permits the next attempt.",
+      "pos": [
+        11255,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 170,
+          "end_line": 186
+        }
+      ]
+    },
+    {
+      "id": "cluster-5-timer",
+      "type": "backend",
+      "label": "Backoff timer",
+      "sublabel": "Waits only when a retry is consumed; delay is capped by maxTimeout and remaining maxRetryTime.",
+      "pos": [
+        10920,
+        585
+      ],
+      "size": [
+        285,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 66,
+          "end_line": 106
+        },
+        {
+          "path": "index.js",
+          "line": 184,
+          "end_line": 197
+        }
+      ]
+    },
+    {
+      "id": "cluster-5-signal",
+      "type": "external",
+      "label": "AbortSignal",
+      "sublabel": "Controller checks it around attempts; delay listens once and clears its timer.",
+      "pos": [
+        10605,
+        600
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 89,
+          "end_line": 105
+        },
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 247
+        }
+      ]
+    },
+    {
+      "id": "cluster-5-outcome",
+      "type": "external",
+      "label": "Caller promise outcome",
+      "sublabel": "Successful value returns, or the last/original error rejects.",
+      "pos": [
+        10300,
+        625
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 114,
+          "end_line": 116
+        },
+        {
+          "path": "index.js",
+          "line": 245,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "cluster-6-caller",
+      "type": "external",
+      "label": "Caller",
+      "sublabel": "Supplies input and retry options.",
+      "pos": [
+        12050,
+        270
+      ],
+      "size": [
+        185,
+        74
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 200,
+          "end_line": 201
+        }
+      ]
+    },
+    {
+      "id": "cluster-6-controller",
+      "type": "backend",
+      "label": "pRetry controller",
+      "sublabel": "Owns attemptNumber, retriesConsumed, startTime, and the loop.",
+      "pos": [
+        12300,
+        270
+      ],
+      "size": [
+        245,
+        86
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 259
+        }
+      ]
+    },
+    {
+      "id": "cluster-6-operation",
+      "type": "external",
+      "label": "Caller-provided input",
+      "sublabel": "Runs one attempt; receives attemptNumber.",
+      "pos": [
+        12625,
+        120
+      ],
+      "size": [
+        225,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 240,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "cluster-6-abort-error",
+      "type": "external",
+      "label": "AbortError",
+      "sublabel": "Operation can use it to stop retries and preserve originalError.",
+      "pos": [
+        12935,
+        105
+      ],
+      "size": [
+        230,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 49,
+          "end_line": 62
+        }
+      ]
+    },
+    {
+      "id": "cluster-6-failure",
+      "type": "backend",
+      "label": "Failure controller",
+      "sublabel": "Normalizes errors; computes retries left, remaining retry time, and delay.",
+      "pos": [
+        12620,
+        330
+      ],
+      "size": [
+        255,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 109,
+          "end_line": 168
+        }
+      ]
+    },
+    {
+      "id": "cluster-6-consume-hook",
+      "type": "external",
+      "label": "shouldConsumeRetry",
+      "sublabel": "First hook: decides whether this failure consumes retry budget.",
+      "pos": [
+        12965,
+        275
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 140,
+          "end_line": 155
+        }
+      ]
+    },
+    {
+      "id": "cluster-6-failed-hook",
+      "type": "external",
+      "label": "onFailedAttempt",
+      "sublabel": "Second hook: observes the frozen failure context.",
+      "pos": [
+        12965,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 150,
+          "end_line": 158
+        }
+      ]
+    },
+    {
+      "id": "cluster-6-retry-hook",
+      "type": "external",
+      "label": "shouldRetry",
+      "sublabel": "Third hook: false rejects; true permits the next attempt.",
+      "pos": [
+        13255,
+        420
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 170,
+          "end_line": 186
+        }
+      ]
+    },
+    {
+      "id": "cluster-6-timer",
+      "type": "backend",
+      "label": "Backoff timer",
+      "sublabel": "Waits only when a retry is consumed; delay is capped by maxTimeout and remaining maxRetryTime.",
+      "pos": [
+        12920,
+        585
+      ],
+      "size": [
+        285,
+        90
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 66,
+          "end_line": 106
+        },
+        {
+          "path": "index.js",
+          "line": 184,
+          "end_line": 197
+        }
+      ]
+    },
+    {
+      "id": "cluster-6-signal",
+      "type": "external",
+      "label": "AbortSignal",
+      "sublabel": "Controller checks it around attempts; delay listens once and clears its timer.",
+      "pos": [
+        12605,
+        600
+      ],
+      "size": [
+        245,
+        82
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 89,
+          "end_line": 105
+        },
+        {
+          "path": "index.js",
+          "line": 233,
+          "end_line": 247
+        }
+      ]
+    },
+    {
+      "id": "cluster-6-outcome",
+      "type": "external",
+      "label": "Caller promise outcome",
+      "sublabel": "Successful value returns, or the last/original error rejects.",
+      "pos": [
+        12300,
+        625
+      ],
+      "size": [
+        245,
+        78
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 114,
+          "end_line": 116
+        },
+        {
+          "path": "index.js",
+          "line": 245,
+          "end_line": 249
+        }
+      ]
+    },
+    {
+      "id": "suffix-source",
+      "type": "backend",
+      "label": "Suffix source",
+      "pos": [
+        80,
+        3000
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "suffix-blocker",
+      "type": "security",
+      "label": "Suffix blocker",
+      "pos": [
+        780,
+        2980
+      ],
+      "size": [
+        160,
+        100
+      ]
+    },
+    {
+      "id": "suffix-target",
+      "type": "database",
+      "label": "Suffix target",
+      "pos": [
+        1580,
+        3000
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cluster-0-start",
+      "from": "cluster-0-caller",
+      "to": "cluster-0-controller",
+      "label": "call pRetry(input, options)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-0-invoke",
+      "from": "cluster-0-controller",
+      "to": "cluster-0-operation",
+      "label": "input(attemptNumber)"
+    },
+    {
+      "id": "cluster-0-success",
+      "from": "cluster-0-operation",
+      "to": "cluster-0-controller",
+      "label": "fulfilled value → return",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-0-failure-path",
+      "from": "cluster-0-operation",
+      "to": "cluster-0-failure",
+      "label": "rejected / thrown error"
+    },
+    {
+      "id": "cluster-0-abort-request",
+      "from": "cluster-0-operation",
+      "to": "cluster-0-abort-error",
+      "label": "may throw to stop retries",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-0-unwrap",
+      "from": "cluster-0-abort-error",
+      "to": "cluster-0-failure",
+      "label": "unwrap originalError; skip hooks",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-0-consume",
+      "from": "cluster-0-failure",
+      "to": "cluster-0-consume-hook",
+      "label": "1. shouldConsumeRetry(context)"
+    },
+    {
+      "id": "cluster-0-failed",
+      "from": "cluster-0-consume-hook",
+      "to": "cluster-0-failed-hook",
+      "label": "2. then onFailedAttempt(context)"
+    },
+    {
+      "id": "cluster-0-retry",
+      "from": "cluster-0-failed-hook",
+      "to": "cluster-0-retry-hook",
+      "label": "3. then shouldRetry(context)"
+    },
+    {
+      "id": "cluster-0-no-consume-loop",
+      "from": "cluster-0-retry-hook",
+      "to": "cluster-0-controller",
+      "label": "approved + no consume → loop; no wait",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-0-wait",
+      "from": "cluster-0-retry-hook",
+      "to": "cluster-0-timer",
+      "label": "approved + consume → bounded delay"
+    },
+    {
+      "id": "cluster-0-resume",
+      "from": "cluster-0-timer",
+      "to": "cluster-0-controller",
+      "label": "timer resolves → increment consumed; loop",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-0-signal-check",
+      "from": "cluster-0-signal",
+      "to": "cluster-0-controller",
+      "label": "throwIfAborted before / after await input",
+      "variant": "security"
+    },
+    {
+      "id": "cluster-0-cancel-delay",
+      "from": "cluster-0-signal",
+      "to": "cluster-0-timer",
+      "label": "abort clears timeout and rejects delay",
+      "variant": "security"
+    },
+    {
+      "id": "cluster-0-return-value",
+      "from": "cluster-0-controller",
+      "to": "cluster-0-outcome",
+      "label": "return successful value",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-0-reject-error",
+      "from": "cluster-0-failure",
+      "to": "cluster-0-outcome",
+      "label": "reject: time/count exhausted, non-network TypeError, or shouldRetry false",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-1-start",
+      "from": "cluster-1-caller",
+      "to": "cluster-1-controller",
+      "label": "call pRetry(input, options)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-1-invoke",
+      "from": "cluster-1-controller",
+      "to": "cluster-1-operation",
+      "label": "input(attemptNumber)"
+    },
+    {
+      "id": "cluster-1-success",
+      "from": "cluster-1-operation",
+      "to": "cluster-1-controller",
+      "label": "fulfilled value → return",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-1-failure-path",
+      "from": "cluster-1-operation",
+      "to": "cluster-1-failure",
+      "label": "rejected / thrown error"
+    },
+    {
+      "id": "cluster-1-abort-request",
+      "from": "cluster-1-operation",
+      "to": "cluster-1-abort-error",
+      "label": "may throw to stop retries",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-1-unwrap",
+      "from": "cluster-1-abort-error",
+      "to": "cluster-1-failure",
+      "label": "unwrap originalError; skip hooks",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-1-consume",
+      "from": "cluster-1-failure",
+      "to": "cluster-1-consume-hook",
+      "label": "1. shouldConsumeRetry(context)"
+    },
+    {
+      "id": "cluster-1-failed",
+      "from": "cluster-1-consume-hook",
+      "to": "cluster-1-failed-hook",
+      "label": "2. then onFailedAttempt(context)"
+    },
+    {
+      "id": "cluster-1-retry",
+      "from": "cluster-1-failed-hook",
+      "to": "cluster-1-retry-hook",
+      "label": "3. then shouldRetry(context)"
+    },
+    {
+      "id": "cluster-1-no-consume-loop",
+      "from": "cluster-1-retry-hook",
+      "to": "cluster-1-controller",
+      "label": "approved + no consume → loop; no wait",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-1-wait",
+      "from": "cluster-1-retry-hook",
+      "to": "cluster-1-timer",
+      "label": "approved + consume → bounded delay"
+    },
+    {
+      "id": "cluster-1-resume",
+      "from": "cluster-1-timer",
+      "to": "cluster-1-controller",
+      "label": "timer resolves → increment consumed; loop",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-1-signal-check",
+      "from": "cluster-1-signal",
+      "to": "cluster-1-controller",
+      "label": "throwIfAborted before / after await input",
+      "variant": "security"
+    },
+    {
+      "id": "cluster-1-cancel-delay",
+      "from": "cluster-1-signal",
+      "to": "cluster-1-timer",
+      "label": "abort clears timeout and rejects delay",
+      "variant": "security"
+    },
+    {
+      "id": "cluster-1-return-value",
+      "from": "cluster-1-controller",
+      "to": "cluster-1-outcome",
+      "label": "return successful value",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-1-reject-error",
+      "from": "cluster-1-failure",
+      "to": "cluster-1-outcome",
+      "label": "reject: time/count exhausted, non-network TypeError, or shouldRetry false",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-2-start",
+      "from": "cluster-2-caller",
+      "to": "cluster-2-controller",
+      "label": "call pRetry(input, options)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-2-invoke",
+      "from": "cluster-2-controller",
+      "to": "cluster-2-operation",
+      "label": "input(attemptNumber)"
+    },
+    {
+      "id": "cluster-2-success",
+      "from": "cluster-2-operation",
+      "to": "cluster-2-controller",
+      "label": "fulfilled value → return",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-2-failure-path",
+      "from": "cluster-2-operation",
+      "to": "cluster-2-failure",
+      "label": "rejected / thrown error"
+    },
+    {
+      "id": "cluster-2-abort-request",
+      "from": "cluster-2-operation",
+      "to": "cluster-2-abort-error",
+      "label": "may throw to stop retries",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-2-unwrap",
+      "from": "cluster-2-abort-error",
+      "to": "cluster-2-failure",
+      "label": "unwrap originalError; skip hooks",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-2-consume",
+      "from": "cluster-2-failure",
+      "to": "cluster-2-consume-hook",
+      "label": "1. shouldConsumeRetry(context)"
+    },
+    {
+      "id": "cluster-2-failed",
+      "from": "cluster-2-consume-hook",
+      "to": "cluster-2-failed-hook",
+      "label": "2. then onFailedAttempt(context)"
+    },
+    {
+      "id": "cluster-2-retry",
+      "from": "cluster-2-failed-hook",
+      "to": "cluster-2-retry-hook",
+      "label": "3. then shouldRetry(context)"
+    },
+    {
+      "id": "cluster-2-no-consume-loop",
+      "from": "cluster-2-retry-hook",
+      "to": "cluster-2-controller",
+      "label": "approved + no consume → loop; no wait",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-2-wait",
+      "from": "cluster-2-retry-hook",
+      "to": "cluster-2-timer",
+      "label": "approved + consume → bounded delay"
+    },
+    {
+      "id": "cluster-2-resume",
+      "from": "cluster-2-timer",
+      "to": "cluster-2-controller",
+      "label": "timer resolves → increment consumed; loop",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-2-signal-check",
+      "from": "cluster-2-signal",
+      "to": "cluster-2-controller",
+      "label": "throwIfAborted before / after await input",
+      "variant": "security"
+    },
+    {
+      "id": "cluster-2-cancel-delay",
+      "from": "cluster-2-signal",
+      "to": "cluster-2-timer",
+      "label": "abort clears timeout and rejects delay",
+      "variant": "security"
+    },
+    {
+      "id": "cluster-2-return-value",
+      "from": "cluster-2-controller",
+      "to": "cluster-2-outcome",
+      "label": "return successful value",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-2-reject-error",
+      "from": "cluster-2-failure",
+      "to": "cluster-2-outcome",
+      "label": "reject: time/count exhausted, non-network TypeError, or shouldRetry false",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-3-start",
+      "from": "cluster-3-caller",
+      "to": "cluster-3-controller",
+      "label": "call pRetry(input, options)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-3-invoke",
+      "from": "cluster-3-controller",
+      "to": "cluster-3-operation",
+      "label": "input(attemptNumber)"
+    },
+    {
+      "id": "cluster-3-success",
+      "from": "cluster-3-operation",
+      "to": "cluster-3-controller",
+      "label": "fulfilled value → return",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-3-failure-path",
+      "from": "cluster-3-operation",
+      "to": "cluster-3-failure",
+      "label": "rejected / thrown error"
+    },
+    {
+      "id": "cluster-3-abort-request",
+      "from": "cluster-3-operation",
+      "to": "cluster-3-abort-error",
+      "label": "may throw to stop retries",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-3-unwrap",
+      "from": "cluster-3-abort-error",
+      "to": "cluster-3-failure",
+      "label": "unwrap originalError; skip hooks",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-3-consume",
+      "from": "cluster-3-failure",
+      "to": "cluster-3-consume-hook",
+      "label": "1. shouldConsumeRetry(context)"
+    },
+    {
+      "id": "cluster-3-failed",
+      "from": "cluster-3-consume-hook",
+      "to": "cluster-3-failed-hook",
+      "label": "2. then onFailedAttempt(context)"
+    },
+    {
+      "id": "cluster-3-retry",
+      "from": "cluster-3-failed-hook",
+      "to": "cluster-3-retry-hook",
+      "label": "3. then shouldRetry(context)"
+    },
+    {
+      "id": "cluster-3-no-consume-loop",
+      "from": "cluster-3-retry-hook",
+      "to": "cluster-3-controller",
+      "label": "approved + no consume → loop; no wait",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-3-wait",
+      "from": "cluster-3-retry-hook",
+      "to": "cluster-3-timer",
+      "label": "approved + consume → bounded delay"
+    },
+    {
+      "id": "cluster-3-resume",
+      "from": "cluster-3-timer",
+      "to": "cluster-3-controller",
+      "label": "timer resolves → increment consumed; loop",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-3-signal-check",
+      "from": "cluster-3-signal",
+      "to": "cluster-3-controller",
+      "label": "throwIfAborted before / after await input",
+      "variant": "security"
+    },
+    {
+      "id": "cluster-3-cancel-delay",
+      "from": "cluster-3-signal",
+      "to": "cluster-3-timer",
+      "label": "abort clears timeout and rejects delay",
+      "variant": "security"
+    },
+    {
+      "id": "cluster-3-return-value",
+      "from": "cluster-3-controller",
+      "to": "cluster-3-outcome",
+      "label": "return successful value",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-3-reject-error",
+      "from": "cluster-3-failure",
+      "to": "cluster-3-outcome",
+      "label": "reject: time/count exhausted, non-network TypeError, or shouldRetry false",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-4-start",
+      "from": "cluster-4-caller",
+      "to": "cluster-4-controller",
+      "label": "call pRetry(input, options)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-4-invoke",
+      "from": "cluster-4-controller",
+      "to": "cluster-4-operation",
+      "label": "input(attemptNumber)"
+    },
+    {
+      "id": "cluster-4-success",
+      "from": "cluster-4-operation",
+      "to": "cluster-4-controller",
+      "label": "fulfilled value → return",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-4-failure-path",
+      "from": "cluster-4-operation",
+      "to": "cluster-4-failure",
+      "label": "rejected / thrown error"
+    },
+    {
+      "id": "cluster-4-abort-request",
+      "from": "cluster-4-operation",
+      "to": "cluster-4-abort-error",
+      "label": "may throw to stop retries",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-4-unwrap",
+      "from": "cluster-4-abort-error",
+      "to": "cluster-4-failure",
+      "label": "unwrap originalError; skip hooks",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-4-consume",
+      "from": "cluster-4-failure",
+      "to": "cluster-4-consume-hook",
+      "label": "1. shouldConsumeRetry(context)"
+    },
+    {
+      "id": "cluster-4-failed",
+      "from": "cluster-4-consume-hook",
+      "to": "cluster-4-failed-hook",
+      "label": "2. then onFailedAttempt(context)"
+    },
+    {
+      "id": "cluster-4-retry",
+      "from": "cluster-4-failed-hook",
+      "to": "cluster-4-retry-hook",
+      "label": "3. then shouldRetry(context)"
+    },
+    {
+      "id": "cluster-4-no-consume-loop",
+      "from": "cluster-4-retry-hook",
+      "to": "cluster-4-controller",
+      "label": "approved + no consume → loop; no wait",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-4-wait",
+      "from": "cluster-4-retry-hook",
+      "to": "cluster-4-timer",
+      "label": "approved + consume → bounded delay"
+    },
+    {
+      "id": "cluster-4-resume",
+      "from": "cluster-4-timer",
+      "to": "cluster-4-controller",
+      "label": "timer resolves → increment consumed; loop",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-4-signal-check",
+      "from": "cluster-4-signal",
+      "to": "cluster-4-controller",
+      "label": "throwIfAborted before / after await input",
+      "variant": "security"
+    },
+    {
+      "id": "cluster-4-cancel-delay",
+      "from": "cluster-4-signal",
+      "to": "cluster-4-timer",
+      "label": "abort clears timeout and rejects delay",
+      "variant": "security"
+    },
+    {
+      "id": "cluster-4-return-value",
+      "from": "cluster-4-controller",
+      "to": "cluster-4-outcome",
+      "label": "return successful value",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-4-reject-error",
+      "from": "cluster-4-failure",
+      "to": "cluster-4-outcome",
+      "label": "reject: time/count exhausted, non-network TypeError, or shouldRetry false",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-5-start",
+      "from": "cluster-5-caller",
+      "to": "cluster-5-controller",
+      "label": "call pRetry(input, options)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-5-invoke",
+      "from": "cluster-5-controller",
+      "to": "cluster-5-operation",
+      "label": "input(attemptNumber)"
+    },
+    {
+      "id": "cluster-5-success",
+      "from": "cluster-5-operation",
+      "to": "cluster-5-controller",
+      "label": "fulfilled value → return",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-5-failure-path",
+      "from": "cluster-5-operation",
+      "to": "cluster-5-failure",
+      "label": "rejected / thrown error"
+    },
+    {
+      "id": "cluster-5-abort-request",
+      "from": "cluster-5-operation",
+      "to": "cluster-5-abort-error",
+      "label": "may throw to stop retries",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-5-unwrap",
+      "from": "cluster-5-abort-error",
+      "to": "cluster-5-failure",
+      "label": "unwrap originalError; skip hooks",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-5-consume",
+      "from": "cluster-5-failure",
+      "to": "cluster-5-consume-hook",
+      "label": "1. shouldConsumeRetry(context)"
+    },
+    {
+      "id": "cluster-5-failed",
+      "from": "cluster-5-consume-hook",
+      "to": "cluster-5-failed-hook",
+      "label": "2. then onFailedAttempt(context)"
+    },
+    {
+      "id": "cluster-5-retry",
+      "from": "cluster-5-failed-hook",
+      "to": "cluster-5-retry-hook",
+      "label": "3. then shouldRetry(context)"
+    },
+    {
+      "id": "cluster-5-no-consume-loop",
+      "from": "cluster-5-retry-hook",
+      "to": "cluster-5-controller",
+      "label": "approved + no consume → loop; no wait",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-5-wait",
+      "from": "cluster-5-retry-hook",
+      "to": "cluster-5-timer",
+      "label": "approved + consume → bounded delay"
+    },
+    {
+      "id": "cluster-5-resume",
+      "from": "cluster-5-timer",
+      "to": "cluster-5-controller",
+      "label": "timer resolves → increment consumed; loop",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-5-signal-check",
+      "from": "cluster-5-signal",
+      "to": "cluster-5-controller",
+      "label": "throwIfAborted before / after await input",
+      "variant": "security"
+    },
+    {
+      "id": "cluster-5-cancel-delay",
+      "from": "cluster-5-signal",
+      "to": "cluster-5-timer",
+      "label": "abort clears timeout and rejects delay",
+      "variant": "security"
+    },
+    {
+      "id": "cluster-5-return-value",
+      "from": "cluster-5-controller",
+      "to": "cluster-5-outcome",
+      "label": "return successful value",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-5-reject-error",
+      "from": "cluster-5-failure",
+      "to": "cluster-5-outcome",
+      "label": "reject: time/count exhausted, non-network TypeError, or shouldRetry false",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-6-start",
+      "from": "cluster-6-caller",
+      "to": "cluster-6-controller",
+      "label": "call pRetry(input, options)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-6-invoke",
+      "from": "cluster-6-controller",
+      "to": "cluster-6-operation",
+      "label": "input(attemptNumber)"
+    },
+    {
+      "id": "cluster-6-success",
+      "from": "cluster-6-operation",
+      "to": "cluster-6-controller",
+      "label": "fulfilled value → return",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-6-failure-path",
+      "from": "cluster-6-operation",
+      "to": "cluster-6-failure",
+      "label": "rejected / thrown error"
+    },
+    {
+      "id": "cluster-6-abort-request",
+      "from": "cluster-6-operation",
+      "to": "cluster-6-abort-error",
+      "label": "may throw to stop retries",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-6-unwrap",
+      "from": "cluster-6-abort-error",
+      "to": "cluster-6-failure",
+      "label": "unwrap originalError; skip hooks",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-6-consume",
+      "from": "cluster-6-failure",
+      "to": "cluster-6-consume-hook",
+      "label": "1. shouldConsumeRetry(context)"
+    },
+    {
+      "id": "cluster-6-failed",
+      "from": "cluster-6-consume-hook",
+      "to": "cluster-6-failed-hook",
+      "label": "2. then onFailedAttempt(context)"
+    },
+    {
+      "id": "cluster-6-retry",
+      "from": "cluster-6-failed-hook",
+      "to": "cluster-6-retry-hook",
+      "label": "3. then shouldRetry(context)"
+    },
+    {
+      "id": "cluster-6-no-consume-loop",
+      "from": "cluster-6-retry-hook",
+      "to": "cluster-6-controller",
+      "label": "approved + no consume → loop; no wait",
+      "variant": "dashed"
+    },
+    {
+      "id": "cluster-6-wait",
+      "from": "cluster-6-retry-hook",
+      "to": "cluster-6-timer",
+      "label": "approved + consume → bounded delay"
+    },
+    {
+      "id": "cluster-6-resume",
+      "from": "cluster-6-timer",
+      "to": "cluster-6-controller",
+      "label": "timer resolves → increment consumed; loop",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-6-signal-check",
+      "from": "cluster-6-signal",
+      "to": "cluster-6-controller",
+      "label": "throwIfAborted before / after await input",
+      "variant": "security"
+    },
+    {
+      "id": "cluster-6-cancel-delay",
+      "from": "cluster-6-signal",
+      "to": "cluster-6-timer",
+      "label": "abort clears timeout and rejects delay",
+      "variant": "security"
+    },
+    {
+      "id": "cluster-6-return-value",
+      "from": "cluster-6-controller",
+      "to": "cluster-6-outcome",
+      "label": "return successful value",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cluster-6-reject-error",
+      "from": "cluster-6-failure",
+      "to": "cluster-6-outcome",
+      "label": "reject: time/count exhausted, non-network TypeError, or shouldRetry false",
+      "variant": "dashed"
+    },
+    {
+      "id": "suffix-grid-route",
+      "from": "suffix-source",
+      "to": "suffix-target"
+    }
+  ]
+}

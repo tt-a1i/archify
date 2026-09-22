@@ -1,0 +1,31 @@
+{
+  "start_epoch": 1789974943.510165,
+  "observed_seconds": 265.13043383299373,
+  "max_poll_gap_seconds": 0.13358674990013242,
+  "expired": false,
+  "snapshots": [
+    {
+      "index": 1,
+      "elapsed_seconds": 185.11085620801896,
+      "sha256": "41c13ce7ceade8e788eeade07437fcad343e3a3462460366fa911181debaf485",
+      "bytes": 7950,
+      "parseable": true,
+      "structurally_complete": true
+    },
+    {
+      "index": 2,
+      "elapsed_seconds": 233.54894295800477,
+      "sha256": "8a25f434c8d635b0d700d0fa105c0c9d6670a282fc393db13ae1914d966505bd",
+      "bytes": 7970,
+      "parseable": true,
+      "structurally_complete": true
+    }
+  ],
+  "first_complete_seconds": 185.11085620801896,
+  "completion": {
+    "task_status": "completed",
+    "epoch": 1789975208.593683,
+    "delivery_status": "see artifact receipts, not implied by task completion"
+  },
+  "limits": "Observed from before dispatch; scheduling included. Structural completeness is not factual acceptance. Hidden model/HTTP timing unavailable."
+}

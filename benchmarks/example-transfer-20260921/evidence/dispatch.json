@@ -1,0 +1,6 @@
+{
+  "p-retry-B1": "/root/example_retry_b1",
+  "p-retry-P1": "/root/example_retry_p1",
+  "quick-lru-P1": "/root/example_lru_p1",
+  "quick-lru-B1": "/root/example_lru_b1"
+}

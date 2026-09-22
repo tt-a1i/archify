@@ -1,0 +1,19 @@
+{
+  "candidate_sha256": "436455ac73fb883ce7031f1c862027b3f5b957f58d65b469c7f95fc536a60b68",
+  "machine_finalize": "pass",
+  "semantic_quality": "fail",
+  "independent_overall_quality": "fail",
+  "promotion_qualified": false,
+  "agreed_blocker": {
+    "clause": 2,
+    "finding": "The absent-current set branch does not explain that the same key can remain in the old generation. Both reviewers independently found this omission.",
+    "source": "index.js:120-132; #set index.js:68-77",
+    "adjudication": "Confirmed from pinned source and the complete unchanged diagram strings. Explicitly required by the visible task. An input omission, not content deleted by preflight."
+  },
+  "additional_findings": {
+    "optional_expiry_policy": "Confirmed missing: no maxAge/default policy explanation despite visible required clause 1. Controller source citation alone does not show it.",
+    "expiry_predicate_and_has_peek_returns": "Terra identified missing detail; Luna accepted the generic expiry paths. Retained as a granularity disagreement, not needed to decide overall failure; no requirement for literal source-code wording is added.",
+    "visual": "Luna accepted with minor notes, Terra rejected fine text at 1440 dark. Root inspected the actual 1440 dark capture: containment is good but fine labels are small and faint. No unanimous perceptual pass is claimed. Normal document scrolling is not a failure."
+  },
+  "scope": "The prototype retains all authored content. Exact semantic preservation establishes no deletion, not semantic completeness. No post-review rewrite is included in the recorded timing."
+}

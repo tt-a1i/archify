@@ -1,0 +1,129 @@
+{
+  "scope": {
+    "mode": "read-only diagnosis",
+    "inputs": "frozen revision-2 development receipts and current preflight.mjs",
+    "excluded": "prior/runtime holdout bytes, new candidate generation, reruns, and source changes"
+  },
+  "frozen_receipts": {
+    "root": "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/repair-firstpass-20260921/revision-2/development",
+    "summary": {
+      "quick-lru-B1": { "status": "accepted", "attempts": 22, "elapsed_ms": 4241 },
+      "p-retry-C1": { "status": "declined", "reason": "no-passing-geometry-proposal", "attempts": 55, "elapsed_ms": 9987 },
+      "lilconfig-C1": { "status": "declined", "reason": "no-passing-geometry-proposal", "attempts": 64, "elapsed_ms": 12737 }
+    }
+  },
+  "observed_progress": {
+    "quick-lru-B1": {
+      "baseline_instances": {
+        "composition/micro-segment": 1,
+        "composition/label-route-clearance": 1,
+        "layout/constraint": 2
+      },
+      "passing_attempt_index": 21,
+      "passing_proposal": "local-0-down>composition/micro-segment:0:4:-16,0",
+      "result": "The stateful successor mechanism did compose an improving local state with a targeted move and passed ordinary showcase validation."
+    },
+    "p-retry-C1": {
+      "baseline_instances": {
+        "composition/short-interior-segment": 2,
+        "composition/micro-segment": 2,
+        "layout/constraint": 4
+      },
+      "best_layout_clean_attempt": {
+        "index": 26,
+        "proposal": "spread-y-10>composition/micro-segment:0:1:32,0",
+        "layout_diagnostic_count": 0,
+        "ordinary_showcase_diagnostic": "composition/desktop-readability",
+        "ordinary_showcase_evidence": {
+          "node_id": "abort-error",
+          "viewBoxWidth": 1540,
+          "availableDiagramWidth": 1346,
+          "scale": 0.874025974025974,
+          "sourceFontPx": 6,
+          "projectedFontPx": 5.244155844155844,
+          "minimumProjectedFontPx": 6
+        }
+      },
+      "width_recovery": {
+        "reached": true,
+        "attempt_index": 27,
+        "proposal": "spread-y-10>composition/micro-segment:0:1:32,0>readable-secondary-7",
+        "resulting_layout_instances": {
+          "composition/short-interior-segment": 2,
+          "composition/micro-segment": 1,
+          "layout/constraint": 1
+        },
+        "interpretation": "The full-validation desktop-readability receipt was used to create a recovery candidate from the route-clean state. The recovery widened all secondary-text boxes and reintroduced layout/routing failures; it did not produce an accepted candidate."
+      },
+      "best_remaining_error_count": 1,
+      "best_remaining_classes": [
+        "composition/micro-segment",
+        "composition/short-interior-segment",
+        "layout/constraint",
+        "composition/desktop-readability"
+      ],
+      "termination": "55 attempts, 9.987s. The queue exhausted before either protocol ceiling (64 attempts or 20s)."
+    },
+    "lilconfig-C1": {
+      "baseline_instances": {
+        "composition/short-interior-segment": 2,
+        "composition/micro-segment": 2,
+        "composition/label-route-clearance": 6,
+        "layout/constraint": 14
+      },
+      "best_remaining_error_count": 4,
+      "best_remaining_instances": {
+        "composition/short-interior-segment": 1,
+        "composition/label-route-clearance": 2,
+        "layout/constraint": 1
+      },
+      "best_attempt_indices": [60, 61, 62, 63],
+      "best_anchor_proposal": "spread-x-10>composition/micro-segment:0:7:32,0",
+      "remaining_subjects": {
+        "short_segment": { "connection": "loadInvoke", "from": "explorer", "to": "load", "lengthPx": 12, "minimumPx": 16 },
+        "label_clearance": { "connection": "probe", "from": "candidate", "to": "filesystem", "other_connections": ["readSearch", "searchFailures"], "clearancePx": 0, "minimumPx": 4 }
+      },
+      "termination": "The fixed 64-attempt ceiling was reached at 12.737s, with 7.263s unused time."
+    }
+  },
+  "classification": {
+    "implementation_defects_or_omissions": [
+      {
+        "finding": "The diagnostic target extractor accepts connection endpoints and obstacle IDs, but not the desktop-readability subject.nodeId or evidence.owner.id.",
+        "evidence": "preflight.mjs targetIds reads subject.from, subject.to, evidence.obstacle.id, subject.obstacle.id, and otherRelationship endpoints; the p-retry readability receipt names abort-error only as subject.nodeId/evidence.owner.id.",
+        "effect": "No owner-specific geometry proposal was generated for abort-error. The only readability family widened every component with secondary text."
+      },
+      {
+        "finding": "The readable-secondary proposal is broad and non-monotone with routing.",
+        "evidence": "p-retry attempt 27 follows the clean attempt 26 and returns four layout instances after widening all secondary-text boxes.",
+        "effect": "The width recovery did run, but it did not preserve the route-clean geometry."
+      }
+    ],
+    "heuristic_and_budget_limits": [
+      {
+        "finding": "Search expansion is globally strict-improvement gated.",
+        "evidence": "A successor is enqueued only when lessScore(score, bestScore) is true in preflight.mjs.",
+        "effect": "Equal-score alternative states and states that temporarily trade one diagnostic class for another are not expanded, even when a later composition could pass."
+      },
+      {
+        "finding": "Per-state successors are truncated to 16 before the global 64-attempt cap.",
+        "evidence": "targetedSeeds returns seeds.slice(0, 16).",
+        "effect": "The order of diagnostic instances can starve later implicated nodes/relationships."
+      },
+      {
+        "finding": "Lilconfig consumed the attempt cap on deep short-segment branches rather than wall-clock time.",
+        "evidence": "64 attempts completed in 12.737s; the best four-error states appear only at attempts 60-63.",
+        "effect": "The observed limit is bounded beam coverage, not subprocess latency or a 20s timeout."
+      }
+    ],
+    "not_an_implementation_failure": [
+      "The full ordinary showcase receipt was used after a successful layout pass: p-retry attempt 26 emitted composition/desktop-readability and directly led to attempt 27 readable-secondary-7.",
+      "State reuse is functional: QuickLRU passed with a targeted successor of local-0-down."
+    ]
+  },
+  "conclusion": {
+    "development_gate": "1 of 3 passed; the required 2 of 3 was not met.",
+    "authorization_implication": "The frozen protocol does not permit holdout or author-pair work from this result.",
+    "repair_action": "None performed. This file records diagnosis only."
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "tasks": [
+    {
+      "id": "p-retry",
+      "url": "https://github.com/sindresorhus/p-retry",
+      "revision": "1472907affe8d6107aba5884abc36d6361b3042e",
+      "scope": [
+        "index.js"
+      ],
+      "prompt": "Create a source-backed architecture diagram explaining pRetry(input, options) from the caller's request through successful return or final rejection. Explain the actual retry controller, the caller-provided operation, failure-decision hooks and the timer/AbortSignal boundaries. Make both normal retry and stopping paths understandable to a developer new to this code.",
+      "required": [
+        "Show which controller owns attempt numbers, consumed retries and the overall retry-time budget; distinguish it from the caller-provided operation.",
+        "Show operation invocation and successful value return, plus the failed-attempt path back into the controller.",
+        "Explain the roles and actual ordering/conditions of shouldConsumeRetry, onFailedAttempt and shouldRetry; distinguish consuming retry count and waiting from retrying without that consumption/delay, while retaining retry-time and remaining-retry conditions.",
+        "Explain stopping when retry count or retry time is exhausted, when shouldRetry declines, and when a non-network TypeError is rejected.",
+        "Show AbortError unwrapping and distinguish it from AbortSignal cancellation. Explain cancellation during a retry delay and the limits of cancelling an already-running caller operation.",
+        "Show backoff/timer waiting bounded by configured maxTimeout and remaining maxRetryTime (which may be infinite), and the retry loop. Distinguish a retry-time budget from an enforced deadline on an already-running input. Random-jitter formula details, option-validation error wording and the makeRetriable wrapper are outside scope.",
+        "Support the diagram's roles, meaningful branches and material conclusion-card claims with exact inspected source ranges. Use reader-focused views/cards when they explain distinct aspects; there are no content-count targets."
+      ]
+    },
+    {
+      "id": "quick-lru",
+      "url": "https://github.com/sindresorhus/quick-lru",
+      "revision": "a2190ebdf8e455b95a7138803d274ff5ed57ebcd",
+      "scope": [
+        "index.js"
+      ],
+      "prompt": "Create a source-backed architecture diagram of QuickLRU's core cache lifecycle: set, get, has/peek, expiry, generation rotation, delete and clear. Explain the owning cache object, its in-memory state, and the caller/callback boundaries. A reader should understand why this implementation keeps two generations and which operations promote entries or invoke onEviction.",
+      "required": [
+        "Show QuickLRU as the controller owning the current and old in-memory maps, the current-generation count, maxSize and optional expiry policy; do not imply persistent or remote storage.",
+        "Show set for a current-generation key versus a key absent from the current generation (possibly still in the old generation), and generation rotation at the configured threshold; distinguish rotation from evicting just the one least-recent item.",
+        "Show get from the current generation, get/promotion from the old generation and a missing key. Preserve the actual expiry checks and their effect on removal/return.",
+        "Explain that has and peek inspect without get-style promotion, including their expiry behavior.",
+        "Distinguish onEviction for expired/rotated-out entries from explicit delete and clear. Show their effects on both maps/current count without inventing callbacks on manual deletion.",
+        "Iteration, resize and exact public size arithmetic are outside scope. Support all authored claims with inspected source ranges; include useful views/cards without content-count targets."
+      ]
+    }
+  ]
+}

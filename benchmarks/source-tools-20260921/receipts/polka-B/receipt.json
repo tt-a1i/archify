@@ -1,0 +1,23 @@
+{
+  "start_epoch": 1789963052.610738,
+  "observed_seconds": 207.93279437499586,
+  "max_poll_gap_seconds": 0.1279821660136804,
+  "expired": false,
+  "snapshots": [
+    {
+      "index": 1,
+      "elapsed_seconds": 163.0228623340372,
+      "sha256": "94c265e3266be792e7f1fcd0329e0566e6f638ab0ee167c0cbcccc0b060602cc",
+      "bytes": 9336,
+      "parseable": true,
+      "structurally_complete": true
+    }
+  ],
+  "first_complete_seconds": 163.0228623340372,
+  "completion": {
+    "epoch": 1789963260.450741,
+    "status": "completed",
+    "handle": "/root/source_polka_b"
+  },
+  "limits": "Observed from before dispatch; scheduling included. Structural completeness is not factual acceptance. Hidden model/HTTP timing unavailable."
+}

@@ -1,0 +1,522 @@
+{
+  "auditedTaskFile": "/Users/tushaokun/.codex/worktrees/archify-semantic-firstdraft-20260921/benchmarks/semantic-firstdraft-20260921/tasks.json",
+  "auditedTaskSha256": "e78b303cd574b861d0d0bb04f4937658726b877c3fc227af5e78a7c5957a3483",
+  "scope": "Read-only audit against visible tasks and frozen scoped source only. No future runs or results read. No tests or benchmarks run. No additional acceptance criteria introduced.",
+  "disposition": "READY_TO_FREEZE: revised task card checked. Required factual and scope corrections are resolved; no further required clarification and no new acceptance criteria.",
+  "tasks": [
+    {
+      "id": "p-retry",
+      "revisionVerified": "1472907affe8d6107aba5884abc36d6361b3042e",
+      "source": "/private/tmp/archify-semantic-firstdraft-20260921/repos/p-retry/index.js",
+      "clauses": [
+        {
+          "number": 1,
+          "ranges": [
+            [
+              200,
+              217
+            ],
+            [
+              233,
+              258
+            ],
+            [
+              118,
+              126
+            ],
+            [
+              160,
+              189
+            ]
+          ],
+          "finding": "pRetry owns attemptNumber, retriesConsumed and startTime; onAttemptFailure checks elapsed time and retry allowance. The caller input is separate. maxRetryTime is not a timer that preempts an in-flight input."
+        },
+        {
+          "number": 2,
+          "ranges": [
+            [
+              242,
+              259
+            ]
+          ],
+          "finding": "Input is awaited with attemptNumber; success checks signal then returns value; caught failure is delegated to the failure controller."
+        },
+        {
+          "number": 3,
+          "ranges": [
+            [
+              109,
+              176
+            ],
+            [
+              178,
+              197
+            ],
+            [
+              251,
+              259
+            ]
+          ],
+          "finding": "AbortError bypasses hooks. Already exhausted time calls only onFailedAttempt then rejects. Otherwise shouldConsumeRetry precedes onFailedAttempt; time/count/non-network TypeError checks precede shouldRetry. Non-consuming allowed retries skip delay and do not increment retriesConsumed, but remain subject to time and retriesLeft checks."
+        },
+        {
+          "number": 4,
+          "ranges": [
+            [
+              118,
+              137
+            ],
+            [
+              158,
+              181
+            ]
+          ],
+          "finding": "Retry-count/time exhaustion, non-network TypeError and shouldRetry=false reject. All requested stop paths are real."
+        },
+        {
+          "number": 5,
+          "ranges": [
+            [
+              49,
+              64
+            ],
+            [
+              84,
+              106
+            ],
+            [
+              114,
+              116
+            ],
+            [
+              184,
+              195
+            ],
+            [
+              233,
+              249
+            ]
+          ],
+          "finding": "AbortError unwraps originalError. Signal abort clears/rejects the delay and is checked at controller checkpoints. Input receives attemptNumber only and is directly awaited; pRetry does not itself interrupt it. Input may cooperate with a signal independently."
+        },
+        {
+          "number": 6,
+          "ranges": [
+            [
+              66,
+              82
+            ],
+            [
+              84,
+              106
+            ],
+            [
+              184,
+              197
+            ],
+            [
+              209,
+              217
+            ],
+            [
+              235,
+              260
+            ],
+            [
+              267,
+              271
+            ]
+          ],
+          "finding": "Backoff is capped by configured maxTimeout and remaining maxRetryTime; both time limits can be Infinity. Timer/delay and loop are real. Excluded makeRetriable wrapper exists."
+        },
+        {
+          "number": 7,
+          "ranges": [],
+          "finding": "Evidence and useful views/cards without count targets are deliverable rules, not repository behavior requiring a fake source citation."
+        }
+      ],
+      "recommendations": [
+        {
+          "clauses": [
+            3
+          ],
+          "kind": "clarify",
+          "replacement": "Explain the roles and actual ordering/conditions of shouldConsumeRetry, onFailedAttempt and shouldRetry; distinguish consuming a retry count and waiting from an allowed non-consuming retry that skips the delay. Both remain subject to the elapsed-time and retry-exhaustion checks.",
+          "reason": "The word budget otherwise conflates retriesConsumed and elapsed maxRetryTime.",
+          "status": "resolved by revised visible task wording; no additional wording required"
+        },
+        {
+          "clauses": [
+            1,
+            6
+          ],
+          "kind": "clarify",
+          "replacement": "Show configured backoff, capped by maxTimeout and the remaining maxRetryTime when finite, timer waiting and the retry loop. Do not imply maxRetryTime interrupts an already-running operation.",
+          "reason": "Both limits default to Infinity; successful input return is not followed by a maxRetryTime check.",
+          "status": "resolved by revised visible task wording; no additional wording required"
+        }
+      ]
+    },
+    {
+      "id": "quick-lru",
+      "revisionVerified": "a2190ebdf8e455b95a7138803d274ff5ed57ebcd",
+      "source": "/private/tmp/archify-semantic-firstdraft-20260921/repos/quick-lru/index.js",
+      "clauses": [
+        {
+          "number": 1,
+          "ranges": [
+            [
+              1,
+              7
+            ],
+            [
+              20,
+              22
+            ],
+            [
+              30,
+              46
+            ],
+            [
+              105,
+              179
+            ]
+          ],
+          "finding": "QuickLRU owns two in-memory Maps, current generation count, capacity, default expiry and callback. No persistent or remote storage is implied by source."
+        },
+        {
+          "number": 2,
+          "ranges": [
+            [
+              68,
+              83
+            ],
+            [
+              105,
+              135
+            ]
+          ],
+          "finding": "Current-key set replaces without count increment. A key absent from current is inserted even if present in old. At threshold, callbacks cover the whole discarded old generation, current becomes old, and a new current map/count begins. get promotion also uses the same insertion helper and can rotate."
+        },
+        {
+          "number": 3,
+          "ranges": [
+            [
+              40,
+              61
+            ],
+            [
+              105,
+              118
+            ],
+            [
+              166,
+              173
+            ]
+          ],
+          "finding": "Current get uses the expiry-truthiness gated helper. Old get checks expiration directly, promotes only unexpired entries and returns value; missing falls through to undefined. Expiry invokes callback then delete, which affects both maps."
+        },
+        {
+          "number": 4,
+          "ranges": [
+            [
+              40,
+              66
+            ],
+            [
+              137,
+              157
+            ]
+          ],
+          "finding": "has and peek do not promote but can delete expired entries. has directly checks expiry; peek shares the value helper's expiry truthiness gate. Missing returns false or undefined respectively."
+        },
+        {
+          "number": 5,
+          "ranges": [
+            [
+              30,
+              46
+            ],
+            [
+              68,
+              78
+            ],
+            [
+              166,
+              179
+            ]
+          ],
+          "finding": "Expiry and rotation invoke optional onEviction. Manual delete removes both-map occurrences and decrements count only if current held the key; clear empties both and resets count. Neither manual method invokes eviction callbacks."
+        },
+        {
+          "number": 6,
+          "ranges": [
+            [
+              9,
+              23
+            ],
+            [
+              85,
+              103
+            ],
+            [
+              159,
+              164
+            ],
+            [
+              181,
+              203
+            ],
+            [
+              205,
+              221
+            ],
+            [
+              223,
+              298
+            ],
+            [
+              308,
+              315
+            ]
+          ],
+          "finding": "Iteration, resize and exact public size arithmetic are valid explicit exclusions. The nonexistent constructor-seeded feature exclusion has been removed. The listed core lifecycle methods define scope; evidence/views/card rules are deliverable requirements."
+        }
+      ],
+      "recommendations": [
+        {
+          "clauses": [
+            2
+          ],
+          "kind": "clarify",
+          "replacement": "Replace inserting a new key with inserting a key absent from the current generation, including a key still present in the old generation. State that get promotion can trigger rotation through the same insertion helper.",
+          "reason": "new could mean globally absent; the actual branch is current-map membership.",
+          "status": "resolved by revised visible task wording; no additional wording required"
+        },
+        {
+          "clauses": [
+            4
+          ],
+          "kind": "clarify",
+          "replacement": "Explain that has and peek inspect without get-style promotion, while still removing expired entries.",
+          "reason": "inspect can otherwise be misread as read-only.",
+          "status": "non-blocking wording suggestion only; not an additional acceptance criterion and not required before freeze"
+        },
+        {
+          "clauses": [
+            6
+          ],
+          "kind": "remove_false_implication",
+          "replacement": "Remove constructor-seeded entries from the out-of-scope list.",
+          "reason": "The frozen constructor has no seeded-entries option.",
+          "status": "resolved by revised visible task wording; no additional wording required"
+        },
+        {
+          "clauses": [
+            "prompt",
+            6
+          ],
+          "kind": "optional_scope_clarity",
+          "replacement": "Use which of the scoped operations invoke onEviction; optionally name evict and expiresIn in the exclusions.",
+          "reason": "The visible task scopes core methods, while other public methods exist and some also invoke callbacks. This narrows wording and adds no new acceptance requirement.",
+          "status": "non-blocking wording suggestion only; not an additional acceptance criterion and not required before freeze"
+        }
+      ]
+    },
+    {
+      "id": "lilconfig",
+      "revisionVerified": "6ae4bcdd4594b3909626dcd95b841a60ca165fd3",
+      "source": "/private/tmp/archify-semantic-firstdraft-20260921/repos/lilconfig/src/index.js",
+      "clauses": [
+        {
+          "number": 1,
+          "ranges": [
+            [
+              10,
+              25
+            ],
+            [
+              81,
+              87
+            ],
+            [
+              96,
+              125
+            ],
+            [
+              157,
+              172
+            ],
+            [
+              192,
+              199
+            ],
+            [
+              204,
+              238
+            ],
+            [
+              246,
+              294
+            ]
+          ],
+          "finding": "Default places/loaders and options are merged, checked and retained in explorer closure with two caches. Caller, filesystem, configured loader and transform boundaries are real."
+        },
+        {
+          "number": 2,
+          "ranges": [
+            [
+              172,
+              193
+            ],
+            [
+              207,
+              210
+            ],
+            [
+              220,
+              238
+            ]
+          ],
+          "finding": "Search starts from the requested/default directory, checks cache and searchPlaces, processes stopping directory itself, then stops at stopDir/root or walks upward. No match reaches transform(null)."
+        },
+        {
+          "number": 3,
+          "ranges": [
+            [
+              129,
+              136
+            ],
+            [
+              194,
+              228
+            ]
+          ],
+          "finding": "Only access failure is caught and skipped. readFile at line 199 is outside that catch. package.json counts as a found config only when packageProp extraction is non-null; empty ordinary files obey ignoreEmptySearchPlaces."
+        },
+        {
+          "number": 4,
+          "ranges": [
+            [
+              139,
+              142
+            ],
+            [
+              246,
+              294
+            ]
+          ],
+          "finding": "Explicit load validates filepath, uses absolute key and its own cache, chooses/validates loader by extension then reads. Empty ordinary files return isEmpty results without invoking content loader under either ignoreEmptySearchPlaces value."
+        },
+        {
+          "number": 5,
+          "ranges": [
+            [
+              150,
+              154
+            ],
+            [
+              167,
+              169
+            ],
+            [
+              183,
+              187
+            ],
+            [
+              234,
+              244
+            ],
+            [
+              258,
+              306
+            ]
+          ],
+          "finding": "Search/load call transform and cache its return value; search also backfills visited directories. Cache hits and separate/all clearing are real. Transform returns may be promises because cache insertion does not await transform."
+        },
+        {
+          "number": 6,
+          "ranges": [
+            [
+              41,
+              42
+            ],
+            [
+              81,
+              86
+            ],
+            [
+              194,
+              206
+            ],
+            [
+              224,
+              238
+            ],
+            [
+              246,
+              294
+            ]
+          ],
+          "finding": "Parse/loader/transform failures propagate, and read failures propagate in both search and load. access-check failures are the search skip case; normal miss is distinct."
+        },
+        {
+          "number": 7,
+          "ranges": [
+            [
+              55,
+              78
+            ],
+            [
+              157,
+              311
+            ]
+          ],
+          "finding": "The selected async explorer is lines 157-309; sync implementation starts at 311, import/require interoperability is 55-78. Evidence/views/cards are deliverable policy, not a source behavior."
+        }
+      ],
+      "recommendations": [
+        {
+          "clauses": [
+            3
+          ],
+          "kind": "correct_misleading_behavior",
+          "replacement": "Replace missing/unreadable candidates with candidates skipped when the filesystem access check fails.",
+          "reason": "access() has no read-permission mode; readFile failure is outside the catch.",
+          "status": "resolved by revised visible task wording; no additional wording required"
+        },
+        {
+          "clauses": [
+            6
+          ],
+          "kind": "correct_misleading_behavior",
+          "replacement": "Preserve error propagation for loader/parse/transform failures and file-read failures in both search() and load(); distinguish these errors from access-check failures that search skips and from a normal search miss.",
+          "reason": "The current pairing risks treating search read failures as misses.",
+          "status": "resolved by revised visible task wording; no additional wording required"
+        },
+        {
+          "clauses": [
+            5
+          ],
+          "kind": "clarify",
+          "replacement": "Replace transformed cached results with transform return values retained in the explorer's caches.",
+          "reason": "No await occurs before cache insertion. This wording avoids implying only resolved successful values are cached and introduces no promise-specific scoring criterion.",
+          "status": "non-blocking wording suggestion only; not an additional acceptance criterion and not required before freeze"
+        }
+      ]
+    }
+  ],
+  "hiddenExpectationsGuard": [
+    "Only visible task clauses are in scope; no new method, branch, node-count, view-count or source-count acceptance targets were added.",
+    "Out-of-scope and delivery-policy clauses should not be presented as behaviors needing source evidence.",
+    "Source ranges identify supporting code; they do not mandate one separate node per helper or a particular diagram geometry."
+  ],
+  "initialAuditedTaskSha256": "d77f16753d96bf6ce44a86dbe8265a27b5b4db8e57e2b06b90bd855f8a6cf15c",
+  "revisedTaskVerified": true,
+  "remainingRequiredCorrections": [],
+  "revisionReadback": {
+    "p-retry": "Retry-count consumption is distinct from elapsed-time/remaining-retry conditions; both time limits may be infinite and input is not subject to an enforced deadline.",
+    "quick-lru": "set branch now uses current-generation membership including keys remaining in old; nonexistent constructor-seeded exclusion removed.",
+    "lilconfig": "Access-check skip is distinguished from propagated file-read failures in both search and load."
+  }
+}

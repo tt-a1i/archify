@@ -1,0 +1,118 @@
+{
+  "tool": {
+    "name": "semantic-navigation",
+    "typescript": "5.9.3",
+    "typescriptPath": "/private/tmp/archify-semantic-repair-20260921/tool-deps/node_modules/typescript",
+    "coldProcess": true
+  },
+  "query": {
+    "kind": "symbol",
+    "symbol": "Ky.create"
+  },
+  "symbol": "create",
+  "scope": {
+    "repoRoot": "/private/tmp/archify-semantic-repair-20260921/runs/ky-N/source",
+    "scope": "source",
+    "includedFiles": 31,
+    "omittedByScope": {
+      "declarations": 0,
+      "references": 0
+    },
+    "dependencyResolution": "TypeScript may parse imported files outside the root set; queries and returned source locations are restricted to eligible root files",
+    "policy": "recursive TS/JS source only; excludes node_modules, test, tests, and __tests__ path segments; does not execute code or install target-repository dependencies"
+  },
+  "outputPolicy": {
+    "resultLimit": 40,
+    "declarationLines": 40,
+    "declarationSlice": "AST declaration starts at range.start and ends at shownThroughLine; fullEndLine/range.end remain exact when the slice is truncated"
+  },
+  "timing": {
+    "entryUptimeMs": 51.697083,
+    "programBuildMs": 645.739917,
+    "queryMs": 26.213834
+  },
+  "declarations": {
+    "items": [
+      {
+        "identifier": {
+          "path": "source/core/Ky.ts",
+          "start": {
+            "line": 179,
+            "column": 9
+          },
+          "end": {
+            "line": 179,
+            "column": 15
+          },
+          "snippet": "static create(input: Input, options: Options): ResponsePromise {"
+        },
+        "kind": "MethodDeclaration",
+        "role": "implementation",
+        "range": {
+          "start": {
+            "line": 179,
+            "column": 2
+          },
+          "end": {
+            "line": 358,
+            "column": 3
+          }
+        },
+        "source": {
+          "startLine": 179,
+          "shownThroughLine": 218,
+          "fullEndLine": 358,
+          "text": "\tstatic create(input: Input, options: Options): ResponsePromise {\n\t\tconst initHooks = options.hooks?.init ?? [];\n\t\tconst initHookOptions = initHooks.length > 0 ? cloneInitHookOptions(options) : options;\n\n\t\tfor (const hook of initHooks) {\n\t\t\thook(initHookOptions as InitOptions);\n\t\t}\n\n\t\tconst ky = new Ky(input, initHookOptions);\n\n\t\tconst function_ = async (): Promise<Response | void> => {\n\t\t\tif (typeof ky.#options.timeout === 'number' && ky.#options.timeout > maxSafeTimeout) {\n\t\t\t\tthrow new RangeError(`The \\`timeout\\` option cannot be greater than ${maxSafeTimeout}`);\n\t\t\t}\n\n\t\t\tif (typeof ky.#options.totalTimeout === 'number' && ky.#options.totalTimeout > maxSafeTimeout) {\n\t\t\t\tthrow new RangeError(`The \\`totalTimeout\\` option cannot be greater than ${maxSafeTimeout}`);\n\t\t\t}\n\n\t\t\t// Delay the fetch so that body method shortcuts can set the Accept header\n\t\t\tawait Promise.resolve();\n\t\t\tconst beforeRequestResponse = await ky.#runBeforeRequestHooks();\n\t\t\tif (beforeRequestResponse !== undefined) {\n\t\t\t\tky.#retryLimit = normalizeRetryOptions(ky.#options.retry).limit;\n\t\t\t}\n\n\t\t\tlet response = beforeRequestResponse ?? await ky.#retry();\n\t\t\tlet responseFromHook = beforeRequestResponse !== undefined\n\t\t\t\t|| ky.#consumeReturnedResponseFromBeforeRetryHook();\n\n\t\t\tfor (;;) {\n\t\t\t\t// `undefined` means a hook stopped the flow without providing a response.\n\t\t\t\t// Non-native Responses still continue through Ky if they pass `isResponseInstance()`.\n\t\t\t\tif (response === undefined) {\n\t\t\t\t\treturn response;\n\t\t\t\t}\n\n\t\t\t\tif (isResponseInstance(response)) {\n\t\t\t\t\ttry {\n\t\t\t\t\t\t// eslint-disable-next-line no-await-in-loop",
+          "truncatedLines": 140
+        }
+      }
+    ],
+    "truncated": 0
+  },
+  "references": {
+    "items": [
+      {
+        "path": "source/index.ts",
+        "start": {
+          "line": 12,
+          "column": 83
+        },
+        "end": {
+          "line": 12,
+          "column": 89
+        },
+        "snippet": "const ky: Partial<Mutable<KyInstance>> = (input: Input, options?: Options) => Ky.create(input, validateAndMerge(defaults, options));"
+      },
+      {
+        "path": "source/index.ts",
+        "start": {
+          "line": 16,
+          "column": 56
+        },
+        "end": {
+          "line": 16,
+          "column": 62
+        },
+        "snippet": "ky[method] = (input: Input, options?: Options) => Ky.create(input, validateAndMerge(defaults, options, {method}));"
+      },
+      {
+        "path": "source/core/Ky.ts",
+        "start": {
+          "line": 179,
+          "column": 9
+        },
+        "end": {
+          "line": 179,
+          "column": 15
+        },
+        "snippet": "static create(input: Input, options: Options): ResponsePromise {"
+      }
+    ],
+    "truncated": 0
+  },
+  "limits": [
+    "static TypeScript bindings only",
+    "dynamic import, eval, reflection, runtime registration/configuration, and external unresolved modules are not proven",
+    "source scope policy can omit callers outside the chosen directory"
+  ]
+}

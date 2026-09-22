@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Hono request execution",
+    "locale": "en",
+    "subtitle": "A source-backed path from Fetch request to Response",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/honojs/hono.git",
+      "provider": "github",
+      "revision": "28e8572cd265b4da1160ce6cd51919bb70516e2c",
+      "link_mode": "web"
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": ["caller", "fetch", "dispatch", "router", "compose", "handler", "response"],
+        "note": "Follow the normal request from fetch through matching, handlers, and the returned Response."
+      },
+      {
+        "id": "exceptions",
+        "label": "Exceptions",
+        "focus": ["router", "compose", "error", "notfound", "response"],
+        "note": "See how unmatched routes and thrown errors become responses at their owning boundary."
+      },
+      {
+        "id": "head-special",
+        "label": "HEAD special case",
+        "focus": ["fetch", "dispatch", "head", "router", "response"],
+        "note": "HEAD is dispatched through GET and its body is removed before the response returns."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "Fetch caller",
+      "sublabel": "Request + optional env/context",
+      "pos": [40, 300],
+      "size": [170, 72],
+      "sources": [{"path": "src/hono-base.ts", "line": 470, "end_line": 487, "label": "fetch entry point"}]
+    },
+    {
+      "id": "fetch",
+      "type": "backend",
+      "label": "Hono.fetch",
+      "sublabel": "forwards method to dispatch",
+      "pos": [280, 300],
+      "size": [180, 72],
+      "sources": [{"path": "src/hono-base.ts", "line": 481, "end_line": 487, "label": "fetch"}]
+    },
+    {
+      "id": "dispatch",
+      "type": "backend",
+      "label": "Request dispatcher",
+      "sublabel": "path, match, context",
+      "pos": [530, 300],
+      "size": [190, 76],
+      "sources": [{"path": "src/hono-base.ts", "line": 408, "end_line": 430, "label": "dispatch setup"}]
+    },
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "SmartRouter",
+      "sublabel": "selects RegExpRouter or TrieRouter",
+      "pos": [790, 300],
+      "size": [205, 76],
+      "sources": [
+        {"path": "src/hono.ts", "line": 26, "end_line": 32, "label": "default routers"},
+        {"path": "src/router/smart-router/router.ts", "line": 21, "end_line": 60, "label": "lazy router selection"}
+      ]
+    },
+    {
+      "id": "compose",
+      "type": "backend",
+      "label": "Middleware composer",
+      "sublabel": "ordered dispatch + next()",
+      "pos": [1060, 300],
+      "size": [205, 76],
+      "sources": [
+        {"path": "src/hono-base.ts", "line": 431, "end_line": 467, "label": "compose invocation"},
+        {"path": "src/compose.ts", "line": 32, "end_line": 70, "label": "dispatch loop"}
+      ]
+    },
+    {
+      "id": "handler",
+      "type": "backend",
+      "label": "Matched handlers",
+      "sublabel": "middleware and route handler",
+      "pos": [1325, 300],
+      "size": [195, 76],
+      "sources": [{"path": "src/compose.ts", "line": 42, "end_line": 52, "label": "invoke handler"}]
+    },
+    {
+      "id": "response",
+      "type": "external",
+      "label": "Response",
+      "sublabel": "Context response returned to caller",
+      "pos": [1570, 300],
+      "size": [180, 72],
+      "sources": [
+        {"path": "src/hono-base.ts", "line": 452, "end_line": 467, "label": "final response"},
+        {"path": "src/context.ts", "line": 403, "end_line": 434, "label": "finalization"}
+      ]
+    },
+    {
+      "id": "head",
+      "type": "backend",
+      "label": "HEAD adapter",
+      "sublabel": "dispatch GET, strip body",
+      "pos": [530, 120],
+      "size": [190, 68],
+      "sources": [{"path": "src/hono-base.ts", "line": 414, "end_line": 418, "label": "HEAD handling"}]
+    },
+    {
+      "id": "notfound",
+      "type": "backend",
+      "label": "Not-found handler",
+      "sublabel": "404 Not Found by default",
+      "pos": [1060, 640],
+      "size": [205, 72],
+      "sources": [
+        {"path": "src/hono-base.ts", "line": 31, "end_line": 33, "label": "default 404"},
+        {"path": "src/compose.ts", "line": 61, "end_line": 64, "label": "unfinalized path"}
+      ]
+    },
+    {
+      "id": "error",
+      "type": "security",
+      "label": "Error handler",
+      "sublabel": "HTTPException or 500",
+      "pos": [1325, 520],
+      "size": [195, 72],
+      "sources": [
+        {"path": "src/hono-base.ts", "line": 35, "end_line": 42, "label": "default error policy"},
+        {"path": "src/compose.ts", "line": 49, "end_line": 59, "label": "caught errors"}
+      ]
+    }
+  ],
+  "connections": [
+    {"id": "invoke", "from": "caller", "to": "fetch", "label": "fetch(request, env, executionCtx)"},
+    {"id": "dispatch", "from": "fetch", "to": "dispatch", "label": "method + request"},
+    {"id": "head-get", "from": "dispatch", "to": "head", "label": "HEAD only", "variant": "emphasis"},
+    {"id": "head-loop", "from": "head", "to": "dispatch", "label": "re-dispatch as GET", "variant": "emphasis"},
+    {"id": "match", "from": "dispatch", "to": "router", "label": "match(method, path)"},
+    {"id": "matched", "from": "router", "to": "compose", "label": "ordered match result"},
+    {"id": "run", "from": "compose", "to": "handler", "label": "handler(context, next)"},
+    {"id": "next", "from": "handler", "to": "compose", "label": "await next()", "variant": "dashed"},
+    {"id": "handled", "from": "handler", "to": "response", "label": "return Response"},
+    {"id": "return", "from": "compose", "to": "response", "label": "finalized context"},
+    {"id": "unmatched", "from": "router", "to": "notfound", "label": "no matching handler", "variant": "dashed"},
+    {"id": "notfound-response", "from": "notfound", "to": "response", "fromSide": "right", "toSide": "left", "label": "404 or custom response", "variant": "dashed"},
+    {"id": "thrown", "from": "compose", "to": "error", "label": "handler throws", "variant": "security"},
+    {"id": "error-response", "from": "error", "to": "response", "label": "HTTPException response or 500", "variant": "security"},
+    {"id": "head-response", "from": "head", "to": "response", "fromSide": "right", "toSide": "left", "label": "body removed", "variant": "emphasis"}
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Normal request",
+      "items": [
+        "fetch delegates to dispatch, which computes the path and creates Context",
+        "The router supplies an ordered result consumed by the middleware composer"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Terminal paths",
+      "items": [
+        "A handler response finalizes Context; an unfinalized chain reaches notFound",
+        "Thrown Error values are routed through the configured error handler"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "HEAD behavior",
+      "items": [
+        "HEAD recursively dispatches as GET and wraps the result in a bodyless Response"
+      ]
+    }
+  ]
+}

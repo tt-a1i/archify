@@ -1,0 +1,240 @@
+[
+  {
+    "run": "ky-B",
+    "stage": "first",
+    "snapshot": 1,
+    "sha256": "41c13ce7ceade8e788eeade07437fcad343e3a3462460366fa911181debaf485",
+    "codes": [
+      "composition/container-border-run",
+      "composition/micro-segment"
+    ],
+    "route_codes_only": false,
+    "authored_pin_ids": [],
+    "subjects": [
+      {
+        "diagramType": "architecture",
+        "collection": "connections",
+        "index": 4,
+        "id": "fetch-attempt",
+        "from": "before-request",
+        "to": "fetch"
+      },
+      {
+        "diagramType": "architecture",
+        "collection": "connections",
+        "index": 14,
+        "id": "final-failure",
+        "from": "retry-policy",
+        "to": "final-error"
+      }
+    ],
+    "semantic_eligibility": "pending independent review; this is only geometry metadata"
+  },
+  {
+    "run": "ky-B",
+    "stage": "final",
+    "snapshot": 2,
+    "sha256": "8a25f434c8d635b0d700d0fa105c0c9d6670a282fc393db13ae1914d966505bd",
+    "codes": [],
+    "route_codes_only": false,
+    "authored_pin_ids": [
+      "fetch-attempt"
+    ],
+    "subjects": [],
+    "semantic_eligibility": "pending independent review; this is only geometry metadata"
+  },
+  {
+    "run": "ky-N",
+    "stage": "first",
+    "snapshot": 1,
+    "sha256": "aa5a23eeab96a32b7e41285ca67fc40ab816d49b737dac6dfab7c8e28247729a",
+    "codes": [
+      "composition/micro-segment"
+    ],
+    "route_codes_only": true,
+    "authored_pin_ids": [],
+    "subjects": [
+      {
+        "diagramType": "architecture",
+        "collection": "connections",
+        "index": 7,
+        "id": "hook-response",
+        "from": "before-request",
+        "to": "after-response"
+      },
+      {
+        "diagramType": "architecture",
+        "collection": "connections",
+        "index": 16,
+        "id": "unretryable",
+        "from": "retry-policy",
+        "to": "error"
+      }
+    ],
+    "semantic_eligibility": "pending independent review; this is only geometry metadata"
+  },
+  {
+    "run": "ky-N",
+    "stage": "final",
+    "snapshot": 4,
+    "sha256": "6c3691fd18837fa201953737f97cb3f6ea380c523dd7b58ad17b2d06682cd4e6",
+    "codes": [
+      "composition/short-interior-segment"
+    ],
+    "route_codes_only": true,
+    "authored_pin_ids": [],
+    "subjects": [
+      {
+        "diagramType": "architecture",
+        "collection": "connections",
+        "index": 17,
+        "id": "hook-error",
+        "from": "before-request",
+        "to": "error"
+      }
+    ],
+    "semantic_eligibility": "pending independent review; this is only geometry metadata"
+  },
+  {
+    "run": "query-N",
+    "stage": "first",
+    "snapshot": 1,
+    "sha256": "2edc5deb1a98ec7bf32097f87d7ba0bb243ae3dc436155b1d17beb9e55b25f90",
+    "codes": [
+      "composition/short-interior-segment"
+    ],
+    "route_codes_only": true,
+    "authored_pin_ids": [],
+    "subjects": [
+      {
+        "diagramType": "architecture",
+        "collection": "connections",
+        "index": 3,
+        "id": "stale-fetch",
+        "from": "client",
+        "to": "query"
+      }
+    ],
+    "semantic_eligibility": "pending independent review; this is only geometry metadata"
+  },
+  {
+    "run": "query-N",
+    "stage": "final",
+    "snapshot": 2,
+    "sha256": "5d62a64450bb318f79786802c5b5737fa7a412bc5f4a1ca5fa024d5ab328a678",
+    "codes": [],
+    "route_codes_only": false,
+    "authored_pin_ids": [],
+    "subjects": [],
+    "semantic_eligibility": "pending independent review; this is only geometry metadata"
+  },
+  {
+    "run": "query-B",
+    "stage": "first",
+    "snapshot": 1,
+    "sha256": "5184a213fb773193d3c3463e625987c95fb10456de0f71e3e91034aabbc93f22",
+    "codes": [],
+    "route_codes_only": false,
+    "authored_pin_ids": [],
+    "subjects": [],
+    "semantic_eligibility": "pending independent review; this is only geometry metadata"
+  },
+  {
+    "run": "query-B",
+    "stage": "final",
+    "snapshot": 1,
+    "sha256": "5184a213fb773193d3c3463e625987c95fb10456de0f71e3e91034aabbc93f22",
+    "codes": [],
+    "route_codes_only": false,
+    "authored_pin_ids": [],
+    "subjects": [],
+    "semantic_eligibility": "pending independent review; this is only geometry metadata"
+  },
+  {
+    "run": "pqueue-R",
+    "stage": "first",
+    "snapshot": 1,
+    "sha256": "31573db4e411df048293643d1250e4976f0d60775c88669919988f86cdcb1deb",
+    "codes": [
+      "composition/label-route-clearance",
+      "composition/short-interior-segment",
+      "layout/constraint"
+    ],
+    "route_codes_only": false,
+    "authored_pin_ids": [],
+    "subjects": [
+      {
+        "diagramType": "architecture",
+        "collection": "connections",
+        "index": 5,
+        "id": "release",
+        "from": "running",
+        "to": "controller"
+      },
+      {
+        "diagramType": "architecture",
+        "collection": "connections",
+        "index": 7,
+        "id": "pause",
+        "from": "caller",
+        "to": "admission"
+      },
+      {
+        "diagramType": "architecture",
+        "collection": "connections",
+        "index": 10,
+        "id": "timeout",
+        "from": "admission",
+        "to": "running"
+      },
+      {
+        "diagramType": "architecture",
+        "collection": "connections",
+        "index": 10,
+        "id": "timeout",
+        "from": "admission",
+        "to": "running"
+      },
+      {
+        "diagramType": "architecture"
+      },
+      {
+        "diagramType": "architecture"
+      }
+    ],
+    "semantic_eligibility": "pending independent review; this is only geometry metadata"
+  },
+  {
+    "run": "pqueue-R",
+    "stage": "final",
+    "snapshot": 3,
+    "sha256": "2ff686b76162e7c2a1a939b97d88d52f6cb15cd4aa32a1491fc2a89a0d71b9dc",
+    "codes": [],
+    "route_codes_only": false,
+    "authored_pin_ids": [],
+    "subjects": [],
+    "semantic_eligibility": "pending independent review; this is only geometry metadata"
+  },
+  {
+    "run": "pqueue-B",
+    "stage": "first",
+    "snapshot": 1,
+    "sha256": "b416d727127e45380b697adb24649bd6bc3537e8120959320273ac4f131768c1",
+    "codes": [],
+    "route_codes_only": false,
+    "authored_pin_ids": [],
+    "subjects": [],
+    "semantic_eligibility": "pending independent review; this is only geometry metadata"
+  },
+  {
+    "run": "pqueue-B",
+    "stage": "final",
+    "snapshot": 1,
+    "sha256": "b416d727127e45380b697adb24649bd6bc3537e8120959320273ac4f131768c1",
+    "codes": [],
+    "route_codes_only": false,
+    "authored_pin_ids": [],
+    "subjects": [],
+    "semantic_eligibility": "pending independent review; this is only geometry metadata"
+  }
+]

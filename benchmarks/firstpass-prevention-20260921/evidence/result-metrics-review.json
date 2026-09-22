@@ -1,0 +1,31 @@
+{
+  "status": "material_issue",
+  "scope": "Read-only post-run audit of the stated result document, summarize.py, content_diff.py, prepare_review.py, frozen/run receipts, and aggregate evidence. Independent quality-review files were not read.",
+  "verified": {
+    "six_timing_rows": {
+      "p-retry-B1": {"first": 168.53497052192688, "native": 314.3970000743866, "full": 323.1452579498291, "post_first": 145.86202955245972, "observed_repairs": 3},
+      "p-retry-P1": {"first": 196.28451085090637, "native": 295.6799998283386, "full": 309.16492795944214, "post_first": 99.39548897743225, "pre_finalize_content_changes": 1, "observed_repairs": 0},
+      "quick-lru-P1": {"first": 162.92432832717896, "native": 253.96199989318848, "full": 266.02274990081787, "post_first": 91.03767156600952, "observed_repairs": 2},
+      "quick-lru-B1": {"first": 174.02010941505432, "native": 289.4610002040863, "full": 297.9998140335083, "post_first": 115.44089078903198, "observed_repairs": 3},
+      "lilconfig-B1": {"first": 219.79154920578003, "native": 343.5770001411438, "full": 352.17458391189575, "post_first": 123.78545093536377, "observed_repairs": 2},
+      "lilconfig-P1": {"first": 213.8701708316803, "native": 370.5590000152588, "full": 580.273463010788, "post_first": 156.6888291835785, "observed_repairs": 3, "dispatch_gap": 209.71446299552917}
+    },
+    "aggregate": {"native_seconds": 1867.6360001564026, "full_seconds": 2128.780796766281, "observed_finalize_seconds": 13.553},
+    "qualification": "summary-metrics.json has zero qualified pairs, screen_pass=false, promotion_qualified=false. This follows even before the pending quality adjudication because every B machine_delivery is false; it agrees with the frozen minimum of two qualified pairs and all candidate quality-pass requirement.",
+    "repair_count_boundary": "repair-count-audit.json supports reporting lilconfig-B1 as two observed post-first-finalize revisions despite its prose claiming three; the report states this correctly.",
+    "first_final_hashes": "first-final-content-diff.json binds all six first/final SHA-256 values. P runs have zero non-geometry differences; p-retry-B1 removes four listed connections and lilconfig-B1 changes the Caller sublabel by removing 'supplies options'. The report states these facts and appropriately defers semantic impact to source review.",
+    "run_integrity": "All six integrity.json receipts report outcome_eligible=true. Every run verifies frozen source/package/task; P runs additionally verify helper and guide. Frozen order/base/helper SHA agree with the report.",
+    "observational_limits": "The report's distinction between observed finalized revisions, pre-finalize changes, coarse public timing, unknown hidden/provider activity, and pending independent quality review matches summarize.py and the protocol. The pending QUALITY placeholder is appropriate and was not treated as a defect."
+  },
+  "finding": {
+    "severity": "material",
+    "subject": "Global post-run preservation claim",
+    "evidence": "preservation-interim.json is timestamped 1789995810.884. lilconfig-P1 begins at 1789995443.421 and its native trace completes at approximately 1789996013.694, so the only global original/live-install preservation snapshot predates completion of the final timed run. No preservation-final.json exists in the evidence directory. Per-run integrity does not replace a final readback of the original dirty checkout and live installs.",
+    "impact": "The result document's present-tense claim that the original dirty workspace, production package and live installs were preserved lacks end-of-experiment global evidence. It does not affect the six timing rows, machine outcome, qualification screen, or run-local frozen-integrity receipts.",
+    "supported_change": "Before finalizing the report, run the existing preservation readback again after all timed work and save a final, timestamped receipt that compares the same original checkout status/diff hashes and live-install tree hashes. Until it exists, change only the global-preservation sentence to say that per-run integrity passed and final global preservation readback is pending. Do not alter timing, repair, quality, or promotion conclusions."
+  },
+  "non_issues": [
+    "The 209.7-second lilconfig-P1 full-minus-native gap is correctly retained in full time. start.json shows setup through prepared_epoch was about 0.57 seconds, so describing the remainder as dispatch/context handoff is consistent with the available timestamps but remains an attribution, not author execution time.",
+    "No independent quality result was inspected or inferred."
+  ]
+}

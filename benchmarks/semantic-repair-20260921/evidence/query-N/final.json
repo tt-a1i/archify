@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "QueryClient.fetchQuery lifecycle",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/TanStack/query",
+      "provider": "github",
+      "revision": "97cab92a7e56713773f599ea8a379b173cb4f8bd"
+    },
+    "views": [
+      {
+        "id": "cache-decision",
+        "label": "Cache decision",
+        "focus": ["caller", "client", "cache", "query"],
+        "note": "Trace defaulting and cache ownership through stale-time evaluation."
+      },
+      {
+        "id": "in-flight-work",
+        "label": "In-flight work",
+        "focus": ["query", "retryer", "query_fn"],
+        "note": "Follow query-function execution, cancellation, retry, and paused continuation."
+      },
+      {
+        "id": "state-notifications",
+        "label": "State notifications",
+        "focus": ["query", "observers", "cache", "cache_subscribers"],
+        "note": "See state dispatch reach observers and cache subscribers after each action."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "Imperative caller",
+      "sublabel": "supplies FetchQueryOptions",
+      "pos": [40, 300],
+      "size": [175, 70],
+      "sources": [{"path": "packages/query-core/src/queryClient.ts", "line": 602, "end_line": 616, "label": "fetchQuery API"}]
+    },
+    {
+      "id": "client",
+      "type": "backend",
+      "label": "QueryClient.fetchQuery",
+      "sublabel": "defaults options; retry defaults false",
+      "pos": [280, 300],
+      "size": [205, 78],
+      "sources": [{"path": "packages/query-core/src/queryClient.ts", "line": 617, "end_line": 630, "label": "defaults and stale branch"}]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "QueryCache",
+      "sublabel": "get-or-create by query hash",
+      "pos": [555, 300],
+      "size": [185, 72],
+      "sources": [{"path": "packages/query-core/src/queryCache.ts", "line": 147, "end_line": 178, "label": "build existing or new Query"}]
+    },
+    {
+      "id": "query",
+      "type": "backend",
+      "label": "Query",
+      "sublabel": "state, stale check, in-flight promise",
+      "pos": [810, 430],
+      "size": [220, 78],
+      "sources": [
+        {"path": "packages/query-core/src/query.ts", "line": 473, "end_line": 488, "label": "stale-time decision"},
+        {"path": "packages/query-core/src/query.ts", "line": 590, "end_line": 609, "label": "reuse or cancel fetch"},
+        {"path": "packages/query-core/src/query.ts", "line": 822, "end_line": 903, "label": "state dispatch"}
+      ]
+    },
+    {
+      "id": "retryer",
+      "type": "backend",
+      "label": "Retryer",
+      "sublabel": "retry delay; pause; continue; cancel",
+      "pos": [1085, 450],
+      "size": [205, 78],
+      "sources": [
+        {"path": "packages/query-core/src/query.ts", "line": 725, "end_line": 753, "label": "retryer callbacks"},
+        {"path": "packages/query-core/src/retryer.ts", "line": 171, "end_line": 256, "label": "retry and pause loop"}
+      ]
+    },
+    {
+      "id": "query_fn",
+      "type": "external",
+      "label": "Caller query function",
+      "sublabel": "external behavior; optional AbortSignal",
+      "pos": [1350, 450],
+      "size": [200, 78],
+      "sources": [{"path": "packages/query-core/src/query.ts", "line": 634, "end_line": 679, "label": "queryFn context and signal"}]
+    },
+    {
+      "id": "observers",
+      "type": "external",
+      "label": "Query observers",
+      "sublabel": "recompute result and notify listeners",
+      "pos": [830, 660],
+      "size": [210, 76],
+      "sources": [{"path": "packages/query-core/src/queryObserver.ts", "line": 730, "end_line": 805, "label": "observer result notification"}]
+    },
+    {
+      "id": "cache_subscribers",
+      "type": "external",
+      "label": "Cache subscribers",
+      "sublabel": "receive added and updated events",
+      "pos": [555, 660],
+      "size": [205, 72],
+      "sources": [{"path": "packages/query-core/src/queryCache.ts", "line": 181, "end_line": 189, "label": "added event"}, {"path": "packages/query-core/src/queryCache.ts", "line": 250, "end_line": 258, "label": "subscriber notification"}]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "query-core ownership",
+      "wraps": ["client", "cache", "query", "retryer"],
+      "pad": 28
+    }
+  ],
+  "connections": [
+    {"id": "invoke", "from": "caller", "to": "client", "label": "fetchQuery(options)"},
+    {"id": "build", "from": "client", "to": "cache", "label": "defaulted options; build"},
+    {"id": "owned-query", "from": "cache", "to": "query", "label": "return existing or add new Query"},
+    {"id": "stale-fetch", "from": "client", "to": "query", "label": "if stale: fetch(defaulted options)", "variant": "emphasis"},
+    {"id": "fresh-return", "from": "query", "to": "caller", "label": "if fresh: resolve cached data", "variant": "dashed"},
+    {"id": "inflight", "from": "query", "to": "retryer", "label": "reuse promise or create/start retryer"},
+    {"id": "execute", "from": "retryer", "to": "query_fn", "label": "execute queryFn(context.signal)"},
+    {"id": "settle-attempt", "from": "query_fn", "to": "retryer", "label": "resolve or reject"},
+    {"id": "retry-control", "from": "retryer", "to": "query", "label": "failed, paused, continue, cancel"},
+    {"id": "observer-update", "from": "query", "to": "observers", "label": "dispatch state; onQueryUpdate"},
+    {"id": "cache-update", "from": "query", "to": "cache", "label": "updated action event"},
+    {"id": "subscriber-notify", "from": "cache", "to": "cache_subscribers", "label": "batched cache notification"}
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Fresh versus fetching",
+      "items": [
+        "fetchQuery resolves cached data when isStaleByTime is false.",
+        "A stale Query fetches; an already active retryer normally continues and returns its current promise."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Failure and cancellation",
+      "items": [
+        "Retryer retries according to retry and retryDelay, pausing when it cannot continue.",
+        "Cancellation aborts the controller; a reverting cancellation can restore the pre-fetch state."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "State fan-out",
+      "items": [
+        "Successful data or an error is dispatched into Query state.",
+        "Each dispatch batches observer updates and a QueryCache updated event."
+      ]
+    }
+  ]
+}

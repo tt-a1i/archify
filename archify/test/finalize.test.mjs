@@ -231,7 +231,7 @@ test('finalize stops at the failed gate and persists actionable failure evidence
     action: 'edit-in-place',
     candidate: input,
     constraint: 'Preserve unaffected semantics and geometry; do not replace the whole candidate.',
-    then: 'validate-once',
+    then: 'finalize-once',
   });
   assert.equal(finalized.receipt.diagnostics[0].evidence.intersection[1], 40);
   assert.equal(JSON.parse(fs.readFileSync(finalized.summary.evidence.receipt)).status, 'fail');

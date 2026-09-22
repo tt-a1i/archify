@@ -469,8 +469,8 @@ export function buildRepositoryIndex(root, options = {}) {
       } : {}),
     },
     level1,
-    manifests: records.filter((record) => record.manifest).map(publicFile),
-    entrypoints: records.filter((record) => record.entrypoint).map(publicFile),
+    manifests: batchRecords.filter((record) => record.manifest).map(publicFile),
+    entrypoints: batchRecords.filter((record) => record.entrypoint).map(publicFile),
     files: batchRecords.map(publicFile),
   };
 }
@@ -484,7 +484,7 @@ export function formatRepositoryIndex(result) {
       ? [
         `Level 1 batch ${result.level1.batch}/${result.level1.totalBatches}: ${result.level1.parsedFiles}/${result.level1.inspectedFiles} parsed, ${result.level1.rejectedFiles} rejected`,
         `Level 1 coverage: ${result.level1.coverage.surfaced}/${result.level1.coverage.total} configuration candidates`,
-        `Level 1 boundaries: ${result.level1.boundaries.services.length} services, ${result.level1.boundaries.dependencies.length} dependencies, ${result.level1.boundaries.entrypoints.length} entrypoints, ${result.level1.boundaries.deployment.length} deployment, ${result.level1.boundaries.apis.length} APIs, ${result.level1.boundaries.ci.length} CI`,
+        `Level 1 boundaries: ${result.level1.boundaries.services.length} services, ${result.level1.boundaries.dependencies.length} dependencies, ${result.level1.boundaries.entrypoints.length} entrypoints, ${result.level1.boundaries.deployment.length} deployment, ${result.level1.boundaries.apis.length} APIs, ${result.level1.boundaries.ci.length} CI${result.level1.boundariesTruncated ? ' (truncated; inspect configurations)' : ''}`,
       ]
       : []),
     `Directory coverage: ${result.coverage.directoryModules.covered}/${result.coverage.directoryModules.total}`,

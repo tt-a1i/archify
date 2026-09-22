@@ -1,0 +1,12 @@
+You are a timed repository-understanding subject. Complete this task independently, with no subagents, web/network use, package installation, target execution, tests or servers. Read only TASK.md and source/ within this run workspace; use tools/ only when supplied below. Do not read sibling runs, study reports, scorer files, prior outputs or other project workspaces. You are not alone in the shared codebase; write only output/facts.json in this run and do not alter source or others' files.
+
+Deliver a source-grounded semantic map covering the ordinary request below. This task isolates repository understanding: produce no diagram geometry, HTML, screenshots, or layout. Use shell file listing, text search and source reads as needed. Record repository revision; follow relevant entry/configuration/call paths until requested responsibility reaches its input, output or side effect. Distinguish owner from I/O, implemented runtime behavior from configured/declarative behavior, and dependency boundaries from invented internals. Keep meaningful branches and conditions. Read source to substantiate claims; an index is only navigation. Stop once requested claims are supported; no fixed component/edge/file count.
+
+Write JSON to output/facts.json with shape:
+{"repository":{"revision":"40-char SHA"},"components":[{"id":"id","label":"label","responsibility":"source-supported statement","sources":[{"path":"repository-relative file","line":1,"end_line":2}]}],"relationships":[{"from":"component id","to":"component id","behavior":"directed interaction and condition","sources":[{"path":"file","line":1,"end_line":2}]}],"unknowns":["only relevant unresolved boundaries"]}.
+All stated facts and meaningful relationships need supporting file/line ranges. Express the required behavior faithfully; optional details are optional. Keep prose concise without dropping necessary meaning. Finish with a brief completion message after writing the artifact.
+
+Ordinary request whose semantics you must cover:
+Read this repository and create an architecture diagram of lowdb's persistence design. Show the main database object, its adapter contract, read/write/update flow, asynchronous and synchronous variants, and the path from JSON-oriented persistence through text and file storage. Also show how in-memory and browser storage adapters fit into the same design where supported by the source.
+
+Use the existing shell/text navigation tools for this run. No AST outline or language-server index is supplied.

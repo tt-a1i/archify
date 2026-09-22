@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/opt/homebrew/opt/node@22/bin/node",
+    "--test",
+    "benchmarks/semantic-repair-20260921/navigation/semantic-navigation.test.cjs",
+    "benchmarks/semantic-repair-20260921/route-repair/test-route-repair.mjs"
+  ],
+  "exit": 0,
+  "test_count_expected": 10,
+  "elapsed_seconds": 4.341380791040137,
+  "note": "functional validation, not performance evidence"
+}

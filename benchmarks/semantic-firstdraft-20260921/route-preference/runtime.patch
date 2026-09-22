@@ -1,0 +1,42 @@
+diff --git a/renderers/architecture/routing.mjs b/renderers/architecture/routing.mjs
+index 398c1bc..d37f4d8 100644
+--- a/renderers/architecture/routing.mjs
++++ b/renderers/architecture/routing.mjs
+@@ -14,4 +14,5 @@ import {
+   routeHonorsEndpointSides,
+   normalizeRoutePoints,
+   roundedPath,
++  collectRouteRhythmIssues,
+ } from '../shared/geometry.mjs';
+@@ -615,6 +616,12 @@ export function createRouter(components, connections) {
+       && !routeOverlapsResolved(conn, routed.points, resolvedRoutes);
+   }
+ 
++  function routeHasCleanRhythm(routed) {
++    return collectRouteRhythmIssues({
++      routedRelations: [{ points: routed.points }],
++    }).length === 0;
++  }
++
+   function computePath(conn, resolvedRoutes) {
+     if (hasAuthoredRouteGeometry(conn)) {
+       const sides = inferredConnectionSides(conn);
+@@ -626,13 +633,16 @@ export function createRouter(components, connections) {
+     }
+ 
+     let firstFallback = null;
++    let firstClear = null;
+     for (const sides of candidateSidePairs(conn)) {
+       const geometry = connectionGeometry(conn, sides);
+       const routed = routedForGeometry(conn, resolvedRoutes, geometry);
+       if (!firstFallback) firstFallback = { routed, sides };
+       if (routeIsClear(conn, routed, geometry, resolvedRoutes)) {
+-        return cachePath(conn, routed, sides);
++        if (!firstClear) firstClear = { routed, sides };
++        if (routeHasCleanRhythm(routed)) return cachePath(conn, routed, sides);
+       }
+     }
+-    return cachePath(conn, firstFallback.routed, firstFallback.sides);
++    const selected = firstClear || firstFallback;
++    return cachePath(conn, selected.routed, selected.sides);
+   }

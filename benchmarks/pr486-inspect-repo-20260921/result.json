@@ -1,0 +1,18 @@
+{
+  "fixture": "40 packages; 50 JavaScript source files plus one package.json in each; 2,040 tracked files",
+  "runtime": { "node": "v26.8.1", "platform": "darwin", "arch": "arm64" },
+  "repetitions": 5,
+  "firstPage": {
+    "elapsedMs": 587.7,
+    "bytes": 48160,
+    "surfacedFiles": 20,
+    "inventoryTotal": 2040,
+    "configurationTotal": 40
+  },
+  "secondPage": {
+    "cachedMs": [84.7, 97.9, 88.3, 79.8, 79.6],
+    "uncachedMs": [157.1, 164.0, 187.1, 159.7, 159.3],
+    "cachedMedianMs": 84.7,
+    "uncachedMedianMs": 159.7
+  }
+}

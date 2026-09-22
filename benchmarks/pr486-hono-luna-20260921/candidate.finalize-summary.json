@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/tushaokun/.codex/visualizations/2026/09/21/01a0c47a-bf49-7ba3-8b07-8b43671e574d/inspect-repo-luna-medium-trial/candidate/candidate.json",
+    "sha256": "52f18f010db6056e0505c50a5215ac4bfb8254427933f58776141e06981ad5ad",
+    "bytes": 7152
+  },
+  "artifact": {
+    "path": "/Users/tushaokun/.codex/visualizations/2026/09/21/01a0c47a-bf49-7ba3-8b07-8b43671e574d/inspect-repo-luna-medium-trial/candidate/candidate.html",
+    "sha256": "a2f9d2bbb0aa4017024727f8d850c440110f55815b740d5d3475887411e57e98",
+    "bytes": 846558
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/tushaokun/.codex/visualizations/2026/09/21/01a0c47a-bf49-7ba3-8b07-8b43671e574d/inspect-repo-luna-medium-trial/candidate/candidate.finalize.json",
+    "summaryReceipt": "/Users/tushaokun/.codex/visualizations/2026/09/21/01a0c47a-bf49-7ba3-8b07-8b43671e574d/inspect-repo-luna-medium-trial/candidate/candidate.finalize-summary.json",
+    "browserCheckReceipt": "/Users/tushaokun/.codex/visualizations/2026/09/21/01a0c47a-bf49-7ba3-8b07-8b43671e574d/inspect-repo-luna-medium-trial/candidate/candidate.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 2796
+}

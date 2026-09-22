@@ -1,0 +1,30 @@
+{
+  "scope": "Benchmark helper, collector and research records only; production package unchanged",
+  "helper_sha256": "37cf125ba93d3aef5d16a4707210253714ce6f8aa8527da885306a56df560c4c",
+  "helper_tests": {
+    "result": "9/9 pass",
+    "source": "final-code-review.json",
+    "reuse": "Independent reviewer ran these on identical frozen V2 bytes; not repeated after documentation-only edits."
+  },
+  "offline_projection_tests": {
+    "command": "python3 -B benchmarks/repair-firstpass-20260921/offline_test.py",
+    "exit": 0,
+    "result": "2/2 pass"
+  },
+  "frozen_hashes": {
+    "helper": true,
+    "tests": true,
+    "protocol": true
+  },
+  "plain_json_parse": "pass",
+  "archive_readback": "pass; manifest contains per-file SHA-256 and archive digest",
+  "git_diff_check": "pass before staging; staged check performed before commit",
+  "production_suite": "Not rerun: no production implementation or package changes. Earlier 25 baseline layout tests are context only, not prototype holdout compatibility evidence.",
+  "development_gate": "fail 1/3 < 2/3",
+  "quick_lru_finalize": "pass",
+  "quick_lru_independent_quality": "fail",
+  "holdout": "not reached",
+  "baseline_passing_compatibility_panel": "not reached",
+  "fresh_author_pairs": "not reached",
+  "promotion": false
+}

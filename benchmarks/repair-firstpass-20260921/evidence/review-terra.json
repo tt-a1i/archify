@@ -1,0 +1,91 @@
+{
+  "reviewer": "terra",
+  "case": "case-01",
+  "reviewed_artifact": "/private/tmp/archify-repair-firstpass-20260921/quality/case-01/diagram.json",
+  "source": {
+    "root": "/private/tmp/archify-semantic-firstdraft-20260921/repos/quick-lru",
+    "requested_revision": "a2190ebdf8e455b95a7138803d274ff5ed57ebcd",
+    "observed_head": "a2190ebdf8e455b95a7138803d274ff5ed57ebcd",
+    "file": "index.js"
+  },
+  "captures_reviewed": [
+    "diagram.visual-check.1440x900.light.png",
+    "diagram.visual-check.1440x900.dark.png",
+    "diagram.visual-check.2048x1320.light.png",
+    "diagram.visual-check.2048x1320.dark.png",
+    "diagram.visual-check.contact.png"
+  ],
+  "clauses": [
+    {
+      "required_clause": "Show QuickLRU as the controller owning the current and old in-memory maps, the current-generation count, maxSize and optional expiry policy; do not imply persistent or remote storage.",
+      "status": "fail",
+      "source_ranges": ["index.js:2-7", "index.js:20-22"],
+      "observed": "The controller, Current Map, Old Map, count, and in-memory-only boundary are explicit; the rotation label also names maxSize. The graphic calls an Expiry guard but never identifies the instance's optional maxAge/expiry policy or that it derives from the constructor option.",
+      "reason": "The missing optional expiry-policy state leaves a required ownership/policy fact unshown. No persistent or remote storage is implied."
+    },
+    {
+      "required_clause": "Show set for a current-generation key versus a key absent from the current generation (possibly still in the old generation), and generation rotation at the configured threshold; distinguish rotation from evicting just the one least-recent item.",
+      "status": "fail",
+      "source_ranges": ["index.js:68-77", "index.js:120-132"],
+      "observed": "The diagram shows current-key replacement, an absent-current add/increment branch, count >= maxSize, whole-map swap, prior-old callback, and a card correctly saying the rotation code does not select one least-recent item. It does not show or say that the absent-current branch can still have an old-generation entry; set only tests #cache and then inserts into it.",
+      "reason": "The requested old-generation possibility is material to the distinction and is absent, although the displayed threshold rotation is source-entailing."
+    },
+    {
+      "required_clause": "Show get from the current generation, get/promotion from the old generation and a missing key. Preserve the actual expiry checks and their effect on removal/return.",
+      "status": "fail",
+      "source_ranges": ["index.js:40-60", "index.js:80-83", "index.js:105-118"],
+      "observed": "Current and old hits, old-key deletion followed by #set promotion, and missing-or-expired undefined are shown. The Expiry guard only says 'check an expiring item' and 'expired item: notify, then delete(key)'; it omits the actual predicate (numeric expiry at or before Date.now()) and the current-hit versus old-hit return paths after that check.",
+      "reason": "A generic expiry box does not preserve the required actual check, even though its deletion/callback effect is correctly summarized."
+    },
+    {
+      "required_clause": "Explain that has and peek inspect without get-style promotion, including their expiry behavior.",
+      "status": "fail",
+      "source_ranges": ["index.js:40-65", "index.js:80-83", "index.js:137-157"],
+      "observed": "The inspection node and card correctly state current-then-old inspection with no promotion, and its edge reaches the generic Expiry guard. The diagram does not distinguish expired has returning false from expired peek returning undefined after deletion.",
+      "reason": "The required expiry behavior for both inspection methods is not fully explained."
+    },
+    {
+      "required_clause": "Distinguish onEviction for expired/rotated-out entries from explicit delete and clear. Show their effects on both maps/current count without inventing callbacks on manual deletion.",
+      "status": "pass",
+      "source_ranges": ["index.js:30-37", "index.js:40-46", "index.js:72-76", "index.js:166-179"],
+      "observed": "Expiry and rotation connect to onEviction; delete/clear connect to both maps and state count adjustment/reset. The amber card explicitly says public delete and clear do not invoke onEviction.",
+      "reason": "The displayed callback boundaries and state effects entail the pinned implementation."
+    },
+    {
+      "required_clause": "Iteration, resize and exact public size arithmetic are outside scope. Support all authored claims with inspected source ranges; include useful views/cards without content-count targets.",
+      "status": "pass",
+      "source_ranges": ["index.js:1-23", "index.js:30-77", "index.js:80-83", "index.js:105-179"],
+      "observed": "Iteration, resize, and public size arithmetic are absent. Component metadata supplies relevant index.js ranges, and the cards' rotation, promotion, expiry, and manual-removal claims are entailed by those ranges. Three focused views and three explanatory cards are useful rather than quota-driven.",
+      "reason": "The checked authored claims have supporting inspected source ranges in the specification metadata."
+    }
+  ],
+  "citation_entailment": {
+    "status": "mixed",
+    "supported_claims": [
+      "Rotation emits every prior-old entry, then replaces old with current and starts a fresh current Map at count 0 (index.js:68-77).",
+      "An unexpired old get deletes the old key and reinserts it through #set (index.js:80-83, 111-115).",
+      "Expired access calls onEviction when supplied and then public delete(key) (index.js:40-49).",
+      "Public delete and clear do not call onEviction (index.js:166-179)."
+    ],
+    "unsupported_or_incomplete_display_claims": [
+      "The generic expiry wording does not state the source predicate: typeof item.expiry === 'number' && item.expiry <= Date.now() (index.js:40-41).",
+      "The inspection wording does not state has=false versus peek=undefined for expired entries (index.js:137-157, 52-65).",
+      "The absent-current set route does not communicate that #oldCache is not tested by set (index.js:125-132)."
+    ],
+    "note": "Source references are present in diagram metadata; captures show SRC badges but not expanded path/range text."
+  },
+  "contradictions": [],
+  "visual_assessment": {
+    "containment": "pass",
+    "observations": [
+      "All diagram nodes, boundary, callback, legend, and controls are contained in each 1440x900 and 2048x1320 light/dark capture.",
+      "At 1440x900 the cards continue below the viewport; this is normal vertical Reader-document scrolling and not clipping.",
+      "At 2048x1320, all three cards are visible and readable in both themes.",
+      "At 1440x900, major node titles remain readable, but many connection labels and node sublabels are very small; in dark mode the muted blue/gray route labels have weak contrast against the grid. This makes several semantic distinctions difficult to read at the common viewport without zooming."
+    ],
+    "legibility": "fail",
+    "theme_consistency": "pass"
+  },
+  "overall_quality": "fail",
+  "overall_reason": "The artifact accurately depicts rotation, promotion, callback boundaries, and manual removal, but it does not fully satisfy four required semantic clauses: optional expiry policy, the old-generation possibility during set, the actual expiry predicate/return effects for get, and distinct expired has/peek results. The 1440px dark capture also leaves fine route text insufficiently legible."
+}

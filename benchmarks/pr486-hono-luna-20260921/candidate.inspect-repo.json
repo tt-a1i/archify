@@ -1,0 +1,916 @@
+{
+  "schemaVersion": 1,
+  "command": "inspect-repo",
+  "ok": true,
+  "repository": {
+    "root": "/tmp/archify-inspect-luna-hono-20260921",
+    "source": "git-working-tree",
+    "head": "28e8572cd265b4da1160ce6cd51919bb70516e2c",
+    "dirty": false
+  },
+  "policy": {
+    "mode": "filter-and-batch-v1",
+    "scoring": false,
+    "ast": false,
+    "sourceBodiesIncluded": false,
+    "snapshotReuse": false,
+    "batch": 1,
+    "batchSize": 20
+  },
+  "summary": {
+    "discovery": "git",
+    "discoveredFiles": 488,
+    "retainedFiles": 468,
+    "filteredFiles": 20,
+    "filtered": {
+      "directories": 11,
+      "excludedFiles": 7,
+      "sensitiveFiles": 0,
+      "binaries": 2,
+      "symlinks": 0,
+      "unreadable": 0
+    },
+    "roles": {
+      "config": 29,
+      "documentation": 11,
+      "infrastructure": 5,
+      "manifest": 8,
+      "other-text": 25,
+      "source": 251,
+      "test": 139
+    },
+    "languages": {
+      "javascript": 3,
+      "shell": 1,
+      "typescript": 384
+    },
+    "modules": 17,
+    "durationMs": 268
+  },
+  "directoryModules": {
+    "total": 17,
+    "reported": 17,
+    "truncated": false,
+    "items": [
+      {
+        "path": ".",
+        "files": 18,
+        "roles": {
+          "config": 8,
+          "documentation": 1,
+          "manifest": 1,
+          "other-text": 5,
+          "source": 2,
+          "test": 1
+        },
+        "languages": {
+          "javascript": 1,
+          "typescript": 1
+        }
+      },
+      {
+        "path": ".github",
+        "files": 11,
+        "roles": {
+          "config": 5,
+          "documentation": 1,
+          "infrastructure": 5
+        },
+        "languages": {}
+      },
+      {
+        "path": "benchmarks",
+        "files": 68,
+        "roles": {
+          "config": 4,
+          "documentation": 4,
+          "manifest": 6,
+          "other-text": 5,
+          "source": 49
+        },
+        "languages": {
+          "javascript": 2,
+          "shell": 1,
+          "typescript": 46
+        }
+      },
+      {
+        "path": "docs",
+        "files": 5,
+        "roles": {
+          "documentation": 5
+        },
+        "languages": {}
+      },
+      {
+        "path": "perf-measures",
+        "files": 10,
+        "roles": {
+          "config": 4,
+          "other-text": 2,
+          "source": 4
+        },
+        "languages": {
+          "typescript": 4
+        }
+      },
+      {
+        "path": "runtime-tests",
+        "files": 44,
+        "roles": {
+          "config": 8,
+          "manifest": 1,
+          "other-text": 13,
+          "source": 8,
+          "test": 14
+        },
+        "languages": {
+          "typescript": 22
+        }
+      },
+      {
+        "path": "src",
+        "files": 15,
+        "roles": {
+          "source": 9,
+          "test": 6
+        },
+        "languages": {
+          "typescript": 15
+        }
+      },
+      {
+        "path": "src/adapter",
+        "files": 57,
+        "roles": {
+          "source": 38,
+          "test": 19
+        },
+        "languages": {
+          "typescript": 57
+        }
+      },
+      {
+        "path": "src/client",
+        "files": 8,
+        "roles": {
+          "source": 5,
+          "test": 3
+        },
+        "languages": {
+          "typescript": 8
+        }
+      },
+      {
+        "path": "src/helper",
+        "files": 43,
+        "roles": {
+          "source": 25,
+          "test": 18
+        },
+        "languages": {
+          "typescript": 43
+        }
+      },
+      {
+        "path": "src/jsx",
+        "files": 46,
+        "roles": {
+          "source": 27,
+          "test": 19
+        },
+        "languages": {
+          "typescript": 46
+        }
+      },
+      {
+        "path": "src/middleware",
+        "files": 64,
+        "roles": {
+          "source": 35,
+          "test": 29
+        },
+        "languages": {
+          "typescript": 63
+        }
+      },
+      {
+        "path": "src/preset",
+        "files": 4,
+        "roles": {
+          "source": 2,
+          "test": 2
+        },
+        "languages": {
+          "typescript": 4
+        }
+      },
+      {
+        "path": "src/request",
+        "files": 1,
+        "roles": {
+          "source": 1
+        },
+        "languages": {
+          "typescript": 1
+        }
+      },
+      {
+        "path": "src/router",
+        "files": 24,
+        "roles": {
+          "source": 16,
+          "test": 8
+        },
+        "languages": {
+          "typescript": 24
+        }
+      },
+      {
+        "path": "src/utils",
+        "files": 45,
+        "roles": {
+          "source": 27,
+          "test": 18
+        },
+        "languages": {
+          "typescript": 45
+        }
+      },
+      {
+        "path": "src/validator",
+        "files": 5,
+        "roles": {
+          "source": 3,
+          "test": 2
+        },
+        "languages": {
+          "typescript": 5
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "semanticCompletenessClaimed": false,
+    "directoryModules": {
+      "covered": 17,
+      "total": 17,
+      "complete": true,
+      "uncovered": [],
+      "unreportedUncovered": 0
+    },
+    "fileInventory": {
+      "surfaced": 20,
+      "total": 468,
+      "complete": false
+    },
+    "batch": 1,
+    "batchSize": 20,
+    "totalBatches": 24,
+    "fileBatches": 24,
+    "configurationBatches": 1,
+    "nextBatch": 2,
+    "nextArguments": [
+      "/tmp/archify-inspect-luna-hono-20260921",
+      "--snapshot",
+      "/var/folders/25/mpff0p7j7slgl5fj961tl7480000gp/T/archify-inspect-repo-H06Bte/snapshot.json",
+      "--batch-size",
+      "20",
+      "--batch",
+      "2",
+      "--json"
+    ]
+  },
+  "level1": {
+    "name": "configuration-boundaries",
+    "sourceBodiesIncluded": false,
+    "batch": 1,
+    "batchSize": 250,
+    "totalBatches": 1,
+    "candidateFiles": 19,
+    "inspectedFiles": 19,
+    "consideredFiles": 11,
+    "parsedFiles": 11,
+    "rejectedFiles": 8,
+    "skippedByLimit": 0,
+    "unreadable": 0,
+    "bytesRead": 45299,
+    "candidates": {
+      "inspected": 8,
+      "rejected": 8
+    },
+    "limits": {
+      "maximumFiles": 250,
+      "maximumBytesPerFile": 524288,
+      "maximumTotalBytes": 16777216,
+      "maximumFactItems": 50
+    },
+    "coverage": {
+      "surfaced": 19,
+      "total": 19,
+      "complete": true,
+      "directories": {
+        "covered": 11,
+        "total": 11
+      },
+      "kinds": {
+        "covered": 3,
+        "total": 3
+      },
+      "nextBatch": null
+    },
+    "boundaries": {
+      "services": [
+        {
+          "name": "jsx",
+          "kind": "node-package",
+          "source": "benchmarks/jsx/package.json"
+        },
+        {
+          "name": "hono",
+          "kind": "node-package",
+          "source": "package.json"
+        }
+      ],
+      "dependencies": [],
+      "entrypoints": [
+        {
+          "name": "jsx:main",
+          "files": [
+            "index.js"
+          ],
+          "kind": "npm-main",
+          "source": "benchmarks/jsx/package.json"
+        },
+        {
+          "name": "hono:main",
+          "files": [
+            "dist/cjs/index.js"
+          ],
+          "kind": "npm-main",
+          "source": "package.json"
+        }
+      ],
+      "deployment": [],
+      "apis": [],
+      "ci": [
+        {
+          "kind": "ci-workflow",
+          "jobs": [
+            "autofix"
+          ],
+          "stages": [],
+          "source": ".github/workflows/autofix.yml"
+        },
+        {
+          "kind": "ci-workflow",
+          "jobs": [
+            "coverage",
+            "main",
+            "jsr-dry-run",
+            "deno",
+            "bun",
+            "bun-windows",
+            "fastly",
+            "node",
+            "workerd",
+            "lambda",
+            "lambda-edge",
+            "perf-measures-check-on-pr",
+            "http-benchmark-on-pr",
+            "perf-measures-check-on-main"
+          ],
+          "stages": [],
+          "source": ".github/workflows/ci.yml"
+        },
+        {
+          "kind": "ci-workflow",
+          "jobs": [
+            "publish"
+          ],
+          "stages": [],
+          "source": ".github/workflows/cr.yml"
+        },
+        {
+          "kind": "ci-workflow",
+          "jobs": [
+            "stale"
+          ],
+          "stages": [],
+          "source": ".github/workflows/no-response.yml"
+        },
+        {
+          "kind": "ci-workflow",
+          "jobs": [
+            "npm",
+            "jsr"
+          ],
+          "stages": [],
+          "source": ".github/workflows/release.yml"
+        }
+      ]
+    },
+    "boundariesTruncated": false,
+    "configurations": [
+      {
+        "path": ".github/workflows/autofix.yml",
+        "module": ".github",
+        "kind": "ci-workflow",
+        "truncated": false,
+        "factsTruncated": false,
+        "facts": {
+          "jobs": [
+            "autofix"
+          ],
+          "runners": [
+            "ubuntu-latest"
+          ],
+          "actions": [
+            "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd",
+            "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
+            "autofix-ci/action@c5b2d67aa2274e7b5a18224e8171550871fc7e4a"
+          ]
+        }
+      },
+      {
+        "path": ".github/workflows/ci.yml",
+        "module": ".github",
+        "kind": "ci-workflow",
+        "truncated": false,
+        "factsTruncated": false,
+        "facts": {
+          "jobs": [
+            "coverage",
+            "main",
+            "jsr-dry-run",
+            "deno",
+            "bun",
+            "bun-windows",
+            "fastly",
+            "node",
+            "workerd",
+            "lambda",
+            "lambda-edge",
+            "perf-measures-check-on-pr",
+            "http-benchmark-on-pr",
+            "perf-measures-check-on-main"
+          ],
+          "runners": [
+            "ubuntu-latest",
+            "windows-latest"
+          ],
+          "actions": [
+            "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd",
+            "actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53",
+            "codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f",
+            "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e",
+            "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
+            "actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4",
+            "denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282",
+            "./.github/actions/perf-measures",
+            "actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b"
+          ]
+        }
+      },
+      {
+        "path": ".github/workflows/cr.yml",
+        "module": ".github",
+        "kind": "ci-workflow",
+        "truncated": false,
+        "factsTruncated": false,
+        "facts": {
+          "jobs": [
+            "publish"
+          ],
+          "runners": [
+            "ubuntu-latest"
+          ],
+          "actions": [
+            "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd",
+            "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e",
+            "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6"
+          ]
+        }
+      },
+      {
+        "path": ".github/workflows/no-response.yml",
+        "module": ".github",
+        "kind": "ci-workflow",
+        "truncated": false,
+        "factsTruncated": false,
+        "facts": {
+          "jobs": [
+            "stale"
+          ],
+          "runners": [
+            "ubuntu-latest"
+          ],
+          "actions": [
+            "actions/stale@1160a2240286f5da8ec72b1c0816ce2481aabf84"
+          ]
+        }
+      },
+      {
+        "path": ".github/workflows/release.yml",
+        "module": ".github",
+        "kind": "ci-workflow",
+        "truncated": false,
+        "factsTruncated": false,
+        "facts": {
+          "jobs": [
+            "npm",
+            "jsr"
+          ],
+          "runners": [
+            "ubuntu-latest"
+          ],
+          "actions": [
+            "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd",
+            "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e",
+            "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
+            "denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282"
+          ]
+        }
+      },
+      {
+        "path": "benchmarks/fetch/package.json",
+        "module": "benchmarks",
+        "kind": "package-json",
+        "truncated": false,
+        "factsTruncated": false,
+        "facts": {
+          "name": null,
+          "workspaces": [],
+          "scripts": [],
+          "entryScriptFiles": {},
+          "binaries": {},
+          "main": null,
+          "runtimeDependencies": []
+        }
+      },
+      {
+        "path": "benchmarks/jsx/package.json",
+        "module": "benchmarks",
+        "kind": "package-json",
+        "truncated": false,
+        "factsTruncated": false,
+        "facts": {
+          "name": "jsx",
+          "workspaces": [],
+          "scripts": [
+            "bench:node",
+            "bench:bun",
+            "bench:react-jsx:node",
+            "compare-bundle-size"
+          ],
+          "entryScriptFiles": {},
+          "binaries": {},
+          "main": "index.js",
+          "runtimeDependencies": [
+            "@types/benchmark",
+            "@types/react",
+            "@types/react-dom",
+            "benchmark",
+            "hono",
+            "nano-jsx",
+            "preact",
+            "preact-render-to-string",
+            "react",
+            "react-dom",
+            "typescript"
+          ]
+        }
+      },
+      {
+        "path": "benchmarks/query-param/package.json",
+        "module": "benchmarks",
+        "kind": "package-json",
+        "truncated": false,
+        "factsTruncated": false,
+        "facts": {
+          "name": null,
+          "workspaces": [],
+          "scripts": [
+            "bench:node",
+            "bench:bun"
+          ],
+          "entryScriptFiles": {},
+          "binaries": {},
+          "main": null,
+          "runtimeDependencies": [
+            "fast-querystring",
+            "mitata",
+            "qs"
+          ]
+        }
+      },
+      {
+        "path": "benchmarks/routers/package.json",
+        "module": "benchmarks",
+        "kind": "package-json",
+        "truncated": false,
+        "factsTruncated": false,
+        "facts": {
+          "name": null,
+          "workspaces": [],
+          "scripts": [
+            "bench:node",
+            "bench:bun",
+            "bench-includes-init:node",
+            "bench-includes-init:bun"
+          ],
+          "entryScriptFiles": {},
+          "binaries": {},
+          "main": null,
+          "runtimeDependencies": [
+            "@medley/router",
+            "express",
+            "find-my-way",
+            "koa-router",
+            "koa-tree-router",
+            "memoirist",
+            "mitata",
+            "radix3",
+            "rou3",
+            "trek-router"
+          ]
+        }
+      },
+      {
+        "path": "benchmarks/utils/package.json",
+        "module": "benchmarks",
+        "kind": "package-json",
+        "truncated": false,
+        "factsTruncated": false,
+        "facts": {
+          "name": null,
+          "workspaces": [],
+          "scripts": [],
+          "entryScriptFiles": {},
+          "binaries": {},
+          "main": null,
+          "runtimeDependencies": []
+        }
+      },
+      {
+        "path": "package.json",
+        "module": ".",
+        "kind": "package-json",
+        "truncated": false,
+        "factsTruncated": false,
+        "facts": {
+          "name": "hono",
+          "workspaces": [],
+          "scripts": [
+            "test",
+            "test:watch",
+            "test:deno",
+            "test:bun",
+            "test:fastly",
+            "test:node",
+            "test:workerd",
+            "test:lambda",
+            "test:lambda-edge",
+            "test:all",
+            "lint",
+            "lint:fix",
+            "format",
+            "format:fix",
+            "editorconfig-checker",
+            "copy:package.cjs.json",
+            "build",
+            "postbuild",
+            "watch",
+            "coverage",
+            "prerelease",
+            "release",
+            "remove-dist"
+          ],
+          "entryScriptFiles": {},
+          "binaries": {},
+          "main": "dist/cjs/index.js",
+          "runtimeDependencies": []
+        }
+      }
+    ]
+  },
+  "manifests": [
+    {
+      "path": "package.json",
+      "module": ".",
+      "role": "manifest",
+      "size": 23613,
+      "manifest": "node-package"
+    },
+    {
+      "path": "benchmarks/fetch/package.json",
+      "module": "benchmarks",
+      "role": "manifest",
+      "size": 85,
+      "manifest": "node-package"
+    },
+    {
+      "path": "runtime-tests/deno/deno.json",
+      "module": "runtime-tests",
+      "role": "manifest",
+      "size": 382,
+      "manifest": "deno-project"
+    },
+    {
+      "path": "benchmarks/jsx/package.json",
+      "module": "benchmarks",
+      "role": "manifest",
+      "size": 867,
+      "manifest": "node-package"
+    }
+  ],
+  "entrypoints": [
+    {
+      "path": "src/index.ts",
+      "module": "src",
+      "role": "source",
+      "size": 1104,
+      "language": "typescript",
+      "entrypoint": true
+    },
+    {
+      "path": "src/adapter/bun/server.ts",
+      "module": "src/adapter",
+      "role": "source",
+      "size": 364,
+      "language": "typescript",
+      "entrypoint": true
+    },
+    {
+      "path": "src/client/index.ts",
+      "module": "src/client",
+      "role": "source",
+      "size": 325,
+      "language": "typescript",
+      "entrypoint": true
+    },
+    {
+      "path": "src/jsx/dom/server.ts",
+      "module": "src/jsx",
+      "role": "source",
+      "size": 2268,
+      "language": "typescript",
+      "entrypoint": true
+    },
+    {
+      "path": "src/validator/index.ts",
+      "module": "src/validator",
+      "role": "source",
+      "size": 179,
+      "language": "typescript",
+      "entrypoint": true
+    }
+  ],
+  "files": [
+    {
+      "path": "package.json",
+      "module": ".",
+      "role": "manifest",
+      "size": 23613,
+      "manifest": "node-package"
+    },
+    {
+      "path": ".github/workflows/autofix.yml",
+      "module": ".github",
+      "role": "infrastructure",
+      "size": 856
+    },
+    {
+      "path": "benchmarks/fetch/package.json",
+      "module": "benchmarks",
+      "role": "manifest",
+      "size": 85,
+      "manifest": "node-package"
+    },
+    {
+      "path": "docs/CODE_OF_CONDUCT.md",
+      "module": "docs",
+      "role": "documentation",
+      "size": 5229
+    },
+    {
+      "path": "perf-measures/.octocov.consolidated.perf-measures.main.yml",
+      "module": "perf-measures",
+      "role": "config",
+      "size": 429
+    },
+    {
+      "path": "runtime-tests/deno/deno.json",
+      "module": "runtime-tests",
+      "role": "manifest",
+      "size": 382,
+      "manifest": "deno-project"
+    },
+    {
+      "path": "src/index.ts",
+      "module": "src",
+      "role": "source",
+      "size": 1104,
+      "language": "typescript",
+      "entrypoint": true
+    },
+    {
+      "path": "src/adapter/bun/server.ts",
+      "module": "src/adapter",
+      "role": "source",
+      "size": 364,
+      "language": "typescript",
+      "entrypoint": true
+    },
+    {
+      "path": "src/client/index.ts",
+      "module": "src/client",
+      "role": "source",
+      "size": 325,
+      "language": "typescript",
+      "entrypoint": true
+    },
+    {
+      "path": "src/helper/accepts/accepts.ts",
+      "module": "src/helper",
+      "role": "source",
+      "size": 2587,
+      "language": "typescript"
+    },
+    {
+      "path": "src/jsx/dom/server.ts",
+      "module": "src/jsx",
+      "role": "source",
+      "size": 2268,
+      "language": "typescript",
+      "entrypoint": true
+    },
+    {
+      "path": "src/middleware/basic-auth/index.ts",
+      "module": "src/middleware",
+      "role": "source",
+      "size": 4973,
+      "language": "typescript"
+    },
+    {
+      "path": "src/preset/quick.ts",
+      "module": "src/preset",
+      "role": "source",
+      "size": 695,
+      "language": "typescript"
+    },
+    {
+      "path": "src/request/constants.ts",
+      "module": "src/request",
+      "role": "source",
+      "size": 56,
+      "language": "typescript"
+    },
+    {
+      "path": "src/router/linear-router/index.ts",
+      "module": "src/router",
+      "role": "source",
+      "size": 86,
+      "language": "typescript"
+    },
+    {
+      "path": "src/utils/accept.ts",
+      "module": "src/utils",
+      "role": "source",
+      "size": 7325,
+      "language": "typescript"
+    },
+    {
+      "path": "src/validator/index.ts",
+      "module": "src/validator",
+      "role": "source",
+      "size": 179,
+      "language": "typescript",
+      "entrypoint": true
+    },
+    {
+      "path": ".prettierrc",
+      "module": ".",
+      "role": "config",
+      "size": 154
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "module": ".github",
+      "role": "infrastructure",
+      "size": 9547
+    },
+    {
+      "path": "benchmarks/jsx/package.json",
+      "module": "benchmarks",
+      "role": "manifest",
+      "size": 867,
+      "manifest": "node-package"
+    }
+  ],
+  "session": {
+    "reusable": true,
+    "reused": false,
+    "snapshot": "/var/folders/25/mpff0p7j7slgl5fj961tl7480000gp/T/archify-inspect-repo-H06Bte/snapshot.json"
+  }
+}

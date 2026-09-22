@@ -1,0 +1,238 @@
+{
+  "epoch": 1789996843.682224,
+  "method": "Two source-and-image reviews blinded to condition/timing, followed by a root-raised branch question applied consistently to all four pRetry cases. Original reviews and addenda retained. Root inspected both final 1440 light/dark captures. No candidate edits after author timing.",
+  "clause_index_convention": "Luna initial indexes are one-based, Terra initial/revised indexes are zero-based; references to clause 3 here are one-based original task numbering.",
+  "cases": [
+    {
+      "case": "case-01",
+      "run": "quick-lru-B1",
+      "phases": [
+        "final"
+      ],
+      "sha256": "c0eba94325d5f8722749fffb15201e87f862db3abfefcbcc694c27b21bf7a8d2",
+      "semantic_pass": true,
+      "visual_pass": null,
+      "semantic_reason": "Both independent source reviews accepted original visible task clauses; no contrary material evidence found in adjudication.",
+      "visual_reason": "No eligible rendered capture; visual acceptance unknown."
+    },
+    {
+      "case": "case-02",
+      "run": "quick-lru-P1",
+      "phases": [
+        "first"
+      ],
+      "sha256": "ea74d0d37a3295657b5eb0ab5e2de0cc3d75e339a73f9fe4d2e7bc2ea26dd792",
+      "semantic_pass": true,
+      "visual_pass": null,
+      "semantic_reason": "Both independent source reviews accepted original visible task clauses; no contrary material evidence found in adjudication.",
+      "visual_reason": "No eligible rendered capture; visual acceptance unknown."
+    },
+    {
+      "case": "case-03",
+      "run": "lilconfig-B1",
+      "phases": [
+        "final"
+      ],
+      "sha256": "c4ab163f6c93b9b14fbdf5f25d829247f92000627dbe51485cac0c5789b4d119",
+      "semantic_pass": true,
+      "visual_pass": null,
+      "semantic_reason": "Both independent source reviews accepted original visible task clauses; no contrary material evidence found in adjudication.",
+      "visual_reason": "No eligible rendered capture; visual acceptance unknown."
+    },
+    {
+      "case": "case-04",
+      "run": "lilconfig-P1",
+      "phases": [
+        "first"
+      ],
+      "sha256": "8d8fc13764034d8ec9d6270263e6b9de4a54d9dd3605607a9a4d7cb9ab8d6d82",
+      "semantic_pass": true,
+      "visual_pass": null,
+      "semantic_reason": "Both independent source reviews accepted original visible task clauses; no contrary material evidence found in adjudication.",
+      "visual_reason": "No eligible rendered capture; visual acceptance unknown."
+    },
+    {
+      "case": "case-05",
+      "run": "p-retry-P1",
+      "phases": [
+        "final"
+      ],
+      "sha256": "e19cc59fb687164f1d3eb41a07729fa8bac467f94a3f0548f593d0a63cc5a5c3",
+      "semantic_pass": false,
+      "visual_pass": false,
+      "semantic_reason": "Original clause 3 requires actual callback conditions. The pre-callback exhausted-time branch still calls onFailedAttempt with retryDelay 0 and skips shouldConsumeRetry/shouldRetry (index.js:124-137); all four pRetry drafts omit this. P views also state a broad consume-first sequence. Both initial reviewers missed it and both revised on a consistent four-case source recheck.",
+      "visual_reason": "Original reviewers disagree; root agrees dense small edge text at default 1440 viewport does not meet perceptual acceptance. See visual-adjudication.json."
+    },
+    {
+      "case": "case-06",
+      "run": "p-retry-B1",
+      "phases": [
+        "first"
+      ],
+      "sha256": "6b1b19b62c12a66d1f724d4094e841fc6044193beceb53a18e8b234d30fc2275",
+      "semantic_pass": false,
+      "visual_pass": null,
+      "semantic_reason": "Original clause 3 requires actual callback conditions. The pre-callback exhausted-time branch still calls onFailedAttempt with retryDelay 0 and skips shouldConsumeRetry/shouldRetry (index.js:124-137); all four pRetry drafts omit this. P views also state a broad consume-first sequence. Both initial reviewers missed it and both revised on a consistent four-case source recheck.",
+      "visual_reason": "No eligible rendered capture; visual acceptance unknown."
+    },
+    {
+      "case": "case-07",
+      "run": "lilconfig-P1",
+      "phases": [
+        "final"
+      ],
+      "sha256": "1246766663d580afe38308a169085d5272bcc577e86441b78b0633d7ee504800",
+      "semantic_pass": true,
+      "visual_pass": null,
+      "semantic_reason": "Both independent source reviews accepted original visible task clauses; no contrary material evidence found in adjudication.",
+      "visual_reason": "No eligible rendered capture; visual acceptance unknown."
+    },
+    {
+      "case": "case-08",
+      "run": "quick-lru-P1",
+      "phases": [
+        "final"
+      ],
+      "sha256": "b4b1a32ffa22ab26bc6eb7c4dc75d17a291dc604123ec2b87c5d917a488a4d22",
+      "semantic_pass": true,
+      "visual_pass": false,
+      "semantic_reason": "Both independent source reviews accepted original visible task clauses; no contrary material evidence found in adjudication.",
+      "visual_reason": "Original reviewers disagree; root agrees dense small edge text at default 1440 viewport does not meet perceptual acceptance. See visual-adjudication.json."
+    },
+    {
+      "case": "case-09",
+      "run": "lilconfig-B1",
+      "phases": [
+        "first"
+      ],
+      "sha256": "09d2f067ae644d4905b205ff5e27c2c5e5c0ea95847cfeba68ccc55f8b6f0e83",
+      "semantic_pass": true,
+      "visual_pass": null,
+      "semantic_reason": "Both independent source reviews accepted original visible task clauses; no contrary material evidence found in adjudication.",
+      "visual_reason": "No eligible rendered capture; visual acceptance unknown."
+    },
+    {
+      "case": "case-10",
+      "run": "p-retry-B1",
+      "phases": [
+        "final"
+      ],
+      "sha256": "d00c20228c53e1fa2b8b8064d58d758108e213f7434721520ffe7a95396aff69",
+      "semantic_pass": false,
+      "visual_pass": null,
+      "semantic_reason": "Original clause 3 requires actual callback conditions. The pre-callback exhausted-time branch still calls onFailedAttempt with retryDelay 0 and skips shouldConsumeRetry/shouldRetry (index.js:124-137); all four pRetry drafts omit this. P views also state a broad consume-first sequence. Both initial reviewers missed it and both revised on a consistent four-case source recheck.",
+      "visual_reason": "No eligible rendered capture; visual acceptance unknown."
+    },
+    {
+      "case": "case-11",
+      "run": "p-retry-P1",
+      "phases": [
+        "first"
+      ],
+      "sha256": "32f8c4d2e814a9e2894dd46f7209ba6783adff4db41b0e8b1bf22048d962c7c6",
+      "semantic_pass": false,
+      "visual_pass": null,
+      "semantic_reason": "Original clause 3 requires actual callback conditions. The pre-callback exhausted-time branch still calls onFailedAttempt with retryDelay 0 and skips shouldConsumeRetry/shouldRetry (index.js:124-137); all four pRetry drafts omit this. P views also state a broad consume-first sequence. Both initial reviewers missed it and both revised on a consistent four-case source recheck.",
+      "visual_reason": "No eligible rendered capture; visual acceptance unknown."
+    },
+    {
+      "case": "case-12",
+      "run": "quick-lru-B1",
+      "phases": [
+        "first"
+      ],
+      "sha256": "6fe98bdc28d5978409bb4bf255f4918585791812eff7bc7a46bab30277b9d8ca",
+      "semantic_pass": true,
+      "visual_pass": null,
+      "semantic_reason": "Both independent source reviews accepted original visible task clauses; no contrary material evidence found in adjudication.",
+      "visual_reason": "No eligible rendered capture; visual acceptance unknown."
+    }
+  ],
+  "runs": {
+    "p-retry-B1": {
+      "first_pass": false,
+      "first_semantic_pass": false,
+      "first_visual_pass": null,
+      "first_machine_pass": false,
+      "first_case": "case-06",
+      "final_pass": false,
+      "final_semantic_pass": false,
+      "final_visual_pass": null,
+      "final_machine_pass": false,
+      "final_case": "case-10"
+    },
+    "p-retry-P1": {
+      "final_pass": false,
+      "final_semantic_pass": false,
+      "final_visual_pass": false,
+      "final_machine_pass": true,
+      "final_case": "case-05",
+      "first_pass": false,
+      "first_semantic_pass": false,
+      "first_visual_pass": null,
+      "first_machine_pass": false,
+      "first_case": "case-11"
+    },
+    "quick-lru-P1": {
+      "first_pass": false,
+      "first_semantic_pass": true,
+      "first_visual_pass": null,
+      "first_machine_pass": false,
+      "first_case": "case-02",
+      "final_pass": false,
+      "final_semantic_pass": true,
+      "final_visual_pass": false,
+      "final_machine_pass": true,
+      "final_case": "case-08"
+    },
+    "quick-lru-B1": {
+      "final_pass": false,
+      "final_semantic_pass": true,
+      "final_visual_pass": null,
+      "final_machine_pass": false,
+      "final_case": "case-01",
+      "first_pass": false,
+      "first_semantic_pass": true,
+      "first_visual_pass": null,
+      "first_machine_pass": false,
+      "first_case": "case-12"
+    },
+    "lilconfig-B1": {
+      "final_pass": false,
+      "final_semantic_pass": true,
+      "final_visual_pass": null,
+      "final_machine_pass": false,
+      "final_case": "case-03",
+      "first_pass": false,
+      "first_semantic_pass": true,
+      "first_visual_pass": null,
+      "first_machine_pass": false,
+      "first_case": "case-09"
+    },
+    "lilconfig-P1": {
+      "first_pass": false,
+      "first_semantic_pass": true,
+      "first_visual_pass": null,
+      "first_machine_pass": false,
+      "first_case": "case-04",
+      "final_pass": false,
+      "final_semantic_pass": true,
+      "final_visual_pass": null,
+      "final_machine_pass": false,
+      "final_case": "case-07"
+    }
+  },
+  "semantic_final_pass_counts": {
+    "B": 2,
+    "P": 2
+  },
+  "complete_final_pass_counts": {
+    "B": 0,
+    "P": 0
+  },
+  "first_complete_pass_counts": {
+    "B": 0,
+    "P": 0
+  },
+  "limits": "Source review is evidence-backed human/agent judgement, not a semantic proof. Visual acceptance is a recorded perceptual adjudication with disagreement, not a changed machine threshold. Machine-failed missing captures remain unknown. Even accepting the permissive visual review would leave zero both-quality latency pairs because all B machine delivery failed."
+}

@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "pRetry: Retry Controller and Stop Boundaries",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/sindresorhus/p-retry.git",
+      "provider": "github",
+      "revision": "1472907affe8d6107aba5884abc36d6361b3042e"
+    },
+    "views": [
+      {
+        "id": "normal-loop",
+        "label": "Normal retry loop",
+        "focus": ["caller", "controller", "operation", "failure-policy", "retry-timer", "success"],
+        "note": "The controller increments attempt numbers, invokes the supplied operation, and only increments consumed retries after a consuming retry is approved."
+      },
+      {
+        "id": "failure-decisions",
+        "label": "Failure decisions",
+        "focus": ["controller", "failure-policy", "rejection"],
+        "note": "Read the ordered hooks with their guards: consume decision, failure notification, then retry decision after time and retry checks."
+      },
+      {
+        "id": "abort-boundary",
+        "label": "Abort and timer boundary",
+        "focus": ["controller", "retry-timer", "abort-signal", "rejection"],
+        "note": "AbortSignal is checked around attempts and cancels a pending retry delay; the supplied operation receives only an attempt number."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "Caller",
+      "sublabel": "provides input(operation) + options",
+      "pos": [40, 340],
+      "size": [190, 70],
+      "sources": [{"path": "index.js", "line": 200, "end_line": 201, "label": "pRetry parameters"}]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "pRetry controller",
+      "sublabel": "owns attemptNumber, retriesConsumed, startTime and retry budget",
+      "pos": [300, 340],
+      "size": [250, 82],
+      "sources": [{"path": "index.js", "line": 233, "end_line": 259, "label": "loop and owned state"}]
+    },
+    {
+      "id": "operation",
+      "type": "external",
+      "label": "Caller operation",
+      "sublabel": "input(attemptNumber): value or throw/reject",
+      "pos": [620, 120],
+      "size": [220, 70],
+      "sources": [{"path": "index.js", "line": 240, "end_line": 250, "label": "operation invocation"}]
+    },
+    {
+      "id": "failure-policy",
+      "type": "backend",
+      "label": "Failure decision hooks",
+      "sublabel": "shouldConsumeRetry → onFailedAttempt → shouldRetry",
+      "pos": [620, 340],
+      "size": [260, 82],
+      "sources": [{"path": "index.js", "line": 109, "end_line": 197, "label": "failure controller"}]
+    },
+    {
+      "id": "retry-timer",
+      "type": "backend",
+      "label": "Backoff timer",
+      "sublabel": "delay ≤ maxTimeout and remaining maxRetryTime",
+      "pos": [620, 570],
+      "size": [250, 74],
+      "sources": [{"path": "index.js", "line": 66, "end_line": 106, "label": "delay calculation and timer"}]
+    },
+    {
+      "id": "abort-signal",
+      "type": "security",
+      "label": "AbortSignal",
+      "sublabel": "caller-controlled cancellation",
+      "pos": [930, 120],
+      "size": [190, 70],
+      "sources": [{"path": "index.js", "line": 89, "end_line": 106, "label": "delay abort listener"}]
+    },
+    {
+      "id": "success",
+      "type": "external",
+      "label": "Successful return",
+      "sublabel": "pRetry resolves with operation value",
+      "pos": [1190, 290],
+      "size": [210, 70],
+      "sources": [{"path": "index.js", "line": 245, "end_line": 249, "label": "return result"}]
+    },
+    {
+      "id": "rejection",
+      "type": "external",
+      "label": "Final rejection",
+      "sublabel": "original, unwrapped, or signal reason",
+      "pos": [1190, 530],
+      "size": [210, 70],
+      "sources": [{"path": "index.js", "line": 110, "end_line": 116, "label": "AbortError unwrap"}, {"path": "index.js", "line": 160, "end_line": 195, "label": "stop guards and abort"}]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "One pRetry invocation: controller-owned retry state",
+      "wraps": ["controller", "failure-policy", "retry-timer"]
+    }
+  ],
+  "connections": [
+    {"id": "start", "from": "caller", "to": "controller", "label": "call pRetry(input, options)"},
+    {"id": "invoke-operation", "from": "controller", "to": "operation", "label": "await input(++attemptNumber)"},
+    {"id": "value", "from": "operation", "to": "controller", "label": "value"},
+    {"id": "resolve", "from": "controller", "to": "success", "label": "return result"},
+    {"id": "failure", "from": "operation", "to": "failure-policy", "label": "throw / reject"},
+    {"id": "failure-context", "from": "controller", "to": "failure-policy", "label": "error + counters + remaining budget"},
+    {"id": "consume", "from": "failure-policy", "to": "controller", "label": "consume? true increments retriesConsumed"},
+    {"id": "skip-consume", "from": "failure-policy", "to": "controller", "label": "consume? false: retry loop, no delay"},
+    {"id": "wait", "from": "failure-policy", "to": "retry-timer", "label": "approved consuming retry: bounded delay"},
+    {"id": "retry", "from": "retry-timer", "to": "controller", "label": "timer completes → next attempt"},
+    {"id": "signal-controller", "from": "abort-signal", "to": "controller", "label": "throwIfAborted before / after operation", "variant": "security"},
+    {"id": "signal-timer", "from": "abort-signal", "to": "retry-timer", "label": "abort clears pending timeout", "variant": "security"},
+    {"id": "stop", "from": "failure-policy", "to": "rejection", "label": "reject: time/retries exhausted, TypeError, or shouldRetry false"},
+    {"id": "abort-stop", "from": "controller", "to": "rejection", "label": "signal reason / AbortError original error", "variant": "security"}
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Who owns the counters and budget?",
+      "items": [
+        "pRetry initializes and increments attemptNumber; it increments retriesConsumed only after onAttemptFailure returns true.",
+        "maxRetryTime is measured from pRetry's startTime. Infinity means no retry-time cap; it is not a deadline imposed on a running input operation."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Failed attempt: exact decision order",
+      "items": [
+        "AbortError is unwrapped first. With time remaining, shouldConsumeRetry runs, then onFailedAttempt runs, then time/retries and non-network TypeError guards run before shouldRetry.",
+        "A false consume decision can still retry after shouldRetry approves, but it neither consumes a retry nor waits."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Where cancellation reaches",
+      "items": [
+        "AbortSignal stops entry checks and rejects a pending delay by clearing its timeout; it is checked again after waiting.",
+        "pRetry calls input only with attemptNumber, so aborting its signal does not itself cancel an already-running caller operation."
+      ]
+    }
+  ]
+}

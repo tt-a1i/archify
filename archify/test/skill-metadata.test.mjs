@@ -89,8 +89,8 @@ test('repository authoring starts with evidence and avoids speculative preflight
   assert.match(authoringContract, /source-driven topology needs room/i);
   assert.match(authoringContract, /Include every component required to explain the requested responsibilities and boundaries; omit only genuinely irrelevant detail/i);
   assert.match(skill, /repository-backed candidate[\s\S]*--repo-root <repo-root>/i);
-  assert.match(skill, /every repository-backed validation must also include `--repo-root <repo-root>`/i);
-  assert.match(skill, /Do not first run validation without the repository root/i);
+  assert.match(skill, /rerun the complete `finalize` command from step 4 once, retaining `--quality showcase` and `--repo-root <repo-root>` for repository-backed candidates/i);
+  assert.match(skill, /Use standalone `validate` only for focused diagnosis, with `--repo-root <repo-root>` for a repository/i);
   assert.match(authoringDefaults, /finish the evidence shape while inspecting source, not after validation fails/i);
   assert.match(authoringDefaults, /canonical remote URL and full 40-character commit/i);
   assert.match(authoringDefaults, /at least one inspected `sources` entry to every key semantic node/i);

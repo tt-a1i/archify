@@ -1,0 +1,14 @@
+✔ p-retry C1 frozen first candidate removes routing diagnostics but does not mask the four text constraints (426.0485ms)
+✔ p-retry B1 frozen first candidate retains its schema failure exactly (209.938667ms)
+✔ a known passing showcase example still passes (621.59875ms)
+✔ a normal first clear, rhythm-clean route remains identical and does not search the grid (2.078333ms)
+✔ the frozen C1 patch consumes more of the shared grid budget; downstream impact is unverified (30.935084ms)
+✔ explicit architecture geometry remains byte-for-byte identical in rendered route data (416.95075ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1764.689125

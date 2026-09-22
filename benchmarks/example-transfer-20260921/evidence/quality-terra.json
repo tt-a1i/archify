@@ -1,0 +1,142 @@
+{
+  "cases": [
+    {
+      "id": "case-01",
+      "source_pass": true,
+      "visual_pass": null,
+      "combined_quality": null,
+      "findings": [
+        {
+          "kind": "source-pass",
+          "evidence": "Clauses 1-5 are entailed by diagram.json components, connections, and cards: the two volatile Maps and options (components quicklru/current/old) match repo/index.js:1-23; current-vs-absent set and whole-generation rotation match connections set-current-overwrite/set-rotate/rotation-fresh-current and index.js:68-77,120-132; read/promotion/expiry match get-current/get-old/old-promotion and index.js:40-65,105-118; has/peek are non-promoting and expiry-aware per inspect-* and index.js:137-157; callback/manual-removal distinction matches rotation-callback/expiry-callback/manual-no-callback and index.js:30-46,166-179."
+        },
+        {
+          "kind": "visual-unknown",
+          "evidence": "manifest.json lists captures: []; visual acceptance cannot be determined."
+        }
+      ],
+      "images_viewed": []
+    },
+    {
+      "id": "case-02",
+      "source_pass": true,
+      "visual_pass": null,
+      "combined_quality": null,
+      "findings": [
+        {
+          "kind": "source-pass",
+          "evidence": "Clauses 1-5 are entailed by diagram.json components, connections, and cards: the two volatile Maps and options (components quicklru/current/old) match repo/index.js:1-23; current-vs-absent set and whole-generation rotation match connections set-current-overwrite/set-rotate/rotation-fresh-current and index.js:68-77,120-132; read/promotion/expiry match get-current/get-old/old-promotion and index.js:40-65,105-118; has/peek are non-promoting and expiry-aware per inspect-* and index.js:137-157; callback/manual-removal distinction matches rotation-callback/expiry-callback/manual-no-callback and index.js:30-46,166-179."
+        },
+        {
+          "kind": "visual-unknown",
+          "evidence": "manifest.json lists captures: []; visual acceptance cannot be determined."
+        }
+      ],
+      "images_viewed": []
+    },
+    {
+      "id": "case-03",
+      "source_pass": true,
+      "visual_pass": false,
+      "combined_quality": false,
+      "findings": [
+        {
+          "kind": "source-pass",
+          "evidence": "Clauses 1-5 are entailed by diagram.json components, connections, and cards: volatile two-Map ownership and policy match repo/index.js:1-23; current-vs-absent set and whole-generation rotation match set-current/set-new/threshold/rotate/fresh-current and index.js:68-77,120-132; current/old get, promotion, missing return, and expiry match current-get/old-get/promote/expired and index.js:40-65,105-118; non-promoting has/peek behavior matches inspect/expired and index.js:137-157; eviction versus delete/clear matches rotation-callback/expiry-callback/delete-*/clear and index.js:30-46,166-179."
+        },
+        {
+          "kind": "visual-fail",
+          "clause": "ordinary readable text and traceable relationships without zoom",
+          "source_evidence": "Not applicable; this is a perceptual finding.",
+          "json_evidence": "diagram.json connections set-current, set-new, threshold, current-get, old-get, promote, delete-current, delete-old, and clear encode relationship labels needed to follow the lifecycle.",
+          "evidence": "At both inspected 1440x900 captures, these rendered connection labels are visibly much smaller and lower-contrast than the node/card text, so the complete path cannot be read at ordinary viewing without zoom. The 2048x1320 captures improve legibility but do not cure the 1440px acceptance failure."
+        }
+      ],
+      "images_viewed": [
+        "/private/tmp/archify-example-transfer-20260921/blind-review/case-03/diagram.visual-check.1440x900.dark.png",
+        "/private/tmp/archify-example-transfer-20260921/blind-review/case-03/diagram.visual-check.1440x900.light.png",
+        "/private/tmp/archify-example-transfer-20260921/blind-review/case-03/diagram.visual-check.2048x1320.dark.png",
+        "/private/tmp/archify-example-transfer-20260921/blind-review/case-03/diagram.visual-check.2048x1320.light.png"
+      ]
+    },
+    {
+      "id": "case-04",
+      "source_pass": true,
+      "visual_pass": null,
+      "combined_quality": null,
+      "findings": [
+        {
+          "kind": "source-pass",
+          "evidence": "Clauses 1-5 are entailed by diagram.json components, connections, and cards: controller state and caller boundaries match repo/index.js:200-249; ordinary failure order and the no-consume retry path match consume-decision/failed-callback/retry-decision/no-consume-loop and index.js:140-197; terminal guards and AbortError unwrapping match abort-error/stop-guards and index.js:109-116,160-181; abort loop/delay limits match signal-loop/signal-delay and index.js:84-106,233-247; retry delay and non-interruption of a running input match timer and cards and index.js:66-82,178-197,245-247."
+        },
+        {
+          "kind": "visual-unknown",
+          "evidence": "manifest.json lists captures: []; visual acceptance cannot be determined."
+        }
+      ],
+      "images_viewed": []
+    },
+    {
+      "id": "case-05",
+      "source_pass": true,
+      "visual_pass": null,
+      "combined_quality": null,
+      "findings": [
+        {
+          "kind": "source-pass",
+          "evidence": "Clauses 1-5 are entailed by diagram.json components, connections, and cards: controller/caller ownership and attempt execution match repo/index.js:200-249; ordinary failure order and no-consume immediate retry match decide/wait/repeat and index.js:140-197; terminal guards and AbortError bypass match abort-error/stop/decline and index.js:109-116,160-181; AbortSignal behavior and the running-input limit match signal-delay/signal-controller/signal-operation and index.js:84-106,233-247; maxTimeout/remaining-time backoff behavior matches timer and index.js:66-82,178-193."
+        },
+        {
+          "kind": "visual-unknown",
+          "evidence": "manifest.json lists captures: []; visual acceptance cannot be determined."
+        }
+      ],
+      "images_viewed": []
+    },
+    {
+      "id": "case-06",
+      "source_pass": true,
+      "visual_pass": null,
+      "combined_quality": null,
+      "findings": [
+        {
+          "kind": "source-pass",
+          "evidence": "Clauses 1-5 are entailed by diagram.json components, connections, and cards: controller state and caller boundaries match repo/index.js:200-249; ordinary failure order and the no-consume retry path match consume-decision/failed-callback/retry-decision/no-consume-loop and index.js:140-197; terminal guards and AbortError unwrapping match abort-error/stop-guards and index.js:109-116,160-181; abort loop/delay limits match signal-loop/signal-delay and index.js:84-106,233-247; retry delay and non-interruption of a running input match timer and cards and index.js:66-82,178-197,245-247."
+        },
+        {
+          "kind": "visual-unknown",
+          "evidence": "manifest.json lists captures: []; visual acceptance cannot be determined."
+        }
+      ],
+      "images_viewed": []
+    },
+    {
+      "id": "case-07",
+      "source_pass": true,
+      "visual_pass": null,
+      "combined_quality": null,
+      "findings": [
+        {
+          "kind": "source-pass",
+          "evidence": "Clauses 1-5 are entailed by diagram.json components, connections, and cards: volatile two-Map ownership and policy match repo/index.js:1-23; current-vs-absent set and whole-generation rotation match set-current/set-new/threshold/rotate/fresh-current and index.js:68-77,120-132; current/old get, promotion, missing return, and expiry match current-get/old-get/promote/expired and index.js:40-65,105-118; non-promoting has/peek behavior matches inspect/expired and index.js:137-157; eviction versus delete/clear matches rotation-callback/expiry-callback/delete-*/clear and index.js:30-46,166-179."
+        },
+        {
+          "kind": "visual-unknown",
+          "evidence": "manifest.json lists captures: []; visual acceptance cannot be determined."
+        }
+      ],
+      "images_viewed": []
+    }
+  ],
+  "summary": {
+    "source_pass": 7,
+    "source_fail": 0,
+    "visual_pass": 0,
+    "visual_fail": 1,
+    "visual_unknown": 6,
+    "combined_pass": 0,
+    "combined_fail": 1,
+    "combined_unknown": 6,
+    "conclusion": "All seven diagrams source-entail the visible task clauses. Case-03 is not perceptually accepted because its path labels are unreadable at the supplied 1440px viewport without zoom; the other six cases have no eligible captures, so their visual and combined quality remains unknown."
+  }
+}

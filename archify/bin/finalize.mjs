@@ -312,7 +312,7 @@ function failureDiagnostics(stage, result, receipt, quality) {
     },
     supportedFixes: [invalidReceipt
       ? `restore the ${stage} JSON receipt contract before retrying finalize`
-      : 'use the compact finalize summary to repair the named subject in place, then validate once'],
+      : 'use the compact finalize summary to repair the named subject in place, then rerun finalize once'],
   }];
 }
 
@@ -453,7 +453,7 @@ export function compactFinalizeReceipt(receipt) {
       action: 'edit-in-place',
       candidate: receipt.specification?.path,
       constraint: 'Preserve unaffected semantics and geometry; do not replace the whole candidate.',
-      then: 'validate-once',
+      then: 'finalize-once',
     };
   }
   return compact;

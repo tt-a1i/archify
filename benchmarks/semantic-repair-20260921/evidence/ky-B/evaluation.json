@@ -1,0 +1,28 @@
+{
+  "snapshots": [
+    {
+      "snapshot": 1,
+      "sha256": "41c13ce7ceade8e788eeade07437fcad343e3a3462460366fa911181debaf485",
+      "from_native_start_seconds": 173.26802134513855,
+      "validation_exit": 1,
+      "codes": [
+        "composition/container-border-run",
+        "composition/micro-segment"
+      ]
+    },
+    {
+      "snapshot": 2,
+      "sha256": "8a25f434c8d635b0d700d0fa105c0c9d6670a282fc393db13ae1914d966505bd",
+      "from_native_start_seconds": 221.70610809326172,
+      "validation_exit": 0,
+      "codes": []
+    }
+  ],
+  "note": "post-run checking of exact preserved bytes, separate from author timing and semantic/perceptual acceptance",
+  "visual_exit": 0,
+  "first_visual": {
+    "available": false,
+    "reason": "first candidate fails production validation; no accepted artifact to capture",
+    "candidate_sha256": "41c13ce7ceade8e788eeade07437fcad343e3a3462460366fa911181debaf485"
+  }
+}

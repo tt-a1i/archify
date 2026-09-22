@@ -1,0 +1,59 @@
+{
+  "epoch": 1789974943.408174,
+  "runs": [
+    {
+      "run": "ky-B",
+      "source_revision": "0d59458a0a58e1c3d7c6db0ab17ed5c7cd671e47",
+      "prompt_sha256": "d825ea97408943b08ca4dfd09d313f6711bdfa4630972d6e6c5230766cb3bc27",
+      "helpers": {},
+      "package_tree_sha256": "b675b2f5532b61f739c6670cb6ed44c9d8b8134211eb8fbdd285216f5bd2c481"
+    },
+    {
+      "run": "ky-N",
+      "source_revision": "0d59458a0a58e1c3d7c6db0ab17ed5c7cd671e47",
+      "prompt_sha256": "4c00f6a1a897217a5fbd2e7d04cbcef8e4225f5e7363308f96a083349415db97",
+      "helpers": {
+        "tools/semantic-navigation.cjs": "bf02e86c4cdcda0c353184875cf74fe068ddd189fc52d7a682c0d802b360de85"
+      },
+      "package_tree_sha256": "b675b2f5532b61f739c6670cb6ed44c9d8b8134211eb8fbdd285216f5bd2c481"
+    },
+    {
+      "run": "query-N",
+      "source_revision": "97cab92a7e56713773f599ea8a379b173cb4f8bd",
+      "prompt_sha256": "5d9988c22871022520b55136bb18b04faa6de43a3e8bf509ca28ab0e6655ba0a",
+      "helpers": {
+        "tools/semantic-navigation.cjs": "bf02e86c4cdcda0c353184875cf74fe068ddd189fc52d7a682c0d802b360de85"
+      },
+      "package_tree_sha256": "b675b2f5532b61f739c6670cb6ed44c9d8b8134211eb8fbdd285216f5bd2c481"
+    },
+    {
+      "run": "query-B",
+      "source_revision": "97cab92a7e56713773f599ea8a379b173cb4f8bd",
+      "prompt_sha256": "3e1f12167cca10c55dd500a9b60592f8baf62897d51f0a9733699c5e8f4cc2c7",
+      "helpers": {},
+      "package_tree_sha256": "b675b2f5532b61f739c6670cb6ed44c9d8b8134211eb8fbdd285216f5bd2c481"
+    },
+    {
+      "run": "pqueue-R",
+      "source_revision": "180ab9e25cd10b6f548767d7176076b50d25e188",
+      "prompt_sha256": "c2ee4fc3294ff0c86132d69a840503a5180f625d6da1d4716ad29ba3e5260b92",
+      "helpers": {
+        "benchmarks/semantic-repair-20260921/route-repair/route-repair.mjs": "9156498735730ecd8cafe126a54c9aa19d355e2b5b921877dd05651521fda139"
+      },
+      "package_tree_sha256": "b675b2f5532b61f739c6670cb6ed44c9d8b8134211eb8fbdd285216f5bd2c481"
+    },
+    {
+      "run": "pqueue-B",
+      "source_revision": "180ab9e25cd10b6f548767d7176076b50d25e188",
+      "prompt_sha256": "7d08b35fcee35d94f08e9b743a53dbd0b3e429e9886e455aee54c145c12e6878",
+      "helpers": {},
+      "package_tree_sha256": "b675b2f5532b61f739c6670cb6ed44c9d8b8134211eb8fbdd285216f5bd2c481"
+    }
+  ],
+  "tasks_sha256": "6f9d7637982a714eaf7feefe1f86dd9e99022b74e0d3abc2d07f7240f0d9c5fe",
+  "rubric_sha256": "92368054ded9b210004e1e6dd16d8a2b360ab41c730d1fefc6b13474af2c5576",
+  "package_sha256": "43a922783ed093b70fa470eb0d9916b48c4cf134d8665a570931467c1c00d8ff",
+  "typescript_lock_sha256": "456736eefd0b60ef077a2d458ec36cbd678fc55e4cd010edf4fcc4f31d36c1f9",
+  "policy": "fresh Terra/medium serial, fixed scopes/quality, no whole-author retries, setup separate; OS cache/provider scheduling uncontrolled",
+  "repair_eligibility": "first structurally complete or final candidate, in original run order; independently source-complete and sole supported route diagnostics; no candidate editing to manufacture eligibility"
+}

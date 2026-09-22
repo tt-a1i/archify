@@ -1,0 +1,11 @@
+{
+  "duration_seconds": 0.08300183399114758,
+  "exit_code": 0,
+  "bytes": 6380,
+  "lines": 178,
+  "source_revision": "8a6fce9b72f769b22533f0979fbc2e73180f8112",
+  "binary_sha256": "5651f0c6dcbbf2f7813297f9eb8f6ba00fb4ee2d81410a8138ac6151416f31ad",
+  "index_sha256": "691bdeea9a092203171536521cc7118f80693781ae0447c19bddea38ed07ee11",
+  "scope": "all files recognized as requested language; static navigation only",
+  "cache": "fresh CLI process, no persistent index; OS caches uncontrolled"
+}

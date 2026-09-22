@@ -1,0 +1,82 @@
+diff --git a/renderers/architecture/routing.mjs b/renderers/architecture/routing.mjs
+--- a/renderers/architecture/routing.mjs
++++ b/renderers/architecture/routing.mjs
+@@ -14,6 +14,7 @@
+   routeHonorsEndpointSides,
+   normalizeRoutePoints,
+   roundedPath,
++  collectRouteRhythmIssues,
+ } from '../shared/geometry.mjs';
+ import { shortestOrthogonalGridRoute } from '../shared/route-quality.mjs';
+ 
+@@ -315,7 +316,7 @@
+     return { start, end };
+   }
+ 
+-  function routeVia(conn, from, to, start, end, fromSide, toSide, resolvedRoutes = []) {
++  function routeVia(conn, from, to, start, end, fromSide, toSide, resolvedRoutes = [], { allowGridSearch = true } = {}) {
+     if (conn.via) return conn.via;
+     switch (conn.route || 'auto') {
+       case 'straight':
+@@ -414,6 +415,8 @@
+               && routeClearsComponents(conn, points)
+               && !routeConflictsWithResolved(conn, points, resolvedRoutes)) return candidate;
+         }
++
++        if (!allowGridSearch) return sideSafe[0] || sideAware[0] || horizontalFirst;
+ 
+         // Two-bend doglegs are deliberately cheap, but a real architecture can
+         // place adjacent components on both of those corridors. Search a
+@@ -554,11 +557,11 @@
+     return { from, to, start, end, fromSide, toSide };
+   }
+ 
+-  function routedForGeometry(conn, resolvedRoutes, geometry) {
++  function routedForGeometry(conn, resolvedRoutes, geometry, options) {
+     const { from, to, start, end, fromSide, toSide } = geometry;
+     const authoredPoints = [
+       start,
+-      ...routeVia(conn, from, to, start, end, fromSide, toSide, resolvedRoutes),
++      ...routeVia(conn, from, to, start, end, fromSide, toSide, resolvedRoutes, options),
+       end,
+     ];
+     // Explicit waypoints are author-owned geometry. Keep even a collinear
+@@ -615,6 +618,12 @@
+       && !routeOverlapsResolved(conn, routed.points, resolvedRoutes);
+   }
+ 
++  function routeHasCleanRhythm(routed) {
++    return collectRouteRhythmIssues({
++      routedRelations: [{ points: routed.points }],
++    }).length === 0;
++  }
++
+   function computePath(conn, resolvedRoutes) {
+     if (hasAuthoredRouteGeometry(conn)) {
+       const sides = inferredConnectionSides(conn);
+@@ -626,15 +635,20 @@
+     }
+ 
+     let firstFallback = null;
++    let firstClear = null;
+     for (const sides of candidateSidePairs(conn)) {
+       const geometry = connectionGeometry(conn, sides);
+-      const routed = routedForGeometry(conn, resolvedRoutes, geometry);
++      const routed = routedForGeometry(conn, resolvedRoutes, geometry, {
++        allowGridSearch: !firstClear,
++      });
+       if (!firstFallback) firstFallback = { routed, sides };
+       if (routeIsClear(conn, routed, geometry, resolvedRoutes)) {
+-        return cachePath(conn, routed, sides);
+-      }
+-    }
+-    return cachePath(conn, firstFallback.routed, firstFallback.sides);
++        if (!firstClear) firstClear = { routed, sides };
++        if (routeHasCleanRhythm(routed)) return cachePath(conn, routed, sides);
++      }
++    }
++    const selected = firstClear || firstFallback;
++    return cachePath(conn, selected.routed, selected.sides);
+   }
+ 
+   let routesPlanned = false;

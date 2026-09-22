@@ -1,0 +1,38 @@
+{
+  "snapshots": [
+    {
+      "snapshot": 1,
+      "sha256": "31573db4e411df048293643d1250e4976f0d60775c88669919988f86cdcb1deb",
+      "from_native_start_seconds": 134.68587493896484,
+      "validation_exit": 1,
+      "codes": [
+        "composition/label-route-clearance",
+        "composition/short-interior-segment",
+        "layout/constraint"
+      ]
+    },
+    {
+      "snapshot": 2,
+      "sha256": "4f97f2c65f9610ed445164b9e320f468d6df37de8223cee1ad2fc3e7f4603949",
+      "from_native_start_seconds": 182.26730036735535,
+      "validation_exit": 1,
+      "codes": [
+        "composition/label-route-clearance"
+      ]
+    },
+    {
+      "snapshot": 3,
+      "sha256": "2ff686b76162e7c2a1a939b97d88d52f6cb15cd4aa32a1491fc2a89a0d71b9dc",
+      "from_native_start_seconds": 211.23116731643677,
+      "validation_exit": 0,
+      "codes": []
+    }
+  ],
+  "note": "post-run checking of exact preserved bytes, separate from author timing and semantic/perceptual acceptance",
+  "visual_exit": 0,
+  "first_visual": {
+    "available": false,
+    "reason": "first candidate fails production validation; no accepted artifact to capture",
+    "candidate_sha256": "31573db4e411df048293643d1250e4976f0d60775c88669919988f86cdcb1deb"
+  }
+}

@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Line-stamp CLI",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://fixtures.invalid/archify/line-stamp-cli",
+      "revision": "cec633c5019bfa48889691182e69b0e044b48d04",
+      "link_mode": "local-only"
+    },
+    "views": [
+      {
+        "id": "control-path",
+        "label": "Control path",
+        "focus": [
+          "operator",
+          "cli",
+          "options",
+          "transform"
+        ],
+        "note": "Follow argument ownership into the pure in-memory transform."
+      },
+      {
+        "id": "file-path",
+        "label": "File path",
+        "focus": [
+          "cli",
+          "input",
+          "transform",
+          "output"
+        ],
+        "note": "Separate the CLI-owned filesystem reads and writes from text transformation."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "operator",
+      "type": "external",
+      "label": "Operator",
+      "sublabel": "CLI invocation",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/cli.mjs",
+          "line": 13,
+          "end_line": 13
+        }
+      ]
+    },
+    {
+      "id": "cli",
+      "type": "backend",
+      "label": "line-stamp CLI",
+      "sublabel": "control + filesystem I/O",
+      "pos": [
+        280,
+        300
+      ],
+      "size": [
+        170,
+        72
+      ],
+      "sources": [
+        {
+          "path": "src/cli.mjs",
+          "line": 5,
+          "end_line": 10
+        }
+      ]
+    },
+    {
+      "id": "options",
+      "type": "backend",
+      "label": "Argument parser",
+      "sublabel": "required strings",
+      "pos": [
+        280,
+        500
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/options.mjs",
+          "line": 1,
+          "end_line": 5
+        }
+      ]
+    },
+    {
+      "id": "input",
+      "type": "external",
+      "label": "Input file",
+      "sublabel": "readFile",
+      "pos": [
+        280,
+        120
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/cli.mjs",
+          "line": 7,
+          "end_line": 7
+        }
+      ]
+    },
+    {
+      "id": "transform",
+      "type": "backend",
+      "label": "Line normalizer",
+      "sublabel": "in-memory transform",
+      "pos": [
+        540,
+        300
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "src/transform.mjs",
+          "line": 1,
+          "end_line": 5
+        }
+      ]
+    },
+    {
+      "id": "output",
+      "type": "external",
+      "label": "Output file",
+      "sublabel": "writeFile",
+      "pos": [
+        820,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/cli.mjs",
+          "line": 9,
+          "end_line": 9
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "line-stamp process",
+      "wraps": [
+        "cli",
+        "options",
+        "transform"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "invoke",
+      "from": "operator",
+      "to": "cli",
+      "label": "invoke"
+    },
+    {
+      "id": "parse",
+      "from": "cli",
+      "to": "options",
+      "label": "parse args"
+    },
+    {
+      "id": "paths",
+      "from": "options",
+      "to": "cli",
+      "label": "arguments"
+    },
+    {
+      "id": "read",
+      "from": "cli",
+      "to": "input",
+      "label": "readFile"
+    },
+    {
+      "id": "bytes",
+      "from": "input",
+      "to": "cli",
+      "label": "decoded text"
+    },
+    {
+      "id": "normalize",
+      "from": "cli",
+      "to": "transform",
+      "label": "normalizeLines"
+    },
+    {
+      "id": "normalized",
+      "from": "transform",
+      "to": "cli",
+      "label": "normalized text"
+    },
+    {
+      "id": "write",
+      "from": "cli",
+      "to": "output",
+      "label": "writeFile"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Ownership",
+      "items": [
+        "The CLI parses arguments and owns readFile/writeFile",
+        "The normalizer changes in-memory text only"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Filesystem boundary",
+      "items": [
+        "Input and output are files outside the process boundary",
+        "No remote service is implied by this fixture"
+      ]
+    }
+  ]
+}

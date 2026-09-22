@@ -1,0 +1,124 @@
+{
+  "summary": "lowdb X is the strongest complete result: required semantics are covered and its 1440x900 render is readable. lowdb Y is semantically richer in its explicit adapter layers but omits required core-state/read details and its browser section is clipped. Polka X covers the required request flow and is readable, with some dense edge crossings. Polka Y has a required URL-parser/request-field omission and no supplied final image; there is no fair aggregate winner across these uneven visual conditions.",
+  "cases": {
+    "lowdb": {
+      "X": {
+        "first": {
+          "semantic_status": "pass",
+          "defects": [],
+          "evidence": [
+            "src/core/Low.ts:1-64 supports the adapter and sync-adapter contracts, constructors with adapter/default data, in-memory data, read replacement, write delegation, and update-then-write; the candidate shows these through the Low/LowSync cards and contract edges.",
+            "src/adapters/node/JSONFile.ts:5-20 and src/adapters/node/DataFile.ts:6-71 support JSON parse/stringify composed with text adapters; src/adapters/node/TextFile.ts:9-71 supports the async and sync file paths, including temp-file rename.",
+            "src/adapters/Memory.ts:3-27 and src/adapters/browser/WebStorage.ts:3-26 support the Memory/MemorySync and WebStorage alternatives and their contract edges."
+          ]
+        },
+        "final": {
+          "semantic_status": "pass",
+          "defects": [],
+          "evidence": [
+            "src/core/Low.ts:1-64 supports the adapter contracts, default/in-memory database state, read/write/update flow, and async/sync variants represented by the diagram and cards.",
+            "src/adapters/node/JSONFile.ts:5-20, src/adapters/node/DataFile.ts:6-71, and src/adapters/node/TextFile.ts:9-71 support the JSON-to-text/file composition and sync temp-file rename shown.",
+            "src/adapters/Memory.ts:3-27 and src/adapters/browser/WebStorage.ts:3-26 support the in-memory and key-addressed browser-storage alternatives."
+          ],
+          "visual_status": "pass",
+          "visual_defects": [],
+          "image_inspected": true,
+          "image_path": "/private/tmp/archify-source-tools-20260921/review-full/lowdb/X/final-1440.png"
+        }
+      },
+      "Y": {
+        "first": {
+          "semantic_status": "minor_defect",
+          "defects": [
+            "The Low/LowSync core is represented mainly by contract edges and a timing card; it does not explicitly show that the constructors receive default data, retain in-memory data, or replace it only when read returns data. Those are required core semantics in src/core/Low.ts:16-64.",
+            "The extra preset claims are source-supported but rely on files outside the rubric's listed paths; they do not repair the missing explicit core-state semantics."
+          ],
+          "evidence": [
+            "src/core/Low.ts:16-39 and :41-64 show constructor defaultData, data fields, conditional read replacement, write delegation, and update mutation; the candidate's core labels/cards only state await/direct read-write and update-then-write.",
+            "src/adapters/node/DataFile.ts:6-71, src/adapters/node/JSONFile.ts:5-20, and src/adapters/node/TextFile.ts:9-71 support the candidate's explicit JSON/DataFile/TextFile layering.",
+            "src/presets/node.ts and src/presets/browser.ts support the candidate's optional preset claims; src/adapters/browser/LocalStorage.ts and SessionStorage.ts support the concrete storage edges."
+          ]
+        },
+        "final": {
+          "semantic_status": "minor_defect",
+          "defects": [
+            "The Low/LowSync core is represented mainly by contract edges and a timing card; it does not explicitly show that the constructors receive default data, retain in-memory data, or replace it only when read returns data. Those are required core semantics in src/core/Low.ts:16-64.",
+            "The extra preset claims are source-supported but rely on files outside the rubric's listed paths; they do not repair the missing explicit core-state semantics."
+          ],
+          "evidence": [
+            "src/core/Low.ts:16-39 and :41-64 show constructor defaultData, data fields, conditional read replacement, write delegation, and update mutation; the candidate's core labels/cards only state await/direct read-write and update-then-write.",
+            "src/adapters/node/DataFile.ts:6-71, src/adapters/node/JSONFile.ts:5-20, and src/adapters/node/TextFile.ts:9-71 support the candidate's explicit JSON/DataFile/TextFile layering.",
+            "src/presets/node.ts and src/presets/browser.ts support the candidate's optional preset claims; src/adapters/browser/LocalStorage.ts and SessionStorage.ts support the concrete storage edges."
+          ],
+          "visual_status": "fail",
+          "visual_defects": [
+            "At the supplied 1440x900 viewport, the browser-runtime region is cut off at the bottom: Browser presets/WebStorage lower content is truncated and the session-storage branch is not visible, so an important required alternative is not fully readable."
+          ],
+          "image_inspected": true,
+          "image_path": "/private/tmp/archify-source-tools-20260921/review-full/lowdb/Y/final-1440.png"
+        }
+      }
+    },
+    "polka": {
+      "X": {
+        "first": {
+          "semantic_status": "pass",
+          "defects": [],
+          "evidence": [
+            "packages/polka/index.js:65-98 supports listen() attaching handler, parse-before-find, request path/query assignment, ordered global/scoped/route or mounted dispatch, onNoMatch fallback, and next(err) to onError; the candidate shows each as a distinct node and directed edge.",
+            "packages/polka/index.js:15-18 and :51-59, :82-85 support scoped/mounted URL mutation and child delegation shown.",
+            "packages/polka/index.js:20-24 and :35-37 support distinct onError and onNoMatch terminal behavior; the candidate keeps them separate."
+          ]
+        },
+        "final": {
+          "semantic_status": "pass",
+          "defects": [],
+          "evidence": [
+            "packages/polka/index.js:65-98 supports listen() attaching handler, parse-before-find, request path/query assignment, ordered global/scoped/route or mounted dispatch, onNoMatch fallback, and next(err) to onError; the candidate shows each as a distinct node and directed edge.",
+            "packages/polka/index.js:15-18 and :51-59, :82-85 support scoped/mounted URL mutation and child delegation shown.",
+            "packages/polka/index.js:20-24 and :35-37 support distinct onError and onNoMatch terminal behavior; the candidate keeps them separate."
+          ],
+          "visual_status": "minor_defect",
+          "visual_defects": [
+            "The 1440x900 render has several dense, crossing dashed paths around the handler/global/scoped/error area. Nodes and labels remain readable and the main control flow is understandable, but this region takes extra effort to trace."
+          ],
+          "image_inspected": true,
+          "image_path": "/private/tmp/archify-source-tools-20260921/review-full/polka/X/final-1440.png"
+        }
+      },
+      "Y": {
+        "first": {
+          "semantic_status": "minor_defect",
+          "defects": [
+            "The diagram collapses URL parsing and route lookup into one handler-to-route edge and has no parser/request-field node or edge showing parsed path/query information exposed on the request. That is part of required coverage in packages/polka/index.js:71-80 and packages/url/index.js:1-24."
+          ],
+          "evidence": [
+            "packages/polka/index.js:71-80 calls the URL parser, uses info.pathname for find(), and assigns req.path, req.search, and req.query; packages/url/index.js:1-24 defines pathname/search/query parsing.",
+            "The candidate's handler-to-route label says only 'parse URL + find(method, pathname)' and its cards do not represent req.path/query exposure; the remaining startup, middleware, mount, no-match, and error claims are source-supported by packages/polka/index.js:20-98."
+          ]
+        },
+        "final": {
+          "semantic_status": "minor_defect",
+          "defects": [
+            "The diagram collapses URL parsing and route lookup into one handler-to-route edge and has no parser/request-field node or edge showing parsed path/query information exposed on the request. That is part of required coverage in packages/polka/index.js:71-80 and packages/url/index.js:1-24."
+          ],
+          "evidence": [
+            "packages/polka/index.js:71-80 calls the URL parser, uses info.pathname for find(), and assigns req.path, req.search, and req.query; packages/url/index.js:1-24 defines pathname/search/query parsing.",
+            "The candidate's handler-to-route label says only 'parse URL + find(method, pathname)' and its cards do not represent req.path/query exposure; the remaining startup, middleware, mount, no-match, and error claims are source-supported by packages/polka/index.js:20-98."
+          ],
+          "visual_status": "unassessed",
+          "visual_defects": [
+            "No final-1440.png was supplied for Polka Y, so readability, overlap, and clipping cannot be assessed."
+          ],
+          "image_inspected": false,
+          "image_path": null
+        }
+      }
+    }
+  },
+  "limits": [
+    "First-candidate machine-validation failures were accepted as given; first-stage semantic review was performed from the supplied JSON because no first screenshots were supplied.",
+    "Visual judgments are limited to the supplied 1440x900 PNGs; absent images are unassessed rather than treated as visual passes.",
+    "Only the supplied input, referenced source checkout files, candidate JSONs, and referenced PNGs were inspected."
+  ]
+}

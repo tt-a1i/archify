@@ -1,0 +1,19 @@
+{
+  "base_files": 266,
+  "candidate_files": 272,
+  "changed": [
+    "SKILL.md"
+  ],
+  "added": [
+    "examples/document-publisher/preview.png",
+    "examples/document-publisher/publisher.architecture.json",
+    "examples/document-publisher/source-pin.json",
+    "examples/document-publisher/source/README.md",
+    "examples/document-publisher/source/publisher.mjs",
+    "references/library-worked-example.md"
+  ],
+  "removed": [],
+  "local_links_resolve": true,
+  "production_source_untouched": true,
+  "example_sha256": "9dddd8134174fa314edc27514e173e0cb0425f5cb90a8d69d680132b4be64844"
+}

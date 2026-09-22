@@ -1,0 +1,149 @@
+{
+  "runs": [
+    {
+      "run": "p-retry-B1",
+      "author_seconds": 223.25799989700317,
+      "full_seconds": 231.62912893295288,
+      "first_structural_seconds": 160.8787202835083,
+      "snapshot_count": 4,
+      "machine_pass": true,
+      "sha256": "bc7564266646d22fbd2e164aeb308972d921edb9ff4bffae46c4c1ea00f481ae",
+      "integrity": {
+        "source_unchanged": true,
+        "package_unchanged": true
+      },
+      "surfaced_faults": [],
+      "reported_turn_usage": {
+        "input_tokens": 793086,
+        "cached_input_tokens": 753152,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 5215,
+        "reasoning_output_tokens": 777,
+        "total_tokens": 798301
+      }
+    },
+    {
+      "run": "p-retry-C1",
+      "author_seconds": 394.94900012016296,
+      "full_seconds": 402.712858915329,
+      "first_structural_seconds": 141.9028491973877,
+      "snapshot_count": 4,
+      "machine_pass": false,
+      "sha256": "f25525c884f14563d8f57a6191d355aeecc9117c87653d64855be0e33d1eb9d7",
+      "integrity": {
+        "source_unchanged": true,
+        "package_unchanged": true,
+        "helper_unchanged": true,
+        "guide_unchanged": true
+      },
+      "surfaced_faults": [],
+      "reported_turn_usage": {
+        "input_tokens": 779096,
+        "cached_input_tokens": 736768,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 10144,
+        "reasoning_output_tokens": 5179,
+        "total_tokens": 789240
+      }
+    },
+    {
+      "run": "quick-lru-C1",
+      "author_seconds": 182.52300000190735,
+      "full_seconds": 189.23994898796082,
+      "first_structural_seconds": 141.9056260585785,
+      "snapshot_count": 2,
+      "machine_pass": true,
+      "sha256": "d838cec6092ed7a19b70bc0b5eb9e0dff0e20d776305df4d3d94b346130c9535",
+      "integrity": {
+        "source_unchanged": true,
+        "package_unchanged": true,
+        "helper_unchanged": true,
+        "guide_unchanged": true
+      },
+      "surfaced_faults": [],
+      "reported_turn_usage": {
+        "input_tokens": 438762,
+        "cached_input_tokens": 409344,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4434,
+        "reasoning_output_tokens": 1102,
+        "total_tokens": 443196
+      }
+    },
+    {
+      "run": "quick-lru-B1",
+      "author_seconds": 329.4249999523163,
+      "full_seconds": 337.2699580192566,
+      "first_structural_seconds": 203.96328210830688,
+      "snapshot_count": 4,
+      "machine_pass": false,
+      "sha256": "1a80523461dc5aa3a993aa42782138c57f0d598a59e555fb88641a18e943ea34",
+      "integrity": {
+        "source_unchanged": true,
+        "package_unchanged": true
+      },
+      "surfaced_faults": [],
+      "reported_turn_usage": {
+        "input_tokens": 942315,
+        "cached_input_tokens": 900864,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 8254,
+        "reasoning_output_tokens": 2480,
+        "total_tokens": 950569
+      }
+    },
+    {
+      "run": "lilconfig-B1",
+      "author_seconds": 453.0979998111725,
+      "full_seconds": 460.3049478530884,
+      "first_structural_seconds": 239.6425986289978,
+      "snapshot_count": 4,
+      "machine_pass": false,
+      "sha256": "65bf131c8f2d559be956ee42ff536e00b0d9f2e82143c529af1adb1b34a05c7f",
+      "integrity": {
+        "source_unchanged": true,
+        "package_unchanged": true
+      },
+      "surfaced_faults": [],
+      "reported_turn_usage": {
+        "input_tokens": 1271244,
+        "cached_input_tokens": 1215744,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 10362,
+        "reasoning_output_tokens": 3447,
+        "total_tokens": 1281606
+      }
+    },
+    {
+      "run": "lilconfig-C1",
+      "author_seconds": 429.76200008392334,
+      "full_seconds": 446.4232370853424,
+      "first_structural_seconds": 158.9586877822876,
+      "snapshot_count": 4,
+      "machine_pass": false,
+      "sha256": "fce26950989c450a239f7a2e2adf0ca34961b15d529bfd864d0d5bb6fd2b5943",
+      "integrity": {
+        "source_unchanged": true,
+        "package_unchanged": true,
+        "helper_unchanged": true,
+        "guide_unchanged": true
+      },
+      "surfaced_faults": [],
+      "reported_turn_usage": {
+        "input_tokens": 980661,
+        "cached_input_tokens": 930560,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 10651,
+        "reasoning_output_tokens": 2789,
+        "total_tokens": 991312
+      }
+    }
+  ],
+  "total_author_seconds": 2013.0149998664856,
+  "total_full_seconds": 2067.58007979393,
+  "median_first_structural_seconds": 159.91870403289795,
+  "screening": "failed: two of three compact candidates failed mandatory complete machine finalization; no confirmation permitted",
+  "quality_review": "complete; see initial-quality-adjudication.json",
+  "caveat": "auxiliary review/probe work overlapped some late initial authors; no general causal timing conclusion",
+  "qualified_pairs": 0
+}

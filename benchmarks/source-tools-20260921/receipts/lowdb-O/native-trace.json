@@ -1,0 +1,115 @@
+{
+  "identity": {
+    "model": "gpt-5.6-terra",
+    "effort": "medium"
+  },
+  "task_started_at": "2026-09-21T04:05:25.963Z",
+  "task_completed_at": "2026-09-21T04:09:36.136Z",
+  "native_task_seconds": 250.1729998588562,
+  "first_complete_from_native_start_seconds": 202.01325130462646,
+  "external_observer_seconds": 292.7092770000454,
+  "observer_max_gap_seconds": 0.1283259589690715,
+  "tool_calls": [
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T04:05:38.942Z",
+      "categories": [
+        "read-or-search"
+      ],
+      "completed_at": "2026-09-21T04:05:39.226Z",
+      "observed_tool_seconds": 0.2840001583099365
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T04:05:48.079Z",
+      "categories": [
+        "ast-outline",
+        "read-or-search"
+      ],
+      "completed_at": "2026-09-21T04:05:48.508Z",
+      "observed_tool_seconds": 0.4289999008178711
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T04:05:57.564Z",
+      "categories": [
+        "ast-outline",
+        "read-or-search"
+      ],
+      "completed_at": "2026-09-21T04:05:58.005Z",
+      "observed_tool_seconds": 0.44100022315979004
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T04:06:19.150Z",
+      "categories": [
+        "repository-metadata"
+      ],
+      "completed_at": "2026-09-21T04:06:19.812Z",
+      "observed_tool_seconds": 0.6619999408721924
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T04:06:35.635Z",
+      "categories": [
+        "other-tool"
+      ],
+      "completed_at": "2026-09-21T04:06:36.375Z",
+      "observed_tool_seconds": 0.7400000095367432
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T04:06:54.319Z",
+      "categories": [
+        "other-tool"
+      ],
+      "completed_at": "2026-09-21T04:06:54.832Z",
+      "observed_tool_seconds": 0.5130000114440918
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T04:08:47.865Z",
+      "categories": [
+        "artifact-write"
+      ],
+      "completed_at": "2026-09-21T04:08:48.201Z",
+      "observed_tool_seconds": 0.3359999656677246
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T04:09:19.253Z",
+      "categories": [
+        "artifact-write"
+      ],
+      "completed_at": "2026-09-21T04:09:19.406Z",
+      "observed_tool_seconds": 0.1529998779296875
+    },
+    {
+      "tool": "exec",
+      "started_at": "2026-09-21T04:09:25.054Z",
+      "categories": [
+        "other-tool"
+      ],
+      "completed_at": "2026-09-21T04:09:25.267Z",
+      "observed_tool_seconds": 0.21300005912780762
+    }
+  ],
+  "outline_calls": 2,
+  "surfaced_faults": [],
+  "reported_turn_usage": {
+    "input_tokens": 424335,
+    "cached_input_tokens": 400896,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 6140,
+    "reasoning_output_tokens": 1199,
+    "total_tokens": 430475
+  },
+  "unknown": [
+    "internal requests",
+    "network retries",
+    "server timing",
+    "hidden reasoning time"
+  ],
+  "limits": "Tool categories are coarse lexical metadata. Tool output, arguments, prose and reasoning are not retained. No surfaced error does not prove no network retry.",
+  "adoption_status": "failed: attempted ../tools and ../../tools rather than supplied tools path; binary verified present; zero successful index calls"
+}

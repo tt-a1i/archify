@@ -1,0 +1,131 @@
+{
+  "cases": [
+    {
+      "id": "case-01",
+      "source_pass": true,
+      "visual_pass": null,
+      "findings": [
+        {
+          "kind": "visual",
+          "status": "unknown",
+          "evidence": "manifest.json lists captures: [] for case-01; no visual acceptance inferred from source-only evidence"
+        }
+      ],
+      "images_viewed": []
+    },
+    {
+      "id": "case-02",
+      "source_pass": true,
+      "visual_pass": null,
+      "findings": [
+        {
+          "kind": "visual",
+          "status": "unknown",
+          "evidence": "manifest.json lists captures: [] for case-02; no visual acceptance inferred from source-only evidence"
+        }
+      ],
+      "images_viewed": []
+    },
+    {
+      "id": "case-03",
+      "source_pass": true,
+      "visual_pass": true,
+      "findings": [
+        {
+          "kind": "visual",
+          "status": "pass",
+          "evidence": "Inspected all four eligible 1440x900 and 2048x1320 light/dark captures; authored text remains readable at ordinary view and the labeled paths between caller, controller, maps, expiry, and callback are traceable. The 1440 captures continue into the card area below the viewport; normal page-level scrolling is allowed."
+        }
+      ],
+      "images_viewed": [
+        "/private/tmp/archify-example-transfer-20260921/blind-review/case-03/diagram.visual-check.1440x900.dark.png",
+        "/private/tmp/archify-example-transfer-20260921/blind-review/case-03/diagram.visual-check.1440x900.light.png",
+        "/private/tmp/archify-example-transfer-20260921/blind-review/case-03/diagram.visual-check.2048x1320.dark.png",
+        "/private/tmp/archify-example-transfer-20260921/blind-review/case-03/diagram.visual-check.2048x1320.light.png"
+      ]
+    },
+    {
+      "id": "case-04",
+      "source_pass": false,
+      "visual_pass": null,
+      "findings": [
+        {
+          "clause": 3,
+          "source": "index.js:124-158",
+          "json_evidence": "connections failure-handler -> consume-hook ('first: should this failure consume?'), failure-handler -> failed-hook ('then: onFailedAttempt(context)'), and failure-handler -> retry-hook ('then: shouldRetry(context)'); cards[1].items[0] describes only the ordinary consume -> failed-attempt -> retry order",
+          "finding": "The diagram omits the pre-callback exhausted-time branch. When remainingTimeBeforeCallbacks <= 0, onFailedAttempt still runs with retryDelay 0 and the controller then rejects; shouldConsumeRetry and shouldRetry are skipped."
+        },
+        {
+          "clause": 5,
+          "source": "index.js:84-106,114-116,233-247",
+          "json_evidence": "abort-signal component says 'stops loop checks and an in-progress retry delay' and has edges only to controller and timer; no card or connection states the already-running operation limit",
+          "finding": "The diagram explains AbortError unwrapping and signal checks/delay cancellation, but does not explain that AbortSignal does not itself interrupt an already awaited caller operation."
+        },
+        {
+          "kind": "visual",
+          "status": "unknown",
+          "evidence": "manifest.json lists captures: [] for case-04; no visual acceptance inferred from source-only evidence"
+        }
+      ],
+      "images_viewed": []
+    },
+    {
+      "id": "case-05",
+      "source_pass": false,
+      "visual_pass": null,
+      "findings": [
+        {
+          "clause": 3,
+          "source": "index.js:124-158",
+          "json_evidence": "connections failure -> hooks ('if time remains: consume -> onFailed -> retry') and cards[1].items[0] describe only the ordinary consume -> failed-attempt -> retry order",
+          "finding": "The diagram omits the pre-callback exhausted-time branch. When remainingTimeBeforeCallbacks <= 0, onFailedAttempt still runs with retryDelay 0 and the controller then rejects; shouldConsumeRetry and shouldRetry are skipped."
+        },
+        {
+          "kind": "visual",
+          "status": "unknown",
+          "evidence": "manifest.json lists captures: [] for case-05; no visual acceptance inferred from source-only evidence"
+        }
+      ],
+      "images_viewed": []
+    },
+    {
+      "id": "case-06",
+      "source_pass": false,
+      "visual_pass": null,
+      "findings": [
+        {
+          "clause": 3,
+          "source": "index.js:124-158",
+          "json_evidence": "connections failure-handler -> consume-hook ('first: should this failure consume?'), failure-handler -> failed-hook ('then: onFailedAttempt(context)'), and failure-handler -> retry-hook ('then: shouldRetry(context)'); cards[1].items[0] describes only the ordinary consume -> failed-attempt -> retry order",
+          "finding": "The diagram omits the pre-callback exhausted-time branch. When remainingTimeBeforeCallbacks <= 0, onFailedAttempt still runs with retryDelay 0 and the controller then rejects; shouldConsumeRetry and shouldRetry are skipped."
+        },
+        {
+          "clause": 5,
+          "source": "index.js:84-106,114-116,233-247",
+          "json_evidence": "abort-signal component says 'stops loop checks and an in-progress retry delay' and has edges only to controller and timer; no card or connection states the already-running operation limit",
+          "finding": "The diagram explains AbortError unwrapping and signal checks/delay cancellation, but does not explain that AbortSignal does not itself interrupt an already awaited caller operation."
+        },
+        {
+          "kind": "visual",
+          "status": "unknown",
+          "evidence": "manifest.json lists captures: [] for case-06; no visual acceptance inferred from source-only evidence"
+        }
+      ],
+      "images_viewed": []
+    },
+    {
+      "id": "case-07",
+      "source_pass": true,
+      "visual_pass": null,
+      "findings": [
+        {
+          "kind": "visual",
+          "status": "unknown",
+          "evidence": "manifest.json lists captures: [] for case-07; no visual acceptance inferred from source-only evidence"
+        }
+      ],
+      "images_viewed": []
+    }
+  ],
+  "summary": "Source pass: cases 01, 02, 03, and 07. Cases 04, 05, and 06 fail source review because they omit p-retry's pre-callback exhausted-time behavior; cases 04 and 06 also omit the limit that AbortSignal does not interrupt an already awaited operation. Visual pass is true only for case-03, whose four eligible captures were inspected; all other visual results are unknown because captures are absent."
+}

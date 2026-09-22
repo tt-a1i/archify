@@ -1,0 +1,520 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "QuickLRU: Two-Generation In-Memory Cache Lifecycle",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/sindresorhus/quick-lru.git",
+      "revision": "a2190ebdf8e455b95a7138803d274ff5ed57ebcd",
+      "provider": "github"
+    },
+    "views": [
+      {
+        "id": "write-rotation",
+        "label": "Write and rotation",
+        "focus": [
+          "caller",
+          "quick-lru",
+          "set",
+          "current",
+          "rotate",
+          "old",
+          "eviction"
+        ],
+        "note": "A new current-generation key increments the counter; reaching maxSize rotates whole generations."
+      },
+      {
+        "id": "read-promotion",
+        "label": "Read and promotion",
+        "focus": [
+          "quick-lru",
+          "get",
+          "current",
+          "old",
+          "expiry",
+          "delete-clear"
+        ],
+        "note": "Only an unexpired old-generation get is moved into the current generation."
+      },
+      {
+        "id": "inspect-remove",
+        "label": "Inspect and remove",
+        "focus": [
+          "inspect",
+          "expiry",
+          "delete-clear",
+          "current",
+          "old",
+          "eviction"
+        ],
+        "note": "has and peek inspect either map without promotion; expiry differs from manual removal because it can notify."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "Caller",
+      "sublabel": "uses the public cache API",
+      "pos": [
+        24,
+        410
+      ],
+      "size": [
+        166,
+        68
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 105,
+          "end_line": 179,
+          "label": "public cache methods"
+        }
+      ]
+    },
+    {
+      "id": "quick-lru",
+      "type": "backend",
+      "label": "QuickLRU controller",
+      "sublabel": "one instance; owns policy and state",
+      "pos": [
+        250,
+        410
+      ],
+      "size": [
+        196,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 1,
+          "end_line": 23,
+          "label": "class and options"
+        }
+      ]
+    },
+    {
+      "id": "set",
+      "type": "backend",
+      "label": "set(key, value)",
+      "sublabel": "overwrite current or add a new entry",
+      "pos": [
+        510,
+        92
+      ],
+      "size": [
+        206,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 120,
+          "end_line": 134,
+          "label": "public set"
+        }
+      ]
+    },
+    {
+      "id": "get",
+      "type": "backend",
+      "label": "get(key)",
+      "sublabel": "current hit, old hit, or undefined",
+      "pos": [
+        550,
+        278
+      ],
+      "size": [
+        206,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 105,
+          "end_line": 118,
+          "label": "public get"
+        }
+      ]
+    },
+    {
+      "id": "inspect",
+      "type": "backend",
+      "label": "has(key) / peek(key)",
+      "sublabel": "inspect either generation; no promotion",
+      "pos": [
+        440,
+        540
+      ],
+      "size": [
+        206,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 137,
+          "end_line": 157,
+          "label": "inspection methods"
+        }
+      ]
+    },
+    {
+      "id": "delete-clear",
+      "type": "backend",
+      "label": "delete(key) / clear()",
+      "sublabel": "remove both maps; reset or adjust current count",
+      "pos": [
+        510,
+        712
+      ],
+      "size": [
+        230,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 166,
+          "end_line": 179,
+          "label": "manual removal"
+        }
+      ]
+    },
+    {
+      "id": "current",
+      "type": "database",
+      "label": "Current Map",
+      "sublabel": "in-memory entries and current-generation count",
+      "pos": [
+        825,
+        130
+      ],
+      "size": [
+        230,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 2,
+          "end_line": 7,
+          "label": "private in-memory state"
+        },
+        {
+          "path": "index.js",
+          "line": 68,
+          "end_line": 77,
+          "label": "internal insertion"
+        }
+      ]
+    },
+    {
+      "id": "old",
+      "type": "database",
+      "label": "Old Map",
+      "sublabel": "previous in-memory generation",
+      "pos": [
+        825,
+        570
+      ],
+      "size": [
+        210,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 3,
+          "end_line": 4,
+          "label": "two Maps"
+        },
+        {
+          "path": "index.js",
+          "line": 72,
+          "end_line": 76,
+          "label": "generation swap"
+        }
+      ]
+    },
+    {
+      "id": "rotate",
+      "type": "backend",
+      "label": "Generation rotation",
+      "sublabel": "when current count reaches maxSize",
+      "pos": [
+        1115,
+        112
+      ],
+      "size": [
+        226,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 68,
+          "end_line": 77,
+          "label": "threshold rotation"
+        }
+      ]
+    },
+    {
+      "id": "expiry",
+      "type": "backend",
+      "label": "Expiry guard",
+      "sublabel": "expired item: notify, then delete(key)",
+      "pos": [
+        1115,
+        356
+      ],
+      "size": [
+        230,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 40,
+          "end_line": 65,
+          "label": "expiry and value access"
+        }
+      ]
+    },
+    {
+      "id": "eviction",
+      "type": "external",
+      "label": "onEviction callback",
+      "sublabel": "optional caller-provided function",
+      "pos": [
+        1430,
+        310
+      ],
+      "size": [
+        214,
+        76
+      ],
+      "sources": [
+        {
+          "path": "index.js",
+          "line": 30,
+          "end_line": 37,
+          "label": "batch callback"
+        },
+        {
+          "path": "index.js",
+          "line": 40,
+          "end_line": 46,
+          "label": "expired callback"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "One QuickLRU instance — in-memory only",
+      "wraps": [
+        "quick-lru",
+        "set",
+        "get",
+        "inspect",
+        "delete-clear",
+        "current",
+        "old",
+        "rotate",
+        "expiry"
+      ],
+      "pad": 34
+    }
+  ],
+  "connections": [
+    {
+      "id": "api",
+      "from": "caller",
+      "to": "quick-lru",
+      "label": "set / get / has / peek / delete / clear",
+      "labelAt": [
+        220,
+        370
+      ],
+      "variant": "emphasis"
+    },
+    {
+      "id": "set-path",
+      "from": "quick-lru",
+      "to": "set",
+      "label": "set path"
+    },
+    {
+      "id": "get-path",
+      "from": "quick-lru",
+      "to": "get",
+      "label": "get path"
+    },
+    {
+      "id": "inspect-path",
+      "from": "quick-lru",
+      "to": "inspect",
+      "label": "inspection path"
+    },
+    {
+      "id": "remove-path",
+      "from": "quick-lru",
+      "to": "delete-clear",
+      "label": "manual removal"
+    },
+    {
+      "id": "overwrite-current",
+      "from": "set",
+      "to": "current",
+      "label": "current key: replace item"
+    },
+    {
+      "id": "insert-current",
+      "from": "set",
+      "to": "current",
+      "label": "absent current key: add + increment count"
+    },
+    {
+      "id": "threshold",
+      "from": "current",
+      "to": "rotate",
+      "label": "count ≥ maxSize"
+    },
+    {
+      "id": "rotate-old",
+      "from": "rotate",
+      "to": "old",
+      "label": "oldCache = current Map"
+    },
+    {
+      "id": "rotate-current",
+      "from": "rotate",
+      "to": "current",
+      "label": "new current Map; count = 0"
+    },
+    {
+      "id": "rotated-evictions",
+      "from": "rotate",
+      "to": "eviction",
+      "label": "notify every prior old entry",
+      "variant": "emphasis"
+    },
+    {
+      "id": "current-get",
+      "from": "current",
+      "to": "get",
+      "label": "current hit: item"
+    },
+    {
+      "id": "old-get",
+      "from": "old",
+      "to": "get",
+      "label": "old hit: item"
+    },
+    {
+      "id": "missing-get",
+      "from": "get",
+      "to": "caller",
+      "label": "missing or expired: undefined",
+      "variant": "dashed"
+    },
+    {
+      "id": "promote-remove-old",
+      "from": "get",
+      "to": "old",
+      "label": "unexpired old hit: delete old key"
+    },
+    {
+      "id": "promote-recent",
+      "from": "get",
+      "to": "set",
+      "label": "then #set moves it to current",
+      "variant": "emphasis"
+    },
+    {
+      "id": "current-inspect",
+      "from": "inspect",
+      "to": "current",
+      "label": "probe current; no move"
+    },
+    {
+      "id": "old-inspect",
+      "from": "inspect",
+      "to": "old",
+      "label": "probe old; no move"
+    },
+    {
+      "id": "expiry-from-get",
+      "from": "get",
+      "to": "expiry",
+      "label": "check an expiring item"
+    },
+    {
+      "id": "expiry-from-inspect",
+      "from": "inspect",
+      "to": "expiry",
+      "label": "check an expiring item"
+    },
+    {
+      "id": "expired-callback",
+      "from": "expiry",
+      "to": "eviction",
+      "label": "expired: notify key and value",
+      "variant": "emphasis"
+    },
+    {
+      "id": "expired-delete",
+      "from": "expiry",
+      "to": "delete-clear",
+      "label": "then delete(key)"
+    },
+    {
+      "id": "delete-current",
+      "from": "delete-clear",
+      "to": "current",
+      "label": "delete / clear; decrement or reset count"
+    },
+    {
+      "id": "delete-old",
+      "from": "delete-clear",
+      "to": "old",
+      "label": "delete / clear old entries"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Two generations, not per-item LRU eviction",
+      "items": [
+        "#set inserts into the current Map and increments #size.",
+        "At #size ≥ #maxSize, the prior old Map is passed to onEviction, current becomes old, and a fresh current Map starts at count 0.",
+        "The rotation code does not select and evict one least-recent entry."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Read versus inspection",
+      "items": [
+        "get returns a current hit after value/expiry handling.",
+        "An unexpired old hit is deleted from old and reinserted into current; a miss returns undefined.",
+        "has and peek inspect current first, then old, and never call #moveToRecent."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Expiry and callbacks",
+      "items": [
+        "An expired item invokes onEviction when supplied, then calls delete(key), which removes from both Maps and adjusts current count when applicable.",
+        "Rotation also invokes onEviction for every entry in the prior old Map.",
+        "Public delete(key) and clear() remove state directly; their implementations do not invoke onEviction."
+      ]
+    }
+  ]
+}

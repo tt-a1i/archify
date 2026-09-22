@@ -900,6 +900,7 @@ test('packaged skill puts a bounded ordinary-model path before progressive featu
   const authoring = fs.readFileSync(path.join(skillRoot, 'references', 'authoring-contract.md'), 'utf8');
   const viewer = fs.readFileSync(path.join(skillRoot, 'references', 'viewer-runtime.md'), 'utf8');
   assert.match(skill, /## Existing candidate handoff[\s\S]*run `finalize` first as one CLI invocation/);
+  assert.match(skill, /After editing, omit any earlier `--candidate-sha256`/);
   const fastPath = skill.indexOf('## Fast authoring path');
   // A diagnosed repair may link to a reference inside the fast path. Bound
   // the contract by its next section, not by the first inline link.
@@ -911,7 +912,7 @@ test('packaged skill puts a bounded ordinary-model path before progressive featu
   for (const required of [
     'exact paths in the Type router',
     'do not list `schemas/` or `examples/` first',
-    'the next tool action must write the candidate',
+    'once requested scope and source evidence are covered, write the candidate directly',
     'do not plan coordinates in prose',
     'Fresh authorship means new IDs, domain wording, and layout',
     'let the renderer route every connection',
@@ -930,13 +931,14 @@ test('packaged skill puts a bounded ordinary-model path before progressive featu
     'A non-zero exit is never success',
     'Do not read `bin/` implementation',
     'not prose coordinate exploration or whole-candidate replacement',
-    'validate <type>',
+    'After the edit, rerun the complete `finalize` command from step 4 once',
   ]) {
     assert.match(
       skill.slice(fastPath, fastPathEnd),
       new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
     );
   }
+  assert.doesNotMatch(skill.slice(fastPath, fastPathEnd), /Then run exactly one `validate/);
   assert.match(skill.slice(fastPath, fastPathEnd), /references\/authoring-defaults\.md/);
   assert.match(skill, /real system determine the number of nodes and relationships/i);
   assert.match(skill, /Never use node, relationship, source-reference, view, card, or boundary counts as an authoring target/i);

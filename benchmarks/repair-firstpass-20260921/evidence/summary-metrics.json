@@ -1,0 +1,90 @@
+{
+  "rows": [
+    {
+      "revision": 1,
+      "run": "p-retry-C1",
+      "input_sha256": "b86306919985437b9dfa1b16a4cf8b85300013ae720f0e8b71e96bfe1c52c86c",
+      "static_pass": false,
+      "helper_process_seconds": 3.5003610418643802,
+      "internal_attempts": 22,
+      "source_unchanged": true,
+      "input_unchanged": true,
+      "runtime_unchanged": true,
+      "semantic_projection_unchanged": null
+    },
+    {
+      "revision": 1,
+      "run": "quick-lru-B1",
+      "input_sha256": "9e817ccff0507aa811bcaeaa0d0c0e9684e5929e6b8be1ccadd729a204180a75",
+      "static_pass": false,
+      "helper_process_seconds": 3.514112916076556,
+      "internal_attempts": 21,
+      "source_unchanged": true,
+      "input_unchanged": true,
+      "runtime_unchanged": true,
+      "semantic_projection_unchanged": null
+    },
+    {
+      "revision": 1,
+      "run": "lilconfig-C1",
+      "input_sha256": "281c3e50b041aada0846a61fbd093236e9a165594b43961b7a7e7db329fa0bbb",
+      "static_pass": false,
+      "helper_process_seconds": 4.362098334124312,
+      "internal_attempts": 22,
+      "source_unchanged": true,
+      "input_unchanged": true,
+      "runtime_unchanged": true,
+      "semantic_projection_unchanged": null
+    },
+    {
+      "revision": 2,
+      "run": "p-retry-C1",
+      "input_sha256": "b86306919985437b9dfa1b16a4cf8b85300013ae720f0e8b71e96bfe1c52c86c",
+      "static_pass": false,
+      "helper_process_seconds": 10.030819665873423,
+      "internal_attempts": 55,
+      "source_unchanged": true,
+      "input_unchanged": true,
+      "runtime_unchanged": true,
+      "semantic_projection_unchanged": null
+    },
+    {
+      "revision": 2,
+      "run": "quick-lru-B1",
+      "input_sha256": "9e817ccff0507aa811bcaeaa0d0c0e9684e5929e6b8be1ccadd729a204180a75",
+      "static_pass": true,
+      "helper_process_seconds": 4.281306124990806,
+      "internal_attempts": 22,
+      "source_unchanged": true,
+      "input_unchanged": true,
+      "runtime_unchanged": true,
+      "semantic_projection_unchanged": true
+    },
+    {
+      "revision": 2,
+      "run": "lilconfig-C1",
+      "input_sha256": "281c3e50b041aada0846a61fbd093236e9a165594b43961b7a7e7db329fa0bbb",
+      "static_pass": false,
+      "helper_process_seconds": 12.78388729179278,
+      "internal_attempts": 64,
+      "source_unchanged": true,
+      "input_unchanged": true,
+      "runtime_unchanged": true,
+      "semantic_projection_unchanged": null
+    }
+  ],
+  "v1_helper_seconds_sum": 11.376572292065248,
+  "v2_helper_seconds_sum": 27.09601308265701,
+  "quick_lru_finalize_ms": 3486,
+  "static_successes_v2": 1,
+  "fully_quality_accepted_successes_v2": 0,
+  "development_gate_pass": false,
+  "holdout_cases_run": 0,
+  "fresh_author_runs": 0,
+  "model_repair_reduction": null,
+  "end_to_end_saving": null,
+  "generalization_estimate": null,
+  "promotion_qualified": false,
+  "note": "Helper subprocess time includes its internal validators; finalize and independent reviews were subsequent separate work. No matched author pair exists.",
+  "declined_candidate_note": "Declines emitted no output candidate; output semantic projection is therefore null here. Raw collector receipts use false to fail the acceptance condition, not to allege input semantic mutation."
+}

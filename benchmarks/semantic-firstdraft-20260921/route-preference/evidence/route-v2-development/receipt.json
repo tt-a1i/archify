@@ -1,0 +1,46 @@
+{
+  "candidate_sha256": "1a80523461dc5aa3a993aa42782138c57f0d598a59e555fb88641a18e943ea34",
+  "runtime_routing_sha256": "cfd259b6b06b7f48e155e10c54e7912e6a8f7338afb79df7465a5c43bd576988",
+  "postrun_only": true,
+  "development_input": true,
+  "records": [
+    {
+      "command": [
+        "node",
+        "/private/tmp/archify-semantic-firstdraft-20260921/route-preference-probe-v2/runtime/bin/archify.mjs",
+        "finalize",
+        "architecture",
+        "/private/tmp/archify-semantic-firstdraft-20260921/runs/quick-lru-B1/output/diagram.architecture.json",
+        "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/route-v2-development/diagram.html",
+        "--repo-root",
+        "/private/tmp/archify-semantic-firstdraft-20260921/repos/quick-lru",
+        "--quality",
+        "showcase",
+        "--json"
+      ],
+      "exit": 0,
+      "wall_seconds": 3.987420791061595
+    },
+    {
+      "command": [
+        "node",
+        "/private/tmp/archify-semantic-firstdraft-20260921/route-preference-probe-v2/runtime/bin/archify.mjs",
+        "visual-check",
+        "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/route-v2-development/diagram.html",
+        "--require-provenance",
+        "--out-dir",
+        "/Users/tushaokun/.codex/visualizations/2026/09/20/01a0bd05-f71b-7461-a1ea-6437b90d3f2c/semantic-firstdraft-20260921/route-v2-development/visual",
+        "--json"
+      ],
+      "exit": 0,
+      "wall_seconds": 2.7898531251121312
+    }
+  ],
+  "capture_identical_to_reviewed_case06": {
+    "diagram.visual-check.contact.png": false,
+    "diagram.visual-check.1440x900.dark.png": false,
+    "diagram.visual-check.2048x1320.light.png": false,
+    "diagram.visual-check.2048x1320.dark.png": false,
+    "diagram.visual-check.1440x900.light.png": false
+  }
+}

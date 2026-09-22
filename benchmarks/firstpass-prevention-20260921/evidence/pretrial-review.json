@@ -1,0 +1,50 @@
+{
+  "status": "no_blocker",
+  "scope": "Read-only pretrial review of protocol.json, firstpass.mjs, prevention.md, and focused test source; no task diagrams inspected.",
+  "reviewed": [
+    "benchmarks/firstpass-prevention-20260921/protocol.json",
+    "benchmarks/firstpass-prevention-20260921/firstpass.mjs",
+    "benchmarks/firstpass-prevention-20260921/prevention.md",
+    "benchmarks/firstpass-prevention-20260921/firstpass.test.mjs"
+  ],
+  "review_history": [
+    {
+      "reviewed_at": "2026-09-21",
+      "original_finding": "prevention.md imports './tools/firstpass.mjs' while the repository benchmark file is beside prevention.md.",
+      "status": "superseded",
+      "correction_evidence": "run.py:91-98 creates the per-author workspace/tools directory and copies firstpass.mjs to workspace/tools/firstpass.mjs; run.py:112-114 directs P-condition authors to use that copied path.",
+      "adjudication": "The guide is correct in its actual timed workspace. Do not change it to a repository-relative same-directory import."
+    },
+    {
+      "reviewed_at": "2026-09-21",
+      "original_finding": "writeDraft() did not reject a symlinked parent output directory.",
+      "status": "resolved",
+      "correction_evidence": "firstpass.mjs:123-136 resolves the real cwd, constrains the target beneath cwd/output/, walks existing ancestors with lstatSync().isSymbolicLink(), and retains O_EXCL. firstpass.test.mjs:56-64 covers a symlinked output ancestor and outside target. mechanical-validation.json records helper SHA-256 be5185f88656aca57ff8166cc5fdae71c18f5e23cd7613beb75c35870be5664d, 6/6 focused tests, and a run-style copied-workspace import exit 0.",
+      "adjudication": "The observed parent-alias escape is addressed for the experiment's ordinary non-adversarial workspace setup."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "blocker",
+      "file": "benchmarks/firstpass-prevention-20260921/prevention.md",
+      "evidence": "The runnable example imports './tools/firstpass.mjs', but the frozen benchmark lists firstpass.mjs beside prevention.md and has no tools/ directory.",
+      "impact": "A fresh timed author following the supplied guide fails before it can create its initial candidate, producing an avoidable infrastructure failure rather than an experimental observation.",
+      "required_before_timing": "Correct the documented import path or place a deliberate immutable wrapper at the documented path; verify the exact example import resolves in the timed directory."
+    },
+    {
+      "severity": "blocker",
+      "file": "benchmarks/firstpass-prevention-20260921/firstpass.mjs",
+      "evidence": "writeDraft() uses path.resolve() plus mkdirSync(parent, {recursive:true}) and then O_EXCL on only the final file. The focused alias test covers an existing final file, hard link, and file symlink, but not a symlinked ancestor directory.",
+      "impact": "If an output ancestor is a symlink, the helper follows it and can create a new file outside the intended experiment directory. That conflicts with protocol.json's preservation requirement and makes the stated 'alias' protection incomplete.",
+      "required_before_timing": "Reject a symlink in every existing output ancestor (or create and verify a trusted real output root before author dispatch), and add the parent-symlink regression."
+    }
+  ],
+  "observed_non_blocking": [
+    "checkCoverage enforces one entry for every clause index and only permits nonempty visible-text pointers. Its receipt explicitly reports semanticTruthVerified=false and sourceEntailmentVerified=false; this matches protocol.json's structural-only coverage boundary and does not overclaim semantic truth.",
+    "prepare() clones the input, rejects explicit initial geometry/routing controls, removes only row/col and generated pos/size, and compares a projection with those geometry fields removed. Within its declared initial-plan scope, this preserves authored text, topology, sources, boundaries, cards, and views.",
+    "Per-column maximum node width, per-row maximum height, and adjacent same-row edge-label gaps match prevention.md's stated limited placement behavior. The receipt warns that routes, labels, and boundaries may exceed final bounds, so it does not claim final layout validation.",
+    "Focused tests were reported by the requester as 5/5 passed; this review did not rerun them."
+  ],
+  "historical_conclusion": "Do not begin timed authors until both blockers are repaired and their focused checks pass. No claim is made about task-specific diagrams or experimental outcome.",
+  "current_conclusion": "No material blocker remains in this bounded pretrial review. The guide path is correct for the copied timed workspace; the output-root and ancestor-alias checks are present and their supplied focused and import-smoke evidence is internally consistent. This is not a claim about task-specific diagrams or experimental outcome."
+}

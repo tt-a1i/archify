@@ -1,0 +1,100 @@
+{
+  "base": "e484993f819ec16f3ee4c976ee14173901cdbc56",
+  "runtime": "/private/tmp/archify-semantic-firstdraft-20260921/route-preference-probe-v2/runtime",
+  "routingSha256": "cfd259b6b06b7f48e155e10c54e7912e6a8f7338afb79df7465a5c43bd576988",
+  "freshPatchApply": {
+    "ok": true,
+    "syntaxCheck": "node --check",
+    "outputRoutingSha256": "cfd259b6b06b7f48e155e10c54e7912e6a8f7338afb79df7465a5c43bd576988"
+  },
+  "mechanism": "after first clear candidate, preference-only side probes skip grid search without charging budget",
+  "developmentInputs": {
+    "pRetryC1": {
+      "baselineRouteDiagnostics": 4,
+      "v2RouteDiagnostics": 0,
+      "remainingDiagnostics": [
+        "layout/constraint",
+        "layout/constraint",
+        "layout/constraint",
+        "layout/constraint"
+      ],
+      "exitCode": 1
+    },
+    "quickLruB1": {
+      "v2ExitCode": 0,
+      "v2DiagnosticCodes": []
+    }
+  },
+  "sevenExamples": {
+    "passing": 6,
+    "repositoryEvidenceBlockedBeforeRouting": [
+      "examples/source-to-diagram/source-to-diagram.architecture.json"
+    ]
+  },
+  "focusedTests": {
+    "command": "node --test test/geometry.test.mjs test/authored-straight-routes.test.mjs",
+    "passed": 93,
+    "failed": 0
+  },
+  "independentSuffixFixture": {
+    "path": "/private/tmp/archify-semantic-firstdraft-20260921/route-independent-review/seven-c1-plus-grid-suffix.json",
+    "sha256": "0870c66c90dba343c31817d1b7485d0c07bd12a453c0498630b8dbd44d5c7be8",
+    "baseAndV2Identical": true,
+    "sides": {
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    "pointCount": 6,
+    "gridSearchCount": 22,
+    "gridBudgetExhaustedCount": 0,
+    "blockerIntersections": 0,
+    "rhythmCodes": []
+  },
+  "applyable_patch_sha256": "3a2c6a6a88df2883cd1c35911647ca5d5eb6239457bd53d7bf59fe8cc879d060",
+  "root_fresh_apply_proof": {
+    "checks": [
+      {
+        "command": [
+          "git",
+          "apply",
+          "--check",
+          "/Users/tushaokun/.codex/worktrees/archify-semantic-firstdraft-20260921/benchmarks/semantic-firstdraft-20260921/route-preference/v2/runtime.patch"
+        ],
+        "exit": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "apply",
+          "/Users/tushaokun/.codex/worktrees/archify-semantic-firstdraft-20260921/benchmarks/semantic-firstdraft-20260921/route-preference/v2/runtime.patch"
+        ],
+        "exit": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "renderers/architecture/routing.mjs"
+        ],
+        "exit": 0,
+        "stderr": ""
+      }
+    ],
+    "applied_routing_sha256": "cfd259b6b06b7f48e155e10c54e7912e6a8f7338afb79df7465a5c43bd576988"
+  },
+  "root_additional_tests": {
+    "command": "node --test test/route-detour.test.mjs test/architecture-automatic-labels.test.mjs",
+    "exit": 0,
+    "passed": 16,
+    "failed": 0
+  },
+  "portable_regressions": {
+    "command": "node --test benchmarks/semantic-firstdraft-20260921/route-preference/route-preference.test.mjs benchmarks/semantic-firstdraft-20260921/route-preference/v2/route-preference.test.mjs",
+    "passed": 9,
+    "failed": 0,
+    "duration_ms": 2695.822041,
+    "note": "Completed between first and second timed runtime authors; copies/apply-tests both patches against checked-in frozen candidate bytes."
+  }
+}

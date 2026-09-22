@@ -1,0 +1,237 @@
+{
+  "reviewer": "review-two",
+  "scope": "Visible required clauses, source entailment, extra authored claims, supplied visual captures, and separately reported production-machine status only.",
+  "cases": [
+    {
+      "id": "case-01",
+      "stages": [
+        {
+          "stage": "first",
+          "required_clauses": [
+            {"number": 1, "status": "pass", "source": "index.js:233-259", "reason": "Controller owns counters, start time, loop, and invokes the supplied input."},
+            {"number": 2, "status": "pass", "source": "index.js:239-250", "reason": "Invocation, successful return, and catch-back failure path are represented."},
+            {"number": 3, "status": "pass", "source": "index.js:140-197,251-259", "reason": "Shows consume → failed-attempt → gates → retry ordering, including immediate unconsumed retry."},
+            {"number": 4, "status": "pass", "source": "index.js:126-181", "reason": "Shows time/count, declined shouldRetry, and non-network TypeError stops."},
+            {"number": 5, "status": "pass", "source": "index.js:84-105,109-116,233-249", "reason": "Separates AbortError unwrap from signal checks and pending-delay cancellation; states no pRetry call cancels running input."},
+            {"number": 6, "status": "pass", "source": "index.js:66-82,178-197", "reason": "Timer wait is capped by backoff/maxTimeout and remaining retry time; card distinguishes budget from running-input deadline."},
+            {"number": 7, "status": "pass", "source": "index.js:66-82,84-105,109-197,200-259", "reason": "All visible roles and material cards carry exact, entailing component citations."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Inspected component ranges entail the authored roles and claims."},
+          "material_extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No supplied PNG capture; unavailable is not a visual pass."},
+          "overall_quality": {"status": "not_passed", "reason": "Semantic review passes, but final readability cannot be accepted without a capture."},
+          "production_machine": {"status": "failed", "validate_exit": 1, "diagnostics": ["schema/maxLength"]}
+        },
+        {
+          "stage": "final",
+          "required_clauses": [
+            {"number": 1, "status": "pass", "source": "index.js:233-259", "reason": "Controller ownership and caller-operation boundary are shown."},
+            {"number": 2, "status": "pass", "source": "index.js:239-250", "reason": "Invocation, return, and failed-attempt return to controller are shown."},
+            {"number": 3, "status": "pass", "source": "index.js:140-197,251-259", "reason": "Correct hook order and consumed versus immediate retry paths are shown."},
+            {"number": 4, "status": "pass", "source": "index.js:126-181", "reason": "All requested stopping conditions are represented."},
+            {"number": 5, "status": "pass", "source": "index.js:84-105,109-116,233-249", "reason": "AbortError, signal-delay cancellation, and non-cancellation of running input are distinguished."},
+            {"number": 6, "status": "pass", "source": "index.js:66-82,178-197", "reason": "Bounded delay and non-deadline retry-time semantics are explicit."},
+            {"number": 7, "status": "pass", "source": "index.js:66-82,84-105,109-197,200-259", "reason": "Visible claims have exact component references."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Inspected citations entail all material claims."},
+          "material_extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No supplied PNG capture; unavailable is not a visual pass."},
+          "overall_quality": {"status": "not_passed", "reason": "Semantic review passes, but final readability cannot be accepted without a capture."},
+          "production_machine": {"status": "failed", "validate_exit": 1, "diagnostics": ["composition/container-border-run"], "author_complete_machine_pass": false}
+        }
+      ]
+    },
+    {
+      "id": "case-02",
+      "stages": [
+        {
+          "stage": "first",
+          "required_clauses": [
+            {"number": 1, "status": "pass", "source": "src/index.js:96-125,156-171", "reason": "Merged defaults/loaders and distinct caller, explorer, filesystem, loader, and transform roles are shown."},
+            {"number": 2, "status": "pass", "source": "src/index.js:172-193,230-245", "reason": "Search cache, configured places, upward walk, stop/root, found, and miss are shown."},
+            {"number": 3, "status": "pass", "source": "src/index.js:192-228", "reason": "Access skips, empty policy, and packageProp non-null condition are correctly distinguished."},
+            {"number": 4, "status": "pass", "source": "src/index.js:246-294", "reason": "Separate explicit-load cache/read/extension-loader/empty path is shown."},
+            {"number": 5, "status": "pass", "source": "src/index.js:167-169,234-245,249-305", "reason": "Transform result paths, transformed cache values, and separate cache clearers are shown."},
+            {"number": 6, "status": "pass", "source": "src/index.js:194-205,224-225,256-294", "reason": "Read/loader/parse/transform propagation remains distinct from swallowed access failure and normal miss."},
+            {"number": 7, "status": "pass", "source": "src/index.js:80-125,150-169,172-307", "reason": "Component citations entail the visible roles, branches, and cards."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Exact inspected component ranges support the authored behavior."},
+          "material_extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No supplied PNG capture; unavailable is not a visual pass."},
+          "overall_quality": {"status": "not_passed", "reason": "Final readability is unavailable."},
+          "production_machine": {"status": "failed", "validate_exit": 1, "diagnostics": ["composition/label-route-clearance", "layout/constraint"]}
+        },
+        {
+          "stage": "final",
+          "required_clauses": [
+            {"number": 1, "status": "pass", "source": "src/index.js:96-125,156-171", "reason": "Merged options and distinct controller/callback/filesystem roles are shown."},
+            {"number": 2, "status": "pass", "source": "src/index.js:172-193,230-245", "reason": "Upward cached search, stopping, found and miss paths are shown."},
+            {"number": 3, "status": "pass", "source": "src/index.js:192-228", "reason": "Access skip, empty policy, and packageProp decision are correct."},
+            {"number": 4, "status": "pass", "source": "src/index.js:246-294", "reason": "Explicit-file load remains separate and complete."},
+            {"number": 5, "status": "pass", "source": "src/index.js:167-169,234-245,249-305", "reason": "Transformation, transformed caching, and independent clearing are shown."},
+            {"number": 6, "status": "pass", "source": "src/index.js:194-205,224-225,256-294", "reason": "Failure propagation versus skip/miss is preserved."},
+            {"number": 7, "status": "pass", "source": "src/index.js:80-125,150-169,172-307", "reason": "Visible roles and cards have entailing citations."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Exact inspected component ranges support the authored behavior."},
+          "material_extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No supplied PNG capture; unavailable is not a visual pass."},
+          "overall_quality": {"status": "not_passed", "reason": "Final readability is unavailable."},
+          "production_machine": {"status": "failed", "validate_exit": 1, "diagnostics": ["composition/label-route-clearance", "layout/constraint"], "author_complete_machine_pass": false}
+        }
+      ]
+    },
+    {
+      "id": "case-03",
+      "stages": [
+        {
+          "stage": "first",
+          "required_clauses": [
+            {"number": 1, "status": "pass", "source": "index.js:233-259", "reason": "Controller owns attempt/count/time state and is separate from input."},
+            {"number": 2, "status": "pass", "source": "index.js:239-250", "reason": "Input invocation, caller return, and failure return to controller are shown."},
+            {"number": 3, "status": "pass", "source": "index.js:140-197,251-259", "reason": "Hook order, immediate unconsumed retry, and later gates are correctly stated."},
+            {"number": 4, "status": "pass", "source": "index.js:126-181", "reason": "Time/count, declined retry, and TypeError stops are shown."},
+            {"number": 5, "status": "pass", "source": "index.js:84-105,109-116,233-249", "reason": "AbortError unwrap and AbortSignal boundaries are distinct; running input is not interrupted by pRetry."},
+            {"number": 6, "status": "pass", "source": "index.js:66-82,178-197", "reason": "Timer cap and retry-budget versus input-deadline distinction are correct."},
+            {"number": 7, "status": "pass", "source": "index.js:49-82,84-197,200-259; index.d.ts:247-250", "reason": "Inspected ranges entail the roles and conclusion cards."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Component citations are valid and entail the material claims."},
+          "material_extra_contradictions": [],
+          "visual": {"status": "pass", "reason": "Supplied contact sheet and 1440 captures show readable light/dark diagrams; ordinary vertical Reader scrolling is indicated and acceptable."},
+          "overall_quality": {"status": "pass", "reason": "Required semantics, citations, and supplied readability are acceptable."},
+          "production_machine": {"status": "passed", "validate_exit": 0, "diagnostics": []}
+        },
+        {
+          "stage": "final",
+          "semantic_judgment_reused_from": "first (identical sha256)",
+          "required_clauses": [
+            {"number": 1, "status": "pass", "source": "index.js:233-259", "reason": "Same candidate: controller owns attempt/count/time state."},
+            {"number": 2, "status": "pass", "source": "index.js:239-250", "reason": "Same candidate: invocation, return, and failure path are shown."},
+            {"number": 3, "status": "pass", "source": "index.js:140-197,251-259", "reason": "Same candidate: correct hook ordering and retry variants."},
+            {"number": 4, "status": "pass", "source": "index.js:126-181", "reason": "Same candidate: requested stopping paths."},
+            {"number": 5, "status": "pass", "source": "index.js:84-105,109-116,233-249", "reason": "Same candidate: distinct AbortError and signal behavior."},
+            {"number": 6, "status": "pass", "source": "index.js:66-82,178-197", "reason": "Same candidate: bounded waiting and non-deadline semantics."},
+            {"number": 7, "status": "pass", "source": "index.js:49-82,84-197,200-259; index.d.ts:247-250", "reason": "Same candidate: exact entailing citations."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Same candidate and citations as first."},
+          "material_extra_contradictions": [],
+          "visual": {"status": "pass", "reason": "Supplied 1440 light/dark captures are readable, with no clipping or overlap that prevents reading."},
+          "overall_quality": {"status": "pass", "reason": "Required semantics, citations, and supplied readability are acceptable."},
+          "production_machine": {"status": "passed", "validate_exit": 0, "diagnostics": [], "author_complete_machine_pass": true}
+        }
+      ]
+    },
+    {
+      "id": "case-04",
+      "stages": [
+        {
+          "stage": "first",
+          "required_clauses": [
+            {"number": 1, "status": "pass", "source": "index.js:1-23", "reason": "QuickLRU owns two in-memory Maps, current count, maxSize, and optional maxAge."},
+            {"number": 2, "status": "pass", "source": "index.js:68-83,125-132", "reason": "Current versus absent-current (including old) writes and whole-generation rotation are shown."},
+            {"number": 3, "status": "pass", "source": "index.js:40-65,105-118", "reason": "Current/old/missing get paths, expiry deletion, and old promotion are shown."},
+            {"number": 4, "status": "pass", "source": "index.js:40-65,137-157", "reason": "has and peek inspect either map without old-to-current promotion and apply expiry."},
+            {"number": 5, "status": "pass", "source": "index.js:30-47,68-77,166-179", "reason": "Expiry/rotation callback boundary and manual delete/clear behavior are correctly distinguished."},
+            {"number": 6, "status": "pass", "source": "index.js:1-179", "reason": "Citations cover the visible lifecycle roles and cards."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "'#size counts new keys' is accurate in its Current Map context: set increments for keys newly entering #cache, including promotion from old."},
+          "material_extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No supplied PNG capture; unavailable is not a visual pass."},
+          "overall_quality": {"status": "not_passed", "reason": "Semantic review passes, but final readability is unavailable."},
+          "production_machine": {"status": "failed", "validate_exit": 1, "diagnostics": ["composition/label-route-clearance", "layout/constraint"]}
+        },
+        {
+          "stage": "final",
+          "required_clauses": [
+            {"number": 1, "status": "pass", "source": "index.js:1-23", "reason": "Controller/state/option ownership is shown."},
+            {"number": 2, "status": "pass", "source": "index.js:68-83,125-132", "reason": "Write variants and whole-map rotation are shown."},
+            {"number": 3, "status": "pass", "source": "index.js:40-65,105-118", "reason": "Get, expiry, old promotion, and miss are shown."},
+            {"number": 4, "status": "pass", "source": "index.js:40-65,137-157", "reason": "Non-promoting has/peek expiry behavior is shown."},
+            {"number": 5, "status": "pass", "source": "index.js:30-47,68-77,166-179", "reason": "Eviction versus manual mutation is shown."},
+            {"number": 6, "status": "pass", "source": "index.js:1-179", "reason": "Visible roles/cards are cited."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "The Current Map-local count claim and the absent-from-current write edge are consistent with source."},
+          "material_extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No supplied PNG capture; unavailable is not a visual pass."},
+          "overall_quality": {"status": "not_passed", "reason": "Semantic review passes, but final readability is unavailable."},
+          "production_machine": {"status": "failed", "validate_exit": 1, "diagnostics": ["composition/label-route-clearance"], "author_complete_machine_pass": false}
+        }
+      ]
+    },
+    {
+      "id": "case-05",
+      "stages": [
+        {
+          "stage": "first",
+          "required_clauses": [
+            {"number": 1, "status": "pass", "source": "src/index.js:96-125,157-171", "reason": "Merged options/default async loaders and all distinct roles are shown."},
+            {"number": 2, "status": "pass", "source": "src/index.js:172-193,230-245", "reason": "Cached upward search, stopping/root, found and not-found paths are shown."},
+            {"number": 3, "status": "pass", "source": "src/index.js:192-228", "reason": "Access skip, empty handling, and non-null packageProp condition are shown."},
+            {"number": 4, "status": "pass", "source": "src/index.js:246-294", "reason": "Explicit load has its own cache/read/loader/empty path."},
+            {"number": 5, "status": "pass", "source": "src/index.js:167-169,234-245,249-305", "reason": "Transformed returns/caches and separate cache clearing are shown."},
+            {"number": 6, "status": "pass", "source": "src/index.js:194-205,224-225,256-294", "reason": "Read, loader/parse, and transform failure propagation is preserved."},
+            {"number": 7, "status": "pass", "source": "src/index.js:80-125,150-169,172-307; src/index.d.ts:39-46", "reason": "Visible claims have exact entailing citations."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Inspected component ranges entail material roles and cards."},
+          "material_extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No supplied PNG capture; unavailable is not a visual pass."},
+          "overall_quality": {"status": "not_passed", "reason": "Final readability is unavailable."},
+          "production_machine": {"status": "failed", "validate_exit": 1, "diagnostics": ["composition/micro-segment"]}
+        },
+        {
+          "stage": "final",
+          "required_clauses": [
+            {"number": 1, "status": "pass", "source": "src/index.js:96-125,157-171", "reason": "Merged options and distinct roles are shown."},
+            {"number": 2, "status": "pass", "source": "src/index.js:172-193,230-245", "reason": "Search/cache/walk/stop/result behavior is shown."},
+            {"number": 3, "status": "pass", "source": "src/index.js:192-228", "reason": "Candidate decisions are accurate."},
+            {"number": 4, "status": "pass", "source": "src/index.js:246-294", "reason": "Separate explicit load behavior is complete."},
+            {"number": 5, "status": "pass", "source": "src/index.js:167-169,234-245,249-305", "reason": "Transform/cache/clearing behavior is correct."},
+            {"number": 6, "status": "pass", "source": "src/index.js:194-205,224-225,256-294", "reason": "Failure propagation stays distinct from skip and miss."},
+            {"number": 7, "status": "pass", "source": "src/index.js:80-125,150-169,172-307; src/index.d.ts:39-46", "reason": "Visible roles/cards are accurately cited."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "Inspected component ranges entail material roles and cards."},
+          "material_extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No supplied PNG capture; unavailable is not a visual pass."},
+          "overall_quality": {"status": "not_passed", "reason": "Final readability is unavailable."},
+          "production_machine": {"status": "failed", "validate_exit": 1, "diagnostics": ["composition/label-route-clearance", "layout/constraint"], "author_complete_machine_pass": false}
+        }
+      ]
+    },
+    {
+      "id": "case-06",
+      "stages": [
+        {
+          "stage": "first",
+          "required_clauses": [
+            {"number": 1, "status": "pass", "source": "index.js:1-23", "reason": "Controller owns two in-memory maps, count, maxSize, and optional expiry policy."},
+            {"number": 2, "status": "pass", "source": "index.js:68-83,125-132", "reason": "Current versus absent-current/old writes and whole-generation threshold rotation are shown."},
+            {"number": 3, "status": "pass", "source": "index.js:40-65,105-118", "reason": "Current/old/missing get and expiry/promotion effects are shown."},
+            {"number": 4, "status": "pass", "source": "index.js:40-65,137-157", "reason": "has/peek are non-promoting and apply expiry."},
+            {"number": 5, "status": "pass", "source": "index.js:30-47,68-77,166-179", "reason": "Callback and manual delete/clear boundaries are shown."},
+            {"number": 6, "status": "pass", "source": "index.js:1-179", "reason": "Material visible lifecycle claims are cited."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "The Current Map-local '#size tracks new keys' claim is consistent with the explicitly shown absent-from-current rule."},
+          "material_extra_contradictions": [],
+          "visual": {"status": "unavailable", "reason": "No supplied first-stage PNG capture; unavailable is not a visual pass."},
+          "overall_quality": {"status": "not_passed", "reason": "Semantic review passes, but readability is unavailable."},
+          "production_machine": {"status": "failed", "validate_exit": 1, "diagnostics": ["composition/label-route-clearance", "layout/constraint"]}
+        },
+        {
+          "stage": "final",
+          "required_clauses": [
+            {"number": 1, "status": "pass", "source": "index.js:1-23", "reason": "Controller/state/policy ownership is present."},
+            {"number": 2, "status": "pass", "source": "index.js:68-83,125-132", "reason": "Cards retain the configured threshold and distinguish whole generation rotation."},
+            {"number": 3, "status": "pass", "source": "index.js:40-65,105-118", "reason": "Get paths, expiry and promotion are correctly shown."},
+            {"number": 4, "status": "pass", "source": "index.js:40-65,137-157", "reason": "Non-promoting has/peek behavior is shown."},
+            {"number": 5, "status": "pass", "source": "index.js:30-47,68-77,166-179", "reason": "Eviction callback and manual mutation behavior are distinct."},
+            {"number": 6, "status": "pass", "source": "index.js:1-179", "reason": "Visible roles and cards have citations."}
+          ],
+          "citation_entailment": {"status": "pass", "reason": "The Current Map-local count claim is consistent with source and the visible absent-from-current write edge."},
+          "material_extra_contradictions": [],
+          "visual": {"status": "pass", "reason": "Supplied contact sheet and 1440 light capture are readable at normal scale; no clipping prevents reading."},
+          "overall_quality": {"status": "pass", "reason": "Required semantics, citations, and supplied readability are acceptable."},
+          "production_machine": {"status": "passed", "validate_exit": 0, "diagnostics": [], "author_complete_machine_pass": true}
+        }
+      ]
+    }
+  ]
+}

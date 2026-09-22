@@ -1,0 +1,136 @@
+{
+  "status": "pass",
+  "blockers": [],
+  "review_scope": {
+    "worktree": "/Users/tushaokun/.codex/worktrees/archify-repair-firstpass-20260921/archify",
+    "worktree_head": "3725b4c54ff2e1867e363bc1b5f919ca8f3537fc",
+    "candidate": "benchmarks/example-transfer-20260921/example/publisher.architecture.json",
+    "candidate_sha256": "9dddd8134174fa314edc27514e173e0cb0425f5cb90a8d69d680132b4be64844",
+    "source": "benchmarks/example-transfer-20260921/example/source/publisher.mjs",
+    "source_sha256": "14aac56bc66124b5691cd891c58b531806827ae8062c39ab8aa93a4199d7777e",
+    "source_pin": "benchmarks/example-transfer-20260921/example/source-pin.json",
+    "source_pin_sha256": "fb1411fef644f9224827f77b7a34bb95953716a03be1a347ed8bf6179e008ab5",
+    "source_revision": "f1182e57f67d321c61817a6249f82c2720113f88",
+    "source_url": "https://fixtures.invalid/archify/document-publisher",
+    "source_readme_sha256": "b194f2a82ce111b582394f65f040c35ab1e7873fb6b37ed135f7987d45725daf"
+  },
+  "source_gate": {
+    "status": "pass",
+    "source_identity_matches_pin": true,
+    "source_refs": 6,
+    "source_refs_resolve": true,
+    "source_ref_file": "publisher.mjs",
+    "source_ref_ranges_within_file": true,
+    "material_roles_and_paths": [
+      "caller supplies callbacks and calls the API",
+      "publisher controller owns closed and published state",
+      "authorize truthy/falsy branch",
+      "closed and denied onSkip paths",
+      "convert then save success path",
+      "close and status API methods",
+      "awaited callback rejection propagates without recovery"
+    ],
+    "no_invented_external_effects": true,
+    "external_effect_boundary": "save is labeled as a callback with persistence, transport, durability, and external effects unknown",
+    "source_trace_command": "node benchmarks/example-transfer-20260921/example/source-traces.mjs",
+    "source_trace_status": "pass"
+  },
+  "machine_gate": {
+    "status": "pass",
+    "finalize_summary": {
+      "path": "/private/tmp/archify-example-transfer-20260921/prototype/02-publisher.architecture.finalize-summary.json",
+      "sha256": "a0f92f17652b0dc0738764c2f0ef376175265f6a1f6fdf785585344d55c1849e",
+      "status": "pass",
+      "gates": {
+        "validate": "pass",
+        "deliver": "pass",
+        "check": "pass",
+        "browser-check": "pass"
+      },
+      "validation_checks": 9,
+      "composition_errors": 0,
+      "composition_warnings": 0,
+      "visual_review": "not-requested"
+    },
+    "artifact": {
+      "path": "/private/tmp/archify-example-transfer-20260921/prototype/02-publisher.architecture.html",
+      "sha256": "fd7e83d5b85a2fc595150cda07d828a68284f82cd4824acf3cb26e54f5847b63"
+    },
+    "delivery_receipt_sha256": "4192bf91c751cfe633fbc6ecfcf089608e2d7a5d926ab70dca827a144c1202ad",
+    "strict_check": {
+      "status": "pass",
+      "checks": 9,
+      "crossings": 0,
+      "ambiguous_corridors": 0,
+      "desktop_readability_issues": 0,
+      "minimum_projected_text_px": 7.5,
+      "horizontal_overflow": false
+    },
+    "browser_check": {
+      "status": "pass",
+      "receipt_sha256": "dc0fe45e6199493e87a57ecbcb3e5ab0029944961b097b0e557ab63164987456",
+      "all_four_theme_viewports_pass": true,
+      "1440x900": "readable vertical scroll accepted; no horizontal overflow",
+      "2048x1320": "contained; no horizontal overflow"
+    }
+  },
+  "visual_gate": {
+    "status": "pass",
+    "receipt_sha256": "40d3c453008ecc50dbf2f7e19cae86b87c5b87d99d73059e76a309a09076f020",
+    "images_viewed": [
+      {
+        "path": "/private/tmp/archify-example-transfer-20260921/prototype/02-publisher.architecture.visual-check.1440x900.dark.png",
+        "sha256": "f2f9413b0934353388c5d5f48f925acd5c0fe7342540851189f8b1a1da58437c"
+      },
+      {
+        "path": "/private/tmp/archify-example-transfer-20260921/prototype/02-publisher.architecture.visual-check.1440x900.light.png",
+        "sha256": "27f49d891932c06e2b5dc88cc2db556242f79222d001ab28c1030c78bee6092a"
+      },
+      {
+        "path": "/private/tmp/archify-example-transfer-20260921/prototype/02-publisher.architecture.visual-check.2048x1320.dark.png",
+        "sha256": "06bda326155fa67805e2cd2476f1317bfbd54c394c970e4cf8eebe916c67857e"
+      },
+      {
+        "path": "/private/tmp/archify-example-transfer-20260921/prototype/02-publisher.architecture.visual-check.2048x1320.light.png",
+        "sha256": "5d088e3fcd1417f0c37c5fd6248ee6f6a22f0d93255ae24cff38c64fe2c6d4d4"
+      }
+    ],
+    "judgement": "All four captures show the complete diagram and readable labels. At 1440x900 the lower cards continue below the viewport through normal document scrolling; at 2048x1320 the page is contained. No clipped node, edge, label, legend, or card content was observed. Light/dark contrast and route separation remain clear."
+  },
+  "harness_sanity": {
+    "overlay_and_immutability": {
+      "status": "pass",
+      "method": "run.py candidate_package_files overlay smoke",
+      "base_file_count": 266,
+      "candidate_file_count": 272,
+      "added_files": [
+        "examples/document-publisher/preview.png",
+        "examples/document-publisher/publisher.architecture.json",
+        "examples/document-publisher/source-pin.json",
+        "examples/document-publisher/source/README.md",
+        "examples/document-publisher/source/publisher.mjs",
+        "references/library-worked-example.md"
+      ],
+      "removed_files": [],
+      "changed_files": ["SKILL.md"],
+      "live_package_unchanged": true
+    },
+    "unit_tests": {
+      "command": "python3 -B -m unittest discover -s benchmarks/example-transfer-20260921 -p '*_test.py'",
+      "status": "pass",
+      "tests_run": 4,
+      "evaluate_fail_closed_integrity_and_time": "pass",
+      "summarize_quality_gate_and_all_observed_revisions": "pass"
+    }
+  },
+  "reviewed_file_hashes": {
+    "benchmarks/example-transfer-20260921/protocol.json": "c8483c98a5f49ed9a0830d751da0f12fad57866bf4de138b01369fbd1be9af3c",
+    "benchmarks/example-transfer-20260921/reference.md": "a366591a2bffdede29d495342b614ebc1f8def34fec722a5b7c3a4d9c302e81a",
+    "benchmarks/example-transfer-20260921/entrypoint.txt": "3731fdf5b0fec6e2ca9c04ec2976c11cb76ed27cd2a4f22d27d30e444a6c9892",
+    "benchmarks/example-transfer-20260921/run.py": "bca1f1bf269572e204296718ae2a0b2646e2550ef2e1a52493be79e8c8143317",
+    "benchmarks/example-transfer-20260921/watch.py": "914932db8d62cd66a4163b7077ae51ee07b8d2be77aa5721050371f32d4b7efb",
+    "benchmarks/example-transfer-20260921/evaluate.py": "ab5b4564d90378897bed114eead25a0c72d1fbdf7e20dcfad5091ef38d83e538",
+    "benchmarks/example-transfer-20260921/summarize.py": "73de58cfc1e6f10154619e9519739af23aa19c170d1d3a03fe2b9e8dd9af5c5f",
+    "benchmarks/example-transfer-20260921/review-key.json": "aa3d573fb3683042c7727c3e4cfd3d113a664360142482e68a027c7c743d451e"
+  }
+}
