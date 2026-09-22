@@ -1,0 +1,298 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "UNICUM TV – Zielprozess Vertrieb (Vorschlag)",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "lead",
+        "label": "Lead-Pipeline",
+        "focus": [
+          "source_rules",
+          "ai_research",
+          "human_qualify",
+          "draft_queue",
+          "human_release"
+        ],
+        "note": "Vorgeschlagene Halbautomatik: KI bereitet vor, Vertrieb entscheidet und gibt frei."
+      },
+      {
+        "id": "followup",
+        "label": "Kapazitätsgesteuertes Follow-up",
+        "focus": [
+          "draft_queue",
+          "human_release",
+          "reply_review"
+        ],
+        "note": "Tagesmenge wird bewusst vom Vertrieb gewählt; keine autonome Versandlogik."
+      },
+      {
+        "id": "offer",
+        "label": "Angebotsvorschlag",
+        "focus": [
+          "request_intake",
+          "selection_assistant",
+          "human_offer_check",
+          "offer_send",
+          "datev"
+        ],
+        "note": "Die KI liefert einen erklärbaren Vorschlag; Selektion und Preisfreigabe bleiben beim Menschen."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "input",
+      "label": "Quellen / Kunde"
+    },
+    {
+      "id": "automation",
+      "label": "Vorgeschlagene KI- & Workflow-Unterstützung"
+    },
+    {
+      "id": "sales",
+      "label": "UNICUM TV Vertrieb – menschliche Kontrolle"
+    },
+    {
+      "id": "systems",
+      "label": "Bestehende Systeme"
+    }
+  ],
+  "phases": [
+    {
+      "id": "prepare",
+      "label": "Vorbereiten",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "review",
+      "label": "Prüfen & freigeben",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "convert",
+      "label": "Beraten & abschließen",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "source_rules",
+    "ai_research",
+    "human_qualify",
+    "draft_queue",
+    "human_release",
+    "reply_review"
+  ],
+  "nodes": [
+    {
+      "id": "source_rules",
+      "lane": "input",
+      "col": 0,
+      "type": "external",
+      "label": "Freigegebene Zielquellen",
+      "sublabel": "Job- und Ausbildungsquellen",
+      "tag": "Vorschlag: Quellenregeln",
+      "width": 165
+    },
+    {
+      "id": "request_intake",
+      "lane": "input",
+      "col": 5,
+      "type": "external",
+      "label": "Kundenanfrage",
+      "sublabel": "Ziele, Budget, Kriterien",
+      "width": 148
+    },
+    {
+      "id": "ai_research",
+      "lane": "automation",
+      "col": 1,
+      "type": "backend",
+      "label": "KI-Rechercheassistent",
+      "sublabel": "Kontakte extrahieren & strukturieren",
+      "tag": "NEU · Vorschlag",
+      "width": 160
+    },
+    {
+      "id": "draft_queue",
+      "lane": "automation",
+      "col": 3,
+      "type": "backend",
+      "label": "Entwurfswarteschlange",
+      "sublabel": "personalisierte Mail-Entwürfe",
+      "tag": "NEU · kein Autoversand",
+      "width": 160
+    },
+    {
+      "id": "selection_assistant",
+      "lane": "automation",
+      "col": 5,
+      "type": "backend",
+      "label": "Selektionsassistent",
+      "sublabel": "begründeter Standortvorschlag",
+      "tag": "NEU · Vorschlag",
+      "width": 162
+    },
+    {
+      "id": "human_qualify",
+      "lane": "sales",
+      "col": 2,
+      "type": "security",
+      "label": "Kontakt prüfen",
+      "sublabel": "Zielgruppe, Opt-out; freigeben",
+      "tag": "Pflichtkontrolle",
+      "width": 154
+    },
+    {
+      "id": "human_release",
+      "lane": "sales",
+      "col": 3,
+      "type": "security",
+      "label": "Ton & Versand freigeben",
+      "sublabel": "Menge und Zeitpunkt selbst steuern",
+      "tag": "Pflichtkontrolle",
+      "width": 162,
+      "yOffset": 100
+    },
+    {
+      "id": "reply_review",
+      "lane": "sales",
+      "col": 4,
+      "type": "backend",
+      "label": "Antwort priorisieren",
+      "sublabel": "schnell & verbindlich reagieren",
+      "tag": "menschlich",
+      "width": 150
+    },
+    {
+      "id": "human_offer_check",
+      "lane": "sales",
+      "col": 5,
+      "type": "security",
+      "label": "Angebot & Preis prüfen",
+      "sublabel": "Kriterien, Konditionen, Nutzen",
+      "tag": "Pflichtkontrolle",
+      "width": 164,
+      "yOffset": 100
+    },
+    {
+      "id": "offer_send",
+      "lane": "sales",
+      "col": 5,
+      "type": "backend",
+      "label": "Angebot senden",
+      "sublabel": "E-Mail oder PDF",
+      "width": 154,
+      "yOffset": 210
+    },
+    {
+      "id": "datev",
+      "lane": "systems",
+      "col": 5,
+      "type": "database",
+      "label": "DATEV",
+      "sublabel": "nach bestehendem Prozess",
+      "tag": "bestehend",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "source_rules",
+      "to": "ai_research",
+      "label": "definierte Quellen",
+      "variant": "dashed",
+      "role": "main"
+    },
+    {
+      "from": "ai_research",
+      "to": "human_qualify",
+      "label": "strukturierter Vorschlag",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "human_qualify",
+      "to": "draft_queue",
+      "label": "freigegebene Kontakte",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "draft_queue",
+      "to": "human_release",
+      "label": "Entwürfe",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "human_release",
+      "to": "reply_review",
+      "label": "versendete Mail",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "from": "request_intake",
+      "to": "selection_assistant",
+      "label": "Anfrageparameter",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "selection_assistant",
+      "to": "human_offer_check",
+      "label": "begründeter Vorschlag",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "human_offer_check",
+      "to": "offer_send",
+      "label": "Freigabe",
+      "variant": "security",
+      "role": "main"
+    },
+    {
+      "from": "offer_send",
+      "to": "datev",
+      "label": "bei formellem Angebot",
+      "variant": "default",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Automatisierung zuerst dort, wo Volumen entsteht",
+      "items": [
+        "Recherche, Datenstrukturierung und Mail-Entwürfe sind vorbereitbare Arbeit.",
+        "Der Vertrieb bestimmt Menge, Zeitpunkt, Ton und Versand selbst.",
+        "Autonomes Nachfassen ist ausdrücklich nicht vorgesehen."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Schutz der Vertriebsqualität",
+      "items": [
+        "Human-in-the-loop vor Kontaktaufnahme und vor Angebotsversand.",
+        "Opt-out-Prüfung und Zielgruppenpassung sind Freigabekriterien.",
+        "Antwortfähigkeit begrenzt die tägliche Versandmenge."
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Annahmen / offene Entscheidungen",
+      "items": [
+        "Ein gemeinsamer Kontaktpool und eine Entwurfswarteschlange sind Vorschläge, keine vorhandenen Systeme.",
+        "Datenmodell, Quellenzugriff, Rechtsgrundlage, Dubletten- und Sperrlogik sind vor Umsetzung zu spezifizieren."
+      ]
+    }
+  ]
+}

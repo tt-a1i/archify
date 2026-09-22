@@ -1,0 +1,57 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "UNICUM TV – Ist-Prozess Vertrieb",
+    "quality_profile": "showcase",
+    "views": [
+      {"id":"neukunden","label":"Neukunden & Mailing","focus":["market_sources","manual_research","excel_pool","mailing","prospect_response","welab","no_interest"],"note":"Belegter Weg von passenden Online-Quellen zur Ansprache und Antwortverarbeitung."},
+      {"id":"warm","label":"Warme Leads","focus":["welab","manual_followup","mailing","prospect_response"],"note":"Wiedervorlagen werden manuell aufgegriffen; Ansprache wird je Kontakt individualisiert."},
+      {"id":"offer","label":"Anfrage bis Rechnung","focus":["concrete_request","manual_selection","offer_email_pdf","datev"],"note":"Die Angebotserstellung bleibt bei komplexen Anforderungen ein manueller Beratungs- und Selektionsschritt."}
+    ]
+  },
+  "lanes": [
+    {"id":"market","label":"Markt / Kontakt"},
+    {"id":"sales","label":"UNICUM TV Vertrieb"},
+    {"id":"systems","label":"Bestehende Daten & Werkzeuge"},
+    {"id":"outcome","label":"Ergebnis / Wartestatus","variant":"exception"}
+  ],
+  "phases": [
+    {"id":"identify","label":"Identifizieren","fromCol":0,"toCol":1},
+    {"id":"qualify","label":"Qualifizieren & ansprechen","fromCol":2,"toCol":3,"variant":"emphasis"},
+    {"id":"convert","label":"Anfrage & Angebot","fromCol":4,"toCol":5,"variant":"dashed"}
+  ],
+  "mainPath": ["market_sources","manual_research","excel_pool","mailing","prospect_response","welab","manual_followup"],
+  "nodes": [
+    {"id":"market_sources","lane":"market","col":0,"type":"external","label":"Passende Online-Quellen","sublabel":"z. B. Job- / Studierendenmessen","width":158},
+    {"id":"prospect_response","lane":"market","col":3,"type":"external","label":"Antwort / Anfrage","sublabel":"Bedarf, später, keine Antwort","width":150},
+    {"id":"concrete_request","lane":"market","col":4,"type":"external","label":"Konkrete Anfrage","sublabel":"z. B. Standort- / Budgetvorgabe","width":150},
+    {"id":"manual_research","lane":"sales","col":1,"type":"backend","label":"Manuelle Recherche","sublabel":"Firma, Kontakt, E-Mail kopieren","tag":"manuell","width":152},
+    {"id":"mailing","lane":"sales","col":2,"type":"backend","label":"Ansprache versenden","sublabel":"Vorlage manuell anpassen","tag":"menschlicher Ton","width":152},
+    {"id":"manual_followup","lane":"sales","col":3,"type":"backend","label":"Follow-up bearbeiten","sublabel":"Bedarf individuell abfragen","tag":"manuell","width":152},
+    {"id":"manual_selection","lane":"sales","col":5,"type":"backend","label":"Angebot selektieren","sublabel":"Kriterien & Konditionen","tag":"Kontrollpunkt","width":168},
+    {"id":"offer_email_pdf","lane":"sales","col":5,"type":"backend","label":"Angebot erstellen","sublabel":"E-Mail oder offizielles PDF","width":150,"yOffset":108},
+    {"id":"excel_pool","lane":"systems","col":2,"type":"database","label":"Excel-Listen","sublabel":"Recherche & Status","tag":"manuell gepflegt","width":152},
+    {"id":"welab","lane":"systems","col":3,"type":"database","label":"weclapp","sublabel":"Kontakte & Wiedervorlagen","tag":"bestehend","width":145},
+    {"id":"datev","lane":"systems","col":5,"type":"database","label":"DATEV","sublabel":"Angebot, AB, Rechnung","tag":"bestehend","width":178,"yOffset":108},
+    {"id":"no_interest","lane":"outcome","col":4,"type":"security","label":"Absage / keine Antwort","sublabel":"in Excel; Opt-out manuell beachten","tag":"Warte- / Sperrstatus","width":170}
+  ],
+  "edges": [
+    {"from":"market_sources","to":"manual_research","label":"Kontaktquelle","variant":"default"},
+    {"from":"manual_research","to":"excel_pool","label":"Kontakt speichern","variant":"default","role":"main"},
+    {"from":"excel_pool","to":"mailing","label":"Adressdaten übernehmen","variant":"emphasis","role":"main"},
+    {"from":"mailing","to":"prospect_response","label":"E-Mail / Serienmail","variant":"emphasis","role":"main"},
+    {"from":"prospect_response","to":"welab","label":"Interesse / später","variant":"emphasis","role":"main"},
+    {"from":"welab","to":"manual_followup","label":"Wiedervorlage","variant":"default","role":"main"},
+    {"from":"manual_followup","to":"mailing","label":"erneute Ansprache","variant":"dashed","role":"branch"},
+    {"from":"prospect_response","to":"no_interest","label":"Absage / keine Antwort","variant":"security","role":"error"},
+    {"from":"concrete_request","to":"manual_selection","label":"Kriterien & Budget","variant":"emphasis","role":"main"},
+    {"from":"manual_selection","to":"offer_email_pdf","label":"Selektion + Preis","variant":"emphasis","role":"main"},
+    {"from":"offer_email_pdf","to":"datev","label":"bei formellem Angebot","variant":"default","role":"main"}
+  ],
+  "cards": [
+    {"dot":"amber","title":"Belegte Engpässe","items":["Kontaktrecherche und Dateneingabe erfolgen manuell.","Mailings werden manuell vorbereitet und versandt.","Komplexe Standortselektionen benötigen bis zu etwa ein bis zwei Stunden."]},
+    {"dot":"rose","title":"Wartezeiten & Risiken","items":["Bedarf entsteht häufig erst Monate später; Wiedervorlagen sind zentral.","Opt-outs müssen zuverlässig gespeichert werden.","Zu hohes Mailing-Volumen führte bereits zu einer zeitweisen Microsoft-Sperre."]},
+    {"dot":"slate","title":"Abgrenzung","items":["Keine technische Schnittstelle zwischen Excel, weclapp und DATEV ist im Transkript belegt.","Die Kante DATEV beschreibt nur den beschriebenen Geschäftsablauf, keine Systemintegration."]}
+  ]
+}
