@@ -37,7 +37,7 @@ test('landing metadata describes the full technical-diagram product and trusted 
 test('landing hero leads with three real generated proof artifacts', () => {
   assert.match(landing, /id="hero-proof-stage"/);
   assert.match(landing, /id="hero-proof-panel" role="tabpanel"/);
-  assert.equal((landing.match(/class="spec-card"/g) || []).length, 3);
+  assert.equal((landing.match(/class="spec-card(?: [^"]*)?"/g) || []).length, 3);
   assert.equal((landing.match(/role="tab"/g) || []).length, 3);
   assert.doesNotMatch(landing, /class="hero-screenshot/);
 
@@ -73,14 +73,14 @@ test('landing proof switcher is bilingual and keyboard navigable', () => {
   assert.doesNotMatch(landing, /proofFrame\.contentWindow|proofFrame\.contentDocument/);
   assert.match(landing, /\?present=1&play=1#view=/);
   assert.match(landing, /#view=\$\{encodeURIComponent\(proof\.view\)\}/);
-  assert.match(landing, /Pin one exact Story Moment, copy its stable link, and let someone else open the same authored node/);
+  assert.match(landing, /Play the story from the current moment, then pin and share that node/);
 });
 
 test('landing makes Route Journey and core exploration shortcuts discoverable in both languages', () => {
-  assert.match(landing, /Route Journey keeps the complete authored path visible/);
-  assert.match(landing, /Route Journey 始终保留完整作者路径/);
-  assert.match(landing, /one finite, reader-controlled pass over each exact incoming relationship/);
-  assert.match(landing, /沿每条精确入向关系播放一次由读者控制的有限旅程/);
+  assert.match(landing, /Route Journey keeps the authored path visible/);
+  assert.match(landing, /Route Journey 保留完整作者路径/);
+  assert.match(landing, /play one reader-controlled pass/);
+  assert.match(landing, /播放一次读者控制的旅程/);
   assert.match(landing, /data-i18n="f7-tag">INSPECT · PLAY · PAUSE/);
   assert.match(landing, /'f7-tag':'INSPECT · PLAY · PAUSE'/);
   assert.match(landing, /'f7-tag':'检查 · 播放 · 暂停'/);

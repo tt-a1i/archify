@@ -11,14 +11,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 const repoRoot = path.resolve(skillRoot, '..');
 
-test('guide page: checked-in HTML is reproducible from the shared recipe source', () => {
+test('guide page: Astro baseline and compatibility builder share canonical recipe data', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-guide-page-'));
   const generated = path.join(tmp, 'guide.html');
   try {
     execFileSync(process.execPath, [path.join(repoRoot, 'scripts/build-guide.mjs'), generated]);
-    assert.equal(
-      fs.readFileSync(generated, 'utf8'),
-      fs.readFileSync(path.join(repoRoot, 'docs/guide.html'), 'utf8'),
+    // Astro owns page markup; the legacy builder still owns compatibility output.
+    const recipes = html => JSON.parse(html.match(/<script id="guide-data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+    assert.deepEqual(
+      recipes(fs.readFileSync(generated, 'utf8')),
+      recipes(fs.readFileSync(path.join(repoRoot, 'docs/guide.html'), 'utf8')),
     );
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
@@ -53,9 +55,9 @@ test('guide page: ships bilingual recipes and syntactically valid interaction co
   assert.match(html, /Open verified example/);
   assert.match(html, /打开验证成品/);
 
-  const scriptMatch = html.match(/<script>\n([\s\S]*?)\n  <\/script>\n<\/body>/);
-  assert.ok(scriptMatch);
-  assert.doesNotThrow(() => new vm.Script(scriptMatch[1]));
+  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+  assert.ok(scripts.length > 0);
+  for (const [, source] of scripts) assert.doesNotThrow(() => new vm.Script(source));
 });
 
 test('guide search: preserves s in recipe IDs and matches whitespace-separated signals', () => {

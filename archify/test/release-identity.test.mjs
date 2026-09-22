@@ -363,6 +363,27 @@ test('package, lockfile, Skill metadata, escaped Shields badge, and public docs 
   }
 });
 
+test('document identity and proof counts ignore bundled styles but still check localized copy', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
+  try {
+    writeValidDevelopmentFixture(fixture);
+    for (const page of ['index', 'start']) {
+      const file = path.join(fixture, `docs/${page}.html`);
+      fs.appendFileSync(file, '<style>/*! tailwindcss v4.3.3 */ .preview { aspect-ratio:16/10; }</style>');
+    }
+    const valid = runCheck(fixture);
+    assert.equal(valid.status, 0, valid.stderr);
+
+    fs.appendFileSync(path.join(fixture, 'docs/index.html'), '<script>const copy = {zh: "旧版本 v2.12.0 · 8/8 项验证通过"};</script>');
+    const stale = runCheck(fixture);
+    assert.notEqual(stale.status, 0);
+    assert.match(stale.stderr, /docs\/index\.html must advertise development identity/);
+    assert.match(stale.stderr, /found 8\/8/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
 test('landing proof receipt matches the current nine-check artifact contract', () => {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
   try {

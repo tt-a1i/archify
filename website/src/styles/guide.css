@@ -128,11 +128,9 @@
     footer { border-top:1px solid var(--line); padding:1.75rem 0 2.5rem; color:var(--dim); font-family:var(--font-mono); font-size:.625rem; letter-spacing:.04em; }
     footer .shell { display:flex; justify-content:space-between; gap:1rem; }
 
-    /* ENTRANCE */
-    @keyframes rise { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
-    .hero, .chooser, .library { animation:rise .7s var(--ease-out) both; }
-    .chooser { animation-delay:.08s; }
-    .library { animation-delay:.16s; }
+    /* ENTRANCE — shared .fade-up/.mask reveals; generated cards cascade via --i */
+    @keyframes card-in { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+    .card { animation:card-in .55s var(--ease-out) backwards; animation-delay:calc(var(--i,0) * 45ms); }
 
     @media(max-width:900px) {
       .hero { grid-template-columns:1fr; gap:2.25rem; padding-top:8.5rem; }
@@ -164,5 +162,6 @@
     }
     @media (prefers-reduced-motion:reduce) {
       html { scroll-behavior:auto; }
-      .hero, .chooser, .library, .result.visible { animation:none; }
+      .result.visible { animation:none; }
+      .card { animation:none; }
     }

@@ -191,12 +191,7 @@ for (const readmeName of ['README.md', 'README_EN.md', 'README_ZH.md']) {
     `${readmeName} badge says ${[...new Set(badgeVersions)].join(', ') || '(missing)'} instead of ${pkg.version}`);
 }
 
-const landingPage = fs.readFileSync(path.join(repoRoot, 'docs/index.html'), 'utf8');
-const landingVersions = [...landingPage.matchAll(/\bv\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?\b/g)]
-  .map((match) => match[0]);
-check('GitHub Pages version labels match package.json',
-  landingVersions.length > 0 && landingVersions.every((v) => v === `v${pkg.version}`),
-  `landing page says ${[...new Set(landingVersions)].join(', ') || '(no version)'}`);
+// Public page identities are enforced by check:release-identity before this suite.
 
 // ---------------------------------------------------------------------------
 fs.rmSync(tmp, { recursive: true, force: true });

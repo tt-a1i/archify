@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html lang="en" data-preview-theme="dark">
+<html lang="en">
 <head>
+  
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="archify gallery 2.17.0-dev.1">
@@ -12,7 +13,199 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/site-navigation.css">
+
   <style>
+    /* ══════════════════════════════════════
+       POLISH (shared) — spotlight, mask reveals, wash,
+       sheen, trace routes, scroll drift. Loaded before page CSS.
+    ══════════════════════════════════════ */
+
+    /* section anchors clear the fixed nav */
+    section[id] { scroll-margin-top:4.75rem; }
+
+    /* FADE-UP — universal develop-in reveal; IntersectionObserver adds .visible */
+    .fade-up { opacity:0; transform:translateY(18px); filter:blur(6px); transition:opacity .9s var(--ease-out),transform .9s var(--ease-out),filter .9s var(--ease-out); }
+    .fade-up.visible { opacity:1; transform:translateY(0); filter:blur(0); }
+    .fade-up.d1 { transition-delay:.08s; } .fade-up.d2 { transition-delay:.16s; }
+    .fade-up.d3 { transition-delay:.24s; } .fade-up.d4 { transition-delay:.32s; }
+    .fade-up.d5 { transition-delay:.4s; }
+
+    /* MASK REVEAL — blocks wipe upward instead of plain fade.
+       mask-image (not clip-path) keeps IntersectionObserver geometry intact. */
+    .fade-up.mask {
+      -webkit-mask-image:linear-gradient(to top,transparent 42%,black 58%);
+      mask-image:linear-gradient(to top,transparent 42%,black 58%);
+      -webkit-mask-size:100% 260%; mask-size:100% 260%;
+      -webkit-mask-position:0 100%; mask-position:0 100%;
+      -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+      transition:opacity .9s var(--ease-out),transform .9s var(--ease-out),filter .9s var(--ease-out),-webkit-mask-position 1.05s var(--ease-out),mask-position 1.05s var(--ease-out);
+    }
+    .fade-up.mask.visible { -webkit-mask-position:0 0%; mask-position:0 0%; }
+
+    /* HEADLINE WASH — accent mark develops behind italic ems of revealed h1s */
+    h1.fade-up em { background-image:linear-gradient(100deg,rgba(225,74,14,.16),rgba(225,74,14,.16)); background-repeat:no-repeat; background-position:0 94%; background-size:0% 32%; padding:0 .05em; transition:background-size 1.1s var(--ease-out) .55s; }
+    h1.fade-up.visible em { background-size:100% 32%; }
+
+    /* SPOTLIGHT — cursor-tracked accent glow on cards (JS sets --mx/--my) */
+    .spot { position:relative; }
+    .spot::before { content:''; position:absolute; inset:0; z-index:1; border-radius:inherit; pointer-events:none; opacity:0; transition:opacity .35s var(--ease-out);
+      background:radial-gradient(230px circle at var(--mx,50%) var(--my,50%), rgba(225,74,14,.09), transparent 65%); }
+    .spot:hover::before { opacity:1; }
+    .spot.strong::before { background:radial-gradient(230px circle at var(--mx,50%) var(--my,50%), rgba(225,74,14,.28), transparent 65%); }
+
+    /* SHEEN — light sweep across solid primary actions */
+    .btn-primary, .cta-install, .action-primary, button.primary, .card-link.primary { position:relative; overflow:hidden; }
+    .btn-primary::after, .cta-install::after, .action-primary::after, button.primary::after, .card-link.primary::after { content:''; position:absolute; inset:0; pointer-events:none;
+      background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.22) 50%,transparent 65%);
+      transform:translateX(-135%); transition:transform .7s var(--ease-out); }
+    .btn-primary:hover::after, .cta-install:hover::after, .action-primary:hover::after, button.primary:hover::after, .card-link.primary:hover::after { transform:translateX(135%); }
+
+    /* TRACE FIELD — faint drafted routes with traveling signal packets (TraceField.astro) */
+    .hero, .lead { position:relative; overflow:clip; }
+    .hero-trace { position:absolute; inset:0; z-index:0; width:100%; height:100%; pointer-events:none;
+      -webkit-mask-image:radial-gradient(ellipse 120% 62% at 18% 8%, black 30%, transparent 78%);
+      mask-image:radial-gradient(ellipse 120% 62% at 18% 8%, black 30%, transparent 78%); }
+    .hero-trace ~ * { position:relative; z-index:1; }
+    /* routes draw themselves on load, then packets start traveling */
+    .ht-geom path { stroke:rgba(20,23,26,.11); stroke-width:1; stroke-dasharray:1; stroke-dashoffset:1; animation:ht-draw 1.7s var(--ease-out) .15s forwards; }
+    .ht-geom path:nth-child(2) { animation-delay:.45s; }
+    .ht-geom path:nth-child(3) { animation-delay:.75s; }
+    .ht-geom rect, .ht-geom circle { stroke:rgba(20,23,26,.2); fill:var(--paper, var(--paper-site)); stroke-width:1; opacity:0; animation:ht-pop .5s var(--ease-out) forwards; }
+    .ht-geom rect:nth-of-type(1) { animation-delay:1.05s; } .ht-geom rect:nth-of-type(2) { animation-delay:1.25s; }
+    .ht-geom rect:nth-of-type(3) { animation-delay:1.15s; } .ht-geom rect:nth-of-type(4) { animation-delay:1.45s; }
+    .ht-geom rect:nth-of-type(5) { animation-delay:1.35s; }
+    .ht-geom circle { animation-delay:1.6s; }
+    @keyframes ht-draw { to { stroke-dashoffset:0; } }
+    @keyframes ht-pop { from { opacity:0; } to { opacity:1; } }
+    .ht-pkt { stroke:var(--accent, var(--accent-site)); stroke-width:1.5; stroke-linecap:round; stroke-dasharray:.05 .95; stroke-dashoffset:1; animation:ht-flow 9s linear 1.8s infinite; opacity:.6; }
+    .ht-pkt.p2 { animation-duration:12s; animation-delay:3.4s; }
+    .ht-pkt.p3 { animation-duration:10s; animation-delay:5.2s; }
+    @keyframes ht-flow { from { stroke-dashoffset:1; } to { stroke-dashoffset:0; } }
+
+    /* GRID GLOW — the sheet grid lights up around the cursor */
+    .grid-glow { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0; transition:opacity .5s var(--ease-out); mix-blend-mode:difference;
+      background-image:linear-gradient(rgba(255,255,255,.3) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.3) 1px,transparent 1px);
+      background-size:56px 56px;
+      -webkit-mask-image:radial-gradient(280px circle at var(--gx,50%) var(--gy,20%),black,transparent 72%);
+      mask-image:radial-gradient(280px circle at var(--gx,50%) var(--gy,20%),black,transparent 72%); }
+    body.has-crosshair .grid-glow { opacity:.55; }
+
+    /* GRID DRIFT — the sheet grid parallaxes against scroll where supported */
+    @supports (animation-timeline: scroll()) {
+      .grid-bg { inset:-16% 0; animation:bg-drift linear both; animation-timeline:scroll(root); }
+      @keyframes bg-drift { to { transform:translateY(14%); } }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      .fade-up { opacity:1!important; transform:none!important; transition:none!important; filter:none!important; }
+      .fade-up.mask { -webkit-mask-image:none!important; mask-image:none!important; }
+      .ht-pkt, .grid-bg, .footer-word { animation:none!important; }
+      h1.fade-up em { background-size:100% 32%; transition:none; }
+      .spot::before, .btn-primary::after, .cta-install::after, .action-primary::after, button.primary::after, .card-link.primary::after { display:none; }
+    }
+
+    /* TYPED LINE — mono prompt typing, shared by pages that demo the prompt */
+    .hero-typed { display:flex; align-items:baseline; gap:.45rem; margin-bottom:1.75rem; font-family:var(--font-mono); font-size:.75rem; color:var(--muted, var(--muted-site)); min-height:1.4em; }
+    .typed-prompt { color:var(--accent, var(--accent-site)); font-weight:600; }
+    .typed-caret { display:inline-block; width:.55em; height:1em; margin-left:1px; vertical-align:-0.14em; background:var(--accent, var(--accent-site)); animation:caret-blink 1.1s steps(1) infinite; }
+    @keyframes caret-blink { 50% { opacity:0; } }
+
+    /* ══════════════════════════════════════
+       POLISH L2 — drafting crosshair, progress, scramble, wordmark
+    ══════════════════════════════════════ */
+
+    /* CROSSHAIR — the whole page reads as a sheet under inspection */
+    .crosshair, .crosshair-read { opacity:0; transition:opacity .4s var(--ease-out); }
+    body.has-crosshair .crosshair-x, body.has-crosshair .crosshair-y { opacity:.32; }
+    body.has-crosshair .crosshair-read { opacity:1; }
+    .crosshair { position:fixed; z-index:90; pointer-events:none; }
+    .crosshair-x { left:0; right:0; height:1px; background:#fff; mix-blend-mode:difference; }
+    .crosshair-y { top:0; bottom:0; width:1px; background:#fff; mix-blend-mode:difference; }
+    .crosshair-read { position:fixed; z-index:91; pointer-events:none; padding:.18rem .5rem; border:1px solid var(--line-hi, rgba(20,23,26,.3)); border-radius:5px; background:rgba(248,250,249,.9); color:var(--muted, #60686d); font-family:var(--font-mono); font-size:.5625rem; letter-spacing:.08em; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); white-space:nowrap; }
+
+    /* NAV — the bar tightens and lifts once the sheet is under scroll */
+    .site-nav { transition:height .35s var(--ease-out), box-shadow .35s var(--ease-out); }
+    body.nav-scrolled .site-nav { height:52px; box-shadow:0 10px 34px rgba(20,23,26,.09); }
+
+    /* CROSSHAIR instrument state — accent when the caliper is over a control */
+    body.crosshair-on .crosshair-x, body.crosshair-on .crosshair-y { background:var(--accent, var(--accent-site)); mix-blend-mode:normal; }
+    body.crosshair-on .crosshair-x { opacity:.5; } body.crosshair-on .crosshair-y { opacity:.5; }
+    body.crosshair-on .crosshair-read { border-color:var(--accent, var(--accent-site)); color:var(--accent, var(--accent-site)); }
+
+    /* SCROLL PROGRESS — 2px accent line pinned to the viewport top */
+    .scroll-progress { position:fixed; top:0; left:0; z-index:210; height:2px; width:100%; background:var(--accent, var(--accent-site)); transform:scaleX(0); transform-origin:0 50%; pointer-events:none; }
+
+    /* FOOTER WORDMARK — giant outlined signature closing the sheet */
+    .footer-word { margin:0 auto 1.75rem; max-width:1200px; padding:0 2rem; font-family:var(--font-display); font-style:italic; font-optical-sizing:auto; font-size:clamp(4.5rem,16vw,12.5rem); font-weight:400; line-height:.82; letter-spacing:-.02em; text-align:center; color:transparent; -webkit-text-stroke:1.5px rgba(20,23,26,.18); user-select:none; pointer-events:none; }
+    @supports (animation-timeline: view()) {
+      .footer-word { animation:word-drift linear both; animation-timeline:view(); animation-range:entry 0% exit 100%; }
+      @keyframes word-drift { from { transform:translateY(24px); opacity:.6; } to { transform:translateY(-8px); opacity:1; } }
+    }
+    @media(max-width:640px) { .footer-word { font-size:clamp(3rem,17vw,5rem); padding:0 1rem; } }
+
+    @media(prefers-reduced-motion:reduce) {
+      .typed-caret { animation:none; }
+      .crosshair, .crosshair-read { display:none!important; }
+      .grid-glow { display:none!important; }
+      .ht-geom path { animation:none!important; stroke-dashoffset:0; }
+      .ht-geom rect, .ht-geom circle { animation:none!important; opacity:1; }
+    }
+    @media(pointer:coarse) {
+      .crosshair, .crosshair-read { display:none!important; }
+      .grid-glow { display:none!important; }
+    }
+
+    /* ══════════════════════════════════════
+       POLISH L3 — page transitions, drawn dividers, trace labels
+    ══════════════════════════════════════ */
+
+    /* Cross-document view transitions — nav clicks fade/slide instead of hard-jumping */
+    @view-transition { navigation: auto; }
+    ::view-transition-old(root) { animation:vt-out .22s ease-in both; }
+    ::view-transition-new(root) { animation:vt-in .36s var(--ease-out) .05s both; }
+    @keyframes vt-out { to { opacity:0; transform:translateY(-10px); } }
+    @keyframes vt-in { from { opacity:0; transform:translateY(16px); } }
+
+    /* DIVIDERS draw themselves left→right as they enter */
+    @supports (animation-timeline: view()) {
+      .divider { transform-origin:0 50%; animation:div-draw linear both; animation-timeline:view(); animation-range:entry 0% entry 55%; }
+      @keyframes div-draw { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+    }
+
+    /* TRACE LABELS — micro annotations beside route nodes */
+    .ht-labels text { font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; fill:rgba(20,23,26,.34); opacity:0; animation:ht-pop .5s var(--ease-out) forwards; }
+    .ht-labels text:nth-child(1) { animation-delay:1.7s; }
+    .ht-labels text:nth-child(2) { animation-delay:1.9s; }
+    .ht-labels text:nth-child(3) { animation-delay:2.1s; }
+
+    @media(prefers-reduced-motion:reduce) {
+      ::view-transition-old(root), ::view-transition-new(root) { animation:none!important; }
+      .divider { animation:none!important; }
+      .ht-labels text { animation:none!important; opacity:1; }
+    }
+
+    /* WORD-SPLIT — headings materialize token by token inside their mask */
+    [data-split] .w { display:inline-block; opacity:0; transform:translateY(.45em); filter:blur(5px); transition:opacity .5s var(--ease-out), transform .65s var(--ease-out), filter .5s var(--ease-out); transition-delay:calc(var(--wi) * 42ms); }
+    [data-split].visible .w { opacity:1; transform:none; filter:none; }
+
+    /* SHEET MARKS — fixed margin annotations framing the page */
+    .sheet-mark { position:fixed; bottom:.8rem; z-index:89; pointer-events:none; font-family:var(--font-mono); font-size:.5625rem; letter-spacing:.16em; color:rgba(255,255,255,.5); mix-blend-mode:difference; }
+    .sheet-mark-l { left:1.1rem; }
+    .sheet-mark-r { right:1.1rem; }
+    @media(max-width:980px) { .sheet-mark { display:none; } }
+
+    /* HERO DISSOLVE — the opening composition recedes as the sheet scrolls */
+    @supports (animation-timeline: scroll()) {
+      section.hero, header.lead { animation:hero-out linear both; animation-timeline:scroll(root); animation-range:0 60vh; }
+      @keyframes hero-out { to { opacity:.18; transform:translateY(-5%) scale(.985); filter:blur(2.5px); } }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      [data-split] .w { opacity:1!important; transform:none!important; filter:none!important; transition:none!important; }
+      section.hero, header.lead { animation:none!important; }
+      .sheet-mark { display:none; }
+    }
+
     :root {
       /* Drafted-sheet palette — shared with the project page */
       --paper-site:#eff2f1; --paper-raised:#f8faf9;
@@ -115,10 +308,15 @@
       background: var(--paper-raised);
       opacity: 0;
       transform: translateY(18px);
-      transition: opacity .5s var(--ease-out), transform .5s var(--ease-out), border-color .2s var(--ease-out), box-shadow .2s var(--ease-out);
+      transition: border-color .2s var(--ease-out), box-shadow .2s var(--ease-out);
     }
-    .showcase-card.visible { opacity: 1; transform: translateY(0); }
+    @keyframes card-enter { from { opacity:0; transform:translateY(26px); } }
+    .showcase-card.visible { opacity: 1; transform: translateY(0); animation:card-enter .7s var(--ease-out) calc(var(--i, 0) * 55ms) both; }
     .showcase-card:hover { border-color: var(--ink-site); box-shadow:0 22px 54px rgba(20,23,26,.12); }
+    .card-index { transition:color .25s var(--ease-out); }
+    .showcase-card:hover .card-index { color: var(--accent, var(--accent-site)); }
+    .preview-shell iframe { transition:transform .8s var(--ease-out); transform-origin:center; }
+    .showcase-card:hover .preview-shell iframe { transform:scale(1.018); }
     .showcase-card:target { scroll-margin-top: 86px; border-color: var(--accent, var(--accent-site)); box-shadow: 0 0 0 1px var(--accent, var(--accent-site)), 0 24px 60px rgba(20,23,26,.14); }
     .showcase-card.is-featured { grid-column: 1 / -1; }
     .showcase-card[hidden] { display: none; }
@@ -129,6 +327,10 @@
     .card-title { font-family:var(--font-display); font-optical-sizing:auto; font-size: 1.375rem; font-weight:500; letter-spacing: -.02em; color:var(--ink-site); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-mode { margin-right: 1.375rem; padding: .4rem .65rem; border: 1px solid var(--line); border-radius:999px; color: var(--muted); font-family:var(--font-mono); font-size: .5625rem; letter-spacing: .1em; text-transform: uppercase; }
     .preview-shell { position: relative; height: 370px; overflow: hidden; background: var(--plate); border-bottom: 1px solid var(--line); }
+    .preview-shell::after { content:''; position:absolute; inset:0; z-index:2; pointer-events:none;
+      background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.14) 50%,transparent 68%);
+      transform:translateX(-140%); transition:transform .9s var(--ease-out); }
+    .showcase-card:hover .preview-shell::after { transform:translateX(140%); }
     .showcase-card.is-featured .preview-shell { height: 600px; }
     .preview-shell iframe { width: 100%; height: 100%; border: 0; display: block; pointer-events: none; background: var(--plate); }
     .live-flag { position: absolute; z-index: 2; top: .875rem; left: .875rem; display: inline-flex; align-items: center; gap: .45rem; padding: .4rem .6rem; border: 1px solid rgba(52,211,153,.35); border-radius:6px; background: rgba(15,18,22,.82); color: #34d399; font-family:var(--font-mono); font-size: .5rem; font-weight:600; letter-spacing: .14em; text-transform: uppercase; }
@@ -218,44 +420,68 @@
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
       .showcase-card { opacity:1; transform:none; transition:none; }
+      .preview-shell::after { display:none; }
     }
-  </style>
-</head>
+</style>
+<style>/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+@layer theme,utilities;
+</style></head>
 <body>
+
   <div class="grid-bg" aria-hidden="true"></div>
 
   <nav class="site-nav" aria-label="Primary navigation">
-    <a class="nav-logo" href="./" aria-label="Back to Archify home">
-      <img class="nav-logo-text brand-lockup" src="assets/archify-lockup-light.svg" alt="Archify" width="117" height="32">
-      <span class="nav-logo-path" data-en="/ proof lab" data-zh="/ 验证作品集">/ proof lab</span>
-    </a>
-    <div class="nav-right">
-      <a class="nav-link" href="guide.html" data-en="Guide" data-zh="场景指南">Guide</a>
-      <a class="nav-link" href="gallery.html" aria-current="page" data-en="Proof Lab" data-zh="验证作品集">Proof Lab</a>
-      <a class="nav-link" href="start.html" data-en="Start" data-zh="快速上手">Start</a>
-      <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
-      <button class="btn-lang" id="language" type="button" aria-label="Switch language">中文</button>
-      <a class="btn btn-primary nav-cta" href="start.html" data-en="Install Skill" data-zh="安装技能">Install Skill</a>
-    </div>
-  </nav>
+  <a class="nav-logo" href="./" aria-label="Back to Archify home">
+    <img class="nav-logo-text brand-lockup" src="assets/archify-lockup-light.svg" alt="Archify" width="117" height="32"/>
+    <span class="nav-logo-path" data-en="/ proof lab" data-zh="/ 验证作品集">/ proof lab</span>
+  </a>
+  <div class="nav-right">
+    <a class="nav-link" href="guide.html" data-en="Guide" data-zh="场景指南">Guide</a><a class="nav-link" href="gallery.html" aria-current="page" data-en="Proof Lab" data-zh="验证作品集">Proof Lab</a><a class="nav-link" href="start.html" data-en="Start" data-zh="快速上手">Start</a>
+    <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
+    <button class="btn-lang" id="language" type="button" aria-label="Switch language">中文</button>
+    <a class="btn btn-primary nav-cta" href="start.html" data-en="Install Skill" data-zh="安装技能">Install Skill</a>
+  </div>
+</nav>
 
   <main>
     <section class="hero">
+      <svg class="hero-trace" viewBox="0 0 1200 700" fill="none" aria-hidden="true" preserveAspectRatio="xMidYMin slice">
+  <g class="ht-geom">
+    <path pathLength="1" d="M-40 560 H200 V380 H380 V250 H560"></path>
+    <path pathLength="1" d="M-40 120 H320 V230 H540 V120 H760"></path>
+    <path pathLength="1" d="M700 700 V540 H920 V430 H1240"></path>
+    <rect x="196" y="376" width="8" height="8"></rect>
+    <rect x="376" y="246" width="8" height="8"></rect>
+    <rect x="316" y="226" width="8" height="8"></rect>
+    <rect x="536" y="116" width="8" height="8"></rect>
+    <rect x="916" y="426" width="8" height="8"></rect>
+    <circle cx="560" cy="250" r="4"></circle>
+    <circle cx="760" cy="120" r="4"></circle>
+  </g>
+  <path class="ht-pkt" pathLength="1" d="M-40 560 H200 V380 H380 V250 H560"></path>
+  <path class="ht-pkt p2" pathLength="1" d="M-40 120 H320 V230 H540 V120 H760"></path>
+  <path class="ht-pkt p3" pathLength="1" d="M700 700 V540 H920 V430 H1240"></path>
+  <g class="ht-labels">
+    <text x="212" y="368">api · svc</text>
+    <text x="330" y="214">edge · tls</text>
+    <text x="928" y="418">db · primary</text>
+  </g>
+</svg>
       <div class="shell hero-grid">
         <div>
-          <div class="lead-label" data-en="Generated showcase / verified artifacts" data-zh="自动生成作品集 / 真实验证成品">Generated showcase / verified artifacts</div>
-          <h1 data-en="Proof,<br><em>not promises.</em>" data-zh="先看成品，<br><em>再谈能力。</em>">Proof,<br><em>not promises.</em></h1>
-          <p class="hero-copy" data-en="Every frame below is a live Archify artifact—not a mockup. Each one is regenerated from versioned JSON IR, checked for structural integrity, and linked to the exact source that produced it." data-zh="下面每一帧都是可运行的 Archify 成品，不是效果图。它们全部由版本化 JSON IR 重新生成、经过结构检查，并链接到产生它的精确源数据。">Every frame below is a live Archify artifact—not a mockup. Each one is regenerated from versioned JSON IR, checked for structural integrity, and linked to the exact source that produced it.</p>
+          <div class="lead-label fade-up" data-en="Generated showcase / verified artifacts" data-zh="自动生成作品集 / 真实验证成品">Generated showcase / verified artifacts</div>
+          <h1 class="fade-up mask d1" data-split data-en="Proof,&lt;br&gt;&lt;em&gt;not promises.&lt;/em&gt;" data-zh="先看成品，&lt;br&gt;&lt;em&gt;再谈能力。&lt;/em&gt;">Proof,<br><em>not promises.</em></h1>
+          <p class="hero-copy fade-up d2" data-en="Every frame is a live Archify artifact — regenerated from versioned IR, structurally checked, linked to its source." data-zh="每一帧都是可运行的 Archify 成品——由版本化 IR 重新生成、经结构检查、链接到源数据。">Every frame is a live Archify artifact — regenerated from versioned IR, structurally checked, linked to its source.</p>
         </div>
-        <div class="proof-board" aria-label="Gallery quality summary">
-          <div class="proof-row"><span class="proof-value">11</span><span class="proof-label" data-en="scenario proofs<br>from real IR" data-zh="个场景成品<br>来自真实 IR">scenario proofs<br>from real IR</span></div>
-          <div class="proof-row"><span class="proof-value">99</span><span class="proof-label" data-en="structural checks<br>passed" data-zh="项结构检查<br>全部通过">structural checks<br>passed</span></div>
-          <div class="proof-row"><span class="proof-value proof-status">PASS</span><span class="proof-label" data-en="generated from<br>source of truth" data-zh="从源数据<br>自动生成">generated from<br>source of truth</span></div>
+        <div class="proof-board spot fade-up d3" data-tilt aria-label="Gallery quality summary">
+          <div class="proof-row"><span class="proof-value" data-count="11">11</span><span class="proof-label" data-en="scenario proofs&lt;br&gt;from real IR" data-zh="个场景成品&lt;br&gt;来自真实 IR">scenario proofs<br>from real IR</span></div>
+          <div class="proof-row"><span class="proof-value" data-count="99">99</span><span class="proof-label" data-en="structural checks&lt;br&gt;passed" data-zh="项结构检查&lt;br&gt;全部通过">structural checks<br>passed</span></div>
+          <div class="proof-row"><span class="proof-value proof-status">PASS</span><span class="proof-label" data-en="generated from&lt;br&gt;source of truth" data-zh="从源数据&lt;br&gt;自动生成">generated from<br>source of truth</span></div>
         </div>
       </div>
     </section>
 
-    <section class="controls" aria-label="Gallery controls">
+    <section class="controls fade-up" aria-label="Gallery controls">
       <div class="shell controls-inner">
         <div class="filter-group" role="group" aria-label="Filter diagrams by type">
           <button class="filter-button" type="button" data-filter="all" aria-pressed="true" data-en="All / 11" data-zh="全部配方 / 11">All / 11</button>
@@ -274,12 +500,12 @@
 
     <section class="gallery-section" id="gallery">
       <div class="shell">
-        <div class="section-intro">
+        <div class="section-intro fade-up mask">
           <h2 data-en="Five lenses. Eleven real stories." data-zh="五种视角，十一个真实故事。">Five lenses. Eleven real stories.</h2>
-          <p data-en="Every scenario has named reader views with a path-aware Story Trail, shareable navigation, dark/light rendering, self-contained export, and a machine-readable quality receipt." data-zh="每个场景都有能辨别真实方向的 Story Trail 命名视图、可分享导航、深浅主题、自包含导出和机器可读质量凭证。">Every scenario has named reader views with a path-aware Story Trail, shareable navigation, dark/light rendering, self-contained export, and a machine-readable quality receipt.</p>
+          <p data-en="Named reader views, path-aware story trails, dark/light rendering, self-contained export, machine-readable receipts." data-zh="命名读者视图、路径感知故事线、深浅主题、自包含导出、机器可读凭证。">Named reader views, path-aware story trails, dark/light rendering, self-contained export, machine-readable receipts.</p>
         </div>
         <div class="gallery-grid" id="gallery-grid">
-          <article class="showcase-card is-featured" id="proof-agent-tool-call" data-proof-id="agent-tool-call" data-type="workflow" style="--accent:#047857">
+                    <article class="showcase-card spot is-featured" id="proof-agent-tool-call" data-proof-id="agent-tool-call" data-type="workflow" style="--accent:#047857">
             <header class="card-header">
               <div class="card-index">01</div>
               <div class="card-title-wrap">
@@ -307,8 +533,7 @@
                 <a class="card-link create-link" href="start.html?type=workflow&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a>
               </div>
             </div>
-          </article>
-          <article class="showcase-card" id="proof-deployment-ownership" data-proof-id="deployment-ownership" data-type="architecture" style="--accent:#0891b2">
+          </article>          <article class="showcase-card spot" id="proof-deployment-ownership" data-proof-id="deployment-ownership" data-type="architecture" style="--accent:#0891b2">
             <header class="card-header">
               <div class="card-index">02</div>
               <div class="card-title-wrap">
@@ -337,8 +562,7 @@
                 <a class="card-link create-link" href="start.html?type=architecture&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a>
               </div>
             </div>
-          </article>
-          <article class="showcase-card" id="proof-cache-miss" data-proof-id="cache-miss" data-type="sequence" style="--accent:#6d28d9">
+          </article>          <article class="showcase-card spot" id="proof-cache-miss" data-proof-id="cache-miss" data-type="sequence" style="--accent:#6d28d9">
             <header class="card-header">
               <div class="card-index">03</div>
               <div class="card-title-wrap">
@@ -366,8 +590,7 @@
                 <a class="card-link create-link" href="start.html?type=sequence&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a>
               </div>
             </div>
-          </article>
-          <article class="showcase-card" id="proof-delivery-workflow" data-proof-id="delivery-workflow" data-type="workflow" style="--accent:#047857">
+          </article>          <article class="showcase-card spot" id="proof-delivery-workflow" data-proof-id="delivery-workflow" data-type="workflow" style="--accent:#047857">
             <header class="card-header">
               <div class="card-index">04</div>
               <div class="card-title-wrap">
@@ -395,8 +618,7 @@
                 <a class="card-link create-link" href="start.html?type=workflow&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a>
               </div>
             </div>
-          </article>
-          <article class="showcase-card" id="proof-incident-runbook" data-proof-id="incident-runbook" data-type="workflow" style="--accent:#047857">
+          </article>          <article class="showcase-card spot" id="proof-incident-runbook" data-proof-id="incident-runbook" data-type="workflow" style="--accent:#047857">
             <header class="card-header">
               <div class="card-index">05</div>
               <div class="card-title-wrap">
@@ -424,8 +646,7 @@
                 <a class="card-link create-link" href="start.html?type=workflow&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a>
               </div>
             </div>
-          </article>
-          <article class="showcase-card" id="proof-product-analytics" data-proof-id="product-analytics" data-type="dataflow" style="--accent:#b45309">
+          </article>          <article class="showcase-card spot" id="proof-product-analytics" data-proof-id="product-analytics" data-type="dataflow" style="--accent:#b45309">
             <header class="card-header">
               <div class="card-index">06</div>
               <div class="card-title-wrap">
@@ -453,8 +674,7 @@
                 <a class="card-link create-link" href="start.html?type=dataflow&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a>
               </div>
             </div>
-          </article>
-          <article class="showcase-card" id="proof-async-roundtrip" data-proof-id="async-roundtrip" data-type="sequence" style="--accent:#6d28d9">
+          </article>          <article class="showcase-card spot" id="proof-async-roundtrip" data-proof-id="async-roundtrip" data-type="sequence" style="--accent:#6d28d9">
             <header class="card-header">
               <div class="card-index">07</div>
               <div class="card-title-wrap">
@@ -482,8 +702,7 @@
                 <a class="card-link create-link" href="start.html?type=sequence&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a>
               </div>
             </div>
-          </article>
-          <article class="showcase-card" id="proof-event-stream" data-proof-id="event-stream" data-type="dataflow" style="--accent:#b45309">
+          </article>          <article class="showcase-card spot" id="proof-event-stream" data-proof-id="event-stream" data-type="dataflow" style="--accent:#b45309">
             <header class="card-header">
               <div class="card-index">08</div>
               <div class="card-title-wrap">
@@ -511,8 +730,7 @@
                 <a class="card-link create-link" href="start.html?type=dataflow&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a>
               </div>
             </div>
-          </article>
-          <article class="showcase-card" id="proof-agent-run" data-proof-id="agent-run" data-type="lifecycle" style="--accent:#be123c">
+          </article>          <article class="showcase-card spot" id="proof-agent-run" data-proof-id="agent-run" data-type="lifecycle" style="--accent:#be123c">
             <header class="card-header">
               <div class="card-index">09</div>
               <div class="card-title-wrap">
@@ -540,8 +758,7 @@
                 <a class="card-link create-link" href="start.html?type=lifecycle&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a>
               </div>
             </div>
-          </article>
-          <article class="showcase-card" id="proof-deployment-lifecycle" data-proof-id="deployment-lifecycle" data-type="lifecycle" style="--accent:#be123c">
+          </article>          <article class="showcase-card spot" id="proof-deployment-lifecycle" data-proof-id="deployment-lifecycle" data-type="lifecycle" style="--accent:#be123c">
             <header class="card-header">
               <div class="card-index">10</div>
               <div class="card-title-wrap">
@@ -569,8 +786,7 @@
                 <a class="card-link create-link" href="start.html?type=lifecycle&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a>
               </div>
             </div>
-          </article>
-          <article class="showcase-card" id="proof-web-app" data-proof-id="web-app" data-type="architecture" style="--accent:#0891b2">
+          </article>          <article class="showcase-card spot" id="proof-web-app" data-proof-id="web-app" data-type="architecture" style="--accent:#0891b2">
             <header class="card-header">
               <div class="card-index">11</div>
               <div class="card-title-wrap">
@@ -601,10 +817,10 @@
           </article>
         </div>
         <div class="empty-state" id="empty-state" data-en="No proof cards match this filter." data-zh="当前筛选条件下没有成品。">No proof cards match this filter.</div>
-        <div class="community-callout">
+        <div class="community-callout spot fade-up">
           <div class="community-callout-copy">
             <strong class="community-callout-title" data-en="Built something real?" data-zh="做出了真实成品？">Built something real?</strong>
-            <p data-en="Share the redacted source, verified artifact, validation receipt, and visual-review result. Approved work can join the community Proof Lab with attribution." data-zh="提交脱敏源数据、已验证成品、验证凭证和视觉审查结果。通过审核的作品可署名加入社区 Proof Lab。">Share the redacted source, verified artifact, validation receipt, and visual-review result. Approved work can join the community Proof Lab with attribution.</p>
+            <p data-en="Share the redacted source, verified artifact, and receipt. Approved work joins the Proof Lab with attribution." data-zh="提交脱敏源数据、已验证成品、验证凭证和视觉审查结果。通过审核的作品可署名加入社区 Proof Lab。">Share the redacted source, verified artifact, and receipt. Approved work joins the Proof Lab with attribution.</p>
           </div>
           <a class="card-link" href="https://github.com/tt-a1i/archify/issues/new?template=showcase.yml" target="_blank" rel="noopener noreferrer" data-en="Share a verified diagram ↗" data-zh="提交已验证成品 ↗">Share a verified diagram ↗</a>
         </div>
@@ -613,7 +829,7 @@
 
     <section class="method">
       <div class="shell method-grid">
-        <div>
+        <div class="fade-up mask">
           <div class="lead-label" data-en="Build receipt" data-zh="生成凭证">Build receipt</div>
           <h2 data-en="The gallery cannot drift from the product." data-zh="画廊不会和产品事实分叉。">The gallery cannot drift from the product.</h2>
           <div class="pipeline" aria-label="Gallery generation pipeline">
@@ -623,7 +839,7 @@
             <div class="pipeline-step"><span class="pipeline-num">04</span><span class="pipeline-label" data-en="Publish artifact, source, and digest" data-zh="发布成品、源数据与摘要">Publish artifact, source, and digest</span><span class="pipeline-state">PASS</span></div>
           </div>
         </div>
-        <div class="method-code">
+        <div class="method-code spot fade-up d2">
           <div class="method-code-bar"><span>reproduce locally</span><span>zero runtime deps</span></div>
           <pre><span class="accent">$ node scripts/build-gallery.mjs</span>
 
@@ -640,6 +856,7 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
   </main>
 
   <footer>
+    <div class="footer-word" aria-hidden="true">Archify</div>
     <div class="shell footer-inner">
       <span data-en="Generated from Archify's checked-in examples. No hand-authored capability claims." data-zh="由 Archify 仓库内示例自动生成，不手写可能过期的能力声明。">Generated from Archify's checked-in examples. No hand-authored capability claims.</span>
       <span data-en="Archify v2.17.0-dev.1 · development · MIT" data-zh="Archify v2.17.0-dev.1 · 开发版 · MIT">Archify v2.17.0-dev.1 · development · MIT</span>
@@ -1754,9 +1971,282 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       }
     }
   ]
-}</script>
-  <script src="assets/site-language.js"></script>
-  <script>
+}</script><script src="assets/site-language.js"></script><script>
+  /* ══════════════════════════════════════
+     POLISH (shared) — spotlight, reveals, count-up, tilt.
+     Zero dependencies; safe on every site page.
+  ══════════════════════════════════════ */
+  (function () {
+    'use strict';
+    var reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var finePointer = matchMedia('(pointer: fine)').matches;
+
+    /* Spotlight — cursor-tracked glow on .spot cards */
+    if (finePointer && !reducedMotion) {
+      var spotEl = null, spotX = 0, spotY = 0, spotRaf = 0;
+      document.addEventListener('pointermove', function (e) {
+        spotEl = e.target.closest ? e.target.closest('.spot') : null;
+        spotX = e.clientX; spotY = e.clientY;
+        if (!spotRaf) spotRaf = requestAnimationFrame(function () {
+          spotRaf = 0;
+          if (!spotEl) return;
+          var r = spotEl.getBoundingClientRect();
+          spotEl.style.setProperty('--mx', (spotX - r.left) + 'px');
+          spotEl.style.setProperty('--my', (spotY - r.top) + 'px');
+        });
+      }, { passive: true });
+    }
+
+    /* Reveal — .fade-up gains .visible once, on approach */
+    var revealObs = null;
+    if ('IntersectionObserver' in window) {
+      revealObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) { entry.target.classList.add('visible'); revealObs.unobserve(entry.target); }
+        });
+      }, { threshold: .12, rootMargin: '0px 0px -40px 0px' });
+    }
+    function observe(el) {
+      if (revealObs) revealObs.observe(el); else el.classList.add('visible');
+    }
+    document.querySelectorAll('.fade-up').forEach(observe);
+    window.ArchifyPolish = { observe: observe, reducedMotion: reducedMotion };
+
+    /* Count-up — [data-count] numbers animate once when they enter view */
+    var nums = document.querySelectorAll('[data-count]');
+    if (nums.length && !reducedMotion && 'IntersectionObserver' in window) {
+      var nObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          nObs.unobserve(en.target);
+          var el = en.target;
+          var end = +el.dataset.count, pad = +(el.dataset.pad || 0);
+          var t0 = performance.now(), dur = 1100;
+          var tick = function (t) {
+            var p = Math.min((t - t0) / dur, 1);
+            el.textContent = String(Math.round(end * (1 - Math.pow(1 - p, 3)))).padStart(pad, '0');
+            if (p < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        });
+      }, { threshold: .5 });
+      nums.forEach(function (n) { n.textContent = '0'.repeat(+n.dataset.pad || 1); nObs.observe(n); });
+    }
+
+    /* Tilt — [data-tilt] leans slightly toward the cursor inside [data-tilt-scope] (or its parent) */
+    if (finePointer && !reducedMotion) {
+      document.querySelectorAll('[data-tilt]').forEach(function (plate) {
+        var scope = plate.closest('[data-tilt-scope]') || plate.parentElement;
+        if (!scope) return;
+        var tx = 0, ty = 0, cx = 0, cy = 0, tiltRaf = 0;
+        var loop = function () {
+          cx += (tx - cx) * .08; cy += (ty - cy) * .08;
+          if (Math.abs(tx - cx) < .005 && Math.abs(ty - cy) < .005) {
+            tiltRaf = 0;
+            if (tx === 0 && ty === 0) plate.style.transform = '';
+            return;
+          }
+          plate.style.transform = 'perspective(1400px) rotateY(' + cx + 'deg) rotateX(' + cy + 'deg)';
+          tiltRaf = requestAnimationFrame(loop);
+        };
+        scope.addEventListener('pointermove', function (e) {
+          var r = plate.getBoundingClientRect();
+          tx = Math.max(-1.4, Math.min(1.4, ((e.clientX - (r.left + r.width / 2)) / r.width) * 2.4));
+          ty = Math.max(-1.2, Math.min(1.2, -((e.clientY - (r.top + r.height / 2)) / r.height) * 2.4));
+          if (!tiltRaf) tiltRaf = requestAnimationFrame(loop);
+        }, { passive: true });
+        scope.addEventListener('pointerleave', function () {
+          tx = 0; ty = 0;
+          if (!tiltRaf) tiltRaf = requestAnimationFrame(loop);
+        });
+      });
+    }
+  })();
+
+  /* ══ L2: crosshair, scroll progress, scramble, magnetic ══ */
+  (function () {
+    'use strict';
+    var reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var finePointer = matchMedia('(pointer: fine)').matches;
+
+    /* Crosshair + coordinate readout — drafting instrument cursor */
+    if (finePointer && !reducedMotion) {
+      var cx = document.createElement('div'), cy = document.createElement('div'), cr = document.createElement('div');
+      cx.className = 'crosshair crosshair-x'; cy.className = 'crosshair crosshair-y'; cr.className = 'crosshair-read';
+      document.body.appendChild(cx); document.body.appendChild(cy); document.body.appendChild(cr);
+      var glow = document.createElement('div');
+      glow.className = 'grid-glow';
+      glow.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(glow);
+      var px = 0, py = 0, chRaf = 0;
+      document.addEventListener('pointermove', function (e) {
+        px = e.clientX; py = e.clientY;
+        document.body.classList.add('has-crosshair');
+        if (!chRaf) chRaf = requestAnimationFrame(function () {
+          chRaf = 0;
+          cx.style.transform = 'translateY(' + py + 'px)';
+          cy.style.transform = 'translateX(' + px + 'px)';
+          glow.style.setProperty('--gx', px + 'px');
+          glow.style.setProperty('--gy', py + 'px');
+          var lx = Math.min(px + 16, innerWidth - 150), ly = Math.min(py + 18, innerHeight - 30);
+          cr.style.transform = 'translate(' + lx + 'px,' + ly + 'px)';
+          cr.textContent = 'x:' + String(px).padStart(4, '0') + ' y:' + String(py).padStart(4, '0') + (hoverTag ? '  ·  ' + hoverTag : '');
+        });
+      }, { passive: true });
+      var hoverTag = '';
+      document.addEventListener('pointerover', function (e) {
+        var t = e.target && e.target.closest ? e.target.closest('a,button,[role="button"],iframe') : null;
+        document.body.classList.toggle('crosshair-on', !!t);
+        if (t) {
+          var label = (t.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 22);
+          hoverTag = t.tagName === 'IFRAME' ? 'live doc' : (label || t.tagName.toLowerCase());
+        } else hoverTag = '';
+      }, { passive: true });
+      document.addEventListener('mouseleave', function () { document.body.classList.remove('has-crosshair'); });
+      document.addEventListener('pointerdown', function () { document.body.classList.add('has-crosshair'); });
+    }
+
+    /* Scroll progress line */
+    var bar = document.createElement('div');
+    bar.className = 'scroll-progress';
+    document.body.appendChild(bar);
+    var progRaf = 0;
+    var setProgress = function () {
+      progRaf = 0;
+      var max = document.documentElement.scrollHeight - innerHeight;
+      bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(scrollY / max, 1) : 0) + ')';
+      document.body.classList.toggle('nav-scrolled', scrollY > 24);
+    };
+    addEventListener('scroll', function () { if (!progRaf) progRaf = requestAnimationFrame(setProgress); }, { passive: true });
+    setProgress();
+
+    /* Scramble — mono labels decode when they enter view */
+    var GLYPHS = '▚▞▛░▒<>/=+*·_';
+    var scramble = function (el) {
+      if (el._scrambling) return;
+      el._scrambling = true;
+      var text = el.dataset.scrambled || el.textContent;
+      var language = document.documentElement.lang;
+      var t0 = performance.now();
+      var frame = function (t) {
+        // Language handlers replace localized labels; untranslated words still need to finish.
+        if (document.documentElement.lang !== language && el.matches('[data-i18n], [data-en][data-zh]')) { el._scrambling = false; return; }
+        var p = Math.min((t - t0) / 520, 1);
+        var n = Math.floor(p * text.length);
+        el.textContent = text.slice(0, n) + text.slice(n).replace(/[^\s]/g, function () { return GLYPHS[(Math.random() * GLYPHS.length) | 0]; });
+        if (p < 1) requestAnimationFrame(frame); else { el.textContent = text; el._scrambling = false; }
+      };
+      requestAnimationFrame(frame);
+    };
+    if (!reducedMotion && 'IntersectionObserver' in window) {
+      var sObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { sObs.unobserve(en.target); scramble(en.target); }
+        });
+      }, { threshold: .6 });
+      document.querySelectorAll('.section-label, .lead-label, .rail-label, .export-label-row, .shortcut-title, .card-kicker, .mini-heading, .controls-note, .type-label span, .type-label strong, .panel-kicker span, .agent-picker-head span, .footer-word').forEach(function (el) {
+        if (el.children.length === 0 && el.textContent.trim()) sObs.observe(el);
+      });
+    }
+
+    /* Typed line — [data-typed] with "|" items, zh via data-typed-zh; re-runs on lang flip */
+    document.querySelectorAll('[data-typed]').forEach(function (el) {
+      var target = el.querySelector('.typed-text') || el;
+      var timer = 0;
+      var items = function () {
+        var zh = /^zh/.test(document.documentElement.lang || '');
+        var raw = (zh && el.dataset.typedZh) || el.dataset.typed || '';
+        return raw.split('|').map(function (x) { return x.trim(); }).filter(Boolean);
+      };
+      var run = function () {
+        clearTimeout(timer);
+        var list = items();
+        if (!list.length) return;
+        if (reducedMotion) { target.textContent = list[0]; return; }
+        var i = 0, pos = 0, dir = 1;
+        var tick = function () {
+          var str = list[i % list.length];
+          pos += dir;
+          target.textContent = str.slice(0, Math.max(0, pos));
+          var wait = dir > 0 ? 46 : 15;
+          if (dir > 0 && pos >= str.length) { dir = -1; wait = 2000; }
+          else if (dir < 0 && pos <= 0) { dir = 1; i++; wait = 420; }
+          timer = setTimeout(tick, wait);
+        };
+        tick();
+      };
+      run();
+      new MutationObserver(function (muts) {
+        muts.forEach(function (m) { if (m.attributeName === 'lang') run(); });
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+    });
+
+    /* Nav links decode on hover */
+    if (finePointer && !reducedMotion) {
+      document.querySelectorAll('.nav-link').forEach(function (link) {
+        link.addEventListener('pointerenter', function () { scramble(link); });
+      });
+    }
+
+    /* Sheet marks — fixed margin annotations; right one tracks scroll depth */
+    (function () {
+      var mkL = document.createElement('div'), mkR = document.createElement('div');
+      mkL.className = 'sheet-mark sheet-mark-l'; mkR.className = 'sheet-mark sheet-mark-r';
+      mkL.setAttribute('aria-hidden', 'true'); mkR.setAttribute('aria-hidden', 'true');
+      mkL.textContent = 'ARCHIFY · FIELD SHEET';
+      document.body.appendChild(mkL); document.body.appendChild(mkR);
+      var markRaf = 0;
+      var setMark = function () {
+        markRaf = 0;
+        mkR.textContent = 'Y·' + String(Math.round(scrollY)).padStart(5, '0') + 'PX';
+      };
+      addEventListener('scroll', function () { if (!markRaf) markRaf = requestAnimationFrame(setMark); }, { passive: true });
+      setMark();
+    })();
+
+    /* Word-split reveal — [data-split] headings materialize word by word (CJK per char) */
+    (function () {
+      var splitWords = function (el) {
+        if (el.querySelector('.w')) return;
+        var wi = 0;
+        var walk = function (node) {
+          Array.prototype.slice.call(node.childNodes).forEach(function (n) {
+            if (n.nodeType === 3) {
+              var frag = document.createDocumentFragment();
+              n.textContent.split(/(\s+|[\u3400-\u9fff\uf900-\ufaff])/g).forEach(function (tok) {
+                if (!tok) return;
+                if (/^\s+$/.test(tok)) { frag.appendChild(document.createTextNode(tok)); return; }
+                var w = document.createElement('span');
+                w.className = 'w';
+                w.style.setProperty('--wi', wi++);
+                w.textContent = tok;
+                frag.appendChild(w);
+              });
+              node.replaceChild(frag, n);
+            } else if (n.nodeType === 1 && n.tagName !== 'BR') walk(n);
+          });
+        };
+        walk(el);
+      };
+      var splitAll = function () { document.querySelectorAll('[data-split]').forEach(splitWords); };
+      splitAll();
+      new MutationObserver(splitAll).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+    })();
+
+    /* Magnetic — primary actions lean toward the cursor */
+    if (finePointer && !reducedMotion) {
+      document.querySelectorAll('.btn-primary, .cta-install, .action-primary').forEach(function (btn) {
+        btn.addEventListener('pointermove', function (e) {
+          var r = btn.getBoundingClientRect();
+          var dx = Math.max(-3, Math.min(3, (e.clientX - (r.left + r.width / 2)) * .1));
+          var dy = Math.max(-3, Math.min(3, (e.clientY - (r.top + r.height / 2)) * .16));
+          btn.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+        });
+        btn.addEventListener('pointerleave', function () { btn.style.transform = ''; });
+      });
+    }
+  })();
+</script><script>
     (function () {
       var cards = Array.prototype.slice.call(document.querySelectorAll('.showcase-card'));
       var filterButtons = Array.prototype.slice.call(document.querySelectorAll('[data-filter]'));
@@ -1777,11 +2267,23 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
 
       function applyFilter(type, updateUrl) {
         var visible = 0;
+        var replay = [];
         cards.forEach(function (card) {
           var match = type === 'all' || card.getAttribute('data-type') === type;
           card.hidden = !match;
-          if (match) visible += 1;
+          if (match) {
+            if (card.classList.contains('visible')) {
+              card.classList.remove('visible');
+              card.style.setProperty('--i', Math.min(visible, 14));
+              replay.push(card);
+            }
+            visible += 1;
+          }
         });
+        if (replay.length) {
+          void document.body.offsetHeight;
+          replay.forEach(function (card) { card.classList.add('visible'); });
+        }
         filterButtons.forEach(function (button) {
           button.setAttribute('aria-pressed', button.getAttribute('data-filter') === type ? 'true' : 'false');
         });
@@ -1814,6 +2316,17 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       applyFilter(allowed.indexOf(requested) >= 0 ? requested : 'all', false);
       applyLanguage(language);
 
+      if (matchMedia('(pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        cards.forEach(function (card) {
+          card.addEventListener('mouseenter', function () {
+            var frame = card.querySelector('iframe[data-src-base]');
+            if (frame && frame.src.indexOf('play=1') < 0) {
+              frame.src = frame.getAttribute('data-src-base') + '?embed=1&theme=' + previewTheme + '&play=1';
+            }
+          });
+        });
+      }
+
       if ('IntersectionObserver' in window) {
         var observer = new IntersectionObserver(function (entries) {
           entries.forEach(function (entry) {
@@ -1828,6 +2341,5 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
         cards.forEach(function (card) { card.classList.add('visible'); });
       }
     })();
-  </script>
-</body>
+</script></body>
 </html>

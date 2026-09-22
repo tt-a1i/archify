@@ -162,7 +162,7 @@ function esc(value) {
 }
 
 export function renderCard(entry, index) {
-  const classes = `showcase-card${entry.featured ? ' is-featured' : ''}`;
+  const classes = `showcase-card spot${entry.featured ? ' is-featured' : ''}`;
   const mode = entry.animation === 'trace' ? `${entry.visualPreset} + trace` : entry.visualPreset;
   const artifact = `gallery/artifacts/${entry.output}`;
   const source = `gallery/sources/${entry.input}`;

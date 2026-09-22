@@ -9,6 +9,7 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
+import { desktopBrowser } from './helpers/desktop-browser.mjs';
 import { DIAGRAM_TYPES, DIAGRAM_TYPE_LABELS } from '../../scripts/site-copy.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -377,6 +378,87 @@ test('scenario guide type filters use consistent Chinese diagram names', () => {
     html.includes(`var labels = ${JSON.stringify(DIAGRAM_TYPE_LABELS)};`),
     'docs/guide.html: Guide filters must use the shared Chinese diagram names',
   );
+});
+
+test('real Chrome preserves localized polish labels and reduced-motion preferences in the built website', {
+  skip: chromePath && process.env.ARCHIFY_SITE_ROOT ? false : 'Set ARCHIFY_SITE_ROOT and ARCHIFY_CHROME for built website checks.',
+  timeout: 60000,
+}, async (t) => {
+  const server = startStaticServer(path.resolve(process.env.ARCHIFY_SITE_ROOT), '/archify');
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const baseUrl = `http://127.0.0.1:${server.address().port}/archify`;
+  const browser = desktopBrowser(chromePath);
+  try {
+    const session = await browser.sessionPromise;
+    await browser.cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 1440, height: 900, deviceScaleFactor: 1, mobile: false,
+    }, session);
+    for (const page of ['index', 'gallery', 'guide', 'start']) {
+      await t.test(`${page}: language changes during hover decoding`, async () => {
+        await navigate(browser, session, `${baseUrl}/${page}.html?lang=en`);
+        assert.equal(await evaluate(browser, session, "matchMedia('(pointer: fine)').matches"), true);
+        for (const language of ['zh-CN', 'en']) {
+          const result = await evaluate(browser, session, `(async function () {
+            const link = document.querySelector('.nav-link');
+            link.dispatchEvent(new PointerEvent('pointerenter'));
+            const started = link._scrambling === true;
+            document.querySelector('#btn-lang, #language').click();
+            const expected = link.textContent;
+            await new Promise(resolve => setTimeout(resolve, 650));
+            return { started, expected, actual: link.textContent, language: document.documentElement.lang };
+          })()`);
+          assert.equal(result.started, true, 'exercise an active decode animation');
+          assert.equal(result.language, language);
+          assert.equal(result.actual, result.expected);
+        }
+      });
+      await t.test(`${page}: untranslated wordmark finishes decoding across a language change`, async () => {
+        await navigate(browser, session, `${baseUrl}/${page}.html?lang=en`);
+        const result = await evaluate(browser, session, `(async function () {
+          const wordmark = document.querySelector('.footer-word');
+          const expected = wordmark.textContent;
+          wordmark.scrollIntoView({ behavior: 'instant', block: 'center' });
+          await new Promise((resolve, reject) => {
+            const deadline = performance.now() + 2000;
+            function check() {
+              if (wordmark._scrambling && wordmark.textContent !== expected) resolve();
+              else if (performance.now() > deadline) reject(new Error('Wordmark did not start decoding'));
+              else requestAnimationFrame(check);
+            }
+            check();
+          });
+          document.querySelector('#btn-lang, #language').click();
+          await new Promise(resolve => setTimeout(resolve, 650));
+          return { expected, actual: wordmark.textContent, language: document.documentElement.lang };
+        })()`);
+        assert.equal(result.expected, 'Archify');
+        assert.equal(result.language, 'zh-CN');
+        assert.equal(result.actual, result.expected);
+      });
+    }
+    await t.test('reduced motion disables scroll-linked animations including pseudo-elements', async () => {
+      await navigate(browser, session, `${baseUrl}/index.html?lang=en`);
+      assert.equal(await evaluate(browser, session, "CSS.supports('animation-timeline: scroll()')"), true);
+      const styles = `[
+        ['.grid-bg'], ['.footer-word'], ['#types', '::after'], ['#features', '::after'],
+        ['#palette', '::after'], ['#quickstart', '::after'], ['.cinema-stage'], ['#cinema', '::after']
+      ].map(([selector, pseudo]) => getComputedStyle(document.querySelector(selector), pseudo).animationName)`;
+      assert.ok((await evaluate(browser, session, styles)).every(name => name !== 'none'));
+      await browser.cdp.send('Emulation.setEmulatedMedia', {
+        features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
+      }, session);
+      assert.deepEqual(await evaluate(browser, session, styles), Array(8).fill('none'));
+    });
+    await t.test('English start page has English button text without JavaScript', async () => {
+      await browser.cdp.send('Emulation.setScriptExecutionDisabled', { value: true }, session);
+      await navigate(browser, session, `${baseUrl}/start.html`);
+      assert.equal(await evaluate(browser, session, `document.querySelector('[data-input="description"] strong').textContent`), 'Just describe it');
+      await browser.cdp.send('Emulation.setScriptExecutionDisabled', { value: false }, session);
+    });
+  } finally {
+    await browser.close();
+    await new Promise(resolve => server.close(resolve));
+  }
 });
 
 test('real Chrome preserves language through entry, navigation, selection, refresh, and consistent navigation chrome', {

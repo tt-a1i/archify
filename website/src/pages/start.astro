@@ -3,10 +3,13 @@ import { version, versioned, jsonScript, starts } from '../data/site';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Navigation from '../components/Navigation.astro';
 import head from '../data/start-head.html?raw';
+import polishCss from '../styles/polish.css?raw';
 import css from '../styles/start.css?raw';
+import polishScript from '../scripts/polish.js?raw';
 import pageScript from '../scripts/start.js?raw';
+import TraceField from '../components/TraceField.astro';
 ---
-<SiteLayout head={versioned(head)} css={css}>
+<SiteLayout head={versioned(head)} css={polishCss + css}>
 
   <div class="grid-bg" aria-hidden="true"></div>
 
@@ -14,21 +17,22 @@ import pageScript from '../scripts/start.js?raw';
 
   <main>
     <header class="lead">
+      <TraceField />
       <div>
-        <p class="lead-label" data-en="Start with words, Mermaid, or code" data-zh="从描述、Mermaid 或代码开始">Start with words, Mermaid, or code</p>
-        <h1><span data-en="Describe it." data-zh="直接说，">Describe it.</span><span class="title-gap" aria-hidden="true"> </span><em data-en="Archify maps it." data-zh="Archify 就能画。">Archify maps it.</em></h1>
+        <p class="lead-label fade-up" data-en="Start with words, Mermaid, or code" data-zh="从描述、Mermaid 或代码开始">Start with words, Mermaid, or code</p>
+        <h1 class="fade-up mask d1" data-split><span data-en="Describe it." data-zh="直接说，">Describe it.</span><span class="title-gap" aria-hidden="true"> </span><em data-en="Archify maps it." data-zh="Archify 就能画。">Archify maps it.</em></h1>
       </div>
-      <div>
-        <p class="lead-copy" data-en="No repository is required. Describe a system or flow in a normal agent chat and Archify will turn it into a checked, interactive diagram. If code exists, the same skill can inspect it for evidence." data-zh="不需要绑定代码库。在任意 Agent 对话里用自然语言描述系统或流程，Archify 就会把它变成经过校验的交互图；如果有代码，也可以再让它读取仓库作为证据。">No repository is required. Describe a system or flow in a normal agent chat and Archify will turn it into a checked, interactive diagram. If code exists, the same skill can inspect it for evidence.</p>
+      <div class="fade-up d2">
+        <p class="lead-copy" data-en="No repository needed. Describe a system in any agent chat and Archify turns it into a checked, interactive diagram — or inspects your code for evidence." data-zh="不需要代码库。在任意 Agent 对话里描述系统，Archify 生成经过校验的交互图；有代码也可读取作证据。">No repository needed. Describe a system in any agent chat and Archify turns it into a checked, interactive diagram — or inspects your code for evidence.</p>
         <div class="trust-line" data-en="Your description is enough to make the first diagram." data-zh="只有一段描述，也足够画出第一张图。">Your description is enough to make the first diagram.</div>
       </div>
     </header>
 
-    <section class="type-shell" aria-labelledby="type-label">
+    <section class="type-shell spot fade-up d1" aria-labelledby="type-label">
       <p class="type-label"><span data-en="Choose how to start" data-zh="选择如何开始">Choose how to start</span><strong data-en="Repository optional" data-zh="代码库可选">Repository optional</strong></p>
       <div class="input-paths" role="tablist" aria-label="Input source">
-        <button class="input-path" type="button" role="tab" data-input="description"><strong data-en="Just describe it" data-zh="直接描述">直接描述</strong><span data-en="Start in any chat. No files or repository needed." data-zh="在任意对话里开始，不需要文件或代码库。">Start in any chat. No files or repository needed.</span></button>
-        <button class="input-path" type="button" role="tab" data-input="repository"><strong data-en="Use a repository" data-zh="从代码库开始">Use a repository</strong><span data-en="Let the agent inspect code when source evidence matters." data-zh="需要源码证据时，再让 Agent 检查代码。">Let the agent inspect code when source evidence matters.</span></button>
+        <button class="input-path spot" type="button" role="tab" data-input="description"><strong data-en="Just describe it" data-zh="直接描述">Just describe it</strong><span data-en="Start in any chat. No files or repository needed." data-zh="在任意对话里开始，不需要文件或代码库。">Start in any chat. No files or repository needed.</span></button>
+        <button class="input-path spot" type="button" role="tab" data-input="repository"><strong data-en="Use a repository" data-zh="从代码库开始">Use a repository</strong><span data-en="Let the agent inspect code when source evidence matters." data-zh="需要源码证据时，再让 Agent 检查代码。">Let the agent inspect code when source evidence matters.</span></button>
       </div>
       <p class="type-label" id="type-label"><span data-en="Choose the question shape" data-zh="选择问题形态">Choose the question shape</span><strong data-en="5 typed renderers" data-zh="5 种类型化渲染器">5 typed renderers</strong></p>
       <div class="type-tabs" role="tablist" aria-label="Diagram type">
@@ -41,7 +45,7 @@ import pageScript from '../scripts/start.js?raw';
     </section>
 
     <section class="workbench" aria-label="Archify quick start">
-      <article class="panel" id="install">
+      <article class="panel spot fade-up d1" id="install">
         <div class="panel-kicker"><b>01</b><span data-en="Install the skill" data-zh="安装 Skill">Install the skill</span></div>
         <h2 data-en="Keep the tool local." data-zh="让工具留在本地。">Keep the tool local.</h2>
         <p class="panel-intro" data-en="Choose Cursor, Codex, Claude Code, or OpenCode. The switcher gives each one the same checked Skill and zero-dependency renderers—no vendor-specific fork." data-zh="选择 Cursor、Codex、Claude Code 或 OpenCode。切换器为每个 Agent 提供同一份经过检查的 Skill 与零依赖渲染器，不维护厂商专属分叉。">Choose Cursor, Codex, Claude Code, or OpenCode. The switcher gives each one the same checked Skill and zero-dependency renderers—no vendor-specific fork.</p>
@@ -56,11 +60,11 @@ import pageScript from '../scripts/start.js?raw';
           </div>
         </div>
 
-        <div class="command-block">
+        <div class="command-block spot strong">
           <div class="command-bar"><span data-en="Global install" data-zh="全局安装">Global install</span><button class="copy-button" type="button" data-copy-source="install-command" data-en="Copy" data-zh="复制">Copy</button></div>
           <pre id="install-command">npx -y skills add tt-a1i/archify --skill archify --agent codex --global --copy --yes</pre>
         </div>
-        <div class="command-block">
+        <div class="command-block spot strong">
           <div class="command-bar"><span data-en="This repository only" data-zh="仅安装到当前仓库">This repository only</span><button class="copy-button" type="button" data-copy-source="project-command" data-en="Copy" data-zh="复制">Copy</button></div>
           <pre id="project-command">npx -y skills add tt-a1i/archify --skill archify --agent codex --copy --yes</pre>
         </div>
@@ -68,7 +72,7 @@ import pageScript from '../scripts/start.js?raw';
         <p class="secondary-note" data-en="The Start link carries only your agent, language, diagram type, input mode, and a coarse source label. Journey events stay in this browser session and are never sent by Archify. No repository path, title, node, relationship, or source JSON is recorded." data-zh="Start 链接只携带 Agent、语言、图表类型、输入模式和粗粒度来源标签。转化步骤只保存在当前浏览器会话中，Archify 不会发送这些数据，也不会记录仓库路径、标题、节点、关系或源 JSON。">The Start link carries only your agent, language, diagram type, input mode, and a coarse source label. Journey events stay in this browser session and are never sent by Archify. No repository path, title, node, relationship, or source JSON is recorded.</p>
       </article>
 
-      <article class="panel" aria-live="polite">
+      <article class="panel spot fade-up d2" aria-live="polite">
         <div class="panel-kicker"><b>02</b><span data-en="Ask one bounded question" data-zh="只问一个有边界的问题">Ask one bounded question</span></div>
         <h2 id="recipe-title">System overview</h2>
         <p class="question" id="recipe-question"></p>
@@ -84,6 +88,7 @@ import pageScript from '../scripts/start.js?raw';
       </article>
     </section>
 
+    <div class="footer-word" aria-hidden="true">Archify</div>
     <footer class="page-footer">
       <span data-en={`Archify v${version} · development · self-contained HTML · typed JSON source`} data-zh={`Archify v${version} · 开发版 · 独立 HTML · 类型化 JSON 源`}>Archify v{version} · development · self-contained HTML · typed JSON source</span>
       <span id="copy-status" role="status" aria-live="polite"></span>
@@ -93,6 +98,7 @@ import pageScript from '../scripts/start.js?raw';
 
   <script is:inline id="start-data" type="application/json" set:html={jsonScript(starts)}></script>
   <script is:inline src="assets/site-language.js"></script>
+  <script is:inline set:html={polishScript}></script>
   <script is:inline set:html={versioned(pageScript)}></script>
 
 </SiteLayout>

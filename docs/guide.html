@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="archify guide 2.17.0-dev.1">
@@ -12,7 +13,199 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/site-navigation.css">
+
   <style>
+    /* ══════════════════════════════════════
+       POLISH (shared) — spotlight, mask reveals, wash,
+       sheen, trace routes, scroll drift. Loaded before page CSS.
+    ══════════════════════════════════════ */
+
+    /* section anchors clear the fixed nav */
+    section[id] { scroll-margin-top:4.75rem; }
+
+    /* FADE-UP — universal develop-in reveal; IntersectionObserver adds .visible */
+    .fade-up { opacity:0; transform:translateY(18px); filter:blur(6px); transition:opacity .9s var(--ease-out),transform .9s var(--ease-out),filter .9s var(--ease-out); }
+    .fade-up.visible { opacity:1; transform:translateY(0); filter:blur(0); }
+    .fade-up.d1 { transition-delay:.08s; } .fade-up.d2 { transition-delay:.16s; }
+    .fade-up.d3 { transition-delay:.24s; } .fade-up.d4 { transition-delay:.32s; }
+    .fade-up.d5 { transition-delay:.4s; }
+
+    /* MASK REVEAL — blocks wipe upward instead of plain fade.
+       mask-image (not clip-path) keeps IntersectionObserver geometry intact. */
+    .fade-up.mask {
+      -webkit-mask-image:linear-gradient(to top,transparent 42%,black 58%);
+      mask-image:linear-gradient(to top,transparent 42%,black 58%);
+      -webkit-mask-size:100% 260%; mask-size:100% 260%;
+      -webkit-mask-position:0 100%; mask-position:0 100%;
+      -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+      transition:opacity .9s var(--ease-out),transform .9s var(--ease-out),filter .9s var(--ease-out),-webkit-mask-position 1.05s var(--ease-out),mask-position 1.05s var(--ease-out);
+    }
+    .fade-up.mask.visible { -webkit-mask-position:0 0%; mask-position:0 0%; }
+
+    /* HEADLINE WASH — accent mark develops behind italic ems of revealed h1s */
+    h1.fade-up em { background-image:linear-gradient(100deg,rgba(225,74,14,.16),rgba(225,74,14,.16)); background-repeat:no-repeat; background-position:0 94%; background-size:0% 32%; padding:0 .05em; transition:background-size 1.1s var(--ease-out) .55s; }
+    h1.fade-up.visible em { background-size:100% 32%; }
+
+    /* SPOTLIGHT — cursor-tracked accent glow on cards (JS sets --mx/--my) */
+    .spot { position:relative; }
+    .spot::before { content:''; position:absolute; inset:0; z-index:1; border-radius:inherit; pointer-events:none; opacity:0; transition:opacity .35s var(--ease-out);
+      background:radial-gradient(230px circle at var(--mx,50%) var(--my,50%), rgba(225,74,14,.09), transparent 65%); }
+    .spot:hover::before { opacity:1; }
+    .spot.strong::before { background:radial-gradient(230px circle at var(--mx,50%) var(--my,50%), rgba(225,74,14,.28), transparent 65%); }
+
+    /* SHEEN — light sweep across solid primary actions */
+    .btn-primary, .cta-install, .action-primary, button.primary, .card-link.primary { position:relative; overflow:hidden; }
+    .btn-primary::after, .cta-install::after, .action-primary::after, button.primary::after, .card-link.primary::after { content:''; position:absolute; inset:0; pointer-events:none;
+      background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.22) 50%,transparent 65%);
+      transform:translateX(-135%); transition:transform .7s var(--ease-out); }
+    .btn-primary:hover::after, .cta-install:hover::after, .action-primary:hover::after, button.primary:hover::after, .card-link.primary:hover::after { transform:translateX(135%); }
+
+    /* TRACE FIELD — faint drafted routes with traveling signal packets (TraceField.astro) */
+    .hero, .lead { position:relative; overflow:clip; }
+    .hero-trace { position:absolute; inset:0; z-index:0; width:100%; height:100%; pointer-events:none;
+      -webkit-mask-image:radial-gradient(ellipse 120% 62% at 18% 8%, black 30%, transparent 78%);
+      mask-image:radial-gradient(ellipse 120% 62% at 18% 8%, black 30%, transparent 78%); }
+    .hero-trace ~ * { position:relative; z-index:1; }
+    /* routes draw themselves on load, then packets start traveling */
+    .ht-geom path { stroke:rgba(20,23,26,.11); stroke-width:1; stroke-dasharray:1; stroke-dashoffset:1; animation:ht-draw 1.7s var(--ease-out) .15s forwards; }
+    .ht-geom path:nth-child(2) { animation-delay:.45s; }
+    .ht-geom path:nth-child(3) { animation-delay:.75s; }
+    .ht-geom rect, .ht-geom circle { stroke:rgba(20,23,26,.2); fill:var(--paper, var(--paper-site)); stroke-width:1; opacity:0; animation:ht-pop .5s var(--ease-out) forwards; }
+    .ht-geom rect:nth-of-type(1) { animation-delay:1.05s; } .ht-geom rect:nth-of-type(2) { animation-delay:1.25s; }
+    .ht-geom rect:nth-of-type(3) { animation-delay:1.15s; } .ht-geom rect:nth-of-type(4) { animation-delay:1.45s; }
+    .ht-geom rect:nth-of-type(5) { animation-delay:1.35s; }
+    .ht-geom circle { animation-delay:1.6s; }
+    @keyframes ht-draw { to { stroke-dashoffset:0; } }
+    @keyframes ht-pop { from { opacity:0; } to { opacity:1; } }
+    .ht-pkt { stroke:var(--accent, var(--accent-site)); stroke-width:1.5; stroke-linecap:round; stroke-dasharray:.05 .95; stroke-dashoffset:1; animation:ht-flow 9s linear 1.8s infinite; opacity:.6; }
+    .ht-pkt.p2 { animation-duration:12s; animation-delay:3.4s; }
+    .ht-pkt.p3 { animation-duration:10s; animation-delay:5.2s; }
+    @keyframes ht-flow { from { stroke-dashoffset:1; } to { stroke-dashoffset:0; } }
+
+    /* GRID GLOW — the sheet grid lights up around the cursor */
+    .grid-glow { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0; transition:opacity .5s var(--ease-out); mix-blend-mode:difference;
+      background-image:linear-gradient(rgba(255,255,255,.3) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.3) 1px,transparent 1px);
+      background-size:56px 56px;
+      -webkit-mask-image:radial-gradient(280px circle at var(--gx,50%) var(--gy,20%),black,transparent 72%);
+      mask-image:radial-gradient(280px circle at var(--gx,50%) var(--gy,20%),black,transparent 72%); }
+    body.has-crosshair .grid-glow { opacity:.55; }
+
+    /* GRID DRIFT — the sheet grid parallaxes against scroll where supported */
+    @supports (animation-timeline: scroll()) {
+      .grid-bg { inset:-16% 0; animation:bg-drift linear both; animation-timeline:scroll(root); }
+      @keyframes bg-drift { to { transform:translateY(14%); } }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      .fade-up { opacity:1!important; transform:none!important; transition:none!important; filter:none!important; }
+      .fade-up.mask { -webkit-mask-image:none!important; mask-image:none!important; }
+      .ht-pkt, .grid-bg, .footer-word { animation:none!important; }
+      h1.fade-up em { background-size:100% 32%; transition:none; }
+      .spot::before, .btn-primary::after, .cta-install::after, .action-primary::after, button.primary::after, .card-link.primary::after { display:none; }
+    }
+
+    /* TYPED LINE — mono prompt typing, shared by pages that demo the prompt */
+    .hero-typed { display:flex; align-items:baseline; gap:.45rem; margin-bottom:1.75rem; font-family:var(--font-mono); font-size:.75rem; color:var(--muted, var(--muted-site)); min-height:1.4em; }
+    .typed-prompt { color:var(--accent, var(--accent-site)); font-weight:600; }
+    .typed-caret { display:inline-block; width:.55em; height:1em; margin-left:1px; vertical-align:-0.14em; background:var(--accent, var(--accent-site)); animation:caret-blink 1.1s steps(1) infinite; }
+    @keyframes caret-blink { 50% { opacity:0; } }
+
+    /* ══════════════════════════════════════
+       POLISH L2 — drafting crosshair, progress, scramble, wordmark
+    ══════════════════════════════════════ */
+
+    /* CROSSHAIR — the whole page reads as a sheet under inspection */
+    .crosshair, .crosshair-read { opacity:0; transition:opacity .4s var(--ease-out); }
+    body.has-crosshair .crosshair-x, body.has-crosshair .crosshair-y { opacity:.32; }
+    body.has-crosshair .crosshair-read { opacity:1; }
+    .crosshair { position:fixed; z-index:90; pointer-events:none; }
+    .crosshair-x { left:0; right:0; height:1px; background:#fff; mix-blend-mode:difference; }
+    .crosshair-y { top:0; bottom:0; width:1px; background:#fff; mix-blend-mode:difference; }
+    .crosshair-read { position:fixed; z-index:91; pointer-events:none; padding:.18rem .5rem; border:1px solid var(--line-hi, rgba(20,23,26,.3)); border-radius:5px; background:rgba(248,250,249,.9); color:var(--muted, #60686d); font-family:var(--font-mono); font-size:.5625rem; letter-spacing:.08em; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); white-space:nowrap; }
+
+    /* NAV — the bar tightens and lifts once the sheet is under scroll */
+    .site-nav { transition:height .35s var(--ease-out), box-shadow .35s var(--ease-out); }
+    body.nav-scrolled .site-nav { height:52px; box-shadow:0 10px 34px rgba(20,23,26,.09); }
+
+    /* CROSSHAIR instrument state — accent when the caliper is over a control */
+    body.crosshair-on .crosshair-x, body.crosshair-on .crosshair-y { background:var(--accent, var(--accent-site)); mix-blend-mode:normal; }
+    body.crosshair-on .crosshair-x { opacity:.5; } body.crosshair-on .crosshair-y { opacity:.5; }
+    body.crosshair-on .crosshair-read { border-color:var(--accent, var(--accent-site)); color:var(--accent, var(--accent-site)); }
+
+    /* SCROLL PROGRESS — 2px accent line pinned to the viewport top */
+    .scroll-progress { position:fixed; top:0; left:0; z-index:210; height:2px; width:100%; background:var(--accent, var(--accent-site)); transform:scaleX(0); transform-origin:0 50%; pointer-events:none; }
+
+    /* FOOTER WORDMARK — giant outlined signature closing the sheet */
+    .footer-word { margin:0 auto 1.75rem; max-width:1200px; padding:0 2rem; font-family:var(--font-display); font-style:italic; font-optical-sizing:auto; font-size:clamp(4.5rem,16vw,12.5rem); font-weight:400; line-height:.82; letter-spacing:-.02em; text-align:center; color:transparent; -webkit-text-stroke:1.5px rgba(20,23,26,.18); user-select:none; pointer-events:none; }
+    @supports (animation-timeline: view()) {
+      .footer-word { animation:word-drift linear both; animation-timeline:view(); animation-range:entry 0% exit 100%; }
+      @keyframes word-drift { from { transform:translateY(24px); opacity:.6; } to { transform:translateY(-8px); opacity:1; } }
+    }
+    @media(max-width:640px) { .footer-word { font-size:clamp(3rem,17vw,5rem); padding:0 1rem; } }
+
+    @media(prefers-reduced-motion:reduce) {
+      .typed-caret { animation:none; }
+      .crosshair, .crosshair-read { display:none!important; }
+      .grid-glow { display:none!important; }
+      .ht-geom path { animation:none!important; stroke-dashoffset:0; }
+      .ht-geom rect, .ht-geom circle { animation:none!important; opacity:1; }
+    }
+    @media(pointer:coarse) {
+      .crosshair, .crosshair-read { display:none!important; }
+      .grid-glow { display:none!important; }
+    }
+
+    /* ══════════════════════════════════════
+       POLISH L3 — page transitions, drawn dividers, trace labels
+    ══════════════════════════════════════ */
+
+    /* Cross-document view transitions — nav clicks fade/slide instead of hard-jumping */
+    @view-transition { navigation: auto; }
+    ::view-transition-old(root) { animation:vt-out .22s ease-in both; }
+    ::view-transition-new(root) { animation:vt-in .36s var(--ease-out) .05s both; }
+    @keyframes vt-out { to { opacity:0; transform:translateY(-10px); } }
+    @keyframes vt-in { from { opacity:0; transform:translateY(16px); } }
+
+    /* DIVIDERS draw themselves left→right as they enter */
+    @supports (animation-timeline: view()) {
+      .divider { transform-origin:0 50%; animation:div-draw linear both; animation-timeline:view(); animation-range:entry 0% entry 55%; }
+      @keyframes div-draw { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+    }
+
+    /* TRACE LABELS — micro annotations beside route nodes */
+    .ht-labels text { font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; fill:rgba(20,23,26,.34); opacity:0; animation:ht-pop .5s var(--ease-out) forwards; }
+    .ht-labels text:nth-child(1) { animation-delay:1.7s; }
+    .ht-labels text:nth-child(2) { animation-delay:1.9s; }
+    .ht-labels text:nth-child(3) { animation-delay:2.1s; }
+
+    @media(prefers-reduced-motion:reduce) {
+      ::view-transition-old(root), ::view-transition-new(root) { animation:none!important; }
+      .divider { animation:none!important; }
+      .ht-labels text { animation:none!important; opacity:1; }
+    }
+
+    /* WORD-SPLIT — headings materialize token by token inside their mask */
+    [data-split] .w { display:inline-block; opacity:0; transform:translateY(.45em); filter:blur(5px); transition:opacity .5s var(--ease-out), transform .65s var(--ease-out), filter .5s var(--ease-out); transition-delay:calc(var(--wi) * 42ms); }
+    [data-split].visible .w { opacity:1; transform:none; filter:none; }
+
+    /* SHEET MARKS — fixed margin annotations framing the page */
+    .sheet-mark { position:fixed; bottom:.8rem; z-index:89; pointer-events:none; font-family:var(--font-mono); font-size:.5625rem; letter-spacing:.16em; color:rgba(255,255,255,.5); mix-blend-mode:difference; }
+    .sheet-mark-l { left:1.1rem; }
+    .sheet-mark-r { right:1.1rem; }
+    @media(max-width:980px) { .sheet-mark { display:none; } }
+
+    /* HERO DISSOLVE — the opening composition recedes as the sheet scrolls */
+    @supports (animation-timeline: scroll()) {
+      section.hero, header.lead { animation:hero-out linear both; animation-timeline:scroll(root); animation-range:0 60vh; }
+      @keyframes hero-out { to { opacity:.18; transform:translateY(-5%) scale(.985); filter:blur(2.5px); } }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      [data-split] .w { opacity:1!important; transform:none!important; filter:none!important; transition:none!important; }
+      section.hero, header.lead { animation:none!important; }
+      .sheet-mark { display:none; }
+    }
+
     :root {
       /* Drafted-sheet palette — shared with the project page */
       --paper:#eff2f1; --paper-raised:#f8faf9;
@@ -142,11 +335,9 @@
     footer { border-top:1px solid var(--line); padding:1.75rem 0 2.5rem; color:var(--dim); font-family:var(--font-mono); font-size:.625rem; letter-spacing:.04em; }
     footer .shell { display:flex; justify-content:space-between; gap:1rem; }
 
-    /* ENTRANCE */
-    @keyframes rise { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
-    .hero, .chooser, .library { animation:rise .7s var(--ease-out) both; }
-    .chooser { animation-delay:.08s; }
-    .library { animation-delay:.16s; }
+    /* ENTRANCE — shared .fade-up/.mask reveals; generated cards cascade via --i */
+    @keyframes card-in { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+    .card { animation:card-in .55s var(--ease-out) backwards; animation-delay:calc(var(--i,0) * 45ms); }
 
     @media(max-width:900px) {
       .hero { grid-template-columns:1fr; gap:2.25rem; padding-top:8.5rem; }
@@ -178,45 +369,70 @@
     }
     @media (prefers-reduced-motion:reduce) {
       html { scroll-behavior:auto; }
-      .hero, .chooser, .library, .result.visible { animation:none; }
+      .result.visible { animation:none; }
+      .card { animation:none; }
     }
-  </style>
-</head>
+</style>
+<style>/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+@layer theme,utilities;
+</style></head>
 <body>
+
   <div class="grid-bg" aria-hidden="true"></div>
 
   <nav class="site-nav" aria-label="Primary navigation">
-    <a class="nav-logo" href="./" aria-label="Archify home">
-      <img class="nav-logo-text brand-lockup" src="assets/archify-lockup-light.svg" alt="Archify" width="117" height="32">
-      <span class="nav-logo-path" data-en="/ guide" data-zh="/ 场景指南">/ guide</span>
-    </a>
-    <div class="nav-right">
-      <a class="nav-link" href="guide.html" aria-current="page" data-i18n="navGuide">Guide</a>
-      <a class="nav-link" href="gallery.html" data-i18n="navProof">Proof Lab</a>
-      <a class="nav-link" href="start.html" data-i18n="navStart">Start</a>
-      <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
-      <button class="btn-lang" id="language" type="button" aria-label="Switch language">中文</button>
-      <a class="btn btn-primary nav-cta" href="start.html" data-i18n="navInstall">Install Skill</a>
-    </div>
-  </nav>
+  <a class="nav-logo" href="./" aria-label="Archify home">
+    <img class="nav-logo-text brand-lockup" src="assets/archify-lockup-light.svg" alt="Archify" width="117" height="32"/>
+    <span class="nav-logo-path" data-en="/ guide" data-zh="/ 场景指南">/ guide</span>
+  </a>
+  <div class="nav-right">
+    <a class="nav-link" href="guide.html" aria-current="page" data-i18n="navGuide">Guide</a><a class="nav-link" href="gallery.html" data-i18n="navProof">Proof Lab</a><a class="nav-link" href="start.html" data-i18n="navStart">Start</a>
+    <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
+    <button class="btn-lang" id="language" type="button" aria-label="Switch language">中文</button>
+    <a class="btn btn-primary nav-cta" href="start.html" data-i18n="navInstall">Install Skill</a>
+  </div>
+</nav>
 
   <main class="shell">
     <section class="hero">
+      <svg class="hero-trace" viewBox="0 0 1200 700" fill="none" aria-hidden="true" preserveAspectRatio="xMidYMin slice">
+  <g class="ht-geom">
+    <path pathLength="1" d="M-40 560 H200 V380 H380 V250 H560"></path>
+    <path pathLength="1" d="M-40 120 H320 V230 H540 V120 H760"></path>
+    <path pathLength="1" d="M700 700 V540 H920 V430 H1240"></path>
+    <rect x="196" y="376" width="8" height="8"></rect>
+    <rect x="376" y="246" width="8" height="8"></rect>
+    <rect x="316" y="226" width="8" height="8"></rect>
+    <rect x="536" y="116" width="8" height="8"></rect>
+    <rect x="916" y="426" width="8" height="8"></rect>
+    <circle cx="560" cy="250" r="4"></circle>
+    <circle cx="760" cy="120" r="4"></circle>
+  </g>
+  <path class="ht-pkt" pathLength="1" d="M-40 560 H200 V380 H380 V250 H560"></path>
+  <path class="ht-pkt p2" pathLength="1" d="M-40 120 H320 V230 H540 V120 H760"></path>
+  <path class="ht-pkt p3" pathLength="1" d="M700 700 V540 H920 V430 H1240"></path>
+  <g class="ht-labels">
+    <text x="212" y="368">api · svc</text>
+    <text x="330" y="214">edge · tls</text>
+    <text x="928" y="418">db · primary</text>
+  </g>
+</svg>
       <div>
-        <div class="lead-label" data-i18n="eyebrow">Question-first diagramming</div>
-        <h1 data-i18n-html="headline">Choose the question.<br>Get the <em>right diagram.</em></h1>
-        <p class="lede" data-i18n="lede">Describe what your audience needs to understand. Archify recommends one bounded visual recipe—plus the evidence it must contain, when not to use it, and a prompt you can copy.</p>
+        <div class="lead-label fade-up" data-i18n="eyebrow">Question-first diagramming</div>
+        <h1 class="fade-up mask d1" data-split data-i18n-html="headline">Choose the question.<br>Get the <em>right diagram.</em></h1>
+        <p class="lede fade-up d2" data-i18n="lede">Describe what your audience needs to understand. Get one bounded recipe — evidence, anti-patterns, a copy-ready prompt.</p>
+        <p class="hero-typed fade-up d3" aria-hidden="true" data-typed="explain the cache-miss path to a new hire|prove the payment flow is idempotent|show which services touch PII|walk the rollout order before the review" data-typed-zh="向新同事讲清缓存未命中的路径|证明支付流程是幂等的|标出哪些服务碰 PII|评审前走一遍发布顺序"><span class="typed-prompt">›</span> <span class="typed-text">explain the cache-miss path</span><span class="typed-caret"></span></p>
       </div>
-      <div class="metrics" aria-label="Guide metrics">
-        <div class="metric"><strong>11</strong><span data-i18n-html="metricRecipes">real-world<br>recipes</span></div>
-        <div class="metric"><strong>5</strong><span data-i18n-html="metricModes">typed diagram<br>modes</span></div>
+      <div class="metrics spot fade-up d3" aria-label="Guide metrics">
+        <div class="metric"><strong data-count="11">11</strong><span data-i18n-html="metricRecipes">real-world<br>recipes</span></div>
+        <div class="metric"><strong data-count="5">5</strong><span data-i18n-html="metricModes">typed diagram<br>modes</span></div>
         <div class="metric"><strong>0</strong><span data-i18n-html="metricRuntime">runtime<br>dependencies</span></div>
       </div>
     </section>
 
-    <section class="chooser" aria-labelledby="chooser-title">
+    <section class="chooser spot fade-up" aria-labelledby="chooser-title">
       <div class="chooser-head">
-        <div><h2 id="chooser-title" data-i18n="chooserTitle">What must the diagram explain?</h2><p data-i18n="chooserBody">Write a situation, not a diagram type. Specific system facts produce a stronger recommendation.</p></div>
+        <div><h2 id="chooser-title" data-i18n="chooserTitle">What must the diagram explain?</h2><p data-i18n="chooserBody">Write a situation, not a diagram type.</p></div>
         <span class="kbd">⌘ / Ctrl + Enter</span>
       </div>
       <textarea id="scenario" data-i18n-placeholder="placeholder" placeholder="Example: Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing."></textarea>
@@ -229,20 +445,293 @@
     </section>
 
     <section class="library" id="library">
-      <div class="section-head">
+      <div class="section-head fade-up mask">
         <div><div class="lead-label" data-i18n="libraryEyebrow">Recipe library</div><h2 data-i18n="libraryTitle">Eleven small, opinionated starting points.</h2></div>
-        <p data-i18n="libraryBody">Each recipe answers one technical question. That boundary keeps the result legible, reviewable, and honest about missing evidence.</p>
+        <p data-i18n="libraryBody">Each recipe answers one question — bounded, legible, honest about missing evidence.</p>
       </div>
       <div class="filters" id="filters" aria-label="Filter recipes"></div>
       <div class="cards" id="cards"></div>
     </section>
   </main>
 
-  <footer><div class="shell"><span data-i18n="footerLeft">Generated from the same recipe source as the Archify CLI.</span><span>archify guide "your scenario"</span><span data-i18n="versionLabel">Scenario guide / development / v2.17.0-dev.1</span></div></footer>
+  <footer><div class="footer-word" aria-hidden="true">Archify</div><div class="shell"><span data-i18n="footerLeft">Generated from the same recipe source as the Archify CLI.</span><span>archify guide "your scenario"</span><span data-i18n="versionLabel">Scenario guide / development / v2.17.0-dev.1</span></div></footer>
 
-  <script id="guide-data" type="application/json">[{"id":"system-overview","type":"architecture","proof":"web-app","presentation":{"preset":"classic","motion":"static","views":"optional"},"title":"System overview","question":"What exists, who owns it, and how is it connected?","summary":"A bounded map of core components, external dependencies, primary paths, and trust boundaries.","useWhen":"Onboarding, design reviews, repository orientation, or explaining a service landscape.","avoidWhen":"The audience needs exact call order, state transitions, or row-level data lineage.","include":["8–12 core components","one primary path","external dependencies","trust boundaries"],"prompt":"Analyze this repository, then use Archify to create a high-level architecture diagram. Show 8–12 core runtime components, one primary request or data path, external dependencies, ownership or trust boundaries, and put supporting detail in cards instead of adding more edges.","en":{"title":"System overview","question":"What exists, who owns it, and how is it connected?","summary":"A bounded map of core components, external dependencies, primary paths, and trust boundaries.","useWhen":"Onboarding, design reviews, repository orientation, or explaining a service landscape.","avoidWhen":"The audience needs exact call order, state transitions, or row-level data lineage.","include":["8–12 core components","one primary path","external dependencies","trust boundaries"],"prompt":"Analyze this repository, then use Archify to create a high-level architecture diagram. Show 8–12 core runtime components, one primary request or data path, external dependencies, ownership or trust boundaries, and put supporting detail in cards instead of adding more edges."},"zh":{"title":"系统总览","question":"系统里有什么、归谁负责、彼此如何连接？","summary":"用一张有边界的图展示核心组件、外部依赖、主路径和信任边界。","useWhen":"适合新人上手、方案评审、仓库梳理和服务全景说明。","avoidWhen":"如果重点是精确调用顺序、状态流转或字段级血缘，请换其他配方。","include":["8–12 个核心组件","一条主路径","外部依赖","归属或信任边界"],"prompt":"分析这个仓库，然后用 Archify 生成高层系统架构图。展示 8–12 个核心运行时组件、一条主要请求或数据路径、外部依赖、归属或信任边界；支持性细节放进卡片，不要继续堆连线。"},"signals":[["system overview",12],["architecture",10],["components",6],["services",4],["repository",5],["trust boundary",8],["架构",10],["系统总览",12],["组件",6],["服务",4],["仓库",5],["信任边界",8]]},{"id":"deployment-ownership","type":"architecture","proof":"deployment-ownership","presentation":{"preset":"blueprint","motion":"trace","views":"recommended"},"title":"Deployment ownership","question":"Where does each workload run, and what crosses a boundary?","summary":"A deployment-focused map of regions, networks, clusters, workloads, stores, and cross-boundary mechanisms.","useWhen":"Cloud reviews, production readiness, multi-region planning, or infrastructure ownership handoffs.","avoidWhen":"Deployment facts are unknown or the real question is application behavior rather than placement.","include":["regions and networks","workload ownership","stateful services","named boundary crossings"],"prompt":"Use Archify to draw the production deployment topology. Group resources by region, network, cluster, and owner; show workloads and stateful services; label every cross-boundary mechanism. Do not invent deployment facts—mark unknown areas explicitly. If the user wants a fail-closed deployment review, ask before setting meta.engineering_profile to deployment-ownership; otherwise leave the engineering profile unset.","en":{"title":"Deployment ownership","question":"Where does each workload run, and what crosses a boundary?","summary":"A deployment-focused map of regions, networks, clusters, workloads, stores, and cross-boundary mechanisms.","useWhen":"Cloud reviews, production readiness, multi-region planning, or infrastructure ownership handoffs.","avoidWhen":"Deployment facts are unknown or the real question is application behavior rather than placement.","include":["regions and networks","workload ownership","stateful services","named boundary crossings"],"prompt":"Use Archify to draw the production deployment topology. Group resources by region, network, cluster, and owner; show workloads and stateful services; label every cross-boundary mechanism. Do not invent deployment facts—mark unknown areas explicitly. If the user wants a fail-closed deployment review, ask before setting meta.engineering_profile to deployment-ownership; otherwise leave the engineering profile unset."},"zh":{"title":"部署与归属","question":"每个工作负载运行在哪里，哪些连接跨越了边界？","summary":"围绕 Region、网络、集群、工作负载、存储和跨边界机制组织部署图。","useWhen":"适合云上评审、生产就绪、多区域规划和基础设施交接。","avoidWhen":"部署事实不清楚，或真正问题是应用行为而不是资源位置时不要使用。","include":["区域与网络","工作负载归属","有状态服务","明确的跨边界机制"],"prompt":"用 Archify 绘制生产部署拓扑。按区域、网络、集群和负责人分组，展示工作负载与有状态服务，并标注每一种跨边界机制。不要编造部署事实，不确定的区域要明确标出。如果用户需要失败即阻断的部署评审，先征得确认，再把 meta.engineering_profile 设为 deployment-ownership；否则不要启用工程画像。"},"signals":[["deployment topology",14],["region",7],["vpc",9],["cluster",6],["availability zone",8],["ownership",7],["cloud deployment",12],["部署拓扑",14],["区域",6],["集群",6],["可用区",8],["资源归属",9],["跨区",8]]},{"id":"agent-tool-call","type":"workflow","proof":"agent-tool-call","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Agent tool-call loop","question":"How does an agent plan, get permission, act, recover, and report?","summary":"A lane-based agent loop with policy gates, tool execution, exception recovery, evidence, and final response.","useWhen":"Explaining agent runtimes, MCP/tool orchestration, approvals, retries, or observability.","avoidWhen":"The goal is only to show static agent components or exact API message timing.","include":["request and planning","policy or approval gate","tool execution","exception and evidence paths"],"prompt":"Use Archify workflow mode to explain this agent tool-call loop. Separate user surface, agent runtime, policy boundary, exception handling, tool execution, and observability into lanes. Make the successful path primary and show approval, retry, blocked, and evidence paths explicitly.","en":{"title":"Agent tool-call loop","question":"How does an agent plan, get permission, act, recover, and report?","summary":"A lane-based agent loop with policy gates, tool execution, exception recovery, evidence, and final response.","useWhen":"Explaining agent runtimes, MCP/tool orchestration, approvals, retries, or observability.","avoidWhen":"The goal is only to show static agent components or exact API message timing.","include":["request and planning","policy or approval gate","tool execution","exception and evidence paths"],"prompt":"Use Archify workflow mode to explain this agent tool-call loop. Separate user surface, agent runtime, policy boundary, exception handling, tool execution, and observability into lanes. Make the successful path primary and show approval, retry, blocked, and evidence paths explicitly."},"zh":{"title":"智能体工具调用","question":"智能体如何规划、获批、执行、恢复并汇报？","summary":"用泳道表达策略门、工具执行、异常恢复、证据和最终回复。","useWhen":"适合解释 Agent Runtime、MCP/工具编排、审批、重试和可观测性。","avoidWhen":"如果只想看静态组件，或重点是精确 API 消息时序，请换其他配方。","include":["请求与规划","策略或审批门","工具执行","异常与证据路径"],"prompt":"用 Archify 工作流模式解释这段智能体工具调用。把用户界面、Agent Runtime、策略边界、异常处理、工具执行和可观测性分成泳道；突出成功主路径，并明确展示审批、重试、阻塞和证据路径。"},"signals":[["agent tool call",16],["tool call",12],["approval gate",10],["human in the loop",9],["mcp",7],["planner",6],["agent loop",10],["智能体工具调用",16],["工具调用",12],["审批门",10],["人在回路",9],["规划器",6],["智能体循环",10]]},{"id":"delivery-workflow","type":"workflow","proof":"delivery-workflow","presentation":{"preset":"classic","motion":"trace","views":"optional"},"title":"Delivery workflow","question":"How does a change move safely from commit to production?","summary":"A delivery flow with build, checks, environments, approvals, smoke tests, rollback, and ownership lanes.","useWhen":"CI/CD design, release reviews, deployment governance, or onboarding developers to delivery.","avoidWhen":"The question is where infrastructure runs or what states a deployment object can occupy.","include":["trigger and build","blocking checks","approval and environments","rollback and verification"],"prompt":"Use Archify workflow mode to draw this delivery process from commit to production. Separate developer, CI, approval, environment, and exception lanes; mark blocking checks, smoke tests, ownership, and the rollback path. Keep one unmistakable happy path.","en":{"title":"Delivery workflow","question":"How does a change move safely from commit to production?","summary":"A delivery flow with build, checks, environments, approvals, smoke tests, rollback, and ownership lanes.","useWhen":"CI/CD design, release reviews, deployment governance, or onboarding developers to delivery.","avoidWhen":"The question is where infrastructure runs or what states a deployment object can occupy.","include":["trigger and build","blocking checks","approval and environments","rollback and verification"],"prompt":"Use Archify workflow mode to draw this delivery process from commit to production. Separate developer, CI, approval, environment, and exception lanes; mark blocking checks, smoke tests, ownership, and the rollback path. Keep one unmistakable happy path."},"zh":{"title":"研发交付流程","question":"一次变更如何安全地从提交走到生产？","summary":"展示构建、检查、环境、审批、冒烟、回滚和负责人泳道。","useWhen":"适合 CI/CD 设计、发布评审、部署治理和研发新人上手。","avoidWhen":"如果重点是基础设施位置或部署对象的状态集合，请换架构图或生命周期图。","include":["触发与构建","阻断检查","审批与环境","回滚与验证"],"prompt":"用 Archify 工作流模式绘制从代码提交到生产发布的流程。拆分开发者、CI、审批、环境和异常泳道；标出阻断检查、冒烟测试、负责人和回滚路径，并保留一条一眼可见的成功主路径。"},"signals":[["ci/cd",14],["release workflow",14],["deployment pipeline",11],["pull request",7],["staging",7],["rollback",8],["发布流程",14],["流水线",9],["上线",7],["预发",7],["回滚",8],["审批发布",10]]},{"id":"incident-runbook","type":"workflow","proof":"incident-runbook","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Incident runbook","question":"How do responders detect, triage, mitigate, verify, and escalate?","summary":"An operational workflow that separates signals, responders, mitigation, communications, and recovery proof.","useWhen":"Incident playbooks, on-call handoffs, reliability reviews, and tabletop exercises.","avoidWhen":"The audience needs live metrics or a post-incident component topology instead of response actions.","include":["detection signal","triage owner","mitigation and rollback","verification and communication"],"prompt":"Use Archify workflow mode to turn this incident runbook into responder lanes. Show detection, triage, mitigation, escalation, communication, rollback, and recovery verification. Separate decision gates from actions and make missing ownership visible.","en":{"title":"Incident runbook","question":"How do responders detect, triage, mitigate, verify, and escalate?","summary":"An operational workflow that separates signals, responders, mitigation, communications, and recovery proof.","useWhen":"Incident playbooks, on-call handoffs, reliability reviews, and tabletop exercises.","avoidWhen":"The audience needs live metrics or a post-incident component topology instead of response actions.","include":["detection signal","triage owner","mitigation and rollback","verification and communication"],"prompt":"Use Archify workflow mode to turn this incident runbook into responder lanes. Show detection, triage, mitigation, escalation, communication, rollback, and recovery verification. Separate decision gates from actions and make missing ownership visible."},"zh":{"title":"事故处置 Runbook","question":"响应者如何发现、分诊、缓解、验证并升级？","summary":"把信号、响应者、缓解动作、沟通和恢复证据拆成可执行流程。","useWhen":"适合故障预案、On-call 交接、稳定性评审和桌面演练。","avoidWhen":"如果受众需要实时指标仪表盘或事故后的组件拓扑，而不是响应动作，请换其他视图。","include":["发现信号","分诊负责人","缓解与回滚","恢复验证与沟通"],"prompt":"用 Archify 工作流模式把事故处置预案画成响应者泳道。展示发现、分诊、缓解、升级、沟通、回滚和恢复验证；把决策门与操作分开，并让缺失的负责人清晰可见。"},"signals":[["incident response",15],["runbook",12],["outage",9],["triage",8],["mitigation",8],["escalation",7],["事故处置",15],["故障",9],["应急预案",12],["排障",9],["缓解",7],["升级响应",8]]},{"id":"api-request","type":"sequence","proof":"cache-miss","presentation":{"preset":"classic","motion":"trace","views":"optional"},"title":"API request chain","question":"Who calls whom, in what order, and what returns?","summary":"A time-ordered request path with authentication, cache fallback, persistence, return traffic, and async trace.","useWhen":"API documentation, debugging request latency, auth reviews, or explaining cache fallback.","avoidWhen":"Order is unimportant and the audience only needs the stable service topology.","include":["callers and callees","request and return messages","fallback or error path","async side effects"],"prompt":"Use Archify sequence mode to show this request from caller to final response. Include authentication, cache hit or miss, persistence fallback, return messages, and asynchronous trace or event emission. Keep message labels short and order unambiguous.","en":{"title":"API request chain","question":"Who calls whom, in what order, and what returns?","summary":"A time-ordered request path with authentication, cache fallback, persistence, return traffic, and async trace.","useWhen":"API documentation, debugging request latency, auth reviews, or explaining cache fallback.","avoidWhen":"Order is unimportant and the audience only needs the stable service topology.","include":["callers and callees","request and return messages","fallback or error path","async side effects"],"prompt":"Use Archify sequence mode to show this request from caller to final response. Include authentication, cache hit or miss, persistence fallback, return messages, and asynchronous trace or event emission. Keep message labels short and order unambiguous."},"zh":{"title":"API 请求链","question":"谁调用谁、顺序如何、最终返回什么？","summary":"按时间展示鉴权、缓存回退、持久化、返回流量和异步追踪。","useWhen":"适合 API 文档、请求耗时排查、鉴权评审和缓存回退说明。","avoidWhen":"如果顺序不重要，受众只需要稳定的服务拓扑，请用架构图。","include":["调用方与被调用方","请求与返回消息","回退或错误路径","异步副作用"],"prompt":"用 Archify 时序模式展示从调用方到最终响应的完整请求。包含鉴权、缓存命中或未命中、持久化回退、返回消息，以及异步 Trace 或事件上报；消息标签保持简短，顺序必须明确。"},"signals":[["api request",14],["request response",12],["call chain",11],["cache miss",13],["jwt",8],["who calls whom",12],["api 请求",14],["请求响应",12],["调用链",11],["缓存未命中",13],["谁调用谁",12],["鉴权链路",9]]},{"id":"async-roundtrip","type":"sequence","proof":"async-roundtrip","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Async roundtrip","question":"What happens after the initial request returns?","summary":"A sequence view of enqueue, acknowledgement, background work, callbacks, retries, timeout, and final consistency.","useWhen":"Webhooks, jobs, queues, payment callbacks, eventual consistency, or async API contracts.","avoidWhen":"The primary question is topic topology and consumer ownership rather than time order.","include":["initial acknowledgement","queue or scheduler","background work","callback, retry, and timeout"],"prompt":"Use Archify sequence mode to explain this asynchronous roundtrip. Show the initial acknowledgement, enqueue or scheduling step, background processing, callback or polling, retry and timeout behavior, and the point where the caller can observe final consistency.","en":{"title":"Async roundtrip","question":"What happens after the initial request returns?","summary":"A sequence view of enqueue, acknowledgement, background work, callbacks, retries, timeout, and final consistency.","useWhen":"Webhooks, jobs, queues, payment callbacks, eventual consistency, or async API contracts.","avoidWhen":"The primary question is topic topology and consumer ownership rather than time order.","include":["initial acknowledgement","queue or scheduler","background work","callback, retry, and timeout"],"prompt":"Use Archify sequence mode to explain this asynchronous roundtrip. Show the initial acknowledgement, enqueue or scheduling step, background processing, callback or polling, retry and timeout behavior, and the point where the caller can observe final consistency."},"zh":{"title":"异步往返链路","question":"初始请求返回之后，后台还会发生什么？","summary":"按时间展示入队、确认、后台处理、回调、重试、超时和最终一致。","useWhen":"适合 Webhook、后台任务、队列、支付回调、最终一致和异步 API 契约。","avoidWhen":"如果重点是 Topic 拓扑和消费者归属，而不是时间顺序，请用事件数据流配方。","include":["初始确认","队列或调度器","后台处理","回调、重试与超时"],"prompt":"用 Archify 时序模式解释这段异步往返链路。展示初始确认、入队或调度、后台处理、回调或轮询、重试与超时，以及调用方何时能观察到最终一致结果。"},"signals":[["async roundtrip",14],["webhook",10],["callback",10],["acknowledgement",8],["timeout",7],["retry message",8],["异步回调",14],["回调",10],["确认消息",8],["超时",7],["消息重试",9],["webhook",10]]},{"id":"data-lineage","type":"dataflow","proof":"product-analytics","presentation":{"preset":"classic","motion":"trace","views":"recommended"},"title":"Data lineage","question":"Where does data come from, how does it change, and who consumes it?","summary":"A governed path from sources through consent, transforms, sensitive stores, warehouse, and consumers.","useWhen":"Analytics architecture, ETL/ELT review, PII assessment, warehouse design, or model feature lineage.","avoidWhen":"The audience needs request timing or operational task ownership rather than data assets.","include":["sources and assets","transform stages","classification or consent","stores and consumers"],"prompt":"Use Archify dataflow mode to map this data lineage. Name every data asset and transform, show consent or classification boundaries, distinguish streaming from batch paths, and identify stores plus downstream consumers. Do not use unlabeled flows.","en":{"title":"Data lineage","question":"Where does data come from, how does it change, and who consumes it?","summary":"A governed path from sources through consent, transforms, sensitive stores, warehouse, and consumers.","useWhen":"Analytics architecture, ETL/ELT review, PII assessment, warehouse design, or model feature lineage.","avoidWhen":"The audience needs request timing or operational task ownership rather than data assets.","include":["sources and assets","transform stages","classification or consent","stores and consumers"],"prompt":"Use Archify dataflow mode to map this data lineage. Name every data asset and transform, show consent or classification boundaries, distinguish streaming from batch paths, and identify stores plus downstream consumers. Do not use unlabeled flows."},"zh":{"title":"数据血缘","question":"数据从哪里来、如何变化、最终被谁消费？","summary":"从来源经过同意、转换、敏感存储、数仓直到消费者的治理路径。","useWhen":"适合分析架构、ETL/ELT 评审、PII 评估、数仓设计和特征血缘。","avoidWhen":"如果受众需要请求时序或操作负责人，而不是数据资产，请换其他配方。","include":["数据来源与资产","转换阶段","分类或同意边界","存储与消费者"],"prompt":"用 Archify 数据流模式梳理这段数据血缘。为每个数据资产和转换命名，展示用户同意或数据分类边界，区分流式与批处理路径，并标明存储和下游消费者；所有数据流都必须有标签。"},"signals":[["data lineage",15],["etl",12],["warehouse",9],["pii",11],["governance",9],["analytics pipeline",12],["数据血缘",15],["数据管道",11],["数仓",9],["治理",9],["隐私数据",10],["用户同意",9]]},{"id":"event-stream","type":"dataflow","proof":"event-stream","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Event-stream topology","question":"Which events move through which topics, processors, groups, and failure paths?","summary":"A stream map of producers, topics, ordered processors, consumer groups, state, replay, and DLQ.","useWhen":"Kafka/event-platform design, stream processing reviews, ownership, replay, and failure handling.","avoidWhen":"Topic names, consumer groups, and delivery semantics are not known—use a generic workflow instead.","include":["producers and event names","topics and ordering","processors and consumer groups","state, replay, and DLQ"],"prompt":"Use Archify dataflow mode to draw this event-stream topology. Name producers, events, topics, ordered processors, consumer groups, state stores, replay paths, and the DLQ. Show ownership and delivery semantics only when supported by evidence.","en":{"title":"Event-stream topology","question":"Which events move through which topics, processors, groups, and failure paths?","summary":"A stream map of producers, topics, ordered processors, consumer groups, state, replay, and DLQ.","useWhen":"Kafka/event-platform design, stream processing reviews, ownership, replay, and failure handling.","avoidWhen":"Topic names, consumer groups, and delivery semantics are not known—use a generic workflow instead.","include":["producers and event names","topics and ordering","processors and consumer groups","state, replay, and DLQ"],"prompt":"Use Archify dataflow mode to draw this event-stream topology. Name producers, events, topics, ordered processors, consumer groups, state stores, replay paths, and the DLQ. Show ownership and delivery semantics only when supported by evidence."},"zh":{"title":"事件流拓扑","question":"哪些事件经过哪些 Topic、处理器、消费者组和失败路径？","summary":"展示生产者、Topic、有序处理器、消费者组、状态、重放和 DLQ。","useWhen":"适合 Kafka/事件平台设计、流处理评审、归属、重放和失败处理。","avoidWhen":"如果 Topic、消费者组和投递语义都不清楚，请先用通用工作流，不要编造事件拓扑。","include":["生产者与事件名","Topic 与顺序","处理器与消费者组","状态、重放与 DLQ"],"prompt":"用 Archify 数据流模式绘制这段事件流拓扑。命名生产者、事件、Topic、有序处理器、消费者组、状态存储、重放路径和 DLQ；只有在证据充分时才标注归属和投递语义。"},"signals":[["event stream",15],["kafka topology",14],["topic",8],["consumer group",11],["dead letter",10],["dlq",10],["事件流",15],["kafka 拓扑",14],["主题",7],["消费者组",11],["死信",10],["事件地铁图",12]]},{"id":"object-lifecycle","type":"lifecycle","proof":"agent-run","presentation":{"preset":"classic","motion":"trace","views":"optional"},"title":"Object lifecycle","question":"Which states exist, what events move between them, and how does it end?","summary":"A state model with active work, waits, retries, cancellation, failure, and explicit terminal outcomes.","useWhen":"Tasks, orders, tickets, subscriptions, jobs, agent runs, or any durable object with status.","avoidWhen":"The object has no durable state and the real question is participant interaction over time.","include":["start and active states","event-labelled transitions","wait and retry states","all terminal outcomes"],"prompt":"Use Archify lifecycle mode to model this object. Separate main progress, waiting or interruption states, and terminal outcomes. Label transitions with events, include retry, cancellation, timeout, success, and failure where real, and never hide an ending.","en":{"title":"Object lifecycle","question":"Which states exist, what events move between them, and how does it end?","summary":"A state model with active work, waits, retries, cancellation, failure, and explicit terminal outcomes.","useWhen":"Tasks, orders, tickets, subscriptions, jobs, agent runs, or any durable object with status.","avoidWhen":"The object has no durable state and the real question is participant interaction over time.","include":["start and active states","event-labelled transitions","wait and retry states","all terminal outcomes"],"prompt":"Use Archify lifecycle mode to model this object. Separate main progress, waiting or interruption states, and terminal outcomes. Label transitions with events, include retry, cancellation, timeout, success, and failure where real, and never hide an ending."},"zh":{"title":"对象生命周期","question":"有哪些状态、什么事件触发流转、最终如何结束？","summary":"展示执行、等待、重试、取消、失败以及明确终态的状态模型。","useWhen":"适合任务、订单、工单、订阅、作业、Agent Run 等带持久状态的对象。","avoidWhen":"对象没有持久状态，真正问题是参与者随时间的交互时，请使用时序图。","include":["开始与执行态","带事件的转换","等待与重试态","所有终态"],"prompt":"用 Archify 生命周期模式建模这个对象。分开主进度、等待或中断状态和终态；用事件标注转换，并在真实存在时展示重试、取消、超时、成功和失败，不能隐藏任何结束方式。"},"signals":[["state machine",15],["object lifecycle",14],["status transition",11],["terminal state",9],["retry state",8],["状态机",15],["生命周期",13],["状态流转",11],["终态",9],["等待态",8],["重试状态",8]]},{"id":"deployment-lifecycle","type":"lifecycle","proof":"deployment-lifecycle","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Deployment lifecycle","question":"What state is a release in, and what can happen next?","summary":"A deployment state model covering queued, building, verifying, approval, promotion, rollback, and terminal outcomes.","useWhen":"Release controllers, GitOps reconciliation, environment promotion, or deployment status APIs.","avoidWhen":"The question is the human/CI sequence of delivery actions rather than the deployment object state.","include":["queued and running states","verification and approval","promotion and rollback","success, failure, cancellation"],"prompt":"Use Archify lifecycle mode to model the deployment object. Show queued, building, verifying, waiting for approval, promoting, rolling back, and every terminal outcome. Label the events and guards that permit each transition.","en":{"title":"Deployment lifecycle","question":"What state is a release in, and what can happen next?","summary":"A deployment state model covering queued, building, verifying, approval, promotion, rollback, and terminal outcomes.","useWhen":"Release controllers, GitOps reconciliation, environment promotion, or deployment status APIs.","avoidWhen":"The question is the human/CI sequence of delivery actions rather than the deployment object state.","include":["queued and running states","verification and approval","promotion and rollback","success, failure, cancellation"],"prompt":"Use Archify lifecycle mode to model the deployment object. Show queued, building, verifying, waiting for approval, promoting, rolling back, and every terminal outcome. Label the events and guards that permit each transition."},"zh":{"title":"部署生命周期","question":"一次发布当前处于什么状态，下一步可能发生什么？","summary":"覆盖排队、构建、验证、审批、晋级、回滚和终态的部署状态模型。","useWhen":"适合发布控制器、GitOps 对账、环境晋级和部署状态 API。","avoidWhen":"如果重点是人员与 CI 的交付动作顺序，而不是部署对象状态，请用交付工作流。","include":["排队与执行态","验证与审批","晋级与回滚","成功、失败与取消"],"prompt":"用 Archify 生命周期模式建模部署对象。展示排队、构建、验证、等待审批、晋级、回滚以及所有终态，并标注允许每次状态转换的事件和守卫条件。"},"signals":[["deployment lifecycle",15],["release state",10],["promotion state",9],["approval status",8],["rollback state",10],["部署生命周期",15],["发布状态",10],["晋级",7],["审批状态",8],["回滚状态",10]]}]</script>
-  <script src="assets/site-language.js"></script>
-  <script>
+  <script id="guide-data" type="application/json">[{"id":"system-overview","type":"architecture","proof":"web-app","presentation":{"preset":"classic","motion":"static","views":"optional"},"title":"System overview","question":"What exists, who owns it, and how is it connected?","summary":"A bounded map of core components, external dependencies, primary paths, and trust boundaries.","useWhen":"Onboarding, design reviews, repository orientation, or explaining a service landscape.","avoidWhen":"The audience needs exact call order, state transitions, or row-level data lineage.","include":["8–12 core components","one primary path","external dependencies","trust boundaries"],"prompt":"Analyze this repository, then use Archify to create a high-level architecture diagram. Show 8–12 core runtime components, one primary request or data path, external dependencies, ownership or trust boundaries, and put supporting detail in cards instead of adding more edges.","en":{"title":"System overview","question":"What exists, who owns it, and how is it connected?","summary":"A bounded map of core components, external dependencies, primary paths, and trust boundaries.","useWhen":"Onboarding, design reviews, repository orientation, or explaining a service landscape.","avoidWhen":"The audience needs exact call order, state transitions, or row-level data lineage.","include":["8–12 core components","one primary path","external dependencies","trust boundaries"],"prompt":"Analyze this repository, then use Archify to create a high-level architecture diagram. Show 8–12 core runtime components, one primary request or data path, external dependencies, ownership or trust boundaries, and put supporting detail in cards instead of adding more edges."},"zh":{"title":"系统总览","question":"系统里有什么、归谁负责、彼此如何连接？","summary":"用一张有边界的图展示核心组件、外部依赖、主路径和信任边界。","useWhen":"适合新人上手、方案评审、仓库梳理和服务全景说明。","avoidWhen":"如果重点是精确调用顺序、状态流转或字段级血缘，请换其他配方。","include":["8–12 个核心组件","一条主路径","外部依赖","归属或信任边界"],"prompt":"分析这个仓库，然后用 Archify 生成高层系统架构图。展示 8–12 个核心运行时组件、一条主要请求或数据路径、外部依赖、归属或信任边界；支持性细节放进卡片，不要继续堆连线。"},"signals":[["system overview",12],["architecture",10],["components",6],["services",4],["repository",5],["trust boundary",8],["架构",10],["系统总览",12],["组件",6],["服务",4],["仓库",5],["信任边界",8]]},{"id":"deployment-ownership","type":"architecture","proof":"deployment-ownership","presentation":{"preset":"blueprint","motion":"trace","views":"recommended"},"title":"Deployment ownership","question":"Where does each workload run, and what crosses a boundary?","summary":"A deployment-focused map of regions, networks, clusters, workloads, stores, and cross-boundary mechanisms.","useWhen":"Cloud reviews, production readiness, multi-region planning, or infrastructure ownership handoffs.","avoidWhen":"Deployment facts are unknown or the real question is application behavior rather than placement.","include":["regions and networks","workload ownership","stateful services","named boundary crossings"],"prompt":"Use Archify to draw the production deployment topology. Group resources by region, network, cluster, and owner; show workloads and stateful services; label every cross-boundary mechanism. Do not invent deployment facts—mark unknown areas explicitly. If the user wants a fail-closed deployment review, ask before setting meta.engineering_profile to deployment-ownership; otherwise leave the engineering profile unset.","en":{"title":"Deployment ownership","question":"Where does each workload run, and what crosses a boundary?","summary":"A deployment-focused map of regions, networks, clusters, workloads, stores, and cross-boundary mechanisms.","useWhen":"Cloud reviews, production readiness, multi-region planning, or infrastructure ownership handoffs.","avoidWhen":"Deployment facts are unknown or the real question is application behavior rather than placement.","include":["regions and networks","workload ownership","stateful services","named boundary crossings"],"prompt":"Use Archify to draw the production deployment topology. Group resources by region, network, cluster, and owner; show workloads and stateful services; label every cross-boundary mechanism. Do not invent deployment facts—mark unknown areas explicitly. If the user wants a fail-closed deployment review, ask before setting meta.engineering_profile to deployment-ownership; otherwise leave the engineering profile unset."},"zh":{"title":"部署与归属","question":"每个工作负载运行在哪里，哪些连接跨越了边界？","summary":"围绕 Region、网络、集群、工作负载、存储和跨边界机制组织部署图。","useWhen":"适合云上评审、生产就绪、多区域规划和基础设施交接。","avoidWhen":"部署事实不清楚，或真正问题是应用行为而不是资源位置时不要使用。","include":["区域与网络","工作负载归属","有状态服务","明确的跨边界机制"],"prompt":"用 Archify 绘制生产部署拓扑。按区域、网络、集群和负责人分组，展示工作负载与有状态服务，并标注每一种跨边界机制。不要编造部署事实，不确定的区域要明确标出。如果用户需要失败即阻断的部署评审，先征得确认，再把 meta.engineering_profile 设为 deployment-ownership；否则不要启用工程画像。"},"signals":[["deployment topology",14],["region",7],["vpc",9],["cluster",6],["availability zone",8],["ownership",7],["cloud deployment",12],["部署拓扑",14],["区域",6],["集群",6],["可用区",8],["资源归属",9],["跨区",8]]},{"id":"agent-tool-call","type":"workflow","proof":"agent-tool-call","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Agent tool-call loop","question":"How does an agent plan, get permission, act, recover, and report?","summary":"A lane-based agent loop with policy gates, tool execution, exception recovery, evidence, and final response.","useWhen":"Explaining agent runtimes, MCP/tool orchestration, approvals, retries, or observability.","avoidWhen":"The goal is only to show static agent components or exact API message timing.","include":["request and planning","policy or approval gate","tool execution","exception and evidence paths"],"prompt":"Use Archify workflow mode to explain this agent tool-call loop. Separate user surface, agent runtime, policy boundary, exception handling, tool execution, and observability into lanes. Make the successful path primary and show approval, retry, blocked, and evidence paths explicitly.","en":{"title":"Agent tool-call loop","question":"How does an agent plan, get permission, act, recover, and report?","summary":"A lane-based agent loop with policy gates, tool execution, exception recovery, evidence, and final response.","useWhen":"Explaining agent runtimes, MCP/tool orchestration, approvals, retries, or observability.","avoidWhen":"The goal is only to show static agent components or exact API message timing.","include":["request and planning","policy or approval gate","tool execution","exception and evidence paths"],"prompt":"Use Archify workflow mode to explain this agent tool-call loop. Separate user surface, agent runtime, policy boundary, exception handling, tool execution, and observability into lanes. Make the successful path primary and show approval, retry, blocked, and evidence paths explicitly."},"zh":{"title":"智能体工具调用","question":"智能体如何规划、获批、执行、恢复并汇报？","summary":"用泳道表达策略门、工具执行、异常恢复、证据和最终回复。","useWhen":"适合解释 Agent Runtime、MCP/工具编排、审批、重试和可观测性。","avoidWhen":"如果只想看静态组件，或重点是精确 API 消息时序，请换其他配方。","include":["请求与规划","策略或审批门","工具执行","异常与证据路径"],"prompt":"用 Archify 工作流模式解释这段智能体工具调用。把用户界面、Agent Runtime、策略边界、异常处理、工具执行和可观测性分成泳道；突出成功主路径，并明确展示审批、重试、阻塞和证据路径。"},"signals":[["agent tool call",16],["tool call",12],["approval gate",10],["human in the loop",9],["mcp",7],["planner",6],["agent loop",10],["智能体工具调用",16],["工具调用",12],["审批门",10],["人在回路",9],["规划器",6],["智能体循环",10]]},{"id":"delivery-workflow","type":"workflow","proof":"delivery-workflow","presentation":{"preset":"classic","motion":"trace","views":"optional"},"title":"Delivery workflow","question":"How does a change move safely from commit to production?","summary":"A delivery flow with build, checks, environments, approvals, smoke tests, rollback, and ownership lanes.","useWhen":"CI/CD design, release reviews, deployment governance, or onboarding developers to delivery.","avoidWhen":"The question is where infrastructure runs or what states a deployment object can occupy.","include":["trigger and build","blocking checks","approval and environments","rollback and verification"],"prompt":"Use Archify workflow mode to draw this delivery process from commit to production. Separate developer, CI, approval, environment, and exception lanes; mark blocking checks, smoke tests, ownership, and the rollback path. Keep one unmistakable happy path.","en":{"title":"Delivery workflow","question":"How does a change move safely from commit to production?","summary":"A delivery flow with build, checks, environments, approvals, smoke tests, rollback, and ownership lanes.","useWhen":"CI/CD design, release reviews, deployment governance, or onboarding developers to delivery.","avoidWhen":"The question is where infrastructure runs or what states a deployment object can occupy.","include":["trigger and build","blocking checks","approval and environments","rollback and verification"],"prompt":"Use Archify workflow mode to draw this delivery process from commit to production. Separate developer, CI, approval, environment, and exception lanes; mark blocking checks, smoke tests, ownership, and the rollback path. Keep one unmistakable happy path."},"zh":{"title":"研发交付流程","question":"一次变更如何安全地从提交走到生产？","summary":"展示构建、检查、环境、审批、冒烟、回滚和负责人泳道。","useWhen":"适合 CI/CD 设计、发布评审、部署治理和研发新人上手。","avoidWhen":"如果重点是基础设施位置或部署对象的状态集合，请换架构图或生命周期图。","include":["触发与构建","阻断检查","审批与环境","回滚与验证"],"prompt":"用 Archify 工作流模式绘制从代码提交到生产发布的流程。拆分开发者、CI、审批、环境和异常泳道；标出阻断检查、冒烟测试、负责人和回滚路径，并保留一条一眼可见的成功主路径。"},"signals":[["ci/cd",14],["release workflow",14],["deployment pipeline",11],["pull request",7],["staging",7],["rollback",8],["发布流程",14],["流水线",9],["上线",7],["预发",7],["回滚",8],["审批发布",10]]},{"id":"incident-runbook","type":"workflow","proof":"incident-runbook","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Incident runbook","question":"How do responders detect, triage, mitigate, verify, and escalate?","summary":"An operational workflow that separates signals, responders, mitigation, communications, and recovery proof.","useWhen":"Incident playbooks, on-call handoffs, reliability reviews, and tabletop exercises.","avoidWhen":"The audience needs live metrics or a post-incident component topology instead of response actions.","include":["detection signal","triage owner","mitigation and rollback","verification and communication"],"prompt":"Use Archify workflow mode to turn this incident runbook into responder lanes. Show detection, triage, mitigation, escalation, communication, rollback, and recovery verification. Separate decision gates from actions and make missing ownership visible.","en":{"title":"Incident runbook","question":"How do responders detect, triage, mitigate, verify, and escalate?","summary":"An operational workflow that separates signals, responders, mitigation, communications, and recovery proof.","useWhen":"Incident playbooks, on-call handoffs, reliability reviews, and tabletop exercises.","avoidWhen":"The audience needs live metrics or a post-incident component topology instead of response actions.","include":["detection signal","triage owner","mitigation and rollback","verification and communication"],"prompt":"Use Archify workflow mode to turn this incident runbook into responder lanes. Show detection, triage, mitigation, escalation, communication, rollback, and recovery verification. Separate decision gates from actions and make missing ownership visible."},"zh":{"title":"事故处置 Runbook","question":"响应者如何发现、分诊、缓解、验证并升级？","summary":"把信号、响应者、缓解动作、沟通和恢复证据拆成可执行流程。","useWhen":"适合故障预案、On-call 交接、稳定性评审和桌面演练。","avoidWhen":"如果受众需要实时指标仪表盘或事故后的组件拓扑，而不是响应动作，请换其他视图。","include":["发现信号","分诊负责人","缓解与回滚","恢复验证与沟通"],"prompt":"用 Archify 工作流模式把事故处置预案画成响应者泳道。展示发现、分诊、缓解、升级、沟通、回滚和恢复验证；把决策门与操作分开，并让缺失的负责人清晰可见。"},"signals":[["incident response",15],["runbook",12],["outage",9],["triage",8],["mitigation",8],["escalation",7],["事故处置",15],["故障",9],["应急预案",12],["排障",9],["缓解",7],["升级响应",8]]},{"id":"api-request","type":"sequence","proof":"cache-miss","presentation":{"preset":"classic","motion":"trace","views":"optional"},"title":"API request chain","question":"Who calls whom, in what order, and what returns?","summary":"A time-ordered request path with authentication, cache fallback, persistence, return traffic, and async trace.","useWhen":"API documentation, debugging request latency, auth reviews, or explaining cache fallback.","avoidWhen":"Order is unimportant and the audience only needs the stable service topology.","include":["callers and callees","request and return messages","fallback or error path","async side effects"],"prompt":"Use Archify sequence mode to show this request from caller to final response. Include authentication, cache hit or miss, persistence fallback, return messages, and asynchronous trace or event emission. Keep message labels short and order unambiguous.","en":{"title":"API request chain","question":"Who calls whom, in what order, and what returns?","summary":"A time-ordered request path with authentication, cache fallback, persistence, return traffic, and async trace.","useWhen":"API documentation, debugging request latency, auth reviews, or explaining cache fallback.","avoidWhen":"Order is unimportant and the audience only needs the stable service topology.","include":["callers and callees","request and return messages","fallback or error path","async side effects"],"prompt":"Use Archify sequence mode to show this request from caller to final response. Include authentication, cache hit or miss, persistence fallback, return messages, and asynchronous trace or event emission. Keep message labels short and order unambiguous."},"zh":{"title":"API 请求链","question":"谁调用谁、顺序如何、最终返回什么？","summary":"按时间展示鉴权、缓存回退、持久化、返回流量和异步追踪。","useWhen":"适合 API 文档、请求耗时排查、鉴权评审和缓存回退说明。","avoidWhen":"如果顺序不重要，受众只需要稳定的服务拓扑，请用架构图。","include":["调用方与被调用方","请求与返回消息","回退或错误路径","异步副作用"],"prompt":"用 Archify 时序模式展示从调用方到最终响应的完整请求。包含鉴权、缓存命中或未命中、持久化回退、返回消息，以及异步 Trace 或事件上报；消息标签保持简短，顺序必须明确。"},"signals":[["api request",14],["request response",12],["call chain",11],["cache miss",13],["jwt",8],["who calls whom",12],["api 请求",14],["请求响应",12],["调用链",11],["缓存未命中",13],["谁调用谁",12],["鉴权链路",9]]},{"id":"async-roundtrip","type":"sequence","proof":"async-roundtrip","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Async roundtrip","question":"What happens after the initial request returns?","summary":"A sequence view of enqueue, acknowledgement, background work, callbacks, retries, timeout, and final consistency.","useWhen":"Webhooks, jobs, queues, payment callbacks, eventual consistency, or async API contracts.","avoidWhen":"The primary question is topic topology and consumer ownership rather than time order.","include":["initial acknowledgement","queue or scheduler","background work","callback, retry, and timeout"],"prompt":"Use Archify sequence mode to explain this asynchronous roundtrip. Show the initial acknowledgement, enqueue or scheduling step, background processing, callback or polling, retry and timeout behavior, and the point where the caller can observe final consistency.","en":{"title":"Async roundtrip","question":"What happens after the initial request returns?","summary":"A sequence view of enqueue, acknowledgement, background work, callbacks, retries, timeout, and final consistency.","useWhen":"Webhooks, jobs, queues, payment callbacks, eventual consistency, or async API contracts.","avoidWhen":"The primary question is topic topology and consumer ownership rather than time order.","include":["initial acknowledgement","queue or scheduler","background work","callback, retry, and timeout"],"prompt":"Use Archify sequence mode to explain this asynchronous roundtrip. Show the initial acknowledgement, enqueue or scheduling step, background processing, callback or polling, retry and timeout behavior, and the point where the caller can observe final consistency."},"zh":{"title":"异步往返链路","question":"初始请求返回之后，后台还会发生什么？","summary":"按时间展示入队、确认、后台处理、回调、重试、超时和最终一致。","useWhen":"适合 Webhook、后台任务、队列、支付回调、最终一致和异步 API 契约。","avoidWhen":"如果重点是 Topic 拓扑和消费者归属，而不是时间顺序，请用事件数据流配方。","include":["初始确认","队列或调度器","后台处理","回调、重试与超时"],"prompt":"用 Archify 时序模式解释这段异步往返链路。展示初始确认、入队或调度、后台处理、回调或轮询、重试与超时，以及调用方何时能观察到最终一致结果。"},"signals":[["async roundtrip",14],["webhook",10],["callback",10],["acknowledgement",8],["timeout",7],["retry message",8],["异步回调",14],["回调",10],["确认消息",8],["超时",7],["消息重试",9],["webhook",10]]},{"id":"data-lineage","type":"dataflow","proof":"product-analytics","presentation":{"preset":"classic","motion":"trace","views":"recommended"},"title":"Data lineage","question":"Where does data come from, how does it change, and who consumes it?","summary":"A governed path from sources through consent, transforms, sensitive stores, warehouse, and consumers.","useWhen":"Analytics architecture, ETL/ELT review, PII assessment, warehouse design, or model feature lineage.","avoidWhen":"The audience needs request timing or operational task ownership rather than data assets.","include":["sources and assets","transform stages","classification or consent","stores and consumers"],"prompt":"Use Archify dataflow mode to map this data lineage. Name every data asset and transform, show consent or classification boundaries, distinguish streaming from batch paths, and identify stores plus downstream consumers. Do not use unlabeled flows.","en":{"title":"Data lineage","question":"Where does data come from, how does it change, and who consumes it?","summary":"A governed path from sources through consent, transforms, sensitive stores, warehouse, and consumers.","useWhen":"Analytics architecture, ETL/ELT review, PII assessment, warehouse design, or model feature lineage.","avoidWhen":"The audience needs request timing or operational task ownership rather than data assets.","include":["sources and assets","transform stages","classification or consent","stores and consumers"],"prompt":"Use Archify dataflow mode to map this data lineage. Name every data asset and transform, show consent or classification boundaries, distinguish streaming from batch paths, and identify stores plus downstream consumers. Do not use unlabeled flows."},"zh":{"title":"数据血缘","question":"数据从哪里来、如何变化、最终被谁消费？","summary":"从来源经过同意、转换、敏感存储、数仓直到消费者的治理路径。","useWhen":"适合分析架构、ETL/ELT 评审、PII 评估、数仓设计和特征血缘。","avoidWhen":"如果受众需要请求时序或操作负责人，而不是数据资产，请换其他配方。","include":["数据来源与资产","转换阶段","分类或同意边界","存储与消费者"],"prompt":"用 Archify 数据流模式梳理这段数据血缘。为每个数据资产和转换命名，展示用户同意或数据分类边界，区分流式与批处理路径，并标明存储和下游消费者；所有数据流都必须有标签。"},"signals":[["data lineage",15],["etl",12],["warehouse",9],["pii",11],["governance",9],["analytics pipeline",12],["数据血缘",15],["数据管道",11],["数仓",9],["治理",9],["隐私数据",10],["用户同意",9]]},{"id":"event-stream","type":"dataflow","proof":"event-stream","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Event-stream topology","question":"Which events move through which topics, processors, groups, and failure paths?","summary":"A stream map of producers, topics, ordered processors, consumer groups, state, replay, and DLQ.","useWhen":"Kafka/event-platform design, stream processing reviews, ownership, replay, and failure handling.","avoidWhen":"Topic names, consumer groups, and delivery semantics are not known—use a generic workflow instead.","include":["producers and event names","topics and ordering","processors and consumer groups","state, replay, and DLQ"],"prompt":"Use Archify dataflow mode to draw this event-stream topology. Name producers, events, topics, ordered processors, consumer groups, state stores, replay paths, and the DLQ. Show ownership and delivery semantics only when supported by evidence.","en":{"title":"Event-stream topology","question":"Which events move through which topics, processors, groups, and failure paths?","summary":"A stream map of producers, topics, ordered processors, consumer groups, state, replay, and DLQ.","useWhen":"Kafka/event-platform design, stream processing reviews, ownership, replay, and failure handling.","avoidWhen":"Topic names, consumer groups, and delivery semantics are not known—use a generic workflow instead.","include":["producers and event names","topics and ordering","processors and consumer groups","state, replay, and DLQ"],"prompt":"Use Archify dataflow mode to draw this event-stream topology. Name producers, events, topics, ordered processors, consumer groups, state stores, replay paths, and the DLQ. Show ownership and delivery semantics only when supported by evidence."},"zh":{"title":"事件流拓扑","question":"哪些事件经过哪些 Topic、处理器、消费者组和失败路径？","summary":"展示生产者、Topic、有序处理器、消费者组、状态、重放和 DLQ。","useWhen":"适合 Kafka/事件平台设计、流处理评审、归属、重放和失败处理。","avoidWhen":"如果 Topic、消费者组和投递语义都不清楚，请先用通用工作流，不要编造事件拓扑。","include":["生产者与事件名","Topic 与顺序","处理器与消费者组","状态、重放与 DLQ"],"prompt":"用 Archify 数据流模式绘制这段事件流拓扑。命名生产者、事件、Topic、有序处理器、消费者组、状态存储、重放路径和 DLQ；只有在证据充分时才标注归属和投递语义。"},"signals":[["event stream",15],["kafka topology",14],["topic",8],["consumer group",11],["dead letter",10],["dlq",10],["事件流",15],["kafka 拓扑",14],["主题",7],["消费者组",11],["死信",10],["事件地铁图",12]]},{"id":"object-lifecycle","type":"lifecycle","proof":"agent-run","presentation":{"preset":"classic","motion":"trace","views":"optional"},"title":"Object lifecycle","question":"Which states exist, what events move between them, and how does it end?","summary":"A state model with active work, waits, retries, cancellation, failure, and explicit terminal outcomes.","useWhen":"Tasks, orders, tickets, subscriptions, jobs, agent runs, or any durable object with status.","avoidWhen":"The object has no durable state and the real question is participant interaction over time.","include":["start and active states","event-labelled transitions","wait and retry states","all terminal outcomes"],"prompt":"Use Archify lifecycle mode to model this object. Separate main progress, waiting or interruption states, and terminal outcomes. Label transitions with events, include retry, cancellation, timeout, success, and failure where real, and never hide an ending.","en":{"title":"Object lifecycle","question":"Which states exist, what events move between them, and how does it end?","summary":"A state model with active work, waits, retries, cancellation, failure, and explicit terminal outcomes.","useWhen":"Tasks, orders, tickets, subscriptions, jobs, agent runs, or any durable object with status.","avoidWhen":"The object has no durable state and the real question is participant interaction over time.","include":["start and active states","event-labelled transitions","wait and retry states","all terminal outcomes"],"prompt":"Use Archify lifecycle mode to model this object. Separate main progress, waiting or interruption states, and terminal outcomes. Label transitions with events, include retry, cancellation, timeout, success, and failure where real, and never hide an ending."},"zh":{"title":"对象生命周期","question":"有哪些状态、什么事件触发流转、最终如何结束？","summary":"展示执行、等待、重试、取消、失败以及明确终态的状态模型。","useWhen":"适合任务、订单、工单、订阅、作业、Agent Run 等带持久状态的对象。","avoidWhen":"对象没有持久状态，真正问题是参与者随时间的交互时，请使用时序图。","include":["开始与执行态","带事件的转换","等待与重试态","所有终态"],"prompt":"用 Archify 生命周期模式建模这个对象。分开主进度、等待或中断状态和终态；用事件标注转换，并在真实存在时展示重试、取消、超时、成功和失败，不能隐藏任何结束方式。"},"signals":[["state machine",15],["object lifecycle",14],["status transition",11],["terminal state",9],["retry state",8],["状态机",15],["生命周期",13],["状态流转",11],["终态",9],["等待态",8],["重试状态",8]]},{"id":"deployment-lifecycle","type":"lifecycle","proof":"deployment-lifecycle","presentation":{"preset":"signal-flow","motion":"trace","views":"recommended"},"title":"Deployment lifecycle","question":"What state is a release in, and what can happen next?","summary":"A deployment state model covering queued, building, verifying, approval, promotion, rollback, and terminal outcomes.","useWhen":"Release controllers, GitOps reconciliation, environment promotion, or deployment status APIs.","avoidWhen":"The question is the human/CI sequence of delivery actions rather than the deployment object state.","include":["queued and running states","verification and approval","promotion and rollback","success, failure, cancellation"],"prompt":"Use Archify lifecycle mode to model the deployment object. Show queued, building, verifying, waiting for approval, promoting, rolling back, and every terminal outcome. Label the events and guards that permit each transition.","en":{"title":"Deployment lifecycle","question":"What state is a release in, and what can happen next?","summary":"A deployment state model covering queued, building, verifying, approval, promotion, rollback, and terminal outcomes.","useWhen":"Release controllers, GitOps reconciliation, environment promotion, or deployment status APIs.","avoidWhen":"The question is the human/CI sequence of delivery actions rather than the deployment object state.","include":["queued and running states","verification and approval","promotion and rollback","success, failure, cancellation"],"prompt":"Use Archify lifecycle mode to model the deployment object. Show queued, building, verifying, waiting for approval, promoting, rolling back, and every terminal outcome. Label the events and guards that permit each transition."},"zh":{"title":"部署生命周期","question":"一次发布当前处于什么状态，下一步可能发生什么？","summary":"覆盖排队、构建、验证、审批、晋级、回滚和终态的部署状态模型。","useWhen":"适合发布控制器、GitOps 对账、环境晋级和部署状态 API。","avoidWhen":"如果重点是人员与 CI 的交付动作顺序，而不是部署对象状态，请用交付工作流。","include":["排队与执行态","验证与审批","晋级与回滚","成功、失败与取消"],"prompt":"用 Archify 生命周期模式建模部署对象。展示排队、构建、验证、等待审批、晋级、回滚以及所有终态，并标注允许每次状态转换的事件和守卫条件。"},"signals":[["deployment lifecycle",15],["release state",10],["promotion state",9],["approval status",8],["rollback state",10],["部署生命周期",15],["发布状态",10],["晋级",7],["审批状态",8],["回滚状态",10]]}]</script><script src="assets/site-language.js"></script><script>
+  /* ══════════════════════════════════════
+     POLISH (shared) — spotlight, reveals, count-up, tilt.
+     Zero dependencies; safe on every site page.
+  ══════════════════════════════════════ */
+  (function () {
+    'use strict';
+    var reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var finePointer = matchMedia('(pointer: fine)').matches;
+
+    /* Spotlight — cursor-tracked glow on .spot cards */
+    if (finePointer && !reducedMotion) {
+      var spotEl = null, spotX = 0, spotY = 0, spotRaf = 0;
+      document.addEventListener('pointermove', function (e) {
+        spotEl = e.target.closest ? e.target.closest('.spot') : null;
+        spotX = e.clientX; spotY = e.clientY;
+        if (!spotRaf) spotRaf = requestAnimationFrame(function () {
+          spotRaf = 0;
+          if (!spotEl) return;
+          var r = spotEl.getBoundingClientRect();
+          spotEl.style.setProperty('--mx', (spotX - r.left) + 'px');
+          spotEl.style.setProperty('--my', (spotY - r.top) + 'px');
+        });
+      }, { passive: true });
+    }
+
+    /* Reveal — .fade-up gains .visible once, on approach */
+    var revealObs = null;
+    if ('IntersectionObserver' in window) {
+      revealObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) { entry.target.classList.add('visible'); revealObs.unobserve(entry.target); }
+        });
+      }, { threshold: .12, rootMargin: '0px 0px -40px 0px' });
+    }
+    function observe(el) {
+      if (revealObs) revealObs.observe(el); else el.classList.add('visible');
+    }
+    document.querySelectorAll('.fade-up').forEach(observe);
+    window.ArchifyPolish = { observe: observe, reducedMotion: reducedMotion };
+
+    /* Count-up — [data-count] numbers animate once when they enter view */
+    var nums = document.querySelectorAll('[data-count]');
+    if (nums.length && !reducedMotion && 'IntersectionObserver' in window) {
+      var nObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          nObs.unobserve(en.target);
+          var el = en.target;
+          var end = +el.dataset.count, pad = +(el.dataset.pad || 0);
+          var t0 = performance.now(), dur = 1100;
+          var tick = function (t) {
+            var p = Math.min((t - t0) / dur, 1);
+            el.textContent = String(Math.round(end * (1 - Math.pow(1 - p, 3)))).padStart(pad, '0');
+            if (p < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        });
+      }, { threshold: .5 });
+      nums.forEach(function (n) { n.textContent = '0'.repeat(+n.dataset.pad || 1); nObs.observe(n); });
+    }
+
+    /* Tilt — [data-tilt] leans slightly toward the cursor inside [data-tilt-scope] (or its parent) */
+    if (finePointer && !reducedMotion) {
+      document.querySelectorAll('[data-tilt]').forEach(function (plate) {
+        var scope = plate.closest('[data-tilt-scope]') || plate.parentElement;
+        if (!scope) return;
+        var tx = 0, ty = 0, cx = 0, cy = 0, tiltRaf = 0;
+        var loop = function () {
+          cx += (tx - cx) * .08; cy += (ty - cy) * .08;
+          if (Math.abs(tx - cx) < .005 && Math.abs(ty - cy) < .005) {
+            tiltRaf = 0;
+            if (tx === 0 && ty === 0) plate.style.transform = '';
+            return;
+          }
+          plate.style.transform = 'perspective(1400px) rotateY(' + cx + 'deg) rotateX(' + cy + 'deg)';
+          tiltRaf = requestAnimationFrame(loop);
+        };
+        scope.addEventListener('pointermove', function (e) {
+          var r = plate.getBoundingClientRect();
+          tx = Math.max(-1.4, Math.min(1.4, ((e.clientX - (r.left + r.width / 2)) / r.width) * 2.4));
+          ty = Math.max(-1.2, Math.min(1.2, -((e.clientY - (r.top + r.height / 2)) / r.height) * 2.4));
+          if (!tiltRaf) tiltRaf = requestAnimationFrame(loop);
+        }, { passive: true });
+        scope.addEventListener('pointerleave', function () {
+          tx = 0; ty = 0;
+          if (!tiltRaf) tiltRaf = requestAnimationFrame(loop);
+        });
+      });
+    }
+  })();
+
+  /* ══ L2: crosshair, scroll progress, scramble, magnetic ══ */
+  (function () {
+    'use strict';
+    var reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var finePointer = matchMedia('(pointer: fine)').matches;
+
+    /* Crosshair + coordinate readout — drafting instrument cursor */
+    if (finePointer && !reducedMotion) {
+      var cx = document.createElement('div'), cy = document.createElement('div'), cr = document.createElement('div');
+      cx.className = 'crosshair crosshair-x'; cy.className = 'crosshair crosshair-y'; cr.className = 'crosshair-read';
+      document.body.appendChild(cx); document.body.appendChild(cy); document.body.appendChild(cr);
+      var glow = document.createElement('div');
+      glow.className = 'grid-glow';
+      glow.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(glow);
+      var px = 0, py = 0, chRaf = 0;
+      document.addEventListener('pointermove', function (e) {
+        px = e.clientX; py = e.clientY;
+        document.body.classList.add('has-crosshair');
+        if (!chRaf) chRaf = requestAnimationFrame(function () {
+          chRaf = 0;
+          cx.style.transform = 'translateY(' + py + 'px)';
+          cy.style.transform = 'translateX(' + px + 'px)';
+          glow.style.setProperty('--gx', px + 'px');
+          glow.style.setProperty('--gy', py + 'px');
+          var lx = Math.min(px + 16, innerWidth - 150), ly = Math.min(py + 18, innerHeight - 30);
+          cr.style.transform = 'translate(' + lx + 'px,' + ly + 'px)';
+          cr.textContent = 'x:' + String(px).padStart(4, '0') + ' y:' + String(py).padStart(4, '0') + (hoverTag ? '  ·  ' + hoverTag : '');
+        });
+      }, { passive: true });
+      var hoverTag = '';
+      document.addEventListener('pointerover', function (e) {
+        var t = e.target && e.target.closest ? e.target.closest('a,button,[role="button"],iframe') : null;
+        document.body.classList.toggle('crosshair-on', !!t);
+        if (t) {
+          var label = (t.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 22);
+          hoverTag = t.tagName === 'IFRAME' ? 'live doc' : (label || t.tagName.toLowerCase());
+        } else hoverTag = '';
+      }, { passive: true });
+      document.addEventListener('mouseleave', function () { document.body.classList.remove('has-crosshair'); });
+      document.addEventListener('pointerdown', function () { document.body.classList.add('has-crosshair'); });
+    }
+
+    /* Scroll progress line */
+    var bar = document.createElement('div');
+    bar.className = 'scroll-progress';
+    document.body.appendChild(bar);
+    var progRaf = 0;
+    var setProgress = function () {
+      progRaf = 0;
+      var max = document.documentElement.scrollHeight - innerHeight;
+      bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(scrollY / max, 1) : 0) + ')';
+      document.body.classList.toggle('nav-scrolled', scrollY > 24);
+    };
+    addEventListener('scroll', function () { if (!progRaf) progRaf = requestAnimationFrame(setProgress); }, { passive: true });
+    setProgress();
+
+    /* Scramble — mono labels decode when they enter view */
+    var GLYPHS = '▚▞▛░▒<>/=+*·_';
+    var scramble = function (el) {
+      if (el._scrambling) return;
+      el._scrambling = true;
+      var text = el.dataset.scrambled || el.textContent;
+      var language = document.documentElement.lang;
+      var t0 = performance.now();
+      var frame = function (t) {
+        // Language handlers replace localized labels; untranslated words still need to finish.
+        if (document.documentElement.lang !== language && el.matches('[data-i18n], [data-en][data-zh]')) { el._scrambling = false; return; }
+        var p = Math.min((t - t0) / 520, 1);
+        var n = Math.floor(p * text.length);
+        el.textContent = text.slice(0, n) + text.slice(n).replace(/[^\s]/g, function () { return GLYPHS[(Math.random() * GLYPHS.length) | 0]; });
+        if (p < 1) requestAnimationFrame(frame); else { el.textContent = text; el._scrambling = false; }
+      };
+      requestAnimationFrame(frame);
+    };
+    if (!reducedMotion && 'IntersectionObserver' in window) {
+      var sObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { sObs.unobserve(en.target); scramble(en.target); }
+        });
+      }, { threshold: .6 });
+      document.querySelectorAll('.section-label, .lead-label, .rail-label, .export-label-row, .shortcut-title, .card-kicker, .mini-heading, .controls-note, .type-label span, .type-label strong, .panel-kicker span, .agent-picker-head span, .footer-word').forEach(function (el) {
+        if (el.children.length === 0 && el.textContent.trim()) sObs.observe(el);
+      });
+    }
+
+    /* Typed line — [data-typed] with "|" items, zh via data-typed-zh; re-runs on lang flip */
+    document.querySelectorAll('[data-typed]').forEach(function (el) {
+      var target = el.querySelector('.typed-text') || el;
+      var timer = 0;
+      var items = function () {
+        var zh = /^zh/.test(document.documentElement.lang || '');
+        var raw = (zh && el.dataset.typedZh) || el.dataset.typed || '';
+        return raw.split('|').map(function (x) { return x.trim(); }).filter(Boolean);
+      };
+      var run = function () {
+        clearTimeout(timer);
+        var list = items();
+        if (!list.length) return;
+        if (reducedMotion) { target.textContent = list[0]; return; }
+        var i = 0, pos = 0, dir = 1;
+        var tick = function () {
+          var str = list[i % list.length];
+          pos += dir;
+          target.textContent = str.slice(0, Math.max(0, pos));
+          var wait = dir > 0 ? 46 : 15;
+          if (dir > 0 && pos >= str.length) { dir = -1; wait = 2000; }
+          else if (dir < 0 && pos <= 0) { dir = 1; i++; wait = 420; }
+          timer = setTimeout(tick, wait);
+        };
+        tick();
+      };
+      run();
+      new MutationObserver(function (muts) {
+        muts.forEach(function (m) { if (m.attributeName === 'lang') run(); });
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+    });
+
+    /* Nav links decode on hover */
+    if (finePointer && !reducedMotion) {
+      document.querySelectorAll('.nav-link').forEach(function (link) {
+        link.addEventListener('pointerenter', function () { scramble(link); });
+      });
+    }
+
+    /* Sheet marks — fixed margin annotations; right one tracks scroll depth */
+    (function () {
+      var mkL = document.createElement('div'), mkR = document.createElement('div');
+      mkL.className = 'sheet-mark sheet-mark-l'; mkR.className = 'sheet-mark sheet-mark-r';
+      mkL.setAttribute('aria-hidden', 'true'); mkR.setAttribute('aria-hidden', 'true');
+      mkL.textContent = 'ARCHIFY · FIELD SHEET';
+      document.body.appendChild(mkL); document.body.appendChild(mkR);
+      var markRaf = 0;
+      var setMark = function () {
+        markRaf = 0;
+        mkR.textContent = 'Y·' + String(Math.round(scrollY)).padStart(5, '0') + 'PX';
+      };
+      addEventListener('scroll', function () { if (!markRaf) markRaf = requestAnimationFrame(setMark); }, { passive: true });
+      setMark();
+    })();
+
+    /* Word-split reveal — [data-split] headings materialize word by word (CJK per char) */
+    (function () {
+      var splitWords = function (el) {
+        if (el.querySelector('.w')) return;
+        var wi = 0;
+        var walk = function (node) {
+          Array.prototype.slice.call(node.childNodes).forEach(function (n) {
+            if (n.nodeType === 3) {
+              var frag = document.createDocumentFragment();
+              n.textContent.split(/(\s+|[\u3400-\u9fff\uf900-\ufaff])/g).forEach(function (tok) {
+                if (!tok) return;
+                if (/^\s+$/.test(tok)) { frag.appendChild(document.createTextNode(tok)); return; }
+                var w = document.createElement('span');
+                w.className = 'w';
+                w.style.setProperty('--wi', wi++);
+                w.textContent = tok;
+                frag.appendChild(w);
+              });
+              node.replaceChild(frag, n);
+            } else if (n.nodeType === 1 && n.tagName !== 'BR') walk(n);
+          });
+        };
+        walk(el);
+      };
+      var splitAll = function () { document.querySelectorAll('[data-split]').forEach(splitWords); };
+      splitAll();
+      new MutationObserver(splitAll).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+    })();
+
+    /* Magnetic — primary actions lean toward the cursor */
+    if (finePointer && !reducedMotion) {
+      document.querySelectorAll('.btn-primary, .cta-install, .action-primary').forEach(function (btn) {
+        btn.addEventListener('pointermove', function (e) {
+          var r = btn.getBoundingClientRect();
+          var dx = Math.max(-3, Math.min(3, (e.clientX - (r.left + r.width / 2)) * .1));
+          var dy = Math.max(-3, Math.min(3, (e.clientY - (r.top + r.height / 2)) * .16));
+          btn.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+        });
+        btn.addEventListener('pointerleave', function () { btn.style.transform = ''; });
+      });
+    }
+  })();
+</script><script>
     (function () {
       'use strict';
       var recipes = JSON.parse(document.getElementById('guide-data').textContent);
@@ -253,13 +742,13 @@
       var lastRecipe = null;
       var copy = {
         en: {
-          navGuide:'Guide',navProof:'Proof Lab',navStart:'Start',navInstall:'Install Skill',versionLabel:'Scenario guide / development / v2.17.0-dev.1',eyebrow:'Question-first diagramming', headline:'Choose the question.<br>Get the <em>right diagram.</em>', lede:'Describe what your audience needs to understand. Archify recommends one bounded visual recipe—plus the evidence it must contain, when not to use it, and a prompt you can copy.',
-          metricRecipes:'real-world<br>recipes',metricModes:'typed diagram<br>modes',metricRuntime:'runtime<br>dependencies',chooserTitle:'What must the diagram explain?',chooserBody:'Write a situation, not a diagram type. Specific system facts produce a stronger recommendation.',placeholder:'Example: Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing.',recommend:'Recommend a recipe →',clear:'Clear',libraryEyebrow:'Recipe library',libraryTitle:'Eleven small, opinionated starting points.',libraryBody:'Each recipe answers one technical question. That boundary keeps the result legible, reviewable, and honest about missing evidence.',footerLeft:'Generated from the same recipe source as the Archify CLI.',all:'All recipes',recommended:'Recommended recipe',use:'Use when',avoid:'Avoid when',must:'Evidence to include',presentation:'Presentation',prompt:'Copy-ready prompt',copyPrompt:'Copy prompt',copied:'Copied',alternatives:'Other possible fits:',confidence:'confidence',open:'Open recipe',proofReady:'Verified proof',proofLink:'Open verified example ↗',
+          navGuide:'Guide',navProof:'Proof Lab',navStart:'Start',navInstall:'Install Skill',versionLabel:'Scenario guide / development / v2.17.0-dev.1',eyebrow:'Question-first diagramming', headline:'Choose the question.<br>Get the <em>right diagram.</em>', lede:'Describe what your audience needs to understand. Get one bounded recipe — evidence, anti-patterns, a copy-ready prompt.',
+          metricRecipes:'real-world<br>recipes',metricModes:'typed diagram<br>modes',metricRuntime:'runtime<br>dependencies',chooserTitle:'What must the diagram explain?',chooserBody:'Write a situation, not a diagram type.',placeholder:'Example: Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing.',recommend:'Recommend a recipe →',clear:'Clear',libraryEyebrow:'Recipe library',libraryTitle:'Eleven small, opinionated starting points.',libraryBody:'Each recipe answers one question — bounded, legible, honest about missing evidence.',footerLeft:'Generated from the same recipe source as the Archify CLI.',all:'All recipes',recommended:'Recommended recipe',use:'Use when',avoid:'Avoid when',must:'Evidence to include',presentation:'Presentation',prompt:'Copy-ready prompt',copyPrompt:'Copy prompt',copied:'Copied',alternatives:'Other possible fits:',confidence:'confidence',open:'Open recipe',proofReady:'Verified proof',proofLink:'Open verified example ↗',
           samples:[['API + cache miss','Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing.'],['Kafka + DLQ','Map Kafka topics, ordered processors, consumer groups, replay, state stores, and the dead-letter queue.'],['Incident response','Show how responders detect, triage, mitigate, escalate, communicate, and verify recovery.']]
         },
         zh: {
-          navGuide:'场景指南',navProof:'验证作品集',navStart:'快速上手',navInstall:'安装技能',versionLabel:'场景指南 / 开发版 / v2.17.0-dev.1',eyebrow:'先问题，后图表',headline:'先选对问题，<br>再得到<em>对的图。</em>',lede:'描述受众真正需要理解的内容。Archify 会推荐一个有边界的视觉配方，同时给出证据清单、禁用条件和可复制提示词。',
-          metricRecipes:'个真实场景<br>配方',metricModes:'种类型化<br>图表模式',metricRuntime:'个运行时<br>依赖',chooserTitle:'这张图必须解释什么？',chooserBody:'写清场景，不要只写图表类型。系统事实越具体，推荐越可靠。',placeholder:'例如：展示带 JWT 鉴权、Redis 缓存未命中、数据库回退和异步追踪的 API 请求。',recommend:'推荐配方 →',clear:'清空',libraryEyebrow:'配方库',libraryTitle:'十一个小而专的起点。',libraryBody:'每个配方只回答一个技术问题。清晰的边界让图更易读、可评审，也不会掩盖证据缺口。',footerLeft:'网页与 Archify CLI 使用同一份配方数据生成。',all:'全部配方',recommended:'推荐配方',use:'适合',avoid:'不要这样用',must:'必须包含的证据',presentation:'表现建议',prompt:'可直接复制的提示词',copyPrompt:'复制提示词',copied:'已复制',alternatives:'其他可能：',confidence:'置信度',open:'打开配方',proofReady:'已验证成品',proofLink:'打开验证成品 ↗',
+          navGuide:'场景指南',navProof:'验证作品集',navStart:'快速上手',navInstall:'安装技能',versionLabel:'场景指南 / 开发版 / v2.17.0-dev.1',eyebrow:'先问题，后图表',headline:'先选对问题，<br>再得到<em>对的图。</em>',lede:'描述受众需要理解的内容，得到一个有边界的配方——证据清单、禁用条件和可复制的提示词。',
+          metricRecipes:'个真实场景<br>配方',metricModes:'种类型化<br>图表模式',metricRuntime:'个运行时<br>依赖',chooserTitle:'这张图必须解释什么？',chooserBody:'写清场景，不要只写图表类型。',placeholder:'例如：展示带 JWT 鉴权、Redis 缓存未命中、数据库回退和异步追踪的 API 请求。',recommend:'推荐配方 →',clear:'清空',libraryEyebrow:'配方库',libraryTitle:'十一个小而专的起点。',libraryBody:'每个配方只回答一个问题——有边界、易读、不掩盖证据缺口。',footerLeft:'网页与 Archify CLI 使用同一份配方数据生成。',all:'全部配方',recommended:'推荐配方',use:'适合',avoid:'不要这样用',must:'必须包含的证据',presentation:'表现建议',prompt:'可直接复制的提示词',copyPrompt:'复制提示词',copied:'已复制',alternatives:'其他可能：',confidence:'置信度',open:'打开配方',proofReady:'已验证成品',proofLink:'打开验证成品 ↗',
           samples:[['API + 缓存未命中','展示带 JWT 鉴权、Redis 缓存未命中、数据库回退和异步追踪的 API 请求。'],['Kafka + 死信','梳理 Kafka Topic、有序处理器、消费者组、重放、状态存储和死信队列。'],['事故处置','展示响应者如何发现、分诊、缓解、升级、沟通并验证恢复。']]
         }
       };
@@ -290,9 +779,9 @@
       }
       function renderCards() {
         var visible = recipes.filter(function (recipe) { return activeType === 'all' || recipe.type === activeType; });
-        document.getElementById('cards').innerHTML = visible.map(function (raw) {
+        document.getElementById('cards').innerHTML = visible.map(function (raw, index) {
           var recipe = local(raw);
-          return '<button class="card" type="button" data-recipe="'+recipe.id+'" style="--type-color:'+colors[recipe.type]+'"><span class="card-type">'+escapeHtml(recipe.type)+'</span><h3>'+escapeHtml(recipe.title)+'</h3><p class="card-question">'+escapeHtml(recipe.question)+'</p><p class="card-summary">'+escapeHtml(recipe.summary)+'</p><span class="card-foot"><span>'+escapeHtml(recipe.presentation.preset)+' · '+escapeHtml(recipe.presentation.motion)+'</span><span>'+escapeHtml(recipe.proof ? t('proofReady') : t('open'))+' ↗</span></span></button>';
+          return '<button class="card spot" type="button" data-recipe="'+recipe.id+'" style="--type-color:'+colors[recipe.type]+';--i:'+index+'"><span class="card-type">'+escapeHtml(recipe.type)+'</span><h3>'+escapeHtml(recipe.title)+'</h3><p class="card-question">'+escapeHtml(recipe.question)+'</p><p class="card-summary">'+escapeHtml(recipe.summary)+'</p><span class="card-foot"><span>'+escapeHtml(recipe.presentation.preset)+' · '+escapeHtml(recipe.presentation.motion)+'</span><span>'+escapeHtml(recipe.proof ? t('proofReady') : t('open'))+' ↗</span></span></button>';
         }).join('');
       }
       function renderResult(rawRecipe, confidence, alternatives) {
@@ -343,6 +832,5 @@
       document.getElementById('result').addEventListener('click',function (event) { if (event.target.id === 'copy-prompt') copyPrompt(); var alt=event.target.closest('[data-alt]'); if (alt) renderResult(recipes.find(function (item) { return item.id === alt.dataset.alt; }),'selected',[]); });
       applyLanguage(language);
     }());
-  </script>
-</body>
+</script></body>
 </html>

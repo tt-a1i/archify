@@ -1,0 +1,191 @@
+
+    /* ══════════════════════════════════════
+       POLISH (shared) — spotlight, mask reveals, wash,
+       sheen, trace routes, scroll drift. Loaded before page CSS.
+    ══════════════════════════════════════ */
+
+    /* section anchors clear the fixed nav */
+    section[id] { scroll-margin-top:4.75rem; }
+
+    /* FADE-UP — universal develop-in reveal; IntersectionObserver adds .visible */
+    .fade-up { opacity:0; transform:translateY(18px); filter:blur(6px); transition:opacity .9s var(--ease-out),transform .9s var(--ease-out),filter .9s var(--ease-out); }
+    .fade-up.visible { opacity:1; transform:translateY(0); filter:blur(0); }
+    .fade-up.d1 { transition-delay:.08s; } .fade-up.d2 { transition-delay:.16s; }
+    .fade-up.d3 { transition-delay:.24s; } .fade-up.d4 { transition-delay:.32s; }
+    .fade-up.d5 { transition-delay:.4s; }
+
+    /* MASK REVEAL — blocks wipe upward instead of plain fade.
+       mask-image (not clip-path) keeps IntersectionObserver geometry intact. */
+    .fade-up.mask {
+      -webkit-mask-image:linear-gradient(to top,transparent 42%,black 58%);
+      mask-image:linear-gradient(to top,transparent 42%,black 58%);
+      -webkit-mask-size:100% 260%; mask-size:100% 260%;
+      -webkit-mask-position:0 100%; mask-position:0 100%;
+      -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+      transition:opacity .9s var(--ease-out),transform .9s var(--ease-out),filter .9s var(--ease-out),-webkit-mask-position 1.05s var(--ease-out),mask-position 1.05s var(--ease-out);
+    }
+    .fade-up.mask.visible { -webkit-mask-position:0 0%; mask-position:0 0%; }
+
+    /* HEADLINE WASH — accent mark develops behind italic ems of revealed h1s */
+    h1.fade-up em { background-image:linear-gradient(100deg,rgba(225,74,14,.16),rgba(225,74,14,.16)); background-repeat:no-repeat; background-position:0 94%; background-size:0% 32%; padding:0 .05em; transition:background-size 1.1s var(--ease-out) .55s; }
+    h1.fade-up.visible em { background-size:100% 32%; }
+
+    /* SPOTLIGHT — cursor-tracked accent glow on cards (JS sets --mx/--my) */
+    .spot { position:relative; }
+    .spot::before { content:''; position:absolute; inset:0; z-index:1; border-radius:inherit; pointer-events:none; opacity:0; transition:opacity .35s var(--ease-out);
+      background:radial-gradient(230px circle at var(--mx,50%) var(--my,50%), rgba(225,74,14,.09), transparent 65%); }
+    .spot:hover::before { opacity:1; }
+    .spot.strong::before { background:radial-gradient(230px circle at var(--mx,50%) var(--my,50%), rgba(225,74,14,.28), transparent 65%); }
+
+    /* SHEEN — light sweep across solid primary actions */
+    .btn-primary, .cta-install, .action-primary, button.primary, .card-link.primary { position:relative; overflow:hidden; }
+    .btn-primary::after, .cta-install::after, .action-primary::after, button.primary::after, .card-link.primary::after { content:''; position:absolute; inset:0; pointer-events:none;
+      background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.22) 50%,transparent 65%);
+      transform:translateX(-135%); transition:transform .7s var(--ease-out); }
+    .btn-primary:hover::after, .cta-install:hover::after, .action-primary:hover::after, button.primary:hover::after, .card-link.primary:hover::after { transform:translateX(135%); }
+
+    /* TRACE FIELD — faint drafted routes with traveling signal packets (TraceField.astro) */
+    .hero, .lead { position:relative; overflow:clip; }
+    .hero-trace { position:absolute; inset:0; z-index:0; width:100%; height:100%; pointer-events:none;
+      -webkit-mask-image:radial-gradient(ellipse 120% 62% at 18% 8%, black 30%, transparent 78%);
+      mask-image:radial-gradient(ellipse 120% 62% at 18% 8%, black 30%, transparent 78%); }
+    .hero-trace ~ * { position:relative; z-index:1; }
+    /* routes draw themselves on load, then packets start traveling */
+    .ht-geom path { stroke:rgba(20,23,26,.11); stroke-width:1; stroke-dasharray:1; stroke-dashoffset:1; animation:ht-draw 1.7s var(--ease-out) .15s forwards; }
+    .ht-geom path:nth-child(2) { animation-delay:.45s; }
+    .ht-geom path:nth-child(3) { animation-delay:.75s; }
+    .ht-geom rect, .ht-geom circle { stroke:rgba(20,23,26,.2); fill:var(--paper, var(--paper-site)); stroke-width:1; opacity:0; animation:ht-pop .5s var(--ease-out) forwards; }
+    .ht-geom rect:nth-of-type(1) { animation-delay:1.05s; } .ht-geom rect:nth-of-type(2) { animation-delay:1.25s; }
+    .ht-geom rect:nth-of-type(3) { animation-delay:1.15s; } .ht-geom rect:nth-of-type(4) { animation-delay:1.45s; }
+    .ht-geom rect:nth-of-type(5) { animation-delay:1.35s; }
+    .ht-geom circle { animation-delay:1.6s; }
+    @keyframes ht-draw { to { stroke-dashoffset:0; } }
+    @keyframes ht-pop { from { opacity:0; } to { opacity:1; } }
+    .ht-pkt { stroke:var(--accent, var(--accent-site)); stroke-width:1.5; stroke-linecap:round; stroke-dasharray:.05 .95; stroke-dashoffset:1; animation:ht-flow 9s linear 1.8s infinite; opacity:.6; }
+    .ht-pkt.p2 { animation-duration:12s; animation-delay:3.4s; }
+    .ht-pkt.p3 { animation-duration:10s; animation-delay:5.2s; }
+    @keyframes ht-flow { from { stroke-dashoffset:1; } to { stroke-dashoffset:0; } }
+
+    /* GRID GLOW — the sheet grid lights up around the cursor */
+    .grid-glow { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0; transition:opacity .5s var(--ease-out); mix-blend-mode:difference;
+      background-image:linear-gradient(rgba(255,255,255,.3) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.3) 1px,transparent 1px);
+      background-size:56px 56px;
+      -webkit-mask-image:radial-gradient(280px circle at var(--gx,50%) var(--gy,20%),black,transparent 72%);
+      mask-image:radial-gradient(280px circle at var(--gx,50%) var(--gy,20%),black,transparent 72%); }
+    body.has-crosshair .grid-glow { opacity:.55; }
+
+    /* GRID DRIFT — the sheet grid parallaxes against scroll where supported */
+    @supports (animation-timeline: scroll()) {
+      .grid-bg { inset:-16% 0; animation:bg-drift linear both; animation-timeline:scroll(root); }
+      @keyframes bg-drift { to { transform:translateY(14%); } }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      .fade-up { opacity:1!important; transform:none!important; transition:none!important; filter:none!important; }
+      .fade-up.mask { -webkit-mask-image:none!important; mask-image:none!important; }
+      .ht-pkt, .grid-bg, .footer-word { animation:none!important; }
+      h1.fade-up em { background-size:100% 32%; transition:none; }
+      .spot::before, .btn-primary::after, .cta-install::after, .action-primary::after, button.primary::after, .card-link.primary::after { display:none; }
+    }
+
+    /* TYPED LINE — mono prompt typing, shared by pages that demo the prompt */
+    .hero-typed { display:flex; align-items:baseline; gap:.45rem; margin-bottom:1.75rem; font-family:var(--font-mono); font-size:.75rem; color:var(--muted, var(--muted-site)); min-height:1.4em; }
+    .typed-prompt { color:var(--accent, var(--accent-site)); font-weight:600; }
+    .typed-caret { display:inline-block; width:.55em; height:1em; margin-left:1px; vertical-align:-0.14em; background:var(--accent, var(--accent-site)); animation:caret-blink 1.1s steps(1) infinite; }
+    @keyframes caret-blink { 50% { opacity:0; } }
+
+    /* ══════════════════════════════════════
+       POLISH L2 — drafting crosshair, progress, scramble, wordmark
+    ══════════════════════════════════════ */
+
+    /* CROSSHAIR — the whole page reads as a sheet under inspection */
+    .crosshair, .crosshair-read { opacity:0; transition:opacity .4s var(--ease-out); }
+    body.has-crosshair .crosshair-x, body.has-crosshair .crosshair-y { opacity:.32; }
+    body.has-crosshair .crosshair-read { opacity:1; }
+    .crosshair { position:fixed; z-index:90; pointer-events:none; }
+    .crosshair-x { left:0; right:0; height:1px; background:#fff; mix-blend-mode:difference; }
+    .crosshair-y { top:0; bottom:0; width:1px; background:#fff; mix-blend-mode:difference; }
+    .crosshair-read { position:fixed; z-index:91; pointer-events:none; padding:.18rem .5rem; border:1px solid var(--line-hi, rgba(20,23,26,.3)); border-radius:5px; background:rgba(248,250,249,.9); color:var(--muted, #60686d); font-family:var(--font-mono); font-size:.5625rem; letter-spacing:.08em; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); white-space:nowrap; }
+
+    /* NAV — the bar tightens and lifts once the sheet is under scroll */
+    .site-nav { transition:height .35s var(--ease-out), box-shadow .35s var(--ease-out); }
+    body.nav-scrolled .site-nav { height:52px; box-shadow:0 10px 34px rgba(20,23,26,.09); }
+
+    /* CROSSHAIR instrument state — accent when the caliper is over a control */
+    body.crosshair-on .crosshair-x, body.crosshair-on .crosshair-y { background:var(--accent, var(--accent-site)); mix-blend-mode:normal; }
+    body.crosshair-on .crosshair-x { opacity:.5; } body.crosshair-on .crosshair-y { opacity:.5; }
+    body.crosshair-on .crosshair-read { border-color:var(--accent, var(--accent-site)); color:var(--accent, var(--accent-site)); }
+
+    /* SCROLL PROGRESS — 2px accent line pinned to the viewport top */
+    .scroll-progress { position:fixed; top:0; left:0; z-index:210; height:2px; width:100%; background:var(--accent, var(--accent-site)); transform:scaleX(0); transform-origin:0 50%; pointer-events:none; }
+
+    /* FOOTER WORDMARK — giant outlined signature closing the sheet */
+    .footer-word { margin:0 auto 1.75rem; max-width:1200px; padding:0 2rem; font-family:var(--font-display); font-style:italic; font-optical-sizing:auto; font-size:clamp(4.5rem,16vw,12.5rem); font-weight:400; line-height:.82; letter-spacing:-.02em; text-align:center; color:transparent; -webkit-text-stroke:1.5px rgba(20,23,26,.18); user-select:none; pointer-events:none; }
+    @supports (animation-timeline: view()) {
+      .footer-word { animation:word-drift linear both; animation-timeline:view(); animation-range:entry 0% exit 100%; }
+      @keyframes word-drift { from { transform:translateY(24px); opacity:.6; } to { transform:translateY(-8px); opacity:1; } }
+    }
+    @media(max-width:640px) { .footer-word { font-size:clamp(3rem,17vw,5rem); padding:0 1rem; } }
+
+    @media(prefers-reduced-motion:reduce) {
+      .typed-caret { animation:none; }
+      .crosshair, .crosshair-read { display:none!important; }
+      .grid-glow { display:none!important; }
+      .ht-geom path { animation:none!important; stroke-dashoffset:0; }
+      .ht-geom rect, .ht-geom circle { animation:none!important; opacity:1; }
+    }
+    @media(pointer:coarse) {
+      .crosshair, .crosshair-read { display:none!important; }
+      .grid-glow { display:none!important; }
+    }
+
+    /* ══════════════════════════════════════
+       POLISH L3 — page transitions, drawn dividers, trace labels
+    ══════════════════════════════════════ */
+
+    /* Cross-document view transitions — nav clicks fade/slide instead of hard-jumping */
+    @view-transition { navigation: auto; }
+    ::view-transition-old(root) { animation:vt-out .22s ease-in both; }
+    ::view-transition-new(root) { animation:vt-in .36s var(--ease-out) .05s both; }
+    @keyframes vt-out { to { opacity:0; transform:translateY(-10px); } }
+    @keyframes vt-in { from { opacity:0; transform:translateY(16px); } }
+
+    /* DIVIDERS draw themselves left→right as they enter */
+    @supports (animation-timeline: view()) {
+      .divider { transform-origin:0 50%; animation:div-draw linear both; animation-timeline:view(); animation-range:entry 0% entry 55%; }
+      @keyframes div-draw { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+    }
+
+    /* TRACE LABELS — micro annotations beside route nodes */
+    .ht-labels text { font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; fill:rgba(20,23,26,.34); opacity:0; animation:ht-pop .5s var(--ease-out) forwards; }
+    .ht-labels text:nth-child(1) { animation-delay:1.7s; }
+    .ht-labels text:nth-child(2) { animation-delay:1.9s; }
+    .ht-labels text:nth-child(3) { animation-delay:2.1s; }
+
+    @media(prefers-reduced-motion:reduce) {
+      ::view-transition-old(root), ::view-transition-new(root) { animation:none!important; }
+      .divider { animation:none!important; }
+      .ht-labels text { animation:none!important; opacity:1; }
+    }
+
+    /* WORD-SPLIT — headings materialize token by token inside their mask */
+    [data-split] .w { display:inline-block; opacity:0; transform:translateY(.45em); filter:blur(5px); transition:opacity .5s var(--ease-out), transform .65s var(--ease-out), filter .5s var(--ease-out); transition-delay:calc(var(--wi) * 42ms); }
+    [data-split].visible .w { opacity:1; transform:none; filter:none; }
+
+    /* SHEET MARKS — fixed margin annotations framing the page */
+    .sheet-mark { position:fixed; bottom:.8rem; z-index:89; pointer-events:none; font-family:var(--font-mono); font-size:.5625rem; letter-spacing:.16em; color:rgba(255,255,255,.5); mix-blend-mode:difference; }
+    .sheet-mark-l { left:1.1rem; }
+    .sheet-mark-r { right:1.1rem; }
+    @media(max-width:980px) { .sheet-mark { display:none; } }
+
+    /* HERO DISSOLVE — the opening composition recedes as the sheet scrolls */
+    @supports (animation-timeline: scroll()) {
+      section.hero, header.lead { animation:hero-out linear both; animation-timeline:scroll(root); animation-range:0 60vh; }
+      @keyframes hero-out { to { opacity:.18; transform:translateY(-5%) scale(.985); filter:blur(2.5px); } }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      [data-split] .w { opacity:1!important; transform:none!important; filter:none!important; transition:none!important; }
+      section.hero, header.lead { animation:none!important; }
+      .sheet-mark { display:none; }
+    }

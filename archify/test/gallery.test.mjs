@@ -112,8 +112,11 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
   assert.match(html, /Share a verified diagram/);
   assert.match(html, /提交已验证成品/);
 
+  // Astro owns gallery.html; compare its shared manifest, not legacy page markup.
+  const embeddedManifest = page => JSON.parse(page.match(/<script id="gallery-manifest" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+  assert.deepEqual(embeddedManifest(html), embeddedManifest(fs.readFileSync(path.join(repoRoot, 'docs/gallery.html'), 'utf8')));
+
   for (const relative of [
-    'gallery.html',
     'assets/site-language.js',
     'assets/site-navigation.css',
     'gallery/manifest.json',

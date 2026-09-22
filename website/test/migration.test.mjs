@@ -31,7 +31,8 @@ for (const page of pages) {
   test(`${page}: DOM, content, accessibility, scripts and styles match the migration baseline`, () => {
     const old = parse(read(docs, page)), next = parse(read(dist, page));
     assert.deepEqual(semantic(elements(next, 'body')[0]), semantic(elements(old, 'body')[0]));
-    assert.deepEqual(elements(next, 'style').map(n => n.childNodes[0]?.value.trim()).filter(css => !css.startsWith('/*! tailwindcss')), elements(old, 'style').map(n => n.childNodes[0]?.value.trim()));
+    const styles = (doc) => elements(doc, 'style').map(n => n.childNodes[0]?.value.trim()).filter(css => !css.startsWith('/*! tailwindcss'));
+    assert.deepEqual(styles(next), styles(old));
     assert.ok(!read(dist, page).includes('[[ARCHIFY_VERSION]]'));
   });
 }

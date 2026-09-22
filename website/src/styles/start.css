@@ -130,11 +130,6 @@
     .page-footer a:hover { color:var(--ink); }
     #copy-status { min-height:1.1rem; color:var(--emerald); }
 
-    /* ENTRANCE — one quiet rise on load */
-    @keyframes rise { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
-    .lead, .type-shell, .workbench { animation:rise .7s var(--ease-out) both; }
-    .type-shell { animation-delay:.08s; }
-    .workbench { animation-delay:.16s; }
 
     @media (max-width:840px) {
       main { width:min(100% - 2rem,720px); padding-top:8rem; }
@@ -155,5 +150,4 @@
     }
     @media (prefers-reduced-motion:reduce) {
       html { scroll-behavior:auto; }
-      .lead, .type-shell, .workbench { animation:none; }
     }

@@ -265,7 +265,9 @@ if (hasSupportedVersion) {
     }
   }
 
-  const landing = read('docs/index.html');
+  // Bundled CSS contains dependency versions and aspect ratios, not release copy.
+  // Keep scripts: the language dictionaries also advertise versions and receipts.
+  const landing = read('docs/index.html').replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, '');
   checkDocument('docs/index.html', landing, version, isDevelopment);
   checkRavenBoundary('docs/index.html', landing, 'both');
   const proofCounts = [...landing.matchAll(/\b\d+\/\d+\b/g)].map((match) => match[0]);
@@ -274,7 +276,7 @@ if (hasSupportedVersion) {
     const found = staleProofCounts.length > 0 ? `; found ${staleProofCounts.join(', ')}` : '';
     fail(`docs/index.html proof receipt must say 9/9 everywhere; every N/N proof receipt must be exactly 9/9${found}.`);
   }
-  const start = read('docs/start.html');
+  const start = read('docs/start.html').replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, '');
   checkDocument('docs/start.html', start, version, isDevelopment);
   checkRavenBoundary('docs/start.html', start, 'both');
   checkRoadmap('ROADMAP.md', read('ROADMAP.md'), version, isDevelopment);

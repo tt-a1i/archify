@@ -15,7 +15,7 @@ function cssRule(selector) {
 }
 
 test('landing declares a truthful first-fold proof aperture in document order', () => {
-  assert.match(landing, /<section class="hero" data-proof-aperture="first-fold">/);
+  assert.match(landing, /<section class="hero" data-proof-aperture="first-fold"[^>]*>/);
   const heroStart = landing.indexOf('data-proof-aperture="first-fold"');
   const headline = landing.indexOf('data-i18n="hero-h1"', heroStart);
   const actions = landing.indexOf('class="hero-actions', headline);
@@ -47,7 +47,7 @@ test('proof aperture remains one real eager sandboxed artifact with explicit use
   assert.match(landing, /loading="eager"/);
   assert.match(landing, /sandbox="allow-scripts"/);
   assert.doesNotMatch(landing, /sandbox="[^"]*allow-same-origin/);
-  assert.equal((landing.match(/class="spec-card"/g) || []).length, 3);
+  assert.equal((landing.match(/class="spec-card(?: [^"]*)?"/g) || []).length, 3);
   assert.match(landing, /data-proof-playback="first-fold-once"/);
   assert.match(landing, /\?embed=1&amp;play=1&amp;theme=dark#view=happy-path/);
   assert.doesNotMatch(landing, /setInterval\(|scrollIntoView\(|scroll-triggered|proof-carousel/);
@@ -64,8 +64,10 @@ test('proof playback delegates reduced motion to the artifact and keeps delibera
   assert.match(landing, /renderProof\(tab\.dataset\.proof, \{ deliberate: true \}\)/);
   assert.match(landing, /renderProof\(tabs\[next\]\.dataset\.proof, \{ focus: true, deliberate: true \}\)/);
   assert.match(landing, /proofEmbedUrl\(proof, \{ play: deliberate \}\)/);
-  assert.match(landing, /document\.querySelectorAll\('\.fade-up'\)\.forEach\(el => el\.classList\.add\('visible'\)\)/);
-  assert.doesNotMatch(landing, /addEventListener\('scroll'/);
+  // Shared page polish may track scroll; hero proof playback must remain deliberate.
+  const proofScript = landing.slice(landing.indexOf('const PROOFS ='), landing.indexOf('const typeChapters ='));
+  assert.ok(proofScript.includes('function renderProof('));
+  assert.doesNotMatch(proofScript, /addEventListener\('scroll'/);
 });
 
 test('aperture uses normal flow and preserves reduced-motion boundaries', () => {

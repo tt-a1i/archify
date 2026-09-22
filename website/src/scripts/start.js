@@ -113,7 +113,7 @@
         projectCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --agent ' + agent + ' --copy --yes';
         title.textContent = copy.title;
         question.textContent = copy.question;
-        prompt.textContent = currentPrompt();
+        decode(prompt, currentPrompt());
         includeList.replaceChildren.apply(includeList, copy.include.map(function (item) {
           var entry = document.createElement('li');
           entry.textContent = item;
@@ -125,6 +125,24 @@
           : 'Verified proof · ' + recipe.presentation.preset + ' · ' + recipe.presentation.motion;
         copyStatus.textContent = '';
         updateUrl();
+      }
+
+      var DECODE_GLYPHS = '\u259a\u259e\u259b\u2591\u2592<>/=+*\u00b7_';
+      var decodeRaf = 0;
+      var decodeReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      function decode(el, text) {
+        if (decodeReduced || !text || text.length > 500) { el.textContent = text; return; }
+        cancelAnimationFrame(decodeRaf);
+        var t0 = performance.now();
+        var step = function (t) {
+          var p = Math.min((t - t0) / 520, 1);
+          var n = Math.floor(p * text.length);
+          el.textContent = text.slice(0, n) + text.slice(n).replace(/\S/g, function () {
+            return DECODE_GLYPHS[(Math.random() * DECODE_GLYPHS.length) | 0];
+          });
+          if (p < 1) decodeRaf = requestAnimationFrame(step); else el.textContent = text;
+        };
+        decodeRaf = requestAnimationFrame(step);
       }
 
       function fallbackCopy(text) {

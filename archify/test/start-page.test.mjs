@@ -37,7 +37,7 @@ class FakeElement {
 
 function executeStartPage(html) {
   const dataMatch = html.match(/<script id="start-data" type="application\/json">([\s\S]*?)<\/script>/);
-  const scriptMatch = html.match(/<script>\n([\s\S]*?)\n  <\/script>\n<\/body>/);
+  const scriptMatch = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].find(([, source]) => source.includes('function starterText('));
   assert.ok(dataMatch);
   assert.ok(scriptMatch);
 
@@ -91,6 +91,7 @@ function executeStartPage(html) {
     window,
     ArchifySiteLanguage: window.ArchifySiteLanguage,
     document,
+    matchMedia: () => ({ matches: true }), // Exercise the immediate reduced-motion prompt path.
     navigator: { languages: ['en'], language: 'en', clipboard: { async writeText(value) { copied.push(value); } } },
     history: { replaceState(_state, _title, url) { replacedUrl = url; } },
     sessionStorage: {
@@ -110,14 +111,16 @@ function executeStartPage(html) {
   return { data: JSON.parse(dataMatch[1]), ids, inputs, copied, window, getUrl: () => replacedUrl };
 }
 
-test('start page: checked-in HTML is reproducible from canonical scenario recipes', () => {
+test('start page: Astro baseline and compatibility builder share canonical prompt data', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-start-page-'));
   const generated = path.join(tmp, 'start.html');
   try {
     execFileSync(process.execPath, [path.join(repoRoot, 'scripts/build-start.mjs'), generated]);
-    assert.equal(
-      fs.readFileSync(generated, 'utf8'),
-      fs.readFileSync(path.join(repoRoot, 'docs/start.html'), 'utf8'),
+    // Page markup is checked by website/test/migration.test.mjs.
+    const prompts = html => JSON.parse(html.match(/<script id="start-data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+    assert.deepEqual(
+      prompts(fs.readFileSync(generated, 'utf8')),
+      prompts(fs.readFileSync(path.join(repoRoot, 'docs/start.html'), 'utf8')),
     );
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
@@ -139,8 +142,8 @@ test('start page: offers five bounded bilingual starts without ingesting source 
   assert.match(html, /id="copy-starter"/);
   assert.match(html, /data-en="Copy install \+ prompt"/);
   assert.match(html, /data-zh="复制安装命令 \+ 提示词"/);
-  assert.match(html, /data-en="No repository is required\./);
-  assert.match(html, /data-zh="不需要绑定代码库。/);
+  assert.match(html, /data-en="No repository needed\./);
+  assert.match(html, /data-zh="不需要代码库。/);
   assert.match(html, /data-input="description"/);
   assert.match(html, /data-input="repository"/);
 
@@ -150,7 +153,7 @@ test('start page: offers five bounded bilingual starts without ingesting source 
   assert.deepEqual(Object.keys(data), ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
   assert.ok(Object.values(data).every((entry) => entry.en.prompt && entry.zh.prompt && entry.en.descriptionPrompt && entry.zh.descriptionPrompt && entry.en.repositoryPrompt && entry.zh.repositoryPrompt && entry.proof));
 
-  const scriptMatch = html.match(/<script>\n([\s\S]*?)\n  <\/script>\n<\/body>/);
+  const scriptMatch = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].find(([, source]) => source.includes('function starterText('));
   assert.ok(scriptMatch);
   assert.doesNotThrow(() => new vm.Script(scriptMatch[1]));
   assert.match(scriptMatch[1], /KNOWN_TYPES\.has\(requestedType\)/);

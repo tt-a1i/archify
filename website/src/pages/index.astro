@@ -4,10 +4,13 @@ import SiteLayout from '../layouts/SiteLayout.astro';
 import Navigation from '../components/Navigation.astro';
 import Brand from '../components/Brand';
 import head from '../data/index-head.html?raw';
+import polishCss from '../styles/polish.css?raw';
 import css from '../styles/index.css?raw';
+import polishScript from '../scripts/polish.js?raw';
 import pageScript from '../scripts/index.js?raw';
+import TraceField from '../components/TraceField.astro';
 ---
-<SiteLayout head={versioned(head)} css={css}>
+<SiteLayout head={versioned(head)} css={polishCss + css}>
 
   <div class="grid-bg" aria-hidden="true"></div>
 
@@ -15,7 +18,8 @@ import pageScript from '../scripts/index.js?raw';
   <Navigation page="index" />
 
   <!-- HERO — bento: intro / live proof / specimen rail / stats -->
-  <section class="hero" data-proof-aperture="first-fold">
+  <section class="hero" data-proof-aperture="first-fold" data-tilt-scope>
+    <TraceField />
     <div class="container">
       <div class="hero-bento">
         <div class="hero-intro">
@@ -23,9 +27,10 @@ import pageScript from '../scripts/index.js?raw';
             <div class="pulse-dot"></div>
             <span data-i18n="hero-badge">Agent Skill &nbsp;·&nbsp; development &nbsp;·&nbsp; v{version}</span>
           </div>
-          <h1 class="fade-up d1" data-i18n="hero-h1">From plain English<br>to architecture <em>you can trust.</em></h1>
-          <p class="hero-sub fade-up d2" data-i18n="hero-sub">Describe your system in chat. Archify generates a polished, explorable HTML diagram — with progressive MAP → READ → FULL detail, a semantic camera, path-aware stories, motion, and ultra-crisp export built in.</p>
-          <div class="hero-actions fade-up d3">
+          <h1 class="fade-up mask d1" data-split data-i18n="hero-h1">From plain English<br>to architecture <em>you can trust.</em></h1>
+          <p class="hero-sub fade-up d2" data-i18n="hero-sub">Describe your system in chat. Archify generates a polished, explorable HTML diagram — semantic camera, path-aware stories, 4× export built in.</p>
+          <p class="hero-typed fade-up d3" aria-hidden="true" data-typed="map our kubernetes production topology|trace the request when the cache misses|sequence the OAuth login with refresh|show the ETL pipeline and PII boundary|draw the deployment lifecycle with rollbacks" data-typed-zh="画出我们的 Kubernetes 生产拓扑|追踪缓存未命中时的请求路径|画出带刷新令牌的 OAuth 登录时序|展示 ETL 管道和 PII 隔离边界|画出带回滚的部署生命周期"><span class="typed-prompt">›</span> <span class="typed-text">map our production topology</span><span class="typed-caret"></span></p>
+          <div class="hero-actions fade-up d4">
             <a class="btn btn-primary" href="guide.html">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               <span data-i18n="hero-cta">Choose the right diagram</span>
@@ -38,7 +43,7 @@ import pageScript from '../scripts/index.js?raw';
         </div>
 
         <!-- MAIN LIVE PROOF -->
-        <div class="proof-main fade-up d2" id="hero-proof-stage" data-proof-playback="first-fold-once">
+        <div class="proof-main fade-up d2" id="hero-proof-stage" data-proof-playback="first-fold-once" data-tilt>
           <div class="proof-chrome">
             <div class="proof-status">
               <span class="proof-live" data-i18n="proof-live">Live proof</span>
@@ -59,14 +64,14 @@ import pageScript from '../scripts/index.js?raw';
               <span id="proof-meta">Workflow · Signal Flow · 12 nodes · 11 edges</span>
               <strong id="proof-title">Agent Tool Call — policy, execution, recovery, and evidence</strong>
             </div>
-            <span class="proof-hint" data-i18n="proof-hint">Pin one exact Story Moment, copy its stable link, and let someone else open the same authored node.</span>
+            <span class="proof-hint" data-i18n="proof-hint">Pin one Story Moment, copy its link, share that exact node.</span>
           </div>
         </div>
 
         <!-- SPECIMEN RAIL (tablist) -->
         <div class="proof-rail fade-up d3" id="proof-tabs" role="tablist" aria-label="Choose a live Archify proof">
           <div class="rail-label" data-i18n="rail-label">Live specimens — select to load</div>
-          <button class="spec-card" id="proof-tab-signal" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="true" tabindex="0" data-proof="signal">
+          <button class="spec-card spot" id="proof-tab-signal" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="true" tabindex="0" data-proof="signal">
             <div class="spec-top">
               <span class="spec-idx">S·01</span>
               <span class="spec-glyph" aria-hidden="true">
@@ -82,7 +87,7 @@ import pageScript from '../scripts/index.js?raw';
             <span class="spec-name">Agent Tool Call</span>
             <span class="spec-meta">Workflow · Signal Flow · 12 nodes · 11 edges</span>
           </button>
-          <button class="spec-card" id="proof-tab-blueprint" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="false" tabindex="-1" data-proof="blueprint">
+          <button class="spec-card spot" id="proof-tab-blueprint" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="false" tabindex="-1" data-proof="blueprint">
             <div class="spec-top">
               <span class="spec-idx">S·02</span>
               <span class="spec-glyph" aria-hidden="true">
@@ -98,7 +103,7 @@ import pageScript from '../scripts/index.js?raw';
             <span class="spec-name">Production Deployment</span>
             <span class="spec-meta">Architecture · Blueprint · 12 nodes · 12 edges</span>
           </button>
-          <button class="spec-card" id="proof-tab-classic" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="false" tabindex="-1" data-proof="classic">
+          <button class="spec-card spot" id="proof-tab-classic" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="false" tabindex="-1" data-proof="classic">
             <div class="spec-top">
               <span class="spec-idx">S·03</span>
               <span class="spec-glyph" aria-hidden="true">
@@ -119,99 +124,101 @@ import pageScript from '../scripts/index.js?raw';
 
         <!-- STATS STRIP -->
         <div class="hero-stats fade-up d4">
-          <div class="stat"><b>05</b><span data-i18n="stat-types">Diagram types</span></div>
-          <div class="stat"><b>04</b><span data-i18n="stat-presets">Visual presets</span></div>
-          <div class="stat"><b>02</b><span data-i18n="stat-themes">Coordinated themes</span></div>
-          <div class="stat"><b>4<sup>×</sup></b><span data-i18n="stat-export">Native export scale</span></div>
+          <div class="stat"><b><span class="stat-num" data-count="5" data-pad="2">05</span></b><span data-i18n="stat-types">Diagram types</span></div>
+          <div class="stat"><b><span class="stat-num" data-count="4" data-pad="2">04</span></b><span data-i18n="stat-presets">Visual presets</span></div>
+          <div class="stat"><b><span class="stat-num" data-count="2" data-pad="2">02</span></b><span data-i18n="stat-themes">Coordinated themes</span></div>
+          <div class="stat"><b><span class="stat-num" data-count="4">4</span><sup>×</sup></b><span data-i18n="stat-export">Native export scale</span></div>
           <div class="stat"><b>00</b><span data-i18n="stat-deps">Dependencies</span></div>
         </div>
       </div>
     </div>
   </section>
 
-  <div class="divider"></div>
+  <!-- TICKER — capability marquee between hero and sections -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track">
+      <div class="marquee-seq">
+        <span>Architecture</span><i>+</i><span>Workflow</span><i>+</i><span>Sequence</span><i>+</i><span>Data Flow</span><i>+</i><span>Lifecycle</span><i>+</i><span>Map → Read → Full</span><i>+</i><span>4× Native Export</span><i>+</i><span>Dual-Theme SVG</span><i>+</i><span>Story Mode</span><i>+</i><span>Zero Dependencies</span><i>+</i>
+      </div>
+      <div class="marquee-seq">
+        <span>Architecture</span><i>+</i><span>Workflow</span><i>+</i><span>Sequence</span><i>+</i><span>Data Flow</span><i>+</i><span>Lifecycle</span><i>+</i><span>Map → Read → Full</span><i>+</i><span>4× Native Export</span><i>+</i><span>Dual-Theme SVG</span><i>+</i><span>Story Mode</span><i>+</i><span>Zero Dependencies</span><i>+</i>
+      </div>
+    </div>
+  </div>
 
   <!-- DIAGRAM TYPES — asymmetric bento deck -->
   <section id="types">
     <div class="container">
       <div class="types-header">
-        <div class="fade-up">
+        <div class="fade-up mask">
           <div class="section-label" data-i18n="label-types">Diagram Types</div>
           <h2 class="section-heading" data-i18n="types-h2">Five ways to see your system.</h2>
-          <p class="section-body" data-i18n="types-body">Architecture, workflows, sequences, data flows, or state machines — describe what you need and Archify picks the right visual language.</p>
+          <p class="section-body" data-i18n="types-body">Describe what you need — Archify picks the right visual language.</p>
         </div>
       </div>
 
-      <div class="types-bento">
-        <div class="type-card big fade-up" data-type="arch">
-          <div class="type-media">
-            <span class="type-tag">T·01</span>
-            <img src="assets/archify-architecture.png" alt="Architecture diagram">
+      <div class="types-stage">
+        <div class="types-pin" aria-hidden="true">
+          <div class="types-frame">
+            <span class="frame-corner" style="top:.7rem;left:.85rem">+</span>
+            <span class="frame-corner" style="top:.7rem;right:.85rem">+</span>
+            <img class="types-shot active" data-shot="arch" src="assets/archify-architecture.png" alt="" loading="lazy">
+            <img class="types-shot" data-shot="wf" src="assets/archify-workflow.png" alt="" loading="lazy">
+            <img class="types-shot" data-shot="seq" src="assets/archify-sequence.png" alt="" loading="lazy">
+            <img class="types-shot" data-shot="flow" src="assets/archify-dataflow.png" alt="" loading="lazy">
+            <img class="types-shot" data-shot="life" src="assets/archify-lifecycle.png" alt="" loading="lazy">
+            <div class="types-live">
+              <span class="types-count"><em id="types-current">01</em> / 05</span>
+              <span class="types-tag-live" id="types-tag">T·01 · Architecture</span>
+            </div>
           </div>
-          <div class="type-body">
+        </div>
+        <div class="types-chapters">
+          <article class="type-chapter active" data-type="arch" data-num="01" data-tag="T·01 · Architecture" data-tag-zh="T·01 · 架构图">
+            <span class="chapter-num">T·01</span>
             <h3 data-i18n="arch-h">Architecture</h3>
-            <p data-i18n="arch-p">System components, cloud resources, databases, caches, services, security groups, and the connections between them.</p>
+            <p data-i18n="arch-p">Components, services, databases, security groups — and every connection between them.</p>
             <ul class="type-uses">
               <li data-i18n="arch-li1">AWS / GCP / Azure infra</li>
               <li data-i18n="arch-li2">Microservices topology</li>
               <li data-i18n="arch-li3">Security boundaries</li>
               <li data-i18n="arch-li4">Network layout</li>
             </ul>
-          </div>
-        </div>
-
-        <div class="type-card sm fade-up d1" data-type="wf">
-          <div class="type-media">
-            <span class="type-tag">T·02</span>
-            <img src="assets/archify-workflow.png" alt="Workflow diagram">
-          </div>
-          <div class="type-body">
+            <div class="chapter-media"><img src="assets/archify-architecture.png" alt="Architecture diagram" loading="lazy"></div>
+          </article>
+          <article class="type-chapter" data-type="wf" data-num="02" data-tag="T·02 · Workflow" data-tag-zh="T·02 · 工作流">
+            <span class="chapter-num">T·02</span>
             <h3 data-i18n="wf-h">Workflow</h3>
-            <p data-i18n="wf-p">Swim-lane processes with semantic nodes and anchored edges — approval gates, async branches, and observability paths, lane by lane.</p>
-          </div>
-        </div>
-
-        <div class="type-card sm fade-up d2" data-type="seq">
-          <div class="type-media">
-            <span class="type-tag">T·03</span>
-            <img src="assets/archify-sequence.png" alt="Sequence diagram">
-          </div>
-          <div class="type-body">
+            <p data-i18n="wf-p">Swim-lane processes with semantic nodes — approval gates, async branches, observability paths.</p>
+            <div class="chapter-media"><img src="assets/archify-workflow.png" alt="Workflow diagram" loading="lazy"></div>
+          </article>
+          <article class="type-chapter" data-type="seq" data-num="03" data-tag="T·03 · Sequence" data-tag-zh="T·03 · 时序图">
+            <span class="chapter-num">T·03</span>
             <h3 data-i18n="seq-h">Sequence</h3>
-            <p data-i18n="seq-p">API call chains, request lifecycles, cache fallback paths, auth checks, async traces — who calls whom, in what order, and what returns.</p>
-          </div>
-        </div>
-
-        <div class="type-card sm fade-up d1" data-type="flow">
-          <div class="type-media">
-            <span class="type-tag">T·04</span>
-            <img src="assets/archify-dataflow.png" alt="Data flow diagram">
-          </div>
-          <div class="type-body">
+            <p data-i18n="seq-p">API calls, request lifecycles, cache fallbacks, auth checks — who calls whom, in what order.</p>
+            <div class="chapter-media"><img src="assets/archify-sequence.png" alt="Sequence diagram" loading="lazy"></div>
+          </article>
+          <article class="type-chapter" data-type="flow" data-num="04" data-tag="T·04 · Data Flow" data-tag-zh="T·04 · 数据流">
+            <span class="chapter-num">T·04</span>
             <h3 data-i18n="flow-h">Data Flow</h3>
-            <p data-i18n="flow-p">Data pipelines, ETL/ELT, analytics events, PII isolation, warehouse sync, lineage, and downstream consumers — with governance boundaries.</p>
-          </div>
-        </div>
-
-        <div class="type-card sm fade-up d2" data-type="life">
-          <div class="type-media">
-            <span class="type-tag">T·05</span>
-            <img src="assets/archify-lifecycle.png" alt="Lifecycle diagram">
-          </div>
-          <div class="type-body">
+            <p data-i18n="flow-p">Pipelines, ETL, PII isolation, lineage — with governance boundaries.</p>
+            <div class="chapter-media"><img src="assets/archify-dataflow.png" alt="Data flow diagram" loading="lazy"></div>
+          </article>
+          <article class="type-chapter" data-type="life" data-num="05" data-tag="T·05 · Lifecycle" data-tag-zh="T·05 · 生命周期">
+            <span class="chapter-num">T·05</span>
             <h3 data-i18n="life-h">Lifecycle</h3>
-            <p data-i18n="life-p">State machines, object lifecycles, run/order/deployment status transitions — with wait states, retries, cancellation, and terminal outcomes.</p>
-          </div>
+            <p data-i18n="life-p">State machines and status transitions — waits, retries, cancellation, terminal states.</p>
+            <div class="chapter-media"><img src="assets/archify-lifecycle.png" alt="Lifecycle diagram" loading="lazy"></div>
+          </article>
+          <a class="type-card more" href="gallery.html">
+            <div>
+              <div class="more-kicker" data-i18n="label-gallery">Index</div>
+              <div class="more-title" data-i18n="types-more">Browse the full proof gallery</div>
+              <div class="more-sub" data-i18n="types-more-sub">Live artifacts · every preset · every type</div>
+            </div>
+            <span class="more-arrow" aria-hidden="true">↗</span>
+          </a>
         </div>
-
-        <a class="type-card more fade-up d3" href="gallery.html">
-          <div>
-            <div class="more-kicker" data-i18n="label-gallery">Index</div>
-            <div class="more-title" data-i18n="types-more">Browse the full proof gallery</div>
-            <div class="more-sub" data-i18n="types-more-sub">Live artifacts · every preset · every type</div>
-          </div>
-          <span class="more-arrow" aria-hidden="true">↗</span>
-        </a>
       </div>
     </div>
   </section>
@@ -221,49 +228,49 @@ import pageScript from '../scripts/index.js?raw';
   <!-- FEATURES — numbered text cards -->
   <section id="features">
     <div class="container">
-      <div class="fade-up" style="margin-bottom:2.75rem">
+      <div class="fade-up mask" style="margin-bottom:2.75rem">
         <div class="section-label" data-i18n="label-features">Features</div>
         <h2 class="section-heading" data-i18n="features-h2">Production-ready output,<br>zero configuration.</h2>
       </div>
       <div class="features-bento">
-        <div class="feature-card f-lg fade-up">
+        <div class="feature-card f-lg spot fade-up">
           <h3 data-i18n="f1-h">Four visual identities</h3>
-          <p data-i18n="f1-p">Classic, Signal Flow, Blueprint, and Editorial share one geometry contract. Every preset includes coordinated dark/light themes and exports cleanly.</p>
+          <p data-i18n="f1-p">Classic, Signal Flow, Blueprint, Editorial — one geometry contract, coordinated dark/light themes.</p>
           <span class="feature-tag" data-i18n="f1-tag">4 PRESETS · 2 THEMES</span>
         </div>
-        <div class="feature-card f-lg fade-up d1">
+        <div class="feature-card f-lg spot fade-up d1">
           <h3 data-i18n="f2-h">Ultra-crisp 4× export</h3>
-          <p data-i18n="f2-p">PNG, JPEG, WebP — all rasterized natively at up to 4× source resolution by the browser. No upsampling blur. Sharp on retina displays, slides, and print.</p>
+          <p data-i18n="f2-p">PNG, JPEG, WebP rasterized natively at 4×. Sharp on retina, slides, and print.</p>
           <span class="feature-tag" data-i18n="f2-tag">PNG · JPEG · WEBP</span>
         </div>
-        <div class="feature-card f-sm fade-up d2">
+        <div class="feature-card f-sm spot fade-up d2">
           <h3 data-i18n="f3-h">Dual-theme SVG</h3>
-          <p data-i18n="f3-p">The SVG export ships with both variable sets plus a @media prefers-color-scheme rule. Drop one file into a GitHub README — it follows the reader's theme.</p>
+          <p data-i18n="f3-p">One SVG ships both theme variable sets plus prefers-color-scheme — drop it in a README and it follows the reader.</p>
           <span class="feature-tag" data-i18n="f3-tag">VECTOR · SELF-THEMED</span>
         </div>
-        <div class="feature-card f-sm fade-up d3">
+        <div class="feature-card f-sm spot fade-up d3">
           <h3 data-i18n="f4-h">Copy to clipboard</h3>
-          <p data-i18n="f4-p">One button puts a PNG straight on your clipboard. Paste directly into Slack, Notion, GitHub, or Figma — no intermediate save step.</p>
+          <p data-i18n="f4-p">One button puts a PNG on your clipboard. Paste into Slack, Notion, GitHub, or Figma.</p>
           <span class="feature-tag" data-i18n="f4-tag">INSTANT SHARE</span>
         </div>
-        <div class="feature-card f-sm fade-up d4">
+        <div class="feature-card f-sm spot fade-up d4">
           <h3 data-i18n="f5-h">Self-contained HTML</h3>
-          <p data-i18n="f5-p">One HTML file. Zero dependencies, no server, no runtime. Open it in any browser and it works. Share by attaching it to an email or PR comment.</p>
+          <p data-i18n="f5-p">One HTML file. Zero dependencies, no server — opens in any browser, attaches to any PR.</p>
           <span class="feature-tag" data-i18n="f5-tag">ZERO DEPS</span>
         </div>
-        <div class="feature-card f-sm fade-up d2">
+        <div class="feature-card f-sm spot fade-up d2">
           <h3 data-i18n="f6-h">Iterate by chat</h3>
-          <p data-i18n="f6-p">"Add Redis", "move auth to the left", "use emerald for the API" — refine in natural language. No diagram editor to learn.</p>
+          <p data-i18n="f6-p">"Add Redis", "move auth left", "emerald for the API" — refine in plain language.</p>
           <span class="feature-tag" data-i18n="f6-tag">CONVERSATIONAL</span>
         </div>
-        <div class="feature-card f-sm fade-up d3">
+        <div class="feature-card f-sm spot fade-up d3">
           <h3 data-i18n="f7-h">Inspect and play real routes</h3>
-          <p data-i18n="f7-p">Route Journey keeps the complete authored path visible while you inspect any stop or play one finite, reader-controlled pass over each exact incoming relationship.</p>
+          <p data-i18n="f7-p">Route Journey keeps the authored path visible — inspect any stop or play one reader-controlled pass.</p>
           <span class="feature-tag" data-i18n="f7-tag">INSPECT · PLAY · PAUSE</span>
         </div>
-        <div class="feature-card f-sm fade-up d4">
+        <div class="feature-card f-sm spot fade-up d4">
           <h3 data-i18n="f8-h">Anticipate and share the exact story moment</h3>
-          <p data-i18n="f8-p">Story Horizon distinguishes the exact next stop, while Semantic Story Carrier shows whether its one authored relationship is a call, data, event, security, or state transition. Pin any beat or share the same stable moment.</p>
+          <p data-i18n="f8-p">Story Horizon marks the next stop; Semantic Story Carrier names the relationship kind. Pin or share any beat.</p>
           <span class="feature-tag" data-i18n="f8-tag">FOLLOW · ANTICIPATE · SHARE</span>
         </div>
       </div>
@@ -287,12 +294,12 @@ import pageScript from '../scripts/index.js?raw';
   <!-- COLOR PALETTE — one specimen strip -->
   <section id="palette">
     <div class="container">
-      <div class="fade-up" style="margin-bottom:2.75rem">
+      <div class="fade-up mask" style="margin-bottom:2.75rem">
         <div class="section-label" data-i18n="label-palette">Design System</div>
         <h2 class="section-heading" data-i18n="palette-h2">A semantic color language for infrastructure.</h2>
-        <p class="section-body" style="margin-top:.5rem" data-i18n="palette-body">Seven component types. Each with coordinated dark and light variants that switch together via the theme toggle.</p>
+        <p class="section-body" style="margin-top:.5rem" data-i18n="palette-body">Seven component types, each with coordinated dark and light variants.</p>
       </div>
-      <div class="palette-card fade-up">
+      <div class="palette-card spot fade-up">
         <div class="palette-chip" style="--node:var(--cyan);--node-fill:var(--cyan-fill);--node-dark:#22d3ee">
           <div class="chip-nodes">
             <div class="mini-node"><b>Web App</b><span>React SPA</span></div>
@@ -353,18 +360,35 @@ import pageScript from '../scripts/index.js?raw';
     </div>
   </section>
 
-  <div class="divider"></div>
+  <!-- CINEMA — full-bleed dark band: the artifact stays alive -->
+  <section id="cinema">
+    <div class="container">
+      <div class="cinema-head fade-up mask">
+        <div>
+          <div class="section-label" data-i18n="label-cinema">Live Document</div>
+          <h2 class="cinema-h" data-i18n="cinema-h">Not a picture.<br><em>A living document.</em></h2>
+        </div>
+        <p class="cinema-sub" data-i18n="cinema-sub">Generated from versioned IR, passed nine checks — and alive: scrub the story, switch theme, export 4×.</p>
+      </div>
+      <div class="cinema-stage fade-up d2">
+        <span class="cinema-anno" style="top:9%;left:1.4rem" aria-hidden="true">+ semantic camera</span>
+        <span class="cinema-anno" style="top:9%;right:1.4rem" aria-hidden="true">path-aware story +</span>
+        <span class="cinema-anno" style="bottom:.9rem;left:1.4rem" aria-hidden="true">+ 4× native export</span>
+        <iframe src="gallery/artifacts/production-deployment.architecture.html?embed=1&amp;play=1&amp;theme=dark#view=request-boundary" title="Production Deployment — living Archify document" loading="lazy"></iframe>
+      </div>
+    </div>
+  </section>
 
   <!-- QUICK START -->
   <section id="quickstart">
     <div class="container">
-      <div class="fade-up" style="margin-bottom:2.75rem">
+      <div class="fade-up mask" style="margin-bottom:2.75rem">
         <div class="section-label" data-i18n="label-qs">Quick Start</div>
         <h2 class="section-heading" data-i18n="qs-h2">Up and running<br>in three steps.</h2>
         <p class="section-body" data-i18n="qs-body">One checked Skill for Cursor, Claude Code, Codex, and OpenCode. Their switcher generates exact commands; for Raven, extract archify.zip into ~/.raven/workspace/skills, which yields ~/.raven/workspace/skills/archify.</p>
       </div>
       <div class="quickstart-layout">
-        <div class="qs-card fade-up d1">
+        <div class="qs-card spot fade-up d1">
           <div class="steps">
             <div class="step">
               <div class="step-num">1</div>
@@ -391,7 +415,7 @@ import pageScript from '../scripts/index.js?raw';
         </div>
 
         <div class="fade-up d2">
-          <div class="shortcut-box">
+          <div class="shortcut-box spot">
             <p class="shortcut-title" data-i18n="kbd-label">Keyboard shortcuts</p>
             <div class="shortcut-rows">
               <div class="shortcut-row"><span data-i18n="kbd-guide">Diagram guide</span><kbd>?</kbd></div>
@@ -435,8 +459,16 @@ import pageScript from '../scripts/index.js?raw';
   <section id="cta">
     <div class="container">
       <div class="cta-card fade-up">
+        <svg class="cta-trace" viewBox="0 0 900 300" fill="none" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+          <path d="M-20 250 H180 V150 H380 V90 H560 V160 H760 V70 H920"/>
+          <rect x="176" y="146" width="8" height="8"/>
+          <rect x="376" y="86" width="8" height="8"/>
+          <rect x="556" y="156" width="8" height="8"/>
+          <rect x="756" y="66" width="8" height="8"/>
+          <path class="cta-pkt" pathLength="1" d="M-20 250 H180 V150 H380 V90 H560 V160 H760 V70 H920"/>
+        </svg>
         <h2 class="cta-h" data-i18n="cta-h">Describe it once.<br><em>Share the map.</em></h2>
-        <p class="cta-sub" data-i18n="cta-sub">One command installs the checked skill for Cursor, Claude Code, Codex, or OpenCode — and your next diagram is a chat message away.</p>
+        <p class="cta-sub" data-i18n="cta-sub">One command for Cursor, Claude Code, Codex, or OpenCode — your next diagram is a chat away.</p>
         <div class="cta-actions">
           <a class="cta-install" href="start.html" data-i18n="cta-install">Install the skill</a>
           <a class="cta-gh" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">github.com/tt-a1i/archify ↗</a>
@@ -448,6 +480,7 @@ import pageScript from '../scripts/index.js?raw';
 
   <!-- FOOTER -->
   <footer>
+    <div class="footer-word" aria-hidden="true">Archify</div>
     <div class="footer-inner">
       <div class="footer-left">
         <a class="nav-logo" href="#">
@@ -464,6 +497,7 @@ import pageScript from '../scripts/index.js?raw';
   </footer>
 
   <script is:inline src="assets/site-language.js"></script>
+  <script is:inline set:html={polishScript}></script>
   <script is:inline set:html={versioned(pageScript)}></script>
 
 </SiteLayout>
