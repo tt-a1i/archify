@@ -390,6 +390,64 @@ function routeLiterals(text) {
   return found;
 }
 
+// --- Runtime channels ---------------------------------------------------------
+// Imports show which code depends on which; they cannot show a process that
+// spawns another, a browser that opens a WebSocket, or a CLI that calls an HTTP
+// API. These call sites are the runtime links a diagram of the system needs, so
+// Level 2 records where each module opens one. Comment lines and lines that
+// look like credentials are skipped; only one trimmed line is kept per channel.
+const RUNTIME_CHANNELS = [
+  ['process-spawn', {
+    javascript: /(?:^|[^.\w$])(?:spawn|spawnSync|execFile|execFileSync|execSync|fork)\s*\(|\b(?:child_process|childProcess|cp|pty|nodePty)\.(?:spawn|spawnSync|exec|execSync|execFile|fork)\s*\(/,
+    python: /\bsubprocess\.(?:Popen|run|call|check_call|check_output)\s*\(|\bos\.(?:system|popen|exec\w*)\s*\(|\basyncio\.create_subprocess_(?:exec|shell)\s*\(|\bmultiprocessing\.Process\s*\(/,
+  }],
+  ['websocket-server', {
+    javascript: /\bnew\s+(?:WebSocketServer|WebSocket\.Server)\s*\(|\.handleUpgrade\s*\(/,
+    python: /@\w+(?:\.\w+)*\.websocket\s*\(|\bwebsockets\.serve\s*\(/,
+  }],
+  ['websocket-client', {
+    javascript: /\bnew\s+WebSocket\s*\(/,
+    python: /\bwebsockets\.connect\s*\(|\bws_connect\s*\(/,
+  }],
+  ['http-server', {
+    javascript: /\b(?:https?|http2|net)\.createServer\s*\(|(?:^|[^.\w$])createServer\s*\(|\b(?:app|server|fastify)\.listen\s*\(/,
+    python: /\buvicorn\.run\s*\(|\bapp\.run\s*\(|\bweb\.run_app\s*\(|\b(?:ThreadingHTTPServer|HTTPServer)\s*\(/,
+  }],
+  ['http-client', {
+    javascript: /(?:^|[^.\w$])fetch\s*\(|\baxios(?:\.\w+)?\s*\(|\bhttps?\.(?:request|get)\s*\(/,
+    python: /\brequests\.(?:get|post|put|delete|patch|request)\s*\(|\bhttpx\.(?:get|post|put|delete|request|AsyncClient|Client)\b|\baiohttp\.ClientSession\s*\(|\burlopen\s*\(/,
+  }],
+  ['worker-thread', {
+    javascript: /\bnew\s+Worker\s*\(/,
+    python: /\bProcessPoolExecutor\s*\(/,
+  }],
+];
+// Maintenance scripts, benchmarks, examples and hidden agent/editor folders
+// spawn and fetch constantly; their call sites are not the system's runtime.
+const CHANNEL_SUPPORT_SEGMENT = /^(?:\..+|scripts?|tools?|tooling|bench(?:mark)?s?|examples?|demos?|samples?|docs?|fixtures?)$/i;
+const CHANNEL_SECRET_LINE = /(?:token|secret|passw(?:or)?d|api[_-]?key|credential)\s*[:=]/i;
+const MAXIMUM_CHANNEL_LINE = 160;
+
+function runtimeChannels(text, language) {
+  const family = language === 'python' ? 'python' : 'javascript';
+  const found = [];
+  const lines = text.split(/\r?\n/);
+  for (let number = 0; number < lines.length; number += 1) {
+    const line = lines[number];
+    const trimmed = line.trim();
+    if (!trimmed || /^(?:#|\/\/|\*|\/\*)/.test(trimmed) || CHANNEL_SECRET_LINE.test(line)) continue;
+    for (const [kind, patterns] of RUNTIME_CHANNELS) {
+      if (!patterns[family].test(line)) continue;
+      found.push({
+        kind,
+        line: number + 1,
+        text: trimmed.length > MAXIMUM_CHANNEL_LINE ? `${trimmed.slice(0, MAXIMUM_CHANNEL_LINE)}...` : trimmed,
+      });
+    }
+  }
+  return found;
+}
+
 // --- Graph assembly ---------------------------------------------------------
 
 // A repository whose source lives under one package (for example
@@ -491,6 +549,7 @@ export function buildSourceLevel2(root, records, options = {}) {
   const scannedRecords = [];
   const routeProviders = [];
   const routeLiteralSites = [];
+  const channelSites = [];
   let stoppedByTotalBytes = false;
   let oversized = 0;
   let unreadable = 0;
@@ -546,6 +605,10 @@ export function buildSourceLevel2(root, records, options = {}) {
       routeProviders.push({ ...declaration, file: record.path, module: moduleOf.get(record.path) || record.modulePath });
     }
     routeLiteralSites.push(...routeLiterals(content.text).map((site) => ({ ...site, file: record.path })));
+    const supportFile = record.path.split('/').slice(0, -1).some((segment) => CHANNEL_SUPPORT_SEGMENT.test(segment));
+    for (const channel of supportFile ? [] : runtimeChannels(content.text, record.language)) {
+      channelSites.push({ ...channel, file: record.path, module: moduleOf.get(record.path) || record.modulePath });
+    }
     const scan = record.language === 'python' ? scanPython(content.text) : scanJs(content.text);
     unresolved.dynamic += scan.dynamic;
     for (const statement of scan.statements) {
@@ -629,6 +692,20 @@ export function buildSourceLevel2(root, records, options = {}) {
     .map((entry) => ({ module: entry.module, routes: entry.routes.size, sample: [...entry.routes].sort().slice(0, 3), anchor: entry.anchor }))
     .sort((left, right) => right.routes - left.routes || left.module.localeCompare(right.module));
 
+  // One entry per module and channel kind: how often the module opens that kind
+  // of channel and the first site, so the author can read one anchor.
+  const channelSummary = [...channelSites
+    .sort((left, right) => left.file.localeCompare(right.file) || left.line - right.line)
+    .reduce((byKey, site) => {
+      const key = `${site.module}\u0000${site.kind}`;
+      const entry = byKey.get(key) || { module: site.module, kind: site.kind, count: 0, files: new Set(), anchor: `${site.file}:${site.line}`, excerpt: site.text };
+      entry.count += 1;
+      entry.files.add(site.file);
+      return byKey.set(key, entry);
+    }, new Map()).values()]
+    .map(({ files, ...entry }) => ({ ...entry, files: files.size }))
+    .sort((left, right) => left.module.localeCompare(right.module) || left.kind.localeCompare(right.kind));
+
   const edges = [...moduleEdges.values()]
     .sort((left, right) => right.weight - left.weight
       || left.from.localeCompare(right.from) || left.to.localeCompare(right.to));
@@ -700,6 +777,7 @@ export function buildSourceLevel2(root, records, options = {}) {
     edges,
     routeProviders: routeProviderSummary,
     routeReferences,
+    runtimeChannels: channelSummary,
     fileEdges,
   };
 }

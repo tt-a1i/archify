@@ -46,9 +46,17 @@ fact has supporting source evidence.
    routes are. These are candidates for you to judge, not edges: when a
    cross-language component would otherwise float unconnected, read its one
    reference anchor and draw the link only if the code there calls the other
-   service. When one file inside a module owns the module's relationship,
-   attach the relationship to the module's component instead of splitting that
-   file into a separate node that leaves its parent unconnected. Module paths
+   service. `runtimeChannels` lists where runtime modules spawn processes,
+   serve or open WebSockets, serve or call HTTP, and start worker threads:
+   the runtime links an import graph cannot show. Draw each channel between
+   the components it connects, reading its one anchor when the peer is
+   unclear, and leave a channel out only when its peer is outside the
+   requested scope. For a repository-backed architecture, finalize rejects an
+   isolated component or a group of components with no connection to the rest
+   of the diagram. When one file inside a module owns the module's
+   relationship, attach the relationship to the module's component instead of
+   splitting that file into a separate node that leaves its parent
+   unconnected. Module paths
    are directories; cite a module's `sample` or `entrypoints` file as its
    source, not the directory or a guessed `__init__.py`. For per-file edges,
    look up the specific module or file in the `detail` graph on disk instead of

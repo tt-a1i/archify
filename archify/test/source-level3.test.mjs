@@ -384,3 +384,27 @@ test('Console scripts resolve onto files without a question, and anchors carry n
   assert.ok(lines.some((line) => line.includes('tonic_build')), 'the build file keeps its binding line');
   assert.ok(!lines.some((line) => /token|api_key|protoc comment/.test(line)), 'credentials and comments are not copied');
 });
+
+test('Runtime channels in the pack are runtime-only and round-robin across kinds', () => {
+  const channel = (module, kind, count) => ({ module, kind, count, files: 1, anchor: `${module}/a.js:1`, excerpt: 'x' });
+  const level2 = {
+    scannedFiles: 20, candidateFiles: 20, truncated: false,
+    unscanned: { files: 0, byLanguage: {} },
+    unresolved: { stdlib: 0, external: 0, dynamic: 0, unknown: 0, topUnknown: [], topExternal: [] },
+    modules: ['server', 'web', 'util'].map((name) => syntheticModule(name, 10)),
+    edges: [{ from: 'web', to: 'server', weight: 3, evidence: [] }, { from: 'server', to: 'util', weight: 2, evidence: [] }],
+    runtimeChannels: [
+      channel('util', 'process-spawn', 40), channel('server', 'process-spawn', 30), channel('web', 'process-spawn', 20),
+      channel('server', 'http-server', 1), channel('web', 'websocket-client', 2), channel('tests', 'http-client', 99),
+    ],
+  };
+  const pack = buildEvidencePack({
+    repositoryState: {}, summary: { retainedFiles: 20, languages: {} }, records: [],
+    boundaries: {}, level2, detailPath: null, declaredDependencies: new Set(),
+  }, { limits: { maximumRuntimeChannels: 3 } });
+
+  assert.deepEqual(pack.runtimeChannels.items.map((entry) => `${entry.module}:${entry.kind}`),
+    ['util:process-spawn', 'server:http-server', 'web:websocket-client']);
+  assert.equal(pack.runtimeChannels.omitted, 2, 'the two remaining spawns are counted, the non-runtime module is dropped');
+  assert.ok(!('excerpt' in pack.runtimeChannels.items[0]), 'excerpts stay in the detail graph');
+});

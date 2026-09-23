@@ -18,6 +18,7 @@ export const PACK_DEFAULT_LIMITS = Object.freeze({
   maximumQuestions: 12,
   maximumQuestionsPerKind: 4,
   maximumExcerptLines: 7,
+  maximumRuntimeChannels: 16,
 });
 
 const BUILD_FILE = /^(?:cmakelists\.txt|setup\.py|build\.rs|makefile|meson\.build|binding\.gyp|build\.sh)$/i;
@@ -460,6 +461,33 @@ function packEdges(level2, shownModules, maximumEdges, maximumEvidence, roles) {
 // judges whether a pair is a real client/server link, reading the one anchor
 // when it matters. Only pairs the import graph does not already connect are
 // listed, since the others add no information.
+// Runtime channels are the links an import graph cannot show: process spawns,
+// WebSocket servers and clients, HTTP servers and clients, worker threads.
+// Only runtime modules are listed, the ones that open a process or socket
+// first, so a spawn or server is never trimmed away before an HTTP call.
+const CHANNEL_PRIORITY = ['process-spawn', 'websocket-server', 'http-server', 'websocket-client', 'http-client', 'worker-thread'];
+
+function packRuntimeChannels(level2, roles, maximum) {
+  // Round-robin across kinds so one noisy kind (every utility that shells
+  // out) cannot take every slot from the server and client channels.
+  const byKind = new Map(CHANNEL_PRIORITY.map((kind) => [kind, []]));
+  for (const entry of level2.runtimeChannels || []) {
+    if (roles.get(entry.module) === 'runtime') byKind.get(entry.kind)?.push(entry);
+  }
+  for (const list of byKind.values()) list.sort((left, right) => right.count - left.count || left.module.localeCompare(right.module));
+  const channels = [];
+  for (let round = 0; [...byKind.values()].some((list) => list.length > round); round += 1) {
+    for (const list of byKind.values()) if (list[round]) channels.push(list[round]);
+  }
+  const { items, omitted } = trimList(channels, maximum);
+  return {
+    note: 'Call sites that open a process, socket or HTTP connection; draw the runtime link they create or leave it out only when its peer is outside the requested scope.',
+    // The one-line excerpt stays in the detail graph; the pack keeps the anchor.
+    items: items.map(({ module, kind, count, anchor }) => ({ module, kind, count, anchor })),
+    omitted,
+  };
+}
+
 function packCrossLanguage(level2, roles, maximumProviders, maximumReferences) {
   const runtime = (module) => roles.get(module) === 'runtime';
   const imported = new Set(level2.edges.flatMap((edge) => [`${edge.from}\u0000${edge.to}`, `${edge.to}\u0000${edge.from}`]));
@@ -506,6 +534,7 @@ export function buildEvidencePack({ repositoryState, summary, records, boundarie
     boundaryItems: limits.maximumBoundaryItems,
     questions: questions.length,
     references: 6,
+    channels: limits.maximumRuntimeChannels,
     excerptLines: limits.maximumExcerptLines,
   };
   const trimmed = [];
@@ -539,6 +568,7 @@ export function buildEvidencePack({ repositoryState, summary, records, boundarie
     modules,
     supportModules: packSupportModules(level2, roles, state.modules),
     crossLanguage,
+    runtimeChannels: packRuntimeChannels(level2, roles, state.channels),
     edges: packEdges(level2, modules.items.map((module) => module.path), state.edges, state.edgeEvidence, roles),
     questions: questions.slice(0, state.questions).map((question) => withExcerpts(question, root, state.excerptLines)),
     detail: detailPath ? { path: detailPath } : null,
@@ -554,11 +584,14 @@ export function buildEvidencePack({ repositoryState, summary, records, boundarie
     ['boundary-items-8', () => { state.boundaryItems = Math.min(state.boundaryItems, 8); }],
     ['edge-evidence', () => { state.edgeEvidence = 0; }],
     ['edges-24', () => { state.edges = Math.min(state.edges, 24); }],
+    ['channels-10', () => { state.channels = Math.min(state.channels, 10); }],
     ['modules-16', () => { state.modules = Math.min(state.modules, 16); }],
     ['boundary-items-5', () => { state.boundaryItems = Math.min(state.boundaryItems, 5); }],
     ['excerpts-4', () => { state.excerptLines = Math.min(state.excerptLines, 4); }],
+    ['channels-4', () => { state.channels = Math.min(state.channels, 4); }],
     ['questions-8', () => { state.questions = Math.min(state.questions, 8); }],
     ['references-3', () => { state.references = Math.min(state.references, 3); }],
+    ['channels-0', () => { state.channels = 0; }],
     ['edges-12', () => { state.edges = Math.min(state.edges, 12); }],
     ['modules-10', () => { state.modules = Math.min(state.modules, 10); }],
     // Last resort: these steps guarantee the budget even for repositories

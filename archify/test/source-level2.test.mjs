@@ -245,3 +245,30 @@ test('inspect-repo batched output is unchanged by the Level 2 module', (t) => {
   assert.equal(result.policy.ast, false);
   assert.ok(!('pack' in result));
 });
+
+test('Level 2 records runtime channels per module and skips comments, support folders and credential lines', (t) => {
+  const root = workspace(t);
+  write(root, 'server/app.js', [
+    "import http from 'node:http';",
+    "import { WebSocketServer } from 'ws';",
+    'const server = http.createServer(handler);',
+    'const wss = new WebSocketServer({ noServer: true });',
+    "// spawn('ignored-in-comment')",
+    "const child = spawn('agent', []);",
+    "const token = fetch('https://example.test');",
+  ].join('\n'));
+  write(root, 'web/client.js', "const ws = new WebSocket('/ws');\nfetch('/api/state');\n");
+  write(root, 'worker/job.py', 'import subprocess\nsubprocess.run(["git", "status"])\n');
+  write(root, 'scripts/check.js', "spawn('node', ['check']);\n");
+
+  const channels = level2(root).runtimeChannels;
+  const kinds = channels.map((entry) => `${entry.module}:${entry.kind}`);
+  for (const expected of ['server:http-server', 'server:websocket-server', 'server:process-spawn', 'web:websocket-client', 'web:http-client', 'worker:process-spawn']) {
+    assert.ok(kinds.includes(expected), `${expected} in ${kinds.join(', ')}`);
+  }
+  assert.ok(!kinds.some((kind) => kind.startsWith('scripts:')), 'maintenance scripts are not runtime channels');
+  const spawnSite = channels.find((entry) => entry.module === 'server' && entry.kind === 'process-spawn');
+  assert.equal(spawnSite.count, 1, 'the commented spawn is skipped');
+  assert.match(spawnSite.anchor, /^server\/app\.js:6$/);
+  assert.ok(!channels.some((entry) => entry.module === 'server' && entry.kind === 'http-client'), 'a credential-looking line is skipped');
+});
