@@ -22,6 +22,41 @@ fact has supporting source evidence.
 2. **Map the slice.** Use project instructions, manifests, entry points,
    registrations, and deployment configuration to locate candidate runtime
    units. Read the entry, configuration, and modules relevant to the request.
+   When those leads do not identify the relevant module in a large repository,
+   run `node bin/archify.mjs inspect-repo <repo-root> --evidence-pack --json`
+   once and read the pack once. The pack is an answer, not a work queue: its
+   `modules` and `edges` are the derived import graph, `boundaries` carries
+   the configuration facts, and `coverage` states what the scan cannot see.
+   Treat `unscanned` languages and `dynamic` import counts as boundaries to
+   confirm through build or binding configuration, not as absence. The
+   `questions` list is at most a dozen ranked optional leads; answer only the
+   ones whose answer could change a boundary in the requested diagram, and
+   ignore the rest. A question's `excerpts` already hold the numbered lines at
+   its anchors; answer from them and open an anchor file only when its excerpt
+   cannot settle the question. Console scripts that the pack mapped onto a file
+   (`boundaries.entrypoints[].files`) are separate processes and need no read.
+   `modules` lists runtime modules only; `supportModules` (tests, maintenance
+   scripts, data and documentation folders) are context, not components, and
+   stay out of an architecture diagram unless the request is about them. A
+   small module is not a reason to merge it: a one-file module with its own
+   imports and importers is a component. Modules in another language (a Rust
+   gateway, Go bindings) have no import edges to the rest;
+   `crossLanguage.routeReferences` lists HTTP route strings in one module that
+   match routes another module declares, ranked by how specific the shared
+   routes are. These are candidates for you to judge, not edges: when a
+   cross-language component would otherwise float unconnected, read its one
+   reference anchor and draw the link only if the code there calls the other
+   service. When one file inside a module owns the module's relationship,
+   attach the relationship to the module's component instead of splitting that
+   file into a separate node that leaves its parent unconnected. Module paths
+   are directories; cite a module's `sample` or `entrypoints` file as its
+   source, not the directory or a guessed `__init__.py`. For per-file edges,
+   look up the specific module or file in the `detail` graph on disk instead of
+   rereading the pack or scanning source. Do not loop `--batch` pages when the
+   pack is available; fall back to `inspect-repo <repo-root> --json` batching
+   only where the pack cannot run. The scan returns file paths and bounded
+   configuration facts; configuration identifiers can be sensitive, so keep
+   the output local. Confirm diagram claims in source as usual.
    Follow imports and call sites
    until the requested responsibility reaches its actual input, output, or
    side effect. Read a small connected slice instead of scanning the repository
