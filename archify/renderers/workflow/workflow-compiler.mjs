@@ -3699,6 +3699,13 @@ function workflowEdgeLabelPoint(edge, points) {
     if (points[labelSegment][0] === points[labelSegment + 1][0]) point[1] += 10;
     return point;
   }
+  if (!edge.labelAt && !Number.isInteger(edge.labelSegment)
+    && edge.labelDx === undefined && edge.labelDy === undefined
+    && points.length === 2 && points[0][0] === points[1][0]) {
+    // Center implicit v2 vertical labels in the corridor. Authored offsets
+    // retain their existing source-relative anchor, including explicit zero.
+    return [points[0][0], (points[0][1] + points[1][1]) / 2];
+  }
   if (edge.labelAt || Number.isInteger(edge.labelSegment) || points.length <= 2) {
     return labelPoint(edge, points);
   }
