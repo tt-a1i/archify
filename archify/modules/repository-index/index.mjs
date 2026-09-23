@@ -5,6 +5,7 @@ import path from 'node:path';
 import { buildConfigurationLevel1, buildConfigurationPlan, summarizeBoundaries, DEFAULT_LIMITS as LEVEL1_DEFAULT_LIMITS } from './config-level1.mjs';
 import { buildSourceLevel2 } from './source-level2.mjs';
 import { buildEvidencePack, classifyModules, decodePackEdges } from './source-level3.mjs';
+import { openSafeRepositoryFile, safeRepositoryEntry } from './safe-file.mjs';
 import { sameEntry } from '../../renderers/shared/path-semantics.mjs';
 
 const DEFAULT_BATCH_SIZE = 20;
@@ -152,6 +153,7 @@ function walkFiles(root) {
     const relativeDir = pending.pop();
     let entries;
     try {
+      safeRepositoryEntry(root, relativeDir, 'directory');
       entries = fs.readdirSync(path.join(root, relativeDir), { withFileTypes: true });
     } catch {
       continue;
@@ -161,9 +163,11 @@ function walkFiles(root) {
       const relative = toPosix(path.join(relativeDir, entry.name));
       if (entry.isSymbolicLink()) continue;
       if (entry.isDirectory()) {
-        if (!excludedDirectory(relative)) pending.push(relative);
+        if (!excludedDirectory(relative)) {
+          try { safeRepositoryEntry(root, relative, 'directory'); pending.push(relative); } catch { /* changed or escaped */ }
+        }
       } else if (entry.isFile()) {
-        files.push(relative);
+        try { safeRepositoryEntry(root, relative, 'file'); files.push(relative); } catch { /* changed or escaped */ }
       }
     }
   }
@@ -207,7 +211,10 @@ export function repositoryState(root) {
       const stat = fs.lstatSync(absolutePath);
       fingerprintHash.update('\0').update(relativePath).update('\0').update(String(stat.mode));
       if (stat.isSymbolicLink()) fingerprintHash.update(fs.readlinkSync(absolutePath));
-      else if (stat.isFile()) fingerprintHash.update(fs.readFileSync(absolutePath));
+      else if (stat.isFile()) {
+        const descriptor = openSafeRepositoryFile(gitRoot, relativePath);
+        try { fingerprintHash.update(fs.readFileSync(descriptor)); } finally { fs.closeSync(descriptor); }
+      }
     } catch {
       fingerprintHash.update('\0missing');
     }
@@ -227,10 +234,10 @@ export function repositoryState(root) {
 // so the sniff is reserved for files the name does not identify.
 const TEXT_EXTENSION = /\.(?:md|mdx|rst|adoc|txt|csv|tsv|log|lock|patch|diff|proto|tf|tfvars|gradle|properties|cfg|conf|ini|env|editorconfig|gitignore|gitattributes|dockerignore|npmrc|nvmrc|snap|map|svg|html?|css|scss|less)$/i;
 
-function looksBinary(absolutePath, size, extension) {
+function looksBinary(root, relativePath, size, extension) {
   if (size === 0) return false;
   if (LANGUAGE_BY_EXTENSION.has(extension) || CONFIG_EXTENSION.test(extension) || TEXT_EXTENSION.test(extension)) return false;
-  const descriptor = fs.openSync(absolutePath, 'r');
+  const descriptor = openSafeRepositoryFile(root, relativePath);
   try {
     const buffer = Buffer.allocUnsafe(Math.min(size, BINARY_SAMPLE_BYTES));
     const read = fs.readSync(descriptor, buffer, 0, buffer.length, 0);
@@ -318,7 +325,8 @@ export function createRepositorySnapshot(root) {
       stat = fs.lstatSync(absolutePath);
       if (stat.isSymbolicLink()) { filtered.symlinks += 1; continue; }
       if (!stat.isFile()) continue;
-      if (looksBinary(absolutePath, stat.size, extension)) { filtered.binaries += 1; continue; }
+      safeRepositoryEntry(absoluteRoot, relativePath, 'file');
+      if (looksBinary(absoluteRoot, relativePath, stat.size, extension)) { filtered.binaries += 1; continue; }
     } catch {
       filtered.unreadable += 1;
       continue;

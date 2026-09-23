@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { openSafeRepositoryFile } from './safe-file.mjs';
 
 // Level 1 reads bounded configuration prefixes and returns selected identifiers.
 // Callers should treat those identifiers as potentially sensitive local data.
@@ -571,7 +572,7 @@ export function buildConfigurationLevel1(root, records, options = {}) {
     // byte bound without silently dropping the tail of a configuration batch.
     const fairShare = Math.floor(remainingBytes / Math.max(1, remainingEntries));
     const bytes = Math.min(entry.record.size, limits.maximumBytesPerFile, fairShare);
-    const descriptor = fs.openSync(path.join(root, ...entry.record.path.split('/')), 'r');
+    const descriptor = openSafeRepositoryFile(root, entry.record.path);
     try {
       const buffer = Buffer.allocUnsafe(bytes);
       const read = bytes ? fs.readSync(descriptor, buffer, 0, bytes, 0) : 0;

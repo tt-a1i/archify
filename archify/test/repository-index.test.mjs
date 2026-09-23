@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { assertRepositorySnapshotCurrent, buildRepositoryIndex, createRepositorySnapshot, repositoryState } from '../modules/repository-index/index.mjs';
+import { assertRepositorySnapshotCurrent, buildRepositoryEvidence, buildRepositoryIndex, createRepositorySnapshot, repositoryState } from '../modules/repository-index/index.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const cli = path.join(skillRoot, 'bin', 'archify.mjs');
@@ -177,6 +177,22 @@ test('a subdirectory snapshot fingerprints changed content and accepts a physica
   write(root, 'sub/main.js', 'export const value = 3;\n');
   assert.notEqual(repositoryState(sub).fingerprint, before);
   assert.throws(() => assertRepositorySnapshotCurrent(snapshot), /Repository changed after this inspection snapshot was created/);
+});
+
+test('inspection does not follow a source directory replaced by an external symlink', (t) => {
+  const root = workspace(t);
+  const outside = workspace(t);
+  write(root, 'src/main.py', 'import os\n');
+  write(outside, 'main.py', 'import external_secret_marker\n');
+  const snapshot = createRepositorySnapshot(root);
+  fs.rmSync(path.join(root, 'src'), { recursive: true });
+  fs.symlinkSync(outside, path.join(root, 'src'));
+
+  const result = buildRepositoryEvidence(root, { snapshot });
+  assert.equal(result.pack.coverage.scannedFiles, 0);
+  assert.ok(!JSON.stringify(result).includes('external_secret_marker'));
+  assert.equal(buildRepositoryIndex(root).files.some((file) => file.path === 'src/main.py'), false,
+    'filesystem discovery excludes the external symlink');
 });
 
 test('inspect-repo CLI returns a requested deterministic batch', (t) => {

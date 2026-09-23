@@ -310,6 +310,18 @@ test('A runtime tools module keeps bare exec and WebSocket channels', (t) => {
   assert.ok(channels.some((entry) => entry.module === 'tools' && entry.kind === 'websocket-server'));
 });
 
+test('Channel excerpts omit Authorization header values', (t) => {
+  const root = workspace(t);
+  write(root, 'web/client.js', [
+    "fetch('/api', {",
+    "  Authorization: 'Bearer samplevalue',",
+    '});',
+  ].join('\n'));
+  const graph = level2(root);
+  assert.ok(graph.runtimeChannels.some((entry) => entry.kind === 'http-client'));
+  assert.ok(!JSON.stringify(graph).includes('samplevalue'));
+});
+
 test('Level 2 records inter-process channels and what they reach', (t) => {
   const root = workspace(t);
   write(root, 'engine/launch.py', [

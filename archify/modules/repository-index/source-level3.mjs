@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { safeSourceLine } from './source-redaction.mjs';
+import { openSafeRepositoryFile } from './safe-file.mjs';
 
 // Level 3 turns the Level 1 configuration boundaries and the Level 2 import
 // graph into one bounded evidence pack. The pack is an answer, not a work
@@ -43,7 +44,8 @@ function anchorExcerpt(root, anchor, maximumLines) {
   const [, file, lineText] = anchor.match(/^(.*?)(?::(\d+))?$/);
   let lines;
   try {
-    lines = fs.readFileSync(path.join(root, ...file.split('/')), 'utf8').split(/\r?\n/);
+    const descriptor = openSafeRepositoryFile(root, file);
+    try { lines = fs.readFileSync(descriptor, 'utf8').split(/\r?\n/); } finally { fs.closeSync(descriptor); }
   } catch {
     return null;
   }
