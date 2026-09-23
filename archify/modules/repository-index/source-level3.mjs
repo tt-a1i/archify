@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { safeSourceLine } from './source-redaction.mjs';
 
 // Level 3 turns the Level 1 configuration boundaries and the Level 2 import
 // graph into one bounded evidence pack. The pack is an answer, not a work
@@ -33,9 +34,9 @@ function evidenceReference(entry) {
 // A question anchor carries the few lines that answer it, so the author does
 // not open whole files: a line anchor keeps its surrounding lines, and a build
 // or project file keeps the lines that declare bindings, extensions, or
-// generated code. Lines that look like credentials are never copied.
+// generated code. Likely credential assignments are omitted and URL userinfo
+// is redacted before excerpts are emitted.
 const BUILD_HINT = /add_library|add_subdirectory|pybind|nanobind|pyo3|maturin|cython|extension|compile_protos|tonic_build|protoc|grpc|python-source|module-name|\[project\.scripts\]|:main\b/i;
-const SECRET_LINE = /(?:token|secret|passw(?:or)?d|api[_-]?key|credential)\s*[:=]/i;
 const MAXIMUM_EXCERPT_LINE = 160;
 
 function anchorExcerpt(root, anchor, maximumLines) {
@@ -58,10 +59,10 @@ function anchorExcerpt(root, anchor, maximumLines) {
     return null;
   }
   const picked = numbers
-    .filter((number) => lines[number - 1].trim() && !SECRET_LINE.test(lines[number - 1]))
+    .filter((number) => lines[number - 1].trim() && safeSourceLine(lines[number - 1]) !== null)
     .slice(0, maximumLines)
     .map((number) => {
-      const text = lines[number - 1].trim();
+      const text = safeSourceLine(lines[number - 1].trim());
       return `${number}: ${text.length > MAXIMUM_EXCERPT_LINE ? `${text.slice(0, MAXIMUM_EXCERPT_LINE)}...` : text}`;
     });
   return picked.length ? picked : null;
@@ -564,6 +565,14 @@ export function buildEvidencePack({ repositoryState, summary, records, boundarie
     excerptLines: limits.maximumExcerptLines,
   };
   const trimmed = [];
+  const measure = (pack) => {
+    let bytes;
+    do {
+      bytes = Buffer.byteLength(JSON.stringify(pack));
+      if (pack.budget.bytes === bytes) return bytes;
+      pack.budget.bytes = bytes;
+    } while (true);
+  };
 
   const assemble = () => {
     const crossLanguage = packCrossLanguage(level2, roles, 4, state.references);
@@ -632,15 +641,17 @@ export function buildEvidencePack({ repositoryState, summary, records, boundarie
   ];
 
   let pack = assemble();
-  let bytes = Buffer.byteLength(JSON.stringify(pack));
+  let bytes = measure(pack);
   for (const [label, apply] of shrinkSteps) {
     if (bytes <= limits.maximumBytes) break;
     apply();
     trimmed.push(label);
     pack = assemble();
-    bytes = Buffer.byteLength(JSON.stringify(pack));
+    bytes = measure(pack);
   }
-  pack.budget.bytes = Buffer.byteLength(JSON.stringify(pack));
-  pack.budget.bytes = Buffer.byteLength(JSON.stringify(pack));
+  if (bytes > limits.maximumBytes) {
+    pack.budget.exceeded = true;
+    measure(pack);
+  }
   return pack;
 }

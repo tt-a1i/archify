@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { buildRepositoryIndex } from '../modules/repository-index/index.mjs';
+import { assertRepositorySnapshotCurrent, buildRepositoryIndex, createRepositorySnapshot, repositoryState } from '../modules/repository-index/index.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const cli = path.join(skillRoot, 'bin', 'archify.mjs');
@@ -150,6 +150,33 @@ test('inspect-repo reuses one Git snapshot across batches and rejects it after t
   });
   assert.equal(stale.status, 2);
   assert.match(stale.stderr, /Repository changed after this inspection snapshot was created/);
+});
+
+test('a subdirectory snapshot fingerprints changed content and accepts a physical root alias', (t) => {
+  const root = workspace(t);
+  write(root, 'sub/main.js', 'export const value = 1;\n');
+  for (const args of [
+    ['init', '--quiet'],
+    ['config', 'user.email', 'snapshot@example.invalid'],
+    ['config', 'user.name', 'Snapshot Test'],
+    ['add', '.'],
+    ['commit', '--quiet', '-m', 'fixture'],
+  ]) {
+    const git = spawnSync('git', ['-C', root, ...args], { encoding: 'utf8' });
+    assert.equal(git.status, 0, git.stderr);
+  }
+  const sub = path.join(root, 'sub');
+  write(root, 'sub/main.js', 'export const value = 2;\n');
+  const snapshot = createRepositorySnapshot(sub);
+  const alias = `${root}-alias`;
+  fs.symlinkSync(root, alias);
+  t.after(() => fs.rmSync(alias, { force: true }));
+  assert.equal(buildRepositoryIndex(path.join(alias, 'sub'), { snapshot }).ok, true);
+
+  const before = repositoryState(sub).fingerprint;
+  write(root, 'sub/main.js', 'export const value = 3;\n');
+  assert.notEqual(repositoryState(sub).fingerprint, before);
+  assert.throws(() => assertRepositorySnapshotCurrent(snapshot), /Repository changed after this inspection snapshot was created/);
 });
 
 test('inspect-repo CLI returns a requested deterministic batch', (t) => {

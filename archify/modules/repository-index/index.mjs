@@ -5,6 +5,7 @@ import path from 'node:path';
 import { buildConfigurationLevel1, buildConfigurationPlan, summarizeBoundaries, DEFAULT_LIMITS as LEVEL1_DEFAULT_LIMITS } from './config-level1.mjs';
 import { buildSourceLevel2 } from './source-level2.mjs';
 import { buildEvidencePack, classifyModules, decodePackEdges } from './source-level3.mjs';
+import { sameEntry } from '../../renderers/shared/path-semantics.mjs';
 
 const DEFAULT_BATCH_SIZE = 20;
 const MAX_BATCH_SIZE = 100;
@@ -174,7 +175,19 @@ export function repositoryState(root) {
   if (headResult.error || headResult.status !== 0) {
     return { source: 'filesystem', head: null, dirty: null, fingerprint: null, reusable: false };
   }
-  const statusResult = spawnSync('git', ['-C', root, 'status', '--porcelain=v1', '-z', '--untracked-files=all'], {
+  const topResult = spawnSync('git', ['-C', root, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' });
+  if (topResult.error || topResult.status !== 0 || !topResult.stdout.trim()) {
+    return { source: 'git-working-tree', head: headResult.stdout.trim(), dirty: null, fingerprint: null, reusable: false };
+  }
+  let gitRoot;
+  let requestedRoot;
+  try {
+    gitRoot = fs.realpathSync(topResult.stdout.trim());
+    requestedRoot = fs.realpathSync(root);
+  } catch {
+    return { source: 'git-working-tree', head: headResult.stdout.trim(), dirty: null, fingerprint: null, reusable: false };
+  }
+  const statusResult = spawnSync('git', ['-C', root, 'status', '--porcelain=v1', '-z', '--untracked-files=all', '--', '.'], {
     encoding: 'buffer', maxBuffer: 64 * 1024 * 1024,
   });
   if (statusResult.error || statusResult.status !== 0) {
@@ -188,8 +201,8 @@ export function repositoryState(root) {
     const status = entry.slice(0, 2);
     const relativePath = toPosix(entry.slice(3));
     if (status[0] === 'R' || status[0] === 'C') index += 1;
-    const absolutePath = path.resolve(root, ...relativePath.split('/'));
-    if (!isInside(root, absolutePath)) continue;
+    const absolutePath = path.resolve(gitRoot, ...relativePath.split('/'));
+    if (!isInside(gitRoot, absolutePath) || !isInside(requestedRoot, absolutePath)) continue;
     try {
       const stat = fs.lstatSync(absolutePath);
       fingerprintHash.update('\0').update(relativePath).update('\0').update(String(stat.mode));
@@ -368,7 +381,7 @@ export function buildRepositoryIndex(root, options = {}) {
     || path.posix.isAbsolute(record.path) || record.path.split('/').includes('..'))) {
     throw new Error('Repository snapshot contains an invalid file path.');
   }
-  if (path.resolve(snapshot.root) !== absoluteRoot) throw new Error('Repository snapshot root does not match the requested repository.');
+  if (sameEntry(snapshot.root, absoluteRoot).status !== 'match') throw new Error('Repository snapshot root does not match the requested repository.');
 
   const batchSize = Number(options.batchSize ?? DEFAULT_BATCH_SIZE);
   if (!Number.isSafeInteger(batchSize) || batchSize < 1 || batchSize > MAX_BATCH_SIZE) {
@@ -539,7 +552,7 @@ export function buildRepositoryEvidence(root, options = {}) {
   if (snapshot.schemaVersion !== 1 || !Array.isArray(snapshot.records) || !snapshot.repositoryState) {
     throw new Error('Repository snapshot is invalid or unsupported.');
   }
-  if (path.resolve(snapshot.root) !== absoluteRoot) throw new Error('Repository snapshot root does not match the requested repository.');
+  if (sameEntry(snapshot.root, absoluteRoot).status !== 'match') throw new Error('Repository snapshot root does not match the requested repository.');
   // Stage timings are wall-clock measurements for benchmarking; they are the
   // only non-deterministic fields besides durationMs.
   const timingsMs = { snapshot: lap() };
@@ -552,7 +565,8 @@ export function buildRepositoryEvidence(root, options = {}) {
 
   let detailPath = null;
   if (options.detailDirectory) {
-    detailPath = path.join(options.detailDirectory, 'source-graph.json');
+    const detailOutput = fs.mkdtempSync(path.join(options.detailDirectory, 'source-graph-'));
+    detailPath = path.join(detailOutput, 'source-graph.json');
     const detail = {
       schemaVersion: 1,
       root: absoluteRoot,
@@ -562,7 +576,7 @@ export function buildRepositoryEvidence(root, options = {}) {
         .flatMap((entry) => (entry.files || []).map((file) => file.replace(/^\.\//, ''))))]
         .sort(([left], [right]) => left.localeCompare(right))),
     };
-    fs.writeFileSync(detailPath, `${JSON.stringify(detail, null, 1)}\n`, { mode: 0o600 });
+    fs.writeFileSync(detailPath, `${JSON.stringify(detail, null, 1)}\n`, { mode: 0o600, flag: 'wx' });
   }
 
   const summary = {
@@ -619,7 +633,7 @@ export function buildRepositoryEvidence(root, options = {}) {
       mode: 'evidence-pack-v1',
       scoring: false,
       ast: false,
-      sourceBodiesIncluded: false,
+      sourceBodiesIncluded: true,
       snapshotReuse: Boolean(options.snapshotReused),
     },
     summary: { ...summary, durationMs: elapsedMs, timingsMs },

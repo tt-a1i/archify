@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { builtinModules } from 'node:module';
 import path from 'node:path';
+import { safeSourceLine } from './source-redaction.mjs';
 
 // Level 2 builds a whole-repository import graph from bounded line scanning.
 // It deliberately avoids per-file AST subprocesses: import statements are the
@@ -282,7 +283,7 @@ const JS_IMPORT_PATTERNS = [
   /\bimport\s+[^'"();]*?from\s*['"]([^'"]+)['"]/g,
   /\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
   /(?:^|[\s;])import\s*['"]([^'"]+)['"]/g,
-  /\bexport\s+(?:\*|\{[^}]*\})\s*from\s*['"]([^'"]+)['"]/g,
+  /\bexport\s+(?:type\s+)?(?:\*(?:\s+as\s+[\w$]+)?|\{[^}]*\})\s*from\s*['"]([^'"]+)['"]/g,
   /\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
 ];
 
@@ -291,13 +292,26 @@ function scanJs(text) {
   let dynamic = 0;
   const state = { block: false, template: false };
   const lines = text.split(/\r?\n/);
-  for (let number = 0; number < lines.length; number += 1) {
-    const stripped = stripJsLine(lines[number], state);
+  const strippedLines = lines.map((line) => stripJsLine(line, state));
+  for (let number = 0; number < strippedLines.length; number += 1) {
+    const stripped = strippedLines[number];
     if (!stripped.trim()) continue;
     const seen = new Set();
+    // Named imports and re-exports often put the `from` clause on a later
+    // line. Bound the window so an unfinished statement cannot consume the
+    // rest of a large source file.
+    const multiline = /\b(?:import|export)\s+(?:type\s+)?(?:\{|\*(?:\s+as\b)?)/.test(stripped)
+      && !/\bfrom\s*['"]/.test(stripped);
+    let candidate = multiline ? strippedLines.slice(number, number + 12).join('\n').slice(0, 2048) : stripped;
+    if (multiline) {
+      const from = /\bfrom\s*['"][^'"]+['"]/.exec(candidate);
+      if (from) candidate = candidate.slice(0, from.index + from[0].length);
+      const semicolon = candidate.indexOf(';');
+      if (semicolon !== -1) candidate = candidate.slice(0, semicolon + 1);
+    }
     for (const pattern of JS_IMPORT_PATTERNS) {
       pattern.lastIndex = 0;
-      for (const match of stripped.matchAll(pattern)) {
+      for (const match of candidate.matchAll(pattern)) {
         const spec = match[1];
         if (!seen.has(spec)) {
           seen.add(spec);
@@ -315,7 +329,12 @@ function resolveJs(statement, fromPath, fileSet) {
   if (spec.startsWith('./') || spec.startsWith('../') || spec === '.' || spec === '..') {
     const base = path.posix.normalize(path.posix.join(posixDirname(fromPath), spec));
     if (base.startsWith('..')) return { kind: 'unknown', name: spec };
+    const typescriptCounterparts = /\.jsx?$/.test(base)
+      ? [base.replace(/\.jsx?$/, '.ts'), base.replace(/\.jsx?$/, '.tsx')]
+      : /\.mjs$/.test(base) ? [base.replace(/\.mjs$/, '.mts')]
+        : /\.cjs$/.test(base) ? [base.replace(/\.cjs$/, '.cts')] : [];
     const candidates = [base,
+      ...typescriptCounterparts,
       ...JS_EXTENSIONS.map((extension) => base + extension),
       ...JS_EXTENSIONS.map((extension) => `${base}/index${extension}`)];
     for (const candidate of candidates) {
@@ -398,7 +417,7 @@ function routeLiterals(text) {
 // look like credentials are skipped; only one trimmed line is kept per channel.
 const RUNTIME_CHANNELS = [
   ['process-spawn', {
-    javascript: /(?:^|[^.\w$])(?:spawn|spawnSync|execFile|execFileSync|execSync|fork)\s*\(|\b(?:child_process|childProcess|cp|pty|nodePty)\.(?:spawn|spawnSync|exec|execSync|execFile|fork)\s*\(/,
+    javascript: /(?:^|[^.\w$])(?:spawn|spawnSync|exec|execFile|execFileSync|execSync|fork)\s*\(|\b(?:child_process|childProcess|cp|pty|nodePty)\.(?:spawn|spawnSync|exec|execSync|execFile|fork)\s*\(/,
     python: /\bsubprocess\.(?:Popen|run|call|check_call|check_output)\s*\(|\bos\.(?:system|popen|exec\w*)\s*\(|\basyncio\.create_subprocess_(?:exec|shell)\s*\(|\b(?:multiprocessing|mp|ctx|mp_ctx)\.Process\s*\(|\.get_context\([^)]*\)\.Process\s*\(|(?:^|[^.\w])Process\s*\(\s*target\s*=/,
   }],
   // Processes that talk through a broker or socket library instead of HTTP:
@@ -437,10 +456,6 @@ const RUNTIME_CHANNELS = [
     python: /\bProcessPoolExecutor\s*\(/,
   }],
 ];
-// Maintenance scripts, benchmarks, examples and hidden agent/editor folders
-// spawn and fetch constantly; their call sites are not the system's runtime.
-const CHANNEL_SUPPORT_SEGMENT = /^(?:\..+|scripts?|tools?|tooling|bench(?:mark)?s?|examples?|demos?|samples?|docs?|fixtures?)$/i;
-const CHANNEL_SECRET_LINE = /(?:token|secret|passw(?:or)?d|api[_-]?key|credential)\s*[:=]/i;
 const MAXIMUM_CHANNEL_LINE = 120;
 const CHANNEL_EXCERPT_LINES = 3;
 const CHANNEL_TARGETS = 4;
@@ -452,7 +467,7 @@ function runtimeChannels(text, language) {
   for (let number = 0; number < lines.length; number += 1) {
     const line = lines[number];
     const trimmed = line.trim();
-    if (!trimmed || /^(?:#|\/\/|\*|\/\*)/.test(trimmed) || CHANNEL_SECRET_LINE.test(line)) continue;
+    if (!trimmed || /^(?:#|\/\/|\*|\/\*)/.test(trimmed) || safeSourceLine(line) === null) continue;
     for (const [kind, patterns] of RUNTIME_CHANNELS) {
       if (!patterns[family].test(line)) continue;
       // The call and the lines right after it usually name the peer: the
@@ -460,8 +475,9 @@ function runtimeChannels(text, language) {
       const excerpt = [];
       for (let next = number; next < lines.length && excerpt.length < CHANNEL_EXCERPT_LINES; next += 1) {
         const text = lines[next].trim();
-        if (!text || /^(?:#|\/\/|\*|\/\*)/.test(text) || CHANNEL_SECRET_LINE.test(lines[next])) continue;
-        excerpt.push(`${next + 1}: ${text.length > MAXIMUM_CHANNEL_LINE ? `${text.slice(0, MAXIMUM_CHANNEL_LINE)}...` : text}`);
+        const safe = safeSourceLine(text);
+        if (!text || /^(?:#|\/\/|\*|\/\*)/.test(text) || safe === null) continue;
+        excerpt.push(`${next + 1}: ${safe.length > MAXIMUM_CHANNEL_LINE ? `${safe.slice(0, MAXIMUM_CHANNEL_LINE)}...` : safe}`);
       }
       const window = lines.slice(number, number + CHANNEL_EXCERPT_LINES + 1).join(' ');
       const processTarget = kind === 'process-spawn' ? /\btarget\s*=\s*([\w.]+)/.exec(window) : null;
@@ -470,7 +486,8 @@ function runtimeChannels(text, language) {
         || (kind === 'message-queue' && /\bzmq\.(PUSH|PULL|PUB|SUB|XPUB|XSUB|REQ|REP|DEALER|ROUTER|PAIR)\s*,\s*([\w.]{1,80})/.exec(window))
         || (kind === 'grpc-client' && /_channel\s*\(\s*([^),]{1,80})/.exec(window));
       const named = target ? target.slice(1).filter(Boolean).join(' ') : null;
-      found.push({ kind, line: number + 1, excerpt, ...(named && !CHANNEL_SECRET_LINE.test(named) ? { target: named } : {}), ...(processTarget ? { processTarget: true } : {}) });
+      const safeTarget = named ? safeSourceLine(named) : null;
+      found.push({ kind, line: number + 1, excerpt, ...(safeTarget ? { target: safeTarget } : {}), ...(processTarget ? { processTarget: true } : {}) });
     }
   }
   return found;
@@ -633,8 +650,7 @@ export function buildSourceLevel2(root, records, options = {}) {
       routeProviders.push({ ...declaration, file: record.path, module: moduleOf.get(record.path) || record.modulePath });
     }
     routeLiteralSites.push(...routeLiterals(content.text).map((site) => ({ ...site, file: record.path })));
-    const supportFile = record.path.split('/').slice(0, -1).some((segment) => CHANNEL_SUPPORT_SEGMENT.test(segment));
-    for (const channel of supportFile ? [] : runtimeChannels(content.text, record.language)) {
+    for (const channel of record.role === 'test' || record.role === 'documentation' ? [] : runtimeChannels(content.text, record.language)) {
       channelSites.push({ ...channel, file: record.path, module: moduleOf.get(record.path) || record.modulePath });
     }
     const scan = record.language === 'python' ? scanPython(content.text) : scanJs(content.text);
@@ -761,7 +777,7 @@ export function buildSourceLevel2(root, records, options = {}) {
     moduleStats.set(modulePath, stats);
   }
   for (const record of scannedRecords) {
-    const stats = moduleStats.get(record.modulePath);
+    const stats = moduleStats.get(moduleOf.get(record.path) || record.modulePath);
 
     if (stats) {
       stats.scannedFiles += 1;
@@ -791,7 +807,7 @@ export function buildSourceLevel2(root, records, options = {}) {
 
   return {
     name: 'source-import-graph',
-    sourceBodiesIncluded: false,
+    sourceBodiesIncluded: true,
     limits,
     scannedFiles,
     scannedBytes,

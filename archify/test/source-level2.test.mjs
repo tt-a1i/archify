@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { buildRepositoryIndex, createRepositorySnapshot } from '../modules/repository-index/index.mjs';
+import { buildRepositoryEvidence, buildRepositoryIndex, createRepositorySnapshot } from '../modules/repository-index/index.mjs';
 import { buildSourceLevel2 } from '../modules/repository-index/source-level2.mjs';
 
 function workspace(t) {
@@ -44,7 +44,7 @@ test('Level 2 resolves Python imports through a nested python/<package> source l
 
   const graph = level2(root);
   assert.equal(graph.name, 'source-import-graph');
-  assert.equal(graph.sourceBodiesIncluded, false);
+  assert.equal(graph.sourceBodiesIncluded, true, 'runtime channel excerpts contain source lines');
   assert.equal(graph.truncated, false);
 
   const edge = graph.edges.find((entry) => entry.from === 'scripts' && entry.to === 'python/pkg');
@@ -97,6 +97,25 @@ test('Level 2 resolves JavaScript relative imports and classifies bare and dynam
   assert.ok(graph.fileEdges.some((entry) => entry.to === 'src/app/lazy.mjs'), 'a literal dynamic import resolves');
 });
 
+test('Level 2 resolves wrapped imports, re-exports and JavaScript specifiers backed by TypeScript', (t) => {
+  const root = workspace(t);
+  write(root, 'src/app/entry.ts', [
+    'import {',
+    '  helper,',
+    "} from '../lib/helper.js';",
+    'export type {',
+    '  Schema,',
+    "} from '../lib/schema.js';",
+    "export * as namespace from '../lib/namespace.js';",
+  ].join('\n'));
+  write(root, 'src/lib/helper.ts', 'export const helper = 1;\n');
+  write(root, 'src/lib/schema.ts', 'export type Schema = {};\n');
+  write(root, 'src/lib/namespace.ts', 'export const value = 1;\n');
+  const graph = level2(root);
+  const edges = graph.fileEdges.filter((edge) => edge.from === 'src/app/entry.ts');
+  assert.deepEqual(edges.map((edge) => edge.to), ['src/lib/helper.ts', 'src/lib/schema.ts', 'src/lib/namespace.ts']);
+});
+
 test('Level 2 covers every module under the file cap and truncates visibly', (t) => {
   const root = workspace(t);
   for (let index = 0; index < 12; index += 1) write(root, `alpha/lib/a${index}.py`, 'VALUE = 1\n');
@@ -142,6 +161,8 @@ test('Level 2 splits a dominant package so subsystem edges stay visible', (t) =>
   const edge = graph.edges.find((entry) => entry.from === 'python/big/srt' && entry.to === 'python/big/lang');
   assert.ok(edge, 'edges between the refined subpackages are reported');
   assert.equal(edge.weight, 20);
+  assert.ok(graph.modules.find((module) => module.path === 'python/big/srt').scannedFiles > 0,
+    'scans are credited to the refined module rather than their original directory key');
   const root2 = workspace(t);
   fs.cpSync(root, root2, { recursive: true });
   for (let index = 0; index < 6; index += 1) write(root2, `python/big/srt/test/test_s${index}.py`, 'VALUE = 1\n');
@@ -246,7 +267,7 @@ test('inspect-repo batched output is unchanged by the Level 2 module', (t) => {
   assert.ok(!('pack' in result));
 });
 
-test('Level 2 records runtime channels per module and skips comments, support folders and credential lines', (t) => {
+test('Level 2 records channel candidates while the pack excludes support modules', (t) => {
   const root = workspace(t);
   write(root, 'server/app.js', [
     "import http from 'node:http';",
@@ -266,12 +287,27 @@ test('Level 2 records runtime channels per module and skips comments, support fo
   for (const expected of ['server:http-server', 'server:websocket-server', 'server:process-spawn', 'web:websocket-client', 'web:http-client', 'worker:process-spawn']) {
     assert.ok(kinds.includes(expected), `${expected} in ${kinds.join(', ')}`);
   }
-  assert.ok(!kinds.some((kind) => kind.startsWith('scripts:')), 'maintenance scripts are not runtime channels');
+  assert.ok(kinds.includes('scripts:process-spawn'), 'the scanner does not discard a directory by name');
+  assert.ok(!buildRepositoryEvidence(root).pack.runtimeChannels.items.some((entry) => entry.module === 'scripts'),
+    'the pack excludes a support-only scripts module');
   const spawnSite = channels.find((entry) => entry.module === 'server' && entry.kind === 'process-spawn');
   assert.equal(spawnSite.count, 1, 'the commented spawn is skipped');
   assert.match(spawnSite.anchor, /^server\/app\.js:6$/);
   assert.deepEqual(spawnSite.excerpt, ["6: const child = spawn('agent', []);"], 'the credential line after the call is not copied');
   assert.ok(!channels.some((entry) => entry.module === 'server' && entry.kind === 'http-client'), 'a credential-looking line is skipped');
+});
+
+test('A runtime tools module keeps bare exec and WebSocket channels', (t) => {
+  const root = workspace(t);
+  write(root, 'package.json', JSON.stringify({ name: 'runtime-tools', bin: { server: 'tools/server.mjs' } }));
+  write(root, 'tools/server.mjs', [
+    "import { exec } from 'node:child_process';",
+    "exec('node worker.js');",
+    'new WebSocketServer({ port: 8080 });',
+  ].join('\n'));
+  const channels = buildRepositoryEvidence(root).pack.runtimeChannels.items;
+  assert.ok(channels.some((entry) => entry.module === 'tools' && entry.kind === 'process-spawn'));
+  assert.ok(channels.some((entry) => entry.module === 'tools' && entry.kind === 'websocket-server'));
 });
 
 test('Level 2 records inter-process channels and what they reach', (t) => {

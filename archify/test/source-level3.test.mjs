@@ -119,12 +119,39 @@ test('The evidence pack enforces its byte budget by trimming detail before facts
 test('The evidence pack writes full per-file detail to disk and points at it', (t) => {
   const root = mixedFixture(t);
   const detailDirectory = workspace(t, 'archify-source-level3-detail-');
+  const unrelated = path.join(detailDirectory, 'source-graph.json');
+  fs.writeFileSync(unrelated, 'unrelated file\n');
   const result = buildRepositoryEvidence(root, { detailDirectory });
   const detailPath = result.pack.detail.path;
-  assert.equal(detailPath, path.join(detailDirectory, 'source-graph.json'));
+  assert.equal(path.basename(detailPath), 'source-graph.json');
+  assert.ok(path.dirname(detailPath).startsWith(path.join(detailDirectory, 'source-graph-')));
+  assert.equal(fs.readFileSync(unrelated, 'utf8'), 'unrelated file\n');
+  assert.notEqual(buildRepositoryEvidence(root, { detailDirectory }).pack.detail.path, detailPath,
+    'a repeat run gets its own detail path');
   const detail = JSON.parse(fs.readFileSync(detailPath, 'utf8'));
   assert.ok(Array.isArray(detail.level2.fileEdges) && detail.level2.fileEdges.length > 0);
   assert.ok(detail.level1.boundaries.services.length >= 1);
+});
+
+test('Source excerpts redact URL userinfo and report that source lines are included', (t) => {
+  const root = workspace(t);
+  write(root, 'native/CMakeLists.txt', 'add_library(native SHARED kernel.cu) # postgres://alice:samplepassword@db.example/app\n');
+  for (let index = 0; index < 6; index += 1) write(root, `native/kernel${index}.cu`, '__global__ void k() {}\n');
+  write(root, 'native/host.py', 'VALUE = 1\n');
+  const result = buildRepositoryEvidence(root);
+  const serialized = JSON.stringify(result.pack);
+  assert.equal(result.policy.sourceBodiesIncluded, true);
+  assert.ok(serialized.includes('postgres://[redacted]@db.example/app'));
+  assert.ok(!serialized.includes('samplepassword'));
+});
+
+test('An exhausted pack budget is reported with the actual serialized size', (t) => {
+  const root = workspace(t);
+  write(root, 'service/app.py', 'VALUE = 1\n');
+  const pack = buildRepositoryEvidence(root, { packLimits: { maximumBytes: 100 } }).pack;
+  assert.equal(pack.budget.exceeded, true);
+  assert.ok(pack.budget.bytes > pack.budget.maximumBytes);
+  assert.equal(pack.budget.bytes, Buffer.byteLength(JSON.stringify(pack)));
 });
 
 test('The evidence pack is deterministic across runs apart from measured duration', (t) => {

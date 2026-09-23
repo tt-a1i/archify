@@ -62,11 +62,13 @@ architecture example from the Type router that fits the repository.
    NATS), serve or call gRPC, serve or open WebSockets, serve or call HTTP,
    and start worker threads; `targets` names what a channel reaches (a
    process target, a spawned command, a queue socket and address):
-   the runtime links an import graph cannot show. Each channel's `excerpt`
-   holds the numbered call lines, which usually name the peer; draw each
-   channel between the components it connects, open its anchor only when the
-   excerpt cannot identify the peer, and leave a channel out only when its
-   peer is outside the requested scope. For a repository-backed architecture, finalize rejects an
+   possible runtime links an import graph cannot show. Each channel's `excerpt`
+   holds numbered call lines. Treat a listed channel as a lead: trace source
+   evidence for both the caller and its peer before drawing a connection.
+   Open the anchor and follow the target when the excerpt alone is insufficient;
+   preserve an unknown or omit the connection if the peer cannot be verified.
+   Do not infer runtime causality from file proximity or naming. For a
+   repository-backed architecture, finalize rejects an
    isolated component or a group of components with no connection to the rest
    of the diagram. When one file inside a module owns the module's
    relationship, attach the relationship to the module's component instead of
