@@ -2226,13 +2226,52 @@ function rendererPath(type) {
   return path.join(skillRoot, 'renderers', type, `render-${type}.mjs`);
 }
 
+// Default capture ceiling for piped child output. spawnSync's own default
+// is 1 MiB, which is below what a dense diagram's checker receipt reaches.
+const DEFAULT_MAX_BUFFER = 64 * 1024 * 1024;
+
 function runNode(args, options = {}) {
   return spawnSync(process.execPath, args, {
     cwd: options.cwd || process.cwd(),
     encoding: 'utf8',
     stdio: options.stdio || 'inherit',
+    maxBuffer: options.maxBuffer ?? DEFAULT_MAX_BUFFER,
     env: options.env ? { ...process.env, ...options.env } : process.env,
   });
+}
+
+// The artifact checker prints its whole receipt on stdout; a dense,
+// warning-heavy diagram can grow that receipt past spawnSync's 1 MiB
+// default, which kills the child before it reports a verdict. Deliver,
+// validate, migrate, compare, and check share this explicit limit so one
+// environment knob moves them together.
+function artifactCheckMaxBuffer() {
+  const raw = process.env.ARCHIFY_CHECK_MAX_BUFFER;
+  if (raw === undefined || raw === '') return DEFAULT_MAX_BUFFER;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && Math.floor(parsed) >= 1 ? Math.floor(parsed) : DEFAULT_MAX_BUFFER;
+}
+
+// A checker terminated while streaming its output never judged the
+// artifact; its truncated stdout must not be reinterpreted as a verdict.
+function checkerOutputLimitDiagnostics(check, limitBytes) {
+  if (check.error?.code !== 'ENOBUFS') return null;
+  const receivedBytes = Buffer.byteLength(check.stdout || '', 'utf8');
+  return [diagnostic({
+    code: 'artifact/check-output-limit',
+    message: `The artifact checker exceeded the ${limitBytes} byte output buffer and was terminated before reporting a verdict (${receivedBytes} stdout bytes received); the artifact was not judged.`,
+    subject: { check: 'render_output' },
+    evidence: {
+      systemCode: check.error.code,
+      ...(check.signal ? { signal: check.signal } : {}),
+      status: check.status ?? null,
+      limitBytes,
+      receivedBytes,
+    },
+    supportedFixes: [
+      'set ARCHIFY_CHECK_MAX_BUFFER to a much larger limit (for example 1073741824) and re-run',
+    ],
+  })];
 }
 
 function extractQualityArgs(args) {
@@ -3527,16 +3566,25 @@ function renderValidatedArchitecture(inputPath, outputPath, quality, repoRoot, c
     artifact = fs.readFileSync(outputPath);
     captureStagingFile(outputPath, artifactIdentity(artifact));
   }
-  const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), outputPath], { stdio: 'pipe' });
+  const checkMaxBuffer = artifactCheckMaxBuffer();
+  const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), outputPath], {
+    stdio: 'pipe',
+    maxBuffer: checkMaxBuffer,
+  });
   if (check.status !== 0) {
     const error = new Error('Validated snapshot failed final artifact checks.');
     error.compareStage = 'check';
     error.compareStatus = check.status ?? 1;
-    try {
-      error.checker = JSON.parse(check.stdout);
-      error.diagnostics = checkerDiagnostics(error.checker);
-    } catch {
-      error.diagnostics = [];
+    const outputLimit = checkerOutputLimitDiagnostics(check, checkMaxBuffer);
+    if (outputLimit) {
+      error.diagnostics = outputLimit;
+    } else {
+      try {
+        error.checker = JSON.parse(check.stdout);
+        error.diagnostics = checkerDiagnostics(error.checker);
+      } catch {
+        error.diagnostics = [];
+      }
     }
     throw error;
   }
@@ -4747,11 +4795,27 @@ async function commandDeliver(args) {
       // Leave an unbound entry untouched during private-directory cleanup.
     }
 
+    const checkMaxBuffer = artifactCheckMaxBuffer();
     const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), candidatePath], {
       stdio: 'pipe',
+      maxBuffer: checkMaxBuffer,
     });
     if (check.status !== 0) {
       if (check.stderr) process.stderr.write(check.stderr);
+      const outputLimit = checkerOutputLimitDiagnostics(check, checkMaxBuffer);
+      if (outputLimit) {
+        reportDeliveryFailure({
+          json,
+          stage: 'check',
+          type,
+          input: inputPath,
+          output: outputPath,
+          error: `The artifact checker exceeded its ${checkMaxBuffer} byte output buffer and was terminated before reporting a verdict; the previous artifact was preserved.`,
+          diagnostics: outputLimit,
+          status: check.status ?? 1,
+        });
+        return;
+      }
       let checker;
       try {
         checker = JSON.parse(check.stdout);
@@ -5368,9 +5432,30 @@ async function commandCheck(args) {
     process.exitCode = 1;
     return;
   }
-  const result = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), html], { stdio: 'pipe' });
+  const checkMaxBuffer = artifactCheckMaxBuffer();
+  const result = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), html], {
+    stdio: 'pipe',
+    maxBuffer: checkMaxBuffer,
+  });
   if (result.error) {
-    console.error(result.error.message);
+    if (result.stderr) process.stderr.write(result.stderr);
+    const outputLimit = checkerOutputLimitDiagnostics(result, checkMaxBuffer);
+    if (outputLimit) {
+      const file = path.resolve(html);
+      const message = outputLimit[0].message;
+      console.log(JSON.stringify({
+        schemaVersion: 1,
+        ok: false,
+        command: 'check',
+        artifact: { path: file },
+        file,
+        error: message,
+        diagnostic: message,
+        diagnostics: outputLimit,
+      }, null, 2));
+    } else {
+      console.error(result.error.message);
+    }
     process.exitCode = 1;
     return;
   }
@@ -6357,10 +6442,24 @@ async function commandMigrate(args) {
       content: artifactIdentity(migrationArtifact),
     });
 
+    const checkMaxBuffer = artifactCheckMaxBuffer();
     const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), artifactPath], {
       stdio: 'pipe',
+      maxBuffer: checkMaxBuffer,
     });
     if (check.status !== 0) {
+      const outputLimit = checkerOutputLimitDiagnostics(check, checkMaxBuffer);
+      if (outputLimit) {
+        reportMigrationFailure({
+          ...migration,
+          newSchemaDiagnostics: [
+            ...migration.newSchemaDiagnostics,
+            ...outputLimit,
+          ],
+          status: check.status ?? 1,
+        });
+        return;
+      }
       let checker;
       try {
         checker = JSON.parse(check.stdout);
@@ -6764,26 +6863,43 @@ async function commandValidate(args) {
       });
       exitCode = render.status ?? 1;
     } else {
-      const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), out], { stdio: 'pipe' });
+      const checkMaxBuffer = artifactCheckMaxBuffer();
+      const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), out], {
+        stdio: 'pipe',
+        maxBuffer: checkMaxBuffer,
+      });
       if (check.status !== 0) {
-        let checker;
-        try {
-          checker = JSON.parse(check.stdout);
-          checker.file = path.resolve(input);
-        } catch {
-          checker = { ok: false, diagnostic: 'Artifact checker failed without a parseable receipt.' };
-        }
-        reportValidateFailure({
-          json,
-          stage: 'check',
-          type,
-          input: path.resolve(input),
-          error: 'Final artifact check failed.',
-          diagnostics: checkerDiagnostics(checker),
-          checker,
-          status: check.status ?? 1,
-        });
         exitCode = check.status ?? 1;
+        const outputLimit = checkerOutputLimitDiagnostics(check, checkMaxBuffer);
+        if (outputLimit) {
+          reportValidateFailure({
+            json,
+            stage: 'check',
+            type,
+            input: path.resolve(input),
+            error: `The artifact checker exceeded its ${checkMaxBuffer} byte output buffer and was terminated before reporting a verdict.`,
+            diagnostics: outputLimit,
+            status: check.status ?? 1,
+          });
+        } else {
+          let checker;
+          try {
+            checker = JSON.parse(check.stdout);
+            checker.file = path.resolve(input);
+          } catch {
+            checker = { ok: false, diagnostic: 'Artifact checker failed without a parseable receipt.' };
+          }
+          reportValidateFailure({
+            json,
+            stage: 'check',
+            type,
+            input: path.resolve(input),
+            error: 'Final artifact check failed.',
+            diagnostics: checkerDiagnostics(checker),
+            checker,
+            status: check.status ?? 1,
+          });
+        }
       } else {
         const result = JSON.parse(check.stdout);
         const engineeringProfile = engineeringProfileFromArtifact(fs.readFileSync(out));

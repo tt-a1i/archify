@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { extractSvgs, parseXml } from './helpers/xml.mjs';
+import { bipartiteArchitectureSpec } from './helpers/dense-fixture.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -21,6 +22,7 @@ function run(args, options = {}) {
   return spawnSync(process.execPath, [cli, ...args], {
     cwd: options.cwd || skillRoot,
     encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
     env: options.env || process.env,
   });
 }
@@ -823,6 +825,191 @@ test('cli: deliver preserves the previous artifact when the final check fails', 
     fs.readdirSync(path.dirname(out)).filter((name) => name.includes('.archify-delivery-')),
     [],
   );
+});
+
+// Dense-but-valid receipt fixtures live in helpers/dense-fixture.mjs.
+
+test('cli: deliver accepts a dense artifact whose checker receipt exceeds the 1 MiB default buffer', { timeout: 60000 }, () => {
+  const input = path.join(tmp, 'dense-receipt.architecture.json');
+  fs.writeFileSync(input, JSON.stringify(bipartiteArchitectureSpec(8)));
+  const out = path.join(tmp, 'dense-receipt.html');
+  // Scrub the knob so this test exercises the default limit even when a
+  // developer or CI environment overrides it.
+  const env = { ...process.env };
+  delete env.ARCHIFY_CHECK_MAX_BUFFER;
+  const delivered = run(['deliver', 'architecture', input, out, '--json'], { env });
+  assert.equal(delivered.status, 0, delivered.stderr);
+  const receipt = JSON.parse(delivered.stdout);
+  assert.equal(receipt.ok, true);
+  assert.equal(receipt.command, 'deliver');
+  const provenance = JSON.parse(fs.readFileSync(deliveryProvenancePath(out), 'utf8'));
+  assert.equal(provenance.status, 'current');
+
+  const checked = spawnSync(process.execPath, [path.join(skillRoot, 'scripts/check-render-output.mjs'), out], {
+    cwd: skillRoot,
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  assert.equal(checked.status, 0, checked.stderr);
+  const bytes = Buffer.byteLength(checked.stdout, 'utf8');
+  assert.ok(bytes > 1024 * 1024, `checker receipt was only ${bytes} bytes; the fixture no longer overflows the 1 MiB default`);
+  assert.equal(JSON.parse(checked.stdout).ok, true);
+});
+
+test('cli: deliver reports an output-limit failure distinctly and preserves the previous artifact', () => {
+  const input = path.join(skillRoot, 'examples/web-app.architecture.json');
+  const out = path.join(tmp, 'output-limit-preserved.html');
+  const trustedPriorArtifact = '<!doctype html><title>trusted prior artifact</title>\n';
+  fs.writeFileSync(out, trustedPriorArtifact);
+
+  const result = run(['deliver', 'architecture', input, out, '--json'], {
+    env: { ...process.env, ARCHIFY_CHECK_MAX_BUFFER: '1024' },
+  });
+
+  assert.equal(result.status, 1);
+  const failure = JSON.parse(result.stdout);
+  assert.equal(failure.ok, false);
+  assert.equal(failure.stage, 'check');
+  assert.equal(failure.diagnostics.length, 1);
+  assert.equal(failure.diagnostics[0].code, 'artifact/check-output-limit');
+  assert.notEqual(failure.diagnostics[0].code, 'artifact/check-failed');
+  assert.equal(failure.diagnostics[0].evidence.systemCode, 'ENOBUFS');
+  assert.equal(failure.diagnostics[0].evidence.limitBytes, 1024);
+  assert.ok(failure.diagnostics[0].evidence.receivedBytes >= 1024);
+  assert.ok(failure.diagnostics[0].supportedFixes.some((fix) => fix.includes('ARCHIFY_CHECK_MAX_BUFFER')));
+  assert.equal(fs.readFileSync(out, 'utf8'), trustedPriorArtifact);
+  const provenance = JSON.parse(fs.readFileSync(deliveryProvenancePath(out), 'utf8'));
+  assert.equal(provenance.status, 'failed');
+  assert.equal(provenance.stage, 'check');
+  assert.deepEqual(
+    fs.readdirSync(path.dirname(out)).filter((name) => name.includes('.archify-delivery-')),
+    [],
+  );
+});
+
+test('cli: validate reports an output-limit failure with the same diagnostic', () => {
+  const input = path.join(skillRoot, 'examples/web-app.architecture.json');
+  const result = run(['validate', 'architecture', input, '--json'], {
+    env: { ...process.env, ARCHIFY_CHECK_MAX_BUFFER: '1024' },
+  });
+
+  assert.equal(result.status, 1);
+  const failure = JSON.parse(result.stdout);
+  assert.equal(failure.ok, false);
+  assert.equal(failure.command, 'validate');
+  assert.equal(failure.stage, 'check');
+  assert.equal(failure.diagnostics[0].code, 'artifact/check-output-limit');
+  assert.equal(failure.diagnostics[0].evidence.systemCode, 'ENOBUFS');
+});
+
+test('cli: migrate reports an output-limit failure with the same diagnostic', () => {
+  const source = path.join(skillRoot, 'test/fixtures/v1-workflow-700x400.workflow.json');
+  const destination = path.join(tmp, 'output-limit-migrated.workflow.json');
+  const result = run(['migrate', 'workflow', source, destination, '--to-schema', '2', '--json'], {
+    env: { ...process.env, ARCHIFY_CHECK_MAX_BUFFER: '1024' },
+  });
+
+  assert.equal(result.status, 1);
+  const failure = JSON.parse(result.stdout);
+  assert.equal(failure.ok, false);
+  assert.equal(failure.command, 'migrate');
+  const entry = failure.diagnostics.find((diagnosticEntry) => diagnosticEntry.code === 'artifact/check-output-limit');
+  assert.ok(entry, `missing output-limit diagnostic in ${JSON.stringify(failure.diagnostics.map((d) => d.code))}`);
+  assert.equal(entry.evidence.systemCode, 'ENOBUFS');
+  assert.equal(entry.evidence.limitBytes, 1024);
+});
+
+test('cli: compare reports an output-limit failure with the same diagnostic', () => {
+  const input = path.join(skillRoot, 'examples/web-app.architecture.json');
+  const out = path.join(tmp, 'compare-output-limit.html');
+  const result = run(['compare', 'architecture', input, input, out, '--json'], {
+    env: { ...process.env, ARCHIFY_CHECK_MAX_BUFFER: '1024' },
+  });
+
+  assert.equal(result.status, 1);
+  const failure = JSON.parse(result.stdout);
+  assert.equal(failure.ok, false);
+  assert.equal(failure.command, 'compare');
+  assert.equal(failure.stage, 'check');
+  assert.equal(failure.diagnostics[0].code, 'artifact/check-output-limit');
+  assert.equal(failure.diagnostics[0].evidence.systemCode, 'ENOBUFS');
+});
+
+test('cli: check reports an output-limit failure with a classified receipt', () => {
+  const input = path.join(skillRoot, 'examples/web-app.architecture.json');
+  const artifact = path.join(tmp, 'check-output-limit.html');
+  const rendered = run(['render', 'architecture', input, artifact]);
+  assert.equal(rendered.status, 0, rendered.stderr);
+
+  const result = run(['check', artifact], {
+    env: { ...process.env, ARCHIFY_CHECK_MAX_BUFFER: '1024' },
+  });
+
+  assert.equal(result.status, 1);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.ok, false);
+  assert.equal(receipt.command, 'check');
+  assert.equal(receipt.diagnostics[0].code, 'artifact/check-output-limit');
+  assert.equal(receipt.diagnostics[0].evidence.systemCode, 'ENOBUFS');
+  assert.equal(receipt.error, receipt.diagnostics[0].message);
+  assert.equal(receipt.diagnostic, receipt.diagnostics[0].message);
+});
+
+test('cli: finalize captures a near-limit check receipt with provenance', { timeout: 180000 }, () => {
+  const input = path.join(tmp, 'near-limit-finalize.architecture.json');
+  fs.writeFileSync(input, JSON.stringify(bipartiteArchitectureSpec(11)));
+  const out = path.join(tmp, 'near-limit-finalize.html');
+  // Setup runs must see the default limit even when the environment
+  // overrides the knob; only the finalize invocation sets it explicitly.
+  const setupEnv = { ...process.env };
+  delete setupEnv.ARCHIFY_CHECK_MAX_BUFFER;
+  const delivered = run(['deliver', 'architecture', input, out, '--json'], { env: setupEnv });
+  assert.equal(delivered.status, 0, delivered.stderr);
+
+  // The finalize gate that must capture big bytes is `check
+  // --require-provenance`: its echo = raw checker receipt + provenance
+  // additions. Size the knob inside [raw, echo) — the checker then admits
+  // it while only capture headroom lets the wider echo through.
+  const measured = spawnSync(process.execPath, [path.join(skillRoot, 'scripts/check-render-output.mjs'), out], {
+    cwd: skillRoot,
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+    env: setupEnv,
+  });
+  assert.equal(measured.status, 0, measured.stderr);
+  const rawBytes = Buffer.byteLength(measured.stdout, 'utf8');
+  assert.ok(rawBytes > 4 * 1024 * 1024, `fixture receipt (${rawBytes} bytes) must exceed the 4 MiB capture floor for this test to bind`);
+
+  const echoed = run(['check', out, '--require-provenance'], { env: setupEnv });
+  assert.equal(echoed.status, 0, echoed.stderr);
+  const echoBytes = Buffer.byteLength(echoed.stdout, 'utf8');
+  assert.ok(echoBytes > rawBytes + 64, `provenance window missing (raw ${rawBytes}, echo ${echoBytes})`);
+  const knob = rawBytes + Math.floor((echoBytes - rawBytes) / 2);
+
+  const outDir = path.join(tmp, 'near-limit-finalize-evidence');
+  const missingChrome = path.join(tmp, 'missing-finalize-chrome');
+  const result = run([
+    'finalize', 'architecture', input, out,
+    '--quality', 'standard', '--json', '--out-dir', outDir,
+  ], {
+    env: {
+      ...process.env,
+      ARCHIFY_CHECK_MAX_BUFFER: String(knob),
+      ARCHIFY_CHROME: missingChrome,
+    },
+  });
+
+  assert.equal(result.status, 2, result.stderr || result.stdout);
+  const summary = JSON.parse(result.stdout);
+  assert.equal(summary.status, 'skipped');
+  assert.equal(summary.failedStage, 'browser-check');
+  assert.deepEqual(summary.gates, {
+    validate: 'pass', deliver: 'pass', check: 'pass', 'browser-check': 'skipped',
+  });
+  const full = JSON.parse(fs.readFileSync(summary.evidence.receipt, 'utf8'));
+  assert.equal(full.stages.check.status, 'pass');
+  assert.equal(full.stages.check.receipt.provenance, 'current');
+  assert.equal(fs.existsSync(out), true, 'verified delivery remains available');
 });
 
 test('cli: deliver reports renderer failure as json and preserves the previous artifact', () => {

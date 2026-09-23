@@ -377,9 +377,27 @@ function browserEvidence(receipt, artifactPath) {
   };
 }
 
+// Stage receipts (dense validate/check JSON) can exceed execFile's 1 MiB
+// default. Track ARCHIFY_CHECK_MAX_BUFFER so a raised checker limit is not
+// defeated one layer up, with a 4 MiB floor: a lowered knob makes failing
+// stages emit compact classified receipts, but those receipts — and any
+// successful receipt the knob let through — still have to fit the capture.
+// The 64 KiB headroom covers the stage echo over the raw checker receipt:
+// commandCheck appends provenance and deliveryReceiptId after the checker
+// ran, so the printed receipt can exceed the knob that admitted it. Read the
+// knob from the runner's env, not process.env: runFinalize callers supply
+// their own env and the child stages inherit exactly that object.
+function stageCaptureMaxBuffer(env = process.env) {
+  const parsed = Number(env.ARCHIFY_CHECK_MAX_BUFFER);
+  const knob = Number.isFinite(parsed) && Math.floor(parsed) >= 1
+    ? Math.floor(parsed)
+    : 64 * 1024 * 1024;
+  return Math.max(knob, 4 * 1024 * 1024) + 64 * 1024;
+}
+
 function defaultRunner({ cliPath, args, cwd, env }) {
   return new Promise((resolve) => {
-    execFile(process.execPath, [cliPath, ...args], { cwd, env, encoding: 'utf8' }, (error, stdout, stderr) => {
+    execFile(process.execPath, [cliPath, ...args], { cwd, env, encoding: 'utf8', maxBuffer: stageCaptureMaxBuffer(env) }, (error, stdout, stderr) => {
       resolve({
         status: error ? (Number.isInteger(error.code) ? error.code : 1) : 0,
         stdout,

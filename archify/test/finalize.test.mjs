@@ -13,6 +13,8 @@ import {
   runFinalize,
 } from '../bin/finalize.mjs';
 import { CAPTURE_VIEWPORTS, VISUAL_CHECK_VIEWPORTS } from '../bin/visual-check.mjs';
+import { fileURLToPath } from 'node:url';
+import { bipartiteArchitectureSpec } from './helpers/dense-fixture.mjs';
 
 function workspace(t) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-finalize-'));
@@ -888,4 +890,44 @@ test('finalize rechecks delivery barriers and the frozen candidate after the bro
     assert.equal(finalized.summary.ok, false);
     assert.equal(finalized.summary.diagnostics[0].code, scenario === 'pending-delivery' ? 'delivery/provenance-pending' : 'finalize/candidate-changed');
   }
+});
+
+test('runFinalize reads the capture limit from the supplied env, not process.env', { timeout: 180000 }, async (t) => {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const cliPath = path.join(here, '..', 'bin', 'archify.mjs');
+  const directory = workspace(t);
+  const input = path.join(directory, 'env-capture.architecture.json');
+  fs.writeFileSync(input, JSON.stringify(bipartiteArchitectureSpec(11)));
+  const output = path.join(directory, 'env-capture.html');
+  const missingChrome = path.join(directory, 'missing-chrome');
+
+  // The parent process sees a 5 MiB knob while the supplied env raises it
+  // to 10 MiB. The dense check echo (about 8.8 MiB) fits only the supplied
+  // env's capture, so a runner reading process.env overflows at the check
+  // gate while the child stages (which inherit the supplied env) pass.
+  process.env.ARCHIFY_CHECK_MAX_BUFFER = String(5 * 1024 * 1024);
+  process.env.ARCHIFY_CHROME = missingChrome;
+  t.after(() => {
+    delete process.env.ARCHIFY_CHECK_MAX_BUFFER;
+    delete process.env.ARCHIFY_CHROME;
+  });
+
+  const finalized = await runFinalize({
+    cliPath,
+    type: 'architecture',
+    input,
+    output,
+    quality: 'standard',
+    cwd: path.join(here, '..'),
+    env: {
+      ...process.env,
+      ARCHIFY_CHECK_MAX_BUFFER: String(10 * 1024 * 1024),
+      ARCHIFY_CHROME: missingChrome,
+    },
+  });
+
+  assert.equal(finalized.exitCode, 2, JSON.stringify(finalized.summary?.gates || finalized.receipt?.failedStage));
+  assert.equal(finalized.receipt.stages.check.status, 'pass');
+  assert.equal(finalized.receipt.stages['browser-check'].status, 'skipped');
+  assert.equal(finalized.receipt.stages.check.receipt.provenance, 'current');
 });
