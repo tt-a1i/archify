@@ -93,6 +93,67 @@ fail-closed deployment review and the source facts are known. Once enabled,
 do not remove the engineering profile merely to pass validation; repair the
 authored facts or report the diagnostics truthfully.
 
+## Nested boundaries
+
+A boundary's `wraps` list may reference either a component id or another
+boundary's own `id`, nesting that boundary inside this one. Nesting is
+capped at 2 levels (outer boundary -> inner boundary -> components); an id
+chain longer than that, or one that cycles back on itself, is a validation
+error, not a silently wrong layout. A boundary can only be nested inside
+another when it does not itself nest a further boundary. Only a boundary
+with an explicit `id` can be referenced this way — an anonymous boundary
+cannot be nested into. Boundary ids and component ids must not collide.
+`meta.engineering_profile: "deployment-ownership"` does not yet support
+nested boundaries; list components directly in `wraps` for that profile.
+
+A component's hover/focus context reports the full scope chain, outermost
+first — a component wrapped only by the innermost boundary still shows
+every ancestor boundary's label, not just its direct one.
+
+Worked example — a "Platform" region containing a "Checkout Subsystem"
+security-group, plus a "Shared Cache" component that sits inside Platform
+but outside the inner subsystem:
+
+```json
+{
+  "components": [
+    { "id": "cart-svc", "type": "backend", "label": "Cart Service" },
+    { "id": "payment-svc", "type": "backend", "label": "Payment Service" },
+    { "id": "inventory-svc", "type": "backend", "label": "Inventory Service" },
+    { "id": "shared-cache", "type": "database", "label": "Shared Cache" },
+    { "id": "notifications", "type": "external", "label": "Notifications" }
+  ],
+  "boundaries": [
+    {
+      "id": "checkout-subsystem",
+      "kind": "security-group",
+      "label": "Checkout Subsystem",
+      "wraps": ["cart-svc", "payment-svc", "inventory-svc"]
+    },
+    {
+      "id": "platform",
+      "kind": "region",
+      "label": "Platform",
+      "wraps": ["checkout-subsystem", "shared-cache"]
+    }
+  ]
+}
+```
+
+`checkout-subsystem`'s frame is computed first, from its own three
+components. `platform`'s frame is then the bounding box of
+(`checkout-subsystem`'s frame ∪ `shared-cache`), plus platform's own pad
+ring — so the outer frame visibly contains the inner one, and grows to
+also cover the directly-wrapped `shared-cache` sitting alongside it.
+`cart-svc`'s reported scope chain is `"Platform › Checkout Subsystem"`
+even though `cart-svc` is not listed in `platform.wraps` directly.
+
+A connection may reference a boundary's own `id` in `from`/`to` to attach
+at the boundary's frame edge instead of a specific component inside it —
+that capability is tracked separately (see #284/#317) and composes with
+nesting: an edge can originate or terminate on either `checkout-subsystem`
+or `platform`, at whichever level the diagram should stay abstract.
+
 ## Title hierarchy
 
 Use one concise title and let the diagram carry the explanation. Omit
@@ -112,46 +173,6 @@ in the generated viewer.
 - Shared endpoint corridors are allowed only when they remain semantically unambiguous. Unrelated collinear overlap of 8px or more fails showcase.
 - Container borders are intentional pass-through geometry, but a long edge running along a structural border is not.
 - An edge crossing an unrelated opaque node is always a hard failure, independent of quality profile.
-
-### Explicit `via` coordinates
-
-Use the resolved departure anchor `S = [sx, sy]` and arrival anchor
-`T = [tx, ty]`. Anchors start at side midpoints, but automatic routing and
-Port Spread can move them as described above; do not assume an anchor copied
-from an automatic route is the anchor of a newly authored explicit route.
-Explicit `via` routes do not receive automatic Port Spread.
-
-For the first waypoint `F = via[0]` and last waypoint `L = via[via.length - 1]`,
-use these alignments and directions (SVG y increases downward):
-
-| Side | Departure (`fromSide`): `S` → `F` | Arrival (`toSide`): `L` → `T` |
-| --- | --- | --- |
-| `top` | `F[0] === sx`, `F[1] < sy` | `L[0] === tx`, `L[1] < ty` |
-| `bottom` | `F[0] === sx`, `F[1] > sy` | `L[0] === tx`, `L[1] > ty` |
-| `left` | `F[1] === sy`, `F[0] < sx` | `L[1] === ty`, `L[0] < tx` |
-| `right` | `F[1] === sy`, `F[0] > sx` | `L[1] === ty`, `L[0] > tx` |
-
-For example, given a bottom departure anchor `S = [180, 160]` and a left
-arrival anchor `T = [360, 260]`, this relationship fragment leaves downward
-and enters the target rightward:
-
-```json
-{
-  "from": "source",
-  "to": "target",
-  "fromSide": "bottom",
-  "toSide": "left",
-  "via": [[180, 200], [300, 200], [300, 260]]
-}
-```
-
-The full path is `[180, 160] → [180, 200] → [300, 200] → [300, 260] → [360, 260]`.
-Changing only the first waypoint to `[200, 200]` makes the departure diagonal;
-changing it to `[180, 120]` keeps its x aligned but leaves upward through the
-source instead of outward from its bottom. Both violate `fromSide: "bottom"`
-and produce `clean-flow/endpoint-side-direction`. The example establishes
-endpoint direction only: keep the full route clear of unrelated nodes and
-apply the other geometry rules above.
 
 ### Spacing and labels
 

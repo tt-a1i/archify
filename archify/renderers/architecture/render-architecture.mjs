@@ -60,8 +60,6 @@ const layout = {
   defaultW: 120,
   defaultH: 60,
   margin: 40,
-  // Boundary padding — the 30/50 rule that was a hand-arithmetic footgun
-  // (CHANGELOG v2.2.1): 30px on top/left/right, plus 20px extra at the bottom.
   boundaryPad: 30,
   boundaryExtraBottom: 20,
   boundaryLabelBaseline: 18,
@@ -84,7 +82,6 @@ const LEGEND_CATALOG = [
   'external',
 ].map((kind) => ({ kind, label: i18nText(arch.meta.locale, `legend.architecture.${kind}`) }));
 
-// ---- Measure components from free coordinates --------------------------------
 function measureComponent(c) {
   const [x, y] = resolveComponentPos(c, grid);
   const [w, h] = Array.isArray(c.size) ? c.size : [layout.defaultW, layout.defaultH];
@@ -102,15 +99,68 @@ for (const [index, c] of asArray(arch.components).entries()) {
   if (!componentSteps.has(c.id)) componentSteps.set(c.id, index);
 }
 
-// ---- Boundaries computed from the `wraps` id list ---------------------------
+const boundaryById = new Map();
+for (const b of asArray(arch.boundaries)) {
+  if (b.id) {
+    if (boundaryById.has(b.id)) {
+      throw new Error(`Boundary id "${b.id}" is used by more than one boundary — boundary ids must be unique.`);
+    }
+    boundaryById.set(b.id, b);
+  }
+}
+
+const boundaryRectCache = new Map();
+
+const boundaryNestingDepth = new Map();
+function nestingDepthOf(boundary, stack = []) {
+  if (boundaryNestingDepth.has(boundary)) return boundaryNestingDepth.get(boundary);
+  if (stack.includes(boundary)) {
+    const cycle = [...stack.map((b) => b.label), boundary.label].join('" -> "');
+    throw new Error(`Boundary "wraps" forms a cycle: "${cycle}".`);
+  }
+  let depth = 0;
+  for (const id of asArray(boundary.wraps)) {
+    if (components.has(id)) continue;
+    const nested = boundaryById.get(id);
+    if (!nested || nested === boundary) continue;
+    depth = Math.max(depth, 1 + nestingDepthOf(nested, [...stack, boundary]));
+  }
+  boundaryNestingDepth.set(boundary, depth);
+  return depth;
+}
+for (const b of boundaryById.values()) nestingDepthOf(b);
+
 function boundaryRect(boundary) {
-  const members = asArray(boundary.wraps).map((id) => components.get(id)).filter(Boolean);
-  if (!members.length) return null;
+  if (boundaryRectCache.has(boundary)) return boundaryRectCache.get(boundary);
+
+  const memberRects = [];
+  for (const id of asArray(boundary.wraps)) {
+    const component = components.get(id);
+    if (component) {
+      memberRects.push(component);
+      continue;
+    }
+    const nested = boundaryById.get(id);
+    if (!nested || nested === boundary) continue;
+    if (nestingDepthOf(nested) > 0) {
+      throw new Error(
+        `Boundary "${boundary.label}" nests boundary "${nested.label}", which itself nests another boundary — `
+        + 'supported nesting is 2 levels deep (outer -> inner -> components).',
+      );
+    }
+    const nestedRect = boundaryRect(nested);
+    if (nestedRect) memberRects.push(nestedRect);
+  }
+
+  if (!memberRects.length) {
+    boundaryRectCache.set(boundary, null);
+    return null;
+  }
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
   let maxY = -Infinity;
-  for (const member of members) {
+  for (const member of memberRects) {
     minX = Math.min(minX, member.x);
     minY = Math.min(minY, member.y);
     maxX = Math.max(maxX, member.x + member.width);
@@ -121,7 +171,7 @@ function boundaryRect(boundary) {
     pad,
     layout.boundaryLabelBaseline + layout.boundaryLabelClearance,
   );
-  return {
+  const rect = {
     ...boundary,
     x: minX - pad,
     y: minY - topPad,
@@ -129,6 +179,8 @@ function boundaryRect(boundary) {
     height: maxY - minY + topPad + layout.boundaryExtraBottom,
     memberTop: minY,
   };
+  boundaryRectCache.set(boundary, rect);
+  return rect;
 }
 
 function rectContains(outer, inner) {
@@ -149,9 +201,6 @@ const architectureLegendEntries = resolveLegend(
   new Set([...components.values()].map((component) => component.type)),
 );
 
-// One source for connection label geometry: the rect the containment rule
-// measures is the rect the SVG mask draws, the auto canvas covers, the legend
-// avoids, and the layout report publishes.
 const resolvedLabelPoints = new Map();
 function connectionLabelBox(conn) {
   if (!conn.label) return null;
@@ -286,9 +335,6 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
   return rawBoundaries.map((_boundary, index) => {
     const { boundary, title } = measured.get(index);
     const bottom = boundary.y + boundary.height;
-    // Profile-less schema-v1 inputs keep their legacy boundary geometry. A
-    // quality profile opts into the stricter title-composition contract and
-    // may expand the frame to contain an adapted title rail.
     const y = enforcesBoundaryTitleComposition
       ? Math.min(boundary.y, title.y - layout.boundaryLabelFrameInset)
       : boundary.y;
@@ -301,15 +347,7 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
   });
 }
 
-// ---- Routing state ----------------------------------------------------------
-// Initialized before the boundary-title work below: connection label rects are
-// part of the derived canvas, so the title convergence must measure the same
-// width the diagram actually renders into (a title sized for a narrower canvas
-// would fall below the desktop-readability floor once labels grow it). Routing
-// reads components, connections and the member-derived boundary frames (so an
-// automatic route never borrows a frame border as its corridor), never the
-// title-expanded frames or the viewBox.
-const rawBoundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
+const rawBoundaries = asArray(arch.boundaries).map((boundary) => boundaryRect(boundary)).filter(Boolean);
 const { pathFor, connectionSides, connectionEndpointSide } = createRouter(components, arch.connections, {
   frames: rawBoundaries.map((boundary) => ({
     ...boundary,
@@ -329,11 +367,7 @@ function hasAutomaticRouteGeometry(connection) {
     && connection?.channelX === undefined
     && connection?.channelY === undefined;
 }
-// The auto canvas has to cover these rects; an authored viewBox is never
-// resized to fit them — there the containment rule reports the clipping.
 let connectionLabels = connectionLabelRects();
-// Unlabelled outer corridors are geometry too. Fitting only nodes and labels
-// can clip a valid explicit via route while every browser overflow check passes.
 const connectionGeometry = [
   ...connectionLabels,
   ...asArray(arch.connections)
@@ -385,24 +419,28 @@ const compositionFrames = boundaries.map((boundary, index) => ({
   radius: boundary.kind === 'security-group' ? 8 : 12,
 }));
 
+function boundaryContainsComponent(boundary, componentId, seen = new Set()) {
+  if (seen.has(boundary)) return false;
+  seen.add(boundary);
+  for (const id of asArray(boundary.wraps)) {
+    if (id === componentId) return true;
+    const nested = boundaryById.get(id);
+    if (nested && nested !== boundary && boundaryContainsComponent(nested, componentId, seen)) return true;
+  }
+  return false;
+}
+
 function componentContext(component) {
   const scopes = boundaries
-    .filter((boundary) => asArray(boundary.wraps).includes(component.id))
+    .filter((boundary) => boundaryContainsComponent(boundary, component.id))
     .sort((a, b) => (b.width * b.height) - (a.width * a.height))
     .map((boundary) => boundary.label);
   return scopes.length ? scopes.join(' › ') : i18nText(arch.meta.locale, 'node.context.architecture');
 }
 
-// ---- Auto viewBox: fit all geometry + the measured resolved legend ----------
-// Connection labels are diagram content, so an auto canvas that stopped at the
-// component/boundary bbox would clip them; the label rects join the fit here
-// and in the title convergence above, which sizes fonts for this same width.
 const viewBox = arch.meta?.viewBox || autoViewBoxFor(boundaries, connectionGeometry);
 const legendY = () => viewBox[1] - 16;
 
-// Fit titles and canvas from the original geometry first. Fallback labels must
-// fit inside that canvas, so moving a label cannot trigger title reflow or a
-// canvas/label feedback loop. Keep standard and every authored label control.
 if (arch.meta?.quality_profile === 'showcase') {
   connectionLabels = placeAutomaticLabels({
     labels: connectionLabels,
@@ -413,8 +451,6 @@ if (arch.meta?.quality_profile === 'showcase') {
     components: [...components.values()],
     titles: boundaries.map(boundary => boundary.title),
     viewBox,
-    // Leave the resolved legend band available; moving a label must not hide
-    // an otherwise visible legend. Existing labels keep their placement.
     placementBottom: architectureLegendEntries.length
       ? legendY() - 32 - legendFootprint(architectureLegendEntries, { width: viewBox[0] - layout.margin * 2 }).extraHeight
       : viewBox[1],
@@ -422,7 +458,6 @@ if (arch.meta?.quality_profile === 'showcase') {
   for (const rect of connectionLabels) resolvedLabelPoints.set(rect.relation, [rect.lx, rect.ly]);
 }
 
-// ---- Validation: mechanical correctness, never layout taste -----------------
 function validateArchitecture() {
   const problems = [];
   const diagnostics = [];
@@ -430,6 +465,27 @@ function validateArchitecture() {
     problems.push(resolvedBoundaryTitles.readabilityProblem);
   }
   const requiresNestedBoundaryMembership = arch.meta?.engineering_profile === 'deployment-ownership';
+  for (const boundary of asArray(arch.boundaries)) {
+    if (boundary.id && components.has(boundary.id)) {
+      problems.push(
+        `Boundary "${boundary.label}" has id "${boundary.id}", which is also a component id — `
+        + 'boundary ids and component ids must not collide.',
+      );
+    }
+  }
+  if (requiresNestedBoundaryMembership) {
+    for (const boundary of asArray(arch.boundaries)) {
+      for (const id of asArray(boundary.wraps)) {
+        if (boundaryById.has(id)) {
+          problems.push(
+            `Boundary "${boundary.label}" nests boundary "${boundaryById.get(id).label}" via wraps, `
+            + 'which the deployment-ownership engineering profile does not yet support — '
+            + 'list components directly in wraps for this profile instead.',
+          );
+        }
+      }
+    }
+  }
   if (components.size !== asArray(arch.components).length) problems.push('Component ids must be unique.');
   if (grid) {
     validateGridPlacement(arch, grid, problems);
@@ -459,8 +515,6 @@ function validateArchitecture() {
     }
     const brandRailProblem = brandTopRailProblem(c, c.width, 8, 'Component');
     if (brandRailProblem) problems.push(brandRailProblem);
-    // sublabel and tag render as single unwrapped <text> elements; shrink-to-fit
-    // handles the ordinary case, this rejects what it cannot rescue.
     const availableTextW = availableNodeTextWidth(c.width);
     for (const [field, value, minimum] of [
       ['Sublabel', c.sublabel, componentTextFit.sublabelMinimum],
@@ -474,7 +528,6 @@ function validateArchitecture() {
     }
   }
 
-  // Component overlap — the highest-traffic hand-placement failure mode.
   const list = [...components.values()];
   for (let i = 0; i < list.length; i += 1) {
     for (let j = i + 1; j < list.length; j += 1) {
@@ -484,10 +537,11 @@ function validateArchitecture() {
     }
   }
 
-  // Boundaries: every wrapped id must exist; the computed box must stay in view.
   for (const boundary of asArray(arch.boundaries)) {
     for (const id of asArray(boundary.wraps)) {
-      if (!components.has(id)) problems.push(`Boundary "${boundary.label}" wraps unknown component "${id}".`);
+      if (components.has(id)) continue;
+      if (boundaryById.has(id) && boundaryById.get(id) !== boundary) continue;
+      problems.push(`Boundary "${boundary.label}" wraps unknown component "${id}".`);
     }
   }
   const viewBoxRect = { x: 0, y: 0, width: viewBox[0], height: viewBox[1] };
@@ -527,11 +581,6 @@ function validateArchitecture() {
           `Boundary labels "${left.label}" and "${right.label}" overlap — shorten a label or increase boundary title space.`,
         );
       }
-      // Ordinary architecture boundaries are sets, not an implied ownership
-      // tree: orthogonal scopes such as runtime and compliance may share some
-      // components while each contains others. The opt-in deployment profile
-      // does promise hierarchical region/private-scope membership, so only it
-      // receives the stricter membership-to-frame containment contract.
       if (!requiresNestedBoundaryMembership) continue;
       const rightMembers = new Set(asArray(right.wraps));
       const shared = [...leftMembers].filter((id) => rightMembers.has(id));
@@ -633,8 +682,6 @@ function validateArchitecture() {
       const [start, end] = [routed.points[0], routed.points[routed.points.length - 1]];
       const distance = Math.hypot(end[0] - start[0], end[1] - start[1]);
       if (distance < 24 && conn.from === conn.to) {
-        // "Move the components apart" cannot be executed for a self-loop; the
-        // ports sit on one component and the sides decide how far apart.
         const message = `Self-loop "${conn.id || conn.label || conn.from}" on component "${conn.from}" has its two ports only ${Math.round(distance)}px apart (minimum 24px) — remove fromSide/toSide so the renderer can choose the loop's sides, or set fromSide and toSide to different sides.`;
         diagnostics.push({
           code: 'layout/self-loop-ports', severity: 'error', message,
@@ -675,9 +722,6 @@ function validateArchitecture() {
     diagramType: 'architecture',
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
-    // Automatic architecture routes render with an opaque crossover halo.
-    // That makes a proper X visually unambiguous while explicit authored
-    // crossings remain a blocking composition error.
     crossingResolved: (left, right) => (
       hasAutomaticRouteGeometry(left) && hasAutomaticRouteGeometry(right)
     ),
@@ -724,7 +768,6 @@ function validateArchitecture() {
     profile: arch.meta?.quality_profile,
   }));
 
-  // Connection labels must not land on top of components.
   const labelRects = connectionLabels;
   for (const rect of labelRects) {
     for (const c of components.values()) {
@@ -750,9 +793,6 @@ function validateArchitecture() {
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
   }));
-  // See collectLabelCanvasOverflow in shared/geometry.mjs. An auto canvas now
-  // covers these rects, so this reports authored viewBoxes and the origin side,
-  // which growth cannot reach.
   problems.push(...cleanLabelCanvasContainmentProblems({
     labels: labelRects,
     viewBox,
@@ -796,7 +836,6 @@ function buildLayoutReport() {
   };
 }
 
-// ---- Rendering ---------------------------------------------------------------
 function renderBoundaryFrame(b, index) {
   const cls = b.kind === 'security-group' ? 'c-security-group' : 'c-region';
   const rx = b.kind === 'security-group' ? 8 : 12;
@@ -822,8 +861,6 @@ function renderConnectionPath(conn, index) {
   const crossover = automaticRoute ? ' data-composition-crossover="halo"' : '';
   const edge = `        <path ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)} data-composition-points="${routePointsValue(routed.points)}"${crossover}${authoredStraightRouteAttrs(conn, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(arch.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
   if (!automaticRoute) return edge;
-  // The wrapper is presentation-only: viewer state remains on the one semantic
-  // edge, while CSS can keep its preceding mask underlay at the same opacity.
   return `        <g data-graph-role="automatic-crossover" style="--step:${index}">\n${underlay}${edge.replace(/^        /, '          ')}\n        </g>`;
 }
 
@@ -890,15 +927,7 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  // An automatic architecture canvas is compiler-measured geometry. Let the
-  // Reader spend the real desktop height budget on it, including when an
-  // outer route makes the canvas taller than the ordinary wide-diagram
-  // threshold. Authored viewBoxes remain authoritative and keep the
-  // established Viewer contract.
   const readerFit = arch.meta?.viewBox ? '' : ' data-reader-fit="intrinsic-height"';
-  // A complete repository architecture is allowed to use normal page scroll;
-  // keep its common-desktop text at a comfortable reading size instead of
-  // shrinking a semantically rich graph to the universal emergency floor.
   const readerMinimumText = arch.meta?.viewBox ? '' : ' data-reader-min-text="7.5"';
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)}${readerFit}${readerMinimumText}>
 ${svgAccessibleText(arch.meta, 'architecture')}
@@ -931,8 +960,6 @@ if (layoutJsonMode) {
   try {
     validateArchitecture();
   } catch (error) {
-    // A rejected layout is still useful repair evidence. Input/implementation
-    // failures must retain their existing failure boundary, not partial geometry.
     if (!error.archifyDiagnostics?.length) throw error;
     console.log(JSON.stringify({
       ...buildLayoutReport(),
