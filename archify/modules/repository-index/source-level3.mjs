@@ -8,9 +8,12 @@ import path from 'node:path';
 // module-level questions whose answers could change a boundary. Per-file
 // detail stays in the on-disk graph the pack points to. The serialized pack
 // never exceeds its byte budget; when trimming is needed, evidence detail is
-// dropped before facts, and every trim is recorded.
+// dropped before facts, and every trim is recorded. 24 KiB keeps every module,
+// 40 edges and the runtime channels of a large repository (SGLang, ~9.5k
+// files) while small and medium repositories stay well under it; the pack is
+// read once and then mostly served from the prompt cache.
 export const PACK_DEFAULT_LIMITS = Object.freeze({
-  maximumBytes: 16 * 1024,
+  maximumBytes: 24 * 1024,
   maximumModules: 24,
   maximumEdges: 60,
   maximumEdgeEvidence: 2,
