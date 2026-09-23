@@ -428,6 +428,13 @@ const RUNTIME_CHANNELS = [
     javascript: /\bzmq\.(?:PUSH|PULL|PUB|SUB|XPUB|XSUB|REQ|REP|DEALER|ROUTER|PAIR)\b|\bnew\s+zmq\.(?:Push|Pull|Publisher|Subscriber|Request|Reply|Dealer|Router|Pair)\s*\(|\bnew\s+(?:Redis|IORedis)\s*\(|\bkafka\.(?:producer|consumer)\s*\(|\bamqp\.connect\s*\(|\bnats\.connect\s*\(/,
     python: /\bzmq\.(?:PUSH|PULL|PUB|SUB|XPUB|XSUB|REQ|REP|DEALER|ROUTER|PAIR)\b|\b(?:multiprocessing|mp|ctx|mp_ctx)\.(?:Queue|SimpleQueue|JoinableQueue|Pipe)\s*\(|\bredis\.(?:asyncio\.)?(?:Redis|StrictRedis|from_url)\s*\(|\bKafka(?:Producer|Consumer)\s*\(|\bpika\.(?:Blocking|Select)Connection\s*\(|\bnats\.connect\s*\(/,
   }],
+  // Durable state: embedded and client databases, and structured files a
+  // module writes (JSON, JSONL, CSV). Diagrams routinely lose these stores
+  // because nothing imports a database file.
+  ['datastore', {
+    javascript: /\bnew\s+(?:Database|DatabaseSync|SqliteDatabase)\s*\(|\bsqlite3?\.(?:Database|open)\s*\(|\bnew\s+PrismaClient\s*\(|\bmongoose\.connect\s*\(|\bMongoClient\.connect\s*\(|\b(?:mysql|pg)\.create(?:Pool|Connection)\s*\(|\bnew\s+(?:pg\.)?Pool\s*\(|\b(?:fs\.(?:promises\.)?)?(?:writeFile|appendFile)(?:Sync)?\s*\([^)]*\.(?:json|jsonl|csv|db|sqlite)\b/,
+    python: /\b(?:sqlite3|aiosqlite|duckdb)\.connect\s*\(|\bcreate_(?:async_)?engine\s*\(|\bpsycopg2?\.connect\s*\(|\b(?:pymongo\.)?MongoClient\s*\(|\bjson\.dump\s*\(|\.write_text\s*\(|\bopen\s*\([^)]*\.(?:json|jsonl|csv|db|sqlite)\b[^)]*['"][wa]b?\+?['"]/,
+  }],
   ['grpc-server', {
     javascript: /\bnew\s+grpc\.Server\s*\(/,
     python: /\bgrpc\.(?:aio\.)?server\s*\(/,
@@ -485,6 +492,7 @@ function runtimeChannels(text, language) {
       const target = (kind === 'process-spawn' && (processTarget
           || /(?:spawn\w*|fork|execFile\w*|exec\w*|Popen|run|check_output|check_call|call)\s*\(\s*\[?\s*['"\x60]([^'"\x60\s]{1,80})/.exec(window)))
         || (kind === 'message-queue' && /\bzmq\.(PUSH|PULL|PUB|SUB|XPUB|XSUB|REQ|REP|DEALER|ROUTER|PAIR)\s*,\s*([\w.]{1,80})/.exec(window))
+        || (kind === 'datastore' && /['"\x60]([^'"\x60\s]{0,120}\.(?:sqlite3?|db|json|jsonl|csv|parquet))['"\x60]/.exec(window))
         || (kind === 'grpc-client' && /_channel\s*\(\s*([^),]{1,80})/.exec(window));
       const named = target ? target.slice(1).filter(Boolean).join(' ') : null;
       const safeTarget = named ? safeSourceLine(named) : null;

@@ -484,7 +484,7 @@ export function decodePackEdges(pack) {
 // WebSocket servers and clients, HTTP servers and clients, worker threads.
 // Only runtime modules are listed, the ones that open a process or socket
 // first, so a spawn or server is never trimmed away before an HTTP call.
-const CHANNEL_PRIORITY = ['process-spawn', 'message-queue', 'grpc-server', 'websocket-server', 'http-server', 'grpc-client', 'websocket-client', 'http-client', 'worker-thread'];
+const CHANNEL_PRIORITY = ['process-spawn', 'message-queue', 'datastore', 'grpc-server', 'websocket-server', 'http-server', 'grpc-client', 'websocket-client', 'http-client', 'worker-thread'];
 
 function packRuntimeChannels(level2, roles, maximum, withExcerpt = true) {
   // Round-robin across kinds so one noisy kind (every utility that shells

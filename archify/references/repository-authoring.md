@@ -35,6 +35,12 @@ architecture example from the Type router that fits the repository.
    G = (V, E): `graph.V[i]` is a module path and each `graph.E` row is
    `[from, to, importCount]` with indices into V. `boundaries` carries
    the configuration facts, and `coverage` states what the scan cannot see.
+   Draw the primary request path end to end first, from the system's input
+   through its processing to its output or durable effect, then add side
+   paths. `graph.E` is import coupling, not data flow: use it to place and
+   group components, and draw an import as a relationship only when no
+   runtime channel explains the coupling, labelled as a dependency (for
+   example `imports`).
    Treat `unscanned` languages and `dynamic` import counts as boundaries to
    confirm through build or binding configuration, not as absence. The
    `questions` list is at most a dozen ranked optional leads; answer only the
@@ -47,10 +53,12 @@ architecture example from the Type router that fits the repository.
    scripts, data and documentation folders) are context, not components, and
    stay out of an architecture diagram unless the request is about them.
    Pack modules are candidates, not one node each: group directory modules
-   that serve one runtime responsibility (a model stack of models, layers and
-   kernels, say) into one component, and keep a module separate when it owns
-   its own process, protocol, boundary, lifecycle or store. Size alone is not
-   a reason either way. Modules in another language (a Rust
+   that are only code organization for one runtime responsibility (a model
+   stack of models, layers and kernels, say) into one component. Keep
+   separate every datastore, every process or trust boundary, every protocol
+   peer, and every callback path (a CLI that an external process runs to call
+   back into the runtime), even when they live inside one module. Size alone
+   is not a reason either way. Modules in another language (a Rust
    gateway, Go bindings) have no import edges to the rest;
    `crossLanguage.routeReferences` lists HTTP route strings in one module that
    match routes another module declares, ranked by how specific the shared
@@ -59,7 +67,8 @@ architecture example from the Type router that fits the repository.
    reference anchor and draw the link only if the code there calls the other
    service. `runtimeChannels` lists where runtime modules spawn processes,
    use message queues (ZeroMQ, multiprocessing queues, Redis, Kafka, AMQP,
-   NATS), serve or call gRPC, serve or open WebSockets, serve or call HTTP,
+   NATS), open databases or write structured files (`datastore`), serve or
+   call gRPC, serve or open WebSockets, serve or call HTTP,
    and start worker threads; `targets` names what a channel reaches (a
    process target, a spawned command, a queue socket and address):
    possible runtime links an import graph cannot show. Each channel's `excerpt`

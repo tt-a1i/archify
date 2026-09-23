@@ -368,3 +368,24 @@ test('Level 2 records inter-process channels and what they reach', (t) => {
   assert.ok(find('managers', 'grpc-server'));
   assert.deepEqual(find('managers', 'grpc-client').targets, ['address']);
 });
+
+test('Level 2 records datastores with the database or file they name', (t) => {
+  const root = workspace(t);
+  write(root, 'server/db.js', [
+    "import { DatabaseSync } from 'node:sqlite';",
+    "const db = new DatabaseSync(join(dataDir, 'runtime.sqlite'));",
+  ].join('\n'));
+  write(root, 'memory/store.py', [
+    'import json, sqlite3',
+    'conn = sqlite3.connect(path, timeout=10)',
+    'with open("memory/facts.json", "w") as f:',
+    '    json.dump(facts, f)',
+  ].join('\n'));
+
+  const channels = level2(root).runtimeChannels;
+  const server = channels.find((entry) => entry.module === 'server' && entry.kind === 'datastore');
+  assert.deepEqual(server.targets, ['runtime.sqlite']);
+  const memory = channels.find((entry) => entry.module === 'memory' && entry.kind === 'datastore');
+  assert.equal(memory.count, 3, 'sqlite3.connect, open(... "w") and json.dump are datastore sites');
+  assert.ok(memory.targets.includes('memory/facts.json'));
+});
