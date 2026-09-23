@@ -270,5 +270,6 @@ test('Level 2 records runtime channels per module and skips comments, support fo
   const spawnSite = channels.find((entry) => entry.module === 'server' && entry.kind === 'process-spawn');
   assert.equal(spawnSite.count, 1, 'the commented spawn is skipped');
   assert.match(spawnSite.anchor, /^server\/app\.js:6$/);
+  assert.deepEqual(spawnSite.excerpt, ["6: const child = spawn('agent', []);"], 'the credential line after the call is not copied');
   assert.ok(!channels.some((entry) => entry.module === 'server' && entry.kind === 'http-client'), 'a credential-looking line is skipped');
 });

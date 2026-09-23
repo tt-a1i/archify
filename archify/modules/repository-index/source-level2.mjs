@@ -426,7 +426,8 @@ const RUNTIME_CHANNELS = [
 // spawn and fetch constantly; their call sites are not the system's runtime.
 const CHANNEL_SUPPORT_SEGMENT = /^(?:\..+|scripts?|tools?|tooling|bench(?:mark)?s?|examples?|demos?|samples?|docs?|fixtures?)$/i;
 const CHANNEL_SECRET_LINE = /(?:token|secret|passw(?:or)?d|api[_-]?key|credential)\s*[:=]/i;
-const MAXIMUM_CHANNEL_LINE = 160;
+const MAXIMUM_CHANNEL_LINE = 120;
+const CHANNEL_EXCERPT_LINES = 3;
 
 function runtimeChannels(text, language) {
   const family = language === 'python' ? 'python' : 'javascript';
@@ -438,11 +439,15 @@ function runtimeChannels(text, language) {
     if (!trimmed || /^(?:#|\/\/|\*|\/\*)/.test(trimmed) || CHANNEL_SECRET_LINE.test(line)) continue;
     for (const [kind, patterns] of RUNTIME_CHANNELS) {
       if (!patterns[family].test(line)) continue;
-      found.push({
-        kind,
-        line: number + 1,
-        text: trimmed.length > MAXIMUM_CHANNEL_LINE ? `${trimmed.slice(0, MAXIMUM_CHANNEL_LINE)}...` : trimmed,
-      });
+      // The call and the lines right after it usually name the peer: the
+      // command, URL or path an argument list carries on the next lines.
+      const excerpt = [];
+      for (let next = number; next < lines.length && excerpt.length < CHANNEL_EXCERPT_LINES; next += 1) {
+        const text = lines[next].trim();
+        if (!text || /^(?:#|\/\/|\*|\/\*)/.test(text) || CHANNEL_SECRET_LINE.test(lines[next])) continue;
+        excerpt.push(`${next + 1}: ${text.length > MAXIMUM_CHANNEL_LINE ? `${text.slice(0, MAXIMUM_CHANNEL_LINE)}...` : text}`);
+      }
+      found.push({ kind, line: number + 1, excerpt });
     }
   }
   return found;
@@ -698,7 +703,7 @@ export function buildSourceLevel2(root, records, options = {}) {
     .sort((left, right) => left.file.localeCompare(right.file) || left.line - right.line)
     .reduce((byKey, site) => {
       const key = `${site.module}\u0000${site.kind}`;
-      const entry = byKey.get(key) || { module: site.module, kind: site.kind, count: 0, files: new Set(), anchor: `${site.file}:${site.line}`, excerpt: site.text };
+      const entry = byKey.get(key) || { module: site.module, kind: site.kind, count: 0, files: new Set(), anchor: `${site.file}:${site.line}`, excerpt: site.excerpt };
       entry.count += 1;
       entry.files.add(site.file);
       return byKey.set(key, entry);

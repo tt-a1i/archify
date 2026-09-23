@@ -483,7 +483,7 @@ export function decodePackEdges(pack) {
 // first, so a spawn or server is never trimmed away before an HTTP call.
 const CHANNEL_PRIORITY = ['process-spawn', 'websocket-server', 'http-server', 'websocket-client', 'http-client', 'worker-thread'];
 
-function packRuntimeChannels(level2, roles, maximum) {
+function packRuntimeChannels(level2, roles, maximum, withExcerpt = true) {
   // Round-robin across kinds so one noisy kind (every utility that shells
   // out) cannot take every slot from the server and client channels.
   const byKind = new Map(CHANNEL_PRIORITY.map((kind) => [kind, []]));
@@ -498,8 +498,11 @@ function packRuntimeChannels(level2, roles, maximum) {
   const { items, omitted } = trimList(channels, maximum);
   return {
     note: 'Call sites that open a process, socket or HTTP connection; draw the runtime link they create or leave it out only when its peer is outside the requested scope.',
-    // The one-line excerpt stays in the detail graph; the pack keeps the anchor.
-    items: items.map(({ module, kind, count, anchor }) => ({ module, kind, count, anchor })),
+    // The excerpt names the peer (command, URL, path) so the author rarely has
+    // to open the anchor file; it is dropped before the channel itself.
+    items: items.map(({ module, kind, count, anchor, excerpt }) => ({
+      module, kind, count, anchor, ...(withExcerpt && excerpt?.length ? { excerpt } : {}),
+    })),
     omitted,
   };
 }
@@ -550,6 +553,7 @@ export function buildEvidencePack({ repositoryState, summary, records, boundarie
     questions: questions.length,
     references: 6,
     channels: limits.maximumRuntimeChannels,
+    channelExcerpts: true,
     excerptLines: limits.maximumExcerptLines,
   };
   const trimmed = [];
@@ -583,7 +587,7 @@ export function buildEvidencePack({ repositoryState, summary, records, boundarie
     modules,
     supportModules: packSupportModules(level2, roles, state.modules),
     crossLanguage,
-    runtimeChannels: packRuntimeChannels(level2, roles, state.channels),
+    runtimeChannels: packRuntimeChannels(level2, roles, state.channels, state.channelExcerpts),
     graph: packGraph(level2, modules.items, state.edges, roles),
     questions: questions.slice(0, state.questions).map((question) => withExcerpts(question, root, state.excerptLines)),
     detail: detailPath ? { path: detailPath } : null,
@@ -596,6 +600,8 @@ export function buildEvidencePack({ repositoryState, summary, records, boundarie
   // configuration boundary lists shrink before any edge is dropped.
   const shrinkSteps = [
     ['boundary-items-8', () => { state.boundaryItems = Math.min(state.boundaryItems, 8); }],
+    ['boundary-items-5', () => { state.boundaryItems = Math.min(state.boundaryItems, 5); }],
+    ['channel-excerpts', () => { state.channelExcerpts = false; }],
     ['edges-40', () => { state.edges = Math.min(state.edges, 40); }],
     ['edges-24', () => { state.edges = Math.min(state.edges, 24); }],
     ['channels-10', () => { state.channels = Math.min(state.channels, 10); }],

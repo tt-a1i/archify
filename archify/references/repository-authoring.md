@@ -5,6 +5,12 @@ the authority for responsibilities, calls, boundaries, and persistence. The
 diagram is complete when the requested meaning is covered and every asserted
 fact has supporting source evidence.
 
+Load the remaining authoring files in one shell command that prints them all
+(`cat a b c` or `Get-Content a,b,c`), not one read per file; each extra read is
+a full model round trip: `references/authoring-defaults.md`,
+`schemas/architecture.schema.json`, `schemas/common.schema.json`, and the
+architecture example from the Type router that fits the repository.
+
 ## Explore on demand
 
 1. **Freeze identity.** From the target repository, record `git rev-parse
@@ -53,10 +59,11 @@ fact has supporting source evidence.
    reference anchor and draw the link only if the code there calls the other
    service. `runtimeChannels` lists where runtime modules spawn processes,
    serve or open WebSockets, serve or call HTTP, and start worker threads:
-   the runtime links an import graph cannot show. Draw each channel between
-   the components it connects, reading its one anchor when the peer is
-   unclear, and leave a channel out only when its peer is outside the
-   requested scope. For a repository-backed architecture, finalize rejects an
+   the runtime links an import graph cannot show. Each channel's `excerpt`
+   holds the numbered call lines, which usually name the peer; draw each
+   channel between the components it connects, open its anchor only when the
+   excerpt cannot identify the peer, and leave a channel out only when its
+   peer is outside the requested scope. For a repository-backed architecture, finalize rejects an
    isolated component or a group of components with no connection to the rest
    of the diagram. When one file inside a module owns the module's
    relationship, attach the relationship to the module's component instead of

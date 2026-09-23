@@ -407,7 +407,7 @@ test('Runtime channels in the pack are runtime-only and round-robin across kinds
   assert.deepEqual(pack.runtimeChannels.items.map((entry) => `${entry.module}:${entry.kind}`),
     ['util:process-spawn', 'server:http-server', 'web:websocket-client']);
   assert.equal(pack.runtimeChannels.omitted, 2, 'the two remaining spawns are counted, the non-runtime module is dropped');
-  assert.ok(!('excerpt' in pack.runtimeChannels.items[0]), 'excerpts stay in the detail graph');
+  assert.equal(pack.runtimeChannels.items[0].excerpt, 'x', 'the call excerpt names the peer without a file read');
 });
 
 test('The module graph is written as G = (V, E) with index triples over V', () => {
