@@ -5156,9 +5156,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="AWS Region: us-west-2" x="220" y="120" width="820" height="400" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="AWS Region: us-west-2" data-composition-frame-members="cdn lb api cache db s3 queue worker" x="220" y="120" width="820" height="400" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" data-composition-frame-label="sg-api :443/:8000" x="430" y="270" width="400" height="110" rx="8" class="c-security-group" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" data-composition-frame-label="sg-api :443/:8000" data-composition-frame-members="lb api" x="430" y="270" width="400" height="110" rx="8" class="c-security-group" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="users" data-edge-to="cdn" data-edge-label="HTTPS" data-edge-key="0" data-edge-id="users-to-cdn" data-composition-points="160,330;250,330" d="M 160 330 L 250 330" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>

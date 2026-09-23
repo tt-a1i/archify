@@ -328,7 +328,7 @@
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">12N · 12E</span></div>
-                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="3ddcf14ba2475722d316c07f4dec49006e3ccd911187888dd8898fc54547ad7f">3ddcf14ba247</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="db7a313e9ee982095c22e8f7f512718f72422420ceb88e29e6160ceb77572f14">db7a313e9ee9</span></div>
               </div>
               <div class="card-actions">
                 <a class="card-link primary" href="gallery/artifacts/production-deployment.architecture.html?present=1&amp;play=1#view=request-boundary" target="_blank" rel="noopener" data-en="Play named chapter ↗" data-zh="播放命名章节 ↗">Play named chapter ↗</a>
@@ -589,7 +589,7 @@
                 <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
                 <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">10N · 9E</span></div>
-                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="426db7bd1842de45916b00233b859dbb6cfb17a0d2fa9c70353c8fe121811d93">426db7bd1842</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="f6546882d048079f678a328d4c4da2b9999c8fbea8f6f1d52a55ab81f8640ab8">f6546882d048</span></div>
               </div>
               <div class="card-actions">
                 <a class="card-link primary" href="gallery/artifacts/web-app.architecture.html?present=1&amp;play=1#view=request-path" target="_blank" rel="noopener" data-en="Play named chapter ↗" data-zh="播放命名章节 ↗">Play named chapter ↗</a>
@@ -729,6 +729,9 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "boundaryMembershipIssues": 0,
+          "boundaryMembershipFramesChecked": 0,
+          "boundaryMembershipFramesUnknown": 9,
           "labelRouteClearanceIssues": 0,
           "minLabelRouteClearance": 29,
           "desktopReadabilityIssues": 0,
@@ -775,8 +778,8 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "engineeringProfile": "deployment-ownership",
       "nodeCount": 12,
       "edgeCount": 12,
-      "artifactBytes": 821465,
-      "artifactSha256": "3ddcf14ba2475722d316c07f4dec49006e3ccd911187888dd8898fc54547ad7f",
+      "artifactBytes": 821714,
+      "artifactSha256": "db7a313e9ee982095c22e8f7f512718f72422420ceb88e29e6160ceb77572f14",
       "sourceBytes": 5476,
       "sourceSha256": "ec484aa8576664fdb207b543fa49486b23273faccb7a5071e1a0becfb48c22eb",
       "checks": [
@@ -823,12 +826,15 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
         "status": "pass",
         "summary": {
           "errors": 0,
-          "warnings": 0
+          "warnings": 1
         },
         "metrics": {
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "boundaryMembershipIssues": 1,
+          "boundaryMembershipFramesChecked": 4,
+          "boundaryMembershipFramesUnknown": 0,
           "labelRouteClearanceIssues": 0,
           "minLabelRouteClearance": 36,
           "desktopReadabilityIssues": 0,
@@ -850,7 +856,35 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
           "segmentPx": 16,
           "microSegmentPx": 8
         },
-        "issues": []
+        "issues": [
+          {
+            "severity": "warning",
+            "code": "composition/boundary-membership",
+            "containment": "straddling",
+            "node": {
+              "id": "audit",
+              "label": "Audit Archive",
+              "kind": "cloud"
+            },
+            "frame": {
+              "kind": "security-group",
+              "id": "1",
+              "label": "private application network"
+            },
+            "nodeRect": {
+              "x": 1190,
+              "y": 450,
+              "width": 126,
+              "height": 62
+            },
+            "frameRect": {
+              "x": 616,
+              "y": 171,
+              "width": 714,
+              "height": 316
+            }
+          }
+        ]
       }
     },
     {
@@ -929,6 +963,9 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "boundaryMembershipIssues": 0,
+          "boundaryMembershipFramesChecked": 0,
+          "boundaryMembershipFramesUnknown": 3,
           "labelRouteClearanceIssues": 0,
           "minLabelRouteClearance": 8,
           "desktopReadabilityIssues": 0,
@@ -1029,6 +1066,9 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "boundaryMembershipIssues": 0,
+          "boundaryMembershipFramesChecked": 0,
+          "boundaryMembershipFramesUnknown": 9,
           "labelRouteClearanceIssues": 0,
           "minLabelRouteClearance": 36.3,
           "desktopReadabilityIssues": 0,
@@ -1129,6 +1169,9 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "boundaryMembershipIssues": 0,
+          "boundaryMembershipFramesChecked": 0,
+          "boundaryMembershipFramesUnknown": 9,
           "labelRouteClearanceIssues": 0,
           "minLabelRouteClearance": 119,
           "desktopReadabilityIssues": 0,
@@ -1229,6 +1272,9 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "boundaryMembershipIssues": 0,
+          "boundaryMembershipFramesChecked": 0,
+          "boundaryMembershipFramesUnknown": 5,
           "labelRouteClearanceIssues": 0,
           "minLabelRouteClearance": 44.3,
           "desktopReadabilityIssues": 0,
@@ -1329,6 +1375,9 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "boundaryMembershipIssues": 0,
+          "boundaryMembershipFramesChecked": 0,
+          "boundaryMembershipFramesUnknown": 3,
           "labelRouteClearanceIssues": 0,
           "minLabelRouteClearance": 22,
           "desktopReadabilityIssues": 0,
@@ -1429,6 +1478,9 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "boundaryMembershipIssues": 0,
+          "boundaryMembershipFramesChecked": 0,
+          "boundaryMembershipFramesUnknown": 5,
           "labelRouteClearanceIssues": 0,
           "minLabelRouteClearance": 9,
           "desktopReadabilityIssues": 0,
@@ -1529,6 +1581,9 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "boundaryMembershipIssues": 0,
+          "boundaryMembershipFramesChecked": 0,
+          "boundaryMembershipFramesUnknown": 0,
           "labelRouteClearanceIssues": 0,
           "minLabelRouteClearance": null,
           "desktopReadabilityIssues": 0,
@@ -1629,6 +1684,9 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "boundaryMembershipIssues": 0,
+          "boundaryMembershipFramesChecked": 0,
+          "boundaryMembershipFramesUnknown": 0,
           "labelRouteClearanceIssues": 0,
           "minLabelRouteClearance": null,
           "desktopReadabilityIssues": 0,
@@ -1675,8 +1733,8 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 9,
-      "artifactBytes": 811809,
-      "artifactSha256": "426db7bd1842de45916b00233b859dbb6cfb17a0d2fa9c70353c8fe121811d93",
+      "artifactBytes": 811918,
+      "artifactSha256": "f6546882d048079f678a328d4c4da2b9999c8fbea8f6f1d52a55ab81f8640ab8",
       "sourceBytes": 3793,
       "sourceSha256": "483350f5297df682aba4e4a0fa491307ce3d3abd725ae4df07fab177490752cf",
       "checks": [
@@ -1729,6 +1787,9 @@ receipt 99 checks / 11 artifacts / deterministic hashes</pre>
           "properCrossings": 0,
           "ambiguousCorridors": 0,
           "containerBorderRuns": 0,
+          "boundaryMembershipIssues": 0,
+          "boundaryMembershipFramesChecked": 2,
+          "boundaryMembershipFramesUnknown": 0,
           "labelRouteClearanceIssues": 0,
           "minLabelRouteClearance": 20,
           "desktopReadabilityIssues": 0,

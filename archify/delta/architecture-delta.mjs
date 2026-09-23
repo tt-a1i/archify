@@ -352,16 +352,28 @@ function boundaryChangeMap(changes) {
   return new Map(changes.map((change) => [`${change.kind}:${esc(change.label)}`, change]));
 }
 
-function addState(tag, change, side, forcedState) {
-  const append = (attributes) => tag.endsWith('/>')
+function appendAttributes(tag, attributes) {
+  return tag.endsWith('/>')
     ? tag.replace(/\/>$/, `${attributes}/>`)
     : tag.replace(/>$/, `${attributes}>`);
-  if (!change && !forcedState) return append(' data-delta-state="same"');
+}
+
+// A compare artifact draws two versions of one diagram in a single coordinate
+// space. An element whose geometry the versions do not share is drawn once per
+// version, so each copy declares which version it depicts; an element drawn
+// once is shared and declares nothing. Composition rules that read boundary
+// membership join frames to components inside a version, never across two.
+function scopeElement(markup, scope) {
+  return markup.replace(/^<(?:rect|g)\s[^>]*>/, (tag) => appendAttributes(tag, ` data-composition-scope="${scope}"`));
+}
+
+function addState(tag, change, side, forcedState) {
+  if (!change && !forcedState) return appendAttributes(tag, ' data-delta-state="same"');
   let state = forcedState || change.status;
   if (change?.status === 'added' && side === 'base') state = 'same';
   if (change?.status === 'removed' && side === 'head') state = 'same';
   const classes = change?.classifications?.join(',') || '';
-  return append(` data-delta-state="${esc(state)}"${classes ? ` data-delta-classifications="${esc(classes)}"` : ''}`);
+  return appendAttributes(tag, ` data-delta-state="${esc(state)}"${classes ? ` data-delta-classifications="${esc(classes)}"` : ''}`);
 }
 
 function markerFor(state) {
@@ -552,6 +564,35 @@ function boundarySymbolMarkup(markup, state) {
   return `<text class="delta-boundary-marker" data-delta-state="${state}" x="${x}" y="${y}" text-anchor="middle" aria-hidden="true">${symbol}</text>`;
 }
 
+// Whether the two versions share an element is a question about what they draw,
+// not about what the comparator classified. A member that moves changes its
+// boundary's frame without changing the boundary, and a layout origin moves
+// every component without changing any of them, so both would otherwise read as
+// shared and let one version's frame judge the other version's geometry.
+function renderedFrameGeometry(svg) {
+  const index = new Map();
+  for (const element of boundaryElements(svg)) {
+    if (element.part !== 'frame') continue;
+    const rect = element.markup.match(/\bx="([\d.-]+)"\s+y="([\d.-]+)"\s+width="([\d.-]+)"\s+height="([\d.-]+)"/);
+    const members = element.markup.match(/\bdata-composition-frame-members="([^"]*)"/)?.[1] ?? '';
+    index.set(element.key, `${rect ? rect.slice(1, 5).join(',') : 'unmeasured'}|${members}`);
+  }
+  return index;
+}
+
+function renderedNodeGeometry(svg) {
+  const index = new Map();
+  for (const range of nodeGroupRanges(svg)) {
+    const rect = svg.slice(range.start, range.end).match(/<rect[^>]*\bx="([\d.-]+)"\s+y="([\d.-]+)"\s+width="([\d.-]+)"\s+height="([\d.-]+)"/);
+    index.set(range.id, rect ? rect.slice(1, 5).join(',') : 'unmeasured');
+  }
+  return index;
+}
+
+function sharedBetweenVersions(base, head) {
+  return (key) => base.has(key) && head.has(key) && base.get(key) === head.get(key);
+}
+
 export function buildDeltaSvg(baseSvg, headSvg, receipt) {
   const [baseW, baseH] = viewBoxSize(baseSvg);
   const [headW, headH] = viewBoxSize(headSvg);
@@ -568,9 +609,17 @@ export function buildDeltaSvg(baseSvg, headSvg, receipt) {
   const edgeMarkers = [];
   const boundaryMarkers = [];
 
+  // A component or boundary the two versions do not draw identically appears
+  // twice in the overlay, or only once but meaning one version, so every copy
+  // that is not shared names the version it depicts.
+  const sharedNode = sharedBetweenVersions(renderedNodeGeometry(baseSvg), renderedNodeGeometry(headSvg));
+  const sharedFrame = sharedBetweenVersions(renderedFrameGeometry(baseSvg), renderedFrameGeometry(headSvg));
+
   for (const change of nodes.values()) {
-    if (change.status === 'removed') baseNodePhantoms.push(forceElementState(elementById(baseSvg, 'node', change.id), 'removed', change.classifications));
-    else if (change.classifications.includes('geometry')) baseNodePhantoms.push(forceElementState(elementById(baseSvg, 'node', change.id), 'moved-from', change.classifications));
+    if (change.status === 'removed') baseNodePhantoms.push(scopeElement(forceElementState(elementById(baseSvg, 'node', change.id), 'removed', change.classifications), 'base'));
+    else if (change.classifications.includes('geometry')) {
+      baseNodePhantoms.push(scopeElement(forceElementState(elementById(baseSvg, 'node', change.id), 'moved-from', change.classifications), 'base'));
+    }
   }
   for (const change of edges.values()) {
     if (change.status === 'removed' || change.classifications.includes('topology')) {
@@ -588,19 +637,23 @@ export function buildDeltaSvg(baseSvg, headSvg, receipt) {
     if (change.status === 'removed') {
       const phantom = forceBoundaryState(boundaryMarkupByKey(baseSvg, renderedKey), 'removed', change.key, change.classifications);
       const parts = boundaryMarkupParts(phantom);
-      baseBoundaryFramePhantoms.push(parts.frame);
+      baseBoundaryFramePhantoms.push(scopeElement(parts.frame, 'base'));
       baseBoundaryLabelPhantoms.push(parts.label);
       boundaryMarkers.push(boundarySymbolMarkup(phantom, 'removed'));
     }
     else if (change.status === 'changed' || change.status === 'geometry-changed') {
       const phantom = forceBoundaryState(boundaryMarkupByKey(baseSvg, renderedKey), 'moved-from', change.key, change.classifications);
       const parts = boundaryMarkupParts(phantom);
-      baseBoundaryFramePhantoms.push(parts.frame);
+      baseBoundaryFramePhantoms.push(scopeElement(parts.frame, 'base'));
       baseBoundaryLabelPhantoms.push(parts.label);
     }
   }
 
   let delta = annotateArchitectureSideSvg(headSvg, receipt, 'head');
+  delta = transformNodeGroups(delta, (group, id) => (sharedNode(id) ? group : scopeElement(group, 'head')));
+  delta = transformBoundaryElements(delta, (markup, key, part) => (
+    part === 'frame' && !sharedFrame(key) ? scopeElement(markup, 'head') : markup
+  ));
   if (baseEdgePhantoms.length) {
     const baseDefinitions = baseRelationshipsSvg.match(/<defs>([\s\S]*?)<\/defs>/)?.[1] || '';
     delta = delta.replace('</defs>', `${baseDefinitions}</defs>`);

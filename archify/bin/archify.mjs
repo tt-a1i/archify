@@ -227,6 +227,7 @@ const COMPOSITION_FIXES = {
   'composition/proper-crossing': ['adjust route/via or channel coordinates so unrelated relationships use separate corridors'],
   'composition/ambiguous-corridor': ['adjust route/via or channel coordinates so unrelated relationships do not visually merge'],
   'composition/container-border-run': ['route across the frame perpendicularly through a clear opening'],
+  'composition/boundary-membership': ['move the component clear of the boundary frame rect', "add the component to that boundary's wraps if it does belong inside"],
   'composition/label-route-clearance': ['adjust labelAt, labelDx, labelDy, labelSegment, message y, or the other relationship route'],
   'composition/desktop-readability': ['reduce the viewBox width, shorten node copy, widen affected nodes, or split the diagram so node context remains at least 6px at a 1440px desktop viewport'],
   'composition/micro-segment': ['move the route/channel/via point so every visible segment is at least 8px'],

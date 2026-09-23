@@ -755,6 +755,58 @@ export function cleanBorderRunProblems({
   });
 }
 
+function rectWithin(outer, inner) {
+  if (!isFinitePoint(outer.x, outer.y, outer.width, outer.height, inner.x, inner.y, inner.width, inner.height)) {
+    return false;
+  }
+  return inner.x >= outer.x
+    && inner.y >= outer.y
+    && inner.x + inner.width <= outer.x + outer.width
+    && inner.y + inner.height <= outer.y + outer.height;
+}
+
+// A compare artifact draws two versions of one diagram in a single coordinate
+// space, so an element whose geometry differs between them appears twice, each
+// copy declaring the version it depicts. An element drawn once is the same in
+// both versions and declares nothing, which makes it part of either. Membership
+// therefore joins a frame to a component only within a version, never across
+// one: a head frame never judges a component that only base draws.
+function sameDiagramScope(frame, node) {
+  if (!frame.scope || !node.scope) return true;
+  return frame.scope === node.scope;
+}
+
+// A boundary frame is the bounding box of its members plus padding, so a
+// component parked in that box renders as enclosed whether or not it belongs.
+// Geometry alone cannot tell the two apart, which is why membership travels
+// with the frame: a frame that declares none is skipped rather than judged,
+// which keeps frames from other diagram types out of this rule.
+export function collectBoundaryMembership({ frames, nodes }) {
+  const hits = [];
+  let framesChecked = 0;
+  let framesUnknown = 0;
+  for (const frame of asArray(frames)) {
+    if (!frame) continue;
+    if (frame.members === undefined || frame.members === null) {
+      framesUnknown += 1;
+      continue;
+    }
+    framesChecked += 1;
+    const members = frame.members instanceof Set ? frame.members : new Set(asArray(frame.members));
+    for (const node of asArray(nodes)) {
+      if (!node || members.has(node.id)) continue;
+      if (!sameDiagramScope(frame, node)) continue;
+      // A zero-area box draws nothing, so it cannot read as enclosed.
+      if (!(node.width > 0) || !(node.height > 0)) continue;
+      if (!rectsOverlap(node, frame)) continue;
+      hits.push({ frame, node, containment: rectWithin(frame, node) ? 'inside' : 'straddling' });
+    }
+  }
+  // A caller cannot tell a clean artifact from an unjudged one by the hit count
+  // alone, so the frames the rule could and could not read are reported too.
+  return { hits, framesChecked, framesUnknown };
+}
+
 export function routeBudgetMetrics({
   routedRelations,
   bendsPerRelationship = 2,

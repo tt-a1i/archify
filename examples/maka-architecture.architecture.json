@@ -20,7 +20,7 @@
       "type": "frontend",
       "label": "Desktop UI",
       "sublabel": "React renderer",
-      "pos": [200, 300],
+      "pos": [240, 300],
       "size": [140, 60]
     },
     {
@@ -28,7 +28,7 @@
       "type": "backend",
       "label": "Main Process",
       "sublabel": "Electron IPC",
-      "pos": [390, 300],
+      "pos": [430, 300],
       "size": [140, 60]
     },
     {
@@ -36,7 +36,7 @@
       "type": "backend",
       "label": "SessionManager",
       "sublabel": "public runtime API",
-      "pos": [580, 300],
+      "pos": [620, 300],
       "size": [150, 60]
     },
     {
@@ -44,7 +44,7 @@
       "type": "backend",
       "label": "AgentRun",
       "sublabel": "turn + recovery",
-      "pos": [780, 300],
+      "pos": [820, 300],
       "size": [140, 60]
     },
     {
@@ -52,7 +52,7 @@
       "type": "backend",
       "label": "ModelAdapter",
       "sublabel": "stream + usage",
-      "pos": [970, 300],
+      "pos": [820, 440],
       "size": [140, 60]
     },
     {
@@ -60,7 +60,7 @@
       "type": "cloud",
       "label": "Model Providers",
       "sublabel": "AI SDK / Ollama",
-      "pos": [970, 140],
+      "pos": [820, 620],
       "size": [140, 60],
       "tag": "API keys local"
     },
@@ -69,7 +69,7 @@
       "type": "external",
       "label": "Bots & Gateway",
       "sublabel": "Telegram · Feishu · HTTP",
-      "pos": [580, 140],
+      "pos": [40, 440],
       "size": [150, 60]
     },
     {
@@ -77,7 +77,7 @@
       "type": "security",
       "label": "Permission",
       "sublabel": "policy engine",
-      "pos": [780, 140],
+      "pos": [820, 140],
       "size": [140, 60],
       "tag": "fail-closed"
     },
@@ -86,7 +86,7 @@
       "type": "database",
       "label": "Local Storage",
       "sublabel": "userData JSONL",
-      "pos": [580, 440],
+      "pos": [620, 140],
       "size": [150, 60]
     },
     {
@@ -94,7 +94,7 @@
       "type": "messagebus",
       "label": "ToolRuntime",
       "sublabel": "validate · abort",
-      "pos": [780, 440],
+      "pos": [1010, 300],
       "size": [140, 60]
     },
     {
@@ -102,7 +102,7 @@
       "type": "frontend",
       "label": "Local Tools",
       "sublabel": "Read · Write · Bash",
-      "pos": [970, 440],
+      "pos": [1210, 300],
       "size": [140, 60]
     }
   ],
@@ -115,7 +115,8 @@
     {
       "kind": "security-group",
       "label": "trust boundary",
-      "wraps": ["permission", "storage"]
+      "wraps": ["permission", "storage"],
+      "pad": 14
     }
   ],
   "connections": [
@@ -144,22 +145,26 @@
     {
       "from": "agentrun",
       "to": "model",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
     },
     {
       "from": "model",
       "to": "providers",
       "label": "stream",
       "variant": "emphasis",
-      "fromSide": "top",
-      "toSide": "bottom"
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
     },
     {
       "from": "bots",
       "to": "session",
       "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [[695, 470]]
     },
     {
       "from": "agentrun",
@@ -172,14 +177,14 @@
       "from": "session",
       "to": "storage",
       "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "fromSide": "top",
+      "toSide": "bottom"
     },
     {
       "from": "agentrun",
       "to": "toolrt",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "fromSide": "right",
+      "toSide": "left"
     },
     {
       "from": "toolrt",
@@ -190,9 +195,9 @@
       "from": "toolrt",
       "to": "permission",
       "variant": "security",
-      "fromSide": "bottom",
-      "toSide": "top",
-      "via": [[850, 540], [1160, 540], [1160, 100], [850, 100]]
+      "fromSide": "top",
+      "toSide": "right",
+      "via": [[1080, 170]]
     }
   ],
   "cards": [

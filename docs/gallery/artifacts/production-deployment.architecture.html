@@ -5156,13 +5156,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="AWS us-east-1 / production" x="210" y="171" width="1126" height="361" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="AWS us-east-1 / production" data-composition-frame-members="edge gateway api_a api_b redis postgres events worker audit" x="210" y="171" width="1126" height="361" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" data-composition-frame-label="private application network" x="616" y="171" width="714" height="316" rx="8" class="c-security-group" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" data-composition-frame-label="private application network" data-composition-frame-members="api_a api_b redis postgres events worker" x="616" y="171" width="714" height="316" rx="8" class="c-security-group" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="AWS eu-west-1 / disaster recovery" x="1006.1135384870968" y="536" width="193.77292302580642" height="124" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="AWS eu-west-1 / disaster recovery" data-composition-frame-members="replica" x="1006.1135384870968" y="536" width="193.77292302580642" height="124" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="3" data-composition-frame-label="DR private subnet" x="1026" y="554" width="154" height="106" rx="8" class="c-security-group" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="3" data-composition-frame-label="DR private subnet" data-composition-frame-members="replica" x="1026" y="554" width="154" height="106" rx="8" class="c-security-group" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="clients" data-edge-to="edge" data-edge-label="HTTPS" data-edge-key="0" data-composition-points="160,330;230,330" d="M 160 330 L 230 330" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>

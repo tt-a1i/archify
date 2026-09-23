@@ -9982,9 +9982,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         &lt;rect width=&quot;100%&quot; height=&quot;100%&quot; fill=&quot;url(#grid)&quot; /&gt;
 
         &lt;!-- Boundaries (behind everything) --&gt;
-        &lt;rect data-graph-role=&quot;structural-frame&quot; data-composition-frame-kind=&quot;region&quot; data-composition-frame-id=&quot;0&quot; data-composition-frame-label=&quot;Production region&quot; x=&quot;190&quot; y=&quot;70&quot; width=&quot;610&quot; height=&quot;410&quot; rx=&quot;12&quot; class=&quot;c-region&quot; stroke-width=&quot;1&quot;/&gt;
+        &lt;rect data-graph-role=&quot;structural-frame&quot; data-composition-frame-kind=&quot;region&quot; data-composition-frame-id=&quot;0&quot; data-composition-frame-label=&quot;Production region&quot; data-composition-frame-members=&quot;cache checkout edge orders queue worker&quot; x=&quot;190&quot; y=&quot;70&quot; width=&quot;610&quot; height=&quot;410&quot; rx=&quot;12&quot; class=&quot;c-region&quot; stroke-width=&quot;1&quot;/&gt;
 
-        &lt;rect data-graph-role=&quot;structural-frame&quot; data-composition-frame-kind=&quot;security-group&quot; data-composition-frame-id=&quot;1&quot; data-composition-frame-label=&quot;Checkout trust zone&quot; x=&quot;400&quot; y=&quot;220&quot; width=&quot;400&quot; height=&quot;110&quot; rx=&quot;8&quot; class=&quot;c-security-group&quot; stroke-width=&quot;1&quot;/&gt;
+        &lt;rect data-graph-role=&quot;structural-frame&quot; data-composition-frame-kind=&quot;security-group&quot; data-composition-frame-id=&quot;1&quot; data-composition-frame-label=&quot;Checkout trust zone&quot; data-composition-frame-members=&quot;checkout orders&quot; x=&quot;400&quot; y=&quot;220&quot; width=&quot;400&quot; height=&quot;110&quot; rx=&quot;8&quot; class=&quot;c-security-group&quot; stroke-width=&quot;1&quot;/&gt;
 
         &lt;!-- Connection paths (before components for correct z-order) --&gt;
         &lt;path data-edge-from=&quot;orders&quot; data-edge-to=&quot;payments&quot; data-edge-label=&quot;authorize&quot; data-edge-key=&quot;0&quot; data-edge-id=&quot;authorize-payment&quot; data-composition-points=&quot;770,280;850,280&quot; d=&quot;M 770 280 L 850 280&quot; class=&quot;a-security&quot; stroke-width=&quot;1.5&quot; marker-end=&quot;url(#arrowhead-security)&quot;/&gt;
@@ -19811,13 +19811,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <rect width="100%" height="100%" fill="url(#delta-head-grid)" />
 
         <!-- Baseline boundary frame phantoms -->
-<rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Production region" x="190" y="70" width="610" height="410" rx="12" class="c-region" stroke-width="1" data-delta-state="moved-from" data-delta-classifications="scope" data-delta-boundary-key="region:Production region"/>
-<rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" data-composition-frame-label="Checkout trust zone" x="400" y="220" width="400" height="110" rx="8" class="c-security-group" stroke-width="1" data-delta-state="moved-from" data-delta-classifications="scope" data-delta-boundary-key="security-group:Checkout trust zone"/>
+<rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Production region" data-composition-frame-members="cache checkout edge orders queue worker" x="190" y="70" width="610" height="410" rx="12" class="c-region" stroke-width="1" data-delta-state="moved-from" data-delta-classifications="scope" data-delta-boundary-key="region:Production region" data-composition-scope="base"/>
+<rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" data-composition-frame-label="Checkout trust zone" data-composition-frame-members="checkout orders" x="400" y="220" width="400" height="110" rx="8" class="c-security-group" stroke-width="1" data-delta-state="moved-from" data-delta-classifications="scope" data-delta-boundary-key="security-group:Checkout trust zone" data-composition-scope="base"/>
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Production region" x="190" y="70" width="610" height="430" rx="12" class="c-region" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope" data-delta-boundary-key="region:Production region"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Production region" data-composition-frame-members="checkout edge fraud orders queue worker" x="190" y="70" width="610" height="430" rx="12" class="c-region" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope" data-delta-boundary-key="region:Production region" data-composition-scope="head"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" data-composition-frame-label="Checkout trust zone" x="400" y="70" width="400" height="260" rx="8" class="c-security-group" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope" data-delta-boundary-key="security-group:Checkout trust zone"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" data-composition-frame-label="Checkout trust zone" data-composition-frame-members="checkout fraud orders" x="400" y="70" width="400" height="260" rx="8" class="c-security-group" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope" data-delta-boundary-key="security-group:Checkout trust zone" data-composition-scope="head"/>
 
         <!-- Baseline relationship phantoms -->
 <path data-edge-from="orders" data-edge-to="payments" data-edge-label="authorize" data-edge-key="0" data-edge-id="authorize-payment" data-composition-points="770,280;850,280" d="M 770 280 L 850 280" class="a-security" stroke-width="1.5" marker-end="url(#delta-base-arrowhead-security)" data-delta-state="removed" data-delta-classifications="geometry,topology"/>
@@ -19857,7 +19857,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         </g>
 
         <!-- Baseline removed and move-from component phantoms -->
-<g id="delta-base-node-cache" data-node-id="cache" data-node-label="Session Cache" role="group" aria-label="Session Cache, Redis, Production region" data-node-kind="database" data-node-sublabel="Redis" data-node-context="Production region" data-delta-state="removed" data-delta-classifications="semantic">
+<g id="delta-base-node-cache" data-node-id="cache" data-node-label="Session Cache" role="group" aria-label="Session Cache, Redis, Production region" data-node-kind="database" data-node-sublabel="Redis" data-node-context="Production region" data-delta-state="removed" data-delta-classifications="semantic" data-composition-scope="base">
           <title>Session Cache · Redis · Production region</title>
           <rect x="430" y="100" width="130" height="60" rx="6" class="c-mask"/>
           <rect x="430" y="100" width="130" height="60" rx="6" class="c-database" stroke-width="1.5"/>
@@ -19870,7 +19870,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
           <g class="delta-node-marker" aria-hidden="true"><circle cx="551" cy="109" r="8"/><text x="551" y="112" text-anchor="middle">−</text></g>
         </g>
-<g id="delta-base-node-queue" data-node-id="queue" data-node-label="Order Events" role="group" aria-label="Order Events, durable queue, Production region" data-node-kind="messagebus" data-node-sublabel="durable queue" data-node-context="Production region" data-delta-state="moved-from" data-delta-classifications="geometry">
+<g id="delta-base-node-queue" data-node-id="queue" data-node-label="Order Events" role="group" aria-label="Order Events, durable queue, Production region" data-node-kind="messagebus" data-node-sublabel="durable queue" data-node-context="Production region" data-delta-state="moved-from" data-delta-classifications="geometry" data-composition-scope="base">
           <title>Order Events · durable queue · Production region</title>
           <rect x="430" y="400" width="130" height="60" rx="6" class="c-mask"/>
           <rect x="430" y="400" width="130" height="60" rx="6" class="c-messagebus" stroke-width="1.5"/>
@@ -19923,7 +19923,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="context" x="285" y="294" class="t-muted" font-size="9" text-anchor="middle">TLS + routing</text>
         </g>
 
-        <g id="delta-head-node-fraud" data-node-id="fraud" data-node-label="Fraud Gate" role="group" aria-label="Fraud Gate, policy scoring, Production region › Checkout trust zone" data-node-kind="security" data-node-sublabel="policy scoring" data-node-tag="new owner" data-node-context="Production region › Checkout trust zone" data-delta-state="added" data-delta-classifications="semantic">
+        <g id="delta-head-node-fraud" data-node-id="fraud" data-node-label="Fraud Gate" role="group" aria-label="Fraud Gate, policy scoring, Production region › Checkout trust zone" data-node-kind="security" data-node-sublabel="policy scoring" data-node-tag="new owner" data-node-context="Production region › Checkout trust zone" data-delta-state="added" data-delta-classifications="semantic" data-composition-scope="head">
           <title>Fraud Gate · policy scoring · Production region › Checkout trust zone · new owner</title>
           <rect x="640" y="100" width="130" height="60" rx="6" class="c-mask"/>
           <rect x="640" y="100" width="130" height="60" rx="6" class="c-security" stroke-width="1.5"/>
@@ -19962,7 +19962,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="context" x="915" y="294" class="t-muted" font-size="9" text-anchor="middle">external</text>
         </g>
 
-        <g id="delta-head-node-queue" data-node-id="queue" data-node-label="Order Events" role="group" aria-label="Order Events, durable queue, Production region" data-node-kind="messagebus" data-node-sublabel="durable queue" data-node-context="Production region" data-delta-state="moved" data-delta-classifications="geometry">
+        <g id="delta-head-node-queue" data-node-id="queue" data-node-label="Order Events" role="group" aria-label="Order Events, durable queue, Production region" data-node-kind="messagebus" data-node-sublabel="durable queue" data-node-context="Production region" data-delta-state="moved" data-delta-classifications="geometry" data-composition-scope="head">
           <title>Order Events · durable queue · Production region</title>
           <rect x="430" y="420" width="130" height="60" rx="6" class="c-mask"/>
           <rect x="430" y="420" width="130" height="60" rx="6" class="c-messagebus" stroke-width="1.5"/>
@@ -25223,9 +25223,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         &lt;rect width=&quot;100%&quot; height=&quot;100%&quot; fill=&quot;url(#grid)&quot; /&gt;
 
         &lt;!-- Boundaries (behind everything) --&gt;
-        &lt;rect data-graph-role=&quot;structural-frame&quot; data-composition-frame-kind=&quot;region&quot; data-composition-frame-id=&quot;0&quot; data-composition-frame-label=&quot;Production region&quot; x=&quot;190&quot; y=&quot;70&quot; width=&quot;610&quot; height=&quot;430&quot; rx=&quot;12&quot; class=&quot;c-region&quot; stroke-width=&quot;1&quot;/&gt;
+        &lt;rect data-graph-role=&quot;structural-frame&quot; data-composition-frame-kind=&quot;region&quot; data-composition-frame-id=&quot;0&quot; data-composition-frame-label=&quot;Production region&quot; data-composition-frame-members=&quot;checkout edge fraud orders queue worker&quot; x=&quot;190&quot; y=&quot;70&quot; width=&quot;610&quot; height=&quot;430&quot; rx=&quot;12&quot; class=&quot;c-region&quot; stroke-width=&quot;1&quot;/&gt;
 
-        &lt;rect data-graph-role=&quot;structural-frame&quot; data-composition-frame-kind=&quot;security-group&quot; data-composition-frame-id=&quot;1&quot; data-composition-frame-label=&quot;Checkout trust zone&quot; x=&quot;400&quot; y=&quot;70&quot; width=&quot;400&quot; height=&quot;260&quot; rx=&quot;8&quot; class=&quot;c-security-group&quot; stroke-width=&quot;1&quot;/&gt;
+        &lt;rect data-graph-role=&quot;structural-frame&quot; data-composition-frame-kind=&quot;security-group&quot; data-composition-frame-id=&quot;1&quot; data-composition-frame-label=&quot;Checkout trust zone&quot; data-composition-frame-members=&quot;checkout fraud orders&quot; x=&quot;400&quot; y=&quot;70&quot; width=&quot;400&quot; height=&quot;260&quot; rx=&quot;8&quot; class=&quot;c-security-group&quot; stroke-width=&quot;1&quot;/&gt;
 
         &lt;!-- Connection paths (before components for correct z-order) --&gt;
         &lt;path data-edge-from=&quot;fraud&quot; data-edge-to=&quot;payments&quot; data-edge-label=&quot;authorize&quot; data-edge-key=&quot;0&quot; data-edge-id=&quot;authorize-payment&quot; data-composition-points=&quot;770,130;820,130;915,130;915,250&quot; d=&quot;M 770 130 L 812 130 Q 820 130 828 130 L 907 130 Q 915 130 915 138 L 915 250&quot; class=&quot;a-security&quot; stroke-width=&quot;1.5&quot; marker-end=&quot;url(#arrowhead-security)&quot;/&gt;

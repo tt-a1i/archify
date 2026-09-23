@@ -2,7 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { collectAmbiguousCorridors, collectBorderRuns, collectLabelRouteClearance, collectRouteRhythmIssues, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
+import { collectAmbiguousCorridors, collectBorderRuns, collectBoundaryMembership, collectLabelRouteClearance, collectRouteRhythmIssues, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 import {
   DESKTOP_READABILITY_VIEWPORT,
   DESKTOP_READER_DIAGRAM_WIDTH,
@@ -40,6 +40,9 @@ let composition = {
     properCrossings: 0,
     ambiguousCorridors: 0,
     containerBorderRuns: 0,
+    boundaryMembershipIssues: 0,
+    boundaryMembershipFramesChecked: 0,
+    boundaryMembershipFramesUnknown: 0,
     labelRouteClearanceIssues: 0,
     minLabelRouteClearance: null,
     maxBends: 0,
@@ -112,6 +115,10 @@ if (svgMatches.length === 1) {
   );
   const relationshipCrossings = collectRelationshipCrossings(arrows);
   const compositionFrames = collectCompositionFrames(beforeLegend);
+  const boundaryMembership = collectBoundaryMembership({
+    frames: compositionFrames,
+    nodes: collectComponentBoxes(beforeLegend),
+  });
   const containerBorderRuns = collectBorderRuns({
     routedRelations: arrows
       .filter((arrow) => arrow.from && arrow.to && arrow.borderSegments.length)
@@ -145,18 +152,27 @@ if (svgMatches.length === 1) {
   const rhythmIsError = qualityProfile === 'showcase';
   const labelClearanceIsError = qualityProfile === 'showcase';
   const desktopReadabilityIsError = qualityProfile === 'showcase';
+  // A non-member drawn entirely inside a frame states the opposite of the
+  // authored model and the reader cannot recover the truth, so showcase rejects
+  // it. A straddle is ambiguous rather than false, and starts as a warning.
+  const membershipIsError = qualityProfile === 'showcase';
+  const enclosedNonMembers = boundaryMembership.hits.filter((hit) => hit.containment === 'inside');
+  const straddlingNonMembers = boundaryMembership.hits.filter((hit) => hit.containment === 'straddling');
   const compositionErrors = (qualityGatesEnforced ? containerBorderRuns.length : 0)
     + (crossingIsError ? relationshipCrossings.length : 0)
     + (corridorIsError ? ambiguousCorridors.length : 0)
     + (labelClearanceIsError ? labelRouteClearance.length : 0)
     + (rhythmIsError ? routeRhythmIssues.length : 0)
-    + (desktopReadabilityIsError && desktopReadabilityIssue ? 1 : 0);
+    + (desktopReadabilityIsError && desktopReadabilityIssue ? 1 : 0)
+    + (membershipIsError ? enclosedNonMembers.length : 0);
   const compositionWarnings = (qualityGatesEnforced ? 0 : containerBorderRuns.length)
     + (crossingIsError ? 0 : relationshipCrossings.length)
     + (corridorIsError ? 0 : ambiguousCorridors.length)
     + (labelClearanceIsError ? 0 : labelRouteClearance.length)
     + (rhythmIsError ? 0 : routeRhythmIssues.length)
-    + (desktopReadabilityIsError || !desktopReadabilityIssue ? 0 : 1);
+    + (desktopReadabilityIsError || !desktopReadabilityIssue ? 0 : 1)
+    + (membershipIsError ? 0 : enclosedNonMembers.length)
+    + straddlingNonMembers.length;
   composition = {
     schemaVersion: 1,
     profile: qualityProfile,
@@ -169,6 +185,9 @@ if (svgMatches.length === 1) {
       properCrossings: relationshipCrossings.length,
       ambiguousCorridors: ambiguousCorridors.length,
       containerBorderRuns: containerBorderRuns.length,
+      boundaryMembershipIssues: boundaryMembership.hits.length,
+      boundaryMembershipFramesChecked: boundaryMembership.framesChecked,
+      boundaryMembershipFramesUnknown: boundaryMembership.framesUnknown,
       labelRouteClearanceIssues: labelRouteClearance.length,
       minLabelRouteClearance: labelRouteMeasurements.length
         ? Math.round(Math.min(...labelRouteMeasurements.map((hit) => hit.clearance)) * 10) / 10
@@ -246,6 +265,16 @@ if (svgMatches.length === 1) {
         projectedFontPx: desktopReadabilityIssue.projectedFontPx,
         minimumProjectedFontPx: MIN_PROJECTED_NODE_TEXT_PX,
       }] : []),
+      ...boundaryMembership.hits.map((hit) => ({
+        severity: hit.containment === 'inside' && membershipIsError ? 'error' : 'warning',
+        code: 'composition/boundary-membership',
+        containment: hit.containment,
+        ...(hit.frame.scope || hit.node.scope ? { scope: hit.frame.scope || hit.node.scope } : {}),
+        node: { id: hit.node.id, label: hit.node.label, kind: hit.node.kind },
+        frame: { kind: hit.frame.kind, id: hit.frame.id, label: hit.frame.label },
+        nodeRect: roundedRect({ x: hit.node.x, y: hit.node.y, width: hit.node.width, height: hit.node.height }),
+        frameRect: roundedRect({ x: hit.frame.x, y: hit.frame.y, width: hit.frame.width, height: hit.frame.height }),
+      })),
     ],
   };
   addCheck(
@@ -453,9 +482,16 @@ function collectCompositionFrames(fragment) {
     if (!kind) continue;
     const identity = attrs['data-composition-frame-id'] || frames.length;
     if (match[1].toLowerCase() === 'rect') {
+      const declaredMembers = attrs['data-composition-frame-members'];
       const frame = {
         kind,
         id: identity,
+        label: attrs['data-composition-frame-label'],
+        // Absent attribute means the frame does not describe membership at all
+        // (other diagram types, or HTML from an older renderer). Undefined is
+        // "unknown" and is skipped; an empty string is a real empty membership.
+        members: declaredMembers === undefined ? undefined : declaredMembers.split(/\s+/).filter(Boolean),
+        scope: attrs['data-composition-scope'],
         x: numberAttr(attrs, 'x'),
         y: numberAttr(attrs, 'y'),
         width: numberAttr(attrs, 'width'),
@@ -483,6 +519,64 @@ function collectCompositionFrames(fragment) {
 
 function frameName(frame) {
   return `${frame.kind || 'frame'} "${frame.id}"`;
+}
+
+// Component boxes come from the node groups the renderers emit. This walks the
+// shared SVG tokenizer rather than a hand-rolled pattern so comments, CDATA and
+// every attribute quoting form behave, and it closes elements by name the way
+// the XML walker does, so an unclosed child cannot carry a node past its own
+// end tag and a stray close tag cannot end it early. A node's rectangle is
+// therefore always its own: markup outside the element can never supply it.
+function collectComponentBoxes(fragment) {
+  const boxes = [];
+  const stack = [];
+  let active = null;
+  for (const match of fragment.matchAll(SVG_TAG_TOKEN)) {
+    if (!match[2]) continue;
+    const element = match[2].toLowerCase();
+    if (match[1]) {
+      const index = stack.lastIndexOf(element);
+      if (index < 0) continue;
+      stack.length = index;
+      if (active && stack.length <= active.depth) active = null;
+      continue;
+    }
+    const attrs = parseAttrs(match[0]);
+    if (active && !active.captured && element === 'rect') {
+      const box = {
+        id: active.id,
+        label: active.label,
+        kind: active.kind,
+        scope: active.scope,
+        x: numberAttr(attrs, 'x'),
+        y: numberAttr(attrs, 'y'),
+        width: numberAttr(attrs, 'width'),
+        height: numberAttr(attrs, 'height'),
+      };
+      if ([box.x, box.y, box.width, box.height].every(Number.isFinite)) {
+        active.captured = true;
+        boxes.push(box);
+      }
+    }
+    // An element that cannot have children cannot hold a rectangle either, so
+    // it never opens a node.
+    const childless = /\/>$/.test(match[0]) || HTML_VOID_ELEMENTS.has(element);
+    const nodeId = attrs['data-node-id'];
+    // No dedupe by id: a compare artifact draws a moved node twice, and both
+    // drawn positions are real geometry that can sit inside the wrong frame.
+    if (!active && !childless && nodeId) {
+      active = {
+        id: nodeId,
+        label: attrs['data-node-label'] || nodeId,
+        kind: attrs['data-node-kind'] || null,
+        scope: attrs['data-composition-scope'],
+        depth: stack.length,
+        captured: false,
+      };
+    }
+    if (!childless) stack.push(element);
+  }
+  return boxes;
 }
 
 function frameRecord(frame) {
