@@ -108,6 +108,7 @@ test('clean staging preserves index modes and strips repository-only package met
     const packageJson = JSON.parse(fs.readFileSync(path.join(destination, 'package.json'), 'utf8'));
     assert.equal(Object.hasOwn(packageJson, 'scripts'), false);
     assert.equal(Object.hasOwn(packageJson, 'devDependencies'), false);
+    assert.equal(Object.hasOwn(packageJson, 'overrides'), false);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

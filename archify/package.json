@@ -1,13 +1,39 @@
 {
-  "name": "archify",
+  "name": "@tt-a1i/archify",
   "version": "2.17.0-dev.1",
-  "private": true,
   "type": "module",
   "description": "JSON-IR diagram renderers (architecture / workflow / sequence / dataflow / lifecycle).",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tt-a1i/archify.git"
+  },
   "bin": {
     "archify": "./bin/archify.mjs"
   },
+  "files": [
+    "SKILL.md",
+    "THIRD_PARTY_NOTICES.md",
+    "skill-release.json",
+    "assets/",
+    "bin/",
+    "brand-marks/",
+    "delta/",
+    "examples/",
+    "migrations/",
+    "recipes/",
+    "references/",
+    "renderers/",
+    "schemas/",
+    "scripts/check-render-output.mjs",
+    "scripts/check-update.mjs",
+    "scripts/render-examples.mjs",
+    "scripts/update-contract.mjs"
+  ],
   "engines": {
     "node": ">=18"
   },

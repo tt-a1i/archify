@@ -203,6 +203,9 @@ function cleanPackageManifest(destination) {
   const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
   delete packageJson.scripts;
   delete packageJson.devDependencies;
+  // Dependency-resolution configuration is meaningless in a package with no
+  // dependencies, and a published manifest must not carry it.
+  delete packageJson.overrides;
   fs.writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
 }
 
