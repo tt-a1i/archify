@@ -139,6 +139,8 @@ expectFailure('zero component height rejected by schema', 'architecture',
   (d) => { d.components[0].size = [120, 0]; }, '/components/0/size/1');
 expectFailure('negative component width rejected by schema', 'architecture',
   (d) => { d.components[0].size = [-1, 60]; }, '/components/0/size/0');
+expectFailure('boundary labelAlign outside enum', 'architecture',
+  (d) => { d.boundaries[0].labelAlign = 'center'; }, '/boundaries/0/labelAlign');
 
 // ---------------------------------------------------------------------------
 console.log('template freshness (architecture example must carry the current template)');
