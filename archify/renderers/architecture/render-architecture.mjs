@@ -207,13 +207,17 @@ function measureBoundaryTitle(boundary, minimumFontSize) {
     Math.min(preferredFontSize, fitted),
   );
   const desiredWidth = boundaryLabelWidth(boundary.label, fontSize);
+  const width = Math.min(availableWidth, desiredWidth);
   const height = Math.max(layout.boundaryLabelMaskHeight, Math.ceil(fontSize + 7));
+  const x = boundary.labelAlign === 'right'
+    ? boundary.x + boundary.width - layout.boundaryLabelFrameInset - width
+    : boundary.x + layout.boundaryLabelFrameInset;
   return {
-    x: boundary.x + layout.boundaryLabelFrameInset,
+    x,
     y: boundary.memberTop
       - layout.boundaryLabelClearance
       - height,
-    width: Math.min(availableWidth, desiredWidth),
+    width,
     height,
     fontSize,
     minimumFontSize,

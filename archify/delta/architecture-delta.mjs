@@ -164,7 +164,7 @@ const CONNECTION_FIELDS = {
   semantic: ['label', 'variant'],
   geometry: ['fromSide', 'toSide', 'route', 'via', 'labelAt', 'labelDx', 'labelDy', 'labelSegment', 'width'],
 };
-const BOUNDARY_FIELDS = { scope: ['wraps'], geometry: ['pad'] };
+const BOUNDARY_FIELDS = { scope: ['wraps'], geometry: ['pad', 'labelAlign'] };
 
 function statusFor(classifications, kind) {
   if (classifications.some((value) => ['topology', 'semantic', 'scope'].includes(value))) return 'changed';

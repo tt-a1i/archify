@@ -97,6 +97,18 @@ test('legend-only changes are presentation changes and never topology changes', 
   assert.deepEqual(receipt.changes, { components: [], connections: [], boundaries: [] });
 });
 
+test('architecture compare classifies a boundary labelAlign change as geometry', () => {
+  const base = read(baseFixture);
+  const head = structuredClone(base);
+  head.boundaries[0].labelAlign = 'right';
+  const receipt = compareArchitecture(base, head);
+  assert.equal(receipt.changes.boundaries.length, 1);
+  const [change] = receipt.changes.boundaries;
+  assert.equal(change.status, 'geometry-changed');
+  assert.deepEqual(change.classifications, ['geometry']);
+  assert.deepEqual(change.changedFields, ['/labelAlign']);
+});
+
 test('canonical architecture ignores formatting, entity order, and set-like order', () => {
   const original = read(baseFixture);
   const reordered = JSON.parse(JSON.stringify(original));

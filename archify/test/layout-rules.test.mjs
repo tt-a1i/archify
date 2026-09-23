@@ -334,6 +334,31 @@ for (const [name, mode, mutate, expected] of CASES) {
   });
 }
 
+test('architecture: boundary labelAlign right anchors the title to the top-right corner', () => {
+  const inset = 4;
+  const base = load('architecture');
+  const aligned = load('architecture');
+  aligned.boundaries[0].labelAlign = 'right';
+  const left = render('architecture', base);
+  const right = render('architecture', aligned);
+  assert.equal(left.code, 0, left.stderr);
+  assert.equal(right.code, 0, right.stderr);
+  const leftHtml = fs.readFileSync(left.outPath, 'utf8');
+  const rightHtml = fs.readFileSync(right.outPath, 'utf8');
+  const frame = boundaryFrameRect(rightHtml, 0);
+  assert.deepEqual(frame, boundaryFrameRect(leftHtml, 0));
+  const leftMask = boundaryTitleMasks(leftHtml).find((mask) => mask.index === 0);
+  const rightMask = boundaryTitleMasks(rightHtml).find((mask) => mask.index === 0);
+  assert.equal(leftMask.x, frame.x + inset);
+  assert.equal(rightMask.x + rightMask.width, frame.x + frame.width - inset);
+  assert.deepEqual(
+    { y: rightMask.y, width: rightMask.width, height: rightMask.height },
+    { y: leftMask.y, width: leftMask.width, height: leftMask.height },
+  );
+  assert.deepEqual(boundaryTitleMasks(rightHtml).find((mask) => mask.index === 1),
+    boundaryTitleMasks(leftHtml).find((mask) => mask.index === 1));
+});
+
 test('architecture: ordinary boundaries may express orthogonal overlapping memberships', () => {
   const d = load('architecture');
   d.boundaries[1].wraps.push('auth');

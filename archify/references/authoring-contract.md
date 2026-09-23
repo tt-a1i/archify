@@ -153,6 +153,8 @@ Use one left-to-right spine with short vertical branches. Prefer 6–12 primary 
 
 Grid placement is preferred when the schema supports it. Free positions are appropriate for a bounded exception, not for prose-level coordinate planning. Keep external actors outside the system boundary when that is factually true.
 
+A boundary title sits in the frame's top-left corner. Set `labelAlign: "right"` on a boundary to move it to the top-right corner, for example when an incoming relationship enters the frame near its left edge.
+
 ### Workflow
 
 Lanes express responsibility or phase. Columns `0..5` express logical

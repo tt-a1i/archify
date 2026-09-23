@@ -142,7 +142,8 @@
             "minItems": 1,
             "items": { "$ref": "common.schema.json#/$defs/id" }
           },
-          "pad": { "type": "number", "minimum": 0 }
+          "pad": { "type": "number", "minimum": 0 },
+          "labelAlign": { "enum": ["left", "right"] }
         }
       }
     },
