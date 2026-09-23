@@ -39,9 +39,12 @@ fact has supporting source evidence.
    (`boundaries.entrypoints[].files`) are separate processes and need no read.
    `modules` lists runtime modules only; `supportModules` (tests, maintenance
    scripts, data and documentation folders) are context, not components, and
-   stay out of an architecture diagram unless the request is about them. A
-   small module is not a reason to merge it: a one-file module with its own
-   imports and importers is a component. Modules in another language (a Rust
+   stay out of an architecture diagram unless the request is about them.
+   Pack modules are candidates, not one node each: group directory modules
+   that serve one runtime responsibility (a model stack of models, layers and
+   kernels, say) into one component, and keep a module separate when it owns
+   its own process, protocol, boundary, lifecycle or store. Size alone is not
+   a reason either way. Modules in another language (a Rust
    gateway, Go bindings) have no import edges to the rest;
    `crossLanguage.routeReferences` lists HTTP route strings in one module that
    match routes another module declares, ranked by how specific the shared

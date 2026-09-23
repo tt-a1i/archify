@@ -4349,7 +4349,7 @@ async function commandDeliver(args) {
   let diagram;
   try {
     specification = fs.readFileSync(inputPath);
-    diagram = JSON.parse(specification.toString('utf8'));
+    diagram = JSON.parse(specification.toString('utf8').replace(/^\uFEFF/, ''));
   } catch (error) {
     const repair = inputDiagnostic(error, inputPath);
     reportDeliveryFailure({
@@ -6299,7 +6299,7 @@ async function commandMigrate(args) {
   };
   try {
     sourceBytes = fs.readFileSync(sourcePath);
-    sourceDocument = JSON.parse(sourceBytes.toString('utf8'));
+    sourceDocument = JSON.parse(sourceBytes.toString('utf8').replace(/^\uFEFF/, ''));
   } catch (error) {
     reportMigrationFailure({
       preExistingDiagnostics: [inputDiagnostic(error, sourcePath)],
@@ -6805,7 +6805,7 @@ async function commandValidate(args) {
   let specification;
   try {
     specification = fs.readFileSync(inputPath);
-    const document = JSON.parse(specification.toString('utf8'));
+    const document = JSON.parse(specification.toString('utf8').replace(/^\uFEFF/, ''));
     const [{ validateAuthoredOutputPath }, { validateSchema }] = await Promise.all([
       import('../renderers/shared/output-path.mjs'),
       import('../renderers/shared/validator.mjs'),
