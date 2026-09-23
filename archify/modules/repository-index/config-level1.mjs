@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { openSafeRepositoryFile } from './safe-file.mjs';
+import { captureRepositoryRoot, openSafeRepositoryFile } from './safe-file.mjs';
 
 // Level 1 reads bounded configuration prefixes and returns selected identifiers.
 // Callers should treat those identifiers as potentially sensitive local data.
@@ -553,6 +553,7 @@ function parseByKind(kind, text) {
 }
 
 export function buildConfigurationLevel1(root, records, options = {}) {
+  const rootIdentity = options.rootIdentity || captureRepositoryRoot(root);
   const limits = { ...DEFAULT_LIMITS, ...(options.limits || {}) };
   const batch = Number(options.batch ?? 1);
   if (!Number.isSafeInteger(batch) || batch < 1) throw new Error('Level 1 batch must be a positive integer.');
@@ -572,7 +573,7 @@ export function buildConfigurationLevel1(root, records, options = {}) {
     // byte bound without silently dropping the tail of a configuration batch.
     const fairShare = Math.floor(remainingBytes / Math.max(1, remainingEntries));
     const bytes = Math.min(entry.record.size, limits.maximumBytesPerFile, fairShare);
-    const descriptor = openSafeRepositoryFile(root, entry.record.path);
+    const descriptor = openSafeRepositoryFile(rootIdentity, entry.record.path);
     try {
       const buffer = Buffer.allocUnsafe(bytes);
       const read = bytes ? fs.readSync(descriptor, buffer, 0, bytes, 0) : 0;

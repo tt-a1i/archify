@@ -5,6 +5,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { buildRepositoryEvidence, buildRepositoryIndex, createRepositorySnapshot } from '../modules/repository-index/index.mjs';
 import { buildSourceLevel2 } from '../modules/repository-index/source-level2.mjs';
+import { captureRepositoryRoot } from '../modules/repository-index/safe-file.mjs';
 
 function workspace(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-source-level2-'));
@@ -320,6 +321,24 @@ test('Channel excerpts omit Authorization header values', (t) => {
   const graph = level2(root);
   assert.ok(graph.runtimeChannels.some((entry) => entry.kind === 'http-client'));
   assert.ok(!JSON.stringify(graph).includes('samplevalue'));
+});
+
+test('A captured root keeps scanning the original repository if its alias changes', (t) => {
+  const original = workspace(t);
+  const replacement = workspace(t);
+  write(original, 'app/main.js', "fetch('/original');\n");
+  write(replacement, 'app/main.js', "new WebSocket('/replacement');\n");
+  const alias = `${original}-alias`;
+  fs.symlinkSync(original, alias);
+  t.after(() => fs.rmSync(alias, { force: true }));
+  const identity = captureRepositoryRoot(alias);
+  const records = createRepositorySnapshot(original).records;
+  fs.rmSync(alias);
+  fs.symlinkSync(replacement, alias);
+
+  const channels = buildSourceLevel2(alias, records, { rootIdentity: identity }).runtimeChannels;
+  assert.ok(channels.some((entry) => entry.kind === 'http-client'));
+  assert.ok(!channels.some((entry) => entry.kind === 'websocket-client'));
 });
 
 test('Level 2 records inter-process channels and what they reach', (t) => {

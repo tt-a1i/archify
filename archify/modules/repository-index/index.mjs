@@ -5,7 +5,7 @@ import path from 'node:path';
 import { buildConfigurationLevel1, buildConfigurationPlan, summarizeBoundaries, DEFAULT_LIMITS as LEVEL1_DEFAULT_LIMITS } from './config-level1.mjs';
 import { buildSourceLevel2 } from './source-level2.mjs';
 import { buildEvidencePack, classifyModules, decodePackEdges } from './source-level3.mjs';
-import { openSafeRepositoryFile, safeRepositoryEntry } from './safe-file.mjs';
+import { captureRepositoryRoot, openSafeRepositoryFile, safeRepositoryEntry } from './safe-file.mjs';
 import { sameEntry } from '../../renderers/shared/path-semantics.mjs';
 
 const DEFAULT_BATCH_SIZE = 20;
@@ -146,14 +146,15 @@ function gitFiles(root) {
   return result.stdout.split('\0').filter(Boolean).map(toPosix);
 }
 
-function walkFiles(root) {
+function walkFiles(rootIdentity) {
+  const root = rootIdentity.physicalRoot;
   const files = [];
   const pending = [''];
   while (pending.length) {
     const relativeDir = pending.pop();
     let entries;
     try {
-      safeRepositoryEntry(root, relativeDir, 'directory');
+      safeRepositoryEntry(rootIdentity, relativeDir, 'directory');
       entries = fs.readdirSync(path.join(root, relativeDir), { withFileTypes: true });
     } catch {
       continue;
@@ -164,10 +165,10 @@ function walkFiles(root) {
       if (entry.isSymbolicLink()) continue;
       if (entry.isDirectory()) {
         if (!excludedDirectory(relative)) {
-          try { safeRepositoryEntry(root, relative, 'directory'); pending.push(relative); } catch { /* changed or escaped */ }
+          try { safeRepositoryEntry(rootIdentity, relative, 'directory'); pending.push(relative); } catch { /* changed or escaped */ }
         }
       } else if (entry.isFile()) {
-        try { safeRepositoryEntry(root, relative, 'file'); files.push(relative); } catch { /* changed or escaped */ }
+        try { safeRepositoryEntry(rootIdentity, relative, 'file'); files.push(relative); } catch { /* changed or escaped */ }
       }
     }
   }
@@ -185,9 +186,11 @@ export function repositoryState(root) {
   }
   let gitRoot;
   let requestedRoot;
+  let gitIdentity;
   try {
     gitRoot = fs.realpathSync(topResult.stdout.trim());
     requestedRoot = fs.realpathSync(root);
+    gitIdentity = captureRepositoryRoot(gitRoot);
   } catch {
     return { source: 'git-working-tree', head: headResult.stdout.trim(), dirty: null, fingerprint: null, reusable: false };
   }
@@ -212,7 +215,7 @@ export function repositoryState(root) {
       fingerprintHash.update('\0').update(relativePath).update('\0').update(String(stat.mode));
       if (stat.isSymbolicLink()) fingerprintHash.update(fs.readlinkSync(absolutePath));
       else if (stat.isFile()) {
-        const descriptor = openSafeRepositoryFile(gitRoot, relativePath);
+        const descriptor = openSafeRepositoryFile(gitIdentity, relativePath);
         try { fingerprintHash.update(fs.readFileSync(descriptor)); } finally { fs.closeSync(descriptor); }
       }
     } catch {
@@ -300,11 +303,12 @@ export function createRepositorySnapshot(root) {
     throw new Error(`Repository root cannot be read: ${error.message}`);
   }
   if (!rootStat.isDirectory()) throw new Error('Repository root must be a directory.');
+  const rootIdentity = captureRepositoryRoot(absoluteRoot);
 
   const stateBefore = repositoryState(absoluteRoot);
-  const discovered = gitFiles(absoluteRoot);
+  const discovered = gitFiles(rootIdentity.physicalRoot);
   const discovery = discovered ? 'git' : 'filesystem';
-  const names = [...new Set(discovered || walkFiles(absoluteRoot))].sort();
+  const names = [...new Set(discovered || walkFiles(rootIdentity))].sort();
   const records = [];
   const filtered = {
     directories: 0, excludedFiles: 0, sensitiveFiles: 0, binaries: 0, symlinks: 0, unreadable: 0,
@@ -317,16 +321,16 @@ export function createRepositorySnapshot(root) {
     if (excludedDirectory(relativePath)) { filtered.directories += 1; continue; }
     if (sensitiveFile(relativePath)) { filtered.sensitiveFiles += 1; continue; }
     if (excludedFile(relativePath)) { filtered.excludedFiles += 1; continue; }
-    const absolutePath = path.resolve(absoluteRoot, ...relativePath.split('/'));
-    if (!isInside(absoluteRoot, absolutePath)) continue;
+    const absolutePath = path.resolve(rootIdentity.physicalRoot, ...relativePath.split('/'));
+    if (!isInside(rootIdentity.physicalRoot, absolutePath)) continue;
     const extension = path.extname(relativePath).toLowerCase();
     let stat;
     try {
       stat = fs.lstatSync(absolutePath);
       if (stat.isSymbolicLink()) { filtered.symlinks += 1; continue; }
       if (!stat.isFile()) continue;
-      safeRepositoryEntry(absoluteRoot, relativePath, 'file');
-      if (looksBinary(absoluteRoot, relativePath, stat.size, extension)) { filtered.binaries += 1; continue; }
+      safeRepositoryEntry(rootIdentity, relativePath, 'file');
+      if (looksBinary(rootIdentity, relativePath, stat.size, extension)) { filtered.binaries += 1; continue; }
     } catch {
       filtered.unreadable += 1;
       continue;
@@ -528,12 +532,12 @@ export function formatRepositoryIndex(result) {
 // Level 1 is batched for incremental reading; the evidence pack needs every
 // configuration boundary at once, so this walks all Level 1 batches with the
 // same per-file limits and rolls the results up once.
-export function buildAggregatedConfiguration(root, records, limits) {
+export function buildAggregatedConfiguration(root, records, limits, rootIdentity) {
   const configurations = [];
   let batch = 1;
   let bytesRead = 0;
   for (;;) {
-    const page = buildConfigurationLevel1(root, records, { batch, limits });
+    const page = buildConfigurationLevel1(root, records, { batch, limits, rootIdentity });
     configurations.push(...page.configurations);
     bytesRead += page.bytesRead;
     if (!page.coverage.nextBatch) break;
@@ -555,6 +559,7 @@ export function buildRepositoryEvidence(root, options = {}) {
     };
   })();
   const absoluteRoot = path.resolve(root || '.');
+  const rootIdentity = captureRepositoryRoot(absoluteRoot);
   const createdSnapshot = !options.snapshot;
   const snapshot = options.snapshot || createRepositorySnapshot(absoluteRoot);
   if (snapshot.schemaVersion !== 1 || !Array.isArray(snapshot.records) || !snapshot.repositoryState) {
@@ -566,9 +571,9 @@ export function buildRepositoryEvidence(root, options = {}) {
   const timingsMs = { snapshot: lap() };
 
   const records = snapshot.records;
-  const level1 = buildAggregatedConfiguration(absoluteRoot, records, options.level1Limits);
+  const level1 = buildAggregatedConfiguration(absoluteRoot, records, options.level1Limits, rootIdentity);
   timingsMs.level1 = lap();
-  const level2 = buildSourceLevel2(absoluteRoot, records, { limits: options.level2Limits });
+  const level2 = buildSourceLevel2(absoluteRoot, records, { limits: options.level2Limits, rootIdentity });
   timingsMs.level2 = lap();
 
   let detailPath = null;
@@ -625,7 +630,7 @@ export function buildRepositoryEvidence(root, options = {}) {
     detailPath,
     declaredDependencies,
     root: absoluteRoot,
-  }, { limits: options.packLimits });
+  }, { limits: options.packLimits, rootIdentity });
   timingsMs.level3 = lap();
 
   if (createdSnapshot && snapshot.repositoryState.reusable) assertRepositorySnapshotCurrent(snapshot);

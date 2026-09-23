@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { builtinModules } from 'node:module';
 import path from 'node:path';
 import { safeSourceLine } from './source-redaction.mjs';
-import { openSafeRepositoryFile } from './safe-file.mjs';
+import { captureRepositoryRoot, openSafeRepositoryFile } from './safe-file.mjs';
 
 // Level 2 builds a whole-repository import graph from bounded line scanning.
 // It deliberately avoids per-file AST subprocesses: import statements are the
@@ -545,6 +545,7 @@ function roundRobinByModule(records) {
 }
 
 export function buildSourceLevel2(root, records, options = {}) {
+  const rootIdentity = options.rootIdentity || captureRepositoryRoot(root);
   const limits = { ...LEVEL2_DEFAULT_LIMITS, ...(options.limits || {}) };
   const sourceRecords = records.filter((record) => record.role === 'source');
   const scannable = sourceRecords.filter((record) => SCANNABLE_LANGUAGES.has(record.language));
@@ -639,7 +640,7 @@ export function buildSourceLevel2(root, records, options = {}) {
     if (scannedBytes + record.size > limits.maximumTotalBytes) { stoppedByTotalBytes = true; break; }
     let content;
     try {
-      content = readPrefix(root, record.path, limits.maximumBytesPerFile);
+      content = readPrefix(rootIdentity, record.path, limits.maximumBytesPerFile);
     } catch {
       unreadable += 1;
       continue;
@@ -673,7 +674,7 @@ export function buildSourceLevel2(root, records, options = {}) {
       if (SCANNABLE_LANGUAGES.has(record.language) || record.size > limits.maximumBytesPerFile) continue;
       if (scannedBytes + contractBytes + record.size > limits.maximumTotalBytes) break;
       try {
-        const content = readPrefix(root, record.path, limits.maximumBytesPerFile);
+        const content = readPrefix(rootIdentity, record.path, limits.maximumBytesPerFile);
         contractBytes += content.bytes;
         routeLiteralSites.push(...routeLiterals(content.text).map((site) => ({ ...site, file: record.path })));
       } catch { /* unreadable files only lose optional contract evidence */ }

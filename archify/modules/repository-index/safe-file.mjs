@@ -6,11 +6,22 @@ function inside(root, target) {
   return relative === '' || (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
 }
 
+export function captureRepositoryRoot(root) {
+  const physicalRoot = fs.realpathSync(root);
+  const stat = fs.statSync(physicalRoot);
+  if (!stat.isDirectory()) throw new Error('Repository root must be a directory.');
+  return { physicalRoot, dev: stat.dev, ino: stat.ino };
+}
+
 export function safeRepositoryEntry(root, relativePath, kind) {
-  const absoluteRoot = path.resolve(root);
-  const target = path.resolve(absoluteRoot, ...relativePath.split('/'));
-  if (!inside(absoluteRoot, target)) throw new Error('Repository path escapes the requested root.');
-  const physicalRoot = fs.realpathSync(absoluteRoot);
+  const identity = typeof root === 'string' ? captureRepositoryRoot(root) : root;
+  const { physicalRoot } = identity;
+  const currentRoot = fs.statSync(physicalRoot);
+  if (currentRoot.dev !== identity.dev || currentRoot.ino !== identity.ino) {
+    throw new Error('Repository root changed during inspection.');
+  }
+  const target = path.resolve(physicalRoot, ...relativePath.split('/'));
+  if (!inside(physicalRoot, target)) throw new Error('Repository path escapes the requested root.');
   const physicalTarget = fs.realpathSync(target);
   if (!inside(physicalRoot, physicalTarget)) throw new Error('Repository path resolves outside the requested root.');
   const stat = fs.lstatSync(target);

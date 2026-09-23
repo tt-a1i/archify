@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { safeSourceLine } from './source-redaction.mjs';
-import { openSafeRepositoryFile } from './safe-file.mjs';
+import { captureRepositoryRoot, openSafeRepositoryFile } from './safe-file.mjs';
 
 // Level 3 turns the Level 1 configuration boundaries and the Level 2 import
 // graph into one bounded evidence pack. The pack is an answer, not a work
@@ -550,6 +550,7 @@ function packBoundaries(boundaries, maximumItems) {
 }
 
 export function buildEvidencePack({ repositoryState, summary, records, boundaries: declaredBoundaries, level2, detailPath, declaredDependencies, root }, options = {}) {
+  const rootIdentity = root ? (options.rootIdentity || captureRepositoryRoot(root)) : null;
   const limits = { ...PACK_DEFAULT_LIMITS, ...(options.limits || {}) };
   const boundaries = resolveScriptEntrypoints(declaredBoundaries, records);
   const declaredEntryFiles = (boundaries.entrypoints || []).flatMap((entry) => (entry.files || []).map((file) => file.replace(/^\.\//, '')));
@@ -607,7 +608,7 @@ export function buildEvidencePack({ repositoryState, summary, records, boundarie
     crossLanguage,
     runtimeChannels: packRuntimeChannels(level2, roles, state.channels, state.channelExcerpts),
     graph: packGraph(level2, modules.items, state.edges, roles),
-    questions: questions.slice(0, state.questions).map((question) => withExcerpts(question, root, state.excerptLines)),
+    questions: questions.slice(0, state.questions).map((question) => withExcerpts(question, rootIdentity, state.excerptLines)),
     detail: detailPath ? { path: detailPath } : null,
     budget: { maximumBytes: limits.maximumBytes, bytes: 0, trimmed },
     };
