@@ -1,3 +1,0 @@
-# A unified diff uses a single space for an empty context line.
-route-preference/runtime.patch -whitespace
-route-preference/v2/runtime.patch -whitespace

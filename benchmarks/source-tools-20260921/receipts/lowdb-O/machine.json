@@ -1,8 +1,0 @@
-{
-  "structural_source_range_pass": true,
-  "errors": [],
-  "components": 14,
-  "relationships": 16,
-  "references": 38,
-  "semantic_entailment": "not evaluated by this checker"
-}

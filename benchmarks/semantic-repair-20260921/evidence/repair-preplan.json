@@ -1,9 +1,0 @@
-{
-  "decided_epoch": 1789976726.356197,
-  "order": [
-    "repair-B",
-    "repair-R"
-  ],
-  "selection": "first source-complete first/final candidate in original six-run order, only supported codes identifying one edge and no authored pins",
-  "note": "repair ordering fixed now, before independent semantic review result or any repair execution; not claimed pre-registered before full authors"
-}
