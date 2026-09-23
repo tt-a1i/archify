@@ -78,6 +78,7 @@ const EVIDENCE_NODE_COLLECTIONS = {
   sequence: 'participants',
   dataflow: 'nodes',
   lifecycle: 'states',
+  erd: 'entities',
 };
 
 function evidenceNodes(diagramType, diagram) {

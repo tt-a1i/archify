@@ -21,6 +21,7 @@ const TYPES = [
   { type: 'sequence', collection: 'participants', example: 'cache-miss-request.sequence.json', first: 'user' },
   { type: 'dataflow', collection: 'nodes', example: 'product-analytics.dataflow.json', first: 'web' },
   { type: 'lifecycle', collection: 'states', example: 'agent-run.lifecycle.json', first: 'queued' },
+  { type: 'erd', collection: 'entities', example: 'orders.erd.json', first: 'customer' },
 ];
 
 function git(repo, ...args) {

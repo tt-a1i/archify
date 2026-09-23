@@ -8,7 +8,10 @@ import {
 
 export { esc };
 
-export function renderDefinitions() {
+// `extra` appends type-owned definitions (the entity renderer's cardinality
+// markers) inside the same <defs>. Callers that pass nothing keep the exact
+// bytes the five longer-standing renderers already emit.
+export function renderDefinitions(extra = '') {
   return `        <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -25,7 +28,7 @@ export function renderDefinitions() {
           </marker>
           <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
             <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
-          </pattern>
+          </pattern>${extra}
         </defs>`;
 }
 

@@ -26,6 +26,7 @@ const SHAPES = {
   sequence: ['participants', 'messages'],
   dataflow: ['nodes', 'flows'],
   lifecycle: ['states', 'transitions'],
+  erd: ['entities', 'relationships'],
 };
 
 function digest(buffer) {

@@ -48,7 +48,7 @@ function executeStartPage(html) {
   ].map((id) => [id, new FakeElement({ id })]));
   ids['start-data'] = new FakeElement({ id: 'start-data', textContent: dataMatch[1] });
 
-  const types = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']
+  const types = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd']
     .map((type) => new FakeElement({ dataset: { type } }));
   const agents = ['cursor', 'codex', 'claude-code', 'opencode', 'github-copilot']
     .map((agent) => new FakeElement({ textContent: agent === 'codex' ? 'Codex' : agent, dataset: { agent } }));
@@ -124,7 +124,38 @@ test('start page: checked-in HTML is reproducible from canonical scenario recipe
   }
 });
 
-test('start page: offers five bounded bilingual starts without ingesting source content', () => {
+// A gallery card links to start.html?type=<case type>, and the page silently
+// falls back to architecture when its allow-list or its start data does not know
+// the type. Both halves are asserted here so adding a case cannot ship a link
+// that lands on the wrong recipe or on an empty page.
+test('start page: every gallery case type resolves to a start entry', () => {
+  const html = fs.readFileSync(path.join(repoRoot, 'docs/start.html'), 'utf8');
+  const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'docs/gallery/manifest.json'), 'utf8'));
+  const dataMatch = html.match(/<script id="start-data" type="application\/json">([\s\S]*?)<\/script>/);
+  assert.ok(dataMatch);
+  const starts = JSON.parse(dataMatch[1]);
+  const allowList = html.match(/var KNOWN_TYPES = new Set\(\[([^\]]*)\]\)/);
+  assert.ok(allowList, 'the start page declares its known types');
+  const known = new Set(allowList[1].split(',').map((value) => value.trim().replace(/^.|.$/g, '')));
+  const galleryTypes = [...new Set(manifest.entries.map((entry) => entry.type))];
+  for (const type of galleryTypes) {
+    assert.ok(known.has(type), `gallery type "${type}" is not in the start page allow-list`);
+    assert.ok(starts[type], `gallery type "${type}" has no start entry`);
+    assert.ok(starts[type].en.descriptionPrompt && starts[type].zh.descriptionPrompt, `${type}: start prompts are bilingual`);
+    // The chooser is the reader's way in: a type the page can render but the
+    // buttons cannot reach is unreachable by click and skipped by keyboard walk.
+    assert.match(html, new RegExp(`data-type="${type}"`), `gallery type "${type}" has no chooser button`);
+  }
+
+  // The label counts the renderers next to the buttons, so it drifts silently.
+  const buttons = [...html.matchAll(/class="type-tab"[^>]*data-type="/g)].length;
+  const label = html.match(/<strong data-en="(\d+) typed renderers"/);
+  assert.ok(label, 'the chooser states how many typed renderers it offers');
+  assert.equal(Number(label[1]), buttons, 'the stated renderer count matches the chooser buttons');
+  assert.equal(buttons, Object.keys(starts).length, 'every start entry has a chooser button');
+});
+
+test('start page: offers six bounded bilingual starts without ingesting source content', () => {
   const html = fs.readFileSync(path.join(repoRoot, 'docs/start.html'), 'utf8');
   assert.doesNotMatch(html, /\[\[[A-Z0-9_]+\]\]/);
   assert.match(html, /npx -y skills add tt-a1i\/archify --skill archify --agent codex --global --copy --yes/);
@@ -147,7 +178,7 @@ test('start page: offers five bounded bilingual starts without ingesting source 
   const dataMatch = html.match(/<script id="start-data" type="application\/json">([\s\S]*?)<\/script>/);
   assert.ok(dataMatch);
   const data = JSON.parse(dataMatch[1]);
-  assert.deepEqual(Object.keys(data), ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
+  assert.deepEqual(Object.keys(data), ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd']);
   assert.ok(Object.values(data).every((entry) => entry.en.prompt && entry.zh.prompt && entry.en.descriptionPrompt && entry.zh.descriptionPrompt && entry.en.repositoryPrompt && entry.zh.repositoryPrompt && entry.proof));
 
   const scriptMatch = html.match(/<script>\n([\s\S]*?)\n  <\/script>\n<\/body>/);

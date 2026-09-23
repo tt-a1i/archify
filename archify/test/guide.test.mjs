@@ -8,15 +8,15 @@ import {
   recommendScenario,
 } from '../recipes/scenarios.mjs';
 
-test('guide: exposes 12 unique recipes across every diagram type, including repair', () => {
-  assert.equal(SCENARIO_RECIPES.length, 12);
-  assert.equal(new Set(SCENARIO_RECIPES.map((recipe) => recipe.id)).size, 12);
+test('guide: exposes 13 unique recipes across every diagram type, including repair', () => {
+  assert.equal(SCENARIO_RECIPES.length, 13);
+  assert.equal(new Set(SCENARIO_RECIPES.map((recipe) => recipe.id)).size, 13);
   assert.deepEqual(
-    Object.fromEntries(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'].map((type) => [
+    Object.fromEntries(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd'].map((type) => [
       type,
       SCENARIO_RECIPES.filter((recipe) => recipe.type === type).length,
     ])),
-    { architecture: 3, workflow: 3, sequence: 2, dataflow: 2, lifecycle: 2 },
+    { architecture: 3, workflow: 3, sequence: 2, dataflow: 2, lifecycle: 2, erd: 1 },
   );
 });
 
@@ -103,7 +103,7 @@ test('guide: exact ids win and unknown questions fall back honestly', () => {
 
 test('guide: public data includes both languages and weighted signals', () => {
   const data = publicGuideData();
-  assert.equal(data.length, 12);
+  assert.equal(data.length, 13);
   for (const recipe of data) {
     assert.ok(recipe.en.title);
     assert.ok(recipe.zh.title);

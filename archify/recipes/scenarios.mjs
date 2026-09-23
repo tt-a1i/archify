@@ -251,6 +251,31 @@ const RAW_RECIPES = [
     },
   },
   {
+    id: 'database-schema', type: 'erd', proof: 'orders',
+    presentation: { preset: 'classic', motion: 'static', views: 'optional' },
+    start: {
+      en: { descriptionPrompt: 'Use Archify to model this data model as an entity-relationship diagram: [paste the schema DDL, or describe the tables, their key columns, and how they relate]. No repository is required. Include every column the reader needs rather than a summary, mark primary, foreign, and unique keys, and draw each foreign-key relationship with the cardinality and optionality of both ends.' },
+      zh: { descriptionPrompt: '用 Archify 把这份数据模型画成实体关系图：[粘贴建表 DDL，或描述表、关键字段以及表之间的关联]。不需要代码库。字段要完整而不是摘要，标注主键、外键和唯一键，并为每条外键关系画出两端的基数和可选性。' },
+    },
+    signals: [['entity relationship', 14], ['er diagram', 15], ['database schema', 13], ['table schema', 12], ['foreign key', 11], ['primary key', 9], ['cardinality', 9], ['实体关系图', 15], ['ER 图', 15], ['表结构', 13], ['数据库设计', 12], ['外键', 11], ['主键', 9], ['实体关系', 12]],
+    en: {
+      title: 'Database schema', question: 'Which tables exist, what columns and keys do they carry, and how do they relate?',
+      summary: 'An entity-relationship map of tables with their complete column lists, key markers, and the cardinality between them.',
+      useWhen: 'Schema reviews, data-model onboarding, migration planning, or explaining a foreign-key graph.',
+      avoidWhen: 'The question is row-level movement between systems (data flow) or access order at runtime (sequence).',
+      include: ['tables with their complete column lists', 'primary, foreign, and unique key markers', 'cardinality and optionality at both ends', 'cards reserved for supplementary notes'],
+      prompt: 'Use Archify ERD mode to model this schema. Show every physical column inside its table — the field list is this diagram\'s primary content, not a summary — and mark primary, foreign, and unique keys. Draw every foreign-key relationship with its cardinality and optionality at both ends, and group related tables into contiguous domain blocks. Keep cards for supplementary notes instead of moving columns out of the tables.',
+    },
+    zh: {
+      title: '数据库表结构', question: '有哪些表、各自带哪些字段和键、彼此如何关联？',
+      summary: '用实体关系图展示表及其完整字段清单、键标记和表之间的基数关系。',
+      useWhen: '适合表结构评审、数据模型上手、迁移规划和解释外键关系图。',
+      avoidWhen: '如果重点是系统之间的行级数据流动或运行期访问顺序，请用数据流图或时序图。',
+      include: ['表及其完整字段清单', '主键、外键、唯一键标记', '两端的基数与可选性', '卡片只放补充说明'],
+      prompt: '用 Archify ERD 模式建模这份表结构。每张表的完整物理字段都画在表内——字段清单是这张图的主要内容，不是摘要——并标注主键、外键和唯一键。为每条外键关系画出两端的基数和可选性，把相关表组织成连续的领域块。卡片只保留补充说明，不要用它把字段移出表外。',
+    },
+  },
+  {
     id: 'layout-repair', type: 'architecture', proof: 'web-app',
     presentation: { preset: 'classic', motion: 'static', views: 'optional' },
     signals: [

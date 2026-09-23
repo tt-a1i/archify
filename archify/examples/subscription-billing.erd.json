@@ -1,0 +1,546 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "title": "Subscription billing schema",
+    "locale": "en",
+    "output": "examples/subscription-billing-rendered.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "tenancy",
+        "label": "Who belongs where",
+        "focus": [
+          "tenant",
+          "user_account",
+          "membership"
+        ],
+        "note": "A user reaches a tenant through membership, which is why both ids are foreign keys on that table."
+      },
+      {
+        "id": "billing-run",
+        "label": "One invoice run",
+        "focus": [
+          "subscription",
+          "invoice",
+          "invoice_line",
+          "price",
+          "plan"
+        ],
+        "note": "A subscription holds a price, an invoice holds its lines; the amount rolls up from the line."
+      },
+      {
+        "id": "money-in",
+        "label": "Money in and back out",
+        "focus": [
+          "payment_method",
+          "payment",
+          "refund",
+          "invoice"
+        ],
+        "note": "Payments are optional until a method is charged, and a refund only ever points at a captured payment."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid"
+  },
+  "entities": [
+    {
+      "id": "tenant",
+      "label": "tenant",
+      "row": 0,
+      "col": 0,
+      "tag": "accounts",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "key": "pk"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(64)",
+          "key": "uk"
+        },
+        {
+          "name": "name",
+          "type": "varchar(160)"
+        },
+        {
+          "name": "status",
+          "type": "varchar(16)"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "user_account",
+      "label": "user_account",
+      "row": 0,
+      "col": 1,
+      "tag": "accounts",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "key": "pk"
+        },
+        {
+          "name": "email",
+          "type": "varchar(255)",
+          "key": "uk"
+        },
+        {
+          "name": "display_name",
+          "type": "varchar(120)"
+        },
+        {
+          "name": "locale",
+          "type": "char(5)"
+        },
+        {
+          "name": "mfa_enabled",
+          "type": "boolean"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "membership",
+      "label": "membership",
+      "row": 0,
+      "col": 2,
+      "tag": "accounts",
+      "width": 250,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "tenant_id",
+          "type": "uuid",
+          "key": "fk",
+          "references": "tenant.id"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "key": "fk",
+          "references": "user_account.id"
+        },
+        {
+          "name": "role",
+          "type": "varchar(24)"
+        },
+        {
+          "name": "joined_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "plan",
+      "label": "plan",
+      "row": 1,
+      "col": 1,
+      "tag": "catalog",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "varchar(32)",
+          "key": "pk"
+        },
+        {
+          "name": "name",
+          "type": "varchar(80)"
+        },
+        {
+          "name": "billing_interval",
+          "type": "varchar(16)"
+        },
+        {
+          "name": "seat_based",
+          "type": "boolean"
+        },
+        {
+          "name": "active",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "id": "price",
+      "label": "price",
+      "row": 1,
+      "col": 2,
+      "tag": "catalog",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "plan_id",
+          "type": "varchar(32)",
+          "key": "fk",
+          "references": "plan.id"
+        },
+        {
+          "name": "currency",
+          "type": "char(3)"
+        },
+        {
+          "name": "unit_amount",
+          "type": "numeric(12,2)"
+        },
+        {
+          "name": "effective_from",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "subscription",
+      "label": "subscription",
+      "row": 2,
+      "col": 0,
+      "width": 240,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "tenant_id",
+          "type": "uuid",
+          "key": "fk",
+          "references": "tenant.id"
+        },
+        {
+          "name": "price_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "price.id"
+        },
+        {
+          "name": "status",
+          "type": "varchar(16)"
+        },
+        {
+          "name": "seats",
+          "type": "int"
+        },
+        {
+          "name": "started_at",
+          "type": "timestamptz"
+        },
+        {
+          "name": "canceled_at",
+          "type": "timestamptz"
+        }
+      ],
+      "tag": "billing"
+    },
+    {
+      "id": "invoice",
+      "label": "invoice",
+      "row": 2,
+      "col": 1,
+      "width": 252,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "subscription_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "subscription.id"
+        },
+        {
+          "name": "number",
+          "type": "varchar(32)",
+          "key": "uk"
+        },
+        {
+          "name": "status",
+          "type": "varchar(16)"
+        },
+        {
+          "name": "subtotal_amount",
+          "type": "numeric(12,2)"
+        },
+        {
+          "name": "tax_amount",
+          "type": "numeric(12,2)"
+        },
+        {
+          "name": "total_amount",
+          "type": "numeric(12,2)"
+        },
+        {
+          "name": "issued_at",
+          "type": "timestamptz"
+        }
+      ],
+      "tag": "billing"
+    },
+    {
+      "id": "invoice_line",
+      "label": "invoice_line",
+      "row": 2,
+      "col": 2,
+      "width": 250,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "invoice_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "invoice.id"
+        },
+        {
+          "name": "description",
+          "type": "varchar(200)"
+        },
+        {
+          "name": "quantity",
+          "type": "int"
+        },
+        {
+          "name": "unit_amount",
+          "type": "numeric(12,2)"
+        },
+        {
+          "name": "amount",
+          "type": "numeric(12,2)"
+        }
+      ],
+      "tag": "billing"
+    },
+    {
+      "id": "payment_method",
+      "label": "payment_method",
+      "row": 3,
+      "col": 0,
+      "width": 240,
+      "tag": "payments",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "tenant_id",
+          "type": "uuid",
+          "key": "fk",
+          "references": "tenant.id"
+        },
+        {
+          "name": "kind",
+          "type": "varchar(16)"
+        },
+        {
+          "name": "last4",
+          "type": "char(4)"
+        },
+        {
+          "name": "expires_at",
+          "type": "date"
+        },
+        {
+          "name": "is_default",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "id": "payment",
+      "label": "payment",
+      "row": 3,
+      "col": 1,
+      "tag": "payments",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "invoice_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "invoice.id"
+        },
+        {
+          "name": "payment_method_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "payment_method.id"
+        },
+        {
+          "name": "amount",
+          "type": "numeric(12,2)"
+        },
+        {
+          "name": "status",
+          "type": "varchar(16)"
+        },
+        {
+          "name": "captured_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "refund",
+      "label": "refund",
+      "row": 3,
+      "col": 2,
+      "tag": "payments",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "payment_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "payment.id"
+        },
+        {
+          "name": "amount",
+          "type": "numeric(12,2)"
+        },
+        {
+          "name": "reason",
+          "type": "varchar(120)"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "membership_tenant",
+      "from": "membership",
+      "to": "tenant",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "membership_user",
+      "from": "membership",
+      "to": "user_account",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "price_plan",
+      "from": "price",
+      "to": "plan",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "subscription_tenant",
+      "from": "subscription",
+      "to": "tenant",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "subscription_price",
+      "from": "subscription",
+      "to": "price",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "invoice_subscription",
+      "from": "invoice",
+      "to": "subscription",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "invoice_line_invoice",
+      "from": "invoice_line",
+      "to": "invoice",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "payment_method_tenant",
+      "from": "payment_method",
+      "to": "tenant",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "payment_invoice",
+      "from": "payment",
+      "to": "invoice",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "fromOptional": true
+    },
+    {
+      "id": "payment_method_of_payment",
+      "from": "payment",
+      "to": "payment_method",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "refund_payment",
+      "from": "refund",
+      "to": "payment",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Scope",
+      "items": [
+        "A redacted subscription-billing model: eleven tables, the fields the service actually stores.",
+        "Money is numeric(12,2) rather than float; every amount column records a currency or inherits one from price.",
+        "Timestamps are timestamptz, so an invoice keeps the instant it was issued, not a local reading of it."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Optionality",
+      "items": [
+        "An invoice may exist before a payment attempt, so the payment side is zero or many.",
+        "A refund is mandatory on its payment: nothing is refunded that was never captured.",
+        "membership carries both foreign keys; a user with no tenant has no membership row at all."
+      ]
+    }
+  ]
+}

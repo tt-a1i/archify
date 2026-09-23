@@ -32,6 +32,7 @@ test('non-architecture sources reach real Viewer beacons, Focus and Finder', {
     ['sequence', 'participants', 'cache-miss-request.sequence.json', false, 'dark'],
     ['dataflow', 'nodes', 'product-analytics.dataflow.json', true, 'light'],
     ['lifecycle', 'states', 'agent-run.lifecycle.json', true, 'dark'],
+    ['erd', 'entities', 'orders.erd.json', true, 'light'],
   ];
   for (const [type, collection, example, local, theme] of cases) {
     const url = local ? 'http://git.internal/Team/repo' : 'https://github.com/example/evidence-repo';

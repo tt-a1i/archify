@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "generator": "scripts/build-gallery.mjs",
   "archifyVersion": "2.17.0-dev.1",
-  "entryCount": 11,
-  "checkCount": 99,
+  "entryCount": 12,
+  "checkCount": 108,
   "entries": [
     {
       "id": "agent-tool-call",
@@ -1432,6 +1432,130 @@
           "minimumSourceTextPx": 8,
           "minimumProjectedTextPx": 7.5,
           "semanticTextCount": 28
+        },
+        "issues": []
+      }
+    },
+    {
+      "id": "orders",
+      "type": "erd",
+      "title": "Order management schema",
+      "subtitle": "",
+      "input": "gallery/sources/orders.erd.json",
+      "artifact": "gallery/artifacts/orders.erd.html",
+      "focus": "order",
+      "view": "checkout",
+      "viewCount": 3,
+      "viewIds": [
+        "identity",
+        "checkout",
+        "followups"
+      ],
+      "guidedPlayback": true,
+      "schemaVersion": 1,
+      "visualPreset": "classic",
+      "animation": "static",
+      "engineeringProfile": null,
+      "nodeCount": 6,
+      "edgeCount": 5,
+      "artifactBytes": 843987,
+      "artifactSha256": "1aac186b764d4d80f8e727d9f841f551f61ab415d74684e658b008f8b230bcc7",
+      "sourceBytes": 7321,
+      "sourceSha256": "1777a374647084466f4d7ce3a968004be6ab70ac9cf82459b96bed7c556cdfdd",
+      "checks": [
+        {
+          "name": "single_svg",
+          "ok": true
+        },
+        {
+          "name": "finite_svg",
+          "ok": true
+        },
+        {
+          "name": "orthogonal_arrows",
+          "ok": true
+        },
+        {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
+          "name": "relationship_crossings",
+          "ok": true
+        },
+        {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
+          "name": "container_border_runs",
+          "ok": true
+        },
+        {
+          "name": "route_rhythm",
+          "ok": true
+        },
+        {
+          "name": "legend_clearance",
+          "ok": true
+        }
+      ],
+      "composition": {
+        "schemaVersion": 1,
+        "profile": "showcase",
+        "status": "pass",
+        "summary": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "metrics": {
+          "properCrossings": 0,
+          "resolvedCrossovers": 0,
+          "ambiguousCorridors": 0,
+          "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
+          "minLabelRouteClearance": 225,
+          "desktopReadabilityIssues": 0,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 8.383647798742139,
+          "maxBends": 2,
+          "routesOverSuggestedBends": 0,
+          "maxStretch": 1,
+          "routesOverSuggestedStretch": 0,
+          "minSegmentPx": 16,
+          "minInteriorSegmentPx": 30,
+          "shortSegmentCount": 0,
+          "shortEndpointSegmentCount": 0,
+          "shortInteriorSegmentCount": 0,
+          "microSegmentCount": 0
+        },
+        "suggestedLimits": {
+          "bendsPerRelationship": 2,
+          "stretch": 1.35,
+          "segmentPx": 16,
+          "microSegmentPx": 8
+        },
+        "desktopReadability": {
+          "budgetBasis": "recognized-declared-wide",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "actualReaderWidth": 960,
+          "desiredReaderWidth": 960,
+          "viewportCap": 1376,
+          "limit": "source-size",
+          "requestedTargetPx": 7.5,
+          "requestedTargetMet": true,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "order_item"
+          },
+          "minimumSourceTextPx": 8.6,
+          "minimumProjectedTextPx": 8.383647798742139,
+          "semanticTextCount": 94
         },
         "issues": []
       }

@@ -13,7 +13,7 @@ export const cards = CASES.map(item => {
 });
 const startRecipeIds = {
   architecture: 'system-overview', workflow: 'agent-tool-call', sequence: 'api-request',
-  dataflow: 'event-stream', lifecycle: 'object-lifecycle',
+  dataflow: 'event-stream', lifecycle: 'object-lifecycle', erd: 'database-schema',
 };
 export const starts = Object.fromEntries(Object.entries(startRecipeIds).map(([type, id]) => {
   const recipe = SCENARIO_RECIPES.find(candidate => candidate.id === id);

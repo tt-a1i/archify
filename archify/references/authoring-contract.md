@@ -7,6 +7,7 @@ Read this reference only after the Fast authoring path calls for more detail. Th
 Read both the mode schema and `schemas/common.schema.json`. The mode schemas use `$ref`, so the common file is where shared enums live.
 
 - `componentType`: `frontend`, `backend`, `database`, `cloud`, `security`, `messagebus`, `external`
+- Entity-relationship documents use `entities` and `relationships`; `key` accepts `pk`, `fk`, or `uk`, and `fromCardinality`/`toCardinality` accept `one` or `many`.
 - `variant`: `default`, `emphasis`, `security`, `dashed`
 - Relationship IDs use the shared identifier pattern and must be unique in their collection.
 
@@ -34,10 +35,13 @@ both. `visible: true` may show an unused supported convention, while
 A label override changes reader wording only. Never infer a kind from prose or
 use the legend to compensate for missing nodes, states, messages, or flows.
 Long labels are measured and wrap into deterministic rows. Architecture's
-implicit automatic viewBox grows from that same measured footprint. For
-backwards compatibility, a legacy document with no `meta.legend` may omit an
-implicit auto legend that cannot fit its explicit viewBox; this never changes
-its typed topology. Adding `meta.legend` makes the presentation intentional and
+implicit automatic viewBox grows from that same measured footprint, and an
+automatic ERD canvas is sized the same way so its default legend is always in
+the generated content. For backwards compatibility, a legacy document with no
+`meta.legend` may omit an implicit auto legend that cannot fit its explicit
+viewBox; this never changes its typed topology. An ERD that authors a
+`meta.viewBox` keeps that fixed area and reports the capacity instead of
+dropping the legend. Adding `meta.legend` makes the presentation intentional and
 strict: if its resolved labels cannot fit the authored viewBox, shorten or hide
 them, or widen the viewBox using the emitted diagnostic.
 
@@ -272,6 +276,56 @@ Participants are ordered by conversation role. Messages own their vertical order
 ### Dataflow
 
 Stages express transformation or custody. Rows separate parallel streams. Label only data contracts, classifications, or cross-boundary movement that is not obvious.
+
+### ERD
+
+Treat a schema ERD as a table catalogue as well as a relationship map. If the
+schema has more than 8 tables or 50 fields, it is a dense full-schema map: start
+with `meta.quality_profile: "standard"` so complete field visibility is not
+traded away for repeated showcase route repairs. Include every physical column in
+`attributes`, keep the source SQL type, and preserve the
+field's Chinese comment in the type string as `SQL_TYPE｜中文备注` because the
+schema has no separate comment property. The default viewer shows these rows at
+the `read` level; do not rely on hover/focus or cards to reveal physical fields.
+Cards may explain constraints, inferred relationships, or domain rules, but never
+replace a field list.
+
+Before placing boxes, classify tables into functional domains using verified table
+names, comments, module paths, and foreign-key meaning. Put the domain name in
+`tag` and assign a contiguous rectangle or compact staircase of grid cells to the
+domain. All tables with the same tag stay together; do not interleave unrelated
+tables between members. A domain whose tables form one contiguous run is drawn as
+a labelled band behind them, so the grouping is visible without reading every box;
+a tag spread across the canvas earns no band and stays in that table's header
+instead, which is also how a single-table domain reads. Order parent/core tables
+toward the shared boundary and
+place their direct children beside or beneath them. Columns read left to right and
+rows read top to bottom, so a relationship between neighbouring columns is one
+straight corridor. Never place an unrelated entity between two aligned anchors;
+the router can detour around it, but the clear corridor is shorter and reads
+better. Use `row`/`col` for this normal grouped layout, and only use explicit
+`pos`/`via` after a diagnostic identifies a concrete geometry problem.
+
+Put one key per attribute (`key`) and the real references in `references`. A
+many-to-many pair is a real fact about the model, so state it and identify the join
+table when one exists. A relationship has two ends and each one declares its own
+maximum, so a `many`-to-`one` foreign key needs both `fromCardinality` and
+`toCardinality`; `fromOptional`/`toOptional` only lowers that same end's minimum
+from one to zero (an optional `one` end reads zero-or-one, an optional `many` end
+reads zero-or-many), and `identifying: false` draws the non-identifying dashed
+line. The foot opens toward the entity it describes, so the drawn glyph states the
+end's maximum, not a direction of travel.
+
+A table side only has room for so many ends: the ports spread at most `(side
+extent - 32) / (ends - 1)` apart, and a cardinality glyph is 14 units tall. More
+relationship ends than that room allows is `layout/marker-capacity`, which names
+the table, the side, and the ways out — add fields so the side is taller, spread
+the relationships, or reduce the fan-in. Never fix it by hiding the cardinality.
+
+An automatic canvas is sized to keep the default legend, and a schema taller than
+one screen scrolls at a readable size instead of being shrunk; see
+[`../renderers/erd/README.md`](../renderers/erd/README.md) for the band and
+reader contract.
 
 ### Lifecycle
 

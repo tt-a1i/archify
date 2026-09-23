@@ -51,7 +51,7 @@
       document.getElementById('language').addEventListener('click', function () { applyLanguage(language === 'en' ? 'zh' : 'en'); });
       document.getElementById('preview-theme').addEventListener('click', function () { applyPreviewTheme(previewTheme === 'dark' ? 'light' : 'dark'); });
 
-      var allowed = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'];
+      var allowed = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd'];
       var requested = new URLSearchParams(location.search).get('type') || 'all';
       applyFilter(allowed.indexOf(requested) >= 0 ? requested : 'all', false);
       applyLanguage(language);

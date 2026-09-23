@@ -15,6 +15,21 @@ export function componentBox(c) {
   };
 }
 
+export function entityBox(e) {
+  return {
+    id: e.id,
+    label: e.label,
+    x: Math.round(e.x),
+    y: Math.round(e.y),
+    width: e.width,
+    height: e.height,
+    attributes: (Array.isArray(e.attributes) ? e.attributes : []).map((attribute) => attribute.name),
+    ...(Number.isInteger(e.row) ? { row: e.row } : {}),
+    ...(Number.isInteger(e.col) ? { col: e.col } : {}),
+    ...(Array.isArray(e.pos) ? { pos: e.pos.map(Math.round) } : {}),
+  };
+}
+
 export function boundaryBox(b) {
   return {
     kind: b.kind,

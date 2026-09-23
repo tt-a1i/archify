@@ -145,6 +145,19 @@ export const CASES = [
     descriptionEn: 'A classic AWS web stack with edge delivery, authentication, API services, cache, persistence, and background work.',
     descriptionZh: '经典 AWS Web 栈：边缘分发、鉴权、API 服务、缓存、持久化与后台任务。',
   },
+  {
+    id: 'orders',
+    type: 'erd',
+    input: 'orders.erd.json',
+    output: 'orders.erd.html',
+    focus: 'order',
+    view: 'checkout',
+    accent: '#f472b6',
+    titleEn: 'Order Management Schema',
+    titleZh: '订单管理表结构',
+    descriptionEn: 'Six tables with their complete column lists, primary, foreign, and unique keys, crow-foot cardinality at both ends, and one optional non-identifying payment link.',
+    descriptionZh: '六张表及其完整字段清单、主键/外键/唯一键标记、两端鸦爪基数，以及一条可选的非标识性支付连线。',
+  },
 ];
 
 const TYPE_ACCENTS = {
@@ -153,6 +166,7 @@ const TYPE_ACCENTS = {
   sequence: '#6d28d9',
   dataflow: '#b45309',
   lifecycle: '#be123c',
+  erd: '#0f766e',
 };
 
 function esc(value) {

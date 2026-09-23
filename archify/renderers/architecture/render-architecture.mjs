@@ -10,7 +10,7 @@ import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandM
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
-import { createRouter } from './routing.mjs';
+import { createRouter } from '../shared/orthogonal-router.mjs';
 import { placeAutomaticLabels, reservedLabelRect } from './labels.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
 import {
