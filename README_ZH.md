@@ -6,6 +6,8 @@
 </p>
 <h3 align="center">把你想理解、规划或分享的事，变成可以互动的可视化作品。</h3>
 
+<p align="center"><img src="docs/assets/archify-readme-hero.png" alt="Archify — interactive diagrams" width="960" /></p>
+
 <p align="center">从一个想法、一个问题或一份计划开始。把它描述给 AI Agent，Archify 就能生成可以探索、修改和分享的交互式 HTML。从旅行行程、知识地图到复杂系统，你都可以继续扩展，做成自己需要的样子。</p>
 
 <p align="center">看看社区正在创造什么，也想想你还能用它做些什么。</p>
@@ -137,8 +139,6 @@ Archify 追踪 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版
 
 <details>
 <summary>深浅主题、导出菜单与分享卡片</summary>
-
-<p align="center"><img src="docs/assets/archify-readme-hero.png" alt="Archify — interactive diagrams" width="960" /></p>
 
 同一张图，两套主题，一键切换：
 

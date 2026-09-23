@@ -6,6 +6,8 @@
 </p>
 <h3 align="center">Turn anything you want to understand, plan, or share into an interactive visual.</h3>
 
+<p align="center"><img src="docs/assets/archify-readme-hero.png" alt="Archify — interactive diagrams" width="960" /></p>
+
 <p align="center">Start with an idea, a question, or a plan. Describe it to your AI agent, and Archify turns it into an interactive HTML you can explore, customize, and share. From travel itineraries and learning maps to complex systems—make it your own.</p>
 
 <p align="center">See what the community is creating—and imagine what you could make next.</p>
@@ -137,8 +139,6 @@ The output is a self-contained HTML file. Download it and open it in your browse
 
 <details>
 <summary>Themes, exports, and share cards</summary>
-
-<p align="center"><img src="docs/assets/archify-readme-hero.png" alt="Archify — interactive diagrams" width="960" /></p>
 
 Same diagram, two themes, one click to switch:
 

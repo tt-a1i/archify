@@ -120,6 +120,13 @@ test('all README languages show the brand mark and retain the verified animated 
   for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     const markIndex = readme.indexOf('docs/assets/archify-lockup-light.svg');
+    const heroPath = 'docs/assets/archify-readme-hero.png';
+    const heroIndex = readme.indexOf(heroPath);
+    const taglineEnd = readme.indexOf('</h3>');
+    assert.equal(readme.split(heroPath).length - 1, 1, `${filename}: hero must appear exactly once`);
+    assert.ok(markIndex < taglineEnd && taglineEnd < heroIndex, `${filename}: hero must follow the logo and tagline`);
+    assert.ok(heroIndex < readme.indexOf('<strong>', taglineEnd), `${filename}: hero must precede navigation`);
+    assert.match(readme.slice(taglineEnd + 5), /^\s*<p align="center"><img src="docs\/assets\/archify-readme-hero\.png"/);
     const proofIndex = readme.indexOf('docs/assets/archify-live-proof.gif');
     const demosIndex = Math.max(readme.indexOf('## See Archify in action'), readme.indexOf('## 看看 Archify 能做什么'));
     assert.ok(markIndex >= 0 && markIndex < demosIndex, `${filename}: brand lockup is missing before the demos`);
