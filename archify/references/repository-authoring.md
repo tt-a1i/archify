@@ -24,8 +24,10 @@ fact has supporting source evidence.
    units. Read the entry, configuration, and modules relevant to the request.
    When those leads do not identify the relevant module in a large repository,
    run `node bin/archify.mjs inspect-repo <repo-root> --evidence-pack --json`
-   once and read the pack once. The pack is an answer, not a work queue: its
-   `modules` and `edges` are the derived import graph, `boundaries` carries
+   once and read the pack once. The pack is an answer, not a work queue:
+   `modules` and `graph` are the derived import graph, written as
+   G = (V, E): `graph.V[i]` is a module path and each `graph.E` row is
+   `[from, to, importCount]` with indices into V. `boundaries` carries
    the configuration facts, and `coverage` states what the scan cannot see.
    Treat `unscanned` languages and `dynamic` import counts as boundaries to
    confirm through build or binding configuration, not as absence. The

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { buildConfigurationLevel1, buildConfigurationPlan, summarizeBoundaries, DEFAULT_LIMITS as LEVEL1_DEFAULT_LIMITS } from './config-level1.mjs';
 import { buildSourceLevel2 } from './source-level2.mjs';
-import { buildEvidencePack, classifyModules } from './source-level3.mjs';
+import { buildEvidencePack, classifyModules, decodePackEdges } from './source-level3.mjs';
 
 const DEFAULT_BATCH_SIZE = 20;
 const MAX_BATCH_SIZE = 100;
@@ -637,8 +637,8 @@ export function formatEvidencePack(result) {
     `Modules (${pack.modules.items.length} shown, ${pack.modules.omitted} omitted):`,
     ...pack.modules.items.map((module) => `- ${module.path} [files ${module.files}; in ${module.fanIn}; out ${module.fanOut}]`),
     `Support modules (not runtime components): ${pack.supportModules.items.map((module) => `${module.path} [${module.role}]`).join(', ') || 'none'}`,
-    `Edges (${pack.edges.items.length} shown, ${pack.edges.omitted} omitted, ${pack.edges.supportEdges} touching support modules):`,
-    ...pack.edges.items.map((edge) => `- ${edge.from} -> ${edge.to} (${edge.weight})`),
+    `Edges (${pack.graph.E.length} shown, ${pack.graph.omittedEdges} omitted, ${pack.graph.supportEdges} touching support modules):`,
+    ...decodePackEdges(pack).map((edge) => `- ${edge.from} -> ${edge.to} (${edge.weight})`),
     `Questions (${pack.questions.length}):`,
     ...pack.questions.map((question) => `- [${question.id} ${question.kind}] ${question.question}`),
     ...(pack.detail ? [`Detail graph: ${pack.detail.path}`] : []),

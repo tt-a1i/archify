@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { buildRepositoryEvidence } from '../modules/repository-index/index.mjs';
-import { buildEvidencePack, PACK_DEFAULT_LIMITS } from '../modules/repository-index/source-level3.mjs';
+import { buildEvidencePack, decodePackEdges, PACK_DEFAULT_LIMITS } from '../modules/repository-index/source-level3.mjs';
 
 function workspace(t, prefix = 'archify-source-level3-') {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -84,7 +84,7 @@ test('The evidence pack keeps facts, coverage, and boundaries from both levels',
   assert.ok(pack.boundaries.services.items.some((entry) => entry.name === 'edge'));
   const modulePaths = pack.modules.items.map((module) => module.path);
   assert.ok(modulePaths.includes('svc') && modulePaths.includes('native'));
-  assert.ok(pack.edges.items.every((edge) => edge.from !== edge.to));
+  assert.ok(decodePackEdges(pack).every((edge) => edge.from !== edge.to));
   assert.equal(pack.coverage.unscanned.byLanguage.cuda, 6);
   assert.ok(pack.coverage.unresolved.external >= 7, 'ghost_lib sites are counted');
   assert.ok(!JSON.stringify(pack).includes('fileEdges'), 'per-file edges stay out of the pack');
@@ -106,7 +106,8 @@ test('The evidence pack enforces its byte budget by trimming detail before facts
     write(root, `packages/m${String(moduleIndex).padStart(2, '0')}/lib/uses_hub.py`, 'import hub.core\n');
   }
 
-  const budget = 6 * 1024;
+  // Edges are compact E rows now, so the fixture needs a tighter budget to trim.
+  const budget = 4 * 1024;
   const result = buildRepositoryEvidence(root, { packLimits: { maximumBytes: budget } });
   const pack = result.pack;
   assert.ok(pack.budget.bytes <= budget, `pack is ${pack.budget.bytes} bytes for a ${budget} byte budget`);
@@ -159,10 +160,10 @@ test('The evidence pack picks a backbone edge for every shown module before fill
 
   const shown = pack.modules.items.map((module) => module.path);
   for (const module of shown) {
-    assert.ok(pack.edges.items.some((entry) => entry.from === module || entry.to === module), `${module} keeps an edge`);
+    assert.ok(decodePackEdges(pack).some((entry) => entry.from === module || entry.to === module), `${module} keeps an edge`);
   }
-  assert.equal(pack.edges.items.length, 3);
-  assert.equal(pack.edges.omitted, 1);
+  assert.equal(decodePackEdges(pack).length, 3);
+  assert.equal(pack.graph.omittedEdges, 1);
 });
 
 test('Undeclared-import questions match distribution tokens and are withheld when a manifest was truncated', (t) => {
@@ -206,10 +207,10 @@ test('The evidence pack folds tests, scripts, and data folders out of the compon
   assert.deepEqual(runtime, ['asr', 'config.py', 'llm', 'main.py', 'tools', 'tts']);
   const support = Object.fromEntries(pack.supportModules.items.map((module) => [module.path, module.role]));
   assert.deepEqual(support, { '.': 'non-source', characters: 'non-source', scripts: 'tooling', tests: 'test' });
-  for (const edge of pack.edges.items) {
+  for (const edge of decodePackEdges(pack)) {
     assert.ok(runtime.includes(edge.from) && runtime.includes(edge.to), `${edge.from} -> ${edge.to} joins runtime modules only`);
   }
-  assert.ok(pack.edges.supportEdges > 0, 'edges touching support modules are counted, not shown');
+  assert.ok(pack.graph.supportEdges > 0, 'edges touching support modules are counted, not shown');
 });
 
 test('A small root splits into per-file modules so an orchestrator and a shared config do not form a false cycle', (t) => {
@@ -217,8 +218,8 @@ test('A small root splits into per-file modules so an orchestrator and a shared 
   const byPath = new Map(pack.modules.items.map((module) => [module.path, module]));
   assert.equal(byPath.get('main.py').fanIn, 0);
   assert.equal(byPath.get('config.py').fanOut, 0);
-  const pairs = new Set(pack.edges.items.map((edge) => `${edge.from}->${edge.to}`));
-  for (const edge of pack.edges.items) {
+  const pairs = new Set(decodePackEdges(pack).map((edge) => `${edge.from}->${edge.to}`));
+  for (const edge of decodePackEdges(pack)) {
     assert.ok(!pairs.has(`${edge.to}->${edge.from}`) || edge.from === 'llm' || edge.to === 'llm',
       `${edge.from} and ${edge.to} are not joined both ways through the root`);
   }
@@ -272,7 +273,7 @@ test('Edge selection keeps the shown graph connected where the import graph is, 
   }, { limits: { maximumEdges: 5 } });
 
   const adjacency = new Map(pack.modules.items.map((module) => [module.path, new Set()]));
-  for (const entry of pack.edges.items) {
+  for (const entry of decodePackEdges(pack)) {
     adjacency.get(entry.from).add(entry.to);
     adjacency.get(entry.to).add(entry.from);
   }
@@ -318,7 +319,7 @@ test('Route references link a Rust gateway to the Python server that declares it
   assert.equal(reference.shared, 3, 'generate, get_server_info, and flush_cache match; /health is generic');
   assert.match(reference.anchor, /^gateway\/src\/router\.rs:\d+$/);
   assert.match(pack.crossLanguage.note, /candidate/);
-  assert.ok(!pack.edges.items.some((entry) => entry.from === 'gateway'), 'route matches are not asserted as edges');
+  assert.ok(!decodePackEdges(pack).some((entry) => entry.from === 'gateway'), 'route matches are not asserted as edges');
   const question = pack.questions.find((entry) => entry.kind === 'cross-language-boundary' && entry.subject === 'gateway');
   assert.match(question.question, /gateway -> server over 3 HTTP routes/);
   assert.match(question.anchors[0], /^gateway\/src\/router\.rs:\d+$/);
@@ -351,9 +352,9 @@ test('A small route provider stays shown, and a gateway keeps its only runtime e
 
   const shown = pack.modules.items.map((module) => module.path);
   assert.ok(shown.includes('server'), 'route provider is pinned');
-  assert.ok(!pack.edges.items.some((entry) => entry.to === 'harness'), 'e2e and bench imports are not runtime edges');
+  assert.ok(!decodePackEdges(pack).some((entry) => entry.to === 'harness'), 'e2e and bench imports are not runtime edges');
   if (shown.includes('gateway')) {
-    assert.ok(pack.edges.items.some((entry) => entry.from === 'gateway' && entry.to === 'server'));
+    assert.ok(decodePackEdges(pack).some((entry) => entry.from === 'gateway' && entry.to === 'server'));
   }
   const server = pack.modules.items.find((module) => module.path === 'server');
   assert.match(server.sample, /^server\/.+\.py$/);
@@ -407,4 +408,33 @@ test('Runtime channels in the pack are runtime-only and round-robin across kinds
     ['util:process-spawn', 'server:http-server', 'web:websocket-client']);
   assert.equal(pack.runtimeChannels.omitted, 2, 'the two remaining spawns are counted, the non-runtime module is dropped');
   assert.ok(!('excerpt' in pack.runtimeChannels.items[0]), 'excerpts stay in the detail graph');
+});
+
+test('The module graph is written as G = (V, E) with index triples over V', () => {
+  const edge = (from, to, weight) => ({ from, to, weight, evidence: [{ file: `${from}/a.py`, line: 1, to: `${to}/b.py` }] });
+  const level2 = {
+    scannedFiles: 30, candidateFiles: 30, truncated: false,
+    unscanned: { files: 0, byLanguage: {} },
+    unresolved: { stdlib: 0, external: 0, dynamic: 0, unknown: 0, topUnknown: [], topExternal: [] },
+    modules: ['api', 'core', 'store'].map((name) => syntheticModule(name, 10)),
+    edges: [edge('api', 'core', 12), edge('core', 'store', 5)],
+  };
+  const pack = buildEvidencePack({
+    repositoryState: {}, summary: { retainedFiles: 30, languages: {} }, records: [],
+    boundaries: {}, level2, detailPath: null, declaredDependencies: new Set(),
+  });
+
+  assert.deepEqual(pack.graph.V.slice(0, pack.modules.items.length), pack.modules.items.map((module) => module.path),
+    'shown modules come first in V, in modules order');
+  for (const row of pack.graph.E) {
+    assert.equal(row.length, 3);
+    assert.ok(row.every(Number.isInteger), 'E rows are integer triples');
+    assert.ok(row[0] < pack.graph.V.length && row[1] < pack.graph.V.length);
+  }
+  assert.deepEqual(decodePackEdges(pack), [
+    { from: 'api', to: 'core', weight: 12 },
+    { from: 'core', to: 'store', weight: 5 },
+  ]);
+  assert.ok(!JSON.stringify(pack.graph).includes('a.py'), 'import sites stay in the detail graph');
+  assert.ok(pack.graph.format.startsWith('G = (V, E)'));
 });

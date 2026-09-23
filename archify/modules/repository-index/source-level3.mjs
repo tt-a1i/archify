@@ -16,7 +16,6 @@ export const PACK_DEFAULT_LIMITS = Object.freeze({
   maximumBytes: 24 * 1024,
   maximumModules: 24,
   maximumEdges: 60,
-  maximumEdgeEvidence: 2,
   maximumBoundaryItems: 15,
   maximumQuestions: 12,
   maximumQuestionsPerKind: 4,
@@ -445,18 +444,32 @@ function selectEdges(level2, shownModules, maximumEdges, roles) {
   };
 }
 
-function packEdges(level2, shownModules, maximumEdges, maximumEvidence, roles) {
-  const { items, omitted, supportEdges } = selectEdges(level2, shownModules, maximumEdges, roles);
-  return {
-    omitted,
-    supportEdges,
-    items: items.map((edge) => ({
-      from: edge.from,
-      to: edge.to,
-      weight: edge.weight,
-      ...(maximumEvidence > 0 ? { evidence: edge.evidence.slice(0, maximumEvidence).map(evidenceReference) } : {}),
-    })),
+// The module graph is written as G = (V, E). Edges were the largest section
+// of a large pack, and most of it was repeated module paths and JSON keys.
+// V lists every module path an edge touches, the shown modules first and in
+// the same order as `modules`; each E row is [from, to, weight], two indices
+// into V and the number of import statements. Per-edge import sites stay in
+// the detail graph on disk.
+export const GRAPH_FORMAT = 'G = (V, E): V[i] is a module path (shown modules first, in modules order); each E row is [from, to, importCount] with indices into V; import sites are in the detail graph';
+
+function packGraph(level2, modules, maximumEdges, roles) {
+  const V = modules.map((module) => module.path);
+  const { items, omitted, supportEdges } = selectEdges(level2, V, maximumEdges, roles);
+  const index = new Map(V.map((modulePath, position) => [modulePath, position]));
+  const vertex = (modulePath) => {
+    if (!index.has(modulePath)) {
+      index.set(modulePath, V.length);
+      V.push(modulePath);
+    }
+    return index.get(modulePath);
   };
+  const E = items.map((edge) => [vertex(edge.from), vertex(edge.to), edge.weight]);
+  return { format: GRAPH_FORMAT, V, E, omittedEdges: omitted, supportEdges };
+}
+
+// Expands E back into { from, to, weight } module paths.
+export function decodePackEdges(pack) {
+  return pack.graph.E.map(([from, to, weight]) => ({ from: pack.graph.V[from], to: pack.graph.V[to], weight }));
 }
 
 // Cross-language facts are handed to the diagram author as a compact table,
@@ -533,7 +546,6 @@ export function buildEvidencePack({ repositoryState, summary, records, boundarie
   const state = {
     modules: limits.maximumModules,
     edges: limits.maximumEdges,
-    edgeEvidence: limits.maximumEdgeEvidence,
     boundaryItems: limits.maximumBoundaryItems,
     questions: questions.length,
     references: 6,
@@ -572,20 +584,19 @@ export function buildEvidencePack({ repositoryState, summary, records, boundarie
     supportModules: packSupportModules(level2, roles, state.modules),
     crossLanguage,
     runtimeChannels: packRuntimeChannels(level2, roles, state.channels),
-    edges: packEdges(level2, modules.items.map((module) => module.path), state.edges, state.edgeEvidence, roles),
+    graph: packGraph(level2, modules.items, state.edges, roles),
     questions: questions.slice(0, state.questions).map((question) => withExcerpts(question, root, state.excerptLines)),
     detail: detailPath ? { path: detailPath } : null,
     budget: { maximumBytes: limits.maximumBytes, bytes: 0, trimmed },
     };
   };
 
-  // Facts survive trims longer than their supporting detail: edge evidence
-  // goes first, then list tails, and questions are cut last.
+  // Facts survive trims longer than their supporting detail: list tails go
+  // first, and questions are cut last. Edges are cheap as E rows, so the
+  // configuration boundary lists shrink before any edge is dropped.
   const shrinkSteps = [
-    ['edge-evidence', () => { state.edgeEvidence = Math.max(0, state.edgeEvidence - 1); }],
-    ['edges-40', () => { state.edges = Math.min(state.edges, 40); }],
     ['boundary-items-8', () => { state.boundaryItems = Math.min(state.boundaryItems, 8); }],
-    ['edge-evidence', () => { state.edgeEvidence = 0; }],
+    ['edges-40', () => { state.edges = Math.min(state.edges, 40); }],
     ['edges-24', () => { state.edges = Math.min(state.edges, 24); }],
     ['channels-10', () => { state.channels = Math.min(state.channels, 10); }],
     ['modules-16', () => { state.modules = Math.min(state.modules, 16); }],
