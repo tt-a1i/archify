@@ -273,3 +273,31 @@ test('Level 2 records runtime channels per module and skips comments, support fo
   assert.deepEqual(spawnSite.excerpt, ["6: const child = spawn('agent', []);"], 'the credential line after the call is not copied');
   assert.ok(!channels.some((entry) => entry.module === 'server' && entry.kind === 'http-client'), 'a credential-looking line is skipped');
 });
+
+test('Level 2 records inter-process channels and what they reach', (t) => {
+  const root = workspace(t);
+  write(root, 'engine/launch.py', [
+    'import multiprocessing as mp',
+    'proc = mp.Process(',
+    '    target=run_scheduler_process,',
+    '    args=(1,),',
+    ')',
+    'tools = subprocess.check_output(["nvidia-smi"])',
+  ].join('\n'));
+  write(root, 'managers/ipc.py', [
+    'import zmq',
+    'sock = get_socket(context, zmq.PULL, port_args.scheduler_ipc_name)',
+    'context.setsockopt(zmq.IPV6, 1)',
+    'server = grpc.aio.server()',
+    'channel = grpc.insecure_channel(address)',
+  ].join('\n'));
+
+  const channels = level2(root).runtimeChannels;
+  const find = (module, kind) => channels.find((entry) => entry.module === module && entry.kind === kind);
+  const spawn = find('engine', 'process-spawn');
+  assert.deepEqual(spawn.targets.sort(), ['nvidia-smi', 'run_scheduler_process']);
+  assert.equal(spawn.processTargets, 1, 'only the target= launch is an in-repository process');
+  assert.deepEqual(find('managers', 'message-queue').targets, ['PULL port_args.scheduler_ipc_name'], 'socket options are not targets');
+  assert.ok(find('managers', 'grpc-server'));
+  assert.deepEqual(find('managers', 'grpc-client').targets, ['address']);
+});

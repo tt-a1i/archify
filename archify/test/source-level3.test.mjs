@@ -438,3 +438,20 @@ test('The module graph is written as G = (V, E) with index triples over V', () =
   assert.ok(!JSON.stringify(pack.graph).includes('a.py'), 'import sites stay in the detail graph');
   assert.ok(pack.graph.format.startsWith('G = (V, E)'));
 });
+
+test('Runtime channels rank in-repository process launches before external tool calls', () => {
+  const channel = (module, count, processTargets) => ({ module, kind: 'process-spawn', count, processTargets, files: 1, anchor: `${module}/a.py:1`, excerpt: ['1: x'] });
+  const level2 = {
+    scannedFiles: 20, candidateFiles: 20, truncated: false,
+    unscanned: { files: 0, byLanguage: {} },
+    unresolved: { stdlib: 0, external: 0, dynamic: 0, unknown: 0, topUnknown: [], topExternal: [] },
+    modules: ['tools', 'engine'].map((name) => syntheticModule(name, 10)),
+    edges: [{ from: 'engine', to: 'tools', weight: 1, evidence: [] }],
+    runtimeChannels: [channel('tools', 40, 0), channel('engine', 3, 3)],
+  };
+  const pack = buildEvidencePack({
+    repositoryState: {}, summary: { retainedFiles: 20, languages: {} }, records: [],
+    boundaries: {}, level2, detailPath: null, declaredDependencies: new Set(),
+  }, { limits: { maximumRuntimeChannels: 1 } });
+  assert.equal(pack.runtimeChannels.items[0].module, 'engine');
+});

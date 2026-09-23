@@ -481,7 +481,7 @@ export function decodePackEdges(pack) {
 // WebSocket servers and clients, HTTP servers and clients, worker threads.
 // Only runtime modules are listed, the ones that open a process or socket
 // first, so a spawn or server is never trimmed away before an HTTP call.
-const CHANNEL_PRIORITY = ['process-spawn', 'websocket-server', 'http-server', 'websocket-client', 'http-client', 'worker-thread'];
+const CHANNEL_PRIORITY = ['process-spawn', 'message-queue', 'grpc-server', 'websocket-server', 'http-server', 'grpc-client', 'websocket-client', 'http-client', 'worker-thread'];
 
 function packRuntimeChannels(level2, roles, maximum, withExcerpt = true) {
   // Round-robin across kinds so one noisy kind (every utility that shells
@@ -490,7 +490,12 @@ function packRuntimeChannels(level2, roles, maximum, withExcerpt = true) {
   for (const entry of level2.runtimeChannels || []) {
     if (roles.get(entry.module) === 'runtime') byKind.get(entry.kind)?.push(entry);
   }
-  for (const list of byKind.values()) list.sort((left, right) => right.count - left.count || left.module.localeCompare(right.module));
+  // Within a kind, modules that start their own processes (a target function
+  // in this repository) come before modules that only call external tools.
+  for (const list of byKind.values()) {
+    list.sort((left, right) => Number((right.processTargets || 0) > 0) - Number((left.processTargets || 0) > 0)
+      || right.count - left.count || left.module.localeCompare(right.module));
+  }
   const channels = [];
   for (let round = 0; [...byKind.values()].some((list) => list.length > round); round += 1) {
     for (const list of byKind.values()) if (list[round]) channels.push(list[round]);
@@ -500,8 +505,10 @@ function packRuntimeChannels(level2, roles, maximum, withExcerpt = true) {
     note: 'Call sites that open a process, socket or HTTP connection; draw the runtime link they create or leave it out only when its peer is outside the requested scope.',
     // The excerpt names the peer (command, URL, path) so the author rarely has
     // to open the anchor file; it is dropped before the channel itself.
-    items: items.map(({ module, kind, count, anchor, excerpt }) => ({
-      module, kind, count, anchor, ...(withExcerpt && excerpt?.length ? { excerpt } : {}),
+    items: items.map(({ module, kind, count, anchor, excerpt, targets }) => ({
+      module, kind, count, anchor,
+      ...(targets?.length ? { targets } : {}),
+      ...(withExcerpt && excerpt?.length ? { excerpt } : {}),
     })),
     omitted,
   };

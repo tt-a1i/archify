@@ -58,7 +58,10 @@ architecture example from the Type router that fits the repository.
    cross-language component would otherwise float unconnected, read its one
    reference anchor and draw the link only if the code there calls the other
    service. `runtimeChannels` lists where runtime modules spawn processes,
-   serve or open WebSockets, serve or call HTTP, and start worker threads:
+   use message queues (ZeroMQ, multiprocessing queues, Redis, Kafka, AMQP,
+   NATS), serve or call gRPC, serve or open WebSockets, serve or call HTTP,
+   and start worker threads; `targets` names what a channel reaches (a
+   process target, a spawned command, a queue socket and address):
    the runtime links an import graph cannot show. Each channel's `excerpt`
    holds the numbered call lines, which usually name the peer; draw each
    channel between the components it connects, open its anchor only when the

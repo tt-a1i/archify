@@ -399,7 +399,22 @@ function routeLiterals(text) {
 const RUNTIME_CHANNELS = [
   ['process-spawn', {
     javascript: /(?:^|[^.\w$])(?:spawn|spawnSync|execFile|execFileSync|execSync|fork)\s*\(|\b(?:child_process|childProcess|cp|pty|nodePty)\.(?:spawn|spawnSync|exec|execSync|execFile|fork)\s*\(/,
-    python: /\bsubprocess\.(?:Popen|run|call|check_call|check_output)\s*\(|\bos\.(?:system|popen|exec\w*)\s*\(|\basyncio\.create_subprocess_(?:exec|shell)\s*\(|\bmultiprocessing\.Process\s*\(/,
+    python: /\bsubprocess\.(?:Popen|run|call|check_call|check_output)\s*\(|\bos\.(?:system|popen|exec\w*)\s*\(|\basyncio\.create_subprocess_(?:exec|shell)\s*\(|\b(?:multiprocessing|mp|ctx|mp_ctx)\.Process\s*\(|\.get_context\([^)]*\)\.Process\s*\(|(?:^|[^.\w])Process\s*\(\s*target\s*=/,
+  }],
+  // Processes that talk through a broker or socket library instead of HTTP:
+  // ZeroMQ socket types, multiprocessing queues and pipes, Redis, Kafka,
+  // AMQP and NATS clients.
+  ['message-queue', {
+    javascript: /\bzmq\.(?:PUSH|PULL|PUB|SUB|XPUB|XSUB|REQ|REP|DEALER|ROUTER|PAIR)\b|\bnew\s+zmq\.(?:Push|Pull|Publisher|Subscriber|Request|Reply|Dealer|Router|Pair)\s*\(|\bnew\s+(?:Redis|IORedis)\s*\(|\bkafka\.(?:producer|consumer)\s*\(|\bamqp\.connect\s*\(|\bnats\.connect\s*\(/,
+    python: /\bzmq\.(?:PUSH|PULL|PUB|SUB|XPUB|XSUB|REQ|REP|DEALER|ROUTER|PAIR)\b|\b(?:multiprocessing|mp|ctx|mp_ctx)\.(?:Queue|SimpleQueue|JoinableQueue|Pipe)\s*\(|\bredis\.(?:asyncio\.)?(?:Redis|StrictRedis|from_url)\s*\(|\bKafka(?:Producer|Consumer)\s*\(|\bpika\.(?:Blocking|Select)Connection\s*\(|\bnats\.connect\s*\(/,
+  }],
+  ['grpc-server', {
+    javascript: /\bnew\s+grpc\.Server\s*\(/,
+    python: /\bgrpc\.(?:aio\.)?server\s*\(/,
+  }],
+  ['grpc-client', {
+    javascript: /\bnew\s+\w+\s*\([^)]*grpc\.credentials\.|\bgrpc\.(?:makeGenericClientConstructor|loadPackageDefinition)\s*\(/,
+    python: /\bgrpc\.(?:aio\.)?(?:insecure|secure)_channel\s*\(/,
   }],
   ['websocket-server', {
     javascript: /\bnew\s+(?:WebSocketServer|WebSocket\.Server)\s*\(|\.handleUpgrade\s*\(/,
@@ -428,6 +443,7 @@ const CHANNEL_SUPPORT_SEGMENT = /^(?:\..+|scripts?|tools?|tooling|bench(?:mark)?
 const CHANNEL_SECRET_LINE = /(?:token|secret|passw(?:or)?d|api[_-]?key|credential)\s*[:=]/i;
 const MAXIMUM_CHANNEL_LINE = 120;
 const CHANNEL_EXCERPT_LINES = 3;
+const CHANNEL_TARGETS = 4;
 
 function runtimeChannels(text, language) {
   const family = language === 'python' ? 'python' : 'javascript';
@@ -447,7 +463,14 @@ function runtimeChannels(text, language) {
         if (!text || /^(?:#|\/\/|\*|\/\*)/.test(text) || CHANNEL_SECRET_LINE.test(lines[next])) continue;
         excerpt.push(`${next + 1}: ${text.length > MAXIMUM_CHANNEL_LINE ? `${text.slice(0, MAXIMUM_CHANNEL_LINE)}...` : text}`);
       }
-      found.push({ kind, line: number + 1, excerpt });
+      const window = lines.slice(number, number + CHANNEL_EXCERPT_LINES + 1).join(' ');
+      const processTarget = kind === 'process-spawn' ? /\btarget\s*=\s*([\w.]+)/.exec(window) : null;
+      const target = (kind === 'process-spawn' && (processTarget
+          || /(?:spawn\w*|fork|execFile\w*|exec\w*|Popen|run|check_output|check_call|call)\s*\(\s*\[?\s*['"\x60]([^'"\x60\s]{1,80})/.exec(window)))
+        || (kind === 'message-queue' && /\bzmq\.(PUSH|PULL|PUB|SUB|XPUB|XSUB|REQ|REP|DEALER|ROUTER|PAIR)\s*,\s*([\w.]{1,80})/.exec(window))
+        || (kind === 'grpc-client' && /_channel\s*\(\s*([^),]{1,80})/.exec(window));
+      const named = target ? target.slice(1).filter(Boolean).join(' ') : null;
+      found.push({ kind, line: number + 1, excerpt, ...(named && !CHANNEL_SECRET_LINE.test(named) ? { target: named } : {}), ...(processTarget ? { processTarget: true } : {}) });
     }
   }
   return found;
@@ -703,12 +726,14 @@ export function buildSourceLevel2(root, records, options = {}) {
     .sort((left, right) => left.file.localeCompare(right.file) || left.line - right.line)
     .reduce((byKey, site) => {
       const key = `${site.module}\u0000${site.kind}`;
-      const entry = byKey.get(key) || { module: site.module, kind: site.kind, count: 0, files: new Set(), anchor: `${site.file}:${site.line}`, excerpt: site.excerpt };
+      const entry = byKey.get(key) || { module: site.module, kind: site.kind, count: 0, processTargets: 0, files: new Set(), targets: new Set(), anchor: `${site.file}:${site.line}`, excerpt: site.excerpt };
       entry.count += 1;
+      if (site.processTarget) entry.processTargets += 1;
       entry.files.add(site.file);
+      if (site.target && entry.targets.size < CHANNEL_TARGETS) entry.targets.add(site.target);
       return byKey.set(key, entry);
     }, new Map()).values()]
-    .map(({ files, ...entry }) => ({ ...entry, files: files.size }))
+    .map(({ files, targets, ...entry }) => ({ ...entry, files: files.size, ...(targets.size ? { targets: [...targets] } : {}) }))
     .sort((left, right) => left.module.localeCompare(right.module) || left.kind.localeCompare(right.kind));
 
   const edges = [...moduleEdges.values()]
