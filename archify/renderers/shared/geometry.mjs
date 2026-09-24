@@ -320,6 +320,18 @@ const ENDPOINT_SIDE_RULES = {
   },
 };
 
+// The coordinate the point next to the port must share, so the author can fix
+// a misaligned via in one edit instead of guessing a perpendicular segment.
+function endpointAlignmentHint(issue) {
+  const port = issue.endpoint === 'source' ? issue.start : issue.end;
+  const round = (value) => Math.round(value * 10) / 10;
+  const beyond = { top: 'above', bottom: 'below', left: 'left of', right: 'right of' }[issue.side];
+  const adjacent = issue.endpoint === 'source' ? 'next' : 'previous';
+  return issue.expectedAxis === 'vertical'
+    ? `the ${adjacent} point must keep x=${round(port[0])} and sit ${beyond} the port at y=${round(port[1])}`
+    : `the ${adjacent} point must keep y=${round(port[1])} and sit ${beyond} the port at x=${round(port[0])}`;
+}
+
 function endpointSideIssue(points, endpoint, side) {
   const rule = ENDPOINT_SIDE_RULES[side];
   if (!rule) return null;
@@ -405,7 +417,7 @@ export function cleanEndpointSideProblems({
       const segmentRole = issue.endpoint === 'source' ? 'first' : 'final';
       const from = issue.start.map((value) => Math.round(value * 10) / 10).join(', ');
       const to = issue.end.map((value) => Math.round(value * 10) / 10).join(', ');
-      const message = `[clean-flow/endpoint-side-direction] ${diagramType} ${relationCollection}[${relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" ${segmentRole} segment ${issue.segmentIndex} [${from}] -> [${to}] does not honor ${sideField} "${issue.side}" — it must run ${issue.expectedAxis} ${issue.expectedDirection}; ${routeHint}.`;
+      const message = `[clean-flow/endpoint-side-direction] ${diagramType} ${relationCollection}[${relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" ${segmentRole} segment ${issue.segmentIndex} [${from}] -> [${to}] does not honor ${sideField} "${issue.side}" — it must run ${issue.expectedAxis} ${issue.expectedDirection}, so ${endpointAlignmentHint(issue)}; ${routeHint}.`;
       recordDiagnostic({
         code: 'clean-flow/endpoint-side-direction',
         severity: 'error',
@@ -422,7 +434,7 @@ export function cleanEndpointSideProblems({
           expectedAxis: issue.expectedAxis,
           expectedDirection: issue.expectedDirection,
         },
-        supportedFixes: [routeHint],
+        supportedFixes: [`${endpointAlignmentHint(issue)}`, routeHint],
       });
       problems.push(message);
     }
@@ -753,6 +765,49 @@ export function collectArrowheadCollisions({ routedRelations }) {
   return hits;
 }
 
+const SIDE_ORDER = ['top', 'right', 'bottom', 'left'];
+
+function segmentSide(from, to, endpoint) {
+  const dx = to[0] - from[0];
+  const dy = to[1] - from[1];
+  const sign = endpoint === 'source' ? 1 : -1;
+  if (Math.abs(dx) >= Math.abs(dy)) return dx * sign > 0 ? 'right' : 'left';
+  return dy * sign > 0 ? 'bottom' : 'top';
+}
+
+// When both relations share an endpoint and leave or enter it on the same
+// side, suggest the side of that node facing the other relation's far end,
+// or its next-best side when that is the crowded one.
+function sharedEndpointHint(hit) {
+  const pairs = [['from', 'source'], ['to', 'target']];
+  for (const [field, endpoint] of pairs) {
+    if (hit.left.relation[field] !== hit.right.relation[field]) continue;
+    const node = hit.left.relation[field];
+    const points = (routed) => normalizeRoutePoints(routed.points || []);
+    const left = points(hit.left);
+    const right = points(hit.right);
+    if (left.length < 2 || right.length < 2) return null;
+    const sideOf = (route) => (endpoint === 'source'
+      ? segmentSide(route[0], route[1], 'source')
+      : segmentSide(route[route.length - 2], route[route.length - 1], 'target'));
+    const crowded = sideOf(left);
+    if (crowded !== sideOf(right)) return null;
+    const move = hit.right;
+    const route = points(move);
+    const port = endpoint === 'source' ? route[0] : route[route.length - 1];
+    const far = endpoint === 'source' ? route[route.length - 1] : route[0];
+    const dx = far[0] - port[0];
+    const dy = far[1] - port[1];
+    const primary = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'bottom' : 'top');
+    const secondary = Math.abs(dx) >= Math.abs(dy) ? (dy > 0 ? 'bottom' : 'top') : (dx > 0 ? 'right' : 'left');
+    const side = [primary, secondary, ...SIDE_ORDER].find((candidate) => candidate !== crowded);
+    const field2 = endpoint === 'source' ? 'fromSide' : 'toSide';
+    const id = move.relation.id ? `"${move.relation.id}"` : `${move.relation.from} -> ${move.relation.to}`;
+    return `both relationships ${endpoint === 'source' ? 'leave' : 'enter'} "${node}" through its ${crowded} side; give ${id} its own side, for example ${field2} "${side}" (facing its other end) without via, or move one of the other endpoints so the two do not share that side`;
+  }
+  return null;
+}
+
 export function cleanAmbiguousCorridorProblems({
   relations,
   endpointIds,
@@ -776,7 +831,8 @@ export function cleanAmbiguousCorridorProblems({
     const length = Math.round(hit.overlapLength * 10) / 10;
     const from = hit.overlapStart.map((value) => Math.round(value * 10) / 10).join(', ');
     const to = hit.overlapEnd.map((value) => Math.round(value * 10) / 10).join(', ');
-    const hint = rePlanHint([hit.left.relation, hit.right.relation], routeHint);
+    const shared = sharedEndpointHint(hit);
+    const hint = shared ? `${shared}; ${rePlanHint([hit.left.relation, hit.right.relation], routeHint)}` : rePlanHint([hit.left.relation, hit.right.relation], routeHint);
     const message = `[composition/ambiguous-corridor] showcase ${diagramType} ${describe(hit.left)} shares a ${length}px corridor with ${describe(hit.right)} at [${from}] -> [${to}] (segments ${hit.leftSegment} and ${hit.rightSegment}; minimum ${minOverlapPx}px) — ${hint}.`;
     recordDiagnostic({
       code: 'composition/ambiguous-corridor',
