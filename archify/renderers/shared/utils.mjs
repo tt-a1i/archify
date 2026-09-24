@@ -35,6 +35,7 @@ const SIGIL_TONE = {
   backend: 'backend',
   active: 'backend',
   database: 'database',
+  artifact: 'artifact',
   success: 'database',
   cloud: 'cloud',
   waiting: 'cloud',
@@ -59,6 +60,8 @@ const SIGIL_SHAPE = {
   backend: `<path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>`,
   database: `<ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>`,
+  artifact: `<path d="M3 2.5h6l4 4V13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/>
+            <path d="M9 2.5V7h4M5.5 9.5h5M5.5 11.5h4"/>`,
   cloud: `<path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>`,
   security: `<path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>`,

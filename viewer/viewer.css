@@ -29,6 +29,8 @@
   --backend-stroke:   #34d399;
   --database-fill:    rgba(76, 29, 149, 0.4);
   --database-stroke:  #a78bfa;
+  --artifact-fill:    rgba(71, 85, 105, 0.42);
+  --artifact-stroke:  #cbd5e1;
   --cloud-fill:       rgba(120, 53, 15, 0.3);
   --cloud-stroke:     #fbbf24;
   --security-fill:    rgba(136, 19, 55, 0.4);
@@ -69,6 +71,8 @@
   --backend-stroke:   #059669;
   --database-fill:    rgba(167, 139, 250, 0.2);
   --database-stroke:  #7c3aed;
+  --artifact-fill:    rgba(100, 116, 139, 0.13);
+  --artifact-stroke:  #475569;
   --cloud-fill:       rgba(251, 191, 36, 0.18);
   --cloud-stroke:     #d97706;
   --security-fill:    rgba(251, 113, 133, 0.15);
@@ -108,6 +112,8 @@
   --backend-stroke: #5eead4;
   --database-fill: rgba(139, 92, 246, 0.16);
   --database-stroke: #c4b5fd;
+  --artifact-fill:    rgba(94, 115, 138, 0.18);
+  --artifact-stroke:  #d0deeb;
   --cloud-fill: rgba(245, 158, 11, 0.13);
   --cloud-stroke: #fcd34d;
   --security-fill: rgba(244, 63, 94, 0.13);
@@ -141,6 +147,8 @@
   --backend-stroke: #087f69;
   --database-fill: rgba(124, 58, 237, 0.09);
   --database-stroke: #7254c7;
+  --artifact-fill:    rgba(83, 105, 124, 0.10);
+  --artifact-stroke:  #4c6578;
   --cloud-fill: rgba(217, 119, 6, 0.08);
   --cloud-stroke: #b9670b;
   --security-fill: rgba(225, 29, 72, 0.08);
@@ -177,6 +185,8 @@
   --backend-stroke: #69dfbd;
   --database-fill: rgba(120, 105, 196, 0.14);
   --database-stroke: #b4a8ff;
+  --artifact-fill:    rgba(94, 137, 154, 0.15);
+  --artifact-stroke:  #b6d3df;
   --cloud-fill: rgba(197, 145, 43, 0.13);
   --cloud-stroke: #ffd166;
   --security-fill: rgba(199, 76, 104, 0.13);
@@ -212,6 +222,8 @@
   --backend-stroke: #08755f;
   --database-fill: rgba(100, 75, 180, 0.08);
   --database-stroke: #6757a8;
+  --artifact-fill:    rgba(86, 119, 135, 0.09);
+  --artifact-stroke:  #4c7181;
   --cloud-fill: rgba(181, 120, 15, 0.08);
   --cloud-stroke: #a86609;
   --security-fill: rgba(190, 48, 80, 0.07);
@@ -254,6 +266,8 @@
   --backend-stroke: #8fc29e;
   --database-fill: rgba(117, 91, 141, 0.17);
   --database-stroke: #c0a4d0;
+  --artifact-fill:    rgba(139, 130, 113, 0.18);
+  --artifact-stroke:  #d0c6b2;
   --cloud-fill: rgba(170, 119, 49, 0.16);
   --cloud-stroke: #d8ad68;
   --security-fill: rgba(157, 69, 65, 0.17);
@@ -289,6 +303,8 @@
   --backend-stroke: #397b53;
   --database-fill: rgba(105, 75, 130, 0.09);
   --database-stroke: #765d86;
+  --artifact-fill:    rgba(111, 103, 89, 0.10);
+  --artifact-stroke:  #716758;
   --cloud-fill: rgba(157, 103, 31, 0.1);
   --cloud-stroke: #9a671f;
   --security-fill: rgba(153, 58, 52, 0.09);
@@ -1197,6 +1213,7 @@ html[data-preset="blueprint"] .overview-map-surface { border-radius: 0.1rem; }
 .overview-map-node[data-kind="start"] { fill: var(--frontend-stroke); stroke: var(--frontend-stroke); }
 .overview-map-node[data-kind="database"],
 .overview-map-node[data-kind="success"] { fill: var(--database-stroke); stroke: var(--database-stroke); }
+.overview-map-node[data-kind="artifact"] { fill: var(--artifact-stroke); stroke: var(--artifact-stroke); }
 .overview-map-node[data-kind="cloud"],
 .overview-map-node[data-kind="waiting"] { fill: var(--cloud-stroke); stroke: var(--cloud-stroke); }
 .overview-map-node[data-kind="messagebus"] { fill: var(--messagebus-stroke); stroke: var(--messagebus-stroke); }
@@ -1364,6 +1381,7 @@ html[data-preset="blueprint"] .semantic-lens-kind { border-radius: 0.12rem; }
 .semantic-lens-kind[data-kind="active"] { --lens-color: var(--backend-stroke); }
 .semantic-lens-kind[data-kind="database"],
 .semantic-lens-kind[data-kind="success"] { --lens-color: var(--database-stroke); }
+.semantic-lens-kind[data-kind="artifact"] { --lens-color: var(--artifact-stroke); }
 .semantic-lens-kind[data-kind="cloud"],
 .semantic-lens-kind[data-kind="waiting"] { --lens-color: var(--cloud-stroke); }
 .semantic-lens-kind[data-kind="messagebus"] { --lens-color: var(--messagebus-stroke); }
@@ -3942,6 +3960,7 @@ html[data-preset="editorial"] .share-chapter-cue {
 .c-frontend   { fill: var(--frontend-fill);   stroke: var(--frontend-stroke); }
 .c-backend    { fill: var(--backend-fill);    stroke: var(--backend-stroke); }
 .c-database   { fill: var(--database-fill);   stroke: var(--database-stroke); }
+.c-artifact   { fill: var(--artifact-fill);   stroke: var(--artifact-stroke); }
 .c-cloud      { fill: var(--cloud-fill);      stroke: var(--cloud-stroke); }
 .c-security   { fill: var(--security-fill);   stroke: var(--security-stroke); }
 .c-messagebus { fill: var(--messagebus-fill); stroke: var(--messagebus-stroke); }
@@ -3954,6 +3973,7 @@ html[data-preset="editorial"] .share-chapter-cue {
 .t-frontend   { fill: var(--frontend-stroke); }
 .t-backend    { fill: var(--backend-stroke); }
 .t-database   { fill: var(--database-stroke); }
+.t-artifact   { fill: var(--artifact-stroke); }
 .t-cloud      { fill: var(--cloud-stroke); }
 .t-security   { fill: var(--security-stroke); }
 .t-messagebus { fill: var(--messagebus-stroke); }
@@ -3982,6 +4002,7 @@ svg .semantic-sigil .sigil-fill { fill: currentColor; stroke: none; }
 svg .s-frontend   { color: var(--frontend-stroke); }
 svg .s-backend    { color: var(--backend-stroke); }
 svg .s-database   { color: var(--database-stroke); }
+svg .s-artifact   { color: var(--artifact-stroke); }
 svg .s-cloud      { color: var(--cloud-stroke); }
 svg .s-security   { color: var(--security-stroke); }
 svg .s-messagebus { color: var(--messagebus-stroke); }

@@ -83,6 +83,7 @@ const LEGEND_CATALOG = [
   'security',
   'messagebus',
   'external',
+  ...(arch.components?.some((component) => component.type === 'artifact') || arch.meta?.legend?.entries?.artifact ? ['artifact'] : []),
 ].map((kind) => ({ kind, label: i18nText(arch.meta.locale, `legend.architecture.${kind}`) }));
 
 // ---- Measure components from free coordinates --------------------------------

@@ -160,3 +160,36 @@ test('a direct relationship crossing a region boundary is not a detour', t => {
   assert.equal(result.status, 0, result.stdout);
   assert.equal(receipt.ok, true);
 });
+
+test('showcase rejects a feedback route that frames the entire scene to avoid one crossing', t => {
+  const diagram = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Local team loop', output: 'diagram.html', quality_profile: 'showcase' },
+    components: [
+      component('browser', [40, 260], [170, 68]),
+      component('http', [330, 260], [190, 68]),
+      component('runtime', [650, 260], [190, 68]),
+      component('orchestrator', [970, 100], [190, 68]),
+      component('worker', [970, 420], [190, 68]),
+      component('sqlite', [650, 550], [190, 68]),
+      component('tasks', [330, 550], [190, 68]),
+    ],
+    connections: [
+      { from: 'browser', to: 'http' },
+      { from: 'http', to: 'runtime' },
+      { from: 'runtime', to: 'orchestrator' },
+      { from: 'orchestrator', to: 'http' },
+      { from: 'runtime', to: 'worker' },
+      { id: 'worker-report', from: 'worker', to: 'http', fromSide: 'bottom', toSide: 'left',
+        via: [[1065, 700], [250, 700], [250, 294]] },
+      { from: 'runtime', to: 'sqlite' },
+      { from: 'http', to: 'tasks' },
+    ],
+  };
+  const { result, receipt } = validate(t, diagram);
+  assert.equal(result.status, 1);
+  const diagnosis = receipt.diagnostics.find(({ code }) => code === 'composition/excessive-route-detour');
+  assert.ok(diagnosis, JSON.stringify(receipt));
+  assert.equal(diagnosis.subject.id, 'worker-report');
+});

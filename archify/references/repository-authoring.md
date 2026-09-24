@@ -40,17 +40,21 @@ fact has supporting source evidence.
    a separate planning artifact. Choose which distinctions need separate
    nodes using [Composition and meaning](authoring-defaults.md#composition-and-meaning);
    discovering an implementation role does not automatically add it to the overview.
-   A configured provider, an injected adapter, a local stub, and a durable
-   service are different claims; label the one the source supports.
+   A configured provider, an injected adapter, a short-lived CLI command, a local stub, and a durable
+   service are different claims; label the one the source supports. When a CLI command calls a local API, keep request submission distinct from authentication or role checks performed by the receiving handler. Trace the whole actor → transport → handler → executor chain before compressing it. For example, if an Agent's CLI command POSTs to a local HTTP API and the Runtime then writes to a Worker PTY, do not draw a route handler or the first Agent as directly owning that PTY. Show the API request and Runtime-owned delivery as edges or an adjacent explanation. Apply the same rule to a Worker report returning through the API. If several operations share one drawn edge, label the shared edge for all of them or split the relationships; do not silently drop a return/report path.
+   Distinguish a data artifact from the store or process that creates it. If a shared workspace file is also read or edited directly by another actor, show or state that access so one drawn server edge does not imply exclusive ownership. Trace
+   the normal path through any source-backed validation or delivery gate that
+   determines whether the artifact reaches the user; do not let a summary card
+   conceal a bypass implied by the main arrows.
 
 4. **Record evidence while reading.** Keep exact repository-relative paths and
    inclusive line ranges for each component and meaningful relationship. Follow
-   actual branches, retries, fallbacks, and error handling. A function that is
+   actual branches, retries, fallbacks, and error handling. For remote access, distinguish the actor establishing a connection from requests later travelling through it; a local outbound tunnel is not a gateway-initiated inbound connection. A function that is
    exported or configured but never called by the normal path is an optional
    capability, not a required runtime edge. For a claim about authoritative
    state change or control ownership, trace to the actual write or execution
    site and the conditions that permit it; an upstream caller alone does not
-   establish those conditions.
+   establish those conditions. If a dispatch can queue until a process starts or resumes, a direct arrow must not imply immediate delivery in every state; put that condition in the edge or an adjacent explanation.
 
 5. **Name uncertainty.** Write unresolved questions beside the claim they
    affect: for example, “`writeFile` is called here; durability is unknown.”

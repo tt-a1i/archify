@@ -927,7 +927,8 @@ test('packaged skill keeps first-draft rules inline and repair contracts behind 
   assert.match(defaults, /Pin a side only for a necessary branch, return, or supplied geometry/);
   assert.match(defaults, /Before writing positions[\s\S]*6\.5px × ASCII units \+ 21px/);
   assert.match(defaults, /9px[\s\S]*5\.4px × text units \+ 8px/);
-  assert.match(defaults, /card alone cannot qualify an otherwise unconditional arrow/);
+  assert.match(defaults, /validation, review, approval, authorization, or state-transition gate[\s\S]*card alone cannot qualify a direct producer-to-finished-output arrow/);
+  assert.match(defaults, /JSON specification, generated HTML, or downloaded file is an `artifact`/);
   assert.match(repository, /local-only[\s\S]*SSH origin, unsupported forge/);
   assert.match(repository, /actual write or execution\s+site and the conditions/);
   for (const instructions of [skill, defaults]) {

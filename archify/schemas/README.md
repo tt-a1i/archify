@@ -77,7 +77,7 @@ Supported keys are renderer-owned:
 
 | Renderer | `meta.legend.entries` keys |
 |---|---|
-| Architecture | `frontend`, `backend`, `database`, `cloud`, `security`, `messagebus`, `external` |
+| Architecture | `frontend`, `backend`, `database`, `artifact`, `cloud`, `security`, `messagebus`, `external` |
 | Workflow | `frontend`, `backend`, `security`, `messagebus`, `database`, `cloud`, `external` |
 | Sequence | `emphasis`, `return`, `security`, `dashed`, `default` |
 | Dataflow | `emphasis`, `security`, `dashed`, `database`, `default` |
@@ -148,7 +148,8 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
 - `id` — element identifiers, pattern `^[a-zA-Z][a-zA-Z0-9_-]*$`
 - `point` — an `[x, y]` pair of numbers (used by `via` and `labelAt`)
 - `componentType` — `frontend`, `backend`, `database`, `cloud`, `security`,
-  `messagebus`, `external`
+  `messagebus`, `external`; Architecture additionally accepts `artifact` for
+  files, documents, and generated output without changing other mode schemas
 - `locale` — the bounded renderer locale, `en`, `zh-CN`, or `es`
 - `portableOutputPath` — the portable POSIX-relative `.html` path used by
   `meta.output`; see the two output-path boundaries in the

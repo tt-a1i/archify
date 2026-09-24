@@ -12,6 +12,10 @@ const DEFAULTS = Object.freeze({
   minimumDetourRatio: 2.5,
   minimumExcessLengthPx: 200,
   minimumEmptyExcursionPx: 96,
+  broadPerimeterMinimumWidthPx: 600,
+  broadPerimeterMinimumLengthPx: 1200,
+  broadPerimeterMinimumDetourRatio: 1.5,
+  broadPerimeterMinimumEmptyExcursionPx: 72,
   maximumObstacleCount: 80,
   sharedCorridorMinimumPx: 32,
 });
@@ -547,13 +551,20 @@ export function cleanRouteDetourProblems({
     const start = points[0];
     const end = points.at(-1);
     const manhattan = Math.abs(end[0] - start[0]) + Math.abs(end[1] - start[1]);
-    if (actualLength < manhattan * policy.minimumDetourRatio
-        || actualLength - manhattan < policy.minimumExcessLengthPx) continue;
     const routeBounds = boundsForPoints(points);
     const excursion = outsideExcursion(routeBounds, contentBounds);
+    const broadPerimeter = routeBounds.width >= policy.broadPerimeterMinimumWidthPx
+      && actualLength >= policy.broadPerimeterMinimumLengthPx
+      && (excursion?.maximum || 0) >= policy.broadPerimeterMinimumEmptyExcursionPx;
+    const minimumDetourRatio = broadPerimeter
+      ? policy.broadPerimeterMinimumDetourRatio : policy.minimumDetourRatio;
+    const minimumEmptyExcursionPx = broadPerimeter
+      ? policy.broadPerimeterMinimumEmptyExcursionPx : policy.minimumEmptyExcursionPx;
+    if (actualLength < manhattan * minimumDetourRatio
+        || actualLength - manhattan < policy.minimumExcessLengthPx) continue;
     const emptyClearance = emptyControlPointClearance(points, obstacleList);
     if (Math.max(excursion?.maximum || 0, emptyClearance?.maximum || 0)
-        < policy.minimumEmptyExcursionPx) continue;
+        < minimumEmptyExcursionPx) continue;
     if (sharesOuterCorridor({
       relation,
       relations,
@@ -578,11 +589,11 @@ export function cleanRouteDetourProblems({
     if (!shortest || !Number.isFinite(shortest.length) || shortest.length <= 0) continue;
     const detourRatio = actualLength / shortest.length;
     const excessLength = actualLength - shortest.length;
-    if (detourRatio < policy.minimumDetourRatio || excessLength < policy.minimumExcessLengthPx) continue;
+    if (detourRatio < minimumDetourRatio || excessLength < policy.minimumExcessLengthPx) continue;
 
     const relationId = relation.id ? ` id "${relation.id}"` : '';
     const message = `[composition/excessive-route-detour] ${diagramType} ${relationCollection}[${relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" travels ${Math.round(actualLength)}px, ${rounded(detourRatio)}x the ${Math.round(shortest.length)}px shortest obstacle-clearing orthogonal route, and reaches ${Math.round(excursion.maximum)}px beyond the content bounds — remove the distant via corridor or move it close to the connected content.`;
-    const supportedFix = 'remove the distant via points and retry automatic routing, or keep the endpoint sides and move the via corridor near the connected nodes while preserving labels and direction';
+    const supportedFix = 'reflow the connected feedback cycle into adjacent rows, remove the distant via points and retry automatic routing; use a short local corridor only if needed, preserving labels and direction';
     recordDiagnostic({
       code: 'composition/excessive-route-detour',
       severity: 'error',
@@ -601,9 +612,9 @@ export function cleanRouteDetourProblems({
         emptyControlPointClearancePx: emptyClearance,
         obstacleCount: shortest.obstacleCount,
         thresholds: {
-          minimumDetourRatio: policy.minimumDetourRatio,
+          minimumDetourRatio,
           minimumExcessLengthPx: policy.minimumExcessLengthPx,
-          minimumEmptyExcursionPx: policy.minimumEmptyExcursionPx,
+          minimumEmptyExcursionPx,
         },
       },
       supportedFixes: [supportedFix],

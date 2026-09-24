@@ -35,6 +35,7 @@
                 "frontend": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "backend": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "database": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "artifact": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "cloud": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "security": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "messagebus": { "$ref": "common.schema.json#/$defs/legendEntry" },
@@ -78,7 +79,7 @@
         "required": ["id", "type", "label"],
         "properties": {
           "id": { "$ref": "common.schema.json#/$defs/id" },
-          "type": { "$ref": "common.schema.json#/$defs/componentType" },
+          "type": { "enum": ["frontend", "backend", "database", "artifact", "cloud", "security", "messagebus", "external"] },
           "label": { "type": "string", "minLength": 1 },
           "sublabel": { "type": "string" },
           "tag": { "type": "string" },

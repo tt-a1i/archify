@@ -14,9 +14,9 @@ For a disproportionate sublabel, keep its exact role or protocol concise and pla
 
 ## Schema lookup
 
-Read both the mode schema and `schemas/common.schema.json`. The mode schemas use `$ref`, so the common file is where shared enums live.
+Read both the mode schema and `schemas/common.schema.json`. Most mode schemas use `$ref` for shared enums; inspect a mode-local enum before assuming it has the same choices.
 
-- `componentType`: `frontend`, `backend`, `database`, `cloud`, `security`, `messagebus`, `external`
+- Shared `componentType`: `frontend`, `backend`, `database`, `cloud`, `security`, `messagebus`, `external`. Architecture also allows `artifact` for files and generated output.
 - `variant`: `default`, `emphasis`, `security`, `dashed`
 - Relationship IDs use the shared identifier pattern and must be unique in their collection.
 
