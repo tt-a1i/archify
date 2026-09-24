@@ -19,6 +19,13 @@ function evidenceFailure(code, message, { subject = {}, evidence = {}, supported
   }]);
 }
 
+// Authored source mistakes (a missing file, a line past the end, a reversed
+// range) are collected across every reference and reported together, so one
+// repair pass can fix them all instead of discovering them one run at a time.
+function sourceProblem(code, message, { subject = {}, evidence = {}, supportedFixes = [] } = {}) {
+  return { code, severity: 'error', message, subject: { surface: 'repository-evidence', ...subject }, evidence, supportedFixes };
+}
+
 function runGit(repoRoot, args) {
   // 固定 SHA 的来源必须读取原始对象，不能使用本地 replacement refs 的替换内容。
   const result = spawnSync('git', ['--no-replace-objects', '-C', repoRoot, ...args], {
@@ -249,6 +256,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   }
 
   const nodes = Object.create(null);
+  const problems = [];
   let referenceCount = 0;
   for (const [nodeIndex, node] of authoredNodes.entries()) {
     if (!Array.isArray(node.sources) || node.sources.length === 0) continue;
@@ -268,26 +276,27 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
         ...(authored.label ? { label: authored.label } : {}),
       };
       if (source.endLine && !source.line) {
-        evidenceFailure('repository-evidence/line-required', `${at}/end_line requires line.`, {
+        problems.push(sourceProblem('repository-evidence/line-required', `${at}/end_line requires line.`, {
           subject: { path: `${at}/end_line`, ...nodeSubject },
           supportedFixes: ['add line or remove end_line'],
-        });
+        }));
       }
       if (source.endLine && source.endLine < source.line) {
-        evidenceFailure('repository-evidence/line-range-invalid', `${at}/end_line must be greater than or equal to line.`, {
+        problems.push(sourceProblem('repository-evidence/line-range-invalid', `${at}/end_line must be greater than or equal to line.`, {
           subject: { path: at, ...nodeSubject },
           evidence: { line: source.line, endLine: source.endLine },
           supportedFixes: ['use an end_line greater than or equal to line'],
-        });
+        }));
       }
       const object = `${revision}:${source.path}`;
       const type = runGit(realRoot, ['cat-file', '-t', object]);
       if (type.status !== 0 || type.stdout.trim() !== 'blob') {
-        evidenceFailure('repository-evidence/file-missing', `${where} does not identify a file at revision ${revision}.`, {
+        problems.push(sourceProblem('repository-evidence/file-missing', `${where} does not identify a file at revision ${revision}.`, {
           subject: { path: where, ...nodeSubject },
           evidence: { sourcePath: source.path, revision },
           supportedFixes: ['use a file path that exists at the pinned revision'],
-        });
+        }));
+        continue;
       }
       if (source.line) {
         const content = runGit(realRoot, ['show', object]);
@@ -299,17 +308,22 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
         const lineCount = sourceLineCount(content.stdout);
         const requestedLine = source.endLine || source.line;
         if (requestedLine > lineCount) {
-          evidenceFailure('repository-evidence/line-out-of-range', `${at} requests line ${requestedLine}, but ${source.path} has ${lineCount} lines at revision ${revision}.`, {
+          problems.push(sourceProblem('repository-evidence/line-out-of-range', `${at} requests line ${requestedLine}, but ${source.path} has ${lineCount} lines at revision ${revision}.`, {
             subject: { path: at, ...nodeSubject },
             evidence: { sourcePath: source.path, requestedLine, lineCount, revision },
             supportedFixes: ['use a line range that exists at the pinned revision'],
-          });
+          }));
         }
       }
       verified.push({ ...source, ...(linkMode === 'web' ? { href: repositorySourceHref(location.provider, location.url, revision, source) } : {}) });
       referenceCount += 1;
     }
     nodes[node.id] = verified;
+  }
+  if (problems.length) {
+    const message = problems.length === 1 ? problems[0].message
+      : `${problems.length} source references do not resolve at revision ${revision}; fix them all before the next run.`;
+    throwDiagnosticError(message, problems);
   }
   if (referenceCount === 0) {
     evidenceFailure('repository-evidence/source-required', `/meta/repository requires at least one /${collection} source reference.`, {

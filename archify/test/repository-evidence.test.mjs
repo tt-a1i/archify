@@ -724,3 +724,20 @@ test('repository architecture reports every isolated component and disconnected 
   data.diagram.connections.push({ from: 'lonely', to: first.id }, { from: 'island-a', to: first.id });
   assert.equal(verifyRepositoryEvidence('architecture', data.diagram, data.root).verified, true);
 });
+
+test('every unresolved source reference is reported in one validation run', () => {
+  const data = fixture();
+  data.diagram.components[0].sources = [
+    { path: 'src/router.js', line: 40 },
+    { path: 'src/missing.js' },
+    { path: 'src/router.js', line: 3, end_line: 1 },
+  ];
+  if (data.diagram.components[1]) data.diagram.components[1].sources = [{ path: 'src/router.js', line: 99 }];
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 1);
+  const codes = JSON.parse(result.stdout).diagnostics.map(({ code }) => code);
+  assert.ok(codes.filter((code) => code === 'repository-evidence/line-out-of-range').length >= (data.diagram.components[1] ? 2 : 1), result.stdout);
+  assert.ok(codes.includes('repository-evidence/file-missing'), result.stdout);
+  assert.ok(codes.includes('repository-evidence/line-range-invalid'), result.stdout);
+});
