@@ -5,6 +5,8 @@ import path from 'node:path';
 
 import { canonicalFuturePath, pathsAlias, resolveNativeOutputDirectory, resolveOutputPath } from '../renderers/shared/output-path.mjs';
 import { boundedSidecarStem } from '../renderers/shared/sidecar-path.mjs';
+import { compactArchitectureWidth } from '../renderers/architecture/compact-width.mjs';
+import { reduceCrossings } from './route-repair.mjs';
 import {
   captureAtomicOutput, captureRegularFileBinding, publishRegularFileBinding,
   releaseRegularFileBinding, removeOwnedRegularFile, verifyAtomicOutput,
@@ -557,6 +559,8 @@ export function compactFinalizeReceipt(receipt) {
     artifact: receipt.artifact,
     gates,
     ...(receipt.failedStage ? { failedStage: receipt.failedStage } : {}),
+    ...(receipt.autoCompaction ? { autoCompaction: receipt.autoCompaction } : {}),
+    ...(receipt.autoRouteRepair ? { autoRouteRepair: receipt.autoRouteRepair } : {}),
     diagnostics: selectedDiagnostics,
     diagnosticSummary: {
       total: allDiagnostics.length,
@@ -610,6 +614,40 @@ export function compactFinalizeReceipt(receipt) {
   return compact;
 }
 
+// A draft whose only failure is desktop width is compacted in place once, so
+// the common "first draft slightly too wide" case needs no authoring turn.
+function compactOverwideCandidate(candidatePath, diagnostics) {
+  if (!diagnostics?.length || !diagnostics.every((d) => d.code === 'composition/desktop-readability')) return null;
+  let removePx = 0;
+  let viewBoxWidth = 0;
+  let maximumViewBoxWidth = Infinity;
+  for (const { evidence = {} } of diagnostics) {
+    const { sourceFontPx, availableDiagramWidth, minimumProjectedFontPx } = evidence;
+    if (![sourceFontPx, availableDiagramWidth, minimumProjectedFontPx, evidence.viewBoxWidth].every(Number.isFinite)
+      || sourceFontPx < minimumProjectedFontPx) return null;
+    const maximum = Math.floor((sourceFontPx * availableDiagramWidth) / minimumProjectedFontPx);
+    maximumViewBoxWidth = Math.min(maximumViewBoxWidth, maximum);
+    viewBoxWidth = Math.max(viewBoxWidth, evidence.viewBoxWidth);
+  }
+  // Boundary padding and edge labels also set the width; keep a 20px margin.
+  removePx = Math.ceil(viewBoxWidth - maximumViewBoxWidth) + 20;
+  let originalBytes;
+  let candidate;
+  try {
+    originalBytes = fs.readFileSync(candidatePath);
+    candidate = JSON.parse(originalBytes.toString('utf8').replace(/^﻿/, ''));
+  } catch {
+    return null;
+  }
+  const compacted = compactArchitectureWidth(candidate, removePx);
+  if (!compacted) return null;
+  fs.writeFileSync(candidatePath, `${JSON.stringify(compacted, null, 2)}\n`);
+  return {
+    originalBytes,
+    record: { reason: 'composition/desktop-readability', viewBoxWidth, maximumViewBoxWidth, removedPx: removePx, originalSha256: sha256(originalBytes) },
+  };
+}
+
 export async function runFinalize({
   cliPath,
   type,
@@ -635,7 +673,7 @@ export async function runFinalize({
   const resolvedInput = path.resolve(input);
   const resolvedOutput = resolveOutputPath({ requestedOutput: output, inputPaths: [resolvedInput] }).outputPath;
   const resolvedOutDir = outDir === undefined ? undefined : resolveNativeOutputDirectory(outDir);
-  const specification = identity(resolvedInput);
+  let specification = identity(resolvedInput);
   if (candidateSha256 && specification.sha256 !== candidateSha256) {
     const error = new Error(`The candidate changed after validation: expected sha256 ${candidateSha256}, found ${specification.sha256 || 'unreadable'}.`);
     error.finalizeCode = 'finalize/candidate-changed';
@@ -721,6 +759,17 @@ export async function runFinalize({
 
   try {
     let exitCode = 0;
+    let compaction = null;
+    let routeRepair = null;
+    let restartForRoutes = false;
+    const restart = () => {
+      specification = identity(resolvedInput);
+      Object.assign(receipt, { status: 'running', specification, stages: {}, diagnostics: [], artifact: { path: resolvedOutput } });
+      delete receipt.failedStage;
+      exitCode = 0;
+      persistReceipts();
+    };
+    for (let attempt = 0; attempt < 5; attempt++) {
     for (const stage of ['deliver', 'check', 'browser-check']) {
       const stageStarted = process.hrtime.bigint();
       const args = stageArguments({
@@ -846,6 +895,73 @@ export async function runFinalize({
         break;
       }
       persistReceipts();
+      // Crossings that remain after a passing check are retried once with
+      // searched endpoint sides before the browser gate runs.
+      const crossings = stage === 'check' ? stageReceipt?.composition?.routeReview?.crossings : null;
+      if (crossings?.length && !routeRepair && type === 'architecture' && runBrowserCheck) {
+        const originalBytes = fs.readFileSync(resolvedInput);
+        let repaired = null;
+        try {
+          repaired = await reduceCrossings({
+            cliPath, quality, cwd, env,
+            candidate: JSON.parse(originalBytes.toString('utf8').replace(/^﻿/, '')),
+          });
+        } catch {
+          repaired = null;
+        }
+        routeRepair = repaired ? { originalBytes, record: repaired.record } : { none: true };
+        if (repaired) {
+          fs.writeFileSync(resolvedInput, `${JSON.stringify(repaired.candidate, null, 2)}
+`);
+          restartForRoutes = true;
+          break;
+        }
+      }
+    }
+    if (restartForRoutes) {
+      restartForRoutes = false;
+      restart();
+      continue;
+    }
+    if (routeRepair?.record && !receipt.autoRouteRepair) {
+      if (exitCode !== 0) {
+        // The searched sides broke another gate: restore the passing draft.
+        const retryDiagnostics = [...new Set(receipt.diagnostics.map((diagnostic) => diagnostic.code))];
+        fs.writeFileSync(resolvedInput, routeRepair.originalBytes);
+        receipt.autoRouteRepair = { ...routeRepair.record, outcome: 'reverted', retryDiagnostics };
+        restart();
+        continue;
+      }
+      receipt.autoRouteRepair = { ...routeRepair.record, outcome: 'applied' };
+    }
+    if (compaction) {
+      if (exitCode !== 0 && receipt.failedStage === 'validate') {
+        // Compaction introduced a new authoring defect: restore the draft and
+        // report its original width failure instead.
+        const retryCodes = [...new Set(receipt.diagnostics.map((diagnostic) => diagnostic.code))];
+        fs.writeFileSync(resolvedInput, compaction.originalBytes);
+        Object.assign(receipt, compaction.firstAttempt);
+        specification = receipt.specification;
+        receipt.autoCompaction = { ...compaction.record, outcome: 'reverted', retryDiagnostics: retryCodes };
+        exitCode = compaction.firstExitCode;
+      } else {
+        receipt.autoCompaction = { ...compaction.record, outcome: 'applied' };
+      }
+      break;
+    }
+    compaction = exitCode !== 0 && type === 'architecture' && receipt.failedStage === 'validate'
+      ? compactOverwideCandidate(resolvedInput, receipt.diagnostics) : null;
+    if (!compaction) break;
+    compaction.firstExitCode = exitCode;
+    compaction.firstAttempt = {
+      stages: receipt.stages, diagnostics: receipt.diagnostics, failedStage: receipt.failedStage,
+      status: receipt.status, specification: receipt.specification, artifact: receipt.artifact,
+    };
+    specification = identity(resolvedInput);
+    Object.assign(receipt, { status: 'running', specification, stages: {}, diagnostics: [], artifact: { path: resolvedOutput } });
+    delete receipt.failedStage;
+    exitCode = 0;
+    persistReceipts();
     }
 
     receipt.ok = exitCode === 0;

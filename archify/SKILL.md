@@ -43,6 +43,10 @@ Use this path for ordinary generation. Read branch references only when their st
 
    For a repository-backed candidate, include evidence on the first draft and use the complete first command: `node bin/archify.mjs finalize <type> <candidate.json> <output.html> --repo-root <repo-root> --quality showcase --json`.
 
+   Write the candidate with a file-writing tool rather than a shell heredoc, which breaks on quotes inside the JSON. In PowerShell run the same command with each path in single quotes, for example `node '<skill>\bin\archify.mjs' finalize architecture '<candidate.json>' '<output.html>' --repo-root '<repo-root>' --quality showcase --json`, and do not append `2>&1`.
+
+   When the only failure is Architecture desktop width, `finalize` narrows the empty horizontal gaps in the candidate file once, keeping node order, rows, and routes, and reruns; its summary then reports `autoCompaction`. When automatic relationships still cross after a passing check, it tries endpoint sides for them once and reports `autoRouteRepair`. Continue from the rewritten candidate.
+
    A passing receipt proves the included `validate`, `deliver`, strict `check`, and real-browser `browser-check` gates passed. Use its compact summary; run standalone commands only for a separate request or focused failure diagnosis.
 
 5. A non-zero exit is never success. Read compact stdout or `evidence.summaryReceipt`, then [repair the failed gate](references/delivery-contract.md#failed-finalize-and-candidate-repair), including its repair limit. Preserve requested meaning and source evidence. For several tangled Architecture routes, read [Architecture layout repair](references/architecture-layout-repair.md); for measured field or geometry failures, read [Authoring contract](references/authoring-contract.md). Edit the connected neighborhood and rerun the complete `finalize` command from step 4.
