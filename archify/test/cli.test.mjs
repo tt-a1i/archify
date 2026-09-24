@@ -4282,3 +4282,15 @@ test('render rejects an extra positional argument', () => {
   assert.notEqual(result.status, 0);
   assert.deepEqual(fs.readdirSync(dir), ['spec.json']);
 });
+
+test('cli: a UTF-8 byte-order mark from Windows PowerShell is not a JSON parse failure', () => {
+  const input = path.join(tmp, 'bom-candidate.json');
+  const out = path.join(tmp, 'bom-candidate.html');
+  const example = fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8');
+  fs.writeFileSync(input, `${String.fromCharCode(0xfeff)}${example}`);
+
+  for (const args of [['validate', 'architecture', input, '--json'], ['deliver', 'architecture', input, out, '--json']]) {
+    const result = run(args);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+  }
+});

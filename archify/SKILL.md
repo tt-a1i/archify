@@ -14,7 +14,13 @@ Create an interactive HTML diagram from typed JSON. Static output is the default
 
 Run commands from your working directory, keeping candidate JSON and output artifacts there. Replace `bin/archify.mjs` in the commands below with the installed package's absolute path, or its path relative to your working directory; input and output paths resolve from that working directory.
 
-For a real codebase, read [Repository authoring](references/repository-authoring.md) while tracing the requested behavior. A system description uses the steps below; an existing JSON uses the handoff path.
+For a real codebase, start with one shell command that builds the evidence pack, records the origin, and prints Repository authoring, then follow [Repository authoring](references/repository-authoring.md) while tracing the requested behavior:
+
+```bash
+node bin/archify.mjs inspect-repo <repo-root> --evidence-pack --json; git -C <repo-root> remote get-url origin; cat references/repository-authoring.md
+```
+
+Resolve the package paths as for `bin/archify.mjs`; in PowerShell, print the file with `Get-Content`. Read Authoring defaults and the example as step 2 below describes. A system description uses the steps below; an existing JSON uses the handoff path.
 
 ## Existing candidate handoff
 
@@ -36,6 +42,10 @@ Use this path for ordinary generation. Read branch references only when their st
    ```
 
    For a repository-backed candidate, include evidence on the first draft and use the complete first command: `node bin/archify.mjs finalize <type> <candidate.json> <output.html> --repo-root <repo-root> --quality showcase --json`.
+
+   Write and edit the candidate with a file-writing tool, including repairs, rather than a shell heredoc or a PowerShell rewrite: heredocs break on quotes inside the JSON, and PowerShell rewrites can garble non-ASCII text and add a byte-order mark. In PowerShell run the same command with each path in single quotes, for example `node '<skill>\bin\archify.mjs' finalize architecture '<candidate.json>' '<output.html>' --repo-root '<repo-root>' --quality showcase --json`, and do not append `2>&1`.
+
+   When the only failure is Architecture desktop width, `finalize` narrows the empty horizontal gaps in the candidate file once, keeping node order, rows, and routes, and reruns; its summary then reports `autoCompaction`. When automatic relationships still cross after a passing check, it tries endpoint sides for them once and reports `autoRouteRepair`. Continue from the rewritten candidate.
 
    A passing receipt proves the included `validate`, `deliver`, strict `check`, and real-browser `browser-check` gates passed. Use its compact summary; run standalone commands only for a separate request or focused failure diagnosis.
 

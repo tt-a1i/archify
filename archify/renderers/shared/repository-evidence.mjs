@@ -19,6 +19,13 @@ function evidenceFailure(code, message, { subject = {}, evidence = {}, supported
   }]);
 }
 
+// Authored source mistakes (a missing file, a line past the end, a reversed
+// range) are collected across every reference and reported together, so one
+// repair pass can fix them all instead of discovering them one run at a time.
+function sourceProblem(code, message, { subject = {}, evidence = {}, supportedFixes = [] } = {}) {
+  return { code, severity: 'error', message, subject: { surface: 'repository-evidence', ...subject }, evidence, supportedFixes };
+}
+
 function runGit(repoRoot, args) {
   // 固定 SHA 的来源必须读取原始对象，不能使用本地 replacement refs 的替换内容。
   const result = spawnSync('git', ['--no-replace-objects', '-C', repoRoot, ...args], {
@@ -92,6 +99,63 @@ export function hasRepositoryEvidence(diagramType, diagram) {
   return Boolean(diagram?.meta?.repository) || authored.nodes.some((node) => Array.isArray(node?.sources) && node.sources.length);
 }
 
+// A repository-derived architecture should show how every component relates
+// to the rest. An isolated component usually means its relationship went to a
+// split-out child or was never traced; a separate group (a Rust server and its
+// protocol drawn beside, but never linked to, the runtime it serves) means a
+// runtime link is missing. The largest connected group is the main diagram;
+// every other group is reported, all in one pass.
+function topologyProblems(diagramType, diagram) {
+  if (diagramType !== 'architecture' || !Array.isArray(diagram?.components) || diagram.components.length < 2) return [];
+  const index = new Map(diagram.components.map((component, position) => [component.id, position]));
+  const neighbours = new Map(diagram.components.map((component) => [component.id, new Set()]));
+  for (const connection of diagram.connections || []) {
+    if (!neighbours.has(connection.from) || !neighbours.has(connection.to)) continue;
+    neighbours.get(connection.from).add(connection.to);
+    neighbours.get(connection.to).add(connection.from);
+  }
+  const groups = [];
+  const seen = new Set();
+  for (const component of diagram.components) {
+    if (seen.has(component.id)) continue;
+    const group = [];
+    const pending = [component.id];
+    seen.add(component.id);
+    while (pending.length) {
+      const id = pending.pop();
+      group.push(id);
+      for (const next of neighbours.get(id)) {
+        if (!seen.has(next)) { seen.add(next); pending.push(next); }
+      }
+    }
+    groups.push(group.sort((left, right) => index.get(left) - index.get(right)));
+  }
+  if (groups.length < 2) return [];
+  const main = groups.reduce((largest, group) => (group.length > largest.length ? group : largest));
+  return groups.filter((group) => group !== main).map((group) => {
+    const subject = { surface: 'repository-evidence', diagramType, collection: 'components' };
+    if (group.length === 1) {
+      const [id] = group;
+      return {
+        code: 'repository-evidence/component-isolated',
+        severity: 'error',
+        message: `/components/${index.get(id)} (${id}) has no connection.`,
+        subject: { ...subject, path: `/components/${index.get(id)}`, nodeId: id, componentId: id },
+        evidence: { mainGroup: main.length },
+        supportedFixes: ['add the evidence-backed connection that links it to the diagram', 'merge it into the component that owns its relationships', 'remove it if it is outside the requested scope'],
+      };
+    }
+    return {
+      code: 'repository-evidence/component-group-disconnected',
+      severity: 'error',
+      message: `Components ${group.join(', ')} form a separate group with no connection to the main diagram (${main.length} components).`,
+      subject: { ...subject, path: '/connections', nodeIds: group },
+      evidence: { group, mainGroup: main.length },
+      supportedFixes: ['add the evidence-backed runtime link between this group and the main diagram', 'remove the group if it is outside the requested scope'],
+    };
+  });
+}
+
 export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   if (!hasRepositoryEvidence(diagramType, diagram)) return null;
   const { collection, nodes: authoredNodes } = evidenceNodes(diagramType, diagram);
@@ -132,6 +196,10 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       subject: { path: '/meta/repository/url' },
       supportedFixes: ['use a canonical GitHub or Gitee URL, or select link_mode: local-only to retain local verification without web links'],
     });
+  }
+  const disconnected = topologyProblems(diagramType, diagram);
+  if (disconnected.length) {
+    throwDiagnosticError(`${disconnected.length} disconnected part(s) in the repository architecture: ${disconnected.map((entry) => entry.message).join(' ')}`, disconnected);
   }
   if (!repoRootInput) {
     evidenceFailure('repository-evidence/root-required', 'This diagram declares source evidence. Pass --repo-root <repository> so Archify can verify it before rendering.', {
@@ -188,6 +256,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   }
 
   const nodes = Object.create(null);
+  const problems = [];
   let referenceCount = 0;
   for (const [nodeIndex, node] of authoredNodes.entries()) {
     if (!Array.isArray(node.sources) || node.sources.length === 0) continue;
@@ -207,26 +276,27 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
         ...(authored.label ? { label: authored.label } : {}),
       };
       if (source.endLine && !source.line) {
-        evidenceFailure('repository-evidence/line-required', `${at}/end_line requires line.`, {
+        problems.push(sourceProblem('repository-evidence/line-required', `${at}/end_line requires line.`, {
           subject: { path: `${at}/end_line`, ...nodeSubject },
           supportedFixes: ['add line or remove end_line'],
-        });
+        }));
       }
       if (source.endLine && source.endLine < source.line) {
-        evidenceFailure('repository-evidence/line-range-invalid', `${at}/end_line must be greater than or equal to line.`, {
+        problems.push(sourceProblem('repository-evidence/line-range-invalid', `${at}/end_line must be greater than or equal to line.`, {
           subject: { path: at, ...nodeSubject },
           evidence: { line: source.line, endLine: source.endLine },
           supportedFixes: ['use an end_line greater than or equal to line'],
-        });
+        }));
       }
       const object = `${revision}:${source.path}`;
       const type = runGit(realRoot, ['cat-file', '-t', object]);
       if (type.status !== 0 || type.stdout.trim() !== 'blob') {
-        evidenceFailure('repository-evidence/file-missing', `${where} does not identify a file at revision ${revision}.`, {
+        problems.push(sourceProblem('repository-evidence/file-missing', `${where} does not identify a file at revision ${revision}.`, {
           subject: { path: where, ...nodeSubject },
           evidence: { sourcePath: source.path, revision },
           supportedFixes: ['use a file path that exists at the pinned revision'],
-        });
+        }));
+        continue;
       }
       if (source.line) {
         const content = runGit(realRoot, ['show', object]);
@@ -238,17 +308,22 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
         const lineCount = sourceLineCount(content.stdout);
         const requestedLine = source.endLine || source.line;
         if (requestedLine > lineCount) {
-          evidenceFailure('repository-evidence/line-out-of-range', `${at} requests line ${requestedLine}, but ${source.path} has ${lineCount} lines at revision ${revision}.`, {
+          problems.push(sourceProblem('repository-evidence/line-out-of-range', `${at} requests line ${requestedLine}, but ${source.path} has ${lineCount} lines at revision ${revision}.`, {
             subject: { path: at, ...nodeSubject },
             evidence: { sourcePath: source.path, requestedLine, lineCount, revision },
             supportedFixes: ['use a line range that exists at the pinned revision'],
-          });
+          }));
         }
       }
       verified.push({ ...source, ...(linkMode === 'web' ? { href: repositorySourceHref(location.provider, location.url, revision, source) } : {}) });
       referenceCount += 1;
     }
     nodes[node.id] = verified;
+  }
+  if (problems.length) {
+    const message = problems.length === 1 ? problems[0].message
+      : `${problems.length} source references do not resolve at revision ${revision}; fix them all before the next run.`;
+    throwDiagnosticError(message, problems);
   }
   if (referenceCount === 0) {
     evidenceFailure('repository-evidence/source-required', `/meta/repository requires at least one /${collection} source reference.`, {

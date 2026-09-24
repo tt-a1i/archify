@@ -701,3 +701,43 @@ test('live preview forwards repo-root and publishes only verified evidence', { t
     await preview.stop();
   }
 });
+
+test('repository architecture reports every isolated component and disconnected group in one pass', () => {
+  const data = fixture();
+  const [first, second, third, fourth] = data.diagram.components;
+  const extra = (id) => ({ ...fourth, id, sources: [{ path: 'src/store.js' }] });
+  data.diagram.components.push(extra('lonely'), extra('island-a'), extra('island-b'));
+  data.diagram.connections.push({ from: 'island-a', to: 'island-b' });
+  assert.ok(first && second && third);
+
+  let diagnostics;
+  try {
+    verifyRepositoryEvidence('architecture', data.diagram, data.root);
+  } catch (error) {
+    diagnostics = error.archifyDiagnostics;
+  }
+  assert.ok(diagnostics, 'a disconnected repository architecture is rejected');
+  assert.deepEqual(diagnostics.map((entry) => entry.code).sort(), ['repository-evidence/component-group-disconnected', 'repository-evidence/component-isolated']);
+  assert.ok(diagnostics.some((entry) => entry.subject.nodeId === 'lonely'));
+  assert.ok(diagnostics.some((entry) => entry.message.includes('island-a, island-b')));
+
+  data.diagram.connections.push({ from: 'lonely', to: first.id }, { from: 'island-a', to: first.id });
+  assert.equal(verifyRepositoryEvidence('architecture', data.diagram, data.root).verified, true);
+});
+
+test('every unresolved source reference is reported in one validation run', () => {
+  const data = fixture();
+  data.diagram.components[0].sources = [
+    { path: 'src/router.js', line: 40 },
+    { path: 'src/missing.js' },
+    { path: 'src/router.js', line: 3, end_line: 1 },
+  ];
+  if (data.diagram.components[1]) data.diagram.components[1].sources = [{ path: 'src/router.js', line: 99 }];
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 1);
+  const codes = JSON.parse(result.stdout).diagnostics.map(({ code }) => code);
+  assert.ok(codes.filter((code) => code === 'repository-evidence/line-out-of-range').length >= (data.diagram.components[1] ? 2 : 1), result.stdout);
+  assert.ok(codes.includes('repository-evidence/file-missing'), result.stdout);
+  assert.ok(codes.includes('repository-evidence/line-range-invalid'), result.stdout);
+});

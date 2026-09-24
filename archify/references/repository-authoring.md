@@ -5,10 +5,16 @@ the authority for responsibilities, calls, boundaries, and persistence. The
 diagram is complete when the requested meaning is covered and every asserted
 fact has supporting source evidence.
 
+The first command in SKILL.md already built the evidence pack, printed the
+origin, and printed this file; if you have not run it, run it now. Read
+Authoring defaults and the example as SKILL.md step 2 describes.
+
 ## Explore on demand
 
-1. **Freeze identity.** From the target repository, record `git rev-parse
-   HEAD`, `git remote get-url origin`, and `git status --short`. Remove HTTP(S)
+1. **Freeze identity.** The pack's `repository` gives `head` and `dirty`, and
+   the first command printed the origin; run `git rev-parse HEAD`,
+   `git remote get-url origin`, or `git status --short` only for a value it
+   did not give. Remove HTTP(S)
    userinfo (including usernames, passwords, and tokens) before recording the
    origin or placing it in the candidate. Preserve its transport, port, path and
    `.git` suffix; do not rewrite an internal SSH origin as HTTPS. Pin the credential-free URL and
@@ -22,13 +28,40 @@ fact has supporting source evidence.
    present uncommitted bytes as evidence for `HEAD`; `local-only` does not record
    a verifiable snapshot of those bytes.
 
-2. **Map the slice.** Use project instructions, manifests, entry points,
-   registrations, and deployment configuration to locate candidate runtime
-   units. Read the entry, configuration, and modules relevant to the request.
-   Follow imports and call sites
-   until the requested responsibility reaches its actual input, output, or
-   side effect. Read a small connected slice instead of scanning the repository
-   for a convenient label.
+2. **Map the slice.** Start from the evidence pack the first command printed;
+   do not rerun or reread it. It is an answer, not a work queue:
+   - `graph` is the import graph G = (V, E): `V[i]` is a module path, each
+     `E` row is `[from, to, importCount]`. Imports place and group
+     components; draw one only when no runtime channel explains it, labelled
+     `imports`.
+   - `runtimeChannels` are where runtime modules spawn processes, use queues,
+     open stores, or serve or call HTTP, gRPC or WebSocket; each `anchor` is
+     the call line. Draw a channel only after tracing both caller and peer.
+   - `modules` are candidates, not one node each; `supportModules` (tests,
+     scripts, docs) stay out unless requested. Console scripts mapped onto a
+     file (`boundaries.entrypoints[].files`) are separate processes.
+   - A module is code, not a runtime unit. A datastore or external system the
+     primary path reads, writes, or calls (a database, a state or data file
+     another step consumes, a repository, model weights) gets its own
+     component even when one module owns it, and so does a process boundary;
+     `datastore` channels point at these stores: read each one's anchor
+     line to name the store it opens, and draw it unless it is outside the
+     requested scope.
+   - `questions` are optional leads; answer only those that could change a
+     boundary, from their anchors.
+   - `crossLanguage.routeReferences` are candidate links for a component in
+     another language; read the one anchor before drawing it.
+   - `unscanned` languages and `dynamic` imports are boundaries to confirm,
+     not absence.
+   The pack carries paths, line numbers and definition names, not source
+   text. When `repository.dirty` is false, cite pack line numbers (anchors,
+   outlines) directly; `outlines` give file lengths and definitions
+   so you read ranges, not whole files. Batch the reads you still need into one
+   command. Draw the primary request path end to end first, then side paths.
+   Finalize rejects an isolated component or disconnected group: attach a
+   relationship owned by one file to its module's component. Cite a module's
+   `sample` or `entrypoints` file, not the directory. Keep the scan output
+   local; configuration identifiers can be sensitive.
 
 3. **Trace ownership.** Derive runtime and I/O relationships from the observed
    actor, operation, and target at their call sites; deployment and trust

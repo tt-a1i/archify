@@ -48,7 +48,8 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
   }
   let diagram;
   try {
-    diagram = JSON.parse(input);
+    // Windows PowerShell writes UTF-8 with a byte-order mark; it is not JSON syntax.
+    diagram = JSON.parse(input.replace(/^\uFEFF/, ''));
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error;
     const message = `Input JSON could not be parsed: ${error.message}`;

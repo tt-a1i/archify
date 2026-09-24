@@ -1,0 +1,341 @@
+{
+ "schema_version": 1,
+ "diagram_type": "architecture",
+ "meta": {
+  "title": "Archify CLI: inspect, render and finalize",
+  "output": "diagram.html",
+  "quality_profile": "showcase",
+  "locale": "en"
+ },
+ "components": [
+  {
+   "id": "agent",
+   "type": "external",
+   "label": "Coding agent",
+   "sublabel": "follows SKILL.md",
+   "pos": [
+    40,
+    60
+   ],
+   "size": [
+    150,
+    64
+   ]
+  },
+  {
+   "id": "cli",
+   "type": "backend",
+   "label": "archify CLI",
+   "sublabel": "bin/archify.mjs",
+   "pos": [
+    320,
+    60
+   ],
+   "size": [
+    150,
+    64
+   ]
+  },
+  {
+   "id": "finalize",
+   "type": "backend",
+   "label": "Finalize pipeline",
+   "sublabel": "4 gates, stops on fail",
+   "pos": [
+    600,
+    60
+   ],
+   "size": [
+    150,
+    64
+   ]
+  },
+  {
+   "id": "browser-check",
+   "type": "backend",
+   "label": "Browser check",
+   "sublabel": "bin/visual-check.mjs",
+   "pos": [
+    880,
+    60
+   ],
+   "size": [
+    150,
+    64
+   ]
+  },
+  {
+   "id": "repo-index",
+   "type": "backend",
+   "label": "Repository index",
+   "sublabel": "evidence pack builder",
+   "pos": [
+    40,
+    240
+   ],
+   "size": [
+    150,
+    64
+   ]
+  },
+  {
+   "id": "renderer",
+   "type": "backend",
+   "label": "Type renderers",
+   "sublabel": "render-<type>.mjs x5",
+   "pos": [
+    320,
+    240
+   ],
+   "size": [
+    150,
+    64
+   ]
+  },
+  {
+   "id": "checker",
+   "type": "backend",
+   "label": "Static artifact check",
+   "sublabel": "check-render-output.mjs",
+   "pos": [
+    600,
+    240
+   ],
+   "size": [
+    150,
+    64
+   ]
+  },
+  {
+   "id": "chrome",
+   "type": "external",
+   "label": "Headless Chrome",
+   "sublabel": "ARCHIFY_CHROME or PATH",
+   "pos": [
+    880,
+    240
+   ],
+   "size": [
+    150,
+    64
+   ]
+  },
+  {
+   "id": "target-repo",
+   "type": "external",
+   "label": "Target Git repo",
+   "sublabel": "inspected codebase",
+   "pos": [
+    40,
+    420
+   ],
+   "size": [
+    150,
+    64
+   ]
+  },
+  {
+   "id": "shared-core",
+   "type": "backend",
+   "label": "Shared render core",
+   "sublabel": "renderers/shared/cli.mjs",
+   "pos": [
+    320,
+    420
+   ],
+   "size": [
+    150,
+    64
+   ]
+  },
+  {
+   "id": "artifact",
+   "type": "database",
+   "label": "diagram.html",
+   "sublabel": "+ .delivery.json",
+   "pos": [
+    600,
+    420
+   ],
+   "size": [
+    150,
+    64
+   ]
+  },
+  {
+   "id": "evidence",
+   "type": "security",
+   "label": "Source evidence",
+   "sublabel": "pinned-revision verify",
+   "pos": [
+    40,
+    600
+   ],
+   "size": [
+    150,
+    64
+   ]
+  },
+  {
+   "id": "template",
+   "type": "database",
+   "label": "Viewer template",
+   "sublabel": "assets/template.html",
+   "pos": [
+    320,
+    600
+   ],
+   "size": [
+    150,
+    64
+   ]
+  },
+  {
+   "id": "viewer-src",
+   "type": "frontend",
+   "label": "Viewer sources",
+   "sublabel": "viewer/*.js + shell",
+   "pos": [
+    600,
+    600
+   ],
+   "size": [
+    150,
+    64
+   ]
+  }
+ ],
+ "connections": [
+  {
+   "id": "agent-runs-cli",
+   "from": "agent",
+   "to": "cli",
+   "label": "run commands",
+   "variant": "emphasis"
+  },
+  {
+   "id": "cli-loads-finalize",
+   "from": "cli",
+   "to": "finalize",
+   "label": "loads finalize",
+   "variant": "emphasis"
+  },
+  {
+   "id": "finalize-runs-stages",
+   "from": "finalize",
+   "to": "cli",
+   "label": "execFile stages",
+   "variant": "dashed"
+  },
+  {
+   "id": "finalize-browser",
+   "from": "finalize",
+   "to": "browser-check",
+   "label": "browser-check"
+  },
+  {
+   "id": "cli-inspect",
+   "from": "cli",
+   "to": "repo-index",
+   "label": "inspect-repo"
+  },
+  {
+   "id": "index-git",
+   "from": "repo-index",
+   "to": "target-repo",
+   "label": "git ls-files"
+  },
+  {
+   "id": "cli-spawns-renderer",
+   "from": "cli",
+   "to": "renderer",
+   "label": "spawn render-<type>",
+   "variant": "emphasis"
+  },
+  {
+   "id": "cli-spawns-check",
+   "from": "cli",
+   "to": "checker",
+   "label": "spawn check"
+  },
+  {
+   "id": "renderer-core",
+   "from": "renderer",
+   "to": "shared-core",
+   "label": "load + write",
+   "variant": "emphasis"
+  },
+  {
+   "id": "core-evidence",
+   "from": "shared-core",
+   "to": "evidence",
+   "label": "verify sources",
+   "variant": "security"
+  },
+  {
+   "id": "evidence-git",
+   "from": "evidence",
+   "to": "target-repo",
+   "label": "read pinned blobs",
+   "variant": "security"
+  },
+  {
+   "id": "template-core",
+   "from": "template",
+   "to": "shared-core",
+   "label": "read template"
+  },
+  {
+   "id": "viewer-generate",
+   "from": "viewer-src",
+   "to": "template",
+   "label": "generate:viewer",
+   "variant": "dashed"
+  },
+  {
+   "id": "core-writes-html",
+   "from": "shared-core",
+   "to": "artifact",
+   "label": "write HTML",
+   "variant": "emphasis"
+  },
+  {
+   "id": "checker-reads",
+   "from": "checker",
+   "to": "artifact",
+   "label": "read bytes"
+  },
+  {
+   "id": "browser-cdp",
+   "from": "browser-check",
+   "to": "chrome",
+   "label": "CDP pipe"
+  },
+  {
+   "id": "chrome-loads",
+   "from": "chrome",
+   "to": "artifact",
+   "label": "Page.navigate"
+  }
+ ],
+ "cards": [
+  {
+   "dot": "cyan",
+   "title": "Finalize gates",
+   "items": [
+    "validate, deliver and check run as CLI child processes",
+    "browser-check runs in process via visual-check.mjs",
+    "First non-passing gate stops the pipeline"
+   ]
+  },
+  {
+   "dot": "emerald",
+   "title": "Rendering",
+   "items": [
+    "Each diagram type has its own renderer process",
+    "Shared core validates schema, verifies sources, fills the template",
+    "Viewer sources are assembled into the committed template by maintainers"
+   ]
+  }
+ ]
+}

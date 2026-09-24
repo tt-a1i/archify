@@ -2187,6 +2187,7 @@ function usage() {
   archify browser-check <output.html> [--json|--summary] [--require-provenance] [--out-dir <dir>]
   archify visual-check <output.html> [--json|--summary] [--require-provenance] [--out-dir <dir>]
   archify guide [scenario or question] [--json] [--lang en|zh]
+  archify inspect-repo <repository-root> [--batch-size 1..100] [--batch number] [--snapshot file] [--evidence-pack [--source-excerpts]] [--json]
   archify brands [name, alias, domain, or category] [--json]
   archify brands capture <url> [--json]
   archify examples
@@ -2667,7 +2668,10 @@ function compositionFixes(issue) {
     return [`${preserveIntent} The diagnosed ${sourceFontPx}px source text is below the ${hardFloorPx}px hard floor even at scale 1, so use a renderer-supported semantic text-size setting or renderer-level fix. Position-only label controls cannot repair its projection.${readerCap}`];
   }
   const maximumViewBoxWidth = Math.floor((sourceFontPx * actualBudgetPx) / hardFloorPx);
-  return [`${preserveIntent} Compactly reflow automatic spacing and empty corridors so the complete viewBox width is at most ${maximumViewBoxWidth}px (current ${viewBoxWidth}px; ${sourceFontPx}px source text at ${actualBudgetPx}px desktop budget). If supplied geometry fixes that width, use a renderer-supported semantic text-size setting or renderer-level fix instead. Position-only label controls cannot repair its projection.${readerCap}`];
+  // Boundary padding and edge labels also set the width, so moving nodes in by
+  // exactly the overflow often leaves the canvas a few pixels too wide.
+  const overflowPx = Math.max(0, Math.ceil(viewBoxWidth - maximumViewBoxWidth));
+  return [`${preserveIntent} Compactly reflow automatic spacing and empty corridors so the complete viewBox width is at most ${maximumViewBoxWidth}px (current ${viewBoxWidth}px, so remove at least ${overflowPx}px; aim about 20px lower, because boundary padding and edge labels also set the width; ${sourceFontPx}px source text at ${actualBudgetPx}px desktop budget). If supplied geometry fixes that width, use a renderer-supported semantic text-size setting or renderer-level fix instead. Position-only label controls cannot repair its projection.${readerCap}`];
 }
 
 function formatDiagnostics(error, diagnostics = []) {
@@ -4348,7 +4352,7 @@ async function commandDeliver(args) {
   let diagram;
   try {
     specification = fs.readFileSync(inputPath);
-    diagram = JSON.parse(specification.toString('utf8'));
+    diagram = JSON.parse(specification.toString('utf8').replace(/^\uFEFF/, ''));
   } catch (error) {
     const repair = inputDiagnostic(error, inputPath);
     reportDeliveryFailure({
@@ -5905,6 +5909,138 @@ async function commandDoctor(args) {
   process.exitCode = 1;
 }
 
+function pruneExpiredInspectSnapshots() {
+  const tempRoot = os.tmpdir();
+  const cutoff = Date.now() - (24 * 60 * 60 * 1000);
+  let entries;
+  try { entries = fs.readdirSync(tempRoot, { withFileTypes: true }); } catch { return; }
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !entry.name.startsWith('archify-inspect-repo-')) continue;
+    const directory = path.join(tempRoot, entry.name);
+    try {
+      if (fs.statSync(directory).mtimeMs < cutoff) fs.rmSync(directory, { recursive: true, force: true });
+    } catch { /* A live or protected session is left alone. */ }
+  }
+}
+
+async function commandInspectRepo(args) {
+  let root;
+  let batchSize = 20;
+  let batch = 1;
+  let snapshotFile;
+  let json = false;
+  let evidencePack = false;
+  let sourceExcerpts = false;
+  let batchOptionProvided = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--batch-size' || arg === '--batch' || arg === '--snapshot') {
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith('--')) {
+        rejectCliArgument(`${arg} requires a value.`, {
+          subject: { option: arg }, supportedFixes: [`provide a value after ${arg}`],
+        });
+      }
+      if (arg === '--batch-size') { batchSize = Number(value); batchOptionProvided = true; }
+      else if (arg === '--batch') { batch = Number(value); batchOptionProvided = true; }
+      else snapshotFile = path.resolve(value);
+      index += 1;
+    } else if (arg === '--json') {
+      json = true;
+    } else if (arg === '--evidence-pack') {
+      evidencePack = true;
+    } else if (arg === '--source-excerpts') {
+      sourceExcerpts = true;
+    } else if (arg.startsWith('--')) {
+      rejectCliArgument(`Unknown inspect-repo option "${arg}".`, {
+        subject: { option: arg },
+        supportedFixes: ['use --batch-size, --batch, --snapshot, --evidence-pack, --source-excerpts, or --json'],
+      });
+    } else if (root === undefined) {
+      root = arg;
+    } else {
+      rejectCliArgument('inspect-repo accepts exactly one repository root.', {
+        evidence: { extraArgument: arg },
+        supportedFixes: ['pass one repository root'],
+      });
+    }
+  }
+  if (!root) {
+    rejectCliArgument('Usage: archify inspect-repo <repository-root> [--batch-size 1..100] [--batch number] [--snapshot file] [--evidence-pack [--source-excerpts]] [--json]');
+  }
+  if (sourceExcerpts && !evidencePack) {
+    rejectCliArgument('--source-excerpts only applies to --evidence-pack.', {
+      subject: { option: '--source-excerpts' },
+      supportedFixes: ['add --evidence-pack, or drop --source-excerpts'],
+    });
+  }
+  if (evidencePack && batchOptionProvided) {
+    rejectCliArgument('--evidence-pack summarises the whole repository in one call and does not combine with --batch or --batch-size.', {
+      subject: { option: '--evidence-pack' },
+      supportedFixes: ['drop --batch and --batch-size, or drop --evidence-pack'],
+    });
+  }
+  const repositoryIndexPath = path.join(skillRoot, 'modules', 'repository-index', 'index.mjs');
+  let repositoryIndex;
+  try {
+    repositoryIndex = await import(pathToFileURL(repositoryIndexPath).href);
+  } catch (error) {
+    rejectCliArgument(`Could not load the repository index: ${error.message}`, {
+      code: 'repository-index/unavailable',
+      supportedFixes: ['restore modules/repository-index/index.mjs and retry'],
+    });
+  }
+  let result;
+  let createdSnapshotDirectory;
+  const inspectionStarted = process.hrtime.bigint();
+  try {
+    let snapshot;
+    let snapshotReused = false;
+    if (snapshotFile) {
+      snapshot = JSON.parse(fs.readFileSync(snapshotFile, 'utf8'));
+      const { sameEntry } = await import('../renderers/shared/path-semantics.mjs');
+      if (sameEntry(snapshot.root || '', root).status !== 'match') throw new Error('Repository snapshot root does not match the requested repository.');
+      snapshotReused = true;
+    } else {
+      snapshot = repositoryIndex.createRepositorySnapshot(root);
+      if (snapshot.repositoryState.reusable) {
+        pruneExpiredInspectSnapshots();
+        createdSnapshotDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-inspect-repo-'));
+        snapshotFile = path.join(createdSnapshotDirectory, 'snapshot.json');
+        fs.writeFileSync(snapshotFile, `${JSON.stringify(snapshot)}\n`, { mode: 0o600 });
+      }
+    }
+    result = evidencePack
+      ? repositoryIndex.buildRepositoryEvidence(root, {
+        snapshot,
+        snapshotReused,
+        sourceExcerpts,
+        detailDirectory: snapshotFile ? path.dirname(snapshotFile) : undefined,
+      })
+      : repositoryIndex.buildRepositoryIndex(root, {
+        batchSize, batch, snapshot, snapshotPath: snapshotFile, snapshotReused,
+      });
+    if (snapshot.repositoryState.reusable) repositoryIndex.assertRepositorySnapshotCurrent(snapshot);
+    result.summary.durationMs = Number((process.hrtime.bigint() - inspectionStarted) / 1000000n);
+    result.session = {
+      reusable: Boolean(snapshotFile),
+      reused: snapshotReused,
+      ...(snapshotFile ? { snapshot: snapshotFile } : {}),
+    };
+  } catch (error) {
+    if (createdSnapshotDirectory) fs.rmSync(createdSnapshotDirectory, { recursive: true, force: true });
+    rejectCliArgument(`Could not inspect the repository: ${error.message}`, {
+      code: 'repository-index/failed',
+      subject: { root: path.resolve(root) },
+      supportedFixes: ['use a readable repository directory and valid inspect-repo options'],
+    });
+  }
+  // The evidence pack is read by a model, so its JSON is compact: indentation
+  // nearly doubles it and can push it past a tool-output limit.
+  console.log(json ? JSON.stringify(result, null, result.mode === 'evidence-pack' ? 0 : 2)
+    : (result.mode === 'evidence-pack' ? repositoryIndex.formatEvidencePack(result) : repositoryIndex.formatRepositoryIndex(result)));
+}
+
 async function commandGuide(args) {
   let lang;
   let json = false;
@@ -6188,7 +6324,7 @@ async function commandMigrate(args) {
   };
   try {
     sourceBytes = fs.readFileSync(sourcePath);
-    sourceDocument = JSON.parse(sourceBytes.toString('utf8'));
+    sourceDocument = JSON.parse(sourceBytes.toString('utf8').replace(/^\uFEFF/, ''));
   } catch (error) {
     reportMigrationFailure({
       preExistingDiagnostics: [inputDiagnostic(error, sourcePath)],
@@ -6694,7 +6830,7 @@ async function commandValidate(args) {
   let specification;
   try {
     specification = fs.readFileSync(inputPath);
-    const document = JSON.parse(specification.toString('utf8'));
+    const document = JSON.parse(specification.toString('utf8').replace(/^\uFEFF/, ''));
     const [{ validateAuthoredOutputPath }, { validateSchema }] = await Promise.all([
       import('../renderers/shared/output-path.mjs'),
       import('../renderers/shared/validator.mjs'),
@@ -6892,6 +7028,9 @@ try {
       break;
     case 'guide':
       await commandGuide(args);
+      break;
+    case 'inspect-repo':
+      await commandInspectRepo(args);
       break;
     case 'brands':
       await commandBrands(args);

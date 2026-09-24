@@ -1078,3 +1078,38 @@ test('finalize rechecks delivery barriers and the frozen candidate after the bro
     assert.equal(finalized.summary.diagnostics[0].code, scenario === 'pending-delivery' ? 'delivery/provenance-pending' : 'finalize/candidate-changed');
   }
 });
+
+test('finalize compacts a draft that only fails desktop width, and restores it when compaction breaks something else', async (t) => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'candidate.json');
+  const output = path.join(directory, 'diagram.html');
+  const draft = `${JSON.stringify({
+    meta: {},
+    components: [{ id: 'a', pos: [40, 40] }, { id: 'b', pos: [400, 40] }, { id: 'c', pos: [800, 40] }],
+    connections: [{ id: 'ab', from: 'a', to: 'b', label: 'calls' }, { id: 'bc', from: 'b', to: 'c' }],
+  }, null, 2)}\n`;
+  fs.writeFileSync(input, draft);
+  const tooWide = {
+    code: 'composition/desktop-readability', severity: 'error', message: 'too wide',
+    evidence: { viewBoxWidth: 1300, sourceFontPx: 8, availableDiagramWidth: 930, minimumProjectedFontPx: 6 },
+  };
+  const delivered = [];
+  const runCommand = ({ stage }) => {
+    assert.equal(stage, 'deliver');
+    delivered.push(fs.readFileSync(input, 'utf8'));
+    const diagnostics = delivered.length === 1 ? [tooWide] : [{ code: 'composition/label-collision', severity: 'error', message: 'collision' }];
+    return result({ schemaVersion: 1, ok: false, command: 'deliver', stage: 'check', diagnostics }, 1);
+  };
+  const { exitCode, receipt, summary } = await runFinalize({ cliPath: 'archify.mjs', type: 'architecture', input, output, runCommand });
+
+  assert.equal(exitCode, 1);
+  assert.equal(delivered.length, 2);
+  assert.notEqual(delivered[1], draft);
+  const compacted = JSON.parse(delivered[1]);
+  assert.ok(compacted.components[2].pos[0] <= 800 - 80);
+  assert.equal(fs.readFileSync(input, 'utf8'), draft);
+  assert.equal(receipt.failedStage, 'validate');
+  assert.deepEqual(receipt.diagnostics.map((d) => d.code), ['composition/desktop-readability']);
+  assert.equal(summary.autoCompaction.outcome, 'reverted');
+  assert.deepEqual(summary.autoCompaction.retryDiagnostics, ['composition/label-collision']);
+});
