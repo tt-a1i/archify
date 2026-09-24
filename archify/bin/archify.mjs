@@ -6022,7 +6022,9 @@ async function commandInspectRepo(args) {
       supportedFixes: ['use a readable repository directory and valid inspect-repo options'],
     });
   }
-  console.log(json ? JSON.stringify(result, null, 2)
+  // The evidence pack is read by a model, so its JSON is compact: indentation
+  // nearly doubles it and can push it past a tool-output limit.
+  console.log(json ? JSON.stringify(result, null, result.mode === 'evidence-pack' ? 0 : 2)
     : (result.mode === 'evidence-pack' ? repositoryIndex.formatEvidencePack(result) : repositoryIndex.formatRepositoryIndex(result)));
 }
 

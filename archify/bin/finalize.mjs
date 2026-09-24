@@ -431,6 +431,34 @@ function stageArguments({ stage, type, input, output, quality, repoRoot, outDir 
   ];
 }
 
+// A repair reruns finalize on the same output, so the artifact changes while
+// the previous browser-check receipt still sits at its sidecar path, and
+// browser-check refuses to replace evidence bound to other artifact bytes.
+// Remove that receipt only when it is byte-for-byte the one our previous
+// finalize receipt at this path recorded; anything else stays a conflict.
+// The previous receipt is read before this run rewrites it after each stage.
+export function recordedBrowserEvidence(finalizeReceiptPath) {
+  try {
+    return JSON.parse(fs.readFileSync(finalizeReceiptPath, 'utf8'))?.stages?.['browser-check']?.receipt || null;
+  } catch {
+    return null;
+  }
+}
+
+export function retirePreviousBrowserEvidence(recorded, output, outDir) {
+  const browserReceipt = browserCheckSidecarPaths(output, { outDir }).receipt;
+  let current;
+  try {
+    current = JSON.parse(fs.readFileSync(browserReceipt, 'utf8'));
+  } catch {
+    return false;
+  }
+  if (!recorded || current?.command !== 'browser-check'
+    || JSON.stringify(current) !== JSON.stringify(recorded)) return false;
+  fs.rmSync(browserReceipt);
+  return true;
+}
+
 export function defaultFinalizeReceiptPath(output, { outDir } = {}) {
   // Reuse the physical artifact and cross-directory namespace used by browser evidence.
   const browserReceipt = browserCheckSidecarPaths(output, { outDir }).receipt;
@@ -629,6 +657,7 @@ export async function runFinalize({
   };
   assertReceiptPaths();
   // Capture both paths before changing either: an unsafe summary cannot leave a new full receipt behind.
+  const previousBrowserEvidence = recordedBrowserEvidence(resolvedReceipt);
   let receiptCapture = captureReceipt(resolvedReceipt);
   let summaryCapture = captureReceipt(resolvedSummary);
 
@@ -695,6 +724,7 @@ export async function runFinalize({
         outDir: resolvedOutDir,
       });
       const inProcess = stage === 'browser-check' && runBrowserCheck;
+      if (stage === 'browser-check') retirePreviousBrowserEvidence(previousBrowserEvidence, resolvedOutput, resolvedOutDir);
       let result;
       if (inProcess) {
         const checked = await runBrowserCheck({
