@@ -20,6 +20,7 @@ const testFiles = [
   'lifecycle-rail-browser.test.mjs',
   'lifecycle-band-title.test.mjs',
   'export-cleanup-browser.test.mjs',
+  'node-icons-browser.test.mjs',
   'offline-font-browser.test.mjs',
   'i18n.test.mjs',
   'semantic-radar.test.mjs',

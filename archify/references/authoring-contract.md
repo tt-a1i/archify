@@ -375,17 +375,20 @@ Use only when no renderer can run. Start from `assets/template.html`, keep seman
 
 For domain-specific diagrams, set an optional `icon` on architecture components,
 workflow/dataflow nodes, sequence participants, or lifecycle states. Choose
-`calendar`, `clock`, `person`, `briefcase`, `flag`, or `moon` for everyday concepts;
+`calendar`, `clock`, `person`, `briefcase`, `flag`, or `moon` for everyday concepts, and `monitor` or `alert` for established observability and alerting responsibilities;
 the complete catalog (including existing technical and lifecycle symbols) is
 `common.schema.json#/$defs/nodeIcon`. Use `icon: "none"` to hide the corner symbol.
 Omitting `icon` keeps the type-based default. These inline SVG symbols are
 renderer-owned and export with the diagram; URLs and raw SVG are not accepted.
 
 Icon selection changes only the corner symbol. The node's type still determines
-color and semantic grouping; brand marks remain independent. For a holiday
+color and semantic grouping; brand marks remain independent. Select role icons
+from established responsibility, not from label wording. A metrics reader or
+anomaly monitor can remain `type: "backend"` with `icon: "monitor"`; a node whose
+established responsibility is emitting warnings or alerts can use `icon: "alert"`. For a holiday
 workflow, pair `type: "backend", icon: "calendar"` with
 `meta.legend.entries.backend.label: "假期"`, and use `icon: "briefcase"` plus
 an appropriate legend label for make-up work. Keep the node label meaningful:
 icons are decorative and are hidden from assistive technology.
 
-See [holiday planning](../examples/holiday-planning.workflow.json) for a complete workflow example.
+See [holiday planning](../examples/holiday-planning.workflow.json) for a complete workflow example and [monitoring and alert flow](../examples/monitoring-alerts.dataflow.json) for responsibility-specific monitoring and alert icons that preserve `type: "backend"`.

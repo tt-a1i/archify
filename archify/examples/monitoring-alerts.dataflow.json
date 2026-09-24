@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Monitoring and Alert Flow",
+    "output": "examples/dataflow-monitoring-alerts.html",
+    "viewBox": [
+      940,
+      520
+    ],
+    "quality_profile": "showcase"
+  },
+  "stages": [
+    {
+      "label": "Signals"
+    },
+    {
+      "label": "Observe"
+    },
+    {
+      "label": "Decide"
+    },
+    {
+      "label": "Notify"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "Metrics Store",
+      "sublabel": "service telemetry",
+      "stage": 0,
+      "row": 1
+    },
+    {
+      "id": "monitor",
+      "type": "backend",
+      "label": "Anomaly Monitor",
+      "sublabel": "evaluates metrics",
+      "icon": "monitor",
+      "stage": 1,
+      "row": 1
+    },
+    {
+      "id": "alert",
+      "type": "backend",
+      "label": "Alert Router",
+      "sublabel": "emits warnings",
+      "icon": "alert",
+      "stage": 2,
+      "row": 1
+    },
+    {
+      "id": "oncall",
+      "type": "external",
+      "label": "On-call",
+      "sublabel": "incident response",
+      "stage": 3,
+      "row": 1
+    }
+  ],
+  "flows": [
+    {
+      "id": "metrics-read",
+      "from": "metrics",
+      "to": "monitor",
+      "label": "service metrics",
+      "classification": "read-only"
+    },
+    {
+      "id": "anomaly-signal",
+      "from": "monitor",
+      "to": "alert",
+      "label": "anomaly signal",
+      "classification": "evaluated"
+    },
+    {
+      "id": "incident-alert",
+      "from": "alert",
+      "to": "oncall",
+      "label": "incident alert",
+      "classification": "notify"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Role semantics",
+      "items": [
+        "Monitoring and alerting remain backend responsibilities in the typed graph",
+        "Role-specific icons clarify responsibility without changing type, color, or legend grouping"
+      ]
+    }
+  ]
+}

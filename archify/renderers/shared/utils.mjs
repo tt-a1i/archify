@@ -52,6 +52,8 @@ const SIGIL_SHAPE = {
   briefcase: `<rect x="2" y="5" width="12" height="9" rx="2"/><path d="M5 5V2h6v3M2 9h12M7 9v2h2V9"/>`,
   flag: `<path d="M3 14V2h10l-2 3 2 3H3"/>`,
   moon: `<path d="M13.5 10A6 6 0 0 1 6 2.5 6 6 0 1 0 13.5 10Z"/>`,
+  monitor: `<rect x="2" y="3" width="12" height="10" rx="2"/><path d="M4 10.5 6 8l2 1.5 3-4 1 1.3"/>`,
+  alert: `<path d="M8 2.2 14 13H2Z"/><path d="M8 5.4v3.4"/><circle cx="8" cy="10.7" r=".7" class="sigil-fill"/>`,
   frontend: `<rect x="2" y="3" width="12" height="10" rx="2"/>
             <path d="M2 6.5h12"/>
             <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>

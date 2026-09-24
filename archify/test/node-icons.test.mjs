@@ -7,6 +7,37 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const iconCatalog = JSON.parse(fs.readFileSync(path.join(root, 'schemas/common.schema.json'))).$defs.nodeIcon.enum;
+
+test('node icon catalog includes monitoring and alerting roles', () => {
+  assert.ok(iconCatalog.includes('monitor'));
+  assert.ok(iconCatalog.includes('alert'));
+});
+
+test('monitoring example preserves technical type while rendering role-specific icons', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-monitoring-icons-'));
+  try {
+    const source = path.join(root, 'examples', 'monitoring-alerts.dataflow.json');
+    const spec = JSON.parse(fs.readFileSync(source));
+    const monitor = spec.nodes.find((node) => node.id === 'monitor');
+    const alert = spec.nodes.find((node) => node.id === 'alert');
+    assert.deepEqual({ type: monitor.type, icon: monitor.icon }, { type: 'backend', icon: 'monitor' });
+    assert.deepEqual({ type: alert.type, icon: alert.icon }, { type: 'backend', icon: 'alert' });
+
+    const validated = spawnSync(process.execPath, [path.join(root, 'bin/archify.mjs'), 'validate', 'dataflow', source, '--json'], { encoding: 'utf8' });
+    assert.equal(validated.status, 0, validated.stderr || validated.stdout);
+
+    const output = path.join(dir, 'monitoring.html');
+    const rendered = spawnSync(process.execPath, [path.join(root, 'renderers/dataflow/render-dataflow.mjs'), source, output], { encoding: 'utf8' });
+    assert.equal(rendered.status, 0, rendered.stderr);
+    const html = fs.readFileSync(output, 'utf8');
+    assert.match(html, /data-node-id="monitor"[\s\S]*?data-semantic-sigil="monitor"/);
+    assert.match(html, /data-node-id="alert"[\s\S]*?data-semantic-sigil="alert"/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 const cases = {
   architecture: ['web-app.architecture.json', 'components'],
   workflow: ['agent-tool-call.workflow.json', 'nodes'],
@@ -31,8 +62,7 @@ for (const [mode, [example, collection]] of Object.entries(cases)) {
       const sigil = /<g aria-hidden="true" data-semantic-sigil="[^"]+"[^>]*>[\s\S]*?<\/g>/;
       const old = baseline.match(sigil)?.[0];
       assert.ok(old);
-      const icons = JSON.parse(fs.readFileSync(path.join(root, 'schemas/common.schema.json'))).$defs.nodeIcon.enum;
-      for (const icon of icons) {
+      for (const icon of iconCatalog) {
         spec[collection][0].icon = icon;
         const html = render();
         if (icon === 'none') {

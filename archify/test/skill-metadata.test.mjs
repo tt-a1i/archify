@@ -26,6 +26,15 @@ test('skill description is portable across 1024-character runtimes and remains s
   assert.match(description, /Use when/i);
 });
 
+test('role-specific icon guidance preserves technical type semantics', () => {
+  assert.match(defaults, /icon: "monitor"/);
+  assert.match(defaults, /icon: "alert"/);
+  assert.match(defaults, /Keep `type` tied to what the node actually is/);
+  assert.match(defaults, /Do not infer either icon from label text alone/);
+  assert.match(authoringContract, /type: "backend"[\s\S]*icon: "monitor"/);
+  assert.match(authoringContract, /icon: "alert"/);
+});
+
 test('literal packaged-skill path references resolve inside the installed skill root', () => {
   const references = [...skill.matchAll(/`((?:assets|bin|examples|recipes|references|renderers|schemas|scripts)\/[^`\s]+)`/g)]
     .map((match) => match[1])
