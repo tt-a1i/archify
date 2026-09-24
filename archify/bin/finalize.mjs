@@ -437,12 +437,20 @@ function stageArguments({ stage, type, input, output, quality, repoRoot, outDir 
 // Remove that receipt only when it is byte-for-byte the one our previous
 // finalize receipt at this path recorded; anything else stays a conflict.
 // The previous receipt is read before this run rewrites it after each stage.
-export function recordedBrowserEvidence(finalizeReceiptPath) {
+// A run that fails before browser-check carries the record forward as
+// `retainedBrowserEvidence`, so ownership survives several failed repairs.
+export function recordedBrowserEvidence(finalizeReceiptPath, output, outDir) {
+  let previous;
+  let current;
   try {
-    return JSON.parse(fs.readFileSync(finalizeReceiptPath, 'utf8'))?.stages?.['browser-check']?.receipt || null;
+    previous = JSON.parse(fs.readFileSync(finalizeReceiptPath, 'utf8'));
+    current = fs.readFileSync(browserCheckSidecarPaths(output, { outDir }).receipt, 'utf8');
   } catch {
     return null;
   }
+  const candidates = [previous?.stages?.['browser-check']?.receipt, previous?.retainedBrowserEvidence];
+  return candidates.find((recorded) => recorded?.command === 'browser-check'
+    && JSON.stringify(recorded) === JSON.stringify(JSON.parse(current))) || null;
 }
 
 export function retirePreviousBrowserEvidence(recorded, output, outDir) {
@@ -657,7 +665,7 @@ export async function runFinalize({
   };
   assertReceiptPaths();
   // Capture both paths before changing either: an unsafe summary cannot leave a new full receipt behind.
-  const previousBrowserEvidence = recordedBrowserEvidence(resolvedReceipt);
+  const previousBrowserEvidence = recordedBrowserEvidence(resolvedReceipt, resolvedOutput, resolvedOutDir);
   let receiptCapture = captureReceipt(resolvedReceipt);
   let summaryCapture = captureReceipt(resolvedSummary);
 
@@ -675,6 +683,7 @@ export async function runFinalize({
     diagnostics: [],
     evidence: { receipt: resolvedReceipt, summaryReceipt: resolvedSummary },
     visualReview: 'not-requested',
+    ...(previousBrowserEvidence ? { retainedBrowserEvidence: previousBrowserEvidence } : {}),
   };
   const persistReceipts = () => {
     assertReceiptPaths();
@@ -724,7 +733,10 @@ export async function runFinalize({
         outDir: resolvedOutDir,
       });
       const inProcess = stage === 'browser-check' && runBrowserCheck;
-      if (stage === 'browser-check') retirePreviousBrowserEvidence(previousBrowserEvidence, resolvedOutput, resolvedOutDir);
+      if (stage === 'browser-check') {
+        retirePreviousBrowserEvidence(previousBrowserEvidence, resolvedOutput, resolvedOutDir);
+        delete receipt.retainedBrowserEvidence;
+      }
       let result;
       if (inProcess) {
         const checked = await runBrowserCheck({
