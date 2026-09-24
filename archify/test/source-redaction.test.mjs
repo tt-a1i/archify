@@ -12,6 +12,8 @@ test('source excerpts drop credentials behind quoted or subscripted keys', () =>
     'let api_key = load();',
     'AWS_ACCESS_KEY_ID = "AKIAEXAMPLE"',
     'client_key_id: "abc",',
+    "headers.authorization = 'Basic dXNlcjpwdw==';",
+    'req.headers["Proxy-Authorization"] = creds;',
   ]) assert.equal(safeSourceLine(line), null, line);
   assert.equal(safeSourceLine('fetch(url, { method: "POST" })'), 'fetch(url, { method: "POST" })');
   assert.equal(safeSourceLine('const u = "https://user:pw@host/x";'), 'const u = "https://[redacted]@host/x";');
