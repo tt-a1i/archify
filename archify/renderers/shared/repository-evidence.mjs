@@ -92,6 +92,63 @@ export function hasRepositoryEvidence(diagramType, diagram) {
   return Boolean(diagram?.meta?.repository) || authored.nodes.some((node) => Array.isArray(node?.sources) && node.sources.length);
 }
 
+// A repository-derived architecture should show how every component relates
+// to the rest. An isolated component usually means its relationship went to a
+// split-out child or was never traced; a separate group (a Rust server and its
+// protocol drawn beside, but never linked to, the runtime it serves) means a
+// runtime link is missing. The largest connected group is the main diagram;
+// every other group is reported, all in one pass.
+function topologyProblems(diagramType, diagram) {
+  if (diagramType !== 'architecture' || !Array.isArray(diagram?.components) || diagram.components.length < 2) return [];
+  const index = new Map(diagram.components.map((component, position) => [component.id, position]));
+  const neighbours = new Map(diagram.components.map((component) => [component.id, new Set()]));
+  for (const connection of diagram.connections || []) {
+    if (!neighbours.has(connection.from) || !neighbours.has(connection.to)) continue;
+    neighbours.get(connection.from).add(connection.to);
+    neighbours.get(connection.to).add(connection.from);
+  }
+  const groups = [];
+  const seen = new Set();
+  for (const component of diagram.components) {
+    if (seen.has(component.id)) continue;
+    const group = [];
+    const pending = [component.id];
+    seen.add(component.id);
+    while (pending.length) {
+      const id = pending.pop();
+      group.push(id);
+      for (const next of neighbours.get(id)) {
+        if (!seen.has(next)) { seen.add(next); pending.push(next); }
+      }
+    }
+    groups.push(group.sort((left, right) => index.get(left) - index.get(right)));
+  }
+  if (groups.length < 2) return [];
+  const main = groups.reduce((largest, group) => (group.length > largest.length ? group : largest));
+  return groups.filter((group) => group !== main).map((group) => {
+    const subject = { surface: 'repository-evidence', diagramType, collection: 'components' };
+    if (group.length === 1) {
+      const [id] = group;
+      return {
+        code: 'repository-evidence/component-isolated',
+        severity: 'error',
+        message: `/components/${index.get(id)} (${id}) has no connection.`,
+        subject: { ...subject, path: `/components/${index.get(id)}`, nodeId: id, componentId: id },
+        evidence: { mainGroup: main.length },
+        supportedFixes: ['add the evidence-backed connection that links it to the diagram', 'merge it into the component that owns its relationships', 'remove it if it is outside the requested scope'],
+      };
+    }
+    return {
+      code: 'repository-evidence/component-group-disconnected',
+      severity: 'error',
+      message: `Components ${group.join(', ')} form a separate group with no connection to the main diagram (${main.length} components).`,
+      subject: { ...subject, path: '/connections', nodeIds: group },
+      evidence: { group, mainGroup: main.length },
+      supportedFixes: ['add the evidence-backed runtime link between this group and the main diagram', 'remove the group if it is outside the requested scope'],
+    };
+  });
+}
+
 export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   if (!hasRepositoryEvidence(diagramType, diagram)) return null;
   const { collection, nodes: authoredNodes } = evidenceNodes(diagramType, diagram);
@@ -132,6 +189,10 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       subject: { path: '/meta/repository/url' },
       supportedFixes: ['use a canonical GitHub or Gitee URL, or select link_mode: local-only to retain local verification without web links'],
     });
+  }
+  const disconnected = topologyProblems(diagramType, diagram);
+  if (disconnected.length) {
+    throwDiagnosticError(`${disconnected.length} disconnected part(s) in the repository architecture: ${disconnected.map((entry) => entry.message).join(' ')}`, disconnected);
   }
   if (!repoRootInput) {
     evidenceFailure('repository-evidence/root-required', 'This diagram declares source evidence. Pass --repo-root <repository> so Archify can verify it before rendering.', {

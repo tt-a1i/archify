@@ -701,3 +701,26 @@ test('live preview forwards repo-root and publishes only verified evidence', { t
     await preview.stop();
   }
 });
+
+test('repository architecture reports every isolated component and disconnected group in one pass', () => {
+  const data = fixture();
+  const [first, second, third, fourth] = data.diagram.components;
+  const extra = (id) => ({ ...fourth, id, sources: [{ path: 'src/store.js' }] });
+  data.diagram.components.push(extra('lonely'), extra('island-a'), extra('island-b'));
+  data.diagram.connections.push({ from: 'island-a', to: 'island-b' });
+  assert.ok(first && second && third);
+
+  let diagnostics;
+  try {
+    verifyRepositoryEvidence('architecture', data.diagram, data.root);
+  } catch (error) {
+    diagnostics = error.archifyDiagnostics;
+  }
+  assert.ok(diagnostics, 'a disconnected repository architecture is rejected');
+  assert.deepEqual(diagnostics.map((entry) => entry.code).sort(), ['repository-evidence/component-group-disconnected', 'repository-evidence/component-isolated']);
+  assert.ok(diagnostics.some((entry) => entry.subject.nodeId === 'lonely'));
+  assert.ok(diagnostics.some((entry) => entry.message.includes('island-a, island-b')));
+
+  data.diagram.connections.push({ from: 'lonely', to: first.id }, { from: 'island-a', to: first.id });
+  assert.equal(verifyRepositoryEvidence('architecture', data.diagram, data.root).verified, true);
+});
