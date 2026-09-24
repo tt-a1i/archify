@@ -40,6 +40,11 @@ Authoring defaults and the example as SKILL.md step 2 describes.
    - `modules` are candidates, not one node each; `supportModules` (tests,
      scripts, docs) stay out unless requested. Console scripts mapped onto a
      file (`boundaries.entrypoints[].files`) are separate processes.
+   - A module is code, not a runtime unit. A datastore or external system the
+     primary path reads, writes, or calls (a database, a state or data file
+     another step consumes, a repository, model weights) gets its own
+     component even when one module owns it, and so does a process boundary;
+     `datastore` channels and their `targets` point at these stores.
    - `questions` are optional leads; answer only those that could change a
      boundary, from their `excerpts` first.
    - `crossLanguage.routeReferences` are candidate links for a component in
