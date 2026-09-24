@@ -4,12 +4,7 @@
   "meta": {
     "title": "Sample Web App",
     "output": "web-app-rendered.html",
-    "quality_profile": "showcase",
-    "views": [
-      { "id": "request-path", "label": "Primary request path", "focus": ["users", "cdn", "lb", "api", "db"], "note": "Follow the primary customer request from the edge to durable state." },
-      { "id": "identity-and-cache", "label": "Identity and cache", "focus": ["auth", "api", "cache"], "note": "Isolate authentication and the read-through cache beside the request path." },
-      { "id": "async-work", "label": "Static and async work", "focus": ["cdn", "s3", "api", "queue", "worker"], "note": "See the two secondary paths without adding noise to the main request." }
-    ]
+    "quality_profile": "showcase"
   },
   "components": [
     { "id": "users", "type": "external", "label": "Users", "sublabel": "Browser / Mobile", "pos": [40, 300], "size": [120, 60] },

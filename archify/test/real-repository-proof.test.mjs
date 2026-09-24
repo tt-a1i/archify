@@ -143,11 +143,6 @@ test('MCO public proof is source-backed, valid, and linked from every README', (
   assert.equal(source.meta.title, 'MCO Runtime Architecture');
   assert.equal(source.meta.quality_profile, 'showcase');
   assert.equal(source.meta.animation, 'trace');
-  assert.deepEqual(source.meta.views.map(view => view.id), [
-    'dispatch-path',
-    'answer-evidence',
-    'durable-sessions',
-  ]);
   assert.equal(source.components.length, 13);
   assert.equal(source.connections.length, 12);
   assert.match(source.components.find((component) => component.id === 'router')?.sublabel || '', /\bdoctor\b/);

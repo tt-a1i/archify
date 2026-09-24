@@ -1983,12 +1983,6 @@ test('compileWorkflow applies the shared cross-collection contracts the renderer
       expectedCode: 'relationship/duplicate-id',
       mutate: (document) => { document.edges[1].id = document.edges[0].id; },
     },
-    {
-      expectedCode: 'guided-view/invalid',
-      mutate: (document) => {
-        document.meta.views = [{ id: 'view', label: 'View', focus: ['missing'] }];
-      },
-    },
   ]) {
     const document = validationParityWorkflow();
     mutate(document);

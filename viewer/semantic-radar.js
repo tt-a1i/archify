@@ -380,8 +380,7 @@
             : viewerText('viewer.radar.viewport.scale', { percent: Math.round(visible.scale * 100) }));
         status.textContent = viewerText('viewer.radar.status', { count: nodes.length, viewport: viewportCopy });
         nodes.forEach(function (item) {
-          var active = item.node.hasAttribute('data-focus-selected') ||
-            item.node.getAttribute('data-story-beat-state') === 'active';
+          var active = item.node.hasAttribute('data-focus-selected');
           if (active) item.rect.setAttribute('data-radar-active', 'true');
           else item.rect.removeAttribute('data-radar-active');
         });
@@ -442,9 +441,6 @@
       function focusNode(id) {
         var main = diagram.querySelector('[data-node-id="' + id + '"]');
         if (!main) return false;
-        if (Archify.guidedViews && typeof Archify.guidedViews.showAll === 'function') {
-          Archify.guidedViews.showAll({ clearFocus: false, updateUrl: false });
-        }
         if (Archify.focus && typeof Archify.focus.set === 'function') {
           Archify.focus.set(id, { toggle: false });
         }

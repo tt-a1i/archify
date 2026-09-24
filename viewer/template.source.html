@@ -284,48 +284,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <p class="subtitle">[Subtitle description]</p>
     </div>
 
-    <!-- ARCHIFY:GUIDED_VIEWS_DATA -->
     <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->
     <!-- ARCHIFY:I18N_DATA -->
-    <div class="guided-views no-print" id="guided-views" hidden aria-label="{{i18n:viewer.guided.region}}">
-      <button id="guided-view-prev" type="button" aria-label="{{i18n:viewer.guided.previous}}" title="{{i18n:viewer.guided.previous.title}}">&#8592;</button>
-      <div class="guided-view-copy">
-        <div class="guided-view-meta">
-          <span>{{i18n:viewer.guided.views}}</span>
-          <span id="guided-view-count"></span>
-          <span class="guided-view-progress" aria-hidden="true"><span id="guided-view-progress-bar"></span></span>
-          <span class="guided-view-handoff" id="guided-view-handoff" hidden aria-hidden="true"></span>
-        </div>
-        <strong id="guided-view-label">{{i18n:viewer.guided.explore}}</strong>
-        <small id="guided-view-note" aria-live="polite" aria-atomic="true">{{i18n:viewer.guided.intro}}</small>
-        <div class="guided-view-trail" id="guided-view-trail" hidden role="group" aria-label="{{i18n:viewer.guided.trail}}"></div>
-        <div class="guided-story-caption" id="guided-story-caption" hidden aria-live="polite" aria-atomic="true">
-          <span class="guided-story-caption-index" id="guided-story-caption-index">{{i18n:viewer.guided.beat}}</span>
-          <strong id="guided-story-caption-route"></strong>
-          <small id="guided-story-caption-detail"></small>
-          <span class="guided-story-caption-next" id="guided-story-caption-next" hidden aria-hidden="true">
-            <small>{{i18n:viewer.guided.nextBeat}}</small>
-            <strong id="guided-story-caption-next-label"></strong>
-          </span>
-        </div>
-      </div>
-      <button id="guided-view-next" type="button" aria-label="{{i18n:viewer.guided.next}}" title="{{i18n:viewer.guided.next.title}}">&#8594;</button>
-      <div class="guided-view-actions">
-        <button class="guided-view-play" id="guided-view-play" type="button" aria-label="{{i18n:viewer.guided.play}}" aria-pressed="false" title="{{i18n:viewer.guided.play.title}}">
-          <span id="guided-view-play-icon" aria-hidden="true">&#9654;</span>
-          <span id="guided-view-play-label">{{i18n:viewer.guided.playStory}}</span>
-        </button>
-        <button class="guided-view-beat-link" id="guided-view-beat-link" type="button" aria-label="{{i18n:viewer.guided.selectBeatLink}}" title="{{i18n:viewer.guided.selectBeatLink}}" disabled>
-          <span aria-hidden="true">&#35;</span>
-          <span id="guided-view-beat-link-label">{{i18n:viewer.guided.copyMoment}}</span>
-        </button>
-        <button class="guided-view-all" id="guided-view-all" type="button" aria-label="{{i18n:viewer.guided.showAll.aria}}">{{i18n:viewer.guided.showAll}}</button>
-      </div>
-      <nav class="guided-view-index" id="guided-view-index" aria-label="{{i18n:viewer.guided.chapters}}">
-        <ol class="guided-view-chapters" id="guided-view-chapters"></ol>
-      </nav>
-    </div>
-
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="{{i18n:viewer.preset.badge.editorialPlate}}">
@@ -478,23 +438,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       </svg>
       <!-- ARCHIFY:SVG_SLOT_END -->
       <p class="intent-trace-status no-print" id="intent-trace-status" role="status" aria-live="polite" aria-atomic="true"></p>
-      <div class="share-chapter-cue no-print" id="share-chapter-cue" hidden role="status" aria-live="polite">
-        <div class="share-chapter-index">
-          <span class="share-chapter-state" id="share-chapter-state">{{i18n:viewer.guided.state.ready}}</span>
-          <span class="share-chapter-count" id="share-chapter-count">{{i18n:viewer.guided.share.initial}}</span>
-        </div>
-        <div class="share-chapter-copy">
-          <strong id="share-chapter-label">{{i18n:viewer.guided.share.default}}</strong>
-          <small id="share-chapter-note"></small>
-        </div>
-        <span class="share-chapter-route" id="share-chapter-route"></span>
-        <span class="share-chapter-progress" aria-hidden="true"><span id="share-chapter-progress-bar"></span></span>
-      </div>
       <div class="diagram-guide no-print" id="diagram-guide" hidden role="dialog" aria-modal="false" aria-labelledby="diagram-guide-title">
         <div class="diagram-guide-head">
           <span>
             <span class="diagram-guide-eyebrow">{{i18n:viewer.guide.eyebrow}}</span>
-            <strong class="diagram-guide-title" id="diagram-guide-title">{{i18n:viewer.guided.explore}}</strong>
+            <strong class="diagram-guide-title" id="diagram-guide-title">{{i18n:viewer.guide.title}}</strong>
           </span>
           <button class="diagram-guide-close" id="diagram-guide-close" type="button" aria-label="{{i18n:viewer.guide.close}}">&#215;</button>
         </div>
@@ -520,13 +468,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <span class="diagram-guide-action-copy"><strong>{{i18n:viewer.guide.lens}}</strong><small>{{i18n:viewer.guide.lens.hint}}</small></span>
             <kbd aria-hidden="true">L</kbd>
           </button>
-          <button class="diagram-guide-action" type="button" data-guide-action="story" aria-label="{{i18n:viewer.guide.story}}">
-            <span class="diagram-guide-index" aria-hidden="true">05</span>
-            <span class="diagram-guide-action-copy"><strong>{{i18n:viewer.guide.story}}</strong><small id="diagram-guide-story-copy">{{i18n:viewer.guide.story.hint}}</small></span>
-            <kbd aria-hidden="true">P</kbd>
-          </button>
           <button class="diagram-guide-action" type="button" data-guide-action="present" aria-label="{{i18n:viewer.present.enter}}">
-            <span class="diagram-guide-index" aria-hidden="true">06</span>
+            <span class="diagram-guide-index" aria-hidden="true">05</span>
             <span class="diagram-guide-action-copy"><strong>{{i18n:viewer.guide.present}}</strong><small>{{i18n:viewer.guide.present.hint}}</small></span>
             <kbd aria-hidden="true">F</kbd>
           </button>
@@ -1035,8 +978,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
 /* ARCHIFY:INTENT_TRACE */
 
-/* ARCHIFY:GUIDED_VIEWS */
-
     /* ============================================================
        Adaptive Reader Shell — one diagram across laptop and monitor.
        The canonical SVG and viewBox never change. On ordinary desktop pages,
@@ -1138,8 +1079,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     /* ============================================================
        Presentation Stage — a shareable, viewport-filling live view.
        It changes only HTML layout and URL state; SVG semantics and export
-       serialization remain untouched. Escape first clears an active guided
-       view/focus, then exits the stage.
+       serialization remain untouched. Escape first clears an active
+       focus, then exits the stage.
        ============================================================ */
     Archify.presentation = (function () {
       var html = document.documentElement;
@@ -1220,7 +1161,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     /* ============================================================
        Diagram Guide — a factual command deck over existing interactions.
        Counts come from compiled semantics; actions delegate to Finder, Route
-       Probe, Semantic Radar, Semantic Lens, Story Trail, Presentation, theme, export, and
+       Probe, Semantic Radar, Semantic Lens, Presentation, theme, export, and
        camera without adding a second command implementation or SVG state.
        ============================================================ */
     Archify.guide = (function () {
@@ -1233,13 +1174,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var stats = document.getElementById('diagram-guide-stats');
       var actions = document.getElementById('diagram-guide-actions');
       var feedback = document.getElementById('diagram-guide-feedback');
-      var storyBtn = actions.querySelector('[data-guide-action="story"]');
-      var storyCopy = document.getElementById('diagram-guide-story-copy');
       var routePanel = document.getElementById('route-probe');
 
-      function viewCount() {
-        return Archify.guidedViews && Number(Archify.guidedViews.count) || 0;
-      }
       function relationshipCount() {
         var seen = {};
         Array.prototype.forEach.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'), function (edge) {
@@ -1255,17 +1191,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function renderFacts() {
         var nodes = svg.querySelectorAll('[data-node-id]').length;
         var relationships = relationshipCount();
-        var views = viewCount();
         stats.textContent = viewerText('viewer.guide.facts', {
           nodes: viewerCount('viewer.guide.fact.node', nodes),
-          relationships: viewerCount('viewer.guide.fact.relationship', relationships),
-          views: viewerCount('viewer.guide.fact.view', views)
+          relationships: viewerCount('viewer.guide.fact.relationship', relationships)
         });
-        storyBtn.disabled = views === 0;
-        storyBtn.setAttribute('aria-disabled', views === 0 ? 'true' : 'false');
-        storyCopy.textContent = views
-          ? viewerCount('viewer.guide.story.available', views)
-          : viewerText('viewer.guide.story.unavailable');
       }
       function actionButtons() {
         return Array.prototype.slice.call(actions.querySelectorAll('.diagram-guide-action:not(:disabled)'));
@@ -1288,9 +1217,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (Archify.finder && Archify.finder.isOpen()) Archify.finder.close({ restoreFocus: false });
         if (Archify.radar && Archify.radar.isOpen()) Archify.radar.close({ restoreFocus: false });
         if (Archify.semanticLens && Archify.semanticLens.isOpen()) Archify.semanticLens.close({ restoreFocus: false });
-        if (Archify.guidedViews && Archify.guidedViews.isPlaying && Archify.guidedViews.isPlaying()) {
-          Archify.guidedViews.pause();
-        }
         if (Archify.routeProbe && Archify.routeProbe.isJourneyPlaying && Archify.routeProbe.isJourneyPlaying()) {
           Archify.routeProbe.pauseJourney({ preserveElapsed: true, reason: 'guide' });
         }
@@ -1310,16 +1236,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function toggle() { return panel.hidden ? open() : close(); }
       function execute(action) {
         feedback.textContent = '';
-        if (action === 'story' && !viewCount()) {
-          feedback.textContent = viewerText('viewer.guide.noStory');
-          return false;
-        }
         close({ restoreFocus: false });
         if (action === 'find') return Archify.finder.open();
         if (action === 'route') return Archify.routeProbe.begin({ focusNode: true });
         if (action === 'map') return Archify.radar.open();
         if (action === 'lens') return Archify.semanticLens.open();
-        if (action === 'story') return Archify.guidedViews.play();
         if (action === 'present') return Archify.presentation.enter();
         if (action === 'export') return Archify.exportMenu.open();
         if (action === 'theme') return Archify.theme.toggle();
@@ -1335,7 +1256,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           r: 'route',
           m: 'map',
           l: 'lens',
-          p: 'story',
           f: 'present',
           e: 'export',
           t: 'theme',
@@ -1397,8 +1317,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         facts: function () {
           return {
             nodes: svg.querySelectorAll('[data-node-id]').length,
-            relationships: relationshipCount(),
-            views: viewCount()
+            relationships: relationshipCount()
           };
         }
       };

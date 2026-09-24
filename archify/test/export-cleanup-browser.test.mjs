@@ -85,10 +85,10 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
       if (!blob) throw new Error('Export did not produce SVG');
       const text = await blob.text();
       const root = new DOMParser().parseFromString(text, 'image/svg+xml').documentElement;
-      const transient = root.querySelectorAll('[data-focus-selected], [data-reach-match], [data-lens-selected], [data-intent-trace-overlay], [data-route-probe-overlay], [data-route-journey-overlay], [data-story-overlay], [data-chapter-preview-role], [data-source-evidence-beacon], [data-relationship-hit-overlay]');
+      const transient = root.querySelectorAll('[data-focus-selected], [data-reach-match], [data-lens-selected], [data-intent-trace-overlay], [data-route-probe-overlay], [data-route-journey-overlay], [data-source-evidence-beacon], [data-relationship-hit-overlay]');
       return { text, liveUnchanged: before === after, transientCount: transient.length,
         geometry: root.getAttribute('viewBox'), liveGeometry: svg.getAttribute('viewBox'),
-        rootClean: !['data-view-scale', 'data-focus-active', 'data-reach-active', 'data-route-active', 'data-lens-active', 'data-story-active', 'data-share-route', 'data-share-reach'].some(a => root.hasAttribute(a)),
+        rootClean: !['data-view-scale', 'data-focus-active', 'data-reach-active', 'data-route-active', 'data-lens-active', 'data-share-route', 'data-share-reach'].some(a => root.hasAttribute(a)),
         resources: performance.getEntriesByType('resource').map(e => e.name).filter(n => /^https?:/.test(n)), errors: exportTestErrors };
     })()`, true);
     assert.equal(value.liveUnchanged, true, `${label}: live SVG changed`);
@@ -112,7 +112,7 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
     }
   });
 
-  await t.test('real zoom, focus, preview, lens, story and route actions leave exports clean', async () => {
+  await t.test('real zoom, focus, preview, lens and route actions leave exports clean', async () => {
     await load(files.architecture);
     const pristine = await exported('interaction-pristine');
     const actions = {
@@ -120,7 +120,6 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
       focus: `if (!Archify.focus.set('api', { toggle: false, updateUrl: false })) throw new Error('focus failed');`,
       preview: `if (!Archify.intentTrace.show('api')) throw new Error('preview failed');`,
       lens: `Archify.semanticLens.select('backend'); if (!Archify.semanticLens.active()) throw new Error('lens failed');`,
-      story: `Archify.guidedViews.activate('request-path', { updateUrl: false }); Archify.guidedViews.playCurrent(); if (!Archify.guidedViews.isPlaying()) throw new Error('story failed');`,
       route: `Archify.routeProbe.begin({ source: 'users', focusNode: false }); if (!Archify.routeProbe.choose('db', { updateUrl: false })) throw new Error('route failed');`,
       upstream: `Archify.focus.set('api', { toggle: false, updateUrl: false }); if (!Archify.focus.reach('upstream', { toggle: false, updateUrl: false, reveal: false })) throw new Error('reach failed');`,
       downstream: `Archify.focus.set('api', { toggle: false, updateUrl: false }); if (!Archify.focus.reach('downstream', { toggle: false, updateUrl: false, reveal: false })) throw new Error('reach failed');`,
@@ -228,20 +227,15 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
       empty.setAttribute('viewBox', '0 0 100 50');
       const emptyBefore = empty.outerHTML;
       const emptyClean = exportCleanupTest.clean(empty);
-      const orphan = document.createElementNS(svg.namespaceURI, 'g');
-      orphan.setAttribute('data-story-carrier-token', 'true');
-      const residual = empty.cloneNode(true);
-      residual.appendChild(orphan);
-      const residualClean = exportCleanupTest.clean(residual);
       return { clean, twiceClean, unchanged: before === svg.outerHTML, idempotent: once === clone.outerHTML,
         authored: group.outerHTML === authored, labels: labels.map(n => n.getAttribute('aria-label')),
         restorationRecords: clone.querySelectorAll('[data-source-evidence-count], [data-source-evidence-original-label]').length,
         shares: clone.hasAttribute('data-share-route') || clone.hasAttribute('data-share-reach'),
-        residualClean, emptyClean, emptyUnchanged: emptyBefore === empty.outerHTML };
+        emptyClean, emptyUnchanged: emptyBefore === empty.outerHTML };
     })()`);
     assert.deepEqual(result, { clean: true, twiceClean: true, unchanged: true, idempotent: true,
       authored: true, labels: ['original', null, null], restorationRecords: 0, shares: false,
-      residualClean: false, emptyClean: true, emptyUnchanged: true });
+      emptyClean: true, emptyUnchanged: true });
     records.push({ label: 'restoration', ...result });
   });
 

@@ -41,7 +41,7 @@ test('automatic architectures preserve primary reading size when fitting the ful
           if (document.documentElement.dataset.theme !== '${theme}') document.getElementById('btn-theme').click();
           await Archify.layoutStability.whenStable();
           const toolbar = document.querySelector('.toolbar').getBoundingClientRect();
-          const guide = document.querySelector('.guided-views').getBoundingClientRect();
+          const guide = document.querySelector('.diagram-container').getBoundingClientRect();
           const svg = document.querySelector('.diagram-container > svg');
           return { rail: document.documentElement.dataset.navStageRail, summaryRail: document.documentElement.dataset.readerRail || null,
             toolbarBottom: toolbar.bottom, guideTop: guide.top, guideWidth: guide.width,
@@ -52,8 +52,8 @@ test('automatic architectures preserve primary reading size when fitting the ful
         })()`);
         const label = `${width}x${height}/${theme}`;
         assert.equal(observed.rail, 'true', label + ': fixture must exercise the compact rail');
-        assert.ok(observed.guideWidth > 0, label + ': guide must be visible');
-        assert.ok(observed.guideTop >= observed.toolbarBottom + 4, label + ': toolbar overlaps guide ' + JSON.stringify(observed));
+        assert.ok(observed.guideWidth > 0, label + ': diagram must be visible');
+        assert.ok(observed.guideTop >= observed.toolbarBottom + 4, label + ': toolbar overlaps diagram ' + JSON.stringify(observed));
         assert.ok(observed.scrollWidth <= width, label + ': horizontal overflow');
         // A docked summary rail may trade comfort down to its 12px default floor;
         // without it (collapsed, bottom or unavailable) the 13.5px comfort holds.

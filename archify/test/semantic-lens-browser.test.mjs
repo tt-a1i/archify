@@ -285,12 +285,11 @@ test('Semantic Lens preserves selection, legend preview and panel contracts', {
     for (const [name, action] of [
       ['focus', `Archify.focus.set('api',{toggle:false})`],
       ['route', `Archify.routeProbe.begin({source:'users'})`],
-      ['guided', `Archify.guidedViews.activate('request-path');await lensWait(()=>!Archify.guidedViews.handoff())`],
       ['intent', `Archify.intentTrace.show('api',{announce:true})`],
     ]) {
       await load('trace'); await run(`(async()=>{${action}})()`); await run(`Archify.semanticLens.select('backend')`);
-      const result = await run(`({focus:Archify.focus.active(),route:Archify.routeProbe.active(),intent:Archify.intentTrace.active(),guided:Archify.guidedViews.active()})`);
-      assert.deepEqual(result, { focus: null, route: null, intent: null, guided: null });
+      const result = await run(`({focus:Archify.focus.active(),route:Archify.routeProbe.active(),intent:Archify.intentTrace.active()})`);
+      assert.deepEqual(result, { focus: null, route: null, intent: null });
       await run(`lensWait(()=>Archify.motionGovernor.owner()==='lens')`); await snapshot(name + '-to-lens');
     }
     await run('Archify.semanticLens.open();Archify.finder.open()');
@@ -300,7 +299,7 @@ test('Semantic Lens preserves selection, legend preview and panel contracts', {
     await load();
     const blockers = await run(`(()=>{
       const svg=document.querySelector('.diagram-container > svg'),html=document.documentElement,e=document.querySelector(${JSON.stringify(legend('backend'))});
-      return [[html,'data-present'],[svg,'data-focus-active'],[svg,'data-intent-trace-active'],[svg,'data-route-picking'],[svg,'data-route-active'],[svg,'data-story-active'],[svg,'data-relationship-preview-active']].map(([el,a])=>{
+      return [[html,'data-present'],[svg,'data-focus-active'],[svg,'data-intent-trace-active'],[svg,'data-route-picking'],[svg,'data-route-active'],[svg,'data-relationship-preview-active']].map(([el,a])=>{
         el.setAttribute(a,'true');e.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));const preview=svg.getAttribute('data-legend-preview-active');e.dispatchEvent(new PointerEvent('pointerout',{bubbles:true,pointerType:'mouse'}));el.removeAttribute(a);return {attribute:a,preview};});
     })()`);
     assert.ok(blockers.every(row => row.preview === null)); records.push({ scenario: 'blocker-fixture', blockers });

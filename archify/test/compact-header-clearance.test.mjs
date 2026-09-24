@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-test('compact stage rail keeps guided views below the fixed toolbar', async (t) => {
+test('compact stage rail keeps the diagram below the fixed toolbar', async (t) => {
   if (!Object.hasOwn(process.env, 'ARCHIFY_CHROME')) return t.skip('Set ARCHIFY_CHROME for real browser checks');
   const chrome = findChrome();
   assert.ok(chrome);
@@ -41,7 +41,7 @@ test('compact stage rail keeps guided views below the fixed toolbar', async (t) 
           if (document.documentElement.dataset.theme !== '${theme}') document.getElementById('btn-theme').click();
           await Archify.layoutStability.whenStable();
           const toolbar = document.querySelector('.toolbar').getBoundingClientRect();
-          const guide = document.querySelector('.guided-views').getBoundingClientRect();
+          const guide = document.querySelector('.diagram-container').getBoundingClientRect();
           const svg = document.querySelector('.diagram-container > svg');
           return { rail: document.documentElement.dataset.navStageRail,
             toolbarBottom: toolbar.bottom, guideTop: guide.top, guideWidth: guide.width,
@@ -51,8 +51,8 @@ test('compact stage rail keeps guided views below the fixed toolbar', async (t) 
         })()`);
         const label = `${width}x${height}/${theme}`;
         assert.equal(observed.rail, 'true', label + ': fixture must exercise the compact rail');
-        assert.ok(observed.guideWidth > 0, label + ': guide must be visible');
-        assert.ok(observed.guideTop >= observed.toolbarBottom + 4, label + ': toolbar overlaps guide ' + JSON.stringify(observed));
+        assert.ok(observed.guideWidth > 0, label + ': diagram must be visible');
+        assert.ok(observed.guideTop >= observed.toolbarBottom + 4, label + ': toolbar overlaps diagram ' + JSON.stringify(observed));
         assert.ok(observed.scrollWidth <= width, label + ': horizontal overflow');
         if (geometry) assert.deepEqual(observed.geometry, geometry, label + ': authored node geometry/font changed');
         else geometry = observed.geometry;

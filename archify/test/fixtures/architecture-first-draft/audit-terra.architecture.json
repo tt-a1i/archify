@@ -5,43 +5,6 @@
     "title": "跨租户审计日志导出与脱敏编排服务（含异步导出、留存策略和人工复核边界）",
     "locale": "zh-CN",
     "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "entry-and-plan",
-        "label": "入口与排队计划",
-        "focus": [
-          "caller",
-          "entry",
-          "plan",
-          "policy"
-        ],
-        "note": "入口仅校验 tenantId 与 range，并返回 queued 计划；未见运行闭包被调用。"
-      },
-      {
-        "id": "conditional-execution",
-        "label": "条件执行与数据边界",
-        "focus": [
-          "plan",
-          "execution",
-          "query-stub",
-          "redactor",
-          "writer-stub",
-          "result"
-        ],
-        "note": "下方流程由计划携带的 run 闭包指向；代码未展示谁调用它，查询与写入是本地桩。"
-      },
-      {
-        "id": "declared-integrations",
-        "label": "通知与人工复核边界",
-        "focus": [
-          "execution",
-          "notifier",
-          "review-declaration",
-          "policy"
-        ],
-        "note": "通知函数只组装返回对象；人工复核队列与函数均为声明，未接入正常路径。"
-      }
-    ],
     "output": "audit-terra.html"
   },
   "components": [

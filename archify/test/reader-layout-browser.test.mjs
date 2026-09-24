@@ -156,7 +156,7 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
               var text = await captured.text();
               var svg = new DOMParser().parseFromString(text, 'image/svg+xml').documentElement;
               return { text: text, geometry: ['viewBox', 'width', 'height'].map(function (name) { return svg.getAttribute(name); }),
-                dirty: !!svg.querySelector('[data-focus-match], [data-story-step], [data-route-match], [data-reader-layout], [data-source-evidence-beacon]') ||
+                dirty: !!svg.querySelector('[data-focus-match], [data-route-match], [data-reader-layout], [data-source-evidence-beacon]') ||
                   svg.hasAttribute('data-view-scale') || svg.hasAttribute('data-focus-active') || svg.hasAttribute('data-route-active') };
             } finally { URL.createObjectURL = original; }
           })()`, true);

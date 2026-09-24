@@ -5,7 +5,6 @@
       var diagram = document.querySelector('.diagram-container');
       var svg = diagram && diagram.querySelector(':scope > svg');
       var header = shell && shell.querySelector('.header');
-      var guided = shell && shell.querySelector('.guided-views');
       var cards = shell && shell.querySelector('.cards');
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
@@ -230,7 +229,7 @@
         if (docked) minWidth = Math.min(maxWidth, minWidth + railExtra);
         var stackedBelow = mode === 'bottom' ? outerHeight(railPanel) : docked ? 0 : outerHeight(cards);
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
-          outerHeight(header) + outerHeight(guided) + stackedBelow;
+          outerHeight(header) + stackedBelow;
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
         var desiredWidth = availableSvgHeight * ratio + chrome.diagramX + (docked ? railExtra : 0);
         var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth, settledCap || desiredWidth));
@@ -283,11 +282,10 @@
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
-        [header, guided, cards].forEach(function (element) { if (element) resizeObserver.observe(element); });
+        [header, cards].forEach(function (element) { if (element) resizeObserver.observe(element); });
       }
       if (typeof MutationObserver === 'function') {
         var contentObserver = new MutationObserver(schedule);
-        if (guided) contentObserver.observe(guided, { attributes: true, childList: true, subtree: true });
         if (cards) contentObserver.observe(cards, { attributes: true, childList: true, subtree: true });
         contentObserver.observe(html, { attributes: true, attributeFilter: ['data-embed', 'data-present'] });
       }

@@ -52,9 +52,6 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
 
   const workflow = manifest.entries.find((entry) => entry.id === 'agent-tool-call');
   assert.equal(workflow.view, 'happy-path');
-  assert.equal(workflow.viewCount, 3);
-  assert.deepEqual(workflow.viewIds, ['happy-path', 'safety-gate', 'evidence-loop']);
-  assert.equal(workflow.guidedPlayback, true);
 
   const deployment = manifest.entries.find((entry) => entry.id === 'deployment-ownership');
   assert.equal(deployment.engineeringProfile, 'deployment-ownership');
@@ -78,8 +75,6 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
     assert.equal(entry.composition.metrics.labelRouteClearanceIssues, 0, `${entry.id}: label-route clearance debt remains`);
     assert.equal(entry.composition.metrics.shortInteriorSegmentCount, 0, `${entry.id}: cramped interior turn remains`);
     assert.equal(entry.composition.metrics.microSegmentCount, 0, `${entry.id}: micro segment remains`);
-    assert.equal(entry.viewCount, 3, `${entry.id}: expected a three-step reader story`);
-    assert.equal(entry.guidedPlayback, true, `${entry.id}: guided playback missing`);
   }
 
   const html = fs.readFileSync(path.join(generatedRoot, 'gallery.html'), 'utf8');
@@ -90,7 +85,6 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
   assert.match(html, /event-stream\.dataflow\.html\?present=1&amp;play=1#view=order-transit/);
   assert.match(html, /id="proof-deployment-lifecycle"/);
   assert.match(html, /Play named chapter/);
-  assert.match(html, /3 views · play/);
   assert.match(html, /Proof,<br><em>not promises\.<\/em>/);
   assert.match(html, /Five lenses\. Eleven real stories\./);
   assert.match(html, /Composition<\/span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS/);

@@ -86,9 +86,9 @@ Report artifact checks, browser evidence, captures, and actual perceptual review
 
 ## Optional viewer capabilities
 
-`meta.animation: "trace"` is opt-in. Use optional `meta.views` for distinct reader questions, with no numeric target.
+`meta.animation: "trace"` is opt-in.
 
-Read `references/viewer-runtime.md` only when the user explicitly asks for Share Cards, Route/Reach cards, motion, guided stories, deep links, presentation, search/focus, or another Viewer Runtime feature.
+Read `references/viewer-runtime.md` only when the user explicitly asks for Share Cards, Route/Reach cards, motion, deep links, presentation, search/focus, or another Viewer Runtime feature.
 
 ## Setup and fallback
 

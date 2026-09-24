@@ -122,6 +122,8 @@ expectFailure('node id starting with a digit', 'workflow',
   (d) => { d.nodes[0].id = '1user'; }, 'pattern');
 expectFailure('extra property rejected', 'workflow',
   (d) => { d.nodes[0].colour = 'red'; }, 'additional properties');
+expectFailure('removed meta.views rejected', 'workflow',
+  (d) => { d.meta.views = [{ id: 'v', label: 'V', focus: [d.nodes[0].id] }]; }, '"additionalProperty":"views"');
 expectFailure('column beyond layout maximum', 'workflow',
   (d) => { d.nodes[0].col = 7; }, '<= 5');
 expectFailure('missing schema_version', 'sequence',

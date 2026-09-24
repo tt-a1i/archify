@@ -5,58 +5,7 @@
     "title": "Document Approval Lifecycle",
     "output": "approval.lifecycle.html",
     "locale": "en",
-    "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "happy-path",
-        "label": "Happy path",
-        "focus": [
-          "draft",
-          "submitted",
-          "under_review",
-          "approved",
-          "scheduled",
-          "published",
-          "archived"
-        ],
-        "note": "The document moves from Draft through review and scheduling to Published and finally Archived."
-      },
-      {
-        "id": "review-gate",
-        "label": "Review gate",
-        "focus": [
-          "submitted",
-          "under_review",
-          "changes_requested",
-          "draft"
-        ],
-        "note": "Submitted waits under a 72h SLA; requested changes loop the document back to Draft."
-      },
-      {
-        "id": "publish-retry",
-        "label": "Publish retry",
-        "focus": [
-          "approved",
-          "scheduled",
-          "publish_failed",
-          "published"
-        ],
-        "note": "A failed publish job gets exactly one automatic retry back into Scheduled."
-      },
-      {
-        "id": "exits",
-        "label": "Terminal exits",
-        "focus": [
-          "submitted",
-          "under_review",
-          "rejected",
-          "withdrawn",
-          "published",
-          "archived"
-        ],
-        "note": "Rejected, Withdrawn and Archived are final; no transition leaves them."
-      }
-    ]
+    "quality_profile": "showcase"
   },
   "lanes": [
     {

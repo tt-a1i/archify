@@ -17,7 +17,7 @@ const cases = {
   lifecycle: ['agent-run.lifecycle.json', 'states', 'transitions'],
 };
 
-test('valid identifiers preserve Viewer selection, chapters, routes and relationship links', {
+test('valid identifiers preserve Viewer selection, routes and relationship links', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser identifier checks.',
 }, async (t) => {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-viewer-ids-'));
@@ -60,10 +60,6 @@ test('valid identifiers preserve Viewer selection, chapters, routes and relation
       (diagram.activations || []).forEach(activation => { activation.participant = rename(activation.participant); });
       if (diagram.mainPath) diagram.mainPath = diagram.mainPath.map(rename);
       first.id = 'toString';
-      diagram.meta.views = [
-        { id: 'request', label: 'Request', focus: ['constructor', 'hasOwnProperty'] },
-        { id: 'destination', label: 'Destination', focus: ['hasOwnProperty'] },
-      ];
       const input = path.join(scratch, `${type}.json`);
       const output = path.join(scratch, `${type}.html`);
       fs.writeFileSync(input, JSON.stringify(diagram));
@@ -97,20 +93,6 @@ test('valid identifiers preserve Viewer selection, chapters, routes and relation
         const before = await run('Archify.view.state()');
         assert.equal(await run('Archify.view.reveal([], {instant:true})'), false);
         assert.deepEqual(await run('Archify.view.state()'), before);
-      });
-      await t.test('chapters retain every authored stop and exact deltas', async () => {
-        await load(output);
-        await run(`Archify.guidedViews.activate('request')`);
-        assert.deepEqual(await run('Archify.guidedViews.focus()'), ['constructor', 'hasOwnProperty']);
-        assert.deepEqual(await run(`Archify.guidedViews.delta('destination')`), {
-          stay: ['hasOwnProperty'], enter: [], leave: ['constructor'],
-        });
-        assert.deepEqual(await run(`[...document.querySelectorAll('[data-story-node]')].map(node=>node.dataset.storyNode)`), ['constructor', 'hasOwnProperty']);
-        await run(`Archify.guidedViews.activate('destination')`);
-        assert.equal(await run('Archify.focus.active()'), 'hasOwnProperty');
-        assert.deepEqual(await run(`Archify.guidedViews.delta('request')`), {
-          stay: ['hasOwnProperty'], enter: ['constructor'], leave: [],
-        });
       });
       await t.test('Route Probe follows the authored edge and exposes the target', async () => {
         await load(output);

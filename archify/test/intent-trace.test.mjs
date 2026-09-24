@@ -99,7 +99,6 @@ test('Intent Trace separates hover, keyboard, touch, and committed focus', () =>
   assert.match(html, /Press Enter for details/);
   assert.match(html, /html\.getAttribute\('data-embed'\) === 'true'/);
   assert.match(html, /container\.classList\.contains\('is-panning'\)/);
-  assert.match(html, /svg\.hasAttribute\('data-story-active'\)/);
   assert.match(html, /svg\.hasAttribute\('data-relationship-preview-active'\)/);
   assert.match(html, /Archify\.focus\.active\(\)/);
   assert.match(html, /Archify\.intentTrace\.clear\(\{ announce: false \}\)/);

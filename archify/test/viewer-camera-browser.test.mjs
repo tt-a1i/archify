@@ -316,25 +316,7 @@ test('Camera preserves transactions, rendered state and real caller handoffs', {
     await snapshot('hidden-call-fixture');
   });
 
-  await t.test('actual Story, Route, Finder and Radar callers retain camera ownership', async () => {
-    await load('trace');
-    const story = await run(`(async () => {
-      Archify.motionGovernor.resume();
-      Archify.guidedViews.activate('request-path');
-      await cameraWait(() => !Archify.guidedViews.handoff());
-      Archify.guidedViews.activate('identity-and-cache');
-      await cameraWait(() => Archify.guidedViews.handoff()?.mode === 'settling');
-      const wasHandoff = !!Archify.guidedViews.handoff();
-      Archify.view.zoomIn();
-      const cleared = Archify.guidedViews.handoff() === null;
-      const played = Archify.guidedViews.play();
-      const wasPlaying = Archify.guidedViews.isPlaying();
-      Archify.view.zoomOut();
-      return { wasHandoff, cleared, played, wasPlaying, paused: !Archify.guidedViews.isPlaying() };
-    })()`, true);
-    assert.deepEqual(story, { wasHandoff: true, cleared: true, played: true, wasPlaying: true, paused: true });
-    await stable();
-    await snapshot('story-takeover');
+  await t.test('actual Route, Finder and Radar callers retain camera ownership', async () => {
     await load('trace');
     const route = await run(`(() => {
       Archify.motionGovernor.resume();

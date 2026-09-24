@@ -219,18 +219,12 @@
         container.removeAttribute('data-camera-transaction');
       }
       function interruptCamera(reason) {
-        if (Archify.guidedViews && Archify.guidedViews.cancelHandoff) {
-          Archify.guidedViews.cancelHandoff(reason || 'manual');
-        }
         var rendered = sampleRenderedState();
         stopCameraMotion(reason || 'manual', false);
         state = rendered;
         state.mode = 'manual';
         apply();
         renderControls();
-        if (Archify.guidedViews && Archify.guidedViews.isPlaying && Archify.guidedViews.isPlaying()) {
-          Archify.guidedViews.pause();
-        }
         if (Archify.routeProbe && Archify.routeProbe.isJourneyPlaying && Archify.routeProbe.isJourneyPlaying()) {
           Archify.routeProbe.pauseJourney({ preserveElapsed: true, reason: reason || 'manual' });
         }
@@ -448,9 +442,6 @@
         return transaction;
       }
       function syncSemantic() {
-        var guided = Archify.guidedViews && typeof Archify.guidedViews.focus === 'function'
-          ? Archify.guidedViews.focus() : [];
-        if (guided && guided.length) return reveal(guided, { reason: 'guided-sync' });
         var active = Archify.focus && typeof Archify.focus.active === 'function' ? Archify.focus.active() : null;
         if (typeof active === 'string') return reveal([active], { includeNeighbors: true, reason: 'focus-sync' });
         if (Array.isArray(active) && active.length) return reveal(active, { reason: 'selection-sync' });

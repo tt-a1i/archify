@@ -690,7 +690,7 @@ test('closing a pending Radar request prevents retry and reflow from reopening i
   }
 });
 
-test('Radar reflects camera viewport, status and Focus/Story activity through normal callers', {
+test('Radar reflects camera viewport, status and Focus activity through normal callers', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
   render('architecture', CASES.architecture);
@@ -712,8 +712,7 @@ test('Radar reflects camera viewport, status and Focus/Story activity through no
           const expected = [logical.x,logical.y,logical.width,logical.height];
           const active = Array.from(document.querySelectorAll('[data-radar-active]'), node => node.getAttribute('data-radar-node-id')).sort();
           const status = document.getElementById('overview-map-status').textContent;
-          const state = { actual, expected, active, status, count: Archify.radar.count(), scale: logical.scale,
-            beat: Archify.guidedViews.beat()?.nodeId || null };
+          const state = { actual, expected, active, status, count: Archify.radar.count(), scale: logical.scale };
           const value = JSON.stringify(state);
           equal = value === previous ? equal + 1 : 0; previous = value;
           if (equal >= 8) return state;
@@ -732,15 +731,6 @@ test('Radar reflects camera viewport, status and Focus/Story activity through no
     assert.deepEqual((await observe(`Archify.focus.set('lb', { toggle:false });`)).active, ['lb']);
     assert.deepEqual((await observe(`Archify.focus.set('db', { toggle:false });`)).active, ['db']);
     assert.deepEqual((await observe(`Archify.focus.clear();`)).active, []);
-    await observe(`Archify.guidedViews.activate('request-path');`);
-    const first = await observe(`document.querySelector('[data-story-index="0"]').click(); Archify.focus.clear({ updateUrl:false });`);
-    assert.ok(first.beat);
-    assert.deepEqual(first.active, [first.beat]);
-    const second = await observe(`document.querySelector('[data-story-index="1"]').click(); Archify.focus.clear({ updateUrl:false });`);
-    assert.ok(second.beat);
-    assert.notEqual(second.beat, first.beat);
-    assert.deepEqual(second.active, [second.beat]);
-    assert.deepEqual((await observe(`Archify.guidedViews.showAll();`)).active, []);
   } finally {
     await browser.close();
   }
