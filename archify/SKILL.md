@@ -43,7 +43,7 @@ Use this path for ordinary generation. Read branch references only when their st
 
    For a repository-backed candidate, include evidence on the first draft and use the complete first command: `node bin/archify.mjs finalize <type> <candidate.json> <output.html> --repo-root <repo-root> --quality showcase --json`.
 
-   Write the candidate with a file-writing tool rather than a shell heredoc, which breaks on quotes inside the JSON. In PowerShell run the same command with each path in single quotes, for example `node '<skill>\bin\archify.mjs' finalize architecture '<candidate.json>' '<output.html>' --repo-root '<repo-root>' --quality showcase --json`, and do not append `2>&1`.
+   Write and edit the candidate with a file-writing tool, including repairs, rather than a shell heredoc or a PowerShell rewrite: heredocs break on quotes inside the JSON, and PowerShell rewrites can garble non-ASCII text and add a byte-order mark. In PowerShell run the same command with each path in single quotes, for example `node '<skill>\bin\archify.mjs' finalize architecture '<candidate.json>' '<output.html>' --repo-root '<repo-root>' --quality showcase --json`, and do not append `2>&1`.
 
    When the only failure is Architecture desktop width, `finalize` narrows the empty horizontal gaps in the candidate file once, keeping node order, rows, and routes, and reruns; its summary then reports `autoCompaction`. When automatic relationships still cross after a passing check, it tries endpoint sides for them once and reports `autoRouteRepair`. Continue from the rewritten candidate.
 
