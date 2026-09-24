@@ -295,7 +295,9 @@ test('Level 2 records channel candidates while the pack excludes support modules
   assert.equal(spawnSite.count, 1, 'the commented spawn is skipped');
   assert.match(spawnSite.anchor, /^server\/app\.js:6$/);
   assert.deepEqual(spawnSite.excerpt, ["6: const child = spawn('agent', []);"], 'the credential line after the call is not copied');
-  assert.ok(!channels.some((entry) => entry.module === 'server' && entry.kind === 'http-client'), 'a credential-looking line is skipped');
+  const credentialCall = channels.find((entry) => entry.module === 'server' && entry.kind === 'http-client');
+  assert.ok(credentialCall, 'a call on a credential-looking line is still a channel');
+  assert.ok(!(credentialCall.excerpt || []).some((line) => line.includes('token')), 'its credential line is not copied');
 });
 
 test('A runtime tools module keeps bare exec and WebSocket channels', (t) => {

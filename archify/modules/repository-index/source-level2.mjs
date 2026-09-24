@@ -477,7 +477,9 @@ function runtimeChannels(text, language, includeSource = false) {
   for (let number = 0; number < lines.length; number += 1) {
     const line = lines[number];
     const trimmed = line.trim();
-    if (!trimmed || /^(?:#|\/\/|\*|\/\*)/.test(trimmed) || safeSourceLine(line) === null) continue;
+    // A channel is detected even on a credential-looking line (fetch(token_url));
+    // only its copied text is filtered below.
+    if (!trimmed || /^(?:#|\/\/|\*|\/\*)/.test(trimmed)) continue;
     for (const [kind, patterns] of RUNTIME_CHANNELS) {
       if (!patterns[family].test(line)) continue;
       // The call and the lines right after it usually name the peer: the

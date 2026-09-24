@@ -823,6 +823,12 @@ function sharedEndpointHint(hit) {
   const pairs = [['from', 'source'], ['to', 'target']];
   for (const [field, endpoint] of pairs) {
     if (hit.left.relation[field] !== hit.right.relation[field]) continue;
+    // A new side only separates an overlap on the segments at that endpoint;
+    // an interior overlap keeps the replanning hint.
+    const atEndpoint = endpoint === 'source'
+      ? hit.leftSegment === 0 && hit.rightSegment === 0
+      : hit.leftSegment === hit.left.points.length - 2 && hit.rightSegment === hit.right.points.length - 2;
+    if (!atEndpoint) continue;
     const node = hit.left.relation[field];
     const points = (routed) => normalizeRoutePoints(routed.points || []);
     const left = points(hit.left);

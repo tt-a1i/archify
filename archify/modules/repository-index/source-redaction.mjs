@@ -4,7 +4,7 @@
 const SECRET_ASSIGNMENT = /(?:^|[^\w])[\w$.-]*(?:token|secret|password|passwd|pwd|api[_-]?key|credential)[\w$.-]*['"]?\]?\s*[:=]/i;
 // A credential word on its own (API_TOKEN, "--password", access_token) but not
 // inside a longer word such as tokenizer or max_tokens.
-const SECRET_WORD = /(?<![a-z])(?:token|secret|password|passwd|pwd|api[_-]?key|credentials?|bearer|private[_-]?key)(?![a-z])/i;
+const SECRET_WORD = /(?<![a-z])(?:token|secret|password|passwd|pwd|api[_-]?key|credentials?|bearer|(?:private|access|signing|encryption|master|session|client)[_-]?key(?:[_-]?id)?)(?![a-z])/i;
 const AUTHORIZATION_HEADER = /(?:^|[^\w])['"]?(?:proxy[-_])?authorization['"]?\s*:/i;
 const URL_USERINFO = /(\b[a-z][a-z0-9+.-]*:\/\/)[^\s/?#@]*@/gi;
 const URL_QUERY = /(\b[a-z][a-z0-9+.-]*:\/\/[^\s'"`?#]*)\?[^\s'"`#]*/gi;

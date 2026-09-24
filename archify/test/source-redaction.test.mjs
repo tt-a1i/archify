@@ -10,6 +10,8 @@ test('source excerpts drop credentials behind quoted or subscripted keys', () =>
     'os.environ["API_TOKEN"] = value',
     'const token = process.env.TOKEN;',
     'let api_key = load();',
+    'AWS_ACCESS_KEY_ID = "AKIAEXAMPLE"',
+    'client_key_id: "abc",',
   ]) assert.equal(safeSourceLine(line), null, line);
   assert.equal(safeSourceLine('fetch(url, { method: "POST" })'), 'fetch(url, { method: "POST" })');
   assert.equal(safeSourceLine('const u = "https://user:pw@host/x";'), 'const u = "https://[redacted]@host/x";');
@@ -37,6 +39,9 @@ test('the default evidence pack copies no source text, even around channel calls
       'const child = spawn("MARKER4", ["--password", "MARKER5"]);',
       'const db = open("MARKER6.db");',
       'export function handler(secret = "MARKER7") { return secret; }',
+      'const AWS_ACCESS_KEY_ID = "MARKER8AWS";',
+      'fetch("/data", { headers: { id: AWS_ACCESS_KEY_ID } });',
+      'const token_url = "/oauth"; fetch(token_url);',
     ].join('\n'));
     write('src/worker.py', 'import subprocess, sqlite3\nsubprocess.run(["MARKER8", "x"])\nconn = sqlite3.connect("MARKER9.sqlite")\n');
     const result = buildRepositoryEvidence(root, { detailDirectory: detail });
@@ -47,7 +52,9 @@ test('the default evidence pack copies no source text, even around channel calls
     assert.doesNotMatch(detailText, /MARKER/);
     const opted = buildRepositoryEvidence(root, { sourceExcerpts: true });
     assert.equal(opted.policy.sourceBodiesIncluded, true);
-    assert.doesNotMatch(JSON.stringify(opted), /MARKER[1257]/, 'credential lines stay out of opt-in excerpts');
+    assert.doesNotMatch(JSON.stringify(opted), /MARKER[1257]|MARKER8AWS/, 'credential lines stay out of opt-in excerpts');
+    const httpCalls = result.pack.runtimeChannels.items.filter((item) => item.kind === 'http-client');
+    assert.ok(httpCalls.length > 0 && httpCalls[0].count >= 3, 'calls on credential-looking lines are still counted');
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
     fs.rmSync(detail, { recursive: true, force: true });

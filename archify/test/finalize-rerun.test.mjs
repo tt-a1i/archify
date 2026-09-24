@@ -71,3 +71,14 @@ test('a failed candidate replacement leaves the previous candidate complete', as
   assert.equal(fs.readFileSync(candidate, 'utf8'), next);
   assert.deepEqual(fs.readdirSync(dir), ['candidate.json']);
 });
+
+test('a candidate replacement keeps the candidate private', { skip: process.platform === 'win32' && 'POSIX file modes' }, async (t) => {
+  const { replaceCandidate } = await import('../bin/finalize.mjs');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-replace-mode-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const candidate = path.join(dir, 'candidate.json');
+  fs.writeFileSync(candidate, '{}\n', { mode: 0o600 });
+  fs.chmodSync(candidate, 0o600);
+  replaceCandidate(candidate, '{"a":1}\n');
+  assert.equal(fs.statSync(candidate).mode & 0o777, 0o600);
+});

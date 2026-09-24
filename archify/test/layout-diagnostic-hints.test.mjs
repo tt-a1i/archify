@@ -33,3 +33,24 @@ test('an endpoint-side failure names the coordinate the next point must keep', (
   });
   assert.match(message, /the next point must keep x=815 and sit below the port at y=294/);
 });
+
+test('an interior shared corridor keeps the replanning hint instead of an endpoint-side fix', () => {
+  // Both leave "hub" to the right on separate lanes and only merge at x=300.
+  const paths = {
+    'hub>a': [[100, 90], [200, 90], [200, 100], [300, 100], [400, 100], [400, 40]],
+    'hub>b': [[100, 110], [220, 110], [220, 100], [320, 100], [420, 100], [420, 220]],
+  };
+  const relations = [{ id: 'to-a', from: 'hub', to: 'a' }, { id: 'to-b', from: 'hub', to: 'b' }];
+  const [message] = cleanAmbiguousCorridorProblems({
+    relations,
+    endpointIds: new Set(['hub', 'a', 'b']),
+    pathFor: (relation) => ({ points: paths[`${relation.from}>${relation.to}`] }),
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: 'showcase',
+    profileIsAuthoritative: true,
+    includeSharedEndpoints: () => true,
+  });
+  assert.ok(message, 'the interior overlap is reported');
+  assert.doesNotMatch(message, /its own side/);
+});

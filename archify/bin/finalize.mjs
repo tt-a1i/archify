@@ -620,8 +620,13 @@ export function compactFinalizeReceipt(receipt) {
 export function replaceCandidate(file, contents, { writeFile = fs.writeFileSync, rename = fs.renameSync } = {}) {
   const bytes = Buffer.isBuffer(contents) ? contents : Buffer.from(contents);
   const staged = path.join(path.dirname(file), `.archify-candidate-${randomUUID()}.json`);
+  let mode = null;
+  try { mode = fs.statSync(file).mode & 0o777; } catch {}
   try {
-    writeFile(staged, bytes, { flag: 'wx' });
+    // Stage privately and give the file the candidate's own mode before it
+    // becomes visible, so a replacement never widens who can read it.
+    writeFile(staged, bytes, { flag: 'wx', mode: 0o600 });
+    if (mode !== null) fs.chmodSync(staged, mode);
     if (!fs.readFileSync(staged).equals(bytes)) throw new Error('The staged candidate does not match the prepared bytes.');
     rename(staged, file);
   } finally {
