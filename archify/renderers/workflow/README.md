@@ -23,6 +23,49 @@ It catches final-SVG issues that are easiest to see in a browser: non-finite
 SVG values, accidental two-point diagonal arrows, and arrows crossing the
 legend.
 
+## Library API
+
+For an in-process caller, import `renderWorkflow()` and pass a parsed workflow
+document. For example, from a script at the repository root:
+
+```js
+import { readFile, writeFile } from 'node:fs/promises';
+import { renderWorkflow } from './archify/renderers/workflow/workflow-api.mjs';
+
+const workflow = JSON.parse(await readFile('input.workflow.json', 'utf8'));
+const result = await renderWorkflow({
+  workflow,
+  repoRoot: process.cwd(), // Used when the document declares repository evidence.
+});
+
+if (result.ok) {
+  await writeFile('output.html', result.html); // The caller chooses delivery.
+} else {
+  console.error(result.diagnostics); // Classified input/rendering failures.
+}
+```
+
+Success returns `{ ok: true, html, svg, cards, meta, sourceEvidence, receipt }`.
+The layout `receipt` is not a completed delivery receipt. Classified failures
+return `{ ok: false, error, diagnostics }` (and a layout receipt when available).
+Invalid API arguments and unexpected implementation errors throw/reject. The
+schema still requires `meta.output`; the API does not write to that path.
+
+The API clones the input and always validates and prepares authored brands on
+its own clone. Built-in brands use bundled resources; unknown brands return
+diagnostics. Caller-side preparation does not replace this step. See the
+[brand resource contract](../../references/brand-marks.md) for digest-pinned
+remote brands, which may require network I/O. The first successful render also
+reads the bundled HTML template, and repository evidence checks read the
+selected repository. Returning an in-memory result does not imply zero I/O.
+
+`qualityProfile` can explicitly override the document's quality profile; the
+returned metadata reflects the effective setting. File writes, console output
+and exit handling in the example belong to the caller. The API installs no
+process-level error handler and does not terminate the host. A direct call
+does not retain subprocess kill-on-timeout isolation: keep a subprocess or
+terminable worker boundary when that isolation is required.
+
 ## Input
 
 Workflow JSON files must set:

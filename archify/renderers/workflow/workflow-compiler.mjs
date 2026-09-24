@@ -4340,7 +4340,7 @@ function renderSvg() {
     && asArray(layout.laneHeights).some((height) => height > 104)
     ? ' data-reader-fit="intrinsic-height"'
     : '';
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit} ${svgRootAttrs(workflow.meta, resolvedQualityProfile)}>
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit} ${svgRootAttrs(workflow.meta, resolvedQualityProfile, { profileIsAuthoritative: true })}>
 ${svgAccessibleText(workflow.meta, 'workflow')}
 ${renderDefinitions()}
 
@@ -4404,7 +4404,7 @@ ${renderLegend()}
       }),
       diagnostics: [],
     };
-    return { ok: true, svg, receipt };
+    return { ok: true, svg, receipt, resolvedQualityProfile };
   } catch (error) {
     if (!Array.isArray(error?.archifyDiagnostics)) throw error;
     const diagnostics = error.archifyDiagnostics.map((diagnostic) => ({ ...diagnostic }));

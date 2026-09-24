@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -5,7 +6,14 @@ const DIAGNOSTIC_MODE = process.env.ARCHIFY_DIAGNOSTIC_FORMAT === 'json';
 const recorded = [];
 const recordedMessages = new Set();
 const boundaryKey = Symbol.for('archify.renderer-diagnostic-boundary');
-let recordingSuppressionDepth = 0;
+// A plain depth counter is unsafe once a suppressed callback can be async:
+// its `finally` fires as soon as the callback's synchronous portion returns,
+// not when the returned promise settles, so an await inside would leave
+// suppression lifted while the callback is still running — and, worse, two
+// overlapping async suppressed calls would race the same shared counter.
+// AsyncLocalStorage scopes suppression to each call's own async continuation
+// instead of process-wide state.
+const recordingSuppression = new AsyncLocalStorage();
 
 function plainObject(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
@@ -30,7 +38,7 @@ function normalizedDiagnostic(diagnostic) {
 }
 
 export function recordDiagnostic(diagnostic) {
-  if (!DIAGNOSTIC_MODE || recordingSuppressionDepth > 0) return;
+  if (!DIAGNOSTIC_MODE || recordingSuppression.getStore()) return;
   const normalized = normalizedDiagnostic(diagnostic);
   if (recordedMessages.has(normalized.message)) return;
   recordedMessages.add(normalized.message);
@@ -38,12 +46,7 @@ export function recordDiagnostic(diagnostic) {
 }
 
 export function withDiagnosticRecordingSuppressed(callback) {
-  recordingSuppressionDepth += 1;
-  try {
-    return callback();
-  } finally {
-    recordingSuppressionDepth -= 1;
-  }
+  return recordingSuppression.run(true, callback);
 }
 
 export function throwDiagnosticError(message, diagnostics) {
